@@ -1,13 +1,27 @@
-"""Import as:
+# -*- coding: utf-8 -*-
+# %%
+# %matplotlib inline
+
+# %% [markdown]
+"""
+Import as:
 
 import core.plotting as plot
 """
 
+# %%
 import calendar
 import logging
 import math
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import core.explore as expl
+import core.finance as fin
+import core.signal_processing as sigp
+import core.statistics as stats
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
+import helpers.list as hlist
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
@@ -21,14 +35,6 @@ import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
 import statsmodels.regression.rolling as smrr
-
-import core.explore as expl
-import core.finance as fin
-import core.signal_processing as sigp
-import core.statistics as stats
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
-import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
@@ -50,9 +56,11 @@ _DATETIME_TYPES = [
 ]
 
 
-# #############################################################################
+# %% [markdown]
 # General plotting helpers
 # #############################################################################
+
+# %%
 
 
 def plot_non_na_cols(
@@ -195,9 +203,11 @@ def get_multiple_plots(
     return fig, ax
 
 
-# #############################################################################
+# %% [markdown]
 # Data count plots.
 # #############################################################################
+
+# %%
 
 
 def plot_value_counts(
@@ -384,9 +394,11 @@ def plot_barplot(
         ax.set(xlabel=xlabel)
 
 
-# #############################################################################
+# %% [markdown]
 # Time series plotting
 # #############################################################################
+
+# %%
 
 
 def plot_timeseries_distribution(
@@ -656,9 +668,11 @@ def plot_time_series_dict(
         srs.to_frame().plot(title=key, ax=axes[i])
 
 
-# #############################################################################
+# %% [markdown]
 # Correlation-type plots
 # #############################################################################
+
+# %%
 
 
 def plot_heatmap(
@@ -785,6 +799,37 @@ def display_corr_df(df: pd.core.frame.DataFrame) -> None:
         expl.display_df(df_tmp)
     else:
         _LOG.warning("Can't display correlation df since it is None")
+
+
+def plot_clusters(
+    df: pd.core.frame.DataFrame, figsize: Optional[Tuple[int, int]] = None
+) -> None:
+    """Plot a clustering dendrogram with correlation linkage.
+
+    A dendrogram is a diagram representing a tree.
+
+    :param df: df to plot a heatmap
+    :param figsize: if nothing specified, basic (20,5) used
+    """
+    constant_cols = df.columns[(df.diff().iloc[1:] == 0).all()]
+    if not constant_cols.empty:
+        _LOG.warning("Excluding constant columns: %s", constant_cols.tolist())
+        df = df.drop(columns=constant_cols)
+    if df.shape[1] < 2:
+        _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
+        return
+    df = df.drop(df.columns[df.nunique() == 1], axis=1)
+    z = sp.cluster.hierarchy.linkage(df.T, "single", "correlation")
+    if figsize is None:
+        figsize = FIG_SIZE
+    _ = plt.figure(figsize=figsize)
+    sp.cluster.hierarchy.dendrogram(
+        z,
+        labels=df.columns.tolist(),
+        leaf_rotation=90,
+    )
+    plt.title("Hierarchical Clustering Dendrogram")
+    plt.ylabel("Distance")
 
 
 def plot_dendrogram(
@@ -938,9 +983,11 @@ def _get_heatmap_colormap() -> mpl_col.LinearSegmentedColormap:
     return cmap
 
 
-# #############################################################################
+# %% [markdown]
 # Eval metrics plots
 # #############################################################################
+
+# %%
 
 
 def plot_confusion_heatmap(
@@ -1048,9 +1095,11 @@ def multipletests_plot(
     plt.tight_layout()
 
 
-# #############################################################################
+# %% [markdown]
 # Model evaluation
 # #############################################################################
+
+# %%
 
 
 def plot_cumulative_returns(
