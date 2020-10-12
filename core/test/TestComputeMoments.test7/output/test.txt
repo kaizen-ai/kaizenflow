@@ -1,0 +1,5 @@
+          arma(2,2)
+mean            inf
+std             NaN
+skew            NaN
+kurtosis        NaN
