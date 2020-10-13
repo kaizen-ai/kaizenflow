@@ -8,6 +8,13 @@ import logging
 import math
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import core.explore as expl
+import core.finance as fin
+import core.signal_processing as sigp
+import core.statistics as stats
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
+import helpers.list as hlist
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
@@ -21,14 +28,6 @@ import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
 import statsmodels.regression.rolling as smrr
-
-import core.explore as expl
-import core.finance as fin
-import core.signal_processing as sigp
-import core.statistics as stats
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
-import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
@@ -785,6 +784,82 @@ def display_corr_df(df: pd.core.frame.DataFrame) -> None:
         expl.display_df(df_tmp)
     else:
         _LOG.warning("Can't display correlation df since it is None")
+
+
+def cluster_and_select(
+    df: pd.DataFrame,
+    num_clust: int,
+    show_corr_plots: bool = True,
+    show_dendogram: bool = True,
+) -> List:
+    """
+    :df: input dataframe where each column is a timeseries and row is a date index
+    :num_clust: number of clusters to compute
+    :show_corr_plots: specify whether to show correlation plots or not
+    :show_dendogram: specify whether to show original clustering dendogram plot
+    :return: list of names of series to keep
+    """
+    df = df.drop(df.columns[df.nunique() == 1], axis=1)
+    if df.shape[1] < 2:
+        _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
+        return
+    Z = hac.linkage(df.T, "single", "correlation")
+    clusters = hac.fcluster(Z, num_clust, criterion="maxclust")
+    series_to_keep = []
+    df_name_clust = pd.DataFrame(
+        {"name": list(df.columns.values), "cluster": clusters}
+    )
+    if show_dendogram:
+        plt.figure(figsize=(25, 10))
+        plt.title("Hierarchical Clustering Dendrogram")
+        plt.ylabel("Distance")
+        hac.dendrogram(
+            Z,
+            leaf_rotation=90.0,  # rotates the x axis labels
+            leaf_font_size=8.0,  # font size for the x axis labels
+        )
+        plt.show()
+    for i in range(1, num_clust + 1):
+        print("----------")
+        print("Cluster {}".format(i))
+        print("----------")
+        names = list(set(df_name_clust[df_name_clust.cluster == i].name.values))
+        cluster_subset = df[names]
+        cluster_corr = cluster_subset.corr().abs()
+        if show_corr_plots:
+            sns.heatmap(cluster_corr, cmap="RdBu_r", vmin=0, vmax=1)
+            plt.show()
+        remaining = list(names.copy())
+        for j in range(0, len(names)):
+            for k in range(j + 1, len(names) - 1):
+                corr_series = cluster_corr.loc[names[j]].loc[names[k]]
+                if corr_series >= 0.8:
+                    try:
+                        remaining.remove(names[j])
+                    except:
+                        ValueError
+        series_to_keep = series_to_keep + list(set(remaining))
+        plt.show()
+        print(list(set(remaining)))
+        print("------------------------------------------")
+        print(
+            "Number of original series in cluser {0} is {1}".format(
+                i, len(set(names))
+            )
+        )
+        print(
+            "Number of series to keep in cluster {0} is {1}".format(
+                i, len(set(remaining))
+            )
+        )
+    print(" ")
+    print("------------------------------------------")
+    print(
+        "Final number of selected time series is {}".format(len(series_to_keep))
+    )
+    print("Series to keep are: {}".format(series_to_keep))
+    print("------------------------------------------")
+    return series_to_keep
 
 
 def plot_dendrogram(
