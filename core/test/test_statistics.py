@@ -67,6 +67,17 @@ class TestComputeMoments(hut.TestCase):
         series = pd.Series([np.nan for i in range(10)])
         stats.compute_moments(series)
 
+    def test7(self) -> None:
+        """
+        Test series with `inf`.
+        """
+        series = self._get_series(seed=1)
+        # Place some `NaN` values in the series.
+        series[4] = np.inf
+        actual = stats.compute_moments(series, nan_mode="ffill_and_drop_leading")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
 
 class TestComputeFracZero(hut.TestCase):
     @staticmethod
