@@ -49,6 +49,8 @@ _DATETIME_TYPES = [
     "second",
 ]
 
+_COLORMAP = Union[str, mpl.colors.Colormap]
+
 
 # #############################################################################
 # General plotting helpers
@@ -195,6 +197,7 @@ def get_multiple_plots(
     return fig, ax
 
 
+# TODO(Julia): Choose new function names.
 def plot_projection(df: pd.DataFrame, ax: mpl.axes.Axes) -> None:
     """
     Plot lines above index where each column is not `NaN`.
@@ -210,6 +213,31 @@ def plot_projection(df: pd.DataFrame, ax: mpl.axes.Axes) -> None:
         # Plot line above the index.
         color = ax.lines[i].get_color()
         ylim_srs.plot(ax=ax, legend=None, color=color, linewidth=1, alpha=0.8)
+
+
+def plot_projection1(
+    df: pd.DataFrame,
+    ax: Optional[mpl.axes.Axes] = None,
+    colormap: Optional[_COLORMAP] = None,
+) -> None:
+    """
+    Plot lines where each column is not `NaN`.
+
+    :param df: dataframe
+    :param ax: axis on which to plot. If `None`, create an axis and plot there
+    :param colormap: matplotlib colormap or colormap name
+    """
+    ax = ax or plt.gca()
+    ax.set_yticklabels([])
+    # Replace non-nan values with column numbers.
+    range_df = df.copy()
+    for i in range(df.shape[1]):
+        range_df.iloc[:, i] = i
+    # TODO(Julia): Support different types of special values. Probably,
+    #     it would be useful if the user can combine them (so it might be
+    #     better to push mask selection to the user).
+    df_to_plot = df.mask(df.notna(), range_df)
+    df_to_plot.plot(ax=ax, legend="reverse", colormap=colormap)
 
 
 # #############################################################################
@@ -501,7 +529,7 @@ def plot_timeseries_per_category(
 # TODO(*): Rename. Maybe `plot_sequence_and_density()`.
 def plot_cols(
     data: Union[pd.Series, pd.DataFrame],
-    colormap: str = "rainbow",
+    colormap: _COLORMAP = "rainbow",
     mode: Optional[str] = None,
     axes: Optional[List[mpl.axes.Axes]] = None,
     figsize: Optional[Tuple[float, float]] = (20, 10),
@@ -1342,7 +1370,7 @@ def plot_monthly_heatmap(
 def plot_pnl(
     pnls: Dict[int, pd.Series],
     title: Optional[str] = None,
-    colormap: Optional[str] = None,
+    colormap: Optional[_COLORMAP] = None,
     figsize: Optional[Tuple[int]] = None,
     start_date: Optional[Union[str, pd.Timestamp]] = None,
     end_date: Optional[Union[str, pd.Timestamp]] = None,
