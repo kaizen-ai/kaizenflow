@@ -1,8 +1,15 @@
-"""Import as:
+# -*- coding: utf-8 -*-
+# %%
+# %matplotlib inline
+
+# %% [markdown]
+"""
+Import as:
 
 import core.plotting as plot
 """
 
+# %%
 import calendar
 import logging
 import math
@@ -50,10 +57,11 @@ _DATETIME_TYPES = [
 ]
 
 
-# #############################################################################
+# %% [markdown]
 # General plotting helpers
 # #############################################################################
 
+# %%
 
 def plot_non_na_cols(
     df: pd.core.frame.DataFrame,
@@ -195,10 +203,12 @@ def get_multiple_plots(
     return fig, ax
 
 
-# #############################################################################
+
+# %% [markdown]
 # Data count plots.
 # #############################################################################
 
+# %%
 
 def plot_value_counts(
     srs: pd.Series, dropna: bool = True, *args: Any, **kwargs: Any
@@ -384,10 +394,12 @@ def plot_barplot(
         ax.set(xlabel=xlabel)
 
 
-# #############################################################################
+
+# %% [markdown]
 # Time series plotting
 # #############################################################################
 
+# %%
 
 def plot_timeseries_distribution(
     srs: pd.Series,
@@ -655,11 +667,47 @@ def plot_time_series_dict(
         srs = dict_[key]
         srs.to_frame().plot(title=key, ax=axes[i])
 
+        
+def plot_histograms_and_lagged_scatterplot(
+    srs: pd.Series,
+    lag: int,
+    title = None,
+    figsize: Optional[Tuple] = None,
+    hist_kwargs: Optional[Any] = None,
+    scatter_kwargs: Optional[Any] = None,
+) -> None:
+    """Plot histograms and scatterplot to test stationarity visually.
 
-# #############################################################################
+    Function plots histograms with density plot for 1st and 2nd half of the time series (if the timeseries is stationary,
+    the histogram of the 1st half of the timeseries would be similar to the histogram of the 2nd half)
+    and scatter-plot of time series observations versus their lagged values (x_t versus x_{t - lag}, where lag > 0).
+    If it is stationary the scatter-plot with its lagged values would resemble a circular cloud
+    """
+    # Sort index if it is not sorted yet
+    srs = srs.sort_index()
+    # Divide timeseries to two parts
+    srs_first_half = srs.iloc[: len(srs) // 2]
+    srs_second_half = srs.iloc[len(srs) // 2 :]
+    # Plot histograms
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=figsize)
+    plt.suptitle(title or srs.name)
+    sns.histplot(srs_first_half, ax=axes[0][0], kde=True, **hist_kwargs or {})
+    axes[0][0].set(xlabel=None, ylabel=None, title="1st half-sample distribution")
+    sns.histplot(srs_second_half, ax=axes[0][1], kde=True, **hist_kwargs or {})
+    axes[0][1].set(xlabel=None, ylabel=None, title="2nd half-sample distribution")
+    # Plot scatter plot
+    fig.subplots_adjust(hspace=0.25)
+    axes[1][0].scatter(srs, srs.shift(lag), **scatter_kwargs or {})
+    axes[1][0].set_title("scatter-plot with lag={}".format(lag))
+    fig.delaxes(axes[1][1])
+    plt.show()
+
+
+# %% [markdown]
 # Correlation-type plots
 # #############################################################################
 
+# %%
 
 def plot_heatmap(
     corr_df: pd.core.frame.DataFrame,
@@ -938,10 +986,12 @@ def _get_heatmap_colormap() -> mpl_col.LinearSegmentedColormap:
     return cmap
 
 
-# #############################################################################
+
+# %% [markdown]
 # Eval metrics plots
 # #############################################################################
 
+# %%
 
 def plot_confusion_heatmap(
     y_true: Union[List[Union[float, int]], np.array],
@@ -1048,10 +1098,12 @@ def multipletests_plot(
     plt.tight_layout()
 
 
-# #############################################################################
+
+# %% [markdown]
 # Model evaluation
 # #############################################################################
 
+# %%
 
 def plot_cumulative_returns(
     cumulative_rets: pd.Series,
