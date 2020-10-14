@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -1049,8 +1050,8 @@ class Test_compute_bet_stats(hut.TestCase):
 
 class Test_compute_sharpe_ratio(hut.TestCase):
     def test1(self) -> None:
-        ar_params = []
-        ma_params = []
+        ar_params: List[float] = []
+        ma_params: List[float] = []
         arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},
@@ -1063,8 +1064,8 @@ class Test_compute_sharpe_ratio(hut.TestCase):
 
 class Test_compute_sharpe_ratio_standard_error(hut.TestCase):
     def test1(self) -> None:
-        ar_params = []
-        ma_params = []
+        ar_params: List[float] = []
+        ma_params: List[float] = []
         arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},
@@ -1199,8 +1200,8 @@ class Test_compute_annualized_sharpe_ratio_standard_error(hut.TestCase):
 
 class Test_summarize_sharpe_ratio(hut.TestCase):
     def test1(self) -> None:
-        ar_params = []
-        ma_params = []
+        ar_params: List[float] = []
+        ma_params: List[float] = []
         arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},
@@ -1657,5 +1658,24 @@ class Test_summarize_time_index_info(hut.TestCase):
         """
         series = self._get_series(seed=1)
         actual = stats.summarize_time_index_info(series, prefix="test_")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test6(self) -> None:
+        """
+        Test `NaN` series.
+        """
+        date_range_kwargs = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = pd.Series(np.nan, index=pd.date_range(**date_range_kwargs))
+        actual = stats.summarize_time_index_info(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test7(self) -> None:
+        """
+        Test empty series.
+        """
+        series = pd.Series(index=pd.DatetimeIndex([]))
+        actual = stats.summarize_time_index_info(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
