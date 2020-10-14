@@ -32,7 +32,9 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(Paul): Double-check axes in used in calculation.
 def compute_moments(
-    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
+    srs: pd.Series,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """Calculate, mean, standard deviation, skew, and kurtosis.
 
@@ -44,7 +46,8 @@ def compute_moments(
     dbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
-    data = hdf.apply_nan_mode(srs, mode=nan_mode)
+    data = replace_infs_with_nans(srs)
+    data = hdf.apply_nan_mode(data, mode=nan_mode)
     result_index = [
         prefix + "mean",
         prefix + "std",
@@ -53,18 +56,14 @@ def compute_moments(
     ]
     if data.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
-        n_stats = len(result_index)
-        nan_result = pd.Series(
-            data=[np.nan for i in range(n_stats)],
-            index=result_index,
-            name=srs.name,
-        )
+        nan_result = pd.Series(np.nan, index=result_index, name=srs.name)
         return nan_result
+    # TODO(*): re-applyg stricter sp.stats nan_policy after we handle inf's.
     result_values = [
         data.mean(),
         data.std(),
-        sp.stats.skew(data, nan_policy="raise"),
-        sp.stats.kurtosis(data, nan_policy="raise"),
+        sp.stats.skew(data, nan_policy="omit"),
+        sp.stats.kurtosis(data, nan_policy="omit"),
     ]
     result = pd.Series(data=result_values, index=result_index, name=srs.name)
     return result
@@ -202,7 +201,8 @@ def _compute_denominator_and_package(
 
 
 def compute_special_value_stats(
-    srs: pd.Series, prefix: Optional[str] = None,
+    srs: pd.Series,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """Calculate special value statistics in time series.
 
@@ -221,10 +221,7 @@ def compute_special_value_stats(
         prefix + "num_finite_samples",
         prefix + "num_unique_values",
     ]
-    n_stats = len(result_index)
-    nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
-    )
+    nan_result = pd.Series(np.nan, index=result_index, name=srs.name)
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
@@ -247,7 +244,8 @@ def compute_special_value_stats(
 
 
 def summarize_sharpe_ratio(
-    log_rets: pd.Series, prefix: Optional[str] = None,
+    log_rets: pd.Series,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """Calculate SR, SE(SR) from rets with an index freq and annualize.
 
@@ -539,7 +537,9 @@ def compute_drawdown_cdf(
 
 
 def compute_normalized_drawdown_cdf(
-    sharpe_ratio: float, normalized_drawdown: float, time: Optional[float] = None,
+    sharpe_ratio: float,
+    normalized_drawdown: float,
+    time: Optional[float] = None,
 ) -> float:
     """Compute the drawdown cdf for drawdown given in units of volatility.
 
@@ -601,7 +601,8 @@ def compute_max_drawdown_approximate_cdf(
 
 
 def compute_annualized_return_and_volatility(
-    srs: pd.Series, prefix: Optional[str] = None,
+    srs: pd.Series,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """Annualized mean return and sample volatility in %.
 
@@ -617,7 +618,7 @@ def compute_annualized_return_and_volatility(
         prefix + "annualized_volatility_(%)",
     ]
     nan_result = pd.Series(
-        data=[np.nan, np.nan], index=result_index, name=srs.name, dtype="float64"
+        np.nan, index=result_index, name=srs.name, dtype="float64"
     )
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
@@ -633,7 +634,8 @@ def compute_annualized_return_and_volatility(
 
 
 def compute_max_drawdown(
-    log_rets: pd.Series, prefix: Optional[str] = None,
+    log_rets: pd.Series,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """Calculate max drawdown statistic.
 
@@ -797,9 +799,7 @@ def ttest_1samp(
         prefix + "tval",
         prefix + "pval",
     ]
-    nan_result = pd.Series(
-        data=[np.nan, np.nan], index=result_index, name=srs.name
-    )
+    nan_result = pd.Series(data=np.nan, index=result_index, name=srs.name)
     if data.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
@@ -867,7 +867,7 @@ def multi_ttest(
     if data.empty:
         _LOG.warning("Empty input!")
         return pd.DataFrame(
-            [np.nan, np.nan, np.nan],
+            np.nan,
             index=[prefix + "tval", prefix + "pval", prefix + "adj_pval"],
             columns=[data.columns],
         )
@@ -879,7 +879,9 @@ def multi_ttest(
 
 
 def apply_normality_test(
-    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
+    srs: pd.Series,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """Test (indep) null hypotheses that each col is normally distributed.
 
@@ -897,10 +899,7 @@ def apply_normality_test(
         prefix + "stat",
         prefix + "pval",
     ]
-    n_stats = len(result_index)
-    nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
-    )
+    nan_result = pd.Series(data=np.nan, index=result_index, name=srs.name)
     if data.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
@@ -943,6 +942,8 @@ def apply_adf_test(
     autolag = autolag or "AIC"
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
+    # Hack until we factor out inf handling.
+    srs = srs.replace([np.inf, -np.inf], np.nan)
     data = hdf.apply_nan_mode(srs, mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
     result_index = [
@@ -955,9 +956,10 @@ def apply_adf_test(
         prefix + "critical_values_10%",
         prefix + "ic_best",
     ]
-    n_stats = len(result_index)
     nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=data.name,
+        data=np.nan,
+        index=result_index,
+        name=data.name,
     )
     if data.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
@@ -1016,6 +1018,7 @@ def apply_kpss_test(
     dbg.dassert_isinstance(srs, pd.Series)
     regression = regression or "c"
     nan_mode = nan_mode or "drop"
+    nlags = nlags or "auto"
     prefix = prefix or ""
     data = hdf.apply_nan_mode(srs, mode=nan_mode)
     # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.kpss.html
@@ -1027,20 +1030,25 @@ def apply_kpss_test(
         prefix + "critical_values_5%",
         prefix + "critical_values_10%",
     ]
-    n_stats = len(result_index)
     nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=data.name,
+        data=np.nan,
+        index=result_index,
+        name=data.name,
     )
     if data.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
     try:
-        (kpss_stat, pval, lags, critical_values,) = sm.tsa.stattools.kpss(
-            data.values, regression=regression, nlags=nlags
-        )
-    except ValueError:
+        (
+            kpss_stat,
+            pval,
+            lags,
+            critical_values,
+        ) = sm.tsa.stattools.kpss(data.values, regression=regression, nlags=nlags)
+    except (ValueError, OverflowError):
         # This can raise if there are not enough data points, but the number
         # required can depend upon the input parameters.
+        # TODO(Julia): Debug OverflowError.
         return nan_result
         #
     result_values = [
@@ -1154,7 +1162,7 @@ def compute_jensen_ratio(
     prefix = prefix or ""
     data = hdf.apply_nan_mode(signal, mode=nan_mode)
     nan_result = pd.Series(
-        data=[np.nan], index=[prefix + "jensen_ratio"], name=signal.name
+        data=np.nan, index=[prefix + "jensen_ratio"], name=signal.name
     )
     dbg.dassert(not data.isna().any())
     # Handle infs.
@@ -1218,7 +1226,7 @@ def compute_forecastability(
     if data.size == 0:
         _LOG.warning("Empty input signal `%s`", signal.name)
         nan_result = pd.Series(
-            data=[np.nan], index=[prefix + "forecastability"], name=signal.name
+            data=np.nan, index=[prefix + "forecastability"], name=signal.name
         )
         return nan_result
     if mode == "welch":
@@ -1273,9 +1281,7 @@ def compute_zero_diff_proportion(
             srs.name,
             data.shape[0],
         )
-        nan_result = pd.Series(
-            data=[np.nan, np.nan], index=result_index, name=srs.name
-        )
+        nan_result = pd.Series(data=np.nan, index=result_index, name=srs.name)
         return nan_result
     # Compute if neighboring elements are equal within the given tolerance.
     equal_ngb_srs = np.isclose(data.shift(1)[1:], data[1:], atol=atol, rtol=rtol)
@@ -1289,7 +1295,8 @@ def compute_zero_diff_proportion(
 
 
 def get_interarrival_time(
-    srs: pd.Series, nan_mode: Optional[str] = None,
+    srs: pd.Series,
+    nan_mode: Optional[str] = None,
 ) -> Optional[pd.Series]:
     """Get interrarival time from index of a time series.
 
@@ -1314,7 +1321,9 @@ def get_interarrival_time(
 
 
 def compute_interarrival_time_stats(
-    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
+    srs: pd.Series,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """Compute interarrival time statistics.
 
@@ -1523,7 +1532,9 @@ def convert_splits_to_string(splits: collections.OrderedDict) -> str:
 
 
 def summarize_time_index_info(
-    srs: pd.Series, nan_mode: Optional[str] = None, prefix: Optional[str] = None,
+    srs: pd.Series,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """Return summarized information about datetime index of the input.
 
@@ -1543,20 +1554,30 @@ def summarize_time_index_info(
     clear_srs = hdf.apply_nan_mode(srs, mode=nan_mode)
     clear_index = clear_srs.index
     result = pd.Series([], dtype="object")
-    result[prefix + "start_time"] = clear_index[0]
-    result[prefix + "end_time"] = clear_index[-1]
-    result[prefix + "n_sampling_points"] = len(clear_index)
-    if freq is None:
-        result[prefix + "frequency"] = "None"
+    if clear_srs.empty:
+        _LOG.warning("Empty input series `%s`", srs.name)
+        result["start_time"] = np.nan
+        result["end_time"] = np.nan
     else:
-        result[prefix + "frequency"] = freq
+        result["start_time"] = clear_index[0]
+        result["end_time"] = clear_index[-1]
+    result["n_sampling_points"] = len(clear_index)
+    result["frequency"] = freq
+    if freq is None:
+        sampling_points_per_year = clear_srs.resample("Y").count().mean()
+    else:
         sampling_points_per_year = hdf.compute_points_per_year_for_given_freq(
             freq
         )
-        result[prefix + "sampling_points_per_year"] = sampling_points_per_year
-        # Compute input time span as a number of `freq` units in `clear_index`.
+    result["sampling_points_per_year"] = sampling_points_per_year
+    # Compute input time span as a number of `freq` units in
+    # `clear_index`.
+    if not clear_srs.empty:
         clear_index_time_span = len(srs[clear_index[0] : clear_index[-1]])
-        result[prefix + "time_span_in_years"] = (
-            clear_index_time_span / sampling_points_per_year
-        )
+    else:
+        clear_index_time_span = 0
+    result["time_span_in_years"] = (
+        clear_index_time_span / sampling_points_per_year
+    )
+    result.index = prefix + result.index
     return result

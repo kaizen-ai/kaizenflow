@@ -3,6 +3,7 @@ import os
 from typing import Any, Callable, Dict, Optional, Union
 
 import pandas as pd
+import ast
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -294,3 +295,42 @@ def save_csv_as_json(
         path_to_json = io_.change_filename_extension(path_to_csv, ".csv", ".json")
     # Save the dict into a json file.
     io_.to_json(path_to_json, dict_df)
+
+
+def to_typed_csv(df: pd.DataFrame, file_name: str) -> None:
+    """Convert Dataframe into csv and then creates a file with the dtypes of columns.
+    
+    As the file with types, this function create file with the same name and suffix
+    'foobar.csv.types'.
+
+    :param df: dataframe, which you want to convert into csv.
+    :param file_name: name of file with desired format, which is used for saving
+    :return: 
+    """
+    dtypes_filename = file_name + '.types'
+    io_.create_enclosing_dir(dtypes_filename, incremental=True)
+    dtypes_dict = str(df.dtypes.apply(lambda x: x.name).to_dict())
+
+    df.to_csv(file_name, index = False)
+    with open(dtypes_filename, 'w') as dtypes_file:
+        dtypes_file.write(dtypes_dict)
+    
+
+def from_typed_csv(file_name: str) -> pd.DataFrame:
+    """Loads csv file into dataframe and applies the original types of columns,
+    in order to open csv in a proper way.
+
+    As a file, which contains types format, it is used 'file_name.types' file,
+    if it's exist.
+
+    :param file_name: name of file, which is need to be converted into dataframe
+    :return pd.DataFrame: dataframe of pandas format.
+    """
+    dtypes_filename = file_name + '.types'
+    dbg.dassert_exists(dtypes_filename)
+
+    dtypes_file = open(dtypes_filename)
+    dtypes_dict = ast.literal_eval(list(dtypes_file)[0])
+
+    df = pd.read_csv(file_name, dtype = dtypes_dict)
+    return df

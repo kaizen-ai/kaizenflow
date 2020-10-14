@@ -1,1 +1,1 @@
-from .data import KibotDataLoader  # noqa
+from .data_loader import KibotDataLoader  # noqa

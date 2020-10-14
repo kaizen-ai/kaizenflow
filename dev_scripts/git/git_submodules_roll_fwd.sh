@@ -57,22 +57,11 @@ execute $cmd
 cd ..
 git add amp
 
-# Pull infra
-echo "+ Pull infra"
-cd infra
-git checkout $BRANCH
-git pull --autostash
-if [[ $clean == 1 ]]; then
-    git clean -fd
-fi;
-cd ..
-git add infra
-
 echo "# amp pointer in p1 is at:"
 cmd="git ls-tree master | grep amp"
 execute $cmd
 
-msg='git commit -am "Move fwd amp and infra" && git push'
+msg='git commit -am "Move forward git submodules" && git push'
 SCRIPT_NAME="./tmp_push.sh"
 echo $msg > $SCRIPT_NAME
 chmod +x $SCRIPT_NAME

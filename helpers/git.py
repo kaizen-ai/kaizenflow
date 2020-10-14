@@ -273,7 +273,7 @@ def get_repo_dirs() -> List[str]:
     """Return the list of the repo repositories, e.g., `[".", "amp",
     "infra"]`."""
     dir_names = ["."]
-    dirs = ["amp", "infra"]
+    dirs = ["amp"]
     for dir_name in dirs:
         if os.path.exists(dir_name):
             dir_names.append(dir_name)

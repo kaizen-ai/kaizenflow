@@ -45,7 +45,7 @@ def _roll_fwd(dir_names: List[str], auto_commit: bool, short_hash: bool) -> None
         cmd = f"git add {dir_name}"
         si.system(cmd)
     # Commit.
-    cmd = 'git commit -am "Move fwd amp and infra" && git push'
+    cmd = 'git commit -am "Move forward git submodules" && git push'
     if auto_commit:
         si.system(cmd)
     else:

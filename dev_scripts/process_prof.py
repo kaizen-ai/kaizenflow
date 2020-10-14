@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 
 # To run:
 #   python -m cProfile -o prof.bin CMD
@@ -56,24 +56,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
     p = pstats.Stats(prof_file).strip_dirs()
     if args.custom_code:
         # Custom code for profiling.
-        # Show ranked contributors.
-        showRank = True
-        # Show who is called by <funcs>.
-        show_callees = False
-        # Show who calls <funcs>.
-        show_callers = True
         # Functions to analyze.
         funcs = [
-            "getmodule",
-            "findsource",
-            "getframeinfo",
-            "getouterframes",
-            "stack",
-            "GetFunctionName",
-            "feature_computer.py:163",
+            "_helper_table_extraction"
         ]
-        funcs = ["frame.py:1913"]
-        if showRank:
+        # Show ranked contributors.
+        show_rank = True
+        # Show who is called by <funcs>.
+        show_callees = True
+        # Show who calls <funcs>.
+        show_callers = False
+        if show_rank:
             # From http://docs.python.org/2/library/profile.html
             # - ncalls: for the number of calls,
             # - tottime: for the total time spent in the given function (and
@@ -81,7 +74,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             # - cumtime: is the cumulative time spent in this and all
             #   subfunctions (from invocation till exit). This figure is
             #   accurate even for recursive functions.
-            p.sort_stats("time").print_stats(50)
+            p.sort_stats("cumulative").print_stats(50)
             # p.sort_stats(-1).print_stats()
             # p.sort_stats('cum').print_stats()
             # p.sort_stats('time', 'cum').print_stats()

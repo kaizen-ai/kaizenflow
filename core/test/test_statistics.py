@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -65,6 +66,17 @@ class TestComputeMoments(hut.TestCase):
     def test6(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
         stats.compute_moments(series)
+
+    def test7(self) -> None:
+        """
+        Test series with `inf`.
+        """
+        series = self._get_series(seed=1)
+        # Place some `NaN` values in the series.
+        series[4] = np.inf
+        actual = stats.compute_moments(series, nan_mode="ffill_and_drop_leading")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
 
 
 class TestComputeFracZero(hut.TestCase):
@@ -284,7 +296,11 @@ class TestMultipleTests(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
-        series = hut.get_random_df(num_cols=1, seed=seed, **date_range,)[0]
+        series = hut.get_random_df(
+            num_cols=1,
+            seed=seed,
+            **date_range,
+        )[0]
         return series
 
     # Smoke test for empty input.
@@ -808,32 +824,46 @@ class Test_compute_jensen_ratio(hut.TestCase):
 
     def test1(self) -> None:
         signal = self._get_signal(seed=1)
-        actual = stats.compute_jensen_ratio(signal,)
+        actual = stats.compute_jensen_ratio(
+            signal,
+        )
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         signal = self._get_signal(seed=1)
-        actual = stats.compute_jensen_ratio(signal, p_norm=3,)
+        actual = stats.compute_jensen_ratio(
+            signal,
+            p_norm=3,
+        )
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         signal = self._get_signal(seed=1)
         signal[5:8] = np.inf
-        actual = stats.compute_jensen_ratio(signal, inf_mode="drop",)
+        actual = stats.compute_jensen_ratio(
+            signal,
+            inf_mode="drop",
+        )
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
         signal = self._get_signal(seed=1)
-        actual = stats.compute_jensen_ratio(signal, nan_mode="ffill",)
+        actual = stats.compute_jensen_ratio(
+            signal,
+            nan_mode="ffill",
+        )
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test5(self) -> None:
         signal = self._get_signal(seed=1)
-        actual = stats.compute_jensen_ratio(signal, prefix="commodity_",)
+        actual = stats.compute_jensen_ratio(
+            signal,
+            prefix="commodity_",
+        )
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
@@ -854,27 +884,36 @@ class Test_compute_forecastability(hut.TestCase):
 
     def test1(self) -> None:
         signal = self._get_signal(seed=1)
-        actual = stats.compute_forecastability(signal,)
+        actual = stats.compute_forecastability(
+            signal,
+        )
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         signal = self._get_signal(seed=1)
-        actual = stats.compute_forecastability(signal, mode="periodogram",)
+        actual = stats.compute_forecastability(
+            signal,
+            mode="periodogram",
+        )
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         signal = self._get_signal(seed=1)
         actual = stats.compute_forecastability(
-            signal, nan_mode="ffill_and_drop_leading",
+            signal,
+            nan_mode="ffill_and_drop_leading",
         )
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
     def test4(self) -> None:
         signal = self._get_signal(seed=1)
-        actual = stats.compute_forecastability(signal, prefix="commodity_",)
+        actual = stats.compute_forecastability(
+            signal,
+            prefix="commodity_",
+        )
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
@@ -1011,8 +1050,8 @@ class Test_compute_bet_stats(hut.TestCase):
 
 class Test_compute_sharpe_ratio(hut.TestCase):
     def test1(self) -> None:
-        ar_params = []
-        ma_params = []
+        ar_params: List[float] = []
+        ma_params: List[float] = []
         arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},
@@ -1025,8 +1064,8 @@ class Test_compute_sharpe_ratio(hut.TestCase):
 
 class Test_compute_sharpe_ratio_standard_error(hut.TestCase):
     def test1(self) -> None:
-        ar_params = []
-        ma_params = []
+        ar_params: List[float] = []
+        ma_params: List[float] = []
         arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},
@@ -1161,8 +1200,8 @@ class Test_compute_annualized_sharpe_ratio_standard_error(hut.TestCase):
 
 class Test_summarize_sharpe_ratio(hut.TestCase):
     def test1(self) -> None:
-        ar_params = []
-        ma_params = []
+        ar_params: List[float] = []
+        ma_params: List[float] = []
         arma_process = sig_gen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},
@@ -1561,7 +1600,11 @@ class Test_summarize_time_index_info(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
-        series = hut.get_random_df(num_cols=1, seed=seed, **date_range,)[0]
+        series = hut.get_random_df(
+            num_cols=1,
+            seed=seed,
+            **date_range,
+        )[0]
         return series
 
     def test1(self) -> None:
@@ -1615,5 +1658,24 @@ class Test_summarize_time_index_info(hut.TestCase):
         """
         series = self._get_series(seed=1)
         actual = stats.summarize_time_index_info(series, prefix="test_")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test6(self) -> None:
+        """
+        Test `NaN` series.
+        """
+        date_range_kwargs = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = pd.Series(np.nan, index=pd.date_range(**date_range_kwargs))
+        actual = stats.summarize_time_index_info(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test7(self) -> None:
+        """
+        Test empty series.
+        """
+        series = pd.Series(index=pd.DatetimeIndex([]))
+        actual = stats.summarize_time_index_info(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)

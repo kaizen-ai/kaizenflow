@@ -8,13 +8,6 @@ import logging
 import math
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
-import core.explore as expl
-import core.finance as fin
-import core.signal_processing as sigp
-import core.statistics as stats
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
-import helpers.list as hlist
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
@@ -28,6 +21,14 @@ import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
 import statsmodels.regression.rolling as smrr
+
+import core.explore as expl
+import core.finance as fin
+import core.signal_processing as sigp
+import core.statistics as stats
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
+import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
@@ -389,7 +390,8 @@ def plot_barplot(
 
 
 def plot_timeseries_distribution(
-    srs: pd.Series, datetime_types: Optional[List[str]] = None,
+    srs: pd.Series,
+    datetime_types: Optional[List[str]] = None,
 ) -> None:
     """Plot timeseries distribution by.
 
@@ -480,6 +482,7 @@ def plot_timeseries_per_category(
         fig.suptitle(f"Distribution by {datetime_type}")
 
 
+# TODO(*): Rename. Maybe `plot_sequence_and_density()`.
 def plot_cols(
     data: Union[pd.Series, pd.DataFrame],
     colormap: str = "rainbow",
@@ -507,16 +510,19 @@ def plot_cols(
         data /= data.std()
     else:
         raise ValueError(f"Unsupported mode `{mode}`")
-    data.plot(kind="density", colormap=colormap, ax=axes[0])
+    data.replace([np.inf, -np.inf], np.nan).plot(
+        kind="density", colormap=colormap, ax=axes[0]
+    )
     data.plot(colormap=colormap, ax=axes[1])
 
 
+# TODO(*): Check that data index size exceeds lags.
 def plot_autocorrelation(
     signal: Union[pd.Series, pd.DataFrame],
     lags: int = 40,
     zero: bool = False,
     nan_mode: str = "conservative",
-    fft: bool = False,
+    fft: bool = True,
     title_prefix: Optional[str] = None,
     axes: Optional[List[mpl.axes.Axes]] = None,
     **kwargs: Any,
@@ -552,7 +558,12 @@ def plot_autocorrelation(
         ax2 = axes[idx][1]
         pacf_title = title_prefix + f"{col} partial autocorrelation"
         _ = sm.graphics.tsa.plot_pacf(
-            data, lags=lags, ax=ax2, zero=zero, title=pacf_title, **kwargs,
+            data,
+            lags=lags,
+            ax=ax2,
+            zero=zero,
+            title=pacf_title,
+            **kwargs,
         )
 
 
@@ -604,6 +615,50 @@ def plot_spectrum(
         # ax2.set_xlabel("Time window")
 
 
+def plot_time_series_dict(
+    dict_: Dict[str, pd.Series],
+    num_plots: Optional[int] = None,
+    num_cols: Optional[int] = 2,
+    y_scale: Optional[float] = 4,
+    sharex: bool = True,
+    sharey: bool = False,
+    exclude_empty: bool = True,
+) -> None:
+    """
+    Plot series from a dict of series.
+
+    :param dict_: dict of series
+    :param num_plots: number of plots
+    :param num_cols: number of columns to use in the subplot
+    :param y_scale: scale of y-axis
+    :param sharex: unify x-axis if True
+    :param sharey: unify y-axis if True
+    :param exclude_empty: whether to exclude plots of empty series
+    """
+    if exclude_empty:
+        non_empty_dict_ = {
+            key: val for key, val in dict_.items() if not val.empty
+        }
+        if len(non_empty_dict_) < len(dict_):
+            excluded_series = set(dict_).difference(non_empty_dict_)
+            _LOG.warning("Excluded empty series: %s", excluded_series)
+        dict_ = non_empty_dict_
+    num_plots = num_plots or len(dict_)
+    # Create figure to accommodate plots.
+    _, axes = get_multiple_plots(
+        num_plots=num_plots,
+        num_cols=num_cols,
+        y_scale=y_scale,
+        sharex=sharex,
+        sharey=sharey,
+    )
+    # Select first `num_plots` series in the dict and plot them.
+    keys_to_draw = list(dict_.keys())[:num_plots]
+    for i, key in enumerate(keys_to_draw):
+        srs = dict_[key]
+        srs.to_frame().plot(title=key, ax=axes[i])
+
+
 # #############################################################################
 # Correlation-type plots
 # #############################################################################
@@ -611,7 +666,7 @@ def plot_spectrum(
 
 def plot_heatmap(
     corr_df: pd.core.frame.DataFrame,
-    mode: str,
+    mode: Optional[str] = None,
     annot: Union[bool, str] = "auto",
     figsize: Optional[Tuple[int, int]] = None,
     title: Optional[str] = None,
@@ -632,13 +687,11 @@ def plot_heatmap(
     """
     # Sanity check.
     dbg.dassert_eq(corr_df.shape[0], corr_df.shape[1])
+    if corr_df.empty:
+        _LOG.warning("Can't plot heatmap for empty `corr_df`")
+        return
     if corr_df.shape[0] > 20:
         _LOG.warning("The corr_df.shape[0]='%s' > 20", corr_df.shape[0])
-    if corr_df.shape[0] < 2 or corr_df.shape[1] < 2:
-        _LOG.warning(
-            "Can't plot heatmap for corr_df with shape=%s", str(corr_df.shape)
-        )
-        return
     if np.all(np.isnan(corr_df)):
         _LOG.warning(
             "Can't plot heatmap with only nans:\n%s", corr_df.to_string()
@@ -651,6 +704,7 @@ def plot_heatmap(
     cmap = _get_heatmap_colormap()
     if figsize is None:
         figsize = FIG_SIZE
+    mode = mode or "heatmap"
     if mode in ("heatmap", "heatmap_semitriangle"):
         # Set up the matplotlib figure.
         if ax is None:
@@ -665,7 +719,6 @@ def plot_heatmap(
             square=True,
             annot=annot,
             fmt=".2f",
-            linewidths=0.5,
             cbar_kws={"shrink": 0.5},
             mask=mask,
             ax=ax,
@@ -678,7 +731,6 @@ def plot_heatmap(
             cmap=cmap,
             vmin=vmin,
             vmax=vmax,
-            linewidths=0.5,
             square=True,
             annot=annot,
             figsize=figsize,
@@ -692,7 +744,7 @@ def plot_heatmap(
 # http://stackoverflow.com/questions/24432101/correlation-coefficients-and-p-values-for-all-pairs-of-rows-of-a-matrix
 def plot_correlation_matrix(
     df: pd.core.frame.DataFrame,
-    mode: str,
+    mode: Optional[str] = None,
     annot: Union[bool, str] = False,
     figsize: Optional[Tuple[int, int]] = None,
     title: Optional[str] = None,
@@ -710,8 +762,8 @@ def plot_correlation_matrix(
     :param min_periods: minimum number of observations required per pair of columns to have
         a valid result; currently only available for Pearson and Spearman correlation
     """
-    if df.shape[1] < 2:
-        _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
+    if df.empty:
+        _LOG.warning("Skipping correlation matrix since `df` is empty")
         return None
     # Compute the correlation matrix.
     method = method or "pearson"
@@ -719,7 +771,7 @@ def plot_correlation_matrix(
     # Plot heatmap.
     plot_heatmap(
         corr_df,
-        mode,
+        mode=mode,
         annot=annot,
         figsize=figsize,
         title=title,
@@ -739,7 +791,9 @@ def display_corr_df(df: pd.core.frame.DataFrame) -> None:
 
 
 def plot_dendrogram(
-    df: pd.core.frame.DataFrame, figsize: Optional[Tuple[int, int]] = None
+    df: pd.core.frame.DataFrame,
+    figsize: Optional[Tuple[int, int]] = None,
+    **kwargs: Any,
 ) -> None:
     """Plot a dendrogram.
 
@@ -747,6 +801,7 @@ def plot_dendrogram(
 
     :param df: df to plot a heatmap
     :param figsize: if nothing specified, basic (20,5) used
+    :param kwargs: kwargs for `sp.cluster.hierarchy.dendrogram`
     """
     # Look at:
     # ~/.conda/envs/root_longman_20150820/lib/python2.7/site-packages/seaborn/matrix.py
@@ -765,21 +820,18 @@ def plot_dendrogram(
         figsize = FIG_SIZE
     _ = plt.figure(figsize=figsize)
     sp.cluster.hierarchy.dendrogram(
-        z,
-        labels=df.columns.tolist(),
-        leaf_rotation=0,
-        color_threshold=0,
-        orientation="right",
+        z, labels=df.columns.tolist(), orientation="right", **kwargs
     )
 
 
 def plot_corr_over_time(
     corr_df: pd.core.frame.DataFrame,
-    mode: str,
+    mode: Optional[str] = None,
     annot: bool = False,
     num_cols: int = 4,
 ) -> None:
     """Plot correlation over time."""
+    mode = mode or "heatmap"
     timestamps = corr_df.index.get_level_values(0).unique()
     if len(timestamps) > 20:
         _LOG.warning("The first level of index length='%s' > 20", len(timestamps))
@@ -1104,7 +1156,8 @@ def plot_rolling_annualized_volatility(
     # Plot.
     ax = ax or plt.gca()
     ax.plot(
-        annualized_rolling_volatility, label="annualized rolling volatility",
+        annualized_rolling_volatility,
+        label="annualized rolling volatility",
     )
     ax.axhline(
         annualized_volatility,
@@ -1750,6 +1803,9 @@ def _maybe_add_events(
     colors = cm.get_cmap("Set1")(np.linspace(0, 1, len(events)))
     for event, color in zip(events, colors):
         ax.axvline(
-            x=pd.Timestamp(event[0]), label=event[1], color=color, linestyle="--",
+            x=pd.Timestamp(event[0]),
+            label=event[1],
+            color=color,
+            linestyle="--",
         )
     return None

@@ -21,7 +21,7 @@ jp_pd.register_handlers()
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(\*): Unit test and add more types.
+# TODO(\*): Add more types.
 def to_python_code(obj: Any) -> str:
     """Serialize an object into a string of python code.
 
@@ -34,7 +34,8 @@ def to_python_code(obj: Any) -> str:
         output.append(str(obj))
     elif isinstance(obj, str):
         # String test -> '"test"'.
-        output.append('"' + obj + '"')
+        # Use jsonpickle to handle double quotes.
+        output.append(jsonpickle.encode(obj))
     elif isinstance(obj, list):
         # List ["a", 1] -> '["a", 1]'.
         output_tmp = "["

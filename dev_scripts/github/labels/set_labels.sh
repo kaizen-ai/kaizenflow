@@ -44,13 +44,6 @@ if [[ 1 == 1 ]]; then
     backup_and_update
 fi;
 
-# ParticleDev/infra
-OWNER="ParticleDev"
-REPO="infra"
-if [[ 1 == 1 ]]; then
-    backup_and_update
-fi;
-
 # alphamatic/amp
 OWNER="alphamatic"
 REPO="amp"

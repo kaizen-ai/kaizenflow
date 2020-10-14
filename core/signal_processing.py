@@ -191,6 +191,21 @@ def fit_random_walk_plus_noise(
 # #############################################################################
 
 
+def correlate_with_lag(df: pd.DataFrame, lag: int,) -> pd.DataFrame:
+    """
+    Combine cols of `df` with their lags and compute the correlation matrix.
+
+    :param df: dataframe of numeric values
+    :param lag: number of lags to apply
+    :return: correlation matrix with `2 * df.columns` columns
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert_isinstance(lag, int)
+    df_lagged = df.shift(lag).rename(columns=lambda x: str(x) + f"_lag_{lag}")
+    merged_df = df.merge(df_lagged, left_index=True, right_index=True)
+    return merged_df.corr()
+
+
 def plot_crosscorrelation(
     x: Union[pd.DataFrame, pd.Series], y: Union[pd.DataFrame, pd.Series]
 ) -> None:
@@ -772,6 +787,32 @@ def compute_rolling_sharpe_ratio(
 # #############################################################################
 
 
+def compute_rolling_cov(
+    srs1: Union[pd.DataFrame, pd.Series],
+    srs2: Union[pd.DataFrame, pd.Series],
+    tau: float,
+    demean: bool = True,
+    min_periods: int = 0,
+    min_depth: int = 1,
+    max_depth: int = 1,
+) -> Union[pd.DataFrame, pd.Series]:
+    """Smooth moving covariance."""
+    if demean:
+        srs1_adj = srs1 - compute_smooth_moving_average(
+            srs1, tau, min_periods, min_depth, max_depth
+        )
+        srs2_adj = srs2 - compute_smooth_moving_average(
+            srs2, tau, min_periods, min_depth, max_depth
+        )
+    else:
+        srs1_adj = srs1
+        srs2_adj = srs2
+    smooth_prod = compute_smooth_moving_average(
+        srs1_adj.multiply(srs2_adj), tau, min_periods, min_depth, max_depth
+    )
+    return smooth_prod
+
+
 def compute_rolling_corr(
     srs1: Union[pd.DataFrame, pd.Series],
     srs2: Union[pd.DataFrame, pd.Series],
@@ -793,7 +834,6 @@ def compute_rolling_corr(
     else:
         srs1_adj = srs1
         srs2_adj = srs2
-
     smooth_prod = compute_smooth_moving_average(
         srs1_adj.multiply(srs2_adj), tau, min_periods, min_depth, max_depth
     )
@@ -1447,3 +1487,50 @@ def resample(
     # Execute resampling with specified kwargs.
     resampled_data = data.resample(**resample_kwargs)
     return resampled_data
+
+
+# #############################################################################
+# Special functions
+# #############################################################################
+
+
+def c_infinity(x: float) -> float:
+    """
+    Return C-infinity function evaluated at x.
+
+    This function is zero for x <= 0 and approaches exp(1) as x -> infinity.
+    """
+    if x > 0:
+        return np.exp(-1 / x)
+    else:
+        return 0
+
+
+def c_infinity_step_function(x: float) -> float:
+    """
+    Return C-infinity step function evaluated at x.
+
+    This function is
+      - 0 for x <= 0
+      - 1 for x >= 1
+    """
+    fx = c_infinity(x)
+    f1mx = c_infinity(1 - x)
+    if fx + f1mx == 0:
+        return np.nan
+    return fx / (fx + f1mx)
+
+
+def c_infinity_bump_function(x: float, a: float, b: float) -> float:
+    """
+    Return value of C-infinity bump function evaluated at x.
+
+    :param x: point at which to evaluate
+    :param a: function is 1 between -a and a
+    :param b: function is zero for abs(x) >= b
+    """
+    dbg.dassert_lt(0, a)
+    dbg.dassert_lt(a, b)
+    y = (x ** 2 - a ** 2) / (b ** 2 - a ** 2)
+    inverse_bump = c_infinity_step_function(y)
+    return 1 - inverse_bump

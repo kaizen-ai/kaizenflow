@@ -264,7 +264,11 @@ def purify_txt_from_client(txt: str) -> str:
     for super_module in [False, True]:
         # Replace the git path with `$GIT_ROOT`.
         super_module_path = git.get_client_root(super_module=super_module)
-        txt = txt.replace(super_module_path, "$GIT_ROOT")
+        if super_module_path != "/":
+            txt = txt.replace(super_module_path, "$GIT_ROOT")
+        else:
+            # If the git path is `/` then we don't need to do anything.
+            pass
     # Replace the current path with `$PWD`
     pwd = os.getcwd()
     txt = txt.replace(pwd, "$PWD")

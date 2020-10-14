@@ -12,7 +12,8 @@ Convert a txt file into a PDF / HTML using pandoc.
 # Check that can be compiled:
 > pandoc.py -a pdf --no_toc --no_open_pdf --input ...
 
-> pandoc.py --input notes/IN_PROGRESS/math.The_hundred_page_ML_book.Burkov.2019.txt -a pdf --no_cleanup --no_cleanup_before --no_run_latex_again --no_open
+> pandoc.py --input notes/IN_PROGRESS/math.The_hundred_page_ML_book.Burkov.2019.txt \
+        -a pdf --no_cleanup --no_cleanup_before --no_run_latex_again --no_open
 """
 
 # TODO(gp):
@@ -28,6 +29,7 @@ from typing import Any, List, Tuple
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
+import helpers.open as opn
 import helpers.parser as prsr
 import helpers.printing as prnt
 import helpers.system_interaction as si
@@ -204,7 +206,11 @@ def _copy_to_output(args: argparse.Namespace, file_in: str, prefix: str) -> str:
         file_out = args.output
     else:
         _LOG.debug("Leaving file_out in the tmp dir")
-        file_out = "%s.%s.%s" % (prefix, os.path.basename(args.input), args.type,)
+        file_out = "%s.%s.%s" % (
+            prefix,
+            os.path.basename(args.input),
+            args.type,
+        )
     _LOG.debug("file_out=%s", file_out)
     cmd = r"\cp -af %s %s" % (file_in, file_out)
     _ = _system(cmd)
@@ -227,41 +233,6 @@ def _copy_to_gdrive(args: argparse.Namespace, file_name: str, ext: str) -> None:
     cmd = r"\cp -af %s %s" % (file_name, dst_file)
     _ = _system(cmd)
     _LOG.debug("Saved file='%s' to gdrive", dst_file)
-
-
-def _open_pdf(file_name: str) -> None:
-    _LOG.info("\n%s", prnt.frame("Open PDF", char1="<", char2=">"))
-    dbg.dassert_exists(file_name)
-    dbg.dassert_file_extension(file_name, "pdf")
-    #
-    _LOG.debug("Opening file='%s'", file_name)
-    cmd = (
-        """
-/usr/bin/osascript << EOF
-set theFile to POSIX file "%s" as alias
-tell application "Skim"
-activate
-set theDocs to get documents whose path is (get POSIX path of theFile)
-if (count of theDocs) > 0 then revert theDocs
-open theFile
-end tell
-EOF
-            """
-        % file_name
-    )
-    _ = _system(cmd)
-    cmd = "open -a Skim %s" % file_name
-    _ = _system(cmd)
-
-
-def _open_html(file_name: str) -> None:
-    _LOG.info("\n%s", prnt.frame("Open HTML", char1="<", char2=">"))
-    dbg.dassert_exists(file_name)
-    dbg.dassert_file_extension(file_name, "html")
-    #
-    _LOG.debug("Opening file='%s'", file_name)
-    cmd = "open %s" % file_name
-    _ = _system(cmd)
 
 
 def _cleanup_after(prefix: str) -> None:
@@ -326,17 +297,7 @@ def _pandoc(args: argparse.Namespace) -> None:
     action = "open"
     to_execute, actions = prsr.mark_action(action, actions)
     if to_execute:
-        os_name = si.get_os_name()
-        if os_name == "Darwin":
-            if args.type == "pdf":
-                _open_pdf(file_final)
-            elif args.type == "html":
-                _open_html(file_final)
-            else:
-                raise ValueError("Invalid type='%s'" % args.type)
-        else:
-            # TODO(gp): Extend this.
-            _LOG.warning("Can't open file on %s", os_name)
+        opn.open_file(file_final)
     #
     action = "cleanup_after"
     to_execute, actions = prsr.mark_action(action, actions)
