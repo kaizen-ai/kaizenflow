@@ -15,7 +15,7 @@ import core.statistics as stats
 import helpers.dataframe as hdf
 import helpers.dbg as dbg
 import helpers.list as hlist
-import helpers.printing as hpr
+import helpers.printing as prnt
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
@@ -794,18 +794,17 @@ def cluster_and_selects(
     corr_thresh: float = 0.8,
     show_corr_plots: bool = True,
     show_dendogram: bool = True,
+    Z: Optional[np.ndarray] = None,
 ) -> List:
     """
-    :param df: input dataframe where each column is a timeseries and row is a date index
-    :type df: pd.DataFrame
-    :param num_clust: number of clusters to compute
-    :type num_clust: int
-    :param corr_threash: correlation threshold
-    :type corr_threash: float
-    :param show_corr_plots: specify whether to show correlation plots or not
-    :type show_corr_plots: bool
-    :param show_dendogram: specify whether to show original clustering dendogram plot
-    :type show_dendogram: bool
+    Function to cluster time series and select least correlated ones in each cluster.
+    
+    :param df: df input dataframe where each column is a timeseries and row is a date index
+    :param num_clust: int number of clusters to compute
+    :param corr_threash: float correlation threshold
+    :param show_corr_plots: bool specify whether to show correlation plots or not
+    :param show_dendogram: bool specify whether to show original clustering dendogram plot
+    :param Z: ndarray optional pre-computed cluster array
     :returns: list of names of series to keep
     :rtypes: List
     """
@@ -814,18 +813,20 @@ def cluster_and_selects(
         _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
         return
     # Cluster the time series
-    Z = hac.linkage(df.T, "single", "correlation")
+    corr = df.corr()
+    if Z is None:
+        Z = hac.linkage(corr, "average")
     clusters = hac.fcluster(Z, num_clust, criterion="maxclust")
     series_to_keep = []
     df_name_clust = pd.DataFrame(
         {"name": list(df.columns.values), "cluster": clusters}
     )
-    # Plot the dendogram of clustered series
+    # Plot the dendogram of clustered series.
     if show_dendogram:
         plot_dendrogram(df, Z)
-    # For each cluster, plot the correlation heatmap of series within the cluster and drop highly correlated time series
+    # For each cluster, plot the correlation heatmap of series within the cluster and drop highly correlated time series.
     for i in range(1, num_clust + 1):
-        print(hpr.frame(f"Cluster {i}"))
+        print(prnt.frame(f"Cluster {i}"))
         names = list(set(df_name_clust[df_name_clust.cluster == i].name.values))
         cluster_subset = df[names]
         cluster_corr = cluster_subset.corr().abs()
@@ -833,7 +834,7 @@ def cluster_and_selects(
             sns.heatmap(cluster_corr, cmap="RdBu_r", vmin=0, vmax=1)
             plt.show()
         remaining = list(names.copy())
-        # Remove the series that have correlation above the threshold specified
+        # Remove the series that have correlation above the threshold specified.
         for j in range(0, len(names)):
             for k in range(j + 1, len(names) - 1):
                 corr_series = cluster_corr.loc[names[j]].loc[names[k]]
@@ -846,20 +847,20 @@ def cluster_and_selects(
         plt.show()
         print(list(set(remaining)))
         print(
-            hpr.frame(
+            prnt.frame(
                 f"Number of original series in cluser {i} is {len(set(names))}"
                 + "\n"
                 + f"Number of series to keep in cluster {i} is {len(set(remaining))}"
             )
         )
-    # Print the final list of series to keep
+    # Print the final list of series to keep.
     print(" ")
     print(
-        hpr.frame(
+        prnt.frame(
             f"Final number of selected time series is {len(series_to_keep)}"
         )
     )
-    print(hpr.frame(f"Series to keep are: {series_to_keep}"))
+    print(prnt.frame(f"Series to keep are: {series_to_keep}"))
     return series_to_keep
 
 
@@ -902,11 +903,8 @@ def plot_dendrogram(
     sp.cluster.hierarchy.dendrogram(
         z,
         labels=df.columns.tolist(),
-        leaf_rotation=90.0,  # rotates the x axis labels
-        leaf_font_size=8.0,  # font size for the x axis labels
         **kwargs,
     )
-    plt.show()
 
 
 def plot_corr_over_time(
