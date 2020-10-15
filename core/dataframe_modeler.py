@@ -354,6 +354,22 @@ class DataFrameModeler:
             srs = df[col_name]
             srs.to_frame().plot(title=col_name, ax=axes[i])
 
+            
+    def plot_cumulative_returns(
+        self,
+        cols: Optional[List[Any]] = None,
+        plot_cum_rets_kwargs: Optional[dict] = None,
+        mode_data: str = "ins",
+        mode_rets: str = 'log'
+    ) -> None:
+        df = self._get_df(cols=cols, mode=mode_data)
+        plot_cum_rets_kwargs = plot_cum_rets_kwargs or {}
+        cols = df.columns.values
+        n = len(df.columns.values)
+        for i in cols:
+            cum_rets = df[i].cumsum()
+            plot.plot_cumulative_returns(cum_rets, mode = mode_rets, **plot_cum_rets_kwargs)
+
     def plot_correlation_with_lag(
         self, lag: int, cols: Optional[List[Any]] = None, mode: str = "ins"
     ) -> pd.DataFrame:
