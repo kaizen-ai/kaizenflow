@@ -1222,12 +1222,8 @@ def compute_forecastability(
     data = hdf.apply_nan_mode(signal, mode=nan_mode)
     has_infs = (~data.apply(np.isfinite)).any()
     if has_infs:
-        if inf_mode == "return_nan":
-            # According to a strict interpretation, each norm is infinite, and
-            # and so their quotient is undefined.
-            return nan_result
         if inf_mode == "drop":
-            # Replace inf values with np.nan and drop.
+            # Replace inf with np.nan and drop.
             data = data.replace([-np.inf, np.inf], np.nan).dropna()
         else:
             raise ValueError(f"Unrecognized inf_mode `{inf_mode}")
