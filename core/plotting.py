@@ -812,7 +812,7 @@ def cluster_and_selects(
     if df.shape[1] < 2:
         _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
         return
-    # Cluster the time series
+    # Cluster the time series.
     corr = df.corr()
     if Z is None:
         Z = hac.linkage(corr, "average")
