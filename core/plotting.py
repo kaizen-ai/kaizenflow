@@ -542,6 +542,8 @@ def plot_autocorrelation(
             axes = [axes]
     if title_prefix is None:
         title_prefix = ""
+    # Replacing inf with nan to ensure non-empty plots generated.
+    signal = stats.replace_infs_with_nans(signal)
     for idx, col in enumerate(signal.columns):
         if nan_mode == "conservative":
             data = signal[col].fillna(0).dropna()
@@ -587,6 +589,8 @@ def plot_spectrum(
         signal = signal.to_frame()
     if title_prefix is None:
         title_prefix = ""
+    # Replacing inf with nan to ensure non-empty plots generated.
+    signal = stats.replace_infs_with_nans(signal)
     nrows = len(signal.columns)
     if axes == [[None, None]]:
         _, axes = plt.subplots(nrows=nrows, ncols=2, figsize=(20, 5 * nrows))
