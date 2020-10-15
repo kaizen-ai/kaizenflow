@@ -787,24 +787,26 @@ def display_corr_df(df: pd.core.frame.DataFrame) -> None:
     else:
         _LOG.warning("Can't display correlation df since it is None")
 
+def compute_linkage(df: pd.DataFrame) -> np.ndarray:
+    return hac.linkage(df, method="average")
 
-def cluster_and_selects(
+def cluster_and_select(
     df: pd.DataFrame,
     num_clust: int,
-    corr_thresh: float = 0.8,
+    corr_thr: float = 0.8,
     show_corr_plots: bool = True,
     show_dendogram: bool = True,
-    Z: Optional[np.ndarray] = None,
+    z_linkage: Optional[np.ndarray] = None,
 ) -> List:
     """
     Function to cluster time series and select least correlated ones in each cluster.
     
-    :param df: df input dataframe where each column is a timeseries and row is a date index
+    :param df: df input dataframe 
     :param num_clust: int number of clusters to compute
-    :param corr_threash: float correlation threshold
-    :param show_corr_plots: bool specify whether to show correlation plots or not
-    :param show_dendogram: bool specify whether to show original clustering dendogram plot
-    :param Z: ndarray optional pre-computed cluster array
+    :param corr_thr: float correlation threshold
+    :param show_corr_plots: bool whether to show correlation plots or not
+    :param show_dendogram: bool whether to show original clustering dendogram 
+    :param z_linkage: ndarray optional pre-computed cluster array
     :returns: list of names of series to keep
     :rtypes: List
     """
@@ -814,17 +816,17 @@ def cluster_and_selects(
         return
     # Cluster the time series.
     corr = df.corr()
-    if Z is None:
-        Z = hac.linkage(corr, "average")
-    clusters = hac.fcluster(Z, num_clust, criterion="maxclust")
+    if z_linkage is None:
+        z_linkage = compute_linkage(corr)
+    clusters = hac.fcluster(z_linkage, num_clust, criterion="maxclust")
     series_to_keep = []
     df_name_clust = pd.DataFrame(
         {"name": list(df.columns.values), "cluster": clusters}
     )
     # Plot the dendogram of clustered series.
     if show_dendogram:
-        plot_dendrogram(df, Z)
-    # For each cluster, plot the correlation heatmap of series within the cluster and drop highly correlated time series.
+        plot_dendrogram(df, z_linkage)
+    # Plot the correlation heatmap for each cluster and drop highly correlated ts.
     for i in range(1, num_clust + 1):
         print(prnt.frame(f"Cluster {i}"))
         names = list(set(df_name_clust[df_name_clust.cluster == i].name.values))
@@ -834,11 +836,11 @@ def cluster_and_selects(
             sns.heatmap(cluster_corr, cmap="RdBu_r", vmin=0, vmax=1)
             plt.show()
         remaining = list(names.copy())
-        # Remove the series that have correlation above the threshold specified.
+        # Remove series that have correlation above the threshold specified.
         for j in range(0, len(names)):
             for k in range(j + 1, len(names) - 1):
                 corr_series = cluster_corr.loc[names[j]].loc[names[k]]
-                if corr_series >= corr_thresh:
+                if corr_series >= corr_thr:
                     try:
                         remaining.remove(names[j])
                     except:
