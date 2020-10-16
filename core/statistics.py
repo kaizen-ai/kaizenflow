@@ -11,16 +11,15 @@ import math
 import numbers
 from typing import Any, Iterable, List, Optional, Tuple, Union
 
+import core.finance as fin
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
 import numpy as np
 import pandas as pd
 import scipy as sp
 import sklearn.model_selection
 import statsmodels
 import statsmodels.api as sm
-
-import core.finance as fin
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -1154,7 +1153,7 @@ def compute_jensen_ratio(
     # should not expect a finite value in the continuous limit.
     dbg.dassert(np.isfinite(p_norm))
     # Set reasonable defaults for inf and nan modes.
-    inf_mode = inf_mode or "return_nan"
+    inf_mode = inf_mode or "drop"
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     data = hdf.apply_nan_mode(signal, mode=nan_mode)
@@ -1195,6 +1194,7 @@ def compute_jensen_ratio(
 def compute_forecastability(
     signal: pd.Series,
     mode: str = "welch",
+    inf_mode: Optional[str] = None,
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
@@ -1217,8 +1217,19 @@ def compute_forecastability(
     """
     dbg.dassert_isinstance(signal, pd.Series)
     nan_mode = nan_mode or "fill_with_zero"
+    inf_mode = inf_mode or "drop"
     prefix = prefix or ""
     data = hdf.apply_nan_mode(signal, mode=nan_mode)
+    has_infs = (~data.apply(np.isfinite)).any()
+    if has_infs:
+        if inf_mode == "return_nan":
+            return nan_result
+        if inf_mode == "drop":
+            # Replace inf with np.nan and drop.
+            data = data.replace([-np.inf, np.inf], np.nan).dropna()
+        else:
+            raise ValueError(f"Unrecognized inf_mode `{inf_mode}")
+    dbg.dassert(data.apply(np.isfinite).all())
     # Return NaN if there is no data.
     if data.size == 0:
         _LOG.warning("Empty input signal `%s`", signal.name)

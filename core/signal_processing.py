@@ -191,7 +191,7 @@ def fit_random_walk_plus_noise(
 # #############################################################################
 
 
-def correlate_with_lag(df: pd.DataFrame, lag: int,) -> pd.DataFrame:
+def correlate_with_lag(df: pd.DataFrame, lag: int) -> pd.DataFrame:
     """
     Combine cols of `df` with their lags and compute the correlation matrix.
 
@@ -204,6 +204,51 @@ def correlate_with_lag(df: pd.DataFrame, lag: int,) -> pd.DataFrame:
     df_lagged = df.shift(lag).rename(columns=lambda x: str(x) + f"_lag_{lag}")
     merged_df = df.merge(df_lagged, left_index=True, right_index=True)
     return merged_df.corr()
+
+
+def correlate_with_lagged_cumsum(
+    df: pd.DataFrame,
+    lag: int,
+    y_vars: List[str],
+    x_vars: Optional[List[str]] = None,
+    nan_mode: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Compute correlation matrix of `df` cols and lagged cumulative sums.
+
+    The flow is the following:
+        - Compute cumulative sums of `y_vars` columns for `num_steps = lag`
+        - Lag them so that `x_t` aligns with `y_{t+1} + ... + y{t+lag}`
+        - Compute correlation of `df` columns (other than `y_vars`) and the
+          lagged cumulative sums of `y_vars`
+
+    This function can be applied to compute correlations between predictors and
+    cumulative log returns.
+
+    :param df: dataframe of numeric values
+    :param lag: number of time points to shift the data by. Number of steps to
+        compute rolling sum is `lag` too.
+    :param y_vars: names of columns for which to compute cumulative sum
+    :param x_vars: names of columns to correlate the `y_vars` with. If `None`,
+        defaults to all columns except `y_vars`
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: correlation matrix of `(len(x_vars), len(y_vars))` shape
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert_isinstance(y_vars, list)
+    x_vars = x_vars or df.columns.difference(y_vars).tolist()
+    dbg.dassert_isinstance(x_vars, list)
+    dbg.dassert_lte(
+        1,
+        len(x_vars),
+        "There are no columns to compute the correlation of cumulative "
+        "returns with. ",
+    )
+    df = df[x_vars + y_vars].copy()
+    cumsum_df = _compute_lagged_cumsum(df, lag, y_vars=y_vars, nan_mode=nan_mode)
+    corr_df = cumsum_df.corr()
+    y_cumsum_vars = cumsum_df.columns.difference(x_vars)
+    return corr_df.loc[x_vars, y_cumsum_vars]
 
 
 def plot_crosscorrelation(
@@ -222,6 +267,42 @@ def plot_crosscorrelation(
     corr /= n
     step_idx = pd.RangeIndex(-1 * n + 1, n)
     pd.Series(data=corr, index=step_idx).plot()
+
+
+def _compute_lagged_cumsum(
+    df: pd.DataFrame,
+    lag: int,
+    y_vars: Optional[List[str]] = None,
+    nan_mode: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Compute lagged cumulative sum for selected columns.
+
+    Align `x_t` with `y_{t+1} + ... + y{t+lag}`.
+
+    :param df: dataframe of numeric values
+    :param lag: number of time points to shift the data by. Number of steps to
+        compute rolling sum is `lag`
+    :param y_vars: names of columns for which to compute cumulative sum. If
+        `None`, compute for all columns
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: dataframe with lagged cumulative sum columns
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    y_vars = y_vars or df.columns.tolist()
+    dbg.dassert_isinstance(y_vars, list)
+    x_vars = df.columns.difference(y_vars)
+    y = df[y_vars].copy()
+    x = df[x_vars].copy()
+    # Compute cumulative sum.
+    y_cumsum = y.apply(accumulate, num_steps=lag, nan_mode=nan_mode)
+    y_cumsum.rename(columns=lambda x: f"{x}_cumsum_{lag}", inplace=True)
+    # Let's lag `y` so that `x_t` aligns with `y_{t+1} + ... + y{t+lag}`.
+    y_cumsum_lagged = y_cumsum.shift(-lag)
+    y_cumsum_lagged.rename(columns=lambda z: f"{z}_lag_{lag}", inplace=True)
+    #
+    merged_df = x.merge(y_cumsum_lagged, left_index=True, right_index=True)
+    return merged_df
 
 
 # TODO(Paul): Add coherence plotting function.
@@ -248,7 +329,9 @@ def squash(
 
 
 def accumulate(
-    srs: pd.Series, num_steps: int, nan_mode: Optional[str] = None,
+    srs: pd.Series,
+    num_steps: int,
+    nan_mode: Optional[str] = None,
 ) -> pd.Series:
     """Accumulate series for step.
 
@@ -257,6 +340,13 @@ def accumulate(
     :param nan_mode: argument for hdf.apply_nan_mode()
     :return: time series for step
     """
+    dbg.dassert_isinstance(num_steps, int)
+    dbg.dassert_lte(
+        1,
+        num_steps,
+        "`num_steps=0` returns all-zero dataframe. Passed in `num_steps`='%s'",
+        num_steps,
+    )
     nan_mode = nan_mode or "leave_unchanged"
     srs = hdf.apply_nan_mode(srs, mode=nan_mode)
     return srs.rolling(window=num_steps).sum()
@@ -1113,7 +1203,10 @@ def process_nonfinite(
 
 
 def compute_ipca(
-    df: pd.DataFrame, num_pc: int, tau: float, nan_mode: Optional[str] = None,
+    df: pd.DataFrame,
+    num_pc: int,
+    tau: float,
+    nan_mode: Optional[str] = None,
 ) -> Tuple[pd.DataFrame, List[pd.DataFrame]]:
     """Incremental PCA.
 
@@ -1463,8 +1556,9 @@ def get_dyadic_zscored(
 
 
 def resample(
-    data: Union[pd.Series, pd.DataFrame], **resample_kwargs: Any,
-):
+    data: Union[pd.Series, pd.DataFrame],
+    **resample_kwargs: Any,
+) -> Union[pd.Series, pd.DataFrame]:
     """Execute series resampling with specified `.resample()` arguments.
 
     The `rule` argument must always be specified and the `closed` and `label`
