@@ -787,8 +787,10 @@ def display_corr_df(df: pd.core.frame.DataFrame) -> None:
     else:
         _LOG.warning("Can't display correlation df since it is None")
 
+
 def compute_linkage(df: pd.DataFrame) -> np.ndarray:
     return hac.linkage(df, method="average")
+
 
 def cluster_and_select(
     df: pd.DataFrame,
@@ -799,13 +801,13 @@ def cluster_and_select(
     z_linkage: Optional[np.ndarray] = None,
 ) -> List:
     """
-    Function to cluster time series and select least correlated ones in each cluster.
-    
-    :param df: df input dataframe 
+    Cluster time series and select least correlated ones in each cluster.
+
+    :param df: df input dataframe
     :param num_clust: int number of clusters to compute
     :param corr_thr: float correlation threshold
     :param show_corr_plots: bool whether to show correlation plots or not
-    :param show_dendogram: bool whether to show original clustering dendogram 
+    :param show_dendogram: bool whether to show original clustering dendogram
     :param z_linkage: ndarray optional pre-computed cluster array
     :returns: list of names of series to keep
     :rtypes: List
@@ -823,18 +825,19 @@ def cluster_and_select(
     df_name_clust = pd.DataFrame(
         {"name": list(df.columns.values), "cluster": clusters}
     )
+    groups = df_name_clust.groupby("cluster").groups
     # Plot the dendogram of clustered series.
     if show_dendogram:
         plot_dendrogram(df, z_linkage)
     # Plot the correlation heatmap for each cluster and drop highly correlated ts.
     for i in range(1, num_clust + 1):
         print(prnt.frame(f"Cluster {i}"))
-        names = list(set(df_name_clust[df_name_clust.cluster == i].name.values))
-        cluster_subset = df[names]
+        cluster_subset = df.iloc[:, groups[i]]
         cluster_corr = cluster_subset.corr().abs()
         if show_corr_plots:
             sns.heatmap(cluster_corr, cmap="RdBu_r", vmin=0, vmax=1)
             plt.show()
+        names = df.columns[groups[i]]
         remaining = list(names.copy())
         # Remove series that have correlation above the threshold specified.
         for j in range(0, len(names)):
