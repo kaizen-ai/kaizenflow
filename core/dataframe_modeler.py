@@ -41,7 +41,7 @@ class DataFrameModeler:
     def __init__(
         self,
         df: pd.DataFrame,
-        oos_start: Optional[float] = None,
+        oos_start: Optional[Union[str, pd.Timestamp, datetime.datetime]] = None,
         info: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
@@ -363,6 +363,23 @@ class DataFrameModeler:
         df = self._get_df(cols=cols, mode=mode)
         # Calculate correlation.
         corr_df = sigp.correlate_with_lag(df, lag=lag)
+        return plot.plot_correlation_matrix(corr_df)
+
+    def plot_correlation_with_cumsum(
+        self,
+        num_steps: int,
+        cols: Optional[List[Any]] = None,
+        nan_mode: Optional[str] = None,
+        mode: str = "ins",
+    ) -> pd.DataFrame:
+        """
+        Calculate correlation of `cols` with cumulative sums of `cols`.
+        """
+        df = self._get_df(cols=cols, mode=mode)
+        # Calculate correlation.
+        corr_df = sigp.correlate_with_cumsum(
+            df, num_steps=num_steps, nan_mode=nan_mode
+        )
         return plot.plot_correlation_matrix(corr_df)
 
     def plot_autocorrelation(

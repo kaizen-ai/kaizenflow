@@ -11,9 +11,34 @@ import pytest
 import core.artificial_signal_generators as sig_gen
 import core.signal_processing as sigp
 import helpers.git as git
+import helpers.printing as prnt
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
+
+
+class Test_correlate_with_cumsum(hut.TestCase):
+    def test1(self) -> None:
+        input_df = self._get_arma_df()
+        output_df = sigp.correlate_with_cumsum(input_df, 4)
+        self.check_string(
+            f"{prnt.frame('input')}"
+            f"{hut.convert_df_to_string(input_df, index=True)}"
+            f"{prnt.frame('output')}"
+            f"{hut.convert_df_to_string(output_df, index=True)}"
+        )
+
+    @staticmethod
+    def _get_arma_df(seed: int = 0) -> pd.DataFrame:
+        arma_process = sig_gen.ArmaProcess([], [])
+        date_range = {"start": "2010-01-01", "periods": 40, "freq": "M"}
+        srs1 = arma_process.generate_sample(
+            date_range_kwargs=date_range, scale=0.1, seed=seed
+        ).rename("col1")
+        srs2 = arma_process.generate_sample(
+            date_range_kwargs=date_range, scale=0.1, seed=seed + 1
+        ).rename("col2")
+        return pd.concat([srs1, srs2], axis=1)
 
 
 class Test_accumulate(hut.TestCase):
@@ -937,10 +962,10 @@ class Test__compute_ipca_step(hut.TestCase):
 
     def test4(self) -> None:
         """
-       Test for input series with all NaNs.
+        Test for input series with all NaNs.
 
-       Output is not intended.
-       TODO(Dan): implement a way to deal with NaNs in the input.
+        Output is not intended.
+        TODO(Dan): implement a way to deal with NaNs in the input.
         """
         mn_process = sig_gen.MultivariateNormalProcess()
         mn_process.set_cov_from_inv_wishart_draw(dim=10, seed=1)
