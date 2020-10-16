@@ -363,7 +363,8 @@ class DataFrameModeler:
         df = self._get_df(cols=cols, mode=mode)
         # Calculate correlation.
         corr_df = sigp.correlate_with_lag(df, lag=lag)
-        return plot.plot_correlation_matrix(corr_df)
+        plot.plot_heatmap(corr_df)
+        return corr_df
 
     def plot_correlation_with_lagged_cumsum(
         self,
