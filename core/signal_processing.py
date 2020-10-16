@@ -217,8 +217,8 @@ def correlate_with_lagged_cumsum(
     Compute correlation matrix of `df` cols and lagged cumulative sums.
 
     The flow is the following:
-        - Compute cumulative sums of `y_vars` columns for `num_steps = lag + 1`
-        - Lag them so that `x_t` aligns with `y_cumsum_{t+lag}`
+        - Compute cumulative sums of `y_vars` columns for `num_steps = lag`
+        - Lag them so that `x_t` aligns with `y_{t+1} + ... + y{t+lag}`
         - Compute correlation of `df` columns (other than `y_vars`) and the
           lagged cumulative sums of `y_vars`
 
@@ -227,7 +227,7 @@ def correlate_with_lagged_cumsum(
 
     :param df: dataframe of numeric values
     :param lag: number of time points to shift the data by. Number of steps to
-        compute rolling sum is `lag + 1`
+        compute rolling sum is `lag` too.
     :param y_vars: names of columns for which to compute cumulative sum
     :param x_vars: names of columns to correlate the `y_vars` with. If `None`,
         defaults to all columns except `y_vars`
@@ -278,13 +278,15 @@ def _compute_lagged_cumsum(
     """
     Compute lagged cumulative sum for selected columns.
 
+    Align `x_t` with `y_{t+1} + ... + y{t+lag}`.
+
     :param df: dataframe of numeric values
     :param lag: number of time points to shift the data by. Number of steps to
-        compute rolling sum is `lag + 1`
+        compute rolling sum is `lag`
     :param y_vars: names of columns for which to compute cumulative sum. If
         `None`, compute for all columns
     :param nan_mode: argument for hdf.apply_nan_mode()
-    :return: correlation matrix with `2 * df.columns` columns
+    :return: dataframe with lagged cumulative sum columns
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
     y_vars = y_vars or df.columns.tolist()
@@ -293,12 +295,9 @@ def _compute_lagged_cumsum(
     y = df[y_vars].copy()
     x = df[x_vars].copy()
     # Compute cumulative sum.
-    num_steps = lag + 1
-    y_cumsum = y.apply(accumulate, num_steps=num_steps, nan_mode=nan_mode)
-    y_cumsum.rename(columns=lambda x: f"{x}_cumsum_{num_steps}", inplace=True)
-    # `y_cumsum_t = y_{t} + y_{t-1} + ... + y_{t-num_steps+1}`. Let's lag `y`
-    # so that `x_t` aligns with `y_cumsum_{t+num_steps-1} = y_t + y_{t+1} + ...
-    # + y{t+num_steps-1}`.
+    y_cumsum = y.apply(accumulate, num_steps=lag, nan_mode=nan_mode)
+    y_cumsum.rename(columns=lambda x: f"{x}_cumsum_{lag}", inplace=True)
+    # Let's lag `y` so that `x_t` aligns with `y_{t+1} + ... + y{t+lag}`.
     y_cumsum_lagged = y_cumsum.shift(-lag)
     y_cumsum_lagged.rename(columns=lambda z: f"{z}_lag_{lag}", inplace=True)
     #

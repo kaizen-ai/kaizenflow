@@ -39,17 +39,6 @@ class Test__compute_lagged_cumsum(hut.TestCase):
             f"{hut.convert_df_to_string(output_df, index=True)}"
         )
 
-    def test_num_steps_1(self) -> None:
-        input_df = self._get_df()
-        input_df.columns = ["x", "y1", "y2"]
-        output_df = sigp._compute_lagged_cumsum(input_df, 0, ["y1", "y2"])
-        self.check_string(
-            f"{prnt.frame('input')}\n"
-            f"{hut.convert_df_to_string(input_df, index=True)}\n"
-            f"{prnt.frame('output')}\n"
-            f"{hut.convert_df_to_string(output_df, index=True)}"
-        )
-
     def test_lag_1(self) -> None:
         input_df = self._get_df()
         input_df.columns = ["x", "y1", "y2"]
