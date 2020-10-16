@@ -683,7 +683,6 @@ def plot_heatmap(
     :param ax: axes in which to draw the plot
     """
     # Sanity check.
-    dbg.dassert_eq(corr_df.shape[0], corr_df.shape[1])
     if corr_df.empty:
         _LOG.warning("Can't plot heatmap for empty `corr_df`")
         return
