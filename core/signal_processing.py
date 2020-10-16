@@ -257,6 +257,9 @@ def correlate_with_lagged_cumsum(
         - Compute correlation of `df` columns (other than `y_vars`) and the
           lagged cumulative sums of `y_vars`
 
+    This function can be applied to compute correlations between predictors and
+    cumulative log returns. 
+
     :param df: dataframe of numeric values
     :param num_steps: number of steps to compute rolling sum for
     :param y_vars: names of columns for which to compute cumulative sum
