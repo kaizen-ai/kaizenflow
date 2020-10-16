@@ -20,7 +20,7 @@ _LOG = logging.getLogger(__name__)
 class Test__compute_lagged_cumsum(hut.TestCase):
     def test1(self) -> None:
         input_df = self._get_df()
-        output_df = sigp._compute_lagged_cumsum(input_df, 4)
+        output_df = sigp._compute_lagged_cumsum(input_df, 3)
         self.check_string(
             f"{prnt.frame('input')}\n"
             f"{hut.convert_df_to_string(input_df, index=True)}\n"
@@ -31,7 +31,7 @@ class Test__compute_lagged_cumsum(hut.TestCase):
     def test2(self) -> None:
         input_df = self._get_df()
         input_df.columns = ["x", "y1", "y2"]
-        output_df = sigp._compute_lagged_cumsum(input_df, 4, ["y1", "y2"])
+        output_df = sigp._compute_lagged_cumsum(input_df, 3, ["y1", "y2"])
         self.check_string(
             f"{prnt.frame('input')}\n"
             f"{hut.convert_df_to_string(input_df, index=True)}\n"
@@ -40,6 +40,17 @@ class Test__compute_lagged_cumsum(hut.TestCase):
         )
 
     def test_num_steps_1(self) -> None:
+        input_df = self._get_df()
+        input_df.columns = ["x", "y1", "y2"]
+        output_df = sigp._compute_lagged_cumsum(input_df, 0, ["y1", "y2"])
+        self.check_string(
+            f"{prnt.frame('input')}\n"
+            f"{hut.convert_df_to_string(input_df, index=True)}\n"
+            f"{prnt.frame('output')}\n"
+            f"{hut.convert_df_to_string(output_df, index=True)}"
+        )
+
+    def test_lag_1(self) -> None:
         input_df = self._get_df()
         input_df.columns = ["x", "y1", "y2"]
         output_df = sigp._compute_lagged_cumsum(input_df, 1, ["y1", "y2"])
@@ -64,7 +75,7 @@ class Test_correlate_with_lagged_cumsum(hut.TestCase):
     def test1(self) -> None:
         input_df = self._get_arma_df()
         output_df = sigp.correlate_with_lagged_cumsum(
-            input_df, 4, y_vars=["y1", "y2"]
+            input_df, 3, y_vars=["y1", "y2"]
         )
         self.check_string(
             f"{prnt.frame('input')}\n"
@@ -76,7 +87,7 @@ class Test_correlate_with_lagged_cumsum(hut.TestCase):
     def test2(self) -> None:
         input_df = self._get_arma_df()
         output_df = sigp.correlate_with_lagged_cumsum(
-            input_df, 4, y_vars=["y1"], x_vars=["x"]
+            input_df, 3, y_vars=["y1"], x_vars=["x"]
         )
         self.check_string(
             f"{prnt.frame('input')}\n"

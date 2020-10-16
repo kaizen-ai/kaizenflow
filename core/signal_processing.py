@@ -208,7 +208,7 @@ def correlate_with_lag(df: pd.DataFrame, lag: int) -> pd.DataFrame:
 
 def correlate_with_lagged_cumsum(
     df: pd.DataFrame,
-    num_steps: int,
+    lag: int,
     y_vars: List[str],
     x_vars: Optional[List[str]] = None,
     nan_mode: Optional[str] = None,
@@ -217,8 +217,8 @@ def correlate_with_lagged_cumsum(
     Compute correlation matrix of `df` cols and lagged cumulative sums.
 
     The flow is the following:
-        - Compute cumulative sums of `y_vars` columns
-        - Lag them so that `x_t` aligns with `y_cumsum_{t+num_steps-1}`
+        - Compute cumulative sums of `y_vars` columns for `num_steps = lag + 1`
+        - Lag them so that `x_t` aligns with `y_cumsum_{t+lag}`
         - Compute correlation of `df` columns (other than `y_vars`) and the
           lagged cumulative sums of `y_vars`
 
@@ -226,7 +226,8 @@ def correlate_with_lagged_cumsum(
     cumulative log returns.
 
     :param df: dataframe of numeric values
-    :param num_steps: number of steps to compute rolling sum for
+    :param lag: number of time points to shift the data by. Number of steps to
+        compute rolling sum is `lag + 1`
     :param y_vars: names of columns for which to compute cumulative sum
     :param x_vars: names of columns to correlate the `y_vars` with. If `None`,
         defaults to all columns except `y_vars`
@@ -244,9 +245,7 @@ def correlate_with_lagged_cumsum(
         "returns with. ",
     )
     df = df[x_vars + y_vars].copy()
-    cumsum_df = _compute_lagged_cumsum(
-        df, num_steps, y_vars=y_vars, nan_mode=nan_mode
-    )
+    cumsum_df = _compute_lagged_cumsum(df, lag, y_vars=y_vars, nan_mode=nan_mode)
     corr_df = cumsum_df.corr()
     y_cumsum_vars = cumsum_df.columns.difference(x_vars)
     return corr_df.loc[x_vars, y_cumsum_vars]
@@ -272,7 +271,7 @@ def plot_crosscorrelation(
 
 def _compute_lagged_cumsum(
     df: pd.DataFrame,
-    num_steps: int,
+    lag: int,
     y_vars: Optional[List[str]] = None,
     nan_mode: Optional[str] = None,
 ) -> pd.DataFrame:
@@ -280,7 +279,8 @@ def _compute_lagged_cumsum(
     Compute lagged cumulative sum for selected columns.
 
     :param df: dataframe of numeric values
-    :param num_steps: number of steps to compute rolling sum for
+    :param lag: number of time points to shift the data by. Number of steps to
+        compute rolling sum is `lag + 1`
     :param y_vars: names of columns for which to compute cumulative sum. If
         `None`, compute for all columns
     :param nan_mode: argument for hdf.apply_nan_mode()
@@ -293,12 +293,12 @@ def _compute_lagged_cumsum(
     y = df[y_vars].copy()
     x = df[x_vars].copy()
     # Compute cumulative sum.
+    num_steps = lag + 1
     y_cumsum = y.apply(accumulate, num_steps=num_steps, nan_mode=nan_mode)
     y_cumsum.rename(columns=lambda x: f"{x}_cumsum_{num_steps}", inplace=True)
     # `y_cumsum_t = y_{t} + y_{t-1} + ... + y_{t-num_steps+1}`. Let's lag `y`
     # so that `x_t` aligns with `y_cumsum_{t+num_steps-1} = y_t + y_{t+1} + ...
     # + y{t+num_steps-1}`.
-    lag = num_steps - 1
     y_cumsum_lagged = y_cumsum.shift(-lag)
     y_cumsum_lagged.rename(columns=lambda z: f"{z}_lag_{lag}", inplace=True)
     #
