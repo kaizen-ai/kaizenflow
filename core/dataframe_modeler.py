@@ -381,7 +381,8 @@ class DataFrameModeler:
         corr_df = sigp.correlate_with_lagged_cumsum(
             df, num_steps=num_steps, y_vars=y_vars, nan_mode=nan_mode
         )
-        return plot.plot_correlation_matrix(corr_df)
+        plot.plot_heatmap(corr_df)
+        return corr_df
 
     def plot_autocorrelation(
         self,

@@ -206,6 +206,70 @@ def correlate_with_lag(df: pd.DataFrame, lag: int) -> pd.DataFrame:
     return merged_df.corr()
 
 
+def correlate_with_lagged_cumsum(
+    df: pd.DataFrame,
+    num_steps: int,
+    y_vars: List[str],
+    x_vars: Optional[List[str]] = None,
+    nan_mode: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Compute correlation matrix of `df` cols and lagged cumulative sums.
+
+    The flow is the following:
+        - Compute cumulative sums of `y_vars` columns
+        - Lag them so that `x_t` aligns with `y_cumsum_{t+num_steps-1}`
+        - Compute correlation of `df` columns (other than `y_vars`) and the
+          lagged cumulative sums of `y_vars`
+
+    This function can be applied to compute correlations between predictors and
+    cumulative log returns.
+
+    :param df: dataframe of numeric values
+    :param num_steps: number of steps to compute rolling sum for
+    :param y_vars: names of columns for which to compute cumulative sum
+    :param x_vars: names of columns to correlate the `y_vars` with. If `None`,
+        defaults to all columns except `y_vars`
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :return: correlation matrix of `(len(x_vars), len(y_vars))` shape
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert_isinstance(y_vars, list)
+    x_vars = x_vars or df.columns.difference(y_vars).tolist()
+    dbg.dassert_isinstance(x_vars, list)
+    dbg.dassert_lte(
+        1,
+        len(x_vars),
+        "There are no columns to compute the correlation of cumulative "
+        "returns with. ",
+    )
+    df = df[x_vars + y_vars].copy()
+    cumsum_df = _compute_lagged_cumsum(
+        df, num_steps, y_vars=y_vars, nan_mode=nan_mode
+    )
+    corr_df = cumsum_df.corr()
+    y_cumsum_vars = cumsum_df.columns.difference(x_vars)
+    return corr_df.loc[x_vars, y_cumsum_vars]
+
+
+def plot_crosscorrelation(
+    x: Union[pd.DataFrame, pd.Series], y: Union[pd.DataFrame, pd.Series]
+) -> None:
+    r"""Assume x, y have been approximately demeaned and normalized (e.g.,
+    z-scored with ewma).
+
+    At index `k` in the result, the value is given by
+        (1 / n) * \sum_{l = 0}^{n - 1} x_l * y_{l + k}
+    """
+    joint_idx = x.index.intersection(y.index)
+    corr = sp.signal.correlate(x.loc[joint_idx], y.loc[joint_idx])
+    # Normalize by number of points in series (e.g., take expectations)
+    n = joint_idx.size
+    corr /= n
+    step_idx = pd.RangeIndex(-1 * n + 1, n)
+    pd.Series(data=corr, index=step_idx).plot()
+
+
 def _compute_lagged_cumsum(
     df: pd.DataFrame,
     num_steps: int,
@@ -240,63 +304,6 @@ def _compute_lagged_cumsum(
     #
     merged_df = x.merge(y_cumsum_lagged, left_index=True, right_index=True)
     return merged_df
-
-
-def correlate_with_lagged_cumsum(
-    df: pd.DataFrame,
-    num_steps: int,
-    y_vars: List[str],
-    nan_mode: Optional[str] = None,
-) -> pd.DataFrame:
-    """
-    Compute correlation matrix of `df` cols and lagged cumulative sums.
-
-    The flow is the following:
-        - Compute cumulative sums of `y_vars` columns
-        - Lag them so that `x_t` aligns with `y_cumsum_{t+num_steps-1}`
-        - Compute correlation of `df` columns (other than `y_vars`) and the
-          lagged cumulative sums of `y_vars`
-
-    This function can be applied to compute correlations between predictors and
-    cumulative log returns. 
-
-    :param df: dataframe of numeric values
-    :param num_steps: number of steps to compute rolling sum for
-    :param y_vars: names of columns for which to compute cumulative sum
-    :param nan_mode: argument for hdf.apply_nan_mode()
-    :return: correlation matrix with `2 * df.columns` columns
-    """
-    dbg.dassert_isinstance(df, pd.DataFrame)
-    dbg.dassert_isinstance(y_vars, list)
-    x_vars = df.columns.difference(y_vars)
-    dbg.dassert(
-        not x_vars.empty,
-        "There are no columns to compute the correlation of cumulative "
-        "returns with. ",
-    )
-    cumsum_df = _compute_lagged_cumsum(
-        df, num_steps, y_vars=y_vars, nan_mode=nan_mode
-    )
-    corr_df = cumsum_df.corr()
-    return corr_df
-
-
-def plot_crosscorrelation(
-    x: Union[pd.DataFrame, pd.Series], y: Union[pd.DataFrame, pd.Series]
-) -> None:
-    r"""Assume x, y have been approximately demeaned and normalized (e.g.,
-    z-scored with ewma).
-
-    At index `k` in the result, the value is given by
-        (1 / n) * \sum_{l = 0}^{n - 1} x_l * y_{l + k}
-    """
-    joint_idx = x.index.intersection(y.index)
-    corr = sp.signal.correlate(x.loc[joint_idx], y.loc[joint_idx])
-    # Normalize by number of points in series (e.g., take expectations)
-    n = joint_idx.size
-    corr /= n
-    step_idx = pd.RangeIndex(-1 * n + 1, n)
-    pd.Series(data=corr, index=step_idx).plot()
 
 
 # TODO(Paul): Add coherence plotting function.
@@ -1552,7 +1559,7 @@ def get_dyadic_zscored(
 def resample(
     data: Union[pd.Series, pd.DataFrame],
     **resample_kwargs: Any,
-):
+) -> Union[pd.Series, pd.DataFrame]:
     """Execute series resampling with specified `.resample()` arguments.
 
     The `rule` argument must always be specified and the `closed` and `label`

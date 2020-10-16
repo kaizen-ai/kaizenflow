@@ -73,6 +73,18 @@ class Test_correlate_with_lagged_cumsum(hut.TestCase):
             f"{hut.convert_df_to_string(output_df, index=True)}"
         )
 
+    def test2(self) -> None:
+        input_df = self._get_arma_df()
+        output_df = sigp.correlate_with_lagged_cumsum(
+            input_df, 4, y_vars=["y1"], x_vars=["x"]
+        )
+        self.check_string(
+            f"{prnt.frame('input')}\n"
+            f"{hut.convert_df_to_string(input_df, index=True)}\n"
+            f"{prnt.frame('output')}\n"
+            f"{hut.convert_df_to_string(output_df, index=True)}"
+        )
+
     @staticmethod
     def _get_arma_df(seed: int = 0) -> pd.DataFrame:
         arma_process = sig_gen.ArmaProcess([], [])
