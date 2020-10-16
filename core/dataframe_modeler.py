@@ -11,12 +11,6 @@ import datetime
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from tqdm.autonotebook import tqdm
-
 import core.dataflow as dtf
 import core.finance as fin
 import core.plotting as plot
@@ -24,6 +18,11 @@ import core.signal_processing as sigp
 import core.statistics as stats
 import core.timeseries_study as tss
 import helpers.dbg as dbg
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from tqdm.autonotebook import tqdm
 
 _LOG = logging.getLogger(__name__)
 
@@ -354,21 +353,21 @@ class DataFrameModeler:
             srs = df[col_name]
             srs.to_frame().plot(title=col_name, ax=axes[i])
 
-            
     def plot_cumulative_returns(
         self,
         cols: Optional[List[Any]] = None,
-        plot_cum_rets_kwargs: Optional[dict] = None,
-        mode_data: str = "ins",
-        mode_rets: str = 'log'
+        plot_cum_rets_kwargs: Optional[Dict[str, Any]] = None,
+        mode_rets: str = "log",
+        mode: str = "ins",
     ) -> None:
-        df = self._get_df(cols=cols, mode=mode_data)
+        df = self._get_df(cols=cols, mode=mode)
         plot_cum_rets_kwargs = plot_cum_rets_kwargs or {}
         cols = df.columns.values
-        n = len(df.columns.values)
-        for i in cols:
-            cum_rets = df[i].cumsum()
-            plot.plot_cumulative_returns(cum_rets, mode = mode_rets, **plot_cum_rets_kwargs)
+        cum_rets = df.cumsum()
+        for i in range(df.shape[1]):
+            plot.plot_cumulative_returns(
+                cum_rets.iloc[:, i], mode=mode_rets, **plot_cum_rets_kwargs
+            )
 
     def plot_correlation_with_lag(
         self, lag: int, cols: Optional[List[Any]] = None, mode: str = "ins"
