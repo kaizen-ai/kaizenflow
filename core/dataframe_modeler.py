@@ -368,6 +368,7 @@ class DataFrameModeler:
     def plot_correlation_with_cumsum(
         self,
         num_steps: int,
+        y_vars: List[str],
         cols: Optional[List[Any]] = None,
         nan_mode: Optional[str] = None,
         mode: str = "ins",
@@ -378,7 +379,7 @@ class DataFrameModeler:
         df = self._get_df(cols=cols, mode=mode)
         # Calculate correlation.
         corr_df = sigp.correlate_with_cumsum(
-            df, num_steps=num_steps, nan_mode=nan_mode
+            df, num_steps=num_steps, y_vars=y_vars, nan_mode=nan_mode
         )
         return plot.plot_correlation_matrix(corr_df)
 

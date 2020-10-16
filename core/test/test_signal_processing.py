@@ -17,14 +17,57 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
+class Test__compute_lagged_cumsum(hut.TestCase):
+    def test1(self) -> None:
+        input_df = self._get_df()
+        output_df = sigp._compute_lagged_cumsum(input_df, 4)
+        self.check_string(
+            f"{prnt.frame('input')}\n"
+            f"{hut.convert_df_to_string(input_df, index=True)}\n"
+            f"{prnt.frame('output')}\n"
+            f"{hut.convert_df_to_string(output_df, index=True)}"
+        )
+
+    def test2(self) -> None:
+        input_df = self._get_df()
+        input_df.columns = ["x", "y1", "y2"]
+        output_df = sigp._compute_lagged_cumsum(input_df, 4, ["y1", "y2"])
+        self.check_string(
+            f"{prnt.frame('input')}\n"
+            f"{hut.convert_df_to_string(input_df, index=True)}\n"
+            f"{prnt.frame('output')}\n"
+            f"{hut.convert_df_to_string(output_df, index=True)}"
+        )
+
+    def test_num_steps_1(self) -> None:
+        input_df = self._get_df()
+        input_df.columns = ["x", "y1", "y2"]
+        output_df = sigp._compute_lagged_cumsum(input_df, 1, ["y1", "y2"])
+        self.check_string(
+            f"{prnt.frame('input')}\n"
+            f"{hut.convert_df_to_string(input_df, index=True)}\n"
+            f"{prnt.frame('output')}\n"
+            f"{hut.convert_df_to_string(output_df, index=True)}"
+        )
+
+    @staticmethod
+    def _get_df() -> pd.DataFrame:
+        df = pd.DataFrame([list(range(10))] * 3).T
+        df[1] = df[0] + 1
+        df[2] = df[0] + 2
+        df.index = pd.date_range(start="2010-01-01", periods=10)
+        df.rename(columns=lambda x: f"col_{x}", inplace=True)
+        return df
+
+
 class Test_correlate_with_cumsum(hut.TestCase):
     def test1(self) -> None:
         input_df = self._get_arma_df()
-        output_df = sigp.correlate_with_cumsum(input_df, 4)
+        output_df = sigp.correlate_with_cumsum(input_df, 4, y_vars=["y1", "y2"])
         self.check_string(
-            f"{prnt.frame('input')}"
-            f"{hut.convert_df_to_string(input_df, index=True)}"
-            f"{prnt.frame('output')}"
+            f"{prnt.frame('input')}\n"
+            f"{hut.convert_df_to_string(input_df, index=True)}\n"
+            f"{prnt.frame('output')}\n"
             f"{hut.convert_df_to_string(output_df, index=True)}"
         )
 
@@ -34,11 +77,14 @@ class Test_correlate_with_cumsum(hut.TestCase):
         date_range = {"start": "2010-01-01", "periods": 40, "freq": "M"}
         srs1 = arma_process.generate_sample(
             date_range_kwargs=date_range, scale=0.1, seed=seed
-        ).rename("col1")
+        ).rename("x")
         srs2 = arma_process.generate_sample(
             date_range_kwargs=date_range, scale=0.1, seed=seed + 1
-        ).rename("col2")
-        return pd.concat([srs1, srs2], axis=1)
+        ).rename("y1")
+        srs3 = arma_process.generate_sample(
+            date_range_kwargs=date_range, scale=0.1, seed=seed + 2
+        ).rename("y2")
+        return pd.concat([srs1, srs2, srs3], axis=1)
 
 
 class Test_accumulate(hut.TestCase):
