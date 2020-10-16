@@ -242,7 +242,7 @@ def _compute_lagged_cumsum(
     return merged_df
 
 
-def correlate_with_cumsum(
+def correlate_with_lagged_cumsum(
     df: pd.DataFrame,
     num_steps: int,
     y_vars: List[str],

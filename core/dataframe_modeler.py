@@ -365,7 +365,7 @@ class DataFrameModeler:
         corr_df = sigp.correlate_with_lag(df, lag=lag)
         return plot.plot_correlation_matrix(corr_df)
 
-    def plot_correlation_with_cumsum(
+    def plot_correlation_with_lagged_cumsum(
         self,
         num_steps: int,
         y_vars: List[str],
@@ -374,11 +374,11 @@ class DataFrameModeler:
         mode: str = "ins",
     ) -> pd.DataFrame:
         """
-        Calculate correlation of `cols` with cumulative sums of `cols`.
+        Calculate correlation of `cols` with lagged cumulative sum of `y_vars`.
         """
         df = self._get_df(cols=cols, mode=mode)
         # Calculate correlation.
-        corr_df = sigp.correlate_with_cumsum(
+        corr_df = sigp.correlate_with_lagged_cumsum(
             df, num_steps=num_steps, y_vars=y_vars, nan_mode=nan_mode
         )
         return plot.plot_correlation_matrix(corr_df)
