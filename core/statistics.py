@@ -1222,6 +1222,8 @@ def compute_forecastability(
     data = hdf.apply_nan_mode(signal, mode=nan_mode)
     has_infs = (~data.apply(np.isfinite)).any()
     if has_infs:
+        if inf_mode == "return_nan":
+            return nan_result
         if inf_mode == "drop":
             # Replace inf with np.nan and drop.
             data = data.replace([-np.inf, np.inf], np.nan).dropna()
