@@ -356,17 +356,17 @@ class DataFrameModeler:
     def plot_cumulative_returns(
         self,
         cols: Optional[List[Any]] = None,
-        plot_cum_rets_kwargs: Optional[Dict[str, Any]] = None,
+        plot_cumulative_returns_kwargs: Optional[Dict[str, Any]] = None,
         mode_rets: str = "log",
         mode: str = "ins",
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
-        plot_cum_rets_kwargs = plot_cum_rets_kwargs or {}
+        plot_cumulative_returns_kwargs = plot_cumulative_returns_kwargs or {}
         cols = df.columns.values
         cum_rets = df.cumsum()
         for i in range(df.shape[1]):
             plot.plot_cumulative_returns(
-                cum_rets.iloc[:, i], mode=mode_rets, **plot_cum_rets_kwargs
+                cum_rets.iloc[:, i], mode=mode_rets, **plot_cumulative_returns_kwargs
             )
 
     def plot_correlation_with_lag(
