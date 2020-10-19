@@ -789,7 +789,14 @@ def display_corr_df(df: pd.core.frame.DataFrame) -> None:
 
 
 def compute_linkage(df: pd.DataFrame) -> np.ndarray:
-    return hac.linkage(df, method="average")
+    """
+    Perform hierarchical clustering.
+
+    :param df: df input dataframe
+    :returns: The hierarchical clustering encoded as a linkage matrix
+    """
+    corr = df.corr()
+    return hac.linkage(corr, method="average")
 
 
 def cluster_and_select(
@@ -810,34 +817,31 @@ def cluster_and_select(
     :param show_dendogram: bool whether to show original clustering dendogram
     :param z_linkage: ndarray optional pre-computed cluster array
     :returns: list of names of series to keep
-    :rtypes: List
     """
     df = df.drop(df.columns[df.nunique() == 1], axis=1)
     if df.shape[1] < 2:
         _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
         return
     # Cluster the time series.
-    corr = df.corr()
     if z_linkage is None:
-        z_linkage = compute_linkage(corr)
+        z_linkage = compute_linkage(df)
     clusters = hac.fcluster(z_linkage, num_clust, criterion="maxclust")
     series_to_keep = []
     df_name_clust = pd.DataFrame(
         {"name": list(df.columns.values), "cluster": clusters}
     )
-    groups = df_name_clust.groupby("cluster").groups
+    df_name_clust.groupby("cluster")
     # Plot the dendogram of clustered series.
     if show_dendogram:
         plot_dendrogram(df, z_linkage)
     # Plot the correlation heatmap for each cluster and drop highly correlated ts.
-    for i in range(1, num_clust + 1):
-        print(prnt.frame(f"Cluster {i}"))
-        cluster_subset = df.iloc[:, groups[i]]
+    for cluster_name, cluster_series in df_name_clust.groupby("cluster"):
+        names = list(cluster_series["name"])
+        cluster_subset = df[names]
         cluster_corr = cluster_subset.corr().abs()
         if show_corr_plots:
             sns.heatmap(cluster_corr, cmap="RdBu_r", vmin=0, vmax=1)
             plt.show()
-        names = df.columns[groups[i]]
         remaining = list(names.copy())
         # Remove series that have correlation above the threshold specified.
         for j in range(0, len(names)):
@@ -853,9 +857,9 @@ def cluster_and_select(
         print(list(set(remaining)))
         print(
             prnt.frame(
-                f"Number of original series in cluser {i} is {len(set(names))}"
+                f"Number of original series in cluser {cluster_name} is {len(set(names))}"
                 + "\n"
-                + f"Number of series to keep in cluster {i} is {len(set(remaining))}"
+                + f"Number of series to keep in cluster {cluster_name} is {len(set(remaining))}"
             )
         )
     # Print the final list of series to keep.
