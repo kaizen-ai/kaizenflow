@@ -8,6 +8,13 @@ import logging
 import math
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import core.explore as expl
+import core.finance as fin
+import core.signal_processing as sigp
+import core.statistics as stats
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
+import helpers.list as hlist
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
@@ -21,14 +28,6 @@ import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
 import statsmodels.regression.rolling as smrr
-
-import core.explore as expl
-import core.finance as fin
-import core.signal_processing as sigp
-import core.statistics as stats
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
-import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
@@ -1085,7 +1084,7 @@ def plot_cumulative_returns(
         title = "Cumulative returns"
     else:
         raise ValueError("Invalid mode='%s'" % mode)
-    label = cumulative_rets.name or "returns"
+    label = str(cumulative_rets.name) or "returns"
     #
     ax = ax or plt.gca()
     cumulative_rets.plot(ax=ax, title=f"{title}{title_suffix}", label=label)
@@ -1101,6 +1100,7 @@ def plot_cumulative_returns(
     _maybe_add_events(ax=ax, events=events)
     ax.set_ylabel(unit)
     ax.legend()
+    ax.autoscale()
 
 
 def plot_rolling_annualized_volatility(
