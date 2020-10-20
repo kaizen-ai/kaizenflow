@@ -366,7 +366,9 @@ class DataFrameModeler:
         cum_rets = df.cumsum()
         for i in range(df.shape[1]):
             plot.plot_cumulative_returns(
-                cum_rets.iloc[:, i], mode=mode_rets, **plot_cumulative_returns_kwargs
+                cum_rets.iloc[:, i],
+                mode=mode_rets,
+                **plot_cumulative_returns_kwargs,
             )
 
     def plot_correlation_with_lag(
