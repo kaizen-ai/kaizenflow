@@ -195,7 +195,11 @@ def get_multiple_plots(
         return fig, ax.flatten()
     return fig, ax
 
+
+# #############################################################################
 # Data count plots.
+# #############################################################################
+
 
 def plot_value_counts(
     srs: pd.Series, dropna: bool = True, *args: Any, **kwargs: Any
