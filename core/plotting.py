@@ -249,12 +249,12 @@ def plot_special_values(
         else:
             curr_mask = df.eq(curr_val)
         special_val_mask |= curr_mask
-    # Replace non-special values with column numbers.
+    # Replace non-special values with column numbers and special values with
+    # `NaN`s.
     range_df = df.copy()
     for i in range(df.shape[1]):
         range_df.iloc[:, i] = i
-    df_to_plot = df.mask(special_val_mask, np.nan)
-    df_to_plot = df_to_plot.mask(~special_val_mask, range_df)
+    df_to_plot = range_df.mask(special_val_mask, np.nan)
     # Plot.
     df_to_plot.plot(ax=ax, legend="reverse", colormap=colormap)
     if mode == "scatter":
