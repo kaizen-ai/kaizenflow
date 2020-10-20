@@ -41,7 +41,7 @@ class DataFrameModeler:
     def __init__(
         self,
         df: pd.DataFrame,
-        oos_start: Optional[float] = None,
+        oos_start: Optional[Union[str, pd.Timestamp, datetime.datetime]] = None,
         info: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
@@ -363,7 +363,27 @@ class DataFrameModeler:
         df = self._get_df(cols=cols, mode=mode)
         # Calculate correlation.
         corr_df = sigp.correlate_with_lag(df, lag=lag)
-        return plot.plot_correlation_matrix(corr_df)
+        plot.plot_heatmap(corr_df)
+        return corr_df
+
+    def plot_correlation_with_lagged_cumsum(
+        self,
+        lag: int,
+        y_vars: List[str],
+        cols: Optional[List[Any]] = None,
+        nan_mode: Optional[str] = None,
+        mode: str = "ins",
+    ) -> pd.DataFrame:
+        """
+        Calculate correlation of `cols` with lagged cumulative sum of `y_vars`.
+        """
+        df = self._get_df(cols=cols, mode=mode)
+        # Calculate correlation.
+        corr_df = sigp.correlate_with_lagged_cumsum(
+            df, lag=lag, y_vars=y_vars, nan_mode=nan_mode
+        )
+        plot.plot_heatmap(corr_df)
+        return corr_df
 
     def plot_autocorrelation(
         self,
@@ -410,7 +430,7 @@ class DataFrameModeler:
         cols: Optional[List[Any]] = None,
         figsize: Optional[Tuple[int, int]] = None,
         mode: str = "ins",
-        plot_dendrogram_kwargs: Optional[Dict[str, Any]] = None
+        plot_dendrogram_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         plot_dendrogram_kwargs = plot_dendrogram_kwargs or {}
         #
@@ -526,7 +546,6 @@ class DataFrameModeler:
         """
         Calculate stats for a single series.
         """
-        dbg.dassert(not srs.empty, msg="Series should not be empty")
         stats_dict = {}
         stats_dict[0] = stats.summarize_time_index_info(srs)
         stats_dict[1] = stats.compute_jensen_ratio(srs)
