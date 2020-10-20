@@ -1,4 +1,77 @@
+<!--ts-->
+   * [Abbreviations](#abbreviations)
+   * [Task management with GitHub](#task-management-with-github)
+      * [Everything we work on comes as a GitHub task](#everything-we-work-on-comes-as-a-github-task)
+      * [Issues vs bugs vs tasks](#issues-vs-bugs-vs-tasks)
+      * [Life cycle of a bug / task](#life-cycle-of-a-bug--task)
+      * [Done means "DONE"](#done-means-done)
+      * [Tend your tasks](#tend-your-tasks)
+      * [File descriptive GH tasks](#file-descriptive-gh-tasks)
+      * [Do not change the assignee for a task](#do-not-change-the-assignee-for-a-task)
+   * [Code review with GitHub](#code-review-with-github)
+      * [Avoid committing to master](#avoid-committing-to-master)
+      * [Use branches and PRs](#use-branches-and-prs)
+      * [Optional PR review](#optional-pr-review)
+      * [Reviewers don't follow a branch](#reviewers-dont-follow-a-branch)
+      * [Reviewers vs assignees](#reviewers-vs-assignees)
+      * [Reviewers and authors interactions](#reviewers-and-authors-interactions)
+      * ["Pending" comments](#pending-comments)
+   * [ZenHub](#zenhub)
+      * [Refs](#refs)
+      * [Agile concepts](#agile-concepts)
+         * [Agile development](#agile-development)
+         * [Sprints](#sprints)
+         * [User story](#user-story)
+         * [Epics](#epics)
+         * [Product backlog](#product-backlog)
+         * [Icebox](#icebox)
+         * [Sprint backlog](#sprint-backlog)
+         * [Mapping Agile concepts onto GH](#mapping-agile-concepts-onto-gh)
+   * [ZenHub concepts](#zenhub-concepts)
+      * [ZH vs GH](#zh-vs-gh)
+      * [ZH workspaces](#zh-workspaces)
+      * [ZH epics](#zh-epics)
+      * [Epics vs GH Issues](#epics-vs-gh-issues)
+      * [Roadmaps](#roadmaps)
+      * [Sprint planning](#sprint-planning)
+      * [Burndown](#burndown)
+      * [Velocity charts](#velocity-charts)
+      * [Issue cycle and control chart](#issue-cycle-and-control-chart)
+      * [Cumulative flow diagram](#cumulative-flow-diagram)
+      * [Release reports](#release-reports)
+      * [Milestone vs Epics](#milestone-vs-epics)
+      * [Pipelines](#pipelines)
+   * [Our conventions](#our-conventions)
+      * [Epics](#epics-1)
+         * [Master Epics](#master-epics)
+         * [Sub-epics](#sub-epics)
+      * [Sprint](#sprint)
+      * [Pipelines](#pipelines-1)
+         * [New Issues](#new-issues)
+         * [Icebox (P2)](#icebox-p2)
+         * [Backlog (P1)](#backlog-p1)
+         * [Ready to Go (P0)](#ready-to-go-p0)
+         * [Sprint backlog](#sprint-backlog-1)
+         * [In progress](#in-progress)
+         * [Review / QA](#review--qa)
+         * [Epic](#epic)
+         * [Open Research](#open-research)
+         * [Done](#done)
+         * [Closed](#closed)
+      * [Labels](#labels)
+         * [Pipeline vs Epic vs Label](#pipeline-vs-epic-vs-label)
+      * [Workflows](#workflows)
+         * [Moving tasks between pipelines workflow](#moving-tasks-between-pipelines-workflow)
+         * [Filing an issue](#filing-an-issue)
+      * [Story Points aka Task Estimation](#story-points-aka-task-estimation)
+         * [How to make good estimates?](#how-to-make-good-estimates)
+      * [Sprint retrospective / planning](#sprint-retrospective--planning)
+
+
+
+<!--te-->
 # Abbreviations
+
 - GH = GitHub
 - ZH = ZenHub
 - PR = Pull Request
@@ -13,7 +86,7 @@
 
 ## Issues vs bugs vs tasks
 
-- We call GitHub issues "issues", "bugs", and "tasks" interchangeably 
+- We call GitHub issues "issues", "bugs", and "tasks" interchangeably
 - "Bugs" is a bit improper since many times we use GitHub to track ideas,
   activities, and improvements, and not only defects in the code
 - The best names are "tasks" and "issues"
@@ -125,8 +198,8 @@
 
 - Unfortunately merging the PR automatically closes the PR
 
-- The problem is that once the reviewers get to that PR and add comments,
-  emails are sent, but GitHub doesn't track the PR as open
+- The problem is that once the reviewers get to that PR and add comments, emails
+  are sent, but GitHub doesn't track the PR as open
   - The comments are there but not "resolved"
   - One needs to go to the PR page, e.g.,
     `https://github.com/alphamatic/amp/pull/52` to see the comments
@@ -156,7 +229,7 @@
 ## Reviewers vs assignees
 
 - In a GitHub PR mark people as reviewers and leave the assignee field empty
-- The difference between reviewers and assignees is explained 
+- The difference between reviewers and assignees is explained
   [here](https://stackoverflow.com/questions/41087206)
 - In a few words assignees are people that are requested to merge the branch
   after the PR, when they are different from the reviewers
@@ -165,8 +238,8 @@
 
 - If the reviewer's comment is clear to the author and agreed upon
   - The author addresses the comment with a code change and _after_ changing the
-    code (everywhere the comment it applies) marks it as `RESOLVED` on the GitHub
-    interface
+    code (everywhere the comment it applies) marks it as `RESOLVED` on the
+    GitHub interface
   - Here we trust the authors to do a good job and to not skip / lose comments
   - This mechanism only works if the author is diligent
 
@@ -428,7 +501,7 @@
   implications are still unknown
 - We are moving these materials to gdocs (e.g., DSE and CDSE) and closing these
   issues
-- TODO(*): Remove this when all bugs are closed
+- TODO(\*): Remove this when all bugs are closed
 
 ### Done
 
@@ -446,14 +519,15 @@
 
 ## Labels
 
-- Labels represent "qualifications" of an Issue that are not represented by Epics
-  or Pipelines
+- Labels represent "qualifications" of an Issue that are not represented by
+  Epics or Pipelines
 
 - TODO(gp): Add definition of labels in GitHub
-- TODO(gp): Remove Umbrella, Wontfix, Unclear, Permanent, Enhancement, Duplicate,
-  Feature, Question
+- TODO(gp): Remove Umbrella, Wontfix, Unclear, Permanent, Enhancement,
+  Duplicate, Feature, Question
 
 ### Pipeline vs Epic vs Label
+
 - A ZH Pipeline represents the "progress" status of an Issue
 - A ZH Epic pulls together Issues that are somehow related by their topic
 - A GH Label represents characteristics like "bug", "1 hr", "discussion"
@@ -468,8 +542,8 @@
 
 ### Moving tasks between pipelines workflow
 
-- When an assignee starts to work on a Issue, he/she moves it to the `In
-  progress` pipeline
+- When an assignee starts to work on a Issue, he/she moves it to the
+  `In progress` pipeline
   - Ideally only Issues from the current Sprint milestone should be selected
 
 - Once the PR is done, the assignee moves the Issue to `Review / QA for the
@@ -489,7 +563,8 @@
 
 - GP & P see if new Issues need to be filed as follow-up (or maybe a touch up)
   - Once there is nothing else to do, GP & P move the Issue to "Closed"
-  - If an issue stays in `Done` for 2 sprints in a row, it is closed automatically
+  - If an issue stays in `Done` for 2 sprints in a row, it is closed
+    automatically
 
 ### Filing an issue
 
@@ -499,10 +574,12 @@
   - Add issue to a Sub-epic, or to a Master Epic, if it doesn't belong to any
     sub-epics
   - Add issue to a pipeline based on its priority
-    - if an issue is of high (immediate) priority, add it to `Ready to Go (P0)` pipeline
-    - if an issue is of medium priority, add it to the `Backlog (P1)` pipeline
-    - if an issue is of low priority, add it to the `Icebox (P2)` pipeline
-    - if you are not sure about the priority of an issue, leave it in New Issues pipeline
+    - If an issue is of high (immediate) priority, add it to `Ready to Go (P0)`
+      pipeline
+    - If an issue is of medium priority, add it to the `Backlog (P1)` pipeline
+    - If an issue is of low priority, add it to the `Icebox (P2)` pipeline
+    - If you are not sure about the priority of an issue, leave it in New Issues
+      pipeline
       - Paul & GP are to sort out the New Issues pipeline by priorities
 - When working on an issue
   - Make sure the issue is assigned to you and / or other people who are working
@@ -511,8 +588,8 @@
       assigned
     - Assign Issue to the one who actually does the work
     - Avoid adding / removing people to the bug just to do some part of the job
-      - If you want someone to have a look at the issue and comment on it without
-        actually working on it, just tag them in a comment
+      - If you want someone to have a look at the issue and comment on it
+        without actually working on it, just tag them in a comment
         - `@saggese can you please ...`
     - If you don't know whom to assign the issue to or what to do, assign it to
       GP + Paul for rerouting
@@ -531,13 +608,13 @@
   effort increases 2 times
   - E.g., an Issue with complexity `2` is 2x more complex than a task with
     complexity `1`
-  - Complexity `3` is 2x more complex than a task with complexity
-    `2` and thus 4x more complex than a task of complexity `1`
-  - Thus a task with complexity `5` is 16x more complex than a task of complexity
-    `1`
+  - Complexity `3` is 2x more complex than a task with complexity `2` and thus
+    4x more complex than a task of complexity `1`
+  - Thus a task with complexity `5` is 16x more complex than a task of
+    complexity `1`
   - Alas life is exponentially complex
-  - If some Issue is more complex than `5`, it needs to turned into an Epic or be
-    broken down into atomic issues
+  - If some Issue is more complex than `5`, it needs to turned into an Epic or
+    be broken down into atomic issues
 
 - Some example of story point complexity:
   - `1`:
@@ -546,7 +623,7 @@
     - Lint a piece of code
   - `2`:
     - Search and replace of a variable in the entire code base (including
-     running tests!)
+      running tests!)
     - Write a unit test
   - `3`:
     - Refactor a piece of code
@@ -565,11 +642,12 @@
   - Then we sum the scores and potentially break the Issue in sub-Issues
 
 ### How to make good estimates?
+
 - It's hard to estimate what you know you don't know (known unknowns)
-  - It's very hard to estimate things that you don't know you don't know (unknown
-    unknowns)
-  - The trick is not to shy away from the estimation saying "it's ready when it's
-    ready"
+  - It's very hard to estimate things that you don't know you don't know
+    (unknown unknowns)
+  - The trick is not to shy away from the estimation saying "it's ready when
+    it's ready"
     - This approach is not acceptable
     - We need to learn how to make estimates and we can achieve that only by
       trying hard to estimate and understand why our estimates are incorrect
@@ -584,15 +662,16 @@
     - It always takes longer than you expect, even when you take into account
       Hofstadter's Law
   - Fred Brooks' law:
-    - What one programmer can do in one month, two programmers can do in two months.
+    - What one programmer can do in one month, two programmers can do in two
+      months.
   - From https://en.wikipedia.org/wiki/Parkinson%27s_law
     - Work expands so as to fill the time available for its completion
 
 ## Sprint retrospective / planning
 
 - By Thursday EOD (RPs)
-  - [ ] Move all the completed issues from the `Review/QA` pipeline to the `Done`
-    pipeline
+  - [ ] Move all the completed issues from the `Review/QA` pipeline to the
+        `Done` pipeline
   - [ ] Make sure all issues in the `Done` pipeline are ready to be closed
     - They all have estimates
     - They all are added to the current Sprint milestone
