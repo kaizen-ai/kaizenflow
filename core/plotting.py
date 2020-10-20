@@ -15,7 +15,6 @@ import core.statistics as stats
 import helpers.dataframe as hdf
 import helpers.dbg as dbg
 import helpers.list as hlist
-import helpers.printing as prnt
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
@@ -788,15 +787,18 @@ def display_corr_df(df: pd.core.frame.DataFrame) -> None:
         _LOG.warning("Can't display correlation df since it is None")
 
 
-def compute_linkage(df: pd.DataFrame) -> np.ndarray:
+def compute_linkage(
+    df: pd.DataFrame, method: Optional[str] = "average"
+) -> np.ndarray:
     """
     Perform hierarchical clustering.
 
     :param df: df input dataframe
+    :method: str distance calculation method
     :returns: The hierarchical clustering encoded as a linkage matrix
     """
     corr = df.corr()
-    return hac.linkage(corr, method="average")
+    return hac.linkage(corr, method=method)
 
 
 def cluster_and_select(
@@ -806,7 +808,7 @@ def cluster_and_select(
     show_corr_plots: bool = True,
     show_dendogram: bool = True,
     z_linkage: Optional[np.ndarray] = None,
-) -> List:
+) -> List[str]:
     """
     Cluster time series and select least correlated ones in each cluster.
 
@@ -830,7 +832,6 @@ def cluster_and_select(
     df_name_clust = pd.DataFrame(
         {"name": list(df.columns.values), "cluster": clusters}
     )
-    df_name_clust.groupby("cluster")
     # Plot the dendogram of clustered series.
     if show_dendogram:
         plot_dendrogram(df, z_linkage)
@@ -840,7 +841,7 @@ def cluster_and_select(
         cluster_subset = df[names]
         cluster_corr = cluster_subset.corr().abs()
         if show_corr_plots:
-            sns.heatmap(cluster_corr, cmap="RdBu_r", vmin=0, vmax=1)
+            plot_heatmap(cluster_corr)
             plt.show()
         remaining = list(names.copy())
         # Remove series that have correlation above the threshold specified.
@@ -852,30 +853,25 @@ def cluster_and_select(
                         remaining.remove(names[j])
                     except:
                         ValueError
-        series_to_keep = series_to_keep + list(set(remaining))
+        remaining_series = list(set(remaining))
+        series_to_keep = series_to_keep + remaining_series
         plt.show()
-        print(list(set(remaining)))
-        print(
-            prnt.frame(
-                f"Number of original series in cluser {cluster_name} is {len(set(names))}"
-                + "\n"
-                + f"Number of series to keep in cluster {cluster_name} is {len(set(remaining))}"
-            )
+        print(remaining_series)
+        _LOG.info(
+            f"Number of original series in cluser {cluster_name} is {len(set(names))}"
+            + "\n"
+            + f"Number of series to keep in cluster {cluster_name} is {len(remaining_series)}"
         )
     # Print the final list of series to keep.
     print(" ")
-    print(
-        prnt.frame(
-            f"Final number of selected time series is {len(series_to_keep)}"
-        )
-    )
-    print(prnt.frame(f"Series to keep are: {series_to_keep}"))
+    _LOG.info(f"Final number of selected time series is {len(series_to_keep)}")
+    _LOG.info(f"Series to keep are: {series_to_keep}")
     return series_to_keep
 
 
 def plot_dendrogram(
     df: pd.core.frame.DataFrame,
-    z: Optional[np.ndarray] = None,
+    z_linkage: Optional[np.ndarray] = None,
     figsize: Optional[Tuple[int, int]] = None,
     **kwargs: Any,
 ) -> None:
@@ -884,7 +880,7 @@ def plot_dendrogram(
     A dendrogram is a diagram representing a tree.
 
     :param df: df to plot a heatmap
-    :param z: precomputed cluster array
+    :param z_linkage: precomputed cluster array
     :param figsize: if nothing specified, basic (20,5) used
     :param kwargs: kwargs for `sp.cluster.hierarchy.dendrogram`
     """
@@ -899,9 +895,8 @@ def plot_dendrogram(
     if df.shape[1] < 2:
         _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
         return
-    y = df.corr().values
-    if z is None:
-        z = sp.cluster.hierarchy.linkage(y, "average")
+    if z_linkage is None:
+        z_linkage = compute_linkage(df)
     else:
         pass
     if figsize is None:
@@ -910,7 +905,7 @@ def plot_dendrogram(
     plt.title("Hierarchical Clustering Dendrogram")
     plt.ylabel("Distance")
     sp.cluster.hierarchy.dendrogram(
-        z,
+        z_linkage,
         labels=df.columns.tolist(),
         **kwargs,
     )
