@@ -1475,6 +1475,15 @@ class TestComputeZeroDiffProportion(hut.TestCase):
         series = pd.Series([])
         stats.compute_zero_diff_proportion(series)
 
+    def test8(self) -> None:
+        series = pd.Series(
+            [1, np.nan, 1, np.nan],
+            index=pd.date_range(start="2010-01-01", periods=4),
+        )
+        actual = stats.compute_zero_diff_proportion(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
 
 class TestGetInterarrivalTime(hut.TestCase):
     @staticmethod

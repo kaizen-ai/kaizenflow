@@ -11,15 +11,16 @@ import math
 import numbers
 from typing import Any, Iterable, List, Optional, Tuple, Union
 
-import core.finance as fin
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
 import numpy as np
 import pandas as pd
 import scipy as sp
 import sklearn.model_selection
 import statsmodels
 import statsmodels.api as sm
+
+import core.finance as fin
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -1275,7 +1276,7 @@ def compute_zero_diff_proportion(
     dbg.dassert_isinstance(srs, pd.Series)
     atol = atol or 0
     rtol = rtol or 1e-05
-    nan_mode = nan_mode or "drop"
+    nan_mode = nan_mode or "leave_unchanged"
     prefix = prefix or ""
     srs = srs.replace([np.inf, -np.inf], np.nan)
     data = hdf.apply_nan_mode(srs, mode=nan_mode)
