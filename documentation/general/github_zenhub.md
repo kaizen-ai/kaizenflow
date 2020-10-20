@@ -9,33 +9,35 @@
 ## Everything we work on comes as a GitHub task
 
 - We file tasks and then prioritize and distribute the workload
-- We try to work always on high priority (e.g., `P0`) tasks
+- We try to always work on high priority (e.g., `P0`) tasks
 
 ## Issues vs bugs vs tasks
 
-- We call GitHub issues interchangeably "issues", "bugs", and "tasks"
+- We call GitHub issues "issues", "bugs", and "tasks" interchangeably 
 - "Bugs" is a bit improper since many times we use GitHub to track ideas,
-  activities, and improvements, and not only defect in the code
+  activities, and improvements, and not only defects in the code
 - The best names are "tasks" and "issues"
 
 ## Life cycle of a bug / task
 
-- We use ZenHub as project management on top of GitHub
-- When you start working on an Issue, move it to the `In Progress` pipeline on ZH
-  - Make sure the description, the assignees, the Epic are up to date
-  - Try to have `In Progress` only for the Issues on which you are actually doing
-    work
-  - A rule of thumb is that you should not have more than 2-3 `In Progress` Issues
-  - Give priority to Issues that are close to be completed, rather than starting a
-    new Issue
+- We use ZenHub as project management layer on top of GitHub
+- When you start working on an Issue, move it to the `In Progress` pipeline on
+  ZH
+  - Make sure the description, the assignees, and the Epic are up to date
+  - Try to use `In Progress` only for Issues you are actively working on
+  - A rule of thumb is that you should not have more than 2-3 `In Progress`
+    Issues
+  - Give priority to Issues that are close to being completed, rather than
+    starting a new Issue
 
 - Update an Issue on GH often, like at least once a day of work
   - Show the progress to the team with quick updates
   - Update your Issue with pointers to gdocs, PRs, notebooks
-  - If you have questions, post them on the bug and tag with people
+  - If you have questions, post them on the bug and tag people
 
 - When, in your opinion, there is no more work to be done on your side on an
-  Issue please move it to the `Done` or `Review/QA` pipeline, but not close it
+  Issue, please move it to the `Done` or `Review/QA` pipeline, but do not close
+  it
 - If we decide to stop the work, add a `Paused` label and move it back to the
   backlog, e.g., `Ready to Go (P0)`, `Backlog (P1)`, `Icebox (P2)`
 
@@ -43,25 +45,28 @@
   summarizing status and next actions
 
 - Connect the PR to the Issue
-  - TODO(Paul): Explain how to do it
+  - You should do this on the PR page of GH
+  - If you do not see the option to connect the PR to the Issue on that page,
+    then the likely cause is that you do not have the ZH plugin installed in
+    your browser. Check this and install the plugin if you do not have it.
   - The Issue is then automatically moved to `Review/QA`
 
-- We leave Issues in the `Done` state when we need to so some other work after
-  it, and we don't want to forget about this by closing it
-  - The rule is that only who filed the bug or a RP should close the bug, after
-    verifying that all work has done up to our standards
+- We leave Issues in the `Done` state when we need to do some other work after
+  it and we don't want to forget about this by closing it
+  - The rule is that only the one who filed the bug or a RP should close the
+    bug, but only after verifying that all work has done up to our standards
 
 ## Done means "DONE"
 
 - A task is closed when the pull request has been reviewed and merged into
   `master`
-- If you made specific assumptions, if there are loose ends and so forth, add a
+- If you made specific assumptions, or if there are loose ends, etc., add a
   `TODO(user)`
 - Done means that something is DONE, not 99% done
   - It means that the code is tested, readable and usable by other teammates
 - Together we can decide that 99% done is good enough, but it should be a
-  conscious decision and not a come as a surprise
-- If you know that more work needs to be done file more Issues explaining what
+  conscious decision and not come as a surprise
+- If you know that more work needs to be done, file more Issues explaining what
   needs to be done
 
 ## Tend your tasks
@@ -79,12 +84,12 @@
 - For any "serious" problem, file an Issue describing the problem and, ideally,
   giving a "repro case" (i.e., a clear description of how to reproduce the
   problem)
-  - Put as many information about the Issue as possible, e.g.,
+  - Put as much information about the Issue as possible, e.g.,
     - The command line you ran
     - The log of the run
       - Maybe the same run using `-v DEBUG` to get more info on the problem
-    - What is the problem and why it is different from what you expected
-  - You need to make the life easy for the person who is going to have to fix the
+    - What the problem is and why it is different from what you expected
+  - You need to make life easy for the person who is going to have to fix the
     Issue
 
 ## Do not change the assignee for a task
@@ -104,7 +109,7 @@
 - Exceptions are small commits that are not part of a feature
   - E.g., fixing a break, improving documentation
 
-## Use branches and PR
+## Use branches and PRs
 
 - All code should be reviewed before it is merged into `master`
 
@@ -120,7 +125,7 @@
 
 - Unfortunately merging the PR automatically closes the PR
 
-- The problem is that once the reviewers get to that PR and adds comments,
+- The problem is that once the reviewers get to that PR and add comments,
   emails are sent, but GitHub doesn't track the PR as open
   - The comments are there but not "resolved"
   - One needs to go to the PR page, e.g.,
@@ -134,7 +139,7 @@
       post-commit review using a "flag" as a reminder that something needs to be
       addressed
 
-- As usual for all the post-commit review, the author should:
+- Just like for pre-commit reviews, the author should:
   - Address the comments as soon as possible
   - Close the conversation on GH, marking them as resolved or engage in
     discussion
@@ -150,11 +155,11 @@
 
 ## Reviewers vs assignees
 
-- In a GitHub PR mark people as reviewers and leave assignee fields empty
+- In a GitHub PR mark people as reviewers and leave the assignee field empty
 - The difference between reviewers and assignees is explained 
   [here](https://stackoverflow.com/questions/41087206)
-- In few words assignees are people that are requested to merge the branch after
-  the PR, when they are different from the reviewers
+- In a few words assignees are people that are requested to merge the branch
+  after the PR, when they are different from the reviewers
 
 ## Reviewers and authors interactions
 
@@ -180,7 +185,7 @@
 
 - Comments that are marked as "pending" in GitHub are not published yet and
   visible only to the author
-- Once you publish the review then an email is sent and comments become visible
+- Once you publish the review, then an email is sent and comments become visible
 
 # ZenHub
 
@@ -195,9 +200,9 @@
 - = iterative approach to software development that emphasizes flexibility,
   interactivity, and transparency
 - It focus on:
-  - Frequent release of useable code
+  - Frequent releases of useable code
   - Continuous testing
-  - Acceptance that reality is always changing and thus requirements
+  - Acceptance that reality is always changing and thus requirements are
 
 ### Sprints
 
@@ -238,7 +243,7 @@
 
 ### Sprint backlog
 
-- = the work that the team is committed to tackle in a given Milestone
+- = the work that the team is committed to tackling in a given Milestone
 
 ### Mapping Agile concepts onto GH
 
@@ -302,7 +307,7 @@
 
 ## Cumulative flow diagram
 
-- Track how much work is been done across dates
+- Track how much work has been done across dates
 
 ## Release reports
 
@@ -334,7 +339,7 @@
 
 - Master Epics are long-running Epics (i.e., projects)
 
-- If you don't know what is the right Epic talk to a RP
+- If you don't know what the right Epic is, talk to an RP
 
 - TODO: Remove Epics `CLEANUP`, `INVESTIGATE`
   - There is a top level project (MISC, TOP, ORG, NAN)
@@ -362,7 +367,7 @@
 - Sprints are numbered (and can have a commodity name)
   - E.g., "Sprint1 - Gold", "Sprint2 - Natural gas"
 - We have a single Sprint for the entire company, since the teams are only a
-  convenience to split the work (but we win or lose together)
+  convenience for splitting the work (but we win or lose together)
 
 ## Pipelines
 
@@ -421,7 +426,7 @@
 
 - Contains Issues with exploratory analysis that might be completed, but whose
   implications are still unknown
-- We are moving these material to gdocs (e.g., DSE and CDSE) and closing these
+- We are moving these materials to gdocs (e.g., DSE and CDSE) and closing these
   issues
 - TODO(*): Remove this when all bugs are closed
 
@@ -436,7 +441,7 @@
 
 ### Closed
 
-- Issues that are done and don't need a followup
+- Issues that are done and don't need a follow-up
   - Issues are moved from `Done` to `Closed` by RPs
 
 ## Labels
@@ -450,7 +455,7 @@
 
 ### Pipeline vs Epic vs Label
 - A ZH Pipeline represents the "progress" status of an Issue
-- An ZH Epic pulls together Issues that are somehow related by their topic
+- A ZH Epic pulls together Issues that are somehow related by their topic
 - A GH Label represents characteristics like "bug", "1 hr", "discussion"
 
 - Note that certain attributes of an Issue are clearly in one of the
@@ -474,16 +479,16 @@
 
 - The issue stays in Review/QA pipeline until all PRs are merged. It means that
   - All tests are written
-    - If tests are in a separate PR than the PR with tests should be merged
+    - If tests are in a separate PR, then the PR with tests should be merged
   - The documentation is updated
-    - If the issue requires a documentation update than the PR with
+    - If the issue requires a documentation update then the PR with the
       documentation update should be merged
   - When all the PRs are merged, the assignee moves the Issue to `Done`
   - The assignee doesn't close the GH issue, but only moves it to the `Done`
     pipeline in ZH
 
-- GP & P see if new Issues need to be filed as follow up (or maybe a touch up)
-  - Once there is nothing else to do, GP & P move the Issue to "Close"
+- GP & P see if new Issues need to be filed as follow-up (or maybe a touch up)
+  - Once there is nothing else to do, GP & P move the Issue to "Closed"
   - If an issue stays in `Done` for 2 sprints in a row, it is closed automatically
 
 ### Filing an issue
@@ -540,7 +545,8 @@
     - Fix a simple break
     - Lint a piece of code
   - `2`:
-    - Search and replace of a variable in the entire code (including running tests!)
+    - Search and replace of a variable in the entire code base (including
+     running tests!)
     - Write a unit test
   - `3`:
     - Refactor a piece of code
