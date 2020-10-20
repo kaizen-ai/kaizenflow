@@ -788,7 +788,7 @@ def display_corr_df(df: pd.core.frame.DataFrame) -> None:
 
 
 def compute_linkage(
-    df: pd.DataFrame, method: Optional[str] = "average"
+    df: pd.DataFrame, method: Optional[str] = None
 ) -> np.ndarray:
     """
     Perform hierarchical clustering.
@@ -797,6 +797,7 @@ def compute_linkage(
     :method: str distance calculation method
     :returns: The hierarchical clustering encoded as a linkage matrix
     """
+    method = method or "average"
     corr = df.corr()
     return hac.linkage(corr, method=method)
 
@@ -808,7 +809,7 @@ def cluster_and_select(
     show_corr_plots: bool = True,
     show_dendogram: bool = True,
     z_linkage: Optional[np.ndarray] = None,
-) -> List[str]:
+) -> Union[List[str], None]:
     """
     Cluster time series and select least correlated ones in each cluster.
 
@@ -843,29 +844,24 @@ def cluster_and_select(
         if show_corr_plots:
             plot_heatmap(cluster_corr)
             plt.show()
-        remaining = list(names.copy())
+        remaining = set(names.copy())
         # Remove series that have correlation above the threshold specified.
         for j in range(0, len(names)):
             for k in range(j + 1, len(names) - 1):
                 corr_series = cluster_corr.loc[names[j]].loc[names[k]]
                 if corr_series >= corr_thr:
-                    try:
-                        remaining.remove(names[j])
+                    remaining = set(remaining) - set(names[j])
                     except:
                         ValueError
-        remaining_series = list(set(remaining))
+        remaining_series = list(remaining)
         series_to_keep = series_to_keep + remaining_series
         plt.show()
-        print(remaining_series)
-        _LOG.info(
-            f"Number of original series in cluser {cluster_name} is {len(set(names))}"
-            + "\n"
-            + f"Number of series to keep in cluster {cluster_name} is {len(remaining_series)}"
-        )
+        _LOG.info(remaining_series)
+        _LOG.info("Number of original series in cluser %s is %s" % (cluster_name, len(set(names))))
+        _LOG.info("Number of series to keep in cluster %s is %s" % (cluster_name, len(remaining_series)))
     # Print the final list of series to keep.
-    print(" ")
-    _LOG.info(f"Final number of selected time series is {len(series_to_keep)}")
-    _LOG.info(f"Series to keep are: {series_to_keep}")
+    _LOG.info("Final number of selected time series is %s" % (len(series_to_keep)))
+    _LOG.info("Series to keep are: %s" % (series_to_keep))
     return series_to_keep
 
 
