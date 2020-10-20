@@ -1476,13 +1476,36 @@ class TestComputeZeroDiffProportion(hut.TestCase):
         stats.compute_zero_diff_proportion(series)
 
     def test8(self) -> None:
+        """Test constant series with `NaN`s in between."""
         series = pd.Series(
             [1, np.nan, 1, np.nan],
             index=pd.date_range(start="2010-01-01", periods=4),
         )
         actual = stats.compute_zero_diff_proportion(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        output_str = (
+            f"{prnt.frame('input')}\n"
+            f"{hut.convert_df_to_string(series, index=True)}\n"
+            f"{prnt.frame('output')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
+
+    def test9(self) -> None:
+        """Test series with consecutive `NaN`s."""
+        series = pd.Series(
+            [1, np.nan, np.nan, 2],
+            index=pd.date_range(start="2010-01-01", periods=4),
+        )
+        actual = stats.compute_zero_diff_proportion(
+            series, nan_mode="leave_unchanged"
+        )
+        output_str = (
+            f"{prnt.frame('input')}\n"
+            f"{hut.convert_df_to_string(series, index=True)}\n"
+            f"{prnt.frame('output, `nan_mode`=`leave_unchanged`')}\n"
+            f"{hut.convert_df_to_string(actual, index=True)}"
+        )
+        self.check_string(output_str)
 
 
 class TestGetInterarrivalTime(hut.TestCase):
