@@ -1,15 +1,9 @@
-# -*- coding: utf-8 -*-
-# %%
-# %matplotlib inline
-
-# %% [markdown]
 """
 Import as:
 
 import core.plotting as plot
 """
 
-# %%
 import calendar
 import logging
 import math
@@ -56,12 +50,7 @@ _DATETIME_TYPES = [
     "second",
 ]
 
-
-# %% [markdown]
 # General plotting helpers
-# #############################################################################
-
-# %%
 
 def plot_non_na_cols(
     df: pd.core.frame.DataFrame,
@@ -202,13 +191,7 @@ def get_multiple_plots(
         return fig, ax.flatten()
     return fig, ax
 
-
-
-# %% [markdown]
 # Data count plots.
-# #############################################################################
-
-# %%
 
 def plot_value_counts(
     srs: pd.Series, dropna: bool = True, *args: Any, **kwargs: Any
@@ -393,13 +376,7 @@ def plot_barplot(
     if xlabel:
         ax.set(xlabel=xlabel)
 
-
-
-# %% [markdown]
 # Time series plotting
-# #############################################################################
-
-# %%
 
 def plot_timeseries_distribution(
     srs: pd.Series,
@@ -714,12 +691,7 @@ def plot_histograms_and_lagged_scatterplot(
     fig.delaxes(axes[1][1])
     plt.show()
 
-
-# %% [markdown]
 # Correlation-type plots
-# #############################################################################
-
-# %%
 
 def plot_heatmap(
     corr_df: pd.core.frame.DataFrame,
@@ -997,13 +969,7 @@ def _get_heatmap_colormap() -> mpl_col.LinearSegmentedColormap:
     cmap = sns.diverging_palette(220, 10, as_cmap=True)
     return cmap
 
-
-
-# %% [markdown]
 # Eval metrics plots
-# #############################################################################
-
-# %%
 
 def plot_confusion_heatmap(
     y_true: Union[List[Union[float, int]], np.array],
@@ -1109,13 +1075,7 @@ def multipletests_plot(
     plt.suptitle(suptitle, x=0.5105, y=1.01, fontsize=15)
     plt.tight_layout()
 
-
-
-# %% [markdown]
 # Model evaluation
-# #############################################################################
-
-# %%
 
 def plot_cumulative_returns(
     cumulative_rets: pd.Series,
