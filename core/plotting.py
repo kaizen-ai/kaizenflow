@@ -197,7 +197,6 @@ def get_multiple_plots(
     return fig, ax
 
 
-# TODO(Julia): Choose new function names.
 def plot_projection(df: pd.DataFrame, ax: mpl.axes.Axes) -> None:
     """
     Plot lines above index where each column is not `NaN`.
@@ -215,29 +214,57 @@ def plot_projection(df: pd.DataFrame, ax: mpl.axes.Axes) -> None:
         ylim_srs.plot(ax=ax, legend=None, color=color, linewidth=1, alpha=0.8)
 
 
-def plot_projection1(
+def plot_special_values(
     df: pd.DataFrame,
+    special_values: List[Any],
+    mode: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
     colormap: Optional[_COLORMAP] = None,
 ) -> None:
     """
-    Plot lines where each column is not `NaN`.
+    Plot lines where each column is not in special values.
 
     :param df: dataframe
+    :param special_values: values for which not to plot lines
+    :param mode: "scatter" or "no-scatter"; whether to add a scatter plot
     :param ax: axis on which to plot. If `None`, create an axis and plot there
     :param colormap: matplotlib colormap or colormap name
     """
     ax = ax or plt.gca()
     ax.set_yticklabels([])
-    # Replace non-nan values with column numbers.
+    mode = mode or "scatter"
+    dbg.dassert_in(mode, ["scatter", "no-scatter"], "Invalid `mode`='%s'", mode)
+    dbg.dassert_strictly_increasing_index(df)
+    dbg.dassert_no_duplicates(df.columns.tolist())
+    df = df.copy()
+    # Get a mask for special values.
+    special_val_mask = pd.DataFrame(
+        np.full(df.shape, False), columns=df.columns, index=df.index
+    )
+    for curr_val in special_values:
+        if pd.isna(curr_val):
+            curr_mask = df.isna()
+        elif np.isinf(curr_val):
+            curr_mask = df.applymap(np.isinf)
+        else:
+            curr_mask = df.eq(curr_val)
+        special_val_mask |= curr_mask
+    # Replace non-special values with column numbers.
     range_df = df.copy()
     for i in range(df.shape[1]):
         range_df.iloc[:, i] = i
-    # TODO(Julia): Support different types of special values. Probably,
-    #     it would be useful if the user can combine them (so it might be
-    #     better to push mask selection to the user).
-    df_to_plot = df.mask(df.notna(), range_df)
+    df_to_plot = df.mask(special_val_mask, np.nan)
+    df_to_plot = df_to_plot.mask(~special_val_mask, range_df)
+    # Plot.
     df_to_plot.plot(ax=ax, legend="reverse", colormap=colormap)
+    if mode == "scatter":
+        sns.scatterplot(
+            data=df_to_plot,
+            markers=["o"] * df.shape[1],
+            ax=ax,
+            legend=False,
+            color=colormap,
+        )
 
 
 # #############################################################################
