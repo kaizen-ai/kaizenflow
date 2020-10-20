@@ -50,7 +50,11 @@ _DATETIME_TYPES = [
     "second",
 ]
 
+
+# #############################################################################
 # General plotting helpers
+# #############################################################################
+
 
 def plot_non_na_cols(
     df: pd.core.frame.DataFrame,
@@ -376,7 +380,11 @@ def plot_barplot(
     if xlabel:
         ax.set(xlabel=xlabel)
 
+        
+# #############################################################################
 # Time series plotting
+# #############################################################################
+
 
 def plot_timeseries_distribution(
     srs: pd.Series,
@@ -691,7 +699,11 @@ def plot_histograms_and_lagged_scatterplot(
     fig.delaxes(axes[1][1])
     plt.show()
 
+
+# #############################################################################
 # Correlation-type plots
+# #############################################################################
+
 
 def plot_heatmap(
     corr_df: pd.core.frame.DataFrame,
@@ -969,7 +981,11 @@ def _get_heatmap_colormap() -> mpl_col.LinearSegmentedColormap:
     cmap = sns.diverging_palette(220, 10, as_cmap=True)
     return cmap
 
+
+# #############################################################################
 # Eval metrics plots
+# #############################################################################
+
 
 def plot_confusion_heatmap(
     y_true: Union[List[Union[float, int]], np.array],
@@ -1075,7 +1091,11 @@ def multipletests_plot(
     plt.suptitle(suptitle, x=0.5105, y=1.01, fontsize=15)
     plt.tight_layout()
 
+
+# #############################################################################
 # Model evaluation
+# #############################################################################
+
 
 def plot_cumulative_returns(
     cumulative_rets: pd.Series,
