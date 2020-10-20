@@ -97,7 +97,7 @@
 
 # Code review with GitHub
 
-- TODO(gp): Move it code_review.md
+- TODO(gp): Move it `code_review.md`
 
 ## Avoid committing to `master`
 
@@ -332,60 +332,28 @@
 
 ### Master Epics
 
-- Pipeline "state of progress" of an Issue
-- Epics are about projects
-  - There is a top level project (MISC, TOP, ORG, NAN)
-- Labels are "modifiers", "kind of bugs"
-
 - Master Epics are long-running Epics (i.e., projects)
+
+- If you don't know what is the right Epic talk to a RP
+
+- TODO: Remove Epics `CLEANUP`, `INVESTIGATE`
+  - There is a top level project (MISC, TOP, ORG, NAN)
 - TODO(gp): Make examples and leave it of sync with the board
-
-- If you don't know what is the right Epic talk to the RP
-
-  - `AUTOML`: issues related to AutoML research
-  - `BUILD`: issues related to the build system
-  - `CLEANUP`: issues related to refactorings, reorganization of the code base
-    (especially if there is not a more specific master Epic, e.g., a cleanup in
-    AutoML will go in AutoML)
-  - `CONFIG`: issues related to our configuration layer for experiments
-  - `DATA`: issues related to data source exploration
-  - `DATAFLOW`: issues related to dataflow design, structure, usage patterns,
-    etc.
-  - `DOCUMENTATION`: issues related to documenting workflow and so on (unless
-    there is a more specific software component that can be applied, e.g.,
-    AutoML)
-  - `ETL`: issues related to ETL layer
-  - `INFRA`: issues related to IT work, sysadmin, AWS
-  - `INVESTIGATE`: investigation of packages, tools, papers
-  - `KG`: issues related to Knowledge Graph design, schema, implementation, or
-    population
-  - `NLP`: issues related to NLP
-  - `ORG`: anything related to organization, process, conventions
-  - `RESEARCH`: general research topics
-  - `TOOLS`: tools that make us more productive (e.g., linter, docker, git, etc.)
-  - `WIND`: issues related to WIND terminal and data
-
-- TODO: Remove CLEANUP
-
-
-- Master Epics can be broken down into smaller Epics (=sub-epics)
-  - Ex.: `NLP - RP skateboard`
-  - Their title should follow the pattern: `XYZ - `, where XYZ is a master Epic
-    title
 
 - Each issue should belong to an Epic: either a sub-epic or a master Epic
   - There is no need to add an issue to a Master Epic if it is already added to
     a sub-epic
 
-### Non-master Epics
+### Sub-epics
 
+- Master Epics can be broken down into smaller Epics (=sub-epics)
+  - Ex.: `NLP - RP skateboard`
+  - Their title should follow the pattern: `XYZ - `, where XYZ is a master Epic
+    title
 - Sub-epics should have a short title and a smaller scope
-- Sub-epics should belong to a Master Epic
+- Sub-epics should belong to a Master Epic in ZenHub
   - A sub-epic can be moved to `Done` only if all issues nested in it are moved
     to `Done`
-- Organically it's ok to have as many levels of the Epic as needed
-  - No need to keep the Epics super well organized in a hierarchy (no Epic
-    hyper-graph!)
 
 ## Sprint
 
