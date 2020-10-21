@@ -1087,7 +1087,7 @@ def plot_cumulative_returns(
         title = "Cumulative returns"
     else:
         raise ValueError("Invalid mode='%s'" % mode)
-    label = cumulative_rets.name or "returns"
+    label = str(cumulative_rets.name) or "returns"
     #
     ax = ax or plt.gca()
     cumulative_rets.plot(ax=ax, title=f"{title}{title_suffix}", label=label)
@@ -1103,6 +1103,7 @@ def plot_cumulative_returns(
     _maybe_add_events(ax=ax, events=events)
     ax.set_ylabel(unit)
     ax.legend()
+    ax.autoscale()
 
 
 def plot_rolling_annualized_volatility(
