@@ -195,6 +195,37 @@ def resample_time_bars(
     return result_df
 
 
+def compute_vwap(
+    df: pd.DataFrame,
+    rule: str,
+    *,
+    price_col: Optional[list] = None,
+    volume_col: Optional[list] = None,
+) -> pd.Series:
+    """
+    Compute VWAP from price and volume.
+
+    :param df: input dataframe with datetime index
+    :param rule: resampling frequency and vwap aggregation window
+    :param price_col: price for bar
+    :param volume_col: volume for bar
+    :return: vwap series
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    price = df[price_col]
+    volume = df[volume_col]
+    # Weight price according to volume
+    volume_weighted_price = price.multiply(volume)
+    # Resample using `rule`.
+    resampled_volume_weighted_price = sigp.resample(volume_weighted_price, rule=rule).sum(min_count=1)
+    resampled_volume = sigp.resample(volume, rule=rule).sum(min_count=1)
+    # Divide
+    vwap = resampled_volume_weighted_price.divide(resampled_volume)
+    # Replace infs with NaNs.
+    vwap = vwap.replace([-np.inf, np.inf], np.nan)
+    return vwap
+
+
 def compute_ret_0(
     prices: Union[pd.Series, pd.DataFrame], mode: str
 ) -> Union[pd.Series, pd.DataFrame]:
