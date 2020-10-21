@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -118,7 +118,7 @@ def resample_time_bars(
     df: pd.DataFrame,
     rule: str,
     *,
-    return_cols: list,
+    return_cols: Optional[list] = None,
     return_agg_func: Optional[str] = None,
     return_agg_func_kwargs: Optional[dict] = None,
     price_cols: Optional[list] = None,
@@ -165,12 +165,18 @@ def resample_time_bars(
         resampled = resampler.agg(agg_func, **agg_func_kwargs)
         return resampled
 
-    # Resample returns.
-    return_agg_func = return_agg_func or "sum"
-    return_agg_func_kwargs = return_agg_func_kwargs or {"min_count": 1}
-    result_df = _resample_financial(
-        df, rule, return_cols, return_agg_func, return_agg_func_kwargs
-    )
+    result_df = pd.DataFrame()
+    # Maybe resample returns.
+    if return_cols:
+        return_agg_func = return_agg_func or "sum"
+        return_agg_func_kwargs = return_agg_func_kwargs or {"min_count": 1}
+        return_df = _resample_financial(
+            df, rule, return_cols, return_agg_func, return_agg_func_kwargs
+        )
+        result_df = result_df.merge(
+            return_df, how="outer", left_index=True, right_index=True
+        )
+        dbg.dassert(result_df.index.freq)
     # Maybe resample prices.
     if price_cols:
         price_agg_func = price_agg_func or "mean"
@@ -182,6 +188,7 @@ def resample_time_bars(
             price_df, how="outer", left_index=True, right_index=True
         )
         dbg.dassert(result_df.index.freq)
+    # Maybe resample volume.
     if volume_cols:
         volume_agg_func = volume_agg_func or "sum"
         volume_agg_func_kwargs = volume_agg_func_kwargs or {"min_count": 1}
@@ -195,12 +202,12 @@ def resample_time_bars(
     return result_df
 
 
-def compute_vwap(
+def compute_twap_vwap(
     df: pd.DataFrame,
     rule: str,
     *,
-    price_col: Optional[list] = None,
-    volume_col: Optional[list] = None,
+    price_col: Any,
+    volume_col: Any,
 ) -> pd.Series:
     """
     Compute VWAP from price and volume.
@@ -212,6 +219,9 @@ def compute_vwap(
     :return: vwap series
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert(df.index.freq)
+    dbg.dassert_in(price_col, df.columns)
+    dbg.dassert_in(volume_col, df.columns)
     price = df[price_col]
     volume = df[volume_col]
     # Weight price according to volume
@@ -223,7 +233,13 @@ def compute_vwap(
     vwap = resampled_volume_weighted_price.divide(resampled_volume)
     # Replace infs with NaNs.
     vwap = vwap.replace([-np.inf, np.inf], np.nan)
-    return vwap
+    vwap.name = "vwap"
+    #
+    twap = sigp.resample(price, rule=rule).mean()
+    twap.loc[resampled_volume_weighted_price.isna()] = np.nan
+    twap.name = "twap"
+    #
+    return pd.concat([vwap, twap], axis=1)
 
 
 def compute_ret_0(
