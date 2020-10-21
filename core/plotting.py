@@ -214,7 +214,7 @@ def plot_projection(df: pd.DataFrame, ax: mpl.axes.Axes) -> None:
         ylim_srs.plot(ax=ax, legend=None, color=color, linewidth=1, alpha=0.8)
 
 
-def plot_special_values(
+def plot_special_values_indicator(
     df: pd.DataFrame,
     special_values: List[Any],
     mode: Optional[str] = None,
@@ -225,7 +225,7 @@ def plot_special_values(
     Plot lines where each column is not in special values.
 
     :param df: dataframe
-    :param special_values: values for which not to plot lines
+    :param special_values: values to omit from plot
     :param mode: "scatter" or "no-scatter"; whether to add a scatter plot
     :param ax: axis on which to plot. If `None`, create an axis and plot there
     :param colormap: matplotlib colormap or colormap name
@@ -233,7 +233,6 @@ def plot_special_values(
     ax = ax or plt.gca()
     ax.set_yticklabels([])
     mode = mode or "scatter"
-    dbg.dassert_in(mode, ["scatter", "no-scatter"], "Invalid `mode`='%s'", mode)
     dbg.dassert_strictly_increasing_index(df)
     dbg.dassert_no_duplicates(df.columns.tolist())
     df = df.copy()
@@ -265,6 +264,10 @@ def plot_special_values(
             legend=False,
             color=colormap,
         )
+    elif mode == "no-scatter":
+        pass
+    else:
+        raise ValueError("Invalid `mode`='%s'" % mode)
 
 
 # #############################################################################
