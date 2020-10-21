@@ -14,7 +14,8 @@ more complex pipelines. The output is reported through logging.
 import datetime
 import logging
 import math
-from typing import Any, Callable, Collection, Dict, List, Optional, Tuple, Union, cast
+from typing import (Any, Callable, Collection, Dict, List, Optional, Tuple,
+                    Union, cast)
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt

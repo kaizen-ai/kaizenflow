@@ -1,5 +1,6 @@
 import collections
 import logging
+from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -8,8 +9,6 @@ import statsmodels.api as sm
 
 import helpers.dbg as dbg
 import helpers.printing as pri
-
-from typing import List, Dict, Tuple, Union
 
 _LOG = logging.getLogger(__name__)
 
@@ -202,7 +201,7 @@ class Reporter:
         return color
 
     @staticmethod
-    def _decorate_with_color(txt: str, color_map: Dict[str, str]) -> str: 
+    def _decorate_with_color(txt: str, color_map: Dict[str, str]) -> str:
         dbg.dassert_in(txt, color_map)
         color = color_map[txt]
         return "background-color: %s" % color

@@ -5,12 +5,12 @@ import core.features as ftrs
 
 import collections
 import logging
+from typing import List, Tuple
 
 import pandas as pd
 
 import helpers.dbg as dbg
 
-from typing import List, Tuple
 _LOG = logging.getLogger(__name__)
 
 

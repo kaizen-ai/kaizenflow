@@ -107,7 +107,7 @@ class _TimeSeriesAnalyzer:
         )
         plt.tight_layout()
         plt.show()
-        return 
+        return
 
     # TODO(gp): Think if it makes sense to generalize this by passing a lambda
     #  that define the timescale, e.g.,
@@ -206,7 +206,7 @@ class TimeSeriesMinutelyStudy(_TimeSeriesAnalyzer):
         plt.title(f"{self._ts_name} during different hours {self._title_suffix}")
         plt.xlabel("hour")
         plt.show()
-        return 
+        return
 
     def execute(self) -> None:
         super().execute()

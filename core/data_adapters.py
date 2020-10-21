@@ -22,7 +22,6 @@ if True:
     # TODO(*): gluon needs these imports to work properly.
     import gluonts.dataset.common as gdc  # isort: skip # noqa: F401 # pylint: disable=unused-import
     import gluonts.model.forecast as gmf  # isort: skip # noqa: F401 # pylint: disable=unused-import
-
     # #########################################################################
     # GluonTS
     # #########################################################################

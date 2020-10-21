@@ -140,7 +140,7 @@ def count_num_finite_samples(data: pd.Series) -> Union[int, float]:
 
 
 # TODO(Paul): Extend to dataframes.
-def count_num_unique_values(data: pd.Series) -> Union[int, float, np.nan]:
+def count_num_unique_values(data: pd.Series) -> Union[int, float, np.float]:
     """Count number of unique values in the series."""
     if data.empty:
         _LOG.warning("Empty input series `%s`", data.name)
@@ -1157,7 +1157,7 @@ def compute_jensen_ratio(
     # should not expect a finite value in the continuous limit.
     dbg.dassert(np.isfinite(p_norm))
     # Set reasonable defaults for inf and nan modes.
-    inf_mode = inf_mode or "return_nan"
+    inf_mode = inf_mode or "drop"
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     data = hdf.apply_nan_mode(signal, mode=nan_mode)
@@ -1198,6 +1198,7 @@ def compute_jensen_ratio(
 def compute_forecastability(
     signal: pd.Series,
     mode: str = "welch",
+    inf_mode: Optional[str] = None,
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
@@ -1220,8 +1221,19 @@ def compute_forecastability(
     """
     dbg.dassert_isinstance(signal, pd.Series)
     nan_mode = nan_mode or "fill_with_zero"
+    inf_mode = inf_mode or "drop"
     prefix = prefix or ""
     data = hdf.apply_nan_mode(signal, mode=nan_mode)
+    has_infs = (~data.apply(np.isfinite)).any()
+    if has_infs:
+        if inf_mode == "return_nan":
+            return nan_result
+        if inf_mode == "drop":
+            # Replace inf with np.nan and drop.
+            data = data.replace([-np.inf, np.inf], np.nan).dropna()
+        else:
+            raise ValueError(f"Unrecognized inf_mode `{inf_mode}")
+    dbg.dassert(data.apply(np.isfinite).all())
     # Return NaN if there is no data.
     if data.size == 0:
         _LOG.warning("Empty input signal `%s`", signal.name)

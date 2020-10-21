@@ -1,11 +1,11 @@
 import logging
+from typing import Any, Union
 
 import numpy as np
 import pandas as pd
 import pymc3 as pm  # type: ignore
 import theano  # type: ignore
 
-from typing import Union, Any
 # See https://stackoverflow.com/questions/51238578/error-non-constant-expression-cannot-be-narrowed-from-type-npy-intp-to-int  # pylint: disable=line-too-long
 theano.config.gcc.cxxflags = "-Wno-c++11-narrowing"  # pylint: disable=no-member
 
