@@ -1278,6 +1278,10 @@ def compute_zero_diff_proportion(
           - the denominator is reduced by the number of `NaN` and `inf` values
           - repeated values with `NaN` in between are counted as a constant
             period
+        If `nan_mode` is "ffill":
+          - consecutive `NaN`s are counted as a constant period
+          - repeated values with `NaN` in between are counted as a constant
+            period
     :param prefix: optional prefix for metrics' outcome
     :return: series with proportion of unvarying periods
     """
