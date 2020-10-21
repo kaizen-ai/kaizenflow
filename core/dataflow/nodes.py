@@ -652,11 +652,11 @@ class TimeBarResampler(Transformer):
 
 class TwapVwapComputer(Transformer):
     def __init__(
-            self,
-            nid: str,
-            rule: Union[pd.DateOffset, pd.Timedelta, str],
-            price_col: Any,
-            volume_col: Any,
+        self,
+        nid: str,
+        rule: Union[pd.DateOffset, pd.Timedelta, str],
+        price_col: Any,
+        volume_col: Any,
     ) -> None:
         """
         Resample time bars with returns, price, volume.
@@ -671,7 +671,7 @@ class TwapVwapComputer(Transformer):
         self._volume_col = volume_col
 
     def _transform(
-            self, df: pd.DataFrame
+        self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
         df = fin.compute_twap_vwap(
@@ -684,6 +684,7 @@ class TwapVwapComputer(Transformer):
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
+
 
 # #############################################################################
 # Results processing

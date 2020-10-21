@@ -203,11 +203,7 @@ def resample_time_bars(
 
 
 def compute_twap_vwap(
-    df: pd.DataFrame,
-    rule: str,
-    *,
-    price_col: Any,
-    volume_col: Any,
+    df: pd.DataFrame, rule: str, *, price_col: Any, volume_col: Any,
 ) -> pd.Series:
     """
     Compute VWAP from price and volume.
@@ -227,7 +223,9 @@ def compute_twap_vwap(
     # Weight price according to volume
     volume_weighted_price = price.multiply(volume)
     # Resample using `rule`.
-    resampled_volume_weighted_price = sigp.resample(volume_weighted_price, rule=rule).sum(min_count=1)
+    resampled_volume_weighted_price = sigp.resample(
+        volume_weighted_price, rule=rule
+    ).sum(min_count=1)
     resampled_volume = sigp.resample(volume, rule=rule).sum(min_count=1)
     # Divide
     vwap = resampled_volume_weighted_price.divide(resampled_volume)
