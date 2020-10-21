@@ -10,5 +10,5 @@ input
 output
 ################################################################################
                       0
-approx_const_count  1.0
-approx_const_frac   1.0
+approx_const_count  0.0
+approx_const_frac   0.0

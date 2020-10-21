@@ -1288,7 +1288,7 @@ def compute_zero_diff_proportion(
     dbg.dassert_isinstance(srs, pd.Series)
     atol = atol or 0
     rtol = rtol or 1e-05
-    nan_mode = nan_mode or "drop"
+    nan_mode = nan_mode or "leave_unchanged"
     prefix = prefix or ""
     srs = srs.replace([np.inf, -np.inf], np.nan)
     data = hdf.apply_nan_mode(srs, mode=nan_mode)
