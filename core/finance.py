@@ -246,7 +246,7 @@ def compute_ret_0(
     prices: Union[pd.Series, pd.DataFrame], mode: str
 ) -> Union[pd.Series, pd.DataFrame]:
     if mode == "pct_change":
-        ret_0 = prices.pct_change()
+        ret_0 = prices.divide(prices.shift(1)) - 1
     elif mode == "log_rets":
         ret_0 = np.log(prices) - np.log(prices.shift(1))
     elif mode == "diff":
