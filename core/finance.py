@@ -220,19 +220,19 @@ def compute_twap_vwap(
     dbg.dassert_in(volume_col, df.columns)
     price = df[price_col]
     volume = df[volume_col]
-    # Weight price according to volume
+    # Weight price according to volume.
     volume_weighted_price = price.multiply(volume)
     # Resample using `rule`.
     resampled_volume_weighted_price = sigp.resample(
         volume_weighted_price, rule=rule
     ).sum(min_count=1)
     resampled_volume = sigp.resample(volume, rule=rule).sum(min_count=1)
-    # Divide
+    # Complete the VWAP calculation.
     vwap = resampled_volume_weighted_price.divide(resampled_volume)
     # Replace infs with NaNs.
     vwap = vwap.replace([-np.inf, np.inf], np.nan)
     vwap.name = "vwap"
-    #
+    # Calculate TWAP, but preserve NaNs for all-NaN bars.
     twap = sigp.resample(price, rule=rule).mean()
     twap.loc[resampled_volume_weighted_price.isna()] = np.nan
     twap.name = "twap"
