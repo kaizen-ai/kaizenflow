@@ -674,10 +674,10 @@ def plot_histograms_and_lagged_scatterplot(
     versus x_{t - lag}, where lag > 0). If it is stationary the scatter-plot 
     with its lagged values would resemble a circular cloud.
     """
+    dbg.dassert_monotonic_index(srs, "Index must be monotonic")
+    dbg.dassert_lt(0, lag, "Lag must be positive")
     hist_kwargs = hist_kwargs or {}
     scatter_kwargs = scatter_kwargs or {}
-    # Sort index if it is not sorted yet.
-    srs = srs.sort_index()
     # Divide timeseries to two parts.
     srs_first_half = srs.iloc[: len(srs) // 2]
     srs_second_half = srs.iloc[len(srs) // 2 :]
@@ -699,6 +699,7 @@ def plot_histograms_and_lagged_scatterplot(
     # Plot scatter plot.
     fig.subplots_adjust(hspace=0.25)
     axes[1][0].scatter(srs, srs.shift(lag), **scatter_kwargs)
+    axes[1][0].set(xlabel="values", ylabel="lagged values")
     axes[1][0].set_title("scatter-plot with lag={}".format(lag))
     fig.delaxes(axes[1][1])
     plt.show()
