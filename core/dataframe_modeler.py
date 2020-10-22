@@ -548,7 +548,7 @@ class DataFrameModeler:
             dbg.dassert(
                 self.oos_start, msg="Must set `oos_start` to run `predict()`"
             )
-            model.fit(self._df[self.oos_start :])
+            model.fit(self._df[: self.oos_start])
             info["fit"] = model.get_info("fit")
             df_out = model.predict(self._df)["df_out"]
             info["predict"] = model.get_info("predict")
