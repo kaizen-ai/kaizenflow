@@ -659,9 +659,9 @@ class TwapVwapComputer(Transformer):
         volume_col: Any,
     ) -> None:
         """
-        Resample time bars with returns, price, volume.
+        Calculate TWAP and VWAP prices from price and volume columns.
 
-        This function wraps `resample_time_bars()`. Params as in that function.
+        This function wraps `compute_twap_vwap()`. Params as in that function.
 
         :param nid: node identifier
         """
