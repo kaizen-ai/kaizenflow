@@ -856,11 +856,11 @@ def cluster_and_select(
         plt.show()
         _LOG.info(remaining_series)
         _LOG.info("Current cluster is %s", cluster_name)
-        _LOG.info("Number of original series in cluster is %s", str(len(set(names))))
-        _LOG.info("Number of series to keep in cluster is %s", str(len(remaining_series)))
+        _LOG.info("Number of original series in cluster is %s", len(set(names)))
+        _LOG.info("Number of series to keep in cluster is %s", len(remaining_series))
     # Print the final list of series to keep.
-    _LOG.info("Final number of selected time series is %s", str(len(series_to_keep)))
-    _LOG.info("Series to keep are: %s", str(series_to_keep))
+    _LOG.info("Final number of selected time series is %s", len(series_to_keep))
+    _LOG.info("Series to keep are: %s", series_to_keep)
     return series_to_keep
 
 
