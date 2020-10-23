@@ -713,11 +713,11 @@ def plot_histograms_and_lagged_scatterplot(
         title="2nd part-sample distribution"
     )
     # Plot scatter plot.
-    fig.subplots_adjust(hspace=0.25)
     axes[1][0].scatter(srs, srs.shift(lag), **scatter_kwargs)
     axes[1][0].set(xlabel="values", ylabel="lagged values")
     axes[1][0].set_title("scatter-plot with lag={}".format(lag))
     fig.delaxes(axes[1][1])
+    fig.tight_layout()
     plt.show()
 
 

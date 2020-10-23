@@ -483,6 +483,25 @@ class DataFrameModeler:
             tsds = tss.TimeSeriesDailyStudy(df[col_name], data_name=str(col_name))
             tsds.execute()
             plt.show()
+            
+    def plot_histograms_and_lagged_scatterplot(
+        self,
+        lag: int,
+        cols: Optional[List[Any]] = None,
+        hist_kwargs: Optional[Any] = None,
+        scatter_kwargs: Optional[Any] = None,
+    ) -> None:
+        df = self._get_df(cols=cols, mode="all_available")
+        for col_name in df.columns:
+            plot.plot_histograms_and_lagged_scatterplot(
+                df[col_name],
+                lag=lag,
+                oos_start=self.oos_start,
+                title=col_name,
+                hist_kwargs=hist_kwargs,
+                scatter_kwargs=scatter_kwargs,
+            )
+            plt.show() 
 
     # #########################################################################
     # Private helpers
