@@ -46,7 +46,8 @@ def compute_moments(
     dbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
-    data = hdf.apply_nan_mode(srs, mode=nan_mode)
+    data = replace_infs_with_nans(srs)
+    data = hdf.apply_nan_mode(data, mode=nan_mode)
     result_index = [
         prefix + "mean",
         prefix + "std",
@@ -55,12 +56,7 @@ def compute_moments(
     ]
     if data.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
-        n_stats = len(result_index)
-        nan_result = pd.Series(
-            data=[np.nan for i in range(n_stats)],
-            index=result_index,
-            name=srs.name,
-        )
+        nan_result = pd.Series(np.nan, index=result_index, name=srs.name)
         return nan_result
     # TODO(*): re-applyg stricter sp.stats nan_policy after we handle inf's.
     result_values = [
@@ -223,10 +219,7 @@ def compute_special_value_stats(
         prefix + "num_finite_samples",
         prefix + "num_unique_values",
     ]
-    n_stats = len(result_index)
-    nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
-    )
+    nan_result = pd.Series(np.nan, index=result_index, name=srs.name)
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
@@ -622,7 +615,7 @@ def compute_annualized_return_and_volatility(
         prefix + "annualized_volatility_(%)",
     ]
     nan_result = pd.Series(
-        data=[np.nan, np.nan], index=result_index, name=srs.name, dtype="float64"
+        np.nan, index=result_index, name=srs.name, dtype="float64"
     )
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
@@ -803,9 +796,7 @@ def ttest_1samp(
         prefix + "tval",
         prefix + "pval",
     ]
-    nan_result = pd.Series(
-        data=[np.nan, np.nan], index=result_index, name=srs.name
-    )
+    nan_result = pd.Series(data=np.nan, index=result_index, name=srs.name)
     if data.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
@@ -873,7 +864,7 @@ def multi_ttest(
     if data.empty:
         _LOG.warning("Empty input!")
         return pd.DataFrame(
-            [np.nan, np.nan, np.nan],
+            np.nan,
             index=[prefix + "tval", prefix + "pval", prefix + "adj_pval"],
             columns=[data.columns],
         )
@@ -905,10 +896,7 @@ def apply_normality_test(
         prefix + "stat",
         prefix + "pval",
     ]
-    n_stats = len(result_index)
-    nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)], index=result_index, name=srs.name
-    )
+    nan_result = pd.Series(data=np.nan, index=result_index, name=srs.name)
     if data.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
@@ -965,9 +953,8 @@ def apply_adf_test(
         prefix + "critical_values_10%",
         prefix + "ic_best",
     ]
-    n_stats = len(result_index)
     nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)],
+        data=np.nan,
         index=result_index,
         name=data.name,
     )
@@ -1040,9 +1027,8 @@ def apply_kpss_test(
         prefix + "critical_values_5%",
         prefix + "critical_values_10%",
     ]
-    n_stats = len(result_index)
     nan_result = pd.Series(
-        data=[np.nan for i in range(n_stats)],
+        data=np.nan,
         index=result_index,
         name=data.name,
     )
@@ -1168,12 +1154,12 @@ def compute_jensen_ratio(
     # should not expect a finite value in the continuous limit.
     dbg.dassert(np.isfinite(p_norm))
     # Set reasonable defaults for inf and nan modes.
-    inf_mode = inf_mode or "return_nan"
+    inf_mode = inf_mode or "drop"
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     data = hdf.apply_nan_mode(signal, mode=nan_mode)
     nan_result = pd.Series(
-        data=[np.nan], index=[prefix + "jensen_ratio"], name=signal.name
+        data=np.nan, index=[prefix + "jensen_ratio"], name=signal.name
     )
     dbg.dassert(not data.isna().any())
     # Handle infs.
@@ -1209,6 +1195,7 @@ def compute_jensen_ratio(
 def compute_forecastability(
     signal: pd.Series,
     mode: str = "welch",
+    inf_mode: Optional[str] = None,
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
@@ -1231,13 +1218,24 @@ def compute_forecastability(
     """
     dbg.dassert_isinstance(signal, pd.Series)
     nan_mode = nan_mode or "fill_with_zero"
+    inf_mode = inf_mode or "drop"
     prefix = prefix or ""
     data = hdf.apply_nan_mode(signal, mode=nan_mode)
+    has_infs = (~data.apply(np.isfinite)).any()
+    if has_infs:
+        if inf_mode == "return_nan":
+            return nan_result
+        if inf_mode == "drop":
+            # Replace inf with np.nan and drop.
+            data = data.replace([-np.inf, np.inf], np.nan).dropna()
+        else:
+            raise ValueError(f"Unrecognized inf_mode `{inf_mode}")
+    dbg.dassert(data.apply(np.isfinite).all())
     # Return NaN if there is no data.
     if data.size == 0:
         _LOG.warning("Empty input signal `%s`", signal.name)
         nan_result = pd.Series(
-            data=[np.nan], index=[prefix + "forecastability"], name=signal.name
+            data=np.nan, index=[prefix + "forecastability"], name=signal.name
         )
         return nan_result
     if mode == "welch":
@@ -1272,6 +1270,18 @@ def compute_zero_diff_proportion(
     :param atol: as in numpy.isclose
     :param rtol: as in numpy.isclose
     :param nan_mode: argument for hdf.apply_nan_mode()
+        If `nan_mode` is "leave_unchanged":
+          - consecutive `NaN`s are not counted as a constant period
+          - repeated values with `NaN` in between are not counted as a constant
+            period
+        If `nan_mode` is "drop":
+          - the denominator is reduced by the number of `NaN` and `inf` values
+          - repeated values with `NaN` in between are counted as a constant
+            period
+        If `nan_mode` is "ffill":
+          - consecutive `NaN`s are counted as a constant period
+          - repeated values with `NaN` in between are counted as a constant
+            period
     :param prefix: optional prefix for metrics' outcome
     :return: series with proportion of unvarying periods
     """
@@ -1292,9 +1302,7 @@ def compute_zero_diff_proportion(
             srs.name,
             data.shape[0],
         )
-        nan_result = pd.Series(
-            data=[np.nan, np.nan], index=result_index, name=srs.name
-        )
+        nan_result = pd.Series(data=np.nan, index=result_index, name=srs.name)
         return nan_result
     # Compute if neighboring elements are equal within the given tolerance.
     equal_ngb_srs = np.isclose(data.shift(1)[1:], data[1:], atol=atol, rtol=rtol)
@@ -1575,24 +1583,22 @@ def summarize_time_index_info(
         result["start_time"] = clear_index[0]
         result["end_time"] = clear_index[-1]
     result["n_sampling_points"] = len(clear_index)
+    result["frequency"] = freq
     if freq is None:
-        result["frequency"] = None
-        result["sampling_points_per_year"] = None
-        result["time_span_in_years"] = None
+        sampling_points_per_year = clear_srs.resample("Y").count().mean()
     else:
-        result["frequency"] = freq
         sampling_points_per_year = hdf.compute_points_per_year_for_given_freq(
             freq
         )
-        result["sampling_points_per_year"] = sampling_points_per_year
-        # Compute input time span as a number of `freq` units in
-        # `clear_index`.
-        if not clear_srs.empty:
-            clear_index_time_span = len(srs[clear_index[0] : clear_index[-1]])
-        else:
-            clear_index_time_span = 0
-        result["time_span_in_years"] = (
-            clear_index_time_span / sampling_points_per_year
-        )
+    result["sampling_points_per_year"] = sampling_points_per_year
+    # Compute input time span as a number of `freq` units in
+    # `clear_index`.
+    if not clear_srs.empty:
+        clear_index_time_span = len(srs[clear_index[0] : clear_index[-1]])
+    else:
+        clear_index_time_span = 0
+    result["time_span_in_years"] = (
+        clear_index_time_span / sampling_points_per_year
+    )
     result.index = prefix + result.index
     return result
