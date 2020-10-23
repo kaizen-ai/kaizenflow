@@ -9,7 +9,7 @@ if [[ -z $DIR ]]; then
     echo "You need to specify a dir"
     exit -1
 fi;
-pyreverse $DIR --ignore=tests/*
+pyreverse $DIR --ignore=test
 dot -Tpng classes.dot >classes.png
 # This works only on macOS.
 if [[ $(uname) == "Darwin" ]]; then
