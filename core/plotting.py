@@ -787,9 +787,7 @@ def display_corr_df(df: pd.core.frame.DataFrame) -> None:
         _LOG.warning("Can't display correlation df since it is None")
 
 
-def compute_linkage(
-    df: pd.DataFrame, method: Optional[str] = None
-) -> np.ndarray:
+def compute_linkage(df: pd.DataFrame, method: Optional[str] = None) -> np.ndarray:
     """
     Perform hierarchical clustering.
 
@@ -809,7 +807,7 @@ def cluster_and_select(
     show_corr_plots: bool = True,
     show_dendogram: bool = True,
     z_linkage: Optional[np.ndarray] = None,
-) -> Optional[List[str]]:
+) -> Optional[Union[dict, List[str]]]:
     """
     Cluster time series and select least correlated ones in each cluster.
 
@@ -830,6 +828,7 @@ def cluster_and_select(
         z_linkage = compute_linkage(df)
     clusters = hac.fcluster(z_linkage, num_clust, criterion="maxclust")
     series_to_keep = []
+    dict_series_to_keep = {}
     df_name_clust = pd.DataFrame(
         {"name": list(df.columns.values), "cluster": clusters}
     )
@@ -844,24 +843,25 @@ def cluster_and_select(
         if show_corr_plots:
             plot_heatmap(cluster_corr)
             plt.show()
-        remaining = set(names.copy())
+        original = set(names.copy())
+        to_remove = []
         # Remove series that have correlation above the threshold specified.
         for j in range(0, len(names)):
             for k in range(j + 1, len(names) - 1):
                 corr_series = cluster_corr.loc[names[j]].loc[names[k]]
                 if corr_series >= corr_thr:
-                    remaining = set(remaining) - set(names[j])
-        remaining_series = list(remaining)
+                    to_remove.append(names[j])
+        remaining_series = list(original - set(to_remove))
         series_to_keep = series_to_keep + remaining_series
+        dict_series_to_keep[cluster_name] = remaining_series
         plt.show()
-        _LOG.info(remaining_series)
         _LOG.info("Current cluster is %s", cluster_name)
-        _LOG.info("Number of original series in cluster is %s", len(set(names)))
-        _LOG.info("Number of series to keep in cluster is %s", len(remaining_series))
+        _LOG.info("Original series in cluster is %s", list(original))
+        _LOG.info("Series to keep in cluster is %s", remaining_series)
     # Print the final list of series to keep.
     _LOG.info("Final number of selected time series is %s", len(series_to_keep))
     _LOG.info("Series to keep are: %s", series_to_keep)
-    return series_to_keep
+    return dict_series_to_keep, series_to_keep
 
 
 def plot_dendrogram(
