@@ -172,7 +172,9 @@ if True:
             # `iterate_target_features` docstring.
             if len(gluon_ts) == 1:
                 idx = pd.date_range(
-                    start_date, periods=target_arr.shape[1], freq=start_date.freq,
+                    start_date,
+                    periods=target_arr.shape[1],
+                    freq=start_date.freq,
                 )
             else:
                 idx = [start_date] * target_arr.shape[1]
@@ -219,7 +221,8 @@ if True:
         return pd.concat(forecast_dfs).sort_index(level=0)
 
     def _convert_tuples_list_to_df(
-        dfs: List[Tuple[pd.DataFrame, pd.DataFrame]], index_name: Optional[str],
+        dfs: List[Tuple[pd.DataFrame, pd.DataFrame]],
+        index_name: Optional[str],
     ) -> pd.DataFrame:
         def _process_features_target(
             features: pd.DataFrame, target: pd.DataFrame
@@ -346,7 +349,9 @@ def transform_to_sklearn_old(
 
 
 def transform_from_sklearn(
-    idx: pd.Index, vars_: List[str], vals: np.array,
+    idx: pd.Index,
+    vars_: List[str],
+    vals: np.array,
 ) -> pd.DataFrame:
     """Add index and column names to sklearn output.
 
@@ -355,6 +360,10 @@ def transform_from_sklearn(
     :param vals: features data
     :return: dataframe with an index an column names
     """
+    # Some SkLearn models like Lasso return a one-dimensional array for a
+    # two-dimensional input. Add a dimension for such cases.
+    if vals.ndim == 1:
+        vals = np.expand_dims(vals, axis=1)
     dbg.dassert_eq(
         vals.shape,
         (len(idx), len(vars_)),

@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Dict, Optional, Union, cast
+from typing import Any, Dict, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -118,7 +118,7 @@ def resample_time_bars(
     df: pd.DataFrame,
     rule: str,
     *,
-    return_cols: list,
+    return_cols: Optional[list] = None,
     return_agg_func: Optional[str] = None,
     return_agg_func_kwargs: Optional[dict] = None,
     price_cols: Optional[list] = None,
@@ -165,12 +165,18 @@ def resample_time_bars(
         resampled = resampler.agg(agg_func, **agg_func_kwargs)
         return resampled
 
-    # Resample returns.
-    return_agg_func = return_agg_func or "sum"
-    return_agg_func_kwargs = return_agg_func_kwargs or {"min_count": 1}
-    result_df = _resample_financial(
-        df, rule, return_cols, return_agg_func, return_agg_func_kwargs
-    )
+    result_df = pd.DataFrame()
+    # Maybe resample returns.
+    if return_cols:
+        return_agg_func = return_agg_func or "sum"
+        return_agg_func_kwargs = return_agg_func_kwargs or {"min_count": 1}
+        return_df = _resample_financial(
+            df, rule, return_cols, return_agg_func, return_agg_func_kwargs
+        )
+        result_df = result_df.merge(
+            return_df, how="outer", left_index=True, right_index=True
+        )
+        dbg.dassert(result_df.index.freq)
     # Maybe resample prices.
     if price_cols:
         price_agg_func = price_agg_func or "mean"
@@ -182,6 +188,7 @@ def resample_time_bars(
             price_df, how="outer", left_index=True, right_index=True
         )
         dbg.dassert(result_df.index.freq)
+    # Maybe resample volume.
     if volume_cols:
         volume_agg_func = volume_agg_func or "sum"
         volume_agg_func_kwargs = volume_agg_func_kwargs or {"min_count": 1}
@@ -195,11 +202,53 @@ def resample_time_bars(
     return result_df
 
 
+def compute_twap_vwap(
+    df: pd.DataFrame,
+    rule: str,
+    *,
+    price_col: Any,
+    volume_col: Any,
+) -> pd.Series:
+    """
+    Compute VWAP from price and volume.
+
+    :param df: input dataframe with datetime index
+    :param rule: resampling frequency and vwap aggregation window
+    :param price_col: price for bar
+    :param volume_col: volume for bar
+    :return: vwap series
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert(df.index.freq)
+    dbg.dassert_in(price_col, df.columns)
+    dbg.dassert_in(volume_col, df.columns)
+    price = df[price_col]
+    volume = df[volume_col]
+    # Weight price according to volume.
+    volume_weighted_price = price.multiply(volume)
+    # Resample using `rule`.
+    resampled_volume_weighted_price = sigp.resample(
+        volume_weighted_price, rule=rule
+    ).sum(min_count=1)
+    resampled_volume = sigp.resample(volume, rule=rule).sum(min_count=1)
+    # Complete the VWAP calculation.
+    vwap = resampled_volume_weighted_price.divide(resampled_volume)
+    # Replace infs with NaNs.
+    vwap = vwap.replace([-np.inf, np.inf], np.nan)
+    vwap.name = "vwap"
+    # Calculate TWAP, but preserve NaNs for all-NaN bars.
+    twap = sigp.resample(price, rule=rule).mean()
+    twap.loc[resampled_volume_weighted_price.isna()] = np.nan
+    twap.name = "twap"
+    #
+    return pd.concat([vwap, twap], axis=1)
+
+
 def compute_ret_0(
     prices: Union[pd.Series, pd.DataFrame], mode: str
 ) -> Union[pd.Series, pd.DataFrame]:
     if mode == "pct_change":
-        ret_0 = prices.pct_change()
+        ret_0 = prices.divide(prices.shift(1)) - 1
     elif mode == "log_rets":
         ret_0 = np.log(prices) - np.log(prices.shift(1))
     elif mode == "diff":
@@ -555,7 +604,8 @@ def compute_bet_ends(
 
 
 def compute_signed_bet_lengths(
-    positions: pd.Series, nan_mode: Optional[str] = None,
+    positions: pd.Series,
+    nan_mode: Optional[str] = None,
 ) -> pd.Series:
     """Calculate lengths of bets (in sampling freq).
 
@@ -640,7 +690,7 @@ def compute_annualized_return(srs: pd.Series) -> float:
     ppy = hdf.infer_sampling_points_per_year(srs)
     mean_rets = srs.mean()
     annualized_mean_rets = ppy * mean_rets
-    annualized_mean_rets= cast(float, annualized_mean_rets)
+    annualized_mean_rets = cast(float, annualized_mean_rets)
     return annualized_mean_rets
 
 
@@ -654,5 +704,5 @@ def compute_annualized_volatility(srs: pd.Series) -> float:
     ppy = hdf.infer_sampling_points_per_year(srs)
     std = srs.std()
     annualized_volatility = np.sqrt(ppy) * std
-    annualized_volatility= cast(float, annualized_volatility)
+    annualized_volatility = cast(float, annualized_volatility)
     return annualized_volatility
