@@ -20,7 +20,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def resample_index(
-    index: pd.DatetimeIndex, time: Tuple[int, int] = None, **kwargs: Any
+    index: pd.DatetimeIndex, time: Union[None, Tuple[int, int]] = None, **kwargs: Any
 ) -> pd.DatetimeIndex:
     """Resample `index` with options compatible with pd.date_range().
     Implementation inspired by https://stackoverflow.com/questions/37853623.

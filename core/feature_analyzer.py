@@ -1,5 +1,6 @@
 import collections
 import logging
+from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -13,8 +14,8 @@ _LOG = logging.getLogger(__name__)
 
 
 def _analyze_feature(
-    df, y_var, x_var, use_intercept, nan_mode, x_shift, report_stats
-):
+        df: pd.DataFrame, y_var: str, x_var: str, use_intercept: bool, nan_mode: str, x_shift: int, report_stats: bool
+) -> collections.OrderedDict:
     _LOG.debug("df=\n%s", df.head(3))
     _LOG.debug(
         "y_var=%s, x_var=%s, use_intercept=%s, nan_mode=%s, x_shift=%s",
@@ -81,14 +82,14 @@ def _analyze_feature(
 
 
 def analyze_features(
-    df,
-    y_var,
-    x_vars,
-    use_intercept,
-    nan_mode="drop",
-    x_shifts=None,
-    report_stats=False,
-):
+    df: pd.DataFrame,
+    y_var: str,
+    x_vars: List[str],
+    use_intercept: bool,
+    nan_mode: str = "drop",
+    x_shifts: Union[None, List[int]] = None,
+    report_stats: bool = False,
+) -> pd.DataFrame:
     if x_shifts is None:
         x_shifts = [0]
     res_df = []
@@ -110,10 +111,10 @@ class Reporter:
     """Report results from `analyze_features()` in a heatmap with coefficient
     values and p-values."""
 
-    def __init__(self, res_df):
+    def __init__(self, res_df: pd.DataFrame):
         self.res_df = res_df
 
-    def plot(self):
+    def plot(self) -> pd.DataFrame:
         # Reshape the results in terms of coeff values and pvalues.
         coeff_df = self.res_df[
             ["x_var", "x_shift", "params_var", "pvalues_var"]
@@ -159,7 +160,7 @@ class Reporter:
         return coeff_df_tmp
 
     @staticmethod
-    def _interpolate(val, max_val, min_col, max_col):
+    def _interpolate(val: float, max_val: float, min_col: float, max_col: float) -> int:
         """Interpolate intensity in [min_col, max_col] based on val in 0,
         max_val].
 
@@ -171,7 +172,7 @@ class Reporter:
         return int(res)
 
     @staticmethod
-    def _interpolate_rgb(val, max_val, min_rgb, max_rgb):
+    def _interpolate_rgb(val: float, max_val: float, min_rgb: Tuple[int, int, int], max_rgb: Tuple[int, int, int]) -> List[int]:
         """Interpolate val in [0, max_val] in terms of the rgb colors.
 
         [min_rgb, max_rgb] by interpolating the 3 color channels.
@@ -183,7 +184,7 @@ class Reporter:
         return res
 
     @staticmethod
-    def _assign_color(val, min_val, max_val):
+    def _assign_color(val: float, min_val: float, max_val: float) -> str:
         if val < 0:
             min_rgb = (255, 255, 255)
             max_rgb = (96, 96, 255)
@@ -200,7 +201,7 @@ class Reporter:
         return color
 
     @staticmethod
-    def _decorate_with_color(txt, color_map):
+    def _decorate_with_color(txt: str, color_map: Dict[str, str]) -> str:
         dbg.dassert_in(txt, color_map)
         color = color_map[txt]
         return "background-color: %s" % color

@@ -9,7 +9,7 @@ import functools
 import logging
 import math
 import numbers
-from typing import Any, Iterable, List, Optional, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -131,14 +131,16 @@ def count_num_finite_samples(data: pd.Series) -> Union[int, float]:
     """
     if data.empty:
         _LOG.warning("Empty input series `%s`", data.name)
-        return np.nan
+        return np.nan  # type: ignore
     data = data.copy()
     data = replace_infs_with_nans(data)
-    return data.count()
+    ret = data.count()
+    ret = cast(int, ret)
+    return ret
 
 
 # TODO(Paul): Extend to dataframes.
-def count_num_unique_values(data: pd.Series) -> Union[int, float]:
+def count_num_unique_values(data: pd.Series) -> Union[int, float, np.float]:
     """Count number of unique values in the series."""
     if data.empty:
         _LOG.warning("Empty input series `%s`", data.name)
@@ -486,6 +488,7 @@ def compute_sharpe_ratio_prediction_interval_inflation_factor(
     :return: float > 1
     """
     se_inflation_factor = np.sqrt(1 + ins_nobs / oos_nobs)
+    se_inflation_factor = cast(float, se_inflation_factor)
     return se_inflation_factor
 
 
