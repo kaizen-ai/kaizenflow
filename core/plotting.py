@@ -678,7 +678,6 @@ def plot_histograms_and_lagged_scatterplot(
     """
     dbg.dassert(isinstance(srs, pd.Series), "Input must be Series")
     dbg.dassert_monotonic_index(srs, "Index must be monotonic")
-    dbg.dassert_lt(0, lag, "Lag must be positive")
     hist_kwargs = hist_kwargs or {}
     scatter_kwargs = scatter_kwargs or {}
     # Divide timeseries to two parts.
@@ -698,7 +697,7 @@ def plot_histograms_and_lagged_scatterplot(
     axes[0][0].set(
         xlabel=None, 
         ylabel=None, 
-        title="1st part-sample distribution"
+        title="Sample distribution split 1"
     )
     sns.histplot(
         srs_second_part, 
@@ -710,13 +709,13 @@ def plot_histograms_and_lagged_scatterplot(
     axes[0][1].set(
         xlabel=None, 
         ylabel=None, 
-        title="2nd part-sample distribution"
+        title="Sample distribution split 2"
     )
     # Plot scatter plot.
     fig.subplots_adjust(hspace=0.25)
     axes[1][0].scatter(srs, srs.shift(lag), **scatter_kwargs)
-    axes[1][0].set(xlabel="values", ylabel="lagged values")
-    axes[1][0].set_title("scatter-plot with lag={}".format(lag))
+    axes[1][0].set(xlabel="Values", ylabel="Values with lag={}".format(lag))
+    axes[1][0].set_title("Scatter-plot with lag={}".format(lag))
     fig.delaxes(axes[1][1])
     plt.show()
 
