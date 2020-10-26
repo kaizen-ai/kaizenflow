@@ -95,12 +95,12 @@
 
 - We use ZenHub as project management layer on top of GitHub
 - Please install the [ZenHub extension](https://www.zenhub.com/extension) for
-  GitHub. This is going to make your life easier
+  GitHub. This is going to make your life easier.
 
 ## Filing an Issue
 
 - Use an informative description (typically an action “Do this and that”).
-We don’t use a period at the end of the title
+  We don’t use a period at the end of the title.
 - Assign to the right RP for re-routing (or to GP / Paul if you are not sure)
 - Assign to one of the pipelines, ideally based on the urgency
     - P0: needs to be done soon
@@ -111,14 +111,14 @@ We don’t use a period at the end of the title
 - No need to agonize over labels for now. We are going to improve the GitHub
   label conventions soon.
 - Assign to an Epic
-    - Pls review the available Epics to find the most suitable
+    - Please review the available Epics to find the most suitable
     - If you are unsure then you can leave it empty, but @tag GP / Paul to
-    make sure we can re-route and improve the Epics
+      make sure we can re-route and improve the Epics
 
 ## Updating an Issue
 
 - When you start working on an Issue, move it to the `In Progress` pipeline on
-ZH
+  ZH
   - Try to use `In Progress` only for Issues you are actively working on
   - A rule of thumb is that you should not have more than 2-3 `In Progress`
     Issues
