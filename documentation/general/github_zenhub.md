@@ -667,6 +667,79 @@
   - From https://en.wikipedia.org/wiki/Parkinson%27s_law
     - Work expands so as to fill the time available for its completion
 
+## PR flow for Integrators
+
+Integrators are responsible for
+- Merging PRs
+- Ensuring architectural integrity
+- Pushing for clean and reusable interfaces
+- Maintaining coherence at the container and component c4 scopes
+- Assessing readability
+
+Process goals include:
+- Fast iterations
+- Asynchronous reviews
+- Scaling up
+- Keeping multiple integrators in the loop
+
+### How is this different from an RP review?
+
+- Checking low-level details about the code should be automated as much as
+  possible
+- RPs focus on the internal consistency of the pieces (e.g., L3 and L4 of c4)
+- Integrators focus on coherence between higher level pieces, architecture,
+  and interfaces (L2 and L3)
+  
+### Integrator process
+
+- All final PRs are assigned to all integrators
+  - Use the golden tag for final reviews
+- The most important parts of an Integrator review are the parts that touch on
+  - Architecture
+  - Interfaces
+  - Readability
+- Nevertheless, potential issues or improvements are highlighted, even if small
+  or controversial. These comments may or may not be implemented by the PR
+  author.
+  - Truly minor changes can be implemented immediately
+  - If addressing minor comments requires much time or touches a lot of code,
+    then it is better for the PR author to file an issue that points to the
+    comment and describes what should be done
+  - Favor velocity and overall code improvement over perfection
+  - If the author disagrees with the minor points, then that should be noted in
+    the comment thread
+  - All comments should be either
+    - Discussed
+    - Resolved, following the appropriate changes
+    - Postponed with a follow-up issue that is posted in the comment thread
+- If a reviewer is uncertain about something, or deferring to another
+  reviewer's judgment, that reviewer can tag appropriate people in the PR
+  - The PR author is responsible for coordinating the reviewers
+  - If reviewers appear to be providing diverging feedback, then the PR author
+    is responsible for driving consensus
+
+### Running the integrator gauntlet
+
+- Address the most important points first:
+  - Architecture
+  - Interfaces
+  - Readability
+- Address all comments, no matter how trivial
+  - If the change is obvious and quick, make the change and mark as resolved
+  - If the change is on a minor point and would slow down the review/merge
+    process
+    - File a well-documented issue
+    - In addition to providing a stand-alone summary, point to the PR comment
+      in the issue (so posterity can get more context if needed)
+    - Mention the issue in the PR comment thread (so the reviewer knows that
+      the change is acknowledged)
+  - If the change is controversial or disputed, comment on the thread and drive
+    to reach consensus
+- Be sure to mark the PR as ready for review after having addressed all
+  comments
+- Velocity is important. Prioritize final-review PRs above other work and push
+  for the merge.
+
 ## Sprint retrospective / planning
 
 - By Thursday EOD (RPs)
