@@ -107,7 +107,7 @@
     - P1: nice to have
     - P2: well, we will do it sometime in 2022
     - If you are not sure, leave it unassigned but @tag GP / Paul to make
-    sure we can take care of it
+      sure we can take care of it
 - No need to agonize over labels for now. We are going to improve the GitHub
   label conventions soon.
 - Assign to an Epic
