@@ -505,7 +505,7 @@ class FactorLoadingStatsmodelComputer:
 
     def __init__(self) -> None:
         super().__init__()
-        self._residuals = []
+        self._residuals: List = []
 
     def transform(self, target_df: pd.DataFrame, factor_df: pd.DataFrame) -> None:
         """Express each row of target_df in terms of previous rows of

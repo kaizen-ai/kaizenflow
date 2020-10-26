@@ -5,6 +5,7 @@ import core.features as ftrs
 
 import collections
 import logging
+from typing import List, Tuple
 
 import pandas as pd
 
@@ -13,7 +14,7 @@ import helpers.dbg as dbg
 _LOG = logging.getLogger(__name__)
 
 
-def get_lagged_feature_names(y_var, delay_lag, num_lags):
+def get_lagged_feature_names(y_var: str, delay_lag: int, num_lags: int) -> Tuple[List[int], List[str]]:
     dbg.dassert(
         y_var.endswith("_0"),
         "y_var='%s' is not a valid name to generate lagging variables",
@@ -36,7 +37,7 @@ def get_lagged_feature_names(y_var, delay_lag, num_lags):
     return x_var_shifts, x_vars
 
 
-def compute_lagged_features(df, y_var, delay_lag, num_lags):
+def compute_lagged_features(df: pd.DataFrame, y_var: str, delay_lag: int, num_lags: int) -> Tuple[pd.DataFrame, collections.OrderedDict]:
     """Compute features by adding lags of `y_var` in `df`. The operation is
     performed in-place.
 

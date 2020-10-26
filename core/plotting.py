@@ -7,15 +7,8 @@ import core.plotting as plot
 import calendar
 import logging
 import math
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
-import core.explore as expl
-import core.finance as fin
-import core.signal_processing as sigp
-import core.statistics as stats
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
-import helpers.list as hlist
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
@@ -29,6 +22,14 @@ import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
 import statsmodels.regression.rolling as smrr
+
+import core.explore as expl
+import core.finance as fin
+import core.signal_processing as sigp
+import core.statistics as stats
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
+import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
@@ -383,7 +384,7 @@ def plot_barplot(
     if xlabel:
         ax.set(xlabel=xlabel)
 
-        
+
 # #############################################################################
 # Time series plotting
 # #############################################################################
@@ -456,6 +457,7 @@ def plot_timeseries_per_category(
     if not datetime_types:
         datetime_types = _DATETIME_TYPES
     for datetime_type in datetime_types:
+        categories = cast(List[str], categories)
         rows = math.ceil(len(categories) / 3)
         fig, ax = plt.subplots(
             figsize=(FIG_SIZE[0], rows * 4.5),
@@ -538,7 +540,7 @@ def plot_autocorrelation(
     nrows = len(signal.columns)
     if axes == [[None, None]]:
         _, axes = plt.subplots(nrows=nrows, ncols=2, figsize=(20, 5 * nrows))
-        if axes.size == 2:
+        if axes.size == 2:  # type: ignore
             axes = [axes]
     if title_prefix is None:
         title_prefix = ""
@@ -549,6 +551,7 @@ def plot_autocorrelation(
             data = signal[col].fillna(0).dropna()
         else:
             raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
+        axes = cast(List, axes)
         ax1 = axes[idx][0]
         # Exclude lag zero so that the y-axis does not get squashed.
         acf_title = title_prefix + f"{col} autocorrelation"
@@ -594,13 +597,14 @@ def plot_spectrum(
     nrows = len(signal.columns)
     if axes == [[None, None]]:
         _, axes = plt.subplots(nrows=nrows, ncols=2, figsize=(20, 5 * nrows))
-        if axes.size == 2:
+        if axes.size == 2:  # type: ignore
             axes = [axes]
     for idx, col in enumerate(signal.columns):
         if nan_mode == "conservative":
             data = signal[col].fillna(0).dropna()
         else:
             raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
+        axes = cast(List, axes)
         ax1 = axes[idx][0]
         f_pxx, Pxx = sp.signal.welch(data)
         ax1.semilogy(f_pxx, Pxx)
@@ -659,7 +663,7 @@ def plot_time_series_dict(
         srs = dict_[key]
         srs.to_frame().plot(title=key, ax=axes[i])
 
-        
+
 def plot_histograms_and_lagged_scatterplot(
     srs: pd.Series,
     lag: int,
@@ -671,10 +675,10 @@ def plot_histograms_and_lagged_scatterplot(
     """Plot histograms and scatterplot to test stationarity visually.
 
     Function plots histograms with density plot for 1st and 2nd half of the time
-    series (if the timeseries is stationary, the histogram of the 1st half of 
-    the timeseries would be similar to the histogram of the 2nd half) and 
-    scatter-plot of time series observations versus their lagged values (x_t 
-    versus x_{t - lag}, where lag > 0). If it is stationary the scatter-plot 
+    series (if the timeseries is stationary, the histogram of the 1st half of
+    the timeseries would be similar to the histogram of the 2nd half) and
+    scatter-plot of time series observations versus their lagged values (x_t
+    versus x_{t - lag}, where lag > 0). If it is stationary the scatter-plot
     with its lagged values would resemble a circular cloud.
     """
     hist_kwargs = hist_kwargs or {}
@@ -689,14 +693,14 @@ def plot_histograms_and_lagged_scatterplot(
     plt.suptitle(title or srs.name)
     sns.histplot(srs_first_half, ax=axes[0][0], kde=True, **hist_kwargs)
     axes[0][0].set(
-        xlabel=None, 
-        ylabel=None, 
+        xlabel=None,
+        ylabel=None,
         title="1st half-sample distribution"
     )
     sns.histplot(srs_second_half, ax=axes[0][1], kde=True, **hist_kwargs)
     axes[0][1].set(
-        xlabel=None, 
-        ylabel=None, 
+        xlabel=None,
+        ylabel=None,
         title="2nd half-sample distribution"
     )
     # Plot scatter plot.

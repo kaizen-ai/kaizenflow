@@ -11,6 +11,12 @@ import datetime
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from tqdm.autonotebook import tqdm
+
 import core.dataflow as dtf
 import core.finance as fin
 import core.plotting as plot
@@ -18,11 +24,6 @@ import core.signal_processing as sigp
 import core.statistics as stats
 import core.timeseries_study as tss
 import helpers.dbg as dbg
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from tqdm.autonotebook import tqdm
 
 _LOG = logging.getLogger(__name__)
 
