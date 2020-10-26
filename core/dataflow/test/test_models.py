@@ -64,6 +64,32 @@ class TestContinuousSkLearnModel(hut.TestCase):
         output_df = dag.run_leq_node("sklearn", "fit")["df_out"]
         self.check_string(output_df.to_string())
 
+    def test_fit_dag3(self) -> None:
+        """
+        Test `slm.Lasso` model.
+
+        `Lasso` returns a one-dimensional array for a two-dimensional input.
+        """
+        pred_lag = 1
+        # Load test data.
+        data = self._get_data(pred_lag)
+        data_source_node = dtf.ReadDataFromDf("data", data)
+        # Create DAG and test data node.
+        dag = dtf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Load sklearn config and create modeling node.
+        config = self._get_config(pred_lag)
+        node = dtf.ContinuousSkLearnModel(
+            "sklearn",
+            model_func=slm.Lasso,
+            **config.to_dict(),
+        )
+        dag.add_node(node)
+        dag.connect("data", "sklearn")
+        #
+        output_df = dag.run_leq_node("sklearn", "fit")["df_out"]
+        self.check_string(output_df.to_string())
+
     def test_predict_dag1(self) -> None:
         pred_lag = 1
         # Load test data.

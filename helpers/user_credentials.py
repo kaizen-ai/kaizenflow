@@ -259,7 +259,7 @@ def get_credentials() -> Dict[str, Any]:
         git_user_name = "stanvanrooy"
         git_user_email = "stan@rooy.dev"
         jupyter_port = 9233
-        if server_name == "Lenovo-ideapad-530S-15IKB":
+        if server_name == "DESKTOP-T1P8F7M":
             # Home laptop.
             conda_sh_path = "~/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "~/.conda/envs"

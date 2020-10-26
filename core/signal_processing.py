@@ -487,7 +487,7 @@ def skip_apply_func(
 # #############################################################################
 
 
-def _calculate_tau_from_com(com: float) -> float:
+def _calculate_tau_from_com(com: float) -> Union[float, np.float]:
     """Transform center-of-mass (com) into tau parameter.
 
     This is the function inverse of `_calculate_com_from_tau`.
@@ -496,7 +496,7 @@ def _calculate_tau_from_com(com: float) -> float:
     return 1.0 / np.log(1 + 1.0 / com)
 
 
-def _calculate_com_from_tau(tau: float) -> float:
+def _calculate_com_from_tau(tau: float) -> Union[float, np.float]:
     """Transform tau parameter into center-of-mass (com).
 
     We use the tau parameter for kernels (as in Dacorogna, et al), but for the
@@ -1245,10 +1245,10 @@ def compute_ipca(
     _LOG.debug("alpha = %0.2f", alpha)
     nan_mode = nan_mode or "fill_with_zero"
     df = df.apply(hdf.apply_nan_mode, mode=nan_mode)
-    lambdas = {k: [] for k in range(num_pc)}
+    lambdas: Dict[int, list] = {k: [] for k in range(num_pc)}
     # V's are eigenvectors with norm equal to corresponding eigenvalue.
-    vs = {k: [] for k in range(num_pc)}
-    unit_eigenvecs = {k: [] for k in range(num_pc)}
+    vs: Dict[int, list] = {k: [] for k in range(num_pc)}
+    unit_eigenvecs: Dict[int, list] = {k: [] for k in range(num_pc)}
     step = 0
     for step, n in enumerate(df.index):
         # Initialize u(n).
