@@ -438,13 +438,17 @@
   - Type hinting makes the `:type ...` redundant and you should use only type
     hinting
   - As a result, an example of a function definition is:
-  
+
     ```python
     def my_function(param1: str) -> str:
         """
-        A short description of what the function does.
+        A one-line description of what the function does.
 
-        A longer description with a more detailed explanation.
+        A longer description (possibly on multiple lines) with a more detailed
+        explanation of what the function does, trying to not be redundant with
+        the parameter / return description below. The focus is on the interface
+        and what the user should know to use the function and not how the
+        function is implemented.
 
         :param param1: this is a first param
         :return: this is a description of what is returned
