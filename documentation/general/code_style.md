@@ -437,6 +437,19 @@
     noun or type
   - Type hinting makes the `:type ...` redundant and you should use only type
     hinting
+  - As a result, an example of a function definition is:
+  
+    ```python
+    def my_function(param1: str) -> str:
+        """
+        A short description of what the function does.
+
+        A longer description with a more detailed explanation.
+
+        :param param1: this is a first param
+        :return: this is a description of what is returned
+        """
+    ```
 
 - More examples of and discussions on python docstrings are
   [here](https://stackoverflow.com/questions/3898572)
