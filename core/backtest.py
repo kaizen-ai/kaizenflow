@@ -49,6 +49,7 @@ if True:
         else:
             use_feat_dynamic_real = True
         #
+        y_truncate: Optional[int]
         if use_feat_dynamic_real:
             y_truncate = prediction_length
         else:

@@ -9,7 +9,7 @@ import functools
 import logging
 import math
 import numbers
-from typing import Any, Iterable, List, Optional, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -131,14 +131,16 @@ def count_num_finite_samples(data: pd.Series) -> Union[int, float]:
     """
     if data.empty:
         _LOG.warning("Empty input series `%s`", data.name)
-        return np.nan
+        return np.nan  # type: ignore
     data = data.copy()
     data = replace_infs_with_nans(data)
-    return data.count()
+    ret = data.count()
+    ret = cast(int, ret)
+    return ret
 
 
 # TODO(Paul): Extend to dataframes.
-def count_num_unique_values(data: pd.Series) -> Union[int, float]:
+def count_num_unique_values(data: pd.Series) -> Union[int, float, np.float]:
     """Count number of unique values in the series."""
     if data.empty:
         _LOG.warning("Empty input series `%s`", data.name)
@@ -486,6 +488,7 @@ def compute_sharpe_ratio_prediction_interval_inflation_factor(
     :return: float > 1
     """
     se_inflation_factor = np.sqrt(1 + ins_nobs / oos_nobs)
+    se_inflation_factor = cast(float, se_inflation_factor)
     return se_inflation_factor
 
 
@@ -1154,7 +1157,7 @@ def compute_jensen_ratio(
     # should not expect a finite value in the continuous limit.
     dbg.dassert(np.isfinite(p_norm))
     # Set reasonable defaults for inf and nan modes.
-    inf_mode = inf_mode or "return_nan"
+    inf_mode = inf_mode or "drop"
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     data = hdf.apply_nan_mode(signal, mode=nan_mode)
@@ -1195,6 +1198,7 @@ def compute_jensen_ratio(
 def compute_forecastability(
     signal: pd.Series,
     mode: str = "welch",
+    inf_mode: Optional[str] = None,
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
@@ -1217,8 +1221,19 @@ def compute_forecastability(
     """
     dbg.dassert_isinstance(signal, pd.Series)
     nan_mode = nan_mode or "fill_with_zero"
+    inf_mode = inf_mode or "drop"
     prefix = prefix or ""
     data = hdf.apply_nan_mode(signal, mode=nan_mode)
+    has_infs = (~data.apply(np.isfinite)).any()
+    if has_infs:
+        if inf_mode == "return_nan":
+            return nan_result
+        if inf_mode == "drop":
+            # Replace inf with np.nan and drop.
+            data = data.replace([-np.inf, np.inf], np.nan).dropna()
+        else:
+            raise ValueError(f"Unrecognized inf_mode `{inf_mode}")
+    dbg.dassert(data.apply(np.isfinite).all())
     # Return NaN if there is no data.
     if data.size == 0:
         _LOG.warning("Empty input signal `%s`", signal.name)
@@ -1258,6 +1273,18 @@ def compute_zero_diff_proportion(
     :param atol: as in numpy.isclose
     :param rtol: as in numpy.isclose
     :param nan_mode: argument for hdf.apply_nan_mode()
+        If `nan_mode` is "leave_unchanged":
+          - consecutive `NaN`s are not counted as a constant period
+          - repeated values with `NaN` in between are not counted as a constant
+            period
+        If `nan_mode` is "drop":
+          - the denominator is reduced by the number of `NaN` and `inf` values
+          - repeated values with `NaN` in between are counted as a constant
+            period
+        If `nan_mode` is "ffill":
+          - consecutive `NaN`s are counted as a constant period
+          - repeated values with `NaN` in between are counted as a constant
+            period
     :param prefix: optional prefix for metrics' outcome
     :return: series with proportion of unvarying periods
     """
