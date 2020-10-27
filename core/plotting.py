@@ -667,7 +667,7 @@ def plot_time_series_dict(
 def plot_histograms_and_lagged_scatterplot(
     srs: pd.Series,
     lag: int,
-    title = None,
+    title=None,
     figsize: Optional[Tuple] = None,
     hist_kwargs: Optional[Any] = None,
     scatter_kwargs: Optional[Any] = None,
@@ -692,17 +692,9 @@ def plot_histograms_and_lagged_scatterplot(
     fig, axes = plt.subplots(nrows=2, ncols=2, figsize=figsize)
     plt.suptitle(title or srs.name)
     sns.histplot(srs_first_half, ax=axes[0][0], kde=True, **hist_kwargs)
-    axes[0][0].set(
-        xlabel=None,
-        ylabel=None,
-        title="1st half-sample distribution"
-    )
+    axes[0][0].set(xlabel=None, ylabel=None, title="1st half-sample distribution")
     sns.histplot(srs_second_half, ax=axes[0][1], kde=True, **hist_kwargs)
-    axes[0][1].set(
-        xlabel=None,
-        ylabel=None,
-        title="2nd half-sample distribution"
-    )
+    axes[0][1].set(xlabel=None, ylabel=None, title="2nd half-sample distribution")
     # Plot scatter plot.
     fig.subplots_adjust(hspace=0.25)
     axes[1][0].scatter(srs, srs.shift(lag), **scatter_kwargs)
@@ -1696,6 +1688,7 @@ def plot_rolling_correlation(
     mode: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
     events: Optional[List[Tuple[str, Optional[str]]]] = None,
+    plot_zero_line: bool = True,
 ) -> None:
     """
     Return rolling correlation between 2 series and plot rolling correlation.
@@ -1743,6 +1736,8 @@ def plot_rolling_correlation(
     whole_period = srs1.corr(srs2)
     # Plot correlation whole period.
     ax.axhline(whole_period, ls="--", c="k", label="Whole-period correlation")
+    if plot_zero_line:
+        ax.axhline(0, linewidth=0.8, color="black")
     ax.set_xlabel("period")
     ax.set_ylabel("correlation")
     _maybe_add_events(ax=ax, events=events)
