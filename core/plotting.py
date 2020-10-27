@@ -1737,7 +1737,7 @@ def plot_rolling_correlation(
     # Plot correlation whole period.
     ax.axhline(whole_period, ls="--", c="k", label="Whole-period correlation")
     if plot_zero_line:
-        ax.axhline(0, linewidth=0.8, color="black")
+        ax.axhline(0, linewidth=0.5, color="black")
     ax.set_xlabel("period")
     ax.set_ylabel("correlation")
     _maybe_add_events(ax=ax, events=events)
