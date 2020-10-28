@@ -536,6 +536,8 @@ class DataFrameModeler:
         else:
             oos_start = None
         for col_name in df.columns:
+            df[col_name].replace([-np.inf, np.inf], np.nan, inplace=True)
+            df[col_name].dropna(inplace=True)
             plot.plot_histograms_and_lagged_scatterplot(
                 df[col_name],
                 lag=lag,
