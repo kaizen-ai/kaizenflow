@@ -41,7 +41,7 @@ class DataFrameModeler:
     def __init__(
         self,
         df: pd.DataFrame,
-        oos_start: Optional[float] = None,
+        oos_start: Optional[Union[str, pd.Timestamp, datetime.datetime]] = None,
         info: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
@@ -354,6 +354,24 @@ class DataFrameModeler:
             srs = df[col_name]
             srs.to_frame().plot(title=col_name, ax=axes[i])
 
+    def plot_cumulative_returns(
+        self,
+        cols: Optional[List[Any]] = None,
+        plot_cumulative_returns_kwargs: Optional[Dict[str, Any]] = None,
+        mode_rets: str = "log",
+        mode: str = "ins",
+    ) -> None:
+        df = self._get_df(cols=cols, mode=mode)
+        plot_cumulative_returns_kwargs = plot_cumulative_returns_kwargs or {}
+        cols = df.columns.values
+        cum_rets = df.cumsum()
+        for i in range(df.shape[1]):
+            plot.plot_cumulative_returns(
+                cum_rets.iloc[:, i],
+                mode=mode_rets,
+                **plot_cumulative_returns_kwargs,
+            )
+
     def plot_correlation_with_lag(
         self, lag: int, cols: Optional[List[Any]] = None, mode: str = "ins"
     ) -> pd.DataFrame:
@@ -363,7 +381,27 @@ class DataFrameModeler:
         df = self._get_df(cols=cols, mode=mode)
         # Calculate correlation.
         corr_df = sigp.correlate_with_lag(df, lag=lag)
-        return plot.plot_correlation_matrix(corr_df)
+        plot.plot_heatmap(corr_df)
+        return corr_df
+
+    def plot_correlation_with_lagged_cumsum(
+        self,
+        lag: int,
+        y_vars: List[str],
+        cols: Optional[List[Any]] = None,
+        nan_mode: Optional[str] = None,
+        mode: str = "ins",
+    ) -> pd.DataFrame:
+        """
+        Calculate correlation of `cols` with lagged cumulative sum of `y_vars`.
+        """
+        df = self._get_df(cols=cols, mode=mode)
+        # Calculate correlation.
+        corr_df = sigp.correlate_with_lagged_cumsum(
+            df, lag=lag, y_vars=y_vars, nan_mode=nan_mode
+        )
+        plot.plot_heatmap(corr_df)
+        return corr_df
 
     def plot_autocorrelation(
         self,
@@ -535,7 +573,7 @@ class DataFrameModeler:
             dbg.dassert(
                 self.oos_start, msg="Must set `oos_start` to run `predict()`"
             )
-            model.fit(self._df[self.oos_start :])
+            model.fit(self._df[: self.oos_start])
             info["fit"] = model.get_info("fit")
             df_out = model.predict(self._df)["df_out"]
             info["predict"] = model.get_info("predict")

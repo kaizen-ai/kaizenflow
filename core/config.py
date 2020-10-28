@@ -348,8 +348,8 @@ def convert_to_series(config: Config) -> pd.Series:
     dbg.dassert_isinstance(config, Config)
     dbg.dassert(config, msg="`config` is empty")
     flat = config.flatten()
-    keys = []
-    vals = []
+    keys: List[str] = []
+    vals: List[tuple] = []
     for k, v in flat.items():
         key = ".".join(k)
         keys.append(key)
