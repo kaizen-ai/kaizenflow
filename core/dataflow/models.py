@@ -1632,7 +1632,9 @@ class VolatilityModel(FitPredictNode):
         self._check_cols(df_in, sma)
         normalized_vol = sma[self._fwd_vol_col] ** (1.0 / self._p_moment)
         normalized_vol_hat = sma[self._fwd_vol_col_hat] ** (1.0 / self._p_moment)
-        df_in[self._zscored_col] = df_in[self._col[0]].divide(normalized_vol_hat)
+        df_in[self._zscored_col] = df_in[self._col[0]].divide(
+            normalized_vol_hat.shift(self._steps_ahead)
+        )
         vol_df = pd.DataFrame(
             {
                 self._fwd_vol_col: normalized_vol,
@@ -1653,11 +1655,18 @@ class VolatilityModel(FitPredictNode):
         info = collections.OrderedDict()
         info["sma"] = self._sma_model.get_info("predict")
         self._check_cols(df_in, sma)
-        normalized_vol = sma[self._fwd_vol_col_hat] ** (1.0 / self._p_moment)
+        normalized_vol = sma[self._fwd_vol_col] ** (1.0 / self._p_moment)
+        normalized_vol_hat = sma[self._fwd_vol_col_hat] ** (1.0 / self._p_moment)
         df_in[self._zscored_col] = df_in[self._col[0]].divide(
-            normalized_vol.shift(self._steps_ahead)
+            normalized_vol_hat.shift(self._steps_ahead)
         )
-        df_in = sma.merge(df_in, left_index=True, right_index=True)
+        vol_df = pd.DataFrame(
+            {
+                self._fwd_vol_col: normalized_vol,
+                self._fwd_vol_col_hat: normalized_vol_hat,
+            }
+        )
+        df_in = vol_df.merge(df_in, left_index=True, right_index=True)
         self._set_info("predict", info)
         return {"df_out": df_in}
 
