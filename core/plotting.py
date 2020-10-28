@@ -1712,6 +1712,7 @@ def plot_rolling_correlation(
     mode: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
     events: Optional[List[Tuple[str, Optional[str]]]] = None,
+    plot_zero_line: bool = True,
 ) -> None:
     """
     Return rolling correlation between 2 series and plot rolling correlation.
@@ -1759,6 +1760,8 @@ def plot_rolling_correlation(
     whole_period = srs1.corr(srs2)
     # Plot correlation whole period.
     ax.axhline(whole_period, ls="--", c="k", label="Whole-period correlation")
+    if plot_zero_line:
+        ax.axhline(0, linewidth=0.5, color="black")
     ax.set_xlabel("period")
     ax.set_ylabel("correlation")
     _maybe_add_events(ax=ax, events=events)
