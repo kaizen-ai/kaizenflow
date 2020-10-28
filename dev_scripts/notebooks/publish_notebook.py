@@ -65,6 +65,9 @@ import datetime
 import logging
 import os
 import tempfile
+from typing import List, Tuple, BinaryIO
+
+import requests
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -73,6 +76,8 @@ import helpers.parser as prsr
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
+_NOTEBOOK_KEEPER_SRV = "http://notebook-keeper.p1"
+_NOTEBOOK_KEEPER_ENTRY_POINT = f"{_NOTEBOOK_KEEPER_SRV}/save-file"
 
 
 def _add_tag(file_path: str, tag: str = "") -> str:
@@ -113,13 +118,7 @@ def _export_html(path_to_notebook: str) -> str:
     return dst_path
 
 
-def _create_remote_folder(server_address: str, dir_path: str) -> None:
-    cmd = f"ssh {server_address} mkdir -p {dir_path}"
-    si.system(cmd)
-    _LOG.debug("Remote directory '%s' created.", dir_path)
-
-
-def _copy_to_remote_folder(path_to_file: str, dst_dir: str) -> None:
+def _copy_to_remote_folder(path_to_file: str, remote_dst_path: str) -> None:
     """
     Copy file to a directory on the remote server.
     :param path_to_file: The path to the local file
@@ -127,12 +126,17 @@ def _copy_to_remote_folder(path_to_file: str, dst_dir: str) -> None:
     :param dst_dir: The folder in which the file will be copied
         e.g.: user@server_ip:/http/notebook_publisher
     """
-    file_name = os.path.basename(path_to_file)
-    dst_f_name = os.path.join(dst_dir, file_name)
     # File copying.
-    cmd = f"scp {path_to_file} {dst_f_name}"
-    si.system(cmd)
-    _LOG.debug("Copy '%s' to '%s' over SSH.", file_name, dst_dir)
+    payload: dict = {'dst_path': remote_dst_path}
+    files: List[Tuple[str, BinaryIO]] = [
+        ('file', open(path_to_file, 'rb'))
+    ]
+    response = requests.request("POST",
+                                _NOTEBOOK_KEEPER_ENTRY_POINT,
+                                data=payload,
+                                files=files)
+    _LOG.debug("Response: %s",
+               response.text.encode('utf8'))
 
 
 def _export_to_webpath(path_to_notebook: str, dst_dir: str) -> str:
@@ -268,25 +272,21 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if _ACTION_PUBLISH in args.action:
         _LOG.debug("Action '%s' selected.", _ACTION_PUBLISH)
         # Convert the notebook to the HTML format and move to the PUB location.
-        server_address = "research.p1"
-        publisher_dir = "/http/notebook_publisher"
-        dst_path = f"{publisher_dir}/{args.subdir}"
-        _create_remote_folder(server_address, dst_path)
-        pub_path = f"{server_address}:{dst_path}"
         pub_file_name = os.path.basename(html_file_name)
-        _copy_to_remote_folder(html_file_name, pub_path)
+        remote_dst_path = os.path.join(args.subdir, pub_file_name)
+        _copy_to_remote_folder(html_file_name, remote_dst_path)
         #
         _LOG.debug(
             "Notebook '%s' was converted to the HTML format and stored at '%s'",
             src_file_name,
-            pub_path + pub_file_name,
+            remote_dst_path,
         )
         print(
             f"HTML version of the notebook saved as '{pub_file_name}' "
             f"at the dev server publishing location.\n"
             f"You can view it using this url:"
         )
-        print(f"http://{server_address}:8077/{pub_file_name}")
+        print(f"{_NOTEBOOK_KEEPER_SRV}/{remote_dst_path}")
 
 
 if __name__ == "__main__":
