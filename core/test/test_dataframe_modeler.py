@@ -11,50 +11,66 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestDataFrameModeler(hut.TestCase):
-    def test_fit(self) -> None:
+    def test_sklearnmodel_fit_with_oos(self) -> None:
         pred_lag = 2
         # Load test data.
         data = self._get_data(pred_lag)
         # Load sklearn config.
         config = self._get_config(pred_lag)
         # Create DataFrame Modeler object.
-        df_modeler = dfmod.DataFrameModeler(
-            df=data, oos_start=config["oos_start"]
-        )
+        df_modeler = dfmod.DataFrameModeler(df=data, oos_start="2010-03-01")
         # Apply sklearn model with fit method.
-        output = df_modeler.apply_sklearn_model(
-            model_func=slm.LinearRegression,
-            x_vars=config["x"],
-            y_vars=config["y"],
-            steps_ahead=config["steps_ahead"],
-            method="fit",
-        )
+        output = df_modeler.apply_sklearn_model(**config.to_dict())
         output_df = output.df
-        info_fit = output.get_info("fit")
+        info_fit = output.info["fit"]
         _LOG.info("Info Fit %s", info_fit)
         self.check_string(output_df.to_string())
 
-    def test_predict(self) -> None:
+    def test_sklearnmodel_predict_with_oos(self) -> None:
         pred_lag = 2
         # Load test data.
         data = self._get_data(pred_lag)
         # Load sklearn config.
         config = self._get_config(pred_lag)
         # Create DataFrame Modeler object.
-        df_modeler = dfmod.DataFrameModeler(
-            df=data, oos_start=config["oos_start"]
-        )
+        df_modeler = dfmod.DataFrameModeler(df=data, oos_start="2010-03-01")
         # Apply sklearn model with predict method.
-        output_df = df_modeler.apply_sklearn_model(
-            model_func=slm.LinearRegression,
-            x_vars=config["x"],
-            y_vars=config["y"],
-            steps_ahead=config["steps_ahead"],
-            method="predict",
-        )
+        output = df_modeler.apply_sklearn_model(**config.to_dict(), method = "predict")
         output_df = output.df
-        info_fit = output.get_info("fit")
-        info_predict = output.get_info("predict")
+        info_fit = output.info["fit"]
+        info_predict = output.info["predict"]
+        _LOG.info("Info Fit %s", info_fit)
+        _LOG.info("Info Predict %s", info_predict)
+        self.check_string(output_df.to_string())
+
+    def test_sklearnmodel_fit_without_oos(self) -> None:
+        pred_lag = 2
+        # Load test data.
+        data = self._get_data(pred_lag)
+        # Load sklearn config.
+        config = self._get_config(pred_lag)
+        # Create DataFrame Modeler object.
+        df_modeler = dfmod.DataFrameModeler(df=data)
+        # Apply sklearn model with fit method.
+        output = df_modeler.apply_sklearn_model(**config.to_dict())
+        output_df = output.df
+        info_fit = output.info["fit"]
+        _LOG.info("Info Fit %s", info_fit)
+        self.check_string(output_df.to_string())
+
+    def test_sklearnmodel_predict_without_oos(self) -> None:
+        pred_lag = 2
+        # Load test data.
+        data = self._get_data(pred_lag)
+        # Load sklearn config.
+        config = self._get_config(pred_lag)
+        # Create DataFrame Modeler object.
+        df_modeler = dfmod.DataFrameModeler(df=data)
+        # Apply sklearn model with predict method.
+        output = df_modeler.apply_sklearn_model(**config.to_dict(), method = "predict")
+        output_df = output.df
+        info_fit = output.info["fit"]
+        info_predict = output.info["predict"]
         _LOG.info("Info Fit %s", info_fit)
         _LOG.info("Info Predict %s", info_predict)
         self.check_string(output_df.to_string())
@@ -64,9 +80,7 @@ class TestDataFrameModeler(hut.TestCase):
         config["x_vars"] = ["x"]
         config["y_vars"] = ["y"]
         config["steps_ahead"] = steps_ahead
-        config["oos_start"] = "2010-02-30"
-        config_kwargs = config.add_subconfig("model_kwargs")
-        config_kwargs["alpha"] = 0.5
+        config["model_func"] = slm.LinearRegression
         return config
 
     def _get_data(self, lag: int) -> pd.DataFrame:
