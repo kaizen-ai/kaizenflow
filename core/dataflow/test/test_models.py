@@ -14,7 +14,6 @@ import core.config as cfg
 import core.config_builders as cfgb
 import core.dataflow as dtf
 import core.signal_processing as sigp
-import helpers.dbg as dbg
 import helpers.printing as prnt
 import helpers.unit_test as hut
 
@@ -530,19 +529,6 @@ class TestContinuousSarimaxModel(hut.TestCase):
         )
         return config
 
-    @staticmethod
-    def _compare_non_nan_intersection(
-        df1: pd.DataFrame, df2: pd.DataFrame
-    ) -> None:
-        dbg.dassert(
-            df1.columns.equals(df2.columns),
-            "Comparison of dataframes with different columns is not supported",
-        )
-        for col in df1.columns:
-            df1[col].dropna()
-            df2[col].dropna()
-            dbg.dassert
-
 
 class TestResidualizer(hut.TestCase):
     def test_fit_dag1(self) -> None:
@@ -710,6 +696,32 @@ class TestVolatilityModel(hut.TestCase):
         output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
         self.check_string(output_df.to_string())
 
+    def test_fit_dag_correctness1(self) -> None:
+        # Load test data.
+        data = self._get_data()
+        data_source_node = dtf.ReadDataFromDf("data", data)
+        # Create DAG and test data node.
+        dag = dtf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Specify config and create modeling node.
+        config = cfg.Config()
+        config["col"] = ["ret_0"]
+        config["steps_ahead"] = 2
+        config["nan_mode"] = "drop"
+        node = dtf.VolatilityModel("vol_model", **config.to_dict())
+        dag.add_node(node)
+        dag.connect("data", "vol_model")
+        # Z-score.
+        zscore_df = dag.run_leq_node("vol_model", "fit")["df_out"]
+        # Invert z-scoring.
+        ret_0_vol_0_hat = zscore_df["ret_0_vol_2_hat"].shift(2)
+        inverted_rets = (ret_0_vol_0_hat * zscore_df["ret_0_zscored"]).rename(
+            "ret_0_inverted"
+        )
+        # Compare results.
+        output_df = zscore_df.join(inverted_rets)
+        self.check_string(hut.convert_df_to_string(output_df, index=True))
+
     def test_predict_dag1(self) -> None:
         # Load test data.
         data = self._get_data()
@@ -733,6 +745,37 @@ class TestVolatilityModel(hut.TestCase):
         dag.run_leq_node("vol_model", "fit")
         output_df = dag.run_leq_node("vol_model", "predict")["df_out"]
         self.check_string(output_df.to_string())
+
+    def test_predict_dag_correctness1(self) -> None:
+        # Load test data.
+        data = self._get_data()
+        fit_interval = ("2000-01-01", "2000-02-10")
+        predict_interval = ("2000-01-20", "2000-02-23")
+        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node.set_fit_intervals([fit_interval])
+        data_source_node.set_predict_intervals([predict_interval])
+        # Create DAG and test data node.
+        dag = dtf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Specify config and create modeling node.
+        config = cfg.Config()
+        config["col"] = ["ret_0"]
+        config["steps_ahead"] = 2
+        config["nan_mode"] = "drop"
+        node = dtf.VolatilityModel("vol_model", **config.to_dict())
+        dag.add_node(node)
+        dag.connect("data", "vol_model")
+        #
+        dag.run_leq_node("vol_model", "fit")
+        zscore_df = dag.run_leq_node("vol_model", "predict")["df_out"]
+        # Invert z-scoring.
+        ret_0_vol_0_hat = zscore_df["ret_0_vol_2_hat"].shift(2)
+        inverted_rets = (ret_0_vol_0_hat * zscore_df["ret_0_zscored"]).rename(
+            "ret_0_inverted"
+        )
+        # Compare results.
+        output_df = zscore_df.join(inverted_rets)
+        self.check_string(hut.convert_df_to_string(output_df, index=True))
 
     @staticmethod
     def _get_data() -> pd.DataFrame:
