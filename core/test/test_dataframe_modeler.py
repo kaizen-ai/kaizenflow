@@ -22,7 +22,7 @@ class TestDataFrameModeler(hut.TestCase):
         info_fit = output.info["fit"]
         str_output = (
             f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df)}\n"
+            f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
             f"{hut.convert_info_to_string(info_fit)}"
         )
         self.check_string(str_output)
@@ -40,7 +40,7 @@ class TestDataFrameModeler(hut.TestCase):
         output.info["predict"]
         str_output = (
             f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df)}\n"
+            f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
             f"{hut.convert_info_to_string(info_fit)}"
         )
         self.check_string(str_output)
@@ -55,7 +55,7 @@ class TestDataFrameModeler(hut.TestCase):
         info_fit = output.info["fit"]
         str_output = (
             f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df)}\n"
+            f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
             f"{hut.convert_info_to_string(info_fit)}"
         )
         self.check_string(str_output)
@@ -69,12 +69,6 @@ class TestDataFrameModeler(hut.TestCase):
             output = df_modeler.apply_sklearn_model(
                 **config.to_dict(), method="predict"
             )
-            output_df = output.df
-            str_output = (
-                f"{prnt.frame('config')}\n{config}\n"
-                f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df)}\n"
-            )
-            self.check_string(str_output)
 
     def _get_config(self, steps_ahead: int) -> cfg.Config:
         config = cfg.Config()
