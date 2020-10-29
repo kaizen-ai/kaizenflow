@@ -215,7 +215,7 @@ def plot_projection(
     :param colormap: matplotlib colormap or colormap name
     """
     special_values = special_values or [None]
-    mode = mode or "scatter"
+    mode = mode or "no-scatter"
     ax = ax or plt.gca()
     ax.set_yticklabels([])
     dbg.dassert_strictly_increasing_index(df)
