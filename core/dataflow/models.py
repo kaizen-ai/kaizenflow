@@ -1636,10 +1636,8 @@ class VolatilityModel(FitPredictNode):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_not_in(self._vol_col, df_in.columns)
         df_in = df_in.copy()
-        vol = pd.Series(
-            np.abs(df_in[self._col[0]]) ** self._p_moment, name=self._vol_col
-        ).to_frame()
-        sma = self._sma_model.predict(vol)["df_out"]
+        vol_power = self._calculate_vol_power(df_in)
+        sma = self._sma_model.predict(vol_power)["df_out"]
         info = collections.OrderedDict()
         info["sma"] = self._sma_model.get_info("predict")
         df_in = self._add_vol_and_zscore(df_in, sma)
