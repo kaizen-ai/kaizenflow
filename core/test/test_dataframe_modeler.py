@@ -3,6 +3,7 @@ import logging
 import core.artificial_signal_generators as sig_gen
 import core.config as cfg
 import core.dataframe_modeler as dfmod
+import helpers.printing as prnt
 import helpers.unit_test as hut
 import pandas as pd
 import sklearn.linear_model as slm
@@ -11,7 +12,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestDataFrameModeler(hut.TestCase):
-    def test_continioussklearnmodel_fit_with_oos(self) -> None:
+    def test_apply_sklearn_model_fit_with_oos(self) -> None:
         pred_lag = 2
         data = self._get_data(pred_lag)
         config = self._get_config(pred_lag)
@@ -19,10 +20,14 @@ class TestDataFrameModeler(hut.TestCase):
         output = df_modeler.apply_sklearn_model(**config.to_dict())
         output_df = output.df
         info_fit = output.info["fit"]
-        self.check_string(output_df.to_string())
-        self.check_string(info_fit.to_string())
+        str_output = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df)}\n"
+            f"{hut.convert_info_to_string(info_fit)}"
+        )
+        self.check_string(str_output)
 
-    def test_continioussklearnmodel_predict_with_oos(self) -> None:
+    def test_apply_sklearn_model_predict_with_oos(self) -> None:
         pred_lag = 2
         data = self._get_data(pred_lag)
         config = self._get_config(pred_lag)
@@ -32,12 +37,15 @@ class TestDataFrameModeler(hut.TestCase):
         )
         output_df = output.df
         info_fit = output.info["fit"]
-        info_predict = output.info["predict"]
-        self.check_string(output_df.to_string())
-        self.check_string(info_fit.to_string())
-        self.check_string(info_predict.to_string())
+        output.info["predict"]
+        str_output = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df)}\n"
+            f"{hut.convert_info_to_string(info_fit)}"
+        )
+        self.check_string(str_output)
 
-    def test_continioussklearnmodel_fit_without_oos(self) -> None:
+    def test_apply_sklearn_model_fit_without_oos(self) -> None:
         pred_lag = 2
         data = self._get_data(pred_lag)
         config = self._get_config(pred_lag)
@@ -45,10 +53,14 @@ class TestDataFrameModeler(hut.TestCase):
         output = df_modeler.apply_sklearn_model(**config.to_dict())
         output_df = output.df
         info_fit = output.info["fit"]
-        self.check_string(output_df.to_string())
-        self.check_string(info_fit.to_string())
+        str_output = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df)}\n"
+            f"{hut.convert_info_to_string(info_fit)}"
+        )
+        self.check_string(str_output)
 
-    def test_continioussklearnmodel_predict_without_oos(self) -> None:
+    def test_apply_sklearn_model_predict_without_oos(self) -> None:
         pred_lag = 2
         data = self._get_data(pred_lag)
         config = self._get_config(pred_lag)
@@ -58,11 +70,11 @@ class TestDataFrameModeler(hut.TestCase):
                 **config.to_dict(), method="predict"
             )
             output_df = output.df
-            info_fit = output.info["fit"]
-            info_predict = output.info["predict"]
-            self.check_string(output_df.to_string())
-            self.check_string(info_fit.to_string())
-            self.check_string(info_predict.to_string())
+            str_output = (
+                f"{prnt.frame('config')}\n{config}\n"
+                f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df)}\n"
+            )
+            self.check_string(str_output)
 
     def _get_config(self, steps_ahead: int) -> cfg.Config:
         config = cfg.Config()
