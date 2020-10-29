@@ -1,4 +1,5 @@
-"""Import as:
+"""
+Import as:
 
 import core.plotting as plot
 """
@@ -6,7 +7,7 @@ import core.plotting as plot
 import calendar
 import logging
 import math
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import matplotlib as mpl
 import matplotlib.cm as cm
@@ -312,57 +313,37 @@ def plot_counts(
     :param figsize: size of the plot
     :param rotation: rotation of xtick labels
     """
-    # Get default values for plot title and label.
-    if not figsize:
-        figsize = FIG_SIZE
-    # Display a number of unique values in сolumn.
-    print("Number of unique values: %d" % counts.index.nunique())
-    if top_n_to_print == 0:
-        # Do not show anything.
-        pass
-    else:
-        counts_tmp = counts.copy()
-        counts.sort_values(ascending=False, inplace=True)
-        if top_n_to_print is not None:
-            dbg.dassert_lte(1, top_n_to_print)
-            counts_tmp = counts_tmp[:top_n_to_print]
-            print("Up to first %d unique labels:" % top_n_to_print)
-        else:
-            print("All unique labels:")
-        print(counts_tmp)
-    # Plot horizontally or vertically, depending on counts number.
+    dbg.dassert_isinstance(counts, pd.Series)
+    figsize = figsize or FIG_SIZE
+    counts = counts.sort_values(ascending=False)
+    # Display the top n counts.
+    top_n_to_print = top_n_to_print or counts.size
+    if top_n_to_print != 0:
+        top_n_to_print = min(top_n_to_print, counts.size)
+        print(
+            f"First {top_n_to_print} out of {counts.size} labels:\n"
+            f"{counts[:top_n_to_print].to_string()}"
+        )
+    # Plot the top n counts.
     if top_n_to_plot == 0:
-        # Do not show anything.
-        pass
+        return
+    top_n_to_plot = top_n_to_plot or counts.size
+    # Plot horizontally or vertically, depending on counts number.
+    if top_n_to_plot > 20:
+        ylen = math.ceil(top_n_to_plot / 26) * 5
+        figsize = (figsize[0], ylen)
+        orientation = "horizontal"
     else:
-        counts_tmp = counts.copy()
-        # Subset N values to plot.
-        if top_n_to_plot is not None:
-            dbg.dassert_lte(1, top_n_to_plot)
-            counts_tmp = counts_tmp[:top_n_to_plot]
-        if len(counts_tmp) > 20:
-            # Plot large number of categories horizontally.
-            counts_tmp.sort_values(ascending=True, inplace=True)
-            ylen = math.ceil(len(counts_tmp) / 26) * 5
-            figsize = (figsize[0], ylen)
-            plot_barplot(
-                counts_tmp,
-                orientation="horizontal",
-                title=plot_title,
-                figsize=figsize,
-                xlabel=label,
-                rotation=rotation,
-            )
-        else:
-            # Plot small number of categories vertically.
-            plot_barplot(
-                counts_tmp,
-                orientation="vertical",
-                title=plot_title,
-                figsize=figsize,
-                xlabel=label,
-                rotation=rotation,
-            )
+        orientation = "vertical"
+    plot_barplot(
+        counts[:top_n_to_plot],
+        orientation=orientation,
+        title=plot_title,
+        figsize=figsize,
+        xlabel=label,
+        rotation=rotation,
+        unicolor=True,
+    )
 
 
 def plot_barplot(
@@ -419,7 +400,7 @@ def plot_barplot(
         srs_top_n = srs_sorted[:top_n_to_plot]
     # Choose colors.
     if unicolor:
-        color = sns.color_palette("muted")[0]
+        color = sns.color_palette("deep")[0]
     else:
         color_palette = color_palette or sns.diverging_palette(10, 133, n=2)
         color = (srs > 0).map({True: color_palette[-1], False: color_palette[0]})
@@ -531,6 +512,7 @@ def plot_timeseries_per_category(
     if not datetime_types:
         datetime_types = _DATETIME_TYPES
     for datetime_type in datetime_types:
+        categories = cast(List[str], categories)
         rows = math.ceil(len(categories) / 3)
         fig, ax = plt.subplots(
             figsize=(FIG_SIZE[0], rows * 4.5),
@@ -613,15 +595,18 @@ def plot_autocorrelation(
     nrows = len(signal.columns)
     if axes == [[None, None]]:
         _, axes = plt.subplots(nrows=nrows, ncols=2, figsize=(20, 5 * nrows))
-        if axes.size == 2:
+        if axes.size == 2:  # type: ignore
             axes = [axes]
     if title_prefix is None:
         title_prefix = ""
+    # Replacing inf with nan to ensure non-empty plots generated.
+    signal = stats.replace_infs_with_nans(signal)
     for idx, col in enumerate(signal.columns):
         if nan_mode == "conservative":
             data = signal[col].fillna(0).dropna()
         else:
             raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
+        axes = cast(List, axes)
         ax1 = axes[idx][0]
         # Exclude lag zero so that the y-axis does not get squashed.
         acf_title = title_prefix + f"{col} autocorrelation"
@@ -662,16 +647,19 @@ def plot_spectrum(
         signal = signal.to_frame()
     if title_prefix is None:
         title_prefix = ""
+    # Replacing inf with nan to ensure non-empty plots generated.
+    signal = stats.replace_infs_with_nans(signal)
     nrows = len(signal.columns)
     if axes == [[None, None]]:
         _, axes = plt.subplots(nrows=nrows, ncols=2, figsize=(20, 5 * nrows))
-        if axes.size == 2:
+        if axes.size == 2:  # type: ignore
             axes = [axes]
     for idx, col in enumerate(signal.columns):
         if nan_mode == "conservative":
             data = signal[col].fillna(0).dropna()
         else:
             raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
+        axes = cast(List, axes)
         ax1 = axes[idx][0]
         f_pxx, Pxx = sp.signal.welch(data)
         ax1.semilogy(f_pxx, Pxx)
@@ -690,7 +678,7 @@ def plot_spectrum(
 def plot_time_series_dict(
     dict_: Dict[str, pd.Series],
     num_plots: Optional[int] = None,
-    num_cols: Optional[int] = 2,
+    num_cols: Optional[int] = None,
     y_scale: Optional[float] = 4,
     sharex: bool = True,
     sharey: bool = False,
@@ -716,6 +704,7 @@ def plot_time_series_dict(
             _LOG.warning("Excluded empty series: %s", excluded_series)
         dict_ = non_empty_dict_
     num_plots = num_plots or len(dict_)
+    num_cols = num_cols or 2
     # Create figure to accommodate plots.
     _, axes = get_multiple_plots(
         num_plots=num_plots,
@@ -729,6 +718,57 @@ def plot_time_series_dict(
     for i, key in enumerate(keys_to_draw):
         srs = dict_[key]
         srs.to_frame().plot(title=key, ax=axes[i])
+
+
+def plot_histograms_and_lagged_scatterplot(
+    srs: pd.Series,
+    lag: int,
+    oos_start: Optional[str] = None,
+    title: Optional[str] = None,
+    figsize: Optional[Tuple] = None,
+    hist_kwargs: Optional[Any] = None,
+    scatter_kwargs: Optional[Any] = None,
+) -> None:
+    """Plot histograms and scatterplot to test stationarity visually.
+
+    Function plots histograms with density plot for 1st and 2nd part of the time
+    series (splitted by oos_start if provided otherwise to two equal halves).
+    If the timeseries is stationary, the histogram of the 1st part of
+    the timeseries would be similar to the histogram of the 2nd part) and
+    scatter-plot of time series observations versus their lagged values (x_t
+    versus x_{t - lag}, where lag > 0). If it is stationary the scatter-plot
+    with its lagged values would resemble a circular cloud.
+    """
+    dbg.dassert(isinstance(srs, pd.Series), "Input must be Series")
+    dbg.dassert_monotonic_index(srs, "Index must be monotonic")
+    hist_kwargs = hist_kwargs or {}
+    scatter_kwargs = scatter_kwargs or {}
+    # Divide timeseries to two parts.
+    oos_start = oos_start or srs.index.tolist()[len(srs) // 2]
+    srs_first_part = srs[:oos_start]
+    srs_second_part = srs[oos_start:]
+    # Plot histograms.
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=figsize)
+    plt.suptitle(title or srs.name)
+    sns.histplot(
+        srs_first_part, ax=axes[0][0], kde=True, stat="probability", **hist_kwargs
+    )
+    axes[0][0].set(xlabel=None, ylabel=None, title="Sample distribution split 1")
+    sns.histplot(
+        srs_second_part,
+        ax=axes[0][1],
+        kde=True,
+        stat="probability",
+        **hist_kwargs,
+    )
+    axes[0][1].set(xlabel=None, ylabel=None, title="Sample distribution split 2")
+    # Plot scatter plot.
+    fig.subplots_adjust(hspace=0.25)
+    axes[1][0].scatter(srs, srs.shift(lag), **scatter_kwargs)
+    axes[1][0].set(xlabel="Values", ylabel="Values with lag={}".format(lag))
+    axes[1][0].set_title("Scatter-plot with lag={}".format(lag))
+    fig.delaxes(axes[1][1])
+    plt.show()
 
 
 # #############################################################################
@@ -758,7 +798,6 @@ def plot_heatmap(
     :param ax: axes in which to draw the plot
     """
     # Sanity check.
-    dbg.dassert_eq(corr_df.shape[0], corr_df.shape[1])
     if corr_df.empty:
         _LOG.warning("Can't plot heatmap for empty `corr_df`")
         return
@@ -1160,7 +1199,7 @@ def plot_cumulative_returns(
         title = "Cumulative returns"
     else:
         raise ValueError("Invalid mode='%s'" % mode)
-    label = cumulative_rets.name or "returns"
+    label = str(cumulative_rets.name) or "returns"
     #
     ax = ax or plt.gca()
     cumulative_rets.plot(ax=ax, title=f"{title}{title_suffix}", label=label)
@@ -1176,6 +1215,7 @@ def plot_cumulative_returns(
     _maybe_add_events(ax=ax, events=events)
     ax.set_ylabel(unit)
     ax.legend()
+    ax.autoscale()
 
 
 def plot_rolling_annualized_volatility(
@@ -1716,6 +1756,7 @@ def plot_rolling_correlation(
     mode: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
     events: Optional[List[Tuple[str, Optional[str]]]] = None,
+    plot_zero_line: bool = True,
 ) -> None:
     """
     Return rolling correlation between 2 series and plot rolling correlation.
@@ -1763,6 +1804,8 @@ def plot_rolling_correlation(
     whole_period = srs1.corr(srs2)
     # Plot correlation whole period.
     ax.axhline(whole_period, ls="--", c="k", label="Whole-period correlation")
+    if plot_zero_line:
+        ax.axhline(0, linewidth=0.5, color="black")
     ax.set_xlabel("period")
     ax.set_ylabel("correlation")
     _maybe_add_events(ax=ax, events=events)

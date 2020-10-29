@@ -280,7 +280,7 @@
 
 - Makes sure you have English checker in all your tools:
   - Pycharm: you can use
-    [this](https://plugins.jetbrains.com/plugin/1574-spell-checker-english-dictionary)
+    [this](https://plugins.jetbrains.com/plugin/12175-grazie)
     plugin
   - Vim: `set spell`
   - Emacs: TBD (something bloated and probably broken)

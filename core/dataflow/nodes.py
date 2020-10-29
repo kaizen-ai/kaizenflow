@@ -598,7 +598,7 @@ class TimeBarResampler(Transformer):
         self,
         nid: str,
         rule: Union[pd.DateOffset, pd.Timedelta, str],
-        return_cols: list,
+        return_cols: Optional[list] = None,
         return_agg_func: Optional[str] = None,
         return_agg_func_kwargs: Optional[dict] = None,
         price_cols: Optional[list] = None,
@@ -643,6 +643,42 @@ class TimeBarResampler(Transformer):
             volume_cols=self._volume_cols,
             volume_agg_func=self._volume_agg_func,
             volume_agg_func_kwargs=self._volume_agg_func_kwargs,
+        )
+        #
+        info: collections.OrderedDict[str, Any] = collections.OrderedDict()
+        info["df_transformed_info"] = get_df_info_as_string(df)
+        return df, info
+
+
+class TwapVwapComputer(Transformer):
+    def __init__(
+        self,
+        nid: str,
+        rule: Union[pd.DateOffset, pd.Timedelta, str],
+        price_col: Any,
+        volume_col: Any,
+    ) -> None:
+        """
+        Calculate TWAP and VWAP prices from price and volume columns.
+
+        This function wraps `compute_twap_vwap()`. Params as in that function.
+
+        :param nid: node identifier
+        """
+        super().__init__(nid)
+        self._rule = rule
+        self._price_col = price_col
+        self._volume_col = volume_col
+
+    def _transform(
+        self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
+        df = df.copy()
+        df = fin.compute_twap_vwap(
+            df,
+            self._rule,
+            price_col=self._price_col,
+            volume_col=self._volume_col,
         )
         #
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
