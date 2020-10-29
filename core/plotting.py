@@ -267,6 +267,7 @@ def plot_counts(
         figsize=figsize,
         xlabel=label,
         rotation=rotation,
+        unicolor=True,
     )
 
 
@@ -324,7 +325,7 @@ def plot_barplot(
         srs_top_n = srs_sorted[:top_n_to_plot]
     # Choose colors.
     if unicolor:
-        color = sns.color_palette("muted")[0]
+        color = sns.color_palette("deep")[0]
     else:
         color_palette = color_palette or sns.diverging_palette(10, 133, n=2)
         color = (srs > 0).map({True: color_palette[-1], False: color_palette[0]})
