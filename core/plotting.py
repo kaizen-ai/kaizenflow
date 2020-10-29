@@ -1729,10 +1729,14 @@ def plot_rolling_correlation(
     whole_period = srs1.corr(srs2)
     # Plot correlation whole period.
     ax.axhline(
-        whole_period, ls="--", c="darkviolet", label="Whole-period correlation"
+        whole_period,
+        linewidth=0.8,
+        ls="--",
+        c="darkviolet",
+        label="Whole-period correlation",
     )
     if plot_zero_line:
-        ax.axhline(0, linewidth=0.5, color="k")
+        ax.axhline(0, linewidth=0.8, color="k")
     ax.set_xlabel("period")
     ax.set_ylabel("correlation")
     _maybe_add_events(ax=ax, events=events)
