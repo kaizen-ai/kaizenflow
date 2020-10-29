@@ -649,6 +649,7 @@ def plot_histograms_and_lagged_scatterplot(
     srs: pd.Series,
     lag: int,
     oos_start: Optional[str] = None,
+    nan_mode: Optional[str] = None,
     title: Optional[str] = None,
     figsize: Optional[Tuple] = None,
     hist_kwargs: Optional[Any] = None,
@@ -657,17 +658,21 @@ def plot_histograms_and_lagged_scatterplot(
     """Plot histograms and scatterplot to test stationarity visually.
 
     Function plots histograms with density plot for 1st and 2nd part of the time
-    series (splitted by oos_start if provided otherwise to two equal halves).
-    If the timeseries is stationary, the histogram of the 1st part of
-    the timeseries would be similar to the histogram of the 2nd part) and
-    scatter-plot of time series observations versus their lagged values (x_t
-    versus x_{t - lag}, where lag > 0). If it is stationary the scatter-plot
-    with its lagged values would resemble a circular cloud.
+    series (splitted by oos_start if provided otherwise to two equal halves). 
+    If the timeseries is stationary, the histogram of the 1st part of 
+    the timeseries would be similar to the histogram of the 2nd part) and 
+    scatter-plot of time series observations versus their lagged values (x_t 
+    versus x_{t - lag}). If it is stationary the scatter-plot with its lagged 
+    values would resemble a circular cloud.
     """
     dbg.dassert(isinstance(srs, pd.Series), "Input must be Series")
     dbg.dassert_monotonic_index(srs, "Index must be monotonic")
     hist_kwargs = hist_kwargs or {}
     scatter_kwargs = scatter_kwargs or {}
+    # Handle inf and nan.
+    srs = srs.replace([-np.inf, np.inf], np.nan)
+    nan_mode = nan_mode or "drop"
+    srs = hdf.apply_nan_mode(srs, mode=nan_mode)
     # Divide timeseries to two parts.
     oos_start = oos_start or srs.index.tolist()[len(srs) // 2]
     srs_first_part = srs[:oos_start]
@@ -688,11 +693,11 @@ def plot_histograms_and_lagged_scatterplot(
     )
     axes[0][1].set(xlabel=None, ylabel=None, title="Sample distribution split 2")
     # Plot scatter plot.
-    fig.subplots_adjust(hspace=0.25)
     axes[1][0].scatter(srs, srs.shift(lag), **scatter_kwargs)
     axes[1][0].set(xlabel="Values", ylabel="Values with lag={}".format(lag))
     axes[1][0].set_title("Scatter-plot with lag={}".format(lag))
     fig.delaxes(axes[1][1])
+    fig.tight_layout()
     plt.show()
 
 
