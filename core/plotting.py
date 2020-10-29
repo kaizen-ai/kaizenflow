@@ -238,57 +238,37 @@ def plot_counts(
     :param figsize: size of the plot
     :param rotation: rotation of xtick labels
     """
-    # Get default values for plot title and label.
-    if not figsize:
-        figsize = FIG_SIZE
-    # Display a number of unique values in сolumn.
-    print("Number of unique values: %d" % counts.index.nunique())
-    if top_n_to_print == 0:
-        # Do not show anything.
-        pass
-    else:
-        counts_tmp = counts.copy()
-        counts.sort_values(ascending=False, inplace=True)
-        if top_n_to_print is not None:
-            dbg.dassert_lte(1, top_n_to_print)
-            counts_tmp = counts_tmp[:top_n_to_print]
-            print("Up to first %d unique labels:" % top_n_to_print)
-        else:
-            print("All unique labels:")
-        print(counts_tmp)
-    # Plot horizontally or vertically, depending on counts number.
+    dbg.dassert_isinstance(counts, pd.Series)
+    figsize = figsize or FIG_SIZE
+    counts = counts.sort_values(ascending=False)
+    # Display the top n counts.
+    top_n_to_print = top_n_to_print or counts.size
+    if top_n_to_print != 0:
+        top_n_to_print = min(top_n_to_print, counts.size)
+        print(
+            f"First {top_n_to_print} out of {counts.size} labels:\n"
+            f"{counts[:top_n_to_print].to_string()}"
+        )
+    # Plot the top n counts.
     if top_n_to_plot == 0:
-        # Do not show anything.
-        pass
+        return
+    top_n_to_plot = top_n_to_plot or counts.size
+    # Plot horizontally or vertically, depending on counts number.
+    if top_n_to_plot > 20:
+        ylen = math.ceil(top_n_to_plot / 26) * 5
+        figsize = (figsize[0], ylen)
+        orientation = "horizontal"
     else:
-        counts_tmp = counts.copy()
-        # Subset N values to plot.
-        if top_n_to_plot is not None:
-            dbg.dassert_lte(1, top_n_to_plot)
-            counts_tmp = counts_tmp[:top_n_to_plot]
-        if len(counts_tmp) > 20:
-            # Plot large number of categories horizontally.
-            counts_tmp.sort_values(ascending=True, inplace=True)
-            ylen = math.ceil(len(counts_tmp) / 26) * 5
-            figsize = (figsize[0], ylen)
-            plot_barplot(
-                counts_tmp,
-                orientation="horizontal",
-                title=plot_title,
-                figsize=figsize,
-                xlabel=label,
-                rotation=rotation,
-            )
-        else:
-            # Plot small number of categories vertically.
-            plot_barplot(
-                counts_tmp,
-                orientation="vertical",
-                title=plot_title,
-                figsize=figsize,
-                xlabel=label,
-                rotation=rotation,
-            )
+        orientation = "vertical"
+    plot_barplot(
+        counts[:top_n_to_plot],
+        orientation=orientation,
+        title=plot_title,
+        figsize=figsize,
+        xlabel=label,
+        rotation=rotation,
+        unicolor=True,
+    )
 
 
 def plot_barplot(
@@ -345,7 +325,7 @@ def plot_barplot(
         srs_top_n = srs_sorted[:top_n_to_plot]
     # Choose colors.
     if unicolor:
-        color = sns.color_palette("muted")[0]
+        color = sns.color_palette("deep")[0]
     else:
         color_palette = color_palette or sns.diverging_palette(10, 133, n=2)
         color = (srs > 0).map({True: color_palette[-1], False: color_palette[0]})
@@ -623,7 +603,7 @@ def plot_spectrum(
 def plot_time_series_dict(
     dict_: Dict[str, pd.Series],
     num_plots: Optional[int] = None,
-    num_cols: Optional[int] = 2,
+    num_cols: Optional[int] = None,
     y_scale: Optional[float] = 4,
     sharex: bool = True,
     sharey: bool = False,
@@ -649,6 +629,7 @@ def plot_time_series_dict(
             _LOG.warning("Excluded empty series: %s", excluded_series)
         dict_ = non_empty_dict_
     num_plots = num_plots or len(dict_)
+    num_cols = num_cols or 2
     # Create figure to accommodate plots.
     _, axes = get_multiple_plots(
         num_plots=num_plots,
@@ -676,11 +657,11 @@ def plot_histograms_and_lagged_scatterplot(
     """Plot histograms and scatterplot to test stationarity visually.
 
     Function plots histograms with density plot for 1st and 2nd part of the time
-    series (splitted by oos_start if provided otherwise to two equal halves). 
-    If the timeseries is stationary, the histogram of the 1st part of 
-    the timeseries would be similar to the histogram of the 2nd part) and 
-    scatter-plot of time series observations versus their lagged values (x_t 
-    versus x_{t - lag}, where lag > 0). If it is stationary the scatter-plot 
+    series (splitted by oos_start if provided otherwise to two equal halves).
+    If the timeseries is stationary, the histogram of the 1st part of
+    the timeseries would be similar to the histogram of the 2nd part) and
+    scatter-plot of time series observations versus their lagged values (x_t
+    versus x_{t - lag}, where lag > 0). If it is stationary the scatter-plot
     with its lagged values would resemble a circular cloud.
     """
     dbg.dassert(isinstance(srs, pd.Series), "Input must be Series")
@@ -689,35 +670,23 @@ def plot_histograms_and_lagged_scatterplot(
     scatter_kwargs = scatter_kwargs or {}
     # Divide timeseries to two parts.
     oos_start = oos_start or srs.index.tolist()[len(srs) // 2]
-    srs_first_part = srs[: oos_start]
-    srs_second_part = srs[oos_start :]
+    srs_first_part = srs[:oos_start]
+    srs_second_part = srs[oos_start:]
     # Plot histograms.
     fig, axes = plt.subplots(nrows=2, ncols=2, figsize=figsize)
     plt.suptitle(title or srs.name)
     sns.histplot(
-        srs_first_part, 
-        ax=axes[0][0], 
-        kde=True, 
-        stat="probability",
-        **hist_kwargs
+        srs_first_part, ax=axes[0][0], kde=True, stat="probability", **hist_kwargs
     )
-    axes[0][0].set(
-        xlabel=None, 
-        ylabel=None, 
-        title="Sample distribution split 1"
-    )
+    axes[0][0].set(xlabel=None, ylabel=None, title="Sample distribution split 1")
     sns.histplot(
-        srs_second_part, 
-        ax=axes[0][1], 
-        kde=True, 
+        srs_second_part,
+        ax=axes[0][1],
+        kde=True,
         stat="probability",
-        **hist_kwargs
+        **hist_kwargs,
     )
-    axes[0][1].set(
-        xlabel=None, 
-        ylabel=None, 
-        title="Sample distribution split 2"
-    )
+    axes[0][1].set(xlabel=None, ylabel=None, title="Sample distribution split 2")
     # Plot scatter plot.
     fig.subplots_adjust(hspace=0.25)
     axes[1][0].scatter(srs, srs.shift(lag), **scatter_kwargs)
