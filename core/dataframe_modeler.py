@@ -526,6 +526,7 @@ class DataFrameModeler:
         self,
         lag: int,
         mode: str = "ins",
+        nan_mode: Optional[str] = None,
         cols: Optional[List[Any]] = None,
         hist_kwargs: Optional[Any] = None,
         scatter_kwargs: Optional[Any] = None,
@@ -536,12 +537,11 @@ class DataFrameModeler:
         else:
             oos_start = None
         for col_name in df.columns:
-            df[col_name].replace([-np.inf, np.inf], np.nan, inplace=True)
-            df[col_name].dropna(inplace=True)
             plot.plot_histograms_and_lagged_scatterplot(
                 df[col_name],
                 lag=lag,
                 oos_start=oos_start,
+                nan_mode=nan_mode,
                 title=col_name,
                 hist_kwargs=hist_kwargs,
                 scatter_kwargs=scatter_kwargs,
