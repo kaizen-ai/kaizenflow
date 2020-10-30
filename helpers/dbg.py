@@ -516,9 +516,9 @@ def get_user_name() -> str:
 
 
 def _get_logging_format(
-    force_print_format: bool, force_verbose_format: bool
+    force_print_format: bool, force_verbose_format: bool, force_no_warning: bool
 ) -> Tuple[str, str]:
-    if is_running_in_ipynb():
+    if is_running_in_ipynb() and not force_no_warning:
         print("WARNING: Running in Jupyter")
     verbose_format = not is_running_in_ipynb()
     dassert(
@@ -570,6 +570,7 @@ def init_logger(
     force_verbose_format: bool = False,
     force_print_format: bool = False,
     force_white: bool = True,
+    force_no_warning: bool = False,
 ) -> None:
     """Send stderr and stdout to logging (optionally teeing the logs to file).
 
@@ -613,7 +614,7 @@ def init_logger(
     ch.setLevel(verbosity)
     # Decide whether to use verbose or print format.
     date_fmt, log_format = _get_logging_format(
-        force_print_format, force_verbose_format
+        force_print_format, force_verbose_format, force_no_warning
     )
     # Use normal formatter.
     # formatter = logging.Formatter(log_format, datefmt=date_fmt)
