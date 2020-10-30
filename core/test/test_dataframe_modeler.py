@@ -37,11 +37,12 @@ class TestDataFrameModeler(hut.TestCase):
         )
         output_df = output.df
         info_fit = output.info["fit"]
-        output.info["predict"]
+        info_predict = output.info["predict"]
         str_output = (
             f"{prnt.frame('config')}\n{config}\n"
             f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
-            f"{hut.convert_info_to_string(info_fit)}"
+            f"{hut.convert_info_to_string(info_fit)}\n"
+            f"{hut.convert_info_to_string(info_predict)}"
         )
         self.check_string(str_output)
 
@@ -66,9 +67,7 @@ class TestDataFrameModeler(hut.TestCase):
         config = self._get_config(pred_lag)
         df_modeler = dfmod.DataFrameModeler(df=data)
         with self.assertRaises(AssertionError):
-            output = df_modeler.apply_sklearn_model(
-                **config.to_dict(), method="predict"
-            )
+            df_modeler.apply_sklearn_model(**config.to_dict(), method="predict")
 
     def _get_config(self, steps_ahead: int) -> cfg.Config:
         config = cfg.Config()
