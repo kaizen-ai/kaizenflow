@@ -2,13 +2,13 @@
 
 - This tool can be used for various purposes
 
-*   Take a snapshot of a notebook as a backup or before making changes as a checkpoint
-    *   This is a lightweight alternative to unit testing to capture the desired behavior of a notebook
-    *   One can take a snapshot and visually compare multiple notebooks side-by-side for changes
-*   Open a notebook from github, from a snapshot without using jupyter notebook (which modifies the file in your client) or github preview (which is slow or fails when the notebook is too large)
-*   Use it to compare multiple notebooks against each other in different browser windows
-*   Share a notebook with someone else in a simple way
-*   Review someone notebook
+-   Take a snapshot of a notebook as a backup or before making changes as a checkpoint
+    -   This is a lightweight alternative to unit testing to capture the desired behavior of a notebook
+    -   One can take a snapshot and visually compare multiple notebooks side-by-side for changes
+-   Open a notebook from github, from a snapshot without using jupyter notebook (which modifies the file in your client) or github preview (which is slow or fails when the notebook is too large)
+-   Use it to compare multiple notebooks against each other in different browser windows
+-   Share a notebook with someone else in a simple way
+-   Review someone notebook
 
 # Options
 
