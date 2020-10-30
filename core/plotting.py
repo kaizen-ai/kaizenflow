@@ -50,6 +50,8 @@ _DATETIME_TYPES = [
     "second",
 ]
 
+_COLORMAP = Union[str, mpl.colors.Colormap]
+
 
 # #############################################################################
 # General plotting helpers
@@ -194,6 +196,63 @@ def get_multiple_plots(
     if isinstance(ax, np.ndarray):
         return fig, ax.flatten()
     return fig, ax
+
+
+def plot_projection(
+    df: pd.DataFrame,
+    special_values: Optional[List[Any]] = None,
+    mode: Optional[str] = None,
+    ax: Optional[mpl.axes.Axes] = None,
+    colormap: Optional[_COLORMAP] = None,
+) -> None:
+    """
+    Plot lines where each column is not in special values.
+
+    :param df: dataframe
+    :param special_values: values to omit from plot. If `None`, omit `NaN`s
+    :param mode: "scatter" or "no-scatter"; whether to add a scatter plot
+    :param ax: axis on which to plot. If `None`, create an axis and plot there
+    :param colormap: matplotlib colormap or colormap name
+    """
+    special_values = special_values or [None]
+    mode = mode or "no-scatter"
+    ax = ax or plt.gca()
+    ax.set_yticklabels([])
+    dbg.dassert_strictly_increasing_index(df)
+    dbg.dassert_no_duplicates(df.columns.tolist())
+    df = df.copy()
+    # Get a mask for special values.
+    special_val_mask = pd.DataFrame(
+        np.full(df.shape, False), columns=df.columns, index=df.index
+    )
+    for curr_val in special_values:
+        if pd.isna(curr_val):
+            curr_mask = df.isna()
+        elif np.isinf(curr_val):
+            curr_mask = df.applymap(np.isinf)
+        else:
+            curr_mask = df.eq(curr_val)
+        special_val_mask |= curr_mask
+    # Replace non-special values with column numbers and special values with
+    # `NaN`s.
+    range_df = df.copy()
+    for i in range(df.shape[1]):
+        range_df.iloc[:, i] = i
+    df_to_plot = range_df.mask(special_val_mask, np.nan)
+    # Plot.
+    df_to_plot.plot(ax=ax, legend="reverse", colormap=colormap)
+    if mode == "scatter":
+        sns.scatterplot(
+            data=df_to_plot,
+            markers=["o"] * df.shape[1],
+            ax=ax,
+            legend=False,
+            color=colormap,
+        )
+    elif mode == "no-scatter":
+        pass
+    else:
+        raise ValueError("Invalid `mode`='%s'" % mode)
 
 
 # #############################################################################
@@ -466,7 +525,7 @@ def plot_timeseries_per_category(
 # TODO(*): Rename. Maybe `plot_sequence_and_density()`.
 def plot_cols(
     data: Union[pd.Series, pd.DataFrame],
-    colormap: str = "rainbow",
+    colormap: _COLORMAP = "rainbow",
     mode: Optional[str] = None,
     axes: Optional[List[mpl.axes.Axes]] = None,
     figsize: Optional[Tuple[float, float]] = (20, 10),
@@ -1370,7 +1429,7 @@ def plot_monthly_heatmap(
 def plot_pnl(
     pnls: Dict[int, pd.Series],
     title: Optional[str] = None,
-    colormap: Optional[str] = None,
+    colormap: Optional[_COLORMAP] = None,
     figsize: Optional[Tuple[int]] = None,
     start_date: Optional[Union[str, pd.Timestamp]] = None,
     end_date: Optional[Union[str, pd.Timestamp]] = None,
@@ -1733,9 +1792,15 @@ def plot_rolling_correlation(
     # Calculate correlation whole period.
     whole_period = srs1.corr(srs2)
     # Plot correlation whole period.
-    ax.axhline(whole_period, ls="--", c="k", label="Whole-period correlation")
+    ax.axhline(
+        whole_period,
+        linewidth=0.8,
+        ls="--",
+        c="darkviolet",
+        label="Whole-period correlation",
+    )
     if plot_zero_line:
-        ax.axhline(0, linewidth=0.5, color="black")
+        ax.axhline(0, linewidth=0.8, color="k")
     ax.set_xlabel("period")
     ax.set_ylabel("correlation")
     _maybe_add_events(ax=ax, events=events)
