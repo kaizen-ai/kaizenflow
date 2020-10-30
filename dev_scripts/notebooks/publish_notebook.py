@@ -65,7 +65,7 @@ import datetime
 import logging
 import os
 import tempfile
-from typing import List, Tuple, BinaryIO
+from typing import BinaryIO, List, Tuple
 
 import requests
 
@@ -127,16 +127,12 @@ def _copy_to_remote_folder(path_to_file: str, remote_dst_path: str) -> None:
         e.g.: user@server_ip:/http/notebook_publisher
     """
     # File copying.
-    payload: dict = {'dst_path': remote_dst_path}
-    files: List[Tuple[str, BinaryIO]] = [
-        ('file', open(path_to_file, 'rb'))
-    ]
-    response = requests.request("POST",
-                                _NOTEBOOK_KEEPER_ENTRY_POINT,
-                                data=payload,
-                                files=files)
-    _LOG.debug("Response: %s",
-               response.text.encode('utf8'))
+    payload: dict = {"dst_path": remote_dst_path}
+    files: List[Tuple[str, BinaryIO]] = [("file", open(path_to_file, "rb"))]
+    response = requests.request(
+        "POST", _NOTEBOOK_KEEPER_ENTRY_POINT, data=payload, files=files
+    )
+    _LOG.debug("Response: %s", response.text.encode("utf8"))
 
 
 def _export_to_webpath(path_to_notebook: str, dst_dir: str) -> str:
@@ -215,8 +211,7 @@ def _parse() -> argparse.ArgumentParser:
         _ACTION_OPEN: f"'--action {_ACTION_OPEN}' - Open selected notebook in a browser.",
     }
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawTextHelpFormatter,
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
         "-f",
