@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -203,7 +203,11 @@ def resample_time_bars(
 
 
 def compute_twap_vwap(
-    df: pd.DataFrame, rule: str, *, price_col: Any, volume_col: Any,
+    df: pd.DataFrame,
+    rule: str,
+    *,
+    price_col: Any,
+    volume_col: Any,
 ) -> pd.Series:
     """
     Compute VWAP from price and volume.
@@ -379,6 +383,7 @@ def compute_volatility_normalization_factor(
     srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
     scale_factor = target_volatility / (np.sqrt(ppy) * srs.std())
     _LOG.debug("`scale_factor`=%f", scale_factor)
+    scale_factor = cast(float, scale_factor)
     return scale_factor
 
 
@@ -408,6 +413,7 @@ def compute_kratio(log_rets: pd.Series) -> float:
     # Adjust k-ratio by the number of observations and points per year.
     ppy = hdf.infer_sampling_points_per_year(log_rets)
     kratio = kratio * np.sqrt(ppy) / len(log_rets)
+    kratio = cast(float, kratio)
     return kratio
 
 
@@ -598,7 +604,8 @@ def compute_bet_ends(
 
 
 def compute_signed_bet_lengths(
-    positions: pd.Series, nan_mode: Optional[str] = None,
+    positions: pd.Series,
+    nan_mode: Optional[str] = None,
 ) -> pd.Series:
     """Calculate lengths of bets (in sampling freq).
 
@@ -683,6 +690,7 @@ def compute_annualized_return(srs: pd.Series) -> float:
     ppy = hdf.infer_sampling_points_per_year(srs)
     mean_rets = srs.mean()
     annualized_mean_rets = ppy * mean_rets
+    annualized_mean_rets = cast(float, annualized_mean_rets)
     return annualized_mean_rets
 
 
@@ -696,4 +704,5 @@ def compute_annualized_volatility(srs: pd.Series) -> float:
     ppy = hdf.infer_sampling_points_per_year(srs)
     std = srs.std()
     annualized_volatility = np.sqrt(ppy) * std
+    annualized_volatility = cast(float, annualized_volatility)
     return annualized_volatility

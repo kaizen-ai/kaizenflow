@@ -56,7 +56,7 @@ class _TimeSeriesAnalyzer:
         self._sharey = sharey
         self._disabled_methods = disabled_methods or []
 
-    def plot_time_series(self):
+    def plot_time_series(self) -> None:
         """Plot timeseries on its original time scale."""
         func_name = intr.get_function_name()
         _LOG.debug(func_name)
@@ -76,8 +76,9 @@ class _TimeSeriesAnalyzer:
             rotation_mode="anchor",
         )
         plt.show()
+        return
 
-    def plot_by_year(self):
+    def plot_by_year(self) -> None:
         """Resample yearly and then plot each year on a different plot."""
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
@@ -106,6 +107,7 @@ class _TimeSeriesAnalyzer:
         )
         plt.tight_layout()
         plt.show()
+        return
 
     # TODO(gp): Think if it makes sense to generalize this by passing a lambda
     #  that define the timescale, e.g.,
@@ -115,7 +117,7 @@ class _TimeSeriesAnalyzer:
     # TODO(gp): It would be nice to plot the timeseries broken down by
     #  different timescales instead of doing the mean in each step
     #  (see https://en.wikipedia.org/wiki/Seasonality#Detecting_seasonality)
-    def boxplot_day_of_month(self):
+    def boxplot_day_of_month(self) -> None:
         """Plot the mean value of the timeseries for each day."""
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
@@ -131,8 +133,9 @@ class _TimeSeriesAnalyzer:
         # We need to close the plot otherwise there is a coupling between
         # plots that makes matplotlib assert.
         plt.close()
+        return
 
-    def boxplot_day_of_week(self):
+    def boxplot_day_of_week(self) -> None:
         """Plot the mean value of the timeseries for year."""
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
@@ -148,21 +151,22 @@ class _TimeSeriesAnalyzer:
         # We need to close the plot otherwise there is a coupling between
         # plots that makes matplotlib assert.
         plt.close()
+        return
 
-    def execute(self):
+    def execute(self) -> None:
         self.plot_time_series()
         self.plot_by_year()
         self.boxplot_day_of_month()
         self.boxplot_day_of_week()
 
     @staticmethod
-    def _boxplot(ts, groupby):
+    def _boxplot(ts, groupby: str) -> None:
         ts_df = pd.DataFrame(ts)
         ts_df["groupby"] = groupby
         ts_df.boxplot(by="groupby", column=ts.name)
         plt.suptitle("")
 
-    def _need_to_skip(self, func_name):
+    def _need_to_skip(self, func_name: str) -> bool:
         _LOG.debug(func_name)
         if func_name in self._disabled_methods:
             _LOG.debug("Skipping '%s' as per user request", func_name)
@@ -170,7 +174,7 @@ class _TimeSeriesAnalyzer:
         return False
 
     @property
-    def _title_suffix(self):
+    def _title_suffix(self) -> str:
         if self._data_name is not None:
             ret = f" for {self._data_name}"
         else:
@@ -193,7 +197,7 @@ class TimeSeriesDailyStudy(_TimeSeriesAnalyzer):
 
 
 class TimeSeriesMinutelyStudy(_TimeSeriesAnalyzer):
-    def boxplot_minutely_hour(self):
+    def boxplot_minutely_hour(self) -> None:
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
             return
@@ -202,8 +206,9 @@ class TimeSeriesMinutelyStudy(_TimeSeriesAnalyzer):
         plt.title(f"{self._ts_name} during different hours {self._title_suffix}")
         plt.xlabel("hour")
         plt.show()
+        return
 
-    def execute(self):
+    def execute(self) -> None:
         super().execute()
         self.boxplot_minutely_hour()
 
