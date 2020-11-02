@@ -166,6 +166,26 @@ def _postprocess(txt: str, in_file_name: str) -> str:
     return txt_new_as_str
 
 
+def _frame_chapters(txt: str) -> str:
+    """
+    Add the frame around each chapter.
+    """
+    txt_new : List[str] = []
+    _LOG.debug("txt=%s", txt)
+    for line in txt.split("\n"):
+        m = re.match("^(\#+) ", line)
+        if m:
+            comment = m.group(1)
+            sep = comment + " " + "#" * (80 - 1 - len(comment))
+            txt_new.append(sep)
+            txt_new.append(line)
+            txt_new.append(sep)
+        else:
+            txt_new.append(line)
+    txt_new_as_str = "\n".join(txt_new).rstrip("\n")
+    return txt_new_as_str
+
+
 def _refresh_toc(txt: str) -> str:
     _LOG.debug("txt=%s", txt)
     # Check whether there is a TOC otherwise add it.
@@ -209,6 +229,7 @@ def _process(
     actions: Optional[List[str]] = None,
     print_width: Optional[int] = None,
 ) -> str:
+    is_md_file = in_file_name.endswith(".md")
     # Pre-process text.
     action = "preprocess"
     if _to_execute_action(action, actions):
@@ -221,10 +242,14 @@ def _process(
     action = "postprocess"
     if _to_execute_action(action, actions):
         txt = _postprocess(txt, in_file_name)
+    # Frame chapters.
+    action = "frame_chapters"
+    if _to_execute_action(action, actions):
+        if not is_md_file:
+            txt = _frame_chapters(txt)
     # Refresh table of content.
     action = "refresh_toc"
     if _to_execute_action(action, actions):
-        is_md_file = in_file_name.endswith(".md")
         if is_md_file:
             txt = _refresh_toc(txt)
     return txt
@@ -236,6 +261,7 @@ _VALID_ACTIONS = [
     "preprocess",
     "prettier",
     "postprocess",
+    "frame_chapters",
     "refresh_toc",
 ]
 
