@@ -787,14 +787,13 @@ def plot_heatmap(
     :param ax: axes in which to draw the plot
     """
     figsize = figsize or FIG_SIZE
-    square = True
     # Sanity check.
     if corr_df.empty:
         _LOG.warning("Can't plot heatmap for empty `corr_df`")
         return
     if corr_df.shape[0] > 20:
         _LOG.warning("The corr_df.shape[0]='%s' > 20", corr_df.shape[0])
-        square = False
+        figsize = (figsize[0], figsize[0])
     if np.all(np.isnan(corr_df)):
         _LOG.warning(
             "Can't plot heatmap with only nans:\n%s", corr_df.to_string()
@@ -817,7 +816,7 @@ def plot_heatmap(
             vmin=vmin,
             vmax=vmax,
             # Use correct aspect ratio.
-            square=square,
+            square=True,
             annot=annot,
             fmt=".2f",
             cbar_kws={
@@ -837,7 +836,7 @@ def plot_heatmap(
             cmap=cmap,
             vmin=vmin,
             vmax=vmax,
-            square=square,
+            square=True,
             annot=annot,
             figsize=figsize,
         )
