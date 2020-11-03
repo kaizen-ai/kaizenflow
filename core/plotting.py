@@ -717,11 +717,11 @@ def plot_histograms_and_lagged_scatterplot(
     """Plot histograms and scatterplot to test stationarity visually.
 
     Function plots histograms with density plot for 1st and 2nd part of the time
-    series (splitted by oos_start if provided otherwise to two equal halves). 
-    If the timeseries is stationary, the histogram of the 1st part of 
-    the timeseries would be similar to the histogram of the 2nd part) and 
-    scatter-plot of time series observations versus their lagged values (x_t 
-    versus x_{t - lag}). If it is stationary the scatter-plot with its lagged 
+    series (splitted by oos_start if provided otherwise to two equal halves).
+    If the timeseries is stationary, the histogram of the 1st part of
+    the timeseries would be similar to the histogram of the 2nd part) and
+    scatter-plot of time series observations versus their lagged values (x_t
+    versus x_{t - lag}). If it is stationary the scatter-plot with its lagged
     values would resemble a circular cloud.
     """
     dbg.dassert(isinstance(srs, pd.Series), "Input must be Series")
@@ -786,12 +786,15 @@ def plot_heatmap(
     :param vmax: maximum value to anchor the colormap
     :param ax: axes in which to draw the plot
     """
+    figsize = figsize or FIG_SIZE
+    square = True
     # Sanity check.
     if corr_df.empty:
         _LOG.warning("Can't plot heatmap for empty `corr_df`")
         return
     if corr_df.shape[0] > 20:
         _LOG.warning("The corr_df.shape[0]='%s' > 20", corr_df.shape[0])
+        square = False
     if np.all(np.isnan(corr_df)):
         _LOG.warning(
             "Can't plot heatmap with only nans:\n%s", corr_df.to_string()
@@ -802,8 +805,6 @@ def plot_heatmap(
         annot = corr_df.shape[0] < 10
     # Generate a custom diverging colormap.
     cmap = _get_heatmap_colormap()
-    if figsize is None:
-        figsize = FIG_SIZE
     mode = mode or "heatmap"
     if mode in ("heatmap", "heatmap_semitriangle"):
         # Set up the matplotlib figure.
@@ -816,10 +817,15 @@ def plot_heatmap(
             vmin=vmin,
             vmax=vmax,
             # Use correct aspect ratio.
-            square=True,
+            square=square,
             annot=annot,
             fmt=".2f",
-            cbar_kws={"shrink": 0.5},
+            cbar_kws={
+                "shrink": 0.5,
+                "location": "left",
+                "use_gridspec": False,
+                "pad": 0.03,
+            },
             mask=mask,
             ax=ax,
         )
@@ -831,13 +837,14 @@ def plot_heatmap(
             cmap=cmap,
             vmin=vmin,
             vmax=vmax,
-            square=True,
+            square=square,
             annot=annot,
             figsize=figsize,
         )
         g.ax_heatmap.set_title(title)
     else:
         raise RuntimeError("Invalid mode='%s'" % mode)
+    ax.tick_params(axis="y", labelright=True, labelleft=False, labelrotation=0)
 
 
 # TODO(gp): Add an option to mask out the correlation with low pvalues
