@@ -9,6 +9,13 @@ import logging
 import math
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
+import core.explore as expl
+import core.finance as fin
+import core.signal_processing as sigp
+import core.statistics as stats
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
+import helpers.list as hlist
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
@@ -23,14 +30,6 @@ import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
 import statsmodels.regression.rolling as smrr
-
-import core.explore as expl
-import core.finance as fin
-import core.signal_processing as sigp
-import core.statistics as stats
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
-import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
@@ -719,11 +718,11 @@ def plot_histograms_and_lagged_scatterplot(
 
 
     Function plots histograms with density plot for 1st and 2nd part of the time
-    series (splitted by oos_start if provided otherwise to two equal halves). 
-    If the timeseries is stationary, the histogram of the 1st part of 
-    the timeseries would be similar to the histogram of the 2nd part) and 
-    scatter-plot of time series observations versus their lagged values (x_t 
-    versus x_{t - lag}). If it is stationary the scatter-plot with its lagged 
+    series (splitted by oos_start if provided otherwise to two equal halves).
+    If the timeseries is stationary, the histogram of the 1st part of
+    the timeseries would be similar to the histogram of the 2nd part) and
+    scatter-plot of time series observations versus their lagged values (x_t
+    versus x_{t - lag}). If it is stationary the scatter-plot with its lagged
     values would resemble a circular cloud.
     """
     dbg.dassert(isinstance(srs, pd.Series), "Input must be Series")
@@ -905,6 +904,26 @@ def compute_linkage(df: pd.DataFrame, method: Optional[str] = None) -> np.ndarra
     return hac.linkage(corr, method=method)
 
 
+def select_series_to_remove(
+    df_corr: pd.DataFrame, threshold: float
+) -> List["str"]:
+    corr = df_corr.copy()
+    np.fill_diagonal(corr.values, 0)
+    to_remove = []
+    while True:
+        subset_corr = corr[abs(corr) > threshold]
+        if subset_corr.isnull().values.all():
+            return to_remove
+        else:
+            column_to_remove = (
+                subset_corr[abs(subset_corr) > threshold].notnull().sum().idxmax()
+            )
+            to_remove.append(column_to_remove)
+            corr = subset_corr.drop([column_to_remove]).drop(
+                [column_to_remove], axis=1
+            )
+
+
 def cluster_and_select(
     df: pd.DataFrame,
     num_clust: int,
@@ -944,18 +963,13 @@ def cluster_and_select(
     for cluster_name, cluster_series in df_name_clust.groupby("cluster"):
         names = list(cluster_series["name"])
         cluster_subset = df[names]
-        cluster_corr = cluster_subset.corr().abs()
+        cluster_corr = cluster_subset.corr()
         if show_corr_plots:
             plot_heatmap(cluster_corr)
             plt.show()
         original = set(names.copy())
-        to_remove = []
         # Remove series that have correlation above the threshold specified.
-        for j in range(0, len(names)):
-            for k in range(j + 1, len(names) - 1):
-                corr_series = cluster_corr.loc[names[j]].loc[names[k]]
-                if corr_series >= corr_thr:
-                    to_remove.append(names[j])
+        to_remove = select_series_to_remove(cluster_corr, corr_thr)
         remaining_series = list(original - set(to_remove))
         series_to_keep = series_to_keep + remaining_series
         dict_series_to_keep[cluster_name] = remaining_series
