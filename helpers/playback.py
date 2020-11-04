@@ -9,12 +9,12 @@ import os
 import inspect
 import json
 import logging
-from typing import Any, List, Union, Optional, Tuple
+from typing import Any, List, Union, Optional, Tuple, Dict
 
 import jsonpickle  # type: ignore
 import jsonpickle.ext.pandas as jp_pd  # type: ignore
 import pandas as pd
-
+import collections as coll
 import helpers.dbg as dbg
 import helpers.io_ as io_
 
@@ -71,7 +71,9 @@ def to_python_code(obj: Any) -> str:
 
 
 class Playback:
-    def __init__(self, mode: str, to_file: Optional[bool] = None) -> None:
+    _tests_with_counts: Dict[str, int] = coll.defaultdict(int)
+
+    def __init__(self, mode: str, to_file: Optional[bool] = None, max_tests: Optional[int] = None) -> None:
         """Initialize the class variables.
 
         :param mode: the type of unit test to be generated (e.g. "assert_equal")
@@ -122,6 +124,8 @@ class Playback:
         # Get already existing content in the test file.
         if self._to_file:
             self._code = io_.from_file(self._test_file).split("\n")
+        # Limit number of tests per tested function.
+        self._max_tests = max_tests
 
     def run(self, func_output: Any) -> str:
         """Generate a unit test for the function.
@@ -132,6 +136,14 @@ class Playback:
         :param func_output: the expected function output
         :return: the code of the unit test
         """
+        # Count if we fixed max number of tests generated for a single function.
+        if self._max_tests is not None:
+            key = "%s-%s-%s" % (self._test_file, self._parent_class, self._func_name)
+            if self.__class__._tests_with_counts.get(key, 0) >= self._max_tests:
+                # Enough number of tests are generated.
+                return ""
+            # Increase counter since new test is coming.
+            self.__class__._tests_with_counts[key] += 1
         self._add_imports()
         pointer = self._add_test_class()
         pointer = self._add_var_definitions(pointer)
