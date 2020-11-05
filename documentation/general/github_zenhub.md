@@ -3,7 +3,9 @@
    * [Task management with GitHub](#task-management-with-github)
       * [Everything we work on comes as a GitHub task](#everything-we-work-on-comes-as-a-github-task)
       * [Issues vs bugs vs tasks](#issues-vs-bugs-vs-tasks)
-      * [Life cycle of a bug / task](#life-cycle-of-a-bug--task)
+      * [ZenHub for project management](#zenhub-for-project-management)
+      * [Filing an Issue](#filing-an-issue)
+      * [Updating an Issue](#updating-an-issue)
       * [Done means "DONE"](#done-means-done)
       * [Tend your tasks](#tend-your-tasks)
       * [File descriptive GH tasks](#file-descriptive-gh-tasks)
@@ -60,16 +62,22 @@
          * [Closed](#closed)
       * [Labels](#labels)
          * [Pipeline vs Epic vs Label](#pipeline-vs-epic-vs-label)
-      * [Workflows](#workflows)
-         * [Moving tasks between pipelines workflow](#moving-tasks-between-pipelines-workflow)
-         * [Filing an issue](#filing-an-issue)
+   * [Workflows](#workflows)
+      * [Sprint planning](#sprint-planning-1)
+      * [During the Sprint](#during-the-sprint)
+      * [Moving Issues between pipelines](#moving-issues-between-pipelines)
+      * [Filing an issue](#filing-an-issue-1)
       * [Story Points aka Task Estimation](#story-points-aka-task-estimation)
          * [How to make good estimates?](#how-to-make-good-estimates)
-      * [Sprint retrospective / planning](#sprint-retrospective--planning)
+      * [PR flow for Integrators](#pr-flow-for-integrators)
+         * [How is this different from an RP review?](#how-is-this-different-from-an-rp-review)
+         * [Integrator process](#integrator-process)
+         * [Running the integrator gauntlet](#running-the-integrator-gauntlet)
 
 
 
 <!--te-->
+
 # Abbreviations
 
 - GH = GitHub
@@ -99,21 +107,21 @@
 
 ## Filing an Issue
 
-- Use an informative description (typically an action “Do this and that”).
-  We don’t use a period at the end of the title.
+- Use an informative description (typically an action "Do this and that"). We
+  don't use a period at the end of the title.
 - Assign to the right RP for re-routing (or to GP / Paul if you are not sure)
 - Assign to one of the pipelines, ideally based on the urgency
-    - P0: needs to be done soon
-    - P1: nice to have
-    - P2: well, we will do it sometime in 2022
-    - If you are not sure, leave it unassigned but @tag GP / Paul to make
-      sure we can take care of it
+  - P0: needs to be done soon
+  - P1: nice to have
+  - P2: well, we will do it sometime in 2022
+  - If you are not sure, leave it unassigned but @tag GP / Paul to make sure we
+    can take care of it
 - No need to agonize over labels for now. We are going to improve the GitHub
   label conventions soon.
 - Assign to an Epic
-    - Please review the available Epics to find the most suitable
-    - If you are unsure then you can leave it empty, but @tag GP / Paul to
-      make sure we can re-route and improve the Epics
+  - Please review the available Epics to find the most suitable
+  - If you are unsure then you can leave it empty, but @tag GP / Paul to make
+    sure we can re-route and improve the Epics
 
 ## Updating an Issue
 
@@ -448,7 +456,7 @@
 
 - Master Epics can be broken down into smaller Epics (=sub-epics)
   - Ex.: `NLP - RP skateboard`
-  - Their title should follow the pattern: `XYZ - `, where XYZ is a master Epic
+  - Their title should follow the pattern: `XYZ -`, where XYZ is a master Epic
     title
 - Sub-epics should have a short title and a smaller scope
 - Sub-epics should belong to a Master Epic in ZenHub
@@ -572,53 +580,54 @@
 - For every Sprint GP / Paul creates an Issue to plan the Sprint with the
   following checklist
 - [ ] GP / Paul: Create a new ZH milestone for the current sprint
-    - A milestone spans 2 weeks, [Monday, Friday of the following week]
+  - A milestone spans 2 weeks, [Monday, Friday of the following week]
 - RPs + teams plan sprint
-    - ETA: Finish the sprint planning by Thursday EOD (filed event on RP's
-      calendar)
-    - [ ] Clean up the previous milestone (e.g., close Issues that are done)
-    - [ ] Read carefully the documentation about our conventions
-      [https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md](https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md)
-    - [ ] Take a look at your team's high-level planning document
-      `Master - $TEAM - Plan` to orient yourself
-    - [ ] Remember business priorities, but don’t forget about paying technical
-      debt
-        - Allocate 20% of the effort to paying technical debt (especially the
-          debt that is slowing down the team now)
-        - If you are not sure about the priorities, ping GP / Paul
-    - [ ] Try to describe the outcome of a sprint with 1-2 crisp phrases:
-        - “Release Point-In-Time in production for all the data providers
-          currently supported in KG"
-        - “Build an initial model for predicting basis prices in the Frey set-up”
-        - “Implement and test fetchers for 3 data providers”
-    - [ ] Move Issues to ZH `Sprint Backlog` pipeline
-    - [ ] Make sure all Issues are assigned to the right Epic
-    - [ ] Assign story points to each Issue (see
-      [https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md#story-points-aka-task-estimation](https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md#story-points-aka-task-estimation))
-    - [ ] Assign the new milestone to the Issue
+  - ETA: Finish the sprint planning by Thursday EOD (filed event on RP's
+    calendar)
+  - [ ] Clean up the previous milestone (e.g., close Issues that are done)
+  - [ ] Read carefully the documentation about our conventions
+        [https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md](https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md)
+  - [ ] Take a look at your team's high-level planning document
+        `Master - $TEAM - Plan` to orient yourself
+  - [ ] Remember business priorities, but don't forget about paying technical
+        debt
+    - Allocate 20% of the effort to paying technical debt (especially the debt
+      that is slowing down the team now)
+    - If you are not sure about the priorities, ping GP / Paul
+  - [ ] Try to describe the outcome of a sprint with 1-2 crisp phrases:
+    - "Release Point-In-Time in production for all the data providers currently
+      supported in KG"
+    - "Build an initial model for predicting basis prices in the Frey set-up"
+    - "Implement and test fetchers for 3 data providers"
+  - [ ] Move Issues to ZH `Sprint Backlog` pipeline
+  - [ ] Make sure all Issues are assigned to the right Epic
+  - [ ] Assign story points to each Issue (see
+        [https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md#story-points-aka-task-estimation](https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md#story-points-aka-task-estimation))
+  - [ ] Assign the new milestone to the Issue
 - GP / Paul finalize sprint planning
-    - ETA: Friday EOD
-    - [ ] Review the Sprint Backlog team-by-team
-    - [ ] Make sure that the Sprint Backlog is aligned with the Business goals
-      and deadlines
-        - Hold meetings with RPs to discuss / clarify, if needed
+  - ETA: Friday EOD
+  - [ ] Review the Sprint Backlog team-by-team
+  - [ ] Make sure that the Sprint Backlog is aligned with the Business goals and
+        deadlines
+    - Hold meetings with RPs to discuss / clarify, if needed
 - GP / Paul do a sprint retrospective
-    - [ ] Close the old Sprint
-    - [ ] Review the performance of each team and team members
-    - [ ] Compute and collect metrics
+  - [ ] Close the old Sprint
+  - [ ] Review the performance of each team and team members
+  - [ ] Compute and collect metrics
 - GP / Paul during company meeting on Mon
-    - Review the burn down chart, high level comments about what worked / didn't
-      work
-    - Talk about the new Sprint
+  - Review the burn down chart, high level comments about what worked / didn't
+    work
+  - Talk about the new Sprint
 
 ## During the Sprint
-- The goal is to plan and then focus on executing for two weeks without agonizing
-  over what to do next
+
+- The goal is to plan and then focus on executing for two weeks without
+  agonizing over what to do next
 - File more GH Issues as you go and assign them some priority (P0, P1, P2)
-    - Get every problem out of your head and into GH
-- If you are running low on tasks during the Sprint, it’s ok to pick up more
+  - Get every problem out of your head and into GH
+- If you are running low on tasks during the Sprint, it's ok to pick up more
   tasks
-- It’s inevitable that something comes up (e.g., an existing customer issue, a
+- It's inevitable that something comes up (e.g., an existing customer issue, a
   customer inquiry) that might change our carefully crafted plan
 - Focus on the Issues that you started and bring them to completion
 - We want to become good at estimating the complexity of a task
@@ -753,6 +762,7 @@
 ## PR flow for Integrators
 
 Integrators are responsible for
+
 - Merging PRs
 - Ensuring architectural integrity
 - Pushing for clean and reusable interfaces
@@ -760,6 +770,7 @@ Integrators are responsible for
 - Assessing readability
 
 Process goals include:
+
 - Fast iterations
 - Asynchronous reviews
 - Scaling up
@@ -770,9 +781,9 @@ Process goals include:
 - Checking low-level details about the code should be automated as much as
   possible
 - RPs focus on the internal consistency of the pieces (e.g., L3 and L4 of c4)
-- Integrators focus on coherence between higher level pieces, architecture,
-  and interfaces (L2 and L3)
-  
+- Integrators focus on coherence between higher level pieces, architecture, and
+  interfaces (L2 and L3)
+
 ### Integrator process
 
 - All final PRs are assigned to all integrators
@@ -795,8 +806,8 @@ Process goals include:
     - Discussed
     - Resolved, following the appropriate changes
     - Postponed with a follow-up issue that is posted in the comment thread
-- If a reviewer is uncertain about something, or deferring to another
-  reviewer's judgment, that reviewer can tag appropriate people in the PR
+- If a reviewer is uncertain about something, or deferring to another reviewer's
+  judgment, that reviewer can tag appropriate people in the PR
   - The PR author is responsible for coordinating the reviewers
   - If reviewers appear to be providing diverging feedback, then the PR author
     is responsible for driving consensus
@@ -812,13 +823,12 @@ Process goals include:
   - If the change is on a minor point and would slow down the review/merge
     process
     - File a well-documented issue
-    - In addition to providing a stand-alone summary, point to the PR comment
-      in the issue (so posterity can get more context if needed)
-    - Mention the issue in the PR comment thread (so the reviewer knows that
-      the change is acknowledged)
+    - In addition to providing a stand-alone summary, point to the PR comment in
+      the issue (so posterity can get more context if needed)
+    - Mention the issue in the PR comment thread (so the reviewer knows that the
+      change is acknowledged)
   - If the change is controversial or disputed, comment on the thread and drive
     to reach consensus
-- Be sure to mark the PR as ready for review after having addressed all
-  comments
+- Be sure to mark the PR as ready for review after having addressed all comments
 - Velocity is important. Prioritize final-review PRs above other work and push
   for the merge.
