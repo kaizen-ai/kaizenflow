@@ -913,6 +913,17 @@ def compute_linkage(df: pd.DataFrame, method: Optional[str] = None) -> np.ndarra
 def select_series_to_remove(
     df_corr: pd.DataFrame, threshold: float
 ) -> List["str"]:
+    """
+    Iterate through the correlation dataframe
+    by removing the time series above the correlation
+    threashold and continue the process on the remaining
+    subset matrix untill all of the time series in the
+    remaining matrix have correlation below the threashold.
+
+    :param df_corr: df with time series correlations
+    :param threshold: float correlation threashold to remove ts
+    :returns: list of series to remove
+    """
     corr = df_corr.copy()
     np.fill_diagonal(corr.values, 0)
     to_remove = []
@@ -936,26 +947,42 @@ def cluster_and_select(
     corr_thr: float = 0.8,
     show_corr_plots: bool = True,
     show_dendogram: bool = True,
-    z_linkage: Optional[np.ndarray] = None,
+    method: Optional[str] = None,
 ) -> Optional[Dict[str, float]]:
     """
-    Cluster time series and select least correlated ones in each cluster.
+    Cluster time series using hierarchical clustering algorithm
+    defined by the linkage matrix. The linkage matrix can
+    be passed as a precomuted input matrix. If the argument is
+    empty, compute_linkage() function is used to compute linkage
+    matrix with the default 'average' method (or the method specified
+    in the input).
+    Once the clusters are formed and each time series is assigned to a
+    specific cluster, the correlations amongst time series produced
+    for every such cluster. The correlation matrix is then passed to
+    select_series_to_remove() method, which returns the list of highly
+    correlated time series within the cluster (above the threashold specified)
+    that are removed from the total list of time series to consider.
+    Once the the function iterated over every cluster and removed from the
+    original list of time series, it returns the reduced list of time series
+    with equivalent amount of information that can be used to consider
+    for further analysis. The function also produces dendogram of clustered
+    time series along with correlation plots at different stages of execution.
 
     :param df: df input dataframe
     :param num_clust: int number of clusters to compute
     :param corr_thr: float correlation threshold
     :param show_corr_plots: bool whether to show correlation plots or not
     :param show_dendogram: bool whether to show original clustering dendogram
-    :param z_linkage: ndarray optional pre-computed cluster array
+    :param method: str distance calculation method
     :returns: list of names of series to keep
     """
+    method = method or "average"
     df = df.drop(df.columns[df.nunique() == 1], axis=1)
     if df.shape[1] < 2:
         _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
         return
     # Cluster the time series.
-    if z_linkage is None:
-        z_linkage = compute_linkage(df)
+    z_linkage = compute_linkage(df, method=method)
     clusters = hac.fcluster(z_linkage, num_clust, criterion="maxclust")
     series_to_keep = []
     dict_series_to_keep = {}
@@ -964,7 +991,7 @@ def cluster_and_select(
     )
     # Plot the dendogram of clustered series.
     if show_dendogram:
-        plot_dendrogram(df, z_linkage)
+        plot_dendrogram(df, method=method)
     # Plot the correlation heatmap for each cluster and drop highly correlated ts.
     for cluster_name, cluster_series in df_name_clust.groupby("cluster"):
         names = list(cluster_series["name"])
@@ -991,7 +1018,7 @@ def cluster_and_select(
 
 def plot_dendrogram(
     df: pd.core.frame.DataFrame,
-    z_linkage: Optional[np.ndarray] = None,
+    method: Optional[str] = None,
     figsize: Optional[Tuple[int, int]] = None,
     **kwargs: Any,
 ) -> None:
@@ -1000,7 +1027,7 @@ def plot_dendrogram(
     A dendrogram is a diagram representing a tree.
 
     :param df: df to plot a heatmap
-    :param z_linkage: precomputed cluster array
+    :param method: str distance calculation method
     :param figsize: if nothing specified, basic (20,5) used
     :param kwargs: kwargs for `sp.cluster.hierarchy.dendrogram`
     """
@@ -1008,6 +1035,7 @@ def plot_dendrogram(
     # ~/.conda/envs/root_longman_20150820/lib/python2.7/site-packages/seaborn/matrix.py
     # https://joernhees.de/blog/2015/08/26/scipy-hierarchical-clustering-and-dendrogram-tutorial/
     # Drop constant columns.
+    method = method or "average"
     constant_cols = df.columns[(df.diff().iloc[1:] == 0).all()]
     if not constant_cols.empty:
         _LOG.warning("Excluding constant columns: %s", constant_cols.tolist())
@@ -1015,10 +1043,7 @@ def plot_dendrogram(
     if df.shape[1] < 2:
         _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
         return
-    if z_linkage is None:
-        z_linkage = compute_linkage(df)
-    else:
-        pass
+    z_linkage = compute_linkage(df, method=method)
     if figsize is None:
         figsize = FIG_SIZE
     _ = plt.figure(figsize=figsize)
