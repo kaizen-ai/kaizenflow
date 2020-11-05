@@ -466,12 +466,14 @@ class DataFrameModeler:
         self,
         cols: Optional[List[Any]] = None,
         num_components: Optional[int] = None,
+        num_cols: int = 2,
+        y_scale: Optional[float] = None,
         mode: str = "ins",
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         pca = plot.PCA(mode="standard")
         pca.fit(df.replace([np.inf, -np.inf], np.nan).fillna(0))
-        pca.plot_components(num_components)
+        pca.plot_components(num_components, num_cols=num_cols, y_scale=y_scale)
 
     def plot_explained_variance(
         self,

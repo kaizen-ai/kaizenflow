@@ -986,7 +986,10 @@ class PCA:
             raise ValueError("Invalid mode='%s'" % mode)
 
     def plot_components(
-        self, num_components: Optional[int] = None, num_cols: int = 4
+        self,
+        num_components: Optional[int] = None,
+        num_cols: int = 4,
+        y_scale: Optional[float] = None,
     ) -> None:
         """Plot principal components.
 
@@ -999,7 +1002,11 @@ class PCA:
         num_components = self._get_num_pcs_to_plot(num_components, max_pcs)
         _LOG.info("num_components=%s", num_components)
         _, axes = get_multiple_plots(
-            num_components, num_cols=num_cols, sharex=True, sharey=True
+            num_components,
+            num_cols=num_cols,
+            y_scale=y_scale,
+            sharex=True,
+            sharey=True,
         )
         plt.suptitle("Principal components")
         for i in range(num_components):
