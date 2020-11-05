@@ -336,10 +336,16 @@ class DataFrameModeler:
         y_scale: Optional[float] = 4,
         sharex: bool = True,
         sharey: bool = False,
+        separator: Optional[str] = None,
         mode: str = "ins",
     ) -> None:
+        """
+        :param separator: if not `None`, split the column names by it and
+            display only the last part as the plot title
+        """
         df = self._get_df(cols=cols, mode=mode)
         num_plots = num_plots or df.shape[1]
+        num_plots = min(num_plots, df.shape[1])
         # Create figure to accommodate plots.
         _, axes = plot.get_multiple_plots(
             num_plots=num_plots,
@@ -352,7 +358,8 @@ class DataFrameModeler:
         cols_to_draw = df.columns[:num_plots]
         for i, col_name in enumerate(cols_to_draw):
             srs = df[col_name]
-            srs.to_frame().plot(title=col_name, ax=axes[i])
+            title = col_name.rsplit(separator, 1)[-1]
+            srs.plot(title=title, ax=axes[i])
 
     def plot_cumulative_returns(
         self,
@@ -521,7 +528,7 @@ class DataFrameModeler:
             tsds = tss.TimeSeriesDailyStudy(df[col_name], data_name=str(col_name))
             tsds.execute()
             plt.show()
-            
+
     def plot_histograms_and_lagged_scatterplot(
         self,
         lag: int,
@@ -546,7 +553,7 @@ class DataFrameModeler:
                 hist_kwargs=hist_kwargs,
                 scatter_kwargs=scatter_kwargs,
             )
-            plt.show() 
+            plt.show()
 
     # #########################################################################
     # Private helpers
