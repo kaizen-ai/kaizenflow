@@ -552,6 +552,7 @@ class DataFrameModeler:
                 title=col_name,
                 hist_kwargs=hist_kwargs,
                 scatter_kwargs=scatter_kwargs,
+                figsize=(20, 10),
             )
             plt.show()
 

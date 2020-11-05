@@ -758,6 +758,7 @@ def plot_histograms_and_lagged_scatterplot(
     # Plot scatter plot.
     axes[1][0].scatter(srs, srs.shift(lag), **scatter_kwargs)
     axes[1][0].set(xlabel="Values", ylabel="Values with lag={}".format(lag))
+    axes[1][0].axis("equal")
     axes[1][0].set_title("Scatter-plot with lag={}".format(lag))
     fig.delaxes(axes[1][1])
     fig.tight_layout()
