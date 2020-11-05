@@ -787,12 +787,14 @@ def plot_heatmap(
     :param vmax: maximum value to anchor the colormap
     :param ax: axes in which to draw the plot
     """
+    figsize = figsize or FIG_SIZE
     # Sanity check.
     if corr_df.empty:
         _LOG.warning("Can't plot heatmap for empty `corr_df`")
         return
     if corr_df.shape[0] > 20:
         _LOG.warning("The corr_df.shape[0]='%s' > 20", corr_df.shape[0])
+        figsize = (figsize[0], figsize[0])
     if np.all(np.isnan(corr_df)):
         _LOG.warning(
             "Can't plot heatmap with only nans:\n%s", corr_df.to_string()
@@ -803,8 +805,6 @@ def plot_heatmap(
         annot = corr_df.shape[0] < 10
     # Generate a custom diverging colormap.
     cmap = _get_heatmap_colormap()
-    if figsize is None:
-        figsize = FIG_SIZE
     mode = mode or "heatmap"
     if mode in ("heatmap", "heatmap_semitriangle"):
         # Set up the matplotlib figure.
@@ -820,7 +820,12 @@ def plot_heatmap(
             square=True,
             annot=annot,
             fmt=".2f",
-            cbar_kws={"shrink": 0.5},
+            cbar_kws={
+                "shrink": 0.5,
+                "location": "left",
+                "use_gridspec": False,
+                "pad": 0.03,
+            },
             mask=mask,
             ax=ax,
         )
@@ -839,6 +844,7 @@ def plot_heatmap(
         g.ax_heatmap.set_title(title)
     else:
         raise RuntimeError("Invalid mode='%s'" % mode)
+    ax.tick_params(axis="y", labelright=True, labelleft=False, labelrotation=0)
 
 
 # TODO(gp): Add an option to mask out the correlation with low pvalues
