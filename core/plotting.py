@@ -194,7 +194,11 @@ def get_multiple_plots(
         **kwargs,
     )
     if isinstance(ax, np.ndarray):
-        return fig, ax.flatten()
+        ax = ax.flatten()
+    # Remove extra axes that can appear when `num_cols` > 1.
+    empty_axes = ax[num_plots:]
+    for empty_ax in empty_axes:
+        empty_ax.remove()
     return fig, ax
 
 
