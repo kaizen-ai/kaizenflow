@@ -560,9 +560,70 @@
   - We decided to use different pipelines for priority to make it simpler to
     separate Issues given their urgency
 
-## Workflows
+# Workflows
 
-### Moving tasks between pipelines workflow
+## Sprint planning
+
+- Each Sprint lasts two weeks
+  - Sprints are aligned to [Monday, Friday of the following week], independently
+    of the month
+  - Monthly Company milestones are aligned to 2 sprints (4 weeks) without
+    necessarily aligning with a month
+- For every Sprint GP / Paul creates an Issue to plan the Sprint with the
+  following checklist
+- [ ] GP / Paul: Create a new ZH milestone for the current sprint
+    - A milestone spans 2 weeks, [Monday, Friday of the following week]
+- RPs + teams plan sprint
+    - ETA: Finish the sprint planning by Thursday EOD (filed event on RP's
+      calendar)
+    - [ ] Clean up the previous milestone (e.g., close Issues that are done)
+    - [ ] Read carefully the documentation about our conventions
+      [https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md](https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md)
+    - [ ] Take a look at your team's high-level planning document
+      `Master - $TEAM - Plan` to orient yourself
+    - [ ] Remember business priorities, but don’t forget about paying technical
+      debt
+        - Allocate 20% of the effort to paying technical debt (especially the
+          debt that is slowing down the team now)
+        - If you are not sure about the priorities, ping GP / Paul
+    - [ ] Try to describe the outcome of a sprint with 1-2 crisp phrases:
+        - “Release Point-In-Time in production for all the data providers
+          currently supported in KG"
+        - “Build an initial model for predicting basis prices in the Frey set-up”
+        - “Implement and test fetchers for 3 data providers”
+    - [ ] Move Issues to ZH `Sprint Backlog` pipeline
+    - [ ] Make sure all Issues are assigned to the right Epic
+    - [ ] Assign story points to each Issue (see
+      [https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md#story-points-aka-task-estimation](https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md#story-points-aka-task-estimation))
+    - [ ] Assign the new milestone to the Issue
+- GP / Paul finalize sprint planning
+    - ETA: Friday EOD
+    - [ ] Review the Sprint Backlog team-by-team
+    - [ ] Make sure that the Sprint Backlog is aligned with the Business goals
+      and deadlines
+        - Hold meetings with RPs to discuss / clarify, if needed
+- GP / Paul do a sprint retrospective
+    - [ ] Close the old Sprint
+    - [ ] Review the performance of each team and team members
+    - [ ] Compute and collect metrics
+- GP / Paul during company meeting on Mon
+    - Review the burn down chart, high level comments about what worked / didn't
+      work
+    - Talk about the new Sprint
+
+## During the Sprint
+- The goal is to plan and then focus on executing for two weeks without agonizing
+  over what to do next
+- File more GH Issues as you go and assign them some priority (P0, P1, P2)
+    - Get every problem out of your head and into GH
+- If you are running low on tasks during the Sprint, it’s ok to pick up more
+  tasks
+- It’s inevitable that something comes up (e.g., an existing customer issue, a
+  customer inquiry) that might change our carefully crafted plan
+- Focus on the Issues that you started and bring them to completion
+- We want to become good at estimating the complexity of a task
+
+## Moving Issues between pipelines
 
 - When an assignee starts to work on a Issue, he/she moves it to the
   `In progress` pipeline
@@ -588,7 +649,7 @@
   - If an issue stays in `Done` for 2 sprints in a row, it is closed
     automatically
 
-### Filing an issue
+## Filing an issue
 
 - When filing an issue:
   - Add a title for the issue
@@ -761,32 +822,3 @@ Process goals include:
   comments
 - Velocity is important. Prioritize final-review PRs above other work and push
   for the merge.
-
-## Sprint retrospective / planning
-
-- By Thursday EOD (RPs)
-  - [ ] Move all the completed issues from the `Review/QA` pipeline to the
-        `Done` pipeline
-  - [ ] Make sure all issues in the `Done` pipeline are ready to be closed
-    - They all have estimates
-    - They all are added to the current Sprint milestone
-    - They all belong to an Epic
-
-- By Friday EOD (GP + Paul)
-  - [ ] Do the team assessment
-  - [ ] Look at the statistics of the sprint (e.g., Sprint burndown report)
-    - TODO(GP, Paul): Describe exactly what to do
-
-- By Friday EOD (RPs + teams)
-  - [ ] Prepare the Sprint backlog
-
-- Saturday / Sunday
-  - [ ] GP and Paul review the Sprint backlog
-
-- Monday group meeting
-  - Every week at 9 am ET, independently of Day Light Savings (although we can
-    try to adjust things to help the Russia team)
-  - Review the Sprint progress in terms of plots
-
-- Thursday group meetings
-  - Usual tech sync-ups
