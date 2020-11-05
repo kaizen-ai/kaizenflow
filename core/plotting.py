@@ -199,7 +199,7 @@ def get_multiple_plots(
     empty_axes = ax[num_plots:]
     for empty_ax in empty_axes:
         empty_ax.remove()
-    return fig, ax
+    return fig, ax[:num_plots]
 
 
 def plot_projection(
