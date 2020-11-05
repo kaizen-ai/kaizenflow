@@ -78,32 +78,28 @@
 
 <!--te-->
 
-# Abbreviations
-
-- GH = GitHub
-- ZH = ZenHub
-- PR = Pull Request
-- RP = Responsible Particle
-
 # Task management with GitHub
 
-## Everything we work on comes as a GitHub task
+In the following we use the abbreviations below:
+  - GH = GitHub
+  - ZH = ZenHub
+  - PR = Pull Request
+  - RP = Responsible Particle
 
-- We file tasks and then prioritize and distribute the workload
-- We try to always work on high priority (e.g., `P0`) tasks
+- Everything we work on comes as a GitHub task
+  - We file tasks and then prioritize and distribute the workload
+  - We try to always work on high priority (e.g., `P0`) tasks
 
-## Issues vs bugs vs tasks
+- Issues vs bugs vs tasks
+  - We call GitHub issues "issues", "bugs", and "tasks" interchangeably
+  - "Bugs" is a bit improper since many times we use GitHub to track ideas,
+    activities, and improvements, and not only defects in the code
+  - The best names are "tasks" and "issues"
 
-- We call GitHub issues "issues", "bugs", and "tasks" interchangeably
-- "Bugs" is a bit improper since many times we use GitHub to track ideas,
-  activities, and improvements, and not only defects in the code
-- The best names are "tasks" and "issues"
-
-## ZenHub for project management
-
-- We use ZenHub as project management layer on top of GitHub
-- Please install the [ZenHub extension](https://www.zenhub.com/extension) for
-  GitHub. This is going to make your life easier.
+- ZenHub for project management
+  - We use ZenHub as project management layer on top of GitHub
+  - Please install the [ZenHub extension](https://www.zenhub.com/extension) for
+    GitHub. This is going to make your life easier.
 
 ## Filing an Issue
 
@@ -203,93 +199,6 @@
   beginning to end and not ping-pong the responsibility
   - Collective ownership of a task means that nobody owns it
 
-# Code review with GitHub
-
-- TODO(gp): Move it `code_review.md`
-
-## Avoid committing to `master`
-
-- Exceptions are small commits that are not part of a feature
-  - E.g., fixing a break, improving documentation
-
-## Use branches and PRs
-
-- All code should be reviewed before it is merged into `master`
-
-## Optional PR review
-
-- Sometimes we want to do an "optional" review in GitHub
-
-- The process is:
-  - Create a PR
-  - Tag the reviewers, adding a description if needed, like in the normal PR
-    flow
-  - Merge the PR without waiting for the review
-
-- Unfortunately merging the PR automatically closes the PR
-
-- The problem is that once the reviewers get to that PR and add comments, emails
-  are sent, but GitHub doesn't track the PR as open
-  - The comments are there but not "resolved"
-  - One needs to go to the PR page, e.g.,
-    `https://github.com/alphamatic/amp/pull/52` to see the comments
-  - There is no way for the reviewer to reopen the PR to signal that there is
-    something to address
-  - Solutions:
-    - Unfortunately this requires discipline and organization in the email
-      management of the author and reviewer
-    - Maybe author / reviewer can mark the email from GitHub about the
-      post-commit review using a "flag" as a reminder that something needs to be
-      addressed
-
-- Just like for pre-commit reviews, the author should:
-  - Address the comments as soon as possible
-  - Close the conversation on GH, marking them as resolved or engage in
-    discussion
-  - Tag commits as addressing reviewers' comments
-
-## Reviewers don't follow a branch
-
-- We don't expect code in a branch to be reviewed until a PR is filed
-- It's ok to cut corners during the development of the code (e.g., running all
-  tests or linting after every commit)
-  - The code needs to be production quality when you propose to merge into
-    `master`
-
-## Reviewers vs assignees
-
-- In a GitHub PR mark people as reviewers and leave the assignee field empty
-- The difference between reviewers and assignees is explained
-  [here](https://stackoverflow.com/questions/41087206)
-- In a few words assignees are people that are requested to merge the branch
-  after the PR, when they are different from the reviewers
-
-## Reviewers and authors interactions
-
-- If the reviewer's comment is clear to the author and agreed upon
-  - The author addresses the comment with a code change and _after_ changing the
-    code (everywhere the comment it applies) marks it as `RESOLVED` on the
-    GitHub interface
-  - Here we trust the authors to do a good job and to not skip / lose comments
-  - This mechanism only works if the author is diligent
-
-- If the comment needs further discussion, the author adds a note explaining why
-  he/she disagrees and the discussion continues until consensus is reached
-
-- We don't want to leave comments unaddressed since otherwise we don't know if
-  it was agreed upon and done or forgotten
-
-- We are ok with doing multiple commits in the branch or a single commit for all
-  the comments
-  - The goal is for the author to keep the PR clear and minimize his / her
-    overhead
-
-## "Pending" comments
-
-- Comments that are marked as "pending" in GitHub are not published yet and
-  visible only to the author
-- Once you publish the review, then an email is sent and comments become visible
-
 # ZenHub
 
 ## Refs
@@ -298,139 +207,119 @@
 
 ## Agile concepts
 
-### Agile development
+- Agile development
+  - = iterative approach to software development that emphasizes flexibility,
+    interactivity, and transparency
+  - It focus on:
+    - Frequent releases of useable code
+    - Continuous testing
+    - Acceptance that reality is always changing and thus requirements are
 
-- = iterative approach to software development that emphasizes flexibility,
-  interactivity, and transparency
-- It focus on:
-  - Frequent releases of useable code
-  - Continuous testing
-  - Acceptance that reality is always changing and thus requirements are
+- Sprints
+  - = fixed length of time during which agreed-upon chunk of work is completed and
+    shipped
+  - Once a Sprint begins, its scope remain fixed
+    - The opposite is called "scope creep"
 
-### Sprints
+- User story
+  - = high level descriptions of features from customer's perspective
+  - A template of a user story is:
+    - (Title): "as a <USER>, I want <GOAL> so that <BENEFIT>"
+    - User story
+    - Acceptance criteria
+    - Definition of "Done"
 
-- = fixed length of time during which agreed-upon chunk of work is completed and
-  shipped
-- Once a Sprint begins, its scope remain fixed
-  - The opposite is called "scope creep"
+- Epics
+  - = "big" user story of theme of work
+  - E.g.,
+    - Epic: "Management feature"
+    - User story: "As a customer, I want to be able to create an account"
 
-### User story
+- Product backlog
+  - Aka "Master Story List"
+  - = include all the work, e.g.,
+    - User stories
+    - Half-baked feature ideas
+    - Bug fixes
+  - The goal is to get stuff out of our head and into GH
 
-- = high level descriptions of features from customer's perspective
+- Icebox
+  - = items that are low priority in the product backlog
 
-- A template of a user story is:
-  - (Title): "as a <USER>, I want <GOAL> so that <BENEFIT>"
-  - User story
-  - Acceptance criteria
-  - Definition of "Done"
+- Sprint backlog
+  - = the work that the team is committed to tackling in a given Milestone
 
-### Epics
-
-- = "big" user story of theme of work
-- E.g.,
-  - Epic: "Management feature"
-  - User story: "As a customer, I want to be able to create an account"
-
-### Product backlog
-
-- Aka "Master Story List"
-- = include all the work, e.g.,
-  - User stories
-  - Half-baked feature ideas
-  - Bug fixes
-- The goal is to get stuff out of our head and into GH
-
-### Icebox
-
-- = items that are low priority in the product backlog
-
-### Sprint backlog
-
-- = the work that the team is committed to tackling in a given Milestone
-
-### Mapping Agile concepts onto GH
-
-- User stories = GH Issues
-- Scrum sprints = GH milestones
-- Product backlog = GH list of issues
+- Mapping Agile concepts onto GH
+  - User stories = GH Issues
+  - Scrum sprints = GH milestones
+  - Product backlog = GH list of issues
 
 # ZenHub concepts
 
-## ZH vs GH
-
-- GH Issues are used to provide a place to talk about bugs and features
-- ZH builds on top of GH Issues, PRs, Milestones to implement a project
-  management layer
+- ZH vs GH
+  - GH Issues are used to provide a place to talk about bugs and features
+  - ZH builds on top of GH Issues, PRs, Milestones to implement a project
+    management layer
 
 ## ZH workspaces
+  - Allows you to bundle multiple GitHub repos into a single view
+  - Different teams (or team members) can create different pipeline structures for
+    the same set of repos
+    - Each team can have their own workflow
 
-- Allows you to bundle multiple GitHub repos into a single view
-- Different teams (or team members) can create different pipeline structures for
-  the same set of repos
-  - Each team can have their own workflow
+## ZH concepts
 
-## ZH epics
+- Epics
+  - = theme of work containing several sub-tasks required to complete a larger
+    goal
+  - Tasks are broken down into small, manageable chunks
+  - An Epic is a "big user story"
 
-- = theme of work containing several sub-tasks required to complete a larger
-  goal
-- Tasks are broken down into small, manageable chunks
-- An Epic is a "big user story"
+- Epics vs GH Issues
+  - GH issues have no hierarchy: they are a list
+    - Which issues are related, which are blocked, or dependent?
+  - Epics add a layer of hierarchy on GH issues
+  - Epics are like "themes of work"
 
-## Epics vs GH Issues
+- Roadmaps
+  - Organize Projects and Epics into a Gantt-style timeline view
+  - This shows what is the critical part of the software project
 
-- GH issues have no hierarchy: they are a list
-  - Which issues are related, which are blocked, or dependent?
-- Epics add a layer of hierarchy on GH issues
-- Epics are like "themes of work"
+- Sprint planning
+  - How much work can we actually tackle?
+  - Can we ship in the next two weeks?
+  - What issues should be de-scoped?
 
-## Roadmaps
+- Burndown charts
+  - = indicator of how projects are processing
+  - Each time an issue is closed the burndown chart is updated
 
-- Organize Projects and Epics into a Gantt-style timeline view
-- This shows what is the critical part of the software project
+- Velocity charts
+  - Reporting on how the amount of work completed fluctuates over time (i.e.,
+    sprint over sprint)
 
-## Sprint planning
+- Issue cycle and control chart
+  - Understand how long Issues take from start to finish
 
-- How much work can we actually tackle?
-- Can we ship in the next two weeks?
-- What issues should be de-scoped?
+- Cumulative flow diagram
+  - Track how much work has been done across dates
 
-## Burndown
+- Release reports
+  - Releases are used for tracking long-term and dynamic projects
+  - Features span multiple sprints
 
-- = indicator of how projects are processing
-- Each time an issue is closed the burndown chart is updated
+- Milestone vs Epics
+  - Epics are larger initiatives
+    - Contain issues related to the same subject
+    - Issues are added and removed
 
-## Velocity charts
+  - Milestones are GH sprints
+    - Contain issues related in terms of time
+    - Issues are fixed once a sprint begins
 
-- Reporting on how the amount of work completed fluctuates over time (i.e.,
-  sprint over sprint)
-
-## Issue cycle and control chart
-
-- Understand how long Issues take from start to finish
-
-## Cumulative flow diagram
-
-- Track how much work has been done across dates
-
-## Release reports
-
-- Releases are used for tracking long-term and dynamic projects
-- Features span multiple sprints
-
-## Milestone vs Epics
-
-- Epics are larger initiatives
-  - Contain issues related to the same subject
-  - Issues are added and removed
-
-- Milestones are GH sprints
-  - Contain issues related in terms of time
-  - Issues are fixed once a sprint begins
-
-## Pipelines
-
-- Implement multiple workflows representing how Issues are selected,
-  implemented, and completed
+- Pipelines
+  - Implement multiple workflows representing how Issues are selected,
+    implemented, and completed
 
 # Our conventions
 
@@ -489,62 +378,51 @@
 - Pipeline order is integral for the whole team, so make sure you are not
   changing the order of the pipelines on the board while working
 
-### New Issues
+- New Issues
+  - Any new GH Issue goes here
 
-- Any new GH Issue goes here
+- Icebox (P2)
+  - Low priority, un-prioritized issues
 
-### Icebox (P2)
+- Backlog (P1)
+  - Issues of medium priority at the moment
 
-- Low priority, un-prioritized issues
+- Ready to Go (P0)
+  - Issues of high priority at the moment
 
-### Backlog (P1)
-
-- Issues of medium priority at the moment
-
-### Ready to Go (P0)
-
-- Issues of high priority at the moment
-
-### Sprint backlog
-
-- = Sprint backlog
+- Sprint backlog
+  - = Sprint backlog
   - All issues to be completed during the current Sprint
 
-### In progress
+- In progress
+  - Issues that we are currently working on
 
-- Issues that we are currently working on
+- Review / QA
+  - Issues opened for review and testing
+  - Code is ready to be deployed pending feedback
+  - Issues stay in Review/QA pipeline while being reviewed
 
-### Review / QA
+- Epic
+  - All Epic issues
+    - Both Master Epics and Sub-epics
 
-- Issues opened for review and testing
-- Code is ready to be deployed pending feedback
-- Issues stay in Review/QA pipeline while being reviewed
+- Open Research
+  - Contains Issues with exploratory analysis that might be completed, but whose
+    implications are still unknown
+  - We are moving these materials to gdocs (e.g., DSE and CDSE) and closing these
+    issues
+  - TODO(\*): Remove this when all bugs are closed
 
-### Epic
+- Done
+  - Definition of `Done` for an issue:
+    - PR which is connected to the issue is merged
+      - If there is more than one PR, all PRs should be merged
+    - All tests are written
+    - If an issue requires updating documentation, PR with documentation update is
+      merged
 
-- All Epic issues
-  - Both Master Epics and Sub-epics
-
-### Open Research
-
-- Contains Issues with exploratory analysis that might be completed, but whose
-  implications are still unknown
-- We are moving these materials to gdocs (e.g., DSE and CDSE) and closing these
-  issues
-- TODO(\*): Remove this when all bugs are closed
-
-### Done
-
-- Definition of `Done` for an issue:
-  - PR which is connected to the issue is merged
-    - If there is more than one PR, all PRs should be merged
-  - All tests are written
-  - If an issue requires updating documentation, PR with documentation update is
-    merged
-
-### Closed
-
-- Issues that are done and don't need a follow-up
+- Closed
+  - Issues that are done and don't need a follow-up
   - Issues are moved from `Done` to `Closed` by RPs
 
 ## Labels
@@ -556,7 +434,7 @@
 - TODO(gp): Remove Umbrella, Wontfix, Unclear, Permanent, Enhancement,
   Duplicate, Feature, Question
 
-### Pipeline vs Epic vs Label
+## Pipeline vs Epic vs Label
 
 - A ZH Pipeline represents the "progress" status of an Issue
 - A ZH Epic pulls together Issues that are somehow related by their topic
@@ -758,6 +636,93 @@
       months.
   - From https://en.wikipedia.org/wiki/Parkinson%27s_law
     - Work expands so as to fill the time available for its completion
+
+# Code review with GitHub / ZenHub
+
+- TODO(gp): Move / merge with `code_review.md`?
+
+## Avoid committing to `master`
+
+- Exceptions are small commits that are not part of a feature
+  - E.g., fixing a break, improving documentation
+
+## Use branches and PRs
+
+- All code should be reviewed before it is merged into `master`
+
+## Optional PR review
+
+- Sometimes we want to do an "optional" review in GitHub
+
+- The process is:
+  - Create a PR
+  - Tag the reviewers, adding a description if needed, like in the normal PR
+    flow
+  - Merge the PR without waiting for the review
+
+- Unfortunately merging the PR automatically closes the PR
+
+- The problem is that once the reviewers get to that PR and add comments, emails
+  are sent, but GitHub doesn't track the PR as open
+  - The comments are there but not "resolved"
+  - One needs to go to the PR page, e.g.,
+    `https://github.com/alphamatic/amp/pull/52` to see the comments
+  - There is no way for the reviewer to reopen the PR to signal that there is
+    something to address
+  - Solutions:
+    - Unfortunately this requires discipline and organization in the email
+      management of the author and reviewer
+    - Maybe author / reviewer can mark the email from GitHub about the
+      post-commit review using a "flag" as a reminder that something needs to be
+      addressed
+
+- Just like for pre-commit reviews, the author should:
+  - Address the comments as soon as possible
+  - Close the conversation on GH, marking them as resolved or engage in
+    discussion
+  - Tag commits as addressing reviewers' comments
+
+## Reviewers don't follow a branch
+
+- We don't expect code in a branch to be reviewed until a PR is filed
+- It's ok to cut corners during the development of the code (e.g., running all
+  tests or linting after every commit)
+  - The code needs to be production quality when you propose to merge into
+    `master`
+
+## Reviewers vs assignees
+
+- In a GitHub PR mark people as reviewers and leave the assignee field empty
+- The difference between reviewers and assignees is explained
+  [here](https://stackoverflow.com/questions/41087206)
+- In a few words assignees are people that are requested to merge the branch
+  after the PR, when they are different from the reviewers
+
+## Reviewers and authors interactions
+
+- If the reviewer's comment is clear to the author and agreed upon
+  - The author addresses the comment with a code change and _after_ changing the
+    code (everywhere the comment it applies) marks it as `RESOLVED` on the
+    GitHub interface
+  - Here we trust the authors to do a good job and to not skip / lose comments
+  - This mechanism only works if the author is diligent
+
+- If the comment needs further discussion, the author adds a note explaining why
+  he/she disagrees and the discussion continues until consensus is reached
+
+- We don't want to leave comments unaddressed since otherwise we don't know if
+  it was agreed upon and done or forgotten
+
+- We are ok with doing multiple commits in the branch or a single commit for all
+  the comments
+  - The goal is for the author to keep the PR clear and minimize his / her
+    overhead
+
+## "Pending" comments
+
+- Comments that are marked as "pending" in GitHub are not published yet and
+  visible only to the author
+- Once you publish the review, then an email is sent and comments become visible
 
 ## PR flow for Integrators
 
