@@ -527,7 +527,7 @@ class DataFrameModeler:
         num_plots = num_plots or df.shape[1]
         cols_to_draw = df.columns[:num_plots]
         for col_name in cols_to_draw:
-            tsds = tss.TimeSeriesDailyStudy(df[col_name], data_name=str(col_name))
+            tsds = tss.TimeSeriesDailyStudy(df[col_name])
             tsds.execute()
             plt.show()
 
