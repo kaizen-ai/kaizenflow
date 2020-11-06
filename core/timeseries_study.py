@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from tqdm.auto import tqdm
 
+import core.plotting as plot
 import helpers.dbg as dbg
 import helpers.introspection as intr
 
@@ -87,27 +88,32 @@ class _TimeSeriesAnalyzer:
         time_series = self._time_series.dropna()
         yearly_resample = time_series.resample("y")
         # Include only the years with enough data to plot.
-        num_plots = (yearly_resample.count() > 1).sum()
+        yearly_resample_count = yearly_resample.count()
+        enough_data_mask = yearly_resample_count > 1
+        num_plots = enough_data_mask.sum()
         if num_plots == 0:
             _LOG.warning("Not enough data to plot year-by-year.")
             return
         # Create as many subplots as years.
-        _, axis = plt.subplots(
+        _, axis = plot.get_multiple_plots(
             num_plots,
-            figsize=(20, 5 * len(yearly_resample)),
+            num_cols=1,
+            y_scale=5,
             sharey=self._sharey,
         )
         # Plot each year in a subplot.
-        for i, year_ts in enumerate(yearly_resample):
-            # resample() is a groupby() returning the value on which we
-            # perform the split and the extracted time series.
-            group_by, ts = year_ts
-            if len(ts) < 2:
-                _LOG.info(
-                    "Skipping year %s: not enough data to plot", group_by.year
-                )
-                continue
-            ts.plot(ax=axis[i], title=group_by.year)
+        if (~enough_data_mask).sum() > 0:
+            years_with_not_enough_data = enough_data_mask[
+                ~enough_data_mask
+            ].index.year.tolist()
+            _LOG.info(
+                "Skipping years %s: not enough data to plot",
+                years_with_not_enough_data,
+            )
+        years_with_enough_data = yearly_resample_count[enough_data_mask].index
+        for ax, group_by_timestamp in zip(axis, years_with_enough_data):
+            ts = yearly_resample.get_group(group_by_timestamp)
+            ts.plot(ax=ax, title=group_by_timestamp.year)
         plt.suptitle(
             f"{self._freq_name.capitalize()} {self._ts_name} by year"
             f"{self._title_suffix}",
