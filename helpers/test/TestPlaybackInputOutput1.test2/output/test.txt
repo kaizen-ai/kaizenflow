@@ -1,9 +1,9 @@
 # Test created for test_playback.get_result_ae
+
 import helpers.unit_test as hut
 import jsonpickle
 import pandas as pd
-
-
+import core.config as cfg
 class TestGetResultAe(hut.TestCase):
     def test1(self) -> None:
         # Define input variables

@@ -5,18 +5,18 @@ Import as:
 import helpers.playback as plbck
 """
 
-import os
 import inspect
 import json
 import logging
-from typing import Any, List, Union, Optional, Tuple, Dict
+import os
+from typing import Any, List, Optional, Union
 
+import core.config as cfg
+import helpers.dbg as dbg
+import helpers.io_ as io_
 import jsonpickle  # type: ignore
 import jsonpickle.ext.pandas as jp_pd  # type: ignore
 import pandas as pd
-import collections as coll
-import helpers.dbg as dbg
-import helpers.io_ as io_
 
 jp_pd.register_handlers()
 
@@ -59,6 +59,14 @@ def to_python_code(obj: Any) -> str:
         # [1, 2]})".
         vals = obj.to_dict(orient="list")
         output.append("pd.DataFrame.from_dict(%s)" % vals)
+    elif isinstance(obj, pd.Series):
+        # Series init as pd.Series([1, 2])
+        vals = obj.to_list()
+        output.append("pd.Series(%s)" % vals)
+    elif isinstance(obj, cfg.Config):
+        # Config -> python_code -> "cfg.Config.from_python(python_code)"
+        val = obj.to_python()
+        output.append('cfg.Config.from_python("%s")' % val)
     else:
         # Use `jsonpickle` for serialization.
         _LOG.warning(
@@ -71,9 +79,12 @@ def to_python_code(obj: Any) -> str:
 
 
 class Playback:
-    _tests_with_counts: Dict[str, int] = coll.defaultdict(int)
-
-    def __init__(self, mode: str, to_file: Optional[bool] = None, max_tests: Optional[int] = None) -> None:
+    def __init__(
+        self,
+        mode: str,
+        to_file: Optional[bool] = None,
+        max_tests: Optional[int] = None,
+    ) -> None:
         """Initialize the class variables.
 
         :param mode: the type of unit test to be generated (e.g. "assert_equal")
@@ -114,18 +125,13 @@ class Playback:
         self._to_file = to_file if to_file is not None else False
         # Find filename to write the code.
         file_with_code = cur_frame.f_back.f_code.co_filename  # type: ignore
-        dirname_with_code, filename_with_code = os.path.split(file_with_code)
-        dirname_with_test = os.path.join(dirname_with_code, "test")
-        self._test_file = os.path.join(dirname_with_test, "test_%s" % filename_with_code)
-        # Create test file if it doesn't exist.
-        if self._to_file and not os.path.exists(self._test_file):
-            io_.create_dir(dirname_with_test, True)
-            io_.to_file(self._test_file, "", mode = "w")
-        # Get already existing content in the test file.
+        self._test_file = self._get_test_file_name(file_with_code)
+        # Check if file exists, need to keep code already here.
+        self._file_exists = False
         if self._to_file:
-            self._code = io_.from_file(self._test_file).split("\n")
+            self._update_code_to_existing()
         # Limit number of tests per tested function.
-        self._max_tests = max_tests
+        self._max_tests = max_tests or float("+inf")
 
     def run(self, func_output: Any) -> str:
         """Generate a unit test for the function.
@@ -136,19 +142,22 @@ class Playback:
         :param func_output: the expected function output
         :return: the code of the unit test
         """
+        if self._to_file and self._file_exists:
+            # Imports were added before, so skip.
+            pass
+        else:
+            # Start with imports.
+            self._add_imports()
         # Count if we fixed max number of tests generated for a single function.
-        if self._max_tests is not None:
-            key = "%s-%s-%s" % (self._test_file, self._parent_class, self._func_name)
-            if self.__class__._tests_with_counts.get(key, 0) >= self._max_tests:
-                # Enough number of tests are generated.
-                return ""
-            # Increase counter since new test is coming.
-            self.__class__._tests_with_counts[key] += 1
-        self._add_imports()
-        pointer = self._add_test_class()
-        pointer = self._add_var_definitions(pointer)
-        pointer = self._add_function_call(pointer)
-        self._check_code(func_output, pointer)
+        try:
+            self._add_test_class()
+        except IndexError as exception:
+            # If there are already enough tests, not add anything.
+            _LOG.warning(str(exception))
+            return ""
+        self._add_var_definitions()
+        self._add_function_call()
+        self._check_code(func_output)
         return self._gen_code()
 
     @staticmethod
@@ -160,158 +169,118 @@ class Playback:
         # ```
         _ = exec(output)  # pylint: disable=exec-used
 
-    def _check_code(self, func_output: Any, index_to_paste: int) -> int:
-        check_code = []
+    @staticmethod
+    def _get_test_file_name(file_with_code: str) -> str:
+        # Get directory and filename of the testing code.
+        dirname_with_code, filename_with_code = os.path.split(file_with_code)
+        dirname_with_test = os.path.join(dirname_with_code, "test")
+        # Construct test file.
+        test_file = os.path.join(
+            dirname_with_test, "test_by_playback_%s" % filename_with_code
+        )
+        return test_file
+
+    def _update_code_to_existing(self) -> None:
+        # Create test file if it doesn't exist.
+        if not os.path.exists(self._test_file):
+            io_.create_enclosing_dir(self._test_file, True)
+            io_.to_file(self._test_file, "", mode="w")
+        else:
+            # Get already existing content in the test file.
+            self._code = io_.from_file(self._test_file).split("\n")
+            self._file_exists = True
+
+    def _check_code(self, func_output: Any) -> None:
         if self.mode == "check_string":
             if isinstance(func_output, (pd.DataFrame, pd.Series, str)):
                 if not isinstance(func_output, str):
-                    check_code.append(
+                    self._code.append(
                         "        act = hut.convert_df_to_string(act)"
                     )
             if not isinstance(func_output, (str, bytes)):
-                check_code.append("        act = str(act)")
-            check_code.append("        # Check output")
-            check_code.append("        self.check_string(act)")
+                self._code.append("        act = str(act)")
+            self._code.append("        # Check output")
+            self._code.append("        self.check_string(act)")
         elif self.mode == "assert_equal":
-            check_code.append("        # Define expected output")
+            self._code.append("        # Define expected output")
             func_output_as_code = to_python_code(func_output)
-            check_code.append(f"        exp = {func_output_as_code}")
+            self._code.append(f"        exp = {func_output_as_code}")
             if not isinstance(
                 func_output, (int, float, str, list, dict, pd.DataFrame)
             ):
-                check_code.append("        exp = jsonpickle.decode(exp)")
+                self._code.append("        exp = jsonpickle.decode(exp)")
 
             if isinstance(func_output, (pd.DataFrame, pd.Series)):
-                check_code.append("        act = hut.convert_df_to_string(act)")
-                check_code.append("        exp = hut.convert_df_to_string(exp)")
-            check_code.append("        # Compare actual and expected output")
-            check_code.append("        self.assertEqual(act, exp)")
+                self._code.append("        act = hut.convert_df_to_string(act)")
+                self._code.append("        exp = hut.convert_df_to_string(exp)")
+            self._code.append("        # Compare actual and expected output")
+            self._code.append("        self.assertEqual(act, exp)")
         else:
             raise ValueError("Invalid mode='%s'" % self.mode)
-        # Put function call to the correct place.
-        self._code[index_to_paste:index_to_paste] = check_code
-        # Find index to paste next code.
-        if index_to_paste == -1:
-            return -1
-        return index_to_paste + len(check_code)
 
     def _add_imports(self, additional: Union[None, List[str]] = None) -> None:
         # Construct what is needed to paste
-        imports = []
-        imports.append("import helpers.unit_test as hut")
-        imports.append("import jsonpickle")
-        imports.append("import pandas as pd")
+        self._code.append("import helpers.unit_test as hut")
+        self._code.append("import jsonpickle")
+        self._code.append("import pandas as pd")
+        self._code.append("import core.config as cfg")
         for a in additional or []:
-            imports.append(a)
-        # Remove what is already exists in the file.
-        imports = self._filter_existing_lines(imports)
-        index_to_paste = self._get_import_index()
-        # If no imports are found need to add 2 newlines at the end.
-        if index_to_paste == -1:
-            imports.extend(["", ""])
-        # Put imports to the correct place.
-        self._code[index_to_paste:index_to_paste] = imports
+            self._code.append(a)
 
-    def _filter_existing_lines(self, new_lines: List[str]) -> List[str]:
-        return [line for line in new_lines if line not in self._code]
-
-    def _get_import_index(self) -> int:
-        if not self._to_file:
-            return -1
-        import_indeces = [i for i, line in enumerate(self._code) if line.startswith("import")]
-        if not import_indeces:
-            # First import to paste.
-            return -1
-        last_import_index = max(import_indeces)
-        return last_import_index + 1
-
-    def _add_test_class(self) -> int:
+    def _add_test_class(self) -> None:
         # Construct test class and test method.
-        test_name = "".join([x.capitalize() for x in self._func_name.split("_")])
-        header = []
+        test_name = (
+            self._parent_class.__class__.__name__
+            if self._parent_class is not None
+            else ""
+        )
+        test_name += "".join([x.capitalize() for x in self._func_name.split("_")])
         class_string = f"class Test{test_name}(hut.TestCase):"
-        header.append(class_string)
-        header = self._filter_existing_lines(header)
-        if header:
-            # First time we add a class with a current test.
-            index_to_paste = -1
-            header.append("    def test1(self) -> None:")
-        else:
-            # Find when class ends and count existing test methods.
-            index_to_paste, count = self._get_class_index_count(class_string)
-            header.append("    def test%i(self) -> None:" % (count + 1))
-        # Put class or/and method definitions to the correct place.
-        self._code[index_to_paste:index_to_paste] = header
-        # Find index to paste the test code.
-        next_iteration_index = -1
-        if index_to_paste != -1:
-            # Test is pasting at the middle of file.
-            next_iteration_index = index_to_paste + len(header)
-        return next_iteration_index
+        # Find how many times method was tested.
+        count = self._get_class_count(class_string)
+        if count >= self._max_tests:
+            # If it was already tested enough times, raise.
+            raise IndexError("%i tests already generated" % self._max_tests)
+        # Otherwise, continue to create a test code.
+        self._code.append(class_string)
+        self._code.append("    def test%i(self) -> None:" % (count + 1))
 
-    def _get_class_index_count(self, class_string: str) -> Tuple[int, int]:
-        class_start_index = self._code.index(class_string)
-        class_end_index = -1
-        # Find new class appearance.
-        class_counter = 0
-        method_counter = 0
-        for line_number in range(class_start_index, len(self._code)):
-            line = self._code[line_number]
-            # Count methods.
-            method_counter += line.startswith("    def test")
-            # Count classes.
-            class_counter += line.startswith("class ")
-            # Current class is also counted.
-            if class_counter == 2:
-                # Next class is found, go back to a newline.
-                class_end_index = line_number - 1
-                break
-        return (class_end_index, method_counter)
+    def _get_class_count(self, class_string: str) -> int:
+        count = 0
+        for line in self._code:
+            count += line == class_string
+        return count
 
-    def _add_function_call(self, index_to_paste: int) -> int:
-        function_call = []
-        function_call.append("        # Call function to test")
+    def _add_function_call(self) -> None:
+        self._code.append("        # Call function to test")
         if self._parent_class is None:
             fnc_call = [f"{k}={k}" for k in self._kwargs.keys()]
-            function_call.append(
+            self._code.append(
                 "        act = %s(%s)" % (self._func_name, ", ".join(fnc_call))
             )
         else:
             var_code = to_python_code(self._parent_class)
             # Re-create the parent class.
-            function_call.append(f"        cls = {var_code}")
-            function_call.append("        cls = jsonpickle.decode(cls)")
+            self._code.append(f"        cls = {var_code}")
+            self._code.append("        cls = jsonpickle.decode(cls)")
             fnc_call = ["{0}={0}".format(k) for k in self._kwargs.keys()]
             # Call the method as a child of the parent class.
-            function_call.append(
+            self._code.append(
                 f"        act = cls.{self._func_name}({', '.join(fnc_call)})"
             )
-        # Put function call to the correct place.
-        self._code[index_to_paste:index_to_paste] = function_call
-        # Find index to paste next code.
-        if index_to_paste == -1:
-            return -1
-        return index_to_paste + len(function_call)
 
-    def _add_var_definitions(self, index_to_paste: int) -> int:
-        var_definitions = []
-        var_definitions.append("        # Define input variables")
+    def _add_var_definitions(self) -> None:
+        self._code.append("        # Define input variables")
         for key in self._kwargs:
             as_python = to_python_code(self._kwargs[key])
-            var_definitions.append("        %s = %s" % (key, as_python))
+            self._code.append("        %s = %s" % (key, as_python))
             # Decode back to an actual Python object, if necessary.
             if not isinstance(
                 self._kwargs[key], (int, float, str, list, dict, pd.DataFrame)
             ):
-                var_definitions.append(
+                self._code.append(
                     "        {0} = jsonpickle.decode({0})".format(key)
                 )
-        # Paste var definitions to the right place.
-        self._code[index_to_paste:index_to_paste] = var_definitions
-        # Find where to paste the next code.
-        if index_to_paste == -1:
-            return -1
-        return index_to_paste + len(var_definitions)
 
     def _gen_code(self) -> str:
         code = "\n".join(self._code) + "\n"
@@ -319,17 +288,6 @@ class Playback:
         if self._to_file:
             io_.to_file(self._test_file, code)
         return code
-
-
-def filename(text: str) -> None:
-    """Save a content to a generic file name"""
-    frame = inspect.currentframe()
-    func = frame.f_back.f_code.co_name
-    import sys
-    print(sys.modules[__name__])
-    print(__name__)
-    print(frame.f_back.f_code.co_filename)
-    print(func)
 
 
 def json_pretty_print(parsed: Any) -> str:
