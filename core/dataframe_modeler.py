@@ -358,7 +358,10 @@ class DataFrameModeler:
         cols_to_draw = df.columns[:num_plots]
         for i, col_name in enumerate(cols_to_draw):
             srs = df[col_name]
-            title = col_name.rsplit(separator, 1)[-1]
+            if separator is not None:
+                title = col_name.rsplit(separator, 1)[-1]
+            else:
+                title = col_name
             srs.plot(title=title, ax=axes[i])
 
     def plot_cumulative_returns(
@@ -523,11 +526,11 @@ class DataFrameModeler:
         """
         :param num_plots: number of cols to plot the study for
         """
-        df = self._get_df(cols=cols, mode=mode).squeeze()
+        df = self._get_df(cols=cols, mode=mode)
         num_plots = num_plots or df.shape[1]
         cols_to_draw = df.columns[:num_plots]
         for col_name in cols_to_draw:
-            tsds = tss.TimeSeriesDailyStudy(df[col_name], data_name=str(col_name))
+            tsds = tss.TimeSeriesDailyStudy(df[col_name])
             tsds.execute()
             plt.show()
 

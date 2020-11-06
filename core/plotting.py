@@ -195,6 +195,8 @@ def get_multiple_plots(
     )
     if isinstance(ax, np.ndarray):
         ax = ax.flatten()
+    else:
+        ax = np.array([ax])
     # Remove extra axes that can appear when `num_cols` > 1.
     empty_axes = ax[num_plots:]
     for empty_ax in empty_axes:
