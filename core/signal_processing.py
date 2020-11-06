@@ -328,13 +328,13 @@ def squash(
 
 
 def accumulate(
-    inp_data: Union[pd.DataFrame, pd.Series],
+    signal: Union[pd.DataFrame, pd.Series],
     num_steps: int,
     nan_mode: Optional[str] = None,
 ) -> Union[pd.DataFrame, pd.Series]:
     """Accumulate series for step.
 
-    :param inp_data: time series or dataframe
+    :param signal: time series or dataframe
     :param num_steps: number of steps to compute rolling sum for
     :param nan_mode: argument for hdf.apply_nan_mode()
     :return: time series or dataframe accumulated
@@ -348,19 +348,19 @@ def accumulate(
     )
     nan_mode = nan_mode or "leave_unchanged"
 
-    if type(inp_data) == pd.Series:
-        accumulated = hdf.apply_nan_mode(inp_data, mode=nan_mode)
-        cumulative = accumulated.rolling(window=num_steps).sum()
-    elif type(inp_data) == pd.DataFrame:
-        accumulated = inp_data.apply(
+    if isinstance(signal, pd.Series):
+        signal_cleaned = hdf.apply_nan_mode(signal, mode=nan_mode)
+        signal_cumulative = signal_cleaned.rolling(window=num_steps).sum()
+    elif isinstance(signal, pd.DataFrame):
+        signal_cleaned = signal.apply(
             (lambda x: hdf.apply_nan_mode(x, mode=nan_mode)), axis=0
         )
-        cumulative = accumulated.apply(
+        signal_cumulative = signal_cleaned.apply(
             (lambda x: x.rolling(window=num_steps).sum()), axis=0
         )
     else:
         raise ValueError(f"Invalid input type `{type(inp_data)}`")
-    return cumulative
+    return signal_cumulative
 
 
 def get_symmetric_equisized_bins(
