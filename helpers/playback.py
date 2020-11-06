@@ -62,8 +62,10 @@ def to_python_code(obj: Any) -> str:
         output.append("pd.DataFrame.from_dict(%s)" % vals)
     elif isinstance(obj, pd.Series):
         # Series init as pd.Series([1, 2])
-        vals = obj.to_list()
-        output.append("pd.Series(%s)" % vals)
+        output.append(
+            "pd.Series(data=%s, index=%s, name=%s, dtype=%s)"
+            % (obj.tolist(), obj.index, obj.name, obj.dtype)
+        )
     elif isinstance(obj, cfg.Config):
         # Config -> python_code -> "cfg.Config.from_python(python_code)"
         val = obj.to_python()
