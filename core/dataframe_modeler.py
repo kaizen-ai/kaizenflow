@@ -358,7 +358,10 @@ class DataFrameModeler:
         cols_to_draw = df.columns[:num_plots]
         for i, col_name in enumerate(cols_to_draw):
             srs = df[col_name]
-            title = col_name.rsplit(separator, 1)[-1]
+            if separator is not None:
+                title = col_name.rsplit(separator, 1)[-1]
+            else:
+                title = col_name
             srs.plot(title=title, ax=axes[i])
 
     def plot_cumulative_returns(
