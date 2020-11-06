@@ -227,6 +227,7 @@ class Playback:
         self._code.append("import core.config as cfg")
         for a in additional or []:
             self._code.append(a)
+        self._code.extend(["", ""])
 
     def _add_test_class(self) -> None:
         # Construct test class and test method.

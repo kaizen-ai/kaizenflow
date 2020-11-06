@@ -4,6 +4,8 @@ import helpers.unit_test as hut
 import jsonpickle
 import pandas as pd
 import core.config as cfg
+
+
 class TestGetResultCs(hut.TestCase):
     def test1(self) -> None:
         # Define input variables
