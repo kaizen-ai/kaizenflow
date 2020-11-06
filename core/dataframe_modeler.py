@@ -523,7 +523,7 @@ class DataFrameModeler:
         """
         :param num_plots: number of cols to plot the study for
         """
-        df = self._get_df(cols=cols, mode=mode).squeeze()
+        df = self._get_df(cols=cols, mode=mode)
         num_plots = num_plots or df.shape[1]
         cols_to_draw = df.columns[:num_plots]
         for col_name in cols_to_draw:

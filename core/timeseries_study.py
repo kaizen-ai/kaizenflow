@@ -83,13 +83,17 @@ class _TimeSeriesAnalyzer:
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
             return
-        #
         # Split by year.
         time_series = self._time_series.dropna()
         yearly_resample = time_series.resample("y")
+        # Include only the years with enough data to plot.
+        num_plots = (yearly_resample.count() > 1).sum()
+        if num_plots == 0:
+            _LOG.warning("Not enough data to plot year-by-year.")
+            return
         # Create as many subplots as years.
         _, axis = plt.subplots(
-            len(yearly_resample),
+            num_plots,
             figsize=(20, 5 * len(yearly_resample)),
             sharey=self._sharey,
         )
@@ -98,6 +102,11 @@ class _TimeSeriesAnalyzer:
             # resample() is a groupby() returning the value on which we
             # perform the split and the extracted time series.
             group_by, ts = year_ts
+            if len(ts) < 2:
+                _LOG.info(
+                    "Skipping year %s: not enough data to plot", group_by.year
+                )
+                continue
             ts.plot(ax=axis[i], title=group_by.year)
         plt.suptitle(
             f"{self._freq_name.capitalize()} {self._ts_name} by year"
