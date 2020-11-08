@@ -203,14 +203,18 @@
   - We are mainly interested in the "Class diagram" section
 
 - The website https://structurizr.com has lots of information on using tools for
-  C4
+  C4 and lots of [examples](https://structurizr.com/share/52804/plantuml)
 
 ## PlantUML is Markdown
 
 - We use PlantUML for rendering diagrams in our documentation
   - For interactive use you can rely on online tools like:
-    - [planttext](https://www.planttext.com/)
-    - [liveuml](https://liveuml.com/)
+    - Online editors:
+      - [planttext](https://www.planttext.com/)
+      - [liveuml](https://liveuml.com/)
+      - [PlantUML Web Server](http://www.plantuml.com/plantuml/uml/SyfFKj2rKt3CoKnELR1Io4ZDoSa70000)
+    - PyCharm plugin (create and edit `.puml` file locally):
+      - [PlantUML integration](https://plugins.jetbrains.com/plugin/7017-plantuml-integration)
 
 - You can embed the diagrams in a `architecture.md` or a `README.md` in the
   corresponding folders
