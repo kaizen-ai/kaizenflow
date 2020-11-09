@@ -151,7 +151,7 @@ class Playback:
         else:
             # Start with imports.
             self._add_imports()
-        # Count if we fixed max number of tests generated for a single function.
+        # Count if we reached max number of tests generated for a single function.
         try:
             self._add_test_class()
         except IndexError as exception:
@@ -174,6 +174,11 @@ class Playback:
 
     @staticmethod
     def _get_test_file_name(file_with_code: str) -> str:
+        """Construct the test file name based on the file with the code to test.
+
+        :param file_with_code: path to file with code to test.
+        :return: path to the file with generated test.
+        """
         # Get directory and filename of the testing code.
         dirname_with_code, filename_with_code = os.path.split(file_with_code)
         dirname_with_test = os.path.join(dirname_with_code, "test")
@@ -184,6 +189,7 @@ class Playback:
         return test_file
 
     def _update_code_to_existing(self) -> None:
+        """Get existing content from the file with test. If the file doesn't exist - creates it."""
         # Create test file if it doesn't exist.
         if not os.path.exists(self._test_file):
             io_.create_enclosing_dir(self._test_file, True)
@@ -194,6 +200,7 @@ class Playback:
             self._file_exists = True
 
     def _check_code(self, func_output: Any) -> None:
+        """Generate test code that makes an assertion."""
         if self.mode == "check_string":
             if isinstance(func_output, (pd.DataFrame, pd.Series, str)):
                 if not isinstance(func_output, str):
@@ -222,7 +229,8 @@ class Playback:
             raise ValueError("Invalid mode='%s'" % self.mode)
 
     def _add_imports(self, additional: Union[None, List[str]] = None) -> None:
-        # Construct what is needed to paste
+        """Add the code with imports."""
+        # Add imports.
         self._code.append("import helpers.unit_test as hut")
         self._code.append("import jsonpickle")
         self._code.append("import pandas as pd")
@@ -232,14 +240,9 @@ class Playback:
         self._code.extend(["", ""])
 
     def _add_test_class(self) -> None:
-        # Construct test class and test method.
-        test_name = (
-            self._parent_class.__class__.__name__
-            if self._parent_class is not None
-            else ""
-        )
-        test_name += "".join([x.capitalize() for x in self._func_name.split("_")])
-        class_string = f"class Test{test_name}(hut.TestCase):"
+        """Add the code with the test class definition and the test method definition."""
+        # Add test class and test method.
+        class_string = self._get_class_name_string()
         # Find how many times method was tested.
         count = self._get_class_count(class_string)
         if count >= self._max_tests:
@@ -249,13 +252,27 @@ class Playback:
         self._code.append(class_string)
         self._code.append("    def test%i(self) -> None:" % (count + 1))
 
-    def _get_class_count(self, class_string: str) -> int:
+    def _get_class_count(self) -> int:
+        """Find a number of already generated tests for the method."""
+        class_string = self._get_class_name_string()
         count = 0
         for line in self._code:
             count += line == class_string
         return count
 
+    def _get_class_name_string(self) -> str:
+        """Get a string for the test code with the name of the test class. I.e. "class TestMyMethod(hut.TestCase):"."""
+        test_name = (
+            self._parent_class.__class__.__name__
+            if self._parent_class is not None
+            else ""
+        )
+        test_name += "".join([x.capitalize() for x in self._func_name.split("_")])
+        class_string = f"class Test{test_name}(hut.TestCase):"
+        return class_string
+
     def _add_function_call(self) -> None:
+        """Add a call of the function to test to the test code."""
         self._code.append("        # Call function to test")
         if self._parent_class is None:
             fnc_call = [f"{k}={k}" for k in self._kwargs.keys()]
@@ -274,6 +291,7 @@ class Playback:
             )
 
     def _add_var_definitions(self) -> None:
+        """Add variables definitions for the function to test."""
         self._code.append("        # Define input variables")
         for key in self._kwargs:
             as_python = to_python_code(self._kwargs[key])
@@ -287,6 +305,7 @@ class Playback:
                 )
 
     def _gen_code(self) -> str:
+        """Construct string with all generated test code."""
         code = "\n".join(self._code) + "\n"
         _LOG.debug("code=\n%s", code)
         if self._to_file:
