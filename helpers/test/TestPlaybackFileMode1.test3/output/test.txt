@@ -1,4 +1,4 @@
-# Test created for __main__.plbck_sum
+# Test created for __main__.plbck_sum.
 
 import helpers.unit_test as hut
 import jsonpickle
@@ -8,22 +8,22 @@ import core.config as cfg
 
 class TestPlbckSum(hut.TestCase):
     def test1(self) -> None:
-        # Define input variables
+        # Define input variables.
         a = 0
         b = 1
-        # Call function to test
+        # Call function to test.
         act = plbck_sum(a=a, b=b)
         act = str(act)
-        # Check output
+        # Check output.
         self.check_string(act)
 
 class TestPlbckSum(hut.TestCase):
     def test2(self) -> None:
-        # Define input variables
+        # Define input variables.
         a = 1
         b = 2
-        # Call function to test
+        # Call function to test.
         act = plbck_sum(a=a, b=b)
         act = str(act)
-        # Check output
+        # Check output.
         self.check_string(act)

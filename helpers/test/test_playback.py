@@ -176,6 +176,14 @@ class TestPlaybackInputOutput1(hut.TestCase):
         # Generate, freeze and execute a unit test.
         self._helper("assert_equal", a=a, b=b)
 
+    def test17(self) -> None:
+        """Test if testing function has no args with check_string."""
+        self._helper("check_string")
+
+    def test18(self) -> None:
+        """Test if testing function has no args with assert_equal."""
+        self._helper("assert_equal")
+
     def _helper(self, mode: str, *args: Any, **kwargs: Any) -> None:
         # Define a function to generate a unit test for.
         def get_result_ae(a: Any, b: Any) -> Any:
@@ -210,10 +218,24 @@ class TestPlaybackInputOutput1(hut.TestCase):
                 return p.run(c)
             return p.run(a + b)
 
+        def get_result_ae_none() -> Any:
+            p = plbck.Playback("assert_equal")
+            return p.run("Some string.")
+
+        def get_result_cs_none() -> Any:
+            p = plbck.Playback("check_string")
+            return p.run("Some string")
+
         if mode == "assert_equal":
-            code = get_result_ae(*args, **kwargs)
+            if not args and not kwargs:
+                code = get_result_ae_none()
+            else:
+                code = get_result_ae(*args, **kwargs)
         elif mode == "check_string":
-            code = get_result_cs(*args, **kwargs)
+            if not args and not kwargs:
+                code = get_result_cs_none()
+            else:
+                code = get_result_cs(*args, **kwargs)
         else:
             raise ValueError("Invalid mode ")
         self.check_string(code)

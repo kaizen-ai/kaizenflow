@@ -115,13 +115,13 @@ class Playback:
             self._parent_class = x
             self._code = [
                 f'# Test created for {cur_frame.f_back.f_globals["__name__"]}'  # type: ignore
-                f".{x.__class__.__name__}.{self._func_name}"
+                f".{x.__class__.__name__}.{self._func_name}."
             ]
         else:
             self._parent_class = None
             self._code = [
                 # pylint: disable=line-too-long
-                f'# Test created for {cur_frame.f_back.f_globals["__name__"]}.{self._func_name}'  # type: ignore
+                f'# Test created for {cur_frame.f_back.f_globals["__name__"]}.{self._func_name}.'  # type: ignore
             ]
         self._code.append("")
         # Check if need to write the code directly to file.
@@ -209,10 +209,10 @@ class Playback:
                     )
             if not isinstance(func_output, (str, bytes)):
                 self._code.append("        act = str(act)")
-            self._code.append("        # Check output")
+            self._code.append("        # Check output.")
             self._code.append("        self.check_string(act)")
         elif self.mode == "assert_equal":
-            self._code.append("        # Define expected output")
+            self._code.append("        # Define expected output.")
             func_output_as_code = to_python_code(func_output)
             self._code.append(f"        exp = {func_output_as_code}")
             if not isinstance(
@@ -223,7 +223,7 @@ class Playback:
             if isinstance(func_output, (pd.DataFrame, pd.Series)):
                 self._code.append("        act = hut.convert_df_to_string(act)")
                 self._code.append("        exp = hut.convert_df_to_string(exp)")
-            self._code.append("        # Compare actual and expected output")
+            self._code.append("        # Compare actual and expected output.")
             self._code.append("        self.assertEqual(act, exp)")
         else:
             raise ValueError("Invalid mode='%s'" % self.mode)
@@ -273,7 +273,7 @@ class Playback:
 
     def _add_function_call(self) -> None:
         """Add a call of the function to test to the test code."""
-        self._code.append("        # Call function to test")
+        self._code.append("        # Call function to test.")
         if self._parent_class is None:
             fnc_call = [f"{k}={k}" for k in self._kwargs.keys()]
             self._code.append(
@@ -292,13 +292,14 @@ class Playback:
 
     def _add_var_definitions(self) -> None:
         """Add variables definitions for the function to test."""
-        self._code.append("        # Define input variables")
+        if self._kwargs:
+            self._code.append("        # Define input variables.")
         for key in self._kwargs:
             as_python = to_python_code(self._kwargs[key])
             self._code.append("        %s = %s" % (key, as_python))
             # Decode back to an actual Python object, if necessary.
             if not isinstance(
-                self._kwargs[key], (int, float, str, list, dict, pd.DataFrame)
+                self._kwargs[key], (int, float, str, list, dict, pd.DataFrame, pd.Series, cfg.Config)
             ):
                 self._code.append(
                     "        {0} = jsonpickle.decode({0})".format(key)

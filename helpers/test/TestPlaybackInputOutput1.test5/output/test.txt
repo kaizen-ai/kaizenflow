@@ -1,4 +1,4 @@
-# Test created for test_playback.get_result_ae
+# Test created for test_playback.get_result_ae.
 
 import helpers.unit_test as hut
 import jsonpickle
@@ -8,14 +8,14 @@ import core.config as cfg
 
 class TestGetResultAe(hut.TestCase):
     def test1(self) -> None:
-        # Define input variables
+        # Define input variables.
         a = pd.DataFrame.from_dict({'Price': [700, 250, 800, 1200]})
         b = pd.DataFrame.from_dict({'Price': [1, 1, 1, 1]})
-        # Call function to test
+        # Call function to test.
         act = get_result_ae(a=a, b=b)
-        # Define expected output
+        # Define expected output.
         exp = pd.DataFrame.from_dict({'Price': [701, 251, 801, 1201]})
         act = hut.convert_df_to_string(act)
         exp = hut.convert_df_to_string(exp)
-        # Compare actual and expected output
+        # Compare actual and expected output.
         self.assertEqual(act, exp)

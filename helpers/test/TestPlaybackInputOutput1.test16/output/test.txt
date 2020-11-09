@@ -1,4 +1,4 @@
-# Test created for test_playback.get_result_ae
+# Test created for test_playback.get_result_ae.
 
 import helpers.unit_test as hut
 import jsonpickle
@@ -8,15 +8,13 @@ import core.config as cfg
 
 class TestGetResultAe(hut.TestCase):
     def test1(self) -> None:
-        # Define input variables
+        # Define input variables.
         a = cfg.Config.from_python("Config([('meta', 'meta value 1'), ('list', [1, 2])])")
-        a = jsonpickle.decode(a)
         b = cfg.Config.from_python("Config([('meta', 'meta value 2')])")
-        b = jsonpickle.decode(b)
-        # Call function to test
+        # Call function to test.
         act = get_result_ae(a=a, b=b)
-        # Define expected output
+        # Define expected output.
         exp = cfg.Config.from_python("Config([('meta', 'meta value 2'), ('list', [1, 2])])")
         exp = jsonpickle.decode(exp)
-        # Compare actual and expected output
+        # Compare actual and expected output.
         self.assertEqual(act, exp)
