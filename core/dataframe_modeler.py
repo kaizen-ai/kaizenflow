@@ -336,10 +336,16 @@ class DataFrameModeler:
         y_scale: Optional[float] = 4,
         sharex: bool = True,
         sharey: bool = False,
+        separator: Optional[str] = None,
         mode: str = "ins",
     ) -> None:
+        """
+        :param separator: if not `None`, split the column names by it and
+            display only the last part as the plot title
+        """
         df = self._get_df(cols=cols, mode=mode)
         num_plots = num_plots or df.shape[1]
+        num_plots = min(num_plots, df.shape[1])
         # Create figure to accommodate plots.
         _, axes = plot.get_multiple_plots(
             num_plots=num_plots,
@@ -352,7 +358,11 @@ class DataFrameModeler:
         cols_to_draw = df.columns[:num_plots]
         for i, col_name in enumerate(cols_to_draw):
             srs = df[col_name]
-            srs.to_frame().plot(title=col_name, ax=axes[i])
+            if separator is not None:
+                title = col_name.rsplit(separator, 1)[-1]
+            else:
+                title = col_name
+            srs.plot(title=title, ax=axes[i])
 
     def plot_cumulative_returns(
         self,
@@ -459,12 +469,14 @@ class DataFrameModeler:
         self,
         cols: Optional[List[Any]] = None,
         num_components: Optional[int] = None,
+        num_cols: int = 2,
+        y_scale: Optional[float] = None,
         mode: str = "ins",
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         pca = plot.PCA(mode="standard")
         pca.fit(df.replace([np.inf, -np.inf], np.nan).fillna(0))
-        pca.plot_components(num_components)
+        pca.plot_components(num_components, num_cols=num_cols, y_scale=y_scale)
 
     def plot_explained_variance(
         self,
@@ -514,14 +526,14 @@ class DataFrameModeler:
         """
         :param num_plots: number of cols to plot the study for
         """
-        df = self._get_df(cols=cols, mode=mode).squeeze()
+        df = self._get_df(cols=cols, mode=mode)
         num_plots = num_plots or df.shape[1]
         cols_to_draw = df.columns[:num_plots]
         for col_name in cols_to_draw:
-            tsds = tss.TimeSeriesDailyStudy(df[col_name], data_name=str(col_name))
+            tsds = tss.TimeSeriesDailyStudy(df[col_name])
             tsds.execute()
             plt.show()
-            
+
     def plot_histograms_and_lagged_scatterplot(
         self,
         lag: int,
@@ -545,8 +557,9 @@ class DataFrameModeler:
                 title=col_name,
                 hist_kwargs=hist_kwargs,
                 scatter_kwargs=scatter_kwargs,
+                figsize=(20, 10),
             )
-            plt.show() 
+            plt.show()
 
     # #########################################################################
     # Private helpers

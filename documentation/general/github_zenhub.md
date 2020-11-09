@@ -3,7 +3,9 @@
    * [Task management with GitHub](#task-management-with-github)
       * [Everything we work on comes as a GitHub task](#everything-we-work-on-comes-as-a-github-task)
       * [Issues vs bugs vs tasks](#issues-vs-bugs-vs-tasks)
-      * [Life cycle of a bug / task](#life-cycle-of-a-bug--task)
+      * [ZenHub for project management](#zenhub-for-project-management)
+      * [Filing an Issue](#filing-an-issue)
+      * [Updating an Issue](#updating-an-issue)
       * [Done means "DONE"](#done-means-done)
       * [Tend your tasks](#tend-your-tasks)
       * [File descriptive GH tasks](#file-descriptive-gh-tasks)
@@ -60,60 +62,62 @@
          * [Closed](#closed)
       * [Labels](#labels)
          * [Pipeline vs Epic vs Label](#pipeline-vs-epic-vs-label)
-      * [Workflows](#workflows)
-         * [Moving tasks between pipelines workflow](#moving-tasks-between-pipelines-workflow)
-         * [Filing an issue](#filing-an-issue)
+   * [Workflows](#workflows)
+      * [Sprint planning](#sprint-planning-1)
+      * [During the Sprint](#during-the-sprint)
+      * [Moving Issues between pipelines](#moving-issues-between-pipelines)
+      * [Filing an issue](#filing-an-issue-1)
       * [Story Points aka Task Estimation](#story-points-aka-task-estimation)
          * [How to make good estimates?](#how-to-make-good-estimates)
-      * [Sprint retrospective / planning](#sprint-retrospective--planning)
+      * [PR flow for Integrators](#pr-flow-for-integrators)
+         * [How is this different from an RP review?](#how-is-this-different-from-an-rp-review)
+         * [Integrator process](#integrator-process)
+         * [Running the integrator gauntlet](#running-the-integrator-gauntlet)
 
 
 
 <!--te-->
-# Abbreviations
-
-- GH = GitHub
-- ZH = ZenHub
-- PR = Pull Request
-- RP = Responsible Particle
 
 # Task management with GitHub
 
-## Everything we work on comes as a GitHub task
+In the following we use the abbreviations below:
+  - GH = GitHub
+  - ZH = ZenHub
+  - PR = Pull Request
+  - RP = Responsible Particle
 
-- We file tasks and then prioritize and distribute the workload
-- We try to always work on high priority (e.g., `P0`) tasks
+- Everything we work on comes as a GitHub task
+  - We file tasks and then prioritize and distribute the workload
+  - We try to always work on high priority (e.g., `P0`) tasks
 
-## Issues vs bugs vs tasks
+- Issues vs bugs vs tasks
+  - We call GitHub issues "issues", "bugs", and "tasks" interchangeably
+  - "Bugs" is a bit improper since many times we use GitHub to track ideas,
+    activities, and improvements, and not only defects in the code
+  - The best names are "tasks" and "issues"
 
-- We call GitHub issues "issues", "bugs", and "tasks" interchangeably
-- "Bugs" is a bit improper since many times we use GitHub to track ideas,
-  activities, and improvements, and not only defects in the code
-- The best names are "tasks" and "issues"
-
-## ZenHub for project management
-
-- We use ZenHub as project management layer on top of GitHub
-- Please install the [ZenHub extension](https://www.zenhub.com/extension) for
-  GitHub. This is going to make your life easier.
+- ZenHub for project management
+  - We use ZenHub as project management layer on top of GitHub
+  - Please install the [ZenHub extension](https://www.zenhub.com/extension) for
+    GitHub. This is going to make your life easier.
 
 ## Filing an Issue
 
-- Use an informative description (typically an action “Do this and that”).
-  We don’t use a period at the end of the title.
+- Use an informative description (typically an action "Do this and that"). We
+  don't use a period at the end of the title.
 - Assign to the right RP for re-routing (or to GP / Paul if you are not sure)
 - Assign to one of the pipelines, ideally based on the urgency
-    - P0: needs to be done soon
-    - P1: nice to have
-    - P2: well, we will do it sometime in 2022
-    - If you are not sure, leave it unassigned but @tag GP / Paul to make
-      sure we can take care of it
+  - P0: needs to be done soon
+  - P1: nice to have
+  - P2: well, we will do it sometime in 2022
+  - If you are not sure, leave it unassigned but @tag GP / Paul to make sure we
+    can take care of it
 - No need to agonize over labels for now. We are going to improve the GitHub
   label conventions soon.
 - Assign to an Epic
-    - Please review the available Epics to find the most suitable
-    - If you are unsure then you can leave it empty, but @tag GP / Paul to
-      make sure we can re-route and improve the Epics
+  - Please review the available Epics to find the most suitable
+  - If you are unsure then you can leave it empty, but @tag GP / Paul to make
+    sure we can re-route and improve the Epics
 
 ## Updating an Issue
 
@@ -195,93 +199,6 @@
   beginning to end and not ping-pong the responsibility
   - Collective ownership of a task means that nobody owns it
 
-# Code review with GitHub
-
-- TODO(gp): Move it `code_review.md`
-
-## Avoid committing to `master`
-
-- Exceptions are small commits that are not part of a feature
-  - E.g., fixing a break, improving documentation
-
-## Use branches and PRs
-
-- All code should be reviewed before it is merged into `master`
-
-## Optional PR review
-
-- Sometimes we want to do an "optional" review in GitHub
-
-- The process is:
-  - Create a PR
-  - Tag the reviewers, adding a description if needed, like in the normal PR
-    flow
-  - Merge the PR without waiting for the review
-
-- Unfortunately merging the PR automatically closes the PR
-
-- The problem is that once the reviewers get to that PR and add comments, emails
-  are sent, but GitHub doesn't track the PR as open
-  - The comments are there but not "resolved"
-  - One needs to go to the PR page, e.g.,
-    `https://github.com/alphamatic/amp/pull/52` to see the comments
-  - There is no way for the reviewer to reopen the PR to signal that there is
-    something to address
-  - Solutions:
-    - Unfortunately this requires discipline and organization in the email
-      management of the author and reviewer
-    - Maybe author / reviewer can mark the email from GitHub about the
-      post-commit review using a "flag" as a reminder that something needs to be
-      addressed
-
-- Just like for pre-commit reviews, the author should:
-  - Address the comments as soon as possible
-  - Close the conversation on GH, marking them as resolved or engage in
-    discussion
-  - Tag commits as addressing reviewers' comments
-
-## Reviewers don't follow a branch
-
-- We don't expect code in a branch to be reviewed until a PR is filed
-- It's ok to cut corners during the development of the code (e.g., running all
-  tests or linting after every commit)
-  - The code needs to be production quality when you propose to merge into
-    `master`
-
-## Reviewers vs assignees
-
-- In a GitHub PR mark people as reviewers and leave the assignee field empty
-- The difference between reviewers and assignees is explained
-  [here](https://stackoverflow.com/questions/41087206)
-- In a few words assignees are people that are requested to merge the branch
-  after the PR, when they are different from the reviewers
-
-## Reviewers and authors interactions
-
-- If the reviewer's comment is clear to the author and agreed upon
-  - The author addresses the comment with a code change and _after_ changing the
-    code (everywhere the comment it applies) marks it as `RESOLVED` on the
-    GitHub interface
-  - Here we trust the authors to do a good job and to not skip / lose comments
-  - This mechanism only works if the author is diligent
-
-- If the comment needs further discussion, the author adds a note explaining why
-  he/she disagrees and the discussion continues until consensus is reached
-
-- We don't want to leave comments unaddressed since otherwise we don't know if
-  it was agreed upon and done or forgotten
-
-- We are ok with doing multiple commits in the branch or a single commit for all
-  the comments
-  - The goal is for the author to keep the PR clear and minimize his / her
-    overhead
-
-## "Pending" comments
-
-- Comments that are marked as "pending" in GitHub are not published yet and
-  visible only to the author
-- Once you publish the review, then an email is sent and comments become visible
-
 # ZenHub
 
 ## Refs
@@ -290,139 +207,119 @@
 
 ## Agile concepts
 
-### Agile development
+- Agile development
+  - = iterative approach to software development that emphasizes flexibility,
+    interactivity, and transparency
+  - It focuses on:
+    - Frequent releases of useable code
+    - Continuous testing
+    - Acceptance that reality is always changing and thus requirements are
 
-- = iterative approach to software development that emphasizes flexibility,
-  interactivity, and transparency
-- It focus on:
-  - Frequent releases of useable code
-  - Continuous testing
-  - Acceptance that reality is always changing and thus requirements are
+- Sprints
+  - = fixed length of time during which agreed-upon chunk of work is completed and
+    shipped
+  - Once a Sprint begins, its scope remain fixed
+    - The opposite is called "scope creep"
 
-### Sprints
+- User story
+  - = high level descriptions of features from customer's perspective
+  - A template of a user story is:
+    - (Title): "as a <USER>, I want <GOAL> so that <BENEFIT>"
+    - User story
+    - Acceptance criteria
+    - Definition of "Done"
 
-- = fixed length of time during which agreed-upon chunk of work is completed and
-  shipped
-- Once a Sprint begins, its scope remain fixed
-  - The opposite is called "scope creep"
+- Epics
+  - = "big" user story of theme of work
+  - E.g.,
+    - Epic: "Management feature"
+    - User story: "As a customer, I want to be able to create an account"
 
-### User story
+- Product backlog
+  - Aka "Master Story List"
+  - = include all the work, e.g.,
+    - User stories
+    - Half-baked feature ideas
+    - Bug fixes
+  - The goal is to get stuff out of our heads and into GH
 
-- = high level descriptions of features from customer's perspective
+- Icebox
+  - = items that are low priority in the product backlog
 
-- A template of a user story is:
-  - (Title): "as a <USER>, I want <GOAL> so that <BENEFIT>"
-  - User story
-  - Acceptance criteria
-  - Definition of "Done"
+- Sprint backlog
+  - = the work that the team is committed to tackling in a given Milestone
 
-### Epics
-
-- = "big" user story of theme of work
-- E.g.,
-  - Epic: "Management feature"
-  - User story: "As a customer, I want to be able to create an account"
-
-### Product backlog
-
-- Aka "Master Story List"
-- = include all the work, e.g.,
-  - User stories
-  - Half-baked feature ideas
-  - Bug fixes
-- The goal is to get stuff out of our head and into GH
-
-### Icebox
-
-- = items that are low priority in the product backlog
-
-### Sprint backlog
-
-- = the work that the team is committed to tackling in a given Milestone
-
-### Mapping Agile concepts onto GH
-
-- User stories = GH Issues
-- Scrum sprints = GH milestones
-- Product backlog = GH list of issues
+- Mapping Agile concepts onto GH
+  - User stories = GH Issues
+  - Scrum sprints = GH milestones
+  - Product backlog = GH list of issues
 
 # ZenHub concepts
 
-## ZH vs GH
-
-- GH Issues are used to provide a place to talk about bugs and features
-- ZH builds on top of GH Issues, PRs, Milestones to implement a project
-  management layer
+- ZH vs GH
+  - GH Issues are used to provide a place to talk about bugs and features
+  - ZH builds on top of GH Issues, PRs, Milestones to implement a project
+    management layer
 
 ## ZH workspaces
+  - Allows you to bundle multiple GitHub repos into a single view
+  - Different teams (or team members) can create different pipeline structures for
+    the same set of repos
+    - Each team can have their own workflow
 
-- Allows you to bundle multiple GitHub repos into a single view
-- Different teams (or team members) can create different pipeline structures for
-  the same set of repos
-  - Each team can have their own workflow
+## ZH concepts
 
-## ZH epics
+- Epics
+  - = theme of work containing several sub-tasks required to complete a larger
+    goal
+  - Tasks are broken down into small, manageable chunks
+  - An Epic is a "big user story"
 
-- = theme of work containing several sub-tasks required to complete a larger
-  goal
-- Tasks are broken down into small, manageable chunks
-- An Epic is a "big user story"
+- Epics vs GH Issues
+  - GH issues have no hierarchy: they are a list
+    - Which issues are related, which are blocked, or dependent?
+  - Epics add a layer of hierarchy on GH issues
+  - Epics are like "themes of work"
 
-## Epics vs GH Issues
+- Roadmaps
+  - Organize Projects and Epics into a Gantt-style timeline view
+  - This shows what the critical part of the software project is
 
-- GH issues have no hierarchy: they are a list
-  - Which issues are related, which are blocked, or dependent?
-- Epics add a layer of hierarchy on GH issues
-- Epics are like "themes of work"
+- Sprint planning
+  - How much work can we actually tackle?
+  - Can we ship in the next two weeks?
+  - What issues should be de-scoped?
 
-## Roadmaps
+- Burndown charts
+  - = indicator of how projects are processing
+  - Each time an issue is closed the burndown chart is updated
 
-- Organize Projects and Epics into a Gantt-style timeline view
-- This shows what is the critical part of the software project
+- Velocity charts
+  - Reporting on how the amount of work completed fluctuates over time (i.e.,
+    sprint over sprint)
 
-## Sprint planning
+- Issue cycle and control chart
+  - Understand how long Issues take from start to finish
 
-- How much work can we actually tackle?
-- Can we ship in the next two weeks?
-- What issues should be de-scoped?
+- Cumulative flow diagram
+  - Track how much work has been done across dates
 
-## Burndown
+- Release reports
+  - Releases are used for tracking long-term and dynamic projects
+  - Features span multiple sprints
 
-- = indicator of how projects are processing
-- Each time an issue is closed the burndown chart is updated
+- Milestone vs Epics
+  - Epics are larger initiatives
+    - Contain issues related to the same subject
+    - Issues are added and removed
 
-## Velocity charts
+  - Milestones are GH sprints
+    - Contain issues related in terms of time
+    - Issues are fixed once a sprint begins
 
-- Reporting on how the amount of work completed fluctuates over time (i.e.,
-  sprint over sprint)
-
-## Issue cycle and control chart
-
-- Understand how long Issues take from start to finish
-
-## Cumulative flow diagram
-
-- Track how much work has been done across dates
-
-## Release reports
-
-- Releases are used for tracking long-term and dynamic projects
-- Features span multiple sprints
-
-## Milestone vs Epics
-
-- Epics are larger initiatives
-  - Contain issues related to the same subject
-  - Issues are added and removed
-
-- Milestones are GH sprints
-  - Contain issues related in terms of time
-  - Issues are fixed once a sprint begins
-
-## Pipelines
-
-- Implement multiple workflows representing how Issues are selected,
-  implemented, and completed
+- Pipelines
+  - Implement multiple workflows representing how Issues are selected,
+    implemented, and completed
 
 # Our conventions
 
@@ -448,7 +345,7 @@
 
 - Master Epics can be broken down into smaller Epics (=sub-epics)
   - Ex.: `NLP - RP skateboard`
-  - Their title should follow the pattern: `XYZ - `, where XYZ is a master Epic
+  - Their titles should follow the pattern: `XYZ -`, where XYZ is a master Epic
     title
 - Sub-epics should have a short title and a smaller scope
 - Sub-epics should belong to a Master Epic in ZenHub
@@ -481,62 +378,51 @@
 - Pipeline order is integral for the whole team, so make sure you are not
   changing the order of the pipelines on the board while working
 
-### New Issues
+- New Issues
+  - Any new GH Issue goes here
 
-- Any new GH Issue goes here
+- Icebox (P2)
+  - Low priority, un-prioritized issues
 
-### Icebox (P2)
+- Backlog (P1)
+  - Issues of medium priority at the moment
 
-- Low priority, un-prioritized issues
+- Ready to Go (P0)
+  - Issues of high priority at the moment
 
-### Backlog (P1)
-
-- Issues of medium priority at the moment
-
-### Ready to Go (P0)
-
-- Issues of high priority at the moment
-
-### Sprint backlog
-
-- = Sprint backlog
+- Sprint backlog
+  - = Sprint backlog
   - All issues to be completed during the current Sprint
 
-### In progress
+- In progress
+  - Issues that we are currently working on
 
-- Issues that we are currently working on
+- Review / QA
+  - Issues opened for review and testing
+  - Code is ready to be deployed pending feedback
+  - Issues stay in Review/QA pipeline while being reviewed
 
-### Review / QA
+- Epic
+  - All Epic issues
+    - Both Master Epics and Sub-epics
 
-- Issues opened for review and testing
-- Code is ready to be deployed pending feedback
-- Issues stay in Review/QA pipeline while being reviewed
+- Open Research
+  - Contains Issues with exploratory analysis that might be completed, but whose
+    implications are still unknown
+  - We are moving these materials to gdocs (e.g., DSE and CDSE) and closing these
+    issues
+  - TODO(\*): Remove this when all bugs are closed
 
-### Epic
+- Done
+  - Definition of `Done` for an issue:
+    - PR which is connected to the issue is merged
+      - If there is more than one PR, all PRs should be merged
+    - All tests are written
+    - If an issue requires updating documentation, PR with documentation update is
+      merged
 
-- All Epic issues
-  - Both Master Epics and Sub-epics
-
-### Open Research
-
-- Contains Issues with exploratory analysis that might be completed, but whose
-  implications are still unknown
-- We are moving these materials to gdocs (e.g., DSE and CDSE) and closing these
-  issues
-- TODO(\*): Remove this when all bugs are closed
-
-### Done
-
-- Definition of `Done` for an issue:
-  - PR which is connected to the issue is merged
-    - If there is more than one PR, all PRs should be merged
-  - All tests are written
-  - If an issue requires updating documentation, PR with documentation update is
-    merged
-
-### Closed
-
-- Issues that are done and don't need a follow-up
+- Closed
+  - Issues that are done and don't need a follow-up
   - Issues are moved from `Done` to `Closed` by RPs
 
 ## Labels
@@ -548,7 +434,7 @@
 - TODO(gp): Remove Umbrella, Wontfix, Unclear, Permanent, Enhancement,
   Duplicate, Feature, Question
 
-### Pipeline vs Epic vs Label
+## Pipeline vs Epic vs Label
 
 - A ZH Pipeline represents the "progress" status of an Issue
 - A ZH Epic pulls together Issues that are somehow related by their topic
@@ -560,9 +446,71 @@
   - We decided to use different pipelines for priority to make it simpler to
     separate Issues given their urgency
 
-## Workflows
+# Workflows
 
-### Moving tasks between pipelines workflow
+## Sprint planning
+
+- Each Sprint lasts two weeks
+  - Sprints are aligned to [Monday, Friday of the following week], independently
+    of the month
+  - Monthly Company milestones are aligned to 2 sprints (4 weeks) without
+    necessarily aligning with a month
+- For every Sprint GP / Paul creates an Issue to plan the Sprint with the
+  following checklist
+- [ ] GP / Paul: Create a new ZH milestone for the current sprint
+  - A milestone spans 2 weeks, [Monday, Friday of the following week]
+- RPs + teams plan sprint
+  - ETA: Finish the sprint planning by Thursday EOD (filed event on RP's
+    calendar)
+  - [ ] Clean up the previous milestone (e.g., close Issues that are done)
+  - [ ] Read carefully the documentation about our conventions
+        [https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md](https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md)
+  - [ ] Take a look at your team's high-level planning document
+        `Master - $TEAM - Plan` to orient yourself
+  - [ ] Remember business priorities, but don't forget about paying technical
+        debt
+    - Allocate 20% of the effort to paying technical debt (especially the debt
+      that is slowing down the team now)
+    - If you are not sure about the priorities, ping GP / Paul
+  - [ ] Try to describe the outcome of a sprint with 1-2 crisp phrases:
+    - "Release Point-In-Time in production for all the data providers currently
+      supported in KG"
+    - "Build an initial model for predicting basis prices in the Frey set-up"
+    - "Implement and test fetchers for 3 data providers"
+  - [ ] Move Issues to ZH `Sprint Backlog` pipeline
+  - [ ] Make sure all Issues are assigned to the right Epic
+  - [ ] Assign story points to each Issue (see
+        [https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md#story-points-aka-task-estimation](https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md#story-points-aka-task-estimation))
+  - [ ] Assign the new milestone to the Issue
+- GP / Paul finalize sprint planning
+  - ETA: Friday EOD
+  - [ ] Review the Sprint Backlog team-by-team
+  - [ ] Make sure that the Sprint Backlog is aligned with the Business goals and
+        deadlines
+    - Hold meetings with RPs to discuss / clarify, if needed
+- GP / Paul do a sprint retrospective
+  - [ ] Close the old Sprint
+  - [ ] Review the performance of each team and team members
+  - [ ] Compute and collect metrics
+- GP / Paul during company meeting on Mon
+  - Review the burn down chart, high level comments about what worked / didn't
+    work
+  - Talk about the new Sprint
+
+## During the Sprint
+
+- The goal is to plan and then focus on executing for two weeks without
+  agonizing over what to do next
+- File more GH Issues as you go and assign them some priority (P0, P1, P2)
+  - Get every problem out of your head and into GH
+- If you are running low on tasks during the Sprint, it's ok to pick up more
+  tasks
+- It's inevitable that something comes up (e.g., an existing customer issue, a
+  customer inquiry) that might change our carefully crafted plan
+- Focus on the Issues that you started and bring them to completion
+- We want to become good at estimating the complexity of a task
+
+## Moving Issues between pipelines
 
 - When an assignee starts to work on a Issue, he/she moves it to the
   `In progress` pipeline
@@ -588,7 +536,7 @@
   - If an issue stays in `Done` for 2 sprints in a row, it is closed
     automatically
 
-### Filing an issue
+## Filing an issue
 
 - When filing an issue:
   - Add a title for the issue
@@ -689,9 +637,97 @@
   - From https://en.wikipedia.org/wiki/Parkinson%27s_law
     - Work expands so as to fill the time available for its completion
 
+# Code review with GitHub / ZenHub
+
+- TODO(gp): Move / merge with `code_review.md`?
+
+## Avoid committing to `master`
+
+- Exceptions are small commits that are not part of a feature
+  - E.g., fixing a break, improving documentation
+
+## Use branches and PRs
+
+- All code should be reviewed before it is merged into `master`
+
+## Optional PR review
+
+- Sometimes we want to do an "optional" review in GitHub
+
+- The process is:
+  - Create a PR
+  - Tag the reviewers, adding a description if needed, like in the normal PR
+    flow
+  - Merge the PR without waiting for the review
+
+- Unfortunately merging the PR automatically closes the PR
+
+- The problem is that once the reviewers get to that PR and add comments, emails
+  are sent, but GitHub doesn't track the PR as open
+  - The comments are there but not "resolved"
+  - One needs to go to the PR page, e.g.,
+    `https://github.com/alphamatic/amp/pull/52` to see the comments
+  - There is no way for the reviewer to reopen the PR to signal that there is
+    something to address
+  - Solutions:
+    - Unfortunately this requires discipline and organization in the email
+      management of the author and reviewer
+    - Maybe author / reviewer can mark the email from GitHub about the
+      post-commit review using a "flag" as a reminder that something needs to be
+      addressed
+
+- Just like for pre-commit reviews, the author should:
+  - Address the comments as soon as possible
+  - Close the conversation on GH, marking them as resolved or engage in
+    discussion
+  - Tag commits as addressing reviewers' comments
+
+## Reviewers don't follow a branch
+
+- We don't expect code in a branch to be reviewed until a PR is filed
+- It's ok to cut corners during the development of the code (e.g., running all
+  tests or linting after every commit)
+  - The code needs to be production quality when you propose to merge into
+    `master`
+
+## Reviewers vs assignees
+
+- In a GitHub PR, mark people as reviewers and leave the assignee field empty
+- The difference between reviewers and assignees is explained
+  [here](https://stackoverflow.com/questions/41087206)
+- In a few words assignees are people that are requested to merge the branch
+  after the PR, when they are different from the reviewers
+
+## Reviewer and author interactions
+
+- If the reviewer's comment is clear to the author and agreed upon
+  - The author addresses the comment with a code change and _after_ changing the
+    code (everywhere the comment it applies) marks it as `RESOLVED` on the
+    GitHub interface
+  - Here we trust the authors to do a good job and to not skip / lose comments
+  - This mechanism only works if the author is diligent
+
+- If the comment needs further discussion, the author adds a note explaining why
+  he/she disagrees and the discussion continues until consensus is reached
+
+- We don't want to leave comments unaddressed since otherwise we don't know if
+  it was agreed upon and done or forgotten
+
+- We are ok with doing multiple commits in the branch or a single commit for all
+  the comments
+  - The goal is for the author to keep the PR clear and minimize his / her
+    overhead
+
+## "Pending" comments
+
+- Comments that are marked as "pending" in GitHub are not published yet and
+  visible only to the author
+- Once you publish the review, then an email is sent and comments become visible
+
 ## PR flow for Integrators
 
 Integrators are responsible for
+
 - Merging PRs
 - Ensuring architectural integrity
 - Pushing for clean and reusable interfaces
@@ -699,6 +735,7 @@ Integrators are responsible for
 - Assessing readability
 
 Process goals include:
+
 - Fast iterations
 - Asynchronous reviews
 - Scaling up
@@ -709,9 +746,9 @@ Process goals include:
 - Checking low-level details about the code should be automated as much as
   possible
 - RPs focus on the internal consistency of the pieces (e.g., L3 and L4 of c4)
-- Integrators focus on coherence between higher level pieces, architecture,
-  and interfaces (L2 and L3)
-  
+- Integrators focus on coherence between higher level pieces, architecture, and
+  interfaces (L2 and L3)
+
 ### Integrator process
 
 - All final PRs are assigned to all integrators
@@ -734,8 +771,8 @@ Process goals include:
     - Discussed
     - Resolved, following the appropriate changes
     - Postponed with a follow-up issue that is posted in the comment thread
-- If a reviewer is uncertain about something, or deferring to another
-  reviewer's judgment, that reviewer can tag appropriate people in the PR
+- If a reviewer is uncertain about something, or deferring to another reviewer's
+  judgment, that reviewer can tag appropriate people in the PR
   - The PR author is responsible for coordinating the reviewers
   - If reviewers appear to be providing diverging feedback, then the PR author
     is responsible for driving consensus
@@ -751,42 +788,12 @@ Process goals include:
   - If the change is on a minor point and would slow down the review/merge
     process
     - File a well-documented issue
-    - In addition to providing a stand-alone summary, point to the PR comment
-      in the issue (so posterity can get more context if needed)
-    - Mention the issue in the PR comment thread (so the reviewer knows that
-      the change is acknowledged)
+    - In addition to providing a stand-alone summary, point to the PR comment in
+      the issue (so posterity can get more context if needed)
+    - Mention the issue in the PR comment thread (so the reviewer knows that the
+      change is acknowledged)
   - If the change is controversial or disputed, comment on the thread and drive
     to reach consensus
-- Be sure to mark the PR as ready for review after having addressed all
-  comments
+- Be sure to mark the PR as ready for review after having addressed all comments
 - Velocity is important. Prioritize final-review PRs above other work and push
   for the merge.
-
-## Sprint retrospective / planning
-
-- By Thursday EOD (RPs)
-  - [ ] Move all the completed issues from the `Review/QA` pipeline to the
-        `Done` pipeline
-  - [ ] Make sure all issues in the `Done` pipeline are ready to be closed
-    - They all have estimates
-    - They all are added to the current Sprint milestone
-    - They all belong to an Epic
-
-- By Friday EOD (GP + Paul)
-  - [ ] Do the team assessment
-  - [ ] Look at the statistics of the sprint (e.g., Sprint burndown report)
-    - TODO(GP, Paul): Describe exactly what to do
-
-- By Friday EOD (RPs + teams)
-  - [ ] Prepare the Sprint backlog
-
-- Saturday / Sunday
-  - [ ] GP and Paul review the Sprint backlog
-
-- Monday group meeting
-  - Every week at 9 am ET, independently of Day Light Savings (although we can
-    try to adjust things to help the Russia team)
-  - Review the Sprint progress in terms of plots
-
-- Thursday group meetings
-  - Usual tech sync-ups

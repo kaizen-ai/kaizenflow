@@ -7,15 +7,14 @@ import functools
 import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pywt
 import scipy as sp
 import statsmodels.api as sm
-
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -329,16 +328,16 @@ def squash(
 
 
 def accumulate(
-    srs: pd.Series,
+    signal: Union[pd.DataFrame, pd.Series],
     num_steps: int,
     nan_mode: Optional[str] = None,
-) -> pd.Series:
+) -> Union[pd.DataFrame, pd.Series]:
     """Accumulate series for step.
 
-    :param srs: time series
+    :param signal: time series or dataframe
     :param num_steps: number of steps to compute rolling sum for
     :param nan_mode: argument for hdf.apply_nan_mode()
-    :return: time series for step
+    :return: time series or dataframe accumulated
     """
     dbg.dassert_isinstance(num_steps, int)
     dbg.dassert_lte(
@@ -348,8 +347,20 @@ def accumulate(
         num_steps,
     )
     nan_mode = nan_mode or "leave_unchanged"
-    srs = hdf.apply_nan_mode(srs, mode=nan_mode)
-    return srs.rolling(window=num_steps).sum()
+
+    if isinstance(signal, pd.Series):
+        signal_cleaned = hdf.apply_nan_mode(signal, mode=nan_mode)
+        signal_cumulative = signal_cleaned.rolling(window=num_steps).sum()
+    elif isinstance(signal, pd.DataFrame):
+        signal_cleaned = signal.apply(
+            (lambda x: hdf.apply_nan_mode(x, mode=nan_mode)), axis=0
+        )
+        signal_cumulative = signal_cleaned.apply(
+            (lambda x: x.rolling(window=num_steps).sum()), axis=0
+        )
+    else:
+        raise ValueError(f"Invalid input type `{type(inp_data)}`")
+    return signal_cumulative
 
 
 def get_symmetric_equisized_bins(
