@@ -901,27 +901,32 @@ def compute_linkage(df: pd.DataFrame, method: Optional[str] = None) -> np.ndarra
     """
     Perform hierarchical clustering.
 
-    :param df: df input dataframe
-    :method: str distance calculation method
-    :returns: The hierarchical clustering encoded as a linkage matrix
+    Linkage methods available in the official documentation:
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.linkage.html
+
+    :param df: input dataframe with columns as series
+    :method: distance calculation method
+    :returns: hierarchical clustering encoded as a linkage matrix
     """
     method = method or "average"
     corr = df.corr()
     return hac.linkage(corr, method=method)
 
 
-def select_series_to_remove(
-    df_corr: pd.DataFrame, threshold: float
-) -> List["str"]:
+def select_series_to_remove(df_corr: pd.DataFrame, threshold: float) -> List[str]:
     """
-    Iterate through the correlation dataframe
-    by removing the time series above the correlation
-    threashold and continue the process on the remaining
-    subset matrix untill all of the time series in the
-    remaining matrix have correlation below the threashold.
+    Select correlate series to remove.
 
-    :param df_corr: df with time series correlations
-    :param threshold: float correlation threashold to remove ts
+    Iterate through the correlation dataframe by removing the time series that has
+    the largest number of coefficients above the correlation threshold and append
+    this time series name to the list of series to remove. Continue the process on
+    the remaining subset matrix until all of the time series in the remaining matrix
+    have a correlation below the threshold. Stop the process when all of the time
+    series have correlations below this threshold. Return the formed list with the
+    selected series to remove.
+
+    :param df_corr: dataframe with time series correlations
+    :param threshold: correlation threshold to remove time series
     :returns: list of series to remove
     """
     corr = df_corr.copy()
@@ -950,30 +955,29 @@ def cluster_and_select(
     method: Optional[str] = None,
 ) -> Optional[Dict[str, float]]:
     """
-    Cluster time series using hierarchical clustering algorithm
-    defined by the linkage matrix. The linkage matrix can
-    be passed as a precomuted input matrix. If the argument is
-    empty, compute_linkage() function is used to compute linkage
-    matrix with the default 'average' method (or the method specified
-    in the input).
+    Select a subset of time series, using clustering and correlation approach.
+
+    Cluster time series using hierarchical clustering algorithm defined by
+    the linkage matrix. We use compute_linkage() function to compute linkage
+    matrix with the default 'average' method (or the method specified in the input).
     Once the clusters are formed and each time series is assigned to a
     specific cluster, the correlations amongst time series produced
     for every such cluster. The correlation matrix is then passed to
     select_series_to_remove() method, which returns the list of highly
-    correlated time series within the cluster (above the threashold specified)
+    correlated time series within the cluster (above the threshold specified)
     that are removed from the total list of time series to consider.
-    Once the the function iterated over every cluster and removed from the
+    Once the function iterated over every cluster and removed from the
     original list of time series, it returns the reduced list of time series
-    with equivalent amount of information that can be used to consider
+    with the equivalent amount of information that can be used to consider
     for further analysis. The function also produces dendogram of clustered
     time series along with correlation plots at different stages of execution.
 
-    :param df: df input dataframe
-    :param num_clust: int number of clusters to compute
-    :param corr_thr: float correlation threshold
+    :param df: input dataframe with columns as time series
+    :param num_clust: number of clusters to compute
+    :param corr_thr: correlation threshold
     :param show_corr_plots: bool whether to show correlation plots or not
     :param show_dendogram: bool whether to show original clustering dendogram
-    :param method: str distance calculation method
+    :param method: distance calculation method
     :returns: list of names of series to keep
     """
     method = method or "average"
