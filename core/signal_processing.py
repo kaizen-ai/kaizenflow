@@ -7,14 +7,15 @@ import functools
 import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pywt
 import scipy as sp
 import statsmodels.api as sm
+
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -190,18 +191,29 @@ def fit_random_walk_plus_noise(
 # #############################################################################
 
 
-def correlate_with_lag(df: pd.DataFrame, lag: int) -> pd.DataFrame:
+def correlate_with_lag(
+    df: pd.DataFrame, lag: Union[int, List[int]]
+) -> pd.DataFrame:
     """
     Combine cols of `df` with their lags and compute the correlation matrix.
 
     :param df: dataframe of numeric values
-    :param lag: number of lags to apply
-    :return: correlation matrix with `2 * df.columns` columns
+    :param lag: number of lags to apply or list of number of lags
+    :return: correlation matrix with `(1 + len(lag)) * df.columns` columns
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
-    dbg.dassert_isinstance(lag, int)
-    df_lagged = df.shift(lag).rename(columns=lambda x: str(x) + f"_lag_{lag}")
-    merged_df = df.merge(df_lagged, left_index=True, right_index=True)
+    if isinstance(lag, int):
+        lag = [lag]
+    elif isinstance(lag, list):
+        pass
+    else:
+        raise ValueError("Invalid `type(lag)`='%s'" % type(lag))
+    lagged_dfs = [df]
+    for lag_curr in lag:
+        df_lagged = df.shift(lag_curr)
+        df_lagged.columns = df_lagged.columns.astype(str) + f"_lag_{lag_curr}"
+        lagged_dfs.append(df_lagged)
+    merged_df = pd.concat(lagged_dfs, axis=1)
     return merged_df.corr()
 
 
@@ -359,7 +371,7 @@ def accumulate(
             (lambda x: x.rolling(window=num_steps).sum()), axis=0
         )
     else:
-        raise ValueError(f"Invalid input type `{type(inp_data)}`")
+        raise ValueError(f"Invalid input type `{type(signal)}`")
     return signal_cumulative
 
 
@@ -1607,8 +1619,7 @@ def c_infinity(x: float) -> float:
     """
     if x > 0:
         return np.exp(-1 / x)
-    else:
-        return 0
+    return 0
 
 
 def c_infinity_step_function(x: float) -> float:
