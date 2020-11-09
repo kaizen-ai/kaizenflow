@@ -1,4 +1,4 @@
-# Test created for test_playback.get_result_cs.
+# Test created for test_playback.get_result_cs_none.
 
 import helpers.unit_test as hut
 import jsonpickle
@@ -6,12 +6,9 @@ import pandas as pd
 import core.config as cfg
 
 
-class TestGetResultCs(hut.TestCase):
+class TestGetResultCsNone(hut.TestCase):
     def test1(self) -> None:
-        # Define input variables.
-        a = "test"
-        b = "case"
         # Call function to test.
-        act = get_result_cs(a=a, b=b)
+        act = get_result_cs_none()
         # Check output.
         self.check_string(act)

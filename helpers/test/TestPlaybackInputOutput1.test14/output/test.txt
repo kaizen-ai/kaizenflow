@@ -9,12 +9,13 @@ import core.config as cfg
 class TestGetResultAe(hut.TestCase):
     def test1(self) -> None:
         # Define input variables.
-        a = pd.DataFrame.from_dict({'Price': [700, 250, 800, 1200]})
-        b = pd.DataFrame.from_dict({'Price': [1, 1, 1, 1]})
+        a = pd.Series(data=[10, 20, 15], index=RangeIndex(start=0, stop=3, step=1), name="N Numbers", dtype=int64)
+        b = pd.Series(data=[10.0, 0.0, 5.5], index=RangeIndex(start=0, stop=3, step=1), name="Z Numbers", dtype=float64)
         # Call function to test.
         act = get_result_ae(a=a, b=b)
         # Define expected output.
-        exp = pd.DataFrame.from_dict({'Price': [701, 251, 801, 1201]})
+        exp = pd.Series(data=[20.0, 20.0, 20.5], index=RangeIndex(start=0, stop=3, step=1), name="None", dtype=float64)
+        exp = jsonpickle.decode(exp)
         act = hut.convert_df_to_string(act)
         exp = hut.convert_df_to_string(exp)
         # Compare actual and expected output.

@@ -1,4 +1,4 @@
-# Test created for test_playback.get_result_ae.
+# Test created for test_playback.get_result_ae_none.
 
 import helpers.unit_test as hut
 import jsonpickle
@@ -6,14 +6,11 @@ import pandas as pd
 import core.config as cfg
 
 
-class TestGetResultAe(hut.TestCase):
+class TestGetResultAeNone(hut.TestCase):
     def test1(self) -> None:
-        # Define input variables.
-        a = "test"
-        b = "case"
         # Call function to test.
-        act = get_result_ae(a=a, b=b)
+        act = get_result_ae_none()
         # Define expected output.
-        exp = "testcase"
+        exp = "Some string."
         # Compare actual and expected output.
         self.assertEqual(act, exp)

@@ -1,20 +1,22 @@
-# Test created for test_playback.get_result_ae
+# Test created for test_playback.get_result_ae.
+
 import helpers.unit_test as hut
 import jsonpickle
 import pandas as pd
+import core.config as cfg
 
 
 class TestGetResultAe(hut.TestCase):
     def test1(self) -> None:
-        # Define input variables
+        # Define input variables.
         a = r'{"py/object": "datetime.date", "__reduce__": [{"py/type": "datetime.date"}, ["B98BAQ=="]]}'
         a = jsonpickle.decode(a)
         b = r'{"py/object": "datetime.date", "__reduce__": [{"py/type": "datetime.date"}, ["B9wBAQ=="]]}'
         b = jsonpickle.decode(b)
-        # Call function to test
+        # Call function to test.
         act = get_result_ae(a=a, b=b)
-        # Define expected output
+        # Define expected output.
         exp = r'{"py/reduce": [{"py/type": "datetime.timedelta"}, {"py/tuple": [1096, 0, 0]}]}'
         exp = jsonpickle.decode(exp)
-        # Compare actual and expected output
+        # Compare actual and expected output.
         self.assertEqual(act, exp)

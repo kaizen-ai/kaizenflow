@@ -1,0 +1,51 @@
+# Test created for __main__.plbck_sum.
+
+import helpers.unit_test as hut
+import jsonpickle
+import pandas as pd
+import core.config as cfg
+
+
+class TestPlbckSum(hut.TestCase):
+    def test1(self) -> None:
+        # Define input variables.
+        a = 0
+        b = 1
+        # Call function to test.
+        act = plbck_sum(a=a, b=b)
+        act = str(act)
+        # Check output.
+        self.check_string(act)
+
+class TestPlbckSum(hut.TestCase):
+    def test2(self) -> None:
+        # Define input variables.
+        a = 1
+        b = 2
+        # Call function to test.
+        act = plbck_sum(a=a, b=b)
+        act = str(act)
+        # Check output.
+        self.check_string(act)
+
+class TestPlbckSum(hut.TestCase):
+    def test3(self) -> None:
+        # Define input variables.
+        a = 2
+        b = 3
+        # Call function to test.
+        act = plbck_sum(a=a, b=b)
+        act = str(act)
+        # Check output.
+        self.check_string(act)
+
+class TestPlbckSum(hut.TestCase):
+    def test4(self) -> None:
+        # Define input variables.
+        a = 3
+        b = 4
+        # Call function to test.
+        act = plbck_sum(a=a, b=b)
+        act = str(act)
+        # Check output.
+        self.check_string(act)
