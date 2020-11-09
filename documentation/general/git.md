@@ -668,6 +668,25 @@ version, and stage #3 is the version you are merging from.
 
 # Submodules
 
+## Working in a submodule
+
+When you work in a submodule, the flow should be like:
+
+  - Create a branch in a submodule
+  - Do your job
+  - Push the submodule branch
+  - Create a PR in the submodule when you are done
+
+## Updating a submodule to the latest commit
+
+After the submodule PR is merged:
+
+  - Checkout the submodule in the master branch and do `git pull`
+  - In the main repo, create a branch like `PartTask1234_update_submodule`
+  - From the new branch do `git add <submodule_name>`, e.g., `git add amp`
+  - Commit changes, push
+  - Create a PR
+
 ## To check if p1 and amp are in sync
 
 - Run the script:
