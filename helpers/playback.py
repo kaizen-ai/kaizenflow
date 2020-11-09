@@ -63,7 +63,7 @@ def to_python_code(obj: Any) -> str:
     elif isinstance(obj, pd.Series):
         # Series init as pd.Series([1, 2])
         output.append(
-            "pd.Series(data=%s, index=%s, name=\"%s\", dtype=%s)"
+            'pd.Series(data=%s, index=%s, name="%s", dtype=%s)'
             % (obj.tolist(), obj.index, obj.name, obj.dtype)
         )
     elif isinstance(obj, cfg.Config):
@@ -174,7 +174,8 @@ class Playback:
 
     @staticmethod
     def _get_test_file_name(file_with_code: str) -> str:
-        """Construct the test file name based on the file with the code to test.
+        """Construct the test file name based on the file with the code to
+        test.
 
         :param file_with_code: path to file with code to test.
         :return: path to the file with generated test.
@@ -189,7 +190,10 @@ class Playback:
         return test_file
 
     def _update_code_to_existing(self) -> None:
-        """Get existing content from the file with test. If the file doesn't exist - creates it."""
+        """Get existing content from the file with test.
+
+        If the file doesn't exist - creates it.
+        """
         # Create test file if it doesn't exist.
         if not os.path.exists(self._test_file):
             io_.create_enclosing_dir(self._test_file, True)
@@ -240,7 +244,8 @@ class Playback:
         self._code.extend(["", ""])
 
     def _add_test_class(self) -> None:
-        """Add the code with the test class definition and the test method definition."""
+        """Add the code with the test class definition and the test method
+        definition."""
         # Add test class and test method.
         class_string = self._get_class_name_string()
         # Find how many times method was tested.
@@ -261,7 +266,10 @@ class Playback:
         return count
 
     def _get_class_name_string(self) -> str:
-        """Get a string for the test code with the name of the test class. I.e. "class TestMyMethod(hut.TestCase):"."""
+        """Get a string for the test code with the name of the test class.
+
+        I.e. "class TestMyMethod(hut.TestCase):".
+        """
         test_name = (
             self._parent_class.__class__.__name__
             if self._parent_class is not None
