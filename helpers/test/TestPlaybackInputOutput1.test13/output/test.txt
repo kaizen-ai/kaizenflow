@@ -1,0 +1,21 @@
+# Test created for test_playback.get_result_cs
+
+import helpers.unit_test as hut
+import jsonpickle
+import pandas as pd
+import core.config as cfg
+
+
+class TestGetResultCs(hut.TestCase):
+    def test1(self) -> None:
+        # Define input variables
+        a = pd.Series(data=[10, 20, 15], index=RangeIndex(start=0, stop=3, step=1), name="N Numbers", dtype=int64)
+        a = jsonpickle.decode(a)
+        b = pd.Series(data=[10.0, 0.0, 5.5], index=RangeIndex(start=0, stop=3, step=1), name="Z Numbers", dtype=float64)
+        b = jsonpickle.decode(b)
+        # Call function to test
+        act = get_result_cs(a=a, b=b)
+        act = hut.convert_df_to_string(act)
+        act = str(act)
+        # Check output
+        self.check_string(act)

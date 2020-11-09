@@ -1,0 +1,20 @@
+# Test created for test_playback.get_result_cs
+
+import helpers.unit_test as hut
+import jsonpickle
+import pandas as pd
+import core.config as cfg
+
+
+class TestGetResultCs(hut.TestCase):
+    def test1(self) -> None:
+        # Define input variables
+        a = cfg.Config.from_python("Config([('meta', 'meta value 1'), ('list', [1, 2])])")
+        a = jsonpickle.decode(a)
+        b = cfg.Config.from_python("Config([('meta', 'meta value 2')])")
+        b = jsonpickle.decode(b)
+        # Call function to test
+        act = get_result_cs(a=a, b=b)
+        act = str(act)
+        # Check output
+        self.check_string(act)

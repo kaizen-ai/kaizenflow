@@ -63,7 +63,7 @@ def to_python_code(obj: Any) -> str:
     elif isinstance(obj, pd.Series):
         # Series init as pd.Series([1, 2])
         output.append(
-            "pd.Series(data=%s, index=%s, name=%s, dtype=%s)"
+            "pd.Series(data=%s, index=%s, name=\"%s\", dtype=%s)"
             % (obj.tolist(), obj.index, obj.name, obj.dtype)
         )
     elif isinstance(obj, cfg.Config):
@@ -244,7 +244,7 @@ class Playback:
         # Add test class and test method.
         class_string = self._get_class_name_string()
         # Find how many times method was tested.
-        count = self._get_class_count(class_string)
+        count = self._get_class_count()
         if count >= self._max_tests:
             # If it was already tested enough times, raise.
             raise IndexError("%i tests already generated" % self._max_tests)
