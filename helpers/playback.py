@@ -307,7 +307,17 @@ class Playback:
             self._code.append("        %s = %s" % (key, as_python))
             # Decode back to an actual Python object, if necessary.
             if not isinstance(
-                self._kwargs[key], (int, float, str, list, dict, pd.DataFrame, pd.Series, cfg.Config)
+                self._kwargs[key],
+                (
+                    int,
+                    float,
+                    str,
+                    list,
+                    dict,
+                    pd.DataFrame,
+                    pd.Series,
+                    cfg.Config,
+                ),
             ):
                 self._code.append(
                     "        {0} = jsonpickle.decode({0})".format(key)
