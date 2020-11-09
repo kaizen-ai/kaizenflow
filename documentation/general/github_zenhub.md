@@ -210,7 +210,7 @@ In the following we use the abbreviations below:
 - Agile development
   - = iterative approach to software development that emphasizes flexibility,
     interactivity, and transparency
-  - It focus on:
+  - It focuses on:
     - Frequent releases of useable code
     - Continuous testing
     - Acceptance that reality is always changing and thus requirements are
@@ -241,7 +241,7 @@ In the following we use the abbreviations below:
     - User stories
     - Half-baked feature ideas
     - Bug fixes
-  - The goal is to get stuff out of our head and into GH
+  - The goal is to get stuff out of our heads and into GH
 
 - Icebox
   - = items that are low priority in the product backlog
@@ -283,7 +283,7 @@ In the following we use the abbreviations below:
 
 - Roadmaps
   - Organize Projects and Epics into a Gantt-style timeline view
-  - This shows what is the critical part of the software project
+  - This shows what the critical part of the software project is
 
 - Sprint planning
   - How much work can we actually tackle?
@@ -345,7 +345,7 @@ In the following we use the abbreviations below:
 
 - Master Epics can be broken down into smaller Epics (=sub-epics)
   - Ex.: `NLP - RP skateboard`
-  - Their title should follow the pattern: `XYZ -`, where XYZ is a master Epic
+  - Their titles should follow the pattern: `XYZ -`, where XYZ is a master Epic
     title
 - Sub-epics should have a short title and a smaller scope
 - Sub-epics should belong to a Master Epic in ZenHub
@@ -692,13 +692,13 @@ In the following we use the abbreviations below:
 
 ## Reviewers vs assignees
 
-- In a GitHub PR mark people as reviewers and leave the assignee field empty
+- In a GitHub PR, mark people as reviewers and leave the assignee field empty
 - The difference between reviewers and assignees is explained
   [here](https://stackoverflow.com/questions/41087206)
 - In a few words assignees are people that are requested to merge the branch
   after the PR, when they are different from the reviewers
 
-## Reviewers and authors interactions
+## Reviewer and author interactions
 
 - If the reviewer's comment is clear to the author and agreed upon
   - The author addresses the comment with a code change and _after_ changing the
