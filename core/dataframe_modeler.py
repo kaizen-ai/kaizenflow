@@ -383,7 +383,10 @@ class DataFrameModeler:
             )
 
     def plot_correlation_with_lag(
-        self, lag: int, cols: Optional[List[Any]] = None, mode: str = "ins"
+        self,
+        lag: Union[int, List[int]],
+        cols: Optional[List[Any]] = None,
+        mode: str = "ins",
     ) -> pd.DataFrame:
         """
         Calculate correlation of `cols` with lags of `cols`.
