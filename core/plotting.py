@@ -931,6 +931,10 @@ def select_series_to_remove(df_corr: pd.DataFrame, threshold: float) -> List[str
     have a correlation below the threshold. Stop the process when all of the time
     series have correlations below this threshold. Return the formed list with the
     selected series to remove.
+    Note that the diagonal values in the correlation matrix should be set to 0.
+    This is done to ensure that the correlations of time series with themselves
+    (i.e. 1.0) are not interfering with the process and would not be selected during
+    the process of comparing coefficients to the threshold.
 
     :param df_corr: dataframe with time series correlations
     :param threshold: correlation threshold to remove time series
