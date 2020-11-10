@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-"""
-# Publish all notes:
+"""# Publish all notes:
+
 > docs/scripts/publish_all_notes.py publish
 
 # Publish all the notes from scratch:

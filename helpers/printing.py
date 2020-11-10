@@ -347,8 +347,8 @@ def dataframe_to_str(
 
 
 def config_notebook(sns_set: bool = True) -> None:
-    import pandas as pd
     import matplotlib.pyplot as plt
+    import pandas as pd
     import seaborn as sns
 
     if sns_set:

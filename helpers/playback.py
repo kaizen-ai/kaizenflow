@@ -211,9 +211,7 @@ class Playback:
         if self.mode == "check_string":
             if isinstance(func_output, (pd.DataFrame, pd.Series, str)):
                 if not isinstance(func_output, str):
-                    self._append(
-                        "act = hut.convert_df_to_string(act)", 8
-                    )
+                    self._append("act = hut.convert_df_to_string(act)", 8)
             if not isinstance(func_output, (str, bytes)):
                 self._append("act = str(act)", 8)
             self._append("# Check output.", 8)
@@ -297,9 +295,7 @@ class Playback:
             self._append("cls = jsonpickle.decode(cls)", 8)
             fnc_call = ["{0}={0}".format(k) for k in self._kwargs.keys()]
             # Call the method as a child of the parent class.
-            self._append(
-                f"act = cls.{self._func_name}({', '.join(fnc_call)})", 8
-            )
+            self._append(f"act = cls.{self._func_name}({', '.join(fnc_call)})", 8)
 
     def _add_var_definitions(self) -> None:
         """Add variables definitions for the function to test."""
@@ -322,9 +318,7 @@ class Playback:
                     cfg.Config,
                 ),
             ):
-                self._append(
-                    "{0} = jsonpickle.decode({0})".format(key), 8
-                )
+                self._append("{0} = jsonpickle.decode({0})".format(key), 8)
 
     def _gen_code(self) -> str:
         """Construct string with all generated test code."""

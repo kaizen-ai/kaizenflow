@@ -4,6 +4,7 @@
          * [Run fast tests](#run-fast-tests)
          * [Run slow tests](#run-slow-tests)
          * [Run parallel tests](#run-parallel-tests)
+         * [Compute tests coverage](#compute-tests-coverage)
       * [Using pytest directly](#using-pytest-directly)
          * [Usage and Invocations reference](#usage-and-invocations-reference)
          * [Stop at first failure](#stop-at-first-failure)
@@ -39,10 +40,10 @@
          * [Use the appropriate self.assert*](#use-the-appropriate-selfassert)
          * [Do not use dbg.dassert](#do-not-use-dbgdassert)
          * [Interesting testing functions](#interesting-testing-functions)
-         
-     * [Update test tags](#Update-test-tags)
+      * [Update test tags](#update-test-tags)
 
-<!-- #region -->
+
+
 <!--te-->
 
 # Running unit tests
@@ -104,12 +105,16 @@
   ```bash
   > coverage report --include ./automl --omit ./automl/test/* -m
   ```
-  [Here](https://coverage.readthedocs.io/en/latest/cmd.html#reporting) is an official documentation about reporting.
-- It will also create `htmlcov/` folder, where coverage results are stored as `html` files. You can easy share them or review yourself with:
+  [Here](https://coverage.readthedocs.io/en/latest/cmd.html#reporting) is an
+  official documentation about reporting.
+- It will also create `htmlcov/` folder, where coverage results are stored as
+  `html` files. You can easy share them or review yourself with:
   ```bash
   > cd htmlcov; python -m http.server 33333
   ```
-  After that you will be able to go `http://research.p1:33333` or `http://localhost:33333` depending where do you start your server and review results.
+  After that you will be able to go `http://research.p1:33333` or
+  `http://localhost:33333` depending where do you start your server and review
+  results.
 - To find an original command was called by `run_test2.py` you can:
   ```bash
   > run_tests2.py --coverage --dry_run
@@ -470,16 +475,15 @@
   - [General python](https://docs.python.org/2/library/unittest.html#test-cases)
   - [Numpy](https://docs.scipy.org/doc/numpy-1.15.0/reference/routines.testing.html)
   - [Pandas](https://pandas.pydata.org/pandas-docs/version/0.21/api.html#testing-functions)
-  
+
 ## Update test tags
 
 - There are 2 files with the list of tests' tags:
   - `amp/pytest.ini`
   - `commodity_research/pytest.ini`
-  
-  
+
 - In order to update the tags (do it in the both files):
-  - in the `markers` section add a name of a new tag
-  - afther a `:` add a short description 
-  - keep tags in the alpabetical order
-<!-- #endregion -->
+  - In the `markers` section add a name of a new tag
+  - Afther a `:` add a short description
+  - Keep tags in the alpabetical order
+  <!-- #endregion -->

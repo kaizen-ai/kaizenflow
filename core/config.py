@@ -245,9 +245,7 @@ class Config:
         )
 
     def _to_dict_except_for_leaves(self) -> Dict[str, Any]:
-        """
-        Convert as in `to_dict` except for leaf values.
-        """
+        """Convert as in `to_dict` except for leaf values."""
         # pylint: disable=unsubscriptable-object
         dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
         for k, v in self._config.items():
