@@ -79,7 +79,7 @@ def _process_repo(
         file_names = git.get_modified_files_in_branch(dir_name, dst_branch)
         msg = "Files modified: %d\n%s" % (
             len(file_names),
-            prnt.space("\n".join(file_names)),
+            prnt.indent("\n".join(file_names)),
         )
         _LOG.debug(msg)
         output.append(msg)

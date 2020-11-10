@@ -65,7 +65,7 @@ def _select_phases(args):
     actions = actions_tmp
     # Print actions.
     actions_as_str = _actions_to_string(actions)
-    _LOG.info("\n# Action selected:\n%s", pri.space(actions_as_str))
+    _LOG.info("\n# Action selected:\n%s", pri.indent(actions_as_str))
     return actions
 
 

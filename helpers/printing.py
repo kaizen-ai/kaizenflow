@@ -73,8 +73,7 @@ def frame(
     return ret
 
 
-# TODO(gp): -> indent
-def space(str_: str, num_spaces: int = 2) -> str:
+def indent(str_: str, num_spaces: int = 2) -> str:
     """Add `num_spaces` spaces before each line of the string `str_`."""
     return prepend(str_, " " * num_spaces)
 
@@ -120,7 +119,7 @@ def vars_to_debug_string(vars_as_str: List[str], locals_: Dict[str, Any]) -> str
     txt = []
     for var in vars_as_str:
         txt.append(var + "=")
-        txt.append(space(str(locals_[var])))
+        txt.append(indent(str(locals_[var])))
     return "\n".join(txt)
 
 

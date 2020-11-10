@@ -1672,7 +1672,7 @@ def _main(args: argparse.Namespace) -> int:
     _LOG.info(
         "\n%s\n%s",
         prnt.frame("# Found %d files to lint:" % len(file_names)),
-        prnt.space("\n".join(file_names)),
+        prnt.indent("\n".join(file_names)),
     )
     if args.collect_only:
         _LOG.warning("Exiting as requested")

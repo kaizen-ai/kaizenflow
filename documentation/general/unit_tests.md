@@ -94,6 +94,27 @@
   > run_tests.py --test slow --num_cpus -1
   ```
 
+### Compute tests coverage
+
+- You can use `run_tests2.py` instead of `run_tests.py` to compute the coverage:
+  ```bash
+  > run_tests2.py --test_suite fast --test ./test --coverage
+  ```
+- It will create a coverage report. If you want to customize your report:
+  ```bash
+  > coverage report --include ./automl --omit ./automl/test/* -m
+  ```
+  [Here](https://coverage.readthedocs.io/en/latest/cmd.html#reporting) is an official documentation about reporting.
+- It will also create `htmlcov/` folder, where coverage results are stored as `html` files. You can easy share them or review yourself with:
+  ```bash
+  > cd htmlcov; python -m http.server 33333
+  ```
+  After that you will be able to go `http://research.p1:33333` or `http://localhost:33333` depending where do you start your server and review results.
+- To find an original command was called by `run_test2.py` you can:
+  ```bash
+  > run_tests2.py --coverage --dry_run
+  ```
+
 ## Using `pytest` directly
 
 ### Usage and Invocations reference

@@ -108,7 +108,7 @@ class Config:
         for k, v in self._config.items():
             if isinstance(v, Config):
                 txt_tmp = str(v)
-                txt.append("%s:\n%s" % (k, pri.space(txt_tmp)))
+                txt.append("%s:\n%s" % (k, pri.indent(txt_tmp)))
             else:
                 txt.append("%s: %s" % (k, v))
         ret = "\n".join(txt)
@@ -241,7 +241,7 @@ class Config:
         """Raise an exception when a key is not present."""
         raise ValueError(
             "Invalid %s='%s' in config=\n%s"
-            % (key, self._config[key], pri.space(str(self)))
+            % (key, self._config[key], pri.indent(str(self)))
         )
 
     def _to_dict_except_for_leaves(self) -> Dict[str, Any]:

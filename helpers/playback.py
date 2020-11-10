@@ -18,6 +18,7 @@ import pandas as pd
 import core.config as cfg
 import helpers.dbg as dbg
 import helpers.io_ as io_
+import helpers.printing as prnt
 
 jp_pd.register_handlers()
 
@@ -91,6 +92,8 @@ class Playback:
         """Initialize the class variables.
 
         :param mode: the type of unit test to be generated (e.g. "assert_equal")
+        :param to_file: save playback output to the file test/test_by_playback_<orig_filename>.py
+        :param max_tests: limit a number of generated tests for the testing function. Can be useful if the function is called a lot of times during the execution.
         """
         dbg.dassert_in(mode, ("check_string", "assert_equal"))
         self.mode = mode
@@ -123,7 +126,7 @@ class Playback:
                 # pylint: disable=line-too-long
                 f'# Test created for {cur_frame.f_back.f_globals["__name__"]}.{self._func_name}.'  # type: ignore
             ]
-        self._code.append("")
+        self._append("")
         # Check if need to write the code directly to file.
         self._to_file = to_file if to_file is not None else False
         # Find filename to write the code.
@@ -208,39 +211,39 @@ class Playback:
         if self.mode == "check_string":
             if isinstance(func_output, (pd.DataFrame, pd.Series, str)):
                 if not isinstance(func_output, str):
-                    self._code.append(
-                        "        act = hut.convert_df_to_string(act)"
+                    self._append(
+                        "act = hut.convert_df_to_string(act)", 8
                     )
             if not isinstance(func_output, (str, bytes)):
-                self._code.append("        act = str(act)")
-            self._code.append("        # Check output.")
-            self._code.append("        self.check_string(act)")
+                self._append("act = str(act)", 8)
+            self._append("# Check output.", 8)
+            self._append("self.check_string(act)", 8)
         elif self.mode == "assert_equal":
-            self._code.append("        # Define expected output.")
+            self._append("# Define expected output.", 8)
             func_output_as_code = to_python_code(func_output)
-            self._code.append(f"        exp = {func_output_as_code}")
+            self._append(f"exp = {func_output_as_code}", 8)
             if not isinstance(
                 func_output, (int, float, str, list, dict, pd.DataFrame)
             ):
-                self._code.append("        exp = jsonpickle.decode(exp)")
+                self._append("exp = jsonpickle.decode(exp)", 8)
 
             if isinstance(func_output, (pd.DataFrame, pd.Series)):
-                self._code.append("        act = hut.convert_df_to_string(act)")
-                self._code.append("        exp = hut.convert_df_to_string(exp)")
-            self._code.append("        # Compare actual and expected output.")
-            self._code.append("        self.assertEqual(act, exp)")
+                self._append("act = hut.convert_df_to_string(act)", 8)
+                self._append("exp = hut.convert_df_to_string(exp)", 8)
+            self._append("# Compare actual and expected output.", 8)
+            self._append("self.assertEqual(act, exp)", 8)
         else:
             raise ValueError("Invalid mode='%s'" % self.mode)
 
     def _add_imports(self, additional: Union[None, List[str]] = None) -> None:
         """Add the code with imports."""
         # Add imports.
-        self._code.append("import helpers.unit_test as hut")
-        self._code.append("import jsonpickle")
-        self._code.append("import pandas as pd")
-        self._code.append("import core.config as cfg")
+        self._append("import helpers.unit_test as hut")
+        self._append("import jsonpickle")
+        self._append("import pandas as pd")
+        self._append("import core.config as cfg")
         for a in additional or []:
-            self._code.append(a)
+            self._append(a)
         self._code.extend(["", ""])
 
     def _add_test_class(self) -> None:
@@ -254,8 +257,8 @@ class Playback:
             # If it was already tested enough times, raise.
             raise IndexError("%i tests already generated" % self._max_tests)
         # Otherwise, continue to create a test code.
-        self._code.append(class_string)
-        self._code.append("    def test%i(self) -> None:" % (count + 1))
+        self._append(class_string)
+        self._append("def test%i(self) -> None:" % (count + 1), 4)
 
     def _get_class_count(self) -> int:
         """Find a number of already generated tests for the method."""
@@ -281,30 +284,30 @@ class Playback:
 
     def _add_function_call(self) -> None:
         """Add a call of the function to test to the test code."""
-        self._code.append("        # Call function to test.")
+        self._append("# Call function to test.", 8)
         if self._parent_class is None:
             fnc_call = [f"{k}={k}" for k in self._kwargs.keys()]
-            self._code.append(
-                "        act = %s(%s)" % (self._func_name, ", ".join(fnc_call))
+            self._append(
+                "act = %s(%s)" % (self._func_name, ", ".join(fnc_call)), 8
             )
         else:
             var_code = to_python_code(self._parent_class)
             # Re-create the parent class.
-            self._code.append(f"        cls = {var_code}")
-            self._code.append("        cls = jsonpickle.decode(cls)")
+            self._append(f"cls = {var_code}", 8)
+            self._append("cls = jsonpickle.decode(cls)", 8)
             fnc_call = ["{0}={0}".format(k) for k in self._kwargs.keys()]
             # Call the method as a child of the parent class.
-            self._code.append(
-                f"        act = cls.{self._func_name}({', '.join(fnc_call)})"
+            self._append(
+                f"act = cls.{self._func_name}({', '.join(fnc_call)})", 8
             )
 
     def _add_var_definitions(self) -> None:
         """Add variables definitions for the function to test."""
         if self._kwargs:
-            self._code.append("        # Define input variables.")
+            self._append("# Define input variables.", 8)
         for key in self._kwargs:
             as_python = to_python_code(self._kwargs[key])
-            self._code.append("        %s = %s" % (key, as_python))
+            self._append("%s = %s" % (key, as_python), 8)
             # Decode back to an actual Python object, if necessary.
             if not isinstance(
                 self._kwargs[key],
@@ -319,8 +322,8 @@ class Playback:
                     cfg.Config,
                 ),
             ):
-                self._code.append(
-                    "        {0} = jsonpickle.decode({0})".format(key)
+                self._append(
+                    "{0} = jsonpickle.decode({0})".format(key), 8
                 )
 
     def _gen_code(self) -> str:
@@ -330,6 +333,10 @@ class Playback:
         if self._to_file:
             io_.to_file(self._test_file, code)
         return code
+
+    def _append(self, string: str, num_spaces: int = 0) -> None:
+        """Add indented line to the code."""
+        self._code.append(prnt.indent(string, num_spaces))
 
 
 def json_pretty_print(parsed: Any) -> str:

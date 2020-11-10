@@ -34,7 +34,7 @@ def get_tunnel_info() -> (list, str):
 
 def tunnel_info_to_string(tunnel_info: list) -> str:
     ret = "\n".join(map(str, tunnel_info))
-    ret = prnt.space(ret)
+    ret = prnt.indent(ret)
     return ret
 
 
@@ -99,7 +99,7 @@ def _get_tunnel_info():
 
 def _tunnel_info_to_string(tunnel_info: list) -> str:
     ret = "\n".join(map(str, tunnel_info))
-    ret = prnt.space(ret)
+    ret = prnt.indent(ret)
     return ret
 
 
