@@ -9,11 +9,12 @@ import core.config as cfg
 class TestGetResultAe(hut.TestCase):
     def test1(self) -> None:
         # Define input variables.
-        a = {"1": ["a", 2]}
-        b = {"3": pd.DataFrame.from_dict({'Price': [700, 250, 800, 1200]}), "4": {"5": 6}}
+        a = cfg.Config.from_python("Config([('meta', 'meta value 1'), ('list', [1, 2])])")
+        b = cfg.Config.from_python("Config([('meta', 'meta value 2')])")
         # Call function to test.
         act = get_result_ae(a=a, b=b)
         # Define expected output.
-        exp = {"1": ["a", 2], "3": pd.DataFrame.from_dict({'Price': [700, 250, 800, 1200]}), "4": {"5": 6}}
+        exp = cfg.Config.from_python("Config([('meta', 'meta value 2'), ('list', [1, 2])])")
+        exp = jsonpickle.decode(exp)
         # Compare actual and expected output.
         self.assertEqual(act, exp)

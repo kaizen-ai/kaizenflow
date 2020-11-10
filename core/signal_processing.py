@@ -191,18 +191,29 @@ def fit_random_walk_plus_noise(
 # #############################################################################
 
 
-def correlate_with_lag(df: pd.DataFrame, lag: int) -> pd.DataFrame:
+def correlate_with_lag(
+    df: pd.DataFrame, lag: Union[int, List[int]]
+) -> pd.DataFrame:
     """
     Combine cols of `df` with their lags and compute the correlation matrix.
 
     :param df: dataframe of numeric values
-    :param lag: number of lags to apply
-    :return: correlation matrix with `2 * df.columns` columns
+    :param lag: number of lags to apply or list of number of lags
+    :return: correlation matrix with `(1 + len(lag)) * df.columns` columns
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
-    dbg.dassert_isinstance(lag, int)
-    df_lagged = df.shift(lag).rename(columns=lambda x: str(x) + f"_lag_{lag}")
-    merged_df = df.merge(df_lagged, left_index=True, right_index=True)
+    if isinstance(lag, int):
+        lag = [lag]
+    elif isinstance(lag, list):
+        pass
+    else:
+        raise ValueError("Invalid `type(lag)`='%s'" % type(lag))
+    lagged_dfs = [df]
+    for lag_curr in lag:
+        df_lagged = df.shift(lag_curr)
+        df_lagged.columns = df_lagged.columns.astype(str) + f"_lag_{lag_curr}"
+        lagged_dfs.append(df_lagged)
+    merged_df = pd.concat(lagged_dfs, axis=1)
     return merged_df.corr()
 
 
@@ -329,16 +340,16 @@ def squash(
 
 
 def accumulate(
-    srs: pd.Series,
+    signal: Union[pd.DataFrame, pd.Series],
     num_steps: int,
     nan_mode: Optional[str] = None,
-) -> pd.Series:
+) -> Union[pd.DataFrame, pd.Series]:
     """Accumulate series for step.
 
-    :param srs: time series
+    :param signal: time series or dataframe
     :param num_steps: number of steps to compute rolling sum for
     :param nan_mode: argument for hdf.apply_nan_mode()
-    :return: time series for step
+    :return: time series or dataframe accumulated
     """
     dbg.dassert_isinstance(num_steps, int)
     dbg.dassert_lte(
@@ -348,8 +359,20 @@ def accumulate(
         num_steps,
     )
     nan_mode = nan_mode or "leave_unchanged"
-    srs = hdf.apply_nan_mode(srs, mode=nan_mode)
-    return srs.rolling(window=num_steps).sum()
+
+    if isinstance(signal, pd.Series):
+        signal_cleaned = hdf.apply_nan_mode(signal, mode=nan_mode)
+        signal_cumulative = signal_cleaned.rolling(window=num_steps).sum()
+    elif isinstance(signal, pd.DataFrame):
+        signal_cleaned = signal.apply(
+            (lambda x: hdf.apply_nan_mode(x, mode=nan_mode)), axis=0
+        )
+        signal_cumulative = signal_cleaned.apply(
+            (lambda x: x.rolling(window=num_steps).sum()), axis=0
+        )
+    else:
+        raise ValueError(f"Invalid input type `{type(signal)}`")
+    return signal_cumulative
 
 
 def get_symmetric_equisized_bins(
@@ -1596,8 +1619,7 @@ def c_infinity(x: float) -> float:
     """
     if x > 0:
         return np.exp(-1 / x)
-    else:
-        return 0
+    return 0
 
 
 def c_infinity_step_function(x: float) -> float:

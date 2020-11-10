@@ -194,8 +194,14 @@ def get_multiple_plots(
         **kwargs,
     )
     if isinstance(ax, np.ndarray):
-        return fig, ax.flatten()
-    return fig, ax
+        ax = ax.flatten()
+    else:
+        ax = np.array([ax])
+    # Remove extra axes that can appear when `num_cols` > 1.
+    empty_axes = ax[num_plots:]
+    for empty_ax in empty_axes:
+        empty_ax.remove()
+    return fig, ax[:num_plots]
 
 
 def plot_projection(
@@ -755,6 +761,7 @@ def plot_histograms_and_lagged_scatterplot(
     # Plot scatter plot.
     axes[1][0].scatter(srs, srs.shift(lag), **scatter_kwargs)
     axes[1][0].set(xlabel="Values", ylabel="Values with lag={}".format(lag))
+    axes[1][0].axis("equal")
     axes[1][0].set_title("Scatter-plot with lag={}".format(lag))
     fig.delaxes(axes[1][1])
     fig.tight_layout()
@@ -1111,7 +1118,10 @@ class PCA:
             raise ValueError("Invalid mode='%s'" % mode)
 
     def plot_components(
-        self, num_components: Optional[int] = None, num_cols: int = 4
+        self,
+        num_components: Optional[int] = None,
+        num_cols: int = 4,
+        y_scale: Optional[float] = None,
     ) -> None:
         """Plot principal components.
 
@@ -1124,7 +1134,11 @@ class PCA:
         num_components = self._get_num_pcs_to_plot(num_components, max_pcs)
         _LOG.info("num_components=%s", num_components)
         _, axes = get_multiple_plots(
-            num_components, num_cols=num_cols, sharex=True, sharey=True
+            num_components,
+            num_cols=num_cols,
+            y_scale=y_scale,
+            sharex=True,
+            sharey=True,
         )
         plt.suptitle("Principal components")
         for i in range(num_components):

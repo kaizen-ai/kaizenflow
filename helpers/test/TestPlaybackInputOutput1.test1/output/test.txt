@@ -1,17 +1,19 @@
-# Test created for test_playback.get_result_ae
+# Test created for test_playback.get_result_ae.
+
 import helpers.unit_test as hut
 import jsonpickle
 import pandas as pd
+import core.config as cfg
 
 
 class TestGetResultAe(hut.TestCase):
     def test1(self) -> None:
-        # Define input variables
+        # Define input variables.
         a = 3
         b = 2
-        # Call function to test
+        # Call function to test.
         act = get_result_ae(a=a, b=b)
-        # Define expected output
+        # Define expected output.
         exp = 5
-        # Compare actual and expected output
+        # Compare actual and expected output.
         self.assertEqual(act, exp)

@@ -9,9 +9,10 @@ import core.config as cfg
 class TestGetResultCs(hut.TestCase):
     def test1(self) -> None:
         # Define input variables.
-        a = "test"
-        b = "case"
+        a = cfg.Config.from_python("Config([('meta', 'meta value 1'), ('list', [1, 2])])")
+        b = cfg.Config.from_python("Config([('meta', 'meta value 2')])")
         # Call function to test.
         act = get_result_cs(a=a, b=b)
+        act = str(act)
         # Check output.
         self.check_string(act)
