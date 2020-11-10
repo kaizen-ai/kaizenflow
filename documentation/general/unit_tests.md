@@ -103,7 +103,7 @@
   ```
 - It will create a coverage report. If you want to customize your report:
   ```bash
-  > coverage report --include *.py --omit test_*.py -m
+  > coverage report --include=*.py --omit=test_*.py -m
   ```
   [Here](https://coverage.readthedocs.io/en/latest/cmd.html#reporting) is an
   official documentation about reporting.
