@@ -10,10 +10,14 @@
       * [Mapping C4 and code structure](#mapping-c4-and-code-structure)
       * [Generating class diagram](#generating-class-diagram)
    * [Brief introduction to PlantUML](#brief-introduction-to-plantuml)
+      * [PlantUML is Markdown](#plantuml-is-markdown)
+         * [render_md.py tool](#render_mdpy-tool)
+            * [How to use](#how-to-use)
 
 
 
 <!--te-->
+
 - We describe the high level architecture of our system using the c4 methodology
   and PlantUML
 
@@ -122,8 +126,8 @@
 
 - Using classes has the following advantages:
   - Organizes the code in cohesive parts
-  - Makes clear what is a public interface vs a private interface
-    (e.g., helpers)
+  - Makes clear what is a public interface vs a private interface (e.g.,
+    helpers)
   - Highlights responsibility (e.g., builder, annotation, processor, analyzer)
   - Simplifies the interface of functions by sharing state in the object
 
@@ -185,7 +189,7 @@
 ## Generating class diagram
 
 - To generate a class diagram (level 4 of c4), you can run
-  ```
+  ```bash
   > dev_scripts/create_class_diagram.sh
   ```
 
@@ -219,16 +223,33 @@
 - You can embed the diagrams in a `architecture.md` or a `README.md` in the
   corresponding folders
 
-- To render PlantUML in our markdown files instead of `@startuml` you need to use
-  the tag:
-  ````
+- To render PlantUML in our markdown files instead of `@startuml` you need to
+  use the tag:
+  ````txt
   ```plantuml
   ...
   ```
   ````
 
+### `render_md.py` tool
+
 - We have a `render_md.py` tool to embed images after `plantuml` section.
-  Typical usage to insert images to the markdowm file and to preview it:
+  Typical usage to insert images to the markdown file and to preview it:
+  ```bash
+  > python amp/documentation/scripts/render_md.py -i knowledge_graph/vendors/README.md
   ```
-  > documentation/scripts/render_md.py -i documentation/general/architecture.md
-  ```
+
+#### How to use
+
+1. Make sure `plantuml` is installed on your machine. The easiest way is to use
+   the
+   [docker](https://github.com/ParticleDev/commodity_research/blob/master/documentation_p1/technical/docker.md)
+   container. We have all needed packages already installed in the container.
+2. How to use:
+
+```bash
+> amp/documentation/scripts/render_md.py -h
+```
+
+3. If you want to use `open` action, make sure that your machine is able to open
+   `.html` files in the browser.

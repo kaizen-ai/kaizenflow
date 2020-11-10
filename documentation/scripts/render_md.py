@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 
-"""
-The script replaces all plantUML sections in the markdown files
-with rendered images:
+"""The script replaces all plantUML sections in the markdown files with
+rendered images:
 
 Usage:
     1. Include plantUML diagram picture to markdown:
     > render_md.py -i ABC.md -o XYZ.md --action render
+    > render_md.py -i ABC.md -o XYZ.md
 
     2. Include plantUML diagram picture in place:
-    > render_md.py -i ABC.md --action render
+    > render_md.py -i ABC.md
 
     3. Open html to preview:
     > render_md.py -i ABC.md --action open
 
     4. Render with preview:
-    > render_md.py -i ABC.md -o XYZ.md
-    > render_md.py -i ABC.md
+    > render_md.py -i ABC.md -o XYZ.md --all
+    > render_md.py -i ABC.md --all
 """
 
 import argparse
@@ -38,11 +38,11 @@ _LOG = logging.getLogger(__name__)
 _ACTION_OPEN = "open"
 _ACTION_RENDER = "render"
 _VALID_ACTIONS = [_ACTION_OPEN, _ACTION_RENDER]
-_DEFAULT_ACTIONS = [_ACTION_OPEN, _ACTION_RENDER]
+_DEFAULT_ACTIONS = [_ACTION_RENDER]
 
 
 def _open_html(md_file: str) -> None:
-    """Pandoc markdown to html and open it"""
+    """Pandoc markdown to html and open it."""
     _LOG.info("\n%s", prnt.frame("Process markdown to html"))
     # Get pandoc.py command.
     curr_path = os.path.abspath(os.path.dirname(__file__))
@@ -57,11 +57,10 @@ def _open_html(md_file: str) -> None:
 def _uml_file_names(
     dest_file: str, idx: int, extension: str
 ) -> Tuple[str, str, str]:
-    """
-    Generate plantUML picture filename, temporary UML filename,
-    full path to picture. We want to assign the name of the image relative
-    to the originating file and index. In this way if we update the image,
-    the name of the image doesn't change.
+    """Generate plantUML picture filename, temporary UML filename, full path to
+    picture. We want to assign the name of the image relative to the
+    originating file and index. In this way if we update the image, the name of
+    the image doesn't change.
 
     :param dest_file: markdowm target file where diagrams should be included
     :param idx: order number of the UML appearence at the input file
@@ -86,7 +85,7 @@ def _uml_file_names(
 
 
 def _render_command(uml_file: str, pic_dest: str, extension: str) -> str:
-    """Create PlantUML rendering command"""
+    """Create PlantUML rendering command."""
     available_extensions = ["svg", "png"]
     dbg.dassert_in(extension, available_extensions)
     cmd = "plantuml -t%s -o %s %s" % (extension, pic_dest, uml_file)
@@ -100,8 +99,7 @@ def _render_plantuml_code(
     extension: str,
     dry_run: bool,
 ) -> str:
-    """
-    Render the PlantUML text into a file.
+    """Render the PlantUML text into a file.
 
     :param uml_text: UML format text
     :param out_file: full path to output md file
@@ -137,8 +135,7 @@ def _render_plantuml_code(
 def _render_plantuml(
     in_txt: List[str], out_file: str, extension: str, dry_run: bool
 ) -> List[str]:
-    """
-    Add rendered image after plantuml code blocks
+    """Add rendered image after plantuml code blocks.
 
     :param in_txt: list of strings to process
     :param out_file: name of outcome file
