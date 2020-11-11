@@ -143,11 +143,18 @@ In the following we use the abbreviations below:
 - If there is something that needs to be done, please update the Issue
   summarizing status and next actions
 
-- Connect the PR to the Issue
-  - You should do this on the PR page of GH
+- Connect the PR to the Issue, by using the ZH plugin feature
+  - You should do this on the PR page of GH, at the bottom of the PR:
+    ![](images/github_zenhub/zenhub_connect_PR_to_issue.png)
   - If you do not see the option to connect the PR to the Issue on that page,
     then the likely cause is that you do not have the ZH plugin installed in
     your browser. Check this and install the plugin if you do not have it.
+  - Pay attention to the PR description: some keywords in the pull request's
+    description or in a commit message (e.g., "closes #\<issue number\>")
+    triggers a connection of the PR to the issue through GH, and the issue is
+    automatically closed after merge, this should be generally avoided.
+    You can find an up-to-date list of such keywords on
+    [GH docs page](https://docs.github.com/en/free-pro-team@latest/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword).
   - The Issue is then automatically moved to `Review/QA`
 
 - We leave Issues in the `Done` state when we need to do some other work after
