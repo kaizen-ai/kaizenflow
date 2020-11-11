@@ -151,7 +151,7 @@ In the following we use the abbreviations below:
     your browser. Check this and install the plugin if you do not have it.
   - Pay attention to the PR description: some keywords in the pull request's
     description or in a commit message (e.g., "closes #\<issue number\>")
-    triggers a connection of the PR to the issue through GH, and the issue is
+    trigger a connection of the PR to the issue through GH, and the issue is
     automatically closed after merge, this should be generally avoided.
     You can find an up-to-date list of such keywords on
     [GH docs page](https://docs.github.com/en/free-pro-team@latest/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword).
