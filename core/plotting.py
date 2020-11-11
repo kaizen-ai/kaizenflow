@@ -920,40 +920,40 @@ def compute_linkage(df: pd.DataFrame, method: Optional[str] = None) -> np.ndarra
     return hac.linkage(corr, method=method)
 
 
-def select_series_to_remove(df_corr: pd.DataFrame, threshold: float) -> List[str]:
+def select_series_to_keep(df_corr: pd.DataFrame, threshold: float) -> List[str]:
     """
-    Select correlate series to remove.
+    Select correlate series to keep.
 
-    Iterate through the correlation dataframe by removing the time series that has
-    the largest number of coefficients above the correlation threshold and append
-    this time series name to the list of series to remove. Continue the process on
-    the remaining subset matrix until all of the time series in the remaining matrix
-    have a correlation below the threshold. Stop the process when all of the time
-    series have correlations below this threshold. Return the formed list with the
-    selected series to remove.
-    Note that the diagonal values in the correlation matrix should be set to 0.
-    This is done to ensure that the correlations of time series with themselves
-    (i.e. 1.0) are not interfering with the process and would not be selected during
-    the process of comparing coefficients to the threshold.
+    Iterate through the correlation dataframe by picking the time series that has
+    the largest number of coefficients above the correlation threshold. If there
+    are multiple such time series, pick the first one i.e. with the min index.
+    Next, take all the time series that have correlation above the threshold
+    with the selected one and drop them from the correlation matrix.
+    Continue the process on the remaining subset matrix until all of the time series
+    in the remaining matrix have a correlation below the threshold. At this point,
+    stop the process and return the list of time series in the remaining matrix.
 
     :param df_corr: dataframe with time series correlations
     :param threshold: correlation threshold to remove time series
     :returns: list of series to remove
     """
     corr = df_corr.copy()
+    # Fill diag with 0 to ensure that the correlations of time series with themselves
+    # (i.e. 1.0) are not selected when coefficients compared to the threshold.
     np.fill_diagonal(corr.values, 0)
-    to_remove = []
     while True:
         subset_corr = corr[abs(corr) > threshold]
         if subset_corr.isnull().values.all():
-            return to_remove
+            return list(subset_corr.columns.values)
         else:
-            column_to_remove = (
+            column_to_keep = (
                 subset_corr[abs(subset_corr) > threshold].notnull().sum().idxmax()
             )
-            to_remove.append(column_to_remove)
-            corr = subset_corr.drop([column_to_remove]).drop(
-                [column_to_remove], axis=1
+            columns_to_remove = subset_corr[
+                subset_corr[column_to_keep].notnull()
+            ].index
+            corr = subset_corr.drop(columns_to_remove).drop(
+                columns_to_remove, axis=1
             )
 
 
@@ -1017,8 +1017,7 @@ def cluster_and_select(
             plt.show()
         original = set(names.copy())
         # Remove series that have correlation above the threshold specified.
-        to_remove = select_series_to_remove(cluster_corr, corr_thr)
-        remaining_series = list(original - set(to_remove))
+        remaining_series = select_series_to_keep(cluster_corr, corr_thr)
         series_to_keep = series_to_keep + remaining_series
         dict_series_to_keep[cluster_name] = remaining_series
         plt.show()

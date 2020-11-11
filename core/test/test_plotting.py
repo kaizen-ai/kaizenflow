@@ -21,8 +21,8 @@ class Test_select_series_to_remove(unittest.TestCase):
         }
 
         df = pd.DataFrame(data, columns=["A", "B", "C", "D", "E"])
-        expected = ["C", "B"]
-        actual = plot.select_series_to_remove(df.corr(), 0.7)
+        expected = ["C"]
+        actual = plot.select_series_to_keep(df.corr(), 0.7)
         self.assertListEqual(actual, expected)
 
     def test_select_series_to_remove2(self) -> None:
@@ -38,8 +38,8 @@ class Test_select_series_to_remove(unittest.TestCase):
         }
 
         df = pd.DataFrame(data, columns=["A", "B", "C", "D", "E"])
-        expected = ["B", "C", "D"]
-        actual = plot.select_series_to_remove(df.corr(), 0.5)
+        expected = ["B"]
+        actual = plot.select_series_to_keep(df.corr(), 0.5)
         self.assertListEqual(actual, expected)
 
     def test_select_series_to_remove3(self) -> None:
@@ -55,6 +55,44 @@ class Test_select_series_to_remove(unittest.TestCase):
         }
 
         df = pd.DataFrame(data, columns=["A", "B", "C", "D", "E"])
-        expected = ["A", "B", "C", "D"]
-        actual = plot.select_series_to_remove(df.corr(), 0.3)
+        expected = ["A"]
+        actual = plot.select_series_to_keep(df.corr(), 0.3)
+        self.assertListEqual(actual, expected)
+
+    def test_select_series_to_remove4(self) -> None:
+        """
+        Test correct output of df correlation with threashold = 0.7
+        """
+        data = {
+            "A": [1, 4, 4, 4, 5, 9],
+            "B": [2, 6, 3, 4, 5, 10],
+            "C": [3, 6, 4, 4, 5, 10],
+            "D": [4, 25, 19, 14, 15, 10],
+            "E": [5, 27, 16, 16, 14, 11],
+            "F": [1, 8, 4, 4, 5, 10],
+            "G": [15, 24, 32, 56, 23, 25],
+        }
+
+        df = pd.DataFrame(data, columns=["A", "B", "C", "D", "E", "F", "G"])
+        expected = ["A", "D", "G"]
+        actual = plot.select_series_to_keep(df.corr(), 0.7)
+        self.assertListEqual(actual, expected)
+
+    def test_select_series_to_remove5(self) -> None:
+        """
+        Test correct output of df correlation with threashold = 0.5
+        """
+        data = {
+            "A": [1, 4, 4, 4, 5, 9],
+            "B": [2, 6, 3, 4, 5, 10],
+            "C": [3, 6, 4, 4, 5, 10],
+            "D": [4, 25, 19, 14, 15, 10],
+            "E": [5, 27, 16, 16, 14, 11],
+            "F": [1, 8, 4, 4, 5, 10],
+            "G": [15, 24, 32, 56, 23, 25],
+        }
+
+        df = pd.DataFrame(data, columns=["A", "B", "C", "D", "E", "F", "G"])
+        expected = ["F", "G"]
+        actual = plot.select_series_to_keep(df.corr(), 0.3)
         self.assertListEqual(actual, expected)
