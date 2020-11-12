@@ -249,6 +249,38 @@ class DataFrameModeler:
         )
         return self._run_model(model, method)
 
+    def apply_sarimax_model(
+        self,
+        y_vars: Union[List[str], Callable[[], List[str]]],
+        steps_ahead: int,
+        init_kwargs: Optional[Dict[str, Any]] = None,
+        fit_kwargs: Optional[Dict[str, Any]] = None,
+        x_vars: Optional[Union[List[str], Callable[[], List[str]]]] = None,
+        add_constant: bool = False,
+        col_mode: Optional[str] = "merge_all",
+        nan_mode: Optional[str] = "drop",
+        method: str = "fit",
+        disable_tqdm: bool = False,
+    ) -> DataFrameModeler:
+        """
+        Apply a supervised sklearn model.
+
+        Both x and y vars should be indexed by knowledge time.
+        """
+        model = dtf.ContinuousSarimaxModel(
+            nid="sarimax",
+            y_vars=y_vars,
+            steps_ahead=steps_ahead,
+            init_kwargs=init_kwargs,
+            fit_kwargs=fit_kwargs,
+            x_vars=x_vars,
+            add_constant=add_constant,
+            col_mode=col_mode,
+            nan_mode=nan_mode,
+            disable_tqdm=disable_tqdm,
+        )
+        return self._run_model(model, method)
+
     # #########################################################################
     # Convenience methods
     # #########################################################################
