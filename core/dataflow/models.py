@@ -820,7 +820,7 @@ class ContinuousSarimaxModel(FitPredictNode):
         # Add info.
         # TODO(Julia): Maybe add model performance to info.
         info = collections.OrderedDict()
-        info["model_summary"] = self._model_results.summary()
+        info["model_summary"] = self._model_results.summary().as_text()
         self._set_info("fit", info)
         return {"df_out": df_out}
 
