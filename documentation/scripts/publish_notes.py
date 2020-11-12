@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-"""
-# Publish all notes:
+"""# Publish all notes:
+
 > docs/scripts/publish_all_notes.py publish
 
 # Publish all the notes from scratch:
@@ -86,7 +86,7 @@ def _publish_all_files(args):
     _LOG.debug("dir_name=%s", dir_name)
     file_names = glob.glob(dir_name)
     _LOG.info(
-        "Found %d files\n%s", len(file_names), prnt.space("\n".join(file_names))
+        "Found %d files\n%s", len(file_names), prnt.indent("\n".join(file_names))
     )
     dbg.dassert_lte(1, len(file_names))
     # targets = ["html", "pdf"]
