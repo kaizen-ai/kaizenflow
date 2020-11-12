@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-"""The script replaces all plantUML sections in the markdown files with
-rendered images:
+"""The script adds rendered images to all plantUML sections in the markdown
+files.
 
 Usage:
     1. Include plantUML diagram picture to markdown:

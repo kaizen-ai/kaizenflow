@@ -236,7 +236,7 @@
 - We have a `render_md.py` tool to embed images after `plantuml` section.
   Typical usage to insert images to the markdown file and to preview it:
   ```bash
-  > python amp/documentation/scripts/render_md.py -i knowledge_graph/vendors/README.md
+  > render_md.py -i knowledge_graph/vendors/README.md
   ```
 
 #### How to use
@@ -244,7 +244,8 @@
 1. Make sure `plantuml` is installed on your machine. The easiest way is to use
    the
    [docker](https://github.com/ParticleDev/commodity_research/blob/master/documentation_p1/technical/docker.md)
-   container. We have all needed packages already installed in the container.
+   container. All the packages typically needed for development are installed in
+   the container.
 2. How to use:
 
 ```bash
