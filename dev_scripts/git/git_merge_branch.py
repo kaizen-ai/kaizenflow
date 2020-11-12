@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""
-Qualify a branch for being merged to master.
+"""Qualify a branch for being merged to master.
 
 > git_merge_branch.py
 """
@@ -32,8 +31,7 @@ def _process_repo(
     quick: bool,
     autostash: bool,
 ) -> Tuple[bool, List[str], List[str]]:
-    """
-    Qualify a branch stored in `dir_name`, running linter and unit tests.
+    """Qualify a branch stored in `dir_name`, running linter and unit tests.
 
     :param dst_branch: directory containing the branch
     :param test_list: test list to run (e.g., fast, slow)
@@ -79,7 +77,7 @@ def _process_repo(
         file_names = git.get_modified_files_in_branch(dir_name, dst_branch)
         msg = "Files modified: %d\n%s" % (
             len(file_names),
-            prnt.space("\n".join(file_names)),
+            prnt.indent("\n".join(file_names)),
         )
         _LOG.debug(msg)
         output.append(msg)
@@ -92,7 +90,9 @@ def _process_repo(
             linter_log = os.path.abspath(linter_log)
             cmd = "linter.py -b --linter_log %s" % linter_log
             rc = si.system(
-                cd_cmd + cmd, suppress_output=False, abort_on_error=False,
+                cd_cmd + cmd,
+                suppress_output=False,
+                abort_on_error=False,
             )
             _LOG.info("linter output=\n%s", linter_log)
             if rc != 0:

@@ -468,7 +468,7 @@ def pytest_show_artifacts(dir_name: str, tag: Optional[str] = None) -> List[str]
     if tag is not None:
         num_files = len(file_names)
         _LOG.info("%s: %d", tag, num_files)
-        _LOG.debug("\n%s", prnt.space("\n".join(file_names)))
+        _LOG.debug("\n%s", prnt.indent("\n".join(file_names)))
     return file_names  # type: ignore
 
 

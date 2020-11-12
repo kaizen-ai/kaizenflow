@@ -81,7 +81,7 @@ def _get_file_names(old_string, dirs, exts):
             file_names_to_process.append(f)
     #
     txt = "\n".join(res)
-    _LOG.info("Found %s occurrences\n%s", len(res), pri.space(txt))
+    _LOG.info("Found %s occurrences\n%s", len(res), pri.indent(txt))
     _LOG.info("Found %s files to process", len(file_names_to_process))
     return file_names_to_process, txt
 
@@ -153,7 +153,7 @@ def _replace(file_names_to_process, old_string, new_string, backup, mode):
     _LOG.info(
         "Found %s files:\n%s",
         len(file_names_to_process),
-        pri.space("\n".join(file_names_to_process)),
+        pri.indent("\n".join(file_names_to_process)),
     )
     for file_name in file_names_to_process:
         _LOG.info("* Processing %s", file_name)
