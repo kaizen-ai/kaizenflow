@@ -287,6 +287,7 @@
   - `' Components`
   - `' Databases`
   - `' Containers`
+  - `' Edge labels`
   - `' Notes`
 
 - An example of acceptable C4 diagram plantuml snippet:
