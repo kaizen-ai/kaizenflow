@@ -10,10 +10,15 @@
       * [Mapping C4 and code structure](#mapping-c4-and-code-structure)
       * [Generating class diagram](#generating-class-diagram)
    * [Brief introduction to PlantUML](#brief-introduction-to-plantuml)
+      * [PlantUML is Markdown](#plantuml-is-markdown)
+         * [render_md.py tool](#render_mdpy-tool)
+            * [How to use](#how-to-use)
+         * [Our conventions](#our-conventions-1)
 
 
 
 <!--te-->
+
 - We describe the high level architecture of our system using the c4 methodology
   and PlantUML
 
@@ -122,8 +127,8 @@
 
 - Using classes has the following advantages:
   - Organizes the code in cohesive parts
-  - Makes clear what is a public interface vs a private interface
-    (e.g., helpers)
+  - Makes clear what is a public interface vs a private interface (e.g.,
+    helpers)
   - Highlights responsibility (e.g., builder, annotation, processor, analyzer)
   - Simplifies the interface of functions by sharing state in the object
 
@@ -185,7 +190,7 @@
 ## Generating class diagram
 
 - To generate a class diagram (level 4 of c4), you can run
-  ```
+  ```bash
   > dev_scripts/create_class_diagram.sh
   ```
 
@@ -221,19 +226,34 @@
   architecture description. You can embed the diagrams in `architecture.md` file
   in a correspondent folder.
 
-- To render PlantUML in our markdown files instead of `@startuml` you need to use
-  the tag:
-  ````
+- To render PlantUML in our markdown files instead of `@startuml` you need to
+  use the tag:
+  ````txt
   ```plantuml
   ...
   ```
   ````
 
+### `render_md.py` tool
+
 - We have a `render_md.py` tool to embed images after `plantuml` section.
-  Typical usage to insert images to the markdowm file and to preview it:
+  Typical usage to insert images to the markdown file and to preview it:
+  ```bash
+  > render_md.py -i knowledge_graph/vendors/README.md
   ```
-  > documentation/scripts/render_md.py -i documentation/general/architecture.md
-  ```
+
+#### How to use
+
+1. Make sure `plantuml` is installed on your machine. The easiest way is to use
+   the
+   [docker](https://github.com/ParticleDev/commodity_research/blob/master/documentation_p1/technical/docker.md)
+   container. All the packages typically needed for development are installed in
+   the container.
+
+2. How to use:
+   ```bash
+   > render_md.py -h
+   ```
 
 - We try to let the rendering engine do its job of deciding where to put stuff
   even if sometimes it's not perfect. Otherwise, with any update of the text we
@@ -241,23 +261,27 @@
 
 - `.md` files should be linted by our tools
 
+3. If you want to use `open` action, make sure that your machine is able to open
+   `.html` files in the browser.
+
 ### Our conventions
 
 - Names
   - Each name in mappings should be exactly the same (maybe without some invalid
     chars, like `.`) to not create a cognitive burden to the reader. It's better
     to optimize for readability rather than by the number of chars. E.g.,
+
     ```plantuml
     [build_configs.py] as build_configs_py
     [TableExtractor] as TableExtractor
     ```
-
   - We keep components / classes in alphabetical order, so we can find them
     quickly in the code
 
 - Notes
   - Put notes describing some components / classes inside the blocks they refer
     to. E.g.,
+
     ```plantuml
     node mapping as map {
     [CIK<->Ticker] as ctmap
@@ -265,12 +289,11 @@
     [CIK<->GVKEY] as cgmap
     }
     ```
-
   - We use conventions for notes as for the code comments:
     - Start a note with a capital and end with `.`. In this way, it may be even
       easier to visually distinguish notes from arrow labels.
-    - Put notes straight after their related component definition, so a note will
-      look like a comment in the code
+    - Put notes straight after their related component definition, so a note
+      will look like a comment in the code
 
 - Arcs
   - The direction of the arcs represents the direction of the action. E.g.,
@@ -278,7 +301,6 @@
     ```plantuml
     apple --> ground : falls to
     ```
-
   - We use the third person for describing actions
 
 - We use comments as headers to organize the `architecture.md`. Note that the
@@ -344,7 +366,7 @@
     TargetMatcher --> analyze_results_py: matches values in
     TableNormalizer --> TableFilterer: provides tables to be filtered to
     universe --> mapping: provides universe of companies to
-    ```
+  ```
 
   You can find the correspondent `architecture.md` file
   [here](https://github.com/ParticleDev/commodity_research/blob/master/edgar/forms8/architecture.md).
