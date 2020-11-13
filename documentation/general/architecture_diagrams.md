@@ -13,6 +13,7 @@
       * [PlantUML is Markdown](#plantuml-is-markdown)
          * [render_md.py tool](#render_mdpy-tool)
             * [How to use](#how-to-use)
+         * [Our conventions](#our-conventions-1)
 
 
 
@@ -248,19 +249,17 @@
    [docker](https://github.com/ParticleDev/commodity_research/blob/master/documentation_p1/technical/docker.md)
    container. All the packages typically needed for development are installed in
    the container.
-   
-2. How to use:
 
-```bash
-> amp/documentation/scripts/render_md.py -h
-```
+2. How to use:
+   ```bash
+   > render_md.py -h
+   ```
 
 - We try to let the rendering engine do its job of deciding where to put stuff
   even if sometimes it's not perfect. Otherwise, with any update of the text we
   need to iterate on making it look nice: we don't want to do that.
 
 - `.md` files should be linted by our tools
-        jkdlasjljdlaks
 
 3. If you want to use `open` action, make sure that your machine is able to open
    `.html` files in the browser.
@@ -271,17 +270,18 @@
   - Each name in mappings should be exactly the same (maybe without some invalid
     chars, like `.`) to not create a cognitive burden to the reader. It's better
     to optimize for readability rather than by the number of chars. E.g.,
+
     ```plantuml
     [build_configs.py] as build_configs_py
     [TableExtractor] as TableExtractor
     ```
-
   - We keep components / classes in alphabetical order, so we can find them
     quickly in the code
 
 - Notes
   - Put notes describing some components / classes inside the blocks they refer
     to. E.g.,
+
     ```plantuml
     node mapping as map {
     [CIK<->Ticker] as ctmap
@@ -289,12 +289,11 @@
     [CIK<->GVKEY] as cgmap
     }
     ```
-
   - We use conventions for notes as for the code comments:
     - Start a note with a capital and end with `.`. In this way, it may be even
       easier to visually distinguish notes from arrow labels.
-    - Put notes straight after their related component definition, so a note will
-      look like a comment in the code
+    - Put notes straight after their related component definition, so a note
+      will look like a comment in the code
 
 - Arcs
   - The direction of the arcs represents the direction of the action. E.g.,
@@ -302,7 +301,6 @@
     ```plantuml
     apple --> ground : falls to
     ```
-
   - We use the third person for describing actions
 
 - We use comments as headers to organize the `architecture.md`. Note that the
@@ -368,9 +366,7 @@
     TargetMatcher --> analyze_results_py: matches values in
     TableNormalizer --> TableFilterer: provides tables to be filtered to
     universe --> mapping: provides universe of companies to
-    ```
+  ```
 
   You can find the correspondent `architecture.md` file
   [here](https://github.com/ParticleDev/commodity_research/blob/master/edgar/forms8/architecture.md).
-
-
