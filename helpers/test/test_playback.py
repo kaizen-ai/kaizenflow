@@ -326,8 +326,7 @@ class TestPlaybackFilePath1(hut.TestCase):
     def test1(self) -> None:
         """test writing to file when number of tests is more than generated
         (10)."""
-        playback = plbck.Playback("check_string", to_file=True)
-        test_file = playback._get_test_file_name("./path/to/somewhere.py")
+        test_file = plbck.Playback._get_test_file_name("./path/to/somewhere.py")
         self.assert_equal(
             test_file, "./path/to/test/test_by_playback_somewhere.py"
         )

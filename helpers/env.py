@@ -62,11 +62,11 @@ def get_system_signature(git_commit_type: str = "all") -> (List[str], int):
     if git_commit_type == "all":
         log_txt = git.git_log(num_commits=3, my_commits=False)
         txt.append("# Last commits:")
-        txt.append(pri.space(log_txt))
+        txt.append(pri.indent(log_txt))
     elif git_commit_type == "mine":
         log_txt = git.git_log(num_commits=3, my_commits=False)
         txt.append("# Your last commits:")
-        txt.append(pri.space(log_txt))
+        txt.append(pri.indent(log_txt))
     elif git_commit_type == "none":
         pass
     else:

@@ -21,7 +21,7 @@ def add_bool_arg(
     default: bool = False,
     help_: Optional[str] = None,
 ) -> argparse.ArgumentParser:
-    """Add options to a parser like --xyz and --no_xyz
+    """Add options to a parser like --xyz and --no_xyz.
 
     E.g., for `--incremental`.
     """
@@ -83,7 +83,7 @@ def actions_to_string(
     actions_as_str = "\n".join(actions)
     if add_frame:
         ret = prnt.frame("# Action selected:") + "\n"
-        ret += prnt.space(actions_as_str)
+        ret += prnt.indent(actions_as_str)
     else:
         ret = actions_as_str
     return ret  # type: ignore

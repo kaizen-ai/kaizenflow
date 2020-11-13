@@ -220,8 +220,10 @@
     - PyCharm plugin (create and edit `.puml` file locally):
       - [PlantUML integration](https://plugins.jetbrains.com/plugin/7017-plantuml-integration)
 
-- You can embed the diagrams in a `architecture.md` or a `README.md` in the
-  corresponding folders
+- We create `README.md` and `architecture.md` markdown files to document
+  software. `README.md` is for general content, `architecture.md` is for code
+  architecture description. You can embed the diagrams in `architecture.md` file
+  in a correspondent folder.
 
 - To render PlantUML in our markdown files instead of `@startuml` you need to
   use the tag:
@@ -246,11 +248,129 @@
    [docker](https://github.com/ParticleDev/commodity_research/blob/master/documentation_p1/technical/docker.md)
    container. All the packages typically needed for development are installed in
    the container.
+   
 2. How to use:
 
 ```bash
 > amp/documentation/scripts/render_md.py -h
 ```
 
+- We try to let the rendering engine do its job of deciding where to put stuff
+  even if sometimes it's not perfect. Otherwise, with any update of the text we
+  need to iterate on making it look nice: we don't want to do that.
+
+- `.md` files should be linted by our tools
+        jkdlasjljdlaks
+
 3. If you want to use `open` action, make sure that your machine is able to open
    `.html` files in the browser.
+
+### Our conventions
+
+- Names
+  - Each name in mappings should be exactly the same (maybe without some invalid
+    chars, like `.`) to not create a cognitive burden to the reader. It's better
+    to optimize for readability rather than by the number of chars. E.g.,
+    ```plantuml
+    [build_configs.py] as build_configs_py
+    [TableExtractor] as TableExtractor
+    ```
+
+  - We keep components / classes in alphabetical order, so we can find them
+    quickly in the code
+
+- Notes
+  - Put notes describing some components / classes inside the blocks they refer
+    to. E.g.,
+    ```plantuml
+    node mapping as map {
+    [CIK<->Ticker] as ctmap
+    note top of ctmap: My useful note.
+    [CIK<->GVKEY] as cgmap
+    }
+    ```
+
+  - We use conventions for notes as for the code comments:
+    - Start a note with a capital and end with `.`. In this way, it may be even
+      easier to visually distinguish notes from arrow labels.
+    - Put notes straight after their related component definition, so a note will
+      look like a comment in the code
+
+- Arcs
+  - The direction of the arcs represents the direction of the action. E.g.,
+
+    ```plantuml
+    apple --> ground : falls to
+    ```
+
+  - We use the third person for describing actions
+
+- We use comments as headers to organize the `architecture.md`. Note that the
+  comments in `plantuml` are introduced with `'`. Some frequently used headers
+  are:
+  - `' Components`
+  - `' Databases`
+  - `' Containers`
+  - `' Edge labels`
+  - `' Notes`
+
+- An example of acceptable C4 diagram plantuml snippet:
+
+  ```plantuml
+    ' Components
+    component [Edgar API] as Edgar_API
+    note top of Edgar_API : System storing the real-time\nand historical data from EDGAR.
+    component [Headers dataset] as Headers_dataset
+
+    ' Databases
+    database "Compustat DB" as Compustat_DB
+    note top of Compustat_DB : Third-party database\nwith financial data.
+
+    ' Containers
+    node Form8 as form8 {
+     [analyze_results.py] as analyze_results_py
+     note left of analyze_results_py: Computes matching statistics.
+     [build_configs.py] as build_configs_py
+     [edgar_utils.py] as edgar_utils_py
+     [run_pipeline.py] as run_pipeline_py
+     [TableExtractor]
+     note right of TableExtractor: Extracts forms tables.
+     [TableNormalizer]
+     note right of TableNormalizer: Normalizes extracted tables.
+     [TableFilterer]
+     note right of TableFilterer: Takes only financial tables\nfrom normalized tables.
+     [TargetMatcher]
+     note right of TargetMatcher: Matches financial values in tables.
+    }
+    node mapping as mapping {
+     [CIK<->Ticker] as CIK_Ticker
+     [CIK<->GVKEY] as CIK_GVKEY
+    }
+    node universe as universe{
+     [S&P400]
+     [S&P500]
+     [S&P600]
+     [S&P1500]
+     [S&P1500_ISAM]
+    }
+    note left of universe: Universe of companies\n as Tickers/GVKEYs.
+
+    ' Edge labels
+    Edgar_API --> edgar_utils_py: provides filings payloads to
+    Compustat_DB --> run_pipeline_py: provides target\nvalues to match on to
+    build_configs_py --> run_pipeline_py: provides pipeline\nparameters to
+    edgar_utils_py --> TableExtractor: provides universe filings to
+    analyze_results_py --> run_pipeline_py: provides functions\nto run the matching in to
+    mapping --> edgar_utils_py: provides mapping to construct\n universe as CIKs to
+    Headers_dataset --> analyze_results_py: provides filing\ndates to
+    TableExtractor --> TableNormalizer: provides tables to be normalized to
+    TableFilterer --> run_pipeline_py: provides forms\n values to be matched to
+    TargetMatcher --> analyze_results_py: matches values in
+    TableNormalizer --> TableFilterer: provides tables to be filtered to
+    universe --> mapping: provides universe of companies to
+    ```
+
+  You can find the correspondent `architecture.md` file
+  [here](https://github.com/ParticleDev/commodity_research/blob/master/edgar/forms8/architecture.md).
+
+

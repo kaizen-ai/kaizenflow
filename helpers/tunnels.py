@@ -34,7 +34,7 @@ def get_tunnel_info() -> (list, str):
 
 def tunnel_info_to_string(tunnel_info: list) -> str:
     ret = "\n".join(map(str, tunnel_info))
-    ret = prnt.space(ret)
+    ret = prnt.indent(ret)
     return ret
 
 
@@ -99,7 +99,7 @@ def _get_tunnel_info():
 
 def _tunnel_info_to_string(tunnel_info: list) -> str:
     ret = "\n".join(map(str, tunnel_info))
-    ret = prnt.space(ret)
+    ret = prnt.indent(ret)
     return ret
 
 
@@ -117,9 +117,7 @@ def _service_to_string(service: (str, str, str, str)) -> str:
 
 
 def _get_ssh_tunnel_process(
-        local_port: int,
-        remote_port: int,
-        fuzzy_match: bool
+    local_port: int, remote_port: int, fuzzy_match: bool
 ) -> (List[int], str):
     """Return the pids of the processes attached to a given port."""
 
@@ -142,11 +140,11 @@ def _get_ssh_tunnel_process(
 
 
 def _create_tunnel(
-        server_name: str,
-        local_port: int,
-        remote_port: int,
-        user_name: str,
-        ssh_key_path: str
+    server_name: str,
+    local_port: int,
+    remote_port: int,
+    user_name: str,
+    ssh_key_path: str,
 ) -> None:
     """Create tunnel from localhost to 'server' for the ports `local_port ->
     remote_port` and `user_name`."""
