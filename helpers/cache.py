@@ -11,8 +11,8 @@ import time
 from typing import Any, Callable, Optional, Tuple, Union
 
 import joblib
-import joblib.func_inspect as jfi
-import joblib.memory as jm
+import joblib.func_inspect as jfi  # type: ignore
+import joblib.memory as jm  # type: ignore
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -321,8 +321,8 @@ class Cached:
                     return True
             # Otherwise, check the the source of the function is still the same.
             func_code, _, _ = jm.get_func_code(self._func)
-            old_func_code_cache = cache_backend.store_backend.get_cached_func_code(
-                [func_id]
+            old_func_code_cache = (
+                cache_backend.store_backend.get_cached_func_code([func_id])
             )
             old_func_code, _ = jm.extract_first_line(old_func_code_cache)
             if func_code == old_func_code:
@@ -457,7 +457,7 @@ def cache(
             tag=tag,
         )
 
-    def wrapper(func):
+    def wrapper(func: Callable) -> Cached:
         return Cached(
             func,
             use_mem_cache=use_mem_cache,

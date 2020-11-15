@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from typing import Any, Optional, Tuple
 
 import helpers.dbg as dbg
 import helpers.system_interaction as si
@@ -9,7 +10,7 @@ import helpers.user_credentials as usc
 _LOG = logging.getLogger(__name__)
 
 
-def conda_system(cmd, *args, **kwargs):
+def conda_system(cmd: str, *args: Any, **kwargs: Any) -> Any:
     """When running a conda command we need to execute a script to configure
     conda. This script is typically executed in .bashrc but here we create a
     new bash shell every time to execute a command, so we need to re-initialize
@@ -28,7 +29,7 @@ def conda_system(cmd, *args, **kwargs):
     return si.system(cmd, *args, **kwargs)
 
 
-def conda_system_to_string(cmd, *args, **kwargs):
+def conda_system_to_string(cmd: str, *args: Any, **kwargs: Any) -> Any:
     path = usc.get_credentials()["conda_sh_path"]
     dbg.dassert_exists(path)
     dbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
@@ -36,7 +37,7 @@ def conda_system_to_string(cmd, *args, **kwargs):
     return si.system_to_string(cmd, *args, **kwargs)
 
 
-def get_conda_envs_dirs():
+def get_conda_envs_dirs() -> Any:
     """
     :return: list of the env dirs from conda
     """
@@ -49,7 +50,7 @@ def get_conda_envs_dirs():
     return envs
 
 
-def set_conda_env_root(conda_env_path):
+def set_conda_env_root(conda_env_path: str) -> None:
     """Set conda env dirs so that it matches what specified in.
 
     > conda config --show envs_dirs --json
@@ -94,7 +95,7 @@ def set_conda_env_root(conda_env_path):
         )
 
 
-def get_conda_info_envs():
+def get_conda_info_envs() -> Tuple[dict, None]:
     """
     :return: (env_dict, active_env)
         - env_dict: map 'conda env name -> conda env path'
@@ -133,7 +134,7 @@ def get_conda_info_envs():
     return env_dict, active_env
 
 
-def get_conda_list(conda_env_name):
+def get_conda_list(conda_env_name: str) -> dict:
     """
     :return: env_dict mapping package name to their info
         - env_dict: map 'conda env name -> conda env path'
@@ -168,14 +169,12 @@ def get_conda_list(conda_env_name):
 _CONDA_PATH = None
 
 
-def get_conda_path():
+def get_conda_path() -> Optional[str]:
     global _CONDA_PATH
     if not _CONDA_PATH:
-        rc, txt = _CONDA_PATH = conda_system_to_string(
-            "which conda", abort_on_error=False
-        )
+        rc, txt = conda_system_to_string("which conda", abort_on_error=False)
         if rc == 0:
-            _CONDA_PATH = txt
+            _CONDA_PATH = str(txt)
         else:
             _CONDA_PATH = "n/a"
     return _CONDA_PATH
