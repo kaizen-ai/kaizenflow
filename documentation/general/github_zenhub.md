@@ -430,7 +430,8 @@ In the following we use the abbreviations below:
 
 - Closed
   - Issues that are done and don't need a follow-up
-  - Issues are moved from `Done` to `Closed` by RPs
+  - RPs are in charge of closing bugs
+      - Issues are moved from `Done` to `Closed` by RPs
 
 ## Labels
 
@@ -470,6 +471,11 @@ In the following we use the abbreviations below:
   - ETA: Finish the sprint planning by Thursday EOD (filed event on RP's
     calendar)
   - [ ] Clean up the previous milestone (e.g., close Issues that are done)
+  - [ ] Assign the uncompleted tasks from the previous milestone to the next one
+        - E.g., if an issue was assigned to a Sprint A, the work has started on
+          it but wasn't finished by the end of the sprint A, so the assignee
+          will continue to work on it in the next sprint B, RPs change its
+          attribution to the sprint B
   - [ ] Read carefully the documentation about our conventions
         [https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md](https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md)
   - [ ] Take a look at your team's high-level planning document
@@ -484,7 +490,10 @@ In the following we use the abbreviations below:
       supported in KG"
     - "Build an initial model for predicting basis prices in the Frey set-up"
     - "Implement and test fetchers for 3 data providers"
-  - [ ] Move Issues to ZH `Sprint Backlog` pipeline
+  - [ ] Move Issues to ZH `Sprint Backlog` pipeline, order them from top to
+        bottom in order of priority
+        - In practice the ordering is not super important, the assumption is that
+          we execute most of the Sprint
   - [ ] Make sure all Issues are assigned to the right Epic
   - [ ] Assign story points to each Issue (see
         [https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md#story-points-aka-task-estimation](https://github.com/alphamatic/amp/blob/master/documentation/general/github_zenhub.md#story-points-aka-task-estimation))
@@ -538,8 +547,8 @@ In the following we use the abbreviations below:
   - The assignee doesn't close the GH issue, but only moves it to the `Done`
     pipeline in ZH
 
-- GP & P see if new Issues need to be filed as follow-up (or maybe a touch up)
-  - Once there is nothing else to do, GP & P move the Issue to "Closed"
+- RPs see if new Issues need to be filed as follow-up (or maybe a touch up)
+  - Once there is nothing else to do, RPs move the Issue to "Closed"
   - If an issue stays in `Done` for 2 sprints in a row, it is closed
     automatically
 
