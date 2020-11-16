@@ -11,8 +11,8 @@ import time
 from typing import Any, Callable, Optional, Tuple, Union
 
 import joblib
-import joblib.func_inspect as jfi  # type: ignore
-import joblib.memory as jm  # type: ignore
+import joblib.func_inspect as jfi
+import joblib.memory as jm
 
 import helpers.dbg as dbg
 import helpers.git as git

@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from typing import Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import helpers.dbg as dbg
 import helpers.system_interaction as si
@@ -10,7 +10,7 @@ import helpers.user_credentials as usc
 _LOG = logging.getLogger(__name__)
 
 
-def conda_system(cmd: str, *args: Any, **kwargs: Any) -> Any:
+def conda_system(cmd: str, *args: Any, **kwargs: Any) -> int:
     """When running a conda command we need to execute a script to configure
     conda. This script is typically executed in .bashrc but here we create a
     new bash shell every time to execute a command, so we need to re-initialize
@@ -26,18 +26,22 @@ def conda_system(cmd: str, *args: Any, **kwargs: Any) -> Any:
     dbg.dassert_exists(path)
     dbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
     cmd = "source %s && %s" % (path, cmd)
-    return si.system(cmd, *args, **kwargs)
+    output: int = si.system(cmd, *args, **kwargs)
+    return output
 
 
-def conda_system_to_string(cmd: str, *args: Any, **kwargs: Any) -> Any:
+def conda_system_to_string(
+    cmd: str, *args: Any, **kwargs: Any
+) -> Tuple[int, str]:
     path = usc.get_credentials()["conda_sh_path"]
     dbg.dassert_exists(path)
     dbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
     cmd = "source %s && %s" % (path, cmd)
-    return si.system_to_string(cmd, *args, **kwargs)
+    output: Tuple[int, str] = si.system_to_string(cmd, *args, **kwargs)
+    return output
 
 
-def get_conda_envs_dirs() -> Any:
+def get_conda_envs_dirs() -> List[str]:
     """
     :return: list of the env dirs from conda
     """
@@ -47,7 +51,7 @@ def get_conda_envs_dirs() -> Any:
     dbg.dassert_in("envs_dirs", envs)
     envs = envs["envs_dirs"]
     dbg.dassert_isinstance(envs, list)
-    return envs
+    return list(envs)
 
 
 def set_conda_env_root(conda_env_path: str) -> None:
@@ -134,7 +138,7 @@ def get_conda_info_envs() -> Tuple[dict, None]:
     return env_dict, active_env
 
 
-def get_conda_list(conda_env_name: str) -> dict:
+def get_conda_list(conda_env_name: str) -> Dict[str, Dict[str, str]]:
     """
     :return: env_dict mapping package name to their info
         - env_dict: map 'conda env name -> conda env path'
