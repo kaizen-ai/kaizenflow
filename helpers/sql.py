@@ -1,5 +1,5 @@
 import logging
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import pandas as pd
 import psycopg2 as pg
@@ -29,11 +29,8 @@ def get_connection(
 def get_engine_version(connection: pg.extensions.connection) -> str:
     """Report information on the SQL engine.
 
-    E.g.,
-    ```
-    PostgreSQL 11.5 on x86_64-pc-linux-gnu
-        compiled by gcc (GCC) 4.8.3 20140911 (Red Hat 4.8.3-9), 64-bit
-    ```
+    E.g., ``` PostgreSQL 11.5 on x86_64-pc-linux-gnu     compiled by gcc
+    (GCC) 4.8.3 20140911 (Red Hat 4.8.3-9), 64-bit ```
     """
     query = "SELECT version();"
     df = pd.read_sql_query(query, connection)
@@ -62,14 +59,11 @@ def get_table_size(
 ) -> pd.DataFrame:
     """Report the size of each table.
 
-     E.g.,
-    ```
-      table_name  row_estimate    total    index       toast    table
-    0     events           0.0   262 GB  0 bytes  8192 bytes   262 GB
-    1    stories           0.0   165 GB    43 GB  8192 bytes   122 GB
-    2   entities    10823400.0   706 MB  0 bytes  8192 bytes   706 MB
-    3   taxonomy       20691.0  6960 kB  0 bytes  8192 bytes  6952 kB
-    ```
+    E.g., ```   table_name  row_estimate    total    index       toast
+    table 0     events           0.0   262 GB  0 bytes  8192 bytes   262
+    GB 1    stories           0.0   165 GB    43 GB  8192 bytes   122 GB
+    2   entities    10823400.0   706 MB  0 bytes  8192 bytes   706 MB 3
+    taxonomy       20691.0  6960 kB  0 bytes  8192 bytes  6952 kB ```
     """
     q = """SELECT *, pg_size_pretty(total_bytes) AS total
         , pg_size_pretty(index_bytes) AS INDEX
@@ -115,18 +109,20 @@ def get_table_names(connection: pg.extensions.connection) -> List[str]:
 
 
 # TODO(gp): Test / fix this.
-def get_indexes(connection: pg.extensions.connection) -> dict:
+def get_indexes(connection: pg.extensions.connection) -> pd.DataFrame:
     res = []
     tables = get_table_names(connection)
     cursor = connection.cursor()
     for table in tables:
-        query = """select * from pg_indexes where tablename = '{table}' """.format(
-            table=table
+        query = (
+            """select * from pg_indexes where tablename = '{table}' """.format(
+                table=table
+            )
         )
         cursor.execute(query)
         z = cursor.fetchall()
         res.append(pd.DataFrame(z))
-    tmp = pd.concat(res)
+    tmp: pd.DataFrame = pd.concat(res)
     tmp["index_type"] = tmp[4].apply(
         lambda w: w.split("USING")[1].lstrip().split(" ")[0]
     )
@@ -159,11 +155,11 @@ def get_columns(connection: pg.extensions.connection, table_name: str) -> list:
 def execute_query(
     connection: pg.extensions.connection,
     query: str,
-    limit=None,
-    offset=None,
-    use_timer=False,
-    profile=False,
-    verbose=True,
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
+    use_timer: bool = False,
+    profile: bool = False,
+    verbose: bool = True,
 ) -> Union[None, pd.DataFrame]:
     """Execute a query."""
     if limit is not None:
@@ -196,7 +192,12 @@ def execute_query(
     return df
 
 
-def head_table(connection: pg.extensions.connection, table: str, limit=5, as_txt=False) -> str:
+def head_table(
+    connection: pg.extensions.connection,
+    table: str,
+    limit: int = 5,
+    as_txt: bool = False,
+) -> None:
     query = "SELECT * FROM %s LIMIT %s " % (table, limit)
     df = execute_query(connection, query)
     if as_txt:
@@ -209,7 +210,12 @@ def head_table(connection: pg.extensions.connection, table: str, limit=5, as_txt
         IPython.core.display.display(df)
 
 
-def head_tables(connection: pg.extensions.connection, tables=None, limit=5, as_txt=False) -> None:
+def head_tables(
+    connection: pg.extensions.connection,
+    tables: Optional[List[str]] = None,
+    limit: int = 5,
+    as_txt: bool = False,
+) -> None:
     if tables is None:
         tables = get_table_names(connection)
     for table in tables:
@@ -218,8 +224,7 @@ def head_tables(connection: pg.extensions.connection, tables=None, limit=5, as_t
 
 
 def find_common_columns(
-        connection: pg.extensions.connection,
-        tables: List[str], as_df=False
+    connection: pg.extensions.connection, tables: List[str], as_df: bool = False
 ) -> Union[None, pd.DataFrame]:
     limit = 5
     df = []
@@ -227,10 +232,14 @@ def find_common_columns(
         table = tables[i]
         query = "SELECT * FROM %s LIMIT %s " % (table, limit)
         df1 = execute_query(connection, query, verbose=False)
+        if df1 is None:
+            continue
         for j in range(i + 1, len(tables)):
             table = tables[j]
             query = "SELECT * FROM %s LIMIT %s " % (table, limit)
             df2 = execute_query(connection, query, verbose=False)
+            if df2 is None:
+                continue
             common_cols = [c for c in df1 if c in df2]
             if as_df:
                 df.append(
