@@ -11,7 +11,8 @@ _LOG = logging.getLogger(__name__)
 
 
 def get_nested_dict_iterator(
-    nested: Mapping[Any, Any], path: Optional[Iterable[Any]] = None,
+    nested: Mapping[Any, Any],
+    path: Optional[Iterable[Any]] = None,
 ) -> Generator[Tuple[Tuple, Any], None, None]:
     """Return nested mapping iterator that iterates in a depth-first fashion.
 

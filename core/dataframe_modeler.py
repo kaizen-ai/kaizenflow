@@ -498,7 +498,7 @@ class DataFrameModeler:
         plot_dendrogram_kwargs = plot_dendrogram_kwargs or {}
         #
         df = self._get_df(cols=cols, mode=mode)
-        plot.plot_dendrogram(df, figsize, **plot_dendrogram_kwargs)
+        plot.plot_dendrogram(df, figsize=figsize, **plot_dendrogram_kwargs)
 
     def plot_pca_components(
         self,

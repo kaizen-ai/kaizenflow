@@ -1,9 +1,9 @@
+import ast
 import logging
 import os
 from typing import Any, Callable, Dict, Optional, Union
 
 import pandas as pd
-import ast
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -118,7 +118,7 @@ def find_first_matching_row(
         matches = df[col_name] == val
         if matches.any():
             idx_max = matches.idxmax()
-            return curr + idx_max
+            return int(curr + idx_max)
         curr += nrows_at_a_time
     return None
 
@@ -262,7 +262,9 @@ def convert_csv_to_dict(path_to_csv: str, remove_nans: bool) -> Dict[Any, Any]:
     :return: a json-compatible dict with the dataframe data
     """
     dbg.dassert_exists(
-        path_to_csv, "The file '%s' is not found.", path_to_csv,
+        path_to_csv,
+        "The file '%s' is not found.",
+        path_to_csv,
     )
     # Load the dataframe from a csv file.
     df = pd.read_csv(path_to_csv)
@@ -298,23 +300,24 @@ def save_csv_as_json(
 
 
 def to_typed_csv(df: pd.DataFrame, file_name: str) -> None:
-    """Convert Dataframe into csv and then creates a file with the dtypes of columns.
-    
+    """Convert Dataframe into csv and then creates a file with the dtypes of
+    columns.
+
     As the file with types, this function create file with the same name and suffix
     'foobar.csv.types'.
 
     :param df: dataframe, which you want to convert into csv.
     :param file_name: name of file with desired format, which is used for saving
-    :return: 
+    :return:
     """
-    dtypes_filename = file_name + '.types'
+    dtypes_filename = file_name + ".types"
     io_.create_enclosing_dir(dtypes_filename, incremental=True)
     dtypes_dict = str(df.dtypes.apply(lambda x: x.name).to_dict())
 
-    df.to_csv(file_name, index = False)
-    with open(dtypes_filename, 'w') as dtypes_file:
+    df.to_csv(file_name, index=False)
+    with open(dtypes_filename, "w") as dtypes_file:
         dtypes_file.write(dtypes_dict)
-    
+
 
 def from_typed_csv(file_name: str) -> pd.DataFrame:
     """Loads csv file into dataframe and applies the original types of columns,
@@ -326,11 +329,11 @@ def from_typed_csv(file_name: str) -> pd.DataFrame:
     :param file_name: name of file, which is need to be converted into dataframe
     :return pd.DataFrame: dataframe of pandas format.
     """
-    dtypes_filename = file_name + '.types'
+    dtypes_filename = file_name + ".types"
     dbg.dassert_exists(dtypes_filename)
 
     dtypes_file = open(dtypes_filename)
     dtypes_dict = ast.literal_eval(list(dtypes_file)[0])
 
-    df = pd.read_csv(file_name, dtype = dtypes_dict)
+    df = pd.read_csv(file_name, dtype=dtypes_dict)
     return df

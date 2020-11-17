@@ -1,7 +1,7 @@
 import logging
 import os
 import platform
-from typing import List
+from typing import Tuple
 
 import helpers.conda as hco
 import helpers.git as git
@@ -29,7 +29,7 @@ def _get_version(lib_name: str) -> str:
     return version
 
 
-def get_system_signature(git_commit_type: str = "all") -> (List[str], int):
+def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     txt = []
     txt.append("# Packages")
     # Add package info.
@@ -117,7 +117,7 @@ def get_conda_export_list(conda_env_name: str, add_frame: bool) -> str:
     return msg
 
 
-def save_env_file(conda_env_name: str, dir_name: str) -> (str, str):
+def save_env_file(conda_env_name: str, dir_name: str) -> Tuple[str, str]:
     msg = ""
     msg += get_system_info(add_frame=True)
     msg += get_package_summary(conda_env_name, add_frame=True)

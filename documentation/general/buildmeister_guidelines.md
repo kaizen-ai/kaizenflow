@@ -3,6 +3,9 @@
    * [Notification system](#notification-system)
    * [Buildmeister instructions](#buildmeister-instructions)
    * [Post-mortem analysis](#post-mortem-analysis)
+
+
+
 <!--te-->
 
 # General
@@ -147,6 +150,7 @@
     - Merged a branch with broken tests
     - Master was not merged in a branch
     - Merged broken slow tests without knowing that
+    - Underlying data changed
 - `Issue` column:
   - Provide the link to the ZH issue with the break description
 - `Solution` column:
