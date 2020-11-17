@@ -868,6 +868,7 @@ class ContinuousSarimaxModel(FitPredictNode):
         else:
             pred_range = len(y)
             pred_start = 1
+        y_var = y.columns[0]
         for t in tqdm(range(pred_start, pred_range), disable=self._disable_tqdm):
             # If `t` is larger than `y`, this selects the whole `y`.
             y_past = y.iloc[:t]
@@ -885,19 +886,14 @@ class ContinuousSarimaxModel(FitPredictNode):
             forecast = result_predict.forecast(
                 steps=self._steps_ahead, exog=x_step
             )
-            forecast_last_step = forecast.iloc[-1:]
-            preds.append(forecast_last_step)
+            # Transform forecast into a row indexed by prediction time.
+            forecast = forecast.to_frame(name=y_past.index[-1]).T
+            forecast.columns = [
+                f"{y_var}_{i+1}_hat" for i in range(self._steps_ahead)
+            ]
+            preds.append(forecast)
         preds = pd.concat(preds)
-        y_var = y.columns[0]
-        preds.name = f"{y_var}_0_hat"
-        #
-        # The value `yhat_t` in `preds` is the prediction of `y_t` made
-        # `self._steps_ahead` time points ago. However, by our conventions, the
-        # target and prediction columns are indexed by the timestamp when the
-        # prediction was made and contain the lag in their name:
-        preds = preds.shift(-self._steps_ahead)
-        preds.name = preds.name.replace("_0_hat", f"_{self._steps_ahead}_hat")
-        return preds.to_frame()
+        return preds
 
     def _get_bkwd_x_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -931,8 +927,10 @@ class ContinuousSarimaxModel(FitPredictNode):
                 "A column name 'const' is already present, please rename column.",
             )
             self._x_vars.append("const")
-            return sm.add_constant(x)
+            x = sm.add_constant(x)
+            return x
         _LOG.warning("`add_constant=True` but no exog is provided.")
+        return x
 
     def _handle_nans(
         self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index

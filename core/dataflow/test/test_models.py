@@ -440,7 +440,9 @@ class TestContinuousSarimaxModel(hut.TestCase):
             df_out2.loc["2010-04-10":"2010-04-13", "ret_0_3_hat"],
             df_out3.loc["2010-04-10":"2010-04-13", "ret_0_3_hat"],
         )
-        df_out = pd.concat([df_out1, df_out2, df_out3], axis=1)
+        df_out = pd.concat(
+            [df_out1, df_out2["ret_0_3_hat"], df_out3["ret_0_3_hat"]], axis=1
+        )
         self.check_string(hut.convert_df_to_string(df_out, index=True))
 
     def test_predict_no_x1(self) -> None:
