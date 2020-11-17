@@ -1,15 +1,19 @@
 import argparse
+from typing import Dict, List
 
 import docker
 
 
-def get_volumes(name: str):  # pylint: disable=unused-argument
+def get_volumes(
+    name: str,  # pylint: disable=unused-argument
+) -> List[Dict[str, str]]:
     client = docker.from_env()
     container = client.containers.get("postgres_service")
-    return container.attrs["Mounts"]
+    output: List[Dict[str, str]] = container.attrs["Mounts"]
+    return output
 
 
-def get_source_from(name: str):
+def get_source_from(name: str) -> str:
     s = ""
     for i in get_volumes(name):
         s += i["Source"] + "\n"
