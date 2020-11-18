@@ -795,16 +795,18 @@ class ContinuousSarimaxModel(FitPredictNode):
         non_nan_idx = df[y_vars].dropna().index
         if self._x_vars is not None:
             x_fit = self._get_bkwd_x_df(df).dropna()
-            x_fit_non_nan_idx = x_fit.dropna().index
+            x_fit_non_nan_idx = x_fit.index
+            x_idx_extension = x_fit_non_nan_idx[-self._steps_ahead :]
+            non_nan_idx = non_nan_idx.append(x_idx_extension)
             non_nan_idx = non_nan_idx.intersection(x_fit_non_nan_idx)
-            idx = idx[self._steps_ahead :]
+            idx = idx[self._steps_ahead :].append(x_idx_extension)
         else:
             x_fit = None
         x_fit = self._add_constant_to_x(x_fit)
         dbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, non_nan_idx)
-        y_fit = y_fit.loc[non_nan_idx]
+        y_fit = y_fit.reindex(non_nan_idx)
         # Fit the model.
         self._model = sm.tsa.statespace.SARIMAX(
             y_fit, exog=x_fit, **self._init_kwargs
@@ -835,8 +837,9 @@ class ContinuousSarimaxModel(FitPredictNode):
         if self._x_vars is not None:
             x_predict = self._get_bkwd_x_df(df)
             x_predict = x_predict.dropna()
-            y_predict = y_predict.loc[x_predict.index]
-            idx = idx[self._steps_ahead :]
+            y_predict = y_predict.reindex(x_predict.index)
+            x_idx_extension = x_predict.index[-self._steps_ahead :]
+            idx = idx[self._steps_ahead :].append(x_idx_extension)
         else:
             x_predict = None
         x_predict = self._add_constant_to_x(x_predict)
@@ -858,8 +861,6 @@ class ContinuousSarimaxModel(FitPredictNode):
         """
         Make n-step-ahead predictions.
         """
-        # TODO(Julia): Consider leaving all steps of the prediction, not just
-        #     the last one.
         preds = []
         if self._x_vars is not None:
             pred_range = len(y) - self._steps_ahead
@@ -904,9 +905,11 @@ class ContinuousSarimaxModel(FitPredictNode):
         """
         x_vars = self._to_list(self._x_vars)
         shift = self._steps_ahead
-        mapper = lambda x: x + "_bkwd_%i" % shift
-        bkwd_x_df = df[x_vars].shift(shift).rename(columns=mapper)
-        return bkwd_x_df
+        # Shift index instead of series to extend the index.
+        bkwd_x_df = df[x_vars].copy()
+        bkwd_x_df.index = bkwd_x_df.index.shift(shift)
+        mapper = lambda y: y + "_bkwd_%i" % shift
+        return bkwd_x_df.rename(columns=mapper)
 
     def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -978,6 +981,7 @@ class ContinuousSarimaxModel(FitPredictNode):
         """
         dbg.dassert_isinstance(df, pd.DataFrame)
         dbg.dassert_no_duplicates(df.columns)
+        dbg.dassert(df.index.freq)
 
     @staticmethod
     def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
