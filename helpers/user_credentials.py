@@ -37,8 +37,10 @@ def get_p1_dev_server_ip() -> str:
 
 # pylint: disable=too-many-statements
 def get_credentials() -> Dict[str, Any]:
-    """Report information about a user set-up as a function of: 1) user name 2)
-    server name 3) git repository name.
+    """Report information about a user set-up as a function of:
+    1) user name
+    2) server name
+    3) git repository name.
 
     The mandatory information are:
     1) git_user_name
