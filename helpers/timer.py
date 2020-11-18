@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Optional, Tuple
 
 import helpers.dbg as dbg
 
@@ -17,15 +17,15 @@ class Timer:
 
         If "start_on_creation" is True start automatically the timer.
         """
-        self._stop = None
+        self._stop: Optional[float] = None
         # Store the time for the last elapsed interval.
-        self._last_elapsed = None
+        self._last_elapsed: Optional[float] = None
         # Store the total time for all the measured intervals.
         self._total_elapsed = 0.0
         if start_on_creation:
             # For better accuracy start the timer as last action, after all the
             # bookkeeping.
-            self._start = time.time()
+            self._start: Optional[float] = time.time()
         else:
             self._start = None
 
@@ -81,7 +81,7 @@ class Timer:
             self.stop()
         return self._total_elapsed
 
-    def accumulate(self, timer: "Timer"):
+    def accumulate(self, timer: "Timer") -> None:
         """Accumulate the value of a timer to the current object."""
         # Both timers must be stopped.
         dbg.dassert(timer.is_stopped())
@@ -113,7 +113,7 @@ def stop_timer(timer: Timer) -> str:
     return msg
 
 
-def dtimer_stop(idx: int) -> (str, int):
+def dtimer_stop(idx: int) -> Tuple[str, int]:
     """
     - return:
       - message as as string
@@ -134,19 +134,20 @@ class TimedScope:
     def __init__(self, log_level: int, message: str):
         self._log_level = log_level
         self._message = message
-        self._idx = None
+        self._idx: Optional[int] = None
 
     def __enter__(self) -> "TimedScope":
         self._idx = dtimer_start(self._log_level, self._message)
         return self
 
-    def __exit__(self, *args) -> None:
-        dtimer_stop(self._idx)
+    def __exit__(self, *args: Any) -> None:
+        if self._idx is not None:
+            dtimer_stop(self._idx)
 
 
 # Decorator.
 def timed(f: Callable) -> Callable:
-    def wrapper(*args, **kwargs) -> Any:
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         # if hasattr(f, "__name__"):
         func_name = f.__name__
         # else:

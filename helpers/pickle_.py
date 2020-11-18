@@ -5,7 +5,7 @@ import marshal
 import os
 import pickle
 import types
-from typing import Callable
+from typing import Any, Callable
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -14,17 +14,17 @@ import helpers.timer as timer
 _LOG = logging.getLogger(__name__)
 
 
-def _replace_extension(file_name, ext):
+def _replace_extension(file_name: str, ext: str) -> str:
     dbg.dassert(not ext.startswith("."), msg="ext='%s'" % ext)
     return "%s.%s" % (os.path.splitext(file_name)[0], ext)
 
 
 def to_pickle(
-        obj: object,
-        file_name: str,
-        backend: str = "pickle",
-        log_level: int = logging.DEBUG,
-        verbose: bool = True
+    obj: object,
+    file_name: str,
+    backend: str = "pickle",
+    log_level: int = logging.DEBUG,
+    verbose: bool = True,
 ) -> None:
     """Pickle object <obj> into file <file_name>."""
     dbg.dassert_type_is(file_name, str)
@@ -50,8 +50,8 @@ def to_pickle(
         dbg.dassert(
             file_name.endswith(".pkl.gz"), msg="Invalid file_name=%s" % file_name
         )
-        with gzip.open(file_name, "wb") as fd:
-            pickler = pickle.Pickler(fd, pickle.HIGHEST_PROTOCOL)
+        with gzip.open(file_name, "wb") as zfd:
+            pickler = pickle.Pickler(zfd, pickle.HIGHEST_PROTOCOL)
             pickler.fast = True
             pickler.dump(obj)
     else:
@@ -68,8 +68,11 @@ def to_pickle(
 
 
 def from_pickle(
-    file_name: str, backend: str = "pickle", log_level: int = logging.DEBUG, verbose: bool = True
-):
+    file_name: str,
+    backend: str = "pickle",
+    log_level: int = logging.DEBUG,
+    verbose: bool = True,
+) -> Any:
     """Unpickle and return object stored in <file_name>."""
     dbg.dassert_type_is(file_name, str)
     dtmr = timer.dtimer_start(log_level, "Unpickling from '%s'" % file_name)
@@ -92,8 +95,8 @@ def from_pickle(
         dbg.dassert(
             file_name.endswith(".pkl.gz"), msg="Invalid file_name=%s" % file_name
         )
-        with gzip.open(file_name, "rb") as fd:
-            unpickler = pickle.Unpickler(fd)
+        with gzip.open(file_name, "rb") as zfd:
+            unpickler = pickle.Unpickler(zfd)
             obj = unpickler.load()
     else:
         raise ValueError("Invalid backend='%s'" % backend)
@@ -115,8 +118,8 @@ def pickle_function(func: Callable) -> str:
     - return: string
     """
     dbg.dassert(callable(func))
-    code_as_str = marshal.dumps(func.__code__)
-    return code_as_str
+    code_as_bytes = marshal.dumps(func.__code__)
+    return code_as_bytes.decode()
 
 
 def unpickle_function(code_as_str: str, func_name: str) -> Callable:
@@ -126,7 +129,7 @@ def unpickle_function(code_as_str: str, func_name: str) -> Callable:
     - return: function
     """
     dbg.dassert_type_is(code_as_str, str)
-    code = marshal.loads(code_as_str)
+    code = marshal.loads(code_as_str.encode())
     func = types.FunctionType(code, globals(), name=func_name)
     return func
 
