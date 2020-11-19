@@ -1664,6 +1664,8 @@ def plot_pnl(
 
 def plot_drawdown(
     log_rets: pd.Series,
+    bottom: int = -100,
+    top: int = 0,
     unit: str = "%",
     title_suffix: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
@@ -1672,6 +1674,8 @@ def plot_drawdown(
     """Plot drawdown.
 
     :param log_rets: log returns
+    :param bottom: bottom ylim in data coordinates
+    :param top: top ylim in data coordinates
     :param unit: `ratio`, `%`, input series is rescaled appropriately
     :param title_suffix: suffix added to the title
     :param ax: axes
@@ -1688,7 +1692,7 @@ def plot_drawdown(
         ax=ax, title=f"{title}{title_suffix}", label=label, color="b", alpha=0.3
     )
     _maybe_add_events(ax=ax, events=events)
-    ax.set_ylim(top=0)
+    ax.set_ylim(bottom, top)
     ax.set_ylabel(unit)
     ax.legend()
 
