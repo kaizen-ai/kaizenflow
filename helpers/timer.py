@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple, cast
 
 import helpers.dbg as dbg
 
@@ -34,7 +34,7 @@ class Timer:
         measured_time = self._total_elapsed
         if self.is_started() and not self.is_stopped():
             # Timer still running.
-            measured_time += time.time() - self._start
+            measured_time += time.time() - cast(float, self._start)
         ret = "%.3f secs" % measured_time
         return ret
 
@@ -46,7 +46,7 @@ class Timer:
         self._stop = time.time()
         # Update the total elapsed time.
         dbg.dassert_lte(self._start, self._stop)
-        self._last_elapsed = self._stop - self._start
+        self._last_elapsed = cast(float, self._stop) - cast(float, self._start)
         self._total_elapsed += self._last_elapsed
         # Stop.
         self._start = None
@@ -57,7 +57,7 @@ class Timer:
         if not self.is_stopped():
             self.stop()
         dbg.dassert_is_not(self._last_elapsed, None)
-        return self._last_elapsed
+        return cast(float, self._last_elapsed)
 
     # /////////////////////////////////////////////////////////////////////////
 
@@ -70,7 +70,7 @@ class Timer:
         self._start = time.time()
 
     def is_started(self) -> bool:
-        return self._start >= 0 and self._stop is None
+        return self._start is not None and self._start >= 0 and self._stop is None
 
     def is_stopped(self) -> bool:
         return self._start is None and self._stop is None
