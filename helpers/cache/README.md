@@ -60,3 +60,11 @@
   but over [`tmpfs`](https://uk.wikipedia.org/wiki/Tmpfs).
 - Basically, reuse the same `File` level cache but over a RAM-based disk. This
   implementation overcomes all listed Cons, albeit it is slightly slower.
+
+### Global / Local Cache
+
+By default, all cached functions save their cache in the default "global" `tmp.cache...` folder.
+This global cache is being managed via global functions `create_global_cache`, `set_global_cache`, `get_global_cache`, `clear_global_cache` and `destroy_global_cache`.
+
+It is possible to override cache directory for a specific function by setting different `disk_cache_directory` and / or `mem_cache_directory` parameters in decorator or in `Cached` class constructor.
+If cache is set for the function, it can be managed with `.set_cache_directory()`, `.get_cache_directory()`, `.destroy_cache()` and `.clear_cache()` methods.
