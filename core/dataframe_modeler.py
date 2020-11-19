@@ -396,6 +396,16 @@ class DataFrameModeler:
                 title = col_name
             srs.plot(title=title, ax=axes[i])
 
+    def plot_projection(
+        self,
+        cols: Optional[List[Any]] = None,
+        plot_projection_kwargs: Optional[Dict[str, Any]] = None,
+        mode: str = "ins",
+    ) -> None:
+        df = self._get_df(cols=cols, mode=mode)
+        plot_projection_kwargs = plot_projection_kwargs or {}
+        plot.plot_projection(df, **plot_projection_kwargs)
+
     def plot_cumulative_returns(
         self,
         cols: Optional[List[Any]] = None,
