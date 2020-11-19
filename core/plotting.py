@@ -28,6 +28,7 @@ import seaborn as sns
 import sklearn.decomposition as skldec
 import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
+import statsmodels as sml
 import statsmodels.api as sm
 import statsmodels.regression.rolling as smrr
 
@@ -613,6 +614,14 @@ def plot_autocorrelation(
             title=pacf_title,
             **kwargs,
         )
+
+
+def plot_seasonal_decomposition(df: pd.DataFrame) -> None:
+    """Plot seasonal trend decomposition of ts."""
+    stl = sml.tsa.seasonal.STL(df).fit()
+    fig = stl.plot()
+    fig.set_size_inches(20, 16)
+    plt.tight_layout()
 
 
 def plot_spectrum(
