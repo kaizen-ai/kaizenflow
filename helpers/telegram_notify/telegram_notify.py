@@ -68,10 +68,10 @@ class TelegramNotify:
         msg = "<pre>{notebook_name}</pre>: {message}".format(
             notebook_name=self.launcher_name, message=message
         )
-        self._send(msg, self.token, self.chat_id)
+        self.send(msg, self.token, self.chat_id)
 
     @staticmethod
-    def _send(
+    def send(
         text: str, token: Optional[str], chat_id: Optional[str]
     ) -> Optional[bytes]:
         if chat_id is None or token is None:
@@ -94,7 +94,7 @@ class TelegramNotify:
 
 
 class _RequestsHandler(logging.Handler):
-    def emit(self, record: logging.LogRecord) -> bytes:
+    def emit(self, record: logging.LogRecord) -> bytes:  # type: ignore
         token, chat_id = tgcfg.get_info()
         log_entry = self.format(record)
         payload = {"chat_id": chat_id, "text": log_entry, "parse_mode": "HTML"}
