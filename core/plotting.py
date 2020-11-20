@@ -1664,8 +1664,7 @@ def plot_pnl(
 
 def plot_drawdown(
     log_rets: pd.Series,
-    bottom: int = -100,
-    top: int = 0,
+    bottom_ylim: Optional[str] = None,
     unit: str = "%",
     title_suffix: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
@@ -1674,13 +1673,13 @@ def plot_drawdown(
     """Plot drawdown.
 
     :param log_rets: log returns
-    :param bottom: bottom ylim in data coordinates
-    :param top: top ylim in data coordinates
+    :param bottom_ylim: bottom ylim in data coordinates
     :param unit: `ratio`, `%`, input series is rescaled appropriately
     :param title_suffix: suffix added to the title
     :param ax: axes
     :param events: list of tuples with dates and labels to point out on the plot
     """
+    bottom_ylim = bottom_ylim or "scalable"
     title_suffix = title_suffix or ""
     scale_coeff = _choose_scaling_coefficient(unit)
     drawdown = -scale_coeff * fin.compute_perc_loss_from_high_water_mark(log_rets)
@@ -1692,7 +1691,12 @@ def plot_drawdown(
         ax=ax, title=f"{title}{title_suffix}", label=label, color="b", alpha=0.3
     )
     _maybe_add_events(ax=ax, events=events)
-    ax.set_ylim(bottom, top)
+    if bottom_ylim == "scalable":
+        ax.set_ylim(top=0)
+    elif bottom_ylim == "fixed":
+        ax.set_ylim(bottom=drawdown.min() * scale_coeff, top=0)
+    else:
+        raise ValueError("Invalid bottom ylim='%s'" % bottom_ylim)
     ax.set_ylabel(unit)
     ax.legend()
 
