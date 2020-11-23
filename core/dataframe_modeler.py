@@ -378,6 +378,8 @@ class DataFrameModeler:
         df = self._get_df(cols=cols, mode=mode)
         num_plots = num_plots or df.shape[1]
         num_plots = min(num_plots, df.shape[1])
+        if num_plots == 1:
+            num_cols = 1
         # Create figure to accommodate plots.
         _, axes = plot.get_multiple_plots(
             num_plots=num_plots,

@@ -599,16 +599,25 @@ def plot_autocorrelation(
             raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
         axes = cast(List, axes)
         ax1 = axes[idx][0]
+        # Partial correlation can be computed for lags up to 50% of the sample
+        # size.
+        lags_curr = min(lags, data.size // 2 - 1)
         # Exclude lag zero so that the y-axis does not get squashed.
         acf_title = title_prefix + f"{col} autocorrelation"
         _ = sm.graphics.tsa.plot_acf(
-            data, lags=lags, fft=fft, ax=ax1, zero=zero, title=acf_title, **kwargs
+            data,
+            lags=lags_curr,
+            fft=fft,
+            ax=ax1,
+            zero=zero,
+            title=acf_title,
+            **kwargs,
         )
         ax2 = axes[idx][1]
         pacf_title = title_prefix + f"{col} partial autocorrelation"
         _ = sm.graphics.tsa.plot_pacf(
             data,
-            lags=lags,
+            lags=lags_curr,
             ax=ax2,
             zero=zero,
             title=pacf_title,
