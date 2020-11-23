@@ -1610,7 +1610,7 @@ class VolatilityModel(FitPredictNode):
         self._steps_ahead = steps_ahead
         self._fwd_vol_col = self._vol_col + f"_{self._steps_ahead}"
         self._fwd_vol_col_hat = self._fwd_vol_col + "_hat"
-        self._zscored_col = self._col[0] + "_zscored"
+        self._zscored_col = str(self._col[0]) + "_zscored"
         dbg.dassert_lte(1, p_moment)
         self._p_moment = p_moment
         self._tau = tau
