@@ -42,7 +42,7 @@ def _get_chat_id_updates_dict(username: str, updates_dict: dict) -> str:
 def send_chat_id(token: str, username: str) -> str:
     updates_dict = _get_updates_dict(token)
     chat_id = _get_chat_id_updates_dict(username, updates_dict)
-    httn.TelegramNotify._send(
+    httn.TelegramNotify.send(
         text="Your chat id is: %s" % chat_id, token=token, chat_id=chat_id
     )
     return chat_id
