@@ -1,6 +1,6 @@
 """Import as:
 
-import helpers.cache as hcac
+import helpers.cache as hcache
 """
 
 import copy
@@ -11,12 +11,12 @@ import time
 from typing import Any, Callable, Optional, Tuple, Union
 
 import joblib
-import joblib.func_inspect as jfi
-import joblib.memory as jm
+import joblib.func_inspect as jfuncinspect
+import joblib.memory as jmemory
 
-import helpers.dbg as dbg
-import helpers.git as git
-import helpers.io_ as io_
+import helpers.dbg as hdbg
+import helpers.git as hgit
+import helpers.io_ as hio
 
 _LOG = logging.getLogger(__name__)
 
@@ -33,12 +33,15 @@ _LOG_LEVEL = logging.DEBUG
 
 # #############################################################################
 
-def _create_cache_backend(cache_type: str, tag: Optional[str] = None) -> joblib.Memory:
-    """Return the object storing a cache.
+
+def _create_cache_backend(
+    cache_type: str, tag: Optional[str] = None
+) -> joblib.Memory:
+    """Create the object storing a cache.
 
     :param cache_type: type of a cache
     :param tag: optional unique tag of the cache, empty by default
-    :return:
+    :return: cache backend object
     """
     _check_valid_cache_type(cache_type)
     file_name = get_cache_path(cache_type, tag)
@@ -51,7 +54,7 @@ def _check_valid_cache_type(cache_type: str) -> None:
 
     :param cache_type: type of a cache
     """
-    dbg.dassert_in(cache_type, ("mem", "disk"))
+    hdbg.dassert_in(cache_type, ("mem", "disk"))
 
 
 def set_caching(val: bool) -> None:
@@ -103,7 +106,7 @@ def get_cache_path(cache_type: str, tag: Optional[str] = None) -> str:
     if cache_type == "mem":
         root_path = _MEMORY_TMPFS_PATH
     else:
-        root_path = git.get_client_root(super_module=True)
+        root_path = hgit.get_client_root(super_module=True)
     file_name = os.path.join(root_path, cache_name)
     file_name = os.path.abspath(file_name)
     return file_name
@@ -122,20 +125,17 @@ def get_global_cache(cache_type: str, tag: Optional[str] = None) -> joblib.Memor
     if tag is None:
         if cache_type == "mem":
             if _MEMORY_CACHE is None:
-                # Create global memory cache if not exists.
+                # Create global memory cache if it doesn't exist.
                 _MEMORY_CACHE = _create_cache_backend(cache_type)
             global_cache = _MEMORY_CACHE
         else:
             if _DISK_CACHE is None:
-                # Create global disk cache if not exists.
+                # Create global disk cache if it doesn't exist.
                 _DISK_CACHE = _create_cache_backend(cache_type)
             global_cache = _DISK_CACHE
     else:
         # Build a one-off cache.
-        if cache_type == "mem":
-            global_cache = _create_cache_backend(cache_type, tag)
-        else:
-            global_cache = _create_cache_backend(cache_type, tag)
+        global_cache = _create_cache_backend(cache_type, tag)
     return global_cache
 
 
@@ -177,7 +177,7 @@ def destroy_global_cache(cache_type: str, tag: Optional[str] = None) -> None:
     _check_valid_cache_type(cache_type)
     cache_path = get_cache_path(cache_type, tag)
     _LOG.warning("Destroying %s cache '%s'", cache_type, cache_path)
-    io_.delete_dir(cache_path)
+    hio.delete_dir(cache_path)
 
 
 class Cached:
@@ -247,34 +247,71 @@ class Cached:
             )
         return obj
 
-    def clear_cache(self, cache_type: str = None) -> None:
-        """Clear all cache, or a cache by type.
+    def clear_cache(self, cache_type: Optional[str] = None) -> None:
+        """Clear all cache, or a cache by type. Only works in cache-specific
+        case.
 
         :param cache_type: type of a cache to clear, or None to clear all caches
         """
-        # TODO(vr): Add warning about global cache here, too.
         if cache_type is None:
-            disk_cache = self._get_cache("disk")
-            disk_cache.clear()
-            mem_cache = self._get_cache("mem")
-            mem_cache.clear()
+            if self._disk_cache_directory is None:
+                _LOG.warning(
+                    "Cannot clear global disk cache, use clear_global_cache function instead."
+                )
+            else:
+                disk_cache = self._get_cache("disk")
+                disk_cache.clear()
+            if self._mem_cache_directory is None:
+                _LOG.warning(
+                    "Cannot clear global mem cache, use clear_global_cache function instead."
+                )
+            else:
+                mem_cache = self._get_cache("mem")
+                mem_cache.clear()
         else:
-            cache_backend = self._get_cache(cache_type)
-            cache_backend.clear()
+            if cache_type == "mem":
+                cache_path = self._mem_cache_directory
+            else:
+                cache_path = self._disk_cache_directory
+            if cache_path is None:
+                _LOG.warning(
+                    "Cannot destroy global %s cache, use destroy_global_cache function instead.",
+                    cache_type,
+                )
+            else:
+                cache_backend = self._get_cache(cache_type)
+                cache_backend.clear()
 
     def destroy_cache(self, cache_type: str) -> None:
+        """Destroy a cache by cache type and remove physical directory. Only
+        works in cache-specific case.
+
+        :param cache_type: type of a cache
+        """
         _check_valid_cache_type(cache_type)
         if cache_type == "mem":
             cache_path = self._mem_cache_directory
         else:
             cache_path = self._disk_cache_directory
         if cache_path is None:
-            _LOG.warning("Cannot destroy global %s cache, use destroy_global_cache function instead.", cache_type)
+            _LOG.warning(
+                "Cannot destroy global %s cache, use destroy_global_cache function instead.",
+                cache_type,
+            )
         else:
             _LOG.warning("Destroying %s cache '%s'", cache_type, cache_path)
-            io_.delete_dir(cache_path)
+            hio.delete_dir(cache_path)
 
-    def set_cache_directory(self, cache_type: str, cache_path: Optional[str]) -> None:
+    def set_cache_directory(
+        self, cache_type: str, cache_path: Optional[str]
+    ) -> None:
+        """Set a cache directory for a specific cache type. If None is passed.
+
+        -- use global cache.
+
+        :param cache_type: type of a cache
+        :param cache_path: cache directory or None for global cache
+        """
         _check_valid_cache_type(cache_type)
         if cache_type == "mem":
             self._mem_cache_directory = cache_path
@@ -283,11 +320,16 @@ class Cached:
         self._create_cache(cache_type)
 
     def get_cache_directory(self, cache_type: str) -> Optional[str]:
+        """Get a cache directory for a specific cache type, or None if global
+        cache is used.
+
+        :param cache_type: type of a cache
+        :return: directory for specific cache or None if global cache is used
+        """
         _check_valid_cache_type(cache_type)
         if cache_type == "mem":
             return self._mem_cache_directory
-        else:
-            return self._disk_cache_directory
+        return self._disk_cache_directory
 
     def get_last_cache_accessed(self) -> str:
         """Get the last used cache in the latest call.
@@ -310,13 +352,17 @@ class Cached:
         _check_valid_cache_type(cache_type)
         if cache_type == "mem":
             if self._mem_cache_directory:
-                self._memory_cache = joblib.Memory(self._mem_cache_directory, verbose=0, compress=1)
+                self._memory_cache = joblib.Memory(
+                    self._mem_cache_directory, verbose=0, compress=1
+                )
             else:
                 self._memory_cache = get_global_cache(cache_type, self._tag)
             self._memory_cached_func = self._memory_cache.cache(self._func)
         else:
             if self._disk_cache_directory:
-                self._disk_cache = joblib.Memory(self._disk_cache_directory, verbose=0, compress=1)
+                self._disk_cache = joblib.Memory(
+                    self._disk_cache_directory, verbose=0, compress=1
+                )
             else:
                 self._disk_cache = get_global_cache(cache_type, self._tag)
             self._disk_cached_func = self._disk_cache.cache(self._func)
@@ -346,7 +392,7 @@ class Cached:
         elif cache_type == "disk":
             cache_backend = self._disk_cached_func
         else:
-            dbg.dfatal("Unknown cache type: %s", cache_type)
+            hdbg.dfatal("Unknown cache type: %s", cache_type)
         return cache_backend
 
     def _has_cached_version(
@@ -368,16 +414,16 @@ class Cached:
             # We must check that the source of the function is the same.
             # Otherwise, cache tracing will not be correct.
             # First, try faster check via joblib hash.
-            if self._func in jm._FUNCTION_HASHES:
+            if self._func in jmemory._FUNCTION_HASHES:
                 func_hash = cache_backend._hash_func()
-                if func_hash == jm._FUNCTION_HASHES[self._func]:
+                if func_hash == jmemory._FUNCTION_HASHES[self._func]:
                     return True
             # Otherwise, check the the source of the function is still the same.
-            func_code, _, _ = jm.get_func_code(self._func)
+            func_code, _, _ = jmemory.get_func_code(self._func)
             old_func_code_cache = (
                 cache_backend.store_backend.get_cached_func_code([func_id])
             )
-            old_func_code, _ = jm.extract_first_line(old_func_code_cache)
+            old_func_code, _ = jmemory.extract_first_line(old_func_code_cache)
             if func_code == old_func_code:
                 return True
         return False
@@ -394,7 +440,7 @@ class Cached:
         """
         cache_backend = self._get_cache(cache_type)
         # Write out function code to the cache.
-        func_code, _, first_line = jfi.get_func_code(cache_backend.func)
+        func_code, _, first_line = jfuncinspect.get_func_code(cache_backend.func)
         cache_backend._write_func_code(func_code, first_line)
         # Store the returned value into the cache.
         cache_backend.store_backend.dump_item([func_id, args_id], obj)
@@ -486,13 +532,13 @@ def cache(
 
     Usage examples:
 
-    import helpers.cache as hcac
+    import helpers.cache as hcache
 
-    @hcac.cache
+    @hcache.cache
     def add(x: int, y: int) -> int:
         return x + y
 
-    @hcac.cache(use_mem_cache=False)
+    @hcache.cache(use_mem_cache=False)
     def add(x: int, y: int) -> int:
         return x + y
 
