@@ -1684,7 +1684,9 @@ def plot_drawdown(
     """Plot drawdown.
 
     :param log_rets: log returns
-    :param ylim: bottom ylim in data coordinates
+    :param ylim: either "fixed", "scalable" or None. default is None corresponds
+    to "scalable". If y_lim is set to "fixed", the axes limit relies on units
+    with possible values of -1 for "ratio", -100 for "%" and -10000 for "bps"
     :param unit: `ratio`, `%`, input series is rescaled appropriately
     :param title_suffix: suffix added to the title
     :param ax: axes
@@ -1704,7 +1706,7 @@ def plot_drawdown(
     _maybe_add_events(ax=ax, events=events)
     if ylim == "scalable":
         ax.set_ylim(top=0)
-    # The drawdown is negative is either -1, -100 or -10000 according to units
+    # The drawdown is negative is either -1, -100 or -10000 according to units.
     elif ylim == "fixed":
         ax.set_ylim(bottom=-scale_coeff, top=0)
     else:
