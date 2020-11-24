@@ -1,5 +1,4 @@
-"""
-Import as:
+"""Import as:
 
 import helpers.open as opn
 """
@@ -47,7 +46,7 @@ def _cmd_open_pdf(file_name: str, os_name: str) -> str:
 
 
 def open_file(file_name: str) -> None:
-    """Open file if extension is supported"""
+    """Open file if extension is supported."""
     # Define file format.
     suffix = os.path.split(file_name)[-1].split(".")[-1]
     # Check file.

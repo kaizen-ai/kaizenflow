@@ -6,7 +6,7 @@ import helpers.introspection as intr
 import collections.abc as abc
 import inspect
 import sys
-from typing import Any, List
+from typing import Any, List, Optional
 
 import helpers.dbg as dbg
 
@@ -36,7 +36,7 @@ def get_function_name(count: int = 0) -> str:
 
 
 # From https://github.com/bosswissam/pysize
-def get_size(obj: object, seen: bool = None) -> int:
+def get_size(obj: object, seen: Optional[set] = None) -> int:
     """Recursively find size of an object `obj` in bytes."""
     size = sys.getsizeof(obj)
     if seen is None:
@@ -57,7 +57,7 @@ def get_size(obj: object, seen: bool = None) -> int:
     if isinstance(obj, dict):
         size += sum((get_size(v, seen) for v in obj.values()))
         size += sum((get_size(k, seen) for k in obj.keys()))
-    elif hasattr(obj, "__iter__") and not isinstance(
+    elif isinstance(obj, abc.Iterable) and not isinstance(
         obj, (str, bytes, bytearray)
     ):
         size += sum((get_size(i, seen) for i in obj))

@@ -9,13 +9,6 @@ import logging
 import math
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
-import core.explore as expl
-import core.finance as fin
-import core.signal_processing as sigp
-import core.statistics as stats
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
-import helpers.list as hlist
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
@@ -30,6 +23,14 @@ import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
 import statsmodels.regression.rolling as smrr
+
+import core.explore as expl
+import core.finance as fin
+import core.signal_processing as sigp
+import core.statistics as stats
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
+import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
@@ -598,16 +599,25 @@ def plot_autocorrelation(
             raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
         axes = cast(List, axes)
         ax1 = axes[idx][0]
+        # Partial correlation can be computed for lags up to 50% of the sample
+        # size.
+        lags_curr = min(lags, data.size // 2 - 1)
         # Exclude lag zero so that the y-axis does not get squashed.
         acf_title = title_prefix + f"{col} autocorrelation"
         _ = sm.graphics.tsa.plot_acf(
-            data, lags=lags, fft=fft, ax=ax1, zero=zero, title=acf_title, **kwargs
+            data,
+            lags=lags_curr,
+            fft=fft,
+            ax=ax1,
+            zero=zero,
+            title=acf_title,
+            **kwargs,
         )
         ax2 = axes[idx][1]
         pacf_title = title_prefix + f"{col} partial autocorrelation"
         _ = sm.graphics.tsa.plot_pacf(
             data,
-            lags=lags,
+            lags=lags_curr,
             ax=ax2,
             zero=zero,
             title=pacf_title,
@@ -1063,6 +1073,8 @@ def plot_dendrogram(
     _ = plt.figure(figsize=figsize)
     plt.title("Hierarchical Clustering Dendrogram")
     plt.ylabel("Distance")
+    if not {"leaf_rotation", "orientation"}.intersection(kwargs):
+        kwargs["leaf_rotation"] = 90
     sp.cluster.hierarchy.dendrogram(
         z_linkage,
         labels=df.columns.tolist(),

@@ -1,17 +1,18 @@
-import os
-import smtplib
 import email.mime.multipart as mp
 import email.mime.text as mt
+import os
+import smtplib
+from typing import Optional
 
 
 def send_email(
     subject: str,
     message: str,
     to_adr: str,
-    email_address: str = None,
-    email_password: str = None,
-    html: str = False,
-):
+    email_address: Optional[str] = None,
+    email_password: Optional[str] = None,
+    html: bool = False,
+) -> None:
     """Send mail to specified e-mail addresses.
 
     :param message: Message to be sent

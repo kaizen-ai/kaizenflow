@@ -11,7 +11,7 @@ import argparse
 import logging
 import os
 import pprint
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -94,7 +94,7 @@ def get_credentials() -> Dict[str, Any]:
     git_user_email = ""
     conda_sh_path = ""
     ssh_key_path = "~/.ssh/id_rsa"
-    tunnel_info: List[str] = []
+    tunnel_info: List[Tuple[str, str, str, str]] = []
     jupyter_port = -1
     notebook_html_path = ""
     notebook_backup_path = ""

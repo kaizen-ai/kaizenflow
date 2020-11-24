@@ -142,8 +142,7 @@ def convert_df_to_json_string(
     n_tail: Optional[int] = 10,
     columns_order: Optional[List[str]] = None,
 ) -> str:
-    """
-    Convert dataframe to pretty-printed json string.
+    """Convert dataframe to pretty-printed json string.
 
     To select all rows of the dataframe, pass `n_head` as None.
 

@@ -1,5 +1,5 @@
 import logging
-from typing import Callable
+from typing import Any, Callable, TypeVar
 
 try:
     import numba
@@ -17,9 +17,10 @@ _LOG = logging.getLogger(__name__)
 #   numba_.USE_NUMBA = False
 
 USE_NUMBA = True
+RT = TypeVar("RT")  # Return type for decorator.
 
 
-def jit(f: Callable) -> Callable:
+def jit(f: Callable[..., RT]) -> Callable[..., RT]:
 
     if USE_NUMBA and not numba_available:
         _LOG.warning("numba is not installed")
@@ -27,10 +28,10 @@ def jit(f: Callable) -> Callable:
 
     if use_numba:
         _LOG.debug("Using numba!")
-        wrapper = numba.jit(f)
+        wrapper: Callable[..., RT] = numba.jit(f)
     else:
 
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> RT:
             _LOG.debug("Not using numba!")
             return f(*args, **kwargs)
 
