@@ -9,6 +9,13 @@ import logging
 import math
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
+import core.explore as expl
+import core.finance as fin
+import core.signal_processing as sigp
+import core.statistics as stats
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
+import helpers.list as hlist
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
@@ -24,14 +31,6 @@ import sklearn.utils.validation as skluv
 import statsmodels as sml
 import statsmodels.api as sm
 import statsmodels.regression.rolling as smrr
-
-import core.explore as expl
-import core.finance as fin
-import core.signal_processing as sigp
-import core.statistics as stats
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
-import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
@@ -626,9 +625,17 @@ def plot_autocorrelation(
         )
 
 
-def plot_seasonal_decomposition(df: pd.DataFrame) -> None:
+def plot_seasonal_decomposition(
+    srs: Union[pd.Series, pd.DataFrame],
+    nan_mode: Optional[str] = None,
+    kwargs: Optional[Any] = None,
+) -> None:
     """Plot seasonal trend decomposition of ts."""
-    stl = sml.tsa.seasonal.STL(df).fit()
+    nan_mode = nan_mode or "drop"
+    kwargs = kwargs or {}
+    srs = srs.squeeze()
+    srs = hdf.apply_nan_mode(srs, mode=nan_mode)
+    stl = sml.tsa.seasonal.STL(srs, **kwargs).fit()
     fig = stl.plot()
     fig.set_size_inches(20, 16)
     plt.tight_layout()
