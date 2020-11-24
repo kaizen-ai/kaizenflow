@@ -29,7 +29,7 @@ dependencies:
   - numba
   - numpy
   - pandas >= 1.0.0
-  - pandas-datareader = 0.8.0     # PartTask344.
+  - pandas-datareader
   - pyarrow
   - pywavelets
   - scikit-learn
