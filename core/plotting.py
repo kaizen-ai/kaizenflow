@@ -9,6 +9,13 @@ import logging
 import math
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
+import core.explore as expl
+import core.finance as fin
+import core.signal_processing as sigp
+import core.statistics as stats
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
+import helpers.list as hlist
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
@@ -23,14 +30,6 @@ import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
 import statsmodels.regression.rolling as smrr
-
-import core.explore as expl
-import core.finance as fin
-import core.signal_processing as sigp
-import core.statistics as stats
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
-import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
@@ -1705,6 +1704,7 @@ def plot_drawdown(
     _maybe_add_events(ax=ax, events=events)
     if ylim == "scalable":
         ax.set_ylim(top=0)
+    # The drawdown is negative is either -1, -100 or -10000 according to units
     elif ylim == "fixed":
         ax.set_ylim(bottom=-scale_coeff, top=0)
     else:
