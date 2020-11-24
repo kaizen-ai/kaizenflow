@@ -1685,8 +1685,8 @@ def plot_drawdown(
 
     :param log_rets: log returns
     :param ylim: either "fixed", "scalable" or None. default is None corresponds
-    to "scalable". If y_lim is set to "fixed", the axes limit relies on units
-    with possible values of -1 for "ratio", -100 for "%" and -10000 for "bps"
+        to "scalable". If y_lim is set to "fixed", the axes limit relies on units
+        with possible values of -1 for "ratio", -100 for "%" and -10000 for "bps"
     :param unit: `ratio`, `%`, input series is rescaled appropriately
     :param title_suffix: suffix added to the title
     :param ax: axes
