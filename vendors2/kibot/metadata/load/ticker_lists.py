@@ -4,8 +4,8 @@ from typing import List, Tuple
 
 import pandas as pd
 
-import vendors2.kibot.metadata.config as config
-import vendors2.kibot.metadata.types as types
+import vendors2.kibot.metadata.config as vkmconfig
+import vendors2.kibot.metadata.types as vkmtypes
 
 
 class ParsingState(enum.Enum):
@@ -30,20 +30,22 @@ class TickerListsLoader:
 
     Listed:
 
-    #    Symbol    StartDate    Size(MB)    Description    Exchange    Industry    Sector
-    1    AA    4/27/2007    68    "Alcoa Corporation"    NYSE    "Aluminum"    "Basic Industries"
+    - #    Symbol    StartDate    Size(MB)    Description    Exchange    Industry    Sector
+    - 1    AA    4/27/2007    68    "Alcoa Corporation"    NYSE    "Aluminum"    "Basic Industries"
 
     Delisted:
 
-    1    XOM    12/1/1999    102    "Exxon Mobil Corporation"    NYSE    "Integrated oil Companies"    "Energy"
+    - 1    XOM    12/1/1999    102    "Exxon Mobil Corporation"    NYSE    "Integrated oil Companies"    "Energy"
     ```
     """
 
     # pylint: enable=line-too-long
 
-    def get(self, ticker_list: str, listed: bool = True) -> List[types.Ticker]:
+    def get(self, ticker_list: str, listed: bool = True) -> List[vkmtypes.Ticker]:
         s3_path = os.path.join(
-            config.S3_PREFIX, config.TICKER_LISTS_SUB_DIR, f"{ticker_list}.txt",
+            vkmconfig.S3_PREFIX,
+            vkmconfig.TICKER_LISTS_SUB_DIR,
+            f"{ticker_list}.txt",
         )
 
         lines = self._get_lines(s3_path=s3_path)
@@ -58,10 +60,10 @@ class TickerListsLoader:
 
     def _parse_lines(
         self, lines: List[str]
-    ) -> Tuple[List[types.Ticker], List[types.Ticker]]:
+    ) -> Tuple[List[vkmtypes.Ticker], List[vkmtypes.Ticker]]:
         """Get a list of listed & delisted tickers from lines."""
-        listed_tickers: List[types.Ticker] = []
-        delisted_tickers: List[types.Ticker] = []
+        listed_tickers: List[vkmtypes.Ticker] = []
+        delisted_tickers: List[vkmtypes.Ticker] = []
 
         state = ParsingState.Started
 
@@ -90,7 +92,7 @@ class TickerListsLoader:
         return listed_tickers, delisted_tickers
 
     @staticmethod
-    def _get_ticker_from_line(line: str) -> types.Ticker:
+    def _get_ticker_from_line(line: str) -> vkmtypes.Ticker:
         # pylint: disable=line-too-long
         """Get a ticker from a line.
 
@@ -104,5 +106,5 @@ class TickerListsLoader:
         args[-1] = args[-1].strip()
         # Skip index col.
         args = args[1:]
-        ret = types.Ticker(*args)
+        ret = vkmtypes.Ticker(*args)
         return ret
