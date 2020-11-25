@@ -9,6 +9,13 @@ import logging
 import math
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
+import core.explore as expl
+import core.finance as fin
+import core.signal_processing as sigp
+import core.statistics as stats
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
+import helpers.list as hlist
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
@@ -23,14 +30,6 @@ import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
 import statsmodels.api as sm
 import statsmodels.regression.rolling as smrr
-
-import core.explore as expl
-import core.finance as fin
-import core.signal_processing as sigp
-import core.statistics as stats
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
-import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
@@ -1676,6 +1675,7 @@ def plot_pnl(
 
 def plot_drawdown(
     log_rets: pd.Series,
+    ylim: Optional[str] = None,
     unit: str = "%",
     title_suffix: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
@@ -1684,11 +1684,15 @@ def plot_drawdown(
     """Plot drawdown.
 
     :param log_rets: log returns
+    :param ylim: either "fixed", "scalable" or None. default is None corresponds
+        to "scalable". If y_lim is set to "fixed", the axes limit relies on units
+        with possible values of -1 for "ratio", -100 for "%" and -10000 for "bps"
     :param unit: `ratio`, `%`, input series is rescaled appropriately
     :param title_suffix: suffix added to the title
     :param ax: axes
     :param events: list of tuples with dates and labels to point out on the plot
     """
+    ylim = ylim or "scalable"
     title_suffix = title_suffix or ""
     scale_coeff = _choose_scaling_coefficient(unit)
     drawdown = -scale_coeff * fin.compute_perc_loss_from_high_water_mark(log_rets)
@@ -1700,7 +1704,13 @@ def plot_drawdown(
         ax=ax, title=f"{title}{title_suffix}", label=label, color="b", alpha=0.3
     )
     _maybe_add_events(ax=ax, events=events)
-    ax.set_ylim(top=0)
+    if ylim == "scalable":
+        ax.set_ylim(top=0)
+    # The drawdown is negative is either -1, -100 or -10000 according to units.
+    elif ylim == "fixed":
+        ax.set_ylim(bottom=-scale_coeff, top=0)
+    else:
+        raise ValueError("Invalid bottom ylim='%s'" % ylim)
     ax.set_ylabel(unit)
     ax.legend()
 
