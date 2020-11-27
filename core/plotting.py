@@ -630,9 +630,17 @@ def plot_seasonal_decomposition(
     nan_mode: Optional[str] = None,
     kwargs: Optional[Any] = None,
 ) -> None:
-    """Plot seasonal trend decomposition of ts."""
+    """Plot seasonal trend decomposition using moving averages.
+    https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html
+
+    :param srs: input time series
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :param kwargs: kwargs for sml.tsa.seasonal.STL
+    """
     nan_mode = nan_mode or "drop"
     kwargs = kwargs or {}
+    if type(srs) == pd.DataFrame and srs.shape[1] > 1:
+        raise ValueError("Input df should be 1 dim, not %s'" % srs.shape[1])
     srs = srs.squeeze()
     srs = hdf.apply_nan_mode(srs, mode=nan_mode)
     stl = sml.tsa.seasonal.STL(srs, **kwargs).fit()
