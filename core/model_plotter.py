@@ -103,6 +103,7 @@ class ModelPlotter:
         plot_cumulative_returns_kwargs: Optional[dict] = None,
         plot_rolling_beta_kwargs: Optional[dict] = None,
         plot_rolling_annualized_sharpe_ratio_kwargs: Optional[dict] = None,
+        plot_drawdown_kwargs: Optional[dict] = None,
     ) -> None:
         """
         Plot strategy performance.
@@ -184,7 +185,11 @@ class ModelPlotter:
             events=events,
             **plot_rolling_annualized_sharpe_ratio_kwargs,
         )
-        plot.plot_drawdown(rets, ax=axs[-1], events=events)
+        plot_drawdown_kwargs = (
+            plot_drawdown_kwargs
+            or {"ylim": "scalable", "ax": axs[-1], "events": events}
+        )
+        plot.plot_drawdown(rets, **plot_drawdown_kwargs)
 
     def plot_rets_and_vol(
         self,
