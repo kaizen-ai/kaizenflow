@@ -568,21 +568,18 @@ class DataFrameModeler:
         self,
         cols: Optional[List[Any]] = None,
         num_plots: Optional[int] = None,
-        time_series_daily_study_kwargs: Optional[Dict[str, Any]] = None,
         mode: str = "ins",
+        last_n_years: Optional[int] = None,
     ) -> None:
         """
         :param num_plots: number of cols to plot the study for
         """
-        time_series_daily_study_kwargs = time_series_daily_study_kwargs or {}
         df = self._get_df(cols=cols, mode=mode)
         num_plots = num_plots or df.shape[1]
         cols_to_draw = df.columns[:num_plots]
         for col_name in cols_to_draw:
-            tsds = tss.TimeSeriesDailyStudy(
-                df[col_name], **time_series_daily_study_kwargs
-            )
-            tsds.execute()
+            tsds = tss.TimeSeriesDailyStudy(df[col_name])
+            tsds.execute(last_n_years=last_n_years)
             plt.show()
 
     def plot_histograms_and_lagged_scatterplot(

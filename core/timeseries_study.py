@@ -32,7 +32,6 @@ class _TimeSeriesAnalyzer:
         self,
         time_series: pd.Series,
         freq_name: str,
-        last_n_years: Optional[int] = None,
         data_name: Optional[str] = None,
         sharey: Optional[bool] = False,
         disabled_methods: Optional[Iterable[str]] = None,
@@ -42,7 +41,6 @@ class _TimeSeriesAnalyzer:
             conducted
         :param freq_name: the name of the data frequency to add to plot titles
             e.g., 'daily'
-        :param last_n_years: number of last years to plot in `plot_by_year`
         :param data_name: the name of the data to add to plot titles, e.g.,
             `symbol`
         :param sharey: a parameter passed into plt.subplots in `plot_by_year`
@@ -54,7 +52,6 @@ class _TimeSeriesAnalyzer:
         dbg.dassert_strictly_increasing_index(time_series.index)
         self._time_series = time_series
         self._ts_name = time_series.name
-        self._last_n_years = last_n_years
         self._data_name = data_name
         self._freq_name = freq_name
         self._sharey = sharey
@@ -82,7 +79,7 @@ class _TimeSeriesAnalyzer:
         plt.show()
         return
 
-    def plot_by_year(self) -> None:
+    def plot_by_year(self, last_n_years: Optional[int] = None) -> None:
         """Resample yearly and then plot each year on a different plot."""
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
@@ -94,8 +91,8 @@ class _TimeSeriesAnalyzer:
         yearly_resample_count = yearly_resample.count()
         years_to_plot_data_mask = yearly_resample_count > 1
         # Limit to top n years, if set.
-        if self._last_n_years:
-            years_to_plot_data_mask[: -self._last_n_years - 1] = False
+        if last_n_years:
+            years_to_plot_data_mask[:-last_n_years] = False
         num_plots = years_to_plot_data_mask.sum()
         if num_plots == 0:
             _LOG.warning("Not enough data to plot year-by-year.")
@@ -176,14 +173,14 @@ class _TimeSeriesAnalyzer:
         plt.close()
         return
 
-    def execute(self) -> None:
+    def execute(self, last_n_years: Optional[int] = None) -> None:
         self.plot_time_series()
-        self.plot_by_year()
+        self.plot_by_year(last_n_years=last_n_years)
         self.boxplot_day_of_month()
         self.boxplot_day_of_week()
 
     @staticmethod
-    def _boxplot(ts: pd.Series, groupby: str) -> None:
+    def _boxplot(ts, groupby: str) -> None:
         ts_df = pd.DataFrame(ts)
         ts_df["groupby"] = groupby
         ts_df.boxplot(by="groupby", column=ts.name)
@@ -209,19 +206,13 @@ class TimeSeriesDailyStudy(_TimeSeriesAnalyzer):
     def __init__(
         self,
         time_series: pd.Series,
-        last_n_years: Optional[int] = None,
         data_name: Optional[str] = None,
         sharey: Optional[bool] = False,
         disabled_methods: Optional[Iterable[str]] = None,
     ):
         freq_name = "daily"
         super().__init__(
-            time_series,
-            last_n_years=last_n_years,
-            freq_name=freq_name,
-            data_name=data_name,
-            sharey=sharey,
-            disabled_methods=disabled_methods,
+            time_series, freq_name, data_name, sharey, disabled_methods
         )
 
 
