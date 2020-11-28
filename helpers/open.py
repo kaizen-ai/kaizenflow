@@ -39,7 +39,7 @@ def _cmd_open_pdf(file_name: str, os_name: str) -> str:
         "if (count of theDocs) > 0 then revert theDocs\n"
         "open theFile\n"
         "end tell\n"
-        "EOF" % file_name
+        "EOF\n" % file_name
     }
     dbg.dassert_in(os_name, os_full_cmds)
     return os_full_cmds[os_name]
