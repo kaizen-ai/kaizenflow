@@ -92,7 +92,7 @@ class _TimeSeriesAnalyzer:
         years_to_plot_data_mask = yearly_resample_count > 1
         # Limit to top n years, if set.
         if last_n_years:
-            years_to_plot_data_mask[: -self._last_n_years - 1] = False
+            years_to_plot_data_mask[: -last_n_years - 1] = False
         num_plots = years_to_plot_data_mask.sum()
         if num_plots == 0:
             _LOG.warning("Not enough data to plot year-by-year.")
