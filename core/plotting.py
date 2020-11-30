@@ -628,7 +628,7 @@ def plot_autocorrelation(
 def plot_seasonal_decomposition(
     srs: Union[pd.Series, pd.DataFrame],
     nan_mode: Optional[str] = None,
-    kwargs: Optional[Any] = None,
+    kwargs: Optional[dict] = None,
 ) -> None:
     """Plot seasonal trend decomposition using moving averages.
     https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html
