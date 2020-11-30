@@ -7,17 +7,16 @@ import core.model_plotter as modplot
 import logging
 from typing import Any, List, Optional
 
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import seaborn as sns
-
 import core.finance as fin
 import core.model_evaluator as modeval
 import core.plotting as plot
 import core.statistics as stats
 import helpers.dbg as dbg
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
 
 _LOG = logging.getLogger(__name__)
 
@@ -27,7 +26,10 @@ class ModelPlotter:
     Wraps a ModelEvaluator with plotting functionality.
     """
 
-    def __init__(self, model_evaluator: modeval.ModelEvaluator,) -> None:
+    def __init__(
+        self,
+        model_evaluator: modeval.ModelEvaluator,
+    ) -> None:
         """
         Initialize by supplying an initialized `ModelEvaluator`.
 
@@ -185,11 +187,10 @@ class ModelPlotter:
             events=events,
             **plot_rolling_annualized_sharpe_ratio_kwargs,
         )
-        plot_drawdown_kwargs = (
-            plot_drawdown_kwargs
-            or {"ylim": "scalable", "ax": axs[-1], "events": events}
+        plot_drawdown_kwargs = plot_drawdown_kwargs or {}
+        plot.plot_drawdown(
+            rets, ax=axs[-1], events=events, **plot_drawdown_kwargs
         )
-        plot.plot_drawdown(rets, **plot_drawdown_kwargs)
 
     def plot_rets_and_vol(
         self,
