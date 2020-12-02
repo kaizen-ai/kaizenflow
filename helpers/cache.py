@@ -14,7 +14,7 @@ import joblib
 import joblib.func_inspect as jfuncinspect
 import joblib.memory as jmemory
 
-import helpers.dbg as hdbg
+import helpers.dbg as dbg
 import helpers.git as hgit
 import helpers.io_ as hio
 
@@ -54,7 +54,7 @@ def _check_valid_cache_type(cache_type: str) -> None:
 
     :param cache_type: type of a cache
     """
-    hdbg.dassert_in(cache_type, ("mem", "disk"))
+    dbg.dassert_in(cache_type, ("mem", "disk"))
 
 
 def set_caching(val: bool) -> None:
@@ -255,14 +255,14 @@ class Cached:
         """
         if cache_type is None:
             if self._disk_cache_directory is None:
-                _LOG.warning(
+                dbg.dfatal(
                     "Cannot clear global disk cache, use clear_global_cache function instead."
                 )
             else:
                 disk_cache = self._get_cache("disk")
                 disk_cache.clear()
             if self._mem_cache_directory is None:
-                _LOG.warning(
+                dbg.dfatal(
                     "Cannot clear global mem cache, use clear_global_cache function instead."
                 )
             else:
@@ -274,9 +274,9 @@ class Cached:
             else:
                 cache_path = self._disk_cache_directory
             if cache_path is None:
-                _LOG.warning(
-                    "Cannot destroy global %s cache, use destroy_global_cache function instead.",
-                    cache_type,
+                dbg.dfatal(
+                    "Cannot destroy global %s cache, use destroy_global_cache function instead."
+                    % cache_type
                 )
             else:
                 cache_backend = self._get_cache(cache_type)
@@ -294,20 +294,19 @@ class Cached:
         else:
             cache_path = self._disk_cache_directory
         if cache_path is None:
-            _LOG.warning(
-                "Cannot destroy global %s cache, use destroy_global_cache function instead.",
-                cache_type,
+            dbg.dfatal(
+                "Cannot destroy global %s cache, use destroy_global_cache function instead."
+                % cache_type
             )
         else:
-            _LOG.warning("Destroying %s cache '%s'", cache_type, cache_path)
+            dbg.dfatal("Destroying %s cache '%s'" % (cache_type, cache_path))
             hio.delete_dir(cache_path)
 
     def set_cache_directory(
         self, cache_type: str, cache_path: Optional[str]
     ) -> None:
-        """Set a cache directory for a specific cache type. If None is passed.
-
-        -- use global cache.
+        """Set a cache directory for a specific cache type. If None is passed
+        then use global cache.
 
         :param cache_type: type of a cache
         :param cache_path: cache directory or None for global cache
@@ -392,7 +391,7 @@ class Cached:
         elif cache_type == "disk":
             cache_backend = self._disk_cached_func
         else:
-            hdbg.dfatal("Unknown cache type: %s", cache_type)
+            dbg.dfatal("Unknown cache type: %s", cache_type)
         return cache_backend
 
     def _has_cached_version(

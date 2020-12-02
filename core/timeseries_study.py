@@ -79,7 +79,7 @@ class _TimeSeriesAnalyzer:
         plt.show()
         return
 
-    def plot_by_year(self) -> None:
+    def plot_by_year(self, last_n_years: Optional[int] = None) -> None:
         """Resample yearly and then plot each year on a different plot."""
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
@@ -89,8 +89,11 @@ class _TimeSeriesAnalyzer:
         yearly_resample = time_series.resample("y")
         # Include only the years with enough data to plot.
         yearly_resample_count = yearly_resample.count()
-        enough_data_mask = yearly_resample_count > 1
-        num_plots = enough_data_mask.sum()
+        years_to_plot_data_mask = yearly_resample_count > 1
+        # Limit to top n years, if set.
+        if last_n_years:
+            years_to_plot_data_mask[: -last_n_years - 1] = False
+        num_plots = years_to_plot_data_mask.sum()
         if num_plots == 0:
             _LOG.warning("Not enough data to plot year-by-year.")
             return
@@ -102,15 +105,17 @@ class _TimeSeriesAnalyzer:
             sharey=self._sharey,
         )
         # Plot each year in a subplot.
-        if (~enough_data_mask).sum() > 0:
-            years_with_not_enough_data = enough_data_mask[
-                ~enough_data_mask
+        if (~years_to_plot_data_mask).sum() > 0:
+            years_with_not_enough_data = years_to_plot_data_mask[
+                ~years_to_plot_data_mask
             ].index.year.tolist()
             _LOG.info(
                 "Skipping years %s: not enough data to plot",
                 years_with_not_enough_data,
             )
-        years_with_enough_data = yearly_resample_count[enough_data_mask].index
+        years_with_enough_data = yearly_resample_count[
+            years_to_plot_data_mask
+        ].index
         for ax, group_by_timestamp in zip(axis, years_with_enough_data):
             ts = yearly_resample.get_group(group_by_timestamp)
             ts.plot(ax=ax, title=group_by_timestamp.year)
@@ -168,9 +173,9 @@ class _TimeSeriesAnalyzer:
         plt.close()
         return
 
-    def execute(self) -> None:
+    def execute(self, last_n_years: Optional[int] = None) -> None:
         self.plot_time_series()
-        self.plot_by_year()
+        self.plot_by_year(last_n_years=last_n_years)
         self.boxplot_day_of_month()
         self.boxplot_day_of_week()
 

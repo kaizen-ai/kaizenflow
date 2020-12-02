@@ -568,6 +568,7 @@ class DataFrameModeler:
         cols: Optional[List[Any]] = None,
         num_plots: Optional[int] = None,
         mode: str = "ins",
+        last_n_years: Optional[int] = None,
     ) -> None:
         """
         :param num_plots: number of cols to plot the study for
@@ -577,7 +578,7 @@ class DataFrameModeler:
         cols_to_draw = df.columns[:num_plots]
         for col_name in cols_to_draw:
             tsds = tss.TimeSeriesDailyStudy(df[col_name])
-            tsds.execute()
+            tsds.execute(last_n_years=last_n_years)
             plt.show()
 
     def plot_seasonal_decomposition(
