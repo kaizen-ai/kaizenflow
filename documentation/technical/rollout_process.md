@@ -41,6 +41,7 @@
 
 # An example of roll-out email
 
+```
 Hello team,
 
 ## Intended audience
@@ -88,5 +89,5 @@ won't work from now on, we need to replace them with the new ones
 http://research.p1:8077 replace them with http://notebook-keeper.p1 .
 
 ## Reference documentation
-
 //amp/documentation/general/publish_notebook.md
+```
