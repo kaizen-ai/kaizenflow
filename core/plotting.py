@@ -631,8 +631,8 @@ def plot_seasonal_decomposition(
     figsize: Optional[Tuple[int, int]] = None,
     kwargs: Optional[dict] = None,
 ) -> None:
-    """Plot seasonal trend decomposition using moving averages.
-    https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html
+    """Plot seasonal trend decomposition using LOESS.
+    https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.STL.html
 
     :param srs: input time series
     :param nan_mode: argument for hdf.apply_nan_mode()

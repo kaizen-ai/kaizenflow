@@ -585,15 +585,17 @@ class DataFrameModeler:
         self,
         cols: Optional[List[Any]] = None,
         nan_mode: Optional[str] = None,
-        seasonal_decomposition_kwargs: Optional[Dict[str, Any]] = None,
+        plot_seasonal_decomposition_kwargs: Optional[Dict[str, Any]] = None,
         mode: str = "ins",
     ) -> None:
         nan_mode = nan_mode or "drop"
-        seasonal_decomposition_kwargs = seasonal_decomposition_kwargs or {}
+        plot_seasonal_decomposition_kwargs = (
+            plot_seasonal_decomposition_kwargs or {}
+        )
         df = self._get_df(cols=cols, mode=mode)
         for i in df.columns.values:
             plot.plot_seasonal_decomposition(
-                df[i], nan_mode=nan_mode, **seasonal_decomposition_kwargs
+                df[i], nan_mode=nan_mode, **plot_seasonal_decomposition_kwargs
             )
 
     def plot_histograms_and_lagged_scatterplot(
