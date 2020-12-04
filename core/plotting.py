@@ -28,6 +28,7 @@ import seaborn as sns
 import sklearn.decomposition as skldec
 import sklearn.metrics as sklmet
 import sklearn.utils.validation as skluv
+import statsmodels as sml
 import statsmodels.api as sm
 import statsmodels.regression.rolling as smrr
 
@@ -622,6 +623,33 @@ def plot_autocorrelation(
             title=pacf_title,
             **kwargs,
         )
+
+
+def plot_seasonal_decomposition(
+    srs: Union[pd.Series, pd.DataFrame],
+    nan_mode: Optional[str] = None,
+    figsize: Optional[Tuple[int, int]] = None,
+    kwargs: Optional[dict] = None,
+) -> None:
+    """Plot seasonal trend decomposition using LOESS.
+
+    https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.STL.html
+
+    :param srs: input time series
+    :param nan_mode: argument for hdf.apply_nan_mode()
+    :param kwargs: kwargs for sml.tsa.seasonal.STL
+    """
+    nan_mode = nan_mode or "drop"
+    kwargs = kwargs or {}
+    figsize = figsize or (20, 16)
+    if type(srs) == pd.DataFrame and srs.shape[1] > 1:
+        raise ValueError("Input df should be 1 dim, not %s'" % srs.shape[1])
+    srs = srs.squeeze()
+    srs = hdf.apply_nan_mode(srs, mode=nan_mode)
+    stl = sml.tsa.seasonal.STL(srs, **kwargs).fit()
+    fig = stl.plot()
+    fig.set_size_inches(figsize[0], figsize[1])
+    plt.tight_layout()
 
 
 def plot_spectrum(

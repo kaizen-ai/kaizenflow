@@ -11,12 +11,6 @@ import datetime
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from tqdm.autonotebook import tqdm
-
 import core.dataflow as dtf
 import core.finance as fin
 import core.plotting as plot
@@ -24,6 +18,11 @@ import core.signal_processing as sigp
 import core.statistics as stats
 import core.timeseries_study as tss
 import helpers.dbg as dbg
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from tqdm.autonotebook import tqdm
 
 _LOG = logging.getLogger(__name__)
 
@@ -581,6 +580,23 @@ class DataFrameModeler:
             tsds = tss.TimeSeriesDailyStudy(df[col_name])
             tsds.execute(last_n_years=last_n_years)
             plt.show()
+
+    def plot_seasonal_decomposition(
+        self,
+        cols: Optional[List[Any]] = None,
+        nan_mode: Optional[str] = None,
+        plot_seasonal_decomposition_kwargs: Optional[Dict[str, Any]] = None,
+        mode: str = "ins",
+    ) -> None:
+        nan_mode = nan_mode or "drop"
+        plot_seasonal_decomposition_kwargs = (
+            plot_seasonal_decomposition_kwargs or {}
+        )
+        df = self._get_df(cols=cols, mode=mode)
+        for i in df.columns.values:
+            plot.plot_seasonal_decomposition(
+                df[i], nan_mode=nan_mode, **plot_seasonal_decomposition_kwargs
+            )
 
     def plot_histograms_and_lagged_scatterplot(
         self,
