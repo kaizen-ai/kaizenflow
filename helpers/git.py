@@ -518,3 +518,9 @@ def git_stash_apply(mode: str, log_level: int = logging.DEBUG) -> None:
     else:
         raise ValueError("mode='%s'" % mode)
     si.system(cmd, suppress_output=False, log_level=log_level)
+
+
+def git_add_update(log_level: int = logging.DEBUG) -> None:
+    _LOG.debug("# Adding all changed files to staging ...")
+    cmd = "git add -u"
+    si.system(cmd, suppress_output=False, log_level=log_level)
