@@ -632,6 +632,7 @@ def plot_seasonal_decomposition(
     kwargs: Optional[dict] = None,
 ) -> None:
     """Plot seasonal trend decomposition using LOESS.
+
     https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.STL.html
 
     :param srs: input time series
