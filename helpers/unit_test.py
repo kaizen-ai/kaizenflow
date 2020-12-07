@@ -589,9 +589,14 @@ class TestCase(unittest.TestCase):
 # #############################################################################
 
 
-def run_notebook(file_name: str, scratch_dir: str) -> None:
+def run_notebook(
+    file_name: str, scratch_dir: str, config_builder: Optional[str] = None
+) -> None:
     """Run jupyter notebook `file_name` using `scratch_dir` as temporary dir
     storing the output.
+
+    If `config_builder` is provided, execute notebook for the first config from
+    it.
 
     Assert if the notebook doesn't complete successfully.
     """
@@ -600,6 +605,10 @@ def run_notebook(file_name: str, scratch_dir: str) -> None:
     dbg.dassert_exists(scratch_dir)
     # Build command line.
     cmd = []
+    if config_builder is not None:
+        cmd.append(f'export __CONFIG_BUILDER__="{config_builder}"; ')
+        cmd.append('export __CONFIG_IDX__="0"; ')
+        cmd.append(f'export __CONFIG_DST_DIR__="{scratch_dir}" ;')
     cmd.append("cd %s && " % scratch_dir)
     cmd.append("jupyter nbconvert %s" % file_name)
     cmd.append("--execute")
