@@ -44,9 +44,6 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Pull image
-        run: make docker_pull
-
       - name: Cleanup
         run: sudo chmod 777 -R .
 
@@ -55,6 +52,9 @@ jobs:
         with:
           submodules: true
           ssh-key: ${{ secrets.GH_ACTION_SSH_PRIVATE_KEY }}
+
+      - name: Pull image
+        run: make docker_pull
 
       - name: Run linter for the branch
         run: make lint_branch
