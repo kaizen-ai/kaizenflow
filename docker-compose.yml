@@ -7,7 +7,7 @@ services:
 
   tests:
     # For local runs in user space.
-    image: 083233266530.dkr.ecr.us-east-2.amazonaws.com/particle_env:latest
+    image: ${IMAGE}
     volumes:
       - .:/amp
       - ~/.aws:/root/.aws
