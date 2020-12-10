@@ -45,9 +45,6 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Pull image
-        run: docker pull 083233266530.dkr.ecr.us-east-2.amazonaws.com/particle_env:latest
-
       - name: Cleanup
         run: sudo chmod 777 -R .
 
@@ -56,6 +53,9 @@ jobs:
         with:
           submodules: true
           ssh-key: ${{ secrets.GH_ACTION_SSH_PRIVATE_KEY }}
+
+      - name: Pull image
+        run: make docker_pull
 
       - name: Run fast tests
         env:
