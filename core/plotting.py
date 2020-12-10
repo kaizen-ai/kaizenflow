@@ -596,7 +596,7 @@ def plot_autocorrelation(
     if isinstance(signal, pd.Series):
         signal = signal.to_frame()
     if axes is None:
-        _, axes = get_multiple_plots(signal.shape[1], num_cols=2, y_scale=5)
+        _, axes = get_multiple_plots(signal.shape[1] * 2, num_cols=2, y_scale=5)
     axis_pairs = zip(axes[::2], axes[1::2])
     title_prefix = title_prefix or ""
     # Replacing inf with nan to ensure non-empty plots generated.
@@ -690,7 +690,7 @@ def plot_spectrum(
     # Replacing inf with nan to ensure non-empty plots generated.
     signal = stats.replace_infs_with_nans(signal)
     if axes is None:
-        _, axes = get_multiple_plots(signal.shape[1], num_cols=2, y_scale=5)
+        _, axes = get_multiple_plots(signal.shape[1] * 2, num_cols=2, y_scale=5)
     axis_pairs = zip(axes[::2], axes[1::2])
     for col, axis_pair in zip(signal.columns, axis_pairs):
         if nan_mode == "conservative":
