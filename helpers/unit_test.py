@@ -595,10 +595,15 @@ def run_notebook(
     """Run jupyter notebook `file_name` using `scratch_dir` as temporary dir
     storing the output.
 
-    If `config_builder` is provided, execute notebook for the first config from
-    it.
+    `core.config_builders.get_config_from_env()` supports passing in a config
+    only through a path to a config builder function that returns a list of
+    configs, and a config index from that list.
 
     Assert if the notebook doesn't complete successfully.
+
+    :param config_builder: path to config builder function that returns a
+        config wrapped in a list. If there are multiple configs in that list,
+        execute the notebook for the first one
     """
     file_name = os.path.abspath(file_name)
     dbg.dassert_exists(file_name)
@@ -606,6 +611,9 @@ def run_notebook(
     # Build command line.
     cmd = []
     if config_builder is not None:
+        _LOG.warning(
+            "Running first config from config_builder='%s'", config_builder
+        )
         cmd.append(f'export __CONFIG_BUILDER__="{config_builder}"; ')
         cmd.append('export __CONFIG_IDX__="0"; ')
         cmd.append(f'export __CONFIG_DST_DIR__="{scratch_dir}" ;')
