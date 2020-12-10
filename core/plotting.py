@@ -590,27 +590,23 @@ def plot_autocorrelation(
 
     https://www.statsmodels.org/stable/_modules/statsmodels/graphics/tsaplots.html#plot_acf
     https://www.statsmodels.org/stable/_modules/statsmodels/tsa/stattools.html#acf
+
+    :param axes: flat list of axes or `None`
     """
-    if axes is None:
-        axes = [[None, None]]
     if isinstance(signal, pd.Series):
         signal = signal.to_frame()
-    nrows = len(signal.columns)
-    if axes == [[None, None]]:
-        _, axes = plt.subplots(nrows=nrows, ncols=2, figsize=(20, 5 * nrows))
-        if axes.size == 2:  # type: ignore
-            axes = [axes]
-    if title_prefix is None:
-        title_prefix = ""
+    if axes is None:
+        _, axes = get_multiple_plots(signal.shape[1], num_cols=2, y_scale=5)
+    axis_pairs = zip(axes[::2], axes[1::2])
+    title_prefix = title_prefix or ""
     # Replacing inf with nan to ensure non-empty plots generated.
     signal = stats.replace_infs_with_nans(signal)
-    for idx, col in enumerate(signal.columns):
+    for col, axis_pair in zip(signal.columns, axis_pairs):
         if nan_mode == "conservative":
             data = signal[col].fillna(0).dropna()
         else:
             raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
-        axes = cast(List, axes)
-        ax1 = axes[idx][0]
+        ax1 = axis_pair[0]
         # Partial correlation can be computed for lags up to 50% of the sample
         # size.
         lags_curr = min(lags, data.size // 2 - 1)
@@ -625,7 +621,7 @@ def plot_autocorrelation(
             title=acf_title,
             **kwargs,
         )
-        ax2 = axes[idx][1]
+        ax2 = axis_pair[1]
         pacf_title = title_prefix + f"{col} partial autocorrelation"
         _ = sm.graphics.tsa.plot_pacf(
             data,
@@ -684,34 +680,32 @@ def plot_spectrum(
       - From the scipy documentation of spectrogram:
         "Spectrograms can be used as a way of visualizing the change of a
          nonstationary signal's frequency content over time."
+
+    :param axes: flat list of axes or `None`
     """
-    if axes is None:
-        axes = [[None, None]]
     if isinstance(signal, pd.Series):
         signal = signal.to_frame()
     if title_prefix is None:
         title_prefix = ""
     # Replacing inf with nan to ensure non-empty plots generated.
     signal = stats.replace_infs_with_nans(signal)
-    nrows = len(signal.columns)
-    if axes == [[None, None]]:
-        _, axes = plt.subplots(nrows=nrows, ncols=2, figsize=(20, 5 * nrows))
-        if axes.size == 2:  # type: ignore
-            axes = [axes]
-    for idx, col in enumerate(signal.columns):
+    if axes is None:
+        _, axes = get_multiple_plots(signal.shape[1], num_cols=2, y_scale=5)
+    axis_pairs = zip(axes[::2], axes[1::2])
+    for col, axis_pair in zip(signal.columns, axis_pairs):
         if nan_mode == "conservative":
             data = signal[col].fillna(0).dropna()
         else:
             raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
         axes = cast(List, axes)
-        ax1 = axes[idx][0]
+        ax1 = axis_pair[0]
         f_pxx, Pxx = sp.signal.welch(data)
         ax1.semilogy(f_pxx, Pxx)
         ax1.set_title(title_prefix + f"{col} power spectral density")
         # TODO(*): Maybe put labels on a shared axis.
         # ax1.set_xlabel("Frequency")
         # ax1.set_ylabel("Power")
-        ax2 = axes[idx][1]
+        ax2 = axis_pair[1]
         f_sxx, t, Sxx = sp.signal.spectrogram(data)
         ax2.pcolormesh(t, f_sxx, Sxx)
         ax2.set_title(title_prefix + f"{col} spectrogram")
@@ -789,6 +783,8 @@ def plot_histograms_and_lagged_scatterplot(
     scatter-plot of time series observations versus their lagged values (x_t
     versus x_{t - lag}). If it is stationary the scatter-plot with its lagged
     values would resemble a circular cloud.
+
+    :param axes: flat list of axes or `None`
     """
     dbg.dassert(isinstance(srs, pd.Series), "Input must be Series")
     dbg.dassert_monotonic_index(srs, "Index must be monotonic")
@@ -803,27 +799,26 @@ def plot_histograms_and_lagged_scatterplot(
     srs_first_part = srs[:oos_start]
     srs_second_part = srs[oos_start:]
     # Plot histograms.
-    if axes is None or axes == [[None, None]]:
-        fig, axes = plt.subplots(nrows=2, ncols=2, figsize=figsize)
+    if axes is None:
+        _, axes = get_multiple_plots(3, 2, y_scale=figsize[1] / 2)
         plt.suptitle(title or srs.name)
-        fig.delaxes(axes[1][1])
     sns.histplot(
-        srs_first_part, ax=axes[0][0], kde=True, stat="probability", **hist_kwargs
+        srs_first_part, ax=axes[0], kde=True, stat="probability", **hist_kwargs
     )
-    axes[0][0].set(xlabel=None, ylabel=None, title="Sample distribution split 1")
+    axes[0].set(xlabel=None, ylabel=None, title="Sample distribution split 1")
     sns.histplot(
         srs_second_part,
-        ax=axes[0][1],
+        ax=axes[1],
         kde=True,
         stat="probability",
         **hist_kwargs,
     )
-    axes[0][1].set(xlabel=None, ylabel=None, title="Sample distribution split 2")
+    axes[1].set(xlabel=None, ylabel=None, title="Sample distribution split 2")
     # Plot scatter plot.
-    axes[1][0].scatter(srs, srs.shift(lag), **scatter_kwargs)
-    axes[1][0].set(xlabel="Values", ylabel="Values with lag={}".format(lag))
-    axes[1][0].axis("equal")
-    axes[1][0].set_title("Scatter-plot with lag={}".format(lag))
+    axes[2].scatter(srs, srs.shift(lag), **scatter_kwargs)
+    axes[2].set(xlabel="Values", ylabel="Values with lag={}".format(lag))
+    axes[2].axis("equal")
+    axes[2].set_title("Scatter-plot with lag={}".format(lag))
 
 
 # #############################################################################
