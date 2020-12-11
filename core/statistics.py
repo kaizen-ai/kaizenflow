@@ -1597,11 +1597,17 @@ def summarize_time_index_info(
     # Compute input time span as a number of `freq` units in
     # `clear_index`.
     if not clear_srs.empty:
-        clear_index_time_span = len(srs[clear_index[0] : clear_index[-1]])
+        if freq is None:
+            clear_index_time_span = (clear_index[-1] - clear_index[0]).days
+            sampling_points_per_year = hdf.compute_points_per_year_for_given_freq(
+            'D'
+            )
+        else:
+            clear_index_time_span = len(srs[clear_index[0] : clear_index[-1]])
     else:
         clear_index_time_span = 0
     result["time_span_in_years"] = (
-        clear_index_time_span / sampling_points_per_year
+            clear_index_time_span / sampling_points_per_year
     )
     result.index = prefix + result.index
     return result
