@@ -45,9 +45,6 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Pull image
-        run: docker pull 083233266530.dkr.ecr.us-east-2.amazonaws.com/particle_env:latest
-
       - name: Cleanup
         run: sudo chmod 777 -R .
 
@@ -57,12 +54,14 @@ jobs:
           submodules: true
           ssh-key: ${{ secrets.GH_ACTION_SSH_PRIVATE_KEY }}
 
+      - name: Pull image
+        run: make docker_pull
+
       - name: Run fast tests
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-        run: docker-compose run --rm fast_tests_gh_action
-
+        run: make docker_fast_gh_actions
 
       - name: Post status if was triggered manually
         if: ${{ always() && github.event_name == 'workflow_dispatch' }}
