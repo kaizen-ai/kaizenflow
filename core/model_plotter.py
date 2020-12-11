@@ -7,16 +7,17 @@ import core.model_plotter as modplot
 import logging
 from typing import Any, List, Optional
 
-import core.finance as fin
-import core.model_evaluator as modeval
-import core.plotting as plot
-import core.statistics as stats
-import helpers.dbg as dbg
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+
+import core.finance as fin
+import core.model_evaluator as modeval
+import core.plotting as plot
+import core.statistics as stats
+import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -86,12 +87,12 @@ class ModelPlotter:
         # Plot ACF and PACF.
         plot.plot_autocorrelation(
             rets,
-            axes=[[fig.add_subplot(gs[4, 0]), fig.add_subplot(gs[4, -1])]],
+            axes=[fig.add_subplot(gs[4, 0]), fig.add_subplot(gs[4, -1])],
             fft=True,
         )
         # Plot power spectral density and spectrogram.
         plot.plot_spectrum(
-            rets, axes=[[fig.add_subplot(gs[5, 0]), fig.add_subplot(gs[5, -1])]]
+            rets, axes=[fig.add_subplot(gs[5, 0]), fig.add_subplot(gs[5, -1])]
         )
 
     def plot_performance(
