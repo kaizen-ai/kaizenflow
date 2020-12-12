@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from tqdm.autonotebook import tqdm
 
-import core.data_adapters as adpt
+import core.data_adapters as cdataa
 import helpers.dbg as dbg
 import helpers.list as hlist
 
@@ -16,7 +16,7 @@ if True:
     import gluonts
     import gluonts.evaluation.backtest
 
-    import gluonts.model.forecast as gmf  # isort: skip # noqa: F401 # pylint: disable=unused-import
+    import gluonts.model.forecast as gmfore  # isort: skip # noqa: F401 # pylint: disable=unused-import
 
     def predict(
         predictor: gluonts.model.predictor.Predictor,
@@ -26,7 +26,8 @@ if True:
         num_samples: int,
         x_vars: Optional[List[str]] = None,
     ) -> gluonts.model.forecast.SampleForecast:
-        """Predict next values using trained predictor.
+        """
+        Predict next values using trained predictor.
 
         It is assumed that x_vars and y_vars are both indexed by knowledge times.
 
@@ -54,7 +55,7 @@ if True:
             y_truncate = prediction_length
         else:
             y_truncate = None
-        data = adpt.transform_to_gluon(
+        data = cdataa.transform_to_gluon(
             df,
             x_vars,
             y_vars,
@@ -78,7 +79,8 @@ if True:
         num_samples: int,
         x_vars: Optional[List[str]] = None,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """Generate forward predictions using trained predictor.
+        """
+        Generate forward predictions using trained predictor.
 
         For each time step, generate `num_samples` predictions for each of
         `prediction_length` steps, take the mean across samples.
