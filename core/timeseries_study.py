@@ -1,6 +1,7 @@
-"""Import as:
+"""
+Import as:
 
-import core.timeseries_study as tss
+import core.timeseries_study as ctimes
 """
 
 import logging
@@ -10,15 +11,16 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from tqdm.auto import tqdm
 
-import core.plotting as plot
+import core.plotting as cplott
 import helpers.dbg as dbg
-import helpers.introspection as intr
+import helpers.introspection as hintro
 
 _LOG = logging.getLogger(__name__)
 
 
 class _TimeSeriesAnalyzer:
-    """Perform basic study of time series, such as:
+    """
+    Perform basic study of time series, such as:
 
     - analysis at different time frequencies by resampling
     - plot time series for column
@@ -58,8 +60,10 @@ class _TimeSeriesAnalyzer:
         self._disabled_methods = disabled_methods or []
 
     def plot_time_series(self) -> None:
-        """Plot timeseries on its original time scale."""
-        func_name = intr.get_function_name()
+        """
+        Plot timeseries on its original time scale.
+        """
+        func_name = hintro.get_function_name()
         _LOG.debug(func_name)
         if func_name in self._disabled_methods:
             _LOG.debug("Skipping '%s' as per user request", func_name)
@@ -80,25 +84,27 @@ class _TimeSeriesAnalyzer:
         return
 
     def plot_by_year(self, last_n_years: Optional[int] = None) -> None:
-        """Resample yearly and then plot each year on a different plot."""
-        func_name = intr.get_function_name()
+        """
+        Resample yearly and then plot each year on a different cplott.
+        """
+        func_name = hintro.get_function_name()
         if self._need_to_skip(func_name):
             return
         # Split by year.
         time_series = self._time_series.dropna()
         yearly_resample = time_series.resample("y")
-        # Include only the years with enough data to plot.
+        # Include only the years with enough data to cplott.
         yearly_resample_count = yearly_resample.count()
         years_to_plot_data_mask = yearly_resample_count > 1
         # Limit to top n years, if set.
         if last_n_years:
-            years_to_plot_data_mask[: -last_n_years - 1] = False
+            years_to_plot_data_mask[: -1 * last_n_years - 1] = False
         num_plots = years_to_plot_data_mask.sum()
         if num_plots == 0:
             _LOG.warning("Not enough data to plot year-by-year.")
             return
         # Create as many subplots as years.
-        _, axis = plot.get_multiple_plots(
+        _, axis = cplott.get_multiple_plots(
             num_plots,
             num_cols=1,
             y_scale=5,
@@ -138,8 +144,10 @@ class _TimeSeriesAnalyzer:
     #  different timescales instead of doing the mean in each step
     #  (see https://en.wikipedia.org/wiki/Seasonality#Detecting_seasonality)
     def boxplot_day_of_month(self) -> None:
-        """Plot the mean value of the timeseries for each day."""
-        func_name = intr.get_function_name()
+        """
+        Plot the mean value of the timeseries for each day.
+        """
+        func_name = hintro.get_function_name()
         if self._need_to_skip(func_name):
             return
         #
@@ -156,8 +164,10 @@ class _TimeSeriesAnalyzer:
         return
 
     def boxplot_day_of_week(self) -> None:
-        """Plot the mean value of the timeseries for year."""
-        func_name = intr.get_function_name()
+        """
+        Plot the mean value of the timeseries for year.
+        """
+        func_name = hintro.get_function_name()
         if self._need_to_skip(func_name):
             return
         #
@@ -218,7 +228,7 @@ class TimeSeriesDailyStudy(_TimeSeriesAnalyzer):
 
 class TimeSeriesMinutelyStudy(_TimeSeriesAnalyzer):
     def boxplot_minutely_hour(self) -> None:
-        func_name = intr.get_function_name()
+        func_name = hintro.get_function_name()
         if self._need_to_skip(func_name):
             return
         #
@@ -228,8 +238,8 @@ class TimeSeriesMinutelyStudy(_TimeSeriesAnalyzer):
         plt.show()
         return
 
-    def execute(self) -> None:
-        super().execute()
+    def execute(self, last_n_years: Optional[int] = None) -> None:
+        super().execute(last_n_years=last_n_years)
         self.boxplot_minutely_hour()
 
 
@@ -243,7 +253,8 @@ def map_dict_to_dataframe(
     add_prefix: bool = True,
     progress_bar: bool = True,
 ) -> pd.DataFrame:
-    """Apply and combine results of specified functions on a dict of series.
+    """
+    Apply and combine results of specified functions on a dict of series.
 
     :param dict_: dict of series to apply functions to.
     :param functions: dict with functions prefixes in keys and functions

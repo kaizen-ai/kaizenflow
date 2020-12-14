@@ -1,6 +1,7 @@
-"""Import as:
+"""
+Import as:
 
-import core.explore as expl
+import core.explore as cexplo
 
 Utility functions for Jupyter notebook to:
 - format data
@@ -14,10 +15,19 @@ more complex pipelines. The output is reported through logging.
 import datetime
 import logging
 import math
-from typing import (Any, Callable, Collection, Dict, List, Optional, Tuple,
-                    Union, cast)
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
-import matplotlib as mpl
+import matplotlib as matplo
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -25,12 +35,12 @@ import seaborn as sns
 import sklearn
 import statsmodels
 import statsmodels.api
-import tqdm.autonotebook as tqdm
+import tqdm.autonotebook as tauton
 
-import core.plotting as plot
+import core.plotting as cplott
 import helpers.dbg as dbg
 import helpers.list as hlist
-import helpers.printing as pri
+import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -63,8 +73,9 @@ def cast_to_series(obj: Union[pd.Series, pd.DataFrame]) -> pd.Series:
 
 # TODO(gp): Need to be tested.
 def adapt_to_series(f: Callable) -> Callable:
-    """Decorate a function working on data frames in order to work on
-    series."""
+    """
+    Decorate a function working on data frames in order to work on series.
+    """
 
     def wrapper(
         obj: Union[pd.Series, pd.DataFrame], *args: Any, **kwargs: Any
@@ -104,8 +115,9 @@ def drop_axis_with_all_nans(
     drop_infs: bool = False,
     report_stats: bool = False,
 ) -> pd.DataFrame:
-    """Remove columns and rows completely empty. The operation is not in place
-    and the resulting df is returned.
+    """
+    Remove columns and rows completely empty. The operation is not in place and
+    the resulting df is returned.
 
     Assume that the index is timestamps.
 
@@ -124,13 +136,13 @@ def drop_axis_with_all_nans(
             # Report results.
             cols_after = df.columns[:]
             removed_cols = set(cols_before).difference(set(cols_after))
-            pct_removed = pri.perc(
+            pct_removed = hprint.perc(
                 len(cols_before) - len(cols_after), len(cols_after)
             )
             _LOG.info(
                 "removed cols with all nans: %s %s",
                 pct_removed,
-                pri.list_to_str(removed_cols),
+                hprint.list_to_str(removed_cols),
             )
     if drop_rows:
         # Remove rows with all nans, if any.
@@ -147,7 +159,7 @@ def drop_axis_with_all_nans(
                 # TODO(gp): Report as intervals of dates.
                 min_ts = min(removed_rows)
                 max_ts = max(removed_rows)
-            pct_removed = pri.perc(
+            pct_removed = hprint.perc(
                 len(rows_before) - len(rows_after), len(rows_after)
             )
             _LOG.info(
@@ -166,8 +178,9 @@ def drop_na(
     *args: Any,
     **kwargs: Any,
 ) -> pd.DataFrame:
-    """Wrapper around pd.dropna() reporting information about the removed
-    rows."""
+    """
+    Wrapper around pd.dropna() reporting information about the removed rows.
+    """
     dbg.dassert_isinstance(df, pd.DataFrame)
     num_rows_before = df.shape[0]
     if drop_infs:
@@ -175,7 +188,9 @@ def drop_na(
     df = df.dropna(*args, **kwargs)
     if report_stats:
         num_rows_after = df.shape[0]
-        pct_removed = pri.perc(num_rows_before - num_rows_after, num_rows_before)
+        pct_removed = hprint.perc(
+            num_rows_before - num_rows_after, num_rows_before
+        )
         _LOG.info("removed rows with nans: %s", pct_removed)
     return df
 
@@ -186,7 +201,8 @@ def report_zero_nan_inf_stats(
     verbose: bool = False,
     as_txt: bool = False,
 ) -> pd.DataFrame:
-    """Report count and percentage about zeros, nans, infs for a df.
+    """
+    Report count and percentage about zeros, nans, infs for a df.
 
     :param verbose: print more information
     """
@@ -194,7 +210,7 @@ def report_zero_nan_inf_stats(
     _LOG.info("index in [%s, %s]", df.index.min(), df.index.max())
     #
     num_rows = df.shape[0]
-    _LOG.info("num_rows=%s", pri.thousand_separator(num_rows))
+    _LOG.info("num_rows=%s", hprint.thousand_separator(num_rows))
     _LOG.info("data=")
     display_df(df, max_lines=5, as_txt=as_txt)
     #
@@ -218,22 +234,30 @@ def report_zero_nan_inf_stats(
     num_zeros = (np.abs(df) < zero_threshold).sum(axis=0)
     if verbose:
         stats_df["num_zeros"] = num_zeros
-    stats_df["zeros [%]"] = (100.0 * num_zeros / num_rows).apply(pri.round_digits)
+    stats_df["zeros [%]"] = (100.0 * num_zeros / num_rows).apply(
+        hprint.round_digits
+    )
     #
     num_nans = np.isnan(df).sum(axis=0)
     if verbose:
         stats_df["num_nans"] = num_nans
-    stats_df["nans [%]"] = (100.0 * num_nans / num_rows).apply(pri.round_digits)
+    stats_df["nans [%]"] = (100.0 * num_nans / num_rows).apply(
+        hprint.round_digits
+    )
     #
     num_infs = np.isinf(df).sum(axis=0)
     if verbose:
         stats_df["num_infs"] = num_infs
-    stats_df["infs [%]"] = (100.0 * num_infs / num_rows).apply(pri.round_digits)
+    stats_df["infs [%]"] = (100.0 * num_infs / num_rows).apply(
+        hprint.round_digits
+    )
     #
     num_valid = df.shape[0] - num_zeros - num_nans - num_infs
     if verbose:
         stats_df["num_valid"] = num_valid
-    stats_df["valid [%]"] = (100.0 * num_valid / num_rows).apply(pri.round_digits)
+    stats_df["valid [%]"] = (100.0 * num_valid / num_rows).apply(
+        hprint.round_digits
+    )
     #
     display_df(stats_df, as_txt=as_txt)
     return stats_df
@@ -242,8 +266,9 @@ def report_zero_nan_inf_stats(
 def drop_duplicates(
     df: pd.DataFrame, subset: Optional[List[str]] = None
 ) -> pd.DataFrame:
-    """Wrapper around pd.drop_duplicates() reporting information about
-    theremoved rows.
+    """
+    Wrapper around pd.drop_duplicates() reporting information about theremoved
+    rows.
 
     :df: Df to drop duplicates from.
     :subset: Columns subset.
@@ -254,7 +279,7 @@ def drop_duplicates(
     num_rows_before = df.shape[0]
     df_no_duplicates = df.drop_duplicates(subset=subset)
     num_rows_after = df_no_duplicates.shape[0]
-    pct_removed = pri.perc(num_rows_before - num_rows_after, num_rows_before)
+    pct_removed = hprint.perc(num_rows_before - num_rows_after, num_rows_before)
     _LOG.info("Removed duplicated rows: %s", pct_removed)
     return df_no_duplicates
 
@@ -265,7 +290,8 @@ def drop_duplicates(
 def _get_variable_cols(
     df: pd.DataFrame, threshold: int = 1
 ) -> Tuple[List[str], List[str]]:
-    """Return columns of a df that contain less than <threshold> unique values.
+    """
+    Return columns of a df that contain less than <threshold> unique values.
 
     :return: (variable columns, constant columns)
     """
@@ -282,7 +308,8 @@ def _get_variable_cols(
 def remove_columns_with_low_variability(
     df: pd.DataFrame, threshold: int = 1, log_level: int = logging.DEBUG
 ) -> pd.DataFrame:
-    """Remove columns of a df that contain less than <threshold> unique values.
+    """
+    Remove columns of a df that contain less than <threshold> unique values.
 
     :return: df with only columns with sufficient variability
     """
@@ -293,10 +320,10 @@ def remove_columns_with_low_variability(
             log_level,
             "  %s: %s",
             c,
-            pri.list_to_str(list(map(str, df[c].unique()))),
+            hprint.list_to_str(list(map(str, df[c].unique()))),
         )
     _LOG.log(log_level, "# Var cols")
-    _LOG.log(log_level, pri.list_to_str(var_cols))
+    _LOG.log(log_level, hprint.list_to_str(var_cols))
     return df[var_cols]
 
 
@@ -308,9 +335,10 @@ def add_pct(
     num_digits: int = 2,
     use_thousands_separator: bool = True,
 ) -> pd.DataFrame:
-    """Add to df a column "dst_col_name" storing the percentage of values in
+    """
+    Add to df a column "dst_col_name" storing the percentage of values in
     column "col_name" with respect to "total". The rest of the parameters are
-    the same as pri.round_digits().
+    the same as hprint.round_digits().
 
     :return: updated df
     """
@@ -319,13 +347,15 @@ def add_pct(
     df.insert(pos_col_name + 1, dst_col_name, (100.0 * df[col_name]) / total)
     # Format.
     df[col_name] = [
-        pri.round_digits(
+        hprint.round_digits(
             v, num_digits=None, use_thousands_separator=use_thousands_separator
         )
         for v in df[col_name]
     ]
     df[dst_col_name] = [
-        pri.round_digits(v, num_digits=num_digits, use_thousands_separator=False)
+        hprint.round_digits(
+            v, num_digits=num_digits, use_thousands_separator=False
+        )
         for v in df[dst_col_name]
     ]
     return df
@@ -346,7 +376,7 @@ def breakdown_table(
 ) -> pd.DataFrame:
     if isinstance(col_name, list):
         for c in col_name:
-            print(("\n" + pri.frame(c).rstrip("\n")))
+            print(("\n" + hprint.frame(c).rstrip("\n")))
             res = breakdown_table(df, c)
             print(res)
         return None
@@ -364,18 +394,20 @@ def breakdown_table(
     res["pct"] = (100.0 * res["count"]) / df.shape[0]
     # Format.
     res["count"] = [
-        pri.round_digits(
+        hprint.round_digits(
             v, num_digits=None, use_thousands_separator=use_thousands_separator
         )
         for v in res["count"]
     ]
     res["pct"] = [
-        pri.round_digits(v, num_digits=num_digits, use_thousands_separator=False)
+        hprint.round_digits(
+            v, num_digits=num_digits, use_thousands_separator=False
+        )
         for v in res["pct"]
     ]
     if verbosity:
         for k, df_tmp in df.groupby(col_name):
-            print((pri.frame("%s=%s" % (col_name, k))))
+            print((hprint.frame("%s=%s" % (col_name, k))))
             cols = [col_name, "description"]
             with pd.option_context(
                 "display.max_colwidth", 100000, "display.width", 130
@@ -390,13 +422,14 @@ def print_column_variability(
     num_digits: int = 2,
     use_thousands_separator: bool = True,
 ) -> pd.DataFrame:
-    """Print statistics about the values in each column of a data frame.
+    """
+    Print statistics about the values in each column of a data frame.
 
     This is useful to get a sense of which columns are interesting.
     """
-    print(("# df.columns=%s" % pri.list_to_str(df.columns)))
+    print(("# df.columns=%s" % hprint.list_to_str(df.columns)))
     res = []
-    for c in tqdm.tqdm(df.columns):
+    for c in tauton.tqdm(df.columns):
         vals = df[c].unique()
         try:
             min_val = min(vals)
@@ -472,18 +505,20 @@ def remove_columns(
     df: pd.DataFrame, cols: Collection[str], log_level: int = logging.DEBUG
 ) -> pd.DataFrame:
     to_remove = set(cols).intersection(set(df.columns))
-    _LOG.log(log_level, "to_remove=%s", pri.list_to_str(to_remove))
+    _LOG.log(log_level, "to_remove=%s", hprint.list_to_str(to_remove))
     df.drop(to_remove, axis=1, inplace=True)
     _LOG.debug("df=\n%s", df.head(3))
-    _LOG.log(log_level, pri.list_to_str(df.columns))
+    _LOG.log(log_level, hprint.list_to_str(df.columns))
     return df
 
 
 def filter_with_df(
     df: pd.DataFrame, filter_df: pd.DataFrame, log_level: int = logging.DEBUG
 ) -> pd.Series:
-    """Compute a mask for DataFrame df using common columns and values in
-    "filter_df"."""
+    """
+    Compute a mask for DataFrame df using common columns and values in
+    "filter_df".
+    """
     mask = None
     for c in filter_df:
         dbg.dassert_in(c, df.columns)
@@ -493,7 +528,7 @@ def filter_with_df(
         else:
             mask &= df[c].isin(vals)
     mask: pd.DataFrame
-    _LOG.log(log_level, "after filter=%s", pri.perc(mask.sum(), len(mask)))
+    _LOG.log(log_level, "after filter=%s", hprint.perc(mask.sum(), len(mask)))
     return mask
 
 
@@ -520,7 +555,7 @@ def filter_around_time(
         "Filtering in [%s, %s] selected rows=%s",
         lower_bound,
         upper_bound,
-        pri.perc(mask.sum(), df.shape[0]),
+        hprint.perc(mask.sum(), df.shape[0]),
     )
     return df[mask]
 
@@ -533,8 +568,9 @@ def filter_by_val(
     use_thousands_separator: bool = True,
     log_level: int = logging.DEBUG,
 ) -> pd.DataFrame:
-    """Filter out rows of df where df[col_name] is not in [min_val,
-    max_val]."""
+    """
+    Filter out rows of df where df[col_name] is not in [min_val, max_val].
+    """
     # TODO(gp): If column is ordered, this can be done more efficiently with
     # binary search.
     num_rows = df.shape[0]
@@ -554,12 +590,12 @@ def filter_by_val(
     _LOG.log(
         log_level,
         "Rows kept %s, removed %s rows",
-        pri.perc(
+        hprint.perc(
             res.shape[0],
             num_rows,
             use_thousands_separator=use_thousands_separator,
         ),
-        pri.perc(
+        hprint.perc(
             num_rows - res.shape[0],
             num_rows,
             use_thousands_separator=use_thousands_separator,
@@ -574,7 +610,9 @@ def filter_by_val(
 
 
 def _get_num_pcs_to_plot(num_pcs_to_plot: int, max_pcs: int) -> int:
-    """Get the number of principal components to plot."""
+    """
+    Get the number of principal components to cplott.
+    """
     if num_pcs_to_plot == -1:
         num_pcs_to_plot = max_pcs
     dbg.dassert_lte(0, num_pcs_to_plot)
@@ -600,8 +638,9 @@ def handle_nans(df: pd.DataFrame, nan_mode: str) -> pd.DataFrame:
 def sample_rolling_df(
     rolling_df: pd.DataFrame, periods: int
 ) -> Tuple[pd.DataFrame, pd.DatetimeIndex]:
-    """Given a rolling metric stored as multiindex (e.g., correlation computed
-    by pd.ewm) sample `periods` equispaced samples.
+    """
+    Given a rolling metric stored as multiindex (e.g., correlation computed by
+    pd.ewm) sample `periods` equispaced samples.
 
     :return: sampled df, array of timestamps selected
     """
@@ -620,7 +659,8 @@ def sample_rolling_df(
 def rolling_corr_over_time(
     df: pd.DataFrame, com: float, nan_mode: str
 ) -> pd.DataFrame:
-    """Compute rolling correlation over time.
+    """
+    Compute rolling correlation over time.
 
     :return: corr_df is a multi-index df storing correlation matrices with
         labels
@@ -662,7 +702,8 @@ def _get_eigvals_eigvecs(
 def rolling_pca_over_time(
     df: pd.DataFrame, com: float, nan_mode: str, sort_eigvals: bool = True
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Compute rolling PCAs over time.
+    """
+    Compute rolling PCAs over time.
 
     :param sort_eigvals: sort the eigenvalues in descending orders
     :return:
@@ -676,7 +717,7 @@ def rolling_pca_over_time(
     timestamps = corr_df.index.get_level_values(0).unique()
     eigval = np.zeros((timestamps.shape[0], df.shape[1]))
     eigvec = np.zeros((timestamps.shape[0], df.shape[1], df.shape[1]))
-    for i, dt in tqdm.tqdm(enumerate(timestamps), total=timestamps.shape[0]):
+    for i, dt in tauton.tqdm(enumerate(timestamps), total=timestamps.shape[0]):
         eigval[i], eigvec[i] = _get_eigvals_eigvecs(corr_df, dt, sort_eigvals)
     # Package results.
     eigval_df = pd.DataFrame(eigval, index=timestamps)
@@ -687,11 +728,15 @@ def rolling_pca_over_time(
     eigval_df = eigval_df.multiply(1 / eigval_df.sum(axis=1), axis="index")
     #
     # pylint ref: github.com/PyCQA/pylint/issues/3139
-    eigvec = eigvec.reshape((-1, eigvec.shape[-1]))  # pylint: disable=unsubscriptable-object
+    eigvec = eigvec.reshape(
+        (-1, eigvec.shape[-1])
+    )  # pylint: disable=unsubscriptable-object
     idx = pd.MultiIndex.from_product(
         [timestamps, df.columns], names=["datetime", None]
     )
-    eigvec_df = pd.DataFrame(eigvec, index=idx, columns=range(df.shape[1]))  # pylint: disable=unsubscriptable-object
+    eigvec_df = pd.DataFrame(
+        eigvec, index=idx, columns=range(df.shape[1])
+    )  # pylint: disable=unsubscriptable-object
     dbg.dassert_eq(
         len(eigvec_df.index.get_level_values(0).unique()), len(timestamps)
     )
@@ -704,7 +749,9 @@ def plot_pca_over_time(
     num_pcs_to_plot: int = 0,
     num_cols: int = 2,
 ) -> None:
-    """Similar to plot_pca_analysis() but over time."""
+    """
+    Similar to plot_pca_analysis() but over time.
+    """
     # Plot eigenvalues.
     eigval_df.plot(title="Eigenvalues over time", ylim=(0, 1))
     # Plot cumulative variance.
@@ -716,7 +763,7 @@ def plot_pca_over_time(
     num_pcs_to_plot = _get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
     _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
     if num_pcs_to_plot > 0:
-        _, axes = plot.get_multiple_plots(
+        _, axes = cplott.get_multiple_plots(
             num_pcs_to_plot,
             num_cols=num_cols,
             y_scale=4,
@@ -733,8 +780,9 @@ def plot_time_distributions(
     dts: List[Union[datetime.datetime, pd.Timestamp]],
     mode: str,
     density: bool = True,
-) -> mpl.axes.Axes:
-    """Compute distribution for an array of timestamps `dts`.
+) -> matplo.axes.Axes:
+    """
+    Compute distribution for an array of timestamps `dts`.
 
     - mode: see below
     """
@@ -834,7 +882,8 @@ def jointplot(
     *args: Any,
     **kwargs: Any,
 ) -> None:
-    """Perform a scatterplot of two columns of a dataframe using
+    """
+    Perform a scatterplot of two columns of a dataframe using
     seaborn.jointplot().
 
     :param df: dataframe
@@ -863,7 +912,9 @@ def _preprocess_regression(
     predictor_vars: Union[str, List[str]],
     predictor_vars_delay: int,
 ) -> Optional[Tuple[pd.DataFrame, List[str], List[str]]]:
-    """Preprocess data in dataframe form in order to perform a regression."""
+    """
+    Preprocess data in dataframe form in order to perform a regression.
+    """
     # Sanity check vars.
     dbg.dassert_type_is(df, pd.DataFrame)
     dbg.dassert_lte(1, df.shape[0])
@@ -895,7 +946,7 @@ def _preprocess_regression(
     if num_rows_after_drop_nan_all != num_rows:
         _LOG.info(
             "Removed %s rows with all nans",
-            pri.perc(num_rows - num_rows_after_drop_nan_all, num_rows),
+            hprint.perc(num_rows - num_rows_after_drop_nan_all, num_rows),
         )
     #
     df.dropna(how="any", inplace=True)
@@ -903,7 +954,7 @@ def _preprocess_regression(
     if num_rows_after_drop_nan_any != num_rows_after_drop_nan_all:
         _LOG.warning(
             "Removed %s rows with any nans",
-            pri.perc(num_rows - num_rows_after_drop_nan_any, num_rows),
+            hprint.perc(num_rows - num_rows_after_drop_nan_any, num_rows),
         )
     # Prepare data.
     if intercept:
@@ -936,7 +987,8 @@ def ols_regress(
     predictor_vars_delay: int = 0,
     max_nrows: float = 1e4,
 ) -> Optional[Dict[str, Any]]:
-    """Perform OLS on columns of a dataframe.
+    """
+    Perform OLS on columns of a dataframe.
 
     :param df: dataframe
     :param predicted_var: y variable
@@ -991,14 +1043,14 @@ def ols_regress(
                 if tsplot:
                     # Plot the data over time.
                     if tsplot_figsize is None:
-                        tsplot_figsize = plot.FIG_SIZE
+                        tsplot_figsize = cplott.FIG_SIZE
                     df[[predicted_var, predictor_vars[0]]].plot(
                         figsize=tsplot_figsize
                     )
                 if jointplot_:
-                    # Perform scatter plot.
+                    # Perform scatter cplott.
                     if jointplot_height is None:
-                        jointplot_height = plot.FIG_SIZE[1]
+                        jointplot_height = cplott.FIG_SIZE[1]
                     jointplot(
                         df,
                         predicted_var,
@@ -1032,7 +1084,8 @@ def ols_regress_series(
     convert_to_dates: bool = False,
     **kwargs: Any,
 ) -> Dict[str, Any]:
-    """Regress two series against each other.
+    """
+    Regress two series against each other.
 
     Wrapper around regress() to regress series against each other.
     """
@@ -1151,7 +1204,7 @@ def robust_regression(
     _LOG.info("Estimated coef for RANSAC=%s", ransac.estimator_.coef_)
     if jointplot_:
         if jointplot_figsize is None:
-            jointplot_figsize = plot.FIG_SIZE
+            jointplot_figsize = cplott.FIG_SIZE
         plt.figure(figsize=jointplot_figsize)
         plt.scatter(
             X[inlier_mask],
@@ -1190,7 +1243,8 @@ def display_df(
     tag: Optional[str] = None,
     mode: Optional[str] = None,
 ) -> None:
-    """Display a pandas object (series, df, panel) in a better way than the
+    """
+    Display a pandas object (series, df, panel) in a better way than the
     ipython display, e.g.,
 
         - by printing head and tail of the dataframe
@@ -1293,7 +1347,8 @@ def describe_df(
     sort_by_uniq_num: bool = False,
     log_level: int = logging.INFO,
 ) -> None:
-    """Improved version of pd.DataFrame.describe()
+    """
+    Improved version of pd.DataFrame.describe()
 
     :param ts_col: timestamp column
     """

@@ -1,22 +1,22 @@
 """
 Import as:
 
-import core.model_plotter as modplot
+import core.model_plotter as cmodel
 """
 
 import logging
 from typing import Any, List, Optional
 
-import matplotlib as mpl
+import matplotlib as matplo
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 
-import core.finance as fin
-import core.model_evaluator as modeval
-import core.plotting as plot
-import core.statistics as stats
+import core.finance as cfinan
+import core.model_evaluator as cmodel
+import core.plotting as cplott
+import core.statistics as cstati
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -29,14 +29,14 @@ class ModelPlotter:
 
     def __init__(
         self,
-        model_evaluator: modeval.ModelEvaluator,
+        model_evaluator: cmodel.ModelEvaluator,
     ) -> None:
         """
         Initialize by supplying an initialized `ModelEvaluator`.
 
         :param model_evaluator: initialized ModelEvaluator
         """
-        dbg.dassert_isinstance(model_evaluator, modeval.ModelEvaluator)
+        dbg.dassert_isinstance(model_evaluator, cmodel.ModelEvaluator)
         self.model_evaluator = model_evaluator
 
     def plot_rets_signal_analysis(
@@ -75,24 +75,24 @@ class ModelPlotter:
             rets = rets.resample(rule=resample_rule).sum(min_count=1)
         num_rows = 6
         fig = plt.figure(constrained_layout=True, figsize=(20, 5 * num_rows))
-        gs = mpl.gridspec.GridSpec(num_rows, 2, figure=fig)
+        gs = matplo.gridspec.GridSpec(num_rows, 2, figure=fig)
         # qq-plot against normal.
-        plot.plot_qq(rets, ax=fig.add_subplot(gs[0, :]))
-        # Plot lineplot and density plot.
-        plot.plot_cols(
+        cplott.plot_qq(rets, ax=fig.add_subplot(gs[0, :]))
+        # Plot lineplot and density cplott.
+        cplott.plot_cols(
             rets, axes=[fig.add_subplot(gs[1, :]), fig.add_subplot(gs[2, :])]
         )
         # Plot pnl.
-        plot.plot_pnl({"rets pnl": rets}, ax=fig.add_subplot(gs[3, :]))
+        cplott.plot_pnl({"rets pnl": rets}, ax=fig.add_subplot(gs[3, :]))
         # Plot ACF and PACF.
-        plot.plot_autocorrelation(
+        cplott.plot_autocorrelation(
             rets,
-            axes=[fig.add_subplot(gs[4, 0]), fig.add_subplot(gs[4, -1])],
+            axes=[[fig.add_subplot(gs[4, 0]), fig.add_subplot(gs[4, -1])]],
             fft=True,
         )
         # Plot power spectral density and spectrogram.
-        plot.plot_spectrum(
-            rets, axes=[fig.add_subplot(gs[5, 0]), fig.add_subplot(gs[5, -1])]
+        cplott.plot_spectrum(
+            rets, axes=[[fig.add_subplot(gs[5, 0]), fig.add_subplot(gs[5, -1])]]
         )
 
     def plot_performance(
@@ -164,10 +164,10 @@ class ModelPlotter:
         if cumrets_mode == "log":
             pass
         elif cumrets_mode == "pct":
-            cumrets = fin.convert_log_rets_to_pct_rets(cumrets)
+            cumrets = cfinan.convert_log_rets_to_pct_rets(cumrets)
         else:
             raise ValueError("Invalid cumulative returns mode `{cumrets_mode}`")
-        plot.plot_cumulative_returns(
+        cplott.plot_cumulative_returns(
             cumrets,
             benchmark_series=benchmark,
             ax=axs[0],
@@ -175,21 +175,21 @@ class ModelPlotter:
             **plot_cumulative_returns_kwargs,
         )
         if benchmark is not None:
-            plot.plot_rolling_beta(
+            cplott.plot_rolling_beta(
                 rets,
                 benchmark,
                 ax=axs[1],
                 events=events,
                 **plot_rolling_beta_kwargs,
             )
-        plot.plot_rolling_annualized_sharpe_ratio(
+        cplott.plot_rolling_annualized_sharpe_ratio(
             rets,
             ax=axs[-2],
             events=events,
             **plot_rolling_annualized_sharpe_ratio_kwargs,
         )
         plot_drawdown_kwargs = plot_drawdown_kwargs or {}
-        plot.plot_drawdown(
+        cplott.plot_drawdown(
             rets, ax=axs[-1], events=events, **plot_drawdown_kwargs
         )
 
@@ -233,20 +233,22 @@ class ModelPlotter:
             num_plots, 1, figsize=(20, 5 * num_plots), constrained_layout=True
         )
         # Plot yearly returns.
-        plot.plot_yearly_barplot(
+        cplott.plot_yearly_barplot(
             rets,
             ax=axs[0],
             figsize=(20, 5 * num_plots),
             **plot_yearly_barplot_kwargs,
         )
         # Plot monthly returns.
-        plot.plot_monthly_heatmap(rets, ax=axs[1], **plot_monthly_heatmap_kwargs)
+        cplott.plot_monthly_heatmap(
+            rets, ax=axs[1], **plot_monthly_heatmap_kwargs
+        )
         # Set OOS start if applicable.
         events = None
         if mode == "all_available" and self.model_evaluator.oos_start is not None:
             events = [(self.model_evaluator.oos_start, "OOS start")]
         # Plot volatility.
-        plot.plot_rolling_annualized_volatility(
+        cplott.plot_rolling_annualized_volatility(
             rets,
             ax=axs[2],
             events=events,
@@ -284,9 +286,9 @@ class ModelPlotter:
         if mode == "all_available" and self.model_evaluator.oos_start is not None:
             events = [(self.model_evaluator.oos_start, "OOS start")]
         # Plot holdings.
-        plot.plot_holdings(pos, ax=axs[0], events=events)
+        cplott.plot_holdings(pos, ax=axs[0], events=events)
         # Plot turnover.
-        plot.plot_turnover(pos, unit="%", ax=axs[1], events=events)
+        cplott.plot_turnover(pos, unit="%", ax=axs[1], events=events)
 
     def plot_sharpe_ratio_panel(
         self,
@@ -306,7 +308,7 @@ class ModelPlotter:
         rets, _, _ = self.model_evaluator.aggregate_models(
             keys=keys, weights=weights, mode=mode
         )
-        plot.plot_sharpe_ratio_panel(rets, frequencies=frequencies)
+        cplott.plot_sharpe_ratio_panel(rets, frequencies=frequencies)
 
     def plot_returns_and_predictions(
         self,
@@ -328,7 +330,7 @@ class ModelPlotter:
         preds = self.model_evaluator.get_series_dict(
             "predictions", keys=keys, mode=mode
         )
-        _, axes = plot.get_multiple_plots(
+        _, axes = cplott.get_multiple_plots(
             len(keys), 1, y_scale=5, sharex=True, sharey=True
         )
         if not isinstance(axes, np.ndarray):
@@ -349,7 +351,7 @@ class ModelPlotter:
         multipletests_plot_kwargs: Optional[dict] = None,
     ) -> None:
         """
-        Adjust p-values for selected keys and plot.
+        Adjust p-values for selected keys and cplott.
 
         :param threshold: Adjust p-value threshold for a "pass"
         :param keys: Use all available if `None`
@@ -357,8 +359,8 @@ class ModelPlotter:
         """
         multipletests_plot_kwargs = multipletests_plot_kwargs or {}
         pnls = self.model_evaluator.get_series_dict("pnls", keys=keys, mode=mode)
-        pvals = {k: stats.ttest_1samp(v).loc["pval"] for k, v in pnls.items()}
-        plot.multipletests_plot(
+        pvals = {k: cstati.ttest_1samp(v).loc["pval"] for k, v in pnls.items()}
+        cplott.multipletests_plot(
             pd.Series(pvals), threshold, **multipletests_plot_kwargs
         )
 
@@ -387,7 +389,7 @@ class ModelPlotter:
         if resample_rule is not None:
             for k, v in pnls.items():
                 pnls[k] = v.resample(rule=resample_rule).sum(min_count=1)
-        plot.plot_pnl(pnls)
+        cplott.plot_pnl(pnls)
 
     def plot_correlation_matrix(
         self,
@@ -410,7 +412,7 @@ class ModelPlotter:
         df = self._get_series_as_df(
             series, keys=keys, mode=mode, resample_rule=resample_rule
         )
-        plot.plot_correlation_matrix(df, **plot_correlation_matrix_kwargs)
+        cplott.plot_correlation_matrix(df, **plot_correlation_matrix_kwargs)
 
     def plot_clustermap(
         self,
@@ -451,7 +453,7 @@ class ModelPlotter:
         df = self._get_series_as_df(
             series, keys=keys, mode=mode, resample_rule=resample_rule
         )
-        plot.plot_dendrogram(df.fillna(0))
+        cplott.plot_dendrogram(df.fillna(0))
 
     def plot_multiple_time_series(
         self,
@@ -462,7 +464,7 @@ class ModelPlotter:
         plot_time_series_dict_kwargs: Optional[dict] = None,
     ) -> None:
         """
-        Plot one time series per plot.
+        Plot one time series per cplott.
 
         :param series: "returns", "predictions", "positions", or "pnls"
         :param keys: Use all available if `None`
@@ -476,7 +478,7 @@ class ModelPlotter:
         if resample_rule is not None:
             for k, v in series_dict.items():
                 series_dict[k] = v.resample(rule=resample_rule).sum(min_count=1)
-        plot.plot_time_series_dict(series_dict, **plot_time_series_dict_kwargs)
+        cplott.plot_time_series_dict(series_dict, **plot_time_series_dict_kwargs)
 
     def plot_pca_components(
         self,
@@ -489,7 +491,7 @@ class ModelPlotter:
         df = self._get_series_as_df(
             series, keys=keys, mode=mode, resample_rule=resample_rule
         )
-        pca = plot.PCA(mode="standard")
+        pca = cplott.PCA(mode="standard")
         pca.fit(df.fillna(0))
         pca.plot_components(num_components)
 
@@ -503,7 +505,7 @@ class ModelPlotter:
         df = self._get_series_as_df(
             series, keys=keys, mode=mode, resample_rule=resample_rule
         )
-        pca = plot.PCA(mode="standard")
+        pca = cplott.PCA(mode="standard")
         pca.fit(df.fillna(0))
         pca.plot_explained_variance()
 
