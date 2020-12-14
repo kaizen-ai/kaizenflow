@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.model_evaluator as cmodel
+import core.model_evaluator as modeval
 """
 
 import functools
@@ -12,9 +12,9 @@ import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 
-import core.finance as cfinan
-import core.signal_processing as csigna
-import core.statistics as cstati
+import core.finance as fin
+import core.signal_processing as sigp
+import core.statistics as stats
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -156,7 +156,7 @@ class ModelEvaluator:
         # Obtain dataframe of (log) returns.
         pnl_df = self._get_series_as_df("pnls", keys, mode)
         # Convert to pct returns before aggregating.
-        pnl_df = pnl_df.apply(cfinan.convert_log_rets_to_pct_rets)
+        pnl_df = pnl_df.apply(fin.convert_log_rets_to_pct_rets)
         # Average by default; otherwise use supplied weights.
         weights = weights or [1 / len(keys)] * len(keys)
         dbg.dassert_eq(len(keys), len(weights))
@@ -167,7 +167,7 @@ class ModelEvaluator:
         )
         pnl_srs = pnl_df.squeeze()
         # Convert back to log returns from aggregated pct returns.
-        pnl_srs = cfinan.convert_pct_rets_to_log_rets(pnl_srs)
+        pnl_srs = fin.convert_pct_rets_to_log_rets(pnl_srs)
         pnl_srs.name = "portfolio_pnl"
         # Aggregate positions.
         pos_df = self._get_series_as_df("positions", keys, mode)
@@ -187,7 +187,7 @@ class ModelEvaluator:
                 )
             else:
                 ins_pnl_srs = pnl_srs
-            scale_factor = cfinan.compute_volatility_normalization_factor(
+            scale_factor = fin.compute_volatility_normalization_factor(
                 srs=ins_pnl_srs, target_volatility=target_volatility
             )
             pnl_srs *= scale_factor
@@ -202,9 +202,7 @@ class ModelEvaluator:
         return pnl_srs, pos_srs, aggregate_stats
 
     def calculate_stats(
-        self,
-        keys: Optional[List[Any]] = None,
-        mode: Optional[str] = None,
+        self, keys: Optional[List[Any]] = None, mode: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Calculate performance characteristics of selected models.
@@ -233,7 +231,7 @@ class ModelEvaluator:
             stats_dict[key] = stats_val
         stats_df = pd.concat(stats_dict, axis=1)
         # Calculate BH adjustment of pvals.
-        adj_pvals = cstati.multipletests(stats_df.loc["pval"], nan_mode="drop")
+        adj_pvals = stats.multipletests(stats_df.loc["pval"], nan_mode="drop")
         stats_df = pd.concat(
             [stats_df.transpose(), adj_pvals], axis=1
         ).transpose()
@@ -258,28 +256,28 @@ class ModelEvaluator:
             srs.index.freq for srs in [pnl, positions, returns] if srs is not None
         }
         dbg.dassert_eq(len(freqs), 1, "Series have different frequencies.")
-        # Calculate cstati.
+        # Calculate stats.
         stats_dict = {}
         if pnl is not None:
-            stats_dict[0] = cstati.summarize_sharpe_ratio(pnl)
-            stats_dict[1] = cstati.ttest_1samp(pnl)
+            stats_dict[0] = stats.summarize_sharpe_ratio(pnl)
+            stats_dict[1] = stats.ttest_1samp(pnl)
             stats_dict[2] = pd.Series(
-                cfinan.compute_kratio(pnl), index=["kratio"], name=pnl.name
+                fin.compute_kratio(pnl), index=["kratio"], name=pnl.name
             )
-            stats_dict[3] = cstati.compute_annualized_return_and_volatility(pnl)
-            stats_dict[4] = cstati.compute_max_drawdown(pnl)
-            stats_dict[5] = cstati.summarize_time_index_info(pnl)
-            stats_dict[6] = cstati.calculate_hit_rate(pnl)
-            stats_dict[10] = cstati.compute_jensen_ratio(pnl)
-            stats_dict[11] = cstati.compute_forecastability(pnl)
-            stats_dict[13] = cstati.compute_moments(pnl)
-            stats_dict[14] = cstati.compute_special_value_stats(pnl)
+            stats_dict[3] = stats.compute_annualized_return_and_volatility(pnl)
+            stats_dict[4] = stats.compute_max_drawdown(pnl)
+            stats_dict[5] = stats.summarize_time_index_info(pnl)
+            stats_dict[6] = stats.calculate_hit_rate(pnl)
+            stats_dict[10] = stats.compute_jensen_ratio(pnl)
+            stats_dict[11] = stats.compute_forecastability(pnl)
+            stats_dict[13] = stats.compute_moments(pnl)
+            stats_dict[14] = stats.compute_special_value_stats(pnl)
         if pnl is not None and returns is not None:
             stats_dict[7] = pd.Series(
                 pnl.corr(returns), index=["corr_to_underlying"], name=returns.name
             )
         if positions is not None and returns is not None:
-            stats_dict[8] = cstati.compute_bet_stats(
+            stats_dict[8] = stats.compute_bet_stats(
                 positions, returns[positions.index]
             )
             # TODO(*): Use `predictions` instead.
@@ -289,14 +287,14 @@ class ModelEvaluator:
                 name=returns.name,
             )
         if positions is not None:
-            stats_dict[9] = cstati.compute_avg_turnover_and_holding_period(
+            stats_dict[9] = stats.compute_avg_turnover_and_holding_period(
                 positions
             )
         # Z-score OOS SRs.
         if oos_start is not None and pnl is not None:
             dbg.dassert(pnl[:oos_start].any())
             dbg.dassert(pnl[oos_start:].any())
-            stats_dict[15] = cstati.zscore_oos_sharpe_ratio(pnl, oos_start)
+            stats_dict[15] = stats.zscore_oos_sharpe_ratio(pnl, oos_start)
         # Sort dict by integer keys.
         stats_dict = dict(sorted(stats_dict.items()))
         # Combine stats into one series indexed by stats names.
@@ -305,10 +303,7 @@ class ModelEvaluator:
         return stats_srs
 
     def _get_series_as_df(
-        self,
-        series: str,
-        keys: List[Any],
-        mode: str,
+        self, series: str, keys: List[Any], mode: str,
     ) -> pd.DataFrame:
         """
         Return request series streams as a single dataframe.
@@ -334,8 +329,7 @@ class ModelEvaluator:
         """
         Calculate positions from returns and predictions.
 
-        Rescales to target volatility over in-sample period (if
-        provided).
+        Rescales to target volatility over in-sample period (if provided).
         """
         position_dict = {}
         for key in tqdm(self.valid_keys):
@@ -354,8 +348,7 @@ class ModelEvaluator:
 
     @staticmethod
     def _calculate_pnls(
-        returns: Dict[Any, pd.Series],
-        positions: Dict[Any, pd.Series],
+        returns: Dict[Any, pd.Series], positions: Dict[Any, pd.Series],
     ) -> Dict[Any, pd.Series]:
         """
         Calculate returns from positions.
@@ -419,11 +412,7 @@ class PnlComputer:
     Computes PnL from returns and holdings.
     """
 
-    def __init__(
-        self,
-        returns: pd.Series,
-        positions: pd.Series,
-    ) -> None:
+    def __init__(self, returns: pd.Series, positions: pd.Series,) -> None:
         """
         Initialize by supply returns and positions.
 
@@ -521,36 +510,32 @@ class PositionComputer:
             volatility_strategy=volatility_strategy,
         )
 
-    @staticmethod
     def _multiply_kernel(
+        self,
         predictions: pd.Series,
         tau: float,
         delay: int,
         z_mute_point: float,
         z_saturation_point: float,
     ) -> pd.Series:
-        zscored_preds = csigna.compute_rolling_zscore(
+        zscored_preds = sigp.compute_rolling_zscore(
             predictions, tau=tau, delay=delay
         )
         bump_function = functools.partial(
-            csigna.c_infinity_bump_function, a=z_mute_point, b=z_saturation_point
+            sigp.c_infinity_bump_function, a=z_mute_point, b=z_saturation_point
         )
         scale_factors = 1 - zscored_preds.apply(bump_function)
         adjusted_preds = zscored_preds.multiply(scale_factors)
         return adjusted_preds
 
-    @staticmethod
     def _squash(
-        predictions: pd.Series,
-        tau: float,
-        delay: int,
-        scale: float,
+        self, predictions: pd.Series, tau: float, delay: int, scale: float,
     ) -> pd.Series:
 
-        zscored_preds = csigna.compute_rolling_zscore(
+        zscored_preds = sigp.compute_rolling_zscore(
             predictions, tau=tau, delay=delay
         )
-        return csigna.squash(zscored_preds, scale=scale)
+        return sigp.squash(zscored_preds, scale=scale)
 
     def _adjust_for_volatility(
         self,
@@ -574,26 +559,27 @@ class PositionComputer:
         #
         ins_pnl = pnl[: self.oos_start]
         if volatility_strategy == "rescale":
-            scale_factor = cfinan.compute_volatility_normalization_factor(
+            scale_factor = fin.compute_volatility_normalization_factor(
                 srs=ins_pnl, target_volatility=target_volatility
             )
             positions = scale_factor * predictions
             positions.name = "positions"
             return self._return_srs(positions, mode=mode)
-        raise ValueError(f"Unrecognized strategy `{volatility_strategy}`!")
+        else:
+            raise ValueError(f"Unrecognized strategy `{volatility_strategy}`!")
 
     def _return_srs(self, srs: pd.Series, mode: str) -> pd.Series:
         if mode == "ins":
             return srs[: self.oos_start]
-        if mode == "all_available":
+        elif mode == "all_available":
             return srs
-        if mode == "oos":
+        elif mode == "oos":
             dbg.dassert(
-                self.oos_start,
-                msg="Must set `oos_start` to run `oos`",
+                self.oos_start, msg="Must set `oos_start` to run `oos`",
             )
             return srs[self.oos_start :]
-        raise ValueError(f"Invalid mode `{mode}`!")
+        else:
+            raise ValueError(f"Invalid mode `{mode}`!")
 
     @staticmethod
     def _validate_series(srs: pd.Series, oos_start: Optional[float]) -> None:
@@ -644,15 +630,15 @@ class TransactionCostModeler:
     def _return_srs(self, srs: pd.Series, mode: str) -> pd.Series:
         if mode == "ins":
             return srs[: self.oos_start]
-        if mode == "all_available":
+        elif mode == "all_available":
             return srs
-        if mode == "oos":
+        elif mode == "oos":
             dbg.dassert(
-                self.oos_start,
-                msg="Must set `oos_start` to run `oos`",
+                self.oos_start, msg="Must set `oos_start` to run `oos`",
             )
             return srs[self.oos_start :]
-        raise ValueError(f"Invalid mode `{mode}`!")
+        else:
+            raise ValueError(f"Invalid mode `{mode}`!")
 
     @staticmethod
     def _validate_series(srs: pd.Series, oos_start: Optional[float]) -> None:

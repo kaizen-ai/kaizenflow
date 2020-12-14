@@ -6,10 +6,10 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
-import core.signal_processing as csigna
-import helpers.dataframe as hdataf
+import core.signal_processing as sigp
+import helpers.dataframe as hdf
 import helpers.dbg as dbg
-import helpers.printing as hprint
+import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
 
@@ -17,8 +17,7 @@ _LOG = logging.getLogger(__name__)
 def remove_dates_with_no_data(
     df: pd.DataFrame, report_stats: bool
 ) -> pd.DataFrame:
-    """
-    Given a df indexed with timestamps, scan the data by date and filter out
+    """Given a df indexed with timestamps, scan the data by date and filter out
     all the data when it's all nans.
 
     :return: filtered df
@@ -41,18 +40,18 @@ def remove_dates_with_no_data(
     #
     if report_stats:
         _LOG.info("df.index in [%s, %s]", df.index.min(), df.index.max())
-        removed_perc = hprint.perc(df.shape[0] - df_out.shape[0], df.shape[0])
+        removed_perc = pri.perc(df.shape[0] - df_out.shape[0], df.shape[0])
         _LOG.info("Rows removed: %s", removed_perc)
         #
-        removed_perc = hprint.perc(len(removed_days), num_days)
+        removed_perc = pri.perc(len(removed_days), num_days)
         _LOG.info("Number of removed days: %s", removed_perc)
         # Find week days.
         removed_weekdays = [d for d in removed_days if d.weekday() < 5]
-        removed_perc = hprint.perc(len(removed_weekdays), len(removed_days))
+        removed_perc = pri.perc(len(removed_weekdays), len(removed_days))
         _LOG.info("Number of removed weekdays: %s", removed_perc)
         _LOG.info("Weekdays removed: %s", ", ".join(map(str, removed_weekdays)))
         #
-        removed_perc = hprint.perc(
+        removed_perc = pri.perc(
             len(removed_days) - len(removed_weekdays), len(removed_days)
         )
         _LOG.info("Number of removed weekend days: %s", removed_perc)
@@ -64,11 +63,9 @@ def remove_dates_with_no_data(
 def resample(
     df: pd.DataFrame, agg_interval: Union[str, pd.Timedelta, pd.DateOffset]
 ) -> pd.DataFrame:
-    """
-    Resample returns (using sum) using our timing convention.
-    """
+    """Resample returns (using sum) using our timing convention."""
     dbg.dassert_strictly_increasing_index(df)
-    resampler = csigna.resample(df, rule=agg_interval, closed="left")
+    resampler = sigp.resample(df, rule=agg_interval, closed="left")
     rets = resampler.sum()
     return rets
 
@@ -78,8 +75,7 @@ def set_non_ath_to_nan(
     start_time: Optional[datetime.time] = None,
     end_time: Optional[datetime.time] = None,
 ) -> pd.DataFrame:
-    """
-    Filter according to active trading hours.
+    """Filter according to active trading hours.
 
     We assume time intervals are left closed, right open, labeled right.
 
@@ -104,9 +100,7 @@ def set_non_ath_to_nan(
 
 
 def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Filter out weekends.
-    """
+    """Filter out weekends."""
     dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
     # 5 = Saturday, 6 = Sunday.
     mask = df.index.dayofweek.isin([5, 6])
@@ -161,14 +155,13 @@ def resample_time_bars(
     :return: dataframe of resampled time bars
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
-
     # Helper
     def _resample_financial(df, rule, cols, agg_func, agg_func_kwargs):
         dbg.dassert(not df.empty)
         dbg.dassert_isinstance(cols, list)
         dbg.dassert(cols, msg="`cols` must be nonempty.")
         dbg.dassert_is_subset(cols, df.columns)
-        resampler = csigna.resample(df[cols], rule=rule)
+        resampler = sigp.resample(df[cols], rule=rule)
         resampled = resampler.agg(agg_func, **agg_func_kwargs)
         return resampled
 
@@ -234,17 +227,17 @@ def compute_twap_vwap(
     # Weight price according to volume.
     volume_weighted_price = price.multiply(volume)
     # Resample using `rule`.
-    resampled_volume_weighted_price = csigna.resample(
+    resampled_volume_weighted_price = sigp.resample(
         volume_weighted_price, rule=rule
     ).sum(min_count=1)
-    resampled_volume = csigna.resample(volume, rule=rule).sum(min_count=1)
+    resampled_volume = sigp.resample(volume, rule=rule).sum(min_count=1)
     # Complete the VWAP calculation.
     vwap = resampled_volume_weighted_price.divide(resampled_volume)
     # Replace infs with NaNs.
     vwap = vwap.replace([-np.inf, np.inf], np.nan)
     vwap.name = "vwap"
     # Calculate TWAP, but preserve NaNs for all-NaN bars.
-    twap = csigna.resample(price, rule=rule).mean()
+    twap = sigp.resample(price, rule=rule).mean()
     twap.loc[resampled_volume_weighted_price.isna()] = np.nan
     twap.name = "twap"
     #
@@ -291,8 +284,7 @@ def compute_ret_0_from_multiple_prices(
 def convert_log_rets_to_pct_rets(
     log_rets: Union[float, pd.Series, pd.DataFrame]
 ) -> Union[float, pd.Series, pd.DataFrame]:
-    """
-    Convert log returns to percentage returns.
+    """Convert log returns to percentage returns.
 
     :param log_rets: time series of log returns
     :return: time series of percentage returns
@@ -303,8 +295,7 @@ def convert_log_rets_to_pct_rets(
 def convert_pct_rets_to_log_rets(
     pct_rets: Union[float, pd.Series, pd.DataFrame]
 ) -> Union[float, pd.Series, pd.DataFrame]:
-    """
-    Convert percentage returns to log returns.
+    """Convert percentage returns to log returns.
 
     :param pct_rets: time series of percentage returns
     :return: time series of log returns
@@ -315,8 +306,7 @@ def convert_pct_rets_to_log_rets(
 def rescale_to_target_annual_volatility(
     srs: pd.Series, volatility: float
 ) -> pd.Series:
-    """
-    Rescale srs to achieve target annual volatility.
+    """Rescale srs to achieve target annual volatility.
 
     NOTE: This is not a causal rescaling, but SR is an invariant.
 
@@ -333,8 +323,7 @@ def rescale_to_target_annual_volatility(
 
 
 def compute_inverse_volatility_weights(df: pd.DataFrame) -> pd.Series:
-    """
-    Calculate inverse volatility relative weights.
+    """Calculate inverse volatility relative weights.
 
     :param df: cols contain log returns
     :return: series of weights
@@ -355,13 +344,12 @@ def compute_inverse_volatility_weights(df: pd.DataFrame) -> pd.Series:
     weights /= weights.sum()
     weights.name = "weights"
     # Replace NaN with zero for weights.
-    weights = hdataf.apply_nan_mode(weights, mode="fill_with_zero")
+    weights = hdf.apply_nan_mode(weights, mode="fill_with_zero")
     return weights
 
 
 def aggregate_log_rets(df: pd.DataFrame, weights: pd.Series) -> pd.Series:
-    """
-    Compute aggregate log returns.
+    """Compute aggregate log returns.
 
     :param df: cols contain log returns
     :param weights: series of weights
@@ -383,8 +371,7 @@ def aggregate_log_rets(df: pd.DataFrame, weights: pd.Series) -> pd.Series:
 def compute_volatility_normalization_factor(
     srs: pd.Series, target_volatility: float
 ) -> float:
-    """
-    Compute scale factor of a series according to a target volatility.
+    """Compute scale factor of a series according to a target volatility.
 
     :param srs: returns series. Index must have `freq`.
     :param target_volatility: target volatility as a proportion (e.g., `0.1`
@@ -392,8 +379,8 @@ def compute_volatility_normalization_factor(
     :return: scale factor
     """
     dbg.dassert_isinstance(srs, pd.Series)
-    ppy = hdataf.infer_sampling_points_per_year(srs)
-    srs = hdataf.apply_nan_mode(srs, mode="fill_with_zero")
+    ppy = hdf.infer_sampling_points_per_year(srs)
+    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
     scale_factor = target_volatility / (np.sqrt(ppy) * srs.std())
     _LOG.debug("`scale_factor`=%f", scale_factor)
     scale_factor = cast(float, scale_factor)
@@ -407,15 +394,14 @@ def compute_volatility_normalization_factor(
 
 
 def compute_kratio(log_rets: pd.Series) -> float:
-    """
-    Calculate K-Ratio of a time series of log returns.
+    """Calculate K-Ratio of a time series of log returns.
 
     :param log_rets: time series of log returns
     :return: K-Ratio
     """
     dbg.dassert_isinstance(log_rets, pd.Series)
     dbg.dassert(log_rets.index.freq)
-    log_rets = hdataf.apply_nan_mode(log_rets, mode="fill_with_zero")
+    log_rets = hdf.apply_nan_mode(log_rets, mode="fill_with_zero")
     cum_rets = log_rets.cumsum()
     # Fit the best line to the daily rets.
     x = range(len(cum_rets))
@@ -425,7 +411,7 @@ def compute_kratio(log_rets: pd.Series) -> float:
     # Compute k-ratio as slope / std err of slope.
     kratio = model.params[1] / model.bse[1]
     # Adjust k-ratio by the number of observations and points per year.
-    ppy = hdataf.infer_sampling_points_per_year(log_rets)
+    ppy = hdf.infer_sampling_points_per_year(log_rets)
     kratio = kratio * np.sqrt(ppy) / len(log_rets)
     kratio = cast(float, kratio)
     return kratio
@@ -445,7 +431,7 @@ def compute_drawdown(log_rets: pd.Series) -> pd.Series:
     :return: drawdown time series
     """
     dbg.dassert_isinstance(log_rets, pd.Series)
-    log_rets = hdataf.apply_nan_mode(log_rets, mode="fill_with_zero")
+    log_rets = hdf.apply_nan_mode(log_rets, mode="fill_with_zero")
     cum_rets = log_rets.cumsum()
     running_max = np.maximum.accumulate(cum_rets)  # pylint: disable=no-member
     drawdown = running_max - cum_rets
@@ -453,8 +439,7 @@ def compute_drawdown(log_rets: pd.Series) -> pd.Series:
 
 
 def compute_perc_loss_from_high_water_mark(log_rets: pd.Series) -> pd.Series:
-    """
-    Calculate drawdown in terms of percentage loss.
+    """Calculate drawdown in terms of percentage loss.
 
     :param log_rets: time series of log returns
     :return: drawdown time series as percentage loss
@@ -464,8 +449,7 @@ def compute_perc_loss_from_high_water_mark(log_rets: pd.Series) -> pd.Series:
 
 
 def compute_time_under_water(log_rets: pd.Series) -> pd.Series:
-    """
-    Generate time under water series.
+    """Generate time under water series.
 
     :param log_rets: time series of log returns
     :return: series of number of consecutive time points under water
@@ -490,23 +474,22 @@ def compute_time_under_water(log_rets: pd.Series) -> pd.Series:
 def compute_turnover(
     pos: pd.Series, unit: Optional[str] = None, nan_mode: Optional[str] = None
 ) -> pd.Series:
-    """
-    Compute turnover for a sequence of positions.
+    """Compute turnover for a sequence of positions.
 
     :param pos: sequence of positions
     :param unit: desired output unit (e.g. 'B', 'W', 'M', etc.)
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :return: turnover
     """
     dbg.dassert_isinstance(pos, pd.Series)
     dbg.dassert(pos.index.freq)
     nan_mode = nan_mode or "ffill"
-    pos = hdataf.apply_nan_mode(pos, mode=nan_mode)
+    pos = hdf.apply_nan_mode(pos, mode=nan_mode)
     numerator = pos.diff().abs()
     denominator = (pos.abs() + pos.shift().abs()) / 2
     if unit:
-        numerator = csigna.resample(numerator, rule=unit).sum()
-        denominator = csigna.resample(denominator, rule=unit).sum()
+        numerator = sigp.resample(numerator, rule=unit).sum()
+        denominator = sigp.resample(denominator, rule=unit).sum()
     turnover = numerator / denominator
     # Raise if we upsample.
     if len(turnover) > len(pos):
@@ -517,20 +500,19 @@ def compute_turnover(
 def compute_average_holding_period(
     pos: pd.Series, unit: Optional[str] = None, nan_mode: Optional[str] = None
 ) -> pd.Series:
-    """
-    Compute average holding period for a sequence of positions.
+    """Compute average holding period for a sequence of positions.
 
     :param pos: sequence of positions
     :param unit: desired output unit (e.g. 'B', 'W', 'M', etc.)
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :return: average holding period in specified units
     """
     unit = unit or "B"
     dbg.dassert_isinstance(pos, pd.Series)
     dbg.dassert(pos.index.freq)
-    pos_freq_in_year = hdataf.infer_sampling_points_per_year(pos)
-    unit_freq_in_year = hdataf.infer_sampling_points_per_year(
-        csigna.resample(pos, rule=unit).sum()
+    pos_freq_in_year = hdf.infer_sampling_points_per_year(pos)
+    unit_freq_in_year = hdf.infer_sampling_points_per_year(
+        sigp.resample(pos, rule=unit).sum()
     )
     dbg.dassert_lte(
         unit_freq_in_year,
@@ -538,7 +520,7 @@ def compute_average_holding_period(
         msg=f"Upsampling pos freq={pd.infer_freq(pos.index)} to unit freq={unit} is not allowed",
     )
     nan_mode = nan_mode or "ffill"
-    pos = hdataf.apply_nan_mode(pos, mode=nan_mode)
+    pos = hdf.apply_nan_mode(pos, mode=nan_mode)
     unit_coef = unit_freq_in_year / pos_freq_in_year
     average_holding_period = (
         pos.abs().mean() / pos.diff().abs().mean()
@@ -549,8 +531,7 @@ def compute_average_holding_period(
 def compute_bet_runs(
     positions: pd.Series, nan_mode: Optional[str] = None
 ) -> pd.Series:
-    """
-    Calculate runs of long/short bets.
+    """Calculate runs of long/short bets.
 
     A bet "run" is a (maximal) series of positions on the same "side", e.g.,
     long or short.
@@ -563,7 +544,7 @@ def compute_bet_runs(
     # Forward fill NaN positions by default (e.g., do not assume they are
     # closed out).
     nan_mode = nan_mode or "ffill"
-    positions = hdataf.apply_nan_mode(positions, mode=nan_mode)
+    positions = hdf.apply_nan_mode(positions, mode=nan_mode)
     # Locate zero positions so that we can avoid dividing by zero when
     # determining bet sign.
     zero_mask = positions == 0
@@ -576,8 +557,7 @@ def compute_bet_runs(
 def compute_bet_starts(
     positions: pd.Series, nan_mode: Optional[str] = None
 ) -> pd.Series:
-    """
-    Calculate the start of each new bet.
+    """Calculate the start of each new bet.
 
     :param positions: series of long/short positions
     :return: a series with a +1 at the start of each new long bet and a -1 at
@@ -604,8 +584,7 @@ def compute_bet_starts(
 def compute_bet_ends(
     positions: pd.Series, nan_mode: Optional[str] = None
 ) -> pd.Series:
-    """
-    Calculate the end of each bet.
+    """Calculate the end of each bet.
 
     NOTE: This function is not casual (because of our choice of indexing).
 
@@ -616,7 +595,7 @@ def compute_bet_ends(
     """
     # Apply the NaN mode casually (e.g., `ffill` is not time reversible).
     nan_mode = nan_mode or "ffill"
-    positions = hdataf.apply_nan_mode(positions, mode=nan_mode)
+    positions = hdf.apply_nan_mode(positions, mode=nan_mode)
     # Calculate bet ends by calculating the bet starts of the reversed series.
     reversed_positions = positions.iloc[::-1]
     reversed_bet_starts = compute_bet_starts(reversed_positions, nan_mode=None)
@@ -628,11 +607,10 @@ def compute_signed_bet_lengths(
     positions: pd.Series,
     nan_mode: Optional[str] = None,
 ) -> pd.Series:
-    """
-    Calculate lengths of bets (in sampling freq).
+    """Calculate lengths of bets (in sampling freq).
 
     :param positions: series of long/short positions
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :return: signed lengths of bets, i.e., the sign indicates whether the
         length corresponds to a long bet or a short bet. Index corresponds to
         end of bet (not causal).
@@ -670,12 +648,11 @@ def compute_signed_bet_lengths(
 def compute_returns_per_bet(
     positions: pd.Series, log_rets: pd.Series, nan_mode: Optional[str] = None
 ) -> pd.Series:
-    """
-    Calculate returns for each bet.
+    """Calculate returns for each bet.
 
     :param positions: series of long/short positions
     :param log_rets: log returns
-    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param nan_mode: argument for hdf.apply_nan_mode()
     :return: signed returns for each bet, index corresponds to the last date of
         bet
     """
@@ -703,15 +680,14 @@ def compute_returns_per_bet(
 
 
 def compute_annualized_return(srs: pd.Series) -> float:
-    """
-    Annualize mean return.
+    """Annualize mean return.
 
     :param srs: series with datetimeindex with `freq`
     :return: annualized return; pct rets if `srs` consists of pct rets,
         log rets if `srs` consists of log rets.
     """
-    srs = hdataf.apply_nan_mode(srs, mode="fill_with_zero")
-    ppy = hdataf.infer_sampling_points_per_year(srs)
+    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
+    ppy = hdf.infer_sampling_points_per_year(srs)
     mean_rets = srs.mean()
     annualized_mean_rets = ppy * mean_rets
     annualized_mean_rets = cast(float, annualized_mean_rets)
@@ -719,14 +695,13 @@ def compute_annualized_return(srs: pd.Series) -> float:
 
 
 def compute_annualized_volatility(srs: pd.Series) -> float:
-    """
-    Annualize sample volatility.
+    """Annualize sample volatility.
 
     :param srs: series with datetimeindex with `freq`
     :return: annualized volatility (stdev)
     """
-    srs = hdataf.apply_nan_mode(srs, mode="fill_with_zero")
-    ppy = hdataf.infer_sampling_points_per_year(srs)
+    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
+    ppy = hdf.infer_sampling_points_per_year(srs)
     std = srs.std()
     annualized_volatility = np.sqrt(ppy) * std
     annualized_volatility = cast(float, annualized_volatility)
