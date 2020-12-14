@@ -9,7 +9,6 @@ from typing import Any, List, Optional
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -46,6 +45,7 @@ class ModelPlotter:
         mode: Optional[str] = None,
         target_volatility: Optional[float] = None,
         resample_rule: Optional[str] = None,
+        axes: Optional[List[mpl.axes.Axes]] = None,
     ) -> None:
         """
         Plot a panel of signal analyses for (log) returns.
@@ -64,6 +64,7 @@ class ModelPlotter:
         :param target_volatility: Rescale portfolio to achieve
             `target_volatility` on in-sample region
         :param resample_rule: Resampling frequency to apply before plotting
+        :param axes: a flat list of axes to plot on
         """
         rets, _, _ = self.model_evaluator.aggregate_models(
             keys=keys,
@@ -74,26 +75,38 @@ class ModelPlotter:
         if resample_rule is not None:
             rets = rets.resample(rule=resample_rule).sum(min_count=1)
         num_rows = 6
-        fig = plt.figure(constrained_layout=True, figsize=(20, 5 * num_rows))
-        gs = mpl.gridspec.GridSpec(num_rows, 2, figure=fig)
+        if axes is None:
+            fig = plt.figure(constrained_layout=True, figsize=(20, 5 * num_rows))
+            gs = mpl.gridspec.GridSpec(num_rows, 2, figure=fig)
+            # Generate a flat list of axis.
+            axes = [
+                fig.add_subplot(gs[0, :]),
+                #
+                fig.add_subplot(gs[1, :]),
+                fig.add_subplot(gs[2, :]),
+                #
+                fig.add_subplot(gs[3, :]),
+                #
+                fig.add_subplot(gs[4, 0]),
+                fig.add_subplot(gs[4, -1]),
+                #
+                fig.add_subplot(gs[5, 0]),
+                fig.add_subplot(gs[5, -1]),
+            ]
         # qq-plot against normal.
-        plot.plot_qq(rets, ax=fig.add_subplot(gs[0, :]))
+        plot.plot_qq(rets, ax=axes[0])
         # Plot lineplot and density plot.
-        plot.plot_cols(
-            rets, axes=[fig.add_subplot(gs[1, :]), fig.add_subplot(gs[2, :])]
-        )
+        plot.plot_cols(rets, axes=axes[1:3])
         # Plot pnl.
-        plot.plot_pnl({"rets pnl": rets}, ax=fig.add_subplot(gs[3, :]))
+        plot.plot_pnl({"rets pnl": rets}, ax=axes[3])
         # Plot ACF and PACF.
         plot.plot_autocorrelation(
             rets,
-            axes=[fig.add_subplot(gs[4, 0]), fig.add_subplot(gs[4, -1])],
+            axes=axes[4:6],
             fft=True,
         )
         # Plot power spectral density and spectrogram.
-        plot.plot_spectrum(
-            rets, axes=[fig.add_subplot(gs[5, 0]), fig.add_subplot(gs[5, -1])]
-        )
+        plot.plot_spectrum(rets, axes=axes[6:])
 
     def plot_performance(
         self,
@@ -103,6 +116,7 @@ class ModelPlotter:
         target_volatility: Optional[float] = None,
         resample_rule: Optional[str] = None,
         benchmark: Optional[pd.Series] = None,
+        axes: Optional[List[mpl.axes.Axes]] = None,
         plot_cumulative_returns_kwargs: Optional[dict] = None,
         plot_rolling_beta_kwargs: Optional[dict] = None,
         plot_rolling_annualized_sharpe_ratio_kwargs: Optional[dict] = None,
@@ -127,6 +141,7 @@ class ModelPlotter:
             `target_volatility` on in-sample region
         :param resample_rule: Resampling frequency to apply before plotting
         :param benchmark: Benchmark returns to compare against
+        :param axes: a flat list of axes to plot on
         """
         # Obtain (log) returns.
         rets, _, _ = self.model_evaluator.aggregate_models(
@@ -151,14 +166,15 @@ class ModelPlotter:
         events = None
         if mode == "all_available" and self.model_evaluator.oos_start is not None:
             events = [(self.model_evaluator.oos_start, "OOS start")]
-        # Set number of plots.
-        if benchmark is not None:
-            num_plots = 4
-        else:
-            num_plots = 3
-        _, axs = plt.subplots(
-            num_plots, 1, figsize=(20, 5 * num_plots), constrained_layout=True
-        )
+        if axes is None:
+            # Set number of plots.
+            if benchmark is not None:
+                num_plots = 4
+            else:
+                num_plots = 3
+            _, axes = plot.get_multiple_plots(
+                num_plots, 1, y_scale=5, constrained_layout=True
+            )
         cumrets = rets.cumsum()
         cumrets_mode = plot_cumulative_returns_kwargs["mode"]
         if cumrets_mode == "log":
@@ -170,7 +186,7 @@ class ModelPlotter:
         plot.plot_cumulative_returns(
             cumrets,
             benchmark_series=benchmark,
-            ax=axs[0],
+            ax=axes[0],
             events=events,
             **plot_cumulative_returns_kwargs,
         )
@@ -178,19 +194,19 @@ class ModelPlotter:
             plot.plot_rolling_beta(
                 rets,
                 benchmark,
-                ax=axs[1],
+                ax=axes[1],
                 events=events,
                 **plot_rolling_beta_kwargs,
             )
         plot.plot_rolling_annualized_sharpe_ratio(
             rets,
-            ax=axs[-2],
+            ax=axes[-2],
             events=events,
             **plot_rolling_annualized_sharpe_ratio_kwargs,
         )
         plot_drawdown_kwargs = plot_drawdown_kwargs or {}
         plot.plot_drawdown(
-            rets, ax=axs[-1], events=events, **plot_drawdown_kwargs
+            rets, ax=axes[-1], events=events, **plot_drawdown_kwargs
         )
 
     def plot_rets_and_vol(
@@ -200,6 +216,7 @@ class ModelPlotter:
         mode: Optional[str] = None,
         target_volatility: Optional[float] = None,
         resample_rule: Optional[str] = None,
+        axes: Optional[List[mpl.axes.Axes]] = None,
         plot_yearly_barplot_kwargs: Optional[dict] = None,
         plot_monthly_heatmap_kwargs: Optional[dict] = None,
         plot_rolling_annualized_volatility_kwargs: Optional[dict] = None,
@@ -213,6 +230,7 @@ class ModelPlotter:
         :param target_volatility: Rescale portfolio to achieve
             `target_volatility` on in-sample region
         :param resample_rule: Resampling frequency to apply before plotting
+        :param axes: a flat list of axes to plot on
         """
         plot_yearly_barplot_kwargs = plot_yearly_barplot_kwargs or {"unit": "%"}
         plot_monthly_heatmap_kwargs = plot_monthly_heatmap_kwargs or {"unit": "%"}
@@ -229,18 +247,19 @@ class ModelPlotter:
         if resample_rule is not None:
             rets = rets.resample(rule=resample_rule).sum(min_count=1)
         num_plots = 3
-        _, axs = plt.subplots(
-            num_plots, 1, figsize=(20, 5 * num_plots), constrained_layout=True
-        )
+        if axes is None:
+            _, axes = plot.get_multiple_plots(
+                num_plots, 1, y_scale=5, constrained_layout=True
+            )
         # Plot yearly returns.
         plot.plot_yearly_barplot(
             rets,
-            ax=axs[0],
+            ax=axes[0],
             figsize=(20, 5 * num_plots),
             **plot_yearly_barplot_kwargs,
         )
         # Plot monthly returns.
-        plot.plot_monthly_heatmap(rets, ax=axs[1], **plot_monthly_heatmap_kwargs)
+        plot.plot_monthly_heatmap(rets, ax=axes[1], **plot_monthly_heatmap_kwargs)
         # Set OOS start if applicable.
         events = None
         if mode == "all_available" and self.model_evaluator.oos_start is not None:
@@ -248,7 +267,7 @@ class ModelPlotter:
         # Plot volatility.
         plot.plot_rolling_annualized_volatility(
             rets,
-            ax=axs[2],
+            ax=axes[2],
             events=events,
             **plot_rolling_annualized_volatility_kwargs,
         )
@@ -259,6 +278,7 @@ class ModelPlotter:
         weights: Optional[List[Any]] = None,
         mode: Optional[str] = None,
         target_volatility: Optional[float] = None,
+        axes: Optional[List[mpl.axes.Axes]] = None,
     ) -> None:
         """
         Plot holdings and turnover.
@@ -268,6 +288,7 @@ class ModelPlotter:
         :param mode: "all_available", "ins", or "oos"
         :param target_volatility: Rescale portfolio to achieve
             `target_volatility` on in-sample region
+        :param axes: a flat list of axes to plot on
         """
         _, pos, _ = self.model_evaluator.aggregate_models(
             keys=keys,
@@ -275,18 +296,19 @@ class ModelPlotter:
             mode=mode,
             target_volatility=target_volatility,
         )
-        num_plots = 2
-        _, axs = plt.subplots(
-            num_plots, 1, figsize=(20, 5 * num_plots), constrained_layout=True
-        )
+        if axes is None:
+            num_plots = 2
+            _, axes = plot.get_multiple_plots(
+                num_plots, 1, y_scale=5, constrained_layout=True
+            )
         # Set OOS start if applicable.
         events = None
         if mode == "all_available" and self.model_evaluator.oos_start is not None:
             events = [(self.model_evaluator.oos_start, "OOS start")]
         # Plot holdings.
-        plot.plot_holdings(pos, ax=axs[0], events=events)
+        plot.plot_holdings(pos, ax=axes[0], events=events)
         # Plot turnover.
-        plot.plot_turnover(pos, unit="%", ax=axs[1], events=events)
+        plot.plot_turnover(pos, unit="%", ax=axes[1], events=events)
 
     def plot_sharpe_ratio_panel(
         self,
@@ -294,6 +316,7 @@ class ModelPlotter:
         weights: Optional[List[Any]] = None,
         mode: Optional[str] = None,
         frequencies: Optional[List[str]] = None,
+        ax: Optional[mpl.axes.Axes] = None,
     ) -> None:
         """
         Plot how the SR varies under resampling.
@@ -306,13 +329,14 @@ class ModelPlotter:
         rets, _, _ = self.model_evaluator.aggregate_models(
             keys=keys, weights=weights, mode=mode
         )
-        plot.plot_sharpe_ratio_panel(rets, frequencies=frequencies)
+        plot.plot_sharpe_ratio_panel(rets, frequencies=frequencies, ax=ax)
 
     def plot_returns_and_predictions(
         self,
         keys: Optional[List[Any]] = None,
         mode: Optional[str] = None,
         resample_rule: Optional[str] = None,
+        axes: Optional[List[mpl.axes.Axes]] = None,
     ) -> None:
         """
         Plot returns and model predictions (per key).
@@ -328,24 +352,23 @@ class ModelPlotter:
         preds = self.model_evaluator.get_series_dict(
             "predictions", keys=keys, mode=mode
         )
-        _, axes = plot.get_multiple_plots(
-            len(keys), 1, y_scale=5, sharex=True, sharey=True
-        )
-        if not isinstance(axes, np.ndarray):
-            axes = [axes]
+        if axes is None:
+            _, axes = plot.get_multiple_plots(
+                len(keys), 1, y_scale=5, sharex=True, sharey=True
+            )
+            plt.suptitle("Returns and predictions over time", y=1.01)
         for idx, key in enumerate(keys):
             y_yhat = pd.concat([rets[key], preds[key]], axis=1)
             if resample_rule is not None:
                 y_yhat = y_yhat.resample(rule=resample_rule).sum(min_count=1)
             y_yhat.plot(ax=axes[idx], title=f"Model {key}")
-        plt.suptitle("Returns and predictions over time", y=1.01)
-        plt.tight_layout()
 
     def plot_multiple_tests_adjustment(
         self,
         threshold: float,
         keys: Optional[List[Any]] = None,
         mode: Optional[str] = None,
+        axes: Optional[List[mpl.axes.Axes]] = None,
         multipletests_plot_kwargs: Optional[dict] = None,
     ) -> None:
         """
@@ -359,7 +382,7 @@ class ModelPlotter:
         pnls = self.model_evaluator.get_series_dict("pnls", keys=keys, mode=mode)
         pvals = {k: stats.ttest_1samp(v).loc["pval"] for k, v in pnls.items()}
         plot.multipletests_plot(
-            pd.Series(pvals), threshold, **multipletests_plot_kwargs
+            pd.Series(pvals), threshold, axes=axes, **multipletests_plot_kwargs
         )
 
     def plot_multiple_pnls(
@@ -368,6 +391,7 @@ class ModelPlotter:
         weights: Optional[List[Any]] = None,
         mode: Optional[str] = None,
         resample_rule: Optional[str] = None,
+        ax: Optional[mpl.axes.Axes] = None,
     ) -> None:
         """
         Plot multiple pnl series (cumulatively summed) simultaneously.
@@ -387,7 +411,7 @@ class ModelPlotter:
         if resample_rule is not None:
             for k, v in pnls.items():
                 pnls[k] = v.resample(rule=resample_rule).sum(min_count=1)
-        plot.plot_pnl(pnls)
+        plot.plot_pnl(pnls, ax=ax)
 
     def plot_correlation_matrix(
         self,
@@ -395,6 +419,7 @@ class ModelPlotter:
         keys: Optional[List[Any]] = None,
         mode: Optional[str] = None,
         resample_rule: Optional[str] = None,
+        ax: Optional[mpl.axes.Axes] = None,
         plot_correlation_matrix_kwargs: Optional[dict] = None,
     ) -> None:
         """
@@ -410,7 +435,7 @@ class ModelPlotter:
         df = self._get_series_as_df(
             series, keys=keys, mode=mode, resample_rule=resample_rule
         )
-        plot.plot_correlation_matrix(df, **plot_correlation_matrix_kwargs)
+        plot.plot_correlation_matrix(df, ax=ax, **plot_correlation_matrix_kwargs)
 
     def plot_clustermap(
         self,
@@ -418,6 +443,7 @@ class ModelPlotter:
         keys: Optional[List[Any]] = None,
         mode: Optional[str] = None,
         resample_rule: Optional[str] = None,
+        ax: Optional[mpl.axes.Axes] = None,
         clustermap_kwargs: Optional[dict] = None,
     ) -> None:
         """
@@ -432,7 +458,7 @@ class ModelPlotter:
             series, keys=keys, mode=mode, resample_rule=resample_rule
         )
         corr = df.corr().fillna(0)
-        sns.clustermap(corr, **clustermap_kwargs)
+        sns.clustermap(corr, ax=ax, **clustermap_kwargs)
 
     def plot_dendrogram(
         self,
@@ -440,6 +466,7 @@ class ModelPlotter:
         keys: Optional[List[Any]] = None,
         mode: Optional[str] = None,
         resample_rule: Optional[str] = None,
+        ax: Optional[mpl.axes.Axes] = None,
     ) -> None:
         """
         Plot dendrogram of correlation of selected series.
@@ -451,7 +478,9 @@ class ModelPlotter:
         df = self._get_series_as_df(
             series, keys=keys, mode=mode, resample_rule=resample_rule
         )
-        plot.plot_dendrogram(df.fillna(0))
+        # TODO(Paul): If we fill `NaN`s, we see clusters by data periods
+        #     intersections.
+        plot.plot_dendrogram(df.fillna(0), ax=ax)
 
     def plot_multiple_time_series(
         self,
@@ -459,6 +488,7 @@ class ModelPlotter:
         keys: Optional[List[Any]] = None,
         mode: Optional[str] = None,
         resample_rule: Optional[str] = None,
+        axes: Optional[List[mpl.axes.Axes]] = None,
         plot_time_series_dict_kwargs: Optional[dict] = None,
     ) -> None:
         """
@@ -476,7 +506,9 @@ class ModelPlotter:
         if resample_rule is not None:
             for k, v in series_dict.items():
                 series_dict[k] = v.resample(rule=resample_rule).sum(min_count=1)
-        plot.plot_time_series_dict(series_dict, **plot_time_series_dict_kwargs)
+        plot.plot_time_series_dict(
+            series_dict, axes=axes, **plot_time_series_dict_kwargs
+        )
 
     def plot_pca_components(
         self,
@@ -485,13 +517,14 @@ class ModelPlotter:
         mode: Optional[str] = None,
         resample_rule: Optional[str] = None,
         num_components: Optional[int] = None,
+        axes: Optional[List[mpl.axes.Axes]] = None,
     ) -> None:
         df = self._get_series_as_df(
             series, keys=keys, mode=mode, resample_rule=resample_rule
         )
         pca = plot.PCA(mode="standard")
         pca.fit(df.fillna(0))
-        pca.plot_components(num_components)
+        pca.plot_components(num_components, axes=axes)
 
     def plot_explained_variance(
         self,
@@ -499,13 +532,14 @@ class ModelPlotter:
         keys: Optional[List[Any]] = None,
         mode: Optional[str] = None,
         resample_rule: Optional[str] = None,
+        ax: Optional[mpl.axes.Axes] = None,
     ) -> None:
         df = self._get_series_as_df(
             series, keys=keys, mode=mode, resample_rule=resample_rule
         )
         pca = plot.PCA(mode="standard")
         pca.fit(df.fillna(0))
-        pca.plot_explained_variance()
+        pca.plot_explained_variance(ax=ax)
 
     def _get_series_as_df(
         self,

@@ -834,7 +834,7 @@ def plot_heatmap(
     title: Optional[str] = None,
     vmin: float = -1.0,
     vmax: float = 1.0,
-    ax: Optional[plt.axes] = None,
+    ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """Plot a heatmap for a corr / cov df.
 
