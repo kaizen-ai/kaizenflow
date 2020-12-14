@@ -1,6 +1,4 @@
-"""
-Package with general pandas helpers.
-"""
+"""Package with general pandas helpers."""
 
 import collections
 import logging
@@ -11,9 +9,9 @@ import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 
-import core.residualizer as cresid
+import core.residualizer as res
 import helpers.dbg as dbg
-import helpers.printing as hprint
+import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
 
@@ -22,12 +20,9 @@ _LOG = logging.getLogger(__name__)
 
 
 def resample_index(
-    index: pd.DatetimeIndex,
-    time: Union[None, Tuple[int, int]] = None,
-    **kwargs: Any
+    index: pd.DatetimeIndex, time: Union[None, Tuple[int, int]] = None, **kwargs: Any
 ) -> pd.DatetimeIndex:
-    """
-    Resample `index` with options compatible with pd.date_range().
+    """Resample `index` with options compatible with pd.date_range().
     Implementation inspired by https://stackoverflow.com/questions/37853623.
 
     :param index: The daily-frequency index to resample as pd.DatetimeIndex
@@ -53,9 +48,8 @@ def resample_index(
 
 
 def _build_empty_df(metadata: Dict[str, Any]) -> pd.DataFrame:
-    """
-    Build an empty dataframe using the data in `metadata`, which is populated
-    in the previous calls of the `df_rolling_apply` function.
+    """Build an empty dataframe using the data in `metadata`, which is
+    populated in the previous calls of the `df_rolling_apply` function.
 
     This is used to generate missing data when applying the rolling
     function.
@@ -78,14 +72,12 @@ def _loop(
     i: int,
     ts: Union[int, pd.Timestamp, str],
     df: pd.DataFrame,
-    func: Union[Callable, cresid.PcaFactorComputer],
+    func: Union[Callable, res.PcaFactorComputer],
     window: int,
     metadata: Optional[Dict[str, Any]],
     abort_on_error: bool,
 ) -> Tuple[Optional[pd.DataFrame], Optional[Dict[str, Any]]]:
-    """
-    Apply `func` to a slice of `df` given by `i` and `window`.
-    """
+    """Apply `func` to a slice of `df` given by `i` and `window`."""
     # Extract the window.
     if i <= 1:
         _LOG.debug("i=%s -> return=None", i)
@@ -146,15 +138,14 @@ def _loop(
 def df_rolling_apply(
     df: pd.DataFrame,
     window: int,
-    func: Union[Callable, cresid.PcaFactorComputer],
+    func: Union[Callable, res.PcaFactorComputer],
     timestamps: Optional[pd.DatetimeIndex] = None,
     convert_to_df: bool = True,
     progress_bar: bool = False,
     abort_on_error: bool = True,
 ) -> pd.DataFrame:
-    """
-    Apply function `func` to a rolling window over `df` with `window` columns.
-    Timing semantic:
+    """Apply function `func` to a rolling window over `df` with `window`
+    columns. Timing semantic:
 
     - a timestamp i is computed based on a data slice [i - window + 1:i]
     - mimics pd.rolling functions
@@ -198,7 +189,7 @@ def df_rolling_apply(
             _LOG.warning(
                 "Some of the requested timestamps are not in df: "
                 "missing %s timestamps",
-                hprint.perc(len(idxs), len(timestamps), invert=True),
+                pri.perc(len(idxs), len(timestamps), invert=True),
             )
         # Find the numerical index of all the timestamps in df.
         idxs_loc = (
@@ -213,7 +204,7 @@ def df_rolling_apply(
         iter_ = tqdm(iter_)
     for i in iter_:
         ts = df.index[i]
-        _LOG.debug(hprint.frame("i=%s ts=%s"), i, ts)
+        _LOG.debug(pri.frame("i=%s ts=%s"), i, ts)
         df_tmp, metadata = _loop(
             i, ts, df, func, window, metadata, abort_on_error
         )

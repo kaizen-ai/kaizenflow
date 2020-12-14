@@ -1,7 +1,6 @@
-"""
-Import as:
+"""Import as:
 
-import core.data_adapters as cdataa
+import core.data_adapters as adpt
 """
 
 import functools
@@ -21,9 +20,8 @@ if True:
 
     #
     # TODO(*): gluon needs these imports to work properly.
-    import gluonts.dataset.common as gdcomm  # isort: skip # noqa: F401 # pylint: disable=unused-import
-    import gluonts.model.forecast as gmfore  # isort: skip # noqa: F401 # pylint: disable=unused-import
-
+    import gluonts.dataset.common as gdc  # isort: skip # noqa: F401 # pylint: disable=unused-import
+    import gluonts.model.forecast as gmf  # isort: skip # noqa: F401 # pylint: disable=unused-import
     # #########################################################################
     # GluonTS
     # #########################################################################
@@ -34,8 +32,7 @@ if True:
         y_vars: Union[str, List[str]],
         y_truncate: Optional[int],
     ) -> Generator[Dict[str, Union[pd.DataFrame, pd.Timestamp]], None, None]:
-        """
-        Generate `data_iter` parameter for
+        """Generate `data_iter` parameter for
         `gluonts.dataset.common.ListDataset`.
 
         Yield dicts consisting of:
@@ -84,8 +81,7 @@ if True:
         frequency: Optional[str] = None,
         y_truncate: Optional[int] = None,
     ) -> gluonts.dataset.common.ListDataset:
-        """
-        Transform a dataframe or multiindexed dataframe, e.g., the output of
+        """Transform a dataframe or multiindexed dataframe, e.g., the output of
         `core.event_study.core.build_local_timeseries` into gluonts
         `ListDataset`.
 
@@ -149,8 +145,7 @@ if True:
         y_vars: Iterable[str],
         index_name: Optional[str] = None,
     ) -> pd.DataFrame:
-        """
-        Transform gluonts `ListDataset` into a dataframe.
+        """Transform gluonts `ListDataset` into a dataframe.
 
         If `gluon_ts` consists of one time series, return singly indexed
         dataframe. Else the output is of the same format as the output of
@@ -199,8 +194,7 @@ if True:
     def transform_from_gluon_forecasts(
         forecasts: List[gluonts.model.forecast.SampleForecast],
     ) -> pd.Series:
-        """
-        Transform the output of
+        """Transform the output of
         `gluonts.evaluation.backtest.make_evaluation_predictions` into a
         dataframe.
 
@@ -264,10 +258,8 @@ if True:
     ) -> Generator[
         Dict[str, Union[pd.Series, pd.DataFrame, pd.Timestamp]], None, None
     ]:
-        """
-        Iterate level 0 of MultiIndex and generate `data_iter` parameter for
-        `gluonts.dataset.common.ListDataset`.
-        """
+        """Iterate level 0 of MultiIndex and generate `data_iter` parameter for
+        `gluonts.dataset.common.ListDataset`."""
         dbg.dassert_isinstance(local_ts.index, pd.MultiIndex)
         dbg.dassert_strictly_increasing_index(
             local_ts.index.get_level_values(0).unique()
@@ -305,8 +297,7 @@ if True:
 
 
 def transform_to_sklearn(df: pd.DataFrame, cols: List[Any]) -> np.array:
-    """
-    Transform pd.DataFrame cols into a numpy array and sanity check.
+    """Transform pd.DataFrame cols into a numpy array and sanity check.
 
     :param df: input dataset
     :param cols: columns to be included in transformed dataset
@@ -334,8 +325,7 @@ def transform_to_sklearn(df: pd.DataFrame, cols: List[Any]) -> np.array:
 def transform_to_sklearn_old(
     df: pd.DataFrame, x_vars: Optional[List[str]], y_vars: List[str]
 ) -> Tuple[np.array, np.array]:
-    """
-    Transform pd.DataFrame into sklearn model inputs.
+    """Transform pd.DataFrame into sklearn model inputs.
 
     Sklearn requires separate feature and target inputs, both with range
     index. To undo the transformation into sklrean format, we need the
@@ -363,8 +353,7 @@ def transform_from_sklearn(
     vars_: List[str],
     vals: np.array,
 ) -> pd.DataFrame:
-    """
-    Add index and column names to sklearn output.
+    """Add index and column names to sklearn output.
 
     :param idx: data index
     :param vars_: names of feature columns

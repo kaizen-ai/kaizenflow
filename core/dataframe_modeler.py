@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.dataframe_modeler as cdataf
+import core.dataframe_modeler as dfmod
 """
 
 from __future__ import annotations
@@ -11,19 +11,18 @@ import datetime
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
-import matplotlib as matplo
+import core.dataflow as dtf
+import core.finance as fin
+import core.plotting as plot
+import core.signal_processing as sigp
+import core.statistics as stats
+import core.timeseries_study as tss
+import helpers.dbg as dbg
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from tqdm.autonotebook import tqdm
-
-import core.dataflow as cdataf
-import core.finance as cfinan
-import core.plotting as cplott
-import core.signal_processing as csigna
-import core.statistics as cstati
-import core.timeseries_study as ctimes
-import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -89,7 +88,7 @@ class DataFrameModeler:
         """
         Apply a function to a select of columns.
         """
-        model = cdataf.ColumnTransformer(
+        model = dtf.ColumnTransformer(
             nid="column_transformer",
             transformer_func=transformer_func,
             transformer_kwargs=transformer_kwargs,
@@ -109,7 +108,7 @@ class DataFrameModeler:
         """
         Execute a dataframe method.
         """
-        model = cdataf.DataframeMethodRunner(
+        model = dtf.DataframeMethodRunner(
             nid="dataframe_method_runner",
             method=dataframe_method,
             method_kwargs=method_kwargs,
@@ -128,7 +127,7 @@ class DataFrameModeler:
         Resample the dataframe (causally, by default).
         """
         agg_func_kwargs = agg_func_kwargs or {}
-        model = cdataf.Resample(
+        model = dtf.Resample(
             nid="resample",
             rule=rule,
             agg_func=agg_func,
@@ -148,7 +147,7 @@ class DataFrameModeler:
         """
         Apply an unsupervised model and residualize.
         """
-        model = cdataf.Residualizer(
+        model = dtf.Residualizer(
             nid="sklearn_residualizer",
             model_func=model_func,
             x_vars=x_vars,
@@ -173,7 +172,7 @@ class DataFrameModeler:
 
         Both x and y vars should be indexed by knowledge time.
         """
-        model = cdataf.ContinuousSkLearnModel(
+        model = dtf.ContinuousSkLearnModel(
             nid="sklearn",
             model_func=model_func,
             x_vars=x_vars,
@@ -196,7 +195,7 @@ class DataFrameModeler:
         """
         Apply a smooth moving average model.
         """
-        model = cdataf.SmaModel(
+        model = dtf.SmaModel(
             nid="sma_model",
             col=[col],
             steps_ahead=steps_ahead,
@@ -217,7 +216,7 @@ class DataFrameModeler:
         """
         Apply an unsupervised model, e.g., PCA.
         """
-        model = cdataf.UnsupervisedSkLearnModel(
+        model = dtf.UnsupervisedSkLearnModel(
             nid="unsupervised_sklearn",
             model_func=model_func,
             x_vars=x_vars,
@@ -239,7 +238,7 @@ class DataFrameModeler:
         """
         Model volatility.
         """
-        model = cdataf.VolatilityModel(
+        model = dtf.VolatilityModel(
             nid="volatility_model",
             col=[col],
             steps_ahead=steps_ahead,
@@ -267,7 +266,7 @@ class DataFrameModeler:
 
         Both x and y vars should be indexed by knowledge time.
         """
-        model = cdataf.ContinuousSarimaxModel(
+        model = dtf.ContinuousSarimaxModel(
             nid="sarimax",
             y_vars=y_vars,
             steps_ahead=steps_ahead,
@@ -299,9 +298,9 @@ class DataFrameModeler:
         """
         col_rename_func = col_rename_func or (lambda x: str(x) + "_ret_0")
         col_mode = col_mode or "replace_all"
-        model = cdataf.ColumnTransformer(
+        model = dtf.ColumnTransformer(
             nid="compute_ret_0",
-            transformer_func=cfinan.compute_ret_0,
+            transformer_func=fin.compute_ret_0,
             transformer_kwargs={"mode": rets_mode},
             cols=cols,
             col_rename_func=col_rename_func,
@@ -319,9 +318,9 @@ class DataFrameModeler:
         """
         Replace values at non active trading hours with NaNs.
         """
-        model = cdataf.ColumnTransformer(
+        model = dtf.ColumnTransformer(
             nid="set_non_ath_to_nan",
-            transformer_func=cfinan.set_non_ath_to_nan,
+            transformer_func=fin.set_non_ath_to_nan,
             col_mode="replace_all",
             transformer_kwargs={"start_time": start_time, "end_time": end_time},
         )
@@ -331,9 +330,9 @@ class DataFrameModeler:
         """
         Replace values over weekends with NaNs.
         """
-        model = cdataf.ColumnTransformer(
+        model = dtf.ColumnTransformer(
             nid="set_weekends_to_nan",
-            transformer_func=cfinan.set_weekends_to_nan,
+            transformer_func=fin.set_weekends_to_nan,
             col_mode="replace_all",
         )
         return self._run_model(model, method)
@@ -352,7 +351,7 @@ class DataFrameModeler:
         Calculate stats for selected columns.
         """
         df = self._get_df(cols=cols, mode=mode)
-        # Calculate cstati.
+        # Calculate stats.
         stats_dict = {}
         for col in tqdm(df.columns, disable=not progress_bar):
             stats_val = self._calculate_series_stats(df[col])
@@ -381,7 +380,7 @@ class DataFrameModeler:
         if num_plots == 1:
             num_cols = 1
         # Create figure to accommodate plots.
-        _, axes = cplott.get_multiple_plots(
+        _, axes = plot.get_multiple_plots(
             num_plots=num_plots,
             num_cols=num_cols,
             y_scale=y_scale,
@@ -406,7 +405,7 @@ class DataFrameModeler:
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         plot_projection_kwargs = plot_projection_kwargs or {}
-        cplott.plot_projection(df, **plot_projection_kwargs)
+        plot.plot_projection(df, **plot_projection_kwargs)
 
     def plot_cumulative_returns(
         self,
@@ -420,7 +419,7 @@ class DataFrameModeler:
         cols = df.columns.values
         cum_rets = df.cumsum()
         for i in range(df.shape[1]):
-            cplott.plot_cumulative_returns(
+            plot.plot_cumulative_returns(
                 cum_rets.iloc[:, i],
                 mode=mode_rets,
                 **plot_cumulative_returns_kwargs,
@@ -437,8 +436,8 @@ class DataFrameModeler:
         """
         df = self._get_df(cols=cols, mode=mode)
         # Calculate correlation.
-        corr_df = csigna.correlate_with_lag(df, lag=lag)
-        cplott.plot_heatmap(corr_df)
+        corr_df = sigp.correlate_with_lag(df, lag=lag)
+        plot.plot_heatmap(corr_df)
         return corr_df
 
     def plot_correlation_with_lagged_cumsum(
@@ -454,10 +453,10 @@ class DataFrameModeler:
         """
         df = self._get_df(cols=cols, mode=mode)
         # Calculate correlation.
-        corr_df = csigna.correlate_with_lagged_cumsum(
+        corr_df = sigp.correlate_with_lagged_cumsum(
             df, lag=lag, y_vars=y_vars, nan_mode=nan_mode
         )
-        cplott.plot_heatmap(corr_df)
+        plot.plot_heatmap(corr_df)
         return corr_df
 
     def plot_autocorrelation(
@@ -468,7 +467,7 @@ class DataFrameModeler:
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         plot_auto_correlation_kwargs = plot_auto_correlation_kwargs or {}
-        cplott.plot_autocorrelation(df, **plot_auto_correlation_kwargs)
+        plot.plot_autocorrelation(df, **plot_auto_correlation_kwargs)
 
     def plot_sequence_and_density(
         self,
@@ -478,7 +477,7 @@ class DataFrameModeler:
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         plot_cols_kwargs = plot_cols_kwargs or {}
-        cplott.plot_cols(df, **plot_cols_kwargs)
+        plot.plot_cols(df, **plot_cols_kwargs)
 
     def plot_spectrum(
         self,
@@ -488,7 +487,7 @@ class DataFrameModeler:
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         plot_spectrum_kwargs = plot_spectrum_kwargs or {}
-        cplott.plot_spectrum(df, **plot_spectrum_kwargs)
+        plot.plot_spectrum(df, **plot_spectrum_kwargs)
 
     def plot_correlation_matrix(
         self,
@@ -498,9 +497,7 @@ class DataFrameModeler:
     ) -> pd.DataFrame:
         df = self._get_df(cols=cols, mode=mode)
         plot_correlation_matrix_kwargs = plot_correlation_matrix_kwargs or {}
-        return cplott.plot_correlation_matrix(
-            df, **plot_correlation_matrix_kwargs
-        )
+        return plot.plot_correlation_matrix(df, **plot_correlation_matrix_kwargs)
 
     def plot_dendrogram(
         self,
@@ -512,7 +509,7 @@ class DataFrameModeler:
         plot_dendrogram_kwargs = plot_dendrogram_kwargs or {}
         #
         df = self._get_df(cols=cols, mode=mode)
-        cplott.plot_dendrogram(df, figsize=figsize, **plot_dendrogram_kwargs)
+        plot.plot_dendrogram(df, figsize=figsize, **plot_dendrogram_kwargs)
 
     def plot_pca_components(
         self,
@@ -523,7 +520,7 @@ class DataFrameModeler:
         mode: str = "ins",
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
-        pca = cplott.PCA(mode="standard")
+        pca = plot.PCA(mode="standard")
         pca.fit(df.replace([np.inf, -np.inf], np.nan).fillna(0))
         pca.plot_components(num_components, num_cols=num_cols, y_scale=y_scale)
 
@@ -534,20 +531,20 @@ class DataFrameModeler:
         mode: str = "ins",
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
-        pca = cplott.PCA(mode="standard", n_components=num_components)
+        pca = plot.PCA(mode="standard", n_components=num_components)
         pca.fit(df.replace([np.inf, -np.inf], np.nan).fillna(0))
         pca.plot_explained_variance()
 
     def plot_qq(
         self,
         col: Any,
-        ax: Optional[matplo.axes.Axes] = None,
+        ax: Optional[mpl.axes.Axes] = None,
         dist: Optional[str] = None,
         nan_mode: Optional[str] = None,
         mode: str = "ins",
     ) -> None:
         srs = self._get_df(cols=[col], mode=mode).squeeze()
-        cplott.plot_qq(srs, ax=ax, dist=dist, nan_mode=nan_mode)
+        plot.plot_qq(srs, ax=ax, dist=dist, nan_mode=nan_mode)
 
     def plot_rolling_correlation(
         self,
@@ -559,7 +556,7 @@ class DataFrameModeler:
     ) -> None:
         df = self._get_df(cols=[col1, col2], mode=mode)
         plot_rolling_correlation_kwargs = plot_rolling_correlation_kwargs or {}
-        cplott.plot_rolling_correlation(
+        plot.plot_rolling_correlation(
             df[col1],
             df[col2],
             tau=tau,
@@ -580,9 +577,26 @@ class DataFrameModeler:
         num_plots = num_plots or df.shape[1]
         cols_to_draw = df.columns[:num_plots]
         for col_name in cols_to_draw:
-            tsds = ctimes.TimeSeriesDailyStudy(df[col_name])
+            tsds = tss.TimeSeriesDailyStudy(df[col_name])
             tsds.execute(last_n_years=last_n_years)
             plt.show()
+
+    def plot_seasonal_decomposition(
+        self,
+        cols: Optional[List[Any]] = None,
+        nan_mode: Optional[str] = None,
+        plot_seasonal_decomposition_kwargs: Optional[Dict[str, Any]] = None,
+        mode: str = "ins",
+    ) -> None:
+        nan_mode = nan_mode or "drop"
+        plot_seasonal_decomposition_kwargs = (
+            plot_seasonal_decomposition_kwargs or {}
+        )
+        df = self._get_df(cols=cols, mode=mode)
+        for i in df.columns.values:
+            plot.plot_seasonal_decomposition(
+                df[i], nan_mode=nan_mode, **plot_seasonal_decomposition_kwargs
+            )
 
     def plot_histograms_and_lagged_scatterplot(
         self,
@@ -599,7 +613,7 @@ class DataFrameModeler:
         else:
             oos_start = None
         for col_name in df.columns:
-            cplott.plot_histograms_and_lagged_scatterplot(
+            plot.plot_histograms_and_lagged_scatterplot(
                 df[col_name],
                 lag=lag,
                 oos_start=oos_start,
@@ -627,7 +641,7 @@ class DataFrameModeler:
         raise ValueError(f"Unrecognized mode `{mode}`")
 
     def _run_model(
-        self, model: cdataf.FitPredictNode, method: str
+        self, model: dtf.FitPredictNode, method: str
     ) -> DataFrameModeler:
         info = collections.OrderedDict()
         if method == "fit":
@@ -654,14 +668,14 @@ class DataFrameModeler:
         Calculate stats for a single series.
         """
         stats_dict = {}
-        stats_dict[0] = cstati.summarize_time_index_info(srs)
-        stats_dict[1] = cstati.compute_jensen_ratio(srs)
-        stats_dict[2] = cstati.compute_forecastability(srs)
-        stats_dict[3] = cstati.compute_moments(srs)
-        stats_dict[4] = cstati.compute_special_value_stats(srs)
-        stats_dict[5] = cstati.apply_normality_test(srs, prefix="normality_")
-        stats_dict[6] = cstati.apply_adf_test(srs, prefix="adf_")
-        stats_dict[7] = cstati.apply_kpss_test(srs, prefix="kpss_")
+        stats_dict[0] = stats.summarize_time_index_info(srs)
+        stats_dict[1] = stats.compute_jensen_ratio(srs)
+        stats_dict[2] = stats.compute_forecastability(srs)
+        stats_dict[3] = stats.compute_moments(srs)
+        stats_dict[4] = stats.compute_special_value_stats(srs)
+        stats_dict[5] = stats.apply_normality_test(srs, prefix="normality_")
+        stats_dict[6] = stats.apply_adf_test(srs, prefix="adf_")
+        stats_dict[7] = stats.apply_kpss_test(srs, prefix="kpss_")
         # Sort dict by integer keys.
         stats_dict = dict(sorted(stats_dict.items()))
         stats_srs = pd.concat(stats_dict).droplevel(0)
