@@ -391,6 +391,9 @@ class DAG:
                 kwargs[k] = pre_node.get_output(method, v)
         _LOG.debug("kwargs are %s", kwargs)
         node = self.get_node(nid)
-        output = getattr(node, method)(**kwargs)
-        for out in node.output_names:
-            node._store_output(method, out, output[out])
+        try:
+            output = getattr(node, method)(**kwargs)
+            for out in node.output_names:
+                node._store_output(method, out, output[out])
+        except Exception as e:
+            raise Exception(f"An error occurred in node '{nid}'.") from e
