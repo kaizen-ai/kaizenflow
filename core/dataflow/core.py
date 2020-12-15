@@ -396,4 +396,6 @@ class DAG:
             for out in node.output_names:
                 node._store_output(method, out, output[out])
         except Exception as e:
-            raise Exception(f"An error occurred in node '{nid}'.") from e
+            raise Exception(
+                f"An exception occurred in node '{nid}'."
+            ).with_traceback(e.__traceback__)
