@@ -394,8 +394,6 @@ class DAG:
         try:
             output = getattr(node, method)(**kwargs)
         except Exception as e:
-            raise Exception(
-                f"An exception occurred in node '{nid}'."
-            ).with_traceback(e.__traceback__)
+            raise Exception(f"An exception occurred in node '{nid}'.") from e
         for out in node.output_names:
             node._store_output(method, out, output[out])
