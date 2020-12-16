@@ -17,7 +17,7 @@ import copy
 import logging
 import os
 import sys
-from typing import List
+from typing import List, Optional
 
 import joblib
 import tqdm
@@ -84,8 +84,9 @@ def _run_notebook(
     config: cfg.Config,
     config_builder: str,
     num_attempts: int,
+    abort_on_error: bool,
     publish: bool,
-) -> None:
+) -> Optional[int]:
     """
     Run a notebook for the particular config from a list.
 
@@ -100,7 +101,9 @@ def _run_notebook(
     :param config_builder: function used to generate all configs
     :param num_attempts: maximum number of times to attempt running the
         notebook
+    :param abort_on_error: if `True`, raise an error
     :param publish: publish notebook if `True`
+    :return: `rc` if notebook is not skipped
     """
     dbg.dassert_exists(notebook_file)
     dbg.dassert_isinstance(config, cfg.Config)
@@ -172,11 +175,20 @@ def _run_notebook(
                 num_attempts,
                 rc,
             )
-        # Abort on the last attempt.
-        abort_on_error = n == num_attempts
-        rc = si.system(cmd, output_file=log_file, abort_on_error=abort_on_error)
+        # Possibly abort on the last attempt.
+        is_last_attempt = n == num_attempts
+        abort_on_error_curr = is_last_attempt and abort_on_error
+        rc = si.system(
+            cmd, output_file=log_file, abort_on_error=abort_on_error_curr
+        )
         if rc == 0:
             break
+    if not abort_on_error and rc == -1:
+        _LOG.error(
+            "Execution failed for experiment `%s`. "
+            "Continuing execution for next experiments.",
+            i,
+        )
     # Convert to html and publish.
     if publish:
         _LOG.info("Converting notebook %s", i)
@@ -192,6 +204,7 @@ def _run_notebook(
     file_name = os.path.join(experiment_result_dir, "success.txt")
     _LOG.info("file_name=%s", file_name)
     io_.to_file(file_name, "")
+    return rc
 
 
 def select_config(
@@ -291,7 +304,9 @@ def _parse() -> argparse.ArgumentParser:
         "random_seed_variants=[911,2,42,0])",
     )
     parser.add_argument(
-        "--index", action="store", help="Run a single experiment",
+        "--index",
+        action="store",
+        help="Run a single experiment",
     )
     parser.add_argument(
         "--start_from_index",
@@ -309,6 +324,12 @@ def _parse() -> argparse.ArgumentParser:
         type=int,
         help="Maximum number of times to attempt running the notebook",
         required=False,
+    )
+    parser.add_argument(
+        "--abort_on_error",
+        action="store",
+        default=True,
+        help="Stop execution of experiments after encountering an error",
     )
     parser.add_argument(
         "--num_threads",
@@ -346,29 +367,33 @@ def _main(parser: argparse.ArgumentParser) -> None:
     notebook_file = os.path.abspath(notebook_file)
     dbg.dassert_exists(notebook_file)
     #
-    publish = args.publish_notebook
     num_attempts = args.num_attempts
+    abort_on_error = args.abort_on_error
+    publish = args.publish_notebook
     #
     num_threads = args.num_threads
     if num_threads == "serial":
+        rcs = []
         for config in tqdm.tqdm(configs):
             i = int(config[("meta", "id")])
             _LOG.debug("\n%s", printing.frame("Config %s" % i))
             #
-            _run_notebook(
+            rc = _run_notebook(
                 i,
                 notebook_file,
                 dst_dir,
                 config,
                 config_builder,
                 num_attempts,
+                abort_on_error,
                 publish,
             )
+            rcs.append(rc)
     else:
         num_threads = int(num_threads)
         # -1 is interpreted by joblib like for all cores.
         _LOG.info("Using %d threads", num_threads)
-        joblib.Parallel(n_jobs=num_threads, verbose=50)(
+        rcs = joblib.Parallel(n_jobs=num_threads, verbose=50)(
             joblib.delayed(_run_notebook)(
                 int(config[("meta", "id")]),
                 notebook_file,
@@ -376,10 +401,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 config,
                 config_builder,
                 num_attempts,
+                abort_on_error,
                 publish,
             )
             for config in configs
         )
+    if rcs:
+        _LOG.error("Failed experiments are: %s", rcs)
 
 
 if __name__ == "__main__":
