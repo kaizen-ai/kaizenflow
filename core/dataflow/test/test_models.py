@@ -723,6 +723,54 @@ class TestModulator(hut.TestCase):
         )
         self.check_string(output_str)
 
+    def test_col_mode1(self) -> None:
+        steps_ahead = 2
+        df_in = self._get_signal_and_fwd_vol(steps_ahead)
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "signal_cols": ["ret_0"],
+                "volatility_col": "fwd_vol_hat",
+                "steps_ahead": steps_ahead,
+                "mode": "demodulate",
+                "col_rename_func": lambda x: f"{x}_zscored",
+                "col_mode": "merge_all",
+            }
+        )
+        node = dtf.Modulator("demodulate", **config.to_dict())
+        df_out = node.fit(df_in)["df_out"]
+        output_str = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_in')}\n"
+            f"{hut.convert_df_to_string(df_in, index=True)}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(df_out, index=True)}\n"
+        )
+        self.check_string(output_str)
+
+    def test_col_mode2(self) -> None:
+        steps_ahead = 2
+        df_in = self._get_signal_and_fwd_vol(steps_ahead)
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "signal_cols": ["ret_0"],
+                "volatility_col": "fwd_vol_hat",
+                "steps_ahead": steps_ahead,
+                "mode": "demodulate",
+                "col_rename_func": lambda x: f"{x}_zscored",
+                "col_mode": "replace_selected",
+            }
+        )
+        node = dtf.Modulator("demodulate", **config.to_dict())
+        df_out = node.fit(df_in)["df_out"]
+        output_str = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_in')}\n"
+            f"{hut.convert_df_to_string(df_in, index=True)}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(df_out, index=True)}\n"
+        )
+        self.check_string(output_str)
+
     @staticmethod
     def _get_signal_and_fwd_vol(
         steps_ahead: int,

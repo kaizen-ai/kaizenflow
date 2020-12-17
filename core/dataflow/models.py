@@ -1586,6 +1586,8 @@ class Modulator(FitPredictNode):
         volatility_col: Any,
         steps_ahead: int,
         mode: str,
+        col_rename_func: Optional[Callable[[Any], Any]] = None,
+        col_mode: Optional[str] = None,
     ) -> None:
         """
         :param nid: node identifier
@@ -1593,14 +1595,18 @@ class Modulator(FitPredictNode):
         :param volatility_col: name of forward volatility prediction column
         :param steps_ahead: number of steps ahead of the volatility prediction
         :param mode: "modulate" or "demodulate"
+        :param col_rename_func: as in `ColumnTransformer`
+        :param col_mode: as in `ColumnTransformer`
         """
+        super().__init__(nid)
         dbg.dassert_isinstance(signal_cols, list)
         self._signal_cols = signal_cols
         self._volatility_col = volatility_col
         self._steps_ahead = steps_ahead
         dbg.dassert_in(mode, ["modulate", "demodulate"])
         self._mode = mode
-        super().__init__(nid)
+        self._col_rename_func = col_rename_func or (lambda x: x)
+        self._col_mode = col_mode or "replace_all"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return {"df_out": self._process_signal(df_in)}
@@ -1627,7 +1633,43 @@ class Modulator(FitPredictNode):
         else:
             raise ValueError(f"Invalid mode=`{self._mode}`")
         adjusted_signal = getattr(signal, method)(vol_hat_shifted, axis=0)
-        return adjusted_signal
+        adjusted_signal.rename(columns=self._col_rename_func, inplace=True)
+        df_out = self._apply_col_mode(df_in, adjusted_signal)
+        return df_out
+
+    def _apply_col_mode(
+        self,
+        df_in: pd.DataFrame,
+        df_out: pd.DataFrame,
+    ) -> pd.DataFrame:
+        if self._col_mode == "merge_all":
+            dbg.dassert(
+                df_out.columns.intersection(df_in.columns).empty,
+                "Transformed column names `%s` conflict with existing column "
+                "names `%s`.",
+                df_out.columns,
+                df_in.columns,
+            )
+            df_out = df_in.merge(df_out, left_index=True, right_index=True)
+        elif self._col_mode == "replace_selected":
+            dbg.dassert(
+                df_in.drop(self._signal_cols, axis=1)
+                .columns.intersection(df_out.columns)
+                .empty,
+                "Transformed column names `%s` conflict with existing column "
+                "names `%s`.",
+                df_out.columns,
+                self._signal_cols,
+            )
+            df_out = df_in.drop(self._signal_cols, axis=1).merge(
+                df_out, left_index=True, right_index=True
+            )
+        elif self._col_mode == "replace_all":
+            pass
+        else:
+            raise ValueError(f"Invalid `col_mode`='{self._col_mode}'")
+        dbg.dassert_no_duplicates(df_out.columns)
+        return df_out
 
 
 class VolatilityModel(FitPredictNode):
