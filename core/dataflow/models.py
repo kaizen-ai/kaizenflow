@@ -1699,6 +1699,7 @@ class VolatilityModel(FitPredictNode):
             col=[self._vol_col],
             steps_ahead=self._steps_ahead,
             tau=self._tau,
+            col_mode="merge_all",
             nan_mode=self._nan_mode,
         )
         self._modulator = Modulator(
@@ -1711,8 +1712,8 @@ class VolatilityModel(FitPredictNode):
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df_in = df_in.copy()
-        vol_power = self._calculate_vol_power(df_in)
-        dag = self._get_dag(vol_power)
+        df_in[self._vol_col] = self._calculate_vol_power(df_in)
+        dag = self._get_dag(df_in)
         df_out = dag.run_leq_node("anonymous_modulation", "fit")["df_out"]
         info = extract_info(dag, ["fit"])
         self._set_info("fit", info)
@@ -1722,8 +1723,8 @@ class VolatilityModel(FitPredictNode):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_not_in(self._vol_col, df_in.columns)
         df_in = df_in.copy()
-        vol_power = self._calculate_vol_power(df_in)
-        dag = self._get_dag(vol_power)
+        df_in[self._vol_col] = self._calculate_vol_power(df_in)
+        dag = self._get_dag(df_in)
         df_out = dag.run_leq_node("anonymous_modulation", "predict")["df_out"]
         info = extract_info(dag, ["predict"])
         self._set_info("predict", info)
@@ -1739,9 +1740,9 @@ class VolatilityModel(FitPredictNode):
         ).to_frame()
         return vol_p
 
-    def _get_dag(self, vol_power: pd.DataFrame) -> DAG:
+    def _get_dag(self, df_in: pd.DataFrame) -> DAG:
         dag = DAG(mode="strict")
-        node = ReadDataFromDf("data", vol_power)
+        node = ReadDataFromDf("data", df_in)
         dag.add_node(node)
         dag.add_node(self._sma_model)
         dag.connect("data", "anonymous_sma")
