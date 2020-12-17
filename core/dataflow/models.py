@@ -1574,7 +1574,7 @@ class SmaModel(FitPredictNode):
         return info
 
 
-class ModulationNode(YConnector):
+class Modulator(YConnector):
     """
     Modulate or demodulate signal by volatility prediction.
     """

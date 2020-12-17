@@ -678,14 +678,14 @@ class TestSmaModel(hut.TestCase):
         return df
 
 
-class TestModulationNode(hut.TestCase):
+class TestModulator(hut.TestCase):
     def test_modulate1(self) -> None:
         steps_ahead = 2
         signal, fwd_vol_hat = self._get_signal_and_fwd_vol(steps_ahead)
         config = cfgb.get_config_from_nested_dict(
             {"steps_ahead": steps_ahead, "mode": "modulate"}
         )
-        node = dtf.ModulationNode("modulate", **config.to_dict())
+        node = dtf.Modulator("modulate", **config.to_dict())
         df_out = node.fit(signal, fwd_vol_hat)["df_out"]
         output_str = (
             f"{prnt.frame('config')}\n{config}\n"
@@ -704,7 +704,7 @@ class TestModulationNode(hut.TestCase):
         config = cfgb.get_config_from_nested_dict(
             {"steps_ahead": steps_ahead, "mode": "demodulate"}
         )
-        node = dtf.ModulationNode("demodulate", **config.to_dict())
+        node = dtf.Modulator("demodulate", **config.to_dict())
         df_out = node.fit(signal, fwd_vol_hat)["df_out"]
         output_str = (
             f"{prnt.frame('config')}\n{config}\n"
