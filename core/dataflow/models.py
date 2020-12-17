@@ -1385,6 +1385,7 @@ class SmaModel(FitPredictNode):
         col: list,
         steps_ahead: int,
         tau: Optional[float] = None,
+        col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
         """
@@ -1409,6 +1410,7 @@ class SmaModel(FitPredictNode):
             self._nan_mode = "raise"
         else:
             self._nan_mode = nan_mode
+        self._col_mode = col_mode or "replace_all"
         # Smooth moving average model parameters to learn.
         self._tau = tau
         self._min_periods = None
@@ -1462,6 +1464,7 @@ class SmaModel(FitPredictNode):
         )
         dbg.dassert_no_duplicates(df_out.columns)
         self._set_info("fit", info)
+        df_out = self._apply_col_mode(df_in, df_out)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -1494,6 +1497,7 @@ class SmaModel(FitPredictNode):
         dbg.dassert_no_duplicates(df_out.columns)
         info = collections.OrderedDict()
         self._set_info("predict", info)
+        df_out = self._apply_col_mode(df_in, df_out)
         return {"df_out": df_out}
 
     @staticmethod
@@ -1572,6 +1576,23 @@ class SmaModel(FitPredictNode):
             sigp.resample(pnl_rets, rule="1B").sum()
         )
         return info
+
+    def _apply_col_mode(
+        self,
+        df_in: pd.DataFrame,
+        df_out: pd.DataFrame,
+    ) -> pd.DataFrame:
+        if self._col_mode == "replace_all":
+            pass
+        elif self._col_mode == "merge_all":
+            df_out = df_out.join(
+                df_in,
+                how="outer",
+            )
+        else:
+            raise ValueError(f"Invalid `col_mode`='{self._col_mode}'")
+        dbg.dassert_no_duplicates(df_out.columns)
+        return df_out
 
 
 class VolatilityModel(FitPredictNode):
