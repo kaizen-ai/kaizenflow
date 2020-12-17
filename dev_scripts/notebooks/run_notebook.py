@@ -103,7 +103,8 @@ def _run_notebook(
         notebook
     :param abort_on_error: if `True`, raise an error
     :param publish: publish notebook if `True`
-    :return: `rc` if notebook is not skipped
+    :return: if notebook is skipped ("success.txt" file already exists), return
+        `None`; otherwise, return `rc`
     """
     dbg.dassert_exists(notebook_file)
     dbg.dassert_isinstance(config, cfg.Config)
