@@ -1575,13 +1575,28 @@ class SmaModel(FitPredictNode):
 
 
 class ModulationNode(YConnector):
+    """
+    Modulate or demodulate signal by volatility prediction.
+    """
     def __init__(self, nid: str, steps_ahead: int, mode: str) -> None:
+        """
+        :param nid: node identifier
+        :param steps_ahead: number of steps ahead of the volatility prediction
+        :param mode: "modulate" or "demodulate"
+        """
         self._steps_ahead = steps_ahead
         dbg.dassert_in(mode, ["modulate", "demodulate"])
         self._mode = mode
         super().__init__(nid, self._process_signal)
 
     def _process_signal(self, signal: pd.DataFrame, fwd_vol_hat: pd.DataFrame):
+        """
+        Modulate or demodulate signal by volatility prediction.
+
+        :param signal: signal dataframe
+        :param fwd_vol_hat: forward volatility prediction
+        :return: adjusted signal
+        """
         dbg.dassert_eq(
             fwd_vol_hat.shape[1], 1, "`fwd_vol_hat` should have only one column."
         )
