@@ -681,18 +681,21 @@ class TestSmaModel(hut.TestCase):
 class TestModulator(hut.TestCase):
     def test_modulate1(self) -> None:
         steps_ahead = 2
-        signal, fwd_vol_hat = self._get_signal_and_fwd_vol(steps_ahead)
+        df_in = self._get_signal_and_fwd_vol(steps_ahead)
         config = cfgb.get_config_from_nested_dict(
-            {"steps_ahead": steps_ahead, "mode": "modulate"}
+            {
+                "x_vars": ["ret_0"],
+                "vol_var": "fwd_vol_hat",
+                "steps_ahead": steps_ahead,
+                "mode": "modulate",
+            }
         )
         node = dtf.Modulator("modulate", **config.to_dict())
-        df_out = node.fit(signal, fwd_vol_hat)["df_out"]
+        df_out = node.fit(df_in)["df_out"]
         output_str = (
             f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('signal')}\n"
-            f"{hut.convert_df_to_string(signal, index=True)}\n"
-            f"{prnt.frame('fwd_vol_hat')}\n"
-            f"{hut.convert_df_to_string(fwd_vol_hat, index=True)}\n"
+            f"{prnt.frame('df_in')}\n"
+            f"{hut.convert_df_to_string(df_in, index=True)}\n"
             f"{prnt.frame('df_out')}\n"
             f"{hut.convert_df_to_string(df_out, index=True)}\n"
         )
@@ -700,18 +703,21 @@ class TestModulator(hut.TestCase):
 
     def test_demodulate1(self) -> None:
         steps_ahead = 2
-        signal, fwd_vol_hat = self._get_signal_and_fwd_vol(steps_ahead)
+        df_in = self._get_signal_and_fwd_vol(steps_ahead)
         config = cfgb.get_config_from_nested_dict(
-            {"steps_ahead": steps_ahead, "mode": "demodulate"}
+            {
+                "x_vars": ["ret_0"],
+                "vol_var": "fwd_vol_hat",
+                "steps_ahead": steps_ahead,
+                "mode": "demodulate",
+            }
         )
         node = dtf.Modulator("demodulate", **config.to_dict())
-        df_out = node.fit(signal, fwd_vol_hat)["df_out"]
+        df_out = node.fit(df_in)["df_out"]
         output_str = (
             f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('signal')}\n"
-            f"{hut.convert_df_to_string(signal, index=True)}\n"
-            f"{prnt.frame('fwd_vol_hat')}\n"
-            f"{hut.convert_df_to_string(fwd_vol_hat, index=True)}\n"
+            f"{prnt.frame('df_in')}\n"
+            f"{hut.convert_df_to_string(df_in, index=True)}\n"
             f"{prnt.frame('df_out')}\n"
             f"{hut.convert_df_to_string(df_out, index=True)}\n"
         )
@@ -720,15 +726,17 @@ class TestModulator(hut.TestCase):
     @staticmethod
     def _get_signal_and_fwd_vol(
         steps_ahead: int,
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    ) -> pd.DataFrame:
         arma_process = sig_gen.ArmaProcess([0.45], [0])
         date_range_kwargs = {"start": "2010-01-01", "periods": 40, "freq": "B"}
         signal = arma_process.generate_sample(
             date_range_kwargs=date_range_kwargs, scale=0.1, seed=42
-        ).to_frame(name="ret_0")
+        )
         vol = sigp.compute_smooth_moving_average(signal, 16)
         fwd_vol = vol.shift(-steps_ahead)
-        return signal, fwd_vol
+        return pd.concat(
+            [signal.rename("ret_0"), fwd_vol.rename("fwd_vol_hat")], axis=1
+        )
 
 
 class TestVolatilityModel(hut.TestCase):
