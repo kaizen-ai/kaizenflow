@@ -637,6 +637,29 @@ class TestSmaModel(hut.TestCase):
         output_df = dag.run_leq_node("sma", "fit")["df_out"]
         self.check_string(output_df.to_string())
 
+    def test_fit_dag3(self) -> None:
+        """
+        Specify `col_mode=='merge_all'`.
+        """
+        # Load test data.
+        data = self._get_data()
+        data_source_node = dtf.ReadDataFromDf("data", data)
+        # Create DAG and test data node.
+        dag = dtf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Specify config and create modeling node.
+        config = cfg.Config()
+        config["col"] = ["vol"]
+        config["steps_ahead"] = 2
+        config["col_mode"] = "merge_all"
+        config["nan_mode"] = "drop"
+        node = dtf.SmaModel("sma", **config.to_dict())
+        dag.add_node(node)
+        dag.connect("data", "sma")
+        #
+        output_df = dag.run_leq_node("sma", "fit")["df_out"]
+        self.check_string(output_df.to_string())
+
     def test_predict_dag1(self) -> None:
         # Load test data.
         data = self._get_data()
