@@ -678,6 +678,59 @@ class TestSmaModel(hut.TestCase):
         return df
 
 
+class TestModulationNode(hut.TestCase):
+    def test_modulate1(self) -> None:
+        steps_ahead = 2
+        signal, fwd_vol_hat = self._get_signal_and_fwd_vol(steps_ahead)
+        config = cfgb.get_config_from_nested_dict(
+            {"steps_ahead": steps_ahead, "mode": "modulate"}
+        )
+        node = dtf.ModulationNode("modulate", **config.to_dict())
+        df_out = node.fit(signal, fwd_vol_hat)["df_out"]
+        output_str = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('signal')}\n"
+            f"{hut.convert_df_to_string(signal, index=True)}\n"
+            f"{prnt.frame('fwd_vol_hat')}\n"
+            f"{hut.convert_df_to_string(fwd_vol_hat, index=True)}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(df_out, index=True)}\n"
+        )
+        self.check_string(output_str)
+
+    def test_demodulate1(self) -> None:
+        steps_ahead = 2
+        signal, fwd_vol_hat = self._get_signal_and_fwd_vol(steps_ahead)
+        config = cfgb.get_config_from_nested_dict(
+            {"steps_ahead": steps_ahead, "mode": "demodulate"}
+        )
+        node = dtf.ModulationNode("demodulate", **config.to_dict())
+        df_out = node.fit(signal, fwd_vol_hat)["df_out"]
+        output_str = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('signal')}\n"
+            f"{hut.convert_df_to_string(signal, index=True)}\n"
+            f"{prnt.frame('fwd_vol_hat')}\n"
+            f"{hut.convert_df_to_string(fwd_vol_hat, index=True)}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(df_out, index=True)}\n"
+        )
+        self.check_string(output_str)
+
+    @staticmethod
+    def _get_signal_and_fwd_vol(
+        steps_ahead: int,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        arma_process = sig_gen.ArmaProcess([0.45], [0])
+        date_range_kwargs = {"start": "2010-01-01", "periods": 40, "freq": "B"}
+        signal = arma_process.generate_sample(
+            date_range_kwargs=date_range_kwargs, scale=0.1, seed=42
+        ).to_frame(name="ret_0")
+        vol = sigp.compute_smooth_moving_average(signal, 16)
+        fwd_vol = vol.shift(-steps_ahead)
+        return signal, fwd_vol
+
+
 class TestVolatilityModel(hut.TestCase):
     def test_fit_dag1(self) -> None:
         # Load test data.

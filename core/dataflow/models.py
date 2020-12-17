@@ -19,7 +19,7 @@ import core.statistics as stats
 import helpers.dbg as dbg
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
-from core.dataflow.nodes import FitPredictNode
+from core.dataflow.nodes import FitPredictNode, YConnector
 
 _LOG = logging.getLogger(__name__)
 
@@ -1572,6 +1572,29 @@ class SmaModel(FitPredictNode):
             sigp.resample(pnl_rets, rule="1B").sum()
         )
         return info
+
+
+class ModulationNode(YConnector):
+    def __init__(self, nid: str, steps_ahead: int, mode: str) -> None:
+        self._steps_ahead = steps_ahead
+        dbg.dassert_in(mode, ["modulate", "demodulate"])
+        self._mode = mode
+        super().__init__(nid, self._process_signal)
+
+    def _process_signal(self, signal: pd.DataFrame, fwd_vol_hat: pd.DataFrame):
+        dbg.dassert_eq(
+            fwd_vol_hat.shape[1], 1, "`fwd_vol_hat` should have only one column."
+        )
+        fwd_vol_hat = fwd_vol_hat.squeeze()
+        vol_hat_shifted = fwd_vol_hat.shift(self._steps_ahead)
+        if self._mode == "demodulate":
+            method = "divide"
+        elif self._mode == "modulate":
+            method = "multiply"
+        else:
+            raise ValueError(f"Invalid mode=`{self._mode}`")
+        adjusted_signal = getattr(signal, method)(vol_hat_shifted, axis=0)
+        return adjusted_signal
 
 
 class VolatilityModel(FitPredictNode):
