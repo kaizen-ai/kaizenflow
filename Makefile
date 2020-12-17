@@ -18,7 +18,7 @@ else
 endif
 
 # Pull an image from the registry.
-docker_pull: docker_login
+docker_pull:
 	docker pull $(PARTICLE_ENV_IMAGE)
 	docker pull $(DEV_TOOLS_PROD_IMAGE)
 
