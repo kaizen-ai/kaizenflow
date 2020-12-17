@@ -19,7 +19,7 @@ import core.statistics as stats
 import helpers.dbg as dbg
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
-from core.dataflow.nodes import FitPredictNode, YConnector
+from core.dataflow.nodes import FitPredictNode
 
 _LOG = logging.getLogger(__name__)
 
@@ -1574,33 +1574,50 @@ class SmaModel(FitPredictNode):
         return info
 
 
-class Modulator(YConnector):
+class Modulator(FitPredictNode):
     """
     Modulate or demodulate signal by volatility prediction.
     """
-    def __init__(self, nid: str, steps_ahead: int, mode: str) -> None:
+
+    def __init__(
+        self,
+        nid: str,
+        x_vars: List[str],
+        vol_var: str,
+        steps_ahead: int,
+        mode: str,
+    ) -> None:
         """
         :param nid: node identifier
+        :param x_vars: names of columns to (de)modulate
+        :param vol_var: name of forward volatility prediction column
         :param steps_ahead: number of steps ahead of the volatility prediction
         :param mode: "modulate" or "demodulate"
         """
+        dbg.dassert_isinstance(x_vars, list)
+        self._x_vars = x_vars
+        dbg.dassert_isinstance(vol_var, str)
+        self._vol_var = vol_var
         self._steps_ahead = steps_ahead
         dbg.dassert_in(mode, ["modulate", "demodulate"])
         self._mode = mode
-        super().__init__(nid, self._process_signal)
+        super().__init__(nid)
 
-    def _process_signal(self, signal: pd.DataFrame, fwd_vol_hat: pd.DataFrame):
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return {"df_out": self._process_signal(df_in)}
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return {"df_out": self._process_signal(df_in)}
+
+    def _process_signal(self, df_in: pd.DataFrame) -> pd.DataFrame:
         """
         Modulate or demodulate signal by volatility prediction.
 
-        :param signal: signal dataframe
-        :param fwd_vol_hat: forward volatility prediction
+        :param df_in: dataframe with `self._x_vars` and `self._vol_var` columns
         :return: adjusted signal
         """
-        dbg.dassert_eq(
-            fwd_vol_hat.shape[1], 1, "`fwd_vol_hat` should have only one column."
-        )
-        fwd_vol_hat = fwd_vol_hat.squeeze()
+        signal = df_in[self._x_vars]
+        fwd_vol_hat = df_in[self._vol_var]
         vol_hat_shifted = fwd_vol_hat.shift(self._steps_ahead)
         if self._mode == "demodulate":
             method = "divide"
