@@ -183,7 +183,7 @@ def _run_notebook(
         )
         if rc == 0:
             break
-    if not abort_on_error and rc == -1:
+    if not abort_on_error and rc != 0:
         _LOG.error(
             "Execution failed for experiment `%s`. "
             "Continuing execution for next experiments.",
@@ -326,9 +326,8 @@ def _parse() -> argparse.ArgumentParser:
         required=False,
     )
     parser.add_argument(
-        "--abort_on_error",
-        action="store",
-        default=True,
+        "--no_abort_on_error",
+        action="store_true",
         help="Stop execution of experiments after encountering an error",
     )
     parser.add_argument(
@@ -368,7 +367,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.dassert_exists(notebook_file)
     #
     num_attempts = args.num_attempts
-    abort_on_error = args.abort_on_error
+    abort_on_error = not args.no_abort_on_error
     publish = args.publish_notebook
     #
     num_threads = args.num_threads
@@ -406,8 +405,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
             )
             for config in configs
         )
-    if rcs:
-        _LOG.error("Failed experiments are: %s", rcs)
+    experiment_ids = [int(config[("meta", "id")]) for config in configs]
+    failed_experiment_ids = [
+        i for i, rc in zip(experiment_ids, rcs) if rc is not None and rc != 0
+    ]
+    if failed_experiment_ids:
+        _LOG.error("Failed experiments are: %s", failed_experiment_ids)
 
 
 if __name__ == "__main__":
