@@ -19,7 +19,13 @@ import core.statistics as stats
 import helpers.dbg as dbg
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
-from core.dataflow.nodes import FitPredictNode, YConnector
+from core.dataflow.nodes import (
+    DAG,
+    FitPredictNode,
+    ReadDataFromDf,
+    YConnector,
+    extract_info,
+)
 
 _LOG = logging.getLogger(__name__)
 
@@ -1578,6 +1584,7 @@ class Modulator(YConnector):
     """
     Modulate or demodulate signal by volatility prediction.
     """
+
     def __init__(self, nid: str, steps_ahead: int, mode: str) -> None:
         """
         :param nid: node identifier
@@ -1653,8 +1660,8 @@ class VolatilityModel(FitPredictNode):
         self._p_moment = p_moment
         self._tau = tau
         self._nan_mode = nan_mode
-        # The SmaModel node is only used internally (e.g., it is not added to
-        # any encompasing DAG).
+        # The `SmaModel` and `Modulator` nodes are only used internally (e.g.,
+        # are not added to any encompassing DAG).
         self._sma_model = SmaModel(
             "anonymous_sma",
             col=[self._vol_col],
@@ -1662,27 +1669,30 @@ class VolatilityModel(FitPredictNode):
             tau=self._tau,
             nan_mode=self._nan_mode,
         )
+        self._modulator = Modulator(
+            "anonymous_modulation", self._steps_ahead, "modulate"
+        )
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df_in = df_in.copy()
         vol_power = self._calculate_vol_power(df_in)
-        sma = self._sma_model.fit(vol_power)["df_out"]
-        info = collections.OrderedDict()
-        info["sma"] = self._sma_model.get_info("fit")
-        df_in = self._add_vol_and_zscore(df_in, sma)
+        dag = self._get_dag(vol_power)
+        df_out = dag.run_leq_node("anonymous_modulation", "fit")["df_out"]
+        info = extract_info(dag, ["fit"])
         self._set_info("fit", info)
-        return {"df_out": df_in}
+        df_out = self._add_vol_and_zscore(df_in, df_out)
+        return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_not_in(self._vol_col, df_in.columns)
         df_in = df_in.copy()
         vol_power = self._calculate_vol_power(df_in)
-        sma = self._sma_model.predict(vol_power)["df_out"]
-        info = collections.OrderedDict()
-        info["sma"] = self._sma_model.get_info("predict")
-        df_in = self._add_vol_and_zscore(df_in, sma)
+        dag = self._get_dag(vol_power)
+        df_out = dag.run_leq_node("anonymous_modulation", "predict")["df_out"]
+        info = extract_info(dag, ["predict"])
         self._set_info("predict", info)
-        return {"df_out": df_in}
+        df_out = self._add_vol_and_zscore(df_in, df_out)
+        return {"df_out": df_out}
 
     def _calculate_vol_power(self, df_in: pd.DataFrame) -> pd.DataFrame:
         """
@@ -1692,6 +1702,19 @@ class VolatilityModel(FitPredictNode):
             np.abs(df_in[self._col[0]]) ** self._p_moment, name=self._vol_col
         ).to_frame()
         return vol_p
+
+    def _get_dag(self, vol_power: pd.DataFrame) -> DAG:
+        dag = DAG(mode="strict")
+        node = ReadDataFromDf("data", vol_power)
+        dag.add_node(node)
+        dag.add_node(self._sma_model)
+        dag.connect("data", "anonymous_sma")
+        dag.add_node(self._modulator)
+        dag.connect(("data", "df_out"), ("anonymous_modulation", "df_in1"))
+        dag.connect(
+            ("anonymous_sma", "df_out"), ("anonymous_modulation", "df_in2")
+        )
+        return dag
 
     def _add_vol_and_zscore(
         self, df_in: pd.DataFrame, sma: pd.DataFrame
