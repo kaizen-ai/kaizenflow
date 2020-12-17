@@ -105,6 +105,8 @@ In the following we use the abbreviations below:
 
 - Use an informative description (typically an action "Do this and that"). We
   don't use a period at the end of the title.
+- Use check boxes for "small" actions that need to be tracked in the issue (not
+  worth their own bug)
 - Assign to the right RP for re-routing (or to GP / Paul if you are not sure)
 - Assign to one of the pipelines, ideally based on the urgency
   - P0: needs to be done soon
@@ -156,6 +158,12 @@ In the following we use the abbreviations below:
     You can find an up-to-date list of such keywords on
     [GH docs page](https://docs.github.com/en/free-pro-team@latest/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword).
   - The Issue is then automatically moved to `Review/QA`
+
+- When there is a follow up PR to one reviewed, and the requested changes are
+  not worth their own bug, update the bug with a check box: a notation like:
+  ```
+  - [ ] [#6283](https://github.com/ParticleDev/commodity_research/pull/6283) followup: clean the code
+  ```
 
 - We leave Issues in the `Done` state when we need to do some other work after
   it and we don't want to forget about this by closing it
