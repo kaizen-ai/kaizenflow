@@ -684,8 +684,8 @@ class TestModulator(hut.TestCase):
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
         config = cfgb.get_config_from_nested_dict(
             {
-                "x_vars": ["ret_0"],
-                "vol_var": "fwd_vol_hat",
+                "signal_cols": ["ret_0"],
+                "volatility_col": "fwd_vol_hat",
                 "steps_ahead": steps_ahead,
                 "mode": "modulate",
             }
@@ -706,8 +706,8 @@ class TestModulator(hut.TestCase):
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
         config = cfgb.get_config_from_nested_dict(
             {
-                "x_vars": ["ret_0"],
-                "vol_var": "fwd_vol_hat",
+                "signal_cols": ["ret_0"],
+                "volatility_col": "fwd_vol_hat",
                 "steps_ahead": steps_ahead,
                 "mode": "demodulate",
             }

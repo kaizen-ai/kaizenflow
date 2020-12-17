@@ -1582,22 +1582,21 @@ class Modulator(FitPredictNode):
     def __init__(
         self,
         nid: str,
-        x_vars: List[str],
-        vol_var: str,
+        signal_cols: List[Any],
+        volatility_col: Any,
         steps_ahead: int,
         mode: str,
     ) -> None:
         """
         :param nid: node identifier
-        :param x_vars: names of columns to (de)modulate
-        :param vol_var: name of forward volatility prediction column
+        :param signal_cols: names of columns to (de)modulate
+        :param volatility_col: name of forward volatility prediction column
         :param steps_ahead: number of steps ahead of the volatility prediction
         :param mode: "modulate" or "demodulate"
         """
-        dbg.dassert_isinstance(x_vars, list)
-        self._x_vars = x_vars
-        dbg.dassert_isinstance(vol_var, str)
-        self._vol_var = vol_var
+        dbg.dassert_isinstance(signal_cols, list)
+        self._signal_cols = signal_cols
+        self._volatility_col = volatility_col
         self._steps_ahead = steps_ahead
         dbg.dassert_in(mode, ["modulate", "demodulate"])
         self._mode = mode
@@ -1616,8 +1615,10 @@ class Modulator(FitPredictNode):
         :param df_in: dataframe with `self._x_vars` and `self._vol_var` columns
         :return: adjusted signal
         """
-        signal = df_in[self._x_vars]
-        fwd_vol_hat = df_in[self._vol_var]
+        dbg.dassert_is_subset(self._signal_cols, df_in.columns.tolist())
+        dbg.dassert_in(self._volatility_col, df_in.columns)
+        signal = df_in[self._signal_cols]
+        fwd_vol_hat = df_in[self._volatility_col]
         vol_hat_shifted = fwd_vol_hat.shift(self._steps_ahead)
         if self._mode == "demodulate":
             method = "divide"
