@@ -19,17 +19,7 @@ import core.statistics as stats
 import helpers.dbg as dbg
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
-<<<<<<< HEAD
-from core.dataflow.nodes import (
-    DAG,
-    FitPredictNode,
-    ReadDataFromDf,
-    YConnector,
-    extract_info,
-)
-=======
-from core.dataflow.nodes import FitPredictNode
->>>>>>> PartTask6353_Create_a_node_to_modulate_signal
+from core.dataflow.nodes import DAG, FitPredictNode, ReadDataFromDf, extract_info
 
 _LOG = logging.getLogger(__name__)
 
@@ -1690,7 +1680,11 @@ class VolatilityModel(FitPredictNode):
             nan_mode=self._nan_mode,
         )
         self._modulator = Modulator(
-            "anonymous_modulation", self._steps_ahead, "modulate"
+            "anonymous_modulation",
+            self._col,
+            self._fwd_vol_col_hat,
+            self._steps_ahead,
+            "modulate",
         )
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -1730,10 +1724,7 @@ class VolatilityModel(FitPredictNode):
         dag.add_node(self._sma_model)
         dag.connect("data", "anonymous_sma")
         dag.add_node(self._modulator)
-        dag.connect(("data", "df_out"), ("anonymous_modulation", "df_in1"))
-        dag.connect(
-            ("anonymous_sma", "df_out"), ("anonymous_modulation", "df_in2")
-        )
+        dag.connect("anonymous_sma", "anonymous_modulation")
         return dag
 
     def _add_vol_and_zscore(
