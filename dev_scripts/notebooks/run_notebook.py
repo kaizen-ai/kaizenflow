@@ -327,9 +327,9 @@ def _parse() -> argparse.ArgumentParser:
         required=False,
     )
     parser.add_argument(
-        "--no_abort_on_error",
+        "--skip_on_error",
         action="store_true",
-        help="Stop execution of experiments after encountering an error",
+        help="Continue execution of experiments after encountering an error",
     )
     parser.add_argument(
         "--num_threads",
@@ -368,7 +368,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.dassert_exists(notebook_file)
     #
     num_attempts = args.num_attempts
-    abort_on_error = not args.no_abort_on_error
+    abort_on_error = not args.skip_on_error
     publish = args.publish_notebook
     #
     num_threads = args.num_threads

@@ -20,7 +20,7 @@ class TestRunNotebook(hut.TestCase):
             f"--dst_dir {dst_dir} "
             "--notebook /commodity_research/amp/dev_scripts/notebooks/test_run_notebook.ipynb "
             "--function 'amp.dev_scripts.test.test_run_notebook.build_configs()' "
-            "--no_abort_on_error "
+            "--skip_on_error "
             "--num_threads 1"
         )
         si.system(cmd)
@@ -32,7 +32,7 @@ class TestRunNotebook(hut.TestCase):
             f"--dst_dir {dst_dir} "
             "--notebook /commodity_research/amp/dev_scripts/notebooks/test_run_notebook.ipynb "
             "--function 'amp.dev_scripts.test.test_run_notebook.build_configs()' "
-            "--no_abort_on_error "
+            "--skip_on_error "
             "--num_threads 3"
         )
         si.system(cmd)
