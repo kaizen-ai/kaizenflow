@@ -6,12 +6,16 @@ IMAGE?=$(PARTICLE_ENV_IMAGE)
 # #############################################################################
 
 # Log in to AWS ECR.
+AWSCLI_VERSION=$(shell aws --version | awk '{print $$1}' | awk -F"/" '{print $$2}')
+AWSCLI_MAJOR_VERSION=$(shell echo "$(AWSCLI_VERSION)" | awk -F"." '{print $$1}')
 docker_login:
+	@echo AWS CLI version: $(AWSCLI_VERSION)
+	@echo AWS CLI major version: $(AWSCLI_MAJOR_VERSION)
+ifeq ($(AWSCLI_MAJOR_VERSION),1)
 	eval `aws ecr get-login --no-include-email --region us-east-2`
-
-# Log in to AWS ECR (if your `awscli` version higher or equal `2`).
-docker_login_v2:
+else
 	docker login -u AWS -p $(aws ecr get-login --region us-east-2) https://083233266530.dkr.ecr.us-east-2.amazonaws.com
+endif
 
 # Pull an image from the registry.
 docker_pull:

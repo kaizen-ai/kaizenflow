@@ -11,6 +11,12 @@ import datetime
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from tqdm.autonotebook import tqdm
+
 import core.dataflow as dtf
 import core.finance as fin
 import core.plotting as plot
@@ -18,11 +24,6 @@ import core.signal_processing as sigp
 import core.statistics as stats
 import core.timeseries_study as tss
 import helpers.dbg as dbg
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from tqdm.autonotebook import tqdm
 
 _LOG = logging.getLogger(__name__)
 
@@ -368,6 +369,7 @@ class DataFrameModeler:
         sharex: bool = True,
         sharey: bool = False,
         separator: Optional[str] = None,
+        axes: Optional[List[mpl.axes.Axes]] = None,
         mode: str = "ins",
     ) -> None:
         """
@@ -379,14 +381,15 @@ class DataFrameModeler:
         num_plots = min(num_plots, df.shape[1])
         if num_plots == 1:
             num_cols = 1
-        # Create figure to accommodate plots.
-        _, axes = plot.get_multiple_plots(
-            num_plots=num_plots,
-            num_cols=num_cols,
-            y_scale=y_scale,
-            sharex=sharex,
-            sharey=sharey,
-        )
+        if axes is None:
+            # Create figure to accommodate plots.
+            _, axes = plot.get_multiple_plots(
+                num_plots=num_plots,
+                num_cols=num_cols,
+                y_scale=y_scale,
+                sharex=sharex,
+                sharey=sharey,
+            )
         # Select first `num_plots` series in the dict and plot them.
         cols_to_draw = df.columns[:num_plots]
         for i, col_name in enumerate(cols_to_draw):
@@ -400,35 +403,37 @@ class DataFrameModeler:
     def plot_projection(
         self,
         cols: Optional[List[Any]] = None,
+        ax: Optional[mpl.axes.Axes] = None,
         plot_projection_kwargs: Optional[Dict[str, Any]] = None,
         mode: str = "ins",
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         plot_projection_kwargs = plot_projection_kwargs or {}
-        plot.plot_projection(df, **plot_projection_kwargs)
+        plot.plot_projection(df, ax=ax, **plot_projection_kwargs)
 
     def plot_cumulative_returns(
         self,
         cols: Optional[List[Any]] = None,
+        ax: Optional[mpl.axes.Axes] = None,
         plot_cumulative_returns_kwargs: Optional[Dict[str, Any]] = None,
         mode_rets: str = "log",
         mode: str = "ins",
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         plot_cumulative_returns_kwargs = plot_cumulative_returns_kwargs or {}
-        cols = df.columns.values
         cum_rets = df.cumsum()
-        for i in range(df.shape[1]):
-            plot.plot_cumulative_returns(
-                cum_rets.iloc[:, i],
-                mode=mode_rets,
-                **plot_cumulative_returns_kwargs,
-            )
+        plot.plot_cumulative_returns(
+            cum_rets,
+            mode=mode_rets,
+            ax=ax,
+            **plot_cumulative_returns_kwargs,
+        )
 
     def plot_correlation_with_lag(
         self,
         lag: Union[int, List[int]],
         cols: Optional[List[Any]] = None,
+        ax: Optional[mpl.axes.Axes] = None,
         mode: str = "ins",
     ) -> pd.DataFrame:
         """
@@ -437,7 +442,7 @@ class DataFrameModeler:
         df = self._get_df(cols=cols, mode=mode)
         # Calculate correlation.
         corr_df = sigp.correlate_with_lag(df, lag=lag)
-        plot.plot_heatmap(corr_df)
+        plot.plot_heatmap(corr_df, ax=ax)
         return corr_df
 
     def plot_correlation_with_lagged_cumsum(
@@ -446,6 +451,7 @@ class DataFrameModeler:
         y_vars: List[str],
         cols: Optional[List[Any]] = None,
         nan_mode: Optional[str] = None,
+        ax: Optional[mpl.axes.Axes] = None,
         mode: str = "ins",
     ) -> pd.DataFrame:
         """
@@ -456,60 +462,67 @@ class DataFrameModeler:
         corr_df = sigp.correlate_with_lagged_cumsum(
             df, lag=lag, y_vars=y_vars, nan_mode=nan_mode
         )
-        plot.plot_heatmap(corr_df)
+        plot.plot_heatmap(corr_df, ax=ax)
         return corr_df
 
     def plot_autocorrelation(
         self,
         cols: Optional[List[Any]] = None,
+        axes: Optional[List[mpl.axes.Axes]] = None,
         plot_auto_correlation_kwargs: Optional[dict] = None,
         mode: str = "ins",
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         plot_auto_correlation_kwargs = plot_auto_correlation_kwargs or {}
-        plot.plot_autocorrelation(df, **plot_auto_correlation_kwargs)
+        plot.plot_autocorrelation(df, axes=axes, **plot_auto_correlation_kwargs)
 
     def plot_sequence_and_density(
         self,
         cols: Optional[List[Any]] = None,
+        axes: Optional[List[mpl.axes.Axes]] = None,
         plot_cols_kwargs: Optional[dict] = None,
         mode: str = "ins",
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         plot_cols_kwargs = plot_cols_kwargs or {}
-        plot.plot_cols(df, **plot_cols_kwargs)
+        plot.plot_cols(df, axes=axes, **plot_cols_kwargs)
 
     def plot_spectrum(
         self,
         cols: Optional[List[Any]] = None,
+        axes: Optional[List[mpl.axes.Axes]] = None,
         plot_spectrum_kwargs: Optional[dict] = None,
         mode: str = "ins",
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         plot_spectrum_kwargs = plot_spectrum_kwargs or {}
-        plot.plot_spectrum(df, **plot_spectrum_kwargs)
+        plot.plot_spectrum(df, axes=axes, **plot_spectrum_kwargs)
 
     def plot_correlation_matrix(
         self,
         cols: Optional[List[Any]] = None,
+        ax: Optional[mpl.axes.Axes] = None,
         plot_correlation_matrix_kwargs: Optional[dict] = None,
         mode: str = "ins",
     ) -> pd.DataFrame:
         df = self._get_df(cols=cols, mode=mode)
         plot_correlation_matrix_kwargs = plot_correlation_matrix_kwargs or {}
-        return plot.plot_correlation_matrix(df, **plot_correlation_matrix_kwargs)
+        return plot.plot_correlation_matrix(
+            df, ax=ax, **plot_correlation_matrix_kwargs
+        )
 
     def plot_dendrogram(
         self,
         cols: Optional[List[Any]] = None,
         figsize: Optional[Tuple[int, int]] = None,
-        mode: str = "ins",
+        ax: Optional[mpl.axes.Axes] = None,
         plot_dendrogram_kwargs: Optional[Dict[str, Any]] = None,
+        mode: str = "ins",
     ) -> None:
         plot_dendrogram_kwargs = plot_dendrogram_kwargs or {}
         #
         df = self._get_df(cols=cols, mode=mode)
-        plot.plot_dendrogram(df, figsize=figsize, **plot_dendrogram_kwargs)
+        plot.plot_dendrogram(df, figsize=figsize, ax=ax, **plot_dendrogram_kwargs)
 
     def plot_pca_components(
         self,
@@ -517,30 +530,34 @@ class DataFrameModeler:
         num_components: Optional[int] = None,
         num_cols: int = 2,
         y_scale: Optional[float] = None,
+        axes: Optional[List[mpl.axes.Axes]] = None,
         mode: str = "ins",
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         pca = plot.PCA(mode="standard")
         pca.fit(df.replace([np.inf, -np.inf], np.nan).fillna(0))
-        pca.plot_components(num_components, num_cols=num_cols, y_scale=y_scale)
+        pca.plot_components(
+            num_components, num_cols=num_cols, y_scale=y_scale, axes=axes
+        )
 
     def plot_explained_variance(
         self,
         cols: Optional[List[Any]] = None,
         num_components: Optional[int] = None,
+        ax: Optional[mpl.axes.Axes] = None,
         mode: str = "ins",
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         pca = plot.PCA(mode="standard", n_components=num_components)
         pca.fit(df.replace([np.inf, -np.inf], np.nan).fillna(0))
-        pca.plot_explained_variance()
+        pca.plot_explained_variance(ax=ax)
 
     def plot_qq(
         self,
         col: Any,
-        ax: Optional[mpl.axes.Axes] = None,
         dist: Optional[str] = None,
         nan_mode: Optional[str] = None,
+        ax: Optional[mpl.axes.Axes] = None,
         mode: str = "ins",
     ) -> None:
         srs = self._get_df(cols=[col], mode=mode).squeeze()
@@ -551,6 +568,7 @@ class DataFrameModeler:
         col1: Any,
         col2: Any,
         tau: float,
+        ax: Optional[mpl.axes.Axes] = None,
         plot_rolling_correlation_kwargs: Optional[dict] = None,
         mode: str = "ins",
     ) -> None:
@@ -560,6 +578,7 @@ class DataFrameModeler:
             df[col1],
             df[col2],
             tau=tau,
+            ax=ax,
             **plot_rolling_correlation_kwargs,
         )
 
@@ -569,33 +588,55 @@ class DataFrameModeler:
         num_plots: Optional[int] = None,
         mode: str = "ins",
         last_n_years: Optional[int] = None,
+        axes: Optional[
+            List[Union[mpl.axes.Axes, List[mpl.axes.Axes], None]]
+        ] = None,
     ) -> None:
         """
         :param num_plots: number of cols to plot the study for
+        :param axes: flat list of `ax`/`axes` parameters for each column for
+            each `tss.TimeSeriesDailyStudy`method. If the method is skipped,
+            should be `None`
         """
         df = self._get_df(cols=cols, mode=mode)
         num_plots = num_plots or df.shape[1]
         cols_to_draw = df.columns[:num_plots]
-        for col_name in cols_to_draw:
+        if axes is None:
+            axes_for_cols = [None] * num_plots
+        else:
+            axes_for_cols = np.array(axes).reshape(num_plots, -1)
+        for col_name, axes_for_col in zip(cols_to_draw, axes_for_cols):
             tsds = tss.TimeSeriesDailyStudy(df[col_name])
-            tsds.execute(last_n_years=last_n_years)
-            plt.show()
+            tsds.execute(last_n_years=last_n_years, axes=axes_for_col)
+            if axes is None:
+                plt.show()
 
     def plot_seasonal_decomposition(
         self,
         cols: Optional[List[Any]] = None,
         nan_mode: Optional[str] = None,
+        axes: Optional[List[mpl.axes.Axes]] = None,
         plot_seasonal_decomposition_kwargs: Optional[Dict[str, Any]] = None,
         mode: str = "ins",
     ) -> None:
+        """
+        :param axes: flat list of `axes` parameters for each column
+        """
         nan_mode = nan_mode or "drop"
         plot_seasonal_decomposition_kwargs = (
             plot_seasonal_decomposition_kwargs or {}
         )
         df = self._get_df(cols=cols, mode=mode)
-        for i in df.columns.values:
+        if axes is None:
+            axes_for_cols = [None] * df.shape[1]
+        else:
+            axes_for_cols = np.array(axes).reshape(df.shape[1], -1)
+        for i, axes_for_col in zip(df.columns.values, axes_for_cols):
             plot.plot_seasonal_decomposition(
-                df[i], nan_mode=nan_mode, **plot_seasonal_decomposition_kwargs
+                df[i],
+                nan_mode=nan_mode,
+                axes=axes_for_col,
+                **plot_seasonal_decomposition_kwargs,
             )
 
     def plot_histograms_and_lagged_scatterplot(
@@ -604,26 +645,36 @@ class DataFrameModeler:
         mode: str = "ins",
         nan_mode: Optional[str] = None,
         cols: Optional[List[Any]] = None,
+        axes: Optional[List[mpl.axes.Axes]] = None,
         hist_kwargs: Optional[Any] = None,
         scatter_kwargs: Optional[Any] = None,
     ) -> None:
+        """
+        :param axes: flat list of `axes` parameters for each column
+        """
         df = self._get_df(cols=cols, mode=mode)
         if mode == "all_available":
             oos_start = self.oos_start
         else:
             oos_start = None
-        for col_name in df.columns:
+        if axes is None:
+            axes_for_cols = [None] * df.shape[1]
+        else:
+            axes_for_cols = np.array(axes).reshape(df.shape[1], -1)
+        for col_name, axes_for_col in zip(df.columns, axes_for_cols):
             plot.plot_histograms_and_lagged_scatterplot(
                 df[col_name],
                 lag=lag,
                 oos_start=oos_start,
                 nan_mode=nan_mode,
                 title=col_name,
+                axes=axes_for_col,
                 hist_kwargs=hist_kwargs,
                 scatter_kwargs=scatter_kwargs,
                 figsize=(20, 10),
             )
-            plt.show()
+            if axes is None:
+                plt.show()
 
     # #########################################################################
     # Private helpers

@@ -9,13 +9,6 @@ import logging
 import math
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
-import core.explore as expl
-import core.finance as fin
-import core.signal_processing as sigp
-import core.statistics as stats
-import helpers.dataframe as hdf
-import helpers.dbg as dbg
-import helpers.list as hlist
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.colors as mpl_col
@@ -31,6 +24,14 @@ import sklearn.utils.validation as skluv
 import statsmodels as sml
 import statsmodels.api as sm
 import statsmodels.regression.rolling as smrr
+
+import core.explore as expl
+import core.finance as fin
+import core.signal_processing as sigp
+import core.statistics as stats
+import helpers.dataframe as hdf
+import helpers.dbg as dbg
+import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
@@ -64,6 +65,7 @@ def plot_non_na_cols(
     sort: bool = False,
     ascending: bool = True,
     max_num: Optional[int] = None,
+    ax: Optional[mpl.axes.Axes] = None,
 ) -> Any:
     """Plot a diagram describing the non-nans intervals for the columns of df.
 
@@ -103,10 +105,9 @@ def plot_non_na_cols(
     df *= scale
     num_cols = df.shape[1]
     # Heuristics to find the value of ysize.
-    figsize = None
     ysize = num_cols * 0.3
     figsize = (20, ysize)
-    ax = df.plot(figsize=figsize, legend=False)
+    ax = df.plot(figsize=figsize, legend=False, ax=ax)
     # Force all the yticks to be equal to the column names and to be visible.
     ax.set_yticks(np.arange(num_cols, 0, -1))
     ax.set_yticklabels(reversed(df.columns.tolist()))
@@ -119,6 +120,7 @@ def plot_categories_count(
     figsize: Optional[Tuple[int, int]] = None,
     title: Optional[str] = None,
     label: Optional[str] = None,
+    ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """Plot countplot of a given `category_column`.
 
@@ -134,13 +136,15 @@ def plot_categories_count(
     num_categories = df[category_column].nunique()
     if num_categories > 10:
         ylen = math.ceil(num_categories / 26) * 5
-        figsize = (figsize[0], ylen)
-        plt.figure(figsize=figsize)
         ax = sns.countplot(
-            y=df[category_column], order=df[category_column].value_counts().index
+            y=df[category_column],
+            order=df[category_column].value_counts().index,
+            ax=ax,
         )
         ax.set(xlabel=f"Number of {label}s")
         ax.set(ylabel=category_column.lower())
+        figsize = (figsize[0], ylen)
+        ax.get_figure().set_size_inches(figsize)
         for p in ax.patches:
             ax.text(
                 p.get_width() + 0.1,
@@ -148,19 +152,18 @@ def plot_categories_count(
                 str(round((p.get_width()), 2)),
             )
     else:
-        plt.figure(figsize=figsize)
         ax = sns.countplot(
-            x=df[category_column], order=df[category_column].value_counts().index
+            x=df[category_column],
+            order=df[category_column].value_counts().index,
+            ax=ax,
         )
         ax.set(xlabel=category_column.lower())
         ax.set(ylabel=f"Number of {label}s")
+        ax.get_figure().set_size_inches(figsize)
         for p in ax.patches:
             ax.annotate(p.get_height(), (p.get_x() + 0.35, p.get_height() + 1))
-    if not title:
-        plt.title(f"Distribution by {category_column}")
-    else:
-        plt.title(title)
-    plt.show()
+    title = title or f"Distribution by {category_column}"
+    ax.set_title(title)
 
 
 def get_multiple_plots(
@@ -187,6 +190,8 @@ def get_multiple_plots(
         figsize: Optional[Tuple[float, float]] = (20, ysize)
     else:
         figsize = None
+    if "tight_layout" not in kwargs:
+        kwargs["tight_layout"] = True
     fig, ax = plt.subplots(
         math.ceil(num_plots / num_cols),
         num_cols,
@@ -268,7 +273,11 @@ def plot_projection(
 
 
 def plot_value_counts(
-    srs: pd.Series, dropna: bool = True, *args: Any, **kwargs: Any
+    srs: pd.Series,
+    dropna: bool = True,
+    ax: Optional[mpl.axes.Axes] = None,
+    *args: Any,
+    **kwargs: Any,
 ) -> None:
     """Plot barplots for the counts of a series and print the values.
 
@@ -278,7 +287,7 @@ def plot_value_counts(
     # Compute the counts.
     counts = srs.value_counts(dropna=dropna)
     # Plot.
-    return plot_counts(counts, *args, **kwargs)
+    return plot_counts(counts, ax=ax, *args, **kwargs)
 
 
 def plot_counts(
@@ -287,6 +296,7 @@ def plot_counts(
     top_n_to_plot: Optional[int] = None,
     plot_title: Optional[str] = None,
     label: Optional[str] = None,
+    ax: Optional[mpl.axes.Axes] = None,
     figsize: Optional[Tuple[int, int]] = None,
     rotation: int = 0,
 ) -> None:
@@ -334,6 +344,7 @@ def plot_counts(
         xlabel=label,
         rotation=rotation,
         unicolor=True,
+        ax=ax,
     )
 
 
@@ -402,9 +413,8 @@ def plot_barplot(
         kind = "barh"
     else:
         raise ValueError("Invalid orientation='%s'" % orientation)
-    ax = ax or plt.gca()
     # Plot top N.
-    srs_top_n.plot(
+    ax = srs_top_n.plot(
         kind=kind, color=color, rot=rotation, title=title, ax=ax, figsize=figsize
     )
     # Add annotations to bars.
@@ -439,6 +449,7 @@ def plot_barplot(
 def plot_timeseries_distribution(
     srs: pd.Series,
     datetime_types: Optional[List[str]] = None,
+    axes: Optional[List[mpl.axes.Axes]] = None,
 ) -> None:
     """Plot timeseries distribution by.
 
@@ -456,17 +467,20 @@ def plot_timeseries_distribution(
     """
     dbg.dassert_isinstance(srs, pd.Series)
     dbg.dassert_isinstance(srs.index, pd.DatetimeIndex)
+    if axes is None:
+        _, axes = get_multiple_plots(num_plots=len(datetime_types), num_cols=1)
+    else:
+        dbg.dassert_eq(len(datetime_types), len(axes))
     srs = hdf.apply_nan_mode(srs, mode="drop")
     index_series = pd.Series(srs.index)
     if datetime_types is None:
         datetime_types = _DATETIME_TYPES
-    for datetime_type in datetime_types:
-        plt.figure(figsize=FIG_SIZE)
+    for datetime_type, ax in zip(datetime_types, axes):
         sns.countplot(getattr(index_series.dt, datetime_type))
-        plt.title(f"Distribution by {datetime_type}")
-        plt.xlabel(datetime_type, fontsize=12)
-        plt.ylabel(f"Quantity of {srs.name}", fontsize=12)
-        plt.show()
+        ax.set_title(f"Distribution by {datetime_type}")
+        ax.set_xlabel(datetime_type, fontsize=12)
+        ax.set_ylabel(f"Quantity of {srs.name}", fontsize=12)
+        ax.get_figure().set_size_inches(FIG_SIZE)
 
 
 def plot_timeseries_per_category(
@@ -578,27 +592,23 @@ def plot_autocorrelation(
 
     https://www.statsmodels.org/stable/_modules/statsmodels/graphics/tsaplots.html#plot_acf
     https://www.statsmodels.org/stable/_modules/statsmodels/tsa/stattools.html#acf
+
+    :param axes: flat list of axes or `None`
     """
-    if axes is None:
-        axes = [[None, None]]
     if isinstance(signal, pd.Series):
         signal = signal.to_frame()
-    nrows = len(signal.columns)
-    if axes == [[None, None]]:
-        _, axes = plt.subplots(nrows=nrows, ncols=2, figsize=(20, 5 * nrows))
-        if axes.size == 2:  # type: ignore
-            axes = [axes]
-    if title_prefix is None:
-        title_prefix = ""
+    if axes is None:
+        _, axes = get_multiple_plots(signal.shape[1] * 2, num_cols=2, y_scale=5)
+    axis_pairs = zip(axes[::2], axes[1::2])
+    title_prefix = title_prefix or ""
     # Replacing inf with nan to ensure non-empty plots generated.
     signal = stats.replace_infs_with_nans(signal)
-    for idx, col in enumerate(signal.columns):
+    for col, axis_pair in zip(signal.columns, axis_pairs):
         if nan_mode == "conservative":
             data = signal[col].fillna(0).dropna()
         else:
             raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
-        axes = cast(List, axes)
-        ax1 = axes[idx][0]
+        ax1 = axis_pair[0]
         # Partial correlation can be computed for lags up to 50% of the sample
         # size.
         lags_curr = min(lags, data.size // 2 - 1)
@@ -613,7 +623,7 @@ def plot_autocorrelation(
             title=acf_title,
             **kwargs,
         )
-        ax2 = axes[idx][1]
+        ax2 = axis_pair[1]
         pacf_title = title_prefix + f"{col} partial autocorrelation"
         _ = sm.graphics.tsa.plot_pacf(
             data,
@@ -629,6 +639,7 @@ def plot_seasonal_decomposition(
     srs: Union[pd.Series, pd.DataFrame],
     nan_mode: Optional[str] = None,
     figsize: Optional[Tuple[int, int]] = None,
+    axes: Optional[List[mpl.axes.Axes]] = None,
     kwargs: Optional[dict] = None,
 ) -> None:
     """Plot seasonal trend decomposition using LOESS.
@@ -642,14 +653,18 @@ def plot_seasonal_decomposition(
     nan_mode = nan_mode or "drop"
     kwargs = kwargs or {}
     figsize = figsize or (20, 16)
-    if type(srs) == pd.DataFrame and srs.shape[1] > 1:
+    if isinstance(srs, pd.DataFrame) and srs.shape[1] > 1:
         raise ValueError("Input df should be 1 dim, not %s'" % srs.shape[1])
     srs = srs.squeeze()
     srs = hdf.apply_nan_mode(srs, mode=nan_mode)
     stl = sml.tsa.seasonal.STL(srs, **kwargs).fit()
-    fig = stl.plot()
-    fig.set_size_inches(figsize[0], figsize[1])
-    plt.tight_layout()
+    if axes is None:
+        _, axes = get_multiple_plots(4, 1, y_scale=figsize[1] / 4)
+    stl.observed.plot(ylabel="Observed", ax=axes[0])
+    stl.trend.plot(ylabel="Trend", ax=axes[1])
+    stl.seasonal.plot(ylabel="Season", ax=axes[2])
+    stl.resid.plot(marker="o", linestyle="none", ylabel="Resid", ax=axes[3])
+    axes[3].axhline(0, color="#000000", zorder=-3)
 
 
 def plot_spectrum(
@@ -667,34 +682,32 @@ def plot_spectrum(
       - From the scipy documentation of spectrogram:
         "Spectrograms can be used as a way of visualizing the change of a
          nonstationary signal's frequency content over time."
+
+    :param axes: flat list of axes or `None`
     """
-    if axes is None:
-        axes = [[None, None]]
     if isinstance(signal, pd.Series):
         signal = signal.to_frame()
     if title_prefix is None:
         title_prefix = ""
     # Replacing inf with nan to ensure non-empty plots generated.
     signal = stats.replace_infs_with_nans(signal)
-    nrows = len(signal.columns)
-    if axes == [[None, None]]:
-        _, axes = plt.subplots(nrows=nrows, ncols=2, figsize=(20, 5 * nrows))
-        if axes.size == 2:  # type: ignore
-            axes = [axes]
-    for idx, col in enumerate(signal.columns):
+    if axes is None:
+        _, axes = get_multiple_plots(signal.shape[1] * 2, num_cols=2, y_scale=5)
+    axis_pairs = zip(axes[::2], axes[1::2])
+    for col, axis_pair in zip(signal.columns, axis_pairs):
         if nan_mode == "conservative":
             data = signal[col].fillna(0).dropna()
         else:
             raise ValueError(f"Unsupported nan_mode `{nan_mode}`")
         axes = cast(List, axes)
-        ax1 = axes[idx][0]
+        ax1 = axis_pair[0]
         f_pxx, Pxx = sp.signal.welch(data)
         ax1.semilogy(f_pxx, Pxx)
         ax1.set_title(title_prefix + f"{col} power spectral density")
         # TODO(*): Maybe put labels on a shared axis.
         # ax1.set_xlabel("Frequency")
         # ax1.set_ylabel("Power")
-        ax2 = axes[idx][1]
+        ax2 = axis_pair[1]
         f_sxx, t, Sxx = sp.signal.spectrogram(data)
         ax2.pcolormesh(t, f_sxx, Sxx)
         ax2.set_title(title_prefix + f"{col} spectrogram")
@@ -710,6 +723,7 @@ def plot_time_series_dict(
     sharex: bool = True,
     sharey: bool = False,
     exclude_empty: bool = True,
+    axes: Optional[List[mpl.axes.Axes]] = None,
 ) -> None:
     """
     Plot series from a dict of series.
@@ -731,15 +745,18 @@ def plot_time_series_dict(
             _LOG.warning("Excluded empty series: %s", excluded_series)
         dict_ = non_empty_dict_
     num_plots = num_plots or len(dict_)
-    num_cols = num_cols or 2
-    # Create figure to accommodate plots.
-    _, axes = get_multiple_plots(
-        num_plots=num_plots,
-        num_cols=num_cols,
-        y_scale=y_scale,
-        sharex=sharex,
-        sharey=sharey,
-    )
+    if axes is None:
+        # Create figure to accommodate plots.
+        num_cols = num_cols or 2
+        _, axes = get_multiple_plots(
+            num_plots=num_plots,
+            num_cols=num_cols,
+            y_scale=y_scale,
+            sharex=sharex,
+            sharey=sharey,
+        )
+    else:
+        dbg.dassert_eq(len(axes), num_plots)
     # Select first `num_plots` series in the dict and plot them.
     keys_to_draw = list(dict_.keys())[:num_plots]
     for i, key in enumerate(keys_to_draw):
@@ -756,6 +773,7 @@ def plot_histograms_and_lagged_scatterplot(
     figsize: Optional[Tuple] = None,
     hist_kwargs: Optional[Any] = None,
     scatter_kwargs: Optional[Any] = None,
+    axes: Optional[List[mpl.axes.Axes]] = None,
 ) -> None:
     """Plot histograms and scatterplot to test stationarity visually.
 
@@ -767,6 +785,8 @@ def plot_histograms_and_lagged_scatterplot(
     scatter-plot of time series observations versus their lagged values (x_t
     versus x_{t - lag}). If it is stationary the scatter-plot with its lagged
     values would resemble a circular cloud.
+
+    :param axes: flat list of axes or `None`
     """
     dbg.dassert(isinstance(srs, pd.Series), "Input must be Series")
     dbg.dassert_monotonic_index(srs, "Index must be monotonic")
@@ -781,28 +801,26 @@ def plot_histograms_and_lagged_scatterplot(
     srs_first_part = srs[:oos_start]
     srs_second_part = srs[oos_start:]
     # Plot histograms.
-    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=figsize)
-    plt.suptitle(title or srs.name)
+    if axes is None:
+        _, axes = get_multiple_plots(3, 2, y_scale=figsize[1] / 2)
+        plt.suptitle(title or srs.name)
     sns.histplot(
-        srs_first_part, ax=axes[0][0], kde=True, stat="probability", **hist_kwargs
+        srs_first_part, ax=axes[0], kde=True, stat="probability", **hist_kwargs
     )
-    axes[0][0].set(xlabel=None, ylabel=None, title="Sample distribution split 1")
+    axes[0].set(xlabel=None, ylabel=None, title="Sample distribution split 1")
     sns.histplot(
         srs_second_part,
-        ax=axes[0][1],
+        ax=axes[1],
         kde=True,
         stat="probability",
         **hist_kwargs,
     )
-    axes[0][1].set(xlabel=None, ylabel=None, title="Sample distribution split 2")
+    axes[1].set(xlabel=None, ylabel=None, title="Sample distribution split 2")
     # Plot scatter plot.
-    axes[1][0].scatter(srs, srs.shift(lag), **scatter_kwargs)
-    axes[1][0].set(xlabel="Values", ylabel="Values with lag={}".format(lag))
-    axes[1][0].axis("equal")
-    axes[1][0].set_title("Scatter-plot with lag={}".format(lag))
-    fig.delaxes(axes[1][1])
-    fig.tight_layout()
-    plt.show()
+    axes[2].scatter(srs, srs.shift(lag), **scatter_kwargs)
+    axes[2].set(xlabel="Values", ylabel="Values with lag={}".format(lag))
+    axes[2].axis("equal")
+    axes[2].set_title("Scatter-plot with lag={}".format(lag))
 
 
 # #############################################################################
@@ -818,7 +836,7 @@ def plot_heatmap(
     title: Optional[str] = None,
     vmin: float = -1.0,
     vmax: float = 1.0,
-    ax: Optional[plt.axes] = None,
+    ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
     """Plot a heatmap for a corr / cov df.
 
@@ -901,6 +919,7 @@ def plot_correlation_matrix(
     title: Optional[str] = None,
     method: Optional[str] = None,
     min_periods: Optional[int] = None,
+    ax: Optional[mpl.axes.Axes] = None,
 ) -> pd.core.frame.DataFrame:
     """Compute correlation matrix and plot its heatmap.
 
@@ -928,6 +947,7 @@ def plot_correlation_matrix(
         title=title,
         vmin=-1.0,
         vmax=1.0,
+        ax=ax,
     )
     return corr_df
 
@@ -1071,6 +1091,7 @@ def plot_dendrogram(
     df: pd.core.frame.DataFrame,
     method: Optional[str] = None,
     figsize: Optional[Tuple[int, int]] = None,
+    ax: Optional[mpl.axes.Axes] = None,
     **kwargs: Any,
 ) -> None:
     """Plot a dendrogram.
@@ -1095,18 +1116,19 @@ def plot_dendrogram(
         _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
         return
     z_linkage = compute_linkage(df, method=method)
-    if figsize is None:
-        figsize = FIG_SIZE
-    _ = plt.figure(figsize=figsize)
-    plt.title("Hierarchical Clustering Dendrogram")
-    plt.ylabel("Distance")
     if not {"leaf_rotation", "orientation"}.intersection(kwargs):
         kwargs["leaf_rotation"] = 90
+    ax = ax or plt.gca()
     sp.cluster.hierarchy.dendrogram(
         z_linkage,
         labels=df.columns.tolist(),
+        ax=ax,
         **kwargs,
     )
+    figsize = figsize or FIG_SIZE
+    ax.get_figure().set_size_inches(figsize)
+    ax.set_title("Hierarchical Clustering Dendrogram")
+    ax.set_ylabel("Distance")
 
 
 def plot_corr_over_time(
@@ -1164,6 +1186,7 @@ class PCA:
         num_components: Optional[int] = None,
         num_cols: int = 4,
         y_scale: Optional[float] = None,
+        axes: Optional[List[mpl.axes.Axes]] = None,
     ) -> None:
         """Plot principal components.
 
@@ -1175,29 +1198,36 @@ class PCA:
         max_pcs = self.pca.components_.shape[0]
         num_components = self._get_num_pcs_to_plot(num_components, max_pcs)
         _LOG.info("num_components=%s", num_components)
-        _, axes = get_multiple_plots(
-            num_components,
-            num_cols=num_cols,
-            y_scale=y_scale,
-            sharex=True,
-            sharey=True,
-        )
-        plt.suptitle("Principal components")
+        if axes is None:
+            _, axes = get_multiple_plots(
+                num_components,
+                num_cols=num_cols,
+                y_scale=y_scale,
+                sharex=True,
+                sharey=True,
+            )
+            plt.suptitle("Principal components")
+        else:
+            dbg.dassert_eq(len(axes), num_components)
         for i in range(num_components):
             pc = pcs.iloc[i, :]
             pc.plot(
                 kind="barh", ax=axes[i], title="PC%s" % i, edgecolor="tab:blue"
             )
 
-    def plot_explained_variance(self) -> None:
+    def plot_explained_variance(
+        self,
+        ax: Optional[mpl.axes.Axes] = None,
+    ) -> None:
+        ax = ax or plt.gca()
         skluv.check_is_fitted(self.pca)
         explained_variance_ratio = pd.Series(self.pca.explained_variance_ratio_)
         eigenvals = pd.Series(self.pca.explained_variance_)
         # Plot explained variance.
         explained_variance_ratio.cumsum().plot(
-            title="Explained variance ratio", lw=5, ylim=(0, 1)
+            title="Explained variance ratio", lw=5, ylim=(0, 1), ax=ax
         )
-        (eigenvals / eigenvals.max()).plot(color="g", kind="bar", rot=0)
+        (eigenvals / eigenvals.max()).plot(color="g", kind="bar", rot=0, ax=ax)
 
     def fit(self, X: pd.DataFrame, standardize: bool = False) -> _PCA_TYPE:
         if standardize:
@@ -1242,6 +1272,7 @@ def plot_confusion_heatmap(
     y_true: Union[List[Union[float, int]], np.array],
     y_pred: Union[List[Union[float, int]], np.array],
     return_results: bool = False,
+    axes: Optional[List[mpl.axes.Axes]] = None,
 ) -> Any:
     """Construct and plot a heatmap for a confusion matrix of fact and
     prediction.
@@ -1254,20 +1285,21 @@ def plot_confusion_heatmap(
     labels = set(list(y_true))
     df_out = pd.DataFrame(confusion, index=labels, columns=labels)
     df_out_percentage = df_out.apply(lambda x: x / x.sum(), axis=1)
-    _, (ax, ax2) = plt.subplots(figsize=(FIG_SIZE), ncols=2)
+    if axes is None:
+        _, axes = plt.subplots(figsize=(FIG_SIZE), ncols=2)
     plot_heatmap(
         df_out,
         mode="heatmap",
         vmin=df_out.min().min(),
         vmax=df_out.max().max(),
-        ax=ax,
+        ax=axes[0],
     )
     plot_heatmap(
         df_out_percentage,
         mode="heatmap",
         vmin=df_out_percentage.min().min(),
         vmax=df_out_percentage.max().max(),
-        ax=ax2,
+        ax=axes[1],
     )
     if return_results:
         return df_out, df_out_percentage
@@ -1281,6 +1313,7 @@ def multipletests_plot(
     num_cols: Optional[int] = None,
     method: Optional[str] = None,
     suptitle: Optional[str] = None,
+    axes: Optional[List[mpl.axes.Axes]] = None,
     **kwargs: Any,
 ) -> None:
     """Plot adjusted p-values and pass/fail threshold.
@@ -1303,28 +1336,30 @@ def multipletests_plot(
             adj_pvals = adj_pvals.to_frame()
     num_cols = num_cols or 1
     adj_pvals = adj_pvals.dropna(axis=1, how="all")
-    _, ax = get_multiple_plots(
-        adj_pvals.shape[1],
-        num_cols=num_cols,
-        sharex=False,
-        sharey=True,
-        y_scale=5,
-    )
-    if not isinstance(ax, np.ndarray):
-        ax = [ax]
+    if axes is None:
+        _, axes = get_multiple_plots(
+            adj_pvals.shape[1],
+            num_cols=num_cols,
+            sharex=False,
+            sharey=True,
+            y_scale=5,
+        )
+        if not isinstance(axes, np.ndarray):
+            axes = [axes]
+        plt.suptitle(suptitle, x=0.5105, y=1.01, fontsize=15)
     for i, col in enumerate(adj_pvals.columns):
         mask = adj_pvals[col].notna()
         adj_pval = adj_pvals.loc[mask, col].sort_values().reset_index(drop=True)
-        ax[i].plot(
+        axes[i].plot(
             pval_series.loc[mask].sort_values().reset_index(drop=True),
             label="pvals",
             **kwargs,
         )
-        ax[i].plot(adj_pval, label="adj pvals", **kwargs)
+        axes[i].plot(adj_pval, label="adj pvals", **kwargs)
         # Show min adj p-val in text.
         min_adj_pval = adj_pval.iloc[0]
-        ax[i].text(0.1, 0.7, "adj pval=%.3f" % min_adj_pval, fontsize=20)
-        ax[i].text(
+        axes[i].text(0.1, 0.7, "adj pval=%.3f" % min_adj_pval, fontsize=20)
+        axes[i].text(
             0.1,
             0.6,
             weight="bold",
@@ -1335,12 +1370,10 @@ def multipletests_plot(
                 else {"s": "FAIL", "color": "r"}
             ),
         )
-        ax[i].set_title(col)
-        ax[i].axhline(threshold, ls="--", c="k")
-        ax[i].set_ylim(0, 1)
-        ax[i].legend()
-    plt.suptitle(suptitle, x=0.5105, y=1.01, fontsize=15)
-    plt.tight_layout()
+        axes[i].set_title(col)
+        axes[i].axhline(threshold, ls="--", c="k")
+        axes[i].set_ylim(0, 1)
+        axes[i].legend()
 
 
 # #############################################################################
@@ -1382,8 +1415,7 @@ def plot_cumulative_returns(
         raise ValueError("Invalid mode='%s'" % mode)
     label = str(cumulative_rets.name) or "returns"
     #
-    ax = ax or plt.gca()
-    cumulative_rets.plot(ax=ax, title=f"{title}{title_suffix}", label=label)
+    ax = cumulative_rets.plot(ax=ax, title=f"{title}{title_suffix}", label=label)
     if benchmark_series is not None:
         benchmark_series = benchmark_series.loc[
             cumulative_rets.index[0] : cumulative_rets.index[-1]

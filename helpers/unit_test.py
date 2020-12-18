@@ -589,17 +589,34 @@ class TestCase(unittest.TestCase):
 # #############################################################################
 
 
-def run_notebook(file_name: str, scratch_dir: str) -> None:
+def run_notebook(
+    file_name: str,
+    scratch_dir: str,
+    config_builder: Optional[str] = None,
+    idx: int = 0,
+) -> None:
     """Run jupyter notebook `file_name` using `scratch_dir` as temporary dir
     storing the output.
 
+    `core.config_builders.get_config_from_env()` supports passing in a config
+    only through a path to a config builder function that returns a list of
+    configs, and a config index from that list.
+
     Assert if the notebook doesn't complete successfully.
+
+    :param config_builder: path to config builder function that returns a list
+        of configs
+    :param idx: index of target config in the config list
     """
     file_name = os.path.abspath(file_name)
     dbg.dassert_exists(file_name)
     dbg.dassert_exists(scratch_dir)
     # Build command line.
     cmd = []
+    if config_builder is not None:
+        cmd.append(f'export __CONFIG_BUILDER__="{config_builder}"; ')
+        cmd.append(f'export __CONFIG_IDX__="{idx}"; ')
+        cmd.append(f'export __CONFIG_DST_DIR__="{scratch_dir}" ;')
     cmd.append("cd %s && " % scratch_dir)
     cmd.append("jupyter nbconvert %s" % file_name)
     cmd.append("--execute")
