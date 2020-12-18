@@ -159,8 +159,9 @@ In the following we use the abbreviations below:
     [GH docs page](https://docs.github.com/en/free-pro-team@latest/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword).
   - The Issue is then automatically moved to `Review/QA`
 
-- When there is a follow up PR to one reviewed, and the requested changes are
-  not worth their own bug, update the bug with a check box: a notation like:
+- When additional changes should be made in a follow-up PR, and the requested
+  changes are not worth their own bug, update the bug with a check box: a
+  notation like:
   ```
   - [ ] [#6283](https://github.com/ParticleDev/commodity_research/pull/6283) followup: clean the code
   ```
