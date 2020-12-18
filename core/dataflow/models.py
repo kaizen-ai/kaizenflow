@@ -1577,6 +1577,12 @@ class SmaModel(FitPredictNode):
 class VolatilityModulator(FitPredictNode):
     """
     Modulate or demodulate signal by volatility prediction.
+
+    Input signal and volatility prediction should be indexed by knowledge time.
+
+    Processing steps:
+      - shift volatility prediction by the number of prediction steps
+      - multiply/divide signal by predicted volatility
     """
 
     def __init__(
@@ -1618,14 +1624,18 @@ class VolatilityModulator(FitPredictNode):
         """
         Modulate or demodulate signal by volatility prediction.
 
-        :param df_in: dataframe with `self._x_vars` and `self._vol_var` columns
+        :param df_in: dataframe with `self._signal_cols` and
+            `self._volatility_col` columns
         :return: adjusted signal
         """
         dbg.dassert_is_subset(self._signal_cols, df_in.columns.tolist())
         dbg.dassert_in(self._volatility_col, df_in.columns)
         signal = df_in[self._signal_cols]
         fwd_vol_hat = df_in[self._volatility_col]
+        # Volatility prediction is indexed by knowledge time. Let's align it
+        # with signal.
         vol_hat_shifted = fwd_vol_hat.shift(self._steps_ahead)
+        # Adjust signal by volatility.
         if self._mode == "demodulate":
             method = "divide"
         elif self._mode == "modulate":

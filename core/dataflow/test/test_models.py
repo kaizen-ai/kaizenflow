@@ -685,7 +685,7 @@ class TestVolatilityModulator(hut.TestCase):
         config = cfgb.get_config_from_nested_dict(
             {
                 "signal_cols": ["ret_0"],
-                "volatility_col": "fwd_vol_hat",
+                "volatility_col": "vol_2_hat",
                 "steps_ahead": steps_ahead,
                 "mode": "modulate",
             }
@@ -707,7 +707,7 @@ class TestVolatilityModulator(hut.TestCase):
         config = cfgb.get_config_from_nested_dict(
             {
                 "signal_cols": ["ret_0"],
-                "volatility_col": "fwd_vol_hat",
+                "volatility_col": "vol_2_hat",
                 "steps_ahead": steps_ahead,
                 "mode": "demodulate",
             }
@@ -729,7 +729,7 @@ class TestVolatilityModulator(hut.TestCase):
         config = cfgb.get_config_from_nested_dict(
             {
                 "signal_cols": ["ret_0"],
-                "volatility_col": "fwd_vol_hat",
+                "volatility_col": "vol_2_hat",
                 "steps_ahead": steps_ahead,
                 "mode": "demodulate",
                 "col_rename_func": lambda x: f"{x}_zscored",
@@ -753,7 +753,7 @@ class TestVolatilityModulator(hut.TestCase):
         config = cfgb.get_config_from_nested_dict(
             {
                 "signal_cols": ["ret_0"],
-                "volatility_col": "fwd_vol_hat",
+                "volatility_col": "vol_2_hat",
                 "steps_ahead": steps_ahead,
                 "mode": "demodulate",
                 "col_rename_func": lambda x: f"{x}_zscored",
@@ -783,7 +783,7 @@ class TestVolatilityModulator(hut.TestCase):
         vol = sigp.compute_smooth_moving_average(signal, 16)
         fwd_vol = vol.shift(-steps_ahead)
         return pd.concat(
-            [signal.rename("ret_0"), fwd_vol.rename("fwd_vol_hat")], axis=1
+            [signal.rename("ret_0"), fwd_vol.rename("vol_2_hat")], axis=1
         )
 
 
