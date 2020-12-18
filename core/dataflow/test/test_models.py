@@ -678,7 +678,7 @@ class TestSmaModel(hut.TestCase):
         return df
 
 
-class TestModulator(hut.TestCase):
+class TestVolatilityModulator(hut.TestCase):
     def test_modulate1(self) -> None:
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
@@ -690,7 +690,7 @@ class TestModulator(hut.TestCase):
                 "mode": "modulate",
             }
         )
-        node = dtf.Modulator("modulate", **config.to_dict())
+        node = dtf.VolatilityModulator("modulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         output_str = (
             f"{prnt.frame('config')}\n{config}\n"
@@ -712,7 +712,7 @@ class TestModulator(hut.TestCase):
                 "mode": "demodulate",
             }
         )
-        node = dtf.Modulator("demodulate", **config.to_dict())
+        node = dtf.VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         output_str = (
             f"{prnt.frame('config')}\n{config}\n"
@@ -736,7 +736,7 @@ class TestModulator(hut.TestCase):
                 "col_mode": "merge_all",
             }
         )
-        node = dtf.Modulator("demodulate", **config.to_dict())
+        node = dtf.VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         output_str = (
             f"{prnt.frame('config')}\n{config}\n"
@@ -760,7 +760,7 @@ class TestModulator(hut.TestCase):
                 "col_mode": "replace_selected",
             }
         )
-        node = dtf.Modulator("demodulate", **config.to_dict())
+        node = dtf.VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         output_str = (
             f"{prnt.frame('config')}\n{config}\n"

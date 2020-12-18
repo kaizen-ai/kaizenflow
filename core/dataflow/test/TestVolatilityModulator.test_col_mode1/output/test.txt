@@ -5,7 +5,7 @@ signal_cols: ['ret_0']
 volatility_col: fwd_vol_hat
 steps_ahead: 2
 mode: demodulate
-col_rename_func: <function TestModulator.test_col_mode1.<locals>.<lambda>>
+col_rename_func: <function TestVolatilityModulator.test_col_mode1.<locals>.<lambda>>
 col_mode: merge_all
 ################################################################################
 df_in
