@@ -794,7 +794,7 @@ class ContinuousSarimaxModel(FitPredictNode):
         y_fit = df[y_vars]
         non_nan_idx = df[y_vars].dropna().index
         if self._nan_mode == "keep":
-            non_nan_idx = df[y_vars].index
+            non_nan_idx = idx
         if self._x_vars is not None:
             x_fit = self._get_bkwd_x_df(df).dropna()
             x_fit_non_nan_idx = x_fit.index
