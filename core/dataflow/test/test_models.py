@@ -680,7 +680,8 @@ class TestSmaModel(hut.TestCase):
 
 class TestVolatilityModulator(hut.TestCase):
     def test_modulate1(self) -> None:
-        df_in = self._get_signal_and_fwd_vol()
+        steps_ahead = 2
+        df_in = self._get_signal_and_fwd_vol(steps_ahead)
         # Get mock returns prediction 1 step ahead indexed by knowledge time.
         y_hat = sigp.compute_smooth_moving_average(df_in["ret_0"], 4).shift(-1)
         df_in["ret_1_hat"] = y_hat
@@ -705,7 +706,8 @@ class TestVolatilityModulator(hut.TestCase):
         self.check_string(output_str)
 
     def test_demodulate1(self) -> None:
-        df_in = self._get_signal_and_fwd_vol()
+        steps_ahead = 2
+        df_in = self._get_signal_and_fwd_vol(steps_ahead)
         config = cfgb.get_config_from_nested_dict(
             {
                 "signal_cols": ["ret_0"],
@@ -727,7 +729,8 @@ class TestVolatilityModulator(hut.TestCase):
         self.check_string(output_str)
 
     def test_col_mode1(self) -> None:
-        df_in = self._get_signal_and_fwd_vol()
+        steps_ahead = 2
+        df_in = self._get_signal_and_fwd_vol(steps_ahead)
         config = cfgb.get_config_from_nested_dict(
             {
                 "signal_cols": ["ret_0"],
@@ -751,7 +754,8 @@ class TestVolatilityModulator(hut.TestCase):
         self.check_string(output_str)
 
     def test_col_mode2(self) -> None:
-        df_in = self._get_signal_and_fwd_vol()
+        steps_ahead = 2
+        df_in = self._get_signal_and_fwd_vol(steps_ahead)
         config = cfgb.get_config_from_nested_dict(
             {
                 "signal_cols": ["ret_0"],
@@ -775,15 +779,18 @@ class TestVolatilityModulator(hut.TestCase):
         self.check_string(output_str)
 
     @staticmethod
-    def _get_signal_and_fwd_vol() -> pd.DataFrame:
+    def _get_signal_and_fwd_vol(
+        steps_ahead: int,
+    ) -> pd.DataFrame:
         arma_process = sig_gen.ArmaProcess([0.45], [0])
         date_range_kwargs = {"start": "2010-01-01", "periods": 40, "freq": "B"}
         signal = arma_process.generate_sample(
             date_range_kwargs=date_range_kwargs, scale=0.1, seed=42
         )
         vol = sigp.compute_smooth_moving_average(signal, 16)
+        fwd_vol = vol.shift(-steps_ahead)
         return pd.concat(
-            [signal.rename("ret_0"), vol.rename("vol_2_hat")], axis=1
+            [signal.rename("ret_0"), fwd_vol.rename("vol_2_hat")], axis=1
         )
 
 
