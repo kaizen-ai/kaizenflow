@@ -347,6 +347,9 @@ def _parse() -> argparse.ArgumentParser:
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
+    # TODO(*): Stop modifying the "meta" level of configs:
+    #     https://github.com/ParticleDev/commodity_research/issues/6487
+    _LOG.warning("Modifying 'meta' level of the configs.")
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
