@@ -1579,8 +1579,7 @@ class VolatilityModulator(FitPredictNode):
     Modulate or demodulate signal by volatility.
 
     Processing steps:
-      - shift signal to time `t_0`
-      - shift volatility to time `t_0`
+      - shift volatility to align it with signal
       - multiply/divide signal by volatility
 
     Usage examples:
@@ -1656,20 +1655,18 @@ class VolatilityModulator(FitPredictNode):
         dbg.dassert_in(self._volatility_col, df_in.columns)
         fwd_signal = df_in[self._signal_cols]
         fwd_volatility = df_in[self._volatility_col]
-        # Shift signal and volatility to get values at time `t_0`.
-        signal_t0 = fwd_signal.shift(self._signal_steps_ahead)
-        vol_t0 = fwd_volatility.shift(self._volatility_steps_ahead)
+        # Shift volatility to align it with signal.
+        volatility_shift = self._volatility_steps_ahead - self._signal_steps_ahead
+        volatility_aligned = fwd_volatility.shift(volatility_shift)
         # Adjust signal by volatility.
         if self._mode == "demodulate":
-            method = "divide"
+            adjusted_signal = fwd_signal.divide(volatility_aligned, axis=0)
         elif self._mode == "modulate":
-            method = "multiply"
+            adjusted_signal = fwd_signal.multiply(volatility_aligned, axis=0)
         else:
             raise ValueError(f"Invalid mode=`{self._mode}`")
-        adjusted_signal = getattr(signal_t0, method)(vol_t0, axis=0)
         adjusted_signal.rename(columns=self._col_rename_func, inplace=True)
-        fwd_adjusted_signal = adjusted_signal.shift(-self._signal_steps_ahead)
-        df_out = self._apply_col_mode(df_in, fwd_adjusted_signal)
+        df_out = self._apply_col_mode(df_in, adjusted_signal)
         return df_out
 
     def _apply_col_mode(
