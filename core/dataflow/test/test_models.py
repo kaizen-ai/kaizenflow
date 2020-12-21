@@ -689,8 +689,8 @@ class TestVolatilityModulator(hut.TestCase):
             {
                 "signal_cols": ["ret_1_hat"],
                 "volatility_col": "vol_2_hat",
-                "lag_signal": 1,
-                "lag_volatility": 2,
+                "signal_steps_ahead": 1,
+                "volatility_steps_ahead": 2,
                 "mode": "modulate",
             }
         )
@@ -712,8 +712,8 @@ class TestVolatilityModulator(hut.TestCase):
             {
                 "signal_cols": ["ret_0"],
                 "volatility_col": "vol_2_hat",
-                "lag_signal": 0,
-                "lag_volatility": 2,
+                "signal_steps_ahead": 0,
+                "volatility_steps_ahead": 2,
                 "mode": "demodulate",
             }
         )
@@ -735,8 +735,8 @@ class TestVolatilityModulator(hut.TestCase):
             {
                 "signal_cols": ["ret_0"],
                 "volatility_col": "vol_2_hat",
-                "lag_signal": 0,
-                "lag_volatility": 2,
+                "signal_steps_ahead": 0,
+                "volatility_steps_ahead": 2,
                 "mode": "demodulate",
                 "col_rename_func": lambda x: f"{x}_zscored",
                 "col_mode": "merge_all",
@@ -760,8 +760,8 @@ class TestVolatilityModulator(hut.TestCase):
             {
                 "signal_cols": ["ret_0"],
                 "volatility_col": "vol_2_hat",
-                "lag_signal": 0,
-                "lag_volatility": 2,
+                "signal_steps_ahead": 0,
+                "volatility_steps_ahead": 2,
                 "mode": "demodulate",
                 "col_rename_func": lambda x: f"{x}_zscored",
                 "col_mode": "replace_selected",

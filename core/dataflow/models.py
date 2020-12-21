@@ -1587,16 +1587,16 @@ class VolatilityModulator(FitPredictNode):
       - Z-scoring
         - to obtain volatility prediction, pass in returns into `SmaModel` with
           a `steps_ahead` parameter
-        - to z-score, pass in signal, volatility prediction, `lag_signal=0`,
-          `lag_volatility=steps_ahead`, `mode='demodulate'`
+        - to z-score, pass in signal, volatility prediction, `signal_steps_ahead=0`,
+          `volatility_steps_ahead=steps_ahead`, `mode='demodulate'`
       - Undoing z-scoring
         - Let's say we have
           - forward volatility prediction `n` steps ahead
           - prediction of forward z-scored returns `m` steps ahead. Z-scoring
             for the target has been done using the volatility prediction above
         - To undo z-scoring, we need to pass in the prediction of forward
-          z-scored returns, forward volatility prediction, `lag_signal=n`,
-          `lag_volatility=m`, `mode='modulate'`
+          z-scored returns, forward volatility prediction, `signal_steps_ahead=n`,
+          `volatility_steps_ahead=m`, `mode='modulate'`
     """
 
     def __init__(
@@ -1604,8 +1604,8 @@ class VolatilityModulator(FitPredictNode):
         nid: str,
         signal_cols: List[Any],
         volatility_col: Any,
-        lag_signal: int,
-        lag_volatility: int,
+        signal_steps_ahead: int,
+        volatility_steps_ahead: int,
         mode: str,
         col_rename_func: Optional[Callable[[Any], Any]] = None,
         col_mode: Optional[str] = None,
@@ -1614,13 +1614,13 @@ class VolatilityModulator(FitPredictNode):
         :param nid: node identifier
         :param signal_cols: names of columns to (de)modulate
         :param volatility_col: name of volatility column
-        :param lag_signal: lag of the signal columns. If signal is at `t_0`,
-            this value should be `0`. If signal is a forward prediction of
-            z-scored returns indexed by knowledge time, this value should be
-            equal to the number of steps of the prediction
-        :param lag_volatility: lag of the volatility column. If volatility
-            column is an output of `SmaModel`, this corresponds to the
-            `steps_ahead` parameter
+        :param signal_steps_ahead: steps ahead of the signal columns. If signal
+            is at `t_0`, this value should be `0`. If signal is a forward
+            prediction of z-scored returns indexed by knowledge time, this
+            value should be equal to the number of steps of the prediction
+        :param volatility_steps_ahead: steps ahead of the volatility column. If
+            volatility column is an output of `SmaModel`, this corresponds to
+            the `steps_ahead` parameter
         :param mode: "modulate" or "demodulate"
         :param col_rename_func: as in `ColumnTransformer`
         :param col_mode: as in `ColumnTransformer`
@@ -1629,10 +1629,10 @@ class VolatilityModulator(FitPredictNode):
         dbg.dassert_isinstance(signal_cols, list)
         self._signal_cols = signal_cols
         self._volatility_col = volatility_col
-        dbg.dassert_lte(0, lag_signal)
-        self._lag_signal = lag_signal
-        dbg.dassert_lte(0, lag_volatility)
-        self._lag_volatility = lag_volatility
+        dbg.dassert_lte(0, signal_steps_ahead)
+        self._signal_steps_ahead = signal_steps_ahead
+        dbg.dassert_lte(0, volatility_steps_ahead)
+        self._volatility_steps_ahead = volatility_steps_ahead
         dbg.dassert_in(mode, ["modulate", "demodulate"])
         self._mode = mode
         self._col_rename_func = col_rename_func or (lambda x: x)
@@ -1650,15 +1650,15 @@ class VolatilityModulator(FitPredictNode):
 
         :param df_in: dataframe with `self._signal_cols` and
             `self._volatility_col` columns
-        :return: adjusted signal
+        :return: adjusted signal indexed in the same way as the input signal
         """
         dbg.dassert_is_subset(self._signal_cols, df_in.columns.tolist())
         dbg.dassert_in(self._volatility_col, df_in.columns)
-        signal_lagged = df_in[self._signal_cols]
-        vol_lagged = df_in[self._volatility_col]
+        fwd_signal = df_in[self._signal_cols]
+        fwd_volatility = df_in[self._volatility_col]
         # Shift signal and volatility to get values at time `t_0`.
-        signal_t0 = signal_lagged.shift(self._lag_signal)
-        vol_t0 = vol_lagged.shift(self._lag_volatility)
+        signal_t0 = fwd_signal.shift(self._signal_steps_ahead)
+        vol_t0 = fwd_volatility.shift(self._volatility_steps_ahead)
         # Adjust signal by volatility.
         if self._mode == "demodulate":
             method = "divide"
@@ -1668,7 +1668,8 @@ class VolatilityModulator(FitPredictNode):
             raise ValueError(f"Invalid mode=`{self._mode}`")
         adjusted_signal = getattr(signal_t0, method)(vol_t0, axis=0)
         adjusted_signal.rename(columns=self._col_rename_func, inplace=True)
-        df_out = self._apply_col_mode(df_in, adjusted_signal)
+        fwd_adjusted_signal = adjusted_signal.shift(-self._signal_steps_ahead)
+        df_out = self._apply_col_mode(df_in, fwd_adjusted_signal)
         return df_out
 
     def _apply_col_mode(
