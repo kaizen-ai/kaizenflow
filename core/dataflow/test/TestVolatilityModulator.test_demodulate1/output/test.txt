@@ -3,7 +3,8 @@ config
 ################################################################################
 signal_cols: ['ret_0']
 volatility_col: vol_2_hat
-steps_ahead: 2
+lag_signal: 0
+lag_volatility: 2
 mode: demodulate
 ################################################################################
 df_in

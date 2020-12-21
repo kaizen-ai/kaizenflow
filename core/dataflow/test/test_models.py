@@ -682,11 +682,15 @@ class TestVolatilityModulator(hut.TestCase):
     def test_modulate1(self) -> None:
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
+        # Get mock returns prediction 1 step ahead indexed by knowledge time.
+        y_hat = sigp.compute_smooth_moving_average(df_in["ret_0"], 4).shift(-1)
+        df_in["ret_1_hat"] = y_hat
         config = cfgb.get_config_from_nested_dict(
             {
-                "signal_cols": ["ret_0"],
+                "signal_cols": ["ret_1_hat"],
                 "volatility_col": "vol_2_hat",
-                "steps_ahead": steps_ahead,
+                "lag_signal": 1,
+                "lag_volatility": 2,
                 "mode": "modulate",
             }
         )
@@ -708,7 +712,8 @@ class TestVolatilityModulator(hut.TestCase):
             {
                 "signal_cols": ["ret_0"],
                 "volatility_col": "vol_2_hat",
-                "steps_ahead": steps_ahead,
+                "lag_signal": 0,
+                "lag_volatility": 2,
                 "mode": "demodulate",
             }
         )
@@ -730,7 +735,8 @@ class TestVolatilityModulator(hut.TestCase):
             {
                 "signal_cols": ["ret_0"],
                 "volatility_col": "vol_2_hat",
-                "steps_ahead": steps_ahead,
+                "lag_signal": 0,
+                "lag_volatility": 2,
                 "mode": "demodulate",
                 "col_rename_func": lambda x: f"{x}_zscored",
                 "col_mode": "merge_all",
@@ -754,7 +760,8 @@ class TestVolatilityModulator(hut.TestCase):
             {
                 "signal_cols": ["ret_0"],
                 "volatility_col": "vol_2_hat",
-                "steps_ahead": steps_ahead,
+                "lag_signal": 0,
+                "lag_volatility": 2,
                 "mode": "demodulate",
                 "col_rename_func": lambda x: f"{x}_zscored",
                 "col_mode": "replace_selected",
