@@ -788,7 +788,7 @@ class TestVolatilityModulator(hut.TestCase):
             date_range_kwargs=date_range_kwargs, scale=0.1, seed=42
         )
         vol = sigp.compute_smooth_moving_average(signal, 16)
-        fwd_vol = vol.shift(-steps_ahead)
+        fwd_vol = vol.shift(steps_ahead)
         return pd.concat(
             [signal.rename("ret_0"), fwd_vol.rename("vol_2_hat")], axis=1
         )
