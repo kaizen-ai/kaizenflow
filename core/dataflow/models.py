@@ -624,34 +624,6 @@ class SkLearnModel(FitPredictNode, ToListMixin):
         )
         return x, y, y_h
 
-    @staticmethod
-    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
-        """
-        Return a list given its input.
-
-        - If the input is a list, the output is the same list.
-        - If the input is a function that returns a list, then the output of
-          the function is returned.
-
-        How this might arise in practice:
-          - A ColumnTransformer returns a number of x variables, with the
-            number dependent upon a hyperparameter expressed in config
-          - The column names of the x variables may be derived from the input
-            dataframe column names, not necessarily known until graph execution
-            (and not at construction)
-          - The ColumnTransformer output columns are merged with its input
-            columns (e.g., x vars and y vars are in the same DataFrame)
-        Post-merge, we need a way to distinguish the x vars and y vars.
-        Allowing a callable here allows us to pass in the ColumnTransformer's
-        method `transformed_col_names` and defer the call until graph
-        execution.
-        """
-        if callable(to_list):
-            to_list = to_list()
-        if isinstance(to_list, list):
-            return to_list
-        raise TypeError("Data type=`%s`" % type(to_list))
-
 
 class ContinuousSarimaxModel(FitPredictNode, RegFreqMixin, ToListMixin):
     """
