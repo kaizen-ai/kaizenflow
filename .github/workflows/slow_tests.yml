@@ -5,6 +5,7 @@ on:
       - "master"
   workflow_dispatch:
   schedule:
+    # Run this once a day even if there are no commit.
     - cron:  '0 0 */1 * *'
 
 jobs:
