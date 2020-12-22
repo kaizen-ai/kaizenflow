@@ -701,19 +701,23 @@ class TestSmaModel(hut.TestCase):
         return df
 
 
-class TestModulator(hut.TestCase):
+class TestVolatilityModulator(hut.TestCase):
     def test_modulate1(self) -> None:
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
+        # Get mock returns prediction 1 step ahead indexed by knowledge time.
+        y_hat = sigp.compute_smooth_moving_average(df_in["ret_0"], 4).shift(-1)
+        df_in["ret_1_hat"] = y_hat
         config = cfgb.get_config_from_nested_dict(
             {
-                "signal_cols": ["ret_0"],
-                "volatility_col": "fwd_vol_hat",
-                "steps_ahead": steps_ahead,
+                "signal_cols": ["ret_1_hat"],
+                "volatility_col": "vol_2_hat",
+                "signal_steps_ahead": 1,
+                "volatility_steps_ahead": 2,
                 "mode": "modulate",
             }
         )
-        node = dtf.Modulator("modulate", **config.to_dict())
+        node = dtf.VolatilityModulator("modulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         output_str = (
             f"{prnt.frame('config')}\n{config}\n"
@@ -730,12 +734,13 @@ class TestModulator(hut.TestCase):
         config = cfgb.get_config_from_nested_dict(
             {
                 "signal_cols": ["ret_0"],
-                "volatility_col": "fwd_vol_hat",
-                "steps_ahead": steps_ahead,
+                "volatility_col": "vol_2_hat",
+                "signal_steps_ahead": 0,
+                "volatility_steps_ahead": 2,
                 "mode": "demodulate",
             }
         )
-        node = dtf.Modulator("demodulate", **config.to_dict())
+        node = dtf.VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         output_str = (
             f"{prnt.frame('config')}\n{config}\n"
@@ -752,14 +757,15 @@ class TestModulator(hut.TestCase):
         config = cfgb.get_config_from_nested_dict(
             {
                 "signal_cols": ["ret_0"],
-                "volatility_col": "fwd_vol_hat",
-                "steps_ahead": steps_ahead,
+                "volatility_col": "vol_2_hat",
+                "signal_steps_ahead": 0,
+                "volatility_steps_ahead": 2,
                 "mode": "demodulate",
                 "col_rename_func": lambda x: f"{x}_zscored",
                 "col_mode": "merge_all",
             }
         )
-        node = dtf.Modulator("demodulate", **config.to_dict())
+        node = dtf.VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         output_str = (
             f"{prnt.frame('config')}\n{config}\n"
@@ -776,14 +782,15 @@ class TestModulator(hut.TestCase):
         config = cfgb.get_config_from_nested_dict(
             {
                 "signal_cols": ["ret_0"],
-                "volatility_col": "fwd_vol_hat",
-                "steps_ahead": steps_ahead,
+                "volatility_col": "vol_2_hat",
+                "signal_steps_ahead": 0,
+                "volatility_steps_ahead": 2,
                 "mode": "demodulate",
                 "col_rename_func": lambda x: f"{x}_zscored",
                 "col_mode": "replace_selected",
             }
         )
-        node = dtf.Modulator("demodulate", **config.to_dict())
+        node = dtf.VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         output_str = (
             f"{prnt.frame('config')}\n{config}\n"
@@ -804,9 +811,9 @@ class TestModulator(hut.TestCase):
             date_range_kwargs=date_range_kwargs, scale=0.1, seed=42
         )
         vol = sigp.compute_smooth_moving_average(signal, 16)
-        fwd_vol = vol.shift(-steps_ahead)
+        fwd_vol = vol.shift(steps_ahead)
         return pd.concat(
-            [signal.rename("ret_0"), fwd_vol.rename("fwd_vol_hat")], axis=1
+            [signal.rename("ret_0"), fwd_vol.rename("vol_2_hat")], axis=1
         )
 
 

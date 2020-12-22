@@ -1602,9 +1602,28 @@ class SmaModel(FitPredictNode):
         return df_out
 
 
-class Modulator(FitPredictNode):
+class VolatilityModulator(FitPredictNode):
     """
-    Modulate or demodulate signal by volatility prediction.
+    Modulate or demodulate signal by volatility.
+
+    Processing steps:
+      - shift volatility to align it with signal
+      - multiply/divide signal by volatility
+
+    Usage examples:
+      - Z-scoring
+        - to obtain volatility prediction, pass in returns into `SmaModel` with
+          a `steps_ahead` parameter
+        - to z-score, pass in signal, volatility prediction, `signal_steps_ahead=0`,
+          `volatility_steps_ahead=steps_ahead`, `mode='demodulate'`
+      - Undoing z-scoring
+        - Let's say we have
+          - forward volatility prediction `n` steps ahead
+          - prediction of forward z-scored returns `m` steps ahead. Z-scoring
+            for the target has been done using the volatility prediction above
+        - To undo z-scoring, we need to pass in the prediction of forward
+          z-scored returns, forward volatility prediction, `signal_steps_ahead=n`,
+          `volatility_steps_ahead=m`, `mode='modulate'`
     """
 
     def __init__(
@@ -1612,7 +1631,8 @@ class Modulator(FitPredictNode):
         nid: str,
         signal_cols: List[Any],
         volatility_col: Any,
-        steps_ahead: int,
+        signal_steps_ahead: int,
+        volatility_steps_ahead: int,
         mode: str,
         col_rename_func: Optional[Callable[[Any], Any]] = None,
         col_mode: Optional[str] = None,
@@ -1620,8 +1640,14 @@ class Modulator(FitPredictNode):
         """
         :param nid: node identifier
         :param signal_cols: names of columns to (de)modulate
-        :param volatility_col: name of forward volatility prediction column
-        :param steps_ahead: number of steps ahead of the volatility prediction
+        :param volatility_col: name of volatility column
+        :param signal_steps_ahead: steps ahead of the signal columns. If signal
+            is at `t_0`, this value should be `0`. If signal is a forward
+            prediction of z-scored returns indexed by knowledge time, this
+            value should be equal to the number of steps of the prediction
+        :param volatility_steps_ahead: steps ahead of the volatility column. If
+            volatility column is an output of `SmaModel`, this corresponds to
+            the `steps_ahead` parameter
         :param mode: "modulate" or "demodulate"
         :param col_rename_func: as in `ColumnTransformer`
         :param col_mode: as in `ColumnTransformer`
@@ -1630,7 +1656,10 @@ class Modulator(FitPredictNode):
         dbg.dassert_isinstance(signal_cols, list)
         self._signal_cols = signal_cols
         self._volatility_col = volatility_col
-        self._steps_ahead = steps_ahead
+        dbg.dassert_lte(0, signal_steps_ahead)
+        self._signal_steps_ahead = signal_steps_ahead
+        dbg.dassert_lte(0, volatility_steps_ahead)
+        self._volatility_steps_ahead = volatility_steps_ahead
         dbg.dassert_in(mode, ["modulate", "demodulate"])
         self._mode = mode
         self._col_rename_func = col_rename_func or (lambda x: x)
@@ -1646,21 +1675,24 @@ class Modulator(FitPredictNode):
         """
         Modulate or demodulate signal by volatility prediction.
 
-        :param df_in: dataframe with `self._x_vars` and `self._vol_var` columns
-        :return: adjusted signal
+        :param df_in: dataframe with `self._signal_cols` and
+            `self._volatility_col` columns
+        :return: adjusted signal indexed in the same way as the input signal
         """
         dbg.dassert_is_subset(self._signal_cols, df_in.columns.tolist())
         dbg.dassert_in(self._volatility_col, df_in.columns)
-        signal = df_in[self._signal_cols]
-        fwd_vol_hat = df_in[self._volatility_col]
-        vol_hat_shifted = fwd_vol_hat.shift(self._steps_ahead)
+        fwd_signal = df_in[self._signal_cols]
+        fwd_volatility = df_in[self._volatility_col]
+        # Shift volatility to align it with signal.
+        volatility_shift = self._volatility_steps_ahead - self._signal_steps_ahead
+        volatility_aligned = fwd_volatility.shift(volatility_shift)
+        # Adjust signal by volatility.
         if self._mode == "demodulate":
-            method = "divide"
+            adjusted_signal = fwd_signal.divide(volatility_aligned, axis=0)
         elif self._mode == "modulate":
-            method = "multiply"
+            adjusted_signal = fwd_signal.multiply(volatility_aligned, axis=0)
         else:
             raise ValueError(f"Invalid mode=`{self._mode}`")
-        adjusted_signal = getattr(signal, method)(vol_hat_shifted, axis=0)
         adjusted_signal.rename(columns=self._col_rename_func, inplace=True)
         df_out = self._apply_col_mode(df_in, adjusted_signal)
         return df_out
