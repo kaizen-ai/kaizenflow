@@ -8,7 +8,11 @@
 # https://github.com/pre-commit/pre-commit/issues/1734
 
 if [ $(git rev-parse --show-superproject-working-tree) ]; then
-    SUBMODULE_NAME=$(git config --file ../../.gitmodules --get-regexp path | grep $(basename "$(pwd)") | awk '{print $2}')
+    SUBMODULE_NAME=$(git config \
+    --file $(git rev-parse --show-superproject-working-tree)/.gitmodules \
+    --get-regexp path \
+    | grep $(basename "$(pwd)") \
+    | awk '{print $2}')
     echo "Running linter for '$SUBMODULE_NAME' submodule."
     WORK_DIR="/src/$SUBMODULE_NAME"
     REPO_ROOT=$(git rev-parse --show-superproject-working-tree)
