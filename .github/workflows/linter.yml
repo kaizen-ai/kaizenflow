@@ -20,7 +20,7 @@ jobs:
           sha: ${{ github.sha }}
           target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
   Run_linter:
-    runs-on: [self-hosted, FAST]
+    runs-on: ubuntu-latest
     steps:
       - name: Post status if was triggered manually
         if: ${{ github.event_name == 'workflow_dispatch' }}
