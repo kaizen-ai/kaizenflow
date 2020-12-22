@@ -1,8 +1,11 @@
 name: Slow tests.
 on:
+  push:
+    branches:
+      - "master"
   workflow_dispatch:
   schedule:
-    - cron:  '0 */4 * * *'
+    - cron:  '0 0 */1 * *'
 
 jobs:
   Run_slow_tests_mark_commit:
@@ -77,8 +80,9 @@ jobs:
         if: ${{ failure() && github.event_name == 'schedule' }}
         uses: appleboy/telegram-action@master
         with:
-          to: ${{ secrets.TG_ALL_CHANEL_ID }}
+          to: ${{ secrets.P1_TG_BUILD_MONITORING_CHANNEL_ID }}
           token: ${{ secrets.P1_GH_BOT_TELEGRAM_TOKEN }}
           message: |
-            Build failure 'Slow tests'.
+            Build failure ${{ GITHUB_WORKFLOW }}.
+            Repo: ${{ github.repository }}
             https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
