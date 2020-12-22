@@ -701,6 +701,122 @@ class TestSmaModel(hut.TestCase):
         return df
 
 
+class TestVolatilityModulator(hut.TestCase):
+    def test_modulate1(self) -> None:
+        steps_ahead = 2
+        df_in = self._get_signal_and_fwd_vol(steps_ahead)
+        # Get mock returns prediction 1 step ahead indexed by knowledge time.
+        y_hat = sigp.compute_smooth_moving_average(df_in["ret_0"], 4).shift(-1)
+        df_in["ret_1_hat"] = y_hat
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "signal_cols": ["ret_1_hat"],
+                "volatility_col": "vol_2_hat",
+                "signal_steps_ahead": 1,
+                "volatility_steps_ahead": 2,
+                "mode": "modulate",
+            }
+        )
+        node = dtf.VolatilityModulator("modulate", **config.to_dict())
+        df_out = node.fit(df_in)["df_out"]
+        output_str = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_in')}\n"
+            f"{hut.convert_df_to_string(df_in, index=True)}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(df_out, index=True)}\n"
+        )
+        self.check_string(output_str)
+
+    def test_demodulate1(self) -> None:
+        steps_ahead = 2
+        df_in = self._get_signal_and_fwd_vol(steps_ahead)
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "signal_cols": ["ret_0"],
+                "volatility_col": "vol_2_hat",
+                "signal_steps_ahead": 0,
+                "volatility_steps_ahead": 2,
+                "mode": "demodulate",
+            }
+        )
+        node = dtf.VolatilityModulator("demodulate", **config.to_dict())
+        df_out = node.fit(df_in)["df_out"]
+        output_str = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_in')}\n"
+            f"{hut.convert_df_to_string(df_in, index=True)}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(df_out, index=True)}\n"
+        )
+        self.check_string(output_str)
+
+    def test_col_mode1(self) -> None:
+        steps_ahead = 2
+        df_in = self._get_signal_and_fwd_vol(steps_ahead)
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "signal_cols": ["ret_0"],
+                "volatility_col": "vol_2_hat",
+                "signal_steps_ahead": 0,
+                "volatility_steps_ahead": 2,
+                "mode": "demodulate",
+                "col_rename_func": lambda x: f"{x}_zscored",
+                "col_mode": "merge_all",
+            }
+        )
+        node = dtf.VolatilityModulator("demodulate", **config.to_dict())
+        df_out = node.fit(df_in)["df_out"]
+        output_str = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_in')}\n"
+            f"{hut.convert_df_to_string(df_in, index=True)}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(df_out, index=True)}\n"
+        )
+        self.check_string(output_str)
+
+    def test_col_mode2(self) -> None:
+        steps_ahead = 2
+        df_in = self._get_signal_and_fwd_vol(steps_ahead)
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "signal_cols": ["ret_0"],
+                "volatility_col": "vol_2_hat",
+                "signal_steps_ahead": 0,
+                "volatility_steps_ahead": 2,
+                "mode": "demodulate",
+                "col_rename_func": lambda x: f"{x}_zscored",
+                "col_mode": "replace_selected",
+            }
+        )
+        node = dtf.VolatilityModulator("demodulate", **config.to_dict())
+        df_out = node.fit(df_in)["df_out"]
+        output_str = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_in')}\n"
+            f"{hut.convert_df_to_string(df_in, index=True)}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(df_out, index=True)}\n"
+        )
+        self.check_string(output_str)
+
+    @staticmethod
+    def _get_signal_and_fwd_vol(
+        steps_ahead: int,
+    ) -> pd.DataFrame:
+        arma_process = sig_gen.ArmaProcess([0.45], [0])
+        date_range_kwargs = {"start": "2010-01-01", "periods": 40, "freq": "B"}
+        signal = arma_process.generate_sample(
+            date_range_kwargs=date_range_kwargs, scale=0.1, seed=42
+        )
+        vol = sigp.compute_smooth_moving_average(signal, 16)
+        fwd_vol = vol.shift(steps_ahead)
+        return pd.concat(
+            [signal.rename("ret_0"), fwd_vol.rename("vol_2_hat")], axis=1
+        )
+
+
 class TestVolatilityModel(hut.TestCase):
     def test_fit_dag1(self) -> None:
         # Load test data.
