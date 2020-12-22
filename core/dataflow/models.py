@@ -1788,12 +1788,13 @@ class VolatilityModel(FitPredictNode):
             col_mode="merge_all",
             nan_mode=self._nan_mode,
         )
-        self._modulator = Modulator(
+        self._modulator = VolatilityModulator(
             "anonymous_demodulation",
-            self._col,
-            self._fwd_vol_col_hat,
-            self._steps_ahead,
-            "demodulate",
+            signal_cols=self._col,
+            volatility_col=self._fwd_vol_col_hat,
+            signal_steps_ahead=0,
+            volatility_steps_ahead=self._steps_ahead,
+            mode="demodulate",
             col_rename_func=self._col_rename_func,
             col_mode=self._col_mode,
         )
