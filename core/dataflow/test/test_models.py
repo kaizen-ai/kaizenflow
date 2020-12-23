@@ -415,6 +415,27 @@ class TestContinuousSarimaxModel(hut.TestCase):
             f"{hut.convert_df_to_string(df_out, index=True)}"
         )
         self.check_string(output_str)
+        
+    def test_predict_with_nan(self) -> None:
+        """
+        Test AR(1) process with NaNs in the target.
+        """
+        data = self._get_data([1], [])
+        data.iloc[10:12, 1] = np.nan
+        data.iloc[80, 1] = np.nan
+        data_fit = data.iloc[:70]
+        data_predict = data.iloc[70:]
+        config = self._get_config((1, 0, 0))
+        config["nan_mode"] = "leave_unchanged"
+        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        csm.fit(data_fit)
+        df_out = csm.predict(data_predict)["df_out"]
+        output_str = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(df_out, index=True)}"
+        )
+        self.check_string(output_str)
 
     def test_predict_different_intervals1(self) -> None:
         """

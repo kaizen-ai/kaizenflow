@@ -765,7 +765,7 @@ class ContinuousSarimaxModel(FitPredictNode):
             default `False`. Note that adding a constant and specifying
             `trend="c"` is not the same
         :param col_mode: "replace_all" or "merge_all"
-        :param nan_mode: "raise", "drop" or "keep"
+        :param nan_mode: "raise", "drop" or "leave_unchanged"
         :param disable_tqdm: whether to disable tqdm progress bar
         """
         super().__init__(nid)
@@ -792,9 +792,10 @@ class ContinuousSarimaxModel(FitPredictNode):
         # Get intersection of non-NaN `y` and `x`.
         y_vars = self._to_list(self._y_vars)
         y_fit = df[y_vars]
-        non_nan_idx = df[y_vars].dropna().index
-        if self._nan_mode == "keep":
+        if self._nan_mode == "leave_unchanged":
             non_nan_idx = idx
+        else:
+            non_nan_idx = df[y_vars].dropna().index
         if self._x_vars is not None:
             x_fit = self._get_bkwd_x_df(df).dropna()
             x_fit_non_nan_idx = x_fit.index
@@ -944,7 +945,7 @@ class ContinuousSarimaxModel(FitPredictNode):
             if idx.shape[0] != non_nan_idx.shape[0]:
                 nan_idx = idx.difference(non_nan_idx)
                 raise ValueError(f"NaNs detected at {nan_idx}")
-        elif self._nan_mode == "drop" or self._nan_mode == "keep":
+        elif self._nan_mode == "drop" or self._nan_mode == "leave_unchanged":
             pass
         else:
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
