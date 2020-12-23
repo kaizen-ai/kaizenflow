@@ -19,7 +19,14 @@ import core.statistics as stats
 import helpers.dbg as dbg
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
-from core.dataflow.nodes import FitPredictNode
+from core.dataflow.nodes import (
+    DAG,
+    ColumnTransformer,
+    FitPredictNode,
+    Node,
+    ReadDataFromDf,
+    extract_info,
+)
 
 _LOG = logging.getLogger(__name__)
 
@@ -27,7 +34,54 @@ _LOG = logging.getLogger(__name__)
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
-class ContinuousSkLearnModel(FitPredictNode):
+class RegFreqMixin:
+    """
+    Requires input dataframe to have a well-defined frequency and unique cols.
+    """
+    @staticmethod
+    def _validate_input_df(df: pd.DataFrame) -> None:
+        """
+        Assert if df violates constraints, otherwise return `None`.
+        """
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert_no_duplicates(df.columns)
+        dbg.dassert(df.index.freq)
+
+
+class ToListMixin:
+    """
+    Supports callables that return lists.
+    """
+    @staticmethod
+    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
+        """
+        Return a list given its input.
+
+        - If the input is a list, the output is the same list.
+        - If the input is a function that returns a list, then the output of
+          the function is returned.
+
+        How this might arise in practice:
+          - A ColumnTransformer returns a number of x variables, with the
+            number dependent upon a hyperparameter expressed in config
+          - The column names of the x variables may be derived from the input
+            dataframe column names, not necessarily known until graph execution
+            (and not at construction)
+          - The ColumnTransformer output columns are merged with its input
+            columns (e.g., x vars and y vars are in the same DataFrame)
+        Post-merge, we need a way to distinguish the x vars and y vars.
+        Allowing a callable here allows us to pass in the ColumnTransformer's
+        method `transformed_col_names` and defer the call until graph
+        execution.
+        """
+        if callable(to_list):
+            to_list = to_list()
+        if isinstance(to_list, list):
+            return to_list
+        raise TypeError("Data type=`%s`" % type(to_list))
+
+
+class ContinuousSkLearnModel(FitPredictNode, RegFreqMixin, ToListMixin):
     """
     Fit and predict an sklearn model.
     """
@@ -186,15 +240,6 @@ class ContinuousSkLearnModel(FitPredictNode):
         dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
-    @staticmethod
-    def _validate_input_df(df: pd.DataFrame) -> None:
-        """
-        Assert if df violates constraints, otherwise return `None`.
-        """
-        dbg.dassert_isinstance(df, pd.DataFrame)
-        dbg.dassert_no_duplicates(df.columns)
-        dbg.dassert(df.index.freq)
-
     def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Return dataframe of `steps_ahead` forward y values.
@@ -253,37 +298,8 @@ class ContinuousSkLearnModel(FitPredictNode):
         )
         return info
 
-    # TODO(Paul): Make this a mixin to use with all modeling nodes.
-    @staticmethod
-    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
-        """
-        Return a list given its input.
 
-        - If the input is a list, the output is the same list.
-        - If the input is a function that returns a list, then the output of
-          the function is returned.
-
-        How this might arise in practice:
-          - A ColumnTransformer returns a number of x variables, with the
-            number dependent upon a hyperparameter expressed in config
-          - The column names of the x variables may be derived from the input
-            dataframe column names, not necessarily known until graph execution
-            (and not at construction)
-          - The ColumnTransformer output columns are merged with its input
-            columns (e.g., x vars and y vars are in the same DataFrame)
-        Post-merge, we need a way to distinguish the x vars and y vars.
-        Allowing a callable here allows us to pass in the ColumnTransformer's
-        method `transformed_col_names` and defer the call until graph
-        execution.
-        """
-        if callable(to_list):
-            to_list = to_list()
-        if isinstance(to_list, list):
-            return to_list
-        raise TypeError("Data type=`%s`" % type(to_list))
-
-
-class UnsupervisedSkLearnModel(FitPredictNode):
+class UnsupervisedSkLearnModel(FitPredictNode, RegFreqMixin, ToListMixin):
     """
     Fit and transform an unsupervised sklearn model.
     """
@@ -392,46 +408,8 @@ class UnsupervisedSkLearnModel(FitPredictNode):
         else:
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
-    @staticmethod
-    def _validate_input_df(df: pd.DataFrame) -> None:
-        """
-        Assert if df violates constraints, otherwise return `None`.
-        """
-        dbg.dassert_isinstance(df, pd.DataFrame)
-        dbg.dassert_no_duplicates(df.columns)
-        dbg.dassert(df.index.freq)
 
-    # TODO(Paul): Make this a mixin to use with all modeling nodes.
-    @staticmethod
-    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
-        """
-        Return a list given its input.
-
-        - If the input is a list, the output is the same list.
-        - If the input is a function that returns a list, then the output of
-          the function is returned.
-
-        How this might arise in practice:
-          - A ColumnTransformer returns a number of x variables, with the
-            number dependent upon a hyperparameter expressed in config
-          - The column names of the x variables may be derived from the input
-            dataframe column names, not necessarily known until graph execution
-            (and not at construction)
-          - The ColumnTransformer output columns are merged with its input
-            columns (e.g., x vars and y vars are in the same DataFrame)
-        Post-merge, we need a way to distinguish the x vars and y vars.
-        Allowing a callable here allows us to pass in the ColumnTransformer's
-        method `transformed_col_names` and defer the call until graph
-        execution.
-        """
-        if callable(to_list):
-            to_list = to_list()
-        if isinstance(to_list, list):
-            return to_list
-        raise TypeError("Data type=`%s`" % type(to_list))
-
-
-class Residualizer(FitPredictNode):
+class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
     """
     Residualize using an sklearn model with `inverse_transform()`.
     """
@@ -524,45 +502,8 @@ class Residualizer(FitPredictNode):
         else:
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
-    @staticmethod
-    def _validate_input_df(df: pd.DataFrame) -> None:
-        """
-        Assert if df violates constraints, otherwise return `None`.
-        """
-        dbg.dassert_isinstance(df, pd.DataFrame)
-        dbg.dassert(df.index.freq)
 
-    # TODO(Paul): Make this a mixin to use with all modeling nodes.
-    @staticmethod
-    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
-        """
-        Return a list given its input.
-
-        - If the input is a list, the output is the same list.
-        - If the input is a function that returns a list, then the output of
-          the function is returned.
-
-        How this might arise in practice:
-          - A ColumnTransformer returns a number of x variables, with the
-            number dependent upon a hyperparameter expressed in config
-          - The column names of the x variables may be derived from the input
-            dataframe column names, not necessarily known until graph execution
-            (and not at construction)
-          - The ColumnTransformer output columns are merged with its input
-            columns (e.g., x vars and y vars are in the same DataFrame)
-        Post-merge, we need a way to distinguish the x vars and y vars.
-        Allowing a callable here allows us to pass in the ColumnTransformer's
-        method `transformed_col_names` and defer the call until graph
-        execution.
-        """
-        if callable(to_list):
-            to_list = to_list()
-        if isinstance(to_list, list):
-            return to_list
-        raise TypeError("Data type=`%s`" % type(to_list))
-
-
-class SkLearnModel(FitPredictNode):
+class SkLearnModel(FitPredictNode, ToListMixin):
     def __init__(
         self,
         nid: str,
@@ -690,36 +631,8 @@ class SkLearnModel(FitPredictNode):
         )
         return x, y, y_h
 
-    @staticmethod
-    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
-        """
-        Return a list given its input.
 
-        - If the input is a list, the output is the same list.
-        - If the input is a function that returns a list, then the output of
-          the function is returned.
-
-        How this might arise in practice:
-          - A ColumnTransformer returns a number of x variables, with the
-            number dependent upon a hyperparameter expressed in config
-          - The column names of the x variables may be derived from the input
-            dataframe column names, not necessarily known until graph execution
-            (and not at construction)
-          - The ColumnTransformer output columns are merged with its input
-            columns (e.g., x vars and y vars are in the same DataFrame)
-        Post-merge, we need a way to distinguish the x vars and y vars.
-        Allowing a callable here allows us to pass in the ColumnTransformer's
-        method `transformed_col_names` and defer the call until graph
-        execution.
-        """
-        if callable(to_list):
-            to_list = to_list()
-        if isinstance(to_list, list):
-            return to_list
-        raise TypeError("Data type=`%s`" % type(to_list))
-
-
-class ContinuousSarimaxModel(FitPredictNode):
+class ContinuousSarimaxModel(FitPredictNode, RegFreqMixin, ToListMixin):
     """
     A dataflow node for continuous SARIMAX model.
 
@@ -977,28 +890,8 @@ class ContinuousSarimaxModel(FitPredictNode):
         dbg.dassert_no_duplicates(df_out.columns)
         return df_out
 
-    @staticmethod
-    def _validate_input_df(df: pd.DataFrame) -> None:
-        """
-        Assert if `df` violates constraints.
-        """
-        dbg.dassert_isinstance(df, pd.DataFrame)
-        dbg.dassert_no_duplicates(df.columns)
-        dbg.dassert(df.index.freq)
 
-    @staticmethod
-    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
-        """
-        As in `SkLearnNode` version.
-        """
-        if callable(to_list):
-            to_list = to_list()
-        if isinstance(to_list, list):
-            return to_list
-        raise TypeError("Data type=`%s`" % type(to_list))
-
-
-class ContinuousDeepArModel(FitPredictNode):
+class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
     """
     A dataflow node for a DeepAR model.
 
@@ -1151,15 +1044,6 @@ class ContinuousDeepArModel(FitPredictNode):
         dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
-    @staticmethod
-    def _validate_input_df(df: pd.DataFrame) -> None:
-        """
-        Assert if df violates constraints, otherwise return `None`.
-        """
-        dbg.dassert_isinstance(df, pd.DataFrame)
-        dbg.dassert_no_duplicates(df.columns)
-        dbg.dassert(df.index.freq)
-
     def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Return dataframe of `steps_ahead` forward y values.
@@ -1174,21 +1058,8 @@ class ContinuousDeepArModel(FitPredictNode):
         )
         return fwd_y_df
 
-    @staticmethod
-    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
-        """
-        As in `SkLearnNode` version.
 
-        TODO(Paul): Think about factoring this method out into a parent/mixin.
-        """
-        if callable(to_list):
-            to_list = to_list()
-        if isinstance(to_list, list):
-            return to_list
-        raise TypeError("Data type=`%s`" % type(to_list))
-
-
-class DeepARGlobalModel(FitPredictNode):
+class DeepARGlobalModel(FitPredictNode, ToListMixin):
     """
     A dataflow node for a DeepAR model.
 
@@ -1363,21 +1234,8 @@ class DeepARGlobalModel(FitPredictNode):
         self._set_info("predict", info)
         return {"df_out": y_hat.to_frame()}
 
-    @staticmethod
-    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
-        """
-        As in `SkLearnNode` version.
 
-        TODO(Paul): Think about factoring this method out into a parent/mixin.
-        """
-        if callable(to_list):
-            to_list = to_list()
-        if isinstance(to_list, list):
-            return to_list
-        raise TypeError("Data type=`%s`" % type(to_list))
-
-
-class SmaModel(FitPredictNode):
+class SmaModel(FitPredictNode, RegFreqMixin):
     """
     Fit and predict a smooth moving average model.
     """
@@ -1503,15 +1361,6 @@ class SmaModel(FitPredictNode):
         df_out = self._apply_col_mode(df_in, df_out)
         return {"df_out": df_out}
 
-    @staticmethod
-    def _validate_input_df(df: pd.DataFrame) -> None:
-        """
-        Assert if df violates constraints, otherwise return `None`.
-        """
-        dbg.dassert_isinstance(df, pd.DataFrame)
-        dbg.dassert_no_duplicates(df.columns)
-        dbg.dassert(df.index.freq)
-
     def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Return dataframe of `steps_ahead` forward y values.
@@ -1598,6 +1447,136 @@ class SmaModel(FitPredictNode):
         return df_out
 
 
+class VolatilityModulator(FitPredictNode):
+    """
+    Modulate or demodulate signal by volatility.
+
+    Processing steps:
+      - shift volatility to align it with signal
+      - multiply/divide signal by volatility
+
+    Usage examples:
+      - Z-scoring
+        - to obtain volatility prediction, pass in returns into `SmaModel` with
+          a `steps_ahead` parameter
+        - to z-score, pass in signal, volatility prediction, `signal_steps_ahead=0`,
+          `volatility_steps_ahead=steps_ahead`, `mode='demodulate'`
+      - Undoing z-scoring
+        - Let's say we have
+          - forward volatility prediction `n` steps ahead
+          - prediction of forward z-scored returns `m` steps ahead. Z-scoring
+            for the target has been done using the volatility prediction above
+        - To undo z-scoring, we need to pass in the prediction of forward
+          z-scored returns, forward volatility prediction, `signal_steps_ahead=n`,
+          `volatility_steps_ahead=m`, `mode='modulate'`
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        signal_cols: List[Any],
+        volatility_col: Any,
+        signal_steps_ahead: int,
+        volatility_steps_ahead: int,
+        mode: str,
+        col_rename_func: Optional[Callable[[Any], Any]] = None,
+        col_mode: Optional[str] = None,
+    ) -> None:
+        """
+        :param nid: node identifier
+        :param signal_cols: names of columns to (de)modulate
+        :param volatility_col: name of volatility column
+        :param signal_steps_ahead: steps ahead of the signal columns. If signal
+            is at `t_0`, this value should be `0`. If signal is a forward
+            prediction of z-scored returns indexed by knowledge time, this
+            value should be equal to the number of steps of the prediction
+        :param volatility_steps_ahead: steps ahead of the volatility column. If
+            volatility column is an output of `SmaModel`, this corresponds to
+            the `steps_ahead` parameter
+        :param mode: "modulate" or "demodulate"
+        :param col_rename_func: as in `ColumnTransformer`
+        :param col_mode: as in `ColumnTransformer`
+        """
+        super().__init__(nid)
+        dbg.dassert_isinstance(signal_cols, list)
+        self._signal_cols = signal_cols
+        self._volatility_col = volatility_col
+        dbg.dassert_lte(0, signal_steps_ahead)
+        self._signal_steps_ahead = signal_steps_ahead
+        dbg.dassert_lte(0, volatility_steps_ahead)
+        self._volatility_steps_ahead = volatility_steps_ahead
+        dbg.dassert_in(mode, ["modulate", "demodulate"])
+        self._mode = mode
+        self._col_rename_func = col_rename_func or (lambda x: x)
+        self._col_mode = col_mode or "replace_all"
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return {"df_out": self._process_signal(df_in)}
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return {"df_out": self._process_signal(df_in)}
+
+    def _process_signal(self, df_in: pd.DataFrame) -> pd.DataFrame:
+        """
+        Modulate or demodulate signal by volatility prediction.
+
+        :param df_in: dataframe with `self._signal_cols` and
+            `self._volatility_col` columns
+        :return: adjusted signal indexed in the same way as the input signal
+        """
+        dbg.dassert_is_subset(self._signal_cols, df_in.columns.tolist())
+        dbg.dassert_in(self._volatility_col, df_in.columns)
+        fwd_signal = df_in[self._signal_cols]
+        fwd_volatility = df_in[self._volatility_col]
+        # Shift volatility to align it with signal.
+        volatility_shift = self._volatility_steps_ahead - self._signal_steps_ahead
+        volatility_aligned = fwd_volatility.shift(volatility_shift)
+        # Adjust signal by volatility.
+        if self._mode == "demodulate":
+            adjusted_signal = fwd_signal.divide(volatility_aligned, axis=0)
+        elif self._mode == "modulate":
+            adjusted_signal = fwd_signal.multiply(volatility_aligned, axis=0)
+        else:
+            raise ValueError(f"Invalid mode=`{self._mode}`")
+        adjusted_signal.rename(columns=self._col_rename_func, inplace=True)
+        df_out = self._apply_col_mode(df_in, adjusted_signal)
+        return df_out
+
+    def _apply_col_mode(
+        self,
+        df_in: pd.DataFrame,
+        df_out: pd.DataFrame,
+    ) -> pd.DataFrame:
+        if self._col_mode == "merge_all":
+            dbg.dassert(
+                df_out.columns.intersection(df_in.columns).empty,
+                "Transformed column names `%s` conflict with existing column "
+                "names `%s`.",
+                df_out.columns,
+                df_in.columns,
+            )
+            df_out = df_in.merge(df_out, left_index=True, right_index=True)
+        elif self._col_mode == "replace_selected":
+            dbg.dassert(
+                df_in.drop(self._signal_cols, axis=1)
+                .columns.intersection(df_out.columns)
+                .empty,
+                "Transformed column names `%s` conflict with existing column "
+                "names `%s`.",
+                df_out.columns,
+                self._signal_cols,
+            )
+            df_out = df_in.drop(self._signal_cols, axis=1).merge(
+                df_out, left_index=True, right_index=True
+            )
+        elif self._col_mode == "replace_all":
+            pass
+        else:
+            raise ValueError(f"Invalid `col_mode`='{self._col_mode}'")
+        dbg.dassert_no_duplicates(df_out.columns)
+        return df_out
+
+
 class VolatilityModel(FitPredictNode):
     """
     Fit and predict a smooth moving average volatility model.
@@ -1613,6 +1592,8 @@ class VolatilityModel(FitPredictNode):
         steps_ahead: int,
         p_moment: float = 2,
         tau: Optional[float] = None,
+        col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
+        col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
         """
@@ -1624,6 +1605,8 @@ class VolatilityModel(FitPredictNode):
         :param p_moment: exponent to apply to the absolute value of returns
         :param tau: as in `sigp.compute_smooth_moving_average`. If `None`,
             learn this parameter
+        :param col_rename_func: renaming function for z-scored column
+        :param col_mode: as in `ColumnTransformer`
         :param nan_mode: as in ContinuousSkLearnModel
         """
         super().__init__(nid)
@@ -1634,78 +1617,84 @@ class VolatilityModel(FitPredictNode):
         self._steps_ahead = steps_ahead
         self._fwd_vol_col = self._vol_col + f"_{self._steps_ahead}"
         self._fwd_vol_col_hat = self._fwd_vol_col + "_hat"
-        self._zscored_col = str(self._col[0]) + "_zscored"
         dbg.dassert_lte(1, p_moment)
         self._p_moment = p_moment
         self._tau = tau
+        self._col_rename_func = col_rename_func
+        self._col_mode = col_mode or "merge_all"
         self._nan_mode = nan_mode
-        # The SmaModel node is only used internally (e.g., it is not added to
-        # any encompasing DAG).
+        # The `SmaModel` and `Modulator` nodes are only used internally (e.g.,
+        # are not added to any encompassing DAG).
         self._sma_model = SmaModel(
             "anonymous_sma",
             col=[self._vol_col],
             steps_ahead=self._steps_ahead,
             tau=self._tau,
+            col_mode="merge_all",
             nan_mode=self._nan_mode,
+        )
+        self._modulator = VolatilityModulator(
+            "anonymous_demodulation",
+            signal_cols=self._col,
+            volatility_col=self._fwd_vol_col_hat,
+            signal_steps_ahead=0,
+            volatility_steps_ahead=self._steps_ahead,
+            mode="demodulate",
+            col_rename_func=self._col_rename_func,
+            col_mode=self._col_mode,
         )
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df_in = df_in.copy()
-        vol_power = self._calculate_vol_power(df_in)
-        sma = self._sma_model.fit(vol_power)["df_out"]
-        info = collections.OrderedDict()
-        info["sma"] = self._sma_model.get_info("fit")
-        df_in = self._add_vol_and_zscore(df_in, sma)
+        dag = self._get_dag(df_in)
+        df_out = dag.run_leq_node(self._modulator.nid, "fit")["df_out"]
+        info = extract_info(dag, ["fit"])
         self._set_info("fit", info)
-        return {"df_out": df_in}
+        return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_not_in(self._vol_col, df_in.columns)
         df_in = df_in.copy()
-        vol_power = self._calculate_vol_power(df_in)
-        sma = self._sma_model.predict(vol_power)["df_out"]
-        info = collections.OrderedDict()
-        info["sma"] = self._sma_model.get_info("predict")
-        df_in = self._add_vol_and_zscore(df_in, sma)
+        dag = self._get_dag(df_in)
+        df_out = dag.run_leq_node(self._modulator.nid, "predict")["df_out"]
+        info = extract_info(dag, ["predict"])
         self._set_info("predict", info)
-        return {"df_out": df_in}
+        return {"df_out": df_out}
 
-    def _calculate_vol_power(self, df_in: pd.DataFrame) -> pd.DataFrame:
-        """
-        Calculate p-th moment of returns.
-        """
-        vol_p = pd.Series(
-            np.abs(df_in[self._col[0]]) ** self._p_moment, name=self._vol_col
-        ).to_frame()
-        return vol_p
-
-    def _add_vol_and_zscore(
-        self, df_in: pd.DataFrame, sma: pd.DataFrame
-    ) -> pd.DataFrame:
-        """
-        Add volatility, predicted volatility and z-score to dataframe.
-        """
-        self._check_cols(df_in, sma)
-        normalized_vol = sma[self._fwd_vol_col] ** (1.0 / self._p_moment)
-        normalized_vol_hat = sma[self._fwd_vol_col_hat] ** (1.0 / self._p_moment)
-        df_in[self._zscored_col] = df_in[self._col[0]].divide(
-            normalized_vol_hat.shift(self._steps_ahead)
+    def _get_dag(self, df_in: pd.DataFrame) -> DAG:
+        dag = DAG(mode="strict")
+        # Load data.
+        node = ReadDataFromDf("data", df_in)
+        dag.add_node(node)
+        tail_nid = "data"
+        # Calculate volatility power.
+        node = ColumnTransformer(
+            "calculate_vol_power",
+            transformer_func=lambda x: np.abs(x) ** self._p_moment,
+            cols=self._col,
+            col_rename_func=lambda x: f"{x}_vol",
+            col_mode="merge_all",
         )
-        vol_df = pd.DataFrame(
-            {
-                self._fwd_vol_col: normalized_vol,
-                self._fwd_vol_col_hat: normalized_vol_hat,
-            }
+        tail_nid = self._append(dag, tail_nid, node)
+        # Run SMA.
+        node = self._sma_model
+        tail_nid = self._append(dag, tail_nid, node)
+        # Normalize volatility.
+        node = ColumnTransformer(
+            "normalize_vol",
+            transformer_func=lambda x: x ** (1.0 / self._p_moment),
+            cols=[self._vol_col, self._fwd_vol_col, self._fwd_vol_col_hat],
+            col_mode="replace_selected",
         )
-        df_in = vol_df.merge(df_in, left_index=True, right_index=True)
-        return df_in
+        tail_nid = self._append(dag, tail_nid, node)
+        # Run modulator.
+        node = self._modulator
+        self._append(dag, tail_nid, node)
+        return dag
 
-    def _check_cols(self, df_in: pd.DataFrame, sma: pd.DataFrame) -> None:
-        """
-        Avoid column naming collisions.
-        """
-        dbg.dassert_not_in(self._fwd_vol_col, df_in.columns)
-        dbg.dassert_not_in(self._fwd_vol_col_hat, df_in.columns)
-        dbg.dassert_not_in(self._zscored_col, df_in.columns)
-        dbg.dassert_in(self._fwd_vol_col, sma.columns)
-        dbg.dassert_in(self._fwd_vol_col_hat, sma.columns)
+    @staticmethod
+    def _append(dag: DAG, tail_nid: Optional[str], node: Node) -> str:
+        dag.add_node(node)
+        if tail_nid is not None:
+            dag.connect(tail_nid, node.nid)
+        return node.nid

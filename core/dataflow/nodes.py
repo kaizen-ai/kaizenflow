@@ -118,6 +118,7 @@ class DataSource(FitPredictNode, abc.ABC):
         #
         self.df = None
         self._fit_intervals = None
+        self._predict_intervals = None
         self._predict_idxs = None
 
     def set_fit_intervals(self, intervals: List[Tuple[Any, Any]]) -> None:

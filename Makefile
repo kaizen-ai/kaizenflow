@@ -46,28 +46,9 @@ precommit_uninstall:
         $(DEV_TOOLS_PROD_IMAGE) \
         /dev_tools/pre_commit_scripts/uninstall_precommit_script.sh
 
-# Install pre-commit git-hook.
-precommit_install_githooks:
-	docker run \
-        --rm -t \
-        -v "$(shell pwd)":/src \
-        --workdir /src \
-        --entrypoint="bash" \
-        $(DEV_TOOLS_PROD_IMAGE) \
-        /dev_tools/pre_commit_scripts/install_precommit_hook.sh
-
-# Uninstall pre-commit hook.
-precommit_uninstall_githooks:
-	docker run \
-        --rm -t \
-        -v "$(shell pwd)":/src \
-        --workdir /src \
-        --entrypoint="bash" \
-        $(DEV_TOOLS_PROD_IMAGE) \
-        /dev_tools/pre_commit_scripts/uninstall_precommit_hook.sh
 
 lint_branch:
-	bash pre-commit.sh run --files $(shell git diff --name-only origin/master)
+	bash pre-commit.sh run --files $(shell git diff --name-only master...)
 
 # #############################################################################
 # Tests
