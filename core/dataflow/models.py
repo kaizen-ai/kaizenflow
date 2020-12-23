@@ -19,7 +19,14 @@ import core.statistics as stats
 import helpers.dbg as dbg
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
-from core.dataflow.nodes import FitPredictNode
+from core.dataflow.nodes import (
+    DAG,
+    ColumnTransformer,
+    FitPredictNode,
+    Node,
+    ReadDataFromDf,
+    extract_info,
+)
 
 _LOG = logging.getLogger(__name__)
 
@@ -1582,6 +1589,8 @@ class VolatilityModel(FitPredictNode):
         steps_ahead: int,
         p_moment: float = 2,
         tau: Optional[float] = None,
+        col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
+        col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
         """
@@ -1593,6 +1602,8 @@ class VolatilityModel(FitPredictNode):
         :param p_moment: exponent to apply to the absolute value of returns
         :param tau: as in `sigp.compute_smooth_moving_average`. If `None`,
             learn this parameter
+        :param col_rename_func: renaming function for z-scored column
+        :param col_mode: as in `ColumnTransformer`
         :param nan_mode: as in ContinuousSkLearnModel
         """
         super().__init__(nid)
@@ -1603,78 +1614,84 @@ class VolatilityModel(FitPredictNode):
         self._steps_ahead = steps_ahead
         self._fwd_vol_col = self._vol_col + f"_{self._steps_ahead}"
         self._fwd_vol_col_hat = self._fwd_vol_col + "_hat"
-        self._zscored_col = str(self._col[0]) + "_zscored"
         dbg.dassert_lte(1, p_moment)
         self._p_moment = p_moment
         self._tau = tau
+        self._col_rename_func = col_rename_func
+        self._col_mode = col_mode or "merge_all"
         self._nan_mode = nan_mode
-        # The SmaModel node is only used internally (e.g., it is not added to
-        # any encompasing DAG).
+        # The `SmaModel` and `Modulator` nodes are only used internally (e.g.,
+        # are not added to any encompassing DAG).
         self._sma_model = SmaModel(
             "anonymous_sma",
             col=[self._vol_col],
             steps_ahead=self._steps_ahead,
             tau=self._tau,
+            col_mode="merge_all",
             nan_mode=self._nan_mode,
+        )
+        self._modulator = VolatilityModulator(
+            "anonymous_demodulation",
+            signal_cols=self._col,
+            volatility_col=self._fwd_vol_col_hat,
+            signal_steps_ahead=0,
+            volatility_steps_ahead=self._steps_ahead,
+            mode="demodulate",
+            col_rename_func=self._col_rename_func,
+            col_mode=self._col_mode,
         )
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df_in = df_in.copy()
-        vol_power = self._calculate_vol_power(df_in)
-        sma = self._sma_model.fit(vol_power)["df_out"]
-        info = collections.OrderedDict()
-        info["sma"] = self._sma_model.get_info("fit")
-        df_in = self._add_vol_and_zscore(df_in, sma)
+        dag = self._get_dag(df_in)
+        df_out = dag.run_leq_node(self._modulator.nid, "fit")["df_out"]
+        info = extract_info(dag, ["fit"])
         self._set_info("fit", info)
-        return {"df_out": df_in}
+        return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_not_in(self._vol_col, df_in.columns)
         df_in = df_in.copy()
-        vol_power = self._calculate_vol_power(df_in)
-        sma = self._sma_model.predict(vol_power)["df_out"]
-        info = collections.OrderedDict()
-        info["sma"] = self._sma_model.get_info("predict")
-        df_in = self._add_vol_and_zscore(df_in, sma)
+        dag = self._get_dag(df_in)
+        df_out = dag.run_leq_node(self._modulator.nid, "predict")["df_out"]
+        info = extract_info(dag, ["predict"])
         self._set_info("predict", info)
-        return {"df_out": df_in}
+        return {"df_out": df_out}
 
-    def _calculate_vol_power(self, df_in: pd.DataFrame) -> pd.DataFrame:
-        """
-        Calculate p-th moment of returns.
-        """
-        vol_p = pd.Series(
-            np.abs(df_in[self._col[0]]) ** self._p_moment, name=self._vol_col
-        ).to_frame()
-        return vol_p
-
-    def _add_vol_and_zscore(
-        self, df_in: pd.DataFrame, sma: pd.DataFrame
-    ) -> pd.DataFrame:
-        """
-        Add volatility, predicted volatility and z-score to dataframe.
-        """
-        self._check_cols(df_in, sma)
-        normalized_vol = sma[self._fwd_vol_col] ** (1.0 / self._p_moment)
-        normalized_vol_hat = sma[self._fwd_vol_col_hat] ** (1.0 / self._p_moment)
-        df_in[self._zscored_col] = df_in[self._col[0]].divide(
-            normalized_vol_hat.shift(self._steps_ahead)
+    def _get_dag(self, df_in: pd.DataFrame) -> DAG:
+        dag = DAG(mode="strict")
+        # Load data.
+        node = ReadDataFromDf("data", df_in)
+        dag.add_node(node)
+        tail_nid = "data"
+        # Calculate volatility power.
+        node = ColumnTransformer(
+            "calculate_vol_power",
+            transformer_func=lambda x: np.abs(x) ** self._p_moment,
+            cols=self._col,
+            col_rename_func=lambda x: f"{x}_vol",
+            col_mode="merge_all",
         )
-        vol_df = pd.DataFrame(
-            {
-                self._fwd_vol_col: normalized_vol,
-                self._fwd_vol_col_hat: normalized_vol_hat,
-            }
+        tail_nid = self._append(dag, tail_nid, node)
+        # Run SMA.
+        node = self._sma_model
+        tail_nid = self._append(dag, tail_nid, node)
+        # Normalize volatility.
+        node = ColumnTransformer(
+            "normalize_vol",
+            transformer_func=lambda x: x ** (1.0 / self._p_moment),
+            cols=[self._vol_col, self._fwd_vol_col, self._fwd_vol_col_hat],
+            col_mode="replace_selected",
         )
-        df_in = vol_df.merge(df_in, left_index=True, right_index=True)
-        return df_in
+        tail_nid = self._append(dag, tail_nid, node)
+        # Run modulator.
+        node = self._modulator
+        self._append(dag, tail_nid, node)
+        return dag
 
-    def _check_cols(self, df_in: pd.DataFrame, sma: pd.DataFrame) -> None:
-        """
-        Avoid column naming collisions.
-        """
-        dbg.dassert_not_in(self._fwd_vol_col, df_in.columns)
-        dbg.dassert_not_in(self._fwd_vol_col_hat, df_in.columns)
-        dbg.dassert_not_in(self._zscored_col, df_in.columns)
-        dbg.dassert_in(self._fwd_vol_col, sma.columns)
-        dbg.dassert_in(self._fwd_vol_col_hat, sma.columns)
+    @staticmethod
+    def _append(dag: DAG, tail_nid: Optional[str], node: Node) -> str:
+        dag.add_node(node)
+        if tail_nid is not None:
+            dag.connect(tail_nid, node.nid)
+        return node.nid
