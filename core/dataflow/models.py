@@ -1680,7 +1680,7 @@ class VolatilityModel(FitPredictNode):
         node = ColumnTransformer(
             "normalize_vol",
             transformer_func=lambda x: x ** (1.0 / self._p_moment),
-            cols=[self._fwd_vol_col, self._fwd_vol_col_hat],
+            cols=[self._vol_col, self._fwd_vol_col, self._fwd_vol_col_hat],
             col_mode="replace_selected",
         )
         tail_nid = self._append(dag, tail_nid, node)
