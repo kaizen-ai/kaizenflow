@@ -84,6 +84,6 @@ jobs:
           to: ${{ secrets.P1_TG_BUILD_MONITORING_CHANNEL_ID }}
           token: ${{ secrets.P1_GH_BOT_TELEGRAM_TOKEN }}
           message: |
-            Build failure $GITHUB_WORKFLOW
+            Build failure `${{ github.workflow }}`
             Repo: ${{ github.repository }}
             https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
