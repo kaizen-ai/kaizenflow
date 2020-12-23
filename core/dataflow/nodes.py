@@ -373,7 +373,7 @@ class YConnector(FitPredictNode):
         self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
     ) -> Dict[str, pd.DataFrame]:
         df_out, info = self._apply_connector_func(df_in1, df_in2)
-        self._set_info("fit", info)
+        self._set_info("predict", info)
         return {"df_out": df_out}
 
     def _apply_connector_func(
