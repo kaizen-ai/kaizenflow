@@ -623,7 +623,7 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         #
         ret_0 = model_output["ret_0"]
         cumret_3 = sigp.accumulate(ret_0, 3)
-        fwd_cumret_3 = cumret_3.shift(-3).rename("cumret_1_original")
+        fwd_cumret_3 = cumret_3.shift(-3).rename("cumret_3_original")
         #
         cumret_3_from_result = cum_y_yhat[["cumret_3"]]
         output_df = cumret_3_from_result.join(fwd_cumret_3, how="outer")
