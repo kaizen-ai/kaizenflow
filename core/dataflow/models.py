@@ -893,10 +893,18 @@ class ContinuousSarimaxModel(FitPredictNode, RegFreqMixin, ToListMixin):
         return df_out
 
 
-# TODO(Julia): Add a comment about assuming that volatility steps ahead is `1`.
-# TODO(Julia): Add a comment about what "dynamic" means here.
-# TODO(Julia): Add a comment about prediction cols order.
 class MultihorizonReturnsPredictionProcessor(FitPredictNode):
+    """
+    Process multi-horizon returns prediction.
+
+    In multi-horizon returns prediction problem, the output can take a form of
+    single-step returns for each forecast step. To get returns from `t_0` to
+    `t_n`, we need to:
+      - (optional): undo z-scoring
+      - accumulate returns for each step. The output is `cumret_t_1, ...,
+        cumret_t_n` and `cumret_t_1_hat, ..., cumret_t_n_hat`
+    """
+
     def __init__(
         self,
         nid: str,
@@ -904,6 +912,18 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode):
         prediction_cols: List[Any],
         volatility_col: Any,
     ):
+        """
+        :param nid: node identifier
+        :param target_col: name of the prediction target column which contains
+            single-step returns, e.g. "ret_0_zscored"
+        :param prediction_cols: name of columns with single-step returns
+            predictions for each forecast step. The columns should be indexed
+            by knowledge time and ordered by forecast step, e.g.
+            `["ret_0_zscored_1_hat", "ret_0_zscored_2_hat",
+            "ret_0_zscored_3_hat"]`
+        :param volatility_col: name of a column containing one step ahead
+            volatility forecast. If `None`, z-scoring is not inverted
+        """
         super().__init__(nid)
         self._target_col = target_col
         dbg.dassert_isinstance(prediction_cols, list)
@@ -927,6 +947,9 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode):
         return cum_y_yhat
 
     def _process_predictions(self, df_in: pd.DataFrame) -> pd.DataFrame:
+        """
+        Invert z-scoring and accumulate predicted returns for each step.
+        """
         predictions = df_in[self._prediction_cols]
         # Invert z-scoring.
         if self._volatility_col is not None:
@@ -940,6 +963,9 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode):
         return pd.concat(cum_ret_hats, axis=1)
 
     def _process_target(self, df_in: pd.DataFrame) -> pd.Series:
+        """
+        Invert z-scoring and accumulate returns for each step.
+        """
         target = df_in[self._target_col]
         # Invert z-scoring.
         if self._volatility_col is not None:
