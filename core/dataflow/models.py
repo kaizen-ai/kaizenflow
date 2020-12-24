@@ -922,7 +922,8 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode):
     def _process(self, df_in: pd.DataFrame) -> pd.DataFrame:
         cum_ret_hat = self._process_predictions(df_in)
         fwd_cum_ret = self._process_target(df_in)
-        cum_y_yhat = cum_ret_hat.join(fwd_cum_ret, how="left")
+        # TODO(Julia): Add `col_mode`.
+        cum_y_yhat = fwd_cum_ret.join(cum_ret_hat, how="right")
         return cum_y_yhat
 
     def _process_predictions(self, df_in: pd.DataFrame) -> pd.DataFrame:
@@ -931,14 +932,12 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode):
         if self._volatility_col is not None:
             vol_1_hat = df_in[self._volatility_col]
             predictions = predictions.multiply(vol_1_hat, axis=0)
-        # Accumulate predicted returns.
-        target_col = f"cumret_{self._max_steps_ahead}"
-        prediction_col = f"{target_col}_hat"
-        # TODO(Julia): Add `col_mode`.
-        cum_ret_hat = predictions.sum(axis=1, skipna=False).to_frame(
-            prediction_col
-        )
-        return cum_ret_hat
+        # Accumulate predicted returns for each step.
+        cum_ret_hats = []
+        for i in range(1, self._max_steps_ahead + 1):
+            cum_ret_hat_curr = predictions.iloc[:, :i].sum(axis=1, skipna=False)
+            cum_ret_hats.append(cum_ret_hat_curr.to_frame(name=f"cumret_{i}_hat"))
+        return pd.concat(cum_ret_hats, axis=1)
 
     def _process_target(self, df_in: pd.DataFrame) -> pd.Series:
         target = df_in[self._target_col]
@@ -947,12 +946,13 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode):
             vol_1_hat = df_in[self._volatility_col]
             vol_0_hat = vol_1_hat.shift(1)
             target = target * vol_0_hat
-        # Accumulate target.
-        target_col = f"cumret_{self._max_steps_ahead}"
-        cum_ret = sigp.accumulate(target, self._max_steps_ahead).rename(
-            target_col
-        )
-        fwd_cum_ret = cum_ret.shift(-self._max_steps_ahead)
+        # Accumulate target for each step.
+        cum_rets = []
+        for i in range(1, self._max_steps_ahead + 1):
+            cum_ret_curr = sigp.accumulate(target, i).rename(f"cumret_{i}")
+            cum_rets.append(cum_ret_curr)
+        cum_rets = pd.concat(cum_rets, axis=1)
+        fwd_cum_ret = cum_rets.shift(-self._max_steps_ahead)
         return fwd_cum_ret
 
 
