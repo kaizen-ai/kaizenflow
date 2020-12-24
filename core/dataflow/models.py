@@ -38,6 +38,7 @@ class RegFreqMixin:
     """
     Requires input dataframe to have a well-defined frequency and unique cols.
     """
+
     @staticmethod
     def _validate_input_df(df: pd.DataFrame) -> None:
         """
@@ -52,6 +53,7 @@ class ToListMixin:
     """
     Supports callables that return lists.
     """
+
     @staticmethod
     def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
         """
@@ -889,6 +891,69 @@ class ContinuousSarimaxModel(FitPredictNode, RegFreqMixin, ToListMixin):
             dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
         dbg.dassert_no_duplicates(df_out.columns)
         return df_out
+
+
+# TODO(Julia): Add a comment about assuming that volatility steps ahead is `1`.
+# TODO(Julia): Add a comment about what "dynamic" means here.
+# TODO(Julia): Add a comment about prediction cols order.
+class MultihorizonReturnsPredictionProcessor(FitPredictNode):
+    def __init__(
+        self,
+        nid: str,
+        target_col: Any,
+        prediction_cols: List[Any],
+        volatility_col: Any,
+    ):
+        super().__init__(nid)
+        self._target_col = target_col
+        dbg.dassert_isinstance(prediction_cols, list)
+        self._prediction_cols = prediction_cols
+        self._volatility_col = volatility_col
+        self._max_steps_ahead = len(self._prediction_cols)
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        df_out = self._process(df_in)
+        return {"df_out": df_out}
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        df_out = self._process(df_in)
+        return {"df_out": df_out}
+
+    def _process(self, df_in: pd.DataFrame) -> pd.DataFrame:
+        cum_ret_hat = self._process_predictions(df_in)
+        fwd_cum_ret = self._process_target(df_in)
+        cum_y_yhat = cum_ret_hat.join(fwd_cum_ret, how="left")
+        return cum_y_yhat
+
+    def _process_predictions(self, df_in: pd.DataFrame) -> pd.DataFrame:
+        predictions = df_in[self._prediction_cols]
+        # Invert z-scoring.
+        if self._volatility_col is not None:
+            vol_1_hat = df_in[self._volatility_col]
+            predictions = predictions.multiply(vol_1_hat, axis=0)
+        # Accumulate predicted returns.
+        target_col = f"cumret_{self._max_steps_ahead}"
+        prediction_col = f"{target_col}_hat"
+        # TODO(Julia): Add `col_mode`.
+        cum_ret_hat = predictions.sum(axis=1, skipna=False).to_frame(
+            prediction_col
+        )
+        return cum_ret_hat
+
+    def _process_target(self, df_in: pd.DataFrame) -> pd.Series:
+        target = df_in[self._target_col]
+        # Invert z-scoring.
+        if self._volatility_col is not None:
+            vol_1_hat = df_in[self._volatility_col]
+            vol_0_hat = vol_1_hat.shift(1)
+            target = target * vol_0_hat
+        # Accumulate target.
+        target_col = f"cumret_{self._max_steps_ahead}"
+        cum_ret = sigp.accumulate(target, self._max_steps_ahead).rename(
+            target_col
+        )
+        fwd_cum_ret = cum_ret.shift(-self._max_steps_ahead)
+        return fwd_cum_ret
 
 
 class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):

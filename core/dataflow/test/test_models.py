@@ -553,6 +553,117 @@ class TestContinuousSarimaxModel(hut.TestCase):
         return config
 
 
+class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
+    def test1(self) -> None:
+        model_output = self._get_multihorizon_model_output(3)
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "target_col": "ret_0_zscored",
+                "prediction_cols": [
+                    "ret_0_zscored_1_hat",
+                    "ret_0_zscored_2_hat",
+                    "ret_0_zscored_3_hat",
+                ],
+                "volatility_col": "vol_1_hat",
+            }
+        )
+        mrpp = dtf.MultihorizonReturnsPredictionProcessor(
+            "process_results", **config.to_dict()
+        )
+        cum_y_yhat = mrpp.fit(model_output)["df_out"]
+        # TODO(Julia): Ask about creating a `TestFitPredictNode(hut.TestCase)`
+        #     class that will take care of this piece.
+        output_str = (
+            f"{prnt.frame('config')}\n{config}\n"
+            f"{prnt.frame('df_in')}\n"
+            f"{hut.convert_df_to_string(model_output, index=True)}\n"
+            f"{prnt.frame('df_out')}\n"
+            f"{hut.convert_df_to_string(cum_y_yhat, index=True)}\n"
+        )
+        self.check_string(output_str)
+
+    def test_invert_zret_0_zscoring1(self) -> None:
+        model_output = self._get_multihorizon_model_output(1)
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "target_col": "ret_0_zscored",
+                "prediction_cols": ["ret_0_zscored_1_hat"],
+                "volatility_col": "vol_1_hat",
+            }
+        )
+        mrpp = dtf.MultihorizonReturnsPredictionProcessor(
+            "process_results", **config.to_dict()
+        )
+        cum_y_yhat = mrpp.fit(model_output)["df_out"]
+        #
+        ret_0 = model_output["ret_0"]
+        fwd_ret_0 = ret_0.shift(-1).rename("cumret_1_original")
+        ret_0_from_result = cum_y_yhat[["cumret_1"]]
+        output_df = ret_0_from_result.join(fwd_ret_0, how="outer")
+        output_str = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_str)
+
+    def test_invert_zret_3_zscoring1(self) -> None:
+        model_output = self._get_multihorizon_model_output(3)
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "target_col": "ret_0_zscored",
+                "prediction_cols": [
+                    "ret_0_zscored_1_hat",
+                    "ret_0_zscored_2_hat",
+                    "ret_0_zscored_3_hat",
+                ],
+                "volatility_col": "vol_1_hat",
+            }
+        )
+        mrpp = dtf.MultihorizonReturnsPredictionProcessor(
+            "process_results", **config.to_dict()
+        )
+        cum_y_yhat = mrpp.fit(model_output)["df_out"]
+        #
+        ret_0 = model_output["ret_0"]
+        cumret_3 = sigp.accumulate(ret_0, 3)
+        fwd_cumret_3 = cumret_3.shift(-3).rename("cumret_1_original")
+        #
+        cumret_3_from_result = cum_y_yhat[["cumret_3"]]
+        output_df = cumret_3_from_result.join(fwd_cumret_3, how="outer")
+        output_str = hut.convert_df_to_string(output_df, index=True)
+        self.check_string(output_str)
+
+    @staticmethod
+    def _get_series(seed: int = 24) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([1], [1])
+        date_range_kwargs = {"start": "2010-01-01", "periods": 50, "freq": "D"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range_kwargs, scale=0.1, seed=seed
+        )
+        return series
+
+    @staticmethod
+    def _get_multihorizon_model_output(
+        steps_ahead: int, seed: int = 42
+    ) -> pd.DataFrame:
+        # Get returns.
+        rets = TestMultihorizonReturnsPredictionProcessor._get_series(
+            seed=seed
+        ).rename("ret_0")
+        # Get volatility estimate indexed by knowledge time. Volatility delay
+        # should be one.
+        fwd_vol = sigp.compute_smooth_moving_average(rets, 16).rename("vol_1_hat")
+        rets_zscored = (rets / fwd_vol.shift(1)).to_frame(name="ret_0_zscored")
+        fwd_rets_zscored = rets_zscored.shift(-steps_ahead).rename(
+            lambda x: f"{x}_{steps_ahead}", axis=1
+        )
+        # Get mock returns predictions.
+        model_output = [rets, fwd_vol, rets_zscored, fwd_rets_zscored]
+        for i in range(1, steps_ahead + 1):
+            ret_hat = sigp.compute_smooth_moving_average(
+                rets_zscored, tau=i + 1
+            ).rename(lambda x: f"{x}_{i}_hat", axis=1)
+            model_output.append(ret_hat)
+        return pd.concat(model_output, axis=1)
+
+
 class TestResidualizer(hut.TestCase):
     def test_fit_dag1(self) -> None:
         # Load test data.
