@@ -38,6 +38,7 @@ class RegFreqMixin:
     """
     Requires input dataframe to have a well-defined frequency and unique cols.
     """
+
     @staticmethod
     def _validate_input_df(df: pd.DataFrame) -> None:
         """
@@ -52,6 +53,7 @@ class ToListMixin:
     """
     Supports callables that return lists.
     """
+
     @staticmethod
     def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
         """
@@ -889,6 +891,95 @@ class ContinuousSarimaxModel(FitPredictNode, RegFreqMixin, ToListMixin):
             dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
         dbg.dassert_no_duplicates(df_out.columns)
         return df_out
+
+
+class MultihorizonReturnsPredictionProcessor(FitPredictNode):
+    """
+    Process multi-horizon returns prediction.
+
+    In multi-horizon returns prediction problem, the output can take a form of
+    single-step returns for each forecast step. To get returns from `t_0` to
+    `t_n`, we need to:
+      - (optional): undo z-scoring
+      - accumulate returns for each step. The output is `cumret_t_1, ...,
+        cumret_t_n` and `cumret_t_1_hat, ..., cumret_t_n_hat`
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        target_col: Any,
+        prediction_cols: List[Any],
+        volatility_col: Any,
+    ):
+        """
+        :param nid: node identifier
+        :param target_col: name of the prediction target column which contains
+            single-step returns, e.g. "ret_0_zscored"
+        :param prediction_cols: name of columns with single-step returns
+            predictions for each forecast step. The columns should be indexed
+            by knowledge time and ordered by forecast step, e.g.
+            `["ret_0_zscored_1_hat", "ret_0_zscored_2_hat",
+            "ret_0_zscored_3_hat"]`
+        :param volatility_col: name of a column containing one step ahead
+            volatility forecast. If `None`, z-scoring is not inverted
+        """
+        super().__init__(nid)
+        self._target_col = target_col
+        dbg.dassert_isinstance(prediction_cols, list)
+        self._prediction_cols = prediction_cols
+        self._volatility_col = volatility_col
+        self._max_steps_ahead = len(self._prediction_cols)
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        df_out = self._process(df_in)
+        return {"df_out": df_out}
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        df_out = self._process(df_in)
+        return {"df_out": df_out}
+
+    def _process(self, df_in: pd.DataFrame) -> pd.DataFrame:
+        cum_ret_hat = self._process_predictions(df_in)
+        fwd_cum_ret = self._process_target(df_in)
+        # TODO(Julia): Add `col_mode`.
+        cum_y_yhat = fwd_cum_ret.join(cum_ret_hat, how="right")
+        return cum_y_yhat
+
+    def _process_predictions(self, df_in: pd.DataFrame) -> pd.DataFrame:
+        """
+        Invert z-scoring and accumulate predicted returns for each step.
+        """
+        predictions = df_in[self._prediction_cols]
+        # Invert z-scoring.
+        if self._volatility_col is not None:
+            vol_1_hat = df_in[self._volatility_col]
+            predictions = predictions.multiply(vol_1_hat, axis=0)
+        # Accumulate predicted returns for each step.
+        cum_ret_hats = []
+        for i in range(1, self._max_steps_ahead + 1):
+            cum_ret_hat_curr = predictions.iloc[:, :i].sum(axis=1, skipna=False)
+            cum_ret_hats.append(cum_ret_hat_curr.to_frame(name=f"cumret_{i}_hat"))
+        return pd.concat(cum_ret_hats, axis=1)
+
+    def _process_target(self, df_in: pd.DataFrame) -> pd.Series:
+        """
+        Invert z-scoring and accumulate returns for each step.
+        """
+        target = df_in[self._target_col]
+        # Invert z-scoring.
+        if self._volatility_col is not None:
+            vol_1_hat = df_in[self._volatility_col]
+            vol_0_hat = vol_1_hat.shift(1)
+            target = target * vol_0_hat
+        # Accumulate target for each step.
+        cum_rets = []
+        for i in range(1, self._max_steps_ahead + 1):
+            cum_ret_curr = sigp.accumulate(target, i).rename(f"cumret_{i}")
+            cum_rets.append(cum_ret_curr)
+        cum_rets = pd.concat(cum_rets, axis=1)
+        fwd_cum_ret = cum_rets.shift(-self._max_steps_ahead)
+        return fwd_cum_ret
 
 
 class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
