@@ -537,6 +537,22 @@
   _LOG.info("Results are %s", ...)
   ```
 
+## Commenting out code
+
+- When we comment out code, we should explain why it is no longer relevant and
+  what we need to do before removing the commented out code:
+  - E.g., instead of
+    ```python
+    is_alive = pd.Series(True, index=metadata.index)
+    # is_alive = kgutils.annotate_alive(metadata, self.alive_cutoff)
+    ```
+    use:
+    ```python
+    # TODO(*): As discussed in PartTask5047 for now we set all timeseries to be alive.
+    # is_alive = kgutils.annotate_alive(metadata, self.alive_cutoff)
+    is_alive = pd.Series(True, index=metadata.index)
+    ```
+
 ## If you find a bug or obsolete docstring/TODO in the code
 
 - The process is:
