@@ -310,10 +310,11 @@ def to_typed_csv(df: pd.DataFrame, file_name: str) -> None:
     :param file_name: name of file with desired format, which is used for saving
     :return:
     """
+    # Save the types.
     dtypes_filename = file_name + ".types"
     io_.create_enclosing_dir(dtypes_filename, incremental=True)
     dtypes_dict = str(df.dtypes.apply(lambda x: x.name).to_dict())
-
+    # Save the data.
     df.to_csv(file_name, index=False)
     with open(dtypes_filename, "w") as dtypes_file:
         dtypes_file.write(dtypes_dict)
@@ -329,11 +330,11 @@ def from_typed_csv(file_name: str) -> pd.DataFrame:
     :param file_name: name of file, which is need to be converted into dataframe
     :return pd.DataFrame: dataframe of pandas format.
     """
+    # Load the types.
     dtypes_filename = file_name + ".types"
     dbg.dassert_exists(dtypes_filename)
-
     dtypes_file = open(dtypes_filename)
     dtypes_dict = ast.literal_eval(list(dtypes_file)[0])
-
+    # Load the data.
     df = pd.read_csv(file_name, dtype=dtypes_dict)
     return df

@@ -10,6 +10,7 @@ fi;
 ls $DIR_NAME
 
 if [[ 0 == 1 ]]; then
+  # jupyter nbextension install https://rawgithub.com/lambdalisue/jupyter-vim-binding/master/vim_binding.js --nbextensions=$(jupyter --data-dir)/nbextensions/vim_binding
   # Sometimes the vim extension gives problems. This procedure typically solves
   # the problem.
   # Note on installation:

@@ -145,7 +145,7 @@ def _filter_target_files(file_names: List[str]) -> List[str]:
     for file_name in file_names:
         _, file_ext = os.path.splitext(file_name)
         # We skip .ipynb since jupytext is part of the main flow.
-        is_valid = file_ext in (".py", ".txt", ".md")
+        is_valid = file_ext in (".py", ".txt", ".md", ".ipynb")
         is_valid &= ".ipynb_checkpoints/" not in file_name
         is_valid &= "dev_scripts/install/conda_envs" not in file_name
         # Skip requirements.txt.

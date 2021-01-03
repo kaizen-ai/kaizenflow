@@ -54,11 +54,11 @@ def _log_in(
     password: str,
     requests_session: requests.Session,
 ) -> bool:
-    """Make a login request to my account page and return the result.
+    """Make a login request to the account page and return the result.
 
-    :param page_url: URL to the my account page
-    :param username: actual username
-    :param password: real password
+    :param page_url: URL to the account page
+    :param username: username
+    :param password: password
     :param requests_session: current requests session to preserve cookies
     :return: boolean for operation result
     """
@@ -116,13 +116,13 @@ def _download_page(
 
 
 class DatasetListExtractor:
-    """Extractor of the list of available datasets from Kibot."""
+    """Extract the list of available datasets from Kibot."""
 
     @classmethod
     def extract_dataset_links(cls, src_file: str) -> pd.DataFrame:
         """Retrieve a table with datasets and corresponding page links.
 
-        :param src_file: html file with the my account page
+        :param src_file: html file with the account page
         :return: DataFrame with dataset names and corresponding page links
         """
         html = io_.from_file(src_file)
@@ -164,7 +164,7 @@ class DatasetListExtractor:
 
 
 class DatasetExtractor:
-    """Extractor of payloads for a particular dataset."""
+    """Extract payloads for a particular dataset."""
 
     def __init__(self, dataset: str, requests_session: requests.Session):
         """Init object.
@@ -461,7 +461,8 @@ class DownloadDataCommand(command.KibotCommand):
 
 def _run(args) -> int:  # type: ignore
     # TODO(amr): This is kept as a separate function to minimize the diff, should be
-    # cleaned up at some point Create dirs.
+    # cleaned up at some point
+    # Create dirs.
     incremental = not args.no_incremental
     source_dir_name = "source_data"
     source_dir = os.path.join(args.tmp_dir, source_dir_name)
