@@ -361,6 +361,7 @@ def plot_barplot(
     figsize: Optional[Tuple[int, int]] = None,
     rotation: int = 0,
     ax: Optional[mpl.axes.Axes] = None,
+    scale: Optional[str] = None,
 ) -> None:
     """Plot a barplot.
 
@@ -376,6 +377,7 @@ def plot_barplot(
     :param figsize: size of plot
     :param rotation: rotation of xtick labels
     :param ax: axes
+    :param scale: the scale is linear (if None) or "log"
     """
 
     def _get_annotation_loc(
@@ -413,9 +415,17 @@ def plot_barplot(
         kind = "barh"
     else:
         raise ValueError("Invalid orientation='%s'" % orientation)
+    # Choose scale.
+    if scale == "log":
+        logy = True
+    elif not scale:
+        logy = False
+    else:
+        raise ValueError("Invalid scale='%s'" % scale)
     # Plot top N.
     ax = srs_top_n.plot(
-        kind=kind, color=color, rot=rotation, title=title, ax=ax, figsize=figsize
+        kind=kind, color=color, rot=rotation, title=title, ax=ax, figsize=figsize,
+        logy=logy
     )
     # Add annotations to bars.
     # Note: annotations in both modes are taken from
