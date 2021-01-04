@@ -571,6 +571,7 @@ class DataFrameModeler:
         ax: Optional[mpl.axes.Axes] = None,
         plot_rolling_correlation_kwargs: Optional[dict] = None,
         mode: str = "ins",
+        max_ylim: bool = False,
     ) -> None:
         df = self._get_df(cols=[col1, col2], mode=mode)
         plot_rolling_correlation_kwargs = plot_rolling_correlation_kwargs or {}
@@ -579,6 +580,7 @@ class DataFrameModeler:
             df[col2],
             tau=tau,
             ax=ax,
+            max_ylim=max_ylim,
             **plot_rolling_correlation_kwargs,
         )
 
