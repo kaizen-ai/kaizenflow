@@ -2023,7 +2023,11 @@ def plot_rolling_correlation(
         p_moment=p_moment,
     )
     # Plot rolling correlation.
-    roll_corr.plot(ax=ax, title=title, label=label)
+    roll_corr.plot(
+        ax=ax, 
+        title=title, 
+        label=label + f"\n(tau={tau}, min_periods={min_periods})"
+    )
     # Calculate correlation whole period.
     whole_period = srs1.corr(srs2)
     # Plot correlation whole period.
