@@ -86,6 +86,7 @@ def _system(
     blocking: bool,
     wrapper: Optional[Any],
     output_file: Optional[Any],
+    num_error_lines: Optional[int],
     tee: bool,
     dry_run: bool,
     log_level: Union[int, str],
@@ -100,6 +101,8 @@ def _system(
     :param blocking: blocking system call or not
     :param wrapper: another command to prepend the execution of cmd
     :param output_file: redirect stdout and stderr to this file
+    :param num_error_lines: number of lines of the output to display when
+        raising `RuntimeError`
     :param tee: if True, tee stdout and stderr to output_file
     :param dry_run: just print the final command but not execute it
     :param log_level: print the command to execute at level "log_level".
@@ -201,7 +204,13 @@ def _system(
             % (prnt.line(">"), output, prnt.line("<"))
         )
         _LOG.error("%s", msg)
-        raise RuntimeError("cmd='%s' failed with rc='%s'" % (cmd, rc))
+        # Report the first `num_error_lines` of the output.
+        num_error_lines = num_error_lines or 30
+        output_error = "\n".join(output.split("\n")[:num_error_lines])
+        raise RuntimeError(
+            "cmd='%s' failed with rc='%s'\ntruncated output=\n%s"
+            % (cmd, rc, output_error)
+        )
     # dbg.dassert_type_in(output, (str, ))
     return rc, output
 
@@ -215,6 +224,7 @@ def system(
     blocking: bool = True,
     wrapper: Optional[Any] = None,
     output_file: Optional[Any] = None,
+    num_error_lines: Optional[int] = None,
     tee: bool = False,
     dry_run: bool = False,
     log_level: Union[int, str] = logging.DEBUG,
@@ -231,6 +241,7 @@ def system(
         blocking=blocking,
         wrapper=wrapper,
         output_file=output_file,
+        num_error_lines=num_error_lines,
         tee=tee,
         dry_run=dry_run,
         log_level=log_level,
@@ -271,6 +282,7 @@ def system_to_string(
         blocking=True,
         wrapper=wrapper,
         output_file=None,
+        num_error_lines=None,
         tee=False,
         dry_run=dry_run,
         log_level=log_level,
