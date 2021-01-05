@@ -23,7 +23,7 @@ class TestRunNotebook(hut.TestCase):
             f"--dst_dir {dst_dir} "
             f"--notebook "
             f"{os.path.join(client_root, 'dev_scripts/notebooks/test_run_notebook.ipynb')} "
-            "--function 'amp.dev_scripts.test.test_run_notebook.build_configs()' "
+            "--function 'dev_scripts.test.test_run_notebook.build_configs()' "
             "--skip_on_error "
             "--num_threads 1"
         )
@@ -37,7 +37,7 @@ class TestRunNotebook(hut.TestCase):
             f"--dst_dir {dst_dir} "
             f"--notebook "
             f"{os.path.join(client_root, 'dev_scripts/notebooks/test_run_notebook.ipynb')} "
-            "--function 'amp.dev_scripts.test.test_run_notebook.build_configs()' "
+            "--function 'dev_scripts.test.test_run_notebook.build_configs()' "
             "--skip_on_error "
             "--num_threads 3"
         )
@@ -51,7 +51,7 @@ class TestRunNotebook(hut.TestCase):
             f"--dst_dir {dst_dir} "
             f"--notebook "
             f"{os.path.join(client_root, 'dev_scripts/notebooks/test_run_notebook.ipynb')} "
-            "--function 'amp.dev_scripts.test.test_run_notebook.build_configs()' "
+            "--function 'dev_scripts.test.test_run_notebook.build_configs()' "
             "--num_threads 3"
         )
         with self.assertRaises(RuntimeError):
