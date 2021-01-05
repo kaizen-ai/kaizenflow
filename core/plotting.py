@@ -1987,6 +1987,7 @@ def plot_rolling_correlation(
     ax: Optional[mpl.axes.Axes] = None,
     events: Optional[List[Tuple[str, Optional[str]]]] = None,
     plot_zero_line: bool = True,
+    ylim: Optional[str] = None,
 ) -> None:
     """
     Return rolling correlation between 2 series and plot rolling correlation.
@@ -2002,6 +2003,8 @@ def plot_rolling_correlation(
     :param mode: corr or zcorr
     :param ax: axis
     :param events: list of tuples with dates and labels to point out on the plot
+    :param ylim: either "fixed" or "scalable" (if None). If ylim is set to "fixed", 
+        the y-axis limits are (-1, 1).
     """
     mode = mode or "corr"
     # Calculate and plot rolling correlation.
@@ -2030,6 +2033,13 @@ def plot_rolling_correlation(
     )
     # Plot rolling correlation.
     roll_corr.plot(ax=ax, title=title, label=label)
+    ylim = ylim or "scalable"
+    if ylim == "fixed":
+        ax.set_ylim(-1, 1)
+    elif ylim == "scalable":
+        pass
+    else:
+        raise ValueError("Invalid `ylim`='%s'" % ylim)
     # Calculate correlation whole period.
     whole_period = srs1.corr(srs2)
     # Plot correlation whole period.
