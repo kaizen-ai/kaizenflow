@@ -361,7 +361,7 @@ def plot_barplot(
     figsize: Optional[Tuple[int, int]] = None,
     rotation: int = 0,
     ax: Optional[mpl.axes.Axes] = None,
-    yscale: Optional[str] = "linear",
+    yscale: Optional[str] = None,
 ) -> None:
     """Plot a barplot.
 
@@ -377,7 +377,7 @@ def plot_barplot(
     :param figsize: size of plot
     :param rotation: rotation of xtick labels
     :param ax: axes
-    :param yscale: y-axis scale is "linear" by default or "log"
+    :param yscale: y-axis scale is "linear" (if None) or "log"
     """
 
     def _get_annotation_loc(
@@ -419,6 +419,9 @@ def plot_barplot(
     ax = srs_top_n.plot(
         kind=kind, color=color, rot=rotation, title=title, ax=ax, figsize=figsize
     )
+    # Choose scale.
+    yscale = yscale or "linear"
+    dbg.dassert_in(yscale, ["log", "linear"], f"Invalid scale={yscale}")
     ax.set_yscale(yscale)
     # Add annotations to bars.
     # Note: annotations in both modes are taken from
