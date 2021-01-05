@@ -1,10 +1,12 @@
 import logging
+import os
 from typing import List
 
 import pytest
 
 import core.config as cfg
 import core.config_builders as cfgb
+import helpers.git as git
 import helpers.system_interaction as si
 import helpers.unit_test as hut
 
@@ -15,10 +17,12 @@ _LOG = logging.getLogger(__name__)
 class TestRunNotebook(hut.TestCase):
     def test_main1(self) -> None:
         dst_dir = self.get_scratch_space()
+        client_root = git.get_client_root(super_module=False)
         cmd = (
-            "/commodity_research/amp/dev_scripts/notebooks/run_notebook.py "
+            f"{os.path.join(client_root, 'dev_scripts/notebooks/run_notebook.py')} "
             f"--dst_dir {dst_dir} "
-            "--notebook /commodity_research/amp/dev_scripts/notebooks/test_run_notebook.ipynb "
+            f"--notebook "
+            f"{os.path.join(client_root, 'dev_scripts/notebooks/test_run_notebook.ipynb')} "
             "--function 'amp.dev_scripts.test.test_run_notebook.build_configs()' "
             "--skip_on_error "
             "--num_threads 1"
@@ -27,10 +31,12 @@ class TestRunNotebook(hut.TestCase):
 
     def test_main2(self) -> None:
         dst_dir = self.get_scratch_space()
+        client_root = git.get_client_root(super_module=False)
         cmd = (
-            "/commodity_research/amp/dev_scripts/notebooks/run_notebook.py "
+            f"{os.path.join(client_root, 'dev_scripts/notebooks/run_notebook.py')} "
             f"--dst_dir {dst_dir} "
-            "--notebook /commodity_research/amp/dev_scripts/notebooks/test_run_notebook.ipynb "
+            f"--notebook "
+            f"{os.path.join(client_root, 'dev_scripts/notebooks/test_run_notebook.ipynb')} "
             "--function 'amp.dev_scripts.test.test_run_notebook.build_configs()' "
             "--skip_on_error "
             "--num_threads 3"
@@ -39,10 +45,12 @@ class TestRunNotebook(hut.TestCase):
 
     def test_main3(self) -> None:
         dst_dir = self.get_scratch_space()
+        client_root = git.get_client_root(super_module=False)
         cmd = (
-            "/commodity_research/amp/dev_scripts/notebooks/run_notebook.py "
+            f"{os.path.join(client_root, 'dev_scripts/notebooks/run_notebook.py')} "
             f"--dst_dir {dst_dir} "
-            "--notebook /commodity_research/amp/dev_scripts/notebooks/test_run_notebook.ipynb "
+            f"--notebook "
+            f"{os.path.join(client_root, 'dev_scripts/notebooks/test_run_notebook.ipynb')} "
             "--function 'amp.dev_scripts.test.test_run_notebook.build_configs()' "
             "--num_threads 3"
         )
