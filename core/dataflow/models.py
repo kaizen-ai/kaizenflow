@@ -1609,10 +1609,18 @@ class VolatilityModulator(FitPredictNode):
         self._col_mode = col_mode or "replace_all"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return {"df_out": self._process_signal(df_in)}
+        df_out = self._process_signal(df_in)
+        info = collections.OrderedDict()
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return {"df_out": self._process_signal(df_in)}
+        df_out = self._process_signal(df_in)
+        info = collections.OrderedDict()
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("predict", info)
+        return {"df_out": df_out}
 
     def _process_signal(self, df_in: pd.DataFrame) -> pd.DataFrame:
         """
