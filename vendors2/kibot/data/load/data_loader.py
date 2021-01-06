@@ -21,6 +21,7 @@ class KibotDataLoader:
         contract_type: Optional[types.ContractType] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
+        normalize: bool = True,
     ) -> pd.DataFrame:
         """Read kibot data.
 
@@ -30,6 +31,7 @@ class KibotDataLoader:
         :param contract_type: required for asset class of type: `futures`
         :param unadjusted: required for asset classes of type: `stocks` & `etfs`
         :param nrows: if not None, return only the first nrows of the data
+        :param normalize: whether to normalize the dataframe by frequency
         :return: a dataframe with the symbol data
         """
         return cls._read_data(
@@ -39,6 +41,7 @@ class KibotDataLoader:
             contract_type=contract_type,
             unadjusted=unadjusted,
             nrows=nrows,
+            normalize=normalize,
         )
 
     @staticmethod
@@ -49,6 +52,7 @@ class KibotDataLoader:
         contract_type: Optional[types.ContractType] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
+        normalize: bool = True,
     ) -> pd.DataFrame:
 
         file_path = fpgen.FilePathGenerator().generate_file_path(
@@ -67,6 +71,7 @@ class KibotDataLoader:
 
         df = pd.read_csv(file_path, header=None, nrows=nrows)
 
-        df = nls.normalize(df=df, frequency=frequency)
+        if normalize:
+            df = nls.normalize(df=df, frequency=frequency)
 
         return df
