@@ -12,16 +12,12 @@ import joblib
 import pandas as pd
 import tqdm
 
-import helpers.csv as csv
 import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
+import helpers.parser as hparse
 import helpers.s3 as hs3
-import helpers.system_interaction as si
-import vendors2.kibot.data.config as config
-import vendors2.kibot.data.transform.normalizers as nls
+import vendors2.kibot.data.config as vkdcon
 import vendors2.kibot.data.load as vkdloa
-import vendors2.kibot.data.types as types
+import vendors2.kibot.data.types as vkdtyp
 
 _LOG = logging.getLogger(__name__)
 
@@ -30,43 +26,48 @@ _JOBLIB_VERBOSITY = 1
 
 # #############################################################################
 
+
 def _insert_into_db(df: pd.DataFrame) -> None:
     # TODO(vr): This will receive a DataFrame and will execute an INSERT query to PSQL
-    pass
+    print(df.head())
+
 
 def _convert_kibot_csv_gz_to_sql(
-        symbol: str,
-        downloader: vkdloa.KibotDataLoader,
-        asset_class: types.AssetClass,
-        frequency: types.Frequency,
-        contract_type: Optional[types.ContractType] = None,
-        unadjusted: Optional[bool] = None,
+    symbol: str,
+    downloader: vkdloa.KibotDataLoader,
+    asset_class: vkdtyp.AssetClass,
+    frequency: vkdtyp.Frequency,
+    contract_type: Optional[vkdtyp.ContractType] = None,
+    unadjusted: Optional[bool] = None,
 ) -> bool:
-    """Convert a Kibot dataset for a symbol.
+    """
+    Convert a Kibot dataset for a symbol.
 
     :param symbol: symbol to process
     :return: True if it was processed
     """
-    df = downloader.read_data(symbol,
-                              asset_class=asset_class,
-                              frequency=frequency,
-                              contract_type=contract_type,
-                              unadjusted=unadjusted,
-                              )
+    df = downloader.read_data(
+        symbol,
+        asset_class=asset_class,
+        frequency=frequency,
+        contract_type=contract_type,
+        unadjusted=unadjusted,
+    )
     _insert_into_db(df=df)
     return True
 
 
 def _get_symbols_to_process(aws_csv_gz_dir: str) -> List[str]:
-    """Get a list of symbols that need a .pq file on S3.
+    """
+    Get a list of symbols that need a .pq file on S3.
 
     :param aws_csv_gz_dir: S3 dataset directory with .csv.gz files
     :return: list of symbols
     """
 
     def _extract_filename_without_extension(file_path: str) -> str:
-        """Return only basename of the path without the .csv.gz or .pq
-        extensions.
+        """
+        Return only basename of the path without the .csv.gz or .pq extensions.
 
         :param file_path: a full path of a file
         :return: file name without extension
@@ -85,9 +86,10 @@ def _get_symbols_to_process(aws_csv_gz_dir: str) -> List[str]:
 
 
 def _process_over_dataset(
-        fn: Callable, symbols: List[str], serial: bool, **kwargs: Any
+    fn: Callable, symbols: List[str], serial: bool, **kwargs: Any
 ) -> None:
-    """Process in parallel each symbol in the list.
+    """
+    Process in parallel each symbol in the list.
 
     :param fn: a procedure to be run for each symbol
     :param symbols: list of symbols to run fn over
@@ -113,7 +115,7 @@ def _parse() -> argparse.ArgumentParser:
         # TODO(vr): Change this back.
         # action="store_true",
         action="store_false",
-        help="Download data serially"
+        help="Download data serially",
     )
     parser.add_argument(
         "--max_num_assets",
@@ -124,7 +126,7 @@ def _parse() -> argparse.ArgumentParser:
         default=10,
         help="Maximum number of assets to copy (for debug)",
     )
-    prsr.add_verbosity_arg(parser)
+    hparse.add_verbosity_arg(parser)
     return parser
 
 
@@ -136,7 +138,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     downloader = vkdloa.KibotDataLoader()
     _LOG.info("Created class")
     # Define data directory.
-    aws_csv_gz_dir = os.path.join(config.S3_PREFIX, "All_Futures_Continuous_Contracts_1min")
+    aws_csv_gz_dir = os.path.join(
+        vkdcon.S3_PREFIX, "All_Futures_Continuous_Contracts_1min"
+    )
     # Get the symbols.
     symbols = _get_symbols_to_process(aws_csv_gz_dir)
     # symbols = ["AAPL"]
@@ -150,9 +154,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         symbols,
         args.serial,
         downloader=downloader,
-        asset_class=types.AssetClass.Futures,
-        frequency=types.Frequency.Minutely,
-        contract_type=types.ContractType.Continuous,
+        asset_class=vkdtyp.AssetClass.Futures,
+        frequency=vkdtyp.Frequency.Minutely,
+        contract_type=vkdtyp.ContractType.Continuous,
     )
     #
 
