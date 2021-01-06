@@ -11,9 +11,10 @@ import vendors2.kibot.data.types as types
 
 
 class KibotDataLoader:
-    @staticmethod
+    @classmethod
     @hcac.cache
     def read_data(
+        cls,
         symbol: str,
         asset_class: types.AssetClass,
         frequency: types.Frequency,
@@ -31,7 +32,7 @@ class KibotDataLoader:
         :param nrows: if not None, return only the first nrows of the data
         :return: a dataframe with the symbol data
         """
-        return self._read_data(
+        return cls._read_data(
             symbol=symbol,
             asset_class=asset_class,
             frequency=frequency,
