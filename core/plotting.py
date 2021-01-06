@@ -361,6 +361,7 @@ def plot_barplot(
     figsize: Optional[Tuple[int, int]] = None,
     rotation: int = 0,
     ax: Optional[mpl.axes.Axes] = None,
+    yscale: Optional[str] = None,
 ) -> None:
     """Plot a barplot.
 
@@ -376,6 +377,7 @@ def plot_barplot(
     :param figsize: size of plot
     :param rotation: rotation of xtick labels
     :param ax: axes
+    :param yscale: y-axis scale is "linear" (if None) or "log"
     """
 
     def _get_annotation_loc(
@@ -417,6 +419,10 @@ def plot_barplot(
     ax = srs_top_n.plot(
         kind=kind, color=color, rot=rotation, title=title, ax=ax, figsize=figsize
     )
+    # Choose scale.
+    yscale = yscale or "linear"
+    dbg.dassert_in(yscale, ["log", "linear"], f"Invalid scale={yscale}")
+    ax.set_yscale(yscale)
     # Add annotations to bars.
     # Note: annotations in both modes are taken from
     # entire series, not top N.
@@ -1981,6 +1987,7 @@ def plot_rolling_correlation(
     ax: Optional[mpl.axes.Axes] = None,
     events: Optional[List[Tuple[str, Optional[str]]]] = None,
     plot_zero_line: bool = True,
+    ylim: Optional[str] = None,
 ) -> None:
     """
     Return rolling correlation between 2 series and plot rolling correlation.
@@ -1996,6 +2003,8 @@ def plot_rolling_correlation(
     :param mode: corr or zcorr
     :param ax: axis
     :param events: list of tuples with dates and labels to point out on the plot
+    :param ylim: either "fixed" or "scalable" (if None). If ylim is set to "fixed", 
+        the y-axis limits are (-1, 1).
     """
     mode = mode or "corr"
     # Calculate and plot rolling correlation.
@@ -2023,11 +2032,14 @@ def plot_rolling_correlation(
         p_moment=p_moment,
     )
     # Plot rolling correlation.
-    roll_corr.plot(
-        ax=ax, 
-        title=title, 
-        label=label + f"\n(tau={tau}, min_periods={min_periods})"
-    )
+    roll_corr.plot(ax=ax, title=title, label=label)
+    ylim = ylim or "scalable"
+    if ylim == "fixed":
+        ax.set_ylim(-1, 1)
+    elif ylim == "scalable":
+        pass
+    else:
+        raise ValueError("Invalid `ylim`='%s'" % ylim)
     # Calculate correlation whole period.
     whole_period = srs1.corr(srs2)
     # Plot correlation whole period.
