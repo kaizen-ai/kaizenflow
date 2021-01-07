@@ -92,7 +92,7 @@
   build a complex DAG by adding in multiple steps subgraphs of nodes.
 
 - The DAG and config builder functions should be paired through a concrete
-  `DagBuilder` class.
+  `DagManager` class.
 
 - DAG builders give meaningful `nid` names to their nodes. Collisions in graphs
   build from multiple builders are avoided by the user through the judicious use
