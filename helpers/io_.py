@@ -5,6 +5,7 @@ Import as:
 import helpers.io_ as io_
 """
 
+import datetime
 import fnmatch
 import gzip
 import json
@@ -13,7 +14,9 @@ import os
 import shutil
 import time
 from typing import Any, List, Optional
+import uuid
 
+import numpy as np
 import pandas as pd
 
 import helpers.dbg as dbg
@@ -353,6 +356,34 @@ def change_filename_extension(filename: str, old_ext: str, new_ext: str) -> str:
     return new_filename
 
 
+def json_default_converter(obj: Any) -> Any:
+    """Serialize DataFrame and other objects for JSON.
+
+    E.g. dataframe {"A": [0, 1], "B": [0, 1]} will go to a list of dictionaries:
+    [{"A": 0, "B": 0}, {"A": 1, "B": 1}] - each dictionary is for one row.
+    """
+    result = None
+    if isinstance(obj, pd.DataFrame):
+        result = obj.to_dict("records")
+    elif isinstance(obj, pd.Series):
+        result = obj.to_dict()
+    elif isinstance(obj, np.int64):
+        result = int(obj)
+    elif isinstance(obj, np.float):
+        result = float(obj)
+    elif isinstance(obj, uuid.UUID):
+        result = str(obj)
+    elif isinstance(obj, datetime.date):
+        result = obj.isoformat()
+    elif isinstance(obj, type(pd.NaT)):
+        result = None
+    elif isinstance(obj, type(pd.NA)):
+        result = None
+    else:
+        raise TypeError("Can not serialize %s of type %s" % (obj, type(obj)))
+    return result
+
+
 def to_json(file_name: str, obj: dict) -> None:
     """Write an object into a JSON file.
 
@@ -365,7 +396,7 @@ def to_json(file_name: str, obj: dict) -> None:
         create_dir(dir_name, incremental=True)
 
     with open(file_name, "w") as outfile:
-        json.dump(obj, outfile, indent=4)
+        json.dump(obj, outfile, indent=4, default=json_default_converter)
 
 
 def from_json(file_name: str) -> dict:
