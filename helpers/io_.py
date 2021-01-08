@@ -366,7 +366,7 @@ def change_filename_extension(filename: str, old_ext: str, new_ext: str) -> str:
     return new_filename
 
 
-def json_default_converter(obj: Any) -> Any:
+def serialize_custom_types_for_json_encoder(obj: Any) -> Any:
     """
     Serialize DataFrame and other objects for JSON.
 
@@ -408,7 +408,12 @@ def to_json(file_name: str, obj: dict) -> None:
         create_dir(dir_name, incremental=True)
 
     with open(file_name, "w") as outfile:
-        json.dump(obj, outfile, indent=4, default=json_default_converter)
+        json.dump(
+            obj,
+            outfile,
+            indent=4,
+            default=serialize_custom_types_for_json_encoder,
+        )
 
 
 def from_json(file_name: str) -> dict:
