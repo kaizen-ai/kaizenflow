@@ -126,7 +126,7 @@ def _list_s3_keys(s3_bucket: str, dir_path: str) -> List[str]:
             continuation_arg["ContinuationToken"] = continuation_token
         s3_objects = s3.list_objects_v2(
             Bucket=s3_bucket,
-            StartAfter=dir_path,
+            Prefix=dir_path,
             MaxKeys=AMAZON_MAX_INT,
             **continuation_arg
         )
