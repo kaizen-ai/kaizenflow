@@ -67,6 +67,20 @@ class TestPredictionResultBundle(hut.TestCase):
         expected = {1: ("col2", "col4")}
         self.assertDictEqual(actual, expected)
 
+    def test_get_targets_and_predictions_for_tags1(self) -> None:
+        init_config = self._get_init_config()
+        prb = dtf.PredictionResultBundle(**init_config.to_dict())
+        actual = prb.get_targets_and_predictions_for_tags(tags=[0, 1])
+        expected = {
+            0: (pd.Series([1], name="col1"), pd.Series([3], name="col3")),
+            1: (pd.Series([2], name="col2"), pd.Series([4], name="col4")),
+        }
+        # Compare dicts.
+        self.assertListEqual(list(actual.keys()), list(expected.keys()))
+        for tag, (target, prediction) in actual.items():
+            pd.testing.assert_series_equal(target, expected[tag][0])
+            pd.testing.assert_series_equal(prediction, expected[tag][1])
+
     @staticmethod
     def _get_init_config() -> cfg.Config:
         init_config = cfg.Config()

@@ -66,3 +66,18 @@ class PredictionResultBundle(ResultBundle):
     @property
     def predictions(self) -> pd.DataFrame:
         return self.result_df[self.prediction_col_names]
+
+    def get_targets_and_predictions_for_tags(
+        self, tags: List[Any]
+    ) -> Dict[Any, Tuple[pd.Series, pd.Series]]:
+        tags_to_target_and_prediction_cols = (
+            self.get_target_and_prediction_col_names_for_tags(tags)
+        )
+        targets_and_predictions_for_tags = {
+            tag: (self.result_df[target_col], self.result_df[prediction_col])
+            for tag, (
+                target_col,
+                prediction_col,
+            ) in tags_to_target_and_prediction_cols.items()
+        }
+        return targets_and_predictions_for_tags
