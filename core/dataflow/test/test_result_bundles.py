@@ -12,6 +12,12 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestPredictionResultBundle(hut.TestCase):
+    def test_to_config1(self) -> None:
+        init_config = self._get_init_config()
+        prb = dtf.PredictionResultBundle(**init_config.to_dict())
+        actual_config = prb.to_config(commit_hash=False)
+        self.check_string(f"config without 'commit_hash' field:\n{actual_config}")
+
     def test_get_feature_col_names1(self) -> None:
         init_config = self._get_init_config()
         prb = dtf.PredictionResultBundle(**init_config.to_dict())
