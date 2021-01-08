@@ -115,10 +115,10 @@ class ResultBundle(abc.ABC):
         return rb
 
     def get_tags_for_column(self, column: Any) -> Optional[List[Any]]:
-        return self._search_mapping(column, self._column_to_tags)
+        return ResultBundle._search_mapping(column, self._column_to_tags)
 
     def get_columns_for_tag(self, tag: Any) -> Optional[List[Any]]:
-        return self._search_mapping(tag, self.tag_to_columns)
+        return ResultBundle._search_mapping(tag, self.tag_to_columns)
 
     @staticmethod
     def _search_mapping(
