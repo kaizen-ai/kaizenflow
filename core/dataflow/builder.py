@@ -24,10 +24,10 @@ class ResultBundle(abc.ABC):
 
     def __init__(
         self,
-        config: Optional[cfg.Config] = None,
-        result_nid: Optional[str] = None,
-        method: Optional[str] = None,
-        result_df: Optional[pd.DataFrame] = None,
+        config: cfg.Config,
+        result_nid: str,
+        method: str,
+        result_df: pd.DataFrame,
         column_to_tags: Optional[Dict[Any, List[Any]]] = None,
         info: Optional[collections.OrderedDict] = None,
     ):
@@ -45,8 +45,6 @@ class ResultBundle(abc.ABC):
         self._method = method
         self._result_df = result_df
         self._column_to_tags = column_to_tags
-        if info is not None:
-            info = cfgb.get_config_from_nested_dict(info)
         self._info = info
 
     @property
@@ -81,13 +79,15 @@ class ResultBundle(abc.ABC):
             return tag_to_columns
 
     @property
-    def info(self) -> Optional[cfg.Config]:
+    def info(self) -> Optional[collections.OrderedDict]:
         if self._info is not None:
             return self._info.copy()
 
-    def to_config(self) -> cfg.Config:
+    def to_config(self, commit_hash: bool = True) -> cfg.Config:
         """
         Represent class state as config.
+
+        :param commit_hash: whether to include current commit hash
         """
         serialized_bundle = cfg.Config()
         serialized_bundle["config"] = self._config
@@ -95,9 +95,13 @@ class ResultBundle(abc.ABC):
         serialized_bundle["method"] = self._method
         serialized_bundle["result_df"] = self._result_df
         serialized_bundle["column_to_tags"] = self._column_to_tags
-        serialized_bundle["info"] = self._info
+        info = self._info
+        if info is not None:
+            info = cfgb.get_config_from_nested_dict(info)
+        serialized_bundle["info"] = info
         serialized_bundle["class"] = self.__class__.__name__
-        serialized_bundle["commit_hash"] = git.get_current_commit_hash()
+        if commit_hash:
+            serialized_bundle["commit_hash"] = git.get_current_commit_hash()
         return serialized_bundle
 
     @classmethod
