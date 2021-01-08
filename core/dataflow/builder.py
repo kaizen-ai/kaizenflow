@@ -30,7 +30,7 @@ class ResultBundle(abc.ABC):
         result_df: pd.DataFrame,
         column_to_tags: Optional[Dict[Any, List[Any]]] = None,
         info: Optional[collections.OrderedDict] = None,
-    ):
+    ) -> None:
         """
         :param config: DAG config
         :param result_nid: identifier of terminal node for which DAG was
