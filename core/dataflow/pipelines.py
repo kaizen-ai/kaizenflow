@@ -6,7 +6,7 @@ import sklearn
 import core.config as cfg
 import core.event_study as esf
 import core.signal_processing as sigp
-from core.dataflow.builder import DagBuilder
+from core.dataflow.builder import DagManager
 from core.dataflow.core import DAG
 from core.dataflow.models import SkLearnModel
 from core.dataflow.nodes import (
@@ -19,7 +19,7 @@ from core.dataflow.nodes import (
 _LOG = logging.getLogger(__name__)
 
 
-class EventStudyBuilder(DagBuilder):
+class EventStudyBuilder(DagManager):
     """
     Configurable pipeline for running event studies.
     """
@@ -264,7 +264,7 @@ class EventStudyBuilder(DagBuilder):
         return dag
 
 
-class ContinuousSignalModelBuilder(DagBuilder):
+class ContinuousSignalModelBuilder(DagManager):
     """
     Configurable pipeline for predicting market data using a continuous signal.
 
