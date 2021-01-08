@@ -9,7 +9,6 @@ import pandas as pd
 
 import core.config as cfg
 import core.config_builders as cfgb
-import helpers.dbg as dbg
 import helpers.git as git
 from core.dataflow.core import DAG
 from core.dataflow.nodes import extract_info
@@ -25,18 +24,16 @@ class ResultBundle(abc.ABC):
         result_nid: Optional[str] = None,
         method: Optional[str] = None,
         result_df: Optional[pd.DataFrame] = None,
-        column_mapping: Optional[
-            Dict[Any, List[Any]]
-        ] = None,  # {col_name: [tag]}
-        info: Optional[cfg.Config] = None,
+        column_to_tags: Optional[Dict[Any, List[Any]]] = None,
+        info: Optional[collections.OrderedDict] = None,
     ):
         self._config = config
         self._result_nid = result_nid
         self._method = method
         self._result_df = result_df
-        if result_df is not None and column_mapping is not None:
-            dbg.dassert_set_eq(result_df.columns, column_mapping)
-        self._column_to_tag_mapping = column_mapping
+        self._column_to_tags = column_to_tags
+        if info is not None:
+            info = cfgb.get_config_from_nested_dict(info)
         self._info = info
 
     @property
@@ -58,18 +55,18 @@ class ResultBundle(abc.ABC):
             return self._result_df.copy()
 
     @property
-    def column_mapping(self) -> Optional[Dict[Any, List[Any]]]:
-        if self._column_to_tag_mapping is not None:
-            return self._column_to_tag_mapping.copy()
+    def column_to_tags(self) -> Optional[Dict[Any, List[Any]]]:
+        if self._column_to_tags is not None:
+            return self._column_to_tags.copy()
 
     @property
-    def tag_to_column_mapping(self) -> Optional[Dict[Any, List[Any]]]:
-        if self._column_to_tag_mapping is not None:
-            tag_to_column_mapping: Dict[Any, List[Any]] = {}
-            for column, tags in self._column_to_tag_mapping.items():
+    def tag_to_columns(self) -> Optional[Dict[Any, List[Any]]]:
+        if self._column_to_tags is not None:
+            tag_to_columns: Dict[Any, List[Any]] = {}
+            for column, tags in self._column_to_tags.items():
                 for tag in tags:
-                    tag_to_column_mapping.setdefault(tag, []).append(column)
-            return tag_to_column_mapping
+                    tag_to_columns.setdefault(tag, []).append(column)
+            return tag_to_columns
 
     @property
     def info(self) -> Optional[cfg.Config]:
@@ -83,40 +80,29 @@ class ResultBundle(abc.ABC):
         serialized_bundle["result_nid"] = self._result_nid
         serialized_bundle["method"] = self._method
         serialized_bundle["result_df"] = self._result_df
-        serialized_bundle["column_mapping"] = self._column_to_tag_mapping
+        serialized_bundle["column_to_tags"] = self._column_to_tags
         serialized_bundle["info"] = self._info
         serialized_bundle["class"] = self.__class__.__name__
         serialized_bundle["commit_hash"] = git.get_current_commit_hash()
         return serialized_bundle
 
-    def deserialize(self, serialized_bundle: cfg.Config) -> ResultBundle:
-        # Use case: `rb = ResultBundle.deserialize(serialized_bundle)`.
-        self._config = serialized_bundle["config"]
-        self._result_nid = serialized_bundle["result_nid"]
-        self._method = serialized_bundle["method"]
-        self._result_df = serialized_bundle["result_df"]
-        self._column_to_tag_mapping = serialized_bundle["column_mapping"]
-        self._info = serialized_bundle["info"]
-        # TODO(Julia): Consider making this method static and doing the
-        #     following instead:
-        #         rb = ResultBundle(
-        #             config=serialized_bundle["config"],
-        #             result_nid=serialized_bundle["result_nid"],
-        #             method=serialized_bundle["method"],
-        #             result_df=serialized_bundle["result_df"],
-        #             column_mapping=serialized_bundle["column_mapping"],
-        #             info=serialized_bundle["info"],
-        #         )
-        #         return rb
-        #     The usage will be:
-        #     rb = ResultBundle().deserialize(serialized_bundle)
-        return self
+    @classmethod
+    def deserialize(cls, serialized_bundle: cfg.Config) -> ResultBundle:
+        rb = cls(
+            config=serialized_bundle["config"],
+            result_nid=serialized_bundle["result_nid"],
+            method=serialized_bundle["method"],
+            result_df=serialized_bundle["result_df"],
+            column_to_tags=serialized_bundle["column_to_tags"],
+            info=serialized_bundle["info"],
+        )
+        return rb
 
-    def get_tags(self, column: Any) -> Optional[List[Any]]:
-        return self._search_mapping(column, self._column_to_tag_mapping)
+    def get_tags_for_column(self, column: Any) -> Optional[List[Any]]:
+        return self._search_mapping(column, self._column_to_tags)
 
     def get_columns_for_tag(self, tag: Any) -> Optional[List[Any]]:
-        return self._search_mapping(tag, self.tag_to_column_mapping)
+        return self._search_mapping(tag, self.tag_to_columns)
 
     @staticmethod
     def _search_mapping(
@@ -197,13 +183,12 @@ class DagManager(abc.ABC):
         dag = self.get_dag(config)
         df_out = dag.run_leq_node(nid, method)["df_out"]
         info = extract_info(dag, [method])
-        info = cfgb.get_config_from_nested_dict(info)
         return ResultBundle(
             config=config,
             result_nid=nid,
             method=method,
             result_df=df_out,
-            column_mapping=None,
+            column_to_tags=None,
             info=info,
         )
 
