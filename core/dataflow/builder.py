@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import abc
 import collections
+import copy
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -20,6 +21,7 @@ class ResultBundle(abc.ABC):
     """
     Abstract class for storing DAG results.
     """
+
     def __init__(
         self,
         config: Optional[cfg.Config] = None,
@@ -67,8 +69,7 @@ class ResultBundle(abc.ABC):
 
     @property
     def column_to_tags(self) -> Optional[Dict[Any, List[Any]]]:
-        if self._column_to_tags is not None:
-            return self._column_to_tags.copy()
+        return copy.deepcopy(self._column_to_tags)
 
     @property
     def tag_to_columns(self) -> Optional[Dict[Any, List[Any]]]:
