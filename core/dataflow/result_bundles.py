@@ -1,6 +1,8 @@
 import logging
 from typing import Any, Dict, List, Tuple
 
+import pandas as pd
+
 import helpers.dbg as dbg
 from core.dataflow.builder import ResultBundle
 
@@ -8,21 +10,24 @@ _LOG = logging.getLogger(__name__)
 
 
 class PredictionResultBundle(ResultBundle):
-    def get_feature_col_names(self) -> List[Any]:
+    @property
+    def feature_col_names(self) -> List[Any]:
         return self.get_columns_for_tag("feature_col")
 
-    def get_target_col_names(self) -> List[Any]:
+    @property
+    def target_col_names(self) -> List[Any]:
         return self.get_columns_for_tag("target_col")
 
-    def get_prediction_col_names(self) -> List[Any]:
+    @property
+    def prediction_col_names(self) -> List[Any]:
         return self.get_columns_for_tag("prediction_col")
 
     def get_target_and_prediction_col_names_for_tags(
         self, tags: List[Any]
     ) -> Dict[Any, Tuple[Any, Any]]:
         dbg.dassert_isinstance(tags, list)
-        target_cols = set(self.get_target_col_names())
-        prediction_cols = set(self.get_prediction_col_names())
+        target_cols = set(self.target_col_names)
+        prediction_cols = set(self.prediction_col_names)
         tags_to_target_and_prediction_cols: Dict[Any, Tuple[Any, Any]] = {}
         for tag in tags:
             cols_for_tag = self.get_columns_for_tag(tag)
@@ -49,3 +54,15 @@ class PredictionResultBundle(ResultBundle):
                 prediction_cols_for_tag[0],
             )
         return tags_to_target_and_prediction_cols
+
+    @property
+    def features(self) -> pd.DataFrame:
+        return self.result_df[self.feature_col_names]
+
+    @property
+    def targets(self) -> pd.DataFrame:
+        return self.result_df[self.target_col_names]
+
+    @property
+    def predictions(self) -> pd.DataFrame:
+        return self.result_df[self.prediction_col_names]

@@ -18,24 +18,24 @@ class TestPredictionResultBundle(hut.TestCase):
         actual_config = prb.to_config(commit_hash=False)
         self.check_string(f"config without 'commit_hash' field:\n{actual_config}")
 
-    def test_get_feature_col_names1(self) -> None:
+    def test_feature_col_names1(self) -> None:
         init_config = self._get_init_config()
         prb = dtf.PredictionResultBundle(**init_config.to_dict())
-        actual = prb.get_feature_col_names()
+        actual = prb.feature_col_names
         expected = ["col0"]
         self.assertListEqual(actual, expected)
 
-    def test_get_target_col_names1(self) -> None:
+    def test_target_col_names1(self) -> None:
         init_config = self._get_init_config()
         prb = dtf.PredictionResultBundle(**init_config.to_dict())
-        actual = prb.get_target_col_names()
+        actual = prb.target_col_names
         expected = ["col1", "col2"]
         self.assertListEqual(actual, expected)
 
-    def test_get_prediction_col_names1(self) -> None:
+    def test_prediction_col_names1(self) -> None:
         init_config = self._get_init_config()
         prb = dtf.PredictionResultBundle(**init_config.to_dict())
-        actual = prb.get_prediction_col_names()
+        actual = prb.prediction_col_names
         expected = ["col3", "col4"]
         self.assertListEqual(actual, expected)
 
