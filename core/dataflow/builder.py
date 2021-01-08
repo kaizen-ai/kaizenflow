@@ -17,7 +17,9 @@ _LOG = logging.getLogger(__name__)
 
 
 class ResultBundle(abc.ABC):
-    # TODO(Julia): Add docstrings.
+    """
+    Abstract class for storing DAG results.
+    """
     def __init__(
         self,
         config: Optional[cfg.Config] = None,
@@ -27,6 +29,15 @@ class ResultBundle(abc.ABC):
         column_to_tags: Optional[Dict[Any, List[Any]]] = None,
         info: Optional[collections.OrderedDict] = None,
     ):
+        """
+        :param config: DAG config
+        :param result_nid: identifier of terminal node for which DAG was
+            executed
+        :param method: method which was executed
+        :param result_df: dataframe with results
+        :param column_to_tags: mapping of column names to tags
+        :param info: DAG execution info
+        """
         self._config = config
         self._result_nid = result_nid
         self._method = method
@@ -74,6 +85,9 @@ class ResultBundle(abc.ABC):
             return self._info.copy()
 
     def to_config(self) -> cfg.Config:
+        """
+        Represent class state as config.
+        """
         serialized_bundle = cfg.Config()
         serialized_bundle["config"] = self._config
         serialized_bundle["result_nid"] = self._result_nid
@@ -87,6 +101,9 @@ class ResultBundle(abc.ABC):
 
     @classmethod
     def from_config(cls, serialized_bundle: cfg.Config) -> ResultBundle:
+        """
+        Initialize `ResultBundle` from config.
+        """
         rb = cls(
             config=serialized_bundle["config"],
             result_nid=serialized_bundle["result_nid"],
@@ -178,7 +195,15 @@ class DagManager(abc.ABC):
         """
 
     def run_dag(self, config: cfg.Config, nid: str, method: str) -> ResultBundle:
-        # TODO(Julia): Add a docstring.
+        """
+        Build and run DAG.
+
+        :param config: config for which to build DAG
+        :param nid: identifier of terminal node for execution
+        :param method: `Node` subclass method to be executed
+        :return: `ResultBundle` class containing `config`, `nid`, `method`,
+            result dataframe and DAG info
+        """
         dag = self.get_dag(config)
         df_out = dag.run_leq_node(nid, method)["df_out"]
         info = extract_info(dag, [method])
