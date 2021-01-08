@@ -15,15 +15,13 @@ class TestResultBundle(hut.TestCase):
     def test_to_config1(self) -> None:
         init_config = self._get_init_config()
         rb = dtf.ResultBundle(**init_config.to_dict())
-        actual_config = rb.to_config()
-        actual_config.pop("commit_hash")
+        actual_config = rb.to_config(commit_hash=False)
         self.check_string(f"config without 'commit_hash' field:\n{actual_config}")
 
     def test_from_config1(self) -> None:
         init_config = self._get_init_config()
         rb = dtf.ResultBundle.from_config(init_config)
-        actual_config = rb.to_config()
-        actual_config.pop("commit_hash")
+        actual_config = rb.to_config(commit_hash=False)
         self.check_string(f"config without 'commit_hash' field:\n{actual_config}")
 
     def test_get_tags_for_column1(self) -> None:
