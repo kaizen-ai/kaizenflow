@@ -595,8 +595,7 @@ def run_notebook(
     config_builder: Optional[str] = None,
     idx: int = 0,
 ) -> None:
-    """Run jupyter notebook `file_name` using `scratch_dir` as temporary dir
-    storing the output.
+    """Run jupyter notebook.
 
     `core.config_builders.get_config_from_env()` supports passing in a config
     only through a path to a config builder function that returns a list of
@@ -604,6 +603,9 @@ def run_notebook(
 
     Assert if the notebook doesn't complete successfully.
 
+    :param file_name: path to the notebook to run. If this is a .py file,
+        convert to .ipynb first
+    :param scratch_dir: temporary dir storing the output
     :param config_builder: path to config builder function that returns a list
         of configs
     :param idx: index of target config in the config list
@@ -613,12 +615,23 @@ def run_notebook(
     dbg.dassert_exists(scratch_dir)
     # Build command line.
     cmd = []
+    # Convert .py file into .ipynb if needed.
+    root, ext = os.path.splitext(file_name)
+    if ext == ".ipynb":
+        notebook_name = file_name
+    elif ext == ".py":
+        cmd.append(f"jupytext --update --to notebook {file_name}; ")
+        notebook_name = f"{root}.ipynb"
+    else:
+        raise ValueError(f"Unsupported file format for `file_name`='{file_name}'")
+    # Export config variables.
     if config_builder is not None:
         cmd.append(f'export __CONFIG_BUILDER__="{config_builder}"; ')
         cmd.append(f'export __CONFIG_IDX__="{idx}"; ')
         cmd.append(f'export __CONFIG_DST_DIR__="{scratch_dir}" ;')
+    # Execute notebook.
     cmd.append("cd %s && " % scratch_dir)
-    cmd.append("jupyter nbconvert %s" % file_name)
+    cmd.append("jupyter nbconvert %s" % notebook_name)
     cmd.append("--execute")
     cmd.append("--to html")
     cmd.append("--ExecutePreprocessor.kernel_name=python")
