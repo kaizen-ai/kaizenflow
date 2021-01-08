@@ -73,8 +73,7 @@ class ResultBundle(abc.ABC):
         if self._info is not None:
             return self._info.copy()
 
-    # TODO(Julia): Consider renaming into `to_config` and `from_config`.
-    def serialize(self) -> cfg.Config:
+    def to_config(self) -> cfg.Config:
         serialized_bundle = cfg.Config()
         serialized_bundle["config"] = self._config
         serialized_bundle["result_nid"] = self._result_nid
@@ -87,7 +86,7 @@ class ResultBundle(abc.ABC):
         return serialized_bundle
 
     @classmethod
-    def deserialize(cls, serialized_bundle: cfg.Config) -> ResultBundle:
+    def from_config(cls, serialized_bundle: cfg.Config) -> ResultBundle:
         rb = cls(
             config=serialized_bundle["config"],
             result_nid=serialized_bundle["result_nid"],
