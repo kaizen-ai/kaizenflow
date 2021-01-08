@@ -1,11 +1,13 @@
 import logging
 import os
+from typing import List
 
 import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.s3 as hs3
-import vendors2.kibot.metadata.config as mconfig
+import vendors2.kibot.data.config as vkdcon
+import vendors2.kibot.metadata.config as vkmcon
 
 _LOG = logging.getLogger(__name__)
 
@@ -24,7 +26,8 @@ class S3Backend:
     @staticmethod
     def read_1min_contract_metadata() -> pd.DataFrame:
         # pylint: disable=line-too-long
-        """Read minutely contract metadata.
+        """
+        Read minutely contract metadata.
 
         Contains a mapping from all 1-min prices for each contract to a download
         path (not interesting) and a description.
@@ -40,7 +43,7 @@ class S3Backend:
         """
         # pylint: enable=line-too-long
         file_name = os.path.join(
-            mconfig.S3_PREFIX, "All_Futures_Contracts_1min.csv.gz"
+            vkmcon.S3_PREFIX, "All_Futures_Contracts_1min.csv.gz"
         )
         _LOG.debug("file_name=%s", file_name)
         df = pd.read_csv(file_name, index_col=0)
@@ -52,7 +55,8 @@ class S3Backend:
     @staticmethod
     def read_daily_contract_metadata() -> pd.DataFrame:
         # pylint: disable=line-too-long
-        """Read daily contract metadata.
+        """
+        Read daily contract metadata.
 
         Same mapping as `read_1min_contract_metadata()` but for daily prices.
 
@@ -67,7 +71,7 @@ class S3Backend:
         """
         # pylint: enable=line-too-long
         file_name = os.path.join(
-            mconfig.S3_PREFIX, "All_Futures_Contracts_daily.csv.gz"
+            vkmcon.S3_PREFIX, "All_Futures_Contracts_daily.csv.gz"
         )
         hs3.check_valid_s3_path(file_name)
         _LOG.debug("file_name=%s", file_name)
@@ -80,7 +84,8 @@ class S3Backend:
     @staticmethod
     def read_tickbidask_contract_metadata() -> pd.DataFrame:
         # pylint: disable=line-too-long
-        """Read tick-bid-ask contract metadata.
+        """
+        Read tick-bid-ask contract metadata.
 
         Mapping between symbols (both continuous and not), start date, description,
         and exchange for tickbidask.
@@ -98,7 +103,7 @@ class S3Backend:
         ES            ESH11     4/6/2010     891.0       E-MINI S&P 500 MARCH 2011             Chicago Mercantile Exchange Mini Sized Contrac...
         """
         # pylint: enable=line-too-long
-        file_name = os.path.join(mconfig.S3_PREFIX, "Futures_tickbidask.txt.gz")
+        file_name = os.path.join(vkmcon.S3_PREFIX, "Futures_tickbidask.txt.gz")
         _LOG.debug("file_name=%s", file_name)
         hs3.check_valid_s3_path(file_name)
         df = pd.read_csv(
@@ -121,7 +126,8 @@ class S3Backend:
     @staticmethod
     def read_continuous_contract_metadata() -> pd.DataFrame:
         # pylint: disable=line-too-long
-        """Read tick-bid-ask metadata for continuous contracts.
+        """
+        Read tick-bid-ask metadata for continuous contracts.
 
         Returns a continuous contract subset of
         `read_tickbidask_contract_metadata()`.
@@ -141,7 +147,7 @@ class S3Backend:
         """
         # pylint: enable=line-too-long
         file_name = os.path.join(
-            mconfig.S3_PREFIX, "FuturesContinuous_intraday.txt.gz"
+            vkmcon.S3_PREFIX, "FuturesContinuous_intraday.txt.gz"
         )
         _LOG.debug("file_name=%s", file_name)
         hs3.check_valid_s3_path(file_name)
@@ -164,7 +170,40 @@ class S3Backend:
 
     @staticmethod
     def read_kibot_exchange_mapping() -> pd.DataFrame:
-        file_name = os.path.join(mconfig.S3_PREFIX, "kibot_to_exchange.csv")
+        file_name = os.path.join(vkmcon.S3_PREFIX, "kibot_to_exchange.csv")
         hs3.check_valid_s3_path(file_name)
         kibot_to_cme_mapping = pd.read_csv(file_name, index_col="Kibot_symbol")
         return kibot_to_cme_mapping
+
+    @staticmethod
+    def get_symbols_for_dataset(data_type: str) -> List[str]:
+        """
+        Get a list of symbols stored on S3 in a specific data type, e.g.
+        All_Futures_Continuous_Contracts_1min.
+
+        :param data_type: specific data type, e.g. All_Futures_Continuous_Contracts_1min
+        :return: list of symbols
+        """
+
+        def _extract_filename_without_extension(file_path: str) -> str:
+            """
+            Return only basename of the path without the .csv.gz or .pq
+            extensions.
+
+            :param file_path: a full path of a file
+            :return: file name without extension
+            """
+            filename = os.path.basename(file_path)
+            filename = filename.replace(".csv.gz", "")
+            return filename
+
+        aws_csv_gz_dir = os.path.join(vkdcon.S3_PREFIX, data_type)
+        # List all existing csv gz files on S3.
+        csv_gz_s3_file_paths = hs3.listdir(aws_csv_gz_dir)
+        # Get list of symbols to convert.
+        symbols = list(
+            map(_extract_filename_without_extension, csv_gz_s3_file_paths)
+        )
+        dbg.dassert_no_duplicates(symbols)
+        symbols = sorted(list(set(symbols)))
+        return symbols
