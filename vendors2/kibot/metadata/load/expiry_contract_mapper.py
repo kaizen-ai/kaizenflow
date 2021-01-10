@@ -6,7 +6,9 @@ import helpers.dbg as dbg
 
 
 class ExpiryContractMapper:
-    """Implement functions to handle expiry contracts, e.g., "ESH19"."""
+    """
+    Implement functions to handle expiry contracts, e.g., "ESH19".
+    """
 
     _MONTH_TO_EXPIRY = {
         "January": "F",
@@ -35,22 +37,26 @@ class ExpiryContractMapper:
 
     @staticmethod
     def parse_expiry_contract(v: str) -> Tuple[str, str, str]:
-        """Parse a futures contract name into its components, e.g., in a
-        futures contract name like "ESH10":
+        """
+        Parse a futures contract name into its components, e.g., in a futures
+        contract name like "ESH10":
 
         - base symbol is ES
         - month is H
         - year is 10 (i.e., 2010)
         """
         m = re.match(r"^(\S+)(\S)(\d{2})$", v)
-        dbg.dassert(m, "Invalid '%s'", v)
+        if m is None:
+            dbg.dassert(m, "Invalid '%s'", v)
+            return "", "", ""
         base_symbol, month, year = m.groups()
         return base_symbol, month, year
 
     @staticmethod
     def compare_expiry_contract(v1: str, v2: str) -> int:
-        """Compare function for two expiry contracts in terms of month and year
-        ( e.g., "U10") according to python `cmp` convention.
+        """
+        Compare function for two expiry contracts in terms of month and year (
+        e.g., "U10") according to python `cmp` convention.
 
         :param: return -1, 0, 1 in case of <, ==, > relationship between v1 and
             v2.

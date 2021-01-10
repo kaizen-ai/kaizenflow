@@ -16,7 +16,8 @@ class ContractSymbolMapping:
         self._metadata = km.get_metadata("1min")
 
     def get_contract(self, symbol: str) -> Optional[str]:
-        """Get contract for Kibot symbol.
+        """
+        Get contract for Kibot symbol.
 
         :param symbol: value for `Kibot_symbol` column
         :return: `Exchange_abbreviation`:`Exchange_symbol` format contract
@@ -39,7 +40,8 @@ class ContractSymbolMapping:
         return f"{exchange}:{exchange_symbol}"
 
     def get_kibot_symbol(self, contract: str) -> Optional[Union[str, List[str]]]:
-        """Get Kibot symbol for contract.
+        """
+        Get Kibot symbol for contract.
 
         :param contract: `Exchange_abbreviation`:`Exchange_symbol`
         :return: Kibot symbol
@@ -63,12 +65,12 @@ class ContractSymbolMapping:
                 # `CONTINUOUS UK FEED WHEAT CONTRACT` and
                 # `CONTINUOUS WTI CRUDE CONTRACT`. Return WTI.
                 return "CRD"
-            elif exchange_symbol == "C":
+            if exchange_symbol == "C":
                 # There are two contracts with
                 # `CONTINUOUS EUA CONTRACT` and
                 # `CONTINUOUS LONDON COCOA CONTRACT`. Return EUA.
                 return "UX"
-            else:
-                return contract_metadata["Kibot_symbol"].tolist()
-        kibot_symbol = contract_metadata["Kibot_symbol"].iloc[0]
+            kibot_symbol_list: List[str] = contract_metadata["Kibot_symbol"].tolist()
+            return kibot_symbol_list
+        kibot_symbol: str = contract_metadata["Kibot_symbol"].iloc[0]
         return kibot_symbol

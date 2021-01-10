@@ -3,14 +3,15 @@ import logging
 import pandas as pd
 
 import helpers.dbg as dbg
-import vendors2.kibot.data.types as types
+import vendors2.kibot.data.types as vkdtyp
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Call the column datetime_ET suffix.
 def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
-    """Convert a df with 1 min Kibot data into our internal format.
+    """
+    Convert a df with 1 min Kibot data into our internal format.
 
     - Combine the first two columns into a datetime index
     - Add column names
@@ -44,7 +45,8 @@ def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
-    """Convert a df with daily Kibot data into our internal format.
+    """
+    Convert a df with daily Kibot data into our internal format.
 
     - Convert the first column to datetime and set is as index
     - Add column names
@@ -65,8 +67,9 @@ def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def normalize(df: pd.DataFrame, frequency: types.Frequency) -> pd.DataFrame:
-    """Apply a normalizer function based on the frequency.
+def normalize(df: pd.DataFrame, frequency: vkdtyp.Frequency) -> pd.DataFrame:
+    """
+    Apply a normalizer function based on the frequency.
 
     :param df: a dataframe that should be normalized
     :param frequency: frequency of the data
@@ -74,8 +77,8 @@ def normalize(df: pd.DataFrame, frequency: types.Frequency) -> pd.DataFrame:
     :raises AssertionError: if a frequency is not supported in 'Mapping'.
     """
     MAPPING = {
-        types.Frequency.Daily: _normalize_daily,
-        types.Frequency.Minutely: _normalize_1_min,
+        vkdtyp.Frequency.Daily: _normalize_daily,
+        vkdtyp.Frequency.Minutely: _normalize_1_min,
     }
 
     if frequency not in MAPPING:

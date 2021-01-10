@@ -5,9 +5,9 @@ import sys
 import requests
 
 import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
-import vendors2.kibot.metadata.config as config
+import helpers.io_ as hio
+import helpers.parser as hparse
+import vendors2.kibot.metadata.config as vkmcon
 
 
 class KibotCommand:
@@ -18,7 +18,8 @@ class KibotCommand:
         requires_auth: bool = False,
         requires_api_login: bool = False,
     ) -> None:
-        """Create a kibot command line script.
+        """
+        Create a kibot command line script.
 
         :param docstring: the command's docstring.
         :param supports_tmp_dir: If true, adds optional `tmp_dir` and `incremental` arguments.
@@ -38,10 +39,14 @@ class KibotCommand:
 
     @staticmethod
     def customize_parser(parser: argparse.ArgumentParser) -> None:
-        """Allow child classes to customize the parser further."""
+        """
+        Allow child classes to customize the parser further.
+        """
 
     def customize_run(self) -> int:  # pylint: disable=no-self-use
-        """Allow child classes to customize the run further."""
+        """
+        Allow child classes to customize the run further.
+        """
         return 0
 
     def _setup_parser(self) -> None:
@@ -50,7 +55,7 @@ class KibotCommand:
             formatter_class=argparse.RawDescriptionHelpFormatter,
         )
 
-        prsr.add_verbosity_arg(self.parser)
+        hparse.add_verbosity_arg(self.parser)
 
         if self.supports_tmp_dir:
             self.parser.add_argument(
@@ -90,7 +95,7 @@ class KibotCommand:
         )
 
         if self.supports_tmp_dir:
-            io_.create_dir(
+            hio.create_dir(
                 self.args.tmp_dir, incremental=not self.args.no_incremental
             )
 
@@ -101,10 +106,12 @@ class KibotCommand:
         return self.customize_run()
 
     def _login_to_api(self) -> None:
-        """Login to Kibot API."""
+        """
+        Login to Kibot API.
+        """
 
         response = requests.get(
-            url=config.API_ENDPOINT,
+            url=vkmcon.API_ENDPOINT,
             params=dict(
                 action="login",
                 user=self.args.username,

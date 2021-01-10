@@ -4,8 +4,8 @@ from typing import List, Tuple
 
 import pandas as pd
 
-import vendors2.kibot.metadata.config as vkmconfig
-import vendors2.kibot.metadata.types as vkmtypes
+import vendors2.kibot.metadata.config as vkmcon
+import vendors2.kibot.metadata.types as vkmtyp
 
 
 class ParsingState(enum.Enum):
@@ -41,10 +41,10 @@ class TickerListsLoader:
 
     # pylint: enable=line-too-long
 
-    def get(self, ticker_list: str, listed: bool = True) -> List[vkmtypes.Ticker]:
+    def get(self, ticker_list: str, listed: bool = True) -> List[vkmtyp.Ticker]:
         s3_path = os.path.join(
-            vkmconfig.S3_PREFIX,
-            vkmconfig.TICKER_LISTS_SUB_DIR,
+            vkmcon.S3_PREFIX,
+            vkmcon.TICKER_LISTS_SUB_DIR,
             f"{ticker_list}.txt",
         )
 
@@ -60,10 +60,12 @@ class TickerListsLoader:
 
     def _parse_lines(
         self, lines: List[str]
-    ) -> Tuple[List[vkmtypes.Ticker], List[vkmtypes.Ticker]]:
-        """Get a list of listed & delisted tickers from lines."""
-        listed_tickers: List[vkmtypes.Ticker] = []
-        delisted_tickers: List[vkmtypes.Ticker] = []
+    ) -> Tuple[List[vkmtyp.Ticker], List[vkmtyp.Ticker]]:
+        """
+        Get a list of listed & delisted tickers from lines.
+        """
+        listed_tickers: List[vkmtyp.Ticker] = []
+        delisted_tickers: List[vkmtyp.Ticker] = []
 
         state = ParsingState.Started
 
@@ -92,9 +94,10 @@ class TickerListsLoader:
         return listed_tickers, delisted_tickers
 
     @staticmethod
-    def _get_ticker_from_line(line: str) -> vkmtypes.Ticker:
+    def _get_ticker_from_line(line: str) -> vkmtyp.Ticker:
         # pylint: disable=line-too-long
-        """Get a ticker from a line.
+        """
+        Get a ticker from a line.
 
         - Example line:
         1    AA     4/27/2007    68    "Alcoa Corporation"    NYSE    "Aluminum"    "Basic Industries"
@@ -106,5 +109,5 @@ class TickerListsLoader:
         args[-1] = args[-1].strip()
         # Skip index col.
         args = args[1:]
-        ret = vkmtypes.Ticker(*args)
+        ret = vkmtyp.Ticker(*args)
         return ret
