@@ -12,7 +12,7 @@ import tqdm
 
 import helpers.dbg as dbg
 import helpers.parser as hparse
-import vendors2.docker.sql_writter_backend as vdsqlw
+import vendors2.docker.sql_writer_backend as vdsqlw
 import vendors2.kibot.data.config as vkdcon
 import vendors2.kibot.data.load as vkdloa
 import vendors2.kibot.data.load.dataset_name_parser as vkdlda
@@ -36,12 +36,15 @@ def _convert_kibot_csv_gz_to_sql(
     exchange_id: int,
     contract_type: Optional[vkdtyp.ContractType] = None,
     unadjusted: Optional[bool] = None,
+    max_num_rows: Optional[int] = None,
 ) -> bool:
     """
     Convert a Kibot dataset for a symbol.
 
     :return: True if it was processed
     """
+    _LOG.info("Converting '%s' symbol", symbol)
+    _LOG.debug("Downloading '%s' symbol from S3", symbol)
     df = kibot_data_loader.read_data(
         symbol=symbol,
         asset_class=asset_class,
@@ -50,6 +53,7 @@ def _convert_kibot_csv_gz_to_sql(
         unadjusted=unadjusted,
         normalize=False,
     )
+    _LOG.debug("Managing database for '%s' symbol", symbol)
     sql_writer_backed.ensure_symbol_exists(symbol=symbol, asset_class=asset_class)
     symbol_id = sql_writer_backed.get_symbol_id(symbol=symbol)
     sql_writer_backed.ensure_trade_symbol_exists(
@@ -58,18 +62,44 @@ def _convert_kibot_csv_gz_to_sql(
     trade_symbol_id = sql_writer_backed.get_trade_symbol_id(
         symbol_id=symbol_id, exchange_id=exchange_id
     )
-    # TODO(vr): Below only for Minute frequency.
-    df.columns = ["date", "time", "open", "high", "low", "close", "volume"]
-    for _, row in df.iterrows():
-        sql_writer_backed.insert_minute_data(
-            trade_symbol_id=trade_symbol_id,
-            datetime=f"${row['date']} ${row['time']}",
-            open_val=row["open"],
-            high_val=row["high"],
-            low_val=row["low"],
-            close_val=row["close"],
-            volume_val=row["volume"],
-        )
+    if max_num_rows:
+        df = df.head(max_num_rows)
+    if frequency == vkdtyp.Frequency.Minutely:
+        df.columns = ["date", "time", "open", "high", "low", "close", "volume"]
+        for _, row in df.iterrows():
+            sql_writer_backed.insert_minute_data(
+                trade_symbol_id=trade_symbol_id,
+                datetime=f"${row['date']} ${row['time']}",
+                open_val=row["open"],
+                high_val=row["high"],
+                low_val=row["low"],
+                close_val=row["close"],
+                volume_val=row["volume"],
+            )
+    elif frequency == vkdtyp.Frequency.Daily:
+        df.columns = ["date", "open", "high", "low", "close", "volume"]
+        for _, row in df.iterrows():
+            sql_writer_backed.insert_daily_data(
+                trade_symbol_id=trade_symbol_id,
+                date=row["date"],
+                open_val=row["open"],
+                high_val=row["high"],
+                low_val=row["low"],
+                close_val=row["close"],
+                volume_val=row["volume"],
+            )
+    elif frequency == vkdtyp.Frequency.Tick:
+        df.columns = ["date", "time", "price", "size"]
+        for _, row in df.iterrows():
+            sql_writer_backed.insert_tick_data(
+                trade_symbol_id=trade_symbol_id,
+                datetime=f"${row['date']} ${row['time']}",
+                price_val=row["price"],
+                size_val=row["size"],
+            )
+    else:
+        dbg.dfatal("Unknown frequency '%s'", frequency)
+    _LOG.info("Done converting '%s' symbol", symbol)
     return True
 
 
@@ -87,12 +117,13 @@ def _process_over_dataset(
     tqdm_ = tqdm.tqdm(symbols, desc="symbol", total=len(symbols))
     if serial:
         for symbol in tqdm_:
-            print(symbol)
             fn(symbol=symbol, **kwargs)
     else:
-        joblib.Parallel(n_jobs=_JOBLIB_NUM_CPUS, verbose=_JOBLIB_VERBOSITY)(
-            joblib.delayed(fn)(symbol=symbol, **kwargs) for symbol in tqdm_
-        )
+        joblib.Parallel(
+            n_jobs=_JOBLIB_NUM_CPUS,
+            verbose=_JOBLIB_VERBOSITY,
+            require="sharedmem",
+        )(joblib.delayed(fn)(symbol=symbol, **kwargs) for symbol in tqdm_)
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -101,9 +132,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--serial",
-        # TODO(vr): Change this back.
-        # action="store_true",
-        action="store_false",
+        action="store_true",
         help="Download data serially",
     )
     parser.add_argument(
@@ -112,61 +141,53 @@ def _parse() -> argparse.ArgumentParser:
         help="Process a specific dataset (or all datasets if omitted)",
         choices=vkdcon.S3_DATASETS,
         action="append",
-        # TODO(vr): Change this back.
-        # default=None,
-        default=["All_Futures_Continuous_Contracts_1min"],
+        default=None,
     )
     parser.add_argument(
         "--exchange",
         type=str,
         help="Selected Exchange",
-        # TODO(vr): Change this back.
-        # default=None,
-        default="TestExchange",
+        default=None,
     )
     parser.add_argument(
         "--dbuser",
         type=str,
         help="Postgres User",
-        # TODO(vr): Change this back.
-        # default=None,
-        default="postgres",
+        default=None,
     )
     parser.add_argument(
         "--dbpass",
         type=str,
         help="Postgres Password",
-        # TODO(vr): Change this back.
-        # required=True,
-        # default=None,
-        default="password",
+        default=None,
     )
     parser.add_argument(
         "--dbhost",
         type=str,
         help="Postgres Host",
-        # TODO(vr): Change this back.
-        # required=True,
-        # default=None,
-        default="127.0.0.1",
+        required=True,
+        default=None,
     )
     parser.add_argument(
         "--dbname",
         type=str,
         help="Postgres DB",
-        # TODO(vr): Change this back.
-        # required=True,
-        # default=None,
+        required=True,
         default="postgres",
     )
     parser.add_argument(
         "--max_num_assets",
         action="store",
         type=int,
-        # TODO(vr): Change this back.
-        # default=None,
-        default=2,
+        default=None,
         help="Maximum number of assets to copy (for debug)",
+    )
+    parser.add_argument(
+        "--max_num_rows",
+        action="store",
+        type=int,
+        default=None,
+        help="Maximum number of rows per asset to copy (for debug)",
     )
     hparse.add_verbosity_arg(parser)
     return parser
@@ -176,13 +197,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     dbg.shutup_chatty_modules()
-    # Create Kibot Downloader instance.
+    #
     kibot_data_loader = vkdloa.KibotDataLoader()
-    # Create S3 Backend instance.
+    #
     s3_backend = vkmls3.S3Backend()
-    # Create Dataset Name Parser instance.
+    #
     dataset_name_parser = vkdlda.DatasetNameParser()
-    # Connect to PSQL.
+    #
     sql_writer_backed = vdsqlw.SQLWriterBackend(
         dbname=args.dbname,
         user=args.dbuser,
@@ -192,10 +213,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _LOG.info("Connected to database")
     #
     exchange_id = sql_writer_backed.get_exchange_id(args.exchange)
+    dbg.dassert_lte(0, exchange_id, f"Exchange '{args.exchange}' does not exist.")
     # Go over selected datasets or all datasets.
-    datasets_to_proceed = args.dataset or vkdcon.S3_DATASETS
-    _LOG.info("Proceeding %d datasets", len(datasets_to_proceed))
-    for dataset in tqdm.tqdm(datasets_to_proceed, desc="dataset"):
+    datasets_to_process = args.dataset or vkdcon.S3_DATASETS
+    _LOG.info("Processing %d datasets", len(datasets_to_process))
+    for dataset in tqdm.tqdm(datasets_to_process, desc="dataset"):
         # Get the symbols from S3.
         symbols = s3_backend.get_symbols_for_dataset(dataset)
         # symbols = ["AAPL"]
@@ -215,6 +237,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             _convert_kibot_csv_gz_to_sql,
             symbols,
             args.serial,
+            max_num_rows=args.max_num_rows,
             kibot_data_loader=kibot_data_loader,
             sql_writer_backed=sql_writer_backed,
             asset_class=asset_class,

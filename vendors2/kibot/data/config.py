@@ -34,7 +34,7 @@ DATASETS = [
     "sp_500_unadjusted_daily",
 ]
 
-# TODO(vr): Check if possible to use above instead (All_Futures in above).
+# TODO(vr): Combine with above in AmpTask592.
 S3_DATASETS = [
     "adjustments",
     "all_stocks_1min",

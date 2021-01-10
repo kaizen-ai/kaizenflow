@@ -24,6 +24,18 @@ CREATE TABLE IF NOT EXISTS TradeSymbol (
     UNIQUE (exchange_id, symbol_id)
 );
 
+CREATE TABLE IF NOT EXISTS DailyData (
+    id integer PRIMARY KEY DEFAULT nextval('serial'),
+    trade_symbol_id integer REFERENCES TradeSymbol,
+    date date,
+    open numeric,
+    high numeric,
+    low numeric,
+    close numeric,
+    volume integer,
+    UNIQUE (trade_symbol_id, date)
+);
+
 CREATE TABLE IF NOT EXISTS MinuteData (
     id integer PRIMARY KEY DEFAULT nextval('serial'),
     trade_symbol_id integer REFERENCES TradeSymbol,
@@ -36,13 +48,21 @@ CREATE TABLE IF NOT EXISTS MinuteData (
     UNIQUE (trade_symbol_id, datetime)
 );
 
-CREATE TABLE IF NOT EXISTS TickData (
+CREATE TABLE IF NOT EXISTS TickBidAskData (
     id integer PRIMARY KEY DEFAULT nextval('serial'),
-    trade_symbol_id integer REFERENCES Symbol,
+    trade_symbol_id integer REFERENCES TradeSymbol,
     datetime timestamp,
     bid numeric,
     ask numeric,
     volume integer
+);
+
+CREATE TABLE IF NOT EXISTS TickData (
+    id integer PRIMARY KEY DEFAULT nextval('serial'),
+    trade_symbol_id integer REFERENCES TradeSymbol,
+    datetime timestamp,
+    price numeric,
+    size integer
 );
 
 INSERT INTO Exchange (name) VALUES ('TestExchange');
