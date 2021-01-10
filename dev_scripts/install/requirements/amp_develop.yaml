@@ -93,6 +93,7 @@ dependencies:
   - git                     # To use latest git client.
   - joblib
   - jsonpickle
+  - psycopg2-binary
   - pygraphviz              # For dataflow graph visualization.
   - pymongo
   - scrapy
