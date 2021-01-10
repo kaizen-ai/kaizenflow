@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-"""Download data from kibot.com, compress each file, upload it to S3.
+"""
+Download data from kibot.com, compress each file, upload it to S3.
 
 # Process only specific dataset:
 > download.py --dataset all_stocks_1min --dry_run -u XYZ -p ABC
@@ -22,23 +23,23 @@ import logging
 import os
 import re
 import shutil
-import urllib.parse as urlprs
+import urllib.parse as uparse
 
 import bs4
 import joblib
 import numpy as np
 import pandas as pd
 import requests
-import requests.adapters as adapters
-import requests.packages.urllib3.util as url3ut  # pylint: disable=import-error
+import requests.adapters as radapt
+import requests.packages.urllib3.util as rpuuti  # pylint: disable=import-error
 import tqdm
 
 import helpers.dbg as dbg
-import helpers.io_ as io_
+import helpers.io_ as hio
 import helpers.s3 as hs3
-import helpers.system_interaction as si
-import vendors2.kibot.base.command as command
-import vendors2.kibot.data.config as config
+import helpers.system_interaction as hsyste
+import vendors2.kibot.base.command as vkbcom
+import vendors2.kibot.data.config as vkdcon
 
 _LOG = logging.getLogger(__name__)
 
@@ -54,7 +55,8 @@ def _log_in(
     password: str,
     requests_session: requests.Session,
 ) -> bool:
-    """Make a login request to the account page and return the result.
+    """
+    Make a login request to the account page and return the result.
 
     :param page_url: URL to the account page
     :param username: username
@@ -94,15 +96,15 @@ def _download_page(
     page_url: str,
     requests_session: requests.Session,
 ) -> str:
-    """Download html file by URL and store under specific name in data
-    directory.
+    """
+    Download html file by URL and store under specific name in data directory.
 
     :param page_file_path: path of the file
     :param page_url: URL from where to download
     :param requests_session: current requests session to preserve cookies
     :return: contents of the page
     """
-    resolved_url = urlprs.urljoin(config.ENDPOINT, page_url)
+    resolved_url = uparse.urljoin(vkdcon.ENDPOINT, page_url)
     _LOG.info("Requesting page '%s'", resolved_url)
     page_response = requests_session.get(resolved_url)
     _LOG.info("Storing page to '%s'", page_file_path)
@@ -116,16 +118,19 @@ def _download_page(
 
 
 class DatasetListExtractor:
-    """Extract the list of available datasets from Kibot."""
+    """
+    Extract the list of available datasets from Kibot.
+    """
 
     @classmethod
     def extract_dataset_links(cls, src_file: str) -> pd.DataFrame:
-        """Retrieve a table with datasets and corresponding page links.
+        """
+        Retrieve a table with datasets and corresponding page links.
 
         :param src_file: html file with the account page
         :return: DataFrame with dataset names and corresponding page links
         """
-        html = io_.from_file(src_file)
+        html = hio.from_file(src_file)
         soup = bs4.BeautifulSoup(html, "html.parser")
         # Get last table.
         table = soup.findAll("table")[-1]
@@ -143,7 +148,8 @@ class DatasetListExtractor:
 
     @staticmethod
     def _clean_dataset_name(dataset: str) -> str:
-        """Clean up a dataset name for ease future reference.
+        """
+        Clean up a dataset name for ease future reference.
 
         E.g., the dataset `1. All Stocks 1min on 9/29/2019` becomes `all_stocks_1min`.
 
@@ -156,7 +162,7 @@ class DatasetListExtractor:
         clean_dataset = re.sub(r"\s+", "_", clean_dataset)
         clean_dataset = re.sub(r"&", "", clean_dataset)
         clean_dataset = clean_dataset.strip("_")
-        # TODO(amr): should we assert the result matches an element in `config.DATASETS`?
+        # TODO(amr): should we assert the result matches an element in `vkdcon.DATASETS`?
         return clean_dataset
 
 
@@ -164,24 +170,27 @@ class DatasetListExtractor:
 
 
 class DatasetExtractor:
-    """Extract payloads for a particular dataset."""
+    """
+    Extract payloads for a particular dataset.
+    """
 
     def __init__(self, dataset: str, requests_session: requests.Session):
-        """Init object.
+        """
+        Init object.
 
         :param dataset: input dataset name to process
         :param requests_session: current requests session to preserve cookies
         """
         self.dataset = dataset
         self.requests_session = requests_session
-        self.aws_dir = os.path.join(config.S3_PREFIX, dataset)
+        self.aws_dir = os.path.join(vkdcon.S3_PREFIX, dataset)
         _LOG.info("Saving to S3 in '%s'", self.aws_dir)
 
     def delete_dataset_s3_directory(self) -> None:
         assert 0, "Very dangerous: are you sure?"
         _LOG.warning("Deleting s3 file %s", self.aws_dir)
         cmd = "aws s3 rm --recursive %s" % self.aws_dir
-        si.system(cmd)
+        hsyste.system(cmd)
 
     def download_payload_page(
         self,
@@ -191,7 +200,8 @@ class DatasetExtractor:
         skip_if_exists: bool,
         clean_up_artifacts: bool,
     ) -> bool:
-        """Store CSV payload for specific Symbol in S3.
+        """
+        Store CSV payload for specific Symbol in S3.
 
         :param local_dir: local directory with the data
         :param row: series with Symbol and Link columns
@@ -217,12 +227,12 @@ class DatasetExtractor:
         # Copy to s3.
         hs3.check_valid_s3_path(aws_file)
         cmd = "aws s3 cp %s %s" % (dst_file, aws_file)
-        si.system(cmd)
+        hsyste.system(cmd)
         #
         if clean_up_artifacts:
             # Delete local file.
             cmd = "rm -f %s" % dst_file
-            si.system(cmd)
+            hsyste.system(cmd)
         return True
 
     def get_dataset_payloads_to_download(
@@ -231,7 +241,8 @@ class DatasetExtractor:
         source_dir: str,
         converted_dir: str,
     ) -> pd.DataFrame:
-        """Get a DataFrame with the list of Symbols and Links to download for a
+        """
+        Get a DataFrame with the list of Symbols and Links to download for a
         dataset.
 
         :param dataset_links_df: DataFrame with the list to a dataset pages
@@ -273,7 +284,8 @@ class DatasetExtractor:
         return dataset_df
 
     def store_dataset_csv_file(self, converted_dir: str) -> None:
-        """Store dataset CSV file with Link and Symbol columns on S3.
+        """
+        Store dataset CSV file with Link and Symbol columns on S3.
 
         :param converted_dir: directory to store converted download
         """
@@ -283,16 +295,17 @@ class DatasetExtractor:
         # Copy to s3.
         hs3.check_valid_s3_path(dataset_csv_s3_file)
         cmd = "aws s3 cp %s %s" % (dataset_csv_file, dataset_csv_s3_file)
-        si.system(cmd)
+        hsyste.system(cmd)
 
     @staticmethod
     def _extract_payload_links(src_file: str) -> pd.DataFrame:
-        """Extract a table from dataset html page.
+        """
+        Extract a table from dataset html page.
 
         :param src_file: path to dataset html file page
         :return: DataFrame with the list of series with Symbol and Link columns
         """
-        html = io_.from_file(src_file)
+        html = hio.from_file(src_file)
         # Find HTML that refers a required table.
         _, table_start, rest = html.partition('<table class="ms-classic4-main">')
         table, table_end, _ = rest.partition("</table>")
@@ -308,8 +321,9 @@ class DatasetExtractor:
     def _download_file(
         self, link: str, local_file: str, dst_file: str, download_compressed: bool
     ) -> None:
-        """Download file from the link, store it as local_file and then gzip it
-        as dst_file. Optionally, download it already gzipped.
+        """
+        Download file from the link, store it as local_file and then gzip it as
+        dst_file. Optionally, download it already gzipped.
 
         :param link: URL from where to download
         :param local_file: path to local .csv file
@@ -323,17 +337,18 @@ class DatasetExtractor:
         if not download_compressed:
             # Compress.
             cmd = "gzip %s -c >%s" % (local_file, dst_file)
-            si.system(cmd)
+            hsyste.system(cmd)
             # Delete csv file.
             cmd = "rm -f %s" % local_file
-            si.system(cmd)
+            hsyste.system(cmd)
 
 
 # #############################################################################
 
 
 class AdjustmentsDatasetExtractor(DatasetExtractor):
-    """Extractor of payloads for an adjustments dataset.
+    """
+    Extractor of payloads for an adjustments dataset.
 
     Is a child of DatasetExtractor since requires a separate handling.
     """
@@ -348,7 +363,8 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
         source_dir: str,
         converted_dir: str,
     ) -> pd.DataFrame:
-        """Get a DataFrame with the list of Symbols and Links to download for a
+        """
+        Get a DataFrame with the list of Symbols and Links to download for a
         dataset.
 
         :param source_dir: directory to store source download
@@ -359,7 +375,7 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
         dataset_csv_file = os.path.join(converted_dir, f"{self.dataset}.csv")
         _LOG.debug("Making request to adjustments API")
         response = self.requests_session.get(
-            config.API_ENDPOINT,
+            vkdcon.API_ENDPOINT,
             params={"action": "adjustments", "symbolsonly": 1},
         )
         with open(dataset_txt_file, "w+b") as f:
@@ -383,16 +399,17 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
 
     @staticmethod
     def _get_adjustments_payload_link(symbol: str) -> str:
-        """Get the link to download adjustment data for a symbol.
+        """
+        Get the link to download adjustment data for a symbol.
 
         :param symbol: symbol of the adjustment payload
         :return: a link to download
         """
         query_params = "?"
-        query_params += urlprs.urlencode(
+        query_params += uparse.urlencode(
             {"action": "adjustments", "symbol": symbol}
         )
-        api_link = urlprs.urljoin(config.API_ENDPOINT, query_params)
+        api_link = uparse.urljoin(vkdcon.API_ENDPOINT, query_params)
         return api_link  # type: ignore
 
     def _download_file(
@@ -406,7 +423,7 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
 # #############################################################################
 
 
-class DownloadDataCommand(command.KibotCommand):
+class DownloadDataCommand(vkbcom.KibotCommand):
     def __init__(self) -> None:
         super().__init__(
             docstring=__doc__, supports_tmp_dir=True, requires_auth=True
@@ -424,7 +441,7 @@ class DownloadDataCommand(command.KibotCommand):
             "--dataset",
             type=str,
             help="Download a specific dataset (or all datasets if omitted)",
-            choices=config.DATASETS,
+            choices=vkdcon.DATASETS,
             action="append",
             default=None,
         )
@@ -466,25 +483,25 @@ def _run(args) -> int:  # type: ignore
     incremental = not args.no_incremental
     source_dir_name = "source_data"
     source_dir = os.path.join(args.tmp_dir, source_dir_name)
-    io_.create_dir(source_dir, incremental=incremental)
+    hio.create_dir(source_dir, incremental=incremental)
     #
     converted_dir_name = "converted_data"
     converted_dir = os.path.join(args.tmp_dir, converted_dir_name)
-    io_.create_dir(converted_dir, incremental=incremental)
+    hio.create_dir(converted_dir, incremental=incremental)
     # Log in.
     requests_session = requests.Session()
-    requests_retry = url3ut.Retry(
+    requests_retry = rpuuti.Retry(
         total=12,
         backoff_factor=2,
         status_forcelist=[104, 403, 500, 501, 502, 503, 504],
     )
     requests_session.mount(
-        "http://", adapters.HTTPAdapter(max_retries=requests_retry)
+        "http://", radapt.HTTPAdapter(max_retries=requests_retry)
     )
     requests_session.mount(
-        "https://", adapters.HTTPAdapter(max_retries=requests_retry)
+        "https://", radapt.HTTPAdapter(max_retries=requests_retry)
     )
-    kibot_account = config.ENDPOINT + "account.aspx"
+    kibot_account = vkdcon.ENDPOINT + "account.aspx"
     login_result = _log_in(
         kibot_account, args.username, str(args.password), requests_session
     )
@@ -512,11 +529,11 @@ def _run(args) -> int:  # type: ignore
     dataset_links_df.to_csv(dataset_links_csv_file)
     _LOG.info("Saved dataset list to download in '%s'", dataset_links_csv_file)
     # Process a dataset.
-    datasets_to_proceed = args.dataset or config.DATASETS
+    datasets_to_proceed = args.dataset or vkdcon.DATASETS
     for dataset in tqdm.tqdm(datasets_to_proceed, desc="dataset"):
         # Create dataset dir.
         dataset_dir = os.path.join(converted_dir, dataset)
-        io_.create_dir(dataset_dir, incremental=True)
+        hio.create_dir(dataset_dir, incremental=True)
         # Create payload extractor instance.
         if dataset == "adjustments":
             de: DatasetExtractor = AdjustmentsDatasetExtractor(

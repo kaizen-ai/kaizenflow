@@ -2,28 +2,29 @@ from typing import Optional
 
 import pandas as pd
 
-import helpers.cache as hcac
+import helpers.cache as hcache
 import helpers.dbg as dbg
 import helpers.s3 as hs3
-import vendors2.kibot.data.load.file_path_generator as fpgen
-import vendors2.kibot.data.transform.normalizers as nls
-import vendors2.kibot.data.types as types
+import vendors2.kibot.data.load.file_path_generator as vkdlfi
+import vendors2.kibot.data.transform.normalizers as vkdtno
+import vendors2.kibot.data.types as vkdtyp
 
 
 class KibotDataLoader:
     @classmethod
-    @hcac.cache
+    @hcache.cache
     def read_data(
         cls,
         symbol: str,
-        asset_class: types.AssetClass,
-        frequency: types.Frequency,
-        contract_type: Optional[types.ContractType] = None,
+        asset_class: vkdtyp.AssetClass,
+        frequency: vkdtyp.Frequency,
+        contract_type: Optional[vkdtyp.ContractType] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
     ) -> pd.DataFrame:
-        """Read kibot data.
+        """
+        Read kibot data.
 
         :param symbol: symbol to get the data for
         :param asset_class: asset class
@@ -47,21 +48,21 @@ class KibotDataLoader:
     @staticmethod
     def _read_data(
         symbol: str,
-        asset_class: types.AssetClass,
-        frequency: types.Frequency,
-        contract_type: Optional[types.ContractType] = None,
+        asset_class: vkdtyp.AssetClass,
+        frequency: vkdtyp.Frequency,
+        contract_type: Optional[vkdtyp.ContractType] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
     ) -> pd.DataFrame:
 
-        file_path = fpgen.FilePathGenerator().generate_file_path(
+        file_path = vkdlfi.FilePathGenerator().generate_file_path(
             symbol=symbol,
             asset_class=asset_class,
             frequency=frequency,
             contract_type=contract_type,
             unadjusted=unadjusted,
-            ext=types.Extension.CSV,
+            ext=vkdtyp.Extension.CSV,
         )
 
         if hs3.is_s3_path(file_path):
@@ -72,6 +73,6 @@ class KibotDataLoader:
         df = pd.read_csv(file_path, header=None, nrows=nrows)
 
         if normalize:
-            df = nls.normalize(df=df, frequency=frequency)
+            df = vkdtno.normalize(df=df, frequency=frequency)
 
         return df

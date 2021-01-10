@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-"""Download all adjustments from kibot.
+"""
+Download all adjustments from kibot.
 
 > download_adjustments.py -u kibot_username -p kibot_password
 
@@ -16,11 +17,11 @@ import joblib
 import requests
 import tqdm
 
-import helpers.io_ as io_
+import helpers.io_ as hio
 import helpers.s3 as hs3
-import helpers.system_interaction as si
-import vendors2.kibot.base.command as command
-import vendors2.kibot.metadata.config as config
+import helpers.system_interaction as hsyste
+import vendors2.kibot.base.command as vkbcom
+import vendors2.kibot.metadata.config as vkmcon
 
 # #############################################################################
 
@@ -35,7 +36,9 @@ def _execute_loop(
     total: int,
     serial: bool = True,
 ) -> None:
-    """Execute a function with a list of kwargs serially or in parallel."""
+    """
+    Execute a function with a list of kwargs serially or in parallel.
+    """
     tqdm_ = tqdm.tqdm(kwargs_list, total=total)
 
     if not serial:
@@ -54,9 +57,11 @@ _LOG = logging.getLogger(__name__)
 
 
 def _get_symbols_list() -> List[str]:
-    """Get a list of symbols that have adjustments from Kibot."""
+    """
+    Get a list of symbols that have adjustments from Kibot.
+    """
     response = requests.get(
-        url=config.API_ENDPOINT,
+        url=vkmcon.API_ENDPOINT,
         params=dict(action="adjustments", symbolsonly="1"),
     )
 
@@ -67,31 +72,33 @@ def _get_symbols_list() -> List[str]:
 
 
 def _download_adjustments_data_for_symbol(symbol: str, tmp_dir: str) -> None:
-    """Download adjustments file for a symbol and save to s3."""
+    """
+    Download adjustments file for a symbol and save to s3.
+    """
     response = requests.get(
-        url=config.API_ENDPOINT,
+        url=vkmcon.API_ENDPOINT,
         params=dict(action="adjustments", symbol=symbol),
     )
 
     file_name = f"{symbol}.txt"
-    file_path = os.path.join(tmp_dir, config.ADJUSTMENTS_SUB_DIR, file_name)
-    io_.to_file(file_name=file_path, lines=str(response.content, "utf-8"))
+    file_path = os.path.join(tmp_dir, vkmcon.ADJUSTMENTS_SUB_DIR, file_name)
+    hio.to_file(file_name=file_path, lines=str(response.content, "utf-8"))
 
     # Save to s3.
     aws_path = os.path.join(
-        config.S3_PREFIX, config.ADJUSTMENTS_SUB_DIR, file_name
+        vkmcon.S3_PREFIX, vkmcon.ADJUSTMENTS_SUB_DIR, file_name
     )
     hs3.check_valid_s3_path(aws_path)
 
     # TODO(amr): create hs3.copy() helper.
     cmd = "aws s3 cp %s %s" % (file_path, aws_path)
-    si.system(cmd)
+    hsyste.system(cmd)
 
 
 # #############################################################################
 
 
-class DownloadAdjustmentsCommand(command.KibotCommand):
+class DownloadAdjustmentsCommand(vkbcom.KibotCommand):
     def __init__(self) -> None:
         super().__init__(
             docstring=__doc__,

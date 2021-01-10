@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-"""# Make an API call every 10 seconds to get the history of symbol `MSFT`
+"""
+# Make an API call every 10 seconds to get the history of symbol `MSFT`
 
 > check_realtime_feed.py -u $P1_KIBOT_USERNAME -p $P1_KIBOT_PASSWORD
 """
@@ -10,8 +11,8 @@ import time
 
 import requests
 
-import vendors2.kibot.base.command as command
-import vendors2.kibot.data.config as config
+import vendors2.kibot.base.command as vkbcom
+import vendors2.kibot.data.config as vkdcon
 
 _LOG = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class CheckReadtimeFeedCommand(command.KibotCommand):
+class CheckReadtimeFeedCommand(vkbcom.KibotCommand):
     def __init__(self) -> None:
         super().__init__(
             docstring=__doc__, requires_auth=True, requires_api_login=True
@@ -29,7 +30,7 @@ class CheckReadtimeFeedCommand(command.KibotCommand):
         # Download file.
         while True:
             response = requests.get(
-                url=config.API_ENDPOINT,
+                url=vkdcon.API_ENDPOINT,
                 params=dict(
                     action="history", symbol="MSFT", interval="1", period="2"
                 ),
