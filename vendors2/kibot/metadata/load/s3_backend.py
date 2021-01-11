@@ -23,6 +23,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class S3Backend:
+    max_rows = None
     @staticmethod
     def read_1min_contract_metadata() -> pd.DataFrame:
         # pylint: disable=line-too-long
@@ -46,7 +47,10 @@ class S3Backend:
             vkmcon.S3_PREFIX, "All_Futures_Contracts_1min.csv.gz"
         )
         _LOG.debug("file_name=%s", file_name)
-        df = pd.read_csv(file_name, index_col=0)
+        if S3Backend.max_rows is not None:
+            df = pd.read_csv(file_name, index_col=0, nrows=S3Backend.max_rows)
+        else:
+            df = pd.read_csv(file_name, index_col=0)
         df = df.iloc[:, 1:]
         _LOG.debug("df=\n%s", df.head(3))
         _LOG.debug("df.shape=%s", df.shape)
