@@ -281,6 +281,47 @@ def compute_ret_0_from_multiple_prices(
 #  https://github.com/ParticleDev/commodity_research/issues/568
 
 
+def get_prices_from_returns(
+    df: Union[pd.DataFrame, pd.Series],
+    price_col: str,
+    return_col: str,
+    mode: str,
+    steps_ahead: Optional[int] = None,
+) -> pd.DataFrame:
+    """
+    Compute price at moment t_i with given price at t_0 and return ret_i.
+
+    :param df: input dataframe with prices and returns. In case of using this 
+        function in row-wise pd.DataFrame methods .apply or .transform, it is 
+        series with original column names in index.
+    :param price_col: name of a column with prices
+    :param return_col: name of a column with returns, it must be aligned with 
+        prices
+    :param mode: returns mode as in compute_ret_0
+    :param steps_ahead: steps ahead returns are calculated, if None, resulting 
+        prices are not aligned with original ones 
+    :return: dataframe with added column with computed prices
+    """
+    if isinstance(df, pd.Series):
+        dbg.dassert_in(price_col, df.index)
+        dbg.dassert_in(return_col, df.index)
+    elif isinstance(df, pd.DataFrame):
+        dbg.dassert_in(price_col, df.columns)
+        dbg.dassert_in(return_col, df.columns)
+    else:
+        raise TypeError("Invalid df type='%s'" % type(df))
+    if mode == "pct_change":
+        df["price_pred"] = df[price_col] * (df[return_col] + 1)
+    elif mode == "log_rets":
+        df["price_pred"] = df[price_col] * np.exp(df[return_col])
+    elif mode == "diff":
+        df["price_pred"] = df[price_col] + df[return_col]
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    if steps_ahead:
+        df["price_pred"] = df["price_pred"].shift(steps_ahead)
+    return df
+
 def convert_log_rets_to_pct_rets(
     log_rets: Union[float, pd.Series, pd.DataFrame]
 ) -> Union[float, pd.Series, pd.DataFrame]:
