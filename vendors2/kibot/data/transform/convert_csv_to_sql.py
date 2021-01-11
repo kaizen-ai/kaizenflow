@@ -16,7 +16,7 @@ import vendors2.docker.sql_writer_backend as vdsqlw
 import vendors2.kibot.data.config as vkdcon
 import vendors2.kibot.data.load as vkdloa
 import vendors2.kibot.data.load.dataset_name_parser as vkdlda
-import vendors2.kibot.data.load.sql_data_loader
+import vendors2.kibot.data.load.sql_data_loader as vkdlsq
 import vendors2.kibot.data.types as vkdtyp
 import vendors2.kibot.metadata.load.s3_backend as vkmls3
 
@@ -32,7 +32,7 @@ def _convert_kibot_csv_gz_to_sql(
     symbol: str,
     kibot_data_loader: vkdloa.KibotDataLoader,
     sql_writer_backed: vdsqlw.SQLWriterBackend,
-    sql_data_loader: vendors2.kibot.data.load.sql_data_loader.SQLKibotDataLoader,
+    sql_data_loader: vkdlsq.SQLKibotDataLoader,
     asset_class: vkdtyp.AssetClass,
     frequency: vkdtyp.Frequency,
     exchange_id: int,
@@ -214,7 +214,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         host=args.dbhost,
     )
     #
-    sql_data_loader = vendors2.kibot.data.load.sql_data_loader.SQLKibotDataLoader(
+    sql_data_loader = vkdlsq.SQLKibotDataLoader(
         dbname=args.dbname,
         user=args.dbuser,
         password=args.dbpass,
