@@ -30,6 +30,7 @@ _JOBLIB_VERBOSITY = 1
 
 def _convert_kibot_csv_gz_to_sql(
     symbol: str,
+    exchange: str,
     kibot_data_loader: vkdloa.SQLKibotDataLoader,
     sql_writer_backed: vdsqlw.SQLWriterBackend,
     sql_data_loader: vkdlsq.SQLKibotDataLoader,
@@ -48,6 +49,7 @@ def _convert_kibot_csv_gz_to_sql(
     _LOG.info("Converting '%s' symbol", symbol)
     _LOG.debug("Downloading '%s' symbol from S3", symbol)
     df = kibot_data_loader.read_data(
+        exchange=exchange,
         symbol=symbol,
         asset_class=asset_class,
         frequency=frequency,
@@ -256,6 +258,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             frequency=frequency,
             unadjusted=unadjusted,
             exchange_id=exchange_id,
+            exchange=args.exchange,
         )
         #
     _LOG.info("Closing database connection")
