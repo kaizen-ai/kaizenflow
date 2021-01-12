@@ -139,7 +139,7 @@ def _parse() -> argparse.ArgumentParser:
         "--dataset",
         type=str,
         help="Process a specific dataset (or all datasets if omitted)",
-        choices=vkdcon.S3_DATASETS,
+        choices=vkdcon.DATASETS,
         action="append",
         default=None,
     )
@@ -215,7 +215,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     exchange_id = sql_writer_backed.get_exchange_id(args.exchange)
     dbg.dassert_lte(0, exchange_id, f"Exchange '{args.exchange}' does not exist.")
     # Go over selected datasets or all datasets.
-    datasets_to_process = args.dataset or vkdcon.S3_DATASETS
+    datasets_to_process = args.dataset or vkdcon.DATASETS
     _LOG.info("Processing %d datasets", len(datasets_to_process))
     for dataset in tqdm.tqdm(datasets_to_process, desc="dataset"):
         # Get the symbols from S3.
