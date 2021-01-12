@@ -13,7 +13,7 @@ class TestFilePathGenerator(hut.TestCase):
             frequency=vkdtyp.Frequency.Daily,
             ext=vkdtyp.Extension.CSV,
         )
-        expected_file_path = "All_Futures_Continuous_Contracts_daily/TEST.csv.gz"
+        expected_file_path = "all_futures_continuous_contracts_daily/TEST.csv.gz"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
 
     def test2(self) -> None:
@@ -24,7 +24,7 @@ class TestFilePathGenerator(hut.TestCase):
             frequency=vkdtyp.Frequency.Daily,
             ext=vkdtyp.Extension.Parquet,
         )
-        expected_file_path = "pq/All_Futures_Continuous_Contracts_daily/TEST.pq"
+        expected_file_path = "pq/all_futures_continuous_contracts_daily/TEST.pq"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
 
     def test3(self) -> None:
@@ -35,7 +35,7 @@ class TestFilePathGenerator(hut.TestCase):
             frequency=vkdtyp.Frequency.Daily,
             ext=vkdtyp.Extension.Parquet,
         )
-        expected_file_path = "pq/All_Futures_Contracts_daily/TEST.pq"
+        expected_file_path = "pq/all_futures_contracts_daily/TEST.pq"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
 
     def test4(self) -> None:
@@ -46,7 +46,7 @@ class TestFilePathGenerator(hut.TestCase):
             frequency=vkdtyp.Frequency.Minutely,
             ext=vkdtyp.Extension.Parquet,
         )
-        expected_file_path = "pq/All_Futures_Contracts_1min/TEST.pq"
+        expected_file_path = "pq/all_futures_contracts_1min/TEST.pq"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
 
     def test5(self) -> None:
@@ -103,7 +103,7 @@ class TestFilePathGenerator(hut.TestCase):
             frequency=vkdtyp.Frequency.Tick,
             ext=vkdtyp.Extension.CSV,
         )
-        expected_file_path = "All_Futures_Continuous_Contracts_tick/TEST.csv.gz"
+        expected_file_path = "all_futures_continuous_contracts_tick/TEST.csv.gz"
         self._assert_file_path(args=args, expected_file_path=expected_file_path)
 
     def test9(self) -> None:
