@@ -30,7 +30,7 @@ _JOBLIB_VERBOSITY = 1
 
 def _convert_kibot_csv_gz_to_sql(
     symbol: str,
-    kibot_data_loader: vkdloa.KibotDataLoader,
+    kibot_data_loader: vkdloa.SQLKibotDataLoader,
     sql_writer_backed: vdsqlw.SQLWriterBackend,
     sql_data_loader: vkdlsq.SQLKibotDataLoader,
     asset_class: vkdtyp.AssetClass,
@@ -201,7 +201,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     dbg.shutup_chatty_modules()
     #
-    kibot_data_loader = vkdloa.KibotDataLoader()
+    kibot_data_loader = vkdloa.S3KibotDataLoader()
     #
     s3_backend = vkmls3.S3Backend()
     #

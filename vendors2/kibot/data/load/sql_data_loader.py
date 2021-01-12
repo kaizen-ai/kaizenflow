@@ -4,11 +4,13 @@ import pandas as pd
 import psycopg2
 import psycopg2.extensions as pexten
 
+import helpers.cache as hcache
 import helpers.dbg as dbg
+import vendors2.kibot.data.load.data_loader as vkdlda
 import vendors2.kibot.data.types as vkdtyp
 
 
-class SQLKibotDataLoader:
+class SQLKibotDataLoader(vkdlda.AbstractKibotDataLoader):
     def __init__(self, dbname: str, user: str, password: str, host: str):
         self.conn: psycopg2.extensions.connection = psycopg2.connect(
             dbname=dbname,
@@ -17,20 +19,29 @@ class SQLKibotDataLoader:
             host=host,
         )
 
+    @hcache.cache
     def read_data(
         self,
         exchange: str,
         symbol: str,
+        asset_class: vkdtyp.AssetClass,
         frequency: vkdtyp.Frequency,
+        contract_type: Optional[vkdtyp.ContractType] = None,
+        unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
+        normalize: bool = True,
     ) -> pd.DataFrame:
         """
         Read kibot data.
 
-        :param exchange:
+        :param exchange: name of the exchange
         :param symbol: symbol to get the data for
+        :param asset_class: asset class
         :param frequency: `D` or `T` for daily or minutely data respectively
+        :param contract_type: required for asset class of type: `futures`
+        :param unadjusted: required for asset classes of type: `stocks` & `etfs`
         :param nrows: if not None, return only the first nrows of the data
+        :param normalize: whether to normalize the dataframe by frequency
         :return: a dataframe with the symbol data
         """
         return self._read_data(
@@ -116,7 +127,7 @@ class SQLKibotDataLoader:
         return trade_symbol_id
 
     @staticmethod
-    def get_table_name_by_frequency(frequency: vkdtyp.Frequency) -> str:
+    def _get_table_name_by_frequency(frequency: vkdtyp.Frequency) -> str:
         """
         Get table name by predefined frequency.
 
@@ -143,11 +154,12 @@ class SQLKibotDataLoader:
         exchange_id = self.get_exchange_id(exchange)
         symbol_id = self.get_symbol_id(symbol)
         trade_symbol_id = self.get_trade_symbol_id(symbol_id, exchange_id)
-        table_name = self.get_table_name_by_frequency(frequency)
+        table_name = self._get_table_name_by_frequency(frequency)
         limit = pexten.AsIs("ALL")
         if nrows:
+            dbg.dassert_lte(1, nrows)
             limit = nrows
-        query = "select * from %s where trade_symbol_id = %s limit %s"
+        query = "SELECT * FROM %s WHERE trade_symbol_id = %s LIMIT %s"
         df = pd.read_sql_query(
             query,
             self.conn,
