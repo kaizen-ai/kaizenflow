@@ -4,7 +4,7 @@ import abc
 import collections
 import copy
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import pandas as pd
 
@@ -170,27 +170,15 @@ class PredictionResultBundle(ResultBundle):
         tags_to_target_and_prediction_cols: Dict[Any, Tuple[Any, Any]] = {}
         for tag in tags:
             cols_for_tag = self.get_columns_for_tag(tag) or []
-            target_cols_for_tag = list(target_cols.intersection(cols_for_tag))
-            dbg.dassert_eq(
-                len(target_cols_for_tag),
-                1,
-                "Found `%s`!=`1` target columns for tag '%s'.",
-                len(target_cols_for_tag),
-                tag,
+            target_cols_for_tag = self._get_intersection_with_cols_for_tag(
+                target_cols, cols_for_tag, "target", tag
             )
-            prediction_cols_for_tag = list(
-                prediction_cols.intersection(cols_for_tag)
-            )
-            dbg.dassert_eq(
-                len(prediction_cols_for_tag),
-                1,
-                "Found `%s`!=`1` prediction columns for tag '%s'.",
-                len(prediction_cols_for_tag),
-                tag,
+            prediction_cols_for_tag = self._get_intersection_with_cols_for_tag(
+                prediction_cols, cols_for_tag, "prediction", tag
             )
             target_prediction_col_pair = TargetPredictionColPair(
-                target=target_cols_for_tag[0],
-                prediction=prediction_cols_for_tag[0],
+                target=target_cols_for_tag,
+                prediction=prediction_cols_for_tag,
             )
             tags_to_target_and_prediction_cols[tag] = target_prediction_col_pair
         return tags_to_target_and_prediction_cols
@@ -236,3 +224,31 @@ class PredictionResultBundle(ResultBundle):
             )
             targets_and_predictions_for_tags[tag] = target_prediction_pair
         return targets_and_predictions_for_tags
+
+    @staticmethod
+    def _get_intersection_with_cols_for_tag(
+        selected_cols: Set[Any],
+        cols_for_tag: List[Any],
+        selected_type: str,
+        tag: Any,
+    ) -> Any:
+        """
+        Get intersection of `selected_cols` and `cols_for_tag`.
+
+        :param selected_cols: set of columns
+        :param cols_for_tag: list of columns for tag
+        :param selected_type: type of `selected_cols`, typically "target" or
+            "prediction". Used for the assertion message
+        :param tag: tag of `cols_for_tag`. Used for the assertion message
+        :return: intersection of `selected_cols` and `cols_for_tag`
+        """
+        selected_cols_for_tag = list(selected_cols.intersection(cols_for_tag))
+        dbg.dassert_eq(
+            len(selected_cols_for_tag),
+            1,
+            "Found `%s`!=`1` %s columns for tag '%s'.",
+            len(selected_cols_for_tag),
+            selected_type,
+            tag,
+        )
+        return selected_cols_for_tag[0]
