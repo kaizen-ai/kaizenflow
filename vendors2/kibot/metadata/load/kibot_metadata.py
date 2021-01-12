@@ -65,6 +65,7 @@ class KibotMetadata:
         return futures
 
     @classmethod
+    # For now the metadata is always stored on S3, so we don't need to use `cls`.
     def get_expiry_contracts(cls, symbol: str) -> List[str]:
         """
         Return the expiry contracts corresponding to a continuous contract.
@@ -81,19 +82,19 @@ class KibotMetadata:
 
     @classmethod
     def read_tickbidask_contract_metadata(cls) -> pd.DataFrame:
-        return vkmls3.S3Backend.read_tickbidask_contract_metadata()
+        return vkmls3.S3Backend().read_tickbidask_contract_metadata()
 
     @classmethod
     def read_kibot_exchange_mapping(cls) -> pd.DataFrame:
-        return vkmls3.S3Backend.read_kibot_exchange_mapping()
+        return vkmls3.S3Backend().read_kibot_exchange_mapping()
 
     @classmethod
     def read_continuous_contract_metadata(cls) -> pd.DataFrame:
-        return vkmls3.S3Backend.read_continuous_contract_metadata()
+        return vkmls3.S3Backend().read_continuous_contract_metadata()
 
     @classmethod
     def read_1min_contract_metadata(cls) -> pd.DataFrame:
-        return vkmls3.S3Backend.read_1min_contract_metadata()
+        return vkmls3.S3Backend().read_1min_contract_metadata()
 
     # //////////////////////////////////////////////////////////////////////////
 

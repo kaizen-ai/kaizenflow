@@ -2,6 +2,7 @@ import pytest
 import unittest.mock as mock
 
 import helpers.unit_test as hut
+import vendors2.kibot.metadata.load.s3_backend as vkmls3
 import vendors2.kibot.metadata.load.kibot_metadata as kmd
 import vendors2.kibot.metadata.test.mocking.mock_kibot_metadata as mkmd
 
@@ -10,10 +11,21 @@ MAX_ROWS = 500
 
 
 class TestKibotMetadata(hut.TestCase):
+    def _mock_s3backend_max_rows(self):
+        return mock.patch.multiple(
+            kmd.KibotMetadata,
+            read_kibot_exchange_mapping=vkmls3.S3Backend(MAX_ROWS).read_kibot_exchange_mapping,
+            read_tickbidask_contract_metadata=vkmls3.S3Backend(
+                MAX_ROWS).read_tickbidask_contract_metadata,
+            read_1min_contract_metadata=vkmls3.S3Backend(MAX_ROWS).read_1min_contract_metadata,
+            read_continuous_contract_metadata=vkmls3.S3Backend(
+                MAX_ROWS).read_continuous_contract_metadata,
+        )
+
     @pytest.mark.slow()
     def test_get_metadata_slow1(self) -> None:
         """Output contains all expected columns"""
-        with mock.patch.object(kmd.vkmls3.S3Backend, "max_rows", MAX_ROWS):
+        with self._mock_s3backend_max_rows():
             cls = kmd.KibotMetadata()
             exp_columns = ['Kibot_symbol', 'Description', 'StartDate',
                            'Exchange', 'Exchange_group', 'Exchange_abbreviation',
@@ -26,7 +38,7 @@ class TestKibotMetadata(hut.TestCase):
     @pytest.mark.slow()
     def test_get_metadata_slow2(self) -> None:
         """Output contains an reasonable amount of rows"""
-        with mock.patch.object(kmd.vkmls3.S3Backend, "max_rows", MAX_ROWS):
+        with self._mock_s3backend_max_rows():
             cls = kmd.KibotMetadata()
             exp = 25
             act = len(cls.get_metadata().index)
@@ -35,7 +47,7 @@ class TestKibotMetadata(hut.TestCase):
     @pytest.mark.slow()
     def test_get_metadata_slow3(self) -> None:
         """Output contains an reasonable amount of rows"""
-        with mock.patch.object(kmd.vkmls3.S3Backend, "max_rows", MAX_ROWS):
+        with self._mock_s3backend_max_rows():
             cls = kmd.KibotMetadata()
             exp = 25
             act = len(cls.get_metadata("tick-bid-ask").index)
@@ -44,7 +56,7 @@ class TestKibotMetadata(hut.TestCase):
     @pytest.mark.slow()
     def test_get_futures_slow1(self) -> None:
         """Output contains an reasonable amount of rows"""
-        with mock.patch.object(kmd.vkmls3.S3Backend, "max_rows", MAX_ROWS):
+        with self._mock_s3backend_max_rows():
             cls = kmd.KibotMetadata()
             exp = 25
             act = len(cls.get_futures())
@@ -53,7 +65,7 @@ class TestKibotMetadata(hut.TestCase):
     @pytest.mark.slow()
     def test_get_futures_slow2(self) -> None:
         """Output contains an reasonable amount of rows"""
-        with mock.patch.object(kmd.vkmls3.S3Backend, "max_rows", MAX_ROWS):
+        with self._mock_s3backend_max_rows():
             cls = kmd.KibotMetadata()
             exp = 25
             act = len(cls.get_futures("tick-bid-ask"))
@@ -62,7 +74,7 @@ class TestKibotMetadata(hut.TestCase):
     @pytest.mark.slow()
     def test_get_expiry_contract_slow1(self) -> None:
         """Output contains an reasonable amount of rows"""
-        with mock.patch.object(kmd.vkmls3.S3Backend, "max_rows", MAX_ROWS):
+        with self._mock_s3backend_max_rows():
             cls = kmd.KibotMetadata()
             exp = 25
             act = len(cls.get_expiry_contracts("ES"))
