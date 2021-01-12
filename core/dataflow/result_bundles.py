@@ -47,22 +47,20 @@ class ResultBundle(abc.ABC):
         self._info = info
 
     @property
-    def config(self) -> Optional[cfg.Config]:
-        if self._config is not None:
-            return self._config.copy()
+    def config(self) -> cfg.Config:
+        return self._config.copy()
 
     @property
-    def result_nid(self) -> Optional[str]:
+    def result_nid(self) -> str:
         return self._result_nid
 
     @property
-    def method(self) -> Optional[str]:
+    def method(self) -> str:
         return self._method
 
     @property
-    def result_df(self) -> Optional[pd.DataFrame]:
-        if self._result_df is not None:
-            return self._result_df.copy()
+    def result_df(self) -> pd.DataFrame:
+        return self._result_df.copy()
 
     @property
     def column_to_tags(self) -> Optional[Dict[Any, List[Any]]]:
@@ -140,25 +138,38 @@ class ResultBundle(abc.ABC):
 class PredictionResultBundle(ResultBundle):
     @property
     def feature_col_names(self) -> List[Any]:
-        return self.get_columns_for_tag("feature_col")
+        cols = self.get_columns_for_tag("feature_col") or []
+        return cols
 
     @property
     def target_col_names(self) -> List[Any]:
-        return self.get_columns_for_tag("target_col")
+        cols = self.get_columns_for_tag("target_col") or []
+        return cols
 
     @property
     def prediction_col_names(self) -> List[Any]:
-        return self.get_columns_for_tag("prediction_col")
+        cols = self.get_columns_for_tag("prediction_col") or []
+        return cols
 
     def get_target_and_prediction_col_names_for_tags(
         self, tags: List[Any]
     ) -> Dict[Any, Tuple[Any, Any]]:
+        """
+        Get target and prediction column names for tags.
+
+        :param tags: list of tags
+        :return: `Dict[tag, NamedTuple[target_col_name, prediction_col_name]]`,
+            `NamedTuple` field names are "target" and "prediction"
+        """
         dbg.dassert_isinstance(tags, list)
         target_cols = set(self.target_col_names)
         prediction_cols = set(self.prediction_col_names)
+        TargetPredictionColPair = collections.namedtuple(
+            "TargetPredictionColPair", ["target", "prediction"]
+        )
         tags_to_target_and_prediction_cols: Dict[Any, Tuple[Any, Any]] = {}
         for tag in tags:
-            cols_for_tag = self.get_columns_for_tag(tag)
+            cols_for_tag = self.get_columns_for_tag(tag) or []
             target_cols_for_tag = list(target_cols.intersection(cols_for_tag))
             dbg.dassert_eq(
                 len(target_cols_for_tag),
@@ -177,10 +188,11 @@ class PredictionResultBundle(ResultBundle):
                 len(prediction_cols_for_tag),
                 tag,
             )
-            tags_to_target_and_prediction_cols[tag] = (
-                target_cols_for_tag[0],
-                prediction_cols_for_tag[0],
+            target_prediction_col_pair = TargetPredictionColPair(
+                target=target_cols_for_tag[0],
+                prediction=prediction_cols_for_tag[0],
             )
+            tags_to_target_and_prediction_cols[tag] = target_prediction_col_pair
         return tags_to_target_and_prediction_cols
 
     @property
@@ -198,14 +210,29 @@ class PredictionResultBundle(ResultBundle):
     def get_targets_and_predictions_for_tags(
         self, tags: List[Any]
     ) -> Dict[Any, Tuple[pd.Series, pd.Series]]:
+        """
+        Get target and prediction series for tags.
+
+        :param tags: list of tags
+        :return: `Dict[tag, NamedTuple[target_series, prediction_series]]`,
+            `NamedTuple` field names are "target" and "prediction"
+        """
         tags_to_target_and_prediction_cols = (
             self.get_target_and_prediction_col_names_for_tags(tags)
         )
-        targets_and_predictions_for_tags = {
-            tag: (self.result_df[target_col], self.result_df[prediction_col])
-            for tag, (
-                target_col,
-                prediction_col,
-            ) in tags_to_target_and_prediction_cols.items()
-        }
+        TargetPredictionPair = collections.namedtuple(
+            "TargetPredictionPair", ["target", "prediction"]
+        )
+        targets_and_predictions_for_tags: Dict[
+            Any, Tuple[pd.Series, pd.Series]
+        ] = {}
+        for tag, (
+            target_col,
+            prediction_col,
+        ) in tags_to_target_and_prediction_cols.items():
+            target_prediction_pair = TargetPredictionPair(
+                target=self.result_df[target_col],
+                prediction=self.result_df[prediction_col],
+            )
+            targets_and_predictions_for_tags[tag] = target_prediction_pair
         return targets_and_predictions_for_tags

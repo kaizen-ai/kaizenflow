@@ -5,7 +5,7 @@ result_nid: leaf_node
 method: fit
 result_df:    col0  col1  col2  col3  col4
 0     0     1     2     3     4
-column_to_tags: {'col0': ['feature_col'], 'col1': ['target_col', 0], 'col2': ['target_col', 1], 'col3': ['prediction_col', 0], 'col4': ['prediction_col', 1]}
+column_to_tags: {'col0': ['feature_col'], 'col1': ['target_col', 'step_0'], 'col2': ['target_col', 'step_1'], 'col3': ['prediction_col', 'step_0'], 'col4': ['prediction_col', 'step_1']}
 info:
   df_info: <class 'pandas.core.frame.DataFrame'>
   RangeIndex: 1 entries, 0 to 0

@@ -28,13 +28,13 @@ class TestResultBundle(hut.TestCase):
         init_config = self._get_init_config()
         rb = dtf.ResultBundle(**init_config.to_dict())
         actual = rb.get_tags_for_column("col2")
-        expected = ["target_col", 1]
+        expected = ["target_col", "step_1"]
         self.assertListEqual(actual, expected)
 
     def test_get_columns_for_tag1(self) -> None:
         init_config = self._get_init_config()
         rb = dtf.ResultBundle(**init_config.to_dict())
-        actual = rb.get_columns_for_tag(1)
+        actual = rb.get_columns_for_tag("step_1")
         expected = ["col2", "col4"]
         self.assertListEqual(actual, expected)
 
@@ -48,10 +48,10 @@ class TestResultBundle(hut.TestCase):
         init_config["result_df"] = df
         init_config["column_to_tags"] = {
             "col0": ["feature_col"],
-            "col1": ["target_col", 0],
-            "col2": ["target_col", 1],
-            "col3": ["prediction_col", 0],
-            "col4": ["prediction_col", 1],
+            "col1": ["target_col", "step_0"],
+            "col2": ["target_col", "step_1"],
+            "col3": ["prediction_col", "step_0"],
+            "col4": ["prediction_col", "step_1"],
         }
         init_config["info"] = collections.OrderedDict(
             {"df_info": dtf.get_df_info_as_string(df)}
@@ -90,8 +90,10 @@ class TestPredictionResultBundle(hut.TestCase):
     def test_get_target_and_prediction_col_names_for_tags1(self) -> None:
         init_config = self._get_init_config()
         prb = dtf.PredictionResultBundle(**init_config.to_dict())
-        actual = prb.get_target_and_prediction_col_names_for_tags(tags=[0, 1])
-        expected = {0: ("col1", "col3"), 1: ("col2", "col4")}
+        actual = prb.get_target_and_prediction_col_names_for_tags(
+            tags=["step_0", "step_1"]
+        )
+        expected = {"step_0": ("col1", "col3"), "step_1": ("col2", "col4")}
         self.assertDictEqual(actual, expected)
 
     def test_get_target_and_prediction_col_names_for_tags2(self) -> None:
@@ -102,7 +104,7 @@ class TestPredictionResultBundle(hut.TestCase):
         init_config["column_to_tags"].pop("col1")
         prb = dtf.PredictionResultBundle(**init_config.to_dict())
         with self.assertRaises(AssertionError):
-            prb.get_target_and_prediction_col_names_for_tags(tags=[0])
+            prb.get_target_and_prediction_col_names_for_tags(tags=["step_0"])
 
     def test_get_target_and_prediction_col_names_for_tags3(self) -> None:
         """
@@ -111,17 +113,19 @@ class TestPredictionResultBundle(hut.TestCase):
         init_config = self._get_init_config()
         init_config["column_to_tags"].pop("col1")
         prb = dtf.PredictionResultBundle(**init_config.to_dict())
-        actual = prb.get_target_and_prediction_col_names_for_tags(tags=[1])
-        expected = {1: ("col2", "col4")}
+        actual = prb.get_target_and_prediction_col_names_for_tags(tags=["step_1"])
+        expected = {"step_1": ("col2", "col4")}
         self.assertDictEqual(actual, expected)
 
     def test_get_targets_and_predictions_for_tags1(self) -> None:
         init_config = self._get_init_config()
         prb = dtf.PredictionResultBundle(**init_config.to_dict())
-        actual = prb.get_targets_and_predictions_for_tags(tags=[0, 1])
+        actual = prb.get_targets_and_predictions_for_tags(
+            tags=["step_0", "step_1"]
+        )
         expected = {
-            0: (pd.Series([1], name="col1"), pd.Series([3], name="col3")),
-            1: (pd.Series([2], name="col2"), pd.Series([4], name="col4")),
+            "step_0": (pd.Series([1], name="col1"), pd.Series([3], name="col3")),
+            "step_1": (pd.Series([2], name="col2"), pd.Series([4], name="col4")),
         }
         # Compare dicts.
         self.assertListEqual(list(actual.keys()), list(expected.keys()))
@@ -139,10 +143,10 @@ class TestPredictionResultBundle(hut.TestCase):
         init_config["result_df"] = df
         init_config["column_to_tags"] = {
             "col0": ["feature_col"],
-            "col1": ["target_col", 0],
-            "col2": ["target_col", 1],
-            "col3": ["prediction_col", 0],
-            "col4": ["prediction_col", 1],
+            "col1": ["target_col", "step_0"],
+            "col2": ["target_col", "step_1"],
+            "col3": ["prediction_col", "step_0"],
+            "col4": ["prediction_col", "step_1"],
         }
         init_config["info"] = collections.OrderedDict(
             {"df_info": dtf.get_df_info_as_string(df)}
