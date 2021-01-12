@@ -14,7 +14,7 @@ class FilePathGenerator:
     }
 
     CONTRACT_PATH_MAPPING = {
-        vkdtyp.ContractType.Continuous: "Continuous_",
+        vkdtyp.ContractType.Continuous: "continuous_",
         vkdtyp.ContractType.Expiry: "",
     }
 
@@ -22,7 +22,7 @@ class FilePathGenerator:
         vkdtyp.AssetClass.ETFs: "all_etfs_",
         vkdtyp.AssetClass.Stocks: "all_stocks_",
         vkdtyp.AssetClass.Forex: "all_forex_pairs_",
-        vkdtyp.AssetClass.Futures: "All_Futures",
+        vkdtyp.AssetClass.Futures: "all_futures",
         vkdtyp.AssetClass.SP500: "sp_500_",
     }
 

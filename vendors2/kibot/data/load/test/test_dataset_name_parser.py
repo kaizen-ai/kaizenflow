@@ -6,7 +6,7 @@ import vendors2.kibot.data.types as vkdtyp
 class TestDatasetNameParserExtractAssetClass(hut.TestCase):
     def test_all_futures(self) -> None:
         # Define input variables.
-        dataset = "All_Futures_Continuous_Contracts_1min"
+        dataset = "all_futures_continuous_contracts_1min"
         # Call function to test.
         cls = vkdlda.DatasetNameParser()
         act = cls._extract_asset_class(dataset=dataset)
@@ -63,7 +63,7 @@ class TestDatasetNameParserExtractAssetClass(hut.TestCase):
 class TestDatasetNameParserExtractFrequency(hut.TestCase):
     def test_daily(self) -> None:
         # Define input variables.
-        dataset = "All_Futures_Continuous_Contracts_daily"
+        dataset = "all_futures_continuous_contracts_daily"
         # Call function to test.
         cls = vkdlda.DatasetNameParser()
         act = cls._extract_frequency(dataset=dataset)
@@ -74,7 +74,7 @@ class TestDatasetNameParserExtractFrequency(hut.TestCase):
 
     def test_minutely(self) -> None:
         # Define input variables.
-        dataset = "All_Futures_Continuous_Contracts_1min"
+        dataset = "all_futures_continuous_contracts_1min"
         # Call function to test.
         cls = vkdlda.DatasetNameParser()
         act = cls._extract_frequency(dataset=dataset)
@@ -85,7 +85,7 @@ class TestDatasetNameParserExtractFrequency(hut.TestCase):
 
     def test_tick(self) -> None:
         # Define input variables.
-        dataset = "All_Futures_Continuous_Contracts_tick"
+        dataset = "all_futures_continuous_contracts_tick"
         # Call function to test.
         cls = vkdlda.DatasetNameParser()
         act = cls._extract_frequency(dataset=dataset)
@@ -98,7 +98,7 @@ class TestDatasetNameParserExtractFrequency(hut.TestCase):
 class TestDatasetNameParserExtractContractType(hut.TestCase):
     def test_continuous(self) -> None:
         # Define input variables.
-        dataset = "All_Futures_Continuous_Contracts_1min"
+        dataset = "all_futures_continuous_contracts_1min"
         # Call function to test.
         cls = vkdlda.DatasetNameParser()
         act = cls._extract_contract_type(dataset=dataset)
@@ -109,7 +109,7 @@ class TestDatasetNameParserExtractContractType(hut.TestCase):
 
     def test_expiry(self) -> None:
         # Define input variables.
-        dataset = "All_Futures_Contracts_1min"
+        dataset = "all_futures_contracts_1min"
         # Call function to test.
         cls = vkdlda.DatasetNameParser()
         act = cls._extract_contract_type(dataset=dataset)
