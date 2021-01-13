@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import collections
 import datetime
+import json
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
@@ -17,6 +18,8 @@ import numpy as np
 import pandas as pd
 from tqdm.autonotebook import tqdm
 
+import core.config as cfg
+import core.config_builders as cfgb
 import core.dataflow as dtf
 import core.finance as fin
 import core.plotting as plot
@@ -70,6 +73,70 @@ class DataFrameModeler:
     @property
     def df(self) -> pd.DataFrame:
         return self._df.copy()
+
+    def dump_json(self) -> str:
+        """
+        Dump `DataFrameModeler` instance to json.
+
+        Implementation details:
+          - `self._df` index is converted to `str`. This way it can be easily
+            restored
+          - if `self.oos_start` is `None`, it is saved as is. Otherwise, it is
+            converted to `str`
+          - if `self.info` is `None`, it is saved as is. Otherwise, it is saved
+            as `cfg.Config.to_python()`
+
+        :return: json with "df", "oos_start" and "info" fields.
+        """
+        # Convert dataframe to json while preserving its index.
+        df = self._df.copy()
+        df.index = df.index.astype(str)
+        df = df.to_json()
+        # Convert OOS start to string.
+        oos_start = self.oos_start
+        if oos_start is not None:
+            oos_start = str(oos_start)
+        # Convert info to string.
+        if self.info is not None:
+            try:
+                info = cfgb.get_config_from_nested_dict(self.info)
+                info = info.to_python()
+            except ValueError:
+                _LOG.warning("Failed to serialize `info`.")
+                info = None
+        else:
+            info = None
+        #
+        json_config = {"df": df, "oos_start": oos_start, "info": info}
+        json_str = json.dumps(json_config, indent=4)
+        return json_str
+
+    @classmethod
+    def load_json(cls, json_str: str) -> DataFrameModeler:
+        """
+        Load `DataFrameModeler` instance from json.
+
+        :param json_str: the output of `DataFrameModeler.load_json`
+        :return: `DataFrameModeler` instance
+        """
+        json_str = json.loads(json_str)
+        # Load dataframe.
+        df = json.loads(json_str["df"])
+        df = pd.DataFrame.from_dict(df)
+        df.index = pd.to_datetime(df.index)
+        if df.shape[0] > 2:
+            df.index.freq = pd.infer_freq(df.index)
+        # Load OOS start.
+        oos_start = json_str["oos_start"]
+        if oos_start is not None:
+            oos_start = pd.Timestamp(oos_start)
+        # Load info.
+        info = json_str["info"]
+        if info is not None:
+            info = cfg.Config.from_python(info).to_dict()
+        #
+        modeler = cls(df=df, oos_start=oos_start, info=info)
+        return modeler
 
     # #########################################################################
     # Dataflow nodes
