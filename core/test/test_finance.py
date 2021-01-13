@@ -120,7 +120,7 @@ class Test_get_prices_from_returns(hut.TestCase):
         sample = self._get_sample()
         sample["rets"] = fin.compute_ret_0(sample.price, mode="pct_change")
         sample["price_pred"] = fin.get_prices_from_returns(
-            sample, "price", "rets", "pct_change", 1
+            sample.price, sample.rets, "pct_change"
         )
         sample = sample.dropna()
         np.testing.assert_array_almost_equal(sample.price_pred, sample.price, decimal=3)
@@ -128,9 +128,8 @@ class Test_get_prices_from_returns(hut.TestCase):
     def test2(self) -> None:
         sample = self._get_sample()
         sample["rets"] = fin.compute_ret_0(sample.price, mode="log_rets")
-        sample["rets"] = sample["rets"].rolling(2, min_periods=2).sum()
         sample["price_pred"] = fin.get_prices_from_returns(
-            sample, "price", "rets", "log_rets", 2
+            sample.price, sample.rets, "log_rets"
         )
         sample = sample.dropna()
         np.testing.assert_array_almost_equal(sample.price_pred, sample.price, decimal=3)
@@ -138,24 +137,23 @@ class Test_get_prices_from_returns(hut.TestCase):
     def test3(self) -> None:
         sample = self._get_sample()
         sample["rets"] = fin.compute_ret_0(sample.price, mode="diff")
-        sample["rets"] = sample["rets"].rolling(3, min_periods=3).sum()
         sample["price_pred"] = fin.get_prices_from_returns(
-            sample, "price", "rets", "diff", 3
+            sample.price, sample.rets, "diff"
         )
         sample = sample.dropna()
         np.testing.assert_array_almost_equal(sample.price_pred, sample.price, decimal=3)
-    
+        
     def test4(self) -> None:
         """
-        Check correct handling of .apply method in dataframe.
+        Check forward returns.
         """
-        sample = pd.DataFrame({"price": [1, 2, 3], "rets": [0.1, 0.2, 0.3]})
-        sample = sample.apply(
-            func=lambda x: fin.get_prices_from_returns(x, "price", "rets", "log_rets"),
-            axis=1
-        )
-        output_txt = hut.convert_df_to_string(sample, index=True)
-        self.check_string(output_txt)
+        sample = pd.DataFrame({"price": [1, 2, 3], "fwd_ret": [1, 0.5, np.nan]})
+        sample["ret_0"] = sample.fwd_ret.shift(1)
+        sample["price_pred"] = fin.get_prices_from_returns(
+            sample.price, sample.ret_0, "pct_change"
+        ).shift(1)
+        sample = sample.dropna()
+        np.testing.assert_array_almost_equal(sample.price_pred, sample.price, decimal=3)
         
 class Test_aggregate_log_rets(hut.TestCase):
     @staticmethod

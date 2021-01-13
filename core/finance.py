@@ -282,44 +282,27 @@ def compute_ret_0_from_multiple_prices(
 
 
 def get_prices_from_returns(
-    data: Union[pd.DataFrame, pd.Series],
-    price_col: str,
-    return_col: str,
+    price: Union[pd.Series, pd.DataFrame],
+    rets: Union[pd.Series, pd.DataFrame],
     mode: str,
-    steps_ahead: Optional[int] = None,
 ) -> pd.Series:
     """
-    Compute price at moment t_i with given price at t_0 and return ret_i.
+    Compute price at moment t_1 with given price at t_0 and return ret_0.
 
-    :param df: input dataframe with prices and returns. In case of using this 
-        function in row-wise pd.DataFrame methods .apply or .transform, it is 
-        series with original column names in index.
-    :param price_col: name of a column with prices
-    :param return_col: name of a column with returns
-    :param mode: returns mode as in compute_ret_0
-    :param steps_ahead: steps ahead returns are calculated, if None, resulting 
-        prices are not aligned with original ones 
-    :return: column with with computed prices
+    :param price: series with prices
+    :param rets: series with returns
+    :param mode: returns mode as in compute_ret_0 
+    :return: series with computed prices
     """
-    if isinstance(data, pd.Series):
-        dbg.dassert_in(price_col, data.index)
-        dbg.dassert_in(return_col, data.index)
-    elif isinstance(data, pd.DataFrame):
-        dbg.dassert_in(price_col, data.columns)
-        dbg.dassert_in(return_col, data.columns)
-    else:
-        raise TypeError("Invalid df type='%s'" % type(data))
-    if steps_ahead:
-        price = data[price_col].shift(steps_ahead)
-    else:
-        price = data[price_col] 
-    returns = data[return_col]
+    dbg.dassert_isinstance(price, pd.Series)
+    dbg.dassert_isinstance(rets, pd.Series)
+    price = price.shift(1)
     if mode == "pct_change":
-        price_pred = price * (returns + 1)
+        price_pred = price * (rets + 1)
     elif mode == "log_rets":
-        price_pred = price * np.exp(returns)
+        price_pred = price * np.exp(rets)
     elif mode == "diff":
-        price_pred = price + returns
+        price_pred = price + rets
     else:
         raise ValueError("Invalid mode='%s'" % mode)
     return price_pred
