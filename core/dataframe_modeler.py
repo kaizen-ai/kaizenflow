@@ -86,7 +86,7 @@ class DataFrameModeler:
           - if `self.info` is `None`, it is saved as is. Otherwise, it is saved
             as `cfg.Config.to_python()`
 
-        :return: json with "df", "oos_start" and "info" fields.
+        :return: json with "df", "oos_start" and "info" fields
         """
         # Convert dataframe to json while preserving its index.
         df = self._df.copy()
