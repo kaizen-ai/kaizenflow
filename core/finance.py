@@ -281,7 +281,7 @@ def compute_ret_0_from_multiple_prices(
 #  https://github.com/ParticleDev/commodity_research/issues/568
 
 
-def get_prices_from_returns(
+def compute_prices_from_rets(
     price: Union[pd.Series, pd.DataFrame],
     rets: Union[pd.Series, pd.DataFrame],
     mode: str,
@@ -306,6 +306,7 @@ def get_prices_from_returns(
     else:
         raise ValueError("Invalid mode='%s'" % mode)
     return price_pred
+
 
 def convert_log_rets_to_pct_rets(
     log_rets: Union[float, pd.Series, pd.DataFrame]
