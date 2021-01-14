@@ -1,5 +1,6 @@
 import abc
 import logging
+from typing import Any, List, Optional, Tuple
 
 import core.config as cfg
 import helpers.dbg as dbg
@@ -36,6 +37,32 @@ class DagRunner(abc.ABC):
         self._input_nids = self._dag_builder.input_nids
         self._result_nids = self._dag_builder.result_nids
         self._methods = self._dag_builder.methods
+
+    def set_fit_intervals(
+        self, intervals: Optional[List[Tuple[Any, Any]]]
+    ) -> None:
+        """
+        Set fit intervals for input nodes.
+
+        :param intervals: as in `DataSource` node, but allowing `None`
+        """
+        if intervals is None:
+            return
+        for input_nid in self._input_nids:
+            self.dag.get_node(input_nid).set_fit_intervals(intervals)
+
+    def set_predict_intervals(
+        self, intervals: Optional[List[Tuple[Any, Any]]]
+    ) -> None:
+        """
+        Set predict intervals for input nodes.
+
+        :param intervals: as in `DataSource` node, but allowing `None`
+        """
+        if intervals is None:
+            return
+        for input_nid in self._input_nids:
+            self.dag.get_node(input_nid).set_predict_intervals(intervals)
 
     @abc.abstractmethod
     def predict(self) -> ResultBundle:
