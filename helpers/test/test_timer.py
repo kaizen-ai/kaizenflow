@@ -10,7 +10,7 @@ import helpers.timer as timer
 class TestTimedScope(hut.TestCase):
     def _load_test_table(self) -> pd.DataFrame:
         """
-        Load a pre-saved Form 4 general info table for testing.
+        Load a pre-saved Form 4 general info table slice for testing.
 
         :return: a pre-saved dataframe
         """
