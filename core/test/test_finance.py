@@ -154,6 +154,7 @@ class Test_compute_prices_from_rets(hut.TestCase):
         ).shift(1)
         sample = sample.dropna()
         np.testing.assert_array_almost_equal(sample.price_pred, sample.price)
+
         
 class Test_aggregate_log_rets(hut.TestCase):
     @staticmethod
