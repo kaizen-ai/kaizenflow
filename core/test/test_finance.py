@@ -108,7 +108,7 @@ class Test_compute_inverse_volatility_weights(hut.TestCase):
         self.check_string(output_txt)
 
 
-class Test_get_prices_from_returns(hut.TestCase):
+class Test_compute_prices_from_rets(hut.TestCase):
     @staticmethod
     def _get_sample() -> pd.DataFrame:
         date_range = pd.date_range(start="2010-01-01", periods=40, freq="B")
@@ -119,29 +119,29 @@ class Test_get_prices_from_returns(hut.TestCase):
     def test1(self) -> None:
         sample = self._get_sample()
         sample["rets"] = fin.compute_ret_0(sample.price, mode="pct_change")
-        sample["price_pred"] = fin.get_prices_from_returns(
+        sample["price_pred"] = fin.compute_prices_from_rets(
             sample.price, sample.rets, "pct_change"
         )
         sample = sample.dropna()
-        np.testing.assert_array_almost_equal(sample.price_pred, sample.price, decimal=3)
+        np.testing.assert_array_almost_equal(sample.price_pred, sample.price)
         
     def test2(self) -> None:
         sample = self._get_sample()
         sample["rets"] = fin.compute_ret_0(sample.price, mode="log_rets")
-        sample["price_pred"] = fin.get_prices_from_returns(
+        sample["price_pred"] = fin.compute_prices_from_rets(
             sample.price, sample.rets, "log_rets"
         )
         sample = sample.dropna()
-        np.testing.assert_array_almost_equal(sample.price_pred, sample.price, decimal=3)
+        np.testing.assert_array_almost_equal(sample.price_pred, sample.price)
         
     def test3(self) -> None:
         sample = self._get_sample()
         sample["rets"] = fin.compute_ret_0(sample.price, mode="diff")
-        sample["price_pred"] = fin.get_prices_from_returns(
+        sample["price_pred"] = fin.compute_prices_from_rets(
             sample.price, sample.rets, "diff"
         )
         sample = sample.dropna()
-        np.testing.assert_array_almost_equal(sample.price_pred, sample.price, decimal=3)
+        np.testing.assert_array_almost_equal(sample.price_pred, sample.price)
         
     def test4(self) -> None:
         """
@@ -149,11 +149,11 @@ class Test_get_prices_from_returns(hut.TestCase):
         """
         sample = pd.DataFrame({"price": [1, 2, 3], "fwd_ret": [1, 0.5, np.nan]})
         sample["ret_0"] = sample.fwd_ret.shift(1)
-        sample["price_pred"] = fin.get_prices_from_returns(
+        sample["price_pred"] = fin.compute_prices_from_rets(
             sample.price, sample.ret_0, "pct_change"
         ).shift(1)
         sample = sample.dropna()
-        np.testing.assert_array_almost_equal(sample.price_pred, sample.price, decimal=3)
+        np.testing.assert_array_almost_equal(sample.price_pred, sample.price)
         
 class Test_aggregate_log_rets(hut.TestCase):
     @staticmethod
