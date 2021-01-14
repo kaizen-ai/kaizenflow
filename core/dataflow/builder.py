@@ -6,7 +6,7 @@ from typing import Optional
 import core.config as cfg
 from core.dataflow.core import DAG
 from core.dataflow.nodes import extract_info
-from core.dataflow.result_bundles import ResultBundle
+from core.dataflow.result_bundle import ResultBundle
 
 _LOG = logging.getLogger(__name__)
 
