@@ -93,7 +93,9 @@ class PredictionDagRunner(DagRunner):
         """
         df_out = self.dag.run_leq_node(nid, method)["df_out"]
         info = extract_info(self.dag, [method])
-        column_to_tags = self._dag_builder.get_column_to_tags_mapping(self.config)
+        column_to_tags = self._dag_builder.get_column_to_tags_mapping(
+            self.config["DAG"]
+        )
         return PredictionResultBundle(
             config=self.config,
             result_nid=nid,
