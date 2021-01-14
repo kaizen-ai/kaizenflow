@@ -1,43 +1,18 @@
 import logging
-import os
 
 import helpers.timer as timer
 import helpers.unit_test as hut
-import pandas as pd
 
 
 class TestTimedScope(hut.TestCase):
-    def _load_test_table(self) -> pd.DataFrame:
-        """
-        Load a pre-saved Form 4 general info table slice for testing.
-
-        :return: a pre-saved dataframe
-        """
-        # Get the input directory path.
-        input_dir = self.get_input_dir()
-        # Create a full path to the test tables file.
-        test_table_path = os.path.join(input_dir, "test_table.csv")
-        # Load the test table.
-        test_table = pd.read_csv(test_table_path)
-        return test_table
-
     def test_1(self) -> None:
         """
         Test that elapsed time is correctly extracted.
         """
-        # Load the test table.
-        test_table = self._load_test_table()
-        # Sort table in reverse order.
-        with timer.TimedScope(logging.INFO, "Sort table in reverse order") as ts:
-            test_table.sort_values(
-                by=list(test_table.columns),
-                ascending=[False] * len(test_table.columns),
-            )
-        # Set actual and expected outcomes.
-        actual_message = ts.elapsed_time[0]
-        actual_time = ts.elapsed_time[-1]
-        expected_message = "Sort table in reverse order done (0.006 s)"
-        expected_time = 0.006
-        # Compare actual and expected outcomes.
-        self.assertEqual(actual_message, expected_message)
-        self.assertEqual(actual_time, expected_time)
+        # Run the function on test calculations.
+        with timer.TimedScope(logging.INFO, "Test calculations") as ts:
+            _ = 2**10**8
+        # Round actual time up to 1 decimal and compare it with expected.
+        actual_rounded_time = round(ts.elapsed_time[-1], 1)
+        expected_rounded_time = 0.4
+        self.assertEqual(actual_rounded_time, expected_rounded_time)
