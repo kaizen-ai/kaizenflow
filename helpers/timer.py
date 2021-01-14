@@ -135,6 +135,7 @@ class TimedScope:
         self._log_level = log_level
         self._message = message
         self._idx: Optional[int] = None
+        self.elapsed_time = None
 
     def __enter__(self) -> "TimedScope":
         self._idx = dtimer_start(self._log_level, self._message)
@@ -142,7 +143,7 @@ class TimedScope:
 
     def __exit__(self, *args: Any) -> None:
         if self._idx is not None:
-            dtimer_stop(self._idx)
+            self.elapsed_time = dtimer_stop(self._idx)
 
 
 # Decorator.
