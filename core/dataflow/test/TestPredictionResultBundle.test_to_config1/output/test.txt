@@ -1,6 +1,5 @@
 config without 'commit_hash' field:
-config:
-  key: val
+config: OrderedDict([('key', 'val')])
 result_nid: leaf_node
 method: fit
 result_df:    col0  col1  col2  col3  col4
@@ -20,4 +19,4 @@ info:
   dtypes: int64(5)
   memory usage: 168.0 bytes
   
-class: ResultBundle
+class: PredictionResultBundle
