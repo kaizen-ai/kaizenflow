@@ -61,3 +61,44 @@ class DagRunner(abc.ABC):
             info=info,
         )
 
+
+class PredictionDagRunner(DagRunner):
+    def __init__(self, config: cfg.Config, dag_builder: DagBuilder) -> None:
+        """
+        Initialize DAG.
+
+        :param config: meta config containing a "DAG" key
+        :param dag_builder: `DagBuilder` instance with a
+            `get_column_to_tags_mapping` method
+        """
+        super().__init__(config, dag_builder)
+        dbg.dassert_eq(
+            len(self._result_nids), 1, "Only single result nid is supported."
+        )
+        self._result_nid = self._result_nids[0]
+
+    def fit(self) -> PredictionResultBundle:
+        return self._run_dag(self._result_nid, "fit")
+
+    def predict(self) -> PredictionResultBundle:
+        return self._run_dag(self._result_nid, "predict")
+
+    def _run_dag(self, nid: str, method: str) -> PredictionResultBundle:
+        """
+        Run DAG.
+
+        :param method: `Node` subclass method to be executed
+        :return: `ResultBundle` class containing `config`, `nid`, `method`,
+            result dataframe and DAG info
+        """
+        df_out = self.dag.run_leq_node(nid, method)["df_out"]
+        info = extract_info(self.dag, [method])
+        column_to_tags = self._dag_builder.get_column_to_tags_mapping(self.config)
+        return PredictionResultBundle(
+            config=self.config,
+            result_nid=nid,
+            method=method,
+            result_df=df_out,
+            column_to_tags=column_to_tags,
+            info=info,
+        )
