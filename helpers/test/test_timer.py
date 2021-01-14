@@ -1,10 +1,9 @@
 import logging
 import os
 
-import pandas as pd
-
-import helpers.unit_test as hut
 import helpers.timer as timer
+import helpers.unit_test as hut
+import pandas as pd
 
 
 class TestTimedScope(hut.TestCase):
@@ -32,7 +31,7 @@ class TestTimedScope(hut.TestCase):
         with timer.TimedScope(logging.INFO, "Sort table in reverse order") as ts:
             test_table.sort_values(
                 by=list(test_table.columns),
-                ascending=[False] * len(test_table.columns)
+                ascending=[False] * len(test_table.columns),
             )
         # Set actual and expected outcomes.
         actual_message = ts.elapsed_time[0]
