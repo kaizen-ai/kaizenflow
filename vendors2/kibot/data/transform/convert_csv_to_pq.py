@@ -25,14 +25,14 @@ import joblib
 import pandas as pd
 import tqdm
 
-import helpers.csv as csv
+import helpers.csv as hcsv
 import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
+import helpers.io_ as hio
+import helpers.parser as hparse
 import helpers.s3 as hs3
-import helpers.system_interaction as si
-import vendors2.kibot.data.config as config
-import vendors2.kibot.data.transform.normalizers as nls
+import helpers.system_interaction as hsyste
+import vendors2.kibot.data.config as vkdcon
+import vendors2.kibot.data.transform.normalizers as vkdtno
 
 _LOG = logging.getLogger(__name__)
 
@@ -44,15 +44,16 @@ _JOBLIB_VERBOSITY = 1
 
 
 def _get_normalizer(dataset: str) -> Optional[Callable]:
-    """Choose a normalizer function based on a dataset name.
+    """
+    Choose a normalizer function based on a dataset name.
 
     :param dataset: dataset name
     """
     ret = None
     if dataset.endswith("1min"):
-        ret = nls._normalize_1_min  # pylint: disable=protected-access
+        ret = vkdtno._normalize_1_min  # pylint: disable=protected-access
     elif dataset.endswith("daily"):
-        ret = nls._normalize_daily  # pylint: disable=protected-access
+        ret = vkdtno._normalize_daily  # pylint: disable=protected-access
     elif dataset.endswith("tick"):
         dbg.dfatal("Support for dataset '%s' not implemented yet")
     else:
@@ -64,7 +65,8 @@ def _get_normalizer(dataset: str) -> Optional[Callable]:
 
 
 def _download_from_s3(filename: str, s3_src_dir: str, local_dst_dir: str) -> str:
-    """Copy a file from S3 dir to local dir, unless it already exists.
+    """
+    Copy a file from S3 dir to local dir, unless it already exists.
 
     :param filename: basename of the file
     :param s3_src_dir: src dir on S3
@@ -82,7 +84,7 @@ def _download_from_s3(filename: str, s3_src_dir: str, local_dst_dir: str) -> str
             "Downloading s3 file '%s' into '%s'", s3_filepath, local_filepath
         )
         cmd = "aws s3 cp %s %s" % (s3_filepath, local_filepath)
-        si.system(cmd)
+        hsyste.system(cmd)
     return local_filepath
 
 
@@ -95,7 +97,8 @@ def _convert_kibot_csv_gz_to_pq(
     aws_pq_dir: str,
     skip_if_exists: bool,
 ) -> bool:
-    """Convert a Kibot dataset for a symbol.
+    """
+    Convert a Kibot dataset for a symbol.
 
     This requires to:
     - download a single .csv.gz payload from S3 into source directory,
@@ -127,13 +130,13 @@ def _convert_kibot_csv_gz_to_pq(
     _LOG.debug("Converting '%s' file into '%s'", csv_filepath, pq_filepath)
     normalizer = _get_normalizer(dataset)
     compression = "gzip"
-    csv.convert_csv_to_pq(
+    hcsv.convert_csv_to_pq(
         csv_filepath, pq_filepath, normalizer, compression=compression
     )
     # Upload the PQ file.
     _LOG.debug("Uploading '%s' file into '%s'", pq_filepath, pq_s3_filepath)
     cmd = "aws s3 cp %s %s" % (pq_filepath, pq_s3_filepath)
-    si.system(cmd)
+    hsyste.system(cmd)
     return True
 
 
@@ -145,7 +148,8 @@ def _compare_kibot_csv_gz_to_pq(
     converted_dir: str,
     aws_pq_dir: str,
 ) -> None:
-    """Ensure that the converted data matches the original data.
+    """
+    Ensure that the converted data matches the original data.
 
     This requires to:
     - download a single .csv.gz payload from S3 into source directory
@@ -183,15 +187,16 @@ def _compare_kibot_csv_gz_to_pq(
 
 
 def _get_symbols_to_process(aws_csv_gz_dir: str) -> List[str]:
-    """Get a list of symbols that need a .pq file on S3.
+    """
+    Get a list of symbols that need a .pq file on S3.
 
     :param aws_csv_gz_dir: S3 dataset directory with .csv.gz files
     :return: list of symbols
     """
 
     def _extract_filename_without_extension(file_path: str) -> str:
-        """Return only basename of the path without the .csv.gz or .pq
-        extensions.
+        """
+        Return only basename of the path without the .csv.gz or .pq extensions.
 
         :param file_path: a full path of a file
         :return: file name without extension
@@ -213,7 +218,8 @@ def _get_symbols_to_process(aws_csv_gz_dir: str) -> List[str]:
 def _process_over_dataset(
     fn: Callable, symbols: List[str], serial: bool, **kwargs: Any
 ) -> None:
-    """Process in parallel each symbol in the list.
+    """
+    Process in parallel each symbol in the list.
 
     :param fn: a procedure to be run for each symbol
     :param symbols: list of symbols to run fn over
@@ -245,7 +251,7 @@ def _parse() -> argparse.ArgumentParser:
         "--dataset",
         type=str,
         help="Download a specific dataset (or all datasets if omitted)",
-        choices=config.DATASETS,
+        choices=vkdcon.DATASETS,
         action="append",
         default=None,
     )
@@ -279,7 +285,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store_true",
         help="Delete the S3 dir before starting uploading (dangerous)",
     )
-    prsr.add_verbosity_arg(parser)
+    hparse.add_verbosity_arg(parser)
     return parser
 
 
@@ -289,22 +295,22 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.shutup_chatty_modules()
     # Create dirs.
     incremental = not args.no_incremental
-    io_.create_dir(args.tmp_dir, incremental=incremental)
+    hio.create_dir(args.tmp_dir, incremental=incremental)
     #
     source_dir_name = "source_data"
     source_dir = os.path.join(args.tmp_dir, source_dir_name)
-    io_.create_dir(source_dir, incremental=incremental)
+    hio.create_dir(source_dir, incremental=incremental)
     #
     converted_dir_name = "converted_data"
     converted_dir = os.path.join(args.tmp_dir, converted_dir_name)
-    io_.create_dir(converted_dir, incremental=incremental)
+    hio.create_dir(converted_dir, incremental=incremental)
     # Define S3 dirs.
-    aws_csv_dir = os.path.join(config.S3_PREFIX)
+    aws_csv_dir = os.path.join(vkdcon.S3_PREFIX)
     _LOG.info("aws_csv_dir=%s", aws_csv_dir)
-    aws_pq_dir = os.path.join(config.S3_PREFIX, "pq")
+    aws_pq_dir = os.path.join(vkdcon.S3_PREFIX, "pq")
     _LOG.info("aws_pq_dir=%s", aws_pq_dir)
     #
-    datasets_to_proceed = args.dataset or config.DATASETS
+    datasets_to_proceed = args.dataset or vkdcon.DATASETS
     _LOG.info(
         "datasets=%d %s", len(datasets_to_proceed), ", ".join(datasets_to_proceed)
     )
@@ -312,9 +318,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for dataset in tqdm.tqdm(datasets_to_proceed, desc="Process dataset"):
         # Create dataset dirs.
         source_dir = os.path.join(source_dir, dataset)
-        io_.create_dir(source_dir, incremental=incremental)
+        hio.create_dir(source_dir, incremental=incremental)
         converted_dir = os.path.join(converted_dir, dataset)
-        io_.create_dir(converted_dir, incremental=incremental)
+        hio.create_dir(converted_dir, incremental=incremental)
         # Define S3 dirs.
         aws_csv_gz_dir = os.path.join(aws_csv_dir, dataset)
         aws_pq_dir = os.path.join(aws_pq_dir, dataset)
@@ -326,7 +332,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             )
             _LOG.warning("Deleting s3 file %s", aws_pq_dir)
             cmd = "aws s3 rm --recursive %s" % aws_pq_dir
-            si.system(cmd)
+            hsyste.system(cmd)
         # Get the symbols.
         _LOG.info(
             "# Look for list of symbols to process for the dataset '%s'",

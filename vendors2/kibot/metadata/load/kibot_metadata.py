@@ -3,13 +3,14 @@ from typing import Any, List, Tuple
 
 import pandas as pd
 
-import vendors2.kibot.metadata.load.expiry_contract_mapper as ecmapper
-import vendors2.kibot.metadata.load.s3_backend as s3be
+import vendors2.kibot.metadata.load.expiry_contract_mapper as vkmlex
+import vendors2.kibot.metadata.load.s3_backend as vkmls3
 
 
 class KibotMetadata:
     # pylint: disable=line-too-long
-    """Generate Kibot metadata.
+    """
+    Generate Kibot metadata.
 
     The metadata is computed from:
      - minutely contract metadata (`read_1min_contract_metadata()`)
@@ -43,7 +44,9 @@ class KibotMetadata:
         self.tickbidask_metadata = self._compute_kibot_metadata("tick-bid-ask")
 
     def get_metadata(self, contract_type: str = "1min") -> pd.DataFrame:
-        """Return the metadata."""
+        """
+        Return the metadata.
+        """
         if contract_type in ["1min", "daily"]:
             # Minutely and daily dataframes are identical except for the `Link`
             # column.
@@ -55,15 +58,18 @@ class KibotMetadata:
         return metadata
 
     def get_futures(self, contract_type: str = "1min") -> List[str]:
-        """Return the continuous contracts, e.g., ES, CL."""
+        """
+        Return the continuous contracts, e.g., ES, CL.
+        """
         futures: List[str] = self.get_metadata(contract_type).index.tolist()
         return futures
 
     @staticmethod
     def get_expiry_contracts(symbol: str) -> List[str]:
-        """Return the expiry contracts corresponding to a continuous
-        contract."""
-        one_min_contract_metadata = s3be.S3Backend().read_1min_contract_metadata()
+        """
+        Return the expiry contracts corresponding to a continuous contract.
+        """
+        one_min_contract_metadata = vkmls3.S3Backend().read_1min_contract_metadata()
         one_min_contract_metadata, _ = KibotMetadata._extract_month_year_expiry(
             one_min_contract_metadata
         )
@@ -78,7 +84,7 @@ class KibotMetadata:
     # TODO(Julia): Replace `one_min` with `expiry` once the PR is approved.
     @staticmethod
     def _compute_kibot_metadata(contract_type: str) -> pd.DataFrame:
-        s3_backend = s3be.S3Backend()
+        s3_backend = vkmls3.S3Backend()
         if contract_type in ["1min", "daily"]:
             # Minutely and daily dataframes are identical except for the `Link`
             # column.
@@ -121,7 +127,12 @@ class KibotMetadata:
             to_concat = [one_min_contracts, expiry_counts]
         else:
             to_concat = [one_min_contracts, cont_contracts_chosen, expiry_counts]
-        kibot_metadata = pd.concat(to_concat, axis=1, join="outer", sort=True,)
+        kibot_metadata = pd.concat(
+            to_concat,
+            axis=1,
+            join="outer",
+            sort=True,
+        )
         # Sort by index.
         kibot_metadata.sort_index(inplace=True)
         # Remove empty nans.
@@ -186,7 +197,9 @@ class KibotMetadata:
     def _extract_month_year_expiry(
         one_min_contract_metadata: pd.DataFrame,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """Extract month, year, expiries and SymbolBase from the Symbol."""
+        """
+        Extract month, year, expiries and SymbolBase from the Symbol.
+        """
         # Extract year by extracting the trailing digits. Contracts that
         # do not have a year are continuous.
         one_min_contract_metadata = one_min_contract_metadata.copy()
@@ -203,7 +216,7 @@ class KibotMetadata:
         # Extract SymbolBase, month, year and expiries from contract names.
         symbol_month_year = (
             one_min_contract_metadata["Symbol"]
-            .apply(ecmapper.ExpiryContractMapper.parse_expiry_contract)
+            .apply(vkmlex.ExpiryContractMapper.parse_expiry_contract)
             .apply(pd.Series)
         )
         symbol_month_year.columns = ["SymbolBase", "month", "year"]
@@ -223,7 +236,8 @@ class KibotMetadata:
     def _calculate_expiry_counts(
         one_min_contract_metadata: pd.DataFrame,
     ) -> pd.DataFrame:
-        """Calculate the following stats for each symbol:
+        """
+        Calculate the following stats for each symbol:
 
         - number of contracts
         - number of expiries
@@ -282,7 +296,8 @@ class KibotMetadata:
     def _annotate_with_exchange_mapping(
         kibot_metadata: pd.DataFrame,
     ) -> pd.DataFrame:
-        """Annotate Kibot with exchanges and their symbols.
+        """
+        Annotate Kibot with exchanges and their symbols.
 
         The annotations include
          - "Exchange_group" for high-level exchanges' group
@@ -293,10 +308,10 @@ class KibotMetadata:
 
         :param kibot_metadata: Kibot metadata dataframe
         kibot_to_cme_mapping = (
-            s3be.S3Backend().read_kibot_exchange_mapping()
+            vkmls3.S3Backend().read_kibot_exchange_mapping()
         )
         """
-        kibot_to_cme_mapping = s3be.S3Backend().read_kibot_exchange_mapping()
+        kibot_to_cme_mapping = vkmls3.S3Backend().read_kibot_exchange_mapping()
         # Add mapping columns to the dataframe.
         annotated_metadata = pd.concat(
             [kibot_metadata, kibot_to_cme_mapping], axis=1

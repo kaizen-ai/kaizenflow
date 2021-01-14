@@ -2,40 +2,41 @@ import os
 from typing import Optional, cast
 
 import helpers.dbg as dbg
-import vendors2.kibot.data.config as config
-import vendors2.kibot.data.types as types
+import vendors2.kibot.data.config as vkdcon
+import vendors2.kibot.data.types as vkdtyp
 
 
 class FilePathGenerator:
     FREQ_PATH_MAPPING = {
-        types.Frequency.Daily: "daily",
-        types.Frequency.Minutely: "1min",
-        types.Frequency.Tick: "tick",
+        vkdtyp.Frequency.Daily: "daily",
+        vkdtyp.Frequency.Minutely: "1min",
+        vkdtyp.Frequency.Tick: "tick",
     }
 
     CONTRACT_PATH_MAPPING = {
-        types.ContractType.Continuous: "Continuous_",
-        types.ContractType.Expiry: "",
+        vkdtyp.ContractType.Continuous: "continuous_",
+        vkdtyp.ContractType.Expiry: "",
     }
 
     ASSET_TYPE_PREFIX = {
-        types.AssetClass.ETFs: "all_etfs_",
-        types.AssetClass.Stocks: "all_stocks_",
-        types.AssetClass.Forex: "all_forex_pairs_",
-        types.AssetClass.Futures: "All_Futures",
-        types.AssetClass.SP500: "sp_500_",
+        vkdtyp.AssetClass.ETFs: "all_etfs_",
+        vkdtyp.AssetClass.Stocks: "all_stocks_",
+        vkdtyp.AssetClass.Forex: "all_forex_pairs_",
+        vkdtyp.AssetClass.Futures: "all_futures",
+        vkdtyp.AssetClass.SP500: "sp_500_",
     }
 
     def generate_file_path(
         self,
         symbol: str,
-        frequency: types.Frequency,
-        asset_class: types.AssetClass = types.AssetClass.Futures,
-        contract_type: Optional[types.ContractType] = None,
+        frequency: vkdtyp.Frequency,
+        asset_class: vkdtyp.AssetClass = vkdtyp.AssetClass.Futures,
+        contract_type: Optional[vkdtyp.ContractType] = None,
         unadjusted: Optional[bool] = None,
-        ext: types.Extension = types.Extension.Parquet,
+        ext: vkdtyp.Extension = vkdtyp.Extension.Parquet,
     ) -> str:
-        """Get the path to a specific kibot dataset on s3.
+        """
+        Get the path to a specific kibot dataset on s3.
 
         Parameters as in `read_data`.
         :return: path to the file
@@ -54,23 +55,23 @@ class FilePathGenerator:
         dir_name = f"{asset_class_prefix}{modifier}{freq_path}"
         file_path = os.path.join(dir_name, symbol)
 
-        if ext == types.Extension.Parquet:
+        if ext == vkdtyp.Extension.Parquet:
             # Parquet files are located in `pq/` subdirectory.
             file_path = os.path.join("pq", file_path)
             file_path += ".pq"
-        elif ext == types.Extension.CSV:
+        elif ext == vkdtyp.Extension.CSV:
             file_path += ".csv.gz"
 
         # TODO(amr): should we allow pointing to a local file here?
         # or rename the method to `generate_s3_path`?
-        file_path = os.path.join(config.S3_PREFIX, file_path)
+        file_path = os.path.join(vkdcon.S3_PREFIX, file_path)
         return file_path
 
     def _generate_contract_path_modifier(
-        self, contract_type: types.ContractType
+        self, contract_type: vkdtyp.ContractType
     ) -> str:
         contract_path = self.CONTRACT_PATH_MAPPING[contract_type]
-        return f"_{contract_path}Contracts_"
+        return f"_{contract_path}contracts_"
 
     @staticmethod
     def _generate_unadjusted_modifier(unadjusted: bool) -> str:
@@ -79,11 +80,12 @@ class FilePathGenerator:
 
     def _generate_modifier(
         self,
-        asset_class: types.AssetClass,
+        asset_class: vkdtyp.AssetClass,
         unadjusted: Optional[bool] = None,
-        contract_type: Optional[types.ContractType] = None,
+        contract_type: Optional[vkdtyp.ContractType] = None,
     ) -> str:
-        """Generate a modifier to the file path, based on some asset class
+        """
+        Generate a modifier to the file path, based on some asset class
         options.
 
         :param asset_class: asset class
@@ -92,7 +94,7 @@ class FilePathGenerator:
         :return: a path modifier
         """
         modifier = ""
-        if asset_class == types.AssetClass.Futures:
+        if asset_class == vkdtyp.AssetClass.Futures:
             dbg.dassert_is_not(
                 contract_type,
                 None,
@@ -102,14 +104,15 @@ class FilePathGenerator:
                 contract_type=contract_type
             )
         elif asset_class in [
-            types.AssetClass.Stocks,
-            types.AssetClass.ETFs,
-            types.AssetClass.SP500,
+            vkdtyp.AssetClass.Stocks,
+            vkdtyp.AssetClass.ETFs,
+            vkdtyp.AssetClass.SP500,
         ]:
             dbg.dassert_is_not(
                 unadjusted,
                 None,
-                msg="`unadjusted` is a required arg for asset classes: 'stocks' & 'etfs' & 'sp_500'",
+                msg="`unadjusted` is a required arg for asset "
+                    "classes: 'stocks' & 'etfs' & 'sp_500'",
             )
             modifier = self._generate_unadjusted_modifier(
                 unadjusted=cast(bool, unadjusted)
