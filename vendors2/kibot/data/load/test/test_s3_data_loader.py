@@ -5,13 +5,13 @@ import vendors2.kibot.data.load as vkdloa
 import vendors2.kibot.data.types as vkdtyp
 
 
-class TestKibotDataLoader(hut.TestCase):
+class TestS3KibotDataLoader(hut.TestCase):
     # @pytest.mark.slow
     @pytest.mark.skip("Disabled because of #4770")
     def test1(self) -> None:
         # use the private method to avoid caching
         # TODO(*): Disable caching in unit tests.
-        df = vkdloa.KibotDataLoader()._read_data(
+        df = vkdloa.S3KibotDataLoader()._read_data(
             symbol="XG",
             asset_class=vkdtyp.AssetClass.Futures,
             frequency=vkdtyp.Frequency.Daily,

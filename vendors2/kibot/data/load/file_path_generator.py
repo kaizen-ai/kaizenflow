@@ -14,7 +14,7 @@ class FilePathGenerator:
     }
 
     CONTRACT_PATH_MAPPING = {
-        vkdtyp.ContractType.Continuous: "Continuous_",
+        vkdtyp.ContractType.Continuous: "continuous_",
         vkdtyp.ContractType.Expiry: "",
     }
 
@@ -22,7 +22,7 @@ class FilePathGenerator:
         vkdtyp.AssetClass.ETFs: "all_etfs_",
         vkdtyp.AssetClass.Stocks: "all_stocks_",
         vkdtyp.AssetClass.Forex: "all_forex_pairs_",
-        vkdtyp.AssetClass.Futures: "All_Futures",
+        vkdtyp.AssetClass.Futures: "all_futures",
         vkdtyp.AssetClass.SP500: "sp_500_",
     }
 
@@ -71,7 +71,7 @@ class FilePathGenerator:
         self, contract_type: vkdtyp.ContractType
     ) -> str:
         contract_path = self.CONTRACT_PATH_MAPPING[contract_type]
-        return f"_{contract_path}Contracts_"
+        return f"_{contract_path}contracts_"
 
     @staticmethod
     def _generate_unadjusted_modifier(unadjusted: bool) -> str:

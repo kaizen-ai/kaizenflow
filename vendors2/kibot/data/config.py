@@ -33,34 +33,3 @@ DATASETS = [
     "sp_500_daily",
     "sp_500_unadjusted_daily",
 ]
-
-# TODO(vr): Combine with above in AmpTask592.
-S3_DATASETS = [
-    "adjustments",
-    "all_stocks_1min",
-    "all_stocks_unadjusted_1min",
-    "all_stocks_daily",
-    "all_stocks_unadjusted_daily",
-    #
-    "all_etfs_1min",
-    "all_etfs_unadjusted_1min",
-    "all_etfs_daily",
-    "all_etfs_unadjusted_daily",
-    #
-    "all_forex_pairs_1min",
-    "all_forex_pairs_daily",
-    #
-    "All_Futures_Contracts_1min",
-    "All_Futures_Contracts_daily",
-    # TODO(gp): -> tickbidask?
-    "All_Futures_Continuous_Contracts_1min",
-    "All_Futures_Continuous_Contracts_daily",
-    "All_Futures_Continuous_Contracts_tick",
-    #
-    "sp_500_tickbidask",
-    "sp_500_unadjusted_tickbidask",
-    "sp_500_1min",
-    "sp_500_unadjusted_1min",
-    "sp_500_daily",
-    "sp_500_unadjusted_daily",
-]
