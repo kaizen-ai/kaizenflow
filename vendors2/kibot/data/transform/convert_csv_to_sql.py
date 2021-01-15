@@ -16,6 +16,7 @@ import vendors2.docker.sql_writer_backend as vdsqlw
 import vendors2.kibot.data.config as vkdcon
 import vendors2.kibot.data.load as vkdloa
 import vendors2.kibot.data.load.dataset_name_parser as vkdlda
+import vendors2.kibot.data.load.sql_data_loader as vkdlsq
 import vendors2.kibot.data.types as vkdtyp
 import vendors2.kibot.metadata.load.s3_backend as vkmls3
 
@@ -29,8 +30,10 @@ _JOBLIB_VERBOSITY = 1
 
 def _convert_kibot_csv_gz_to_sql(
     symbol: str,
-    kibot_data_loader: vkdloa.KibotDataLoader,
+    exchange: str,
+    kibot_data_loader: vkdloa.SQLKibotDataLoader,
     sql_writer_backed: vdsqlw.SQLWriterBackend,
+    sql_data_loader: vkdlsq.SQLKibotDataLoader,
     asset_class: vkdtyp.AssetClass,
     frequency: vkdtyp.Frequency,
     exchange_id: int,
@@ -46,6 +49,7 @@ def _convert_kibot_csv_gz_to_sql(
     _LOG.info("Converting '%s' symbol", symbol)
     _LOG.debug("Downloading '%s' symbol from S3", symbol)
     df = kibot_data_loader.read_data(
+        exchange=exchange,
         symbol=symbol,
         asset_class=asset_class,
         frequency=frequency,
@@ -55,11 +59,11 @@ def _convert_kibot_csv_gz_to_sql(
     )
     _LOG.debug("Managing database for '%s' symbol", symbol)
     sql_writer_backed.ensure_symbol_exists(symbol=symbol, asset_class=asset_class)
-    symbol_id = sql_writer_backed.get_symbol_id(symbol=symbol)
+    symbol_id = sql_data_loader.get_symbol_id(symbol=symbol)
     sql_writer_backed.ensure_trade_symbol_exists(
         symbol_id=symbol_id, exchange_id=exchange_id
     )
-    trade_symbol_id = sql_writer_backed.get_trade_symbol_id(
+    trade_symbol_id = sql_data_loader.get_trade_symbol_id(
         symbol_id=symbol_id, exchange_id=exchange_id
     )
     if max_num_rows:
@@ -139,7 +143,7 @@ def _parse() -> argparse.ArgumentParser:
         "--dataset",
         type=str,
         help="Process a specific dataset (or all datasets if omitted)",
-        choices=vkdcon.S3_DATASETS,
+        choices=vkdcon.DATASETS,
         action="append",
         default=None,
     )
@@ -147,6 +151,7 @@ def _parse() -> argparse.ArgumentParser:
         "--exchange",
         type=str,
         help="Selected Exchange",
+        required=True,
         default=None,
     )
     parser.add_argument(
@@ -198,7 +203,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     dbg.shutup_chatty_modules()
     #
-    kibot_data_loader = vkdloa.KibotDataLoader()
+    kibot_data_loader = vkdloa.S3KibotDataLoader()
     #
     s3_backend = vkmls3.S3Backend()
     #
@@ -210,12 +215,19 @@ def _main(parser: argparse.ArgumentParser) -> None:
         password=args.dbpass,
         host=args.dbhost,
     )
+    #
+    sql_data_loader = vkdlsq.SQLKibotDataLoader(
+        dbname=args.dbname,
+        user=args.dbuser,
+        password=args.dbpass,
+        host=args.dbhost,
+    )
     _LOG.info("Connected to database")
     #
-    exchange_id = sql_writer_backed.get_exchange_id(args.exchange)
+    exchange_id = sql_data_loader.get_exchange_id(args.exchange)
     dbg.dassert_lte(0, exchange_id, f"Exchange '{args.exchange}' does not exist.")
     # Go over selected datasets or all datasets.
-    datasets_to_process = args.dataset or vkdcon.S3_DATASETS
+    datasets_to_process = args.dataset or vkdcon.DATASETS
     _LOG.info("Processing %d datasets", len(datasets_to_process))
     for dataset in tqdm.tqdm(datasets_to_process, desc="dataset"):
         # Get the symbols from S3.
@@ -240,11 +252,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
             max_num_rows=args.max_num_rows,
             kibot_data_loader=kibot_data_loader,
             sql_writer_backed=sql_writer_backed,
+            sql_data_loader=sql_data_loader,
             asset_class=asset_class,
             contract_type=contract_type,
             frequency=frequency,
             unadjusted=unadjusted,
             exchange_id=exchange_id,
+            exchange=args.exchange,
         )
         #
     _LOG.info("Closing database connection")

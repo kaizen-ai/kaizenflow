@@ -1,17 +1,82 @@
+import collections
 import logging
+
+import pandas as pd
+import sklearn.linear_model as slm
 
 import core.artificial_signal_generators as sig_gen
 import core.config as cfg
+import core.dataflow as dtf
 import core.dataframe_modeler as dfmod
 import helpers.printing as prnt
 import helpers.unit_test as hut
-import pandas as pd
-import sklearn.linear_model as slm
 
 _LOG = logging.getLogger(__name__)
 
 
 class TestDataFrameModeler(hut.TestCase):
+    def test_dump_json1(self) -> None:
+        df = pd.DataFrame(
+            {"col0": [1, 2, 3], "col1": [4, 5, 6]},
+            index=pd.date_range("2010-01-01", periods=3),
+        )
+        oos_start = pd.Timestamp("2010-01-01")
+        info = collections.OrderedDict({"df_info": dtf.get_df_info_as_string(df)})
+        df_modeler = dfmod.DataFrameModeler(df, oos_start=oos_start, info=info)
+        output = df_modeler.dump_json()
+        self.check_string(output)
+
+    def test_load_json1(self) -> None:
+        """
+        Test by dumping json and loading it again.
+        """
+        df = pd.DataFrame(
+            {"col0": [1, 2, 3], "col1": [4, 5, 6]},
+            index=pd.date_range("2010-01-01", periods=3),
+        )
+        oos_start = pd.Timestamp("2010-01-01")
+        info = collections.OrderedDict({"df_info": dtf.get_df_info_as_string(df)})
+        df_modeler = dfmod.DataFrameModeler(df, oos_start=oos_start, info=info)
+        json_str = df_modeler.dump_json()
+        df_modeler_loaded = dfmod.DataFrameModeler.load_json(json_str)
+        pd.testing.assert_frame_equal(df_modeler.df, df_modeler_loaded.df)
+        self.assertEqual(df_modeler.oos_start, df_modeler_loaded.oos_start)
+        self.assertDictEqual(df_modeler.info, df_modeler_loaded.info)
+
+    def test_load_json2(self) -> None:
+        """
+        Test by dumping json and loading it again with `oos_start=None`.
+        """
+        df = pd.DataFrame(
+            {"col0": [1, 2, 3], "col1": [4, 5, 6]},
+            index=pd.date_range("2010-01-01", periods=3),
+        )
+        oos_start = None
+        info = collections.OrderedDict({"df_info": dtf.get_df_info_as_string(df)})
+        df_modeler = dfmod.DataFrameModeler(df, oos_start=oos_start, info=info)
+        json_str = df_modeler.dump_json()
+        df_modeler_loaded = dfmod.DataFrameModeler.load_json(json_str)
+        pd.testing.assert_frame_equal(df_modeler.df, df_modeler_loaded.df)
+        self.assertEqual(df_modeler.oos_start, df_modeler_loaded.oos_start)
+        self.assertDictEqual(df_modeler.info, df_modeler_loaded.info)
+
+    def test_load_json3(self) -> None:
+        """
+        Test by dumping json and loading it again with `info=None`.
+        """
+        df = pd.DataFrame(
+            {"col0": [1, 2, 3], "col1": [4, 5, 6]},
+            index=pd.date_range("2010-01-01", periods=3),
+        )
+        oos_start = pd.Timestamp("2010-01-01")
+        info = None
+        df_modeler = dfmod.DataFrameModeler(df, oos_start=oos_start, info=info)
+        json_str = df_modeler.dump_json()
+        df_modeler_loaded = dfmod.DataFrameModeler.load_json(json_str)
+        pd.testing.assert_frame_equal(df_modeler.df, df_modeler_loaded.df)
+        self.assertEqual(df_modeler.oos_start, df_modeler_loaded.oos_start)
+        self.assertEqual(df_modeler.info, df_modeler_loaded.info)
+
     def test_apply_sklearn_model_fit_with_oos(self) -> None:
         pred_lag = 2
         data = self._get_data(pred_lag)
