@@ -12,7 +12,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(Paul): Consider moving this to `core.py`.
-class DagManager(abc.ABC):
+class DagBuilder(abc.ABC):
     """
     Abstract class for creating DAGs.
 
@@ -126,7 +126,7 @@ class DagRunner:
 
         `config` should contain keys:
           - "meta"
-            - "dag_builder" (val type: DagManager)
+            - "dag_builder" (val type: DagBuilder)
             - "result_node" (val type: str)
           - "DAG"
 
