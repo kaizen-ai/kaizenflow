@@ -10,7 +10,7 @@ import vendors2.kibot.metadata.load.kibot_metadata as kmd
 
 class TestContractSymbolMapper(hut.TestCase):
     def test(self):
-        l = kmd.ContractExpiryMapper(["AEX"], kmd.KibotTradingActivityContractLifetimeComputer)
+        l = kmd.ContractExpiryMapper(kmd.KibotTradingActivityContractLifetimeComputer, "./test.csv", ["AEX"])
         expiry = l.get_expiry(datetime.datetime.now() - datetime.timedelta(minutes=3600*24*730), 25, "AEX")
         print(expiry)
 

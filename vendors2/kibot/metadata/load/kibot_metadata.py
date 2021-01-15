@@ -1,9 +1,11 @@
 import abc
+import os
 import re
-from typing import Any, List, Tuple, Optional, Type, Dict
+from typing import Any, List, Tuple, Optional, Type
 
 import pandas as pd
 import helpers.dbg as dbg
+import helpers.csv as csv
 
 import vendors2.kibot.metadata.load.expiry_contract_mapper as vkmlex
 import vendors2.kibot.data.load.s3_data_loader as vkdls3
@@ -11,113 +13,6 @@ import vendors2.kibot.metadata.load.s3_backend as vkmls3
 import vendors2.kibot.metadata.load.expiry_contract_mapper as vkmdle
 import vendors2.kibot.data.types as vkdt
 import vendors2.kibot.metadata.types as vkmdt
-
-
-class ContractLifetimeComputer(abc.ABC):
-    @staticmethod
-    @abc.abstractmethod
-    def compute_lifetime(contract_name: str) -> vkmdt.ContractLifetime:
-        """Compute the lifetime of a contract, e.g. 'CLJ17'.
-
-        :param contract_name: the contract for which to compute the lifetime.
-        :return: the computed lifetime.
-        """
-
-
-class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
-    @staticmethod
-    def compute_lifetime(contract_name: str) -> vkmdt.ContractLifetime:
-        """Use the price data from Kibot to compute the lifetime."""
-        df = vkdls3.S3KibotDataLoader()\
-            .read_data("Kibot", contract_name,
-                       vkdt.AssetClass.Futures, vkdt.Frequency.Daily,
-                       vkdt.ContractType.Expiry)
-        start_date = pd.Timestamp(df.first_valid_index())
-        end_date = pd.Timestamp(df.last_valid_index())
-        return vkmdt.ContractLifetime(start_date, end_date)
-
-
-class Contract:
-    def __init__(self, contract_name: str, compute_backend: Type[ContractLifetimeComputer]):
-        self._contract_name = contract_name
-        self._compute_backend = compute_backend
-        self._lifetime: Optional[vkmdt.ContractLifetime] = None
-
-    def get_lifetime(self) -> vkmdt.ContractLifetime:
-        """Get the lifetime of this contract.
-
-        `get_lifetime` returns from memory. If the lifetime hasn't been computed,
-        it will compute it & store it in memory before returning.
-
-        :return: the lifetime of this contract.
-        """
-        if self._lifetime is None:
-            self.compute_lifetime()
-        return self._lifetime
-
-    def compute_lifetime(self) -> None:
-        """Uses the provided compute backend, to compute the lifetime.
-
-        After computing the lifetime, it stores it in memory.
-        """
-        self._lifetime = self._compute_backend.compute_lifetime(self._contract_name)
-
-
-class ContractExpiryMapper:
-    def __init__(self, symbols: List[str], lifetime_computer: Type[ContractLifetimeComputer]):
-        """
-
-        :param symbols: symbols to retrieve the contracts from
-        :param lifetime_computer: computer that will compute the lifetime
-        """
-        kb = KibotMetadata()
-        # symbols = kb.get_kibot_symbols()
-        self.contracts: Dict[str, List[Contract]] = {}
-        for symbol in symbols:
-            contracts = [Contract(cn, lifetime_computer) for cn in kb.get_expiry_contracts(symbol)]
-            self.contracts[symbol] = contracts
-
-    def get_expiry(self, date: vkmdt.DATE_TYPE, date_month_offset: int, symbol: str) -> Optional[vkmdt.Expiry]:
-        """Return expiry for contract given `datetime` and `month` offset.
-
-        :param date: includes year, month, day, and possibly time (otherwise ... assumed)
-        :param date_month_offset: relative month, e.g., 1 for front month, 2 for first back month, and so on
-        :param symbol: Kibot symbol
-        :return: absolute month and year of contract for `symbol`, expressed using Futures month codes
-            and last two digits of year, e.g., `("Z", "20")`
-        """
-        dbg.dassert_in(symbol, self.contracts.keys())
-        df = pd.DataFrame(columns=['contract', 'start_date', 'end_date'])
-        # grab all contract lifetimes
-        for contract in self.contracts[symbol]:
-            contract_lifetime = contract.get_lifetime()
-            index = df['end_date'].searchsorted(contract_lifetime.end_date)
-            row = pd.DataFrame({'contract': contract,
-                                'start_date': contract_lifetime.start_date,
-                                'end_date': contract_lifetime.end_date}, index=[index])
-            df = pd.concat([df.iloc[:index], row, df.iloc[index:]]).reset_index(drop=True)
-
-        # find first index with a `start_date` before `date` and
-        # an `end_date` after `date`
-        idx = df['end_date'].searchsorted(pd.Timestamp(date), side='left')
-        while df['start_date'].iloc[idx] > date:
-            idx = df['end_date'].searchsorted(pd.Timestamp(date), side='left')
-            # 0 = no contracts with a `start_date` before `date`
-            if idx >= len(df.index) or idx == 0:
-                return None
-
-        # add the offset
-        idx = idx + date_month_offset
-        if idx >= len(df.index):
-            # index does not exist
-            return None
-
-        # return the expiry date
-        ret = df['end_date'][idx]
-        return vkmdt.Expiry(
-            month=vkmdle.ExpiryContractMapper().month_to_expiry_num(ret.month),
-            year=str(ret.year)[2::]
-        )
 
 
 class KibotMetadata:
@@ -434,3 +329,104 @@ class KibotMetadata:
             [kibot_metadata, kibot_to_cme_mapping], axis=1
         )
         return annotated_metadata
+
+
+class ContractLifetimeComputer(abc.ABC):
+    @staticmethod
+    @abc.abstractmethod
+    def compute_lifetime(contract_name: str) -> vkmdt.ContractLifetime:
+        """Compute the lifetime of a contract, e.g. 'CLJ17'.
+
+        :param contract_name: the contract for which to compute the lifetime.
+        :return: the computed lifetime.
+        """
+
+
+class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
+    """Use the price data from Kibot to compute the lifetime."""
+
+    @staticmethod
+    def compute_lifetime(contract_name: str) -> vkmdt.ContractLifetime:
+        df = vkdls3.S3KibotDataLoader() \
+            .read_data("Kibot", contract_name,
+                       vkdt.AssetClass.Futures, vkdt.Frequency.Daily,
+                       vkdt.ContractType.Expiry)
+        start_date = pd.Timestamp(df.first_valid_index())
+        end_date = pd.Timestamp(df.last_valid_index())
+        return vkmdt.ContractLifetime(start_date, end_date)
+
+
+class ContractExpiryMapper:
+    contracts: pd.DataFrame
+
+    def __init__(self, lifetime_computer: Type[ContractLifetimeComputer], file: str, symbols: List[str] = None) -> None:
+        """
+
+        :param lifetime_computer: computer responsible for calculating the lifetime.
+        :param file: used for caching results
+        """
+        kb = KibotMetadata()
+        if symbols is None:
+            symbols = kb.get_kibot_symbols()
+        if file is None:
+            self._compute_lifetimes(symbols, kb, lifetime_computer)
+        elif os.path.exists(file):
+            self.contracts = pd.read_csv(file)
+        else:
+            self._compute_lifetimes(symbols, kb, lifetime_computer)
+            csv.to_typed_csv(self.contracts, file)
+
+    def get_expiry(self, date: vkmdt.DATE_TYPE, date_month_offset: int, symbol: str) -> Optional[vkmdt.Expiry]:
+        """Return expiry for contract given `datetime` and `month` offset.
+
+        :param date: includes year, month, day, and possibly time (otherwise ... assumed)
+        :param date_month_offset: relative month, e.g., 1 for front month, 2 for first back month, and so on
+        :param symbol: Kibot symbol
+        :return: absolute month and year of contract for `symbol`, expressed using Futures month codes
+            and last two digits of year, e.g., `("Z", "20")`
+        """
+        dbg.dassert_in(symbol, self.contracts['symbol'])
+
+        # Grab all contract lifetimes.
+        contracts = self.contracts[symbol]
+        df = contracts.sort_values(by="end_date")
+
+        # Find first index with a `start_date` before `date` and
+        # an `end_date` after `date`.
+        idx = df['end_date'].searchsorted(pd.Timestamp(date), side='left')
+        while df['start_date'].iloc[idx] > date:
+            idx = df['end_date'].searchsorted(pd.Timestamp(date), side='left')
+            # 0 = no contracts with a `start_date` before `date`
+            if idx >= len(df.index) or idx == 0:
+                return None
+
+        # Add the offset.
+        idx = idx + date_month_offset
+        if idx >= len(df.index):
+            # Index does not exist.
+            return None
+
+        # Return the expiry date.
+        ret = df['end_date'][idx]
+        return vkmdt.Expiry(
+            month=vkmdle.ExpiryContractMapper().month_to_expiry_num(ret.month),
+            year=str(ret.year)[2::]
+        )
+
+    def _compute_lifetimes(self, symbols: pd.Series, kb: KibotMetadata, lifetime_computer: Type[ContractLifetimeComputer]) -> None:
+        """Compute the lifetime for all contracts available for all symbols passed in.
+
+        :param symbols: kibot symbols from which to retrieve contracts
+        """
+
+        df = pd.DataFrame(columns=['symbol', 'contracts'])
+        for _, symbol in symbols.items():
+            contracts = kb.get_expiry_contracts(symbol)
+            lifetimes = [lifetime_computer.compute_lifetime(cn) for cn in contracts]
+            mapped_contracts = pd.DataFrame(
+                [(cn, lifetime.start_date, lifetime.end_date)
+                 for cn, lifetime in zip(contracts, lifetimes)],
+                columns=['name', 'start_date', 'end_date']
+            )
+            df.append([symbol, mapped_contracts])
+        self.contracts = df
