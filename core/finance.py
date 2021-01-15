@@ -287,7 +287,7 @@ def compute_prices_from_rets(
     mode: str,
 ) -> pd.Series:
     """
-    Compute price at moment t_1 with given price at t_0 and return ret_0.
+    Compute price at moment t_1 with given price at t_0 and return ret_1.
 
     :param price: series with prices
     :param rets: series with returns
