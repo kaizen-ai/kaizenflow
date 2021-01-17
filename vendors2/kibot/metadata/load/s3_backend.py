@@ -115,7 +115,7 @@ class S3Backend:
         df_shape = df.shape
         df.dropna(inplace=True, how="all")
         df_shape_after_dropna = df.shape
-        dbg.dassert_eq(df_shape[0] - 1, df_shape_after_dropna[0])
+        dbg.dassert_eq(df_shape[0], df_shape_after_dropna[0])
         df.index = df.index.astype(int)
         df.index.name = None
         df["StartDate"] = pd.to_datetime(df["StartDate"])
