@@ -47,7 +47,6 @@ class DagBuilder(abc.ABC):
         """
         Input node identifiers.
         """
-        # TODO(*): Add a default implementation that adds all sources.
 
     @property
     @abc.abstractmethod
@@ -55,7 +54,6 @@ class DagBuilder(abc.ABC):
         """
         Result node identifiers.
         """
-        # TODO(*): Add a default implementation that adds all syncs.
 
     @property
     @abc.abstractmethod
