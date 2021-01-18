@@ -122,7 +122,7 @@ class SQLKibotDataLoader(vkdlda.AbstractKibotDataLoader):
         if trade_symbol_id == -1:
             dbg.dfatal(
                 f"Could not find Trade Symbol with "
-                f"symbol_id=${symbol_id} and exchange_id=${exchange_id}"
+                f"symbol_id={symbol_id} and exchange_id={exchange_id}"
             )
         return trade_symbol_id
 

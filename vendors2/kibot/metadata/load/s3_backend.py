@@ -107,7 +107,12 @@ class S3Backend:
         _LOG.debug("file_name=%s", file_name)
         hs3.check_valid_s3_path(file_name)
         df = pd.read_csv(
-            file_name, index_col=0, skiprows=5, header=None, sep="\t", nrows=self._max_rows
+            file_name,
+            index_col=0,
+            skiprows=5,
+            header=None,
+            sep="\t",
+            nrows=self._max_rows,
         )
         df.columns = (
             "SymbolBase Symbol StartDate Size(MB) Description Exchange".split()
@@ -151,7 +156,12 @@ class S3Backend:
         _LOG.debug("file_name=%s", file_name)
         hs3.check_valid_s3_path(file_name)
         df = pd.read_csv(
-            file_name, index_col=0, skiprows=5, header=None, sep="\t", nrows=self._max_rows
+            file_name,
+            index_col=0,
+            skiprows=5,
+            header=None,
+            sep="\t",
+            nrows=self._max_rows,
         )
         df.columns = (
             "SymbolBase Symbol StartDate Size(MB) Description Exchange".split()
@@ -167,12 +177,14 @@ class S3Backend:
         _LOG.debug("df.shape=%s", df.shape)
         return df
 
-    def read_kibot_exchange_mapping(self) -> pd.DataFrame:
+    @staticmethod
+    def read_kibot_exchange_mapping() -> pd.DataFrame:
         file_name = os.path.join(vkmcon.S3_PREFIX, "kibot_to_exchange.csv")
         hs3.check_valid_s3_path(file_name)
         kibot_to_cme_mapping = pd.read_csv(file_name, index_col="Kibot_symbol")
         return kibot_to_cme_mapping
 
+    @staticmethod
     def get_symbols_for_dataset(data_type: str) -> List[str]:
         """
         Get a list of symbols stored on S3 in a specific data type, e.g.

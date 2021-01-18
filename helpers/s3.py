@@ -1,8 +1,10 @@
-"""Import as:
+"""
+Import as:
 
 import helpers.s3 as hs3
 """
 
+import datetime
 import logging
 import os
 from typing import Any, Dict, List, Tuple
@@ -11,13 +13,14 @@ import boto3
 import botocore
 
 import helpers.dbg as dbg
-import helpers.system_interaction as si
+import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
 
 
 def get_bucket() -> str:
-    """Return the default s3 bucket.
+    """
+    Return the default s3 bucket.
 
     Make sure your ~/.aws/credentials uses the right key to access this
     bucket as default.
@@ -28,7 +31,9 @@ def get_bucket() -> str:
 
 # TODO(gp): -> get_s3_bucket_path() ?
 def get_path() -> str:
-    """Return the path corresponding to the default s3 bucket."""
+    """
+    Return the path corresponding to the default s3 bucket.
+    """
     path = "s3://" + get_bucket()
     return path
 
@@ -38,28 +43,33 @@ def is_s3_path(path: str) -> bool:
 
 
 def get_s3fs_root_path() -> str:
-    """Return the path where S3 is mounted on the filesystem."""
+    """
+    Return the path where S3 is mounted on the filesystem.
+    """
     path = "/s3"
-    if si.get_os_name() == "Darwin":
-        if si.get_user_name() in ("paul", "saggese"):
+    if hsyste.get_os_name() == "Darwin":
+        if hsyste.get_user_name() in ("paul", "saggese"):
             # macOS can't access `/` since it's read-only.
             path = "/Volumes/s3"
     return path
 
 
 def get_s3fs_bucket_path() -> str:
-    """Return the path corresponding to the default s3 bucket in the
-    filesystem."""
+    """
+    Return the path corresponding to the default s3 bucket in the filesystem.
+    """
     path = os.path.join(get_s3fs_root_path(), get_bucket())
     return path
 
 
 # TODO(*): Move to amp/helpers/fsx.py at some point.
 def get_fsx_root_path() -> str:
-    """Return the path where FSx is mounted on the filesystem."""
+    """
+    Return the path where FSx is mounted on the filesystem.
+    """
     path = "/fsx"
-    if si.get_os_name() == "Darwin":
-        if si.get_user_name() in ("paul", "saggese"):
+    if hsyste.get_os_name() == "Darwin":
+        if hsyste.get_user_name() in ("paul", "saggese"):
             # macOS can't access `/` since it's read-only.
             home = os.path.expanduser("~")
             path = "%s/fsx" % home
@@ -70,7 +80,8 @@ def get_fsx_root_path() -> str:
 
 
 def exists(s3_path: str) -> bool:
-    """Check if path exists in s3.
+    """
+    Check if path exists in s3.
 
     :raise: exception if checking the s3 key fails.
     """
@@ -98,7 +109,8 @@ def check_valid_s3_path(s3_path: str) -> None:
 
 
 def _list_s3_keys(s3_bucket: str, dir_path: str) -> List[str]:
-    """List s3 keys.
+    """
+    List s3 keys.
 
     A wrapper around `list_objects_v2` method that bypasses its
     restriction for only the first 1000 of the contents.
@@ -139,7 +151,8 @@ def _list_s3_keys(s3_bucket: str, dir_path: str) -> List[str]:
 
 
 def listdir(s3_path: str, mode: str = "recursive") -> List[str]:
-    """List files in s3 directory.
+    """
+    List files in s3 directory.
 
     :param s3_path: the path to s3 directory, e.g.,
         `s3://default00-bucket/kibot/`
@@ -195,7 +208,8 @@ def listdir(s3_path: str, mode: str = "recursive") -> List[str]:
 # TODO(GP): Maybe we should add an S3Path class which will contain
 # prefix, bucket_name and path attributes?
 def parse_path(path: str) -> Tuple[str, str]:
-    """Extract bucket name and a file or folder path from an s3 full path.
+    """
+    Extract bucket name and a file or folder path from an s3 full path.
 
     E.g., for
         s3://default00-bucket/kibot/All_Futures_Continuous_Contracts_daily
@@ -221,7 +235,9 @@ def parse_path(path: str) -> Tuple[str, str]:
 # TODO(Julia): When PartTask418_PRICE_Convert_Kibot_data_from_csv is
 # merged, choose between this ls() and listdir() functions.
 def ls(file_path: str) -> List[str]:
-    """Return the file lists in `file_path`."""
+    """
+    Return the file lists in `file_path`.
+    """
     s3 = boto3.resource("s3")
     bucket_name, file_path = parse_path(file_path)
     _LOG.debug("bucket_name=%s, file_path=%s", bucket_name, file_path)
@@ -233,3 +249,18 @@ def ls(file_path: str) -> List[str]:
     #       key='kibot/All_Futures_Continuous_Contracts_daily/AC.csv.gz')
     file_names = [os.path.basename(p.key) for p in res.all()]
     return file_names
+
+
+def get_last_modified(s3_path: str) -> datetime.datetime:
+    """
+    Get last modified date of a file on S3.
+
+    :param s3_path: the path to s3 directory, e.g.,
+        `s3://default00-bucket/kibot/`
+    :return: last modified date of the file
+    """
+    s3 = boto3.client("s3")
+    bucket_name, file_path = parse_path(s3_path)
+    response = s3.head_object(Bucket=bucket_name, Key=file_path)
+    date_time: datetime.datetime = response["LastModified"].replace(tzinfo=None)
+    return date_time

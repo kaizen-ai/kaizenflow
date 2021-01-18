@@ -1,5 +1,7 @@
+import pandas as pd
 import psycopg2
-import psycopg2.extensions
+import psycopg2.extensions as pexten
+import psycopg2.extras as pextra
 
 import vendors2.kibot.data.types as vkdtyp
 
@@ -10,7 +12,7 @@ class SQLWriterBackend:
     """
 
     def __init__(self, dbname: str, user: str, password: str, host: str):
-        self.conn: psycopg2.extensions.connection = psycopg2.connect(
+        self.conn: pexten.connection = psycopg2.connect(
             dbname=dbname,
             user=user,
             password=password,
@@ -55,6 +57,27 @@ class SQLWriterBackend:
                     [symbol_id, exchange_id],
                 )
 
+    def insert_bulk_daily_data(
+        self,
+        df: pd.DataFrame,
+    ) -> None:
+        """
+        Insert daily data for a particular TradeSymbol entry in bulk.
+
+        :param df: a dataframe from s3
+        """
+        with self.conn:
+            with self.conn.cursor() as curs:
+                pextra.execute_values(
+                    curs,
+                    "INSERT INTO DailyData "
+                    "(trade_symbol_id, date, open, high, low, close, volume) "
+                    "VALUES %s ON CONFLICT DO NOTHING",
+                    df.to_dict("records"),
+                    template="(%(trade_symbol_id)s, %(date)s, %(open)s,"
+                             " %(high)s, %(low)s, %(close)s, %(volume)s)",
+                )
+
     def insert_daily_data(
         self,
         trade_symbol_id: int,
@@ -93,10 +116,31 @@ class SQLWriterBackend:
                     ],
                 )
 
+    def insert_bulk_minute_data(
+        self,
+        df: pd.DataFrame,
+    ) -> None:
+        """
+        Insert minute data for a particular TradeSymbol entry in bulk.
+
+        :param df: a dataframe from s3
+        """
+        with self.conn:
+            with self.conn.cursor() as curs:
+                pextra.execute_values(
+                    curs,
+                    "INSERT INTO MinuteData "
+                    "(trade_symbol_id, datetime, open, high, low, close, volume) "
+                    "VALUES %s ON CONFLICT DO NOTHING",
+                    df.to_dict("records"),
+                    template="(%(trade_symbol_id)s, %(datetime)s, %(open)s,"
+                             " %(high)s, %(low)s, %(close)s, %(volume)s)",
+                )
+
     def insert_minute_data(
         self,
         trade_symbol_id: int,
-        datetime: str,
+        date_time: str,
         open_val: float,
         high_val: float,
         low_val: float,
@@ -107,7 +151,7 @@ class SQLWriterBackend:
         Insert minute data for a particular TradeSymbol entry.
 
         :param trade_symbol_id: id of TradeSymbol
-        :param datetime: date and time string
+        :param date_time: date and time string
         :param open_val: open price
         :param high_val: high price
         :param low_val: low price
@@ -122,7 +166,7 @@ class SQLWriterBackend:
                     "VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
                     [
                         trade_symbol_id,
-                        datetime,
+                        date_time,
                         open_val,
                         high_val,
                         low_val,
@@ -134,7 +178,7 @@ class SQLWriterBackend:
     def insert_tick_data(
         self,
         trade_symbol_id: int,
-        datetime: str,
+        date_time: str,
         price_val: float,
         size_val: int,
     ) -> None:
@@ -142,7 +186,7 @@ class SQLWriterBackend:
         Insert tick data for a particular TradeSymbol entry.
 
         :param trade_symbol_id: id of TradeSymbol
-        :param datetime: date and time string
+        :param date_time: date and time string
         :param price_val: price of the transaction
         :param size_val: size of the transaction
         """
@@ -154,7 +198,7 @@ class SQLWriterBackend:
                     "VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
                     [
                         trade_symbol_id,
-                        datetime,
+                        date_time,
                         price_val,
                         size_val,
                     ],
