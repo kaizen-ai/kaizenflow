@@ -1,7 +1,7 @@
 import abc
 import os
 import re
-from typing import Any, List, Tuple, Optional, Type
+from typing import Any, List, Tuple, Optional, Type, Union
 
 import pandas as pd
 import helpers.dbg as dbg
@@ -71,10 +71,6 @@ class KibotMetadata:
         """
         futures: List[str] = self.get_metadata(contract_type).index.tolist()
         return futures
-
-    def get_kibot_symbols(self, contract_type: str = "1min") -> pd.Series:
-        metadata = self.get_metadata(contract_type)
-        return metadata['Kibot_symbol']
 
     @staticmethod
     def get_expiry_contracts(symbol: str) -> List[str]:
@@ -330,6 +326,10 @@ class KibotMetadata:
         )
         return annotated_metadata
 
+    def get_kibot_symbols(self, contract_type: str = "1min") -> pd.Series:
+        metadata = self.get_metadata(contract_type)
+        return metadata['Kibot_symbol']
+
 
 class ContractLifetimeComputer(abc.ABC):
     @staticmethod
@@ -385,10 +385,10 @@ class ContractExpiryMapper:
         :return: absolute month and year of contract for `symbol`, expressed using Futures month codes
             and last two digits of year, e.g., `("Z", "20")`
         """
-        dbg.dassert_in(symbol, self.contracts['symbol'])
+        dbg.dassert_in(symbol, self.contracts['symbol'].values)
 
         # Grab all contract lifetimes.
-        contracts = self.contracts[symbol]
+        contracts = self.contracts.loc[self.contracts['symbol'] == symbol]
         df = contracts.sort_values(by="end_date")
 
         # Find first index with a `start_date` before `date` and
@@ -413,20 +413,21 @@ class ContractExpiryMapper:
             year=str(ret.year)[2::]
         )
 
-    def _compute_lifetimes(self, symbols: pd.Series, kb: KibotMetadata, lifetime_computer: Type[ContractLifetimeComputer]) -> None:
+    def _compute_lifetimes(self, symbols: Union[pd.Series, List[str]], kb: KibotMetadata, lifetime_computer: Type[ContractLifetimeComputer]) -> None:
         """Compute the lifetime for all contracts available for all symbols passed in.
 
         :param symbols: kibot symbols from which to retrieve contracts
         """
+        dbg.dassert_in(type(symbols), [pd.Series, list])
+        if isinstance(symbols, pd.Series):
+            symbols = [symbol for _, symbol in symbols.items()]
 
-        df = pd.DataFrame(columns=['symbol', 'contracts'])
-        for _, symbol in symbols.items():
+        df = []
+        for symbol in symbols:
             contracts = kb.get_expiry_contracts(symbol)
             lifetimes = [lifetime_computer.compute_lifetime(cn) for cn in contracts]
-            mapped_contracts = pd.DataFrame(
-                [(cn, lifetime.start_date, lifetime.end_date)
-                 for cn, lifetime in zip(contracts, lifetimes)],
-                columns=['name', 'start_date', 'end_date']
-            )
-            df.append([symbol, mapped_contracts])
-        self.contracts = df
+            for contract, lifetime in zip(contracts, lifetimes):
+                lifetime.start_date = pd.Timestamp(lifetime.start_date)
+                lifetime.end_date = pd.Timestamp(lifetime.end_date)
+                df.append([symbol, contract, lifetime.start_date, lifetime.end_date])
+        self.contracts = pd.DataFrame(df, columns=["symbol", "contract", "start_date", "end_date"])
