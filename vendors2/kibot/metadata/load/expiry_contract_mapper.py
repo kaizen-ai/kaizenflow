@@ -25,7 +25,23 @@ class ExpiryContractMapper:
         "December": "Z",
     }
 
+    _MONTH_TO_EXPIRY_NUM = {
+        1: "F",
+        2: "G",
+        3: "H",
+        4: "J",
+        5: "K",
+        6: "M",
+        7: "N",
+        8: "Q",
+        9: "U",
+        10: "V",
+        11:"X",
+        12: "Z"
+    }
+
     _EXPIRY_TO_MONTH = {v: k for k, v in _MONTH_TO_EXPIRY.items()}
+    _EXPIRY_TO_MONTH_NUM = {v: k for k, v in _MONTH_TO_EXPIRY.items()}
 
     def month_to_expiry(self, month: str) -> str:
         dbg.dassert_in(month, self._MONTH_TO_EXPIRY)
@@ -34,6 +50,14 @@ class ExpiryContractMapper:
     def expiry_to_month(self, expiry: str) -> str:
         dbg.dassert_in(expiry, self._EXPIRY_TO_MONTH)
         return self._EXPIRY_TO_MONTH[expiry]
+
+    def month_to_expiry_num(self, month: int) -> str:
+        dbg.dassert_in(month, self._MONTH_TO_EXPIRY_NUM)
+        return self._MONTH_TO_EXPIRY_NUM[month]
+
+    def expiry_to_month_num(self, expiry: int) -> str:
+        dbg.dassert_in(expiry, self._EXPIRY_TO_MONTH_NUM)
+        return self._EXPIRY_TO_MONTH_NUM[expiry]
 
     @staticmethod
     def parse_expiry_contract(v: str) -> Tuple[str, str, str]:
