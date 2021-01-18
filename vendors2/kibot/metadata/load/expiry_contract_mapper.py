@@ -41,7 +41,7 @@ class ExpiryContractMapper:
     }
 
     _EXPIRY_TO_MONTH = {v: k for k, v in _MONTH_TO_EXPIRY.items()}
-    _EXPIRY_TO_MONTH_NUM = {v: k for k, v in _MONTH_TO_EXPIRY.items()}
+    _EXPIRY_TO_MONTH_NUM = {v: k for k, v in _MONTH_TO_EXPIRY_NUM.items()}
 
     def month_to_expiry(self, month: str) -> str:
         dbg.dassert_in(month, self._MONTH_TO_EXPIRY)
@@ -55,7 +55,7 @@ class ExpiryContractMapper:
         dbg.dassert_in(month, self._MONTH_TO_EXPIRY_NUM)
         return self._MONTH_TO_EXPIRY_NUM[month]
 
-    def expiry_to_month_num(self, expiry: int) -> str:
+    def expiry_to_month_num(self, expiry: str) -> int:
         dbg.dassert_in(expiry, self._EXPIRY_TO_MONTH_NUM)
         return self._EXPIRY_TO_MONTH_NUM[expiry]
 
