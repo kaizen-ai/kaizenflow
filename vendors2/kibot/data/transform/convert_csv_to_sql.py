@@ -31,7 +31,7 @@ _JOBLIB_VERBOSITY = 1
 def _convert_kibot_csv_gz_to_sql(
     symbol: str,
     exchange: str,
-    kibot_data_loader: vkdloa.SQLKibotDataLoader,
+    kibot_data_loader: vkdloa.S3KibotDataLoader,
     sql_writer_backed: vdsqlw.SQLWriterBackend,
     sql_data_loader: vkdlsq.SQLKibotDataLoader,
     asset_class: vkdtyp.AssetClass,
@@ -46,6 +46,15 @@ def _convert_kibot_csv_gz_to_sql(
 
     :return: True if it was processed
     """
+    _LOG.debug("Managing database for '%s' symbol", symbol)
+    sql_writer_backed.ensure_symbol_exists(symbol=symbol, asset_class=asset_class)
+    symbol_id = sql_data_loader.get_symbol_id(symbol=symbol)
+    sql_writer_backed.ensure_trade_symbol_exists(
+        symbol_id=symbol_id, exchange_id=exchange_id
+    )
+    trade_symbol_id = sql_data_loader.get_trade_symbol_id(
+        symbol_id=symbol_id, exchange_id=exchange_id
+    )
     _LOG.info("Converting '%s' symbol", symbol)
     _LOG.debug("Downloading '%s' symbol from S3", symbol)
     df = kibot_data_loader.read_data(
@@ -57,47 +66,35 @@ def _convert_kibot_csv_gz_to_sql(
         unadjusted=unadjusted,
         normalize=False,
     )
-    _LOG.debug("Managing database for '%s' symbol", symbol)
-    sql_writer_backed.ensure_symbol_exists(symbol=symbol, asset_class=asset_class)
-    symbol_id = sql_data_loader.get_symbol_id(symbol=symbol)
-    sql_writer_backed.ensure_trade_symbol_exists(
-        symbol_id=symbol_id, exchange_id=exchange_id
-    )
-    trade_symbol_id = sql_data_loader.get_trade_symbol_id(
-        symbol_id=symbol_id, exchange_id=exchange_id
-    )
     if max_num_rows:
         df = df.head(max_num_rows)
     if frequency == vkdtyp.Frequency.Minutely:
-        df.columns = ["date", "time", "open", "high", "low", "close", "volume"]
-        for _, row in df.iterrows():
-            sql_writer_backed.insert_minute_data(
-                trade_symbol_id=trade_symbol_id,
-                datetime=f"${row['date']} ${row['time']}",
-                open_val=row["open"],
-                high_val=row["high"],
-                low_val=row["low"],
-                close_val=row["close"],
-                volume_val=row["volume"],
-            )
+        df.columns = [
+            "date",
+            "time",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+        ]
+        # Transform DataFrame from S3 to DB format.
+        df["trade_symbol_id"] = trade_symbol_id
+        df["datetime"] = df["date"].str.cat(df["time"], sep=" ")
+        del df["date"]
+        del df["time"]
+        sql_writer_backed.insert_bulk_minute_data(df)
     elif frequency == vkdtyp.Frequency.Daily:
         df.columns = ["date", "open", "high", "low", "close", "volume"]
-        for _, row in df.iterrows():
-            sql_writer_backed.insert_daily_data(
-                trade_symbol_id=trade_symbol_id,
-                date=row["date"],
-                open_val=row["open"],
-                high_val=row["high"],
-                low_val=row["low"],
-                close_val=row["close"],
-                volume_val=row["volume"],
-            )
+        # Transform DataFrame from S3 to DB format.
+        df["trade_symbol_id"] = trade_symbol_id
+        sql_writer_backed.insert_bulk_daily_data(df)
     elif frequency == vkdtyp.Frequency.Tick:
         df.columns = ["date", "time", "price", "size"]
         for _, row in df.iterrows():
             sql_writer_backed.insert_tick_data(
                 trade_symbol_id=trade_symbol_id,
-                datetime=f"${row['date']} ${row['time']}",
+                date_time=f"${row['date']} ${row['time']}",
                 price_val=row["price"],
                 size_val=row["size"],
             )
