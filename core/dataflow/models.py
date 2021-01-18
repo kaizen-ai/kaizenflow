@@ -10,6 +10,7 @@ import pandas as pd
 import scipy as sp
 import sklearn as skl
 import statsmodels.api as sm
+import statsmodels.iolib as si
 from tqdm.autonotebook import tqdm
 
 import core.backtest as bcktst
@@ -741,7 +742,10 @@ class ContinuousSarimaxModel(FitPredictNode, RegFreqMixin, ToListMixin):
         # Add info.
         # TODO(Julia): Maybe add model performance to info.
         info = collections.OrderedDict()
-        info["model_summary"] = self._model_results.summary().as_text()
+        info["model_summary"] = (
+            _remove_datetime_info_from_SARIMAX(self._model_results.summary())
+            .as_text()
+        )
         self._set_info("fit", info)
         return {"df_out": df_out}
 
@@ -1804,3 +1808,17 @@ class VolatilityModel(FitPredictNode):
         if tail_nid is not None:
             dag.connect(tail_nid, node.nid)
         return node.nid
+    
+def _remove_datetime_info_from_SARIMAX(
+    summary: si.summary.Summary
+) -> si.summary.Summary:
+    """
+    Remove date and time from model summary.
+    
+    Replace date and time info from 2-4 lines of summary to sample and 
+    covariance info from 4-6 lines, remove duplicated last lines.
+    """
+    for i in range(2, 5):
+        summary.tables[0][i][:2] = summary.tables[0][i + 2][:2]
+    summary.tables[0][:] = summary.tables[0][:5]
+    return summary

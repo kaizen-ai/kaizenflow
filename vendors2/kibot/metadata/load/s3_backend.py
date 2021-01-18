@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 
@@ -23,8 +23,10 @@ _LOG = logging.getLogger(__name__)
 
 
 class S3Backend:
-    @staticmethod
-    def read_1min_contract_metadata() -> pd.DataFrame:
+    def __init__(self, max_rows: Optional[int] = None):
+        self._max_rows = max_rows
+
+    def read_1min_contract_metadata(self) -> pd.DataFrame:
         # pylint: disable=line-too-long
         """
         Read minutely contract metadata.
@@ -46,14 +48,13 @@ class S3Backend:
             vkmcon.S3_PREFIX, "All_Futures_Contracts_1min.csv.gz"
         )
         _LOG.debug("file_name=%s", file_name)
-        df = pd.read_csv(file_name, index_col=0)
+        df = pd.read_csv(file_name, index_col=0, nrows=self._max_rows)
         df = df.iloc[:, 1:]
         _LOG.debug("df=\n%s", df.head(3))
         _LOG.debug("df.shape=%s", df.shape)
         return df
 
-    @staticmethod
-    def read_daily_contract_metadata() -> pd.DataFrame:
+    def read_daily_contract_metadata(self) -> pd.DataFrame:
         # pylint: disable=line-too-long
         """
         Read daily contract metadata.
@@ -75,14 +76,13 @@ class S3Backend:
         )
         hs3.check_valid_s3_path(file_name)
         _LOG.debug("file_name=%s", file_name)
-        df = pd.read_csv(file_name, index_col=0)
+        df = pd.read_csv(file_name, index_col=0, nrows=self._max_rows)
         df = df.iloc[:, 1:]
         _LOG.debug("df=\n%s", df.head(3))
         _LOG.debug("df.shape=%s", df.shape)
         return df
 
-    @staticmethod
-    def read_tickbidask_contract_metadata() -> pd.DataFrame:
+    def read_tickbidask_contract_metadata(self) -> pd.DataFrame:
         # pylint: disable=line-too-long
         """
         Read tick-bid-ask contract metadata.
@@ -107,7 +107,7 @@ class S3Backend:
         _LOG.debug("file_name=%s", file_name)
         hs3.check_valid_s3_path(file_name)
         df = pd.read_csv(
-            file_name, index_col=0, skiprows=5, header=None, sep="\t"
+            file_name, index_col=0, skiprows=5, header=None, sep="\t", nrows=self._max_rows
         )
         df.columns = (
             "SymbolBase Symbol StartDate Size(MB) Description Exchange".split()
@@ -115,7 +115,7 @@ class S3Backend:
         df_shape = df.shape
         df.dropna(inplace=True, how="all")
         df_shape_after_dropna = df.shape
-        dbg.dassert_eq(df_shape[0] - 1, df_shape_after_dropna[0])
+        dbg.dassert_eq(df_shape[0], df_shape_after_dropna[0])
         df.index = df.index.astype(int)
         df.index.name = None
         df["StartDate"] = pd.to_datetime(df["StartDate"])
@@ -123,8 +123,7 @@ class S3Backend:
         _LOG.debug("df.shape=%s", df.shape)
         return df
 
-    @staticmethod
-    def read_continuous_contract_metadata() -> pd.DataFrame:
+    def read_continuous_contract_metadata(self) -> pd.DataFrame:
         # pylint: disable=line-too-long
         """
         Read tick-bid-ask metadata for continuous contracts.
@@ -152,7 +151,7 @@ class S3Backend:
         _LOG.debug("file_name=%s", file_name)
         hs3.check_valid_s3_path(file_name)
         df = pd.read_csv(
-            file_name, index_col=0, skiprows=5, header=None, sep="\t"
+            file_name, index_col=0, skiprows=5, header=None, sep="\t", nrows=self._max_rows
         )
         df.columns = (
             "SymbolBase Symbol StartDate Size(MB) Description Exchange".split()
@@ -168,14 +167,12 @@ class S3Backend:
         _LOG.debug("df.shape=%s", df.shape)
         return df
 
-    @staticmethod
-    def read_kibot_exchange_mapping() -> pd.DataFrame:
+    def read_kibot_exchange_mapping(self) -> pd.DataFrame:
         file_name = os.path.join(vkmcon.S3_PREFIX, "kibot_to_exchange.csv")
         hs3.check_valid_s3_path(file_name)
         kibot_to_cme_mapping = pd.read_csv(file_name, index_col="Kibot_symbol")
         return kibot_to_cme_mapping
 
-    @staticmethod
     def get_symbols_for_dataset(data_type: str) -> List[str]:
         """
         Get a list of symbols stored on S3 in a specific data type, e.g.

@@ -72,13 +72,14 @@ class KibotMetadata:
         futures: List[str] = self.get_metadata(contract_type).index.tolist()
         return futures
 
-    @staticmethod
-    def get_expiry_contracts(symbol: str) -> List[str]:
+    @classmethod
+    # For now the metadata is always stored on S3, so we don't need to use `cls`.
+    def get_expiry_contracts(cls, symbol: str) -> List[str]:
         """
         Return the expiry contracts corresponding to a continuous contract.
         """
-        one_min_contract_metadata = vkmls3.S3Backend().read_1min_contract_metadata()
-        one_min_contract_metadata, _ = KibotMetadata._extract_month_year_expiry(
+        one_min_contract_metadata = cls.read_1min_contract_metadata()
+        one_min_contract_metadata, _ = cls._extract_month_year_expiry(
             one_min_contract_metadata
         )
         # Select the rows with the Symbol equal to the requested one.
@@ -87,32 +88,47 @@ class KibotMetadata:
         contracts: List[str] = df.loc[:, "Symbol"].tolist()
         return contracts
 
+    @classmethod
+    def read_tickbidask_contract_metadata(cls) -> pd.DataFrame:
+        return vkmls3.S3Backend().read_tickbidask_contract_metadata()
+
+    @classmethod
+    def read_kibot_exchange_mapping(cls) -> pd.DataFrame:
+        return vkmls3.S3Backend().read_kibot_exchange_mapping()
+
+    @classmethod
+    def read_continuous_contract_metadata(cls) -> pd.DataFrame:
+        return vkmls3.S3Backend().read_continuous_contract_metadata()
+
+    @classmethod
+    def read_1min_contract_metadata(cls) -> pd.DataFrame:
+        return vkmls3.S3Backend().read_1min_contract_metadata()
+
     # //////////////////////////////////////////////////////////////////////////
 
     # TODO(Julia): Replace `one_min` with `expiry` once the PR is approved.
-    @staticmethod
-    def _compute_kibot_metadata(contract_type: str) -> pd.DataFrame:
-        s3_backend = vkmls3.S3Backend()
+    @classmethod
+    def _compute_kibot_metadata(cls, contract_type: str) -> pd.DataFrame:
         if contract_type in ["1min", "daily"]:
             # Minutely and daily dataframes are identical except for the `Link`
             # column.
-            one_min_contract_metadata = s3_backend.read_1min_contract_metadata()
+            one_min_contract_metadata = cls.read_1min_contract_metadata()
         elif contract_type == "tick-bid-ask":
             one_min_contract_metadata = (
-                s3_backend.read_tickbidask_contract_metadata()
+                cls.read_tickbidask_contract_metadata()
             )
         else:
             raise ValueError("Invalid `contract_type`='%s'" % contract_type)
         continuous_contract_metadata = (
-            s3_backend.read_continuous_contract_metadata()
+            cls.read_continuous_contract_metadata()
         )
         # Extract month, year, expiries and SymbolBase from the Symbol col.
         (
             one_min_contract_metadata,
             one_min_symbols_metadata,
-        ) = KibotMetadata._extract_month_year_expiry(one_min_contract_metadata)
+        ) = cls._extract_month_year_expiry(one_min_contract_metadata)
         # Calculate stats for expiries.
-        expiry_counts = KibotMetadata._calculate_expiry_counts(
+        expiry_counts = cls._calculate_expiry_counts(
             one_min_contract_metadata
         )
         # Drop unneeded columns from the symbol metadata dataframe
@@ -124,8 +140,8 @@ class KibotMetadata:
         )
         # Choose needed columns from the continuous contract metadata.
         cont_contracts_chosen = continuous_contract_metadata.loc[
-            :, ["Symbol", "StartDate", "Exchange"]
-        ]
+                                :, ["Symbol", "StartDate", "Exchange"]
+                                ]
         cont_contracts_chosen = cont_contracts_chosen.set_index(
             "Symbol", drop=True
         )
@@ -152,6 +168,8 @@ class KibotMetadata:
         kibot_metadata["max_contract"] = pd.to_datetime(
             kibot_metadata["max_contract"], format="%m.%Y"
         )
+        # Data can be incomplete, when mocked in a testing environment.
+        kibot_metadata = kibot_metadata[kibot_metadata["num_contracts"].notna()]
         # Convert integer columns to `int`.
         kibot_metadata["num_contracts"] = kibot_metadata["num_contracts"].astype(
             int
@@ -160,7 +178,7 @@ class KibotMetadata:
             int
         )
         # Append Exchange_symbol, Exchange_group, Globex_symbol columns.
-        kibot_metadata = KibotMetadata._annotate_with_exchange_mapping(
+        kibot_metadata = cls._annotate_with_exchange_mapping(
             kibot_metadata
         )
         # Change index to continuous.
@@ -197,13 +215,13 @@ class KibotMetadata:
         "Z": 12,
     }
 
-    @staticmethod
-    def _get_zero_elememt(list_: List[Any]) -> Any:
+    @classmethod
+    def _get_zero_elememt(cls, list_: List[Any]) -> Any:
         return list_[0] if list_ else None
 
-    @staticmethod
-    def _extract_month_year_expiry(
-        one_min_contract_metadata: pd.DataFrame,
+    @classmethod
+    def _extract_month_year_expiry(cls,
+            one_min_contract_metadata: pd.DataFrame,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Extract month, year, expiries and SymbolBase from the Symbol.
@@ -213,8 +231,8 @@ class KibotMetadata:
         one_min_contract_metadata = one_min_contract_metadata.copy()
         one_min_contract_metadata["year"] = (
             one_min_contract_metadata["Symbol"]
-            .apply(lambda x: re.findall(r"\d+$", x))
-            .apply(KibotMetadata._get_zero_elememt)
+                .apply(lambda x: re.findall(r"\d+$", x))
+                .apply(cls._get_zero_elememt)
         )
         one_min_symbols_metadata = one_min_contract_metadata.loc[
             one_min_contract_metadata["year"].isna()
@@ -224,12 +242,12 @@ class KibotMetadata:
         # Extract SymbolBase, month, year and expiries from contract names.
         symbol_month_year = (
             one_min_contract_metadata["Symbol"]
-            .apply(vkmlex.ExpiryContractMapper.parse_expiry_contract)
-            .apply(pd.Series)
+                .apply(vkmlex.ExpiryContractMapper.parse_expiry_contract)
+                .apply(pd.Series)
         )
         symbol_month_year.columns = ["SymbolBase", "month", "year"]
         symbol_month_year["expiries"] = (
-            symbol_month_year["month"] + symbol_month_year["year"]
+                symbol_month_year["month"] + symbol_month_year["year"]
         )
         symbol_month_year.drop(columns="year", inplace=True)
         one_min_contract_metadata.drop(
@@ -240,9 +258,9 @@ class KibotMetadata:
         )
         return one_min_contract_metadata, one_min_symbols_metadata
 
-    @staticmethod
-    def _calculate_expiry_counts(
-        one_min_contract_metadata: pd.DataFrame,
+    @classmethod
+    def _calculate_expiry_counts(cls,
+            one_min_contract_metadata: pd.DataFrame,
     ) -> pd.DataFrame:
         """
         Calculate the following stats for each symbol:
@@ -274,24 +292,24 @@ class KibotMetadata:
             base_groupby["expiries_year_first"].min(), name="min_contract"
         )
         min_contract = min_contract.apply(
-            lambda x: str(KibotMetadata._CONTRACT_EXPIRIES[x[-1]]).zfill(2)
-            + ".20"
-            + x[:2]
+            lambda x: str(cls._CONTRACT_EXPIRIES[x[-1]]).zfill(2)
+                      + ".20"
+                      + x[:2]
         )
         # Get the oldest contract, bring it to the mm.yyyy format.
         max_contract = pd.Series(
             base_groupby["expiries_year_first"].max(), name="max_contract"
         )
         max_contract = max_contract.apply(
-            lambda x: str(KibotMetadata._CONTRACT_EXPIRIES[x[-1]]).zfill(2)
-            + ".20"
-            + x[:2]
+            lambda x: str(cls._CONTRACT_EXPIRIES[x[-1]]).zfill(2)
+                      + ".20"
+                      + x[:2]
         )
         # Get all months at which contracts for each symbol expires,
         # change the str months to the month numbers from 0 to 11.
         expiries = pd.Series(base_groupby["month"].unique(), name="expiries")
         expiries = expiries.apply(
-            lambda x: list(map(lambda y: KibotMetadata._CONTRACT_EXPIRIES[y], x))
+            lambda x: list(map(lambda y: cls._CONTRACT_EXPIRIES[y], x))
         )
         # Combine all counts.
         expiry_counts = pd.concat(
@@ -300,9 +318,9 @@ class KibotMetadata:
         )
         return expiry_counts
 
-    @staticmethod
-    def _annotate_with_exchange_mapping(
-        kibot_metadata: pd.DataFrame,
+    @classmethod
+    def _annotate_with_exchange_mapping(cls,
+            kibot_metadata: pd.DataFrame,
     ) -> pd.DataFrame:
         """
         Annotate Kibot with exchanges and their symbols.
@@ -319,7 +337,7 @@ class KibotMetadata:
             vkmls3.S3Backend().read_kibot_exchange_mapping()
         )
         """
-        kibot_to_cme_mapping = vkmls3.S3Backend().read_kibot_exchange_mapping()
+        kibot_to_cme_mapping = cls.read_kibot_exchange_mapping()
         # Add mapping columns to the dataframe.
         annotated_metadata = pd.concat(
             [kibot_metadata, kibot_to_cme_mapping], axis=1
