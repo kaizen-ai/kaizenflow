@@ -41,27 +41,6 @@ class DagBuilder(abc.ABC):
     def nid_prefix(self) -> str:
         return self._nid_prefix
 
-    @property
-    @abc.abstractmethod
-    def input_nids(self) -> List[str]:
-        """
-        Input node identifiers.
-        """
-
-    @property
-    @abc.abstractmethod
-    def result_nids(self) -> List[str]:
-        """
-        Result node identifiers.
-        """
-
-    @property
-    @abc.abstractmethod
-    def methods(self) -> List[str]:
-        """
-        Methods supported by the DAG.
-        """
-
     @abc.abstractmethod
     def get_config_template(self) -> cfg.Config:
         """
@@ -89,6 +68,14 @@ class DagBuilder(abc.ABC):
             created.
         :return: `dag` with all builder operations applied
         """
+
+    @property
+    def methods(self) -> List[str]:
+        """
+        Methods supported by the DAG.
+        """
+        # TODO(*): Consider make this an abstractmethod.
+        return ["fit", "predict"]
 
     def get_column_to_tags_mapping(self, config: cfg.Config) -> Optional[Dict[Any, List[str]]]:
         """

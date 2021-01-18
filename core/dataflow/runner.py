@@ -26,18 +26,14 @@ class FitPredictDagRunner:
         self._dag_builder = dag_builder
         # Create DAG using DAG builder.
         self.dag = self._dag_builder.get_dag(self.config)
-        self._input_nids = self._dag_builder.input_nids
-        # TODO(*): Require only one result nid.
-        self._result_nid = self._dag_builder.result_nids[0]
         self._methods = self._dag_builder.methods
         self._column_to_tags_mapping = self._dag_builder.get_column_to_tags_mapping(self.config)
-        # Confirm that input nids are sources in DAG.
-        dbg.dassert_is_subset(self._input_nids, self.dag.get_sources())
-        # Confirm that the result nid is a sink in the the DAG.
-        dbg.dassert_in(self._result_nid, self.dag.get_sinks())
         # Confirm that "fit" and "predict" are registered DAG methods.
         dbg.dassert_in("fit", self._methods)
         dbg.dassert_in("predict", self._methods)
+        result_nids = self.dag.get_sinks()
+        dbg.dassert_eq(len(result_nids), 1)
+        self._result_nid = result_nids[0]
 
     def set_fit_intervals(
         self, intervals: Optional[List[Tuple[Any, Any]]]
@@ -49,7 +45,7 @@ class FitPredictDagRunner:
         """
         if intervals is None:
             return
-        for input_nid in self._input_nids:
+        for input_nid in self.dag.get_sources():
             self.dag.get_node(input_nid).set_fit_intervals(intervals)
 
     def set_predict_intervals(
@@ -62,7 +58,7 @@ class FitPredictDagRunner:
         """
         if intervals is None:
             return
-        for input_nid in self._input_nids:
+        for input_nid in self.dag.get_sources():
             self.dag.get_node(input_nid).set_predict_intervals(intervals)
 
     def fit(self) -> ResultBundle:
