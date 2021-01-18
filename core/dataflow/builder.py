@@ -1,6 +1,6 @@
 import abc
 import logging
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 import core.config as cfg
 from core.dataflow.core import DAG
@@ -47,6 +47,7 @@ class DagBuilder(abc.ABC):
         """
         Input node identifiers.
         """
+        # TODO(*): Add a default implementation that adds all sources.
 
     @property
     @abc.abstractmethod
@@ -54,6 +55,7 @@ class DagBuilder(abc.ABC):
         """
         Result node identifiers.
         """
+        # TODO(*): Add a default implementation that adds all syncs.
 
     @property
     @abc.abstractmethod
@@ -89,6 +91,15 @@ class DagBuilder(abc.ABC):
             created.
         :return: `dag` with all builder operations applied
         """
+
+    def get_column_to_tags_mapping(self, config: cfg.Config) -> Optional[Dict[Any, List[str]]]:
+        """
+        Get a dictionary of result nid column names to semantic tags.
+
+        :return: dictionary keyed by column names and with values that are
+            lists of str tag names
+        """
+        return None
 
     def _get_nid(self, stage_name: str) -> str:
         nid = self._nid_prefix + stage_name
