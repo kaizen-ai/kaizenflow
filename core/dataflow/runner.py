@@ -31,6 +31,11 @@ class FitPredictDagRunner:
         self._result_nid = self._dag_builder.result_nids[0]
         self._methods = self._dag_builder.methods
         self._column_to_tags_mapping = self._dag_builder.get_column_to_tags_mapping(self.config)
+        # Confirm that input nids are sources in DAG.
+        dbg.dassert_is_subset(self._input_nids, self.dag.get_sources())
+        # Confirm that the result nid is a sink in the the DAG.
+        dbg.dassert_in(self._result_nid, self.dag.get_sinks())
+        # Confirm that "fit" and "predict" are registered DAG methods.
         dbg.dassert_in("fit", self._methods)
         dbg.dassert_in("predict", self._methods)
 
@@ -62,14 +67,13 @@ class FitPredictDagRunner:
 
     def fit(self) -> ResultBundle:
         return self._run_dag(self._result_nid, "fit")
-        pass
 
     def predict(self) -> ResultBundle:
         return self._run_dag(self._result_nid, "predict")
 
     def _run_dag(self, nid: str, method: str) -> ResultBundle:
         """
-        Run DAG.
+        Run DAG and return a ResultBundle.
 
         :param nid: identifier of terminal node for execution
         :param method: `Node` subclass method to be executed
