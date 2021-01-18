@@ -1,19 +1,11 @@
-import datetime
-
 import pandas as pd
 from unittest.mock import patch
 
 import helpers.unit_test as hut
 import vendors2.kibot.metadata.load.contract_symbol_mapping as csm
-import vendors2.kibot.metadata.load.kibot_metadata as kmd
 
 
 class TestContractSymbolMapper(hut.TestCase):
-    def test(self):
-        l = kmd.ContractExpiryMapper(kmd.KibotTradingActivityContractLifetimeComputer, "./test.csv", ["AEX"])
-        expiry = l.get_expiry(datetime.datetime.now() - datetime.timedelta(seconds=3600*24*730), 5, "AEX")
-        print(expiry)
-
     @staticmethod
     def _mock_csm():
         def mock_test_contract_symbol_mapping_init(self: csm.ContractSymbolMapping):
