@@ -227,7 +227,6 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         return realization
 
 
-#@pytest.mark.skip("Results differ on different environments")
 class TestContinuousSarimaxModel(hut.TestCase):
     """
     Warning:
