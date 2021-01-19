@@ -282,12 +282,16 @@ def compute_ret_0_from_multiple_prices(
 
 
 def compute_prices_from_rets(
-    price: Union[pd.Series, pd.DataFrame],
-    rets: Union[pd.Series, pd.DataFrame],
+    price: pd.Series,
+    rets: pd.Series,
     mode: str,
 ) -> pd.Series:
     """
     Compute price at moment t_1 with given price at t_0 and return ret_1.
+    
+    This implies that input has ret_1 one step ahead of a price at t_0.
+    If we have forward returns instead (ret_1 is aligned with prices at t_0),
+    we need to shift input returns one step ahead. 
 
     :param price: series with prices
     :param rets: series with returns
