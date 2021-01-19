@@ -32,12 +32,12 @@ _NUM_SPACES = 2
 def _process_comment_block(line: str, in_skip_block: bool) -> Tuple[bool, bool]:
     # TODO: improve the comment handling, handle also \* *\ and %.
     do_continue = False
-    if line.startswith(r"<!--") or re.search(r'\s*\/\*', line):
+    if line.startswith(r"<!--") or re.search(r'^\s*\/\*', line):
         dbg.dassert(not in_skip_block)
         # Start skipping comments.
         in_skip_block = True
     if in_skip_block:
-        if line.endswith(r"-->") or re.search(r'\s*\*\/', line):
+        if line.endswith(r"-->") or re.search(r'^\s*\*\/', line):
             # End skipping comments.
             in_skip_block = False
         # Skip comment.

@@ -131,6 +131,7 @@ def _run_pandoc_to_pdf(
     template = "%s/pandoc.latex" % curr_path
     dbg.dassert_exists(template)
     cmd.append("--template %s" % template)
+    cmd.append("--filter pandoc-plantuml")
     #
     file2 = "%s.tex" % prefix
     cmd.append("-o %s" % file2)

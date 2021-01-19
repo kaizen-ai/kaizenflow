@@ -1,7 +1,9 @@
 import dataclasses
 import enum
+import pandas as pd
 
 # TODO(Amr): add doc strings to these classes with examples.
+from typing import Union
 
 
 class KibotContractType(enum.Enum):
@@ -47,3 +49,18 @@ class Ticker:
     Exchange: str
     Industry: str
     Sector: str
+
+
+DATE_TYPE = Union[str, "pandas.Timestamp", "datetime.datetime"]
+
+
+@dataclasses.dataclass
+class Expiry:
+    month: str
+    year: str
+
+
+@dataclasses.dataclass
+class ContractLifetime:
+    start_date: pd.Timestamp
+    end_date: pd.Timestamp

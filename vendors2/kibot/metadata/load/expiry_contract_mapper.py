@@ -25,7 +25,23 @@ class ExpiryContractMapper:
         "December": "Z",
     }
 
+    _MONTH_TO_EXPIRY_NUM = {
+        1: "F",
+        2: "G",
+        3: "H",
+        4: "J",
+        5: "K",
+        6: "M",
+        7: "N",
+        8: "Q",
+        9: "U",
+        10: "V",
+        11:"X",
+        12: "Z"
+    }
+
     _EXPIRY_TO_MONTH = {v: k for k, v in _MONTH_TO_EXPIRY.items()}
+    _EXPIRY_TO_MONTH_NUM = {v: k for k, v in _MONTH_TO_EXPIRY_NUM.items()}
 
     def month_to_expiry(self, month: str) -> str:
         dbg.dassert_in(month, self._MONTH_TO_EXPIRY)
@@ -35,8 +51,16 @@ class ExpiryContractMapper:
         dbg.dassert_in(expiry, self._EXPIRY_TO_MONTH)
         return self._EXPIRY_TO_MONTH[expiry]
 
+    def month_to_expiry_num(self, month: int) -> str:
+        dbg.dassert_in(month, self._MONTH_TO_EXPIRY_NUM)
+        return self._MONTH_TO_EXPIRY_NUM[month]
+
+    def expiry_to_month_num(self, expiry: str) -> int:
+        dbg.dassert_in(expiry, self._EXPIRY_TO_MONTH_NUM)
+        return self._EXPIRY_TO_MONTH_NUM[expiry]
+
     @staticmethod
-    def parse_expiry_contract(v: str) -> Tuple[str, str, str]:
+    def parse_expiry_contract(v: str) -> Tuple[str, str, int]:
         """
         Parse a futures contract name into its components, e.g., in a futures
         contract name like "ESH10":
@@ -48,9 +72,16 @@ class ExpiryContractMapper:
         m = re.match(r"^(\S+)(\S)(\d{2})$", v)
         if m is None:
             dbg.dassert(m, "Invalid '%s'", v)
-            return "", "", ""
+            return "", "", 0
         base_symbol, month, year = m.groups()
+
         return base_symbol, month, year
+
+    def parse_year(self, year: str) -> int:
+        """Convert 2 digit years to 4 digit years, e.g. 20 -> 2020 & 99 -> 1999."""
+        year = int(year)
+        year = year + 2000 if year < 50 else year + 1900
+        return year
 
     @staticmethod
     def compare_expiry_contract(v1: str, v2: str) -> int:

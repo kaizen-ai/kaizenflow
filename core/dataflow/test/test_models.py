@@ -227,7 +227,7 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         return realization
 
 
-@pytest.mark.skip("Results differ on different environments")
+#@pytest.mark.skip("Results differ on different environments")
 class TestContinuousSarimaxModel(hut.TestCase):
     """
     Warning:
@@ -512,6 +512,14 @@ class TestContinuousSarimaxModel(hut.TestCase):
             df_out2.loc["2010-04-07":"2010-04-16", "ret_0_3_hat"],
             df_out3.loc["2010-04-07":"2010-04-16", "ret_0_3_hat"],
         )
+        
+    def test_summary(self) -> None:
+        data = self._get_data([], [])
+        config = self._get_config((1, 0, 1), (1, 0, 1, 3))
+        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        csm.fit(data)
+        info = csm.get_info("fit")["model_summary"]
+        self.check_string(info)
 
     @staticmethod
     def _get_data(
