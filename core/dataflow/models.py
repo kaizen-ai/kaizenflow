@@ -793,7 +793,7 @@ class ContinuousSarimaxModel(FitPredictNode, RegFreqMixin, ToListMixin):
             pred_range = len(y)
             pred_start = 1
         y_var = y.columns[0]
-        for t in tqdm(range(pred_start, pred_range), disable=self._disable_tqdm):
+        for t in tqdm(range(pred_start, pred_range + 1), disable=self._disable_tqdm):
             # If `t` is larger than `y`, this selects the whole `y`.
             y_past = y.iloc[:t]
             if x is not None:
