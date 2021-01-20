@@ -27,7 +27,9 @@ class FitPredictDagRunner:
         # Create DAG using DAG builder.
         self.dag = self._dag_builder.get_dag(self.config)
         self._methods = self._dag_builder.methods
-        self._column_to_tags_mapping = self._dag_builder.get_column_to_tags_mapping(self.config)
+        self._column_to_tags_mapping = (
+            self._dag_builder.get_column_to_tags_mapping(self.config)
+        )
         # Confirm that "fit" and "predict" are registered DAG methods.
         dbg.dassert_in("fit", self._methods)
         dbg.dassert_in("predict", self._methods)
@@ -84,6 +86,6 @@ class FitPredictDagRunner:
             result_nid=nid,
             method=method,
             result_df=df_out,
-            column_to_tags=self.column_to_tags_mapping,
+            column_to_tags=self._column_to_tags_mapping,
             info=info,
         )

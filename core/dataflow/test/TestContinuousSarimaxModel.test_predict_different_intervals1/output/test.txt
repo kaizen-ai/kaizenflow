@@ -20,7 +20,7 @@
 2010-03-30 -0.856396 -0.940601 -0.782702    -0.939044    -0.936298    -0.935553    -0.935553          NaN
 2010-03-31 -0.857677 -0.889274       NaN    -0.887966    -0.888619    -0.887341    -0.887341          NaN
 2010-04-01 -0.858529 -0.879566       NaN    -0.880461    -0.879420    -0.878041    -0.878041          NaN
-2010-04-02 -0.855582 -0.782702       NaN          NaN          NaN          NaN    -0.783638          NaN
+2010-04-02 -0.855582 -0.782702       NaN    -0.784486    -0.785850    -0.783638    -0.783638          NaN
 2010-04-03       NaN       NaN       NaN          NaN          NaN          NaN    -0.846733          NaN
 2010-04-04       NaN       NaN       NaN          NaN          NaN          NaN    -0.877106          NaN
 2010-04-05       NaN       NaN       NaN          NaN          NaN          NaN    -0.918022          NaN
@@ -35,7 +35,7 @@
 2010-04-14       NaN       NaN       NaN          NaN          NaN          NaN    -1.333844    -1.333844
 2010-04-15       NaN       NaN       NaN          NaN          NaN          NaN    -1.352781    -1.352781
 2010-04-16       NaN       NaN       NaN          NaN          NaN          NaN    -1.317200    -1.317200
-2010-04-17       NaN       NaN       NaN          NaN          NaN          NaN          NaN    -1.136405
+2010-04-17       NaN       NaN       NaN          NaN          NaN          NaN    -1.136405    -1.136405
 2010-04-18       NaN       NaN       NaN          NaN          NaN          NaN          NaN    -1.111511
 2010-04-19       NaN       NaN       NaN          NaN          NaN          NaN          NaN    -1.079775
 2010-04-20       NaN       NaN       NaN          NaN          NaN          NaN          NaN    -1.085238
@@ -45,4 +45,4 @@
 2010-04-24       NaN       NaN       NaN          NaN          NaN          NaN          NaN    -1.042216
 2010-04-25       NaN       NaN       NaN          NaN          NaN          NaN          NaN    -1.051562
 2010-04-26       NaN       NaN       NaN          NaN          NaN          NaN          NaN    -1.015117
-2010-04-27       NaN       NaN       NaN          NaN          NaN          NaN          NaN          NaN
+2010-04-27       NaN       NaN       NaN          NaN          NaN          NaN          NaN    -1.018012
