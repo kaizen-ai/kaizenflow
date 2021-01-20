@@ -88,6 +88,10 @@ class ResultBundle(abc.ABC):
     def payload(self) -> Optional[cfg.Config]:
         return self._payload
 
+    @payload.setter
+    def payload(self, value: Optional[cfg.Config]) -> None:
+        self._payload = value
+
     def to_config(self, commit_hash: bool = True) -> cfg.Config:
         """
         Represent class state as config.
