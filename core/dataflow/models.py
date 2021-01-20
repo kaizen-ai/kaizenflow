@@ -182,9 +182,11 @@ class ContinuousSkLearnModel(FitPredictNode, RegFreqMixin, ToListMixin):
         info["model_attributes"] = model_attribute_info
         info["insample_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
         info["insample_score"] = self._score(fwd_y_df, fwd_y_hat)
+        # Get targets and predictions.
+        output = self._replace_or_merge_output(df, fwd_y_df, fwd_y_hat, idx)
+        info["df_out_info"] = get_df_info_as_string(output["df_out"])
         self._set_info("fit", info)
-        # Return targets and predictions.
-        return self._replace_or_merge_output(df, fwd_y_df, fwd_y_hat, idx)
+        return output
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
@@ -216,9 +218,11 @@ class ContinuousSkLearnModel(FitPredictNode, RegFreqMixin, ToListMixin):
         info["model_score"] = self._score(
             fwd_y_df.loc[fwd_y_non_nan_idx], fwd_y_hat.loc[fwd_y_non_nan_idx]
         )
-        self._set_info("predict", info)
-        # Return predictions.
-        return self._replace_or_merge_output(df, fwd_y_df, fwd_y_hat, idx)
+        # Get targets and predictions.
+        output = self._replace_or_merge_output(df, fwd_y_df, fwd_y_hat, idx)
+        info["df_out_info"] = get_df_info_as_string(output["df_out"])
+        self._set_info("fit", info)
+        return output
 
     def _replace_or_merge_output(
         self,
@@ -379,10 +383,6 @@ class UnsupervisedSkLearnModel(FitPredictNode, RegFreqMixin, ToListMixin):
         for k, v in vars(self._model).items():
             model_attribute_info[k] = v
         info["model_attributes"] = model_attribute_info
-        if fit:
-            self._set_info("fit", info)
-        else:
-            self._set_info("predict", info)
         # Return targets and predictions.
         df_out = x_hat.reindex(index=df_in.index)
         if self._col_mode == "replace_all":
@@ -396,6 +396,11 @@ class UnsupervisedSkLearnModel(FitPredictNode, RegFreqMixin, ToListMixin):
             )
         else:
             dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        if fit:
+            self._set_info("fit", info)
+        else:
+            self._set_info("predict", info)
         # Return targets and predictions.
         dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
@@ -487,12 +492,14 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
         for k, v in vars(self._model).items():
             model_attribute_info[k] = v
         info["model_attributes"] = model_attribute_info
+        df_out = x_residual.reindex(index=df_in.index)
+        info["df_out_info"] = get_df_info_as_string(df_out)
         if fit:
             self._set_info("fit", info)
         else:
             self._set_info("predict", info)
         # Return targets and predictions.
-        return {"df_out": x_residual.reindex(index=df_in.index)}
+        return {"df_out": df_out}
 
     def _handle_nans(
         self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
@@ -547,9 +554,11 @@ class SkLearnModel(FitPredictNode, ToListMixin):
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         info["model_params"] = self._model.get_params()
+        output = self._replace_or_merge_output(df, y_hat, idx)
+        info["df_out_info"] = get_df_info_as_string(output["df_out"])
         self._set_info("fit", info)
         # Return targets and predictions.
-        return self._replace_or_merge_output(df, y_hat, idx)
+        return output
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         SkLearnModel._validate_input_df(df_in)
@@ -566,9 +575,11 @@ class SkLearnModel(FitPredictNode, ToListMixin):
         info = collections.OrderedDict()
         info["model_params"] = self._model.get_params()
         info["model_perf"] = self._model_perf(x_predict, y_predict, y_hat)
+        output = self._replace_or_merge_output(df, y_hat, idx)
+        info["df_out_info"] = get_df_info_as_string(output["df_out"])
         self._set_info("predict", info)
         # Return predictions.
-        return self._replace_or_merge_output(df, y_hat, idx)
+        return output
 
     def _replace_or_merge_output(
         self, df: pd.DataFrame, y_hat: pd.DataFrame, idx: pd.Series
@@ -746,6 +757,7 @@ class ContinuousSarimaxModel(FitPredictNode, RegFreqMixin, ToListMixin):
             _remove_datetime_info_from_SARIMAX(self._model_results.summary())
             .as_text()
         )
+        info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
@@ -775,6 +787,7 @@ class ContinuousSarimaxModel(FitPredictNode, RegFreqMixin, ToListMixin):
         # Add info.
         info = collections.OrderedDict()
         info["model_summary"] = self._model_results.summary()
+        info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
@@ -1104,9 +1117,10 @@ class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
         # Store info.
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
-        self._set_info("fit", info)
         #
         df_out = fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("fit", info)
         dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
@@ -1140,9 +1154,10 @@ class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
         # Store info.
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
-        self._set_info("predict", info)
         #
         df_out = fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("predict", info)
         dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
@@ -1287,8 +1302,10 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
         # info["gluon_train"] = list(gluon_train)
         # info["gluon_test"] = list(gluon_test)
         # info["fit_predictions"] = fit_predictions
+        df_out = y_hat.to_frame()
+        info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("fit", info)
-        return {"df_out": y_hat.to_frame()}
+        return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_isinstance(df_in, pd.DataFrame)
@@ -1333,8 +1350,10 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
         # info["gluon_train"] = list(gluon_train)
         # info["gluon_test"] = list(gluon_test)
         # info["fit_predictions"] = fit_predictions
+        df_out = y_hat.to_frame()
+        info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("predict", info)
-        return {"df_out": y_hat.to_frame()}
+        return {"df_out": df_out}
 
 
 class SmaModel(FitPredictNode, RegFreqMixin):
@@ -1459,8 +1478,9 @@ class SmaModel(FitPredictNode, RegFreqMixin):
         )
         dbg.dassert_no_duplicates(df_out.columns)
         info = collections.OrderedDict()
-        self._set_info("predict", info)
         df_out = self._apply_col_mode(df_in, df_out)
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("predict", info)
         return {"df_out": df_out}
 
     def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -1759,6 +1779,7 @@ class VolatilityModel(FitPredictNode):
         dag = self._get_dag(df_in)
         df_out = dag.run_leq_node(self._modulator.nid, "fit")["df_out"]
         info = extract_info(dag, ["fit"])
+        info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
@@ -1768,6 +1789,7 @@ class VolatilityModel(FitPredictNode):
         dag = self._get_dag(df_in)
         df_out = dag.run_leq_node(self._modulator.nid, "predict")["df_out"]
         info = extract_info(dag, ["predict"])
+        info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
