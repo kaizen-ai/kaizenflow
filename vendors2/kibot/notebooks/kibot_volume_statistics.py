@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.4.2
+#       jupytext_version: 1.5.2
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -13,6 +13,7 @@
 # ---
 
 # %% [markdown]
+#
 # # Imports
 #
 # Importing all required modules.
@@ -23,7 +24,6 @@
 
 import datetime as dt
 import os
-from typing import Dict
 
 import pandas as pd
 
@@ -32,72 +32,55 @@ import vendors2.kibot.data.load as kdl
 import vendors2.kibot.data.load.file_path_generator as fpgen
 import vendors2.kibot.data.types as types
 
+# This will be changed later when Exchange will be developed.
+EXCHANGE = "TestExchange"
+
 # %% [markdown] pycharm={"name": "#%% md\n"}
 # Define helper functions to calculate the report.
 
 
 # %% pycharm={"name": "#%%\n"}
 def slice_price_data(
-    price_df_dict: Dict[str, pd.DataFrame], last_years: int
-) -> Dict[str, pd.DataFrame]:
+    prices: pd.DataFrame, last_years: int
+) -> pd.DataFrame:
     """Slice DataFrames for each symbol to contain records only for the
     last_years years.
 
-    :param price_df_dict: {symbol: prices_for_symbol_df}
+    :param prices: price for symbol dataframe.
     :param last_years: Number of years data is averaged to.
-    :return: {symbol: prices_for_symbol_df} sliced.
+    :return: dataframe sliced.
     """
     now = dt.datetime.now()
     # TODO(vr): check if dateutils.relativedate is better?
     before = now - dt.timedelta(days=last_years * 365)
-    sliced_price_df_dict = {
-        symbol: prices.loc[before:now] for symbol, prices in price_df_dict.items()
-    }
-    return sliced_price_df_dict
+    return prices.loc[before:now]
 
 
-def get_start_date(price_df_dict: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+def get_start_date(prices_df: pd.DataFrame) -> str:
     """Extract start dates for each time series.
 
-    :param price_df_dict: {symbol: prices_for_symbol_df}
-    :return: pd.DataFrame indexed by symbol
+    :param prices_df: dataframe with prices
+    :return: start date as string
     """
-    start_date_dict = {
-        symbol: prices.index[0].strftime("%Y-%m-%d")
-        for symbol, prices in price_df_dict.items()
-    }
-    start_date_df = pd.DataFrame.from_dict(
-        start_date_dict, orient="index", columns=["start_date"]
-    )
-    return start_date_df
+    start_date = prices_df.index[0].strftime("%Y-%m-%d")
+    return start_date
 
 
 def get_price_data(
-    price_df_dict: Dict[str, pd.DataFrame],
+    prices_df: pd.DataFrame,
     price_col: str,
     agg_func: str,
-    last_years: int,
-) -> pd.DataFrame:
+) -> float:
     """Get grouped prices for each symbol.
 
-    :param price_df_dict: {symbol: prices_for_symbol_df}
+    :param prices_df: dataframe with prices
     :param price_col: The name of the price column
     :param agg_func: The name of the aggregation function that needs to
         be applied to the prices for each symbol
-    :param last_years: Number of years data is averaged to.
-    :return: pd.DataFrame indexed by symbol
+    :return:
     """
-    price_dict = {
-        symbol: getattr(prices[price_col], agg_func)()
-        for symbol, prices in price_df_dict.items()
-    }
-    price_df = pd.DataFrame.from_dict(
-        price_dict,
-        orient="index",
-        columns=[f"{agg_func}_{last_years}y_{price_col}"],
-    )
-    price_df.index.name = "symbol"
-    return price_df
+    val = getattr(prices_df[price_col], agg_func)()
+    return val
 
 
 # %% [markdown] pycharm={"name": "#%% md\n"}
@@ -105,47 +88,53 @@ def get_price_data(
 
 # %% pycharm={"name": "#%%\n"}
 def generate_report(
-    contract_type: types.ContractType, frequency: types.Frequency
+    exchange: str,
+    asset_class: types.AssetClass,
+    contract_type: types.ContractType,
+    frequency: types.Frequency
 ) -> pd.DataFrame:
     """Generate a report for a dataset.
 
+    :param exchange:
     :param frequency: `D` or `T` for daily or minutely data respectively
+    :param asset_class:
     :param contract_type: `continuous` or `expiry`
     :return: a dataframe with the report
     """
-    dataset_aws_path = fpgen.FilePathGenerator().generate_file_path(
-        frequency, contract_type, "ROOT", ext=types.Extension.CSV
+    dataset_aws_path = fpgen.FilePathGenerator().generate_file_path( "",
+        frequency, asset_class, contract_type, ext=types.Extension.CSV
     )
     dataset_aws_directory = os.path.dirname(dataset_aws_path)
     # Get a list of payloads (symbols) in format XYZ.csv.gz.
     payloads = hs3.listdir(dataset_aws_directory, mode="non-recursive")
     # Get only first n-rows.
-    n_rows = 100
+    n_rows = 10
     # Get only symbols list.
     symbols = tuple(
         payload.replace(".csv.gz", "") for payload in payloads[:n_rows]
     )
     # Read dataframes.
-    kibot_data_loader = kdl.KibotDataLoader()
-    price_df_dict = kibot_data_loader.read_data(frequency, contract_type, symbols)
-    # Get avg. vol for the last 1 year
-    price_1y_df_dict = slice_price_data(price_df_dict, last_years=1)
-    mean_1y_vol = get_price_data(price_1y_df_dict, "vol", "mean", last_years=1)
-    # Get avg. vol for the last 3 years
-    price_3y_df_dict = slice_price_data(price_df_dict, last_years=3)
-    mean_3y_vol = get_price_data(price_3y_df_dict, "vol", "mean", last_years=3)
-    # Get avg. vol for the last 5 years
-    price_5y_df_dict = slice_price_data(price_df_dict, last_years=5)
-    mean_5y_vol = get_price_data(price_5y_df_dict, "vol", "mean", last_years=5)
-    # Get start date for each symbol.
-    start_date_df = get_start_date(price_df_dict)
-    # Get report for dataset.
-    report = pd.concat(
-        [start_date_df, mean_1y_vol, mean_3y_vol, mean_5y_vol],
-        axis=1,
-        join="inner",
+    kibot_data_loader = kdl.S3KibotDataLoader()
+    report_data = []
+    for symbol in symbols:
+        df = kibot_data_loader.read_data(exchange, symbol, asset_class, frequency, contract_type)
+        # Get avg. vol for the last 1 year
+        price_1y_df = slice_price_data(df, last_years=1)
+        mean_1y_vol = get_price_data(price_1y_df, "vol", "mean")
+        # Get avg. vol for the last 3 years
+        price_3y_df = slice_price_data(df, last_years=3)
+        mean_3y_vol = get_price_data(price_3y_df, "vol", "mean")
+        # Get avg. vol for the last 5 years
+        price_5y_df = slice_price_data(df, last_years=5)
+        mean_5y_vol = get_price_data(price_5y_df, "vol", "mean")
+        # Get start date for each symbol.
+        start_date = get_start_date(df)
+        report_data.append((symbol, start_date, mean_1y_vol, mean_3y_vol, mean_5y_vol))
+    report = pd.DataFrame.from_records(
+        report_data,
+        index="symbol",
+        columns=["symbol", "start_date", "mean_1y_vol", "mean_3y_vol", "mean_5y_vol"]
     )
-    report.index.name = "symbol"
     report.fillna(0, inplace=True)
     return report
 
@@ -155,7 +144,10 @@ def generate_report(
 
 # %% pycharm={"name": "#%%\n"}
 dataset_report = generate_report(
-    types.ContractType.Expiry, types.Frequency.Minutely
+    EXCHANGE,
+    types.AssetClass.Futures,
+    types.ContractType.Expiry,
+    types.Frequency.Minutely
 )
 dataset_report
 
@@ -163,23 +155,34 @@ dataset_report
 # Report for all_futures_contracts_daily
 
 # %% pycharm={"name": "#%%\n"}
-dataset_report = generate_report(types.ContractType.Expiry, types.Frequency.Daily)
-dataset_report
-
-# %% [markdown]
-# Report for futures_continuous_contracts_1min
-
-# %% pycharm={"name": "#%%\n", "is_executing": true}
 dataset_report = generate_report(
-    types.ContractType.Continuous, types.Frequency.Minutely
+    EXCHANGE,
+    types.AssetClass.Futures,
+    types.ContractType.Expiry,
+    types.Frequency.Daily
 )
 dataset_report
 
 # %% [markdown]
-# Report for futures_continuous_contracts_daily
+# Report for all_futures_continuous_contracts_1min
 
-# %% pycharm={"name": "#%%\n", "is_executing": true}
+# %% pycharm={"name": "#%%\n"}
 dataset_report = generate_report(
-    types.ContractType.Continuous, types.Frequency.Daily
+    EXCHANGE,
+    types.AssetClass.Futures,
+    types.ContractType.Continuous,
+    types.Frequency.Minutely
+)
+dataset_report
+
+# %% [markdown]
+# Report for all_futures_continuous_contracts_daily
+
+# %% pycharm={"name": "#%%\n"}
+dataset_report = generate_report(
+    EXCHANGE,
+    types.AssetClass.Futures,
+    types.ContractType.Continuous,
+    types.Frequency.Daily
 )
 dataset_report
