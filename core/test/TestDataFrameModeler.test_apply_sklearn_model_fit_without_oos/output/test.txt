@@ -232,4 +232,17 @@ OrderedDict([('model_x_vars', ['x']),
 2010-04-08   0.011838),
                            ('sr', y_2    5.411421
 Name: SR, dtype: float64)])),
-             ('insample_score', 0.9997550926740139)])
+             ('insample_score', 0.9997550926740139),
+             ('df_out_info',
+              "<class 'pandas.core.frame.DataFrame'>\n"
+              'DatetimeIndex: 100 entries, 2010-01-01 to 2010-04-10\n'
+              'Freq: D\n'
+              'Data columns (total 4 columns):\n'
+              ' #   Column   Non-Null Count  Dtype  \n'
+              '---  ------   --------------  -----  \n'
+              ' 0   x        100 non-null    float64\n'
+              ' 1   y        100 non-null    float64\n'
+              ' 2   y_2      98 non-null     float64\n'
+              ' 3   y_2_hat  98 non-null     float64\n'
+              'dtypes: float64(4)\n'
+              'memory usage: 3.9 KB\n')])
