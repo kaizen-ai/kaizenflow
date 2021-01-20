@@ -56,6 +56,7 @@ class TestResultBundle(hut.TestCase):
         init_config["info"] = collections.OrderedDict(
             {"df_info": dtf.get_df_info_as_string(df)}
         )
+        init_config["payload"] = None
         return init_config
 
 

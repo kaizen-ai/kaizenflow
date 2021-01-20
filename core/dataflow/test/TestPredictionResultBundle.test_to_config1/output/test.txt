@@ -19,4 +19,5 @@ info:
   dtypes: int64(5)
   memory usage: 168.0 bytes
   
+payload: None
 class: PredictionResultBundle
