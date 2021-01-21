@@ -145,7 +145,7 @@ class Test_compute_prices_from_rets(hut.TestCase):
         
     def test4(self) -> None:
         """
-        Check forward returns.
+        Check prices from forward returns.
         """
         sample = pd.DataFrame({"price": [1, 2, 3], "fwd_ret": [1, 0.5, np.nan]})
         sample["ret_0"] = sample.fwd_ret.shift(1)
@@ -154,6 +154,20 @@ class Test_compute_prices_from_rets(hut.TestCase):
         ).shift(1)
         sample = sample.dropna()
         np.testing.assert_array_almost_equal(sample.price_pred, sample.price)
+        
+    def test5(self) -> None:
+        """
+        Check output with forward returns.
+        """
+        np.random.seed(0)
+        sample = self._get_sample()
+        sample["ret_0"] = fin.compute_ret_0(sample.price, mode="log_rets")
+        sample["ret_1"] = sample["ret_0"].shift(-1)
+        sample["price_pred"] = fin.compute_prices_from_rets(
+            sample.price, sample.ret_1.shift(1), "log_rets"
+        )
+        output_txt = hut.convert_df_to_string(sample, index=True)
+        self.check_string(output_txt)
 
         
 class Test_aggregate_log_rets(hut.TestCase):
