@@ -406,16 +406,16 @@ class DataFrameModeler:
         )
         return self._run_model(model, method)
     
-    def merge_dataframe_modeler(
+    def merge(
         self, 
         dfm: DataFrameModeler, 
-        merge_kwargs: Optional[dict] = None,
+        merge_kwargs: Optional[Dict[str, Any]] = None,
     ) -> DataFrameModeler:
         """
-        Merge DataFrameModeler with another DataFrameModeler.
+        Merge `DataFrameModeler` with another `DataFrameModeler` object.
         
-        Returns a new DataFrameModeler with merged underlying dataframes.
-        If oos_start dates are different, set it to the first one and raise 
+        Returns a new `DataFrameModeler` with merged underlying dataframes.
+        If `oos_start` dates are different, set it to the first one and raise 
         a warning.
         """
         dbg.dassert_isinstance(dfm, DataFrameModeler)
@@ -427,12 +427,13 @@ class DataFrameModeler:
             **merge_kwargs,
         )
         if self.oos_start != dfm.oos_start:
-            warnings.warn(
-                "OOS start dates are different.\n" + 
-                f"OOS start for merged DataFrameModelers was set to {self.oos_start}.",
-                Warning,
+            _LOG.warning(
+                "`oos_start` dates are different.\n" + 
+                "`oos_start` for merged `DataFrameModelers` was set to " +
+                f"{self.oos_start}."
             )
-        return DataFrameModeler(df_merged, self.oos_start)          
+        info = {"info": dtf.get_df_info_as_string(df_merged)}
+        return DataFrameModeler(df_merged, oos_start=self.oos_start, info=info)          
 
     # #########################################################################
     # Dataframe stats and plotting

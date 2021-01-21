@@ -144,9 +144,7 @@ class TestDataFrameModeler(hut.TestCase):
             index=pd.date_range("2010-01-01", periods=5),
         )
         dfm = dfmod.DataFrameModeler(df1, oos_start="2010-01-01")
-        dfm = dfm.merge_dataframe_modeler(
-            dfmod.DataFrameModeler(df2, oos_start="2010-01-02")
-        )
+        dfm = dfm.merge(dfmod.DataFrameModeler(df2, oos_start="2010-01-02"))
         df = pd.merge(df1, df2, left_index=True, right_index=True)
         pd.testing.assert_frame_equal(dfm.df, df)
         self.assertEqual(dfm.oos_start, "2010-01-01")
