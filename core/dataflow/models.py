@@ -188,10 +188,12 @@ class ContinuousSkLearnModel(
         info["insample_score"] = self._score(fwd_y_df, fwd_y_hat)
         self._set_info("fit", info)
         # Return targets and predictions.
-        df_out = fwd_y_df.merge(fwd_y_hat, left_index=True, right_index=True)
+        df_out = fwd_y_df.merge(
+            fwd_y_hat, how="outer", left_index=True, right_index=True
+        )
         df_out = df_out.reindex(idx)
         df_out = self._apply_col_mode(
-            df.loc[idx], df_out, self._to_list(self._y_vars), self._col_mode
+            df, df_out, self._to_list(self._y_vars), self._col_mode
         )
         return {"df_out": df_out}
 
@@ -227,10 +229,12 @@ class ContinuousSkLearnModel(
         )
         self._set_info("predict", info)
         # Return predictions.
-        df_out = fwd_y_df.merge(fwd_y_hat, left_index=True, right_index=True)
+        df_out = fwd_y_df.merge(
+            fwd_y_hat, how="outer", left_index=True, right_index=True
+        )
         df_out = df_out.reindex(idx)
         df_out = self._apply_col_mode(
-            df.loc[idx], df_out, self._to_list(self._y_vars), self._col_mode
+            df, df_out, self._to_list(self._y_vars), self._col_mode
         )
         return {"df_out": df_out}
 
@@ -710,8 +714,9 @@ class ContinuousSarimaxModel(
         fwd_y_hat = self._predict(y_fit, x_fit)
         # Package results.
         fwd_y_df = self._get_fwd_y_df(df)
-        df_out = fwd_y_df.merge(fwd_y_hat, left_index=True, right_index=True)
-        df_out = df_out.reindex(idx)
+        df_out = fwd_y_df.merge(
+            fwd_y_hat, how="outer", left_index=True, right_index=True
+        )
         df_out = self._apply_col_mode(
             df, df_out, self._to_list(self._y_vars), self._col_mode
         )
@@ -746,8 +751,9 @@ class ContinuousSarimaxModel(
         fwd_y_hat = self._predict(y_predict, x_predict)
         # Package results.
         fwd_y_df = self._get_fwd_y_df(df)
-        df_out = fwd_y_df.merge(fwd_y_hat, left_index=True, right_index=True)
-        df_out = df_out.reindex(idx)
+        df_out = fwd_y_df.merge(
+            fwd_y_hat, how="outer", left_index=True, right_index=True
+        )
         df_out = self._apply_col_mode(
             df, df_out, self._to_list(self._y_vars), self._col_mode
         )
