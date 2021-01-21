@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import collections
 import datetime
+import warnings
 import json
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
@@ -404,6 +405,34 @@ class DataFrameModeler:
             col_mode="replace_all",
         )
         return self._run_model(model, method)
+    
+    def merge_dataframe_modeler(
+        self, 
+        dfm: DataFrameModeler, 
+        merge_kwargs: Optional[dict] = None,
+    ) -> DataFrameModeler:
+        """
+        Merge DataFrameModeler with another DataFrameModeler.
+        
+        Returns a new DataFrameModeler with merged underlying dataframes.
+        If oos_start dates are different, set it to the first one and raise 
+        a warning.
+        """
+        dbg.dassert_isinstance(dfm, DataFrameModeler)
+        merge_kwargs = merge_kwargs or {}
+        df_merged = self._df.merge(
+            dfm.df, 
+            left_index=True,
+            right_index=True,
+            **merge_kwargs,
+        )
+        if self.oos_start != dfm.oos_start:
+            warnings.warn(
+                "OOS start dates are different.\n" + 
+                f"OOS start for merged DataFrameModelers was set to {self.oos_start}.",
+                Warning,
+            )
+        return DataFrameModeler(df_merged, self.oos_start)          
 
     # #########################################################################
     # Dataframe stats and plotting
