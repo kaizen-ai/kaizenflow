@@ -374,25 +374,46 @@ class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
         return vkmdt.ContractLifetime(start_date, end_date)
 
 
-class ContractExpiryMapper:
-    contracts: pd.DataFrame
+class ContractsLoader:
+    def __init__(self, symbols: List[str], file: str, lifetime_computer: ContractLifetimeComputer, refresh: bool = False) -> None:
+        if os.path.isfile(file) and not refresh:
+            self.contracts = self._load_from_csv(file)
+        else:
+            self.contracts = self._compute_lifetimes(symbols, lifetime_computer)
+            csv.to_typed_csv(self.contracts, file)
 
-    def __init__(self, lifetime_computer: Type[ContractLifetimeComputer], file: str, symbols: List[str] = None) -> None:
-        """
+    def get_contracts(self):
+        return self.contracts
 
-        :param lifetime_computer: computer responsible for calculating the lifetime.
-        :param file: used for caching results
+    @staticmethod
+    def _load_from_csv(file: str) -> pd.DataFrame:
+        return csv.from_typed_csv(file)
+
+    @staticmethod
+    def _compute_lifetimes(symbols: Union[pd.Series, List[str]], lifetime_computer: ContractLifetimeComputer) -> pd.DataFrame:
+        """Compute the lifetime for all contracts available for all symbols passed in.
+
+        :param symbols: kibot symbols from which to retrieve contracts
         """
         kb = KibotMetadata()
-        if symbols is None:
-            symbols = kb.get_kibot_symbols()
-        if file is None:
-            self._compute_lifetimes(symbols, kb, lifetime_computer)
-        elif os.path.exists(file):
-            self.contracts = pd.read_csv(file)
-        else:
-            self._compute_lifetimes(symbols, kb, lifetime_computer)
-            csv.to_typed_csv(self.contracts, file)
+        dbg.dassert_in(type(symbols), [pd.Series, list])
+        if isinstance(symbols, pd.Series):
+            symbols = [symbol for _, symbol in symbols.items()]
+
+        df = []
+        for symbol in symbols:
+            contracts = kb.get_expiry_contracts(symbol)
+            lifetimes = [lifetime_computer.compute_lifetime(cn) for cn in contracts]
+            for contract, lifetime in zip(contracts, lifetimes):
+                lifetime.start_date = pd.Timestamp(lifetime.start_date)
+                lifetime.end_date = pd.Timestamp(lifetime.end_date)
+                df.append([symbol, contract, lifetime.start_date, lifetime.end_date])
+        return pd.DataFrame(df, columns=["symbol", "contract", "start_date", "end_date"])
+
+
+class ContractExpiryMapper:
+    def __init__(self, contracts_factory: ContractsLoader) -> None:
+        self.contracts = contracts_factory.get_contracts()
 
     def get_expiry(self, date: vkmdt.DATE_TYPE, date_month_offset: int, symbol: str) -> Optional[vkmdt.Expiry]:
         """Return expiry for contract given `datetime` and `month` offset.
@@ -431,21 +452,3 @@ class ContractExpiryMapper:
             year=str(ret.year)[2::]
         )
 
-    def _compute_lifetimes(self, symbols: Union[pd.Series, List[str]], kb: KibotMetadata, lifetime_computer: Type[ContractLifetimeComputer]) -> None:
-        """Compute the lifetime for all contracts available for all symbols passed in.
-
-        :param symbols: kibot symbols from which to retrieve contracts
-        """
-        dbg.dassert_in(type(symbols), [pd.Series, list])
-        if isinstance(symbols, pd.Series):
-            symbols = [symbol for _, symbol in symbols.items()]
-
-        df = []
-        for symbol in symbols:
-            contracts = kb.get_expiry_contracts(symbol)
-            lifetimes = [lifetime_computer.compute_lifetime(cn) for cn in contracts]
-            for contract, lifetime in zip(contracts, lifetimes):
-                lifetime.start_date = pd.Timestamp(lifetime.start_date)
-                lifetime.end_date = pd.Timestamp(lifetime.end_date)
-                df.append([symbol, contract, lifetime.start_date, lifetime.end_date])
-        self.contracts = pd.DataFrame(df, columns=["symbol", "contract", "start_date", "end_date"])
