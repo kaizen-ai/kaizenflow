@@ -29,6 +29,7 @@ class ResultBundle(abc.ABC):
         result_df: pd.DataFrame,
         column_to_tags: Optional[Dict[Any, List[Any]]] = None,
         info: Optional[collections.OrderedDict] = None,
+        payload: Optional[cfg.Config] = None,
     ) -> None:
         """
         :param config: DAG config
@@ -38,6 +39,8 @@ class ResultBundle(abc.ABC):
         :param result_df: dataframe with results
         :param column_to_tags: mapping of column names to tags
         :param info: DAG execution info
+        :param payload: config with additional information, for example, meta
+            config
         """
         self._config = config
         self._result_nid = result_nid
@@ -45,6 +48,7 @@ class ResultBundle(abc.ABC):
         self._result_df = result_df
         self._column_to_tags = column_to_tags
         self._info = info
+        self._payload = payload
 
     @property
     def config(self) -> cfg.Config:
@@ -80,6 +84,14 @@ class ResultBundle(abc.ABC):
         if self._info is not None:
             return self._info.copy()
 
+    @property
+    def payload(self) -> Optional[cfg.Config]:
+        return self._payload
+
+    @payload.setter
+    def payload(self, value: Optional[cfg.Config]) -> None:
+        self._payload = value
+
     def to_config(self, commit_hash: bool = True) -> cfg.Config:
         """
         Represent class state as config.
@@ -96,6 +108,7 @@ class ResultBundle(abc.ABC):
         if info is not None:
             info = cfgb.get_config_from_nested_dict(info)
         serialized_bundle["info"] = info
+        serialized_bundle["payload"] = self._payload
         serialized_bundle["class"] = self.__class__.__name__
         if commit_hash:
             serialized_bundle["commit_hash"] = git.get_current_commit_hash()
@@ -113,6 +126,7 @@ class ResultBundle(abc.ABC):
             result_df=serialized_bundle["result_df"],
             column_to_tags=serialized_bundle["column_to_tags"],
             info=serialized_bundle["info"],
+            payload=serialized_bundle["payload"],
         )
         return rb
 
