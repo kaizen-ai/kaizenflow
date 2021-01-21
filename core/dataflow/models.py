@@ -221,7 +221,7 @@ class ContinuousSkLearnModel(FitPredictNode, RegFreqMixin, ToListMixin):
         # Get targets and predictions.
         output = self._replace_or_merge_output(df, fwd_y_df, fwd_y_hat, idx)
         info["df_out_info"] = get_df_info_as_string(output["df_out"])
-        self._set_info("fit", info)
+        self._set_info("predict", info)
         return output
 
     def _replace_or_merge_output(
