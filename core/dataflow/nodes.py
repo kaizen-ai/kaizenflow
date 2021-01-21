@@ -423,9 +423,12 @@ class ColModeMixin:
         :param cols_to_transform: columns in `df_in` that were transformed to
             obtain `df_out`
         :param col_mode: "merge_all", "replace_selected", or "replace_all".
-            Determines what columns are propagated
+            Determines what columns are propagated. If "merge_all", perform an
+            outer merge
         :return: dataframe with columns selected by `col_mode`
         """
+        dbg.dassert_isinstance(df_in, pd.DataFrame)
+        dbg.dassert_isinstance(df_out, pd.DataFrame)
         if col_mode == "merge_all":
             shared_columns = df_out.columns.intersection(df_in.columns)
             dbg.dassert(
@@ -435,7 +438,9 @@ class ColModeMixin:
                 df_out.columns,
                 df_in.columns,
             )
-            df_out = df_in.merge(df_out, left_index=True, right_index=True)
+            df_out = df_in.merge(
+                df_out, how="outer", left_index=True, right_index=True
+            )
         elif col_mode == "replace_selected":
             df_in_not_transformed_cols = df_in.columns.drop(cols_to_transform)
             dbg.dassert(
