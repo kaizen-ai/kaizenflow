@@ -759,7 +759,10 @@ class ContinuousSarimaxModel(
         )
         # Add info.
         info = collections.OrderedDict()
-        info["model_summary"] = self._model_results.summary()
+        info["model_summary"] = (
+            _remove_datetime_info_from_SARIMAX(self._model_results.summary())
+            .as_text()
+        )
         self._set_info("predict", info)
         return {"df_out": df_out}
 
