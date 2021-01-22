@@ -117,7 +117,7 @@ class DataFrameModeler:
         """
         Load `DataFrameModeler` instance from json.
 
-        :param json_str: the output of `DataFrameModeler.load_json`
+        :param json_str: the output of `DataFrameModeler.dump_json`
         :return: `DataFrameModeler` instance
         """
         json_str = json.loads(json_str)

@@ -4,6 +4,8 @@ Import as:
 import core.model_plotter as modplot
 """
 
+from __future__ import annotations
+
 import logging
 from typing import Any, List, Optional
 
@@ -33,10 +35,33 @@ class ModelPlotter:
         """
         Initialize by supplying an initialized `ModelEvaluator`.
 
-        :param model_evaluator: initialized ModelEvaluator
+        :param model_evaluator: initialized `ModelEvaluator`
         """
         dbg.dassert_isinstance(model_evaluator, modeval.ModelEvaluator)
         self.model_evaluator = model_evaluator
+
+    def dump_json(self) -> str:
+        """
+        Dump underlying `self.model_evaluator` instance to json.
+
+        :return json representation of `self.model_evaluator`
+        """
+        return self.model_evaluator.dump_json()
+
+    @classmethod
+    def load_json(cls, json_str: str, keys_to_int: bool = True) -> ModelPlotter:
+        """
+        Load `ModelPlotter` instance from json.
+
+        :param json_str: the output of `ModelPlotter.load_json`
+        :param keys_to_int: if `True`, convert dict keys to `int`
+        :return: `ModelPlotter` instance
+        """
+        evaluator = modeval.ModelEvaluator.load_json(
+            json_str, keys_to_int=keys_to_int
+        )
+        plotter = cls(evaluator)
+        return plotter
 
     def plot_rets_signal_analysis(
         self,
