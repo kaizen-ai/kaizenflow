@@ -432,7 +432,9 @@ class DataFrameModeler:
                 "`oos_start` for merged `DataFrameModelers` was set to " +
                 f"{self.oos_start}."
             )
-        info = {"info": dtf.get_df_info_as_string(df_merged)}
+        info = collections.OrderedDict(
+            {"info": dtf.get_df_info_as_string(df_merged)}
+        )
         return DataFrameModeler(df_merged, oos_start=self.oos_start, info=info)          
 
     # #########################################################################
