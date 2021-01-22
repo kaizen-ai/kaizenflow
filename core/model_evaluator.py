@@ -4,9 +4,12 @@ Import as:
 import core.model_evaluator as modeval
 """
 
+from __future__ import annotations
+
 import functools
+import json
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -58,6 +61,7 @@ class ModelEvaluator:
         self.preds = {k: predictions[k] for k in self.valid_keys}
         self.price = None
         self.volume = None
+        self.volatility = None
         self.slippage = None
         if price is not None:
             keys = self._get_valid_keys(returns, price, self.oos_start)
@@ -76,6 +80,52 @@ class ModelEvaluator:
         self.pos = self._calculate_positions()
         # Calculate pnl streams.
         self.pnls = self._calculate_pnls(self.rets, self.pos)
+
+    def dump_json(self) -> str:
+        """
+        Dump `ModelEvaluator` instance to json.
+
+        Implementation details:
+          - series' indices are converted to `str`. This way they can be easily
+            restored
+          - if `self.oos_start` is `None`, it is saved as is. Otherwise, it is
+            converted to `str`
+        :return: json with "returns", "predictions", "price", "volume",
+            "volatility", "target_volatility", "oos_start" fields
+        """
+        oos_start = self.oos_start
+        if oos_start is not None:
+            oos_start = str(oos_start)
+        json_dict = {
+            "returns": self._dump_series_dict_to_json_dict(self.rets),
+            "predictions": self._dump_series_dict_to_json_dict(self.preds),
+            "price": self._dump_series_dict_to_json_dict(self.price),
+            "volume": self._dump_series_dict_to_json_dict(self.volume),
+            "volatility": self._dump_series_dict_to_json_dict(self.volatility),
+            "target_volatility": self.target_volatility,
+            "oos_start": oos_start,
+        }
+        json_str = json.dumps(json_dict, indent=4)
+        return json_str
+
+    @classmethod
+    def load_json(cls, json_str: str, keys_to_int: bool = True) -> ModelEvaluator:
+        """
+        Load `ModelEvaluator` instance from json.
+
+        :param json_str: the output of `ModelEvaluator.dump_json`
+        :param keys_to_int: if `True`, convert dict keys to `int`
+        :return: `ModelEvaluator` instance
+        """
+        json_dict = json.loads(json_str)
+        for key in ["returns", "predictions", "price", "volume", "volatility"]:
+            json_dict[key] = cls._load_series_dict_from_json_dict(
+                json_dict[key], keys_to_int=keys_to_int
+            )
+        if json_dict["oos_start"] is not None:
+            json_dict["oos_start"] = pd.Timestamp(json_dict["oos_start"])
+        model_evaluator = cls(**json_dict)
+        return model_evaluator
 
     # TODO(*): Consider exposing positions / returns in the same way.
     def get_series_dict(
@@ -202,7 +252,9 @@ class ModelEvaluator:
         return pnl_srs, pos_srs, aggregate_stats
 
     def calculate_stats(
-        self, keys: Optional[List[Any]] = None, mode: Optional[str] = None,
+        self,
+        keys: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Calculate performance characteristics of selected models.
@@ -303,7 +355,10 @@ class ModelEvaluator:
         return stats_srs
 
     def _get_series_as_df(
-        self, series: str, keys: List[Any], mode: str,
+        self,
+        series: str,
+        keys: List[Any],
+        mode: str,
     ) -> pd.DataFrame:
         """
         Return request series streams as a single dataframe.
@@ -348,7 +403,8 @@ class ModelEvaluator:
 
     @staticmethod
     def _calculate_pnls(
-        returns: Dict[Any, pd.Series], positions: Dict[Any, pd.Series],
+        returns: Dict[Any, pd.Series],
+        positions: Dict[Any, pd.Series],
     ) -> Dict[Any, pd.Series]:
         """
         Calculate returns from positions.
@@ -406,13 +462,59 @@ class ModelEvaluator:
             valid_keys.append(k)
         return valid_keys
 
+    @staticmethod
+    def _dump_series_to_json(srs: pd.Series) -> str:
+        srs = srs.copy()
+        srs.index = srs.index.astype(str)
+        return srs.to_json()
+
+    @staticmethod
+    def _load_series_from_json(json_srs: str) -> pd.Series:
+        srs = json.loads(json_srs)
+        srs = pd.Series(srs)
+        srs.index = pd.to_datetime(srs.index)
+        if srs.shape[0] > 2:
+            srs.index.freq = pd.infer_freq(srs.index)
+        return srs
+
+    @staticmethod
+    def _dump_series_dict_to_json_dict(
+        series_dict: Optional[Dict[Any, pd.Series]]
+    ) -> Optional[Dict[Any, str]]:
+        if series_dict is None:
+            json_dict = None
+        else:
+            json_dict = {
+                key: ModelEvaluator._dump_series_to_json(srs)
+                for key, srs in series_dict.items()
+            }
+        return json_dict
+
+    @staticmethod
+    def _load_series_dict_from_json_dict(
+        json_dict: Optional[Dict[str, str]], keys_to_int: bool = True
+    ) -> Optional[Dict[Union[str, int], pd.Series]]:
+        if json_dict is None:
+            return None
+        series_dict = {
+            key: ModelEvaluator._load_series_from_json(srs)
+            for key, srs in json_dict.items()
+        }
+        if keys_to_int:
+            series_dict = {int(key): srs for key, srs in series_dict.items()}
+        return series_dict
+
 
 class PnlComputer:
     """
     Computes PnL from returns and holdings.
     """
 
-    def __init__(self, returns: pd.Series, positions: pd.Series,) -> None:
+    def __init__(
+        self,
+        returns: pd.Series,
+        positions: pd.Series,
+    ) -> None:
         """
         Initialize by supply returns and positions.
 
@@ -529,7 +631,11 @@ class PositionComputer:
         return adjusted_preds
 
     def _squash(
-        self, predictions: pd.Series, tau: float, delay: int, scale: float,
+        self,
+        predictions: pd.Series,
+        tau: float,
+        delay: int,
+        scale: float,
     ) -> pd.Series:
 
         zscored_preds = sigp.compute_rolling_zscore(
@@ -575,7 +681,8 @@ class PositionComputer:
             return srs
         elif mode == "oos":
             dbg.dassert(
-                self.oos_start, msg="Must set `oos_start` to run `oos`",
+                self.oos_start,
+                msg="Must set `oos_start` to run `oos`",
             )
             return srs[self.oos_start :]
         else:
@@ -634,7 +741,8 @@ class TransactionCostModeler:
             return srs
         elif mode == "oos":
             dbg.dassert(
-                self.oos_start, msg="Must set `oos_start` to run `oos`",
+                self.oos_start,
+                msg="Must set `oos_start` to run `oos`",
             )
             return srs[self.oos_start :]
         else:
