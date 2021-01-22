@@ -469,7 +469,7 @@ class ModelEvaluator:
         return srs.to_json()
 
     @staticmethod
-    def _load_json_series(json_srs: str) -> pd.Series:
+    def _load_series_from_json(json_srs: str) -> pd.Series:
         srs = json.loads(json_srs)
         srs = pd.Series(srs)
         srs.index = pd.to_datetime(srs.index)
@@ -497,7 +497,7 @@ class ModelEvaluator:
         if json_dict is None:
             return None
         series_dict = {
-            key: ModelEvaluator._load_json_series(srs)
+            key: ModelEvaluator._load_series_from_json(srs)
             for key, srs in json_dict.items()
         }
         if keys_to_int:
