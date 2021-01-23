@@ -340,7 +340,16 @@ class KibotMetadata:
         return metadata["Kibot_symbol"]
 
 
+# ##################################################################################
+
+
+# TODO(*): Move this code into a different file.
+# -> FuturesContractLifetimeComputer.
 class ContractLifetimeComputer(abc.ABC):
+    """
+    Abstract class computing the lifetime of a futures contract.
+    """
+
     @abc.abstractmethod
     def compute_lifetime(self, contract_name: str) -> vkmdt.ContractLifetime:
         """
@@ -351,6 +360,7 @@ class ContractLifetimeComputer(abc.ABC):
         """
 
 
+# TODO(*): Not sure if we should use Kibot since it's already in the package.
 class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
     """
     Use the price data from Kibot to compute the lifetime.
@@ -370,60 +380,47 @@ class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
 
 
 class KibotHardcodedContractLifetimeComputer(ContractLifetimeComputer):
-    """Use hardcoded rules from Kibot to compute a the lifetime."""
+    """
+    Use rules from exchange to compute the lifetime of a contract.
+    """
 
     def __init__(self, start_timedelta_days: int, end_timedelta_days: int):
+        """
+        :param start_timedelta_days: number of days before the official termination
+            date from the exchange that the contract starts
+        :param end_timedelta_days: number of days before the official termination
+            date from the exchange that the contract ends
+        """
+        dbg.dassert_lte(0, start_timedelta_days)
         self.start_timedelta_days = start_timedelta_days
+        dbg.dassert_lte(0, end_timedelta_days)
+        dbg.dassert_lt(end_timedelta_days, start_timedelta_days)
         self.end_timedelta_days = end_timedelta_days
 
     def compute_lifetime(self, contract_name: str) -> vkmdt.ContractLifetime:
+        # From CME rules:
+        # "Trading terminates at the close of business on the third business day
+        # prior to the 25th calendar day of the month preceding the delivery month."
         ecm = vkmdle.ExpiryContractMapper()
         _, month, year = ecm.parse_expiry_contract(contract_name)
         year = ecm.parse_year(year)
-
         month = ecm.expiry_to_month_num(month)
-
         date = datetime.date(year, month, 25)
         # Closes 1 month preceding the expiry month.
         date -= pd.DateOffset(months=1)
-
         # Closes 3 business days before the 25th.
         date -= offsets.BDay(3)
-
         return vkmdt.ContractLifetime(
             pd.Timestamp(date - offsets.Day(self.start_timedelta_days)),
             pd.Timestamp(date - offsets.Day(self.end_timedelta_days))
         )
 
 
-class KibotHardcodedContractLifetimeComputer(ContractLifetimeComputer):
-    """Use hardcoded rules from Kibot to compute a the lifetime."""
-
-    def __init__(self, start_timedelta_days: int, end_timedelta_days: int):
-        self.start_timedelta_days = start_timedelta_days
-        self.end_timedelta_days = end_timedelta_days
-
-    def compute_lifetime(self, contract_name: str) -> vkmdt.ContractLifetime:
-        ecm = vkmdle.ExpiryContractMapper()
-        _, month, year = ecm.parse_expiry_contract(contract_name)
-        year = ecm.parse_year(year)
-
-        month = ecm.expiry_to_month_num(month)
-
-        date = datetime.date(year, month, 25)
-        # Closes 1 month preceding the expiry month.
-        date -= pd.DateOffset(months=1)
-
-        # Closes 3 business days before the 25th.
-        date -= offsets.BDay(3)
-
-        return vkmdt.ContractLifetime(
-            pd.Timestamp(date - offsets.Day(self.start_timedelta_days)),
-            pd.Timestamp(date - offsets.Day(self.end_timedelta_days))
-        )
-
-
+# TODO: -> FuturesContractLifetimeLoader
 class ContractsLoader:
+    """
+    Read (or compute) the lifetime for a subset of futures contracts.
+    """
     def __init__(
         self,
         symbols: List[str],
@@ -477,7 +474,12 @@ class ContractsLoader:
         )
 
 
+# TODO: -> FuturesContractExpiryMapper
 class ContractExpiryMapper:
+    """
+
+    """
+
     def __init__(self, contracts_factory: ContractsLoader) -> None:
         self.contracts = contracts_factory.get_contracts()
 
