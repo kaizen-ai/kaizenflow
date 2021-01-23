@@ -1,11 +1,11 @@
 import abc
 import os
 import re
+import datetime
 from typing import Any, List, Optional, Tuple, Union
 
 import pandas as pd
-
-import helpers.csv as csv
+import pandas.tseries.offsets as offsets
 import helpers.dbg as dbg
 import vendors2.kibot.data.load.s3_data_loader as vkdls3
 import vendors2.kibot.data.types as vkdt
@@ -341,9 +341,8 @@ class KibotMetadata:
 
 
 class ContractLifetimeComputer(abc.ABC):
-    @staticmethod
     @abc.abstractmethod
-    def compute_lifetime(contract_name: str) -> vkmdt.ContractLifetime:
+    def compute_lifetime(self, contract_name: str) -> vkmdt.ContractLifetime:
         """
         Compute the lifetime of a contract, e.g. 'CLJ17'.
 
@@ -357,8 +356,7 @@ class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
     Use the price data from Kibot to compute the lifetime.
     """
 
-    @staticmethod
-    def compute_lifetime(contract_name: str) -> vkmdt.ContractLifetime:
+    def compute_lifetime(self, contract_name: str) -> vkmdt.ContractLifetime:
         df = vkdls3.S3KibotDataLoader().read_data(
             "Kibot",
             contract_name,
@@ -369,6 +367,33 @@ class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
         start_date = pd.Timestamp(df.first_valid_index())
         end_date = pd.Timestamp(df.last_valid_index())
         return vkmdt.ContractLifetime(start_date, end_date)
+
+
+class KibotHardcodedContractLifetimeComputer(ContractLifetimeComputer):
+    """Use hardcoded rules from Kibot to compute a the lifetime."""
+
+    def __init__(self, start_timedelta_days: int, end_timedelta_days: int):
+        self.start_timedelta_days = start_timedelta_days
+        self.end_timedelta_days = end_timedelta_days
+
+    def compute_lifetime(self, contract_name: str) -> vkmdt.ContractLifetime:
+        ecm = vkmdle.ExpiryContractMapper()
+        _, month, year = ecm.parse_expiry_contract(contract_name)
+        year = ecm.parse_year(year)
+
+        month = ecm.expiry_to_month_num(month)
+
+        date = datetime.date(year, month, 25)
+        # Closes 1 month preceding the expiry month.
+        date -= pd.DateOffset(months=1)
+
+        # Closes 3 business days before the 25th.
+        date -= offsets.BDay(3)
+
+        return vkmdt.ContractLifetime(
+            pd.Timestamp(date - offsets.Day(self.start_timedelta_days)),
+            pd.Timestamp(date - offsets.Day(self.end_timedelta_days))
+        )
 
 
 class ContractsLoader:
