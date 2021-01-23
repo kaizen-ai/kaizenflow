@@ -396,6 +396,33 @@ class KibotHardcodedContractLifetimeComputer(ContractLifetimeComputer):
         )
 
 
+class KibotHardcodedContractLifetimeComputer(ContractLifetimeComputer):
+    """Use hardcoded rules from Kibot to compute a the lifetime."""
+
+    def __init__(self, start_timedelta_days: int, end_timedelta_days: int):
+        self.start_timedelta_days = start_timedelta_days
+        self.end_timedelta_days = end_timedelta_days
+
+    def compute_lifetime(self, contract_name: str) -> vkmdt.ContractLifetime:
+        ecm = vkmdle.ExpiryContractMapper()
+        _, month, year = ecm.parse_expiry_contract(contract_name)
+        year = ecm.parse_year(year)
+
+        month = ecm.expiry_to_month_num(month)
+
+        date = datetime.date(year, month, 25)
+        # Closes 1 month preceding the expiry month.
+        date -= pd.DateOffset(months=1)
+
+        # Closes 3 business days before the 25th.
+        date -= offsets.BDay(3)
+
+        return vkmdt.ContractLifetime(
+            pd.Timestamp(date - offsets.Day(self.start_timedelta_days)),
+            pd.Timestamp(date - offsets.Day(self.end_timedelta_days))
+        )
+
+
 class ContractsLoader:
     def __init__(
         self,
