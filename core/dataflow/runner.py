@@ -1,7 +1,7 @@
 import logging
 from typing import Any, List, Optional, Tuple
 
-import core.config as cfg
+import core.config as cconfi
 import helpers.dbg as dbg
 from core.dataflow.builder import DagBuilder
 from core.dataflow.nodes import extract_info
@@ -15,7 +15,7 @@ class FitPredictDagRunner:
     Class for running DAGs.
     """
 
-    def __init__(self, config: cfg.Config, dag_builder: DagBuilder) -> None:
+    def __init__(self, config: cconfi.Config, dag_builder: DagBuilder) -> None:
         """
         Initialize DAG.
 
@@ -95,7 +95,8 @@ class PredictionDagRunner(FitPredictDagRunner):
     """
     Class for running prediction DAGs.
 
-    Identical to `FitPredictDagRunner`, but returns a `PredictionResultBundle`.
+    Identical to `FitPredictDagRunner`, but returns a
+    `PredictionResultBundle`.
     """
 
     def _run_dag(self, nid: str, method: str) -> PredictionResultBundle:
