@@ -1096,6 +1096,26 @@ class TestVolatilityModel(hut.TestCase):
         #
         output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
         self.check_string(output_df.to_string())
+        
+    def test_fit_multiple_columns(self) -> None:
+        # Load test data.
+        data = self._get_data()
+        data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
+        data_source_node = dtf.ReadDataFromDf("data", data)
+        # Create DAG and test data node.
+        dag = dtf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Specify config and create modeling node.
+        config = cfg.Config()
+        config["col"] = ["ret_0", "ret_0_2"]
+        config["steps_ahead"] = 2
+        config["nan_mode"] = "drop"
+        node = dtf.VolatilityModel("vol_model", **config.to_dict())
+        dag.add_node(node)
+        dag.connect("data", "vol_model")
+        #
+        output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
+        self.check_string(output_df.to_string())
 
     @staticmethod
     def _get_data() -> pd.DataFrame:

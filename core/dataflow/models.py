@@ -1625,7 +1625,7 @@ class VolatilityModel(FitPredictNode):
         Specify the data and sma modeling parameters.
 
         :param nid: unique node id
-        :param col: name of returns column to model
+        :param col: name of columns to model
         :param steps_ahead: as in ContinuousSkLearnModel
         :param p_moment: exponent to apply to the absolute value of returns
         :param tau: as in `sigp.compute_smooth_moving_average`. If `None`,
@@ -1636,57 +1636,75 @@ class VolatilityModel(FitPredictNode):
         """
         super().__init__(nid)
         dbg.dassert_isinstance(col, list)
-        dbg.dassert_eq(len(col), 1)
-        self._col = col
-        self._vol_col = str(self._col[0]) + "_vol"
+        self._cols = col
         self._steps_ahead = steps_ahead
-        self._fwd_vol_col = self._vol_col + f"_{self._steps_ahead}"
-        self._fwd_vol_col_hat = self._fwd_vol_col + "_hat"
         dbg.dassert_lte(1, p_moment)
         self._p_moment = p_moment
         self._tau = tau
         self._col_rename_func = col_rename_func
         self._col_mode = col_mode or "merge_all"
         self._nan_mode = nan_mode
-        # The `SmaModel` and `Modulator` nodes are only used internally (e.g.,
-        # are not added to any encompassing DAG).
-        self._sma_model = SmaModel(
-            "anonymous_sma",
-            col=[self._vol_col],
-            steps_ahead=self._steps_ahead,
-            tau=self._tau,
-            col_mode="merge_all",
-            nan_mode=self._nan_mode,
-        )
-        self._modulator = VolatilityModulator(
-            "anonymous_demodulation",
-            signal_cols=self._col,
-            volatility_col=self._fwd_vol_col_hat,
-            signal_steps_ahead=0,
-            volatility_steps_ahead=self._steps_ahead,
-            mode="demodulate",
-            col_rename_func=self._col_rename_func,
-            col_mode=self._col_mode,
-        )
+        self._vol_cols = {}
+        self._fwd_vol_cols = {}
+        self._fwd_vol_cols_hat = {}
+        self._sma_models = {}
+        self._modulators = {}
+        for col in self._cols:
+            self._vol_cols[col] = col + "_vol"
+            self._fwd_vol_cols[col] = self._vol_cols[col] + f"_{self._steps_ahead}"
+            self._fwd_vol_cols_hat[col] = self._fwd_vol_cols[col] + "_hat"
+            # The `SmaModel` and `Modulator` nodes are only used internally (e.g.,
+            # are not added to any encompassing DAG).
+            self._sma_models[col] = SmaModel(
+                "anonymous_sma",
+                col=[self._vol_cols[col]],
+                steps_ahead=self._steps_ahead,
+                tau=self._tau,
+                col_mode="merge_all",
+                nan_mode=self._nan_mode,
+            )
+            self._modulators[col] = VolatilityModulator(
+                "anonymous_demodulation",
+                signal_cols=[col],
+                volatility_col=self._fwd_vol_cols_hat[col],
+                signal_steps_ahead=0,
+                volatility_steps_ahead=self._steps_ahead,
+                mode="demodulate",
+                col_rename_func=self._col_rename_func,
+                col_mode=self._col_mode,
+            )
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df_in = df_in.copy()
-        dag = self._get_dag(df_in)
-        df_out = dag.run_leq_node(self._modulator.nid, "fit")["df_out"]
-        info = extract_info(dag, ["fit"])
+        dfs = []
+        info = collections.OrderedDict()
+        for col in self._cols:
+            df_in = df_in.copy()
+            dag = self._get_dag(df_in, col)
+            df_out = dag.run_leq_node(self._modulators[col].nid, "fit")["df_out"]
+            info[col] = extract_info(dag, ["fit"])
+            dfs.append(df_out)
+        df_out = pd.concat(dfs, axis=1)
+        df_out = df_out.loc[:, ~df_out.columns.duplicated()]
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        dbg.dassert_not_in(self._vol_col, df_in.columns)
-        df_in = df_in.copy()
-        dag = self._get_dag(df_in)
-        df_out = dag.run_leq_node(self._modulator.nid, "predict")["df_out"]
-        info = extract_info(dag, ["predict"])
+        dfs = []
+        info = collections.OrderedDict()
+        for col in self._cols:
+            dbg.dassert_not_in(self._vol_cols[col], df_in.columns)
+            df_in = df_in.copy()
+            dag = self._get_dag(df_in, col)
+            df_out = dag.run_leq_node(self._modulators[col].nid, "predict")["df_out"]
+            
+            info[col] = extract_info(dag, ["predict"])
+            dfs.append(df_out)
+        df_out = pd.concat(dfs, axis=1)
+        df_out = df_out.loc[:, ~df_out.columns.duplicated()]
         self._set_info("predict", info)
         return {"df_out": df_out}
 
-    def _get_dag(self, df_in: pd.DataFrame) -> DAG:
+    def _get_dag(self, df_in: pd.DataFrame, col: str) -> DAG:
         dag = DAG(mode="strict")
         # Load data.
         node = ReadDataFromDf("data", df_in)
@@ -1696,24 +1714,24 @@ class VolatilityModel(FitPredictNode):
         node = ColumnTransformer(
             "calculate_vol_power",
             transformer_func=lambda x: np.abs(x) ** self._p_moment,
-            cols=self._col,
+            cols=[col],
             col_rename_func=lambda x: f"{x}_vol",
             col_mode="merge_all",
         )
         tail_nid = self._append(dag, tail_nid, node)
         # Run SMA.
-        node = self._sma_model
+        node = self._sma_models[col]
         tail_nid = self._append(dag, tail_nid, node)
         # Normalize volatility.
         node = ColumnTransformer(
             "normalize_vol",
             transformer_func=lambda x: x ** (1.0 / self._p_moment),
-            cols=[self._vol_col, self._fwd_vol_col, self._fwd_vol_col_hat],
+            cols=[self._vol_cols[col], self._fwd_vol_cols[col], self._fwd_vol_cols_hat[col]],
             col_mode="replace_selected",
         )
         tail_nid = self._append(dag, tail_nid, node)
         # Run modulator.
-        node = self._modulator
+        node = self._modulators[col]
         self._append(dag, tail_nid, node)
         return dag
 
