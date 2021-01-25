@@ -539,9 +539,12 @@ def _get_logging_format(
         #  Something like:
         #   {{asctime}-5s {{filename}{name}{funcname}{linedo}d}-15s {message}
         # log_format = "%(asctime)-5s %(levelname)-5s: %(funcName)-15s: %(message)s"
+        #%(pathname)s Full pathname of the source file where the logging call was issued(if available).
+        #%(filename)s Filename portion of pathname.
+        #%(module)s Module (name portion of filename).
         log_format = (
             "%(asctime)-5s %(levelname)-5s: "
-            "%(funcName)-15s:%(lineno)-4d: "
+            "%(module)s %(pathname)s %(filename)s %(funcName)-15s:%(lineno)-4d: "
             "%(message)s"
             # "[%(name)s][%(levelname)s]  %(message)s (%(filename)s:%(lineno)d)")
         )
@@ -705,20 +708,26 @@ def get_matching_loggers(module_names: Union[str, Iterable[str]]) -> List:
     return sel_loggers
 
 
-def shutup_chatty_modules(verbosity: int = logging.CRITICAL) -> None:
+def shutup_chatty_modules(verbosity: int = logging.CRITICAL, verbose=False) -> None:
     """Reduce the verbosity for external modules that are very chatty."""
     module_names = [
-        "matplotlib",
         "boto",
-        "urllib3",
-        "s3transfer",
         "boto3",
         "botocore",
+        "fsspec",
+        "s3fs",
+        "hooks",
+        "matplotlib",
         "nose",
+        "s3transfer",
+        "urllib3",
     ]
     loggers = get_matching_loggers(module_names)
     print("Shutting up %s modules" % len(loggers))
-    _LOG.debug("Shutting up modules: (%d) %s", len(loggers), loggers)
+    loggers = sorted(loggers, key=lambda logger: logger.name)
+    if verbose:
+        _LOG.debug("Shutting up modules: (%d)\n%s", len(loggers), "\n".join(
+            [logger.name for logger in loggers]))
     for logger in loggers:
         logger.setLevel(verbosity)
 

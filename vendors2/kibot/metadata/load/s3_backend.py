@@ -9,7 +9,7 @@ import helpers.s3 as hs3
 import vendors2.kibot.data.config as vkdcon
 import vendors2.kibot.metadata.config as vkmcon
 
-_LOG = logging.getLogger(__name__)
+_LOG = logging.getLogger("amp" + __name__)
 
 # TODO(Amr): Extract the 2 distinct functions here
 # TODO(Amr): Map the functions onto `KibotContractType`, so you provide a type,
