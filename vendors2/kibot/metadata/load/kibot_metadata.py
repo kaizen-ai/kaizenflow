@@ -1,11 +1,13 @@
 import abc
+import datetime
+import logging
 import os
 import re
-import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 import pandas.tseries.offsets as offsets
+
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import vendors2.kibot.data.load.s3_data_loader as vkdls3
@@ -15,8 +17,8 @@ import vendors2.kibot.metadata.load.expiry_contract_mapper as vkmdle
 import vendors2.kibot.metadata.load.s3_backend as vkmls3
 import vendors2.kibot.metadata.types as vkmdt
 
-import logging
 _LOG = logging.getLogger(__name__)
+
 
 class KibotMetadata:
     # pylint: disable=line-too-long
@@ -107,6 +109,25 @@ class KibotMetadata:
     def read_1min_contract_metadata(cls) -> pd.DataFrame:
         return vkmls3.S3Backend().read_1min_contract_metadata()
 
+    def get_kibot_symbols(self, contract_type: str = "1min") -> pd.Series:
+        metadata = self.get_metadata(contract_type)
+        return metadata["Kibot_symbol"]
+
+    _CONTRACT_EXPIRIES = {
+        "F": 1,
+        "G": 2,
+        "H": 3,
+        "J": 4,
+        "K": 5,
+        "M": 6,
+        "N": 7,
+        "Q": 8,
+        "U": 9,
+        "V": 10,
+        "X": 11,
+        "Z": 12,
+    }
+
     # //////////////////////////////////////////////////////////////////////////
 
     # TODO(Julia): Replace `one_min` with `expiry` once the PR is approved.
@@ -194,21 +215,6 @@ class KibotMetadata:
             "expiries",
         ]
         return kibot_metadata[columns]
-
-    _CONTRACT_EXPIRIES = {
-        "F": 1,
-        "G": 2,
-        "H": 3,
-        "J": 4,
-        "K": 5,
-        "M": 6,
-        "N": 7,
-        "Q": 8,
-        "U": 9,
-        "V": 10,
-        "X": 11,
-        "Z": 12,
-    }
 
     @classmethod
     def _get_zero_elememt(cls, list_: List[Any]) -> Any:
@@ -338,12 +344,8 @@ class KibotMetadata:
         )
         return annotated_metadata
 
-    def get_kibot_symbols(self, contract_type: str = "1min") -> pd.Series:
-        metadata = self.get_metadata(contract_type)
-        return metadata["Kibot_symbol"]
 
-
-# ##################################################################################
+# #############################################################################
 
 
 # TODO(*): Move this code into a different file.
@@ -415,7 +417,7 @@ class KibotHardcodedContractLifetimeComputer(ContractLifetimeComputer):
         date -= offsets.BDay(3)
         return vkmdt.ContractLifetime(
             pd.Timestamp(date - offsets.Day(self.start_timedelta_days)),
-            pd.Timestamp(date - offsets.Day(self.end_timedelta_days))
+            pd.Timestamp(date - offsets.Day(self.end_timedelta_days)),
         )
 
 
@@ -423,9 +425,11 @@ from tqdm.autonotebook import tqdm
 
 _SymbolToContracts = Dict[str, pd.DataFrame]
 
+
 class FuturesContractLifetimes:
     """
-    Read or save a df storing the lifetime of the contracts for a subset of symbols.
+    Read or save a df storing the lifetime of the contracts for a subset of
+    symbols.
 
     The data is organized in directories like:
         - root_dir_name/
@@ -433,11 +437,12 @@ class FuturesContractLifetimes:
                 - ES.csv
                 - CL.csv
 
-    symbol	contract	start_date	end_date
-    0	ES	ESZ09	2008-11-20	2009-11-13
-    1	ES	ESH10	2009-02-22	2010-02-15
-    2	ES	ESM10	2009-05-20	2010-05-13
+    symbol    contract    start_date    end_date
+    0    ES    ESZ09    2008-11-20    2009-11-13
+    1    ES    ESH10    2009-02-22    2010-02-15
+    2    ES    ESM10    2009-05-20    2010-05-13
     """
+
     def __init__(
         self,
         root_dir_name: str,
@@ -445,10 +450,6 @@ class FuturesContractLifetimes:
     ) -> None:
         self.root_dir_name = root_dir_name
         self.lifetime_computer = lifetime_computer
-
-    def _get_dir_name(self) -> str:
-        name = self.lifetime_computer.__class__.__name__
-        return os.path.join(self.root_dir_name, name)
 
     def save(self, symbols: List[str]) -> None:
         """
@@ -474,8 +475,12 @@ class FuturesContractLifetimes:
             for contract, lifetime in zip(contracts, lifetimes):
                 lifetime.start_date = pd.Timestamp(lifetime.start_date)
                 lifetime.end_date = pd.Timestamp(lifetime.end_date)
-                _LOG.debug("contract=%s -> [%s, %s]", contract, lifetime.start_date,
-                          lifetime.end_date)
+                _LOG.debug(
+                    "contract=%s -> [%s, %s]",
+                    contract,
+                    lifetime.start_date,
+                    lifetime.end_date,
+                )
                 df.append(
                     [symbol, contract, lifetime.start_date, lifetime.end_date]
                 )
@@ -487,21 +492,27 @@ class FuturesContractLifetimes:
             # Save.
             file_name = os.path.join(self._get_dir_name(), symbol + ".csv")
             io_.create_enclosing_dir(file_name, incremental=True)
-            #dbg.dassert_file_exist(file_name)
+            # dbg.dassert_file_exist(file_name)
             df.to_csv(file_name)
 
     def load(self, symbols: List[str]) -> _SymbolToContracts:
-        symbol_to_contracts : _SymbolToContracts = {}
+        symbol_to_contracts: _SymbolToContracts = {}
         for symbol in symbols:
             file_name = os.path.join(self._get_dir_name(), symbol + ".csv")
             dbg.dassert_exists(file_name)
             df = pd.read_csv(file_name, index_col=0)
-            dbg.dassert_eq(df.columns.tolist(),
-                           ["symbol", "contract", "start_date", "end_date"])
+            dbg.dassert_eq(
+                df.columns.tolist(),
+                ["symbol", "contract", "start_date", "end_date"],
+            )
             for col_name in ["start_date", "end_date"]:
                 df[col_name] = pd.to_datetime(df[col_name])
             symbol_to_contracts[symbol] = df
         return symbol_to_contracts
+
+    def _get_dir_name(self) -> str:
+        name = self.lifetime_computer.__class__.__name__
+        return os.path.join(self.root_dir_name, name)
 
 
 class FuturesContractExpiryMapper:
@@ -510,7 +521,7 @@ class FuturesContractExpiryMapper:
     """
 
     def __init__(self, symbol_to_contracts: _SymbolToContracts) -> None:
-        #dbg.dassert_eq(contracts.columns.tolist(), ["symbol", ...])
+        # dbg.dassert_eq(contracts.columns.tolist(), ["symbol", ...])
         self.symbol_to_contracts = symbol_to_contracts
 
     def get_nth_contract(

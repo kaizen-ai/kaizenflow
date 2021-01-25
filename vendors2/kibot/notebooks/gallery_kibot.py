@@ -25,7 +25,7 @@ lfc = kmd.KibotTradingActivityContractLifetimeComputer()
 lfc.compute_lifetime("CLJ17")
 
 # %%
-## 
+##
 
 # %%
 symbols = ["ES", "CL"]

@@ -1,4 +1,5 @@
-"""Import as:
+"""
+Import as:
 
 import helpers.dbg as dbg
 """
@@ -25,7 +26,8 @@ def _line(chars: str = "#", num_cols: int = 80) -> str:
 
 
 def _frame(x: str, chars: str = "#", num_cols: int = 80) -> str:
-    """Return a string with a frame of num_cols chars around the object x.
+    """
+    Return a string with a frame of num_cols chars around the object x.
 
     :param x: object to print through str()
     :param num_cols: number
@@ -39,7 +41,9 @@ def _frame(x: str, chars: str = "#", num_cols: int = 80) -> str:
 
 
 def dfatal(message: str, assertion_type: Optional[Any] = None) -> None:
-    """Print an error message and exits."""
+    """
+    Print an error message and exits.
+    """
     ret = ""
     message = str(message)
     ret = "\n" + _frame(message, "#", 80)
@@ -63,7 +67,9 @@ def dfatal(message: str, assertion_type: Optional[Any] = None) -> None:
 
 
 def _to_msg(msg: Optional[str], *args: Any) -> str:
-    """Format the error message with the params."""
+    """
+    Format the error message with the params.
+    """
     if msg is None:
         # If there is no message, we should have no arguments to format.
         assert not args, "args=%s" % str(args)
@@ -254,7 +260,9 @@ def dassert_set_eq(
 def dassert_is_subset(
     val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
-    """Check that val1 is a subset of val2, raise otherwise."""
+    """
+    Check that val1 is a subset of val2, raise otherwise.
+    """
     val1 = set(val1)
     val2 = set(val2)
     if not val1.issubset(val2):
@@ -269,7 +277,9 @@ def dassert_is_subset(
 def dassert_not_intersection(
     val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
-    """Check that val1 has no intersection val2, raise otherwise."""
+    """
+    Check that val1 has no intersection val2, raise otherwise.
+    """
     val1 = set(val1)
     val2 = set(val2)
     if val1.intersection(val2):
@@ -326,7 +336,9 @@ def dassert_exists(file_name: str, msg: Optional[str] = None, *args: Any) -> Non
 def dassert_dir_exists(
     dir_name: str, msg: Optional[str] = None, *args: Any
 ) -> None:
-    """Assert unless `dir_name` exists and it's a directory."""
+    """
+    Assert unless `dir_name` exists and it's a directory.
+    """
     dir_name = os.path.abspath(dir_name)
     is_ok = os.path.exists(dir_name) and os.path.isdir(dir_name)
     if not is_ok:
@@ -338,8 +350,9 @@ def dassert_dir_exists(
 def dassert_not_exists(
     file_name: str, msg: Optional[str] = None, *args: Any
 ) -> None:
-    """Ensure that a file or a dir `file_name` doesn't exist, otherwise
-    raises."""
+    """
+    Ensure that a file or a dir `file_name` doesn't exist, otherwise raises.
+    """
     file_name = os.path.abspath(file_name)
     # pylint: disable=superfluous-parens,unneeded-not
     if not (not os.path.exists(file_name)):
@@ -417,8 +430,9 @@ def dassert_array_has_same_type_element(
     msg: Optional[str] = None,
     *args: Any
 ) -> None:
-    """Check that two objects iterables like arrays (e.g., pd.Index) have
-    elements of the same type.
+    """
+    Check that two objects iterables like arrays (e.g., pd.Index) have elements
+    of the same type.
 
     :param only_first_elem: whether to check only the first element or all the
         elements of the iterable.
@@ -575,7 +589,8 @@ def init_logger(
     force_white: bool = True,
     force_no_warning: bool = False,
 ) -> None:
-    """Send stderr and stdout to logging (optionally teeing the logs to file).
+    """
+    Send stderr and stdout to logging (optionally teeing the logs to file).
 
     - Note that:
         - logging.DEBUG = 10
@@ -661,7 +676,8 @@ def init_logger(
 def set_logger_verbosity(
     verbosity: int, module_name: Optional[str] = None
 ) -> None:
-    """Change the verbosity of the logging after the initialization.
+    """
+    Change the verbosity of the logging after the initialization.
 
     Passing a module_name (e.g., matplotlib) one can change the logging of
     that specific module.
@@ -687,14 +703,18 @@ def get_logger_verbosity() -> int:
 
 
 def get_all_loggers() -> List:
-    """Return list of all registered loggers."""
+    """
+    Return list of all registered loggers.
+    """
     logger_dict = logging.root.manager.loggerDict  # type: ignore
     loggers = [logging.getLogger(name) for name in logger_dict]
     return loggers
 
 
 def get_matching_loggers(module_names: Union[str, Iterable[str]]) -> List:
-    """Find loggers that match a name or a name in a set."""
+    """
+    Find loggers that match a name or a name in a set.
+    """
     loggers = get_all_loggers()
     if isinstance(module_names, str):
         module_names = [module_names]
@@ -708,8 +728,12 @@ def get_matching_loggers(module_names: Union[str, Iterable[str]]) -> List:
     return sel_loggers
 
 
-def shutup_chatty_modules(verbosity: int = logging.CRITICAL, verbose=False) -> None:
-    """Reduce the verbosity for external modules that are very chatty."""
+def shutup_chatty_modules(
+    verbosity: int = logging.CRITICAL, verbose=False
+) -> None:
+    """
+    Reduce the verbosity for external modules that are very chatty.
+    """
     module_names = [
         "boto",
         "boto3",
@@ -726,8 +750,11 @@ def shutup_chatty_modules(verbosity: int = logging.CRITICAL, verbose=False) -> N
     print("Shutting up %s modules" % len(loggers))
     loggers = sorted(loggers, key=lambda logger: logger.name)
     if verbose:
-        _LOG.debug("Shutting up modules: (%d)\n%s", len(loggers), "\n".join(
-            [logger.name for logger in loggers]))
+        _LOG.debug(
+            "Shutting up modules: (%d)\n%s",
+            len(loggers),
+            "\n".join([logger.name for logger in loggers]),
+        )
     for logger in loggers:
         logger.setLevel(verbosity)
 
