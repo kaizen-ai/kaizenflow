@@ -281,6 +281,37 @@ def compute_ret_0_from_multiple_prices(
 #  https://github.com/ParticleDev/commodity_research/issues/568
 
 
+def compute_prices_from_rets(
+    price: pd.Series,
+    rets: pd.Series,
+    mode: str,
+) -> pd.Series:
+    """
+    Compute price p_1 at moment t_1 with given price p_0 at t_0 and return ret_1
+    
+    This implies that input has ret_1 at moment t_1 and uses price p_0 from 
+    previous step t_0. If we have forward returns instead (ret_1 and p_0 are at 
+    t_0), we need to shift input returns one step ahead. 
+
+    :param price: series with prices
+    :param rets: series with returns
+    :param mode: returns mode as in compute_ret_0 
+    :return: series with computed prices
+    """
+    dbg.dassert_isinstance(price, pd.Series)
+    dbg.dassert_isinstance(rets, pd.Series)
+    price = price.shift(1)
+    if mode == "pct_change":
+        price_pred = price * (rets + 1)
+    elif mode == "log_rets":
+        price_pred = price * np.exp(rets)
+    elif mode == "diff":
+        price_pred = price + rets
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    return price_pred
+
+
 def convert_log_rets_to_pct_rets(
     log_rets: Union[float, pd.Series, pd.DataFrame]
 ) -> Union[float, pd.Series, pd.DataFrame]:

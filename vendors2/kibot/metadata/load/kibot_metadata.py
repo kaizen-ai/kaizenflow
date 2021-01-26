@@ -1,20 +1,23 @@
 import abc
+import datetime
+import logging
 import os
 import re
-import datetime
-from typing import Any, List, Tuple, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 import pandas.tseries.offsets as offsets
-import helpers.dbg as dbg
-import helpers.csv as csv
 
-import vendors2.kibot.metadata.load.expiry_contract_mapper as vkmlex
+import helpers.dbg as dbg
+import helpers.io_ as io_
 import vendors2.kibot.data.load.s3_data_loader as vkdls3
-import vendors2.kibot.metadata.load.s3_backend as vkmls3
-import vendors2.kibot.metadata.load.expiry_contract_mapper as vkmdle
 import vendors2.kibot.data.types as vkdt
+import vendors2.kibot.metadata.load.expiry_contract_mapper as vkmlex
+import vendors2.kibot.metadata.load.expiry_contract_mapper as vkmdle
+import vendors2.kibot.metadata.load.s3_backend as vkmls3
 import vendors2.kibot.metadata.types as vkmdt
+
+_LOG = logging.getLogger(__name__)
 
 
 class KibotMetadata:
@@ -106,6 +109,25 @@ class KibotMetadata:
     def read_1min_contract_metadata(cls) -> pd.DataFrame:
         return vkmls3.S3Backend().read_1min_contract_metadata()
 
+    def get_kibot_symbols(self, contract_type: str = "1min") -> pd.Series:
+        metadata = self.get_metadata(contract_type)
+        return metadata["Kibot_symbol"]
+
+    _CONTRACT_EXPIRIES = {
+        "F": 1,
+        "G": 2,
+        "H": 3,
+        "J": 4,
+        "K": 5,
+        "M": 6,
+        "N": 7,
+        "Q": 8,
+        "U": 9,
+        "V": 10,
+        "X": 11,
+        "Z": 12,
+    }
+
     # //////////////////////////////////////////////////////////////////////////
 
     # TODO(Julia): Replace `one_min` with `expiry` once the PR is approved.
@@ -116,23 +138,17 @@ class KibotMetadata:
             # column.
             one_min_contract_metadata = cls.read_1min_contract_metadata()
         elif contract_type == "tick-bid-ask":
-            one_min_contract_metadata = (
-                cls.read_tickbidask_contract_metadata()
-            )
+            one_min_contract_metadata = cls.read_tickbidask_contract_metadata()
         else:
             raise ValueError("Invalid `contract_type`='%s'" % contract_type)
-        continuous_contract_metadata = (
-            cls.read_continuous_contract_metadata()
-        )
+        continuous_contract_metadata = cls.read_continuous_contract_metadata()
         # Extract month, year, expiries and SymbolBase from the Symbol col.
         (
             one_min_contract_metadata,
             one_min_symbols_metadata,
         ) = cls._extract_month_year_expiry(one_min_contract_metadata)
         # Calculate stats for expiries.
-        expiry_counts = cls._calculate_expiry_counts(
-            one_min_contract_metadata
-        )
+        expiry_counts = cls._calculate_expiry_counts(one_min_contract_metadata)
         # Drop unneeded columns from the symbol metadata dataframe
         # originating from 1 min contract metadata.
         one_min_contracts = one_min_symbols_metadata.copy()
@@ -142,8 +158,8 @@ class KibotMetadata:
         )
         # Choose needed columns from the continuous contract metadata.
         cont_contracts_chosen = continuous_contract_metadata.loc[
-                                :, ["Symbol", "StartDate", "Exchange"]
-                                ]
+            :, ["Symbol", "StartDate", "Exchange"]
+        ]
         cont_contracts_chosen = cont_contracts_chosen.set_index(
             "Symbol", drop=True
         )
@@ -180,9 +196,7 @@ class KibotMetadata:
             int
         )
         # Append Exchange_symbol, Exchange_group, Globex_symbol columns.
-        kibot_metadata = cls._annotate_with_exchange_mapping(
-            kibot_metadata
-        )
+        kibot_metadata = cls._annotate_with_exchange_mapping(kibot_metadata)
         # Change index to continuous.
         kibot_metadata = kibot_metadata.reset_index()
         kibot_metadata = kibot_metadata.rename({"index": "Kibot_symbol"}, axis=1)
@@ -202,28 +216,14 @@ class KibotMetadata:
         ]
         return kibot_metadata[columns]
 
-    _CONTRACT_EXPIRIES = {
-        "F": 1,
-        "G": 2,
-        "H": 3,
-        "J": 4,
-        "K": 5,
-        "M": 6,
-        "N": 7,
-        "Q": 8,
-        "U": 9,
-        "V": 10,
-        "X": 11,
-        "Z": 12,
-    }
-
     @classmethod
     def _get_zero_elememt(cls, list_: List[Any]) -> Any:
         return list_[0] if list_ else None
 
     @classmethod
-    def _extract_month_year_expiry(cls,
-            one_min_contract_metadata: pd.DataFrame,
+    def _extract_month_year_expiry(
+        cls,
+        one_min_contract_metadata: pd.DataFrame,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Extract month, year, expiries and SymbolBase from the Symbol.
@@ -233,8 +233,8 @@ class KibotMetadata:
         one_min_contract_metadata = one_min_contract_metadata.copy()
         one_min_contract_metadata["year"] = (
             one_min_contract_metadata["Symbol"]
-                .apply(lambda x: re.findall(r"\d+$", x))
-                .apply(cls._get_zero_elememt)
+            .apply(lambda x: re.findall(r"\d+$", x))
+            .apply(cls._get_zero_elememt)
         )
         one_min_symbols_metadata = one_min_contract_metadata.loc[
             one_min_contract_metadata["year"].isna()
@@ -244,12 +244,12 @@ class KibotMetadata:
         # Extract SymbolBase, month, year and expiries from contract names.
         symbol_month_year = (
             one_min_contract_metadata["Symbol"]
-                .apply(vkmlex.ExpiryContractMapper.parse_expiry_contract)
-                .apply(pd.Series)
+            .apply(vkmlex.ExpiryContractMapper.parse_expiry_contract)
+            .apply(pd.Series)
         )
         symbol_month_year.columns = ["SymbolBase", "month", "year"]
         symbol_month_year["expiries"] = (
-                symbol_month_year["month"] + symbol_month_year["year"]
+            symbol_month_year["month"] + symbol_month_year["year"]
         )
         symbol_month_year.drop(columns="year", inplace=True)
         one_min_contract_metadata.drop(
@@ -261,8 +261,9 @@ class KibotMetadata:
         return one_min_contract_metadata, one_min_symbols_metadata
 
     @classmethod
-    def _calculate_expiry_counts(cls,
-            one_min_contract_metadata: pd.DataFrame,
+    def _calculate_expiry_counts(
+        cls,
+        one_min_contract_metadata: pd.DataFrame,
     ) -> pd.DataFrame:
         """
         Calculate the following stats for each symbol:
@@ -294,18 +295,14 @@ class KibotMetadata:
             base_groupby["expiries_year_first"].min(), name="min_contract"
         )
         min_contract = min_contract.apply(
-            lambda x: str(cls._CONTRACT_EXPIRIES[x[-1]]).zfill(2)
-                      + ".20"
-                      + x[:2]
+            lambda x: str(cls._CONTRACT_EXPIRIES[x[-1]]).zfill(2) + ".20" + x[:2]
         )
         # Get the oldest contract, bring it to the mm.yyyy format.
         max_contract = pd.Series(
             base_groupby["expiries_year_first"].max(), name="max_contract"
         )
         max_contract = max_contract.apply(
-            lambda x: str(cls._CONTRACT_EXPIRIES[x[-1]]).zfill(2)
-                      + ".20"
-                      + x[:2]
+            lambda x: str(cls._CONTRACT_EXPIRIES[x[-1]]).zfill(2) + ".20" + x[:2]
         )
         # Get all months at which contracts for each symbol expires,
         # change the str months to the month numbers from 0 to 11.
@@ -321,8 +318,9 @@ class KibotMetadata:
         return expiry_counts
 
     @classmethod
-    def _annotate_with_exchange_mapping(cls,
-            kibot_metadata: pd.DataFrame,
+    def _annotate_with_exchange_mapping(
+        cls,
+        kibot_metadata: pd.DataFrame,
     ) -> pd.DataFrame:
         """
         Annotate Kibot with exchanges and their symbols.
@@ -346,133 +344,217 @@ class KibotMetadata:
         )
         return annotated_metadata
 
-    def get_kibot_symbols(self, contract_type: str = "1min") -> pd.Series:
-        metadata = self.get_metadata(contract_type)
-        return metadata['Kibot_symbol']
+
+# #############################################################################
 
 
+# TODO(*): Move this code into a different file.
+# -> FuturesContractLifetimeComputer.
 class ContractLifetimeComputer(abc.ABC):
+    """
+    Abstract class computing the lifetime of a futures contract.
+    """
+
     @abc.abstractmethod
     def compute_lifetime(self, contract_name: str) -> vkmdt.ContractLifetime:
-        """Compute the lifetime of a contract, e.g. 'CLJ17'.
+        """
+        Compute the lifetime of a contract, e.g. 'CLJ17'.
 
         :param contract_name: the contract for which to compute the lifetime.
         :return: the computed lifetime.
         """
 
 
+# TODO(*): Not sure if we should use Kibot since it's already in the package.
 class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
-    """Use the price data from Kibot to compute the lifetime."""
+    """
+    Use the price data from Kibot to compute the lifetime.
+    """
 
     def compute_lifetime(self, contract_name: str) -> vkmdt.ContractLifetime:
-        df = vkdls3.S3KibotDataLoader() \
-            .read_data("Kibot", contract_name,
-                       vkdt.AssetClass.Futures, vkdt.Frequency.Daily,
-                       vkdt.ContractType.Expiry)
+        df = vkdls3.S3KibotDataLoader().read_data(
+            "Kibot",
+            contract_name,
+            vkdt.AssetClass.Futures,
+            vkdt.Frequency.Daily,
+            vkdt.ContractType.Expiry,
+        )
         start_date = pd.Timestamp(df.first_valid_index())
         end_date = pd.Timestamp(df.last_valid_index())
         return vkmdt.ContractLifetime(start_date, end_date)
 
 
 class KibotHardcodedContractLifetimeComputer(ContractLifetimeComputer):
-    """Use hardcoded rules from Kibot to compute a the lifetime."""
+    """
+    Use rules from exchange to compute the lifetime of a contract.
+    """
 
     def __init__(self, start_timedelta_days: int, end_timedelta_days: int):
+        """
+        :param start_timedelta_days: number of days before the official termination
+            date from the exchange that the contract starts
+        :param end_timedelta_days: number of days before the official termination
+            date from the exchange that the contract ends
+        """
+        dbg.dassert_lte(0, start_timedelta_days)
         self.start_timedelta_days = start_timedelta_days
+        dbg.dassert_lte(0, end_timedelta_days)
+        dbg.dassert_lt(end_timedelta_days, start_timedelta_days)
         self.end_timedelta_days = end_timedelta_days
 
     def compute_lifetime(self, contract_name: str) -> vkmdt.ContractLifetime:
+        # From CME rules:
+        # "Trading terminates at the close of business on the third business day
+        # prior to the 25th calendar day of the month preceding the delivery month."
         ecm = vkmdle.ExpiryContractMapper()
         _, month, year = ecm.parse_expiry_contract(contract_name)
         year = ecm.parse_year(year)
-
         month = ecm.expiry_to_month_num(month)
-
         date = datetime.date(year, month, 25)
         # Closes 1 month preceding the expiry month.
         date -= pd.DateOffset(months=1)
-
         # Closes 3 business days before the 25th.
         date -= offsets.BDay(3)
-
         return vkmdt.ContractLifetime(
             pd.Timestamp(date - offsets.Day(self.start_timedelta_days)),
-            pd.Timestamp(date - offsets.Day(self.end_timedelta_days))
+            pd.Timestamp(date - offsets.Day(self.end_timedelta_days)),
         )
 
 
-class ContractExpiryMapper:
-    contracts: pd.DataFrame
+from tqdm.autonotebook import tqdm
 
-    def __init__(self, lifetime_computer: Type[ContractLifetimeComputer], file: str, symbols: List[str] = None) -> None:
+_SymbolToContracts = Dict[str, pd.DataFrame]
+
+
+class FuturesContractLifetimes:
+    """
+    Read or save a df storing the lifetime of the contracts for a subset of
+    symbols.
+
+    The data is organized in directories like:
+        - root_dir_name/
+            - ContractLifetimeComputer.name/
+                - ES.csv
+                - CL.csv
+
+    symbol    contract    start_date    end_date
+    0    ES    ESZ09    2008-11-20    2009-11-13
+    1    ES    ESH10    2009-02-22    2010-02-15
+    2    ES    ESM10    2009-05-20    2010-05-13
+    """
+
+    def __init__(
+        self,
+        root_dir_name: str,
+        lifetime_computer: ContractLifetimeComputer,
+    ) -> None:
+        self.root_dir_name = root_dir_name
+        self.lifetime_computer = lifetime_computer
+
+    def save(self, symbols: List[str]) -> None:
         """
-
-        :param lifetime_computer: computer responsible for calculating the lifetime.
-        :param file: used for caching results
-        """
-        kb = KibotMetadata()
-        if symbols is None:
-            symbols = kb.get_kibot_symbols()
-        if file is None:
-            self._compute_lifetimes(symbols, kb, lifetime_computer)
-        elif os.path.exists(file):
-            self.contracts = pd.read_csv(file)
-        else:
-            self._compute_lifetimes(symbols, kb, lifetime_computer)
-            csv.to_typed_csv(self.contracts, file)
-
-    def get_expiry(self, date: vkmdt.DATE_TYPE, date_month_offset: int, symbol: str) -> Optional[vkmdt.Expiry]:
-        """Return expiry for contract given `datetime` and `month` offset.
-
-        :param date: includes year, month, day, and possibly time (otherwise ... assumed)
-        :param date_month_offset: relative month, e.g., 1 for front month, 2 for first back month, and so on
-        :param symbol: Kibot symbol
-        :return: absolute month and year of contract for `symbol`, expressed using Futures month codes
-            and last two digits of year, e.g., `("Z", "20")`
-        """
-        dbg.dassert_in(symbol, self.contracts['symbol'].values)
-
-        # Grab all contract lifetimes.
-        contracts = self.contracts.loc[self.contracts['symbol'] == symbol]
-        df = contracts.sort_values(by="end_date")
-
-        # Find first index with a `start_date` before `date` and
-        # an `end_date` after `date`.
-        idx = df['end_date'].searchsorted(pd.Timestamp(date), side='left')
-        while df['start_date'].iloc[idx] > date:
-            idx = df['end_date'].searchsorted(pd.Timestamp(date), side='left')
-            # 0 = no contracts with a `start_date` before `date`
-            if idx >= len(df.index) or idx == 0:
-                return None
-
-        # Add the offset.
-        idx = idx + date_month_offset
-        if idx >= len(df.index):
-            # Index does not exist.
-            return None
-
-        # Return the expiry date.
-        ret = df['end_date'][idx]
-        return vkmdt.Expiry(
-            month=vkmdle.ExpiryContractMapper().month_to_expiry_num(ret.month),
-            year=str(ret.year)[2::]
-        )
-
-    def _compute_lifetimes(self, symbols: Union[pd.Series, List[str]], kb: KibotMetadata, lifetime_computer: Type[ContractLifetimeComputer]) -> None:
-        """Compute the lifetime for all contracts available for all symbols passed in.
+        Compute the lifetime for all contracts available for all symbols passed
+        in.
 
         :param symbols: kibot symbols from which to retrieve contracts
         """
-        dbg.dassert_in(type(symbols), [pd.Series, list])
-        if isinstance(symbols, pd.Series):
-            symbols = [symbol for _, symbol in symbols.items()]
-
-        df = []
-        for symbol in symbols:
+        kb = KibotMetadata()
+        dbg.dassert_type_is(symbols, list)
+        io_.create_dir(self.root_dir_name, incremental=True)
+        #
+        for symbol in tqdm(symbols):
+            # For each symbol, get all the expiries.
             contracts = kb.get_expiry_contracts(symbol)
-            lifetimes = [lifetime_computer.compute_lifetime(cn) for cn in contracts]
+            _LOG.debug("Found %s contracts for symbol %s", len(contracts), symbol)
+            _LOG.debug("contracts=%s", contracts[0])
+            lifetimes = [
+                self.lifetime_computer.compute_lifetime(cn) for cn in contracts
+            ]
+            #
+            df = []
             for contract, lifetime in zip(contracts, lifetimes):
                 lifetime.start_date = pd.Timestamp(lifetime.start_date)
                 lifetime.end_date = pd.Timestamp(lifetime.end_date)
-                df.append([symbol, contract, lifetime.start_date, lifetime.end_date])
-        self.contracts = pd.DataFrame(df, columns=["symbol", "contract", "start_date", "end_date"])
+                _LOG.debug(
+                    "contract=%s -> [%s, %s]",
+                    contract,
+                    lifetime.start_date,
+                    lifetime.end_date,
+                )
+                df.append(
+                    [symbol, contract, lifetime.start_date, lifetime.end_date]
+                )
+            df = pd.DataFrame(
+                df, columns=["symbol", "contract", "start_date", "end_date"]
+            )
+            df = df.sort_values(by=["end_date", "start_date"])
+            df.reset_index(drop=True, inplace=True)
+            # Save.
+            file_name = os.path.join(self._get_dir_name(), symbol + ".csv")
+            io_.create_enclosing_dir(file_name, incremental=True)
+            # dbg.dassert_file_exist(file_name)
+            df.to_csv(file_name)
+
+    def load(self, symbols: List[str]) -> _SymbolToContracts:
+        symbol_to_contracts: _SymbolToContracts = {}
+        for symbol in symbols:
+            file_name = os.path.join(self._get_dir_name(), symbol + ".csv")
+            dbg.dassert_exists(file_name)
+            df = pd.read_csv(file_name, index_col=0)
+            dbg.dassert_eq(
+                df.columns.tolist(),
+                ["symbol", "contract", "start_date", "end_date"],
+            )
+            for col_name in ["start_date", "end_date"]:
+                df[col_name] = pd.to_datetime(df[col_name])
+            symbol_to_contracts[symbol] = df
+        return symbol_to_contracts
+
+    def _get_dir_name(self) -> str:
+        name = self.lifetime_computer.__class__.__name__
+        return os.path.join(self.root_dir_name, name)
+
+
+class FuturesContractExpiryMapper:
+    """
+    Map symbols to the n-th corresponding contract, based on a certain date.
+    """
+
+    def __init__(self, symbol_to_contracts: _SymbolToContracts) -> None:
+        # dbg.dassert_eq(contracts.columns.tolist(), ["symbol", ...])
+        self.symbol_to_contracts = symbol_to_contracts
+
+    def get_nth_contract(
+        self, symbol: str, date: vkmdt.DATE_TYPE, n: int
+    ) -> Optional[str]:
+        """
+        Return n-front contract corresponding to a given date and `n` offset.
+
+        :param date: date to use as reference
+        :param n: relative month, e.g., 1 for front month, 2 for first back month,
+            and so on
+        :param symbol: Kibot symbol
+        :return: contract in the form of an Expiry
+            absolute month and year of contract for `symbol`, expressed using Futures month codes
+            and last two digits of year, e.g., `("Z", "20")`
+        """
+        dbg.dassert_lte(1, n)
+        # Grab all contract lifetimes.
+        dbg.dassert_in(symbol, self.symbol_to_contracts.keys())
+        contracts = self.symbol_to_contracts[symbol]
+        _LOG.debug("contracts=\n%s", contracts)
+        date = pd.Timestamp(date)
+        # Find first index with a `start_date` before `date` and
+        # an `end_date` after `date`.
+        idx = contracts["end_date"].searchsorted(date, side="left")
+        if date < contracts["start_date"][idx]:
+            # Index does not exist.
+            return None
+        # Add the offset.
+        idx = idx + n - 1
+        if idx >= contracts.shape[0]:
+            # Index does not exist.
+            return None
+        # Return the contract.
+        ret = contracts["contract"][idx]
+        return ret

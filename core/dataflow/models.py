@@ -22,6 +22,7 @@ import helpers.dbg as dbg
 # TODO(*): This is an exception to the rule waiting for PartTask553.
 from core.dataflow.nodes import (
     DAG,
+    ColModeMixin,
     ColumnTransformer,
     FitPredictNode,
     Node,
@@ -85,7 +86,9 @@ class ToListMixin:
         raise TypeError("Data type=`%s`" % type(to_list))
 
 
-class ContinuousSkLearnModel(FitPredictNode, RegFreqMixin, ToListMixin):
+class ContinuousSkLearnModel(
+    FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin
+):
     """
     Fit and predict an sklearn model.
     """
@@ -137,6 +140,7 @@ class ContinuousSkLearnModel(FitPredictNode, RegFreqMixin, ToListMixin):
         )
         # NOTE: Set to "replace_all" for backward compatibility.
         self._col_mode = col_mode or "replace_all"
+        dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -182,11 +186,17 @@ class ContinuousSkLearnModel(FitPredictNode, RegFreqMixin, ToListMixin):
         info["model_attributes"] = model_attribute_info
         info["insample_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
         info["insample_score"] = self._score(fwd_y_df, fwd_y_hat)
-        # Get targets and predictions.
-        output = self._replace_or_merge_output(df, fwd_y_df, fwd_y_hat, idx)
-        info["df_out_info"] = get_df_info_as_string(output["df_out"])
+        # Return targets and predictions.
+        df_out = fwd_y_df.merge(
+            fwd_y_hat, how="outer", left_index=True, right_index=True
+        )
+        df_out = df_out.reindex(idx)
+        df_out = self._apply_col_mode(
+            df, df_out, self._to_list(self._y_vars), self._col_mode
+        )
+        info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("fit", info)
-        return output
+        return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
@@ -218,34 +228,16 @@ class ContinuousSkLearnModel(FitPredictNode, RegFreqMixin, ToListMixin):
         info["model_score"] = self._score(
             fwd_y_df.loc[fwd_y_non_nan_idx], fwd_y_hat.loc[fwd_y_non_nan_idx]
         )
-        # Get targets and predictions.
-        output = self._replace_or_merge_output(df, fwd_y_df, fwd_y_hat, idx)
-        info["df_out_info"] = get_df_info_as_string(output["df_out"])
-        self._set_info("predict", info)
-        return output
-
-    def _replace_or_merge_output(
-        self,
-        df: pd.DataFrame,
-        fwd_y_df: pd.DataFrame,
-        fwd_y_hat: pd.DataFrame,
-        idx: pd.Series,
-    ) -> Dict[str, pd.DataFrame]:
-        df_out = fwd_y_df.reindex(idx).merge(
-            fwd_y_hat.reindex(idx), left_index=True, right_index=True
+        # Return predictions.
+        df_out = fwd_y_df.merge(
+            fwd_y_hat, how="outer", left_index=True, right_index=True
         )
-        if self._col_mode == "replace_all":
-            pass
-        elif self._col_mode == "merge_all":
-            df_out = df.merge(
-                df_out.reindex(idx),
-                how="outer",
-                left_index=True,
-                right_index=True,
-            )
-        else:
-            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
-        dbg.dassert_no_duplicates(df_out.columns)
+        df_out = df_out.reindex(idx)
+        df_out = self._apply_col_mode(
+            df, df_out, self._to_list(self._y_vars), self._col_mode
+        )
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("predict", info)
         return {"df_out": df_out}
 
     def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -307,7 +299,9 @@ class ContinuousSkLearnModel(FitPredictNode, RegFreqMixin, ToListMixin):
         return info
 
 
-class UnsupervisedSkLearnModel(FitPredictNode, RegFreqMixin, ToListMixin):
+class UnsupervisedSkLearnModel(
+    FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin
+):
     """
     Fit and transform an unsupervised sklearn model.
     """
@@ -337,6 +331,7 @@ class UnsupervisedSkLearnModel(FitPredictNode, RegFreqMixin, ToListMixin):
         self._x_vars = x_vars
         self._model = None
         self._col_mode = col_mode or "replace_all"
+        dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -385,23 +380,12 @@ class UnsupervisedSkLearnModel(FitPredictNode, RegFreqMixin, ToListMixin):
         info["model_attributes"] = model_attribute_info
         # Return targets and predictions.
         df_out = x_hat.reindex(index=df_in.index)
-        if self._col_mode == "replace_all":
-            pass
-        elif self._col_mode == "merge_all":
-            df_out = df_in.merge(
-                df_out,
-                how="outer",
-                left_index=True,
-                right_index=True,
-            )
-        else:
-            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
+        df_out = self._apply_col_mode(df, df_out, x_vars, self._col_mode)
         info["df_out_info"] = get_df_info_as_string(df_out)
         if fit:
             self._set_info("fit", info)
         else:
             self._set_info("predict", info)
-        # Return targets and predictions.
         dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
@@ -514,7 +498,7 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
 
-class SkLearnModel(FitPredictNode, ToListMixin):
+class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
     def __init__(
         self,
         nid: str,
@@ -531,6 +515,7 @@ class SkLearnModel(FitPredictNode, ToListMixin):
         self._y_vars = y_vars
         self._model = None
         self._col_mode = col_mode or "replace_all"
+        dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         SkLearnModel._validate_input_df(df_in)
@@ -554,11 +539,12 @@ class SkLearnModel(FitPredictNode, ToListMixin):
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         info["model_params"] = self._model.get_params()
-        output = self._replace_or_merge_output(df, y_hat, idx)
-        info["df_out_info"] = get_df_info_as_string(output["df_out"])
-        self._set_info("fit", info)
         # Return targets and predictions.
-        return output
+        y_hat = y_hat.reindex(idx)
+        df_out = self._apply_col_mode(df, y_hat, y_vars, self._col_mode)
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         SkLearnModel._validate_input_df(df_in)
@@ -575,28 +561,11 @@ class SkLearnModel(FitPredictNode, ToListMixin):
         info = collections.OrderedDict()
         info["model_params"] = self._model.get_params()
         info["model_perf"] = self._model_perf(x_predict, y_predict, y_hat)
-        output = self._replace_or_merge_output(df, y_hat, idx)
-        info["df_out_info"] = get_df_info_as_string(output["df_out"])
-        self._set_info("predict", info)
         # Return predictions.
-        return output
-
-    def _replace_or_merge_output(
-        self, df: pd.DataFrame, y_hat: pd.DataFrame, idx: pd.Series
-    ) -> Dict[str, pd.DataFrame]:
-        df_out = y_hat
-        if self._col_mode == "replace_all":
-            pass
-        elif self._col_mode == "merge_all":
-            df_out = df.merge(
-                df_out.reindex(idx),
-                how="outer",
-                left_index=True,
-                right_index=True,
-            )
-        else:
-            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
-        dbg.dassert_no_duplicates(df_out.columns)
+        y_hat = y_hat.reindex(idx)
+        df_out = self._apply_col_mode(df, y_hat, y_vars, self._col_mode)
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("predict", info)
         return {"df_out": df_out}
 
     @staticmethod
@@ -647,7 +616,9 @@ class SkLearnModel(FitPredictNode, ToListMixin):
         return x, y, y_h
 
 
-class ContinuousSarimaxModel(FitPredictNode, RegFreqMixin, ToListMixin):
+class ContinuousSarimaxModel(
+    FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin
+):
     """
     A dataflow node for continuous SARIMAX model.
 
@@ -710,6 +681,7 @@ class ContinuousSarimaxModel(FitPredictNode, RegFreqMixin, ToListMixin):
         self._model = None
         self._model_results = None
         self._col_mode = col_mode or "merge_all"
+        dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
         self._nan_mode = nan_mode or "raise"
         self._disable_tqdm = disable_tqdm
 
@@ -749,14 +721,18 @@ class ContinuousSarimaxModel(FitPredictNode, RegFreqMixin, ToListMixin):
         fwd_y_hat = self._predict(y_fit, x_fit)
         # Package results.
         fwd_y_df = self._get_fwd_y_df(df)
-        df_out = self._replace_or_merge_output(df, fwd_y_df, fwd_y_hat, df.index)
+        df_out = fwd_y_df.merge(
+            fwd_y_hat, how="outer", left_index=True, right_index=True
+        )
+        df_out = self._apply_col_mode(
+            df, df_out, self._to_list(self._y_vars), self._col_mode
+        )
         # Add info.
         # TODO(Julia): Maybe add model performance to info.
         info = collections.OrderedDict()
-        info["model_summary"] = (
-            _remove_datetime_info_from_SARIMAX(self._model_results.summary())
-            .as_text()
-        )
+        info["model_summary"] = _remove_datetime_info_from_SARIMAX(
+            self._model_results.summary()
+        ).as_text()
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
@@ -783,10 +759,18 @@ class ContinuousSarimaxModel(FitPredictNode, RegFreqMixin, ToListMixin):
         fwd_y_hat = self._predict(y_predict, x_predict)
         # Package results.
         fwd_y_df = self._get_fwd_y_df(df)
-        df_out = self._replace_or_merge_output(df, fwd_y_df, fwd_y_hat, df.index)
+        df_out = fwd_y_df.merge(
+            fwd_y_hat, how="outer", left_index=True, right_index=True
+        )
+        df_out = self._apply_col_mode(
+            df, df_out, self._to_list(self._y_vars), self._col_mode
+        )
         # Add info.
         info = collections.OrderedDict()
-        info["model_summary"] = self._model_results.summary()
+        info["model_summary"] = (
+            _remove_datetime_info_from_SARIMAX(self._model_results.summary())
+            .as_text()
+        )
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
@@ -806,7 +790,9 @@ class ContinuousSarimaxModel(FitPredictNode, RegFreqMixin, ToListMixin):
             pred_range = len(y)
             pred_start = 1
         y_var = y.columns[0]
-        for t in tqdm(range(pred_start, pred_range + 1), disable=self._disable_tqdm):
+        for t in tqdm(
+            range(pred_start, pred_range + 1), disable=self._disable_tqdm
+        ):
             # If `t` is larger than `y`, this selects the whole `y`.
             y_past = y.iloc[:t]
             if x is not None:
@@ -882,33 +868,6 @@ class ContinuousSarimaxModel(FitPredictNode, RegFreqMixin, ToListMixin):
             pass
         else:
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
-
-    # TODO(*): This is roughly copied from `ContinuousSKlearnModel`. Maybe this
-    #     method can be made static and moved to `FitPredictNode`, or factored
-    #     out as a function.
-    def _replace_or_merge_output(
-        self,
-        df: pd.DataFrame,
-        fwd_y_df: pd.DataFrame,
-        fwd_y_hat: pd.DataFrame,
-        idx: pd.Index,
-    ) -> pd.DataFrame:
-        df_out = fwd_y_df.reindex(idx).merge(
-            fwd_y_hat.reindex(idx), left_index=True, right_index=True
-        )
-        if self._col_mode == "replace_all":
-            pass
-        elif self._col_mode == "merge_all":
-            df_out = df.merge(
-                df_out.reindex(idx),
-                how="outer",
-                left_index=True,
-                right_index=True,
-            )
-        else:
-            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
-        dbg.dassert_no_duplicates(df_out.columns)
-        return df_out
 
 
 class MultihorizonReturnsPredictionProcessor(FitPredictNode):
@@ -1356,7 +1315,7 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
         return {"df_out": df_out}
 
 
-class SmaModel(FitPredictNode, RegFreqMixin):
+class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
     """
     Fit and predict a smooth moving average model.
     """
@@ -1393,6 +1352,7 @@ class SmaModel(FitPredictNode, RegFreqMixin):
         else:
             self._nan_mode = nan_mode
         self._col_mode = col_mode or "replace_all"
+        dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
         # Smooth moving average model parameters to learn.
         self._tau = tau
         self._min_periods = None
@@ -1445,8 +1405,9 @@ class SmaModel(FitPredictNode, RegFreqMixin):
             fwd_y_hat.reindex(idx), left_index=True, right_index=True
         )
         dbg.dassert_no_duplicates(df_out.columns)
+        df_out = self._apply_col_mode(df, df_out, self._col, self._col_mode)
+        info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("fit", info)
-        df_out = self._apply_col_mode(df_in, df_out)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -1478,7 +1439,7 @@ class SmaModel(FitPredictNode, RegFreqMixin):
         )
         dbg.dassert_no_duplicates(df_out.columns)
         info = collections.OrderedDict()
-        df_out = self._apply_col_mode(df_in, df_out)
+        df_out = self._apply_col_mode(df, df_out, self._col, self._col_mode)
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
@@ -1551,25 +1512,8 @@ class SmaModel(FitPredictNode, RegFreqMixin):
         )
         return info
 
-    def _apply_col_mode(
-        self,
-        df_in: pd.DataFrame,
-        df_out: pd.DataFrame,
-    ) -> pd.DataFrame:
-        if self._col_mode == "replace_all":
-            pass
-        elif self._col_mode == "merge_all":
-            df_out = df_out.join(
-                df_in,
-                how="outer",
-            )
-        else:
-            raise ValueError(f"Invalid `col_mode`='{self._col_mode}'")
-        dbg.dassert_no_duplicates(df_out.columns)
-        return df_out
 
-
-class VolatilityModulator(FitPredictNode):
+class VolatilityModulator(FitPredictNode, ColModeMixin):
     """
     Modulate or demodulate signal by volatility.
 
@@ -1669,41 +1613,9 @@ class VolatilityModulator(FitPredictNode):
         else:
             raise ValueError(f"Invalid mode=`{self._mode}`")
         adjusted_signal.rename(columns=self._col_rename_func, inplace=True)
-        df_out = self._apply_col_mode(df_in, adjusted_signal)
-        return df_out
-
-    def _apply_col_mode(
-        self,
-        df_in: pd.DataFrame,
-        df_out: pd.DataFrame,
-    ) -> pd.DataFrame:
-        if self._col_mode == "merge_all":
-            dbg.dassert(
-                df_out.columns.intersection(df_in.columns).empty,
-                "Transformed column names `%s` conflict with existing column "
-                "names `%s`.",
-                df_out.columns,
-                df_in.columns,
-            )
-            df_out = df_in.merge(df_out, left_index=True, right_index=True)
-        elif self._col_mode == "replace_selected":
-            dbg.dassert(
-                df_in.drop(self._signal_cols, axis=1)
-                .columns.intersection(df_out.columns)
-                .empty,
-                "Transformed column names `%s` conflict with existing column "
-                "names `%s`.",
-                df_out.columns,
-                self._signal_cols,
-            )
-            df_out = df_in.drop(self._signal_cols, axis=1).merge(
-                df_out, left_index=True, right_index=True
-            )
-        elif self._col_mode == "replace_all":
-            pass
-        else:
-            raise ValueError(f"Invalid `col_mode`='{self._col_mode}'")
-        dbg.dassert_no_duplicates(df_out.columns)
+        df_out = self._apply_col_mode(
+            df_in, adjusted_signal, self._signal_cols, self._col_mode
+        )
         return df_out
 
 
@@ -1830,14 +1742,15 @@ class VolatilityModel(FitPredictNode):
         if tail_nid is not None:
             dag.connect(tail_nid, node.nid)
         return node.nid
-    
+
+
 def _remove_datetime_info_from_SARIMAX(
-    summary: si.summary.Summary
+    summary: si.summary.Summary,
 ) -> si.summary.Summary:
     """
     Remove date and time from model summary.
-    
-    Replace date and time info from 2-4 lines of summary to sample and 
+
+    Replace date and time info from 2-4 lines of summary to sample and
     covariance info from 4-6 lines, remove duplicated last lines.
     """
     for i in range(2, 5):

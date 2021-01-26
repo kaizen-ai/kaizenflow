@@ -403,7 +403,64 @@ class YConnector(FitPredictNode):
 # #############################################################################
 
 
-class ColumnTransformer(Transformer):
+class ColModeMixin:
+    """
+    Selects columns to propagate in output dataframe.
+    """
+
+    @staticmethod
+    def _apply_col_mode(
+        df_in: pd.DataFrame,
+        df_out: pd.DataFrame,
+        cols_to_transform: List[Any],
+        col_mode: str,
+    ) -> pd.DataFrame:
+        """
+        Merge transformed dataframe with original dataframe.
+
+        :param df_in: original dataframe
+        :param df_out: transformed dataframe
+        :param cols_to_transform: columns in `df_in` that were transformed to
+            obtain `df_out`
+        :param col_mode: "merge_all", "replace_selected", or "replace_all".
+            Determines what columns are propagated. If "merge_all", perform an
+            outer merge
+        :return: dataframe with columns selected by `col_mode`
+        """
+        dbg.dassert_isinstance(df_in, pd.DataFrame)
+        dbg.dassert_isinstance(df_out, pd.DataFrame)
+        if col_mode == "merge_all":
+            shared_columns = df_out.columns.intersection(df_in.columns)
+            dbg.dassert(
+                shared_columns.empty,
+                "Transformed column names `%s` conflict with existing column "
+                "names `%s`.",
+                df_out.columns,
+                df_in.columns,
+            )
+            df_out = df_in.merge(
+                df_out, how="outer", left_index=True, right_index=True
+            )
+        elif col_mode == "replace_selected":
+            df_in_not_transformed_cols = df_in.columns.drop(cols_to_transform)
+            dbg.dassert(
+                df_in_not_transformed_cols.intersection(df_out.columns).empty,
+                "Transformed column names `%s` conflict with existing column "
+                "names `%s`.",
+                df_out.columns,
+                df_in_not_transformed_cols,
+            )
+            df_out = df_in.drop(columns=cols_to_transform).merge(
+                df_out, left_index=True, right_index=True
+            )
+        elif col_mode == "replace_all":
+            pass
+        else:
+            dbg.dfatal("Unsupported column mode `%s`", col_mode)
+        return df_out
+
+
+class ColumnTransformer(Transformer, ColModeMixin):
     """
     Perform non-index modifying changes of columns.
     """
@@ -501,32 +558,9 @@ class ColumnTransformer(Transformer):
         # Store names of transformed columns.
         self._transformed_col_names = df.columns.tolist()
         # Maybe merge transformed columns with a subset of input df columns.
-        if self._col_mode == "merge_all":
-            dbg.dassert(
-                df.columns.intersection(df_in.columns).empty,
-                "Transformed column names `%s` conflict with existing column "
-                "names `%s`.",
-                df.columns,
-                df_in.columns,
-            )
-            df = df_in.merge(df, left_index=True, right_index=True)
-        elif self._col_mode == "replace_selected":
-            dbg.dassert(
-                df.drop(self._cols, axis=1)
-                .columns.intersection(df_in[self._cols].columns)
-                .empty,
-                "Transformed column names `%s` conflict with existing column "
-                "names `%s`.",
-                df.columns,
-                self._cols,
-            )
-            df = df_in.drop(self._cols, axis=1).merge(
-                df, left_index=True, right_index=True
-            )
-        elif self._col_mode == "replace_all":
-            pass
-        else:
-            dbg.dfatal("Unsupported column mode `%s`", self._col_mode)
+        df = self._apply_col_mode(
+            df_in, df, self._transformed_col_names, self._col_mode
+        )
         #
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
@@ -692,7 +726,7 @@ class TwapVwapComputer(Transformer):
 # #############################################################################
 
 
-class VolatilityNormalizer(FitPredictNode):
+class VolatilityNormalizer(FitPredictNode, ColModeMixin):
     def __init__(
         self,
         nid: str,
@@ -728,7 +762,12 @@ class VolatilityNormalizer(FitPredictNode):
             df_in[self._col], self._target_volatility
         )
         rescaled_y_hat = self._scale_factor * df_in[self._col]
-        df_out = self._form_output_df(df_in, rescaled_y_hat)
+        rescaled_y_hat = rescaled_y_hat.to_frame(
+            f"rescaled_{rescaled_y_hat.name}"
+        )
+        df_out = self._apply_col_mode(
+            df_in, rescaled_y_hat, [self._col], self._col_mode
+        )
         # Store info.
         info = collections.OrderedDict()
         info["scale_factor"] = self._scale_factor
@@ -738,27 +777,13 @@ class VolatilityNormalizer(FitPredictNode):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_in(self._col, df_in.columns)
         rescaled_y_hat = self._scale_factor * df_in[self._col]
-        df_out = self._form_output_df(df_in, rescaled_y_hat)
+        rescaled_y_hat = rescaled_y_hat.to_frame(
+            f"rescaled_{rescaled_y_hat.name}"
+        )
+        df_out = self._apply_col_mode(
+            df_in, rescaled_y_hat, [self._col], self._col_mode
+        )
         return {"df_out": df_out}
-
-    def _form_output_df(
-        self, df_in: pd.DataFrame, srs: pd.Series
-    ) -> pd.DataFrame:
-        srs.name = f"rescaled_{srs.name}"
-        # Maybe merge transformed columns with a subset of input df columns.
-        if self._col_mode == "merge_all":
-            dbg.dassert_not_in(
-                srs.name,
-                df_in.columns,
-                "'%s' is already in `df_in` columns.",
-                srs.name,
-            )
-            df_out = df_in.merge(srs, left_index=True, right_index=True)
-        elif self._col_mode == "replace_all":
-            df_out = srs.to_frame()
-        else:
-            raise ValueError("Invalid `col_mode`='%s'" % self._col_mode)
-        return df_out
 
 
 # #############################################################################

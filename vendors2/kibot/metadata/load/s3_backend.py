@@ -9,7 +9,7 @@ import helpers.s3 as hs3
 import vendors2.kibot.data.config as vkdcon
 import vendors2.kibot.metadata.config as vkmcon
 
-_LOG = logging.getLogger(__name__)
+_LOG = logging.getLogger("amp" + __name__)
 
 # TODO(Amr): Extract the 2 distinct functions here
 # TODO(Amr): Map the functions onto `KibotContractType`, so you provide a type,
@@ -120,7 +120,7 @@ class S3Backend:
         df_shape = df.shape
         df.dropna(inplace=True, how="all")
         df_shape_after_dropna = df.shape
-        dbg.dassert_eq(df_shape[0], df_shape_after_dropna[0])
+        #dbg.dassert_eq(df_shape[0], df_shape_after_dropna[0])
         df.index = df.index.astype(int)
         df.index.name = None
         df["StartDate"] = pd.to_datetime(df["StartDate"])
