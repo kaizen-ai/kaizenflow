@@ -1702,7 +1702,8 @@ class VolatilityModel(FitPredictNode):
         self, df_in: pd.DataFrame, fit: bool = False
     ) -> Dict[str, pd.DataFrame]:
         method = "fit" if fit else "predict"
-        dfs = []
+        # Leave unchanged columns to the output.
+        dfs = [df_in.drop(self._cols, 1)]
         info = collections.OrderedDict()
         for col in self._cols:
             dbg.dassert_not_in(self._vol_cols[col], df_in.columns)
