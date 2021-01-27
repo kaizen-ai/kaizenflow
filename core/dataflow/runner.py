@@ -1,11 +1,11 @@
 import logging
 from typing import Any, List, Optional, Tuple
 
-import core.config as cfg
+import core.config as cconfi
 import helpers.dbg as dbg
 from core.dataflow.builder import DagBuilder
 from core.dataflow.nodes import extract_info
-from core.dataflow.result_bundle import ResultBundle
+from core.dataflow.result_bundle import PredictionResultBundle, ResultBundle
 
 _LOG = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ class FitPredictDagRunner:
     Class for running DAGs.
     """
 
-    def __init__(self, config: cfg.Config, dag_builder: DagBuilder) -> None:
+    def __init__(self, config: cconfi.Config, dag_builder: DagBuilder) -> None:
         """
         Initialize DAG.
 
@@ -82,6 +82,36 @@ class FitPredictDagRunner:
         df_out = self.dag.run_leq_node(nid, method)["df_out"]
         info = extract_info(self.dag, [method])
         return ResultBundle(
+            config=self.config,
+            result_nid=nid,
+            method=method,
+            result_df=df_out,
+            column_to_tags=self._column_to_tags_mapping,
+            info=info,
+        )
+
+
+class PredictionDagRunner(FitPredictDagRunner):
+    """
+    Class for running prediction DAGs.
+
+    Identical to `FitPredictDagRunner`, but returns a
+    `PredictionResultBundle`.
+    """
+
+    def _run_dag(self, nid: str, method: str) -> PredictionResultBundle:
+        """
+        Run DAG and return a `PredictionResultBundle`.
+
+        :param nid: identifier of terminal node for execution
+        :param method: `Node` subclass method to be executed
+        :return: `PredictionResultBundle` class containing `config`, `nid`,
+            `method`, result dataframe and DAG info
+        """
+        dbg.dassert_in(method, self._methods)
+        df_out = self.dag.run_leq_node(nid, method)["df_out"]
+        info = extract_info(self.dag, [method])
+        return PredictionResultBundle(
             config=self.config,
             result_nid=nid,
             method=method,
