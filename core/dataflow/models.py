@@ -3,20 +3,20 @@ import datetime
 import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-import gluonts.model.deepar as gmd
-import gluonts.trainer as gt
+import gluonts.model.deepar as gmdeep
+import gluonts.trainer as gtrain
 import numpy as np
 import pandas as pd
 import scipy as sp
-import sklearn as skl
+import sklearn as sklear
 import statsmodels.api as sm
-import statsmodels.iolib as si
+import statsmodels.iolib as siolib
 from tqdm.autonotebook import tqdm
 
-import core.backtest as bcktst
-import core.data_adapters as adpt
-import core.signal_processing as sigp
-import core.statistics as stats
+import core.backtest as cbackt
+import core.data_adapters as cdataa
+import core.signal_processing as csigna
+import core.statistics as cstati
 import helpers.dbg as dbg
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
@@ -162,9 +162,9 @@ class ContinuousSkLearnModel(
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, non_nan_idx)
         # Prepare x_vars in sklearn format.
-        x_fit = adpt.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
+        x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         # Prepare forward y_vars in sklearn format.
-        fwd_y_fit = adpt.transform_to_sklearn(fwd_y_df, fwd_y_df.columns.tolist())
+        fwd_y_fit = cdataa.transform_to_sklearn(fwd_y_df, fwd_y_df.columns.tolist())
         # Define and fit model.
         self._model = self._model_func(**self._model_kwargs)
         self._model = self._model.fit(x_fit, fwd_y_fit)
@@ -172,7 +172,7 @@ class ContinuousSkLearnModel(
         fwd_y_hat = self._model.predict(x_fit)
         #
         fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
-        fwd_y_hat = adpt.transform_from_sklearn(
+        fwd_y_hat = cdataa.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
         )
         # TODO(Paul): Summarize model perf or make configurable.
@@ -208,7 +208,7 @@ class ContinuousSkLearnModel(
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, non_nan_idx)
         # Transform x_vars to sklearn format.
-        x_predict = adpt.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
+        x_predict = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         # Use trained model to generate predictions.
         dbg.dassert_is_not(
             self._model, None, "Model not found! Check if `fit` has been run."
@@ -218,10 +218,10 @@ class ContinuousSkLearnModel(
         fwd_y_df = self._get_fwd_y_df(df).loc[non_nan_idx]
         fwd_y_non_nan_idx = fwd_y_df.dropna().index
         fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
-        fwd_y_hat = adpt.transform_from_sklearn(
+        fwd_y_hat = cdataa.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
         )
-        # Generate basic perf stats.
+        # Generate basic perf cstati.
         info = collections.OrderedDict()
         info["model_params"] = self._model.get_params()
         info["model_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
@@ -270,10 +270,10 @@ class ContinuousSkLearnModel(
         """
         Compute accuracy for classification or R^2 score for regression.
         """
-        if skl.base.is_classifier(self._model):
-            metric = skl.metrics.accuracy_score
-        elif skl.base.is_regressor(self._model):
-            metric = skl.metrics.r2_score
+        if sklear.base.is_classifier(self._model):
+            metric = sklear.metrics.accuracy_score
+        elif sklear.base.is_regressor(self._model):
+            metric = sklear.metrics.r2_score
         else:
             return None
         # In `predict()` method, `y_pred` may exist for index where `y_true`
@@ -293,8 +293,8 @@ class ContinuousSkLearnModel(
             y_hat.rename(columns=lambda x: x.replace("_hat", ""))
         )
         info["pnl_rets"] = pnl_rets
-        info["sr"] = stats.compute_annualized_sharpe_ratio(
-            sigp.resample(pnl_rets, rule="1B").sum()
+        info["sr"] = cstati.compute_annualized_sharpe_ratio(
+            csigna.resample(pnl_rets, rule="1B").sum()
         )
         return info
 
@@ -359,7 +359,7 @@ class UnsupervisedSkLearnModel(
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(df.index, non_nan_idx)
         # Prepare x_vars in sklearn format.
-        x_fit = adpt.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
+        x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         if fit:
             # Define and fit model.
             self._model = self._model_func(**self._model_kwargs)
@@ -368,7 +368,7 @@ class UnsupervisedSkLearnModel(
         x_transform = self._model.transform(x_fit)
         #
         num_cols = x_transform.shape[1]
-        x_hat = adpt.transform_from_sklearn(
+        x_hat = cdataa.transform_from_sklearn(
             non_nan_idx, list(range(num_cols)), x_transform
         )
         info = collections.OrderedDict()
@@ -457,7 +457,7 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(df.index, non_nan_idx)
         # Prepare x_vars in sklearn format.
-        x_fit = adpt.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
+        x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         if fit:
             # Define and fit model.
             self._model = self._model_func(**self._model_kwargs)
@@ -466,7 +466,7 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
         x_transform = self._model.transform(x_fit)
         x_hat = self._model.inverse_transform(x_transform)
         #
-        x_residual = adpt.transform_from_sklearn(
+        x_residual = cdataa.transform_from_sklearn(
             non_nan_idx, x_vars, x_fit - x_hat
         )
         info = collections.OrderedDict()
@@ -586,8 +586,8 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
         # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
         pnl_rets = y.multiply(y_hat.rename(columns=lambda x: x.strip("_hat")))
         info["pnl_rets"] = pnl_rets
-        info["sr"] = stats.compute_sharpe_ratio(
-            sigp.resample(pnl_rets, rule="1B").sum(), time_scaling=252
+        info["sr"] = cstati.compute_sharpe_ratio(
+            csigna.resample(pnl_rets, rule="1B").sum(), time_scaling=252
         )
         return info
 
@@ -596,7 +596,7 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
     ) -> Tuple[List[str], np.array, List[str], np.array]:
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
-        x_vals, y_vals = adpt.transform_to_sklearn_old(df, x_vars, y_vars)
+        x_vals, y_vals = cdataa.transform_to_sklearn_old(df, x_vars, y_vars)
         return x_vars, x_vals, y_vars, y_vals
 
     @staticmethod
@@ -608,9 +608,9 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
         y_vals: np.array,
         y_hat: np.array,
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        x = adpt.transform_from_sklearn(idx, x_vars, x_vals)
-        y = adpt.transform_from_sklearn(idx, y_vars, y_vals)
-        y_h = adpt.transform_from_sklearn(
+        x = cdataa.transform_from_sklearn(idx, x_vars, x_vals)
+        y = cdataa.transform_from_sklearn(idx, y_vars, y_vals)
+        y_h = cdataa.transform_from_sklearn(
             idx, [y + "_hat" for y in y_vars], y_hat
         )
         return x, y, y_h
@@ -958,7 +958,7 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode):
         # Accumulate target for each step.
         cum_rets = []
         for i in range(1, self._max_steps_ahead + 1):
-            cum_ret_curr = sigp.accumulate(target, i).rename(f"cumret_{i}")
+            cum_ret_curr = csigna.accumulate(target, i).rename(f"cumret_{i}")
             cum_rets.append(cum_ret_curr)
         cum_rets = pd.concat(cum_rets, axis=1)
         fwd_cum_ret = cum_rets.shift(-self._max_steps_ahead)
@@ -1018,10 +1018,10 @@ class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
         # To avoid passing a class through config, handle `Trainer()`
         # parameters separately from `estimator_kwargs`.
         self._trainer_kwargs = trainer_kwargs
-        self._trainer = gt.Trainer(**self._trainer_kwargs)
+        self._trainer = gtrain.Trainer(**self._trainer_kwargs)
         dbg.dassert_not_in("trainer", self._estimator_kwargs)
         #
-        self._estimator_func = gmd.DeepAREstimator
+        self._estimator_func = gmdeep.DeepAREstimator
         # NOTE: Covariates (x_vars) are not required by DeepAR.
         #   - This could be useful for, e.g., predicting future values of
         #     what would normally be predictors
@@ -1053,7 +1053,7 @@ class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
             x_vars = None
         y_vars = self._to_list(self._y_vars)
         # Transform dataflow local timeseries dataframe into gluon-ts format.
-        gluon_train = adpt.transform_to_gluon(
+        gluon_train = cdataa.transform_to_gluon(
             df_fit, x_vars, y_vars, df_fit.index.freq.freqstr
         )
         # Instantiate the (DeepAR) estimator and train the model.
@@ -1065,7 +1065,7 @@ class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
         self._predictor = self._estimator.train(gluon_train)
         # Predict. Generate predictions over all of `df_in` (not just on the
         #     restricted slice `df_fit`).
-        fwd_y_hat, fwd_y = bcktst.generate_predictions(
+        fwd_y_hat, fwd_y = cbackt.generate_predictions(
             predictor=self._predictor,
             df=df,
             y_vars=y_vars,
@@ -1091,7 +1091,7 @@ class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
         else:
             x_vars = None
         y_vars = self._to_list(self._y_vars)
-        gluon_train = adpt.transform_to_gluon(
+        gluon_train = cdataa.transform_to_gluon(
             df, x_vars, y_vars, df.index.freq.freqstr
         )
         # Instantiate the (DeepAR) estimator and train the model.
@@ -1102,7 +1102,7 @@ class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
         )
         self._predictor = self._estimator.train(gluon_train)
         #
-        fwd_y_hat, fwd_y = bcktst.generate_predictions(
+        fwd_y_hat, fwd_y = cbackt.generate_predictions(
             predictor=self._predictor,
             df=df,
             y_vars=y_vars,
@@ -1173,10 +1173,10 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
         # To avoid passing a class through config, handle `Trainer()`
         # parameters separately from `estimator_kwargs`.
         self._trainer_kwargs = trainer_kwargs
-        self._trainer = gt.Trainer(**self._trainer_kwargs)
+        self._trainer = gtrain.Trainer(**self._trainer_kwargs)
         dbg.dassert_not_in("trainer", self._estimator_kwargs)
         #
-        self._estimator_func = gmd.DeepAREstimator
+        self._estimator_func = gmdeep.DeepAREstimator
         # NOTE: Covariates (x_vars) are not required by DeepAR.
         # TODO(Paul): Allow this model to accept y_vars only.
         #   - This could be useful for, e.g., predicting future values of
@@ -1196,7 +1196,6 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
         """
         Fit model to multiple series reflected in multiindexed `df_in`.
 
-
         `prediction_length` is autoinferred from the max index of `t_j`, e.g.,
         each `df_in` is assumed to include the index `0` for, e.g.,
         "event time", and indices are assumed to be consecutive integers. So
@@ -1212,7 +1211,7 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
         y_vars = self._to_list(self._y_vars)
         df = df_in.copy()
         # Transform dataflow local timeseries dataframe into gluon-ts format.
-        gluon_train = adpt.transform_to_gluon(df, x_vars, y_vars, self._freq)
+        gluon_train = cdataa.transform_to_gluon(df, x_vars, y_vars, self._freq)
         # Set the prediction length to the length of the local timeseries - 1.
         #   - To predict for time t_j at time t_i, t_j > t_i, we need to know
         #     x_vars up to and including time t_j
@@ -1229,7 +1228,7 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
         # Apply model predictions to the training set (so that we can evaluate
         # in-sample performance).
         #   - Include all data points up to and including zero (the event time)
-        gluon_test = adpt.transform_to_gluon(
+        gluon_test = cdataa.transform_to_gluon(
             df, x_vars, y_vars, self._freq, self._prediction_length
         )
         fit_predictions = list(self._predictor.predict(gluon_test))
@@ -1237,7 +1236,7 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
         # dataframe.
         # TODO(Paul): Gluon has built-in functionality to take the mean of
         #     traces, and we might consider using it instead.
-        y_hat_traces = adpt.transform_from_gluon_forecasts(fit_predictions)
+        y_hat_traces = cdataa.transform_from_gluon_forecasts(fit_predictions)
         # TODO(Paul): Store the traces / dispersion estimates.
         # Average over all available samples.
         y_hat = y_hat_traces.mean(level=[0, 1])
@@ -1273,7 +1272,7 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
         y_vars = self._to_list(self._y_vars)
         df = df_in.copy()
         # Transform dataflow local timeseries dataframe into gluon-ts format.
-        gluon_test = adpt.transform_to_gluon(
+        gluon_test = cdataa.transform_to_gluon(
             df,
             x_vars,
             y_vars,
@@ -1285,7 +1284,7 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
         # dataframe.
         # TODO(Paul): Gluon has built-in functionality to take the mean of
         #     traces, and we might consider using it instead.
-        y_hat_traces = adpt.transform_from_gluon_forecasts(predictions)
+        y_hat_traces = cdataa.transform_from_gluon_forecasts(predictions)
         # TODO(Paul): Store the traces / dispersion estimates.
         # Average over all available samples.
         y_hat = y_hat_traces.mean(level=[0, 1])
@@ -1335,7 +1334,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         :param nid: unique node id
         :param col: name of column to model
         :param steps_ahead: as in ContinuousSkLearnModel
-        :param tau: as in `sigp.compute_smooth_moving_average`. If `None`,
+        :param tau: as in `csigna.compute_smooth_moving_average`. If `None`,
             learn this parameter
         :param nan_mode: as in ContinuousSkLearnModel
         """
@@ -1359,7 +1358,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         self._min_periods_max_frac = 0.2
         self._min_depth = 1
         self._max_depth = 1
-        self._metric = skl.metrics.mean_absolute_error
+        self._metric = sklear.metrics.mean_absolute_error
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
@@ -1379,9 +1378,9 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, non_nan_idx)
         # Prepare x_vars in sklearn format.
-        x_fit = adpt.transform_to_sklearn(df.loc[non_nan_idx], self._col)
+        x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], self._col)
         # Prepare forward y_vars in sklearn format.
-        fwd_y_fit = adpt.transform_to_sklearn(fwd_y_df, fwd_y_df.columns.tolist())
+        fwd_y_fit = cdataa.transform_to_sklearn(fwd_y_df, fwd_y_df.columns.tolist())
         # Define and fit model.
         if self._tau is None:
             self._tau = self._learn_tau(x_fit, fwd_y_fit)
@@ -1397,7 +1396,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         # Generate insample predictions and put in dataflow dataframe format.
         fwd_y_hat = self._predict(x_fit)
         fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
-        fwd_y_hat = adpt.transform_from_sklearn(
+        fwd_y_hat = cdataa.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
         )
         # Return targets and predictions.
@@ -1419,7 +1418,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, non_nan_idx)
         # Transform x_vars to sklearn format.
-        x_predict = adpt.transform_to_sklearn(df.loc[non_nan_idx], self._col)
+        x_predict = cdataa.transform_to_sklearn(df.loc[non_nan_idx], self._col)
         # Use trained model to generate predictions.
         dbg.dassert_is_not(
             self._tau,
@@ -1430,7 +1429,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         # Put predictions in dataflow dataframe format.
         fwd_y_df = self._get_fwd_y_df(df).loc[non_nan_idx]
         fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
-        fwd_y_hat = adpt.transform_from_sklearn(
+        fwd_y_hat = cdataa.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
         )
         # Return targets and predictions.
@@ -1468,7 +1467,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
     def _learn_tau(self, x: np.array, y: np.array) -> float:
         def score(tau: float) -> float:
             x_srs = pd.DataFrame(x.flatten())
-            sma = sigp.compute_smooth_moving_average(
+            sma = csigna.compute_smooth_moving_average(
                 x_srs,
                 tau=tau,
                 min_periods=0,
@@ -1486,7 +1485,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
     def _predict(self, x: np.array) -> np.array:
         x_srs = pd.DataFrame(x.flatten())
         # TODO(*): Make `min_periods` configurable.
-        x_sma = sigp.compute_smooth_moving_average(
+        x_sma = csigna.compute_smooth_moving_average(
             x_srs,
             tau=self._tau,
             min_periods=self._min_periods,
@@ -1507,8 +1506,8 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
             y_hat.rename(columns=lambda x: x.replace("_hat", ""))
         )
         info["pnl_rets"] = pnl_rets
-        info["sr"] = stats.compute_annualized_sharpe_ratio(
-            sigp.resample(pnl_rets, rule="1B").sum()
+        info["sr"] = cstati.compute_annualized_sharpe_ratio(
+            csigna.resample(pnl_rets, rule="1B").sum()
         )
         return info
 
@@ -1623,8 +1622,8 @@ class VolatilityModel(FitPredictNode):
     """
     Fit and predict a smooth moving average volatility model.
 
-    Wraps SmaModel internally, handling calculation of volatility from returns
-    and column appends.
+    Wraps SmaModel internally, handling calculation of volatility from
+    returns and column appends.
     """
 
     def __init__(
@@ -1645,7 +1644,7 @@ class VolatilityModel(FitPredictNode):
         :param col: name of returns column to model
         :param steps_ahead: as in ContinuousSkLearnModel
         :param p_moment: exponent to apply to the absolute value of returns
-        :param tau: as in `sigp.compute_smooth_moving_average`. If `None`,
+        :param tau: as in `csigna.compute_smooth_moving_average`. If `None`,
             learn this parameter
         :param col_rename_func: renaming function for z-scored column
         :param col_mode: as in `ColumnTransformer`
@@ -1745,8 +1744,8 @@ class VolatilityModel(FitPredictNode):
 
 
 def _remove_datetime_info_from_SARIMAX(
-    summary: si.summary.Summary,
-) -> si.summary.Summary:
+    summary: siolib.summary.Summary,
+) -> siolib.summary.Summary:
     """
     Remove date and time from model summary.
 
