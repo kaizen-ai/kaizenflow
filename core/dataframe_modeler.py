@@ -309,7 +309,7 @@ class DataFrameModeler:
         """
         model = dtf.VolatilityModel(
             nid="volatility_model",
-            col=[col],
+            cols=[col],
             steps_ahead=steps_ahead,
             p_moment=p_moment,
             tau=tau,

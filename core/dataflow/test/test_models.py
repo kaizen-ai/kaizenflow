@@ -966,7 +966,7 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
         config = cfg.Config()
-        config["col"] = ["ret_0"]
+        config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
         node = dtf.VolatilityModel("vol_model", **config.to_dict())
@@ -985,7 +985,7 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
         config = cfg.Config()
-        config["col"] = ["ret_0"]
+        config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
         node = dtf.VolatilityModel("vol_model", **config.to_dict())
@@ -1015,7 +1015,7 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
         config = cfg.Config()
-        config["col"] = ["ret_0"]
+        config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
         node = dtf.VolatilityModel("vol_model", **config.to_dict())
@@ -1039,7 +1039,7 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
         config = cfg.Config()
-        config["col"] = ["ret_0"]
+        config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
         node = dtf.VolatilityModel("vol_model", **config.to_dict())
@@ -1066,7 +1066,7 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
         config = cfg.Config()
-        config["col"] = ["ret_0"]
+        config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["col_mode"] = "replace_all"
         config["nan_mode"] = "drop"
@@ -1086,7 +1086,7 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
         config = cfg.Config()
-        config["col"] = ["ret_0"]
+        config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["col_mode"] = "replace_selected"
         config["nan_mode"] = "drop"
@@ -1107,7 +1107,7 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
         config = cfg.Config()
-        config["col"] = ["ret_0", "ret_0_2"]
+        config["cols"] = ["ret_0", "ret_0_2"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
         node = dtf.VolatilityModel("vol_model", **config.to_dict())

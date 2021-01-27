@@ -1613,7 +1613,7 @@ class VolatilityModel(FitPredictNode):
     def __init__(
         self,
         nid: str,
-        col: list,
+        cols: list,
         steps_ahead: int,
         p_moment: float = 2,
         tau: Optional[float] = None,
@@ -1625,7 +1625,7 @@ class VolatilityModel(FitPredictNode):
         Specify the data and sma modeling parameters.
 
         :param nid: unique node id
-        :param col: name of columns to model
+        :param cols: name of columns to model
         :param steps_ahead: as in ContinuousSkLearnModel
         :param p_moment: exponent to apply to the absolute value of returns
         :param tau: as in `sigp.compute_smooth_moving_average`. If `None`,
@@ -1635,8 +1635,8 @@ class VolatilityModel(FitPredictNode):
         :param nan_mode: as in ContinuousSkLearnModel
         """
         super().__init__(nid)
-        dbg.dassert_isinstance(col, list)
-        self._cols = col
+        dbg.dassert_isinstance(cols, list)
+        self._cols = cols
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(1, p_moment)
         self._p_moment = p_moment
@@ -1675,35 +1675,28 @@ class VolatilityModel(FitPredictNode):
             )
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        dfs = []
-        info = collections.OrderedDict()
-        for col in self._cols:
-            df_in = df_in.copy()
-            dag = self._get_dag(df_in, col)
-            df_out = dag.run_leq_node(self._modulators[col].nid, "fit")["df_out"]
-            info[col] = extract_info(dag, ["fit"])
-            dfs.append(df_out)
-        df_out = pd.concat(dfs, axis=1)
-        df_out = df_out.loc[:, ~df_out.columns.duplicated()]
-        self._set_info("fit", info)
-        return {"df_out": df_out}
+        return self._fit_predict_helper(df_in, fit=True)
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=False)
+    
+    def _fit_predict_helper(
+        self, df_in: pd.DataFrame, fit: bool = False
+    ) -> Dict[str, pd.DataFrame]:
+        method = "fit" if fit else "predict"
         dfs = []
         info = collections.OrderedDict()
         for col in self._cols:
             dbg.dassert_not_in(self._vol_cols[col], df_in.columns)
-            df_in = df_in.copy()
-            dag = self._get_dag(df_in, col)
-            df_out = dag.run_leq_node(self._modulators[col].nid, "predict")["df_out"]
-            
-            info[col] = extract_info(dag, ["predict"])
+            dag = self._get_dag(df_in[[col]], col)
+            df_out = dag.run_leq_node(self._modulators[col].nid, method)["df_out"]
+            info[col] = extract_info(dag, [method])
             dfs.append(df_out)
         df_out = pd.concat(dfs, axis=1)
-        df_out = df_out.loc[:, ~df_out.columns.duplicated()]
-        self._set_info("predict", info)
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info(method, info)
         return {"df_out": df_out}
-
+        
     def _get_dag(self, df_in: pd.DataFrame, col: str) -> DAG:
         dag = DAG(mode="strict")
         # Load data.
