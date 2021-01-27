@@ -558,3 +558,46 @@ class FuturesContractExpiryMapper:
         # Return the contract.
         ret = contracts["contract"][idx]
         return ret
+
+    # TODO(*): Deprecate `get_nth_contract()`.
+    def get_nth_contracts(
+        self,
+        symbol: str,
+        start_date: vkmdt.DATE_TYPE,
+        end_date: vkmdt.DATE_TYPE,
+        freq: str,
+        n: int,
+    ) -> Optional[pd.Series]:
+        """
+        Return series of nth back contracts from `start_date` to `end_date`.
+
+        :param symbol: contract symbol, e.g., "CL"
+        :start_date: first date/datetime for lookup, inclusive
+        :end_date: last date/datetime for lookup, inclusive
+        :freq: frequency of output series index
+        :param n: relative month:
+            - 1 for the front month
+            - 2 for the first back month
+            - etc.
+        :return: series of n contract names
+        """
+        dbg.dassert_lte(1, n)
+        idx = pd.date_range(start=start_date, end=end_date, freq=freq)
+        #
+        dbg.dassert_in(symbol, self.symbol_to_contracts.keys())
+        contracts = self.symbol_to_contracts[symbol]
+        _LOG.debug("contracts=\n%s", contracts)
+        # Index contracts by end date.
+        contract_end_dates = contracts[["contract", "end_date"]].set_index(
+            "end_date"
+        )
+        # Shift to index nth contracts by end date.
+        nth_contract_end_dates = contract_end_dates.shift(-1 * (n - 1))
+        # Realign the end date to nth contract mapping to `idx` and backfill
+        # the contract name.
+        # TODO(*): Check for boundary effects.
+        nth_contracts = nth_contract_end_dates.reindex(
+            idx, method="bfill"
+        ).squeeze()
+        nth_contracts.name = symbol + str(n)
+        return nth_contracts
