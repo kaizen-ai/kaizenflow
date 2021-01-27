@@ -1,9 +1,11 @@
-from typing import Union
 import datetime
+from typing import Union
+
 import pandas as pd
+
 import helpers.dbg as dbg
-import vendors2.kibot.data.types as vkdt
 import vendors2.kibot.data.load.s3_data_loader as vkdls3
+import vendors2.kibot.data.types as vkdtyp
 
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
@@ -33,16 +35,21 @@ class FuturesForwardContracts:
         # Determine whether to use daily or minutely contract data.
         ppy = hdataf.infer_sampling_points_per_year(srs)
         if ppy < 366:
-            freq = vkdt.Frequency.Daily
+            freq = vkdtyp.Frequency.Daily
         else:
-            freq = vkdt.Frequency.Minutely
+            freq = vkdtyp.Frequency.Minutely
         # Get the list of contracts to extract data for.
         contracts = srs.unique().tolist()
         # Create a list of data for each contract.
         data_subseries = []
         for contract in contracts:
-            data = vkdls3.read_data("Kibot", contract, vkdt.AssetClass.Futures,
-                                    freq, vkdt.ContractType.Expiry)
+            data = vkdls3.read_data(
+                "Kibot",
+                contract,
+                vkdtyp.AssetClass.Futures,
+                freq,
+                vkdtyp.ContractType.Expiry,
+            )
             data_subseries.append(data.reindex(srs[srs == contract].index).copy())
         # Merge the contract data over the partitioned srs index.
         df = pd.concat(data_subseries, axis=0)
