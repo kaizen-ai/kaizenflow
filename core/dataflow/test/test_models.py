@@ -990,11 +990,7 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
         config = cconfi.Config()
-<<<<<<< HEAD
         config["cols"] = ["ret_0"]
-=======
-        config["col"] = ["ret_0"]
->>>>>>> master
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
         node = cdataf.VolatilityModel("vol_model", **config.to_dict())
