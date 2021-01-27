@@ -6,15 +6,15 @@ import mxnet
 import numpy as np
 import pandas as pd
 import pytest
-import sklearn.decomposition as sld
-import sklearn.linear_model as slm
+import sklearn.decomposition as sdecom
+import sklearn.linear_model as slinea
 
-import core.artificial_signal_generators as sig_gen
-import core.config as cfg
-import core.config_builders as cfgb
-import core.dataflow as dtf
-import core.signal_processing as sigp
-import helpers.printing as prnt
+import core.artificial_signal_generators as cartif
+import core.config as cconfi
+import core.config_builders as ccbuild
+import core.dataflow as cdataf
+import core.signal_processing as csigna
+import helpers.printing as hprint
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -25,15 +25,15 @@ class TestContinuousSkLearnModel(hut.TestCase):
         pred_lag = 1
         # Load test data.
         data = self._get_data(pred_lag)
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Load sklearn config and create modeling node.
         config = self._get_config(pred_lag)
-        node = dtf.ContinuousSkLearnModel(
+        node = cdataf.ContinuousSkLearnModel(
             "sklearn",
-            model_func=slm.Ridge,
+            model_func=slinea.Ridge,
             **config.to_dict(),
         )
         dag.add_node(node)
@@ -46,15 +46,15 @@ class TestContinuousSkLearnModel(hut.TestCase):
         pred_lag = 2
         # Load test data.
         data = self._get_data(pred_lag)
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Load sklearn config and create modeling node.
         config = self._get_config(pred_lag)
-        node = dtf.ContinuousSkLearnModel(
+        node = cdataf.ContinuousSkLearnModel(
             "sklearn",
-            model_func=slm.Ridge,
+            model_func=slinea.Ridge,
             **config.to_dict(),
         )
         dag.add_node(node)
@@ -65,22 +65,23 @@ class TestContinuousSkLearnModel(hut.TestCase):
 
     def test_fit_dag3(self) -> None:
         """
-        Test `slm.Lasso` model.
+        Test `slinea.Lasso` model.
 
-        `Lasso` returns a one-dimensional array for a two-dimensional input.
+        `Lasso` returns a one-dimensional array for a two-dimensional
+        input.
         """
         pred_lag = 1
         # Load test data.
         data = self._get_data(pred_lag)
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Load sklearn config and create modeling node.
         config = self._get_config(pred_lag)
-        node = dtf.ContinuousSkLearnModel(
+        node = cdataf.ContinuousSkLearnModel(
             "sklearn",
-            model_func=slm.Lasso,
+            model_func=slinea.Lasso,
             **config.to_dict(),
         )
         dag.add_node(node)
@@ -95,17 +96,17 @@ class TestContinuousSkLearnModel(hut.TestCase):
         data = self._get_data(pred_lag)
         fit_interval = ("1776-07-04 12:00:00", "2010-01-01 00:29:00")
         predict_interval = ("2010-01-01 00:30:00", "2100")
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         data_source_node.set_fit_intervals([fit_interval])
         data_source_node.set_predict_intervals([predict_interval])
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Load sklearn config and create modeling node.
         config = self._get_config(pred_lag)
-        node = dtf.ContinuousSkLearnModel(
+        node = cdataf.ContinuousSkLearnModel(
             "sklearn",
-            model_func=slm.Ridge,
+            model_func=slinea.Ridge,
             **config.to_dict(),
         )
         dag.add_node(node)
@@ -121,17 +122,17 @@ class TestContinuousSkLearnModel(hut.TestCase):
         data = self._get_data(pred_lag)
         fit_interval = ("1776-07-04 12:00:00", "2010-01-01 00:29:00")
         predict_interval = ("2010-01-01 00:30:00", "2100")
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         data_source_node.set_fit_intervals([fit_interval])
         data_source_node.set_predict_intervals([predict_interval])
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Load sklearn config and create modeling node.
         config = self._get_config(pred_lag)
-        node = dtf.ContinuousSkLearnModel(
+        node = cdataf.ContinuousSkLearnModel(
             "sklearn",
-            model_func=slm.Ridge,
+            model_func=slinea.Ridge,
             **config.to_dict(),
         )
         dag.add_node(node)
@@ -141,8 +142,8 @@ class TestContinuousSkLearnModel(hut.TestCase):
         output_df = dag.run_leq_node("sklearn", "predict")["df_out"]
         self.check_string(output_df.to_string())
 
-    def _get_config(self, steps_ahead: int) -> cfg.Config:
-        config = cfg.Config()
+    def _get_config(self, steps_ahead: int) -> cconfi.Config:
+        config = cconfi.Config()
         config["x_vars"] = ["x"]
         config["y_vars"] = ["y"]
         config["steps_ahead"] = steps_ahead
@@ -152,12 +153,14 @@ class TestContinuousSkLearnModel(hut.TestCase):
 
     def _get_data(self, lag: int) -> pd.DataFrame:
         """
-        Generate "random returns". Use lag + noise as predictor.
+        Generate "random returns".
+
+        Use lag + noise as predictor.
         """
         num_periods = 50
         total_steps = num_periods + lag + 1
-        rets = sig_gen.get_gaussian_walk(0, 0.2, total_steps, seed=10).diff()
-        noise = sig_gen.get_gaussian_walk(0, 0.02, total_steps, seed=1).diff()
+        rets = cartif.get_gaussian_walk(0, 0.2, total_steps, seed=10).diff()
+        noise = cartif.get_gaussian_walk(0, 0.02, total_steps, seed=1).diff()
         pred = rets.shift(-lag).loc[1:num_periods] + noise.loc[1:num_periods]
         resp = rets.loc[1:num_periods]
         idx = pd.date_range("2010-01-01", periods=num_periods, freq="T")
@@ -169,19 +172,19 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
     def test_fit_dag1(self) -> None:
         # Load test data.
         data = self._get_data()
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Load sklearn config and create modeling node.
-        config = cfgb.get_config_from_nested_dict(
+        config = ccbuild.get_config_from_nested_dict(
             {
                 "x_vars": [0, 1, 2, 3],
-                "model_func": sld.PCA,
+                "model_func": sdecom.PCA,
                 "model_kwargs": {"n_components": 2},
             }
         )
-        node = dtf.UnsupervisedSkLearnModel("sklearn", **config.to_dict())
+        node = cdataf.UnsupervisedSkLearnModel("sklearn", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sklearn")
         #
@@ -191,23 +194,23 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
     def test_predict_dag1(self) -> None:
         # Load test data.
         data = self._get_data()
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         fit_interval = ("2000-01-03", "2000-01-31")
         predict_interval = ("2000-02-01", "2000-02-25")
         data_source_node.set_fit_intervals([fit_interval])
         data_source_node.set_predict_intervals([predict_interval])
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Load sklearn config and create modeling node.
-        config = cfgb.get_config_from_nested_dict(
+        config = ccbuild.get_config_from_nested_dict(
             {
                 "x_vars": [0, 1, 2, 3],
-                "model_func": sld.PCA,
+                "model_func": sdecom.PCA,
                 "model_kwargs": {"n_components": 2},
             }
         )
-        node = dtf.UnsupervisedSkLearnModel("sklearn", **config.to_dict())
+        node = cdataf.UnsupervisedSkLearnModel("sklearn", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sklearn")
         #
@@ -219,7 +222,7 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         """
         Generate multivariate normal returns.
         """
-        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process = cartif.MultivariateNormalProcess()
         mn_process.set_cov_from_inv_wishart_draw(dim=4, seed=0)
         realization = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
@@ -236,11 +239,11 @@ class TestContinuousSarimaxModel(hut.TestCase):
     def test_fit1(self) -> None:
         data = self._get_data([], [])
         config = self._get_config((1, 0, 1), (1, 0, 1, 3))
-        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         df_out = csm.fit(data)["df_out"]
         output_str = (
-            f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('df_out')}\n"
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('df_out')}\n"
             f"{hut.convert_df_to_string(df_out, index=True)}"
         )
         self.check_string(output_str)
@@ -254,11 +257,11 @@ class TestContinuousSarimaxModel(hut.TestCase):
         config = self._get_config((1, 0, 0))
         config["steps_ahead"] = 1
         config["fit_kwargs"] = {"start_params": [0.9999, 0.0001, 1.57e-11]}
-        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         df_out = csm.fit(data)["df_out"]
         output_str = (
-            f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('df_out')}\n"
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('df_out')}\n"
             f"{hut.convert_df_to_string(df_out, index=True)}"
         )
         self.check_string(output_str)
@@ -268,11 +271,11 @@ class TestContinuousSarimaxModel(hut.TestCase):
         config = self._get_config((1, 0, 0))
         config["steps_ahead"] = 2
         config["add_constant"] = True
-        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         df_out = csm.fit(data)["df_out"]
         output_str = (
-            f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('df_out')}\n"
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('df_out')}\n"
             f"{hut.convert_df_to_string(df_out, index=True)}"
         )
         self.check_string(output_str)
@@ -285,11 +288,11 @@ class TestContinuousSarimaxModel(hut.TestCase):
         data.drop(columns=["x"], inplace=True)
         config = self._get_config((1, 0, 1), (1, 0, 1, 3))
         config["x_vars"] = None
-        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         df_out = csm.fit(data)["df_out"]
         output_str = (
-            f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('df_out')}\n"
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('df_out')}\n"
             f"{hut.convert_df_to_string(df_out, index=True)}"
         )
         self.check_string(output_str)
@@ -302,16 +305,16 @@ class TestContinuousSarimaxModel(hut.TestCase):
         data.drop(columns=["x"], inplace=True)
         steps_ahead = 1
         # Train SkLearn model.
-        sklearn_config = cfgb.get_config_from_nested_dict(
+        sklearn_config = ccbuild.get_config_from_nested_dict(
             {
-                "model_func": slm.LinearRegression,
+                "model_func": slinea.LinearRegression,
                 "x_vars": ["ret_0"],
                 "y_vars": ["ret_0"],
                 "steps_ahead": steps_ahead,
                 "col_mode": "merge_all",
             }
         )
-        sklearn_model = dtf.ContinuousSkLearnModel(
+        sklearn_model = cdataf.ContinuousSkLearnModel(
             "model", **sklearn_config.to_dict()
         )
         skl_out = sklearn_model.fit(data)["df_out"]
@@ -320,7 +323,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         sarimax_config = self._get_config((1, 0, 0))
         sarimax_config["x_vars"] = None
         sarimax_config["steps_ahead"] = steps_ahead
-        sarimax_model = dtf.ContinuousSarimaxModel(
+        sarimax_model = cdataf.ContinuousSarimaxModel(
             "model", **sarimax_config.to_dict()
         )
         sarimax_out = sarimax_model.fit(data)["df_out"]
@@ -331,9 +334,9 @@ class TestContinuousSarimaxModel(hut.TestCase):
             output_df["skl_ret_0_1_hat"] - output_df["sarimax_ret_0_1_hat"]
         )
         output_str = (
-            f"{prnt.frame('sklearn_config')}\n{sklearn_config}\n"
-            f"{prnt.frame('sarimax_config')}\n{sarimax_config}\n"
-            f"{prnt.frame('df_out')}\n"
+            f"{hprint.frame('sklearn_config')}\n{sklearn_config}\n"
+            f"{hprint.frame('sarimax_config')}\n{sarimax_config}\n"
+            f"{hprint.frame('df_out')}\n"
             f"{hut.convert_df_to_string(output_df, index=True)}"
         )
         self.check_string(output_str)
@@ -346,16 +349,16 @@ class TestContinuousSarimaxModel(hut.TestCase):
         data.drop(columns=["x"], inplace=True)
         steps_ahead = 3
         # Train SkLearn model.
-        sklearn_config = cfgb.get_config_from_nested_dict(
+        sklearn_config = ccbuild.get_config_from_nested_dict(
             {
-                "model_func": slm.LinearRegression,
+                "model_func": slinea.LinearRegression,
                 "x_vars": ["ret_0"],
                 "y_vars": ["ret_0"],
                 "steps_ahead": steps_ahead,
                 "col_mode": "merge_all",
             }
         )
-        sklearn_model = dtf.ContinuousSkLearnModel(
+        sklearn_model = cdataf.ContinuousSkLearnModel(
             "model", **sklearn_config.to_dict()
         )
         skl_out = sklearn_model.fit(data)["df_out"]
@@ -364,7 +367,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         sarimax_config = self._get_config((1, 0, 0))
         sarimax_config["x_vars"] = None
         sarimax_config["steps_ahead"] = steps_ahead
-        sarimax_model = dtf.ContinuousSarimaxModel(
+        sarimax_model = cdataf.ContinuousSarimaxModel(
             "model", **sarimax_config.to_dict()
         )
         sarimax_out = sarimax_model.fit(data)["df_out"]
@@ -375,9 +378,9 @@ class TestContinuousSarimaxModel(hut.TestCase):
             output_df["skl_ret_0_3_hat"] - output_df["sarimax_ret_0_3_hat"]
         )
         output_str = (
-            f"{prnt.frame('sklearn_config')}\n{sklearn_config}\n"
-            f"{prnt.frame('sarimax_config')}\n{sarimax_config}\n"
-            f"{prnt.frame('df_out')}\n"
+            f"{hprint.frame('sklearn_config')}\n{sklearn_config}\n"
+            f"{hprint.frame('sarimax_config')}\n{sarimax_config}\n"
+            f"{hprint.frame('df_out')}\n"
             f"{hut.convert_df_to_string(output_df, index=True)}"
         )
         self.check_string(output_str)
@@ -387,12 +390,12 @@ class TestContinuousSarimaxModel(hut.TestCase):
         data_fit = data.iloc[:70]
         data_predict = data.iloc[70:]
         config = self._get_config((1, 0, 1), (1, 0, 1, 3))
-        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
         output_str = (
-            f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('df_out')}\n"
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('df_out')}\n"
             f"{hut.convert_df_to_string(df_out, index=True)}"
         )
         self.check_string(output_str)
@@ -405,16 +408,16 @@ class TestContinuousSarimaxModel(hut.TestCase):
         data_fit = data.iloc[:70]
         data_predict = data.iloc[70:]
         config = self._get_config((1, 0, 0))
-        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
         output_str = (
-            f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('df_out')}\n"
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('df_out')}\n"
             f"{hut.convert_df_to_string(df_out, index=True)}"
         )
         self.check_string(output_str)
-        
+
     def test_predict_with_nan(self) -> None:
         """
         Test AR(1) process with NaNs in the target.
@@ -426,12 +429,12 @@ class TestContinuousSarimaxModel(hut.TestCase):
         data_predict = data.iloc[70:]
         config = self._get_config((1, 0, 0))
         config["nan_mode"] = "leave_unchanged"
-        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
         output_str = (
-            f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('df_out')}\n"
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('df_out')}\n"
             f"{hut.convert_df_to_string(df_out, index=True)}"
         )
         self.check_string(output_str)
@@ -446,7 +449,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         data_predict1 = data.loc["2010-03-12":"2010-04-02"]
         data_predict2 = data.loc["2010-03-16":"2010-04-17"]
         data_predict3 = data.loc["2010-04-01":"2010-04-27"]
-        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
         df_out1 = csm.predict(data_predict1)["df_out"]
         df_out2 = csm.predict(data_predict2)["df_out"]
@@ -475,12 +478,12 @@ class TestContinuousSarimaxModel(hut.TestCase):
         config["x_vars"] = None
         data_fit = data.iloc[:70]
         data_predict = data.iloc[70:]
-        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
         output_str = (
-            f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('df_out')}\n"
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('df_out')}\n"
             f"{hut.convert_df_to_string(df_out, index=True)}"
         )
         self.check_string(output_str)
@@ -497,7 +500,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         data_predict1 = data.loc["2010-03-12":"2010-04-02"]
         data_predict2 = data.loc["2010-03-20":"2010-04-17"]
         data_predict3 = data.loc["2010-04-01":"2010-04-27"]
-        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
         df_out1 = csm.predict(data_predict1)["df_out"]
         df_out2 = csm.predict(data_predict2)["df_out"]
@@ -511,11 +514,11 @@ class TestContinuousSarimaxModel(hut.TestCase):
             df_out2.loc["2010-04-07":"2010-04-16", "ret_0_3_hat"],
             df_out3.loc["2010-04-07":"2010-04-16", "ret_0_3_hat"],
         )
-        
+
     def test_summary(self) -> None:
         data = self._get_data([], [])
         config = self._get_config((1, 0, 1), (1, 0, 1, 3))
-        csm = dtf.ContinuousSarimaxModel("model", **config.to_dict())
+        csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data)
         info = csm.get_info("fit")["model_summary"]
         self.check_string(info)
@@ -528,7 +531,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         freq: str = "M",
         seed: int = 42,
     ) -> pd.DataFrame:
-        arma_process = sig_gen.ArmaProcess(ar_coeffs, ma_coeffs)
+        arma_process = cartif.ArmaProcess(ar_coeffs, ma_coeffs)
         date_range_kwargs = {
             "start": "2010-01-01",
             "periods": periods,
@@ -537,15 +540,15 @@ class TestContinuousSarimaxModel(hut.TestCase):
         y = arma_process.generate_sample(
             date_range_kwargs=date_range_kwargs, scale=0.1, seed=seed
         ).rename("ret_0")
-        x = sigp.compute_smooth_moving_average(y, 26).rename("x")
+        x = csigna.compute_smooth_moving_average(y, 26).rename("x")
         return pd.concat([x, y], axis=1)
 
     @staticmethod
     def _get_config(
         order: Tuple[int, int, int],
         seasonal_order: Optional[Tuple[int, int, int, int]] = None,
-    ) -> cfg.Config:
-        config = cfgb.get_config_from_nested_dict(
+    ) -> cconfi.Config:
+        config = ccbuild.get_config_from_nested_dict(
             {
                 "y_vars": ["ret_0"],
                 "steps_ahead": 3,
@@ -563,7 +566,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
 class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
     def test1(self) -> None:
         model_output = self._get_multihorizon_model_output(3)
-        config = cfgb.get_config_from_nested_dict(
+        config = ccbuild.get_config_from_nested_dict(
             {
                 "target_col": "ret_0_zscored",
                 "prediction_cols": [
@@ -574,31 +577,31 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
                 "volatility_col": "vol_1_hat",
             }
         )
-        mrpp = dtf.MultihorizonReturnsPredictionProcessor(
+        mrpp = cdataf.MultihorizonReturnsPredictionProcessor(
             "process_results", **config.to_dict()
         )
         cum_y_yhat = mrpp.fit(model_output)["df_out"]
         # TODO(Julia): Ask about creating a `TestFitPredictNode(hut.TestCase)`
         #     class that will take care of this piece.
         output_str = (
-            f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('df_in')}\n"
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('df_in')}\n"
             f"{hut.convert_df_to_string(model_output, index=True)}\n"
-            f"{prnt.frame('df_out')}\n"
+            f"{hprint.frame('df_out')}\n"
             f"{hut.convert_df_to_string(cum_y_yhat, index=True)}\n"
         )
         self.check_string(output_str)
 
     def test_invert_zret_0_zscoring1(self) -> None:
         model_output = self._get_multihorizon_model_output(1)
-        config = cfgb.get_config_from_nested_dict(
+        config = ccbuild.get_config_from_nested_dict(
             {
                 "target_col": "ret_0_zscored",
                 "prediction_cols": ["ret_0_zscored_1_hat"],
                 "volatility_col": "vol_1_hat",
             }
         )
-        mrpp = dtf.MultihorizonReturnsPredictionProcessor(
+        mrpp = cdataf.MultihorizonReturnsPredictionProcessor(
             "process_results", **config.to_dict()
         )
         cum_y_yhat = mrpp.fit(model_output)["df_out"]
@@ -612,7 +615,7 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
 
     def test_invert_zret_3_zscoring1(self) -> None:
         model_output = self._get_multihorizon_model_output(3)
-        config = cfgb.get_config_from_nested_dict(
+        config = ccbuild.get_config_from_nested_dict(
             {
                 "target_col": "ret_0_zscored",
                 "prediction_cols": [
@@ -623,13 +626,13 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
                 "volatility_col": "vol_1_hat",
             }
         )
-        mrpp = dtf.MultihorizonReturnsPredictionProcessor(
+        mrpp = cdataf.MultihorizonReturnsPredictionProcessor(
             "process_results", **config.to_dict()
         )
         cum_y_yhat = mrpp.fit(model_output)["df_out"]
         #
         ret_0 = model_output["ret_0"]
-        cumret_3 = sigp.accumulate(ret_0, 3)
+        cumret_3 = csigna.accumulate(ret_0, 3)
         fwd_cumret_3 = cumret_3.shift(-3).rename("cumret_3_original")
         #
         cumret_3_from_result = cum_y_yhat[["cumret_3"]]
@@ -639,7 +642,7 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
 
     @staticmethod
     def _get_series(seed: int = 24) -> pd.Series:
-        arma_process = sig_gen.ArmaProcess([1], [1])
+        arma_process = cartif.ArmaProcess([1], [1])
         date_range_kwargs = {"start": "2010-01-01", "periods": 50, "freq": "D"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range_kwargs, scale=0.1, seed=seed
@@ -656,7 +659,7 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         ).rename("ret_0")
         # Get volatility estimate indexed by knowledge time. Volatility delay
         # should be one.
-        fwd_vol = sigp.compute_smooth_moving_average(rets, 16).rename("vol_1_hat")
+        fwd_vol = csigna.compute_smooth_moving_average(rets, 16).rename("vol_1_hat")
         rets_zscored = (rets / fwd_vol.shift(1)).to_frame(name="ret_0_zscored")
         fwd_rets_zscored = rets_zscored.shift(-steps_ahead).rename(
             lambda x: f"{x}_{steps_ahead}", axis=1
@@ -664,7 +667,7 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         # Get mock returns predictions.
         model_output = [rets, fwd_vol, rets_zscored, fwd_rets_zscored]
         for i in range(1, steps_ahead + 1):
-            ret_hat = sigp.compute_smooth_moving_average(
+            ret_hat = csigna.compute_smooth_moving_average(
                 rets_zscored, tau=i + 1
             ).rename(lambda x: f"{x}_{i}_hat", axis=1)
             model_output.append(ret_hat)
@@ -675,19 +678,19 @@ class TestResidualizer(hut.TestCase):
     def test_fit_dag1(self) -> None:
         # Load test data.
         data = self._get_data()
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Load sklearn config and create modeling node.
-        config = cfgb.get_config_from_nested_dict(
+        config = ccbuild.get_config_from_nested_dict(
             {
                 "x_vars": [0, 1, 2, 3],
-                "model_func": sld.PCA,
+                "model_func": sdecom.PCA,
                 "model_kwargs": {"n_components": 2},
             }
         )
-        node = dtf.Residualizer("sklearn", **config.to_dict())
+        node = cdataf.Residualizer("sklearn", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sklearn")
         #
@@ -697,23 +700,23 @@ class TestResidualizer(hut.TestCase):
     def test_predict_dag1(self) -> None:
         # Load test data.
         data = self._get_data()
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         fit_interval = ("2000-01-03", "2000-01-31")
         predict_interval = ("2000-02-01", "2000-02-25")
         data_source_node.set_fit_intervals([fit_interval])
         data_source_node.set_predict_intervals([predict_interval])
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Load sklearn config and create modeling node.
-        config = cfgb.get_config_from_nested_dict(
+        config = ccbuild.get_config_from_nested_dict(
             {
                 "x_vars": [0, 1, 2, 3],
-                "model_func": sld.PCA,
+                "model_func": sdecom.PCA,
                 "model_kwargs": {"n_components": 2},
             }
         )
-        node = dtf.Residualizer("sklearn", **config.to_dict())
+        node = cdataf.Residualizer("sklearn", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sklearn")
         #
@@ -725,7 +728,7 @@ class TestResidualizer(hut.TestCase):
         """
         Generate multivariate normal returns.
         """
-        mn_process = sig_gen.MultivariateNormalProcess()
+        mn_process = cartif.MultivariateNormalProcess()
         mn_process.set_cov_from_inv_wishart_draw(dim=4, seed=0)
         realization = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
@@ -737,16 +740,16 @@ class TestSmaModel(hut.TestCase):
     def test_fit_dag1(self) -> None:
         # Load test data.
         data = self._get_data()
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cfg.Config()
+        config = cconfi.Config()
         config["col"] = ["vol"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
-        node = dtf.SmaModel("sma", **config.to_dict())
+        node = cdataf.SmaModel("sma", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sma")
         #
@@ -759,17 +762,17 @@ class TestSmaModel(hut.TestCase):
         """
         # Load test data.
         data = self._get_data()
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cfg.Config()
+        config = cconfi.Config()
         config["col"] = ["vol"]
         config["steps_ahead"] = 2
         config["tau"] = 8
         config["nan_mode"] = "drop"
-        node = dtf.SmaModel("sma", **config.to_dict())
+        node = cdataf.SmaModel("sma", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sma")
         #
@@ -782,17 +785,17 @@ class TestSmaModel(hut.TestCase):
         """
         # Load test data.
         data = self._get_data()
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cfg.Config()
+        config = cconfi.Config()
         config["col"] = ["vol"]
         config["steps_ahead"] = 2
         config["col_mode"] = "merge_all"
         config["nan_mode"] = "drop"
-        node = dtf.SmaModel("sma", **config.to_dict())
+        node = cdataf.SmaModel("sma", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sma")
         #
@@ -804,18 +807,18 @@ class TestSmaModel(hut.TestCase):
         data = self._get_data()
         fit_interval = ("2000-01-01", "2000-02-10")
         predict_interval = ("2000-01-20", "2000-02-23")
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         data_source_node.set_fit_intervals([fit_interval])
         data_source_node.set_predict_intervals([predict_interval])
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cfg.Config()
+        config = cconfi.Config()
         config["col"] = ["vol"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
-        node = dtf.SmaModel("sma", **config.to_dict())
+        node = cdataf.SmaModel("sma", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "sma")
         #
@@ -826,9 +829,11 @@ class TestSmaModel(hut.TestCase):
     @staticmethod
     def _get_data() -> pd.DataFrame:
         """
-        Generate "random returns". Use lag + noise as predictor.
+        Generate "random returns".
+
+        Use lag + noise as predictor.
         """
-        arma_process = sig_gen.ArmaProcess([0.45], [0])
+        arma_process = cartif.ArmaProcess([0.45], [0])
         date_range_kwargs = {"start": "2000-01-01", "periods": 40, "freq": "B"}
         date_range = pd.date_range(**date_range_kwargs)
         realization = arma_process.generate_sample(
@@ -845,9 +850,9 @@ class TestVolatilityModulator(hut.TestCase):
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
         # Get mock returns prediction 1 step ahead indexed by knowledge time.
-        y_hat = sigp.compute_smooth_moving_average(df_in["ret_0"], 4).shift(-1)
+        y_hat = csigna.compute_smooth_moving_average(df_in["ret_0"], 4).shift(-1)
         df_in["ret_1_hat"] = y_hat
-        config = cfgb.get_config_from_nested_dict(
+        config = ccbuild.get_config_from_nested_dict(
             {
                 "signal_cols": ["ret_1_hat"],
                 "volatility_col": "vol_2_hat",
@@ -856,13 +861,13 @@ class TestVolatilityModulator(hut.TestCase):
                 "mode": "modulate",
             }
         )
-        node = dtf.VolatilityModulator("modulate", **config.to_dict())
+        node = cdataf.VolatilityModulator("modulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         output_str = (
-            f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('df_in')}\n"
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('df_in')}\n"
             f"{hut.convert_df_to_string(df_in, index=True)}\n"
-            f"{prnt.frame('df_out')}\n"
+            f"{hprint.frame('df_out')}\n"
             f"{hut.convert_df_to_string(df_out, index=True)}\n"
         )
         self.check_string(output_str)
@@ -870,7 +875,7 @@ class TestVolatilityModulator(hut.TestCase):
     def test_demodulate1(self) -> None:
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
-        config = cfgb.get_config_from_nested_dict(
+        config = ccbuild.get_config_from_nested_dict(
             {
                 "signal_cols": ["ret_0"],
                 "volatility_col": "vol_2_hat",
@@ -879,13 +884,13 @@ class TestVolatilityModulator(hut.TestCase):
                 "mode": "demodulate",
             }
         )
-        node = dtf.VolatilityModulator("demodulate", **config.to_dict())
+        node = cdataf.VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         output_str = (
-            f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('df_in')}\n"
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('df_in')}\n"
             f"{hut.convert_df_to_string(df_in, index=True)}\n"
-            f"{prnt.frame('df_out')}\n"
+            f"{hprint.frame('df_out')}\n"
             f"{hut.convert_df_to_string(df_out, index=True)}\n"
         )
         self.check_string(output_str)
@@ -893,7 +898,7 @@ class TestVolatilityModulator(hut.TestCase):
     def test_col_mode1(self) -> None:
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
-        config = cfgb.get_config_from_nested_dict(
+        config = ccbuild.get_config_from_nested_dict(
             {
                 "signal_cols": ["ret_0"],
                 "volatility_col": "vol_2_hat",
@@ -904,13 +909,13 @@ class TestVolatilityModulator(hut.TestCase):
                 "col_mode": "merge_all",
             }
         )
-        node = dtf.VolatilityModulator("demodulate", **config.to_dict())
+        node = cdataf.VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         output_str = (
-            f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('df_in')}\n"
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('df_in')}\n"
             f"{hut.convert_df_to_string(df_in, index=True)}\n"
-            f"{prnt.frame('df_out')}\n"
+            f"{hprint.frame('df_out')}\n"
             f"{hut.convert_df_to_string(df_out, index=True)}\n"
         )
         self.check_string(output_str)
@@ -918,7 +923,7 @@ class TestVolatilityModulator(hut.TestCase):
     def test_col_mode2(self) -> None:
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
-        config = cfgb.get_config_from_nested_dict(
+        config = ccbuild.get_config_from_nested_dict(
             {
                 "signal_cols": ["ret_0"],
                 "volatility_col": "vol_2_hat",
@@ -929,13 +934,13 @@ class TestVolatilityModulator(hut.TestCase):
                 "col_mode": "replace_selected",
             }
         )
-        node = dtf.VolatilityModulator("demodulate", **config.to_dict())
+        node = cdataf.VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         output_str = (
-            f"{prnt.frame('config')}\n{config}\n"
-            f"{prnt.frame('df_in')}\n"
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('df_in')}\n"
             f"{hut.convert_df_to_string(df_in, index=True)}\n"
-            f"{prnt.frame('df_out')}\n"
+            f"{hprint.frame('df_out')}\n"
             f"{hut.convert_df_to_string(df_out, index=True)}\n"
         )
         self.check_string(output_str)
@@ -944,12 +949,12 @@ class TestVolatilityModulator(hut.TestCase):
     def _get_signal_and_fwd_vol(
         steps_ahead: int,
     ) -> pd.DataFrame:
-        arma_process = sig_gen.ArmaProcess([0.45], [0])
+        arma_process = cartif.ArmaProcess([0.45], [0])
         date_range_kwargs = {"start": "2010-01-01", "periods": 40, "freq": "B"}
         signal = arma_process.generate_sample(
             date_range_kwargs=date_range_kwargs, scale=0.1, seed=42
         )
-        vol = sigp.compute_smooth_moving_average(signal, 16)
+        vol = csigna.compute_smooth_moving_average(signal, 16)
         fwd_vol = vol.shift(steps_ahead)
         return pd.concat(
             [signal.rename("ret_0"), fwd_vol.rename("vol_2_hat")], axis=1
@@ -960,16 +965,16 @@ class TestVolatilityModel(hut.TestCase):
     def test_fit_dag1(self) -> None:
         # Load test data.
         data = self._get_data()
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cfg.Config()
+        config = cconfi.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
-        node = dtf.VolatilityModel("vol_model", **config.to_dict())
+        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "vol_model")
         #
@@ -979,16 +984,16 @@ class TestVolatilityModel(hut.TestCase):
     def test_fit_dag_correctness1(self) -> None:
         # Load test data.
         data = self._get_data()
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cfg.Config()
+        config = cconfi.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
-        node = dtf.VolatilityModel("vol_model", **config.to_dict())
+        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "vol_model")
         # Z-score.
@@ -1007,18 +1012,18 @@ class TestVolatilityModel(hut.TestCase):
         data = self._get_data()
         fit_interval = ("2000-01-01", "2000-02-10")
         predict_interval = ("2000-01-20", "2000-02-23")
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         data_source_node.set_fit_intervals([fit_interval])
         data_source_node.set_predict_intervals([predict_interval])
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cfg.Config()
+        config = cconfi.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
-        node = dtf.VolatilityModel("vol_model", **config.to_dict())
+        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "vol_model")
         #
@@ -1031,18 +1036,18 @@ class TestVolatilityModel(hut.TestCase):
         data = self._get_data()
         fit_interval = ("2000-01-01", "2000-02-10")
         predict_interval = ("2000-01-20", "2000-02-23")
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         data_source_node.set_fit_intervals([fit_interval])
         data_source_node.set_predict_intervals([predict_interval])
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cfg.Config()
+        config = cconfi.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
-        node = dtf.VolatilityModel("vol_model", **config.to_dict())
+        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "vol_model")
         #
@@ -1060,17 +1065,17 @@ class TestVolatilityModel(hut.TestCase):
     def test_col_mode1(self) -> None:
         # Load test data.
         data = self._get_data()
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cfg.Config()
+        config = cconfi.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["col_mode"] = "replace_all"
         config["nan_mode"] = "drop"
-        node = dtf.VolatilityModel("vol_model", **config.to_dict())
+        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "vol_model")
         #
@@ -1080,37 +1085,37 @@ class TestVolatilityModel(hut.TestCase):
     def test_col_mode2(self) -> None:
         # Load test data.
         data = self._get_data()
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cfg.Config()
+        config = cconfi.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["col_mode"] = "replace_selected"
         config["nan_mode"] = "drop"
-        node = dtf.VolatilityModel("vol_model", **config.to_dict())
+        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "vol_model")
         #
         output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
         self.check_string(output_df.to_string())
-        
+
     def test_fit_multiple_columns(self) -> None:
         # Load test data.
         data = self._get_data()
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
-        data_source_node = dtf.ReadDataFromDf("data", data)
+        data_source_node = cdataf.ReadDataFromDf("data", data)
         # Create DAG and test data node.
-        dag = dtf.DAG(mode="strict")
+        dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cfg.Config()
+        config = cconfi.Config()
         config["cols"] = ["ret_0", "ret_0_2"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
-        node = dtf.VolatilityModel("vol_model", **config.to_dict())
+        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "vol_model")
         #
@@ -1120,9 +1125,11 @@ class TestVolatilityModel(hut.TestCase):
     @staticmethod
     def _get_data() -> pd.DataFrame:
         """
-        Generate "random returns". Use lag + noise as predictor.
+        Generate "random returns".
+
+        Use lag + noise as predictor.
         """
-        arma_process = sig_gen.ArmaProcess([0.45], [0])
+        arma_process = cartif.ArmaProcess([0.45], [0])
         date_range_kwargs = {"start": "2000-01-01", "periods": 40, "freq": "B"}
         date_range = pd.date_range(**date_range_kwargs)
         realization = arma_process.generate_sample(
@@ -1151,28 +1158,28 @@ if True:
             output_df = dag.run_leq_node("deepar", "predict")["df_out"]
             self.check_string(output_df.to_string())
 
-        def _get_dag(self) -> dtf.DAG:
+        def _get_dag(self) -> cdataf.DAG:
             mxnet.random.seed(0)
-            data, _ = sig_gen.get_gluon_dataset(
+            data, _ = cartif.get_gluon_dataset(
                 dataset_name="m4_hourly",
                 train_length=100,
                 test_length=1,
             )
             fit_idxs = data.iloc[:70].index
             predict_idxs = data.iloc[70:].index
-            data_source_node = dtf.ReadDataFromDf("data", data)
+            data_source_node = cdataf.ReadDataFromDf("data", data)
             data_source_node.set_fit_idxs(fit_idxs)
             data_source_node.set_predict_idxs(predict_idxs)
             # Create DAG and test data node.
-            dag = dtf.DAG(mode="strict")
+            dag = cdataf.DAG(mode="strict")
             dag.add_node(data_source_node)
             # Load deepar config and create modeling node.
-            config = cfg.Config()
+            config = cconfi.Config()
             config["x_vars"] = None
             config["y_vars"] = ["y"]
             config["trainer_kwargs"] = {"epochs": 1}
             config["estimator_kwargs"] = {"prediction_length": 2}
-            node = dtf.ContinuousDeepArModel(
+            node = cdataf.ContinuousDeepArModel(
                 "deepar",
                 **config.to_dict(),
             )
@@ -1187,7 +1194,7 @@ if True:
             local_ts = self._get_local_ts()
             num_entries = 100
             config = self._get_config()
-            deepar = dtf.DeepARGlobalModel(**config.to_dict())
+            deepar = cdataf.DeepARGlobalModel(**config.to_dict())
             output = deepar.fit(local_ts)
             info = deepar.get_info("fit")
             str_output = "\n".join(
@@ -1200,22 +1207,22 @@ if True:
                 str(key): str(val.shape) for key, val in output.items()
             }
             config_info_output = (
-                f"{prnt.frame('config')}\n{config}\n"
-                f"{prnt.frame('info')}\n{pprint.pformat(info)}\n"
-                f"{prnt.frame('output')}\n{str_output}\n"
-                f"{prnt.frame('output_shape')}\n{output_shape}\n"
+                f"{hprint.frame('config')}\n{config}\n"
+                f"{hprint.frame('info')}\n{pprint.pformat(info)}\n"
+                f"{hprint.frame('output')}\n{str_output}\n"
+                f"{hprint.frame('output_shape')}\n{output_shape}\n"
             )
             self.check_string(config_info_output)
 
         @pytest.mark.skip("Disabled because of PartTask2440")
         def test_fit_dag1(self) -> None:
             mxnet.random.seed(0)
-            dag = dtf.DAG(mode="strict")
+            dag = cdataf.DAG(mode="strict")
             local_ts = self._get_local_ts()
-            data_source_node = dtf.ReadDataFromDf("local_ts", local_ts)
+            data_source_node = cdataf.ReadDataFromDf("local_ts", local_ts)
             dag.add_node(data_source_node)
             config = self._get_config()
-            deepar = dtf.DeepARGlobalModel(**config.to_dict())
+            deepar = cdataf.DeepARGlobalModel(**config.to_dict())
             dag.add_node(deepar)
             dag.connect("local_ts", "deepar")
             output_df = dag.run_leq_node("deepar", "fit")["df_out"]
@@ -1227,12 +1234,12 @@ if True:
             """
             Generate a dataframe of the following format:
 
-                                  EVENT_SENTIMENT_SCORE    zret_0
-            0 2010-01-01 00:00:00               0.496714 -0.138264
-              2010-01-01 00:01:00               0.647689  1.523030
-              2010-01-01 00:02:00              -0.234153 -0.234137
-              2010-01-01 00:03:00               1.579213  0.767435
-              2010-01-01 00:04:00              -0.469474  0.542560
+            EVENT_SENTIMENT_SCORE    zret_0 0
+            2010-01-01 00:00:00               0.496714 -0.138264
+            2010-01-01 00:01:00               0.647689  1.523030
+            2010-01-01 00:02:00              -0.234153 -0.234137
+            2010-01-01 00:03:00               1.579213  0.767435
+            2010-01-01 00:04:00              -0.469474  0.542560
             """
             np.random.seed(42)
             self._n_periods = 10
@@ -1248,8 +1255,8 @@ if True:
             local_ts.columns = self._x_vars + self._y_vars
             return local_ts
 
-        def _get_config(self) -> cfg.Config:
-            config = cfg.Config()
+        def _get_config(self) -> cconfi.Config:
+            config = cconfi.Config()
             config["nid"] = "deepar"
             config["trainer_kwargs"] = {"epochs": 1}
             config["estimator_kwargs"] = {

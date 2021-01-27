@@ -1,14 +1,13 @@
 """
 Import as:
 
-import core.dataframe_modeler as dfmod
+import core.dataframe_modeler as cdataf
 """
 
 from __future__ import annotations
 
 import collections
 import datetime
-import warnings
 import json
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
@@ -19,14 +18,14 @@ import numpy as np
 import pandas as pd
 from tqdm.autonotebook import tqdm
 
-import core.config as cfg
-import core.config_builders as cfgb
-import core.dataflow as dtf
-import core.finance as fin
-import core.plotting as plot
-import core.signal_processing as sigp
-import core.statistics as stats
-import core.timeseries_study as tss
+import core.config as cconfi
+import core.config_builders as ccbuild
+import core.dataflow as cdataf
+import core.finance as cfinan
+import core.plotting as cplott
+import core.signal_processing as csigna
+import core.statistics as cstati
+import core.timeseries_study as ctimes
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -85,7 +84,7 @@ class DataFrameModeler:
           - if `self.oos_start` is `None`, it is saved as is. Otherwise, it is
             converted to `str`
           - if `self.info` is `None`, it is saved as is. Otherwise, it is saved
-            as `cfg.Config.to_python()`
+            as `cconfi.Config.to_python()`
 
         :return: json with "df", "oos_start" and "info" fields
         """
@@ -100,7 +99,7 @@ class DataFrameModeler:
         # Convert info to string.
         if self.info is not None:
             try:
-                info = cfgb.get_config_from_nested_dict(self.info)
+                info = ccbuild.get_config_from_nested_dict(self.info)
                 info = info.to_python()
             except ValueError:
                 _LOG.warning("Failed to serialize `info`.")
@@ -134,7 +133,7 @@ class DataFrameModeler:
         # Load info.
         info = json_str["info"]
         if info is not None:
-            info = cfg.Config.from_python(info).to_dict()
+            info = cconfi.Config.from_python(info).to_dict()
         #
         modeler = cls(df=df, oos_start=oos_start, info=info)
         return modeler
@@ -157,7 +156,7 @@ class DataFrameModeler:
         """
         Apply a function to a select of columns.
         """
-        model = dtf.ColumnTransformer(
+        model = cdataf.ColumnTransformer(
             nid="column_transformer",
             transformer_func=transformer_func,
             transformer_kwargs=transformer_kwargs,
@@ -177,7 +176,7 @@ class DataFrameModeler:
         """
         Execute a dataframe method.
         """
-        model = dtf.DataframeMethodRunner(
+        model = cdataf.DataframeMethodRunner(
             nid="dataframe_method_runner",
             method=dataframe_method,
             method_kwargs=method_kwargs,
@@ -196,7 +195,7 @@ class DataFrameModeler:
         Resample the dataframe (causally, by default).
         """
         agg_func_kwargs = agg_func_kwargs or {}
-        model = dtf.Resample(
+        model = cdataf.Resample(
             nid="resample",
             rule=rule,
             agg_func=agg_func,
@@ -216,7 +215,7 @@ class DataFrameModeler:
         """
         Apply an unsupervised model and residualize.
         """
-        model = dtf.Residualizer(
+        model = cdataf.Residualizer(
             nid="sklearn_residualizer",
             model_func=model_func,
             x_vars=x_vars,
@@ -241,7 +240,7 @@ class DataFrameModeler:
 
         Both x and y vars should be indexed by knowledge time.
         """
-        model = dtf.ContinuousSkLearnModel(
+        model = cdataf.ContinuousSkLearnModel(
             nid="sklearn",
             model_func=model_func,
             x_vars=x_vars,
@@ -264,7 +263,7 @@ class DataFrameModeler:
         """
         Apply a smooth moving average model.
         """
-        model = dtf.SmaModel(
+        model = cdataf.SmaModel(
             nid="sma_model",
             col=[col],
             steps_ahead=steps_ahead,
@@ -285,7 +284,7 @@ class DataFrameModeler:
         """
         Apply an unsupervised model, e.g., PCA.
         """
-        model = dtf.UnsupervisedSkLearnModel(
+        model = cdataf.UnsupervisedSkLearnModel(
             nid="unsupervised_sklearn",
             model_func=model_func,
             x_vars=x_vars,
@@ -307,7 +306,7 @@ class DataFrameModeler:
         """
         Model volatility.
         """
-        model = dtf.VolatilityModel(
+        model = cdataf.VolatilityModel(
             nid="volatility_model",
             cols=[col],
             steps_ahead=steps_ahead,
@@ -335,7 +334,7 @@ class DataFrameModeler:
 
         Both x and y vars should be indexed by knowledge time.
         """
-        model = dtf.ContinuousSarimaxModel(
+        model = cdataf.ContinuousSarimaxModel(
             nid="sarimax",
             y_vars=y_vars,
             steps_ahead=steps_ahead,
@@ -367,9 +366,9 @@ class DataFrameModeler:
         """
         col_rename_func = col_rename_func or (lambda x: str(x) + "_ret_0")
         col_mode = col_mode or "replace_all"
-        model = dtf.ColumnTransformer(
+        model = cdataf.ColumnTransformer(
             nid="compute_ret_0",
-            transformer_func=fin.compute_ret_0,
+            transformer_func=cfinan.compute_ret_0,
             transformer_kwargs={"mode": rets_mode},
             cols=cols,
             col_rename_func=col_rename_func,
@@ -387,9 +386,9 @@ class DataFrameModeler:
         """
         Replace values at non active trading hours with NaNs.
         """
-        model = dtf.ColumnTransformer(
+        model = cdataf.ColumnTransformer(
             nid="set_non_ath_to_nan",
-            transformer_func=fin.set_non_ath_to_nan,
+            transformer_func=cfinan.set_non_ath_to_nan,
             col_mode="replace_all",
             transformer_kwargs={"start_time": start_time, "end_time": end_time},
         )
@@ -399,43 +398,43 @@ class DataFrameModeler:
         """
         Replace values over weekends with NaNs.
         """
-        model = dtf.ColumnTransformer(
+        model = cdataf.ColumnTransformer(
             nid="set_weekends_to_nan",
-            transformer_func=fin.set_weekends_to_nan,
+            transformer_func=cfinan.set_weekends_to_nan,
             col_mode="replace_all",
         )
         return self._run_model(model, method)
-    
+
     def merge(
-        self, 
-        dfm: DataFrameModeler, 
+        self,
+        dfm: DataFrameModeler,
         merge_kwargs: Optional[Dict[str, Any]] = None,
     ) -> DataFrameModeler:
         """
         Merge `DataFrameModeler` with another `DataFrameModeler` object.
-        
-        Returns a new `DataFrameModeler` with merged underlying dataframes.
-        If `oos_start` dates are different, set it to the first one and raise 
-        a warning.
+
+        Returns a new `DataFrameModeler` with merged underlying
+        dataframes. If `oos_start` dates are different, set it to the
+        first one and raise a warning.
         """
         dbg.dassert_isinstance(dfm, DataFrameModeler)
         merge_kwargs = merge_kwargs or {}
         df_merged = self._df.merge(
-            dfm.df, 
+            dfm.df,
             left_index=True,
             right_index=True,
             **merge_kwargs,
         )
         if self.oos_start != dfm.oos_start:
             _LOG.warning(
-                "`oos_start` dates are different.\n" + 
-                "`oos_start` for merged `DataFrameModelers` was set to " +
-                f"{self.oos_start}."
+                "`oos_start` dates are different.\n"
+                + "`oos_start` for merged `DataFrameModelers` was set to "
+                + f"{self.oos_start}."
             )
         info = collections.OrderedDict(
-            {"info": dtf.get_df_info_as_string(df_merged)}
+            {"info": cdataf.get_df_info_as_string(df_merged)}
         )
-        return DataFrameModeler(df_merged, oos_start=self.oos_start, info=info)          
+        return DataFrameModeler(df_merged, oos_start=self.oos_start, info=info)
 
     # #########################################################################
     # Dataframe stats and plotting
@@ -451,7 +450,7 @@ class DataFrameModeler:
         Calculate stats for selected columns.
         """
         df = self._get_df(cols=cols, mode=mode)
-        # Calculate stats.
+        # Calculate cstati.
         stats_dict = {}
         for col in tqdm(df.columns, disable=not progress_bar):
             stats_val = self._calculate_series_stats(df[col])
@@ -482,7 +481,7 @@ class DataFrameModeler:
             num_cols = 1
         if axes is None:
             # Create figure to accommodate plots.
-            _, axes = plot.get_multiple_plots(
+            _, axes = cplott.get_multiple_plots(
                 num_plots=num_plots,
                 num_cols=num_cols,
                 y_scale=y_scale,
@@ -508,7 +507,7 @@ class DataFrameModeler:
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         plot_projection_kwargs = plot_projection_kwargs or {}
-        plot.plot_projection(df, ax=ax, **plot_projection_kwargs)
+        cplott.plot_projection(df, ax=ax, **plot_projection_kwargs)
 
     def plot_cumulative_returns(
         self,
@@ -521,7 +520,7 @@ class DataFrameModeler:
         df = self._get_df(cols=cols, mode=mode)
         plot_cumulative_returns_kwargs = plot_cumulative_returns_kwargs or {}
         cum_rets = df.cumsum()
-        plot.plot_cumulative_returns(
+        cplott.plot_cumulative_returns(
             cum_rets,
             mode=mode_rets,
             ax=ax,
@@ -540,8 +539,8 @@ class DataFrameModeler:
         """
         df = self._get_df(cols=cols, mode=mode)
         # Calculate correlation.
-        corr_df = sigp.correlate_with_lag(df, lag=lag)
-        plot.plot_heatmap(corr_df, ax=ax)
+        corr_df = csigna.correlate_with_lag(df, lag=lag)
+        cplott.plot_heatmap(corr_df, ax=ax)
         return corr_df
 
     def plot_correlation_with_lagged_cumsum(
@@ -558,10 +557,10 @@ class DataFrameModeler:
         """
         df = self._get_df(cols=cols, mode=mode)
         # Calculate correlation.
-        corr_df = sigp.correlate_with_lagged_cumsum(
+        corr_df = csigna.correlate_with_lagged_cumsum(
             df, lag=lag, y_vars=y_vars, nan_mode=nan_mode
         )
-        plot.plot_heatmap(corr_df, ax=ax)
+        cplott.plot_heatmap(corr_df, ax=ax)
         return corr_df
 
     def plot_autocorrelation(
@@ -573,7 +572,7 @@ class DataFrameModeler:
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         plot_auto_correlation_kwargs = plot_auto_correlation_kwargs or {}
-        plot.plot_autocorrelation(df, axes=axes, **plot_auto_correlation_kwargs)
+        cplott.plot_autocorrelation(df, axes=axes, **plot_auto_correlation_kwargs)
 
     def plot_sequence_and_density(
         self,
@@ -584,7 +583,7 @@ class DataFrameModeler:
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         plot_cols_kwargs = plot_cols_kwargs or {}
-        plot.plot_cols(df, axes=axes, **plot_cols_kwargs)
+        cplott.plot_cols(df, axes=axes, **plot_cols_kwargs)
 
     def plot_spectrum(
         self,
@@ -595,7 +594,7 @@ class DataFrameModeler:
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
         plot_spectrum_kwargs = plot_spectrum_kwargs or {}
-        plot.plot_spectrum(df, axes=axes, **plot_spectrum_kwargs)
+        cplott.plot_spectrum(df, axes=axes, **plot_spectrum_kwargs)
 
     def plot_correlation_matrix(
         self,
@@ -606,7 +605,7 @@ class DataFrameModeler:
     ) -> pd.DataFrame:
         df = self._get_df(cols=cols, mode=mode)
         plot_correlation_matrix_kwargs = plot_correlation_matrix_kwargs or {}
-        return plot.plot_correlation_matrix(
+        return cplott.plot_correlation_matrix(
             df, ax=ax, **plot_correlation_matrix_kwargs
         )
 
@@ -621,7 +620,7 @@ class DataFrameModeler:
         plot_dendrogram_kwargs = plot_dendrogram_kwargs or {}
         #
         df = self._get_df(cols=cols, mode=mode)
-        plot.plot_dendrogram(df, figsize=figsize, ax=ax, **plot_dendrogram_kwargs)
+        cplott.plot_dendrogram(df, figsize=figsize, ax=ax, **plot_dendrogram_kwargs)
 
     def plot_pca_components(
         self,
@@ -633,7 +632,7 @@ class DataFrameModeler:
         mode: str = "ins",
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
-        pca = plot.PCA(mode="standard")
+        pca = cplott.PCA(mode="standard")
         pca.fit(df.replace([np.inf, -np.inf], np.nan).fillna(0))
         pca.plot_components(
             num_components, num_cols=num_cols, y_scale=y_scale, axes=axes
@@ -647,7 +646,7 @@ class DataFrameModeler:
         mode: str = "ins",
     ) -> None:
         df = self._get_df(cols=cols, mode=mode)
-        pca = plot.PCA(mode="standard", n_components=num_components)
+        pca = cplott.PCA(mode="standard", n_components=num_components)
         pca.fit(df.replace([np.inf, -np.inf], np.nan).fillna(0))
         pca.plot_explained_variance(ax=ax)
 
@@ -660,7 +659,7 @@ class DataFrameModeler:
         mode: str = "ins",
     ) -> None:
         srs = self._get_df(cols=[col], mode=mode).squeeze()
-        plot.plot_qq(srs, ax=ax, dist=dist, nan_mode=nan_mode)
+        cplott.plot_qq(srs, ax=ax, dist=dist, nan_mode=nan_mode)
 
     def plot_rolling_correlation(
         self,
@@ -673,7 +672,7 @@ class DataFrameModeler:
     ) -> None:
         df = self._get_df(cols=[col1, col2], mode=mode)
         plot_rolling_correlation_kwargs = plot_rolling_correlation_kwargs or {}
-        plot.plot_rolling_correlation(
+        cplott.plot_rolling_correlation(
             df[col1],
             df[col2],
             tau=tau,
@@ -694,7 +693,7 @@ class DataFrameModeler:
         """
         :param num_plots: number of cols to plot the study for
         :param axes: flat list of `ax`/`axes` parameters for each column for
-            each `tss.TimeSeriesDailyStudy`method. If the method is skipped,
+            each `ctimes.TimeSeriesDailyStudy`method. If the method is skipped,
             should be `None`
         """
         df = self._get_df(cols=cols, mode=mode)
@@ -705,7 +704,7 @@ class DataFrameModeler:
         else:
             axes_for_cols = np.array(axes).reshape(num_plots, -1)
         for col_name, axes_for_col in zip(cols_to_draw, axes_for_cols):
-            tsds = tss.TimeSeriesDailyStudy(df[col_name])
+            tsds = ctimes.TimeSeriesDailyStudy(df[col_name])
             tsds.execute(last_n_years=last_n_years, axes=axes_for_col)
             if axes is None:
                 plt.show()
@@ -731,7 +730,7 @@ class DataFrameModeler:
         else:
             axes_for_cols = np.array(axes).reshape(df.shape[1], -1)
         for i, axes_for_col in zip(df.columns.values, axes_for_cols):
-            plot.plot_seasonal_decomposition(
+            cplott.plot_seasonal_decomposition(
                 df[i],
                 nan_mode=nan_mode,
                 axes=axes_for_col,
@@ -761,7 +760,7 @@ class DataFrameModeler:
         else:
             axes_for_cols = np.array(axes).reshape(df.shape[1], -1)
         for col_name, axes_for_col in zip(df.columns, axes_for_cols):
-            plot.plot_histograms_and_lagged_scatterplot(
+            cplott.plot_histograms_and_lagged_scatterplot(
                 df[col_name],
                 lag=lag,
                 oos_start=oos_start,
@@ -791,7 +790,7 @@ class DataFrameModeler:
         raise ValueError(f"Unrecognized mode `{mode}`")
 
     def _run_model(
-        self, model: dtf.FitPredictNode, method: str
+        self, model: cdataf.FitPredictNode, method: str
     ) -> DataFrameModeler:
         info = collections.OrderedDict()
         if method == "fit":
@@ -818,14 +817,14 @@ class DataFrameModeler:
         Calculate stats for a single series.
         """
         stats_dict = {}
-        stats_dict[0] = stats.summarize_time_index_info(srs)
-        stats_dict[1] = stats.compute_jensen_ratio(srs)
-        stats_dict[2] = stats.compute_forecastability(srs)
-        stats_dict[3] = stats.compute_moments(srs)
-        stats_dict[4] = stats.compute_special_value_stats(srs)
-        stats_dict[5] = stats.apply_normality_test(srs, prefix="normality_")
-        stats_dict[6] = stats.apply_adf_test(srs, prefix="adf_")
-        stats_dict[7] = stats.apply_kpss_test(srs, prefix="kpss_")
+        stats_dict[0] = cstati.summarize_time_index_info(srs)
+        stats_dict[1] = cstati.compute_jensen_ratio(srs)
+        stats_dict[2] = cstati.compute_forecastability(srs)
+        stats_dict[3] = cstati.compute_moments(srs)
+        stats_dict[4] = cstati.compute_special_value_stats(srs)
+        stats_dict[5] = cstati.apply_normality_test(srs, prefix="normality_")
+        stats_dict[6] = cstati.apply_adf_test(srs, prefix="adf_")
+        stats_dict[7] = cstati.apply_kpss_test(srs, prefix="kpss_")
         # Sort dict by integer keys.
         stats_dict = dict(sorted(stats_dict.items()))
         stats_srs = pd.concat(stats_dict).droplevel(0)
