@@ -24,7 +24,11 @@ class FuturesForwardContracts:
                 2010-01-14    CLH10
         :return: dataframe of market data indexed like `srs`. Each contract
             name is replaced with a row of market data (as of the time given
-            by the index).
+            by the index). E.g.,
+                             open   high    low  close     vol
+                2010-01-12  82.07  82.34  79.91  80.79  333866
+                2010-01-13  80.06  80.67  78.37  79.65  401627
+                2010-01-14  79.97  80.75  79.32  79.88  197449
         """
         # Determine whether to use daily or minutely contract data.
         ppy = hdataf.infer_sampling_points_per_year(srs)
