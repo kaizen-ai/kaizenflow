@@ -1,0 +1,99 @@
+name: Build image
+on:
+  workflow_dispatch:
+
+jobs:
+  Build_image:
+    runs-on: [self-hosted, CPU4_RAM16, SLOW]
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Cleanup
+        run: sudo chmod 777 -R .
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          ssh-key: ${{ secrets.GH_ACTION_SSH_PRIVATE_KEY }}
+
+      - name: Build image
+        run: make docker_build_rc_image
+
+      - name: Push image rc image
+        run: make docker_push_rc_image
+
+      - name: Run fast tests for rc image
+        if: ${{ success() }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
+          GOOGLE_SPREADSHEET_SECRET_API: ${{ secrets.GOOGLE_SPREADSHEET_SECRET_API }}
+          GOOGLE_SPREADSHEET_DEFAULT_TOKEN: ${{ secrets.GOOGLE_SPREADSHEET_DEFAULT_TOKEN }}
+          GOOGLE_SPREADSHEET_TYPE: ${{ secrets.GOOGLE_SPREADSHEET_TYPE }}
+          GOOGLE_SPREADSHEET_PROJECT_ID: ${{ secrets.GOOGLE_SPREADSHEET_PROJECT_ID }}
+          GOOGLE_SPREADSHEET_PRIVATE_KEY_ID: ${{ secrets.GOOGLE_SPREADSHEET_PRIVATE_KEY_ID }}
+          GOOGLE_SPREADSHEET_PRIVATE_KEY: ${{ secrets.GOOGLE_SPREADSHEET_PRIVATE_KEY }}
+          GOOGLE_SPREADSHEET_CLIENT_EMAIL: ${{ secrets.GOOGLE_SPREADSHEET_CLIENT_EMAIL }}
+          GOOGLE_SPREADSHEET_CLIENT_ID: ${{ secrets.GOOGLE_SPREADSHEET_CLIENT_ID }}
+          GOOGLE_SPREADSHEET_AUTH_URI: ${{ secrets.GOOGLE_SPREADSHEET_AUTH_URI }}
+          GOOGLE_SPREADSHEET_TOKEN_URI: ${{ secrets.GOOGLE_SPREADSHEET_TOKEN_URI }}
+          GOOGLE_SPREADSHEET_AUTH_PROVIDER_X509_CERT_URL: ${{ secrets.GOOGLE_SPREADSHEET_AUTH_PROVIDER_X509_CERT_URL }}
+          GOOGLE_SPREADSHEET_CLIENT_X509_CERT_URL: ${{ secrets.GOOGLE_SPREADSHEET_CLIENT_X509_CERT_URL }}
+        run: docker-compose run --rm fast_tests_gh_action_build_image_rc
+
+      - name: Run slow tests for rc image
+        if: ${{ success() }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
+          GOOGLE_SPREADSHEET_SECRET_API: ${{ secrets.GOOGLE_SPREADSHEET_SECRET_API }}
+          GOOGLE_SPREADSHEET_DEFAULT_TOKEN: ${{ secrets.GOOGLE_SPREADSHEET_DEFAULT_TOKEN }}
+          GOOGLE_SPREADSHEET_TYPE: ${{ secrets.GOOGLE_SPREADSHEET_TYPE }}
+          GOOGLE_SPREADSHEET_PROJECT_ID: ${{ secrets.GOOGLE_SPREADSHEET_PROJECT_ID }}
+          GOOGLE_SPREADSHEET_PRIVATE_KEY_ID: ${{ secrets.GOOGLE_SPREADSHEET_PRIVATE_KEY_ID }}
+          GOOGLE_SPREADSHEET_PRIVATE_KEY: ${{ secrets.GOOGLE_SPREADSHEET_PRIVATE_KEY }}
+          GOOGLE_SPREADSHEET_CLIENT_EMAIL: ${{ secrets.GOOGLE_SPREADSHEET_CLIENT_EMAIL }}
+          GOOGLE_SPREADSHEET_CLIENT_ID: ${{ secrets.GOOGLE_SPREADSHEET_CLIENT_ID }}
+          GOOGLE_SPREADSHEET_AUTH_URI: ${{ secrets.GOOGLE_SPREADSHEET_AUTH_URI }}
+          GOOGLE_SPREADSHEET_TOKEN_URI: ${{ secrets.GOOGLE_SPREADSHEET_TOKEN_URI }}
+          GOOGLE_SPREADSHEET_AUTH_PROVIDER_X509_CERT_URL: ${{ secrets.GOOGLE_SPREADSHEET_AUTH_PROVIDER_X509_CERT_URL }}
+          GOOGLE_SPREADSHEET_CLIENT_X509_CERT_URL: ${{ secrets.GOOGLE_SPREADSHEET_CLIENT_X509_CERT_URL }}
+        run: docker-compose run --rm slow_tests_gh_action_build_image_rc
+
+      - name: Add latest tag
+        if: ${{ success() && github.ref == 'refs/heads/master' }}
+        run: docker tag 083233266530.dkr.ecr.us-east-2.amazonaws.com/amp_env:${GITHUB_SHA} 083233266530.dkr.ecr.us-east-2.amazonaws.com/amp_env:latest
+
+      - name: Push latest image
+        if: ${{ success() && github.ref == 'refs/heads/master' }}
+        run: docker push 083233266530.dkr.ecr.us-east-2.amazonaws.com/amp_env:latest
+
+      - name: Send telegramm notification
+        if: ${{ success() && github.ref == 'refs/heads/master' }}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.P1_TG_BUILD_MONITORING_CHANNEL_ID }}
+          token: ${{ secrets.P1_GH_BOT_TELEGRAM_TOKEN }}
+          message: |
+            The brand new image `amp_env` was successfully built.
+
+            Please pull new image to use the latest version.
+            - Authorize your client:
+            ```
+            make docker_login
+            ```
+            - Pull the latest version
+            ```
+            make docker_pull
+            ```
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
