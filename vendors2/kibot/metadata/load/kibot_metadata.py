@@ -610,6 +610,14 @@ class FuturesContractExpiryMapper:
         freq: str,
     ) -> Optional[pd.DataFrame]:
         """
+        Return dataframe of multiple back contracts. 
+
+        :param symbols: list of contract symbols combined with relative month
+            for back contract, e.g., ["CL1", "CL2"]
+        :start_date: first date/datetime for lookup, inclusive
+        :end_date: last date/datetime for lookup, inclusive
+        :freq: frequency of output series index
+        :return: dataframe of contract names
         """
         contracts = []
         for symbol in symbols:
