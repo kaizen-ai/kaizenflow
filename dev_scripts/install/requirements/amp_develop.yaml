@@ -14,7 +14,6 @@ dependencies:
   - flaky
   - pytest-cov
   - pytest-instafail
-  - pytest-timeout
   - pytest-xdist
   - python >= 3.7
   - python-dateutil
@@ -27,15 +26,14 @@ dependencies:
   - networkx
   - numba
   - numpy
-  - pandas >= 1.0.0
-  - pandas-datareader
+  - pandas >= 1.1.0
+  - pandas-datareader >= 0.9.0
   - pyarrow
   - pywavelets
   - scikit-learn
   - scipy
   - seaborn
   - statsmodels
-  - tabulate                # Required to transform pandas dfs to markdown
   # ############################################################################
   # jupyter
   # ############################################################################
