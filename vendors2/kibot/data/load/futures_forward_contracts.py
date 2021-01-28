@@ -4,7 +4,6 @@ from typing import Union
 import pandas as pd
 
 import helpers.dbg as dbg
-import vendors2.kibot.data.load.s3_data_loader as vkdls3
 import vendors2.kibot.data.types as vkdtyp
 
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
@@ -14,10 +13,17 @@ class FuturesForwardContracts:
     """
     Contract data for open futures contracts.
     """
-
-    def _replace_contracts_with_data(srs: pd.Series) -> pd.Dataframe:
+    def __init__(self, data_loader: vkdlda.AbstractKibotDataLoader) -> None:
         """
-        Accepts a series of contracts and returns market data.
+        Initialize by injecting a data loader.
+
+        :param data_loader: data loader implementing abstract interface
+        """
+        self._data_loader = data_loader
+
+    def _replace_contracts_with_data(self, srs: pd.Series) -> pd.DataFrame:
+        """
+        Accept a series of contracts and returns market data.
 
         :param srs: series of contracts indexed by a datetime index with a
             frequency, e.g.,
@@ -40,10 +46,10 @@ class FuturesForwardContracts:
             freq = vkdtyp.Frequency.Minutely
         # Get the list of contracts to extract data for.
         contracts = srs.unique().tolist()
-        # Create a list of data for each contract.
+        # Extract relevant data subseries for each contract and put in list.
         data_subseries = []
         for contract in contracts:
-            data = vkdls3.read_data(
+            data = self._data_loader.read_data(
                 "Kibot",
                 contract,
                 vkdtyp.AssetClass.Futures,
