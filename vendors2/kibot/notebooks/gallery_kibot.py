@@ -13,20 +13,18 @@
 # ---
 
 # %%
-import pandas as pd
 
-import vendors2.kibot.data.load.futures_forward_contracts as ffc
-import vendors2.kibot.metadata.load.kibot_metadata as kmd
-import vendors2.kibot.metadata.load.expiry_contract_mapper as ecm
+import vendors2.kibot.data.load.futures_forward_contracts as vkdlfu
 import vendors2.kibot.data.load.s3_data_loader as vkdls3
+import vendors2.kibot.metadata.load.kibot_metadata as vkmlki
 
 # %%
-lfc_hc = kmd.KibotHardcodedContractLifetimeComputer(365, 7)
+lfc_hc = vkmlki.KibotHardcodedContractLifetimeComputer(365, 7)
 
 lfc_hc.compute_lifetime("CLJ17")
 
 # %%
-lfc_ta = kmd.KibotTradingActivityContractLifetimeComputer()
+lfc_ta = vkmlki.KibotTradingActivityContractLifetimeComputer()
 
 lfc_ta.compute_lifetime("CLJ17")
 
@@ -38,7 +36,7 @@ symbols = ["ES", "CL"]
 file = "../contracts.csv"
 
 
-fcl = kmd.FuturesContractLifetimes(file, lfc_hc)
+fcl = vkmlki.FuturesContractLifetimes(file, lfc_hc)
 
 # %%
 fcl.save(["CL"])
@@ -52,7 +50,7 @@ cl_data["CL"].head()
 # %%
 
 # %%
-fcem = kmd.FuturesContractExpiryMapper(cl_data)
+fcem = vkmlki.FuturesContractExpiryMapper(cl_data)
 
 # %%
 fcem.get_nth_contract("CL", "2010-01-01", 1)
@@ -67,7 +65,7 @@ srs
 kdl = vkdls3.S3KibotDataLoader()
 
 # %%
-ffc_obj = ffc.FuturesForwardContracts(kdl)
+ffc_obj = vkdlfu.FuturesForwardContracts(kdl)
 
 # %%
 ffc_obj._replace_contracts_with_data(srs)
