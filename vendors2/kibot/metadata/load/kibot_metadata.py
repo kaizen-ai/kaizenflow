@@ -571,9 +571,9 @@ class FuturesContractExpiryMapper:
         Return series of nth back contracts from `start_date` to `end_date`.
 
         :param symbol: contract symbol, e.g., "CL"
-        :start_date: first date/datetime for lookup, inclusive
-        :end_date: last date/datetime for lookup, inclusive
-        :freq: frequency of output series index
+        :param start_date: first date/datetime for lookup, inclusive
+        :param end_date: last date/datetime for lookup, inclusive
+        :param freq: frequency of output series index
         :param n: relative month:
             - 1 for the front month
             - 2 for the first back month
@@ -613,9 +613,9 @@ class FuturesContractExpiryMapper:
 
         :param symbols: list of contract symbols combined with relative month
             for back contract, e.g., ["CL1", "CL2"]
-        :start_date: first date/datetime for lookup, inclusive
-        :end_date: last date/datetime for lookup, inclusive
-        :freq: frequency of output series index
+        :param start_date: first date/datetime for lookup, inclusive
+        :param end_date: last date/datetime for lookup, inclusive
+        :param freq: frequency of output series index
         :return: dataframe of contract names
         """
         contracts = []
