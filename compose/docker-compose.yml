@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  app:
+    # For local runs in user space.
+    image: ${IMAGE}
+    volumes:
+      - .:/amp
+      - ~/.aws:/root/.aws
+      - ./docker_build/fstab:/etc/fstab
+    working_dir: /amp
+    dns:
+      - 172.31.25.168
+      - 172.31.0.2
+    privileged: true
+    cap_add:
+      - SYS_ADMIN

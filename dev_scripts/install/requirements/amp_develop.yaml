@@ -12,7 +12,6 @@ dependencies:
   #- xmltodict
   - pytest
   - flaky
-  - pre-commit
   - pytest-cov
   - pytest-instafail
   - pytest-timeout
@@ -47,18 +46,7 @@ dependencies:
   - jupytext
   - nb_conda
   - nb_conda_kernels
-  # ############################################################################
-  # Linter
-  # ############################################################################
-  #- pyment                 # conda install -c akode pyment
-  - autoflake
-  - black
-  - flake8
-  - isort
-  - mypy
-  - pydocstyle
-  - pylint
-  - yapf                     # Superseded by black, but useful for notebooks.
+  - ipympl
   # ############################################################################
   # Latex
   # ############################################################################
@@ -93,10 +81,8 @@ dependencies:
   - git                     # To use latest git client.
   - joblib
   - jsonpickle
-  - psycopg2-binary
+  - psycopg2
   - pygraphviz              # For dataflow graph visualization.
-  - pymongo
-  - scrapy
   # ############################################################################
   # Profiling
   # ############################################################################
@@ -116,7 +102,6 @@ dependencies:
     - mxnet >= 1.6.0
     - gluonnlp              # gluon* and mxnet need to be installed through pip
     - gluonts               # since conda doesn't support / has old packages.
-    - scrapy_splash
     # ############################################################################
     # ETL3
     # ############################################################################

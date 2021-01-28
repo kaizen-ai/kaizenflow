@@ -40,3 +40,33 @@ docker_stats:
 	# To change output format you can use following --format flag with `docker stats` command.
 	# --format='table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}'
 	docker stats --no-stream $(IDS)
+
+
+
+ifdef $(GITHUB_SHA)
+IMAGE_RC_SHA:=$(GITHUB_SHA)
+else
+# GITHUB_SHA not found. Setting up IMAGE_RC_SHA form HEAD
+IMAGE_RC_SHA:=$(shell git rev-parse HEAD)
+endif
+IMAGE_RC?=$(IMAGE_RC)
+docker_build_rc_image:
+	DOCKER_BUILDKIT=1 \
+	docker build --progress=plain \
+		--no-cache \
+		-t $(IMAGE_RC) \
+		-t $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
+		-f docker_build/Dockerfile .
+
+
+docker_push_rc_image:
+	docker push $(IMAGE_RC)
+	docker push $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA)
+
+
+docker_tag_rc_latest:
+	docker tag $(IMAGE_RC) $(AMP_ENV_IMAGE)
+
+docker_push_latest_image:
+	docker
+
