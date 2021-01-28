@@ -36,9 +36,10 @@ class FuturesForwardContracts:
                 2010-01-12    CLG10 CLH10
                 2010-01-13    CLG10 CLH10
                 2010-01-14    CLH10 CLJ10
+        :param col: name of column to extract, e.g., "open", "close", "volume"
         :return: dataframe of market data indexed like `df`. Each contract
-            name is replaced with its relevant col of market data (as of the time given
-            by the index). E.g.,
+            name is replaced with its relevant col of market data (as of the
+            time given by the index). E.g.,
                               CL1    CL2
                 2010-01-12  80.79  81.17
                 2010-01-13  79.65  80.04
