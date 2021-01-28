@@ -26,7 +26,7 @@ class FuturesForwardContracts:
 
     def _replace_contracts_with_data(self, srs: pd.Series) -> pd.DataFrame:
         """
-        Accept a series of contracts and returns market data.
+        Accept a series of contracts and return market data.
 
         :param srs: series of contracts indexed by a datetime index with a
             frequency, e.g.,
@@ -52,6 +52,7 @@ class FuturesForwardContracts:
         # Extract relevant data subseries for each contract and put in list.
         data_subseries = []
         for contract in contracts:
+            # Load contract data.
             data = self._data_loader.read_data(
                 "Kibot",
                 contract,
@@ -59,7 +60,9 @@ class FuturesForwardContracts:
                 freq,
                 vkdtyp.ContractType.Expiry,
             )
-            data_subseries.append(data.reindex(srs[srs == contract].index).copy())
+            # Restrict to relevant subseries.
+            subseries = data.reindex(srs[srs == contract].index)
+            data_subseries.append(subseries.copy())
         # Merge the contract data over the partitioned srs index.
         df = pd.concat(data_subseries, axis=0)
         dbg.dassert_strictly_increasing_index(df)
