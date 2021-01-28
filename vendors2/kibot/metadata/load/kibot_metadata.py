@@ -601,3 +601,25 @@ class FuturesContractExpiryMapper:
         ).squeeze()
         nth_contracts.name = symbol + str(n)
         return nth_contracts
+
+    def get_contracts(
+        self,
+        symbols: List[str],
+        start_date: vkmdt.DATE_TYPE,
+        end_date: vkmdt.DATE_TYPE,
+        freq: str,
+    ) -> Optional[pd.DataFrame]:
+        """
+        """
+        contracts = []
+        for symbol in symbols:
+            contract_name = symbol[:2] 
+            n = int(symbol[2:])
+            srs = self.get_nth_contracts(symbol=contract_name,
+                                         start_date=start_date,
+                                         end_date=end_date,
+                                         freq=freq,
+                                         n=n)
+            contracts.append(srs)
+        df = pd.concat(contracts, axis=1)
+        return df
