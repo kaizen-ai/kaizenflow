@@ -24,7 +24,9 @@ class FuturesForwardContracts:
         """
         self._data_loader = data_loader
 
-    def replace_contracts_with_data(self, df: pd.DataFrame, col: str) -> pd.DataFrame:
+    def replace_contracts_with_data(
+        self, df: pd.DataFrame, col: str
+    ) -> pd.DataFrame:
         """
         Accept a series of contracts and return market data.
 
@@ -32,7 +34,7 @@ class FuturesForwardContracts:
             frequency, e.g.,
                                 CL1   CL2
                 2010-01-12    CLG10 CLH10
-                2010-01-13    CLG10 CLH10   
+                2010-01-13    CLG10 CLH10
                 2010-01-14    CLH10 CLJ10
         :return: dataframe of market data indexed like `df`. Each contract
             name is replaced with its relevant col of market data (as of the time given
@@ -51,7 +53,6 @@ class FuturesForwardContracts:
             data.append(data_srs)
         data_df = pd.concat(data, axis=1)
         return data_df
-
 
     def _replace_contracts_with_data(self, srs: pd.Series) -> pd.DataFrame:
         """
