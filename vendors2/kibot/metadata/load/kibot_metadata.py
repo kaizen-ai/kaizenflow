@@ -6,16 +6,15 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
-import pandas.tseries.offsets as offsets
+import pandas.tseries.offsets as ptoffs
 
 import helpers.dbg as dbg
-import helpers.io_ as io_
+import helpers.io_ as hio
 import vendors2.kibot.data.load.s3_data_loader as vkdls3
-import vendors2.kibot.data.types as vkdt
+import vendors2.kibot.data.types as vkdtyp
 import vendors2.kibot.metadata.load.expiry_contract_mapper as vkmlex
-import vendors2.kibot.metadata.load.expiry_contract_mapper as vkmdle
 import vendors2.kibot.metadata.load.s3_backend as vkmls3
-import vendors2.kibot.metadata.types as vkmdt
+import vendors2.kibot.metadata.types as vkmtyp
 
 _LOG = logging.getLogger(__name__)
 
@@ -356,7 +355,7 @@ class ContractLifetimeComputer(abc.ABC):
     """
 
     @abc.abstractmethod
-    def compute_lifetime(self, contract_name: str) -> vkmdt.ContractLifetime:
+    def compute_lifetime(self, contract_name: str) -> vkmtyp.ContractLifetime:
         """
         Compute the lifetime of a contract, e.g. 'CLJ17'.
 
@@ -371,17 +370,17 @@ class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
     Use the price data from Kibot to compute the lifetime.
     """
 
-    def compute_lifetime(self, contract_name: str) -> vkmdt.ContractLifetime:
+    def compute_lifetime(self, contract_name: str) -> vkmtyp.ContractLifetime:
         df = vkdls3.S3KibotDataLoader().read_data(
             "Kibot",
             contract_name,
-            vkdt.AssetClass.Futures,
-            vkdt.Frequency.Daily,
-            vkdt.ContractType.Expiry,
+            vkdtyp.AssetClass.Futures,
+            vkdtyp.Frequency.Daily,
+            vkdtyp.ContractType.Expiry,
         )
         start_date = pd.Timestamp(df.first_valid_index())
         end_date = pd.Timestamp(df.last_valid_index())
-        return vkmdt.ContractLifetime(start_date, end_date)
+        return vkmtyp.ContractLifetime(start_date, end_date)
 
 
 class KibotHardcodedContractLifetimeComputer(ContractLifetimeComputer):
@@ -402,11 +401,11 @@ class KibotHardcodedContractLifetimeComputer(ContractLifetimeComputer):
         dbg.dassert_lt(end_timedelta_days, start_timedelta_days)
         self.end_timedelta_days = end_timedelta_days
 
-    def compute_lifetime(self, contract_name: str) -> vkmdt.ContractLifetime:
+    def compute_lifetime(self, contract_name: str) -> vkmtyp.ContractLifetime:
         # From CME rules:
         # "Trading terminates at the close of business on the third business day
         # prior to the 25th calendar day of the month preceding the delivery month."
-        ecm = vkmdle.ExpiryContractMapper()
+        ecm = vkmlex.ExpiryContractMapper()
         _, month, year = ecm.parse_expiry_contract(contract_name)
         year = ecm.parse_year(year)
         month = ecm.expiry_to_month_num(month)
@@ -414,10 +413,10 @@ class KibotHardcodedContractLifetimeComputer(ContractLifetimeComputer):
         # Closes 1 month preceding the expiry month.
         date -= pd.DateOffset(months=1)
         # Closes 3 business days before the 25th.
-        date -= offsets.BDay(3)
-        return vkmdt.ContractLifetime(
-            pd.Timestamp(date - offsets.Day(self.start_timedelta_days)),
-            pd.Timestamp(date - offsets.Day(self.end_timedelta_days)),
+        date -= ptoffs.BDay(3)
+        return vkmtyp.ContractLifetime(
+            pd.Timestamp(date - ptoffs.Day(self.start_timedelta_days)),
+            pd.Timestamp(date - ptoffs.Day(self.end_timedelta_days)),
         )
 
 
@@ -460,7 +459,7 @@ class FuturesContractLifetimes:
         """
         kb = KibotMetadata()
         dbg.dassert_type_is(symbols, list)
-        io_.create_dir(self.root_dir_name, incremental=True)
+        hio.create_dir(self.root_dir_name, incremental=True)
         #
         for symbol in tqdm(symbols):
             # For each symbol, get all the expiries.
@@ -491,7 +490,7 @@ class FuturesContractLifetimes:
             df.reset_index(drop=True, inplace=True)
             # Save.
             file_name = os.path.join(self._get_dir_name(), symbol + ".csv")
-            io_.create_enclosing_dir(file_name, incremental=True)
+            hio.create_enclosing_dir(file_name, incremental=True)
             # dbg.dassert_file_exist(file_name)
             df.to_csv(file_name)
 
@@ -525,7 +524,7 @@ class FuturesContractExpiryMapper:
         self.symbol_to_contracts = symbol_to_contracts
 
     def get_nth_contract(
-        self, symbol: str, date: vkmdt.DATE_TYPE, n: int
+        self, symbol: str, date: vkmtyp.DATE_TYPE, n: int
     ) -> Optional[str]:
         """
         Return n-front contract corresponding to a given date and `n` offset.
@@ -563,8 +562,8 @@ class FuturesContractExpiryMapper:
     def get_nth_contracts(
         self,
         symbol: str,
-        start_date: vkmdt.DATE_TYPE,
-        end_date: vkmdt.DATE_TYPE,
+        start_date: vkmtyp.DATE_TYPE,
+        end_date: vkmtyp.DATE_TYPE,
         freq: str,
         n: int,
     ) -> Optional[pd.Series]:
@@ -572,9 +571,9 @@ class FuturesContractExpiryMapper:
         Return series of nth back contracts from `start_date` to `end_date`.
 
         :param symbol: contract symbol, e.g., "CL"
-        :start_date: first date/datetime for lookup, inclusive
-        :end_date: last date/datetime for lookup, inclusive
-        :freq: frequency of output series index
+        :param start_date: first date/datetime for lookup, inclusive
+        :param end_date: last date/datetime for lookup, inclusive
+        :param freq: frequency of output series index
         :param n: relative month:
             - 1 for the front month
             - 2 for the first back month
@@ -601,3 +600,35 @@ class FuturesContractExpiryMapper:
         ).squeeze()
         nth_contracts.name = symbol + str(n)
         return nth_contracts
+
+    def get_contracts(
+        self,
+        symbols: List[str],
+        start_date: vkmtyp.DATE_TYPE,
+        end_date: vkmtyp.DATE_TYPE,
+        freq: str,
+    ) -> Optional[pd.DataFrame]:
+        """
+        Return dataframe of multiple back contracts.
+
+        :param symbols: list of contract symbols combined with relative month
+            for back contract, e.g., ["CL1", "CL2"]
+        :param start_date: first date/datetime for lookup, inclusive
+        :param end_date: last date/datetime for lookup, inclusive
+        :param freq: frequency of output series index
+        :return: dataframe of contract names
+        """
+        contracts = []
+        for symbol in symbols:
+            contract_name = symbol[:2]
+            n = int(symbol[2:])
+            srs = self.get_nth_contracts(
+                symbol=contract_name,
+                start_date=start_date,
+                end_date=end_date,
+                freq=freq,
+                n=n,
+            )
+            contracts.append(srs)
+        df = pd.concat(contracts, axis=1)
+        return df
