@@ -1663,6 +1663,7 @@ class VolatilityModel(FitPredictNode):
         self._vol_cols = {}
         self._fwd_vol_cols = {}
         self._fwd_vol_cols_hat = {}
+        self._taus = {}
         self._sma_models = {}
         self._modulators = {}
         for col in self._cols:
@@ -1671,6 +1672,7 @@ class VolatilityModel(FitPredictNode):
                 self._vol_cols[col] + f"_{self._steps_ahead}"
             )
             self._fwd_vol_cols_hat[col] = self._fwd_vol_cols[col] + "_hat"
+            self._taus[col] = tau
             # The `SmaModel` and `Modulator` nodes are only used internally (e.g.,
             # are not added to any encompassing DAG).
             self._sma_models[col] = SmaModel(
@@ -1698,6 +1700,10 @@ class VolatilityModel(FitPredictNode):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=False)
 
+    @property
+    def taus(self) -> str:
+        return self._taus
+    
     def _fit_predict_helper(
         self, df_in: pd.DataFrame, fit: bool = False
     ) -> Dict[str, pd.DataFrame]:
@@ -1710,6 +1716,8 @@ class VolatilityModel(FitPredictNode):
             dag = self._get_dag(df_in[[col]], col)
             df_out = dag.run_leq_node(self._modulators[col].nid, method)["df_out"]
             info[col] = extract_info(dag, [method])
+            if method=="fit":
+                self._taus[col] = info[col]['anonymous_sma'][method]['tau']
             dfs.append(df_out)
         df_out = pd.concat(dfs, axis=1)
         info["df_out_info"] = get_df_info_as_string(df_out)
