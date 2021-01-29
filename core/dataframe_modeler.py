@@ -296,7 +296,7 @@ class DataFrameModeler:
 
     def apply_volatility_model(
         self,
-        col: str,
+        cols: List[str],
         steps_ahead: int,
         p_moment: float = 2,
         tau: Optional[float] = None,
@@ -308,7 +308,7 @@ class DataFrameModeler:
         """
         model = cdataf.VolatilityModel(
             nid="volatility_model",
-            cols=[col],
+            cols=cols,
             steps_ahead=steps_ahead,
             p_moment=p_moment,
             tau=tau,
