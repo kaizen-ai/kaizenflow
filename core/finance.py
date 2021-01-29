@@ -291,7 +291,7 @@ def compute_prices_from_rets(
     
     This implies that input has ret_1 at moment t_1 and uses price p_0 from 
     previous step t_0. If we have forward returns instead (ret_1 and p_0 are at 
-    t_0), we need to shift input returns one step ahead. 
+    t_0), we need to shift input returns index one step ahead. 
 
     :param price: series with prices
     :param rets: series with returns
@@ -300,7 +300,7 @@ def compute_prices_from_rets(
     """
     dbg.dassert_isinstance(price, pd.Series)
     dbg.dassert_isinstance(rets, pd.Series)
-    price = price.shift(1)
+    price = price.reindex(rets.index).shift(1)
     if mode == "pct_change":
         price_pred = price * (rets + 1)
     elif mode == "log_rets":
