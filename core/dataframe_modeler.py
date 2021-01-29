@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import collections
 import datetime
-import warnings
 import json
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
