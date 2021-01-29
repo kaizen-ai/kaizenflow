@@ -164,7 +164,9 @@ class ContinuousSkLearnModel(
         # Prepare x_vars in sklearn format.
         x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         # Prepare forward y_vars in sklearn format.
-        fwd_y_fit = cdataa.transform_to_sklearn(fwd_y_df, fwd_y_df.columns.tolist())
+        fwd_y_fit = cdataa.transform_to_sklearn(
+            fwd_y_df, fwd_y_df.columns.tolist()
+        )
         # Define and fit model.
         self._model = self._model_func(**self._model_kwargs)
         self._model = self._model.fit(x_fit, fwd_y_fit)
@@ -767,10 +769,9 @@ class ContinuousSarimaxModel(
         )
         # Add info.
         info = collections.OrderedDict()
-        info["model_summary"] = (
-            _remove_datetime_info_from_SARIMAX(self._model_results.summary())
-            .as_text()
-        )
+        info["model_summary"] = _remove_datetime_info_from_SARIMAX(
+            self._model_results.summary()
+        ).as_text()
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
@@ -1380,7 +1381,9 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         # Prepare x_vars in sklearn format.
         x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], self._col)
         # Prepare forward y_vars in sklearn format.
-        fwd_y_fit = cdataa.transform_to_sklearn(fwd_y_df, fwd_y_df.columns.tolist())
+        fwd_y_fit = cdataa.transform_to_sklearn(
+            fwd_y_df, fwd_y_df.columns.tolist()
+        )
         # Define and fit model.
         if self._tau is None:
             self._tau = self._learn_tau(x_fit, fwd_y_fit)
@@ -1701,23 +1704,25 @@ class VolatilityModel(FitPredictNode):
         return self._fit_predict_helper(df_in, fit=False)
 
     @property
-    def taus(self) -> str:
+    def taus(self) -> Dict[str, Any]:
         return self._taus
-    
+
     def _fit_predict_helper(
         self, df_in: pd.DataFrame, fit: bool = False
     ) -> Dict[str, pd.DataFrame]:
         method = "fit" if fit else "predict"
-        # Leave unchanged columns to the output.
-        dfs = [df_in.drop(self._cols, 1)]
+        if self._col_mode == "replace_all":
+            dfs = []
+        else:
+            dfs = [df_in.drop(self._cols, 1)]
         info = collections.OrderedDict()
         for col in self._cols:
             dbg.dassert_not_in(self._vol_cols[col], df_in.columns)
             dag = self._get_dag(df_in[[col]], col)
             df_out = dag.run_leq_node(self._modulators[col].nid, method)["df_out"]
             info[col] = extract_info(dag, [method])
-            if method=="fit":
-                self._taus[col] = info[col]['anonymous_sma'][method]['tau']
+            if method == "fit":
+                self._taus[col] = info[col]["anonymous_sma"][method]["tau"]
             dfs.append(df_out)
         df_out = pd.concat(dfs, axis=1)
         info["df_out_info"] = get_df_info_as_string(df_out)
