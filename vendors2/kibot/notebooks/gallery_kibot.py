@@ -26,6 +26,7 @@ import pandas as pd
 import sklearn as sk
 
 import core.dataframe_modeler as dfmod
+import core.signal_processing as sigp
 import helpers.dbg as dbg
 import helpers.env as env
 import helpers.printing as prnt
@@ -114,14 +115,17 @@ price_df = ffc_obj.replace_contracts_with_data(cl_df, "close")
 price_df.plot()
 
 # %%
-dfm.compute_ret_0()
-
-# %%
 dfm = dfmod.DataFrameModeler(df=price_df, oos_start="2013-01-01") \
-          .compute_ret_0()
-
-# %%
-dfm.oos_start
+          .compute_ret_0(method="predict") \
+          .apply_column_transformer(
+              transformer_func=sigp.compute_rolling_zscore,
+              transformer_kwargs={
+                  "tau": 10,
+                  "min_periods": 20,
+              },
+              col_mode="replace_all",
+              method="predict",
+          )
 
 # %%
 dfm.plot_time_series()
@@ -133,15 +137,13 @@ dfm.plot_pca_components()
 dfm.plot_explained_variance()
 
 # %%
-dfm.df
-
-# %%
 res = dfm.apply_residualizer(
     model_func=sk.decomposition.PCA,
     x_vars=["CL1_ret_0", "CL2_ret_0", "CL3_ret_0", "CL4_ret_0"],
     model_kwargs={
         "n_components": 1
-    }
+    },
+    method="predict"
 )
 
 # %%
