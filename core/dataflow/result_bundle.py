@@ -279,6 +279,5 @@ def load_result_bundle_from_config(
     :return: result bundle instance
     """
     result_bundle_class = eval(result_bundle_config["class"])
-    dbg.dassert_isinstance(result_bundle_class, ResultBundle)
     result_bundle = result_bundle_class.from_config(result_bundle_config)
     return result_bundle
