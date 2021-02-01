@@ -166,21 +166,30 @@ def _postprocess(txt: str, in_file_name: str) -> str:
     return txt_new_as_str
 
 
-def _frame_chapters(txt: str) -> str:
+def _frame_chapters(txt: str, max_lev: int=4) -> str:
     """
     Add the frame around each chapter.
     """
     txt_new : List[str] = []
-    _LOG.debug("txt=%s", txt)
-    for line in txt.split("\n"):
+    #_LOG.debug("txt=%s", txt)
+    for i, line in enumerate(txt.split("\n")):
+        _LOG.debug("line=%d:%s", i, line)
         m = re.match("^(\#+) ", line)
+        txt_processed = False
         if m:
             comment = m.group(1)
-            sep = comment + " " + "#" * (80 - 1 - len(comment))
-            txt_new.append(sep)
-            txt_new.append(line)
-            txt_new.append(sep)
-        else:
+            lev = len(comment)
+            _LOG.debug("  -> lev=%s", lev)
+            if lev < max_lev:
+                sep = comment + " " + "#" * (80 - 1 - len(comment))
+                txt_new.append(sep)
+                txt_new.append(line)
+                txt_new.append(sep)
+                txt_processed = True
+            else:
+                _LOG.debug("  -> Skip formatting the chapter frame: lev=%d, "
+                    "max_lev=%d", lev, max_lev)
+        if not txt_processed:
             txt_new.append(line)
     txt_new_as_str = "\n".join(txt_new).rstrip("\n")
     return txt_new_as_str
