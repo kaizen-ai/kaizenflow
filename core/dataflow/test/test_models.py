@@ -1214,7 +1214,7 @@ if True:
             """
             Generate a dataframe of the following format:
 
-            EVENT_SENTIMENT_SCORE    zret_0 0 
+            EVENT_SENTIMENT_SCORE           zret_0         0 
             2010-01-01 00:00:00           0.496714 -0.138264 
             2010-01-01 00:01:00           0.647689  1.523030 
             2010-01-01 00:02:00          -0.234153 -0.234137 
