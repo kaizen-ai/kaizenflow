@@ -659,7 +659,9 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         ).rename("ret_0")
         # Get volatility estimate indexed by knowledge time. Volatility delay
         # should be one.
-        fwd_vol = csigna.compute_smooth_moving_average(rets, 16).rename("vol_1_hat")
+        fwd_vol = csigna.compute_smooth_moving_average(rets, 16).rename(
+            "vol_1_hat"
+        )
         rets_zscored = (rets / fwd_vol.shift(1)).to_frame(name="ret_0_zscored")
         fwd_rets_zscored = rets_zscored.shift(-steps_ahead).rename(
             lambda x: f"{x}_{steps_ahead}", axis=1
@@ -1234,12 +1236,12 @@ if True:
             """
             Generate a dataframe of the following format:
 
-            EVENT_SENTIMENT_SCORE    zret_0 0
-            2010-01-01 00:00:00               0.496714 -0.138264
-            2010-01-01 00:01:00               0.647689  1.523030
-            2010-01-01 00:02:00              -0.234153 -0.234137
-            2010-01-01 00:03:00               1.579213  0.767435
-            2010-01-01 00:04:00              -0.469474  0.542560
+            EVENT_SENTIMENT_SCORE    zret_0 0 2010-01-01 00:00:00
+            0.496714 -0.138264 2010-01-01 00:01:00
+            0.647689  1.523030 2010-01-01 00:02:00
+            -0.234153 -0.234137 2010-01-01 00:03:00
+            1.579213  0.767435 2010-01-01 00:04:00
+            -0.469474  0.542560
             """
             np.random.seed(42)
             self._n_periods = 10
