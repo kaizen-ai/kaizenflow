@@ -296,7 +296,7 @@ class DataFrameModeler:
 
     def apply_volatility_model(
         self,
-        col: str,
+        cols: List[str],
         steps_ahead: int,
         p_moment: float = 2,
         tau: Optional[float] = None,
@@ -308,7 +308,7 @@ class DataFrameModeler:
         """
         model = cdataf.VolatilityModel(
             nid="volatility_model",
-            cols=[col],
+            cols=cols,
             steps_ahead=steps_ahead,
             p_moment=p_moment,
             tau=tau,
@@ -450,7 +450,7 @@ class DataFrameModeler:
         Calculate stats for selected columns.
         """
         df = self._get_df(cols=cols, mode=mode)
-        # Calculate cstati.
+        # Calculate stats.
         stats_dict = {}
         for col in tqdm(df.columns, disable=not progress_bar):
             stats_val = self._calculate_series_stats(df[col])
