@@ -356,6 +356,20 @@ class ModelPlotter:
         )
         plot.plot_sharpe_ratio_panel(rets, frequencies=frequencies, ax=ax)
 
+    def plot_strategy(
+        self,
+        keys: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+    ) -> None:
+        """Plot positions (per key)."""
+        keys = keys or self.model_evaluator.valid_keys
+        pos = self.model_evaluator.get_series_dict(
+            "positions", keys=keys, mode=mode
+        )
+        for key in keys:
+            plot.plot_positions(pos[key], label=f"Positions {key}")
+        plt.legend()
+    
     def plot_returns_and_predictions(
         self,
         keys: Optional[List[Any]] = None,

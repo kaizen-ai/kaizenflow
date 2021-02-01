@@ -829,6 +829,17 @@ def plot_histograms_and_lagged_scatterplot(
     axes[2].set_title("Scatter-plot with lag={}".format(lag))
 
 
+def plot_positions(
+    srs: pd.Series,
+    *args: Any,
+    **kwargs: Any,
+) -> None:
+    """Plot positions in time."""
+    dbg.dassert_isinstance(srs, pd.Series)
+    plt.plot(srs, *args, **kwargs)
+    plt.title("Positions")
+
+    
 # #############################################################################
 # Correlation-type plots
 # #############################################################################
