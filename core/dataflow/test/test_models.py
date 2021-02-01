@@ -659,7 +659,9 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         ).rename("ret_0")
         # Get volatility estimate indexed by knowledge time. Volatility delay
         # should be one.
-        fwd_vol = csigna.compute_smooth_moving_average(rets, 16).rename("vol_1_hat")
+        fwd_vol = csigna.compute_smooth_moving_average(rets, 16).rename(
+            "vol_1_hat"
+        )
         rets_zscored = (rets / fwd_vol.shift(1)).to_frame(name="ret_0_zscored")
         fwd_rets_zscored = rets_zscored.shift(-steps_ahead).rename(
             lambda x: f"{x}_{steps_ahead}", axis=1
@@ -971,7 +973,7 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
         config = cconfi.Config()
-        config["col"] = ["ret_0"]
+        config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
         node = cdataf.VolatilityModel("vol_model", **config.to_dict())
@@ -990,7 +992,7 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
         config = cconfi.Config()
-        config["col"] = ["ret_0"]
+        config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
         node = cdataf.VolatilityModel("vol_model", **config.to_dict())
@@ -1020,7 +1022,7 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
         config = cconfi.Config()
-        config["col"] = ["ret_0"]
+        config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
         node = cdataf.VolatilityModel("vol_model", **config.to_dict())
@@ -1044,7 +1046,7 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
         config = cconfi.Config()
-        config["col"] = ["ret_0"]
+        config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
         node = cdataf.VolatilityModel("vol_model", **config.to_dict())
@@ -1071,7 +1073,7 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
         config = cconfi.Config()
-        config["col"] = ["ret_0"]
+        config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["col_mode"] = "replace_all"
         config["nan_mode"] = "drop"
@@ -1091,9 +1093,29 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
         config = cconfi.Config()
-        config["col"] = ["ret_0"]
+        config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["col_mode"] = "replace_selected"
+        config["nan_mode"] = "drop"
+        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
+        dag.add_node(node)
+        dag.connect("data", "vol_model")
+        #
+        output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
+        self.check_string(output_df.to_string())
+
+    def test_fit_multiple_columns(self) -> None:
+        # Load test data.
+        data = self._get_data()
+        data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
+        data_source_node = cdataf.ReadDataFromDf("data", data)
+        # Create DAG and test data node.
+        dag = cdataf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Specify config and create modeling node.
+        config = cconfi.Config()
+        config["cols"] = ["ret_0", "ret_0_2"]
+        config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
         node = cdataf.VolatilityModel("vol_model", **config.to_dict())
         dag.add_node(node)
@@ -1214,12 +1236,12 @@ if True:
             """
             Generate a dataframe of the following format:
 
-            EVENT_SENTIMENT_SCORE    zret_0 0
-            2010-01-01 00:00:00               0.496714 -0.138264
-            2010-01-01 00:01:00               0.647689  1.523030
-            2010-01-01 00:02:00              -0.234153 -0.234137
-            2010-01-01 00:03:00               1.579213  0.767435
-            2010-01-01 00:04:00              -0.469474  0.542560
+            EVENT_SENTIMENT_SCORE    zret_0 0 2010-01-01 00:00:00
+            0.496714 -0.138264 2010-01-01 00:01:00
+            0.647689  1.523030 2010-01-01 00:02:00
+            -0.234153 -0.234137 2010-01-01 00:03:00
+            1.579213  0.767435 2010-01-01 00:04:00
+            -0.469474  0.542560
             """
             np.random.seed(42)
             self._n_periods = 10

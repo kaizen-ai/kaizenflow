@@ -308,7 +308,7 @@ class DataFrameModeler:
         """
         model = cdataf.VolatilityModel(
             nid="volatility_model",
-            col=[col],
+            cols=[col],
             steps_ahead=steps_ahead,
             p_moment=p_moment,
             tau=tau,
@@ -620,7 +620,9 @@ class DataFrameModeler:
         plot_dendrogram_kwargs = plot_dendrogram_kwargs or {}
         #
         df = self._get_df(cols=cols, mode=mode)
-        cplott.plot_dendrogram(df, figsize=figsize, ax=ax, **plot_dendrogram_kwargs)
+        cplott.plot_dendrogram(
+            df, figsize=figsize, ax=ax, **plot_dendrogram_kwargs
+        )
 
     def plot_pca_components(
         self,
