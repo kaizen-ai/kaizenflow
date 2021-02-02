@@ -4,34 +4,29 @@
 # `export DOCKER_BUILDKIT=1`
 # To build an image run:
 # > docker build --progress=plain -t particle:test -f docker_build/Dockerfile .
-FROM continuumio/anaconda3:2020.02
+FROM continuumio/miniconda3:4.9.2
 # Install / remove directories and prepare filesystem.
 # Don't forget credential for auth.
 RUN apt update && \
     apt install cifs-utils -y && \
     apt install keyutils -y && \
-    apt install npm -y && \
     apt install make -y && \
     apt install graphviz -y && \
     apt install vim -y && \
-    apt install s3fs -y
+    apt install git -y && \
+    apt install s3fs -y && \
+    apt install npm -y && \
+    apt-get purge -y --auto-remove
 
 RUN npm install --global prettier
-# Nessesery for openjdk whici is dependency for plantuml
-# https://github.com/geerlingguy/ansible-role-java/issues/64#issuecomment-393299088
-#RUN mkdir -p /usr/share/man/man1
-#RUN apt install plantuml -y
-#RUN curl https://arelle.org/arelle/download/1019/ -o arelle.tar.gz && \
-#    mkdir /usr/bin/arelle && \
-#    tar zxvf arelle.tar.gz -C /usr/bin/arelle && \
-#    rm -f arelle.tar.gz
-
-ARG req=requirements_dev.yaml
-
 RUN mkdir -p /s3/default00-bucket
 RUN mkdir -p /fsx/research
+COPY docker_build/fstab /etc/fstab
 
 RUN conda init bash
+RUN conda config --set default_threads 4
+RUN conda config --add channels conda-forge
+RUN conda config --show-sources
 ENV ENV_DIR="/env_dir"
 RUN mkdir $ENV_DIR
 ENV APP_DIR=/amp

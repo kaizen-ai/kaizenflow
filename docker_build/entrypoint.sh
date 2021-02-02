@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
-#docker_build/entrypoint/run_make.sh
-cd amp
-source docker_build/entrypoint/patch_environment_variables.sh
-cd ..
+
 source docker_build/entrypoint/aws_credentials.sh
 source docker_build/entrypoint/patch_environment_variables.sh
-source docker_build/entrypoint/google_secret_credentials.sh
 
 mount -a
 

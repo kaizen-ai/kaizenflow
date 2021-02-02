@@ -1,13 +1,12 @@
-name: Fast tests.
+name: Superslow tests.
 on:
-  push:
   workflow_dispatch:
   schedule:
-    # Run this once a day even if there are no commit.
+    # Run this once a day.
     - cron:  '0 0 */1 * *'
 
 jobs:
-  Run_fast_tests_mark_commit:
+  Run_superslow_tests_mark_commit:
     runs-on: ubuntu-latest
     steps:
       - name: Post status if was triggered manually
@@ -15,20 +14,20 @@ jobs:
         uses: Sibz/github-status-action@v1
         with:
           authToken: ${{secrets.GITHUB_TOKEN}}
-          context: "Run_fast_tests"
+          context: "Run_superslow_tests"
           description: 'Added to queue, waiting for free runner. (Manual run)'
           state: pending
           sha: ${{ github.sha }}
           target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-  Run_fast_tests:
-    runs-on: [self-hosted, FAST]
+  Run_superslow_tests:
+    runs-on: [SUPERSLOW]
     steps:
       - name: Post status if was triggered manually
         if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: Sibz/github-status-action@v1
         with:
           authToken: ${{secrets.GITHUB_TOKEN}}
-          context: "Run_fast_tests"
+          context: "Run_superslow_tests"
           description: 'Job in progress. (Manual run)'
           state: pending
           sha: ${{ github.sha }}
@@ -56,18 +55,30 @@ jobs:
       - name: Pull image
         run: make docker_pull
 
-      - name: Run fast tests
+      - name: Run superslow tests
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-        run: make test_fast_gh_action
+          GOOGLE_SPREADSHEET_SECRET_API: ${{ secrets.GOOGLE_SPREADSHEET_SECRET_API }}
+          GOOGLE_SPREADSHEET_DEFAULT_TOKEN: ${{ secrets.GOOGLE_SPREADSHEET_DEFAULT_TOKEN }}
+          GOOGLE_SPREADSHEET_TYPE: ${{ secrets.GOOGLE_SPREADSHEET_TYPE }}
+          GOOGLE_SPREADSHEET_PROJECT_ID: ${{ secrets.GOOGLE_SPREADSHEET_PROJECT_ID }}
+          GOOGLE_SPREADSHEET_PRIVATE_KEY_ID: ${{ secrets.GOOGLE_SPREADSHEET_PRIVATE_KEY_ID }}
+          GOOGLE_SPREADSHEET_PRIVATE_KEY: ${{ secrets.GOOGLE_SPREADSHEET_PRIVATE_KEY }}
+          GOOGLE_SPREADSHEET_CLIENT_EMAIL: ${{ secrets.GOOGLE_SPREADSHEET_CLIENT_EMAIL }}
+          GOOGLE_SPREADSHEET_CLIENT_ID: ${{ secrets.GOOGLE_SPREADSHEET_CLIENT_ID }}
+          GOOGLE_SPREADSHEET_AUTH_URI: ${{ secrets.GOOGLE_SPREADSHEET_AUTH_URI }}
+          GOOGLE_SPREADSHEET_TOKEN_URI: ${{ secrets.GOOGLE_SPREADSHEET_TOKEN_URI }}
+          GOOGLE_SPREADSHEET_AUTH_PROVIDER_X509_CERT_URL: ${{ secrets.GOOGLE_SPREADSHEET_AUTH_PROVIDER_X509_CERT_URL }}
+          GOOGLE_SPREADSHEET_CLIENT_X509_CERT_URL: ${{ secrets.GOOGLE_SPREADSHEET_CLIENT_X509_CERT_URL }}
+        run: make test_superslow_gh_action
 
       - name: Post status if was triggered manually
         if: ${{ always() && github.event_name == 'workflow_dispatch' }}
         uses: Sibz/github-status-action@v1
         with:
           authToken: ${{secrets.GITHUB_TOKEN}}
-          context: "Run_fast_tests"
+          context: "Run_superslow_tests"
           description: 'Job is done. (Manual run)'
           state: ${{ job.status }}
           sha: ${{ github.sha }}
@@ -80,6 +91,5 @@ jobs:
           to: ${{ secrets.P1_TG_BUILD_MONITORING_CHANNEL_ID }}
           token: ${{ secrets.P1_GH_BOT_TELEGRAM_TOKEN }}
           message: |
-            Build failure `${{ github.workflow }}`
-            Repo: ${{ github.repository }}
+            Build failure 'Superslow tests'.
             https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

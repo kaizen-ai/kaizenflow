@@ -68,5 +68,12 @@ docker_tag_rc_latest:
 	docker tag $(IMAGE_RC) $(AMP_ENV_IMAGE)
 
 docker_push_latest_image:
-	docker
+	docker push $(AMP_ENV_IMAGE)
 
+docker_bash:
+	IMAGE=$(IMAGE) \
+	docker-compose \
+		-f compose/docker-compose.yml \
+		run --rm \
+		-l user=$(USER) \
+		app bash

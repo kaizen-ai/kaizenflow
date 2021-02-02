@@ -15,7 +15,7 @@ dependencies:
   - pytest-cov
   - pytest-instafail
   - pytest-xdist
-  - python >= 3.7
+#  - python >= 3.7
   - python-dateutil
   - pytz
   - tqdm
@@ -72,14 +72,12 @@ dependencies:
   #- gdrive                  # To interact with Google Drive.
   #- jq                      # To process json.
   #- mxnet                   # Required by gluon (e.g., gluon-ts, gluon-nlp).
-  #- pymongo
+#  - pymongo
   #- rclone                  # To back up Google Drive (conda install -c hcc rclone)
   #- ruby
   - beautifulsoup4
-  - git                     # To use latest git client.
   - joblib
   - jsonpickle
-  - psycopg2
   - pygraphviz              # For dataflow graph visualization.
   # ############################################################################
   # Profiling
@@ -94,6 +92,7 @@ dependencies:
     #- pyannotate           # Enable this to automatically infer types.
     #- ta                   # Technical analysis package.
     #- trading-calendars
+    - psycopg2-binary
     # ##########################################################################
     # Keep the following section unchanged in order, since we need to install
     # mxnet first.
@@ -103,6 +102,6 @@ dependencies:
     # ############################################################################
     # ETL3
     # ############################################################################
-    - gitpython
-    - dbnomics-data-model
-    - python-slugify
+#    - gitpython
+#    - dbnomics-data-model
+#    - python-slugify
