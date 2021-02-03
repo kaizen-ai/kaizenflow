@@ -19,6 +19,22 @@ import vendors2.kibot.metadata.types as vkmtyp
 _LOG = logging.getLogger(__name__)
 
 
+# Top contracts by file size found using
+#     `KibotMetadata().read_continuous_contract_metadata()`.
+TOP_KIBOT = {
+    "Corn": "C",
+    "Crude Oil": "CL",
+    "Rough Rice": "RR",
+    "Soybeans": "S",
+    "Wheat": "W",
+    "Copper": "HG",
+    "Soybean Meal": "SM",
+    "Gold": "GC",
+    "Silver": "SI",
+    "Palm Oil": "KPO",
+}
+
+
 class KibotMetadata:
     # pylint: disable=line-too-long
     """
