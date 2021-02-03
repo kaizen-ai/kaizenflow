@@ -1,4 +1,4 @@
-from typing import Optional, Union, List, Dict
+from typing import Dict, List, Optional, Union
 
 import pandas as pd
 import psycopg2
@@ -58,12 +58,15 @@ class SQLKibotDataLoader(vkdlda.AbstractKibotDataLoader):
             )
         elif isinstance(symbol, list):
             # List of symbols.
-            data = {symbol_: self._read_data(
-                exchange=exchange,
-                symbol=symbol_,
-                frequency=frequency,
-                nrows=nrows,
-            ) for symbol_ in symbol}
+            data = {
+                symbol_: self._read_data(
+                    exchange=exchange,
+                    symbol=symbol_,
+                    frequency=frequency,
+                    nrows=nrows,
+                )
+                for symbol_ in symbol
+            }
         else:
             raise TypeError("Symbol type (%s) is not supported." % type(symbol))
         return data

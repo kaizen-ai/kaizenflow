@@ -1,4 +1,4 @@
-from typing import Optional, Union, List, Dict
+from typing import Dict, List, Optional, Union
 
 import pandas as pd
 
@@ -55,15 +55,18 @@ class S3KibotDataLoader(vkdlda.AbstractKibotDataLoader):
             )
         elif isinstance(symbol, list):
             # List of symbols.
-            data = {symbol_: cls._read_data(
-                symbol=symbol_,
-                asset_class=asset_class,
-                frequency=frequency,
-                contract_type=contract_type,
-                unadjusted=unadjusted,
-                nrows=nrows,
-                normalize=normalize,
-            ) for symbol_ in symbol}
+            data = {
+                symbol_: cls._read_data(
+                    symbol=symbol_,
+                    asset_class=asset_class,
+                    frequency=frequency,
+                    contract_type=contract_type,
+                    unadjusted=unadjusted,
+                    nrows=nrows,
+                    normalize=normalize,
+                )
+                for symbol_ in symbol
+            }
         else:
             raise TypeError("Symbol type (%s) is not supported." % type(symbol))
         return data
