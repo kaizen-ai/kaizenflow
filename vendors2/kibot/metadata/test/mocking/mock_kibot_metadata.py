@@ -23,3 +23,9 @@ class MockKibotMetadata(kmd.KibotMetadata):
     @classmethod
     def read_kibot_exchange_mapping(cls) -> pd.DataFrame:
         return pd.read_csv(f"{FILE_DIR}/kibot_exchange_mapping.txt")
+
+    @classmethod
+    def read_daily_contract_metadata(cls) -> pd.DataFrame:
+        return pd.read_csv(f"{FILE_DIR}/read_daily_contract_metadata.txt")
+
+

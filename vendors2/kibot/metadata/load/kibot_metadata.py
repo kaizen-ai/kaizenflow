@@ -108,6 +108,10 @@ class KibotMetadata:
     def read_1min_contract_metadata(cls) -> pd.DataFrame:
         return vkmls3.S3Backend().read_1min_contract_metadata()
 
+    @classmethod
+    def read_daily_contract_metadata(cls) -> pd.DataFrame:
+        return vkmls3.S3Backend().read_daily_contract_metadata()
+
     def get_kibot_symbols(self, contract_type: str = "1min") -> pd.Series:
         metadata = self.get_metadata(contract_type)
         return metadata["Kibot_symbol"]
