@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union, List, Dict
 
 import pandas as pd
 
@@ -17,19 +17,22 @@ class S3KibotDataLoader(vkdlda.AbstractKibotDataLoader):
     def read_data(
         cls,
         exchange: str,
-        symbol: str,
+        symbol: Union[str, List[str]],
         asset_class: vkdtyp.AssetClass,
         frequency: vkdtyp.Frequency,
         contract_type: Optional[vkdtyp.ContractType] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
-    ) -> pd.DataFrame:
+    ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
         """
         Read kibot data.
 
+        If symbol is a string, return a dataframe with data related to this symbol.
+        If symbol is a list, return a dictionary with symbol as key, data as value pairs.
+
         :param exchange: name of the exchange
-        :param symbol: symbol to get the data for
+        :param symbol: symbol or list of symbols to get the data for
         :param asset_class: asset class
         :param frequency: `D` or `T` for daily or minutely data respectively
         :param contract_type: required for asset class of type: `futures`
@@ -38,15 +41,32 @@ class S3KibotDataLoader(vkdlda.AbstractKibotDataLoader):
         :param normalize: whether to normalize the dataframe by frequency
         :return: a dataframe with the symbol data
         """
-        return cls._read_data(
-            symbol=symbol,
-            asset_class=asset_class,
-            frequency=frequency,
-            contract_type=contract_type,
-            unadjusted=unadjusted,
-            nrows=nrows,
-            normalize=normalize,
-        )
+        data = None
+        if isinstance(symbol, str):
+            # Single symbol.
+            data = cls._read_data(
+                symbol=symbol,
+                asset_class=asset_class,
+                frequency=frequency,
+                contract_type=contract_type,
+                unadjusted=unadjusted,
+                nrows=nrows,
+                normalize=normalize,
+            )
+        elif isinstance(symbol, list):
+            # List of symbols.
+            data = {symbol_: cls._read_data(
+                symbol=symbol_,
+                asset_class=asset_class,
+                frequency=frequency,
+                contract_type=contract_type,
+                unadjusted=unadjusted,
+                nrows=nrows,
+                normalize=normalize,
+            ) for symbol_ in symbol}
+        else:
+            raise TypeError("Symbol type (%s) is not supported." % type(symbol))
+        return data
 
     @staticmethod
     def _read_data(
