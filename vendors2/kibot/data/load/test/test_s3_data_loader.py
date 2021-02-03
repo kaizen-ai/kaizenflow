@@ -6,8 +6,7 @@ import vendors2.kibot.data.types as vkdtyp
 
 
 class TestS3KibotDataLoader(hut.TestCase):
-    # @pytest.mark.slow
-    @pytest.mark.skip("Disabled because of #4770")
+    @pytest.mark.slow
     def test1(self) -> None:
         # use the private method to avoid caching
         # TODO(*): Disable caching in unit tests.
