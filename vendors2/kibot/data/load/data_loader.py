@@ -1,5 +1,5 @@
 import abc
-from typing import Dict, List, Optional, Union
+from typing import Optional
 
 import pandas as pd
 
@@ -12,22 +12,19 @@ class AbstractKibotDataLoader(abc.ABC):
     def read_data(
         cls,
         exchange: str,
-        symbol: Union[str, List[str]],
+        symbol: str,
         asset_class: vkdtyp.AssetClass,
         frequency: vkdtyp.Frequency,
         contract_type: Optional[vkdtyp.ContractType] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
-    ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+    ) -> pd.DataFrame:
         """
         Read kibot data.
 
-        If symbol is a string, return a dataframe with data related to this symbol.
-        If symbol is a list, return a dictionary with symbol as key, data as value pairs.
-
         :param exchange: name of the exchange
-        :param symbol: symbol or list of symbols to get the data for
+        :param symbol: symbol to get the data for
         :param asset_class: asset class
         :param frequency: `D` or `T` for daily or minutely data respectively
         :param contract_type: required for asset class of type: `futures`
