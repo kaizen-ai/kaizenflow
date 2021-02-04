@@ -19,6 +19,22 @@ import vendors2.kibot.metadata.types as vkmtyp
 _LOG = logging.getLogger(__name__)
 
 
+# Top contracts by file size found using
+#     `KibotMetadata().read_continuous_contract_metadata()`.
+TOP_KIBOT = {
+    "Corn": "C",
+    "Crude Oil": "CL",
+    "Rough Rice": "RR",
+    "Soybeans": "S",
+    "Wheat": "W",
+    "Copper": "HG",
+    "Soybean Meal": "SM",
+    "Gold": "GC",
+    "Silver": "SI",
+    "Palm Oil": "KPO",
+}
+
+
 class KibotMetadata:
     # pylint: disable=line-too-long
     """
@@ -107,6 +123,10 @@ class KibotMetadata:
     @classmethod
     def read_1min_contract_metadata(cls) -> pd.DataFrame:
         return vkmls3.S3Backend().read_1min_contract_metadata()
+
+    @classmethod
+    def read_daily_contract_metadata(cls) -> pd.DataFrame:
+        return vkmls3.S3Backend().read_daily_contract_metadata()
 
     def get_kibot_symbols(self, contract_type: str = "1min") -> pd.Series:
         metadata = self.get_metadata(contract_type)
@@ -370,6 +390,14 @@ class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
     Use the price data from Kibot to compute the lifetime.
     """
 
+    def __init__(self, end_timedelta_days: int = 0):
+        """
+        :param end_timedelta_days: number of days before the trading activity 
+            termination to mark as the end
+        """
+        dbg.dassert_lte(0, end_timedelta_days)
+        self.end_timedelta_days = end_timedelta_days
+
     def compute_lifetime(self, contract_name: str) -> vkmtyp.ContractLifetime:
         df = vkdls3.S3KibotDataLoader().read_data(
             "Kibot",
@@ -380,6 +408,7 @@ class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
         )
         start_date = pd.Timestamp(df.first_valid_index())
         end_date = pd.Timestamp(df.last_valid_index())
+        end_date -= ptoffs.BDay(self.end_timedelta_days)
         return vkmtyp.ContractLifetime(start_date, end_date)
 
 
@@ -400,23 +429,36 @@ class KibotHardcodedContractLifetimeComputer(ContractLifetimeComputer):
         dbg.dassert_lte(0, end_timedelta_days)
         dbg.dassert_lt(end_timedelta_days, start_timedelta_days)
         self.end_timedelta_days = end_timedelta_days
+        self.ecm = vkmlex.ExpiryContractMapper()
 
     def compute_lifetime(self, contract_name: str) -> vkmtyp.ContractLifetime:
-        # From CME rules:
-        # "Trading terminates at the close of business on the third business day
-        # prior to the 25th calendar day of the month preceding the delivery month."
-        ecm = vkmlex.ExpiryContractMapper()
-        _, month, year = ecm.parse_expiry_contract(contract_name)
-        year = ecm.parse_year(year)
-        month = ecm.expiry_to_month_num(month)
-        date = datetime.date(year, month, 25)
-        # Closes 1 month preceding the expiry month.
-        date -= pd.DateOffset(months=1)
-        # Closes 3 business days before the 25th.
-        date -= ptoffs.BDay(3)
+        symbol, month, year = self.ecm.parse_expiry_contract(contract_name)
+        year = self.ecm.parse_year(year)
+        month = self.ecm.expiry_to_month_num(month)
+        if symbol == "CL":
+            # https://www.cmegroup.com/trading/energy/crude-oil/light-sweet-crude_contract_specifications.html
+            # "Trading terminates at the close of business on the third business day
+            # prior to the 25th calendar day of the month preceding the delivery month."
+            date = datetime.date(year, month, 25)
+            # Closes 1 month preceding the expiry month.
+            date -= pd.DateOffset(months=1)
+            # Closes 3 business days before the 25th.
+            date -= ptoffs.BDay(3)
+        elif symbol == "NG":
+            # https://www.cmegroup.com/trading/energy/natural-gas/natural-gas_contract_specifications.html
+            # "Trading terminates on the 3rd last business days of the month
+            # prior to the contract month."
+            date = datetime.date(year, month, 1)
+            # Closes = month preceding the expiry month.
+            date += pd.offsets.BMonthEnd(-1)
+            # Closes on the "3rd last business days".
+            date -= ptoffs.BDay(2)
+        else:
+            raise NotImplementedError(f"Contract lifetime for symbol=`{symbol}` not implemented")
+
         return vkmtyp.ContractLifetime(
-            pd.Timestamp(date - ptoffs.Day(self.start_timedelta_days)),
-            pd.Timestamp(date - ptoffs.Day(self.end_timedelta_days)),
+            pd.Timestamp(date - ptoffs.BDay(self.start_timedelta_days)),
+            pd.Timestamp(date - ptoffs.BDay(self.end_timedelta_days)),
         )
 
 
@@ -590,6 +632,7 @@ class FuturesContractExpiryMapper:
         contract_end_dates = contracts[["contract", "end_date"]].set_index(
             "end_date"
         )
+        dbg.dassert_strictly_increasing_index(contract_end_dates)
         # Shift to index nth contracts by end date.
         nth_contract_end_dates = contract_end_dates.shift(-1 * (n - 1))
         # Realign the end date to nth contract mapping to `idx` and backfill
