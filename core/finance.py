@@ -150,6 +150,7 @@ def resample_ohlcv_bars(
         result_df = df1.merge(df2, how="outer", left_index=True, right_index=True)
         dbg.dassert(result_df.index.freq)
         return result_df
+
     #
     dbg.dassert_isinstance(df, pd.DataFrame)
     for col in [open_col, high_col, low_col, close_col, volume_col]:
