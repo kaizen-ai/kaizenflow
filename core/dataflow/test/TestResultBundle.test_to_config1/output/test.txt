@@ -17,7 +17,5 @@ info:
    3   col3    1 non-null      int64
    4   col4    1 non-null      int64
   dtypes: int64(5)
-  memory usage: 168.0 bytes
-  
 payload: None
 class: ResultBundle
