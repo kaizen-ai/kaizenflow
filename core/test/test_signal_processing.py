@@ -130,7 +130,7 @@ class Test_accumulate(hut.TestCase):
         srs = pd.Series(
             np.random.randn(100), index=pd.date_range("2010-01-01", periods=100)
         )
-        actual = sigp.accumulate(srs, num_steps=5)
+        actual = pd.concat([srs, sigp.accumulate(srs, num_steps=5)], axis=1)
         self.check_string(hut.convert_df_to_string(actual, index=True))
 
     def test_long_step1(self) -> None:
