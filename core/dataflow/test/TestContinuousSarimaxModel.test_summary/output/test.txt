@@ -10,3 +10,13 @@ Log Likelihood                           94.232
 AIC                                    -176.465
 BIC                                    -160.834
 HQIC                                   -170.139
+                            1
+0                            
+Ljung-Box (L1) (Q)       0.02
+Prob(Q)                  0.90
+Heteroskedasticity (H)   0.82
+Prob(H) (two-sided)      0.57
+Jarque-Bera (JB)         0.60
+Prob(JB)                 0.74
+Skew                    -0.18
+Kurtosis                 2.89
