@@ -114,6 +114,68 @@ def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
 # #############################################################################
 
 
+def resample_ohlcv_bars(
+    df: pd.DataFrame,
+    rule: str,
+    *,
+    open_col: Optional[str] = "open",
+    high_col: Optional[str] = "high",
+    low_col: Optional[str] = "low",
+    close_col: Optional[str] = "close",
+    volume_col: Optional[str] = "volume",
+    add_twap_vwap: bool = False,
+) -> pd.DataFrame:
+    """
+    Resample OHLCV bars and optionally add TWAP, VWAP prices based on "close".
+
+    :param df: input dataframe with datetime index
+    :param rule: resampling frequency
+    :param open_col: name of "open" column
+    :param high_col: name of "high" column
+    :param low_col: name of "low" column
+    :param close_col: name of "close" column
+    :param volume_col: name of "volume" column
+    :param add_twap_vwap: if `True`, add "twap" and "vwap" columns
+    :return: resampled OHLCV dataframe with same column names; if
+        `add_twap_vwap`, then also includes "twap" and "vwap" columns.
+    """
+    def _merge(df1, df2):
+        result_df = df1.merge(
+            df2, how="outer", left_index=True, right_index=True
+        )
+        dbg.dassert(result_df.index.freq)
+        return result_df
+    #
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    for col in [open_col, high_col, low_col, close_col, volume_col]:
+        if col is not None:
+            dbg.dassert_in(col, df.columns)
+    result_df = pd.DataFrame()
+    if open_col:
+        open_df = fin.resample_time_bars(df[[open_col]], rule=rule, price_cols=[open_col], price_agg_func="first")
+        result_df = _merge(result_df, open_df)
+    if high_col:
+        high_df = fin.resample_time_bars(df[[high_col]], rule=rule, price_cols=[high_col], price_agg_func="max")
+        result_df = _merge(result_df, high_df)
+    if low_col:
+        low_df = fin.resample_time_bars(df[[low_col]], rule=rule, price_cols=[low_col], price_agg_func="min")
+        result_df = _merge(result_df, low_df)
+    if close_col:
+        close_df = fin.resample_time_bars(df[[close_col]], rule=rule, price_cols=[close_col], price_agg_func="last")
+        result_df = _merge(result_df, close_df)
+    if volume_col:
+        volume_df = fin.resample_time_bars(df[[volume_col]], rule=rule, volume_cols=[volume_col])
+        result_df = _merge(result_df, volume_df)
+    if add_twap_vwap:
+        dbg.dassert(close_col)
+        dbg.dassert(volume_col)
+        dbg.dassert_not_in("twap", df.columns)
+        dbg.dassert_not_in("vwap", df.columns)
+        twap_vwap_df = fin.compute_twap_vwap(df, rule=rule, price_col=close_col, volume_col=volume_col)
+        result_df = _merge(result_df, twap_vwap_df)
+    return result_df
+
+
 def resample_time_bars(
     df: pd.DataFrame,
     rule: str,
