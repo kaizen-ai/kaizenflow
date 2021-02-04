@@ -1230,7 +1230,6 @@ class PCA:
         explained_variance_ratio = pd.Series(self.pca.explained_variance_ratio_)
         eigenvals = pd.Series(self.pca.explained_variance_)
         # Plot explained variance.
-        plt.figure(2)
         explained_variance_ratio.cumsum().plot(
             title="Explained variance ratio", lw=5, ylim=(0, 1), ax=ax
         )
