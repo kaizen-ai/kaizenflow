@@ -19,6 +19,22 @@ import vendors2.kibot.metadata.types as vkmtyp
 _LOG = logging.getLogger(__name__)
 
 
+# Top contracts by file size found using
+#     `KibotMetadata().read_continuous_contract_metadata()`.
+TOP_KIBOT = {
+    "Corn": "C",
+    "Crude Oil": "CL",
+    "Rough Rice": "RR",
+    "Soybeans": "S",
+    "Wheat": "W",
+    "Copper": "HG",
+    "Soybean Meal": "SM",
+    "Gold": "GC",
+    "Silver": "SI",
+    "Palm Oil": "KPO",
+}
+
+
 class KibotMetadata:
     # pylint: disable=line-too-long
     """
@@ -107,6 +123,10 @@ class KibotMetadata:
     @classmethod
     def read_1min_contract_metadata(cls) -> pd.DataFrame:
         return vkmls3.S3Backend().read_1min_contract_metadata()
+
+    @classmethod
+    def read_daily_contract_metadata(cls) -> pd.DataFrame:
+        return vkmls3.S3Backend().read_daily_contract_metadata()
 
     def get_kibot_symbols(self, contract_type: str = "1min") -> pd.Series:
         metadata = self.get_metadata(contract_type)
