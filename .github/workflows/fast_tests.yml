@@ -73,7 +73,7 @@ jobs:
           sha: ${{ github.sha }}
           target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-      - name: Send telegramm notification
+      - name: Send Telegram notification
         if: ${{ failure() && github.event_name == 'schedule' }}
         uses: appleboy/telegram-action@master
         with:

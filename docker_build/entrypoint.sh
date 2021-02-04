@@ -7,7 +7,8 @@ mount -a
 
 source ~/.bashrc
 conda activate venv
-# To make possible work with files outside a container
+
+# Allow working with files outside a container.
 umask 000
 
 ./docker_build/test/test_mount_fsx.sh

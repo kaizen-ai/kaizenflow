@@ -54,7 +54,7 @@ jobs:
         if: ${{ success() && github.ref == 'refs/heads/master' }}
         run: make docker_push_latest_image
 
-      - name: Send telegramm notification
+      - name: Send Telegram notification
         if: ${{ success() && github.ref == 'refs/heads/master' }}
         uses: appleboy/telegram-action@master
         with:
