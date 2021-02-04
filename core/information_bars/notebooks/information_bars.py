@@ -33,9 +33,9 @@ import statsmodels.api as sm
 import core.information_bars.bars as cib
 
 # TODO(vr): Use below when Tick data will be in PQ on S3
-# import vendors2.kibot.data.load as vkdl
-import vendors2.kibot.data.load.file_path_generator as vkdlf
-import vendors2.kibot.data.types as vkdt
+# import vendors.kibot.data.load as vkdl
+import vendors.kibot.data.load.file_path_generator as vkdlf
+import vendors.kibot.data.types as vkdt
 
 plt.style.use("seaborn-talk")
 plt.style.use("bmh")
