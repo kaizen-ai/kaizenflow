@@ -1230,6 +1230,7 @@ class PCA:
         explained_variance_ratio = pd.Series(self.pca.explained_variance_ratio_)
         eigenvals = pd.Series(self.pca.explained_variance_)
         # Plot explained variance.
+        plt.figure(2)
         explained_variance_ratio.cumsum().plot(
             title="Explained variance ratio", lw=5, ylim=(0, 1), ax=ax
         )
@@ -1246,8 +1247,9 @@ class PCA:
         if num_pcs_to_plot is None:
             num_pcs_to_plot = max_pcs
             _LOG.warning("Plotting all %s components", num_pcs_to_plot)
+        else:
+            num_pcs_to_plot = min(num_pcs_to_plot, max_pcs)
         dbg.dassert_lte(1, num_pcs_to_plot)
-        dbg.dassert_lte(num_pcs_to_plot, max_pcs)
         return num_pcs_to_plot
 
 
