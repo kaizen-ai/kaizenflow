@@ -3,6 +3,7 @@ from typing import Union
 
 import pandas as pd
 
+import core.finance as cfinan
 import helpers.dataframe as hdataf
 import helpers.dbg as dbg
 import vendors_amp.kibot.data.load.data_loader as vkdlda
@@ -36,7 +37,8 @@ class FuturesForwardContracts:
                 2010-01-12    CLG10 CLH10
                 2010-01-13    CLG10 CLH10
                 2010-01-14    CLH10 CLJ10
-        :param col: name of column to extract, e.g., "open", "close", "volume"
+        :param col: name of column to extract, e.g., "open", "close", "volume",
+            "twap"
         :return: dataframe of market data indexed like `df`. Each contract
             name is replaced with its relevant col of market data (as of the
             time given by the index). E.g.,
@@ -91,8 +93,14 @@ class FuturesForwardContracts:
                 freq,
                 vkdtyp.ContractType.Expiry,
             )
+            resampled = cfinan.resample_ohlcv_bars(
+                data,
+                rule=srs.index.freq,
+                volume_col="vol",
+                add_twap_vwap=True,
+            )
             # Restrict to relevant subseries.
-            subseries = data.reindex(srs[srs == contract].index)
+            subseries = resampled.reindex(srs[srs == contract].index)
             data_subseries.append(subseries.copy())
         # Merge the contract data over the partitioned srs index.
         df = pd.concat(data_subseries, axis=0)
