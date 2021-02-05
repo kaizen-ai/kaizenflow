@@ -193,11 +193,8 @@ def resample_ohlcv_bars(
         dbg.dassert(volume_col)
         dbg.dassert_not_in("twap", df.columns)
         dbg.dassert_not_in("vwap", df.columns)
-        preprocessed_df = resample_time_bars(
-            df, rule=rule, price_cols=[close_col], volume_cols=[volume_col]
-        )
         twap_vwap_df = compute_twap_vwap(
-            preprocessed_df, rule=rule, price_col=close_col, volume_col=volume_col
+            df, rule=rule, price_col=close_col, volume_col=volume_col
         )
         result_df = _merge(result_df, twap_vwap_df)
     return result_df
@@ -308,7 +305,10 @@ def compute_twap_vwap(
     :return: vwap series
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
-    dbg.dassert(df.index.freq)
+    # TODO(*): Determine whether we really need this. Disabling for now to
+    # accommodate data that is not perfectly aligned with a pandas freq
+    # (e.g., Kibot).
+    # dbg.dassert(df.index.freq)
     dbg.dassert_in(price_col, df.columns)
     dbg.dassert_in(volume_col, df.columns)
     price = df[price_col]
