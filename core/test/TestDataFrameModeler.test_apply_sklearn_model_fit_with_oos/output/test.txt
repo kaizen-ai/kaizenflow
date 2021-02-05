@@ -164,5 +164,4 @@ Name: SR, dtype: float64)])),
               ' 1   y        60 non-null     float64\n'
               ' 2   y_2      58 non-null     float64\n'
               ' 3   y_2_hat  58 non-null     float64\n'
-              'dtypes: float64(4)\n'
-              'memory usage: 2.3 KB\n')])
+              'dtypes: float64(4)')])
