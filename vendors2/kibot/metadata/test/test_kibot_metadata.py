@@ -202,9 +202,9 @@ class TestKibotMetadata(hut.TestCase):
         self.assertEqual(exp, act)
 
     def test_kibot_hardcoded_contract_lifetime_computer1(self) -> None:
-        cls = kmd.KibotHardcodedContractLifetimeComputer(365, 7)
+        cls = kmd.KibotHardcodedContractLifetimeComputer(260, 5)
         exp = (
-            "2016-03-22",
+            "2016-03-23",
             "2017-03-15"
         )
         act = cls.compute_lifetime("CLJ17")
@@ -212,9 +212,9 @@ class TestKibotMetadata(hut.TestCase):
         self.assertEqual(exp[1], str(act.end_date.date()))
 
     def test_kibot_hardcoded_contract_lifetime_computer2(self) -> None:
-        cls = kmd.KibotHardcodedContractLifetimeComputer(365, 7)
+        cls = kmd.KibotHardcodedContractLifetimeComputer(260, 5)
         exp = (
-            "2016-12-20",
+            "2016-12-21",
             "2017-12-13"
         )
         act = cls.compute_lifetime("CLF18")
