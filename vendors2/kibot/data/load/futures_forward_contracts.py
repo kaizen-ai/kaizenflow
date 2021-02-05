@@ -3,9 +3,9 @@ from typing import Union
 
 import pandas as pd
 
+import core.finance as cfinan
 import helpers.dataframe as hdataf
 import helpers.dbg as dbg
-import core.finance as cfina
 import vendors2.kibot.data.load.data_loader as vkdlda
 import vendors2.kibot.data.types as vkdtyp
 
@@ -93,7 +93,7 @@ class FuturesForwardContracts:
                 freq,
                 vkdtyp.ContractType.Expiry,
             )
-            resampled = cfina.resample_ohlcv_bars(
+            resampled = cfinan.resample_ohlcv_bars(
                 data,
                 rule=srs.index.freq,
                 volume_col="vol",
