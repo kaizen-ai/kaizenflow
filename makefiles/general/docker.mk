@@ -14,8 +14,9 @@ else
 	docker login -u AWS -p $(aws ecr get-login --region us-east-2) $(ECR_URL)
 endif
 
-# Pull an image from the registry.
+# Login and pull an image from the registry.
 docker_pull:
+	make docker_login
 	$(foreach v, $(REPO_IMAGES), docker pull $(v); )
 
 # List all running containers:
