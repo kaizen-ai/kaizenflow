@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
+set -ex
 
 source ./docker_build/entrypoint.sh
 
-conda list
+SKIPPED_TESTS="not slow and superslow and not broken_deps and not need_data_dir and not not_docker"
+OPTS="-vv -rpa"
 
-OPTS='-vv -rpa  -m "superslow and not slow and not broken_deps and not need_data_dir and not not_docker"'
+# Collect tests without executing them.
+#pytest --collect-only ${OPTS} -m "${SKIPPED_TESTS}"
 
-# Collect without execution
-pytest --co $OPTS
-
-# Run tests
-pytest --log-cli-level=ERROR $OPTS
+# Run tests.
+pytest --log-cli-level=ERROR ${OPTS} -m "${SKIPPED_TESTS}"
