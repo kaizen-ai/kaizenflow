@@ -288,14 +288,14 @@ def compute_prices_from_rets(
 ) -> pd.Series:
     """
     Compute price p_1 at moment t_1 with given price p_0 at t_0 and return ret_1
-    
-    This implies that input has ret_1 at moment t_1 and uses price p_0 from 
-    previous step t_0. If we have forward returns instead (ret_1 and p_0 are at 
-    t_0), we need to shift input returns index one step ahead. 
+
+    This implies that input has ret_1 at moment t_1 and uses price p_0 from
+    previous step t_0. If we have forward returns instead (ret_1 and p_0 are at
+    t_0), we need to shift input returns index one step ahead.
 
     :param price: series with prices
     :param rets: series with returns
-    :param mode: returns mode as in compute_ret_0 
+    :param mode: returns mode as in compute_ret_0
     :return: series with computed prices
     """
     dbg.dassert_isinstance(price, pd.Series)
