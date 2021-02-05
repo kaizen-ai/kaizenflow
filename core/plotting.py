@@ -224,9 +224,9 @@ def plot_projection(
     Plot lines where each column is not in special values.
 
     :param df: dataframe
-    :param special_values: values to omit from cplott. If `None`, omit `NaN`s
+    :param special_values: values to omit from plot. If `None`, omit `NaN`s
     :param mode: "scatter" or "no-scatter"; whether to add a scatter plot
-    :param ax: axis on which to cplott. If `None`, create an axis and plot there
+    :param ax: axis on which to plot. If `None`, create an axis and plot there
     :param colormap: matplotlib colormap or colormap name
     """
     special_values = special_values or [None]
@@ -834,7 +834,7 @@ def plot_histograms_and_lagged_scatterplot(
         **hist_kwargs,
     )
     axes[1].set(xlabel=None, ylabel=None, title="Sample distribution split 2")
-    # Plot scatter cplott.
+    # Plot scatter plot.
     axes[2].scatter(srs, srs.shift(lag), **scatter_kwargs)
     axes[2].set(xlabel="Values", ylabel="Values with lag={}".format(lag))
     axes[2].axis("equal")
@@ -2000,7 +2000,7 @@ def plot_rolling_beta(
     beta_rolling = res_rolling.params[
         benchmark_name
     ]  # pylint: disable=unsubscriptable-object
-    # Return NaN periods to the rolling beta series for the cplott.
+    # Return NaN periods to the rolling beta series for the plot.
     beta_rolling = beta_rolling.reindex(common_index)
     beta_rolling.plot(
         ax=ax,
@@ -2201,7 +2201,7 @@ def _maybe_add_events(
     ax: mpl.axes.Axes, events: Optional[List[Tuple[str, Optional[str]]]]
 ) -> None:
     """
-    Add labeled vertical lines at events' dates on a cplott.
+    Add labeled vertical lines at events' dates on a plot.
 
     :param ax: axes
     :param events: list of tuples with dates and labels to point out on the plot
