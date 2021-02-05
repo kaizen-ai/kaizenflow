@@ -732,8 +732,8 @@ class ContinuousSarimaxModel(
         # Add info.
         # TODO(Julia): Maybe add model performance to info.
         info = collections.OrderedDict()
-        info["model_summary"] = _remove_datetime_info_from_SARIMAX(
-            _convert_SARIMAX_summary_to_dataframe(self._model_results.summary())
+        info["model_summary"] = _remove_datetime_info_from_sarimax(
+            _convert_sarimax_summary_to_dataframe(self._model_results.summary())
         )
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("fit", info)
@@ -769,8 +769,8 @@ class ContinuousSarimaxModel(
         )
         # Add info.
         info = collections.OrderedDict()
-        info["model_summary"] = _remove_datetime_info_from_SARIMAX(
-            _convert_SARIMAX_summary_to_dataframe(self._model_results.summary())
+        info["model_summary"] = _remove_datetime_info_from_sarimax(
+            _convert_sarimax_summary_to_dataframe(self._model_results.summary())
         )
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("predict", info)
@@ -1772,7 +1772,7 @@ class VolatilityModel(FitPredictNode):
         return node.nid
 
 
-def _convert_SARIMAX_summary_to_dataframe(
+def _convert_sarimax_summary_to_dataframe(
     summary: siolib.summary.Summary,
 ) -> Dict[str, pd.DataFrame]:
     """
@@ -1793,19 +1793,25 @@ def _convert_SARIMAX_summary_to_dataframe(
             # Process paired tables.
             table = np.vstack((table[:, :2], table[:, 2:]))
             df = pd.DataFrame(table)
-            df = df.applymap(lambda x: str(x).strip(": "))
-            df = df[df[1] != ""]
+            df = df.applymap(lambda x: str(x).strip(": ").lstrip(" "))
+            if "Sample" in df[0].values:
+                sample_index = df[0].tolist().index("Sample")
+                df.iloc[sample_index, 1] += " " + df.iloc[sample_index + 1, 1]
+            df = df[df[0] != ""]
             df = df.set_index(0)
+            df.index.name = None
+            df = df.iloc[:, 0]
         else:
             # Process coefs table.
             df = pd.DataFrame(table[1:, :])
             df = df.set_index(0)
+            df.index.name = None
             df.columns = table[0, 1:]
         tables_dict[keys[i]] = df
     return tables_dict
 
 
-def _remove_datetime_info_from_SARIMAX(
+def _remove_datetime_info_from_sarimax(
     summary: Dict[str, pd.DataFrame],
 ) -> Dict[str, pd.DataFrame]:
     """
