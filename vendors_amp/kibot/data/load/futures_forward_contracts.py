@@ -18,7 +18,9 @@ class FuturesForwardContracts:
     Contract data for open futures contracts.
     """
 
-    def __init__(self, data_loader: vkdlda.AbstractKibotDataLoader, disable_tqdm=False) -> None:
+    def __init__(
+        self, data_loader: vkdlda.AbstractKibotDataLoader, disable_tqdm=False
+    ) -> None:
         """
         Initialize by injecting a data loader.
 
