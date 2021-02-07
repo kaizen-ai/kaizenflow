@@ -20,9 +20,9 @@ import tempfile
 from typing import List, Optional
 
 import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
-import helpers.system_interaction as si
+import helpers.io_ as hio
+import helpers.parser as hparse
+import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ def _prettier(txt: str, print_width: Optional[int] = None) -> str:
         tmp_file_name = tempfile.NamedTemporaryFile().name
     else:
         tmp_file_name = "/tmp/tmp_prettier.txt"
-    io_.to_file(tmp_file_name, txt)
+    hio.to_file(tmp_file_name, txt)
     #
     executable = "prettier"
     cmd: List[str] = []
@@ -116,10 +116,10 @@ def _prettier(txt: str, print_width: Optional[int] = None) -> str:
         cmd.append(tmp_file_name)
     # cmd.append("2>&1 >/dev/null")
     cmd_as_str = " ".join(cmd)
-    _, output_tmp = si.system_to_string(cmd_as_str, abort_on_error=True)
+    _, output_tmp = hsyste.system_to_string(cmd_as_str, abort_on_error=True)
     _LOG.debug("output_tmp=%s", output_tmp)
     #
-    txt = io_.from_file(tmp_file_name)
+    txt = hio.from_file(tmp_file_name)
     _LOG.debug("After prettier txt=\n%s", txt)
     return txt  # type: ignore
 
@@ -166,12 +166,12 @@ def _postprocess(txt: str, in_file_name: str) -> str:
     return txt_new_as_str
 
 
-def _frame_chapters(txt: str, max_lev: int=4) -> str:
+def _frame_chapters(txt: str, max_lev: int = 4) -> str:
     """
     Add the frame around each chapter.
     """
-    txt_new : List[str] = []
-    #_LOG.debug("txt=%s", txt)
+    txt_new: List[str] = []
+    # _LOG.debug("txt=%s", txt)
     for i, line in enumerate(txt.split("\n")):
         _LOG.debug("line=%d:%s", i, line)
         m = re.match("^(\#+) ", line)
@@ -187,8 +187,12 @@ def _frame_chapters(txt: str, max_lev: int=4) -> str:
                 txt_new.append(sep)
                 txt_processed = True
             else:
-                _LOG.debug("  -> Skip formatting the chapter frame: lev=%d, "
-                    "max_lev=%d", lev, max_lev)
+                _LOG.debug(
+                    "  -> Skip formatting the chapter frame: lev=%d, "
+                    "max_lev=%d",
+                    lev,
+                    max_lev,
+                )
         if not txt_processed:
             txt_new.append(line)
     txt_new_as_str = "\n".join(txt_new).rstrip("\n")
@@ -204,7 +208,7 @@ def _refresh_toc(txt: str) -> str:
         txt = "<!--ts-->\n<!--te-->\n" + txt
     # Write file.
     tmp_file_name = empfile.NamedTemporaryFile().name
-    io_.to_file(tmp_file_name, txt)
+    hio.to_file(tmp_file_name, txt)
     # Process TOC.
     cmd: List[str] = []
     # Find the script `gh-md-toc`, assuming that it's in the same directory of
@@ -216,9 +220,9 @@ def _refresh_toc(txt: str) -> str:
     cmd.append(gh_md_toc)
     cmd.append("--insert %s" % tmp_file_name)
     cmd_as_str = " ".join(cmd)
-    si.system(cmd_as_str, abort_on_error=False, suppress_output=True)
+    hsyste.system(cmd_as_str, abort_on_error=False, suppress_output=True)
     # Read file.
-    txt = io_.from_file(tmp_file_name)
+    txt = hio.from_file(tmp_file_name)
     return txt  # type: ignore
 
 
@@ -307,8 +311,8 @@ def _parser() -> argparse.ArgumentParser:
         type=int,
         default=None,
     )
-    prsr.add_action_arg(parser, _VALID_ACTIONS, _DEFAULT_ACTIONS)
-    prsr.add_verbosity_arg(parser)
+    hparse.add_action_arg(parser, _VALID_ACTIONS, _DEFAULT_ACTIONS)
+    hparse.add_verbosity_arg(parser)
     return parser
 
 
@@ -334,7 +338,7 @@ def _main(args: argparse.Namespace) -> None:
     # Write output.
     if args.in_place:
         dbg.dassert_ne(in_file_name, "<stdin>")
-        io_.to_file(in_file_name, txt)
+        hio.to_file(in_file_name, txt)
     else:
         args.outfile.write(txt)
 

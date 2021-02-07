@@ -1,6 +1,7 @@
-"""Import as:
+"""
+Import as:
 
-import helpers.printing as prnt
+import helpers.printing as hprint
 """
 
 from typing import Any, Dict, Iterable, List, Optional, cast
@@ -30,7 +31,9 @@ def clear_screen() -> None:
 
 
 def line(char: Optional[str] = None, num_chars: Optional[int] = None) -> str:
-    """Return a line with the desired character."""
+    """
+    Return a line with the desired character.
+    """
     char = "#" if char is None else char
     num_chars = 80 if num_chars is None else num_chars
     return char * num_chars
@@ -43,7 +46,9 @@ def frame(
     char2: Optional[str] = None,
     thickness: int = 1,
 ) -> str:
-    """Print a frame around a message."""
+    """
+    Print a frame around a message.
+    """
     # Fill in the default values.
     if char1 is None:
         # User didn't specify any char.
@@ -74,12 +79,16 @@ def frame(
 
 
 def indent(str_: str, num_spaces: int = 2) -> str:
-    """Add `num_spaces` spaces before each line of the string `str_`."""
+    """
+    Add `num_spaces` spaces before each line of the string `str_`.
+    """
     return prepend(str_, " " * num_spaces)
 
 
 def dedent(txt: str) -> str:
-    """Remove all extra leadning / trailing spaces and empty lines."""
+    """
+    Remove all extra leadning / trailing spaces and empty lines.
+    """
     txt_out = []
     for curr_line in txt.split("\n"):
         curr_line = curr_line.rstrip(" ").lstrip(" ")
@@ -89,14 +98,18 @@ def dedent(txt: str) -> str:
 
 
 def prepend(str_: str, prefix: str) -> str:
-    """Add `prefix` before each line of the string `str_`."""
+    """
+    Add `prefix` before each line of the string `str_`.
+    """
     # lines = ["<" + prefix + curr_line + ">" for curr_line in str_.split("\n")]
     lines = [prefix + curr_line for curr_line in str_.split("\n")]
     return "\n".join(lines)
 
 
 def remove_empty_lines_from_string_list(arr: List[str]) -> List[str]:
-    """Remove empty lines from a list of strings."""
+    """
+    Remove empty lines from a list of strings.
+    """
     arr = [line for line in arr if line.rstrip().lstrip()]
     return arr
 
@@ -104,7 +117,9 @@ def remove_empty_lines_from_string_list(arr: List[str]) -> List[str]:
 # TODO(gp): It would be nice to have a decorator to go from / to array of
 #  strings.
 def remove_empty_lines(txt: str) -> str:
-    """Remove empty lines from a multi-line string."""
+    """
+    Remove empty lines from a multi-line string.
+    """
     arr = txt.split("\n")
     arr = remove_empty_lines_from_string_list(arr)
     txt = "\n".join(arr)
@@ -112,7 +127,8 @@ def remove_empty_lines(txt: str) -> str:
 
 
 def vars_to_debug_string(vars_as_str: List[str], locals_: Dict[str, Any]) -> str:
-    """Create a string with var name -> var value.
+    """
+    Create a string with var name -> var value.
 
     E.g., ["var1", "var2"] is converted into: ``` var1=... var2=... ```
     """
@@ -141,7 +157,8 @@ def perc(
     num_digits: int = 2,
     use_thousands_separator: bool = False,
 ) -> str:
-    """Calculate percentage a / b as a string.
+    """
+    Calculate percentage a / b as a string.
 
     Asserts 0 <= a <= b. If true, returns a/b to `num_digits` decimal places.
 
@@ -176,7 +193,8 @@ def perc(
 def round_digits(
     v: float, num_digits: int = 2, use_thousands_separator: bool = False
 ) -> str:
-    """Round digit returning a string representing the formatted number.
+    """
+    Round digit returning a string representing the formatted number.
 
     :param v: value to convert
     :param num_digits: number of digits to represent v on
@@ -199,8 +217,10 @@ def round_digits(
 
 
 def type_to_string(type_as_str: str) -> str:
-    """Return a short string representing the type of an object, e.g.,
-    "core.dataflow.Node" (instead of "class <'core.dataflow.Node'>")"""
+    """
+    Return a short string representing the type of an object, e.g.,
+    "core.dataflow.Node" (instead of "class <'core.dataflow.Node'>")
+    """
     if isinstance(type_as_str, type):
         type_as_str = str(type_as_str)
     dbg.dassert_isinstance(type_as_str, str)
@@ -251,7 +271,9 @@ def list_to_str(
     axis: int = 0,
     to_string: bool = False,
 ) -> str:
-    """Print list / index horizontally or vertically."""
+    """
+    Print list / index horizontally or vertically.
+    """
     # TODO(gp): Fix this.
     _ = to_string
     txt = ""
@@ -315,36 +337,43 @@ def print_set_diff(
         print()
 
 
-import helpers.io_ as io_
 import tempfile
+
+import helpers.io_ as hio
 import helpers.system_interaction as hsyste
 
 
 def diff_strings(
-        txt1: str,
-        txt2: str,
-        txt1_descr: Optional[str]= None,
-        txt2_descr: Optional[str]= None,
-        width: int = 130) -> str:
+    txt1: str,
+    txt2: str,
+    txt1_descr: Optional[str] = None,
+    txt2_descr: Optional[str] = None,
+    width: int = 130,
+) -> str:
     # Write file.
     def _to_file(txt, txt_descr) -> str:
         file_name = tempfile.NamedTemporaryFile().name
         if txt_descr is not None:
             txt = "# " + txt_descr + "\n" + txt
-        io_.to_file(file_name, txt)
+        hio.to_file(file_name, txt)
         return file_name
+
     #
     file_name1 = _to_file(txt1, txt1_descr)
     file_name2 = _to_file(txt2, txt2_descr)
     #
     cmd = f"sdiff --width={width} {file_name1} {file_name2}"
-    _, txt = hsyste.system_to_string(cmd, 
-            # We don't care if they are different.
-            abort_on_error=False)
+    _, txt = hsyste.system_to_string(
+        cmd,
+        # We don't care if they are different.
+        abort_on_error=False,
+    )
     return txt
 
 
-def obj_to_str(obj: Any, using_dict: bool=True, print_type: bool=False) -> str:
+def obj_to_str(
+    obj: Any, using_dict: bool = True, print_type: bool = False
+) -> str:
     ret = []
     if using_dict:
         for v in sorted(obj.__dict__):
