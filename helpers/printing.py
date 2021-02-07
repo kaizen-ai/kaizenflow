@@ -4,9 +4,12 @@ Import as:
 import helpers.printing as hprint
 """
 
+import tempfile
 from typing import Any, Dict, Iterable, List, Optional, cast
 
 import helpers.dbg as dbg
+import helpers.io_ as hio
+import helpers.system_interaction as hsyste
 
 # #############################################################################
 # Debug output
@@ -337,12 +340,6 @@ def print_set_diff(
         print()
 
 
-import tempfile
-
-import helpers.io_ as hio
-import helpers.system_interaction as hsyste
-
-
 def diff_strings(
     txt1: str,
     txt2: str,
@@ -351,7 +348,7 @@ def diff_strings(
     width: int = 130,
 ) -> str:
     # Write file.
-    def _to_file(txt, txt_descr) -> str:
+    def _to_file(txt: str, txt_descr: Optional[str]) -> str:
         file_name = tempfile.NamedTemporaryFile().name
         if txt_descr is not None:
             txt = "# " + txt_descr + "\n" + txt
@@ -368,29 +365,98 @@ def diff_strings(
         # We don't care if they are different.
         abort_on_error=False,
     )
+    # For some reason, mypy doesn't understand that system_to_string returns a
+    # string.
+    txt = cast(str, txt)
     return txt
 
 
 def obj_to_str(
-    obj: Any, using_dict: bool = True, print_type: bool = False
+    obj: Any, attr_mode: str = "__dict__", print_type: bool = False, 
+    callable_mode: str = "skip",
+    private_mode: str = "skip_dunder",
 ) -> str:
+    """
+    Print attributes of an object.
+
+    :param using_dict: use `__dict__` instead of `dir`
+    :param print_type: print the type of the attribute
+    :param callable_mode: how to handle attributes that are callable (i.e.,
+        methods)
+        - skip: skip the methods
+        - only: print only the methods
+        - all: print variables and callable
+    """
+
+    def _to_skip_callable(attr: Any, callable_mode: str) -> bool:
+        dbg.dassert_in(callable_mode, ("skip", "only", "all"))
+        is_callable = callable(attr)
+        skip = False
+        if callable_mode == "skip" and is_callable:
+            skip = True
+        if callable_mode == "only" and not is_callable:
+            skip = True
+        return skip
+
+    def _to_skip_private(name: str, private_mode: str) -> bool:
+        dbg.dassert_in(private_mode, ("skip_dunder", "only_dunder", "skip_private", "only_private", "all"))
+        is_dunder = name.startswith("__") and name.endswith("__")
+        is_private = not is_dunder and name.startswith("_")
+        skip = False
+        if private_mode == "skip_dunder" and is_dunder:
+            skip = True
+        if private_mode == "only_dunder" and not is_dunder:
+            skip = True
+        if private_mode == "skip_private" and is_private:
+            skip = True
+        if private_mode == "only_private" and not is_private:
+            skip = True
+        return skip
+
+    def _to_str(attr: Any, print_type: bool) -> str:
+        if print_type:
+            out = "%s= (%s) %s" % (v, type(attr), str(attr))
+        else:
+            out = "%s= %s" % (v, str(attr))
+        return out
+
     ret = []
-    if using_dict:
+    if attr_mode == "__dict__":
         for v in sorted(obj.__dict__):
             attr = obj.__dict__[v]
-            if print_type:
-                ret.append("%s= (%s) %s" % (v, type(attr), str(attr)))
-            else:
-                ret.append("%s= %s" % (v, str(attr)))
-    else:
+            # Handle dunder / private methods.
+            skip = _to_skip_private(v, private_mode)
+            if skip:
+                continue
+            # Handle callable methods.
+            skip = _to_skip_callable(attr, callable_mode)
+            if skip:
+                continue
+            #
+            out = _to_str(attr, print_type)
+            ret.append(out)
+    elif attr_mode == "dir":
         for v in dir(obj):
             attr = getattr(obj, v)
-            if not callable(attr):
-                if print_type:
-                    ret.append("%s= (%s) %s" % (v, type(attr), attr))
-                else:
-                    ret.append("%s= %s" % (v, attr))
+            # Handle dunder / private methods.
+            skip = _to_skip_private(v, private_mode)
+            if skip:
+                continue
+            # Handle callable methods.
+            skip = _to_skip_callable(attr, callable_mode)
+            if skip:
+                continue
+            #
+            out = _to_str(attr, print_type)
+            ret.append(out)
+    else:
+        dbg.dassert("Invalid attr_mode='%s'" % attr_mode)
     return "\n".join(ret)
+
+
+def type_obj_to_str(obj: Any) -> str:
+    ret = "(%s) %s" % (type(obj), obj)
+    return ret
 
 
 def dataframe_to_str(

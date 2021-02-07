@@ -174,7 +174,7 @@ def _frame_chapters(txt: str, max_lev: int = 4) -> str:
     # _LOG.debug("txt=%s", txt)
     for i, line in enumerate(txt.split("\n")):
         _LOG.debug("line=%d:%s", i, line)
-        m = re.match("^(\#+) ", line)
+        m = re.match(r"^(\#+) ", line)
         txt_processed = False
         if m:
             comment = m.group(1)
@@ -207,7 +207,7 @@ def _refresh_toc(txt: str) -> str:
         _LOG.warning("No tags for table of content in md file: adding it")
         txt = "<!--ts-->\n<!--te-->\n" + txt
     # Write file.
-    tmp_file_name = empfile.NamedTemporaryFile().name
+    tmp_file_name = tempfile.NamedTemporaryFile().name
     hio.to_file(tmp_file_name, txt)
     # Process TOC.
     cmd: List[str] = []
