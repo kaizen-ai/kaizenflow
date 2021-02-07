@@ -203,7 +203,7 @@ def _refresh_toc(txt: str) -> str:
         _LOG.warning("No tags for table of content in md file: adding it")
         txt = "<!--ts-->\n<!--te-->\n" + txt
     # Write file.
-    tmp_file_name = tempfile.NamedTemporaryFile().name
+    tmp_file_name = empfile.NamedTemporaryFile().name
     io_.to_file(tmp_file_name, txt)
     # Process TOC.
     cmd: List[str] = []

@@ -315,6 +315,55 @@ def print_set_diff(
         print()
 
 
+import helpers.io_ as io_
+import tempfile
+import helpers.system_interaction as hsyste
+
+
+def diff_strings(
+        txt1: str,
+        txt2: str,
+        txt1_descr: Optional[str]= None,
+        txt2_descr: Optional[str]= None,
+        width: int = 130) -> str:
+    # Write file.
+    def _to_file(txt, txt_descr) -> str:
+        file_name = tempfile.NamedTemporaryFile().name
+        if txt_descr is not None:
+            txt = "# " + txt_descr + "\n" + txt
+        io_.to_file(file_name, txt)
+        return file_name
+    #
+    file_name1 = _to_file(txt1, txt1_descr)
+    file_name2 = _to_file(txt2, txt2_descr)
+    #
+    cmd = f"sdiff --width={width} {file_name1} {file_name2}"
+    _, txt = hsyste.system_to_string(cmd, 
+            # We don't care if they are different.
+            abort_on_error=False)
+    return txt
+
+
+def obj_to_str(obj: Any, using_dict: bool=True, print_type: bool=False) -> str:
+    ret = []
+    if using_dict:
+        for v in sorted(obj.__dict__):
+            attr = obj.__dict__[v]
+            if print_type:
+                ret.append("%s= (%s) %s" % (v, type(attr), str(attr)))
+            else:
+                ret.append("%s= %s" % (v, str(attr)))
+    else:
+        for v in dir(obj):
+            attr = getattr(obj, v)
+            if not callable(attr):
+                if print_type:
+                    ret.append("%s= (%s) %s" % (v, type(attr), attr))
+                else:
+                    ret.append("%s= %s" % (v, attr))
+    return "\n".join(ret)
+
+
 def dataframe_to_str(
     df: Any,
     max_columns: int = 10000,
