@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.plotting as plot
+import core.plotting as cplott
 """
 
 import calendar
@@ -10,26 +10,26 @@ import math
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import matplotlib as mpl
-import matplotlib.cm as cm
-import matplotlib.colors as mpl_col
+import matplotlib.cm as mcm
+import matplotlib.colors as mcolor
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy as sp
-import scipy.cluster.hierarchy as hac
+import scipy.cluster.hierarchy as schier
 import seaborn as sns
-import sklearn.decomposition as skldec
-import sklearn.metrics as sklmet
-import sklearn.utils.validation as skluv
-import statsmodels as sml
+import sklearn.decomposition as sdecom
+import sklearn.metrics as smetri
+import sklearn.utils.validation as suvali
+import statsmodels as statsm
 import statsmodels.api as sm
-import statsmodels.regression.rolling as smrr
+import statsmodels.regression.rolling as srroll
 
-import core.explore as expl
-import core.finance as fin
-import core.signal_processing as sigp
-import core.statistics as stats
-import helpers.dataframe as hdf
+import core.explore as cexplo
+import core.finance as cfinan
+import core.signal_processing as csigna
+import core.statistics as cstati
+import helpers.dataframe as hdataf
 import helpers.dbg as dbg
 import helpers.list as hlist
 
@@ -37,7 +37,7 @@ _LOG = logging.getLogger(__name__)
 
 _RETURNS_DICT_TYPE = Dict[str, Dict[int, pd.Series]]
 
-_PCA_TYPE = Union[skldec.PCA, skldec.IncrementalPCA]
+_PCA_TYPE = Union[sdecom.PCA, sdecom.IncrementalPCA]
 
 FIG_SIZE = (20, 5)
 
@@ -67,7 +67,8 @@ def plot_non_na_cols(
     max_num: Optional[int] = None,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> Any:
-    """Plot a diagram describing the non-nans intervals for the columns of df.
+    """
+    Plot a diagram describing the non-nans intervals for the columns of df.
 
     :param df: usual df indexed with times
     :param sort: sort the columns by number of non-nans
@@ -122,7 +123,8 @@ def plot_categories_count(
     label: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
-    """Plot countplot of a given `category_column`.
+    """
+    Plot countplot of a given `category_column`.
 
     :param df: df to plot
     :param category_column: categorical column to subset plots by
@@ -173,8 +175,9 @@ def get_multiple_plots(
     *args: Any,
     **kwargs: Any,
 ) -> Tuple[mpl.figure.Figure, np.array]:
-    """Create figure to accommodate `num_plots` plots. The figure is arranged
-    in rows with `num_cols` columns.
+    """
+    Create figure to accommodate `num_plots` plots. The figure is arranged in
+    rows with `num_cols` columns.
 
     :param num_plots: number of plots
     :param num_cols: number of columns to use in the subplot
@@ -279,7 +282,8 @@ def plot_value_counts(
     *args: Any,
     **kwargs: Any,
 ) -> None:
-    """Plot barplots for the counts of a series and print the values.
+    """
+    Plot barplots for the counts of a series and print the values.
 
     Same interface as plot_count_series() but computing the count of the
     given series `srs`.
@@ -300,7 +304,8 @@ def plot_counts(
     figsize: Optional[Tuple[int, int]] = None,
     rotation: int = 0,
 ) -> None:
-    """Plot barplots for series containing counts and print the values.
+    """
+    Plot barplots for series containing counts and print the values.
 
     If the number of labels is over 20, the plot is oriented horizontally
     and the height of the plot is automatically adjusted.
@@ -363,7 +368,8 @@ def plot_barplot(
     ax: Optional[mpl.axes.Axes] = None,
     yscale: Optional[str] = None,
 ) -> None:
-    """Plot a barplot.
+    """
+    Plot a barplot.
 
     :param srs: pd.Series
     :param orientation: vertical or horizontal bars
@@ -457,7 +463,8 @@ def plot_timeseries_distribution(
     datetime_types: Optional[List[str]] = None,
     axes: Optional[List[mpl.axes.Axes]] = None,
 ) -> None:
-    """Plot timeseries distribution by.
+    """
+    Plot timeseries distribution by.
 
     - "year",
     - "month",
@@ -477,7 +484,7 @@ def plot_timeseries_distribution(
         _, axes = get_multiple_plots(num_plots=len(datetime_types), num_cols=1)
     else:
         dbg.dassert_eq(len(datetime_types), len(axes))
-    srs = hdf.apply_nan_mode(srs, mode="drop")
+    srs = hdataf.apply_nan_mode(srs, mode="drop")
     index_series = pd.Series(srs.index)
     if datetime_types is None:
         datetime_types = _DATETIME_TYPES
@@ -499,7 +506,8 @@ def plot_timeseries_per_category(
     top_n: Optional[int] = None,
     figsize: Optional[Tuple[int, int]] = None,
 ) -> None:
-    """Plot distribution (where `datetime_types` has the same meaning as in
+    """
+    Plot distribution (where `datetime_types` has the same meaning as in
     plot_headlines) for a given list of categories.
 
     If `categories` param is not specified, `top_n` must be specified and plots
@@ -514,7 +522,7 @@ def plot_timeseries_per_category(
     """
     if not figsize:
         figsize = FIG_SIZE
-    unique_rows = expl.drop_duplicates(df=df, subset=[column])
+    unique_rows = cexplo.drop_duplicates(df=df, subset=[column])
     if top_n:
         categories = (
             df[category_column].value_counts().iloc[:top_n].index.to_list()
@@ -557,7 +565,8 @@ def plot_cols(
     axes: Optional[List[mpl.axes.Axes]] = None,
     figsize: Optional[Tuple[float, float]] = (20, 10),
 ) -> None:
-    """Plot lineplot and density plot for the given dataframe.
+    """
+    Plot lineplot and density plot for the given dataframe.
 
     :param data: data to plot
     :param colormap: preferred colors
@@ -594,7 +603,8 @@ def plot_autocorrelation(
     axes: Optional[List[mpl.axes.Axes]] = None,
     **kwargs: Any,
 ) -> None:
-    """Plot ACF and PACF of columns.
+    """
+    Plot ACF and PACF of columns.
 
     https://www.statsmodels.org/stable/_modules/statsmodels/graphics/tsaplots.html#plot_acf
     https://www.statsmodels.org/stable/_modules/statsmodels/tsa/stattools.html#acf
@@ -608,7 +618,7 @@ def plot_autocorrelation(
     axis_pairs = zip(axes[::2], axes[1::2])
     title_prefix = title_prefix or ""
     # Replacing inf with nan to ensure non-empty plots generated.
-    signal = stats.replace_infs_with_nans(signal)
+    signal = cstati.replace_infs_with_nans(signal)
     for col, axis_pair in zip(signal.columns, axis_pairs):
         if nan_mode == "conservative":
             data = signal[col].fillna(0).dropna()
@@ -648,13 +658,14 @@ def plot_seasonal_decomposition(
     axes: Optional[List[mpl.axes.Axes]] = None,
     kwargs: Optional[dict] = None,
 ) -> None:
-    """Plot seasonal trend decomposition using LOESS.
+    """
+    Plot seasonal trend decomposition using LOESS.
 
     https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.STL.html
 
     :param srs: input time series
-    :param nan_mode: argument for hdf.apply_nan_mode()
-    :param kwargs: kwargs for sml.tsa.seasonal.STL
+    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param kwargs: kwargs for statsm.tsa.seasonal.STL
     """
     nan_mode = nan_mode or "drop"
     kwargs = kwargs or {}
@@ -662,8 +673,8 @@ def plot_seasonal_decomposition(
     if isinstance(srs, pd.DataFrame) and srs.shape[1] > 1:
         raise ValueError("Input df should be 1 dim, not %s'" % srs.shape[1])
     srs = srs.squeeze()
-    srs = hdf.apply_nan_mode(srs, mode=nan_mode)
-    stl = sml.tsa.seasonal.STL(srs, **kwargs).fit()
+    srs = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    stl = statsm.tsa.seasonal.STL(srs, **kwargs).fit()
     if axes is None:
         _, axes = get_multiple_plots(4, 1, y_scale=figsize[1] / 4)
     stl.observed.plot(ylabel="Observed", ax=axes[0])
@@ -679,7 +690,8 @@ def plot_spectrum(
     title_prefix: Optional[str] = None,
     axes: Optional[List[mpl.axes.Axes]] = None,
 ) -> None:
-    """Plot power spectral density and spectrogram of columns.
+    """
+    Plot power spectral density and spectrogram of columns.
 
     PSD:
       - Estimate the power spectral density using Welch's method.
@@ -696,7 +708,7 @@ def plot_spectrum(
     if title_prefix is None:
         title_prefix = ""
     # Replacing inf with nan to ensure non-empty plots generated.
-    signal = stats.replace_infs_with_nans(signal)
+    signal = cstati.replace_infs_with_nans(signal)
     if axes is None:
         _, axes = get_multiple_plots(signal.shape[1] * 2, num_cols=2, y_scale=5)
     axis_pairs = zip(axes[::2], axes[1::2])
@@ -781,8 +793,8 @@ def plot_histograms_and_lagged_scatterplot(
     scatter_kwargs: Optional[Any] = None,
     axes: Optional[List[mpl.axes.Axes]] = None,
 ) -> None:
-    """Plot histograms and scatterplot to test stationarity visually.
-
+    """
+    Plot histograms and scatterplot to test stationarity visually.
 
     Function plots histograms with density plot for 1st and 2nd part of the time
     series (splitted by oos_start if provided otherwise to two equal halves).
@@ -801,7 +813,7 @@ def plot_histograms_and_lagged_scatterplot(
     # Handle inf and nan.
     srs = srs.replace([-np.inf, np.inf], np.nan)
     nan_mode = nan_mode or "drop"
-    srs = hdf.apply_nan_mode(srs, mode=nan_mode)
+    srs = hdataf.apply_nan_mode(srs, mode=nan_mode)
     # Divide timeseries to two parts.
     oos_start = oos_start or srs.index.tolist()[len(srs) // 2]
     srs_first_part = srs[:oos_start]
@@ -844,7 +856,8 @@ def plot_heatmap(
     vmax: float = 1.0,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
-    """Plot a heatmap for a corr / cov df.
+    """
+    Plot a heatmap for a corr / cov df.
 
     :param corr_df: df to plot a heatmap
     :param mode: "heatmap_semitriangle", "heatmap" or "clustermap"
@@ -927,7 +940,8 @@ def plot_correlation_matrix(
     min_periods: Optional[int] = None,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> pd.core.frame.DataFrame:
-    """Compute correlation matrix and plot its heatmap.
+    """
+    Compute correlation matrix and plot its heatmap.
 
     :param df: Df to compute correlation matrix and plot a heatmap
     :param mode: "heatmap_semitriangle", "heatmap" or "clustermap"
@@ -959,10 +973,12 @@ def plot_correlation_matrix(
 
 
 def display_corr_df(df: pd.core.frame.DataFrame) -> None:
-    """Display a correlation df with values with 2 decimal places."""
+    """
+    Display a correlation df with values with 2 decimal places.
+    """
     if df is not None:
         df_tmp = df.applymap(lambda x: "%.2f" % x)
-        expl.display_df(df_tmp)
+        cexplo.display_df(df_tmp)
     else:
         _LOG.warning("Can't display correlation df since it is None")
 
@@ -980,7 +996,7 @@ def compute_linkage(df: pd.DataFrame, method: Optional[str] = None) -> np.ndarra
     """
     method = method or "average"
     corr = df.corr()
-    return hac.linkage(corr, method=method)
+    return schier.linkage(corr, method=method)
 
 
 def select_series_to_keep(df_corr: pd.DataFrame, threshold: float) -> List[str]:
@@ -1061,7 +1077,7 @@ def cluster_and_select(
         return
     # Cluster the time series.
     z_linkage = compute_linkage(df, method=method)
-    clusters = hac.fcluster(z_linkage, num_clust, criterion="maxclust")
+    clusters = schier.fcluster(z_linkage, num_clust, criterion="maxclust")
     series_to_keep = []
     dict_series_to_keep = {}
     df_name_clust = pd.DataFrame(
@@ -1100,7 +1116,8 @@ def plot_dendrogram(
     ax: Optional[mpl.axes.Axes] = None,
     **kwargs: Any,
 ) -> None:
-    """Plot a dendrogram.
+    """
+    Plot a dendrogram.
 
     A dendrogram is a diagram representing a tree.
 
@@ -1143,7 +1160,9 @@ def plot_corr_over_time(
     annot: bool = False,
     num_cols: int = 4,
 ) -> None:
-    """Plot correlation over time."""
+    """
+    Plot correlation over time.
+    """
     mode = mode or "heatmap"
     timestamps = corr_df.index.get_level_values(0).unique()
     if len(timestamps) > 20:
@@ -1181,9 +1200,9 @@ def plot_corr_over_time(
 class PCA:
     def __init__(self, mode: str, **kwargs: Any):
         if mode == "standard":
-            self.pca = skldec.PCA(**kwargs)
+            self.pca = sdecom.PCA(**kwargs)
         elif mode == "incremental":
-            self.pca = skldec.IncrementalPCA(**kwargs)
+            self.pca = sdecom.IncrementalPCA(**kwargs)
         else:
             raise ValueError("Invalid mode='%s'" % mode)
 
@@ -1194,16 +1213,19 @@ class PCA:
         y_scale: Optional[float] = None,
         axes: Optional[List[mpl.axes.Axes]] = None,
     ) -> None:
-        """Plot principal components.
+        """
+        Plot principal components.
 
         :param num_components: number of top components to plot
         :param num_cols: number of columns to use in the subplot
         """
-        skluv.check_is_fitted(self.pca)
+        suvali.check_is_fitted(self.pca)
         pcs = pd.DataFrame(self.pca.components_)
         max_pcs = self.pca.components_.shape[0]
         num_components = self._get_num_pcs_to_plot(num_components, max_pcs)
-        _LOG.info("num_components=%s", num_components)
+        _LOG.info(
+            f"Plotting the first {num_components} components out of {max_pcs}"
+        )
         if axes is None:
             _, axes = get_multiple_plots(
                 num_components,
@@ -1243,12 +1265,19 @@ class PCA:
 
     @staticmethod
     def _get_num_pcs_to_plot(num_pcs_to_plot: Optional[int], max_pcs: int) -> int:
-        """Get the number of principal components to plot."""
+        """
+        Get the number of principal components to cplott.
+        """
         if num_pcs_to_plot is None:
             num_pcs_to_plot = max_pcs
             _LOG.warning("Plotting all %s components", num_pcs_to_plot)
+        else:
+            if num_pcs_to_plot > max_pcs:
+                _LOG.warning(
+                    "Overall number of components is less than requested"
+                )
+                num_pcs_to_plot = max_pcs
         dbg.dassert_lte(1, num_pcs_to_plot)
-        dbg.dassert_lte(num_pcs_to_plot, max_pcs)
         return num_pcs_to_plot
 
 
@@ -1264,8 +1293,10 @@ def _get_heatmap_mask(corr: pd.DataFrame, mode: str) -> np.ndarray:
     return mask
 
 
-def _get_heatmap_colormap() -> mpl_col.LinearSegmentedColormap:
-    """Generate a custom diverging colormap useful for heatmaps."""
+def _get_heatmap_colormap() -> mcolor.LinearSegmentedColormap:
+    """
+    Generate a custom diverging colormap useful for heatmaps.
+    """
     cmap = sns.diverging_palette(220, 10, as_cmap=True)
     return cmap
 
@@ -1281,14 +1312,14 @@ def plot_confusion_heatmap(
     return_results: bool = False,
     axes: Optional[List[mpl.axes.Axes]] = None,
 ) -> Any:
-    """Construct and plot a heatmap for a confusion matrix of fact and
-    prediction.
+    """
+    Construct and plot a heatmap for a confusion matrix of fact and prediction.
 
     :param y_true: true values
     :param y_pred: predictions
     :param return_results: determines whether to return result dataframes
     """
-    confusion = sklmet.confusion_matrix(y_true, y_pred)
+    confusion = smetri.confusion_matrix(y_true, y_pred)
     labels = set(list(y_true))
     df_out = pd.DataFrame(confusion, index=labels, columns=labels)
     df_out_percentage = df_out.apply(lambda x: x / x.sum(), axis=1)
@@ -1323,7 +1354,8 @@ def multipletests_plot(
     axes: Optional[List[mpl.axes.Axes]] = None,
     **kwargs: Any,
 ) -> None:
-    """Plot adjusted p-values and pass/fail threshold.
+    """
+    Plot adjusted p-values and pass/fail threshold.
 
     :param pvals: unadjusted p-values
     :param threshold: threshold for adjusted p-values separating accepted and
@@ -1336,7 +1368,7 @@ def multipletests_plot(
     """
     if adj_pvals is None:
         pval_series = pvals.dropna().sort_values().reset_index(drop=True)
-        adj_pvals = stats.multipletests(pval_series, method=method).to_frame()
+        adj_pvals = cstati.multipletests(pval_series, method=method).to_frame()
     else:
         pval_series = pvals.dropna()
         if isinstance(adj_pvals, pd.Series):
@@ -1398,7 +1430,8 @@ def plot_cumulative_returns(
     plot_zero_line: bool = True,
     events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
-    """Plot cumulative returns.
+    """
+    Plot cumulative returns.
 
     :param cumulative_rets: log or pct cumulative returns
     :param mode: log or pct, used to choose plot title
@@ -1450,14 +1483,15 @@ def plot_rolling_annualized_volatility(
     ax: Optional[mpl.axes.Axes] = None,
     events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
-    """Plot rolling annualized volatility.
+    """
+    Plot rolling annualized volatility.
 
     :param srs: input series
-    :param tau: argument as for sigp.compute_rolling_std
-    :param min_periods: argument as for sigp.compute_rolling_std
-    :param min_depth: argument as for sigp.compute_rolling_std
-    :param max_depth: argument as for sigp.compute_rolling_std
-    :param p_moment: argument as for sigp.compute_rolling_std
+    :param tau: argument as for csigna.compute_rolling_std
+    :param min_periods: argument as for csigna.compute_rolling_std
+    :param min_depth: argument as for csigna.compute_rolling_std
+    :param max_depth: argument as for csigna.compute_rolling_std
+    :param p_moment: argument as for csigna.compute_rolling_std
     :param unit: "ratio", "%" or "bps" scaling coefficient
         "Exchange:Kibot_symbol"
         "Exchange:Exchange_symbol"
@@ -1466,13 +1500,13 @@ def plot_rolling_annualized_volatility(
     :param events: list of tuples with dates and labels to point out on the plot
     """
     min_periods = min_periods or tau
-    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
+    srs = hdataf.apply_nan_mode(srs, mode="fill_with_zero")
     # Calculate rolling volatility.
-    rolling_volatility = sigp.compute_rolling_std(
+    rolling_volatility = csigna.compute_rolling_std(
         srs, tau, min_periods, min_depth, max_depth, p_moment
     )
     # Annualize rolling volatility.
-    ppy = hdf.infer_sampling_points_per_year(srs)
+    ppy = hdataf.infer_sampling_points_per_year(srs)
     annualized_rolling_volatility = np.sqrt(ppy) * rolling_volatility
     # Remove leading `NaNs`.
     first_valid_index = annualized_rolling_volatility.first_valid_index()
@@ -1483,7 +1517,7 @@ def plot_rolling_annualized_volatility(
     scale_coeff = _choose_scaling_coefficient(unit)
     annualized_rolling_volatility *= scale_coeff
     # Calculate whole-period target volatility.
-    annualized_volatility = fin.compute_annualized_volatility(srs)
+    annualized_volatility = cfinan.compute_annualized_volatility(srs)
     annualized_volatility *= scale_coeff
     # Plot.
     ax = ax or plt.gca()
@@ -1526,13 +1560,14 @@ def plot_rolling_annualized_sharpe_ratio(
     ax: Optional[mpl.axes.Axes] = None,
     events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
-    """Plot rolling annualized Sharpe ratio.
+    """
+    Plot rolling annualized Sharpe ratio.
 
     :param srs: input series
-    :param tau: argument as for sigp.compute_smooth_moving_average
-    :param min_depth: argument as for sigp.compute_smooth_moving_average
-    :param max_depth: argument as for sigp.compute_smooth_moving_average
-    :param p_moment: argument as for sigp.compute_smooth_moving_average
+    :param tau: argument as for csigna.compute_smooth_moving_average
+    :param min_depth: argument as for csigna.compute_smooth_moving_average
+    :param max_depth: argument as for csigna.compute_smooth_moving_average
+    :param p_moment: argument as for csigna.compute_smooth_moving_average
     :param ci: confidence interval
     :param title_suffix: suffix added to the title
     :param trim_index: start plot at original index if True
@@ -1540,9 +1575,9 @@ def plot_rolling_annualized_sharpe_ratio(
     :param events: list of tuples with dates and labels to point out on the plot
     """
     title_suffix = title_suffix or ""
-    srs = hdf.apply_nan_mode(srs, mode="fill_with_zero")
+    srs = hdataf.apply_nan_mode(srs, mode="fill_with_zero")
     min_periods = tau * max_depth
-    rolling_sharpe = sigp.compute_rolling_annualized_sharpe_ratio(
+    rolling_sharpe = csigna.compute_rolling_annualized_sharpe_ratio(
         srs,
         tau,
         min_periods=min_periods,
@@ -1602,7 +1637,8 @@ def plot_yearly_barplot(
     figsize: Optional[Tuple[int, int]] = None,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
-    """Plot a barplot of log returns statistics by year.
+    """
+    Plot a barplot of log returns statistics by year.
 
     :param log_rets: input series of log returns
     :param unit: "ratio", "%" or "bps" scaling coefficient
@@ -1613,7 +1649,7 @@ def plot_yearly_barplot(
     """
     scale_coeff = _choose_scaling_coefficient(unit)
     yearly_log_returns = log_rets.resample("Y").sum()
-    yearly_pct_returns = fin.convert_log_rets_to_pct_rets(yearly_log_returns)
+    yearly_pct_returns = cfinan.convert_log_rets_to_pct_rets(yearly_log_returns)
     yearly_returns = yearly_pct_returns * scale_coeff
     yearly_returns.index = yearly_returns.index.year
     ax = ax or plt.gca()
@@ -1641,7 +1677,8 @@ def plot_yearly_barplot(
 def plot_monthly_heatmap(
     log_rets: pd.Series, unit: str = "ratio", ax: Optional[mpl.axes.Axes] = None
 ) -> None:
-    """Plot a heatmap of log returns statistics by year and month.
+    """
+    Plot a heatmap of log returns statistics by year and month.
 
     :param log_rets: input series of log returns
     :param unit: "ratio", `%` or "bps" scaling coefficient
@@ -1669,7 +1706,8 @@ def plot_pnl(
     ylabel: Optional[str] = None,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
-    """Plot pnls for dict of pnl time series.
+    """
+    Plot pnls for dict of pnl time series.
 
     :param pnls: dict of pnl time series
     :param title: plot title
@@ -1677,7 +1715,7 @@ def plot_pnl(
     :param figsize: size of plot
     :param start_date: left limit value of the X axis
     :param end_date: right limit value of the X axis
-    :param nan_mode: argument for hdf.apply_nan_mode()
+    :param nan_mode: argument for hdataf.apply_nan_mode()
     :param xlabel: label of the X axis
     :param ylabel: label of the Y axis
     :param ax: axes
@@ -1693,7 +1731,7 @@ def plot_pnl(
     pnls_notna = {}
     empty_srs = []
     for key, srs in pnls.items():
-        srs = hdf.apply_nan_mode(srs, mode=nan_mode)
+        srs = hdataf.apply_nan_mode(srs, mode=nan_mode)
         if srs.dropna().empty:
             empty_srs.append(key)
         else:
@@ -1706,7 +1744,7 @@ def plot_pnl(
     df_plot = pd.concat(pnls_notna, axis=1)
     # Compute sharpe ratio for every time series.
     sharpe_ratio = {
-        key: stats.compute_annualized_sharpe_ratio(srs)
+        key: cstati.compute_annualized_sharpe_ratio(srs)
         for key, srs in pnls.items()
     }
     sharpe_ratio = pd.Series(sharpe_ratio)
@@ -1748,7 +1786,8 @@ def plot_drawdown(
     ax: Optional[mpl.axes.Axes] = None,
     events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
-    """Plot drawdown.
+    """
+    Plot drawdown.
 
     :param log_rets: log returns
     :param ylim: either "fixed", "scalable" or None. default is None corresponds
@@ -1762,7 +1801,7 @@ def plot_drawdown(
     ylim = ylim or "scalable"
     title_suffix = title_suffix or ""
     scale_coeff = _choose_scaling_coefficient(unit)
-    drawdown = -scale_coeff * fin.compute_perc_loss_from_high_water_mark(log_rets)
+    drawdown = -scale_coeff * cfinan.compute_perc_loss_from_high_water_mark(log_rets)
     label = drawdown.name or "drawdown"
     title = f"Drawdown ({unit})"
     ax = ax or plt.gca()
@@ -1788,7 +1827,8 @@ def plot_holdings(
     ax: Optional[mpl.axes.Axes] = None,
     events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
-    """Plot holdings, average holdings and average holdings by month.
+    """
+    Plot holdings, average holdings and average holdings by month.
 
     :param holdings: pnl series to plot
     :param unit: "ratio", "%" or "bps" scaling coefficient
@@ -1820,18 +1860,19 @@ def plot_qq(
     dist: Optional[str] = None,
     nan_mode: Optional[str] = None,
 ) -> None:
-    """Plot ordered values against theoretical quantiles of the given
+    """
+    Plot ordered values against theoretical quantiles of the given
     distribution.
 
     :param srs: data to plot
     :param ax: axes in which to draw the plot
     :param dist: distribution name
-    :param nan_mode: argument for hdf.apply_nan_mode()
+    :param nan_mode: argument for hdataf.apply_nan_mode()
     """
     dist = dist or "norm"
     ax = ax or plt.gca()
     nan_mode = nan_mode or "drop"
-    x_plot = hdf.apply_nan_mode(srs, mode=nan_mode)
+    x_plot = hdataf.apply_nan_mode(srs, mode=nan_mode)
     sp.stats.probplot(x_plot, dist=dist, plot=ax)
     ax.set_title(f"{dist} probability plot")
 
@@ -1842,7 +1883,8 @@ def plot_turnover(
     ax: Optional[mpl.axes.Axes] = None,
     events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
-    """Plot turnover, average turnover by month and overall average turnover.
+    """
+    Plot turnover, average turnover by month and overall average turnover.
 
     :param positions: series of positions to plot
     :param unit: "ratio", "%" or "bps" scaling coefficient
@@ -1851,7 +1893,7 @@ def plot_turnover(
     """
     ax = ax or plt.gca()
     scale_coeff = _choose_scaling_coefficient(unit)
-    turnover = fin.compute_turnover(positions)
+    turnover = cfinan.compute_turnover(positions)
     turnover = scale_coeff * turnover
     turnover.plot(linewidth=1, ax=ax, label="turnover")
     turnover.resample("M").mean().plot(
@@ -1876,7 +1918,8 @@ def plot_allocation(
     ax: Optional[mpl.axes.Axes] = None,
     events: Optional[List[Tuple[str, Optional[str]]]] = None,
 ) -> None:
-    """Plot position allocations over time.
+    """
+    Plot position allocations over time.
 
     :param position_df: dataframe with position time series
     :param config: information about time series
@@ -1910,12 +1953,13 @@ def plot_rolling_beta(
     events: Optional[List[Tuple[str, Optional[str]]]] = None,
     **kwargs: Any,
 ) -> None:
-    """Regress returns against benchmark series and plot rolling beta.
+    """
+    Regress returns against benchmark series and plot rolling beta.
 
     :param rets: returns
     :param benchmark_rets: benchmark returns
     :param window: length of the rolling window
-    :param nan_mode: argument for hdf.apply_nan_mode()
+    :param nan_mode: argument for hdataf.apply_nan_mode()
     :param ax: axis
     :param events: list of tuples with dates and labels to point out on the plot
     :param kwargs: kwargs for statsmodels.regression.rolling.RollingOLS
@@ -1942,9 +1986,9 @@ def plot_rolling_beta(
     all_rets_df.columns = [rets_name, benchmark_name]
     # Extract common index in order to keep NaN periods on the X-axis.
     common_index = all_rets_df.index
-    # Apply `.dropna()` after `hdf.apply_nan_mode` in oder to drop remaining
+    # Apply `.dropna()` after `hdataf.apply_nan_mode` in oder to drop remaining
     #     rows with NaNs and calculate rolling beta without NaN gaps in input.
-    clean_rets_df = all_rets_df.apply(hdf.apply_nan_mode, mode=nan_mode).dropna()
+    clean_rets_df = all_rets_df.apply(hdataf.apply_nan_mode, mode=nan_mode).dropna()
     # Get copies of rets and benchmark_rets with unified indices and no NaNs.
     rets = clean_rets_df[rets_name]
     benchmark_rets = clean_rets_df[benchmark_name]
@@ -1952,7 +1996,7 @@ def plot_rolling_beta(
     ax = ax or plt.gca()
     benchmark_rets = sm.add_constant(benchmark_rets)
     # Calculate and plot rolling beta.
-    model_rolling = smrr.RollingOLS(rets, benchmark_rets, window=window, **kwargs)
+    model_rolling = srroll.RollingOLS(rets, benchmark_rets, window=window, **kwargs)
     res_rolling = model_rolling.fit()
     beta_rolling = res_rolling.params[
         benchmark_name
@@ -2004,7 +2048,7 @@ def plot_rolling_correlation(
     :param mode: corr or zcorr
     :param ax: axis
     :param events: list of tuples with dates and labels to point out on the plot
-    :param ylim: either "fixed" or "scalable" (if None). If ylim is set to "fixed", 
+    :param ylim: either "fixed" or "scalable" (if None). If ylim is set to "fixed",
         the y-axis limits are (-1, 1).
     """
     mode = mode or "corr"
@@ -2012,11 +2056,11 @@ def plot_rolling_correlation(
     ax = ax or plt.gca()
     # Calculate rolling correlation.
     if mode == "zcorr":
-        roll_correlation = sigp.compute_rolling_zcorr
+        roll_correlation = csigna.compute_rolling_zcorr
         title = "Z Correlation of 2 time series"
         label = "Rolling z correlation"
     elif mode == "corr":
-        roll_correlation = sigp.compute_rolling_corr
+        roll_correlation = csigna.compute_rolling_corr
         title = "Correlation of 2 time series"
         label = "Rolling correlation"
     else:
@@ -2064,7 +2108,8 @@ def plot_sharpe_ratio_panel(
     frequencies: Optional[List[str]] = None,
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
-    """Plot how SRs vary under resampling.
+    """
+    Plot how SRs vary under resampling.
 
     :param log_rets: log returns
     :param frequencies: frequencies to calculate SR for
@@ -2077,7 +2122,7 @@ def plot_sharpe_ratio_panel(
         _LOG.warning("Input has no frequency and it has been rescaled to 'D'")
         srs_freq = "D"
     # Resample input for assuring input frequency in calculations.
-    log_rets = sigp.resample(log_rets, rule=srs_freq).sum()
+    log_rets = csigna.resample(log_rets, rule=srs_freq).sum()
     # Initiate series for Sharpe ratios of selected frequencies.
     sr_series = pd.Series([], dtype="object")
     # Initiate list for Sharpe ratios' standard errors for error bars.
@@ -2085,9 +2130,9 @@ def plot_sharpe_ratio_panel(
     # Initiate list for frequencies that do not lead to upsampling.
     valid_frequencies = []
     # Compute input frequency points per year for identifying upsampling.
-    input_freq_points_per_year = hdf.infer_sampling_points_per_year(log_rets)
+    input_freq_points_per_year = hdataf.infer_sampling_points_per_year(log_rets)
     for freq in frequencies:
-        freq_points_per_year = hdf.compute_points_per_year_for_given_freq(freq)
+        freq_points_per_year = hdataf.compute_points_per_year_for_given_freq(freq)
         if freq_points_per_year > input_freq_points_per_year:
             _LOG.warning(
                 "Upsampling from input freq='%s' to freq='%s' is blocked",
@@ -2095,15 +2140,15 @@ def plot_sharpe_ratio_panel(
                 freq,
             )
             continue
-        resampled_log_rets = sigp.resample(log_rets, rule=freq).sum()
+        resampled_log_rets = csigna.resample(log_rets, rule=freq).sum()
         if len(resampled_log_rets) == 1:
             _LOG.warning(
                 "Resampling to freq='%s' is blocked because resampled series has only 1 observation",
                 freq,
             )
             continue
-        sr = stats.compute_annualized_sharpe_ratio(resampled_log_rets)
-        se = stats.compute_annualized_sharpe_ratio_standard_error(
+        sr = cstati.compute_annualized_sharpe_ratio(resampled_log_rets)
+        se = cstati.compute_annualized_sharpe_ratio_standard_error(
             resampled_log_rets
         )
         sr_series[freq] = sr
@@ -2132,7 +2177,8 @@ def _choose_scaling_coefficient(unit: str) -> int:
 
 
 def _calculate_year_to_month_spread(log_rets: pd.Series) -> pd.DataFrame:
-    """Calculate log returns statistics by year and month.
+    """
+    Calculate log returns statistics by year and month.
 
     :param log_rets: input series of log returns
     :return: dataframe of log returns with years on y-axis and
@@ -2144,7 +2190,7 @@ def _calculate_year_to_month_spread(log_rets: pd.Series) -> pd.DataFrame:
     log_rets_df["month"] = log_rets_df.index.month
     log_rets_df.reset_index(inplace=True)
     monthly_log_returns = log_rets_df.groupby(["year", "month"])[srs_name].sum()
-    monthly_pct_returns = fin.convert_log_rets_to_pct_rets(monthly_log_returns)
+    monthly_pct_returns = cfinan.convert_log_rets_to_pct_rets(monthly_log_returns)
     monthly_pct_spread = monthly_pct_returns.unstack()
     monthly_pct_spread.columns = monthly_pct_spread.columns.map(
         lambda x: calendar.month_abbr[x]
@@ -2155,14 +2201,15 @@ def _calculate_year_to_month_spread(log_rets: pd.Series) -> pd.DataFrame:
 def _maybe_add_events(
     ax: mpl.axes.Axes, events: Optional[List[Tuple[str, Optional[str]]]]
 ) -> None:
-    """Add labeled vertical lines at events' dates on a plot.
+    """
+    Add labeled vertical lines at events' dates on a plot.
 
     :param ax: axes
     :param events: list of tuples with dates and labels to point out on the plot
     """
     if not events:
         return None
-    colors = cm.get_cmap("Set1")(np.linspace(0, 1, len(events)))
+    colors = mcm.get_cmap("Set1")(np.linspace(0, 1, len(events)))
     for event, color in zip(events, colors):
         ax.axvline(
             x=pd.Timestamp(event[0]),
