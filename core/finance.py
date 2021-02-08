@@ -305,7 +305,10 @@ def compute_twap_vwap(
     :return: vwap series
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
-    dbg.dassert(df.index.freq)
+    # TODO(*): Determine whether we really need this. Disabling for now to
+    # accommodate data that is not perfectly aligned with a pandas freq
+    # (e.g., Kibot).
+    # dbg.dassert(df.index.freq)
     dbg.dassert_in(price_col, df.columns)
     dbg.dassert_in(volume_col, df.columns)
     price = df[price_col]

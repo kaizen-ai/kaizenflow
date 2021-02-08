@@ -851,7 +851,7 @@ def jointplot(
     df = df[mask]
     # Plot.
     sns.jointplot(
-        predictor_var, predicted_var, df, height=height, *args, **kwargs
+        x=predictor_var, y=predicted_var, data=df, height=height, *args, **kwargs
     )
 
 
