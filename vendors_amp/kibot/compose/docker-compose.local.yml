@@ -10,7 +10,7 @@ services:
     env_file:
       - ../env/local.env
     ports:
-      - "0.0.0.0:5432:5432"
+      - "5432:5432"
 
 volumes:
   kibot_postgres_data_local: {}
