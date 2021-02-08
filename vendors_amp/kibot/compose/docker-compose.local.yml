@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  kibot_postgres_local:
+    image: postgres:13
+    container_name: kibot_postgres_local
+    restart: "no"
+    volumes:
+      - kibot_postgres_data_local:/var/lib/postgresql/data
+    env_file:
+      - ../env/local.env
+    ports:
+      - 5432:5432
+
+volumes:
+  kibot_postgres_data_local: {}
+
