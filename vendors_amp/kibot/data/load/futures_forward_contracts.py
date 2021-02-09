@@ -2,6 +2,7 @@ import datetime
 from typing import Union
 
 import pandas as pd
+from tqdm.auto import tqdm
 
 import core.finance as cfinan
 import helpers.dataframe as hdataf
@@ -17,13 +18,16 @@ class FuturesForwardContracts:
     Contract data for open futures contracts.
     """
 
-    def __init__(self, data_loader: vkdlda.AbstractKibotDataLoader) -> None:
+    def __init__(
+        self, data_loader: vkdlda.AbstractKibotDataLoader, disable_tqdm=False
+    ) -> None:
         """
         Initialize by injecting a data loader.
 
         :param data_loader: data loader implementing abstract interface
         """
         self._data_loader = data_loader
+        self._disable_tqdm = disable_tqdm
 
     def replace_contracts_with_data(
         self, df: pd.DataFrame, col: str
@@ -48,7 +52,7 @@ class FuturesForwardContracts:
                 2010-01-14  79.88  80.47
         """
         data = []
-        for column in df.columns:
+        for column in tqdm(df.columns, disable=self._disable_tqdm):
             contract_srs = df[column]
             market_data = self._replace_contracts_with_data(contract_srs)
             data_srs = market_data[col]
@@ -84,7 +88,7 @@ class FuturesForwardContracts:
         contracts = srs.unique().tolist()
         # Extract relevant data subseries for each contract and put in list.
         data_subseries = []
-        for contract in contracts:
+        for contract in tqdm(contracts, leave=False, disable=self._disable_tqdm):
             # Load contract data.
             data = self._data_loader.read_data(
                 "Kibot",
