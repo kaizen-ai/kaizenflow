@@ -1,0 +1,17 @@
+version: '3'
+
+# TODO(plyq): Change base image to amp once it will be ready.
+services:
+  kibot_app:
+    image: 083233266530.dkr.ecr.us-east-2.amazonaws.com/particle_env:latest
+    # image: personal-plyq:latest
+    restart: "no"
+    volumes:
+      - ../../../../:/commodity_research
+      - ~/.aws:/root/.aws
+      - ~/.config/gspread_pandas/:/root/.config/gspread_pandas/
+      - ../../../../docker_build/fstab:/etc/fstab
+    working_dir: /commodity_research
+    privileged: true
+    cap_add:
+      - SYS_ADMIN

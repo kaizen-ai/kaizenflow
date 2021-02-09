@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  kibot_app:
+    #TODO(plyq): Change once amp image will be ready
+    entrypoint: amp/vendors_amp/kibot/compose/entrypoint_local_test.sh
+    depends_on:
+      - kibot_postgres_test
+    env_file:
+      - ../env/test.env
+
+
+  kibot_postgres_test:
+    image: postgres:13
+    container_name: kibot_postgres_test
+    restart: "no"
+    env_file:
+      - ../env/test.env
+    ports:
+      - "5433:5433"
