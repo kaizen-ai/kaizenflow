@@ -691,7 +691,7 @@ class DataFrameModeler:
         axes: Optional[
             List[Union[mpl.axes.Axes, List[mpl.axes.Axes], None]]
         ] = None,
-    ) -> None:
+    ) -> List[List[Optional[mpl.figure.Figure]]]:
         """
         :param num_plots: number of cols to plot the study for
         :param axes: flat list of `ax`/`axes` parameters for each column for
@@ -705,11 +705,15 @@ class DataFrameModeler:
             axes_for_cols = [None] * num_plots
         else:
             axes_for_cols = np.array(axes).reshape(num_plots, -1)
+        figs = []
         for col_name, axes_for_col in zip(cols_to_draw, axes_for_cols):
             tsds = ctimes.TimeSeriesDailyStudy(df[col_name])
-            tsds.execute(last_n_years=last_n_years, axes=axes_for_col)
+            figs.append(
+                tsds.execute(last_n_years=last_n_years, axes=axes_for_col)
+            )
             if axes is None:
                 plt.show()
+        return figs
 
     def plot_seasonal_decomposition(
         self,
