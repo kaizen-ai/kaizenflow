@@ -1796,7 +1796,11 @@ def _convert_sarimax_summary_to_dataframe(
             df = df.applymap(lambda x: str(x).strip(": ").lstrip(" "))
             if "Sample" in df[0].values:
                 sample_index = df[0].tolist().index("Sample")
-                df.iloc[sample_index, 1] += " " + df.iloc[sample_index + 1, 1]
+                df.iloc[sample_index, 0] = "Start Date"
+                df.iloc[sample_index + 1, 0] = "End Date"
+                df.iloc[sample_index + 1, 1] = (
+                    df.iloc[sample_index + 1, 1].lstrip("- ")
+                )
             df = df[df[0] != ""]
             df = df.set_index(0)
             df.index.name = None

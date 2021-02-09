@@ -1,7 +1,8 @@
                                               1
 Dep. Variable                             ret_0
 Model             SARIMAX(1, 0, 1)x(1, 0, 1, 3)
-Sample                  04-30-2010 - 07-31-2018
+Start Date                           04-30-2010
+End Date                             07-31-2018
 Covariance Type                             opg
 No. Observations                            100
 Log Likelihood                           94.232
