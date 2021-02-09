@@ -210,3 +210,15 @@ class TestVolatilityNormalizer(hut.TestCase):
             f"{predict_df_out_volatility}"
         )
         self.check_string(output_str)
+
+
+class Test_get_df_info_as_string(hut.TestCase):
+    def test1(self):
+        df = pd.DataFrame({"col_1": [1, 2], "col_2": [3, 4]})
+        info = dtf.get_df_info_as_string(df, exclude_memory_usage=False)
+        self.check_string(info)
+
+    def test2(self):
+        df = pd.DataFrame({"col_1": [1, 2], "col_2": [3, 4]})
+        info = dtf.get_df_info_as_string(df)
+        self.check_string(info)
