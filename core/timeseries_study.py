@@ -256,8 +256,8 @@ class TimeSeriesMinutelyStudy(_TimeSeriesAnalyzer):
         last_n_years: Optional[int] = None,
         axes: Optional[
             List[Union[mpl.axes.Axes, List[mpl.axes.Axes], None]]
-        ] = List[Optional[mpl.figure.Figure]],
-    ) -> None:
+        ] = None,
+    ) -> List[Optional[mpl.figure.Figure]]:
         axes = axes or [None] * 5
         figs = super().execute(last_n_years=last_n_years, axes=axes[:-1])
         figs.append(self.boxplot_minutely_hour(ax=axes[-1]))
