@@ -732,9 +732,9 @@ class ContinuousSarimaxModel(
         # Add info.
         # TODO(Julia): Maybe add model performance to info.
         info = collections.OrderedDict()
-        info["model_summary"] = _remove_datetime_info_from_SARIMAX(
-            self._model_results.summary()
-        ).as_text()
+        info["model_summary"] = _remove_datetime_info_from_sarimax(
+            _convert_sarimax_summary_to_dataframe(self._model_results.summary())
+        )
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
@@ -769,9 +769,9 @@ class ContinuousSarimaxModel(
         )
         # Add info.
         info = collections.OrderedDict()
-        info["model_summary"] = _remove_datetime_info_from_SARIMAX(
-            self._model_results.summary()
-        ).as_text()
+        info["model_summary"] = _remove_datetime_info_from_sarimax(
+            _convert_sarimax_summary_to_dataframe(self._model_results.summary())
+        )
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
@@ -1772,16 +1772,54 @@ class VolatilityModel(FitPredictNode):
         return node.nid
 
 
-def _remove_datetime_info_from_SARIMAX(
+def _convert_sarimax_summary_to_dataframe(
     summary: siolib.summary.Summary,
-) -> siolib.summary.Summary:
+) -> Dict[str, pd.DataFrame]:
+    """
+    Convert SARIMAX model summary to dataframes.
+
+    SARIMAX model summary consists of 3 tables:
+        1) general info - 2 columns of pairs key-value
+        2) coefs - a table with rows for every feature
+        3) tests results - 2 columns of pairs key-value
+    Function converts 1 and 3 tables to a dataframe with index-key, column-value,
+    2 table - a dataframe with index-feature.
+    """
+    tables_dict = collections.OrderedDict()
+    keys = ["info", "coefs", "tests"]
+    for i, table in enumerate(summary.tables):
+        table = np.array(table)
+        if table.shape[1] == 4:
+            # Process paired tables.
+            table = np.vstack((table[:, :2], table[:, 2:]))
+            df = pd.DataFrame(table)
+            df = df.applymap(lambda x: str(x).strip(": ").lstrip(" "))
+            if "Sample" in df[0].values:
+                sample_index = df[0].tolist().index("Sample")
+                df.iloc[sample_index, 0] = "Start Date"
+                df.iloc[sample_index + 1, 0] = "End Date"
+                df.iloc[sample_index + 1, 1] = (
+                    df.iloc[sample_index + 1, 1].lstrip("- ")
+                )
+            df = df[df[0] != ""]
+            df = df.set_index(0)
+            df.index.name = None
+            df = df.iloc[:, 0]
+        else:
+            # Process coefs table.
+            df = pd.DataFrame(table[1:, :])
+            df = df.set_index(0)
+            df.index.name = None
+            df.columns = table[0, 1:]
+        tables_dict[keys[i]] = df
+    return tables_dict
+
+
+def _remove_datetime_info_from_sarimax(
+    summary: Dict[str, pd.DataFrame],
+) -> Dict[str, pd.DataFrame]:
     """
     Remove date and time from model summary.
-
-    Replace date and time info from 2-4 lines of summary to sample and
-    covariance info from 4-6 lines, remove duplicated last lines.
     """
-    for i in range(2, 5):
-        summary.tables[0][i][:2] = summary.tables[0][i + 2][:2]
-    summary.tables[0][:] = summary.tables[0][:5]
+    summary["info"] = summary["info"].drop(["Date", "Time"])
     return summary
