@@ -11,12 +11,13 @@ class SQLWriterBackend:
     Manager of CRUD operations on a database defined in db.sql.
     """
 
-    def __init__(self, dbname: str, user: str, password: str, host: str):
+    def __init__(self, dbname: str, user: str, password: str, host: str, port: str):
         self.conn: pexten.connection = psycopg2.connect(
             dbname=dbname,
             user=user,
             password=password,
             host=host,
+            port=int(port),
         )
 
     def ensure_symbol_exists(

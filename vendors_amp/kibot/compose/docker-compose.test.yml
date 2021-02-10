@@ -14,6 +14,8 @@ services:
     image: postgres:13
     container_name: kibot_postgres_test
     restart: "no"
+    volumes:
+      - ./init_sql:/docker-entrypoint-initdb.d
     env_file:
       - ../env/test.env
     ports:

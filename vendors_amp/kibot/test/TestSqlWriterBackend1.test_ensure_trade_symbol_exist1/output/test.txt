@@ -1,0 +1,2 @@
+ id  exchange_id  symbol_id
+ 68     13398886   13398886

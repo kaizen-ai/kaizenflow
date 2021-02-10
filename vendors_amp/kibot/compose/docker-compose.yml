@@ -4,7 +4,6 @@ version: '3'
 services:
   kibot_app:
     image: 083233266530.dkr.ecr.us-east-2.amazonaws.com/particle_env:latest
-    # image: personal-plyq:latest
     restart: "no"
     volumes:
       - ../../../../:/commodity_research
