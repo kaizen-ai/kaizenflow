@@ -320,12 +320,11 @@ class UnsupervisedSkLearnModel(
         """
         Specify the data and sklearn modeling parameters.
 
-        Assumptions:
-            :param nid: unique node id
-            :param model_func: an sklearn model
-            :param x_vars: indexed by knowledge datetimes
-            :param model_kwargs: parameters to forward to the sklearn model
-                (e.g., regularization constants)
+        :param nid: unique node id
+        :param model_func: an sklearn model
+        :param x_vars: indexed by knowledge datetimes
+        :param model_kwargs: parameters to forward to the sklearn model
+            (e.g., regularization constants)
         """
         super().__init__(nid)
         self._model_func = model_func
@@ -420,12 +419,11 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
         """
         Specify the data and sklearn modeling parameters.
 
-        Assumptions:
-            :param nid: unique node id
-            :param model_func: an sklearn model
-            :param x_vars: indexed by knowledge datetimes
-            :param model_kwargs: parameters to forward to the sklearn model
-                (e.g., regularization constants)
+        :param nid: unique node id
+        :param model_func: an sklearn model
+        :param x_vars: indexed by knowledge datetimes
+        :param model_kwargs: parameters to forward to the sklearn model
+            (e.g., regularization constants)
         """
         super().__init__(nid)
         self._model_func = model_func
@@ -622,7 +620,7 @@ class SkLearnInverseTransformer(
     FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin
 ):
     """
-    Fit and transform an unsupervised sklearn model.
+    Inverse transform cols using an unsupervised sklearn model.
     """
 
     def __init__(
@@ -638,12 +636,14 @@ class SkLearnInverseTransformer(
         """
         Specify the data and sklearn modeling parameters.
 
-        Assumptions:
-            :param nid: unique node id
-            :param model_func: an sklearn model
-            :param x_vars: indexed by knowledge datetimes
-            :param model_kwargs: parameters to forward to the sklearn model
-                (e.g., regularization constants)
+        :param nid: unique node id
+        :param model_func: an unsupervised sklearn model with an
+            `inverse_transform()` method
+        :param x_vars: indexed by knowledge datetimes; the unsupervised model
+            is learned on these cols
+        :param trans_x_vars: the cols to apply the learned inverse transform to
+        :param model_kwargs: parameters to forward to the sklearn model
+            (e.g., regularization constants)
         """
         super().__init__(nid)
         self._model_func = model_func
