@@ -1,6 +1,6 @@
 import psycopg2
 import os
-import vendors_amp.docker.sql_writer_backend as vdsqlw
+import vendors_amp.kibot.sql_writer_backend as vdsqlw
 import helpers.unit_test as hut
 import pandas as pd
 from typing import Optional
