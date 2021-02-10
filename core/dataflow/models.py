@@ -626,14 +626,14 @@ class SkLearnInverseTransformer(
     """
 
     def __init__(
-            self,
-            nid: str,
-            model_func: Callable[..., Any],
-            x_vars: Union[List[Any], Callable[[], List[Any]]],
-            trans_x_vars: Union[List[Any], Callable[[], List[Any]]],
-            model_kwargs: Optional[Any] = None,
-            col_mode: Optional[str] = None,
-            nan_mode: Optional[str] = None,
+        self,
+        nid: str,
+        model_func: Callable[..., Any],
+        x_vars: Union[List[Any], Callable[[], List[Any]]],
+        trans_x_vars: Union[List[Any], Callable[[], List[Any]]],
+        model_kwargs: Optional[Any] = None,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         Specify the data and sklearn modeling parameters.
@@ -663,7 +663,7 @@ class SkLearnInverseTransformer(
         return self._fit_predict_helper(df_in, fit=False)
 
     def _fit_predict_helper(
-            self, df_in: pd.DataFrame, fit: bool = False
+        self, df_in: pd.DataFrame, fit: bool = False
     ) -> Dict[str, pd.DataFrame]:
         """
         Factor out common flow for fit/predict.
@@ -701,7 +701,9 @@ class SkLearnInverseTransformer(
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(df.index, trans_non_nan_idx)
         # Prepare trans_x_vars in sklearn format.
-        trans_x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], trans_x_vars)
+        trans_x_fit = cdataa.transform_to_sklearn(
+            df.loc[non_nan_idx], trans_x_vars
+        )
         trans_x_inv_trans = self._model.inverse_transform(trans_x_fit)
         trans_x_inv_trans = cdataa.transform_from_sklearn(
             trans_non_nan_idx, x_vars, trans_x_inv_trans
@@ -718,7 +720,7 @@ class SkLearnInverseTransformer(
         return {"df_out": df_out}
 
     def _handle_nans(
-            self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
     ) -> None:
         if self._nan_mode == "raise":
             if idx.shape[0] != non_nan_idx.shape[0]:
