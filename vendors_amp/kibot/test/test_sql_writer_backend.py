@@ -54,8 +54,6 @@ class TestSqlWriterBackend1(hut.TestCase):
                             self._get_test_string(), "Futures"
                         ],
                     )
-                print("Symbols:")
-                print(pd.read_sql("SELECT * FROM Symbol", self._writer.conn))
                 if insert_exchange:
                     curs.execute(
                         "INSERT INTO Exchange (id, name) "
@@ -65,8 +63,6 @@ class TestSqlWriterBackend1(hut.TestCase):
                             self._get_test_string(),
                         ],
                     )
-                print("Exchs:")
-                print(pd.read_sql("SELECT * FROM Exchange", self._writer.conn))
                 if insert_trade_symbol:
                     curs.execute(
                         "INSERT INTO TradeSymbol (id, exchange_id, symbol_id) "
@@ -84,7 +80,7 @@ class TestSqlWriterBackend1(hut.TestCase):
 
     def _get_test_number(self) -> int:
         string = self._get_test_string()
-        return hash(string) % 10**8
+        return sum(bytes(string, "utf-8"))
 
     def _check_saved_data(self, table: str, test_id_field: str,
                           test_id_type: type) -> None:
@@ -105,11 +101,15 @@ class TestSqlWriterBackend1(hut.TestCase):
                                              self._get_test_string())
         query = "SELECT * FROM %s %s;" % (table, condition)
         res = pd.read_sql_query(query, self._writer.conn)
-        self.check_string(hut.convert_df_to_string(res))
         remove_query = "DELETE FROM %s %s" % (table, condition)
         with self._writer.conn:
             with self._writer.conn.cursor() as curs:
                 curs.execute(remove_query)
+        columns_to_check = list(res.columns)
+        for column_to_remove in ["id", "start_date"]:
+            if column_to_remove in columns_to_check:
+                columns_to_check.remove(column_to_remove)
+        self.check_string(hut.convert_df_to_string(res[columns_to_check]))
 
     def test_ensure_symbol_exist1(self) -> None:
         self._writer.ensure_symbol_exists(symbol=self._get_test_string(),

@@ -1,2 +1,2 @@
- id  trade_symbol_id            datetime  open  high  low  close  volume
- 76         12974572 2021-02-10 13:50:00  10.0  15.0  9.0   12.5    1000
+ trade_symbol_id            datetime  open  high  low  close  volume
+            4597 2021-02-10 13:50:00  10.0  15.0  9.0   12.5    1000

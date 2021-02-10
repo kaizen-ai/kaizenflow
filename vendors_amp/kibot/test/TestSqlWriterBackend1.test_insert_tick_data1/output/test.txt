@@ -1,2 +1,2 @@
- id  trade_symbol_id            datetime  price  size
- 77          6176624 2021-02-10 13:50:00   10.0    15
+ trade_symbol_id            datetime  price  size
+            4366 2021-02-10 13:50:00   10.0    15

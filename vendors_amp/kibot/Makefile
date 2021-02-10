@@ -16,8 +16,7 @@ kibot_local_down_postgres:
 	docker-compose \
 		-f compose/docker-compose.yml \
 		-f compose/docker-compose.local.yml \
-		down
-
+		down -v
 
 # #############################################################################
 # Kibot vendor.

@@ -1,2 +1,2 @@
- id                                            code description asset_class  start_date symbol_base
- 82  TestSqlWriterBackend1test_ensure_symbol_exist1        None     Futures  2021-02-10        None
+                                           code description asset_class symbol_base
+ TestSqlWriterBackend1test_ensure_symbol_exist1        None     Futures        None

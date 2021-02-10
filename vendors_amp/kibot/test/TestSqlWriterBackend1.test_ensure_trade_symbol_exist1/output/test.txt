@@ -1,2 +1,2 @@
- id  exchange_id  symbol_id
- 68     13398886   13398886
+ exchange_id  symbol_id
+        5368       5368
