@@ -11,12 +11,15 @@ import vendors_amp.kibot.data.types as vkdtyp
 
 
 class SQLKibotDataLoader(vkdlda.AbstractKibotDataLoader):
-    def __init__(self, dbname: str, user: str, password: str, host: str):
+    def __init__(
+        self, dbname: str, user: str, password: str, host: str, port: int
+    ):
         self.conn: psycopg2.extensions.connection = psycopg2.connect(
             dbname=dbname,
             user=user,
             password=password,
             host=host,
+            port=port,
         )
 
     @hcache.cache

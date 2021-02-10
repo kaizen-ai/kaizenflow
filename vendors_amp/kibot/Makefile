@@ -31,5 +31,3 @@ kibot_local_bash:
 		run --rm \
 		-l user=$(USER) \
 		kibot_app bash
-
-

@@ -21,5 +21,5 @@ echo "POSTGRES_PORT: $POSTGRES_PORT"
 
 # TODO(plyq): Change path once amp image will be ready
 # ./amp/vendors_amp/kibot/compose/init_local_db.sh
- 
+
 ./docker_build/entrypoint.sh "$@"
