@@ -25,12 +25,12 @@ class StatsComputer:
     @property
     def series_stats_methods(self) -> List[str]:
         methods = self._map_name_to_method("series").keys()
-        return list(methods)
+        return list(methods) + ["calculate_series_stats"]
 
     @property
     def model_stats_methods(self) -> List[str]:
         methods = self._map_name_to_method("model").keys()
-        return list(methods)
+        return list(methods) + ["calculate_model_stats"]
 
     # #########################################################################
     # Series stats methods
@@ -432,7 +432,7 @@ class StatsComputer:
     ) -> pd.Series:
         inputs = [returns, positions, pnl]
         dbg.dassert(
-            not pd.isna(inputs).all(), "At least one series should be not `None`."
+            not pd.isna(inputs[1:]).all(), "At least pnl or positions should be not `None`."
         )
         freqs = {srs.index.freq for srs in inputs if srs is not None}
         dbg.dassert_eq(len(freqs), 1, "Series have different frequencies.")
