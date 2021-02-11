@@ -521,7 +521,12 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data)
         info = csm.get_info("fit")["model_summary"]
-        self.check_string(info)
+        output_str = (
+            f"{hut.convert_df_to_string(info['info'], index=True)}\n"
+            f"{hut.convert_df_to_string(info['tests'], index=True)}\n"
+            f"{hut.convert_df_to_string(info['coefs'], index=True)}"
+        )
+        self.check_string(output_str)
 
     @staticmethod
     def _get_data(
@@ -1240,7 +1245,7 @@ if True:
             2010-01-01 00:00:00           0.496714 -0.138264 
             2010-01-01 00:01:00           0.647689  1.523030 
             2010-01-01 00:02:00          -0.234153 -0.234137 
-            2010-01-01 00:03:00           1.579213  0.767435 
+            2010-01-01 00:03:00           1.579213  0.767435
             2010-01-01 00:04:00          -0.469474  0.542560
             """
             np.random.seed(42)

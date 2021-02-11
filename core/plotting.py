@@ -1131,6 +1131,7 @@ def plot_dendrogram(
     # https://joernhees.de/blog/2015/08/26/scipy-hierarchical-clustering-and-dendrogram-tutorial/
     # Drop constant columns.
     method = method or "average"
+    df = df.replace([None], np.nan)
     constant_cols = df.columns[(df.diff().iloc[1:] == 0).all()]
     if not constant_cols.empty:
         _LOG.warning("Excluding constant columns: %s", constant_cols.tolist())
