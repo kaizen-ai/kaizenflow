@@ -11,9 +11,9 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import pandas as pd
 
-import core.finance as fin
-import core.signal_processing as sigp
-import core.statistics as stats
+import core.finance as cfinan
+import core.signal_processing as csigna
+import core.statistics as cstati
 import helpers.dbg as dbg
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
@@ -59,8 +59,8 @@ class FitPredictNode(Node, abc.ABC):
     """
     Define an abstract class with sklearn-style `fit` and `predict` functions.
 
-    Nodes may store a dictionary of information for each method following the
-    method's invocation.
+    Nodes may store a dictionary of information for each method
+    following the method's invocation.
     """
 
     def __init__(
@@ -205,14 +205,6 @@ class Transformer(FitPredictNode, abc.ABC):
     def __init__(self, nid: str) -> None:
         super().__init__(nid)
 
-    @abc.abstractmethod
-    def _transform(
-        self, df: pd.DataFrame
-    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
-        """
-        :return: df, info
-        """
-
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_no_duplicates(df_in.columns)
         # Transform the input df.
@@ -228,6 +220,14 @@ class Transformer(FitPredictNode, abc.ABC):
         self._set_info("predict", info)
         dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
+
+    @abc.abstractmethod
+    def _transform(
+        self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
+        """
+        :return: df, info
+        """
 
 
 # #############################################################################
@@ -271,6 +271,13 @@ class DiskDataSource(DataSource):
         self._end_date = end_date
         self._reader_kwargs = reader_kwargs or {}
 
+    def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
+        """
+        :return: training set as df
+        """
+        self._lazy_load()
+        return super().fit()
+
     def _read_data(self) -> None:
         ext = os.path.splitext(self._file_path)[-1]
         if ext == ".csv":
@@ -296,13 +303,6 @@ class DiskDataSource(DataSource):
             return
         self._read_data()
         self._process_data()
-
-    def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
-        """
-        :return: training set as df
-        """
-        self._lazy_load()
-        return super().fit()
 
 
 # #############################################################################
@@ -620,7 +620,7 @@ class Resample(Transformer):
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
-        resampler = sigp.resample(df, rule=self._rule, **self._resample_kwargs)
+        resampler = csigna.resample(df, rule=self._rule, **self._resample_kwargs)
         df = getattr(resampler, self._agg_func)(**self._agg_func_kwargs)
         #
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
@@ -666,7 +666,7 @@ class TimeBarResampler(Transformer):
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
-        df = fin.resample_time_bars(
+        df = cfinan.resample_time_bars(
             df,
             self._rule,
             return_cols=self._return_cols,
@@ -709,7 +709,7 @@ class TwapVwapComputer(Transformer):
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
-        df = fin.compute_twap_vwap(
+        df = cfinan.compute_twap_vwap(
             df,
             self._rule,
             price_col=self._price_col,
@@ -758,7 +758,7 @@ class VolatilityNormalizer(FitPredictNode, ColModeMixin):
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_in(self._col, df_in.columns)
-        self._scale_factor = fin.compute_volatility_normalization_factor(
+        self._scale_factor = cfinan.compute_volatility_normalization_factor(
             df_in[self._col], self._target_volatility
         )
         rescaled_y_hat = self._scale_factor * df_in[self._col]
@@ -836,10 +836,10 @@ def cross_validate(
     """
     # Get dataframe indices of source nodes.
     source_idxs = _get_source_idxs(dag, mode=idx_mode)
-    composite_idx = stats.combine_indices(source_idxs.values())
+    composite_idx = cstati.combine_indices(source_idxs.values())
     # Generate cross-validation splits from
     splits = split_func(composite_idx, **split_func_kwargs)
-    _LOG.debug(stats.convert_splits_to_string(splits))
+    _LOG.debug(cstati.convert_splits_to_string(splits))
     #
     result_bundle = collections.OrderedDict()
     # TODO(Paul): rename train/test to fit/predict.
@@ -889,8 +889,8 @@ def process_result_bundle(result_bundle: Dict) -> collections.OrderedDict:
         model_coeffs, index=split_names, columns=model_x_vars[0]
     )
     pnl_rets = pd.concat(pnl_rets)
-    sr = stats.compute_sharpe_ratio(
-        sigp.resample(pnl_rets, rule="1B").sum(), time_scaling=252
+    sr = cstati.compute_sharpe_ratio(
+        csigna.resample(pnl_rets, rule="1B").sum(), time_scaling=252
     )
     info["model_df"] = copy.copy(model_df)
     info["pnl_rets"] = copy.copy(pnl_rets)
