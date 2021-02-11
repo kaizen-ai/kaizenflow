@@ -564,10 +564,10 @@ class ColumnTransformer(Transformer, ColModeMixin):
         )
         # Maybe merge transformed columns with a subset of input df columns.
         df = self._apply_col_mode(
-            df_in,
-            df,
-            df.columns.tolist(),
-            self._col_mode,
+            df_in=df_in,
+            df_out=df,
+            cols_to_transform=df.columns.tolist(),
+            col_mode=self._col_mode,
             col_rename_func=self._col_rename_func,
         )
         #
@@ -772,10 +772,10 @@ class VolatilityNormalizer(FitPredictNode, ColModeMixin):
         )
         rescaled_y_hat = self._scale_factor * df_in[self._col]
         df_out = self._apply_col_mode(
-            df_in,
-            rescaled_y_hat.to_frame(),
-            [self._col],
-            self._col_mode,
+            df_in=df_in,
+            df_out=rescaled_y_hat.to_frame(),
+            cols_to_transform=[self._col],
+            col_mode=self._col_mode,
             col_rename_func=lambda x: f"rescaled_{x}",
         )
         # Store info.
@@ -788,10 +788,10 @@ class VolatilityNormalizer(FitPredictNode, ColModeMixin):
         dbg.dassert_in(self._col, df_in.columns)
         rescaled_y_hat = self._scale_factor * df_in[self._col]
         df_out = self._apply_col_mode(
-            df_in,
-            rescaled_y_hat.to_frame(),
-            [self._col],
-            self._col_mode,
+            df_in=df_in,
+            df_out=rescaled_y_hat.to_frame(),
+            cols_to_transform=[self._col],
+            col_mode=self._col_mode,
             col_rename_func=lambda x: f"rescaled_{x}",
         )
         return {"df_out": df_out}

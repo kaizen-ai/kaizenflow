@@ -1615,10 +1615,10 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
         else:
             raise ValueError(f"Invalid mode=`{self._mode}`")
         df_out = self._apply_col_mode(
-            df_in,
-            adjusted_signal,
-            self._signal_cols,
-            self._col_mode,
+            df_in=df_in,
+            df_out=adjusted_signal,
+            cols_to_transform=self._signal_cols,
+            col_mode=self._col_mode,
             col_rename_func=self._col_rename_func,
         )
         return df_out
