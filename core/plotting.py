@@ -1211,7 +1211,7 @@ class PCA:
         self,
         num_components: Optional[int] = None,
         num_cols: int = 4,
-        y_scale: Optional[float] = None,
+        y_scale: Optional[float] = 4,
         axes: Optional[List[mpl.axes.Axes]] = None,
     ) -> None:
         """
@@ -1802,7 +1802,9 @@ def plot_drawdown(
     ylim = ylim or "scalable"
     title_suffix = title_suffix or ""
     scale_coeff = _choose_scaling_coefficient(unit)
-    drawdown = -scale_coeff * cfinan.compute_perc_loss_from_high_water_mark(log_rets)
+    drawdown = -scale_coeff * cfinan.compute_perc_loss_from_high_water_mark(
+        log_rets
+    )
     label = drawdown.name or "drawdown"
     title = f"Drawdown ({unit})"
     ax = ax or plt.gca()
@@ -1989,7 +1991,9 @@ def plot_rolling_beta(
     common_index = all_rets_df.index
     # Apply `.dropna()` after `hdataf.apply_nan_mode` in oder to drop remaining
     #     rows with NaNs and calculate rolling beta without NaN gaps in input.
-    clean_rets_df = all_rets_df.apply(hdataf.apply_nan_mode, mode=nan_mode).dropna()
+    clean_rets_df = all_rets_df.apply(
+        hdataf.apply_nan_mode, mode=nan_mode
+    ).dropna()
     # Get copies of rets and benchmark_rets with unified indices and no NaNs.
     rets = clean_rets_df[rets_name]
     benchmark_rets = clean_rets_df[benchmark_name]
@@ -1997,7 +2001,9 @@ def plot_rolling_beta(
     ax = ax or plt.gca()
     benchmark_rets = sm.add_constant(benchmark_rets)
     # Calculate and plot rolling beta.
-    model_rolling = srroll.RollingOLS(rets, benchmark_rets, window=window, **kwargs)
+    model_rolling = srroll.RollingOLS(
+        rets, benchmark_rets, window=window, **kwargs
+    )
     res_rolling = model_rolling.fit()
     beta_rolling = res_rolling.params[
         benchmark_name
