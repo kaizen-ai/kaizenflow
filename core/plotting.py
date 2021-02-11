@@ -1250,7 +1250,7 @@ class PCA:
     ) -> None:
         if ax is None:
             _, ax = plt.subplots()
-        skluv.check_is_fitted(self.pca)
+        suvali.check_is_fitted(self.pca)
         explained_variance_ratio = pd.Series(self.pca.explained_variance_ratio_)
         eigenvals = pd.Series(self.pca.explained_variance_)
         # Plot explained variance.
