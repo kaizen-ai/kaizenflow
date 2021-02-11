@@ -828,17 +828,6 @@ def plot_histograms_and_lagged_scatterplot(
     axes[2].axis("equal")
     axes[2].set_title("Scatter-plot with lag={}".format(lag))
 
-
-def plot_positions(
-    srs: pd.Series,
-    *args: Any,
-    **kwargs: Any,
-) -> None:
-    """Plot positions in time."""
-    dbg.dassert_isinstance(srs, pd.Series)
-    plt.plot(srs, *args, **kwargs)
-    plt.title("Positions")
-
     
 # #############################################################################
 # Correlation-type plots
@@ -1823,7 +1812,29 @@ def plot_holdings(
     ax.legend()
     ax.set_title(f"Total holdings ({unit})")
 
+def plot_holdings_diffs(
+    holdings: pd.Series,
+    unit: str = "ratio",
+    ax: Optional[mpl.axes.Axes] = None,
+) -> None:
+    """Plot how much to increase or decrease holdings in order to achieve the 
+    target position.
 
+    :param holdings: series to plot
+    :param unit: "ratio", "%" or "bps" scaling coefficient
+    :param ax: axes in which to draw the plot
+    :param events: list of tuples with dates and labels to point out on the plot
+    """
+    ax = ax or plt.gca()
+    scale_coeff = _choose_scaling_coefficient(unit)
+    holdings = scale_coeff * holdings
+    holdings = -holdings.diff(-1)
+    holdings.plot(linewidth=1, ax=ax, label="holdings diffs")
+    ax.set_ylabel(unit)
+    ax.legend()
+    ax.set_title(f"Holdings diffs in ({unit})")
+    
+    
 def plot_qq(
     srs: pd.Series,
     ax: Optional[mpl.axes.Axes] = None,
