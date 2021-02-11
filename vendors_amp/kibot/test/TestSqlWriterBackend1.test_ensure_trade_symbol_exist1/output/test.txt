@@ -1,2 +1,2 @@
  exchange_id  symbol_id
-        5368       5368
+          20         10
