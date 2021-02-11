@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.dataflow as dtf
+import core.dataflow as cdataf
 """
 
 from core.dataflow.builder import *  # pylint: disable=unused-import # NOQA

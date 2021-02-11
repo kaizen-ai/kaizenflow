@@ -312,7 +312,7 @@ class UnsupervisedSkLearnModel(
         self,
         nid: str,
         model_func: Callable[..., Any],
-        x_vars: Union[List[str], Callable[[], List[str]]],
+        x_vars: Union[List[Any], Callable[[], List[Any]]],
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -320,12 +320,11 @@ class UnsupervisedSkLearnModel(
         """
         Specify the data and sklearn modeling parameters.
 
-        Assumptions:
-            :param nid: unique node id
-            :param model_func: an sklearn model
-            :param x_vars: indexed by knowledge datetimes
-            :param model_kwargs: parameters to forward to the sklearn model
-                (e.g., regularization constants)
+        :param nid: unique node id
+        :param model_func: an sklearn model
+        :param x_vars: indexed by knowledge datetimes
+        :param model_kwargs: parameters to forward to the sklearn model
+            (e.g., regularization constants)
         """
         super().__init__(nid)
         self._model_func = model_func
@@ -420,12 +419,11 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
         """
         Specify the data and sklearn modeling parameters.
 
-        Assumptions:
-            :param nid: unique node id
-            :param model_func: an sklearn model
-            :param x_vars: indexed by knowledge datetimes
-            :param model_kwargs: parameters to forward to the sklearn model
-                (e.g., regularization constants)
+        :param nid: unique node id
+        :param model_func: an sklearn model
+        :param x_vars: indexed by knowledge datetimes
+        :param model_kwargs: parameters to forward to the sklearn model
+            (e.g., regularization constants)
         """
         super().__init__(nid)
         self._model_func = model_func
@@ -616,6 +614,122 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
             idx, [y + "_hat" for y in y_vars], y_hat
         )
         return x, y, y_h
+
+
+class SkLearnInverseTransformer(
+    FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin
+):
+    """
+    Inverse transform cols using an unsupervised sklearn model.
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        model_func: Callable[..., Any],
+        x_vars: Union[List[Any], Callable[[], List[Any]]],
+        trans_x_vars: Union[List[Any], Callable[[], List[Any]]],
+        model_kwargs: Optional[Any] = None,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
+    ) -> None:
+        """
+        Specify the data and sklearn modeling parameters.
+
+        :param nid: unique node id
+        :param model_func: an unsupervised sklearn model with an
+            `inverse_transform()` method
+        :param x_vars: indexed by knowledge datetimes; the unsupervised model
+            is learned on these cols
+        :param trans_x_vars: the cols to apply the learned inverse transform to
+        :param model_kwargs: parameters to forward to the sklearn model
+            (e.g., regularization constants)
+        """
+        super().__init__(nid)
+        self._model_func = model_func
+        self._model_kwargs = model_kwargs or {}
+        self._x_vars = x_vars
+        self._trans_x_vars = trans_x_vars
+        dbg.dassert_not_intersection(self._x_vars, self._trans_x_vars)
+        self._model = None
+        self._col_mode = col_mode or "replace_all"
+        dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
+        self._nan_mode = nan_mode or "raise"
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=True)
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=False)
+
+    def _fit_predict_helper(
+        self, df_in: pd.DataFrame, fit: bool = False
+    ) -> Dict[str, pd.DataFrame]:
+        """
+        Factor out common flow for fit/predict.
+
+        :param df_in: as in `fit`/`predict`
+        :param fit: fits model iff `True`
+        :return: transformed df_in
+        """
+        self._validate_input_df(df_in)
+        df = df_in.copy()
+        # Determine index where no x_vars are NaN.
+        x_vars = self._to_list(self._x_vars)
+        non_nan_idx = df[x_vars].dropna().index
+        dbg.dassert(not non_nan_idx.empty)
+        # Handle presence of NaNs according to `nan_mode`.
+        self._handle_nans(df.index, non_nan_idx)
+        # Prepare x_vars in sklearn format.
+        x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
+        if fit:
+            # Define and fit model.
+            self._model = self._model_func(**self._model_kwargs)
+            self._model = self._model.fit(x_fit)
+        # Add info on unsupervised model.
+        info = collections.OrderedDict()
+        info["model_x_vars"] = x_vars
+        info["model_params"] = self._model.get_params()
+        model_attribute_info = collections.OrderedDict()
+        for k, v in vars(self._model).items():
+            model_attribute_info[k] = v
+        info["model_attributes"] = model_attribute_info
+        # Determine index where no trans_x_vars are NaN.
+        trans_x_vars = self._to_list(self._trans_x_vars)
+        trans_non_nan_idx = df[trans_x_vars].dropna().index
+        dbg.dassert(not trans_non_nan_idx.empty)
+        # Handle presence of NaNs according to `nan_mode`.
+        self._handle_nans(df.index, trans_non_nan_idx)
+        # Prepare trans_x_vars in sklearn format.
+        trans_x_fit = cdataa.transform_to_sklearn(
+            df.loc[non_nan_idx], trans_x_vars
+        )
+        trans_x_inv_trans = self._model.inverse_transform(trans_x_fit)
+        trans_x_inv_trans = cdataa.transform_from_sklearn(
+            trans_non_nan_idx, x_vars, trans_x_inv_trans
+        )
+        #
+        df_out = trans_x_inv_trans.reindex(index=df_in.index)
+        df_out = self._apply_col_mode(df, df_out, trans_x_vars, self._col_mode)
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        if fit:
+            self._set_info("fit", info)
+        else:
+            self._set_info("predict", info)
+        dbg.dassert_no_duplicates(df_out.columns)
+        return {"df_out": df_out}
+
+    def _handle_nans(
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+    ) -> None:
+        if self._nan_mode == "raise":
+            if idx.shape[0] != non_nan_idx.shape[0]:
+                nan_idx = idx.difference(non_nan_idx)
+                raise ValueError(f"NaNs detected at {nan_idx}")
+        elif self._nan_mode == "drop":
+            pass
+        else:
+            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
 
 class ContinuousSarimaxModel(
