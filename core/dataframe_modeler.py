@@ -252,6 +252,30 @@ class DataFrameModeler:
         )
         return self._run_model(model, method)
 
+    def apply_sklearn_inverse_transformer(
+        self,
+        model_func: Callable[..., Any],
+        x_vars: Union[List[str], Callable[[], List[str]]],
+        trans_x_vars: Union[List[str], Callable[[], List[str]]],
+        model_kwargs: Optional[Any] = None,
+        col_mode: Optional[str] = "merge_all",
+        nan_mode: Optional[str] = "drop",
+        method: str = "fit",
+    ) -> DataFrameModeler:
+        """
+        Apply an unsupervised model, e.g., PCA.
+        """
+        model = cdataf.SkLearnInverseTransformer(
+            nid="sklearn_inverse_transformer",
+            model_func=model_func,
+            x_vars=x_vars,
+            trans_x_vars=trans_x_vars,
+            model_kwargs=model_kwargs,
+            col_mode=col_mode,
+            nan_mode=nan_mode,
+        )
+        return self._run_model(model, method)
+
     def apply_sma_model(
         self,
         col: str,
