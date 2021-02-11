@@ -1614,9 +1614,12 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
             adjusted_signal = fwd_signal.multiply(volatility_aligned, axis=0)
         else:
             raise ValueError(f"Invalid mode=`{self._mode}`")
-        adjusted_signal.rename(columns=self._col_rename_func, inplace=True)
         df_out = self._apply_col_mode(
-            df_in, adjusted_signal, self._signal_cols, self._col_mode
+            df_in,
+            adjusted_signal,
+            self._signal_cols,
+            self._col_mode,
+            col_rename_func=self._col_rename_func,
         )
         return df_out
 
@@ -1798,9 +1801,9 @@ def _convert_sarimax_summary_to_dataframe(
                 sample_index = df[0].tolist().index("Sample")
                 df.iloc[sample_index, 0] = "Start Date"
                 df.iloc[sample_index + 1, 0] = "End Date"
-                df.iloc[sample_index + 1, 1] = (
-                    df.iloc[sample_index + 1, 1].lstrip("- ")
-                )
+                df.iloc[sample_index + 1, 1] = df.iloc[
+                    sample_index + 1, 1
+                ].lstrip("- ")
             df = df[df[0] != ""]
             df = df.set_index(0)
             df.index.name = None
