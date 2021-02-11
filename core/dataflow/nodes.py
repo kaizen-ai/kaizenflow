@@ -412,28 +412,31 @@ class ColModeMixin:
         self,
         df_in: pd.DataFrame,
         df_out: pd.DataFrame,
-        cols_to_transform: List[Any],
-        col_mode: str,
+        cols: Optional[List[Any]] = None,
         col_rename_func: Optional[Callable[[Any], Any]] = None,
+        col_mode: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Merge transformed dataframe with original dataframe.
 
         :param df_in: original dataframe
         :param df_out: transformed dataframe
-        :param cols_to_transform: columns in `df_in` that were transformed to
-            obtain `df_out`
-        :param col_mode: "merge_all", "replace_selected", or "replace_all".
-            Determines what columns are propagated. If "merge_all", perform an
-            outer merge
+        :param cols: columns in `df_in` that were transformed to obtain
+            `df_out`. `None` defaults to all columns in `df_out`
+        :param col_mode: `None`, "merge_all", "replace_selected", or
+            "replace_all". Determines what columns are propagated. `None`
+            defaults to "merge all". If "merge_all", perform an outer merge
         :param col_rename_func: function for naming transformed columns, e.g.,
-            lambda x: "zscore_" + x
+            lambda x: "zscore_" + x. `None` defaults to identity transform
         :return: dataframe with columns selected by `col_mode`
         """
         dbg.dassert_isinstance(df_in, pd.DataFrame)
         dbg.dassert_isinstance(df_out, pd.DataFrame)
+        dbg.dassert(cols is None or isinstance(cols, list))
+        cols = cols or df_out.columns.tolist()
         col_rename_func = col_rename_func or (lambda x: x)
         dbg.dassert_isinstance(col_rename_func, collections.Callable)
+        col_mode = col_mode or "merge_all"
         # Rename transformed columns.
         df_out = df_out.rename(columns=col_rename_func)
         self._transformed_col_names = df_out.columns.tolist()
@@ -451,7 +454,7 @@ class ColModeMixin:
                 df_out, how="outer", left_index=True, right_index=True
             )
         elif col_mode == "replace_selected":
-            df_in_not_transformed_cols = df_in.columns.drop(cols_to_transform)
+            df_in_not_transformed_cols = df_in.columns.drop(cols)
             dbg.dassert(
                 df_in_not_transformed_cols.intersection(df_out.columns).empty,
                 "Transformed column names `%s` conflict with existing column "
@@ -459,7 +462,7 @@ class ColModeMixin:
                 df_out.columns,
                 df_in_not_transformed_cols,
             )
-            df_out = df_in.drop(columns=cols_to_transform).merge(
+            df_out = df_in.drop(columns=cols).merge(
                 df_out, left_index=True, right_index=True
             )
         elif col_mode == "replace_all":
@@ -505,10 +508,8 @@ class ColumnTransformer(Transformer, ColModeMixin):
         if cols is not None:
             dbg.dassert_isinstance(cols, list)
         self._cols = cols
-        if col_rename_func is not None:
-            dbg.dassert_isinstance(col_rename_func, collections.Callable)
         self._col_rename_func = col_rename_func
-        self._col_mode = col_mode or "merge_all"
+        self._col_mode = col_mode
         self._transformer_func = transformer_func
         self._transformer_kwargs = transformer_kwargs or {}
         # Store the list of columns after the transformation.
@@ -564,11 +565,11 @@ class ColumnTransformer(Transformer, ColModeMixin):
         )
         # Maybe merge transformed columns with a subset of input df columns.
         df = self._apply_col_mode(
-            df_in=df_in,
-            df_out=df,
-            cols_to_transform=df.columns.tolist(),
-            col_mode=self._col_mode,
+            df_in,
+            df,
+            cols=df.columns.tolist(),
             col_rename_func=self._col_rename_func,
+            col_mode=self._col_mode,
         )
         #
         info["df_transformed_info"] = get_df_info_as_string(df)
@@ -772,11 +773,11 @@ class VolatilityNormalizer(FitPredictNode, ColModeMixin):
         )
         rescaled_y_hat = self._scale_factor * df_in[self._col]
         df_out = self._apply_col_mode(
-            df_in=df_in,
-            df_out=rescaled_y_hat.to_frame(),
-            cols_to_transform=[self._col],
-            col_mode=self._col_mode,
+            df_in,
+            rescaled_y_hat.to_frame(),
+            cols=[self._col],
             col_rename_func=lambda x: f"rescaled_{x}",
+            col_mode=self._col_mode,
         )
         # Store info.
         info = collections.OrderedDict()
@@ -788,11 +789,11 @@ class VolatilityNormalizer(FitPredictNode, ColModeMixin):
         dbg.dassert_in(self._col, df_in.columns)
         rescaled_y_hat = self._scale_factor * df_in[self._col]
         df_out = self._apply_col_mode(
-            df_in=df_in,
-            df_out=rescaled_y_hat.to_frame(),
-            cols_to_transform=[self._col],
-            col_mode=self._col_mode,
+            df_in,
+            rescaled_y_hat.to_frame(),
+            cols=[self._col],
             col_rename_func=lambda x: f"rescaled_{x}",
+            col_mode=self._col_mode,
         )
         return {"df_out": df_out}
 
