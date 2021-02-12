@@ -1,0 +1,31 @@
+                                                     0
+sharpe_ratio                                 -0.456981
+sharpe_ratio_standard_error                    2.73061
+tval                                         -0.169078
+pval                                          0.866431
+kratio                                       -0.833241
+annualized_mean_return_(%)                    -764.952
+annualized_volatility_(%)                      1673.93
+max_drawdown_(%)                              -99.9966
+hit_rate_point_est_(%)                              54
+hit_rate_97.50%CI_lower_bound_(%)              40.2866
+hit_rate_97.50%CI_upper_bound_(%)              67.2649
+start_time                         2015-01-01 00:00:00
+end_time                           2015-02-19 00:00:00
+n_sampling_points                                   50
+frequency                                        <Day>
+sampling_points_per_year                        365.25
+time_span_in_years                            0.136893
+jensen_ratio                                   1.22952
+forecastability                               0.148605
+mean                                        -0.0209432
+std                                           0.875873
+skew                                           0.11277
+kurtosis                                     -0.531709
+n_rows                                              50
+frac_zero                                            0
+frac_nan                                             0
+frac_inf                                             0
+frac_constant                                        0
+num_finite_samples                                  50
+num_unique_values                                   50
