@@ -3,9 +3,9 @@ from typing import Optional
 
 import sklearn
 
-import core.config as cfg
-import core.event_study as esf
-import core.signal_processing as sigp
+import core.config as cconfi
+import core.event_study as cevent
+import core.signal_processing as csigna
 from core.dataflow.builder import DagBuilder
 from core.dataflow.core import DAG
 from core.dataflow.models import SkLearnModel
@@ -24,11 +24,11 @@ class EventStudyBuilder(DagBuilder):
     Configurable pipeline for running event studies.
     """
 
-    def get_config_template(self) -> cfg.Config:
+    def get_config_template(self) -> cconfi.Config:
         """
         Return a reference configuration for the event study pipeline.
         """
-        config = cfg.Config()
+        config = cconfi.Config()
         #
         stage = "resample_events"
         config_tmp = config.add_subconfig(self._get_nid(stage))
@@ -59,7 +59,7 @@ class EventStudyBuilder(DagBuilder):
         config_kwargs["alpha"] = 0.5
         return config
 
-    def get_dag(self, config: cfg.Config, dag: Optional[DAG] = None) -> DAG:
+    def get_dag(self, config: cconfi.Config, dag: Optional[DAG] = None) -> DAG:
         """
         Implement a pipeline for running event studies.
 
@@ -128,7 +128,7 @@ class EventStudyBuilder(DagBuilder):
         #   interest)
         stage = "reindex_events"
         node = YConnector(
-            self._get_nid(stage), connector_func=esf.reindex_event_features
+            self._get_nid(stage), connector_func=cevent.reindex_event_features
         )
         dag.add_node(node)
         dag.connect(
@@ -158,7 +158,7 @@ class EventStudyBuilder(DagBuilder):
         stage = "generate_event_signal"
         node = ColumnTransformer(
             self._get_nid(stage),
-            transformer_func=sigp.compute_smooth_moving_average,
+            transformer_func=csigna.compute_smooth_moving_average,
             **config[self._get_nid(stage)].to_dict(),
             col_mode="replace_all",
         )
@@ -201,7 +201,7 @@ class EventStudyBuilder(DagBuilder):
         stage = "build_local_ts"
         node = YConnector(
             self._get_nid(stage),
-            connector_func=esf.build_local_timeseries,
+            connector_func=cevent.build_local_timeseries,
             **config[self._get_nid(stage)].to_dict(),
         )
         dag.add_node(node)
@@ -250,7 +250,7 @@ class EventStudyBuilder(DagBuilder):
         #   back in chronological order
         stage = "unwrap_local_ts"
         node = YConnector(
-            self._get_nid(stage), connector_func=esf.unwrap_local_timeseries
+            self._get_nid(stage), connector_func=cevent.unwrap_local_timeseries
         )
         dag.add_node(node)
         dag.connect(
@@ -271,16 +271,17 @@ class ContinuousSignalModelBuilder(DagBuilder):
     Market data may also include x-vars and be processed.
     """
 
-    def get_config_template(self) -> cfg.Config:
+    def get_config_template(self) -> cconfi.Config:
         """
         Return a reference configuration.
         """
-        config = cfg.Config()
+        config = cconfi.Config()
         return config
 
-    def get_dag(self, config: cfg.Config, dag: Optional[DAG] = None) -> DAG:
+    def get_dag(self, config: cconfi.Config, dag: Optional[DAG] = None) -> DAG:
         """
         Pipeline interface nodes:
+
         - "signal_input_socket"
             - continuous input signal should feed into this node
         - "market_data_input_socket"
