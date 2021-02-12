@@ -39,109 +39,75 @@ class StatsComputer:
     def summarize_time_index_info(
         self,
         srs: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         return self._calculate_series_stats(
             srs=srs,
             stats_names=["summarize_time_index_info"],
-            oos_start=oos_start,
-            mode=mode,
         )
 
     def compute_jensen_ratio(
         self,
         srs: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         return self._calculate_series_stats(
             srs=srs,
             stats_names=["compute_jensen_ratio"],
-            oos_start=oos_start,
-            mode=mode,
         )
 
     def compute_forecastability(
         self,
         srs: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         return self._calculate_series_stats(
             srs=srs,
             stats_names=["compute_forecastability"],
-            oos_start=oos_start,
-            mode=mode,
         )
 
     def compute_moments(
         self,
         srs: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         return self._calculate_series_stats(
             srs=srs,
             stats_names=["compute_moments"],
-            oos_start=oos_start,
-            mode=mode,
         )
 
     def compute_special_value_stats(
         self,
         srs: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         return self._calculate_series_stats(
             srs=srs,
             stats_names=["compute_special_value_stats"],
-            oos_start=oos_start,
-            mode=mode,
         )
 
     def apply_normality_test(
         self,
         srs: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         return self._calculate_series_stats(
             srs=srs,
             stats_names=["apply_normality_test"],
-            oos_start=oos_start,
-            mode=mode,
         )
 
     def apply_stationarity_tests(
         self,
         srs: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         return self._calculate_series_stats(
             srs=srs,
             stats_names=["apply_stationarity_tests"],
-            oos_start=oos_start,
-            mode=mode,
         )
 
     def calculate_series_stats(
         self,
         srs: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         """
         Calculate all available stats for a series as in
         `dataframe_modeler.calculate_stats`.
         """
-        return self._calculate_series_stats(
-            srs=srs,
-            oos_start=oos_start,
-            mode=mode,
-        )
+        return self._calculate_series_stats(srs=srs)
 
     # #########################################################################
     # Model stats methods
@@ -150,137 +116,97 @@ class StatsComputer:
     def summarize_sharpe_ratio(
         self,
         srs: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         return self._calculate_model_stats(
             pnl=srs,
             stats_names=["summarize_sharpe_ratio"],
-            oos_start=oos_start,
-            mode=mode,
         )
 
     def ttest_1samp(
         self,
         srs: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         return self._calculate_model_stats(
             pnl=srs,
             stats_names=["ttest_1samp"],
-            oos_start=oos_start,
-            mode=mode,
         )
 
     def compute_kratio(
         self,
         srs: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         return self._calculate_model_stats(
             pnl=srs,
             stats_names=["compute_kratio"],
-            oos_start=oos_start,
-            mode=mode,
         )
 
     def compute_annualized_return_and_volatility(
         self,
         srs: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         return self._calculate_model_stats(
             pnl=srs,
             stats_names=["compute_annualized_return_and_volatility"],
-            oos_start=oos_start,
-            mode=mode,
         )
 
     def compute_max_drawdown(
         self,
         srs: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         return self._calculate_model_stats(
             pnl=srs,
             stats_names=["compute_max_drawdown"],
-            oos_start=oos_start,
-            mode=mode,
         )
 
     def calculate_hit_rate(
         self,
         srs: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         return self._calculate_model_stats(
             pnl=srs,
             stats_names=["calculate_hit_rate"],
-            oos_start=oos_start,
-            mode=mode,
         )
 
     def calculate_corr_to_underlying(
         self,
         pnl: pd.Series,
         returns: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         return self._calculate_model_stats(
             pnl=pnl,
             returns=returns,
             stats_names=["calculate_corr_to_underlying"],
-            oos_start=oos_start,
-            mode=mode,
         )
 
     def compute_bet_stats(
         self,
         positions: pd.Series,
         returns: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         return self._calculate_model_stats(
             positions=positions,
             returns=returns,
             stats_names=["compute_bet_stats"],
-            oos_start=oos_start,
-            mode=mode,
         )
 
     def compute_avg_turnover_and_holding_period(
         self,
         srs: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         return self._calculate_model_stats(
             positions=srs,
             stats_names=["compute_avg_turnover_and_holding_period"],
-            oos_start=oos_start,
-            mode=mode,
         )
 
     def compute_prediction_corr(
         self,
         returns: pd.Series,
         positions: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         return self._calculate_model_stats(
             returns=returns,
             positions=positions,
             stats_names=["compute_prediction_corr"],
-            oos_start=oos_start,
-            mode=mode,
         )
 
     def calculate_model_stats(
@@ -288,8 +214,6 @@ class StatsComputer:
         returns: Optional[pd.Series] = None,
         positions: Optional[pd.Series] = None,
         pnl: Optional[pd.Series] = None,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         """
         Calculate all available stats for a model as in
@@ -299,8 +223,6 @@ class StatsComputer:
             returns=returns,
             positions=positions,
             pnl=pnl,
-            oos_start=oos_start,
-            mode=mode,
         )
 
     # #########################################################################
@@ -372,20 +294,6 @@ class StatsComputer:
         return stats_names_dict
 
     @staticmethod
-    def _get_srs(
-        srs: pd.Series,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
-    ) -> pd.Series:
-        if mode == "ins":
-            return srs[:oos_start].copy()
-        if mode == "oos":
-            return srs[oos_start:].copy()
-        if mode == "all_available":
-            return srs.copy()
-        raise ValueError(f"Unrecognized mode `{mode}`")
-
-    @staticmethod
     def _validate_stats_names(
         stats_names_available: Iterable[str],
         stats_names_requested: Optional[List[str]] = None,
@@ -407,11 +315,8 @@ class StatsComputer:
         self,
         srs: pd.Series,
         stats_names: Optional[List[str]] = None,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         dbg.dassert_isinstance(srs, pd.Series)
-        srs = self._get_srs(srs, mode=mode, oos_start=oos_start)
         stats_names_dict = self._map_name_to_method("series")
         stats_names = self._validate_stats_names(
             stats_names_dict.keys(), stats_names
@@ -427,8 +332,6 @@ class StatsComputer:
         positions: Optional[pd.Series] = None,
         pnl: Optional[pd.Series] = None,
         stats_names: Optional[List[str]] = None,
-        oos_start: Optional[Union[str, pd.Timestamp]] = None,
-        mode: str = "ins",
     ) -> pd.Series:
         inputs = [returns, positions, pnl]
         dbg.dassert(
@@ -436,13 +339,6 @@ class StatsComputer:
         )
         freqs = {srs.index.freq for srs in inputs if srs is not None}
         dbg.dassert_eq(len(freqs), 1, "Series have different frequencies.")
-        inputs = [
-            self._get_srs(srs, mode=mode, oos_start=oos_start)
-            if srs is not None
-            else None
-            for srs in inputs
-        ]
-        returns, positions, pnl = inputs
         stats_names_dict = self._map_name_to_method("model")
         stats_names = self._validate_stats_names(
             stats_names_dict.keys(), stats_names
