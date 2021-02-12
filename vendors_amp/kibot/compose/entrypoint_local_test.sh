@@ -16,10 +16,4 @@ echo "STAGE: $STAGE"
 echo "POSTGRES_HOST: $POSTGRES_HOST"
 echo "POSTGRES_PORT: $POSTGRES_PORT"
 
-# TODO: remove this line once the dependency will be added to the image.
-# ./edgar/compose/install_postgres_client12.sh
-
-# TODO(plyq): Change path once amp image will be ready
-# ./amp/vendors_amp/kibot/compose/init_local_db.sh
-
 ./docker_build/entrypoint.sh "$@"
