@@ -259,7 +259,19 @@ def drop_duplicates(
     return df_no_duplicates
 
 
-# //////////////////////////////////////////////////////////////////////////////
+# #############################################################################
+# Column variability.
+# #############################################################################
+
+
+def _get_unique_elements_in_column(df: pd.DataFrame, col_name: str) -> List[Any]:
+    try:
+        vals = df[col_name].unique()
+    except TypeError:
+        # TypeError: unhashable type: 'list'
+        _LOG.error("Column '%s' has unhashable types", col_name)
+        vals = list(set(map(str, df[col_name])))
+    return vals
 
 
 def _get_variable_cols(
@@ -271,11 +283,13 @@ def _get_variable_cols(
     """
     var_cols = []
     const_cols = []
-    for i in df.columns:
-        if len(df[i].unique()) <= threshold:
-            const_cols.append(i)
+    for col_name in df.columns:
+        unique_elems = _get_unique_elements_in_column(df, col_name)
+        num_unique_elems = len(unique_elems)
+        if num_unique_elems <= threshold:
+            const_cols.append(col_name)
         else:
-            var_cols.append(i)
+            var_cols.append(col_name)
     return var_cols, const_cols
 
 
@@ -288,16 +302,63 @@ def remove_columns_with_low_variability(
     """
     var_cols, const_cols = _get_variable_cols(df, threshold=threshold)
     _LOG.log(log_level, "# Constant cols")
-    for c in const_cols:
+    for col_name in const_cols:
+        unique_elems = _get_unique_elements_in_column(df, col_name)
         _LOG.log(
             log_level,
             "  %s: %s",
-            c,
-            pri.list_to_str(list(map(str, df[c].unique()))),
+            col_name,
+            pri.list_to_str(list(map(str, unique_elems))),
         )
     _LOG.log(log_level, "# Var cols")
     _LOG.log(log_level, pri.list_to_str(var_cols))
     return df[var_cols]
+
+
+def print_column_variability(
+        df: pd.DataFrame,
+        max_num_vals: int = 3,
+        num_digits: int = 2,
+        use_thousands_separator: bool = True,
+) -> pd.DataFrame:
+    """Print statistics about the values in each column of a data frame.
+
+    This is useful to get a sense of which columns are interesting.
+    """
+    print(("# df.columns=%s" % pri.list_to_str(df.columns)))
+    res = []
+    for c in tqdm.tqdm(df.columns):
+        vals = _get_unique_elements_in_column(df, c)
+        try:
+            min_val = min(vals)
+        except TypeError as e:
+            _LOG.debug("Column='%s' reported %s", c, e)
+            min_val = "nan"
+        try:
+            max_val = max(vals)
+        except TypeError as e:
+            _LOG.debug("Column='%s' reported %s", c, e)
+            max_val = "nan"
+        if len(vals) <= max_num_vals:
+            txt = ", ".join(map(str, vals))
+        else:
+            txt = ", ".join(map(str, [min_val, "...", max_val]))
+        row = ["%20s" % c, len(vals), txt]
+        res.append(row)
+    res = pd.DataFrame(res, columns=["col_name", "num", "elems"])
+    res.sort_values("num", inplace=True)
+    # TODO(gp): Fix this.
+    # res = add_count_as_idx(res)
+    res = add_pct(
+        res,
+        "num",
+        df.shape[0],
+        "[diff %]",
+        num_digits=num_digits,
+        use_thousands_separator=use_thousands_separator,
+    )
+    res.reset_index(drop=True, inplace=True)
+    return res
 
 
 def add_pct(
@@ -381,52 +442,6 @@ def breakdown_table(
                 "display.max_colwidth", 100000, "display.width", 130
             ):
                 print((df_tmp[cols]))
-    return res
-
-
-def print_column_variability(
-    df: pd.DataFrame,
-    max_num_vals: int = 3,
-    num_digits: int = 2,
-    use_thousands_separator: bool = True,
-) -> pd.DataFrame:
-    """Print statistics about the values in each column of a data frame.
-
-    This is useful to get a sense of which columns are interesting.
-    """
-    print(("# df.columns=%s" % pri.list_to_str(df.columns)))
-    res = []
-    for c in tqdm.tqdm(df.columns):
-        vals = df[c].unique()
-        try:
-            min_val = min(vals)
-        except TypeError as e:
-            _LOG.debug("Column='%s' reported %s", c, e)
-            min_val = "nan"
-        try:
-            max_val = max(vals)
-        except TypeError as e:
-            _LOG.debug("Column='%s' reported %s", c, e)
-            max_val = "nan"
-        if len(vals) <= max_num_vals:
-            txt = ", ".join(map(str, vals))
-        else:
-            txt = ", ".join(map(str, [min_val, "...", max_val]))
-        row = ["%20s" % c, len(vals), txt]
-        res.append(row)
-    res = pd.DataFrame(res, columns=["col_name", "num", "elems"])
-    res.sort_values("num", inplace=True)
-    # TODO(gp): Fix this.
-    # res = add_count_as_idx(res)
-    res = add_pct(
-        res,
-        "num",
-        df.shape[0],
-        "[diff %]",
-        num_digits=num_digits,
-        use_thousands_separator=use_thousands_separator,
-    )
-    res.reset_index(drop=True, inplace=True)
     return res
 
 
@@ -568,9 +583,9 @@ def filter_by_val(
     return res
 
 
-# /////////////////////////////////////////////////////////////////////////////
+# ##############################################################################
 # PCA
-# /////////////////////////////////////////////////////////////////////////////
+# ##############################################################################
 
 
 def _get_num_pcs_to_plot(num_pcs_to_plot: int, max_pcs: int) -> int:
