@@ -372,7 +372,9 @@ def diff_strings(
 
 
 def obj_to_str(
-    obj: Any, attr_mode: str = "__dict__", print_type: bool = False, 
+    obj: Any,
+    attr_mode: str = "__dict__",
+    print_type: bool = False,
     callable_mode: str = "skip",
     private_mode: str = "skip_dunder",
 ) -> str:
@@ -399,7 +401,10 @@ def obj_to_str(
         return skip
 
     def _to_skip_private(name: str, private_mode: str) -> bool:
-        dbg.dassert_in(private_mode, ("skip_dunder", "only_dunder", "skip_private", "only_private", "all"))
+        dbg.dassert_in(
+            private_mode,
+            ("skip_dunder", "only_dunder", "skip_private", "only_private", "all"),
+        )
         is_dunder = name.startswith("__") and name.endswith("__")
         is_private = not is_dunder and name.startswith("_")
         skip = False
