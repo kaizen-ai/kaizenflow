@@ -1,5 +1,6 @@
 """
 Utility functions for Jupyter notebook to:
+
 - format data
 - transform pandas data structures
 - compute common stats
@@ -13,6 +14,7 @@ import logging
 import math
 from typing import (
     Any,
+    cast,
     Callable,
     Collection,
     Dict,
@@ -49,6 +51,9 @@ _LOG = logging.getLogger(__name__)
 
 
 def cast_to_df(obj: Union[pd.Series, pd.DataFrame]) -> pd.DataFrame:
+    """
+    Convert a pandas object into a pd.DataFrame.
+    """
     if isinstance(obj, pd.Series):
         df = pd.DataFrame(obj)
     else:
@@ -58,6 +63,9 @@ def cast_to_df(obj: Union[pd.Series, pd.DataFrame]) -> pd.DataFrame:
 
 
 def cast_to_series(obj: Union[pd.Series, pd.DataFrame]) -> pd.Series:
+    """
+    Convert a pandas object into a pd.Series.
+    """
     if isinstance(obj, pd.DataFrame):
         dbg.dassert_eq(obj.shape[1], 1)
         srs = obj.iloc[:, 1]
@@ -70,7 +78,7 @@ def cast_to_series(obj: Union[pd.Series, pd.DataFrame]) -> pd.Series:
 # TODO(gp): Need to be tested.
 def adapt_to_series(f: Callable) -> Callable:
     """
-    Decorate a function working on data frames in order to work on series.
+    Extend a function working on dataframes so that it can work on series.
     """
 
     def wrapper(
@@ -112,14 +120,16 @@ def drop_axis_with_all_nans(
     report_stats: bool = False,
 ) -> pd.DataFrame:
     """
-    Remove columns and rows completely empty. The operation is not in place and
-    the resulting df is returned.
+    Remove columns and rows not containing information (e.g., with only nans).
 
+    The operation is not performed in place and the resulting df is returned.
     Assume that the index is timestamps.
 
+    :param df: data frame to process
     :param drop_rows: remove rows with only nans
     :param drop_columns: remove columns with only nans
     :param drop_infs: remove also +/- np.inf
+    :param report_stats: report the stats of the operations
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
     if drop_infs:
@@ -184,7 +194,9 @@ def drop_na(
     df = df.dropna(*args, **kwargs)
     if report_stats:
         num_rows_after = df.shape[0]
-        pct_removed = hprint.perc(num_rows_before - num_rows_after, num_rows_before)
+        pct_removed = hprint.perc(
+            num_rows_before - num_rows_after, num_rows_before
+        )
         _LOG.info("removed rows with nans: %s", pct_removed)
     return df
 
@@ -197,8 +209,6 @@ def report_zero_nan_inf_stats(
 ) -> pd.DataFrame:
     """
     Report count and percentage about zeros, nans, infs for a df.
-
-    :param verbose: print more information
     """
     df = cast_to_df(df)
     _LOG.info("index in [%s, %s]", df.index.min(), df.index.max())
@@ -228,22 +238,30 @@ def report_zero_nan_inf_stats(
     num_zeros = (np.abs(df) < zero_threshold).sum(axis=0)
     if verbose:
         stats_df["num_zeros"] = num_zeros
-    stats_df["zeros [%]"] = (100.0 * num_zeros / num_rows).apply(hprint.round_digits)
+    stats_df["zeros [%]"] = (100.0 * num_zeros / num_rows).apply(
+        hprint.round_digits
+    )
     #
     num_nans = np.isnan(df).sum(axis=0)
     if verbose:
         stats_df["num_nans"] = num_nans
-    stats_df["nans [%]"] = (100.0 * num_nans / num_rows).apply(hprint.round_digits)
+    stats_df["nans [%]"] = (100.0 * num_nans / num_rows).apply(
+        hprint.round_digits
+    )
     #
     num_infs = np.isinf(df).sum(axis=0)
     if verbose:
         stats_df["num_infs"] = num_infs
-    stats_df["infs [%]"] = (100.0 * num_infs / num_rows).apply(hprint.round_digits)
+    stats_df["infs [%]"] = (100.0 * num_infs / num_rows).apply(
+        hprint.round_digits
+    )
     #
     num_valid = df.shape[0] - num_zeros - num_nans - num_infs
     if verbose:
         stats_df["num_valid"] = num_valid
-    stats_df["valid [%]"] = (100.0 * num_valid / num_rows).apply(hprint.round_digits)
+    stats_df["valid [%]"] = (100.0 * num_valid / num_rows).apply(
+        hprint.round_digits
+    )
     #
     display_df(stats_df, as_txt=as_txt)
     return stats_df
@@ -282,6 +300,7 @@ def _get_unique_elements_in_column(df: pd.DataFrame, col_name: str) -> List[Any]
         # TypeError: unhashable type: 'list'
         _LOG.error("Column '%s' has unhashable types", col_name)
         vals = list(set(map(str, df[col_name])))
+    cast(list, vals)
     return vals
 
 
@@ -401,7 +420,9 @@ def add_pct(
         for v in df[col_name]
     ]
     df[dst_col_name] = [
-        hprint.round_digits(v, num_digits=num_digits, use_thousands_separator=False)
+        hprint.round_digits(
+            v, num_digits=num_digits, use_thousands_separator=False
+        )
         for v in df[dst_col_name]
     ]
     return df
@@ -446,7 +467,9 @@ def breakdown_table(
         for v in res["count"]
     ]
     res["pct"] = [
-        hprint.round_digits(v, num_digits=num_digits, use_thousands_separator=False)
+        hprint.round_digits(
+            v, num_digits=num_digits, use_thousands_separator=False
+        )
         for v in res["pct"]
     ]
     if verbosity:
