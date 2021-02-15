@@ -12,7 +12,7 @@ import tqdm
 
 import helpers.dbg as dbg
 import helpers.parser as hparse
-import vendors2.docker.sql_writer_backend as vdsqlw
+import vendors_amp.docker.sql_writer_backend as vdsqlw
 import vendors_amp.kibot.data.config as vkdcon
 import vendors_amp.kibot.data.load as vkdloa
 import vendors_amp.kibot.data.load.dataset_name_parser as vkdlda

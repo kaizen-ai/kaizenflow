@@ -3,10 +3,10 @@ import itertools
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import networkx as nx
+import networkx as networ
 
 import helpers.dbg as dbg
-import helpers.list as lst
+import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
@@ -73,7 +73,8 @@ class NodeInterface(abc.ABC):
 
 class Node(NodeInterface):
     """
-    A node class that stores and retrieves its output values on a "per-method" basis.
+    A node class that stores and retrieves its output values on a "per-method"
+    basis.
 
     TODO: Explain use case.
     """
@@ -144,8 +145,8 @@ class DAG:
     """
     Class for building DAGs using Nodes.
 
-    The DAG manages node execution and storage of outputs (within executed
-    nodes).
+    The DAG manages node execution and storage of outputs (within
+    executed nodes).
     """
 
     def __init__(
@@ -162,7 +163,7 @@ class DAG:
                     node
             mode = "loose" is useful for interactive notebooks and debugging.
         """
-        self._dag = nx.DiGraph()
+        self._dag = networ.DiGraph()
         #
         if name is not None:
             dbg.dassert_isinstance(name, str)
@@ -176,7 +177,7 @@ class DAG:
         self._mode = mode
 
     @property
-    def dag(self) -> nx.DiGraph:
+    def dag(self) -> networ.DiGraph:
         return self._dag
 
     # TODO(*): Should we force to always have a name? So mypy can perform more
@@ -228,7 +229,7 @@ class DAG:
                     node.nid,
                 )
                 # Remove node successors.
-                for nid in nx.descendants(self._dag, node.nid):
+                for nid in networ.descendants(self._dag, node.nid):
                     _LOG.warning("Removing nid=%s", nid)
                     self.remove_node(nid)
                 # Remove node.
@@ -282,7 +283,7 @@ class DAG:
             dbg.dassert_in(parent_out, self.get_node(parent_nid).output_names)
         else:
             parent_nid = parent
-            parent_out = lst.assert_single_element_and_return(
+            parent_out = hlist.assert_single_element_and_return(
                 self.get_node(parent_nid).output_names
             )
         # Automatically infer input name when the child has only one input.
@@ -292,7 +293,7 @@ class DAG:
             dbg.dassert_in(child_in, self.get_node(child_nid).input_names)
         else:
             child_nid = child
-            child_in = lst.assert_single_element_and_return(
+            child_in = hlist.assert_single_element_and_return(
                 self.get_node(child_nid).input_names
             )
         # Ensure that `child_in` is not already hooked up to an output.
@@ -310,7 +311,7 @@ class DAG:
         self._dag.add_edge(parent_nid, child_nid, **kwargs)
         # If adding the edge causes the DAG property to be violated, remove the
         # edge and raise an error.
-        if not nx.is_directed_acyclic_graph(self._dag):
+        if not networ.is_directed_acyclic_graph(self._dag):
             self._dag.remove_edge(parent_nid, child_nid)
             dbg.dfatal(
                 "Creating edge {} -> {} introduces a cycle!".format(
@@ -323,7 +324,7 @@ class DAG:
         :return: list of nid's of source nodes
         """
         sources = []
-        for nid in nx.topological_sort(self._dag):
+        for nid in networ.topological_sort(self._dag):
             if not any(True for _ in self._dag.predecessors(nid)):
                 sources.append(nid)
         return sources
@@ -333,7 +334,7 @@ class DAG:
         :return: list of nid's of sink nodes
         """
         sinks = []
-        for nid in nx.topological_sort(self._dag):
+        for nid in networ.topological_sort(self._dag):
             if not any(True for _ in self._dag.successors(nid)):
                 sinks.append(nid)
         return sinks
@@ -348,7 +349,7 @@ class DAG:
             `get_outputs(method)`.
         """
         sinks = self.get_sinks()
-        for nid in nx.topological_sort(self._dag):
+        for nid in networ.topological_sort(self._dag):
             self._run_node(nid, method)
         return {sink: self.get_node(sink).get_outputs(method) for sink in sinks}
 
@@ -365,8 +366,8 @@ class DAG:
         :return: result of node nid's `get_outputs(method)`.
         """
         ancestors = filter(
-            lambda x: x in nx.ancestors(self._dag, nid),
-            nx.topological_sort(self._dag),
+            lambda x: x in networ.ancestors(self._dag, nid),
+            networ.topological_sort(self._dag),
         )
         # The `ancestors` filter only returns nodes strictly less than `nid`,
         # and so we need to add `nid` back.

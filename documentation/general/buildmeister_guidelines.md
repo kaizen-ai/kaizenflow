@@ -13,6 +13,8 @@
 - Buildmeister rotates every 2 weeks
   - To see who is the Buildmeister now refer to
     [Buildmeister spreadsheet "Buildmeister rotation"](https://docs.google.com/spreadsheets/d/1AajgLnRQka9-W8mKOkobg8QOzaEVOnIMlDi8wWVATeA/edit#gid=0),
+  - Each rotation should be confirmed by a 'handshake' between the outgoing
+    Buildmeister and the new one in the related Telegram chat.
 - Buildmeister is responsible for:
   - Pushing team members to fix broken tests
   - Conducting post-mortem analysis, see
@@ -120,6 +122,9 @@
   - You have to update the break issues if the problem was solved or partially
     solved.
   - Pay special attention to the failures which resulted in disabling tests
+  
+- When your time of the Buildmeister duties is over, confirm the rotation with
+  the next responsible person in the related Telegram chat.
 
 # Post-mortem analysis
 

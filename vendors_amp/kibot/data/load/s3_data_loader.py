@@ -13,7 +13,7 @@ import vendors_amp.kibot.data.types as vkdtyp
 
 class S3KibotDataLoader(vkdlda.AbstractKibotDataLoader):
     @classmethod
-#    @hcache.cache
+    @hcache.cache
     def read_data(
         cls,
         exchange: str,
