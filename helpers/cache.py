@@ -28,7 +28,7 @@ _DISK_CACHE: Any = None
 # This is the global memory cache.
 _MEMORY_CACHE: Any = None
 _MEMORY_TMPFS_PATH = os.getenv("CACHE_MEMORY_TMPFS_PATH", 
-        "/tmp" if hsi.get_os_name() == "darwin" else
+        "/tmp" if hsi.get_os_name() == "Darwin" else
         "/mnt/tmpfs")
 # Log level for information about the high level behavior of the caching
 # layer.
