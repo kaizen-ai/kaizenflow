@@ -10,7 +10,7 @@ services:
       - ../env/test.env
     environment:
       - PATH=/commodity_research/amp/vendors_amp/kibot/compose/scripts:$PATH
-    
+
 
   kibot_postgres_test:
     image: postgres:13
@@ -23,4 +23,3 @@ services:
     ports:
       - "5433:5433"
     command: "-p 5433"
-

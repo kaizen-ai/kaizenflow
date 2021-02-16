@@ -146,6 +146,3 @@ ifeq ($(VERSION),)
 else
 	docker push $(KIBOT_REPO_BASE_PATH):$(VERSION)
 endif
-
-
-

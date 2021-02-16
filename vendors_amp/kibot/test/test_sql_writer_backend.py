@@ -1,22 +1,25 @@
 import os
-import time
+
 import pandas as pd
+import psycopg2
+import psycopg2.sql as psql
 import pytest
+
+import helpers.io_ as hio
 import helpers.unit_test as hut
 import vendors_amp.kibot.data.types as vkdtyp
 import vendors_amp.kibot.sql_writer_backend as vksqlw
-import helpers.io_ as hio
-import psycopg2
-import psycopg2.sql as sql
 
-DB_SCHEMA_FILE = os.path.join(os.path.dirname(__file__),
-                              "../compose/init_sql/db.sql")
+DB_SCHEMA_FILE = os.path.join(
+    os.path.dirname(__file__), "../compose/init_sql/db.sql"
+)
 
 
 class TestDbSchemaFile(hut.TestCase):
     """
     Test SQL initialization file existence.
     """
+
     def test_exist1(self) -> None:
         """
         Test that schema SQL file exists.
@@ -24,11 +27,24 @@ class TestDbSchemaFile(hut.TestCase):
         self.assertTrue(os.path.exists(DB_SCHEMA_FILE))
 
 
-@pytest.mark.skipif(not ((os.environ.get("STAGE") == "TEST" and os.environ.get("POSTGRES_HOST") == "kibot_postgres_test") or (os.environ.get("STAGE") == "LOCAL" and os.environ.get("POSTGRES_HOST") == "kibot_postgres_local")), reason="Testable only inside kibot container")
+@pytest.mark.skipif(
+    not (
+        (
+            os.environ.get("STAGE") == "TEST"
+            and os.environ.get("POSTGRES_HOST") == "kibot_postgres_test"
+        )
+        or (
+            os.environ.get("STAGE") == "LOCAL"
+            and os.environ.get("POSTGRES_HOST") == "kibot_postgres_local"
+        )
+    ),
+    reason="Testable only inside kibot container",
+)
 class TestSqlWriterBackend1(hut.TestCase):
     """
     Test writing operation to Postgresql kibot db.
     """
+
     def setUp(self) -> None:
         super().setUp()
         # Get postgresql connection parameters.
@@ -40,8 +56,9 @@ class TestSqlWriterBackend1(hut.TestCase):
         # Create database for each test.
         create_database(self._dbname)
         # Initialize writer class to test.
-        self._writer = vksqlw.SQLWriterBackend(self._dbname, user, password,
-                                               host, port)
+        self._writer = vksqlw.SQLWriterBackend(
+            self._dbname, user, password, host, port
+        )
         # Apply production schema to created database.
         with self._writer.conn as conn:
             with conn.cursor() as curs:
@@ -63,37 +80,40 @@ class TestSqlWriterBackend1(hut.TestCase):
         Test adding a new symbol to Symbol table.
         """
         self._writer.ensure_symbol_exists(
-            symbol=self._get_test_string(),
-            asset_class=vkdtyp.AssetClass.Futures)
+            symbol=self._get_test_string(), asset_class=vkdtyp.AssetClass.Futures
+        )
         self._check_saved_data(table="Symbol")
 
     def test_ensure_trade_symbol_exist1(self) -> None:
         """
         Test adding a new symbol to TradeSymbol table.
         """
-        self._prepare_tables(insert_symbol=True,
-                             insert_exchange=True,
-                             insert_trade_symbol=False)
-        self._writer.ensure_trade_symbol_exists(symbol_id=self._symbol_id,
-                                                exchange_id=self._exchange_id)
+        self._prepare_tables(
+            insert_symbol=True, insert_exchange=True, insert_trade_symbol=False
+        )
+        self._writer.ensure_trade_symbol_exists(
+            symbol_id=self._symbol_id, exchange_id=self._exchange_id
+        )
         self._check_saved_data(table="TradeSymbol")
 
     def test_insert_bulk_daily_data1(self) -> None:
         """
         Test adding a dataframe to DailyData table.
         """
-        self._prepare_tables(insert_symbol=True,
-                             insert_exchange=True,
-                             insert_trade_symbol=True)
-        df = pd.DataFrame({
-            "trade_symbol_id": [self._trade_symbol_id] * 3,
-            "date": ["2021-01-01", "2021-01-02", "2021-01-03"],
-            "open": [10.0] * 3,
-            "high": [15] * 3,
-            "low": [9] * 3,
-            "close": [12.5] * 3,
-            "volume": [1000] * 3,
-        })
+        self._prepare_tables(
+            insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
+        )
+        df = pd.DataFrame(
+            {
+                "trade_symbol_id": [self._trade_symbol_id] * 3,
+                "date": ["2021-01-01", "2021-01-02", "2021-01-03"],
+                "open": [10.0] * 3,
+                "high": [15] * 3,
+                "low": [9] * 3,
+                "close": [12.5] * 3,
+                "volume": [1000] * 3,
+            }
+        )
         self._writer.insert_bulk_daily_data(df=df)
         self._check_saved_data(table="DailyData")
 
@@ -101,9 +121,9 @@ class TestSqlWriterBackend1(hut.TestCase):
         """
         Test adding a one bar data to DailyData table.
         """
-        self._prepare_tables(insert_symbol=True,
-                             insert_exchange=True,
-                             insert_trade_symbol=True)
+        self._prepare_tables(
+            insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
+        )
         self._writer.insert_daily_data(
             trade_symbol_id=self._trade_symbol_id,
             date="2021-01-01",
@@ -119,22 +139,24 @@ class TestSqlWriterBackend1(hut.TestCase):
         """
         Test adding a dataframe to MinuteData table.
         """
-        self._prepare_tables(insert_symbol=True,
-                             insert_exchange=True,
-                             insert_trade_symbol=True)
-        df = pd.DataFrame({
-            "trade_symbol_id": [self._trade_symbol_id] * 3,
-            "datetime": [
-                "2021-02-10T13:50:00Z",
-                "2021-02-10T13:51:00Z",
-                "2021-02-10T13:52:00Z",
-            ],
-            "open": [10.0] * 3,
-            "high": [15] * 3,
-            "low": [9] * 3,
-            "close": [12.5] * 3,
-            "volume": [1000] * 3,
-        })
+        self._prepare_tables(
+            insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
+        )
+        df = pd.DataFrame(
+            {
+                "trade_symbol_id": [self._trade_symbol_id] * 3,
+                "datetime": [
+                    "2021-02-10T13:50:00Z",
+                    "2021-02-10T13:51:00Z",
+                    "2021-02-10T13:52:00Z",
+                ],
+                "open": [10.0] * 3,
+                "high": [15] * 3,
+                "low": [9] * 3,
+                "close": [12.5] * 3,
+                "volume": [1000] * 3,
+            }
+        )
         self._writer.insert_bulk_minute_data(df=df)
         self._check_saved_data(table="MinuteData")
 
@@ -142,9 +164,9 @@ class TestSqlWriterBackend1(hut.TestCase):
         """
         Test adding a one bar data to MinuteData table.
         """
-        self._prepare_tables(insert_symbol=True,
-                             insert_exchange=True,
-                             insert_trade_symbol=True)
+        self._prepare_tables(
+            insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
+        )
         self._writer.insert_minute_data(
             trade_symbol_id=self._trade_symbol_id,
             date_time="2021-02-10T13:50:00Z",
@@ -160,9 +182,9 @@ class TestSqlWriterBackend1(hut.TestCase):
         """
         Test adding a one tick data to TickData table.
         """
-        self._prepare_tables(insert_symbol=True,
-                             insert_exchange=True,
-                             insert_trade_symbol=True)
+        self._prepare_tables(
+            insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
+        )
         self._writer.insert_tick_data(
             trade_symbol_id=self._trade_symbol_id,
             date_time="2021-02-10T13:50:00Z",
@@ -179,8 +201,8 @@ class TestSqlWriterBackend1(hut.TestCase):
     ) -> None:
         """
         Insert Symbol, Exchange and TradeSymbol entries to make test work.
-        
-        See `DB_SCHEMA_FILE` for more info. 
+
+        See `DB_SCHEMA_FILE` for more info.
         """
         with self._writer.conn:
             with self._writer.conn.cursor() as curs:
@@ -261,16 +283,18 @@ def create_database(dbname: str) -> None:
         password=password,
     )
     # Make DROP/CREATE DATABASE executable from transaction block.
-    connection.set_isolation_level(
-        psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     # Create a database from scratch.
     with connection:
         with connection.cursor() as cursor:
             cursor.execute(
-                sql.SQL("DROP DATABASE IF EXISTS {};").format(
-                    sql.Identifier(dbname)))
+                psql.SQL("DROP DATABASE IF EXISTS {};").format(
+                    psql.Identifier(dbname)
+                )
+            )
             cursor.execute(
-                sql.SQL("CREATE DATABASE {};").format(sql.Identifier(dbname)))
+                psql.SQL("CREATE DATABASE {};").format(psql.Identifier(dbname))
+            )
     # Close connection.
     connection.close()
 
@@ -294,12 +318,12 @@ def remove_database(dbname: str) -> None:
         password=password,
     )
     # Make DROP DATABASE executable from transaction block.
-    connection.set_isolation_level(
-        psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     # Drop database.
     with connection:
         with connection.cursor() as cursor:
             cursor.execute(
-                sql.SQL("DROP DATABASE {};").format(sql.Identifier(dbname)))
+                psql.SQL("DROP DATABASE {};").format(psql.Identifier(dbname))
+            )
     # Close connection.
     connection.close()

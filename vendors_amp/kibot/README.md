@@ -2,7 +2,7 @@
    * [Build image](#build-image)
    * [Run kibot app](#run-kibot-app)
       * [Run locally for development](#run-locally-for-development)
-      * [Run as a service in detach mode (DEV stage)](#run-as-a-service-in-detach-mode-dev-stage)
+      * [Run locally only PostgreSQL](#run-locally-only-postgresql)
    * [Development flow using stages](#development-flow-using-stages)
 
 
