@@ -168,6 +168,24 @@ class Test_compute_prices_from_rets(hut.TestCase):
         )
         output_txt = hut.convert_df_to_string(sample, index=True)
         self.check_string(output_txt)
+        
+    def test6(self) -> None:
+        """
+        Check future price prediction.
+        """
+        np.random.seed(1)
+        sample = self._get_sample()
+        sample["ret_1"] = fin.compute_ret_0(sample.price, mode="log_rets").shift(-1)
+        future_price_expected = sample.iloc[-1, 0]
+        # Drop latest date price.
+        sample.dropna(inplace=True)
+        rets = sample["ret_1"]
+        rets.index = rets.index.shift(1)
+        # Make future prediction for the dropped price.
+        future_price_actual = fin.compute_prices_from_rets(
+            sample.price, rets, "log_rets"
+        )[-1]
+        np.testing.assert_almost_equal(future_price_expected, future_price_actual)
 
         
 class Test_aggregate_log_rets(hut.TestCase):

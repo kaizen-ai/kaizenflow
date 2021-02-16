@@ -252,6 +252,30 @@ class DataFrameModeler:
         )
         return self._run_model(model, method)
 
+    def apply_sklearn_inverse_transformer(
+        self,
+        model_func: Callable[..., Any],
+        x_vars: Union[List[str], Callable[[], List[str]]],
+        trans_x_vars: Union[List[str], Callable[[], List[str]]],
+        model_kwargs: Optional[Any] = None,
+        col_mode: Optional[str] = "merge_all",
+        nan_mode: Optional[str] = "drop",
+        method: str = "fit",
+    ) -> DataFrameModeler:
+        """
+        Apply an unsupervised model, e.g., PCA.
+        """
+        model = cdataf.SkLearnInverseTransformer(
+            nid="sklearn_inverse_transformer",
+            model_func=model_func,
+            x_vars=x_vars,
+            trans_x_vars=trans_x_vars,
+            model_kwargs=model_kwargs,
+            col_mode=col_mode,
+            nan_mode=nan_mode,
+        )
+        return self._run_model(model, method)
+
     def apply_sma_model(
         self,
         col: str,
@@ -691,7 +715,7 @@ class DataFrameModeler:
         axes: Optional[
             List[Union[mpl.axes.Axes, List[mpl.axes.Axes], None]]
         ] = None,
-    ) -> None:
+    ) -> List[List[Optional[mpl.figure.Figure]]]:
         """
         :param num_plots: number of cols to plot the study for
         :param axes: flat list of `ax`/`axes` parameters for each column for
@@ -705,11 +729,15 @@ class DataFrameModeler:
             axes_for_cols = [None] * num_plots
         else:
             axes_for_cols = np.array(axes).reshape(num_plots, -1)
+        figs = []
         for col_name, axes_for_col in zip(cols_to_draw, axes_for_cols):
             tsds = ctimes.TimeSeriesDailyStudy(df[col_name])
-            tsds.execute(last_n_years=last_n_years, axes=axes_for_col)
+            figs.append(
+                tsds.execute(last_n_years=last_n_years, axes=axes_for_col)
+            )
             if axes is None:
                 plt.show()
+        return figs
 
     def plot_seasonal_decomposition(
         self,

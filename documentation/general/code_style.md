@@ -1174,7 +1174,7 @@ def _get_zero_element(list_: list):
     else:
         return list*[0]
 
-vendors/kibot/utils.py:394: [R1705(no-else-return), ExpiryContractMapper.extract_contract_expiry] Unnecessary "else" after "return" [pylint]
+vendors_amp.kibot/utils.py:394: [R1705(no-else-return), ExpiryContractMapper.extract_contract_expiry] Unnecessary "else" after "return" [pylint]
 ```
 
 - Try to have a single exit point from a function, since this guarantees that

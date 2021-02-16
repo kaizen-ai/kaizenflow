@@ -61,7 +61,7 @@ class _TimeSeriesAnalyzer:
     def plot_time_series(
         self,
         ax: Optional[mpl.axes.Axes] = None,
-    ) -> None:
+    ) -> Optional[mpl.figure.Figure]:
         """Plot timeseries on its original time scale."""
         func_name = intr.get_function_name()
         _LOG.debug(func_name)
@@ -80,13 +80,13 @@ class _TimeSeriesAnalyzer:
             rotation=30,
             rotation_mode="anchor",
         )
-        return
+        return ax.get_figure()
 
     def plot_by_year(
         self,
         last_n_years: Optional[int] = None,
         axes: Optional[List[mpl.axes.Axes]] = None,
-    ) -> None:
+    ) -> Optional[mpl.figure.Figure]:
         """Resample yearly and then plot each year on a different plot."""
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
@@ -133,7 +133,7 @@ class _TimeSeriesAnalyzer:
         for ax, group_by_timestamp in zip(axes, years_with_enough_data):
             ts = yearly_resample.get_group(group_by_timestamp)
             ts.plot(ax=ax, title=group_by_timestamp.year)
-        return
+        return axes[-1].get_figure()
 
     # TODO(gp): Think if it makes sense to generalize this by passing a lambda
     #  that define the timescale, e.g.,
@@ -143,7 +143,9 @@ class _TimeSeriesAnalyzer:
     # TODO(gp): It would be nice to plot the timeseries broken down by
     #  different timescales instead of doing the mean in each step
     #  (see https://en.wikipedia.org/wiki/Seasonality#Detecting_seasonality)
-    def boxplot_day_of_month(self, ax: Optional[mpl.axes.Axes] = None) -> None:
+    def boxplot_day_of_month(
+        self, ax: Optional[mpl.axes.Axes] = None
+    ) -> Optional[mpl.figure.Figure]:
         """Plot the mean value of the timeseries for each day."""
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
@@ -156,9 +158,11 @@ class _TimeSeriesAnalyzer:
             f"{self._freq_name} {self._ts_name} on different days of "
             f"month{self._title_suffix}"
         )
-        return
+        return ax.get_figure()
 
-    def boxplot_day_of_week(self, ax: Optional[mpl.axes.Axes] = None) -> None:
+    def boxplot_day_of_week(
+        self, ax: Optional[mpl.axes.Axes] = None
+    ) -> Optional[mpl.figure.Figure]:
         """Plot the mean value of the timeseries for year."""
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
@@ -171,7 +175,7 @@ class _TimeSeriesAnalyzer:
             f"{self._freq_name} {self._ts_name} on different days of "
             f"week{self._title_suffix}"
         )
-        return
+        return ax.get_figure()
 
     def execute(
         self,
@@ -179,16 +183,18 @@ class _TimeSeriesAnalyzer:
         axes: Optional[
             List[Union[mpl.axes.Axes, List[mpl.axes.Axes], None]]
         ] = None,
-    ) -> None:
+    ) -> List[Optional[mpl.figure.Figure]]:
         """
         :param axes: list of `ax`/`axes` parameters for each method. If the
             method is skipped, should be `None`
         """
         axes = axes or [None] * 4
-        self.plot_time_series(ax=axes[0])
-        self.plot_by_year(last_n_years=last_n_years, axes=axes[1])
-        self.boxplot_day_of_month(ax=axes[2])
-        self.boxplot_day_of_week(ax=axes[3])
+        figs = []
+        figs.append(self.plot_time_series(ax=axes[0]))
+        figs.append(self.plot_by_year(last_n_years=last_n_years, axes=axes[1]))
+        figs.append(self.boxplot_day_of_month(ax=axes[2]))
+        figs.append(self.boxplot_day_of_week(ax=axes[3]))
+        return figs
 
     @staticmethod
     def _boxplot(
@@ -230,7 +236,9 @@ class TimeSeriesDailyStudy(_TimeSeriesAnalyzer):
 
 
 class TimeSeriesMinutelyStudy(_TimeSeriesAnalyzer):
-    def boxplot_minutely_hour(self, ax: Optional[mpl.axes.Axes] = None) -> None:
+    def boxplot_minutely_hour(
+        self, ax: Optional[mpl.axes.Axes] = None
+    ) -> Optional[mpl.figure.Figure]:
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
             return
@@ -241,7 +249,7 @@ class TimeSeriesMinutelyStudy(_TimeSeriesAnalyzer):
             f"{self._ts_name} during different hours {self._title_suffix}"
         )
         ax.set_xlabel("hour")
-        return
+        return ax.get_figure()
 
     def execute(
         self,
@@ -249,10 +257,11 @@ class TimeSeriesMinutelyStudy(_TimeSeriesAnalyzer):
         axes: Optional[
             List[Union[mpl.axes.Axes, List[mpl.axes.Axes], None]]
         ] = None,
-    ) -> None:
+    ) -> List[Optional[mpl.figure.Figure]]:
         axes = axes or [None] * 5
-        super().execute(last_n_years=last_n_years, axes=axes[:-1])
-        self.boxplot_minutely_hour(ax=axes[-1])
+        figs = super().execute(last_n_years=last_n_years, axes=axes[:-1])
+        figs.append(self.boxplot_minutely_hour(ax=axes[-1]))
+        return figs
 
 
 # Functions for processing dict of time series to generate a df with statistics
