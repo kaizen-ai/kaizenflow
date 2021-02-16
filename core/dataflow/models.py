@@ -194,7 +194,7 @@ class ContinuousSkLearnModel(
         )
         df_out = df_out.reindex(idx)
         df_out = self._apply_col_mode(
-            df, df_out, self._to_list(self._y_vars), self._col_mode
+            df, df_out, cols=self._to_list(self._y_vars), col_mode=self._col_mode
         )
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("fit", info)
@@ -236,7 +236,7 @@ class ContinuousSkLearnModel(
         )
         df_out = df_out.reindex(idx)
         df_out = self._apply_col_mode(
-            df, df_out, self._to_list(self._y_vars), self._col_mode
+            df, df_out, cols=self._to_list(self._y_vars), col_mode=self._col_mode
         )
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("predict", info)
@@ -381,7 +381,9 @@ class UnsupervisedSkLearnModel(
         info["model_attributes"] = model_attribute_info
         # Return targets and predictions.
         df_out = x_hat.reindex(index=df_in.index)
-        df_out = self._apply_col_mode(df, df_out, x_vars, self._col_mode)
+        df_out = self._apply_col_mode(
+            df, df_out, cols=x_vars, col_mode=self._col_mode
+        )
         info["df_out_info"] = get_df_info_as_string(df_out)
         if fit:
             self._set_info("fit", info)
@@ -541,7 +543,9 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
         info["model_params"] = self._model.get_params()
         # Return targets and predictions.
         y_hat = y_hat.reindex(idx)
-        df_out = self._apply_col_mode(df, y_hat, y_vars, self._col_mode)
+        df_out = self._apply_col_mode(
+            df, y_hat, cols=y_vars, col_mode=self._col_mode
+        )
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
@@ -563,7 +567,9 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
         info["model_perf"] = self._model_perf(x_predict, y_predict, y_hat)
         # Return predictions.
         y_hat = y_hat.reindex(idx)
-        df_out = self._apply_col_mode(df, y_hat, y_vars, self._col_mode)
+        df_out = self._apply_col_mode(
+            df, y_hat, cols=y_vars, col_mode=self._col_mode
+        )
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
@@ -710,7 +716,9 @@ class SkLearnInverseTransformer(
         )
         #
         df_out = trans_x_inv_trans.reindex(index=df_in.index)
-        df_out = self._apply_col_mode(df, df_out, trans_x_vars, self._col_mode)
+        df_out = self._apply_col_mode(
+            df, df_out, cols=trans_x_vars, col_mode=self._col_mode
+        )
         info["df_out_info"] = get_df_info_as_string(df_out)
         if fit:
             self._set_info("fit", info)
@@ -841,7 +849,7 @@ class ContinuousSarimaxModel(
             fwd_y_hat, how="outer", left_index=True, right_index=True
         )
         df_out = self._apply_col_mode(
-            df, df_out, self._to_list(self._y_vars), self._col_mode
+            df, df_out, cols=self._to_list(self._y_vars), col_mode=self._col_mode
         )
         # Add info.
         # TODO(Julia): Maybe add model performance to info.
@@ -879,7 +887,7 @@ class ContinuousSarimaxModel(
             fwd_y_hat, how="outer", left_index=True, right_index=True
         )
         df_out = self._apply_col_mode(
-            df, df_out, self._to_list(self._y_vars), self._col_mode
+            df, df_out, cols=self._to_list(self._y_vars), col_mode=self._col_mode
         )
         # Add info.
         info = collections.OrderedDict()
@@ -1521,7 +1529,9 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
             fwd_y_hat.reindex(idx), left_index=True, right_index=True
         )
         dbg.dassert_no_duplicates(df_out.columns)
-        df_out = self._apply_col_mode(df, df_out, self._col, self._col_mode)
+        df_out = self._apply_col_mode(
+            df, df_out, cols=self._col, col_mode=self._col_mode
+        )
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
@@ -1555,7 +1565,9 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         )
         dbg.dassert_no_duplicates(df_out.columns)
         info = collections.OrderedDict()
-        df_out = self._apply_col_mode(df, df_out, self._col, self._col_mode)
+        df_out = self._apply_col_mode(
+            df, df_out, cols=self._col, col_mode=self._col_mode
+        )
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
@@ -1728,9 +1740,12 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
             adjusted_signal = fwd_signal.multiply(volatility_aligned, axis=0)
         else:
             raise ValueError(f"Invalid mode=`{self._mode}`")
-        adjusted_signal.rename(columns=self._col_rename_func, inplace=True)
         df_out = self._apply_col_mode(
-            df_in, adjusted_signal, self._signal_cols, self._col_mode
+            df_in,
+            adjusted_signal,
+            cols=self._signal_cols,
+            col_rename_func=self._col_rename_func,
+            col_mode=self._col_mode,
         )
         return df_out
 
