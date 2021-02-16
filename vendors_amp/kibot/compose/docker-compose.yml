@@ -3,7 +3,7 @@ version: '3'
 # TODO(plyq): Change base image to amp once it will be ready.
 services:
   kibot_app:
-    image: 083233266530.dkr.ecr.us-east-2.amazonaws.com/particle_env:latest
+    image: 083233266530.dkr.ecr.us-east-2.amazonaws.com/kibot:latest
     restart: "no"
     volumes:
       - ../../../../:/commodity_research

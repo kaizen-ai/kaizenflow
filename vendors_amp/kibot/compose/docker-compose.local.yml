@@ -3,7 +3,7 @@ version: '3'
 services:
   kibot_app:
     #TODO(plyq): Change once amp image will be ready
-    entrypoint: /commodity_research/amp/vendors_amp/kibot/compose/entrypoint_local_test.sh
+    entrypoint: /commodity_research/amp/vendors_amp/kibot/compose/entrypoints/entrypoint_deploy_postgres.sh
     depends_on:
       - kibot_postgres_local
     env_file:

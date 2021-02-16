@@ -12,14 +12,14 @@ class SQLWriterBackend:
     """
 
     def __init__(
-        self, dbname: str, user: str, password: str, host: str, port: str
+        self, dbname: str, user: str, password: str, host: str, port: int
     ):
         self.conn: pexten.connection = psycopg2.connect(
             dbname=dbname,
             user=user,
             password=password,
             host=host,
-            port=int(port),
+            port=port,
         )
 
     def ensure_symbol_exists(

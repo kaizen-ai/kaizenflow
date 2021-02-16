@@ -57,6 +57,43 @@ docker_kibot_run_local:
 
 
 # #############################################################################
+# Test kibot workflow (including PostgreSQL server).
+# #############################################################################
+
+# Run container with local database.
+# Run fast tests.
+docker_kibot_fast_tests:
+	docker-compose \
+		-f compose/docker-compose.yml \
+		-f compose/docker-compose.test.yml \
+		run --rm \
+		-l user=$(USER) \
+		kibot_app \
+		bash run_fast_tests.sh
+
+# Run container with local database.
+# Run slow tests.
+docker_kibot_slow_tests:
+	docker-compose \
+		-f compose/docker-compose.yml \
+		-f compose/docker-compose.test.yml \
+		run --rm \
+		-l user=$(USER) \
+		kibot_app \
+		bash run_slow_tests.sh
+
+# Run container with local database.
+# Run superslow tests.
+docker_kibot_superslow_tests:
+	docker-compose \
+		-f compose/docker-compose.yml \
+		-f compose/docker-compose.test.yml \
+		run --rm \
+		-l user=$(USER) \
+		kibot_app \
+		bash run_superslow_tests.sh
+
+# #############################################################################
 # Docker workflow.
 # #############################################################################
 kibot_setup_print:

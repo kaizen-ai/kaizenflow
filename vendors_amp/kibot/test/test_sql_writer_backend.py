@@ -24,7 +24,7 @@ class TestDbSchemaFile(hut.TestCase):
         self.assertTrue(os.path.exists(DB_SCHEMA_FILE))
 
 
-@pytest.mark.skip(reason="Testable only inside kibot container")
+@pytest.mark.skipif(not ((os.environ.get("STAGE") == "TEST" and os.environ.get("POSTGRES_HOST") == "kibot_postgres_test") or (os.environ.get("STAGE") == "LOCAL" and os.environ.get("POSTGRES_HOST") == "kibot_postgres_local")), reason="Testable only inside kibot container")
 class TestSqlWriterBackend1(hut.TestCase):
     """
     Test writing operation to Postgresql kibot db.
