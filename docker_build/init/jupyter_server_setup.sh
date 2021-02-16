@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 
 echo "Setup jupyter server"
-conda list
 
+conda activate venv
+
+conda info -e
+
+jupyter notebook --generate-config -y
 jupyter nbextension enable jupytext --py
-jupyter notebook --generate-config
 cat << EOT >> ~/.jupyter/jupyter_notebook_config.py
 #------------------------------------------------------------------------------
 # Jupytext

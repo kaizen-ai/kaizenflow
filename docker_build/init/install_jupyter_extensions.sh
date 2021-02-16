@@ -1,5 +1,9 @@
 #!/bin/bash -e
 
+echo "Install jupyter extensions"
+
+conda activate venv
+
 conda info -e
 
 DIR_NAME=$(jupyter --data-dir)
