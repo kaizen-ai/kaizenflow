@@ -74,8 +74,10 @@ class _TimeSeriesAnalyzer:
             f"{self._freq_name.capitalize()} {self._ts_name}"
             f"{self._title_suffix}"
         )
+        xticklabels = self._time_series.resample("YS").sum().index
+        ax.set_xticks(xticklabels)
         ax.set_xticklabels(
-            self._time_series.resample("YS").sum().index,
+            xticklabels,
             ha="right",
             rotation=30,
             rotation_mode="anchor",
