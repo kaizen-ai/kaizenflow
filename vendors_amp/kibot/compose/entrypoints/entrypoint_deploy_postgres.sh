@@ -4,9 +4,6 @@ postgres_ready() {
   pg_isready -d $POSTGRES_DB -p $POSTGRES_PORT -h $POSTGRES_HOST
 }
 
-# TODO: remove this line once the dependency will be added to the image.
-apt -y install postgresql-client
-
 until postgres_ready; do
   >&2 echo 'Waiting for PostgreSQL to become available...'
   sleep 1

@@ -42,31 +42,10 @@ class TestDbSchemaFile(hut.TestCase):
     ),
     reason="Testable only inside kibot container",
 )
-class TestSqlWriterBackend1(hut.TestCase):
+class TestSqlDataLoader1(hut.TestCase):
     """
     Test writing operation to Postgresql kibot db.
     """
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        hut.TestCase.setUpClass()
-        # Get postgresql connection parameters.
-        host = os.environ["POSTGRES_HOST"]
-        port = os.environ["POSTGRES_PORT"]
-        user = os.environ["POSTGRES_USER"]
-        password = os.environ["POSTGRES_PASSWORD"]
-        dbname = cls.__name__
-        # Create database for test.
-        create_database(dbname)
-        # Initialize writer class to test.
-        writer = vksqlw.SQLWriterBackend(dbname, user, password, host, port)
-        # Apply production schema to created database.
-        with writer.conn as conn:
-            with conn.cursor() as curs:
-                curs.execute(hio.from_file(DB_SCHEMA_FILE))
-        # Add data to database.
-        cls._prepare_tables(writer)
-        writer.close()
 
     def setUp(self) -> None:
         super().setUp()
@@ -75,22 +54,29 @@ class TestSqlWriterBackend1(hut.TestCase):
         port = os.environ["POSTGRES_PORT"]
         user = os.environ["POSTGRES_USER"]
         password = os.environ["POSTGRES_PASSWORD"]
-        dbname = self.__class__.__name__
+        self.dbname = self._get_test_name().replace("/", "").replace(".", "")
+        # Create database for test.
+        create_database(self.dbname)
+        # Initialize writer class to test.
+        writer = vksqlw.SQLWriterBackend(self.dbname, user, password, host, port)
+        # Apply production schema to created database.
+        with writer.conn as conn:
+            with conn.cursor() as curs:
+                curs.execute(hio.from_file(DB_SCHEMA_FILE))
+        # Add data to database.
+        self._prepare_tables(writer)
+        writer.close()
         # Create loader.
         self._loader = vkdlsq.SQLKibotDataLoader(
-            dbname, user, password, host, port
+            self.dbname, user, password, host, port
         )
 
     def tearDown(self) -> None:
         # Close connection.
         self._loader.conn.close()
-        super().tearDown()
-
-    @classmethod
-    def tearDownClass(cls) -> None:
         # Remove created database.
-        remove_database(cls.__name__)
-        hut.TestCase.tearDownClass()
+        remove_database(self.dbname)
+        super().tearDown()
 
     def test_get_symbol_id1(self) -> None:
         """

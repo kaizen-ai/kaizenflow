@@ -17,7 +17,7 @@ KIBOT_IMAGE_RC_SHA=$(KIBOT_REPO_BASE_PATH):$(IMAGE_RC_SHA)
 # #############################################################################
 
 # Start local postgres server.
-docker_kibot_up_postgres_local:
+docker_kibot_postgres_local_up:
 	docker-compose \
 		-f compose/docker-compose.yml \
 		-f compose/docker-compose.local.yml \
@@ -26,14 +26,14 @@ docker_kibot_up_postgres_local:
 		kibot_postgres_local
 
 # Stop local postgres server.
-docker_kibot_down_postgres_local:
+docker_kibot_postgres_local_down:
 	docker-compose \
 		-f compose/docker-compose.yml \
 		-f compose/docker-compose.local.yml \
 		down
 
 # Stop local postgres server and remove all data.
-docker_kibot_rm_postgres_local:
+docker_kibot_postgres_local_rm:
 	docker-compose \
 		-f compose/docker-compose.yml \
 		-f compose/docker-compose.local.yml \
@@ -47,7 +47,7 @@ docker_kibot_rm_postgres_local:
 
 # Run container with local database.
 # Use for development.
-docker_kibot_run_local:
+docker_kibot_local_run:
 	docker-compose \
 		-f compose/docker-compose.yml \
 		-f compose/docker-compose.local.yml \
@@ -62,7 +62,7 @@ docker_kibot_run_local:
 
 # Run container with local database.
 # Run fast tests.
-docker_kibot_fast_tests:
+docker_kibot_test_fast_tests:
 	docker-compose \
 		-f compose/docker-compose.yml \
 		-f compose/docker-compose.test.yml \
@@ -73,7 +73,7 @@ docker_kibot_fast_tests:
 
 # Run container with local database.
 # Run slow tests.
-docker_kibot_slow_tests:
+docker_kibot_test_slow_tests:
 	docker-compose \
 		-f compose/docker-compose.yml \
 		-f compose/docker-compose.test.yml \
@@ -84,7 +84,7 @@ docker_kibot_slow_tests:
 
 # Run container with local database.
 # Run superslow tests.
-docker_kibot_superslow_tests:
+docker_kibot_test_superslow_tests:
 	docker-compose \
 		-f compose/docker-compose.yml \
 		-f compose/docker-compose.test.yml \
@@ -103,11 +103,11 @@ kibot_setup_print:
 	@echo "KIBOT_IMAGE_RC_SHA=$(KIBOT_IMAGE_RC_SHA)"
 
 # Pull images from ecr
-docker_pull_kibot:
+docker_kibot_pull:
 	docker pull $(KIBOT_IMAGE)
 
 # Build images
-docker_build_kibot_rc_image:
+docker_kibot_build_rc_image:
 	docker build \
 		--progress=plain \
 		--no-cache \
@@ -116,23 +116,23 @@ docker_build_kibot_rc_image:
 		--file ./Dockerfile .
 
 # Push release candidate images
-docker_push_kibot_rc_image:
+docker_kibot_push_rc_image:
 	docker push $(KIBOT_IMAGE_RC)
 	docker push $(KIBOT_IMAGE_RC_SHA)
 
 # Tag :rc image with :latest tag
-docker_tag_kibot_rc_latest:
+docker_kibot_tag_rc_latest:
 	docker tag $(KIBOT_IMAGE_RC) $(KIBOT_IMAGE)
 
 # Push image with :latest tag
-docker_push_kibot_latest_image:
+docker_kibot_push_latest_image:
 	docker push $(KIBOT_IMAGE)
 
 
 BASE_IMAGE?=$(KIBOT_IMAGE)
 VERSION?=
 # Tag :latest image with specific tag
-docker_tag_kibot_latest_version:
+docker_kibot_tag_latest_version:
 ifeq ($(VERSION),)
 	@echo "You need to provide VERSION parameter. Example: 'make docker_tag_kibot_rc_version VERSION=0.1'"
 else
@@ -140,7 +140,7 @@ else
 endif
 
 # Push image wish specific tag
-docker_push_kibot_version_image:
+docker_kibot_push_version_image:
 ifeq ($(VERSION),)
 	@echo "You need to provide VERSION parameter. Example: 'make docker_push_kibot_version_image VERSION=0.1'"
 else
