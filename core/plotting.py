@@ -1812,13 +1812,15 @@ def plot_holdings(
     ax.legend()
     ax.set_title(f"Total holdings ({unit})")
 
-def plot_holdings_diffs(
+def plot_holding_diffs(
     holdings: pd.Series,
     unit: str = "ratio",
     ax: Optional[mpl.axes.Axes] = None,
 ) -> None:
-    """Plot how much to increase or decrease holdings in order to achieve the 
-    target position.
+    """Plot holding changes over time.
+    
+    Indicates how much to increase or decrease holdings in order to achieve 
+    the target position and have the same timestamp as forward predictions.
 
     :param holdings: series to plot
     :param unit: "ratio", "%" or "bps" scaling coefficient

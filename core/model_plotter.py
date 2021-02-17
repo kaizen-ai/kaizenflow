@@ -356,12 +356,14 @@ class ModelPlotter:
         )
         plot.plot_sharpe_ratio_panel(rets, frequencies=frequencies, ax=ax)
 
-    def plot_holdings_diffs(
+    def plot_holding_diffs(
         self,
         keys: Optional[List[Any]] = None,
         mode: Optional[str] = None,
     ) -> None:
-        """Plot holdings diffs (per key)."""
+        """
+        Plot holding diffs (per key).
+        """
         keys = keys or self.model_evaluator.valid_keys
         pos = self.model_evaluator.get_series_dict(
             "positions", keys=keys, mode=mode
