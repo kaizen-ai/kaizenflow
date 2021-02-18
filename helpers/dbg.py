@@ -758,10 +758,11 @@ def shutup_chatty_modules(
         "boto3",
         "botocore",
         "fsspec",
-        "s3fs",
         "hooks",
+        "ib_insync",
         "matplotlib",
         "nose",
+        "s3fs",
         "s3transfer",
         "urllib3",
     ]
@@ -769,7 +770,7 @@ def shutup_chatty_modules(
     print("Shutting up %s modules" % len(loggers))
     loggers = sorted(loggers, key=lambda logger: logger.name)
     if verbose:
-        _LOG.debug(
+        print(
             "Shutting up modules: (%d)\n%s",
             len(loggers),
             "\n".join([logger.name for logger in loggers]),
