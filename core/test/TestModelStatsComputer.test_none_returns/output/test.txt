@@ -7,6 +7,12 @@ kratio                                         1.50731
 annualized_mean_return_(%)                     5133.93
 annualized_volatility_(%)                      2172.88
 max_drawdown_(%)                              -99.8876
+start_time                         2015-01-01 00:00:00
+end_time                           2015-02-19 00:00:00
+n_sampling_points                                   50
+frequency                                        <Day>
+sampling_points_per_year                        365.25
+time_span_in_years                            0.136893
 hit_rate_point_est_(%)                              56
 hit_rate_97.50%CI_lower_bound_(%)              42.2275
 hit_rate_97.50%CI_upper_bound_(%)              69.0999
@@ -14,12 +20,6 @@ avg_turnover_(%)                               142.852
 turnover_frequency                               <Day>
 avg_holding_period                            0.700025
 holding_period_units                             <Day>
-start_time                         2015-01-01 00:00:00
-end_time                           2015-02-19 00:00:00
-n_sampling_points                                   50
-frequency                                        <Day>
-sampling_points_per_year                        365.25
-time_span_in_years                            0.136893
 jensen_ratio                                     1.241
 forecastability                                0.14709
 mean                                          0.140559

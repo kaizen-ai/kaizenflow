@@ -179,14 +179,18 @@ class ModelStatsComputer(StatsComputer):
                 "compute_kratio": self.compute_kratio,
                 "compute_annualized_return_and_volatility": self.compute_annualized_return_and_volatility,
                 "compute_max_drawdown": self.compute_max_drawdown,
+                "summarize_time_index_info": self.summarize_time_index_info,
                 "calculate_hit_rate": self.calculate_hit_rate,
                 "calculate_corr_to_underlying": self.calculate_corr_to_underlying,
                 "compute_bet_stats": self.compute_bet_stats,
                 "compute_avg_turnover_and_holding_period": self.compute_avg_turnover_and_holding_period,
+                "compute_jensen_ratio": self.compute_jensen_ratio,
+                "compute_forecastability": self.compute_forecastability,
                 "compute_prediction_corr": self.compute_prediction_corr,
+                "compute_moments": self.compute_moments,
+                "compute_special_value_stats": self.compute_special_value_stats,
             }
         )
-        stats_names_dict.update(super()._map_name_to_method())
         return stats_names_dict
 
     def _calculate_stats(
