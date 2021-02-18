@@ -1762,7 +1762,9 @@ class VolatilityModel(FitPredictNode, ToListMixin):
         self,
         nid: str,
         steps_ahead: int,
-        cols: Optional[Union[List[Union[int, str]], Callable[[], List[Union[int, str]]]]] = None,
+        cols: Optional[
+            Union[List[Union[int, str]], Callable[[], List[Union[int, str]]]]
+        ] = None,
         p_moment: float = 2,
         tau: Optional[float] = None,
         col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
@@ -1814,7 +1816,7 @@ class VolatilityModel(FitPredictNode, ToListMixin):
         method = "fit" if fit else "predict"
         df_in_cols = list(df_in.columns)
         cols = self._get_cols(df_in_cols)
-        if method=="fit":
+        if method == "fit":
             self._fill_model_dicts(cols)
         if self._col_mode == "replace_all":
             dfs = []
@@ -1868,7 +1870,7 @@ class VolatilityModel(FitPredictNode, ToListMixin):
         node = self._modulators[col]
         self._append(dag, tail_nid, node)
         return dag
-    
+
     def _fill_model_dicts(self, cols: List[str]) -> None:
         for col in cols:
             self._vol_cols[col] = col + "_vol"
@@ -1897,7 +1899,7 @@ class VolatilityModel(FitPredictNode, ToListMixin):
                 col_rename_func=self._col_rename_func,
                 col_mode=self._col_mode,
             )
-            
+
     def _get_cols(self, df_in_cols: List[str]) -> List[str]:
         if self._cols is None:
             return df_in_cols

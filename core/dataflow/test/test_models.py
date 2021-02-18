@@ -1128,7 +1128,7 @@ class TestVolatilityModel(hut.TestCase):
         #
         output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
         self.check_string(output_df.to_string())
-        
+
     def test_fit_none_columns(self) -> None:
         # Load test data.
         data = self._get_data()
@@ -1142,7 +1142,7 @@ class TestVolatilityModel(hut.TestCase):
         config["cols"] = ["ret_0", "ret_0_2"]
         output_cols_specified = self._run_volatility_model(data, config)
         np.testing.assert_equal(output_cols_none, output_cols_specified)
-        
+
     def test_fit_columns_numbers(self) -> None:
         # Load test data.
         data = self._get_data()
@@ -1174,7 +1174,7 @@ class TestVolatilityModel(hut.TestCase):
         realization.name = "ret_0"
         df = pd.DataFrame(index=date_range, data=realization)
         return df
-    
+
     @staticmethod
     def _run_volatility_model(data: pd.DataFrame, config: cconfi.Config) -> str:
         data_source_node = cdataf.ReadDataFromDf("data", data)
@@ -1283,11 +1283,10 @@ if True:
             """
             Generate a dataframe of the following format:
 
-            EVENT_SENTIMENT_SCORE           zret_0         0 
-            2010-01-01 00:00:00           0.496714 -0.138264 
-            2010-01-01 00:01:00           0.647689  1.523030 
-            2010-01-01 00:02:00          -0.234153 -0.234137 
-            2010-01-01 00:03:00           1.579213  0.767435
+            EVENT_SENTIMENT_SCORE           zret_0         0 2010-01-01
+            00:00:00           0.496714 -0.138264 2010-01-01 00:01:00
+            0.647689  1.523030 2010-01-01 00:02:00          -0.234153
+            -0.234137 2010-01-01 00:03:00           1.579213  0.767435
             2010-01-01 00:04:00          -0.469474  0.542560
             """
             np.random.seed(42)
