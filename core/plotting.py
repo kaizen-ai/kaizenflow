@@ -1131,6 +1131,7 @@ def plot_dendrogram(
     # https://joernhees.de/blog/2015/08/26/scipy-hierarchical-clustering-and-dendrogram-tutorial/
     # Drop constant columns.
     method = method or "average"
+    df = df.replace([None], np.nan)
     constant_cols = df.columns[(df.diff().iloc[1:] == 0).all()]
     if not constant_cols.empty:
         _LOG.warning("Excluding constant columns: %s", constant_cols.tolist())
@@ -1249,7 +1250,7 @@ class PCA:
     ) -> None:
         if ax is None:
             _, ax = plt.subplots()
-        skluv.check_is_fitted(self.pca)
+        suvali.check_is_fitted(self.pca)
         explained_variance_ratio = pd.Series(self.pca.explained_variance_ratio_)
         eigenvals = pd.Series(self.pca.explained_variance_)
         # Plot explained variance.
@@ -1801,7 +1802,9 @@ def plot_drawdown(
     ylim = ylim or "scalable"
     title_suffix = title_suffix or ""
     scale_coeff = _choose_scaling_coefficient(unit)
-    drawdown = -scale_coeff * cfinan.compute_perc_loss_from_high_water_mark(log_rets)
+    drawdown = -scale_coeff * cfinan.compute_perc_loss_from_high_water_mark(
+        log_rets
+    )
     label = drawdown.name or "drawdown"
     title = f"Drawdown ({unit})"
     ax = ax or plt.gca()
@@ -1988,7 +1991,9 @@ def plot_rolling_beta(
     common_index = all_rets_df.index
     # Apply `.dropna()` after `hdataf.apply_nan_mode` in oder to drop remaining
     #     rows with NaNs and calculate rolling beta without NaN gaps in input.
-    clean_rets_df = all_rets_df.apply(hdataf.apply_nan_mode, mode=nan_mode).dropna()
+    clean_rets_df = all_rets_df.apply(
+        hdataf.apply_nan_mode, mode=nan_mode
+    ).dropna()
     # Get copies of rets and benchmark_rets with unified indices and no NaNs.
     rets = clean_rets_df[rets_name]
     benchmark_rets = clean_rets_df[benchmark_name]
@@ -1996,7 +2001,9 @@ def plot_rolling_beta(
     ax = ax or plt.gca()
     benchmark_rets = sm.add_constant(benchmark_rets)
     # Calculate and plot rolling beta.
-    model_rolling = srroll.RollingOLS(rets, benchmark_rets, window=window, **kwargs)
+    model_rolling = srroll.RollingOLS(
+        rets, benchmark_rets, window=window, **kwargs
+    )
     res_rolling = model_rolling.fit()
     beta_rolling = res_rolling.params[
         benchmark_name

@@ -11,12 +11,15 @@ class SQLWriterBackend:
     Manager of CRUD operations on a database defined in db.sql.
     """
 
-    def __init__(self, dbname: str, user: str, password: str, host: str):
+    def __init__(
+        self, dbname: str, user: str, password: str, host: str, port: int
+    ):
         self.conn: pexten.connection = psycopg2.connect(
             dbname=dbname,
             user=user,
             password=password,
             host=host,
+            port=port,
         )
 
     def ensure_symbol_exists(
@@ -75,7 +78,7 @@ class SQLWriterBackend:
                     "VALUES %s ON CONFLICT DO NOTHING",
                     df.to_dict("records"),
                     template="(%(trade_symbol_id)s, %(date)s, %(open)s,"
-                             " %(high)s, %(low)s, %(close)s, %(volume)s)",
+                    " %(high)s, %(low)s, %(close)s, %(volume)s)",
                 )
 
     def insert_daily_data(
@@ -134,7 +137,7 @@ class SQLWriterBackend:
                     "VALUES %s ON CONFLICT DO NOTHING",
                     df.to_dict("records"),
                     template="(%(trade_symbol_id)s, %(datetime)s, %(open)s,"
-                             " %(high)s, %(low)s, %(close)s, %(volume)s)",
+                    " %(high)s, %(low)s, %(close)s, %(volume)s)",
                 )
 
     def insert_minute_data(

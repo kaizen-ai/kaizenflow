@@ -12,13 +12,13 @@ import tqdm
 
 import helpers.dbg as dbg
 import helpers.parser as hparse
-import vendors_amp.docker.sql_writer_backend as vdsqlw
 import vendors_amp.kibot.data.config as vkdcon
 import vendors_amp.kibot.data.load as vkdloa
 import vendors_amp.kibot.data.load.dataset_name_parser as vkdlda
 import vendors_amp.kibot.data.load.sql_data_loader as vkdlsq
 import vendors_amp.kibot.data.types as vkdtyp
 import vendors_amp.kibot.metadata.load.s3_backend as vkmls3
+import vendors_amp.kibot.sql_writer_backend as vksqlw
 
 _LOG = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ def _convert_kibot_csv_gz_to_sql(
     symbol: str,
     exchange: str,
     kibot_data_loader: vkdloa.S3KibotDataLoader,
-    sql_writer_backed: vdsqlw.SQLWriterBackend,
+    sql_writer_backed: vksqlw.SQLWriterBackend,
     sql_data_loader: vkdlsq.SQLKibotDataLoader,
     asset_class: vkdtyp.AssetClass,
     frequency: vkdtyp.Frequency,
@@ -171,6 +171,13 @@ def _parse() -> argparse.ArgumentParser:
         default=None,
     )
     parser.add_argument(
+        "--dbport",
+        type=int,
+        help="Postgres Port",
+        required=True,
+        default=None,
+    )
+    parser.add_argument(
         "--dbname",
         type=str,
         help="Postgres DB",
@@ -206,11 +213,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     dataset_name_parser = vkdlda.DatasetNameParser()
     #
-    sql_writer_backed = vdsqlw.SQLWriterBackend(
+    sql_writer_backed = vksqlw.SQLWriterBackend(
         dbname=args.dbname,
         user=args.dbuser,
         password=args.dbpass,
         host=args.dbhost,
+        port=args.dbport,
     )
     #
     sql_data_loader = vkdlsq.SQLKibotDataLoader(
@@ -218,6 +226,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         user=args.dbuser,
         password=args.dbpass,
         host=args.dbhost,
+        port=args.dbport,
     )
     _LOG.info("Connected to database")
     #
