@@ -1,7 +1,7 @@
 import collections
 import datetime
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Iterable
 
 import gluonts.model.deepar as gmdeep
 import gluonts.trainer as gtrain
@@ -1750,7 +1750,7 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
         return df_out
 
 
-class VolatilityModel(FitPredictNode, ToListMixin):
+class VolatilityModel(FitPredictNode, ColModeMixin):
     """
     Fit and predict a smooth moving average volatility model.
 
@@ -1762,9 +1762,7 @@ class VolatilityModel(FitPredictNode, ToListMixin):
         self,
         nid: str,
         steps_ahead: int,
-        cols: Optional[
-            Union[List[Union[int, str]], Callable[[], List[Union[int, str]]]]
-        ] = None,
+        cols: Optional[Iterable[Union[int, str]]] = None,
         p_moment: float = 2,
         tau: Optional[float] = None,
         col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
@@ -1814,15 +1812,11 @@ class VolatilityModel(FitPredictNode, ToListMixin):
         self, df_in: pd.DataFrame, fit: bool = False
     ) -> Dict[str, pd.DataFrame]:
         method = "fit" if fit else "predict"
-        df_in_cols = list(df_in.columns)
-        cols = self._get_cols(df_in_cols)
+        cols = self._cols or df_in.columns.tolist()
         if method == "fit":
             self._fill_model_dicts(cols)
-        if self._col_mode == "replace_all":
-            dfs = []
-        else:
-            dfs = [df_in.drop(cols, 1)]
         info = collections.OrderedDict()
+        dfs = []
         for col in cols:
             dbg.dassert_not_in(self._vol_cols[col], df_in.columns)
             dag = self._get_dag(df_in[[col]], col)
@@ -1832,6 +1826,12 @@ class VolatilityModel(FitPredictNode, ToListMixin):
                 self._taus[col] = info[col]["anonymous_sma"][method]["tau"]
             dfs.append(df_out)
         df_out = pd.concat(dfs, axis=1)
+        df_out = self._apply_col_mode(
+            df_in.drop(df_out.columns.intersection(df_in.columns), 1),
+            df_out,
+            cols=list(cols),
+            col_mode=self._col_mode,
+        )
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info(method, info)
         return {"df_out": df_out}
@@ -1873,7 +1873,7 @@ class VolatilityModel(FitPredictNode, ToListMixin):
 
     def _fill_model_dicts(self, cols: List[str]) -> None:
         for col in cols:
-            self._vol_cols[col] = col + "_vol"
+            self._vol_cols[col] = str(col) + "_vol"
             self._fwd_vol_cols[col] = (
                 self._vol_cols[col] + f"_{self._steps_ahead}"
             )
@@ -1899,16 +1899,6 @@ class VolatilityModel(FitPredictNode, ToListMixin):
                 col_rename_func=self._col_rename_func,
                 col_mode=self._col_mode,
             )
-
-    def _get_cols(self, df_in_cols: List[str]) -> List[str]:
-        if self._cols is None:
-            return df_in_cols
-        cols = self._to_list(self._cols)
-        if all(isinstance(item, int) for item in cols):
-            dbg.dassert_is_subset(cols, range(len(df_in_cols)))
-            return [df_in_cols[i] for i in cols]
-        dbg.dassert_is_subset(cols, df_in_cols)
-        return cols
 
     @staticmethod
     def _append(dag: DAG, tail_nid: Optional[str], node: Node) -> str:

@@ -1143,20 +1143,18 @@ class TestVolatilityModel(hut.TestCase):
         output_cols_specified = self._run_volatility_model(data, config)
         np.testing.assert_equal(output_cols_none, output_cols_specified)
 
-    def test_fit_columns_numbers(self) -> None:
+    def test_fit_int_columns(self) -> None:
         # Load test data.
         data = self._get_data()
-        data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
+        data[10] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config.
         config = cconfi.Config()
-        config["cols"] = [0]
+        config["cols"] = [10]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
-        # Get outputs with col numbers and specified col names.
-        output_cols_num = self._run_volatility_model(data, config)
-        config["cols"] = [data.columns[0]]
-        output_cols_specified = self._run_volatility_model(data, config)
-        np.testing.assert_equal(output_cols_num, output_cols_specified)
+        # Get output with integer column names.
+        output_str = self._run_volatility_model(data, config)
+        self.check_string(output_str)
 
     @staticmethod
     def _get_data() -> pd.DataFrame:
