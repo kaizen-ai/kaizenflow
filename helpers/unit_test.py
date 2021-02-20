@@ -362,11 +362,14 @@ def _assert_equal(
     expected = _to_string(expected)
     # Fuzzy match, if needed.
     if fuzzy_match:
-        _LOG.debug("Useing fuzzy match")
+        _LOG.debug("Using fuzzy match")
         actual_orig = actual
         actual = _remove_spaces(actual)
         expected_orig = expected
         expected = _remove_spaces(expected)
+    else:
+        actual_orig = actual
+        expected_orig = expected
     # Check.
     if expected != actual:
         _LOG.info(
@@ -379,11 +382,28 @@ def _assert_equal(
             # print_purified_version = True
             if print_purified_version:
                 expected = expected_orig
-                actual = actual_orig
-        # Dump the actual and expected strings to files.
+                # actual = actual_orig
+        # Print the correct output, like:
+        # var = r'""""
+        # 2021-02-17 09:30:00-05:00
+        # 2021-02-17 10:00:00-05:00
+        # 2021-02-17 11:00:00-05:00
+        # """
+        _LOG.info("\n" + prnt.frame("Actual variable", "#", 80))
+        txt = []
+        prefix = "var = r"
+        spaces = 0
+        #spaces = len(prefix)
+        txt.append(prefix + '"""')
+        txt.append(prnt.indent(actual_orig, spaces))
+        txt.append(prnt.indent('"""', spaces))
+        txt = "\n".join(txt)
+        print(txt)
+        # Save the actual and expected strings to files.
         _LOG.debug("Actual:\n%s", actual)
         act_file_name = "%s/tmp.actual.txt" % test_dir
         io_.to_file(act_file_name, actual)
+        #
         _LOG.debug("Expected:\n%s", expected)
         exp_file_name = "%s/tmp.expected.txt" % test_dir
         io_.to_file(exp_file_name, expected)
@@ -479,7 +499,7 @@ class TestCase(unittest.TestCase):
             self._scratch_dir = dir_name
         return self._scratch_dir
 
-    def assert_equal(self, actual: str, expected: str) -> None:
+    def assert_equal(self, actual: str, expected: str, fuzzy_match: bool = False) -> None:
         dbg.dassert_in(type(actual), (bytes, str))
         dbg.dassert_in(type(expected), (bytes, str))
         #
@@ -489,7 +509,7 @@ class TestCase(unittest.TestCase):
         dbg.dassert_exists(dir_name)
         #
         test_name = self._get_test_name()
-        _assert_equal(actual, expected, test_name, dir_name)
+        _assert_equal(actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match)
 
     def check_string(
         self,
