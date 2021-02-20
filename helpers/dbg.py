@@ -739,11 +739,16 @@ def get_matching_loggers(module_names: Union[str, Iterable[str]]) -> List:
         module_names = [module_names]
     sel_loggers = []
     for module_name in module_names:
+        #print(module_name)
+        #print("\n".join(map(str, loggers)))
+        # TODO(gp): We should have a regex.
+        # str(logger) looks like `<Logger tornado.application (DEBUG)>`
         sel_loggers_tmp = [
-            logger for logger in loggers if module_name in str(logger)
+            logger for logger in loggers if str(logger).startswith("<Logger " + module_name)
+            #logger for logger in loggers if module_name in str(logger)
         ]
+        #print(sel_loggers_tmp)
         sel_loggers.extend(sel_loggers_tmp)
-    # sel_loggers = sorted(list(set(sel_loggers)))
     return sel_loggers
 
 
@@ -771,9 +776,9 @@ def shutup_chatty_modules(
     loggers = sorted(loggers, key=lambda logger: logger.name)
     if verbose:
         print(
-            "Shutting up modules: (%d)\n%s",
+            "Shutting up modules: (%d)\n%s" % (
             len(loggers),
-            "\n".join([logger.name for logger in loggers]),
+            "\n".join([logger.name for logger in loggers]))
         )
     for logger in loggers:
         logger.setLevel(verbosity)
