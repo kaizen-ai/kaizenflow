@@ -1779,7 +1779,12 @@ class VolatilityModel(FitPredictNode, ColModeMixin):
         :param tau: as in `csigna.compute_smooth_moving_average`. If `None`,
             learn this parameter
         :param col_rename_func: renaming function for z-scored column
-        :param col_mode: as in `ColumnTransformer`
+        :param col_mode: 
+            - If "merge_all", merge all columns from input dataframe and 
+                transformed columns
+            - If "replace_selected", merge unselected columns from input dataframe 
+                and transformed selected columns
+            - If "replace_all", leave only transformed selected columns
         :param nan_mode: as in ContinuousSkLearnModel
         """
         super().__init__(nid)
