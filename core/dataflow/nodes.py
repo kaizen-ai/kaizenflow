@@ -11,9 +11,9 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import pandas as pd
 
-import core.finance as fin
-import core.signal_processing as sigp
-import core.statistics as stats
+import core.finance as cfinan
+import core.signal_processing as csigna
+import core.statistics as cstati
 import helpers.dbg as dbg
 
 # TODO(*): This is an exception to the rule waiting for PartTask553.
@@ -59,8 +59,8 @@ class FitPredictNode(Node, abc.ABC):
     """
     Define an abstract class with sklearn-style `fit` and `predict` functions.
 
-    Nodes may store a dictionary of information for each method following the
-    method's invocation.
+    Nodes may store a dictionary of information for each method
+    following the method's invocation.
     """
 
     def __init__(
@@ -205,14 +205,6 @@ class Transformer(FitPredictNode, abc.ABC):
     def __init__(self, nid: str) -> None:
         super().__init__(nid)
 
-    @abc.abstractmethod
-    def _transform(
-        self, df: pd.DataFrame
-    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
-        """
-        :return: df, info
-        """
-
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_no_duplicates(df_in.columns)
         # Transform the input df.
@@ -228,6 +220,14 @@ class Transformer(FitPredictNode, abc.ABC):
         self._set_info("predict", info)
         dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
+
+    @abc.abstractmethod
+    def _transform(
+        self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
+        """
+        :return: df, info
+        """
 
 
 # #############################################################################
@@ -271,6 +271,13 @@ class DiskDataSource(DataSource):
         self._end_date = end_date
         self._reader_kwargs = reader_kwargs or {}
 
+    def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
+        """
+        :return: training set as df
+        """
+        self._lazy_load()
+        return super().fit()
+
     def _read_data(self) -> None:
         ext = os.path.splitext(self._file_path)[-1]
         if ext == ".csv":
@@ -296,13 +303,6 @@ class DiskDataSource(DataSource):
             return
         self._read_data()
         self._process_data()
-
-    def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
-        """
-        :return: training set as df
-        """
-        self._lazy_load()
-        return super().fit()
 
 
 # #############################################################################
@@ -408,27 +408,39 @@ class ColModeMixin:
     Selects columns to propagate in output dataframe.
     """
 
-    @staticmethod
     def _apply_col_mode(
+        self,
         df_in: pd.DataFrame,
         df_out: pd.DataFrame,
-        cols_to_transform: List[Any],
-        col_mode: str,
+        cols: Optional[List[Any]] = None,
+        col_rename_func: Optional[Callable[[Any], Any]] = None,
+        col_mode: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Merge transformed dataframe with original dataframe.
 
         :param df_in: original dataframe
         :param df_out: transformed dataframe
-        :param cols_to_transform: columns in `df_in` that were transformed to
-            obtain `df_out`
-        :param col_mode: "merge_all", "replace_selected", or "replace_all".
-            Determines what columns are propagated. If "merge_all", perform an
-            outer merge
+        :param cols: columns in `df_in` that were transformed to obtain
+            `df_out`. `None` defaults to all columns in `df_out`
+        :param col_mode: `None`, "merge_all", "replace_selected", or
+            "replace_all". Determines what columns are propagated. `None`
+            defaults to "merge all". If "merge_all", perform an outer merge
+        :param col_rename_func: function for naming transformed columns, e.g.,
+            lambda x: "zscore_" + x. `None` defaults to identity transform
         :return: dataframe with columns selected by `col_mode`
         """
         dbg.dassert_isinstance(df_in, pd.DataFrame)
         dbg.dassert_isinstance(df_out, pd.DataFrame)
+        dbg.dassert(cols is None or isinstance(cols, list))
+        cols = cols or df_out.columns.tolist()
+        col_rename_func = col_rename_func or (lambda x: x)
+        dbg.dassert_isinstance(col_rename_func, collections.Callable)
+        col_mode = col_mode or "merge_all"
+        # Rename transformed columns.
+        df_out = df_out.rename(columns=col_rename_func)
+        self._transformed_col_names = df_out.columns.tolist()
+        # Select columns to return.
         if col_mode == "merge_all":
             shared_columns = df_out.columns.intersection(df_in.columns)
             dbg.dassert(
@@ -442,7 +454,7 @@ class ColModeMixin:
                 df_out, how="outer", left_index=True, right_index=True
             )
         elif col_mode == "replace_selected":
-            df_in_not_transformed_cols = df_in.columns.drop(cols_to_transform)
+            df_in_not_transformed_cols = df_in.columns.drop(cols)
             dbg.dassert(
                 df_in_not_transformed_cols.intersection(df_out.columns).empty,
                 "Transformed column names `%s` conflict with existing column "
@@ -450,7 +462,7 @@ class ColModeMixin:
                 df_out.columns,
                 df_in_not_transformed_cols,
             )
-            df_out = df_in.drop(columns=cols_to_transform).merge(
+            df_out = df_in.drop(columns=cols).merge(
                 df_out, left_index=True, right_index=True
             )
         elif col_mode == "replace_all":
@@ -496,16 +508,15 @@ class ColumnTransformer(Transformer, ColModeMixin):
         if cols is not None:
             dbg.dassert_isinstance(cols, list)
         self._cols = cols
-        if col_rename_func is not None:
-            dbg.dassert_isinstance(col_rename_func, collections.Callable)
         self._col_rename_func = col_rename_func
-        self._col_mode = col_mode or "merge_all"
+        self._col_mode = col_mode
         self._transformer_func = transformer_func
         self._transformer_kwargs = transformer_kwargs or {}
         # Store the list of columns after the transformation.
         self._transformed_col_names = None
         self._nan_mode = nan_mode or "leave_unchanged"
 
+    @property
     def transformed_col_names(self) -> List[str]:
         dbg.dassert_is_not(
             self._transformed_col_names,
@@ -552,14 +563,13 @@ class ColumnTransformer(Transformer, ColModeMixin):
             df.index.equals(df_in.index),
             "Input/output indices differ but are expected to be the same!",
         )
-        # Maybe rename transformed columns.
-        if self._col_rename_func is not None:
-            df.rename(columns=self._col_rename_func, inplace=True)
-        # Store names of transformed columns.
-        self._transformed_col_names = df.columns.tolist()
         # Maybe merge transformed columns with a subset of input df columns.
         df = self._apply_col_mode(
-            df_in, df, self._transformed_col_names, self._col_mode
+            df_in,
+            df,
+            cols=df.columns.tolist(),
+            col_rename_func=self._col_rename_func,
+            col_mode=self._col_mode,
         )
         #
         info["df_transformed_info"] = get_df_info_as_string(df)
@@ -620,7 +630,7 @@ class Resample(Transformer):
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
-        resampler = sigp.resample(df, rule=self._rule, **self._resample_kwargs)
+        resampler = csigna.resample(df, rule=self._rule, **self._resample_kwargs)
         df = getattr(resampler, self._agg_func)(**self._agg_func_kwargs)
         #
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
@@ -666,7 +676,7 @@ class TimeBarResampler(Transformer):
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
-        df = fin.resample_time_bars(
+        df = cfinan.resample_time_bars(
             df,
             self._rule,
             return_cols=self._return_cols,
@@ -709,7 +719,7 @@ class TwapVwapComputer(Transformer):
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
-        df = fin.compute_twap_vwap(
+        df = cfinan.compute_twap_vwap(
             df,
             self._rule,
             price_col=self._price_col,
@@ -758,15 +768,16 @@ class VolatilityNormalizer(FitPredictNode, ColModeMixin):
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_in(self._col, df_in.columns)
-        self._scale_factor = fin.compute_volatility_normalization_factor(
+        self._scale_factor = cfinan.compute_volatility_normalization_factor(
             df_in[self._col], self._target_volatility
         )
         rescaled_y_hat = self._scale_factor * df_in[self._col]
-        rescaled_y_hat = rescaled_y_hat.to_frame(
-            f"rescaled_{rescaled_y_hat.name}"
-        )
         df_out = self._apply_col_mode(
-            df_in, rescaled_y_hat, [self._col], self._col_mode
+            df_in,
+            rescaled_y_hat.to_frame(),
+            cols=[self._col],
+            col_rename_func=lambda x: f"rescaled_{x}",
+            col_mode=self._col_mode,
         )
         # Store info.
         info = collections.OrderedDict()
@@ -777,11 +788,12 @@ class VolatilityNormalizer(FitPredictNode, ColModeMixin):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_in(self._col, df_in.columns)
         rescaled_y_hat = self._scale_factor * df_in[self._col]
-        rescaled_y_hat = rescaled_y_hat.to_frame(
-            f"rescaled_{rescaled_y_hat.name}"
-        )
         df_out = self._apply_col_mode(
-            df_in, rescaled_y_hat, [self._col], self._col_mode
+            df_in,
+            rescaled_y_hat.to_frame(),
+            cols=[self._col],
+            col_rename_func=lambda x: f"rescaled_{x}",
+            col_mode=self._col_mode,
         )
         return {"df_out": df_out}
 
@@ -836,10 +848,10 @@ def cross_validate(
     """
     # Get dataframe indices of source nodes.
     source_idxs = _get_source_idxs(dag, mode=idx_mode)
-    composite_idx = stats.combine_indices(source_idxs.values())
+    composite_idx = cstati.combine_indices(source_idxs.values())
     # Generate cross-validation splits from
     splits = split_func(composite_idx, **split_func_kwargs)
-    _LOG.debug(stats.convert_splits_to_string(splits))
+    _LOG.debug(cstati.convert_splits_to_string(splits))
     #
     result_bundle = collections.OrderedDict()
     # TODO(Paul): rename train/test to fit/predict.
@@ -889,8 +901,8 @@ def process_result_bundle(result_bundle: Dict) -> collections.OrderedDict:
         model_coeffs, index=split_names, columns=model_x_vars[0]
     )
     pnl_rets = pd.concat(pnl_rets)
-    sr = stats.compute_sharpe_ratio(
-        sigp.resample(pnl_rets, rule="1B").sum(), time_scaling=252
+    sr = cstati.compute_sharpe_ratio(
+        csigna.resample(pnl_rets, rule="1B").sum(), time_scaling=252
     )
     info["model_df"] = copy.copy(model_df)
     info["pnl_rets"] = copy.copy(pnl_rets)
