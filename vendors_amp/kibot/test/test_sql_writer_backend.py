@@ -84,6 +84,15 @@ class TestSqlWriterBackend1(hut.TestCase):
         )
         self._check_saved_data(table="Symbol")
 
+    def test_ensure_exchange_exist1(self) -> None:
+        """
+        Test adding a new exchange to Exchange table.
+        """
+        self._writer.ensure_exchange_exists(
+            exchange=self._get_test_string()
+        )
+        self._check_saved_data(table="Exchange")
+
     def test_ensure_trade_symbol_exist1(self) -> None:
         """
         Test adding a new symbol to TradeSymbol table.
