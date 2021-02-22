@@ -11,12 +11,15 @@ import vendors_amp.kibot.data.types as vkdtyp
 
 
 class SQLKibotDataLoader(vkdlda.AbstractKibotDataLoader):
-    def __init__(self, dbname: str, user: str, password: str, host: str):
+    def __init__(
+        self, dbname: str, user: str, password: str, host: str, port: int
+    ):
         self.conn: psycopg2.extensions.connection = psycopg2.connect(
             dbname=dbname,
             user=user,
             password=password,
             host=host,
+            port=port,
         )
 
     @hcache.cache
@@ -70,7 +73,7 @@ class SQLKibotDataLoader(vkdlda.AbstractKibotDataLoader):
                 if curs.rowcount:
                     (_exchange_id,) = curs.fetchone()
                     exchange_id = _exchange_id
-        if exchange_id == 0:
+        if exchange_id == -1:
             dbg.dfatal(f"Could not find Exchange ${exchange}")
         return exchange_id
 
