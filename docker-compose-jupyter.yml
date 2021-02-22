@@ -14,7 +14,6 @@ services:
     ports:
       - "${J_PORT}:${J_PORT}"
     working_dir: /commodity_research
-    entrypoint: ""
     command: docker_build/run_jupyter_server.sh
     privileged: true
     cap_add:
@@ -35,7 +34,6 @@ services:
     ports:
       - "${J_PORT}:${J_PORT}"
     working_dir: /commodity_research
-    entrypoint: ""
     command: docker_build/run_jupyter_server.sh
     privileged: true
     cap_add:
