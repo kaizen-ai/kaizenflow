@@ -41,6 +41,24 @@ class SQLWriterBackend:
                     [symbol, asset_class.value],
                 )
 
+    def ensure_exchange_exists(
+        self,
+        exchange: str,
+    ) -> None:
+        """
+        Insert new Exchange entry if it does not exist.
+
+        :param exchange: exchange code
+        """
+        with self.conn:
+            with self.conn.cursor() as curs:
+                curs.execute(
+                    "INSERT INTO Exchange (name) "
+                    "VALUES (%s) ON CONFLICT DO NOTHING",
+                    [exchange],
+                )
+
+
     def ensure_trade_symbol_exists(
         self,
         symbol_id: int,
