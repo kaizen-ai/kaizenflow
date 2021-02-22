@@ -6,7 +6,7 @@ import core.stats_computer as cstats
 
 import collections
 import logging
-from typing import Callable, Dict, Iterable, List, Optional
+from typing import Callable, Dict, Iterable, List, Optional, Any
 
 import pandas as pd
 
@@ -47,9 +47,13 @@ class StatsComputer:
     def compute_special_value_stats(srs: pd.Series) -> pd.Series:
         return cstati.compute_special_value_stats(srs)
 
-    def calculate_stats(self, *args, **kwargs) -> pd.Series:
+    def calculate_stats(self, *args: Any, **kwargs: Any) -> pd.Series:
+        """
+        Calculate all available stats as in dataframe_modeler/model_evaluator.
+        """
         return self._calculate_stats(stats_names=None, *args, **kwargs)
-
+    
+    @property
     def _map_name_to_method(self) -> Dict[str, Callable]:
         """
         Map `stats_names` to corresponding methods.
@@ -69,7 +73,7 @@ class StatsComputer:
     def _validate_stats_names(
         stats_names_available: Iterable[str],
         stats_names_requested: Optional[List[str]] = None,
-    ) -> pd.Series:
+    ) -> Iterable[str]:
         stats_names = stats_names_requested or stats_names_available
         stats_names_diff = set(stats_names) - set(stats_names_available)
         if stats_names_diff:
@@ -82,7 +86,7 @@ class StatsComputer:
         stats_names: Optional[List[str]] = None,
     ) -> pd.Series:
         dbg.dassert_isinstance(srs, pd.Series)
-        stats_names_dict = self._map_name_to_method()
+        stats_names_dict = self._map_name_to_method
         stats_names = self._validate_stats_names(
             stats_names_dict.keys(), stats_names
         )
@@ -109,9 +113,10 @@ class SeriesStatsComputer(StatsComputer):
                 cstati.apply_kpss_test(srs, prefix="kpss_"),
             ]
         )
-
+    
+    @property
     def _map_name_to_method(self) -> Dict[str, Callable]:
-        stats_names_dict = super()._map_name_to_method()
+        stats_names_dict = super()._map_name_to_method
         stats_names_dict.update(
             collections.OrderedDict(
                 {
@@ -154,24 +159,24 @@ class ModelStatsComputer(StatsComputer):
 
     @staticmethod
     def calculate_corr_to_underlying(
-        srs1: pd.Series, srs2: pd.Series
+        pnl: pd.Series, returns: pd.Series
     ) -> pd.Series:
-        return pd.Series(srs1.corr(srs2), index=["corr_to_underlying"])
+        return pd.Series(pnl.corr(returns), index=["corr_to_underlying"])
 
     @staticmethod
-    def compute_bet_stats(srs1: pd.Series, srs2: pd.Series) -> pd.Series:
-        return cstati.compute_bet_stats(srs1, srs2[srs1.index])
+    def compute_bet_stats(positions: pd.Series, returns: pd.Series) -> pd.Series:
+        return cstati.compute_bet_stats(positions, returns[positions.index])
 
     @staticmethod
     def compute_avg_turnover_and_holding_period(srs: pd.Series) -> pd.Series:
         return cstati.compute_avg_turnover_and_holding_period(srs)
 
     @staticmethod
-    def compute_prediction_corr(srs1: pd.Series, srs2: pd.Series) -> pd.Series:
-        return pd.Series(srs1.corr(srs2), index=["prediction_corr"])
-
+    def compute_prediction_corr(positions: pd.Series, returns: pd.Series) -> pd.Series:
+        return pd.Series(positions.corr(returns), index=["prediction_corr"])
+    
+    @property
     def _map_name_to_method(self) -> Dict[str, Callable]:
-
         stats_names_dict = collections.OrderedDict(
             {
                 "summarize_sharpe_ratio": self.summarize_sharpe_ratio,
@@ -208,7 +213,7 @@ class ModelStatsComputer(StatsComputer):
             srs.index.freq for srs in [pnl, positions, returns] if srs is not None
         }
         dbg.dassert_eq(len(freqs), 1, "Series have different frequencies.")
-        stats_names_dict = self._map_name_to_method()
+        stats_names_dict = self._map_name_to_method
         stats_names = self._validate_stats_names(
             stats_names_dict.keys(), stats_names
         )
