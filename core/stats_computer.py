@@ -6,7 +6,7 @@ import core.stats_computer as cstats
 
 import collections
 import logging
-from typing import Callable, Dict, Iterable, List, Optional, Any
+from typing import Any, Callable, Dict, Iterable, List, Optional
 
 import pandas as pd
 
@@ -52,7 +52,7 @@ class StatsComputer:
         Calculate all available stats as in dataframe_modeler/model_evaluator.
         """
         return self._calculate_stats(stats_names=None, *args, **kwargs)
-    
+
     @property
     def _map_name_to_method(self) -> Dict[str, Callable]:
         """
@@ -113,7 +113,7 @@ class SeriesStatsComputer(StatsComputer):
                 cstati.apply_kpss_test(srs, prefix="kpss_"),
             ]
         )
-    
+
     @property
     def _map_name_to_method(self) -> Dict[str, Callable]:
         stats_names_dict = super()._map_name_to_method
@@ -172,9 +172,11 @@ class ModelStatsComputer(StatsComputer):
         return cstati.compute_avg_turnover_and_holding_period(srs)
 
     @staticmethod
-    def compute_prediction_corr(positions: pd.Series, returns: pd.Series) -> pd.Series:
+    def compute_prediction_corr(
+        positions: pd.Series, returns: pd.Series
+    ) -> pd.Series:
         return pd.Series(positions.corr(returns), index=["prediction_corr"])
-    
+
     @property
     def _map_name_to_method(self) -> Dict[str, Callable]:
         stats_names_dict = collections.OrderedDict(
