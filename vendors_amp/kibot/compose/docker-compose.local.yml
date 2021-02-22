@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  kibot_app:
+    #TODO(plyq): Change once amp image will be ready
+    entrypoint: /commodity_research/amp/vendors_amp/kibot/compose/entrypoints/entrypoint_deploy_postgres.sh
+    depends_on:
+      - kibot_postgres_local
+    env_file:
+      - ../env/local.env
+
+
+  kibot_postgres_local:
+    image: postgres:13
+    container_name: kibot_postgres_local
+    restart: "no"
+    volumes:
+      - kibot_postgres_data_local:/var/lib/postgresql/data
+      - ./init_sql:/docker-entrypoint-initdb.d
+    env_file:
+      - ../env/local.env
+    ports:
+      - "5432:5432"
+
+volumes:
+  kibot_postgres_data_local: {}
