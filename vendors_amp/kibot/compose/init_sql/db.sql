@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS DailyData (
     high numeric,
     low numeric,
     close numeric,
-    volume integer,
+    volume bigint,
     UNIQUE (trade_symbol_id, date)
 );
 
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS MinuteData (
     high numeric,
     low numeric,
     close numeric,
-    volume integer,
+    volume bigint,
     UNIQUE (trade_symbol_id, datetime)
 );
 
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS TickBidAskData (
     datetime timestamp,
     bid numeric,
     ask numeric,
-    volume integer
+    volume bigint
 );
 
 CREATE TABLE IF NOT EXISTS TickData (
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS TickData (
     trade_symbol_id integer REFERENCES TradeSymbol,
     datetime timestamp,
     price numeric,
-    size integer
+    size bigint
 );
 
 INSERT INTO Exchange (name) VALUES ('TestExchange');
