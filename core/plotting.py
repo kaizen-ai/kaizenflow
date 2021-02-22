@@ -1821,8 +1821,8 @@ def plot_holding_diffs(
     
     Indicates how much to increase or decrease holdings from current point in 
     time to the next one in order to achieve the target position. Since the 
-    difference is between current and next time periods, the plot has the same 
-    timestamp as forward predictions.
+    difference is between current and next time periods, the holdings change 
+    from t0 to t1 has a timestamp t0.
 
     :param holdings: series to plot
     :param unit: "ratio", "%" or "bps" scaling coefficient
@@ -1833,10 +1833,10 @@ def plot_holding_diffs(
     scale_coeff = _choose_scaling_coefficient(unit)
     holdings = scale_coeff * holdings
     holdings = -holdings.diff(-1)
-    holdings.plot(linewidth=1, ax=ax, label="holding diffs")
+    holdings.plot(linewidth=1, ax=ax, label="holding changes")
     ax.set_ylabel(unit)
     ax.legend()
-    ax.set_title(f"Holding diffs in ({unit})")
+    ax.set_title(f"Holding changes over time (in {unit})")
     
     
 def plot_qq(
