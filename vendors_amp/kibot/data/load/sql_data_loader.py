@@ -1,4 +1,5 @@
 from typing import Optional
+import functools
 
 import pandas as pd
 import psycopg2
@@ -22,7 +23,10 @@ class SQLKibotDataLoader(vkdlda.AbstractKibotDataLoader):
             port=port,
         )
 
-    @hcache.cache
+    # TODO(plyq): Uncomment once #1047 will be resolved.
+    # @hcache.cache
+    # TODO(plyq): Use lru_cache for now.
+    @functools.lru_cache(maxsize=64)
     def read_data(
         self,
         exchange: str,
