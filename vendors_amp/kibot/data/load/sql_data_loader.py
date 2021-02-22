@@ -25,7 +25,7 @@ class SQLKibotDataLoader(vkdlda.AbstractKibotDataLoader):
 
     # TODO(plyq): Uncomment once #1047 will be resolved.
     # @hcache.cache
-    # TODO(plyq): Use lru_cache for now.
+    # Use lru_cache for now.
     @functools.lru_cache(maxsize=64)
     def read_data(
         self,
