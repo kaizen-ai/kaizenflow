@@ -119,7 +119,7 @@ class S3KibotDataLoader(vkdlda.AbstractKibotDataLoader):
         dbg.dassert(df.index.is_unique)
         return df
     
-    @staicmethod
+    @staticmethod
     def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
         """
         Convert a df with daily Kibot data into our internal format.
