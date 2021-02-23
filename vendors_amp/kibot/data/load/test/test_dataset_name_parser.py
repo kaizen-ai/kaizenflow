@@ -1,6 +1,6 @@
 import helpers.unit_test as hut
 import vendors_amp.kibot.data.load.dataset_name_parser as vkdlda
-import vendors_amp.kibot.data.types as vkdtyp
+import vendors_amp.common.data.types as vkdtyp
 
 
 class TestDatasetNameParserExtractAssetClass(hut.TestCase):

@@ -3,7 +3,7 @@ import psycopg2
 import psycopg2.extensions as pexten
 import psycopg2.extras as pextra
 
-import vendors_amp.kibot.data.types as vkdtyp
+import vendors_amp.common.data.types as vkdtyp
 
 
 class SQLWriterBackend:

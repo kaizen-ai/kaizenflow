@@ -7,7 +7,7 @@ import pytest
 
 import helpers.io_ as hio
 import helpers.unit_test as hut
-import vendors_amp.kibot.data.types as vkdtyp
+import vendors_amp.common.data.types as vkdtyp
 import vendors_amp.kibot.sql_writer_backend as vksqlw
 
 DB_SCHEMA_FILE = os.path.join(

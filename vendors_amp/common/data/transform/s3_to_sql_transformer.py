@@ -8,7 +8,7 @@ from typing import Any, Callable, List, Optional
 
 
 import pandas as pd
-import vendors_amp.kibot.data.types as vkdtyp
+import vendors_amp.common.data.types as vkdtyp
 
 _LOG = logging.getLogger(__name__)
 

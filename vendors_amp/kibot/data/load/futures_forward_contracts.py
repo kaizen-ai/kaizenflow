@@ -8,7 +8,7 @@ import core.finance as cfinan
 import helpers.dataframe as hdataf
 import helpers.dbg as dbg
 import vendors_amp.kibot.data.load.data_loader as vkdlda
-import vendors_amp.kibot.data.types as vkdtyp
+import vendors_amp.common.data.types as vkdtyp
 
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 

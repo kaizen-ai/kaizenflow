@@ -25,7 +25,7 @@ import pandas as pd
 import helpers.s3 as hs3
 import vendors_amp.kibot.data.load as kdl
 import vendors_amp.kibot.data.load.file_path_generator as fpgen
-import vendors_amp.kibot.data.types as types
+import vendors_amp.common.data.types as types
 
 # %%
 file = "s3://external-p1/kibot/sp_500_1min/AAPL.csv.gz"

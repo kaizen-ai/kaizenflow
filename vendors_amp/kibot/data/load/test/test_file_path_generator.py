@@ -1,7 +1,7 @@
 import helpers.unit_test as hut
 import vendors_amp.kibot.data.config as vkdcon
 import vendors_amp.kibot.data.load.file_path_generator as vkdlfi
-import vendors_amp.kibot.data.types as vkdtyp
+import vendors_amp.common.data.types as vkdtyp
 
 
 class TestFilePathGenerator(hut.TestCase):

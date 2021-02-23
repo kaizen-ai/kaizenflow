@@ -8,7 +8,7 @@ import psycopg2.extensions as pexten
 import helpers.cache as hcache
 import helpers.dbg as dbg
 import vendors_amp.kibot.data.load.data_loader as vkdlda
-import vendors_amp.kibot.data.types as vkdtyp
+import vendors_amp.common.data.types as vkdtyp
 
 
 class SQLKibotDataLoader(vkdlda.AbstractKibotDataLoader):

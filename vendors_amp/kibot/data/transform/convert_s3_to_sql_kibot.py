@@ -37,7 +37,7 @@ import vendors_amp.kibot.data.config as vkdcon
 import vendors_amp.kibot.data.load as vkdloa
 import vendors_amp.kibot.data.load.dataset_name_parser as vkdlda
 import vendors_amp.kibot.data.load.sql_data_loader as vkdlsq
-import vendors_amp.kibot.data.types as vkdtyp
+import vendors_amp.common.data.types as vkdtyp
 import vendors_amp.kibot.metadata.load.s3_backend as vkmls3
 import vendors_amp.kibot.sql_writer_backend as vksqlw
 import vendors_amp.common.data.transform.convert_s3_to_sql as mconv

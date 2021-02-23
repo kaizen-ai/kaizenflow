@@ -3,7 +3,7 @@ from typing import Optional
 
 import pandas as pd
 
-import vendors_amp.kibot.data.types as vkdtyp
+import vendors_amp.common.data.types as vkdtyp
 
 
 class AbstractKibotDataLoader(abc.ABC):
