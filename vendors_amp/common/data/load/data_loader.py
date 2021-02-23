@@ -7,10 +7,9 @@ import vendors_amp.common.data.types as vkdtyp
 
 
 class AbstractDataLoader(abc.ABC):
-    @classmethod
     @abc.abstractmethod
     def read_data(
-        cls,
+        self,
         exchange: str,
         symbol: str,
         asset_class: vkdtyp.AssetClass,
@@ -21,7 +20,7 @@ class AbstractDataLoader(abc.ABC):
         normalize: bool = True,
     ) -> pd.DataFrame:
         """
-        Read kibot data.
+        Read data.
 
         :param exchange: name of the exchange
         :param symbol: symbol to get the data for
