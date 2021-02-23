@@ -7,7 +7,7 @@ from tqdm.auto import tqdm
 import core.finance as cfinan
 import helpers.dataframe as hdataf
 import helpers.dbg as dbg
-import vendors_amp.kibot.data.load.data_loader as vkdlda
+import vendors_amp.common.data.load.data_loader as vkdlda
 import vendors_amp.common.data.types as vkdtyp
 
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
@@ -19,7 +19,7 @@ class FuturesForwardContracts:
     """
 
     def __init__(
-        self, data_loader: vkdlda.AbstractKibotDataLoader, disable_tqdm=False
+        self, data_loader: vkdlda.AbstractDataLoader, disable_tqdm=False
     ) -> None:
         """
         Initialize by injecting a data loader.

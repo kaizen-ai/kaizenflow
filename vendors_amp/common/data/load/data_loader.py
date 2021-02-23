@@ -6,7 +6,7 @@ import pandas as pd
 import vendors_amp.common.data.types as vkdtyp
 
 
-class AbstractKibotDataLoader(abc.ABC):
+class AbstractDataLoader(abc.ABC):
     @classmethod
     @abc.abstractmethod
     def read_data(
