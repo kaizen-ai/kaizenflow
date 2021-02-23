@@ -1,6 +1,7 @@
 from typing import Optional
 
 import pandas as pd
+import functools
 
 import helpers.cache as hcache
 import helpers.dbg as dbg
@@ -15,7 +16,10 @@ _LOG = logging.getLogger(__name__)
 
 
 class S3KibotDataLoader(vkdlda.AbstractS3DataLoader):
-    @hcache.cache
+    # TODO(plyq): Uncomment once #1047 will be resolved.
+    # @hcache.cache
+    # Use lru_cache for now.
+    @functools.lru_cache(maxsize=64)
     def read_data(
         self,
         exchange: str,

@@ -42,8 +42,9 @@ import helpers.parser as hparse
 import helpers.printing as prnt
 import vendors_amp.common.data.types as vkdtyp
 import vendors_amp.kibot.sql_writer_backend as vksqlw
-import vendors_amp.kibot.data.load.s3_data_loader as mds3
-import vendors_amp.kibot.data.load.sql_data_loader as mdsql
+import vendors_amp.common.data.load.s3_data_loader as mds3
+import vendors_amp.common.data.load.sql_data_loader as mdsql
+import vendors_amp.common.data.load.loader_factory as loadfac
 import vendors_amp.common.data.transform.s3_to_sql_transformer as mtra
 import vendors_amp.common.data.transform.transformer_factory as tfac
 
@@ -58,9 +59,9 @@ _JOBLIB_VERBOSITY = 1
 def convert_s3_to_sql(
     symbol: str,
     exchange: str,
-    s3_data_loader: mds3.S3KibotDataLoader,
+    s3_data_loader: mds3.AbstractS3DataLoader,
     sql_writer_backend: vksqlw.SQLWriterBackend,
-    sql_data_loader: mdsql.SQLKibotDataLoader,
+    sql_data_loader: mdsql.AbstractSQLDataLoader,
     s3_to_sql_transformer: mtra.AbstractS3ToSqlTransformer,
     asset_class: vkdtyp.AssetClass,
     frequency: vkdtyp.Frequency,
@@ -250,8 +251,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Set up parameters for running.
     provider = args.provider
     s3_to_sql_transformer = tfac.TransformerFactory.get_s3_to_sql_transformer(provider=provider)
-    # TODO(plyq): remove kibot specific.
-    s3_data_loader = mds3.S3KibotDataLoader()
+    s3_data_loader: mds3.AbstractS3DataLoader = loadfac.LoaderFactory.get_loader(storage_type="s3", provider=provider)
     sql_writer_backend = vksqlw.SQLWriterBackend(
         dbname=args.dbname,
         user=args.dbuser,
@@ -259,8 +259,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         host=args.dbhost,
         port=args.dbport,
     )
-    # TODO(plyq): remove kibot specific.
-    sql_data_loader = mdsql.SQLKibotDataLoader(
+    sql_data_loader: mdsql.AbstractSQLDataLoader = loadfac.LoaderFactory.get_loader(
+        storage_type="sql",
+        provider=provider,
         dbname=args.dbname,
         user=args.dbuser,
         password=args.dbpass,

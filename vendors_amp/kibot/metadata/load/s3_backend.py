@@ -208,7 +208,7 @@ class S3Backend:
 
         aws_csv_gz_dir = os.path.join(vkdcon.S3_PREFIX, data_type)
         # List all existing csv gz files on S3.
-        csv_gz_s3_file_paths = hs3.listdir(aws_csv_gz_dir)
+        csv_gz_s3_file_paths = [filename for filename in hs3.listdir(aws_csv_gz_dir) if filename.endswith("csv.gz")]
         # Get list of symbols to convert.
         symbols = list(
             map(_extract_filename_without_extension, csv_gz_s3_file_paths)
