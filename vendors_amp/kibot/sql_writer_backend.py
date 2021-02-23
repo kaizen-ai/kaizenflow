@@ -3,7 +3,7 @@ import psycopg2
 import psycopg2.extensions as pexten
 import psycopg2.extras as pextra
 
-import vendors_amp.common.data.types as vkdtyp
+import vendors_amp.common.data.types as vcdtyp
 
 
 class SQLWriterBackend:
@@ -25,7 +25,7 @@ class SQLWriterBackend:
     def ensure_symbol_exists(
         self,
         symbol: str,
-        asset_class: vkdtyp.AssetClass,
+        asset_class: vcdtyp.AssetClass,
     ) -> None:
         """
         Insert new Symbol entry if it does not exist.
@@ -57,7 +57,6 @@ class SQLWriterBackend:
                     "VALUES (%s) ON CONFLICT DO NOTHING",
                     [exchange],
                 )
-
 
     def ensure_trade_symbol_exists(
         self,

@@ -26,22 +26,17 @@ Usage:
 import argparse
 import logging
 import os
-from typing import Any, Callable, List, Optional
-
-import joblib
-import tqdm
 
 import helpers.dbg as dbg
 import helpers.parser as hparse
+import vendors_amp.common.data.transform.convert_s3_to_sql as vcdtco
 import vendors_amp.kibot.data.config as vkdcon
 import vendors_amp.kibot.data.load as vkdloa
 import vendors_amp.kibot.data.load.dataset_name_parser as vkdlda
 import vendors_amp.kibot.data.load.sql_data_loader as vkdlsq
-import vendors_amp.common.data.types as vkdtyp
+import vendors_amp.kibot.data.transform.s3_to_sql_transformer as vkdts3
 import vendors_amp.kibot.metadata.load.s3_backend as vkmls3
 import vendors_amp.kibot.sql_writer_backend as vksqlw
-import vendors_amp.common.data.transform.convert_s3_to_sql as mconv
-import vendors_amp.kibot.data.transform.s3_to_sql_transformer as ktr3
 
 _LOG = logging.getLogger(__name__)
 
@@ -128,7 +123,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     dbg.shutup_chatty_modules()
     #
-    s3_to_sql_transformer = ktr3.S3ToSqlTransformer()
+    s3_to_sql_transformer = vkdts3.S3ToSqlTransformer()
     #
     kibot_data_loader = vkdloa.S3KibotDataLoader()
     #
@@ -173,23 +168,25 @@ def _main(parser: argparse.ArgumentParser) -> None:
             unadjusted,
         ) = dataset_name_parser.parse_dataset_name(dataset)
         for symbol in symbols:
-            params_list.append(dict(
-                symbol=symbol,
-                max_num_rows=args.max_num_rows,
-                s3_data_loader=kibot_data_loader,
-                sql_writer_backend=sql_writer_backed,
-                sql_data_loader=sql_data_loader,
-                s3_to_sql_transformer=s3_to_sql_transformer,
-                asset_class=asset_class,
-                contract_type=contract_type,
-                frequency=frequency,
-                unadjusted=unadjusted,
-                exchange_id=exchange_id,
-                exchange=args.exchange,
-            ))
+            params_list.append(
+                dict(
+                    symbol=symbol,
+                    max_num_rows=args.max_num_rows,
+                    s3_data_loader=kibot_data_loader,
+                    sql_writer_backend=sql_writer_backed,
+                    sql_data_loader=sql_data_loader,
+                    s3_to_sql_transformer=s3_to_sql_transformer,
+                    asset_class=asset_class,
+                    contract_type=contract_type,
+                    frequency=frequency,
+                    unadjusted=unadjusted,
+                    exchange_id=exchange_id,
+                    exchange=args.exchange,
+                )
+            )
     _LOG.info("Found %i items to load to database", len(params_list))
     # Run converting.
-    mconv.convert_s3_to_sql_bulk(serial=args.serial, params_list=params_list)
+    vcdtco.convert_s3_to_sql_bulk(serial=args.serial, params_list=params_list)
     _LOG.info("Closing database connection")
     sql_writer_backed.close()
     sql_data_loader.conn.close()

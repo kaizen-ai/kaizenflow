@@ -31,22 +31,22 @@ Usage:
 
 import argparse
 import logging
-from typing import Any, Callable, List, Optional, Dict
 import os
+from typing import Any, Dict, List, Optional
 
 import joblib
 import tqdm
 
 import helpers.dbg as dbg
 import helpers.parser as hparse
-import helpers.printing as prnt
-import vendors_amp.common.data.types as vkdtyp
+import helpers.printing as hprint
+import vendors_amp.common.data.load.loader_factory as vcdllo
+import vendors_amp.common.data.load.s3_data_loader as vcdls3
+import vendors_amp.common.data.load.sql_data_loader as vcdlsq
+import vendors_amp.common.data.transform.s3_to_sql_transformer as vcdts3
+import vendors_amp.common.data.transform.transformer_factory as vcdttr
+import vendors_amp.common.data.types as vcdtyp
 import vendors_amp.kibot.sql_writer_backend as vksqlw
-import vendors_amp.common.data.load.s3_data_loader as mds3
-import vendors_amp.common.data.load.sql_data_loader as mdsql
-import vendors_amp.common.data.load.loader_factory as loadfac
-import vendors_amp.common.data.transform.s3_to_sql_transformer as mtra
-import vendors_amp.common.data.transform.transformer_factory as tfac
 
 _LOG = logging.getLogger(__name__)
 
@@ -59,14 +59,14 @@ _JOBLIB_VERBOSITY = 1
 def convert_s3_to_sql(
     symbol: str,
     exchange: str,
-    s3_data_loader: mds3.AbstractS3DataLoader,
+    s3_data_loader: vcdls3.AbstractS3DataLoader,
     sql_writer_backend: vksqlw.SQLWriterBackend,
-    sql_data_loader: mdsql.AbstractSQLDataLoader,
-    s3_to_sql_transformer: mtra.AbstractS3ToSqlTransformer,
-    asset_class: vkdtyp.AssetClass,
-    frequency: vkdtyp.Frequency,
+    sql_data_loader: vcdlsq.AbstractSQLDataLoader,
+    s3_to_sql_transformer: vcdts3.AbstractS3ToSqlTransformer,
+    asset_class: vcdtyp.AssetClass,
+    frequency: vcdtyp.Frequency,
     exchange_id: int,
-    contract_type: Optional[vkdtyp.ContractType] = None,
+    contract_type: Optional[vcdtyp.ContractType] = None,
     unadjusted: Optional[bool] = None,
     max_num_rows: Optional[int] = None,
 ) -> bool:
@@ -76,7 +76,9 @@ def convert_s3_to_sql(
     :return: True if it was processed
     """
     _LOG.debug("Managing database for '%s' symbol", symbol)
-    sql_writer_backend.ensure_symbol_exists(symbol=symbol, asset_class=asset_class)
+    sql_writer_backend.ensure_symbol_exists(
+        symbol=symbol, asset_class=asset_class
+    )
     symbol_id = sql_data_loader.get_symbol_id(symbol=symbol)
     sql_writer_backend.ensure_trade_symbol_exists(
         symbol_id=symbol_id, exchange_id=exchange_id
@@ -98,13 +100,15 @@ def convert_s3_to_sql(
     if max_num_rows:
         df = df.head(max_num_rows)
     _LOG.debug("Transforming '%s' data before saving to database", symbol)
-    df = s3_to_sql_transformer.transform(df, trade_symbol_id=trade_symbol_id, frequency=frequency)
+    df = s3_to_sql_transformer.transform(
+        df, trade_symbol_id=trade_symbol_id, frequency=frequency
+    )
     _LOG.debug("Saving '%s' data to database", symbol)
-    if frequency == vkdtyp.Frequency.Minutely:
+    if frequency == vcdtyp.Frequency.Minutely:
         sql_writer_backend.insert_bulk_minute_data(df)
-    elif frequency == vkdtyp.Frequency.Daily:
+    elif frequency == vcdtyp.Frequency.Daily:
         sql_writer_backend.insert_bulk_daily_data(df)
-    elif frequency == vkdtyp.Frequency.Tick:
+    elif frequency == vcdtyp.Frequency.Tick:
         for _, row in df.iterrows():
             sql_writer_backend.insert_tick_data(
                 trade_symbol_id=row["trade_symbol_id"],
@@ -116,9 +120,20 @@ def convert_s3_to_sql(
         dbg.dfatal("Unknown frequency '%s'", frequency)
     _LOG.info("Done converting '%s' symbol", symbol)
     # Return info about loaded data.
-    loaded_data = sql_data_loader.read_data(exchange=exchange, symbol=symbol, asset_class=asset_class, frequency=frequency, contract_type=contract_type, unadjusted=unadjusted, nrows=None, normalize=True)
+    loaded_data = sql_data_loader.read_data(
+        exchange=exchange,
+        symbol=symbol,
+        asset_class=asset_class,
+        frequency=frequency,
+        contract_type=contract_type,
+        unadjusted=unadjusted,
+        nrows=None,
+        normalize=True,
+    )
     _LOG.info("Total %s records loaded for symbol '%s'", len(loaded_data), symbol)
-    _LOG.debug("Tail of loaded data:\n%s", prnt.frame(loaded_data.tail().to_string()))
+    _LOG.debug(
+        "Tail of loaded data:\n%s", hprint.frame(loaded_data.tail().to_string())
+    )
     return True
 
 
@@ -174,19 +189,19 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--asset_class",
-        type=vkdtyp.AssetClass,
+        type=vcdtyp.AssetClass,
         help="Asset class (e.g. Futures)",
         required=True,
     )
     parser.add_argument(
         "--frequency",
-        type=vkdtyp.Frequency,
+        type=vcdtyp.Frequency,
         help="Frequency of data (e.g. Minutely)",
         required=True,
     )
     parser.add_argument(
         "--contract_type",
-        type=vkdtyp.ContractType,
+        type=vcdtyp.ContractType,
         help="Contract type (e.g. Expiry)",
         required=True,
     )
@@ -243,15 +258,18 @@ def _parse() -> argparse.ArgumentParser:
     return parser
 
 
-
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     dbg.shutup_chatty_modules()
     # Set up parameters for running.
     provider = args.provider
-    s3_to_sql_transformer = tfac.TransformerFactory.get_s3_to_sql_transformer(provider=provider)
-    s3_data_loader: mds3.AbstractS3DataLoader = loadfac.LoaderFactory.get_loader(storage_type="s3", provider=provider)
+    s3_to_sql_transformer = vcdttr.TransformerFactory.get_s3_to_sql_transformer(
+        provider=provider
+    )
+    s3_data_loader: vcdls3.AbstractS3DataLoader = vcdllo.LoaderFactory.get_loader(
+        storage_type="s3", provider=provider
+    )
     sql_writer_backend = vksqlw.SQLWriterBackend(
         dbname=args.dbname,
         user=args.dbuser,
@@ -259,14 +277,16 @@ def _main(parser: argparse.ArgumentParser) -> None:
         host=args.dbhost,
         port=args.dbport,
     )
-    sql_data_loader: mdsql.AbstractSQLDataLoader = loadfac.LoaderFactory.get_loader(
-        storage_type="sql",
-        provider=provider,
-        dbname=args.dbname,
-        user=args.dbuser,
-        password=args.dbpass,
-        host=args.dbhost,
-        port=args.dbport,
+    sql_data_loader: vcdlsq.AbstractSQLDataLoader = (
+        vcdllo.LoaderFactory.get_loader(
+            storage_type="sql",
+            provider=provider,
+            dbname=args.dbname,
+            user=args.dbuser,
+            password=args.dbpass,
+            host=args.dbhost,
+            port=args.dbport,
+        )
     )
     _LOG.info("Connected to database")
     sql_writer_backend.ensure_exchange_exists(args.exchange)
@@ -279,20 +299,22 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Construct list of parameters.
     params_list = []
     for symbol in symbols:
-        params_list.append(dict(
-            symbol=symbol,
-            max_num_rows=args.max_num_rows,
-            s3_data_loader=s3_data_loader,
-            sql_writer_backend=sql_writer_backend,
-            sql_data_loader=sql_data_loader,
-            s3_to_sql_transformer=s3_to_sql_transformer,
-            asset_class=args.asset_class,
-            contract_type=args.contract_type,
-            frequency=args.frequency,
-            unadjusted=args.unadjusted,
-            exchange_id=exchange_id,
-            exchange=args.exchange,
-        ))
+        params_list.append(
+            dict(
+                symbol=symbol,
+                max_num_rows=args.max_num_rows,
+                s3_data_loader=s3_data_loader,
+                sql_writer_backend=sql_writer_backend,
+                sql_data_loader=sql_data_loader,
+                s3_to_sql_transformer=s3_to_sql_transformer,
+                asset_class=args.asset_class,
+                contract_type=args.contract_type,
+                frequency=args.frequency,
+                unadjusted=args.unadjusted,
+                exchange_id=exchange_id,
+                exchange=args.exchange,
+            )
+        )
     # Run converting.
     convert_s3_to_sql_bulk(serial=args.serial, params_list=params_list)
     _LOG.info("Closing database connection")

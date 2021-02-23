@@ -3,7 +3,7 @@ from typing import Optional
 
 import pandas as pd
 
-import vendors_amp.common.data.types as vkdtyp
+import vendors_amp.common.data.types as vcdtyp
 
 
 class AbstractDataLoader(abc.ABC):
@@ -12,9 +12,9 @@ class AbstractDataLoader(abc.ABC):
         self,
         exchange: str,
         symbol: str,
-        asset_class: vkdtyp.AssetClass,
-        frequency: vkdtyp.Frequency,
-        contract_type: Optional[vkdtyp.ContractType] = None,
+        asset_class: vcdtyp.AssetClass,
+        frequency: vcdtyp.Frequency,
+        contract_type: Optional[vcdtyp.ContractType] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
