@@ -11,6 +11,7 @@ from typing import Any, Dict, Iterable, List, Tuple, Union
 
 import pandas as pd
 
+import numpy as np
 import helpers.dbg as dbg
 import helpers.dict as dct
 import helpers.introspection as intr
@@ -176,7 +177,7 @@ class Config:
     def from_python(cls, code: str) -> "Config":
         """Create an object from the code returned by `to_python()`."""
         dbg.dassert_isinstance(code, str)
-        val = eval(code)
+        val = eval(code, {"nan": np.nan, "Config": Config})
         dbg.dassert_isinstance(val, Config)
         return val  # type: ignore
 
