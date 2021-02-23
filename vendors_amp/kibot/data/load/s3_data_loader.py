@@ -5,7 +5,7 @@ import pandas as pd
 import helpers.cache as hcache
 import helpers.dbg as dbg
 import helpers.s3 as hs3
-import vendors_amp.common.data.load.data_loader as vkdlda
+import vendors_amp.common.data.load.s3_data_loader as vkdlda
 import vendors_amp.kibot.data.load.file_path_generator as vkdlfi
 import vendors_amp.common.data.types as vkdtyp
 import logging
@@ -14,11 +14,10 @@ _LOG = logging.getLogger(__name__)
 
 
 
-class S3KibotDataLoader(vkdlda.AbstractDataLoader):
-    @classmethod
+class S3KibotDataLoader(vkdlda.AbstractS3DataLoader):
     @hcache.cache
     def read_data(
-        cls,
+        self,
         exchange: str,
         symbol: str,
         asset_class: vkdtyp.AssetClass,
@@ -41,7 +40,7 @@ class S3KibotDataLoader(vkdlda.AbstractDataLoader):
         :param normalize: whether to normalize the dataframe by frequency
         :return: a dataframe with the symbol data
         """
-        return cls._read_data(
+        return self._read_data(
             symbol=symbol,
             asset_class=asset_class,
             frequency=frequency,
