@@ -50,8 +50,9 @@ class S3KibotDataLoader(vkdlda.AbstractS3DataLoader):
             normalize=normalize,
         )
 
-    @staticmethod
+    @classmethod
     def _read_data(
+        cls,
         symbol: str,
         asset_class: vkdtyp.AssetClass,
         frequency: vkdtyp.Frequency,
@@ -78,7 +79,7 @@ class S3KibotDataLoader(vkdlda.AbstractS3DataLoader):
         df = pd.read_csv(file_path, header=None, nrows=nrows)
 
         if normalize:
-            df = vkdtno.normalize(df=df, frequency=frequency)
+            df = cls.normalize(df=df, frequency=frequency)
 
         return df
 
