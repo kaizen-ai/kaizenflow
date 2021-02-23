@@ -7,7 +7,7 @@ import helpers.dbg as dbg
 import helpers.s3 as hs3
 import vendors_amp.kibot.data.load.data_loader as vkdlda
 import vendors_amp.kibot.data.load.file_path_generator as vkdlfi
-import vendors_amp.kibot.data.types as vkdtyp
+import vendors_amp.common.data.types as vkdtyp
 import logging
 
 _LOG = logging.getLogger(__name__)

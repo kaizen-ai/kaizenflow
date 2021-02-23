@@ -11,7 +11,7 @@ import pandas.tseries.offsets as ptoffs
 import helpers.dbg as dbg
 import helpers.io_ as hio
 import vendors_amp.kibot.data.load.s3_data_loader as vkdls3
-import vendors_amp.kibot.data.types as vkdtyp
+import vendors_amp.common.data.types as vkdtyp
 import vendors_amp.kibot.metadata.load.expiry_contract_mapper as vkmlex
 import vendors_amp.kibot.metadata.load.s3_backend as vkmls3
 import vendors_amp.kibot.metadata.types as vkmtyp

@@ -40,7 +40,7 @@ import tqdm
 import helpers.dbg as dbg
 import helpers.parser as hparse
 import helpers.printing as prnt
-import vendors_amp.kibot.data.types as vkdtyp
+import vendors_amp.common.data.types as vkdtyp
 import vendors_amp.kibot.sql_writer_backend as vksqlw
 import vendors_amp.kibot.data.load.s3_data_loader as mds3
 import vendors_amp.kibot.data.load.sql_data_loader as mdsql

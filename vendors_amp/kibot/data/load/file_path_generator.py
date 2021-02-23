@@ -3,7 +3,7 @@ from typing import Optional, cast
 
 import helpers.dbg as dbg
 import vendors_amp.kibot.data.config as vkdcon
-import vendors_amp.kibot.data.types as vkdtyp
+import vendors_amp.common.data.types as vkdtyp
 
 
 class FilePathGenerator:

@@ -2,7 +2,7 @@ from typing import Dict, Tuple
 
 import helpers.dbg as dbg
 import vendors_amp.kibot.data.load.file_path_generator as vkdlfi
-import vendors_amp.kibot.data.types as vkdtyp
+import vendors_amp.common.data.types as vkdtyp
 
 
 class DatasetNameParser:

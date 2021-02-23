@@ -2,7 +2,7 @@ import pytest
 
 import helpers.unit_test as hut
 import vendors_amp.kibot.data.load as vkdloa
-import vendors_amp.kibot.data.types as vkdtyp
+import vendors_amp.common.data.types as vkdtyp
 
 
 class TestS3KibotDataLoader(hut.TestCase):

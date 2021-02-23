@@ -7,7 +7,7 @@ from typing import Any, Callable, List, Optional
 
 import pandas as pd
 import helpers.dbg as dbg
-import vendors_amp.kibot.data.types as vkdtyp
+import vendors_amp.common.data.types as vkdtyp
 import vendors_amp.common.data.transform.s3_to_sql_transformer as vmdts3
 
 _LOG = logging.getLogger(__name__)
