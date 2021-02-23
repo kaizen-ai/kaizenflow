@@ -5,6 +5,7 @@ import core.stats_computer as cstats
 """
 
 import collections
+import inspect
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional
 
@@ -168,14 +169,34 @@ class ModelStatsComputer(StatsComputer):
         return cstati.compute_bet_stats(positions, returns[positions.index])
 
     @staticmethod
-    def compute_avg_turnover_and_holding_period(srs: pd.Series) -> pd.Series:
-        return cstati.compute_avg_turnover_and_holding_period(srs)
+    def compute_avg_turnover_and_holding_period(
+        positions: pd.Series,
+    ) -> pd.Series:
+        return cstati.compute_avg_turnover_and_holding_period(positions)
 
     @staticmethod
     def compute_prediction_corr(
         positions: pd.Series, returns: pd.Series
     ) -> pd.Series:
         return pd.Series(positions.corr(returns), index=["prediction_corr"])
+
+    @staticmethod
+    def _run_func(
+        func: Callable,
+        pnl: Optional[pd.Series] = None,
+        positions: Optional[pd.Series] = None,
+        returns: Optional[pd.Series] = None,
+    ) -> pd.Series:
+        """
+        Apply a function to appropriate input series.
+        """
+        args = inspect.getfullargspec(func)[0]
+        kwargs = {}
+        for arg in args:
+            kwargs[arg] = eval("pnl") if arg == "srs" else eval(arg)
+        if pd.isna(list(kwargs.values())).any():
+            return None
+        return func(**kwargs)
 
     @property
     def _map_name_to_method(self) -> Dict[str, Callable]:
@@ -220,24 +241,10 @@ class ModelStatsComputer(StatsComputer):
             stats_names_dict.keys(), stats_names
         )
         stats_vals = []
-        positions_stats_names = [
-            "compute_bet_stats",
-            "compute_prediction_corr",
-            "compute_avg_turnover_and_holding_period",
-        ]
-        returns_stats_names = [
-            "compute_bet_stats",
-            "compute_prediction_corr",
-            "calculate_corr_to_underlying",
-        ]
         for stat_name in stats_names:
-            srs = positions if stat_name in positions_stats_names else pnl
-            if srs is not None:
-                if stat_name in returns_stats_names:
-                    if returns is not None:
-                        stats_vals.append(
-                            stats_names_dict[stat_name](srs, returns)
-                        )
-                else:
-                    stats_vals.append(stats_names_dict[stat_name](srs))
+            stats_vals.append(
+                self._run_func(
+                    stats_names_dict[stat_name], pnl, positions, returns
+                )
+            )
         return pd.concat(stats_vals)
