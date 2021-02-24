@@ -11,15 +11,15 @@ class DatasetNameParser:
     """
 
     FREQ_PATH_MAPPING: Dict[str, vcdtyp.Frequency] = {
-        v: k for k, v in vkdlfi.FilePathGenerator.FREQ_PATH_MAPPING.items()
+        v: k for k, v in vkdlfi.KibotFilePathGenerator.FREQ_PATH_MAPPING.items()
     }
 
     CONTRACT_PATH_MAPPING = {
-        v: k for k, v in vkdlfi.FilePathGenerator.CONTRACT_PATH_MAPPING.items()
+        v: k for k, v in vkdlfi.KibotFilePathGenerator.CONTRACT_PATH_MAPPING.items()
     }
 
     ASSET_TYPE_PREFIX = {
-        v: k for k, v in vkdlfi.FilePathGenerator.ASSET_TYPE_PREFIX.items()
+        v: k for k, v in vkdlfi.KibotFilePathGenerator.ASSET_TYPE_PREFIX.items()
     }
 
     def parse_dataset_name(

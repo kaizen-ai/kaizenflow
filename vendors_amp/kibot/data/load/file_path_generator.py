@@ -4,9 +4,9 @@ from typing import Optional, cast
 import helpers.dbg as dbg
 import vendors_amp.common.data.types as vcdtyp
 import vendors_amp.kibot.data.config as vkdcon
+import vendors_amp.common.data.load.file_path_generator as vcdf
 
-
-class FilePathGenerator:
+class KibotFilePathGenerator(vcdf.FilePathGenerator):
     FREQ_PATH_MAPPING = {
         vcdtyp.Frequency.Daily: "daily",
         vcdtyp.Frequency.Minutely: "1min",
