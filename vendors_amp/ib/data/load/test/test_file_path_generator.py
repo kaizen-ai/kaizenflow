@@ -1,15 +1,16 @@
-import vendors_amp.ib.data.load.file_path_generator as ibpath
 import helpers.unit_test as hut
-import vendors_amp.common.data.types as typ
+import vendors_amp.common.data.types as vcdtyp
+import vendors_amp.ib.data.load.file_path_generator as vidlfi
 
 
 class TestIbFilePathGenerator(hut.TestCase):
     """
     Test correctness of S3 IB paths.
     """
+
     def setUp(self) -> None:
         super().setUp()
-        self._file_path_generator = ibpath.IbFilePathGenerator()
+        self._file_path_generator = vidlfi.IbFilePathGenerator()
 
     def test_generate_file_path1(self) -> None:
         """
@@ -18,10 +19,10 @@ class TestIbFilePathGenerator(hut.TestCase):
         # Generate path to symbol.
         path = self._file_path_generator.generate_file_path(
             symbol="ESZ21",
-            frequency=typ.Frequency.Minutely,
-            asset_class=typ.AssetClass.Futures,
-            contract_type=typ.ContractType.Expiry,
-            ext=typ.Extension.CSV,
+            frequency=vcdtyp.Frequency.Minutely,
+            asset_class=vcdtyp.AssetClass.Futures,
+            contract_type=vcdtyp.ContractType.Expiry,
+            ext=vcdtyp.Extension.CSV,
         )
         # Compare with expected value.
         self.check_string(path)
@@ -33,10 +34,10 @@ class TestIbFilePathGenerator(hut.TestCase):
         # Generate path to symbol.
         path = self._file_path_generator.generate_file_path(
             symbol="TSLA",
-            frequency=typ.Frequency.Minutely,
-            asset_class=typ.AssetClass.Stocks,
-            contract_type=typ.ContractType.Continuous,
-            ext=typ.Extension.CSV,
+            frequency=vcdtyp.Frequency.Minutely,
+            asset_class=vcdtyp.AssetClass.Stocks,
+            contract_type=vcdtyp.ContractType.Continuous,
+            ext=vcdtyp.Extension.CSV,
         )
         # Compare with expected value.
         self.check_string(path)
@@ -48,11 +49,10 @@ class TestIbFilePathGenerator(hut.TestCase):
         # Generate path to symbol.
         path = self._file_path_generator.generate_file_path(
             symbol="CLH21",
-            frequency=typ.Frequency.Daily,
-            asset_class=typ.AssetClass.Futures,
-            contract_type=typ.ContractType.Expiry,
-            ext=typ.Extension.CSV,
+            frequency=vcdtyp.Frequency.Daily,
+            asset_class=vcdtyp.AssetClass.Futures,
+            contract_type=vcdtyp.ContractType.Expiry,
+            ext=vcdtyp.Extension.CSV,
         )
         # Compare with expected value.
         self.check_string(path)
-
