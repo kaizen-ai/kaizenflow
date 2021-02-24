@@ -195,6 +195,8 @@ def get_multiple_plots(
         figsize = None
     if "tight_layout" not in kwargs:
         kwargs["tight_layout"] = True
+    if "constrained_layout" in kwargs and kwargs["constrained_layout"]:
+         kwargs["tight_layout"] = False
     fig, ax = plt.subplots(
         math.ceil(num_plots / num_cols),
         num_cols,
