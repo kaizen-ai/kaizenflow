@@ -16,7 +16,7 @@ import helpers.dbg as dbg
 import helpers.s3 as hs3
 import vendors_amp.common.data.load.s3_data_loader as vcdls3
 import vendors_amp.common.data.types as vcdtyp
-import vendors_amp.ib.data.load.file_path_generator as ibf
+import vendors_amp.ib.data.load.file_path_generator as vidlfi
 
 _LOG = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class S3IbDataLoader(vcdls3.AbstractS3DataLoader):
         nrows: Optional[int] = None,
     ) -> pd.DataFrame:
         # Find path to look for a data.
-        file_path = ibf.IbFilePathGenerator().generate_file_path(
+        file_path = vidlfi.IbFilePathGenerator().generate_file_path(
             symbol=symbol,
             asset_class=asset_class,
             frequency=frequency,
