@@ -7,11 +7,12 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 import pandas.tseries.offsets as ptoffs
+from tqdm.autonotebook import tqdm
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
+import vendors_amp.common.data.types as vcdtyp
 import vendors_amp.kibot.data.load.s3_data_loader as vkdls3
-import vendors_amp.kibot.data.types as vkdtyp
 import vendors_amp.kibot.metadata.load.expiry_contract_mapper as vkmlex
 import vendors_amp.kibot.metadata.load.s3_backend as vkmls3
 import vendors_amp.kibot.metadata.types as vkmtyp
@@ -33,6 +34,8 @@ TOP_KIBOT = {
     "Silver": "SI",
     "Palm Oil": "KPO",
 }
+# Custom type.
+_SymbolToContracts = Dict[str, pd.DataFrame]
 
 
 class KibotMetadata:
@@ -392,7 +395,7 @@ class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
 
     def __init__(self, end_timedelta_days: int = 0):
         """
-        :param end_timedelta_days: number of days before the trading activity 
+        :param end_timedelta_days: number of days before the trading activity
             termination to mark as the end
         """
         dbg.dassert_lte(0, end_timedelta_days)
@@ -402,9 +405,9 @@ class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
         df = vkdls3.S3KibotDataLoader().read_data(
             "Kibot",
             contract_name,
-            vkdtyp.AssetClass.Futures,
-            vkdtyp.Frequency.Daily,
-            vkdtyp.ContractType.Expiry,
+            vcdtyp.AssetClass.Futures,
+            vcdtyp.Frequency.Daily,
+            vcdtyp.ContractType.Expiry,
         )
         start_date = pd.Timestamp(df.first_valid_index())
         end_date = pd.Timestamp(df.last_valid_index())
@@ -454,17 +457,14 @@ class KibotHardcodedContractLifetimeComputer(ContractLifetimeComputer):
             # Closes on the "3rd last business days".
             date -= ptoffs.BDay(2)
         else:
-            raise NotImplementedError(f"Contract lifetime for symbol=`{symbol}` not implemented")
+            raise NotImplementedError(
+                f"Contract lifetime for symbol=`{symbol}` not implemented"
+            )
 
         return vkmtyp.ContractLifetime(
             pd.Timestamp(date - ptoffs.BDay(self.start_timedelta_days)),
             pd.Timestamp(date - ptoffs.BDay(self.end_timedelta_days)),
         )
-
-
-from tqdm.autonotebook import tqdm
-
-_SymbolToContracts = Dict[str, pd.DataFrame]
 
 
 class FuturesContractLifetimes:
@@ -597,7 +597,7 @@ class FuturesContractExpiryMapper:
             # Index does not exist.
             return None
         # Return the contract.
-        ret = contracts["contract"][idx]
+        ret: str = contracts["contract"][idx]
         return ret
 
     # TODO(*): Deprecate `get_nth_contract()`.

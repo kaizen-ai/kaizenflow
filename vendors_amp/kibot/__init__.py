@@ -3,11 +3,11 @@ Specify public methods and classes.
 
 Import as: import vendors_amp.kibot as vkibot
 """
+# Types
+from vendors_amp.common.data.types import *  # pylint: disable=unused-import # NOQA
+
 # Data
 from vendors_amp.kibot.data.load.s3_data_loader import *  # pylint: disable=unused-import disable=unused-variable # NOQA
-
-# Types
-from vendors_amp.kibot.data.types import *  # pylint: disable=unused-import # NOQA
 
 # Metadata
 from vendors_amp.kibot.metadata.load.adjustments import *  # pylint: disable=unused-import # NOQA

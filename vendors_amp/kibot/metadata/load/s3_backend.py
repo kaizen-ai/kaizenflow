@@ -117,10 +117,10 @@ class S3Backend:
         df.columns = (
             "SymbolBase Symbol StartDate Size(MB) Description Exchange".split()
         )
-        df_shape = df.shape
+        df.shape
         df.dropna(inplace=True, how="all")
-        df_shape_after_dropna = df.shape
-        #dbg.dassert_eq(df_shape[0], df_shape_after_dropna[0])
+        df.shape
+        # dbg.dassert_eq(df_shape[0], df_shape_after_dropna[0])
         df.index = df.index.astype(int)
         df.index.name = None
         df["StartDate"] = pd.to_datetime(df["StartDate"])
@@ -208,7 +208,11 @@ class S3Backend:
 
         aws_csv_gz_dir = os.path.join(vkdcon.S3_PREFIX, data_type)
         # List all existing csv gz files on S3.
-        csv_gz_s3_file_paths = hs3.listdir(aws_csv_gz_dir)
+        csv_gz_s3_file_paths = [
+            filename
+            for filename in hs3.listdir(aws_csv_gz_dir)
+            if filename.endswith("csv.gz")
+        ]
         # Get list of symbols to convert.
         symbols = list(
             map(_extract_filename_without_extension, csv_gz_s3_file_paths)
