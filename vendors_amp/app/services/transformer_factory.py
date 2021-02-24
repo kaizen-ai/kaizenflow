@@ -2,7 +2,7 @@
 Produce transformer objects.
 
 Import as:
-import vendors_amp.common.data.transformer_factory as loadfac
+import vendors_amp.app.services.transformer_factory as loadfac
 """
 from typing import Union, Any
 import vendors_amp.common.data.transform.s3_to_sql_transformer as mt
