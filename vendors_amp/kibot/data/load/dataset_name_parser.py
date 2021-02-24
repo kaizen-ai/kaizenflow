@@ -15,7 +15,8 @@ class DatasetNameParser:
     }
 
     CONTRACT_PATH_MAPPING = {
-        v: k for k, v in vkdlfi.KibotFilePathGenerator.CONTRACT_PATH_MAPPING.items()
+        v: k
+        for k, v in vkdlfi.KibotFilePathGenerator.CONTRACT_PATH_MAPPING.items()
     }
 
     ASSET_TYPE_PREFIX = {

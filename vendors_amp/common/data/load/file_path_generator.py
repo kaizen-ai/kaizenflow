@@ -1,13 +1,10 @@
-import os
-from typing import Optional, cast
-
-import helpers.dbg as dbg
-import vendors_amp.common.data.types as vcdtyp
-import vendors_amp.kibot.data.config as vkdcon
 import abc
+from typing import Optional
+
+import vendors_amp.common.data.types as vcdtyp
+
 
 class FilePathGenerator(abc.ABC):
-    
     @abc.abstractmethod
     def generate_file_path(
         self,
