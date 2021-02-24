@@ -9,9 +9,9 @@ import logging
 import re
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
+import numpy as np
 import pandas as pd
 
-import numpy as np
 import helpers.dbg as dbg
 import helpers.dict as dct
 import helpers.introspection as intr
