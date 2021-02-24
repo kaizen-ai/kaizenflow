@@ -1,8 +1,7 @@
 """
 Produce loader objects.
 
-Import as:
-import vendors_amp.app.services.loader_factory as loadfac
+Import as: import vendors_amp.app.services.loader_factory as vasloa
 """
 from typing import Any
 

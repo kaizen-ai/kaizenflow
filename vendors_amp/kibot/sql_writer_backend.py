@@ -1,12 +1,10 @@
 import pandas as pd
-import psycopg2
-import psycopg2.extensions as pexten
 import psycopg2.extras as pextra
 
-import vendors_amp.common.data.types as vkdtyp
-import vendors_amp.common.sql_writer_backend as vcsql
+import vendors_amp.common.sql_writer_backend as vcsqlw
 
-class SQLWriterKibotBackend(vcsql.AbstractSQLWriterBackend):
+
+class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
     """
     Manager of CRUD operations on a database defined in db.sql.
     """

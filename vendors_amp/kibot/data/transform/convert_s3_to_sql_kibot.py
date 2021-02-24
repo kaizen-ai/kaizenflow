@@ -29,7 +29,7 @@ import os
 
 import helpers.dbg as dbg
 import helpers.parser as hparse
-import vendors_amp.common.data.transform.convert_s3_to_sql as vcdtco
+import vendors_amp.common.data.transform.transform as vcdtco
 import vendors_amp.kibot.data.config as vkdcon
 import vendors_amp.kibot.data.load as vkdloa
 import vendors_amp.kibot.data.load.dataset_name_parser as vkdlda
@@ -37,8 +37,6 @@ import vendors_amp.kibot.data.load.sql_data_loader as vkdlsq
 import vendors_amp.kibot.data.transform.s3_to_sql_transformer as vkdts3
 import vendors_amp.kibot.metadata.load.s3_backend as vkmls3
 import vendors_amp.kibot.sql_writer_backend as vksqlw
-import vendors_amp.common.data.transform.transform as mconv
-import vendors_amp.kibot.data.transform.s3_to_sql_transformer as ktr3
 
 _LOG = logging.getLogger(__name__)
 
