@@ -3,25 +3,24 @@ from typing import Optional
 
 import pandas as pd
 
-import vendors_amp.kibot.data.types as vkdtyp
+import vendors_amp.common.data.types as vcdtyp
 
 
-class AbstractKibotDataLoader(abc.ABC):
-    @classmethod
+class AbstractDataLoader(abc.ABC):
     @abc.abstractmethod
     def read_data(
-        cls,
+        self,
         exchange: str,
         symbol: str,
-        asset_class: vkdtyp.AssetClass,
-        frequency: vkdtyp.Frequency,
-        contract_type: Optional[vkdtyp.ContractType] = None,
+        asset_class: vcdtyp.AssetClass,
+        frequency: vcdtyp.Frequency,
+        contract_type: Optional[vcdtyp.ContractType] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
     ) -> pd.DataFrame:
         """
-        Read kibot data.
+        Read data.
 
         :param exchange: name of the exchange
         :param symbol: symbol to get the data for
