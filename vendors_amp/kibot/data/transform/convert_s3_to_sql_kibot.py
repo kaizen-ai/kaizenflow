@@ -40,7 +40,7 @@ import vendors_amp.kibot.data.load.sql_data_loader as vkdlsq
 import vendors_amp.common.data.types as vkdtyp
 import vendors_amp.kibot.metadata.load.s3_backend as vkmls3
 import vendors_amp.kibot.sql_writer_backend as vksqlw
-import vendors_amp.common.data.transform.convert_s3_to_sql as mconv
+import vendors_amp.common.data.transform.transform as mconv
 import vendors_amp.kibot.data.transform.s3_to_sql_transformer as ktr3
 
 _LOG = logging.getLogger(__name__)
@@ -136,7 +136,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     dataset_name_parser = vkdlda.DatasetNameParser()
     #
-    sql_writer_backed = vksqlw.SQLWriterBackend(
+    sql_writer_backed = vksqlw.SQLWriterKibotBackend(
         dbname=args.dbname,
         user=args.dbuser,
         password=args.dbpass,

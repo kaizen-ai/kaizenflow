@@ -2,7 +2,7 @@
 Produce loader objects.
 
 Import as:
-import vendors_amp.common.data.loader_factory as loadfac
+import vendors_amp.app.services.loader_factory as loadfac
 """
 from typing import Union, Any
 import vendors_amp.common.data.load.s3_data_loader as ms3
