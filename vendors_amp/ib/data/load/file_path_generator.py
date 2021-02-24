@@ -1,18 +1,18 @@
 import os
-from typing import Optional, cast
+from typing import Optional
 
-import helpers.dbg as dbg
+import vendors_amp.common.data.load.file_path_generator as vcdlfi
 import vendors_amp.common.data.types as vcdtyp
-import vendors_amp.ib.data.config as ibconf
-import vendors_amp.common.data.load.file_path_generator as vcdf
+import vendors_amp.ib.data.config as vidcon
 
-class IbFilePathGenerator(vcdf.FilePathGenerator):
+
+class IbFilePathGenerator(vcdlfi.FilePathGenerator):
     """
     Generate file path for a symbol.
 
-    File path is:
-    <symbol>_<frequency>.<extension>
+    File path is: <symbol>_<frequency>.<extension>
     """
+
     FREQ_PATH_MAPPING = {
         vcdtyp.Frequency.Daily: "day",
         vcdtyp.Frequency.Minutely: "minute",
@@ -37,5 +37,5 @@ class IbFilePathGenerator(vcdf.FilePathGenerator):
         freq_part = self.FREQ_PATH_MAPPING[frequency]
         # Format <symbol>_<frequency>.<extension>.
         relative_file_path = "%s_%s.%s" % (symbol, freq_part, ext.value)
-        file_path = os.path.join(ibconf.S3_PREFIX, relative_file_path)
+        file_path = os.path.join(vidcon.S3_PREFIX, relative_file_path)
         return file_path
