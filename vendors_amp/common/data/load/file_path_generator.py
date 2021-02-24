@@ -1,8 +1,9 @@
 """
-Interface for S3 path generation.
+Interface for S3 file path generator.
 
-Import as: import vendors_amp.common.data.load.file_path_generator as
-vcdlfi
+Import as:
+
+import vendors_amp.common.data.load.file_path_generator as vcdlfi
 """
 import abc
 from typing import Optional
