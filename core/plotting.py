@@ -1287,16 +1287,26 @@ def plot_ipca(
     num_pc: int,
     tau: float,
     num_cols: int = 2,
+    axes: Optional[List[mpl.axes.Axes]] = None,
 ) -> None:
+    """
+    Plot a panel of iPCA calculation results over time.
+    
+    Plots include:
+        - Eigenvalues estimates
+        - Eigenvectors estimates
+        - Eigenvector angular distances
+    """
     eigenvalues, eigenvectors = csigna.compute_ipca(df, num_pc=num_pc, tau=tau)
     eigenvalues.plot()
     plt.suptitle("Eigenvalues")
-    _, axes = get_multiple_plots(
-                num_plots=num_pc,
-                num_cols=num_cols,
-                sharex=True,
-                sharey=True,
-            )
+    if axes is None:
+        _, axes = get_multiple_plots(
+                    num_plots=num_pc,
+                    num_cols=num_cols,
+                    sharex=True,
+                    sharey=True,
+                )
     plt.suptitle("Eigenvectors")
     for i in range(num_pc):
         eigenvectors[i].plot(ax=axes[i], title=f"Eigenvectors PC{i}")
