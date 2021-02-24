@@ -2,38 +2,38 @@ import os
 from typing import Optional, cast
 
 import helpers.dbg as dbg
+import vendors_amp.common.data.types as vcdtyp
 import vendors_amp.kibot.data.config as vkdcon
-import vendors_amp.common.data.types as vkdtyp
 
 
 class FilePathGenerator:
     FREQ_PATH_MAPPING = {
-        vkdtyp.Frequency.Daily: "daily",
-        vkdtyp.Frequency.Minutely: "1min",
-        vkdtyp.Frequency.Tick: "tick",
+        vcdtyp.Frequency.Daily: "daily",
+        vcdtyp.Frequency.Minutely: "1min",
+        vcdtyp.Frequency.Tick: "tick",
     }
 
     CONTRACT_PATH_MAPPING = {
-        vkdtyp.ContractType.Continuous: "continuous_",
-        vkdtyp.ContractType.Expiry: "",
+        vcdtyp.ContractType.Continuous: "continuous_",
+        vcdtyp.ContractType.Expiry: "",
     }
 
     ASSET_TYPE_PREFIX = {
-        vkdtyp.AssetClass.ETFs: "all_etfs_",
-        vkdtyp.AssetClass.Stocks: "all_stocks_",
-        vkdtyp.AssetClass.Forex: "all_forex_pairs_",
-        vkdtyp.AssetClass.Futures: "all_futures",
-        vkdtyp.AssetClass.SP500: "sp_500_",
+        vcdtyp.AssetClass.ETFs: "all_etfs_",
+        vcdtyp.AssetClass.Stocks: "all_stocks_",
+        vcdtyp.AssetClass.Forex: "all_forex_pairs_",
+        vcdtyp.AssetClass.Futures: "all_futures",
+        vcdtyp.AssetClass.SP500: "sp_500_",
     }
 
     def generate_file_path(
         self,
         symbol: str,
-        frequency: vkdtyp.Frequency,
-        asset_class: vkdtyp.AssetClass = vkdtyp.AssetClass.Futures,
-        contract_type: Optional[vkdtyp.ContractType] = None,
+        frequency: vcdtyp.Frequency,
+        asset_class: vcdtyp.AssetClass = vcdtyp.AssetClass.Futures,
+        contract_type: Optional[vcdtyp.ContractType] = None,
         unadjusted: Optional[bool] = None,
-        ext: vkdtyp.Extension = vkdtyp.Extension.Parquet,
+        ext: vcdtyp.Extension = vcdtyp.Extension.Parquet,
     ) -> str:
         """
         Get the path to a specific kibot dataset on s3.
@@ -55,11 +55,11 @@ class FilePathGenerator:
         dir_name = f"{asset_class_prefix}{modifier}{freq_path}"
         file_path = os.path.join(dir_name, symbol)
 
-        if ext == vkdtyp.Extension.Parquet:
+        if ext == vcdtyp.Extension.Parquet:
             # Parquet files are located in `pq/` subdirectory.
             file_path = os.path.join("pq", file_path)
             file_path += ".pq"
-        elif ext == vkdtyp.Extension.CSV:
+        elif ext == vcdtyp.Extension.CSV:
             file_path += ".csv.gz"
 
         # TODO(amr): should we allow pointing to a local file here?
@@ -68,7 +68,7 @@ class FilePathGenerator:
         return file_path
 
     def _generate_contract_path_modifier(
-        self, contract_type: vkdtyp.ContractType
+        self, contract_type: vcdtyp.ContractType
     ) -> str:
         contract_path = self.CONTRACT_PATH_MAPPING[contract_type]
         return f"_{contract_path}contracts_"
@@ -80,9 +80,9 @@ class FilePathGenerator:
 
     def _generate_modifier(
         self,
-        asset_class: vkdtyp.AssetClass,
+        asset_class: vcdtyp.AssetClass,
         unadjusted: Optional[bool] = None,
-        contract_type: Optional[vkdtyp.ContractType] = None,
+        contract_type: Optional[vcdtyp.ContractType] = None,
     ) -> str:
         """
         Generate a modifier to the file path, based on some asset class
@@ -94,7 +94,7 @@ class FilePathGenerator:
         :return: a path modifier
         """
         modifier = ""
-        if asset_class == vkdtyp.AssetClass.Futures:
+        if asset_class == vcdtyp.AssetClass.Futures:
             dbg.dassert_is_not(
                 contract_type,
                 None,
@@ -104,15 +104,15 @@ class FilePathGenerator:
                 contract_type=contract_type
             )
         elif asset_class in [
-            vkdtyp.AssetClass.Stocks,
-            vkdtyp.AssetClass.ETFs,
-            vkdtyp.AssetClass.SP500,
+            vcdtyp.AssetClass.Stocks,
+            vcdtyp.AssetClass.ETFs,
+            vcdtyp.AssetClass.SP500,
         ]:
             dbg.dassert_is_not(
                 unadjusted,
                 None,
                 msg="`unadjusted` is a required arg for asset "
-                    "classes: 'stocks' & 'etfs' & 'sp_500'",
+                "classes: 'stocks' & 'etfs' & 'sp_500'",
             )
             modifier = self._generate_unadjusted_modifier(
                 unadjusted=cast(bool, unadjusted)

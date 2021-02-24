@@ -1,21 +1,19 @@
+import functools
+import logging
 from typing import Optional
 
 import pandas as pd
-import functools
 
-import helpers.cache as hcache
 import helpers.dbg as dbg
 import helpers.s3 as hs3
-import vendors_amp.common.data.load.s3_data_loader as vkdlda
+import vendors_amp.common.data.load.s3_data_loader as vcdls3
+import vendors_amp.common.data.types as vcdtyp
 import vendors_amp.kibot.data.load.file_path_generator as vkdlfi
-import vendors_amp.common.data.types as vkdtyp
-import logging
 
 _LOG = logging.getLogger(__name__)
 
 
-
-class S3KibotDataLoader(vkdlda.AbstractS3DataLoader):
+class S3KibotDataLoader(vcdls3.AbstractS3DataLoader):
     # TODO(plyq): Uncomment once #1047 will be resolved.
     # @hcache.cache
     # Use lru_cache for now.
@@ -24,9 +22,9 @@ class S3KibotDataLoader(vkdlda.AbstractS3DataLoader):
         self,
         exchange: str,
         symbol: str,
-        asset_class: vkdtyp.AssetClass,
-        frequency: vkdtyp.Frequency,
-        contract_type: Optional[vkdtyp.ContractType] = None,
+        asset_class: vcdtyp.AssetClass,
+        frequency: vcdtyp.Frequency,
+        contract_type: Optional[vcdtyp.ContractType] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
@@ -55,12 +53,37 @@ class S3KibotDataLoader(vkdlda.AbstractS3DataLoader):
         )
 
     @classmethod
+    def normalize(
+        cls, df: pd.DataFrame, frequency: vcdtyp.Frequency
+    ) -> pd.DataFrame:
+        """
+        Apply a normalizer function based on the frequency.
+
+        :param df: a dataframe that should be normalized
+        :param frequency: frequency of the data
+        :return: a normalized dataframe
+        :raises AssertionError: if a frequency is not supported in 'Mapping'.
+        """
+        MAPPING = {
+            vcdtyp.Frequency.Daily: cls._normalize_daily,
+            vcdtyp.Frequency.Minutely: cls._normalize_1_min,
+        }
+
+        if frequency not in MAPPING:
+            dbg.dfatal(
+                "Support for frequency '%s' not implemented yet", frequency
+            )
+
+        normalizer = MAPPING[frequency]
+        return normalizer(df)
+
+    @classmethod
     def _read_data(
         cls,
         symbol: str,
-        asset_class: vkdtyp.AssetClass,
-        frequency: vkdtyp.Frequency,
-        contract_type: Optional[vkdtyp.ContractType] = None,
+        asset_class: vcdtyp.AssetClass,
+        frequency: vcdtyp.Frequency,
+        contract_type: Optional[vcdtyp.ContractType] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
@@ -72,7 +95,7 @@ class S3KibotDataLoader(vkdlda.AbstractS3DataLoader):
             frequency=frequency,
             contract_type=contract_type,
             unadjusted=unadjusted,
-            ext=vkdtyp.Extension.CSV,
+            ext=vcdtyp.Extension.CSV,
         )
 
         if hs3.is_s3_path(file_path):
@@ -92,11 +115,11 @@ class S3KibotDataLoader(vkdlda.AbstractS3DataLoader):
     def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
         """
         Convert a df with 1 min Kibot data into our internal format.
-    
+
         - Combine the first two columns into a datetime index
         - Add column names
         - Check for monotonic index
-    
+
         :param df: kibot raw dataframe as it is in .csv.gz files
         :return: a dataframe with `datetime` index and `open`, `high`,
             `low`, `close`, `vol` columns. If the input dataframe
@@ -122,16 +145,16 @@ class S3KibotDataLoader(vkdlda.AbstractS3DataLoader):
         dbg.dassert(df.index.is_monotonic_increasing)
         dbg.dassert(df.index.is_unique)
         return df
-    
+
     @staticmethod
     def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
         """
         Convert a df with daily Kibot data into our internal format.
-    
+
         - Convert the first column to datetime and set is as index
         - Add column names
         - Check for monotonic index
-    
+
         :param df: kibot raw dataframe as it is in .csv.gz files
         :return: a dataframe with `datetime` index and `open`, `high`,
             `low`, `close`, `vol` columns.
@@ -145,24 +168,3 @@ class S3KibotDataLoader(vkdlda.AbstractS3DataLoader):
         dbg.dassert(df.index.is_monotonic_increasing)
         dbg.dassert(df.index.is_unique)
         return df
-    
-    @classmethod
-    def normalize(cls, df: pd.DataFrame, frequency: vkdtyp.Frequency) -> pd.DataFrame:
-        """
-        Apply a normalizer function based on the frequency.
-    
-        :param df: a dataframe that should be normalized
-        :param frequency: frequency of the data
-        :return: a normalized dataframe
-        :raises AssertionError: if a frequency is not supported in 'Mapping'.
-        """
-        MAPPING = {
-            vkdtyp.Frequency.Daily: cls._normalize_daily,
-            vkdtyp.Frequency.Minutely: cls._normalize_1_min,
-        }
-    
-        if frequency not in MAPPING:
-            dbg.dfatal("Support for frequency '%s' not implemented yet", frequency)
-    
-        normalizer = MAPPING[frequency]
-        return normalizer(df)

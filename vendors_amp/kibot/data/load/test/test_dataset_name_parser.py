@@ -1,6 +1,6 @@
 import helpers.unit_test as hut
+import vendors_amp.common.data.types as vcdtyp
 import vendors_amp.kibot.data.load.dataset_name_parser as vkdlda
-import vendors_amp.common.data.types as vkdtyp
 
 
 class TestDatasetNameParserExtractAssetClass(hut.TestCase):
@@ -11,7 +11,7 @@ class TestDatasetNameParserExtractAssetClass(hut.TestCase):
         cls = vkdlda.DatasetNameParser()
         act = cls._extract_asset_class(dataset=dataset)
         # Define expected output.
-        exp = vkdtyp.AssetClass.Futures
+        exp = vcdtyp.AssetClass.Futures
         # Compare actual and expected output.
         self.assertEqual(act, exp)
 
@@ -22,7 +22,7 @@ class TestDatasetNameParserExtractAssetClass(hut.TestCase):
         cls = vkdlda.DatasetNameParser()
         act = cls._extract_asset_class(dataset=dataset)
         # Define expected output.
-        exp = vkdtyp.AssetClass.Stocks
+        exp = vcdtyp.AssetClass.Stocks
         # Compare actual and expected output.
         self.assertEqual(act, exp)
 
@@ -33,7 +33,7 @@ class TestDatasetNameParserExtractAssetClass(hut.TestCase):
         cls = vkdlda.DatasetNameParser()
         act = cls._extract_asset_class(dataset=dataset)
         # Define expected output.
-        exp = vkdtyp.AssetClass.ETFs
+        exp = vcdtyp.AssetClass.ETFs
         # Compare actual and expected output.
         self.assertEqual(act, exp)
 
@@ -44,7 +44,7 @@ class TestDatasetNameParserExtractAssetClass(hut.TestCase):
         cls = vkdlda.DatasetNameParser()
         act = cls._extract_asset_class(dataset=dataset)
         # Define expected output.
-        exp = vkdtyp.AssetClass.Forex
+        exp = vcdtyp.AssetClass.Forex
         # Compare actual and expected output.
         self.assertEqual(act, exp)
 
@@ -55,7 +55,7 @@ class TestDatasetNameParserExtractAssetClass(hut.TestCase):
         cls = vkdlda.DatasetNameParser()
         act = cls._extract_asset_class(dataset=dataset)
         # Define expected output.
-        exp = vkdtyp.AssetClass.SP500
+        exp = vcdtyp.AssetClass.SP500
         # Compare actual and expected output.
         self.assertEqual(act, exp)
 
@@ -68,7 +68,7 @@ class TestDatasetNameParserExtractFrequency(hut.TestCase):
         cls = vkdlda.DatasetNameParser()
         act = cls._extract_frequency(dataset=dataset)
         # Define expected output.
-        exp = vkdtyp.Frequency.Daily
+        exp = vcdtyp.Frequency.Daily
         # Compare actual and expected output.
         self.assertEqual(act, exp)
 
@@ -79,7 +79,7 @@ class TestDatasetNameParserExtractFrequency(hut.TestCase):
         cls = vkdlda.DatasetNameParser()
         act = cls._extract_frequency(dataset=dataset)
         # Define expected output.
-        exp = vkdtyp.Frequency.Minutely
+        exp = vcdtyp.Frequency.Minutely
         # Compare actual and expected output.
         self.assertEqual(act, exp)
 
@@ -90,7 +90,7 @@ class TestDatasetNameParserExtractFrequency(hut.TestCase):
         cls = vkdlda.DatasetNameParser()
         act = cls._extract_frequency(dataset=dataset)
         # Define expected output.
-        exp = vkdtyp.Frequency.Tick
+        exp = vcdtyp.Frequency.Tick
         # Compare actual and expected output.
         self.assertEqual(act, exp)
 
@@ -103,7 +103,7 @@ class TestDatasetNameParserExtractContractType(hut.TestCase):
         cls = vkdlda.DatasetNameParser()
         act = cls._extract_contract_type(dataset=dataset)
         # Define expected output.
-        exp = vkdtyp.ContractType.Continuous
+        exp = vcdtyp.ContractType.Continuous
         # Compare actual and expected output.
         self.assertEqual(act, exp)
 
@@ -114,6 +114,6 @@ class TestDatasetNameParserExtractContractType(hut.TestCase):
         cls = vkdlda.DatasetNameParser()
         act = cls._extract_contract_type(dataset=dataset)
         # Define expected output.
-        exp = vkdtyp.ContractType.Expiry
+        exp = vcdtyp.ContractType.Expiry
         # Compare actual and expected output.
         self.assertEqual(act, exp)

@@ -7,7 +7,7 @@ import pytest
 
 import helpers.io_ as hio
 import helpers.unit_test as hut
-import vendors_amp.common.data.types as vkdtyp
+import vendors_amp.common.data.types as vcdtyp
 import vendors_amp.kibot.sql_writer_backend as vksqlw
 
 DB_SCHEMA_FILE = os.path.join(
@@ -80,7 +80,7 @@ class TestSqlWriterBackend1(hut.TestCase):
         Test adding a new symbol to Symbol table.
         """
         self._writer.ensure_symbol_exists(
-            symbol=self._get_test_string(), asset_class=vkdtyp.AssetClass.Futures
+            symbol=self._get_test_string(), asset_class=vcdtyp.AssetClass.Futures
         )
         self._check_saved_data(table="Symbol")
 
@@ -88,9 +88,7 @@ class TestSqlWriterBackend1(hut.TestCase):
         """
         Test adding a new exchange to Exchange table.
         """
-        self._writer.ensure_exchange_exists(
-            exchange=self._get_test_string()
-        )
+        self._writer.ensure_exchange_exists(exchange=self._get_test_string())
         self._check_saved_data(table="Exchange")
 
     def test_ensure_trade_symbol_exist1(self) -> None:

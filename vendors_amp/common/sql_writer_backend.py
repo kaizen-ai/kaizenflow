@@ -1,10 +1,10 @@
+import abc
+
 import pandas as pd
 import psycopg2
 import psycopg2.extensions as pexten
-import psycopg2.extras as pextra
-import abc
 
-import vendors_amp.common.data.types as vkdtyp
+import vendors_amp.common.data.types as vcdtyp
 
 
 class AbstractSQLWriterBackend(abc.ABC):
@@ -26,7 +26,7 @@ class AbstractSQLWriterBackend(abc.ABC):
     def ensure_symbol_exists(
         self,
         symbol: str,
-        asset_class: vkdtyp.AssetClass,
+        asset_class: vcdtyp.AssetClass,
     ) -> None:
         """
         Insert new Symbol entry if it does not exist.

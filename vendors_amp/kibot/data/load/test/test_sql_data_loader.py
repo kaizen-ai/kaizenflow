@@ -8,8 +8,8 @@ import pytest
 
 import helpers.io_ as hio
 import helpers.unit_test as hut
+import vendors_amp.common.data.types as vcdtyp
 import vendors_amp.kibot.data.load.sql_data_loader as vkdlsq
-import vendors_amp.common.data.types as vkdtyp
 import vendors_amp.kibot.sql_writer_backend as vksqlw
 
 DB_SCHEMA_FILE = os.path.join(
@@ -58,7 +58,9 @@ class TestSqlDataLoader1(hut.TestCase):
         # Create database for test.
         create_database(self.dbname)
         # Initialize writer class to test.
-        writer = vksqlw.SQLWriterKibotBackend(self.dbname, user, password, host, port)
+        writer = vksqlw.SQLWriterKibotBackend(
+            self.dbname, user, password, host, port
+        )
         # Apply production schema to created database.
         with writer.conn as conn:
             with conn.cursor() as curs:
@@ -129,7 +131,7 @@ class TestSqlDataLoader1(hut.TestCase):
         Test correct minute data reading for ZYX9 on CME.
         """
         # Get data.
-        actual = self._loader._read_data("CME", "ZYX9", vkdtyp.Frequency.Minutely)
+        actual = self._loader._read_data("CME", "ZYX9", vcdtyp.Frequency.Minutely)
         # Convert to string.
         actual_string = hut.convert_df_to_string(actual)
         # Compare with golden.
@@ -140,7 +142,7 @@ class TestSqlDataLoader1(hut.TestCase):
         Test correct daily data reading for ETF0 on LSE.
         """
         # Get data.
-        actual = self._loader._read_data("LSE", "ZYX9", vkdtyp.Frequency.Daily)
+        actual = self._loader._read_data("LSE", "ZYX9", vcdtyp.Frequency.Daily)
         # Convert to string.
         actual_string = hut.convert_df_to_string(actual)
         # Compare with golden.
@@ -152,7 +154,7 @@ class TestSqlDataLoader1(hut.TestCase):
         """
         # Get data.
         with self.assertRaises(AssertionError):
-            self._loader._read_data("", "ZYX9", vkdtyp.Frequency.Daily)
+            self._loader._read_data("", "ZYX9", vcdtyp.Frequency.Daily)
 
     def test_read_data4(self) -> None:
         """
@@ -160,7 +162,7 @@ class TestSqlDataLoader1(hut.TestCase):
         """
         # Get data.
         with self.assertRaises(AssertionError):
-            self._loader._read_data("CME", "", vkdtyp.Frequency.Minutely)
+            self._loader._read_data("CME", "", vcdtyp.Frequency.Minutely)
 
     @classmethod
     def _prepare_tables(cls, writer: vksqlw.SQLWriterKibotBackend) -> None:

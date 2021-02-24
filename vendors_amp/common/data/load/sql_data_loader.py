@@ -1,16 +1,13 @@
-from typing import Optional
-
-import pandas as pd
 import psycopg2
 
-import vendors_amp.common.data.types as vkdtyp
-import vendors_amp.common.data.load.data_loader as vkldla
-import abc
+import vendors_amp.common.data.load.data_loader as vcdlda
 
-class AbstractSQLDataLoader(vkldla.AbstractDataLoader):
+
+class AbstractSQLDataLoader(vcdlda.AbstractDataLoader):
     """
     Interface for SQL data loader.
     """
+
     def __init__(
         self, dbname: str, user: str, password: str, host: str, port: int
     ):
