@@ -1,7 +1,8 @@
 """
 Produce transformer objects.
 
-Import as: import vendors_amp.common.data.transformer_factory as vcdtra
+Import as:
+import vendors_amp.app.services.transformer_factory as loadfac
 """
 import vendors_amp.common.data.transform.s3_to_sql_transformer as vcdts3
 import vendors_amp.kibot.data.transform.s3_to_sql_transformer as vkdts3

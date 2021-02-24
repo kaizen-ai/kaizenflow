@@ -58,7 +58,7 @@ class TestSqlDataLoader1(hut.TestCase):
         # Create database for test.
         create_database(self.dbname)
         # Initialize writer class to test.
-        writer = vksqlw.SQLWriterBackend(self.dbname, user, password, host, port)
+        writer = vksqlw.SQLWriterKibotBackend(self.dbname, user, password, host, port)
         # Apply production schema to created database.
         with writer.conn as conn:
             with conn.cursor() as curs:
@@ -163,7 +163,7 @@ class TestSqlDataLoader1(hut.TestCase):
             self._loader._read_data("CME", "", vcdtyp.Frequency.Minutely)
 
     @classmethod
-    def _prepare_tables(cls, writer: vksqlw.SQLWriterBackend) -> None:
+    def _prepare_tables(cls, writer: vksqlw.SQLWriterKibotBackend) -> None:
         """
         Insert Symbol, Exchange and TradeSymbol entries to make test work.
 

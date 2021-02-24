@@ -56,7 +56,7 @@ class TestSqlWriterBackend1(hut.TestCase):
         # Create database for each test.
         create_database(self._dbname)
         # Initialize writer class to test.
-        self._writer = vksqlw.SQLWriterBackend(
+        self._writer = vksqlw.SQLWriterKibotBackend(
             self._dbname, user, password, host, port
         )
         # Apply production schema to created database.

@@ -3,79 +3,13 @@ import psycopg2
 import psycopg2.extensions as pexten
 import psycopg2.extras as pextra
 
-import vendors_amp.common.data.types as vcdtyp
+import vendors_amp.common.data.types as vkdtyp
+import vendors_amp.common.sql_writer_backend as vcsql
 
-
-class SQLWriterBackend:
+class SQLWriterKibotBackend(vcsql.AbstractSQLWriterBackend):
     """
     Manager of CRUD operations on a database defined in db.sql.
     """
-
-    def __init__(
-        self, dbname: str, user: str, password: str, host: str, port: int
-    ):
-        self.conn: pexten.connection = psycopg2.connect(
-            dbname=dbname,
-            user=user,
-            password=password,
-            host=host,
-            port=port,
-        )
-
-    def ensure_symbol_exists(
-        self,
-        symbol: str,
-        asset_class: vcdtyp.AssetClass,
-    ) -> None:
-        """
-        Insert new Symbol entry if it does not exist.
-
-        :param symbol: cymbol code
-        :param asset_class: asset class of the Symbol
-        """
-        with self.conn:
-            with self.conn.cursor() as curs:
-                curs.execute(
-                    "INSERT INTO Symbol (code, asset_class) "
-                    "VALUES (%s, %s) ON CONFLICT DO NOTHING",
-                    [symbol, asset_class.value],
-                )
-
-    def ensure_exchange_exists(
-        self,
-        exchange: str,
-    ) -> None:
-        """
-        Insert new Exchange entry if it does not exist.
-
-        :param exchange: exchange code
-        """
-        with self.conn:
-            with self.conn.cursor() as curs:
-                curs.execute(
-                    "INSERT INTO Exchange (name) "
-                    "VALUES (%s) ON CONFLICT DO NOTHING",
-                    [exchange],
-                )
-
-    def ensure_trade_symbol_exists(
-        self,
-        symbol_id: int,
-        exchange_id: int,
-    ) -> None:
-        """
-        Insert new TradeSymbol entry if it does not exist.
-
-        :param symbol_id: id of Symbol
-        :param exchange_id: id of Exchange
-        """
-        with self.conn:
-            with self.conn.cursor() as curs:
-                curs.execute(
-                    "INSERT INTO TradeSymbol (symbol_id, exchange_id) "
-                    "VALUES (%s, %s) ON CONFLICT DO NOTHING",
-                    [symbol_id, exchange_id],
-                )
 
     def insert_bulk_daily_data(
         self,
@@ -223,6 +157,3 @@ class SQLWriterBackend:
                         size_val,
                     ],
                 )
-
-    def close(self) -> None:
-        self.conn.close()
