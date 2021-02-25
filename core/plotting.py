@@ -1827,7 +1827,6 @@ def plot_holding_diffs(
     :param holdings: series to plot
     :param unit: "ratio", "%" or "bps" scaling coefficient
     :param ax: axes in which to draw the plot
-    :param events: list of tuples with dates and labels to point out on the plot
     """
     ax = ax or plt.gca()
     scale_coeff = _choose_scaling_coefficient(unit)
