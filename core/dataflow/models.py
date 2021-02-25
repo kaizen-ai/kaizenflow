@@ -1,7 +1,7 @@
 import collections
 import datetime
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Iterable
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import gluonts.model.deepar as gmdeep
 import gluonts.trainer as gtrain
@@ -1779,10 +1779,10 @@ class VolatilityModel(FitPredictNode, ColModeMixin):
         :param tau: as in `csigna.compute_smooth_moving_average`. If `None`,
             learn this parameter
         :param col_rename_func: renaming function for z-scored column
-        :param col_mode: 
-            - If "merge_all", merge all columns from input dataframe and 
+        :param col_mode:
+            - If "merge_all", merge all columns from input dataframe and
                 transformed columns
-            - If "replace_selected", merge unselected columns from input dataframe 
+            - If "replace_selected", merge unselected columns from input dataframe
                 and transformed selected columns
             - If "replace_all", leave only transformed selected columns
         :param nan_mode: as in ContinuousSkLearnModel
