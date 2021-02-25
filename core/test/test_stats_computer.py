@@ -51,6 +51,28 @@ class TestModelStatsComputer(hut.TestCase):
         str_output = hut.convert_df_to_string(stats, index=True)
         self.check_string(str_output)
 
+    def test_specified_params(self) -> None:
+        srs = _get_srs()
+        stats_comp = cstats.ModelStatsComputer()
+        stats = stats_comp._calculate_stats(
+            positions=srs["positions"],
+            stats_names=["compute_moments", "compute_special_value_stats"],
+            stats_params_dict={"compute_moments": ["positions"]},
+        )
+        str_output = hut.convert_df_to_string(stats, index=True)
+        self.check_string(str_output)
+
+    def test_stand_alone_methods(self) -> None:
+        srs = _get_srs()
+        stats_comp = cstats.ModelStatsComputer()
+        actual = stats_comp._calculate_stats(
+            positions=srs["positions"],
+            stats_names=["ttest_1samp"],
+            stats_params_dict={"ttest_1samp": ["positions"]},
+        )
+        expected = stats_comp.ttest_1samp(srs["positions"])
+        pd.testing.assert_series_equal(actual, expected)
+
 
 def _get_srs() -> pd.DataFrame:
     df = pd.DataFrame()

@@ -5,9 +5,8 @@ import core.stats_computer as cstats
 """
 
 import collections
-import inspect
 import logging
-from typing import Any, Callable, Dict, Iterable, List, Optional
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 import pandas as pd
 
@@ -59,7 +58,7 @@ class StatsComputer:
         """
         Map `stats_names` to corresponding methods.
         """
-        stats_names_dict = collections.OrderedDict(
+        stats_methods_dict = collections.OrderedDict(
             {
                 "summarize_time_index_info": self.summarize_time_index_info,
                 "compute_jensen_ratio": self.compute_jensen_ratio,
@@ -68,12 +67,12 @@ class StatsComputer:
                 "compute_special_value_stats": self.compute_special_value_stats,
             }
         )
-        return stats_names_dict
+        return stats_methods_dict
 
     @staticmethod
     def _validate_stats_names(
         stats_names_available: Iterable[str],
-        stats_names_requested: Optional[List[str]] = None,
+        stats_names_requested: Optional[Iterable[str]] = None,
     ) -> Iterable[str]:
         stats_names = stats_names_requested or stats_names_available
         stats_names_diff = set(stats_names) - set(stats_names_available)
@@ -86,14 +85,17 @@ class StatsComputer:
         srs: pd.Series,
         stats_names: Optional[List[str]] = None,
     ) -> pd.Series:
+        """
+        Calculate stats specified in `stats_names`, if `None` - all available.
+        """
         dbg.dassert_isinstance(srs, pd.Series)
-        stats_names_dict = self._map_name_to_method
+        stats_methods_dict = self._map_name_to_method
         stats_names = self._validate_stats_names(
-            stats_names_dict.keys(), stats_names
+            stats_methods_dict.keys(), stats_names
         )
         stats_vals = []
         for stat_name in stats_names:
-            stats_vals.append(stats_names_dict[stat_name](srs))
+            stats_vals.append(stats_methods_dict[stat_name](srs))
         return pd.concat(stats_vals)
 
 
@@ -117,8 +119,8 @@ class SeriesStatsComputer(StatsComputer):
 
     @property
     def _map_name_to_method(self) -> Dict[str, Callable]:
-        stats_names_dict = super()._map_name_to_method
-        stats_names_dict.update(
+        stats_methods_dict = super()._map_name_to_method
+        stats_methods_dict.update(
             collections.OrderedDict(
                 {
                     "apply_normality_test": self.apply_normality_test,
@@ -126,7 +128,7 @@ class SeriesStatsComputer(StatsComputer):
                 }
             )
         )
-        return stats_names_dict
+        return stats_methods_dict
 
 
 class ModelStatsComputer(StatsComputer):
@@ -170,9 +172,9 @@ class ModelStatsComputer(StatsComputer):
 
     @staticmethod
     def compute_avg_turnover_and_holding_period(
-        positions: pd.Series,
+        srs: pd.Series,
     ) -> pd.Series:
-        return cstati.compute_avg_turnover_and_holding_period(positions)
+        return cstati.compute_avg_turnover_and_holding_period(srs)
 
     @staticmethod
     def compute_prediction_corr(
@@ -180,27 +182,9 @@ class ModelStatsComputer(StatsComputer):
     ) -> pd.Series:
         return pd.Series(positions.corr(returns), index=["prediction_corr"])
 
-    @staticmethod
-    def _run_func(
-        func: Callable,
-        pnl: Optional[pd.Series] = None,
-        positions: Optional[pd.Series] = None,
-        returns: Optional[pd.Series] = None,
-    ) -> pd.Series:
-        """
-        Apply a function to appropriate input series.
-        """
-        args = inspect.getfullargspec(func)[0]
-        kwargs = {}
-        for arg in args:
-            kwargs[arg] = eval("pnl") if arg == "srs" else eval(arg)
-        if pd.isna(list(kwargs.values())).any():
-            return None
-        return func(**kwargs)
-
     @property
     def _map_name_to_method(self) -> Dict[str, Callable]:
-        stats_names_dict = collections.OrderedDict(
+        stats_methods_dict = collections.OrderedDict(
             {
                 "summarize_sharpe_ratio": self.summarize_sharpe_ratio,
                 "ttest_1samp": self.ttest_1samp,
@@ -219,7 +203,51 @@ class ModelStatsComputer(StatsComputer):
                 "compute_special_value_stats": self.compute_special_value_stats,
             }
         )
-        return stats_names_dict
+        return stats_methods_dict
+
+    @property
+    def _map_name_to_params(self) -> Dict[str, Tuple[str]]:
+        stats_params_dict = collections.OrderedDict(
+            {
+                "summarize_sharpe_ratio": ("pnl",),
+                "ttest_1samp": ("pnl",),
+                "compute_kratio": ("pnl",),
+                "compute_annualized_return_and_volatility": ("pnl",),
+                "compute_max_drawdown": ("pnl",),
+                "summarize_time_index_info": ("pnl",),
+                "calculate_hit_rate": ("pnl",),
+                "calculate_corr_to_underlying": ("pnl", "returns"),
+                "compute_bet_stats": ("positions", "returns"),
+                "compute_avg_turnover_and_holding_period": ("positions",),
+                "compute_jensen_ratio": ("pnl",),
+                "compute_forecastability": ("pnl",),
+                "compute_prediction_corr": ("positions", "returns"),
+                "compute_moments": ("pnl",),
+                "compute_special_value_stats": ("pnl",),
+            }
+        )
+        return stats_params_dict
+
+    @staticmethod
+    def _run_func(
+        func: Callable,
+        param_names: Tuple[str],
+        pnl: Optional[pd.Series] = None,
+        positions: Optional[pd.Series] = None,
+        returns: Optional[pd.Series] = None,
+    ) -> pd.Series:
+        """
+        Apply a function to corresponding input series.
+        """
+        param_names_diff = set(param_names) - set(["pnl", "positions", "returns"])
+        if param_names_diff:
+            raise ValueError(f"Unsupported param names: {param_names_diff}")
+        args = []
+        for param_name in param_names:
+            args.append(eval(param_name))
+        if pd.isna(args).any():
+            return None
+        return func(*args)
 
     def _calculate_stats(
         self,
@@ -227,24 +255,42 @@ class ModelStatsComputer(StatsComputer):
         positions: Optional[pd.Series] = None,
         returns: Optional[pd.Series] = None,
         stats_names: Optional[List[str]] = None,
+        stats_params_dict: Optional[Dict[str, Tuple[str]]] = None,
     ) -> pd.Series:
+        """
+        :param stats_names: list of stats to calculate, if `None`, return all
+            available stats
+        :param stats_params_dict: dict `stats_name`: `param` specifying what
+            stats apply to what input series, if not specified, use default
+            specification
+        """
         dbg.dassert(
-            not pd.isna([pnl, positions]).all(),
-            "At least pnl or positions should be not `None`.",
+            not pd.isna([pnl, positions, returns]).all(),
+            "At least one input series should be not `None`.",
         )
         freqs = {
             srs.index.freq for srs in [pnl, positions, returns] if srs is not None
         }
         dbg.dassert_eq(len(freqs), 1, "Series have different frequencies.")
-        stats_names_dict = self._map_name_to_method
+        stats_methods_dict = self._map_name_to_method
         stats_names = self._validate_stats_names(
-            stats_names_dict.keys(), stats_names
+            stats_methods_dict.keys(), stats_names
+        )
+        stats_params_dict = stats_params_dict or {}
+        if set(stats_params_dict.keys()) - set(stats_names):
+            _LOG.warning("Stats with specified parameters are not requested.")
+        stats_params_dict = collections.OrderedDict(
+            self._map_name_to_params, **stats_params_dict
         )
         stats_vals = []
         for stat_name in stats_names:
             stats_vals.append(
                 self._run_func(
-                    stats_names_dict[stat_name], pnl, positions, returns
+                    stats_methods_dict[stat_name],
+                    stats_params_dict[stat_name],
+                    pnl,
+                    positions,
+                    returns,
                 )
             )
         return pd.concat(stats_vals)
