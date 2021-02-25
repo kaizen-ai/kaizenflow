@@ -177,6 +177,7 @@ class Config:
     def from_python(cls, code: str) -> "Config":
         """Create an object from the code returned by `to_python()`."""
         dbg.dassert_isinstance(code, str)
+        # eval function need unknown globals to be set.
         val = eval(code, {"nan": np.nan, "Config": Config})
         dbg.dassert_isinstance(val, Config)
         return val  # type: ignore
