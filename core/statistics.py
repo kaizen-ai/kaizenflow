@@ -682,7 +682,7 @@ def compute_bet_stats(
     )
     #
     stats = dict()
-    stats["num_positions"] = bet_lengths.abs().sum()
+    stats["num_positions"] = int(bet_lengths.abs().sum())
     stats["num_bets"] = bet_lengths.size
     stats["long_bets_(%)"] = 100 * (bet_lengths > 0).sum() / bet_lengths.size
     n_years = positions.size / hdf.infer_sampling_points_per_year(positions)
@@ -1577,7 +1577,7 @@ def summarize_time_index_info(
     freq = original_index.freq
     clear_srs = hdf.apply_nan_mode(srs, mode=nan_mode)
     clear_index = clear_srs.index
-    result = pd.Series([], dtype="object")
+    result = {}
     if clear_srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         result["start_time"] = np.nan
@@ -1609,5 +1609,6 @@ def summarize_time_index_info(
     result["time_span_in_years"] = (
             clear_index_time_span / sampling_points_per_year
     )
+    result = pd.Series(result, dtype="object")
     result.index = prefix + result.index
     return result

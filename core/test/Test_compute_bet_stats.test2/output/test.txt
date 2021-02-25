@@ -46,7 +46,7 @@ rets_pos
 stats
 ################################################################################
                                        arma(0,0)
-num_positions                               40.0
+num_positions                                 40
 num_bets                                       6
 long_bets_(%)                               50.0
 avg_num_bets_per_year                        1.8

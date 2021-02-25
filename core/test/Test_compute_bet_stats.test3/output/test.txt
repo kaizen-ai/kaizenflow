@@ -14,7 +14,7 @@ rets_pos
 stats
 ################################################################################
                                                  0
-num_positions                                  6.0
+num_positions                                    6
 num_bets                                         4
 long_bets_(%)                                 50.0
 avg_num_bets_per_year                      182.625
