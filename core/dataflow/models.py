@@ -1,7 +1,7 @@
 import collections
 import datetime
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Iterable
 
 import gluonts.model.deepar as gmdeep
 import gluonts.trainer as gtrain
@@ -1750,7 +1750,7 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
         return df_out
 
 
-class VolatilityModel(FitPredictNode):
+class VolatilityModel(FitPredictNode, ColModeMixin):
     """
     Fit and predict a smooth moving average volatility model.
 
@@ -1761,8 +1761,8 @@ class VolatilityModel(FitPredictNode):
     def __init__(
         self,
         nid: str,
-        cols: list,
         steps_ahead: int,
+        cols: Optional[Iterable[Union[int, str]]] = None,
         p_moment: float = 2,
         tau: Optional[float] = None,
         col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
@@ -1779,11 +1779,15 @@ class VolatilityModel(FitPredictNode):
         :param tau: as in `csigna.compute_smooth_moving_average`. If `None`,
             learn this parameter
         :param col_rename_func: renaming function for z-scored column
-        :param col_mode: as in `ColumnTransformer`
+        :param col_mode: 
+            - If "merge_all", merge all columns from input dataframe and 
+                transformed columns
+            - If "replace_selected", merge unselected columns from input dataframe 
+                and transformed selected columns
+            - If "replace_all", leave only transformed selected columns
         :param nan_mode: as in ContinuousSkLearnModel
         """
         super().__init__(nid)
-        dbg.dassert_isinstance(cols, list)
         self._cols = cols
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(1, p_moment)
@@ -1798,33 +1802,6 @@ class VolatilityModel(FitPredictNode):
         self._taus = {}
         self._sma_models = {}
         self._modulators = {}
-        for col in self._cols:
-            self._vol_cols[col] = col + "_vol"
-            self._fwd_vol_cols[col] = (
-                self._vol_cols[col] + f"_{self._steps_ahead}"
-            )
-            self._fwd_vol_cols_hat[col] = self._fwd_vol_cols[col] + "_hat"
-            self._taus[col] = tau
-            # The `SmaModel` and `Modulator` nodes are only used internally (e.g.,
-            # are not added to any encompassing DAG).
-            self._sma_models[col] = SmaModel(
-                "anonymous_sma",
-                col=[self._vol_cols[col]],
-                steps_ahead=self._steps_ahead,
-                tau=self._tau,
-                col_mode="merge_all",
-                nan_mode=self._nan_mode,
-            )
-            self._modulators[col] = VolatilityModulator(
-                "anonymous_demodulation",
-                signal_cols=[col],
-                volatility_col=self._fwd_vol_cols_hat[col],
-                signal_steps_ahead=0,
-                volatility_steps_ahead=self._steps_ahead,
-                mode="demodulate",
-                col_rename_func=self._col_rename_func,
-                col_mode=self._col_mode,
-            )
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=True)
@@ -1840,12 +1817,12 @@ class VolatilityModel(FitPredictNode):
         self, df_in: pd.DataFrame, fit: bool = False
     ) -> Dict[str, pd.DataFrame]:
         method = "fit" if fit else "predict"
-        if self._col_mode == "replace_all":
-            dfs = []
-        else:
-            dfs = [df_in.drop(self._cols, 1)]
+        cols = self._cols or df_in.columns.tolist()
+        if method == "fit":
+            self._fill_model_dicts(cols)
         info = collections.OrderedDict()
-        for col in self._cols:
+        dfs = []
+        for col in cols:
             dbg.dassert_not_in(self._vol_cols[col], df_in.columns)
             dag = self._get_dag(df_in[[col]], col)
             df_out = dag.run_leq_node(self._modulators[col].nid, method)["df_out"]
@@ -1854,6 +1831,12 @@ class VolatilityModel(FitPredictNode):
                 self._taus[col] = info[col]["anonymous_sma"][method]["tau"]
             dfs.append(df_out)
         df_out = pd.concat(dfs, axis=1)
+        df_out = self._apply_col_mode(
+            df_in.drop(df_out.columns.intersection(df_in.columns), 1),
+            df_out,
+            cols=list(cols),
+            col_mode=self._col_mode,
+        )
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info(method, info)
         return {"df_out": df_out}
@@ -1892,6 +1875,35 @@ class VolatilityModel(FitPredictNode):
         node = self._modulators[col]
         self._append(dag, tail_nid, node)
         return dag
+
+    def _fill_model_dicts(self, cols: List[str]) -> None:
+        for col in cols:
+            self._vol_cols[col] = str(col) + "_vol"
+            self._fwd_vol_cols[col] = (
+                self._vol_cols[col] + f"_{self._steps_ahead}"
+            )
+            self._fwd_vol_cols_hat[col] = self._fwd_vol_cols[col] + "_hat"
+            self._taus[col] = self._tau
+            # The `SmaModel` and `Modulator` nodes are only used internally (e.g.,
+            # are not added to any encompassing DAG).
+            self._sma_models[col] = SmaModel(
+                "anonymous_sma",
+                col=[self._vol_cols[col]],
+                steps_ahead=self._steps_ahead,
+                tau=self._tau,
+                col_mode="merge_all",
+                nan_mode=self._nan_mode,
+            )
+            self._modulators[col] = VolatilityModulator(
+                "anonymous_demodulation",
+                signal_cols=[col],
+                volatility_col=self._fwd_vol_cols_hat[col],
+                signal_steps_ahead=0,
+                volatility_steps_ahead=self._steps_ahead,
+                mode="demodulate",
+                col_rename_func=self._col_rename_func,
+                col_mode=self._col_mode,
+            )
 
     @staticmethod
     def _append(dag: DAG, tail_nid: Optional[str], node: Node) -> str:
