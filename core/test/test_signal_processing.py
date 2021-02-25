@@ -948,6 +948,25 @@ class Test_compute_ipca(hut.TestCase):
             f"unit_eigenvecs_dfs:\n{unit_eigenvec_dfs_txt}"
         )
         self.check_string(txt)
+        
+    def test6(self) -> None:
+        """
+        Test for interspersed all-NaNs rows.
+        """
+        df = self._get_df(seed=1)
+        df.iloc[0:1, :] = np.nan
+        df.iloc[2:3, :] = np.nan
+        num_pc = 3
+        tau = 16
+        lambda_df, unit_eigenvec_dfs = sigp.compute_ipca(df, num_pc, tau)
+        unit_eigenvec_dfs_txt = "\n".join(
+            [f"{i}:\n{df.to_string()}" for i, df in enumerate(unit_eigenvec_dfs)]
+        )
+        txt = (
+            f"lambda_df:\n{lambda_df.to_string()}\n, "
+            f"unit_eigenvecs_dfs:\n{unit_eigenvec_dfs_txt}"
+        )
+        self.check_string(txt)
 
 
 class Test__compute_ipca_step(hut.TestCase):

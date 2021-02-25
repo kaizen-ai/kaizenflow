@@ -1,8 +1,8 @@
 import pytest
 
 import helpers.unit_test as hut
+import vendors_amp.common.data.types as vcdtyp
 import vendors_amp.kibot.data.load as vkdloa
-import vendors_amp.kibot.data.types as vkdtyp
 
 
 class TestS3KibotDataLoader(hut.TestCase):
@@ -12,9 +12,9 @@ class TestS3KibotDataLoader(hut.TestCase):
         # TODO(*): Disable caching in unit tests.
         df = vkdloa.S3KibotDataLoader()._read_data(
             symbol="XG",
-            asset_class=vkdtyp.AssetClass.Futures,
-            frequency=vkdtyp.Frequency.Daily,
-            contract_type=vkdtyp.ContractType.Continuous,
+            asset_class=vcdtyp.AssetClass.Futures,
+            frequency=vcdtyp.Frequency.Daily,
+            contract_type=vcdtyp.ContractType.Continuous,
         )
 
         self.check_string(df.head(10).to_string())
