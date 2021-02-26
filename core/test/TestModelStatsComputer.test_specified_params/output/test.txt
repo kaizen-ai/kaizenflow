@@ -1,5 +1,0 @@
-          positions
-mean      -0.020943
-std        0.875873
-skew       0.112770
-kurtosis  -0.531709
