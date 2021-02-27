@@ -1273,14 +1273,16 @@ def compute_ipca(
     vs: Dict[int, list] = {k: [] for k in range(num_pc)}
     unit_eigenvecs: Dict[int, list] = {k: [] for k in range(num_pc)}
     step = 0
-    for step, n in enumerate(df.index):
+    for n in df.index:
         # Initialize u(n).
         u = df.loc[n].copy()
         for i in range(min(num_pc, step + 1)):
             # Initialize ith eigenvector.
             if i == step:
-                _LOG.debug("Initializing eigenvector %i...", i)
                 v = u.copy()
+                if np.linalg.norm(v):
+                    _LOG.debug(f"Initializing eigenvector {i}...")
+                    step += 1
             else:
                 # Main update step for eigenvector i.
                 u, v = _compute_ipca_step(u, vs[i][-1], alpha)
@@ -1290,13 +1292,13 @@ def compute_ipca(
             norm = np.linalg.norm(v)
             lambdas[i].append(norm)
             unit_eigenvecs[i].append(v / norm)
-    _LOG.debug("Completed %i steps of incremental PCA.", step + 1)
+    _LOG.debug(f"Completed {len(df)} steps of incremental PCA.")
     # Convert lambda dict of lists to list of series.
     # Convert unit_eigenvecs dict of lists to list of dataframes.
     lambdas_srs = []
     unit_eigenvec_dfs = []
     for i in range(num_pc):
-        lambdas_srs.append(pd.Series(index=df.index[i:], data=lambdas[i]))
+        lambdas_srs.append(pd.Series(index=df.index[-len(lambdas[i]) :], data=lambdas[i]))
         unit_eigenvec_dfs.append(pd.concat(unit_eigenvecs[i], axis=1).transpose())
     lambda_df = pd.concat(lambdas_srs, axis=1)
     return lambda_df, unit_eigenvec_dfs

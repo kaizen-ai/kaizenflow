@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  jupyter_server:
+    image: ${IMAGE}
+    restart: "no"
+    volumes:
+      - ../../../:/commodity_research
+      - ~/.aws:/root/.aws
+      - ~/.config/gspread_pandas/:/root/.config/gspread_pandas/
+      - ../../../docker_build/fstab:/etc/fstab
+    environment:
+      - J_PORT=${J_PORT}
+    ports:
+      - "${J_PORT}:${J_PORT}"
+    working_dir: /commodity_research
+    entrypoint: ""
+    command: docker_build/run_jupyter_server.sh
+    privileged: true
+    cap_add:
+      - SYS_ADMIN
