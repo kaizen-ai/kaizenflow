@@ -1,8 +1,6 @@
 """Import as:
 
 import helpers.unit_test as hut
-
-# TODO(gp): use hut instead of ut.
 """
 
 import inspect
@@ -312,6 +310,28 @@ def diff_files(
     raise RuntimeError(msg_as_str)
 
 
+def diff_strings(string1: str,
+                 string2: str, tag: Optional[str] = None) -> None:
+    test_dir = "."
+    # Save the actual and expected strings to files.
+    file_name1 = "%s/tmp.string1.txt" % test_dir
+    io_.to_file(file_name1, string1)
+    #
+    file_name2 = "%s/tmp.string2.txt" % test_dir
+    io_.to_file(file_name2, string2)
+    #
+    if tag is None:
+        tag = "string1 vs string2"
+    diff_files(file_name1, file_name2, tag)
+
+
+def diff_df_monotonic(df: pd.DataFrame):
+    if not df.index.is_monotonic_increasing:
+        df2 = df.copy()
+        df2.sort_index(inplace=True)
+        diff_strings(df.to_csv(), df2.to_csv())
+
+
 # #############################################################################
 
 
@@ -602,7 +622,6 @@ class TestCase(unittest.TestCase):
             test_method_name = self._testMethodName
         dir_name = dir_name + "/%s.%s" % (test_class_name, test_method_name)
         return dir_name
-
 
 # #############################################################################
 # Notebook testing.
