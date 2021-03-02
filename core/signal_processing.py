@@ -6,6 +6,7 @@ import core.signal_processing as csigna
 
 import functools
 import logging
+import collections
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
@@ -1707,9 +1708,17 @@ def c_infinity_bump_function(x: float, a: float, b: float) -> float:
 # #############################################################################
 
 
-def calculate_inverse(df: pd.DataFrame) -> pd.DataFrame:
+def calculate_inverse(
+    df: pd.DataFrame, 
+    p_moment: Optional[Any] = None,
+    info: Optional[collections.OrderedDict] = None,
+) -> pd.DataFrame:
     """
     Calculate an inverse matrix.
+    
+    :param df: matrix to invert
+    :param p_moment: order of the matrix norm as in `np.linalg.cond` 
+    :param info: dict with info to add the condition number to
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
     dbg.dassert_eq(
@@ -1722,6 +1731,8 @@ def calculate_inverse(df: pd.DataFrame) -> pd.DataFrame:
         "The matrix is not numeric.",
     )
     dbg.dassert_ne(np.linalg.det(df), 0, "The matrix is non-invertible.")
+    if info is not None:
+        info["condition_number"] = np.linalg.cond(df, p_moment)
     return pd.DataFrame(np.linalg.inv(df), df.columns, df.index)
 
 
@@ -1729,9 +1740,17 @@ def calculate_pseudoinverse(
     df: pd.DataFrame,
     rcond: Optional[float] = 1e-15,
     hermitian: Optional[bool] = False,
+    p_moment: Optional[Any] = None,
+    info: Optional[collections.OrderedDict] = None,
 ) -> pd.DataFrame:
     """
     Calculate a pseudoinverse matrix.
+    
+    :param df: matrix to pseudo-invert
+    :param rcond: cutoff for small singular values as in `np.linalg.pinv`
+    :param hermitian: if True, `df` is assumed to be Hermitian
+    :param p_moment: order of the matrix norm as in `np.linalg.cond`
+    :param info: dict with info to add the condition number to
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
     dbg.dassert(
@@ -1740,6 +1759,8 @@ def calculate_pseudoinverse(
         ),
         "The matrix is not numeric.",
     )
+    if info is not None:
+        info["condition_number"] = np.linalg.cond(df, p_moment)
     return pd.DataFrame(
         np.linalg.pinv(df, rcond=rcond, hermitian=hermitian), df.columns, df.index
     )
