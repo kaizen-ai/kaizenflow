@@ -11,6 +11,7 @@ import helpers.unit_test as hut
 import vendors_amp.common.data.types as vcdtyp
 import vendors_amp.kibot.data.load.sql_data_loader as vkdlsq
 import vendors_amp.kibot.sql_writer_backend as vksqlw
+import vendors_amp.common.test.utils as cut
 
 DB_SCHEMA_FILE = os.path.join(
     os.path.dirname(__file__), "../../../compose/init_sql/db.sql"
@@ -56,15 +57,11 @@ class TestSqlDataLoader1(hut.TestCase):
         password = os.environ["POSTGRES_PASSWORD"]
         self.dbname = self._get_test_name().replace("/", "").replace(".", "")
         # Create database for test.
-        create_database(self.dbname)
+        cut.create_database(self.dbname, cut.get_init_sql_files(custom_files=[DB_SCHEMA_FILE]))
         # Initialize writer class to test.
         writer = vksqlw.SQLWriterKibotBackend(
             self.dbname, user, password, host, port
         )
-        # Apply production schema to created database.
-        with writer.conn as conn:
-            with conn.cursor() as curs:
-                curs.execute(hio.from_file(DB_SCHEMA_FILE))
         # Add data to database.
         self._prepare_tables(writer)
         writer.close()
@@ -77,7 +74,7 @@ class TestSqlDataLoader1(hut.TestCase):
         # Close connection.
         self._loader.conn.close()
         # Remove created database.
-        remove_database(self.dbname)
+        cut.remove_database(self.dbname)
         super().tearDown()
 
     def test_get_symbol_id1(self) -> None:
@@ -253,67 +250,3 @@ class TestSqlDataLoader1(hut.TestCase):
         )
         return df
 
-
-# TODO(plyq): Move it to common place, e.g. helpers.
-def create_database(dbname: str) -> None:
-    """
-    Create database in current environment.
-    """
-    # Initialize connection.
-    host = os.environ["POSTGRES_HOST"]
-    port = os.environ["POSTGRES_PORT"]
-    user = os.environ["POSTGRES_USER"]
-    password = os.environ["POSTGRES_PASSWORD"]
-    default_dbname = os.environ["POSTGRES_DB"]
-    connection = psycopg2.connect(
-        dbname=default_dbname,
-        host=host,
-        port=port,
-        user=user,
-        password=password,
-    )
-    # Make DROP/CREATE DATABASE executable from transaction block.
-    connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-    # Create a database from scratch.
-    with connection:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                psql.SQL("DROP DATABASE IF EXISTS {};").format(
-                    psql.Identifier(dbname)
-                )
-            )
-            cursor.execute(
-                psql.SQL("CREATE DATABASE {};").format(psql.Identifier(dbname))
-            )
-    # Close connection.
-    connection.close()
-
-
-# TODO(plyq): Move it to common place, e.g. helpers.
-def remove_database(dbname: str) -> None:
-    """
-    Remove database in current environment.
-    """
-    # Initialize connection.
-    host = os.environ["POSTGRES_HOST"]
-    port = os.environ["POSTGRES_PORT"]
-    user = os.environ["POSTGRES_USER"]
-    password = os.environ["POSTGRES_PASSWORD"]
-    default_dbname = os.environ["POSTGRES_DB"]
-    connection = psycopg2.connect(
-        dbname=default_dbname,
-        host=host,
-        port=port,
-        user=user,
-        password=password,
-    )
-    # Make DROP DATABASE executable from transaction block.
-    connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-    # Drop database.
-    with connection:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                psql.SQL("DROP DATABASE {};").format(psql.Identifier(dbname))
-            )
-    # Close connection.
-    connection.close()
