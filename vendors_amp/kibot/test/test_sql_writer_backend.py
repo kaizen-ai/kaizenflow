@@ -1,15 +1,12 @@
 import os
 
 import pandas as pd
-import psycopg2
-import psycopg2.sql as psql
 import pytest
 
-import helpers.io_ as hio
 import helpers.unit_test as hut
 import vendors_amp.common.data.types as vcdtyp
+import vendors_amp.common.test.utils as vctuti
 import vendors_amp.kibot.sql_writer_backend as vksqlw
-import vendors_amp.common.test.utils as cut
 
 DB_SCHEMA_FILE = os.path.join(
     os.path.dirname(__file__), "../compose/init_sql/db.sql"
@@ -55,7 +52,9 @@ class TestSqlWriterBackend1(hut.TestCase):
         password = os.environ["POSTGRES_PASSWORD"]
         self._dbname = self._get_test_string()
         # Create database for each test.
-        cut.create_database(self._dbname, cut.get_init_sql_files(custom_files=[DB_SCHEMA_FILE]))
+        vctuti.create_database(
+            self._dbname, vctuti.get_init_sql_files(custom_files=[DB_SCHEMA_FILE])
+        )
         # Initialize writer class to test.
         self._writer = vksqlw.SQLWriterKibotBackend(
             self._dbname, user, password, host, port
@@ -69,7 +68,7 @@ class TestSqlWriterBackend1(hut.TestCase):
         # Close connection.
         self._writer.close()
         # Remove created database.
-        cut.remove_database(self._dbname)
+        vctuti.remove_database(self._dbname)
         super().tearDown()
 
     def test_ensure_symbol_exist1(self) -> None:
@@ -266,4 +265,3 @@ class TestSqlWriterBackend1(hut.TestCase):
         txt = hut.convert_df_to_string(res[columns_to_check])
         # Check the output against the golden.
         self.check_string(txt)
-

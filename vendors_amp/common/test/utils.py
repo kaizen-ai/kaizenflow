@@ -1,17 +1,10 @@
-import datetime
 import os
-import time
-import pandas as pd
+from typing import List
+
 import psycopg2
 import psycopg2.sql as psql
-import pytest
 
-from typing import List
 import helpers.io_ as hio
-import helpers.unit_test as hut
-import vendors_amp.common.data.types as vcdtyp
-import vendors_amp.kibot.data.load.sql_data_loader as vkdlsq
-import vendors_amp.kibot.sql_writer_backend as vksqlw
 
 
 def get_init_sql_files(custom_files: List[str]) -> List[str]:
@@ -22,10 +15,14 @@ def get_init_sql_files(custom_files: List[str]) -> List[str]:
     :return: all files to init database
     """
     # Common files.
-    files = [os.path.join(os.path.dirname(__file__), "../compose/init_sql", filename) for filename in ("types.sql", "static.sql")]
+    files = [
+        os.path.join(os.path.dirname(__file__), "../compose/init_sql", filename)
+        for filename in ("types.sql", "static.sql")
+    ]
     # Extend with custom.
     files.extend(custom_files)
     return files
+
 
 # TODO(plyq): Move it to common place, e.g. helpers.
 def create_database(dbname: str, init_sql_files: List[str]) -> None:
@@ -49,7 +46,9 @@ def create_database(dbname: str, init_sql_files: List[str]) -> None:
         password=password,
     )
     # Make DROP/CREATE DATABASE executable from transaction block.
-    admin_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    admin_connection.set_isolation_level(
+        psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT
+    )
     # Create a database from scratch.
     with admin_connection:
         with admin_connection.cursor() as cursor:

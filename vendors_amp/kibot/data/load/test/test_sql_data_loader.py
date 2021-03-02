@@ -2,16 +2,13 @@ import datetime
 import os
 
 import pandas as pd
-import psycopg2
-import psycopg2.sql as psql
 import pytest
 
-import helpers.io_ as hio
 import helpers.unit_test as hut
 import vendors_amp.common.data.types as vcdtyp
+import vendors_amp.common.test.utils as vctuti
 import vendors_amp.kibot.data.load.sql_data_loader as vkdlsq
 import vendors_amp.kibot.sql_writer_backend as vksqlw
-import vendors_amp.common.test.utils as cut
 
 DB_SCHEMA_FILE = os.path.join(
     os.path.dirname(__file__), "../../../compose/init_sql/db.sql"
@@ -57,7 +54,9 @@ class TestSqlDataLoader1(hut.TestCase):
         password = os.environ["POSTGRES_PASSWORD"]
         self.dbname = self._get_test_name().replace("/", "").replace(".", "")
         # Create database for test.
-        cut.create_database(self.dbname, cut.get_init_sql_files(custom_files=[DB_SCHEMA_FILE]))
+        vctuti.create_database(
+            self.dbname, vctuti.get_init_sql_files(custom_files=[DB_SCHEMA_FILE])
+        )
         # Initialize writer class to test.
         writer = vksqlw.SQLWriterKibotBackend(
             self.dbname, user, password, host, port
@@ -74,7 +73,7 @@ class TestSqlDataLoader1(hut.TestCase):
         # Close connection.
         self._loader.conn.close()
         # Remove created database.
-        cut.remove_database(self.dbname)
+        vctuti.remove_database(self.dbname)
         super().tearDown()
 
     def test_get_symbol_id1(self) -> None:
@@ -249,4 +248,3 @@ class TestSqlDataLoader1(hut.TestCase):
             }
         )
         return df
-
