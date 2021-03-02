@@ -1,4 +1,5 @@
 import abc
+from typing import Optional
 
 import pandas as pd
 import psycopg2
@@ -99,6 +100,8 @@ class AbstractSQLWriterBackend(abc.ABC):
         low_val: float,
         close_val: float,
         volume_val: int,
+        average_val: Optional[float],
+        bar_count_val: Optional[int],
     ) -> None:
         """
         Insert daily data for a particular TradeSymbol entry.
@@ -110,6 +113,8 @@ class AbstractSQLWriterBackend(abc.ABC):
         :param low_val: low price
         :param close_val: close price
         :param volume_val: volume
+        :param average_val: average
+        :param bar_count_val: bar count
         """
 
     @abc.abstractmethod
@@ -133,6 +138,8 @@ class AbstractSQLWriterBackend(abc.ABC):
         low_val: float,
         close_val: float,
         volume_val: int,
+        average_val: Optional[float],
+        bar_count_val: Optional[int],
     ) -> None:
         """
         Insert minute data for a particular TradeSymbol entry.
@@ -144,6 +151,8 @@ class AbstractSQLWriterBackend(abc.ABC):
         :param low_val: low price
         :param close_val: close price
         :param volume_val: volume
+        :param average_val: average
+        :param bar_count_val: bar count
         """
 
     @abc.abstractmethod
