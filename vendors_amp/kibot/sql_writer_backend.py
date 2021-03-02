@@ -1,3 +1,5 @@
+from typing import Optional
+
 import pandas as pd
 import psycopg2.extras as pextra
 
@@ -39,6 +41,8 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
         low_val: float,
         close_val: float,
         volume_val: int,
+        average_val: Optional[float] = None,
+        bar_count_val: Optional[int] = None,
     ) -> None:
         """
         Insert daily data for a particular TradeSymbol entry.
@@ -50,6 +54,8 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
         :param low_val: low price
         :param close_val: close price
         :param volume_val: volume
+        :param average_val: average
+        :param bar_count_val: bar count
         """
         with self.conn:
             with self.conn.cursor() as curs:
@@ -98,6 +104,8 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
         low_val: float,
         close_val: float,
         volume_val: int,
+        average_val: Optional[float] = None,
+        bar_count_val: Optional[int] = None,
     ) -> None:
         """
         Insert minute data for a particular TradeSymbol entry.
@@ -109,6 +117,8 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
         :param low_val: low price
         :param close_val: close price
         :param volume_val: volume
+        :param average_val: average
+        :param bar_count_val: bar count
         """
         with self.conn:
             with self.conn.cursor() as curs:

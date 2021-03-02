@@ -40,7 +40,7 @@ class SQLWriterIBBackend(vcsqlw.AbstractSQLWriterBackend):
         close_val: float,
         volume_val: int,
         average_val: float,
-        barCount_val: int,
+        bar_count_val: int,
     ) -> None:
         """
         Insert daily data for a particular TradeSymbol entry.
@@ -53,7 +53,7 @@ class SQLWriterIBBackend(vcsqlw.AbstractSQLWriterBackend):
         :param close_val: close price
         :param volume_val: volume
         :param average_val: average
-        :param barCount_val: barCount
+        :param bar_count_val: bar count
         """
         with self.conn:
             with self.conn.cursor() as curs:
@@ -70,7 +70,7 @@ class SQLWriterIBBackend(vcsqlw.AbstractSQLWriterBackend):
                         close_val,
                         volume_val,
                         average_val,
-                        barCount_val,
+                        bar_count_val,
                     ],
                 )
 
@@ -88,7 +88,8 @@ class SQLWriterIBBackend(vcsqlw.AbstractSQLWriterBackend):
                 pextra.execute_values(
                     curs,
                     "INSERT INTO MinuteData "
-                    "(trade_symbol_id, datetime, open, high, low, close, volume, average, barCount) "
+                    "(trade_symbol_id, datetime, open, high, low, close, "
+                    "volume, average, barCount) "
                     "VALUES %s ON CONFLICT DO NOTHING",
                     df.to_dict("records"),
                     template="(%(trade_symbol_id)s, %(datetime)s, %(open)s,"
@@ -105,7 +106,7 @@ class SQLWriterIBBackend(vcsqlw.AbstractSQLWriterBackend):
         close_val: float,
         volume_val: int,
         average_val: float,
-        barCount_val: int,
+        bar_count_val: int,
     ) -> None:
         """
         Insert minute data for a particular TradeSymbol entry.
@@ -118,13 +119,14 @@ class SQLWriterIBBackend(vcsqlw.AbstractSQLWriterBackend):
         :param close_val: close price
         :param volume_val: volume
         :param average_val: average
-        :param barCount_val: barCount
+        :param bar_count_val: bar count
         """
         with self.conn:
             with self.conn.cursor() as curs:
                 curs.execute(
                     "INSERT INTO MinuteData "
-                    "(trade_symbol_id, datetime, open, high, low, close, volume, average, barCount) "
+                    "(trade_symbol_id, datetime, open, high, low, close, "
+                    "volume, average, barCount) "
                     "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
                     [
                         trade_symbol_id,
@@ -135,7 +137,7 @@ class SQLWriterIBBackend(vcsqlw.AbstractSQLWriterBackend):
                         close_val,
                         volume_val,
                         average_val,
-                        barCount_val,
+                        bar_count_val,
                     ],
                 )
 
