@@ -168,6 +168,22 @@
   > (cd amp; git checkout master)
   ```
 
+## Configure user credentials
+
+- Once you receive access key ID and secret access key run `aws configure` to
+  generate aws config files:
+  - install aws client on your machine
+  - run
+    ```bash
+    > aws configure
+    ```
+  - specify access key ID and secret access key
+  - you may leave the default region name and default output format unassigned
+  - check that the `config` and `credentials` files have been created:
+    ```bash
+    > ls ~/.aws
+    ```
+
 ## Clone multiple git client
 
 - To check out another copy of the codebase (e.g., see possible workflows below)
