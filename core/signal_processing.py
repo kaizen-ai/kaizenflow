@@ -1700,3 +1700,46 @@ def c_infinity_bump_function(x: float, a: float, b: float) -> float:
     y = (x ** 2 - a ** 2) / (b ** 2 - a ** 2)
     inverse_bump = c_infinity_step_function(y)
     return 1 - inverse_bump
+
+
+# #############################################################################
+# Dataframes inverting
+# #############################################################################
+
+
+def calculate_inverse(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate an inverse matrix.
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert_eq(
+        df.shape[0], df.shape[1], "Only square matrices are invertible."
+    )
+    dbg.dassert(
+        df.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull()).all(
+            axis=None
+        ),
+        "The matrix is not numeric.",
+    )
+    dbg.dassert_ne(np.linalg.det(df), 0, "The matrix is non-invertible.")
+    return pd.DataFrame(np.linalg.inv(df), df.columns, df.index)
+
+
+def calculate_pseudoinverse(
+    df: pd.DataFrame,
+    rcond: Optional[float] = 1e-15,
+    hermitian: Optional[bool] = False,
+) -> pd.DataFrame:
+    """
+    Calculate a pseudoinverse matrix.
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert(
+        df.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull()).all(
+            axis=None
+        ),
+        "The matrix is not numeric.",
+    )
+    return pd.DataFrame(
+        np.linalg.pinv(df, rcond=rcond, hermitian=hermitian), df.columns, df.index
+    )
