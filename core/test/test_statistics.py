@@ -1315,12 +1315,12 @@ class Test_zscore_oos_sharpe_ratio(hut.TestCase):
 class Test_sharpe_ratio_correlation_conversion(hut.TestCase):
     def test1(self) -> None:
         np.testing.assert_almost_equal(
-            5/4, 
+            6/5, 
             cstati.apply_sharpe_ratio_correlation_conversion("Q", correlation=3/4)
         )
         np.testing.assert_almost_equal(
             3/4, 
-            cstati.apply_sharpe_ratio_correlation_conversion("Q", sharpe_ratio=5/4)
+            cstati.apply_sharpe_ratio_correlation_conversion("Q", sharpe_ratio=6/5)
         )
         
         
