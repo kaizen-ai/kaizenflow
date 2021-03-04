@@ -7,99 +7,55 @@ try:
 except ModuleNotFoundError:
     print("Can't find ib_insync")
 import pandas as pd
-import pytest
 
 import helpers.dbg as dbg
 import helpers.unit_test as hut
-import vendors_amp.ib_insync.utils as ibutils
+import vendors_amp.ib_insync.utils as viutil
 
 _LOG = logging.getLogger(__name__)
 
 
-#@pytest.mark.skip("Disabled")
+# @pytest.mark.skip("Disabled")
 class Test_get_historical_data(hut.TestCase):
     @classmethod
     def setUpClass(cls):
         dbg.shutup_chatty_modules()
-        cls.ib = ibutils.ib_connect(0, is_notebook=False)
+        cls.ib = viutil.ib_connect(0, is_notebook=False)
 
     @classmethod
     def tearnDownClass(cls):
         cls.ib.disconnect()
 
-    # ##############################################################################
+    # #########################################################################
 
     def test_get_end_timestamp1(self) -> None:
         """
-        Test get_end_timestamp() for ES in and outside regular trading hours (RTH).
+        Test get_end_timestamp() for ES in and outside regular trading hours
+        (RTH).
         """
         contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
         what_to_show = "TRADES"
         use_rth = True
-        ts1 = ibutils.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
+        ts1 = viutil.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
         _LOG.debug("ts1=%s", ts1)
         #
         use_rth = False
-        ts2 = ibutils.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
+        ts2 = viutil.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
         _LOG.debug("ts2=%s", ts2)
-
-    # ##############################################################################
-
-    @staticmethod
-    def _get_df_signatures(df: pd.DataFrame) -> Tuple[str, str]:
-        """
-        Compute a short and a long signature for the df.
-
-        The short signature is suitable to the self.assertEqual() approach.
-        The long signature contains the data and it's suitable to the
-        self.check_string() approach.
-        """
-        txt = []
-        #
-        act = ibutils.get_df_signature(df)
-        txt.append("signature=%s" % act)
-        #
-        if not df.empty:
-            df_tmp = df.copy()
-            _LOG.debug("df_tmp=\n%s", df_tmp.head())
-            dbg.dassert_isinstance(df_tmp.index[0], pd.Timestamp)
-            df_tmp["time"] = df_tmp.index.time
-            min_max_df = df_tmp["time"].groupby(lambda x: x.date()).agg([min, max])
-            txt.append("min_max_df=\n%s" % min_max_df)
-            short_signature = "\n".join(txt)
-        else:
-            short_signature = ""
-        #
-        txt.append("df=\n%s" % df.to_csv())
-        long_signature = "\n".join(txt)
-        return short_signature, long_signature
-
-    def _req_historical_data_helper(self, end_ts, use_rth) -> Tuple[str, str]:
-        """
-        Run ibutils.req_historical_data() with some fixed params and return short
-        and long signature.
-        """
-        contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
-        what_to_show = "TRADES"
-        duration_str = '1 D'
-        bar_size_setting = '1 hour'
-        df = ibutils.req_historical_data(self.ib, contract, end_ts, duration_str,
-                                         bar_size_setting,
-                                         what_to_show, use_rth)
-        short_signature, long_signature = self._get_df_signatures(df)
-        return short_signature, long_signature
 
     def test_req_historical_data1(self) -> None:
         """
         Test req_historical_data() on a single day in trading hours.
 
-        Requesting data for a day ending at 18:00 gets the entire trading day.
+        Requesting data for a day ending at 18:00 gets the entire
+        trading day.
         """
         # 2021-02-18 is a Thursday and it's full day.
         end_ts = pd.Timestamp("2021-02-18 18:00:00")
         use_rth = True
-        short_signature, long_signature = self._req_historical_data_helper(end_ts,
-                                                                           use_rth)
+        short_signature, long_signature = self._req_historical_data_helper(
+            end_ts, use_rth
+        )
         exp = """
         signature=len=9 [2021-02-18 09:30:00-05:00, 2021-02-18 16:30:00-05:00]
         min_max_df=
@@ -113,13 +69,15 @@ class Test_get_historical_data(hut.TestCase):
         """
         Test req_historical_data() on a single day outside trading hours.
 
-        Requesting data for a day ending at 18:00 gets data for a 24 hr period.
+        Requesting data for a day ending at 18:00 gets data for a 24 hr
+        period.
         """
         # 2021-02-18 is a Thursday and it's full day.
         end_ts = pd.Timestamp("2021-02-18 18:00:00")
         use_rth = False
-        short_signature, long_signature = self._req_historical_data_helper(end_ts,
-                                                                           use_rth)
+        short_signature, long_signature = self._req_historical_data_helper(
+            end_ts, use_rth
+        )
         exp = """
         signature=len=24 [2021-02-17 18:00:00-05:00, 2021-02-18 16:30:00-05:00]
         min_max_df=
@@ -134,13 +92,15 @@ class Test_get_historical_data(hut.TestCase):
         """
         Test req_historical_data() on a single day outside trading hours.
 
-        Requesting data for a day ending at midnight gets data after 18:00.
+        Requesting data for a day ending at midnight gets data after
+        18:00.
         """
         # 2021-02-18 is a Thursday and it's full day.
         end_ts = pd.Timestamp("2021-02-18 00:00:00")
         use_rth = False
-        short_signature, long_signature = self._req_historical_data_helper(end_ts,
-                                                                           use_rth)
+        short_signature, long_signature = self._req_historical_data_helper(
+            end_ts, use_rth
+        )
         exp = """
         signature=len=6 [2021-02-17 18:00:00-05:00, 2021-02-17 23:00:00-05:00]
         min_max_df=
@@ -154,14 +114,15 @@ class Test_get_historical_data(hut.TestCase):
         """
         Test req_historical_data() on a single day outside trading hours.
 
-        Requesting data for a day ending at noon gets data after 18:00 of the day
-        before.
+        Requesting data for a day ending at noon gets data after 18:00
+        of the day before.
         """
         # 2021-02-18 is a Thursday and it's full day.
         end_ts = pd.Timestamp("2021-02-18 12:00:00")
         use_rth = False
-        short_signature, long_signature = self._req_historical_data_helper(end_ts,
-                                                                           use_rth)
+        short_signature, long_signature = self._req_historical_data_helper(
+            end_ts, use_rth
+        )
         exp = """
         signature=len=18 [2021-02-17 18:00:00-05:00, 2021-02-18 11:00:00-05:00]
         min_max_df=
@@ -179,8 +140,9 @@ class Test_get_historical_data(hut.TestCase):
         # 2018-02-29 doesn't exist, since 2018 is not a leap year.
         end_ts = pd.Timestamp("2018-01-29 14:00:00-05:00")
         use_rth = False
-        short_signature, long_signature = self._req_historical_data_helper(end_ts,
-                                                                           use_rth)
+        short_signature, long_signature = self._req_historical_data_helper(
+            end_ts, use_rth
+        )
         exp = """
         """
         self.assert_equal(short_signature, exp, fuzzy_match=True)
@@ -193,30 +155,13 @@ class Test_get_historical_data(hut.TestCase):
         # 2018-02-19 is a Thursday and it's president day.
         end_ts = pd.Timestamp("2018-02-19 14:00:00-05:00")
         use_rth = False
-        short_signature, long_signature = self._req_historical_data_helper(end_ts,
-                                                                           use_rth)
+        short_signature, long_signature = self._req_historical_data_helper(
+            end_ts, use_rth
+        )
         exp = """
         """
         self.assert_equal(short_signature, exp, fuzzy_match=True)
         self.check_string(long_signature)
-
-    # ##############################################################################
-
-    def _get_historical_data_with_IB_loop_helper(self, start_ts: pd.Timestamp, end_ts: pd.Timestamp,
-                                                 bar_size_setting: str, use_rth: bool) -> Tuple[pd.DataFrame, str, str]:
-        _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
-        contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
-        what_to_show = "TRADES"
-        duration_str = '1 D'
-        df, ts_seq = ibutils.get_historical_data_with_IB_loop(self.ib, contract,
-                                                              start_ts, end_ts,
-                                                              duration_str,
-                                                              bar_size_setting,
-                                                              what_to_show, use_rth,
-                                                              return_ts_seq=True)
-        short_signature, long_signature = self._get_df_signatures(df)
-        long_signature += "ts_seq=\n" + "\n".join(map(str, ts_seq))
-        return df, short_signature, long_signature
 
     def test_get_historical_data_with_IB_loop1(self) -> None:
         """
@@ -225,12 +170,17 @@ class Test_get_historical_data(hut.TestCase):
         # 2021-02-17 is a Wednesday and it's full day.
         start_ts = pd.Timestamp("2021-02-17 00:00:00")
         end_ts = start_ts + pd.DateOffset(days=1)
-        bar_size_setting = '1 hour'
+        bar_size_setting = "1 hour"
         use_rth = False
-        df, short_signature, long_signature = self._get_historical_data_with_IB_loop_helper(
-            start_ts, end_ts, bar_size_setting, use_rth)
+        (
+            df,
+            short_signature,
+            long_signature,
+        ) = self._get_historical_data_with_IB_loop_helper(
+            start_ts, end_ts, bar_size_setting, use_rth
+        )
         #
-        act = ("\n".join(map(str, df.index)))
+        act = "\n".join(map(str, df.index))
         # NOTE: IB returns also a bar at close 16:30 even if the frequency is hourly.
         exp = """
         2021-02-17 00:00:00-05:00
@@ -272,17 +222,23 @@ class Test_get_historical_data(hut.TestCase):
 
     def test_get_historical_data_with_IB_loop2(self) -> None:
         """
-        Like test_get_historical_data_with_IB_loop1() but for 1 regular trading day.
+        Like test_get_historical_data_with_IB_loop1() but for 1 regular trading
+        day.
         """
         # 2021-02-17 is a Wednesday and it's full day.
         start_ts = pd.Timestamp("2021-02-17 00:00:00")
         end_ts = start_ts + pd.DateOffset(days=1)
-        bar_size_setting = '1 hour'
+        bar_size_setting = "1 hour"
         use_rth = True
-        df, short_signature, long_signature = self._get_historical_data_with_IB_loop_helper(
-            start_ts, end_ts, bar_size_setting, use_rth)
+        (
+            df,
+            short_signature,
+            long_signature,
+        ) = self._get_historical_data_with_IB_loop_helper(
+            start_ts, end_ts, bar_size_setting, use_rth
+        )
         #
-        act = ("\n".join(map(str, df.index)))
+        act = "\n".join(map(str, df.index))
         exp = r"""
         2021-02-17 09:30:00-05:00
         2021-02-17 10:00:00-05:00
@@ -300,7 +256,7 @@ class Test_get_historical_data(hut.TestCase):
         signature=len=9 [2021-02-17 09:30:00-05:00, 2021-02-17 16:30:00-05:00]
         min_max_df=
                         min      max
-        2021-02-17 09:30:00 16:30:00 
+        2021-02-17 09:30:00 16:30:00
         """
         self.assert_equal(short_signature, exp_short_signature, fuzzy_match=True)
         #
@@ -314,12 +270,18 @@ class Test_get_historical_data(hut.TestCase):
         """
         # 2021-02-18 is a Thursday and it's full day.
         start_ts = pd.Timestamp("2021-02-17 00:00:00").tz_localize(
-            tz="America/New_York")
+            tz="America/New_York"
+        )
         end_ts = start_ts + pd.DateOffset(days=1)
-        bar_size_setting = '1 hour'
+        bar_size_setting = "1 hour"
         use_rth = False
-        _, short_signature, long_signature = self._get_historical_data_with_IB_loop_helper(
-            start_ts, end_ts, bar_size_setting, use_rth)
+        (
+            _,
+            short_signature,
+            long_signature,
+        ) = self._get_historical_data_with_IB_loop_helper(
+            start_ts, end_ts, bar_size_setting, use_rth
+        )
         #
         exp_short_signature = """
         signature=len=24 [2021-02-17 00:00:00-05:00, 2021-02-17 23:00:00-05:00]
@@ -340,10 +302,15 @@ class Test_get_historical_data(hut.TestCase):
         # 2021-02-18 is a Thursday and it's full day.
         start_ts = pd.Timestamp("2021-02-17 00:00:00")
         end_ts = start_ts + pd.DateOffset(days=1)
-        bar_size_setting = '1 hour'
+        bar_size_setting = "1 hour"
         use_rth = True
-        df, short_signature, long_signature = self._get_historical_data_with_IB_loop_helper(
-            start_ts, end_ts, bar_size_setting, use_rth)
+        (
+            df,
+            short_signature,
+            long_signature,
+        ) = self._get_historical_data_with_IB_loop_helper(
+            start_ts, end_ts, bar_size_setting, use_rth
+        )
         #
         exp_short_signature = """
         signature=len=9 [2021-02-17 09:30:00-05:00, 2021-02-17 16:30:00-05:00]
@@ -362,10 +329,15 @@ class Test_get_historical_data(hut.TestCase):
         # 2021-02-15 is a Monday and there is no trading activity since it's MLK day.
         start_ts = pd.Timestamp("2021-02-15 00:00:00")
         end_ts = start_ts + pd.DateOffset(days=1)
-        bar_size_setting = '1 hour'
+        bar_size_setting = "1 hour"
         use_rth = False
-        df, short_signature, long_signature = self._get_historical_data_with_IB_loop_helper(
-            start_ts, end_ts, bar_size_setting, use_rth)
+        (
+            df,
+            short_signature,
+            long_signature,
+        ) = self._get_historical_data_with_IB_loop_helper(
+            start_ts, end_ts, bar_size_setting, use_rth
+        )
         #
         # act = ("\n".join(map(str, df.index)))
         # exp = r"""
@@ -389,12 +361,17 @@ class Test_get_historical_data(hut.TestCase):
         # 2021-02-07 is a Sunday.
         start_ts = pd.Timestamp("2021-02-07 00:00:00")
         end_ts = start_ts + pd.DateOffset(days=2)
-        bar_size_setting = '1 hour'
+        bar_size_setting = "1 hour"
         use_rth = False
-        df, short_signature, long_signature = self._get_historical_data_with_IB_loop_helper(
-            start_ts, end_ts, bar_size_setting, use_rth)
+        (
+            df,
+            short_signature,
+            long_signature,
+        ) = self._get_historical_data_with_IB_loop_helper(
+            start_ts, end_ts, bar_size_setting, use_rth
+        )
         #
-        act = ("\n".join(map(str, df.index)))
+        act = "\n".join(map(str, df.index))
         exp = r"""
         2021-02-07 18:00:00-05:00
         2021-02-07 19:00:00-05:00
@@ -425,7 +402,7 @@ class Test_get_historical_data(hut.TestCase):
         2021-02-08 20:00:00-05:00
         2021-02-08 21:00:00-05:00
         2021-02-08 22:00:00-05:00
-        2021-02-08 23:00:00-05:00 
+        2021-02-08 23:00:00-05:00
         """
         self.assert_equal(act, exp, fuzzy_match=True)
         #
@@ -447,10 +424,15 @@ class Test_get_historical_data(hut.TestCase):
         # 2021-02-07 is Sunday.
         start_ts = pd.Timestamp("2021-02-07 00:00:00")
         end_ts = start_ts + pd.DateOffset(days=1)
-        bar_size_setting = '1 min'
+        bar_size_setting = "1 min"
         use_rth = False
-        df, short_signature, long_signature = self._get_historical_data_with_IB_loop_helper(
-            start_ts, end_ts, bar_size_setting, use_rth)
+        (
+            df,
+            short_signature,
+            long_signature,
+        ) = self._get_historical_data_with_IB_loop_helper(
+            start_ts, end_ts, bar_size_setting, use_rth
+        )
         #
         exp_short_signature = """
         signature=len=360 [2021-02-07 18:00:00-05:00, 2021-02-07 23:59:00-05:00]
@@ -462,41 +444,24 @@ class Test_get_historical_data(hut.TestCase):
         #
         self.check_string(long_signature)
 
-    # ##############################################################################
-
-    def _save_historical_data_with_IB_loop_helper(self, start_ts: pd.Timestamp, end_ts: pd.Timestamp,
-                                                  bar_size_setting: str, use_rth: bool) -> Tuple[pd.DataFrame, str, str]:
-        _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
-        contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
-        what_to_show = "TRADES"
-        duration_str = '1 D'
-        file_name = os.path.join(self.get_scratch_space(), "output.csv")
-        incremental = False
-        ibutils.save_historical_data_with_IB_loop(self.ib, contract,
-                                                  start_ts, end_ts,
-                                                  duration_str,
-                                                  bar_size_setting,
-                                                  what_to_show, use_rth,
-                                                  file_name,
-                                                  incremental)
-        # Load the data generated.
-        df = ibutils.load_historical_data(file_name)
-        # Check.
-        short_signature, long_signature = self._get_df_signatures(df)
-        return df, short_signature, long_signature
-
     def test_save_historical_data_with_IB_loop1(self) -> None:
         """
+        
         """
         # 2021-02-17 is a Wednesday and it's full day.
         start_ts = pd.Timestamp("2021-02-17 00:00:00")
         end_ts = start_ts + pd.DateOffset(days=1)
-        bar_size_setting = '1 hour'
+        bar_size_setting = "1 hour"
         use_rth = False
-        df, short_signature, long_signature = self._save_historical_data_with_IB_loop_helper(
-            start_ts, end_ts, bar_size_setting, use_rth)
+        (
+            df,
+            short_signature,
+            long_signature,
+        ) = self._save_historical_data_with_IB_loop_helper(
+            start_ts, end_ts, bar_size_setting, use_rth
+        )
         #
-        act = ("\n".join(map(str, df.index)))
+        act = "\n".join(map(str, df.index))
         # NOTE: IB returns also a bar at close 16:30 even if the frequency is hourly.
         exp = """
         2021-02-16 18:00:00-05:00
@@ -505,7 +470,7 @@ class Test_get_historical_data(hut.TestCase):
         2021-02-16 21:00:00-05:00
         2021-02-16 22:00:00-05:00
         2021-02-16 23:00:00-05:00
-        2021-02-17 00:00:00-05:00                                                   
+        2021-02-17 00:00:00-05:00
         2021-02-17 01:00:00-05:00
         2021-02-17 02:00:00-05:00
         2021-02-17 03:00:00-05:00
@@ -537,7 +502,7 @@ class Test_get_historical_data(hut.TestCase):
         #
         self.check_string(long_signature)
 
-    # ##############################################################################
+    # #########################################################################
 
     def test_download_ib_data1(self) -> None:
         target = "continuous_futures"
@@ -546,20 +511,22 @@ class Test_get_historical_data(hut.TestCase):
         symbols = "ES".split()
         start_ts = pd.Timestamp("2020-12-09 18:00:00-05:00")
         end_ts = pd.Timestamp("2020-12-13 18:00:00-05:00")
-        tasks = ibutils.get_tasks(self.ib, target, frequency, symbols, start_ts, end_ts,
-                                  use_rth)
+        tasks = viutil.get_tasks(
+            self.ib, target, frequency, symbols, start_ts, end_ts, use_rth
+        )
         #
         client_id_base = 5
         #
         num_threads = "serial"
         dst_dir = self.get_scratch_space()
         incremental = False
-        file_names = ibutils.download_ib_data(client_id_base, tasks,
-                                 incremental, dst_dir, num_threads)
+        file_names = viutil.download_ib_data(
+            client_id_base, tasks, incremental, dst_dir, num_threads
+        )
         dbg.dassert_eq(len(file_names), 1)
         _LOG.debug("file_names=%s", file_names)
         # Load the data.
-        df = ibutils.load_historical_data(file_names[0])
+        df = viutil.load_historical_data(file_names[0])
         short_signature, long_signature = self._get_df_signatures(df)
         exp_short_signature = """
         signature=len=48 [2020-12-09 18:00:00-05:00, 2020-12-11 16:30:00-05:00]
@@ -573,19 +540,27 @@ class Test_get_historical_data(hut.TestCase):
         #
         self.check_string(long_signature)
 
-    # ##############################################################################
+    # #########################################################################
 
     def test_ib_date_range1(self):
         start_ts = pd.Timestamp("2018-01-26 15:00").tz_localize(
-            tz="America/New_York")
-        end_ts = pd.Timestamp("2018-02-03 15:00").tz_localize(tz="America/New_York")
-        dates = ibutils._ib_date_range(start_ts, end_ts)
-        bar_size_setting = '1 hour'
+            tz="America/New_York"
+        )
+        end_ts = pd.Timestamp("2018-02-03 15:00").tz_localize(
+            tz="America/New_York"
+        )
+        viutil._ib_date_range(start_ts, end_ts)
+        bar_size_setting = "1 hour"
         use_rth = False
-        df, short_signature, long_signature = self._get_historical_data_with_IB_loop_helper(
-            start_ts, end_ts, bar_size_setting, use_rth)
+        (
+            df,
+            short_signature,
+            long_signature,
+        ) = self._get_historical_data_with_IB_loop_helper(
+            start_ts, end_ts, bar_size_setting, use_rth
+        )
         #
-        act = ("\n".join(map(str, df.index)))
+        act = "\n".join(map(str, df.index))
         # NOTE: IB returns also a bar at close 16:30 even if the frequency is hourly.
         exp = """
         2021-02-17 00:00:00-05:00
@@ -625,13 +600,14 @@ class Test_get_historical_data(hut.TestCase):
         #
         self.check_string(long_signature)
 
-    # ##############################################################################
+    # #########################################################################
 
     def test_ib_date_range1(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 00:00").tz_localize(
-            tz="America/New_York")
+            tz="America/New_York"
+        )
         end_ts = start_ts + pd.DateOffset(days=3)
-        dates = ibutils._ib_date_range(start_ts, end_ts)
+        dates = viutil._ib_date_range(start_ts, end_ts)
         #
         act = "\n".join(map(str, dates))
         exp = """
@@ -642,9 +618,10 @@ class Test_get_historical_data(hut.TestCase):
 
     def test_ib_date_range2(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 18:00").tz_localize(
-            tz="America/New_York")
+            tz="America/New_York"
+        )
         end_ts = start_ts + pd.DateOffset(days=1)
-        dates = ibutils._ib_date_range(start_ts, end_ts)
+        dates = viutil._ib_date_range(start_ts, end_ts)
         #
         act = "\n".join(map(str, dates))
         exp = """
@@ -655,9 +632,10 @@ class Test_get_historical_data(hut.TestCase):
 
     def test_ib_date_range3(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 17:59").tz_localize(
-            tz="America/New_York")
+            tz="America/New_York"
+        )
         end_ts = start_ts + pd.DateOffset(days=2)
-        dates = ibutils._ib_date_range(start_ts, end_ts)
+        dates = viutil._ib_date_range(start_ts, end_ts)
         #
         act = "\n".join(map(str, dates))
         exp = """
@@ -668,9 +646,10 @@ class Test_get_historical_data(hut.TestCase):
 
     def test_ib_date_range4(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 17:59").tz_localize(
-            tz="America/New_York")
+            tz="America/New_York"
+        )
         end_ts = start_ts + pd.DateOffset(days=3)
-        dates = ibutils._ib_date_range(start_ts, end_ts)
+        dates = viutil._ib_date_range(start_ts, end_ts)
         #
         act = "\n".join(map(str, dates))
         exp = """
@@ -681,9 +660,10 @@ class Test_get_historical_data(hut.TestCase):
 
     def test_ib_date_range5(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 00:00:00").tz_localize(
-            tz="America/New_York")
+            tz="America/New_York"
+        )
         end_ts = start_ts + pd.DateOffset(days=3)
-        dates = ibutils._ib_date_range(start_ts, end_ts)
+        dates = viutil._ib_date_range(start_ts, end_ts)
         #
         act = "\n".join(map(str, dates))
         exp = """
@@ -691,41 +671,6 @@ class Test_get_historical_data(hut.TestCase):
         2018-02-10 00:00:00-05:00
         """
         self.assert_equal(act, exp, fuzzy_match=True)
-
-    # ##############################################################################
-
-    def _get_historical_data_helper(self, start_ts: pd.Timestamp, end_ts: pd.Timestamp, bar_size_setting: str,
-                                    use_rth: bool) -> Tuple[pd.DataFrame, str, str]:
-        _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
-        contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
-        what_to_show = "TRADES"
-        mode = "in_memory"
-        client_id = 2
-        df, ts_seq = ibutils.get_historical_data(client_id, contract,
-                                                 start_ts, end_ts,
-                                                 bar_size_setting,
-                                                 what_to_show, use_rth,
-                                                 mode,
-                                                 return_ts_seq=True)
-        short_signature, long_signature = self._get_df_signatures(df)
-        long_signature += "ts_seq=\n" + "\n".join(map(str, ts_seq))
-        return df, short_signature, long_signature
-
-    def _compare_historical_data(self, bar_size_setting: str, start_ts: pd.Timestamp, end_ts: pd.Timestamp, use_rth: bool) -> None:
-        """
-        Retrieve historical data with `get_historical_data` and
-        `get_historical_data_with_IB_loop` and compare it.
-        """
-        # Get the data in two different ways.
-        df, short_signature, long_signature = self._get_historical_data_helper(
-            start_ts, end_ts, bar_size_setting, use_rth)
-        df2, short_signature2, long_signature2 = self._get_historical_data_with_IB_loop_helper(
-            start_ts, end_ts, bar_size_setting, use_rth)
-        # Compare the outcomes.
-        self.assert_equal(df.to_csv(), df2.to_csv(), fuzzy_match=True)
-        self.assert_equal(short_signature, short_signature2)
-        #
-        self.check_string(long_signature)
 
     def test_get_historical_data1(self) -> None:
         """
@@ -770,3 +715,175 @@ class Test_get_historical_data(hut.TestCase):
         use_rth = True
         #
         self._compare_historical_data(bar_size_setting, start_ts, end_ts, use_rth)
+
+    # #########################################################################
+
+    @staticmethod
+    def _get_df_signatures(df: pd.DataFrame) -> Tuple[str, str]:
+        """
+        Compute a short and a long signature for the df.
+
+        The short signature is suitable to the self.assertEqual()
+        approach. The long signature contains the data and it's suitable
+        to the self.check_string() approach.
+        """
+        txt = []
+        #
+        act = viutil.get_df_signature(df)
+        txt.append("signature=%s" % act)
+        #
+        if not df.empty:
+            df_tmp = df.copy()
+            _LOG.debug("df_tmp=\n%s", df_tmp.head())
+            dbg.dassert_isinstance(df_tmp.index[0], pd.Timestamp)
+            df_tmp["time"] = df_tmp.index.time
+            min_max_df = (
+                df_tmp["time"].groupby(lambda x: x.date()).agg([min, max])
+            )
+            txt.append("min_max_df=\n%s" % min_max_df)
+            short_signature = "\n".join(txt)
+        else:
+            short_signature = ""
+        #
+        txt.append("df=\n%s" % df.to_csv())
+        long_signature = "\n".join(txt)
+        return short_signature, long_signature
+
+    def _req_historical_data_helper(self, end_ts, use_rth) -> Tuple[str, str]:
+        """
+        Run viutil.req_historical_data() with some fixed params and return
+        short and long signature.
+        """
+        contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
+        what_to_show = "TRADES"
+        duration_str = "1 D"
+        bar_size_setting = "1 hour"
+        df = viutil.req_historical_data(
+            self.ib,
+            contract,
+            end_ts,
+            duration_str,
+            bar_size_setting,
+            what_to_show,
+            use_rth,
+        )
+        short_signature, long_signature = self._get_df_signatures(df)
+        return short_signature, long_signature
+
+    # #########################################################################
+
+    def _get_historical_data_with_IB_loop_helper(
+        self,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        bar_size_setting: str,
+        use_rth: bool,
+    ) -> Tuple[pd.DataFrame, str, str]:
+        _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
+        contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
+        what_to_show = "TRADES"
+        duration_str = "1 D"
+        df, ts_seq = viutil.get_historical_data_with_IB_loop(
+            self.ib,
+            contract,
+            start_ts,
+            end_ts,
+            duration_str,
+            bar_size_setting,
+            what_to_show,
+            use_rth,
+            return_ts_seq=True,
+        )
+        short_signature, long_signature = self._get_df_signatures(df)
+        long_signature += "ts_seq=\n" + "\n".join(map(str, ts_seq))
+        return df, short_signature, long_signature
+
+    # #########################################################################
+
+    def _save_historical_data_with_IB_loop_helper(
+        self,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        bar_size_setting: str,
+        use_rth: bool,
+    ) -> Tuple[pd.DataFrame, str, str]:
+        _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
+        contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
+        what_to_show = "TRADES"
+        duration_str = "1 D"
+        file_name = os.path.join(self.get_scratch_space(), "output.csv")
+        incremental = False
+        viutil.save_historical_data_with_IB_loop(
+            self.ib,
+            contract,
+            start_ts,
+            end_ts,
+            duration_str,
+            bar_size_setting,
+            what_to_show,
+            use_rth,
+            file_name,
+            incremental,
+        )
+        # Load the data generated.
+        df = viutil.load_historical_data(file_name)
+        # Check.
+        short_signature, long_signature = self._get_df_signatures(df)
+        return df, short_signature, long_signature
+
+    # #########################################################################
+
+    def _get_historical_data_helper(
+        self,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        bar_size_setting: str,
+        use_rth: bool,
+    ) -> Tuple[pd.DataFrame, str, str]:
+        _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
+        contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
+        what_to_show = "TRADES"
+        mode = "in_memory"
+        client_id = 2
+        df, ts_seq = viutil.get_historical_data(
+            client_id,
+            contract,
+            start_ts,
+            end_ts,
+            bar_size_setting,
+            what_to_show,
+            use_rth,
+            mode,
+            return_ts_seq=True,
+        )
+        short_signature, long_signature = self._get_df_signatures(df)
+        long_signature += "ts_seq=\n" + "\n".join(map(str, ts_seq))
+        return df, short_signature, long_signature
+
+    def _compare_historical_data(
+        self,
+        bar_size_setting: str,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        use_rth: bool,
+    ) -> None:
+        """
+        Retrieve historical data with `get_historical_data` and
+        `get_historical_data_with_IB_loop` and compare it.
+        """
+        # Get the data in two different ways.
+        df, short_signature, long_signature = self._get_historical_data_helper(
+            start_ts, end_ts, bar_size_setting, use_rth
+        )
+        (
+            df2,
+            short_signature2,
+            long_signature2,
+        ) = self._get_historical_data_with_IB_loop_helper(
+            start_ts, end_ts, bar_size_setting, use_rth
+        )
+        # Compare the outcomes.
+        self.assert_equal(df.to_csv(), df2.to_csv(), fuzzy_match=True)
+        self.assert_equal(short_signature, short_signature2)
+        #
+        self.check_string(long_signature)

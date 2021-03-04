@@ -1,12 +1,7 @@
 import datetime
 import logging
 import os
-from typing import Union
-from typing import Any
-from typing import Optional
-from typing import Iterator
-from typing import Tuple
-from typing import List
+from typing import Any, Iterator, List, Optional, Tuple, Union
 
 try:
     import ib_insync
@@ -89,7 +84,9 @@ def get_df_signature(df: pd.DataFrame) -> str:
     return txt
 
 
-def to_ET(ts: Union[datetime.datetime, pd.Timestamp, str], as_datetime: bool = True) -> Union[datetime.datetime, pd.Timestamp, str]:
+def to_ET(
+    ts: Union[datetime.datetime, pd.Timestamp, str], as_datetime: bool = True
+) -> Union[datetime.datetime, pd.Timestamp, str]:
     # Handle IB convention that an empty string means now.
     if ts == "":
         return ""
@@ -280,7 +277,15 @@ def ib_loop_generator(
     use_rth: bool,
     use_progress_bar: bool = False,
     num_retry: Optional[Any] = None,
-) -> Iterator[Union[Iterator, Iterator[Tuple[int, pd.DataFrame, Tuple[datetime.datetime, pd.Timestamp]]], Iterator[Tuple[int, pd.DataFrame, Tuple[pd.Timestamp, pd.Timestamp]]]]]:
+) -> Iterator[
+    Union[
+        Iterator,
+        Iterator[
+            Tuple[int, pd.DataFrame, Tuple[datetime.datetime, pd.Timestamp]]
+        ],
+        Iterator[Tuple[int, pd.DataFrame, Tuple[pd.Timestamp, pd.Timestamp]]],
+    ]
+]:
     """
     Get historical data using the IB style of looping for [start_ts, end_ts).
 
@@ -354,7 +359,9 @@ def ib_loop_generator(
         i += 1
 
 
-def _process_start_end_ts(start_ts: pd.Timestamp, end_ts: pd.Timestamp) -> Tuple[datetime.datetime, datetime.datetime]:
+def _process_start_end_ts(
+    start_ts: pd.Timestamp, end_ts: pd.Timestamp
+) -> Tuple[datetime.datetime, datetime.datetime]:
     _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
     start_ts = to_ET(start_ts)
     end_ts = to_ET(end_ts)
@@ -363,7 +370,9 @@ def _process_start_end_ts(start_ts: pd.Timestamp, end_ts: pd.Timestamp) -> Tuple
     return start_ts, end_ts
 
 
-def _truncate(df: pd.DataFrame, start_ts: datetime, end_ts: datetime) -> pd.DataFrame:
+def _truncate(
+    df: pd.DataFrame, start_ts: datetime, end_ts: datetime
+) -> pd.DataFrame:
     _LOG.debug("Before truncation: df=%s", get_df_signature(df))
     _LOG.debug("df.head=\n%s\ndf.tail=\n%s", df.head(3), df.tail(3))
     dbg.dassert_isinstance(df.index[0], pd.Timestamp)
@@ -469,7 +478,10 @@ def get_historical_data_with_IB_loop(
     use_progress_bar: bool = False,
     return_ts_seq: bool = False,
     num_retry: Optional[Any] = None,
-) -> Tuple[pd.DataFrame, List[Tuple[Union[datetime.datetime, pd.Timestamp], pd.Timestamp]]]:
+) -> Tuple[
+    pd.DataFrame,
+    List[Tuple[Union[datetime.datetime, pd.Timestamp], pd.Timestamp]],
+]:
     """
     Get historical data using the IB style of looping for [start_ts, end_ts).
 
@@ -749,7 +761,17 @@ def select_assets(ib, target: str, frequency: str, symbol: str):
     return contract, duration_str, bar_size_setting, what_to_show
 
 
-def get_tasks(ib: ib_insync.ib.IB, target: str, frequency: str, symbols: List[str], start_ts: pd.Timestamp, end_ts: pd.Timestamp, use_rth: bool) -> List[Tuple[ib_insync.Contract, pd.Timestamp, pd.Timestamp, str, str, str, bool]]:
+def get_tasks(
+    ib: ib_insync.ib.IB,
+    target: str,
+    frequency: str,
+    symbols: List[str],
+    start_ts: pd.Timestamp,
+    end_ts: pd.Timestamp,
+    use_rth: bool,
+) -> List[
+    Tuple[ib_insync.Contract, pd.Timestamp, pd.Timestamp, str, str, str, bool]
+]:
     tasks = []
     for symbol in symbols:
         contract, duration_str, bar_size_setting, what_to_show = select_assets(
@@ -823,7 +845,15 @@ def process_workload(
     return file_name
 
 
-def download_ib_data(client_id_base: int, tasks: List[Tuple[ib_insync.Contract, pd.Timestamp, pd.Timestamp, str, str, str, bool]], incremental: bool, dst_dir: str, num_threads: str) -> List[str]:
+def download_ib_data(
+    client_id_base: int,
+    tasks: List[
+        Tuple[ib_insync.Contract, pd.Timestamp, pd.Timestamp, str, str, str, bool]
+    ],
+    incremental: bool,
+    dst_dir: str,
+    num_threads: str,
+) -> List[str]:
     _LOG.info("Tasks=%s\n%s", len(tasks), "\n".join(map(str, tasks)))
     hio.create_dir(dst_dir, incremental=True)
     # ib.reqMarketDataType(4)
@@ -908,7 +938,9 @@ def _set_to_six_pm(ts: pd.Timestamp) -> pd.Timestamp:
     return ts
 
 
-def _align_to_six_pm(ts: pd.Timestamp, align_right: bool) -> Tuple[pd.Timestamp, List[pd.Timestamp]]:
+def _align_to_six_pm(
+    ts: pd.Timestamp, align_right: bool
+) -> Tuple[pd.Timestamp, List[pd.Timestamp]]:
     """
     Align a timestamp to the previous / successive 6pm, unless it's already
     aligned.
@@ -937,7 +969,9 @@ def _align_to_six_pm(ts: pd.Timestamp, align_right: bool) -> Tuple[pd.Timestamp,
     return ts, dates
 
 
-def _start_end_ts_to_ET(start_ts: pd.Timestamp, end_ts: pd.Timestamp) -> Tuple[pd.Timestamp, pd.Timestamp]:
+def _start_end_ts_to_ET(
+    start_ts: pd.Timestamp, end_ts: pd.Timestamp
+) -> Tuple[pd.Timestamp, pd.Timestamp]:
     """
     Convert to timestamps with timezone, if needed.
     """
@@ -949,7 +983,9 @@ def _start_end_ts_to_ET(start_ts: pd.Timestamp, end_ts: pd.Timestamp) -> Tuple[p
     return start_ts, end_ts
 
 
-def _ib_date_range_sanity_check(start_ts: pd.Timestamp, end_ts: pd.Timestamp, dates: List[pd.Timestamp]) -> List[pd.Timestamp]:
+def _ib_date_range_sanity_check(
+    start_ts: pd.Timestamp, end_ts: pd.Timestamp, dates: List[pd.Timestamp]
+) -> List[pd.Timestamp]:
     # Remove some weird pandas artifacts (e.g., 'freq=2D') related to sampling.
     dates = [pd.Timestamp(ts.to_pydatetime()) for ts in dates]
     # Remove duplicates.
@@ -965,7 +1001,9 @@ def _ib_date_range_sanity_check(start_ts: pd.Timestamp, end_ts: pd.Timestamp, da
     return dates
 
 
-def _ib_date_range(start_ts: pd.Timestamp, end_ts: pd.Timestamp) -> List[pd.Timestamp]:
+def _ib_date_range(
+    start_ts: pd.Timestamp, end_ts: pd.Timestamp
+) -> List[pd.Timestamp]:
     """
     Compute a date range covering [start_ts, end_ts] using the IB loop-style.
 
@@ -993,8 +1031,16 @@ def _ib_date_range(start_ts: pd.Timestamp, end_ts: pd.Timestamp) -> List[pd.Time
 
 
 def get_historical_data_workload(
-    contract: ib_insync.Contract, start_ts: pd.Timestamp, end_ts: pd.Timestamp, bar_size_setting: str, what_to_show: str, use_rth: bool
-) -> Tuple[List[Tuple[ib_insync.Contract, pd.Timestamp, str, str, str, bool]], List[pd.Timestamp]]:
+    contract: ib_insync.Contract,
+    start_ts: pd.Timestamp,
+    end_ts: pd.Timestamp,
+    bar_size_setting: str,
+    what_to_show: str,
+    use_rth: bool,
+) -> Tuple[
+    List[Tuple[ib_insync.Contract, pd.Timestamp, str, str, str, bool]],
+    List[pd.Timestamp],
+]:
     """
     Compute the workload needed to get data in [start_ts, end_ts].
     """
@@ -1028,7 +1074,11 @@ def get_historical_data_workload(
     return tasks, dates
 
 
-def get_historical_data_from_tasks(client_id: int, tasks: List[Tuple[ib_insync.Contract, pd.Timestamp, str, str, str, bool]], use_prograss_bar: bool = False) -> pd.DataFrame:
+def get_historical_data_from_tasks(
+    client_id: int,
+    tasks: List[Tuple[ib_insync.Contract, pd.Timestamp, str, str, str, bool]],
+    use_prograss_bar: bool = False,
+) -> pd.DataFrame:
     """
     Execute the workload serially.
     """
