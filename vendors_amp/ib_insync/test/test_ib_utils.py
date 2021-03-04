@@ -499,7 +499,13 @@ class Test_get_historical_data(hut.TestCase):
         act = ("\n".join(map(str, df.index)))
         # NOTE: IB returns also a bar at close 16:30 even if the frequency is hourly.
         exp = """
-        2021-02-17 00:00:00-05:00
+        2021-02-16 18:00:00-05:00
+        2021-02-16 19:00:00-05:00
+        2021-02-16 20:00:00-05:00
+        2021-02-16 21:00:00-05:00
+        2021-02-16 22:00:00-05:00
+        2021-02-16 23:00:00-05:00
+        2021-02-17 00:00:00-05:00                                                   
         2021-02-17 01:00:00-05:00
         2021-02-17 02:00:00-05:00
         2021-02-17 03:00:00-05:00
@@ -517,20 +523,15 @@ class Test_get_historical_data(hut.TestCase):
         2021-02-17 15:00:00-05:00
         2021-02-17 16:00:00-05:00
         2021-02-17 16:30:00-05:00
-        2021-02-17 18:00:00-05:00
-        2021-02-17 19:00:00-05:00
-        2021-02-17 20:00:00-05:00
-        2021-02-17 21:00:00-05:00
-        2021-02-17 22:00:00-05:00
-        2021-02-17 23:00:00-05:00
         """
         self.assert_equal(act, exp, fuzzy_match=True)
         #
         exp_short_signature = """
-        signature=len=24 [2021-02-17 00:00:00-05:00, 2021-02-17 23:00:00-05:00]
+        signature=len=24 [2021-02-16 18:00:00-05:00, 2021-02-17 16:30:00-05:00]
         min_max_df=
-                        min       max
-        2021-02-17  00:00:00  23:00:00
+                         min       max
+        2021-02-16  18:00:00  23:00:00
+        2021-02-17  00:00:00  16:30:00
         """
         self.assert_equal(short_signature, exp_short_signature, fuzzy_match=True)
         #
@@ -690,9 +691,6 @@ class Test_get_historical_data(hut.TestCase):
         2018-02-10 00:00:00-05:00
         """
         self.assert_equal(act, exp, fuzzy_match=True)
-
-        start_ts = pd.Timestamp("2021-02-07 00:00:00")
-        end_ts = start_ts + pd.DateOffset(days=3)
 
     # ##############################################################################
 

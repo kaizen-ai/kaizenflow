@@ -360,7 +360,10 @@ def _process_start_end_ts(start_ts, end_ts):
 def _truncate(df, start_ts, end_ts):
     _LOG.debug("Before truncation: df=%s", get_df_signature(df))
     _LOG.debug("df.head=\n%s\ndf.tail=\n%s", df.head(3), df.tail(3))
+    dbg.dassert_isinstance(df.index[0], pd.Timestamp)
     dbg.dassert_monotonic_index(df)
+    start_ts = pd.Timestamp(start_ts)
+    end_ts = pd.Timestamp(end_ts)
     end_ts3 = end_ts - pd.DateOffset(seconds=1)
     _LOG.debug("start_ts= %s end_ts3=%s", start_ts, end_ts3)
     df = df[start_ts:end_ts3]
@@ -417,7 +420,7 @@ def get_historical_data_with_IB_loop(
     _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
     dbg.dassert_lt(start_ts, end_ts)
     #
-    df = _truncate_df(df, start_ts, end_ts)
+    df = _truncate(df, start_ts, end_ts)
     #
     return df
 
@@ -541,9 +544,9 @@ def save_historical_data_with_IB_loop(
         df_tmp.to_csv(file_name, mode=mode, header=header)
     #
     _LOG.debug("Reading back %s", file_name)
-    df = pd.read_csv(file_name)
+    df = load_historical_data(file_name)
     #
-    df = _truncate_df(df, start_ts, end_ts)
+    df = _truncate(df, start_ts, end_ts)
     #
     df_tmp.to_csv(file_name, mode="w")
     return df
