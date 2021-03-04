@@ -439,7 +439,7 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
 
 
 # #############################################################################
-# Unsupervised models
+# sklearn - unsupervised models
 # #############################################################################
 
 
