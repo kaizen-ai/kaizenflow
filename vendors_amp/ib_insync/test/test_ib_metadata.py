@@ -26,7 +26,7 @@ class Test_ib_metadata1(hut.TestCase):
         cls.ib = viutil.ib_connect(0, is_notebook=False)
 
     @classmethod
-    def tearnDownClass(cls):
+    def tearDownClass(cls):
         cls.ib.disconnect()
 
     def test1(self) -> None:

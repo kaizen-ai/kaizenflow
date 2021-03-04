@@ -25,7 +25,7 @@ class Test_get_historical_data(hut.TestCase):
         cls.ib = viutil.ib_connect(0, is_notebook=False)
 
     @classmethod
-    def tearnDownClass(cls):
+    def tearDownClass(cls):
         cls.ib.disconnect()
 
     # #########################################################################

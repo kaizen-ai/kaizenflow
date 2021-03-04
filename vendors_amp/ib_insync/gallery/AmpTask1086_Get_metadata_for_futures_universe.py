@@ -17,22 +17,24 @@
 # %autoreload 2
 
 import ib_insync
-
 print(ib_insync.__all__)
 
-import vendors_amp.ib_insync.utils as viutil
+import helpers.dbg as dbg
+import helpers.printing as pri
+import core.explore as exp
+import vendors_amp.ib_insync.utils as ibutils
 
 # %%
-ib = viutil.ib_connect(client_id=33, is_notebook=True)
+ib = ibutils.ib_connect(client_id=33, is_notebook=True)
 
 # %%
 # Look for ES.
 
-# symbol = "ES"
+#symbol = "ES"
 symbol = "NG"
-# symbol = "CL"
+#symbol = "CL"
 contract = ib_insync.Future(symbol, includeExpired=True)
-df = viutil.get_contract_details(ib, contract, simplify_df=False)
+df = ibutils.get_contract_details(ib, contract, simplify_df=False)
 
 display(df)
 
@@ -46,7 +48,7 @@ display(df)
 df
 
 # %%
-# df.reset_index(drop=True)
+#df.reset_index(drop=True)
 
 # %%
 import copy
@@ -58,7 +60,7 @@ def create_contracts(ib, contract, symbols):
     for symbol in symbols:
         contract_tmp = copy.copy(contract)
         contract_tmp.symbol = symbol
-        # ib.qualifyContracts(contract_tmp)
+        #ib.qualifyContracts(contract_tmp)
         contracts.append(contract_tmp)
     return contracts
 
@@ -71,10 +73,10 @@ create_contracts(ib, contract, symbols)
 contract2.symbol = "E"
 
 # %%
-import vendors_amp.ib_insync.metadata as vimeta
+import vendors_amp.ib_insync.metadata as ibmetadata
 
 file_name = "./metadata.csv"
-ibmeta = vimeta.IbMetadata()
+ibmeta = ibmetadata.IbMetadata()
 
 ibmeta.update(ib, [contract], file_name, reset=True)
 
