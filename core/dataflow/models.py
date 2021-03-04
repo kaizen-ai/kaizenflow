@@ -35,6 +35,7 @@ _LOG = logging.getLogger(__name__)
 
 
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
+_TO_LIST_MIXIN_TYPE = Union[List[Union[int, str]], Callable[[], List[Union[int, str]]]]
 
 
 class RegFreqMixin:
@@ -58,7 +59,7 @@ class ToListMixin:
     """
 
     @staticmethod
-    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
+    def _to_list(to_list: _TO_LIST_MIXIN_TYPE) -> List[Union[int, str]]:
         """
         Return a list given its input.
 
@@ -97,8 +98,8 @@ class ContinuousSkLearnModel(
         self,
         nid: str,
         model_func: Callable[..., Any],
-        x_vars: Union[List[str], Callable[[], List[str]]],
-        y_vars: Union[List[str], Callable[[], List[str]]],
+        x_vars: _TO_LIST_MIXIN_TYPE,
+        y_vars: _TO_LIST_MIXIN_TYPE,
         steps_ahead: int,
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
@@ -312,7 +313,7 @@ class UnsupervisedSkLearnModel(
         self,
         nid: str,
         model_func: Callable[..., Any],
-        x_vars: Union[List[Any], Callable[[], List[Any]]],
+        x_vars: _TO_LIST_MIXIN_TYPE,
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -414,7 +415,7 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
         self,
         nid: str,
         model_func: Callable[..., Any],
-        x_vars: Union[List[str], Callable[[], List[str]]],
+        x_vars: _TO_LIST_MIXIN_TYPE,
         model_kwargs: Optional[Any] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
@@ -504,8 +505,8 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
     def __init__(
         self,
         nid: str,
-        x_vars: Union[List[str], Callable[[], List[str]]],
-        y_vars: Union[List[str], Callable[[], List[str]]],
+        x_vars: _TO_LIST_MIXIN_TYPE,
+        y_vars: _TO_LIST_MIXIN_TYPE,
         model_func: Callable[..., Any],
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
@@ -599,7 +600,7 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
 
     def _to_sklearn_format(
         self, df: pd.DataFrame
-    ) -> Tuple[List[str], np.array, List[str], np.array]:
+    ) -> Tuple[List[Union[int, str]], np.array, List[Union[int, str]], np.array]:
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
         x_vals, y_vals = cdataa.transform_to_sklearn_old(df, x_vars, y_vars)
@@ -608,9 +609,9 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
     @staticmethod
     def _from_sklearn_format(
         idx: pd.Index,
-        x_vars: List[str],
+        x_vars: List[Union[int, str]],
         x_vals: np.array,
-        y_vars: List[str],
+        y_vars: List[Union[int, str]],
         y_vals: np.array,
         y_hat: np.array,
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -633,8 +634,8 @@ class SkLearnInverseTransformer(
         self,
         nid: str,
         model_func: Callable[..., Any],
-        x_vars: Union[List[Any], Callable[[], List[Any]]],
-        trans_x_vars: Union[List[Any], Callable[[], List[Any]]],
+        x_vars: _TO_LIST_MIXIN_TYPE,
+        trans_x_vars: _TO_LIST_MIXIN_TYPE,
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -763,11 +764,11 @@ class ContinuousSarimaxModel(
     def __init__(
         self,
         nid: str,
-        y_vars: Union[List[str], Callable[[], List[str]]],
+        y_vars: _TO_LIST_MIXIN_TYPE,
         steps_ahead: int,
         init_kwargs: Optional[Dict[str, Any]] = None,
         fit_kwargs: Optional[Dict[str, Any]] = None,
-        x_vars: Optional[Union[List[str], Callable[[], List[str]]]] = None,
+        x_vars: Optional[_TO_LIST_MIXIN_TYPE] = None,
         add_constant: bool = False,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -1113,10 +1114,10 @@ class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
     def __init__(
         self,
         nid: str,
-        y_vars: Union[List[str], Callable[[], List[str]]],
+        y_vars: _TO_LIST_MIXIN_TYPE,
         trainer_kwargs: Optional[Any] = None,
         estimator_kwargs: Optional[Any] = None,
-        x_vars: Optional[Union[List[str], Callable[[], List[str]]]] = None,
+        x_vars: Optional[_TO_LIST_MIXIN_TYPE] = None,
         num_traces: int = 100,
     ) -> None:
         """
@@ -1271,8 +1272,8 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
     def __init__(
         self,
         nid: str,
-        x_vars: Union[List[str], Callable[[], List[str]]],
-        y_vars: Union[List[str], Callable[[], List[str]]],
+        x_vars: _TO_LIST_MIXIN_TYPE,
+        y_vars: _TO_LIST_MIXIN_TYPE,
         trainer_kwargs: Optional[Any] = None,
         estimator_kwargs: Optional[Any] = None,
     ) -> None:
@@ -1641,7 +1642,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         return info
 
 
-class VolatilityModulator(FitPredictNode, ColModeMixin):
+class VolatilityModulator(FitPredictNode, ColModeMixin, ToListMixin):
     """
     Modulate or demodulate signal by volatility.
 
@@ -1668,7 +1669,7 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
     def __init__(
         self,
         nid: str,
-        signal_cols: List[Any],
+        signal_cols: _TO_LIST_MIXIN_TYPE,
         volatility_col: Any,
         signal_steps_ahead: int,
         volatility_steps_ahead: int,
@@ -1693,7 +1694,7 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
         """
         super().__init__(nid)
         dbg.dassert_isinstance(signal_cols, list)
-        self._signal_cols = signal_cols
+        self._signal_cols = self._to_list(signal_cols)
         self._volatility_col = volatility_col
         dbg.dassert_lte(0, signal_steps_ahead)
         self._signal_steps_ahead = signal_steps_ahead
@@ -1750,7 +1751,7 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
         return df_out
 
 
-class VolatilityModel(FitPredictNode, ColModeMixin):
+class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
     """
     Fit and predict a smooth moving average volatility model.
 
@@ -1762,7 +1763,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin):
         self,
         nid: str,
         steps_ahead: int,
-        cols: Optional[Iterable[Union[int, str]]] = None,
+        cols: Optional[_TO_LIST_MIXIN_TYPE] = None,
         p_moment: float = 2,
         tau: Optional[float] = None,
         col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
@@ -1817,7 +1818,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin):
         self, df_in: pd.DataFrame, fit: bool = False
     ) -> Dict[str, pd.DataFrame]:
         method = "fit" if fit else "predict"
-        cols = self._cols or df_in.columns.tolist()
+        cols = self._to_list(self._cols or df_in.columns.tolist())
         if method == "fit":
             self._fill_model_dicts(cols)
         info = collections.OrderedDict()
@@ -1876,7 +1877,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin):
         self._append(dag, tail_nid, node)
         return dag
 
-    def _fill_model_dicts(self, cols: List[str]) -> None:
+    def _fill_model_dicts(self, cols: List[Union[int, str]]) -> None:
         for col in cols:
             self._vol_cols[col] = str(col) + "_vol"
             self._fwd_vol_cols[col] = (
