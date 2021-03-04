@@ -1,6 +1,12 @@
 import datetime
 import logging
 import os
+from typing import Union
+from typing import Any
+from typing import Optional
+from typing import Iterator
+from typing import Tuple
+from typing import List
 
 try:
     import ib_insync
@@ -20,7 +26,7 @@ import helpers.printing as hprint
 _LOG = logging.getLogger(__name__)
 
 
-def ib_connect(client_id=0, is_notebook=True):
+def ib_connect(client_id: int = 0, is_notebook: bool = True) -> ib_insync.ib.IB:
     # TODO(gp): Add check if we are in notebook.
     if is_notebook:
         ib_insync.util.startLoop()
@@ -76,14 +82,14 @@ def get_contract_details(
 # #############################################################################
 
 
-def get_df_signature(df):
+def get_df_signature(df: pd.DataFrame) -> str:
     if df is None or df.empty:
         return ""
     txt = "len=%d [%s, %s]" % (len(df), df.index[0], df.index[-1])
     return txt
 
 
-def to_ET(ts, as_datetime=True):
+def to_ET(ts: Union[datetime.datetime, pd.Timestamp, str], as_datetime: bool = True) -> Union[datetime.datetime, pd.Timestamp, str]:
     # Handle IB convention that an empty string means now.
     if ts == "":
         return ""
@@ -97,7 +103,7 @@ def to_ET(ts, as_datetime=True):
     return ts
 
 
-def to_timestamp_str(ts):
+def to_timestamp_str(ts: pd.Timestamp) -> str:
     dbg.dassert_is_not(ts, None)
     return ts.strftime("%Y%m%dT%H%M%S")
 
@@ -166,15 +172,15 @@ async def req_historical_data_async(
 
 
 def req_historical_data(
-    ib,
-    contract,
-    end_ts,
-    duration_str,
-    bar_size_setting,
-    what_to_show,
-    use_rth,
-    num_retry=None,
-):
+    ib: ib_insync.ib.IB,
+    contract: ib_insync.Contract,
+    end_ts: Union[datetime.datetime, pd.Timestamp, str],
+    duration_str: str,
+    bar_size_setting: str,
+    what_to_show: str,
+    use_rth: bool,
+    num_retry: Optional[int] = None,
+) -> pd.DataFrame:
     """
     Wrap ib.reqHistoricalData() adding a retry semantic and returning a df.
 
@@ -253,7 +259,7 @@ def get_end_timestamp(
 # #############################################################################
 
 
-def duration_str_to_pd_dateoffset(duration_str):
+def duration_str_to_pd_dateoffset(duration_str: str) -> pd.DateOffset:
     if duration_str == "2 D":
         ret = pd.DateOffset(days=2)
     elif duration_str == "7 D":
@@ -264,17 +270,17 @@ def duration_str_to_pd_dateoffset(duration_str):
 
 
 def ib_loop_generator(
-    ib,
-    contract,
-    start_ts,
-    end_ts,
-    duration_str,
-    bar_size_setting,
-    what_to_show,
-    use_rth,
-    use_progress_bar=False,
-    num_retry=None,
-):
+    ib: ib_insync.ib.IB,
+    contract: ib_insync.Contract,
+    start_ts: datetime,
+    end_ts: datetime,
+    duration_str: str,
+    bar_size_setting: str,
+    what_to_show: str,
+    use_rth: bool,
+    use_progress_bar: bool = False,
+    num_retry: Optional[Any] = None,
+) -> Iterator[Union[Iterator, Iterator[Tuple[int, pd.DataFrame, Tuple[datetime.datetime, pd.Timestamp]]], Iterator[Tuple[int, pd.DataFrame, Tuple[pd.Timestamp, pd.Timestamp]]]]]:
     """
     Get historical data using the IB style of looping for [start_ts, end_ts).
 
@@ -348,7 +354,7 @@ def ib_loop_generator(
         i += 1
 
 
-def _process_start_end_ts(start_ts, end_ts):
+def _process_start_end_ts(start_ts: pd.Timestamp, end_ts: pd.Timestamp) -> Tuple[datetime.datetime, datetime.datetime]:
     _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
     start_ts = to_ET(start_ts)
     end_ts = to_ET(end_ts)
@@ -357,7 +363,7 @@ def _process_start_end_ts(start_ts, end_ts):
     return start_ts, end_ts
 
 
-def _truncate(df, start_ts, end_ts):
+def _truncate(df: pd.DataFrame, start_ts: datetime, end_ts: datetime) -> pd.DataFrame:
     _LOG.debug("Before truncation: df=%s", get_df_signature(df))
     _LOG.debug("df.head=\n%s\ndf.tail=\n%s", df.head(3), df.tail(3))
     dbg.dassert_isinstance(df.index[0], pd.Timestamp)
@@ -425,14 +431,14 @@ def get_historical_data_with_IB_loop(
     return df
 
 
-def _check_ib_connected(ib):
+def _check_ib_connected(ib: ib_insync.ib.IB) -> None:
     # Too chatty but useful for debug.
     # _LOG.debug("ib=%s", ib)
     dbg.dassert_isinstance(ib, ib_insync.ib.IB)
     dbg.dassert(ib.isConnected())
 
 
-def _allocate_ib(ib):
+def _allocate_ib(ib: Union[ib_insync.ib.IB, int]) -> Tuple[ib_insync.IB, bool]:
     if isinstance(ib, int):
         client_id = ib
         ib = ib_connect(client_id, is_notebook=False)
@@ -445,25 +451,25 @@ def _allocate_ib(ib):
     return ib, deallocate_ib
 
 
-def _deallocate_ib(ib, deallocate_ib):
+def _deallocate_ib(ib: ib_insync.ib.IB, deallocate_ib: bool) -> None:
     if deallocate_ib:
         _check_ib_connected(ib)
         ib.disconnect()
 
 
 def get_historical_data_with_IB_loop(
-    ib,
-    contract,
-    start_ts,
-    end_ts,
-    duration_str,
-    bar_size_setting,
-    what_to_show,
-    use_rth,
-    use_progress_bar=False,
-    return_ts_seq=False,
-    num_retry=None,
-):
+    ib: ib_insync.ib.IB,
+    contract: ib_insync.Contract,
+    start_ts: pd.Timestamp,
+    end_ts: pd.Timestamp,
+    duration_str: str,
+    bar_size_setting: str,
+    what_to_show: str,
+    use_rth: bool,
+    use_progress_bar: bool = False,
+    return_ts_seq: bool = False,
+    num_retry: Optional[Any] = None,
+) -> Tuple[pd.DataFrame, List[Tuple[Union[datetime.datetime, pd.Timestamp], pd.Timestamp]]]:
     """
     Get historical data using the IB style of looping for [start_ts, end_ts).
 
@@ -503,18 +509,18 @@ def get_historical_data_with_IB_loop(
 
 
 def save_historical_data_with_IB_loop(
-    ib,
-    contract,
-    start_ts,
-    end_ts,
-    duration_str,
-    bar_size_setting,
-    what_to_show,
-    use_rth,
-    file_name,
-    use_progress_bar=False,
-    num_retry=None,
-):
+    ib: ib_insync.ib.IB,
+    contract: ib_insync.Contract,
+    start_ts: pd.Timestamp,
+    end_ts: pd.Timestamp,
+    duration_str: str,
+    bar_size_setting: str,
+    what_to_show: str,
+    use_rth: bool,
+    file_name: str,
+    use_progress_bar: bool = False,
+    num_retry: Optional[Any] = None,
+) -> pd.DataFrame:
     """
     Like get_historical_data_with_IB_loop but saving on a file.
     """
@@ -553,15 +559,15 @@ def save_historical_data_with_IB_loop(
 
 
 def historical_data_to_filename(
-    contract,
-    start_ts,
-    end_ts,
-    duration_str,
-    bar_size_setting,
-    what_to_show,
-    use_rth,
-    dst_dir,
-):
+    contract: ib_insync.Contract,
+    start_ts: pd.Timestamp,
+    end_ts: pd.Timestamp,
+    duration_str: str,
+    bar_size_setting: str,
+    what_to_show: str,
+    use_rth: bool,
+    dst_dir: str,
+) -> str:
     # Create the filename.
     symbol = contract.symbol
     bar_size_setting = bar_size_setting.replace(" ", "_")
@@ -572,19 +578,19 @@ def historical_data_to_filename(
 
 
 def save_historical_data_single_file_with_IB_loop(
-    ib,
-    contract,
-    start_ts,
-    end_ts,
-    duration_str,
-    bar_size_setting,
-    what_to_show,
-    use_rth,
-    file_name,
-    incremental,
-    use_progress_bar=True,
-    num_retry=None,
-):
+    ib: int,
+    contract: ib_insync.Contract,
+    start_ts: pd.Timestamp,
+    end_ts: pd.Timestamp,
+    duration_str: str,
+    bar_size_setting: str,
+    what_to_show: str,
+    use_rth: bool,
+    file_name: str,
+    incremental: bool,
+    use_progress_bar: bool = True,
+    num_retry: Optional[Any] = None,
+) -> None:
     """
     Save historical data into a single `file_name`.
 
@@ -743,7 +749,7 @@ def select_assets(ib, target: str, frequency: str, symbol: str):
     return contract, duration_str, bar_size_setting, what_to_show
 
 
-def get_tasks(ib, target, frequency, symbols, start_ts, end_ts, use_rth):
+def get_tasks(ib: ib_insync.ib.IB, target: str, frequency: str, symbols: List[str], start_ts: pd.Timestamp, end_ts: pd.Timestamp, use_rth: bool) -> List[Tuple[ib_insync.Contract, pd.Timestamp, pd.Timestamp, str, str, str, bool]]:
     tasks = []
     for symbol in symbols:
         contract, duration_str, bar_size_setting, what_to_show = select_assets(
@@ -770,17 +776,17 @@ def get_tasks(ib, target, frequency, symbols, start_ts, end_ts, use_rth):
 
 
 def process_workload(
-    client_id,
-    contract,
-    start_ts,
-    end_ts,
-    duration_str,
-    bar_size_setting,
-    what_to_show,
-    use_rth,
-    dst_dir,
-    incremental,
-):
+    client_id: int,
+    contract: ib_insync.Contract,
+    start_ts: pd.Timestamp,
+    end_ts: pd.Timestamp,
+    duration_str: str,
+    bar_size_setting: str,
+    what_to_show: str,
+    use_rth: bool,
+    dst_dir: str,
+    incremental: bool,
+) -> str:
     file_name = historical_data_to_filename(
         contract,
         start_ts,
@@ -817,7 +823,7 @@ def process_workload(
     return file_name
 
 
-def download_ib_data(client_id_base, tasks, incremental, dst_dir, num_threads):
+def download_ib_data(client_id_base: int, tasks: List[Tuple[ib_insync.Contract, pd.Timestamp, pd.Timestamp, str, str, str, bool]], incremental: bool, dst_dir: str, num_threads: str) -> List[str]:
     _LOG.info("Tasks=%s\n%s", len(tasks), "\n".join(map(str, tasks)))
     hio.create_dir(dst_dir, incremental=True)
     # ib.reqMarketDataType(4)
@@ -885,7 +891,7 @@ def download_ib_data(client_id_base, tasks, incremental, dst_dir, num_threads):
 _SIX_PM = (18, 0, 0)
 
 
-def _get_hh_mm_ss(ts):
+def _get_hh_mm_ss(ts: pd.Timestamp) -> Tuple[int, int, int]:
     """
     Return the hour, minute, second part of a timestamp.
     """
@@ -894,7 +900,7 @@ def _get_hh_mm_ss(ts):
     return ts.hour, ts.minute, ts.second
 
 
-def _set_to_six_pm(ts):
+def _set_to_six_pm(ts: pd.Timestamp) -> pd.Timestamp:
     """
     Set the hour, minute, second part of a timestamp to 18:00:00.
     """
@@ -902,7 +908,7 @@ def _set_to_six_pm(ts):
     return ts
 
 
-def _align_to_six_pm(ts, align_right):
+def _align_to_six_pm(ts: pd.Timestamp, align_right: bool) -> Tuple[pd.Timestamp, List[pd.Timestamp]]:
     """
     Align a timestamp to the previous / successive 6pm, unless it's already
     aligned.
@@ -931,7 +937,7 @@ def _align_to_six_pm(ts, align_right):
     return ts, dates
 
 
-def _start_end_ts_to_ET(start_ts, end_ts):
+def _start_end_ts_to_ET(start_ts: pd.Timestamp, end_ts: pd.Timestamp) -> Tuple[pd.Timestamp, pd.Timestamp]:
     """
     Convert to timestamps with timezone, if needed.
     """
@@ -943,7 +949,7 @@ def _start_end_ts_to_ET(start_ts, end_ts):
     return start_ts, end_ts
 
 
-def _ib_date_range_sanity_check(start_ts, end_ts, dates):
+def _ib_date_range_sanity_check(start_ts: pd.Timestamp, end_ts: pd.Timestamp, dates: List[pd.Timestamp]) -> List[pd.Timestamp]:
     # Remove some weird pandas artifacts (e.g., 'freq=2D') related to sampling.
     dates = [pd.Timestamp(ts.to_pydatetime()) for ts in dates]
     # Remove duplicates.
@@ -959,7 +965,7 @@ def _ib_date_range_sanity_check(start_ts, end_ts, dates):
     return dates
 
 
-def _ib_date_range(start_ts, end_ts):
+def _ib_date_range(start_ts: pd.Timestamp, end_ts: pd.Timestamp) -> List[pd.Timestamp]:
     """
     Compute a date range covering [start_ts, end_ts] using the IB loop-style.
 
@@ -987,8 +993,8 @@ def _ib_date_range(start_ts, end_ts):
 
 
 def get_historical_data_workload(
-    contract, start_ts, end_ts, bar_size_setting, what_to_show, use_rth
-):
+    contract: ib_insync.Contract, start_ts: pd.Timestamp, end_ts: pd.Timestamp, bar_size_setting: str, what_to_show: str, use_rth: bool
+) -> Tuple[List[Tuple[ib_insync.Contract, pd.Timestamp, str, str, str, bool]], List[pd.Timestamp]]:
     """
     Compute the workload needed to get data in [start_ts, end_ts].
     """
@@ -1022,7 +1028,7 @@ def get_historical_data_workload(
     return tasks, dates
 
 
-def get_historical_data_from_tasks(client_id, tasks, use_prograss_bar=False):
+def get_historical_data_from_tasks(client_id: int, tasks: List[Tuple[ib_insync.Contract, pd.Timestamp, str, str, str, bool]], use_prograss_bar: bool = False) -> pd.DataFrame:
     """
     Execute the workload serially.
     """
@@ -1233,20 +1239,20 @@ def get_historical_data_parallel(tasks, num_threads, incremental, dst_dir):
 
 
 def get_historical_data(
-    client_id,
-    contract,
-    start_ts,
-    end_ts,
-    bar_size_setting,
-    what_to_show,
-    use_rth,
-    mode,
-    num_threads="serial",
-    incremental=False,
-    dst_dir=None,
-    use_progress_bar=False,
-    return_ts_seq=False,
-):
+    client_id: int,
+    contract: ib_insync.Contract,
+    start_ts: pd.Timestamp,
+    end_ts: pd.Timestamp,
+    bar_size_setting: str,
+    what_to_show: str,
+    use_rth: bool,
+    mode: str,
+    num_threads: str = "serial",
+    incremental: bool = False,
+    dst_dir: Optional[Any] = None,
+    use_progress_bar: bool = False,
+    return_ts_seq: bool = False,
+) -> Tuple[pd.DataFrame, List[pd.Timestamp]]:
     _LOG.debug(
         "client_id='%s', contract='%s', end_ts='%s', duration_str='%s', bar_size_setting='%s', "
         "what_to_show='%s', use_rth='%s'",

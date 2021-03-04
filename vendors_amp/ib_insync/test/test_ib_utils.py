@@ -46,7 +46,7 @@ class Test_get_historical_data(hut.TestCase):
     # ##############################################################################
 
     @staticmethod
-    def _get_df_signatures(df):
+    def _get_df_signatures(df: pd.DataFrame) -> Tuple[str, str]:
         """
         Compute a short and a long signature for the df.
 
@@ -202,8 +202,8 @@ class Test_get_historical_data(hut.TestCase):
 
     # ##############################################################################
 
-    def _get_historical_data_with_IB_loop_helper(self, start_ts, end_ts,
-                                                 bar_size_setting, use_rth):
+    def _get_historical_data_with_IB_loop_helper(self, start_ts: pd.Timestamp, end_ts: pd.Timestamp,
+                                                 bar_size_setting: str, use_rth: bool) -> Tuple[pd.DataFrame, str, str]:
         _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
         contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
         what_to_show = "TRADES"
@@ -464,8 +464,8 @@ class Test_get_historical_data(hut.TestCase):
 
     # ##############################################################################
 
-    def _save_historical_data_with_IB_loop_helper(self, start_ts, end_ts,
-                                                  bar_size_setting, use_rth):
+    def _save_historical_data_with_IB_loop_helper(self, start_ts: pd.Timestamp, end_ts: pd.Timestamp,
+                                                  bar_size_setting: str, use_rth: bool) -> Tuple[pd.DataFrame, str, str]:
         _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
         contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
         what_to_show = "TRADES"
@@ -539,7 +539,7 @@ class Test_get_historical_data(hut.TestCase):
 
     # ##############################################################################
 
-    def test_download_ib_data1(self):
+    def test_download_ib_data1(self) -> None:
         target = "continuous_futures"
         frequency = "hour"
         use_rth = False
@@ -627,7 +627,7 @@ class Test_get_historical_data(hut.TestCase):
 
     # ##############################################################################
 
-    def test_ib_date_range1(self):
+    def test_ib_date_range1(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 00:00").tz_localize(
             tz="America/New_York")
         end_ts = start_ts + pd.DateOffset(days=3)
@@ -640,7 +640,7 @@ class Test_get_historical_data(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_ib_date_range2(self):
+    def test_ib_date_range2(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 18:00").tz_localize(
             tz="America/New_York")
         end_ts = start_ts + pd.DateOffset(days=1)
@@ -653,7 +653,7 @@ class Test_get_historical_data(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_ib_date_range3(self):
+    def test_ib_date_range3(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 17:59").tz_localize(
             tz="America/New_York")
         end_ts = start_ts + pd.DateOffset(days=2)
@@ -666,7 +666,7 @@ class Test_get_historical_data(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_ib_date_range4(self):
+    def test_ib_date_range4(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 17:59").tz_localize(
             tz="America/New_York")
         end_ts = start_ts + pd.DateOffset(days=3)
@@ -679,7 +679,7 @@ class Test_get_historical_data(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_ib_date_range5(self):
+    def test_ib_date_range5(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 00:00:00").tz_localize(
             tz="America/New_York")
         end_ts = start_ts + pd.DateOffset(days=3)
@@ -694,8 +694,8 @@ class Test_get_historical_data(hut.TestCase):
 
     # ##############################################################################
 
-    def _get_historical_data_helper(self, start_ts, end_ts, bar_size_setting,
-                                    use_rth):
+    def _get_historical_data_helper(self, start_ts: pd.Timestamp, end_ts: pd.Timestamp, bar_size_setting: str,
+                                    use_rth: bool) -> Tuple[pd.DataFrame, str, str]:
         _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
         contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
         what_to_show = "TRADES"
@@ -711,7 +711,7 @@ class Test_get_historical_data(hut.TestCase):
         long_signature += "ts_seq=\n" + "\n".join(map(str, ts_seq))
         return df, short_signature, long_signature
 
-    def _compare_historical_data(self, bar_size_setting, start_ts, end_ts, use_rth):
+    def _compare_historical_data(self, bar_size_setting: str, start_ts: pd.Timestamp, end_ts: pd.Timestamp, use_rth: bool) -> None:
         """
         Retrieve historical data with `get_historical_data` and
         `get_historical_data_with_IB_loop` and compare it.
