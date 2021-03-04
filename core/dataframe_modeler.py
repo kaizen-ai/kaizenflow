@@ -661,6 +661,10 @@ class DataFrameModeler:
         axes: Optional[List[mpl.axes.Axes]] = None,
         mode: str = "ins",
     ) -> None:
+        """
+        :param y_scale: the height of each plot. If `None`, the size of the whole
+            figure equals the default `figsize`
+        """
         df = self._get_df(cols=cols, mode=mode)
         pca = cplott.PCA(mode="standard")
         pca.fit(df.replace([np.inf, -np.inf], np.nan).fillna(0))
