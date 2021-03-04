@@ -451,13 +451,13 @@ class UnsupervisedSkLearnModel(
     """
 
     def __init__(
-            self,
-            nid: str,
-            model_func: Callable[..., Any],
-            x_vars: Union[List[Any], Callable[[], List[Any]]],
-            model_kwargs: Optional[Any] = None,
-            col_mode: Optional[str] = None,
-            nan_mode: Optional[str] = None,
+        self,
+        nid: str,
+        model_func: Callable[..., Any],
+        x_vars: Union[List[Any], Callable[[], List[Any]]],
+        model_kwargs: Optional[Any] = None,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         Specify the data and sklearn modeling parameters.
@@ -484,7 +484,7 @@ class UnsupervisedSkLearnModel(
         return self._fit_predict_helper(df_in, fit=False)
 
     def _fit_predict_helper(
-            self, df_in: pd.DataFrame, fit: bool = False
+        self, df_in: pd.DataFrame, fit: bool = False
     ) -> Dict[str, pd.DataFrame]:
         """
         Factor out common flow for fit/predict.
@@ -535,7 +535,7 @@ class UnsupervisedSkLearnModel(
         return {"df_out": df_out}
 
     def _handle_nans(
-            self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
     ) -> None:
         if self._nan_mode == "raise":
             if idx.shape[0] != non_nan_idx.shape[0]:
@@ -553,12 +553,12 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
     """
 
     def __init__(
-            self,
-            nid: str,
-            model_func: Callable[..., Any],
-            x_vars: Union[List[str], Callable[[], List[str]]],
-            model_kwargs: Optional[Any] = None,
-            nan_mode: Optional[str] = None,
+        self,
+        nid: str,
+        model_func: Callable[..., Any],
+        x_vars: Union[List[str], Callable[[], List[str]]],
+        model_kwargs: Optional[Any] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         Specify the data and sklearn modeling parameters.
@@ -583,7 +583,7 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
         return self._fit_predict_helper(df_in, fit=False)
 
     def _fit_predict_helper(
-            self, df_in: pd.DataFrame, fit: bool = False
+        self, df_in: pd.DataFrame, fit: bool = False
     ) -> Dict[str, pd.DataFrame]:
         """
         Factor out common flow for fit/predict.
@@ -630,7 +630,7 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
         return {"df_out": df_out}
 
     def _handle_nans(
-            self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
     ) -> None:
         if self._nan_mode == "raise":
             if idx.shape[0] != non_nan_idx.shape[0]:
@@ -771,13 +771,13 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
     """
 
     def __init__(
-            self,
-            nid: str,
-            col: list,
-            steps_ahead: int,
-            tau: Optional[float] = None,
-            col_mode: Optional[str] = None,
-            nan_mode: Optional[str] = None,
+        self,
+        nid: str,
+        col: list,
+        steps_ahead: int,
+        tau: Optional[float] = None,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         Specify the data and sma modeling parameters.
@@ -910,7 +910,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         return fwd_y_df
 
     def _handle_nans(
-            self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
     ) -> None:
         if self._nan_mode == "raise":
             if idx.shape[0] != non_nan_idx.shape[0]:
@@ -955,7 +955,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
     #     processing to e.g., adjust for number of hypotheses tested).
     @staticmethod
     def _model_perf(
-            y: pd.DataFrame, y_hat: pd.DataFrame
+        y: pd.DataFrame, y_hat: pd.DataFrame
     ) -> collections.OrderedDict:
         info = collections.OrderedDict()
         # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
@@ -978,15 +978,15 @@ class VolatilityModel(FitPredictNode, ColModeMixin):
     """
 
     def __init__(
-            self,
-            nid: str,
-            steps_ahead: int,
-            cols: Optional[Iterable[Union[int, str]]] = None,
-            p_moment: float = 2,
-            tau: Optional[float] = None,
-            col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
-            col_mode: Optional[str] = None,
-            nan_mode: Optional[str] = None,
+        self,
+        nid: str,
+        steps_ahead: int,
+        cols: Optional[Iterable[Union[int, str]]] = None,
+        p_moment: float = 2,
+        tau: Optional[float] = None,
+        col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         Specify the data and sma modeling parameters.
@@ -1033,7 +1033,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin):
         return self._taus
 
     def _fit_predict_helper(
-            self, df_in: pd.DataFrame, fit: bool = False
+        self, df_in: pd.DataFrame, fit: bool = False
     ) -> Dict[str, pd.DataFrame]:
         method = "fit" if fit else "predict"
         cols = self._cols or df_in.columns.tolist()
@@ -1099,7 +1099,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin):
         for col in cols:
             self._vol_cols[col] = str(col) + "_vol"
             self._fwd_vol_cols[col] = (
-                    self._vol_cols[col] + f"_{self._steps_ahead}"
+                self._vol_cols[col] + f"_{self._steps_ahead}"
             )
             self._fwd_vol_cols_hat[col] = self._fwd_vol_cols[col] + "_hat"
             self._taus[col] = self._tau
@@ -1269,13 +1269,13 @@ class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
     """
 
     def __init__(
-            self,
-            nid: str,
-            y_vars: Union[List[str], Callable[[], List[str]]],
-            trainer_kwargs: Optional[Any] = None,
-            estimator_kwargs: Optional[Any] = None,
-            x_vars: Optional[Union[List[str], Callable[[], List[str]]]] = None,
-            num_traces: int = 100,
+        self,
+        nid: str,
+        y_vars: Union[List[str], Callable[[], List[str]]],
+        trainer_kwargs: Optional[Any] = None,
+        estimator_kwargs: Optional[Any] = None,
+        x_vars: Optional[Union[List[str], Callable[[], List[str]]]] = None,
+        num_traces: int = 100,
     ) -> None:
         """
         Initialize dataflow node for gluon-ts DeepAR model.
@@ -1427,12 +1427,12 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
     """
 
     def __init__(
-            self,
-            nid: str,
-            x_vars: Union[List[str], Callable[[], List[str]]],
-            y_vars: Union[List[str], Callable[[], List[str]]],
-            trainer_kwargs: Optional[Any] = None,
-            estimator_kwargs: Optional[Any] = None,
+        self,
+        nid: str,
+        x_vars: Union[List[str], Callable[[], List[str]]],
+        y_vars: Union[List[str], Callable[[], List[str]]],
+        trainer_kwargs: Optional[Any] = None,
+        estimator_kwargs: Optional[Any] = None,
     ) -> None:
         """
         Initialize dataflow node for gluon-ts DeepAR model.
@@ -1621,17 +1621,17 @@ class ContinuousSarimaxModel(
     """
 
     def __init__(
-            self,
-            nid: str,
-            y_vars: Union[List[str], Callable[[], List[str]]],
-            steps_ahead: int,
-            init_kwargs: Optional[Dict[str, Any]] = None,
-            fit_kwargs: Optional[Dict[str, Any]] = None,
-            x_vars: Optional[Union[List[str], Callable[[], List[str]]]] = None,
-            add_constant: bool = False,
-            col_mode: Optional[str] = None,
-            nan_mode: Optional[str] = None,
-            disable_tqdm: bool = False,
+        self,
+        nid: str,
+        y_vars: Union[List[str], Callable[[], List[str]]],
+        steps_ahead: int,
+        init_kwargs: Optional[Dict[str, Any]] = None,
+        fit_kwargs: Optional[Dict[str, Any]] = None,
+        x_vars: Optional[Union[List[str], Callable[[], List[str]]]] = None,
+        add_constant: bool = False,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
+        disable_tqdm: bool = False,
     ) -> None:
         """
         Initialize node for SARIMAX model.
@@ -1759,7 +1759,7 @@ class ContinuousSarimaxModel(
         return {"df_out": df_out}
 
     def _predict(
-            self, y: pd.DataFrame, x: Optional[pd.DataFrame]
+        self, y: pd.DataFrame, x: Optional[pd.DataFrame]
     ) -> pd.DataFrame:
         """
         Make n-step-ahead predictions.
@@ -1774,7 +1774,7 @@ class ContinuousSarimaxModel(
             pred_start = 1
         y_var = y.columns[0]
         for t in tqdm(
-                range(pred_start, pred_range + 1), disable=self._disable_tqdm
+            range(pred_start, pred_range + 1), disable=self._disable_tqdm
         ):
             # If `t` is larger than `y`, this selects the whole `y`.
             y_past = y.iloc[:t]
@@ -1841,7 +1841,7 @@ class ContinuousSarimaxModel(
         return x
 
     def _handle_nans(
-            self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
     ) -> None:
         if self._nan_mode == "raise":
             if idx.shape[0] != non_nan_idx.shape[0]:
@@ -1866,11 +1866,11 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode):
     """
 
     def __init__(
-            self,
-            nid: str,
-            target_col: Any,
-            prediction_cols: List[Any],
-            volatility_col: Any,
+        self,
+        nid: str,
+        target_col: Any,
+        prediction_cols: List[Any],
+        volatility_col: Any,
     ):
         """
         :param nid: node identifier
