@@ -181,7 +181,8 @@ def get_multiple_plots(
 
     :param num_plots: number of plots
     :param num_cols: number of columns to use in the subplot
-    :param y_scale: if not None
+    :param y_scale: the height of each plot. If `None`, the size of the whole
+        figure equals the default `figsize`
     :return: figure and array of axes
     """
     dbg.dassert_lte(1, num_plots)
@@ -193,7 +194,7 @@ def get_multiple_plots(
         figsize: Optional[Tuple[float, float]] = (20, ysize)
     else:
         figsize = None
-    if "tight_layout" not in kwargs:
+    if "tight_layout" not in kwargs and not kwargs.get("constrained_layout", False):
         kwargs["tight_layout"] = True
     fig, ax = plt.subplots(
         math.ceil(num_plots / num_cols),
@@ -840,7 +841,7 @@ def plot_histograms_and_lagged_scatterplot(
     axes[2].axis("equal")
     axes[2].set_title("Scatter-plot with lag={}".format(lag))
 
-
+    
 # #############################################################################
 # Correlation-type plots
 # #############################################################################
@@ -1211,13 +1212,15 @@ class PCA:
         self,
         num_components: Optional[int] = None,
         num_cols: int = 4,
-        y_scale: Optional[float] = None,
+        y_scale: Optional[float] = 4,
         axes: Optional[List[mpl.axes.Axes]] = None,
     ) -> None:
         """
         Plot principal components.
 
         :param num_components: number of top components to plot
+        :param y_scale: the height of each plot. If `None`, the size of the whole
+            figure equals the default `figsize`
         :param num_cols: number of columns to use in the subplot
         """
         suvali.check_is_fitted(self.pca)
@@ -1886,7 +1889,32 @@ def plot_holdings(
     ax.legend()
     ax.set_title(f"Total holdings ({unit})")
 
+def plot_holding_diffs(
+    holdings: pd.Series,
+    unit: str = "ratio",
+    ax: Optional[mpl.axes.Axes] = None,
+) -> None:
+    """Plot holding changes over time.
+    
+    Indicates how much to increase or decrease holdings from current point in 
+    time to the next one in order to achieve the target position. Since the 
+    difference is between current and next time periods, the holdings change 
+    from t0 to t1 has a timestamp t0.
 
+    :param holdings: series to plot
+    :param unit: "ratio", "%" or "bps" scaling coefficient
+    :param ax: axes in which to draw the plot
+    """
+    ax = ax or plt.gca()
+    scale_coeff = _choose_scaling_coefficient(unit)
+    holdings = scale_coeff * holdings
+    holdings = -holdings.diff(-1)
+    holdings.plot(linewidth=1, ax=ax, label="holding changes")
+    ax.set_ylabel(unit)
+    ax.legend()
+    ax.set_title(f"Holding changes over time (in {unit})")
+    
+    
 def plot_qq(
     srs: pd.Series,
     ax: Optional[mpl.axes.Axes] = None,

@@ -529,12 +529,26 @@ def get_user_name() -> str:
     return res
 
 
+# TODO(gp): Replace `force_print_format` and `force_verbose_format` with `mode`.
 def _get_logging_format(
-    force_print_format: bool, force_verbose_format: bool, force_no_warning: bool
+    force_print_format: bool, force_verbose_format: bool, force_no_warning: bool,
+    date_format_mode: str = "date_time",
 ) -> Tuple[str, str]:
+    """
+    Compute the logging format depending whether running on notebook or in a shell.
+
+    The logging format can be:
+    - print: looks like a `print` statement
+    -
+
+    :param force_print_form: force to use the non-verbose format
+    :param force_verbose_format: force to use the verbose format
+    :param force_no_warning:
+    """
     if is_running_in_ipynb() and not force_no_warning:
         print("WARNING: Running in Jupyter")
     verbose_format = not is_running_in_ipynb()
+    #
     dassert(
         not (force_verbose_format and force_print_format),
         "Can't use both force_verbose_format=%s and force_print_format=%s",
@@ -545,6 +559,7 @@ def _get_logging_format(
         verbose_format = True
     if force_print_format:
         verbose_format = False
+        #
     if verbose_format:
         # TODO(gp): We would like to have filename.name.funcName:lineno all
         #  justified on the 15.
@@ -552,24 +567,28 @@ def _get_logging_format(
         #  -alternative-formatting-styles
         #  Something like:
         #   {{asctime}-5s {{filename}{name}{funcname}{linedo}d}-15s {message}
-        # log_format = "%(asctime)-5s %(levelname)-5s: %(funcName)-15s: %(message)s"
-        #%(pathname)s Full pathname of the source file where the logging call was issued(if available).
-        #%(filename)s Filename portion of pathname.
-        #%(module)s Module (name portion of filename).
-        log_format = (
-            "%(asctime)-5s %(levelname)-5s: "
-            "%(module)s %(pathname)s %(filename)s %(funcName)-15s:%(lineno)-4d: "
-            "%(message)s"
-            # "[%(name)s][%(levelname)s]  %(message)s (%(filename)s:%(lineno)d)")
-        )
-        # date_fmt = "%Y-%m-%d %I:%M:%S %p"
-        date_fmt = "%m-%d_%H:%M"
-        # Print also the executable name, since Jenkins scripts launch
-        # executables from executables.
-        if get_user_name() == "jenkins":
-            exec_name = os.path.basename(get_exec_name())
-            # print("WARNING: Running as jenkins: exec_name='%s'" % exec_name)
-            log_format = exec_name + "::" + log_format
+        #
+        # %(pathname)s Full pathname of the source file where the logging call was
+        #   issued(if available).
+        # %(filename)s Filename portion of pathname.
+        # %(module)s Module (name portion of filename).
+        if True:
+            log_format = "%(asctime)-5s %(levelname)-5s: %(funcName)-15s: %(message)s"
+        else:
+            # Super verbose.
+            log_format = (
+                "%(asctime)-5s %(levelname)-5s: "
+                "%(module)s %(pathname)s %(filename)s %(funcName)-15s:%(lineno)-4d: "
+                "%(message)s"
+            )
+        if date_format_mode == "time":
+            date_fmt = "%H:%M"
+        elif date_format_mode == "date_time":
+            date_fmt = "%m-%d_%H:%M"
+        elif date_format_mode == "date_timestamp":
+            date_fmt = "%Y-%m-%d %I:%M:%S %p"
+        else:
+            raise ValueError("Invalid date_format_mode='%s'", date_format_mode)
     else:
         # Make logging look like a normal print().
         # TODO(gp): We want to still prefix with WARNING and ERROR.
@@ -720,11 +739,16 @@ def get_matching_loggers(module_names: Union[str, Iterable[str]]) -> List:
         module_names = [module_names]
     sel_loggers = []
     for module_name in module_names:
+        #print(module_name)
+        #print("\n".join(map(str, loggers)))
+        # TODO(gp): We should have a regex.
+        # str(logger) looks like `<Logger tornado.application (DEBUG)>`
         sel_loggers_tmp = [
-            logger for logger in loggers if module_name in str(logger)
+            logger for logger in loggers if str(logger).startswith("<Logger " + module_name)
+            #logger for logger in loggers if module_name in str(logger)
         ]
+        #print(sel_loggers_tmp)
         sel_loggers.extend(sel_loggers_tmp)
-    # sel_loggers = sorted(list(set(sel_loggers)))
     return sel_loggers
 
 
@@ -739,10 +763,11 @@ def shutup_chatty_modules(
         "boto3",
         "botocore",
         "fsspec",
-        "s3fs",
         "hooks",
+        "ib_insync",
         "matplotlib",
         "nose",
+        "s3fs",
         "s3transfer",
         "urllib3",
     ]
@@ -750,10 +775,10 @@ def shutup_chatty_modules(
     print("Shutting up %s modules" % len(loggers))
     loggers = sorted(loggers, key=lambda logger: logger.name)
     if verbose:
-        _LOG.debug(
-            "Shutting up modules: (%d)\n%s",
+        print(
+            "Shutting up modules: (%d)\n%s" % (
             len(loggers),
-            "\n".join([logger.name for logger in loggers]),
+            "\n".join([logger.name for logger in loggers]))
         )
     for logger in loggers:
         logger.setLevel(verbosity)

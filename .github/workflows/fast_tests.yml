@@ -60,7 +60,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-        run: make docker_fast_gh_actions
+        run: make test_fast_gh_action
 
       - name: Post status if was triggered manually
         if: ${{ always() && github.event_name == 'workflow_dispatch' }}
@@ -73,7 +73,7 @@ jobs:
           sha: ${{ github.sha }}
           target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-      - name: Send telegramm notification
+      - name: Send Telegram notification
         if: ${{ failure() && github.event_name == 'schedule' }}
         uses: appleboy/telegram-action@master
         with:

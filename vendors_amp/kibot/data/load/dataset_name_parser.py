@@ -1,8 +1,8 @@
 from typing import Dict, Tuple
 
 import helpers.dbg as dbg
+import vendors_amp.common.data.types as vcdtyp
 import vendors_amp.kibot.data.load.file_path_generator as vkdlfi
-import vendors_amp.kibot.data.types as vkdtyp
 
 
 class DatasetNameParser:
@@ -10,7 +10,7 @@ class DatasetNameParser:
     Converter of dataset names into enumerated types.
     """
 
-    FREQ_PATH_MAPPING: Dict[str, vkdtyp.Frequency] = {
+    FREQ_PATH_MAPPING: Dict[str, vcdtyp.Frequency] = {
         v: k for k, v in vkdlfi.FilePathGenerator.FREQ_PATH_MAPPING.items()
     }
 
@@ -25,7 +25,7 @@ class DatasetNameParser:
     def parse_dataset_name(
         self,
         dataset: str,
-    ) -> Tuple[vkdtyp.AssetClass, vkdtyp.ContractType, vkdtyp.Frequency, bool]:
+    ) -> Tuple[vcdtyp.AssetClass, vcdtyp.ContractType, vcdtyp.Frequency, bool]:
         """
         Parse dataset name and return a tuple with types, describing the
         dataset.
@@ -39,7 +39,7 @@ class DatasetNameParser:
         unadjusted = False
         return asset_class, contract_type, frequency, unadjusted
 
-    def _extract_frequency(self, dataset: str) -> vkdtyp.Frequency:
+    def _extract_frequency(self, dataset: str) -> vcdtyp.Frequency:
         frequency = None
         for string, _frequency in self.FREQ_PATH_MAPPING.items():
             if dataset.endswith(string):
@@ -55,7 +55,7 @@ class DatasetNameParser:
             dbg.dfatal(f"${dataset} does not contain frequency.")
         return frequency
 
-    def _extract_asset_class(self, dataset: str) -> vkdtyp.AssetClass:
+    def _extract_asset_class(self, dataset: str) -> vcdtyp.AssetClass:
         asset_class = None
         for string, _asset_class in self.ASSET_TYPE_PREFIX.items():
             if dataset.startswith(string):
@@ -71,7 +71,7 @@ class DatasetNameParser:
             dbg.dfatal(f"${dataset} does not contain asset class.")
         return asset_class
 
-    def _extract_contract_type(self, dataset: str) -> vkdtyp.ContractType:
+    def _extract_contract_type(self, dataset: str) -> vcdtyp.ContractType:
         contract_type = None
         for string, _contract_type in self.CONTRACT_PATH_MAPPING.items():
             if len(string) == 0:
@@ -87,5 +87,5 @@ class DatasetNameParser:
                 )
                 contract_type = _contract_type
         if contract_type is None:
-            contract_type = vkdtyp.ContractType.Expiry
+            contract_type = vcdtyp.ContractType.Expiry
         return contract_type

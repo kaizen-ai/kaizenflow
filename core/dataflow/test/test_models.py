@@ -1129,6 +1129,33 @@ class TestVolatilityModel(hut.TestCase):
         output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
         self.check_string(output_df.to_string())
 
+    def test_fit_none_columns(self) -> None:
+        # Load test data.
+        data = self._get_data()
+        data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
+        # Specify config.
+        config = cconfi.Config()
+        config["steps_ahead"] = 2
+        config["nan_mode"] = "drop"
+        # Get outputs with `cols`=None and all specified.
+        output_cols_none = self._run_volatility_model(data, config)
+        config["cols"] = ["ret_0", "ret_0_2"]
+        output_cols_specified = self._run_volatility_model(data, config)
+        np.testing.assert_equal(output_cols_none, output_cols_specified)
+
+    def test_fit_int_columns(self) -> None:
+        # Load test data.
+        data = self._get_data()
+        data[10] = data.ret_0 + np.random.normal(size=len(data))
+        # Specify config.
+        config = cconfi.Config()
+        config["cols"] = [10]
+        config["steps_ahead"] = 2
+        config["nan_mode"] = "drop"
+        # Get output with integer column names.
+        output_str = self._run_volatility_model(data, config)
+        self.check_string(output_str)
+
     @staticmethod
     def _get_data() -> pd.DataFrame:
         """
@@ -1145,6 +1172,19 @@ class TestVolatilityModel(hut.TestCase):
         realization.name = "ret_0"
         df = pd.DataFrame(index=date_range, data=realization)
         return df
+
+    @staticmethod
+    def _run_volatility_model(data: pd.DataFrame, config: cconfi.Config) -> str:
+        data_source_node = cdataf.ReadDataFromDf("data", data)
+        # Create DAG and test data node.
+        dag = cdataf.DAG(mode="strict")
+        dag.add_node(data_source_node)
+        # Create modeling node.
+        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
+        dag.add_node(node)
+        dag.connect("data", "vol_model")
+        output = dag.run_leq_node("vol_model", "fit")["df_out"]
+        return output.to_string()
 
 
 if True:

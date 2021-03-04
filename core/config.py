@@ -9,6 +9,7 @@ import logging
 import re
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
+import numpy as np
 import pandas as pd
 
 import helpers.dbg as dbg
@@ -176,7 +177,8 @@ class Config:
     def from_python(cls, code: str) -> "Config":
         """Create an object from the code returned by `to_python()`."""
         dbg.dassert_isinstance(code, str)
-        val = eval(code)
+        # eval function need unknown globals to be set.
+        val = eval(code, {"nan": np.nan, "Config": Config})
         dbg.dassert_isinstance(val, Config)
         return val  # type: ignore
 

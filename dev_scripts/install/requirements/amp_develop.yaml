@@ -12,12 +12,10 @@ dependencies:
   #- xmltodict
   - pytest
   - flaky
-  - pre-commit
   - pytest-cov
   - pytest-instafail
-  - pytest-timeout
   - pytest-xdist
-  - python >= 3.7
+#  - python >= 3.7
   - python-dateutil
   - pytz
   - tqdm
@@ -28,15 +26,14 @@ dependencies:
   - networkx
   - numba
   - numpy
-  - pandas >= 1.0.0
-  - pandas-datareader
+  - pandas >= 1.1.0
+  - pandas-datareader >= 0.9.0
   - pyarrow
   - pywavelets
   - scikit-learn
   - scipy
   - seaborn
   - statsmodels
-  - tabulate                # Required to transform pandas dfs to markdown
   # ############################################################################
   # jupyter
   # ############################################################################
@@ -47,18 +44,7 @@ dependencies:
   - jupytext
   - nb_conda
   - nb_conda_kernels
-  # ############################################################################
-  # Linter
-  # ############################################################################
-  #- pyment                 # conda install -c akode pyment
-  - autoflake
-  - black
-  - flake8
-  - isort
-  - mypy
-  - pydocstyle
-  - pylint
-  - yapf                     # Superseded by black, but useful for notebooks.
+  - ipympl
   # ############################################################################
   # Latex
   # ############################################################################
@@ -86,17 +72,13 @@ dependencies:
   #- gdrive                  # To interact with Google Drive.
   #- jq                      # To process json.
   #- mxnet                   # Required by gluon (e.g., gluon-ts, gluon-nlp).
-  #- pymongo
+#  - pymongo
   #- rclone                  # To back up Google Drive (conda install -c hcc rclone)
   #- ruby
   - beautifulsoup4
-  - git                     # To use latest git client.
   - joblib
   - jsonpickle
-  - psycopg2-binary
   - pygraphviz              # For dataflow graph visualization.
-  - pymongo
-  - scrapy
   # ############################################################################
   # Profiling
   # ############################################################################
@@ -110,16 +92,16 @@ dependencies:
     #- pyannotate           # Enable this to automatically infer types.
     #- ta                   # Technical analysis package.
     #- trading-calendars
+    - psycopg2-binary
     # ##########################################################################
     # Keep the following section unchanged in order, since we need to install
     # mxnet first.
     - mxnet >= 1.6.0
     - gluonnlp              # gluon* and mxnet need to be installed through pip
     - gluonts               # since conda doesn't support / has old packages.
-    - scrapy_splash
     # ############################################################################
     # ETL3
     # ############################################################################
-    - gitpython
-    - dbnomics-data-model
-    - python-slugify
+#    - gitpython
+#    - dbnomics-data-model
+#    - python-slugify
