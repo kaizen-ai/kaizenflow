@@ -71,23 +71,22 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
             been collected.  This gives gevent a chance to monkey patch the
             world before importing pyannotate.
             """
-            # mypy: Cannot find module named 'pyannotate_runtime'
-            import pyannotate_runtime  # type: ignore
+            from pyannotate_runtime import collect_types
 
             _ = session
-            pyannotate_runtime.collect_types.init_types_collection()
+            collect_types.init_types_collection()
 
         @pytest.fixture(autouse=True)
         def collect_types_fixture() -> Generator:
-            import pyannotate_runtime
+            from pyannotate_runtime import collect_types
 
-            pyannotate_runtime.collect_types.start()
+            collect_types.start()
             yield
-            pyannotate_runtime.collect_types.stop()
+            collect_types.stop()
 
         def pytest_sessionfinish(session: Any, exitstatus: Any) -> None:
-            import pyannotate_runtime
+            from pyannotate_runtime import collect_types
 
             _ = session, exitstatus
-            pyannotate_runtime.collect_types.dump_stats("type_info.json")
+            collect_types.dump_stats("type_info.json")
             print("\n*** Collected types ***")

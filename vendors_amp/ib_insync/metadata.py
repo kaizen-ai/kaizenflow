@@ -46,7 +46,6 @@ class IbMetadata:
             df_tmp = ibutils.get_contract_details(ib, contract)
             dfs.append(df_tmp)
         df = pd.concat(dfs, axis=0)
-        df = self._clean(df)
         #
         if append:
             df_tmp = self.load()
@@ -54,11 +53,16 @@ class IbMetadata:
         else:
             _LOG.warning("Resetting data in file '%s'", self.file_name)
         #
+        df = self._clean(df)
+        #
         hio.create_enclosing_dir(self.file_name, incremental=True)
         df.to_csv(self.file_name)
 
     def _clean(self, df):
-        _LOG.debug("df=\n%s", df.head())
+        #_LOG.debug("df=\n%s", df.head())
         df.sort_values(["conId", "exchange"], inplace=True)
+        #_LOG.debug("df=\n%s", df.head())
+        df.reset_index(drop=True, inplace=True)
+        #df.reset_index(inplace=True)
         _LOG.debug("df=\n%s", df.head())
         return df

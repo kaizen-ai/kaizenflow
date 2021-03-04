@@ -34,13 +34,21 @@ ib = ibutils.ib_connect(client_id=33, is_notebook=True)
 symbol = "NG"
 #symbol = "CL"
 contract = ib_insync.Future(symbol, includeExpired=True)
-ibutils.get_contract_details(ib, contract, simplify_df=False)
+df = ibutils.get_contract_details(ib, contract, simplify_df=False)
+
+display(df)
 
 # cds = ib.reqContractDetails(contract)
 
 # contracts = [cd.contract for cd in cds]
 
 # ib_insync.util.df(contracts)
+
+# %%
+df
+
+# %%
+#df.reset_index(drop=True)
 
 # %%
 import copy
