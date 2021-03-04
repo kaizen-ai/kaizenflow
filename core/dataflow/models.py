@@ -134,8 +134,9 @@ class ContinuousSkLearnModel(
               `steps_ahead` steps ahead (and not all intermediate steps)
         :param model_kwargs: parameters to forward to the sklearn model
             (e.g., regularization constants)
-        :param col_mode: `merge_all` or `replace_all`, as in
+        :param col_mode: "merge_all" or "replace_all", as in
             ColumnTransformer()
+        :param nan_mode: "drop" or "raise"
         """
         super().__init__(nid)
         self._model_func = model_func
@@ -787,6 +788,8 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         :param steps_ahead: as in ContinuousSkLearnModel
         :param tau: as in `csigna.compute_smooth_moving_average`. If `None`,
             learn this parameter
+        :param col_mode: `merge_all` or `replace_all`, as in
+            ColumnTransformer()
         :param nan_mode: as in ContinuousSkLearnModel
         """
         super().__init__(nid)
