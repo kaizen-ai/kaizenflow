@@ -6,15 +6,17 @@ import helpers.dbg as dbg
 import helpers.io_ as hio
 import vendors_amp.ib_insync.utils as ibutils
 import os
+from typing import List
+import ib_insync
 
 _LOG = logging.getLogger(__name__)
 
 class IbMetadata:
 
-    def __init__(self, file_name):
+    def __init__(self, file_name: str) -> None:
         self.file_name = file_name
 
-    def load(self):
+    def load(self) -> pd.DataFrame:
         """
         Load the data generated through update.
 
@@ -35,7 +37,7 @@ class IbMetadata:
             df = pd.DataFrame()
         return df
 
-    def update(self, ib, contracts, append=False):
+    def update(self, ib: ib_insync.ib.IB, contracts: List[ib_insync.Contract], append: bool = False) -> None:
         """
         Update metadata in `file_name` for the given contracts.
 
@@ -58,11 +60,8 @@ class IbMetadata:
         hio.create_enclosing_dir(self.file_name, incremental=True)
         df.to_csv(self.file_name)
 
-    def _clean(self, df):
-        #_LOG.debug("df=\n%s", df.head())
+    def _clean(self, df: pd.DataFrame) -> pd.DataFrame:
         df.sort_values(["conId", "exchange"], inplace=True)
-        #_LOG.debug("df=\n%s", df.head())
         df.reset_index(drop=True, inplace=True)
-        #df.reset_index(inplace=True)
         _LOG.debug("df=\n%s", df.head())
         return df

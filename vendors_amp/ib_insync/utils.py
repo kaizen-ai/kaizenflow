@@ -46,7 +46,7 @@ def to_contract_details(ib, contract):
     return pri.obj_to_str(contract_details[0])
 
 
-def get_contract_details(ib, contract, simplify_df=False):
+def get_contract_details(ib: ib_insync.ib.IB, contract: ib_insync.Contract, simplify_df: bool = False) -> pd.DataFrame:
     _LOG.debug("contract=%s", contract)
     cds = ib.reqContractDetails(contract)
     _LOG.info("num contracts=%s", len(cds))

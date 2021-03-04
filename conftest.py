@@ -60,6 +60,7 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
             dbg.init_logger(config.getoption("--dbg_verbosity"))
 
     if "PYANNOTATE" in os.environ:
+        # TODO(GP): check https://github.com/Instagram/MonkeyType
         print("\nWARNING: Collecting information about types through pyannotate")
         # From https://github.com/dropbox/pyannotate/blob/master/example/example_conftest.py
         import pytest

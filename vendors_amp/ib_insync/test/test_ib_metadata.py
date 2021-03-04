@@ -29,7 +29,7 @@ class Test_ib_metadata1(hut.TestCase):
     def tearnDownClass(cls):
         cls.ib.disconnect()
 
-    def test1(self):
+    def test1(self) -> None:
         """
         Create some metadata for NG.
         """
@@ -43,7 +43,7 @@ class Test_ib_metadata1(hut.TestCase):
         df = ibmeta.load()
         self.check_string(df.to_csv())
 
-    def test2(self):
+    def test2(self) -> None:
         """
         Create some metadata and then update more.
         """
@@ -61,7 +61,7 @@ class Test_ib_metadata1(hut.TestCase):
         df = ibmeta.load()
         self.check_string(df.to_csv())
 
-    def test3(self):
+    def test3(self) -> None:
         """
         Test that append=False cleans up the file.
         """
