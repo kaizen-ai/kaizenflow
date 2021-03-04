@@ -4,15 +4,14 @@ Import as:
 import core.signal_processing as csigna
 """
 
+import collections
 import functools
 import logging
-import collections
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import pywt
-import scipy as sp
 
 import helpers.dataframe as hdataf
 import helpers.dbg as dbg
@@ -133,9 +132,9 @@ def _compute_lagged_cumsum(
 
 
 def calculate_inverse(
-        df: pd.DataFrame,
-        p_moment: Optional[Any] = None,
-        info: Optional[collections.OrderedDict] = None,
+    df: pd.DataFrame,
+    p_moment: Optional[Any] = None,
+    info: Optional[collections.OrderedDict] = None,
 ) -> pd.DataFrame:
     """
     Calculate an inverse matrix.
@@ -161,11 +160,11 @@ def calculate_inverse(
 
 
 def calculate_pseudoinverse(
-        df: pd.DataFrame,
-        rcond: Optional[float] = 1e-15,
-        hermitian: Optional[bool] = False,
-        p_moment: Optional[Any] = None,
-        info: Optional[collections.OrderedDict] = None,
+    df: pd.DataFrame,
+    rcond: Optional[float] = 1e-15,
+    hermitian: Optional[bool] = False,
+    p_moment: Optional[Any] = None,
+    info: Optional[collections.OrderedDict] = None,
 ) -> pd.DataFrame:
     """
     Calculate a pseudoinverse matrix.
