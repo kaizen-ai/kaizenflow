@@ -25,7 +25,7 @@ print(ib_insync.__all__)
 import helpers.dbg as dbg
 import helpers.printing as pri
 import core.explore as exp
-import vendors_lemonade.ib_insync.utils as ibutils
+import vendors_amp.ib_insync.utils as ibutils
 
 # %% [markdown]
 # # Connect

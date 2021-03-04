@@ -7,7 +7,7 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.unit_test as hut
-import vendors_lemonade.ib_insync.utils as ibutils
+import vendors_amp.ib_insync.utils as ibutils
 
 _LOG = logging.getLogger(__name__)
 
@@ -697,8 +697,6 @@ class Test_get_historical_data(hut.TestCase):
         _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
         contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
         what_to_show = "TRADES"
-        mode = "in_memory"
-        df, ts_seq = ibutils.get_historical_data(self.ib, contract,
         mode = "in_memory"
         client_id = 2
         df, ts_seq = ibutils.get_historical_data(client_id, contract,
