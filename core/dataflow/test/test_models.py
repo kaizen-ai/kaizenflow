@@ -1136,7 +1136,7 @@ class TestVolatilityModel(hut.TestCase):
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config.
         config = cconfi.Config()
-        config["cols"] = ["ret_0"]
+        config["cols"] = ["ret_0", "ret_0_2"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
         config["tau"] = 10
