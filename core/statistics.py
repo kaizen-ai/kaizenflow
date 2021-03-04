@@ -630,8 +630,10 @@ def apply_sharpe_ratio_correlation_conversion(
     """
     dbg.dassert(pd.notna([sharpe_ratio, correlation]).any(),
               "`sharpe_ratio` or `correlation` must be provided.")
+    dbg.dassert(pd.isna([sharpe_ratio, correlation]).any(),
+              "Either `sharpe_ratio` or `correlation` must be provided.")
     points_per_year = hdataf.compute_points_per_year_for_given_freq(freq)
-    if sharpe_ratio:
+    if sharpe_ratio is not None:
         sharpe_ratio /= np.sqrt(points_per_year)
         return sharpe_ratio / np.sqrt(1 - sharpe_ratio**2)
     sharpe_ratio = correlation / np.sqrt(1 + correlation**2)
