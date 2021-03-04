@@ -1,6 +1,8 @@
 import logging
 import os
 
+import pytest
+
 import vendors_amp.ib_insync.metadata as vimeta
 
 try:
@@ -16,6 +18,7 @@ import vendors_amp.ib_insync.utils as viutil
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.skip("Disabled")
 class Test_ib_metadata1(hut.TestCase):
     @classmethod
     def setUpClass(cls):
