@@ -324,6 +324,8 @@ class DataFrameModeler:
         steps_ahead: int,
         p_moment: float = 2,
         tau: Optional[float] = None,
+        col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
+        col_mode: Optional[str] = None,
         nan_mode: Optional[str] = "drop",
         method: str = "fit",
     ) -> DataFrameModeler:
@@ -336,6 +338,8 @@ class DataFrameModeler:
             steps_ahead=steps_ahead,
             p_moment=p_moment,
             tau=tau,
+            col_rename_func=col_rename_func,
+            col_mode=col_mode,
             nan_mode=nan_mode,
         )
         return self._run_model(model, method)

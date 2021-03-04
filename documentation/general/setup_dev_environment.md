@@ -8,22 +8,11 @@
       * [Definitions](#definitions)
       * [Connect to the server](#connect-to-the-server)
       * [Use python3](#use-python3)
-      * [(optional) Install anaconda](#optional-install-anaconda)
-      * [Configure anaconda](#configure-anaconda)
    * [Create a Git client](#create-a-git-client)
       * [Clone the git code](#clone-the-git-code)
       * [Configure git submodules](#configure-git-submodules)
       * [Configure user credentials](#configure-user-credentials)
-      * [Create conda environment](#create-conda-environment)
-      * [Check conda environment](#check-conda-environment)
-      * [Configure conda environment](#configure-conda-environment)
-      * [Delete / recreate environment](#delete--recreate-environment)
-         * [Overwrite a conda environment with create_conda.py](#overwrite-a-conda-environment-with-create_condapy)
-         * [Manually delete a conda environment](#manually-delete-a-conda-environment)
-         * [To delete the entire conda installation (advanced users)](#to-delete-the-entire-conda-installation-advanced-users)
-      * [Update anaconda](#update-anaconda)
       * [Clone multiple git client](#clone-multiple-git-client)
-   * [Be patient](#be-patient)
    * [Workflow examples](#workflow-examples)
       * [Working with multiple clients](#working-with-multiple-clients)
       * [A simple set-up](#a-simple-set-up)
@@ -167,6 +156,22 @@
   > cd $DST_DIR
   > (cd amp; git checkout master)
   ```
+
+## Configure user credentials
+
+- Once you receive access key ID and secret access key run `aws configure` to
+  generate aws config files:
+  - Install aws client on your machine
+  - Run
+    ```bash
+    > aws configure
+    ```
+  - Specify access key ID and secret access key
+  - You may leave the default region name and default output format unassigned
+  - Check that the `config` and `credentials` files have been created:
+    ```bash
+    > ls ~/.aws
+    ```
 
 ## Clone multiple git client
 
