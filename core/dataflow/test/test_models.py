@@ -1129,6 +1129,29 @@ class TestVolatilityModel(hut.TestCase):
         output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
         self.check_string(output_df.to_string())
 
+    def test_multiple_columns_with_specified_tau(self) -> None:
+        # Load test data.
+        data = self._get_data()
+        data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
+        # Specify config.
+        config = cconfi.Config()
+        config["cols"] = ["ret_0"]
+        config["steps_ahead"] = 2
+        config["nan_mode"] = "drop"
+        config["tau"] = 10
+        # Get outputs for columns separately.
+        output_ret_0 = self._run_volatility_model(data, config)["ret_0_zscored"]
+        config["cols"] = ["ret_0_2"]
+        output_ret_0_2 = self._run_volatility_model(data, config)[
+            "ret_0_2_zscored"
+        ]
+        # Get output for multiple columns.
+        config["cols"] = ["ret_0", "ret_0_2"]
+        output = self._run_volatility_model(data, config)
+        np.testing.assert_array_equal(output["ret_0_zscored"], output_ret_0)
+        np.testing.assert_array_equal(output["ret_0_2_zscored"], output_ret_0_2)
+        self.check_string(output.to_string())
+
     def test_fit_none_columns(self) -> None:
         # Load test data.
         data = self._get_data()
@@ -1141,7 +1164,10 @@ class TestVolatilityModel(hut.TestCase):
         output_cols_none = self._run_volatility_model(data, config)
         config["cols"] = ["ret_0", "ret_0_2"]
         output_cols_specified = self._run_volatility_model(data, config)
-        np.testing.assert_equal(output_cols_none, output_cols_specified)
+        np.testing.assert_equal(
+            output_cols_none.to_string(),
+            output_cols_specified.to_string(),
+        )
 
     def test_fit_int_columns(self) -> None:
         # Load test data.
@@ -1153,8 +1179,8 @@ class TestVolatilityModel(hut.TestCase):
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
         # Get output with integer column names.
-        output_str = self._run_volatility_model(data, config)
-        self.check_string(output_str)
+        output = self._run_volatility_model(data, config)
+        self.check_string(output.to_string())
 
     @staticmethod
     def _get_data() -> pd.DataFrame:
@@ -1184,7 +1210,7 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(node)
         dag.connect("data", "vol_model")
         output = dag.run_leq_node("vol_model", "fit")["df_out"]
-        return output.to_string()
+        return output
 
 
 if True:
@@ -1281,11 +1307,10 @@ if True:
             """
             Generate a dataframe of the following format:
 
-            EVENT_SENTIMENT_SCORE           zret_0         0 
-            2010-01-01 00:00:00           0.496714 -0.138264 
-            2010-01-01 00:01:00           0.647689  1.523030 
-            2010-01-01 00:02:00          -0.234153 -0.234137 
-            2010-01-01 00:03:00           1.579213  0.767435
+            EVENT_SENTIMENT_SCORE           zret_0         0 2010-01-01
+            00:00:00           0.496714 -0.138264 2010-01-01 00:01:00
+            0.647689  1.523030 2010-01-01 00:02:00          -0.234153
+            -0.234137 2010-01-01 00:03:00           1.579213  0.767435
             2010-01-01 00:04:00          -0.469474  0.542560
             """
             np.random.seed(42)
