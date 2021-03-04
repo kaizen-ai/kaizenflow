@@ -2,7 +2,7 @@ import datetime
 import logging
 import os
 
-import ib_insync
+#import ib_insync
 import pandas as pd
 # from tqdm.notebook import tqdm
 from tqdm import tqdm
