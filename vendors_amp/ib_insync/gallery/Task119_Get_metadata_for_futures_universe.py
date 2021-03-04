@@ -7,9 +7,9 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.4.2
 #   kernelspec:
-#     display_name: Python [conda env:.conda-p1_develop] *
+#     display_name: Python 3
 #     language: python
-#     name: conda-env-.conda-p1_develop-py
+#     name: python3
 # ---
 
 # %%
@@ -33,11 +33,46 @@ ib = ibutils.ib_connect(client_id=33, is_notebook=True)
 #symbol = "ES"
 symbol = "NG"
 #symbol = "CL"
-asset = ib_insync.Future(symbol, includeExpired=True)
-#ibutils.get_contract_details(ib, asset)
+contract = ib_insync.Future(symbol, includeExpired=True)
+ibutils.get_contract_details(ib, contract, simplify_df=False)
 
-cds = ib.reqContractDetails(asset)
+# cds = ib.reqContractDetails(contract)
 
-contracts = [cd.contract for cd in cds]
+# contracts = [cd.contract for cd in cds]
 
-ib_insync.util.df(contracts)
+# ib_insync.util.df(contracts)
+
+# %%
+import copy
+
+
+# %%
+def create_contracts(ib, contract, symbols):
+    contracts = []
+    for symbol in symbols:
+        contract_tmp = copy.copy(contract)
+        contract_tmp.symbol = symbol
+        #ib.qualifyContracts(contract_tmp)
+        contracts.append(contract_tmp)
+    return contracts
+
+
+contract = ib_insync.Future(symbol, includeExpired=True)
+symbols = "ES CL NG".split()
+create_contracts(ib, contract, symbols)
+
+# %%
+contract2.symbol = "E"
+
+# %%
+import vendors_amp.ib_insync.metadata as ibmetadata
+
+file_name = "./metadata.csv"
+ibmeta = ibmetadata.IbMetadata()
+
+ibmeta.update(ib, [contract], file_name, reset=True)
+
+# %%
+ibmeta.load(file_name)
+
+# %%

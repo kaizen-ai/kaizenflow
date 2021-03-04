@@ -2,7 +2,10 @@ import datetime
 import logging
 import os
 
-#import ib_insync
+try:
+    import ib_insync
+except ModuleNotFoundError:
+    print("Can't find ib_insync")
 import pandas as pd
 # from tqdm.notebook import tqdm
 from tqdm import tqdm
@@ -43,22 +46,30 @@ def to_contract_details(ib, contract):
     return pri.obj_to_str(contract_details[0])
 
 
-def get_contract_details(ib, asset):
-    cds = ib.reqContractDetails(asset)
-    print("num contracts=", len(cds))
+def get_contract_details(ib, contract, simplify_df=False):
+    _LOG.debug("contract=%s", contract)
+    cds = ib.reqContractDetails(contract)
+    _LOG.info("num contracts=%s", len(cds))
     contracts = [cd.contract for cd in cds]
-    print(contracts[0])
+    _LOG.debug("contracts[0]=%s", contracts[0])
     contracts_df = ib_insync.util.df(contracts)
-    # display(exp.print_column_variability(contracts_df))
-    # Remove exchange.
-    print("exchange=", contracts_df["exchange"].unique())
-    contracts_df.sort_values("lastTradeDateOrContractMonth", inplace=True)
-    contracts_df = contracts_df.drop(columns=["exchange", "comboLegs"])
-    contracts_df = contracts_df.drop_duplicates()
-    threshold = 1
-    contracts_df = exp.remove_columns_with_low_variability(contracts_df, threshold)
-    display(contracts_df)
+    if simplify_df:
+        _LOG.debug(exp.print_column_variability(contracts_df))
+        # Remove exchange.
+        _LOG.debug("exchange=%s", contracts_df["exchange"].unique())
+        contracts_df.sort_values("lastTradeDateOrContractMonth", inplace=True)
+        contracts_df = contracts_df.drop(columns=["exchange", "comboLegs"])
+        # Remove duplicates.
+        contracts_df = contracts_df.drop_duplicates()
+        # Remove constant values.
+        threshold = 1
+        contracts_df = exp.remove_columns_with_low_variability(contracts_df,
+                                                               threshold)
+    return contracts_df
 
+
+
+#def create_contracts(ib, contract):
 
 # #################################################################################
 
