@@ -1,20 +1,17 @@
-import os
 import logging
-from typing import Tuple
+import os
 
-import vendors_amp.ib_insync.metadata as ibmetadata
+import vendors_amp.ib_insync.metadata as vimeta
 
 try:
     import ib_insync
 except ModuleNotFoundError:
     print("Can't find ib_insync")
 
-import pandas as pd
-import pytest
 
 import helpers.dbg as dbg
 import helpers.unit_test as hut
-import vendors_amp.ib_insync.utils as ibutils
+import vendors_amp.ib_insync.utils as viutil
 
 _LOG = logging.getLogger(__name__)
 
@@ -23,7 +20,7 @@ class Test_ib_metadata1(hut.TestCase):
     @classmethod
     def setUpClass(cls):
         dbg.shutup_chatty_modules()
-        cls.ib = ibutils.ib_connect(0, is_notebook=False)
+        cls.ib = viutil.ib_connect(0, is_notebook=False)
 
     @classmethod
     def tearnDownClass(cls):
@@ -34,7 +31,7 @@ class Test_ib_metadata1(hut.TestCase):
         Create some metadata for NG.
         """
         file_name = os.path.join(self.get_scratch_space(), "metadata.csv")
-        ibmeta = ibmetadata.IbMetadata(file_name)
+        ibmeta = vimeta.IbMetadata(file_name)
         #
         symbol = "NG"
         contract = ib_insync.Future(symbol, includeExpired=True)
@@ -48,7 +45,7 @@ class Test_ib_metadata1(hut.TestCase):
         Create some metadata and then update more.
         """
         file_name = os.path.join(self.get_scratch_space(), "metadata.csv")
-        ibmeta = ibmetadata.IbMetadata(file_name)
+        ibmeta = vimeta.IbMetadata(file_name)
         #
         symbol = "NG"
         contract = ib_insync.Future(symbol, includeExpired=True)
@@ -66,7 +63,7 @@ class Test_ib_metadata1(hut.TestCase):
         Test that append=False cleans up the file.
         """
         file_name = os.path.join(self.get_scratch_space(), "metadata.csv")
-        ibmeta = ibmetadata.IbMetadata(file_name)
+        ibmeta = vimeta.IbMetadata(file_name)
         #
         symbol = "NG"
         contract = ib_insync.Future(symbol, includeExpired=True)

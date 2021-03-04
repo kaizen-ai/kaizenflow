@@ -68,9 +68,10 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
         def pytest_collection_finish(session: Any) -> None:
             """
             Handle the pytest collection finish hook: configure pyannotate.
-            Explicitly delay importing `collect_types` until all tests have
-            been collected.  This gives gevent a chance to monkey patch the
-            world before importing pyannotate.
+
+            Explicitly delay importing `collect_types` until all tests
+            have been collected.  This gives gevent a chance to monkey
+            patch the world before importing pyannotate.
             """
             from pyannotate_runtime import collect_types
 

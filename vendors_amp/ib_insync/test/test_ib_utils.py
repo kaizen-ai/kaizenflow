@@ -2,7 +2,10 @@ import logging
 import os
 from typing import Tuple
 
-#import ib_insync
+try:
+    import ib_insync
+except ModuleNotFoundError:
+    print("Can't find ib_insync")
 import pandas as pd
 import pytest
 
@@ -13,7 +16,7 @@ import vendors_amp.ib_insync.utils as ibutils
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skip("Disabled")
+#@pytest.mark.skip("Disabled")
 class Test_get_historical_data(hut.TestCase):
     @classmethod
     def setUpClass(cls):

@@ -1,18 +1,17 @@
 import logging
-
-import pandas as pd
-
-import helpers.dbg as dbg
-import helpers.io_ as hio
-import vendors_amp.ib_insync.utils as ibutils
 import os
 from typing import List
+
 import ib_insync
+import pandas as pd
+
+import helpers.io_ as hio
+import vendors_amp.ib_insync.utils as viutil
 
 _LOG = logging.getLogger(__name__)
 
-class IbMetadata:
 
+class IbMetadata:
     def __init__(self, file_name: str) -> None:
         self.file_name = file_name
 
@@ -37,7 +36,12 @@ class IbMetadata:
             df = pd.DataFrame()
         return df
 
-    def update(self, ib: ib_insync.ib.IB, contracts: List[ib_insync.Contract], append: bool = False) -> None:
+    def update(
+        self,
+        ib: ib_insync.ib.IB,
+        contracts: List[ib_insync.Contract],
+        append: bool = False,
+    ) -> None:
         """
         Update metadata in `file_name` for the given contracts.
 
@@ -45,7 +49,7 @@ class IbMetadata:
         """
         dfs = []
         for contract in contracts:
-            df_tmp = ibutils.get_contract_details(ib, contract)
+            df_tmp = viutil.get_contract_details(ib, contract)
             dfs.append(df_tmp)
         df = pd.concat(dfs, axis=0)
         #
