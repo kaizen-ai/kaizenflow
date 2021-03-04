@@ -1,11 +1,17 @@
-"""Import as:
+"""
+Import as:
 
-import helpers.printing as prnt
+import helpers.printing as hprint
 """
 
+import tempfile
 from typing import Any, Dict, Iterable, List, Optional, cast
 
+import pandas as pd
+
 import helpers.dbg as dbg
+import helpers.io_ as hio
+import helpers.system_interaction as hsyste
 
 # #############################################################################
 # Debug output
@@ -30,7 +36,9 @@ def clear_screen() -> None:
 
 
 def line(char: Optional[str] = None, num_chars: Optional[int] = None) -> str:
-    """Return a line with the desired character."""
+    """
+    Return a line with the desired character.
+    """
     char = "#" if char is None else char
     num_chars = 80 if num_chars is None else num_chars
     return char * num_chars
@@ -43,7 +51,9 @@ def frame(
     char2: Optional[str] = None,
     thickness: int = 1,
 ) -> str:
-    """Print a frame around a message."""
+    """
+    Print a frame around a message.
+    """
     # Fill in the default values.
     if char1 is None:
         # User didn't specify any char.
@@ -74,12 +84,16 @@ def frame(
 
 
 def indent(str_: str, num_spaces: int = 2) -> str:
-    """Add `num_spaces` spaces before each line of the string `str_`."""
+    """
+    Add `num_spaces` spaces before each line of the string `str_`.
+    """
     return prepend(str_, " " * num_spaces)
 
 
 def dedent(txt: str) -> str:
-    """Remove all extra leadning / trailing spaces and empty lines."""
+    """
+    Remove all extra leadning / trailing spaces and empty lines.
+    """
     txt_out = []
     for curr_line in txt.split("\n"):
         curr_line = curr_line.rstrip(" ").lstrip(" ")
@@ -89,14 +103,18 @@ def dedent(txt: str) -> str:
 
 
 def prepend(str_: str, prefix: str) -> str:
-    """Add `prefix` before each line of the string `str_`."""
+    """
+    Add `prefix` before each line of the string `str_`.
+    """
     # lines = ["<" + prefix + curr_line + ">" for curr_line in str_.split("\n")]
     lines = [prefix + curr_line for curr_line in str_.split("\n")]
     return "\n".join(lines)
 
 
 def remove_empty_lines_from_string_list(arr: List[str]) -> List[str]:
-    """Remove empty lines from a list of strings."""
+    """
+    Remove empty lines from a list of strings.
+    """
     arr = [line for line in arr if line.rstrip().lstrip()]
     return arr
 
@@ -104,7 +122,9 @@ def remove_empty_lines_from_string_list(arr: List[str]) -> List[str]:
 # TODO(gp): It would be nice to have a decorator to go from / to array of
 #  strings.
 def remove_empty_lines(txt: str) -> str:
-    """Remove empty lines from a multi-line string."""
+    """
+    Remove empty lines from a multi-line string.
+    """
     arr = txt.split("\n")
     arr = remove_empty_lines_from_string_list(arr)
     txt = "\n".join(arr)
@@ -112,7 +132,8 @@ def remove_empty_lines(txt: str) -> str:
 
 
 def vars_to_debug_string(vars_as_str: List[str], locals_: Dict[str, Any]) -> str:
-    """Create a string with var name -> var value.
+    """
+    Create a string with var name -> var value.
 
     E.g., ["var1", "var2"] is converted into: ``` var1=... var2=... ```
     """
@@ -141,7 +162,8 @@ def perc(
     num_digits: int = 2,
     use_thousands_separator: bool = False,
 ) -> str:
-    """Calculate percentage a / b as a string.
+    """
+    Calculate percentage a / b as a string.
 
     Asserts 0 <= a <= b. If true, returns a/b to `num_digits` decimal places.
 
@@ -176,7 +198,8 @@ def perc(
 def round_digits(
     v: float, num_digits: int = 2, use_thousands_separator: bool = False
 ) -> str:
-    """Round digit returning a string representing the formatted number.
+    """
+    Round digit returning a string representing the formatted number.
 
     :param v: value to convert
     :param num_digits: number of digits to represent v on
@@ -199,8 +222,10 @@ def round_digits(
 
 
 def type_to_string(type_as_str: str) -> str:
-    """Return a short string representing the type of an object, e.g.,
-    "core.dataflow.Node" (instead of "class <'core.dataflow.Node'>")"""
+    """
+    Return a short string representing the type of an object, e.g.,
+    "core.dataflow.Node" (instead of "class <'core.dataflow.Node'>")
+    """
     if isinstance(type_as_str, type):
         type_as_str = str(type_as_str)
     dbg.dassert_isinstance(type_as_str, str)
@@ -251,7 +276,9 @@ def list_to_str(
     axis: int = 0,
     to_string: bool = False,
 ) -> str:
-    """Print list / index horizontally or vertically."""
+    """
+    Print list / index horizontally or vertically.
+    """
     # TODO(gp): Fix this.
     _ = to_string
     txt = ""
@@ -315,15 +342,137 @@ def print_set_diff(
         print()
 
 
+def diff_strings(
+    txt1: str,
+    txt2: str,
+    txt1_descr: Optional[str] = None,
+    txt2_descr: Optional[str] = None,
+    width: int = 130,
+) -> str:
+    # Write file.
+    def _to_file(txt: str, txt_descr: Optional[str]) -> str:
+        file_name = tempfile.NamedTemporaryFile().name
+        if txt_descr is not None:
+            txt = "# " + txt_descr + "\n" + txt
+        hio.to_file(file_name, txt)
+        return file_name
+
+    #
+    file_name1 = _to_file(txt1, txt1_descr)
+    file_name2 = _to_file(txt2, txt2_descr)
+    #
+    cmd = f"sdiff --width={width} {file_name1} {file_name2}"
+    _, txt = hsyste.system_to_string(
+        cmd,
+        # We don't care if they are different.
+        abort_on_error=False,
+    )
+    # For some reason, mypy doesn't understand that system_to_string returns a
+    # string.
+    txt = cast(str, txt)
+    return txt
+
+
+def obj_to_str(
+    obj: Any,
+    attr_mode: str = "__dict__",
+    print_type: bool = False,
+    callable_mode: str = "skip",
+    private_mode: str = "skip_dunder",
+) -> str:
+    """
+    Print attributes of an object.
+
+    :param using_dict: use `__dict__` instead of `dir`
+    :param print_type: print the type of the attribute
+    :param callable_mode: how to handle attributes that are callable (i.e.,
+        methods)
+        - skip: skip the methods
+        - only: print only the methods
+        - all: print variables and callable
+    """
+
+    def _to_skip_callable(attr: Any, callable_mode: str) -> bool:
+        dbg.dassert_in(callable_mode, ("skip", "only", "all"))
+        is_callable = callable(attr)
+        skip = False
+        if callable_mode == "skip" and is_callable:
+            skip = True
+        if callable_mode == "only" and not is_callable:
+            skip = True
+        return skip
+
+    def _to_skip_private(name: str, private_mode: str) -> bool:
+        dbg.dassert_in(
+            private_mode,
+            ("skip_dunder", "only_dunder", "skip_private", "only_private", "all"),
+        )
+        is_dunder = name.startswith("__") and name.endswith("__")
+        is_private = not is_dunder and name.startswith("_")
+        skip = False
+        if private_mode == "skip_dunder" and is_dunder:
+            skip = True
+        if private_mode == "only_dunder" and not is_dunder:
+            skip = True
+        if private_mode == "skip_private" and is_private:
+            skip = True
+        if private_mode == "only_private" and not is_private:
+            skip = True
+        return skip
+
+    def _to_str(attr: Any, print_type: bool) -> str:
+        if print_type:
+            out = "%s= (%s) %s" % (v, type(attr), str(attr))
+        else:
+            out = "%s= %s" % (v, str(attr))
+        return out
+
+    ret = []
+    if attr_mode == "__dict__":
+        for v in sorted(obj.__dict__):
+            attr = obj.__dict__[v]
+            # Handle dunder / private methods.
+            skip = _to_skip_private(v, private_mode)
+            if skip:
+                continue
+            # Handle callable methods.
+            skip = _to_skip_callable(attr, callable_mode)
+            if skip:
+                continue
+            #
+            out = _to_str(attr, print_type)
+            ret.append(out)
+    elif attr_mode == "dir":
+        for v in dir(obj):
+            attr = getattr(obj, v)
+            # Handle dunder / private methods.
+            skip = _to_skip_private(v, private_mode)
+            if skip:
+                continue
+            # Handle callable methods.
+            skip = _to_skip_callable(attr, callable_mode)
+            if skip:
+                continue
+            #
+            out = _to_str(attr, print_type)
+            ret.append(out)
+    else:
+        dbg.dassert("Invalid attr_mode='%s'" % attr_mode)
+    return "\n".join(ret)
+
+
+def type_obj_to_str(obj: Any) -> str:
+    ret = "(%s) %s" % (type(obj), obj)
+    return ret
+
+
 def dataframe_to_str(
-    df: Any,
+    df: pd.DataFrame,
     max_columns: int = 10000,
     max_colwidth: int = 2000,
     max_rows: int = 500,
     display_width: int = 10000,
 ) -> str:
-    import pandas as pd
-
     with pd.option_context(
         "display.max_colwidth",
         max_colwidth,
@@ -348,7 +497,6 @@ def dataframe_to_str(
 
 def config_notebook(sns_set: bool = True) -> None:
     import matplotlib.pyplot as plt
-    import pandas as pd
     import seaborn as sns
 
     if sns_set:

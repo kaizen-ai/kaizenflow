@@ -1,35 +1,27 @@
+import functools
 from typing import Optional
 
 import pandas as pd
-import psycopg2
 import psycopg2.extensions as pexten
 
-import helpers.cache as hcache
 import helpers.dbg as dbg
-import vendors_amp.kibot.data.load.data_loader as vkdlda
-import vendors_amp.kibot.data.types as vkdtyp
+import vendors_amp.common.data.load.sql_data_loader as vcdlsq
+import vendors_amp.common.data.types as vcdtyp
 
 
-class SQLKibotDataLoader(vkdlda.AbstractKibotDataLoader):
-    def __init__(
-        self, dbname: str, user: str, password: str, host: str, port: int
-    ):
-        self.conn: psycopg2.extensions.connection = psycopg2.connect(
-            dbname=dbname,
-            user=user,
-            password=password,
-            host=host,
-            port=port,
-        )
+class SQLKibotDataLoader(vcdlsq.AbstractSQLDataLoader):
 
-    @hcache.cache
+    # TODO(plyq): Uncomment once #1047 will be resolved.
+    # @hcache.cache
+    # Use lru_cache for now.
+    @functools.lru_cache(maxsize=64)
     def read_data(
         self,
         exchange: str,
         symbol: str,
-        asset_class: vkdtyp.AssetClass,
-        frequency: vkdtyp.Frequency,
-        contract_type: Optional[vkdtyp.ContractType] = None,
+        asset_class: vcdtyp.AssetClass,
+        frequency: vcdtyp.Frequency,
+        contract_type: Optional[vcdtyp.ContractType] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
@@ -130,7 +122,7 @@ class SQLKibotDataLoader(vkdlda.AbstractKibotDataLoader):
         return trade_symbol_id
 
     @staticmethod
-    def _get_table_name_by_frequency(frequency: vkdtyp.Frequency) -> str:
+    def _get_table_name_by_frequency(frequency: vcdtyp.Frequency) -> str:
         """
         Get table name by predefined frequency.
 
@@ -138,11 +130,11 @@ class SQLKibotDataLoader(vkdlda.AbstractKibotDataLoader):
         :return: table name in DB
         """
         table_name = ""
-        if frequency == vkdtyp.Frequency.Minutely:
+        if frequency == vcdtyp.Frequency.Minutely:
             table_name = "MinuteData"
-        elif frequency == vkdtyp.Frequency.Daily:
+        elif frequency == vcdtyp.Frequency.Daily:
             table_name = "DailyData"
-        elif frequency == vkdtyp.Frequency.Tick:
+        elif frequency == vcdtyp.Frequency.Tick:
             table_name = "TickData"
         dbg.dassert(table_name, f"Unknown frequency {frequency}")
         return table_name
@@ -151,7 +143,7 @@ class SQLKibotDataLoader(vkdlda.AbstractKibotDataLoader):
         self,
         exchange: str,
         symbol: str,
-        frequency: vkdtyp.Frequency,
+        frequency: vcdtyp.Frequency,
         nrows: Optional[int] = None,
     ) -> pd.DataFrame:
         exchange_id = self.get_exchange_id(exchange)
