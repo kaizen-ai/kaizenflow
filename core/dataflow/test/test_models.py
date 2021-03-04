@@ -14,6 +14,7 @@ import core.config as cconfi
 import core.config_builders as ccbuild
 import core.dataflow as cdataf
 import core.signal_processing as csigna
+import helpers.dbg as dbg
 import helpers.printing as hprint
 import helpers.unit_test as hut
 
@@ -1139,18 +1140,10 @@ class TestVolatilityModel(hut.TestCase):
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
         config["tau"] = 10
-        # Get outputs for columns separately.
-        output_ret_0 = self._run_volatility_model(data, config)["ret_0_zscored"]
-        config["cols"] = ["ret_0_2"]
-        output_ret_0_2 = self._run_volatility_model(data, config)[
-            "ret_0_2_zscored"
-        ]
-        # Get output for multiple columns.
-        config["cols"] = ["ret_0", "ret_0_2"]
-        output = self._run_volatility_model(data, config)
-        np.testing.assert_array_equal(output["ret_0_zscored"], output_ret_0)
-        np.testing.assert_array_equal(output["ret_0_2_zscored"], output_ret_0_2)
-        self.check_string(output.to_string())
+        # Check if specified tau is used for all columns via learned taus property.
+        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
+        node.fit(data)
+        dbg.dassert_set_eq(node.taus.values(), [10])
 
     def test_fit_none_columns(self) -> None:
         # Load test data.
