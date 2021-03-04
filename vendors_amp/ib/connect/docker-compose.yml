@@ -1,0 +1,36 @@
+version: '2'
+services:
+  tws:
+    image: ib-connect:latest
+    volumes:
+      - ../../../:/amp
+      - ~/.aws:/root/.aws
+      - ../../../docker_build/fstab:/etc/fstab
+    privileged: true
+    cap_add:
+      - SYS_ADMIN 
+    ports:
+      - "4003:4003"
+      - "5901:5900"
+    entrypoint: "/entrypoint.sh"
+    env_file:
+      - "~/.vnc/ib.credentials"
+    environment:
+      - APP=${IB_APP}
+      - VNC_PASSWORD=${VNC_PASSWORD}
+      - TZ=UTC
+      - TWS_MAJOR_VRSN=974
+      - IBC_INI=/root/IBController/IBController.ini
+      - IBC_PATH=/opt/IBController
+      - TWS_PATH=/root/Jts
+      - TWS_CONFIG_PATH=/root/Jts
+      - LOG_PATH=/opt/IBController/Logs
+      - JAVA_PATH=/opt/i4j_jres/1.8.0_152/bin
+      - TRADING_MODE=paper
+      # Credentials are specified in a separate file.
+      # - VNC_TRUSTED_IPS=
+      # - TWSUSERID=
+      # - TWSPASSWORD=
+      # - FIXUSERID=
+      # - FIXPASSWORD=
+     
