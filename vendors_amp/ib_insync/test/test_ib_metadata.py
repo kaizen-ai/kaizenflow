@@ -38,7 +38,7 @@ class Test_ib_metadata1(hut.TestCase):
         #
         symbol = "NG"
         contract = ib_insync.Future(symbol, includeExpired=True)
-        ibmeta.update(self.ib, [contract], append=True)
+        ibmeta.update(self.ib, [contract])
         #
         df = ibmeta.load()
         self.check_string(df.to_csv())
@@ -52,7 +52,7 @@ class Test_ib_metadata1(hut.TestCase):
         #
         symbol = "NG"
         contract = ib_insync.Future(symbol, includeExpired=True)
-        ibmeta.update(self.ib, [contract], append=True)
+        ibmeta.update(self.ib, [contract])
         #
         symbol = "CL"
         contract = ib_insync.Future(symbol, includeExpired=True)
@@ -70,7 +70,7 @@ class Test_ib_metadata1(hut.TestCase):
         #
         symbol = "NG"
         contract = ib_insync.Future(symbol, includeExpired=True)
-        ibmeta.update(self.ib, [contract], append=True)
+        ibmeta.update(self.ib, [contract])
         #
         symbol = "CL"
         contract = ib_insync.Future(symbol, includeExpired=True)

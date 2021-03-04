@@ -29,29 +29,36 @@ class IbMetadata:
         """
         if os.path.exists(self.file_name):
             df = pd.read_csv(self.file_name, index_col=0)
+            df = self._clean(df)
         else:
             _LOG.debug("No file '%s'", self.file_name)
             df = pd.DataFrame()
         return df
 
-    def update(self, ib, contracts, append=True):
+    def update(self, ib, contracts, append=False):
         """
         Update metadata in `file_name` for the given contracts.
 
         :param append: if True it keeps appending
         """
         dfs = []
-        if append:
-            df = self.load()
-            dfs.append(df)
-        else:
-            _LOG.warning("Resetting data in file '%s'", self.file_name)
         for contract in contracts:
             df_tmp = ibutils.get_contract_details(ib, contract)
             dfs.append(df_tmp)
-        #
         df = pd.concat(dfs, axis=0)
-        df.set_index("conId", drop=True, inplace=True)
+        df = self._clean(df)
+        #
+        if append:
+            df_tmp = self.load()
+            df = pd.concat([df_tmp, df], axis=0)
+        else:
+            _LOG.warning("Resetting data in file '%s'", self.file_name)
         #
         hio.create_enclosing_dir(self.file_name, incremental=True)
         df.to_csv(self.file_name)
+
+    def _clean(self, df):
+        _LOG.debug("df=\n%s", df.head())
+        df.sort_values(["conId", "exchange"], inplace=True)
+        _LOG.debug("df=\n%s", df.head())
+        return df
