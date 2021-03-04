@@ -280,8 +280,6 @@ def ib_loop_generator(ib, contract, start_ts, end_ts, duration_str,
             _LOG.debug("idx=%s, total=%s", idx, pbar.total)
             pbar.n = idx
             pbar.refresh()
-        if curr_ts <= start_ts:
-        #
         yield i, df, ts_seq
         # We insert at the beginning since we are walking backwards the interval.
         if start_ts != "" and curr_ts <= start_ts:
@@ -289,10 +287,6 @@ def ib_loop_generator(ib, contract, start_ts, end_ts, duration_str,
                        "curr_ts=%s start_ts=%s", curr_ts, start_ts)
             return
         i += 1
-        yield i, df, ts_seq
-
-
-def _truncate_df(df, start_ts, end_ts):
 
 
 def _process_start_end_ts(start_ts, end_ts):
