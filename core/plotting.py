@@ -181,7 +181,8 @@ def get_multiple_plots(
 
     :param num_plots: number of plots
     :param num_cols: number of columns to use in the subplot
-    :param y_scale: if not None
+    :param y_scale: the height of each plot. If `None`, the size of the whole
+        figure equals the default `figsize`
     :return: figure and array of axes
     """
     dbg.dassert_lte(1, num_plots)
@@ -1211,13 +1212,15 @@ class PCA:
         self,
         num_components: Optional[int] = None,
         num_cols: int = 4,
-        y_scale: Optional[float] = None,
+        y_scale: Optional[float] = 4,
         axes: Optional[List[mpl.axes.Axes]] = None,
     ) -> None:
         """
         Plot principal components.
 
         :param num_components: number of top components to plot
+        :param y_scale: the height of each plot. If `None`, the size of the whole
+            figure equals the default `figsize`
         :param num_cols: number of columns to use in the subplot
         """
         suvali.check_is_fitted(self.pca)
