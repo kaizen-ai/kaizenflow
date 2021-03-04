@@ -79,12 +79,14 @@ def convert_df_to_string(
     n_rows: Optional[int] = None,
     title: Optional[str] = None,
     index: bool = False,
+    decimals: int = 6
 ) -> str:
     """Convert DataFrame or Series to string for verifying test results.
 
     :param df: DataFrame to be verified
     :param n_rows: number of rows in expected output
     :param title: title for test output
+    :param decimals: number of decimal points
     :return: string representation of input
     """
     if isinstance(df, pd.Series):
@@ -102,6 +104,8 @@ def convert_df_to_string(
         None,
         "display.max_rows",
         None,
+        "display.precision",
+        decimals
     ):
         # Add top N rows.
         output.append(df.head(n_rows).to_string(index=index))

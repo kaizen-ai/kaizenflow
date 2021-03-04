@@ -840,7 +840,7 @@ def plot_histograms_and_lagged_scatterplot(
     axes[2].axis("equal")
     axes[2].set_title("Scatter-plot with lag={}".format(lag))
 
-
+    
 # #############################################################################
 # Correlation-type plots
 # #############################################################################
@@ -1856,7 +1856,32 @@ def plot_holdings(
     ax.legend()
     ax.set_title(f"Total holdings ({unit})")
 
+def plot_holding_diffs(
+    holdings: pd.Series,
+    unit: str = "ratio",
+    ax: Optional[mpl.axes.Axes] = None,
+) -> None:
+    """Plot holding changes over time.
+    
+    Indicates how much to increase or decrease holdings from current point in 
+    time to the next one in order to achieve the target position. Since the 
+    difference is between current and next time periods, the holdings change 
+    from t0 to t1 has a timestamp t0.
 
+    :param holdings: series to plot
+    :param unit: "ratio", "%" or "bps" scaling coefficient
+    :param ax: axes in which to draw the plot
+    """
+    ax = ax or plt.gca()
+    scale_coeff = _choose_scaling_coefficient(unit)
+    holdings = scale_coeff * holdings
+    holdings = -holdings.diff(-1)
+    holdings.plot(linewidth=1, ax=ax, label="holding changes")
+    ax.set_ylabel(unit)
+    ax.legend()
+    ax.set_title(f"Holding changes over time (in {unit})")
+    
+    
 def plot_qq(
     srs: pd.Series,
     ax: Optional[mpl.axes.Axes] = None,
