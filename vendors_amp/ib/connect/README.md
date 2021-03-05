@@ -3,14 +3,11 @@
       * [Getting Started](#getting-started)
          * [Pull image](#pull-image)
          * [Create image](#create-image)
-         * [Set up VNC server with running app on localhost](#set-up-vnc-server-with-running-app-on-localhost)
-            * [Start TWS](#start-tws)
-            * [Start Gateway app](#start-gateway-app)
-         * [Set up VNC server with running app on remote server](#set-up-vnc-server-with-running-app-on-remote-server)
-            * [Start Gateway app](#start-gateway-app-1)
-         * [Shutdown VNC server with running app](#shutdown-vnc-server-with-running-app)
-      * [Client connection to running TWS/Gateway app](#client-connection-to-running-twsgateway-app)
-         * [Linux](#linux)
+         * [Start app on localhost](#start-app-on-localhost)
+         * [Shutdown app](#shutdown-app)
+   * [VNC](#vnc)
+      * [Linux](#linux)
+      * [Mac](#mac)
 
 
 
@@ -35,8 +32,8 @@
 > make ib_connect.docker.pull
 ```
 
-- If the image is not available in ECR you can follow the instructions in [Create
-  image](create-image)
+- If the image is not available in ECR you can follow the instructions in
+  [Create image](create-image)
 
 ### Create image
 
@@ -49,6 +46,7 @@
 ### Start app on localhost
 
 - You need to add a file with IB credentials to `~/.vnc/ib.credentials` like:
+
   ```bash
   TWSUSERID=user123
   TWSPASSWORD=password456
@@ -57,11 +55,13 @@
   ```
 
 - Start TWS
+
   ```bash
   > IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=TWS make ib_connect.docker.local.up
   ```
 
 - Start Gateway app
+
   ```bash
   > IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=GATEWAY make ib_connect.docker.local.up
   ```
@@ -91,6 +91,7 @@
 ## Linux
 
 - Install a VNC viewer with:
+
   ```bash
   > sudo apt install tigervnc-viewer
   ```
@@ -106,5 +107,3 @@
 - In the menu, `Go` -> `Connect to server...` enter
   - Go to `vnc://localhost:5901`
   - Then you should get prompted for the password
-
-- As an alternative you can use 
