@@ -18,15 +18,15 @@
 
 # Interactive Brokers Gateway Docker
 
-IB Gateway running in Docker with
-[IB Controller](https://github.com/ib-controller/ib-controller/) and VNC
-
-* TWS Gateway: v974.4g
-* IB Controller: v3.2.0
+- Docker container with:
+  - TWS Gateway: v974.4g
+  - IB Controller: v3.2.0
+  - [IB Controller](https://github.com/ib-controller/ib-controller/)
+  - VNC
 
 ## Getting Started
 
-All commands runs from `amp` root directory.
+- All commands need to be executed from `amp` root directory
 
 ### Pull image
 
@@ -35,7 +35,8 @@ All commands runs from `amp` root directory.
 > make ib_connect.docker.pull
 ```
 
-If image is not at the production stage look [Create image](create-image).
+- If the image is not available in ECR you can follow the instructions in [Create
+  image](create-image)
 
 ### Create image
 
