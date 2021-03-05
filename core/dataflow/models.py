@@ -174,7 +174,7 @@ class ContinuousSkLearnModel(
         # Generate insample predictions and put in dataflow dataframe format.
         fwd_y_hat = self._model.predict(x_fit)
         #
-        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
+        fwd_y_hat_vars = [f"{y}_hat" for y in fwd_y_df.columns]
         fwd_y_hat = cdataa.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
         )
@@ -220,7 +220,7 @@ class ContinuousSkLearnModel(
         # Put predictions in dataflow dataframe format.
         fwd_y_df = self._get_fwd_y_df(df).loc[non_nan_idx]
         fwd_y_non_nan_idx = fwd_y_df.dropna().index
-        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
+        fwd_y_hat_vars = [f"{y}_hat" for y in fwd_y_df.columns]
         fwd_y_hat = cdataa.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
         )
@@ -618,7 +618,7 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
         x = cdataa.transform_from_sklearn(idx, x_vars, x_vals)
         y = cdataa.transform_from_sklearn(idx, y_vars, y_vals)
         y_h = cdataa.transform_from_sklearn(
-            idx, [y + "_hat" for y in y_vars], y_hat
+            idx, [f"{y}_hat" for y in y_vars], y_hat
         )
         return x, y, y_h
 
@@ -954,7 +954,7 @@ class ContinuousSarimaxModel(
         # Shift index instead of series to extend the index.
         bkwd_x_df = df[x_vars].copy()
         bkwd_x_df.index = bkwd_x_df.index.shift(shift)
-        mapper = lambda y: y + "_bkwd_%i" % shift
+        mapper = lambda y: str(y) + "_bkwd_%i" % shift
         return bkwd_x_df.rename(columns=mapper)
 
     def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -962,7 +962,7 @@ class ContinuousSarimaxModel(
         Return dataframe of `steps_ahead` forward y values.
         """
         y_vars = self._to_list(self._y_vars)
-        mapper = lambda y: y + "_%i" % self._steps_ahead
+        mapper = lambda y: str(y) + "_%i" % self._steps_ahead
         fwd_y_df = df[y_vars].shift(-self._steps_ahead).rename(columns=mapper)
         return fwd_y_df
 
@@ -994,7 +994,7 @@ class ContinuousSarimaxModel(
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
 
-class MultihorizonReturnsPredictionProcessor(FitPredictNode):
+class MultihorizonReturnsPredictionProcessor(FitPredictNode, ToListMixin):
     """
     Process multi-horizon returns prediction.
 
@@ -1010,7 +1010,7 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode):
         self,
         nid: str,
         target_col: Any,
-        prediction_cols: List[Any],
+        prediction_cols: _TO_LIST_MIXIN_TYPE,
         volatility_col: Any,
     ):
         """
@@ -1027,8 +1027,7 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode):
         """
         super().__init__(nid)
         self._target_col = target_col
-        dbg.dassert_isinstance(prediction_cols, list)
-        self._prediction_cols = prediction_cols
+        self._prediction_cols = self._to_list(prediction_cols)
         self._volatility_col = volatility_col
         self._max_steps_ahead = len(self._prediction_cols)
 
@@ -1249,7 +1248,7 @@ class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
         Return dataframe of `steps_ahead` forward y values.
         """
         y_vars = self._to_list(self._y_vars)
-        mapper = lambda y: y + "_%i" % self._prediction_length
+        mapper = lambda y: str(y) + "_%i" % self._prediction_length
         # TODO(gp): Not sure if the following is needed.
         # [mapper(y) for y in y_vars]
         # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
@@ -1374,7 +1373,7 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
             )
         )
         y_hat.index = aligned_idx
-        y_hat.name = y_vars[0] + "_hat"
+        y_hat.name = str(y_vars[0]) + "_hat"
         y_hat.index.rename(df.index.names, inplace=True)
         # Store info.
         info = collections.OrderedDict()
@@ -1422,7 +1421,7 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
             )
         )
         y_hat.index = aligned_idx
-        y_hat.name = y_vars[0] + "_hat"
+        y_hat.name = str(y_vars[0]) + "_hat"
         y_hat.index.rename(df.index.names, inplace=True)
         # Store info.
         info = collections.OrderedDict()
@@ -1438,7 +1437,7 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
         return {"df_out": df_out}
 
 
-class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
+class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
     """
     Fit and predict a smooth moving average model.
     """
@@ -1446,7 +1445,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
     def __init__(
         self,
         nid: str,
-        col: list,
+        col: _TO_LIST_MIXIN_TYPE,
         steps_ahead: int,
         tau: Optional[float] = None,
         col_mode: Optional[str] = None,
@@ -1463,9 +1462,8 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         :param nan_mode: as in ContinuousSkLearnModel
         """
         super().__init__(nid)
-        dbg.dassert_isinstance(col, list)
-        dbg.dassert_eq(len(col), 1)
-        self._col = col
+        self._col = self._to_list(col)
+        dbg.dassert_eq(len(self._col), 1)
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(
             0, self._steps_ahead, "Non-causal prediction attempted! Aborting..."
@@ -1521,7 +1519,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         info["min_periods"] = self._min_periods
         # Generate insample predictions and put in dataflow dataframe format.
         fwd_y_hat = self._predict(x_fit)
-        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
+        fwd_y_hat_vars = [f"{y}_hat" for y in fwd_y_df.columns]
         fwd_y_hat = cdataa.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
         )
@@ -1556,7 +1554,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         fwd_y_hat = self._predict(x_predict)
         # Put predictions in dataflow dataframe format.
         fwd_y_df = self._get_fwd_y_df(df).loc[non_nan_idx]
-        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
+        fwd_y_hat_vars = [f"{y}_hat" for y in fwd_y_df.columns]
         fwd_y_hat = cdataa.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
         )
