@@ -31,19 +31,14 @@ RUN yes n | /opt/TWS/ibgateway-latest-standalone-linux-x64-v974.4g.sh
 
 ENV DISPLAY :0
 
-ADD entrypoint.sh entrypoint.sh
-ADD ./vnc/xvfb_init /etc/init.d/xvfb
-ADD ./vnc/vnc_init /etc/init.d/vnc
-ADD ./vnc/xvfb-daemon-run /usr/bin/xvfb-daemon-run
+ADD ./vendors_amp/ib/connect/entrypoint.sh entrypoint.sh
+ADD ./vendors_amp/ib/connect/vnc/xvfb_init /etc/init.d/xvfb
+ADD ./vendors_amp/ib/connect/vnc/vnc_init /etc/init.d/vnc
+ADD ./vendors_amp/ib/connect/vnc/xvfb-daemon-run /usr/bin/xvfb-daemon-run
 
 RUN chmod -R u+x entrypoint.sh \
   && chmod -R 777 /usr/bin/xvfb-daemon-run \
   && chmod 777 /etc/init.d/xvfb \
   && chmod 777 /etc/init.d/vnc
 
-# Below files copied during build to enable operation without volume mount
-# COPY ./ib/IBController.ini /root/IBController/IBController.ini
-# COPY ./ib/jts.ini /root/Jts/jts.ini
-
-# CMD bash entrypoint.sh
 WORKDIR /amp
