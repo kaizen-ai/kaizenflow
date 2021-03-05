@@ -628,16 +628,16 @@ def apply_sharpe_ratio_correlation_conversion(
     :return: annualized Sharpe ratio if correlation is provided; correlation 
         if annualized Sharpe ratio is provided.
     """
-    dbg.dassert(pd.notna([sharpe_ratio, correlation]).any(),
-              "`sharpe_ratio` or `correlation` must be provided.")
-    dbg.dassert(pd.isna([sharpe_ratio, correlation]).any(),
-              "Either `sharpe_ratio` or `correlation` must be provided.")
     points_per_year = hdataf.compute_points_per_year_for_given_freq(freq)
-    if sharpe_ratio is not None:
+    if sharpe_ratio is not None and correlation is None:
         sharpe_ratio /= np.sqrt(points_per_year)
         return sharpe_ratio / np.sqrt(1 - sharpe_ratio**2)
-    sharpe_ratio = correlation / np.sqrt(1 + correlation**2)
-    return sharpe_ratio * np.sqrt(points_per_year)
+    if sharpe_ratio is None and correlation is not None:
+        sharpe_ratio = correlation / np.sqrt(1 + correlation**2)
+        return sharpe_ratio * np.sqrt(points_per_year)
+    raise ValueError(
+            "Precisely one of `sharpe_ratio` and `correlation` should not be `None`"
+        )
 
 
 # #############################################################################
