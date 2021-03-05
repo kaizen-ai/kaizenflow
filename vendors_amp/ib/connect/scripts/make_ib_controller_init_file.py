@@ -9,12 +9,13 @@ Usage:
     1. Create config with IB user/password:
     > make_ib_controller_init_file.py --user username --password password
 """
-import logging
 import argparse
+import logging
+from typing import Any, Dict
+
 import helpers.dbg as dbg
-import helpers.parser as hparse
 import helpers.io_ as hio
-from typing import Dict, Any
+import helpers.parser as hparse
 
 DEFAULT_CONFIG = dict(
     LogToConsole="yes",
@@ -54,7 +55,13 @@ _LOG = logging.getLogger(__name__)
 
 def _save_config_to_file(config: Dict[str, Any]) -> None:
     # Get text to save.
-    string = "\n".join(["%s=%s" % (param, value) for param, value in config.items() if value is not None])
+    string = "\n".join(
+        [
+            "%s=%s" % (param, value)
+            for param, value in config.items()
+            if value is not None
+        ]
+    )
     # Save text to file.
     hio.create_enclosing_dir(PATH_TO_CONFIG, incremental=True)
     hio.to_file(PATH_TO_CONFIG, string)
@@ -96,4 +103,3 @@ def _main(parser: argparse.ArgumentParser) -> None:
 
 if __name__ == "__main__":
     _main(_parse())
-

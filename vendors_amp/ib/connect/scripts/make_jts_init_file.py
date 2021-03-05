@@ -8,20 +8,21 @@ https://github.com/mvberg/ib-gateway-docker/blob/master/ib/jts.ini
 Usage:
     1. Create default config file:
     > make_jts_init_file.py
-    
+
     2. Create config on server (use your local IP instead of 33.3.33.3):
     > make_jts_init_file.py --trusted_ips 127.0.0.1,33.3.33.3
 """
-import logging
 import argparse
+import logging
+from typing import Any, Dict
+
 import helpers.dbg as dbg
-import helpers.parser as hparse
 import helpers.io_ as hio
-from typing import Dict, Any
+import helpers.parser as hparse
 
 PATH_TO_CONFIG = "/root/Jts/jts.ini"
 _LOG = logging.getLogger(__name__)
-DEFAULT_CONFIG = {
+DEFAULT_CONFIG: Dict[str, Dict[str, Any]] = {
     "IBGateway": {
         "WriteDebug": "false",
         "TrustedIPs": "127.0.0.1",
@@ -44,7 +45,7 @@ DEFAULT_CONFIG = {
         "os_titlebar": "false",
         "s3store": "true",
     },
-    "ns" : {
+    "ns": {
         "darykq": 1,
     },
     "Communication": {
@@ -96,7 +97,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     dbg.shutup_chatty_modules()
     # Set up config to save.
-    params = DEFAULT_CONFIG.copy()
+    params: Dict[str, Dict[str, Any]] = DEFAULT_CONFIG.copy()
     # Add trusted IP-s.
     if args.trusted_ips is not None:
         params["IBGateway"]["TrustedIPs"] = args.trusted_ips
@@ -106,4 +107,3 @@ def _main(parser: argparse.ArgumentParser) -> None:
 
 if __name__ == "__main__":
     _main(_parse())
-

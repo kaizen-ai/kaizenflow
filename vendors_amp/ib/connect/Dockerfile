@@ -7,7 +7,7 @@ RUN  apt-get update \
   && apt-get install -y libxtst6 \
   && apt-get install -y libxrender1 \
   && apt-get install -y libxi6 \
-	&& apt-get install -y x11vnc \
+    && apt-get install -y x11vnc \
   && apt-get install -y socat \
   && apt-get install -y software-properties-common
 
