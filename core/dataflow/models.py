@@ -921,6 +921,8 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
                 raise ValueError(f"NaNs detected at {nan_idx}")
         elif self._nan_mode == "drop":
             pass
+        elif self._nan_mode == "leave_unchanged":
+            pass
         else:
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
