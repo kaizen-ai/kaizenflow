@@ -83,7 +83,7 @@ Gateway app example:
 ![vnc](docs/ib_gateway_vnc.jpg)
 
 How to connect to VNC with different OS is described here. 
-Assume that VNC server is running on localhost:5901.
+Assume that VNC server is running on `localhost:5901`.
 
 ### Linux
 
