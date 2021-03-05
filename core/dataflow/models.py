@@ -921,6 +921,8 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
                 raise ValueError(f"NaNs detected at {nan_idx}")
         elif self._nan_mode == "drop":
             pass
+        elif self._nan_mode == "leave_unchanged":
+            pass
         else:
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
@@ -1125,6 +1127,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin):
                 mode="demodulate",
                 col_rename_func=self._col_rename_func,
                 col_mode=self._col_mode,
+                nan_mode=self._nan_mode,
             )
 
     @staticmethod
@@ -1169,6 +1172,7 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
         mode: str,
         col_rename_func: Optional[Callable[[Any], Any]] = None,
         col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         :param nid: node identifier
@@ -1197,6 +1201,7 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
         self._mode = mode
         self._col_rename_func = col_rename_func or (lambda x: x)
         self._col_mode = col_mode or "replace_all"
+        self._nan_mode = nan_mode or "leave_unchanged"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df_out = self._process_signal(df_in)
@@ -1226,6 +1231,12 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
         fwd_volatility = df_in[self._volatility_col]
         # Shift volatility to align it with signal.
         volatility_shift = self._volatility_steps_ahead - self._signal_steps_ahead
+        if self._nan_mode == "drop":
+            fwd_volatility = fwd_volatility.dropna()
+        elif self._nan_mode == "leave_unchanged":
+            pass
+        else:
+            raise ValueError(f"Unrecognized `nan_mode` {self._nan_mode}")
         volatility_aligned = fwd_volatility.shift(volatility_shift)
         # Adjust signal by volatility.
         if self._mode == "demodulate":
