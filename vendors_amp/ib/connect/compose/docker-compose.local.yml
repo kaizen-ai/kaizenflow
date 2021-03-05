@@ -1,0 +1,10 @@
+version: '3'
+services:
+  tws:
+    env_file:
+      - "~/.vnc/ib.credentials"
+      - "../env/local.env"
+    ports:
+      - "4003:4003"
+      - "5901:5900"
+

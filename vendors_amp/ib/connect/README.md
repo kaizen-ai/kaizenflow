@@ -39,13 +39,13 @@ FIXPASSWORD=
 #### Start TWS
 
 ```bash
-> IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=TWS make ib_connect.docker.up
+> IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=TWS make ib_connect.docker.local.up
 ```
 
 #### Start Gateway app
 
 ```bash
-> IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=GATEWAY make ib_connect.docker.up
+> IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=GATEWAY make ib_connect.docker.local.up
 ```
 
 You will now have the IB Gateway app running on port 4003 and VNC on 5901.
@@ -57,13 +57,13 @@ you will still need to add a parameter `IB_CONNECT_TRUSTED_IPS`
 with all public IP-s needed to connect to VNC server (e.g. IP of your local machine):
 
 ```bash
-> IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_TRUSTED_IPS=46.73.103.55 IB_CONNECT_APP=GATEWAY make ib_connect.docker.up
+> IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_TRUSTED_IPS=46.73.103.55 IB_CONNECT_APP=GATEWAY make ib_connect.docker.local.up
 ```
 
 #### Start Gateway app
 
 ```bash
-> IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=GATEWAY make ib_connect.docker.up
+> IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=GATEWAY make ib_connect.docker.local.up
 ```
 
 You will now have the IB Gateway app running on port 4003 and VNC on 5901.
@@ -73,7 +73,7 @@ You will now have the IB Gateway app running on port 4003 and VNC on 5901.
 ### Shutdown VNC server with running app
 
 ```bash
-> make ib_connect.docker.down
+> make ib_connect.docker.local.down
 ```
 
 ## Client connection to running TWS/Gateway app
