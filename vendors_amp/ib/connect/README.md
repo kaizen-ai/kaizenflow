@@ -7,66 +7,89 @@ IB Gateway running in Docker with [IB Controller](https://github.com/ib-controll
 
 ## Getting Started
 
-### Set up VNC server with running app
+All commands runs from `amp` root directory.
+
+### Pull image
 
 ```bash
-> make 
-> cd ib-gateway-docker
-> docker build .
-> docker-compose up
+> make docker_login
+> make ib_connect.docker.pull
 ```
 
-#### Expected output
+If image is not at the production stage look [Create image](create-image).
+
+### Create image
 
 ```bash
-Creating ibgatewaydocker_tws_1 ...
-Creating ibgatewaydocker_tws_1 ... done
-Attaching to ibgatewaydocker_tws_1
-tws_1  | Starting virtual X frame buffer: Xvfb.
-tws_1  | find: '/opt/IBController/Logs': No such file or directory
-tws_1  | stored passwd in file: /.vnc/passwd
-tws_1  | Starting x11vnc.
-tws_1  |
-tws_1  | +==============================================================================
-tws_1  | +
-tws_1  | + IBController version 3.2.0
-tws_1  | +
-tws_1  | + Running GATEWAY 960
-tws_1  | +
-tws_1  | + Diagnostic information is logged in:
-tws_1  | +
-tws_1  | + /opt/IBController/Logs/ibc-3.2.0_GATEWAY-960_Tuesday.txt
-tws_1  | +
-tws_1  | +
-tws_1  | Forking :::4001 onto 0.0.0.0:4003\n
+> make ib_connect.docker.build.rc_image
+> # Check that image is correct.
+> make ib_connect.docker.tag.rc.latest
+```
+
+### Set up VNC server with running app on localhost
+
+You will need to add a file with IB credentials to `~/.vnc/ib.credentials` like:
+```bash
+TWSUSERID=user123
+TWSPASSWORD=password456
+FIXUSERID=
+FIXPASSWORD=
+```
+
+#### Start TWS
+
+```bash
+> IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=TWS make ib_connect.docker.up
+```
+
+#### Start Gateway app
+
+```bash
+> IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=GATEWAY make ib_connect.docker.up
 ```
 
 You will now have the IB Gateway app running on port 4003 and VNC on 5901.
 
-See [docker-compose.yml](docker-compose.yml) for configuring VNC password, accounts and trading mode.
+### Set up VNC server with running app on remote server
 
-Please do not open your box to the internet.
+In addition to [Set up VNC server with running app on localhost](set-up-vnc-server-with-running-app-on-localhost)
+you will still need to add a parameter `IB_CONNECT_TRUSTED_IPS` 
+with all public IP-s needed to connect to VNC server (e.g. IP of your local machine):
 
-### Testing VNC
-
-* localhost:5901
-
-![vnc](docs/ib_gateway_vnc.jpg)
-
-### Demo Accounts
-
-It seems that all of the `demo` accounts are dead for good:
-
-* edemo
-* fdemo
-* pmdemo
-
-### Troubleshooting
-
-Sometimes, when running in non-daemon mode, you will see this:
-
-```java
-Exception in thread "main" java.awt.AWTError: Can't connect to X11 window server using ':0' as the value of the DISPLAY variable.
+```bash
+> IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_TRUSTED_IPS=46.73.103.55 IB_CONNECT_APP=GATEWAY make ib_connect.docker.up
 ```
 
-You will have to remove the container `docker rm container_id` and run `docker-compose up` again.
+#### Start Gateway app
+
+```bash
+> IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=GATEWAY make ib_connect.docker.up
+```
+
+You will now have the IB Gateway app running on port 4003 and VNC on 5901.
+
+
+
+### Shutdown VNC server with running app
+
+```bash
+> make ib_connect.docker.down
+```
+
+## Client connection to running TWS/Gateway app
+
+To connect to VNC where the app is running, one will need a VNC viewer app.
+Gateway app example:
+![vnc](docs/ib_gateway_vnc.jpg)
+
+How to connect to VNC with different OS is described here. 
+Assume that VNC server is running on localhost:5901.
+
+### Linux
+
+```bash
+sudo apt install tigervnc-viewer
+vncviewer localhost::5901
+```
+
+It will ask you for a password, use one that you use on VNS server start up (`IB_CONNECT_VNC_PASSWORD`).
