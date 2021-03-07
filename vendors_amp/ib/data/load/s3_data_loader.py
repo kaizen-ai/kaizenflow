@@ -1,6 +1,4 @@
 """
-Load S3 data for IB provider.
-
 Import as:
 
 vendors_amp.ib.data.load.s3_data_loader ibs3
@@ -22,6 +20,10 @@ _LOG = logging.getLogger(__name__)
 
 
 class S3IbDataLoader(vcdls3.AbstractS3DataLoader):
+    """
+    Reads IB data from S3.
+    """
+
     S3_COLUMNS = {
         "date": "datetime64[ns]",
         "open": float,
@@ -80,7 +82,7 @@ class S3IbDataLoader(vcdls3.AbstractS3DataLoader):
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
     ) -> pd.DataFrame:
-        # Find path to look for a data.
+        # Generate path to retrieve data.
         file_path = vidlfi.IbFilePathGenerator().generate_file_path(
             symbol=symbol,
             asset_class=asset_class,
@@ -96,6 +98,6 @@ class S3IbDataLoader(vcdls3.AbstractS3DataLoader):
             )
         # Read data.
         data = pd.read_csv(file_path, nrows=nrows)
-        # Arrange types.
+        # Cast columns to correct types.
         data = data.astype(cls.S3_COLUMNS)
         return data

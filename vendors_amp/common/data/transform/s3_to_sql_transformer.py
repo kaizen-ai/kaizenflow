@@ -1,7 +1,3 @@
-"""
-Converts data stored in S3 to SQL.
-"""
-
 import abc
 import logging
 
@@ -21,7 +17,7 @@ class AbstractS3ToSqlTransformer(abc.ABC):
         frequency: vcdtyp.Frequency,
     ) -> pd.DataFrame:
         """
-        Transform data loaded from S3 to load to SQL.
+        Transform data stored on S3 to load to SQL.
 
         :param df: dataframe with data from S3
         :param trade_symbol_id: symbol id in SQL database

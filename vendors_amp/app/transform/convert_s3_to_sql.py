@@ -2,31 +2,29 @@
 r"""
 Converts data from S3 to SQL and inserts it into DB.
 
-Usage:
-    1. Convert daily data from S3 to SQL for AAPL, kibot provider:
-    > convert_s3_to_sql.py \
-        --provider kibot \
-        --symbol AAPL \
-        --frequency D \
-        --contract_type continuous \
-        --asset_class stocks \
-        --exchange NYSE
+Usage examples:
+- Convert daily data from S3 to SQL for AAPL, and provider "kibot":
+  > convert_s3_to_sql.py \
+      --provider kibot \
+      --symbol AAPL \
+      --frequency D \
+      --contract_type continuous \
+      --asset_class stocks \
+      --exchange NYSE
 
-    2. Convert daily data from S3 to SQL for AAPL, kibot provider,
-        specifying connection:
-    > convert_s3_to_sql.py \
-        --provider kibot \
-        --symbol AAPL \
-        --frequency D \
-        --contract_type continuous \
-        --asset_class stocks \
-        --exchange NYSE \
-        --dbname kibot_postgres_db_local \
-        --dbhost kibot_postgres_local \
-        --dbuser menjgbcvejlpcbejlc \
-        --dbpass eidvlbaresntlcdbresntdjlrs \
-        --dbport 5432
-
+- Convert daily data from S3 to SQL for AAPL, kibot provider, specifying connection:
+  > convert_s3_to_sql.py \
+      --provider kibot \
+      --symbol AAPL \
+      --frequency D \
+      --contract_type continuous \
+      --asset_class stocks \
+      --exchange NYSE \
+      --dbname kibot_postgres_db_local \
+      --dbhost kibot_postgres_local \
+      --dbuser menjgbcvejlpcbejlc \
+      --dbpass eidvlbaresntlcdbresntdjlrs \
+      --dbport 5432
 """
 
 import argparse
@@ -152,11 +150,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.shutup_chatty_modules()
     # Set up parameters for running.
     provider = args.provider
-    s3_to_sql_transformer = vastra.TransformerFactory.get_s3_to_sql_transformer(
-        provider=provider
-    )
     s3_data_loader: vcdls3.AbstractS3DataLoader = vasloa.LoaderFactory.get_loader(
         storage_type="s3", provider=provider
+    )
+    s3_to_sql_transformer = vastra.TransformerFactory.get_s3_to_sql_transformer(
+        provider=provider
     )
     sql_writer_backend = vassql.SqlWriterFactory.get_sql_writer_backend(
         provider=provider,
@@ -177,12 +175,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
             port=args.dbport,
         )
     )
-    _LOG.info("Connected to database")
+    _LOG.info("Connecting to database")
     sql_writer_backend.ensure_exchange_exists(args.exchange)
     exchange_id = sql_data_loader.get_exchange_id(args.exchange)
     # Select symbols to process.
     symbols = args.symbol
     if args.max_num_assets is not None:
+        _LOG.warning("Selected only %d symbols as per user request",
+                     args.max_num_assets)
         dbg.dassert_lte(1, args.max_num_assets)
         symbols = symbols[: args.max_num_assets]
     # Construct list of parameters.
