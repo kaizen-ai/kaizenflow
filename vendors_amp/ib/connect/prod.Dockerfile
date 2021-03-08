@@ -6,4 +6,3 @@ ADD ./vendors_amp/ib/connect/vnc/xvfb-daemon-run /usr/bin/xvfb-daemon-run
 
 ADD ./helpers /amp/helpers
 ADD ./vendors_amp/ib/connect /amp/vendors_amp/ib/connect
-

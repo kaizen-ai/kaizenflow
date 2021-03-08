@@ -4,6 +4,8 @@
          * [Pull image](#pull-image)
          * [Create image](#create-image)
          * [Start app on localhost](#start-app-on-localhost)
+         * [Start app on production](#start-app-on-production)
+         * [Additional start parameters](#additional-start-parameters)
          * [Shutdown app](#shutdown-app)
    * [VNC](#vnc)
       * [Linux](#linux)
@@ -94,6 +96,7 @@
 ### Shutdown app
 
 - Local image
+
   ```bash
   > make ib_connect.docker_down.local
   ```
