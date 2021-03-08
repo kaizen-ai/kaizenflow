@@ -37,7 +37,7 @@ ib_connect.docker_build.prod_image:
 		-t $(IB_CONNECT_PROD_IMAGE) \
 		--file vendors_amp/ib/connect/prod.Dockerfile .
 
-# Push release candidate images.
+# Push prod images.
 ib_connect.docker_push.prod_image:
 	docker push $(IB_CONNECT_PROD_IMAGE)
 

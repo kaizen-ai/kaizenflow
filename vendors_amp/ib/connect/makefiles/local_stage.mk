@@ -6,10 +6,9 @@
 IB_CONNECT_APP?=GATEWAY
 IB_CONNECT_TRUSTED_IPS?=""
 IB_CONNECT_VNC_PASSWORD?=
-IB_CONNECT_IMAGE?=$(IB_CONNECT_IMAGE)
 ib_connect.docker_run.local:
 ifeq ($(IB_CONNECT_VNC_PASSWORD),)
-	@echo "You need to provide IB_CONNECT_VNC_PASSWORD parameter. Example: 'IB_CONNECT_VNC_PASSWORD=12345 make ib_connect.docker.run'"
+	@echo "You need to provide IB_CONNECT_VNC_PASSWORD parameter. Example: 'IB_CONNECT_VNC_PASSWORD=12345 make ib_connect.docker_run.local'"
 else
 	IB_APP=$(IB_CONNECT_APP) \
 	IMAGE=$(IB_CONNECT_DEV_IMAGE) \
@@ -28,7 +27,7 @@ endif
 # Run in detach mode.
 ib_connect.docker_up.local:
 ifeq ($(IB_CONNECT_VNC_PASSWORD),)
-	@echo "You need to provide IB_CONNECT_VNC_PASSWORD parameter. Example: 'IB_CONNECT_VNC_PASSWORD=12345 make ib_connect.docker.run'"
+	@echo "You need to provide IB_CONNECT_VNC_PASSWORD parameter. Example: 'IB_CONNECT_VNC_PASSWORD=12345 make ib_connect.docker_up.local'"
 else
 	IB_APP=$(IB_CONNECT_APP) \
 	IMAGE=$(IB_CONNECT_DEV_IMAGE) \

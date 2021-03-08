@@ -17,7 +17,6 @@
 
 - Docker container with:
   - TWS Gateway: v974.4g
-  - IB Controller: v3.2.0
   - [IB Controller](https://github.com/ib-controller/ib-controller/)
   - VNC
 
@@ -29,7 +28,7 @@
 
 ```bash
 > make docker_login
-> make ib_connect.docker.pull
+> make ib_connect.docker_pull
 ```
 
 - If the image is not available in ECR you can follow the instructions in
@@ -38,9 +37,9 @@
 ### Create image
 
 ```bash
-> make ib_connect.docker.build.rc_image
+> make ib_connect.docker_build.rc_image
 > # Check that image is correct.
-> make ib_connect.docker.tag.rc.latest
+> make ib_connect.docker_tag.rc_dev
 ```
 
 ### Start app on localhost
@@ -63,22 +62,46 @@
 - Start Gateway app
 
   ```bash
-  > IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=GATEWAY make ib_connect.docker.local.up
+  > IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=GATEWAY make ib_connect.docker_up.local
   ```
 
 - You will now have the IB Gateway app running on port 4003 and VNC on 5901.
 
+### Start app on production
+
+- Start TWS
+
+  ```bash
+  > IB_CONNECT_USER=user123 IB_CONNECT_PASSWORD=password456 IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=TWS make ib_connect.docker_up.prod
+  ```
+
+- Start Gateway app
+
+  ```bash
+  > IB_CONNECT_USER=user123 IB_CONNECT_PASSWORD=password456 IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=GATEWAY make ib_connect.docker_up.prod
+  ```
+
+- You will now have the IB Gateway app running on port 4004 and VNC on 5902.
+
+### Additional start parameters
+
 - Note that you might need to add a parameter `IB_CONNECT_TRUSTED_IPS` with all
   public IP-s needed to connect to VNC server (e.g. IP of your local machine):
   ```bash
-  > MY_IP=$(curl ifconfig.me); IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_TRUSTED_IPS=$MY_IP IB_CONNECT_APP=TWS make ib_connect.docker.local.up
+  > MY_IP=$(curl ifconfig.me); IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_TRUSTED_IPS=$MY_IP IB_CONNECT_APP=TWS make ib_connect.docker_up.local
   ```
 
 ### Shutdown app
 
-```bash
-> make ib_connect.docker.local.down
-```
+- Local image
+  ```bash
+  > make ib_connect.docker_down.local
+  ```
+
+- Production image
+  ```bash
+  > make ib_connect.docker_down.prod
+  ```
 
 # VNC
 

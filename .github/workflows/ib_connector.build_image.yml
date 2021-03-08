@@ -1,4 +1,4 @@
-name: ID connector build image
+name: IB connector build image
 on:
   workflow_dispatch:
 
@@ -27,32 +27,23 @@ jobs:
           ssh-key: ${{ secrets.GH_ACTION_SSH_PRIVATE_KEY }}
 
       - name: Build image
-        run: make docker_build_rc_image
+        run: make ib_connect.docker_build.rc_image
 
-      - name: Push image rc image
-        run: make docker_push_rc_image
-
-      - name: Run fast tests for rc image
-        if: ${{ success() }}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-        run: make test_fast_gh_action_rc
-
-      - name: Run slow tests for rc image
-        if: ${{ success() }}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-        run: make test_slow_gh_action_rc
-
-      - name: Add latest tag
+      - name: Add dev tag
         if: ${{ success() && github.ref == 'refs/heads/master' }}
-        run: make docker_tag_rc_latest
+        run: make ib_connect.docker_tag.rc_dev
 
-      - name: Push latest image
+      - name: Push dev image
         if: ${{ success() && github.ref == 'refs/heads/master' }}
-        run: make docker_push_latest_image
+        run: make ib_connect.docker_push.dev
+
+      - name: Build prod image
+        if: ${{ success() && github.ref == 'refs/heads/master' }}
+        run: make ib_connect.docker_build.prod_image
+
+      - name: Push prod image
+        if: ${{ success() && github.ref == 'refs/heads/master' }}
+        run: make ib_connect.docker_push.prod
 
       - name: Send Telegram notification
         if: ${{ success() && github.ref == 'refs/heads/master' }}
@@ -61,7 +52,7 @@ jobs:
           to: ${{ secrets.P1_TG_BUILD_MONITORING_CHANNEL_ID }}
           token: ${{ secrets.P1_GH_BOT_TELEGRAM_TOKEN }}
           message: |
-            The brand new image `amp_env` was successfully built.
+            The brand new image `ib_connect` was successfully built.
 
             Please pull new image to use the latest version.
             - Authorize your client:
@@ -70,6 +61,8 @@ jobs:
             ```
             - Pull the latest version
             ```
-            make docker_pull
+            make ib_connect.docker_pull
             ```
             https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+ 

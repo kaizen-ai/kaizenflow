@@ -30,7 +30,7 @@ DEFAULT_CONFIG = dict(
     IbDir=None,
     StoreSettingsOnServer="no",
     MinimizeMainWindow="no",
-    ExistingSessionDetectedAction="primary",
+    ExistingSessionDetectedAction="secondary",
     AcceptIncomingConnectionAction="accept",
     ShowAllTrades="no",
     ForceTwsApiPort=4001,
@@ -83,6 +83,12 @@ def _parse() -> argparse.ArgumentParser:
         help="IB password",
         action="store",
     )
+    parser.add_argument(
+        "--stage",
+        type=str,
+        help="Stage: LOCAL or PROD",
+        action="store",
+    )
     hparse.add_verbosity_arg(parser)
     return parser
 
@@ -97,6 +103,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         params["user"] = args.user
     if args.password is not None:
         params["password"] = args.password
+    if args.stage == "PROD":
+        params["ExistingSessionDetectedAction"] = "primary"
     # Save to file.
     _save_config_to_file(params)
 

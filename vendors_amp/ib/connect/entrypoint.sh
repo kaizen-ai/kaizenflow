@@ -5,7 +5,8 @@ export PYTHONPATH=$PYTHONPATH:/amp
 # Create configurations for controller.
 CMD="python vendors_amp/ib/connect/scripts/make_ib_controller_init_file.py \
      --user ${TWSUSERID} \
-     --password ${TWSPASSWORD}"
+     --password ${TWSPASSWORD} \
+     --stage ${STAGE}"
 
 echo $CMD
 eval $CMD
