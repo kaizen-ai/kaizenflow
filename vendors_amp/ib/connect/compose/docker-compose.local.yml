@@ -1,9 +1,20 @@
 version: '3'
 services:
   tws:
+    image: ${IMAGE}
+    volumes:
+      - ../../../../:/amp
+      - ../vnc/xvfb_init:/etc/init.d/xvfb
+      - ../vnc/vnc_init:/etc/init.d/vnc
+      - ../vnc/xvfb-daemon-run:/usr/bin/xvfb-daemon-run
+    entrypoint: "vendors_amp/ib/connect/entrypoint.sh"
+    environment:
+      - APP=${IB_APP}
+      - VNC_PASSWORD=${VNC_PASSWORD}
+      - VNC_TRUSTED_IPS=${VNC_TRUSTED_IPS}
     env_file:
-      - "~/.vnc/ib.credentials"
-      - "../env/local.env"
+      - ~/.vnc/ib.credentials
+      - ../.env/local.env
     ports:
       - "4003:4003"
       - "5901:5900"
