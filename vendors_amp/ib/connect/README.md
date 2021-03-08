@@ -57,7 +57,7 @@
 - Start TWS
 
   ```bash
-  > IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=TWS make ib_connect.docker.local.up
+  > IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=TWS make ib_connect.docker_up.local
   ```
 
 - Start Gateway app

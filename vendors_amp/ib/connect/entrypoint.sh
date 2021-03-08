@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 
-source docker_build/entrypoint.sh
+export PYTHONPATH=$PYTHONPATH:/amp
 
 # Create configurations for controller.
 CMD="python vendors_amp/ib/connect/scripts/make_ib_controller_init_file.py \
      --user ${TWSUSERID} \
      --password ${TWSPASSWORD}"
+
 echo $CMD
 eval $CMD
 

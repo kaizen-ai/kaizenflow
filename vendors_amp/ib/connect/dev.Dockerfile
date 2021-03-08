@@ -1,4 +1,4 @@
-FROM 083233266530.dkr.ecr.us-east-2.amazonaws.com/amp_env:latest
+FROM python:3.7-slim-buster
 
 RUN apt-get update \
   && apt-get install -y wget \
@@ -11,6 +11,9 @@ RUN apt-get update \
   && apt-get install -y socat \
   && apt-get install -y software-properties-common
 
+COPY vendors_amp/ib/connect/requirements.txt /requirements.txt
+RUN pip install -r /requirements.txt
+
 # Setup IB TWS.
 RUN mkdir -p /opt/TWS
 WORKDIR /opt/TWS
@@ -20,8 +23,9 @@ RUN chmod a+x ibgateway-latest-standalone-linux-x64-v974.4g.sh
 # Setup IBController.
 RUN mkdir -p /opt/IBController/ && mkdir -p /opt/IBController/Logs
 WORKDIR /opt/IBController/
-RUN wget -q http://cdn.quantconnect.com/interactive/IBController-QuantConnect-3.2.0.5.zip
-RUN unzip ./IBController-QuantConnect-3.2.0.5.zip
+RUN wget -q http://cdn.quantconnect.com/interactive/IBController-QuantConnect-3.2.0.5.zip && \
+    unzip ./IBController-QuantConnect-3.2.0.5.zip && \
+    rm ./IBController-QuantConnect-3.2.0.5.zip
 RUN chmod -R u+x *.sh && chmod -R u+x Scripts/*.sh
 
 WORKDIR /
@@ -30,15 +34,5 @@ WORKDIR /
 RUN yes n | /opt/TWS/ibgateway-latest-standalone-linux-x64-v974.4g.sh
 
 ENV DISPLAY :0
-
-ADD ./vendors_amp/ib/connect/entrypoint.sh entrypoint.sh
-ADD ./vendors_amp/ib/connect/vnc/xvfb_init /etc/init.d/xvfb
-ADD ./vendors_amp/ib/connect/vnc/vnc_init /etc/init.d/vnc
-ADD ./vendors_amp/ib/connect/vnc/xvfb-daemon-run /usr/bin/xvfb-daemon-run
-
-RUN chmod -R u+x entrypoint.sh \
-  && chmod -R 777 /usr/bin/xvfb-daemon-run \
-  && chmod 777 /etc/init.d/xvfb \
-  && chmod 777 /etc/init.d/vnc
 
 WORKDIR /amp
