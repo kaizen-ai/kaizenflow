@@ -96,6 +96,7 @@ class ToListMixin:
 # #############################################################################
 
 
+# pylint: disable=too-many-ancestors
 class ContinuousSkLearnModel(
     FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin
 ):
