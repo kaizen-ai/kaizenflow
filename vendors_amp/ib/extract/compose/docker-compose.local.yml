@@ -24,5 +24,4 @@ services:
       - ../.env/local.env
     ports:
       - "5905:5905"
-      # Don't expose API ports since all work is done inside the container.
       - "4006:4006"
