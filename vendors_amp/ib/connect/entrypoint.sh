@@ -12,7 +12,7 @@ echo $CMD
 eval $CMD
 
 CMD="python vendors_amp/ib/connect/scripts/make_jts_init_file.py \
-    --trusted_ips 127.0.0.1,${VNC_TRUSTED_IPS}"
+    --trusted_ips 127.0.0.1,${TRUSTED_IPS}"
 
 echo $CMD
 eval $CMD

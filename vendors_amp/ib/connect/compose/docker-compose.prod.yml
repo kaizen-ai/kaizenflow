@@ -6,7 +6,7 @@ services:
     environment:
       - APP=${IB_APP}
       - VNC_PASSWORD=${VNC_PASSWORD}
-      - VNC_TRUSTED_IPS=${VNC_TRUSTED_IPS}
+      - TRUSTED_IPS=${TRUSTED_IPS}
       - TWSUSERID=${TWSUSERID}
       - TWSPASSWORD=${TWSPASSWORD}
     env_file:
