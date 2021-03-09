@@ -35,9 +35,8 @@ _LOG = logging.getLogger(__name__)
 
 
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
-_TO_LIST_MIXIN_TYPE = Union[
-    List[Union[int, str]], Callable[[], List[Union[int, str]]]
-]
+_COL_TYPE = Union[int, str]
+_TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 
 # #############################################################################
@@ -66,7 +65,7 @@ class ToListMixin:
     """
 
     @staticmethod
-    def _to_list(to_list: _TO_LIST_MIXIN_TYPE) -> List[Union[int, str]]:
+    def _to_list(to_list: _TO_LIST_MIXIN_TYPE) -> List[_COL_TYPE]:
         """
         Return a list given its input.
 
@@ -419,7 +418,7 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
 
     def _to_sklearn_format(
         self, df: pd.DataFrame
-    ) -> Tuple[List[Union[int, str]], np.array, List[Union[int, str]], np.array]:
+    ) -> Tuple[List[_COL_TYPE], np.array, List[_COL_TYPE], np.array]:
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
         x_vals, y_vals = cdataa.transform_to_sklearn_old(df, x_vars, y_vars)
@@ -428,9 +427,9 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
     @staticmethod
     def _from_sklearn_format(
         idx: pd.Index,
-        x_vars: List[Union[int, str]],
+        x_vars: List[_COL_TYPE],
         x_vals: np.array,
-        y_vars: List[Union[int, str]],
+        y_vars: List[_COL_TYPE],
         y_vals: np.array,
         y_hat: np.array,
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -1102,7 +1101,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self._append(dag, tail_nid, node)
         return dag
 
-    def _fill_model_dicts(self, cols: List[Union[int, str]]) -> None:
+    def _fill_model_dicts(self, cols: List[_COL_TYPE]) -> None:
         for col in cols:
             self._vol_cols[col] = str(col) + "_vol"
             self._fwd_vol_cols[col] = (
