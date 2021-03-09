@@ -501,6 +501,8 @@ class DataFrameModeler:
         mode: str = "ins",
     ) -> None:
         """
+        :param y_scale: the height of each plot. If `None`, the size of the whole
+            figure equals the default `figsize`
         :param separator: if not `None`, split the column names by it and
             display only the last part as the plot title
         """

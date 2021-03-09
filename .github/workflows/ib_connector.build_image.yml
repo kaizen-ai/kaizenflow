@@ -1,0 +1,68 @@
+name: IB connector build image
+on:
+  workflow_dispatch:
+
+jobs:
+  Build_image:
+    runs-on: [self-hosted, CPU4_RAM16, SLOW]
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Cleanup
+        run: sudo chmod 777 -R .
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          ssh-key: ${{ secrets.GH_ACTION_SSH_PRIVATE_KEY }}
+
+      - name: Build image
+        run: make ib_connect.docker_build.rc_image
+
+      - name: Add dev tag
+        if: ${{ success() && github.ref == 'refs/heads/master' }}
+        run: make ib_connect.docker_tag.rc_dev
+
+      - name: Push dev image
+        if: ${{ success() && github.ref == 'refs/heads/master' }}
+        run: make ib_connect.docker_push.dev
+
+      - name: Build prod image
+        if: ${{ success() && github.ref == 'refs/heads/master' }}
+        run: make ib_connect.docker_build.prod_image
+
+      - name: Push prod image
+        if: ${{ success() && github.ref == 'refs/heads/master' }}
+        run: make ib_connect.docker_push.prod
+
+      - name: Send Telegram notification
+        if: ${{ success() && github.ref == 'refs/heads/master' }}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.P1_TG_BUILD_MONITORING_CHANNEL_ID }}
+          token: ${{ secrets.P1_GH_BOT_TELEGRAM_TOKEN }}
+          message: |
+            The brand new image `ib_connect` was successfully built.
+
+            Please pull new image to use the latest version.
+            - Authorize your client:
+            ```
+            make docker_login
+            ```
+            - Pull the latest version
+            ```
+            make ib_connect.docker_pull
+            ```
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+ 

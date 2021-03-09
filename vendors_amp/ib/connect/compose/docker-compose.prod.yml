@@ -1,0 +1,16 @@
+version: '3'
+services:
+  tws:
+    image: ${IMAGE}
+    entrypoint: "vendors_amp/ib/connect/entrypoint.sh"
+    environment:
+      - APP=${IB_APP}
+      - VNC_PASSWORD=${VNC_PASSWORD}
+      - VNC_TRUSTED_IPS=${VNC_TRUSTED_IPS}
+      - TWSUSERID=${TWSUSERID}
+      - TWSPASSWORD=${TWSPASSWORD}
+    env_file:
+      - ../.env/prod.env
+    ports:
+      - "4004:4003"
+      - "5902:5900"
