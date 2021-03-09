@@ -1285,6 +1285,36 @@ class PCA:
         return num_pcs_to_plot
 
 
+def plot_ipca(
+    df: pd.DataFrame,
+    num_pc: int,
+    tau: float,
+    num_cols: int = 2,
+    axes: Optional[List[mpl.axes.Axes]] = None,
+) -> None:
+    """
+    Plot a panel of iPCA calculation results over time.
+    
+    Plots include:
+        - Eigenvalues estimates
+        - Eigenvectors estimates
+        - Eigenvector angular distances
+    """
+    eigenvalues, eigenvectors = csigna.compute_ipca(df, num_pc=num_pc, tau=tau)
+    eigenvalues.plot(title="Eigenvalues")
+    if axes is None:
+        _, axes = get_multiple_plots(
+                    num_plots=num_pc,
+                    num_cols=num_cols,
+                    sharex=True,
+                    sharey=True,
+                )
+    for i in range(num_pc):
+        eigenvectors[i].plot(ax=axes[i], title=f"Eigenvectors PC{i}")
+    eigenvector_diffs = csigna.compute_eigenvector_diffs(eigenvectors)
+    eigenvector_diffs.plot(title="Eigenvector angular distances")
+   
+    
 def _get_heatmap_mask(corr: pd.DataFrame, mode: str) -> np.ndarray:
     if mode == "heatmap_semitriangle":
         # Generate a mask for the upper triangle.

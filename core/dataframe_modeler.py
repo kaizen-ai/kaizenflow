@@ -281,6 +281,7 @@ class DataFrameModeler:
         col: str,
         steps_ahead: int,
         tau: Optional[float] = None,
+        col_mode: Optional[str] = "merge_all",
         nan_mode: Optional[str] = "drop",
         method: str = "fit",
     ) -> DataFrameModeler:
@@ -292,6 +293,7 @@ class DataFrameModeler:
             col=[col],
             steps_ahead=steps_ahead,
             tau=tau,
+            col_mode=col_mode,
             nan_mode=nan_mode,
         )
         return self._run_model(model, method)
