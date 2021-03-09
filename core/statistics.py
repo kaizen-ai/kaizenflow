@@ -614,6 +614,32 @@ def compute_max_drawdown_approximate_cdf(
     return probability
 
 
+def apply_sharpe_ratio_correlation_conversion(
+    freq: str,
+    sharpe_ratio: Optional[float] = None,
+    correlation: Optional[float] = None,
+) -> float:
+    """
+    Convert annualized SR to correlation or vice-versa.
+
+    :param freq: time series sampling frequency
+    :param sharpe_ratio: annualized Sharpe ratio
+    :param correlation: correlation coefficient
+    :return: annualized Sharpe ratio if correlation is provided; correlation 
+        if annualized Sharpe ratio is provided.
+    """
+    points_per_year = hdataf.compute_points_per_year_for_given_freq(freq)
+    if sharpe_ratio is not None and correlation is None:
+        sharpe_ratio /= np.sqrt(points_per_year)
+        return sharpe_ratio / np.sqrt(1 - sharpe_ratio**2)
+    if sharpe_ratio is None and correlation is not None:
+        sharpe_ratio = correlation / np.sqrt(1 + correlation**2)
+        return sharpe_ratio * np.sqrt(points_per_year)
+    raise ValueError(
+            "Precisely one of `sharpe_ratio` and `correlation` should not be `None`"
+        )
+
+
 # #############################################################################
 # Returns
 # #############################################################################
