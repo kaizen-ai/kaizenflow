@@ -18,7 +18,7 @@ import joblib.memory as jmemor
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as hio
-import helpers.system_interaction as hsi
+import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
 
@@ -27,9 +27,10 @@ _USE_CACHING: bool = True
 _DISK_CACHE: Any = None
 # This is the global memory cache.
 _MEMORY_CACHE: Any = None
-_MEMORY_TMPFS_PATH = os.getenv("CACHE_MEMORY_TMPFS_PATH", 
-        "/tmp" if hsi.get_os_name() == "Darwin" else
-        "/mnt/tmpfs")
+_MEMORY_TMPFS_PATH = os.getenv(
+    "CACHE_MEMORY_TMPFS_PATH",
+    "/tmp" if hsyste.get_os_name() == "Darwin" else "/mnt/tmpfs",
+)
 # Log level for information about the high level behavior of the caching
 # layer.
 _LOG_LEVEL = logging.DEBUG
