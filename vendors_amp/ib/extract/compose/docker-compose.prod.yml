@@ -1,0 +1,7 @@
+version: '3'
+services:
+  extractor:
+    image: ${IMAGE}
+    entrypoint: "vendors_amp/ib/extract/entrypoint.sh"
+    env_file:
+      - ../.env/prod.env

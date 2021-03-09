@@ -1,0 +1,28 @@
+version: '3'
+services:
+  extractor:
+    image: ${IMAGE}
+    volumes:
+      - ../../../../:/amp
+    entrypoint: "vendors_amp/ib/extract/entrypoint.sh"
+    env_file:
+      - ../.env/local.env
+    depends_on:
+      - tws
+
+  tws:
+    image: 083233266530.dkr.ecr.us-east-2.amazonaws.com/ib_connect:prod
+    container_name: "ib_connect_local"
+    entrypoint: "vendors_amp/ib/connect/entrypoint.sh"
+    environment:
+      - APP=GATEWAY
+      # No trusted IP-s, so it is possible to connect only from localhost.
+      - VNC_PASSWORD=12345
+      - VNC_TRUSTED_IPS=
+    env_file:
+      - ~/.vnc/ib.credentials
+      - ../.env/local.env
+    ports:
+      - "5905:5905"
+      # Don't expose API ports since all work is done inside the container.
+      - "4006:4006"
