@@ -89,7 +89,7 @@ class S3KibotDataLoader(vcdls3.AbstractS3DataLoader):
         normalize: bool = True,
     ) -> pd.DataFrame:
 
-        file_path = vkdlfi.FilePathGenerator().generate_file_path(
+        file_path = vkdlfi.KibotFilePathGenerator().generate_file_path(
             symbol=symbol,
             asset_class=asset_class,
             frequency=frequency,

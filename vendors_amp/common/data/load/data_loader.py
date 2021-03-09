@@ -7,6 +7,9 @@ import vendors_amp.common.data.types as vcdtyp
 
 
 class AbstractDataLoader(abc.ABC):
+    """
+    Reads data for symbols of a given asset and exchange.
+    """
     @abc.abstractmethod
     def read_data(
         self,
@@ -26,10 +29,9 @@ class AbstractDataLoader(abc.ABC):
         :param symbol: symbol to get the data for
         :param asset_class: asset class
         :param frequency: `D` or `T` for daily or minutely data respectively
-        :param contract_type: required for asset class of type: `futures`
-        :param unadjusted: required for asset classes of type: `stocks` & `etfs`
+        :param contract_type: required for asset class of type `futures`
+        :param unadjusted: required for asset classes of type `stocks` & `etfs`
         :param nrows: if not None, return only the first nrows of the data
-        :param normalize: whether to normalize the dataframe by frequency
-        :return: a dataframe with the symbol data
+        :param normalize: whether to normalize the dataframe based on frequency
+        :return: a dataframe with the data
         """
-        ...

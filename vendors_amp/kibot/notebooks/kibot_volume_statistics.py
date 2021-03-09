@@ -117,7 +117,7 @@ def generate_report(
     :param contract_type: `continuous` or `expiry`
     :return: a dataframe with the report
     """
-    dataset_aws_path = vkdlfi.FilePathGenerator().generate_file_path(
+    dataset_aws_path = vkdlfi.KibotFilePathGenerator().generate_file_path(
         frequency, contract_type, "ROOT", ext=vcdtyp.Extension.CSV
     )
     dataset_aws_directory = os.path.dirname(dataset_aws_path)
