@@ -1,12 +1,10 @@
-from typing import Optional
-
 import pandas as pd
 import psycopg2.extras as pextra
 
 import vendors_amp.common.sql_writer_backend as vcsqlw
 
 
-class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
+class SQLWriterIBBackend(vcsqlw.AbstractSQLWriterBackend):
     """
     Manager of CRUD operations on a database defined in db.sql.
     """
@@ -25,11 +23,11 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
                 pextra.execute_values(
                     curs,
                     "INSERT INTO DailyData "
-                    "(trade_symbol_id, date, open, high, low, close, volume) "
+                    "(trade_symbol_id, date, open, high, low, close, volume, average, barCount) "
                     "VALUES %s ON CONFLICT DO NOTHING",
                     df.to_dict("records"),
                     template="(%(trade_symbol_id)s, %(date)s, %(open)s,"
-                    " %(high)s, %(low)s, %(close)s, %(volume)s)",
+                    " %(high)s, %(low)s, %(close)s, %(volume)s, %(average)s, %(barCount)s)",
                 )
 
     def insert_daily_data(
@@ -41,8 +39,8 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
         low_val: float,
         close_val: float,
         volume_val: int,
-        average_val: Optional[float] = None,
-        bar_count_val: Optional[int] = None,
+        average_val: float,
+        bar_count_val: int,
     ) -> None:
         """
         Insert daily data for a particular TradeSymbol entry.
@@ -61,8 +59,8 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
             with self.conn.cursor() as curs:
                 curs.execute(
                     "INSERT INTO DailyData "
-                    "(trade_symbol_id, date, open, high, low, close, volume) "
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
+                    "(trade_symbol_id, date, open, high, low, close, volume, average, barCount) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
                     [
                         trade_symbol_id,
                         date,
@@ -71,6 +69,8 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
                         low_val,
                         close_val,
                         volume_val,
+                        average_val,
+                        bar_count_val,
                     ],
                 )
 
@@ -88,11 +88,12 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
                 pextra.execute_values(
                     curs,
                     "INSERT INTO MinuteData "
-                    "(trade_symbol_id, datetime, open, high, low, close, volume) "
+                    "(trade_symbol_id, datetime, open, high, low, close, "
+                    "volume, average, barCount) "
                     "VALUES %s ON CONFLICT DO NOTHING",
                     df.to_dict("records"),
                     template="(%(trade_symbol_id)s, %(datetime)s, %(open)s,"
-                    " %(high)s, %(low)s, %(close)s, %(volume)s)",
+                    " %(high)s, %(low)s, %(close)s, %(volume)s), %(average)s, %(barCount)s",
                 )
 
     def insert_minute_data(
@@ -104,8 +105,8 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
         low_val: float,
         close_val: float,
         volume_val: int,
-        average_val: Optional[float] = None,
-        bar_count_val: Optional[int] = None,
+        average_val: float,
+        bar_count_val: int,
     ) -> None:
         """
         Insert minute data for a particular TradeSymbol entry.
@@ -124,8 +125,9 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
             with self.conn.cursor() as curs:
                 curs.execute(
                     "INSERT INTO MinuteData "
-                    "(trade_symbol_id, datetime, open, high, low, close, volume) "
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
+                    "(trade_symbol_id, datetime, open, high, low, close, "
+                    "volume, average, barCount) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
                     [
                         trade_symbol_id,
                         date_time,
@@ -134,6 +136,8 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
                         low_val,
                         close_val,
                         volume_val,
+                        average_val,
+                        bar_count_val,
                     ],
                 )
 

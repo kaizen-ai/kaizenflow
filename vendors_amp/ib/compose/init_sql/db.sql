@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS DailyData (
     low numeric,
     close numeric,
     volume bigint,
+    average numeric,
+    barCount integer,
     UNIQUE (trade_symbol_id, date)
 );
 
@@ -19,6 +21,8 @@ CREATE TABLE IF NOT EXISTS MinuteData (
     low numeric,
     close numeric,
     volume bigint,
+    average numeric,
+    barCount integer,
     UNIQUE (trade_symbol_id, datetime)
 );
 

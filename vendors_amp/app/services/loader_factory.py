@@ -1,6 +1,4 @@
 """
-Produce loader objects.
-
 Import as: import vendors_amp.app.services.loader_factory as vasloa
 """
 from typing import Any
@@ -13,21 +11,21 @@ import vendors_amp.kibot.data.load.sql_data_loader as vkdlsq
 
 
 class LoaderFactory:
-    @classmethod
+    """
+    Builds AbstractDataLoader objects based on different criteria (e.g., provider
+    and storage type).
+    """
+
+@classmethod
     def get_loader(
         cls, storage_type: str, provider: str, **kwargs: Any
     ) -> vcdlda.AbstractDataLoader:
         """
-        Get `storage_type` loader for provider.
+        Return a data loader for the requested `storage_type` and `provider`.
 
-        Supported storages:
-            - s3
-            - sql
-
-        :param storage_type: load from where
-        :param provider: provider (kibot, ...)
+        :param storage_type: load from where (e.g., s3, sql)
+        :param provider: provider (e.g., kibot, ib)
         :param kwargs: additional parameters for loader instantiation
-        :return: loader instance with `read_data()` method
         :raises ValueError: `storage_type` loader is not implemented for provider
         """
         if storage_type == "sql":
@@ -41,11 +39,10 @@ class LoaderFactory:
     @staticmethod
     def _get_s3_loader(provider: str) -> vcdls3.AbstractS3DataLoader:
         """
-        Get S3 loader for provider.
+        Return a data loader from S3 for the requested `provider`.
 
-        :param provider: provider (kibot, ...)
-        :return: loader instance with `read_data()` method
-        :raises ValueError: if S3 loader is not implemented for provider
+        :param provider: provider (e.g., kibot)
+        :raises ValueError: if loader is not implemented for provider
         """
         loader: vcdls3.AbstractS3DataLoader
         if provider == "kibot":
@@ -59,15 +56,14 @@ class LoaderFactory:
         provider: str, dbname: str, user: str, password: str, host: str, port: str
     ) -> vcdlsq.AbstractSQLDataLoader:
         """
-        Get SQL loader for provider.
+        Returna a data loader from SQL for the requested `provider`.
 
-        :param provider: provider (kibot, ...)
+        :param provider: provider (e.g., kibot)
         :param dbname: database name to connect
         :param user: authorization user
         :param password: authorization password
         :param host: database host
         :param port: database port
-        :return: loader instance with `read_data()` method
         :raises ValueError: if SQL loader is not implemented for provider
         """
         loader: vcdlsq.AbstractSQLDataLoader

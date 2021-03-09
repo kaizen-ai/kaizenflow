@@ -5,7 +5,7 @@ import vendors_amp.common.data.load.data_loader as vcdlda
 
 class AbstractSQLDataLoader(vcdlda.AbstractDataLoader):
     """
-    Interface for SQL data loader.
+    Interface for class which loads the data for a security from an SQL backend.
     """
 
     def __init__(
