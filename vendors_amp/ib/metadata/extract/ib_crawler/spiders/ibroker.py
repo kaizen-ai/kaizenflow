@@ -1,13 +1,11 @@
 import csv
-import collections as col
-from typing import DefaultDict, List
 
 import scrapy
-import scrapy.signals as sig
 import scrapy.http as http
+import scrapy.linkextractors as le
 import scrapy.loader as ldr
 import scrapy.loader.processors as pr
-import scrapy.linkextractors as le
+import scrapy.signals as sig
 
 import ib_crawler.items as it
 
@@ -24,27 +22,26 @@ class SymbolLoader(ldr.ItemLoader):
 
 
 class IbrokerSpider(scrapy.Spider):
-    name = 'ibroker'
-    allowed_domains = ['interactivebrokers.com']
-    start_urls = ['https://ndcdyn.interactivebrokers.com/en/index.php?f=1562']
-    exchange_header = [
-        'region', 'country', 'market', 'link', 'products', 'hours'
-    ]
+    name = "ibroker"
+    allowed_domains = ["interactivebrokers.com"]
+    start_urls = ["https://ndcdyn.interactivebrokers.com/en/index.php?f=1562"]
+    exchange_header = ["region", "country", "market", "link", "products", "hours"]
     symbols_header = [
-        'market', 'product', 's_title', 'ib_symbol', 'symbol', 'currency'
+        "market",
+        "product",
+        "s_title",
+        "ib_symbol",
+        "symbol",
+        "currency",
     ]
 
-    lx_regions = le.LinkExtractor(
-        restrict_css="#toptabs ul.ui-tabs-nav"
-    )
-    lx_exchanges = le.LinkExtractor(
-        restrict_css="#exchange-listings table"
-    )
+    lx_regions = le.LinkExtractor(restrict_css="#toptabs ul.ui-tabs-nav")
+    lx_exchanges = le.LinkExtractor(restrict_css="#exchange-listings table")
     lx_products = le.LinkExtractor(
-        restrict_css='#exchange-products div.row div.btn-selectors',
+        restrict_css="#exchange-products div.row div.btn-selectors",
     )
     lx_pagination = le.LinkExtractor(
-        restrict_css='#exchange-products ul.pagination li:not(li.disabled)'
+        restrict_css="#exchange-products ul.pagination li:not(li.disabled)"
     )
 
     @classmethod
@@ -67,17 +64,15 @@ class IbrokerSpider(scrapy.Spider):
             yield scrapy.Request(
                 link.url,
                 self.parse_region,
-                cb_kwargs={"exchange_meta": {"region":link.text}},
+                cb_kwargs={"exchange_meta": {"region": link.text}},
             )
 
     def parse_region(
-        self,
-        response: http.HtmlResponse,
-        exchange_meta: dict
+        self, response: http.HtmlResponse, exchange_meta: dict
     ) -> None:
         country = None
         table = response.css(
-            '#exchange-listings div.col-xs-12 table.table tbody tr'
+            "#exchange-listings div.col-xs-12 table.table tbody tr"
         )
         for t in table:
             row = t.css("td")
@@ -93,15 +88,19 @@ class IbrokerSpider(scrapy.Spider):
             exchange_meta["products"] = products
             exchange_meta["hours"] = hours
             yield scrapy.Request(
-                url, self.parse_exchange,
+                url,
+                self.parse_exchange,
                 cb_kwargs={"exchange_meta": exchange_meta},
             )
 
     def parse_exchange(self, response: http.HtmlResponse, exchange_meta: dict):
         self.logger.debug("Start parse_exchange")
-        link = response.xpath(
-            '//*[@id="exchange-info"]/div/div/div/div[1]/table/tbody/tr/td[2]/a/@href'
-        ).get() or "N/A"
+        link = (
+            response.xpath(
+                '//*[@id="exchange-info"]/div/div/div/div[1]/table/tbody/tr/td[2]/a/@href'
+            ).get()
+            or "N/A"
+        )
         eldr = ExchangeLoader(item=it.ExchangeItem())
         eldr.add_value("link", link)
         eldr.add_value("region", exchange_meta["region"])
@@ -122,15 +121,18 @@ class IbrokerSpider(scrapy.Spider):
 
     def parse_symbols(self, response: http.HtmlResponse, market: str):
         self.logger.debug("Start parse_symbols")
-        product = response.css(
-            '#exchange-products div.btn-selectors p a.btn.btn-default::text'
-        ).get() or "N/A"
-        symbol_title = response.css(
-            '#exchange-products div.col-xs-12.col-sm-12 table.table tbody tr td a::text'
+        product = (
+            response.css(
+                "#exchange-products div.btn-selectors p a.btn.btn-default::text"
+            ).get()
+            or "N/A"
         )
-        symbols = response.css('#exchange-products div.col-xs-12 tbody tr')
+        symbol_title = response.css(
+            "#exchange-products div.col-xs-12.col-sm-12 table.table tbody tr td a::text"
+        )
+        symbols = response.css("#exchange-products div.col-xs-12 tbody tr")
         for row in symbols:
-            s_data = row.css('td::text').getall()
+            s_data = row.css("td::text").getall()
             if len(s_data) < 4:
                 symbol_title = row.css("td a::text").get()
                 s_data.insert(1, symbol_title)
@@ -142,13 +144,9 @@ class IbrokerSpider(scrapy.Spider):
             item.add_value("symbol", s_data[2])
             item.add_value("currency", s_data[3])
             yield item.load_item()
-        
+
         next_page = self.lx_pagination.extract_links(response)[-1]
         if ">" in next_page.text:
             yield scrapy.Request(
-                next_page.url,
-                self.parse_symbols,
-                cb_kwargs={"market": market},
+                next_page.url, self.parse_symbols, cb_kwargs={"market": market},
             )
-
-

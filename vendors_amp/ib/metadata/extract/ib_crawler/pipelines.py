@@ -1,4 +1,3 @@
-import io
 import csv
 
 import scrapy
@@ -29,7 +28,7 @@ class CSVPipeline:
     def from_crawler(cls, crawler: scrapy.Spider):
         return cls(
             exchange_fname=crawler.settings.get("EXCHANGE_FNAME"),
-            symbol_fname=crawler.settings.get("SYMBOLS_FNAME")
+            symbol_fname=crawler.settings.get("SYMBOLS_FNAME"),
         )
 
     def open_spider(self, spider: ib.IbrokerSpider):

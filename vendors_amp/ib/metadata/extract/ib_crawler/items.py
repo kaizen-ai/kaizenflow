@@ -1,4 +1,3 @@
-from urllib.parse import SplitResult
 import scrapy
 
 
@@ -7,9 +6,12 @@ class ExchangeItem(scrapy.Item):
     country = scrapy.Field()
     market = scrapy.Field()
     link = scrapy.Field()
-    products = scrapy.Field()   # TODO: implement postprocessor for list -> ",".join method
+    products = (
+        scrapy.Field()
+    )  # TODO: implement postprocessor for list -> ",".join method
     hours = scrapy.Field()  # TODO: implement postprocessor for list -> " ".join()
-    
+
+
 class SymbolItem(scrapy.Item):
     market = scrapy.Field()
     product = scrapy.Field()
@@ -17,4 +19,3 @@ class SymbolItem(scrapy.Item):
     ib_symbol = scrapy.Field()
     symbol = scrapy.Field()
     currency = scrapy.Field()
-

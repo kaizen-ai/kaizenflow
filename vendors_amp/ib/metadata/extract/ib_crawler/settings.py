@@ -1,10 +1,7 @@
-import pathlib
+BOT_NAME = "ib_crawler"
 
-
-BOT_NAME = 'ib_crawler'
-
-SPIDER_MODULES = ['ib_crawler.spiders']
-NEWSPIDER_MODULE = 'ib_crawler.spiders'
+SPIDER_MODULES = ["ib_crawler.spiders"]
+NEWSPIDER_MODULE = "ib_crawler.spiders"
 
 CONCURRENT_REQUESTS_PER_IP = 10
 ROBOTSTXT_OBEY = False
