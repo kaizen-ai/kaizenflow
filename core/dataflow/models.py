@@ -1,7 +1,7 @@
 import collections
 import datetime
 import logging
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import gluonts.model.deepar as gmdeep
 import gluonts.trainer as gtrain
@@ -35,7 +35,9 @@ _LOG = logging.getLogger(__name__)
 
 
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
-_TO_LIST_MIXIN_TYPE = Union[List[Union[int, str]], Callable[[], List[Union[int, str]]]]
+_TO_LIST_MIXIN_TYPE = Union[
+    List[Union[int, str]], Callable[[], List[Union[int, str]]]
+]
 
 
 # #############################################################################
@@ -761,13 +763,13 @@ class SkLearnInverseTransformer(
         else:
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
-            
+
 # #############################################################################
 # Volatility modeling
 # #############################################################################
 
 
-class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
+class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
     """
     Fit and predict a smooth moving average model.
     """
