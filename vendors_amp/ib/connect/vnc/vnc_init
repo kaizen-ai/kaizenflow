@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 VNC=/usr/bin/x11vnc
-VNCARGS="-forever -rfbport 5900 -rfbauth /.vnc/passwd \
+VNCARGS="-forever -rfbport $IB_VNC_PORT -rfbauth /.vnc/passwd \
   -o /.vnc/x11vnc.log -display $DISPLAY"
 PIDFILE=/var/vnc.pid
 case "$1" in
