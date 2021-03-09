@@ -1,7 +1,7 @@
 import collections
 import datetime
 import logging
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import gluonts.model.deepar as gmdeep
 import gluonts.trainer as gtrain
@@ -35,6 +35,8 @@ _LOG = logging.getLogger(__name__)
 
 
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
+_COL_TYPE = Union[int, str]
+_TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 
 # #############################################################################
@@ -63,7 +65,7 @@ class ToListMixin:
     """
 
     @staticmethod
-    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
+    def _to_list(to_list: _TO_LIST_MIXIN_TYPE) -> List[_COL_TYPE]:
         """
         Return a list given its input.
 
@@ -107,8 +109,8 @@ class ContinuousSkLearnModel(
         self,
         nid: str,
         model_func: Callable[..., Any],
-        x_vars: Union[List[str], Callable[[], List[str]]],
-        y_vars: Union[List[str], Callable[[], List[str]]],
+        x_vars: _TO_LIST_MIXIN_TYPE,
+        y_vars: _TO_LIST_MIXIN_TYPE,
         steps_ahead: int,
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
@@ -183,7 +185,7 @@ class ContinuousSkLearnModel(
         # Generate insample predictions and put in dataflow dataframe format.
         fwd_y_hat = self._model.predict(x_fit)
         #
-        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
+        fwd_y_hat_vars = [f"{y}_hat" for y in fwd_y_df.columns]
         fwd_y_hat = cdataa.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
         )
@@ -229,7 +231,7 @@ class ContinuousSkLearnModel(
         # Put predictions in dataflow dataframe format.
         fwd_y_df = self._get_fwd_y_df(df).loc[non_nan_idx]
         fwd_y_non_nan_idx = fwd_y_df.dropna().index
-        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
+        fwd_y_hat_vars = [f"{y}_hat" for y in fwd_y_df.columns]
         fwd_y_hat = cdataa.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
         )
@@ -321,8 +323,8 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
     def __init__(
         self,
         nid: str,
-        x_vars: Union[List[str], Callable[[], List[str]]],
-        y_vars: Union[List[str], Callable[[], List[str]]],
+        x_vars: _TO_LIST_MIXIN_TYPE,
+        y_vars: _TO_LIST_MIXIN_TYPE,
         model_func: Callable[..., Any],
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
@@ -416,7 +418,7 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
 
     def _to_sklearn_format(
         self, df: pd.DataFrame
-    ) -> Tuple[List[str], np.array, List[str], np.array]:
+    ) -> Tuple[List[_COL_TYPE], np.array, List[_COL_TYPE], np.array]:
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
         x_vals, y_vals = cdataa.transform_to_sklearn_old(df, x_vars, y_vars)
@@ -425,16 +427,16 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
     @staticmethod
     def _from_sklearn_format(
         idx: pd.Index,
-        x_vars: List[str],
+        x_vars: List[_COL_TYPE],
         x_vals: np.array,
-        y_vars: List[str],
+        y_vars: List[_COL_TYPE],
         y_vals: np.array,
         y_hat: np.array,
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         x = cdataa.transform_from_sklearn(idx, x_vars, x_vals)
         y = cdataa.transform_from_sklearn(idx, y_vars, y_vals)
         y_h = cdataa.transform_from_sklearn(
-            idx, [y + "_hat" for y in y_vars], y_hat
+            idx, [f"{y}_hat" for y in y_vars], y_hat
         )
         return x, y, y_h
 
@@ -455,7 +457,7 @@ class UnsupervisedSkLearnModel(
         self,
         nid: str,
         model_func: Callable[..., Any],
-        x_vars: Union[List[Any], Callable[[], List[Any]]],
+        x_vars: _TO_LIST_MIXIN_TYPE,
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -557,7 +559,7 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
         self,
         nid: str,
         model_func: Callable[..., Any],
-        x_vars: Union[List[str], Callable[[], List[str]]],
+        x_vars: _TO_LIST_MIXIN_TYPE,
         model_kwargs: Optional[Any] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
@@ -654,8 +656,8 @@ class SkLearnInverseTransformer(
         self,
         nid: str,
         model_func: Callable[..., Any],
-        x_vars: Union[List[Any], Callable[[], List[Any]]],
-        trans_x_vars: Union[List[Any], Callable[[], List[Any]]],
+        x_vars: _TO_LIST_MIXIN_TYPE,
+        trans_x_vars: _TO_LIST_MIXIN_TYPE,
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -675,8 +677,8 @@ class SkLearnInverseTransformer(
         super().__init__(nid)
         self._model_func = model_func
         self._model_kwargs = model_kwargs or {}
-        self._x_vars = x_vars
-        self._trans_x_vars = trans_x_vars
+        self._x_vars = self._to_list(x_vars)
+        self._trans_x_vars = self._to_list(trans_x_vars)
         dbg.dassert_not_intersection(self._x_vars, self._trans_x_vars)
         self._model = None
         self._col_mode = col_mode or "replace_all"
@@ -766,7 +768,7 @@ class SkLearnInverseTransformer(
 # #############################################################################
 
 
-class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
+class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
     """
     Fit and predict a smooth moving average model.
     """
@@ -774,7 +776,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
     def __init__(
         self,
         nid: str,
-        col: list,
+        col: _TO_LIST_MIXIN_TYPE,
         steps_ahead: int,
         tau: Optional[float] = None,
         col_mode: Optional[str] = None,
@@ -793,9 +795,8 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         :param nan_mode: as in ContinuousSkLearnModel
         """
         super().__init__(nid)
-        dbg.dassert_isinstance(col, list)
-        dbg.dassert_eq(len(col), 1)
-        self._col = col
+        self._col = self._to_list(col)
+        dbg.dassert_eq(len(self._col), 1)
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(
             0, self._steps_ahead, "Non-causal prediction attempted! Aborting..."
@@ -851,7 +852,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         info["min_periods"] = self._min_periods
         # Generate insample predictions and put in dataflow dataframe format.
         fwd_y_hat = self._predict(x_fit)
-        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
+        fwd_y_hat_vars = [f"{y}_hat" for y in fwd_y_df.columns]
         fwd_y_hat = cdataa.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
         )
@@ -886,7 +887,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         fwd_y_hat = self._predict(x_predict)
         # Put predictions in dataflow dataframe format.
         fwd_y_df = self._get_fwd_y_df(df).loc[non_nan_idx]
-        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
+        fwd_y_hat_vars = [f"{y}_hat" for y in fwd_y_df.columns]
         fwd_y_hat = cdataa.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
         )
@@ -974,7 +975,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         return info
 
 
-class VolatilityModel(FitPredictNode, ColModeMixin):
+class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
     """
     Fit and predict a smooth moving average volatility model.
 
@@ -986,7 +987,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin):
         self,
         nid: str,
         steps_ahead: int,
-        cols: Optional[Iterable[Union[int, str]]] = None,
+        cols: _TO_LIST_MIXIN_TYPE = None,
         p_moment: float = 2,
         tau: Optional[float] = None,
         col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
@@ -1041,7 +1042,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin):
         self, df_in: pd.DataFrame, fit: bool = False
     ) -> Dict[str, pd.DataFrame]:
         method = "fit" if fit else "predict"
-        cols = self._cols or df_in.columns.tolist()
+        cols = self._to_list(self._cols or df_in.columns.tolist())
         if method == "fit":
             self._fill_model_dicts(cols)
         info = collections.OrderedDict()
@@ -1100,7 +1101,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin):
         self._append(dag, tail_nid, node)
         return dag
 
-    def _fill_model_dicts(self, cols: List[str]) -> None:
+    def _fill_model_dicts(self, cols: List[_COL_TYPE]) -> None:
         for col in cols:
             self._vol_cols[col] = str(col) + "_vol"
             self._fwd_vol_cols[col] = (
@@ -1138,7 +1139,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin):
         return node.nid
 
 
-class VolatilityModulator(FitPredictNode, ColModeMixin):
+class VolatilityModulator(FitPredictNode, ColModeMixin, ToListMixin):
     """
     Modulate or demodulate signal by volatility.
 
@@ -1165,7 +1166,7 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
     def __init__(
         self,
         nid: str,
-        signal_cols: List[Any],
+        signal_cols: _TO_LIST_MIXIN_TYPE,
         volatility_col: Any,
         signal_steps_ahead: int,
         volatility_steps_ahead: int,
@@ -1190,8 +1191,7 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
         :param col_mode: as in `ColumnTransformer`
         """
         super().__init__(nid)
-        dbg.dassert_isinstance(signal_cols, list)
-        self._signal_cols = signal_cols
+        self._signal_cols = self._to_list(signal_cols)
         self._volatility_col = volatility_col
         dbg.dassert_lte(0, signal_steps_ahead)
         self._signal_steps_ahead = signal_steps_ahead
@@ -1285,10 +1285,10 @@ class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
     def __init__(
         self,
         nid: str,
-        y_vars: Union[List[str], Callable[[], List[str]]],
+        y_vars: _TO_LIST_MIXIN_TYPE,
         trainer_kwargs: Optional[Any] = None,
         estimator_kwargs: Optional[Any] = None,
-        x_vars: Optional[Union[List[str], Callable[[], List[str]]]] = None,
+        x_vars: Optional[_TO_LIST_MIXIN_TYPE] = None,
         num_traces: int = 100,
     ) -> None:
         """
@@ -1420,7 +1420,7 @@ class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
         Return dataframe of `steps_ahead` forward y values.
         """
         y_vars = self._to_list(self._y_vars)
-        mapper = lambda y: y + "_%i" % self._prediction_length
+        mapper = lambda y: str(y) + "_%i" % self._prediction_length
         # TODO(gp): Not sure if the following is needed.
         # [mapper(y) for y in y_vars]
         # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
@@ -1443,8 +1443,8 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
     def __init__(
         self,
         nid: str,
-        x_vars: Union[List[str], Callable[[], List[str]]],
-        y_vars: Union[List[str], Callable[[], List[str]]],
+        x_vars: _TO_LIST_MIXIN_TYPE,
+        y_vars: _TO_LIST_MIXIN_TYPE,
         trainer_kwargs: Optional[Any] = None,
         estimator_kwargs: Optional[Any] = None,
     ) -> None:
@@ -1545,7 +1545,7 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
             )
         )
         y_hat.index = aligned_idx
-        y_hat.name = y_vars[0] + "_hat"
+        y_hat.name = str(y_vars[0]) + "_hat"
         y_hat.index.rename(df.index.names, inplace=True)
         # Store info.
         info = collections.OrderedDict()
@@ -1593,7 +1593,7 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
             )
         )
         y_hat.index = aligned_idx
-        y_hat.name = y_vars[0] + "_hat"
+        y_hat.name = str(y_vars[0]) + "_hat"
         y_hat.index.rename(df.index.names, inplace=True)
         # Store info.
         info = collections.OrderedDict()
@@ -1637,11 +1637,11 @@ class ContinuousSarimaxModel(
     def __init__(
         self,
         nid: str,
-        y_vars: Union[List[str], Callable[[], List[str]]],
+        y_vars: _TO_LIST_MIXIN_TYPE,
         steps_ahead: int,
         init_kwargs: Optional[Dict[str, Any]] = None,
         fit_kwargs: Optional[Dict[str, Any]] = None,
-        x_vars: Optional[Union[List[str], Callable[[], List[str]]]] = None,
+        x_vars: Optional[_TO_LIST_MIXIN_TYPE] = None,
         add_constant: bool = False,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -1827,7 +1827,7 @@ class ContinuousSarimaxModel(
         # Shift index instead of series to extend the index.
         bkwd_x_df = df[x_vars].copy()
         bkwd_x_df.index = bkwd_x_df.index.shift(shift)
-        mapper = lambda y: y + "_bkwd_%i" % shift
+        mapper = lambda y: str(y) + "_bkwd_%i" % shift
         return bkwd_x_df.rename(columns=mapper)
 
     def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -1835,7 +1835,7 @@ class ContinuousSarimaxModel(
         Return dataframe of `steps_ahead` forward y values.
         """
         y_vars = self._to_list(self._y_vars)
-        mapper = lambda y: y + "_%i" % self._steps_ahead
+        mapper = lambda y: str(y) + "_%i" % self._steps_ahead
         fwd_y_df = df[y_vars].shift(-self._steps_ahead).rename(columns=mapper)
         return fwd_y_df
 
@@ -1867,7 +1867,7 @@ class ContinuousSarimaxModel(
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
 
-class MultihorizonReturnsPredictionProcessor(FitPredictNode):
+class MultihorizonReturnsPredictionProcessor(FitPredictNode, ToListMixin):
     """
     Process multi-horizon returns prediction.
 
@@ -1883,7 +1883,7 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode):
         self,
         nid: str,
         target_col: Any,
-        prediction_cols: List[Any],
+        prediction_cols: _TO_LIST_MIXIN_TYPE,
         volatility_col: Any,
     ):
         """
@@ -1900,8 +1900,7 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode):
         """
         super().__init__(nid)
         self._target_col = target_col
-        dbg.dassert_isinstance(prediction_cols, list)
-        self._prediction_cols = prediction_cols
+        self._prediction_cols = self._to_list(prediction_cols)
         self._volatility_col = volatility_col
         self._max_steps_ahead = len(self._prediction_cols)
 
