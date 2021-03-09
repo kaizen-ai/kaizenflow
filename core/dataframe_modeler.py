@@ -281,6 +281,7 @@ class DataFrameModeler:
         col: str,
         steps_ahead: int,
         tau: Optional[float] = None,
+        col_mode: Optional[str] = "merge_all",
         nan_mode: Optional[str] = "drop",
         method: str = "fit",
     ) -> DataFrameModeler:
@@ -292,6 +293,7 @@ class DataFrameModeler:
             col=[col],
             steps_ahead=steps_ahead,
             tau=tau,
+            col_mode=col_mode,
             nan_mode=nan_mode,
         )
         return self._run_model(model, method)
@@ -499,6 +501,8 @@ class DataFrameModeler:
         mode: str = "ins",
     ) -> None:
         """
+        :param y_scale: the height of each plot. If `None`, the size of the whole
+            figure equals the default `figsize`
         :param separator: if not `None`, split the column names by it and
             display only the last part as the plot title
         """
@@ -657,10 +661,14 @@ class DataFrameModeler:
         cols: Optional[List[Any]] = None,
         num_components: Optional[int] = None,
         num_cols: int = 2,
-        y_scale: Optional[float] = None,
+        y_scale: Optional[float] = 4,
         axes: Optional[List[mpl.axes.Axes]] = None,
         mode: str = "ins",
     ) -> None:
+        """
+        :param y_scale: the height of each plot. If `None`, the size of the whole
+            figure equals the default `figsize`
+        """
         df = self._get_df(cols=cols, mode=mode)
         pca = cplott.PCA(mode="standard")
         pca.fit(df.replace([np.inf, -np.inf], np.nan).fillna(0))

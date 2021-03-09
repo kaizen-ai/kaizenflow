@@ -181,7 +181,8 @@ def get_multiple_plots(
 
     :param num_plots: number of plots
     :param num_cols: number of columns to use in the subplot
-    :param y_scale: if not None
+    :param y_scale: the height of each plot. If `None`, the size of the whole
+        figure equals the default `figsize`
     :return: figure and array of axes
     """
     dbg.dassert_lte(1, num_plots)
@@ -193,7 +194,7 @@ def get_multiple_plots(
         figsize: Optional[Tuple[float, float]] = (20, ysize)
     else:
         figsize = None
-    if "tight_layout" not in kwargs:
+    if "tight_layout" not in kwargs and not kwargs.get("constrained_layout", False):
         kwargs["tight_layout"] = True
     fig, ax = plt.subplots(
         math.ceil(num_plots / num_cols),
@@ -749,7 +750,8 @@ def plot_time_series_dict(
     :param dict_: dict of series
     :param num_plots: number of plots
     :param num_cols: number of columns to use in the subplot
-    :param y_scale: scale of y-axis
+    :param y_scale: the height of each plot. If `None`, the size of the whole
+        figure equals the default `figsize`
     :param sharex: unify x-axis if True
     :param sharey: unify y-axis if True
     :param exclude_empty: whether to exclude plots of empty series
@@ -840,7 +842,7 @@ def plot_histograms_and_lagged_scatterplot(
     axes[2].axis("equal")
     axes[2].set_title("Scatter-plot with lag={}".format(lag))
 
-
+    
 # #############################################################################
 # Correlation-type plots
 # #############################################################################
@@ -1211,13 +1213,15 @@ class PCA:
         self,
         num_components: Optional[int] = None,
         num_cols: int = 4,
-        y_scale: Optional[float] = None,
+        y_scale: Optional[float] = 4,
         axes: Optional[List[mpl.axes.Axes]] = None,
     ) -> None:
         """
         Plot principal components.
 
         :param num_components: number of top components to plot
+        :param y_scale: the height of each plot. If `None`, the size of the whole
+            figure equals the default `figsize`
         :param num_cols: number of columns to use in the subplot
         """
         suvali.check_is_fitted(self.pca)
@@ -1282,6 +1286,36 @@ class PCA:
         return num_pcs_to_plot
 
 
+def plot_ipca(
+    df: pd.DataFrame,
+    num_pc: int,
+    tau: float,
+    num_cols: int = 2,
+    axes: Optional[List[mpl.axes.Axes]] = None,
+) -> None:
+    """
+    Plot a panel of iPCA calculation results over time.
+    
+    Plots include:
+        - Eigenvalues estimates
+        - Eigenvectors estimates
+        - Eigenvector angular distances
+    """
+    eigenvalues, eigenvectors = csigna.compute_ipca(df, num_pc=num_pc, tau=tau)
+    eigenvalues.plot(title="Eigenvalues")
+    if axes is None:
+        _, axes = get_multiple_plots(
+                    num_plots=num_pc,
+                    num_cols=num_cols,
+                    sharex=True,
+                    sharey=True,
+                )
+    for i in range(num_pc):
+        eigenvectors[i].plot(ax=axes[i], title=f"Eigenvectors PC{i}")
+    eigenvector_diffs = csigna.compute_eigenvector_diffs(eigenvectors)
+    eigenvector_diffs.plot(title="Eigenvector angular distances")
+   
+    
 def _get_heatmap_mask(corr: pd.DataFrame, mode: str) -> np.ndarray:
     if mode == "heatmap_semitriangle":
         # Generate a mask for the upper triangle.
@@ -1856,7 +1890,32 @@ def plot_holdings(
     ax.legend()
     ax.set_title(f"Total holdings ({unit})")
 
+def plot_holding_diffs(
+    holdings: pd.Series,
+    unit: str = "ratio",
+    ax: Optional[mpl.axes.Axes] = None,
+) -> None:
+    """Plot holding changes over time.
+    
+    Indicates how much to increase or decrease holdings from current point in 
+    time to the next one in order to achieve the target position. Since the 
+    difference is between current and next time periods, the holdings change 
+    from t0 to t1 has a timestamp t0.
 
+    :param holdings: series to plot
+    :param unit: "ratio", "%" or "bps" scaling coefficient
+    :param ax: axes in which to draw the plot
+    """
+    ax = ax or plt.gca()
+    scale_coeff = _choose_scaling_coefficient(unit)
+    holdings = scale_coeff * holdings
+    holdings = -holdings.diff(-1)
+    holdings.plot(linewidth=1, ax=ax, label="holding changes")
+    ax.set_ylabel(unit)
+    ax.legend()
+    ax.set_title(f"Holding changes over time (in {unit})")
+    
+    
 def plot_qq(
     srs: pd.Series,
     ax: Optional[mpl.axes.Axes] = None,
