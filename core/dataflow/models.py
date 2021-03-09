@@ -105,6 +105,8 @@ class ContinuousSkLearnModel(
     Fit and predict an sklearn model.
     """
 
+    # pylint: disable=too-many-ancestors
+
     def __init__(
         self,
         nid: str,
@@ -453,6 +455,8 @@ class UnsupervisedSkLearnModel(
     Fit and transform an unsupervised sklearn model.
     """
 
+    # pylint: disable=too-many-ancestors
+
     def __init__(
         self,
         nid: str,
@@ -651,6 +655,8 @@ class SkLearnInverseTransformer(
     """
     Inverse transform cols using an unsupervised sklearn model.
     """
+
+    # pylint: disable=too-many-ancestors
 
     def __init__(
         self,
@@ -1633,6 +1639,8 @@ class ContinuousSarimaxModel(
     https://www.statsmodels.org/stable/examples/notebooks/generated/statespace_sarimax_stata.html
     for SARIMAX model examples.
     """
+
+    # pylint: disable=too-many-ancestors
 
     def __init__(
         self,
