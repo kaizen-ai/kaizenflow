@@ -8,6 +8,8 @@ IB_CONNECT_PASSWORD?=
 IB_CONNECT_APP?=GATEWAY
 IB_CONNECT_TRUSTED_IPS?=""
 IB_CONNECT_VNC_PASSWORD?=
+IB_CONNECT_API_PORT?=4004
+IB_CONNECT_VNC_PORT?=5902
 ib_connect.docker_run.prod:
 ifeq ($(IB_CONNECT_VNC_PASSWORD),)
 	@echo "You need to provide IB_CONNECT_VNC_PASSWORD parameter. Example: 'IB_CONNECT_VNC_PASSWORD=12345 make ib_connect.docker_run.prod'"
@@ -22,6 +24,8 @@ else
 	TRUSTED_IPS=$(IB_CONNECT_TRUSTED_IPS) \
 	VNC_PASSWORD=$(IB_CONNECT_VNC_PASSWORD) \
 	IMAGE=$(IB_CONNECT_PROD_IMAGE) \
+	API_PORT=$(IB_CONNECT_API_PORT) \
+	VNC_PORT=$(IB_CONNECT_VNC_PORT) \
 	docker-compose \
 		-f vendors_amp/ib/connect/compose/docker-compose.prod.yml \
     run --rm \
@@ -47,6 +51,8 @@ else
 	TRUSTED_IPS=$(IB_CONNECT_TRUSTED_IPS) \
 	VNC_PASSWORD=$(IB_CONNECT_VNC_PASSWORD) \
 	IMAGE=$(IB_CONNECT_PROD_IMAGE) \
+	API_PORT=$(IB_CONNECT_API_PORT) \
+	VNC_PORT=$(IB_CONNECT_VNC_PORT) \
 	docker-compose \
 	  -f vendors_amp/ib/connect/compose/docker-compose.prod.yml \
 		up \
@@ -57,6 +63,8 @@ endif
 ib_connect.docker_down.prod:
 	IB_APP=$(IB_CONNECT_APP) \
 	IMAGE=$(IB_CONNECT_PROD_IMAGE) \
+	API_PORT=$(IB_CONNECT_API_PORT) \
+	VNC_PORT=$(IB_CONNECT_VNC_PORT) \
 	docker-compose \
 		-f vendors_amp/ib/connect/compose/docker-compose.prod.yml \
 		down
