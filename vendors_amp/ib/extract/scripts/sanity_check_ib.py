@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import datetime
+import os
 
 import ib_insync
 
@@ -21,9 +22,11 @@ def get_es_data(ib):
 
 
 ib = ib_insync.IB()
-port = 4003
-print("Connecting to port %s" % port)
-ib.connect(port=port)
+host = os.environ["IB_GW_CONNECTION_HOST"]
+port = os.environ["IB_GW_CONNECTION_PORT"]
+# port = 4006
+print("Connecting to %s:%s" % (host, port))
+ib.connect(host=host, port=port)
 
 get_es_data(ib)
 
