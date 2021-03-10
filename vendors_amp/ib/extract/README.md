@@ -55,7 +55,11 @@
   ```
 
 - You will now also have the IB Gateway app running on port 4006 and VNC
-  on 5905.
+  on 5906. To specify custom ports run in a following way:
+
+  ```bash
+  > IB_CONNECT_API_PORT=4015 IB_CONNECT_VNC_PORT=5915 make ib_extract.docker_run.local
+  ```
 
 ### Start app on production
 
