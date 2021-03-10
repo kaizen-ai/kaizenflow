@@ -34,8 +34,8 @@ from core.dataflow.nodes import (
 _LOG = logging.getLogger(__name__)
 
 
-_PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 _COL_TYPE = Union[int, str]
+_PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 
@@ -1027,12 +1027,12 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self._col_rename_func = col_rename_func
         self._col_mode = col_mode or "merge_all"
         self._nan_mode = nan_mode
-        self._vol_cols = {}
-        self._fwd_vol_cols = {}
-        self._fwd_vol_cols_hat = {}
-        self._taus = {}
-        self._sma_models = {}
-        self._modulators = {}
+        self._vol_cols: Dict[_COL_TYPE, str] = {}
+        self._fwd_vol_cols: Dict[_COL_TYPE, str] = {}
+        self._fwd_vol_cols_hat: Dict[_COL_TYPE, str] = {}
+        self._taus: Dict[_COL_TYPE, Optional[float]] = {}
+        self._sma_models: Dict[_COL_TYPE, SmaModel] = {}
+        self._modulators: Dict[_COL_TYPE, VolatilityModulator] = {}
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=True)
@@ -1041,7 +1041,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         return self._fit_predict_helper(df_in, fit=False)
 
     @property
-    def taus(self) -> Dict[str, Any]:
+    def taus(self) -> Dict[_COL_TYPE, Any]:
         return self._taus
 
     def _fit_predict_helper(
@@ -1072,7 +1072,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self._set_info(method, info)
         return {"df_out": df_out}
 
-    def _get_dag(self, df_in: pd.DataFrame, col: str) -> DAG:
+    def _get_dag(self, df_in: pd.DataFrame, col: _COL_TYPE) -> DAG:
         dag = DAG(mode="strict")
         # Load data.
         node = ReadDataFromDf("data", df_in)
@@ -1173,7 +1173,7 @@ class VolatilityModulator(FitPredictNode, ColModeMixin, ToListMixin):
         self,
         nid: str,
         signal_cols: _TO_LIST_MIXIN_TYPE,
-        volatility_col: Any,
+        volatility_col: _COL_TYPE,
         signal_steps_ahead: int,
         volatility_steps_ahead: int,
         mode: str,
@@ -1851,9 +1851,10 @@ class ContinuousSarimaxModel(
         if not self._add_constant:
             return x
         if self._x_vars is not None:
+            self._x_vars = self._to_list(self._x_vars)
             dbg.dassert_not_in(
                 "const",
-                self._to_list(self._x_vars),
+                self._x_vars,
                 "A column name 'const' is already present, please rename column.",
             )
             self._x_vars.append("const")
