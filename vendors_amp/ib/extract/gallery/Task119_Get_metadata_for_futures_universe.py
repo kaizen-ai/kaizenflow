@@ -22,7 +22,7 @@ print(ib_insync.__all__)
 import helpers.dbg as dbg
 import helpers.printing as pri
 import core.explore as exp
-import vendors_amp.ib_insync.utils as ibutils
+import vendors_amp.ib.extract.utils as ibutils
 
 # %%
 ib = ibutils.ib_connect(client_id=33, is_notebook=True)
