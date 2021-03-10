@@ -1,0 +1,4 @@
+numpy
+pandas
+matplotlib
+ib_insync==0.9.65
