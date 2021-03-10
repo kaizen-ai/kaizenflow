@@ -2,18 +2,17 @@ import logging
 import os
 from typing import Tuple
 
-#import ib_insync
+import ib_insync
 import pandas as pd
 import pytest
 
 import helpers.dbg as dbg
 import helpers.unit_test as hut
-import vendors_amp.ib_insync.utils as ibutils
+import vendors_amp.ib.extract.utils as ibutils
 
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skip("Disabled")
 class Test_get_historical_data(hut.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -30,7 +29,7 @@ class Test_get_historical_data(hut.TestCase):
         """
         Test get_end_timestamp() for ES in and outside regular trading hours (RTH).
         """
-        contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
+        contract = ib_insync.ContFuture("ES", "GLOBEX", currency="USD")
         what_to_show = "TRADES"
         use_rth = True
         ts1 = ibutils.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
@@ -76,7 +75,7 @@ class Test_get_historical_data(hut.TestCase):
         Run ibutils.req_historical_data() with some fixed params and return short
         and long signature.
         """
-        contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
+        contract = ib_insync.ContFuture("ES", "GLOBEX", currency="USD")
         what_to_show = "TRADES"
         duration_str = '1 D'
         bar_size_setting = '1 hour'
@@ -202,7 +201,7 @@ class Test_get_historical_data(hut.TestCase):
     def _get_historical_data_with_IB_loop_helper(self, start_ts, end_ts,
                                                  bar_size_setting, use_rth):
         _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
-        contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
+        contract = ib_insync.ContFuture("ES", "GLOBEX", currency="USD")
         what_to_show = "TRADES"
         duration_str = '1 D'
         df, ts_seq = ibutils.get_historical_data_with_IB_loop(self.ib, contract,
@@ -464,7 +463,7 @@ class Test_get_historical_data(hut.TestCase):
     def _save_historical_data_with_IB_loop_helper(self, start_ts, end_ts,
                                                   bar_size_setting, use_rth):
         _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
-        contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
+        contract = ib_insync.ContFuture("ES", "GLOBEX", currency="USD")
         what_to_show = "TRADES"
         duration_str = '1 D'
         file_name = os.path.join(self.get_scratch_space(), "output.csv")
@@ -696,7 +695,7 @@ class Test_get_historical_data(hut.TestCase):
     def _get_historical_data_helper(self, start_ts, end_ts, bar_size_setting,
                                     use_rth):
         _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
-        contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
+        contract = ib_insync.ContFuture("ES", "GLOBEX", currency="USD")
         what_to_show = "TRADES"
         mode = "in_memory"
         client_id = 2

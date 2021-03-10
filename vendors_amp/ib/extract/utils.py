@@ -2,12 +2,12 @@ import datetime
 import logging
 import os
 
-#import ib_insync
+import ib_insync
 import pandas as pd
 # from tqdm.notebook import tqdm
 from tqdm import tqdm
 
-import core.explore as exp
+# import core.explore as exp
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.list as hlist
@@ -21,13 +21,10 @@ def ib_connect(client_id=0, is_notebook=True):
     if is_notebook:
         ib_insync.util.startLoop()
     ib = ib_insync.IB()
-    real_account = 7492
-    paper_account = 7497
-    account = paper_account
-    dbg.dassert_eq(account, paper_account)
-    dbg.dassert_lte(0, client_id)
+    host = os.environ["IB_GW_CONNECTION_HOST"]
+    port = os.environ["IB_GW_CONNECTION_PORT"]
     _LOG.debug("Trying to connect to client_id=%s", client_id)
-    ib.connect('127.0.0.1', account, clientId=client_id)
+    ib.connect(host=host, port=port, clientId=client_id)
     #
     ib_insync.IB.RaiseRequestErrors = True
     _LOG.debug("Connected to IB: client_id=%s", client_id)
@@ -56,7 +53,7 @@ def get_contract_details(ib, asset):
     contracts_df = contracts_df.drop(columns=["exchange", "comboLegs"])
     contracts_df = contracts_df.drop_duplicates()
     threshold = 1
-    contracts_df = exp.remove_columns_with_low_variability(contracts_df, threshold)
+    # contracts_df = exp.remove_columns_with_low_variability(contracts_df, threshold)
     display(contracts_df)
 
 
@@ -218,6 +215,8 @@ def duration_str_to_pd_dateoffset(duration_str):
         ret = pd.DateOffset(days=2)
     elif duration_str == "7 D":
         ret = pd.DateOffset(days=7)
+    elif duration_str == "1 D":
+        ret = pd.DateOffset(days=1)
     else:
         raise ValueError("Invalid duration_str='%s'" % duration_str)
     return ret
@@ -342,7 +341,7 @@ def get_historical_data_with_IB_loop(ib, contract, start_ts, end_ts, duration_st
     _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
     dbg.dassert_lt(start_ts, end_ts)
     #
-    df = _truncate_df(df, start_ts, end_ts)
+    df = _truncate(df, start_ts, end_ts)
     #
     return df
 
@@ -430,16 +429,18 @@ def save_historical_data_with_IB_loop(ib, contract, start_ts, end_ts, duration_s
                                   num_retry=num_retry)
     for i, df_tmp, ts_seq_tmp in generator:
         # Update file.
-        header = i == 1
+        header = i == 0
         mode = "w" if header else "a"
         df_tmp.to_csv(file_name, mode=mode, header=header)
     #
     _LOG.debug("Reading back %s", file_name)
-    df = pd.read_csv(file_name)
+    df = pd.read_csv(file_name, parse_dates=True, index_col='date')
+    # It is not sorted since we are going back.
+    df = df.sort_index()
     #
-    df = _truncate_df(df, start_ts, end_ts)
+    df = _truncate(df, start_ts, end_ts)
     #
-    df_tmp.to_csv(file_name, mode="w")
+    df.to_csv(file_name, mode="w")
     return df
 
 
@@ -582,13 +583,13 @@ def load_historical_data(file_name: str, verbose: bool = False) -> pd.DataFrame:
 def select_assets(ib, target: str, frequency: str, symbol: str):
     #
     if target == "futures":
-        contract = ib_insync.Future(symbol, '202109', 'GLOBEX', "USD")
+        contract = ib_insync.Future(symbol, '202109', 'GLOBEX', currency="USD")
         what_to_show = 'TRADES'
     if target == "continuous_futures":
-        contract = ib_insync.ContFuture(symbol, 'GLOBEX', "USD")
+        contract = ib_insync.ContFuture(symbol, 'GLOBEX', currency="USD")
         what_to_show = 'TRADES'
     elif target == "stocks":
-        contract = ib_insync.Stock(symbol, 'SMART', 'USD')
+        contract = ib_insync.Stock(symbol, 'SMART', currency='USD')
         what_to_show = 'TRADES'
     elif target == "forex":
         contract = ib_insync.Forex(symbol)
