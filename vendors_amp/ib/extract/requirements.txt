@@ -3,5 +3,6 @@ pandas
 matplotlib
 ib_insync==0.9.65
 pytest
+pytest-xdist
 flaky
 tqdm

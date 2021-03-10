@@ -12,16 +12,31 @@ import vendors_amp.ib.extract.utils as ibutils
 
 _LOG = logging.getLogger(__name__)
 
-
+@pytest.mark.skipif(
+    not (
+        (
+            os.environ.get("STAGE") == "TEST"
+            and os.environ.get("IB_GW_CONNECTION_HOST") == "ib_connect_test"
+        )
+        or (
+            os.environ.get("STAGE") == "LOCAL"
+            and os.environ.get("IB_GW_CONNECTION_HOST") == "ib_connect_local"
+        )
+    ),
+    reason="Testable only inside IB container",
+)
 class Test_get_historical_data(hut.TestCase):
     @classmethod
     def setUpClass(cls):
         dbg.shutup_chatty_modules()
-        cls.ib = ibutils.ib_connect(0, is_notebook=False)
+    
+    def setUp(self):
+        super().setUp()
+        self.ib = ibutils.ib_connect(sum(bytes(self._get_test_name(), encoding="UTF-8")), is_notebook=False)
 
-    @classmethod
-    def tearnDownClass(cls):
-        cls.ib.disconnect()
+    def tearDown(self):
+        self.ib.disconnect()
+        super().tearDown()
 
     # ##############################################################################
 
