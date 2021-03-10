@@ -168,15 +168,15 @@ class DataFrameModeler:
         return self._run_model(model, method)
 
     def apply_series_transformer(
-            self,
-            transformer_func: Callable[..., pd.DataFrame],
-            transformer_kwargs: Optional[Dict[str, Any]] = None,
-            # TODO(Paul): May need to assume `List` instead.
-            cols: Optional[Iterable[str]] = None,
-            col_rename_func: Optional[Callable[[Any], Any]] = None,
-            col_mode: Optional[str] = None,
-            nan_mode: Optional[str] = None,
-            method: str = "fit",
+        self,
+        transformer_func: Callable[..., pd.DataFrame],
+        transformer_kwargs: Optional[Dict[str, Any]] = None,
+        # TODO(Paul): May need to assume `List` instead.
+        cols: Optional[Iterable[str]] = None,
+        col_rename_func: Optional[Callable[[Any], Any]] = None,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
+        method: str = "fit",
     ) -> DataFrameModeler:
         """
         Apply a function to a select of columns.

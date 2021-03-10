@@ -582,15 +582,15 @@ class SeriesTransformer(Transformer, ColModeMixin):
     """
 
     def __init__(
-            self,
-            nid: str,
-            transformer_func: Callable[..., pd.DataFrame],
-            transformer_kwargs: Optional[Dict[str, Any]] = None,
-            # TODO(Paul): May need to assume `List` instead.
-            cols: Optional[Iterable[Union[int, str]]] = None,
-            col_rename_func: Optional[Callable[[Any], Any]] = None,
-            col_mode: Optional[str] = None,
-            nan_mode: Optional[str] = None,
+        self,
+        nid: str,
+        transformer_func: Callable[..., pd.DataFrame],
+        transformer_kwargs: Optional[Dict[str, Any]] = None,
+        # TODO(Paul): May need to assume `List` instead.
+        cols: Optional[Iterable[Union[int, str]]] = None,
+        col_rename_func: Optional[Callable[[Any], Any]] = None,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         :param nid: unique node id
@@ -631,7 +631,7 @@ class SeriesTransformer(Transformer, ColModeMixin):
         return self._transformed_col_names
 
     def _transform(
-            self, df: pd.DataFrame
+        self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df_in = df.copy()
         df = df.copy()
@@ -691,6 +691,7 @@ class SeriesTransformer(Transformer, ColModeMixin):
         #
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
+
 
 class DataframeMethodRunner(Transformer):
     def __init__(

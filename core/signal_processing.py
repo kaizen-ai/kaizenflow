@@ -1431,11 +1431,11 @@ def get_swt(
 
 
 def get_swt_level(
-        sig: Union[pd.DataFrame, pd.Series],
-        wavelet: str,
-        level: int,
-        timing_mode: Optional[str] = None,
-        output_mode: Optional[str] = None,
+    sig: Union[pd.DataFrame, pd.Series],
+    wavelet: str,
+    level: int,
+    timing_mode: Optional[str] = None,
+    output_mode: Optional[str] = None,
 ) -> pd.Series:
     """
     Wraps `get_swt` and extracts a single wavelet level.
@@ -1458,11 +1458,12 @@ def get_swt_level(
     :return: see `output_mode`
     """
     dbg.dassert_in(output_mode, ["smooth", "detail"])
-    swt = get_swt(sig,
-            wavelet=wavelet,
-            depth=level,
-            timing_mode=timing_mode,
-            output_mode=output_mode
+    swt = get_swt(
+        sig,
+        wavelet=wavelet,
+        depth=level,
+        timing_mode=timing_mode,
+        output_mode=output_mode,
     )
     dbg.dassert_in(level, swt.columns)
     return swt[level]
