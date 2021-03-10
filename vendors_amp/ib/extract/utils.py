@@ -53,6 +53,7 @@ def get_contract_details(ib, asset):
     contracts_df = contracts_df.drop(columns=["exchange", "comboLegs"])
     contracts_df = contracts_df.drop_duplicates()
     threshold = 1
+    # TODO(*): remove or avoid since it is only one place where `core` is used.
     # contracts_df = exp.remove_columns_with_low_variability(contracts_df, threshold)
     display(contracts_df)
 
