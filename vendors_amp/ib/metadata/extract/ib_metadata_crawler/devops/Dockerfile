@@ -3,10 +3,9 @@ FROM python:3.8-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY devops/requirements.txt .
 RUN pip install -r requirements.txt
 
-# Copy local src dir to working dir.
-COPY . .
+COPY ./src .
 
 #CMD ["python", "./server.py"]
