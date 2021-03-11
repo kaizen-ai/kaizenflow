@@ -559,67 +559,7 @@ class Test_get_historical_data(hut.TestCase):
 
     # #########################################################################
 
-    def test_ib_date_range1(self):
-        start_ts = pd.Timestamp("2018-01-26 15:00").tz_localize(
-            tz="America/New_York"
-        )
-        end_ts = pd.Timestamp("2018-02-03 15:00").tz_localize(
-            tz="America/New_York"
-        )
-        vieuti._ib_date_range(start_ts, end_ts)
-        bar_size_setting = "1 hour"
-        use_rth = False
-        (
-            df,
-            short_signature,
-            long_signature,
-        ) = self._get_historical_data_with_IB_loop_helper(
-            start_ts, end_ts, bar_size_setting, use_rth
-        )
-        #
-        act = "\n".join(map(str, df.index))
-        # NOTE: IB returns also a bar at close 16:30 even if the frequency is hourly.
-        exp = """
-        2021-02-17 00:00:00-05:00
-        2021-02-17 01:00:00-05:00
-        2021-02-17 02:00:00-05:00
-        2021-02-17 03:00:00-05:00
-        2021-02-17 04:00:00-05:00
-        2021-02-17 05:00:00-05:00
-        2021-02-17 06:00:00-05:00
-        2021-02-17 07:00:00-05:00
-        2021-02-17 08:00:00-05:00
-        2021-02-17 09:00:00-05:00
-        2021-02-17 10:00:00-05:00
-        2021-02-17 11:00:00-05:00
-        2021-02-17 12:00:00-05:00
-        2021-02-17 13:00:00-05:00
-        2021-02-17 14:00:00-05:00
-        2021-02-17 15:00:00-05:00
-        2021-02-17 16:00:00-05:00
-        2021-02-17 16:30:00-05:00
-        2021-02-17 18:00:00-05:00
-        2021-02-17 19:00:00-05:00
-        2021-02-17 20:00:00-05:00
-        2021-02-17 21:00:00-05:00
-        2021-02-17 22:00:00-05:00
-        2021-02-17 23:00:00-05:00
-        """
-        self.assert_equal(act, exp, fuzzy_match=True)
-        #
-        exp_short_signature = """
-        signature=len=24 [2021-02-17 00:00:00-05:00, 2021-02-17 23:00:00-05:00]
-        min_max_df=
-                        min       max
-        2021-02-17  00:00:00  23:00:00
-        """
-        self.assert_equal(short_signature, exp_short_signature, fuzzy_match=True)
-        #
-        self.check_string(long_signature)
-
-    # #########################################################################
-
-    def test_ib_date_range2(self) -> None:
+    def test_ib_date_range1(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 00:00").tz_localize(
             tz="America/New_York"
         )
@@ -633,7 +573,7 @@ class Test_get_historical_data(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_ib_date_range3(self) -> None:
+    def test_ib_date_range2(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 18:00").tz_localize(
             tz="America/New_York"
         )
@@ -647,7 +587,7 @@ class Test_get_historical_data(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_ib_date_range4(self) -> None:
+    def test_ib_date_range3(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 17:59").tz_localize(
             tz="America/New_York"
         )
@@ -661,7 +601,7 @@ class Test_get_historical_data(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_ib_date_range5(self) -> None:
+    def test_ib_date_range4(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 17:59").tz_localize(
             tz="America/New_York"
         )
@@ -675,7 +615,7 @@ class Test_get_historical_data(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_ib_date_range6(self) -> None:
+    def test_ib_date_range5(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 00:00:00").tz_localize(
             tz="America/New_York"
         )
