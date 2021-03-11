@@ -6,7 +6,7 @@ import ib_insync
 import pandas as pd
 
 import helpers.io_ as hio
-import vendors_amp.ib.extract.utils as viutil
+import vendors_amp.ib.extract.utils as vieuti
 
 _LOG = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ class IbMetadata:
         """
         dfs = []
         for contract in contracts:
-            df_tmp = viutil.get_contract_details(ib, contract)
+            df_tmp = vieuti.get_contract_details(ib, contract)
             dfs.append(df_tmp)
         df = pd.concat(dfs, axis=0)
         #

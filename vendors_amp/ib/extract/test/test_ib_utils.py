@@ -11,9 +11,10 @@ import pytest
 
 import helpers.dbg as dbg
 import helpers.unit_test as hut
-import vendors_amp.ib.extract.utils as viutil
+import vendors_amp.ib.extract.utils as vieuti
 
 _LOG = logging.getLogger(__name__)
+
 
 @pytest.mark.skipif(
     not (
@@ -35,7 +36,9 @@ class Test_get_historical_data(hut.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.ib = viutil.ib_connect(sum(bytes(self._get_test_name(), encoding="UTF-8")), is_notebook=False)
+        self.ib = vieuti.ib_connect(
+            sum(bytes(self._get_test_name(), encoding="UTF-8")), is_notebook=False
+        )
 
     def tearDown(self):
         self.ib.disconnect()
@@ -51,11 +54,11 @@ class Test_get_historical_data(hut.TestCase):
         contract = ib_insync.ContFuture("ES", "GLOBEX", currency="USD")
         what_to_show = "TRADES"
         use_rth = True
-        ts1 = viutil.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
+        ts1 = vieuti.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
         _LOG.debug("ts1=%s", ts1)
         #
         use_rth = False
-        ts2 = viutil.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
+        ts2 = vieuti.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
         _LOG.debug("ts2=%s", ts2)
 
     def test_req_historical_data1(self) -> None:
@@ -525,7 +528,7 @@ class Test_get_historical_data(hut.TestCase):
         symbols = "ES".split()
         start_ts = pd.Timestamp("2020-12-09 18:00:00-05:00")
         end_ts = pd.Timestamp("2020-12-13 18:00:00-05:00")
-        tasks = viutil.get_tasks(
+        tasks = vieuti.get_tasks(
             self.ib, target, frequency, symbols, start_ts, end_ts, use_rth
         )
         #
@@ -534,13 +537,13 @@ class Test_get_historical_data(hut.TestCase):
         num_threads = "serial"
         dst_dir = self.get_scratch_space()
         incremental = False
-        file_names = viutil.download_ib_data(
+        file_names = vieuti.download_ib_data(
             client_id_base, tasks, incremental, dst_dir, num_threads
         )
         dbg.dassert_eq(len(file_names), 1)
         _LOG.debug("file_names=%s", file_names)
         # Load the data.
-        df = viutil.load_historical_data(file_names[0])
+        df = vieuti.load_historical_data(file_names[0])
         short_signature, long_signature = self._get_df_signatures(df)
         exp_short_signature = """
         signature=len=48 [2020-12-09 18:00:00-05:00, 2020-12-11 16:30:00-05:00]
@@ -563,7 +566,7 @@ class Test_get_historical_data(hut.TestCase):
         end_ts = pd.Timestamp("2018-02-03 15:00").tz_localize(
             tz="America/New_York"
         )
-        viutil._ib_date_range(start_ts, end_ts)
+        vieuti._ib_date_range(start_ts, end_ts)
         bar_size_setting = "1 hour"
         use_rth = False
         (
@@ -616,12 +619,12 @@ class Test_get_historical_data(hut.TestCase):
 
     # #########################################################################
 
-    def test_ib_date_range1(self) -> None:
+    def test_ib_date_range2(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 00:00").tz_localize(
             tz="America/New_York"
         )
         end_ts = start_ts + pd.DateOffset(days=3)
-        dates = viutil._ib_date_range(start_ts, end_ts)
+        dates = vieuti._ib_date_range(start_ts, end_ts)
         #
         act = "\n".join(map(str, dates))
         exp = """
@@ -630,12 +633,12 @@ class Test_get_historical_data(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_ib_date_range2(self) -> None:
+    def test_ib_date_range3(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 18:00").tz_localize(
             tz="America/New_York"
         )
         end_ts = start_ts + pd.DateOffset(days=1)
-        dates = viutil._ib_date_range(start_ts, end_ts)
+        dates = vieuti._ib_date_range(start_ts, end_ts)
         #
         act = "\n".join(map(str, dates))
         exp = """
@@ -644,12 +647,12 @@ class Test_get_historical_data(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_ib_date_range3(self) -> None:
+    def test_ib_date_range4(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 17:59").tz_localize(
             tz="America/New_York"
         )
         end_ts = start_ts + pd.DateOffset(days=2)
-        dates = viutil._ib_date_range(start_ts, end_ts)
+        dates = vieuti._ib_date_range(start_ts, end_ts)
         #
         act = "\n".join(map(str, dates))
         exp = """
@@ -658,12 +661,12 @@ class Test_get_historical_data(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_ib_date_range4(self) -> None:
+    def test_ib_date_range5(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 17:59").tz_localize(
             tz="America/New_York"
         )
         end_ts = start_ts + pd.DateOffset(days=3)
-        dates = viutil._ib_date_range(start_ts, end_ts)
+        dates = vieuti._ib_date_range(start_ts, end_ts)
         #
         act = "\n".join(map(str, dates))
         exp = """
@@ -672,12 +675,12 @@ class Test_get_historical_data(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_ib_date_range5(self) -> None:
+    def test_ib_date_range6(self) -> None:
         start_ts = pd.Timestamp("2018-02-07 00:00:00").tz_localize(
             tz="America/New_York"
         )
         end_ts = start_ts + pd.DateOffset(days=3)
-        dates = viutil._ib_date_range(start_ts, end_ts)
+        dates = vieuti._ib_date_range(start_ts, end_ts)
         #
         act = "\n".join(map(str, dates))
         exp = """
@@ -685,7 +688,6 @@ class Test_get_historical_data(hut.TestCase):
         2018-02-10 00:00:00-05:00
         """
         self.assert_equal(act, exp, fuzzy_match=True)
-
 
     def test_get_historical_data1(self) -> None:
         """
@@ -744,7 +746,7 @@ class Test_get_historical_data(hut.TestCase):
         """
         txt = []
         #
-        act = viutil.get_df_signature(df)
+        act = vieuti.get_df_signature(df)
         txt.append("signature=%s" % act)
         #
         if not df.empty:
@@ -766,14 +768,14 @@ class Test_get_historical_data(hut.TestCase):
 
     def _req_historical_data_helper(self, end_ts, use_rth) -> Tuple[str, str]:
         """
-        Run viutil.req_historical_data() with some fixed params and return
+        Run vieuti.req_historical_data() with some fixed params and return
         short and long signature.
         """
         contract = ib_insync.ContFuture("ES", "GLOBEX", currency="USD")
         what_to_show = "TRADES"
         duration_str = "1 D"
         bar_size_setting = "1 hour"
-        df = viutil.req_historical_data(
+        df = vieuti.req_historical_data(
             self.ib,
             contract,
             end_ts,
@@ -798,7 +800,7 @@ class Test_get_historical_data(hut.TestCase):
         contract = ib_insync.ContFuture("ES", "GLOBEX", currency="USD")
         what_to_show = "TRADES"
         duration_str = "1 D"
-        df, ts_seq = viutil.get_historical_data_with_IB_loop(
+        df, ts_seq = vieuti.get_historical_data_with_IB_loop(
             self.ib,
             contract,
             start_ts,
@@ -828,7 +830,7 @@ class Test_get_historical_data(hut.TestCase):
         duration_str = "1 D"
         file_name = os.path.join(self.get_scratch_space(), "output.csv")
         incremental = False
-        viutil.save_historical_data_with_IB_loop(
+        vieuti.save_historical_data_with_IB_loop(
             self.ib,
             contract,
             start_ts,
@@ -841,7 +843,7 @@ class Test_get_historical_data(hut.TestCase):
             incremental,
         )
         # Load the data generated.
-        df = viutil.load_historical_data(file_name)
+        df = vieuti.load_historical_data(file_name)
         # Check.
         short_signature, long_signature = self._get_df_signatures(df)
         return df, short_signature, long_signature
@@ -860,7 +862,7 @@ class Test_get_historical_data(hut.TestCase):
         what_to_show = "TRADES"
         mode = "in_memory"
         client_id = 2
-        df, ts_seq = viutil.get_historical_data(
+        df, ts_seq = vieuti.get_historical_data(
             client_id,
             contract,
             start_ts,

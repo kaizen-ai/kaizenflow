@@ -10,11 +10,10 @@ except ModuleNotFoundError:
 
 import pandas as pd
 
-
 # from tqdm.notebook import tqdm
 from tqdm import tqdm
 
-# import core.explore as exp
+# import core.explore as cexplo
 import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.list as hlist
@@ -59,7 +58,8 @@ def get_contract_details(
     _LOG.debug("contracts[0]=%s", contracts[0])
     contracts_df = ib_insync.util.df(contracts)
     if simplify_df:
-        _LOG.debug(cexplo.print_column_variability(contracts_df))
+        # TODO(*): remove or avoid since it is only one place where `core` is used.
+        # _LOG.debug(cexplo.print_column_variability(contracts_df))
         # Remove exchange.
         _LOG.debug("exchange=%s", contracts_df["exchange"].unique())
         contracts_df.sort_values("lastTradeDateOrContractMonth", inplace=True)
@@ -67,12 +67,13 @@ def get_contract_details(
         # Remove duplicates.
         contracts_df = contracts_df.drop_duplicates()
         # Remove constant values.
-        threshold = 1
+        # threshold = 1
         # TODO(*): remove or avoid since it is only one place where `core` is used.
         # contracts_df = cexplo.remove_columns_with_low_variability(
         #     contracts_df, threshold
         # )
     return contracts_df
+
 
 # #############################################################################
 
@@ -385,60 +386,6 @@ def _truncate(
     _LOG.debug("start_ts= %s end_ts3=%s", start_ts, end_ts3)
     df = df[start_ts:end_ts3]
     _LOG.debug("After truncation: df=%s", get_df_signature(df))
-    return df
-
-
-def get_historical_data_with_IB_loop(
-    ib,
-    contract,
-    start_ts,
-    end_ts,
-    duration_str,
-    bar_size_setting,
-    what_to_show,
-    use_rth,
-    use_progress_bar=False,
-    return_ts_seq=False,
-    num_retry=None,
-):
-    """
-    Get historical data using the IB style of looping for [start_ts, end_ts).
-
-    The IB loop style consists in starting from the end of the interval
-    and then using the earliest value returned to move the window
-    backwards in time. The problem with this approach is that one can't
-    parallelize the requests of chunks of data.
-    """
-    generator = ib_loop_generator(
-        ib,
-        contract,
-        start_ts,
-        end_ts,
-        duration_str,
-        bar_size_setting,
-        what_to_show,
-        use_rth,
-        use_progress_bar=use_progress_bar,
-        num_retry=num_retry,
-    )
-    df = []
-    ts_seq = []
-    for i, df_tmp, ts_seq_tmp in generator:
-        # We insert at the beginning.
-        df.insert(0, df_tmp)
-        ts_seq.append(ts_seq_tmp)
-    #
-    df = pd.concat(df)
-    #
-    # TODO(gp): Factor this out.
-    _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
-    start_ts = to_ET(start_ts)
-    end_ts = to_ET(end_ts)
-    _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
-    dbg.dassert_lt(start_ts, end_ts)
-    #
-    df = _truncate(df, start_ts, end_ts)
-    #
     return df
 
 
