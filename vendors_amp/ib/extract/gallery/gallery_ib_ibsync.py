@@ -220,7 +220,7 @@ if False:
 elif False:
     contract = ib_insync.Future('ES', '202109', 'GLOBEX')
     whatToShow = 'TRADES'
-elif True:
+elif False:
     contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
     whatToShow = 'TRADES'
 else:
