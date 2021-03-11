@@ -1430,6 +1430,45 @@ def get_swt(
     raise ValueError("Unsupported output_mode `{output_mode}`")
 
 
+def get_swt_level(
+    sig: Union[pd.DataFrame, pd.Series],
+    wavelet: str,
+    level: int,
+    timing_mode: Optional[str] = None,
+    output_mode: Optional[str] = None,
+) -> pd.Series:
+    """
+    Wraps `get_swt` and extracts a single wavelet level.
+
+    :param sig: input signal
+    :param wavelet: pywt wavelet name, e.g., "db8"
+    :param level: the wavelet level to extract
+    :param timing_mode: supported timing modes are
+        - "knowledge_time":
+            - reindex transform according to knowledge times
+            - remove warm-up artifacts
+        - "zero_phase":
+            - no reindexing (e.g., no phase lag in output, but transform
+              timestamps are not necessarily knowledge times)
+            - remove warm-up artifacts
+        - "raw": `pywt.swt` as-is
+    :param output_mode: valid output modes are
+        - "smooth": return smooth_df for `level`
+        - "detail": return detail_df for `level`
+    :return: see `output_mode`
+    """
+    dbg.dassert_in(output_mode, ["smooth", "detail"])
+    swt = get_swt(
+        sig,
+        wavelet=wavelet,
+        depth=level,
+        timing_mode=timing_mode,
+        output_mode=output_mode,
+    )
+    dbg.dassert_in(level, swt.columns)
+    return swt[level]
+
+
 def _pad_to_pow_of_2(arr: np.array) -> np.array:
     """
     Minimally extend `arr` with zeros so that len is a power of 2.

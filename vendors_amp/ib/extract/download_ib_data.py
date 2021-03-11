@@ -7,7 +7,7 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.parser as prsr
-import vendors_amp.ib_insync.utils as ibutils
+import vendors_amp.ib.extract.utils as ibutils
 
 # from tqdm.notebook import tqdm
 

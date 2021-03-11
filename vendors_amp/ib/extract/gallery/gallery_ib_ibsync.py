@@ -25,7 +25,7 @@ print(ib_insync.__all__)
 import helpers.dbg as dbg
 import helpers.printing as pri
 import core.explore as exp
-import vendors_amp.ib_insync.utils as ibutils
+import vendors_amp.ib.extract.utils as ibutils
 
 # %% [markdown]
 # # Connect
@@ -220,7 +220,7 @@ if False:
 elif False:
     contract = ib_insync.Future('ES', '202109', 'GLOBEX')
     whatToShow = 'TRADES'
-elif True:
+elif False:
     contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
     whatToShow = 'TRADES'
 else:
