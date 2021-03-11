@@ -750,7 +750,8 @@ def plot_time_series_dict(
     :param dict_: dict of series
     :param num_plots: number of plots
     :param num_cols: number of columns to use in the subplot
-    :param y_scale: scale of y-axis
+    :param y_scale: the height of each plot. If `None`, the size of the whole
+        figure equals the default `figsize`
     :param sharex: unify x-axis if True
     :param sharey: unify y-axis if True
     :param exclude_empty: whether to exclude plots of empty series

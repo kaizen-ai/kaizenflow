@@ -1,7 +1,7 @@
 import collections
 import datetime
 import logging
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import gluonts.model.deepar as gmdeep
 import gluonts.trainer as gtrain
@@ -35,6 +35,13 @@ _LOG = logging.getLogger(__name__)
 
 
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
+_COL_TYPE = Union[int, str]
+_TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
+
+
+# #############################################################################
+# Model Mixins
+# #############################################################################
 
 
 class RegFreqMixin:
@@ -58,7 +65,7 @@ class ToListMixin:
     """
 
     @staticmethod
-    def _to_list(to_list: Union[List[str], Callable[[], List[str]]]) -> List[str]:
+    def _to_list(to_list: _TO_LIST_MIXIN_TYPE) -> List[_COL_TYPE]:
         """
         Return a list given its input.
 
@@ -86,6 +93,11 @@ class ToListMixin:
         raise TypeError("Data type=`%s`" % type(to_list))
 
 
+# #############################################################################
+# sklearn - supervised prediction models
+# #############################################################################
+
+
 class ContinuousSkLearnModel(
     FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin
 ):
@@ -93,12 +105,14 @@ class ContinuousSkLearnModel(
     Fit and predict an sklearn model.
     """
 
+    # pylint: disable=too-many-ancestors
+
     def __init__(
         self,
         nid: str,
         model_func: Callable[..., Any],
-        x_vars: Union[List[str], Callable[[], List[str]]],
-        y_vars: Union[List[str], Callable[[], List[str]]],
+        x_vars: _TO_LIST_MIXIN_TYPE,
+        y_vars: _TO_LIST_MIXIN_TYPE,
         steps_ahead: int,
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
@@ -107,26 +121,26 @@ class ContinuousSkLearnModel(
         """
         Specify the data and sklearn modeling parameters.
 
-        Assumptions:
-            :param nid: unique node id
-            :param model_func: an sklearn model
-            :param x_vars: indexed by knowledge datetimes
-                - `x_vars` may contain lags of `y_vars`
-            :param y_vars: indexed by knowledge datetimes
-                - e.g., in the case of returns, this would correspond to `ret_0`
-            :param steps_ahead: number of steps ahead for which a prediction is
-                to be generated. E.g.,
-                    - if `steps_ahead == 0`, then the predictions are
-                      are contemporaneous with the observed response (and hence
-                      inactionable)
-                    - if `steps_ahead == 1`, then the model attempts to predict
-                      `y_vars` for the next time step
-                    - The model is only trained to predict the target
-                      `steps_ahead` steps ahead (and not all intermediate steps)
-            :param model_kwargs: parameters to forward to the sklearn model
-                (e.g., regularization constants)
-            :param col_mode: `merge_all` or `replace_all`, as in
-                ColumnTransformer()
+        :param nid: unique node id
+        :param model_func: an sklearn model
+        :param x_vars: indexed by knowledge datetimes
+            - `x_vars` may contain lags of `y_vars`
+        :param y_vars: indexed by knowledge datetimes
+            - e.g., in the case of returns, this would correspond to `ret_0`
+        :param steps_ahead: number of steps ahead for which a prediction is
+            to be generated. E.g.,
+            - if `steps_ahead == 0`, then the predictions are
+              are contemporaneous with the observed response (and hence
+              inactionable)
+            - if `steps_ahead == 1`, then the model attempts to predict
+              `y_vars` for the next time step
+            - The model is only trained to predict the target
+              `steps_ahead` steps ahead (and not all intermediate steps)
+        :param model_kwargs: parameters to forward to the sklearn model
+            (e.g., regularization constants)
+        :param col_mode: "merge_all" or "replace_all", as in
+            ColumnTransformer()
+        :param nan_mode: "drop" or "raise"
         """
         super().__init__(nid)
         self._model_func = model_func
@@ -173,7 +187,7 @@ class ContinuousSkLearnModel(
         # Generate insample predictions and put in dataflow dataframe format.
         fwd_y_hat = self._model.predict(x_fit)
         #
-        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
+        fwd_y_hat_vars = [f"{y}_hat" for y in fwd_y_df.columns]
         fwd_y_hat = cdataa.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
         )
@@ -219,7 +233,7 @@ class ContinuousSkLearnModel(
         # Put predictions in dataflow dataframe format.
         fwd_y_df = self._get_fwd_y_df(df).loc[non_nan_idx]
         fwd_y_non_nan_idx = fwd_y_df.dropna().index
-        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
+        fwd_y_hat_vars = [f"{y}_hat" for y in fwd_y_df.columns]
         fwd_y_hat = cdataa.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
         )
@@ -301,6 +315,139 @@ class ContinuousSkLearnModel(
         return info
 
 
+class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
+    """
+    Fit and predict an sklearn model.
+
+    No NaN-handling or uniform sampling frequency requirement.
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        x_vars: _TO_LIST_MIXIN_TYPE,
+        y_vars: _TO_LIST_MIXIN_TYPE,
+        model_func: Callable[..., Any],
+        model_kwargs: Optional[Any] = None,
+        col_mode: Optional[str] = None,
+    ) -> None:
+        super().__init__(nid)
+        self._model_func = model_func
+        self._model_kwargs = model_kwargs or {}
+        self._x_vars = x_vars
+        self._y_vars = y_vars
+        self._model = None
+        self._col_mode = col_mode or "replace_all"
+        dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        SkLearnModel._validate_input_df(df_in)
+        dbg.dassert(
+            df_in[df_in.isna().any(axis=1)].index.empty,
+            "NaNs detected at index `%s`",
+            str(df_in[df_in.isna().any(axis=1)].head().index),
+        )
+        df = df_in.copy()
+        idx = df.index
+        x_vars, x_fit, y_vars, y_fit = self._to_sklearn_format(df)
+        self._model = self._model_func(**self._model_kwargs)
+        self._model = self._model.fit(x_fit, y_fit)
+        y_hat = self._model.predict(x_fit)
+        #
+        x_fit, y_fit, y_hat = self._from_sklearn_format(
+            idx, x_vars, x_fit, y_vars, y_fit, y_hat
+        )
+        # TODO(Paul): Summarize model perf or make configurable.
+        # TODO(Paul): Consider separating model eval from fit/predict.
+        info = collections.OrderedDict()
+        info["model_x_vars"] = x_vars
+        info["model_params"] = self._model.get_params()
+        # Return targets and predictions.
+        y_hat = y_hat.reindex(idx)
+        df_out = self._apply_col_mode(
+            df, y_hat, cols=y_vars, col_mode=self._col_mode
+        )
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        SkLearnModel._validate_input_df(df_in)
+        df = df_in.copy()
+        idx = df.index
+        x_vars, x_predict, y_vars, y_predict = self._to_sklearn_format(df)
+        dbg.dassert_is_not(
+            self._model, None, "Model not found! Check if `fit` has been run."
+        )
+        y_hat = self._model.predict(x_predict)
+        x_predict, y_predict, y_hat = self._from_sklearn_format(
+            idx, x_vars, x_predict, y_vars, y_predict, y_hat
+        )
+        info = collections.OrderedDict()
+        info["model_params"] = self._model.get_params()
+        info["model_perf"] = self._model_perf(x_predict, y_predict, y_hat)
+        # Return predictions.
+        y_hat = y_hat.reindex(idx)
+        df_out = self._apply_col_mode(
+            df, y_hat, cols=y_vars, col_mode=self._col_mode
+        )
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("predict", info)
+        return {"df_out": df_out}
+
+    @staticmethod
+    def _validate_input_df(df: pd.DataFrame) -> None:
+        """
+        Assert if df violates constraints, otherwise return `None`.
+        """
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert_no_duplicates(df.columns)
+
+    # TODO(Paul): Add type hints.
+    @staticmethod
+    def _model_perf(
+        x: pd.DataFrame, y: pd.DataFrame, y_hat: pd.DataFrame
+    ) -> collections.OrderedDict:
+        _ = x
+        info = collections.OrderedDict()
+        # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
+        pnl_rets = y.multiply(y_hat.rename(columns=lambda x: x.strip("_hat")))
+        info["pnl_rets"] = pnl_rets
+        info["sr"] = cstati.compute_sharpe_ratio(
+            csigna.resample(pnl_rets, rule="1B").sum(), time_scaling=252
+        )
+        return info
+
+    def _to_sklearn_format(
+        self, df: pd.DataFrame
+    ) -> Tuple[List[_COL_TYPE], np.array, List[_COL_TYPE], np.array]:
+        x_vars = self._to_list(self._x_vars)
+        y_vars = self._to_list(self._y_vars)
+        x_vals, y_vals = cdataa.transform_to_sklearn_old(df, x_vars, y_vars)
+        return x_vars, x_vals, y_vars, y_vals
+
+    @staticmethod
+    def _from_sklearn_format(
+        idx: pd.Index,
+        x_vars: List[_COL_TYPE],
+        x_vals: np.array,
+        y_vars: List[_COL_TYPE],
+        y_vals: np.array,
+        y_hat: np.array,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        x = cdataa.transform_from_sklearn(idx, x_vars, x_vals)
+        y = cdataa.transform_from_sklearn(idx, y_vars, y_vals)
+        y_h = cdataa.transform_from_sklearn(
+            idx, [f"{y}_hat" for y in y_vars], y_hat
+        )
+        return x, y, y_h
+
+
+# #############################################################################
+# sklearn - unsupervised models
+# #############################################################################
+
+
 class UnsupervisedSkLearnModel(
     FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin
 ):
@@ -308,11 +455,13 @@ class UnsupervisedSkLearnModel(
     Fit and transform an unsupervised sklearn model.
     """
 
+    # pylint: disable=too-many-ancestors
+
     def __init__(
         self,
         nid: str,
         model_func: Callable[..., Any],
-        x_vars: Union[List[Any], Callable[[], List[Any]]],
+        x_vars: _TO_LIST_MIXIN_TYPE,
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -414,7 +563,7 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
         self,
         nid: str,
         model_func: Callable[..., Any],
-        x_vars: Union[List[str], Callable[[], List[str]]],
+        x_vars: _TO_LIST_MIXIN_TYPE,
         model_kwargs: Optional[Any] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
@@ -500,128 +649,6 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
 
-class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
-    def __init__(
-        self,
-        nid: str,
-        x_vars: Union[List[str], Callable[[], List[str]]],
-        y_vars: Union[List[str], Callable[[], List[str]]],
-        model_func: Callable[..., Any],
-        model_kwargs: Optional[Any] = None,
-        col_mode: Optional[str] = None,
-    ) -> None:
-        super().__init__(nid)
-        self._model_func = model_func
-        self._model_kwargs = model_kwargs or {}
-        self._x_vars = x_vars
-        self._y_vars = y_vars
-        self._model = None
-        self._col_mode = col_mode or "replace_all"
-        dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
-
-    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        SkLearnModel._validate_input_df(df_in)
-        dbg.dassert(
-            df_in[df_in.isna().any(axis=1)].index.empty,
-            "NaNs detected at index `%s`",
-            str(df_in[df_in.isna().any(axis=1)].head().index),
-        )
-        df = df_in.copy()
-        idx = df.index
-        x_vars, x_fit, y_vars, y_fit = self._to_sklearn_format(df)
-        self._model = self._model_func(**self._model_kwargs)
-        self._model = self._model.fit(x_fit, y_fit)
-        y_hat = self._model.predict(x_fit)
-        #
-        x_fit, y_fit, y_hat = self._from_sklearn_format(
-            idx, x_vars, x_fit, y_vars, y_fit, y_hat
-        )
-        # TODO(Paul): Summarize model perf or make configurable.
-        # TODO(Paul): Consider separating model eval from fit/predict.
-        info = collections.OrderedDict()
-        info["model_x_vars"] = x_vars
-        info["model_params"] = self._model.get_params()
-        # Return targets and predictions.
-        y_hat = y_hat.reindex(idx)
-        df_out = self._apply_col_mode(
-            df, y_hat, cols=y_vars, col_mode=self._col_mode
-        )
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
-
-    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        SkLearnModel._validate_input_df(df_in)
-        df = df_in.copy()
-        idx = df.index
-        x_vars, x_predict, y_vars, y_predict = self._to_sklearn_format(df)
-        dbg.dassert_is_not(
-            self._model, None, "Model not found! Check if `fit` has been run."
-        )
-        y_hat = self._model.predict(x_predict)
-        x_predict, y_predict, y_hat = self._from_sklearn_format(
-            idx, x_vars, x_predict, y_vars, y_predict, y_hat
-        )
-        info = collections.OrderedDict()
-        info["model_params"] = self._model.get_params()
-        info["model_perf"] = self._model_perf(x_predict, y_predict, y_hat)
-        # Return predictions.
-        y_hat = y_hat.reindex(idx)
-        df_out = self._apply_col_mode(
-            df, y_hat, cols=y_vars, col_mode=self._col_mode
-        )
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        self._set_info("predict", info)
-        return {"df_out": df_out}
-
-    @staticmethod
-    def _validate_input_df(df: pd.DataFrame) -> None:
-        """
-        Assert if df violates constraints, otherwise return `None`.
-        """
-        dbg.dassert_isinstance(df, pd.DataFrame)
-        dbg.dassert_no_duplicates(df.columns)
-
-    # TODO(Paul): Add type hints.
-    @staticmethod
-    def _model_perf(
-        x: pd.DataFrame, y: pd.DataFrame, y_hat: pd.DataFrame
-    ) -> collections.OrderedDict:
-        _ = x
-        info = collections.OrderedDict()
-        # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
-        pnl_rets = y.multiply(y_hat.rename(columns=lambda x: x.strip("_hat")))
-        info["pnl_rets"] = pnl_rets
-        info["sr"] = cstati.compute_sharpe_ratio(
-            csigna.resample(pnl_rets, rule="1B").sum(), time_scaling=252
-        )
-        return info
-
-    def _to_sklearn_format(
-        self, df: pd.DataFrame
-    ) -> Tuple[List[str], np.array, List[str], np.array]:
-        x_vars = self._to_list(self._x_vars)
-        y_vars = self._to_list(self._y_vars)
-        x_vals, y_vals = cdataa.transform_to_sklearn_old(df, x_vars, y_vars)
-        return x_vars, x_vals, y_vars, y_vals
-
-    @staticmethod
-    def _from_sklearn_format(
-        idx: pd.Index,
-        x_vars: List[str],
-        x_vals: np.array,
-        y_vars: List[str],
-        y_vals: np.array,
-        y_hat: np.array,
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        x = cdataa.transform_from_sklearn(idx, x_vars, x_vals)
-        y = cdataa.transform_from_sklearn(idx, y_vars, y_vals)
-        y_h = cdataa.transform_from_sklearn(
-            idx, [y + "_hat" for y in y_vars], y_hat
-        )
-        return x, y, y_h
-
-
 class SkLearnInverseTransformer(
     FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin
 ):
@@ -629,12 +656,14 @@ class SkLearnInverseTransformer(
     Inverse transform cols using an unsupervised sklearn model.
     """
 
+    # pylint: disable=too-many-ancestors
+
     def __init__(
         self,
         nid: str,
         model_func: Callable[..., Any],
-        x_vars: Union[List[Any], Callable[[], List[Any]]],
-        trans_x_vars: Union[List[Any], Callable[[], List[Any]]],
+        x_vars: _TO_LIST_MIXIN_TYPE,
+        trans_x_vars: _TO_LIST_MIXIN_TYPE,
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -654,8 +683,8 @@ class SkLearnInverseTransformer(
         super().__init__(nid)
         self._model_func = model_func
         self._model_kwargs = model_kwargs or {}
-        self._x_vars = x_vars
-        self._trans_x_vars = trans_x_vars
+        self._x_vars = self._to_list(x_vars)
+        self._trans_x_vars = self._to_list(trans_x_vars)
         dbg.dassert_not_intersection(self._x_vars, self._trans_x_vars)
         self._model = None
         self._col_mode = col_mode or "replace_all"
@@ -740,6 +769,857 @@ class SkLearnInverseTransformer(
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
 
+# #############################################################################
+# Volatility modeling
+# #############################################################################
+
+
+class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
+    """
+    Fit and predict a smooth moving average model.
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        col: _TO_LIST_MIXIN_TYPE,
+        steps_ahead: int,
+        tau: Optional[float] = None,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
+    ) -> None:
+        """
+        Specify the data and sma modeling parameters.
+
+        :param nid: unique node id
+        :param col: name of column to model
+        :param steps_ahead: as in ContinuousSkLearnModel
+        :param tau: as in `csigna.compute_smooth_moving_average`. If `None`,
+            learn this parameter
+        :param col_mode: `merge_all` or `replace_all`, as in
+            ColumnTransformer()
+        :param nan_mode: as in ContinuousSkLearnModel
+        """
+        super().__init__(nid)
+        self._col = self._to_list(col)
+        dbg.dassert_eq(len(self._col), 1)
+        self._steps_ahead = steps_ahead
+        dbg.dassert_lte(
+            0, self._steps_ahead, "Non-causal prediction attempted! Aborting..."
+        )
+        if nan_mode is None:
+            self._nan_mode = "raise"
+        else:
+            self._nan_mode = nan_mode
+        self._col_mode = col_mode or "replace_all"
+        dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
+        # Smooth moving average model parameters to learn.
+        self._tau = tau
+        self._min_periods = None
+        self._min_periods_max_frac = 0.2
+        self._min_depth = 1
+        self._max_depth = 1
+        self._metric = sklear.metrics.mean_absolute_error
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        self._validate_input_df(df_in)
+        df = df_in.copy()
+        # Obtain index slice for which forward targets exist.
+        dbg.dassert_lt(self._steps_ahead, df.index.size)
+        idx = df.index[: -self._steps_ahead]
+        # Determine index where no x_vars are NaN.
+        non_nan_idx_x = df.loc[idx][self._col].dropna().index
+        # Determine index where target is not NaN.
+        fwd_y_df = self._get_fwd_y_df(df).loc[idx].dropna()
+        non_nan_idx_fwd_y = fwd_y_df.dropna().index
+        # Intersect non-NaN indices.
+        non_nan_idx = non_nan_idx_x.intersection(non_nan_idx_fwd_y)
+        dbg.dassert(not non_nan_idx.empty)
+        fwd_y_df = fwd_y_df.loc[non_nan_idx]
+        # Handle presence of NaNs according to `nan_mode`.
+        self._handle_nans(idx, non_nan_idx)
+        # Prepare x_vars in sklearn format.
+        x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], self._col)
+        # Prepare forward y_vars in sklearn format.
+        fwd_y_fit = cdataa.transform_to_sklearn(
+            fwd_y_df, fwd_y_df.columns.tolist()
+        )
+        # Define and fit model.
+        if self._tau is None:
+            self._tau = self._learn_tau(x_fit, fwd_y_fit)
+        min_periods = 2 * self._tau
+        if min_periods / len(non_nan_idx) > self._min_periods_max_frac:
+            self._min_periods = int(len(non_nan_idx) * self._min_periods_max_frac)
+        else:
+            self._min_periods = min_periods
+        _LOG.debug("tau=", self._tau)
+        info = collections.OrderedDict()
+        info["tau"] = self._tau
+        info["min_periods"] = self._min_periods
+        # Generate insample predictions and put in dataflow dataframe format.
+        fwd_y_hat = self._predict(x_fit)
+        fwd_y_hat_vars = [f"{y}_hat" for y in fwd_y_df.columns]
+        fwd_y_hat = cdataa.transform_from_sklearn(
+            non_nan_idx, fwd_y_hat_vars, fwd_y_hat
+        )
+        # Return targets and predictions.
+        df_out = fwd_y_df.reindex(idx).merge(
+            fwd_y_hat.reindex(idx), left_index=True, right_index=True
+        )
+        dbg.dassert_no_duplicates(df_out.columns)
+        df_out = self._apply_col_mode(
+            df, df_out, cols=self._col, col_mode=self._col_mode
+        )
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        self._validate_input_df(df_in)
+        df = df_in.copy()
+        idx = df.index
+        # Restrict to times where col has no NaNs.
+        non_nan_idx = df.loc[idx][self._col].dropna().index
+        # Handle presence of NaNs according to `nan_mode`.
+        self._handle_nans(idx, non_nan_idx)
+        # Transform x_vars to sklearn format.
+        x_predict = cdataa.transform_to_sklearn(df.loc[non_nan_idx], self._col)
+        # Use trained model to generate predictions.
+        dbg.dassert_is_not(
+            self._tau,
+            None,
+            "Parameter tau not found! Check if `fit` has been run.",
+        )
+        fwd_y_hat = self._predict(x_predict)
+        # Put predictions in dataflow dataframe format.
+        fwd_y_df = self._get_fwd_y_df(df).loc[non_nan_idx]
+        fwd_y_hat_vars = [f"{y}_hat" for y in fwd_y_df.columns]
+        fwd_y_hat = cdataa.transform_from_sklearn(
+            non_nan_idx, fwd_y_hat_vars, fwd_y_hat
+        )
+        # Return targets and predictions.
+        df_out = fwd_y_df.reindex(idx).merge(
+            fwd_y_hat.reindex(idx), left_index=True, right_index=True
+        )
+        dbg.dassert_no_duplicates(df_out.columns)
+        info = collections.OrderedDict()
+        df_out = self._apply_col_mode(
+            df, df_out, cols=self._col, col_mode=self._col_mode
+        )
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("predict", info)
+        return {"df_out": df_out}
+
+    def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Return dataframe of `steps_ahead` forward y values.
+        """
+        mapper = lambda y: str(y) + "_%i" % self._steps_ahead
+        # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
+        fwd_y_df = df[self._col].shift(-self._steps_ahead).rename(columns=mapper)
+        return fwd_y_df
+
+    def _handle_nans(
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+    ) -> None:
+        if self._nan_mode == "raise":
+            if idx.shape[0] != non_nan_idx.shape[0]:
+                nan_idx = idx.difference(non_nan_idx)
+                raise ValueError(f"NaNs detected at {nan_idx}")
+        elif self._nan_mode == "drop":
+            pass
+        elif self._nan_mode == "leave_unchanged":
+            pass
+        else:
+            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
+
+    def _learn_tau(self, x: np.array, y: np.array) -> float:
+        def score(tau: float) -> float:
+            x_srs = pd.DataFrame(x.flatten())
+            sma = csigna.compute_smooth_moving_average(
+                x_srs,
+                tau=tau,
+                min_periods=0,
+                min_depth=self._min_depth,
+                max_depth=self._max_depth,
+            )
+            return self._metric(sma.values, y[self._min_periods :])
+
+        # TODO(*): Make this configurable.
+        opt_results = sp.optimize.minimize_scalar(
+            score, method="bounded", bounds=[1, 100]
+        )
+        return opt_results.x
+
+    def _predict(self, x: np.array) -> np.array:
+        x_srs = pd.DataFrame(x.flatten())
+        # TODO(*): Make `min_periods` configurable.
+        x_sma = csigna.compute_smooth_moving_average(
+            x_srs,
+            tau=self._tau,
+            min_periods=self._min_periods,
+            min_depth=self._min_depth,
+            max_depth=self._max_depth,
+        )
+        return x_sma.values
+
+    # TODO(Paul): Consider omitting this (and relying on downstream
+    #     processing to e.g., adjust for number of hypotheses tested).
+    @staticmethod
+    def _model_perf(
+        y: pd.DataFrame, y_hat: pd.DataFrame
+    ) -> collections.OrderedDict:
+        info = collections.OrderedDict()
+        # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
+        pnl_rets = y.multiply(
+            y_hat.rename(columns=lambda x: x.replace("_hat", ""))
+        )
+        info["pnl_rets"] = pnl_rets
+        info["sr"] = cstati.compute_annualized_sharpe_ratio(
+            csigna.resample(pnl_rets, rule="1B").sum()
+        )
+        return info
+
+
+class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
+    """
+    Fit and predict a smooth moving average volatility model.
+
+    Wraps SmaModel internally, handling calculation of volatility from
+    returns and column appends.
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        steps_ahead: int,
+        cols: _TO_LIST_MIXIN_TYPE = None,
+        p_moment: float = 2,
+        tau: Optional[float] = None,
+        col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
+    ) -> None:
+        """
+        Specify the data and sma modeling parameters.
+
+        :param nid: unique node id
+        :param cols: name of columns to model
+        :param steps_ahead: as in ContinuousSkLearnModel
+        :param p_moment: exponent to apply to the absolute value of returns
+        :param tau: as in `csigna.compute_smooth_moving_average`. If `None`,
+            learn this parameter
+        :param col_rename_func: renaming function for z-scored column
+        :param col_mode:
+            - If "merge_all", merge all columns from input dataframe and
+                transformed columns
+            - If "replace_selected", merge unselected columns from input dataframe
+                and transformed selected columns
+            - If "replace_all", leave only transformed selected columns
+        :param nan_mode: as in ContinuousSkLearnModel
+        """
+        super().__init__(nid)
+        self._cols = cols
+        self._steps_ahead = steps_ahead
+        dbg.dassert_lte(1, p_moment)
+        self._p_moment = p_moment
+        self._tau = tau
+        self._col_rename_func = col_rename_func
+        self._col_mode = col_mode or "merge_all"
+        self._nan_mode = nan_mode
+        self._vol_cols = {}
+        self._fwd_vol_cols = {}
+        self._fwd_vol_cols_hat = {}
+        self._taus = {}
+        self._sma_models = {}
+        self._modulators = {}
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=True)
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=False)
+
+    @property
+    def taus(self) -> Dict[str, Any]:
+        return self._taus
+
+    def _fit_predict_helper(
+        self, df_in: pd.DataFrame, fit: bool = False
+    ) -> Dict[str, pd.DataFrame]:
+        method = "fit" if fit else "predict"
+        cols = self._to_list(self._cols or df_in.columns.tolist())
+        if method == "fit":
+            self._fill_model_dicts(cols)
+        info = collections.OrderedDict()
+        dfs = []
+        for col in cols:
+            dbg.dassert_not_in(self._vol_cols[col], df_in.columns)
+            dag = self._get_dag(df_in[[col]], col)
+            df_out = dag.run_leq_node(self._modulators[col].nid, method)["df_out"]
+            info[col] = extract_info(dag, [method])
+            if method == "fit":
+                self._taus[col] = info[col]["anonymous_sma"][method]["tau"]
+            dfs.append(df_out)
+        df_out = pd.concat(dfs, axis=1)
+        df_out = self._apply_col_mode(
+            df_in.drop(df_out.columns.intersection(df_in.columns), 1),
+            df_out,
+            cols=list(cols),
+            col_mode=self._col_mode,
+        )
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info(method, info)
+        return {"df_out": df_out}
+
+    def _get_dag(self, df_in: pd.DataFrame, col: str) -> DAG:
+        dag = DAG(mode="strict")
+        # Load data.
+        node = ReadDataFromDf("data", df_in)
+        dag.add_node(node)
+        tail_nid = "data"
+        # Calculate volatility power.
+        node = ColumnTransformer(
+            "calculate_vol_power",
+            transformer_func=lambda x: np.abs(x) ** self._p_moment,
+            cols=[col],
+            col_rename_func=lambda x: f"{x}_vol",
+            col_mode="merge_all",
+        )
+        tail_nid = self._append(dag, tail_nid, node)
+        # Run SMA.
+        node = self._sma_models[col]
+        tail_nid = self._append(dag, tail_nid, node)
+        # Normalize volatility.
+        node = ColumnTransformer(
+            "normalize_vol",
+            transformer_func=lambda x: x ** (1.0 / self._p_moment),
+            cols=[
+                self._vol_cols[col],
+                self._fwd_vol_cols[col],
+                self._fwd_vol_cols_hat[col],
+            ],
+            col_mode="replace_selected",
+        )
+        tail_nid = self._append(dag, tail_nid, node)
+        # Run modulator.
+        node = self._modulators[col]
+        self._append(dag, tail_nid, node)
+        return dag
+
+    def _fill_model_dicts(self, cols: List[_COL_TYPE]) -> None:
+        for col in cols:
+            self._vol_cols[col] = str(col) + "_vol"
+            self._fwd_vol_cols[col] = (
+                self._vol_cols[col] + f"_{self._steps_ahead}"
+            )
+            self._fwd_vol_cols_hat[col] = self._fwd_vol_cols[col] + "_hat"
+            self._taus[col] = self._tau
+            # The `SmaModel` and `Modulator` nodes are only used internally (e.g.,
+            # are not added to any encompassing DAG).
+            self._sma_models[col] = SmaModel(
+                "anonymous_sma",
+                col=[self._vol_cols[col]],
+                steps_ahead=self._steps_ahead,
+                tau=self._tau,
+                col_mode="merge_all",
+                nan_mode=self._nan_mode,
+            )
+            self._modulators[col] = VolatilityModulator(
+                "anonymous_demodulation",
+                signal_cols=[col],
+                volatility_col=self._fwd_vol_cols_hat[col],
+                signal_steps_ahead=0,
+                volatility_steps_ahead=self._steps_ahead,
+                mode="demodulate",
+                col_rename_func=self._col_rename_func,
+                col_mode=self._col_mode,
+                nan_mode=self._nan_mode,
+            )
+
+    @staticmethod
+    def _append(dag: DAG, tail_nid: Optional[str], node: Node) -> str:
+        dag.add_node(node)
+        if tail_nid is not None:
+            dag.connect(tail_nid, node.nid)
+        return node.nid
+
+
+class VolatilityModulator(FitPredictNode, ColModeMixin, ToListMixin):
+    """
+    Modulate or demodulate signal by volatility.
+
+    Processing steps:
+      - shift volatility to align it with signal
+      - multiply/divide signal by volatility
+
+    Usage examples:
+      - Z-scoring
+        - to obtain volatility prediction, pass in returns into `SmaModel` with
+          a `steps_ahead` parameter
+        - to z-score, pass in signal, volatility prediction, `signal_steps_ahead=0`,
+          `volatility_steps_ahead=steps_ahead`, `mode='demodulate'`
+      - Undoing z-scoring
+        - Let's say we have
+          - forward volatility prediction `n` steps ahead
+          - prediction of forward z-scored returns `m` steps ahead. Z-scoring
+            for the target has been done using the volatility prediction above
+        - To undo z-scoring, we need to pass in the prediction of forward
+          z-scored returns, forward volatility prediction, `signal_steps_ahead=n`,
+          `volatility_steps_ahead=m`, `mode='modulate'`
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        signal_cols: _TO_LIST_MIXIN_TYPE,
+        volatility_col: Any,
+        signal_steps_ahead: int,
+        volatility_steps_ahead: int,
+        mode: str,
+        col_rename_func: Optional[Callable[[Any], Any]] = None,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
+    ) -> None:
+        """
+        :param nid: node identifier
+        :param signal_cols: names of columns to (de)modulate
+        :param volatility_col: name of volatility column
+        :param signal_steps_ahead: steps ahead of the signal columns. If signal
+            is at `t_0`, this value should be `0`. If signal is a forward
+            prediction of z-scored returns indexed by knowledge time, this
+            value should be equal to the number of steps of the prediction
+        :param volatility_steps_ahead: steps ahead of the volatility column. If
+            volatility column is an output of `SmaModel`, this corresponds to
+            the `steps_ahead` parameter
+        :param mode: "modulate" or "demodulate"
+        :param col_rename_func: as in `ColumnTransformer`
+        :param col_mode: as in `ColumnTransformer`
+        """
+        super().__init__(nid)
+        self._signal_cols = self._to_list(signal_cols)
+        self._volatility_col = volatility_col
+        dbg.dassert_lte(0, signal_steps_ahead)
+        self._signal_steps_ahead = signal_steps_ahead
+        dbg.dassert_lte(0, volatility_steps_ahead)
+        self._volatility_steps_ahead = volatility_steps_ahead
+        dbg.dassert_in(mode, ["modulate", "demodulate"])
+        self._mode = mode
+        self._col_rename_func = col_rename_func or (lambda x: x)
+        self._col_mode = col_mode or "replace_all"
+        self._nan_mode = nan_mode or "leave_unchanged"
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        df_out = self._process_signal(df_in)
+        info = collections.OrderedDict()
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        df_out = self._process_signal(df_in)
+        info = collections.OrderedDict()
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("predict", info)
+        return {"df_out": df_out}
+
+    def _process_signal(self, df_in: pd.DataFrame) -> pd.DataFrame:
+        """
+        Modulate or demodulate signal by volatility prediction.
+
+        :param df_in: dataframe with `self._signal_cols` and
+            `self._volatility_col` columns
+        :return: adjusted signal indexed in the same way as the input signal
+        """
+        dbg.dassert_is_subset(self._signal_cols, df_in.columns.tolist())
+        dbg.dassert_in(self._volatility_col, df_in.columns)
+        fwd_signal = df_in[self._signal_cols]
+        fwd_volatility = df_in[self._volatility_col]
+        # Shift volatility to align it with signal.
+        volatility_shift = self._volatility_steps_ahead - self._signal_steps_ahead
+        if self._nan_mode == "drop":
+            fwd_volatility = fwd_volatility.dropna()
+        elif self._nan_mode == "leave_unchanged":
+            pass
+        else:
+            raise ValueError(f"Unrecognized `nan_mode` {self._nan_mode}")
+        volatility_aligned = fwd_volatility.shift(volatility_shift)
+        # Adjust signal by volatility.
+        if self._mode == "demodulate":
+            adjusted_signal = fwd_signal.divide(volatility_aligned, axis=0)
+        elif self._mode == "modulate":
+            adjusted_signal = fwd_signal.multiply(volatility_aligned, axis=0)
+        else:
+            raise ValueError(f"Invalid mode=`{self._mode}`")
+        df_out = self._apply_col_mode(
+            df_in,
+            adjusted_signal,
+            cols=self._signal_cols,
+            col_rename_func=self._col_rename_func,
+            col_mode=self._col_mode,
+        )
+        return df_out
+
+
+# #############################################################################
+# gluon-ts - DeepAR
+# #############################################################################
+
+
+class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
+    """
+    A dataflow node for a DeepAR model.
+
+    This node trains a DeepAR model using only one time series
+    - By using only one time series, we are not taking advantage of the
+      "global" modeling capabilities of gluonts or DeepAR
+    - This may be somewhat mitigated by the fact that the single time series
+      that we provide will typically contain on the order of 10E5 or more time
+      points
+    - In training, DeepAR randomly cuts the time series provided, and so
+      unless there are obvious cut-points we want to take advantage of, it may
+      be best to let DeepAR cut
+    - If certain cut-points are naturally more appropriate in our problem
+      domain, an event study modeling approach may be more suitable
+
+    See https://arxiv.org/abs/1704.04110 for a description of the DeepAR model.
+
+    For additional context and best-practices, see
+    https://github.com/ParticleDev/commodity_research/issues/966
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        y_vars: _TO_LIST_MIXIN_TYPE,
+        trainer_kwargs: Optional[Any] = None,
+        estimator_kwargs: Optional[Any] = None,
+        x_vars: Optional[_TO_LIST_MIXIN_TYPE] = None,
+        num_traces: int = 100,
+    ) -> None:
+        """
+        Initialize dataflow node for gluon-ts DeepAR model.
+
+        :param nid: unique node id
+        :param y_vars: Used in autoregression
+        :param trainer_kwargs: See
+          - https://gluon-ts.mxnet.io/api/gluonts/gluonts.trainer.html#gluonts.trainer.Trainer
+          - https://github.com/awslabs/gluon-ts/blob/master/src/gluonts/trainer/_base.py
+        :param estimator_kwargs: See
+          - https://gluon-ts.mxnet.io/api/gluonts/gluonts.model.deepar.html
+          - https://github.com/awslabs/gluon-ts/blob/master/src/gluonts/model/deepar/_estimator.py
+        :param x_vars: Covariates. Could be, e.g., features associated with a
+            point-in-time event. Must be known throughout the prediction
+            window at the time the prediction is made. May be omitted.
+        :num_traces: Number of sample paths / traces to generate per
+            prediction. The mean of the traces is used as the prediction.
+        """
+        super().__init__(nid)
+        self._estimator_kwargs = estimator_kwargs
+        # To avoid passing a class through config, handle `Trainer()`
+        # parameters separately from `estimator_kwargs`.
+        self._trainer_kwargs = trainer_kwargs
+        self._trainer = gtrain.Trainer(**self._trainer_kwargs)
+        dbg.dassert_not_in("trainer", self._estimator_kwargs)
+        #
+        self._estimator_func = gmdeep.DeepAREstimator
+        # NOTE: Covariates (x_vars) are not required by DeepAR.
+        #   - This could be useful for, e.g., predicting future values of
+        #     what would normally be predictors
+        self._x_vars = x_vars
+        self._y_vars = y_vars
+        self._num_traces = num_traces
+        self._estimator = None
+        self._predictor = None
+        #
+        dbg.dassert_in("prediction_length", self._estimator_kwargs)
+        self._prediction_length = self._estimator_kwargs["prediction_length"]
+        dbg.dassert_lt(0, self._prediction_length)
+        dbg.dassert_not_in(
+            "freq",
+            self._estimator_kwargs,
+            "`freq` to be autoinferred from `df_in`; do not specify",
+        )
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        self._validate_input_df(df_in)
+        df = df_in.copy()
+        # Obtain index slice for which forward targets exist.
+        dbg.dassert_lt(self._prediction_length, df.index.size)
+        df_fit = df.iloc[: -self._prediction_length]
+        #
+        if self._x_vars is not None:
+            x_vars = self._to_list(self._x_vars)
+        else:
+            x_vars = None
+        y_vars = self._to_list(self._y_vars)
+        # Transform dataflow local timeseries dataframe into gluon-ts format.
+        gluon_train = cdataa.transform_to_gluon(
+            df_fit, x_vars, y_vars, df_fit.index.freq.freqstr
+        )
+        # Instantiate the (DeepAR) estimator and train the model.
+        self._estimator = self._estimator_func(
+            trainer=self._trainer,
+            freq=df_fit.index.freq.freqstr,
+            **self._estimator_kwargs,
+        )
+        self._predictor = self._estimator.train(gluon_train)
+        # Predict. Generate predictions over all of `df_in` (not just on the
+        #     restricted slice `df_fit`).
+        fwd_y_hat, fwd_y = cbackt.generate_predictions(
+            predictor=self._predictor,
+            df=df,
+            y_vars=y_vars,
+            prediction_length=self._prediction_length,
+            num_samples=self._num_traces,
+            x_vars=x_vars,
+        )
+        # Store info.
+        info = collections.OrderedDict()
+        info["model_x_vars"] = x_vars
+        #
+        df_out = fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("fit", info)
+        dbg.dassert_no_duplicates(df_out.columns)
+        return {"df_out": df_out}
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        self._validate_input_df(df_in)
+        df = df_in.copy()
+        if self._x_vars is not None:
+            x_vars = self._to_list(self._x_vars)
+        else:
+            x_vars = None
+        y_vars = self._to_list(self._y_vars)
+        gluon_train = cdataa.transform_to_gluon(
+            df, x_vars, y_vars, df.index.freq.freqstr
+        )
+        # Instantiate the (DeepAR) estimator and train the model.
+        self._estimator = self._estimator_func(
+            trainer=self._trainer,
+            freq=df.index.freq.freqstr,
+            **self._estimator_kwargs,
+        )
+        self._predictor = self._estimator.train(gluon_train)
+        #
+        fwd_y_hat, fwd_y = cbackt.generate_predictions(
+            predictor=self._predictor,
+            df=df,
+            y_vars=y_vars,
+            prediction_length=self._prediction_length,
+            num_samples=self._num_traces,
+            x_vars=x_vars,
+        )
+        # Store info.
+        info = collections.OrderedDict()
+        info["model_x_vars"] = x_vars
+        #
+        df_out = fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("predict", info)
+        dbg.dassert_no_duplicates(df_out.columns)
+        return {"df_out": df_out}
+
+    def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Return dataframe of `steps_ahead` forward y values.
+        """
+        y_vars = self._to_list(self._y_vars)
+        mapper = lambda y: str(y) + "_%i" % self._prediction_length
+        # TODO(gp): Not sure if the following is needed.
+        # [mapper(y) for y in y_vars]
+        # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
+        fwd_y_df = (
+            df[y_vars].shift(-self._prediction_length).rename(columns=mapper)
+        )
+        return fwd_y_df
+
+
+class DeepARGlobalModel(FitPredictNode, ToListMixin):
+    """
+    A dataflow node for a DeepAR model.
+
+    See https://arxiv.org/abs/1704.04110 for a description of the DeepAR model.
+
+    For additional context and best-practices, see
+    https://github.com/ParticleDev/commodity_research/issues/966
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        x_vars: _TO_LIST_MIXIN_TYPE,
+        y_vars: _TO_LIST_MIXIN_TYPE,
+        trainer_kwargs: Optional[Any] = None,
+        estimator_kwargs: Optional[Any] = None,
+    ) -> None:
+        """
+        Initialize dataflow node for gluon-ts DeepAR model.
+
+        :param nid: unique node id
+        :param trainer_kwargs: See
+          - https://gluon-ts.mxnet.io/api/gluonts/gluonts.trainer.html#gluonts.trainer.Trainer
+          - https://github.com/awslabs/gluon-ts/blob/master/src/gluonts/trainer/_base.py
+        :param estimator_kwargs: See
+          - https://gluon-ts.mxnet.io/api/gluonts/gluonts.model.deepar.html
+          - https://github.com/awslabs/gluon-ts/blob/master/src/gluonts/model/deepar/_estimator.py
+        :param x_vars: Covariates. Could be, e.g., features associated with a
+            point-in-time event. Must be known throughout the prediction
+            window at the time the prediction is made.
+        :param y_vars: Used in autoregression
+        """
+        super().__init__(nid)
+        self._estimator_kwargs = estimator_kwargs
+        # To avoid passing a class through config, handle `Trainer()`
+        # parameters separately from `estimator_kwargs`.
+        self._trainer_kwargs = trainer_kwargs
+        self._trainer = gtrain.Trainer(**self._trainer_kwargs)
+        dbg.dassert_not_in("trainer", self._estimator_kwargs)
+        #
+        self._estimator_func = gmdeep.DeepAREstimator
+        # NOTE: Covariates (x_vars) are not required by DeepAR.
+        # TODO(Paul): Allow this model to accept y_vars only.
+        #   - This could be useful for, e.g., predicting future values of
+        #     what would normally be predictors
+        self._x_vars = x_vars
+        self._y_vars = y_vars
+        self._estimator = None
+        self._predictor = None
+        # We determine `prediction_length` automatically and therefore do not
+        # allow it to be set by the user.
+        dbg.dassert_not_in("prediction_length", self._estimator_kwargs)
+        #
+        dbg.dassert_in("freq", self._estimator_kwargs)
+        self._freq = self._estimator_kwargs["freq"]
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        """
+        Fit model to multiple series reflected in multiindexed `df_in`.
+
+        `prediction_length` is autoinferred from the max index of `t_j`, e.g.,
+        each `df_in` is assumed to include the index `0` for, e.g.,
+        "event time", and indices are assumed to be consecutive integers. So
+        if there are time points
+
+            t_{-2} < t_{-1} < t_0 < t_1 < t_2
+
+        then `prediction_length = 2`.
+        """
+        dbg.dassert_isinstance(df_in, pd.DataFrame)
+        dbg.dassert_no_duplicates(df_in.columns)
+        x_vars = self._to_list(self._x_vars)
+        y_vars = self._to_list(self._y_vars)
+        df = df_in.copy()
+        # Transform dataflow local timeseries dataframe into gluon-ts format.
+        gluon_train = cdataa.transform_to_gluon(df, x_vars, y_vars, self._freq)
+        # Set the prediction length to the length of the local timeseries - 1.
+        #   - To predict for time t_j at time t_i, t_j > t_i, we need to know
+        #     x_vars up to and including time t_j
+        #   - For this model, multi-step predictions are equivalent to
+        #     iterated single-step predictions
+        self._prediction_length = df.index.get_level_values(0).max()
+        # Instantiate the (DeepAR) estimator and train the model.
+        self._estimator = self._estimator_func(
+            prediction_length=self._prediction_length,
+            trainer=self._trainer,
+            **self._estimator_kwargs,
+        )
+        self._predictor = self._estimator.train(gluon_train)
+        # Apply model predictions to the training set (so that we can evaluate
+        # in-sample performance).
+        #   - Include all data points up to and including zero (the event time)
+        gluon_test = cdataa.transform_to_gluon(
+            df, x_vars, y_vars, self._freq, self._prediction_length
+        )
+        fit_predictions = list(self._predictor.predict(gluon_test))
+        # Transform gluon-ts predictions into a dataflow local timeseries
+        # dataframe.
+        # TODO(Paul): Gluon has built-in functionality to take the mean of
+        #     traces, and we might consider using it instead.
+        y_hat_traces = cdataa.transform_from_gluon_forecasts(fit_predictions)
+        # TODO(Paul): Store the traces / dispersion estimates.
+        # Average over all available samples.
+        y_hat = y_hat_traces.mean(level=[0, 1])
+        # Map multiindices to align our prediction indices with those used
+        # by the passed-in local timeseries dataframe.
+        # TODO(Paul): Do this mapping earlier before removing the traces.
+        aligned_idx = y_hat.index.map(
+            lambda x: (
+                x[0] + 1,
+                x[1] - pd.Timedelta(f"1{self._freq}"),
+            )
+        )
+        y_hat.index = aligned_idx
+        y_hat.name = str(y_vars[0]) + "_hat"
+        y_hat.index.rename(df.index.names, inplace=True)
+        # Store info.
+        info = collections.OrderedDict()
+        info["model_x_vars"] = x_vars
+        # TODO(Paul): Consider storing only the head of each list in `info`
+        #     for debugging purposes.
+        # info["gluon_train"] = list(gluon_train)
+        # info["gluon_test"] = list(gluon_test)
+        # info["fit_predictions"] = fit_predictions
+        df_out = y_hat.to_frame()
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        dbg.dassert_isinstance(df_in, pd.DataFrame)
+        dbg.dassert_no_duplicates(df_in.columns)
+        x_vars = self._to_list(self._x_vars)
+        y_vars = self._to_list(self._y_vars)
+        df = df_in.copy()
+        # Transform dataflow local timeseries dataframe into gluon-ts format.
+        gluon_test = cdataa.transform_to_gluon(
+            df,
+            x_vars,
+            y_vars,
+            self._freq,
+            self._prediction_length,
+        )
+        predictions = list(self._predictor.predict(gluon_test))
+        # Transform gluon-ts predictions into a dataflow local timeseries
+        # dataframe.
+        # TODO(Paul): Gluon has built-in functionality to take the mean of
+        #     traces, and we might consider using it instead.
+        y_hat_traces = cdataa.transform_from_gluon_forecasts(predictions)
+        # TODO(Paul): Store the traces / dispersion estimates.
+        # Average over all available samples.
+        y_hat = y_hat_traces.mean(level=[0, 1])
+        # Map multiindices to align our prediction indices with those used
+        # by the passed-in local timeseries dataframe.
+        # TODO(Paul): Do this mapping earlier before removing the traces.
+        aligned_idx = y_hat.index.map(
+            lambda x: (
+                x[0] + 1,
+                x[1] - pd.Timedelta(f"1{self._freq}"),
+            )
+        )
+        y_hat.index = aligned_idx
+        y_hat.name = str(y_vars[0]) + "_hat"
+        y_hat.index.rename(df.index.names, inplace=True)
+        # Store info.
+        info = collections.OrderedDict()
+        info["model_x_vars"] = x_vars
+        # TODO(Paul): Consider storing only the head of each list in `info`
+        #     for debugging purposes.
+        # info["gluon_train"] = list(gluon_train)
+        # info["gluon_test"] = list(gluon_test)
+        # info["fit_predictions"] = fit_predictions
+        df_out = y_hat.to_frame()
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("predict", info)
+        return {"df_out": df_out}
+
+
+# #############################################################################
+# statsmodels - SARIMAX
+# #############################################################################
+
+
 class ContinuousSarimaxModel(
     FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin
 ):
@@ -760,14 +1640,16 @@ class ContinuousSarimaxModel(
     for SARIMAX model examples.
     """
 
+    # pylint: disable=too-many-ancestors
+
     def __init__(
         self,
         nid: str,
-        y_vars: Union[List[str], Callable[[], List[str]]],
+        y_vars: _TO_LIST_MIXIN_TYPE,
         steps_ahead: int,
         init_kwargs: Optional[Dict[str, Any]] = None,
         fit_kwargs: Optional[Dict[str, Any]] = None,
-        x_vars: Optional[Union[List[str], Callable[[], List[str]]]] = None,
+        x_vars: Optional[_TO_LIST_MIXIN_TYPE] = None,
         add_constant: bool = False,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -953,7 +1835,7 @@ class ContinuousSarimaxModel(
         # Shift index instead of series to extend the index.
         bkwd_x_df = df[x_vars].copy()
         bkwd_x_df.index = bkwd_x_df.index.shift(shift)
-        mapper = lambda y: y + "_bkwd_%i" % shift
+        mapper = lambda y: str(y) + "_bkwd_%i" % shift
         return bkwd_x_df.rename(columns=mapper)
 
     def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -961,7 +1843,7 @@ class ContinuousSarimaxModel(
         Return dataframe of `steps_ahead` forward y values.
         """
         y_vars = self._to_list(self._y_vars)
-        mapper = lambda y: y + "_%i" % self._steps_ahead
+        mapper = lambda y: str(y) + "_%i" % self._steps_ahead
         fwd_y_df = df[y_vars].shift(-self._steps_ahead).rename(columns=mapper)
         return fwd_y_df
 
@@ -993,7 +1875,7 @@ class ContinuousSarimaxModel(
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
 
-class MultihorizonReturnsPredictionProcessor(FitPredictNode):
+class MultihorizonReturnsPredictionProcessor(FitPredictNode, ToListMixin):
     """
     Process multi-horizon returns prediction.
 
@@ -1009,7 +1891,7 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode):
         self,
         nid: str,
         target_col: Any,
-        prediction_cols: List[Any],
+        prediction_cols: _TO_LIST_MIXIN_TYPE,
         volatility_col: Any,
     ):
         """
@@ -1026,8 +1908,7 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode):
         """
         super().__init__(nid)
         self._target_col = target_col
-        dbg.dassert_isinstance(prediction_cols, list)
-        self._prediction_cols = prediction_cols
+        self._prediction_cols = self._to_list(prediction_cols)
         self._volatility_col = volatility_col
         self._max_steps_ahead = len(self._prediction_cols)
 
@@ -1086,831 +1967,6 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode):
         cum_rets = pd.concat(cum_rets, axis=1)
         fwd_cum_ret = cum_rets.shift(-self._max_steps_ahead)
         return fwd_cum_ret
-
-
-class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
-    """
-    A dataflow node for a DeepAR model.
-
-    This node trains a DeepAR model using only one time series
-    - By using only one time series, we are not taking advantage of the
-      "global" modeling capabilities of gluonts or DeepAR
-    - This may be somewhat mitigated by the fact that the single time series
-      that we provide will typically contain on the order of 10E5 or more time
-      points
-    - In training, DeepAR randomly cuts the time series provided, and so
-      unless there are obvious cut-points we want to take advantage of, it may
-      be best to let DeepAR cut
-    - If certain cut-points are naturally more appropriate in our problem
-      domain, an event study modeling approach may be more suitable
-
-    See https://arxiv.org/abs/1704.04110 for a description of the DeepAR model.
-
-    For additional context and best-practices, see
-    https://github.com/ParticleDev/commodity_research/issues/966
-    """
-
-    def __init__(
-        self,
-        nid: str,
-        y_vars: Union[List[str], Callable[[], List[str]]],
-        trainer_kwargs: Optional[Any] = None,
-        estimator_kwargs: Optional[Any] = None,
-        x_vars: Optional[Union[List[str], Callable[[], List[str]]]] = None,
-        num_traces: int = 100,
-    ) -> None:
-        """
-        Initialize dataflow node for gluon-ts DeepAR model.
-
-        :param nid: unique node id
-        :param y_vars: Used in autoregression
-        :param trainer_kwargs: See
-          - https://gluon-ts.mxnet.io/api/gluonts/gluonts.trainer.html#gluonts.trainer.Trainer
-          - https://github.com/awslabs/gluon-ts/blob/master/src/gluonts/trainer/_base.py
-        :param estimator_kwargs: See
-          - https://gluon-ts.mxnet.io/api/gluonts/gluonts.model.deepar.html
-          - https://github.com/awslabs/gluon-ts/blob/master/src/gluonts/model/deepar/_estimator.py
-        :param x_vars: Covariates. Could be, e.g., features associated with a
-            point-in-time event. Must be known throughout the prediction
-            window at the time the prediction is made. May be omitted.
-        :num_traces: Number of sample paths / traces to generate per
-            prediction. The mean of the traces is used as the prediction.
-        """
-        super().__init__(nid)
-        self._estimator_kwargs = estimator_kwargs
-        # To avoid passing a class through config, handle `Trainer()`
-        # parameters separately from `estimator_kwargs`.
-        self._trainer_kwargs = trainer_kwargs
-        self._trainer = gtrain.Trainer(**self._trainer_kwargs)
-        dbg.dassert_not_in("trainer", self._estimator_kwargs)
-        #
-        self._estimator_func = gmdeep.DeepAREstimator
-        # NOTE: Covariates (x_vars) are not required by DeepAR.
-        #   - This could be useful for, e.g., predicting future values of
-        #     what would normally be predictors
-        self._x_vars = x_vars
-        self._y_vars = y_vars
-        self._num_traces = num_traces
-        self._estimator = None
-        self._predictor = None
-        #
-        dbg.dassert_in("prediction_length", self._estimator_kwargs)
-        self._prediction_length = self._estimator_kwargs["prediction_length"]
-        dbg.dassert_lt(0, self._prediction_length)
-        dbg.dassert_not_in(
-            "freq",
-            self._estimator_kwargs,
-            "`freq` to be autoinferred from `df_in`; do not specify",
-        )
-
-    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        self._validate_input_df(df_in)
-        df = df_in.copy()
-        # Obtain index slice for which forward targets exist.
-        dbg.dassert_lt(self._prediction_length, df.index.size)
-        df_fit = df.iloc[: -self._prediction_length]
-        #
-        if self._x_vars is not None:
-            x_vars = self._to_list(self._x_vars)
-        else:
-            x_vars = None
-        y_vars = self._to_list(self._y_vars)
-        # Transform dataflow local timeseries dataframe into gluon-ts format.
-        gluon_train = cdataa.transform_to_gluon(
-            df_fit, x_vars, y_vars, df_fit.index.freq.freqstr
-        )
-        # Instantiate the (DeepAR) estimator and train the model.
-        self._estimator = self._estimator_func(
-            trainer=self._trainer,
-            freq=df_fit.index.freq.freqstr,
-            **self._estimator_kwargs,
-        )
-        self._predictor = self._estimator.train(gluon_train)
-        # Predict. Generate predictions over all of `df_in` (not just on the
-        #     restricted slice `df_fit`).
-        fwd_y_hat, fwd_y = cbackt.generate_predictions(
-            predictor=self._predictor,
-            df=df,
-            y_vars=y_vars,
-            prediction_length=self._prediction_length,
-            num_samples=self._num_traces,
-            x_vars=x_vars,
-        )
-        # Store info.
-        info = collections.OrderedDict()
-        info["model_x_vars"] = x_vars
-        #
-        df_out = fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        self._set_info("fit", info)
-        dbg.dassert_no_duplicates(df_out.columns)
-        return {"df_out": df_out}
-
-    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        self._validate_input_df(df_in)
-        df = df_in.copy()
-        if self._x_vars is not None:
-            x_vars = self._to_list(self._x_vars)
-        else:
-            x_vars = None
-        y_vars = self._to_list(self._y_vars)
-        gluon_train = cdataa.transform_to_gluon(
-            df, x_vars, y_vars, df.index.freq.freqstr
-        )
-        # Instantiate the (DeepAR) estimator and train the model.
-        self._estimator = self._estimator_func(
-            trainer=self._trainer,
-            freq=df.index.freq.freqstr,
-            **self._estimator_kwargs,
-        )
-        self._predictor = self._estimator.train(gluon_train)
-        #
-        fwd_y_hat, fwd_y = cbackt.generate_predictions(
-            predictor=self._predictor,
-            df=df,
-            y_vars=y_vars,
-            prediction_length=self._prediction_length,
-            num_samples=self._num_traces,
-            x_vars=x_vars,
-        )
-        # Store info.
-        info = collections.OrderedDict()
-        info["model_x_vars"] = x_vars
-        #
-        df_out = fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        self._set_info("predict", info)
-        dbg.dassert_no_duplicates(df_out.columns)
-        return {"df_out": df_out}
-
-    def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Return dataframe of `steps_ahead` forward y values.
-        """
-        y_vars = self._to_list(self._y_vars)
-        mapper = lambda y: y + "_%i" % self._prediction_length
-        # TODO(gp): Not sure if the following is needed.
-        # [mapper(y) for y in y_vars]
-        # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
-        fwd_y_df = (
-            df[y_vars].shift(-self._prediction_length).rename(columns=mapper)
-        )
-        return fwd_y_df
-
-
-class DeepARGlobalModel(FitPredictNode, ToListMixin):
-    """
-    A dataflow node for a DeepAR model.
-
-    See https://arxiv.org/abs/1704.04110 for a description of the DeepAR model.
-
-    For additional context and best-practices, see
-    https://github.com/ParticleDev/commodity_research/issues/966
-    """
-
-    def __init__(
-        self,
-        nid: str,
-        x_vars: Union[List[str], Callable[[], List[str]]],
-        y_vars: Union[List[str], Callable[[], List[str]]],
-        trainer_kwargs: Optional[Any] = None,
-        estimator_kwargs: Optional[Any] = None,
-    ) -> None:
-        """
-        Initialize dataflow node for gluon-ts DeepAR model.
-
-        :param nid: unique node id
-        :param trainer_kwargs: See
-          - https://gluon-ts.mxnet.io/api/gluonts/gluonts.trainer.html#gluonts.trainer.Trainer
-          - https://github.com/awslabs/gluon-ts/blob/master/src/gluonts/trainer/_base.py
-        :param estimator_kwargs: See
-          - https://gluon-ts.mxnet.io/api/gluonts/gluonts.model.deepar.html
-          - https://github.com/awslabs/gluon-ts/blob/master/src/gluonts/model/deepar/_estimator.py
-        :param x_vars: Covariates. Could be, e.g., features associated with a
-            point-in-time event. Must be known throughout the prediction
-            window at the time the prediction is made.
-        :param y_vars: Used in autoregression
-        """
-        super().__init__(nid)
-        self._estimator_kwargs = estimator_kwargs
-        # To avoid passing a class through config, handle `Trainer()`
-        # parameters separately from `estimator_kwargs`.
-        self._trainer_kwargs = trainer_kwargs
-        self._trainer = gtrain.Trainer(**self._trainer_kwargs)
-        dbg.dassert_not_in("trainer", self._estimator_kwargs)
-        #
-        self._estimator_func = gmdeep.DeepAREstimator
-        # NOTE: Covariates (x_vars) are not required by DeepAR.
-        # TODO(Paul): Allow this model to accept y_vars only.
-        #   - This could be useful for, e.g., predicting future values of
-        #     what would normally be predictors
-        self._x_vars = x_vars
-        self._y_vars = y_vars
-        self._estimator = None
-        self._predictor = None
-        # We determine `prediction_length` automatically and therefore do not
-        # allow it to be set by the user.
-        dbg.dassert_not_in("prediction_length", self._estimator_kwargs)
-        #
-        dbg.dassert_in("freq", self._estimator_kwargs)
-        self._freq = self._estimator_kwargs["freq"]
-
-    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        """
-        Fit model to multiple series reflected in multiindexed `df_in`.
-
-        `prediction_length` is autoinferred from the max index of `t_j`, e.g.,
-        each `df_in` is assumed to include the index `0` for, e.g.,
-        "event time", and indices are assumed to be consecutive integers. So
-        if there are time points
-
-            t_{-2} < t_{-1} < t_0 < t_1 < t_2
-
-        then `prediction_length = 2`.
-        """
-        dbg.dassert_isinstance(df_in, pd.DataFrame)
-        dbg.dassert_no_duplicates(df_in.columns)
-        x_vars = self._to_list(self._x_vars)
-        y_vars = self._to_list(self._y_vars)
-        df = df_in.copy()
-        # Transform dataflow local timeseries dataframe into gluon-ts format.
-        gluon_train = cdataa.transform_to_gluon(df, x_vars, y_vars, self._freq)
-        # Set the prediction length to the length of the local timeseries - 1.
-        #   - To predict for time t_j at time t_i, t_j > t_i, we need to know
-        #     x_vars up to and including time t_j
-        #   - For this model, multi-step predictions are equivalent to
-        #     iterated single-step predictions
-        self._prediction_length = df.index.get_level_values(0).max()
-        # Instantiate the (DeepAR) estimator and train the model.
-        self._estimator = self._estimator_func(
-            prediction_length=self._prediction_length,
-            trainer=self._trainer,
-            **self._estimator_kwargs,
-        )
-        self._predictor = self._estimator.train(gluon_train)
-        # Apply model predictions to the training set (so that we can evaluate
-        # in-sample performance).
-        #   - Include all data points up to and including zero (the event time)
-        gluon_test = cdataa.transform_to_gluon(
-            df, x_vars, y_vars, self._freq, self._prediction_length
-        )
-        fit_predictions = list(self._predictor.predict(gluon_test))
-        # Transform gluon-ts predictions into a dataflow local timeseries
-        # dataframe.
-        # TODO(Paul): Gluon has built-in functionality to take the mean of
-        #     traces, and we might consider using it instead.
-        y_hat_traces = cdataa.transform_from_gluon_forecasts(fit_predictions)
-        # TODO(Paul): Store the traces / dispersion estimates.
-        # Average over all available samples.
-        y_hat = y_hat_traces.mean(level=[0, 1])
-        # Map multiindices to align our prediction indices with those used
-        # by the passed-in local timeseries dataframe.
-        # TODO(Paul): Do this mapping earlier before removing the traces.
-        aligned_idx = y_hat.index.map(
-            lambda x: (
-                x[0] + 1,
-                x[1] - pd.Timedelta(f"1{self._freq}"),
-            )
-        )
-        y_hat.index = aligned_idx
-        y_hat.name = y_vars[0] + "_hat"
-        y_hat.index.rename(df.index.names, inplace=True)
-        # Store info.
-        info = collections.OrderedDict()
-        info["model_x_vars"] = x_vars
-        # TODO(Paul): Consider storing only the head of each list in `info`
-        #     for debugging purposes.
-        # info["gluon_train"] = list(gluon_train)
-        # info["gluon_test"] = list(gluon_test)
-        # info["fit_predictions"] = fit_predictions
-        df_out = y_hat.to_frame()
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
-
-    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        dbg.dassert_isinstance(df_in, pd.DataFrame)
-        dbg.dassert_no_duplicates(df_in.columns)
-        x_vars = self._to_list(self._x_vars)
-        y_vars = self._to_list(self._y_vars)
-        df = df_in.copy()
-        # Transform dataflow local timeseries dataframe into gluon-ts format.
-        gluon_test = cdataa.transform_to_gluon(
-            df,
-            x_vars,
-            y_vars,
-            self._freq,
-            self._prediction_length,
-        )
-        predictions = list(self._predictor.predict(gluon_test))
-        # Transform gluon-ts predictions into a dataflow local timeseries
-        # dataframe.
-        # TODO(Paul): Gluon has built-in functionality to take the mean of
-        #     traces, and we might consider using it instead.
-        y_hat_traces = cdataa.transform_from_gluon_forecasts(predictions)
-        # TODO(Paul): Store the traces / dispersion estimates.
-        # Average over all available samples.
-        y_hat = y_hat_traces.mean(level=[0, 1])
-        # Map multiindices to align our prediction indices with those used
-        # by the passed-in local timeseries dataframe.
-        # TODO(Paul): Do this mapping earlier before removing the traces.
-        aligned_idx = y_hat.index.map(
-            lambda x: (
-                x[0] + 1,
-                x[1] - pd.Timedelta(f"1{self._freq}"),
-            )
-        )
-        y_hat.index = aligned_idx
-        y_hat.name = y_vars[0] + "_hat"
-        y_hat.index.rename(df.index.names, inplace=True)
-        # Store info.
-        info = collections.OrderedDict()
-        info["model_x_vars"] = x_vars
-        # TODO(Paul): Consider storing only the head of each list in `info`
-        #     for debugging purposes.
-        # info["gluon_train"] = list(gluon_train)
-        # info["gluon_test"] = list(gluon_test)
-        # info["fit_predictions"] = fit_predictions
-        df_out = y_hat.to_frame()
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        self._set_info("predict", info)
-        return {"df_out": df_out}
-
-
-class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
-    """
-    Fit and predict a smooth moving average model.
-    """
-
-    def __init__(
-        self,
-        nid: str,
-        col: list,
-        steps_ahead: int,
-        tau: Optional[float] = None,
-        col_mode: Optional[str] = None,
-        nan_mode: Optional[str] = None,
-    ) -> None:
-        """
-        Specify the data and sma modeling parameters.
-
-        :param nid: unique node id
-        :param col: name of column to model
-        :param steps_ahead: as in ContinuousSkLearnModel
-        :param tau: as in `csigna.compute_smooth_moving_average`. If `None`,
-            learn this parameter
-        :param nan_mode: as in ContinuousSkLearnModel
-        """
-        super().__init__(nid)
-        dbg.dassert_isinstance(col, list)
-        dbg.dassert_eq(len(col), 1)
-        self._col = col
-        self._steps_ahead = steps_ahead
-        dbg.dassert_lte(
-            0, self._steps_ahead, "Non-causal prediction attempted! Aborting..."
-        )
-        if nan_mode is None:
-            self._nan_mode = "raise"
-        else:
-            self._nan_mode = nan_mode
-        self._col_mode = col_mode or "replace_all"
-        dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
-        # Smooth moving average model parameters to learn.
-        self._tau = tau
-        self._min_periods = None
-        self._min_periods_max_frac = 0.2
-        self._min_depth = 1
-        self._max_depth = 1
-        self._metric = sklear.metrics.mean_absolute_error
-
-    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        self._validate_input_df(df_in)
-        df = df_in.copy()
-        # Obtain index slice for which forward targets exist.
-        dbg.dassert_lt(self._steps_ahead, df.index.size)
-        idx = df.index[: -self._steps_ahead]
-        # Determine index where no x_vars are NaN.
-        non_nan_idx_x = df.loc[idx][self._col].dropna().index
-        # Determine index where target is not NaN.
-        fwd_y_df = self._get_fwd_y_df(df).loc[idx].dropna()
-        non_nan_idx_fwd_y = fwd_y_df.dropna().index
-        # Intersect non-NaN indices.
-        non_nan_idx = non_nan_idx_x.intersection(non_nan_idx_fwd_y)
-        dbg.dassert(not non_nan_idx.empty)
-        fwd_y_df = fwd_y_df.loc[non_nan_idx]
-        # Handle presence of NaNs according to `nan_mode`.
-        self._handle_nans(idx, non_nan_idx)
-        # Prepare x_vars in sklearn format.
-        x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], self._col)
-        # Prepare forward y_vars in sklearn format.
-        fwd_y_fit = cdataa.transform_to_sklearn(
-            fwd_y_df, fwd_y_df.columns.tolist()
-        )
-        # Define and fit model.
-        if self._tau is None:
-            self._tau = self._learn_tau(x_fit, fwd_y_fit)
-        min_periods = 2 * self._tau
-        if min_periods / len(non_nan_idx) > self._min_periods_max_frac:
-            self._min_periods = int(len(non_nan_idx) * self._min_periods_max_frac)
-        else:
-            self._min_periods = min_periods
-        _LOG.debug("tau=", self._tau)
-        info = collections.OrderedDict()
-        info["tau"] = self._tau
-        info["min_periods"] = self._min_periods
-        # Generate insample predictions and put in dataflow dataframe format.
-        fwd_y_hat = self._predict(x_fit)
-        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
-        fwd_y_hat = cdataa.transform_from_sklearn(
-            non_nan_idx, fwd_y_hat_vars, fwd_y_hat
-        )
-        # Return targets and predictions.
-        df_out = fwd_y_df.reindex(idx).merge(
-            fwd_y_hat.reindex(idx), left_index=True, right_index=True
-        )
-        dbg.dassert_no_duplicates(df_out.columns)
-        df_out = self._apply_col_mode(
-            df, df_out, cols=self._col, col_mode=self._col_mode
-        )
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
-
-    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        self._validate_input_df(df_in)
-        df = df_in.copy()
-        idx = df.index
-        # Restrict to times where col has no NaNs.
-        non_nan_idx = df.loc[idx][self._col].dropna().index
-        # Handle presence of NaNs according to `nan_mode`.
-        self._handle_nans(idx, non_nan_idx)
-        # Transform x_vars to sklearn format.
-        x_predict = cdataa.transform_to_sklearn(df.loc[non_nan_idx], self._col)
-        # Use trained model to generate predictions.
-        dbg.dassert_is_not(
-            self._tau,
-            None,
-            "Parameter tau not found! Check if `fit` has been run.",
-        )
-        fwd_y_hat = self._predict(x_predict)
-        # Put predictions in dataflow dataframe format.
-        fwd_y_df = self._get_fwd_y_df(df).loc[non_nan_idx]
-        fwd_y_hat_vars = [y + "_hat" for y in fwd_y_df.columns]
-        fwd_y_hat = cdataa.transform_from_sklearn(
-            non_nan_idx, fwd_y_hat_vars, fwd_y_hat
-        )
-        # Return targets and predictions.
-        df_out = fwd_y_df.reindex(idx).merge(
-            fwd_y_hat.reindex(idx), left_index=True, right_index=True
-        )
-        dbg.dassert_no_duplicates(df_out.columns)
-        info = collections.OrderedDict()
-        df_out = self._apply_col_mode(
-            df, df_out, cols=self._col, col_mode=self._col_mode
-        )
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        self._set_info("predict", info)
-        return {"df_out": df_out}
-
-    def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Return dataframe of `steps_ahead` forward y values.
-        """
-        mapper = lambda y: str(y) + "_%i" % self._steps_ahead
-        # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
-        fwd_y_df = df[self._col].shift(-self._steps_ahead).rename(columns=mapper)
-        return fwd_y_df
-
-    def _handle_nans(
-        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
-    ) -> None:
-        if self._nan_mode == "raise":
-            if idx.shape[0] != non_nan_idx.shape[0]:
-                nan_idx = idx.difference(non_nan_idx)
-                raise ValueError(f"NaNs detected at {nan_idx}")
-        elif self._nan_mode == "drop":
-            pass
-        else:
-            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
-
-    def _learn_tau(self, x: np.array, y: np.array) -> float:
-        def score(tau: float) -> float:
-            x_srs = pd.DataFrame(x.flatten())
-            sma = csigna.compute_smooth_moving_average(
-                x_srs,
-                tau=tau,
-                min_periods=0,
-                min_depth=self._min_depth,
-                max_depth=self._max_depth,
-            )
-            return self._metric(sma.values, y[self._min_periods :])
-
-        # TODO(*): Make this configurable.
-        opt_results = sp.optimize.minimize_scalar(
-            score, method="bounded", bounds=[1, 100]
-        )
-        return opt_results.x
-
-    def _predict(self, x: np.array) -> np.array:
-        x_srs = pd.DataFrame(x.flatten())
-        # TODO(*): Make `min_periods` configurable.
-        x_sma = csigna.compute_smooth_moving_average(
-            x_srs,
-            tau=self._tau,
-            min_periods=self._min_periods,
-            min_depth=self._min_depth,
-            max_depth=self._max_depth,
-        )
-        return x_sma.values
-
-    # TODO(Paul): Consider omitting this (and relying on downstream
-    #     processing to e.g., adjust for number of hypotheses tested).
-    @staticmethod
-    def _model_perf(
-        y: pd.DataFrame, y_hat: pd.DataFrame
-    ) -> collections.OrderedDict:
-        info = collections.OrderedDict()
-        # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
-        pnl_rets = y.multiply(
-            y_hat.rename(columns=lambda x: x.replace("_hat", ""))
-        )
-        info["pnl_rets"] = pnl_rets
-        info["sr"] = cstati.compute_annualized_sharpe_ratio(
-            csigna.resample(pnl_rets, rule="1B").sum()
-        )
-        return info
-
-
-class VolatilityModulator(FitPredictNode, ColModeMixin):
-    """
-    Modulate or demodulate signal by volatility.
-
-    Processing steps:
-      - shift volatility to align it with signal
-      - multiply/divide signal by volatility
-
-    Usage examples:
-      - Z-scoring
-        - to obtain volatility prediction, pass in returns into `SmaModel` with
-          a `steps_ahead` parameter
-        - to z-score, pass in signal, volatility prediction, `signal_steps_ahead=0`,
-          `volatility_steps_ahead=steps_ahead`, `mode='demodulate'`
-      - Undoing z-scoring
-        - Let's say we have
-          - forward volatility prediction `n` steps ahead
-          - prediction of forward z-scored returns `m` steps ahead. Z-scoring
-            for the target has been done using the volatility prediction above
-        - To undo z-scoring, we need to pass in the prediction of forward
-          z-scored returns, forward volatility prediction, `signal_steps_ahead=n`,
-          `volatility_steps_ahead=m`, `mode='modulate'`
-    """
-
-    def __init__(
-        self,
-        nid: str,
-        signal_cols: List[Any],
-        volatility_col: Any,
-        signal_steps_ahead: int,
-        volatility_steps_ahead: int,
-        mode: str,
-        col_rename_func: Optional[Callable[[Any], Any]] = None,
-        col_mode: Optional[str] = None,
-    ) -> None:
-        """
-        :param nid: node identifier
-        :param signal_cols: names of columns to (de)modulate
-        :param volatility_col: name of volatility column
-        :param signal_steps_ahead: steps ahead of the signal columns. If signal
-            is at `t_0`, this value should be `0`. If signal is a forward
-            prediction of z-scored returns indexed by knowledge time, this
-            value should be equal to the number of steps of the prediction
-        :param volatility_steps_ahead: steps ahead of the volatility column. If
-            volatility column is an output of `SmaModel`, this corresponds to
-            the `steps_ahead` parameter
-        :param mode: "modulate" or "demodulate"
-        :param col_rename_func: as in `ColumnTransformer`
-        :param col_mode: as in `ColumnTransformer`
-        """
-        super().__init__(nid)
-        dbg.dassert_isinstance(signal_cols, list)
-        self._signal_cols = signal_cols
-        self._volatility_col = volatility_col
-        dbg.dassert_lte(0, signal_steps_ahead)
-        self._signal_steps_ahead = signal_steps_ahead
-        dbg.dassert_lte(0, volatility_steps_ahead)
-        self._volatility_steps_ahead = volatility_steps_ahead
-        dbg.dassert_in(mode, ["modulate", "demodulate"])
-        self._mode = mode
-        self._col_rename_func = col_rename_func or (lambda x: x)
-        self._col_mode = col_mode or "replace_all"
-
-    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df_out = self._process_signal(df_in)
-        info = collections.OrderedDict()
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
-
-    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df_out = self._process_signal(df_in)
-        info = collections.OrderedDict()
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        self._set_info("predict", info)
-        return {"df_out": df_out}
-
-    def _process_signal(self, df_in: pd.DataFrame) -> pd.DataFrame:
-        """
-        Modulate or demodulate signal by volatility prediction.
-
-        :param df_in: dataframe with `self._signal_cols` and
-            `self._volatility_col` columns
-        :return: adjusted signal indexed in the same way as the input signal
-        """
-        dbg.dassert_is_subset(self._signal_cols, df_in.columns.tolist())
-        dbg.dassert_in(self._volatility_col, df_in.columns)
-        fwd_signal = df_in[self._signal_cols]
-        fwd_volatility = df_in[self._volatility_col]
-        # Shift volatility to align it with signal.
-        volatility_shift = self._volatility_steps_ahead - self._signal_steps_ahead
-        volatility_aligned = fwd_volatility.shift(volatility_shift)
-        # Adjust signal by volatility.
-        if self._mode == "demodulate":
-            adjusted_signal = fwd_signal.divide(volatility_aligned, axis=0)
-        elif self._mode == "modulate":
-            adjusted_signal = fwd_signal.multiply(volatility_aligned, axis=0)
-        else:
-            raise ValueError(f"Invalid mode=`{self._mode}`")
-        df_out = self._apply_col_mode(
-            df_in,
-            adjusted_signal,
-            cols=self._signal_cols,
-            col_rename_func=self._col_rename_func,
-            col_mode=self._col_mode,
-        )
-        return df_out
-
-
-class VolatilityModel(FitPredictNode, ColModeMixin):
-    """
-    Fit and predict a smooth moving average volatility model.
-
-    Wraps SmaModel internally, handling calculation of volatility from
-    returns and column appends.
-    """
-
-    def __init__(
-        self,
-        nid: str,
-        steps_ahead: int,
-        cols: Optional[Iterable[Union[int, str]]] = None,
-        p_moment: float = 2,
-        tau: Optional[float] = None,
-        col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
-        col_mode: Optional[str] = None,
-        nan_mode: Optional[str] = None,
-    ) -> None:
-        """
-        Specify the data and sma modeling parameters.
-
-        :param nid: unique node id
-        :param cols: name of columns to model
-        :param steps_ahead: as in ContinuousSkLearnModel
-        :param p_moment: exponent to apply to the absolute value of returns
-        :param tau: as in `csigna.compute_smooth_moving_average`. If `None`,
-            learn this parameter
-        :param col_rename_func: renaming function for z-scored column
-        :param col_mode:
-            - If "merge_all", merge all columns from input dataframe and
-                transformed columns
-            - If "replace_selected", merge unselected columns from input dataframe
-                and transformed selected columns
-            - If "replace_all", leave only transformed selected columns
-        :param nan_mode: as in ContinuousSkLearnModel
-        """
-        super().__init__(nid)
-        self._cols = cols
-        self._steps_ahead = steps_ahead
-        dbg.dassert_lte(1, p_moment)
-        self._p_moment = p_moment
-        self._tau = tau
-        self._col_rename_func = col_rename_func
-        self._col_mode = col_mode or "merge_all"
-        self._nan_mode = nan_mode
-        self._vol_cols = {}
-        self._fwd_vol_cols = {}
-        self._fwd_vol_cols_hat = {}
-        self._taus = {}
-        self._sma_models = {}
-        self._modulators = {}
-
-    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return self._fit_predict_helper(df_in, fit=True)
-
-    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return self._fit_predict_helper(df_in, fit=False)
-
-    @property
-    def taus(self) -> Dict[str, Any]:
-        return self._taus
-
-    def _fit_predict_helper(
-        self, df_in: pd.DataFrame, fit: bool = False
-    ) -> Dict[str, pd.DataFrame]:
-        method = "fit" if fit else "predict"
-        cols = self._cols or df_in.columns.tolist()
-        if method == "fit":
-            self._fill_model_dicts(cols)
-        info = collections.OrderedDict()
-        dfs = []
-        for col in cols:
-            dbg.dassert_not_in(self._vol_cols[col], df_in.columns)
-            dag = self._get_dag(df_in[[col]], col)
-            df_out = dag.run_leq_node(self._modulators[col].nid, method)["df_out"]
-            info[col] = extract_info(dag, [method])
-            if method == "fit":
-                self._taus[col] = info[col]["anonymous_sma"][method]["tau"]
-            dfs.append(df_out)
-        df_out = pd.concat(dfs, axis=1)
-        df_out = self._apply_col_mode(
-            df_in.drop(df_out.columns.intersection(df_in.columns), 1),
-            df_out,
-            cols=list(cols),
-            col_mode=self._col_mode,
-        )
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        self._set_info(method, info)
-        return {"df_out": df_out}
-
-    def _get_dag(self, df_in: pd.DataFrame, col: str) -> DAG:
-        dag = DAG(mode="strict")
-        # Load data.
-        node = ReadDataFromDf("data", df_in)
-        dag.add_node(node)
-        tail_nid = "data"
-        # Calculate volatility power.
-        node = ColumnTransformer(
-            "calculate_vol_power",
-            transformer_func=lambda x: np.abs(x) ** self._p_moment,
-            cols=[col],
-            col_rename_func=lambda x: f"{x}_vol",
-            col_mode="merge_all",
-        )
-        tail_nid = self._append(dag, tail_nid, node)
-        # Run SMA.
-        node = self._sma_models[col]
-        tail_nid = self._append(dag, tail_nid, node)
-        # Normalize volatility.
-        node = ColumnTransformer(
-            "normalize_vol",
-            transformer_func=lambda x: x ** (1.0 / self._p_moment),
-            cols=[
-                self._vol_cols[col],
-                self._fwd_vol_cols[col],
-                self._fwd_vol_cols_hat[col],
-            ],
-            col_mode="replace_selected",
-        )
-        tail_nid = self._append(dag, tail_nid, node)
-        # Run modulator.
-        node = self._modulators[col]
-        self._append(dag, tail_nid, node)
-        return dag
-
-    def _fill_model_dicts(self, cols: List[str]) -> None:
-        for col in cols:
-            self._vol_cols[col] = str(col) + "_vol"
-            self._fwd_vol_cols[col] = (
-                self._vol_cols[col] + f"_{self._steps_ahead}"
-            )
-            self._fwd_vol_cols_hat[col] = self._fwd_vol_cols[col] + "_hat"
-            self._taus[col] = self._tau
-            # The `SmaModel` and `Modulator` nodes are only used internally (e.g.,
-            # are not added to any encompassing DAG).
-            self._sma_models[col] = SmaModel(
-                "anonymous_sma",
-                col=[self._vol_cols[col]],
-                steps_ahead=self._steps_ahead,
-                tau=self._tau,
-                col_mode="merge_all",
-                nan_mode=self._nan_mode,
-            )
-            self._modulators[col] = VolatilityModulator(
-                "anonymous_demodulation",
-                signal_cols=[col],
-                volatility_col=self._fwd_vol_cols_hat[col],
-                signal_steps_ahead=0,
-                volatility_steps_ahead=self._steps_ahead,
-                mode="demodulate",
-                col_rename_func=self._col_rename_func,
-                col_mode=self._col_mode,
-            )
-
-    @staticmethod
-    def _append(dag: DAG, tail_nid: Optional[str], node: Node) -> str:
-        dag.add_node(node)
-        if tail_nid is not None:
-            dag.connect(tail_nid, node.nid)
-        return node.nid
 
 
 def _convert_sarimax_summary_to_dataframe(

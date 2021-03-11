@@ -167,6 +167,31 @@ class DataFrameModeler:
         )
         return self._run_model(model, method)
 
+    def apply_series_transformer(
+        self,
+        transformer_func: Callable[..., pd.DataFrame],
+        transformer_kwargs: Optional[Dict[str, Any]] = None,
+        # TODO(Paul): May need to assume `List` instead.
+        cols: Optional[Iterable[str]] = None,
+        col_rename_func: Optional[Callable[[Any], Any]] = None,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
+        method: str = "fit",
+    ) -> DataFrameModeler:
+        """
+        Apply a function to a select of columns.
+        """
+        model = cdataf.SeriesTransformer(
+            nid="column_transformer",
+            transformer_func=transformer_func,
+            transformer_kwargs=transformer_kwargs,
+            cols=cols,
+            col_rename_func=col_rename_func,
+            col_mode=col_mode,
+            nan_mode=nan_mode,
+        )
+        return self._run_model(model, method)
+
     def apply_dataframe_method_runner(
         self,
         dataframe_method: str,
@@ -281,6 +306,7 @@ class DataFrameModeler:
         col: str,
         steps_ahead: int,
         tau: Optional[float] = None,
+        col_mode: Optional[str] = "merge_all",
         nan_mode: Optional[str] = "drop",
         method: str = "fit",
     ) -> DataFrameModeler:
@@ -292,6 +318,7 @@ class DataFrameModeler:
             col=[col],
             steps_ahead=steps_ahead,
             tau=tau,
+            col_mode=col_mode,
             nan_mode=nan_mode,
         )
         return self._run_model(model, method)
@@ -499,6 +526,8 @@ class DataFrameModeler:
         mode: str = "ins",
     ) -> None:
         """
+        :param y_scale: the height of each plot. If `None`, the size of the whole
+            figure equals the default `figsize`
         :param separator: if not `None`, split the column names by it and
             display only the last part as the plot title
         """
