@@ -1,5 +1,19 @@
-scrapy crawl ibroker --loglevel INFO
+# 
 
-CLOSESPIDER_ERRORCOUNT=0
+- To run:
 
-scrapy crawl ibroker -s CLOSESPIDER_ERRORCOUNT=0
+  ```bash
+  # Build container.
+  > cd amp/vendors_amp/ib/metadata/extract/ib_metadata_crawler
+  > make ib_metadata_crawler.docker_build
+
+  # Run crawler.
+  > make ib_metadata_crawler.run
+  ```
+
+- The results are:
+  ```
+  scrapy.log
+  src/exchanges.csv
+  src/symbols.csv
+  ```
