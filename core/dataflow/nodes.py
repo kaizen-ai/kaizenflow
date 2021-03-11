@@ -576,6 +576,123 @@ class ColumnTransformer(Transformer, ColModeMixin):
         return df, info
 
 
+class SeriesTransformer(Transformer, ColModeMixin):
+    """
+    Perform non-index modifying changes of columns.
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        transformer_func: Callable[..., pd.DataFrame],
+        transformer_kwargs: Optional[Dict[str, Any]] = None,
+        # TODO(Paul): May need to assume `List` instead.
+        cols: Optional[Iterable[Union[int, str]]] = None,
+        col_rename_func: Optional[Callable[[Any], Any]] = None,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
+    ) -> None:
+        """
+        :param nid: unique node id
+        :param transformer_func: srs -> df. The keyword `info` (if present) is
+            assumed to have a specific semantic meaning. If present,
+                - An empty dict is passed in to this `info`
+                - The resulting (populated) dict is included in the node's
+                  `_info`
+        :param transformer_kwargs: transformer_func kwargs
+        :param cols: columns to transform; `None` defaults to all available.
+        :param col_rename_func: function for naming transformed columns, e.g.,
+            lambda x: "zscore_" + x
+        :param col_mode: `merge_all`, `replace_selected`, or `replace_all`.
+            Determines what columns are propagated by the node.
+        :param nan_mode: `leave_unchanged` or `drop`. If `drop`, applies to
+            columns individually.
+        """
+        super().__init__(nid)
+        if cols is not None:
+            dbg.dassert_isinstance(cols, list)
+        self._cols = cols
+        self._col_rename_func = col_rename_func
+        self._col_mode = col_mode
+        self._transformer_func = transformer_func
+        self._transformer_kwargs = transformer_kwargs or {}
+        # Store the list of columns after the transformation.
+        self._transformed_col_names = None
+        self._nan_mode = nan_mode or "leave_unchanged"
+
+    @property
+    def transformed_col_names(self) -> List[str]:
+        dbg.dassert_is_not(
+            self._transformed_col_names,
+            None,
+            "No transformed column names. This may indicate "
+            "an invocation prior to graph execution.",
+        )
+        return self._transformed_col_names
+
+    def _transform(
+        self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
+        df_in = df.copy()
+        df = df.copy()
+        if self._cols is not None:
+            df = df[self._cols]
+        idx = df.index
+        # Initialize container to store info (e.g., auxiliary stats) in the
+        # node.
+        info = collections.OrderedDict()
+        info["func_info"] = collections.OrderedDict()
+        func_info = info["func_info"]
+        srs_list = []
+        for col in df.columns:
+            col_info = collections.OrderedDict()
+            srs = df[col]
+            if self._nan_mode == "leave_unchanged":
+                pass
+            elif self._nan_mode == "drop":
+                srs = srs.dropna()
+            else:
+                raise ValueError(f"Unrecognized `nan_mode` {self._nan_mode}")
+            # Perform the column transformation operations.
+            # Introspect to see whether `_transformer_func` contains an `info`
+            # parameter. If so, inject an empty dict to be populated when
+            # `_transformer_func` is executed.
+            func_sig = inspect.signature(self._transformer_func)
+            if "info" in func_sig.parameters:
+                func_info = collections.OrderedDict()
+                srs = self._transformer_func(
+                    srs, info=col_info, **self._transformer_kwargs
+                )
+                func_info[col] = col_info
+            else:
+                srs = self._transformer_func(srs, **self._transformer_kwargs)
+            if self._col_rename_func is not None:
+                srs.name = self._col_rename_func(col)
+            else:
+                srs.name = col
+            srs_list.append(srs)
+        info["func_info"] = func_info
+        df = pd.concat(srs_list, axis=1)
+        df = df.reindex(index=idx)
+        # TODO(Paul): Consider supporting the option of relaxing or
+        # foregoing this check.
+        dbg.dassert(
+            df.index.equals(df_in.index),
+            "Input/output indices differ but are expected to be the same!",
+        )
+        # Maybe merge transformed columns with a subset of input df columns.
+        df = self._apply_col_mode(
+            df_in,
+            df,
+            cols=df.columns.tolist(),
+            col_rename_func=None,
+            col_mode=self._col_mode,
+        )
+        #
+        info["df_transformed_info"] = get_df_info_as_string(df)
+        return df, info
+
+
 class DataframeMethodRunner(Transformer):
     def __init__(
         self,

@@ -14,6 +14,7 @@ import core.config as cconfi
 import core.config_builders as ccbuild
 import core.dataflow as cdataf
 import core.signal_processing as csigna
+import helpers.dbg as dbg
 import helpers.printing as hprint
 import helpers.unit_test as hut
 
@@ -980,7 +981,7 @@ class TestVolatilityModel(hut.TestCase):
         config = cconfi.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
-        config["nan_mode"] = "drop"
+        config["nan_mode"] = "leave_unchanged"
         node = cdataf.VolatilityModel("vol_model", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "vol_model")
@@ -999,7 +1000,7 @@ class TestVolatilityModel(hut.TestCase):
         config = cconfi.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
-        config["nan_mode"] = "drop"
+        config["nan_mode"] = "leave_unchanged"
         node = cdataf.VolatilityModel("vol_model", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "vol_model")
@@ -1029,7 +1030,7 @@ class TestVolatilityModel(hut.TestCase):
         config = cconfi.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
-        config["nan_mode"] = "drop"
+        config["nan_mode"] = "leave_unchanged"
         node = cdataf.VolatilityModel("vol_model", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "vol_model")
@@ -1053,7 +1054,7 @@ class TestVolatilityModel(hut.TestCase):
         config = cconfi.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
-        config["nan_mode"] = "drop"
+        config["nan_mode"] = "leave_unchanged"
         node = cdataf.VolatilityModel("vol_model", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "vol_model")
@@ -1081,7 +1082,7 @@ class TestVolatilityModel(hut.TestCase):
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["col_mode"] = "replace_all"
-        config["nan_mode"] = "drop"
+        config["nan_mode"] = "leave_unchanged"
         node = cdataf.VolatilityModel("vol_model", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "vol_model")
@@ -1101,7 +1102,7 @@ class TestVolatilityModel(hut.TestCase):
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["col_mode"] = "replace_selected"
-        config["nan_mode"] = "drop"
+        config["nan_mode"] = "leave_unchanged"
         node = cdataf.VolatilityModel("vol_model", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "vol_model")
@@ -1121,13 +1122,28 @@ class TestVolatilityModel(hut.TestCase):
         config = cconfi.Config()
         config["cols"] = ["ret_0", "ret_0_2"]
         config["steps_ahead"] = 2
-        config["nan_mode"] = "drop"
+        config["nan_mode"] = "leave_unchanged"
         node = cdataf.VolatilityModel("vol_model", **config.to_dict())
         dag.add_node(node)
         dag.connect("data", "vol_model")
         #
         output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
         self.check_string(output_df.to_string())
+
+    def test_multiple_columns_with_specified_tau(self) -> None:
+        # Load test data.
+        data = self._get_data()
+        data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
+        # Specify config.
+        config = cconfi.Config()
+        config["cols"] = ["ret_0", "ret_0_2"]
+        config["steps_ahead"] = 2
+        config["nan_mode"] = "drop"
+        config["tau"] = 10
+        # Check if specified tau is used for all columns via learned taus property.
+        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
+        node.fit(data)
+        dbg.dassert_set_eq(node.taus.values(), [10])
 
     def test_fit_none_columns(self) -> None:
         # Load test data.
@@ -1136,12 +1152,15 @@ class TestVolatilityModel(hut.TestCase):
         # Specify config.
         config = cconfi.Config()
         config["steps_ahead"] = 2
-        config["nan_mode"] = "drop"
+        config["nan_mode"] = "leave_unchanged"
         # Get outputs with `cols`=None and all specified.
         output_cols_none = self._run_volatility_model(data, config)
         config["cols"] = ["ret_0", "ret_0_2"]
         output_cols_specified = self._run_volatility_model(data, config)
-        np.testing.assert_equal(output_cols_none, output_cols_specified)
+        np.testing.assert_equal(
+            output_cols_none.to_string(),
+            output_cols_specified.to_string(),
+        )
 
     def test_fit_int_columns(self) -> None:
         # Load test data.
@@ -1151,10 +1170,10 @@ class TestVolatilityModel(hut.TestCase):
         config = cconfi.Config()
         config["cols"] = [10]
         config["steps_ahead"] = 2
-        config["nan_mode"] = "drop"
+        config["nan_mode"] = "leave_unchanged"
         # Get output with integer column names.
-        output_str = self._run_volatility_model(data, config)
-        self.check_string(output_str)
+        output = self._run_volatility_model(data, config)
+        self.check_string(output.to_string())
 
     @staticmethod
     def _get_data() -> pd.DataFrame:
@@ -1184,7 +1203,7 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(node)
         dag.connect("data", "vol_model")
         output = dag.run_leq_node("vol_model", "fit")["df_out"]
-        return output.to_string()
+        return output
 
 
 if True:

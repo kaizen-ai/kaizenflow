@@ -4,17 +4,14 @@ Import as:
 import core.signal_processing as csigna
 """
 
+import collections
 import functools
 import logging
-import collections
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pywt
-import scipy as sp
-import statsmodels.api as sm
 
 import helpers.dataframe as hdataf
 import helpers.dbg as dbg
@@ -23,176 +20,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# Graphical tools for time and frequency analysis
-# #############################################################################
-
-# Some use cases include:
-#   - Determining whether a predictor exhibits autocorrelation
-#   - Determining the characteristic time scale of a signal
-#   - Signal filtering
-#   - Lag determination
-#   - etc.
-
-
-# TODO(*): Deprecate. Keep for now as a nice way to arrange subplots.
-def plot_wavelet_levels(
-    signal: Union[pd.DataFrame, pd.Series], wavelet_name: str, levels: int
-) -> None:
-    """
-    Wavelet level decomposition plot. Higher levels are smoother.
-
-    :param signal: Series-like numerical object
-    :param wavelet_name: One of the names in pywt.wavelist()
-    :param levels: The number of levels to plot
-    """
-    _, ax = plt.subplots(figsize=(6, 1))
-    ax.set_title("Original signal")
-    ax.plot(signal)
-    plt.show()
-
-    data = signal.copy()
-    _, axarr = plt.subplots(nrows=levels, ncols=2, figsize=(6, 6))
-    for idx in range(levels):
-        (data, coeff_d) = pywt.dwt(data, wavelet_name)
-        axarr[idx, 0].plot(data, "r")
-        axarr[idx, 1].plot(coeff_d, "g")
-        axarr[idx, 0].set_ylabel(
-            "Level {}".format(idx + 1), fontsize=14, rotation=90
-        )
-        axarr[idx, 0].set_yticklabels([])
-        if idx == 0:
-            axarr[idx, 0].set_title("Approximation coefficients", fontsize=14)
-            axarr[idx, 1].set_title("Detail coefficients", fontsize=14)
-        axarr[idx, 1].set_yticklabels([])
-    plt.tight_layout()
-    plt.show()
-
-
-def filter_low_pass(
-    signal: Union[pd.DataFrame, pd.Series], wavelet_name: str, threshold: float
-) -> pd.Series:
-    """
-    Wavelet low-pass filtering using a threshold.
-
-    Currently configured to use 'periodic' mode.
-    See https://pywavelets.readthedocs.io/en/latest/regression/modes.html.
-    Uses soft thresholding.
-
-    :param signal: Signal as pd.Series
-    :param wavelet_name: One of the names in pywt.wavelist()
-    :param threshold: Coefficient threshold (>= passes)
-
-    :return: Smoothed signal as pd.Series, indexed like signal.index
-    """
-    threshold = threshold * np.nanmax(signal)
-    coeff = pywt.wavedec(signal, wavelet_name, mode="per")
-    coeff[1:] = (
-        pywt.threshold(i, value=threshold, mode="soft") for i in coeff[1:]
-    )
-    rec = pywt.waverec(coeff, wavelet_name, mode="per")
-    if rec.size > signal.size:
-        rec = rec[1:]
-    reconstructed_signal = pd.Series(rec, index=signal.index)
-    return reconstructed_signal
-
-
-def plot_scaleogram(
-    signal: Union[pd.DataFrame, pd.Series],
-    scales: np.array,
-    wavelet_name: str,
-    cmap: plt.cm = plt.cm.seismic,  # pylint: disable=no-member
-    title: str = "Wavelet Spectrogram of signal",
-    ylabel: str = "Period",
-    xlabel: str = "Time",
-) -> None:
-    r"""Plot wavelet-based spectrogram (aka scaleogram).
-
-    A nice reference and utility for plotting can be found at
-    https://github.com/alsauve/scaleogram.
-
-    Also see:
-    https://github.com/PyWavelets/pywt/blob/master/demo/wp_scalogram.py.
-
-    :param signal: signal to transform
-    :param scales: numpy array, e.g., np.arange(1, 128)
-    :param wavelet_name: continuous wavelet, e.g., 'cmor' or 'morl'
-    """
-    time = np.arange(0, signal.size)
-    dt = time[1] - time[0]
-    [coeffs, freqs] = pywt.cwt(signal, scales, wavelet_name, dt)
-    power = np.abs(coeffs) ** 2
-    periods = 1.0 / freqs
-    levels = [0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8]
-    contour_levels = np.log2(levels)
-
-    fig, ax = plt.subplots(figsize=(15, 10))
-    im = ax.contourf(
-        time,
-        np.log2(periods),
-        np.log2(power),
-        contour_levels,
-        extend="both",
-        cmap=cmap,
-    )
-
-    ax.set_title(title, fontsize=20)
-    ax.set_ylabel(ylabel, fontsize=18)
-    ax.set_xlabel(xlabel, fontsize=18)
-
-    yticks = 2 ** np.arange(
-        np.ceil(np.log2(periods.min())), np.ceil(np.log2(periods.max()))
-    )
-    ax.set_yticks(np.log2(yticks))
-    ax.set_yticklabels(yticks)
-    ax.invert_yaxis()
-    ylim = ax.get_ylim()
-    ax.set_ylim(ylim[0], -1)
-
-    cbar_ax = fig.add_axes([0.95, 0.5, 0.03, 0.25])
-    fig.colorbar(im, cax=cbar_ax, orientation="vertical")
-    plt.show()
-
-
-# #############################################################################
-# Basic modeling
-# #############################################################################
-
-
-def fit_random_walk_plus_noise(
-    signal: Union[pd.DataFrame, pd.Series]
-) -> Tuple[sm.tsa.UnobservedComponents, sm.tsa.statespace.MLEResults]:
-    """
-    Fit a random walk + Gaussian noise model using state space methods.
-
-    After convergence the resulting model is equivalent to exponential
-    smoothing. Using the state space approach we can
-      - Calculate the signal-to-noise ratio
-      - Determine an optimal (under model assumptions) ewma com
-      - Analyze residuals
-
-    :return: SSM model and fitted result
-    """
-    model = sm.tsa.UnobservedComponents(
-        signal, level="local level", initialization="diffuse"
-    )
-    result = model.fit(method="powell", disp=True)
-    # Signal-to-noise ratio.
-    q = result.params[1] / result.params[0]
-    _LOG.info("Signal-to-noise ratio q = %f", q)
-    p = 0.5 * (q + np.sqrt(q ** 2 + 4 * q))
-    kalman_gain = p / (p + 1)
-    _LOG.info("Steady-state Kalman gain = %f", kalman_gain)
-    # EWMA com.
-    com = 1 / kalman_gain - 1
-    _LOG.info("EWMA com = %f", com)
-    print(result.summary())
-    result.plot_diagnostics()
-    result.plot_components(legend_loc="lower right", figsize=(15, 9))
-    return model, result
-
-
-# #############################################################################
-# Multisignal or predictor/response functions
+# Correlation helpers
 # #############################################################################
 
 
@@ -267,24 +95,6 @@ def correlate_with_lagged_cumsum(
     return corr_df.loc[x_vars, y_cumsum_vars]
 
 
-def plot_crosscorrelation(
-    x: Union[pd.DataFrame, pd.Series], y: Union[pd.DataFrame, pd.Series]
-) -> None:
-    r"""Assume x, y have been approximately demeaned and normalized (e.g.,
-    z-scored with ewma).
-
-    At index `k` in the result, the value is given by
-        (1 / n) * \sum_{l = 0}^{n - 1} x_l * y_{l + k}
-    """
-    joint_idx = x.index.intersection(y.index)
-    corr = sp.signal.correlate(x.loc[joint_idx], y.loc[joint_idx])
-    # Normalize by number of points in series (e.g., take expectations)
-    n = joint_idx.size
-    corr /= n
-    step_idx = pd.RangeIndex(-1 * n + 1, n)
-    pd.Series(data=corr, index=step_idx).plot()
-
-
 def _compute_lagged_cumsum(
     df: pd.DataFrame,
     lag: int,
@@ -321,7 +131,62 @@ def _compute_lagged_cumsum(
     return merged_df
 
 
-# TODO(Paul): Add coherence plotting function.
+def calculate_inverse(
+    df: pd.DataFrame,
+    p_moment: Optional[Any] = None,
+    info: Optional[collections.OrderedDict] = None,
+) -> pd.DataFrame:
+    """
+    Calculate an inverse matrix.
+
+    :param df: matrix to invert
+    :param p_moment: order of the matrix norm as in `np.linalg.cond`
+    :param info: dict with info to add the condition number to
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert_eq(
+        df.shape[0], df.shape[1], "Only square matrices are invertible."
+    )
+    dbg.dassert(
+        df.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull()).all(
+            axis=None
+        ),
+        "The matrix is not numeric.",
+    )
+    dbg.dassert_ne(np.linalg.det(df), 0, "The matrix is non-invertible.")
+    if info is not None:
+        info["condition_number"] = np.linalg.cond(df, p_moment)
+    return pd.DataFrame(np.linalg.inv(df), df.columns, df.index)
+
+
+def calculate_pseudoinverse(
+    df: pd.DataFrame,
+    rcond: Optional[float] = 1e-15,
+    hermitian: Optional[bool] = False,
+    p_moment: Optional[Any] = None,
+    info: Optional[collections.OrderedDict] = None,
+) -> pd.DataFrame:
+    """
+    Calculate a pseudoinverse matrix.
+
+    :param df: matrix to pseudo-invert
+    :param rcond: cutoff for small singular values as in `np.linalg.pinv`
+    :param hermitian: if True, `df` is assumed to be Hermitian
+    :param p_moment: order of the matrix norm as in `np.linalg.cond`
+    :param info: dict with info to add the condition number to
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert(
+        df.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull()).all(
+            axis=None
+        ),
+        "The matrix is not numeric.",
+    )
+    if info is not None:
+        info["condition_number"] = np.linalg.cond(df, p_moment)
+    return pd.DataFrame(
+        np.linalg.pinv(df, rcond=rcond, hermitian=hermitian), df.columns, df.index
+    )
 
 
 # #############################################################################
@@ -1565,6 +1430,45 @@ def get_swt(
     raise ValueError("Unsupported output_mode `{output_mode}`")
 
 
+def get_swt_level(
+    sig: Union[pd.DataFrame, pd.Series],
+    wavelet: str,
+    level: int,
+    timing_mode: Optional[str] = None,
+    output_mode: Optional[str] = None,
+) -> pd.Series:
+    """
+    Wraps `get_swt` and extracts a single wavelet level.
+
+    :param sig: input signal
+    :param wavelet: pywt wavelet name, e.g., "db8"
+    :param level: the wavelet level to extract
+    :param timing_mode: supported timing modes are
+        - "knowledge_time":
+            - reindex transform according to knowledge times
+            - remove warm-up artifacts
+        - "zero_phase":
+            - no reindexing (e.g., no phase lag in output, but transform
+              timestamps are not necessarily knowledge times)
+            - remove warm-up artifacts
+        - "raw": `pywt.swt` as-is
+    :param output_mode: valid output modes are
+        - "smooth": return smooth_df for `level`
+        - "detail": return detail_df for `level`
+    :return: see `output_mode`
+    """
+    dbg.dassert_in(output_mode, ["smooth", "detail"])
+    swt = get_swt(
+        sig,
+        wavelet=wavelet,
+        depth=level,
+        timing_mode=timing_mode,
+        output_mode=output_mode,
+    )
+    dbg.dassert_in(level, swt.columns)
+    return swt[level]
+
+
 def _pad_to_pow_of_2(arr: np.array) -> np.array:
     """
     Minimally extend `arr` with zeros so that len is a power of 2.
@@ -1701,66 +1605,3 @@ def c_infinity_bump_function(x: float, a: float, b: float) -> float:
     y = (x ** 2 - a ** 2) / (b ** 2 - a ** 2)
     inverse_bump = c_infinity_step_function(y)
     return 1 - inverse_bump
-
-
-# #############################################################################
-# Dataframes inverting
-# #############################################################################
-
-
-def calculate_inverse(
-    df: pd.DataFrame, 
-    p_moment: Optional[Any] = None,
-    info: Optional[collections.OrderedDict] = None,
-) -> pd.DataFrame:
-    """
-    Calculate an inverse matrix.
-    
-    :param df: matrix to invert
-    :param p_moment: order of the matrix norm as in `np.linalg.cond` 
-    :param info: dict with info to add the condition number to
-    """
-    dbg.dassert_isinstance(df, pd.DataFrame)
-    dbg.dassert_eq(
-        df.shape[0], df.shape[1], "Only square matrices are invertible."
-    )
-    dbg.dassert(
-        df.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull()).all(
-            axis=None
-        ),
-        "The matrix is not numeric.",
-    )
-    dbg.dassert_ne(np.linalg.det(df), 0, "The matrix is non-invertible.")
-    if info is not None:
-        info["condition_number"] = np.linalg.cond(df, p_moment)
-    return pd.DataFrame(np.linalg.inv(df), df.columns, df.index)
-
-
-def calculate_pseudoinverse(
-    df: pd.DataFrame,
-    rcond: Optional[float] = 1e-15,
-    hermitian: Optional[bool] = False,
-    p_moment: Optional[Any] = None,
-    info: Optional[collections.OrderedDict] = None,
-) -> pd.DataFrame:
-    """
-    Calculate a pseudoinverse matrix.
-    
-    :param df: matrix to pseudo-invert
-    :param rcond: cutoff for small singular values as in `np.linalg.pinv`
-    :param hermitian: if True, `df` is assumed to be Hermitian
-    :param p_moment: order of the matrix norm as in `np.linalg.cond`
-    :param info: dict with info to add the condition number to
-    """
-    dbg.dassert_isinstance(df, pd.DataFrame)
-    dbg.dassert(
-        df.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull()).all(
-            axis=None
-        ),
-        "The matrix is not numeric.",
-    )
-    if info is not None:
-        info["condition_number"] = np.linalg.cond(df, p_moment)
-    return pd.DataFrame(
-        np.linalg.pinv(df, rcond=rcond, hermitian=hermitian), df.columns, df.index
-    )
