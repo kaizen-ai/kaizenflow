@@ -60,7 +60,6 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
             dbg.init_logger(config.getoption("--dbg_verbosity"))
 
     if "PYANNOTATE" in os.environ:
-        # TODO(GP): check https://github.com/Instagram/MonkeyType
         print("\nWARNING: Collecting information about types through pyannotate")
         # From https://github.com/dropbox/pyannotate/blob/master/example/example_conftest.py
         import pytest
@@ -68,27 +67,27 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
         def pytest_collection_finish(session: Any) -> None:
             """
             Handle the pytest collection finish hook: configure pyannotate.
-
-            Explicitly delay importing `collect_types` until all tests
-            have been collected.  This gives gevent a chance to monkey
-            patch the world before importing pyannotate.
+            Explicitly delay importing `collect_types` until all tests have
+            been collected.  This gives gevent a chance to monkey patch the
+            world before importing pyannotate.
             """
-            from pyannotate_runtime import collect_types
+            # mypy: Cannot find module named 'pyannotate_runtime'
+            import pyannotate_runtime  # type: ignore
 
             _ = session
-            collect_types.init_types_collection()
+            pyannotate_runtime.collect_types.init_types_collection()
 
         @pytest.fixture(autouse=True)
         def collect_types_fixture() -> Generator:
-            from pyannotate_runtime import collect_types
+            import pyannotate_runtime
 
-            collect_types.start()
+            pyannotate_runtime.collect_types.start()
             yield
-            collect_types.stop()
+            pyannotate_runtime.collect_types.stop()
 
         def pytest_sessionfinish(session: Any, exitstatus: Any) -> None:
-            from pyannotate_runtime import collect_types
+            import pyannotate_runtime
 
             _ = session, exitstatus
-            collect_types.dump_stats("type_info.json")
+            pyannotate_runtime.collect_types.dump_stats("type_info.json")
             print("\n*** Collected types ***")
