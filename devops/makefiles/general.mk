@@ -14,15 +14,21 @@ else
 	docker login -u AWS -p $(aws ecr get-login --region us-east-2) $(ECR_URL)
 endif
 
-# Pull an image from the registry.
-docker_pull:
-	$(foreach v, $(REPO_IMAGES), docker pull $(v); )
+make_print_targets:
+	find . -name "*.mk" -o -name "Makefile" | xargs grep -H -n '^.*:\$$'
+
+make_print_makefiles:
+	find . -name "*.mk" -o -name "Makefile" | sort
+
+# List images in the logged in repo.
+docker_repo_images:
+	docker image ls $(ECR_BASE_PATH)
 
 # List all running containers:
 #   ```
 #   > docker_ps
-#   CONTAINER ID		user				IMAGE															  COMMAND				  CREATED			 STATUS			  PORTS			   service
-#   2ece37303ec9		gad				 083233266530.dkr.ecr.us-east-2.amazonaws.com/particle_env:latest   "./docker_build/entr…"   5 seconds ago	   Up 4 seconds							user_space
+#   CONTAINER ID  user  IMAGE                                COMMAND                 CREATED        STATUS        PORTS  service
+#   2ece37303ec9  gad   083233266530....particle_env:latest  "./docker_build/entr…"  5 seconds ago  Up 4 seconds         user_space
 #   ```
 docker_ps:
 	docker ps --format='table {{.ID}}\t{{.Label "user"}}\t{{.Image}}\t{{.Command}}\t{{.RunningFor}}\t{{.Status}}\t{{.Ports}}\t{{.Label "com.docker.compose.service"}}'
@@ -30,14 +36,15 @@ docker_ps:
 # Report container stats, e.g., CPU, RAM.
 #   ```
 #   > docker_stats
-#   CONTAINER ID		NAME								   CPU %			   MEM USAGE / LIMIT	 MEM %			   NET I/O			 BLOCK I/O		   PIDS
-#   2ece37303ec9		commodity_research_user_space_run_30   0.00%			   15.74MiB / 31.07GiB   0.05%			   351kB / 6.27kB	  34.2MB / 12.3kB	 4
+#   CONTAINER ID  NAME                                  CPU %  MEM USAGE / LIMIT     MEM %  NET I/O         BLOCK I/O        PIDS
+#   2ece37303ec9  commodity_research_user_space_run_30  0.00%  15.74MiB / 31.07GiB   0.05%  351kB / 6.27kB  34.2MB / 12.3kB  4
 #   ```
 docker_stats:
 	# To change output format you can use following --format flag with `docker stats` command.
 	# --format='table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}'
 	docker stats --no-stream $(IDS)
 
+# TODO(gp): This is repo specific.
 docker_bash:
 	IMAGE=$(IMAGE) \
 	docker-compose \
@@ -47,7 +54,7 @@ docker_bash:
 		app bash
 
 # #############################################################################
-# Admins.
+# Images workflows.
 # #############################################################################
 
 ifdef $(GITHUB_SHA)
@@ -74,6 +81,26 @@ docker_tag_rc_latest:
 
 docker_push_latest_image:
 	docker push $(AMP_ENV_IMAGE)
+
+# #############################################################################
+# Git.
+# #############################################################################
+
+# Pull all the repos.
+git_pull:
+	git pull --autostash && \
+	git submodule foreach 'git pull --autostash'
+
+# Clean all the repos.
+# TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
+# mistake.
+git_clean:
+	git clean -fd && \
+	git submodule foreach 'git clean -fd'
+
+git_for:
+	$(CMD) && \
+	git submodule foreach '$(CMD)'
 
 # #############################################################################
 # Linter.
