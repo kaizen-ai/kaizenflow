@@ -1,4 +1,5 @@
 OPTS?=
+
 ib_metadata_crawler.docker_build:
 	docker build \
 		--progress=plain \
@@ -15,8 +16,16 @@ ib_metadata_crawler.run:
 		ib_crawler \
 		scrapy crawl ibroker \
 		--loglevel INFO \
-		-s CLOSESPIDER_ERRORCOUNT=0 \
+		-s CLOSESPIDER_ERRORCOUNT=0 $(OPTS) \
 		2>&1 | tee scrapy.log
+
+ib_metadata_crawler.scrapy:
+	docker run \
+		--rm \
+		-it \
+		-v ${PWD}/src:/app \
+		ib_crawler \
+		scrapy $(OPTS)
 
 ib_metadata_crawler.bash:
 	docker run \
