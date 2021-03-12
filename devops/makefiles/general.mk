@@ -11,7 +11,7 @@ docker_login:
 ifeq ($(AWSCLI_MAJOR_VERSION),1)
 	eval `aws ecr get-login --no-include-email --region us-east-2`
 else
-	docker login -u AWS -p $(aws ecr get-login --region us-east-2) $(ECR_URL)
+	docker login -u AWS -p $(aws ecr get-login --region us-east-2) https://$(ECR_REPO_BASE_PATH)
 endif
 
 make_print_targets:
