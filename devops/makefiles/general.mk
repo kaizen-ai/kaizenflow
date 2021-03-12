@@ -74,23 +74,53 @@ docker_tag_rc_latest:
 
 docker_push_latest_image:
 	docker push $(AMP_ENV_IMAGE)
-	
+
 # #############################################################################
-# Git.
+# Linter.
 # #############################################################################
 
-# Pull all the repos.
-git_pull:
-	git pull --autostash && \
-	git submodule foreach 'git pull --autostash'
+lint_branch:
+	bash pre-commit.sh run --files $(shell git diff --name-only master...)
 
-# Clean all the repos.
-# TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
-# mistake.
-git_clean:
-	git clean -fd && \
-	git submodule foreach 'git clean -fd'
+# #############################################################################
+# Pre-commit installation.
+# #############################################################################
+# Install pre-commit shell script.
+precommit_install:
+	docker run \
+		--rm -t \
+		-v "$(shell pwd)":/src \
+		--workdir /src \
+		--entrypoint="bash" \
+		$(DEV_TOOLS_PROD_IMAGE) \
+		/dev_tools/pre_commit_scripts/install_precommit_script.sh
 
-git_for:
-	$(CMD) && \
-	git submodule foreach '$(CMD)'
+# Uninstall pre-commit shell script.
+precommit_uninstall:
+	docker run \
+		--rm -t \
+		-v "$(shell pwd)":/src \
+		--workdir /src \
+		--entrypoint="bash" \
+		$(DEV_TOOLS_PROD_IMAGE) \
+		/dev_tools/pre_commit_scripts/uninstall_precommit_script.sh
+
+# Install pre-commit git-hook.
+precommit_install_githooks:
+	docker run \
+		--rm -t \
+		-v "$(shell pwd)":/src \
+		--workdir /src \
+		--entrypoint="bash" \
+		$(DEV_TOOLS_PROD_IMAGE) \
+		/dev_tools/pre_commit_scripts/install_precommit_hook.sh
+
+# Uninstall pre-commit hook.
+precommit_uninstall_githooks:
+	docker run \
+		--rm -t \
+		-v "$(shell pwd)":/src \
+		--workdir /src \
+		--entrypoint="bash" \
+		$(DEV_TOOLS_PROD_IMAGE) \
+		/dev_tools/pre_commit_scripts/uninstall_precommit_hook.sh
