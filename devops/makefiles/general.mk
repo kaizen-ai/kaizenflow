@@ -14,9 +14,11 @@ else
 	docker login -u AWS -p $(aws ecr get-login --region us-east-2) https://$(ECR_REPO_BASE_PATH)
 endif
 
+# Print all the makefile targets.
 make_print_targets:
 	find . -name "*.mk" -o -name "Makefile" | xargs grep -H -n '^.*:\$$'
 
+# Print all the makefiles.
 make_print_makefiles:
 	find . -name "*.mk" -o -name "Makefile" | sort
 
@@ -44,15 +46,6 @@ docker_stats:
 	# --format='table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}'
 	docker stats --no-stream $(IDS)
 
-# TODO(gp): This is repo specific.
-docker_bash:
-	IMAGE=$(IMAGE) \
-	docker-compose \
-		-f compose/docker-compose.yml \
-		run --rm \
-		-l user=$(USER) \
-		app bash
-
 # #############################################################################
 # Images workflows.
 # #############################################################################
@@ -60,13 +53,14 @@ docker_bash:
 ifdef $(GITHUB_SHA)
 IMAGE_RC_SHA:=$(GITHUB_SHA)
 else
-# GITHUB_SHA not found. Setting up IMAGE_RC_SHA form HEAD.
+# GITHUB_SHA not found. Setting IMAGE_RC_SHA from HEAD.
 IMAGE_RC_SHA:=$(shell git rev-parse HEAD)
 endif
 IMAGE_RC?=$(IMAGE_RC)
 docker_build_rc_image:
 	DOCKER_BUILDKIT=1 \
-	docker build --progress=plain \
+	docker build \
+		--progress=plain \
 		--no-cache \
 		-t $(IMAGE_RC) \
 		-t $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
@@ -88,18 +82,18 @@ docker_push_latest_image:
 
 # Pull all the repos.
 git_pull:
-	git pull --autostash && \
+	git pull --autostash
 	git submodule foreach 'git pull --autostash'
 
 # Clean all the repos.
 # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
 # mistake.
 git_clean:
-	git clean -fd && \
+	git clean -fd
 	git submodule foreach 'git clean -fd'
 
 git_for:
-	$(CMD) && \
+	$(CMD)
 	git submodule foreach '$(CMD)'
 
 # #############################################################################
@@ -112,6 +106,7 @@ lint_branch:
 # #############################################################################
 # Pre-commit installation.
 # #############################################################################
+
 # Install pre-commit shell script.
 precommit_install:
 	docker run \
@@ -151,3 +146,25 @@ precommit_uninstall_githooks:
 		--entrypoint="bash" \
 		$(DEV_TOOLS_PROD_IMAGE) \
 		/dev_tools/pre_commit_scripts/uninstall_precommit_hook.sh
+
+# #############################################################################
+# Self test.
+# #############################################################################
+
+# Run sanity checks on the current build system to make sure it works after
+# changes.
+
+fast_self_test:
+	make print_setup
+	make make_print_targets
+	make make_print_makefiles
+	make docker_login
+	make docker_repo_images
+	make docker_ps
+	make docker_pull
+
+slow_self_test:
+	make docker_build_image_with_cache.rc
+	make docker_cmd CMD="echo" IMAGE=$(IMAGE_RC)
+	make run_fast_tests.rc
+	make docker_build_image.prod

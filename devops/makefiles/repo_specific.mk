@@ -1,6 +1,7 @@
 # #############################################################################
 # Setup.
 # #############################################################################
+
 ECR_BASE_PATH=083233266530.dkr.ecr.us-east-2.amazonaws.com
 # TODO(gp): -> amp
 ECR_REPO_BASE_PATH:=$(ECR_BASE_PATH)/amp_env
@@ -33,55 +34,55 @@ docker_pull:
 	docker pull $(DEV_TOOLS_IMAGE_PROD)
 
 # Run bash inside container.
+# TODO(gp): Move all the compose files under compose/
 docker_bash:
 	IMAGE=$(IMAGE) \
 	docker-compose \
-		-f docker-compose-user-space.yml \
-		run --rm \
+		-f devops/docker-compose-user-space.yml \
+		run \
+		--rm \
 		-l user=$(USER) \
-		user_space bash
+		user_space \
+		bash
 
 # Start a container and run the script inside with activated environment.
 docker_cmd:
 	IMAGE=$(IMAGE) \
 	docker-compose \
-		-f docker-compose-user-space.yml \
-		run --rm \
+		-f devops/docker-compose-user-space.yml \
+		run \
+		--rm \
 		-l user=$(USER) \
-		user_space $(CMD)
+		user_space \
+		$(CMD)
 
-# Run jupyter notebook server
-# To run jupyter server on specific port use following pattern:
-# ```
-# > make docker_jupyter J_PORT=9998
-# ```
-# where `9998` is your port.
-#
-# Use the default port if no additional parameters are specified.
+# Run jupyter notebook server.
 J_PORT?=9999
 docker_jupyter:
 	J_PORT=$(J_PORT) \
 	IMAGE=$(IMAGE) \
 	docker-compose \
-		-f docker-compose-jupyter.yml \
-		run --rm \
+		-f devops/docker-compose-jupyter.yml \
+		run \
+		--rm \
 		-l user=$(USER) \
 		--service-ports \
 		jupyter_server
 
 # #############################################################################
-# Tests
+# Run tests on latest image.
 # #############################################################################
 
 # Run fast tests locally.
 test_fast:
 	IMAGE=$(IMAGE) \
 	docker-compose \
-		-f compose/docker-compose.yml \
+		-f devops/compose/docker-compose.yml \
 		run \
 		-l user=$(USER) \
 		--rm \
-		app docker_build/run_fast_tests.sh
+		app \
+		devops/docker_build/run_fast_tests.sh
 
 # Run slow tests.
 test_slow:
@@ -91,7 +92,8 @@ test_slow:
 		run \
 		-l user=$(USER) \
 		--rm \
-		app docker_build/run_slow_tests.sh
+		app \
+		devops/docker_build/run_slow_tests.sh
 
 # Run superslow tests.
 test_superslow:
@@ -101,7 +103,8 @@ test_superslow:
 		run \
 		-l user=$(USER) \
 		--rm \
-		app docker_build/run_superslow_tests.sh
+		app \
+		devops/docker_build/run_superslow_tests.sh
 
 # #############################################################################
 # GH Actions
@@ -112,17 +115,29 @@ test_superslow:
 # Run fast tests.
 docker_fast_gh_actions:
 	IMAGE=$(IMAGE) \
-	docker-compose run -l user=$(USER) --rm fast_tests_gh_action
+	docker-compose \
+		run \
+		-l user=$(USER) \
+		--rm \
+		fast_tests_gh_action
 
 # Run slow tests.
 docker_slow_gh_actions:
 	IMAGE=$(IMAGE) \
-	docker-compose run -l user=$(USER) --rm slow_tests_gh_action
+	docker-compose \
+		run \
+		-l user=$(USER) \
+		--rm \
+		slow_tests_gh_action
 
 # Run superslow tests.
 docker_superslow_gh_actions:
 	IMAGE=$(IMAGE) \
-	docker-compose run -l user=$(USER) --rm superslow_tests_gh_action
+	docker-compose \
+		run \
+		-l user=$(USER) \
+		--rm \
+		superslow_tests_gh_action
 
 # #############################################################################
 # GH actions tests.
@@ -132,34 +147,37 @@ docker_superslow_gh_actions:
 test_fast_gh_action:
 	IMAGE=$(IMAGE) \
 	docker-compose \
-		-f compose/docker-compose.yml \
-		-f compose/docker-compose.gh_actions.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.gh_actions.yml \
 		run \
 		-l user=$(USER) \
 		--rm \
-		app docker_build/run_fast_tests.sh
+		app \
+		devops/docker_build/run_fast_tests.sh
 
 # Run slow tests.
 test_slow_gh_action:
 	IMAGE=$(IMAGE) \
 	docker-compose \
-		-f compose/docker-compose.yml \
-		-f compose/docker-compose.gh_actions.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.gh_actions.yml \
 		run \
 		-l user=$(USER) \
 		--rm \
-		app docker_build/run_slow_tests.sh
+		app \
+		devops/docker_build/run_slow_tests.sh
 
 # Run superslow tests.
 test_superslow_gh_action:
 	IMAGE=$(IMAGE) \
 	docker-compose \
-		-f compose/docker-compose.yml \
-		-f compose/docker-compose.gh_actions.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.gh_actions.yml \
 		run \
 		-l user=$(USER) \
 		--rm \
-		app docker_build/run_superslow_tests.sh
+		app \
+		devops/docker_build/run_superslow_tests.sh
 
 # #############################################################################
 # GH actions release candidate tests.
@@ -170,31 +188,34 @@ test_superslow_gh_action:
 test_fast_gh_action_rc:
 	IMAGE=$(IMAGE_RC) \
 	docker-compose \
-		-f compose/docker-compose.yml \
-		-f compose/docker-compose.gh_actions.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.gh_actions.yml \
 		run \
 		-l user=$(USER) \
 		--rm \
-		app docker_build/run_fast_tests.sh
+		app \
+		devops/docker_build/run_fast_tests.sh
 
 # Run slow tests.
 test_slow_gh_action_rc:
 	IMAGE=$(IMAGE_RC) \
 	docker-compose \
-		-f compose/docker-compose.yml \
-		-f compose/docker-compose.gh_actions.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.gh_actions.yml \
 		run \
 		-l user=$(USER) \
 		--rm \
-		app docker_build/run_slow_tests.sh
+		app \
+		devops/docker_build/run_slow_tests.sh
 
 # Run superslow tests.
 test_superslow_gh_action_rc:
 	IMAGE=$(IMAGE_RC) \
 	docker-compose \
-		-f compose/docker-compose.yml \
-		-f compose/docker-compose.gh_actions.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.gh_actions.yml \
 		run \
 		-l user=$(USER) \
 		--rm \
-		app docker_build/run_superslow_tests.sh
+		app \
+		devops/docker_build/run_superslow_tests.sh

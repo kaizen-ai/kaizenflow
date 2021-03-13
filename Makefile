@@ -1,1 +1,1 @@
-include $(shell find -name "*.mk")
+include $(shell find . -name "*.mk")
