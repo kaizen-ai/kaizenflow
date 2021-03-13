@@ -15,6 +15,8 @@ import statsmodels.iolib as siolib
 from tqdm.autonotebook import tqdm
 
 import core.backtest as cbackt
+import core.config as cfg
+import core.config_builders as cfgb
 import core.data_adapters as cdataa
 import core.signal_processing as csigna
 import core.statistics as cstati
@@ -1002,7 +1004,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         steps_ahead: int,
         cols: _TO_LIST_MIXIN_TYPE = None,
         p_moment: float = 2,
-        tau: Optional[float] = None,
+        tau: Optional[Union[float, Dict[_COL_TYPE, float]]] = None,
         col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -1030,119 +1032,160 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(1, p_moment)
         self._p_moment = p_moment
+        #
         self._tau = tau
         self._col_rename_func = col_rename_func
         self._col_mode = col_mode or "merge_all"
         self._nan_mode = nan_mode
+        # Maybe initialize these.
         self._vol_cols: Dict[_COL_TYPE, str] = {}
         self._fwd_vol_cols: Dict[_COL_TYPE, str] = {}
         self._fwd_vol_cols_hat: Dict[_COL_TYPE, str] = {}
+        if isinstance(self._cols, list):
+            self._init_col_dicts(self._cols)
+        #
         self._taus: Dict[_COL_TYPE, Optional[float]] = {}
-        self._sma_models: Dict[_COL_TYPE, SmaModel] = {}
-        self._modulators: Dict[_COL_TYPE, VolatilityModulator] = {}
+        if isinstance(self._tau, dict):
+            # Check that keys are same as those of cols.
+            self._taus = self._tau
+
+    def _init_col_dicts(self, cols: List[_COL_TYPE]) -> None:
+        for col in cols:
+            self._vol_cols[col] = str(col) + "_vol"
+            self._fwd_vol_cols[col] = (
+                    self._vol_cols[col] + f"_{self._steps_ahead}"
+            )
+            self._fwd_vol_cols_hat[col] = self._fwd_vol_cols[col] + "_hat"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return self._fit_predict_helper(df_in, fit=True)
-
-    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return self._fit_predict_helper(df_in, fit=False)
-
-    @property
-    def taus(self) -> Dict[_COL_TYPE, Any]:
-        return self._taus
-
-    def _fit_predict_helper(
-        self, df_in: pd.DataFrame, fit: bool = False
-    ) -> Dict[str, pd.DataFrame]:
-        method = "fit" if fit else "predict"
-        cols = self._to_list(self._cols or df_in.columns.tolist())
-        if method == "fit":
-            self._fill_model_dicts(cols)
+        if not isinstance(self._cols, list):
+            self._cols = self._to_list(self._cols or df_in.columns.tolist())
+            self._init_col_dicts(cols=self._cols)
+        if len(self._taus) == 0:
+            for col in self._cols:
+                self._taus[col] = self._tau
+        #
         info = collections.OrderedDict()
         dfs = []
-        for col in cols:
+        for col in self._cols:
             dbg.dassert_not_in(self._vol_cols[col], df_in.columns)
-            dag = self._get_dag(df_in[[col]], col)
-            df_out = dag.run_leq_node(self._modulators[col].nid, method)["df_out"]
-            info[col] = extract_info(dag, [method])
-            if method == "fit":
-                self._taus[col] = info[col]["anonymous_sma"][method]["tau"]
+            config = self._get_config(col=col, tau=self._taus[col])
+            dag = self._get_dag(df_in, config)
+            df_out = dag.run_leq_node("demodulate_using_vol_pred", "fit")["df_out"]
+            info[col] = extract_info(dag, ["fit"])
+            if self._tau is None:
+                self._taus[col] = info[col]["compute_smooth_moving_average"]["fit"]["tau"]
             dfs.append(df_out)
         df_out = pd.concat(dfs, axis=1)
         df_out = self._apply_col_mode(
             df_in.drop(df_out.columns.intersection(df_in.columns), 1),
             df_out,
-            cols=list(cols),
+            cols=self._cols,
             col_mode=self._col_mode,
         )
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        self._set_info(method, info)
         return {"df_out": df_out}
 
-    def _get_dag(self, df_in: pd.DataFrame, col: _COL_TYPE) -> DAG:
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        info = collections.OrderedDict()
+        dfs = []
+        for col in self._cols:
+            dbg.dassert_not_in(self._vol_cols[col], df_in.columns)
+            config = self._get_config(col=col, tau=self._taus[col])
+            dag = self._get_dag(df_in, config)
+            df_out = dag.run_leq_node("demodulate_using_vol_pred", "predict")["df_out"]
+            info[col] = extract_info(dag, ["predict"])
+            dfs.append(df_out)
+        df_out = pd.concat(dfs, axis=1)
+        df_out = self._apply_col_mode(
+            df_in.drop(df_out.columns.intersection(df_in.columns), 1),
+            df_out,
+            cols=self._cols,
+            col_mode=self._col_mode,
+        )
+        return {"df_out": df_out}
+
+    @property
+    def taus(self) -> Dict[_COL_TYPE, Any]:
+        return self._taus
+
+    def _get_config(self, col: _COL_TYPE, tau: Optional[float] = None) -> cfg.Config:
+        """
+
+        :param col:
+        :param tau:
+        :return:
+        """
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "calculate_vol_pth_power": {
+                    "cols": [col],
+                    "col_rename_func": lambda x: f"{x}_vol",
+                    "col_mode": "merge_all",
+                },
+                "compute_smooth_moving_average": {
+                    "col": [self._vol_cols[col]],
+                    "steps_ahead": self._steps_ahead,
+                    "tau": tau,
+                    "col_mode": "merge_all",
+                    "nan_mode": self._nan_mode,
+                },
+                "calculate_vol_pth_root": {
+                    "cols": [
+                        self._vol_cols[col],
+                        self._fwd_vol_cols[col],
+                        self._fwd_vol_cols_hat[col],
+                    ],
+                    "col_mode": "replace_selected"
+                },
+                "demodulate_using_vol_pred": {
+                    "signal_cols": [col],
+                    "volatility_col": self._fwd_vol_cols_hat[col],
+                    "signal_steps_ahead": 0,
+                    "volatility_steps_ahead": self._steps_ahead,
+                    "col_rename_func": self._col_rename_func,
+                    "col_mode": self._col_mode,
+                    "nan_mode": self._nan_mode,
+                },
+            }
+        )
+        return config
+
+    def _get_dag(self, df_in: pd.DataFrame, config: cfg.Config) -> DAG:
         dag = DAG(mode="strict")
-        # Load data.
-        node = ReadDataFromDf("data", df_in)
-        dag.add_node(node)
-        tail_nid = "data"
-        # Calculate volatility power.
+        _LOG.debug("%s", config)
+        # Load `df_in`.
+        nid = "load_data"
+        node = ReadDataFromDf(nid, df_in)
+        tail_nid = self._append(dag, None, node)
+        # Raise volatility columns to pth power.
+        nid = "calculate_vol_pth_power"
         node = ColumnTransformer(
-            "calculate_vol_power",
+            nid,
             transformer_func=lambda x: np.abs(x) ** self._p_moment,
-            cols=[col],
-            col_rename_func=lambda x: f"{x}_vol",
-            col_mode="merge_all",
+            **config[nid].to_dict()
         )
         tail_nid = self._append(dag, tail_nid, node)
-        # Run SMA.
-        node = self._sma_models[col]
+        # Predict pth power of volatility using smooth moving average.
+        nid = "compute_smooth_moving_average"
+        node = SmaModel(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, tail_nid, node)
-        # Normalize volatility.
+        # Calculate the pth root of volatility columns.
+        nid = "calculate_vol_pth_root"
         node = ColumnTransformer(
-            "normalize_vol",
-            transformer_func=lambda x: x ** (1.0 / self._p_moment),
-            cols=[
-                self._vol_cols[col],
-                self._fwd_vol_cols[col],
-                self._fwd_vol_cols_hat[col],
-            ],
-            col_mode="replace_selected",
+            nid,
+            transformer_func=lambda x: np.abs(x) ** (1.0 / self._p_moment),
+            **config[nid].to_dict()
         )
         tail_nid = self._append(dag, tail_nid, node)
-        # Run modulator.
-        node = self._modulators[col]
+        # Divide returns by volatilty prediction.
+        nid = "demodulate_using_vol_pred"
+        node = VolatilityModulator(
+            nid,
+            mode="demodulate",
+            **config[nid].to_dict()
+        )
         self._append(dag, tail_nid, node)
         return dag
-
-    def _fill_model_dicts(self, cols: List[_COL_TYPE]) -> None:
-        for col in cols:
-            self._vol_cols[col] = str(col) + "_vol"
-            self._fwd_vol_cols[col] = (
-                self._vol_cols[col] + f"_{self._steps_ahead}"
-            )
-            self._fwd_vol_cols_hat[col] = self._fwd_vol_cols[col] + "_hat"
-            self._taus[col] = self._tau
-            # The `SmaModel` and `Modulator` nodes are only used internally (e.g.,
-            # are not added to any encompassing DAG).
-            self._sma_models[col] = SmaModel(
-                "anonymous_sma",
-                col=[self._vol_cols[col]],
-                steps_ahead=self._steps_ahead,
-                tau=self._tau,
-                col_mode="merge_all",
-                nan_mode=self._nan_mode,
-            )
-            self._modulators[col] = VolatilityModulator(
-                "anonymous_demodulation",
-                signal_cols=[col],
-                volatility_col=self._fwd_vol_cols_hat[col],
-                signal_steps_ahead=0,
-                volatility_steps_ahead=self._steps_ahead,
-                mode="demodulate",
-                col_rename_func=self._col_rename_func,
-                col_mode=self._col_mode,
-                nan_mode=self._nan_mode,
-            )
 
     @staticmethod
     def _append(dag: DAG, tail_nid: Optional[str], node: Node) -> str:
