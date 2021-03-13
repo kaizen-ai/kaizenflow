@@ -74,8 +74,8 @@ docker_jupyter:
 # #############################################################################
 
 # Run fast tests locally.
-test_fast:
-	IMAGE=$(IMAGE) \
+run_fast_tests:
+	IMAGE=$(IMAGE_RC) \
 	docker-compose \
 		-f devops/compose/docker-compose.yml \
 		run \
@@ -105,39 +105,6 @@ test_superslow:
 		--rm \
 		app \
 		devops/docker_build/run_superslow_tests.sh
-
-# #############################################################################
-# GH Actions
-# #############################################################################
-
-# TODO(gp): Are these needed?
-
-# Run fast tests.
-docker_fast_gh_actions:
-	IMAGE=$(IMAGE) \
-	docker-compose \
-		run \
-		-l user=$(USER) \
-		--rm \
-		fast_tests_gh_action
-
-# Run slow tests.
-docker_slow_gh_actions:
-	IMAGE=$(IMAGE) \
-	docker-compose \
-		run \
-		-l user=$(USER) \
-		--rm \
-		slow_tests_gh_action
-
-# Run superslow tests.
-docker_superslow_gh_actions:
-	IMAGE=$(IMAGE) \
-	docker-compose \
-		run \
-		-l user=$(USER) \
-		--rm \
-		superslow_tests_gh_action
 
 # #############################################################################
 # GH actions tests.
