@@ -57,24 +57,68 @@ else
 IMAGE_RC_SHA:=$(shell git rev-parse HEAD)
 endif
 IMAGE_RC?=$(IMAGE_RC)
-docker_build_rc_image:
-	DOCKER_BUILDKIT=1 \
-	docker build \
+
+# Use Docker buildkit or not.
+# DOCKER_BUILDKIT=1
+DOCKER_BUILDKIT=0
+
+# DEV image flow:
+# - A release candidate "rc" for the DEV image is built
+# - A qualification process (e.g., running all tests) is performed on the "rc"
+#   image (typically through GitHub actions)
+# - If qualification is passed, it becomes "latest".
+docker_build_image.rc:
+	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
+		docker build \
 		--progress=plain \
 		--no-cache \
 		-t $(IMAGE_RC) \
 		-t $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
-		-f docker_build/Dockerfile .
+		-f devops/docker_build/dev.Dockerfile \
+		.
 
+docker_build_image_with_cache.rc:
+	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
+	docker build \
+		--progress=plain \
+		-t $(IMAGE_RC) \
+		-t $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
+		-f devops/docker_build/dev.Dockerfile \
+		.
+
+# Push the "rc" image to the registry.
 docker_push_rc_image:
 	docker push $(IMAGE_RC)
 	docker push $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA)
 
-docker_tag_rc_latest:
-	docker tag $(IMAGE_RC) $(AMP_ENV_IMAGE)
+# Make the "rc" image as "latest".
+docker_tag_rc_image_latest:
+	docker tag $(IMAGE_RC) $(ECR_REPO_BASE_PATH):latest
 
+# Push the "latest" image to the registry.
 docker_push_latest_image:
-	docker push $(AMP_ENV_IMAGE)
+	docker push $(ECR_REPO_BASE_PATH):latest
+
+# PROD image flow:
+# - PROD image has no release candidate
+# - The DEV image is qualified
+# - The PROD image is created from the DEV image by copying the code inside the
+#   image
+# - The PROD image becomes "prod".
+docker_build_image.prod:
+	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
+	docker build \
+		--progress=plain \
+		--no-cache \
+		-t $(IMAGE_PROD) \
+		-t $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
+		-f devops/docker_build/prod.Dockerfile \
+		.
+
+# Push the "prod" image to the registry.
+docker_push_image.prod:
+	docker push $(IMAGE_PROD)
+	docker push $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA)
 
 # #############################################################################
 # Git.
@@ -168,3 +212,7 @@ slow_self_test:
 	make docker_cmd CMD="echo" IMAGE=$(IMAGE_RC)
 	make run_fast_tests.rc
 	make docker_build_image.prod
+
+self_test:
+	make fast_self_test
+	make slow_self_test
