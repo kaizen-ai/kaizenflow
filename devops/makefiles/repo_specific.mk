@@ -182,7 +182,7 @@ test_superslow_gh_action:
 # #############################################################################
 # GH actions release candidate tests.
 # #############################################################################
-# Tests using release candidate image via GH Actions.
+# Test using release candidate image via GH Actions.
 
 # Run fast tests.
 test_fast_gh_action_rc:

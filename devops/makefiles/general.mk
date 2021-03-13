@@ -16,7 +16,7 @@ endif
 
 # Print all the makefile targets.
 make_print_targets:
-	find . -name "*.mk" -o -name "Makefile" | xargs grep -H -n '^.*:\$$'
+	find . -name "*.mk" -o -name "Makefile" | xargs -n 1 perl -ne 'if (/^\S+:$$/) { print $$_ }'
 
 # Print all the makefiles.
 make_print_makefiles:
@@ -59,15 +59,16 @@ endif
 IMAGE_RC?=$(IMAGE_RC)
 
 # Use Docker buildkit or not.
-# DOCKER_BUILDKIT=1
-DOCKER_BUILDKIT=0
+DOCKER_BUILDKIT=1
+#DOCKER_BUILDKIT=0
 
 # DEV image flow:
 # - A release candidate "rc" for the DEV image is built
 # - A qualification process (e.g., running all tests) is performed on the "rc"
 #   image (typically through GitHub actions)
 # - If qualification is passed, it becomes "latest".
-docker_build_image.rc:
+docker_build_rc_image:
+	time \
 	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
 		docker build \
 		--progress=plain \
@@ -77,8 +78,9 @@ docker_build_image.rc:
 		-f devops/docker_build/dev.Dockerfile \
 		.
 
-docker_build_image_with_cache.rc:
+docker_build_rc_image_with_cache:
 	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
+	time \
 	docker build \
 		--progress=plain \
 		-t $(IMAGE_RC) \
@@ -208,7 +210,7 @@ fast_self_test:
 	make docker_pull
 
 slow_self_test:
-	make docker_build_image_with_cache.rc
+	make docker_build_rc_image_with_cache
 	make docker_cmd CMD="echo" IMAGE=$(IMAGE_RC)
 	make run_fast_tests.rc
 	make docker_build_image.prod

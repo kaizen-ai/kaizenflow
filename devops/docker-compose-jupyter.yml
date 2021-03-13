@@ -14,27 +14,7 @@ services:
     ports:
       - "${J_PORT}:${J_PORT}"
     working_dir: /commodity_research
-    command: docker_build/run_jupyter_server.sh
-    privileged: true
-    cap_add:
-      - SYS_ADMIN
-  jupyter_demo_server:
-    image: $IMAGE
-    restart: "no"
-    volumes:
-      - .:/commodity_research
-      - ~/.aws:/root/.aws
-      - ~/.config/gspread_pandas/:/root/.config/gspread_pandas/
-      - ./docker_build/fstab:/etc/fstab
-      - ./docker_build/notebook_demo/custom.css:/root/.jupyter/custom/custom.css
-      - ./docker_build/notebook_demo/custom.js:/root/.jupyter/custom/custom.js
-      - ./docker_build/notebook_demo/particle_logo.png:/root/.jupyter/custom/particle_logo.png
-    environment:
-      - J_PORT=${J_PORT}
-    ports:
-      - "${J_PORT}:${J_PORT}"
-    working_dir: /commodity_research
-    command: docker_build/run_jupyter_server.sh
+    command: devops/docker_build/run_jupyter_server.sh
     privileged: true
     cap_add:
       - SYS_ADMIN
