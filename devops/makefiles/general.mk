@@ -199,8 +199,11 @@ precommit_uninstall_githooks:
 
 # Run sanity checks on the current build system to make sure it works after
 # changes.
+#
+# NOTE: We need to run with IMAGE_RC since that's what we should be working
+# with, when changing the build system.
 
-fast_self_test:
+fast_self_tests:
 	make print_setup
 	make make_print_targets
 	make make_print_makefiles
@@ -208,13 +211,14 @@ fast_self_test:
 	make docker_repo_images
 	make docker_ps
 	make docker_pull
-
-slow_self_test:
-	make docker_build_rc_image_with_cache
 	make docker_cmd CMD="echo" IMAGE=$(IMAGE_RC)
+
+slow_self_tests:
+	make docker_build_rc_image_with_cache
+	make run_blank_tests.rc
 	make run_fast_tests.rc
 	make docker_build_image.prod
 
-self_test:
-	make fast_self_test
-	make slow_self_test
+self_tests:
+	make fast_self_tests
+	make slow_self_tests

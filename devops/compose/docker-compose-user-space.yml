@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  user_space:
+    image: $IMAGE
+    restart: "no"
+    volumes:
+      - ../../:/amp
+      - ~/.aws:/root/.aws
+      - ~/.config/gspread_pandas/:/root/.config/gspread_pandas/
+      - ../docker_build/fstab:/etc/fstab
+    privileged: true
+    cap_add:
+      - SYS_ADMIN

@@ -25,7 +25,7 @@ print_setup:
 	@echo "IMAGE_RC=$(IMAGE_RC)"
 	
 # #############################################################################
-# Docker.
+# Docker development.
 # #############################################################################
 
 # Pull all the needed images from the registry.
@@ -34,11 +34,10 @@ docker_pull:
 	docker pull $(DEV_TOOLS_IMAGE_PROD)
 
 # Run bash inside container.
-# TODO(gp): Move all the compose files under compose/
 docker_bash:
 	IMAGE=$(IMAGE) \
 	docker-compose \
-		-f devops/docker-compose-user-space.yml \
+		-f devops/compose/docker-compose-user-space.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -49,10 +48,11 @@ docker_bash:
 docker_cmd:
 	IMAGE=$(IMAGE) \
 	docker-compose \
-		-f devops/docker-compose-user-space.yml \
+		-f devops/compose/docker-compose-user-space.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
+		--entrypoint $(CMD) \
 		user_space \
 		$(CMD)
 
@@ -62,7 +62,7 @@ docker_jupyter:
 	J_PORT=$(J_PORT) \
 	IMAGE=$(IMAGE) \
 	docker-compose \
-		-f devops/docker-compose-jupyter.yml \
+		-f devops/compose/docker-compose-jupyter.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -70,73 +70,85 @@ docker_jupyter:
 		jupyter_server
 
 # #############################################################################
-# Run tests on latest image.
+# Run tests with "latest" image.
 # #############################################################################
+
+# TODO(gp): Move all this to the general.mk, once it's unified.
+
+# The user can use IMAGE_RC to test a change to the build system.
+# > make run_*_tests IMAGE=083233266530.dkr.ecr.us-east-2.amazonaws.com/amp_env:rc
+
+# We need to pass the params from the callers.
+_run_tests:
+	IMAGE=$(_IMAGE) \
+	docker-compose \
+		-f devops/compose/docker-compose-user-space.yml \
+		run \
+		-l user=$(USER) \
+		--rm \
+		user_space \
+		$(_CMD)
+
+# Make sure pytest works.
+run_blank_tests:
+	_IMAGE=$(IMAGE) \
+	_CMD="pytest -h >/dev/null" \
+	make _run_tests
 
 # Run fast tests locally.
 run_fast_tests:
-	IMAGE=$(IMAGE_RC) \
-	docker-compose \
-		-f devops/compose/docker-compose.yml \
-		run \
-		-l user=$(USER) \
-		--rm \
-		app \
-		devops/docker_build/run_fast_tests.sh
+	_IMAGE=$(IMAGE) \
+	_CMD="devops/docker_scripts/run_fast_tests.sh" \
+	make _run_tests
 
 # Run slow tests.
-test_slow:
-	IMAGE=$(IMAGE) \
-	docker-compose \
-		-f compose/docker-compose.yml \
-		run \
-		-l user=$(USER) \
-		--rm \
-		app \
-		devops/docker_build/run_slow_tests.sh
+run_slow_tests:
+	_IMAGE=$(IMAGE) \
+	_CMD="devops/docker_scripts/run_slow_tests.sh" \
+	make _run_tests
 
 # Run superslow tests.
-test_superslow:
-	IMAGE=$(IMAGE) \
-	docker-compose \
-		-f compose/docker-compose.yml \
-		run \
-		-l user=$(USER) \
-		--rm \
-		app \
-		devops/docker_build/run_superslow_tests.sh
+run_superslow_tests:
+	_IMAGE=$(IMAGE) \
+	_CMD="devops/docker_scripts/run_superslow_tests.sh" \
+	make _run_tests
 
 # #############################################################################
-# GH actions tests.
+# Run tests with "rc" image.
 # #############################################################################
 
-# Run fast tests.
-test_fast_gh_action:
-	IMAGE=$(IMAGE) \
-	docker-compose \
-		-f devops/compose/docker-compose.yml \
-		-f devops/compose/docker-compose.gh_actions.yml \
-		run \
-		-l user=$(USER) \
-		--rm \
-		app \
-		devops/docker_build/run_fast_tests.sh
+# Make sure pytest works.
+run_blank_tests.rc:
+	_IMAGE=$(IMAGE_RC) \
+	_CMD="pytest -h >/dev/null" \
+	make _run_tests
+
+# TODO: Move the *.sh to docker_scripts
+
+# Run fast tests locally.
+run_fast_tests.rc:
+	_IMAGE=$(IMAGE_RC) \
+	_CMD="devops/docker_scripts/run_fast_tests.sh" \
+	make _run_tests
 
 # Run slow tests.
-test_slow_gh_action:
-	IMAGE=$(IMAGE) \
-	docker-compose \
-		-f devops/compose/docker-compose.yml \
-		-f devops/compose/docker-compose.gh_actions.yml \
-		run \
-		-l user=$(USER) \
-		--rm \
-		app \
-		devops/docker_build/run_slow_tests.sh
+run_slow_tests.rc:
+	_IMAGE=$(IMAGE_RC) \
+	_CMD="devops/docker_scripts/run_slow_tests.sh" \
+	make _run_tests
 
 # Run superslow tests.
-test_superslow_gh_action:
-	IMAGE=$(IMAGE) \
+run_superslow_tests.rc:
+	_IMAGE=$(IMAGE_RC) \
+	_CMD="devops/docker_scripts/run_superslow_tests.sh" \
+	make _run_tests
+
+# #############################################################################
+# GH actions tests for "latest" image.
+# #############################################################################
+
+_run_tests.gh_action:
+	IMAGE=$(_IMAGE) \
 	docker-compose \
 		-f devops/compose/docker-compose.yml \
 		-f devops/compose/docker-compose.gh_actions.yml \
@@ -144,45 +156,40 @@ test_superslow_gh_action:
 		-l user=$(USER) \
 		--rm \
 		app \
-		devops/docker_build/run_superslow_tests.sh
+		$(_CMD)
+
+run_fast_tests.gh_action:
+	_IMAGE=$(IMAGE)
+	_CMD="devops/docker_scripts/run_fast_tests.sh" \
+	make _run_tests.gh_action
+
+run_slow_tests.gh_action:
+	_IMAGE=$(IMAGE)
+	_CMD="devops/docker_scripts/run_slow_tests.sh" \
+	make _run_tests.gh_action
+
+run_superslow_tests.gh_action:
+	_IMAGE=$(IMAGE)
+	_CMD="devops/docker_scripts/run_superslow_tests.sh" \
+	make _run_tests.gh_action
 
 # #############################################################################
-# GH actions release candidate tests.
+# GH actions tests for "rc" image.
 # #############################################################################
+
 # Test using release candidate image via GH Actions.
 
-# Run fast tests.
-test_fast_gh_action_rc:
-	IMAGE=$(IMAGE_RC) \
-	docker-compose \
-		-f devops/compose/docker-compose.yml \
-		-f devops/compose/docker-compose.gh_actions.yml \
-		run \
-		-l user=$(USER) \
-		--rm \
-		app \
-		devops/docker_build/run_fast_tests.sh
+run_fast_tests.gh_action_rc:
+	_IMAGE=$(IMAGE_RC) \
+	_CMD="devops/docker_scripts/run_fast_tests.sh" \
+	make _run_tests.gh_action
 
-# Run slow tests.
-test_slow_gh_action_rc:
+run_slow_tests.gh_action_rc:
 	IMAGE=$(IMAGE_RC) \
-	docker-compose \
-		-f devops/compose/docker-compose.yml \
-		-f devops/compose/docker-compose.gh_actions.yml \
-		run \
-		-l user=$(USER) \
-		--rm \
-		app \
-		devops/docker_build/run_slow_tests.sh
+	_CMD="devops/docker_scripts/run_slow_tests.sh" \
+	make _run_tests.gh_action
 
-# Run superslow tests.
-test_superslow_gh_action_rc:
-	IMAGE=$(IMAGE_RC) \
-	docker-compose \
-		-f devops/compose/docker-compose.yml \
-		-f devops/compose/docker-compose.gh_actions.yml \
-		run \
-		-l user=$(USER) \
-		--rm \
-		app \
-		devops/docker_build/run_superslow_tests.sh
+run_superslow_tests.gh_action_rc:
+	_IMAGE=$(IMAGE_RC) \
+	_CMD="devops/docker_scripts/run_superslow_tests.sh" \
+	make _run_tests.gh_action
