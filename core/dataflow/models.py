@@ -1,6 +1,7 @@
 import collections
 import datetime
 import logging
+import pickle
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import gluonts.model.deepar as gmdeep
@@ -117,6 +118,7 @@ class ContinuousSkLearnModel(
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
+        state: Optional[str] = None,
     ) -> None:
         """
         Specify the data and sklearn modeling parameters.
@@ -147,7 +149,11 @@ class ContinuousSkLearnModel(
         self._model_kwargs = model_kwargs or {}
         self._x_vars = x_vars
         self._y_vars = y_vars
-        self._model = None
+        self._state = state
+        if self._state is None:
+            self._model = None
+        else:
+            self._model = pickle.loads(state)
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(
             0, self._steps_ahead, "Non-causal prediction attempted! Aborting..."
@@ -253,6 +259,7 @@ class ContinuousSkLearnModel(
             df, df_out, cols=self._to_list(self._y_vars), col_mode=self._col_mode
         )
         info["df_out_info"] = get_df_info_as_string(df_out)
+        info["state"] = pickle.dumps(self._model)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
