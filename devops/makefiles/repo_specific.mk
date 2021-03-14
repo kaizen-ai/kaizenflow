@@ -4,7 +4,8 @@
 
 ECR_BASE_PATH=083233266530.dkr.ecr.us-east-2.amazonaws.com
 # TODO(gp): -> amp
-ECR_REPO_BASE_PATH:=$(ECR_BASE_PATH)/amp_env
+#ECR_REPO_BASE_PATH:=$(ECR_BASE_PATH)/amp_env
+ECR_REPO_BASE_PATH:=$(ECR_BASE_PATH)/amp_tmp
 
 AMP_IMAGE_DEV=$(ECR_REPO_BASE_PATH):latest
 AMP_IMAGE_RC=$(ECR_REPO_BASE_PATH):rc

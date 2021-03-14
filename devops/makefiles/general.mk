@@ -174,17 +174,17 @@ _run_tests.gh_action:
 		$(_CMD)
 
 run_fast_tests.gh_action:
-	_IMAGE=$(IMAGE_DEV)
+	_IMAGE=$(IMAGE_DEV) \
 	_CMD="devops/docker_scripts/run_fast_tests.sh" \
 	make _run_tests.gh_action
 
 run_slow_tests.gh_action:
-	_IMAGE=$(IMAGE_DEV)
+	_IMAGE=$(IMAGE_DEV) \
 	_CMD="devops/docker_scripts/run_slow_tests.sh" \
 	make _run_tests.gh_action
 
 run_superslow_tests.gh_action:
-	_IMAGE=$(IMAGE_DEV)
+	_IMAGE=$(IMAGE_DEV) \
 	_CMD="devops/docker_scripts/run_superslow_tests.sh" \
 	make _run_tests.gh_action
 
