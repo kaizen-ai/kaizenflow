@@ -1,3 +1,4 @@
+import collections
 import logging
 import pprint
 from typing import List, Optional, Tuple
@@ -762,7 +763,13 @@ class TestSmaModel(hut.TestCase):
         dag.connect("data", "sma")
         #
         output_df = dag.run_leq_node("sma", "fit")["df_out"]
-        self.check_string(output_df.to_string())
+        info = cdataf.extract_info(dag, ["fit"])
+        str_output = (
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
+            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
+        )
+        self.check_string(str_output)
 
     def test_fit_dag2(self) -> None:
         """
@@ -785,7 +792,13 @@ class TestSmaModel(hut.TestCase):
         dag.connect("data", "sma")
         #
         output_df = dag.run_leq_node("sma", "fit")["df_out"]
-        self.check_string(output_df.to_string())
+        info = cdataf.extract_info(dag, ["fit"])
+        str_output = (
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
+            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
+        )
+        self.check_string(str_output)
 
     def test_fit_dag3(self) -> None:
         """
@@ -808,7 +821,13 @@ class TestSmaModel(hut.TestCase):
         dag.connect("data", "sma")
         #
         output_df = dag.run_leq_node("sma", "fit")["df_out"]
-        self.check_string(output_df.to_string())
+        info = cdataf.extract_info(dag, ["fit"])
+        str_output = (
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
+            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
+        )
+        self.check_string(str_output)
 
     def test_predict_dag1(self) -> None:
         # Load test data.
@@ -832,7 +851,15 @@ class TestSmaModel(hut.TestCase):
         #
         dag.run_leq_node("sma", "fit")
         output_df = dag.run_leq_node("sma", "predict")["df_out"]
-        self.check_string(output_df.to_string())
+        info = collections.OrderedDict()
+        info["fit"] = cdataf.extract_info(dag, ["fit"])
+        info["predict"] = cdataf.extract_info(dag, ["predict"])
+        str_output = (
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
+            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
+        )
+        self.check_string(str_output)
 
     @staticmethod
     def _get_data() -> pd.DataFrame:
@@ -987,7 +1014,13 @@ class TestVolatilityModel(hut.TestCase):
         dag.connect("data", "vol_model")
         #
         output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
-        self.check_string(output_df.to_string())
+        info = cdataf.extract_info(dag, ["fit"])
+        str_output = (
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
+            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
+        )
+        self.check_string(str_output)
 
     def test_fit_dag_correctness1(self) -> None:
         # Load test data.
@@ -1013,7 +1046,13 @@ class TestVolatilityModel(hut.TestCase):
         )
         # Compare results.
         output_df = zscore_df.join(inverted_rets)
-        self.check_string(hut.convert_df_to_string(output_df, index=True))
+        info = cdataf.extract_info(dag, ["fit"])
+        str_output = (
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
+            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
+        )
+        self.check_string(str_output)
 
     def test_predict_dag1(self) -> None:
         # Load test data.
@@ -1037,7 +1076,13 @@ class TestVolatilityModel(hut.TestCase):
         #
         dag.run_leq_node("vol_model", "fit")
         output_df = dag.run_leq_node("vol_model", "predict")["df_out"]
-        self.check_string(output_df.to_string())
+        info = cdataf.extract_info(dag, ["fit"])
+        str_output = (
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
+            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
+        )
+        self.check_string(str_output)
 
     def test_predict_dag_correctness1(self) -> None:
         # Load test data.
@@ -1068,7 +1113,13 @@ class TestVolatilityModel(hut.TestCase):
         )
         # Compare results.
         output_df = zscore_df.join(inverted_rets)
-        self.check_string(hut.convert_df_to_string(output_df, index=True))
+        info = cdataf.extract_info(dag, ["fit"])
+        str_output = (
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
+            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
+        )
+        self.check_string(str_output)
 
     def test_col_mode1(self) -> None:
         # Load test data.
@@ -1088,7 +1139,13 @@ class TestVolatilityModel(hut.TestCase):
         dag.connect("data", "vol_model")
         #
         output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
-        self.check_string(output_df.to_string())
+        info = cdataf.extract_info(dag, ["fit"])
+        str_output = (
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
+            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
+        )
+        self.check_string(str_output)
 
     def test_col_mode2(self) -> None:
         # Load test data.
@@ -1108,7 +1165,13 @@ class TestVolatilityModel(hut.TestCase):
         dag.connect("data", "vol_model")
         #
         output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
-        self.check_string(output_df.to_string())
+        info = cdataf.extract_info(dag, ["fit"])
+        str_output = (
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
+            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
+        )
+        self.check_string(str_output)
 
     def test_fit_multiple_columns(self) -> None:
         # Load test data.
@@ -1128,7 +1191,13 @@ class TestVolatilityModel(hut.TestCase):
         dag.connect("data", "vol_model")
         #
         output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
-        self.check_string(output_df.to_string())
+        info = cdataf.extract_info(dag, ["fit"])
+        str_output = (
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
+            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
+        )
+        self.check_string(str_output)
 
     def test_multiple_columns_with_specified_tau(self) -> None:
         # Load test data.

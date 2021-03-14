@@ -1085,6 +1085,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
             cols=self._cols,
             col_mode=self._col_mode,
         )
+        self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -1106,6 +1107,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
             cols=self._cols,
             col_mode=self._col_mode,
         )
+        self._set_info("predict", info)
         return {"df_out": df_out}
 
     @property
