@@ -952,7 +952,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
                 max_depth=self._max_depth,
             )
             min_periods = int(np.rint(self._min_tau_periods * tau))
-            return self._metric(sma[min_periods :], y[min_periods :])
+            return self._metric(sma[min_periods:], y[min_periods:])
 
         # TODO(*): Make this configurable.
         opt_results = sp.optimize.minimize_scalar(
@@ -1055,7 +1055,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         for col in cols:
             self._vol_cols[col] = str(col) + "_vol"
             self._fwd_vol_cols[col] = (
-                    self._vol_cols[col] + f"_{self._steps_ahead}"
+                self._vol_cols[col] + f"_{self._steps_ahead}"
             )
             self._fwd_vol_cols_hat[col] = self._fwd_vol_cols[col] + "_hat"
 
@@ -1073,10 +1073,14 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
             dbg.dassert_not_in(self._vol_cols[col], df_in.columns)
             config = self._get_config(col=col, tau=self._taus[col])
             dag = self._get_dag(df_in, config)
-            df_out = dag.run_leq_node("demodulate_using_vol_pred", "fit")["df_out"]
+            df_out = dag.run_leq_node("demodulate_using_vol_pred", "fit")[
+                "df_out"
+            ]
             info[col] = extract_info(dag, ["fit"])
             if self._tau is None:
-                self._taus[col] = info[col]["compute_smooth_moving_average"]["fit"]["tau"]
+                self._taus[col] = info[col]["compute_smooth_moving_average"][
+                    "fit"
+                ]["tau"]
             dfs.append(df_out)
         df_out = pd.concat(dfs, axis=1)
         df_out = self._apply_col_mode(
@@ -1097,7 +1101,9 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
             dbg.dassert(tau)
             config = self._get_config(col=col, tau=tau)
             dag = self._get_dag(df_in, config)
-            df_out = dag.run_leq_node("demodulate_using_vol_pred", "predict")["df_out"]
+            df_out = dag.run_leq_node("demodulate_using_vol_pred", "predict")[
+                "df_out"
+            ]
             info[col] = extract_info(dag, ["predict"])
             dfs.append(df_out)
         df_out = pd.concat(dfs, axis=1)
@@ -1114,7 +1120,9 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
     def taus(self) -> Dict[_COL_TYPE, Any]:
         return self._taus
 
-    def _get_config(self, col: _COL_TYPE, tau: Optional[float] = None) -> cfg.Config:
+    def _get_config(
+        self, col: _COL_TYPE, tau: Optional[float] = None
+    ) -> cfg.Config:
         """
 
         :param col:
@@ -1141,7 +1149,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
                         self._fwd_vol_cols[col],
                         self._fwd_vol_cols_hat[col],
                     ],
-                    "col_mode": "replace_selected"
+                    "col_mode": "replace_selected",
                 },
                 "demodulate_using_vol_pred": {
                     "signal_cols": [col],
@@ -1168,7 +1176,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         node = ColumnTransformer(
             nid,
             transformer_func=lambda x: np.abs(x) ** self._p_moment,
-            **config[nid].to_dict()
+            **config[nid].to_dict(),
         )
         tail_nid = self._append(dag, tail_nid, node)
         # Predict pth power of volatility using smooth moving average.
@@ -1180,15 +1188,13 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         node = ColumnTransformer(
             nid,
             transformer_func=lambda x: np.abs(x) ** (1.0 / self._p_moment),
-            **config[nid].to_dict()
+            **config[nid].to_dict(),
         )
         tail_nid = self._append(dag, tail_nid, node)
         # Divide returns by volatilty prediction.
         nid = "demodulate_using_vol_pred"
         node = VolatilityModulator(
-            nid,
-            mode="demodulate",
-            **config[nid].to_dict()
+            nid, mode="demodulate", **config[nid].to_dict()
         )
         self._append(dag, tail_nid, node)
         return dag

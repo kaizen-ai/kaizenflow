@@ -14,8 +14,8 @@ data:
     DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
     Freq: B
     Data columns (total 1 columns):
-     #   Column  Non-Null Count  Dtype  
-    ---  ------  --------------  -----  
+     #   Column  Non-Null Count  Dtype
+    ---  ------  --------------  -----
      0   vol     40 non-null     float64
     dtypes: float64(1)
 sma:
@@ -26,8 +26,8 @@ sma:
     DatetimeIndex: 38 entries, 2000-01-03 to 2000-02-23
     Freq: B
     Data columns (total 2 columns):
-     #   Column     Non-Null Count  Dtype  
-    ---  ------     --------------  -----  
+     #   Column     Non-Null Count  Dtype
+    ---  ------     --------------  -----
      0   vol_2      38 non-null     float64
      1   vol_2_hat  37 non-null     float64
     dtypes: float64(2)
