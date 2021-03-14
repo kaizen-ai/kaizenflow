@@ -48,7 +48,7 @@ docker_stats:
 
 # Run bash inside container.
 docker_bash:
-	IMAGE=$(IMAGE) \
+	IMAGE=$(IMAGE_DEV) \
 	docker-compose \
 		-f devops/compose/docker-compose-user-space.yml \
 		run \
@@ -59,7 +59,7 @@ docker_bash:
 
 # Start a container and run the script inside with activated environment.
 docker_cmd:
-	IMAGE=$(IMAGE) \
+	IMAGE=$(IMAGE_DEV) \
 	docker-compose \
 		-f devops/compose/docker-compose-user-space.yml \
 		run \
@@ -73,7 +73,7 @@ docker_cmd:
 J_PORT?=9999
 docker_jupyter:
 	J_PORT=$(J_PORT) \
-	IMAGE=$(IMAGE) \
+	IMAGE=$(IMAGE_DEV) \
 	docker-compose \
 		-f devops/compose/docker-compose-jupyter.yml \
 		run \
@@ -95,32 +95,32 @@ _run_tests:
 	docker-compose \
 		-f devops/compose/docker-compose-user-space.yml \
 		run \
-		-l user=$(USER) \
 		--rm \
+		-l user=$(USER) \
 		user_space \
 		$(_CMD)
 
 # Make sure pytest works.
 run_blank_tests:
-	_IMAGE=$(IMAGE) \
+	_IMAGE=$(IMAGE_DEV) \
 	_CMD="pytest -h >/dev/null" \
 	make _run_tests
 
 # Run fast tests locally.
 run_fast_tests:
-	_IMAGE=$(IMAGE) \
+	_IMAGE=$(IMAGE_DEV) \
 	_CMD="devops/docker_scripts/run_fast_tests.sh" \
 	make _run_tests
 
 # Run slow tests.
 run_slow_tests:
-	_IMAGE=$(IMAGE) \
+	_IMAGE=$(IMAGE_DEV) \
 	_CMD="devops/docker_scripts/run_slow_tests.sh" \
 	make _run_tests
 
 # Run superslow tests.
 run_superslow_tests:
-	_IMAGE=$(IMAGE) \
+	_IMAGE=$(IMAGE_DEV) \
 	_CMD="devops/docker_scripts/run_superslow_tests.sh" \
 	make _run_tests
 
@@ -133,8 +133,6 @@ run_blank_tests.rc:
 	_IMAGE=$(IMAGE_RC) \
 	_CMD="pytest -h >/dev/null" \
 	make _run_tests
-
-# TODO: Move the *.sh to docker_scripts
 
 # Run fast tests locally.
 run_fast_tests.rc:
@@ -164,23 +162,23 @@ _run_tests.gh_action:
 		-f devops/compose/docker-compose.yml \
 		-f devops/compose/docker-compose.gh_actions.yml \
 		run \
-		-l user=$(USER) \
 		--rm \
+		-l user=$(USER) \
 		app \
 		$(_CMD)
 
 run_fast_tests.gh_action:
-	_IMAGE=$(IMAGE)
+	_IMAGE=$(IMAGE_DEV)
 	_CMD="devops/docker_scripts/run_fast_tests.sh" \
 	make _run_tests.gh_action
 
 run_slow_tests.gh_action:
-	_IMAGE=$(IMAGE)
+	_IMAGE=$(IMAGE_DEV)
 	_CMD="devops/docker_scripts/run_slow_tests.sh" \
 	make _run_tests.gh_action
 
 run_superslow_tests.gh_action:
-	_IMAGE=$(IMAGE)
+	_IMAGE=$(IMAGE_DEV)
 	_CMD="devops/docker_scripts/run_superslow_tests.sh" \
 	make _run_tests.gh_action
 
