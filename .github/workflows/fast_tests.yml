@@ -9,6 +9,7 @@ on:
 jobs:
   Run_fast_tests_mark_commit:
     runs-on: ubuntu-latest
+
     steps:
       - name: Post status if was triggered manually
         if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -16,12 +17,14 @@ jobs:
         with:
           authToken: ${{secrets.GITHUB_TOKEN}}
           context: "Run_fast_tests"
-          description: 'Added to queue, waiting for free runner. (Manual run)'
+          description: 'Added to queue, waiting for free runner (manual run)'
           state: pending
           sha: ${{ github.sha }}
           target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
   Run_fast_tests:
     runs-on: [self-hosted, FAST]
+
     steps:
       - name: Post status if was triggered manually
         if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -29,10 +32,11 @@ jobs:
         with:
           authToken: ${{secrets.GITHUB_TOKEN}}
           context: "Run_fast_tests"
-          description: 'Job in progress. (Manual run)'
+          description: 'Job in progress (manual run)'
           state: pending
           sha: ${{ github.sha }}
           target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -60,7 +64,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-        run: make test_fast_gh_action
+        run: make run_fast_tests.gh_action
 
       - name: Post status if was triggered manually
         if: ${{ always() && github.event_name == 'workflow_dispatch' }}
@@ -68,7 +72,7 @@ jobs:
         with:
           authToken: ${{secrets.GITHUB_TOKEN}}
           context: "Run_fast_tests"
-          description: 'Job is done. (Manual run)'
+          description: 'Job is done (manual run)'
           state: ${{ job.status }}
           sha: ${{ github.sha }}
           target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"

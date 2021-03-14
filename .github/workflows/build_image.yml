@@ -26,31 +26,38 @@ jobs:
           submodules: true
           ssh-key: ${{ secrets.GH_ACTION_SSH_PRIVATE_KEY }}
 
-      - name: Build image
+      - name: Build "rc" image
         run: make docker_build_rc_image
 
-      - name: Push image rc image
+      - name: Push image "rc" image
         run: make docker_push_rc_image
 
-      - name: Run fast tests for rc image
+      - name: Run fast tests for "rc" image
         if: ${{ success() }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-        run: make test_fast_gh_action_rc
+        run: make run_fast_tests.gh_action_rc
 
-      - name: Run slow tests for rc image
+      - name: Run slow tests for "rc" image
         if: ${{ success() }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-        run: make test_slow_gh_action_rc
+        run: make run_slow_tests.gh_action_rc
 
-      - name: Add latest tag
+      - name: Run superslow tests for "rc" image
+        if: ${{ success() }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
+        run: make run_superslow_tests.gh_action_rc
+
+      - name: Add "latest" tag
         if: ${{ success() && github.ref == 'refs/heads/master' }}
-        run: make docker_tag_rc_latest
+        run: make docker_tag_rc_image_latest
 
-      - name: Push latest image
+      - name: Push "latest" image
         if: ${{ success() && github.ref == 'refs/heads/master' }}
         run: make docker_push_latest_image
 
@@ -61,15 +68,13 @@ jobs:
           to: ${{ secrets.P1_TG_BUILD_MONITORING_CHANNEL_ID }}
           token: ${{ secrets.P1_GH_BOT_TELEGRAM_TOKEN }}
           message: |
-            The brand new image `amp_env` was successfully built.
+            A brand new image `amp_env` was successfully built.
 
             Please pull new image to use the latest version.
-            - Authorize your client:
             ```
+            # Authorize your client:
             make docker_login
-            ```
-            - Pull the latest version
-            ```
+            # Pull the latest version:
             make docker_pull
             ```
             https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
