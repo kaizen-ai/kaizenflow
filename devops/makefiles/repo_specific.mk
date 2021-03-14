@@ -9,6 +9,7 @@ ECR_REPO_BASE_PATH:=$(ECR_BASE_PATH)/amp_env
 AMP_IMAGE_DEV=$(ECR_REPO_BASE_PATH):latest
 AMP_IMAGE_RC=$(ECR_REPO_BASE_PATH):rc
 
+# Target image for the common actions.
 IMAGE_DEV=$(AMP_IMAGE_DEV)
 IMAGE_RC=$(AMP_IMAGE_RC)
 

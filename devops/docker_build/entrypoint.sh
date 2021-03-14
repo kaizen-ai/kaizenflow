@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ex
+set -e
 
 source devops/docker_build/entrypoint/aws_credentials.sh
 source devops/docker_build/entrypoint/patch_environment_variables.sh

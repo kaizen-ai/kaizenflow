@@ -1,6 +1,8 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
+#
 # Check that there are the credentials for AWS and for Google spreadsheet.
+
+set -e
 
 AWS_VOLUME="${HOME}/.aws/"
 GSPREAD_PANDAS_VOLUME="${HOME}/.config/gspread_pandas/"

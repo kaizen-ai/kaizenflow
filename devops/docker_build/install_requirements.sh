@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-
-set -xe
-
+#
 # Install conda requirements.
+
+set -e
 
 update_env () {
     echo "Installing ${1}"

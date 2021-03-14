@@ -1,6 +1,6 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
 
-set -xe
+set -e
 
 echo "Install jupyter extensions"
 

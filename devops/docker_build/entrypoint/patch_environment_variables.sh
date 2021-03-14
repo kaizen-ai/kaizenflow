@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 export PYTHONDONTWRITEBYTECODE=x
 
 export PYTHONPATH="$(pwd):$PYTHONPATH"

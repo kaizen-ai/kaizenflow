@@ -1,4 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+set -e
+
 INI_FILE=~/.aws/credentials
 while IFS=' = ' read key value
 do

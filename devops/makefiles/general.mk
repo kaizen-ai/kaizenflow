@@ -46,9 +46,10 @@ docker_stats:
 	# --format='table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}'
 	docker stats --no-stream $(IDS)
 
-# Run bash inside container.
+# Run bash inside container with activated environment.
 docker_bash:
 	IMAGE=$(IMAGE_DEV) \
+	echo "IMAGE=$(IMAGE)" \
 	docker-compose \
 		-f devops/compose/docker-compose-user-space.yml \
 		run \
@@ -57,9 +58,10 @@ docker_bash:
 		user_space \
 		bash
 
-# Start a container and run the script inside with activated environment.
+# Run the script inside the container with activated environment.
 docker_cmd:
 	IMAGE=$(IMAGE_DEV) \
+	IMAGE=$(IMAGE) \
 	docker-compose \
 		-f devops/compose/docker-compose-user-space.yml \
 		run \
@@ -70,10 +72,13 @@ docker_cmd:
 		$(CMD)
 
 # Run jupyter notebook server.
+# E.g., run on port 10000 using a specific image:
+# > make docker_jupyter J_PORT=10000 IMAGE="083233266530.dkr.ecr.us-east-2.amazonaws.com/amp_env:rc"
 J_PORT?=9999
 docker_jupyter:
 	J_PORT=$(J_PORT) \
 	IMAGE=$(IMAGE_DEV) \
+	IMAGE=$(IMAGE) \
 	docker-compose \
 		-f devops/compose/docker-compose-jupyter.yml \
 		run \
@@ -86,10 +91,11 @@ docker_jupyter:
 # Run tests with "latest" image.
 # #############################################################################
 
-# The user can use IMAGE_RC to test a change to the build system.
-# > make run_*_tests IMAGE=083233266530.dkr.ecr.us-east-2.amazonaws.com/amp_env:rc
+# The user can pass another IMAGE to run tests in another image.
 
 # We need to pass the params from the callers.
+# E.g.,
+# > make run_*_tests _IMAGE=083233266530.dkr.ecr.us-east-2.amazonaws.com/amp_env:rc
 _run_tests:
 	IMAGE=$(_IMAGE) \
 	docker-compose \

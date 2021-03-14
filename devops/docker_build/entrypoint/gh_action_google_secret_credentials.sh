@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+set -e
 
 if [ "$GOOGLE_SPREADSHEET_PRIVATE_KEY" ]; then
   mkdir -p ~/.config/gspread_pandas/

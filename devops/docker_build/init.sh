@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-
-# This script is very chatty so we don't echo the commands.
-set -e
-
+#
 # Execute all the scripts under the init dir `docker_build/init`.
+
+set -e
 
 source ~/.bashrc
 conda activate venv
