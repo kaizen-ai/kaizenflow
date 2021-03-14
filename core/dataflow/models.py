@@ -794,6 +794,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         col: _TO_LIST_MIXIN_TYPE,
         steps_ahead: int,
         tau: Optional[float] = None,
+        min_tau_periods: Optional[float] = 0.2,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
@@ -805,6 +806,9 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         :param steps_ahead: as in ContinuousSkLearnModel
         :param tau: as in `csigna.compute_smooth_moving_average`. If `None`,
             learn this parameter
+        :param min_tau_periods: similar to `min_periods` as in
+            `csigna.compute_smooth_moving_average`, but expressed in units of
+            tau
         :param col_mode: `merge_all` or `replace_all`, as in
             ColumnTransformer()
         :param nan_mode: as in ContinuousSkLearnModel
@@ -824,8 +828,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
         # Smooth moving average model parameters to learn.
         self._tau = tau
-        self._min_periods = None
-        self._min_periods_max_frac = 0.2
+        self._min_tau_periods = min_tau_periods or 0
         self._min_depth = 1
         self._max_depth = 1
         self._metric = sklear.metrics.mean_absolute_error
@@ -856,15 +859,11 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         # Define and fit model.
         if self._tau is None:
             self._tau = self._learn_tau(x_fit, fwd_y_fit)
-        min_periods = 2 * self._tau
-        if min_periods / len(non_nan_idx) > self._min_periods_max_frac:
-            self._min_periods = int(len(non_nan_idx) * self._min_periods_max_frac)
-        else:
-            self._min_periods = min_periods
+        min_periods = int(np.rint(self._min_tau_periods * self._tau))
         _LOG.debug("tau=", self._tau)
         info = collections.OrderedDict()
         info["tau"] = self._tau
-        info["min_periods"] = self._min_periods
+        info["min_periods"] = min_periods
         # Generate insample predictions and put in dataflow dataframe format.
         fwd_y_hat = self._predict(x_fit)
         fwd_y_hat_vars = [f"{y}_hat" for y in fwd_y_df.columns]
@@ -952,7 +951,8 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
                 min_depth=self._min_depth,
                 max_depth=self._max_depth,
             )
-            return self._metric(sma.values, y[self._min_periods :])
+            min_periods = int(np.rint(self._min_tau_periods * tau))
+            return self._metric(sma[min_periods :], y[min_periods :])
 
         # TODO(*): Make this configurable.
         opt_results = sp.optimize.minimize_scalar(
@@ -963,10 +963,12 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
     def _predict(self, x: np.array) -> np.array:
         x_srs = pd.DataFrame(x.flatten())
         # TODO(*): Make `min_periods` configurable.
+        min_periods = int(np.rint(self._min_tau_periods * self._tau))
+        _LOG.debug("min_periods=%f", min_periods)
         x_sma = csigna.compute_smooth_moving_average(
             x_srs,
             tau=self._tau,
-            min_periods=self._min_periods,
+            min_periods=min_periods,
             min_depth=self._min_depth,
             max_depth=self._max_depth,
         )
@@ -1090,7 +1092,9 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         dfs = []
         for col in self._cols:
             dbg.dassert_not_in(self._vol_cols[col], df_in.columns)
-            config = self._get_config(col=col, tau=self._taus[col])
+            tau = self._taus[col]
+            dbg.dassert(tau)
+            config = self._get_config(col=col, tau=tau)
             dag = self._get_dag(df_in, config)
             df_out = dag.run_leq_node("demodulate_using_vol_pred", "predict")["df_out"]
             info[col] = extract_info(dag, ["predict"])
