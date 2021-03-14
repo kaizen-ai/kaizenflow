@@ -117,14 +117,12 @@ OrderedDict([('model_x_vars', ['x']),
               {'copy_X': True,
                'fit_intercept': True,
                'n_jobs': None,
-               'normalize': False,
-               'positive': False}),
+               'normalize': False}),
              ('model_attributes',
               OrderedDict([('fit_intercept', True),
                            ('normalize', False),
                            ('copy_X', True),
                            ('n_jobs', None),
-                           ('positive', False),
                            ('n_features_in_', 1),
                            ('coef_', array([[1.00337614]])),
                            ('_residues', array([0.01746603])),
@@ -214,8 +212,7 @@ OrderedDict([('model_params',
               {'copy_X': True,
                'fit_intercept': True,
                'n_jobs': None,
-               'normalize': False,
-               'positive': False}),
+               'normalize': False}),
              ('model_perf',
               OrderedDict([('pnl_rets',
                                               y_2
@@ -333,4 +330,24 @@ Name: SR, dtype: float64)])),
               ' 1   y        100 non-null    float64\n'
               ' 2   y_2      98 non-null     float64\n'
               ' 3   y_2_hat  100 non-null    float64\n'
-              'dtypes: float64(4)')])
+              'dtypes: float64(4)'),
+             ('state',
+              b'\x80\x03csklearn.linear_model._base\nLinearRegression\nq'
+              b'\x00)\x81q\x01}q\x02(X\r\x00\x00\x00fit_interceptq\x03\x88X\t'
+              b'\x00\x00\x00normalizeq\x04\x89X\x06\x00\x00\x00copy_Xq\x05'
+              b'\x88X\x06\x00\x00\x00n_jobsq\x06NX\x0e\x00\x00\x00n_features_i'
+              b'n_q\x07K\x01X\x05\x00\x00\x00coef_q\x08cnumpy.core.multiarray'
+              b'\n_reconstruct\nq\tcnumpy\nndarray\nq\nK\x00\x85q\x0bC\x01'
+              b'bq\x0c\x87q\rRq\x0e(K\x01K\x01K\x01\x86q\x0fcnumpy\ndtype\n'
+              b'q\x10X\x02\x00\x00\x00f8q\x11K\x00K\x01\x87q\x12Rq\x13(K\x03'
+              b'X\x01\x00\x00\x00<q\x14NNNJ\xff\xff\xff\xffJ\xff\xff\xff'
+              b'\xffK\x00tq\x15b\x89C\x08)XZ#\xd4\r\xf0?q\x16tq\x17bX\t\x00\x00'
+              b'\x00_residuesq\x18h\th\nK\x00\x85q\x19h\x0c\x87q\x1aRq'
+              b'\x1b(K\x01K\x01\x85q\x1ch\x13\x89C\x08\xeaw\xfcL\x9d\xe2'
+              b'\x91?q\x1dtq\x1ebX\x05\x00\x00\x00rank_q\x1fK\x01X\t'
+              b'\x00\x00\x00singular_q h\th\nK\x00\x85q!h\x0c\x87q"Rq#('
+              b'K\x01K\x01\x85q$h\x13\x89C\x08\xac\xe4\x90\xa8\x82\xb2\r@q%tq'
+              b"&bX\n\x00\x00\x00intercept_q'h\th\nK\x00\x85q(h\x0c\x87q)Rq*"
+              b'(K\x01K\x01\x85q+h\x13\x89C\x08\x00+9\x7f(S:?q,tq-bX'
+              b'\x10\x00\x00\x00_sklearn_versionq.X\x06\x00\x00\x000.23.1q/u'
+              b'b.')])
