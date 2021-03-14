@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -xe
+
 echo "Install nltk dicts."
 
 conda activate venv

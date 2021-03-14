@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+set -xe
+
 echo "Install jupyter extensions"
 
 conda activate venv

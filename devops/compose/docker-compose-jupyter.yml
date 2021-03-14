@@ -5,10 +5,10 @@ services:
     image: $IMAGE
     restart: "no"
     volumes:
-      - .:/commodity_research
+      - ../../:/amp
       - ~/.aws:/root/.aws
       - ~/.config/gspread_pandas/:/root/.config/gspread_pandas/
-      - ./docker_build/fstab:/etc/fstab
+      - ../docker_build/fstab:/etc/fstab
     environment:
       - J_PORT=${J_PORT}
     ports:

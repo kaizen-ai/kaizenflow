@@ -2,8 +2,6 @@
 
 FROM continuumio/miniconda3:4.9.2
 
-# Install / remove directories and prepare filesystem.
-# Don't forget credential for auth.
 RUN apt update && \
     apt install cifs-utils -y && \
     apt install keyutils -y && \
@@ -28,23 +26,36 @@ RUN conda init bash
 RUN conda config --set default_threads 4
 RUN conda config --add channels conda-forge
 RUN conda config --show-sources
-ENV ENV_DIR="/env_dir"
-RUN mkdir $ENV_DIR
+
 # TODO(gp): amp -> app
 ENV APP_DIR=/amp
-WORKDIR $APP_DIR
+
+# Create conda environment.
 ENV ENV_NAME="venv"
 RUN conda create -n $ENV_NAME python=3.7 -y
 
+# We assume that the needed files to build the image are under
+# devops/{docker_build,docker_scripts}
+# We want to minimize the dependencies to avoid to invalidate Docker cache for
+# a change in files that doesn't matter for building the image.
+RUN mkdir -p $APP_DIR/devops/docker_build
+COPY devops/docker_build $APP_DIR/devops/docker_build
+RUN mkdir -p $APP_DIR/devops/docker_scripts
+COPY devops/docker_scripts $APP_DIR/devops/docker_scripts
+WORKDIR $APP_DIR
+
 # Install requirements.
+RUN devops/docker_build/install_requirements.sh
 # TODO(gp): This is not portable across BUILDKIT=1 and BUILDKIT=0 and it's not
 # cached.
-RUN --mount=source=.,target=/amp ./devops/docker_build/install_requirements.sh
+#RUN --mount=source=.,target=/amp ./devops/docker_build/install_requirements.sh
 
 # Run repo-specific initialization scripts.
+RUN devops/docker_build/init.sh
 # TODO(gp): This is not portable across BUILDKIT=1 and BUILDKIT=0 and it's not
 # cached.
-RUN --mount=source=.,target=/amp ./devops/docker_build/init.sh
+#RUN --mount=source=.,target=/amp ./devops/docker_build/init.sh
+
 RUN echo "conda activate venv" >> ~/.bashrc
 
 ENTRYPOINT ["./devops/docker_build/entrypoint.sh"]

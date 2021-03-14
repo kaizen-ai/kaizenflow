@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -xe
+
 echo "Setup jupyter server"
 
 conda activate venv

@@ -1,6 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# TODO(Sergey): Why not using `#!/usr/bin/env bash` here?
+# This script is very chatty so we don't echo the commands.
+set -e
 
 # Execute all the scripts under the init dir `docker_build/init`.
 

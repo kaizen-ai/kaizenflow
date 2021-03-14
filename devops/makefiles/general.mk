@@ -59,8 +59,8 @@ endif
 IMAGE_RC?=$(IMAGE_RC)
 
 # Use Docker buildkit or not.
-DOCKER_BUILDKIT=1
-#DOCKER_BUILDKIT=0
+# DOCKER_BUILDKIT=1
+DOCKER_BUILDKIT=0
 
 # DEV image flow:
 # - A release candidate "rc" for the DEV image is built
