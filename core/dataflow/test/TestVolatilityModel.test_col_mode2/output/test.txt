@@ -14,8 +14,8 @@ data:
     DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
     Freq: B
     Data columns (total 1 columns):
-     #   Column  Non-Null Count  Dtype
-    ---  ------  --------------  -----
+     #   Column  Non-Null Count  Dtype  
+    ---  ------  --------------  -----  
      0   ret_0   40 non-null     float64
     dtypes: float64(1)
 vol_model:
@@ -27,8 +27,8 @@ vol_model:
           DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
           Freq: B
           Data columns (total 1 columns):
-           #   Column  Non-Null Count  Dtype
-          ---  ------  --------------  -----
+           #   Column  Non-Null Count  Dtype  
+          ---  ------  --------------  -----  
            0   ret_0   40 non-null     float64
           dtypes: float64(1)
       calculate_vol_pth_power:
@@ -37,8 +37,8 @@ vol_model:
           DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
           Freq: B
           Data columns (total 2 columns):
-           #   Column     Non-Null Count  Dtype
-          ---  ------     --------------  -----
+           #   Column     Non-Null Count  Dtype  
+          ---  ------     --------------  -----  
            0   ret_0      40 non-null     float64
            1   ret_0_vol  40 non-null     float64
           dtypes: float64(2)
@@ -50,8 +50,8 @@ vol_model:
           DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
           Freq: B
           Data columns (total 4 columns):
-           #   Column           Non-Null Count  Dtype
-          ---  ------           --------------  -----
+           #   Column           Non-Null Count  Dtype  
+          ---  ------           --------------  -----  
            0   ret_0            40 non-null     float64
            1   ret_0_vol        40 non-null     float64
            2   ret_0_vol_2      38 non-null     float64
@@ -63,8 +63,8 @@ vol_model:
           DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
           Freq: B
           Data columns (total 4 columns):
-           #   Column           Non-Null Count  Dtype
-          ---  ------           --------------  -----
+           #   Column           Non-Null Count  Dtype  
+          ---  ------           --------------  -----  
            0   ret_0            40 non-null     float64
            1   ret_0_vol        40 non-null     float64
            2   ret_0_vol_2      38 non-null     float64
@@ -76,8 +76,8 @@ vol_model:
           DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
           Freq: B
           Data columns (total 4 columns):
-           #   Column           Non-Null Count  Dtype
-          ---  ------           --------------  -----
+           #   Column           Non-Null Count  Dtype  
+          ---  ------           --------------  -----  
            0   ret_0_vol        40 non-null     float64
            1   ret_0_vol_2      38 non-null     float64
            2   ret_0_vol_2_hat  30 non-null     float64
