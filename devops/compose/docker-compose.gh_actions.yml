@@ -5,4 +5,4 @@ services:
     environment:
       AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
       AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
-    entrypoint: "docker_build/gh_action_entrypoint.sh"
+    entrypoint: "devops/docker_build/gh_action_entrypoint.sh"
