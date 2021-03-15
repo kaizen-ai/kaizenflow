@@ -261,7 +261,8 @@ class ContinuousSkLearnModel(
             df, df_out, cols=self._to_list(self._y_vars), col_mode=self._col_mode
         )
         info["df_out_info"] = get_df_info_as_string(df_out)
-        info["state"] = pickle.dumps(self._model)
+        # TODO(*): Consider adding state to `info` as follows.
+        # info["state"] = pickle.dumps(self._model)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
@@ -1124,10 +1125,11 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self, col: _COL_TYPE, tau: Optional[float] = None
     ) -> cfg.Config:
         """
+        Generate a DAG config.
 
-        :param col:
-        :param tau:
-        :return:
+        :param col: column whose volatility is to be modeled
+        :param tau: tau for SMA; if `None`, then to be learned
+        :return: a complete config to be used with `_get_dag()`
         """
         config = cfgb.get_config_from_nested_dict(
             {
@@ -1165,6 +1167,13 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         return config
 
     def _get_dag(self, df_in: pd.DataFrame, config: cfg.Config) -> DAG:
+        """
+        Build a DAG from data and config.
+
+        :param df_in: data over which to run DAG
+        :param config: config for configuring DAG nodes
+        :return: ready-to-run DAG
+        """
         dag = DAG(mode="strict")
         _LOG.debug("%s", config)
         # Load `df_in`.
