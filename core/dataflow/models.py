@@ -145,6 +145,7 @@ class ContinuousSkLearnModel(
         :param col_mode: "merge_all" or "replace_all", as in
             ColumnTransformer()
         :param nan_mode: "drop" or "raise"
+        :param state: sklearn model state (e.g., from previous `fit` run)
         """
         super().__init__(nid)
         self._model_func = model_func
