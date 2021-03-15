@@ -1,4 +1,4 @@
-name: Slow tests.
+name: Slow tests
 on:
   push:
     branches:

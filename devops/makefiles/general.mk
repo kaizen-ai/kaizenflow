@@ -231,9 +231,9 @@ DOCKER_BUILDKIT=0
 #   image (typically through GitHub actions)
 # - If qualification is passed, it becomes "latest".
 docker_build_rc_image:
-	time \
 	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
-		docker build \
+	time \
+	docker build \
 		--progress=plain \
 		--no-cache \
 		-t $(IMAGE_RC) \
@@ -243,7 +243,6 @@ docker_build_rc_image:
 
 docker_build_rc_image_with_cache:
 	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
-	time \
 	docker build \
 		--progress=plain \
 		-t $(IMAGE_RC) \

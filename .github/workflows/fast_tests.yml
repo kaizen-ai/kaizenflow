@@ -1,4 +1,4 @@
-name: Fast tests.
+name: Fast tests
 on:
   push:
   workflow_dispatch:

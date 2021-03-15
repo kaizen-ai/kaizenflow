@@ -1,4 +1,4 @@
-name: Superslow tests.
+name: Superslow tests
 on:
   workflow_dispatch:
   schedule:
