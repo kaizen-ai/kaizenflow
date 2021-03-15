@@ -200,7 +200,7 @@ run_fast_tests.gh_action_rc:
 	make _run_tests.gh_action
 
 run_slow_tests.gh_action_rc:
-	IMAGE=$(IMAGE_RC) \
+	_IMAGE=$(IMAGE_RC) \
 	_CMD="devops/docker_scripts/run_slow_tests.sh" \
 	make _run_tests.gh_action
 
