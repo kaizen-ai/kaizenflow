@@ -1018,7 +1018,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         steps_ahead: int,
         cols: _TO_LIST_MIXIN_TYPE = None,
         p_moment: float = 2,
-        tau: Optional[Union[float, Dict[_COL_TYPE, float]]] = None,
+        tau: Optional[float] = None,
         col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -1051,31 +1051,21 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self._col_rename_func = col_rename_func
         self._col_mode = col_mode or "merge_all"
         self._nan_mode = nan_mode
-        # Maybe initialize these.
+        #
+        self._fit_cols: Dict[_COL_TYPE, str] = {}
         self._vol_cols: Dict[_COL_TYPE, str] = {}
         self._fwd_vol_cols: Dict[_COL_TYPE, str] = {}
         self._fwd_vol_cols_hat: Dict[_COL_TYPE, str] = {}
-        if isinstance(self._cols, list):
-            self._init_col_dicts(self._cols)
-        #
         self._taus: Dict[_COL_TYPE, Optional[float]] = {}
-        if isinstance(self._tau, dict):
-            # Check that keys are same as those of cols.
-            self._taus = self._tau
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        if not isinstance(self._cols, list):
-            self._cols = self._to_list(self._cols or df_in.columns.tolist())
-            self._init_col_dicts(cols=self._cols)
-        if len(self._taus) == 0:
-            for col in self._cols:
-                self._taus[col] = self._tau
-        #
+        self._fit_cols = self._to_list(self._cols or df_in.columns.tolist())
+        self._init_cols(self._fit_cols)
         info = collections.OrderedDict()
         dfs = []
-        for col in self._cols:
-            dbg.dassert_not_in(self._vol_cols[col], df_in.columns)
-            config = self._get_config(col=col, tau=self._taus[col])
+        for col in self._fit_cols:
+            dbg.dassert_not_in(self._vol_cols[col], self._fit_cols)
+            config = self._get_config(col=col, tau=self._tau)
             dag = self._get_dag(df_in, config)
             df_out = dag.run_leq_node("demodulate_using_vol_pred", "fit")[
                 "df_out"
@@ -1085,12 +1075,14 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
                 self._taus[col] = info[col]["compute_smooth_moving_average"][
                     "fit"
                 ]["tau"]
+            else:
+                self._taus[col] = self._tau
             dfs.append(df_out)
         df_out = pd.concat(dfs, axis=1)
         df_out = self._apply_col_mode(
             df_in.drop(df_out.columns.intersection(df_in.columns), 1),
             df_out,
-            cols=self._cols,
+            cols=self._fit_cols,
             col_mode=self._col_mode,
         )
         self._set_info("fit", info)
@@ -1099,7 +1091,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         info = collections.OrderedDict()
         dfs = []
-        for col in self._cols:
+        for col in self._fit_cols:
             dbg.dassert_not_in(self._vol_cols[col], df_in.columns)
             tau = self._taus[col]
             dbg.dassert(tau)
@@ -1114,7 +1106,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         df_out = self._apply_col_mode(
             df_in.drop(df_out.columns.intersection(df_in.columns), 1),
             df_out,
-            cols=self._cols,
+            cols=self._fit_cols,
             col_mode=self._col_mode,
         )
         self._set_info("predict", info)
@@ -1124,13 +1116,11 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
     def taus(self) -> Dict[_COL_TYPE, Any]:
         return self._taus
 
-    def _init_col_dicts(self, cols: List[_COL_TYPE]) -> None:
-        for col in cols:
-            self._vol_cols[col] = str(col) + "_vol"
-            self._fwd_vol_cols[col] = (
-                self._vol_cols[col] + f"_{self._steps_ahead}"
-            )
-            self._fwd_vol_cols_hat[col] = self._fwd_vol_cols[col] + "_hat"
+    def _init_cols(self, cols: List[_COL_TYPE]) -> None:
+        dbg.dassert_isinstance(cols, list)
+        self._vol_cols = {col: str(col) + "_vol" for col in cols}
+        self._fwd_vol_cols = {col: self._vol_cols[col] + f"_{self._steps_ahead}" for col in cols}
+        self._fwd_vol_cols_hat = {col: self._fwd_vol_cols[col] + "_hat" for col in cols}
 
     def _get_config(
         self, col: _COL_TYPE, tau: Optional[float] = None
