@@ -14,8 +14,8 @@ import statsmodels.iolib as siolib
 from tqdm.autonotebook import tqdm
 
 import core.backtest as cbackt
-import core.config as cfg
-import core.config_builders as cfgb
+import core.config as cconfi
+import core.config_builders as ccbuild
 import core.data_adapters as cdataa
 import core.signal_processing as csigna
 import core.statistics as cstati
@@ -261,10 +261,7 @@ class ContinuousSkLearnModel(
         return {"df_out": df_out}
 
     def get_fit_state(self) -> Dict[str, Any]:
-        fit_state = {
-            "_model": self._model,
-            "_info['fit']": self._info["fit"]
-        }
+        fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
         return fit_state
 
     def set_fit_state(self, fit_state: Dict[str, Any]):
@@ -1057,14 +1054,6 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
             # Check that keys are same as those of cols.
             self._taus = self._tau
 
-    def _init_col_dicts(self, cols: List[_COL_TYPE]) -> None:
-        for col in cols:
-            self._vol_cols[col] = str(col) + "_vol"
-            self._fwd_vol_cols[col] = (
-                self._vol_cols[col] + f"_{self._steps_ahead}"
-            )
-            self._fwd_vol_cols_hat[col] = self._fwd_vol_cols[col] + "_hat"
-
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         if not isinstance(self._cols, list):
             self._cols = self._to_list(self._cols or df_in.columns.tolist())
@@ -1126,9 +1115,17 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
     def taus(self) -> Dict[_COL_TYPE, Any]:
         return self._taus
 
+    def _init_col_dicts(self, cols: List[_COL_TYPE]) -> None:
+        for col in cols:
+            self._vol_cols[col] = str(col) + "_vol"
+            self._fwd_vol_cols[col] = (
+                self._vol_cols[col] + f"_{self._steps_ahead}"
+            )
+            self._fwd_vol_cols_hat[col] = self._fwd_vol_cols[col] + "_hat"
+
     def _get_config(
         self, col: _COL_TYPE, tau: Optional[float] = None
-    ) -> cfg.Config:
+    ) -> cconfi.Config:
         """
         Generate a DAG config.
 
@@ -1136,7 +1133,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         :param tau: tau for SMA; if `None`, then to be learned
         :return: a complete config to be used with `_get_dag()`
         """
-        config = cfgb.get_config_from_nested_dict(
+        config = ccbuild.get_config_from_nested_dict(
             {
                 "calculate_vol_pth_power": {
                     "cols": [col],
@@ -1171,7 +1168,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         )
         return config
 
-    def _get_dag(self, df_in: pd.DataFrame, config: cfg.Config) -> DAG:
+    def _get_dag(self, df_in: pd.DataFrame, config: cconfi.Config) -> DAG:
         """
         Build a DAG from data and config.
 
