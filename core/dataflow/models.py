@@ -1116,6 +1116,24 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
     def taus(self) -> Dict[_COL_TYPE, Any]:
         return self._taus
 
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {
+            "_fit_cols": self._fit_cols,
+            "_vol_cols": self._vol_cols,
+            "_fwd_vol_cols": self._fwd_vol_cols,
+            "_fwd_vol_cols_hat": self._fwd_vol_cols_hat,
+            "_taus": self._taus,
+            "_info['fit']": self._info["fit"]}
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]):
+        self._fit_cols = fit_state["_fit_cols"]
+        self._vol_cols = fit_state["_vol_cols"]
+        self._fwd_vol_cols = fit_state["_fwd_vol_cols"]
+        self._fwd_vol_cols_hat = fit_state["_fwd_vol_cols_hat"]
+        self._taus = fit_state["_taus"]
+        self._info["fit"] = fit_state["_info['fit']"]
+
     def _init_cols(self, cols: List[_COL_TYPE]) -> None:
         dbg.dassert_isinstance(cols, list)
         self._vol_cols = {col: str(col) + "_vol" for col in cols}
