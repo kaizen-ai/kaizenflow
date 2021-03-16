@@ -58,6 +58,8 @@ class DataFrameModeler:
         dbg.dassert_isinstance(df, pd.DataFrame)
         dbg.dassert(pd.DataFrame)
         self._df = df
+        if oos_start is not None:
+            oos_start = pd.Timestamp(oos_start)
         self.oos_start = oos_start or None
         self.info = info or None
 
