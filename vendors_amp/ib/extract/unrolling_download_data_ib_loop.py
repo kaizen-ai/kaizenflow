@@ -124,9 +124,9 @@ def _ib_date_range(
     _LOG.debug("start_ts_tmp='%s' end_ts='%s'", start_ts_tmp, end_ts)
     dbg.dassert_eq(_get_hh_mm_ss(start_ts_tmp), _SIX_PM)
     dbg.dassert_lt(start_ts_tmp, end_ts)
-    dates = pd.date_range(start=start_ts_tmp, end=end_ts, freq="2D").tolist()
+    dates = pd.date_range(start=start_ts_tmp, end=end_ts, freq="1D").tolist()
     # If the first date is before start_ts, then we don't need since the interval
-    # [date - days(2), date] doesn't overlap with [start_ts, end_ts].
+    # [date - days(1), date] doesn't overlap with [start_ts, end_ts].
     if dates[0] < start_ts:
         dates = dates[1:]
     # If the last date
@@ -164,7 +164,7 @@ def get_historical_data_workload(
     dbg.dassert_lte(3, (end_ts - start_ts).days)
     dates = _ib_date_range(start_ts, end_ts)
     # duration_str = "2 D"
-    duration_str = "7 D"
+    duration_str = "1 D"
     tasks = []
     for end in dates:
         task = (
