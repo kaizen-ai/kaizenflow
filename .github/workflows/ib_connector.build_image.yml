@@ -52,15 +52,12 @@ jobs:
           to: ${{ secrets.P1_TG_BUILD_MONITORING_CHANNEL_ID }}
           token: ${{ secrets.P1_GH_BOT_TELEGRAM_TOKEN }}
           message: |
-            The brand new image `ib_connect` was successfully built.
+            A brand new image `ib_connect` was successfully built.
 
             Please pull new image to use the latest version.
-            - Authorize your client:
-            ```
+            # Authorize your client:
             make docker_login
-            ```
-            - Pull the latest version
-            ```
+            # Pull the latest version:
             make ib_connect.docker_pull
             ```
             https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
