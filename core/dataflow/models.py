@@ -1119,8 +1119,12 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
     def _init_cols(self, cols: List[_COL_TYPE]) -> None:
         dbg.dassert_isinstance(cols, list)
         self._vol_cols = {col: str(col) + "_vol" for col in cols}
-        self._fwd_vol_cols = {col: self._vol_cols[col] + f"_{self._steps_ahead}" for col in cols}
-        self._fwd_vol_cols_hat = {col: self._fwd_vol_cols[col] + "_hat" for col in cols}
+        self._fwd_vol_cols = {
+            col: self._vol_cols[col] + f"_{self._steps_ahead}" for col in cols
+        }
+        self._fwd_vol_cols_hat = {
+            col: self._fwd_vol_cols[col] + "_hat" for col in cols
+        }
 
     def _get_config(
         self, col: _COL_TYPE, tau: Optional[float] = None
