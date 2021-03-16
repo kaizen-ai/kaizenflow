@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  app:
+    environment:
+      AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+      AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+    entrypoint: "devops/docker_build/gh_action_entrypoint.sh"

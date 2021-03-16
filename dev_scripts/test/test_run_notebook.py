@@ -54,6 +54,8 @@ class TestRunNotebook(hut.TestCase):
             "--function 'dev_scripts.test.test_run_notebook.build_configs()' "
             "--num_threads 3"
         )
+        # TODO(gp): Add a WARNING to explain that this is an expected failure.
+        #  Maybe send the output to /dev/null.
         with self.assertRaises(RuntimeError):
             si.system(cmd)
 
