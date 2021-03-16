@@ -133,7 +133,7 @@ class TestDataFrameModeler(hut.TestCase):
         df_modeler = dfmod.DataFrameModeler(df=data)
         with self.assertRaises(AssertionError):
             df_modeler.apply_sklearn_model(**config.to_dict(), method="predict")
-            
+
     def test_merge(self) -> None:
         df1 = pd.DataFrame(
             {"col0": [1, 2, 3], "col1": [4, 5, 6]},
@@ -147,7 +147,7 @@ class TestDataFrameModeler(hut.TestCase):
         dfm = dfm.merge(dfmod.DataFrameModeler(df2, oos_start="2010-01-02"))
         df = pd.merge(df1, df2, left_index=True, right_index=True)
         pd.testing.assert_frame_equal(dfm.df, df)
-        self.assertEqual(dfm.oos_start, "2010-01-01")
+        self.assertEqual(dfm.oos_start, pd.Timestamp("2010-01-01"))
         str_output = hut.convert_df_to_string(dfm.df, index=True)
         self.check_string(str_output)
 
