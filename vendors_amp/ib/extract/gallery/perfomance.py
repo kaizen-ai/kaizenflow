@@ -162,7 +162,7 @@ def _parse():
 if __name__ == "__main__":
     _main(_parse())
 
-# Sep 20    
+# Sep 20
 # 03-16_20:58 [36mINFO [0m: _run_unrolling_download_data_ib_loop: Running unrolling_download_data_ib_loop code...
 # 03-16_20:58 [36mINFO [0m: _run_unrolling_download_data_ib_loop: Starting data extraction. Mode: in_memory. Threads: serial.
 # 03-16_21:06 [36mINFO [0m: _run_unrolling_download_data_ib_loop: Finished. Time: 493.179828 seconds. Dataframe: len=29805 [2020-09-01 00:00:00-04:00, 2020-09-30 23:59:00-04:00]
@@ -177,7 +177,7 @@ if __name__ == "__main__":
 # 03-16_21:29 [36mINFO [0m: _run_download_data_IB_loop: Starting in memory data extraction.
 # 03-16_21:35 [36mINFO [0m: _run_download_data_IB_loop: Finished. Time: 365.110541 seconds. Dataframe: len=29805 [2020-09-01 00:00:00-04:00, 2020-09-30 23:59:00-04:00]
 # 03-16_21:35 [36mINFO [0m: _run_download_data_IB_loop: Starting to file data extraction.
-# 03-16_21:41 [36mINFO [0m: _run_download_data_IB_loop: Finished. Time: 366.961852 seconds. Dataframe: 
+# 03-16_21:41 [36mINFO [0m: _run_download_data_IB_loop: Finished. Time: 366.961852 seconds. Dataframe:
 
 # Feb Mar 21
 # 03-16_21:45 [36mINFO [0m: _run_unrolling_download_data_ib_loop: Running unrolling_download_data_ib_loop code...
