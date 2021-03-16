@@ -1060,7 +1060,14 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._fit_cols = self._to_list(self._cols or df_in.columns.tolist())
-        self._init_cols(self._fit_cols)
+        self._vol_cols = {col: str(col) + "_vol" for col in self._fit_cols}
+        self._fwd_vol_cols = {
+            col: self._vol_cols[col] + f"_{self._steps_ahead}"
+            for col in self._fit_cols
+        }
+        self._fwd_vol_cols_hat = {
+            col: self._fwd_vol_cols[col] + "_hat" for col in self._fit_cols
+        }
         info = collections.OrderedDict()
         dfs = []
         for col in self._fit_cols:
@@ -1123,7 +1130,8 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
             "_fwd_vol_cols": self._fwd_vol_cols,
             "_fwd_vol_cols_hat": self._fwd_vol_cols_hat,
             "_taus": self._taus,
-            "_info['fit']": self._info["fit"]}
+            "_info['fit']": self._info["fit"],
+        }
         return fit_state
 
     def set_fit_state(self, fit_state: Dict[str, Any]):
@@ -1133,16 +1141,6 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self._fwd_vol_cols_hat = fit_state["_fwd_vol_cols_hat"]
         self._taus = fit_state["_taus"]
         self._info["fit"] = fit_state["_info['fit']"]
-
-    def _init_cols(self, cols: List[_COL_TYPE]) -> None:
-        dbg.dassert_isinstance(cols, list)
-        self._vol_cols = {col: str(col) + "_vol" for col in cols}
-        self._fwd_vol_cols = {
-            col: self._vol_cols[col] + f"_{self._steps_ahead}" for col in cols
-        }
-        self._fwd_vol_cols_hat = {
-            col: self._fwd_vol_cols[col] + "_hat" for col in cols
-        }
 
     def _get_config(
         self, col: _COL_TYPE, tau: Optional[float] = None
