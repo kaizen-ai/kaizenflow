@@ -20,8 +20,8 @@ _LOG = logging.getLogger(__name__)
 SETUP = dict(
     client_id=100,
     contract=ib_insync.ContFuture(symbol="ES", exchange="GLOBEX", currency="USD"),
-    start_ts=pd.Timestamp(year=2020, month=9, day=1),
-    end_ts=pd.Timestamp(year=2021, month=3, day=1),
+    start_ts=pd.Timestamp(year=2021, month=2, day=14),
+    end_ts=pd.Timestamp(year=2021, month=3, day=15),
     duration="1 D",
     bar_size="1 min",
     what_to_show="TRADES",
@@ -161,3 +161,36 @@ def _parse():
 
 if __name__ == "__main__":
     _main(_parse())
+
+# Sep 20    
+# 03-16_20:58 [36mINFO [0m: _run_unrolling_download_data_ib_loop: Running unrolling_download_data_ib_loop code...
+# 03-16_20:58 [36mINFO [0m: _run_unrolling_download_data_ib_loop: Starting data extraction. Mode: in_memory. Threads: serial.
+# 03-16_21:06 [36mINFO [0m: _run_unrolling_download_data_ib_loop: Finished. Time: 493.179828 seconds. Dataframe: len=29805 [2020-09-01 00:00:00-04:00, 2020-09-30 23:59:00-04:00]
+# 03-16_21:06 [36mINFO [0m: _run_unrolling_download_data_ib_loop: Starting data extraction. Mode: on_disk. Threads: serial.
+# 03-16_21:15 [36mINFO [0m: _run_unrolling_download_data_ib_loop: Finished. Time: 528.675238 seconds. Dataframe: len=29805 [2020-09-01 00:00:00-04:00, 2020-09-30 23:59:00-04:00]
+# 03-16_21:15 [36mINFO [0m: _run_unrolling_download_data_ib_loop: Starting data extraction. Mode: on_disk. Threads: 4.
+# 03-16_21:23 [36mINFO [0m: _run_unrolling_download_data_ib_loop: Finished. Time: 443.870279 seconds. Dataframe: len=21840 [2020-09-01 00:00:00-04:00, 2020-09-30 23:59:00-04:00]
+# 03-16_21:23 [36mINFO [0m: _run_save_historical_data_with_IB_loop: Running save_historical_data_with_IB_loop code...
+# 03-16_21:23 [36mINFO [0m: _run_save_historical_data_with_IB_loop: Starting data extraction.
+# 03-16_21:29 [36mINFO [0m: _run_save_historical_data_with_IB_loop: Finished. Time: 396.476231 seconds. Dataframe: len=29805 [2020-09-01 00:00:00-04:00, 2020-09-30 23:59:00-04:00]
+# 03-16_21:29 [36mINFO [0m: _run_download_data_IB_loop: Running download_data_IB_loop code...
+# 03-16_21:29 [36mINFO [0m: _run_download_data_IB_loop: Starting in memory data extraction.
+# 03-16_21:35 [36mINFO [0m: _run_download_data_IB_loop: Finished. Time: 365.110541 seconds. Dataframe: len=29805 [2020-09-01 00:00:00-04:00, 2020-09-30 23:59:00-04:00]
+# 03-16_21:35 [36mINFO [0m: _run_download_data_IB_loop: Starting to file data extraction.
+# 03-16_21:41 [36mINFO [0m: _run_download_data_IB_loop: Finished. Time: 366.961852 seconds. Dataframe: 
+
+# Feb Mar 21
+# 03-16_21:45 [36mINFO [0m: _run_unrolling_download_data_ib_loop: Running unrolling_download_data_ib_loop code...
+# 03-16_21:45 [36mINFO [0m: _run_unrolling_download_data_ib_loop: Starting data extraction. Mode: in_memory. Threads: serial.
+# 03-16_21:49 [36mINFO [0m: _run_unrolling_download_data_ib_loop: Finished. Time: 223.140918 seconds. Dataframe: len=27434 [2021-02-14 18:00:00-05:00, 2021-03-14 23:59:00-04:00]
+# 03-16_21:49 [36mINFO [0m: _run_unrolling_download_data_ib_loop: Starting data extraction. Mode: on_disk. Threads: serial.
+# 03-16_21:53 [36mINFO [0m: _run_unrolling_download_data_ib_loop: Finished. Time: 236.328374 seconds. Dataframe: len=27434 [2021-02-14 18:00:00-05:00, 2021-03-14 23:59:00-04:00]
+# 03-16_21:53 [36mINFO [0m: _run_unrolling_download_data_ib_loop: Starting data extraction. Mode: on_disk. Threads: 4.
+# 03-16_21:57 [36mINFO [0m: _run_unrolling_download_data_ib_loop: Finished. Time: 232.805387 seconds. Dataframe: len=27434 [2021-02-14 18:00:00-05:00, 2021-03-14 23:59:00-04:00]
+# 03-16_21:57 [36mINFO [0m: _run_save_historical_data_with_IB_loop: Running save_historical_data_with_IB_loop code...
+# 03-16_21:57 [36mINFO [0m: _run_save_historical_data_with_IB_loop: Starting data extraction.
+# 03-16_21:59 [36mINFO [0m: _run_save_historical_data_with_IB_loop: Finished. Time: 172.968709 seconds. Dataframe: len=27435 [2021-02-14 18:00:00-05:00, 2021-03-14 23:59:00-04:00]
+# 03-16_21:59 [36mINFO [0m: _run_download_data_IB_loop: Running download_data_IB_loop code...
+# 03-16_21:59 [36mINFO [0m: _run_download_data_IB_loop: Starting in memory data extraction.
+# 03-16_22:02 [36mINFO [0m: _run_download_data_IB_loop: Finished. Time: 173.33158 seconds. Dataframe: len=27435 [2021-02-14 18:00:00-05:00, 2021-03-14 23:59:00-04:00]
+# 03-16_22:02 [36mINFO [0m: _run_download_data_IB_loop: Starting to file data extraction.

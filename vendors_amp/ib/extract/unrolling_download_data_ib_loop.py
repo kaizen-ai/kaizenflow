@@ -268,7 +268,8 @@ def _execute_ptask(
     ib.disconnect()
     dbg.dassert_monotonic_index(df)
     _LOG.debug("%s -> df=%s", end_ts, vieuti.get_df_signature(df))
-    df.to_csv(file_name)
+    if not df.empty:
+        df.to_csv(file_name)
 
 
 def get_historical_data_parallel(tasks, num_threads, incremental, dst_dir):
@@ -381,7 +382,9 @@ def get_historical_data_parallel(tasks, num_threads, incremental, dst_dir):
             use_rth,
             file_name,
         ) = ptask
-        df_tmp = viedow.load_historical_data(file_name)
+        # If job was completed succesfully, read dataframe.
+        if os.path.exists(file_name):
+            df_tmp = viedow.load_historical_data(file_name)
         df.append(df_tmp)
     #
     df = pd.concat(df)
