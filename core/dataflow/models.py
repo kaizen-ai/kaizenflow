@@ -808,7 +808,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         :param col: name of column to model
         :param steps_ahead: as in ContinuousSkLearnModel
         :param tau: as in `csigna.compute_smooth_moving_average`. If `None`,
-            learn this parameter
+            learn this parameter. Will be re-learned on each `fit` call.
         :param min_tau_periods: similar to `min_periods` as in
             `csigna.compute_smooth_moving_average`, but expressed in units of
             tau
@@ -830,6 +830,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         self._col_mode = col_mode or "replace_all"
         dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
         # Smooth moving average model parameters to learn.
+        self._must_learn_tau = tau is None
         self._tau = tau
         self._min_tau_periods = min_tau_periods or 0
         self._min_depth = 1
@@ -860,7 +861,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
             fwd_y_df, fwd_y_df.columns.tolist()
         )
         # Define and fit model.
-        if self._tau is None:
+        if self._must_learn_tau:
             self._tau = self._learn_tau(x_fit, fwd_y_fit)
         min_periods = int(np.rint(self._min_tau_periods * self._tau))
         _LOG.debug("tau=", self._tau)
@@ -920,6 +921,14 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
+
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {"_tau": self._tau, "_info['fit']": self._info["fit"]}
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]):
+        self._tau = fit_state["_tau"]
+        self._info["fit"] = fit_state["_info['fit']"]
 
     def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
