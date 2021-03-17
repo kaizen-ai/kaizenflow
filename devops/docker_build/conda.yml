@@ -67,12 +67,12 @@ dependencies:
   # ############################################################################
   # Misc
   # ############################################################################
-  #- csvkit                  # To process csv.
-  #- gdrive                  # To interact with Google Drive.
-  #- jq                      # To process json.
-  #- mxnet                   # Required by gluon (e.g., gluon-ts, gluon-nlp).
+  #- csvkit                 # To process csv.
+  #- gdrive                 # To interact with Google Drive.
+  #- jq                     # To process json.
+  #- mxnet                  # Required by gluon (e.g., gluon-ts, gluon-nlp).
   #- pymongo
-  #- rclone                  # To back up Google Drive (conda install -c hcc rclone)
+  #- rclone                 # To back up Google Drive (conda install -c hcc rclone)
   #- ruby
   - beautifulsoup4
   - joblib
