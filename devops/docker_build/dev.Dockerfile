@@ -2,15 +2,16 @@
 
 FROM continuumio/miniconda3:4.9.2
 
+# TODO(gp): Trim this down. npm needed?
 RUN apt update && \
     apt install cifs-utils -y && \
-    apt install git -y && \
-    apt install graphviz -y && \
     apt install keyutils -y && \
     apt install make -y && \
-    apt install npm -y && \
-    apt install s3fs -y && \
+    apt install graphviz -y && \
     apt install vim -y && \
+    apt install git -y && \
+    apt install s3fs -y && \
+    apt install npm -y && \
     apt-get purge -y --auto-remove
 
 # TODO(*): Remove prettier since it goes in dev_tools.
@@ -38,10 +39,14 @@ RUN conda create -n $ENV_NAME python=3.7 -y
 # devops/{docker_build,docker_scripts}
 # We want to minimize the dependencies to avoid to invalidate Docker cache for
 # a change in files that doesn't matter for building the image.
-RUN mkdir -p $APP_DIR/devops/docker_build
-COPY devops/docker_build $APP_DIR/devops/docker_build
-RUN mkdir -p $APP_DIR/devops/docker_scripts
-COPY devops/docker_scripts $APP_DIR/devops/docker_scripts
+ENV DIR="devops/docker_build"
+RUN mkdir -p $APP_DIR/$DIR
+COPY $DIR $APP_DIR/$DIR
+
+ENV DIR="devops/docker_scripts"
+RUN mkdir -p $APP_DIR/$DIR
+COPY $DIR $APP_DIR/$DIR
+
 WORKDIR $APP_DIR
 
 # Install requirements.
