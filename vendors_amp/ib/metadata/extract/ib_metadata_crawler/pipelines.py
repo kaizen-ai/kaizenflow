@@ -1,4 +1,5 @@
 import csv
+import pathlib
 
 import scrapy
 import scrapy.exceptions as ex
@@ -19,33 +20,31 @@ class ExchangeUniquePipeline:
 
 
 class CSVPipeline:
-    def __init__(self, exchange_fname: str, symbol_fname: str):
+    def __init__(
+        self, root: pathlib.Path,
+        exchange_fname: str, symbol_fname: str
+    ) -> None:
+        self.root_dir = root
         self.exchange = exchange_fname
         self.symbol = symbol_fname
-        self.exchange_seen = set()
 
     @classmethod
     def from_crawler(cls, crawler: scrapy.Spider):
         return cls(
+            root=crawler.settings.get("OUTCOME_LOCATION"),
             exchange_fname=crawler.settings.get("EXCHANGE_FNAME"),
-            symbol_fname=crawler.settings.get("SYMBOLS_FNAME"),
+            symbol_fname=crawler.settings.get("SYMBOLS_FNAME")
         )
 
     def open_spider(self, spider: ib.IbrokerSpider):
-        self.exchange_f = open(self.exchange, "a")
-        self.symbol_f = open(self.symbol, "a")
+        self.exchange_f = open(self.root_dir / self.exchange, "a")
+        self.symbol_f = open(self.root_dir /self.symbol, "a")
         self.exchange_csv = csv.writer(self.exchange_f, delimiter="\t")
         self.symbol_csv = csv.writer(self.symbol_f, delimiter="\t")
 
     def close_spider(self, spider: ib.IbrokerSpider):
         self.exchange_f.close()
         self.symbol_f.close()
-        # with open(self.exchange) as f:
-        #     self.exchange_buf.seek(0)
-        #     f.write(self.exchange_buf.getvalue())
-        # with open(self.symbol, "a") as f:
-        #     self.symbol_buf.seek(0)
-        #     f.write(self.symbol_buf.getvalue())
 
     def process_item(self, item: scrapy.Item, spider: ib.IbrokerSpider):
         if isinstance(item, it.ExchangeItem):

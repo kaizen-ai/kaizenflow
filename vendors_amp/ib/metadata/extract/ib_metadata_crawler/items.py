@@ -6,10 +6,8 @@ class ExchangeItem(scrapy.Item):
     country = scrapy.Field()
     market = scrapy.Field()
     link = scrapy.Field()
-    products = (
-        scrapy.Field()
-    )  # TODO: implement postprocessor for list -> ",".join method
-    hours = scrapy.Field()  # TODO: implement postprocessor for list -> " ".join()
+    products = scrapy.Field()
+    hours = scrapy.Field()
 
 
 class SymbolItem(scrapy.Item):
