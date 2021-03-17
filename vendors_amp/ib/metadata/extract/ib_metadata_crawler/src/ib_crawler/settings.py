@@ -6,6 +6,7 @@ NEWSPIDER_MODULE = "ib_crawler.spiders"
 CONCURRENT_REQUESTS_PER_IP = 10
 ROBOTSTXT_OBEY = False
 
+LOG_LEVEL = "INFO"
 EXCHANGE_FNAME = "exchanges.csv"
 SYMBOLS_FNAME = "symbols.csv"
 

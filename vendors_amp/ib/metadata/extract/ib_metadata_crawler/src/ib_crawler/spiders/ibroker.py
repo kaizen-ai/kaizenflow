@@ -145,8 +145,8 @@ class IbrokerSpider(scrapy.Spider):
             item.add_value("currency", s_data[3])
             yield item.load_item()
 
-        next_page = self.lx_pagination.extract_links(response)[-1]
-        if ">" in next_page.text:
+        next_page = self.lx_pagination.extract_links(response)
+        if next_page and ">" in next_page[-1].text:
             yield scrapy.Request(
-                next_page.url, self.parse_symbols, cb_kwargs={"market": market},
+                next_page[-1].url, self.parse_symbols, cb_kwargs={"market": market},
             )
