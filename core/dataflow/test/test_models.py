@@ -691,7 +691,41 @@ class TestVolatilityModel(hut.TestCase):
         # Get output with integer column names.
         output = self._run_volatility_model(data, config)
         self.check_string(output.to_string())
-
+        
+    def test_get_fit_state(self) -> None:
+        data = self._get_data()
+        config = cconfi.Config()
+        config["cols"] = ["ret_0"]
+        config["steps_ahead"] = 2
+        config["nan_mode"] = "leave_unchanged"
+        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
+        node.fit(data)
+        str_output = f"{hprint.frame('state')}\n{node.get_fit_state()}\n"
+        self.check_string(str_output)
+        
+    def test_predict_with_predefined_state(self) -> None:
+        data = self._get_data()
+        config = cconfi.Config()
+        config["cols"] = ["ret_0"]
+        config["steps_ahead"] = 2
+        config["nan_mode"] = "leave_unchanged"
+        state = {'_fit_cols': ["ret_0"],
+                 '_vol_cols': {"ret_0": 'ret_0_vol'},
+                 '_fwd_vol_cols': {"ret_0": 'ret_0_vol_1'},
+                 '_fwd_vol_cols_hat': {"ret_0": 'ret_0_vol_1_hat'},
+                 '_taus': {"ret_0": 10},
+                 "_info['fit']": None
+            }
+        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
+        node.set_fit_state(state)
+        output_df = node.predict(data)["df_out"]
+        str_output = (
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('state')}\n{state}\n"
+            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
+        )
+        self.check_string(str_output)
+        
     @staticmethod
     def _get_data() -> pd.DataFrame:
         """
