@@ -4,13 +4,13 @@ FROM continuumio/miniconda3:4.9.2
 
 RUN apt update && \
     apt install cifs-utils -y && \
+    apt install git -y && \
+    apt install graphviz -y && \
     apt install keyutils -y && \
     apt install make -y && \
-    apt install graphviz -y && \
-    apt install vim -y && \
-    apt install git -y && \
-    apt install s3fs -y && \
     apt install npm -y && \
+    apt install s3fs -y && \
+    apt install vim -y && \
     apt-get purge -y --auto-remove
 
 # TODO(*): Remove prettier since it goes in dev_tools.
