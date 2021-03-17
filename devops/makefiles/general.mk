@@ -49,7 +49,6 @@ docker_stats:
 # Run bash inside container with activated environment.
 docker_bash:
 	IMAGE=$(IMAGE_DEV) \
-	echo "IMAGE=$(IMAGE)" \
 	docker-compose \
 		-f devops/compose/docker-compose-user-space.yml \
 		run \
@@ -61,7 +60,6 @@ docker_bash:
 # Run the script inside the container with activated environment.
 docker_cmd:
 	IMAGE=$(IMAGE_DEV) \
-	IMAGE=$(IMAGE) \
 	docker-compose \
 		-f devops/compose/docker-compose-user-space.yml \
 		run \
@@ -115,19 +113,19 @@ run_blank_tests:
 # Run fast tests locally.
 run_fast_tests:
 	_IMAGE=$(IMAGE_DEV) \
-	_CMD="devops/docker_scripts/run_fast_tests.sh" \
+	_CMD="$(AMP_DIR)/devops/docker_scripts/run_fast_tests.sh" \
 	make _run_tests
 
 # Run slow tests.
 run_slow_tests:
 	_IMAGE=$(IMAGE_DEV) \
-	_CMD="devops/docker_scripts/run_slow_tests.sh" \
+	_CMD="$(AMP_DIR)/devops/docker_scripts/run_slow_tests.sh" \
 	make _run_tests
 
 # Run superslow tests.
 run_superslow_tests:
 	_IMAGE=$(IMAGE_DEV) \
-	_CMD="devops/docker_scripts/run_superslow_tests.sh" \
+	_CMD="$(AMP_DIR)/devops/docker_scripts/run_superslow_tests.sh" \
 	make _run_tests
 
 # #############################################################################
@@ -143,19 +141,19 @@ run_blank_tests.rc:
 # Run fast tests locally.
 run_fast_tests.rc:
 	_IMAGE=$(IMAGE_RC) \
-	_CMD="devops/docker_scripts/run_fast_tests.sh" \
+	_CMD="$(AMP_DIR)/devops/docker_scripts/run_fast_tests.sh" \
 	make _run_tests
 
 # Run slow tests.
 run_slow_tests.rc:
 	_IMAGE=$(IMAGE_RC) \
-	_CMD="devops/docker_scripts/run_slow_tests.sh" \
+	_CMD="$(AMP_DIR)/devops/docker_scripts/run_slow_tests.sh" \
 	make _run_tests
 
 # Run superslow tests.
 run_superslow_tests.rc:
 	_IMAGE=$(IMAGE_RC) \
-	_CMD="devops/docker_scripts/run_superslow_tests.sh" \
+	_CMD="$(AMP_DIR)/devops/docker_scripts/run_superslow_tests.sh" \
 	make _run_tests
 
 # #############################################################################
@@ -175,17 +173,17 @@ _run_tests.gh_action:
 
 run_fast_tests.gh_action:
 	_IMAGE=$(IMAGE_DEV) \
-	_CMD="devops/docker_scripts/run_fast_tests.sh" \
+	_CMD="$(AMP_DIR)/devops/docker_scripts/run_fast_tests.sh" \
 	make _run_tests.gh_action
 
 run_slow_tests.gh_action:
 	_IMAGE=$(IMAGE_DEV) \
-	_CMD="devops/docker_scripts/run_slow_tests.sh" \
+	_CMD="$(AMP_DIR)/devops/docker_scripts/run_slow_tests.sh" \
 	make _run_tests.gh_action
 
 run_superslow_tests.gh_action:
 	_IMAGE=$(IMAGE_DEV) \
-	_CMD="devops/docker_scripts/run_superslow_tests.sh" \
+	_CMD="$(AMP_DIR)/devops/docker_scripts/run_superslow_tests.sh" \
 	make _run_tests.gh_action
 
 # #############################################################################
@@ -196,17 +194,17 @@ run_superslow_tests.gh_action:
 
 run_fast_tests.gh_action_rc:
 	_IMAGE=$(IMAGE_RC) \
-	_CMD="devops/docker_scripts/run_fast_tests.sh" \
+	_CMD="$(AMP_DIR)/devops/docker_scripts/run_fast_tests.sh" \
 	make _run_tests.gh_action
 
 run_slow_tests.gh_action_rc:
 	_IMAGE=$(IMAGE_RC) \
-	_CMD="devops/docker_scripts/run_slow_tests.sh" \
+	_CMD="$(AMP_DIR)/devops/docker_scripts/run_slow_tests.sh" \
 	make _run_tests.gh_action
 
 run_superslow_tests.gh_action_rc:
 	_IMAGE=$(IMAGE_RC) \
-	_CMD="devops/docker_scripts/run_superslow_tests.sh" \
+	_CMD="$(AMP_DIR)/devops/docker_scripts/run_superslow_tests.sh" \
 	make _run_tests.gh_action
 
 # #############################################################################
