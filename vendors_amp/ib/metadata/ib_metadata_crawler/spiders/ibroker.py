@@ -8,7 +8,7 @@ import scrapy.loader as ldr
 import scrapy.loader.processors as pr
 import scrapy.linkextractors as le
 
-import ib_crawler.items as it
+import ib_metadata_crawler.items as it
 
 
 class ExchangeLoader(ldr.ItemLoader):

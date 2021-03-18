@@ -15,13 +15,13 @@ The IB Crawler is avaliable at the Particle Amazon ECR as a Docker image
 - Make sure that you pull the latest verson of image:
 
 ```bash
-docker pull 083233266530.dkr.ecr.us-east-2.amazonaws.com/ib-crawler:1.0.0
+> docker pull 083233266530.dkr.ecr.us-east-2.amazonaws.com/ib-crawler:1.0.0
 ```
 
-Or you can build an image in-place
+Or you can build an image in-place with `Make`
 
 ```bash
-docker build -t ib-crawler:local .
+> make ib_metadata_crawler.docker_build
 ```
 
 ## Configuration
@@ -29,7 +29,13 @@ docker build -t ib-crawler:local .
 Map host folder into container `/outcome` for getting crawler results.
 
 ```bash
-docker run ... -v $(pwd)/outcome:/outcome ...
+> docker run ... -v $(pwd)/outcome:/outcome ...
+```
+
+Or use `Make` command for local run (current work directory on the host will map into container folder `/outcome`):
+
+```bash
+> make ib_metadata_crawler.run
 ```
 
 The result of crawling is present in two `csv` files (with `tab` as a delimiter):
@@ -59,7 +65,13 @@ ArcaEdge (ARCAEDGE)	ETFs	AIA GROUP LTD-SP ADR	AAGIY	AAGIY	USD
 ## Run example
 
 ```bash
-docker run --rm -v $(pwd)/outcome:/outcome 083233266530.dkr.ecr.us-east-2.amazonaws.com/ib-crawler:1.0.0 scrapy crawl ibroker
+> docker run --rm -v $(pwd)/outcome:/outcome 083233266530.dkr.ecr.us-east-2.amazonaws.com/ib-crawler:1.0.0 scrapy crawl ibroker
+```
+
+Local with `make` command:
+
+```bash
+> make ib_metadata_crawler.run
 ```
 
 ## Release History

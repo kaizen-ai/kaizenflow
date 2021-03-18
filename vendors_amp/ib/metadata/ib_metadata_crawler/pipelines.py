@@ -4,8 +4,8 @@ import pathlib
 import scrapy
 import scrapy.exceptions as ex
 
-import ib_crawler.items as it
-import ib_crawler.spiders.ibroker as ib
+import ib_metadata_crawler.items as it
+import ib_metadata_crawler.spiders.ibroker as ib
 
 
 class ExchangeUniquePipeline:
