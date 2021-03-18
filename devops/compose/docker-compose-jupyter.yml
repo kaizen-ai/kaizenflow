@@ -13,7 +13,6 @@ services:
       - J_PORT=${J_PORT}
     ports:
       - "${J_PORT}:${J_PORT}"
-    working_dir: /commodity_research
     command: devops/docker_scripts/run_jupyter_server.sh
     privileged: true
     cap_add:

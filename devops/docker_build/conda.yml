@@ -47,9 +47,9 @@ dependencies:
   # ############################################################################
   # Latex
   # ############################################################################
-  - graphviz                # Also for dataflow graph visualization.
-  - pandoc
-  - pandocfilters
+  #- graphviz                # Also for dataflow graph visualization.
+  #- pandoc
+  #- pandocfilters
   # ############################################################################
   # AWS
   # ############################################################################
@@ -61,9 +61,9 @@ dependencies:
   # ############################################################################
   #- pydot
   #- python-graphviz        # To plot pymc3 graphical models.
-  - arviz                   # Needed by pymc3 for some plotting functionality.
-  - mkl-service             # pymc3 expects it; not sure why conda doesn't solve for it.
-  - pymc3
+  #- arviz                   # Needed by pymc3 for some plotting functionality.
+  #- mkl-service             # pymc3 expects it; not sure why conda doesn't solve for it.
+  #- pymc3
   # ############################################################################
   # Misc
   # ############################################################################
