@@ -202,6 +202,12 @@ def duration_str_to_pd_dateoffset(duration_str: str) -> pd.DateOffset:
         ret = pd.DateOffset(days=7)
     elif duration_str == "1 D":
         ret = pd.DateOffset(days=1)
+    elif duration_str == "4 D":
+        ret = pd.DateOffset(days=4)
+    elif duration_str == "3 D":
+        ret = pd.DateOffset(days=3)
+    elif duration_str == "1 M":
+        ret = pd.DateOffset(months=1)
     else:
         raise ValueError("Invalid duration_str='%s'" % duration_str)
     return ret
