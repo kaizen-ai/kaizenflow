@@ -21,8 +21,7 @@ class ExchangeUniquePipeline:
 
 class CSVPipeline:
     def __init__(
-        self, root: pathlib.Path,
-        exchange_fname: str, symbol_fname: str
+        self, root: pathlib.Path, exchange_fname: str, symbol_fname: str
     ) -> None:
         self.root_dir = root
         self.exchange = exchange_fname
@@ -33,12 +32,12 @@ class CSVPipeline:
         return cls(
             root=crawler.settings.get("OUTCOME_LOCATION"),
             exchange_fname=crawler.settings.get("EXCHANGE_FNAME"),
-            symbol_fname=crawler.settings.get("SYMBOLS_FNAME")
+            symbol_fname=crawler.settings.get("SYMBOLS_FNAME"),
         )
 
     def open_spider(self, spider: ib.IbrokerSpider):
         self.exchange_f = open(self.root_dir / self.exchange, "a")
-        self.symbol_f = open(self.root_dir /self.symbol, "a")
+        self.symbol_f = open(self.root_dir / self.symbol, "a")
         self.exchange_csv = csv.writer(self.exchange_f, delimiter="\t")
         self.symbol_csv = csv.writer(self.symbol_f, delimiter="\t")
 
