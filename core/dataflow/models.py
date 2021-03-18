@@ -967,8 +967,11 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
             return self._metric(sma[min_periods:], y[min_periods:])
 
         # TODO(*): Make this configurable.
+        tau_lb, tau_ub = 1, 100
+        if self._min_tau_periods > 0:
+            tau_ub = min(tau_ub, int(len(x) / self._min_tau_periods))
         opt_results = sp.optimize.minimize_scalar(
-            score, method="bounded", bounds=[1, 100]
+            score, method="bounded", bounds=[tau_lb, tau_ub]
         )
         return opt_results.x
 
