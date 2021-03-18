@@ -1,8 +1,7 @@
 <!--ts-->
-   * [InteractiveBroker Crawler](#interactivebroker-crawler)
+   * [InteractiveBrokers (IB) metadata crawler](#interactivebrokers-ib-metadata-crawler)
       * [Installation](#installation)
       * [Configuration](#configuration)
-      * [Run example](#run-example)
       * [Release History](#release-history)
 
 
@@ -13,7 +12,8 @@
 
 - The InteractiveBrokers crawler allows downloading metadata about products that
   are available on the platform:
-  - Global markets metadata (e.g., country, market name, products, operation hours)
+  - Global markets metadata (e.g., country, market name, products, operation
+    hours)
   - Market products metadata (e.g., market, product, IB symbol, description,
     symbol, currency)
 
@@ -29,17 +29,18 @@
 
 ## Configuration
 
-
 - Use `make` command for running
+
   ```bash
   > make ib_metadata_crawler.run
   ```
 
 - The current work directory on the host will map into container folder
   `/outcome` that contains the crawler results:
+
   ```bash
   > docker run \
-    --rm 
+    --rm
     -v $(pwd)/outcome:/outcome \
     ib-crawler:1.0.0 \
     scrapy crawl ibroker
@@ -49,6 +50,7 @@
   delimiter:
 
 - `exchanges-timestamp.csv`
+
   ```csv
   region          country          market               link                                     products                    hours
   North America   United States    Absolute Funds       http://absoluteadvisers.com              N/A                         9:30 - 15:59 ET
