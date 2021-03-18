@@ -372,6 +372,7 @@ $$"""
         file_name = "test.txt"
         self._helper_process(txt, exp, file_name)
 
+    @pytest.mark.skip("Disabled because of PartTask7871")
     def test_process3(self) -> None:
         """
         Run the text linter on a md file.
