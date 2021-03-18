@@ -76,7 +76,6 @@ J_PORT?=9999
 docker_jupyter:
 	J_PORT=$(J_PORT) \
 	IMAGE=$(IMAGE_DEV) \
-	IMAGE=$(IMAGE) \
 	docker-compose \
 		-f $(DOCKER_COMPOSE_USER_SPACE) \
 		-f devops/compose/docker-compose-jupyter.yml \
@@ -90,7 +89,9 @@ docker_jupyter:
 # Run tests with "latest" image.
 # #############################################################################
 
-# Workaround for when amp is a submodule of another module.
+# Workaround for when amp is a submodule of another module
+#
+# See AmpTask1017.
 #
 # Return the path to the Git repo including the Git submodule for a submodule
 # and it's empty for a supermodule.
@@ -101,7 +102,7 @@ SUBMODULE_NAME=$(shell ( \
 		| grep $(basename "$(pwd)") \
 		| awk '{ print $$2 }'))
 
-ifdef $(SUBMODULE_SUPERPROJECT)
+ifeq ($(SUBMODULE_SUPERPROJECT), )
 DOCKER_COMPOSE_USER_SPACE="devops/compose/docker-compose-user-space.yml"
 else
 DOCKER_COMPOSE_USER_SPACE="devops/compose/docker-compose-user-space-git-subrepo.yml"
@@ -290,6 +291,7 @@ docker_push_latest_image:
 #   image
 # - The PROD image becomes "prod".
 docker_build_image.prod:
+ifdef $(IMAGE_PROD)
 	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
 	docker build \
 		--progress=plain \
@@ -298,11 +300,18 @@ docker_build_image.prod:
 		-t $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
 		-f devops/docker_build/prod.Dockerfile \
 		.
+else
+	@echo "IMAGE_PROD is not defined: nothing to do"
+endif
 
 # Push the "prod" image to the registry.
 docker_push_image.prod:
+ifdef $(IMAGE_PROD)
 	docker push $(IMAGE_PROD)
 	docker push $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA)
+else
+	@echo "IMAGE_PROD is not defined: nothing to do"
+endif
 
 # #############################################################################
 # Git.
