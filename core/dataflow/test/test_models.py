@@ -178,8 +178,8 @@ class TestContinuousSkLearnModel(hut.TestCase):
 # #############################################################################
 # Test sklearn - unsupervised models
 # #############################################################################
-   
-    
+
+
 class TestUnsupervisedSkLearnModel(hut.TestCase):
     def test_fit_dag1(self) -> None:
         # Load test data.
@@ -241,7 +241,7 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         )
         return realization
 
-    
+
 class TestResidualizer(hut.TestCase):
     def test_fit_dag1(self) -> None:
         # Load test data.
@@ -306,9 +306,9 @@ class TestResidualizer(hut.TestCase):
 
 # #############################################################################
 # Test volatility modeling
-# ############################################################################# 
-    
-    
+# #############################################################################
+
+
 class TestSmaModel(hut.TestCase):
     def test_fit_dag1(self) -> None:
         # Load test data.
@@ -442,8 +442,8 @@ class TestSmaModel(hut.TestCase):
         vol.name = "vol"
         df = pd.DataFrame(index=date_range, data=vol)
         return df
-    
-    
+
+
 class TestVolatilityModel(hut.TestCase):
     def test_fit_dag1(self) -> None:
         # Load test data.
@@ -692,6 +692,59 @@ class TestVolatilityModel(hut.TestCase):
         output = self._run_volatility_model(data, config)
         self.check_string(output.to_string())
 
+    def test_get_fit_state(self) -> None:
+        data = self._get_data()
+        config = cconfi.Config()
+        config["cols"] = ["ret_0"]
+        config["steps_ahead"] = 2
+        config["nan_mode"] = "leave_unchanged"
+        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
+        output_df = node.fit(data)["df_out"]
+        str_output = (
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('state')}\n{node.get_fit_state()}\n"
+            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
+        )
+        self.check_string(str_output)
+
+    def test_get_fit_state(self) -> None:
+        data = self._get_data()
+        config = cconfi.Config()
+        config["cols"] = ["ret_0"]
+        config["steps_ahead"] = 2
+        config["nan_mode"] = "leave_unchanged"
+        state = {
+            "_fit_cols": ["ret_0"],
+            "_vol_cols": {"ret_0": "ret_0_vol"},
+            "_fwd_vol_cols": {"ret_0": "ret_0_vol_2"},
+            "_fwd_vol_cols_hat": {"ret_0": "ret_0_vol_2_hat"},
+            "_taus": {"ret_0": 10},
+            "_info['fit']": None,
+        }
+        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
+        node.set_fit_state(state)
+        output_df = node.predict(data)["df_out"]
+        str_output = (
+            f"{hprint.frame('config')}\n{config}\n"
+            f"{hprint.frame('state')}\n{state}\n"
+            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
+        )
+        self.check_string(str_output)
+
+    def test_predict_with_predefined_state(self) -> None:
+        data = self._get_data()
+        config = cconfi.Config()
+        config["cols"] = ["ret_0"]
+        config["steps_ahead"] = 2
+        config["nan_mode"] = "leave_unchanged"
+        node_fit = cdataf.VolatilityModel("vol_model", **config.to_dict())
+        node_fit.fit(data)
+        output_fit = node_fit.predict(data)["df_out"]
+        node_predefined = cdataf.VolatilityModel("vol_model", **config.to_dict())
+        node_predefined.set_fit_state(node_fit.get_fit_state())
+        output_predefined = node_predefined.predict(data)["df_out"]
+        pd.testing.assert_frame_equal(output_fit, output_predefined)
+
     @staticmethod
     def _get_data() -> pd.DataFrame:
         """
@@ -722,7 +775,7 @@ class TestVolatilityModel(hut.TestCase):
         output = dag.run_leq_node("vol_model", "fit")["df_out"]
         return output
 
-    
+
 class TestVolatilityModulator(hut.TestCase):
     def test_modulate1(self) -> None:
         steps_ahead = 2
@@ -837,13 +890,13 @@ class TestVolatilityModulator(hut.TestCase):
         return pd.concat(
             [signal.rename("ret_0"), fwd_vol.rename("vol_2_hat")], axis=1
         )
-    
+
 
 # #############################################################################
 # Test gluon-ts - DeepAR
 # #############################################################################
 
- 
+
 if True:
 
     class TestContinuousDeepArModel(hut.TestCase):
@@ -969,9 +1022,9 @@ if True:
             }
             config["x_vars"] = self._x_vars
             config["y_vars"] = self._y_vars
-            return config  
-    
-    
+            return config
+
+
 # #############################################################################
 # Test statsmodels - SARIMAX
 # #############################################################################
