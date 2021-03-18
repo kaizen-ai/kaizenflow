@@ -56,9 +56,7 @@ class CSVPipeline:
         if isinstance(item, it.SymbolItem):
             return self._process_symbol(item, spider.symbols_header)
 
-    def _process_exchange(
-        self, item: scrapy.Item, header: list
-    ) -> scrapy.Item:
+    def _process_exchange(self, item: scrapy.Item, header: list) -> scrapy.Item:
         self.exchange_csv.writerow([item[x] for x in header])
         return item
 

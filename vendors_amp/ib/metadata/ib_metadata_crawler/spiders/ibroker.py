@@ -34,7 +34,7 @@ class IbrokerSpider(scrapy.Spider):
         "ib_symbol",
         "symbol",
         "currency",
-        "url"
+        "url",
     ]
 
     lx_regions = le.LinkExtractor(restrict_css="#toptabs ul.ui-tabs-nav")
