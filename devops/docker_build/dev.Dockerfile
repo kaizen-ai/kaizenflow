@@ -28,8 +28,7 @@ RUN conda config --set default_threads 4
 RUN conda config --add channels conda-forge
 RUN conda config --show-sources
 
-# TODO(gp): amp -> app
-ENV APP_DIR=/amp
+ENV APP_DIR=/app
 
 # Create conda environment.
 ENV ENV_NAME="venv"

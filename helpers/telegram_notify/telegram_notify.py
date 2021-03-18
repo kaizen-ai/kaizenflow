@@ -104,7 +104,7 @@ class _RequestsHandler(logging.Handler):
         ).content
 
 
-class _LOGstashFormatter(logging.Formatter):
+class _LogFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         launcher_name = _get_launcher_name()
         return "<pre>{notebook_name}</pre>: {message}".format(
@@ -116,6 +116,6 @@ def init_tglogger(log_level: int = logging.DEBUG) -> None:
     _tg_log = logging.getLogger("telegram_notify")
     _tg_log.setLevel(log_level)
     handler = _RequestsHandler()
-    formatter = _LOGstashFormatter()
+    formatter = _LogFormatter()
     handler.setFormatter(formatter)
     _tg_log.handlers = [handler]

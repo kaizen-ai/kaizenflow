@@ -5,7 +5,7 @@ services:
     # For local runs in user space.
     image: ${IMAGE}
     volumes:
-      - ../../:/amp
+      - ../../:/app
       - ~/.aws:/root/.aws
       - ../docker_build/fstab:/etc/fstab
     privileged: true
