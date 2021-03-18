@@ -34,6 +34,7 @@ class IbrokerSpider(scrapy.Spider):
         "ib_symbol",
         "symbol",
         "currency",
+        "url"
     ]
 
     lx_regions = le.LinkExtractor(restrict_css="#toptabs ul.ui-tabs-nav")
@@ -160,6 +161,7 @@ class IbrokerSpider(scrapy.Spider):
             sldr.add_value("ib_symbol", s_data[0])
             sldr.add_value("symbol", s_data[2])
             sldr.add_value("currency", s_data[3])
+            sldr.add_value("url", response.url)
             yield sldr.load_item()
 
         pagination = self.lx_pagination.extract_links(response)

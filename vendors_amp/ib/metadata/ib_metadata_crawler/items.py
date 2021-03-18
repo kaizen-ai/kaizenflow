@@ -17,3 +17,4 @@ class SymbolItem(scrapy.Item):
     ib_symbol = scrapy.Field()
     symbol = scrapy.Field()
     currency = scrapy.Field()
+    url = scrapy.Field()
