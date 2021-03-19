@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# TODO(gp): Move all the PATH and PYTHONPATH to the entrypoint.
+
 set -e
 
 source devops/docker_build/entrypoint/aws_credentials.sh

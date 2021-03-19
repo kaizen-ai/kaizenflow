@@ -4,14 +4,14 @@ FROM continuumio/miniconda3:4.9.2
 
 # TODO(gp): Trim this down. npm needed?
 RUN apt update && \
-    apt install cifs-utils -y && \
-    apt install git -y && \
-    apt install graphviz -y && \
-    apt install keyutils -y && \
-    apt install make -y && \
-    apt install npm -y && \
-    apt install s3fs -y && \
-    apt install vim -y && \
+    apt install -y cifs-utils && \
+    apt install -y git && \
+    apt install -y graphviz && \
+    apt install -y keyutils && \
+    apt install -y make && \
+    apt install -y npm && \
+    apt install -y s3fs && \
+    apt install -y vim && \
     apt-get purge -y --auto-remove
 
 # TODO(*): Remove prettier since it goes in dev_tools.

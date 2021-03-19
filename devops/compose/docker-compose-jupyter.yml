@@ -23,4 +23,4 @@ services:
   jupyter_server_test:
     extends:
       jupyter_server
-    command: jupyter notebook -h
+    command: jupyter notebook -h >/dev/null

@@ -1,6 +1,8 @@
 #!/bin/bash
 DIR1=$HOME/src/commodity_research1
+#DIR1=$HOME/src/commodity_research1/amp
 DIR2=$HOME/src/commodity_research1/amp
+#DIR2=$HOME/src/dev_tools
 
 echo "DIR1=$DIR1"
 echo "DIR2=$DIR2"
