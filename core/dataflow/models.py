@@ -800,7 +800,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         col: _TO_LIST_MIXIN_TYPE,
         steps_ahead: int,
         tau: Optional[float] = None,
-        min_tau_periods: Optional[float] = 0.2,
+        min_tau_periods: Optional[float] = 2,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
@@ -866,7 +866,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         # Define and fit model.
         if self._must_learn_tau:
             self._tau = self._learn_tau(x_fit, fwd_y_fit)
-        min_periods = int(np.rint(self._min_tau_periods * self._tau))
+        min_periods = self._get_min_periods(self._tau)
         _LOG.debug("tau=", self._tau)
         info = collections.OrderedDict()
         info["tau"] = self._tau
@@ -966,14 +966,29 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
                 min_depth=self._min_depth,
                 max_depth=self._max_depth,
             )
-            min_periods = int(np.rint(self._min_tau_periods * tau))
+            min_periods = self._get_min_periods(tau)
             return self._metric(sma[min_periods:], y[min_periods:])
 
-        # TODO(*): Make this configurable.
+        tau_lb, tau_ub = 1, 1000
+        # Satisfy 2 * tau_ub * min_tau_periods = len(x).
+        # This ensures that no more than half of the `fit` series is burned.
+        if self._min_tau_periods > 0:
+            tau_ub = int(len(x) / (2 * self._min_tau_periods))
         opt_results = sp.optimize.minimize_scalar(
-            score, method="bounded", bounds=[1, 100]
+            score, method="bounded", bounds=[tau_lb, tau_ub]
         )
         return opt_results.x
+
+    def _get_min_periods(self, tau: float) -> int:
+        """
+        Return burn-in period.
+
+        Multiplies `tau` by `min_tau_periods` and converts to an integer.
+
+        :param tau: kernel tau (approximately equal to com)
+        :return: minimum number of periods required to generate a prediction
+        """
+        return int(np.rint(self._min_tau_periods * tau))
 
     def _predict(self, x: np.array) -> np.array:
         x_srs = pd.DataFrame(x.flatten())
@@ -1019,7 +1034,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self,
         nid: str,
         steps_ahead: int,
-        cols: _TO_LIST_MIXIN_TYPE = None,
+        cols: Optional[_TO_LIST_MIXIN_TYPE] = None,
         p_moment: float = 2,
         tau: Optional[float] = None,
         col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
@@ -1055,7 +1070,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self._col_mode = col_mode or "merge_all"
         self._nan_mode = nan_mode
         #
-        self._fit_cols: Dict[_COL_TYPE, str] = {}
+        self._fit_cols: List[_COL_TYPE] = []
         self._vol_cols: Dict[_COL_TYPE, str] = {}
         self._fwd_vol_cols: Dict[_COL_TYPE, str] = {}
         self._fwd_vol_cols_hat: Dict[_COL_TYPE, str] = {}
