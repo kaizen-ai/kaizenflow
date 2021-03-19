@@ -49,7 +49,6 @@ docker_stats:
 # Run bash inside container with activated environment.
 docker_bash:
 	IMAGE=$(IMAGE_DEV) \
-	echo "IMAGE=$(IMAGE)" \
 	docker-compose \
 		-f devops/compose/docker-compose-user-space.yml \
 		run \
@@ -61,7 +60,6 @@ docker_bash:
 # Run the script inside the container with activated environment.
 docker_cmd:
 	IMAGE=$(IMAGE_DEV) \
-	IMAGE=$(IMAGE) \
 	docker-compose \
 		-f devops/compose/docker-compose-user-space.yml \
 		run \
@@ -78,7 +76,6 @@ J_PORT?=9999
 docker_jupyter:
 	J_PORT=$(J_PORT) \
 	IMAGE=$(IMAGE_DEV) \
-	IMAGE=$(IMAGE) \
 	docker-compose \
 		-f devops/compose/docker-compose-jupyter.yml \
 		run \

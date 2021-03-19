@@ -84,6 +84,12 @@ class FitPredictNode(Node, abc.ABC):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         pass
 
+    def get_fit_state(self) -> Dict[str, Any]:
+        return {}
+
+    def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
+        pass
+
     def get_info(
         self, method: str
     ) -> Optional[Union[str, collections.OrderedDict]]:

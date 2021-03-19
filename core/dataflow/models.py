@@ -1,7 +1,6 @@
 import collections
 import datetime
 import logging
-import pickle
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import gluonts.model.deepar as gmdeep
@@ -15,8 +14,8 @@ import statsmodels.iolib as siolib
 from tqdm.autonotebook import tqdm
 
 import core.backtest as cbackt
-import core.config as cfg
-import core.config_builders as cfgb
+import core.config as cconfi
+import core.config_builders as ccbuild
 import core.data_adapters as cdataa
 import core.signal_processing as csigna
 import core.statistics as cstati
@@ -120,7 +119,6 @@ class ContinuousSkLearnModel(
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
-        state: Optional[str] = None,
     ) -> None:
         """
         Specify the data and sklearn modeling parameters.
@@ -145,18 +143,13 @@ class ContinuousSkLearnModel(
         :param col_mode: "merge_all" or "replace_all", as in
             ColumnTransformer()
         :param nan_mode: "drop" or "raise"
-        :param state: sklearn model state (e.g., from previous `fit` run)
         """
         super().__init__(nid)
         self._model_func = model_func
         self._model_kwargs = model_kwargs or {}
         self._x_vars = x_vars
         self._y_vars = y_vars
-        self._state = state
-        if self._state is None:
-            self._model = None
-        else:
-            self._model = pickle.loads(state)
+        self._model = None
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(
             0, self._steps_ahead, "Non-causal prediction attempted! Aborting..."
@@ -266,6 +259,14 @@ class ContinuousSkLearnModel(
         # info["state"] = pickle.dumps(self._model)
         self._set_info("predict", info)
         return {"df_out": df_out}
+
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]):
+        self._model = fit_state["_model"]
+        self._info["fit"] = fit_state["_info['fit']"]
 
     def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -472,7 +473,7 @@ class UnsupervisedSkLearnModel(
         self,
         nid: str,
         model_func: Callable[..., Any],
-        x_vars: _TO_LIST_MIXIN_TYPE,
+        x_vars: Optional[_TO_LIST_MIXIN_TYPE] = None,
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -514,7 +515,10 @@ class UnsupervisedSkLearnModel(
         self._validate_input_df(df_in)
         df = df_in.copy()
         # Determine index where no x_vars are NaN.
-        x_vars = self._to_list(self._x_vars)
+        if self._x_vars is None:
+            x_vars = df_in.columns.tolist()
+        else:
+            x_vars = self._to_list(self._x_vars)
         non_nan_idx = df[x_vars].dropna().index
         dbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
@@ -807,7 +811,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         :param col: name of column to model
         :param steps_ahead: as in ContinuousSkLearnModel
         :param tau: as in `csigna.compute_smooth_moving_average`. If `None`,
-            learn this parameter
+            learn this parameter. Will be re-learned on each `fit` call.
         :param min_tau_periods: similar to `min_periods` as in
             `csigna.compute_smooth_moving_average`, but expressed in units of
             tau
@@ -829,6 +833,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         self._col_mode = col_mode or "replace_all"
         dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
         # Smooth moving average model parameters to learn.
+        self._must_learn_tau = tau is None
         self._tau = tau
         self._min_tau_periods = min_tau_periods or 0
         self._min_depth = 1
@@ -859,7 +864,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
             fwd_y_df, fwd_y_df.columns.tolist()
         )
         # Define and fit model.
-        if self._tau is None:
+        if self._must_learn_tau:
             self._tau = self._learn_tau(x_fit, fwd_y_fit)
         min_periods = int(np.rint(self._min_tau_periods * self._tau))
         _LOG.debug("tau=", self._tau)
@@ -919,6 +924,14 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
+
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {"_tau": self._tau, "_info['fit']": self._info["fit"]}
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]):
+        self._tau = fit_state["_tau"]
+        self._info["fit"] = fit_state["_info['fit']"]
 
     def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -1008,7 +1021,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         steps_ahead: int,
         cols: _TO_LIST_MIXIN_TYPE = None,
         p_moment: float = 2,
-        tau: Optional[Union[float, Dict[_COL_TYPE, float]]] = None,
+        tau: Optional[float] = None,
         col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -1041,39 +1054,28 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self._col_rename_func = col_rename_func
         self._col_mode = col_mode or "merge_all"
         self._nan_mode = nan_mode
-        # Maybe initialize these.
+        #
+        self._fit_cols: Dict[_COL_TYPE, str] = {}
         self._vol_cols: Dict[_COL_TYPE, str] = {}
         self._fwd_vol_cols: Dict[_COL_TYPE, str] = {}
         self._fwd_vol_cols_hat: Dict[_COL_TYPE, str] = {}
-        if isinstance(self._cols, list):
-            self._init_col_dicts(self._cols)
-        #
         self._taus: Dict[_COL_TYPE, Optional[float]] = {}
-        if isinstance(self._tau, dict):
-            # Check that keys are same as those of cols.
-            self._taus = self._tau
-
-    def _init_col_dicts(self, cols: List[_COL_TYPE]) -> None:
-        for col in cols:
-            self._vol_cols[col] = str(col) + "_vol"
-            self._fwd_vol_cols[col] = (
-                self._vol_cols[col] + f"_{self._steps_ahead}"
-            )
-            self._fwd_vol_cols_hat[col] = self._fwd_vol_cols[col] + "_hat"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        if not isinstance(self._cols, list):
-            self._cols = self._to_list(self._cols or df_in.columns.tolist())
-            self._init_col_dicts(cols=self._cols)
-        if len(self._taus) == 0:
-            for col in self._cols:
-                self._taus[col] = self._tau
-        #
+        self._fit_cols = self._to_list(self._cols or df_in.columns.tolist())
+        self._vol_cols = {col: str(col) + "_vol" for col in self._fit_cols}
+        self._fwd_vol_cols = {
+            col: self._vol_cols[col] + f"_{self._steps_ahead}"
+            for col in self._fit_cols
+        }
+        self._fwd_vol_cols_hat = {
+            col: self._fwd_vol_cols[col] + "_hat" for col in self._fit_cols
+        }
         info = collections.OrderedDict()
         dfs = []
-        for col in self._cols:
-            dbg.dassert_not_in(self._vol_cols[col], df_in.columns)
-            config = self._get_config(col=col, tau=self._taus[col])
+        for col in self._fit_cols:
+            dbg.dassert_not_in(self._vol_cols[col], self._fit_cols)
+            config = self._get_config(col=col, tau=self._tau)
             dag = self._get_dag(df_in, config)
             df_out = dag.run_leq_node("demodulate_using_vol_pred", "fit")[
                 "df_out"
@@ -1083,21 +1085,24 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
                 self._taus[col] = info[col]["compute_smooth_moving_average"][
                     "fit"
                 ]["tau"]
+            else:
+                self._taus[col] = self._tau
             dfs.append(df_out)
         df_out = pd.concat(dfs, axis=1)
         df_out = self._apply_col_mode(
             df_in.drop(df_out.columns.intersection(df_in.columns), 1),
             df_out,
-            cols=self._cols,
+            cols=self._fit_cols,
             col_mode=self._col_mode,
         )
+        df_out = df_out.reindex(df_in.index)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         info = collections.OrderedDict()
         dfs = []
-        for col in self._cols:
+        for col in self._fit_cols:
             dbg.dassert_not_in(self._vol_cols[col], df_in.columns)
             tau = self._taus[col]
             dbg.dassert(tau)
@@ -1112,9 +1117,10 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         df_out = self._apply_col_mode(
             df_in.drop(df_out.columns.intersection(df_in.columns), 1),
             df_out,
-            cols=self._cols,
+            cols=self._fit_cols,
             col_mode=self._col_mode,
         )
+        df_out = df_out.reindex(df_in.index)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
@@ -1122,9 +1128,28 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
     def taus(self) -> Dict[_COL_TYPE, Any]:
         return self._taus
 
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {
+            "_fit_cols": self._fit_cols,
+            "_vol_cols": self._vol_cols,
+            "_fwd_vol_cols": self._fwd_vol_cols,
+            "_fwd_vol_cols_hat": self._fwd_vol_cols_hat,
+            "_taus": self._taus,
+            "_info['fit']": self._info["fit"],
+        }
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]):
+        self._fit_cols = fit_state["_fit_cols"]
+        self._vol_cols = fit_state["_vol_cols"]
+        self._fwd_vol_cols = fit_state["_fwd_vol_cols"]
+        self._fwd_vol_cols_hat = fit_state["_fwd_vol_cols_hat"]
+        self._taus = fit_state["_taus"]
+        self._info["fit"] = fit_state["_info['fit']"]
+
     def _get_config(
         self, col: _COL_TYPE, tau: Optional[float] = None
-    ) -> cfg.Config:
+    ) -> cconfi.Config:
         """
         Generate a DAG config.
 
@@ -1132,7 +1157,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         :param tau: tau for SMA; if `None`, then to be learned
         :return: a complete config to be used with `_get_dag()`
         """
-        config = cfgb.get_config_from_nested_dict(
+        config = ccbuild.get_config_from_nested_dict(
             {
                 "calculate_vol_pth_power": {
                     "cols": [col],
@@ -1167,7 +1192,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         )
         return config
 
-    def _get_dag(self, df_in: pd.DataFrame, config: cfg.Config) -> DAG:
+    def _get_dag(self, df_in: pd.DataFrame, config: cconfi.Config) -> DAG:
         """
         Build a DAG from data and config.
 
