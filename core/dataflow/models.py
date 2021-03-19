@@ -1019,7 +1019,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self,
         nid: str,
         steps_ahead: int,
-        cols: _TO_LIST_MIXIN_TYPE = None,
+        cols: Optional[_TO_LIST_MIXIN_TYPE] = None,
         p_moment: float = 2,
         tau: Optional[float] = None,
         col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
@@ -1055,7 +1055,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self._col_mode = col_mode or "merge_all"
         self._nan_mode = nan_mode
         #
-        self._fit_cols: Dict[_COL_TYPE, str] = {}
+        self._fit_cols: List[_COL_TYPE] = []
         self._vol_cols: Dict[_COL_TYPE, str] = {}
         self._fwd_vol_cols: Dict[_COL_TYPE, str] = {}
         self._fwd_vol_cols_hat: Dict[_COL_TYPE, str] = {}
