@@ -109,7 +109,6 @@ def _parse_diff_output(input_file: str, dir1: str, dir2: str, args):
                 dfatal("Invalid dir_='%s'" % dir_)
             if args.dir1_name is not None:
                 dir_ = dir_.replace("$DIR1", args.dir1_name)
-                sign = "<"
             if args.dir2_name is not None:
                 dir_ = dir_.replace("$DIR2", args.dir2_name)
             comment = line + "\n"
@@ -123,8 +122,8 @@ def _parse_diff_output(input_file: str, dir1: str, dir2: str, args):
             else:
                 dbg.dassert_in(args.dir2, file_name)
                 out_line = "vimdiff %s %s" % (
-                    file_name,
                     file_name.replace(args.dir2, args.dir1),
+                    file_name,
                 )
             # Skip directory.
             if os.path.isdir(file_name):
@@ -150,8 +149,8 @@ def _parse_diff_output(input_file: str, dir1: str, dir2: str, args):
             file2 = file2.replace("$DIR2/", "")
             dbg.dassert_eq(file1, file2)
             sign = "-"
-            comment = line + "\n"
-            comment += "%s: DIFF: %s\n" % (sign, file1)
+            comment = "\n" + line + "\n"
+            comment += "%s: DIFF: %s" % (sign, file1)
             # Diff command.
             out_line = "vimdiff %s %s" % (m.group(1), m.group(2))
             if args.only_different_files:

@@ -5,13 +5,13 @@ FROM continuumio/miniconda3:4.9.2
 # TODO(gp): Trim this down. npm needed?
 RUN apt update && \
     apt install cifs-utils -y && \
+    apt install git -y && \
+    apt install graphviz -y && \
     apt install keyutils -y && \
     apt install make -y && \
-    apt install graphviz -y && \
-    apt install vim -y && \
-    apt install git -y && \
-    apt install s3fs -y && \
     apt install npm -y && \
+    apt install s3fs -y && \
+    apt install vim -y && \
     apt-get purge -y --auto-remove
 
 # TODO(*): Remove prettier since it goes in dev_tools.
@@ -58,7 +58,7 @@ RUN devops/docker_build/install_requirements.sh
 RUN devops/docker_build/init.sh
 # TODO(gp): This is not portable across BUILDKIT=1 and BUILDKIT=0 and it's not
 # cached.
-#RUN --mount=source=.,target=/amp ./devops/docker_build/init.sh
+#RUN --mount=source=.,target=/app ./devops/docker_build/init.sh
 
 RUN echo "conda activate venv" >> ~/.bashrc
 

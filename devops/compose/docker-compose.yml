@@ -1,8 +1,9 @@
+# For local runs in user space.
+
 version: '3'
 
 services:
   app:
-    # For local runs in user space.
     image: ${IMAGE}
     volumes:
       - ../../:/app

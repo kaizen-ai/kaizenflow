@@ -5,12 +5,12 @@ services:
     image: $IMAGE
     restart: "no"
     volumes:
-      # AmpTask1017: Move one dir up to include the entire git repo.
+      # Move one dir up to include the entire git repo (see AmpTask1017).
       - ../../../:/app
       - ~/.aws:/root/.aws
-      - ~/.config/gspread_pandas/:/root/.config/gspread_pandas/
+      - ~/.config/gspread_pandas/:/root/.config/gspread_pandas
       - ../docker_build/fstab:/etc/fstab
-    # AmpTask1017: Move one dir down to include the entire git repo.
+    # Move one dir down to include the entire git repo (see AmpTask1017).
     working_dir: /app/amp
     privileged: true
     cap_add:

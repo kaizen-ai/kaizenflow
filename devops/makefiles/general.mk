@@ -77,8 +77,8 @@ docker_jupyter:
 	J_PORT=$(J_PORT) \
 	IMAGE=$(IMAGE_DEV) \
 	docker-compose \
-		-f $(DOCKER_COMPOSE_USER_SPACE) \
 		-f devops/compose/docker-compose-jupyter.yml \
+		-f $(DOCKER_COMPOSE_USER_SPACE) \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -394,8 +394,22 @@ precommit_uninstall_githooks:
 # NOTE: We need to run with IMAGE_RC since that's what we should be working
 # with, when changing the build system.
 
+J_PORT?=19999
+docker_jupyter_test:
+	J_PORT=$(J_PORT) \
+	IMAGE=$(IMAGE_DEV) \
+	docker-compose \
+		-f devops/compose/docker-compose-jupyter.yml \
+		-f $(DOCKER_COMPOSE_USER_SPACE) \
+		run \
+		--rm \
+		-l user=$(USER) \
+		--service-ports \
+		jupyter_server_test
+
 fast_self_tests:
 	make print_setup
+	make print_debug_setup
 	make make_print_targets
 	make make_print_makefiles
 	make docker_login
@@ -403,12 +417,14 @@ fast_self_tests:
 	make docker_ps
 	make docker_pull
 	make docker_cmd CMD="echo" IMAGE=$(IMAGE_RC)
+	make docker_jupyter_test
 
 slow_self_tests:
 	make docker_build_rc_image_with_cache
 	make run_blank_tests.rc
 	make run_fast_tests.rc
 	make docker_build_image.prod
+	make run_slow_tests.rc
 
 self_tests:
 	make fast_self_tests

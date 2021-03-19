@@ -16,7 +16,6 @@ AMP_IMAGE_RC=$(ECR_REPO_BASE_PATH):rc
 # Target image for the common actions.
 IMAGE_DEV=$(AMP_IMAGE_DEV)
 IMAGE_RC=$(AMP_IMAGE_RC)
-IMAGE_PROD=$(AMP_IMAGE_PROD)
 
 DEV_TOOLS_IMAGE_PROD=$(ECR_BASE_PATH)/dev_tools:prod
 

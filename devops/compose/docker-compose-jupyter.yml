@@ -1,5 +1,7 @@
 version: '3'
 
+# TODO(gp): derive from docker-compose or mix with it.
+
 services:
   jupyter_server:
     image: $IMAGE
@@ -17,3 +19,8 @@ services:
     privileged: true
     cap_add:
       - SYS_ADMIN
+
+  jupyter_server_test:
+    extends:
+      jupyter_server
+    command: jupyter notebook -h
