@@ -473,7 +473,7 @@ class UnsupervisedSkLearnModel(
         self,
         nid: str,
         model_func: Callable[..., Any],
-        x_vars: _TO_LIST_MIXIN_TYPE,
+        x_vars: Optional[_TO_LIST_MIXIN_TYPE] = None,
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -515,7 +515,10 @@ class UnsupervisedSkLearnModel(
         self._validate_input_df(df_in)
         df = df_in.copy()
         # Determine index where no x_vars are NaN.
-        x_vars = self._to_list(self._x_vars)
+        if self._x_vars is None:
+            x_vars = df_in.columns.tolist()
+        else:
+            x_vars = self._to_list(self._x_vars)
         non_nan_idx = df[x_vars].dropna().index
         dbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
@@ -1092,6 +1095,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
             cols=self._fit_cols,
             col_mode=self._col_mode,
         )
+        df_out = df_out.reindex(df_in.index)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
@@ -1116,6 +1120,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
             cols=self._fit_cols,
             col_mode=self._col_mode,
         )
+        df_out = df_out.reindex(df_in.index)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
