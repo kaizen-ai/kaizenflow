@@ -521,6 +521,7 @@ class ColumnTransformer(Transformer, ColModeMixin):
         # Store the list of columns after the transformation.
         self._transformed_col_names = None
         self._nan_mode = nan_mode or "leave_unchanged"
+        self._fit_cols = cols
 
     @property
     def transformed_col_names(self) -> List[str]:
@@ -537,8 +538,11 @@ class ColumnTransformer(Transformer, ColModeMixin):
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df_in = df.copy()
         df = df.copy()
-        if self._cols is not None:
-            df = df[self._cols]
+        if self._fit_cols is None:
+            self._fit_cols = df.columns.tolist() or self._cols
+        if self._cols is None:
+            dbg.dassert_set_eq(self._fit_cols, df.columns)
+        df = df[self._fit_cols]  
         idx = df.index
         if self._nan_mode == "leave_unchanged":
             pass
@@ -625,6 +629,7 @@ class SeriesTransformer(Transformer, ColModeMixin):
         # Store the list of columns after the transformation.
         self._transformed_col_names = None
         self._nan_mode = nan_mode or "leave_unchanged"
+        self._fit_cols = cols
 
     @property
     def transformed_col_names(self) -> List[str]:
@@ -641,8 +646,11 @@ class SeriesTransformer(Transformer, ColModeMixin):
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df_in = df.copy()
         df = df.copy()
-        if self._cols is not None:
-            df = df[self._cols]
+        if self._fit_cols is None:
+            self._fit_cols = df.columns.tolist() or self._cols
+        if self._cols is None:
+            dbg.dassert_set_eq(self._fit_cols, df.columns)
+        df = df[self._fit_cols]
         idx = df.index
         # Initialize container to store info (e.g., auxiliary stats) in the
         # node.
