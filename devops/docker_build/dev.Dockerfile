@@ -14,8 +14,6 @@ RUN apt update && \
     apt install -y vim && \
     apt-get purge -y --auto-remove
 
-# TODO(*): Remove prettier since it goes in dev_tools.
-RUN npm install --global prettier
 
 # Mount external filesystems.
 RUN mkdir -p /s3/default00-bucket

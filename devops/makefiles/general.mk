@@ -353,16 +353,12 @@ git_pull:
 	git pull --autostash
 	git submodule foreach 'git pull --autostash'
 
-_clean:
-	git clean -fd
-	find . | \grep -E "(__pycache__|\.pyc|\.pyo$)" | xargs rm -rf
-
 # Clean all the repos.
 # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
 # mistake.
 git_clean:
-	make _clean
-	git submodule foreach 'make _clean'
+	git clean -fd
+	git submodule foreach 'git clean -fd'
 
 git_for:
 	$(CMD)
