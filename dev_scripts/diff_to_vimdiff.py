@@ -156,6 +156,14 @@ def _parse_diff_output(input_file: str, dir1: str, dir2: str, args):
             if args.only_different_files:
                 _LOG.debug("  -> Skipping line")
                 skip = True
+        elif line.startswith("File "):
+            # File
+            #   /wd/saggese/src/commodity_research1/amp/devops/docker_build/fstab
+            # is a regular file while file
+            #   /wd/saggese/src/dev_tools/devops/docker_build/fstab
+            # is a directory
+            _LOG.warning(line)
+            continue
         else:
             dbg.dfatal("Invalid line='%s'" % line)
         #

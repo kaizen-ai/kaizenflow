@@ -56,8 +56,8 @@ class TestRunNotebook(hut.TestCase):
         )
         cmd += " 2>&1 >/dev/null"
         _LOG.warning("This command is supposed to fail")
-        with self.assertRaises(RuntimeError):
-            si.system(cmd)
+        rc = si.system(cmd, abort_on_error=False)
+        self.assertNotEqual(rc, 0)
 
 
 def build_configs() -> List[cfg.Config]:

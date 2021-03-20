@@ -8,7 +8,7 @@ AWSCLI_MAJOR_VERSION=$(shell echo "$(AWSCLI_VERSION)" | awk -F"." '{print $$1}')
 docker_login:
 	@echo AWS CLI version: $(AWSCLI_VERSION)
 	@echo AWS CLI major version: $(AWSCLI_MAJOR_VERSION)
-ifeq ($(AWSCLI_MAJOR_VERSION),1)
+ifeq ($(AWSCLI_MAJOR_VERSION), 1)
 	eval `aws ecr get-login --no-include-email --region us-east-2`
 else
 	docker login -u AWS -p $(aws ecr get-login --region us-east-2) https://$(ECR_REPO_BASE_PATH)
@@ -74,6 +74,7 @@ docker_cmd:
 # > make docker_jupyter J_PORT=10000 IMAGE="083233266530.dkr.ecr.us-east-2.amazonaws.com/amp_env:rc"
 J_PORT?=9999
 docker_jupyter:
+ifndef NO_JUPYTER
 	J_PORT=$(J_PORT) \
 	IMAGE=$(IMAGE_DEV) \
 	docker-compose \
@@ -84,6 +85,9 @@ docker_jupyter:
 		-l user=$(USER) \
 		--service-ports \
 		jupyter_server
+else
+	@echo "Jupyter is not supported"
+endif
 
 # #############################################################################
 # Run tests with "latest" image.
@@ -111,6 +115,10 @@ endif
 print_debug_setup:
 	@echo "SUBMODULE_NAME=$(SUBMODULE_NAME)"
 	@echo "DOCKER_COMPOSE_USER_SPACE=${DOCKER_COMPOSE_USER_SPACE}"
+	@echo "NO_JUPYTER=$(NO_JUPYTER)"
+	@echo "NO_FAST_TESTS=$(NO_FAST_TESTS)"
+	@echo "NO_SLOW_TESTS=$(NO_SLOW_TESTS)"
+	@echo "NO_SUPERSLOW_TESTS=$(NO_SUPERSLOW_TESTS)"
 
 # The user can pass another IMAGE to run tests in another image.
 
@@ -133,23 +141,32 @@ run_blank_tests:
 	_CMD="pytest -h >/dev/null" \
 	make _run_tests
 
-# Run fast tests locally.
 run_fast_tests:
+ifndef NO_FAST_TESTS
 	_IMAGE=$(IMAGE_DEV) \
 	_CMD="$(RUN_TESTS_DIR)/run_fast_tests.sh" \
 	make _run_tests
+else
+	echo "No fast tests"
+endif
 
-# Run slow tests.
 run_slow_tests:
+ifndef NO_SLOW_TESTS
 	_IMAGE=$(IMAGE_DEV) \
 	_CMD="$(RUN_TESTS_DIR)/run_slow_tests.sh" \
 	make _run_tests
+else
+	echo "No slow tests"
+endif
 
-# Run superslow tests.
 run_superslow_tests:
+ifndef NO_SUPERSLOW_TESTS
 	_IMAGE=$(IMAGE_DEV) \
 	_CMD="$(RUN_TESTS_DIR)/run_superslow_tests.sh" \
 	make _run_tests
+else
+	echo "No superslow tests"
+endif
 
 # #############################################################################
 # Run tests with "rc" image.
@@ -161,27 +178,39 @@ run_blank_tests.rc:
 	_CMD="pytest -h >/dev/null" \
 	make _run_tests
 
-# Run fast tests locally.
 run_fast_tests.rc:
+ifndef NO_FAST_TESTS
 	_IMAGE=$(IMAGE_RC) \
 	_CMD="$(RUN_TESTS_DIR)/run_fast_tests.sh" \
 	make _run_tests
+else
+	echo "No fast tests"
+endif
 
-# Run slow tests.
 run_slow_tests.rc:
+ifndef NO_SLOW_TESTS
 	_IMAGE=$(IMAGE_RC) \
 	_CMD="$(RUN_TESTS_DIR)/run_slow_tests.sh" \
 	make _run_tests
+else
+	echo "No slow tests"
+endif
 
-# Run superslow tests.
 run_superslow_tests.rc:
+ifndef NO_SUPERSLOW_TESTS
 	_IMAGE=$(IMAGE_RC) \
 	_CMD="$(RUN_TESTS_DIR)/run_superslow_tests.sh" \
 	make _run_tests
+else
+	echo "No superslow tests"
+endif
 
 # #############################################################################
 # GH actions tests for "latest" image.
 # #############################################################################
+
+# For the GH actions we assume that if we call the target, it must work: thus
+# we don't use NO_{FAST,SLOW,SUPERSLOW}_TESTS.
 
 _run_tests.gh_action:
 	IMAGE=$(_IMAGE) \
@@ -234,7 +263,7 @@ run_superslow_tests.gh_action_rc:
 # Images workflows.
 # #############################################################################
 
-ifdef $(GITHUB_SHA)
+ifdef GITHUB_SHA
 IMAGE_RC_SHA:=$(GITHUB_SHA)
 else
 # GITHUB_SHA not found. Setting IMAGE_RC_SHA from HEAD.
@@ -291,7 +320,7 @@ docker_push_latest_image:
 #   image
 # - The PROD image becomes "prod".
 docker_build_image.prod:
-ifdef $(IMAGE_PROD)
+ifdef IMAGE_PROD
 	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
 	docker build \
 		--progress=plain \
@@ -306,7 +335,7 @@ endif
 
 # Push the "prod" image to the registry.
 docker_push_image.prod:
-ifdef $(IMAGE_PROD)
+ifdef IMAGE_PROD
 	docker push $(IMAGE_PROD)
 	docker push $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA)
 else
@@ -322,12 +351,16 @@ git_pull:
 	git pull --autostash
 	git submodule foreach 'git pull --autostash'
 
+_clean:
+	git clean -fd
+	find . | \grep -E "(__pycache__|\.pyc|\.pyo$)" | xargs rm -rf
+
 # Clean all the repos.
 # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
 # mistake.
 git_clean:
-	git clean -fd
-	git submodule foreach 'git clean -fd'
+	make _clean
+	git submodule foreach 'make _clean'
 
 git_for:
 	$(CMD)
@@ -394,9 +427,9 @@ precommit_uninstall_githooks:
 # NOTE: We need to run with IMAGE_RC since that's what we should be working
 # with, when changing the build system.
 
-J_PORT?=19999
 docker_jupyter_test:
-	J_PORT=$(J_PORT) \
+ifndef NO_JUPYTER
+	J_PORT=19999 \
 	IMAGE=$(IMAGE_DEV) \
 	docker-compose \
 		-f devops/compose/docker-compose-jupyter.yml \
@@ -406,6 +439,10 @@ docker_jupyter_test:
 		-l user=$(USER) \
 		--service-ports \
 		jupyter_server_test
+else
+	@echo "Jupyter is not supported"
+endif
+
 
 fast_self_tests:
 	make print_setup
