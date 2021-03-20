@@ -106,7 +106,7 @@ class TestSqlWriterBackend1(hut.TestCase):
         # Literally delete the tail of the data.
         with self._writer.conn as conn:
             with conn.cursor() as curs:
-                curs.execute("delete from DailyData where date > '2021-01-01'")
+                curs.execute("DELETE FROM DailyData WHERE date > '2021-01-01'")
         # Get remains of pandas Dataframe to load.
         df = self._writer.get_remains_data_to_load(self._trade_symbol_id,
                                                    df,
@@ -248,8 +248,8 @@ class TestSqlWriterBackend1(hut.TestCase):
         )
         with self._writer.conn as conn:
             with conn as curs:
-                curs.execute("delete from MinuteData "
-                             "where datetime = '2021-02-10T13:51:00Z'")
+                curs.execute("DELETE FROM MinuteData "
+                             "WHERE datetime = '2021-02-10T13:51:00Z'")
         self._writer.insert_bulk_minute_data(df=df)
         self._check_saved_data(table="MinuteData")
 
@@ -338,7 +338,7 @@ class TestSqlWriterBackend1(hut.TestCase):
 
     def _check_saved_data(self, table: str) -> None:
         """
-        Check data saved test_insert_bulk_daily_data1in Postgresql by test.
+        Check data saved in Postgresql by test.
 
         :param table: table name
         """

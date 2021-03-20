@@ -78,6 +78,9 @@ def convert_s3_to_sql(
             trade_symbol_id,
             df,
             vcdtyp.Frequency.Minutely)
+    else:
+        sql_writer_backend.delete_data_by_trade_symbol_id(trade_symbol_id,
+                                                          vcdtyp.Frequency.Minutely)
     if frequency == vcdtyp.Frequency.Minutely:
         sql_writer_backend.insert_bulk_minute_data(df)
     elif frequency == vcdtyp.Frequency.Daily:
