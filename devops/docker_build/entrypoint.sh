@@ -19,4 +19,8 @@ umask 000
 ./devops/docker_build/test/test_mount_s3.sh
 ./devops/docker_build/test/test_volumes.sh
 
+#echo "PATH=$PATH"
+#echo "PYTHONPATH=$PYTHONPATH"
+#echo "entrypoint.sh: '$@'"
+# TODO(gp): eval seems to be more general, but it creates a new executable.
 exec "$@"

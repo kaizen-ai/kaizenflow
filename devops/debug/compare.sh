@@ -1,9 +1,12 @@
 #!/bin/bash
-DIR1=$HOME/src/commodity_research1
-DIR2=$HOME/src/commodity_research1/amp
 
-#DIR1=$HOME/src/commodity_research1/amp
-#DIR2=$HOME/src/dev_tools
+if [[ 0 == 0 ]]; then
+    DIR1=$HOME/src/commodity_research1
+    DIR2=$HOME/src/commodity_research1/amp
+else
+    DIR1=$HOME/src/commodity_research1/amp
+    DIR2=$HOME/src/dev_tools
+fi;
 
 echo "DIR1=$DIR1"
 echo "DIR2=$DIR2"

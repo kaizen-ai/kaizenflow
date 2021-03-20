@@ -22,6 +22,8 @@ DEV_TOOLS_IMAGE_PROD=$(ECR_BASE_PATH)/dev_tools:prod
 # Point to the dir with the run_scripts.
 RUN_TESTS_DIR="devops/docker_scripts"
 
+NO_SUPERSLOW_TESTS='True'
+
 print_setup:
 	@echo "ECR_BASE_PATH=$(ECR_BASE_PATH)"
 	@echo "ECR_REPO_BASE_PATH=$(ECR_REPO_BASE_PATH)"

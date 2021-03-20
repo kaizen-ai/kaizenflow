@@ -46,6 +46,26 @@ docker_stats:
 	# --format='table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}'
 	docker stats --no-stream $(IDS)
 
+# Workaround for when amp is a submodule of another module
+#
+# See AmpTask1017.
+#
+# Return the path to the Git repo including the Git submodule for a submodule
+# and it's empty for a supermodule.
+SUBMODULE_SUPERPROJECT=$(shell git rev-parse --show-superproject-working-tree)
+# E.g., `amp`.
+SUBMODULE_NAME=$(shell ( \
+		git config --file ${SUBMODULE_SUPERPROJECT}/.gitmodules --get-regexp path \
+		| grep $(basename "$(pwd)") \
+		| awk '{ print $$2 }'))
+
+ifeq ($(SUBMODULE_SUPERPROJECT), )
+DOCKER_COMPOSE_USER_SPACE=devops/compose/docker-compose-user-space.yml
+else
+DOCKER_COMPOSE_USER_SPACE=devops/compose/docker-compose-user-space-git-subrepo.yml
+endif
+
+
 # Run bash inside container with activated environment.
 docker_bash:
 	IMAGE=$(IMAGE_DEV) \
@@ -58,6 +78,8 @@ docker_bash:
 		bash
 
 # Run the script inside the container with activated environment.
+# No need to overwrite the entrypoint:
+#	--entrypoint $(CMD)
 docker_cmd:
 	IMAGE=$(IMAGE_DEV) \
 	docker-compose \
@@ -65,9 +87,8 @@ docker_cmd:
 		run \
 		--rm \
 		-l user=$(USER) \
-		--entrypoint $(CMD) \
 		user_space \
-		$(CMD)
+		'$(CMD)'
 
 # Run jupyter notebook server.
 # E.g., run on port 10000 using a specific image:
@@ -92,25 +113,6 @@ endif
 # #############################################################################
 # Run tests with "latest" image.
 # #############################################################################
-
-# Workaround for when amp is a submodule of another module
-#
-# See AmpTask1017.
-#
-# Return the path to the Git repo including the Git submodule for a submodule
-# and it's empty for a supermodule.
-SUBMODULE_SUPERPROJECT=$(shell git rev-parse --show-superproject-working-tree)
-# E.g., `amp`.
-SUBMODULE_NAME=$(shell ( \
-		git config --file ${SUBMODULE_SUPERPROJECT}/.gitmodules --get-regexp path \
-		| grep $(basename "$(pwd)") \
-		| awk '{ print $$2 }'))
-
-ifeq ($(SUBMODULE_SUPERPROJECT), )
-DOCKER_COMPOSE_USER_SPACE="devops/compose/docker-compose-user-space.yml"
-else
-DOCKER_COMPOSE_USER_SPACE="devops/compose/docker-compose-user-space-git-subrepo.yml"
-endif
 
 print_debug_setup:
 	@echo "SUBMODULE_NAME=$(SUBMODULE_NAME)"
