@@ -57,7 +57,7 @@ class RegFreqMixin:
         Assert if df violates constraints, otherwise return `None`.
         """
         dbg.dassert_isinstance(df, pd.DataFrame)
-        dbg.dassert_no_duplicates(df.columns)
+        dbg.dassert_no_duplicates(df.columns.tolist())
         dbg.dassert(df.index.freq)
 
 
