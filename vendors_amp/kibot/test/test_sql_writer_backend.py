@@ -1,9 +1,8 @@
 import os
 
+import helpers.unit_test as hut
 import pandas as pd
 import pytest
-
-import helpers.unit_test as hut
 import vendors_amp.common.data.types as vcdtyp
 import vendors_amp.common.test.utils as vctuti
 import vendors_amp.kibot.sql_writer_backend as vksqlw
@@ -108,9 +107,9 @@ class TestSqlWriterBackend1(hut.TestCase):
             with conn.cursor() as curs:
                 curs.execute("DELETE FROM DailyData WHERE date > '2021-01-01'")
         # Get remains of pandas Dataframe to load.
-        df = self._writer.get_remains_data_to_load(self._trade_symbol_id,
-                                                   df,
-                                                   vcdtyp.Frequency.Daily)
+        df = self._writer.get_remains_data_to_load(
+            self._trade_symbol_id, df, vcdtyp.Frequency.Daily
+        )
         # Convert dataframe to string.
         txt = hut.convert_df_to_string(df)
         # Check the output against the golden.
@@ -248,8 +247,10 @@ class TestSqlWriterBackend1(hut.TestCase):
         )
         with self._writer.conn as conn:
             with conn as curs:
-                curs.execute("DELETE FROM MinuteData "
-                             "WHERE datetime = '2021-02-10T13:51:00Z'")
+                curs.execute(
+                    "DELETE FROM MinuteData "
+                    "WHERE datetime = '2021-02-10T13:51:00Z'"
+                )
         self._writer.insert_bulk_minute_data(df=df)
         self._check_saved_data(table="MinuteData")
 

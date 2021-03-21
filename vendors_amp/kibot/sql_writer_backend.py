@@ -2,7 +2,6 @@ from typing import Optional
 
 import pandas as pd
 import psycopg2.extras as pextra
-
 import vendors_amp.common.data.types as vcdtyp
 import vendors_amp.common.sql_writer_backend as vcsqlw
 
@@ -13,18 +12,23 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
     """
 
     FREQ_ATTR_MAPPING = {
-        vcdtyp.Frequency.Daily: {"table_name": "DailyData",
-                                 "datetime_field_name": "date"},
-        vcdtyp.Frequency.Minutely: {"table_name": "MinuteData",
-                                    "datetime_field_name": "datetime"},
-        vcdtyp.Frequency.Tick: {"table_name": "TickData",
-                                "datetime_field_name": "datetime"},
+        vcdtyp.Frequency.Daily: {
+            "table_name": "DailyData",
+            "datetime_field_name": "date",
+        },
+        vcdtyp.Frequency.Minutely: {
+            "table_name": "MinuteData",
+            "datetime_field_name": "datetime",
+        },
+        vcdtyp.Frequency.Tick: {
+            "table_name": "TickData",
+            "datetime_field_name": "datetime",
+        },
     }
 
-    def get_remains_data_to_load(self,
-                                 trade_symbol_id: int,
-                                 df: pd.DataFrame,
-                                 frequency: vcdtyp.Frequency):
+    def get_remains_data_to_load(
+        self, trade_symbol_id: int, df: pd.DataFrame, frequency: vcdtyp.Frequency
+    ) -> pd.DataFrame:
         """
         Find the maximum date(time) for trade_symbol_id in a certain frequency
         that already loaded and return a slice of data from a pandas
@@ -35,22 +39,26 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
         :param frequency: frequency of the data.
         :return: Slice of Pandas Dataframe to load.
         """
-        datetime_field_name = self.FREQ_ATTR_MAPPING[frequency]['datetime_field_name']
-        table_name = self.FREQ_ATTR_MAPPING[frequency]['table_name']
+        datetime_field_name = self.FREQ_ATTR_MAPPING[frequency][
+            "datetime_field_name"
+        ]
+        table_name = self.FREQ_ATTR_MAPPING[frequency]["table_name"]
         with self.conn:
             with self.conn.cursor() as cur:
-                cur.execute(f"SELECT MAX({datetime_field_name}) "
-                            f"FROM {table_name} WHERE "
-                            f"trade_symbol_id = {trade_symbol_id}")
+                cur.execute(
+                    f"SELECT MAX({datetime_field_name}) "
+                    f"FROM {table_name} WHERE "
+                    f"trade_symbol_id = {trade_symbol_id}"
+                )
                 max_datetime = cur.fetchone()[0]
         df[datetime_field_name] = pd.to_datetime(df[datetime_field_name])
         if max_datetime is not None:
             df = df[df[datetime_field_name] > pd.to_datetime(max_datetime)]
         return df
 
-    def delete_data_by_trade_symbol_id(self,
-                                       trade_symbol_id: int,
-                                       frequency: vcdtyp.Frequency) -> None:
+    def delete_data_by_trade_symbol_id(
+        self, trade_symbol_id: int, frequency: vcdtyp.Frequency
+    ) -> None:
         """
         Delete all data from table by given frequency and trade_symbol_id.
 
@@ -58,11 +66,13 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
         :param frequency: frequency of the data.
         :return:
         """
-        table_name = self.FREQ_ATTR_MAPPING[frequency]['table_name']
+        table_name = self.FREQ_ATTR_MAPPING[frequency]["table_name"]
         with self.conn:
             with self.conn.cursor() as cur:
-                cur.execute(f"DELETE FROM {table_name} "
-                            f"WHERE trade_symbol_id = {trade_symbol_id}")
+                cur.execute(
+                    f"DELETE FROM {table_name} "
+                    f"WHERE trade_symbol_id = {trade_symbol_id}"
+                )
 
     def insert_bulk_daily_data(
         self,

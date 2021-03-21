@@ -187,7 +187,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     unadjusted=unadjusted,
                     exchange_id=exchange_id,
                     exchange=args.exchange,
-                    incremental=args.incremental
+                    incremental=args.incremental,
                 )
             )
     _LOG.info("Found %i items to load to database", len(params_list))
