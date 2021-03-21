@@ -282,7 +282,7 @@ DOCKER_BUILDKIT=0
 # - A qualification process (e.g., running all tests) is performed on the "rc"
 #   image (typically through GitHub actions)
 # - If qualification is passed, it becomes "latest".
-docker_build_rc_image:
+docker_build_image.rc:
 	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
 	time \
 	docker build \
@@ -292,8 +292,9 @@ docker_build_rc_image:
 		-t $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
 		-f devops/docker_build/dev.Dockerfile \
 		.
+	docker image ls $(IMAGE_RC)
 
-docker_build_rc_image_with_cache:
+docker_build_image_with_cache.rc:
 	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
 	docker build \
 		--progress=plain \
@@ -301,19 +302,28 @@ docker_build_rc_image_with_cache:
 		-t $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
 		-f devops/docker_build/dev.Dockerfile \
 		.
+	docker image ls $(IMAGE_RC)
 
 # Push the "rc" image to the registry.
-docker_push_rc_image:
+docker_push_image.rc:
 	docker push $(IMAGE_RC)
 	docker push $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA)
 
-# Make the "rc" image as "latest".
-docker_tag_rc_image_latest:
+# Mark the "rc" image as "latest".
+docker_tag_rc_image.latest:
 	docker tag $(IMAGE_RC) $(ECR_REPO_BASE_PATH):latest
 
 # Push the "latest" image to the registry.
-docker_push_latest_image:
+docker_push_image.latest:
 	docker push $(ECR_REPO_BASE_PATH):latest
+
+docker_release.latest:
+	make docker_build_image_with_cache.rc
+	make run_fast_tests.rc
+	make run_slow_tests.rc
+	make docker_tag_rc_image.latest
+	make docker_push_image.latest
+	@echo "==> SUCCESS <=="
 
 # PROD image flow:
 # - PROD image has no release candidate
@@ -331,6 +341,7 @@ ifdef IMAGE_PROD
 		-t $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
 		-f devops/docker_build/prod.Dockerfile \
 		.
+	docker image ls $(IMAGE_PROD)
 else
 	@echo "IMAGE_PROD is not defined: nothing to do"
 endif
@@ -343,6 +354,15 @@ ifdef IMAGE_PROD
 else
 	@echo "IMAGE_PROD is not defined: nothing to do"
 endif
+
+docker_release.prod:
+	make docker_build_image_with_cache.rc
+	make run_fast_tests.rc
+	make run_slow_tests.rc
+	make docker_tag_rc_image.latest
+	make docker_build_image.prod
+	make docker_push_image.prod
+	@echo "==> SUCCESS <=="
 
 # #############################################################################
 # Git.
@@ -370,50 +390,6 @@ git_for:
 
 lint_branch:
 	bash pre-commit.sh run --files $(shell git diff --name-only master...)
-
-# #############################################################################
-# Pre-commit installation.
-# #############################################################################
-
-# Install pre-commit shell script.
-precommit_install:
-	docker run \
-		--rm -t \
-		-v "$(shell pwd)":/src \
-		--workdir /src \
-		--entrypoint="bash" \
-		$(DEV_TOOLS_PROD_IMAGE) \
-		/dev_tools/pre_commit_scripts/install_precommit_script.sh
-
-# Uninstall pre-commit shell script.
-precommit_uninstall:
-	docker run \
-		--rm -t \
-		-v "$(shell pwd)":/src \
-		--workdir /src \
-		--entrypoint="bash" \
-		$(DEV_TOOLS_PROD_IMAGE) \
-		/dev_tools/pre_commit_scripts/uninstall_precommit_script.sh
-
-# Install pre-commit git-hook.
-precommit_install_githooks:
-	docker run \
-		--rm -t \
-		-v "$(shell pwd)":/src \
-		--workdir /src \
-		--entrypoint="bash" \
-		$(DEV_TOOLS_PROD_IMAGE) \
-		/dev_tools/pre_commit_scripts/install_precommit_hook.sh
-
-# Uninstall pre-commit hook.
-precommit_uninstall_githooks:
-	docker run \
-		--rm -t \
-		-v "$(shell pwd)":/src \
-		--workdir /src \
-		--entrypoint="bash" \
-		$(DEV_TOOLS_PROD_IMAGE) \
-		/dev_tools/pre_commit_scripts/uninstall_precommit_hook.sh
 
 # #############################################################################
 # Self test.
@@ -453,14 +429,17 @@ fast_self_tests:
 	make docker_pull
 	make docker_cmd CMD="echo" IMAGE=$(IMAGE_RC)
 	make docker_jupyter_test
+	@echo "==> SUCCESS <=="
 
 slow_self_tests:
-	make docker_build_rc_image_with_cache
+	make docker_build_image_with_cache.rc
 	make run_blank_tests.rc
 	make run_fast_tests.rc
 	make docker_build_image.prod
 	make run_slow_tests.rc
+	@echo "==> SUCCESS <=="
 
 self_tests:
 	make fast_self_tests
 	make slow_self_tests
+	@echo "==> SUCCESS <=="

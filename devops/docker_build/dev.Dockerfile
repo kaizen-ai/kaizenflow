@@ -48,15 +48,13 @@ WORKDIR $APP_DIR
 
 # Install requirements.
 RUN devops/docker_build/install_requirements.sh
-# TODO(gp): This is not portable across BUILDKIT=1 and BUILDKIT=0 and it's not
-# cached.
+# This is not portable across BUILDKIT=1 and BUILDKIT=0 and it's not cached.
 #RUN --mount=source=.,target=/amp ./devops/docker_build/install_requirements.sh
 
 # Run repo-specific initialization scripts.
 RUN devops/docker_build/init.sh
-# TODO(gp): This is not portable across BUILDKIT=1 and BUILDKIT=0 and it's not
-# cached.
-#RUN --mount=source=.,target=/app ./devops/docker_build/init.sh
+# This is not portable across BUILDKIT=1 and BUILDKIT=0 and it's not cached.
+#RUN --mount=source=.,target=/commodity_research ./devops/docker_build/init.sh
 
 RUN echo "conda activate venv" >> ~/.bashrc
 
