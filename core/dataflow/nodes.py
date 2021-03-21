@@ -475,6 +475,7 @@ class ColModeMixin:
             pass
         else:
             dbg.dfatal("Unsupported column mode `%s`", col_mode)
+        dbg.dassert_no_duplicates(df_out.columns.tolist())
         return df_out
 
 
