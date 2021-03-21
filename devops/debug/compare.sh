@@ -1,9 +1,9 @@
 #!/bin/bash
 
-if [[ 0 == 0 ]]; then
+if [[ 1 == 1 ]]; then
     # amp vs p1
-    DIR1=$HOME/src/commodity_research1
-    DIR2=$HOME/src/commodity_research1/amp
+    DIR1=$HOME/src/commodity_research1/amp
+    DIR2=$HOME/src/commodity_research1
 else
     # amp vs dev_tools
     DIR1=$HOME/src/commodity_research1/amp
@@ -13,7 +13,7 @@ fi;
 echo "DIR1=$DIR1"
 echo "DIR2=$DIR2"
 
-if [[ 1 == 1 ]]; then
+if [[ 0 == 1 ]]; then
     vimdiff {$DIR1,$DIR2}/Makefile
     vimdiff {$DIR1,$DIR2}/devops/makefiles/general.mk
     vimdiff {$DIR1,$DIR2}/devops/makefiles/repo_specific.mk
