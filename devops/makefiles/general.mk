@@ -65,7 +65,6 @@ else
 DOCKER_COMPOSE_USER_SPACE=devops/compose/docker-compose-user-space-git-subrepo.yml
 endif
 
-
 # Run bash inside container with activated environment.
 docker_bash:
 	IMAGE=$(IMAGE_DEV) \
@@ -109,6 +108,10 @@ ifndef NO_JUPYTER
 else
 	@echo "Jupyter is not supported"
 endif
+
+docker_kill_last:
+	docker ps -l -q
+	docker rm -f $(docker ps -l -q)
 
 # #############################################################################
 # Run tests with "latest" image.

@@ -161,11 +161,6 @@ class Test_git1(ut.TestCase):
                 + ut.to_string("repo_sym_name_tmpA")
             )
 
-    def test_get_amp_abs_path1(self) -> None:
-        amp_dir = git.get_amp_abs_path()
-        # Check.
-        self.assertTrue(os.path.exists(amp_dir))
-
     def test_get_branch_name1(self) -> None:
         _ = git.get_branch_name()
 
