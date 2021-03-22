@@ -18,11 +18,11 @@ class TestS3IbDataLoader1(hut.TestCase):
         """
         # Load data.
         data = self._s3_data_loader.read_data(
-            exchange="CME",
-            symbol="ESZ21",
+            exchange="GLOBEX",
+            symbol="ES",
             asset_class=vcdtyp.AssetClass.Futures,
-            frequency=vcdtyp.Frequency.Minutely,
-            contract_type=vcdtyp.ContractType.Expiry,
+            frequency=vcdtyp.Frequency.Daily,
+            contract_type=vcdtyp.ContractType.Continuous,
             unadjusted=None,
             nrows=1,
         )
@@ -33,15 +33,15 @@ class TestS3IbDataLoader1(hut.TestCase):
 
     def test_read_data1(self) -> None:
         """
-        Test correctness of minute ESZ21 data loading.
+        Test correctness of minute ES data loading.
         """
         # Load data.
         data = self._s3_data_loader.read_data(
-            exchange="CME",
-            symbol="ESZ21",
+            exchange="GLOBEX",
+            symbol="ES",
             asset_class=vcdtyp.AssetClass.Futures,
             frequency=vcdtyp.Frequency.Minutely,
-            contract_type=vcdtyp.ContractType.Expiry,
+            contract_type=vcdtyp.ContractType.Continuous,
             unadjusted=None,
             nrows=10,
         )
@@ -52,14 +52,14 @@ class TestS3IbDataLoader1(hut.TestCase):
 
     def test_read_data2(self) -> None:
         """
-        Test correctness of minute TSLA data loading.
+        Test correctness of daily ES data loading.
         """
         # Load data.
         data = self._s3_data_loader.read_data(
-            exchange="NSDQ",
-            symbol="TSLA",
-            asset_class=vcdtyp.AssetClass.Stocks,
-            frequency=vcdtyp.Frequency.Minutely,
+            exchange="GLOBEX",
+            symbol="ES",
+            asset_class=vcdtyp.AssetClass.Futures,
+            frequency=vcdtyp.Frequency.Daily,
             contract_type=vcdtyp.ContractType.Continuous,
             unadjusted=True,
             nrows=10,
@@ -71,15 +71,15 @@ class TestS3IbDataLoader1(hut.TestCase):
 
     def test_read_data3(self) -> None:
         """
-        Test correctness of daily CLH21 data loading.
+        Test correctness of hourly ES data loading.
         """
         # Load data.
         data = self._s3_data_loader.read_data(
-            exchange="CME",
-            symbol="CLH21",
+            exchange="GLOBEX",
+            symbol="ES",
             asset_class=vcdtyp.AssetClass.Futures,
-            frequency=vcdtyp.Frequency.Daily,
-            contract_type=vcdtyp.ContractType.Expiry,
+            frequency=vcdtyp.Frequency.Hourly,
+            contract_type=vcdtyp.ContractType.Continuous,
             unadjusted=None,
             nrows=10,
         )

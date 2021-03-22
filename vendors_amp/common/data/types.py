@@ -12,6 +12,7 @@ class AssetClass(enum.Enum):
 class Frequency(enum.Enum):
     Minutely = "T"
     Daily = "D"
+    Hourly = "H"
     Tick = "tick"
 
 

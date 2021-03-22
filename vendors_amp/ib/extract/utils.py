@@ -160,7 +160,8 @@ def req_historical_data(
         df.set_index("date", drop=True, inplace=True)
         dbg.dassert_monotonic_index(df)
         # Convert to ET.
-        df.index = df.index.tz_convert(tz="America/New_York")
+        if bar_size_setting != "1 day":
+            df.index = df.index.tz_convert(tz="America/New_York")
         _LOG.debug("df=%s", get_df_signature(df))
     else:
         df = pd.DataFrame()
@@ -285,8 +286,7 @@ def select_assets(ib, target: str, frequency: str, symbol: str):
     #
     ib.qualifyContracts(contract)
     if frequency == "intraday":
-        # duration_str = '2 D'
-        duration_str = "7 D"
+        duration_str = "1 D"
         bar_size_setting = "1 min"
     elif frequency == "hour":
         duration_str = "2 D"
@@ -321,7 +321,6 @@ def get_tasks(
             )
         if end_ts is None:
             end_ts = get_end_timestamp(ib, contract, what_to_show, use_rth)
-            # end_ts = pd.Timestamp("2020-12-13 18:00:00-05:00")
         task = (
             contract,
             start_ts,
