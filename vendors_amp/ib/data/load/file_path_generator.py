@@ -15,8 +15,8 @@ class IbFilePathGenerator(vcdlfi.FilePathGenerator):
 
     FREQ_PATH_MAPPING = {
         vcdtyp.Frequency.Daily: "daily",
-        vcdtyp.Frequency.Minutely: "minutely",
         vcdtyp.Frequency.Hourly: "hourly",
+        vcdtyp.Frequency.Minutely: "minutely",
         vcdtyp.Frequency.Tick: "tick",
     }
 
@@ -51,7 +51,7 @@ class IbFilePathGenerator(vcdlfi.FilePathGenerator):
         if ext == vcdtyp.Extension.CSV:
             extension_part = "csv.gz"
         else:
-            raise ValueError("Unsupported extension %s", ext)
+            raise ValueError("Unsupported extension %s" % ext)
         # Get file name.
         file_name = "%s.%s" % (symbol, extension_part)
         # Construct full path.

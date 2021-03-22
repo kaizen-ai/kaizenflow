@@ -29,7 +29,7 @@ class TestS3IbDataLoader1(hut.TestCase):
         # Get columns types.
         types = data.dtypes.to_string()
         # Compare with expected.
-        self.check_string(types)
+        self.check_string(types, fuzzy_match=True)
 
     def test_read_data1(self) -> None:
         """
@@ -48,7 +48,7 @@ class TestS3IbDataLoader1(hut.TestCase):
         # Transform dataframe to string.
         actual_string = hut.convert_df_to_string(data)
         # Compare with expected.
-        self.check_string(actual_string)
+        self.check_string(actual_string, fuzzy_match=True)
 
     def test_read_data2(self) -> None:
         """
@@ -67,7 +67,7 @@ class TestS3IbDataLoader1(hut.TestCase):
         # Transform dataframe to string.
         actual_string = hut.convert_df_to_string(data)
         # Compare with expected.
-        self.check_string(actual_string)
+        self.check_string(actual_string, fuzzy_match=True)
 
     def test_read_data3(self) -> None:
         """
@@ -86,4 +86,4 @@ class TestS3IbDataLoader1(hut.TestCase):
         # Transform dataframe to string.
         actual_string = hut.convert_df_to_string(data)
         # Compare with expected.
-        self.check_string(actual_string)
+        self.check_string(actual_string, fuzzy_match=True)
