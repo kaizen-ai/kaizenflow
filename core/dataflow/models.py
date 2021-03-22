@@ -57,7 +57,7 @@ class RegFreqMixin:
         Assert if df violates constraints, otherwise return `None`.
         """
         dbg.dassert_isinstance(df, pd.DataFrame)
-        dbg.dassert_no_duplicates(df.columns)
+        dbg.dassert_no_duplicates(df.columns.tolist())
         dbg.dassert(df.index.freq)
 
 
@@ -1022,7 +1022,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         return info
 
 
-class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
+class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
     """
     Fit and predict a smooth moving average volatility model.
 
@@ -1077,6 +1077,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self._taus: Dict[_COL_TYPE, Optional[float]] = {}
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        self._validate_input_df(df_in)
         self._fit_cols = self._to_list(self._cols or df_in.columns.tolist())
         self._vol_cols = {col: str(col) + "_vol" for col in self._fit_cols}
         self._fwd_vol_cols = {
@@ -1086,6 +1087,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self._fwd_vol_cols_hat = {
             col: self._fwd_vol_cols[col] + "_hat" for col in self._fit_cols
         }
+        self._check_cols(df_in.columns.tolist())
         info = collections.OrderedDict()
         dfs = []
         for col in self._fit_cols:
@@ -1115,6 +1117,8 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        self._validate_input_df(df_in)
+        self._check_cols(df_in.columns.tolist())
         info = collections.OrderedDict()
         dfs = []
         for col in self._fit_cols:
@@ -1162,6 +1166,11 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self._taus = fit_state["_taus"]
         self._info["fit"] = fit_state["_info['fit']"]
 
+    def _check_cols(self, cols: List[_COL_TYPE]):
+        dbg.dassert_not_intersection(cols, self._vol_cols.values())
+        dbg.dassert_not_intersection(cols, self._fwd_vol_cols.values())
+        dbg.dassert_not_intersection(cols, self._fwd_vol_cols_hat.values())
+
     def _get_config(
         self, col: _COL_TYPE, tau: Optional[float] = None
     ) -> cconfi.Config:
@@ -1200,7 +1209,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
                     "signal_steps_ahead": 0,
                     "volatility_steps_ahead": self._steps_ahead,
                     "col_rename_func": self._col_rename_func,
-                    "col_mode": self._col_mode,
+                    "col_mode": "replace_selected",
                     "nan_mode": self._nan_mode,
                 },
             }
