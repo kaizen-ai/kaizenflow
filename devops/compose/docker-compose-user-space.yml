@@ -1,3 +1,5 @@
+# TODO(gp): Merge devops/compose/docker-compose-user-space.yml with
+# devops/compose/docker-compose.yml and remove the first one.
 version: '3'
 
 services:

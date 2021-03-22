@@ -14,7 +14,6 @@ RUN apt update && \
     apt install -y vim && \
     apt-get purge -y --auto-remove
 
-
 # Mount external filesystems.
 RUN mkdir -p /s3/default00-bucket
 RUN mkdir -p /fsx/research
