@@ -124,9 +124,9 @@ def _ib_date_range(
     _LOG.debug("start_ts_tmp='%s' end_ts='%s'", start_ts_tmp, end_ts)
     dbg.dassert_eq(_get_hh_mm_ss(start_ts_tmp), _SIX_PM)
     dbg.dassert_lt(start_ts_tmp, end_ts)
-    dates = pd.date_range(start=start_ts_tmp, end=end_ts, freq="2D").tolist()
+    dates = pd.date_range(start=start_ts_tmp, end=end_ts, freq="1D").tolist()
     # If the first date is before start_ts, then we don't need since the interval
-    # [date - days(2), date] doesn't overlap with [start_ts, end_ts].
+    # [date - days(1), date] doesn't overlap with [start_ts, end_ts].
     if dates[0] < start_ts:
         dates = dates[1:]
     # If the last date
@@ -164,7 +164,7 @@ def get_historical_data_workload(
     dbg.dassert_lte(3, (end_ts - start_ts).days)
     dates = _ib_date_range(start_ts, end_ts)
     # duration_str = "2 D"
-    duration_str = "7 D"
+    duration_str = "1 D"
     tasks = []
     for end in dates:
         task = (
@@ -268,7 +268,8 @@ def _execute_ptask(
     ib.disconnect()
     dbg.dassert_monotonic_index(df)
     _LOG.debug("%s -> df=%s", end_ts, vieuti.get_df_signature(df))
-    df.to_csv(file_name)
+    if not df.empty:
+        df.to_csv(file_name)
 
 
 def get_historical_data_parallel(tasks, num_threads, incremental, dst_dir):
@@ -381,7 +382,9 @@ def get_historical_data_parallel(tasks, num_threads, incremental, dst_dir):
             use_rth,
             file_name,
         ) = ptask
-        df_tmp = viedow.load_historical_data(file_name)
+        # If job was completed succesfully, read dataframe.
+        if os.path.exists(file_name):
+            df_tmp = viedow.load_historical_data(file_name)
         df.append(df_tmp)
     #
     df = pd.concat(df)
