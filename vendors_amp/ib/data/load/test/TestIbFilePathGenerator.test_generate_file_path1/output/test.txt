@@ -1,1 +1,1 @@
-s3://default00-bucket/tmp/PartTask7463/ESZ21_minute.csv
+s3://external-p1/ib/Futures/minutely/ESZ21.csv.gz
