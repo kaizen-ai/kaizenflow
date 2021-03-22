@@ -1093,7 +1093,7 @@ class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         for col in self._fit_cols:
             dbg.dassert_not_in(self._vol_cols[col], self._fit_cols)
             config = self._get_config(col=col, tau=self._tau)
-            dag = self._get_dag(df_in, config)
+            dag = self._get_dag(df_in[[col]], config)
             df_out = dag.run_leq_node("demodulate_using_vol_pred", "fit")[
                 "df_out"
             ]
@@ -1126,7 +1126,7 @@ class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
             tau = self._taus[col]
             dbg.dassert(tau)
             config = self._get_config(col=col, tau=tau)
-            dag = self._get_dag(df_in, config)
+            dag = self._get_dag(df_in[[col]], config)
             df_out = dag.run_leq_node("demodulate_using_vol_pred", "predict")[
                 "df_out"
             ]
