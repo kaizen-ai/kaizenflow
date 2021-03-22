@@ -1,8 +1,9 @@
 import os
 
-import helpers.unit_test as hut
 import pandas as pd
 import pytest
+
+import helpers.unit_test as hut
 import vendors_amp.common.data.types as vcdtyp
 import vendors_amp.common.test.utils as vctuti
 import vendors_amp.kibot.sql_writer_backend as vksqlw
@@ -82,8 +83,10 @@ class TestSqlWriterBackend1(hut.TestCase):
     def test_get_remains_data_to_load(self) -> None:
         """
         Slicing Pandas Dataframe to load.
-        This test, mock the situation, when loading process interrupted somehow.
-        Then, we need to load remaining data from the Pandas Dataframe.
+
+        This test, mock the situation, when loading process interrupted
+        somehow. Then, we need to load remaining data from the Pandas
+        Dataframe.
         """
         # Load the daily data.
         self._prepare_tables(

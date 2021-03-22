@@ -2,6 +2,7 @@ from typing import Optional
 
 import pandas as pd
 import psycopg2.extras as pextra
+
 import vendors_amp.common.data.types as vcdtyp
 import vendors_amp.common.sql_writer_backend as vcsqlw
 
@@ -31,8 +32,8 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
     ) -> pd.DataFrame:
         """
         Find the maximum date(time) for trade_symbol_id in a certain frequency
-        that already loaded and return a slice of data from a pandas
-        Dataframe where datetime > given maximum.
+        that already loaded and return a slice of data from a pandas Dataframe
+        where datetime > given maximum.
 
         :param trade_symbol_id: id of TradeSymbol.
         :param df: Pandas Dataframe to load.

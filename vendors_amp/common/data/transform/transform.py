@@ -5,10 +5,11 @@ Base methods to run converters.
 import logging
 from typing import Any, Dict, List, Optional
 
-import helpers.dbg as dbg
-import helpers.printing as hprint
 import joblib
 import tqdm
+
+import helpers.dbg as dbg
+import helpers.printing as hprint
 import vendors_amp.common.data.load.s3_data_loader as vcdls3
 import vendors_amp.common.data.load.sql_data_loader as vcdlsq
 import vendors_amp.common.data.transform.s3_to_sql_transformer as vcdts3
@@ -74,11 +75,11 @@ def convert_s3_to_sql(
     _LOG.debug("Saving '%s' data to database", symbol)
     if incremental:
         df = sql_writer_backend.get_remains_data_to_load(
-            trade_symbol_id, df, vcdtyp.Frequency.Minutely
+            trade_symbol_id, df, frequency
         )
     else:
         sql_writer_backend.delete_data_by_trade_symbol_id(
-            trade_symbol_id, vcdtyp.Frequency.Minutely
+            trade_symbol_id, frequency
         )
     if frequency == vcdtyp.Frequency.Minutely:
         sql_writer_backend.insert_bulk_minute_data(df)

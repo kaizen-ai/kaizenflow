@@ -29,7 +29,7 @@ import os
 
 import helpers.dbg as dbg
 import helpers.parser as hparse
-import vendors_amp.common.data.transform.transform as vcdtco
+import vendors_amp.common.data.transform.transform as vcdttr
 import vendors_amp.kibot.data.config as vkdcon
 import vendors_amp.kibot.data.load as vkdloa
 import vendors_amp.kibot.data.load.dataset_name_parser as vkdlda
@@ -192,7 +192,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             )
     _LOG.info("Found %i items to load to database", len(params_list))
     # Run converting.
-    vcdtco.convert_s3_to_sql_bulk(serial=args.serial, params_list=params_list)
+    vcdttr.convert_s3_to_sql_bulk(serial=args.serial, params_list=params_list)
     _LOG.info("Closing database connection")
     sql_writer_backed.close()
     sql_data_loader.conn.close()
