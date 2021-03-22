@@ -80,6 +80,44 @@ class TestSqlWriterBackend1(hut.TestCase):
         )
         self._check_saved_data(table="Symbol")
 
+    def test_get_remains_data_to_load(self) -> None:
+        """
+        Slicing Pandas Dataframe to load.
+
+        This test, mock the situation, when loading process interrupted
+        somehow. Then, we need to load remaining data from the Pandas
+        Dataframe.
+        """
+        # Load the daily data.
+        self._prepare_tables(
+            insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
+        )
+        df = pd.DataFrame(
+            {
+                "trade_symbol_id": [self._trade_symbol_id] * 3,
+                "date": ["2021-01-01", "2021-01-02", "2021-01-03"],
+                "open": [10.0] * 3,
+                "high": [15] * 3,
+                "low": [9] * 3,
+                "close": [12.5] * 3,
+                "volume": [1000] * 3,
+            }
+        )
+        self._writer.insert_bulk_daily_data(df=df)
+        # Mock the situation, when loading process interrupted somehow.
+        # Literally delete the tail of the data.
+        with self._writer.conn as conn:
+            with conn.cursor() as curs:
+                curs.execute("DELETE FROM DailyData WHERE date > '2021-01-01'")
+        # Get remains of pandas Dataframe to load.
+        df = self._writer.get_remains_data_to_load(
+            self._trade_symbol_id, df, vcdtyp.Frequency.Daily
+        )
+        # Convert dataframe to string.
+        txt = hut.convert_df_to_string(df)
+        # Check the output against the golden.
+        self.check_string(txt, fuzzy_match=True)
+
     def test_ensure_exchange_exist1(self) -> None:
         """
         Test adding a new exchange to Exchange table.
@@ -117,6 +155,31 @@ class TestSqlWriterBackend1(hut.TestCase):
                 "volume": [1000] * 3,
             }
         )
+        self._writer.insert_bulk_daily_data(df=df)
+        self._check_saved_data(table="DailyData")
+
+    def test_insert_bulk_daily_data_with_holes(self) -> None:
+        """
+        Test adding a dataframe to DailyData table if some data is missing.
+        """
+        self._prepare_tables(
+            insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
+        )
+        df = pd.DataFrame(
+            {
+                "trade_symbol_id": [self._trade_symbol_id] * 3,
+                "date": ["2021-01-01", "2021-01-02", "2021-01-03"],
+                "open": [10.0] * 3,
+                "high": [15] * 3,
+                "low": [9] * 3,
+                "close": [12.5] * 3,
+                "volume": [1000] * 3,
+            }
+        )
+        self._writer.insert_bulk_daily_data(df=df)
+        with self._writer.conn as conn:
+            with conn.cursor() as curs:
+                curs.execute("delete from DailyData where date = '2021-01-02'")
         self._writer.insert_bulk_daily_data(df=df)
         self._check_saved_data(table="DailyData")
 
@@ -160,6 +223,37 @@ class TestSqlWriterBackend1(hut.TestCase):
                 "volume": [1000] * 3,
             }
         )
+        self._writer.insert_bulk_minute_data(df=df)
+        self._check_saved_data(table="MinuteData")
+
+    def test_insert_bulk_minute_data_with_holes(self) -> None:
+        """
+        Test adding a dataframe to MinuteData table if some data is missing.
+        """
+        self._prepare_tables(
+            insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
+        )
+        df = pd.DataFrame(
+            {
+                "trade_symbol_id": [self._trade_symbol_id] * 3,
+                "datetime": [
+                    "2021-02-10T13:50:00Z",
+                    "2021-02-10T13:51:00Z",
+                    "2021-02-10T13:52:00Z",
+                ],
+                "open": [10.0] * 3,
+                "high": [15] * 3,
+                "low": [9] * 3,
+                "close": [12.5] * 3,
+                "volume": [1000] * 3,
+            }
+        )
+        with self._writer.conn as conn:
+            with conn as curs:
+                curs.execute(
+                    "DELETE FROM MinuteData "
+                    "WHERE datetime = '2021-02-10T13:51:00Z'"
+                )
         self._writer.insert_bulk_minute_data(df=df)
         self._check_saved_data(table="MinuteData")
 

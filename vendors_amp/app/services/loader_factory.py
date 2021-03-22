@@ -16,7 +16,7 @@ class LoaderFactory:
     and storage type).
     """
 
-@classmethod
+    @classmethod
     def get_loader(
         cls, storage_type: str, provider: str, **kwargs: Any
     ) -> vcdlda.AbstractDataLoader:

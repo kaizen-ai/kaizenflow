@@ -37,6 +37,7 @@ def convert_s3_to_sql(
     contract_type: Optional[vcdtyp.ContractType] = None,
     unadjusted: Optional[bool] = None,
     max_num_rows: Optional[int] = None,
+    incremental: Optional[bool] = False,
 ) -> bool:
     """
     Convert a dataset from S3 for a symbol.
@@ -72,6 +73,14 @@ def convert_s3_to_sql(
         df, trade_symbol_id=trade_symbol_id, frequency=frequency
     )
     _LOG.debug("Saving '%s' data to database", symbol)
+    if incremental:
+        df = sql_writer_backend.get_remains_data_to_load(
+            trade_symbol_id, df, frequency
+        )
+    else:
+        sql_writer_backend.delete_data_by_trade_symbol_id(
+            trade_symbol_id, frequency
+        )
     if frequency == vcdtyp.Frequency.Minutely:
         sql_writer_backend.insert_bulk_minute_data(df)
     elif frequency == vcdtyp.Frequency.Daily:
