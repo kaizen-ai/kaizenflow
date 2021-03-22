@@ -94,7 +94,9 @@ docker_cmd:
 # > make docker_jupyter J_PORT=10000 IMAGE="083233266530.dkr.ecr.us-east-2.amazonaws.com/amp_env:rc"
 J_PORT?=9999
 docker_jupyter:
-ifndef NO_JUPYTER
+ifeq ($(NO_JUPYTER), 'True')
+	@echo "Jupyter is not supported"
+else
 	J_PORT=$(J_PORT) \
 	IMAGE=$(IMAGE_DEV) \
 	docker-compose \
@@ -105,8 +107,6 @@ ifndef NO_JUPYTER
 		-l user=$(USER) \
 		--service-ports \
 		jupyter_server
-else
-	@echo "Jupyter is not supported"
 endif
 
 docker_kill_last:
@@ -121,9 +121,29 @@ print_debug_setup:
 	@echo "SUBMODULE_NAME=$(SUBMODULE_NAME)"
 	@echo "DOCKER_COMPOSE_USER_SPACE=${DOCKER_COMPOSE_USER_SPACE}"
 	@echo "NO_JUPYTER=$(NO_JUPYTER)"
+ifeq ($(NO_JUPYTER), 'True')
+	@echo "  No Jupyter"
+else
+	@echo "  Execute Jupyter"
+endif
 	@echo "NO_FAST_TESTS=$(NO_FAST_TESTS)"
+ifeq ($(NO_FAST_TESTS), 'True')
+	@echo "  Do not execute fast tests"
+else
+	@echo "  Execute fast tests"
+endif
 	@echo "NO_SLOW_TESTS=$(NO_SLOW_TESTS)"
+ifeq ($(NO_SLOW_TESTS), 'True')
+	@echo "  Do not execute slow tests"
+else
+	@echo "  Execute slow tests"
+endif
 	@echo "NO_SUPERSLOW_TESTS=$(NO_SUPERSLOW_TESTS)"
+ifeq ($(NO_SUPERSLOW_TESTS), 'True')
+	@echo "  Do not execute superslow tests"
+else
+	@echo "  Execute superslow tests"
+endif
 
 # The user can pass another IMAGE to run tests in another image.
 
@@ -147,30 +167,30 @@ run_blank_tests:
 	make _run_tests
 
 run_fast_tests:
-ifndef NO_FAST_TESTS
+ifeq ($(NO_FAST_TESTS), 'True')
+	@echo "No fast tests"
+else
 	_IMAGE=$(IMAGE_DEV) \
 	_CMD="$(RUN_TESTS_DIR)/run_fast_tests.sh" \
 	make _run_tests
-else
-	echo "No fast tests"
 endif
 
 run_slow_tests:
-ifndef NO_SLOW_TESTS
+ifeq ($(NO_SLOW_TESTS), 'True')
+	@echo "No slow tests"
+else
 	_IMAGE=$(IMAGE_DEV) \
 	_CMD="$(RUN_TESTS_DIR)/run_slow_tests.sh" \
 	make _run_tests
-else
-	echo "No slow tests"
 endif
 
 run_superslow_tests:
-ifndef NO_SUPERSLOW_TESTS
+ifeq ($(NO_SUPERSLOW_TESTS), 'True')
+	@echo "No superslow tests"
+else
 	_IMAGE=$(IMAGE_DEV) \
 	_CMD="$(RUN_TESTS_DIR)/run_superslow_tests.sh" \
 	make _run_tests
-else
-	echo "No superslow tests"
 endif
 
 # #############################################################################
@@ -184,38 +204,35 @@ run_blank_tests.rc:
 	make _run_tests
 
 run_fast_tests.rc:
-ifndef NO_FAST_TESTS
+ifeq ($(NO_FAST_TESTS), 'True')
+	@echo "No fast tests"
+else
 	_IMAGE=$(IMAGE_RC) \
 	_CMD="$(RUN_TESTS_DIR)/run_fast_tests.sh" \
 	make _run_tests
-else
-	echo "No fast tests"
 endif
 
 run_slow_tests.rc:
-ifndef NO_SLOW_TESTS
+ifeq ($(NO_SLOW_TESTS), 'True')
+	@echo "No slow tests"
+else
 	_IMAGE=$(IMAGE_RC) \
 	_CMD="$(RUN_TESTS_DIR)/run_slow_tests.sh" \
 	make _run_tests
-else
-	echo "No slow tests"
 endif
 
 run_superslow_tests.rc:
-ifndef NO_SUPERSLOW_TESTS
+ifeq ($(NO_SUPERSLOW_TESTS), 'True')
+	@echo "No superslow tests"
+else
 	_IMAGE=$(IMAGE_RC) \
 	_CMD="$(RUN_TESTS_DIR)/run_superslow_tests.sh" \
 	make _run_tests
-else
-	echo "No superslow tests"
 endif
 
 # #############################################################################
 # GH actions tests for "latest" image.
 # #############################################################################
-
-# For the GH actions we assume that if we call the target, it must work: thus
-# we don't use NO_{FAST,SLOW,SUPERSLOW}_TESTS.
 
 _run_tests.gh_action:
 	IMAGE=$(_IMAGE) \
@@ -229,19 +246,31 @@ _run_tests.gh_action:
 		$(_CMD)
 
 run_fast_tests.gh_action:
+ifeq ($(NO_FAST_TESTS), 'True')
+	@echo "No fast tests"
+else
 	_IMAGE=$(IMAGE_DEV) \
 	_CMD="$(RUN_TESTS_DIR)/run_fast_tests.sh" \
 	make _run_tests.gh_action
+endif
 
 run_slow_tests.gh_action:
+ifeq ($(NO_SLOW_TESTS), 'True')
+	@echo "No slow tests"
+else
 	_IMAGE=$(IMAGE_DEV) \
 	_CMD="$(RUN_TESTS_DIR)/run_slow_tests.sh" \
 	make _run_tests.gh_action
+endif
 
 run_superslow_tests.gh_action:
+ifeq ($(NO_SUPERSLOW_TESTS), 'True')
+	@echo "No superslow tests"
+else
 	_IMAGE=$(IMAGE_DEV) \
 	_CMD="$(RUN_TESTS_DIR)/run_superslow_tests.sh" \
 	make _run_tests.gh_action
+endif
 
 # #############################################################################
 # GH actions tests for "rc" image.
@@ -250,19 +279,31 @@ run_superslow_tests.gh_action:
 # Test using release candidate image via GH Actions.
 
 run_fast_tests.gh_action_rc:
+ifeq ($(NO_FAST_TESTS), 'True')
+	@echo "No fast tests"
+else
 	_IMAGE=$(IMAGE_RC) \
 	_CMD="$(RUN_TESTS_DIR)/run_fast_tests.sh" \
 	make _run_tests.gh_action
+endif
 
 run_slow_tests.gh_action_rc:
+ifeq ($(NO_SLOW_TESTS), 'True')
+	@echo "No slow tests"
+else
 	_IMAGE=$(IMAGE_RC) \
 	_CMD="$(RUN_TESTS_DIR)/run_slow_tests.sh" \
 	make _run_tests.gh_action
+endif
 
 run_superslow_tests.gh_action_rc:
+ifeq ($(NO_SUPERSLOW_TESTS), 'True')
+	@echo "No superslow tests"
+else
 	_IMAGE=$(IMAGE_RC) \
 	_CMD="$(RUN_TESTS_DIR)/run_superslow_tests.sh" \
 	make _run_tests.gh_action
+endif
 
 # #############################################################################
 # Images workflows.
@@ -405,7 +446,9 @@ lint_branch:
 # with, when changing the build system.
 
 docker_jupyter_test:
-ifndef NO_JUPYTER
+ifeq ($(NO_JUPYTER), 'True')
+	@echo "Jupyter is not supported"
+else
 	J_PORT=19999 \
 	IMAGE=$(IMAGE_DEV) \
 	docker-compose \
@@ -416,8 +459,6 @@ ifndef NO_JUPYTER
 		-l user=$(USER) \
 		--service-ports \
 		jupyter_server_test
-else
-	@echo "Jupyter is not supported"
 endif
 
 
