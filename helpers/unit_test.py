@@ -436,6 +436,62 @@ def _assert_equal(
         diff_files(act_file_name, exp_file_name, tag)
 
 
+def get_pd_default_values():
+    import copy
+    vals = copy.deepcopy(pd.options)
+    return vals
+
+
+def set_pd_default_values():
+    # 'display':
+    default_pd_values = {'chop_threshold': None,
+                         'colheader_justify': 'right',
+                         'column_space': 12,
+                         'date_dayfirst': False,
+                         'date_yearfirst': False,
+                         'encoding': 'UTF-8',
+                         'expand_frame_repr': True,
+                         'float_format': None,
+                         'html': {'border': 1,
+                                  'table_schema': False,
+                                  'use_mathjax': True},
+                         'large_repr': 'truncate',
+                         'latex': {'escape': True,
+                                   'longtable': False,
+                                   'multicolumn': True,
+                                   'multicolumn_format': 'l',
+                                   'multirow': False,
+                                   'repr': False},
+                         'max_categories': 8,
+                         'max_columns': 20,
+                         'max_colwidth': 50,
+                         'max_info_columns': 100,
+                         'max_info_rows': 1690785,
+                         'max_rows': 60,
+                         'max_seq_items': 100,
+                         'memory_usage': True,
+                         'min_rows': 10,
+                         'multi_sparse': True,
+                         'notebook_repr_html': True,
+                         'pprint_nest_depth': 3,
+                         'precision': 6,
+                         'show_dimensions': 'truncate',
+                         'unicode': {'ambiguous_as_wide': False,
+                                     'east_asian_width': False},
+                         'width': 80}
+    section = "display"
+    for key, new_val in default_pd_values.items():
+        if isinstance(new_val, dict):
+            continue
+        full_key = "%s.%s" % (section, key)
+        old_val = pd.get_option(full_key)
+        #_LOG.debug("full_key=%s: old_val=%s, new_val=%s", full_key, old_val, new_val)
+        if old_val != new_val:
+            _LOG.debug("-> Assigning a different value: full_key=%s, old_val=%s, new_val=%s", full_key, old_val, new_val)
+        pd.set_option(full_key, new_val)
+
+
+
 class TestCase(unittest.TestCase):
     """Class adding some auxiliary functions to make easy to save output of
     tests as txt."""
@@ -450,8 +506,14 @@ class TestCase(unittest.TestCase):
         # Print banner to signal starting of a new test.
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
         _LOG.debug("\n%s", prnt.frame(func_name))
+        # Set the default pandas options (see AmpTask1140).
+        self.old_pd_options = get_pd_default_values()
+        set_pd_default_values()
+
 
     def tearDown(self) -> None:
+        # Recover the original default pandas options.
+        pd.options = self.old_pd_options
         # Force matplotlib to close plots to decouple tests.
         plt.close()
         plt.clf()

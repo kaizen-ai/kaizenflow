@@ -76,6 +76,17 @@ docker_bash:
 		user_space \
 		bash
 
+# Run bash inside an RC image.
+docker_bash.rc:
+	IMAGE=$(IMAGE_RC) \
+	docker-compose \
+		-f $(DOCKER_COMPOSE_USER_SPACE) \
+		run \
+		--rm \
+		-l user=$(USER) \
+		user_space \
+		bash
+
 # Run the script inside the container with activated environment.
 # No need to overwrite the entrypoint:
 #	--entrypoint $(CMD)
