@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# TODO(gp): Is this needed?
+
 set -e
 
 if [ "$GOOGLE_SPREADSHEET_PRIVATE_KEY" ]; then

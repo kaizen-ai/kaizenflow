@@ -29,21 +29,29 @@ if [ $SUBMODULE_SUPERPROJECT ]; then
     | grep $(basename "$(pwd)")$ \
     | awk '{print $2}')
     echo "Running pre-commit for the Git $SUBMODULE_NAME submodule."
-    # The working dir is the submcoule.
-    WORK_DIR="/src/$SUBMODULE_NAME"
+    # The working dir is the submodule.
+    WORK_DIR="/app/$SUBMODULE_NAME"
     REPO_ROOT=$SUBMODULE_SUPERPROJECT
   else
-    echo "Running pre-commit for the Git repository."
-    WORK_DIR="/src"
+    WORK_DIR="/app"
     REPO_ROOT="$(pwd)"
 fi
 
-docker run \
-    --rm \
-    -t \
-    --env "PRE_COMMIT_HOME=$HOME/.cache/pre-commit" \
-    --env "SKIP=$SKIP" \
-    -v "$HOME/.cache:$HOME/.cache:rw" \
-    -v "$REPO_ROOT":/src \
-    --workdir "$WORK_DIR" \
-    083233266530.dkr.ecr.us-east-2.amazonaws.com/dev_tools:prod "$@"
+#IMAGE="083233266530.dkr.ecr.us-east-2.amazonaws.com/dev_tools:prod"
+IMAGE="083233266530.dkr.ecr.us-east-2.amazonaws.com/dev_tools:rc"
+echo "IMAGE=$IMAGE"
+
+# Keep this in sync with devops/compose/docker-compose-user-space.yml.
+cmd="docker run --rm -t \
+--env \"SKIP=$SKIP\" \
+-v \"$REPO_ROOT\":/app \
+$IMAGE \
+\"/usr/local/bin/pre-commit $@\""
+
+# TODO(gp): We use /root/.cache/pre-commit has cache so it's in the
+# container and not shared with the user.
+#--env \"PRE_COMMIT_HOME=$HOME/.cache/pre-commit\" \
+#-v \"$HOME/.cache:/app/.cache\" \
+
+echo "> $cmd"
+eval $cmd

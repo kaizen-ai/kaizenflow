@@ -2,4 +2,6 @@
 
 set -e
 
-jupyter notebook --ip=* --port=${J_PORT} --allow-root
+cmd="jupyter notebook --ip=* --port=${J_PORT} --allow-root"
+echo "> cmd=$cmd"
+eval $cmd
