@@ -10,7 +10,9 @@ SKIPPED_TESTS="not slow and \
     not need_data_dir and \
     not not_docker"
 
+TEST_DIR="vendors_amp"
+
 # Run tests.
-cmd="pytest ${OPTS} -m '${SKIPPED_TESTS}' vendors_amp"
+cmd="pytest ${OPTS} -m '${SKIPPED_TESTS}' ${TEST_DIR}"
 echo "> cmd=$cmd"
 eval $cmd

@@ -54,8 +54,8 @@ im.run_fast_tests:
 im.run_slow_tests:
 	IMAGE=$(KIBOT_IMAGE_DEV) \
 	docker-compose \
-		-f compose/docker-compose.yml \
-		-f compose/docker-compose.test.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.test.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -65,8 +65,8 @@ im.run_slow_tests:
 im.run_superslow_tests:
 	IMAGE=$(KIBOT_IMAGE_DEV) \
 	docker-compose \
-		-f compose/docker-compose.yml \
-		-f compose/docker-compose.test.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.test.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -76,17 +76,6 @@ im.run_superslow_tests:
 # #############################################################################
 # Services.
 # #############################################################################
-
-# Start local postgres server.
-im.docker_postgres_up.local:
-	IMAGE=$(KIBOT_IMAGE_DEV) \
-	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
-	docker-compose \
-		-f devops/compose/docker-compose.yml \
-		-f devops/compose/docker-compose.local.yml \
-		up \
- 		-d \
-		kibot_postgres_local
 
 # Stop local postgres server.
 im.docker_postgres_down.local:

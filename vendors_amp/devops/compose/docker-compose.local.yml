@@ -17,9 +17,6 @@ services:
     restart: "no"
     volumes:
       - kibot_postgres_data_local:/var/lib/postgresql/data
-      # - ./../../common/db/sql/types.sql:/docker-entrypoint-initdb.d/0-types.sql
-      # - ./../../common/db/sql/static.sql:/docker-entrypoint-initdb.d/1-static.sql
-      # - ./../../common/db/sql/kibot.sql:/docker-entrypoint-initdb.d/2-kibot.sql
     env_file:
       - ../env/local.env
     environment:

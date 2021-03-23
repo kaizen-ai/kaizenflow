@@ -14,6 +14,8 @@ until postgres_ready; do
 done
 >&2 echo 'PostgreSQL is available'
 
+umask 000
+
 ./vendors_amp/devops/docker_scripts/init_im_db.py --db $POSTGRES_DB
 
 eval "$@"

@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
 
-# Collect without execution
-pytest --co -vv -rpa -m \
-    "superslow and not slow and not broken_deps and not need_data_dir and not not_docker" \
-    amp/vendors_amp/kibot
-# Run tests
-pytest -vv -rpa -m \
-    "superslow and not slow and not broken_deps and not need_data_dir and not not_docker" \
-    amp/vendors_amp/kibot
+set -e
+
+OPTS="-vv -rpa --log-cli-level=INFO"
+
+SKIPPED_TESTS="not slow and \
+    superslow and \
+    not broken_deps and \
+    not need_data_dir and \
+    not not_docker"
+
+TEST_DIR="vendors_amp"
+
+# Run tests.
+cmd="pytest ${OPTS} -m '${SKIPPED_TESTS}' ${TEST_DIR}"
+echo "> cmd=$cmd"
+eval $cmd
