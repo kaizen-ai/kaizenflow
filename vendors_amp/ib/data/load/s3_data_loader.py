@@ -97,7 +97,7 @@ class S3IbDataLoader(vcdls3.AbstractS3DataLoader):
                 hs3.exists(file_path), True, msg=f"S3 key not found: {file_path}"
             )
         # Read data.
-        data = pd.read_csv(file_path, nrows=nrows)
+        data = pd.read_csv(file_path, nrows=nrows, names=cls.S3_COLUMNS.keys())
         # Cast columns to correct types.
         data = data.astype(cls.S3_COLUMNS)
         return data

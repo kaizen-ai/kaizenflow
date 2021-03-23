@@ -11,9 +11,11 @@ Send a notification through Telegram. See README.md in helpers/telegram_notify
 
 import argparse
 import logging
+import os
 
 import helpers.dbg as dbg
 import helpers.parser as prsr
+import helpers.system_interaction as hsi
 import helpers.telegram_notify.telegram_notify as tg
 
 _LOG = logging.getLogger(__name__)
@@ -25,11 +27,9 @@ def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("positional", nargs="*", help="...")
     parser.add_argument("-m", "--msg", action="store", default="done", type=str)
     parser.add_argument(
-        "-c",
-        "--command",
+        "--cmd",
         action="store",
         default=None,
         type=str,
@@ -43,11 +43,22 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
-    if args.command is not None:
-        _LOG.info("Executing: %s", args.command)
-        assert 0, "Not implemented yet"
+    message = []
+    message.append("user=%s" % hsi.get_user_name())
+    message.append("server=%s" % hsi.get_server_name())
+    #
+    if args.cmd is not None:
+        cmd = args.cmd
+        _LOG.info("Executing: %s", cmd)
+        rc = hsi.system(cmd, suppress_output=False, abort_on_error=False)
+        _LOG.info("rc=%s", rc)
+        message.append("cmd='%s'" % cmd)
+        message.append("rc=%s" % rc)
     else:
-        message = args.msg
+        message.append("msg=%s" % args.msg)
+    message = "\n" + "\n".join(message)
+    _LOG.info(message)
+    #
     tgn = tg.TelegramNotify()
     tgn.notify(message)
 

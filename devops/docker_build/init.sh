@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
 #
-# Execute all the scripts under the init dir `docker_build/init`.
+# Execute scripts to initialize the image.
 
 set -e
 
 source ~/.bashrc
 conda activate venv
 
-INIT_DIR="docker_build/init"
 
-run_inits (){
+run_inits () {
+    INIT_DIR="devops/docker_build/init"
     if [[ -d "$1/$INIT_DIR" ]];then
-        echo "++++++ $1 contains $INIT_DIR directory"
         for f in "$1/$INIT_DIR/"*.sh; do
             echo "Running script: ${f}"
             source "$f"
         done
     else
-        echo "------ $1 does not contain $INIT_DIR directory"
+        echo "ERROR: '$1' does not contain '$INIT_DIR' directory"
+        exit -1
     fi
 }
 

@@ -19,10 +19,11 @@ dependencies:
   - pytz
   - tqdm
   # ############################################################################
-  # pydata
+  # Data
   # ############################################################################
   - matplotlib
   - networkx
+  # TODO(gp): Remove this.
   - numba
   - numpy
   - pandas >= 1.1.0
@@ -47,9 +48,9 @@ dependencies:
   # ############################################################################
   # Latex
   # ############################################################################
-  - graphviz                # Also for dataflow graph visualization.
-  - pandoc
-  - pandocfilters
+  #- graphviz                # Also for dataflow graph visualization.
+  #- pandoc
+  #- pandocfilters
   # ############################################################################
   # AWS
   # ############################################################################
@@ -61,18 +62,18 @@ dependencies:
   # ############################################################################
   #- pydot
   #- python-graphviz        # To plot pymc3 graphical models.
-  - arviz                   # Needed by pymc3 for some plotting functionality.
-  - mkl-service             # pymc3 expects it; not sure why conda doesn't solve for it.
-  - pymc3
+  #- arviz                   # Needed by pymc3 for some plotting functionality.
+  #- mkl-service             # pymc3 expects it; not sure why conda doesn't solve for it.
+  #- pymc3
   # ############################################################################
   # Misc
   # ############################################################################
-  #- csvkit                  # To process csv.
-  #- gdrive                  # To interact with Google Drive.
-  #- jq                      # To process json.
-  #- mxnet                   # Required by gluon (e.g., gluon-ts, gluon-nlp).
+  #- csvkit                 # To process csv.
+  #- gdrive                 # To interact with Google Drive.
+  #- jq                     # To process json.
+  #- mxnet                  # Required by gluon (e.g., gluon-ts, gluon-nlp).
   #- pymongo
-  #- rclone                  # To back up Google Drive (conda install -c hcc rclone)
+  #- rclone                 # To back up Google Drive (conda install -c hcc rclone)
   #- ruby
   - beautifulsoup4
   - joblib
@@ -81,8 +82,8 @@ dependencies:
   # ############################################################################
   # Profiling
   # ############################################################################
-  - memory_profiler
-  - gprof2dot
+  #- memory_profiler
+  #- gprof2dot
   # ############################################################################
   # Pip
   # ############################################################################
@@ -98,9 +99,3 @@ dependencies:
     - mxnet >= 1.6.0
     - gluonnlp              # gluon* and mxnet need to be installed through pip
     - gluonts               # since conda doesn't support / has old packages.
-    # ############################################################################
-    # ETL3
-    # ############################################################################
-    #- gitpython
-    #- dbnomics-data-model
-    #- python-slugify

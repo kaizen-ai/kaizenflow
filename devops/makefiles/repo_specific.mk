@@ -4,11 +4,12 @@
 
 ECR_BASE_PATH=083233266530.dkr.ecr.us-east-2.amazonaws.com
 
-# TODO(gp): -> amp
+# TODO(gp): -> amp?
 ECR_REPO_BASE_PATH:=$(ECR_BASE_PATH)/amp_env
+
 # When testing a change to the build system in a branch you can use a different
-# image, e.g., `amp_tmp` to not interfere with the prod system.
-#ECR_REPO_BASE_PATH:=$(ECR_BASE_PATH)/amp_tmp
+# image, e.g., `XYZ_tmp` to not interfere with the prod system.
+#ECR_REPO_BASE_PATH:=$(ECR_BASE_PATH)/amp_env_tmp
 
 AMP_IMAGE_DEV=$(ECR_REPO_BASE_PATH):latest
 AMP_IMAGE_RC=$(ECR_REPO_BASE_PATH):rc
@@ -18,6 +19,11 @@ IMAGE_DEV=$(AMP_IMAGE_DEV)
 IMAGE_RC=$(AMP_IMAGE_RC)
 
 DEV_TOOLS_IMAGE_PROD=$(ECR_BASE_PATH)/dev_tools:prod
+
+# Point to the dir with the run_scripts.
+RUN_TESTS_DIR="devops/docker_scripts"
+
+NO_SUPERSLOW_TESTS='True'
 
 print_setup:
 	@echo "ECR_BASE_PATH=$(ECR_BASE_PATH)"

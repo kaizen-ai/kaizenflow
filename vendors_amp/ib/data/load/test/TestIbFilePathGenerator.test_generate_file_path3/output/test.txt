@@ -1,1 +1,1 @@
-s3://default00-bucket/tmp/PartTask7463/CLH21_day.csv
+s3://external-p1/ib/Futures/daily/CLH21.csv.gz

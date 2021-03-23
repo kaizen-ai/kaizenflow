@@ -43,7 +43,6 @@ runtools/main
 toc2/main
 spellchecker/main"
 
-
 for v in $extensions; do
   cmd="jupyter nbextension enable $v"
   echo "> $cmd"
@@ -52,5 +51,6 @@ for v in $extensions; do
   fi;
 done;
 eval "jupyter nbextension disable vim_binding/vim_binding"
+
 # Disable configuration for nbextensions without explicit compatibility
 echo "{\"nbext_hide_incompat\": false}" > /root/.jupyter/nbconfig/common.json

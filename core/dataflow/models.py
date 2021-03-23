@@ -57,7 +57,7 @@ class RegFreqMixin:
         Assert if df violates constraints, otherwise return `None`.
         """
         dbg.dassert_isinstance(df, pd.DataFrame)
-        dbg.dassert_no_duplicates(df.columns)
+        dbg.dassert_no_duplicates(df.columns.tolist())
         dbg.dassert(df.index.freq)
 
 
@@ -473,7 +473,7 @@ class UnsupervisedSkLearnModel(
         self,
         nid: str,
         model_func: Callable[..., Any],
-        x_vars: _TO_LIST_MIXIN_TYPE,
+        x_vars: Optional[_TO_LIST_MIXIN_TYPE] = None,
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -515,7 +515,10 @@ class UnsupervisedSkLearnModel(
         self._validate_input_df(df_in)
         df = df_in.copy()
         # Determine index where no x_vars are NaN.
-        x_vars = self._to_list(self._x_vars)
+        if self._x_vars is None:
+            x_vars = df_in.columns.tolist()
+        else:
+            x_vars = self._to_list(self._x_vars)
         non_nan_idx = df[x_vars].dropna().index
         dbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
@@ -797,7 +800,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         col: _TO_LIST_MIXIN_TYPE,
         steps_ahead: int,
         tau: Optional[float] = None,
-        min_tau_periods: Optional[float] = 0.2,
+        min_tau_periods: Optional[float] = 2,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
@@ -863,7 +866,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         # Define and fit model.
         if self._must_learn_tau:
             self._tau = self._learn_tau(x_fit, fwd_y_fit)
-        min_periods = int(np.rint(self._min_tau_periods * self._tau))
+        min_periods = self._get_min_periods(self._tau)
         _LOG.debug("tau=", self._tau)
         info = collections.OrderedDict()
         info["tau"] = self._tau
@@ -963,14 +966,29 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
                 min_depth=self._min_depth,
                 max_depth=self._max_depth,
             )
-            min_periods = int(np.rint(self._min_tau_periods * tau))
+            min_periods = self._get_min_periods(tau)
             return self._metric(sma[min_periods:], y[min_periods:])
 
-        # TODO(*): Make this configurable.
+        tau_lb, tau_ub = 1, 1000
+        # Satisfy 2 * tau_ub * min_tau_periods = len(x).
+        # This ensures that no more than half of the `fit` series is burned.
+        if self._min_tau_periods > 0:
+            tau_ub = int(len(x) / (2 * self._min_tau_periods))
         opt_results = sp.optimize.minimize_scalar(
-            score, method="bounded", bounds=[1, 100]
+            score, method="bounded", bounds=[tau_lb, tau_ub]
         )
         return opt_results.x
+
+    def _get_min_periods(self, tau: float) -> int:
+        """
+        Return burn-in period.
+
+        Multiplies `tau` by `min_tau_periods` and converts to an integer.
+
+        :param tau: kernel tau (approximately equal to com)
+        :return: minimum number of periods required to generate a prediction
+        """
+        return int(np.rint(self._min_tau_periods * tau))
 
     def _predict(self, x: np.array) -> np.array:
         x_srs = pd.DataFrame(x.flatten())
@@ -1004,7 +1022,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         return info
 
 
-class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
+class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
     """
     Fit and predict a smooth moving average volatility model.
 
@@ -1016,7 +1034,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self,
         nid: str,
         steps_ahead: int,
-        cols: _TO_LIST_MIXIN_TYPE = None,
+        cols: Optional[_TO_LIST_MIXIN_TYPE] = None,
         p_moment: float = 2,
         tau: Optional[float] = None,
         col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
@@ -1052,13 +1070,14 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self._col_mode = col_mode or "merge_all"
         self._nan_mode = nan_mode
         #
-        self._fit_cols: Dict[_COL_TYPE, str] = {}
+        self._fit_cols: List[_COL_TYPE] = []
         self._vol_cols: Dict[_COL_TYPE, str] = {}
         self._fwd_vol_cols: Dict[_COL_TYPE, str] = {}
         self._fwd_vol_cols_hat: Dict[_COL_TYPE, str] = {}
         self._taus: Dict[_COL_TYPE, Optional[float]] = {}
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        self._validate_input_df(df_in)
         self._fit_cols = self._to_list(self._cols or df_in.columns.tolist())
         self._vol_cols = {col: str(col) + "_vol" for col in self._fit_cols}
         self._fwd_vol_cols = {
@@ -1068,12 +1087,13 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self._fwd_vol_cols_hat = {
             col: self._fwd_vol_cols[col] + "_hat" for col in self._fit_cols
         }
+        self._check_cols(df_in.columns.tolist())
         info = collections.OrderedDict()
         dfs = []
         for col in self._fit_cols:
             dbg.dassert_not_in(self._vol_cols[col], self._fit_cols)
             config = self._get_config(col=col, tau=self._tau)
-            dag = self._get_dag(df_in, config)
+            dag = self._get_dag(df_in[[col]], config)
             df_out = dag.run_leq_node("demodulate_using_vol_pred", "fit")[
                 "df_out"
             ]
@@ -1092,10 +1112,13 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
             cols=self._fit_cols,
             col_mode=self._col_mode,
         )
+        df_out = df_out.reindex(df_in.index)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        self._validate_input_df(df_in)
+        self._check_cols(df_in.columns.tolist())
         info = collections.OrderedDict()
         dfs = []
         for col in self._fit_cols:
@@ -1103,7 +1126,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
             tau = self._taus[col]
             dbg.dassert(tau)
             config = self._get_config(col=col, tau=tau)
-            dag = self._get_dag(df_in, config)
+            dag = self._get_dag(df_in[[col]], config)
             df_out = dag.run_leq_node("demodulate_using_vol_pred", "predict")[
                 "df_out"
             ]
@@ -1116,6 +1139,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
             cols=self._fit_cols,
             col_mode=self._col_mode,
         )
+        df_out = df_out.reindex(df_in.index)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
@@ -1141,6 +1165,11 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
         self._fwd_vol_cols_hat = fit_state["_fwd_vol_cols_hat"]
         self._taus = fit_state["_taus"]
         self._info["fit"] = fit_state["_info['fit']"]
+
+    def _check_cols(self, cols: List[_COL_TYPE]):
+        dbg.dassert_not_intersection(cols, self._vol_cols.values())
+        dbg.dassert_not_intersection(cols, self._fwd_vol_cols.values())
+        dbg.dassert_not_intersection(cols, self._fwd_vol_cols_hat.values())
 
     def _get_config(
         self, col: _COL_TYPE, tau: Optional[float] = None
@@ -1180,7 +1209,7 @@ class VolatilityModel(FitPredictNode, ColModeMixin, ToListMixin):
                     "signal_steps_ahead": 0,
                     "volatility_steps_ahead": self._steps_ahead,
                     "col_rename_func": self._col_rename_func,
-                    "col_mode": self._col_mode,
+                    "col_mode": "replace_selected",
                     "nan_mode": self._nan_mode,
                 },
             }

@@ -1,3 +1,5 @@
+# TODO(gp): Merge devops/compose/docker-compose-user-space.yml with
+# devops/compose/docker-compose.yml and remove the first one.
 version: '3'
 
 services:
@@ -5,7 +7,8 @@ services:
     image: $IMAGE
     restart: "no"
     volumes:
-      - ../../:/amp
+      # TODO(gp): Remove this since it's in docker-compose-jupyter.yml.
+      - ../../:/app
       - ~/.aws:/root/.aws
       - ~/.config/gspread_pandas/:/root/.config/gspread_pandas/
       - ../docker_build/fstab:/etc/fstab

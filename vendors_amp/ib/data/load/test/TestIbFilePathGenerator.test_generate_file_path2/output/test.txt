@@ -1,1 +1,1 @@
-s3://default00-bucket/tmp/PartTask7463/TSLA_minute.csv
+s3://external-p1/ib/stocks/minutely/TSLA.csv.gz
