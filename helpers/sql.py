@@ -3,23 +3,25 @@ from typing import List, Optional, Tuple, Union
 
 import pandas as pd
 import psycopg2 as pg
-
+import psycopg2.sql as psql
 import helpers.timer as timer
 
 _log = logging.getLogger(__name__)
 
 
 def get_connection(
-    dbname: str,
-    host: str,
-    user: str,
-    port: int,
-    password: str,
-    autocommit: bool = True,
+        dbname: str,
+        host: str,
+        user: str,
+        port: int,
+        password: str,
+        autocommit: bool = True,
 ) -> Tuple[pg.extensions.connection, pg.extensions.cursor]:
-    connection = pg.connect(
-        dbname=dbname, host=host, user=user, port=port, password=password
-    )
+    connection = pg.connect(dbname=dbname,
+                            host=host,
+                            user=user,
+                            port=port,
+                            password=password)
     cursor = connection.cursor()
     if autocommit:
         connection.autocommit = True
@@ -56,9 +58,9 @@ def get_db_names(connection: pg.extensions.connection) -> List[str]:
 
 
 def get_table_size(
-    connection: pg.extensions.connection,
-    only_public: bool = True,
-    summary: bool = True,
+        connection: pg.extensions.connection,
+        only_public: bool = True,
+        summary: bool = True,
 ) -> pd.DataFrame:
     """Report the size of each table.
 
@@ -122,16 +124,13 @@ def get_indexes(connection: pg.extensions.connection) -> pd.DataFrame:
     for table in tables:
         query = (
             """select * from pg_indexes where tablename = '{table}' """.format(
-                table=table
-            )
-        )
+                table=table))
         cursor.execute(query)
         z = cursor.fetchall()
         res.append(pd.DataFrame(z))
     tmp: pd.DataFrame = pd.concat(res)
     tmp["index_type"] = tmp[4].apply(
-        lambda w: w.split("USING")[1].lstrip().split(" ")[0]
-    )
+        lambda w: w.split("USING")[1].lstrip().split(" ")[0])
     tmp.columns = [
         "type: public/private",
         "table_name",
@@ -146,12 +145,9 @@ def get_indexes(connection: pg.extensions.connection) -> pd.DataFrame:
 
 
 def get_columns(connection: pg.extensions.connection, table_name: str) -> list:
-    query = (
-        """SELECT column_name
+    query = ("""SELECT column_name
             FROM information_schema.columns
-            WHERE TABLE_NAME = '%s' """
-        % table_name
-    )
+            WHERE TABLE_NAME = '%s' """ % table_name)
     cursor = connection.get_cursor()
     cursor.execute(query)
     columns = [x[0] for x in cursor.fetchall()]
@@ -159,13 +155,13 @@ def get_columns(connection: pg.extensions.connection, table_name: str) -> list:
 
 
 def execute_query(
-    connection: pg.extensions.connection,
-    query: str,
-    limit: Optional[int] = None,
-    offset: Optional[int] = None,
-    use_timer: bool = False,
-    profile: bool = False,
-    verbose: bool = True,
+        connection: pg.extensions.connection,
+        query: str,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        use_timer: bool = False,
+        profile: bool = False,
+        verbose: bool = True,
 ) -> Union[None, pd.DataFrame]:
     """Execute a query."""
     if limit is not None:
@@ -199,10 +195,10 @@ def execute_query(
 
 
 def head_table(
-    connection: pg.extensions.connection,
-    table: str,
-    limit: int = 5,
-    as_txt: bool = False,
+        connection: pg.extensions.connection,
+        table: str,
+        limit: int = 5,
+        as_txt: bool = False,
 ) -> None:
     query = "SELECT * FROM %s LIMIT %s " % (table, limit)
     df = execute_query(connection, query)
@@ -217,10 +213,10 @@ def head_table(
 
 
 def head_tables(
-    connection: pg.extensions.connection,
-    tables: Optional[List[str]] = None,
-    limit: int = 5,
-    as_txt: bool = False,
+        connection: pg.extensions.connection,
+        tables: Optional[List[str]] = None,
+        limit: int = 5,
+        as_txt: bool = False,
 ) -> None:
     if tables is None:
         tables = get_table_names(connection)
@@ -229,9 +225,9 @@ def head_tables(
         head_table(connection, table, limit=limit, as_txt=as_txt)
 
 
-def find_common_columns(
-    connection: pg.extensions.connection, tables: List[str], as_df: bool = False
-) -> Union[None, pd.DataFrame]:
+def find_common_columns(connection: pg.extensions.connection,
+                        tables: List[str],
+                        as_df: bool = False) -> Union[None, pd.DataFrame]:
     limit = 5
     df = []
     for i, table in enumerate(tables):
@@ -248,22 +244,40 @@ def find_common_columns(
                 continue
             common_cols = [c for c in df1 if c in df2]
             if as_df:
-                df.append(
-                    (
-                        tables[i],
-                        tables[j],
-                        len(common_cols),
-                        " ".join(common_cols),
-                    )
-                )
+                df.append((
+                    tables[i],
+                    tables[j],
+                    len(common_cols),
+                    " ".join(common_cols),
+                ))
             else:
                 print(("'%s' vs '%s'" % (tables[i], tables[j])))
-                print(
-                    ("    (%s): %s" % (len(common_cols), " ".join(common_cols)))
-                )
+                print(("    (%s): %s" %
+                       (len(common_cols), " ".join(common_cols))))
     obj = None
     if as_df:
         obj = pd.DataFrame(
-            df, columns=["table1", "table2", "num_comm_cols", "common_cols"]
-        )
+            df, columns=["table1", "table2", "num_comm_cols", "common_cols"])
     return obj
+
+
+# TODO(plyq): Tests.
+def create_database(connection: pg.extensions.connection,
+                    db: str,
+                    force: Optional[bool] = None) -> None:
+    """
+    Create empty database.
+
+    :param connection: database connection
+    :param db: database to create
+    :param force: overwrite existing database
+    """
+    with connection.cursor() as cursor:
+        if force:
+            cursor.execute(
+                psql.SQL("DROP DATABASE IF EXISTS {};").format(
+                    psql.Identifier(db)))
+        else:
+            raise ValueError("Database %s already exists" % db)
+        cursor.execute(
+            psql.SQL("CREATE DATABASE {};").format(psql.Identifier(db)))

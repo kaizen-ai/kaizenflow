@@ -49,7 +49,7 @@ im.run_fast_tests:
 		--rm \
 		-l user=$(USER) \
 		app \
-		vendors_amp/devops/docker_scripts/run_fast_tests.sh
+ 		vendors_amp/devops/docker_scripts/run_fast_tests.sh
 
 im.run_slow_tests:
 	IMAGE=$(KIBOT_IMAGE_DEV) \
@@ -85,7 +85,7 @@ im.docker_postgres_up.local:
 		-f devops/compose/docker-compose.yml \
 		-f devops/compose/docker-compose.local.yml \
 		up \
-#		-d \
+ 		-d \
 		kibot_postgres_local
 
 # Stop local postgres server.
@@ -95,7 +95,8 @@ im.docker_postgres_down.local:
 	docker-compose \
 		-f devops/compose/docker-compose.yml \
 		-f devops/compose/docker-compose.local.yml \
-		down
+		down \
+		--remove-orphans
 
 # Stop local postgres server and remove all data.
 im.docker_postgres_rm.local:
@@ -105,7 +106,8 @@ im.docker_postgres_rm.local:
 		-f devops/compose/docker-compose.yml \
 		-f devops/compose/docker-compose.local.yml \
 		down \
-		-v
+		--remove-orphans; \
+	docker volume rm compose_kibot_postgres_data_local
 
 # #############################################################################
 # Images workflows.
@@ -129,7 +131,7 @@ im.docker_build_image.rc:
 		--no-cache \
 		-t $(KIBOT_IMAGE_RC) \
 		-t $(KIBOT_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
-		--file devops/docker_build/Dockerfile \
+		--file devops/docker_build/dev.Dockerfile \
 		.
 
 im.docker_build_image_with_cache.rc:
@@ -138,7 +140,7 @@ im.docker_build_image_with_cache.rc:
 		--progress=plain \
 		-t $(KIBOT_IMAGE_RC) \
 		-t $(KIBOT_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
-		--file devops/docker_build/Dockerfile \
+		--file devops/docker_build/dev.Dockerfile \
 		.
 
 # Push the "rc" image to the registry.
