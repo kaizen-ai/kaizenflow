@@ -19,7 +19,8 @@ class TestDbSchemaFile(hut.TestCase):
         """
         Test that schema SQL file exists.
         """
-        self.assertTrue(os.path.exists(vctuti.DB_SCHEMA_FILE))
+        for file_name in vctuti.get_init_sql_files():
+            self.assertTrue(os.path.exists(file_name))
 
 
 @pytest.mark.skipif(
@@ -50,7 +51,7 @@ class TestSqlWriterBackend1(hut.TestCase):
         self._dbname = self._get_test_string()
         # Create database for each test.
         vctuti.create_database(
-            self._dbname, vctuti.get_init_sql_files(custom_files=[vctuti.DB_SCHEMA_FILE])
+            self._dbname, vctuti.get_init_sql_files()
         )
         # Initialize writer class to test.
         self._writer = vksqlw.SQLWriterKibotBackend(
@@ -246,7 +247,7 @@ class TestSqlWriterBackend1(hut.TestCase):
             }
         )
         with self._writer.conn as conn:
-            with conn as curs:
+            with conn.cursor() as curs:
                 curs.execute(
                     "DELETE FROM MinuteData "
                     "WHERE datetime = '2021-02-10T13:51:00Z'"
@@ -296,7 +297,7 @@ class TestSqlWriterBackend1(hut.TestCase):
         """
         Insert Symbol, Exchange and TradeSymbol entries to make test work.
 
-        See `DB_SCHEMA_FILE` for more info.
+        See `common/db/init/sql` for more info.
         """
         with self._writer.conn:
             with self._writer.conn.cursor() as curs:
@@ -355,4 +356,4 @@ class TestSqlWriterBackend1(hut.TestCase):
         # Convert dataframe to string.
         txt = hut.convert_df_to_string(res[columns_to_check])
         # Check the output against the golden.
-        self.check_string(txt)
+        self.check_string(txt, fuzzy_match=True)
