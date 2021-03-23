@@ -5,50 +5,89 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.4.2
+#       jupytext_version: 1.11.0
 #   kernelspec:
-#     display_name: Python [conda env:.conda-p1_develop] *
+#     display_name: Python [conda env:venv] *
 #     language: python
-#     name: conda-env-.conda-p1_develop-py
+#     name: conda-env-venv-py
 # ---
 
 # %%
+import glob
 import os
 
 import pandas as pd
 
-# %%
-# !ls ../log_2021_03_11
+import helpers.dbg as dbg
 
 # %%
-dir_name = "../log_2021_03_11"
+# !ls ..
 
-file_name = os.path.join(dir_name, "symbols.csv")
+# %%
+dir_name = ".."
+
+files = glob.glob(os.path.join(dir_name, "symbols*.csv"))
+dbg.dassert(len(files), 1)
+file_name = files[0]
+print("file_name=%s" % file_name)
 symbols = pd.read_csv(file_name, sep="\t")
 
-symbols.head()
+print(len(symbols))
+
+symbols.head(3)
 
 # %%
-file_name = os.path.join(dir_name, "exchanges.csv")
+files = glob.glob(os.path.join(dir_name, "exchanges*.csv"))
+dbg.dassert(len(files), 1)
+file_name = files[0]
+print("file_name=%s" % file_name)
 exchanges = pd.read_csv(file_name, sep="\t")
 
-exchanges.head()
+print(len(exchanges))
+
+exchanges.head(3)
+
+# %% [markdown]
+# ## Products
 
 # %%
-markets = symbols["market"].unique()
+print(symbols["product"].unique())
+
+# %% [markdown]
+# ## Markets
+
+# %%
+markets = sorted(symbols["market"].unique())
 print("\n".join(markets))
 
 # %%
 grouped = symbols.groupby("market")
 
-grouped[["product"]].count()
+count = grouped[["product"]].count()
+count = count.sort_values(by="product", ascending=False)
+
+count.plot()
+
+print(count.head(10))
 
 # %%
-idx = 3
-print("market=", markets[idx])
-mask = df["market"] == markets[idx]
+idx = 0
+market = count.index[idx]
+print("market=", market)
+mask = symbols["market"] == market
 symbols_tmp = symbols[mask]
 
 grouped = symbols_tmp.groupby("product")
 
 grouped[["product"]].count()
+
+# %%
+pd.set_option("display.max_colwidth", 100)
+
+# %%
+symbols_tmp[["product", "url"]]
+
+# %%
+symbols_tmp["url"].values
+
+# %%
