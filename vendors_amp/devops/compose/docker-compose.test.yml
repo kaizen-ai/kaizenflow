@@ -1,9 +1,10 @@
 version: '3'
 
 services:
+  # TODO(gp): -> app
   kibot_app:
     image: ${IMAGE}
-    entrypoint: /commodity_research/amp/vendors_amp/kibot/compose/entrypoints/entrypoint_deploy_postgres.sh
+    entrypoint: /app/vendors_amp/kibot/compose/entrypoints/entrypoint_deploy_postgres.sh
     depends_on:
       - kibot_postgres_test
     env_file:
@@ -11,11 +12,15 @@ services:
     environment:
       - PATH=/commodity_research/amp/vendors_amp/kibot/compose/scripts:$PATH
 
+  # TODO(gp): -> im.postgres.test:
   kibot_postgres_test:
     image: postgres:13
+    # TODO(gp): -> Needed?
     container_name: kibot_postgres_test
     restart: "no"
     volumes:
+      # TODO(gp): A little difficult to maintain. Let's just use a script like
+      # edgar/db/schema/version_1.0/init_index_schema.sh.
       - ./init_sql:/docker-entrypoint-initdb.d
       - ./../../common/compose/init_sql/types.sql:/docker-entrypoint-initdb.d/0-types.sql
       - ./../../common/compose/init_sql/static.sql:/docker-entrypoint-initdb.d/1-static.sql
