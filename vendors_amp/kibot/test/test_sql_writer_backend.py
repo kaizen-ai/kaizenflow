@@ -5,7 +5,7 @@ import pytest
 
 import helpers.unit_test as hut
 import vendors_amp.common.data.types as vcdtyp
-import vendors_amp.common.test.utils as vctuti
+import vendors_amp.common.db.init as vctuti
 import vendors_amp.kibot.sql_writer_backend as vksqlw
 
 
@@ -51,7 +51,7 @@ class TestSqlWriterBackend1(hut.TestCase):
         self._dbname = self._get_test_string()
         # Create database for each test.
         vctuti.create_database(
-            self._dbname, vctuti.get_init_sql_files()
+            self._dbname, vctuti.get_init_sql_files(), force=True,
         )
         # Initialize writer class to test.
         self._writer = vksqlw.SQLWriterKibotBackend(
@@ -297,7 +297,7 @@ class TestSqlWriterBackend1(hut.TestCase):
         """
         Insert Symbol, Exchange and TradeSymbol entries to make test work.
 
-        See `common/db/init/sql` for more info.
+        See `common/db/sql` for more info.
         """
         with self._writer.conn:
             with self._writer.conn.cursor() as curs:

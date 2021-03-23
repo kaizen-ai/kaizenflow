@@ -1,0 +1,14 @@
+boto3
+botocore
+bs4
+flaky
+fsspec
+joblib
+lxml
+matplotlib
+pandas
+psycopg2
+pytest
+requests
+s3fs
+tqdm
