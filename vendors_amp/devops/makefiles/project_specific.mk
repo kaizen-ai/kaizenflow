@@ -10,6 +10,8 @@ KIBOT_IMAGE_RC=$(KIBOT_REPO_BASE_PATH):rc
 
 NO_SUPERSLOW_TESTS='True'
 
+IM_PG_PORT_LOCAL?=5550
+
 im.print_setup:
 	@echo "KIBOT_REPO_BASE_PATH=$(KIBOT_REPO_BASE_PATH)"
 	@echo "KIBOT_IMAGE_DEV=$(KIBOT_IMAGE_DEV)"
@@ -20,6 +22,7 @@ im.print_setup:
 # #############################################################################
 
 im.docker_bash:
+	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	IMAGE=$(KIBOT_IMAGE_DEV) \
 	docker-compose \
 		-f devops/compose/docker-compose.yml \
@@ -41,7 +44,7 @@ im.run_fast_tests:
 	IMAGE=$(KIBOT_IMAGE_DEV) \
 	docker-compose \
 		-f devops/compose/docker-compose.yml \
-		-f devops/compose/docker-compose.local.yml \
+		-f devops/compose/docker-compose.test.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -49,22 +52,26 @@ im.run_fast_tests:
 		vendors_amp/devops/docker_scripts/run_fast_tests.sh
 
 im.run_slow_tests:
+	IMAGE=$(KIBOT_IMAGE_DEV) \
 	docker-compose \
 		-f compose/docker-compose.yml \
 		-f compose/docker-compose.test.yml \
-		run --rm \
+		run \
+		--rm \
 		-l user=$(USER) \
-		kibot_app \
-		bash run_slow_tests.sh
+		app \
+		vendors_amp/devops/docker_scripts/run_slow_tests.sh
 
 im.run_superslow_tests:
+	IMAGE=$(KIBOT_IMAGE_DEV) \
 	docker-compose \
 		-f compose/docker-compose.yml \
 		-f compose/docker-compose.test.yml \
-		run --rm \
+		run \
+		--rm \
 		-l user=$(USER) \
-		kibot_app \
-		bash run_superslow_tests.sh
+		app \
+		vendors_amp/devops/docker_scripts/run_superslow_tests.sh
 
 # #############################################################################
 # Services.
@@ -72,25 +79,31 @@ im.run_superslow_tests:
 
 # Start local postgres server.
 im.docker_postgres_up.local:
+	IMAGE=$(KIBOT_IMAGE_DEV) \
+	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
-		-f compose/docker-compose.yml \
-		-f compose/docker-compose.local.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.local.yml \
 		up \
-		-d \
+#		-d \
 		kibot_postgres_local
 
 # Stop local postgres server.
 im.docker_postgres_down.local:
+	IMAGE=$(KIBOT_IMAGE_DEV) \
+	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
-		-f compose/docker-compose.yml \
-		-f compose/docker-compose.local.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.local.yml \
 		down
 
 # Stop local postgres server and remove all data.
 im.docker_postgres_rm.local:
+	IMAGE=$(KIBOT_IMAGE_DEV) \
+	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
-		-f compose/docker-compose.yml \
-		-f compose/docker-compose.local.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.local.yml \
 		down \
 		-v
 

@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Optional
 
 import psycopg2
 import psycopg2.sql as psql
@@ -7,12 +7,7 @@ import psycopg2.sql as psql
 import helpers.io_ as hio
 
 
-DB_SCHEMA_FILE = os.path.join(
-    os.path.dirname(__file__), "../../devops/compose/init_sql/db.sql"
-)
-
-
-def get_init_sql_files(custom_files: List[str]) -> List[str]:
+def get_init_sql_files(custom_files: Optional[List[str]] = None) -> List[str]:
     """
     Return list of PostgreSQL initialization files in order of running.
 
@@ -21,11 +16,12 @@ def get_init_sql_files(custom_files: List[str]) -> List[str]:
     """
     # Common files.
     files = [
-        os.path.join(os.path.dirname(__file__), "../compose/init_sql", filename)
-        for filename in ("types.sql", "static.sql")
+        os.path.join(os.path.dirname(__file__), "../db/init/sql", filename)
+        for filename in ("types.sql", "static.sql", "kibot.sql")
     ]
     # Extend with custom.
-    files.extend(custom_files)
+    if custom_files:
+        files.extend(custom_files)
     return files
 
 
