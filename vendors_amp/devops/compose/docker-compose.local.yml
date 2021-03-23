@@ -1,14 +1,13 @@
 version: '3'
 
 services:
-  kibot_app:
-    #TODO(plyq): Change once amp image will be ready
-    entrypoint: /commodity_research/amp/vendors_amp/kibot/compose/entrypoints/entrypoint_deploy_postgres.sh
+  app:
+    image: ${IMAGE}
+    entrypoint: /app/vendors_amp/devops/docker_build/entrypoints/entrypoint_deploy_postgres.sh
     depends_on:
       - kibot_postgres_local
     env_file:
       - ../env/local.env
-
 
   kibot_postgres_local:
     image: postgres:13

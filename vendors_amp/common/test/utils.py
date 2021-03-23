@@ -7,6 +7,11 @@ import psycopg2.sql as psql
 import helpers.io_ as hio
 
 
+DB_SCHEMA_FILE = os.path.join(
+    os.path.dirname(__file__), "../../devops/compose/init_sql/db.sql"
+)
+
+
 def get_init_sql_files(custom_files: List[str]) -> List[str]:
     """
     Return list of PostgreSQL initialization files in order of running.

@@ -8,9 +8,6 @@ import vendors_amp.common.data.types as vcdtyp
 import vendors_amp.common.test.utils as vctuti
 import vendors_amp.kibot.sql_writer_backend as vksqlw
 
-DB_SCHEMA_FILE = os.path.join(
-    os.path.dirname(__file__), "../compose/init_sql/db.sql"
-)
 
 
 class TestDbSchemaFile(hut.TestCase):
@@ -22,7 +19,7 @@ class TestDbSchemaFile(hut.TestCase):
         """
         Test that schema SQL file exists.
         """
-        self.assertTrue(os.path.exists(DB_SCHEMA_FILE))
+        self.assertTrue(os.path.exists(vctuti.DB_SCHEMA_FILE))
 
 
 @pytest.mark.skipif(
@@ -53,7 +50,7 @@ class TestSqlWriterBackend1(hut.TestCase):
         self._dbname = self._get_test_string()
         # Create database for each test.
         vctuti.create_database(
-            self._dbname, vctuti.get_init_sql_files(custom_files=[DB_SCHEMA_FILE])
+            self._dbname, vctuti.get_init_sql_files(custom_files=[vctuti.DB_SCHEMA_FILE])
         )
         # Initialize writer class to test.
         self._writer = vksqlw.SQLWriterKibotBackend(

@@ -2,7 +2,7 @@ version: '3'
 
 services:
   kibot_app:
-    #TODO(plyq): Change once amp image will be ready
+    image: ${IMAGE}
     entrypoint: /commodity_research/amp/vendors_amp/kibot/compose/entrypoints/entrypoint_deploy_postgres.sh
     depends_on:
       - kibot_postgres_test
@@ -10,7 +10,6 @@ services:
       - ../env/test.env
     environment:
       - PATH=/commodity_research/amp/vendors_amp/kibot/compose/scripts:$PATH
-
 
   kibot_postgres_test:
     image: postgres:13

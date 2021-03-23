@@ -4,7 +4,7 @@
 
 ECR_BASE_PATH=083233266530.dkr.ecr.us-east-2.amazonaws.com
 
-KIBOT_REPO_BASE_PATH=$(ECR_BASE_PATH)/kibot
+KIBOT_REPO_BASE_PATH=$(ECR_BASE_PATH)/im
 KIBOT_IMAGE_DEV=$(KIBOT_REPO_BASE_PATH):latest
 KIBOT_IMAGE_RC=$(KIBOT_REPO_BASE_PATH):rc
 
@@ -20,13 +20,14 @@ im.print_setup:
 # #############################################################################
 
 im.docker_bash:
+	IMAGE=$(KIBOT_IMAGE_DEV) \
 	docker-compose \
 		-f devops/compose/docker-compose.yml \
 		-f devops/compose/docker-compose.local.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
-		kibot_app \
+		app \
 		bash
 
 im.docker_pull:
@@ -37,13 +38,15 @@ im.docker_pull:
 # #############################################################################
 
 im.run_fast_tests:
+	IMAGE=$(KIBOT_IMAGE_DEV) \
 	docker-compose \
-		-f compose/docker-compose.yml \
-		-f compose/docker-compose.test.yml \
-		run --rm \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.local.yml \
+		run \
+		--rm \
 		-l user=$(USER) \
-		kibot_app \
-		bash run_fast_tests.sh
+		app \
+		vendors_amp/devops/docker_scripts/run_fast_tests.sh
 
 im.run_slow_tests:
 	docker-compose \
@@ -138,6 +141,13 @@ im.docker_tag_rc_image.latest:
 im.docker_push_image.latest:
 	docker push $(KIBOT_IMAGE_DEV)
 
+docker_release.latest:
+	make im.docker_build_image_with_cache.rc
+	make im.run_fast_tests.rc
+	#make run_slow_tests.rc
+	make im.docker_tag_rc_image.latest
+	make im.docker_push_image.latest
+	@echo "==> SUCCESS <=="
 
 #BASE_IMAGE?=$(KIBOT_IMAGE)
 #VERSION?=

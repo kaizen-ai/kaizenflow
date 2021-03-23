@@ -13,4 +13,4 @@ echo "STAGE: $STAGE"
 echo "POSTGRES_HOST: $POSTGRES_HOST"
 echo "POSTGRES_PORT: $POSTGRES_PORT"
 
-./docker_build/entrypoint.sh "$@"
+./devops/docker_build/entrypoint.sh "$@"
