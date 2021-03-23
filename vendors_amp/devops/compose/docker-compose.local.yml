@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  app:
+    image: ${IMAGE}
+    entrypoint: /app/vendors_amp/devops/docker_build/entrypoints/entrypoint_deploy_postgres.sh
+    depends_on:
+      - kibot_postgres_local
+    env_file:
+      - ../env/local.env
+    environment:
+      - POSTGRES_PORT=${POSTGRES_PORT}
+
+  kibot_postgres_local:
+    image: postgres:13
+    container_name: kibot_postgres_local
+    restart: "no"
+    volumes:
+      - kibot_postgres_data_local:/var/lib/postgresql/data
+      - ./../../common/db/init/sql/types.sql:/docker-entrypoint-initdb.d/0-types.sql
+      - ./../../common/db/init/sql/static.sql:/docker-entrypoint-initdb.d/1-static.sql
+      - ./../../common/db/init/sql/kibot.sql:/docker-entrypoint-initdb.d/2-kibot.sql
+    env_file:
+      - ../env/local.env
+    environment:
+      - POSTGRES_PORT=${POSTGRES_PORT}
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    command: "-p ${POSTGRES_PORT}"
+
+volumes:
+  kibot_postgres_data_local: {}

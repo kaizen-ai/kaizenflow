@@ -10,10 +10,6 @@ import vendors_amp.common.test.utils as vctuti
 import vendors_amp.kibot.data.load.sql_data_loader as vkdlsq
 import vendors_amp.kibot.sql_writer_backend as vksqlw
 
-DB_SCHEMA_FILE = os.path.join(
-    os.path.dirname(__file__), "../../../compose/init_sql/db.sql"
-)
-
 
 class TestDbSchemaFile(hut.TestCase):
     """
@@ -24,7 +20,8 @@ class TestDbSchemaFile(hut.TestCase):
         """
         Test that schema SQL file exists.
         """
-        self.assertTrue(os.path.exists(DB_SCHEMA_FILE))
+        for file_name in vctuti.get_init_sql_files():
+            self.assertTrue(os.path.exists(file_name))
 
 
 @pytest.mark.skipif(
@@ -55,7 +52,7 @@ class TestSqlDataLoader1(hut.TestCase):
         self.dbname = self._get_test_name().replace("/", "").replace(".", "")
         # Create database for test.
         vctuti.create_database(
-            self.dbname, vctuti.get_init_sql_files(custom_files=[DB_SCHEMA_FILE])
+            self.dbname, vctuti.get_init_sql_files()
         )
         # Initialize writer class to test.
         writer = vksqlw.SQLWriterKibotBackend(
@@ -131,7 +128,7 @@ class TestSqlDataLoader1(hut.TestCase):
         # Convert to string.
         actual_string = hut.convert_df_to_string(actual)
         # Compare with golden.
-        self.check_string(actual_string)
+        self.check_string(actual_string, fuzzy_match=True)
 
     def test_read_data2(self) -> None:
         """
@@ -142,7 +139,7 @@ class TestSqlDataLoader1(hut.TestCase):
         # Convert to string.
         actual_string = hut.convert_df_to_string(actual)
         # Compare with golden.
-        self.check_string(actual_string)
+        self.check_string(actual_string, fuzzy_match=True)
 
     def test_read_data3(self) -> None:
         """
@@ -165,7 +162,7 @@ class TestSqlDataLoader1(hut.TestCase):
         """
         Insert Symbol, Exchange and TradeSymbol entries to make test work.
 
-        See `DB_SCHEMA_FILE` for more info.
+        See `common/db/init/sql/` for more info.
         """
         with writer.conn as conn:
             with conn.cursor() as curs:
