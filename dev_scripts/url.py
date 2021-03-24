@@ -24,15 +24,15 @@ import requests
 
 import helpers.dbg as dbg
 import helpers.git as git
-import helpers.parser as prsr
-import helpers.printing as prnt
-import helpers.system_interaction as si
+import helpers.parser as hparse
+import helpers.printing as hprint
+import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Move it to a central place, helpers.network?
-def check_url(url):
+def check_url(url) -> None:
     try:
         request = requests.get(url)
         exists = request.status_code == 200
@@ -45,12 +45,12 @@ def check_url(url):
         _LOG.warning("url '%s' doesn't exist", url)
 
 
-def _get_prefixes():
-    si.get_user_name()
+def _get_prefixes() -> None:
+    hsyste.get_user_name()
     jupyter_port = 10001
     _LOG.warning(
-        "jupyter_port not defined: using the default one %s",
-        jupyter_port)
+        "jupyter_port not defined: using the default one %s", jupyter_port
+    )
     repo_name = git.get_repo_symbolic_name(super_module=False)
     _LOG.debug("repo_name=%s", repo_name)
     github_prefix = "https://github.com/%s/blob/master" % repo_name
@@ -60,9 +60,9 @@ def _get_prefixes():
 
 def _get_file_name(url: str) -> str:
     """
-    Given a url from Jupyter server or github extract the path corresponding
-    to the file.
-    E.g.,
+    Given a url from Jupyter server or github extract the path corresponding to
+    the file. E.g.,
+
     - http://localhost:10001/notebooks/research/...
         oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb
       ->
@@ -101,9 +101,9 @@ def _get_file_name(url: str) -> str:
     return ret  # type: ignore
 
 
-def _print(tag, val, verbose):
+def _print(tag: str, val: str, verbose: bool) -> None:
     if verbose:
-        print("\n# %s\n%s" % (prnt.color_highlight(tag, "green"), val))
+        print("\n# %s\n%s" % (hprint.color_highlight(tag, "green"), val))
     else:
         print("\n" + val)
 
@@ -117,7 +117,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument("positional", nargs="*")
     parser.add_argument("--short", action="store_true", help="Short output form")
-    prsr.add_verbosity_arg(parser)
+    hparse.add_verbosity_arg(parser)
     return parser
 
 

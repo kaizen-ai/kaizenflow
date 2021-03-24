@@ -1,12 +1,9 @@
 import logging
-import os
 import platform
 from typing import Tuple
 
 import helpers.git as git
-import helpers.io_ as hio
 import helpers.printing as hprint
-import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
 

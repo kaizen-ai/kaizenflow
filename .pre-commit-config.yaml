@@ -38,12 +38,14 @@ repos:
         language: python
         types: [python]
         additional_dependencies: ["-r", "/requirements.txt"]
+        require_serial: true
       - id: black
         name: black
         entry: p1_black.py
         language: python
         types: [python]
         additional_dependencies: ["-r", "/requirements.txt"]
+        require_serial: true
       - id: flake8
         name: flake8
         entry: p1_flake8.py

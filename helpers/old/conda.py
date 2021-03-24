@@ -4,8 +4,8 @@ import os
 from typing import Any, Dict, List, Optional, Tuple
 
 import helpers.dbg as dbg
+import helpers.old.user_credentials as houser
 import helpers.system_interaction as hsyste
-import helpers.user_credentials as huserc
 
 _LOG = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ def conda_system(cmd: str, *args: Any, **kwargs: Any) -> int:
     :return:
     """
     # TODO(gp): Pass conda_env_name as done in get_conda_list()
-    path = huserc.get_credentials()["conda_sh_path"]
+    path = houser.get_credentials()["conda_sh_path"]
     dbg.dassert_exists(path)
     dbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
     cmd = "source %s && %s" % (path, cmd)
@@ -34,7 +34,7 @@ def conda_system(cmd: str, *args: Any, **kwargs: Any) -> int:
 def conda_system_to_string(
     cmd: str, *args: Any, **kwargs: Any
 ) -> Tuple[int, str]:
-    path = huserc.get_credentials()["conda_sh_path"]
+    path = houser.get_credentials()["conda_sh_path"]
     dbg.dassert_exists(path)
     dbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
     cmd = "source %s && %s" % (path, cmd)

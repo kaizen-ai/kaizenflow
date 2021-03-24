@@ -121,8 +121,8 @@ else
 endif
 
 docker_kill_last:
-	docker ps -l -q
-	docker rm -f $(docker ps -l -q)
+	docker ps -l
+	docker rm -f $(shell docker ps -l -q)
 
 # #############################################################################
 # Run tests with "latest" image.
@@ -455,7 +455,7 @@ git_for:
 # #############################################################################
 
 lint_branch:
-	bash pre-commit.sh run --files $(shell git diff --name-only master...)
+	bash pre-commit.sh run --files $(shell git diff --name-only master...) 2>&1 | tee linter_warnings.txt
 
 # #############################################################################
 # Self test.
@@ -494,6 +494,7 @@ fast_self_tests:
 	make docker_pull
 	make docker_cmd CMD="echo" IMAGE=$(IMAGE_RC)
 	make docker_jupyter_test
+	make docker_cmd CMD="pytest amp/helpers/test/test_dbg.py" IMAGE=$(IMAGE_RC)
 	@echo "==> SUCCESS <=="
 
 slow_self_tests:

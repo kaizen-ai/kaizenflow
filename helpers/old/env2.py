@@ -1,11 +1,9 @@
 import logging
 import os
-import platform
 from typing import Tuple
 
-import helpers.old.conda as hconda
-import helpers.git as git
 import helpers.io_ as hio
+import helpers.old.conda as hocond
 import helpers.printing as hprint
 import helpers.system_interaction as hsyste
 
@@ -22,8 +20,8 @@ def get_system_info(add_frame: bool) -> str:
     msg += "user name=%s\n" % hsyste.get_user_name()
     msg += "server name=%s\n" % hsyste.get_server_name()
     msg += "os name=%s\n" % hsyste.get_os_name()
-    msg += "conda path=%s\n" % hconda.get_conda_path()
-    msg += "conda env root=%s\n" % str(hconda.get_conda_envs_dirs())
+    msg += "conda path=%s\n" % hocond.get_conda_path()
+    msg += "conda env root=%s\n" % str(hocond.get_conda_envs_dirs())
     return msg
 
 
@@ -31,7 +29,7 @@ def get_package_summary(conda_env_name: str, add_frame: bool) -> str:
     msg = ""
     if add_frame:
         msg += hprint.frame("Package summary") + "\n"
-    conda_list = hconda.get_conda_list(conda_env_name)
+    conda_list = hocond.get_conda_list(conda_env_name)
     msg = ""
     for package in ["pandas", "numpy", "scipy", "arrow-cpp"]:
         ver = conda_list[package]["version"] if package in conda_list else "None"
@@ -48,7 +46,7 @@ def get_conda_export_list(conda_env_name: str, add_frame: bool) -> str:
         "(conda activate %s 2>&1 >/dev/null) && conda list --export"
         % conda_env_name
     )
-    _, msg_tmp = hconda.conda_system_to_string(cmd)
+    _, msg_tmp = hocond.conda_system_to_string(cmd)
     msg += msg_tmp
     return msg
 
@@ -74,4 +72,3 @@ def save_env_file(conda_env_name: str, dir_name: str) -> Tuple[str, str]:
     else:
         dst_file = None
     return msg, dst_file
-

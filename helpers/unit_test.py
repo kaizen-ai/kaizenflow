@@ -425,7 +425,7 @@ def _assert_equal(
         # 2021-02-17 10:00:00-05:00
         # 2021-02-17 11:00:00-05:00
         # """
-        _LOG.info("\n" + hprint.frame("Actual variable", "#", 80))
+        _LOG.info("\n%s", hprint.frame("Actual variable", "#", 80))
         txt = []
         prefix = "var = r"
         spaces = 0
@@ -448,14 +448,14 @@ def _assert_equal(
         diff_files(act_file_name, exp_file_name, tag)
 
 
-def get_pd_default_values():
+def get_pd_default_values() -> pd.core._config.DictWrapper:
     import copy
 
     vals = copy.deepcopy(pd.options)
     return vals
 
 
-def set_pd_default_values():
+def set_pd_default_values() -> None:
     # 'display':
     default_pd_values = {
         "chop_threshold": None,

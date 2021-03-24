@@ -9,7 +9,7 @@
 #     > more .git
 #     gitdir: ../.git/modules/amp
 #     ```
-#   
+#
 # - To work around this problem we mount the entire Git super-project
 #   repository and then we tweak the `WORK_DIR` to change the working directory
 #   to the submodule. See PartTask6350 for more context.
