@@ -181,8 +181,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Select symbols to process.
     symbols = args.symbol
     if args.max_num_assets is not None:
-        _LOG.warning("Selected only %d symbols as per user request",
-                     args.max_num_assets)
+        _LOG.warning(
+            "Selected only %d symbols as per user request", args.max_num_assets
+        )
         dbg.dassert_lte(1, args.max_num_assets)
         symbols = symbols[: args.max_num_assets]
     # Construct list of parameters.
