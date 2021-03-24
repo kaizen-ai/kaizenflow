@@ -21,6 +21,20 @@ im.print_setup:
 # Development.
 # #############################################################################
 
+# Run app container, start a local PostgreSQL DB.
+im.docker_up.local:
+	IMAGE=$(IM_IMAGE_DEV) \
+	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
+	docker-compose \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.local.yml \
+		run \
+		--rm \
+		-l user=$(USER) \
+		app \
+		bash
+
+# Run app container w/o PostgreSQL.
 im.docker_bash:
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	IMAGE=$(IM_IMAGE_DEV) \
@@ -30,6 +44,7 @@ im.docker_bash:
 		run \
 		--rm \
 		-l user=$(USER) \
+		--no-deps \
 		app \
 		bash
 
@@ -76,16 +91,6 @@ im.run_superslow_tests:
 # #############################################################################
 # Services.
 # #############################################################################
-
-# Start local postgres server.
-im.docker_postgres_up.local:
-	IMAGE=$(KIBOT_IMAGE_DEV) \
-	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
-	docker-compose \
-		-f devops/compose/docker-compose.yml \
-		-f devops/compose/docker-compose.local.yml \
-		up \
-		--remove-orphans
 
 # Stop local postgres server.
 im.docker_postgres_down.local:
