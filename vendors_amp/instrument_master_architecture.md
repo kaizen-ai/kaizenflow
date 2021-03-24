@@ -223,7 +223,7 @@ namespace base {
 }
 
 namespace data {
-   class KibotMinuteData {
+   class MinuteData {
       traded_symbol: TradedSymbol
       datetime: datetime
       Open: float
@@ -233,7 +233,7 @@ namespace data {
       Volume: int
    }
 
-   class KibotTickData {
+   class TickData {
       traded_symbol: TradedSymbol
       datetime: datetime
       Bid: float
@@ -241,8 +241,8 @@ namespace data {
       Volume: int
    }
 
-   KibotMinuteData -left-> base.TradedSymbol
-   KibotTickData -left-> base.TradedSymbol
+   MinuteData -left-> base.TradedSymbol
+   TickData -left-> base.TradedSymbol
 
 }
 
@@ -273,7 +273,7 @@ namespace metadata {
 }
 
 namespace generated {
-   class AggregateKibotTickData {
+   class AggregateTickData {
       traded_symbol: TradedSymbol
       data: date
       bid_open: float
@@ -286,7 +286,7 @@ namespace generated {
       ask_close: float
    }
 
-   AggregateKibotTickData -left-> data.KibotTickData
+   AggregateTickData -left-> data.TickData
 }
 @enduml
 ```
