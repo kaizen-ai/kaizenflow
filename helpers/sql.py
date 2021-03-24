@@ -3,10 +3,7 @@ from typing import List, Optional, Tuple, Union
 
 import pandas as pd
 import psycopg2 as psycop
-<<<<<<< HEAD
 import psycopg2.sql as psql
-=======
->>>>>>> Checkpoint
 
 import helpers.timer as htimer
 
@@ -66,7 +63,6 @@ def get_table_size(
     """
     Report the size of each table.
 
-<<<<<<< HEAD
     E.g.,
 
       table_name  row_estimate   total    index      toast  table
@@ -74,16 +70,6 @@ def get_table_size(
     1    stories           0.0   15 GB    43 GB  192 bytes  12 GB
     2   entities    10823400.0   76 MB  0 bytes  192 bytes  76 MB
     3   taxonomy       20691.0  690 kB  0 bytes  192 bytes 652 kB
-=======
-     E.g.,
-    ```
-      table_name  row_estimate    total    index       toast    table
-    0     events           0.0   262 GB  0 bytes  8192 bytes   262 GB
-    1    stories           0.0   165 GB    43 GB  8192 bytes   122 GB
-    2   entities    10823400.0   706 MB  0 bytes  8192 bytes   706 MB
-    3   taxonomy       20691.0  6960 kB  0 bytes  8192 bytes  6952 kB
-    ```
->>>>>>> Checkpoint
     """
     q = """SELECT *, pg_size_pretty(total_bytes) AS total
         , pg_size_pretty(index_bytes) AS INDEX
@@ -160,13 +146,9 @@ def get_indexes(connection: psycop.extensions.connection) -> pd.DataFrame:
     return tmp
 
 
-<<<<<<< HEAD
 def get_columns(
     connection: psycop.extensions.connection, table_name: str
 ) -> list:
-=======
-def get_columns(connection: psycop.extensions.connection, table_name: str) -> list:
->>>>>>> Checkpoint
     query = (
         """SELECT column_name
             FROM information_schema.columns
