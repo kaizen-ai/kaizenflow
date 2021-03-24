@@ -15,8 +15,8 @@ Usage:
     > convert_s3_to_sql_kibot.py \
         --dataset sp_500_daily \
         --exchange NYSE \
-        --dbname kibot_postgres_db_local \
-        --dbhost kibot_postgres_local \
+        --dbname im_postgres_db_local \
+        --dbhost im_postgres_local \
         --dbuser menjgbcvejlpcbejlc \
         --dbpass eidvlbaresntlcdbresntdjlrs \
         --dbport 5432

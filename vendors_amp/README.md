@@ -3,7 +3,7 @@
    * [Build image](#build-image)
    * [Run kibot app](#run-kibot-app)
       * [Run locally for development](#run-locally-for-development)
-      * [Run locally only PostgreSQL](#run-locally-only-postgresql)
+      * [Stop remaining PostgreSQL containers](#stop-remaining-postgresql-containers)
    * [Development flow using stages](#development-flow-using-stages)
 
 
@@ -27,7 +27,8 @@
 - As a consequence our usual "ret_0" # (price entering instantaneously at time t
   - 1 and exiting at time t) is implemented in terms of Kibot data as: ret_0(t)
     = open_price(t) - open_price(t - 1)
-  ```
+
+  ```text
                datetime     open     high      low    close   vol      time  ret_0
   0 2009-09-27 18:00:00  1042.25  1043.25  1042.25  1043.00  1354  18:00:00    NaN
   1 2009-09-27 18:01:00  1043.25  1043.50  1042.75  1042.75   778  18:01:00   1.00
@@ -53,33 +54,25 @@
 1. Build release candidate image
 
 ```bash
-> make docker_kibot_build_rc_image
+> make im.docker_buildi_image.rc
 ```
 
 2. (Optional for now) Push release candidate image to ECR (Optional for now)
 
 ```bash
-> make docker_kibot_push_rc_image
+> make im.docker_push_image.rc
 ```
 
 3. Tag release candidate image with the latest tag
 
 ```bash
-> make docker_kibot_tag_rc_latest
+> make im.docker_tag_rc_image.latest
 ```
 
 4. Push latest image do ECR
 
 ```bash
-> make docker_kibot_push_latest_image
-```
-
-5. (Optional for now) You can tag the latest image with a various version and
-   push it to ECR
-
-```bash
-> make docker_kibot_tag_latest_version VERSION=0.1
-> make docker_kibot_push_version_image VERSION=0.1
+> make im.docker_push_image.latest
 ```
 
 # Run kibot app
@@ -87,19 +80,18 @@
 Pull image.
 
 ```bash
-> make docker_kibot_pull
+> make im.docker_pull
 ```
 
 By the default we use $KIBOT_IMAGE for all run. You can check the setup to
 identify concrete image.
 
 ```bash
-> make kibot_setup_print
+> make im.print_setup
 # You will get something like:
-KIBOT_REPO_BASE_PATH=083233266530.dkr.ecr.us-east-2.amazonaws.com/kibot
-KIBOT_IMAGE=083233266530.dkr.ecr.us-east-2.amazonaws.com/kibot:latest
-KIBOT_IMAGE_RC=083233266530.dkr.ecr.us-east-2.amazonaws.com/kibot:rc
-KIBOT_IMAGE_RC_SHA=083233266530.dkr.ecr.us-east-2.amazonaws.com/kibot:bab347bceedb8cb6b013acecd0439e9cf87ba9f4
+IM_REPO_BASE_PATH=083233266530.dkr.ecr.us-east-2.amazonaws.com/im
+IM_IMAGE_DEV=083233266530.dkr.ecr.us-east-2.amazonaws.com/im:latest
+IM_IMAGE_RC=083233266530.dkr.ecr.us-east-2.amazonaws.com/im:rc
 ```
 
 ## Run locally for development
@@ -107,40 +99,40 @@ KIBOT_IMAGE_RC_SHA=083233266530.dkr.ecr.us-east-2.amazonaws.com/kibot:bab347bcee
 Build local image:
 
 ```bash
-> make docker_kibot_build_rc_image
-> make docker_kibot_tag_rc_latest
+> make im.docker_build_image.rc
+> make im.docker_tag_rc_image.latest
 ```
 
-Basic run:
+Basic run with PostgreSQL:
 
 ```bash
-> make docker_kibot_local_run
+> make im.docker_up.local
 ```
 
-## Run locally only PostgreSQL
-
-Start server in detached mode:
+Basic run without PostgreSQL:
 
 ```bash
-> make docker_kibot_postgres_up_local
+> make im.docker_bash
 ```
 
-Stop PostgreSQL server:
+## Stop remaining PostgreSQL containers
+
+Stop a container:
 
 ```bash
-> make docker_kibot_down_postgres_local
+> make im.docker_down.local
 ```
 
-Stop PostgreSQL server and remove all data:
+Stop a container and remove all data:
 
 ```bash
-> make docker_kibot_rm_postgres_local
+> make im.docker_rm.local
 ```
 
 # Development flow using stages
 
 - Use `local` stages for development locally. Related: target in makefile
-  `docker_kibot_local_run`
+  `im.docker_up.local`
 
 All stages can have separate docker-compose files. All stages must have separate
 targets in make file to start and stop services.
