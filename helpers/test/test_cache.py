@@ -3,12 +3,12 @@ import tempfile
 import time
 from typing import Any, Callable, Tuple
 
-import numpy as numpy
+import numpy as np
 import pandas as pd
 
 import helpers.cache as hcache
-import helpers.printing as hprinting
-import helpers.unit_test as hunittest
+import helpers.printing as hprint
+import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
@@ -16,7 +16,9 @@ _LOG = logging.getLogger(__name__)
 
 
 def _get_add_function() -> Callable:
-    """Return function for testing with the ability to track state."""
+    """
+    Return function for testing with the ability to track state.
+    """
     #
     def fn(x: int, y: int) -> int:
         fn.executed = True
@@ -28,17 +30,19 @@ def _get_add_function() -> Callable:
     return fn
 
 
-class TestCacheTag(hunittest.TestCase):
+class TestCacheTag(hut.TestCase):
     def test1(self) -> None:
-        """Cache unit tests need to clean up the cache, so we need to make sure
-        we are using the unit test cache, and not the dev cache."""
+        """
+        Cache unit tests need to clean up the cache, so we need to make sure we
+        are using the unit test cache, and not the dev cache.
+        """
         cache_tag = "unittest"
         disk_cache_name = hcache.get_cache_name("disk", cache_tag)
         _LOG.debug("disk_cache_name=%s", disk_cache_name)
         self.assertIn(cache_tag, disk_cache_name)
 
 
-class TestCacheFeatures(hunittest.TestCase):
+class TestCacheFeatures(hut.TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.cache_tag = "%s::%s" % (
@@ -53,8 +57,10 @@ class TestCacheFeatures(hunittest.TestCase):
         super().tearDown()
 
     def test_without_caching1(self) -> None:
-        """Test that we get two executions of a function, if we execute two
-        times, without caching."""
+        """
+        Test that we get two executions of a function, if we execute two times,
+        without caching.
+        """
         f = self._get_function()
         # Execute.
         act = f(3, 4)
@@ -69,29 +75,33 @@ class TestCacheFeatures(hunittest.TestCase):
         self.assertTrue(f.executed)
 
     def test_with_caching1(self) -> None:
-        """Test that caching the same value works."""
+        """
+        Test that caching the same value works.
+        """
         f, cf = self._get_f_cf_functions()
         # Execute the first time: verify that it is executed.
-        _LOG.debug("\n%s", hprinting.frame("Executing the 1st time"))
+        _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the second time: verify that it is *NOT* executed.
-        _LOG.debug("\n%s", hprinting.frame("Executing the 2nd time"))
+        _LOG.debug("\n%s", hprint.frame("Executing the 2nd time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
         # Execute the third time: verify that it is *NOT* executed.
-        _LOG.debug("\n%s", hprinting.frame("Executing the 3rd time"))
+        _LOG.debug("\n%s", hprint.frame("Executing the 3rd time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
 
     def test_with_caching2(self) -> None:
-        """Test that caching mixing different values works."""
+        """
+        Test that caching mixing different values works.
+        """
         f, cf = self._get_f_cf_functions()
         # Execute the first time: verify that it is executed.
-        _LOG.debug("\n%s", hprinting.frame("Executing the 1st time"))
+        _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
@@ -100,7 +110,7 @@ class TestCacheFeatures(hunittest.TestCase):
             f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the second time: verify that it is *NOT* executed.
-        _LOG.debug("\n%s", hprinting.frame("Executing the 2nd time"))
+        _LOG.debug("\n%s", hprint.frame("Executing the 2nd time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
@@ -110,12 +120,14 @@ class TestCacheFeatures(hunittest.TestCase):
         )
 
     def test_with_caching3(self) -> None:
-        """Test disabling both mem and disk cache."""
+        """
+        Test disabling both mem and disk cache.
+        """
         f, cf = self._get_f_cf_functions(
             use_mem_cache=False, use_disk_cache=False
         )
         # Execute the first time.
-        _LOG.debug("\n%s", hprinting.frame("Executing the 1st time"))
+        _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
@@ -124,7 +136,7 @@ class TestCacheFeatures(hunittest.TestCase):
             f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the second time.
-        _LOG.debug("\n%s", hprinting.frame("Executing the 2nd time"))
+        _LOG.debug("\n%s", hprint.frame("Executing the 2nd time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
@@ -134,11 +146,13 @@ class TestCacheFeatures(hunittest.TestCase):
         )
 
     def test_with_caching4(self) -> None:
-        """Test that caching mixing different values works, when we disable the
-        disk cache."""
+        """
+        Test that caching mixing different values works, when we disable the
+        disk cache.
+        """
         f, cf = self._get_f_cf_functions(use_mem_cache=True, use_disk_cache=False)
         # Execute the first time: verify that it is executed.
-        _LOG.debug("\n%s", hprinting.frame("Executing the 1st time"))
+        _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
@@ -147,7 +161,7 @@ class TestCacheFeatures(hunittest.TestCase):
             f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the second time: verify that it is *NOT* executed.
-        _LOG.debug("\n%s", hprinting.frame("Executing the 2nd time"))
+        _LOG.debug("\n%s", hprint.frame("Executing the 2nd time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
@@ -157,11 +171,13 @@ class TestCacheFeatures(hunittest.TestCase):
         )
 
     def test_with_caching5(self) -> None:
-        """Test that caching mixing different values works, when we disable the
-        memory cache."""
+        """
+        Test that caching mixing different values works, when we disable the
+        memory cache.
+        """
         f, cf = self._get_f_cf_functions(use_mem_cache=False, use_disk_cache=True)
         # Execute the first time: verify that it is executed.
-        _LOG.debug("\n%s", hprinting.frame("Executing the 1st time"))
+        _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
@@ -170,7 +186,7 @@ class TestCacheFeatures(hunittest.TestCase):
             f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the second time: verify that it is *NOT* executed.
-        _LOG.debug("\n%s", hprinting.frame("Executing the 2nd time"))
+        _LOG.debug("\n%s", hprint.frame("Executing the 2nd time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
         )
@@ -180,50 +196,56 @@ class TestCacheFeatures(hunittest.TestCase):
         )
 
     def test_with_caching_mem_reset(self) -> None:
-        """Test resetting mem cache."""
+        """
+        Test resetting mem cache.
+        """
         f, cf = self._get_f_cf_functions(use_mem_cache=True, use_disk_cache=False)
         # Execute the first time: verify that it is executed.
-        _LOG.debug("\n%s", hprinting.frame("Executing the 1st time"))
+        _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the first time: verify that it is *NOT* executed.
-        _LOG.debug("\n%s", hprinting.frame("Executing the 2nd time"))
+        _LOG.debug("\n%s", hprint.frame("Executing the 2nd time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
         # Reset memory cache.
         hcache.clear_global_cache("mem", self.cache_tag)
         # Execute the 3rd time: verify that it is executed.
-        _LOG.debug("\n%s", hprinting.frame("Executing the 3rd time"))
+        _LOG.debug("\n%s", hprint.frame("Executing the 3rd time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
 
     def test_with_caching_disk_reset(self) -> None:
-        """Test resetting disk cache."""
+        """
+        Test resetting disk cache.
+        """
         f, cf = self._get_f_cf_functions(use_mem_cache=False, use_disk_cache=True)
         # Execute the first time: verify that it is executed.
-        _LOG.debug("\n%s", hprinting.frame("Executing the 1st time"))
+        _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the first time: verify that it is *NOT* executed.
-        _LOG.debug("\n%s", hprinting.frame("Executing the 2nd time"))
+        _LOG.debug("\n%s", hprint.frame("Executing the 2nd time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
         )
         # Reset disk cache.
         hcache.clear_global_cache("disk", self.cache_tag)
         # Execute the 3rd time: verify that it is executed.
-        _LOG.debug("\n%s", hprinting.frame("Executing the 3rd time"))
+        _LOG.debug("\n%s", hprint.frame("Executing the 3rd time"))
         self._check_cache_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
 
     def test_redefined_function(self) -> None:
-        """Test if the function is redefined, but it's still the same, the
-        intrinsic function should not be recomputed."""
+        """
+        Test if the function is redefined, but it's still the same, the
+        intrinsic function should not be recomputed.
+        """
         # Define the function inline imitating working in a notebook.
         add = self._get_add_function()
         cached_add = hcache.Cached(add, tag=self.cache_tag)
@@ -252,8 +274,10 @@ class TestCacheFeatures(hunittest.TestCase):
         )
 
     def test_changed_function(self) -> None:
-        """Test if the function is redefined, but it is not the same, the
-        intrinsic function should be recomputed."""
+        """
+        Test if the function is redefined, but it is not the same, the
+        intrinsic function should be recomputed.
+        """
         # Define the function inline imitating working in a notebook.
         def add(x: int, y: int) -> int:
             add.executed = True
@@ -299,16 +323,18 @@ class TestCacheFeatures(hunittest.TestCase):
         return add
 
     def _get_function(self) -> Callable:
-        """Build a function that can be used to verify if it was executed or
-        not."""
+        """
+        Build a function that can be used to verify if it was executed or not.
+        """
         f = _get_add_function()
         # Make sure the function starts from a non-executed state.
         self.assertFalse(f.executed)
         return f
 
     def _reset_function(self, f: Callable) -> None:
-        """Reset the function before another execution, so we can verify if it
-        was executed or not.
+        """
+        Reset the function before another execution, so we can verify if it was
+        executed or not.
 
         We should do this every time we run the cached version of the
         function.
@@ -325,8 +351,10 @@ class TestCacheFeatures(hunittest.TestCase):
         exp_f_state: bool,
         exp_cf_state: str,
     ) -> None:
-        """Call the (cached function) `cf(val1, val2)` and check whether the
-        intrinsic function was executed and what caches were used."""
+        """
+        Call the (cached function) `cf(val1, val2)` and check whether the
+        intrinsic function was executed and what caches were used.
+        """
         _LOG.debug(
             "val1=%s, val2=%s, exp_f_state=%s, exp_cf_state=%s",
             val1,
@@ -347,8 +375,12 @@ class TestCacheFeatures(hunittest.TestCase):
         _LOG.debug("executed=%s", f.executed)
         self.assertEqual(exp_f_state, f.executed)
 
-    def _get_f_cf_functions(self, **kwargs: Any) -> Tuple[Callable, hcache.Cached]:
-        """Create the intrinsic function `f` and its cached version `cf`."""
+    def _get_f_cf_functions(
+        self, **kwargs: Any
+    ) -> Tuple[Callable, hcache.Cached]:
+        """
+        Create the intrinsic function `f` and its cached version `cf`.
+        """
         # Make sure that we are using the unit test cache.
         disk_cache_name = hcache.get_cache_name("disk", self.cache_tag)
         _LOG.debug("disk_cache_name=%s", disk_cache_name)
@@ -366,7 +398,7 @@ class TestCacheFeatures(hunittest.TestCase):
         return f, cf
 
 
-class TestSpecificCache(hunittest.TestCase):
+class TestSpecificCache(hut.TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.cache_tag = "%s::%s" % (
@@ -389,7 +421,9 @@ class TestSpecificCache(hunittest.TestCase):
         super().tearDown()
 
     def test_with_specific_cache(self) -> None:
-        """Test that caching mixing different values works."""
+        """
+        Test that caching mixing different values works.
+        """
         # Execute the first time: verify that it is executed.
         self._check_cache_state(3, 4, exp_f_state=True, exp_cf_state="no_cache")
         # Execute the second time: verify that it is *NOT* executed.
@@ -406,16 +440,18 @@ class TestSpecificCache(hunittest.TestCase):
         self._check_cache_state(3, 4, exp_f_state=False, exp_cf_state="mem")
 
     def _get_function(self) -> Callable:
-        """Build a function that can be used to verify if it was executed or
-        not."""
+        """
+        Build a function that can be used to verify if it was executed or not.
+        """
         f = _get_add_function()
         # Make sure the function starts from a non-executed state.
         self.assertFalse(f.executed)
         return f
 
     def _reset_function(self, f: Callable) -> None:
-        """Reset the function before another execution, so we can verify if it
-        was executed or not.
+        """
+        Reset the function before another execution, so we can verify if it was
+        executed or not.
 
         We should do this every time we run the cached version of the
         function.
@@ -430,8 +466,10 @@ class TestSpecificCache(hunittest.TestCase):
         exp_f_state: bool,
         exp_cf_state: str,
     ) -> None:
-        """Call the (cached function) `cf(val1, val2)` and check whether the
-        intrinsic function was executed and what caches were used."""
+        """
+        Call the (cached function) `cf(val1, val2)` and check whether the
+        intrinsic function was executed and what caches were used.
+        """
         _LOG.debug(
             "val1=%s, val2=%s, exp_f_state=%s, exp_cf_state=%s",
             val1,
@@ -455,7 +493,9 @@ class TestSpecificCache(hunittest.TestCase):
         self.assertEqual(exp_f_state, self.f.executed)
 
     def _get_f_cf_functions(self) -> Tuple[Callable, hcache.Cached]:
-        """Create the intrinsic function `f` and its cached version `cf`."""
+        """
+        Create the intrinsic function `f` and its cached version `cf`.
+        """
         # Create the intrinsic function.
         f = self._get_function()
         # Create the cached function.
@@ -471,7 +511,7 @@ class TestSpecificCache(hunittest.TestCase):
         return f, cf
 
 
-class TestCachePerformance(hunittest.TestCase):
+class TestCachePerformance(hut.TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.cache_tag = "%s::%s" % (
@@ -486,23 +526,28 @@ class TestCachePerformance(hunittest.TestCase):
         super().tearDown()
 
     def test_performance_dataframe(self) -> None:
-        """Test performance of the cache over pandas DataFrame."""
+        """
+        Test performance of the cache over pandas DataFrame.
+        """
         # Create a somewhat big DataFrame with random data.
         df = pd.DataFrame(
-            numpy.random.randint(0, 100, size=(100, 4)), columns=list("ABCD")
+            np.random.randint(0, 100, size=(100, 4)), columns=list("ABCD")
         )
         print("testing pandas dataframe, with sample size", df.shape)
         self._test_performance(df)
 
     def test_performance_series(self) -> None:
-        """Test performance of the cache over pandas Series."""
+        """
+        Test performance of the cache over pandas Series.
+        """
         # Create a somewhat big DataFrame with random data.
-        s = pd.Series(numpy.random.randint(0, 100, size=100))
+        s = pd.Series(np.random.randint(0, 100, size=100))
         print("testing pandas series, with sample size", s.shape)
         self._test_performance(s)
 
     def _test_performance(self, val: Any) -> None:
-        """Test performance of the cache over some argument val.
+        """
+        Test performance of the cache over some argument val.
 
         :param val: any hashable argument
         """
@@ -542,7 +587,8 @@ class TestCachePerformance(hunittest.TestCase):
     @staticmethod
     # pylint: disable=unused-argument
     def _computation(*args: Any) -> None:
-        """Simulate work.
+        """
+        Simulate work.
 
         :param args: throw away arguments
         """
@@ -551,7 +597,8 @@ class TestCachePerformance(hunittest.TestCase):
 
     @staticmethod
     def _timeit(fn: Callable, *args: Any) -> float:
-        """Get performance measure of the call to fn with args.
+        """
+        Get performance measure of the call to fn with args.
 
         :param fn: callable function
         :param args: any arguments to pass to the function fn
@@ -563,7 +610,7 @@ class TestCachePerformance(hunittest.TestCase):
         return perf_diff
 
 
-class TestCacheDecorator(hunittest.TestCase):
+class TestCacheDecorator(hut.TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.cache_tag = "%s::%s" % (
@@ -578,7 +625,9 @@ class TestCacheDecorator(hunittest.TestCase):
         super().tearDown()
 
     def test_decorated_function(self) -> None:
-        """Test decorator with both caches enabled."""
+        """
+        Test decorator with both caches enabled.
+        """
         # Define the function inline imitating working in a notebook.
         @hcache.cache(tag=self.cache_tag)
         def add(x: int, y: int) -> int:
@@ -595,7 +644,9 @@ class TestCacheDecorator(hunittest.TestCase):
         )
 
     def test_decorated_function_no_mem(self) -> None:
-        """Test decorator with only disk cache."""
+        """
+        Test decorator with only disk cache.
+        """
         # Define the function inline imitating working in a notebook.
         @hcache.cache(tag=self.cache_tag, use_mem_cache=False)
         def add(x: int, y: int) -> int:
@@ -620,8 +671,10 @@ class TestCacheDecorator(hunittest.TestCase):
         exp_f_state: bool,
         exp_cf_state: str,
     ) -> None:
-        """Call the (cached function) `cf(val1, val2)` and check whether the
-        intrinsic function was executed and what caches were used."""
+        """
+        Call the (cached function) `cf(val1, val2)` and check whether the
+        intrinsic function was executed and what caches were used.
+        """
         _LOG.debug(
             "val1=%s, val2=%s, exp_f_state=%s, exp_cf_state=%s",
             val1,

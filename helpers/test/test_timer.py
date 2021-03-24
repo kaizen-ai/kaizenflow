@@ -1,7 +1,7 @@
 import logging
 import time
 
-import helpers.timer as timer
+import helpers.timer as htimer
 import helpers.unit_test as hut
 
 
@@ -11,7 +11,7 @@ class TestTimedScope(hut.TestCase):
         Test that elapsed time is correctly computed.
         """
         # Run the function to test.
-        with timer.TimedScope(logging.INFO, "Test") as ts:
+        with htimer.TimedScope(logging.INFO, "Test") as ts:
             time.sleep(1)
         # Round actual time up to 1 decimal and compare it with expected.
         actual_rounded_time = round(ts.elapsed_time[-1], 1)

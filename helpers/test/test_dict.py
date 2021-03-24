@@ -1,7 +1,7 @@
 import logging
 
-import core.config as cfg
-import helpers.dict as dct
+import core.config as cconfi
+import helpers.dict as hdict
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -13,7 +13,7 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         Test basic case with no nesting.
         """
         dict_ = {"key0": "value0", "key1": "value1"}
-        actual_result = list(dct.get_nested_dict_iterator(dict_))
+        actual_result = list(hdict.get_nested_dict_iterator(dict_))
         expected_result = [(("key0",), "value0"), (("key1",), "value1")]
         self.assertListEqual(actual_result, expected_result)
 
@@ -25,7 +25,7 @@ class Test_get_nested_dict_iterator(hut.TestCase):
             "key0": {"key00": "value00", "key01": "value01"},
             "key1": "value1",
         }
-        actual_result = list(dct.get_nested_dict_iterator(dict_))
+        actual_result = list(hdict.get_nested_dict_iterator(dict_))
         expected_result = [
             (("key0", "key00"), "value00"),
             (("key0", "key01"), "value01"),
@@ -38,7 +38,7 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         Test multilevel nested case.
         """
         dict_ = {"key0": {"key00": {"key000": "value000"}}, "key1": "value1"}
-        actual_result = list(dct.get_nested_dict_iterator(dict_))
+        actual_result = list(hdict.get_nested_dict_iterator(dict_))
         expected_result = [
             (("key0", "key00", "key000"), "value000"),
             (("key1",), "value1"),
@@ -50,7 +50,7 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         Test flat case with `None` value.
         """
         dict_ = {"key0": "value0", "key1": None}
-        actual_result = list(dct.get_nested_dict_iterator(dict_))
+        actual_result = list(hdict.get_nested_dict_iterator(dict_))
         expected_result = [(("key0",), "value0"), (("key1",), None)]
         self.assertListEqual(actual_result, expected_result)
 
@@ -59,7 +59,7 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         Test nested case with `None` value.
         """
         dict_ = {"key0": {"key00": None}, "key1": "value1"}
-        actual_result = list(dct.get_nested_dict_iterator(dict_))
+        actual_result = list(hdict.get_nested_dict_iterator(dict_))
         expected_result = [(("key0", "key00"), None), (("key1",), "value1")]
         self.assertListEqual(actual_result, expected_result)
 
@@ -68,7 +68,7 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         Test flat case with empty dict value.
         """
         dict_ = {"key0": {}, "key1": "value1"}
-        actual_result = list(dct.get_nested_dict_iterator(dict_))
+        actual_result = list(hdict.get_nested_dict_iterator(dict_))
         expected_result = [(("key0",), {}), (("key1",), "value1")]
         self.assertListEqual(actual_result, expected_result)
 
@@ -77,7 +77,7 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         Test nested case with empty dict value.
         """
         dict_ = {"key0": {"key00": {}}, "key1": "value1"}
-        actual_result = list(dct.get_nested_dict_iterator(dict_))
+        actual_result = list(hdict.get_nested_dict_iterator(dict_))
         expected_result = [(("key0", "key00"), {}), (("key1",), "value1")]
         self.assertListEqual(actual_result, expected_result)
 
@@ -85,9 +85,9 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         """
         Test flat case with empty Config value.
         """
-        config = cfg.Config()
+        config = cconfi.Config()
         dict_ = {"key0": config, "key1": "value1"}
-        actual_result = list(dct.get_nested_dict_iterator(dict_))
+        actual_result = list(hdict.get_nested_dict_iterator(dict_))
         expected_result = [(("key0",), config), (("key1",), "value1")]
         self.assertListEqual(actual_result, expected_result)
 
@@ -95,8 +95,8 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         """
         Test nexted case with empty Config value.
         """
-        config = cfg.Config()
+        config = cconfi.Config()
         dict_ = {"key0": {"key00": config}, "key1": "value1"}
-        actual_result = list(dct.get_nested_dict_iterator(dict_))
+        actual_result = list(hdict.get_nested_dict_iterator(dict_))
         expected_result = [(("key0", "key00"), config), (("key1",), "value1")]
         self.assertListEqual(actual_result, expected_result)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-# Start all tunnels
+# Start all tunnels.
+
 > ssh_tunnels.py start
 
 # Stop all service tunnels
@@ -22,17 +23,17 @@ import logging
 
 import helpers.dbg as dbg
 import helpers.git as git
-import helpers.parser as prsr
-import helpers.system_interaction as si
-import helpers.tunnels as tnls
+import helpers.old.tunnels as hotunn
+import helpers.parser as hparse
+import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
 
 
-# ##############################################################################
+# #############################################################################
 
 
-def _main():
+def _main() -> None:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -49,7 +50,7 @@ def _main():
         help=_help,
     )
     parser.add_argument("--user", type=str, action="store")
-    prsr.add_verbosity_arg(parser)
+    hparse.add_verbosity_arg(parser)
     #
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
@@ -70,18 +71,18 @@ def _main():
     if args.user:
         user_name = args.user
     else:
-        user_name = si.get_user_name()
+        user_name = hsyste.get_user_name()
     #
     action = args.positional[0]
     _LOG.debug("action=%s", action)
     if action == "start":
-        tnls.start_tunnels(user_name)
+        hotunn.start_tunnels(user_name)
     elif action == "stop":
-        tnls.stop_tunnels()
+        hotunn.stop_tunnels()
     elif action == "check":
-        tnls.check_tunnels()
+        hotunn.check_tunnels()
     elif action == "kill":
-        tnls.kill_all_tunnel_processes()
+        hotunn.kill_all_tunnel_processes()
     else:
         dbg.dfatal("Invalid action='%s'" % action)
 

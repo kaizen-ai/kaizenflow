@@ -3,12 +3,12 @@
 """
 Convert a url / path into different formats: jupyter url, github, git path.
 
-> url.py https://github.com/ParticleDev/commodity_research/blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+> url.py https://github.com/ParticleDev/.../Task229_Exploratory_analysis_of_ST_data.ipynb
 file_name=
 /Users/saggese/src/particle/commodity_research/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 
 github_url=
-https://github.com/ParticleDev/commodity_research/blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+https://github.com/ParticleDev/.../Task229_Exploratory_analysis_of_ST_data.ipynb
 
 jupyter_url=
 http://localhost:10001/tree/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
@@ -19,6 +19,7 @@ import logging
 import os
 import re
 import sys
+from typing import Tuple
 
 import requests
 
@@ -32,7 +33,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Move it to a central place, helpers.network?
-def check_url(url) -> None:
+def check_url(url: str) -> None:
     try:
         request = requests.get(url)
         exists = request.status_code == 200
@@ -45,7 +46,7 @@ def check_url(url) -> None:
         _LOG.warning("url '%s' doesn't exist", url)
 
 
-def _get_prefixes() -> None:
+def _get_prefixes() -> Tuple[str, str]:
     hsyste.get_user_name()
     jupyter_port = 10001
     _LOG.warning(

@@ -1,14 +1,14 @@
 import logging
 
 import helpers.dbg as dbg
-import helpers.unit_test as ut
+import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
 # #############################################################################
 
 
-class Test_dassert1(ut.TestCase):
+class Test_dassert1(hut.TestCase):
     def test1(self) -> None:
         dbg.dassert(True)
 
@@ -47,7 +47,7 @@ class Test_dassert1(ut.TestCase):
 # #############################################################################
 
 
-class Test_dassert_eq1(ut.TestCase):
+class Test_dassert_eq1(hut.TestCase):
     def test1(self) -> None:
         dbg.dassert_eq(1, 1)
 
@@ -76,7 +76,7 @@ class Test_dassert_eq1(ut.TestCase):
 # #############################################################################
 
 
-class Test_dassert_misc1(ut.TestCase):
+class Test_dassert_misc1(hut.TestCase):
     def test1(self) -> None:
         dbg.dassert_in("a", "abc")
 
@@ -178,6 +178,6 @@ class Test_dassert_misc1(ut.TestCase):
 # #############################################################################
 
 
-class Test_logging1(ut.TestCase):
+class Test_logging1(hut.TestCase):
     def test_logging_levels1(self) -> None:
         dbg.test_logger()

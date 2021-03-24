@@ -6,20 +6,20 @@ import helpers.tunnels as htunne
 
 import logging
 import os
-from typing import Dict, List
+from typing import Dict, List, Tuple, cast
 
 import helpers.dbg as dbg
+import helpers.old.user_credentials as houser
 import helpers.printing as hprint
 import helpers.system_interaction as hsyste
-import helpers.user_credentials as huserc
 
 _LOG = logging.getLogger(__name__)
 
 # #############################################################################
 
 
-def get_tunnel_info() -> (list, str):
-    credentials = huserc.get_credentials()
+def get_tunnel_info() -> Tuple[list, str]:
+    credentials = houser.get_credentials()
     #
     tunnel_info = credentials["tunnel_info"]
     dbg.dassert_is_not(tunnel_info, None)
@@ -83,8 +83,8 @@ def _get_services_info() -> list:
     return services
 
 
-def _get_tunnel_info():
-    credentials = huserc.get_credentials()
+def _get_tunnel_info() -> Tuple[Any, str]:
+    credentials = houser.get_credentials()
     #
     tunnel_info = credentials["tunnel_info"]
     dbg.dassert_is_not(tunnel_info, None)
@@ -101,10 +101,11 @@ def _get_tunnel_info():
 def _tunnel_info_to_string(tunnel_info: list) -> str:
     ret = "\n".join(map(str, tunnel_info))
     ret = hprint.indent(ret)
+    cast(str, ret)
     return ret
 
 
-def _service_to_string(service: (str, str, str, str)) -> str:
+def _service_to_string(service: Tuple[str, str, str, str]) -> str:
     service_name, server, local_port, remote_port = service
     ret = (
         f"tunnel for service '{service_name}'"
@@ -119,12 +120,12 @@ def _service_to_string(service: (str, str, str, str)) -> str:
 
 def _get_ssh_tunnel_process(
     local_port: int, remote_port: int, fuzzy_match: bool
-) -> (List[int], str):
+) -> Tuple[List[int], str]:
     """
     Return the pids of the processes attached to a given port.
     """
 
-    def _keep_line(line):
+    def _keep_line(line: str) -> bool:
         keep = "ssh -i" in line
         if keep:
             if fuzzy_match:
@@ -251,7 +252,7 @@ def kill_all_tunnel_processes() -> None:
     Kill all the processes that have `ssh -i ...:localhost:...".
     """
     # cmd = "ps ax | grep 'ssh -i' | grep localhost: | grep -v grep"
-    def _keep_line(line):
+    def _keep_line(line: str) -> bool:
         keep = ("ssh -i" in line) and (":localhost:" in line)
         return keep
 
