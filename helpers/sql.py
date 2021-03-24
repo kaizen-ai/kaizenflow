@@ -3,6 +3,7 @@ from typing import List, Optional, Tuple, Union
 
 import pandas as pd
 import psycopg2 as psycop
+import psycopg2.sql as psql
 
 import helpers.timer as htimer
 
@@ -30,11 +31,8 @@ def get_engine_version(connection: psycop.extensions.connection) -> str:
     """
     Report information on the SQL engine.
 
-    E.g.,
-    ```
-    PostgreSQL 11.5 on x86_64-pc-linux-gnu
-        compiled by gcc (GCC) 4.8.3 20140911 (Red Hat 4.8.3-9), 64-bit
-    ```
+    E.g., ``` PostgreSQL 11.5 on x86_64-pc-linux-gnu     compiled by gcc
+    (GCC) 4.8.3 20140911 (Red Hat 4.8.3-9), 64-bit ```
     """
     query = "SELECT version();"
     df = pd.read_sql_query(query, connection)
@@ -65,14 +63,13 @@ def get_table_size(
     """
     Report the size of each table.
 
-     E.g.,
-    ```
-      table_name  row_estimate    total    index       toast    table
-    0     events           0.0   262 GB  0 bytes  8192 bytes   262 GB
-    1    stories           0.0   165 GB    43 GB  8192 bytes   122 GB
-    2   entities    10823400.0   706 MB  0 bytes  8192 bytes   706 MB
-    3   taxonomy       20691.0  6960 kB  0 bytes  8192 bytes  6952 kB
-    ```
+    E.g.,
+
+      table_name  row_estimate   total    index      toast  table
+    0     events           0.0   26 GB  0 bytes  192 bytes  26 GB
+    1    stories           0.0   15 GB    43 GB  192 bytes  12 GB
+    2   entities    10823400.0   76 MB  0 bytes  192 bytes  76 MB
+    3   taxonomy       20691.0  690 kB  0 bytes  192 bytes 652 kB
     """
     q = """SELECT *, pg_size_pretty(total_bytes) AS total
         , pg_size_pretty(index_bytes) AS INDEX
@@ -149,7 +146,9 @@ def get_indexes(connection: psycop.extensions.connection) -> pd.DataFrame:
     return tmp
 
 
-def get_columns(connection: psycop.extensions.connection, table_name: str) -> list:
+def get_columns(
+    connection: psycop.extensions.connection, table_name: str
+) -> list:
     query = (
         """SELECT column_name
             FROM information_schema.columns
@@ -236,7 +235,9 @@ def head_tables(
 
 
 def find_common_columns(
-    connection: psycop.extensions.connection, tables: List[str], as_df: bool = False
+    connection: psycop.extensions.connection,
+    tables: List[str],
+    as_df: bool = False,
 ) -> Union[None, pd.DataFrame]:
     limit = 5
     df = []
@@ -273,3 +274,30 @@ def find_common_columns(
             df, columns=["table1", "table2", "num_comm_cols", "common_cols"]
         )
     return obj
+
+
+# TODO(plyq): Tests.
+def create_database(
+    connection: psycop.extensions.connection,
+    db: str,
+    force: Optional[bool] = None,
+) -> None:
+    """
+    Create empty database.
+
+    :param connection: database connection
+    :param db: database to create
+    :param force: overwrite existing database
+    """
+    with connection.cursor() as cursor:
+        if force:
+            cursor.execute(
+                psql.SQL("DROP DATABASE IF EXISTS {};").format(
+                    psql.Identifier(db)
+                )
+            )
+        else:
+            raise ValueError("Database %s already exists" % db)
+        cursor.execute(
+            psql.SQL("CREATE DATABASE {};").format(psql.Identifier(db))
+        )
