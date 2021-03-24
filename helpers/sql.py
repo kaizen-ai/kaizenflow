@@ -63,11 +63,13 @@ def get_table_size(
     """
     Report the size of each table.
 
-    E.g., ```   table_name  row_estimate    total    index       toast
-    table 0     events           0.0   262 GB  0 bytes  8192 bytes   262
-    GB 1    stories           0.0   165 GB    43 GB  8192 bytes   122 GB
-    2   entities    10823400.0   706 MB  0 bytes  8192 bytes   706 MB 3
-    taxonomy       20691.0  6960 kB  0 bytes  8192 bytes  6952 kB ```
+    E.g.,
+
+      table_name  row_estimate   total    index      toast  table
+    0     events           0.0   26 GB  0 bytes  192 bytes  26 GB
+    1    stories           0.0   15 GB    43 GB  192 bytes  12 GB
+    2   entities    10823400.0   76 MB  0 bytes  192 bytes  76 MB
+    3   taxonomy       20691.0  690 kB  0 bytes  192 bytes 652 kB
     """
     q = """SELECT *, pg_size_pretty(total_bytes) AS total
         , pg_size_pretty(index_bytes) AS INDEX
