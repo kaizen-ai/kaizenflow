@@ -14,15 +14,15 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
 
     FREQ_ATTR_MAPPING = {
         vcdtyp.Frequency.Daily: {
-            "table_name": "DailyData",
+            "table_name": "KibotDailyData",
             "datetime_field_name": "date",
         },
         vcdtyp.Frequency.Minutely: {
-            "table_name": "MinuteData",
+            "table_name": "KibotMinuteData",
             "datetime_field_name": "datetime",
         },
         vcdtyp.Frequency.Tick: {
-            "table_name": "TickData",
+            "table_name": "KibotTickData",
             "datetime_field_name": "datetime",
         },
     }
@@ -88,7 +88,7 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
             with self.conn.cursor() as curs:
                 pextra.execute_values(
                     curs,
-                    "INSERT INTO DailyData "
+                    "INSERT INTO KibotDailyData "
                     "(trade_symbol_id, date, open, high, low, close, volume) "
                     "VALUES %s ON CONFLICT DO NOTHING",
                     df.to_dict("records"),
@@ -124,7 +124,7 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
         with self.conn:
             with self.conn.cursor() as curs:
                 curs.execute(
-                    "INSERT INTO DailyData "
+                    "INSERT INTO KibotDailyData "
                     "(trade_symbol_id, date, open, high, low, close, volume) "
                     "VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
                     [
@@ -151,7 +151,7 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
             with self.conn.cursor() as curs:
                 pextra.execute_values(
                     curs,
-                    "INSERT INTO MinuteData "
+                    "INSERT INTO KibotMinuteData "
                     "(trade_symbol_id, datetime, open, high, low, close, volume) "
                     "VALUES %s ON CONFLICT DO NOTHING",
                     df.to_dict("records"),
@@ -187,7 +187,7 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
         with self.conn:
             with self.conn.cursor() as curs:
                 curs.execute(
-                    "INSERT INTO MinuteData "
+                    "INSERT INTO KibotMinuteData "
                     "(trade_symbol_id, datetime, open, high, low, close, volume) "
                     "VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
                     [
@@ -219,7 +219,7 @@ class SQLWriterKibotBackend(vcsqlw.AbstractSQLWriterBackend):
         with self.conn:
             with self.conn.cursor() as curs:
                 curs.execute(
-                    "INSERT INTO TickData "
+                    "INSERT INTO KibotTickData "
                     "(trade_symbol_id, datetime, price, size) "
                     "VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
                     [

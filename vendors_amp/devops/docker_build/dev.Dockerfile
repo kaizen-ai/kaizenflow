@@ -10,5 +10,5 @@ RUN apt-get update && \
     pip install -r requirements.txt && \
     apt-get purge gcc -y
 
-WORKDIR /amp
-ENV PYTHONPATH=$PYTHONPATH:/amp
+WORKDIR /app
+ENV PYTHONPATH=$PYTHONPATH:/app

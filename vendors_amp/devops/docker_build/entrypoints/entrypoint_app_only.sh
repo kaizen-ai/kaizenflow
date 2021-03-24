@@ -7,6 +7,4 @@ echo "PostgreSQL will not be started..."
 
 umask 000
 
-export PYTHONPATH=/amp:$PYTHONPATH
-
 eval "$@"

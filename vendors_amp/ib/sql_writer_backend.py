@@ -22,7 +22,7 @@ class SQLWriterIBBackend(vcsqlw.AbstractSQLWriterBackend):
             with self.conn.cursor() as curs:
                 pextra.execute_values(
                     curs,
-                    "INSERT INTO DailyData "
+                    "INSERT INTO IbDailyData "
                     "(trade_symbol_id, date, open, high, low, close, volume, average, barCount) "
                     "VALUES %s ON CONFLICT DO NOTHING",
                     df.to_dict("records"),
@@ -58,7 +58,7 @@ class SQLWriterIBBackend(vcsqlw.AbstractSQLWriterBackend):
         with self.conn:
             with self.conn.cursor() as curs:
                 curs.execute(
-                    "INSERT INTO DailyData "
+                    "INSERT INTO IbDailyData "
                     "(trade_symbol_id, date, open, high, low, close, volume, average, barCount) "
                     "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
                     [
@@ -87,7 +87,7 @@ class SQLWriterIBBackend(vcsqlw.AbstractSQLWriterBackend):
             with self.conn.cursor() as curs:
                 pextra.execute_values(
                     curs,
-                    "INSERT INTO MinuteData "
+                    "INSERT INTO IbMinuteData "
                     "(trade_symbol_id, datetime, open, high, low, close, "
                     "volume, average, barCount) "
                     "VALUES %s ON CONFLICT DO NOTHING",
@@ -124,7 +124,7 @@ class SQLWriterIBBackend(vcsqlw.AbstractSQLWriterBackend):
         with self.conn:
             with self.conn.cursor() as curs:
                 curs.execute(
-                    "INSERT INTO MinuteData "
+                    "INSERT INTO IbMinuteData "
                     "(trade_symbol_id, datetime, open, high, low, close, "
                     "volume, average, barCount) "
                     "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
@@ -159,7 +159,7 @@ class SQLWriterIBBackend(vcsqlw.AbstractSQLWriterBackend):
         with self.conn:
             with self.conn.cursor() as curs:
                 curs.execute(
-                    "INSERT INTO TickData "
+                    "INSERT INTO IbTickData "
                     "(trade_symbol_id, datetime, price, size) "
                     "VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
                     [
