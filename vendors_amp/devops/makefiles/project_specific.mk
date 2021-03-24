@@ -77,6 +77,16 @@ im.run_superslow_tests:
 # Services.
 # #############################################################################
 
+# Start local postgres server.
+im.docker_postgres_up.local:
+	IMAGE=$(KIBOT_IMAGE_DEV) \
+	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
+	docker-compose \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.local.yml \
+		up \
+		--remove-orphans
+
 # Stop local postgres server.
 im.docker_postgres_down.local:
 	IMAGE=$(IM_IMAGE_DEV) \
@@ -145,7 +155,7 @@ im.docker_tag_rc_image.latest:
 im.docker_push_image.latest:
 	docker push $(IM_IMAGE_DEV)
 
-docker_release.latest:
+im.docker_release.latest:
 	make im.docker_build_image_with_cache.rc
 	make im.run_fast_tests.rc
 	#make run_slow_tests.rc
