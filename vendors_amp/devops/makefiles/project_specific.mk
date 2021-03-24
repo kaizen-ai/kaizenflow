@@ -36,8 +36,8 @@ im.docker_up.local:
 
 # Run app container w/o PostgreSQL.
 im.docker_bash:
-	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	IMAGE=$(IM_IMAGE_DEV) \
+	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
 		-f devops/compose/docker-compose.yml \
 		-f devops/compose/docker-compose.local.yml \
@@ -45,8 +45,30 @@ im.docker_bash:
 		--rm \
 		-l user=$(USER) \
 		--no-deps \
+		--entrypoint=vendors_amp/devops/docker_build/entrypoints/entrypoint_app_only.sh \
 		app \
 		bash
+
+# Stop local container including all dependencies.
+im.docker_down.local:
+	IMAGE=$(IM_IMAGE_DEV) \
+	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
+	docker-compose \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.local.yml \
+		down \
+		--remove-orphans
+
+# Stop local container including all dependencies and remove all data.
+im.docker_rm.local:
+	IMAGE=$(IM_IMAGE_DEV) \
+	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
+	docker-compose \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.local.yml \
+		down \
+		--remove-orphans; \
+	docker volume rm compose_im_postgres_data_local
 
 im.docker_pull:
 	docker pull $(IM_IMAGE_DEV)
@@ -87,31 +109,6 @@ im.run_superslow_tests:
 		-l user=$(USER) \
 		app \
 		vendors_amp/devops/docker_scripts/run_superslow_tests.sh
-
-# #############################################################################
-# Services.
-# #############################################################################
-
-# Stop local postgres server.
-im.docker_postgres_down.local:
-	IMAGE=$(IM_IMAGE_DEV) \
-	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
-	docker-compose \
-		-f devops/compose/docker-compose.yml \
-		-f devops/compose/docker-compose.local.yml \
-		down \
-		--remove-orphans
-
-# Stop local postgres server and remove all data.
-im.docker_postgres_rm.local:
-	IMAGE=$(IM_IMAGE_DEV) \
-	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
-	docker-compose \
-		-f devops/compose/docker-compose.yml \
-		-f devops/compose/docker-compose.local.yml \
-		down \
-		--remove-orphans; \
-	docker volume rm compose_im_postgres_data_local
 
 # #############################################################################
 # Images workflows.
