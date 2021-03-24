@@ -27,7 +27,6 @@ import helpers.git as git
 import helpers.parser as prsr
 import helpers.printing as prnt
 import helpers.system_interaction as si
-import helpers.user_credentials as usc
 
 _LOG = logging.getLogger(__name__)
 
@@ -48,16 +47,10 @@ def check_url(url):
 
 def _get_prefixes():
     si.get_user_name()
-    user_credentials = usc.get_credentials()
-    if "jupyter_port" in user_credentials:
-        jupyter_port = user_credentials["jupyter_port"]
-    else:
-        jupyter_port = 10001
-        _LOG.warning(
-            "jupyter_port not defined in user_credentials.py: using "
-            "the default one %s",
-            jupyter_port,
-        )
+    jupyter_port = 10001
+    _LOG.warning(
+        "jupyter_port not defined: using the default one %s",
+        jupyter_port)
     repo_name = git.get_repo_symbolic_name(super_module=False)
     _LOG.debug("repo_name=%s", repo_name)
     github_prefix = "https://github.com/%s/blob/master" % repo_name

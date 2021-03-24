@@ -1,6 +1,7 @@
-"""Import as:
+"""
+Import as:
 
-import helpers.tunnels as tnls
+import helpers.tunnels as htunne
 """
 
 import logging
@@ -8,9 +9,9 @@ import os
 from typing import Dict, List
 
 import helpers.dbg as dbg
-import helpers.printing as prnt
-import helpers.system_interaction as si
-import helpers.user_credentials as usc
+import helpers.printing as hprint
+import helpers.system_interaction as hsyste
+import helpers.user_credentials as huserc
 
 _LOG = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def get_tunnel_info() -> (list, str):
-    credentials = usc.get_credentials()
+    credentials = huserc.get_credentials()
     #
     tunnel_info = credentials["tunnel_info"]
     dbg.dassert_is_not(tunnel_info, None)
@@ -34,7 +35,7 @@ def get_tunnel_info() -> (list, str):
 
 def tunnel_info_to_string(tunnel_info: list) -> str:
     ret = "\n".join(map(str, tunnel_info))
-    ret = prnt.indent(ret)
+    ret = hprint.indent(ret)
     return ret
 
 
@@ -71,10 +72,10 @@ def _get_services_info() -> list:
     # Server ports.
     services = [
         # service name, server public IP, local port, remote port.
-        ("MongoDb", si.get_env_var("P1_OLD_DEV_SERVER"), 27017, 27017),
-        ("Jenkins", si.get_env_var("P1_JENKINS_SERVER"), 8080, 8080),
-        # ("Reviewboard", si.get_env_var("P1_REVIEWBOARD_SERVER"), 8000, 8000),
-        # ("Doc server", si.get_env_var("P1_REVIEWBOARD_SERVER"), 8001, 80),
+        ("MongoDb", hsyste.get_env_var("P1_OLD_DEV_SERVER"), 27017, 27017),
+        ("Jenkins", hsyste.get_env_var("P1_JENKINS_SERVER"), 8080, 8080),
+        # ("Reviewboard", hsyste.get_env_var("P1_REVIEWBOARD_SERVER"), 8000, 8000),
+        # ("Doc server", hsyste.get_env_var("P1_REVIEWBOARD_SERVER"), 8001, 80),
         # Netdata to Jenkins and Dev server.
         # ("Dev system performance", DEV_SERVER, 19999),
         # ("Jenkins system performance", DEV_SERVER, 19999),
@@ -83,7 +84,7 @@ def _get_services_info() -> list:
 
 
 def _get_tunnel_info():
-    credentials = usc.get_credentials()
+    credentials = huserc.get_credentials()
     #
     tunnel_info = credentials["tunnel_info"]
     dbg.dassert_is_not(tunnel_info, None)
@@ -99,7 +100,7 @@ def _get_tunnel_info():
 
 def _tunnel_info_to_string(tunnel_info: list) -> str:
     ret = "\n".join(map(str, tunnel_info))
-    ret = prnt.indent(ret)
+    ret = hprint.indent(ret)
     return ret
 
 
@@ -119,7 +120,9 @@ def _service_to_string(service: (str, str, str, str)) -> str:
 def _get_ssh_tunnel_process(
     local_port: int, remote_port: int, fuzzy_match: bool
 ) -> (List[int], str):
-    """Return the pids of the processes attached to a given port."""
+    """
+    Return the pids of the processes attached to a given port.
+    """
 
     def _keep_line(line):
         keep = "ssh -i" in line
@@ -133,7 +136,7 @@ def _get_ssh_tunnel_process(
         return keep
 
     _LOG.debug("local_port=%d -> remote_port=%d", local_port, remote_port)
-    pids, txt = si.get_process_pids(_keep_line)
+    pids, txt = hsyste.get_process_pids(_keep_line)
     _LOG.debug("pids=%s", pids)
     _LOG.debug("txt=\n%s", txt)
     return pids, txt
@@ -146,8 +149,10 @@ def _create_tunnel(
     user_name: str,
     ssh_key_path: str,
 ) -> None:
-    """Create tunnel from localhost to 'server' for the ports `local_port ->
-    remote_port` and `user_name`."""
+    """
+    Create tunnel from localhost to 'server' for the ports `local_port ->
+    remote_port` and `user_name`.
+    """
     ssh_key_path = os.path.expanduser(ssh_key_path)
     _LOG.debug("ssh_key_path=%s", ssh_key_path)
     dbg.dassert_exists(ssh_key_path)
@@ -163,25 +168,29 @@ def _create_tunnel(
         remote_port=remote_port,
         server=server_name,
     )
-    si.system(cmd, blocking=False)
+    hsyste.system(cmd, blocking=False)
     # Check that the tunnel is up and running.
     pids = _get_ssh_tunnel_process(local_port, remote_port, fuzzy_match=True)
     dbg.dassert_lte(1, len(pids))
 
 
 def _kill_ssh_tunnel_process(local_port: int, remote_port: int) -> None:
-    """Kill all the processes attached to either local or remote port."""
+    """
+    Kill all the processes attached to either local or remote port.
+    """
     get_pids = lambda: _get_ssh_tunnel_process(
         local_port, remote_port, fuzzy_match=True
     )
-    si.kill_process(get_pids)
+    hsyste.kill_process(get_pids)
 
 
 # #############################################################################
 
 
 def start_tunnels(user_name: str) -> None:
-    """Start all the tunnels for the given user."""
+    """
+    Start all the tunnels for the given user.
+    """
     _LOG.debug("user_name=%s", user_name)
     # Get tunnel info.
     tunnel_info, ssh_key_path = _get_tunnel_info()
@@ -204,7 +213,9 @@ def start_tunnels(user_name: str) -> None:
 
 
 def stop_tunnels() -> None:
-    """Stop all the tunnels for the given user."""
+    """
+    Stop all the tunnels for the given user.
+    """
     # Get the tunnel info.
     tunnel_info, _ = _get_tunnel_info()
     _LOG.info("\n%s", _tunnel_info_to_string(tunnel_info))
@@ -216,7 +227,9 @@ def stop_tunnels() -> None:
 
 
 def check_tunnels() -> None:
-    """Check the status of the tunnels for the given user."""
+    """
+    Check the status of the tunnels for the given user.
+    """
     # Get the tunnel info.
     tunnel_info, _ = _get_tunnel_info()
     _LOG.info("\n%s", _tunnel_info_to_string(tunnel_info))
@@ -234,11 +247,13 @@ def check_tunnels() -> None:
 
 
 def kill_all_tunnel_processes() -> None:
-    """Kill all the processes that have `ssh -i ...:localhost:..."."""
+    """
+    Kill all the processes that have `ssh -i ...:localhost:...".
+    """
     # cmd = "ps ax | grep 'ssh -i' | grep localhost: | grep -v grep"
     def _keep_line(line):
         keep = ("ssh -i" in line) and (":localhost:" in line)
         return keep
 
-    get_pids = lambda: si.get_process_pids(_keep_line)
-    si.kill_process(get_pids)
+    get_pids = lambda: hsyste.get_process_pids(_keep_line)
+    hsyste.kill_process(get_pids)

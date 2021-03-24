@@ -1,6 +1,7 @@
-"""Import as:
+"""
+Import as:
 
-import helpers.parser as prsr
+import helpers.parser as hparse
 """
 
 import argparse
@@ -10,7 +11,7 @@ import sys
 from typing import List, Optional, Tuple
 
 import helpers.dbg as dbg
-import helpers.printing as prnt
+import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -21,7 +22,8 @@ def add_bool_arg(
     default: bool = False,
     help_: Optional[str] = None,
 ) -> argparse.ArgumentParser:
-    """Add options to a parser like --xyz and --no_xyz.
+    """
+    Add options to a parser like --xyz and --no_xyz.
 
     E.g., for `--incremental`.
     """
@@ -82,8 +84,8 @@ def actions_to_string(
     ]
     actions_as_str = "\n".join(actions)
     if add_frame:
-        ret = prnt.frame("# Action selected:") + "\n"
-        ret += prnt.indent(actions_as_str)
+        ret = hprint.frame("# Action selected:") + "\n"
+        ret += hprint.indent(actions_as_str)
     else:
         ret = actions_as_str
     return ret  # type: ignore
@@ -128,7 +130,7 @@ def select_actions(
 
 def mark_action(action: str, actions: List[str]) -> Tuple[bool, List[str]]:
     to_execute = action in actions
-    _LOG.debug("\n%s", prnt.frame("action=%s" % action))
+    _LOG.debug("\n%s", hprint.frame("action=%s" % action))
     if to_execute:
         actions = [a for a in actions if a != action]
     else:
@@ -142,7 +144,9 @@ def mark_action(action: str, actions: List[str]) -> Tuple[bool, List[str]]:
 def add_input_output_args(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
-    """Add options to parse input and output file name."""
+    """
+    Add options to parse input and output file name.
+    """
     parser.add_argument(
         "-i",
         "--in_file_name",
@@ -178,7 +182,9 @@ def parse_input_output_args(
 
 
 def read_file(file_name: str) -> List[str]:
-    """Read file or stdin (represented by `-`), returning an array of lines."""
+    """
+    Read file or stdin (represented by `-`), returning an array of lines.
+    """
     if file_name == "-":
         f = sys.stdin
     else:
@@ -193,7 +199,9 @@ def read_file(file_name: str) -> List[str]:
 
 
 def write_file(txt: List[str], file_name: str) -> None:
-    """Write txt in a file or stdin (represented by `-`)."""
+    """
+    Write txt in a file or stdin (represented by `-`).
+    """
     if file_name == "-":
         print("\n".join(txt))
     else:

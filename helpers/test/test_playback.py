@@ -311,7 +311,7 @@ class TestToPythonCode1(hut.TestCase):
         config["var2"] = cfg.Config([("var3", 10), ("var4", "val4")])
         self._check(
             config,
-            "cfg.Config.from_python(\"Config([('var1', 'val1'), "
+            "cconfi.Config.from_python(\"Config([('var1', 'val1'), "
             "('var2', Config([('var3', 10), ('var4', 'val4')]))])\")",
         )
 

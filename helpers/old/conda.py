@@ -4,14 +4,15 @@ import os
 from typing import Any, Dict, List, Optional, Tuple
 
 import helpers.dbg as dbg
-import helpers.system_interaction as si
-import helpers.user_credentials as usc
+import helpers.system_interaction as hsyste
+import helpers.user_credentials as huserc
 
 _LOG = logging.getLogger(__name__)
 
 
 def conda_system(cmd: str, *args: Any, **kwargs: Any) -> int:
-    """When running a conda command we need to execute a script to configure
+    """
+    When running a conda command we need to execute a script to configure
     conda. This script is typically executed in .bashrc but here we create a
     new bash shell every time to execute a command, so we need to re-initialize
     the shell before any conda command.
@@ -22,22 +23,22 @@ def conda_system(cmd: str, *args: Any, **kwargs: Any) -> int:
     :return:
     """
     # TODO(gp): Pass conda_env_name as done in get_conda_list()
-    path = usc.get_credentials()["conda_sh_path"]
+    path = huserc.get_credentials()["conda_sh_path"]
     dbg.dassert_exists(path)
     dbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
     cmd = "source %s && %s" % (path, cmd)
-    output: int = si.system(cmd, *args, **kwargs)
+    output: int = hsyste.system(cmd, *args, **kwargs)
     return output
 
 
 def conda_system_to_string(
     cmd: str, *args: Any, **kwargs: Any
 ) -> Tuple[int, str]:
-    path = usc.get_credentials()["conda_sh_path"]
+    path = huserc.get_credentials()["conda_sh_path"]
     dbg.dassert_exists(path)
     dbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
     cmd = "source %s && %s" % (path, cmd)
-    output: Tuple[int, str] = si.system_to_string(cmd, *args, **kwargs)
+    output: Tuple[int, str] = hsyste.system_to_string(cmd, *args, **kwargs)
     return output
 
 
@@ -55,7 +56,8 @@ def get_conda_envs_dirs() -> List[str]:
 
 
 def set_conda_env_root(conda_env_path: str) -> None:
-    """Set conda env dirs so that it matches what specified in.
+    """
+    Set conda env dirs so that it matches what specified in.
 
     > conda config --show envs_dirs --json
     {

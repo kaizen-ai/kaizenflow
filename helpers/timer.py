@@ -10,10 +10,13 @@ _LOG = logging.getLogger(__name__)
 
 
 class Timer:
-    """Measure time elapsed in one or more intervals."""
+    """
+    Measure time elapsed in one or more intervals.
+    """
 
     def __init__(self, start_on_creation: bool = True):
-        """Create a timer.
+        """
+        Create a timer.
 
         If "start_on_creation" is True start automatically the timer.
         """
@@ -30,7 +33,9 @@ class Timer:
             self._start = None
 
     def __repr__(self) -> str:
-        """Return string with the intervals measured so far."""
+        """
+        Return string with the intervals measured so far.
+        """
         measured_time = self._total_elapsed
         if self.is_started() and not self.is_stopped():
             # Timer still running.
@@ -39,7 +44,9 @@ class Timer:
         return ret
 
     def stop(self) -> None:
-        """Stop the timer and accumulate the interval."""
+        """
+        Stop the timer and accumulate the interval.
+        """
         # Timer must have not been stopped before.
         dbg.dassert(self.is_started() and not self.is_stopped())
         # For better accuracy stop the timer as first action.
@@ -53,7 +60,9 @@ class Timer:
         self._stop = None
 
     def get_elapsed(self) -> float:
-        """Stop if not stopped already, and return the elapsed time."""
+        """
+        Stop if not stopped already, and return the elapsed time.
+        """
         if not self.is_stopped():
             self.stop()
         dbg.dassert_is_not(self._last_elapsed, None)
@@ -62,7 +71,9 @@ class Timer:
     # /////////////////////////////////////////////////////////////////////////
 
     def resume(self) -> None:
-        """Resume the timer after a stop."""
+        """
+        Resume the timer after a stop.
+        """
         # Timer must have been stopped before.
         dbg.dassert(self.is_started() or self.is_stopped())
         self._stop = None
@@ -76,13 +87,17 @@ class Timer:
         return self._start is None and self._stop is None
 
     def get_total_elapsed(self) -> float:
-        """Stop if not stopped already, and return the total elapsed time."""
+        """
+        Stop if not stopped already, and return the total elapsed time.
+        """
         if not self.is_stopped():
             self.stop()
         return self._total_elapsed
 
     def accumulate(self, timer: "Timer") -> None:
-        """Accumulate the value of a timer to the current object."""
+        """
+        Accumulate the value of a timer to the current object.
+        """
         # Both timers must be stopped.
         dbg.dassert(timer.is_stopped())
         dbg.dassert(self.is_stopped())

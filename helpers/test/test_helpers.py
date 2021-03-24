@@ -15,7 +15,6 @@ import helpers.printing as prnt
 import helpers.s3 as hs3
 import helpers.system_interaction as si
 import helpers.unit_test as ut
-import helpers.user_credentials as usc
 
 _LOG = logging.getLogger(__name__)
 
@@ -327,14 +326,3 @@ class Test_s3_1(ut.TestCase):
         file_names = hs3.ls(file_path)
         # We rely on the fact that Kibot data is not changing.
         self.assertEqual(len(file_names), 253)
-
-
-# #############################################################################
-# user_credentials.py
-# #############################################################################
-
-
-class Test_user_credentials1(ut.TestCase):
-    def test_get_credentials1(self) -> None:
-        data = usc.get_credentials()
-        _LOG.debug("data=%s", data)

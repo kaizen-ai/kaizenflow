@@ -1,0 +1,126 @@
+default_stages: ["commit"]
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.4.0
+    hooks:
+      - id: no-commit-to-branch
+        args: ["--pattern", '^(?!\S+\d+_\S+).*$']
+      - id: check-merge-conflict
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+  - repo: https://github.com/jorisroovers/gitlint
+    rev: v0.15.0
+    hooks:
+      - id: gitlint
+        stages: [commit-msg]
+        entry: gitlint
+        # B6 Body message is missing.
+        args: [--contrib=CT1, --ignore=B6, --msg-filename]
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.1.9
+    hooks:
+      - id: remove-crlf
+      - id: remove-tabs
+        args: ["--whitespaces-count", "4"]
+        exclude: \.mk|Makefile
+  - repo: https://github.com/humitos/mirrors-autoflake
+    rev: v1.1
+    hooks:
+      - id: autoflake
+        args: [-i, --remove-all-unused-imports, --remove-unused-variables]
+  - repo: local
+    hooks:
+      - id: isort
+        name: isort
+        entry: p1_isort.py
+        language: python
+        types: [python]
+        additional_dependencies: ["-r", "/requirements.txt"]
+      - id: black
+        name: black
+        entry: p1_black.py
+        language: python
+        types: [python]
+        additional_dependencies: ["-r", "/requirements.txt"]
+      - id: flake8
+        name: flake8
+        entry: p1_flake8.py
+        language: python
+        types: [python]
+        additional_dependencies: ["-r", "/requirements.txt"]
+      - id: doc_formatter
+        name: doc_formatter
+        entry: p1_doc_formatter.py
+        language: python
+        types: [python]
+        additional_dependencies: ["-r", "/requirements.txt"]
+      - id: pylint
+        name: pylint
+        entry: p1_pylint.py
+        language: python
+        types: [python]
+        additional_dependencies: ["-r", "/requirements.txt"]
+      - id: mypy
+        name: mypy
+        entry: p1_mypy.py
+        language: python
+        types: [python]
+        additional_dependencies: ["-r", "/requirements.txt"]
+      - id: processjupytext
+        name: processjupytext
+        entry: p1_processjupytext.py
+        language: python
+        types: [python]
+        additional_dependencies: ["-r", "/requirements.txt"]
+      - id: lint_md
+        name: lint_md
+        entry: p1_lint_md.py
+        language: python
+        types: [markdown]
+        additional_dependencies: ["-r", "/requirements.txt"]
+#     TODO(plyq): Not stable, to see - run on linters/p1_pylint.py.
+#     - id: fix_comments
+#       name: fix_comments
+#       entry: p1_fix_comments.py
+#       language: python
+#       types: [python]
+#       additional_dependencies: ["-r", "/requirements.txt"]
+      - id: method_order
+        name: method_order
+        entry: p1_class_method_order.py
+        language: python
+        types: [python]
+        additional_dependencies: ["-r", "/requirements.txt"]
+      - id: check_filename
+        name: check_filename
+        entry: p1_check_filename.py
+        language: python
+        types: [python]
+        additional_dependencies: ["-r", "/requirements.txt"]
+      - id: clean_import
+        name: clean_import
+        entry: p1_clean_import.py
+        language: python
+        types: [python]
+        additional_dependencies: ["-r", "/requirements.txt"]
+      - id: format_separating_line
+        name: format_separating_line
+        entry: p1_format_separating_line.py
+        language: python
+        types: [python]
+        additional_dependencies: ["-r", "/requirements.txt"]
+      - id: warn_incorrectly_formatted_todo
+        name: warn_incorrectly_formatted_todo
+        entry: p1_warn_incorrectly_formatted_todo.py
+        language: python
+        types: [python]
+        additional_dependencies: ["-r", "/requirements.txt"]
+#     TODO(vr): Does not work with Docker on Mac, see dev_tools#97.
+#      - id: check_shebang
+#        name: check_shebang
+#        entry: p1_check_shebang.py
+#        language: python
+#        types: [python]
+#        additional_dependencies: ["-r", "/requirements.txt"]

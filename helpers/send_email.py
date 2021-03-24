@@ -1,5 +1,5 @@
-import email.mime.multipart as mp
-import email.mime.text as mt
+import email.mime.multipart as emmult
+import email.mime.text as emtext
 import os
 import smtplib
 from typing import Optional
@@ -13,7 +13,8 @@ def send_email(
     email_password: Optional[str] = None,
     html: bool = False,
 ) -> None:
-    """Send mail to specified e-mail addresses.
+    """
+    Send mail to specified e-mail addresses.
 
     :param message: Message to be sent
     :param to_adr: Mail to which to send messages
@@ -27,14 +28,14 @@ def send_email(
     if email_password is None:
         email_password = os.environ["EMAIL_PASSWORD"]
     server.login(email_address, email_password)
-    msg = mp.MIMEMultipart()
+    msg = emmult.MIMEMultipart()
     msg["From"] = email_address
     msg["To"] = ", ".join(to_adr)
     msg["Subject"] = subject
     if html:
-        msg.attach(mt.MIMEText(message, "html"))
+        msg.attach(emtext.MIMEText(message, "html"))
     else:
-        msg.attach(mt.MIMEText(message, "plain"))
+        msg.attach(emtext.MIMEText(message, "plain"))
 
     text = msg.as_string()
     server.sendmail(email_address, to_adr, text)

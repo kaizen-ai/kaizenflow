@@ -1,6 +1,7 @@
-"""Import as:
+"""
+Import as:
 
-import helpers.dataframe as hdf
+import helpers.dataframe as hdataf
 """
 
 import collections
@@ -13,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 import helpers.dbg as dbg
-import helpers.printing as prnt
+import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -27,7 +28,8 @@ def filter_data_by_values(
     mode: str,
     info: Optional[collections.OrderedDict] = None,
 ) -> pd.DataFrame:
-    """Filter dataframe rows based on column values.
+    """
+    Filter dataframe rows based on column values.
 
     :param data: dataframe
     :param filters: `{col_name: (possible_values)}`
@@ -47,7 +49,7 @@ def filter_data_by_values(
         dbg.dassert_isinstance(vals, tuple)
         mask = data[col_name].isin(vals)
         info[f"n_{col_name}"] = mask.sum()
-        info[f"perc_{col_name}"] = prnt.perc(mask.sum(), data.shape[0])
+        info[f"perc_{col_name}"] = hprint.perc(mask.sum(), data.shape[0])
         masks.append(mask)
     masks = pd.concat(masks, axis=1)
     combined_mask = _combine_masks(masks, mode, info)
@@ -63,7 +65,8 @@ def filter_data_by_comparison(
     mode: str,
     info: Optional[collections.OrderedDict] = None,
 ) -> pd.DataFrame:
-    """Filter dataframe by comparing columns to values.
+    """
+    Filter dataframe by comparing columns to values.
 
     :param data: dataframe
     :param filters: `{col_name: (comparison_method, value)}` or
@@ -91,7 +94,7 @@ def filter_data_by_comparison(
             )
             mask = getattr(data[col_name], comparison_method)(val)
             info[f"n_{col_name}_{comparison_method}_{val}"] = mask.sum()
-            info[f"perc_{col_name}_{comparison_method}_{val}"] = prnt.perc(
+            info[f"perc_{col_name}_{comparison_method}_{val}"] = hprint.perc(
                 mask.sum(), data.shape[0]
             )
             masks.append(mask)
@@ -107,7 +110,8 @@ def filter_data_by_method(
     mode: str,
     info: Optional[collections.OrderedDict] = None,
 ) -> pd.DataFrame:
-    """Filter dataframe by calling a method specified for each column.
+    """
+    Filter dataframe by calling a method specified for each column.
 
     :param data: dataframe
     :param filters: `{col_name: {method: kwargs}}`, where `method` is the
@@ -129,7 +133,7 @@ def filter_data_by_method(
         for method, kwargs in method_dict.items():
             mask = operator.attrgetter(method)(data[col_name])(**kwargs)
             info[f"n_{col_name}"] = mask.sum()
-            info[f"perc_{col_name}"] = prnt.perc(mask.sum(), data.shape[0])
+            info[f"perc_{col_name}"] = hprint.perc(mask.sum(), data.shape[0])
             masks.append(mask)
     masks = pd.concat(masks, axis=1)
     combined_mask = _combine_masks(masks, mode, info)
@@ -157,7 +161,8 @@ def apply_nan_mode(
     mode: str = "leave_unchanged",
     info: Optional[dict] = None,
 ) -> pd.Series:
-    """Process NaN values in a series according to the parameters.
+    """
+    Process NaN values in a series according to the parameters.
 
     :param srs: pd.Series to process
     :param mode: method of processing NaNs
@@ -211,7 +216,8 @@ def apply_nan_mode(
 
 
 def infer_sampling_points_per_year(data: Union[pd.Series, pd.DataFrame]) -> float:
-    """Return the number of index time points per year.
+    """
+    Return the number of index time points per year.
 
     TODO(*): Consider extending to all frequencies and count points by
         explicitly building indices of the given frequency.
@@ -227,7 +233,8 @@ def infer_sampling_points_per_year(data: Union[pd.Series, pd.DataFrame]) -> floa
 
 @functools.lru_cache()
 def compute_points_per_year_for_given_freq(freq: str) -> float:
-    """Return the number of index time points per year.
+    """
+    Return the number of index time points per year.
 
     :param freq: string identifier of date frequency
     :return: number of time points per year (approximate)

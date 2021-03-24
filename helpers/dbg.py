@@ -531,11 +531,14 @@ def get_user_name() -> str:
 
 # TODO(gp): Replace `force_print_format` and `force_verbose_format` with `mode`.
 def _get_logging_format(
-    force_print_format: bool, force_verbose_format: bool, force_no_warning: bool,
+    force_print_format: bool,
+    force_verbose_format: bool,
+    force_no_warning: bool,
     date_format_mode: str = "date_time",
 ) -> Tuple[str, str]:
     """
-    Compute the logging format depending whether running on notebook or in a shell.
+    Compute the logging format depending whether running on notebook or in a
+    shell.
 
     The logging format can be:
     - print: looks like a `print` statement
@@ -573,7 +576,9 @@ def _get_logging_format(
         # %(filename)s Filename portion of pathname.
         # %(module)s Module (name portion of filename).
         if True:
-            log_format = "%(asctime)-5s %(levelname)-5s: %(funcName)-15s: %(message)s"
+            log_format = (
+                "%(asctime)-5s %(levelname)-5s: %(funcName)-15s: %(message)s"
+            )
         else:
             # Super verbose.
             log_format = (
@@ -588,7 +593,7 @@ def _get_logging_format(
         elif date_format_mode == "date_timestamp":
             date_fmt = "%Y-%m-%d %I:%M:%S %p"
         else:
-            raise ValueError("Invalid date_format_mode='%s'", date_format_mode)
+            raise ValueError("Invalid date_format_mode='%s'" % date_format_mode)
     else:
         # Make logging look like a normal print().
         # TODO(gp): We want to still prefix with WARNING and ERROR.
@@ -739,15 +744,17 @@ def get_matching_loggers(module_names: Union[str, Iterable[str]]) -> List:
         module_names = [module_names]
     sel_loggers = []
     for module_name in module_names:
-        #print(module_name)
-        #print("\n".join(map(str, loggers)))
+        # print(module_name)
+        # print("\n".join(map(str, loggers)))
         # TODO(gp): We should have a regex.
         # str(logger) looks like `<Logger tornado.application (DEBUG)>`
         sel_loggers_tmp = [
-            logger for logger in loggers if str(logger).startswith("<Logger " + module_name)
-            #logger for logger in loggers if module_name in str(logger)
+            logger
+            for logger in loggers
+            if str(logger).startswith("<Logger " + module_name)
+            # logger for logger in loggers if module_name in str(logger)
         ]
-        #print(sel_loggers_tmp)
+        # print(sel_loggers_tmp)
         sel_loggers.extend(sel_loggers_tmp)
     return sel_loggers
 
@@ -776,9 +783,8 @@ def shutup_chatty_modules(
     loggers = sorted(loggers, key=lambda logger: logger.name)
     if verbose:
         print(
-            "Shutting up modules: (%d)\n%s" % (
-            len(loggers),
-            "\n".join([logger.name for logger in loggers]))
+            "Shutting up modules: (%d)\n%s"
+            % (len(loggers), "\n".join([logger.name for logger in loggers]))
         )
     for logger in loggers:
         logger.setLevel(verbosity)
