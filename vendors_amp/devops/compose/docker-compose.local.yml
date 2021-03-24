@@ -5,18 +5,18 @@ services:
     image: ${IMAGE}
     entrypoint: /app/vendors_amp/devops/docker_build/entrypoints/entrypoint_deploy_postgres.sh
     depends_on:
-      - kibot_postgres_local
+      - im_postgres_local
     env_file:
       - ../env/local.env
     environment:
       - POSTGRES_PORT=${POSTGRES_PORT}
 
-  kibot_postgres_local:
+  im_postgres_local:
     image: postgres:13
-    container_name: kibot_postgres_local
+    container_name: im_postgres_local
     restart: "no"
     volumes:
-      - kibot_postgres_data_local:/var/lib/postgresql/data
+      - im_postgres_data_local:/var/lib/postgresql/data
     env_file:
       - ../env/local.env
     environment:
@@ -26,4 +26,4 @@ services:
     command: "-p ${POSTGRES_PORT}"
 
 volumes:
-  kibot_postgres_data_local: {}
+  im_postgres_data_local: {}

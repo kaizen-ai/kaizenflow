@@ -93,3 +93,20 @@ def remove_database(dbname: str) -> None:
     cursor.execute(psql.SQL("DROP DATABASE {};").format(psql.Identifier(dbname)))
     # Close connection.
     connection.close()
+
+
+def is_inside_im_container() -> bool:
+    """
+    Define if IM app is started.
+    """
+    condition = (
+        (
+            os.environ.get("STAGE") == "TEST"
+            and os.environ.get("POSTGRES_HOST") == "im_postgres_test"
+        )
+        or (
+            os.environ.get("STAGE") == "LOCAL"
+            and os.environ.get("POSTGRES_HOST") == "im_postgres_local"
+        )
+    )
+    return condition

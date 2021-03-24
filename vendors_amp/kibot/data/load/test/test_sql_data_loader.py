@@ -11,30 +11,8 @@ import vendors_amp.kibot.data.load.sql_data_loader as vkdlsq
 import vendors_amp.kibot.sql_writer_backend as vksqlw
 
 
-class TestDbSchemaFile(hut.TestCase):
-    """
-    Test SQL initialization file existence.
-    """
-
-    def test_exist1(self) -> None:
-        """
-        Test that schema SQL file exists.
-        """
-        for file_name in vcdini.get_init_sql_files():
-            self.assertTrue(os.path.exists(file_name))
-
-
 @pytest.mark.skipif(
-    not (
-        (
-            os.environ.get("STAGE") == "TEST"
-            and os.environ.get("POSTGRES_HOST") == "kibot_postgres_test"
-        )
-        or (
-            os.environ.get("STAGE") == "LOCAL"
-            and os.environ.get("POSTGRES_HOST") == "kibot_postgres_local"
-        )
-    ),
+    not vcdini.is_inside_im_container(),
     reason="Testable only inside kibot container",
 )
 class TestSqlDataLoader1(hut.TestCase):
