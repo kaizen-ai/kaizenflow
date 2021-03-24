@@ -1,8 +1,9 @@
-"""Code to automatically generate unit tests for functions.
+"""
+Code to automatically generate unit tests for functions.
 
 Import as:
 
-import helpers.playback as plbck
+import helpers.playback as hplayb
 """
 
 import inspect
@@ -12,22 +13,23 @@ import os
 from typing import Any, List, Optional, Union
 
 import jsonpickle  # type: ignore
-import jsonpickle.ext.pandas as jp_pd  # type: ignore
+import jsonpickle.ext.pandas as jepand  # type: ignore
 import pandas as pd
 
-import core.config as cfg
+import core.config as cconfi
 import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.printing as prnt
+import helpers.io_ as hio
+import helpers.printing as hprint
 
-jp_pd.register_handlers()
+jepand.register_handlers()
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(\*): Add more types.
 def to_python_code(obj: Any) -> str:
-    """Serialize an object into a string of python code.
+    """
+    Serialize an object into a string of python code.
 
     :param obj: an object to serialize
     :return: a string of python code building the object
@@ -67,10 +69,10 @@ def to_python_code(obj: Any) -> str:
             'pd.Series(data=%s, index=%s, name="%s", dtype=%s)'
             % (obj.tolist(), obj.index, obj.name, obj.dtype)
         )
-    elif isinstance(obj, cfg.Config):
-        # Config -> python_code -> "cfg.Config.from_python(python_code)"
+    elif isinstance(obj, cconfi.Config):
+        # Config -> python_code -> "cconfi.Config.from_python(python_code)"
         val = obj.to_python()
-        output.append('cfg.Config.from_python("%s")' % val)
+        output.append('cconfi.Config.from_python("%s")' % val)
     else:
         # Use `jsonpickle` for serialization.
         _LOG.warning(
@@ -89,7 +91,8 @@ class Playback:
         to_file: Optional[bool] = None,
         max_tests: Optional[int] = None,
     ) -> None:
-        """Initialize the class variables.
+        """
+        Initialize the class variables.
 
         :param mode: the type of unit test to be generated (e.g. "assert_equal")
         :param to_file: save playback output to the file test/test_by_playback_<orig_filename>.py
@@ -141,7 +144,8 @@ class Playback:
         self._max_tests = max_tests or float("+inf")
 
     def run(self, func_output: Any) -> str:
-        """Generate a unit test for the function.
+        """
+        Generate a unit test for the function.
 
         The unit test compares the actual function output with the expected
         `func_output`.
@@ -178,8 +182,8 @@ class Playback:
 
     @staticmethod
     def _get_test_file_name(file_with_code: str) -> str:
-        """Construct the test file name based on the file with the code to
-        test.
+        """
+        Construct the test file name based on the file with the code to test.
 
         :param file_with_code: path to file with code to test.
         :return: path to the file with generated test.
@@ -194,21 +198,24 @@ class Playback:
         return test_file
 
     def _update_code_to_existing(self) -> None:
-        """Get existing content from the file with test.
+        """
+        Get existing content from the file with test.
 
         If the file doesn't exist - creates it.
         """
         # Create test file if it doesn't exist.
         if not os.path.exists(self._test_file):
-            io_.create_enclosing_dir(self._test_file, True)
-            io_.to_file(self._test_file, "", mode="w")
+            hio.create_enclosing_dir(self._test_file, True)
+            hio.to_file(self._test_file, "", mode="w")
         else:
             # Get already existing content in the test file.
-            self._code = io_.from_file(self._test_file).split("\n")
+            self._code = hio.from_file(self._test_file).split("\n")
             self._file_exists = True
 
     def _check_code(self, func_output: Any) -> None:
-        """Generate test code that makes an assertion."""
+        """
+        Generate test code that makes an assertion.
+        """
         if self.mode == "check_string":
             if isinstance(func_output, (pd.DataFrame, pd.Series, str)):
                 if not isinstance(func_output, str):
@@ -235,19 +242,23 @@ class Playback:
             raise ValueError("Invalid mode='%s'" % self.mode)
 
     def _add_imports(self, additional: Union[None, List[str]] = None) -> None:
-        """Add the code with imports."""
+        """
+        Add the code with imports.
+        """
         # Add imports.
         self._append("import helpers.unit_test as hut")
         self._append("import jsonpickle")
         self._append("import pandas as pd")
-        self._append("import core.config as cfg")
+        self._append("import core.config as cconfi")
         for a in additional or []:
             self._append(a)
         self._code.extend(["", ""])
 
     def _add_test_class(self) -> None:
-        """Add the code with the test class definition and the test method
-        definition."""
+        """
+        Add the code with the test class definition and the test method
+        definition.
+        """
         # Add test class and test method.
         class_string = self._get_class_name_string()
         # Find how many times method was tested.
@@ -260,7 +271,9 @@ class Playback:
         self._append("def test%i(self) -> None:" % (count + 1), 1)
 
     def _get_class_count(self) -> int:
-        """Find a number of already generated tests for the method."""
+        """
+        Find a number of already generated tests for the method.
+        """
         class_string = self._get_class_name_string()
         count = 0
         for line in self._code:
@@ -268,7 +281,8 @@ class Playback:
         return count
 
     def _get_class_name_string(self) -> str:
-        """Get a string for the test code with the name of the test class.
+        """
+        Get a string for the test code with the name of the test class.
 
         I.e. "class TestMyMethod(hut.TestCase):".
         """
@@ -282,7 +296,9 @@ class Playback:
         return class_string
 
     def _add_function_call(self) -> None:
-        """Add a call of the function to test to the test code."""
+        """
+        Add a call of the function to test to the test code.
+        """
         self._append("# Call function to test.", 2)
         if self._parent_class is None:
             fnc_call = [f"{k}={k}" for k in self._kwargs.keys()]
@@ -299,7 +315,9 @@ class Playback:
             self._append(f"act = cls.{self._func_name}({', '.join(fnc_call)})", 2)
 
     def _add_var_definitions(self) -> None:
-        """Add variables definitions for the function to test."""
+        """
+        Add variables definitions for the function to test.
+        """
         if self._kwargs:
             self._append("# Define input variables.", 2)
         for key in self._kwargs:
@@ -316,26 +334,31 @@ class Playback:
                     dict,
                     pd.DataFrame,
                     pd.Series,
-                    cfg.Config,
+                    cconfi.Config,
                 ),
             ):
                 self._append("{0} = jsonpickle.decode({0})".format(key), 2)
 
     def _gen_code(self) -> str:
-        """Construct string with all generated test code."""
+        """
+        Construct string with all generated test code.
+        """
         code = "\n".join(self._code) + "\n"
         _LOG.debug("code=\n%s", code)
         if self._to_file:
-            io_.to_file(self._test_file, code)
+            hio.to_file(self._test_file, code)
         return code
 
     def _append(self, string: str, num_tabs: int = 0) -> None:
-        """Add indented line to the code."""
-        self._code.append(prnt.indent(string, num_tabs * 4))
+        """
+        Add indented line to the code.
+        """
+        self._code.append(hprint.indent(string, num_tabs * 4))
 
 
 def json_pretty_print(parsed: Any) -> str:
-    """Pretty print a json object.
+    """
+    Pretty print a json object.
 
     :param parsed: a json object
     :return: a prettified json object
@@ -348,8 +371,8 @@ def json_pretty_print(parsed: Any) -> str:
 
 
 def round_trip_convert(obj1: Any, log_level: int) -> Any:
-    """Encode and decode with `jsonpickle` ensuring the object remains the
-    same.
+    """
+    Encode and decode with `jsonpickle` ensuring the object remains the same.
 
     :param obj1: the initial object
     :param log_level: the level of logging

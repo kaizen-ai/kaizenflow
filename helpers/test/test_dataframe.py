@@ -5,8 +5,8 @@ import os
 import numpy as np
 import pandas as pd
 
-import helpers.dataframe as hdf
-import helpers.printing as prnt
+import helpers.dataframe as hdataf
+import helpers.printing as hprint
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -18,12 +18,12 @@ class Test_filter_data_by_values1(hut.TestCase):
         data = data.add_prefix("col_")
         filters = {"col_0": (1, 12), "col_1": (2, 11), "col_2": (3, 6)}
         info: collections.OrderedDict = collections.OrderedDict()
-        filtered_data = hdf.filter_data_by_values(data, filters, "and", info)
+        filtered_data = hdataf.filter_data_by_values(data, filters, "and", info)
         str_output = (
-            f"{prnt.frame('data')}\n"
+            f"{hprint.frame('data')}\n"
             f"{hut.convert_df_to_string(data, index=True)}\n"
-            f"{prnt.frame('filters')}\n{filters}\n"
-            f"{prnt.frame('filtered_data')}\n"
+            f"{hprint.frame('filters')}\n{filters}\n"
+            f"{hprint.frame('filtered_data')}\n"
             f"{hut.convert_df_to_string(filtered_data, index=True)}\n"
             f"{hut.convert_info_to_string(info)}"
         )
@@ -34,12 +34,12 @@ class Test_filter_data_by_values1(hut.TestCase):
         data = data.add_prefix("col_")
         filters = {"col_0": (1, 12), "col_1": (2, 11), "col_2": (3, 6)}
         info: collections.OrderedDict = collections.OrderedDict()
-        filtered_data = hdf.filter_data_by_values(data, filters, "or", info)
+        filtered_data = hdataf.filter_data_by_values(data, filters, "or", info)
         str_output = (
-            f"{prnt.frame('data')}\n"
+            f"{hprint.frame('data')}\n"
             f"{hut.convert_df_to_string(data, index=True)}\n"
-            f"{prnt.frame('filters')}\n{filters}\n"
-            f"{prnt.frame('filtered_data')}"
+            f"{hprint.frame('filters')}\n{filters}\n"
+            f"{hprint.frame('filtered_data')}"
             f"\n{hut.convert_df_to_string(filtered_data, index=True)}\n"
             f"{hut.convert_info_to_string(info)}"
         )
@@ -52,12 +52,12 @@ class Test_filter_data_by_comparison(hut.TestCase):
         data = data.add_prefix("col_")
         filters = {"col_0": (("gt", 1), ("lt", 7)), "col_1": ("eq", 5)}
         info: collections.OrderedDict = collections.OrderedDict()
-        filtered_data = hdf.filter_data_by_comparison(data, filters, "and", info)
+        filtered_data = hdataf.filter_data_by_comparison(data, filters, "and", info)
         str_output = (
-            f"{prnt.frame('data')}\n"
+            f"{hprint.frame('data')}\n"
             f"{hut.convert_df_to_string(data, index=True)}\n"
-            f"{prnt.frame('filters')}\n{filters}\n"
-            f"{prnt.frame('filtered_data')}\n"
+            f"{hprint.frame('filters')}\n{filters}\n"
+            f"{hprint.frame('filtered_data')}\n"
             f"{hut.convert_df_to_string(filtered_data, index=True)}\n"
             f"{hut.convert_info_to_string(info)}"
         )
@@ -68,12 +68,12 @@ class Test_filter_data_by_comparison(hut.TestCase):
         data = data.add_prefix("col_")
         filters = {"col_0": ("gt", 2), "col_1": ("eq", 5)}
         info: collections.OrderedDict = collections.OrderedDict()
-        filtered_data = hdf.filter_data_by_comparison(data, filters, "or", info)
+        filtered_data = hdataf.filter_data_by_comparison(data, filters, "or", info)
         str_output = (
-            f"{prnt.frame('data')}\n"
+            f"{hprint.frame('data')}\n"
             f"{hut.convert_df_to_string(data, index=True)}\n"
-            f"{prnt.frame('filters')}\n{filters}\n"
-            f"{prnt.frame('filtered_data')}"
+            f"{hprint.frame('filters')}\n{filters}\n"
+            f"{hprint.frame('filtered_data')}"
             f"\n{hut.convert_df_to_string(filtered_data, index=True)}\n"
             f"{hut.convert_info_to_string(info)}"
         )
@@ -81,7 +81,9 @@ class Test_filter_data_by_comparison(hut.TestCase):
 
 
 class TestFilterDataByMethod(hut.TestCase):
-    """This test was generated automatically with Playback."""
+    """
+    This test was generated automatically with Playback.
+    """
 
     def test1(self) -> None:
         # Define input variables.
@@ -95,7 +97,7 @@ class TestFilterDataByMethod(hut.TestCase):
         mode = "and"
         info: collections.OrderedDict = collections.OrderedDict()
         # Call function to test.
-        act = hdf.filter_data_by_method(
+        act = hdataf.filter_data_by_method(
             data=data, filters=filters, mode=mode, info=info
         )
         act = hut.convert_df_to_string(act)
@@ -105,6 +107,56 @@ class TestFilterDataByMethod(hut.TestCase):
 
 
 class Test_apply_nan_mode(hut.TestCase):
+
+    def test1(self) -> None:
+        """
+        Test for `mode=leave_unchanged`.
+        """
+        series = self._get_series_with_nans(seed=1)
+        actual = hdataf.apply_nan_mode(series)
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        """
+        Test for `mode="drop"`.
+        """
+        series = self._get_series_with_nans(seed=1)
+        actual = hdataf.apply_nan_mode(series, mode="drop")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test3(self) -> None:
+        """
+        Test for `mode="ffill"`.
+        """
+        series = self._get_series_with_nans(seed=1)
+        actual = hdataf.apply_nan_mode(series, mode="ffill")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test4(self) -> None:
+        """
+        Test for `mode="ffill_and_drop_leading"`.
+        """
+        series = self._get_series_with_nans(seed=1)
+        actual = hdataf.apply_nan_mode(series, mode="ffill_and_drop_leading")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    def test5(self) -> None:
+        """
+        Test for `mode="fill_with_zero"`.
+        """
+        series = self._get_series_with_nans(seed=1)
+        actual = hdataf.apply_nan_mode(series, mode="fill_with_zero")
+        actual_string = hut.convert_df_to_string(actual, index=True)
+        self.check_string(actual_string)
+
+    # Smoke test for empty input.
+    def test6(self) -> None:
+        series = pd.Series([])
+        hdataf.apply_nan_mode(series)
     @staticmethod
     def _get_series_with_nans(seed: int) -> pd.Series:
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
@@ -118,82 +170,32 @@ class Test_apply_nan_mode(hut.TestCase):
         series[5:7] = np.nan
         return series
 
-    def test1(self) -> None:
-        """
-        Test for `mode=leave_unchanged`.
-        """
-        series = self._get_series_with_nans(seed=1)
-        actual = hdf.apply_nan_mode(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
-
-    def test2(self) -> None:
-        """
-        Test for `mode="drop"`.
-        """
-        series = self._get_series_with_nans(seed=1)
-        actual = hdf.apply_nan_mode(series, mode="drop")
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
-
-    def test3(self) -> None:
-        """
-        Test for `mode="ffill"`.
-        """
-        series = self._get_series_with_nans(seed=1)
-        actual = hdf.apply_nan_mode(series, mode="ffill")
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
-
-    def test4(self) -> None:
-        """
-        Test for `mode="ffill_and_drop_leading"`.
-        """
-        series = self._get_series_with_nans(seed=1)
-        actual = hdf.apply_nan_mode(series, mode="ffill_and_drop_leading")
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
-
-    def test5(self) -> None:
-        """
-        Test for `mode="fill_with_zero"`.
-        """
-        series = self._get_series_with_nans(seed=1)
-        actual = hdf.apply_nan_mode(series, mode="fill_with_zero")
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
-
-    # Smoke test for empty input.
-    def test6(self) -> None:
-        series = pd.Series([])
-        hdf.apply_nan_mode(series)
-
 
 class Test_compute_points_per_year_for_given_freq(hut.TestCase):
     def test1(self) -> None:
-        actual = hdf.compute_points_per_year_for_given_freq("T")
+        actual = hdataf.compute_points_per_year_for_given_freq("T")
         np.testing.assert_equal(actual, 525780.125)
 
     def test2(self) -> None:
-        actual = hdf.compute_points_per_year_for_given_freq("B")
+        actual = hdataf.compute_points_per_year_for_given_freq("B")
         np.testing.assert_equal(actual, 260.875)
 
     def test3(self) -> None:
-        actual = hdf.compute_points_per_year_for_given_freq("D")
+        actual = hdataf.compute_points_per_year_for_given_freq("D")
         np.testing.assert_equal(actual, 365.25)
 
     def test4(self) -> None:
-        actual = hdf.compute_points_per_year_for_given_freq("W")
+        actual = hdataf.compute_points_per_year_for_given_freq("W")
         np.testing.assert_equal(actual, 52.25)
 
     def test5(self) -> None:
-        actual = hdf.compute_points_per_year_for_given_freq("M")
+        actual = hdataf.compute_points_per_year_for_given_freq("M")
         np.testing.assert_equal(actual, 12.0)
 
     def test6(self) -> None:
-        actual = hdf.compute_points_per_year_for_given_freq("Y")
+        actual = hdataf.compute_points_per_year_for_given_freq("Y")
         np.testing.assert_equal(actual, 1.0)
 
     def test7(self) -> None:
-        actual = hdf.compute_points_per_year_for_given_freq("0D")
+        actual = hdataf.compute_points_per_year_for_given_freq("0D")
         np.testing.assert_equal(actual, 0.0)

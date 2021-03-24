@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-"""This script allows translating text using AWS Translate. It can be used as a
+"""
+This script allows translating text using AWS Translate. It can be used as a
 module or CLI tool.
 
 Supported languages and languages codes:
@@ -15,7 +16,7 @@ import sys
 from typing import Optional, Tuple
 
 import boto3
-import lxml.html as html
+import lxml.html as lhtml
 
 _LOG = logging.getLogger(__name__)
 
@@ -43,7 +44,8 @@ def _parse_args() -> argparse.Namespace:
 
 
 def _load_credentials(conf_path: pathlib.Path) -> Tuple[str, str]:
-    """Load aws credentilas from config file.
+    """
+    Load aws credentilas from config file.
 
     :param conf_path:credentials file path.
     :return: A tuple consist of aws_access and aws_secret keys.
@@ -76,7 +78,8 @@ class TranslateAPI:
         )
 
     def translate_text(self, text: str, lang_code: str) -> str:
-        """Translate given text into English. Amazon has a limit on text size:
+        """
+        Translate given text into English. Amazon has a limit on text size:
         5,000 bytes.
 
         :param text: Foreing language text.
@@ -95,7 +98,7 @@ class TranslateAPI:
     ) -> bool:
         if not pathlib.Path(source_path).exists():
             return False
-        page = html.parse(source_path)
+        page = lhtml.parse(source_path)
         for elm in page.getiterator():
             if elm.text and re.search(r"[^0-9.,|\-\s]", elm.text):
                 tr = self.translate_text(elm.text, lang_code)

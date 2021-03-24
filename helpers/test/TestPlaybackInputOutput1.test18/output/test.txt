@@ -3,7 +3,7 @@
 import helpers.unit_test as hut
 import jsonpickle
 import pandas as pd
-import core.config as cfg
+import core.config as cconfi
 
 
 class TestGetResultAeNone(hut.TestCase):

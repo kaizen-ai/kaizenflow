@@ -3,20 +3,20 @@ import re
 import tempfile
 
 import helpers.dbg as dbg
-import helpers.system_interaction as si
-import helpers.unit_test as ut
+import helpers.system_interaction as hsyste
+import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
 # #############################################################################
 
 
-class Test_system1(ut.TestCase):
+class Test_system1(hut.TestCase):
     def test1(self) -> None:
-        si.system("ls")
+        hsyste.system("ls")
 
     def test2(self) -> None:
-        si.system("ls /dev/null", suppress_output=False)
+        hsyste.system("ls /dev/null", suppress_output=False)
 
     def test3(self) -> None:
         """
@@ -25,7 +25,7 @@ class Test_system1(ut.TestCase):
         with tempfile.NamedTemporaryFile() as fp:
             temp_file_name = fp.name
             _LOG.debug("temp_file_name=%s", temp_file_name)
-            si.system("ls", output_file=temp_file_name)
+            hsyste.system("ls", output_file=temp_file_name)
             dbg.dassert_exists(temp_file_name)
 
     def test4(self) -> None:
@@ -35,7 +35,7 @@ class Test_system1(ut.TestCase):
         with tempfile.NamedTemporaryFile() as fp:
             temp_file_name = fp.name
             _LOG.debug("temp_file_name=%s", temp_file_name)
-            si.system("ls", output_file=temp_file_name, tee=True)
+            hsyste.system("ls", output_file=temp_file_name, tee=True)
             dbg.dassert_exists(temp_file_name)
 
     def test5(self) -> None:
@@ -46,21 +46,21 @@ class Test_system1(ut.TestCase):
         candidate_name = tempfile._get_candidate_names()  # type: ignore
         temp_file_name += "/" + next(candidate_name)
         _LOG.debug("temp_file_name=%s", temp_file_name)
-        si.system("ls", output_file=temp_file_name, dry_run=True)
+        hsyste.system("ls", output_file=temp_file_name, dry_run=True)
         dbg.dassert_not_exists(temp_file_name)
 
     def test6(self) -> None:
         """
         Test abort_on_error=True.
         """
-        si.system("ls this_file_doesnt_exist", abort_on_error=False)
+        hsyste.system("ls this_file_doesnt_exist", abort_on_error=False)
 
     def test7(self) -> None:
         """
         Test abort_on_error=False.
         """
         with self.assertRaises(RuntimeError) as cm:
-            si.system("ls this_file_doesnt_exist")
+            hsyste.system("ls this_file_doesnt_exist")
         act = str(cm.exception)
         # Different systems return different rc.
         # cmd='(ls this_file_doesnt_exist) 2>&1' failed with rc='2'
@@ -71,31 +71,31 @@ class Test_system1(ut.TestCase):
 # #############################################################################
 
 
-class Test_system2(ut.TestCase):
+class Test_system2(hut.TestCase):
     def test_get_user_name(self) -> None:
-        act = si.get_user_name()
+        act = hsyste.get_user_name()
         _LOG.debug("act=%s", act)
         #
-        exp = si.system_to_string("whoami")[1]
+        exp = hsyste.system_to_string("whoami")[1]
         _LOG.debug("exp=%s", exp)
         self.assertEqual(act, exp)
         #
-        exp = si.system_to_one_line("whoami")[1]
+        exp = hsyste.system_to_one_line("whoami")[1]
         _LOG.debug("exp=%s", exp)
         self.assertEqual(act, exp)
 
     def test_get_server_name(self) -> None:
-        act = si.get_server_name()
+        act = hsyste.get_server_name()
         _LOG.debug("act=%s", act)
         #
-        exp = si.system_to_string("uname -n")[1]
+        exp = hsyste.system_to_string("uname -n")[1]
         _LOG.debug("exp=%s", exp)
         self.assertEqual(act, exp)
 
     def test_get_os_name(self) -> None:
-        act = si.get_os_name()
+        act = hsyste.get_os_name()
         _LOG.debug("act=%s", act)
         #
-        exp = si.system_to_string("uname -s")[1]
+        exp = hsyste.system_to_string("uname -s")[1]
         _LOG.debug("exp=%s", exp)
         self.assertEqual(act, exp)

@@ -1,6 +1,7 @@
-"""Import as:
+"""
+Import as:
 
-import helpers.dict as dct
+import helpers.dict as hdict
 """
 
 import collections
@@ -14,7 +15,8 @@ def get_nested_dict_iterator(
     nested: Mapping[Any, Any],
     path: Optional[Iterable[Any]] = None,
 ) -> Generator[Tuple[Tuple, Any], None, None]:
-    """Return nested mapping iterator that iterates in a depth-first fashion.
+    """
+    Return nested mapping iterator that iterates in a depth-first fashion.
 
     :param nested: nested dictionary
     :param path: path to node to start the visit from or `None` to start from
@@ -36,7 +38,8 @@ def get_nested_dict_iterator(
 
 
 def extract_leaf_values(nested: Dict[Any, Any], key: Any) -> Dict[Any, Any]:
-    """Extract leaf values with key matching `key`.
+    """
+    Extract leaf values with key matching `key`.
 
     :param nested: nested dictionary
     :param key: leaf key value to match

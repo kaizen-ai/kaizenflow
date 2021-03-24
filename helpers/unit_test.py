@@ -1,4 +1,5 @@
-"""Import as:
+"""
+Import as:
 
 import helpers.unit_test as hut
 """
@@ -18,9 +19,9 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.git as git
-import helpers.io_ as io_
-import helpers.printing as prnt
-import helpers.system_interaction as si
+import helpers.io_ as hio
+import helpers.printing as hprint
+import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
 
@@ -64,7 +65,8 @@ _CONFTEST_IN_PYTEST = False
 
 
 def in_unit_test_mode() -> bool:
-    """Return True if we are inside a pytest run.
+    """
+    Return True if we are inside a pytest run.
 
     This is set by conftest.py.
     """
@@ -79,9 +81,10 @@ def convert_df_to_string(
     n_rows: Optional[int] = None,
     title: Optional[str] = None,
     index: bool = False,
-    decimals: int = 6
+    decimals: int = 6,
 ) -> str:
-    """Convert DataFrame or Series to string for verifying test results.
+    """
+    Convert DataFrame or Series to string for verifying test results.
 
     :param df: DataFrame to be verified
     :param n_rows: number of rows in expected output
@@ -95,7 +98,7 @@ def convert_df_to_string(
     output = []
     # Add title in the beginning if provided.
     if title is not None:
-        output.append(prnt.frame(title))
+        output.append(hprint.frame(title))
     # Provide context for full representation of data.
     with pd.option_context(
         "display.max_colwidth",
@@ -105,7 +108,7 @@ def convert_df_to_string(
         "display.max_rows",
         None,
         "display.precision",
-        decimals
+        decimals,
     ):
         # Add top N rows.
         output.append(df.head(n_rows).to_string(index=index))
@@ -114,7 +117,8 @@ def convert_df_to_string(
 
 
 def convert_info_to_string(info: Mapping) -> str:
-    """Convert info to string for verifying test results.
+    """
+    Convert info to string for verifying test results.
 
     Info often contains pd.Series, so pandas context is provided
     to print all rows and all contents.
@@ -132,7 +136,7 @@ def convert_info_to_string(info: Mapping) -> str:
         "display.max_rows",
         None,
     ):
-        output.append(prnt.frame("info"))
+        output.append(hprint.frame("info"))
         output.append(pprint.pformat(info))
         output_str = "\n".join(output)
     return output_str
@@ -144,7 +148,8 @@ def convert_df_to_json_string(
     n_tail: Optional[int] = 10,
     columns_order: Optional[List[str]] = None,
 ) -> str:
-    """Convert dataframe to pretty-printed json string.
+    """
+    Convert dataframe to pretty-printed json string.
 
     To select all rows of the dataframe, pass `n_head` as None.
 
@@ -201,8 +206,9 @@ def to_string(var: str) -> str:
 def get_random_df(
     num_cols: int, seed: Optional[int] = None, **kwargs: Any
 ) -> pd.DataFrame:
-    """Compute df with random data with `num_cols` columns and index obtained
-    by calling `pd.date_range(**kwargs)`.
+    """
+    Compute df with random data with `num_cols` columns and index obtained by
+    calling `pd.date_range(**kwargs)`.
 
     :return: df
     """
@@ -228,7 +234,9 @@ def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
 
 # TODO(gp): Maybe it's more general than this file.
 def filter_text(regex: str, txt: str) -> str:
-    """Remove lines in `txt` that match the regex `regex`."""
+    """
+    Remove lines in `txt` that match the regex `regex`.
+    """
     _LOG.debug("Filtering with '%s'", regex)
     if regex is None:
         return txt
@@ -252,7 +260,9 @@ def filter_text(regex: str, txt: str) -> str:
 
 
 def remove_amp_references(txt: str) -> str:
-    """Remove references to amp."""
+    """
+    Remove references to amp.
+    """
     txt = re.sub("^amp/", "", txt, flags=re.MULTILINE)
     txt = re.sub("/amp/", "/", txt, flags=re.MULTILINE)
     txt = re.sub("/amp:", ":", txt, flags=re.MULTILINE)
@@ -260,7 +270,9 @@ def remove_amp_references(txt: str) -> str:
 
 
 def purify_txt_from_client(txt: str) -> str:
-    """Remove from a string all the information specific of a git client."""
+    """
+    Remove from a string all the information specific of a git client.
+    """
     # We remove references to the Git modules starting from the innermost one.
     for super_module in [False, True]:
         # Replace the git path with `$GIT_ROOT`.
@@ -274,7 +286,7 @@ def purify_txt_from_client(txt: str) -> str:
     pwd = os.getcwd()
     txt = txt.replace(pwd, "$PWD")
     # Replace the user name with `$USER_NAME`.
-    user_name = si.get_user_name()
+    user_name = hsyste.get_user_name()
     txt = txt.replace(user_name, "$USER_NAME")
     # Remove amp reference, if any.
     txt = remove_amp_references(txt)
@@ -286,13 +298,13 @@ def diff_files(
     file_name1: str, file_name2: str, tag: Optional[str] = None
 ) -> NoReturn:
     # Diff to screen.
-    _, res = si.system_to_string(
+    _, res = hsyste.system_to_string(
         "echo; sdiff -l -w 150 %s %s" % (file_name1, file_name2),
         abort_on_error=False,
         log_level=logging.DEBUG,
     )
     if tag is not None:
-        _LOG.error("%s", "\n" + prnt.frame(tag))
+        _LOG.error("%s", "\n" + hprint.frame(tag))
     _LOG.error(res)
     # Report how to diff.
     vimdiff_cmd = "vimdiff %s %s" % (
@@ -301,9 +313,9 @@ def diff_files(
     )
     # Save a script to diff.
     diff_script = "./tmp_diff.sh"
-    io_.to_file(diff_script, vimdiff_cmd)
+    hio.to_file(diff_script, vimdiff_cmd)
     cmd = "chmod +x " + diff_script
-    si.system(cmd)
+    hsyste.system(cmd)
     msg = []
     msg.append("Diff with:")
     msg.append("> " + vimdiff_cmd)
@@ -314,15 +326,14 @@ def diff_files(
     raise RuntimeError(msg_as_str)
 
 
-def diff_strings(string1: str,
-                 string2: str, tag: Optional[str] = None) -> None:
+def diff_strings(string1: str, string2: str, tag: Optional[str] = None) -> None:
     test_dir = "."
     # Save the actual and expected strings to files.
     file_name1 = "%s/tmp.string1.txt" % test_dir
-    io_.to_file(file_name1, string1)
+    hio.to_file(file_name1, string1)
     #
     file_name2 = "%s/tmp.string2.txt" % test_dir
-    io_.to_file(file_name2, string2)
+    hio.to_file(file_name2, string2)
     #
     if tag is None:
         tag = "string1 vs string2"
@@ -365,9 +376,10 @@ def _assert_equal(
     test_dir: str,
     fuzzy_match: bool = False,
 ) -> None:
-    """Implement a better version of self.assertEqual() that reports
-    mismatching strings with sdiff and save them to files for further analysis
-    with vimdiff.
+    """
+    Implement a better version of self.assertEqual() that reports mismatching
+    strings with sdiff and save them to files for further analysis with
+    vimdiff.
 
     :param fuzzy: ignore differences in spaces and end of lines (see
       `_remove_spaces`)
@@ -397,7 +409,7 @@ def _assert_equal(
     # Check.
     if expected != actual:
         _LOG.info(
-            "%s", "\n" + prnt.frame("Test %s failed" % full_test_name, "=", 80)
+            "%s", "\n" + hprint.frame("Test %s failed" % full_test_name, "=", 80)
         )
         if fuzzy_match:
             # Set the following var to True to print the purified version (e.g.,
@@ -413,88 +425,96 @@ def _assert_equal(
         # 2021-02-17 10:00:00-05:00
         # 2021-02-17 11:00:00-05:00
         # """
-        _LOG.info("\n" + prnt.frame("Actual variable", "#", 80))
+        _LOG.info("\n%s", hprint.frame("Actual variable", "#", 80))
         txt = []
         prefix = "var = r"
         spaces = 0
-        #spaces = len(prefix)
+        # spaces = len(prefix)
         txt.append(prefix + '"""')
-        txt.append(prnt.indent(actual_orig, spaces))
-        txt.append(prnt.indent('"""', spaces))
+        txt.append(hprint.indent(actual_orig, spaces))
+        txt.append(hprint.indent('"""', spaces))
         txt = "\n".join(txt)
         print(txt)
         # Save the actual and expected strings to files.
         _LOG.debug("Actual:\n%s", actual)
         act_file_name = "%s/tmp.actual.txt" % test_dir
-        io_.to_file(act_file_name, actual)
+        hio.to_file(act_file_name, actual)
         #
         _LOG.debug("Expected:\n%s", expected)
         exp_file_name = "%s/tmp.expected.txt" % test_dir
-        io_.to_file(exp_file_name, expected)
+        hio.to_file(exp_file_name, expected)
         #
         tag = "ACTUAL vs EXPECTED"
         diff_files(act_file_name, exp_file_name, tag)
 
 
-def get_pd_default_values():
+def get_pd_default_values() -> pd._config.config.DictWrapper:
     import copy
+
     vals = copy.deepcopy(pd.options)
     return vals
 
 
-def set_pd_default_values():
+def set_pd_default_values() -> None:
     # 'display':
-    default_pd_values = {'chop_threshold': None,
-                         'colheader_justify': 'right',
-                         'column_space': 12,
-                         'date_dayfirst': False,
-                         'date_yearfirst': False,
-                         'encoding': 'UTF-8',
-                         'expand_frame_repr': True,
-                         'float_format': None,
-                         'html': {'border': 1,
-                                  'table_schema': False,
-                                  'use_mathjax': True},
-                         'large_repr': 'truncate',
-                         'latex': {'escape': True,
-                                   'longtable': False,
-                                   'multicolumn': True,
-                                   'multicolumn_format': 'l',
-                                   'multirow': False,
-                                   'repr': False},
-                         'max_categories': 8,
-                         'max_columns': 20,
-                         'max_colwidth': 50,
-                         'max_info_columns': 100,
-                         'max_info_rows': 1690785,
-                         'max_rows': 60,
-                         'max_seq_items': 100,
-                         'memory_usage': True,
-                         'min_rows': 10,
-                         'multi_sparse': True,
-                         'notebook_repr_html': True,
-                         'pprint_nest_depth': 3,
-                         'precision': 6,
-                         'show_dimensions': 'truncate',
-                         'unicode': {'ambiguous_as_wide': False,
-                                     'east_asian_width': False},
-                         'width': 80}
+    default_pd_values = {
+        "chop_threshold": None,
+        "colheader_justify": "right",
+        "column_space": 12,
+        "date_dayfirst": False,
+        "date_yearfirst": False,
+        "encoding": "UTF-8",
+        "expand_frame_repr": True,
+        "float_format": None,
+        "html": {"border": 1, "table_schema": False, "use_mathjax": True},
+        "large_repr": "truncate",
+        "latex": {
+            "escape": True,
+            "longtable": False,
+            "multicolumn": True,
+            "multicolumn_format": "l",
+            "multirow": False,
+            "repr": False,
+        },
+        "max_categories": 8,
+        "max_columns": 20,
+        "max_colwidth": 50,
+        "max_info_columns": 100,
+        "max_info_rows": 1690785,
+        "max_rows": 60,
+        "max_seq_items": 100,
+        "memory_usage": True,
+        "min_rows": 10,
+        "multi_sparse": True,
+        "notebook_repr_html": True,
+        "pprint_nest_depth": 3,
+        "precision": 6,
+        "show_dimensions": "truncate",
+        "unicode": {"ambiguous_as_wide": False, "east_asian_width": False},
+        "width": 80,
+    }
     section = "display"
     for key, new_val in default_pd_values.items():
         if isinstance(new_val, dict):
             continue
         full_key = "%s.%s" % (section, key)
         old_val = pd.get_option(full_key)
-        #_LOG.debug("full_key=%s: old_val=%s, new_val=%s", full_key, old_val, new_val)
+        # _LOG.debug("full_key=%s: old_val=%s, new_val=%s", full_key, old_val, new_val)
         if old_val != new_val:
-            _LOG.debug("-> Assigning a different value: full_key=%s, old_val=%s, new_val=%s", full_key, old_val, new_val)
+            _LOG.debug(
+                "-> Assigning a different value: full_key=%s, old_val=%s, new_val=%s",
+                full_key,
+                old_val,
+                new_val,
+            )
         pd.set_option(full_key, new_val)
 
 
-
 class TestCase(unittest.TestCase):
-    """Class adding some auxiliary functions to make easy to save output of
-    tests as txt."""
+    """
+    Class adding some auxiliary functions to make easy to save output of tests
+    as txt.
+    """
 
     def setUp(self) -> None:
         random.seed(20000101)
@@ -505,11 +525,10 @@ class TestCase(unittest.TestCase):
         self._scratch_dir: Optional[str] = None
         # Print banner to signal starting of a new test.
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
-        _LOG.debug("\n%s", prnt.frame(func_name))
+        _LOG.debug("\n%s", hprint.frame(func_name))
         # Set the default pandas options (see AmpTask1140).
         self.old_pd_options = get_pd_default_values()
         set_pd_default_values()
-
 
     def tearDown(self) -> None:
         # Recover the original default pandas options.
@@ -526,14 +545,14 @@ class TestCase(unittest.TestCase):
                 _LOG.warning("Skipping deleting %s", self._scratch_dir)
             else:
                 _LOG.debug("Deleting %s", self._scratch_dir)
-                io_.delete_dir(self._scratch_dir)
+                hio.delete_dir(self._scratch_dir)
 
     def create_io_dirs(self) -> None:
         dir_name = self.get_input_dir()
-        io_.create_dir(dir_name, incremental=True)
+        hio.create_dir(dir_name, incremental=True)
         _LOG.info("Creating dir_name=%s", dir_name)
         dir_name = self.get_output_dir()
-        io_.create_dir(dir_name, incremental=True)
+        hio.create_dir(dir_name, incremental=True)
         _LOG.info("Creating dir_name=%s", dir_name)
 
     def get_input_dir(
@@ -541,7 +560,8 @@ class TestCase(unittest.TestCase):
         test_class_name: Optional[str] = None,
         test_method_name: Optional[str] = None,
     ) -> str:
-        """Return the path of the directory storing input data for this test
+        """
+        Return the path of the directory storing input data for this test
         class.
 
         :return: dir name
@@ -555,7 +575,8 @@ class TestCase(unittest.TestCase):
         return dir_name
 
     def get_output_dir(self) -> str:
-        """Return the path of the directory storing output data for this test
+        """
+        Return the path of the directory storing output data for this test
         class.
 
         :return: dir name
@@ -569,7 +590,8 @@ class TestCase(unittest.TestCase):
         test_class_name: Optional[Any] = None,
         test_method_name: Optional[Any] = None,
     ) -> str:
-        """Return the path of the directory storing scratch data for this test
+        """
+        Return the path of the directory storing scratch data for this test
         class. The directory is also created and cleaned up based on whether
         the incremental behavior is enabled or not.
 
@@ -581,21 +603,25 @@ class TestCase(unittest.TestCase):
                 test_class_name=test_class_name, test_method_name=test_method_name
             )
             dir_name = os.path.join(curr_path, "tmp.scratch")
-            io_.create_dir(dir_name, incremental=get_incremental_tests())
+            hio.create_dir(dir_name, incremental=get_incremental_tests())
             self._scratch_dir = dir_name
         return self._scratch_dir
 
-    def assert_equal(self, actual: str, expected: str, fuzzy_match: bool = False) -> None:
+    def assert_equal(
+        self, actual: str, expected: str, fuzzy_match: bool = False
+    ) -> None:
         dbg.dassert_in(type(actual), (bytes, str))
         dbg.dassert_in(type(expected), (bytes, str))
         #
         dir_name = self._get_current_path()
         _LOG.debug("dir_name=%s", dir_name)
-        io_.create_dir(dir_name, incremental=True)
+        hio.create_dir(dir_name, incremental=True)
         dbg.dassert_exists(dir_name)
         #
         test_name = self._get_test_name()
-        _assert_equal(actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match)
+        _assert_equal(
+            actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match
+        )
 
     def check_string(
         self,
@@ -604,7 +630,8 @@ class TestCase(unittest.TestCase):
         purify_text: bool = False,
         use_gzip: bool = False,
     ) -> None:
-        """Check the actual outcome of a test against the expected outcomes
+        """
+        Check the actual outcome of a test against the expected outcomes
         contained in the file and/or updates the golden reference file with the
         actual outcome.
 
@@ -616,7 +643,7 @@ class TestCase(unittest.TestCase):
         #
         dir_name = self._get_current_path()
         _LOG.debug("dir_name=%s", dir_name)
-        io_.create_dir(dir_name, incremental=True)
+        hio.create_dir(dir_name, incremental=True)
         dbg.dassert_exists(dir_name)
         # Get the expected outcome.
         file_name = self.get_output_dir() + "/test.txt"
@@ -632,7 +659,7 @@ class TestCase(unittest.TestCase):
             outcome_updated = False
             file_exists = os.path.exists(file_name)
             if file_exists:
-                expected = io_.from_file(file_name, use_gzip=use_gzip)
+                expected = hio.from_file(file_name, use_gzip=use_gzip)
                 if expected != actual:
                     outcome_updated = True
             else:
@@ -641,10 +668,10 @@ class TestCase(unittest.TestCase):
             if outcome_updated:
                 # Update the test result.
                 _LOG.warning("Test outcome updated ... ")
-                io_.to_file(file_name, actual, use_gzip=use_gzip)
+                hio.to_file(file_name, actual, use_gzip=use_gzip)
                 # Add to git.
                 cmd = "git add %s" % file_name
-                rc = si.system(cmd, abort_on_error=False)
+                rc = hsyste.system(cmd, abort_on_error=False)
                 if rc:
                     _LOG.warning(
                         "Can't run '%s': you need to add the file " "manually",
@@ -655,7 +682,7 @@ class TestCase(unittest.TestCase):
             if os.path.exists(file_name):
                 # Golden outcome is available: check the actual outcome against
                 # the golden outcome.
-                expected = io_.from_file(file_name, use_gzip=use_gzip)
+                expected = hio.from_file(file_name, use_gzip=use_gzip)
                 test_name = self._get_test_name()
                 _assert_equal(
                     actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match
@@ -663,7 +690,7 @@ class TestCase(unittest.TestCase):
             else:
                 # No golden outcome available: save the result in a tmp file.
                 tmp_file_name = file_name + ".tmp"
-                io_.to_file(tmp_file_name, actual)
+                hio.to_file(tmp_file_name, actual)
                 msg = "Can't find golden in %s\nSaved actual outcome in %s" % (
                     file_name,
                     tmp_file_name,
@@ -689,6 +716,7 @@ class TestCase(unittest.TestCase):
         dir_name = dir_name + "/%s.%s" % (test_class_name, test_method_name)
         return dir_name
 
+
 # #############################################################################
 # Notebook testing.
 # #############################################################################
@@ -700,7 +728,8 @@ def run_notebook(
     config_builder: Optional[str] = None,
     idx: int = 0,
 ) -> None:
-    """Run jupyter notebook.
+    """
+    Run jupyter notebook.
 
     `core.config_builders.get_config_from_env()` supports passing in a config
     only through a path to a config builder function that returns a list of
@@ -744,4 +773,4 @@ def run_notebook(
     cmd.append("--ExecutePreprocessor.timeout=-1")
     # Execute.
     cmd_as_str = " ".join(cmd)
-    si.system(cmd_as_str, abort_on_error=True)
+    hsyste.system(cmd_as_str, abort_on_error=True)

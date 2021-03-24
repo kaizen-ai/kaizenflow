@@ -121,8 +121,8 @@ else
 endif
 
 docker_kill_last:
-	docker ps -l -q
-	docker rm -f $(docker ps -l -q)
+	docker ps -l
+	docker rm -f $(shell docker ps -l -q)
 
 # #############################################################################
 # Run tests with "latest" image.
@@ -316,6 +316,17 @@ else
 	make _run_tests.gh_action
 endif
 
+docker_bash.gh_action_rc:
+	IMAGE=$(IMAGE_RC) \
+	docker-compose \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.gh_actions.yml \
+		run \
+		--rm \
+		-l user=$(USER) \
+		app \
+		bash
+
 # #############################################################################
 # Images workflows.
 # #############################################################################
@@ -375,7 +386,7 @@ docker_push_image.latest:
 docker_release.latest:
 	make docker_build_image_with_cache.rc
 	make run_fast_tests.rc
-	make run_slow_tests.rc
+	#make run_slow_tests.rc
 	make docker_tag_rc_image.latest
 	make docker_push_image.latest
 	@echo "==> SUCCESS <=="
@@ -444,7 +455,7 @@ git_for:
 # #############################################################################
 
 lint_branch:
-	bash pre-commit.sh run --files $(shell git diff --name-only master...)
+	bash pre-commit.sh run --files $(shell git diff --name-only master...) 2>&1 | tee linter_warnings.txt
 
 # #############################################################################
 # Self test.
@@ -472,7 +483,6 @@ else
 		jupyter_server_test
 endif
 
-
 fast_self_tests:
 	make print_setup
 	make print_debug_setup
@@ -484,6 +494,7 @@ fast_self_tests:
 	make docker_pull
 	make docker_cmd CMD="echo" IMAGE=$(IMAGE_RC)
 	make docker_jupyter_test
+	make docker_cmd CMD="pytest --collect-only" IMAGE=$(IMAGE_RC)
 	@echo "==> SUCCESS <=="
 
 slow_self_tests:

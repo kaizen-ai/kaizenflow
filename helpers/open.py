@@ -1,14 +1,15 @@
-"""Import as:
+"""
+Import as:
 
-import helpers.open as opn
+import helpers.open as hopen
 """
 
 import logging
 import os
 
 import helpers.dbg as dbg
-import helpers.printing as prnt
-import helpers.system_interaction as si
+import helpers.printing as hprint
+import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
 
@@ -16,7 +17,9 @@ _LOG = logging.getLogger(__name__)
 
 
 def _cmd_open_html(file_name: str, os_name: str) -> str:
-    """Get OS-based command to open html file."""
+    """
+    Get OS-based command to open html file.
+    """
     os_cmds = {
         "Darwin": "open",
         "Windows": "start",
@@ -28,7 +31,9 @@ def _cmd_open_html(file_name: str, os_name: str) -> str:
 
 
 def _cmd_open_pdf(file_name: str, os_name: str) -> str:
-    """Get OS-based command to open pdf file."""
+    """
+    Get OS-based command to open pdf file.
+    """
     os_full_cmds = {
         "Darwin": "/usr/bin/osascript << EOF\n"
         'set theFile to POSIX file "%s" as alias\n'
@@ -46,17 +51,19 @@ def _cmd_open_pdf(file_name: str, os_name: str) -> str:
 
 
 def open_file(file_name: str) -> None:
-    """Open file if extension is supported."""
+    """
+    Open file if extension is supported.
+    """
     # Define file format.
     suffix = os.path.split(file_name)[-1].split(".")[-1]
     # Check file.
     _LOG.info(
-        "\n%s", prnt.frame("Open %s" % suffix.upper(), char1="<", char2=">")
+        "\n%s", hprint.frame("Open %s" % suffix.upper(), char1="<", char2=">")
     )
     dbg.dassert_exists(file_name)
     _LOG.debug("Opening file='%s'", file_name)
     # Define OS.
-    os_name = si.get_os_name()
+    os_name = hsyste.get_os_name()
     # Define open command for OS.
     cmd: str
     if suffix == "pdf":
@@ -66,4 +73,4 @@ def open_file(file_name: str) -> None:
     else:
         dbg.dassert(False, "Open .%s files is not supported yet." % suffix)
     # Run command.
-    si.system(cmd)
+    hsyste.system(cmd)

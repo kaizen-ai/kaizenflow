@@ -1,4 +1,5 @@
-"""Import as:
+"""
+Import as:
 
 import helpers.git as git
 """
@@ -9,9 +10,9 @@ import os
 import re
 from typing import Dict, List, Optional, Tuple
 
-import helpers.datetime_ as hdt
+import helpers.datetime_ as hdatet
 import helpers.dbg as dbg
-import helpers.system_interaction as si
+import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
 
@@ -24,11 +25,13 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): -> get_user_name(). No stuttering.
 def get_git_name() -> str:
-    """Return the git user name."""
+    """
+    Return the git user name.
+    """
     cmd = "git config --get user.name"
     # TODO(gp): For some reason data is annotated as Any by mypy, instead of
     # Tuple[int, str] so we need to cast it to the right value.
-    data: Tuple[int, str] = si.system_to_one_line(cmd)
+    data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
     _, output = data
     return output
 
@@ -36,13 +39,14 @@ def get_git_name() -> str:
 # TODO(gp): Make the param mandatory.
 # TODO(gp): git_dir -> dir_name
 def get_branch_name(git_dir: str = ".") -> str:
-    """Return the name of the Git branch we are in.
+    """
+    Return the name of the Git branch we are in.
 
     E.g., `master` or `PartTask672_DEV_INFRA_Add_script_to_check_and_merge_PR`
     """
     dbg.dassert_exists(git_dir)
     cmd = "cd %s && git rev-parse --abbrev-ref HEAD" % git_dir
-    data: Tuple[int, str] = si.system_to_one_line(cmd)
+    data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
     _, output = data
     return output
 
@@ -51,19 +55,22 @@ def get_branch_name(git_dir: str = ".") -> str:
 #  change dir (which is a horrible idea) and thus we can memoize.
 # TODO(gp): -> is_submodule
 def is_inside_submodule(git_dir: str = ".") -> bool:
-    """Return whether we are inside a Git submodule or in a Git supermodule."""
+    """
+    Return whether we are inside a Git submodule or in a Git supermodule.
+    """
     cmd = []
     cmd.append("cd %s" % git_dir)
     cmd.append('cd "$(git rev-parse --show-toplevel)/.."')
     cmd.append("(git rev-parse --is-inside-work-tree | grep -q true)")
     cmd_as_str = " && ".join(cmd)
-    rc = si.system(cmd_as_str, abort_on_error=False)
+    rc = hsyste.system(cmd_as_str, abort_on_error=False)
     ret: bool = rc == 0
     return ret
 
 
 def get_client_root(super_module: bool) -> str:
-    """Return the full path of the root of the Git client.
+    """
+    Return the full path of the root of the Git client.
 
     E.g., `/Users/saggese/src/.../amp`.
 
@@ -75,7 +82,7 @@ def get_client_root(super_module: bool) -> str:
         cmd = "git rev-parse --show-superproject-working-tree"
     else:
         cmd = "git rev-parse --show-toplevel"
-    _, out = si.system_to_string(cmd)
+    _, out = hsyste.system_to_string(cmd)
     out = out.rstrip("\n")
     dbg.dassert_eq(len(out.split("\n")), 1, msg="Invalid out='%s'" % out)
     client_root: str = os.path.realpath(out)
@@ -83,11 +90,13 @@ def get_client_root(super_module: bool) -> str:
 
 
 def find_file_in_git_tree(file_in: str, super_module: bool = True) -> str:
-    """Find the path of a file `file_in` in the outermost git submodule (i.e.,
-    in the super-module)."""
+    """
+    Find the path of a file `file_in` in the outermost git submodule (i.e., in
+    the super-module).
+    """
     root_dir = get_client_root(super_module=super_module)
     cmd = "find %s -name '%s' | grep -v .git" % (root_dir, file_in)
-    _, file_name = si.system_to_one_line(cmd)
+    _, file_name = hsyste.system_to_one_line(cmd)
     _LOG.debug("file_name=%s", file_name)
     dbg.dassert(
         file_name != "", "Can't find file '%s' in dir '%s'", file_in, root_dir
@@ -98,7 +107,8 @@ def find_file_in_git_tree(file_in: str, super_module: bool = True) -> str:
 
 
 def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
-    """Return the name of the repo in `git_dir`.
+    """
+    Return the name of the repo in `git_dir`.
 
     E.g., "alphamatic/amp", "ParticleDev/commodity_research"
     """
@@ -106,7 +116,7 @@ def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
     cmd = "cd %s; (git remote -v | grep fetch)" % git_dir
     # TODO(gp): Make it more robust, by checking both fetch and push.
     # "origin  git@github.com:alphamatic/amp (fetch)"
-    _, output = si.system_to_string(cmd)
+    _, output = hsyste.system_to_string(cmd)
     data: List[str] = output.split()
     _LOG.debug("data=%s", data)
     dbg.dassert_eq(len(data), 3, "data='%s'", str(data))
@@ -127,7 +137,8 @@ def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
 
 
 def get_repo_symbolic_name(super_module: bool) -> str:
-    """Return the name of the remote repo. E.g., "alphamatic/amp",
+    """
+    Return the name of the remote repo. E.g., "alphamatic/amp",
     "ParticleDev/commodity_research".
 
     :param super_module: like get_client_root()
@@ -143,9 +154,9 @@ def _get_repo_map() -> Dict[str, str]:
     # TODO(gp): The proper fix is #PartTask551.
     # Get info from the including repo, if possible.
     try:
-        import repo_config as repc
+        import repo_config as repoco
 
-        repo_map.update(repc.REPO_MAP)
+        repo_map.update(repoco.REPO_MAP)
     except ImportError:
         _LOG.debug("No including repo")
     dbg.dassert_no_duplicates(repo_map.keys())
@@ -160,7 +171,8 @@ def get_all_repo_symbolic_names() -> List[str]:
 
 # TODO(gp): Found a better name.
 def get_repo_prefix(repo_github_name: str) -> str:
-    """Return the symbolic name of a git repo.
+    """
+    Return the symbolic name of a git repo.
 
     E.g., for "alphamatic/amp", the function returns "Amp".
     """
@@ -179,7 +191,8 @@ def get_repo_github_name(repo_symbolic_name: str) -> str:
 
 
 def get_path_from_git_root(file_name: str, super_module: bool) -> str:
-    """Get the git path from the root of the tree.
+    """
+    Get the git path from the root of the tree.
 
     :param super_module: like get_client_root()
     """
@@ -189,13 +202,15 @@ def get_path_from_git_root(file_name: str, super_module: bool) -> str:
     end_idx = len(git_root)
     ret = abs_path[end_idx:]
     # cmd = "git ls-tree --full-name --name-only HEAD %s" % file_name
-    # _, git_file_name = si.system_to_string(cmd)
+    # _, git_file_name = hsyste.system_to_string(cmd)
     # dbg.dassert_ne(git_file_name, "")
     return ret
 
 
 def get_amp_abs_path() -> str:
-    """Return the absolute path of `amp` dir."""
+    """
+    Return the absolute path of `amp` dir.
+    """
     repo_sym_name = get_repo_symbolic_name(super_module=False)
     if repo_sym_name == "alphamatic/amp":
         # If we are in the amp repo, then the git client root is the amp
@@ -214,14 +229,15 @@ def get_amp_abs_path() -> str:
 
 
 def get_submodule_hash(dir_name: str) -> str:
-    """Report the Git hash that a submodule (e.g., amp) is at from the point of
+    """
+    Report the Git hash that a submodule (e.g., amp) is at from the point of
     view of a supermodule (e.g., p1).
 
     > git ls-tree master | grep <dir_name>
     """
     dbg.dassert_exists(dir_name)
     cmd = "git ls-tree master | grep %s" % dir_name
-    data: Tuple[int, str] = si.system_to_one_line(cmd)
+    data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
     _, output = data
     # 160000 commit 0011776388b4c0582161eb2749b665fc45b87e7e  amp
     _LOG.debug("output=%s", output)
@@ -232,13 +248,14 @@ def get_submodule_hash(dir_name: str) -> str:
 
 
 def get_head_hash(dir_name: str) -> str:
-    """Report the hash that a Git repo is synced at.
+    """
+    Report the hash that a Git repo is synced at.
 
     > git rev-parse HEAD
     """
     dbg.dassert_exists(dir_name)
     cmd = f"cd {dir_name} && git rev-parse HEAD"
-    data: Tuple[int, str] = si.system_to_one_line(cmd)
+    data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
     _, output = data
     # 4759b3685f903e6c669096e960b248ec31c63b69
     return output
@@ -247,7 +264,7 @@ def get_head_hash(dir_name: str) -> str:
 def get_current_commit_hash(dir_name: str = "./") -> str:
     dbg.dassert_exists(dir_name)
     cmd = f"cd {dir_name} && git rev-parse HEAD"
-    data: Tuple[int, str] = si.system_to_one_line(cmd)
+    data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
     _, sha = data
     # 0011776388b4c0582161eb2749b665fc45b87e7e
     _LOG.debug("sha=%s", sha)
@@ -255,11 +272,13 @@ def get_current_commit_hash(dir_name: str = "./") -> str:
 
 
 def get_remote_head_hash(dir_name: str) -> str:
-    """Report the hash that the remote Git repo is at."""
+    """
+    Report the hash that the remote Git repo is at.
+    """
     dbg.dassert_exists(dir_name)
     sym_name = get_repo_symbolic_name_from_dirname(dir_name)
     cmd = f"git ls-remote git@github.com:{sym_name} HEAD 2>/dev/null"
-    data: Tuple[int, str] = si.system_to_one_line(cmd)
+    data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
     _, output = data
     # > git ls-remote git@github.com:alphamatic/amp HEAD 2>/dev/null
     # 921676624f6a5f3f36ab507baed1b886227ac2e6        HEAD
@@ -267,8 +286,9 @@ def get_remote_head_hash(dir_name: str) -> str:
 
 
 def get_repo_dirs() -> List[str]:
-    """Return the list of the repo repositories, e.g., `[".", "amp",
-    "infra"]`."""
+    """
+    Return the list of the repo repositories, e.g., `[".", "amp", "infra"]`.
+    """
     dir_names = ["."]
     dirs = ["amp"]
     for dir_name in dirs:
@@ -317,7 +337,9 @@ def _group_hashes(head_hash: str, remh_hash: str, subm_hash: str) -> str:
 
 
 def report_submodule_status(dir_names: List[str], short_hash: bool) -> str:
-    """Return a string representing the status of the repos in `dir_names`."""
+    """
+    Return a string representing the status of the repos in `dir_names`.
+    """
     txt = []
     for dir_name in dir_names:
         txt.append("dir_name='%s'" % dir_name)
@@ -361,7 +383,7 @@ def _get_files(
     dir_name: str, cmd: str, remove_files_non_present: bool
 ) -> List[str]:
     cd_cmd = "cd %s && " % dir_name
-    _, output = si.system_to_string(cd_cmd + cmd)
+    _, output = hsyste.system_to_string(cd_cmd + cmd)
     #
     files = output.split()
     files = [os.path.join(dir_name, f) for f in files]
@@ -373,7 +395,8 @@ def _get_files(
 def get_modified_files(
     dir_name: str = ".", remove_files_non_present: bool = True
 ) -> List[str]:
-    """Return the files that are added and modified in the Git client.
+    """
+    Return the files that are added and modified in the Git client.
 
     In other words the files that will be committed with a `git commit -am ...`.
     Equivalent to `dev_scripts/git_files.sh`
@@ -407,8 +430,8 @@ def get_previous_committed_files(
     num_commits: int = 1,
     remove_files_non_present: bool = True,
 ) -> List[str]:
-    """Return files changed in the Git client in the last `num_commits`
-    commits.
+    """
+    Return files changed in the Git client in the last `num_commits` commits.
 
     Equivalent to `dev_scripts/git_previous_commit_files.sh`
 
@@ -429,8 +452,8 @@ def get_previous_committed_files(
 def get_modified_files_in_branch(
     dir_name: str, dst_branch: str, remove_files_non_present: bool = True
 ) -> List[str]:
-    """Return files modified in the current branch with respect to
-    `dst_branch`.
+    """
+    Return files modified in the current branch with respect to `dst_branch`.
 
     Equivalent to `git diff --name-only master...`
     Please remember that there is a difference between `master` and `origin/master`.
@@ -451,7 +474,8 @@ def get_modified_files_in_branch(
 
 
 def git_log(num_commits: int = 5, my_commits: bool = False) -> str:
-    """Return the output of a pimped version of git log.
+    """
+    Return the output of a pimped version of git log.
 
     :param num_commits: number of commits to report
     :param my_commits: True to report only the current user commits
@@ -466,7 +490,7 @@ def git_log(num_commits: int = 5, my_commits: bool = False) -> str:
     if my_commits:
         cmd.append("--author $(git config user.name)")
     cmd = " ".join(cmd)
-    data: Tuple[int, str] = si.system_to_string(cmd)
+    data: Tuple[int, str] = hsyste.system_to_string(cmd)
     _, txt = data
     return txt
 
@@ -477,9 +501,9 @@ def git_log(num_commits: int = 5, my_commits: bool = False) -> str:
 def git_stash_push(
     prefix: str, msg: Optional[str] = None, log_level: int = logging.DEBUG
 ) -> Tuple[str, bool]:
-    user_name = si.get_user_name()
-    server_name = si.get_server_name()
-    timestamp = hdt.get_timestamp()
+    user_name = hsyste.get_user_name()
+    server_name = hsyste.get_server_name()
+    timestamp = hdatet.get_timestamp()
     tag = "%s-%s-%s" % (user_name, server_name, timestamp)
     tag = prefix + "." + tag
     _LOG.debug("tag='%s'", tag)
@@ -489,10 +513,10 @@ def git_stash_push(
     if msg:
         push_msg += ": " + msg
     cmd += " -m '%s'" % push_msg
-    si.system(cmd, suppress_output=False, log_level=log_level)
+    hsyste.system(cmd, suppress_output=False, log_level=log_level)
     # Check if we actually stashed anything.
     cmd = r"git stash list | \grep '%s' | wc -l" % tag
-    _, output = si.system_to_string(cmd)
+    _, output = hsyste.system_to_string(cmd)
     was_stashed = int(output) > 0
     if not was_stashed:
         msg = "Nothing was stashed"
@@ -504,7 +528,7 @@ def git_stash_push(
 def git_stash_apply(mode: str, log_level: int = logging.DEBUG) -> None:
     _LOG.debug("# Checking stash head ...")
     cmd = "git stash list | head -3"
-    si.system(cmd, suppress_output=False, log_level=log_level)
+    hsyste.system(cmd, suppress_output=False, log_level=log_level)
     #
     _LOG.debug("# Restoring local changes...")
     if mode == "pop":
@@ -513,10 +537,10 @@ def git_stash_apply(mode: str, log_level: int = logging.DEBUG) -> None:
         cmd = "git stash apply --quiet"
     else:
         raise ValueError("mode='%s'" % mode)
-    si.system(cmd, suppress_output=False, log_level=log_level)
+    hsyste.system(cmd, suppress_output=False, log_level=log_level)
 
 
 def git_add_update(log_level: int = logging.DEBUG) -> None:
     _LOG.debug("# Adding all changed files to staging ...")
     cmd = "git add -u"
-    si.system(cmd, suppress_output=False, log_level=log_level)
+    hsyste.system(cmd, suppress_output=False, log_level=log_level)

@@ -1,15 +1,15 @@
 import datetime
-import unittest.mock as mock
+import unittest.mock as umock
 import uuid
 
 import pandas as pd
 import pytest
 
 import helpers.git as git
-import helpers.unit_test as ut
+import helpers.unit_test as hut
 
 
-class Test_unit_test1(ut.TestCase):
+class Test_unit_test1(hut.TestCase):
     @pytest.mark.not_docker
     @pytest.mark.amp
     def test_purify_txt_from_client1(self) -> None:
@@ -36,22 +36,26 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [E0602(und
 dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\s'. String constant might be missing an r prefix. [pylint]
 dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Name 're' is not defined [mypy]
 """
-        act = ut.purify_txt_from_client(txt)
+        act = hut.purify_txt_from_client(txt)
         self.assert_equal(act, exp)
 
     def test_purify_txt_from_client2(self) -> None:
-        """Test case when client root path is equal to `/`"""
-        git = mock.Mock()
+        """
+        Test case when client root path is equal to `/`
+        """
+        git = umock.Mock()
         git.get_client_root.return_value = "/"
         txt = "/tmp/subdir1"
         exp = txt
-        act = ut.purify_txt_from_client(txt)
+        act = hut.purify_txt_from_client(txt)
         self.assertEqual(act, exp)
 
 
-class TestDataframeToJson(ut.TestCase):
+class TestDataframeToJson(hut.TestCase):
     def test_dataframe_to_json(self) -> None:
-        """Verify correctness of dataframe to JSON transformation."""
+        """
+        Verify correctness of dataframe to JSON transformation.
+        """
         # Initialize a dataframe.
         test_dataframe = pd.DataFrame(
             {
@@ -60,13 +64,15 @@ class TestDataframeToJson(ut.TestCase):
             }
         )
         # Convert dataframe to JSON.
-        output_str = ut.convert_df_to_json_string(
+        output_str = hut.convert_df_to_json_string(
             test_dataframe, n_head=3, n_tail=3
         )
         self.check_string(output_str)
 
     def test_dataframe_to_json_uuid(self) -> None:
-        """Verify correctness of UUID-containing dataframe transformation."""
+        """
+        Verify correctness of UUID-containing dataframe transformation.
+        """
         # Initialize a dataframe.
         test_dataframe = pd.DataFrame(
             {
@@ -78,14 +84,15 @@ class TestDataframeToJson(ut.TestCase):
             }
         )
         # Convert dataframe to JSON.
-        output_str = ut.convert_df_to_json_string(
+        output_str = hut.convert_df_to_json_string(
             test_dataframe, n_head=None, n_tail=None
         )
         self.check_string(output_str)
 
     def test_dataframe_to_json_timestamp(self) -> None:
-        """Verify correctness of transformation of a dataframe with
-        Timestamps."""
+        """
+        Verify correctness of transformation of a dataframe with Timestamps.
+        """
         # Initialize a dataframe.
         test_dataframe = pd.DataFrame(
             {
@@ -94,14 +101,15 @@ class TestDataframeToJson(ut.TestCase):
             }
         )
         # Convert dataframe to JSON.
-        output_str = ut.convert_df_to_json_string(
+        output_str = hut.convert_df_to_json_string(
             test_dataframe, n_head=None, n_tail=None
         )
         self.check_string(output_str)
 
     def test_dataframe_to_json_datetime(self) -> None:
-        """Verify correctness of transformation of a dataframe with
-        datetime."""
+        """
+        Verify correctness of transformation of a dataframe with datetime.
+        """
         # Initialize a dataframe.
         test_dataframe = pd.DataFrame(
             {
@@ -113,7 +121,7 @@ class TestDataframeToJson(ut.TestCase):
             }
         )
         # Convert dataframe to JSON.
-        output_str = ut.convert_df_to_json_string(
+        output_str = hut.convert_df_to_json_string(
             test_dataframe, n_head=None, n_tail=None
         )
         self.check_string(output_str)

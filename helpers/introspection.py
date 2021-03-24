@@ -1,9 +1,10 @@
-"""Import as:
+"""
+Import as:
 
-import helpers.introspection as intr
+import helpers.introspection as hintro
 """
 
-import collections.abc as abc
+import collections.abc as cabc
 import inspect
 import sys
 from typing import Any, List, Optional
@@ -12,18 +13,21 @@ import helpers.dbg as dbg
 
 
 def is_iterable(obj: object) -> bool:
-    """Return whether obj can be iterated upon or not.
+    """
+    Return whether obj can be iterated upon or not.
 
     Note that a string is iterable in python, but typically we refer to
     iterables as lists, tuples, so we exclude it.
     """
     # From https://stackoverflow.com/questions/1952464
-    return not isinstance(obj, str) and isinstance(obj, abc.Iterable)
+    return not isinstance(obj, str) and isinstance(obj, cabc.Iterable)
 
 
 def get_function_name(count: int = 0) -> str:
-    """Return the name of the function calling this function, i.e., the name of
-    the function calling `get_function_name()`."""
+    """
+    Return the name of the function calling this function, i.e., the name of
+    the function calling `get_function_name()`.
+    """
     ptr = inspect.currentframe()
     # count=0 corresponds to the calling function, so we need to add an extra
     # step walking the call stack.
@@ -37,7 +41,9 @@ def get_function_name(count: int = 0) -> str:
 
 # From https://github.com/bosswissam/pysize
 def get_size(obj: object, seen: Optional[set] = None) -> int:
-    """Recursively find size of an object `obj` in bytes."""
+    """
+    Recursively find size of an object `obj` in bytes.
+    """
     size = sys.getsizeof(obj)
     if seen is None:
         seen = set()
@@ -57,7 +63,7 @@ def get_size(obj: object, seen: Optional[set] = None) -> int:
     if isinstance(obj, dict):
         size += sum((get_size(v, seen) for v in obj.values()))
         size += sum((get_size(k, seen) for k in obj.keys()))
-    elif isinstance(obj, abc.Iterable) and not isinstance(
+    elif isinstance(obj, cabc.Iterable) and not isinstance(
         obj, (str, bytes, bytearray)
     ):
         size += sum((get_size(i, seen) for i in obj))
@@ -71,7 +77,8 @@ def get_size(obj: object, seen: Optional[set] = None) -> int:
 
 
 def get_methods(obj: Any, access: str = "all") -> List[str]:
-    """Return list of names corresponding to class methods of an object `obj`.
+    """
+    Return list of names corresponding to class methods of an object `obj`.
 
     :param obj: class or class object
     :param access: allows to select private, public or all methods of

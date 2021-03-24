@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, Optional, Union
 import pandas as pd
 
 import helpers.dbg as dbg
-import helpers.io_ as io_
+import helpers.io_ as hio
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
@@ -15,7 +15,8 @@ _LOG = logging.getLogger(__name__)
 def read_csv_range(
     csv_path: str, from_: int, to: int, **kwargs: Any
 ) -> pd.DataFrame:
-    """Read a specified row range of a csv file and convert to a DataFrame.
+    """
+    Read a specified row range of a csv file and convert to a DataFrame.
 
     Assumed to have header, considered to be row 0.
     Reads [from_, to), e.g., to - from_ lines.
@@ -43,7 +44,8 @@ def build_chunk(
     nrows_at_a_time: int = 1000,
     **kwargs: Any,
 ) -> pd.DataFrame:
-    """Build a DataFrame from a csv subset as follows:
+    """
+    Build a DataFrame from a csv subset as follows:
 
       - Names the columns using the header line (row 0)
       - Reads the value in (row, col) coordinates (`start`, `col_name`) (if it
@@ -99,7 +101,8 @@ def find_first_matching_row(
     nrows_at_a_time: int = 1000000,
     **kwargs: Any,
 ) -> Optional[int]:
-    """Find first row in csv where value in column `col_name` equals `val`.
+    """
+    Find first row in csv where value in column `col_name` equals `val`.
 
     :param csv_path: location of csv file
     :param col_name: name of column whose values define chunks
@@ -137,7 +140,8 @@ def csv_mapreduce(
     chunk_preprocessor: Union[None, Callable],
     chunksize: int = 1000000,
 ) -> None:
-    """Map-reduce-type processing of csv.
+    """
+    Map-reduce-type processing of csv.
 
     The phases are:
       - Read the csv in chunks, loading the chunk into a DataFrame
@@ -169,7 +173,8 @@ def convert_csv_to_pq(
     header: Union[None, str] = None,
     compression: Optional[str] = "gzip",
 ) -> None:
-    """Convert csv file to parquet file.
+    """
+    Convert csv file to parquet file.
 
     Output of csv_mapreduce is typically headerless (to support append mode), and so
     `normalizer` may be used to add appropriate headers. Note that parquet
@@ -189,9 +194,10 @@ def convert_csv_to_pq(
     df.to_parquet(pq_path, compression=compression)
 
 
-# TODO(gp): Promote to io_.
+# TODO(gp): Promote to hio.
 def _maybe_remove_extension(filename: str, extension: str) -> Optional[str]:
-    """Attempt to remove `extension` from `filename`.
+    """
+    Attempt to remove `extension` from `filename`.
 
     :param filename: str filename
     :param extension: e.g., ".csv"
@@ -221,7 +227,8 @@ def convert_csv_dir_to_pq_dir(
     normalizer: Union[None, Callable] = None,
     header: Union[None, str] = None,
 ) -> None:
-    """Apply `convert_csv_to_pq` to all files in csv_dir.
+    """
+    Apply `convert_csv_to_pq` to all files in csv_dir.
 
     :param csv_dir: directory of csv's
     :param pq_dir: target directory
@@ -255,7 +262,8 @@ def convert_csv_dir_to_pq_dir(
 
 
 def convert_csv_to_dict(path_to_csv: str, remove_nans: bool) -> Dict[Any, Any]:
-    """Convert a csv file with a dataframe into a json-compatible dict.
+    """
+    Convert a csv file with a dataframe into a json-compatible dict.
 
     :param path_to_csv: path to the csv file
     :param remove_nans: whether to remove NaNs from the dictionary
@@ -280,7 +288,8 @@ def convert_csv_to_dict(path_to_csv: str, remove_nans: bool) -> Dict[Any, Any]:
 def save_csv_as_json(
     path_to_csv: str, remove_nans: bool, path_to_json: Optional[str] = None
 ) -> None:
-    """Convert the df from a csv into a dict and save it into a json file.
+    """
+    Convert the df from a csv into a dict and save it into a json file.
 
     If the `path_to_json` is not provided, the json is saved in the folder where
     the csv file is located.
@@ -294,13 +303,14 @@ def save_csv_as_json(
     dict_df = convert_csv_to_dict(path_to_csv, remove_nans)
     # Determine the json destination path.
     if path_to_json is None:
-        path_to_json = io_.change_filename_extension(path_to_csv, ".csv", ".json")
+        path_to_json = hio.change_filename_extension(path_to_csv, ".csv", ".json")
     # Save the dict into a json file.
-    io_.to_json(path_to_json, dict_df)
+    hio.to_json(path_to_json, dict_df)
 
 
 def to_typed_csv(df: pd.DataFrame, file_name: str) -> None:
-    """Convert Dataframe into csv and then creates a file with the dtypes of
+    """
+    Convert Dataframe into csv and then creates a file with the dtypes of
     columns.
 
     As the file with types, this function create file with the same name and suffix
@@ -312,7 +322,7 @@ def to_typed_csv(df: pd.DataFrame, file_name: str) -> None:
     """
     # Save the types.
     dtypes_filename = file_name + ".types"
-    io_.create_enclosing_dir(dtypes_filename, incremental=True)
+    hio.create_enclosing_dir(dtypes_filename, incremental=True)
     dtypes_dict = str(df.dtypes.apply(lambda x: x.name).to_dict())
     # Save the data.
     df.to_csv(file_name, index=False)
@@ -321,8 +331,9 @@ def to_typed_csv(df: pd.DataFrame, file_name: str) -> None:
 
 
 def from_typed_csv(file_name: str) -> pd.DataFrame:
-    """Loads csv file into dataframe and applies the original types of columns,
-    in order to open csv in a proper way.
+    """
+    Loads csv file into dataframe and applies the original types of columns, in
+    order to open csv in a proper way.
 
     As a file, which contains types format, it is used 'file_name.types' file,
     if it's exist.

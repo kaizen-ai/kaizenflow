@@ -1,7 +1,8 @@
 #!/usr/bin/env python
-"""Import as:
+"""
+Import as:
 
-import helpers.user_credentials as usc
+import helpers.user_credentials as huserc
 
 # Test that all the credentials are properly defined.
 > helpers/user_credentials.py
@@ -15,9 +16,9 @@ from typing import Any, Dict, List, Tuple
 
 import helpers.dbg as dbg
 import helpers.git as git
-import helpers.io_ as io_
-import helpers.parser as prsr
-import helpers.system_interaction as si
+import helpers.io_ as hio
+import helpers.parser as hparse
+import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
 
@@ -26,7 +27,9 @@ _LOG = logging.getLogger(__name__)
 
 
 def get_p1_dev_server_ip() -> str:
-    """Get the dev server name from the user environment."""
+    """
+    Get the dev server name from the user environment.
+    """
     env_var_name = "P1_DEV_SERVER"
     if env_var_name not in os.environ:
         _LOG.error("Can't find '%s': re-run dev_scripts/setenv.sh?", env_var_name)
@@ -37,10 +40,9 @@ def get_p1_dev_server_ip() -> str:
 
 # pylint: disable=too-many-statements
 def get_credentials() -> Dict[str, Any]:
-    """Report information about a user set-up as a function of:
-    1) user name
-    2) server name
-    3) git repository name.
+    """
+    Report information about a user set-up as a function of: 1) user name 2)
+    server name 3) git repository name.
 
     The mandatory information are:
     1) git_user_name
@@ -84,8 +86,8 @@ def get_credentials() -> Dict[str, Any]:
         notebooks
     """
     #
-    user_name = si.get_user_name()
-    server_name = si.get_server_name()
+    user_name = hsyste.get_user_name()
+    server_name = hsyste.get_server_name()
     _LOG.debug("user_name='%s'", user_name)
     _LOG.debug("server_name='%s'", server_name)
     git_repo_name = git.get_repo_symbolic_name(super_module=True)
@@ -306,7 +308,7 @@ def get_credentials() -> Dict[str, Any]:
     # Not necessarily the conda_env_path exists.
     if not os.path.exists(conda_env_path):
         _LOG.warning("The dir '%s' doesn't exist: creating it", conda_env_path)
-        io_.create_dir(conda_env_path, incremental=True)
+        hio.create_dir(conda_env_path, incremental=True)
     dbg.dassert_exists(os.path.dirname(conda_env_path))
     #
     for service in tunnel_info:
@@ -339,7 +341,7 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--user", action="store", default=None, help="Impersonate a user"
     )
-    prsr.add_verbosity_arg(parser)
+    hparse.add_verbosity_arg(parser)
     return parser
 
 
@@ -347,7 +349,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     if args.user:
-        si.set_user_name(args.user)
+        hsyste.set_user_name(args.user)
     usc = get_credentials()
     pprint.pprint(usc)
 

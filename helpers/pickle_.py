@@ -8,8 +8,8 @@ import types
 from typing import Any, Callable
 
 import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.timer as timer
+import helpers.io_ as hio
+import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
 
@@ -26,10 +26,12 @@ def to_pickle(
     log_level: int = logging.DEBUG,
     verbose: bool = True,
 ) -> None:
-    """Pickle object <obj> into file <file_name>."""
+    """
+    Pickle object <obj> into file <file_name>.
+    """
     dbg.dassert_type_is(file_name, str)
-    dtmr = timer.dtimer_start(log_level, "Pickling to '%s'" % file_name)
-    io_.create_enclosing_dir(file_name, incremental=True)
+    dtmr = htimer.dtimer_start(log_level, "Pickling to '%s'" % file_name)
+    hio.create_enclosing_dir(file_name, incremental=True)
     # We assume that the user always specifies a .pkl extension and then we
     # change the extension based on the backend.
     if backend in ("pickle", "dill"):
@@ -56,7 +58,7 @@ def to_pickle(
             pickler.dump(obj)
     else:
         raise ValueError("Invalid backend='%s'" % backend)
-    _, elapsed_time = timer.dtimer_stop(dtmr)
+    _, elapsed_time = htimer.dtimer_stop(dtmr)
     size_mb = os.path.getsize(file_name) / (1024.0 ** 2)
     if verbose:
         _LOG.info(
@@ -73,9 +75,11 @@ def from_pickle(
     log_level: int = logging.DEBUG,
     verbose: bool = True,
 ) -> Any:
-    """Unpickle and return object stored in <file_name>."""
+    """
+    Unpickle and return object stored in <file_name>.
+    """
     dbg.dassert_type_is(file_name, str)
-    dtmr = timer.dtimer_start(log_level, "Unpickling from '%s'" % file_name)
+    dtmr = htimer.dtimer_start(log_level, "Unpickling from '%s'" % file_name)
     # We assume that the user always specifies a .pkl extension and then we
     # change the extension based on the backend.
     if backend in ("pickle", "dill"):
@@ -100,7 +104,7 @@ def from_pickle(
             obj = unpickler.load()
     else:
         raise ValueError("Invalid backend='%s'" % backend)
-    _, elapsed_time = timer.dtimer_stop(dtmr)
+    _, elapsed_time = htimer.dtimer_stop(dtmr)
     size_mb = os.path.getsize(file_name) / (1024.0 ** 2)
     if verbose:
         _LOG.info(
@@ -113,7 +117,8 @@ def from_pickle(
 
 
 def pickle_function(func: Callable) -> str:
-    """Pickle a function into bytecode stored into a string.
+    """
+    Pickle a function into bytecode stored into a string.
 
     - return: string
     """
@@ -123,7 +128,8 @@ def pickle_function(func: Callable) -> str:
 
 
 def unpickle_function(code_as_str: str, func_name: str) -> Callable:
-    """Unpickle a function saved into string <code_as_str>. The function is
+    """
+    Unpickle a function saved into string <code_as_str>. The function is
     injected in the global namespace as <func_name>.
 
     - return: function
@@ -146,5 +152,5 @@ def to_json(file_name: str, obj: object) -> None:
 
 def from_json(file_name: str) -> object:
     dbg.dassert_exists(file_name)
-    obj = json.loads(io_.from_file(file_name))
+    obj = json.loads(hio.from_file(file_name))
     return obj
