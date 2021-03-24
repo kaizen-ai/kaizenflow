@@ -8,8 +8,6 @@ services:
       - kibot_postgres_test
     env_file:
       - ../env/test.env
-    environment:
-      - PATH=/app/vendors_amp/devops/docker_scripts:$PATH
 
   # TODO(gp): -> im.postgres.test:
   kibot_postgres_test:
@@ -17,12 +15,6 @@ services:
     # TODO(gp): -> Needed?
     container_name: kibot_postgres_test
     restart: "no"
-    volumes:
-      # TODO(gp): A little difficult to maintain. Let's just use a script like
-      # edgar/db/schema/version_1.0/init_index_schema.sh.
-      - ./../../common/db/init/sql/types.sql:/docker-entrypoint-initdb.d/0-types.sql
-      - ./../../common/db/init/sql/static.sql:/docker-entrypoint-initdb.d/1-static.sql
-      - ./../../common/db/init/sql/kibot.sql:/docker-entrypoint-initdb.d/2-kibot.sql
     env_file:
       - ../env/test.env
     ports:

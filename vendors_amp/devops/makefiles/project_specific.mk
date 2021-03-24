@@ -49,13 +49,13 @@ im.run_fast_tests:
 		--rm \
 		-l user=$(USER) \
 		app \
-		vendors_amp/devops/docker_scripts/run_fast_tests.sh
+ 		vendors_amp/devops/docker_scripts/run_fast_tests.sh
 
 im.run_slow_tests:
 	IMAGE=$(KIBOT_IMAGE_DEV) \
 	docker-compose \
-		-f compose/docker-compose.yml \
-		-f compose/docker-compose.test.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.test.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -65,8 +65,8 @@ im.run_slow_tests:
 im.run_superslow_tests:
 	IMAGE=$(KIBOT_IMAGE_DEV) \
 	docker-compose \
-		-f compose/docker-compose.yml \
-		-f compose/docker-compose.test.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.test.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -85,8 +85,7 @@ im.docker_postgres_up.local:
 		-f devops/compose/docker-compose.yml \
 		-f devops/compose/docker-compose.local.yml \
 		up \
-#		-d \
-		kibot_postgres_local
+		--remove-orphans
 
 # Stop local postgres server.
 im.docker_postgres_down.local:
@@ -95,7 +94,8 @@ im.docker_postgres_down.local:
 	docker-compose \
 		-f devops/compose/docker-compose.yml \
 		-f devops/compose/docker-compose.local.yml \
-		down
+		down \
+		--remove-orphans
 
 # Stop local postgres server and remove all data.
 im.docker_postgres_rm.local:
@@ -105,7 +105,8 @@ im.docker_postgres_rm.local:
 		-f devops/compose/docker-compose.yml \
 		-f devops/compose/docker-compose.local.yml \
 		down \
-		-v
+		--remove-orphans; \
+	docker volume rm compose_kibot_postgres_data_local
 
 # #############################################################################
 # Images workflows.
@@ -129,7 +130,7 @@ im.docker_build_image.rc:
 		--no-cache \
 		-t $(KIBOT_IMAGE_RC) \
 		-t $(KIBOT_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
-		--file devops/docker_build/Dockerfile \
+		--file devops/docker_build/dev.Dockerfile \
 		.
 
 im.docker_build_image_with_cache.rc:
@@ -138,7 +139,7 @@ im.docker_build_image_with_cache.rc:
 		--progress=plain \
 		-t $(KIBOT_IMAGE_RC) \
 		-t $(KIBOT_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
-		--file devops/docker_build/Dockerfile \
+		--file devops/docker_build/dev.Dockerfile \
 		.
 
 # Push the "rc" image to the registry.
@@ -154,7 +155,7 @@ im.docker_tag_rc_image.latest:
 im.docker_push_image.latest:
 	docker push $(KIBOT_IMAGE_DEV)
 
-docker_release.latest:
+im.docker_release.latest:
 	make im.docker_build_image_with_cache.rc
 	make im.run_fast_tests.rc
 	#make run_slow_tests.rc

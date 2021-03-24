@@ -6,7 +6,7 @@ import pytest
 
 import helpers.unit_test as hut
 import vendors_amp.common.data.types as vcdtyp
-import vendors_amp.common.test.utils as vctuti
+import vendors_amp.common.db.init as vcdini
 import vendors_amp.kibot.data.load.sql_data_loader as vkdlsq
 import vendors_amp.kibot.sql_writer_backend as vksqlw
 
@@ -20,7 +20,7 @@ class TestDbSchemaFile(hut.TestCase):
         """
         Test that schema SQL file exists.
         """
-        for file_name in vctuti.get_init_sql_files():
+        for file_name in vcdini.get_init_sql_files():
             self.assertTrue(os.path.exists(file_name))
 
 
@@ -51,8 +51,10 @@ class TestSqlDataLoader1(hut.TestCase):
         password = os.environ["POSTGRES_PASSWORD"]
         self.dbname = self._get_test_name().replace("/", "").replace(".", "")
         # Create database for test.
-        vctuti.create_database(
-            self.dbname, vctuti.get_init_sql_files()
+        vcdini.create_database(
+            self.dbname,
+            vcdini.get_init_sql_files(),
+            force=True,
         )
         # Initialize writer class to test.
         writer = vksqlw.SQLWriterKibotBackend(
@@ -70,7 +72,7 @@ class TestSqlDataLoader1(hut.TestCase):
         # Close connection.
         self._loader.conn.close()
         # Remove created database.
-        vctuti.remove_database(self.dbname)
+        vcdini.remove_database(self.dbname)
         super().tearDown()
 
     def test_get_symbol_id1(self) -> None:
@@ -162,7 +164,7 @@ class TestSqlDataLoader1(hut.TestCase):
         """
         Insert Symbol, Exchange and TradeSymbol entries to make test work.
 
-        See `common/db/init/sql/` for more info.
+        See `common/db/sql/` for more info.
         """
         with writer.conn as conn:
             with conn.cursor() as curs:

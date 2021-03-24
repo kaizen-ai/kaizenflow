@@ -14,4 +14,9 @@ until postgres_ready; do
 done
 >&2 echo 'PostgreSQL is available'
 
-./devops/docker_build/entrypoint.sh "$@"
+umask 000
+
+export PYTHONPATH=/amp:$PYTHONPATH
+./vendors_amp/devops/docker_scripts/init_im_db.py --db $POSTGRES_DB
+
+eval "$@"
