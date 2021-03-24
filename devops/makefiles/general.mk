@@ -316,6 +316,17 @@ else
 	make _run_tests.gh_action
 endif
 
+docker_bash.gh_action_rc:
+	IMAGE=$(IMAGE_RC) \
+	docker-compose \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.gh_actions.yml \
+		run \
+		--rm \
+		-l user=$(USER) \
+		app \
+		bash
+
 # #############################################################################
 # Images workflows.
 # #############################################################################
@@ -375,7 +386,7 @@ docker_push_image.latest:
 docker_release.latest:
 	make docker_build_image_with_cache.rc
 	make run_fast_tests.rc
-	make run_slow_tests.rc
+	#make run_slow_tests.rc
 	make docker_tag_rc_image.latest
 	make docker_push_image.latest
 	@echo "==> SUCCESS <=="
@@ -471,7 +482,6 @@ else
 		--service-ports \
 		jupyter_server_test
 endif
-
 
 fast_self_tests:
 	make print_setup
