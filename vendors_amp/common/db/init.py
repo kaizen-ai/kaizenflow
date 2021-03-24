@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import List, Optional
 
@@ -6,9 +7,9 @@ import psycopg2.sql as psql
 
 import helpers.io_ as hio
 import helpers.sql as hsql
-import logging
 
 _LOG = logging.getLogger(__name__)
+
 
 def get_init_sql_files(custom_files: Optional[List[str]] = None) -> List[str]:
     """
@@ -28,7 +29,9 @@ def get_init_sql_files(custom_files: Optional[List[str]] = None) -> List[str]:
     return files
 
 
-def create_database(dbname: str, init_sql_files: List[str], force: Optional[bool] = None) -> None:
+def create_database(
+    dbname: str, init_sql_files: List[str], force: Optional[bool] = None
+) -> None:
     """
     Create database in current environment.
 
@@ -66,7 +69,9 @@ def initialize_database(dbname: str, init_sql_files: List[str]) -> None:
         try:
             cursor.execute(hio.from_file(sql_file))
         except psycopg2.errors.DuplicateObject:
-            _LOG.warning("Database %s already initialized. Initialization stopped.", dbname)
+            _LOG.warning(
+                "Database %s already initialized. Initialization stopped.", dbname
+            )
             break
     # Close connection.
     connection.close()
@@ -85,8 +90,6 @@ def remove_database(dbname: str) -> None:
         password=os.environ["POSTGRES_PASSWORD"],
     )
     # Drop database.
-    cursor.execute(
-        psql.SQL("DROP DATABASE {};").format(psql.Identifier(dbname))
-    )
+    cursor.execute(psql.SQL("DROP DATABASE {};").format(psql.Identifier(dbname)))
     # Close connection.
     connection.close()

@@ -5,9 +5,8 @@ import pytest
 
 import helpers.unit_test as hut
 import vendors_amp.common.data.types as vcdtyp
-import vendors_amp.common.db.init as vctuti
+import vendors_amp.common.db.init as vcdini
 import vendors_amp.kibot.sql_writer_backend as vksqlw
-
 
 
 class TestDbSchemaFile(hut.TestCase):
@@ -19,7 +18,7 @@ class TestDbSchemaFile(hut.TestCase):
         """
         Test that schema SQL file exists.
         """
-        for file_name in vctuti.get_init_sql_files():
+        for file_name in vcdini.get_init_sql_files():
             self.assertTrue(os.path.exists(file_name))
 
 
@@ -50,8 +49,10 @@ class TestSqlWriterBackend1(hut.TestCase):
         password = os.environ["POSTGRES_PASSWORD"]
         self._dbname = self._get_test_string()
         # Create database for each test.
-        vctuti.create_database(
-            self._dbname, vctuti.get_init_sql_files(), force=True,
+        vcdini.create_database(
+            self._dbname,
+            vcdini.get_init_sql_files(),
+            force=True,
         )
         # Initialize writer class to test.
         self._writer = vksqlw.SQLWriterKibotBackend(
@@ -66,7 +67,7 @@ class TestSqlWriterBackend1(hut.TestCase):
         # Close connection.
         self._writer.close()
         # Remove created database.
-        vctuti.remove_database(self._dbname)
+        vcdini.remove_database(self._dbname)
         super().tearDown()
 
     def test_ensure_symbol_exist1(self) -> None:
