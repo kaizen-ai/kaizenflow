@@ -85,7 +85,9 @@ class TestSqlWriterBackend1(hut.TestCase):
         # Literally delete the tail of the data.
         with self._writer.conn as conn:
             with conn.cursor() as curs:
-                curs.execute("DELETE FROM DailyData WHERE date > '2021-01-01'")
+                curs.execute(
+                    "DELETE FROM KibotDailyData WHERE date > '2021-01-01'"
+                )
         # Get remains of pandas Dataframe to load.
         df = self._writer.get_remains_data_to_load(
             self._trade_symbol_id, df, vcdtyp.Frequency.Daily
@@ -116,7 +118,7 @@ class TestSqlWriterBackend1(hut.TestCase):
 
     def test_insert_bulk_daily_data1(self) -> None:
         """
-        Test adding a dataframe to DailyData table.
+        Test adding a dataframe to KibotDailyData table.
         """
         self._prepare_tables(
             insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
@@ -133,11 +135,12 @@ class TestSqlWriterBackend1(hut.TestCase):
             }
         )
         self._writer.insert_bulk_daily_data(df=df)
-        self._check_saved_data(table="DailyData")
+        self._check_saved_data(table="KibotDailyData")
 
     def test_insert_bulk_daily_data_with_holes(self) -> None:
         """
-        Test adding a dataframe to DailyData table if some data is missing.
+        Test adding a dataframe to KibotDailyData table if some data is
+        missing.
         """
         self._prepare_tables(
             insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
@@ -156,13 +159,15 @@ class TestSqlWriterBackend1(hut.TestCase):
         self._writer.insert_bulk_daily_data(df=df)
         with self._writer.conn as conn:
             with conn.cursor() as curs:
-                curs.execute("delete from DailyData where date = '2021-01-02'")
+                curs.execute(
+                    "delete from KibotDailyData where date = '2021-01-02'"
+                )
         self._writer.insert_bulk_daily_data(df=df)
-        self._check_saved_data(table="DailyData")
+        self._check_saved_data(table="KibotDailyData")
 
     def test_insert_daily_data1(self) -> None:
         """
-        Test adding a one bar data to DailyData table.
+        Test adding a one bar data to KibotDailyData table.
         """
         self._prepare_tables(
             insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
@@ -176,11 +181,11 @@ class TestSqlWriterBackend1(hut.TestCase):
             close_val=12.5,
             volume_val=1000,
         )
-        self._check_saved_data(table="DailyData")
+        self._check_saved_data(table="KibotDailyData")
 
     def test_insert_bulk_minute_data1(self) -> None:
         """
-        Test adding a dataframe to MinuteData table.
+        Test adding a dataframe to KibotMinuteData table.
         """
         self._prepare_tables(
             insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
@@ -201,11 +206,12 @@ class TestSqlWriterBackend1(hut.TestCase):
             }
         )
         self._writer.insert_bulk_minute_data(df=df)
-        self._check_saved_data(table="MinuteData")
+        self._check_saved_data(table="KibotMinuteData")
 
     def test_insert_bulk_minute_data_with_holes(self) -> None:
         """
-        Test adding a dataframe to MinuteData table if some data is missing.
+        Test adding a dataframe to KibotMinuteData table if some data is
+        missing.
         """
         self._prepare_tables(
             insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
@@ -228,15 +234,15 @@ class TestSqlWriterBackend1(hut.TestCase):
         with self._writer.conn as conn:
             with conn.cursor() as curs:
                 curs.execute(
-                    "DELETE FROM MinuteData "
+                    "DELETE FROM KibotMinuteData "
                     "WHERE datetime = '2021-02-10T13:51:00Z'"
                 )
         self._writer.insert_bulk_minute_data(df=df)
-        self._check_saved_data(table="MinuteData")
+        self._check_saved_data(table="KibotMinuteData")
 
     def test_insert_minute_data1(self) -> None:
         """
-        Test adding a one bar data to MinuteData table.
+        Test adding a one bar data to KibotMinuteData table.
         """
         self._prepare_tables(
             insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
@@ -250,11 +256,11 @@ class TestSqlWriterBackend1(hut.TestCase):
             close_val=12.5,
             volume_val=1000,
         )
-        self._check_saved_data(table="MinuteData")
+        self._check_saved_data(table="KibotMinuteData")
 
     def test_insert_tick_data1(self) -> None:
         """
-        Test adding a one tick data to TickData table.
+        Test adding a one tick data to KibotTickData table.
         """
         self._prepare_tables(
             insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
@@ -265,7 +271,7 @@ class TestSqlWriterBackend1(hut.TestCase):
             price_val=10.0,
             size_val=15,
         )
-        self._check_saved_data(table="TickData")
+        self._check_saved_data(table="KibotTickData")
 
     def _prepare_tables(
         self,

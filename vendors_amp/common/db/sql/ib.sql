@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS KibotDailyData (
+CREATE TABLE IF NOT EXISTS IbDailyData (
     id integer PRIMARY KEY DEFAULT nextval('serial'),
     trade_symbol_id integer REFERENCES TradeSymbol,
     date date,
@@ -7,10 +7,12 @@ CREATE TABLE IF NOT EXISTS KibotDailyData (
     low numeric,
     close numeric,
     volume bigint,
+    average numeric,
+    barCount integer,
     UNIQUE (trade_symbol_id, date)
 );
 
-CREATE TABLE IF NOT EXISTS KibotMinuteData (
+CREATE TABLE IF NOT EXISTS IbMinuteData (
     id integer PRIMARY KEY DEFAULT nextval('serial'),
     trade_symbol_id integer REFERENCES TradeSymbol,
     datetime timestamp,
@@ -19,10 +21,12 @@ CREATE TABLE IF NOT EXISTS KibotMinuteData (
     low numeric,
     close numeric,
     volume bigint,
+    average numeric,
+    barCount integer,
     UNIQUE (trade_symbol_id, datetime)
 );
 
-CREATE TABLE IF NOT EXISTS KibotTickBidAskData (
+CREATE TABLE IF NOT EXISTS IbTickBidAskData (
     id integer PRIMARY KEY DEFAULT nextval('serial'),
     trade_symbol_id integer REFERENCES TradeSymbol,
     datetime timestamp,
@@ -31,7 +35,7 @@ CREATE TABLE IF NOT EXISTS KibotTickBidAskData (
     volume bigint
 );
 
-CREATE TABLE IF NOT EXISTS KibotTickData (
+CREATE TABLE IF NOT EXISTS IbTickData (
     id integer PRIMARY KEY DEFAULT nextval('serial'),
     trade_symbol_id integer REFERENCES TradeSymbol,
     datetime timestamp,

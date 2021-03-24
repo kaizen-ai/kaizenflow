@@ -131,11 +131,11 @@ class SQLKibotDataLoader(vcdlsq.AbstractSQLDataLoader):
         """
         table_name = ""
         if frequency == vcdtyp.Frequency.Minutely:
-            table_name = "MinuteData"
+            table_name = "KibotMinuteData"
         elif frequency == vcdtyp.Frequency.Daily:
-            table_name = "DailyData"
+            table_name = "KibotDailyData"
         elif frequency == vcdtyp.Frequency.Tick:
-            table_name = "TickData"
+            table_name = "KibotTickData"
         dbg.dassert(table_name, f"Unknown frequency {frequency}")
         return table_name
 

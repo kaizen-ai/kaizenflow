@@ -21,7 +21,13 @@ def get_init_sql_files(custom_files: Optional[List[str]] = None) -> List[str]:
     # Common files.
     files = [
         os.path.join(os.path.dirname(__file__), "../db/sql", filename)
-        for filename in ("types.sql", "static.sql", "kibot.sql")
+        for filename in (
+            "types.sql",
+            "static.sql",
+            "kibot.sql",
+            "ib.sql",
+            "test.sql",
+        )
     ]
     # Extend with custom.
     if custom_files:
