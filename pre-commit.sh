@@ -37,21 +37,33 @@ if [ $SUBMODULE_SUPERPROJECT ]; then
     REPO_ROOT="$(pwd)"
 fi
 
-#IMAGE="083233266530.dkr.ecr.us-east-2.amazonaws.com/dev_tools:prod"
-IMAGE="083233266530.dkr.ecr.us-east-2.amazonaws.com/dev_tools:rc"
+IMAGE="083233266530.dkr.ecr.us-east-2.amazonaws.com/dev_tools:prod"
+# IMAGE="083233266530.dkr.ecr.us-east-2.amazonaws.com/dev_tools:rc"
 echo "IMAGE=$IMAGE"
 
-# Keep this in sync with devops/compose/docker-compose-user-space.yml.
-cmd="docker run --rm -t \
---env \"SKIP=$SKIP\" \
--v \"$REPO_ROOT\":/app \
-$IMAGE \
-\"/usr/local/bin/pre-commit $@\""
+# # Keep this in sync with devops/compose/docker-compose-user-space.yml.
+# cmd="docker run --rm -t \
+# --env \"SKIP=$SKIP\" \
+# -v \"$REPO_ROOT\":/app \
+# $IMAGE \
+# \"/usr/local/bin/pre-commit $@\""
+# 
+# # TODO(gp): We use /root/.cache/pre-commit has cache so it's in the
+# # container and not shared with the user.
+# #--env \"PRE_COMMIT_HOME=$HOME/.cache/pre-commit\" \
+# #-v \"$HOME/.cache:/app/.cache\" \
+# 
+# echo "> $cmd"
+# eval $cmd
 
-# TODO(gp): We use /root/.cache/pre-commit has cache so it's in the
-# container and not shared with the user.
-#--env \"PRE_COMMIT_HOME=$HOME/.cache/pre-commit\" \
-#-v \"$HOME/.cache:/app/.cache\" \
+docker run \
+    --rm \
+    -t \
+    --env "PRE_COMMIT_HOME=$HOME/.cache/pre-commit" \
+    --env "SKIP=$SKIP" \
+    -v "$HOME/.cache:$HOME/.cache:rw" \
+    -v "$REPO_ROOT":/app \
+    --workdir "$WORK_DIR" \
+    ${IMAGE} "$@"
 
-echo "> $cmd"
-eval $cmd
+
