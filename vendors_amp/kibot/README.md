@@ -122,7 +122,7 @@ Basic run:
 Start server in detached mode:
 
 ```bash
-> make docker_kibot_postgres_up_local
+> make docker_im_postgres_up_local
 ```
 
 Stop PostgreSQL server:
