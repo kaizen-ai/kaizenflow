@@ -448,7 +448,7 @@ def _assert_equal(
         diff_files(act_file_name, exp_file_name, tag)
 
 
-def get_pd_default_values() -> pd.core._config.DictWrapper:
+def get_pd_default_values() -> pd._config.config.DictWrapper:
     import copy
 
     vals = copy.deepcopy(pd.options)

@@ -494,7 +494,7 @@ fast_self_tests:
 	make docker_pull
 	make docker_cmd CMD="echo" IMAGE=$(IMAGE_RC)
 	make docker_jupyter_test
-	make docker_cmd CMD="pytest amp/helpers/test/test_dbg.py" IMAGE=$(IMAGE_RC)
+	make docker_cmd CMD="pytest --collect-only" IMAGE=$(IMAGE_RC)
 	@echo "==> SUCCESS <=="
 
 slow_self_tests:
