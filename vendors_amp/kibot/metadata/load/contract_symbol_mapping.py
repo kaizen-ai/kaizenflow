@@ -60,7 +60,7 @@ class ContractSymbolMapping:
             print("0-----------------------")
             return None
         # Seven exchange symbols are mapped to multiple contracts:
-        # https://github.com/ParticleDev/commodity_research/issues/2988#issuecomment-646351846.
+        # https://github.com/.../.../issues/2988#issuecomment-646351846.
         # TODO(Julia): Once the mapping is fixed, remove this.
         if contract_metadata.shape[0] > 1:
             if exchange_symbol == "T":

@@ -29,8 +29,8 @@ docker_repo_images:
 # List all running containers:
 #   ```
 #   > docker_ps
-#   CONTAINER ID  user  IMAGE                                COMMAND                 CREATED        STATUS        PORTS  service
-#   2ece37303ec9  gad   083233266530....particle_env:latest  "./docker_build/entr…"  5 seconds ago  Up 4 seconds         user_space
+#   CONTAINER ID  user  IMAGE                    COMMAND                 	  CREATED        STATUS        PORTS  service
+#   2ece37303ec9  gad   083233266530....:latest  "./docker_build/entrâ¦"  5 seconds ago  Up 4 seconds         user_space
 #   ```
 docker_ps:
 	docker ps --format='table {{.ID}}\t{{.Label "user"}}\t{{.Image}}\t{{.Command}}\t{{.RunningFor}}\t{{.Status}}\t{{.Ports}}\t{{.Label "com.docker.compose.service"}}'
@@ -39,7 +39,7 @@ docker_ps:
 #   ```
 #   > docker_stats
 #   CONTAINER ID  NAME                                  CPU %  MEM USAGE / LIMIT     MEM %  NET I/O         BLOCK I/O        PIDS
-#   2ece37303ec9  commodity_research_user_space_run_30  0.00%  15.74MiB / 31.07GiB   0.05%  351kB / 6.27kB  34.2MB / 12.3kB  4
+#   2ece37303ec9  ..._user_space_run_30  0.00%  15.74MiB / 31.07GiB   0.05%  351kB / 6.27kB  34.2MB / 12.3kB  4
 #   ```
 docker_stats:
 	# To change output format you can use following --format flag with `docker stats` command.

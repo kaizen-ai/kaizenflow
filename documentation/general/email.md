@@ -123,7 +123,7 @@
   ```
   GP Saggese <notifications@github.com>
   to
-      ParticleDev/commodity_research (commodity_research@noreply.github.com),
+      .../... (...@noreply.github.com),
       me (saggese@gmail)
       Your (your_activity@noreply.github.com)
 
@@ -134,7 +134,7 @@
 
   https://github.com/ekalinin/github-markdown-toc
 
-  —
+  â
   You are receiving this because you are subscribed to this thread.
   Reply to this email directly, view it on GitHub, or unsubscribe.
   ```
@@ -142,8 +142,8 @@
 - Another email looks like:
   ```
   To: GP Saggese <notifications@github.com>
-  Suject: [ParticleDev/commodity_research] BUG: jupytext sync doesn't work anymore (#572)
-  To: ParticleDev/commodity_research <commodity_research@noreply.github.com>
+  Suject: [.../...] BUG: jupytext sync doesn't work anymore (#572)
+  To: .../... <...@noreply.github.com>
   Cc:
       Giacinto Paolo Saggese <saggese@gmail.com>,
       Your activity <your_activity@noreply.github.com>
@@ -152,7 +152,7 @@
   [jupytext] Reading research/PartTask218_Large_price_movement_analysis_for_security.py
   [jupytext] Warning: 'research/PartTask218_Large_price_movement_analysis_for_security.py' is not a paired notebook
 
-  —
+  â
   You are receiving this because you are subscribed to this thread.
   Reply to this email directly, view it on GitHub, or unsubscribe.
   ```
@@ -179,9 +179,9 @@
   to git
 
     Branch: refs/heads/master
-    Home:   https://github.com/ParticleDev/commodity_research
+    Home:   https://github.com/.../...
     Commit: b0431274fdf619cdb831e1274cd01841fe810b62
-        https://github.com/ParticleDev/commodity_research/commit/b0431274fdf619cdb831e1274cd01841fe810b62
+        https://github.com/.../.../commit/b0431274fdf619cdb831e1274cd01841fe810b62
     Author: gad26032 <malanin@particle.one>
     Date:   2019-10-12 (Sat, 12 Oct 2019)
 

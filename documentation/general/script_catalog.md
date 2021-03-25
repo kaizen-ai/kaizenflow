@@ -53,7 +53,7 @@ To clean up the crap in the dirs:
 > git clean -fdx --dry-run
 
 Diff dirs:
-> diff_to_vimdiff.py --src_dir /Users/saggese/src/commodity_research2/amp --dst_dir /Users/saggese/src/commodity_research3/amp
+> diff_to_vimdiff.py --src_dir /Users/saggese/src/...2/amp --dst_dir /Users/saggese/src/...3/amp
 ```
 
 **_dev_scripts/ffind.py_**
@@ -83,7 +83,7 @@ Get all the data relative to issue #257:
 > ghi_show.py 257
 Github:
 #257: ST: sources analysis
-https://github.com/ParticleDev/commodity_research/issues/257
+https://github.com/.../.../issues/257
 
 Files in the repo:
 ./oil/ST/Task257_Sources_analysis.py
@@ -100,12 +100,12 @@ Get all the data relative to issue #13 for a different GitHub repo:
 **_dev_scripts/grsync.py_**
 ```
 - Rsync a git dir against a pycharm deploy dir
-> grsync.py --src_dir $HOME/src/particle/commodity_research --config P1 --action rsync -v DEBUG --preview
+> grsync.py --src_dir $HOME/src/particle/... --config P1 --action rsync -v DEBUG --preview
 
 - Diff
-> grsync.py --src_dir $HOME/src/particle/commodity_research --config P1 --action diff
-> grsync.py --src_dir $HOME/src/particle/commodity_research --config P1 --action diff_verb
-> grsync.py --src_dir $HOME/src/particle/commodity_research/tr --config P1 --action diff_verb
+> grsync.py --src_dir $HOME/src/particle/... --config P1 --action diff
+> grsync.py --src_dir $HOME/src/particle/... --config P1 --action diff_verb
+> grsync.py --src_dir $HOME/src/particle/.../tr --config P1 --action diff_verb
 ```
 
 **_dev_scripts/jack_**
@@ -213,12 +213,12 @@ To revert all files but this one
 ```
 Convert a url / path into different formats: jupyter url, github, git path.
 
-> url.py https://github.com/ParticleDev/commodity_research/blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+> url.py https://github.com/.../.../blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 file_name=
-/Users/saggese/src/particle/commodity_research/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+/Users/saggese/src/particle/.../oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 
 github_url=
-https://github.com/ParticleDev/commodity_research/blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+https://github.com/.../.../blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 
 jupyter_url=
 http://localhost:10001/tree/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
@@ -697,7 +697,7 @@ Test all the executables that need to bootstrap.
 ```
 - Run all the Jenkins builds locally to debug.
 - To run
-  > (cd $HOME/src/commodity_research1/amp; dev_scripts/jenkins/amp.smoke_test.sh 2>&1 | tee log.txt)
+  > (cd $HOME/src/...1/amp; dev_scripts/jenkins/amp.smoke_test.sh 2>&1 | tee log.txt)
 ```
 
 **_dev_scripts/jenkins/bisect.sh_**

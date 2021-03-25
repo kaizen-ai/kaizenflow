@@ -75,7 +75,7 @@
 ## Definitions
 
 - We refer to Git repos in the following way:
-  - `ParticleDev/commodity_research` as `//p1`
+  - `.../...` as `//p1`
   - `alphamatic/amp` as `//amp`
 
 ## Connect to the server
@@ -111,14 +111,14 @@
 
 - You can clone the code multiple times in different directories, if you want to
   have multiple clients
-  - E.g., `$HOME/src/commodity_research1`, `$HOME/src/commodity_research2`, ...
+  - E.g., `$HOME/src/...1`, `$HOME/src/...2`, ...
 - For now let's create a single client
 
 - To clone the code for the first time run:
 
   ```bash
-  > DST_DIR="commodity_research"
-  > git clone --recursive git@github.com:ParticleDev/commodity_research.git $DST_DIR
+  > DST_DIR="..."
+  > git clone --recursive git@github.com:.../....git $DST_DIR
   ```
 
 - If you encounter the error
@@ -180,8 +180,8 @@
   ```bash
   > more dev_scripts_p1/git_checkout.sh
   #!/bin/bash -xe
-  DST_DIR="commodity_research"
-  git clone --recursive git@github.com:ParticleDev/commodity_research.git $DST_DIR
+  DST_DIR="..."
+  git clone --recursive git@github.com:.../....git $DST_DIR
   ```
 
 # Workflow examples
@@ -192,7 +192,7 @@
 
 ## A simple set-up
 
-- Always work from the Git repo `//Part`, typically `commodity_research`
+- Always work from the Git repo `//Part`, typically `...`
 - You might need to `cd` back and forth between the two repos `//Part` and
   `//Amp`
 
@@ -205,7 +205,7 @@
   - One client for checking out branches to do reviews
   - One client for development
 
-- Two Git clients `commodity_research1` and `commodity_research2`
+- Two Git clients `...1` and `...2`
   - One for development
   - One for review CLs
 - One terminal window per Git client
@@ -214,9 +214,9 @@
   - To edit the code
 - One tmux session in each terminal with:
   - (So I can switch easily between dirs of the project)
-  - One shell cd-ed in `commodity_research*`
+  - One shell cd-ed in `...*`
   - One shell running jupyter
-  - One shell cd-ed `commodity_research*/amp`
+  - One shell cd-ed `...*/amp`
   - See details `//amp/dev_scripts/tmux.sh`
 
 ## Run jupyter notebook

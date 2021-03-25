@@ -110,7 +110,7 @@ def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
     """
     Return the name of the repo in `git_dir`.
 
-    E.g., "alphamatic/amp", "ParticleDev/commodity_research"
+    E.g., "alphamatic/amp"
     """
     dbg.dassert_exists(git_dir)
     cmd = "cd %s; (git remote -v | grep fetch)" % git_dir
@@ -129,7 +129,7 @@ def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
     # We expect something like "alphamatic/amp".
     m = re.match(r"^\S+/\S+$", repo_name)
     dbg.dassert(m, "repo_name='%s'", repo_name)
-    # origin  git@github.com:ParticleDev/ORG_Particle.git (fetch)
+    # origin  git@github.com:.../ORG_Particle.git (fetch)
     suffix_to_remove = ".git"
     if repo_name.endswith(suffix_to_remove):
         repo_name = repo_name[: -len(suffix_to_remove)]
@@ -138,8 +138,7 @@ def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
 
 def get_repo_symbolic_name(super_module: bool) -> str:
     """
-    Return the name of the remote repo. E.g., "alphamatic/amp",
-    "ParticleDev/commodity_research".
+    Return the name of the remote repo. E.g., "alphamatic/amp".
 
     :param super_module: like get_client_root()
     """

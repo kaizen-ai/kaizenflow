@@ -480,7 +480,7 @@
 
 - There are 2 files with the list of tests' tags:
   - `amp/pytest.ini`
-  - `commodity_research/pytest.ini`
+  - `.../pytest.ini`
 
 - In order to update the tags (do it in the both files):
   - In the `markers` section add a name of a new tag

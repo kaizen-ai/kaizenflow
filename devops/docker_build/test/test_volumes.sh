@@ -12,13 +12,11 @@ test_aws() {
   local _aws_conf_file="${AWS_VOLUME}config"
 
   if [ ! -e "$_aws_cred_file" ]; then
-    echo -e """\e[93mWARNING\e[0m: AWS credential check failed: can't find $_aws_cred_file file.
-Check your setup following the instructions at: https://github.com/ParticleDev/commodity_research/blob/master/documentation_p1/technical/aws_personal_token.md"""
+    echo -e """\e[93mWARNING\e[0m: AWS credential check failed: can't find $_aws_cred_file file."""
   fi
 
   if [ ! -e "$_aws_conf_file" ]; then
-    echo -e """\e[93mWARNING\e[0m: AWS credential check failed: can't find $_aws_conf_file file.
-Check your setup following the instructions at: https://github.com/ParticleDev/commodity_research/blob/master/documentation_p1/technical/aws_personal_token.md"""
+    echo -e """\e[93mWARNING\e[0m: AWS credential check failed: can't find $_aws_conf_file file."""
   fi
 }
 
@@ -27,12 +25,10 @@ test_gspread_pandas() {
   local _google_cred_file="${GSPREAD_PANDAS_VOLUME}creds/default"
 
   if [ ! -e "$_aws_cred_file" ]; then
-    echo -e """\e[93mWARNING\e[0m: Google API credential check failed: can't find $_google_secret_file file.
-Check your setup following the instructions at: https://github.com/alphamatic/amp/blob/master/documentation/technical/gsheet_into_pandas.md"""
+    echo -e """\e[93mWARNING\e[0m: Google API credential check failed: can't find $_google_secret_file file."""
   fi
   if [ ! -e "$_google_cred_file" ]; then
-    echo -e """\e[93mWARNING\e[0m: Google API credential check failed: can't find $_google_cred_file file.
-Check your setup following the instructions at: https://github.com/alphamatic/amp/blob/master/documentation/technical/gsheet_into_pandas.md"""
+    echo -e """\e[93mWARNING\e[0m: Google API credential check failed: can't find $_google_cred_file file."""
   fi
 }
 

@@ -1406,7 +1406,7 @@ class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
     See https://arxiv.org/abs/1704.04110 for a description of the DeepAR model.
 
     For additional context and best-practices, see
-    https://github.com/ParticleDev/commodity_research/issues/966
+    https://github.com/.../.../issues/966
     """
 
     def __init__(
@@ -1564,7 +1564,7 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
     See https://arxiv.org/abs/1704.04110 for a description of the DeepAR model.
 
     For additional context and best-practices, see
-    https://github.com/ParticleDev/commodity_research/issues/966
+    https://github.com/.../.../issues/966
     """
 
     def __init__(

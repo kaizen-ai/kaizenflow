@@ -8,7 +8,7 @@ Transform the output of `diff -r --brief dir1 dir2` into a script using vimdiff.
 > git clean -fdx --dry-run
 
 # Diff dirs:
-> diff_to_vimdiff.py --dir1 /Users/saggese/src/commodity_research2/amp --dir2 /Users/saggese/src/commodity_research3/amp
+> diff_to_vimdiff.py --dir1 /Users/saggese/src/...2/amp --dir2 /Users/saggese/src/...3/amp
 """
 
 import argparse
@@ -58,7 +58,7 @@ def _diff(dir1: str, dir2: str) -> str:
 def _get_symbolic_filepath(dir1, dir2, file_name):
     """
     Transform a path like:
-        /Users/saggese/src/commodity_research2/amp/vendors/first_rate/utils.py
+        /Users/saggese/src/...2/amp/vendors/first_rate/utils.py
     into:
         $DIR1/amp/vendors/first_rate/utils.py
     """
@@ -158,7 +158,7 @@ def _parse_diff_output(input_file: str, dir1: str, dir2: str, args):
                 skip = True
         elif line.startswith("File "):
             # File
-            #   /wd/saggese/src/commodity_research1/amp/devops/docker_build/fstab
+            #   /wd/saggese/src/...1/amp/devops/docker_build/fstab
             # is a regular file while file
             #   /wd/saggese/src/dev_tools/devops/docker_build/fstab
             # is a directory

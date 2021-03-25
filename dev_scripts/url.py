@@ -3,12 +3,12 @@
 """
 Convert a url / path into different formats: jupyter url, github, git path.
 
-> url.py https://github.com/ParticleDev/.../Task229_Exploratory_analysis_of_ST_data.ipynb
+> url.py https://github.com/.../.../Task229_Exploratory_analysis_of_ST_data.ipynb
 file_name=
-/Users/saggese/src/particle/commodity_research/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+/Users/saggese/src/particle/.../oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 
 github_url=
-https://github.com/ParticleDev/.../Task229_Exploratory_analysis_of_ST_data.ipynb
+https://github.com/.../.../Task229_Exploratory_analysis_of_ST_data.ipynb
 
 jupyter_url=
 http://localhost:10001/tree/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
@@ -69,7 +69,7 @@ def _get_file_name(url: str) -> str:
       ->
         oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb
 
-    - https://github.com/ParticleDev/commodity_research/blob/master/...
+    - https://github.com/.../.../blob/master/...
         oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
       ->
         oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb
@@ -87,12 +87,12 @@ def _get_file_name(url: str) -> str:
                 end_idx = idx + len(to_remove)
                 ret = ret[end_idx:]
     if ret is None:
-        # https://github.com/ParticleDev/commodity_research/blob/master/...
+        # https://github.com/.../.../blob/master/...
         #   oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
         m = re.search(r"http.*://.*github.com/(.*)", url)
         if m:
             ret = m.group(1)
-            # Remove "ParticleDev/commodity_research/blob/master"
+            # Remove ".../.../blob/master"
             ret = "/".join(ret.split("/")[4:])
     if ret is None:
         if os.path.exists(url):

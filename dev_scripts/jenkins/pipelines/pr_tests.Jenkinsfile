@@ -86,7 +86,7 @@ def getRequestGhApi(String url) {
 // `data_pull_request__links_comments_href` variable that available
 // in web-hook data.
 // Example:
-//      data_pull_request__links_comments_href=https://api.github.com/repos/ParticleDev/commodity_research/issues/2223/comments
+//      data_pull_request__links_comments_href=https://api.github.com/repos/.../.../issues/2223/comments
 
 def postPrComment(String message) {
     // Post comment to the PR that triggered job
@@ -102,7 +102,7 @@ def postPrComment(String message) {
 // `data_pull_request_issue_url` variable that available
 // in web-hook data.
 // Example:
-//      data_pull_request_issue_url=https://api.github.com/repos/ParticleDev/commodity_research/issues/2223
+//      data_pull_request_issue_url=https://api.github.com/repos/.../.../issues/2223
 
 def labelsGetFromIssue() {
     // Get labels(List of strings) from the PR that triggered job.
@@ -139,7 +139,7 @@ def labelAddToIssue(String name) {
 // `data_pull_request_statuses_url` variable that available
 // in web-hook data.
 // Example:
-//      data_pull_request_statuses_url=https://api.github.com/repos/ParticleDev/commodity_research/statuses/45e1be89cd0dddcd7ad9c3076c8ac3b87b4304e4
+//      data_pull_request_statuses_url=https://api.github.com/repos/.../.../statuses/45e1be89cd0dddcd7ad9c3076c8ac3b87b4304e4
 
 def postGitStatus(String state, String description, String testName) {
     // Add status to the PR that triggered job.

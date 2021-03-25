@@ -30,7 +30,7 @@ class Test_url_py1(ut.TestCase):
 
     def test_get_file_name2(self) -> None:
         url_tmp = (
-            "https://github.com/ParticleDev/commodity_research/blob/"
+            "https://github.com/.../.../blob/"
             + "master/oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
         )
         act = url._get_file_name(url_tmp)
