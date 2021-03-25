@@ -36,7 +36,7 @@
 - This is needed to install all the packages that are required for development:
   ```bash
   > cd $DST_DIR
-  > ./dev_scripts_p1/create_conda.p1_develop.sh
+  > ./dev_scripts_p1/create_conda.develop.sh
   ```
 - This script takes 5 mins to run
 
@@ -52,7 +52,7 @@
   # conda environments:
   #
   base                     /anaconda3
-  p1_develop            *  /home/<USER>/.conda/envs/p1_develop
+  develop            *  /home/<USER>/.conda/envs/develop
   ```
 
 ## Configure conda environment
@@ -61,7 +61,7 @@
   run:
 
   ```bash
-  > source dev_scripts_p1/setenv_p1.sh
+  > source dev_scripts_p1/setenv_....sh
   ```
 
 - This script:
@@ -78,7 +78,7 @@
 - This is the typical approach
 
 - There are some pre-packaged command lines to create the standard environments,
-  e.g., `./dev_scripts_p1/create_conda.p1_develop.sh`
+  e.g., `./dev_scripts_p1/create_conda.develop.sh`
 
 - The `create_conda.py` help as some useful examples of command lines, see the
   help:
@@ -220,11 +220,11 @@ side (or locally) in a docker container. Here you can find the documentation
     (e.g. packages written by students trying to graduate, non-coding savvy PhDs
     and professors)
   - Create a new local experimental conda environment with:
-    `create_conda.py --env_name p1_develop.nlp`
+    `create_conda.py --env_name develop.nlp`
   - If you want to reproduce your environment or share it (e.g., among the NLP
-    team) you can branch `dev_scripts/install/requirements/p1_develop.yaml` and
+    team) you can branch `dev_scripts/install/requirements/develop.yaml` and
     modify it, then you can create an environment programmatically with:
-    `create_conda.py --env_name p1_develop.nlp --req_file dev_scripts/install/requirements/p1_develop.nlp.yaml`
+    `create_conda.py --env_name develop.nlp --req_file dev_scripts/install/requirements/develop.nlp.yaml`
 
 - We can make this process more automated by generalizing the scripts we already
   have.

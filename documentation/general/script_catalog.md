@@ -607,11 +607,11 @@ Install the `amp` default environment:
         --req_file dev_scripts/install/requirements/amp_develop.yaml \
         --delete_env_if_exists
 
-Install the `p1_develop` default environment:
+Install the `develop` default environment:
 > create_conda.py \
-        --env_name p1_develop \
+        --env_name develop \
         --req_file amp/dev_scripts/install/requirements/amp_develop.yaml \
-        --req_file dev_scripts_p1/install/requirements/p1_develop.yaml \
+        --req_file dev_scripts_p1/install/requirements/develop.yaml \
         --delete_env_if_exists
 
 Quick install to test the script:
@@ -669,7 +669,7 @@ Test all the executables that need to bootstrap.
 
 **_dev_scripts/jenkins/amp.run_linter_on_branch.sh_**
 ```
-- No conda env is built, but we rely on `p1_develop.daily_build` being already
+- No conda env is built, but we rely on `develop.daily_build` being already
  build.
 - This script runs the linter on a git branch.
 ```
@@ -1014,9 +1014,9 @@ Backup and then update labels of several GitHub repos.
 
 # `dev_scripts/jenkins/test_runners`
 
-**_dev_scripts/jenkins/test_runners/run_build_clean_env.p1_develop.daily_build.sh_**
+**_dev_scripts/jenkins/test_runners/run_build_clean_env.develop.daily_build.sh_**
 ```
-- Build "p1_develop" conda env from scratch.
+- Build "develop" conda env from scratch.
 ```
 
 **_dev_scripts/jenkins/test_runners/run_fast_coverage_tests.sh_**

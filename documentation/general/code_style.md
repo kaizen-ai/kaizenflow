@@ -377,15 +377,15 @@
 ## Solution
 
 - Install the package in whatever way you want (`conda`, `pip`, install from
-  source) on top of your `p1_develop` conda environment
+  source) on top of your `develop` conda environment
   - If you don't know how to install, file a bug for Sergey and we can help
 
 - You should document how you install the package so that anyone who runs the
-  notebook can install the package on top of `p1_develop` in the same way
+  notebook can install the package on top of `develop` in the same way
 
 - Once the code is reviewed and promoted to a lib / unit tested, the conda
   recipe is updated as part of the PR
-  - The team needs to update their `p1_develop` package to pick up the
+  - The team needs to update their `develop` package to pick up the
     dependencies
 
 - This applies to both code and notebooks

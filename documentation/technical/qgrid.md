@@ -36,12 +36,12 @@
 
   ```bash
   > jupyter nbextension enable --py --sys-prefix qgrid
-  /Users/saggese/.conda/envs/p1_develop/bin/jupytext
+  /Users/saggese/.conda/envs/develop/bin/jupytext
   jupyter nbextension enable --py --sys-prefix widgetsnbextensionEnabling notebook extension qgrid/extension...
         - Validating: OK
 
   > jupyter nbextension enable --py --sys-prefix widgetsnbextension
-  /Users/saggese/.conda/envs/p1_develop/bin/jupytext
+  /Users/saggese/.conda/envs/develop/bin/jupytext
   Enabling notebook extension jupyter-js-widgets/extension...
         - Validating: OK
   ```
