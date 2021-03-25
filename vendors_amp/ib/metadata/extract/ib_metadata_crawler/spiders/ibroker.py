@@ -141,7 +141,7 @@ class IbrokerSpider(scrapy.Spider):
     ) -> Generator[Union[scrapy.Item, scrapy.Request], None, None]:
         product = (
             response.css(
-                "#exchange-products div.btn-selectors p a.btn.btn-default::text"
+                "#exchange-products div.btn-selectors p a.btn.btn-default.active::text"
             ).get()
             or "N/A"
         )
