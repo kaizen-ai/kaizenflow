@@ -5,22 +5,22 @@ import helpers.unit_test as hut
 import vendors_amp.common.data.types as vcdtyp
 import vendors_amp.common.db.init as vcdini
 import vendors_amp.common.test.utils as vctuti
-import vendors_amp.kibot.sql_writer_backend as vksqlw
+import vendors_amp.ib.sql_writer_backend as visqlw
 
 
 @pytest.mark.skipif(
     not vcdini.is_inside_im_container(),
     reason="Testable only inside IM container",
 )
-class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
+class TestIbSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
     """
-    Test writing operation to Postgresql kibot db.
+    Test writing operation to Postgresql IM db.
     """
 
     def setUp(self) -> None:
         super().setUp()
         # Initialize writer class to test.
-        self._writer = vksqlw.SQLWriterKibotBackend(
+        self._writer = visqlw.SQLWriterIbBackend(
             dbname=self._dbname,
             user=self._user,
             password=self._password,
@@ -58,6 +58,8 @@ class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
                 "low": [9] * 3,
                 "close": [12.5] * 3,
                 "volume": [1000] * 3,
+                "average": [12.0] * 3,
+                "barCount": [10] * 3,
             }
         )
         self._writer.insert_bulk_daily_data(df=df)
@@ -65,9 +67,7 @@ class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
         # Literally delete the tail of the data.
         with self._writer.conn as conn:
             with conn.cursor() as curs:
-                curs.execute(
-                    "DELETE FROM KibotDailyData WHERE date > '2021-01-01'"
-                )
+                curs.execute("DELETE FROM IbDailyData WHERE date > '2021-01-01'")
         # Get remains of pandas Dataframe to load.
         df = self._writer.get_remains_data_to_load(
             self._trade_symbol_id, df, vcdtyp.Frequency.Daily
@@ -98,7 +98,7 @@ class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
 
     def test_insert_bulk_daily_data1(self) -> None:
         """
-        Test adding a dataframe to KibotDailyData table.
+        Test adding a dataframe to IbDailyData table.
         """
         self._prepare_tables(
             insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
@@ -112,15 +112,16 @@ class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
                 "low": [9] * 3,
                 "close": [12.5] * 3,
                 "volume": [1000] * 3,
+                "average": [12.0] * 3,
+                "barCount": [10] * 3,
             }
         )
         self._writer.insert_bulk_daily_data(df=df)
-        self._check_saved_data(table="KibotDailyData")
+        self._check_saved_data(table="IbDailyData")
 
     def test_insert_bulk_daily_data_with_holes(self) -> None:
         """
-        Test adding a dataframe to KibotDailyData table if some data is
-        missing.
+        Test adding a dataframe to IbDailyData table if some data is missing.
         """
         self._prepare_tables(
             insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
@@ -134,20 +135,20 @@ class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
                 "low": [9] * 3,
                 "close": [12.5] * 3,
                 "volume": [1000] * 3,
+                "average": [12.0] * 3,
+                "barCount": [10] * 3,
             }
         )
         self._writer.insert_bulk_daily_data(df=df)
         with self._writer.conn as conn:
             with conn.cursor() as curs:
-                curs.execute(
-                    "delete from KibotDailyData where date = '2021-01-02'"
-                )
+                curs.execute("delete from IbDailyData where date = '2021-01-02'")
         self._writer.insert_bulk_daily_data(df=df)
-        self._check_saved_data(table="KibotDailyData")
+        self._check_saved_data(table="IbDailyData")
 
     def test_insert_daily_data1(self) -> None:
         """
-        Test adding a one bar data to KibotDailyData table.
+        Test adding a one bar data to IbDailyData table.
         """
         self._prepare_tables(
             insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
@@ -160,12 +161,14 @@ class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
             low_val=9,
             close_val=12.5,
             volume_val=1000,
+            average_val=12.0,
+            bar_count_val=10,
         )
-        self._check_saved_data(table="KibotDailyData")
+        self._check_saved_data(table="IbDailyData")
 
     def test_insert_bulk_minute_data1(self) -> None:
         """
-        Test adding a dataframe to KibotMinuteData table.
+        Test adding a dataframe to IbMinuteData table.
         """
         self._prepare_tables(
             insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
@@ -183,15 +186,16 @@ class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
                 "low": [9] * 3,
                 "close": [12.5] * 3,
                 "volume": [1000] * 3,
+                "average": [12.0] * 3,
+                "barCount": [10] * 3,
             }
         )
         self._writer.insert_bulk_minute_data(df=df)
-        self._check_saved_data(table="KibotMinuteData")
+        self._check_saved_data(table="IbMinuteData")
 
     def test_insert_bulk_minute_data_with_holes(self) -> None:
         """
-        Test adding a dataframe to KibotMinuteData table if some data is
-        missing.
+        Test adding a dataframe to IbMinuteData table if some data is missing.
         """
         self._prepare_tables(
             insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
@@ -209,20 +213,22 @@ class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
                 "low": [9] * 3,
                 "close": [12.5] * 3,
                 "volume": [1000] * 3,
+                "average": [12.0] * 3,
+                "barCount": [10] * 3,
             }
         )
         with self._writer.conn as conn:
             with conn.cursor() as curs:
                 curs.execute(
-                    "DELETE FROM KibotMinuteData "
+                    "DELETE FROM IbMinuteData "
                     "WHERE datetime = '2021-02-10T13:51:00Z'"
                 )
         self._writer.insert_bulk_minute_data(df=df)
-        self._check_saved_data(table="KibotMinuteData")
+        self._check_saved_data(table="IbMinuteData")
 
     def test_insert_minute_data1(self) -> None:
         """
-        Test adding a one bar data to KibotMinuteData table.
+        Test adding a one bar data to IbMinuteData table.
         """
         self._prepare_tables(
             insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
@@ -235,12 +241,14 @@ class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
             low_val=9,
             close_val=12.5,
             volume_val=1000,
+            average_val=12.0,
+            bar_count_val=10,
         )
-        self._check_saved_data(table="KibotMinuteData")
+        self._check_saved_data(table="IbMinuteData")
 
     def test_insert_tick_data1(self) -> None:
         """
-        Test adding a one tick data to KibotTickData table.
+        Test adding a one tick data to IbTickData table.
         """
         self._prepare_tables(
             insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
@@ -251,4 +259,4 @@ class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
             price_val=10.0,
             size_val=15,
         )
-        self._check_saved_data(table="KibotTickData")
+        self._check_saved_data(table="IbTickData")

@@ -1,5 +1,5 @@
 import abc
-from typing import Optional
+from typing import Dict, Optional
 
 import pandas as pd
 import psycopg2
@@ -12,6 +12,16 @@ class AbstractSQLWriterBackend(abc.ABC):
     """
     Interface for manager of CRUD operations on a database defined in db.sql.
     """
+
+    # Provider-specific constant. Map frequency to table name and datetime field.
+    # E.g.:
+    # {
+    #      vcdtyp.Frequency.Daily: {
+    #         "table_name": "KibotDailyData",
+    #         "datetime_field_name": "date",
+    #     }
+    # }
+    FREQ_ATTR_MAPPING: Dict[vcdtyp.Frequency, Dict[str, str]]
 
     def __init__(
         self, dbname: str, user: str, password: str, host: str, port: int
@@ -174,3 +184,51 @@ class AbstractSQLWriterBackend(abc.ABC):
 
     def close(self) -> None:
         self.conn.close()
+
+    def get_remains_data_to_load(
+        self, trade_symbol_id: int, df: pd.DataFrame, frequency: vcdtyp.Frequency
+    ) -> pd.DataFrame:
+        """
+        Find the maximum date(time) for trade_symbol_id in a certain frequency
+        that already loaded and return a slice of data from a pandas Dataframe
+        where datetime > given maximum.
+
+        :param trade_symbol_id: id of TradeSymbol.
+        :param df: Pandas Dataframe to load.
+        :param frequency: frequency of the data.
+        :return: Slice of Pandas Dataframe to load.
+        """
+        datetime_field_name = self.FREQ_ATTR_MAPPING[frequency][
+            "datetime_field_name"
+        ]
+        table_name = self.FREQ_ATTR_MAPPING[frequency]["table_name"]
+        with self.conn:
+            with self.conn.cursor() as cur:
+                cur.execute(
+                    f"SELECT MAX({datetime_field_name}) "
+                    f"FROM {table_name} WHERE "
+                    f"trade_symbol_id = {trade_symbol_id}"
+                )
+                max_datetime = cur.fetchone()[0]
+        df[datetime_field_name] = pd.to_datetime(df[datetime_field_name])
+        if max_datetime is not None:
+            df = df[df[datetime_field_name] > pd.to_datetime(max_datetime)]
+        return df
+
+    def delete_data_by_trade_symbol_id(
+        self, trade_symbol_id: int, frequency: vcdtyp.Frequency
+    ) -> None:
+        """
+        Delete all data from table by given frequency and trade_symbol_id.
+
+        :param trade_symbol_id: id of TradeSymbol.
+        :param frequency: frequency of the data.
+        :return:
+        """
+        table_name = self.FREQ_ATTR_MAPPING[frequency]["table_name"]
+        with self.conn:
+            with self.conn.cursor() as cur:
+                cur.execute(
+                    f"DELETE FROM {table_name} "
+                    f"WHERE trade_symbol_id = {trade_symbol_id}"
+                )

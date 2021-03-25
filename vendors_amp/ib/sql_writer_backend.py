@@ -1,13 +1,29 @@
 import pandas as pd
 import psycopg2.extras as pextra
 
+import vendors_amp.common.data.types as vcdtyp
 import vendors_amp.common.sql_writer_backend as vcsqlw
 
 
-class SQLWriterIBBackend(vcsqlw.AbstractSQLWriterBackend):
+class SQLWriterIbBackend(vcsqlw.AbstractSQLWriterBackend):
     """
     Manager of CRUD operations on a database defined in db.sql.
     """
+
+    FREQ_ATTR_MAPPING = {
+        vcdtyp.Frequency.Daily: {
+            "table_name": "IbDailyData",
+            "datetime_field_name": "date",
+        },
+        vcdtyp.Frequency.Minutely: {
+            "table_name": "IbMinuteData",
+            "datetime_field_name": "datetime",
+        },
+        vcdtyp.Frequency.Tick: {
+            "table_name": "IbTickData",
+            "datetime_field_name": "datetime",
+        },
+    }
 
     def insert_bulk_daily_data(
         self,
@@ -93,7 +109,7 @@ class SQLWriterIBBackend(vcsqlw.AbstractSQLWriterBackend):
                     "VALUES %s ON CONFLICT DO NOTHING",
                     df.to_dict("records"),
                     template="(%(trade_symbol_id)s, %(datetime)s, %(open)s,"
-                    " %(high)s, %(low)s, %(close)s, %(volume)s), %(average)s, %(barCount)s",
+                    " %(high)s, %(low)s, %(close)s, %(volume)s, %(average)s, %(barCount)s)",
                 )
 
     def insert_minute_data(

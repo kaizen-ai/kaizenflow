@@ -9,6 +9,7 @@ matplotlib
 pandas
 psycopg2
 pytest
+pytest-xdist
 requests
 s3fs
 tqdm
