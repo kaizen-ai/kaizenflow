@@ -170,7 +170,7 @@
   - Component = a group of related functionality encapsulated behind a
     well-defined interface (e.g., collection of classes behind an interface)
   - Components correspond to the second level of directory
-  - E.g., in `//p1/edgar`
+  - E.g., in `//.../edgar`
     - `api`: real-time system storing the data from EDGAR
     - `company_commodity_mapping`: data pipeline to process mapping between
       commodities and companies
@@ -179,7 +179,7 @@
 - Level 4
   - Classes
   - Typically we organize multiple related classes in files
-  - E.g., in `//p1/edgar/form8`
+  - E.g., in `//.../edgar/form8`
     - `analyze_results.py`: classes and functions to analyze results from the
       data pipeline
     - `extract_tables.py`: class `TableExtractor` extracting tables from Form 8

@@ -227,7 +227,7 @@
 # `setenv.sh` design notes
 
 - Each `setenv.sh` (e.g., `//amp/dev_scripts/setenv_amp.sh`,
-  `//p1/dev_scripts/setenv_....sh`)
+  `//.../dev_scripts/setenv_....sh`)
   - Contains some boiler plate code (calls `helpers.sh`, checks python version)
   - `execute_setenv`
     - Calls `_setenv.py` to generate a bash script to configure

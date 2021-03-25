@@ -1577,7 +1577,7 @@ def ...(...):
 ## Research quality vs production quality
 
 - Code belonging to top level libraries (e.g., `//amp/core`, `//amp/helpers`)
-  and production (e.g., `//p1/db`, `vendors`) needs to meet high quality
+  and production (e.g., `//.../db`, `vendors`) needs to meet high quality
   standards, e.g.,
   - Well commented
   - Following our style guide
