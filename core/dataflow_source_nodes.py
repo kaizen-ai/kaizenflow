@@ -2,9 +2,10 @@ import datetime
 import logging
 from typing import Any, Dict, List, Optional, Union
 
+import pandas as pd
+
 import core.dataflow as cdataf
 import helpers.dbg as dbg
-import pandas as pd
 import vendors_amp.kibot as vkibot
 
 _LOG = logging.getLogger(__name__)
@@ -13,7 +14,7 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
 def DataSourceNodeFactory(
-        nid: str, source_node_name: str, source_node_kwargs: Dict[str, Any]
+    nid: str, source_node_name: str, source_node_kwargs: Dict[str, Any]
 ) -> cdataf.DataSource:
     """
     Initialize the appropriate data source node.
@@ -36,14 +37,14 @@ def DataSourceNodeFactory(
 
 class KibotDataReader(cdataf.DataSource):
     def __init__(
-            self,
-            nid: str,
-            symbol: str,
-            frequency: Union[str, vkibot.Frequency],
-            contract_type: Union[str, vkibot.ContractType],
-            start_date: Optional[_PANDAS_DATE_TYPE] = None,
-            end_date: Optional[_PANDAS_DATE_TYPE] = None,
-            nrows: Optional[int] = None,
+        self,
+        nid: str,
+        symbol: str,
+        frequency: Union[str, vkibot.Frequency],
+        contract_type: Union[str, vkibot.ContractType],
+        start_date: Optional[_PANDAS_DATE_TYPE] = None,
+        end_date: Optional[_PANDAS_DATE_TYPE] = None,
+        nrows: Optional[int] = None,
     ) -> None:
         """
         Create data source node outputting single instrument data from Kibot.
@@ -92,11 +93,11 @@ class KibotDataReader(cdataf.DataSource):
             symbol=self._symbol,
             nrows=self._nrows,
         )
-        self.df = self.df.loc[self._start_date: self._end_date]
+        self.df = self.df.loc[self._start_date : self._end_date]
 
     @staticmethod
     def _process_timestamp(
-            timestamp: Optional[_PANDAS_DATE_TYPE],
+        timestamp: Optional[_PANDAS_DATE_TYPE],
     ) -> Optional[pd.Timestamp]:
         if timestamp is pd.NaT:
             timestamp = None
@@ -108,15 +109,15 @@ class KibotDataReader(cdataf.DataSource):
 
 class KibotColumnReader(cdataf.DataSource):
     def __init__(
-            self,
-            nid: str,
-            symbols: List[str],
-            frequency: Union[str, vkibot.Frequency],
-            contract_type: Union[str, vkibot.ContractType],
-            col: str,
-            start_date: Optional[_PANDAS_DATE_TYPE] = None,
-            end_date: Optional[_PANDAS_DATE_TYPE] = None,
-            nrows: Optional[int] = None,
+        self,
+        nid: str,
+        symbols: List[str],
+        frequency: Union[str, vkibot.Frequency],
+        contract_type: Union[str, vkibot.ContractType],
+        col: str,
+        start_date: Optional[_PANDAS_DATE_TYPE] = None,
+        end_date: Optional[_PANDAS_DATE_TYPE] = None,
+        nrows: Optional[int] = None,
     ) -> None:
         """
         Same interface as KibotDataReader but with multiple symbols.
@@ -159,7 +160,6 @@ class KibotColumnReader(cdataf.DataSource):
                 symbol=s,
                 nrows=self._nrows,
             )[self._col]
-            data = data.loc[self._start_date: self._end_date]
+            data = data.loc[self._start_date : self._end_date]
             dict_df[s] = data
         self.df = pd.DataFrame.from_dict(dict_df)
-
