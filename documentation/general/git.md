@@ -394,7 +394,7 @@
   > git show --name-only 39a9e335298a3fe604896fa19296d20829801cf2
 
   commit 39a9e335298a3fe604896fa19296d20829801cf2
-  Author: Julia <julia@particle.one>
+  Author: Julia <julia@...>
   Date:   Fri Sep 27 11:43:41 2019
 
       PartTask274 lint

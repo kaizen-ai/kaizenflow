@@ -84,7 +84,7 @@ In the following we use the abbreviations below:
   - GH = GitHub
   - ZH = ZenHub
   - PR = Pull Request
-  - RP = Responsible Particle
+  - RP = Responsible Party
 
 - Everything we work on comes as a GitHub task
   - We file tasks and then prioritize and distribute the workload

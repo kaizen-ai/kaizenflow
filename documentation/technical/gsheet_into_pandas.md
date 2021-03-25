@@ -28,10 +28,9 @@
     around in the GUI
 
 - Some gotchas:
-  - Make sure to act only under your `particle.one` account.
+  - Make sure to act only under your `...` account.
   - `project/product/application` names don't really matter. It's convenient to
-    pick a name connected to Particle (e.g. ParticleApp) so that it's easy to
-    find later.
+    pick a name connected to the project so that it's easy to find later.
   - Whenever you are given a choice of making something generally accessible or
     accessible only to the members of your organization, choose making it
     accessible only to the members of your organization.

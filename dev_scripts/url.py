@@ -5,7 +5,7 @@ Convert a url / path into different formats: jupyter url, github, git path.
 
 > url.py https://github.com/.../.../Task229_Exploratory_analysis_of_ST_data.ipynb
 file_name=
-/Users/saggese/src/particle/.../oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+/Users/saggese/src/.../.../oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 
 github_url=
 https://github.com/.../.../Task229_Exploratory_analysis_of_ST_data.ipynb

@@ -87,7 +87,7 @@ def _parse_diff_output(input_file: str, dir1: str, dir2: str, args):
         out_line = None
         skip = False
         if line.startswith("Only in "):
-            # Only in /data/gp_wd/src/deploy_particle1/: cfile
+            # Only in /data/gp_wd/src/deploy_...1/: cfile
             m = re.match(r"^Only in (\S+): (\S+)$", line)
             dbg.dassert(m, "Invalid line='%s'", line)
             file_name = "%s/%s" % (m.group(1), m.group(2))
@@ -135,8 +135,8 @@ def _parse_diff_output(input_file: str, dir1: str, dir2: str, args):
                 skip = True
         elif line.startswith("Files "):
             # Files
-            #   /data/gp_wd/src/deploy_particle1/compustat/fiscal_calendar.py and
-            #   /data/gp_wd/src/particle1/compustat/fiscal_calendar.py differ
+            #   /data/gp_wd/src/deploy_...1/compustat/fiscal_calendar.py and
+            #   /data/gp_wd/src/...1/compustat/fiscal_calendar.py differ
             m = re.match(r"^Files (\S+) and (\S+) differ$", line)
             dbg.dassert(m, "Invalid line='%s'", line)
             # Check.

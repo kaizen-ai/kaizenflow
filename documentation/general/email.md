@@ -23,14 +23,13 @@
 
 # Mailing lists
 
-- `all@particle.one` is the mailing list with everybody at the company
+- `all@` is the mailing list with everybody at the company
 
 - We send notifications for commits and other services (e.g., Jenkins) to
-  `git@particle.one`
-  - TODO(gp): Maybe it should be a more general `dev@particle.one` ?
+  `git@`
 
-- A GitHub user `infraparticleone` is used to check out code for services (e.g.,
-  Jenkins, ReviewBoard)
+- A GitHub user `infra` is used to check out code for services (e.g., Jenkins,
+  ReviewBoard)
 
 # Organizing email flow
 
@@ -182,7 +181,6 @@
     Home:   https://github.com/.../...
     Commit: b0431274fdf619cdb831e1274cd01841fe810b62
         https://github.com/.../.../commit/b0431274fdf619cdb831e1274cd01841fe810b62
-    Author: gad26032 <malanin@particle.one>
     Date:   2019-10-12 (Sat, 12 Oct 2019)
 
     Changed paths:
@@ -206,21 +204,6 @@
 
 - These emails have `comments-noreply@docs.google.com` or `(Google Docs)` in the
   "subject" field
-
-## Jenkins
-
-- We want to distinguish emails about break vs all-is-good
-
-- Emails about breaks look like:
-  ```
-  From:    Jenkins <infra@particle.one>
-  To:    git@particle.one
-  Subject:    Build failed in Jenkins: p1.master.build_clean_env.p1_develop #27
-  ```
-
-### How to filter
-
-- These emails have `infra@particle.one` in the `From:` field
 
 ## TODO emails
 

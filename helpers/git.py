@@ -129,7 +129,7 @@ def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
     # We expect something like "alphamatic/amp".
     m = re.match(r"^\S+/\S+$", repo_name)
     dbg.dassert(m, "repo_name='%s'", repo_name)
-    # origin  git@github.com:.../ORG_Particle.git (fetch)
+    # origin  git@github.com:.../ORG_....git (fetch)
     suffix_to_remove = ".git"
     if repo_name.endswith(suffix_to_remove):
         repo_name = repo_name[: -len(suffix_to_remove)]

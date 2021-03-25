@@ -5,7 +5,7 @@
   ```bash
   > pip install pipreqs
 
-  > pipreqs --ignore notebooks,gallery,old,particle_one,etl3/fetchers,dbn_importer/helpers
+  > pipreqs --ignore notebooks,gallery,old,...,etl3/fetchers,dbn_importer/helpers
 
   > more requirements.txt
   PyWavelets==1.1.1

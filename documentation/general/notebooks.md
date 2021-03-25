@@ -106,7 +106,7 @@
   import matplotlib.pyplot as plt
   import pandas as pd
 
-  # ParticleOne imports.
+  # Local imports.
   import helpers.dbg as dbg
   import helpers.env as env
   import helpers.printing as prnt

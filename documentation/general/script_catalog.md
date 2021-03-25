@@ -89,8 +89,8 @@ Files in the repo:
 ./oil/ST/Task257_Sources_analysis.py
 ./oil/ST/Task257_Sources_analysis.ipynb
 
-Files in the gdrive '/Users/saggese/GoogleDriveParticle':
-'/Users/saggese/GoogleDriveParticle/Tech/Task 257 - ST - Sources Analysis.gdoc'
+Files in the gdrive '/Users/saggese/GoogleDrive':
+'/Users/saggese/GoogleDrive/Tech/Task 257 - ST - Sources Analysis.gdoc'
   https://docs.google.com/open?id=1B70mA0m5UovKmuzAq05XESlKNvToflBR1uqtcYGXhhM
 
 Get all the data relative to issue #13 for a different GitHub repo:
@@ -100,12 +100,12 @@ Get all the data relative to issue #13 for a different GitHub repo:
 **_dev_scripts/grsync.py_**
 ```
 - Rsync a git dir against a pycharm deploy dir
-> grsync.py --src_dir $HOME/src/particle/... --config P1 --action rsync -v DEBUG --preview
+> grsync.py --src_dir $HOME/src/.../... --config ... --action rsync -v DEBUG --preview
 
 - Diff
-> grsync.py --src_dir $HOME/src/particle/... --config P1 --action diff
-> grsync.py --src_dir $HOME/src/particle/... --config P1 --action diff_verb
-> grsync.py --src_dir $HOME/src/particle/.../tr --config P1 --action diff_verb
+> grsync.py --src_dir $HOME/src/.../... --config ... --action diff
+> grsync.py --src_dir $HOME/src/.../... --config ... --action diff_verb
+> grsync.py --src_dir $HOME/src/.../.../tr --config ... --action diff_verb
 ```
 
 **_dev_scripts/jack_**
@@ -215,7 +215,7 @@ Convert a url / path into different formats: jupyter url, github, git path.
 
 > url.py https://github.com/.../.../blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 file_name=
-/Users/saggese/src/particle/.../oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+/Users/saggese/src/.../.../oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 
 github_url=
 https://github.com/.../.../blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb

@@ -95,7 +95,7 @@
       The requested version 0.5.2 has no directory associated with it.
       ```
   - Add the issue to the
-    [BUILD - Breaks](https://app.zenhub.com/workspaces/particle-one-5e4448e6b9975964dfe1582f/issues/particledev/.../1564)
+    [BUILD - Breaks](https://app.zenhub.com/workspaces/...-5e4448e6b9975964dfe1582f/issues/.../.../1564)
     Epic so that we can track it
   - If the failures are not connected to each other, file separate issues for
     each of the potential root cause
@@ -118,7 +118,7 @@
     resort!
 
 - Regularly check issues that belong to the Epic
-  [BUILD - Breaks](https://app.zenhub.com/workspaces/particle-one-5e4448e6b9975964dfe1582f/issues/particledev/.../1564).
+  [BUILD - Breaks](https://app.zenhub.com/workspaces/...-5e4448e6b9975964dfe1582f/issues/.../.../1564).
   - You have to update the break issues if the problem was solved or partially
     solved.
   - Pay special attention to the failures which resulted in disabling tests
