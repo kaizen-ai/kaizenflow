@@ -41,7 +41,7 @@
 - This script takes 5 mins to run
 
 - You need to create an environment for every server you use (e.g., for the AWS
-  server `research.p1`, for your laptop)
+  server `research`, for your laptop)
 - You can reuse the same environment for multiple Git clients
 
 ## Check conda environment

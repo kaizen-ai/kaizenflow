@@ -112,7 +112,7 @@
   ```bash
   > cd htmlcov; python -m http.server 33333
   ```
-  After that you will be able to go `http://research.p1:33333` or
+  After that you will be able to go `http://research:33333` or
   `http://localhost:33333` depending where do you start your server and review
   results.
 - To find an original command was called by `run_test2.py` you can:

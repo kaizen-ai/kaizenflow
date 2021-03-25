@@ -51,9 +51,9 @@
   ```
   and copy that on the server, e.g.,
   ```bash
-  > ssh research.p1 "mkdir -p $DST_DIR"
-  > scp $SRC_FILE research.p1:$DST_FILE
-  > ssh research.p1 "chmod 600 $DST_FILE"
+  > ssh research "mkdir -p $DST_DIR"
+  > scp $SRC_FILE research:$DST_FILE
+  > ssh research "chmod 600 $DST_FILE"
   ``
 
 # Using gspread-pandas

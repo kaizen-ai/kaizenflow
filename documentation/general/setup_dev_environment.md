@@ -75,7 +75,6 @@
 ## Definitions
 
 - We refer to Git repos in the following way:
-  - `.../...` as `//p1`
   - `alphamatic/amp` as `//amp`
 
 ## Connect to the server
@@ -84,15 +83,15 @@
 - Make sure you see the servers:
 
   ```bash
-  > ping research.p1
-  PING research.p1 (172.31.16.23): 56 data bytes
+  > ping research
+  PING research (172.31.16.23): 56 data bytes
   64 bytes from 172.31.16.23: icmp_seq=0 ttl=63 time=19.780 ms
   ...
   ```
 
 - Try to connect to the servers:
   ```bash
-  > ssh research.p1
+  > ssh research
   ```
 - Best course of action is to pass your public key to Infra so that you can
   login without typing in a password

@@ -505,8 +505,8 @@ endif
 fast_self_tests:
 	make print_setup
 	make print_debug_setup
-	make make_print_targets
-	make make_print_makefiles
+	make targets
+	make makefiles
 	make docker_login
 	make docker_repo_images
 	make docker_ps

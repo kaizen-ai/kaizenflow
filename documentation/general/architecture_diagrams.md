@@ -152,14 +152,14 @@
     other systems
   - A system is typically mapped onto a code repository
   - E.g.,
-    - `//p1` is a system providing data and analytics for commodity
+    - `//...` is a system providing data and analytics for commodity
     - `//pre-commit` is a system implementing a code linter
 
 - Level 2:
   - Container = high-level software architecture and how responsibilities are
     split in the system
   - A container corresponds to the first level of directories in a repo
-  - E.g., in `//p1`
+  - E.g., in `//...`
     - `automl`: application for automatic machine learning for commodity
       analysis
     - `edgar`: application to handle EDGAR data

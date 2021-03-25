@@ -36,7 +36,7 @@
 
 # Notification system
 
-- `@p1_GH_bot` notifies the team about breaks via Telegram channel `@ALL`
+- `GH_bot` notifies the team about breaks via Telegram channel `@ALL`
 - A notification contains:
   - Failing tests type: fast/slow/super-slow
   - Link to a failing run
@@ -54,7 +54,7 @@
 - Notify the team
   - Post on the `@ALL` Telegram channel what tests broke, e.g.,
     ```python
-    FAILED knowledge_graph/vendors/p1/test/test_p1_utils.py::TestClean::test_clean
+    FAILED knowledge_graph/vendors/test/test_utils.py::TestClean::test_clean
     FAILED knowledge_graph/vendors/nbsc/test/test_nbsc_utils.py::TestExposeNBSCMetadata::test_expose_nbsc_metadata
     ```
   - Ask if somebody knows what is the problem
@@ -72,7 +72,7 @@
     problem
     - List all the tests with FAILED status in a github run
       ```python
-      FAILED knowledge_graph/vendors/p1/test/test_p1_utils.py::TestClean::test_clean
+      FAILED knowledge_graph/vendors/test/test_p1_utils.py::TestClean::test_clean
       FAILED knowledge_graph/vendors/nbsc/test/test_nbsc_utils.py::TestExposeNBSCMetadata::test_expose_nbsc_metadata
       ```
     - Stack trace or part of it (if it's too large)
@@ -80,7 +80,7 @@
       Traceback (most recent call last):
       File "/.../automl/hypotheses/test/test_rh_generator.py", line 104, in test1
         kg_metadata, _ = p1ut.load_release(version="0.5.2")
-      File "/.../knowledge_graph/vendors/p1/utils.py", line 53, in load_release
+      File "/.../knowledge_graph/vendors/utils.py", line 53, in load_release
         % version,
       File "/.../amp/helpers/dbg.py", line 335, in dassert_dir_exists
         _dfatal(txt, msg, *args)
