@@ -611,7 +611,7 @@ Install the `develop` default environment:
 > create_conda.py \
         --env_name develop \
         --req_file amp/dev_scripts/install/requirements/amp_develop.yaml \
-        --req_file dev_scripts_p1/install/requirements/develop.yaml \
+        --req_file dev_scripts/install/requirements/develop.yaml \
         --delete_env_if_exists
 
 Quick install to test the script:

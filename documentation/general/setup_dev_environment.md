@@ -178,7 +178,7 @@
 - To check out another copy of the codebase (e.g., see possible workflows below)
   do:
   ```bash
-  > more dev_scripts_p1/git_checkout.sh
+  > more dev_scripts/git_checkout.sh
   #!/bin/bash -xe
   DST_DIR="..."
   git clone --recursive git@github.com:.../....git $DST_DIR

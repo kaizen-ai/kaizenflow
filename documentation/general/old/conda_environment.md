@@ -36,7 +36,7 @@
 - This is needed to install all the packages that are required for development:
   ```bash
   > cd $DST_DIR
-  > ./dev_scripts_p1/create_conda.develop.sh
+  > ./dev_scripts/create_conda.develop.sh
   ```
 - This script takes 5 mins to run
 
@@ -61,7 +61,7 @@
   run:
 
   ```bash
-  > source dev_scripts_p1/setenv_....sh
+  > source dev_scripts/setenv_....sh
   ```
 
 - This script:
@@ -78,7 +78,7 @@
 - This is the typical approach
 
 - There are some pre-packaged command lines to create the standard environments,
-  e.g., `./dev_scripts_p1/create_conda.develop.sh`
+  e.g., `./dev_scripts/create_conda.develop.sh`
 
 - The `create_conda.py` help as some useful examples of command lines, see the
   help:

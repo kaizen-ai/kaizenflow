@@ -227,7 +227,7 @@
 # `setenv.sh` design notes
 
 - Each `setenv.sh` (e.g., `//amp/dev_scripts/setenv_amp.sh`,
-  `//p1/dev_scripts_p1/setenv_....sh`)
+  `//p1/dev_scripts/setenv_....sh`)
   - Contains some boiler plate code (calls `helpers.sh`, checks python version)
   - `execute_setenv`
     - Calls `_setenv.py` to generate a bash script to configure
@@ -248,6 +248,6 @@
   > (cd $HOME/src/.../amp; source dev_scripts/setenv_amp.sh)
   > (cd $HOME/src/.../amp; dev_scripts/install/create_conda.py -h)
 
-  > (cd $HOME/src/...; dev_scripts_p1/_setenv_amp.py)
-  > (cd $HOME/src/...; source dev_scripts_p1/setenv_....sh)
+  > (cd $HOME/src/...; dev_scripts/_setenv_amp.py)
+  > (cd $HOME/src/...; source dev_scripts/setenv_....sh)
   ```
