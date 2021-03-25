@@ -15,11 +15,11 @@ else
 endif
 
 # Print all the makefile targets.
-make_print_targets:
+targets:
 	find . -name "*.mk" -o -name "Makefile" | xargs -n 1 perl -ne 'if (/^\S+:$$/) { print $$_ }'
 
 # Print all the makefiles.
-make_print_makefiles:
+makefiles:
 	find . -name "*.mk" -o -name "Makefile" | sort
 
 # List images in the logged in repo.
@@ -65,7 +65,6 @@ else
 DOCKER_COMPOSE_USER_SPACE=devops/compose/docker-compose-user-space-git-subrepo.yml
 endif
 
-# Run bash inside container with activated environment.
 docker_bash:
 	IMAGE=$(IMAGE_DEV) \
 	docker-compose \
@@ -76,7 +75,6 @@ docker_bash:
 		user_space \
 		bash
 
-# Run bash inside an RC image.
 docker_bash.rc:
 	IMAGE=$(IMAGE_RC) \
 	docker-compose \
@@ -86,8 +84,21 @@ docker_bash.rc:
 		-l user=$(USER) \
 		user_space \
 		bash
+	
+docker_bash.prod:
+ifdef IMAGE_PROD
+	IMAGE=$(IMAGE_PROD) \
+	docker-compose \
+		-f $(DOCKER_COMPOSE_USER_SPACE) \
+		run \
+		--rm \
+		-l user=$(USER) \
+		user_space \
+		bash
+else
+	@echo "IMAGE_PROD is not defined"
+endif
 
-# Run the script inside the container with activated environment.
 # No need to overwrite the entrypoint:
 #	--entrypoint $(CMD)
 docker_cmd:
@@ -409,7 +420,7 @@ ifdef IMAGE_PROD
 		.
 	docker image ls $(IMAGE_PROD)
 else
-	@echo "IMAGE_PROD is not defined: nothing to do"
+	@echo "IMAGE_PROD is not defined"
 endif
 
 # Push the "prod" image to the registry.
@@ -418,7 +429,7 @@ ifdef IMAGE_PROD
 	docker push $(IMAGE_PROD)
 	docker push $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA)
 else
-	@echo "IMAGE_PROD is not defined: nothing to do"
+	@echo "IMAGE_PROD is not defined"
 endif
 
 docker_release.prod:
@@ -428,6 +439,11 @@ docker_release.prod:
 	make docker_tag_rc_image.latest
 	make docker_build_image.prod
 	make docker_push_image.prod
+	@echo "==> SUCCESS <=="
+
+docker_release.all:
+	make docker_release.latest
+	make docker_release.prod
 	@echo "==> SUCCESS <=="
 
 # #############################################################################
@@ -445,6 +461,9 @@ git_pull:
 git_clean:
 	git clean -fd
 	git submodule foreach 'git clean -fd'
+	find . | \
+		grep -E "(tmp.joblib.unittest.cache|.pytest_cache|.mypy_cache|.ipynb_checkpoints|__pycache__|\.pyc|\.pyo$$)" | \
+		xargs rm -rf
 
 git_for:
 	$(CMD)

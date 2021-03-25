@@ -45,8 +45,8 @@ def get_client() -> zeep.Client:
 
 def _get_token() -> str:
     """Login to EODData API using credentials in env vars and get a token."""
-    username = si.get_env_var("P1_EODDATA_USERNAME")
-    password = si.get_env_var("P1_EODDATA_PASSWORD")
+    username = si.get_env_var("EODDATA_USERNAME")
+    password = si.get_env_var("EODDATA_PASSWORD")
 
     _LOG.info("Logging into EODData API ...")
 

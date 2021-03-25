@@ -3,7 +3,7 @@
 """
 # Make an API call every 10 seconds to get the history of symbol `MSFT`
 
-> check_realtime_feed.py -u $P1_KIBOT_USERNAME -p $P1_KIBOT_PASSWORD
+> check_realtime_feed.py -u $KIBOT_USERNAME -p $KIBOT_PASSWORD
 """
 
 import logging

@@ -231,7 +231,7 @@ def get_amp_abs_path() -> str:
 def get_submodule_hash(dir_name: str) -> str:
     """
     Report the Git hash that a submodule (e.g., amp) is at from the point of
-    view of a supermodule (e.g., p1).
+    view of a supermodule.
 
     > git ls-tree master | grep <dir_name>
     """
