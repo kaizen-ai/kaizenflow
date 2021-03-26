@@ -15,7 +15,7 @@ import core.finance as cfinan
 import core.signal_processing as csigna
 import helpers.dbg as dbg
 
-from core.dataflow.core import DAG, Node
+from core.dataflow.core import Node
 
 _LOG = logging.getLogger(__name__)
 
@@ -516,7 +516,7 @@ class ColumnTransformer(Transformer, ColModeMixin):
             self._fit_cols = df.columns.tolist() or self._cols
         if self._cols is None:
             dbg.dassert_set_eq(self._fit_cols, df.columns)
-        df = df[self._fit_cols]  
+        df = df[self._fit_cols]
         idx = df.index
         if self._nan_mode == "leave_unchanged":
             pass
