@@ -14,7 +14,6 @@ import pandas as pd
 import core.finance as cfinan
 import core.signal_processing as csigna
 import helpers.dbg as dbg
-
 from core.dataflow.core import Node
 
 _LOG = logging.getLogger(__name__)

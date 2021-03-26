@@ -4,7 +4,6 @@ import logging
 from typing import List
 
 import helpers.dbg as dbg
-
 from core.dataflow.core import DAG
 
 _LOG = logging.getLogger(__name__)
