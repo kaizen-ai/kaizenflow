@@ -29,8 +29,11 @@ from core.dataflow.nodes import (
     FitPredictNode,
     Node,
     ReadDataFromDf,
-    extract_info,
     get_df_info_as_string,
+)
+
+from core.dataflow.visitors import (
+    extract_info
 )
 
 _LOG = logging.getLogger(__name__)
