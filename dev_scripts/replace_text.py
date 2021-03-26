@@ -41,7 +41,7 @@ import sys
 from typing import Dict, List, Tuple
 
 import helpers.dbg as dbg
-import helpers.io_ as hhelpe
+import helpers.io_ as hio
 import helpers.parser as hparse
 import helpers.printing as hprint
 import helpers.system_interaction as hsyste
@@ -80,10 +80,10 @@ def _get_all_files(dirs: List[str], exts: str) -> List[str]:
         _LOG.debug("Processing dir '%s'", d)
         if exts is None:
             for ext in exts:
-                file_names_tmp = hhelpe.find_files(d, "*." + ext)
+                file_names_tmp = hio.find_files(d, "*." + ext)
                 _LOG.debug("ext=%s -> found %s files", ext, len(file_names_tmp))
         else:
-            file_names_tmp = hhelpe.find_files(d, "*")
+            file_names_tmp = hio.find_files(d, "*")
             _LOG.debug("exts=%s -> found %s files", exts, len(file_names_tmp))
             file_names.extend(file_names_tmp)
     # Filter files.
@@ -123,14 +123,14 @@ def _get_files_to_replace(
 
 
 def _look_for(file_name: str, old_string: str) -> Tuple[bool, List[str]]:
-    txt = hhelpe.from_file(file_name, encoding=_ENCODING)
+    txt = hio.from_file(file_name, encoding=_ENCODING)
     txt = txt.split("\n")
     res = []
     found = False
     for i, line in enumerate(txt):
         m = re.search(old_string, line)
         if m:
-            # ./install/create_conda.py:21:import helpers.helper_io as hhelpe
+            # ./install/create_conda.py:21:import helpers.helper_io as hio
             res.append("%s:%s:%s" % (file_name, i + 1, line))
             found = True
     return found, res
@@ -177,7 +177,7 @@ def _replace_with_python(
         cmd = "cp %s %s.bak" % (file_name, file_name)
         hsyste.system(cmd)
     #
-    lines = hhelpe.from_file(file_name, encoding=_ENCODING).split("\n")
+    lines = hio.from_file(file_name, encoding=_ENCODING).split("\n")
     lines_out = []
     for line in lines:
         _LOG.debug("line='%s'", line)
@@ -186,7 +186,7 @@ def _replace_with_python(
             _LOG.debug("    -> line_new='%s'", line_new)
         lines_out.append(line_new)
     lines_out = "\n".join(lines_out)
-    hhelpe.to_file(file_name, lines_out)
+    hio.to_file(file_name, lines_out)
 
 
 def _replace(
@@ -240,7 +240,7 @@ def _custom1(args: argparse.Namespace) -> None:
             txt += txt_tmp
         else:
             _replace(file_names_to_process, old_string, new_string, backup, mode)
-    hhelpe.to_file("./cfile", txt)
+    hio.to_file("./cfile", txt)
     if preview:
         _LOG.warning("Preview only as required. Results saved in ./cfile")
         sys.exit(0)
@@ -357,7 +357,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             )
             #
             if args.preview:
-                hhelpe.to_file("./cfile", txt)
+                hio.to_file("./cfile", txt)
                 _LOG.warning("Preview only as required. Results saved in ./cfile")
                 sys.exit(0)
             _replace(
