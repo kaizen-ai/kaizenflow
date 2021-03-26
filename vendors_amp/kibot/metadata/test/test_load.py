@@ -47,7 +47,7 @@ class TestTickerListLoader(hut.TestCase):
             ],
         )
 
-    @pytest.mark.skip("Disabled waiting for PartTask4139")
+    @pytest.mark.skip("Disabled waiting for PTask4139")
     def test_real_call(self) -> None:
         tickers = vkmloa.TickerListsLoader().get(ticker_list="dow_30_intraday")
 
@@ -68,7 +68,7 @@ class TestTickerListLoader(hut.TestCase):
 
 
 class TestAdjustmentsLoader(hut.TestCase):
-    @pytest.mark.skip("Disabled waiting for PartTask4139")
+    @pytest.mark.skip("Disabled waiting for PTask4139")
     def test_real_call(self) -> None:
         adjustments = vkmloa.AdjustmentsLoader().load(symbol="SPTN")
 

@@ -5,7 +5,7 @@ r"""
 # #############################################################################
 
 > amp/dev_scripts/notebooks/publish_notebook.py \
-    --file nlp/notebooks/PartTask768_event_filtering.ipynb \
+    --file nlp/notebooks/PTask768_event_filtering.ipynb \
     --action open
 
 This command opens a local notebook as HTML into the browser, if possible.
@@ -22,7 +22,7 @@ This command opens a local notebook as HTML into the browser, if possible.
 # #############################################################################
 
 > amp/dev_scripts/notebooks/publish_notebook.py \
-    --file nlp/notebooks/PartTask768_event_filtering.ipynb \
+    --file nlp/notebooks/PTask768_event_filtering.ipynb \
     --action publish
 
 This command publishes a local notebook as HTML on the dev server.
@@ -47,7 +47,7 @@ This command publishes a local notebook as HTML on the dev server.
 # #############################################################################
 
 >  amp/dev_scripts/notebooks/publish_notebook.py \
-    --file nlp/notebooks/PartTask768_event_filtering.ipynb \
+    --file nlp/notebooks/PTask768_event_filtering.ipynb \
     --branch origin/master
     --action open
 
@@ -186,7 +186,7 @@ def _get_file_from_git_branch(git_branch: str, git_path: str) -> str:
     """
     Checkout a file from a git branch and store it in a temporary location.
     :param git_branch: the branch name
-        e.g. origin/PartTask302_download_eurostat_data
+        e.g. origin/PTask302_download_eurostat_data
     :param git_path: the relative path to the file
         e.g. core/notebooks/gallery_signal_processing.ipynb
     :return: the path to the file retrieved

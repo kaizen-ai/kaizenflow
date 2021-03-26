@@ -34,7 +34,7 @@ import helpers.printing as pri
 import helpers.s3 as hs3
 # TODO(go): add 'cme' package
 # import vendors2.cme.reader as cmer
-import vendors2.kibot.PartTask269_liquidity_analysis_utils as lau
+import vendors2.kibot.PTask269_liquidity_analysis_utils as lau
 import vendors2.kibot.utils as kut
 
 # %%

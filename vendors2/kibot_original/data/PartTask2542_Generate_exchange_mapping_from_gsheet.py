@@ -58,7 +58,7 @@ def generate_kibot_to_exchange_mapping() -> pd.DataFrame:
     """
     # Load the spreadsheet with manual mapping.
     spreadsheet = gspread_pandas.spread.Spread(
-        "PartTask1788 - Map Kibot to CME", sheet="exchange_mapping_csv"
+        "PTask1788 - Map Kibot to CME", sheet="exchange_mapping_csv"
     )
     mapping_df = spreadsheet.sheet_to_df()
     # Use default exchange symbol from CME/Kibot metadata or its manual correction.

@@ -548,7 +548,7 @@
     ```
     use:
     ```python
-    # TODO(*): As discussed in PartTask5047 for now we set all timeseries to be alive.
+    # TODO(*): As discussed in PTask5047 for now we set all timeseries to be alive.
     # is_alive = kgutils.annotate_alive(metadata, self.alive_cutoff)
     is_alive = pd.Series(True, index=metadata.index)
     ```
@@ -1735,7 +1735,7 @@ def ...(...):
    e.g.,
    - Screwing up some formatting you care about for some reason, or
    - Suggesting changes that you are worried might introduce bugs you can commit
-     your code and then do a "lint commit" with a message "PartTaskXYZ: Lint"
+     your code and then do a "lint commit" with a message "PTaskXYZ: Lint"
 
 - In this way you have a backup state that you can rollback to, if you want
 

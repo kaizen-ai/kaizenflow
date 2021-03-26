@@ -737,7 +737,7 @@ Open a notebook.
 #############################################################################
 
 > amp/dev_scripts/notebooks/publish_notebook.py \
-    --file nlp/notebooks/PartTask768_event_filtering.ipynb \
+    --file nlp/notebooks/PTask768_event_filtering.ipynb \
     --action open
 
 This command opens a local notebook as HTML into the browser, if possible.
@@ -754,7 +754,7 @@ Publish a notebook.
 #############################################################################
 
 > amp/dev_scripts/notebooks/publish_notebook.py \
-    --file nlp/notebooks/PartTask768_event_filtering.ipynb \
+    --file nlp/notebooks/PTask768_event_filtering.ipynb \
     --action publish
 
 This command publishes a local notebook as HTML on the dev server.
@@ -778,7 +778,7 @@ Open or publish a notebook from a git branch.
 #############################################################################
 
 >  amp/dev_scripts/notebooks/publish_notebook.py \
-    --file nlp/notebooks/PartTask768_event_filtering.ipynb \
+    --file nlp/notebooks/PTask768_event_filtering.ipynb \
     --branch origin/master
     --action open
 
@@ -809,7 +809,7 @@ Run a notebook given a config or a list of configs.
 Use example:
 > run_notebook.py --dst_dir nlp/test_results \
  --notebook nlp/notebooks/NLP_RP_pipeline.ipynb \
- --function "nlp.build_configs.build_PartTask1088_configs()" \
+ --function "nlp.build_configs.build_PTask1088_configs()" \
   --num_threads 2
 ```
 

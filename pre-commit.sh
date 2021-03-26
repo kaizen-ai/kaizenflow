@@ -12,7 +12,7 @@
 #
 # - To work around this problem we mount the entire Git super-project
 #   repository and then we tweak the `WORK_DIR` to change the working directory
-#   to the submodule. See PartTask6350 for more context.
+#   to the submodule. See PTask6350 for more context.
 # - We have filed an issue in pre-commit official repo
 #   (https://github.com/pre-commit/pre-commit/issues/1734), but they won't
 #   going to fix this

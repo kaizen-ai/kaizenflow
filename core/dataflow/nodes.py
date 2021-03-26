@@ -16,7 +16,7 @@ import core.signal_processing as csigna
 import core.statistics as cstati
 import helpers.dbg as dbg
 
-# TODO(*): This is an exception to the rule waiting for PartTask553.
+# TODO(*): This is an exception to the rule waiting for PTask553.
 from core.dataflow.core import DAG, Node
 
 _LOG = logging.getLogger(__name__)

@@ -20,7 +20,7 @@ import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): Remove after PartTask2335.
+# TODO(gp): Remove after PTask2335.
 if True:
     import gluonts
     import gluonts.dataset.artificial as gda

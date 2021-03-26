@@ -42,7 +42,7 @@ def get_branch_name(git_dir: str = ".") -> str:
     """
     Return the name of the Git branch we are in.
 
-    E.g., `master` or `PartTask672_DEV_INFRA_Add_script_to_check_and_merge_PR`
+    E.g., `master` or `PTask672_DEV_INFRA_Add_script_to_check_and_merge_PR`
     """
     dbg.dassert_exists(git_dir)
     cmd = "cd %s && git rev-parse --abbrev-ref HEAD" % git_dir
@@ -150,7 +150,7 @@ def get_repo_symbolic_name(super_module: bool) -> str:
 
 def _get_repo_map() -> Dict[str, str]:
     repo_map = {"alphamatic/amp": "Amp"}
-    # TODO(gp): The proper fix is #PartTask551.
+    # TODO(gp): The proper fix is #PTask551.
     # Get info from the including repo, if possible.
     try:
         import repo_config as repoco

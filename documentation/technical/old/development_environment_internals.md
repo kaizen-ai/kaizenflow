@@ -219,7 +219,7 @@
   ```yaml
   - arviz # Needed by pymc3 for some plotting functionality.
   - mkl-service # pymc3 expects it; not sure why conda doesn't solve for it.
-  - pandas-datareader=0.8.0 # PartTask344.
+  - pandas-datareader=0.8.0 # PTask344.
   ```
 - We use some tags, e.g., `# Not on Mac.`, to do conditional builds, since
   `conda` doesn't support them out of the box
