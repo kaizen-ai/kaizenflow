@@ -4,8 +4,8 @@ from typing import Any, List, Optional, Tuple
 import core.config as cconfi
 import helpers.dbg as dbg
 from core.dataflow.builder import DagBuilder
-from core.dataflow.nodes import extract_info
 from core.dataflow.result_bundle import PredictionResultBundle, ResultBundle
+from core.dataflow.visitors import extract_info
 
 _LOG = logging.getLogger(__name__)
 

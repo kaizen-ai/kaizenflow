@@ -20,18 +20,15 @@ import core.data_adapters as cdataa
 import core.signal_processing as csigna
 import core.statistics as cstati
 import helpers.dbg as dbg
-
-# TODO(*): This is an exception to the rule waiting for PartTask553.
+from core.dataflow.core import DAG, Node
 from core.dataflow.nodes import (
-    DAG,
     ColModeMixin,
     ColumnTransformer,
     FitPredictNode,
-    Node,
     ReadDataFromDf,
-    extract_info,
     get_df_info_as_string,
 )
+from core.dataflow.visitors import extract_info
 
 _LOG = logging.getLogger(__name__)
 
