@@ -5,7 +5,7 @@ services:
     image: ${IMAGE}
     restart: "no"
     volumes:
-      - ../../../:/commodity_research
+      - ../../../:/app
       - ~/.aws:/root/.aws
       - ~/.config/gspread_pandas/:/root/.config/gspread_pandas/
       - ../../../docker_build/fstab:/etc/fstab
@@ -13,7 +13,7 @@ services:
       - J_PORT=${J_PORT}
     ports:
       - "${J_PORT}:${J_PORT}"
-    working_dir: /commodity_research
+    working_dir: /app
     entrypoint: ""
     command: docker_build/run_jupyter_server.sh
     privileged: true

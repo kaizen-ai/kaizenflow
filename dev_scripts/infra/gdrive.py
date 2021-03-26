@@ -37,7 +37,7 @@ Handle backups / export / import of Google Drive directory.
 
 # The Google drives are:
 # - "gp_drive:alphamatic"
-# - "particle_drive:"
+# - "..._drive:"
 # - "alphamatic:"
 
 import argparse

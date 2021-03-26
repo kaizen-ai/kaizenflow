@@ -23,14 +23,13 @@
 
 # Mailing lists
 
-- `all@particle.one` is the mailing list with everybody at the company
+- `all@` is the mailing list with everybody at the company
 
 - We send notifications for commits and other services (e.g., Jenkins) to
-  `git@particle.one`
-  - TODO(gp): Maybe it should be a more general `dev@particle.one` ?
+  `git@`
 
-- A GitHub user `infraparticleone` is used to check out code for services (e.g.,
-  Jenkins, ReviewBoard)
+- A GitHub user `infra` is used to check out code for services (e.g., Jenkins,
+  ReviewBoard)
 
 # Organizing email flow
 
@@ -123,7 +122,7 @@
   ```
   GP Saggese <notifications@github.com>
   to
-      ParticleDev/commodity_research (commodity_research@noreply.github.com),
+      .../... (...@noreply.github.com),
       me (saggese@gmail)
       Your (your_activity@noreply.github.com)
 
@@ -134,7 +133,7 @@
 
   https://github.com/ekalinin/github-markdown-toc
 
-  —
+  â
   You are receiving this because you are subscribed to this thread.
   Reply to this email directly, view it on GitHub, or unsubscribe.
   ```
@@ -142,8 +141,8 @@
 - Another email looks like:
   ```
   To: GP Saggese <notifications@github.com>
-  Suject: [ParticleDev/commodity_research] BUG: jupytext sync doesn't work anymore (#572)
-  To: ParticleDev/commodity_research <commodity_research@noreply.github.com>
+  Suject: [.../...] BUG: jupytext sync doesn't work anymore (#572)
+  To: .../... <...@noreply.github.com>
   Cc:
       Giacinto Paolo Saggese <saggese@gmail.com>,
       Your activity <your_activity@noreply.github.com>
@@ -152,7 +151,7 @@
   [jupytext] Reading research/PartTask218_Large_price_movement_analysis_for_security.py
   [jupytext] Warning: 'research/PartTask218_Large_price_movement_analysis_for_security.py' is not a paired notebook
 
-  —
+  â
   You are receiving this because you are subscribed to this thread.
   Reply to this email directly, view it on GitHub, or unsubscribe.
   ```
@@ -179,10 +178,9 @@
   to git
 
     Branch: refs/heads/master
-    Home:   https://github.com/ParticleDev/commodity_research
+    Home:   https://github.com/.../...
     Commit: b0431274fdf619cdb831e1274cd01841fe810b62
-        https://github.com/ParticleDev/commodity_research/commit/b0431274fdf619cdb831e1274cd01841fe810b62
-    Author: gad26032 <malanin@particle.one>
+        https://github.com/.../.../commit/b0431274fdf619cdb831e1274cd01841fe810b62
     Date:   2019-10-12 (Sat, 12 Oct 2019)
 
     Changed paths:
@@ -206,21 +204,6 @@
 
 - These emails have `comments-noreply@docs.google.com` or `(Google Docs)` in the
   "subject" field
-
-## Jenkins
-
-- We want to distinguish emails about break vs all-is-good
-
-- Emails about breaks look like:
-  ```
-  From:    Jenkins <infra@particle.one>
-  To:    git@particle.one
-  Subject:    Build failed in Jenkins: p1.master.build_clean_env.p1_develop #27
-  ```
-
-### How to filter
-
-- These emails have `infra@particle.one` in the `From:` field
 
 ## TODO emails
 

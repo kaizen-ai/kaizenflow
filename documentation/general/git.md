@@ -89,7 +89,7 @@
 
       ```bash
       > ghi_show.py 274 --only_github
-      > ghi_show.py 274 -r ParticleDev/commodity_research --only_github
+      > ghi_show.py 274 -r .../... --only_github
       # Github:
       #274: PRICE: Download equity data
       https://github.com/alphamatic/lemonade/issues/274
@@ -394,7 +394,7 @@
   > git show --name-only 39a9e335298a3fe604896fa19296d20829801cf2
 
   commit 39a9e335298a3fe604896fa19296d20829801cf2
-  Author: Julia <julia@particle.one>
+  Author: Julia <julia@...>
   Date:   Fri Sep 27 11:43:41 2019
 
       PartTask274 lint
@@ -445,7 +445,7 @@ version, and stage #3 is the version you are merging from.
 3. diff the changes in the branch vs another client at `master`
    ```bash
    > diff_to_vimdiff.py --dir1 $DIR1/amp --dir2 $DIR2/amp --skip_vim
-   Saving log to file '/Users/saggese/src/commodity_research2/amp/dev_scripts/diff_to_vimdiff.py.log'
+   Saving log to file '/Users/saggese/src/...2/amp/dev_scripts/diff_to_vimdiff.py.log'
    10-06_15:22 INFO : _parse_diff_output:36  : Reading '/tmp/tmp.diff_to_vimdiff.txt'
    #       DIFF: README.md
    #       DIFF: core/dataflow.py
@@ -460,7 +460,7 @@ version, and stage #3 is the version you are merging from.
    ```
 4. diff / merge manually the files that are different
    ```bash
-   > diff_to_vimdiff.py --dir1 $DIR1/commodity_research2/amp --dir2 $DIR2/commodity_research3/amp --skip_vim --only_diff_content
+   > diff_to_vimdiff.py --dir1 $DIR1/...2/amp --dir2 $DIR2/...3/amp --skip_vim --only_diff_content
    #       DIFF: README.md
    #       DIFF: core/dataflow.py
    #       DIFF: core/dataflow_core.py

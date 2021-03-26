@@ -84,7 +84,7 @@ In the following we use the abbreviations below:
   - GH = GitHub
   - ZH = ZenHub
   - PR = Pull Request
-  - RP = Responsible Particle
+  - RP = Responsible Party
 
 - Everything we work on comes as a GitHub task
   - We file tasks and then prioritize and distribute the workload
@@ -163,7 +163,7 @@ In the following we use the abbreviations below:
   changes are not worth their own bug, update the bug with a check box: a
   notation like:
   ```
-  - [ ] [#6283](https://github.com/ParticleDev/commodity_research/pull/6283) followup: clean the code
+  - [ ] [#6283](https://github.com/.../.../pull/6283) followup: clean the code
   ```
 
 - We leave Issues in the `Done` state when we need to do some other work after

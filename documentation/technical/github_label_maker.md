@@ -35,7 +35,7 @@
 - Extract the current labels as a backup or for saving
 
   ```bash
-  > python github-label-maker.py -d p1.json -o ParticleDev -r commodity_research -t $GH_TOKEN
+  > python github-label-maker.py -d p1.json -o ... -r ... -t $GH_TOKEN
   > python github-label-maker.py -d amp.json -o alphamatic -r amp -t $GH_TOKEN
   ```
 
@@ -71,7 +71,7 @@
 - Update the labels
 
   ```bash
-  vimdiff dev_scripts/github/labels/backup/labels.ParticleDev.commodity_research.json dev_scripts/github/labels/gh_tech_labels.json
+  vimdiff dev_scripts/github/labels/backup/labels.json dev_scripts/github/labels/gh_tech_labels.json
   ```
 
 - Run the script updating the labels

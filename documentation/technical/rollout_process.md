@@ -82,11 +82,11 @@ You can use our shortcut:
 We've deployed the new service for storing notebooks in HTML format. From now on
 `publish_notebook.py` will work from the Docker container. The new version of
 `publish_notebook.py` works using HTTP protocol and does not require ssh key
-authorization as it was before We‘ve synchronized all documents. So all old docs
-already available on the new service The old links http://research.p1:8077/...
+authorization as it was before We've synchronized all documents. So all old docs
+already available on the new service The old links http://research:8077/...
 won't work from now on, we need to replace them with the new ones
 (http://notebook-keeper.p1/...) If you see any link starts with
-http://research.p1:8077 replace them with http://notebook-keeper.p1 .
+http://research:8077 replace them with http://notebook-keeper.p1 .
 
 ## Reference documentation
 //amp/documentation/general/publish_notebook.md

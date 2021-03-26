@@ -633,7 +633,7 @@ dependencies:
 #-#       jupytext_version: 1.3.3
 #+#       jupytext_version: 1.3.0
 # #   kernelspec:
-# #     display_name: Python [conda env:.conda-p1_develop] *
+# #     display_name: Python [conda env:.conda-develop] *
 # #     language: python
 #"""
 #        self.assertTrue(proc_jup._is_jupytext_version_different(txt))
@@ -649,7 +649,7 @@ dependencies:
 # #       format_version: '1.3'
 # #       jupytext_version: 1.3.3
 # #   kernelspec:
-# #     display_name: Python [conda env:.conda-p1_develop] *
+# #     display_name: Python [conda env:.conda-develop] *
 # #     language: python
 #"""
 #        self.assertFalse(proc_jup._is_jupytext_version_different(txt))

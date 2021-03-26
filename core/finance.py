@@ -367,7 +367,7 @@ def compute_ret_0_from_multiple_prices(
 
 
 # TODO(GPPJ): Add a decorator for handling multi-variate prices as in
-#  https://github.com/ParticleDev/commodity_research/issues/568
+#  https://github.com/.../.../issues/568
 
 
 def compute_prices_from_rets(

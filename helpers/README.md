@@ -1,5 +1,5 @@
 <!--ts-->
-   * [Particle Helpers Distribution Package](#particle-helpers-distribution-package)
+   * [Helpers Distribution Package](#helpers-distribution-package)
       * [General Information](#general-information)
       * [Client Configuration / Installation](#client-configuration--installation)
       * [Server Details](#server-details)
@@ -12,9 +12,9 @@
 
 <!--te-->
 
-# Particle Helpers Distribution Package
+# Helpers Distribution Package
 
-- This document describes how to build, distribute and install the P1 `helpers`
+- This document describes how to build, distribute and install the `helpers`
   package
 
 - Note for dev/data science members: if you are looking for how to install
@@ -49,8 +49,8 @@
    ```ini
    [distutils]
    index-servers =
-   particle
-   [particle]
+   part
+   [part]
    username:<upload_pypi_username>
    password:<upload_pypi_passwd>
    ```
@@ -60,7 +60,7 @@
 3. Edit `setup.py`, changing `version` in accordance in `CHANGELOG`, update
    `install_requires` parameters.
 
-4. Run `python setup.py sdist upload -r particle`
+4. Run `python setup.py sdist upload -r part`
 
 # PyPI server installation
 

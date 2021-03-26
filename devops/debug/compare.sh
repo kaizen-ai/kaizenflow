@@ -2,11 +2,11 @@
 
 if [[ 1 == 1 ]]; then
     # amp vs p1
-    DIR1=$HOME/src/commodity_research1/amp
-    DIR2=$HOME/src/commodity_research1
+    DIR1=$HOME/src/...1/amp
+    DIR2=$HOME/src/...1
 else
     # amp vs dev_tools
-    DIR1=$HOME/src/commodity_research1/amp
+    DIR1=$HOME/src/...1/amp
     DIR2=$HOME/src/dev_tools
 fi;
 

@@ -152,14 +152,14 @@
     other systems
   - A system is typically mapped onto a code repository
   - E.g.,
-    - `//p1` is a system providing data and analytics for commodity
+    - `//...` is a system providing data and analytics for commodity
     - `//pre-commit` is a system implementing a code linter
 
 - Level 2:
   - Container = high-level software architecture and how responsibilities are
     split in the system
   - A container corresponds to the first level of directories in a repo
-  - E.g., in `//p1`
+  - E.g., in `//...`
     - `automl`: application for automatic machine learning for commodity
       analysis
     - `edgar`: application to handle EDGAR data
@@ -170,7 +170,7 @@
   - Component = a group of related functionality encapsulated behind a
     well-defined interface (e.g., collection of classes behind an interface)
   - Components correspond to the second level of directory
-  - E.g., in `//p1/edgar`
+  - E.g., in `//.../edgar`
     - `api`: real-time system storing the data from EDGAR
     - `company_commodity_mapping`: data pipeline to process mapping between
       commodities and companies
@@ -179,7 +179,7 @@
 - Level 4
   - Classes
   - Typically we organize multiple related classes in files
-  - E.g., in `//p1/edgar/form8`
+  - E.g., in `//.../edgar/form8`
     - `analyze_results.py`: classes and functions to analyze results from the
       data pipeline
     - `extract_tables.py`: class `TableExtractor` extracting tables from Form 8
@@ -245,10 +245,8 @@
 #### How to use
 
 1. Make sure `plantuml` is installed on your machine. The easiest way is to use
-   the
-   [docker](https://github.com/ParticleDev/commodity_research/blob/master/documentation_p1/technical/docker.md)
-   container. All the packages typically needed for development are installed in
-   the container.
+   the Docker container. All the packages typically needed for development are
+   installed in the container.
 
 2. How to use:
    ```bash
@@ -369,4 +367,4 @@
   ```
 
   You can find the correspondent `architecture.md` file
-  [here](https://github.com/ParticleDev/commodity_research/blob/master/edgar/forms8/architecture.md).
+  [here](https://github.com/.../.../blob/master/edgar/forms8/architecture.md).

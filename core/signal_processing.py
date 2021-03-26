@@ -1036,7 +1036,7 @@ def process_outlier_df(
     Extend `process_outliers` to dataframes.
 
     TODO(*): Revisit this with a decorator approach:
-    https://github.com/ParticleDev/commodity_research/issues/568
+    https://github.com/.../.../issues/568
     """
     if info is not None:
         dbg.dassert_isinstance(info, dict)

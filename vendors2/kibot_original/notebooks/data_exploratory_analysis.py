@@ -8,9 +8,9 @@
 #       format_version: '1.2'
 #       jupytext_version: 1.2.4
 #   kernelspec:
-#     display_name: Python [conda env:.conda-p1_develop] *
+#     display_name: Python [conda env:.conda-develop] *
 #     language: python
-#     name: conda-env-.conda-p1_develop-py
+#     name: conda-env-.conda-develop-py
 # ---
 
 # %% [markdown]

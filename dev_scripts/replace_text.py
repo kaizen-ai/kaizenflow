@@ -1,31 +1,50 @@
 #!/usr/bin/env python
 
 r"""
-Replace an instance of text in all py, ipynb, and txt files.
+Replace an instance of text in all py, ipynb, and txt files or in filenames.
 
-> replace_text.py --old "import core.finance" --new "import core.finance" --preview
-> replace_text.py --old "alphamatic/kibot/All_Futures" --new "alphamatic/kibot/All_Futures" --preview
+> replace_text.py \
+        --old "import core.finance" \
+        --new "import core.finance" \
+        --preview
+
+> replace_text.py \
+        --old "alphamatic/kibot/All_Futures" \
+        --new "alphamatic/kibot/All_Futures" \
+        --preview
 
 # Custom flow:
 > replace_text.py --custom_flow _custom1
 
-# Replace in scripts
-> replace_text.py --old "exec " --new "execute " --preview --dirs dev_scripts --exts None
+# Replace in scripts:
+> replace_text.py \
+        --old "exec " \
+        --new "execute " \
+        --preview \
+        --dirs dev_scripts \
+        --exts None
 
-# To revert all files but this one
-> gs -s | grep -v dev_scripts/replace_text.py | grep -v "\?" | awk '{print $2}' | xargs git checkout --
+# To revert all files but this one:
+> gs -s | \
+        grep -v dev_scripts/replace_text.py | \
+        grep -v "\?" | \
+        awk '{print $2}' | \
+        xargs git checkout --
 """
 
 import argparse
 import logging
+import os
+import pprint
 import re
 import sys
+from typing import Dict, List, Tuple
 
 import helpers.dbg as dbg
-import helpers.io_ as io_
-import helpers.parser as prsr
-import helpers.printing as pri
-import helpers.system_interaction as si
+import helpers.io_ as hio
+import helpers.parser as hparse
+import helpers.printing as hprint
+import helpers.system_interaction as hsyste
 
 # TODO(gp):
 #  - allow to read a cfile with a subset of files / points to replace
@@ -38,14 +57,14 @@ _LOG = logging.getLogger(__name__)
 _ENCODING = "ISO-8859-1"
 
 
-def _get_extensions(exts):
+def _get_extensions(exts: str) -> List[str]:
     # exts = "py,ipynb,txt"
     exts = exts.split(",")
     _LOG.info("Extensions: %s", exts)
     return exts
 
 
-def _get_file_names(old_string, dirs, exts):
+def _get_all_files(dirs: List[str], exts: str) -> List[str]:
     """
     :param exts: if None, no filtering by extentions
     """
@@ -61,15 +80,32 @@ def _get_file_names(old_string, dirs, exts):
         _LOG.debug("Processing dir '%s'", d)
         if exts is None:
             for ext in exts:
-                file_names_tmp = io_.find_files(d, "*." + ext)
+                file_names_tmp = hio.find_files(d, "*." + ext)
                 _LOG.debug("ext=%s -> found %s files", ext, len(file_names_tmp))
         else:
-            file_names_tmp = io_.find_files(d, "*")
-            _LOG.debug("ext=%s -> found %s files", ext, len(file_names_tmp))
+            file_names_tmp = hio.find_files(d, "*")
+            _LOG.debug("exts=%s -> found %s files", exts, len(file_names_tmp))
             file_names.extend(file_names_tmp)
+    # Filter files.
     file_names = [f for f in file_names if ".ipynb_checkpoints" not in f]
+    file_names = [f for f in file_names if "__pycache__" not in f]
+    file_names = [f for f in file_names if ".mypy_cache" not in f]
+    file_names = [f for f in file_names if ".pytest_cache" not in f]
     file_names = [f for f in file_names if "replace_text.py" not in f]
+    file_names = [f for f in file_names if ".git/" not in f]
+    file_names = [f for f in file_names if os.path.basename(f) != "cfile"]
     _LOG.info("Found %s target files", len(file_names))
+    return file_names
+
+
+# #############################################################################
+# Replace strings inside file.
+# #############################################################################
+
+
+def _get_files_to_replace(
+    file_names: List[str], old_string: str
+) -> Tuple[List[str], str]:
     # Look for files with values.
     res = []
     file_names_to_process = []
@@ -81,20 +117,20 @@ def _get_file_names(old_string, dirs, exts):
             file_names_to_process.append(f)
     #
     txt = "\n".join(res)
-    _LOG.info("Found %s occurrences\n%s", len(res), pri.indent(txt))
+    _LOG.info("Found %s occurrences\n%s", len(res), hprint.indent(txt))
     _LOG.info("Found %s files to process", len(file_names_to_process))
     return file_names_to_process, txt
 
 
-def _look_for(file_name, old_string):
-    txt = io_.from_file(file_name, encoding=_ENCODING)
+def _look_for(file_name: str, old_string: str) -> Tuple[bool, List[str]]:
+    txt = hio.from_file(file_name, encoding=_ENCODING)
     txt = txt.split("\n")
     res = []
     found = False
     for i, line in enumerate(txt):
         m = re.search(old_string, line)
         if m:
-            # ./install/create_conda.py:21:import helpers.helper_io as io_
+            # ./install/create_conda.py:21:import helpers.helper_io as hio
             res.append("%s:%s:%s" % (file_name, i + 1, line))
             found = True
     return found, res
@@ -103,7 +139,9 @@ def _look_for(file_name, old_string):
 # #############################################################################
 
 
-def _replace_with_perl(file_name, old_string, new_string, backup):
+def _replace_with_perl(
+    file_name: str, old_string: str, new_string: str, backup: bool
+) -> None:
     perl_opts = []
     perl_opts.append("-p")
     if backup:
@@ -129,15 +167,17 @@ def _replace_with_perl(file_name, old_string, new_string, backup):
     else:
         perl_opts.append(r"-e '%s unless /^\s*#/'" % regex)
     cmd = "perl %s %s" % (" ".join(perl_opts), file_name)
-    si.system(cmd, suppress_output=False)
+    hsyste.system(cmd, suppress_output=False)
 
 
-def _replace_with_python(file_name, old_string, new_string, backup):
+def _replace_with_python(
+    file_name: str, old_string: str, new_string: str, backup: bool
+):
     if backup:
         cmd = "cp %s %s.bak" % (file_name, file_name)
-        si.system(cmd)
+        hsyste.system(cmd)
     #
-    lines = io_.from_file(file_name, encoding=_ENCODING).split("\n")
+    lines = hio.from_file(file_name, encoding=_ENCODING).split("\n")
     lines_out = []
     for line in lines:
         _LOG.debug("line='%s'", line)
@@ -146,14 +186,20 @@ def _replace_with_python(file_name, old_string, new_string, backup):
             _LOG.debug("    -> line_new='%s'", line_new)
         lines_out.append(line_new)
     lines_out = "\n".join(lines_out)
-    io_.to_file(file_name, lines_out)
+    hio.to_file(file_name, lines_out)
 
 
-def _replace(file_names_to_process, old_string, new_string, backup, mode):
+def _replace(
+    file_names_to_process: List[str],
+    old_string: str,
+    new_string: str,
+    backup: bool,
+    mode: str,
+) -> None:
     _LOG.info(
         "Found %s files:\n%s",
         len(file_names_to_process),
-        pri.indent("\n".join(file_names_to_process)),
+        hprint.indent("\n".join(file_names_to_process)),
     )
     for file_name in file_names_to_process:
         _LOG.info("* Processing %s", file_name)
@@ -168,33 +214,69 @@ def _replace(file_names_to_process, old_string, new_string, backup, mode):
 # #############################################################################
 
 
-def _custom1(args):
+def _custom1(args: argparse.Namespace) -> None:
     to_replace = [
-        # ("import helpers.printing as printing", "import helpers.printing as
+        # ("import helpers.printing as hprint", "import helpers.printing as
         # pri"),
-        # (r"printing\.", "pri."),
+        # (r"printing\.", "hprint."),
         ("import helpers.config", "import core.config")
     ]
-    dirs = "."
+    dirs = ["."]
     exts = ["py", "ipynb"]
     backup = args.backup
     preview = args.preview
     mode = "replace_with_python"
     #
+    file_names = _get_all_files(dirs, exts)
     txt = ""
     for old_string, new_string in to_replace:
-        print(pri.frame("%s -> %s" % (old_string, new_string)))
-        file_names_to_process, txt_tmp = _get_file_names(old_string, dirs, exts)
+        print(hprint.frame("%s -> %s" % (old_string, new_string)))
+        file_names_to_process, txt_tmp = _get_files_to_replace(
+            file_names, old_string
+        )
         dbg.dassert_lte(1, len(file_names_to_process))
         # Replace.
         if preview:
             txt += txt_tmp
         else:
             _replace(file_names_to_process, old_string, new_string, backup, mode)
-    io_.to_file("./cfile", txt)
+    hio.to_file("./cfile", txt)
     if preview:
         _LOG.warning("Preview only as required. Results saved in ./cfile")
         sys.exit(0)
+
+
+# #############################################################################
+# Rename files.
+# #############################################################################
+
+
+def _get_files_to_rename(
+    file_names: List[str], old_string: str, new_string: str
+) -> Tuple[List[str], Dict[str, str]]:
+    # Look for files containing "old_string".
+    file_map: Dict[str, str] = {}
+    file_names_to_process = []
+    for f in file_names:
+        dirname = os.path.dirname(f)
+        basename = os.path.basename(f)
+        found = old_string in basename
+        if found:
+            new_basename = basename.replace(old_string, new_string)
+            _LOG.debug("File='%s', found=%s", f, found)
+            file_names_to_process.append(f)
+            file_map[f] = os.path.join(dirname, new_basename)
+    #
+    _LOG.info("Found %s files to process", len(file_names_to_process))
+    _LOG.info("%s", pprint.pformat(file_map))
+    return file_names_to_process, file_map
+
+
+def _rename(file_names_to_process: List[str], file_map: Dict[str, str]) -> None:
+    for f in file_names_to_process:
+        new_name = file_map[f]
+        cmd = "git mv %s %s" % (f, new_name)
+        hsyste.system(cmd)
 
 
 # #############################################################################
@@ -225,6 +307,12 @@ def _parse() -> argparse.ArgumentParser:
         choices=["replace_with_python", "replace_with_perl"],
     )
     parser.add_argument(
+        "--action",
+        action="store",
+        default="replace",
+        choices=["replace", "rename"],
+    )
+    parser.add_argument(
         "--ext",
         action="store",
         type=str,
@@ -241,11 +329,11 @@ def _parse() -> argparse.ArgumentParser:
         default=None,
         help="Directories to process",
     )
-    prsr.add_verbosity_arg(parser)
+    hparse.add_verbosity_arg(parser)
     return parser
 
 
-def _main(parser):
+def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(args.log_level)
     if args.custom_flow:
@@ -261,16 +349,31 @@ def _main(parser):
         else:
             exts = _get_extensions(args.ext)
         _LOG.info("extensions=%s", exts)
-        file_names_to_process, txt = _get_file_names(args.old, dirs, exts)
-        io_.to_file("./cfile", txt)
-        #
-        if args.preview:
-            _LOG.warning("Preview only as required. Results saved in ./cfile")
-            sys.exit(0)
-        # Replace.
-        _replace(
-            file_names_to_process, args.old, args.new, args.backup, args.mode
-        )
+        file_names = _get_all_files(dirs, exts)
+        if args.action == "replace":
+            # Replace.
+            file_names_to_process, txt = _get_files_to_replace(
+                file_names, args.old
+            )
+            #
+            if args.preview:
+                hio.to_file("./cfile", txt)
+                _LOG.warning("Preview only as required. Results saved in ./cfile")
+                sys.exit(0)
+            _replace(
+                file_names_to_process, args.old, args.new, args.backup, args.mode
+            )
+        elif args.action == "rename":
+            # Rename.
+            file_names_to_process, file_map = _get_files_to_rename(
+                file_names, args.old, args.new
+            )
+            if args.preview:
+                _LOG.warning("Preview only as required.")
+                sys.exit(0)
+            _rename(file_names_to_process, file_map)
+        else:
+            raise ValueError("Invalid action='%s'" % args.action)
 
 
 if __name__ == "__main__":

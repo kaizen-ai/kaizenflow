@@ -148,7 +148,7 @@
 
 ### Morning email
 
-- First thing in the morning, send an email to `all@particle.one` to broadcast
+- First thing in the morning, send an email to `all@...` to broadcast
   what you are planning to work on during that day
 
 - The goal is:

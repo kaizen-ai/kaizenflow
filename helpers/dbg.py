@@ -760,7 +760,7 @@ def get_matching_loggers(module_names: Union[str, Iterable[str]]) -> List:
 
 
 def shutup_chatty_modules(
-    verbosity: int = logging.CRITICAL, verbose=False
+        verbosity: int = logging.CRITICAL, verbose: bool = False
 ) -> None:
     """
     Reduce the verbosity for external modules that are very chatty.

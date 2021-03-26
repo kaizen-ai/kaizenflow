@@ -112,7 +112,7 @@
   ```bash
   > cd htmlcov; python -m http.server 33333
   ```
-  After that you will be able to go `http://research.p1:33333` or
+  After that you will be able to go `http://research:33333` or
   `http://localhost:33333` depending where do you start your server and review
   results.
 - To find an original command was called by `run_test2.py` you can:
@@ -480,7 +480,7 @@
 
 - There are 2 files with the list of tests' tags:
   - `amp/pytest.ini`
-  - `commodity_research/pytest.ini`
+  - `.../pytest.ini`
 
 - In order to update the tags (do it in the both files):
   - In the `markers` section add a name of a new tag

@@ -2,12 +2,12 @@
 
 """
 - Rsync a git dir against a pycharm deploy dir
-> grsync.py --src_dir $HOME/src/particle/commodity_research --config P1 --action rsync -v DEBUG --preview
+> grsync.py --src_dir $HOME/src/.../... --config amp --action rsync -v DEBUG --preview
 
 - Diff
-> grsync.py --src_dir $HOME/src/particle/commodity_research --config P1 --action diff
-> grsync.py --src_dir $HOME/src/particle/commodity_research --config P1 --action diff_verb
-> grsync.py --src_dir $HOME/src/particle/commodity_research/tr --config P1 --action diff_verb
+> grsync.py --src_dir $HOME/src/.../... --config amp --action diff
+> grsync.py --src_dir $HOME/src/.../... --config amp --action diff_verb
+> grsync.py --src_dir $HOME/src/.../.../tr --config amp --action diff_verb
 """
 
 import argparse
@@ -67,8 +67,8 @@ def _get_rsync_cmd(
     # Handle a quirk of rsync where the destination dir needs to have one
     # missing level.
     # > rsync --itemize-changes -avzu --exclude ... \
-    #   /Users/saggese/src/particle/commodity_research/tr
-    #   gp@104.248.187.204:/home/gp/src/commodity_research
+    #   /Users/saggese/src/.../.../tr
+    #   gp@104.248.187.204:/home/gp/src/...
     #   --dry-run
     dbg.dassert_eq(os.path.basename(src_dir), os.path.basename(dst_dir))
     dst_dir = os.path.dirname(dst_dir)
@@ -81,8 +81,8 @@ def _get_rsync_cmd(
 
 
 def _process_rsync_file_list(src_file, dst_file):
-    # rsync --itemize-changes -n -avzu --exclude ... /Users/saggese/src/particle/commodity_research/tr
-    # rsync --itemize-changes -n -avzu --exclude ... gp@104.248.187.204:/home/gp/src/commodity_research/tr
+    # rsync --itemize-changes -n -avzu --exclude ... /Users/saggese/src/.../.../tr
+    # rsync --itemize-changes -n -avzu --exclude ... gp@104.248.187.204:/home/gp/src/.../tr
     # Load.
     txt = io_.from_file(src_file).split("\n")
     _LOG.debug("Read file '%s'", src_file)
@@ -99,7 +99,7 @@ def _process_rsync_file_list(src_file, dst_file):
             continue
         # _LOG.debug("line=%s", line)
         # 0                   1     2          3        4
-        # drwxr-xr-x          1,312 2019/09/05 17:51:42 commodity_research
+        # drwxr-xr-x          1,312 2019/09/05 17:51:42 ...
         data = line.split()
         dbg.dassert_lte(4, len(data), "line=%s", str(data))
         perms, size, date, time = data[:4]
@@ -180,13 +180,13 @@ def _main():
     dbg.init_logger(verbosity=args.log_level)
     #
     src_dir = args.src_dir
-    if args.config == "P1":
+    if args.config == "":
         # TODO(gp): Generalize this.
         remote_user_name = "gp"
         remote_ip = "104.248.187.204"
-        dst_dir = "/home/gp/src/commodity_research"
+        dst_dir = "/home/gp/src"
         if args.src_dir:
-            base_dir = "commodity_research"
+            base_dir = ""
             dbg.dassert_in(base_dir, src_dir)
             dbg.dassert_in(base_dir, dst_dir)
             idx = src_dir.index(base_dir) + len(base_dir)
