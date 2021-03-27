@@ -38,7 +38,7 @@ docker_ps:
 # Report container stats, e.g., CPU, RAM.
 #   ```
 #   > docker_stats
-#   CONTAINER ID  NAME                                  CPU %  MEM USAGE / LIMIT     MEM %  NET I/O         BLOCK I/O        PIDS
+#   CONTAINER ID  NAME                   CPU %  MEM USAGE / LIMIT     MEM %  NET I/O         BLOCK I/O        PIDS
 #   2ece37303ec9  ..._user_space_run_30  0.00%  15.74MiB / 31.07GiB   0.05%  351kB / 6.27kB  34.2MB / 12.3kB  4
 #   ```
 docker_stats:
