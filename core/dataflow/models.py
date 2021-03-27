@@ -617,6 +617,14 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=False)
 
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]):
+        self._model = fit_state["_model"]
+        self._info["fit"] = fit_state["_info['fit']"]
+
     def _fit_predict_helper(
         self, df_in: pd.DataFrame, fit: bool = False
     ) -> Dict[str, pd.DataFrame]:
@@ -663,14 +671,6 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
             self._set_info("predict", info)
         # Return targets and predictions.
         return {"df_out": df_out}
-
-    def get_fit_state(self) -> Dict[str, Any]:
-        fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
-        return fit_state
-
-    def set_fit_state(self, fit_state: Dict[str, Any]):
-        self._model = fit_state["_model"]
-        self._info["fit"] = fit_state["_info['fit']"]
 
     def _handle_nans(
         self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
