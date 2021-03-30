@@ -1,7 +1,8 @@
 import datetime
 import logging
 import os
-from typing import List, Optional, Tuple, Union
+import random
+from typing import Dict, List, Optional, Tuple, Union
 
 try:
     import ib_insync
@@ -33,6 +34,28 @@ def ib_connect(client_id: int = 0, is_notebook: bool = True) -> ib_insync.ib.IB:
     ib_insync.IB.RaiseRequestErrors = True
     _LOG.debug("Connected to IB: client_id=%s", client_id)
     return ib
+
+
+def get_free_client_id(max_attempts: Optional[int]) -> int:
+    """
+    Find free slot to connect to IB gateway.
+    """
+    free_client_id = -1
+    max_attempts = 1 if max_attempts is None else max_attempts
+    for i in random.sample(
+        range(1, max_attempts + 1),
+        max_attempts,
+    ):
+        try:
+            ib_connection = ib_connect(i, is_notebook=False)
+        except TimeoutError:
+            continue
+        free_client_id = i
+        ib_connection.disconnect()
+        break
+    if free_client_id == -1:
+        raise TimeoutError("Couldn't connect to IB")
+    return free_client_id
 
 
 def to_contract_details(ib, contract):
@@ -209,9 +232,69 @@ def duration_str_to_pd_dateoffset(duration_str: str) -> pd.DateOffset:
         ret = pd.DateOffset(days=7)
     elif duration_str == "1 M":
         ret = pd.DateOffset(months=1)
+    elif duration_str == "1 Y":
+        ret = pd.DateOffset(years=1)
     else:
         raise ValueError("Invalid duration_str='%s'" % duration_str)
     return ret
+
+
+def find_date_bounds_by_dateoffset(
+    datetime: pd.Timestamp, offset: pd.DateOffset
+) -> Tuple[pd.Timestamp, pd.Timestamp]:
+    """
+    Find the interval [ts, ts + `offset`) where `datetime` is in.
+
+    :param datetime: timestamp to found bounds for
+    :param offset: the difference between lower and upper bounds
+    :return: pair of lower and upper bounds
+    """
+    ts_iterator = pd.Timestamp(year=1970, month=1, day=1)
+    while to_ET(ts_iterator) <= to_ET(datetime):
+        ts_iterator += offset
+    return (ts_iterator - offset, ts_iterator)
+
+
+def cover_interval_by_static_offset_intervals(
+    start_ts: pd.Timestamp, end_ts: pd.Timestamp, offset: pd.DateOffset
+) -> List[Tuple[pd.Timestamp, pd.Timestamp]]:
+    """
+    Cover one big interval by a few offset-length intervals.
+
+    :param start_ts: start of the big interval
+    :param end_ts: end of the big interval
+    :param offset: difference between small intervals start/end times
+    :return: List of start/end pairs for each small interval
+    """
+    intervals = []
+    start_interval_ts, end_interval_ts = find_date_bounds_by_dateoffset(
+        start_ts, offset
+    )
+    while to_ET(start_interval_ts) < to_ET(end_ts):
+        intervals.append((start_interval_ts, end_interval_ts))
+        start_interval_ts = end_interval_ts
+        end_interval_ts += offset
+    _LOG.debug(
+        "start_ts='%s' end_ts='%s' is covered by %s ... %s",
+        start_ts,
+        end_ts,
+        intervals[0],
+        intervals[-1],
+    )
+    return intervals
+
+
+def split_data_by_intervals(
+    data: pd.DataFrame, offset: pd.DateOffset
+) -> Dict[Tuple[pd.Timestamp, pd.Timestamp], pd.DataFrame]:
+    min_ts = min(data.index)
+    max_ts = max(data.index) + pd.DateOffset(seconds=1)
+    intervals = cover_interval_by_static_offset_intervals(min_ts, max_ts, offset)
+    dfs_by_interval = [
+        (interval, truncate(data, interval[0], interval[1]))
+        for interval in intervals
+    ]
+    return dfs_by_interval
 
 
 def process_start_end_ts(
@@ -226,11 +309,11 @@ def process_start_end_ts(
 
 
 def truncate(
-    df: pd.DataFrame, start_ts: datetime, end_ts: datetime
+    df: pd.DataFrame, start_ts: pd.Timestamp, end_ts: pd.Timestamp
 ) -> pd.DataFrame:
     _LOG.debug("Before truncation: df=%s", get_df_signature(df))
     _LOG.debug("df.head=\n%s\ndf.tail=\n%s", df.head(3), df.tail(3))
-    dbg.dassert_isinstance(df.index[0], pd.Timestamp)
+    dbg.dassert_in(type(df.index[0]), [datetime.date, pd.Timestamp])
     dbg.dassert_monotonic_index(df)
     start_ts = pd.Timestamp(start_ts)
     end_ts = pd.Timestamp(end_ts)
@@ -267,16 +350,21 @@ def deallocate_ib(ib: ib_insync.ib.IB, deallocate_ib: bool) -> None:
         ib.disconnect()
 
 
-def select_assets(ib, target: str, frequency: str, symbol: str):
+def select_assets(
+    ib, target: str, frequency: str, symbol: str, exchange: Optional[str] = None
+):
     #
     if target == "futures":
-        contract = ib_insync.Future(symbol, "202109", "GLOBEX", currency="USD")
+        exchange = "GLOBEX" if exchange is None else exchange
+        contract = ib_insync.Future(symbol, "202109", exchange, currency="USD")
         what_to_show = "TRADES"
     if target == "continuous_futures":
-        contract = ib_insync.ContFuture(symbol, "GLOBEX", currency="USD")
+        exchange = "GLOBEX" if exchange is None else exchange
+        contract = ib_insync.ContFuture(symbol, exchange, currency="USD")
         what_to_show = "TRADES"
     elif target == "stocks":
-        contract = ib_insync.Stock(symbol, "SMART", currency="USD")
+        exchange = "SMART" if exchange is None else exchange
+        contract = ib_insync.Stock(symbol, exchange, currency="USD")
         what_to_show = "TRADES"
     elif target == "forex":
         contract = ib_insync.Forex(symbol)
@@ -307,13 +395,27 @@ def get_tasks(
     start_ts: pd.Timestamp,
     end_ts: pd.Timestamp,
     use_rth: bool,
+    exchange: Optional[str] = None,
 ) -> List[
     Tuple[ib_insync.Contract, pd.Timestamp, pd.Timestamp, str, str, str, bool]
 ]:
+    """
+    Get list of parameters to run with IB loop to get the data.
+
+    :param ib: active IB connection
+    :param target: asset class like `future`, `continuous_future`, `forex`, ...
+    :param frequency: tick frequency, e.g. `intraday`, `hour`, `day`
+    :param symbols: list of symbols
+    :param start_ts: time of the first data row (the oldest avaialble if None)
+    :param end_ts: time of the last data row (now if None)
+    :param use_rth: if False returns full day, if True - only working hours
+    :param exchange: exchange for a symbol
+    :return: contract, start time, end time, duration, bar size, type of data, use_rth
+    """
     tasks = []
     for symbol in symbols:
         contract, duration_str, bar_size_setting, what_to_show = select_assets(
-            ib, target, frequency, symbol
+            ib, target, frequency, symbol, exchange
         )
         if start_ts is None:
             start_ts = ib.reqHeadTimeStamp(
