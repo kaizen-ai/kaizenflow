@@ -1,9 +1,10 @@
 """
 Produce transformer objects.
 
-Import as: import instrument_master.app.services.transformer_factory as vastra
+Import as: import vendors_amp.app.services.transformer_factory as vastra
 """
 import instrument_master.common.data.transform.s3_to_sql_transformer as vcdts3
+import instrument_master.ib.data.transform.s3_to_sql_transformer as vidts3
 import instrument_master.kibot.data.transform.s3_to_sql_transformer as vkdts3
 
 
@@ -22,6 +23,8 @@ class TransformerFactory:
         transformer: vcdts3.AbstractS3ToSqlTransformer
         if provider == "kibot":
             transformer = vkdts3.S3ToSqlTransformer()
+        elif provider == "ib":
+            transformer = vidts3.S3ToSqlIBTransformer()
         else:
             raise ValueError(
                 "S3 to SQL transformer for %s is not implemented" % provider
