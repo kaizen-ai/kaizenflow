@@ -16,6 +16,7 @@ from tqdm import tqdm
 # import core.explore as cexplo
 import helpers.dbg as dbg
 import helpers.io_ as hio
+import helpers.s3 as hs3
 import vendors_amp.ib.data.extract.gateway.utils as videgu
 
 _LOG = logging.getLogger(__name__)
@@ -112,6 +113,96 @@ def ib_loop_generator(
             )
             return
         i += 1
+
+
+def save_historical_data_by_intervals_IB_loop(
+    ib: int,
+    contract: ib_insync.Contract,
+    start_ts: pd.Timestamp,
+    end_ts: pd.Timestamp,
+    duration_str: str,
+    bar_size_setting: str,
+    what_to_show: str,
+    use_rth: bool,
+    file_name: str,
+    incremental: bool,
+    use_progress_bar: bool = True,
+    num_retry: Optional[Any] = None,
+) -> List[Tuple[pd.Timestamp, pd.Timestamp]]:
+    """
+    Save historical data into multiple files into `contract.symbol` directory
+    near the `file_name`.
+
+    :param incremental: if the `file_name` already exists, resume downloading
+        from the last date
+    """
+    if incremental and os.path.exists(file_name):
+        df = load_historical_data(file_name)
+        end_ts = df.index.min()
+        _LOG.warning(
+            "Found file '%s': starting from end_ts=%s because incremental mode",
+            file_name,
+            end_ts,
+        )
+    #
+    start_ts, end_ts = videgu.process_start_end_ts(start_ts, end_ts)
+    #
+    ib, deallocate_ib = videgu.allocate_ib(ib)
+    _LOG.debug("ib=%s", ib)
+    generator = ib_loop_generator(
+        ib,
+        contract,
+        start_ts,
+        end_ts,
+        duration_str,
+        bar_size_setting,
+        what_to_show,
+        use_rth,
+        use_progress_bar=use_progress_bar,
+        num_retry=num_retry,
+    )
+    saved_intervals = set()
+    for i, df_tmp, _ in generator:
+        # Split data by static intervals.
+        for interval, df_tmp_part in videgu.split_data_by_intervals(
+            df_tmp, videgu.duration_str_to_pd_dateoffset(duration_str)
+        ):
+            # Get file name for each part.
+            file_name_for_part = historical_data_to_filename(
+                contract=contract,
+                start_ts=interval[0],
+                end_ts=interval[1],
+                duration_str=duration_str,
+                bar_size_setting=bar_size_setting,
+                what_to_show=what_to_show,
+                use_rth=use_rth,
+                dst_dir=os.path.join(
+                    os.path.split(file_name)[0], contract.symbol
+                ),
+            )
+            # There can be already data from previous loop iteration.
+            if hs3.exists(file_name_for_part):
+                df_to_write = pd.concat(
+                    [df_tmp_part, load_historical_data(file_name_for_part)]
+                )
+            else:
+                # First iteration ever.
+                df_to_write = df_tmp_part
+            # Force to have index `pd.Timestamp` format.
+            df_to_write.index = df_to_write.index.map(videgu.to_ET)
+            if incremental:
+                # It is possible that same data was already loaded.
+                df_to_write = df_to_write[
+                    ~df_to_write.index.duplicated(keep="last")
+                ]
+                df_to_write.sort_index(inplace=True)
+            dbg.dassert_monotonic_index(df_to_write)
+            # We appended data at step before, so re-write the file.
+            df_to_write.to_csv(file_name_for_part, mode="w", header=True)
+            _LOG.info("Saved partial data in '%s'", file_name_for_part)
+            saved_intervals.add(interval)
+    videgu.deallocate_ib(ib, deallocate_ib)
+    return saved_intervals
 
 
 def get_historical_data_with_IB_loop(
