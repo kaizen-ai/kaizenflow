@@ -105,7 +105,7 @@
     https://github.com/alphamatic/amp/pull/31
 
   Commit Summary
-  PartTask403: Add docstrings and type annotations
+  PTask403: Add docstrings and type annotations
   Make comments self-consistent
   Add more docstrings, annotations
   ```
@@ -133,7 +133,6 @@
 
   https://github.com/ekalinin/github-markdown-toc
 
-  â
   You are receiving this because you are subscribed to this thread.
   Reply to this email directly, view it on GitHub, or unsubscribe.
   ```
@@ -147,11 +146,10 @@
       Giacinto Paolo Saggese <saggese@gmail.com>,
       Your activity <your_activity@noreply.github.com>
 
-  > jupytext --sync --to py:percent research/PartTask218_Large_price_movement_analysis_for_security.py
-  [jupytext] Reading research/PartTask218_Large_price_movement_analysis_for_security.py
-  [jupytext] Warning: 'research/PartTask218_Large_price_movement_analysis_for_security.py' is not a paired notebook
+  > jupytext --sync --to py:percent research/PTask218_Large_price_movement_analysis_for_security.py
+  [jupytext] Reading research/PTask218_Large_price_movement_analysis_for_security.py
+  [jupytext] Warning: 'research/PTask218_Large_price_movement_analysis_for_security.py' is not a paired notebook
 
-  â
   You are receiving this because you are subscribed to this thread.
   Reply to this email directly, view it on GitHub, or unsubscribe.
   ```
@@ -189,7 +187,7 @@
 
     Log Message:
     -----------
-    PartTask302 added reader in DE
+    PTask302 added reader in DE
   ```
 
 ### How to filter

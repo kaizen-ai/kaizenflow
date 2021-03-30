@@ -67,12 +67,12 @@
 #        #
 #        self.check_string(hut.convert_df_to_string(df, index=True))
 #
-#    @pytest.mark.skip(reason="PartTask2117")
+#    @pytest.mark.skip(reason="PTask2117")
 #    def test_read_metadata1(self) -> None:
 #        df = kut.read_1min_contract_metadata()
 #        self.check_string(hut.convert_df_to_string(df))
 #
-#    @pytest.mark.skip(reason="PartTask2117")
+#    @pytest.mark.skip(reason="PTask2117")
 #    def test_read_metadata2(self) -> None:
 #        df = kut.read_daily_contract_metadata()
 #        self.check_string(hut.convert_df_to_string(df))

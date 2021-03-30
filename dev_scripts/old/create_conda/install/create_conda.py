@@ -248,11 +248,11 @@ def _create_conda_env(args: Any, conda_env_name: str) -> None:
 
 def _run_pip_install(args: Any, conda_env_name: str) -> None:
     if args.test_install:
-        # To work around the break of PartTask1124.
+        # To work around the break of PTask1124.
         pass
     else:
         if False:
-            # PartTask1005: Moved to pip and pinned for gluonts.
+            # PTask1005: Moved to pip and pinned for gluonts.
             cmd = [
                 "conda activate %s" % conda_env_name,
                 'pip install --no-deps "mxnet>=1.6.0"',
