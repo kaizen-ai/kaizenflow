@@ -7,7 +7,7 @@ except ModuleNotFoundError:
 import pandas as pd
 import pytest
 
-import vendors_amp.ib.extract.test.utils as vietut
+import vendors_amp.ib.data.extract.gateway.test.utils as vietut
 
 _LOG = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 import logging
 import os
 
-import vendors_amp.ib.extract.metadata as viemet
+import vendors_amp.ib.data.extract.gateway.metadata as viemet
 
 try:
     import ib_insync
@@ -11,7 +11,7 @@ except ModuleNotFoundError:
 
 import helpers.dbg as dbg
 import helpers.unit_test as hut
-import vendors_amp.ib.extract.utils as vieuti
+import vendors_amp.ib.data.extract.gateway.utils as vieuti
 
 _LOG = logging.getLogger(__name__)
 

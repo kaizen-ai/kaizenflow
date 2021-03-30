@@ -14,10 +14,10 @@ import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.parser as hparse
 import helpers.timer as htimer
-import vendors_amp.ib.extract.download_data_ib_loop as viedow
-import vendors_amp.ib.extract.save_historical_data_with_IB_loop as viesav
-import vendors_amp.ib.extract.unrolling_download_data_ib_loop as vieunr
-import vendors_amp.ib.extract.utils as vieuti
+import vendors_amp.ib.data.extract.gateway.download_data_ib_loop as viedow
+import vendors_amp.ib.data.extract.gateway.save_historical_data_with_IB_loop as viesav
+import vendors_amp.ib.data.extract.gateway.unrolling_download_data_ib_loop as vieunr
+import vendors_amp.ib.data.extract.gateway.utils as vieuti
 
 _LOG = logging.getLogger(__name__)
 

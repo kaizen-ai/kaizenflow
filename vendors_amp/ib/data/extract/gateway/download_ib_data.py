@@ -7,8 +7,8 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.parser as hparse
-import vendors_amp.ib.extract.download_data_ib_loop as viedow
-import vendors_amp.ib.extract.utils as vieuti
+import vendors_amp.ib.data.extract.gateway.download_data_ib_loop as viedow
+import vendors_amp.ib.data.extract.gateway.utils as vieuti
 
 # from tqdm.notebook import tqdm
 

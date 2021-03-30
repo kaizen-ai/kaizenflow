@@ -10,7 +10,7 @@ ib_extract.docker_run.local:
 	API_PORT=$(IB_CONNECT_API_PORT) \
 	VNC_PORT=$(IB_CONNECT_VNC_PORT) \
 	docker-compose \
-		-f vendors_amp/ib/extract/compose/docker-compose.local.yml \
+		-f vendors_amp/ib/data/extract/gateway/compose/docker-compose.local.yml \
     run --rm \
 		-l user=$(USER) \
 		-l app="ib_extract" \
@@ -24,7 +24,7 @@ ib_extract.docker_up.local:
 	API_PORT=$(IB_CONNECT_API_PORT) \
 	VNC_PORT=$(IB_CONNECT_VNC_PORT) \
 	docker-compose \
-	  -f vendors_amp/ib/extract/compose/docker-compose.local.yml \
+	  -f vendors_amp/ib/data/extract/gateway/compose/docker-compose.local.yml \
 		up \
 		-d
 
@@ -34,5 +34,5 @@ ib_extract.docker_down.local:
 	API_PORT=$(IB_CONNECT_API_PORT) \
 	VNC_PORT=$(IB_CONNECT_VNC_PORT) \
 	docker-compose \
-		-f vendors_amp/ib/extract/compose/docker-compose.local.yml \
+		-f vendors_amp/ib/data/extract/gateway/compose/docker-compose.local.yml \
 		down

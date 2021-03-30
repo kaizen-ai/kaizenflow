@@ -14,7 +14,7 @@ ib_extract.docker_build.rc_image:
 		--no-cache \
 		-t $(IB_EXTRACT_RC_IMAGE) \
 		-t $(IB_EXTRACT_RC_IMAGE_SHA) \
-		--file vendors_amp/ib/extract/dev.Dockerfile .
+		--file vendors_amp/ib/data/extract/gateway/dev.Dockerfile .
 
 # Push release candidate images.
 ib_extract.docker_push.rc_image:
@@ -35,7 +35,7 @@ ib_extract.docker_build.prod_image:
 		--progress=plain \
 		--no-cache \
 		-t $(IB_EXTRACT_PROD_IMAGE) \
-		--file vendors_amp/ib/extract/prod.Dockerfile .
+		--file vendors_amp/ib/data/extract/gateway/prod.Dockerfile .
 
 # Push prod images.
 ib_extract.docker_push.prod_image:

@@ -16,8 +16,8 @@ from tqdm import tqdm
 import helpers.dbg as dbg
 import helpers.list as hlist
 import helpers.printing as hprint
-import vendors_amp.ib.extract.download_data_ib_loop as viedow
-import vendors_amp.ib.extract.utils as vieuti
+import vendors_amp.ib.data.extract.gateway.download_data_ib_loop as viedow
+import vendors_amp.ib.data.extract.gateway.utils as vieuti
 
 _LOG = logging.getLogger(__name__)
 

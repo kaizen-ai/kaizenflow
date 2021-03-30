@@ -22,7 +22,7 @@ print(ib_insync.__all__)
 import helpers.dbg as dbg
 import helpers.printing as pri
 import core.explore as exp
-import vendors_amp.ib.extract.utils as ibutils
+import vendors_amp.ib.data.extract.gateway.utils as ibutils
 
 # %%
 ib = ibutils.ib_connect(client_id=33, is_notebook=True)
@@ -73,7 +73,7 @@ create_contracts(ib, contract, symbols)
 contract2.symbol = "E"
 
 # %%
-import vendors_amp.ib.extract.metadata as ibmetadata
+import vendors_amp.ib.data.extract.gateway.metadata as ibmetadata
 
 file_name = "./metadata.csv"
 ibmeta = ibmetadata.IbMetadata()

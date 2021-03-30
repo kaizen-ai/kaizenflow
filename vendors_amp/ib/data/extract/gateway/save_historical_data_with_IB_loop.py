@@ -11,8 +11,8 @@ import pandas as pd
 # import core.explore as cexplo
 import helpers.dbg as dbg
 import helpers.io_ as hio
-import vendors_amp.ib.extract.download_data_ib_loop as viedow
-import vendors_amp.ib.extract.utils as vieuti
+import vendors_amp.ib.data.extract.gateway.download_data_ib_loop as viedow
+import vendors_amp.ib.data.extract.gateway.utils as vieuti
 
 # from tqdm.notebook import tqdm
 

@@ -34,7 +34,7 @@ import os
 import core.explore as exp
 import numpy as np
 
-import vendors_amp.ib.extract.utils as ibutils
+import vendors_amp.ib.data.extract.gateway.utils as ibutils
 
 import datetime
 import matplotlib.pyplot as plt

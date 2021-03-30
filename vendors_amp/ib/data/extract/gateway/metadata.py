@@ -6,7 +6,7 @@ import ib_insync
 import pandas as pd
 
 import helpers.io_ as hio
-import vendors_amp.ib.extract.utils as vieuti
+import vendors_amp.ib.data.extract.gateway.utils as vieuti
 
 _LOG = logging.getLogger(__name__)
 
