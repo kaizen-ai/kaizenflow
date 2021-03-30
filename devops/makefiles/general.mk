@@ -111,6 +111,16 @@ docker_cmd:
 		user_space \
 		'$(CMD)'
 
+docker_cmd.rc:
+	IMAGE=$(IMAGE_RC) \
+	docker-compose \
+		-f $(DOCKER_COMPOSE_USER_SPACE) \
+		run \
+		--rm \
+		-l user=$(USER) \
+		user_space \
+		'$(CMD)'
+
 # Run jupyter notebook server.
 # E.g., run on port 10000 using a specific image:
 # > make docker_jupyter J_PORT=10000 IMAGE="083233266530.dkr.ecr.us-east-2.amazonaws.com/amp_env:rc"
@@ -511,9 +521,8 @@ fast_self_tests:
 	make docker_repo_images
 	make docker_ps
 	make docker_pull
-	make docker_cmd CMD="echo" IMAGE=$(IMAGE_RC)
 	make docker_jupyter_test
-	make docker_cmd CMD="pytest --collect-only" IMAGE=$(IMAGE_RC)
+	make docker_cmd.rc CMD="pytest --collect-only"
 	@echo "==> SUCCESS <=="
 
 slow_self_tests:
