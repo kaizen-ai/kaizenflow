@@ -18,4 +18,7 @@ umask 000
 
 ./vendors_amp/devops/docker_scripts/init_im_db.py --db $POSTGRES_DB
 
+# Check that IB is ready.
+./vendors_amp/devops/docker_scripts/sanity_check_ib.py
+
 eval "$@"

@@ -3,7 +3,7 @@ version: '3'
 services:
   app:
     image: ${IMAGE}
-    entrypoint: /app/vendors_amp/devops/docker_build/entrypoints/entrypoint_deploy_postgres.sh
+    entrypoint: /app/vendors_amp/devops/docker_build/entrypoints/entrypoint_deploy.sh
     depends_on:
       - im_postgres_test
     env_file:

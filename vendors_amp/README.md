@@ -2,6 +2,7 @@
    * [Kibot timing](#kibot-timing)
    * [Build image](#build-image)
    * [Run kibot app](#run-kibot-app)
+      * [Prerequisites](#prerequisites)
       * [Run locally for development](#run-locally-for-development)
       * [Stop remaining PostgreSQL containers](#stop-remaining-postgresql-containers)
    * [Development flow using stages](#development-flow-using-stages)
@@ -93,6 +94,11 @@ IM_REPO_BASE_PATH=083233266530.dkr.ecr.us-east-2.amazonaws.com/im
 IM_IMAGE_DEV=083233266530.dkr.ecr.us-east-2.amazonaws.com/im:latest
 IM_IMAGE_RC=083233266530.dkr.ecr.us-east-2.amazonaws.com/im:rc
 ```
+
+## Prerequisites
+
+- IB TWS or Gateway app [should be up](./ib/connect/README.md) on `research.p1`
+  with API port 4012.
 
 ## Run locally for development
 
