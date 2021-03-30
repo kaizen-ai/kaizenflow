@@ -98,7 +98,16 @@ IM_IMAGE_RC=083233266530.dkr.ecr.us-east-2.amazonaws.com/im:rc
 ## Prerequisites
 
 - IB TWS or Gateway app [should be up](./ib/connect/README.md) on `research.p1`
-  with API port 4012.
+  with API port 4012. For example:
+
+```bash
+> IB_CONNECT_USER=gpsagg314 \
+  IB_CONNECT_PASSWORD=<password> \
+  IB_CONNECT_VNC_PASSWORD=12345 \
+  IB_CONNECT_API_PORT=4012 \
+  IB_CONNECT_VNC_PORT=5912 \
+  make ib_connect.docker_up.prod
+```
 
 ## Run locally for development
 
