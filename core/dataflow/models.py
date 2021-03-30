@@ -20,18 +20,15 @@ import core.data_adapters as cdataa
 import core.signal_processing as csigna
 import core.statistics as cstati
 import helpers.dbg as dbg
-
-# TODO(*): This is an exception to the rule waiting for PTask553.
+from core.dataflow.core import DAG, Node
 from core.dataflow.nodes import (
-    DAG,
     ColModeMixin,
     ColumnTransformer,
     FitPredictNode,
-    Node,
     ReadDataFromDf,
-    extract_info,
     get_df_info_as_string,
 )
+from core.dataflow.visitors import extract_info
 
 _LOG = logging.getLogger(__name__)
 
@@ -407,6 +404,14 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
         self._set_info("predict", info)
         return {"df_out": df_out}
 
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]):
+        self._model = fit_state["_model"]
+        self._info["fit"] = fit_state["_info['fit']"]
+
     @staticmethod
     def _validate_input_df(df: pd.DataFrame) -> None:
         """
@@ -501,6 +506,14 @@ class UnsupervisedSkLearnModel(
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=False)
+
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]):
+        self._model = fit_state["_model"]
+        self._info["fit"] = fit_state["_info['fit']"]
 
     def _fit_predict_helper(
         self, df_in: pd.DataFrame, fit: bool = False
@@ -603,6 +616,14 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=False)
+
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]):
+        self._model = fit_state["_model"]
+        self._info["fit"] = fit_state["_info['fit']"]
 
     def _fit_predict_helper(
         self, df_in: pd.DataFrame, fit: bool = False
@@ -711,6 +732,14 @@ class SkLearnInverseTransformer(
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=False)
+
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]):
+        self._model = fit_state["_model"]
+        self._info["fit"] = fit_state["_info['fit']"]
 
     def _fit_predict_helper(
         self, df_in: pd.DataFrame, fit: bool = False
