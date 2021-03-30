@@ -1,0 +1,9 @@
+version: '3'
+services:
+  extractor:
+    image: ${IMAGE}
+    entrypoint: "vendors_amp/ib/data/extract/gateway/entrypoint.sh"
+    environment:
+      - IB_GW_CONNECTION_PORT=${API_PORT}
+    env_file:
+      - ../.env/prod.env
