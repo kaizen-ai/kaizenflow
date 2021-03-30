@@ -2,6 +2,8 @@
 r"""
 Extract date from IB Gateway to S3.
 
+Note, that IB Gateway app should be up.
+
 Usage examples:
 - Download NQ data to S3:
   > download_ib_data.py \
