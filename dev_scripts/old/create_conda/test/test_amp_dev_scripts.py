@@ -129,7 +129,7 @@ channels:
   - quantopian
 dependencies:
   - pandas
-  - pandas-datareader=0.8.0     # PartTask344.
+  - pandas-datareader=0.8.0     # PTask344.
   - pip
   - pip:
     #- ta                   # Technical analysis package.
@@ -153,7 +153,7 @@ channels:
   - quantopian
 dependencies:
   - pandas
-  - pandas-datareader=0.8.0     # PartTask344.
+  - pandas-datareader=0.8.0     # PTask344.
   - pip:
     #- ta                   # Technical analysis package.
     - trading-calendars """
@@ -274,7 +274,7 @@ dependencies:
 #        """
 #        return txt
 #
-#    @pytest.mark.skip(reason="Disable because of PartTask3409")
+#    @pytest.mark.skip(reason="Disable because of PTask3409")
 #    @pytest.mark.skipif(
 #        'si.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
 #    )
@@ -288,7 +288,7 @@ dependencies:
 #        # Check.
 #        self.check_string(output, purify_text=True)
 #
-#    @pytest.mark.skip(reason="Disable because of PartTask3409")
+#    @pytest.mark.skip(reason="Disable because of PTask3409")
 #    @pytest.mark.skipif(
 #        'si.get_server_name() == "docker-instance"', reason="Issue #1522, #1831"
 #    )
@@ -600,7 +600,7 @@ dependencies:
 #@pytest.mark.amp
 #class Test_process_jupytext(ut.TestCase):
 #    @pytest.mark.skip(
-#        "Latest version of jupytext fixed this problem (PartTask1240)"
+#        "Latest version of jupytext fixed this problem (PTask1240)"
 #    )
 #    def test1_end_to_end(self) -> None:
 #        file_name = "test_notebook.py"

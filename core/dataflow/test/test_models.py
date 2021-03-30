@@ -900,14 +900,14 @@ class TestVolatilityModulator(hut.TestCase):
 if True:
 
     class TestContinuousDeepArModel(hut.TestCase):
-        @pytest.mark.skip("Disabled because of PartTask2440")
+        @pytest.mark.skip("Disabled because of PTask2440")
         def test_fit_dag1(self) -> None:
             dag = self._get_dag()
             #
             output_df = dag.run_leq_node("deepar", "fit")["df_out"]
             self.check_string(output_df.to_string())
 
-        @pytest.mark.skip("Disabled because of PartTask2440")
+        @pytest.mark.skip("Disabled because of PTask2440")
         def test_predict_dag1(self) -> None:
             dag = self._get_dag()
             #
@@ -945,7 +945,7 @@ if True:
             return dag
 
     class TestDeepARGlobalModel(hut.TestCase):
-        @pytest.mark.skip("Disabled because of PartTask2440")
+        @pytest.mark.skip("Disabled because of PTask2440")
         def test_fit1(self) -> None:
             mxnet.random.seed(0)
             local_ts = self._get_local_ts()
@@ -971,7 +971,7 @@ if True:
             )
             self.check_string(config_info_output)
 
-        @pytest.mark.skip("Disabled because of PartTask2440")
+        @pytest.mark.skip("Disabled because of PTask2440")
         def test_fit_dag1(self) -> None:
             mxnet.random.seed(0)
             dag = cdataf.DAG(mode="strict")

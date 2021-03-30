@@ -46,7 +46,7 @@
 - Our usual review process is to work in a branch and create a pull request
   - See the `git.md` notes for details
   - The name of the pull request is generated with `ghi_show.py` and looks like
-    `PartTask2704 make exchange contracts get contracts applicable to series`
+    `PTask2704 make exchange contracts get contracts applicable to series`
 
 # From the code author point of view
 
@@ -273,7 +273,7 @@
 
 ## Remember "small steps ahead"
 
-- Follow the Google approach of “merge a PR that is a strict improvement”
+- Follow the Google approach of âmerge a PR that is a strict improvementâ
 
 ## Nothing is too small
 
@@ -281,7 +281,7 @@
 - Problems are highlighted even if small or controversial
   - Not all of those comments might not be implemented by the author
 - Of course if different approaches are really equivalent but reviewers have
-  their own stylistic preference, this should not be pointed, unless it’s a
+  their own stylistic preference, this should not be pointed, unless itâs a
   matter of consistency or leave the choice to the author
 
 ## Final GH comment

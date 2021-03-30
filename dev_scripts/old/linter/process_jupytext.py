@@ -81,8 +81,8 @@ def _is_jupytext_version_different(output_txt: str) -> bool:
     Workaround for https://github.com/mwouts/jupytext/issues/414 to avoid
     report an error due to jupytext version mismatch.
 
-    [jupytext] Reading nlp/notebooks/PartTask1081_RP_small_test.py
-    nlp/notebooks/PartTask1081_RP_small_test.py:
+    [jupytext] Reading nlp/notebooks/PTask1081_RP_small_test.py
+    nlp/notebooks/PTask1081_RP_small_test.py:
     --- expected
     +++ actual
     @@ -5,7 +5,7 @@

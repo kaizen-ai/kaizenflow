@@ -38,7 +38,7 @@ docker_ps:
 # Report container stats, e.g., CPU, RAM.
 #   ```
 #   > docker_stats
-#   CONTAINER ID  NAME                                  CPU %  MEM USAGE / LIMIT     MEM %  NET I/O         BLOCK I/O        PIDS
+#   CONTAINER ID  NAME                   CPU %  MEM USAGE / LIMIT     MEM %  NET I/O         BLOCK I/O        PIDS
 #   2ece37303ec9  ..._user_space_run_30  0.00%  15.74MiB / 31.07GiB   0.05%  351kB / 6.27kB  34.2MB / 12.3kB  4
 #   ```
 docker_stats:
@@ -103,6 +103,16 @@ endif
 #	--entrypoint $(CMD)
 docker_cmd:
 	IMAGE=$(IMAGE_DEV) \
+	docker-compose \
+		-f $(DOCKER_COMPOSE_USER_SPACE) \
+		run \
+		--rm \
+		-l user=$(USER) \
+		user_space \
+		'$(CMD)'
+
+docker_cmd.rc:
+	IMAGE=$(IMAGE_RC) \
 	docker-compose \
 		-f $(DOCKER_COMPOSE_USER_SPACE) \
 		run \
@@ -511,9 +521,8 @@ fast_self_tests:
 	make docker_repo_images
 	make docker_ps
 	make docker_pull
-	make docker_cmd CMD="echo" IMAGE=$(IMAGE_RC)
 	make docker_jupyter_test
-	make docker_cmd CMD="pytest --collect-only" IMAGE=$(IMAGE_RC)
+	make docker_cmd.rc CMD="pytest --collect-only"
 	@echo "==> SUCCESS <=="
 
 slow_self_tests:

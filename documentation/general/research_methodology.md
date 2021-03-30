@@ -242,7 +242,7 @@
   - The notebook contains the "skeleton" of all necessary training stages, and
     the library the implementation of each stage
   - E.g., the NLP sentiment pipeline is in
-    `nlp/notebooks/PartTask1102_RP_Pipeline.py` and in `nlp/lstm_utils.py`
+    `nlp/notebooks/PTask1102_RP_Pipeline.py` and in `nlp/lstm_utils.py`
 - The specific configuration of the stages are passed using a Config object.
 - Config objects are generated using config builder functions for a particular
   research task.
@@ -281,7 +281,7 @@
   - E.g., `nlp/lstm_utils.py`
 - Modify the KOTH pipeline (e.g., the official notebook) and config to wire the
   new feature
-  - E.g., `nlp/notebooks/PartTask1102_RP_Pipeline.py`
+  - E.g., `nlp/notebooks/PTask1102_RP_Pipeline.py`
 - Experiment with the KOTH (as a different notebook derived from the KOTH, or
   with the KOTH directly) to make sure the feature works as expected inside the
   official pipeline
@@ -319,7 +319,7 @@
 
 - Each research Issue culminates with the proposal of new a KOTH.
 - The new defined stage or an optimal value of a previously defined parameter is
-  added to the template notebook at `nlp/notebooks/PartTask1102_RP_Pipeline.py`.
+  added to the template notebook at `nlp/notebooks/PTask1102_RP_Pipeline.py`.
 - The KOTH config is updated with an option to turn on/off the new stage.
 - The result of the experiment is compared across our benchmarks (e.g. accuracy
   for all futures).
