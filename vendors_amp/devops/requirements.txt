@@ -3,6 +3,7 @@ botocore
 bs4
 flaky
 fsspec
+ib_insync==0.9.65
 joblib
 lxml
 matplotlib

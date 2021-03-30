@@ -56,8 +56,7 @@ im.docker_down.local:
 	docker-compose \
 		-f devops/compose/docker-compose.yml \
 		-f devops/compose/docker-compose.local.yml \
-		down \
-		--remove-orphans
+		down
 
 # Stop local container including all dependencies and remove all data.
 im.docker_rm.local:
@@ -66,8 +65,7 @@ im.docker_rm.local:
 	docker-compose \
 		-f devops/compose/docker-compose.yml \
 		-f devops/compose/docker-compose.local.yml \
-		down \
-		--remove-orphans; \
+		down; \
 	docker volume rm compose_im_postgres_data_local
 
 im.docker_pull:
