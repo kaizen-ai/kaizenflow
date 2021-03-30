@@ -16,8 +16,8 @@ from tqdm import tqdm
 import helpers.dbg as dbg
 import helpers.list as hlist
 import helpers.printing as hprint
-import vendors_amp.ib.data.extract.gateway.download_data_ib_loop as viedow
-import vendors_amp.ib.data.extract.gateway.utils as vieuti
+import vendors_amp.ib.data.extract.gateway.download_data_ib_loop as videgd
+import vendors_amp.ib.data.extract.gateway.utils as videgu
 
 _LOG = logging.getLogger(__name__)
 
@@ -83,8 +83,8 @@ def _start_end_ts_to_ET(
     """
     dbg.dassert_lt(start_ts, end_ts)
     _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
-    start_ts = vieuti.to_ET(start_ts, as_datetime=False)
-    end_ts = vieuti.to_ET(end_ts, as_datetime=False)
+    start_ts = videgu.to_ET(start_ts, as_datetime=False)
+    end_ts = videgu.to_ET(end_ts, as_datetime=False)
     _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
     return start_ts, end_ts
 
@@ -189,7 +189,7 @@ def get_historical_data_from_tasks(
     Execute the workload serially.
     """
     df = []
-    ib = vieuti.ib_connect(client_id, is_notebook=False)
+    ib = videgu.ib_connect(client_id, is_notebook=False)
     if use_prograss_bar:
         tasks = tqdm(tasks)
     for task in tasks:
@@ -202,7 +202,7 @@ def get_historical_data_from_tasks(
             what_to_show,
             use_rth,
         ) = task
-        df_tmp = vieuti.req_historical_data(
+        df_tmp = videgu.req_historical_data(
             ib,
             contract,
             end_ts,
@@ -212,7 +212,7 @@ def get_historical_data_from_tasks(
             use_rth,
         )
         dbg.dassert_monotonic_index(df_tmp)
-        _LOG.debug("%s -> df_tmp=%s", end_ts, vieuti.get_df_signature(df_tmp))
+        _LOG.debug("%s -> df_tmp=%s", end_ts, videgu.get_df_signature(df_tmp))
         df.append(df_tmp)
     #
     ib.disconnect()
@@ -240,7 +240,7 @@ def _task_to_filename(
     symbol = contract.symbol
     bar_size_setting = bar_size_setting.replace(" ", "_")
     duration_str = duration_str.replace(" ", "_")
-    file_name = f"{symbol}.{vieuti.to_timestamp_str(end_ts)}.{duration_str}.{bar_size_setting}.{what_to_show}.{use_rth}.csv"
+    file_name = f"{symbol}.{videgu.to_timestamp_str(end_ts)}.{duration_str}.{bar_size_setting}.{what_to_show}.{use_rth}.csv"
     file_name = os.path.join(dst_dir, file_name)
     return file_name
 
@@ -255,8 +255,8 @@ def _execute_ptask(
     use_rth,
     file_name,
 ):
-    ib = vieuti.ib_connect(client_id, is_notebook=False)
-    df = vieuti.req_historical_data(
+    ib = videgu.ib_connect(client_id, is_notebook=False)
+    df = videgu.req_historical_data(
         ib,
         contract,
         end_ts,
@@ -267,7 +267,7 @@ def _execute_ptask(
     )
     ib.disconnect()
     dbg.dassert_monotonic_index(df)
-    _LOG.debug("%s -> df=%s", end_ts, vieuti.get_df_signature(df))
+    _LOG.debug("%s -> df=%s", end_ts, videgu.get_df_signature(df))
     if not df.empty:
         df.to_csv(file_name)
 
@@ -384,7 +384,7 @@ def get_historical_data_parallel(tasks, num_threads, incremental, dst_dir):
         ) = ptask
         # If job was completed succesfully, read dataframe.
         if os.path.exists(file_name):
-            df_tmp = viedow.load_historical_data(file_name)
+            df_tmp = videgd.load_historical_data(file_name)
         df.append(df_tmp)
     #
     df = pd.concat(df)

@@ -7,16 +7,16 @@ except ModuleNotFoundError:
 import pandas as pd
 import pytest
 
-import vendors_amp.ib.data.extract.gateway.test.utils as vietut
+import vendors_amp.ib.data.extract.gateway.test.utils as videgt
 
 _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skipif(
-    not vietut.IS_TWS_ENABLED,
+    not videgt.IS_TWS_ENABLED,
     reason="Testable only inside IB container",
 )
-class Test_get_historical_data(vietut.IbExtractionTest):
+class Test_get_historical_data(videgt.IbExtractionTest):
     def test_save_historical_data_with_IB_loop1(self) -> None:
         """
         

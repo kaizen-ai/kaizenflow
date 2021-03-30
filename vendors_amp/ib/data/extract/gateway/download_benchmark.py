@@ -14,10 +14,10 @@ import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.parser as hparse
 import helpers.timer as htimer
-import vendors_amp.ib.data.extract.gateway.download_data_ib_loop as viedow
-import vendors_amp.ib.data.extract.gateway.save_historical_data_with_IB_loop as viesav
-import vendors_amp.ib.data.extract.gateway.unrolling_download_data_ib_loop as vieunr
-import vendors_amp.ib.data.extract.gateway.utils as vieuti
+import vendors_amp.ib.data.extract.gateway.download_data_ib_loop as videgd
+import vendors_amp.ib.data.extract.gateway.save_historical_data_with_IB_loop as videgs
+import vendors_amp.ib.data.extract.gateway.unrolling_download_data_ib_loop as videgu0
+import vendors_amp.ib.data.extract.gateway.utils as videgu
 
 _LOG = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ SETUP = dict(
 def _run_req_wrapper() -> None:
     # Just run direct IB request.
     args = SETUP.copy()
-    ib = vieuti.ib_connect(200, False)
+    ib = videgu.ib_connect(200, False)
     contract = ib.qualifyContracts(args.pop("contract"))[0]
     ib.disconnect()
     args.pop("start_ts")
@@ -50,14 +50,14 @@ def _run_req_wrapper() -> None:
         timer = htimer.Timer()
         args.update(dict(duration_str=dur))
         for i in range(times):
-            ib = vieuti.ib_connect(201 + i, False)
+            ib = videgu.ib_connect(201 + i, False)
             args["ib"] = ib
-            df = vieuti.req_historical_data(**args)
+            df = videgu.req_historical_data(**args)
             ib.disconnect()
         _LOG.info(
             "Finished. Time: %s seconds. Dataframe: %s",
             timer.get_elapsed(),
-            vieuti.get_df_signature(df),
+            videgu.get_df_signature(df),
         )
 
 
@@ -85,11 +85,11 @@ def _run_unrolling_download_data_ib_loop() -> None:
             "Starting data extraction. Mode: %s. Threads: %s.", mode, num_threads
         )
         timer = htimer.Timer()
-        df = vieunr.get_historical_data(**args)
+        df = videgu0.get_historical_data(**args)
         _LOG.info(
             "Finished. Time: %s seconds. Dataframe: %s",
             timer.get_elapsed(),
-            vieuti.get_df_signature(df),
+            videgu.get_df_signature(df),
         )
         hio.delete_dir(dst_dir)
 
@@ -102,15 +102,15 @@ def _run_save_historical_data_with_IB_loop() -> None:
     _LOG.info("Starting data extraction.")
     args = SETUP.copy()
     args.update(
-        dict(file_name=file_name, ib=vieuti.ib_connect(400, is_notebook=False))
+        dict(file_name=file_name, ib=videgu.ib_connect(400, is_notebook=False))
     )
     timer = htimer.Timer()
-    df = viesav.save_historical_data_with_IB_loop(**args)
+    df = videgs.save_historical_data_with_IB_loop(**args)
     args["ib"].disconnect()
     _LOG.info(
         "Finished. Time: %s seconds. Dataframe: %s",
         timer.get_elapsed(),
-        vieuti.get_df_signature(df),
+        videgu.get_df_signature(df),
     )
     hio.delete_file(file_name)
 
@@ -150,7 +150,7 @@ def _run_download_data_IB_loop_by_symbol(
     args = SETUP.copy()
     args.update(
         dict(
-            ib=vieuti.ib_connect(
+            ib=videgu.ib_connect(
                 base_client_id + sum(bytes(symbol, encoding="UTF-8")),
                 is_notebook=False,
             )
@@ -167,11 +167,11 @@ def _run_download_data_IB_loop_by_symbol(
         args.update(dict(duration_str=duration_str))
         _LOG.info("Run for %s duration", duration_str)
         timer = htimer.Timer()
-        df = viedow.get_historical_data_with_IB_loop(**args)
+        df = videgd.get_historical_data_with_IB_loop(**args)
         _LOG.info(
             "Finished. Time: %s seconds. Dataframe: %s",
             timer.get_elapsed(),
-            vieuti.get_df_signature(df),
+            videgu.get_df_signature(df),
         )
     args["ib"].disconnect()
     hio.delete_file(file_name)

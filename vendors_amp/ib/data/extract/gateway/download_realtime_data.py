@@ -6,8 +6,8 @@ import logging
 import pandas as pd
 
 import helpers.dbg as dbg
-import helpers.parser as prsr
-import vendors_amp.ib.data.extract.gateway.utils as ibutils
+import helpers.parser as hparse
+import vendors_amp.ib.data.extract.gateway.utils as videgu
 
 # from tqdm.notebook import tqdm
 
@@ -38,25 +38,27 @@ def _main(parser: argparse.ArgumentParser) -> None:
         symbols = ["ES"]
     symbols = "ES CL NG".split()
     try:
-        ib = ibutils.ib_connect(0, is_notebook=False)
-        bars = ib.reqRealTimeBars(contract, 5, 'MIDPOINT', False)
+        ib = videgu.ib_connect(0, is_notebook=False)
+        bars = ib.reqRealTimeBars(contract, 5, "MIDPOINT", False)
         bars.updateEvent += onBarUpdate
     finally:
         ib.disconnect()
     use_rth = False
     start_ts = None
-    #start_ts = pd.Timestamp("2020-12-13 18:00:00-05:00")
+    # start_ts = pd.Timestamp("2020-12-13 18:00:00-05:00")
     end_ts = None
-    #end_ts = pd.Timestamp("2020-12-23 18:00:00-05:00")
-    tasks = ibutils.get_tasks(ib, target, frequency, symbols, start_ts, end_ts,
-                              use_rth)
+    # end_ts = pd.Timestamp("2020-12-23 18:00:00-05:00")
+    tasks = videgu.get_tasks(
+        ib, target, frequency, symbols, start_ts, end_ts, use_rth
+    )
     num_threads = 3
     num_threads = "serial"
     dst_dir = args.dst_dir
     incremental = not args.not_incremental
     client_id_base = 5
-    file_names = ibutils.download_ib_data(client_id_base, tasks,
-                                          incremental, dst_dir, num_threads)
+    file_names = videgu.download_ib_data(
+        client_id_base, tasks, incremental, dst_dir, num_threads
+    )
     _LOG.info("file_names=%s", file_names)
 
 
@@ -65,10 +67,14 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("positional", nargs="*", help="...")
-    parser.add_argument("--dst_dir", action="store", default="./tmp.download_data",
-                        help="Destination dir")
+    parser.add_argument(
+        "--dst_dir",
+        action="store",
+        default="./tmp.download_data",
+        help="Destination dir",
+    )
     parser.add_argument("--not_incremental", action="store_true", default=False)
-    prsr.add_verbosity_arg(parser)
+    hparse.add_verbosity_arg(parser)
     return parser
 
 

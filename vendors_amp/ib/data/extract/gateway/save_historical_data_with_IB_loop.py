@@ -11,8 +11,8 @@ import pandas as pd
 # import core.explore as cexplo
 import helpers.dbg as dbg
 import helpers.io_ as hio
-import vendors_amp.ib.data.extract.gateway.download_data_ib_loop as viedow
-import vendors_amp.ib.data.extract.gateway.utils as vieuti
+import vendors_amp.ib.data.extract.gateway.download_data_ib_loop as videgd
+import vendors_amp.ib.data.extract.gateway.utils as videgu
 
 # from tqdm.notebook import tqdm
 
@@ -39,12 +39,12 @@ def save_historical_data_with_IB_loop(
     """
     # TODO(gp): Factor this out.
     _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
-    start_ts = vieuti.to_ET(start_ts)
-    end_ts = vieuti.to_ET(end_ts)
+    start_ts = videgu.to_ET(start_ts)
+    end_ts = videgu.to_ET(end_ts)
     _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
     dbg.dassert_lt(start_ts, end_ts)
     #
-    generator = viedow.ib_loop_generator(
+    generator = videgd.ib_loop_generator(
         ib,
         contract,
         start_ts,
@@ -68,12 +68,12 @@ def save_historical_data_with_IB_loop(
     # Go in reverse order to make timestamps ascending.
     df = pd.concat(
         [
-            viedow.load_historical_data(tmp_file_pattern % (file_name, i))
+            videgd.load_historical_data(tmp_file_pattern % (file_name, i))
             for i in range(len(tmp_files))[::-1]
         ]
     )
     #
-    df = vieuti.truncate(df, start_ts, end_ts)
+    df = videgu.truncate(df, start_ts, end_ts)
     #
     df.to_csv(file_name, mode="w")
     # Clean temporary files.

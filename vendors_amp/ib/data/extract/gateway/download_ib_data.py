@@ -7,8 +7,8 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.parser as hparse
-import vendors_amp.ib.data.extract.gateway.download_data_ib_loop as viedow
-import vendors_amp.ib.data.extract.gateway.utils as vieuti
+import vendors_amp.ib.data.extract.gateway.download_data_ib_loop as videgd
+import vendors_amp.ib.data.extract.gateway.utils as videgu
 
 # from tqdm.notebook import tqdm
 
@@ -37,7 +37,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args.exchange
     target = args.asset_class
     frequency = args.frequency
-    ib = vieuti.ib_connect(0, is_notebook=False)
+    ib = videgu.ib_connect(0, is_notebook=False)
     use_rth = False
     start_ts = None
     end_ts = None
@@ -45,10 +45,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dst_dir = args.dst_dir
     incremental = args.incremental
     client_id_base = 5
-    tasks = vieuti.get_tasks(
+    tasks = videgu.get_tasks(
         ib, target, frequency, symbols, start_ts, end_ts, use_rth
     )
-    file_names = viedow.download_ib_data(
+    file_names = videgd.download_ib_data(
         client_id_base, tasks, incremental, dst_dir, num_threads
     )
     _LOG.info("file_names=%s", file_names)

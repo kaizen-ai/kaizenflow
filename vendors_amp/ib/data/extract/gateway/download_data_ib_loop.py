@@ -16,7 +16,7 @@ from tqdm import tqdm
 # import core.explore as cexplo
 import helpers.dbg as dbg
 import helpers.io_ as hio
-import vendors_amp.ib.data.extract.gateway.utils as vieuti
+import vendors_amp.ib.data.extract.gateway.utils as videgu
 
 _LOG = logging.getLogger(__name__)
 
@@ -49,10 +49,10 @@ def ib_loop_generator(
     backwards in time. The problem with this approach is that one can't
     parallelize the requests of chunks of data.
     """
-    vieuti.check_ib_connected(ib)
+    videgu.check_ib_connected(ib)
     _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
-    start_ts = vieuti.to_ET(start_ts)
-    end_ts = vieuti.to_ET(end_ts)
+    start_ts = videgu.to_ET(start_ts)
+    end_ts = videgu.to_ET(end_ts)
     _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
     dbg.dassert_lt(start_ts, end_ts)
     # Let's start from the end.
@@ -63,7 +63,7 @@ def ib_loop_generator(
     ts_seq = None
     while True:
         _LOG.debug("Requesting data for curr_ts='%s'", curr_ts)
-        df = vieuti.req_historical_data(
+        df = videgu.req_historical_data(
             ib,
             contract,
             curr_ts,
@@ -78,16 +78,16 @@ def ib_loop_generator(
             # TODO(gp): Sometimes IB returns an empty df in a chunk although there is more data
             # later on. Maybe we can just keep going.
             return
-        _LOG.debug("df=%s\n%s", vieuti.get_df_signature(df), df.head(3))
+        _LOG.debug("df=%s\n%s", videgu.get_df_signature(df), df.head(3))
         if df.empty:
             # Sometimes IB returns an empty df in a chunk although there is more
             # data later on: we keep going.
-            date_offset = vieuti.duration_str_to_pd_dateoffset(duration_str)
+            date_offset = videgu.duration_str_to_pd_dateoffset(duration_str)
             curr_ts = curr_ts - date_offset
             _LOG.debug("Empty df -> curr_ts=%s", curr_ts)
             continue
         # Move the curr_ts to the beginning of the chuck.
-        next_curr_ts = vieuti.to_ET(df.index[0])
+        next_curr_ts = videgu.to_ET(df.index[0])
         ts_seq = (curr_ts, next_curr_ts)
         curr_ts = next_curr_ts
         _LOG.debug("curr_ts='%s'", curr_ts)
@@ -138,11 +138,11 @@ def get_historical_data_with_IB_loop(
     backwards in time. The problem with this approach is that one can't
     parallelize the requests of chunks of data.
     """
-    start_ts, end_ts = vieuti.process_start_end_ts(start_ts, end_ts)
+    start_ts, end_ts = videgu.process_start_end_ts(start_ts, end_ts)
     #
     dfs = []
     ts_seq = []
-    ib, deallocate_ib = vieuti.allocate_ib(ib)
+    ib, deallocate_ib = videgu.allocate_ib(ib)
     generator = ib_loop_generator(
         ib,
         contract,
@@ -156,13 +156,13 @@ def get_historical_data_with_IB_loop(
         num_retry=num_retry,
     )
     # Deallocate.
-    vieuti.deallocate_ib(ib, deallocate_ib)
+    videgu.deallocate_ib(ib, deallocate_ib)
     for i, df_tmp, ts_seq_tmp in generator:
         ts_seq.append(ts_seq_tmp)
         dfs.insert(0, df_tmp)
     #
     df = pd.concat(dfs)
-    df = vieuti.truncate(df, start_ts, end_ts)
+    df = videgu.truncate(df, start_ts, end_ts)
     if return_ts_seq:
         return df, ts_seq
     return df
@@ -182,7 +182,7 @@ def historical_data_to_filename(
     symbol = contract.symbol
     bar_size_setting = bar_size_setting.replace(" ", "_")
     duration_str = duration_str.replace(" ", "_")
-    file_name = f"{symbol}.{vieuti.to_timestamp_str(start_ts)}.{vieuti.to_timestamp_str(end_ts)}.{duration_str}.{bar_size_setting}.{what_to_show}.{use_rth}.csv"
+    file_name = f"{symbol}.{videgu.to_timestamp_str(start_ts)}.{videgu.to_timestamp_str(end_ts)}.{duration_str}.{bar_size_setting}.{what_to_show}.{use_rth}.csv"
     file_name = os.path.join(dst_dir, file_name)
     return file_name
 
@@ -216,9 +216,9 @@ def save_historical_data_single_file_with_IB_loop(
             end_ts,
         )
     #
-    start_ts, end_ts = vieuti.process_start_end_ts(start_ts, end_ts)
+    start_ts, end_ts = videgu.process_start_end_ts(start_ts, end_ts)
     #
-    ib, deallocate_ib = vieuti.allocate_ib(ib)
+    ib, deallocate_ib = videgu.allocate_ib(ib)
     _LOG.debug("ib=%s", ib)
     generator = ib_loop_generator(
         ib,
@@ -250,11 +250,11 @@ def save_historical_data_single_file_with_IB_loop(
             mode = "a"
             header = False
         df_tmp.to_csv(file_name, mode=mode, header=header)
-    vieuti.deallocate_ib(ib, deallocate_ib)
+    videgu.deallocate_ib(ib, deallocate_ib)
     # Load everything and clean it up.
     df = load_historical_data(file_name)
     df.sort_index(inplace=True)
-    df = vieuti.truncate(df, start_ts, end_ts)
+    df = videgu.truncate(df, start_ts, end_ts)
     _LOG.info("Saved full data in '%s'", file_name)
     df.to_csv(file_name)
 

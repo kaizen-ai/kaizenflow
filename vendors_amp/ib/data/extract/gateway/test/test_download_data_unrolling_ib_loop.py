@@ -7,17 +7,17 @@ except ModuleNotFoundError:
 import pandas as pd
 import pytest
 
-import vendors_amp.ib.data.extract.gateway.test.utils as vietut
-import vendors_amp.ib.data.extract.gateway.unrolling_download_data_ib_loop as vieunr
+import vendors_amp.ib.data.extract.gateway.test.utils as videgt
+import vendors_amp.ib.data.extract.gateway.unrolling_download_data_ib_loop as videgu
 
 _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skipif(
-    not vietut.IS_TWS_ENABLED,
+    not videgt.IS_TWS_ENABLED,
     reason="Testable only inside IB container",
 )
-class Test_get_historical_data(vietut.IbExtractionTest):
+class Test_get_historical_data(videgt.IbExtractionTest):
     def test_get_historical_data1(self) -> None:
         """
         Test getting 1 hr data for 3 days.
@@ -67,7 +67,7 @@ class Test_get_historical_data(vietut.IbExtractionTest):
             tz="America/New_York"
         )
         end_ts = start_ts + pd.DateOffset(days=3)
-        dates = vieunr._ib_date_range(start_ts, end_ts)
+        dates = videgu._ib_date_range(start_ts, end_ts)
         #
         act = "\n".join(map(str, dates))
         exp = """
@@ -81,7 +81,7 @@ class Test_get_historical_data(vietut.IbExtractionTest):
             tz="America/New_York"
         )
         end_ts = start_ts + pd.DateOffset(days=1)
-        dates = vieunr._ib_date_range(start_ts, end_ts)
+        dates = videgu._ib_date_range(start_ts, end_ts)
         #
         act = "\n".join(map(str, dates))
         exp = """
@@ -95,7 +95,7 @@ class Test_get_historical_data(vietut.IbExtractionTest):
             tz="America/New_York"
         )
         end_ts = start_ts + pd.DateOffset(days=2)
-        dates = vieunr._ib_date_range(start_ts, end_ts)
+        dates = videgu._ib_date_range(start_ts, end_ts)
         #
         act = "\n".join(map(str, dates))
         exp = """
@@ -109,6 +109,6 @@ class Test_get_historical_data(vietut.IbExtractionTest):
             tz="America/New_York"
         )
         end_ts = start_ts + pd.DateOffset(days=3)
-        dates = vieunr._ib_date_range(start_ts, end_ts)
+        dates = videgu._ib_date_range(start_ts, end_ts)
         #
         act = "\n".join(map(str, dates))
