@@ -22,6 +22,7 @@ class AbstractDataExtractor(abc.ABC):
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
         incremental: Optional[bool] = None,
+        dst_dir: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Extract the data, save it and return all data for symbol.
@@ -38,5 +39,6 @@ class AbstractDataExtractor(abc.ABC):
         :param incremental: if True - save only new data,
             if False - remove old firstly,
             True by default
+        :param dst_dir: path to store the data
         :return: a dataframe with the data
         """

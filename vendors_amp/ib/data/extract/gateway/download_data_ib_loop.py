@@ -125,6 +125,7 @@ def save_historical_data_by_intervals_IB_loop(
     what_to_show: str,
     use_rth: bool,
     file_name: str,
+    part_files_dir: str,
     incremental: bool,
     use_progress_bar: bool = True,
     num_retry: Optional[Any] = None,
@@ -176,12 +177,15 @@ def save_historical_data_by_intervals_IB_loop(
                 bar_size_setting=bar_size_setting,
                 what_to_show=what_to_show,
                 use_rth=use_rth,
-                dst_dir=os.path.join(
-                    os.path.split(file_name)[0], contract.symbol
-                ),
+                dst_dir=part_files_dir,
             )
             # There can be already data from previous loop iteration.
-            if hs3.exists(file_name_for_part):
+            already_exists = (
+                hs3.exists(file_name_for_part)
+                if file_name_for_part.startswith("s3://")
+                else os.path.exists(file_name_for_part)
+            )
+            if already_exists:
                 df_to_write = pd.concat(
                     [df_tmp_part, load_historical_data(file_name_for_part)]
                 )

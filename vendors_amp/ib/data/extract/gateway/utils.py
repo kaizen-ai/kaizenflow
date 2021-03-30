@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import random
 from typing import Dict, List, Optional, Tuple, Union
 
 try:
@@ -33,6 +34,28 @@ def ib_connect(client_id: int = 0, is_notebook: bool = True) -> ib_insync.ib.IB:
     ib_insync.IB.RaiseRequestErrors = True
     _LOG.debug("Connected to IB: client_id=%s", client_id)
     return ib
+
+
+def get_free_client_id(max_attempts: Optional[int]) -> int:
+    """
+    Find free slot to connect to IB gateway.
+    """
+    free_client_id = -1
+    max_attempts = 1 if max_attempts is None else max_attempts
+    for i in random.sample(
+        range(1, max_attempts + 1),
+        max_attempts,
+    ):
+        try:
+            ib_connection = ib_connect(i, is_notebook=False)
+        except TimeoutError:
+            continue
+        free_client_id = i
+        ib_connection.disconnect()
+        break
+    if free_client_id == -1:
+        raise TimeoutError("Couldn't connect to IB")
+    return free_client_id
 
 
 def to_contract_details(ib, contract):
