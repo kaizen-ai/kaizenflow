@@ -1,8 +1,8 @@
 import os
 
 import helpers.unit_test as hut
-import vendors2.eoddata.metadata.load as load
-import vendors2.eoddata.metadata.types as mtypes
+import instrument_master.eoddata.metadata.load as load
+import instrument_master.eoddata.metadata.types as mtypes
 
 
 class Test_read_symbols_from_file(hut.TestCase):
