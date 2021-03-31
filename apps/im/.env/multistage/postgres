@@ -2,6 +2,6 @@ STAGE=MULTISTAGE
 
 # PostgreSQL
 # ------------------------------------------------------------------------------
-POSTGRES_HOST=particle
+POSTGRES_DB=particle
 POSTGRES_PASSWORD=dawd7Adh123daW151adgjJ
 POSTGRES_PORT=5432
