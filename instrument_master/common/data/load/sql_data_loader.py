@@ -3,6 +3,8 @@ import psycopg2
 import instrument_master.common.data.load.data_loader as vcdlda
 
 
+# TODO(*): Move it to data_loader.py
+# TODO(*): SQL -> Sql
 class AbstractSQLDataLoader(vcdlda.AbstractDataLoader):
     """
     Interface for class which loads the data for a security from an SQL backend.

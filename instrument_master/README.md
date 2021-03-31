@@ -11,143 +11,158 @@
 
 <!--te-->
 
-# Kibot timing
+# Run unit tests
 
-- [gdoc](https://docs.google.com/document/d/1BdOj3DGpFzHQZ6dpYCMMAeyjTtqYgltyqDbQ7n8Vde8/edit#)
-
-- Kibot documentation (from http://www.kibot.com/Support.aspx#data_format)
-  states the following timing semantic: "a time stamp of 10:00 AM is for a
-  period between 10:00:00 AM and 10:00:59 AM" "All records with a time stamp
-  between 9:30:00 AM and 3:59:59 PM represent the regular US stock market
-  trading session."
-
-- Thus the open price at time "ts" corresponds to the instantaneous price at
-  time "ts", which by our conventions corresponds to the "end" of an interval in
-  the form [a, b) interval
-
-- As a consequence our usual "ret_0" # (price entering instantaneously at time t
-  - 1 and exiting at time t) is implemented in terms of Kibot data as: ret_0(t)
-    = open_price(t) - open_price(t - 1)
-
-  ```text
-               datetime     open     high      low    close   vol      time  ret_0
-  0 2009-09-27 18:00:00  1042.25  1043.25  1042.25  1043.00  1354  18:00:00    NaN
-  1 2009-09-27 18:01:00  1043.25  1043.50  1042.75  1042.75   778  18:01:00   1.00
+- Run the tests in the base Docker image:
+  ```bash
+  > pytest vendors_amp
   ```
 
-- E.g., ret_0(18:01) is the return realized entering (instantaneously) at 18:00
-  and exiting at 18:01
-
-- In reality we need time to:
-  - Compute the forecast
-  - Enter the position
-- We can't use open at time t - 1 since this would imply instantaneous forecast
-- We can use data at time t - 2, which corresponds to [t-1, t-2), although still
-  we would need to enter instantaneously
-- A better assumption is to let 1 minute to enter in position, so:
-  - Use data for [t - 2, t - 1) (which Kibot tags with t - 2)
-  - Enter in position between [t - 1, t)
-  - Capture the return realized between [t, t + 1]
-- In other terms we need 1 extra delay (probably 2 would be even safer)
+- Run the tests that require IM Docker image:
+  ```bash
+  > make im.run_fast_tests
+  ```
 
 # Build image
 
-1. Build release candidate image
+- Build release candidate image:
+  ```bash
+  > make im.docker_build_image.rc
+  ```
 
-```bash
-> make im.docker_buildi_image.rc
-```
+- (Optional for now) Push release candidate image to ECR:
+  ```bash
+  > make im.docker_push_image.rc
+  ```
 
-2. (Optional for now) Push release candidate image to ECR (Optional for now)
+- Tag release candidate image with the latest tag:
+  ```bash
+  > make im.docker_tag_rc_image.latest
+  ```
 
-```bash
-> make im.docker_push_image.rc
-```
+- Push latest image do ECR:
+  ```bash
+  > make im.docker_push_image.latest
+  ```
 
-3. Tag release candidate image with the latest tag
+# Run IM app
 
-```bash
-> make im.docker_tag_rc_image.latest
-```
+- Pull image.
 
-4. Push latest image do ECR
+  ```bash
+  > make im.docker_pull
+  ```
 
-```bash
-> make im.docker_push_image.latest
-```
-
-# Run kibot app
-
-Pull image.
-
-```bash
-> make im.docker_pull
-```
-
-By the default we use $KIBOT_IMAGE for all run. You can check the setup to
-identify concrete image.
-
-```bash
-> make im.print_setup
-# You will get something like:
-IM_REPO_BASE_PATH=083233266530.dkr.ecr.us-east-2.amazonaws.com/im
-IM_IMAGE_DEV=083233266530.dkr.ecr.us-east-2.amazonaws.com/im:latest
-IM_IMAGE_RC=083233266530.dkr.ecr.us-east-2.amazonaws.com/im:rc
-```
+- By default we use $IM_IMAGE_DEV for all the runs. You can check the setup to
+  identify the actual image used
+  ```bash
+  > make im.print_setup
+  # You will get something like:
+  IM_REPO_BASE_PATH=083233266530.dkr.ecr.us-east-2.amazonaws.com/im
+  IM_IMAGE_DEV=083233266530.dkr.ecr.us-east-2.amazonaws.com/im:latest
+  IM_IMAGE_RC=083233266530.dkr.ecr.us-east-2.amazonaws.com/im:rc
+  ```
 
 ## Prerequisites
 
 - IB TWS or Gateway app [should be up](./ib/connect/README.md) on `research.p1`
   with API port 4012. For example:
+  ```bash
+  > IB_CONNECT_USER=gpsagg314 \
+    IB_CONNECT_PASSWORD=<password> \
+    IB_CONNECT_VNC_PASSWORD=12345 \
+    IB_CONNECT_API_PORT=4012 \
+    IB_CONNECT_VNC_PORT=5912 \
+    make ib_connect.docker_up.prod
+  ```
 
-```bash
-> IB_CONNECT_USER=gpsagg314 \
-  IB_CONNECT_PASSWORD=<password> \
-  IB_CONNECT_VNC_PASSWORD=12345 \
-  IB_CONNECT_API_PORT=4012 \
-  IB_CONNECT_VNC_PORT=5912 \
-  make ib_connect.docker_up.prod
-```
+- Testing that the connection to IB is up
+  ```bash
+  > make im.docker_up.local
+  root@...:/app# ./instrument_master/devops/docker_scripts/sanity_check_ib.py
+  Saving log to file '/app/instrument_master/devops/docker_scripts/sanity_check_ib.py.log'
+  Shutting up 2 modules
+  03-31_19:38 INFO : _main          : Connecting to 172.31.16.23:4012, attempt 1/100
+  03-31_19:38 INFO : get_es_data    : Getting data for contract=Future(symbol='ES', lastTradeDateOrContractMonth='202103', exchange='GLOBEX', includeExpired=True)
+  03-31_19:38 INFO : get_es_data    :                  date     open     high      low    close  volume  average  barCount
+  0 2021-02-01 14:30:00  3740.75  3747.25  3717.25  3727.75  188100  3735.35     49249
+  1 2021-02-01 15:00:00  3727.50  3743.00  3720.00  3731.25  243588  3732.30     65466
+  2 2021-02-01 16:00:00  3731.50  3761.50  3725.50  3754.50  189778  3747.65     44627
+  3 2021-02-01 17:00:00  3754.75  3768.25  3754.75  3768.00  105194  3762.50     26175
+  4 2021-02-01 18:00:00  3768.00  3770.50  3761.50  3767.75   82137  3766.20     23193
+  03-31_19:38 INFO : _main          : Disconnecting
+  03-31_19:38 INFO : _main          : Done
+  ```
 
 ## Run locally for development
 
-Build local image:
+- Build local image:
+  ```bash
+  > make im.docker_build_image.rc
+  > make im.docker_tag_rc_image.latest
+  ```
 
-```bash
-> make im.docker_build_image.rc
-> make im.docker_tag_rc_image.latest
-```
+- Basic run with PostgreSQL:
+  ```bash
+  > make im.docker_up.local
+  ```
 
-Basic run with PostgreSQL:
-
-```bash
-> make im.docker_up.local
-```
-
-Basic run without PostgreSQL:
-
-```bash
-> make im.docker_bash
-```
+- Basic run without PostgreSQL:
+  ```bash
+  > make im.docker_bash
+  ```
 
 ## Stop remaining PostgreSQL containers
 
-Stop a container:
+- Stop a container:
+  ```bash
+  > make im.docker_down.local
+  ```
 
-```bash
-> make im.docker_down.local
-```
-
-Stop a container and remove all data:
-
-```bash
-> make im.docker_rm.local
-```
+- Stop a container and remove all data:
+  ```bash
+  > make im.docker_rm.local
+  ```
 
 # Development flow using stages
 
 - Use `local` stages for development locally. Related: target in makefile
   `im.docker_up.local`
 
-All stages can have separate docker-compose files. All stages must have separate
-targets in make file to start and stop services.
+- All stages can have separate docker-compose files. All stages must have separate
+  targets in makefile to start and stop services.
+  
+# Loading data into the DB
+
+- Bring up the stack:
+  ```bash
+  > make im.docker_up.local
+  ```
+
+- Run a test inside a container to populate some data
+
+  ```bash
+  root@6e507de35b1b:/app# cd instrument_master
+  root@6e507de35b1b:/app/instrument_master# pytest -k TestSqlWriterBackend1
+  ```
+
+- To connect to the local DB:
+  ```bash
+  PGPASSWORD=eidvlbaresntlcdbresntdjlrs psql -h localhost -p 5550 -d im_postgres_db_local  -U menjgbcvejlpcbejlc
+
+  im_postgres_db_local=# \dt;
+  List of relations
+  Schema |        Name         | Type  |       Owner
+  --------+---------------------+-------+--------------------
+  public | exchange            | table | menjgbcvejlpcbejlc
+  public | ibdailydata         | table | menjgbcvejlpcbejlc
+  public | ibminutedata        | table | menjgbcvejlpcbejlc
+  public | ibtickbidaskdata    | table | menjgbcvejlpcbejlc
+  public | ibtickdata          | table | menjgbcvejlpcbejlc
+  public | kibotdailydata      | table | menjgbcvejlpcbejlc
+  public | kibotminutedata     | table | menjgbcvejlpcbejlc
+  public | kibottickbidaskdata | table | menjgbcvejlpcbejlc
+  public | kibottickdata       | table | menjgbcvejlpcbejlc
+  public | symbol              | table | menjgbcvejlpcbejlc
+  public | tradesymbol         | table | menjgbcvejlpcbejlc
+  ```

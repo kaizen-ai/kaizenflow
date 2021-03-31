@@ -21,6 +21,7 @@ class ContractType(enum.Enum):
     Expiry = "expiry"
 
 
+# TODO(*): Is it still needed?
 class Extension(enum.Enum):
     CSV = "csv"
     Parquet = "pq"

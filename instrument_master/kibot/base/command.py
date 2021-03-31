@@ -1,3 +1,4 @@
+# TODO(*): Move it one level up and call it kibot_command.py
 import argparse
 import inspect
 import sys

@@ -7,13 +7,14 @@ import instrument_master.common.data.transform.s3_to_sql_transformer as vcdts3
 import instrument_master.kibot.data.transform.s3_to_sql_transformer as vkdts3
 
 
+# TODO(*): -> S3ToSqlTransformerFactory
 class TransformerFactory:
     @classmethod
     def get_s3_to_sql_transformer(
         cls, provider: str
     ) -> vcdts3.AbstractS3ToSqlTransformer:
         """
-        Get s3 data to sql data transformer for provider.
+        Get S3 data to SQL data transformer for provider.
 
         :param provider: provider (kibot, ...)
         :raises ValueError: if s3-to-sql transformer is not implemented for provider

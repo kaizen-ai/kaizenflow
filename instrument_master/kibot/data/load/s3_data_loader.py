@@ -13,6 +13,7 @@ import instrument_master.kibot.data.load.file_path_generator as vkdlfi
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): -> KibotS3DataLoader
 class S3KibotDataLoader(vcdls3.AbstractS3DataLoader):
     # TODO(plyq): Uncomment once #1047 will be resolved.
     # @hcache.cache
@@ -68,12 +69,10 @@ class S3KibotDataLoader(vcdls3.AbstractS3DataLoader):
             vcdtyp.Frequency.Daily: cls._normalize_daily,
             vcdtyp.Frequency.Minutely: cls._normalize_1_min,
         }
-
         if frequency not in MAPPING:
             dbg.dfatal(
                 "Support for frequency '%s' not implemented yet", frequency
             )
-
         normalizer = MAPPING[frequency]
         return normalizer(df)
 
@@ -88,7 +87,6 @@ class S3KibotDataLoader(vcdls3.AbstractS3DataLoader):
         nrows: Optional[int] = None,
         normalize: bool = True,
     ) -> pd.DataFrame:
-
         file_path = vkdlfi.KibotFilePathGenerator().generate_file_path(
             symbol=symbol,
             asset_class=asset_class,
@@ -97,17 +95,13 @@ class S3KibotDataLoader(vcdls3.AbstractS3DataLoader):
             unadjusted=unadjusted,
             ext=vcdtyp.Extension.CSV,
         )
-
         if hs3.is_s3_path(file_path):
             dbg.dassert_is(
                 hs3.exists(file_path), True, msg=f"S3 key not found: {file_path}"
             )
-
         df = pd.read_csv(file_path, header=None, nrows=nrows)
-
         if normalize:
             df = cls.normalize(df=df, frequency=frequency)
-
         return df
 
     @staticmethod

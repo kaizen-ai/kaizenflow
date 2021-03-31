@@ -1,3 +1,7 @@
+"""
+Creates and handles the Postgres DB.
+"""
+
 import logging
 import os
 from typing import List, Optional
@@ -13,9 +17,9 @@ _LOG = logging.getLogger(__name__)
 
 def get_init_sql_files(custom_files: Optional[List[str]] = None) -> List[str]:
     """
-    Return list of PostgreSQL initialization files in order of running.
+    Return the list of PostgreSQL initialization scripts in proper execution order.
 
-    :param custom_fields: provider related init files
+    :param custom_files: provider related init files
     :return: all files to init database
     """
     # Common files.
@@ -43,6 +47,7 @@ def create_database(
 
     :param dbname: database to create
     :param init_sql_files: files to run to init database
+    :param force: overwrite existing database
     """
     # Initialize connection.
     admin_connection, _ = hsql.get_connection(
@@ -54,13 +59,15 @@ def create_database(
     )
     # Create a database from scratch.
     hsql.create_database(admin_connection, db=dbname, force=force)
-    # Close connection.
     admin_connection.close()
     # Initialize database.
     initialize_database(dbname, init_sql_files)
 
 
 def initialize_database(dbname: str, init_sql_files: List[str]) -> None:
+    """
+    Execute init scripts on database.
+    """
     # Connect to recently created database.
     connection, cursor = hsql.get_connection(
         dbname=dbname,
@@ -69,7 +76,7 @@ def initialize_database(dbname: str, init_sql_files: List[str]) -> None:
         user=os.environ["POSTGRES_USER"],
         password=os.environ["POSTGRES_PASSWORD"],
     )
-    # Make this database the copy of default.
+    # Execute the init scripts.
     for sql_file in init_sql_files:
         _LOG.info("Executing %s...", sql_file)
         try:
@@ -101,9 +108,10 @@ def remove_database(dbname: str) -> None:
     connection.close()
 
 
+# TODO(*): Is this in the right place?
 def is_inside_im_container() -> bool:
     """
-    Define if IM app is started.
+    Return whether we are running inside IM app.
     """
     condition = (
         os.environ.get("STAGE") == "TEST"

@@ -9,6 +9,7 @@ import instrument_master.common.data.load.sql_data_loader as vcdlsq
 import instrument_master.common.data.types as vcdtyp
 
 
+# TODO(gp): -> KibotSqlDataLoader
 class SQLKibotDataLoader(vcdlsq.AbstractSQLDataLoader):
 
     # TODO(plyq): Uncomment once #1047 will be resolved.
@@ -27,7 +28,7 @@ class SQLKibotDataLoader(vcdlsq.AbstractSQLDataLoader):
         normalize: bool = True,
     ) -> pd.DataFrame:
         """
-        Read kibot data.
+        Read Kibot data.
 
         :param exchange: name of the exchange
         :param symbol: symbol to get the data for

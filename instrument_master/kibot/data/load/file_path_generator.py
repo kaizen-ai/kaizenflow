@@ -37,32 +37,26 @@ class KibotFilePathGenerator(vcdlfi.FilePathGenerator):
         ext: vcdtyp.Extension = vcdtyp.Extension.Parquet,
     ) -> str:
         """
-        Get the path to a specific kibot dataset on s3.
+        Get the path to a specific kibot dataset on S3.
 
         Parameters as in `read_data`.
         :return: path to the file
         """
-
         freq_path = self.FREQ_PATH_MAPPING[frequency]
-
         asset_class_prefix = self.ASSET_TYPE_PREFIX[asset_class]
-
         modifier = self._generate_modifier(
             asset_class=asset_class,
             contract_type=contract_type,
             unadjusted=unadjusted,
         )
-
         dir_name = f"{asset_class_prefix}{modifier}{freq_path}"
         file_path = os.path.join(dir_name, symbol)
-
         if ext == vcdtyp.Extension.Parquet:
             # Parquet files are located in `pq/` subdirectory.
             file_path = os.path.join("pq", file_path)
             file_path += ".pq"
         elif ext == vcdtyp.Extension.CSV:
             file_path += ".csv.gz"
-
         # TODO(amr): should we allow pointing to a local file here?
         # or rename the method to `generate_s3_path`?
         file_path = os.path.join(vkdcon.S3_PREFIX, file_path)
@@ -86,8 +80,7 @@ class KibotFilePathGenerator(vcdlfi.FilePathGenerator):
         contract_type: Optional[vcdtyp.ContractType] = None,
     ) -> str:
         """
-        Generate a modifier to the file path, based on some asset class
-        options.
+        Generate a modifier to the file path, based on some asset class options.
 
         :param asset_class: asset class
         :param unadjusted: required for asset classes of type: `stocks` & `etfs`

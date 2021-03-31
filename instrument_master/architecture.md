@@ -19,20 +19,17 @@
 
 At a high level, we want to implement a system that:
 
-- Downloads the price data (both historical & also real-time) from different
-  data sources:
-  - We already have Kibot interface
-  - We want to add an interface for EODData
-- Downloads and saves the related metadata
+- Downloads the price data (both historical and real-time) and metadata from different
+  data sources (e.g., Kibot, Interactive Brokers, EODData)
 - Converts CSV price data into a suitable format for fast querying
-  - We decided against using Parquet files and use directly a DB backend
+  - We decided against using Parquet files and using directly a Postgres DB backend
 - Implements mapping between metadata and price data
 - Allows to query the system to get specific price time series based on symbol
   name
   - It should handle:
     - Different frequency (e.g., end-of-day vs 5 minutes vs 1 minute)
     - Different asset classes (e.g., equities vs futures vs forex vs ...)
-    - Different providers (e.g., `kibot` vs `eoddata` vs `firstrate` vs ...)
+    - Different providers (e.g., Kibot vs EODData vs Firstrate vs ...)
 - Has:
   - Different backends for different data providers (e.g., Kibot, EODData)
   - A layer to make all the data uniform from the semantics point of view
@@ -40,7 +37,7 @@ At a high level, we want to implement a system that:
 # Architecture
 
 Note: The documentation of the architecture follows the C4 model:
-https://c4model.com/.
+https://c4model.com/
 
 ## System context diagram
 
@@ -296,29 +293,6 @@ namespace generated {
 
 - Generated data should be behind an interface (then it computed on the fly or
   cached somehow).
-
-# Proposed Code Layout
-
-Based on the container diagram, the code layout matches the different containers
-that we have.
-
-```ansi
-types/  # standardized types (see data model above)
-loader/  # adapts all vendor loaders to a common interface
-vendors/
-   kibot/
-      extractor/
-      transformer/
-      loader/
-      types/  # vendor specific types
-      config.py  # s3 paths, credentials for vendor
-   eoddata/
-      extractor/
-      transformer/
-      loader/
-      types/
-      config.py
-```
 
 ## Guidelines
 
