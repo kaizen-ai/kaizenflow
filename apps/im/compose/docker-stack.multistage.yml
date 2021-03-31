@@ -5,8 +5,6 @@ services:
     image: postgres
     container_name: im-postgres
     restart: always
-    env_file:
-      - ../.env/multistage/postgres
     volumes:
       - /data:/var/lib/postgresql/data
       - ../init.sql:/docker-entrypoint-initdb.d/init.sql
