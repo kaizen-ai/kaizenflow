@@ -6,7 +6,7 @@ import pandas as pd
 
 import core.dataflow as cdataf
 import helpers.dbg as dbg
-import vendors_amp.kibot as vkibot
+import instrument_master.kibot as vkibot
 
 _LOG = logging.getLogger(__name__)
 
