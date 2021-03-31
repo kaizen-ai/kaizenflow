@@ -4,5 +4,6 @@ STAGE=DEV
 # ------------------------------------------------------------------------------
 POSTGRES_USER=im_dev
 POSTGRES_DB=im_db_dev
+POSTGRES_HOST=pg-im.multistage.p1
 POSTGRES_PASSWORD=***REMOVED***
 POSTGRES_PORT=5432
