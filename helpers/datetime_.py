@@ -63,28 +63,41 @@ def validate_datetime(timestamp: DATETIME_TYPE) -> pd.Timestamp:
 
 
 def to_datetime(dates: Union[pd.Series, pd.Index]) -> Union[pd.Series, pd.Index]:
+    """
+    Convert string dates to datetime.
+
+    This works like `pd.to_datetime`, but supports more date formats and shifts
+    the dates to the end of period instead of the start.
+
+    :param dates: series or index of dates to convert
+    :return: datetime dates
+    """
     # TODO(Julia): Support ISO 8601 weeks.
     # This function doesn't deal with mixed formats.
     dbg.dassert_isinstance(dates, Iterable)
     dbg.dassert(not isinstance(dates, str))
     # Try converting to datetime using `pd.to_datetime`.
-    format_fix = _handle_incorrect_conversions(dates[0])
+    format_example_index = -1
+    date_example = dates.tolist()[format_example_index]
+    format_fix = _handle_incorrect_conversions(date_example)
     if format_fix is not None:
         format_, date_modifiction_func = format_fix
         dates = dates.map(date_modifiction_func)
+        date_example = dates.tolist()[format_example_index]
     else:
         format_ = None
     datetime_dates = pd.to_datetime(dates, format=format_, errors="coerce")
     # Shift to end of period if conversion has been successful.
     if not pd.isna(datetime_dates).all():
-        if datetime_dates[0].strftime("%Y-%m-%d") == dates[0]:
+        datetime_example = datetime_dates.tolist()[format_example_index]
+        if datetime_example.strftime("%Y-%m-%d") == date_example:
             return datetime_dates
-        shift_func = _shift_to_period_end(dates[0])
+        shift_func = _shift_to_period_end(date_example)
         if shift_func is not None:
             datetime_dates = datetime_dates.map(shift_func)
         return datetime_dates
     # If standard conversion fails, attempt our own conversion.
-    format_, date_modification_func = _determine_date_format(dates[0])
+    format_, date_modification_func = _determine_date_format(date_example)
     dates = dates.map(date_modification_func)
     return pd.to_datetime(dates, format=format_)
 
@@ -92,7 +105,13 @@ def to_datetime(dates: Union[pd.Series, pd.Index]) -> Union[pd.Series, pd.Index]
 def _handle_incorrect_conversions(
     date: str,
 ) -> Optional[Tuple[Optional[str], Callable[[str], str]]]:
+    """
+    Change data pre-processing for cases when `pd.to_datetime` is mistaken.
 
+    :param date: string date
+    :return: date format and a function to apply to string dates before passing
+        them into `pd.to_datetime()`
+    """
     if len(date) in [7, 8]:
         # "2021-M2" is transformed to '2020-01-01 00:00:01' by
         # `pd.to_datetime`.
@@ -108,21 +127,19 @@ def _handle_incorrect_conversions(
                 return modified_x
 
             return "%Y-%m-%d", modify_monthly_date
-        if date[0] == "Q" and len(date) == 7 and date[-4:].isdigit():
-            # "Q1 2020" format.
-
-            def move_quarter_to_end(x: str) -> str:
-                year_number = x[-4:]
-                quarter = x[:2]
-                modified_x = f"{year_number}-{quarter}"
-                return modified_x
-
-            return None, move_quarter_to_end
 
 
 def _shift_to_period_end(
     date: str,
 ) -> Optional[Callable[[DATETIME_TYPE], DATETIME_TYPE]]:
+    """
+    Get function to shift the dates to the end of period.
+
+    :param date: string date
+    :return: a function to shift the dates to the end of period. If `None`, no
+        shift is needed
+    """
+
     def shift_to_month_end(x: DATETIME_TYPE) -> DATETIME_TYPE:
         return x + pd.offsets.MonthEnd(0)
 
@@ -163,6 +180,15 @@ def _shift_to_period_end(
 def _determine_date_format(
     date: str, date_standard: Optional[str] = None
 ) -> Tuple[str, Callable[[str], str]]:
+    """
+    Determine date format for cases when `pd.to_datetime` fails.
+
+    :param date: date string
+    :param date_standard: "standard" or "ISO_8601", `None` defaults to
+        "standard"
+    :return: date format and a function to transform date strings before
+        converting them to datetime using `pd.to_datetime`
+    """
     date_standard = date_standard or "standard"
     if date_standard == "standard":
         year_format = "%Y"
@@ -178,6 +204,23 @@ def _determine_date_format(
     format_ = ""
     if date[:4].isdigit():
         format_ += year_format
+    elif date[0] == "Q" and len(date) == 7 and date[-4:].isdigit():
+        # "Q1 2020" format.
+
+        def modify_quarterly_data(x: str) -> str:
+            year_number = x[-4:]
+            quarter = int(x[1:2])
+            last_month_of_quarter = 3 * quarter
+            last_day_of_quarter = calendar.monthrange(
+                int(year_number), last_month_of_quarter
+            )[1]
+            modified_x = (
+                f"{year_number}-{last_month_of_quarter}-{last_day_of_quarter}"
+            )
+            return modified_x
+
+        format_ = f"{year_format}-%m-%d"
+        return format_, modify_quarterly_data
     else:
         raise ValueError(f"This format is not supported: '{date}'")
     next_char = date[4]
