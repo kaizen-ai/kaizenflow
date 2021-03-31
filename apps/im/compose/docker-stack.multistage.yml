@@ -5,6 +5,8 @@ services:
     image: postgres
     container_name: im-postgres
     restart: always
+    environment:
+      - POSTGRES_PASSWORD=dajhnwdIUP@Y73y1nbjndawjoi
     volumes:
       - /data:/var/lib/postgresql/data
       - ../init.sql:/docker-entrypoint-initdb.d/init.sql
