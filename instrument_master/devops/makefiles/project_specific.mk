@@ -248,10 +248,7 @@ im.fast_self_tests:
 	make im.docker_pull
 	make im.docker_build_image_with_cache.rc
 	make im.run_fast_tests.rc
-	#
 	make im.docker_cmd.local CMD="ls"
-	#make im.docker_down.local
-	#make im.docker_rm.local
 	@echo "==> SUCCESS <=="
 
 im.slow_self_tests:
