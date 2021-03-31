@@ -3,7 +3,7 @@
 # #############################################################################
 
 # Run app container, start a dev PostgreSQL DB.
-im-app.docker_up.local:
+im-app.docker_up.dev:
 	IMAGE=$(IM_IMAGE_DEV) \
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
@@ -28,7 +28,7 @@ im-app.docker_bash:
 		bash
 
 # Stop local container including all dependencies.
-im-app.docker_down.local:
+im-app.docker_down.dev:
 	IMAGE=$(IM_IMAGE_DEV) \
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
@@ -37,7 +37,7 @@ im-app.docker_down.local:
 		--remove-orphans
 
 # Stop dev container including all dependencies and remove all data.
-im-app.docker_rm.local:
+im-app.docker_rm.dev:
 	IMAGE=$(IM_IMAGE_DEV) \
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
