@@ -9,7 +9,7 @@ import vendors_amp.common.data.load.sql_data_loader as vcdlsq
 import vendors_amp.common.data.types as vcdtyp
 
 
-class SQLIBDataLoader(vcdlsq.AbstractSQLDataLoader):
+class SQLIbDataLoader(vcdlsq.AbstractSQLDataLoader):
 
     # TODO(plyq): Uncomment once #1047 will be resolved.
     # @hcache.cache
@@ -45,50 +45,6 @@ class SQLIBDataLoader(vcdlsq.AbstractSQLDataLoader):
             frequency=frequency,
             nrows=nrows,
         )
-
-    def get_exchange_id(
-        self,
-        exchange: str,
-    ) -> int:
-        """
-        Get primary key (id) of the Exchange entry by its name.
-
-        :param exchange: Name of the Exchange entry as defined in DB.
-        :return: primary key (id)
-        """
-        exchange_id = -1
-        with self.conn:
-            with self.conn.cursor() as curs:
-                curs.execute(
-                    "SELECT id FROM Exchange WHERE name = %s", [exchange]
-                )
-                if curs.rowcount:
-                    (_exchange_id,) = curs.fetchone()
-                    exchange_id = _exchange_id
-        if exchange_id == -1:
-            dbg.dfatal(f"Could not find Exchange ${exchange}")
-        return exchange_id
-
-    def get_symbol_id(
-        self,
-        symbol: str,
-    ) -> int:
-        """
-        Get primary key (id) of the Symbol entry by its symbol code.
-
-        :param symbol: symbol code, e.g. GOOGL
-        :return: primary key (id)
-        """
-        symbol_id = -1
-        with self.conn:
-            with self.conn.cursor() as curs:
-                curs.execute("SELECT id FROM Symbol WHERE code = %s", [symbol])
-                if curs.rowcount:
-                    (_symbol_id,) = curs.fetchone()
-                    symbol_id = _symbol_id
-        if symbol_id == -1:
-            dbg.dfatal(f"Could not find Symbol ${symbol}")
-        return symbol_id
 
     def get_trade_symbol_id(
         self,
@@ -131,11 +87,11 @@ class SQLIBDataLoader(vcdlsq.AbstractSQLDataLoader):
         """
         table_name = ""
         if frequency == vcdtyp.Frequency.Minutely:
-            table_name = "KibotMinuteData"
+            table_name = "IbMinuteData"
         elif frequency == vcdtyp.Frequency.Daily:
-            table_name = "KibotDailyData"
+            table_name = "IbDailyData"
         elif frequency == vcdtyp.Frequency.Tick:
-            table_name = "KibotTickData"
+            table_name = "IbTickData"
         dbg.dassert(table_name, f"Unknown frequency {frequency}")
         return table_name
 

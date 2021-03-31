@@ -15,7 +15,7 @@ import vendors_amp.common.data.types as vcdtyp
 _LOG = logging.getLogger(__name__)
 
 
-class S3ToSqlIBTransformer(vcdts3.AbstractS3ToSqlTransformer):
+class S3ToSqlIbTransformer(vcdts3.AbstractS3ToSqlTransformer):
     @classmethod
     def transform(
         cls,

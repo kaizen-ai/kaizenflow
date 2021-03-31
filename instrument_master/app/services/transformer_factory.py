@@ -24,7 +24,7 @@ class TransformerFactory:
         if provider == "kibot":
             transformer = vkdts3.S3ToSqlTransformer()
         elif provider == "ib":
-            transformer = vidts3.S3ToSqlIBTransformer()
+            transformer = vidts3.S3ToSqlIbTransformer()
         else:
             raise ValueError(
                 "S3 to SQL transformer for %s is not implemented" % provider
