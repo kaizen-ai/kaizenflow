@@ -5,3 +5,4 @@ STAGE=DEV
 POSTGRES_USER=im_dev
 POSTGRES_PASSWORD=***REMOVED***
 POSTGRES_PORT=5432
+docker-compose  -f apps/im/compose/docker-stack.multistage.yml up
