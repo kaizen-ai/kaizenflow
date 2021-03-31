@@ -2,6 +2,6 @@ STAGE=DEV
 
 # PostgreSQL
 # ------------------------------------------------------------------------------
-POSTGRES_HOST=particle
-POSTGRES_DB=dawd7Adh123daW151adgjJ
+POSTGRES_USER=im_dev
+POSTGRES_PASSWORD=***REMOVED***
 POSTGRES_PORT=5432

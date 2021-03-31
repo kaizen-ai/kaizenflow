@@ -8,3 +8,4 @@ services:
       - ../.env/dev/postgres
     volumes:
       - ../../../vendors_amp:/app/vendors_amp
+      - ../../init.sql:/docker-entrypoint-initdb.d/
