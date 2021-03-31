@@ -7,7 +7,6 @@ import helpers.printing as hprint
 import tempfile
 from typing import Any, Dict, Iterable, List, Optional, cast
 
-import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
@@ -467,12 +466,13 @@ def type_obj_to_str(obj: Any) -> str:
 
 
 def dataframe_to_str(
-    df: pd.DataFrame,
+    df: Any,
     max_columns: int = 10000,
     max_colwidth: int = 2000,
     max_rows: int = 500,
     display_width: int = 10000,
 ) -> str:
+    import pandas as pd
     with pd.option_context(
         "display.max_colwidth",
         max_colwidth,
@@ -501,6 +501,7 @@ def config_notebook(sns_set: bool = True) -> None:
 
     if sns_set:
         sns.set()
+    import pandas as pd
     pd.set_option("display.max_rows", 500)
     pd.set_option("display.max_columns", 500)
     pd.set_option("display.width", 1000)
