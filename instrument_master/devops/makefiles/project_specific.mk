@@ -26,8 +26,8 @@ im.docker_up.local:
 	IMAGE=$(IM_IMAGE_DEV) \
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
-		-f vendors_amp/devops/compose/docker-compose.yml \
-		-f vendors_amp/devops/compose/docker-compose.local.yml \
+		-f instrument_master/devops/compose/docker-compose.yml \
+		-f instrument_master/devops/compose/docker-compose.local.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -39,8 +39,8 @@ im.docker_bash:
 	IMAGE=$(IM_IMAGE_DEV) \
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
-		-f vendors_amp/devops/compose/docker-compose.yml \
-		-f vendors_amp/devops/compose/docker-compose.local.yml \
+		-f instrument_master/devops/compose/docker-compose.yml \
+		-f instrument_master/devops/compose/docker-compose.local.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -54,8 +54,8 @@ im.docker_down.local:
 	IMAGE=$(IM_IMAGE_DEV) \
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
-		-f vendors_amp/devops/compose/docker-compose.yml \
-		-f vendors_amp/devops/compose/docker-compose.local.yml \
+		-f instrument_master/devops/compose/docker-compose.yml \
+		-f instrument_master/devops/compose/docker-compose.local.yml \
 		down
 
 # Stop local container including all dependencies and remove all data.
@@ -63,8 +63,8 @@ im.docker_rm.local:
 	IMAGE=$(IM_IMAGE_DEV) \
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
-		-f vendors_amp/devops/compose/docker-compose.yml \
-		-f vendors_amp/devops/compose/docker-compose.local.yml \
+		-f instrument_master/devops/compose/docker-compose.yml \
+		-f instrument_master/devops/compose/docker-compose.local.yml \
 		down; \
 	docker volume rm compose_im_postgres_data_local
 
@@ -78,8 +78,8 @@ im.docker_pull:
 im.run_fast_tests:
 	IMAGE=$(IM_IMAGE_DEV) \
 	docker-compose \
-		-f vendors_amp/devops/compose/docker-compose.yml \
-		-f vendors_amp/devops/compose/docker-compose.test.yml \
+		-f instrument_master/devops/compose/docker-compose.yml \
+		-f instrument_master/devops/compose/docker-compose.test.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -89,8 +89,8 @@ im.run_fast_tests:
 im.run_slow_tests:
 	IMAGE=$(IM_IMAGE_DEV) \
 	docker-compose \
-		-f vendors_amp/devops/compose/docker-compose.yml \
-		-f vendors_amp/devops/compose/docker-compose.test.yml \
+		-f instrument_master/devops/compose/docker-compose.yml \
+		-f instrument_master/devops/compose/docker-compose.test.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -100,8 +100,8 @@ im.run_slow_tests:
 im.run_superslow_tests:
 	IMAGE=$(IM_IMAGE_DEV) \
 	docker-compose \
-		-f vendors_amp/devops/compose/docker-compose.yml \
-		-f vendors_amp/devops/compose/docker-compose.test.yml \
+		-f instrument_master/devops/compose/docker-compose.yml \
+		-f instrument_master/devops/compose/docker-compose.test.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -130,7 +130,7 @@ im.docker_build_image.rc:
 		--no-cache \
 		-t $(IM_IMAGE_RC) \
 		-t $(IM_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
-		--file vendors_amp/devops/docker_build/dev.Dockerfile \
+		--file instrument_master/devops/docker_build/dev.Dockerfile \
 		.
 
 im.docker_build_image_with_cache.rc:
@@ -139,7 +139,7 @@ im.docker_build_image_with_cache.rc:
 		--progress=plain \
 		-t $(IM_IMAGE_RC) \
 		-t $(IM_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
-		--file vendors_amp/devops/docker_build/dev.Dockerfile \
+		--file instrument_master/devops/docker_build/dev.Dockerfile \
 		.
 
 # Push the "rc" image to the registry.
