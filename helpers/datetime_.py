@@ -6,6 +6,7 @@ import helpers.datetime_ as hdatet
 
 import calendar
 import datetime
+import logging
 import re
 from typing import Callable, Iterable, Optional, Tuple, Union
 
@@ -13,6 +14,8 @@ import dateutil.parser as dparse
 import pandas as pd
 
 import helpers.dbg as dbg
+
+_LOG = logging.getLogger(__name__)
 
 DATETIME_TYPE = Union[pd.Timestamp, datetime.datetime]
 
@@ -90,14 +93,20 @@ def to_datetime(dates: Union[pd.Series, pd.Index]) -> Union[pd.Series, pd.Index]
     # Shift to end of period if conversion has been successful.
     if not pd.isna(datetime_dates).all():
         datetime_example = datetime_dates.tolist()[format_example_index]
-        if datetime_example.strftime("%Y-%m-%d") == date_example:
+        if (
+            not pd.isna(datetime_example)
+            and datetime_example.strftime("%Y-%m-%d") == date_example
+        ):
             return datetime_dates
         shift_func = _shift_to_period_end(date_example)
         if shift_func is not None:
             datetime_dates = datetime_dates.map(shift_func)
         return datetime_dates
     # If standard conversion fails, attempt our own conversion.
-    format_, date_modification_func = _determine_date_format(date_example)
+    format_determination_output = _determine_date_format(date_example)
+    if format_determination_output is None:
+        return datetime_dates
+    format_, date_modification_func = format_determination_output
     dates = dates.map(date_modification_func)
     return pd.to_datetime(dates, format=format_)
 
@@ -154,7 +163,7 @@ def _shift_to_period_end(
             if date[5:].isdigit():
                 # "2020-12" format.
                 return shift_to_month_end
-            elif date[5] == "Q":
+            if date[5] == "Q":
                 # "2021-Q1" format.
                 return shift_to_quarter_end
         elif len(date) == 6:
@@ -179,7 +188,7 @@ def _shift_to_period_end(
 
 def _determine_date_format(
     date: str, date_standard: Optional[str] = None
-) -> Tuple[str, Callable[[str], str]]:
+) -> Optional[Tuple[str, Callable[[str], str]]]:
     """
     Determine date format for cases when `pd.to_datetime` fails.
 
@@ -222,12 +231,14 @@ def _determine_date_format(
         format_ = f"{year_format}-%m-%d"
         return format_, modify_quarterly_data
     else:
-        raise ValueError(f"This format is not supported: '{date}'")
+        _LOG.error("This format is not supported: '%s'", date)
+        return
     next_char = date[4]
     # TODO(Julia): Support `["-", ".", "/", " "]` separators.
     if next_char == "-":
         if len(date) not in [7, 8]:
-            raise ValueError(f"This format is not supported: '{date}'")
+            _LOG.error("This format is not supported: '%s'", date)
+            return
         format_ += next_char
         next_char = date[5]
         if next_char == "W":
@@ -259,7 +270,8 @@ def _determine_date_format(
             date_modification_func = modify_bimonthly_date
             format_ += "%m-%d"
         else:
-            raise ValueError(f"This format is not supported: '{date}'")
+            _LOG.error("This format is not supported: '%s'", date)
+            return
     elif next_char == "M":
         # TODO(Julia): Check for string length.
         # "1959M01" format.
@@ -276,5 +288,6 @@ def _determine_date_format(
         date_modification_func = modify_monthly_date
         format_ += "-%m-%d"
     else:
-        raise ValueError(f"This format is not supported: '{date}'")
+        _LOG.error("This format is not supported: '%s'", date)
+        return
     return format_, date_modification_func
