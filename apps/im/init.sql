@@ -1,5 +1,5 @@
 CREATE DATABASE im_db_dev;
-CREATE USER im_dev;
+CREATE USER im_dev WITH PASSWORD '***REMOVED***';
 GRANT ALL PRIVILEGES ON DATABASE im_dev TO im_db_dev;
 CREATE DATABASE im_db_pre_prod;
 CREATE USER im_pre_prod WITH PASSWORD 'hjadhnuh2193nbodwaWa';
