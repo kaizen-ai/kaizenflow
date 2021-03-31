@@ -9,6 +9,6 @@ services:
       - ../.env/multistage/postgres
     volumes:
       - /data:/var/lib/postgresql/data
-      - ../../init.sql:/docker-entrypoint-initdb.d/
+      - ../init.sql:/docker-entrypoint-initdb.d/
     ports:
       - "0.0.0.0:5432:5432"
