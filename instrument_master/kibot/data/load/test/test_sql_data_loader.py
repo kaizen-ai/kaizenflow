@@ -35,14 +35,14 @@ class TestSqlDataLoader1(hut.TestCase):
             force=True,
         )
         # Initialize writer class to test.
-        writer = vksqlw.SQLWriterKibotBackend(
+        writer = vksqlw.KibotSqlWriterBackend(
             self.dbname, user, password, host, port
         )
         # Add data to database.
         self._prepare_tables(writer)
         writer.close()
         # Create loader.
-        self._loader = vkdlsq.SQLKibotDataLoader(
+        self._loader = vkdlsq.KibotSqlDataLoader(
             self.dbname, user, password, host, port
         )
 
@@ -138,7 +138,7 @@ class TestSqlDataLoader1(hut.TestCase):
             self._loader._read_data("CME", "", vcdtyp.Frequency.Minutely)
 
     @classmethod
-    def _prepare_tables(cls, writer: vksqlw.SQLWriterKibotBackend) -> None:
+    def _prepare_tables(cls, writer: vksqlw.KibotSqlWriterBackend) -> None:
         """
         Insert Symbol, Exchange and TradeSymbol entries to make test work.
 

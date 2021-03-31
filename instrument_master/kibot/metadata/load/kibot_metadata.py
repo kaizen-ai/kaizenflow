@@ -402,7 +402,7 @@ class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
         self.end_timedelta_days = end_timedelta_days
 
     def compute_lifetime(self, contract_name: str) -> vkmtyp.ContractLifetime:
-        df = vkdls3.S3KibotDataLoader().read_data(
+        df = vkdls3.KibotS3DataLoader().read_data(
             "Kibot",
             contract_name,
             vcdtyp.AssetClass.Futures,

@@ -87,7 +87,7 @@ srs = fcem.get_nth_contracts("NG", "2010-01-10", "2010-01-20", freq="B", n=1)
 srs
 
 # %%
-kdl = vkdls3.S3KibotDataLoader()
+kdl = vkdls3.KibotS3DataLoader()
 
 # %%
 ffc_obj = vkdlfu.FuturesForwardContracts(kdl)

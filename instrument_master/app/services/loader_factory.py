@@ -46,7 +46,7 @@ class LoaderFactory:
         """
         loader: vcdls3.AbstractS3DataLoader
         if provider == "kibot":
-            loader = vkdls3.S3KibotDataLoader()
+            loader = vkdls3.KibotS3DataLoader()
         else:
             raise ValueError("S3 loader for %s is not implemented" % provider)
         return loader
@@ -54,7 +54,7 @@ class LoaderFactory:
     @staticmethod
     def _get_sql_loader(
         provider: str, dbname: str, user: str, password: str, host: str, port: str
-    ) -> vcdlsq.AbstractSQLDataLoader:
+    ) -> vcdlsq.AbstractSqlDataLoader:
         """
         Returna a data loader from SQL for the requested `provider`.
 
@@ -66,9 +66,9 @@ class LoaderFactory:
         :param port: database port
         :raises ValueError: if SQL loader is not implemented for provider
         """
-        loader: vcdlsq.AbstractSQLDataLoader
+        loader: vcdlsq.AbstractSqlDataLoader
         if provider == "kibot":
-            loader = vkdlsq.SQLKibotDataLoader(
+            loader = vkdlsq.KibotSqlDataLoader(
                 dbname=dbname, user=user, password=password, host=host, port=port
             )
         else:

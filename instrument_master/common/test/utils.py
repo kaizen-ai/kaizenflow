@@ -31,7 +31,7 @@ class SqlWriterBackendTestCase(hut.TestCase):
         self._exchange_id = 20
         self._trade_symbol_id = 30
         # Create a placeholder for self._writer.
-        self._writer: vcsqlw.AbstractSQLWriterBackend
+        self._writer: vcsqlw.AbstractSqlWriterBackend
 
     def tearDown(self) -> None:
         # Close connection.

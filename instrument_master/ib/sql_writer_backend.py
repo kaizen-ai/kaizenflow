@@ -5,7 +5,7 @@ import instrument_master.common.data.types as vcdtyp
 import instrument_master.common.sql_writer_backend as vcsqlw
 
 
-class SQLWriterIbBackend(vcsqlw.AbstractSQLWriterBackend):
+class IbSqlWriterBackend(vcsqlw.AbstractSqlWriterBackend):
     """
     Manager of CRUD operations on a database defined in db.sql.
     """

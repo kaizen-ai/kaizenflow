@@ -20,7 +20,7 @@ class TestIbSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
     def setUp(self) -> None:
         super().setUp()
         # Initialize writer class to test.
-        self._writer = visqlw.SQLWriterIbBackend(
+        self._writer = visqlw.IbSqlWriterBackend(
             dbname=self._dbname,
             user=self._user,
             password=self._password,

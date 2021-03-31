@@ -285,7 +285,7 @@ def _rename(file_names_to_process: List[str], file_map: Dict[str, str]) -> None:
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__,
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--custom_flow", action="store", type=str)
     parser.add_argument(
