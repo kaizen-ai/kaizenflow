@@ -5,7 +5,7 @@ services:
     image: ${IMAGE}
     entrypoint: /app/vendors_amp/devops/docker_build/entrypoints/entrypoint_deploy_postgres.sh
     env_file:
-      - ../.env/dev
+      - ../.env/dev/postgres
 
 volumes:
   im_postgres_data_local: {}
