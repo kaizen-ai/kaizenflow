@@ -1,8 +1,13 @@
+"""
+Import as:
+
+import vendors_amp.ib.data.load.sql_data_loader as vidlsq
+"""
+
 import functools
 from typing import Optional
 
 import pandas as pd
-import psycopg2.extensions as pexten
 
 import helpers.dbg as dbg
 import vendors_amp.common.data.load.sql_data_loader as vcdlsq
@@ -46,37 +51,6 @@ class SQLIbDataLoader(vcdlsq.AbstractSQLDataLoader):
             nrows=nrows,
         )
 
-    def get_trade_symbol_id(
-        self,
-        symbol_id: int,
-        exchange_id: int,
-    ) -> int:
-        """
-        Get primary key (id) of the TradeSymbol entry by its respective Symbol
-        and Exchange ids.
-
-        :param symbol_id: id of Symbol
-        :param exchange_id: id of Exchange
-        :return: primary key (id)
-        """
-        trade_symbol_id = -1
-        with self.conn:
-            with self.conn.cursor() as curs:
-                curs.execute(
-                    "SELECT id FROM TradeSymbol "
-                    "WHERE symbol_id = %s AND exchange_id = %s",
-                    [symbol_id, exchange_id],
-                )
-                if curs.rowcount:
-                    (_trade_symbol_id,) = curs.fetchone()
-                    trade_symbol_id = _trade_symbol_id
-        if trade_symbol_id == -1:
-            dbg.dfatal(
-                f"Could not find Trade Symbol with "
-                f"symbol_id={symbol_id} and exchange_id={exchange_id}"
-            )
-        return trade_symbol_id
-
     @staticmethod
     def _get_table_name_by_frequency(frequency: vcdtyp.Frequency) -> str:
         """
@@ -94,26 +68,3 @@ class SQLIbDataLoader(vcdlsq.AbstractSQLDataLoader):
             table_name = "IbTickData"
         dbg.dassert(table_name, f"Unknown frequency {frequency}")
         return table_name
-
-    def _read_data(
-        self,
-        exchange: str,
-        symbol: str,
-        frequency: vcdtyp.Frequency,
-        nrows: Optional[int] = None,
-    ) -> pd.DataFrame:
-        exchange_id = self.get_exchange_id(exchange)
-        symbol_id = self.get_symbol_id(symbol)
-        trade_symbol_id = self.get_trade_symbol_id(symbol_id, exchange_id)
-        table_name = self._get_table_name_by_frequency(frequency)
-        limit = pexten.AsIs("ALL")
-        if nrows:
-            dbg.dassert_lte(1, nrows)
-            limit = nrows
-        query = "SELECT * FROM %s WHERE trade_symbol_id = %s LIMIT %s"
-        df = pd.read_sql_query(
-            query,
-            self.conn,
-            params=[pexten.AsIs(table_name), trade_symbol_id, limit],
-        )
-        return df
