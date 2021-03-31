@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  app:
+    image: ${IMAGE}
+    entrypoint: /app/vendors_amp/devops/docker_build/entrypoints/entrypoint_deploy_postgres.sh
+    depends_on:
+      - im_postgres_local
+    env_file:
+      - ../.env/local.env
+    environment:
+      - POSTGRES_PORT=${POSTGRES_PORT}
+
+  im_postgres_local:
+    image: postgres:13
+    container_name: im_postgres_local
+    restart: "no"
+    volumes:
+      - im_postgres_data_local:/var/lib/postgresql/data
+    env_file:
+      - ../.env/local.env
+    ports:
+      - "5432:5432"
+
+volumes:
+  im_postgres_data_local: {}

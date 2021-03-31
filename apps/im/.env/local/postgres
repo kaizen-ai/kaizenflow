@@ -1,7 +1,7 @@
-STAGE=MULTISTAGE
+STAGE=LOCAL
 
 # PostgreSQL
 # ------------------------------------------------------------------------------
-POSTGRES_HOST=particle
-POSTGRES_DB=dawd7Adh123daW151adgjJ
+POSTGRES_HOST=particle_local
+POSTGRES_DB=***REMOVED***
 POSTGRES_PORT=5432
