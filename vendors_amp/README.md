@@ -11,7 +11,17 @@
 
 <!--te-->
 
+# Running unit tests
 
+- Run the tests in the base Docker image:
+  ```bash
+  > pytest vendors_amp
+  ```
+
+- Run the tests that require IM Docker image:
+  ```bash
+  > make im.run_fast_tests
+  ```
 
 # Build image
 
