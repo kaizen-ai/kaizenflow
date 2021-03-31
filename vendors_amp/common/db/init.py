@@ -1,3 +1,7 @@
+"""
+Creates and handles the Postgres DB.
+"""
+
 import logging
 import os
 from typing import List, Optional
@@ -15,7 +19,7 @@ def get_init_sql_files(custom_files: Optional[List[str]] = None) -> List[str]:
     """
     Return the list of PostgreSQL initialization scripts in proper execution order.
 
-    :param custom_fields: provider related init files
+    :param custom_files: provider related init files
     :return: all files to init database
     """
     # Common files.
@@ -104,7 +108,7 @@ def remove_database(dbname: str) -> None:
     connection.close()
 
 
-# TODO(*): Is this the right position.
+# TODO(*): Is this in the right place?
 def is_inside_im_container() -> bool:
     """
     Return whether we are running inside IM app.

@@ -1,3 +1,4 @@
+# TODO(*): Move to convert_s3_to_sql_kibot.py
 """
 Converts Kibot data on S3 from .csv.gz to SQL.
 """

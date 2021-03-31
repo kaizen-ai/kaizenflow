@@ -7,7 +7,12 @@ import vendors_amp.kibot.data.load.file_path_generator as vkdlfi
 
 class DatasetNameParser:
     """
-    Converter of dataset names into enumerated types.
+    Convert a dataset name into enumerated types.
+
+    E.g., all_futures_continuous_contracts_daily ->
+        AssetClass.Futures
+        ContractType.Continuous
+        Frequency.Minutely
     """
 
     FREQ_PATH_MAPPING: Dict[str, vcdtyp.Frequency] = {

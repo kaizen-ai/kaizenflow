@@ -25,33 +25,32 @@
 
 # Build image
 
-1. Build release candidate image
-
+- Build release candidate image
 ```bash
-> make im.docker_buildi_image.rc
+> make im.docker_build_image.rc
 ```
 
-2. (Optional for now) Push release candidate image to ECR (Optional for now)
+- (Optional for now) Push release candidate image to ECR
 
 ```bash
 > make im.docker_push_image.rc
 ```
 
-3. Tag release candidate image with the latest tag
+- Tag release candidate image with the latest tag
 
 ```bash
 > make im.docker_tag_rc_image.latest
 ```
 
-4. Push latest image do ECR
+- Push latest image do ECR
 
 ```bash
 > make im.docker_push_image.latest
 ```
 
-# Run kibot app
+# Run IM app
 
-Pull image.
+- Pull image.
 
 ```bash
 > make im.docker_pull
@@ -84,20 +83,20 @@ IM_IMAGE_RC=083233266530.dkr.ecr.us-east-2.amazonaws.com/im:rc
 
 ## Run locally for development
 
-Build local image:
+- Build local image:
 
 ```bash
 > make im.docker_build_image.rc
 > make im.docker_tag_rc_image.latest
 ```
 
-Basic run with PostgreSQL:
+- Basic run with PostgreSQL:
 
 ```bash
 > make im.docker_up.local
 ```
 
-Basic run without PostgreSQL:
+- Basic run without PostgreSQL:
 
 ```bash
 > make im.docker_bash
@@ -105,13 +104,13 @@ Basic run without PostgreSQL:
 
 ## Stop remaining PostgreSQL containers
 
-Stop a container:
+- Stop a container:
 
 ```bash
 > make im.docker_down.local
 ```
 
-Stop a container and remove all data:
+- Stop a container and remove all data:
 
 ```bash
 > make im.docker_rm.local
@@ -122,5 +121,5 @@ Stop a container and remove all data:
 - Use `local` stages for development locally. Related: target in makefile
   `im.docker_up.local`
 
-All stages can have separate docker-compose files. All stages must have separate
-targets in make file to start and stop services.
+- All stages can have separate docker-compose files. All stages must have separate
+  targets in make file to start and stop services.
