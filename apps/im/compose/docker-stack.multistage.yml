@@ -1,0 +1,13 @@
+version: '3.1'
+
+services:
+  im-postgres:
+    image: postgres
+    container_name: im-postgres
+    restart: always
+    env_file:
+      - ../.env/multistage
+    volumes:
+      - /data:/var/lib/postgresql/data
+    ports:
+      - "0.0.0.0:5432:5432"
