@@ -21,13 +21,16 @@ im.print_setup:
 # Development.
 # #############################################################################
 
+im.docker_pull:
+	docker pull $(IM_IMAGE_DEV)
+
 # Run app container, start a local PostgreSQL DB.
 im.docker_up.local:
 	IMAGE=$(IM_IMAGE_DEV) \
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
-		-f instrument_master/devops/compose/docker-compose.yml \
-		-f instrument_master/devops/compose/docker-compose.local.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.local.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -39,8 +42,8 @@ im.docker_bash:
 	IMAGE=$(IM_IMAGE_DEV) \
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
-		-f instrument_master/devops/compose/docker-compose.yml \
-		-f instrument_master/devops/compose/docker-compose.local.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.local.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -54,8 +57,8 @@ im.docker_down.local:
 	IMAGE=$(IM_IMAGE_DEV) \
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
-		-f instrument_master/devops/compose/docker-compose.yml \
-		-f instrument_master/devops/compose/docker-compose.local.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.local.yml \
 		down
 
 # Stop local container including all dependencies and remove all data.
@@ -63,13 +66,10 @@ im.docker_rm.local:
 	IMAGE=$(IM_IMAGE_DEV) \
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
-		-f instrument_master/devops/compose/docker-compose.yml \
-		-f instrument_master/devops/compose/docker-compose.local.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.local.yml \
 		down; \
 	docker volume rm compose_im_postgres_data_local
-
-im.docker_pull:
-	docker pull $(IM_IMAGE_DEV)
 
 # #############################################################################
 # Test im workflow (including PostgreSQL server).
@@ -78,8 +78,8 @@ im.docker_pull:
 im.run_fast_tests:
 	IMAGE=$(IM_IMAGE_DEV) \
 	docker-compose \
-		-f instrument_master/devops/compose/docker-compose.yml \
-		-f instrument_master/devops/compose/docker-compose.test.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.test.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -89,8 +89,8 @@ im.run_fast_tests:
 im.run_slow_tests:
 	IMAGE=$(IM_IMAGE_DEV) \
 	docker-compose \
-		-f instrument_master/devops/compose/docker-compose.yml \
-		-f instrument_master/devops/compose/docker-compose.test.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.test.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -100,8 +100,8 @@ im.run_slow_tests:
 im.run_superslow_tests:
 	IMAGE=$(IM_IMAGE_DEV) \
 	docker-compose \
-		-f instrument_master/devops/compose/docker-compose.yml \
-		-f instrument_master/devops/compose/docker-compose.test.yml \
+		-f devops/compose/docker-compose.yml \
+		-f devops/compose/docker-compose.test.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -130,7 +130,7 @@ im.docker_build_image.rc:
 		--no-cache \
 		-t $(IM_IMAGE_RC) \
 		-t $(IM_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
-		--file instrument_master/devops/docker_build/dev.Dockerfile \
+		--file devops/docker_build/dev.Dockerfile \
 		.
 
 im.docker_build_image_with_cache.rc:
@@ -139,7 +139,7 @@ im.docker_build_image_with_cache.rc:
 		--progress=plain \
 		-t $(IM_IMAGE_RC) \
 		-t $(IM_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
-		--file instrument_master/devops/docker_build/dev.Dockerfile \
+		--file devops/docker_build/dev.Dockerfile \
 		.
 
 # Push the "rc" image to the registry.
@@ -161,6 +161,38 @@ im.docker_release.latest:
 	#make run_slow_tests.rc
 	make im.docker_tag_rc_image.latest
 	make im.docker_push_image.latest
+	@echo "==> SUCCESS <=="
+
+# #############################################################################
+# Self test.
+# #############################################################################
+
+# Run sanity checks on the current build system to make sure it works after
+# changes.
+#
+# NOTE: We need to run with IMAGE_RC since that's what we should be working
+# with, when changing the build system.
+
+im.fast_self_tests:
+	make im.print_setup
+	make targets
+	make makefiles
+	make docker_login
+	make docker_repo_images
+	make docker_ps
+	make im.docker_pull
+	make im.docker_build_image_with_cache.rc
+	make im.run_fast_tests.rc
+	@echo "==> SUCCESS <=="
+
+im.slow_self_tests:
+	make im.docker_build_image.prod
+	make im.run_slow_tests.rc
+	@echo "==> SUCCESS <=="
+
+im.self_tests:
+	make im.fast_self_tests
+	make im.slow_self_tests
 	@echo "==> SUCCESS <=="
 
 #BASE_IMAGE?=$(IM_IMAGE)

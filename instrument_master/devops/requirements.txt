@@ -8,7 +8,8 @@ joblib
 lxml
 matplotlib
 pandas
-psycopg2
+#psycopg2
+psycopg2-binary
 pytest
 pytest-xdist
 requests
