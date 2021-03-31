@@ -8,7 +8,7 @@ import os
 from typing import List
 
 import helpers.io_ as io_
-import vendors2.eoddata.metadata.types as mtypes
+import instrument_master.eoddata.metadata.types as mtypes
 
 _LOG = logging.getLogger(__name__)
 

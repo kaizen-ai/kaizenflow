@@ -31,7 +31,7 @@ import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.parser as prsr
 import helpers.system_interaction as si
-import vendors2.eoddata.metadata.types as mtypes
+import instrument_master.eoddata.metadata.types as mtypes
 
 _LOG = logging.getLogger(__name__)
 
