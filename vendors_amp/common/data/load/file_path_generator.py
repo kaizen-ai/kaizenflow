@@ -9,6 +9,7 @@ from typing import Optional
 import vendors_amp.common.data.types as vcdtyp
 
 
+# TODO(*): -> S3FilePathGenerator
 class FilePathGenerator(abc.ABC):
     """
     Generates path from specific security to the file storing the data on S3.

@@ -31,8 +31,11 @@ def get_engine_version(connection: psycop.extensions.connection) -> str:
     """
     Report information on the SQL engine.
 
-    E.g., ``` PostgreSQL 11.5 on x86_64-pc-linux-gnu     compiled by gcc
-    (GCC) 4.8.3 20140911 (Red Hat 4.8.3-9), 64-bit ```
+    E.g.,
+    ```
+    PostgreSQL 11.5 on x86_64-pc-linux-gnu
+    compiled by gcc (GCC) 4.8.3 20140911 (Red Hat 4.8.3-9), 64-bit
+    ```
     """
     query = "SELECT version();"
     df = pd.read_sql_query(query, connection)
