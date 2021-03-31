@@ -6,7 +6,7 @@ services:
     container_name: im-postgres
     restart: always
     env_file:
-      - ../.env/multistage
+      - ../.env/multistage/postgres
     volumes:
       - /data:/var/lib/postgresql/data
     ports:
