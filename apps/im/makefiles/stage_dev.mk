@@ -5,24 +5,17 @@
 # Run app container, start a dev PostgreSQL DB.
 im-app.docker_up.dev:
 	IMAGE=$(IM_IMAGE_DEV) \
-	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
 		-f amp/apps/im/compose/docker-stack.dev.yml
-		run \
-		--rm \
-		-l user=$(USER) \
-		app \
-		bash
+		up
 
-# Run app container w/o PostgreSQL.
+# Run app compose
 im-app.docker_bash:
 	IMAGE=$(IM_IMAGE_DEV) \
-	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
 		-f amp/apps/im/compose/docker-stack.dev.yml
 		run \
 		--rm \
-		-l user=$(USER) \
 		--no-deps \
 		app \
 		bash
@@ -33,18 +26,14 @@ im-app.docker_down.dev:
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
 		-f amp/apps/im/compose/docker-stack.dev.yml
-		down \
-		--remove-orphans
+		down
 
 # Stop dev container including all dependencies and remove all data.
 im-app.docker_rm.dev:
 	IMAGE=$(IM_IMAGE_DEV) \
-	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
 		-f amp/apps/im/compose/docker-stack.dev.yml
-		down \
-		--remove-orphans; \
-	docker volume rm compose_im_postgres_data_local
+		down -v
 
 # Pull docker image from AWS ECR
 im-app.docker_pull:
