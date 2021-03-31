@@ -2,10 +2,9 @@ version: '3'
 
 services:
   app:
-    image: ${IMAGE}
+    image: ${IM_IMAGE_DEV}
     entrypoint: /app/vendors_amp/devops/docker_build/entrypoints/entrypoint_deploy_postgres.sh
     env_file:
       - ../.env/dev/postgres
-
-volumes:
-  im_postgres_data_local: {}
+    volumes:
+      - ../../../vendors_amp:/app/vendors_amp

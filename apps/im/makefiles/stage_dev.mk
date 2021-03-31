@@ -36,5 +36,5 @@ im-app.docker_rm.dev:
 		down -v
 
 # Pull docker image from AWS ECR
-im-app.docker_pull:
+im-app.docker_pull.dev:
 	docker pull $(IM_IMAGE_DEV)
