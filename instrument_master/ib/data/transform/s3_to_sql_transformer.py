@@ -1,5 +1,5 @@
 """
-Converts Kibot data on S3 from .csv.gz to SQL.
+Convert IB data on S3 from .csv.gz to SQL.
 """
 
 import logging
@@ -40,7 +40,6 @@ class S3ToSqlIbTransformer(vcdts3.AbstractS3ToSqlTransformer):
             dbg.dfatal("Unknown frequency '%s'", frequency)
         return df
 
-    # TODO(Vlad): Rework it with IB data as in _transorm_daily_df.
     @staticmethod
     def _transorm_minutely_df(
         df: pd.DataFrame,
@@ -89,7 +88,7 @@ class S3ToSqlIbTransformer(vcdts3.AbstractS3ToSqlTransformer):
         df["trade_symbol_id"] = trade_symbol_id
         return df
 
-    # TODO(Vlad): Rework it with IB data as in _transorm_daily_df.
+    # TODO(Vlad): Rework it once tick data will be available.
     @staticmethod
     def _transorm_tick_df(
         df: pd.DataFrame,

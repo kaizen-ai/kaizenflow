@@ -140,6 +140,9 @@ class AbstractSqlDataLoader(vcdlda.AbstractDataLoader):
             nrows=nrows,
         )
 
+    def close(self) -> None:
+        self.conn.close()
+
     @abc.abstractstaticmethod
     def _get_table_name_by_frequency(frequency: vcdtyp.Frequency) -> str:
         """

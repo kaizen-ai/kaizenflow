@@ -25,7 +25,7 @@ class S3IbDataLoader(vcdls3.AbstractS3DataLoader):
     """
 
     S3_COLUMNS = {
-        "date": "datetime64[ns]",
+        "date": "object",
         "open": float,
         "high": float,
         "low": float,
@@ -103,6 +103,10 @@ class S3IbDataLoader(vcdls3.AbstractS3DataLoader):
         data = pd.read_csv(
             file_path, nrows=nrows, names=list(cls.S3_COLUMNS.keys())
         )
+        # TODO(plyq): Reload ES data with a new extractor to have a header.
+        # If header was already in data, remove it.
+        if list(data.iloc[0]) == list(cls.S3_COLUMNS.keys()):
+            data = data[1:].reset_index(drop=True)
         # Cast columns to correct types.
         data = data.astype(
             {
