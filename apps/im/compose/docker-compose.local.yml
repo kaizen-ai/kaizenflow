@@ -5,8 +5,8 @@ services:
     image: ${IM_IMAGE_DEV}
     container_name: im_app_local
     entrypoint: /app/vendors_amp/devops/docker_build/entrypoints/entrypoint_deploy_postgres.sh
-    depends_on:
-      - im_postgres_local
+    volumes:
+      - ../../../vendors_amp:/app/vendors_amp
     env_file:
       - ../.env/local/postgres
 

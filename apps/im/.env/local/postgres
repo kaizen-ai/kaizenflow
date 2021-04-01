@@ -2,6 +2,6 @@ STAGE=LOCAL
 
 # PostgreSQL
 # ------------------------------------------------------------------------------
-POSTGRES_HOST=particle_local
-POSTGRES_DB=***REMOVED***
+POSTGRES_USER=particle_local
+POSTGRES_PASSWORD=***REMOVED***
 POSTGRES_PORT=5432
