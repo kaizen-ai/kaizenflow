@@ -4,7 +4,7 @@ services:
   app:
     image: ${IM_IMAGE_DEV}
     container_name: im_app_local
-    entrypoint: /app/vendors_amp/devops/docker_build/entrypoints/entrypoint_deploy_postgres.sh
+    entrypoint: /app/instrument_master/devops/docker_build/entrypoints/entrypoint_deploy_postgres.sh
     volumes:
       - ../../../:/app
       - ~/.aws:/root/.aws

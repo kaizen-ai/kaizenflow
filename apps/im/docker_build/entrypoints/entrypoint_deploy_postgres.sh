@@ -16,6 +16,6 @@ done
 
 umask 000
 
-./vendors_amp/devops/docker_scripts/init_im_db.py --db $POSTGRES_DB
+./instrument_master/devops/docker_scripts/init_im_db.py --db $POSTGRES_DB
 
 eval "$@"

@@ -1,6 +1,6 @@
 FROM python:3.7-slim-buster
 
-COPY amp/vendors_amp/devops/requirements.txt .
+COPY amp/instrument_master/devops/requirements.txt .
 
 RUN apt-get update && \
     apt-get install gcc -y && \
