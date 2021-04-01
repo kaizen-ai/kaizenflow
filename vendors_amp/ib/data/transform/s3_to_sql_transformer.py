@@ -54,19 +54,17 @@ class S3ToSqlIbTransformer(vcdts3.AbstractS3ToSqlTransformer):
         :return: transformed dataframe
         """
         df.columns = [
-            "date",
-            "time",
+            "datetime",
             "open",
             "high",
             "low",
             "close",
             "volume",
+            "average",
+            "barCount",
         ]
         # Transform DataFrame from S3 to DB format.
         df["trade_symbol_id"] = trade_symbol_id
-        df["datetime"] = df["date"].str.cat(df["time"], sep=" ")
-        del df["date"]
-        del df["time"]
         return df
 
     @staticmethod

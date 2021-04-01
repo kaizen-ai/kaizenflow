@@ -34,6 +34,7 @@ class S3IbDataLoader(vcdls3.AbstractS3DataLoader):
         "average": float,
         "barCount": int,
     }
+    S3_DATE_COLUMNS = ["date"]
 
     # TODO(plyq): Uncomment once #1047 will be resolved.
     # @hcache.cache
@@ -101,5 +102,8 @@ class S3IbDataLoader(vcdls3.AbstractS3DataLoader):
         # https://github.com/pandas-dev/pandas/issues/36928 fixed in Pandas 1.1.4
         data = pd.read_csv(file_path, nrows=nrows, names=list(cls.S3_COLUMNS.keys()))
         # Cast columns to correct types.
-        data = data.astype(cls.S3_COLUMNS)
+        data = data.astype({key: cls.S3_COLUMNS[key] for key in cls.S3_COLUMNS
+                            if key not in cls.S3_DATE_COLUMNS})
+        for date_column in cls.S3_DATE_COLUMNS:
+            data[date_column] = pd.to_datetime(data[date_column])
         return data
