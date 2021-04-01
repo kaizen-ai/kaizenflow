@@ -130,13 +130,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     s3_to_sql_transformer = vkdts3.S3ToSqlTransformer()
     #
-    kibot_data_loader = vkdloa.S3KibotDataLoader()
+    kibot_data_loader = vkdloa.KibotS3DataLoader()
     #
     s3_backend = vkmls3.S3Backend()
     #
     dataset_name_parser = vkdlda.DatasetNameParser()
     #
-    sql_writer_backed = vksqlw.SQLWriterKibotBackend(
+    sql_writer_backed = vksqlw.KibotSqlWriterBackend(
         dbname=args.dbname,
         user=args.dbuser,
         password=args.dbpass,
@@ -144,7 +144,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         port=args.dbport,
     )
     #
-    sql_data_loader = vkdlsq.SQLKibotDataLoader(
+    sql_data_loader = vkdlsq.KibotSqlDataLoader(
         dbname=args.dbname,
         user=args.dbuser,
         password=args.dbpass,

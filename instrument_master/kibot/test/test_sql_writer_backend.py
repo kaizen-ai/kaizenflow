@@ -20,7 +20,7 @@ class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
     def setUp(self) -> None:
         super().setUp()
         # Initialize writer class to test.
-        self._writer = vksqlw.SQLWriterKibotBackend(
+        self._writer = vksqlw.KibotSqlWriterBackend(
             dbname=self._dbname,
             user=self._user,
             password=self._password,

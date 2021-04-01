@@ -9,8 +9,7 @@ import instrument_master.common.data.load.sql_data_loader as vcdlsq
 import instrument_master.common.data.types as vcdtyp
 
 
-# TODO(gp): -> KibotSqlDataLoader
-class SQLKibotDataLoader(vcdlsq.AbstractSQLDataLoader):
+class KibotSqlDataLoader(vcdlsq.AbstractSqlDataLoader):
 
     # TODO(plyq): Uncomment once #1047 will be resolved.
     # @hcache.cache

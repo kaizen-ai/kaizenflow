@@ -164,7 +164,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         host=args.dbhost,
         port=args.dbport,
     )
-    sql_data_loader: vcdlsq.AbstractSQLDataLoader = (
+    sql_data_loader: vcdlsq.AbstractSqlDataLoader = (
         vasloa.LoaderFactory.get_loader(
             storage_type="sql",
             provider=provider,

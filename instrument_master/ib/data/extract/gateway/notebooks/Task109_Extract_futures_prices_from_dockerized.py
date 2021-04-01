@@ -71,7 +71,7 @@ def print_df(df, n=3):
 # # Kibot
 
 # %%
-df_kibot = vakibot.S3KibotDataLoader().read_data(
+df_kibot = vakibot.KibotS3DataLoader().read_data(
     "Kibot",
     "ES",
     vakibot.AssetClass.Futures,

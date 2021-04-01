@@ -13,8 +13,7 @@ import instrument_master.kibot.data.load.file_path_generator as vkdlfi
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): -> KibotS3DataLoader
-class S3KibotDataLoader(vcdls3.AbstractS3DataLoader):
+class KibotS3DataLoader(vcdls3.AbstractS3DataLoader):
     # TODO(plyq): Uncomment once #1047 will be resolved.
     # @hcache.cache
     # Use lru_cache for now.
