@@ -3,7 +3,7 @@ Import as: import instrument_master.app.services.sql_writer_factory as vassql
 """
 import instrument_master.common.sql_writer_backend as vcsqlw
 import instrument_master.ib.sql_writer_backend as visqlw
-import vendorsinstrument_master_amp.kibot.sql_writer_backend as vksqlw
+import instrument_master.kibot.sql_writer_backend as vksqlw
 
 
 class SqlWriterFactory:

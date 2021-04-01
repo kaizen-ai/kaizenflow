@@ -7,8 +7,8 @@ import logging
 import pandas as pd
 
 import helpers.dbg as dbg
-import vendors_amp.common.data.transform.s3_to_sql_transformer as vcdts3
-import vendors_amp.common.data.types as vcdtyp
+import instrument_master.common.data.transform.s3_to_sql_transformer as vcdts3
+import instrument_master.common.data.types as vcdtyp
 
 _LOG = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 """
 Produce transformer objects.
 
-Import as: import vendors_amp.app.services.transformer_factory as vastra
+Import as: import instrument_master.app.services.transformer_factory as vastra
 """
 import instrument_master.common.data.transform.s3_to_sql_transformer as vcdts3
 import instrument_master.ib.data.transform.s3_to_sql_transformer as vidts3

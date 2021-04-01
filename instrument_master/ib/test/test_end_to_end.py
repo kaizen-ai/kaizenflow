@@ -1,14 +1,14 @@
 import pytest
 
 import helpers.unit_test as hut
-import vendors_amp.common.data.transform.transform as vcdttr
-import vendors_amp.common.data.types as vcdtyp
-import vendors_amp.common.db.init as vcdini
-import vendors_amp.common.test.utils as vctuti
-import vendors_amp.ib.data.load.s3_data_loader as vidls3
-import vendors_amp.ib.data.load.sql_data_loader as vidlsq
-import vendors_amp.ib.data.transform.s3_to_sql_transformer as vidts3
-import vendors_amp.ib.sql_writer_backend as visqlw
+import instrument_master.common.data.transform.transform as vcdttr
+import instrument_master.common.data.types as vcdtyp
+import instrument_master.common.db.init as vcdini
+import instrument_master.common.test.utils as vctuti
+import instrument_master.ib.data.load.s3_data_loader as vidls3
+import instrument_master.ib.data.load.sql_data_loader as vidlsq
+import instrument_master.ib.data.transform.s3_to_sql_transformer as vidts3
+import instrument_master.ib.sql_writer_backend as visqlw
 
 
 @pytest.mark.skipif(
@@ -24,7 +24,7 @@ class TestIbEndToEnd(vctuti.SqlWriterBackendTestCase):
         super().setUp()
         self._dbname_test = "im_postgres_db_local"
         # Initialize writer class to test.
-        self._writer = visqlw.SQLWriterIbBackend(
+        self._writer = visqlw.IbSqlWriterBackend(
             dbname=self._dbname_test,
             user=self._user,
             password=self._password,
