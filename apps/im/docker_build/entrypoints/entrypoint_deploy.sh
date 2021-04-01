@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 postgres_ready() {
   pg_isready -d $POSTGRES_DB -p $POSTGRES_PORT -h $POSTGRES_HOST
 }
@@ -16,6 +18,11 @@ done
 
 umask 000
 
+source ~/.bashrc
+
+export PYTHONPATH=/app:$PYTHONPATH
+echo "PYTHONPATH=$PYTHONPATH"
+python -c "import psycopg2"
 ./instrument_master/devops/docker_scripts/init_im_db.py --db $POSTGRES_DB
 
 eval "$@"
