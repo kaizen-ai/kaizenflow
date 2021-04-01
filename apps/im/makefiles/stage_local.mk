@@ -7,7 +7,7 @@ im-app.docker_up.local:
 	IMAGE=$(IM_IMAGE_DEV) \
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
-		-f amp/apps/im/compose/docker-stack.local.yml
+		-f amp/apps/im/compose/docker-compose.local.yml
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -19,7 +19,7 @@ im-app.docker_bash:
 	IMAGE=$(IM_IMAGE_DEV) \
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
-		-f amp/apps/im/compose/docker-stack.local.yml
+		-f amp/apps/im/compose/docker-compose.local.yml
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -32,7 +32,7 @@ im-app.docker_down.local:
 	IMAGE=$(IM_IMAGE_DEV) \
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
-		-f amp/apps/im/compose/docker-stack.local.yml
+		-f amp/apps/im/compose/docker-compose.local.yml
 		down \
 		--remove-orphans
 
@@ -41,7 +41,7 @@ im-app.docker_rm.local:
 	IMAGE=$(IM_IMAGE_DEV) \
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
-		-f amp/apps/im/compose/docker-stack.local.yml
+		-f amp/apps/im/compose/docker-compose.local.yml
 		down \
 		--remove-orphans; \
 	docker volume rm compose_im_postgres_data_local

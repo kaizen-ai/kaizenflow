@@ -2,7 +2,7 @@ version: '3'
 
 services:
   app:
-    image: ${IMAGE}
+    image: ${IM_IMAGE_DEV}
     container_name: im_app_local
     entrypoint: /app/vendors_amp/devops/docker_build/entrypoints/entrypoint_deploy_postgres.sh
     depends_on:
