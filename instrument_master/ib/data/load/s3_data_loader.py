@@ -19,13 +19,13 @@ import instrument_master.ib.data.load.file_path_generator as vidlfi
 _LOG = logging.getLogger(__name__)
 
 
-class S3IbDataLoader(vcdls3.AbstractS3DataLoader):
+class IbS3DataLoader(vcdls3.AbstractS3DataLoader):
     """
     Reads IB data from S3.
     """
 
     S3_COLUMNS = {
-        "date": "datetime64[ns]",
+        "date": "object",
         "open": float,
         "high": float,
         "low": float,
@@ -34,6 +34,7 @@ class S3IbDataLoader(vcdls3.AbstractS3DataLoader):
         "average": float,
         "barCount": int,
     }
+    S3_DATE_COLUMNS = ["date"]
 
     # TODO(plyq): Uncomment once #1047 will be resolved.
     # @hcache.cache
@@ -97,7 +98,23 @@ class S3IbDataLoader(vcdls3.AbstractS3DataLoader):
                 hs3.exists(file_path), True, msg=f"S3 key not found: {file_path}"
             )
         # Read data.
-        data = pd.read_csv(file_path, nrows=nrows, names=cls.S3_COLUMNS.keys())
+        # cls.S3_COLUMNS.keys() -> list(cls.S3_COLUMNS.keys())
+        # https://github.com/pandas-dev/pandas/issues/36928 fixed in Pandas 1.1.4
+        data = pd.read_csv(
+            file_path, nrows=nrows, names=list(cls.S3_COLUMNS.keys())
+        )
+        # TODO(plyq): Reload ES data with a new extractor to have a header.
+        # If header was already in data, remove it.
+        if list(data.iloc[0]) == list(cls.S3_COLUMNS.keys()):
+            data = data[1:].reset_index(drop=True)
         # Cast columns to correct types.
-        data = data.astype(cls.S3_COLUMNS)
+        data = data.astype(
+            {
+                key: cls.S3_COLUMNS[key]
+                for key in cls.S3_COLUMNS
+                if key not in cls.S3_DATE_COLUMNS
+            }
+        )
+        for date_column in cls.S3_DATE_COLUMNS:
+            data[date_column] = pd.to_datetime(data[date_column])
         return data

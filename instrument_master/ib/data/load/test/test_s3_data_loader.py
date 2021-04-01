@@ -10,7 +10,7 @@ class TestS3IbDataLoader1(hut.TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self._s3_data_loader = vidls3.S3IbDataLoader()
+        self._s3_data_loader = vidls3.IbS3DataLoader()
 
     def test_dtypes1(self) -> None:
         """
