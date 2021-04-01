@@ -178,7 +178,7 @@
   public | tradesymbol         | table | menjgbcvejlpcbejlc
   ```
 
-- To copy data from S3 to SQL (HG continuous minutely data):
+- To copy data from S3 to SQL (e.g. HG continuous minutely data):
   ```bash
   cd instrument_master/app/transform
   python convert_s3_to_sql.py \
