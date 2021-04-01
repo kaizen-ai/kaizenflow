@@ -49,7 +49,7 @@ class TestReadFromS3WriteToSql(vctuti.SqlWriterBackendTestCase):
         Test equal with:
 
         ```
-        > app/instument_master/transform/convert_s3_to_sql.py \
+        > app/transform/convert_s3_to_sql.py \
                 --provider ib \
                 --symbol ES \
                 --frequency D \
@@ -77,7 +77,7 @@ class TestReadFromS3WriteToSql(vctuti.SqlWriterBackendTestCase):
         Test equal with:
 
         ```
-        > app/instument_master/transform/convert_s3_to_sql.py \
+        > app/transform/convert_s3_to_sql.py \
                 --provider ib \
                 --symbol HG \
                 --frequency D \
@@ -105,7 +105,7 @@ class TestReadFromS3WriteToSql(vctuti.SqlWriterBackendTestCase):
         Test equal with:
 
         ```
-        > app/instument_master/transform/convert_s3_to_sql.py \
+        > app/transform/convert_s3_to_sql.py \
                 --provider ib \
                 --symbol ES \
                 --frequency T \
@@ -133,7 +133,7 @@ class TestReadFromS3WriteToSql(vctuti.SqlWriterBackendTestCase):
         Test equal with:
 
         ```
-        > app/instument_master/transform/convert_s3_to_sql.py \
+        > app/transform/convert_s3_to_sql.py \
                 --provider ib \
                 --symbol HG \
                 --frequency T \
@@ -170,13 +170,13 @@ class TestReadFromS3WriteToSql(vctuti.SqlWriterBackendTestCase):
         - Read from S3
         - Transform
         - Write to PostgreSQL
-        - Read from PostgrSQL
+        - Read from PostgreSQL
         - Check results
 
         :param exchange: symbol exchange
         :param symbol: symbol name
         :param asset_class: symbol asset class
-        :param contract_type: symbol contract_type
+        :param contract_type: symbol contract type
         :param frequency: data frequency to return
         """
         # Prepare database.
