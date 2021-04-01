@@ -6,7 +6,10 @@ services:
     container_name: im_app_local
     entrypoint: /app/vendors_amp/devops/docker_build/entrypoints/entrypoint_deploy_postgres.sh
     volumes:
-      - ../../../vendors_amp:/app/vendors_amp
+      - ../../../:/app
+      - ~/.aws:/root/.aws
+      - ~/.config/gspread_pandas/:/root/.config/gspread_pandas/
+      - ../../../devops/docker_build/fstab:/etc/fstab
     env_file:
       - ../.env/local/postgres
 

@@ -9,4 +9,4 @@ services:
     env_file:
       - ../.env/dev/postgres
     volumes:
-      - ../../../vendors_amp:/app/vendors_amp
+      - ../../../:/app
