@@ -7,3 +7,4 @@ POSTGRES_DB=im_db_dev
 POSTGRES_HOST=pg-im.multistage.p1
 POSTGRES_PASSWORD=***REMOVED***
 POSTGRES_PORT=5432
+POSTGRES_MULTIPLE_DATABASES=im_db_dev,im_db_pre_prod,im_db_prod

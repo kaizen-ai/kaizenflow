@@ -7,4 +7,5 @@ services:
     env_file:
       - ../.env/dev/postgres
     volumes:
+      - ../../create-multiple-postgresql-databases.sh:/docker-entrypoint-initdb.d
       - ../../../vendors_amp:/app/vendors_amp
