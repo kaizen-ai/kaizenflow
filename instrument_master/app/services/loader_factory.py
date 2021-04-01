@@ -1,19 +1,21 @@
 """
-Import as: import instrument_master.app.services.loader_factory as vasloa
+Import as: import instrument_master.app.services.loader_factory as vasloa.
 """
 from typing import Any
 
 import instrument_master.common.data.load.data_loader as vcdlda
 import instrument_master.common.data.load.s3_data_loader as vcdls3
 import instrument_master.common.data.load.sql_data_loader as vcdlsq
+import instrument_master.ib.data.load.s3_data_loader as vidls3
+import instrument_master.ib.data.load.sql_data_loader as vidlsq
 import instrument_master.kibot.data.load.s3_data_loader as vkdls3
 import instrument_master.kibot.data.load.sql_data_loader as vkdlsq
 
 
 class LoaderFactory:
     """
-    Builds AbstractDataLoader objects based on different criteria (e.g., provider
-    and storage type).
+    Builds AbstractDataLoader objects based on different criteria (e.g.,
+    provider and storage type).
     """
 
     @classmethod
@@ -47,13 +49,15 @@ class LoaderFactory:
         loader: vcdls3.AbstractS3DataLoader
         if provider == "kibot":
             loader = vkdls3.KibotS3DataLoader()
+        elif provider == "ib":
+            loader = vidls3.IbS3DataLoader()
         else:
             raise ValueError("S3 loader for %s is not implemented" % provider)
         return loader
 
     @staticmethod
     def _get_sql_loader(
-        provider: str, dbname: str, user: str, password: str, host: str, port: str
+        provider: str, dbname: str, user: str, password: str, host: str, port: int
     ) -> vcdlsq.AbstractSqlDataLoader:
         """
         Returna a data loader from SQL for the requested `provider`.
@@ -69,6 +73,10 @@ class LoaderFactory:
         loader: vcdlsq.AbstractSqlDataLoader
         if provider == "kibot":
             loader = vkdlsq.KibotSqlDataLoader(
+                dbname=dbname, user=user, password=password, host=host, port=port
+            )
+        elif provider == "ib":
+            loader = vidlsq.IbSqlDataLoader(
                 dbname=dbname, user=user, password=password, host=host, port=port
             )
         else:

@@ -64,10 +64,9 @@ def convert_s3_to_sql(
         frequency=frequency,
         contract_type=contract_type,
         unadjusted=unadjusted,
+        nrows=max_num_rows,
         normalize=False,
     )
-    if max_num_rows:
-        df = df.head(max_num_rows)
     _LOG.debug("Transforming '%s' data before saving to database", symbol)
     df = s3_to_sql_transformer.transform(
         df, trade_symbol_id=trade_symbol_id, frequency=frequency
