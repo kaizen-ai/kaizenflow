@@ -13,6 +13,9 @@ services:
     env_file:
       - ../.env/local/postgres
     privileged: true
+    depends_on:
+      im_postgres_local:
+        condition: service_started
     working_dir: /app
     cap_add:
       - SYS_ADMIN
