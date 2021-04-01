@@ -1,11 +1,12 @@
 <!--ts-->
-   * [Kibot timing](#kibot-timing)
+   * [Run unit tests](#run-unit-tests)
    * [Build image](#build-image)
-   * [Run kibot app](#run-kibot-app)
+   * [Run IM app](#run-im-app)
       * [Prerequisites](#prerequisites)
       * [Run locally for development](#run-locally-for-development)
       * [Stop remaining PostgreSQL containers](#stop-remaining-postgresql-containers)
    * [Development flow using stages](#development-flow-using-stages)
+   * [Loading data into the DB](#loading-data-into-the-db)
 
 
 
@@ -14,6 +15,7 @@
 # Run unit tests
 
 - Run the tests in the base Docker image:
+
   ```bash
   > pytest vendors_amp
   ```
@@ -26,16 +28,19 @@
 # Build image
 
 - Build release candidate image:
+
   ```bash
   > make im.docker_build_image.rc
   ```
 
 - (Optional for now) Push release candidate image to ECR:
+
   ```bash
   > make im.docker_push_image.rc
   ```
 
 - Tag release candidate image with the latest tag:
+
   ```bash
   > make im.docker_tag_rc_image.latest
   ```
@@ -67,6 +72,7 @@
 
 - IB TWS or Gateway app [should be up](./ib/connect/README.md) on `research.p1`
   with API port 4012. For example:
+
   ```bash
   > IB_CONNECT_USER=gpsagg314 \
     IB_CONNECT_PASSWORD=<password> \
@@ -97,12 +103,14 @@
 ## Run locally for development
 
 - Build local image:
+
   ```bash
   > make im.docker_build_image.rc
   > make im.docker_tag_rc_image.latest
   ```
 
 - Basic run with PostgreSQL:
+
   ```bash
   > make im.docker_up.local
   ```
@@ -115,6 +123,7 @@
 ## Stop remaining PostgreSQL containers
 
 - Stop a container:
+
   ```bash
   > make im.docker_down.local
   ```
@@ -129,12 +138,13 @@
 - Use `local` stages for development locally. Related: target in makefile
   `im.docker_up.local`
 
-- All stages can have separate docker-compose files. All stages must have separate
-  targets in makefile to start and stop services.
-  
+- All stages can have separate docker-compose files. All stages must have
+  separate targets in makefile to start and stop services.
+
 # Loading data into the DB
 
 - Bring up the stack:
+
   ```bash
   > make im.docker_up.local
   ```
@@ -147,6 +157,7 @@
   ```
 
 - To connect to the local DB:
+
   ```bash
   PGPASSWORD=eidvlbaresntlcdbresntdjlrs psql -h localhost -p 5550 -d im_postgres_db_local  -U menjgbcvejlpcbejlc
 
@@ -165,4 +176,16 @@
   public | kibottickdata       | table | menjgbcvejlpcbejlc
   public | symbol              | table | menjgbcvejlpcbejlc
   public | tradesymbol         | table | menjgbcvejlpcbejlc
+  ```
+
+- To copy data from S3 to SQL (e.g. HG continuous minutely data):
+  ```bash
+  cd instrument_master/app/transform
+  python convert_s3_to_sql.py \
+                --provider ib \
+                --symbol HG \
+                --frequency T \
+                --contract_type continuous \
+                --asset_class Futures \
+                --exchange NYMEX
   ```
