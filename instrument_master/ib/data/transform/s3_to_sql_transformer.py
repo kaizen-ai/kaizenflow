@@ -13,7 +13,7 @@ import instrument_master.common.data.types as vcdtyp
 _LOG = logging.getLogger(__name__)
 
 
-class S3ToSqlIbTransformer(vcdts3.AbstractS3ToSqlTransformer):
+class IbS3ToSqlTransformer(vcdts3.AbstractS3ToSqlTransformer):
     @classmethod
     def transform(
         cls,

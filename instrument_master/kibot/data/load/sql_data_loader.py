@@ -4,7 +4,6 @@ import instrument_master.common.data.types as vcdtyp
 
 
 class KibotSqlDataLoader(vcdlsq.AbstractSqlDataLoader):
-
     @staticmethod
     def _get_table_name_by_frequency(frequency: vcdtyp.Frequency) -> str:
         """

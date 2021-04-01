@@ -30,9 +30,9 @@ class TestReadFromS3WriteToSql(vctuti.SqlWriterBackendTestCase):
             host=self._host,
             port=self._port,
         )
-        self._s3_data_loader = vidls3.S3IbDataLoader()
-        self._s3_to_sql_transformer = vidts3.S3ToSqlIbTransformer()
-        self._sql_data_loader = vidlsq.SQLIbDataLoader(
+        self._s3_data_loader = vidls3.IbS3DataLoader()
+        self._s3_to_sql_transformer = vidts3.IbS3ToSqlTransformer()
+        self._sql_data_loader = vidlsq.IbSqlDataLoader(
             dbname=self._dbname,
             user=self._user,
             password=self._password,

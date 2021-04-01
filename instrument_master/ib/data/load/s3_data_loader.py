@@ -19,7 +19,7 @@ import instrument_master.ib.data.load.file_path_generator as vidlfi
 _LOG = logging.getLogger(__name__)
 
 
-class S3IbDataLoader(vcdls3.AbstractS3DataLoader):
+class IbS3DataLoader(vcdls3.AbstractS3DataLoader):
     """
     Reads IB data from S3.
     """

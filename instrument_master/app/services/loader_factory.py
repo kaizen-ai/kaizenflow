@@ -1,5 +1,5 @@
 """
-Import as: import instrument_master.app.services.loader_factory as vasloa
+Import as: import instrument_master.app.services.loader_factory as vasloa.
 """
 from typing import Any
 
@@ -48,7 +48,7 @@ class LoaderFactory:
         """
         loader: vcdls3.AbstractS3DataLoader
         if provider == "kibot":
-            loader = vkdls3.KibotS3DataLoader()()
+            loader = vkdls3.KibotS3DataLoader()
         elif provider == "ib":
             loader = vidls3.IbS3DataLoader()
         else:
@@ -58,7 +58,7 @@ class LoaderFactory:
     @staticmethod
     def _get_sql_loader(
         provider: str, dbname: str, user: str, password: str, host: str, port: int
-    ) -> vcdlsq.AbstractSQLDataLoader:
+    ) -> vcdlsq.AbstractSqlDataLoader:
         """
         Returna a data loader from SQL for the requested `provider`.
 
@@ -73,13 +73,11 @@ class LoaderFactory:
         loader: vcdlsq.AbstractSqlDataLoader
         if provider == "kibot":
             loader = vkdlsq.KibotSqlDataLoader(
-                dbname=dbname, user=user, password=password, host=host,
-                port=port
+                dbname=dbname, user=user, password=password, host=host, port=port
             )
         elif provider == "ib":
-            loader = vidlsq.IbSQLDataLoader(
-                dbname=dbname, user=user, password=password, host=host,
-                port=port
+            loader = vidlsq.IbSqlDataLoader(
+                dbname=dbname, user=user, password=password, host=host, port=port
             )
         else:
             raise ValueError("SQL loader for %s is not implemented" % provider)

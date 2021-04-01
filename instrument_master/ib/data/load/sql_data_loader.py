@@ -8,7 +8,7 @@ import instrument_master.common.data.load.sql_data_loader as vcdlsq
 import instrument_master.common.data.types as vcdtyp
 
 
-class SQLIbDataLoader(vcdlsq.AbstractSqlDataLoader):
+class IbSqlDataLoader(vcdlsq.AbstractSqlDataLoader):
     @staticmethod
     def _get_table_name_by_frequency(frequency: vcdtyp.Frequency) -> str:
         """
