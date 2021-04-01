@@ -1575,7 +1575,7 @@ def truncate_index(idx: pd.Index, min_idx: Any, max_idx: Any) -> pd.Index:
     Return subset of idx with values >= min_idx and < max_idx.
     """
     dbg.dassert_strictly_increasing_index(idx)
-    # TODO(*): PartTask667: Consider using bisection to avoid linear scans.
+    # TODO(*): PTask667: Consider using bisection to avoid linear scans.
     min_mask = idx >= min_idx
     max_mask = idx < max_idx
     mask = min_mask & max_mask

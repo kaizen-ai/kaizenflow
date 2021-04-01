@@ -232,7 +232,7 @@ def parse_path(path: str) -> Tuple[str, str]:
     return bucket_name, ret
 
 
-# TODO(Julia): When PartTask418_PRICE_Convert_Kibot_data_from_csv is
+# TODO(Julia): When PTask418_PRICE_Convert_Kibot_data_from_csv is
 # merged, choose between this ls() and listdir() functions.
 def ls(file_path: str) -> List[str]:
     """

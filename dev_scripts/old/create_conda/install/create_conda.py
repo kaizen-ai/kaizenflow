@@ -13,11 +13,11 @@ libraries.
         --req_file dev_scripts/install/requirements/amp_develop.yaml \
         --delete_env_if_exists
 
-# Install the `p1_develop` default environment:
+# Install the `develop` default environment:
 > create_conda.py \
-        --env_name p1_develop \
+        --env_name develop \
         --req_file amp/dev_scripts/install/requirements/amp_develop.yaml \
-        --req_file dev_scripts_p1/install/requirements/p1_develop.yaml \
+        --req_file dev_scripts/install/requirements/develop.yaml \
         --delete_env_if_exists
 
 # Quick install to test the script:
@@ -248,11 +248,11 @@ def _create_conda_env(args: Any, conda_env_name: str) -> None:
 
 def _run_pip_install(args: Any, conda_env_name: str) -> None:
     if args.test_install:
-        # To work around the break of PartTask1124.
+        # To work around the break of PTask1124.
         pass
     else:
         if False:
-            # PartTask1005: Moved to pip and pinned for gluonts.
+            # PTask1005: Moved to pip and pinned for gluonts.
             cmd = [
                 "conda activate %s" % conda_env_name,
                 'pip install --no-deps "mxnet>=1.6.0"',

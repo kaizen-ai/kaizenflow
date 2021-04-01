@@ -8,16 +8,15 @@ workflows.
 > ghi_show.py 257
 # Github:
 #257: ST: sources analysis
-https://github.com/ParticleDev/commodity_research/issues/257
+https://github.com/.../issues/257
 
 # Files in the repo:
-./oil/ST/Task257_Sources_analysis.py
-./oil/ST/Task257_Sources_analysis.ipynb
+.../Task257_Sources_analysis.py
+.../Task257_Sources_analysis.ipynb
 
-# Files in the gdrive '/Users/saggese/GoogleDriveParticle':
-'/Users/saggese/GoogleDriveParticle/Tech/Task 257 - ST - Sources Analysis.gdoc'
+# Files in the gdrive '/Users/saggese/GoogleDrive':
+'/Users/saggese/GoogleDrive/Tech/Task 257 - ST - Sources Analysis.gdoc'
   https://docs.google.com/open?id=1B70mA0m5UovKmuzAq05XESlKNvToflBR1uqtcYGXhhM
-
 
 # Get all the data relative to issue #13 for a different GitHub repo:
 > ghi_show.py 13 --repo Amp
@@ -101,7 +100,7 @@ def _print_files_in_git_repo(issue_num, repo_github_name):
 
 def _print_gdrive_files(issue_num, repo_github_name):
     _ = repo_github_name
-    env_name = "P1_GDRIVE_PATH"
+    env_name = "GDRIVE_PATH"
     if env_name in os.environ:
         dir_name = os.environ[env_name]
         print(
@@ -120,7 +119,7 @@ def _print_gdrive_files(issue_num, repo_github_name):
         #   "doc_id":
         #       "1B70mA0m5UovKmuzAq05XESlKNvToflBR1uqtcYGXhhM",
         #   "email":
-        #       "gp@particle.one"}
+        #       "gp@"}
         for f in txt.split("\n"):
             if f.endswith(".gdoc") or f.endswith(".gsheet"):
                 txt_tmp = io_.from_file(f)
@@ -153,8 +152,7 @@ def _parse() -> argparse.ArgumentParser:
         "-r",
         "--repo_github_name",
         action="store",
-        # TODO(gp): This is a workaround for PartTask551.
-        default="ParticleDev/commodity_research",
+        default="",
         help="Refer to one of the repos using full git name",
     )
     parser.add_argument("positional", nargs="+", help="Github issue number")

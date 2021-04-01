@@ -53,7 +53,7 @@ To clean up the crap in the dirs:
 > git clean -fdx --dry-run
 
 Diff dirs:
-> diff_to_vimdiff.py --src_dir /Users/saggese/src/commodity_research2/amp --dst_dir /Users/saggese/src/commodity_research3/amp
+> diff_to_vimdiff.py --src_dir /Users/saggese/src/...2/amp --dst_dir /Users/saggese/src/...3/amp
 ```
 
 **_dev_scripts/ffind.py_**
@@ -83,14 +83,14 @@ Get all the data relative to issue #257:
 > ghi_show.py 257
 Github:
 #257: ST: sources analysis
-https://github.com/ParticleDev/commodity_research/issues/257
+https://github.com/.../.../issues/257
 
 Files in the repo:
 ./oil/ST/Task257_Sources_analysis.py
 ./oil/ST/Task257_Sources_analysis.ipynb
 
-Files in the gdrive '/Users/saggese/GoogleDriveParticle':
-'/Users/saggese/GoogleDriveParticle/Tech/Task 257 - ST - Sources Analysis.gdoc'
+Files in the gdrive '/Users/saggese/GoogleDrive':
+'/Users/saggese/GoogleDrive/Tech/Task 257 - ST - Sources Analysis.gdoc'
   https://docs.google.com/open?id=1B70mA0m5UovKmuzAq05XESlKNvToflBR1uqtcYGXhhM
 
 Get all the data relative to issue #13 for a different GitHub repo:
@@ -100,12 +100,12 @@ Get all the data relative to issue #13 for a different GitHub repo:
 **_dev_scripts/grsync.py_**
 ```
 - Rsync a git dir against a pycharm deploy dir
-> grsync.py --src_dir $HOME/src/particle/commodity_research --config P1 --action rsync -v DEBUG --preview
+> grsync.py --src_dir $HOME/src/.../... --config ... --action rsync -v DEBUG --preview
 
 - Diff
-> grsync.py --src_dir $HOME/src/particle/commodity_research --config P1 --action diff
-> grsync.py --src_dir $HOME/src/particle/commodity_research --config P1 --action diff_verb
-> grsync.py --src_dir $HOME/src/particle/commodity_research/tr --config P1 --action diff_verb
+> grsync.py --src_dir $HOME/src/.../... --config ... --action diff
+> grsync.py --src_dir $HOME/src/.../... --config ... --action diff_verb
+> grsync.py --src_dir $HOME/src/.../.../tr --config ... --action diff_verb
 ```
 
 **_dev_scripts/jack_**
@@ -213,12 +213,12 @@ To revert all files but this one
 ```
 Convert a url / path into different formats: jupyter url, github, git path.
 
-> url.py https://github.com/ParticleDev/commodity_research/blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+> url.py https://github.com/.../.../blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 file_name=
-/Users/saggese/src/particle/commodity_research/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+/Users/saggese/src/.../.../oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 
 github_url=
-https://github.com/ParticleDev/commodity_research/blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
+https://github.com/.../.../blob/master/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 
 jupyter_url=
 http://localhost:10001/tree/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
@@ -586,7 +586,7 @@ Kill all the ssh tunnels on the machine, for a known service or not.
 
 Starting a tunnel is equivalent to:
 > ssh -i {ssh_key_path} -f -nNT -L {local_port}:localhost:{remote_port} {user_name}@{server}
-> ssh -f -nNT -L 10003:localhost:10003 saggese@$P1_DEV_SERVER
+> ssh -f -nNT -L 10003:localhost:10003 saggese@$DEV_SERVER
 ```
 
 # `dev_scripts/install`
@@ -607,11 +607,11 @@ Install the `amp` default environment:
         --req_file dev_scripts/install/requirements/amp_develop.yaml \
         --delete_env_if_exists
 
-Install the `p1_develop` default environment:
+Install the `develop` default environment:
 > create_conda.py \
-        --env_name p1_develop \
+        --env_name develop \
         --req_file amp/dev_scripts/install/requirements/amp_develop.yaml \
-        --req_file dev_scripts_p1/install/requirements/p1_develop.yaml \
+        --req_file dev_scripts/install/requirements/develop.yaml \
         --delete_env_if_exists
 
 Quick install to test the script:
@@ -669,7 +669,7 @@ Test all the executables that need to bootstrap.
 
 **_dev_scripts/jenkins/amp.run_linter_on_branch.sh_**
 ```
-- No conda env is built, but we rely on `p1_develop.daily_build` being already
+- No conda env is built, but we rely on `develop.daily_build` being already
  build.
 - This script runs the linter on a git branch.
 ```
@@ -697,7 +697,7 @@ Test all the executables that need to bootstrap.
 ```
 - Run all the Jenkins builds locally to debug.
 - To run
-  > (cd $HOME/src/commodity_research1/amp; dev_scripts/jenkins/amp.smoke_test.sh 2>&1 | tee log.txt)
+  > (cd $HOME/src/...1/amp; dev_scripts/jenkins/amp.smoke_test.sh 2>&1 | tee log.txt)
 ```
 
 **_dev_scripts/jenkins/bisect.sh_**
@@ -720,14 +720,14 @@ Automate some common workflows with jupytext.
 > find . -name "*.ipynb" | grep -v ipynb_checkpoints | head -3 | xargs -t -L 1 process_jupytext.py --action sync --file
 
 Pair
-> process_jupytext.py -f vendors_amp.kibot/data_exploratory_analysis.ipynb --action pair
+> process_jupytext.py -f instrument_master.kibot/data_exploratory_analysis.ipynb --action pair
 
 Test
-> process_jupytext.py -f vendors_amp.kibot/data_exploratory_analysis.ipynb --action test
-> process_jupytext.py -f vendors_amp.kibot/data_exploratory_analysis.ipynb --action test_strict
+> process_jupytext.py -f instrument_master.kibot/data_exploratory_analysis.ipynb --action test
+> process_jupytext.py -f instrument_master.kibot/data_exploratory_analysis.ipynb --action test_strict
 
 Sync
-> process_jupytext.py -f vendors_amp.kibot/data_exploratory_analysis.ipynb --action sync
+> process_jupytext.py -f instrument_master.kibot/data_exploratory_analysis.ipynb --action sync
 ```
 
 **_dev_scripts/notebooks/publish_notebook.py_**
@@ -737,7 +737,7 @@ Open a notebook.
 #############################################################################
 
 > amp/dev_scripts/notebooks/publish_notebook.py \
-    --file nlp/notebooks/PartTask768_event_filtering.ipynb \
+    --file nlp/notebooks/PTask768_event_filtering.ipynb \
     --action open
 
 This command opens a local notebook as HTML into the browser, if possible.
@@ -754,7 +754,7 @@ Publish a notebook.
 #############################################################################
 
 > amp/dev_scripts/notebooks/publish_notebook.py \
-    --file nlp/notebooks/PartTask768_event_filtering.ipynb \
+    --file nlp/notebooks/PTask768_event_filtering.ipynb \
     --action publish
 
 This command publishes a local notebook as HTML on the dev server.
@@ -778,7 +778,7 @@ Open or publish a notebook from a git branch.
 #############################################################################
 
 >  amp/dev_scripts/notebooks/publish_notebook.py \
-    --file nlp/notebooks/PartTask768_event_filtering.ipynb \
+    --file nlp/notebooks/PTask768_event_filtering.ipynb \
     --branch origin/master
     --action open
 
@@ -809,7 +809,7 @@ Run a notebook given a config or a list of configs.
 Use example:
 > run_notebook.py --dst_dir nlp/test_results \
  --notebook nlp/notebooks/NLP_RP_pipeline.ipynb \
- --function "nlp.build_configs.build_PartTask1088_configs()" \
+ --function "nlp.build_configs.build_PTask1088_configs()" \
   --num_threads 2
 ```
 
@@ -1014,9 +1014,9 @@ Backup and then update labels of several GitHub repos.
 
 # `dev_scripts/jenkins/test_runners`
 
-**_dev_scripts/jenkins/test_runners/run_build_clean_env.p1_develop.daily_build.sh_**
+**_dev_scripts/jenkins/test_runners/run_build_clean_env.develop.daily_build.sh_**
 ```
-- Build "p1_develop" conda env from scratch.
+- Build "develop" conda env from scratch.
 ```
 
 **_dev_scripts/jenkins/test_runners/run_fast_coverage_tests.sh_**

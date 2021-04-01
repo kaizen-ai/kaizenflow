@@ -10,7 +10,7 @@
 # Parameters passed to this script are propagated to _setenv.py
 #
 # Keep this script in sync with:
-# > vimdiff ./dev_scripts_p1/setenv_p1.sh amp/dev_scripts/setenv_amp.sh
+# > vimdiff ./dev_scripts/setenv_....sh amp/dev_scripts/setenv_amp.sh
 # """
 
 # Name of the current script, e.g,. `./dev_scripts/setenv_amp.sh`
@@ -19,7 +19,7 @@ echo "Running '$EXEC_NAME' ..."
 # Dir to the executable, e.g., `./dev_scripts`
 EXEC_DIR=$(dirname "$EXEC_NAME")
 # Full path to the executable, e.g.,
-#   `/Users/saggese/src/commodity_research1/amp/dev_scripts`
+#   `/Users/saggese/src/...1/amp/dev_scripts`
 EXEC_PATH=$(cd $EXEC_DIR; pwd -P)
 echo "EXEC_DIR=$EXEC_DIR"
 echo "EXEC_PATH=$EXEC_PATH"

@@ -15,11 +15,11 @@ else
 endif
 
 # Print all the makefile targets.
-make_print_targets:
+targets:
 	find . -name "*.mk" -o -name "Makefile" | xargs -n 1 perl -ne 'if (/^\S+:$$/) { print $$_ }'
 
 # Print all the makefiles.
-make_print_makefiles:
+makefiles:
 	find . -name "*.mk" -o -name "Makefile" | sort
 
 # List images in the logged in repo.
@@ -29,8 +29,8 @@ docker_repo_images:
 # List all running containers:
 #   ```
 #   > docker_ps
-#   CONTAINER ID  user  IMAGE                                COMMAND                 CREATED        STATUS        PORTS  service
-#   2ece37303ec9  gad   083233266530....particle_env:latest  "./docker_build/entr…"  5 seconds ago  Up 4 seconds         user_space
+#   CONTAINER ID  user  IMAGE                    COMMAND                 	  CREATED        STATUS        PORTS  service
+#   2ece37303ec9  gad   083233266530....:latest  "./docker_build/entrâ¦"  5 seconds ago  Up 4 seconds         user_space
 #   ```
 docker_ps:
 	docker ps --format='table {{.ID}}\t{{.Label "user"}}\t{{.Image}}\t{{.Command}}\t{{.RunningFor}}\t{{.Status}}\t{{.Ports}}\t{{.Label "com.docker.compose.service"}}'
@@ -38,8 +38,8 @@ docker_ps:
 # Report container stats, e.g., CPU, RAM.
 #   ```
 #   > docker_stats
-#   CONTAINER ID  NAME                                  CPU %  MEM USAGE / LIMIT     MEM %  NET I/O         BLOCK I/O        PIDS
-#   2ece37303ec9  commodity_research_user_space_run_30  0.00%  15.74MiB / 31.07GiB   0.05%  351kB / 6.27kB  34.2MB / 12.3kB  4
+#   CONTAINER ID  NAME                   CPU %  MEM USAGE / LIMIT     MEM %  NET I/O         BLOCK I/O        PIDS
+#   2ece37303ec9  ..._user_space_run_30  0.00%  15.74MiB / 31.07GiB   0.05%  351kB / 6.27kB  34.2MB / 12.3kB  4
 #   ```
 docker_stats:
 	# To change output format you can use following --format flag with `docker stats` command.
@@ -65,7 +65,6 @@ else
 DOCKER_COMPOSE_USER_SPACE=devops/compose/docker-compose-user-space-git-subrepo.yml
 endif
 
-# Run bash inside container with activated environment.
 docker_bash:
 	IMAGE=$(IMAGE_DEV) \
 	docker-compose \
@@ -76,7 +75,6 @@ docker_bash:
 		user_space \
 		bash
 
-# Run bash inside an RC image.
 docker_bash.rc:
 	IMAGE=$(IMAGE_RC) \
 	docker-compose \
@@ -86,12 +84,35 @@ docker_bash.rc:
 		-l user=$(USER) \
 		user_space \
 		bash
+	
+docker_bash.prod:
+ifdef IMAGE_PROD
+	IMAGE=$(IMAGE_PROD) \
+	docker-compose \
+		-f $(DOCKER_COMPOSE_USER_SPACE) \
+		run \
+		--rm \
+		-l user=$(USER) \
+		user_space \
+		bash
+else
+	@echo "IMAGE_PROD is not defined"
+endif
 
-# Run the script inside the container with activated environment.
 # No need to overwrite the entrypoint:
 #	--entrypoint $(CMD)
 docker_cmd:
 	IMAGE=$(IMAGE_DEV) \
+	docker-compose \
+		-f $(DOCKER_COMPOSE_USER_SPACE) \
+		run \
+		--rm \
+		-l user=$(USER) \
+		user_space \
+		'$(CMD)'
+
+docker_cmd.rc:
+	IMAGE=$(IMAGE_RC) \
 	docker-compose \
 		-f $(DOCKER_COMPOSE_USER_SPACE) \
 		run \
@@ -409,7 +430,7 @@ ifdef IMAGE_PROD
 		.
 	docker image ls $(IMAGE_PROD)
 else
-	@echo "IMAGE_PROD is not defined: nothing to do"
+	@echo "IMAGE_PROD is not defined"
 endif
 
 # Push the "prod" image to the registry.
@@ -418,7 +439,7 @@ ifdef IMAGE_PROD
 	docker push $(IMAGE_PROD)
 	docker push $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA)
 else
-	@echo "IMAGE_PROD is not defined: nothing to do"
+	@echo "IMAGE_PROD is not defined"
 endif
 
 docker_release.prod:
@@ -428,6 +449,11 @@ docker_release.prod:
 	make docker_tag_rc_image.latest
 	make docker_build_image.prod
 	make docker_push_image.prod
+	@echo "==> SUCCESS <=="
+
+docker_release.all:
+	make docker_release.latest
+	make docker_release.prod
 	@echo "==> SUCCESS <=="
 
 # #############################################################################
@@ -445,6 +471,9 @@ git_pull:
 git_clean:
 	git clean -fd
 	git submodule foreach 'git clean -fd'
+	find . | \
+		grep -E "(tmp.joblib.unittest.cache|.pytest_cache|.mypy_cache|.ipynb_checkpoints|__pycache__|\.pyc|\.pyo$$)" | \
+		xargs rm -rf
 
 git_for:
 	$(CMD)
@@ -486,15 +515,14 @@ endif
 fast_self_tests:
 	make print_setup
 	make print_debug_setup
-	make make_print_targets
-	make make_print_makefiles
+	make targets
+	make makefiles
 	make docker_login
 	make docker_repo_images
 	make docker_ps
 	make docker_pull
-	make docker_cmd CMD="echo" IMAGE=$(IMAGE_RC)
 	make docker_jupyter_test
-	make docker_cmd CMD="pytest --collect-only" IMAGE=$(IMAGE_RC)
+	make docker_cmd.rc CMD="pytest --collect-only"
 	@echo "==> SUCCESS <=="
 
 slow_self_tests:

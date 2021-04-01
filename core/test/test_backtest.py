@@ -3,7 +3,7 @@ from typing import Iterable
 
 import pytest
 
-# TODO(gp): Remove after PartTask2335.
+# TODO(gp): Remove after PTask2335.
 if True:
     import gluonts
 
@@ -51,7 +51,7 @@ if True:
                 shift=shift,
             )
 
-        @pytest.mark.skip("Disabled because of PartTask2440")
+        @pytest.mark.skip("Disabled because of PTask2440")
         def test1(self) -> None:
             """
             Generate y from a shift of an ARIMA series.
@@ -93,7 +93,7 @@ if True:
             )
             self.check_string(str_output)
 
-        @pytest.mark.skip("Disabled because of PartTask2440")
+        @pytest.mark.skip("Disabled because of PTask2440")
         def test2(self) -> None:
             """
             Generate y from a shift of a linear combination of ARIMA series.
@@ -135,7 +135,7 @@ if True:
             )
             self.check_string(str_output)
 
-        @pytest.mark.skip("Disabled because of PartTask2440")
+        @pytest.mark.skip("Disabled because of PTask2440")
         def test3(self) -> None:
             """
             Generate y from a shift of an ARIMA series. Ignore x.
@@ -174,7 +174,7 @@ if True:
             self.check_string(str_output)
 
         @pytest.mark.slow
-        @pytest.mark.skip("Disabled because of PartTask2440")
+        @pytest.mark.skip("Disabled because of PTask2440")
         def test4(self) -> None:
             """
             Generate y using `m4_hourly` Gluon dataset. No `x_vars`.

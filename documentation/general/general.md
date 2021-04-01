@@ -148,7 +148,7 @@
 
 ### Morning email
 
-- First thing in the morning, send an email to `all@particle.one` to broadcast
+- First thing in the morning, send an email to `all@...` to broadcast
   what you are planning to work on during that day
 
 - The goal is:
@@ -170,7 +170,7 @@
     have finished a task by yesterday, but it's taking longer) keep the older
     ETA and add the new one, e.g.,
     ```
-    #PartTask240: Implement Universe metadata
+    #PTask240: Implement Universe metadata
     - ETA: today (2018-10-10)
     - Original ETA: yesterday (2018-10-09)
     - Reason: it was more complex than what we thought
@@ -183,19 +183,19 @@
 - Here is an example of an email
   ```
   Subject: TODO
-  - PartTask240: Implement Universe metadata
+  - PTask240: Implement Universe metadata
       - ETA: today (2018-10-10)
       - Original ETA: yesterday (2018-10-09)
       - Reason: the download didn't finish
-  -   PartTask166: Generate h5 file from forms4
+  -   PTask166: Generate h5 file from forms4
       - reorganize document
       - ETA: tomorrow (2018-10-11)
   - Background tasks
       - working with Dima on #203 RP: Market cap mapping
-      - PartTask233 Create convenience pickles
-      - working with Vitaly PartTask238 INFRA: Total reorg of AWS
+      - PTask233 Create convenience pickles
+      - working with Vitaly PTask238 INFRA: Total reorg of AWS
       - scoring sync up
-  - Blocked on PartTaskXYZ Fix the world before it explodes
+  - Blocked on PTaskXYZ Fix the world before it explodes
   - I'm running out of tasks!
   ```
 

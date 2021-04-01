@@ -5,7 +5,7 @@ Run a notebook given a config or a list of configs.
 Use example:
 > run_notebook.py --dst_dir nlp/test_results \
  --notebook nlp/notebooks/NLP_RP_pipeline.ipynb \
- --function "nlp.build_configs.build_PartTask1088_configs()" \
+ --function "nlp.build_configs.build_PTask1088_configs()" \
  --num_threads 2
 
 Import as:
@@ -301,7 +301,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         help="Full function to create configs, e.g., "
-        "nlp.build_configs.build_PartTask1297_configs("
+        "nlp.build_configs.build_PTask1297_configs("
         "random_seed_variants=[911,2,42,0])",
     )
     parser.add_argument(
@@ -348,7 +348,7 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     # TODO(*): Stop modifying the "meta" level of configs:
-    #     https://github.com/ParticleDev/commodity_research/issues/6487
+    #     https://github.com/.../.../issues/6487
     _LOG.warning("Modifying 'meta' level of the configs.")
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)

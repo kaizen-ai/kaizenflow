@@ -81,7 +81,7 @@ class Test_generate_arima_signal_and_response(hut.TestCase):
         self.check_string(hut.convert_df_to_string(srs, index=True))
 
 
-# TODO(gp): Remove after PartTask2335
+# TODO(gp): Remove after PTask2335
 if True:
     import gluonts
     import gluonts.dataset.artificial.recipe as gdar  # isort: skip # noqa: F401 # pylint: disable=unused-import

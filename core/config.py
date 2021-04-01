@@ -118,7 +118,7 @@ class Config:
         memory_loc_pattern = r"(<function \w+.+) at \dx\w+"
         ret = re.sub(memory_loc_pattern, r"\1", ret)
         # Remove memory locations of objects, if config contains them, e.g.,
-        # "<dataflow_p1.task2538_pipeline.ArPredictorBuilder object at 0x7f7c7991d390>"
+        # "<dataflow.task2538_pipeline.ArPredictorBuilder object at 0x7f7c7991d390>"
         memory_loc_pattern = r"(<\w+.+ object) at \dx\w+"
         ret = re.sub(memory_loc_pattern, r"\1", ret)
         return ret

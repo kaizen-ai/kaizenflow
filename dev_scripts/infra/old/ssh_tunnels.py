@@ -15,7 +15,7 @@
 
 # Starting a tunnel is equivalent to:
 > ssh -i {ssh_key_path} -f -nNT -L {local_port}:localhost:{remote_port} {user_name}@{server}
-> ssh -f -nNT -L 10003:localhost:10003 saggese@$P1_DEV_SERVER
+> ssh -f -nNT -L 10003:localhost:10003 saggese@$DEV_SERVER
 """
 
 import argparse
@@ -54,12 +54,12 @@ def _main() -> None:
     #
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Check that we are in the P1 repo since to open the tunnel we need some
+    # Check that we are in the repo since to open the tunnel we need some
     # env vars set by setenv.sh. This is also preventing Test_ssh_tunnel to be
     # run by Jenkins.
     # TODO(gp): Improve this.
     repo_name = git.get_repo_symbolic_name(super_module=True)
-    exp_repo_name = "ParticleDev/commodity_research"
+    exp_repo_name = ".../..."
     if repo_name != exp_repo_name:
         msg = "Need to run from repo '%s' and not from '%s'" % (
             exp_repo_name,

@@ -5,11 +5,11 @@ services:
     image: ${IMAGE}
     restart: "no"
     volumes:
-      - ../../../:/commodity_research
+      - ../../../:/app
       - ~/.aws:/root/.aws
       - ~/.config/gspread_pandas/:/root/.config/gspread_pandas/
       - ../../../docker_build/fstab:/etc/fstab
-    working_dir: /commodity_research
+    working_dir: /app
     privileged: true
     cap_add:
       - SYS_ADMIN

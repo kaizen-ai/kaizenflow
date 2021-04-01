@@ -6,14 +6,14 @@ Automate some common workflows with jupytext.
 > find . -name "*.ipynb" | grep -v ipynb_checkpoints | head -3 | xargs -t -L 1 process_jupytext.py --action sync --file
 
 # Pair
-> process_jupytext.py -f vendors_amp.kibot/data_exploratory_analysis.ipynb --action pair
+> process_jupytext.py -f instrument_master.kibot/data_exploratory_analysis.ipynb --action pair
 
 # Test
-> process_jupytext.py -f vendors_amp.kibot/data_exploratory_analysis.ipynb --action test
-> process_jupytext.py -f vendors_amp.kibot/data_exploratory_analysis.ipynb --action test_strict
+> process_jupytext.py -f instrument_master.kibot/data_exploratory_analysis.ipynb --action test
+> process_jupytext.py -f instrument_master.kibot/data_exploratory_analysis.ipynb --action test_strict
 
 # Sync
-> process_jupytext.py -f vendors_amp.kibot/data_exploratory_analysis.ipynb --action sync
+> process_jupytext.py -f instrument_master.kibot/data_exploratory_analysis.ipynb --action sync
 """
 # pylint: enable=line-too-long
 
@@ -81,8 +81,8 @@ def _is_jupytext_version_different(output_txt: str) -> bool:
     Workaround for https://github.com/mwouts/jupytext/issues/414 to avoid
     report an error due to jupytext version mismatch.
 
-    [jupytext] Reading nlp/notebooks/PartTask1081_RP_small_test.py
-    nlp/notebooks/PartTask1081_RP_small_test.py:
+    [jupytext] Reading nlp/notebooks/PTask1081_RP_small_test.py
+    nlp/notebooks/PTask1081_RP_small_test.py:
     --- expected
     +++ actual
     @@ -5,7 +5,7 @@
@@ -92,7 +92,7 @@ def _is_jupytext_version_different(output_txt: str) -> bool:
     -#       jupytext_version: 1.3.3
     +#       jupytext_version: 1.3.0
      #   kernelspec:
-     #     display_name: Python [conda env:.conda-p1_develop] *
+     #     display_name: Python [conda env:.conda-develop] *
      #     language: python
     """
     ret = False

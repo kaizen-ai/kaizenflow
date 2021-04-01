@@ -47,10 +47,10 @@
 
 - We have synchronized all the old documents on the new service
 
-- The old links `http://research.p1:8077/...` still work for now
+- The old links `http://research:8077/...` still work for now
 - To use the new service you need to replace the URL with the new ones
   `http://notebook-keeper.p1/...`
-  - If you see any link starting with http://research.p1:8077 please replace it
+  - If you see any link starting with http://research:8077 please replace it
     with the new link
 
 - We will disable the old service on Nov 30, 2020

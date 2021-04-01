@@ -63,7 +63,7 @@
     # List all the branches.
     > git branch -r
       origin/HEAD -> origin/master
-      origin/PartTask274
+      origin/PTask274
       ...
     ```
 
@@ -89,10 +89,10 @@
 
       ```bash
       > ghi_show.py 274 --only_github
-      > ghi_show.py 274 -r ParticleDev/commodity_research --only_github
+      > ghi_show.py 274 -r .../... --only_github
       # Github:
       #274: PRICE: Download equity data
-      https://github.com/alphamatic/lemonade/issues/274
+      https://github.com/alphamatic/amp/issues/274
 
       # Tag:
       LemTask274_PRICE_Download_equity_data
@@ -290,7 +290,7 @@
 - You can run the script `dev_scripts/git/git_branch.sh` to get all the branches
   together with some information, e.g., last commit and creator
 
-- E.g., let's assume we believe that `PartTask354_INFRA_Populate_S3_bucket` is
+- E.g., let's assume we believe that `PTask354_INFRA_Populate_S3_bucket` is
   obsolete and we want to delete it
 
 1. Get `master` up to date
@@ -304,7 +304,7 @@
 2. Merge `master` into the target branch
    - Pull and merge
      ```bash
-     > git checkout PartTask354_INFRA_Populate_S3_bucket
+     > git checkout PTask354_INFRA_Populate_S3_bucket
      > git pull
      > git merge master
      ```
@@ -318,13 +318,13 @@
    - One approach is to ask Git if all the changes in master are also in the
      branch
      ```bash
-     > git branch `PartTask354_INFRA_Populate_S3_bucket` --no-merged
-       PartTask354_INFRA_Populate_S3_bucket
+     > git branch `PTask354_INFRA_Populate_S3_bucket` --no-merged
+       PTask354_INFRA_Populate_S3_bucket
      ```
    - Note that Git is very strict here, e.g.,
-     `PartTask354_INFRA_Populate_S3_bucket` is not completely merged since I've
+     `PTask354_INFRA_Populate_S3_bucket` is not completely merged since I've
      moved code "manually" (not only through `git cherry-pick`, `git merge`)
-   - One approach is to just merge `PartTask354_INFRA_Populate_S3_bucket` into
+   - One approach is to just merge `PTask354_INFRA_Populate_S3_bucket` into
      master and run `git branch` again
 
 4. Manually check if there is any textual difference
@@ -332,7 +332,7 @@
      and `origin/master`
      ```bash
      > git log master..HEAD
-     6465b0c saggese, 25 seconds ago : Merge branch 'master' into PartTask354_INFRA_Populate_S3_bucket  (HEAD -> PartTask354_INFRA_Populate_S3_bucket, origin/PartTask354_INFRA_Populate_S3_bucket)
+     6465b0c saggese, 25 seconds ago : Merge branch 'master' into PTask354_INFRA_Populate_S3_bucket  (HEAD -> PTask354_INFRA_Populate_S3_bucket, origin/PTask354_INFRA_Populate_S3_bucket)
      > git log HEAD..master
      ```
    - Here we see that there are no textual differences
@@ -341,8 +341,8 @@
 5. Kill-kill-kill!
    - To delete both the local and remote branch you can do
      ```bash
-     > git branch -d PartTask354_INFRA_Populate_S3_bucket
-     > git push origin --delete PartTask354_INFRA_Populate_S3_bucket
+     > git branch -d PTask354_INFRA_Populate_S3_bucket
+     > git push origin --delete PTask354_INFRA_Populate_S3_bucket
      ```
 
 # How-to and troubleshooting
@@ -359,11 +359,11 @@
      `bash > git fetch > git checkout <BRANCH> > git log origin/master..HEAD`
      shows only commits made by you or, if you are not the only one working on
      the branch, only commits belonging to the branch with the same
-     `PartTaskXYZ`
-   - E.g., if George is working on PartTask275 and sees:
+     `PTaskXYZ`
+   - E.g., if George is working on PTask275 and sees:
      ```bash
      a379826 Ringo, 3 weeks ago : LemTask54: finish dataflow through cross-validation
-     33a46b2 George, 2 weeks ago : PartTask275 Move class attributes docstrings to init, change logging
+     33a46b2 George, 2 weeks ago : PTask275 Move class attributes docstrings to init, change logging
      ```
      something funny is going on
 
@@ -394,10 +394,10 @@
   > git show --name-only 39a9e335298a3fe604896fa19296d20829801cf2
 
   commit 39a9e335298a3fe604896fa19296d20829801cf2
-  Author: Julia <julia@particle.one>
+  Author: Julia <julia@...>
   Date:   Fri Sep 27 11:43:41 2019
 
-      PartTask274 lint
+      PTask274 lint
 
   vendors/cme/utils.py
   vendors/first_rate/utils.py
@@ -445,7 +445,7 @@ version, and stage #3 is the version you are merging from.
 3. diff the changes in the branch vs another client at `master`
    ```bash
    > diff_to_vimdiff.py --dir1 $DIR1/amp --dir2 $DIR2/amp --skip_vim
-   Saving log to file '/Users/saggese/src/commodity_research2/amp/dev_scripts/diff_to_vimdiff.py.log'
+   Saving log to file '/Users/saggese/src/...2/amp/dev_scripts/diff_to_vimdiff.py.log'
    10-06_15:22 INFO : _parse_diff_output:36  : Reading '/tmp/tmp.diff_to_vimdiff.txt'
    #       DIFF: README.md
    #       DIFF: core/dataflow.py
@@ -460,7 +460,7 @@ version, and stage #3 is the version you are merging from.
    ```
 4. diff / merge manually the files that are different
    ```bash
-   > diff_to_vimdiff.py --dir1 $DIR1/commodity_research2/amp --dir2 $DIR2/commodity_research3/amp --skip_vim --only_diff_content
+   > diff_to_vimdiff.py --dir1 $DIR1/...2/amp --dir2 $DIR2/...3/amp --skip_vim --only_diff_content
    #       DIFF: README.md
    #       DIFF: core/dataflow.py
    #       DIFF: core/dataflow_core.py
@@ -488,14 +488,14 @@ version, and stage #3 is the version you are merging from.
   # List all the branches.
   > git branch -r
     origin/HEAD -> origin/master
-    origin/PartTask274
+    origin/PTask274
     ...
   ```
 
 - Go to the branch:
 
   ```bash
-  > git checkout PartTask274
+  > git checkout PTask274
   ```
 
 - Check what are the commits that are in the current branch `HEAD` but not in
@@ -506,9 +506,9 @@ version, and stage #3 is the version you are merging from.
   > git log master..HEAD
   ```
 
-* eb12233 Julia PartTask274 verify dataset integrity ( 13 hours ago) Sat Sep
-  28 18:55:12 2019 (HEAD -> PartTask274, origin/PartTask274) ...
-* a637594 saggese PartTask274: Add tag for review ( 3 days ago) Thu Sep 26
+* eb12233 Julia PTask274 verify dataset integrity ( 13 hours ago) Sat Sep
+  28 18:55:12 2019 (HEAD -> PTask274, origin/PTask274) ...
+* a637594 saggese PTask274: Add tag for review ( 3 days ago) Thu Sep 26
   17:13:33 2019
   ```
   ```
@@ -550,13 +550,13 @@ version, and stage #3 is the version you are merging from.
 - This is useful if we want to focus on changes on a single dir
 
   ```bash
-  > git ll master..PartTask274 vendors/cme
+  > git ll master..PTask274 vendors/cme
   ```
 
-* 39a9e33 Julia PartTask274 lint ( 2 days ago) Fri Sep 27 11:43:41 2019
-* c8e7e1a Julia PartTask268 modify according to review16 ( 2 days ago) Fri
+* 39a9e33 Julia PTask274 lint ( 2 days ago) Fri Sep 27 11:43:41 2019
+* c8e7e1a Julia PTask268 modify according to review16 ( 2 days ago) Fri
   Sep 27 11:41:47 2019
-* a637594 saggese PartTask274: Add tag for review ( 3 days ago) Thu Sep 26
+* a637594 saggese PTask274: Add tag for review ( 3 days ago) Thu Sep 26
   17:13:33 2019
 
   ````
@@ -682,7 +682,7 @@ When you work in a submodule, the flow should be like:
 After the submodule PR is merged:
 
   - Checkout the submodule in the master branch and do `git pull`
-  - In the main repo, create a branch like `PartTask1234_update_submodule`
+  - In the main repo, create a branch like `PTask1234_update_submodule`
   - From the new branch do `git add <submodule_name>`, e.g., `git add amp`
   - Commit changes, push
   - Create a PR

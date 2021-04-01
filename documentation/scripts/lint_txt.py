@@ -109,7 +109,7 @@ def _prettier(txt: str, print_width: Optional[int] = None) -> str:
         dbg.dassert_lte(1, print_width)
         cmd.append("--print-width %s" % print_width)
     if True:
-        # Workaround for PartTask2155.
+        # Workaround for PTask2155.
         cmd.insert(0, "cd %s &&" % os.path.dirname(tmp_file_name))
         cmd.append(os.path.basename(tmp_file_name))
     else:

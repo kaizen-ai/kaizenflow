@@ -377,15 +377,15 @@
 ## Solution
 
 - Install the package in whatever way you want (`conda`, `pip`, install from
-  source) on top of your `p1_develop` conda environment
+  source) on top of your `develop` conda environment
   - If you don't know how to install, file a bug for Sergey and we can help
 
 - You should document how you install the package so that anyone who runs the
-  notebook can install the package on top of `p1_develop` in the same way
+  notebook can install the package on top of `develop` in the same way
 
 - Once the code is reviewed and promoted to a lib / unit tested, the conda
   recipe is updated as part of the PR
-  - The team needs to update their `p1_develop` package to pick up the
+  - The team needs to update their `develop` package to pick up the
     dependencies
 
 - This applies to both code and notebooks
@@ -548,7 +548,7 @@
     ```
     use:
     ```python
-    # TODO(*): As discussed in PartTask5047 for now we set all timeseries to be alive.
+    # TODO(*): As discussed in PTask5047 for now we set all timeseries to be alive.
     # is_alive = kgutils.annotate_alive(metadata, self.alive_cutoff)
     is_alive = pd.Series(True, index=metadata.index)
     ```
@@ -1174,7 +1174,7 @@ def _get_zero_element(list_: list):
     else:
         return list*[0]
 
-vendors_amp.kibot/utils.py:394: [R1705(no-else-return), ExpiryContractMapper.extract_contract_expiry] Unnecessary "else" after "return" [pylint]
+instrument_master.kibot/utils.py:394: [R1705(no-else-return), ExpiryContractMapper.extract_contract_expiry] Unnecessary "else" after "return" [pylint]
 ```
 
 - Try to have a single exit point from a function, since this guarantees that
@@ -1577,7 +1577,7 @@ def ...(...):
 ## Research quality vs production quality
 
 - Code belonging to top level libraries (e.g., `//amp/core`, `//amp/helpers`)
-  and production (e.g., `//p1/db`, `vendors`) needs to meet high quality
+  and production (e.g., `//.../db`, `vendors`) needs to meet high quality
   standards, e.g.,
   - Well commented
   - Following our style guide
@@ -1735,7 +1735,7 @@ def ...(...):
    e.g.,
    - Screwing up some formatting you care about for some reason, or
    - Suggesting changes that you are worried might introduce bugs you can commit
-     your code and then do a "lint commit" with a message "PartTaskXYZ: Lint"
+     your code and then do a "lint commit" with a message "PTaskXYZ: Lint"
 
 - In this way you have a backup state that you can rollback to, if you want
 

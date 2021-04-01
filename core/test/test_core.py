@@ -660,7 +660,7 @@ class Test_explore1(hut.TestCase):
         )
 
     @pytest.mark.skip(
-        reason="https://github.com/ParticleDev/commodity_research/issues/3676"
+        reason="https://github.com/.../.../issues/3676"
     )
     def test_rolling_pca_over_time1(self) -> None:
         np.random.seed(42)

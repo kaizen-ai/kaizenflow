@@ -34,95 +34,95 @@ repos:
     hooks:
       - id: isort
         name: isort
-        entry: p1_isort.py
+        entry: amp_isort.py
         language: python
         types: [python]
         additional_dependencies: ["-r", "/requirements.txt"]
         require_serial: true
       - id: black
         name: black
-        entry: p1_black.py
+        entry: amp_black.py
         language: python
         types: [python]
         additional_dependencies: ["-r", "/requirements.txt"]
         require_serial: true
       - id: flake8
         name: flake8
-        entry: p1_flake8.py
+        entry: amp_flake8.py
         language: python
         types: [python]
         additional_dependencies: ["-r", "/requirements.txt"]
       - id: doc_formatter
         name: doc_formatter
-        entry: p1_doc_formatter.py
+        entry: amp_doc_formatter.py
         language: python
         types: [python]
         additional_dependencies: ["-r", "/requirements.txt"]
       - id: pylint
         name: pylint
-        entry: p1_pylint.py
+        entry: amp_pylint.py
         language: python
         types: [python]
         additional_dependencies: ["-r", "/requirements.txt"]
       - id: mypy
         name: mypy
-        entry: p1_mypy.py
+        entry: amp_mypy.py
         language: python
         types: [python]
         additional_dependencies: ["-r", "/requirements.txt"]
       - id: processjupytext
         name: processjupytext
-        entry: p1_processjupytext.py
+        entry: amp_processjupytext.py
         language: python
         types: [python]
         additional_dependencies: ["-r", "/requirements.txt"]
       - id: lint_md
         name: lint_md
-        entry: p1_lint_md.py
+        entry: amp_lint_md.py
         language: python
         types: [markdown]
         additional_dependencies: ["-r", "/requirements.txt"]
-#     TODO(plyq): Not stable, to see - run on linters/p1_pylint.py.
+#     TODO(plyq): Not stable, to see - run on linters/amp_pylint.py.
 #     - id: fix_comments
 #       name: fix_comments
-#       entry: p1_fix_comments.py
+#       entry: amp_fix_comments.py
 #       language: python
 #       types: [python]
 #       additional_dependencies: ["-r", "/requirements.txt"]
       - id: method_order
         name: method_order
-        entry: p1_class_method_order.py
+        entry: amp_class_method_order.py
         language: python
         types: [python]
         additional_dependencies: ["-r", "/requirements.txt"]
       - id: check_filename
         name: check_filename
-        entry: p1_check_filename.py
+        entry: amp_check_filename.py
         language: python
         types: [python]
         additional_dependencies: ["-r", "/requirements.txt"]
       - id: clean_import
         name: clean_import
-        entry: p1_clean_import.py
+        entry: amp_clean_import.py
         language: python
         types: [python]
         additional_dependencies: ["-r", "/requirements.txt"]
       - id: format_separating_line
         name: format_separating_line
-        entry: p1_format_separating_line.py
+        entry: amp_format_separating_line.py
         language: python
         types: [python]
         additional_dependencies: ["-r", "/requirements.txt"]
       - id: warn_incorrectly_formatted_todo
         name: warn_incorrectly_formatted_todo
-        entry: p1_warn_incorrectly_formatted_todo.py
+        entry: amp_warn_incorrectly_formatted_todo.py
         language: python
         types: [python]
         additional_dependencies: ["-r", "/requirements.txt"]
 #     TODO(vr): Does not work with Docker on Mac, see dev_tools#97.
 #      - id: check_shebang
 #        name: check_shebang
-#        entry: p1_check_shebang.py
+#        entry: amp_check_shebang.py
 #        language: python
 #        types: [python]
 #        additional_dependencies: ["-r", "/requirements.txt"]

@@ -49,7 +49,7 @@
 - [ ] Use logging instead of `print`
 
 # Package dependencies
-- There is a file `p1_develop.yaml` with some dependencies
+- There is a file `develop.yaml` with some dependencies
   - You can handle the dependencies in your favorite way (e.g., `conda`, `pip`,
     `poetry`)
 

@@ -37,9 +37,9 @@ function backup_and_update() {
 }
 
 
-# ParticleDev/commodity_research
-OWNER="ParticleDev"
-REPO="commodity_research"
+# .../...
+OWNER="..."
+REPO="..."
 if [[ 1 == 1 ]]; then
     backup_and_update
 fi;
