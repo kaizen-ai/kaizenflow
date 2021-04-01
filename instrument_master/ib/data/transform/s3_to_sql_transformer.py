@@ -31,17 +31,17 @@ class IbS3ToSqlTransformer(vcdts3.AbstractS3ToSqlTransformer):
         """
         # Transform dataframe.
         if frequency == vcdtyp.Frequency.Minutely:
-            df = cls._transorm_minutely_df(df, trade_symbol_id)
+            df = cls._transform_minutely_df(df, trade_symbol_id)
         elif frequency == vcdtyp.Frequency.Daily:
-            df = cls._transorm_daily_df(df, trade_symbol_id)
+            df = cls._transform_daily_df(df, trade_symbol_id)
         elif frequency == vcdtyp.Frequency.Tick:
-            df = cls._transorm_tick_df(df, trade_symbol_id)
+            df = cls._transform_tick_df(df, trade_symbol_id)
         else:
             dbg.dfatal("Unknown frequency '%s'", frequency)
         return df
 
     @staticmethod
-    def _transorm_minutely_df(
+    def _transform_minutely_df(
         df: pd.DataFrame,
         trade_symbol_id: int,
     ) -> pd.DataFrame:
@@ -65,7 +65,7 @@ class IbS3ToSqlTransformer(vcdts3.AbstractS3ToSqlTransformer):
         return df
 
     @staticmethod
-    def _transorm_daily_df(
+    def _transform_daily_df(
         df: pd.DataFrame,
         trade_symbol_id: int,
     ) -> pd.DataFrame:
@@ -90,7 +90,7 @@ class IbS3ToSqlTransformer(vcdts3.AbstractS3ToSqlTransformer):
 
     # TODO(Vlad): Rework it once tick data will be available.
     @staticmethod
-    def _transorm_tick_df(
+    def _transform_tick_df(
         df: pd.DataFrame,
         trade_symbol_id: int,
     ) -> pd.DataFrame:
