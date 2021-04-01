@@ -80,15 +80,18 @@ def ib_loop_generator(
             # later on. Maybe we can just keep going.
             return
         _LOG.debug("df=%s\n%s", videgu.get_df_signature(df), df.head(3))
+        date_offset = videgu.duration_str_to_pd_dateoffset(duration_str)
         if df.empty:
             # Sometimes IB returns an empty df in a chunk although there is more
             # data later on: we keep going.
-            date_offset = videgu.duration_str_to_pd_dateoffset(duration_str)
             curr_ts = curr_ts - date_offset
             _LOG.debug("Empty df -> curr_ts=%s", curr_ts)
             continue
         # Move the curr_ts to the beginning of the chuck.
         next_curr_ts = videgu.to_ET(df.index[0])
+        # Avoid infinite loop if there is only one record in response.
+        if next_curr_ts == curr_ts:
+            next_curr_ts -= date_offset
         ts_seq = (curr_ts, next_curr_ts)
         curr_ts = next_curr_ts
         _LOG.debug("curr_ts='%s'", curr_ts)

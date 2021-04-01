@@ -152,6 +152,7 @@ def req_historical_data(
     for i in range(num_retry):
         bars = []
         try:
+            _LOG.debug("Requesting data for %s, end_ts=%s...", contract, end_ts)
             bars = ib.reqHistoricalData(
                 contract,
                 endDateTime=end_ts,
