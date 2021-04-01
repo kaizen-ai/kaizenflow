@@ -14,8 +14,8 @@ import instrument_master.kibot.data.load.sql_data_loader as vkdlsq
 
 class LoaderFactory:
     """
-    Builds AbstractDataLoader objects based on different criteria (e.g., provider
-    and storage type).
+    Builds AbstractDataLoader objects based on different criteria (e.g.,
+    provider and storage type).
     """
 
     @classmethod

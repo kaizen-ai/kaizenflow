@@ -15,7 +15,8 @@ import instrument_master.common.data.types as vcdtyp
 # TODO(*): SQL -> Sql
 class AbstractSqlDataLoader(vcdlda.AbstractDataLoader):
     """
-    Interface for class which loads the data for a security from an SQL backend.
+    Interface for class which loads the data for a security from an SQL
+    backend.
     """
 
     def __init__(

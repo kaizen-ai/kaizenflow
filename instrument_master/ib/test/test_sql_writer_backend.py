@@ -260,5 +260,3 @@ class TestIbSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
             size_val=15,
         )
         self._check_saved_data(table="IbTickData")
-
-

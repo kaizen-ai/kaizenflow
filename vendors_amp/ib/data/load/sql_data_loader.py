@@ -9,7 +9,6 @@ import vendors_amp.common.data.types as vcdtyp
 
 
 class SQLIbDataLoader(vcdlsq.AbstractSQLDataLoader):
-
     @staticmethod
     def _get_table_name_by_frequency(frequency: vcdtyp.Frequency) -> str:
         """

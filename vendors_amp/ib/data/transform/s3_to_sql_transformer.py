@@ -1,7 +1,5 @@
 """
 Converts Kibot data on S3 from .csv.gz to SQL.
-
-
 """
 
 import logging
@@ -77,7 +75,16 @@ class S3ToSqlIbTransformer(vcdts3.AbstractS3ToSqlTransformer):
 
         :return: transformed dataframe
         """
-        df.columns = ["date", "open", "high", "low", "close", "volume", "average", "barCount"]
+        df.columns = [
+            "date",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "average",
+            "barCount",
+        ]
         # Transform DataFrame from S3 to DB format.
         df["trade_symbol_id"] = trade_symbol_id
         return df

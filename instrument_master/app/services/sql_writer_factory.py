@@ -9,6 +9,8 @@ import vendorsinstrument_master_amp.kibot.sql_writer_backend as vksqlw
 class SqlWriterFactory:
     """
     Builds an SqlWriter to write data from a specific provider in an SQL backend.
+    Builds an SQLWriter to write data from a specific provider in an SQL
+    backend.
     """
 
     @staticmethod
