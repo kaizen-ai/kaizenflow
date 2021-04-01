@@ -105,7 +105,8 @@ def ib_loop_generator(
             _LOG.debug("idx=%s, total=%s", idx, pbar.total)
             pbar.n = idx
             pbar.refresh()
-        yield i, df, ts_seq
+        if not df.empty:
+            yield i, df, ts_seq
         # We insert at the beginning since we are walking backwards the interval.
         if start_ts != "" and curr_ts <= start_ts:
             _LOG.debug(
