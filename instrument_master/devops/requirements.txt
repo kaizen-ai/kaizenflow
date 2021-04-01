@@ -1,0 +1,17 @@
+boto3
+botocore
+bs4
+flaky
+fsspec
+ib_insync==0.9.65
+joblib
+lxml
+matplotlib
+pandas
+#psycopg2
+psycopg2-binary
+pytest
+pytest-xdist
+requests
+s3fs
+tqdm
