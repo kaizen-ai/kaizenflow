@@ -159,7 +159,11 @@
 - To connect to the local DB:
 
   ```bash
-  PGPASSWORD=eidvlbaresntlcdbresntdjlrs psql -h localhost -p 5550 -d im_postgres_db_local  -U menjgbcvejlpcbejlc
+  PGPASSWORD=eidvlbaresntlcdbresntdjlrs psql \
+    -h localhost \
+    -p 5550 \
+    -d im_postgres_db_local \
+    -U menjgbcvejlpcbejlc
 
   im_postgres_db_local=# \dt;
   List of relations

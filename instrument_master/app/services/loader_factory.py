@@ -3,6 +3,8 @@ Import as: import instrument_master.app.services.loader_factory as vasloa.
 """
 from typing import Any
 
+# TODO: Move it out to app/
+
 import instrument_master.common.data.load.data_loader as vcdlda
 import instrument_master.common.data.load.s3_data_loader as vcdls3
 import instrument_master.common.data.load.sql_data_loader as vcdlsq
@@ -60,7 +62,7 @@ class LoaderFactory:
         provider: str, dbname: str, user: str, password: str, host: str, port: int
     ) -> vcdlsq.AbstractSqlDataLoader:
         """
-        Returna a data loader from SQL for the requested `provider`.
+        Return a data loader from SQL for the requested `provider`.
 
         :param provider: provider (e.g., kibot)
         :param dbname: database name to connect

@@ -4,6 +4,7 @@ import enum
 class AssetClass(enum.Enum):
     ETFs = "etfs"
     Forex = "forex"
+    # TODO(*): -> futures
     Futures = "Futures"
     SP500 = "sp_500"
     Stocks = "stocks"

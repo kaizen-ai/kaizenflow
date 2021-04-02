@@ -8,6 +8,7 @@ import psycopg2.extensions as pexten
 import instrument_master.common.data.types as vcdtyp
 
 
+# TODO: -> Why not AbstractSqlWriter?
 class AbstractSqlWriterBackend(abc.ABC):
     """
     Interface for manager of CRUD operations on a database defined in db.sql.

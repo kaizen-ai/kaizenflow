@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS IbDailyData (
     close numeric,
     volume bigint,
     average numeric,
+    -- TODO(*): barCount -> bar_count
     barCount integer,
     UNIQUE (trade_symbol_id, date)
 );

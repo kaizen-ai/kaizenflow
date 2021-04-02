@@ -1,18 +1,13 @@
 """
-Import as: import instrument_master.app.services.sql_writer_factory as vassql.
+Import as:
+import instrument_master.app.services.sql_writer_factory as vassql
 """
 import instrument_master.common.sql_writer_backend as vcsqlw
-import instrument_master.ib.sql_writer_backend as visqlw
-import instrument_master.kibot.sql_writer_backend as vksqlw
 
 
 class SqlWriterFactory:
     """
-    Builds an SqlWriter to write data from a specific provider in an SQL
-    backend.
-
-    Builds an SQLWriter to write data from a specific provider in an SQL
-    backend.
+    Build an SqlWriter to write data from a specific provider into an SQL backend.
     """
 
     @staticmethod
@@ -27,10 +22,12 @@ class SqlWriterFactory:
         """
         transformer: vcsqlw.AbstractSqlWriterBackend
         if provider == "kibot":
+            import instrument_master.kibot.sql_writer_backend as vksqlw
             transformer = vksqlw.KibotSqlWriterBackend(
                 dbname=dbname, user=user, password=password, host=host, port=port
             )
         elif provider == "ib":
+            import instrument_master.ib.sql_writer_backend as visqlw
             transformer = visqlw.IbSqlWriterBackend(
                 dbname=dbname, user=user, password=password, host=host, port=port
             )

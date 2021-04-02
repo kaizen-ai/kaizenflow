@@ -1,18 +1,24 @@
 # Code Layout
 
-- Based on the container diagram, the code layout matches the different containers
-  that we have
+- The code layout matches the different software components that we have
+
+- We separate the 3 ETL stages (extract, transform, and load) for both data and
+  metadata
 
 ```text
 app/
-  # user interface to use IM
+  # User interface to IM
+  # It contains all and only the code that is used to access the production data
+  # (SQL, S3, and the conversion)
 common/
-  # code common to all the providers
+  # Code common to all the providers
   data/
-    # code to handle the common data
+    # Code to handle the common data
     extract/
     load/
     transform
+  db/
+    # Code to create
 devops/
   # scripts to handle infrastructure
 ib/
@@ -39,22 +45,4 @@ kibot
     extract/
     load/
     transform/
-```
-    
-
-types/  # standardized types (see data model above)
-loader/  # adapts all vendor loaders to a common interface
-vendors/
-   kibot/
-      extractor/
-      transformer/
-      loader/
-      types/  # vendor specific types
-      config.py  # s3 paths, credentials for vendor
-   eoddata/
-      extractor/
-      transformer/
-      loader/
-      types/
-      config.py
 ```
