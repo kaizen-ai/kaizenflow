@@ -30,7 +30,7 @@ class IbFilePathGenerator(vcdlfi.FilePathGenerator):
         ext: vcdtyp.Extension = vcdtyp.Extension.CSV,
     ) -> str:
         """
-        Get the path to a specific IB dataset on s3.
+        Get the path to a specific IB dataset on S3.
 
         Format like `continuous_futures/daily/ES.csv.gz`.
 

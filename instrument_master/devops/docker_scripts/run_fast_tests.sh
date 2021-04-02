@@ -16,4 +16,4 @@ TEST_DIR="instrument_master"
 # Run tests.
 cmd="pytest ${OPTS} -m '${SKIPPED_TESTS}' ${TEST_DIR}"
 echo "> cmd=$cmd"
-eval $cmd
+eval "$cmd"

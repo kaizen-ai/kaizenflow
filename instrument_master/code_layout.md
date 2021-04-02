@@ -10,29 +10,28 @@
   - It contains all and only the code that is used to access the production data
     (SQL, S3, and the conversion)
     
-- ```common/```
-  - Code common to all providers
-  - ```data/```
-    - Code to handle the common data
+- ```common/```: code common to all providers
+  - ```data/```: code to handle the common data
     - ```extract/```
     - ```load/```
     - ```transform/```
-  - ```db/```
-    - Code to handle the DB
+  - ```db/```: code to handle the DB
   
-- ```devops/```
-  - Scripts to handle infrastructure, with the usual conventions
+- ```devops/```: scripts to handle infrastructure, with the usual conventions
   
-- ```ib/```
-  - Interactive Broker provider
-  - ```connect/```
-    - IB TWS interface
-  - ```data/```
-    - Handle IB data
+- ```ib/```: Interactive Broker provider
+  - ```connect/```: IB TWS interface
+  - ```data/```: handle IB data
+    - ```extract/```
+      - ```gateway/```: 
+    - ```load/```
+    - ```transform/```
   - ```metadata/```
     - Handle IB medata
     - ```extract```
       - Crawler
+    - ```load/```
+    - ```transform/```
       
 - ```kibot/```
   - Kibot provider
