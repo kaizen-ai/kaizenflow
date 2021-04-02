@@ -23,7 +23,7 @@ class S3ToSqlTransformer(vcdts3.AbstractS3ToSqlTransformer):
         frequency: vcdtyp.Frequency,
     ) -> pd.DataFrame:
         """
-        Transform kibot data loaded from S3 to load to SQL.
+        Transform Kibot data loaded from S3 to load to SQL.
 
         :param df: dataframe with data from S3
         :param trade_symbol_id: symbol id in SQL database

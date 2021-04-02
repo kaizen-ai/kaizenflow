@@ -497,7 +497,7 @@ class FuturesContractLifetimes:
         Compute the lifetime for all contracts available for all symbols passed
         in.
 
-        :param symbols: kibot symbols from which to retrieve contracts
+        :param symbols: Kibot symbols from which to retrieve contracts
         """
         kb = KibotMetadata()
         dbg.dassert_type_is(symbols, list)

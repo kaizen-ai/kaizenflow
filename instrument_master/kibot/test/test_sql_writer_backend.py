@@ -14,7 +14,7 @@ import instrument_master.kibot.sql_writer_backend as vksqlw
 )
 class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
     """
-    Test writing operation to Postgresql kibot db.
+    Test writing operation to PostgreSQL Kibot DB.
     """
 
     def setUp(self) -> None:

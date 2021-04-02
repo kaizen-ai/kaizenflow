@@ -20,9 +20,9 @@ class KibotCommand:
         requires_api_login: bool = False,
     ) -> None:
         """
-        Create a kibot command line script.
+        Create a Kibot command line script.
 
-        :param docstring: the command's docstring.
+        :param docstring: the command docstring.
         :param supports_tmp_dir: If true, adds optional `tmp_dir` and `incremental` arguments.
         :param requires_auth: If true, adds username and password as required arguments.
         :param requires_api_login: If true, logs into API before calling customize_run()

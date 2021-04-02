@@ -1,3 +1,4 @@
+# TODO(*): -> kibot_s3_data_loader
 import functools
 import logging
 from typing import Optional
@@ -14,9 +15,8 @@ _LOG = logging.getLogger(__name__)
 
 
 class KibotS3DataLoader(vcdls3.AbstractS3DataLoader):
-    # TODO(plyq): Uncomment once #1047 will be resolved.
+    # TODO(plyq): Uncomment once #1047 will be resolved. Use lru_cache for now.
     # @hcache.cache
-    # Use lru_cache for now.
     @functools.lru_cache(maxsize=64)
     def read_data(
         self,
@@ -30,17 +30,7 @@ class KibotS3DataLoader(vcdls3.AbstractS3DataLoader):
         normalize: bool = True,
     ) -> pd.DataFrame:
         """
-        Read kibot data.
-
-        :param exchange: name of the exchange
-        :param symbol: symbol to get the data for
-        :param asset_class: asset class
-        :param frequency: `D` or `T` for daily or minutely data respectively
-        :param contract_type: required for asset class of type: `futures`
-        :param unadjusted: required for asset classes of type: `stocks` & `etfs`
-        :param nrows: if not None, return only the first nrows of the data
-        :param normalize: whether to normalize the dataframe by frequency
-        :return: a dataframe with the symbol data
+        Read Kibot data.
         """
         return self._read_data(
             symbol=symbol,
@@ -62,8 +52,9 @@ class KibotS3DataLoader(vcdls3.AbstractS3DataLoader):
         :param df: a dataframe that should be normalized
         :param frequency: frequency of the data
         :return: a normalized dataframe
-        :raises AssertionError: if a frequency is not supported in 'Mapping'.
+        :raises AssertionError: if frequency is not supported
         """
+        # TODO(*): -> mapping or move it out
         MAPPING = {
             vcdtyp.Frequency.Daily: cls._normalize_daily,
             vcdtyp.Frequency.Minutely: cls._normalize_1_min,
@@ -103,8 +94,8 @@ class KibotS3DataLoader(vcdls3.AbstractS3DataLoader):
             df = cls.normalize(df=df, frequency=frequency)
         return df
 
-    @staticmethod
     # TODO(gp): Call the column datetime_ET suffix.
+    @staticmethod
     def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
         """
         Convert a df with 1 min Kibot data into our internal format.
@@ -113,7 +104,7 @@ class KibotS3DataLoader(vcdls3.AbstractS3DataLoader):
         - Add column names
         - Check for monotonic index
 
-        :param df: kibot raw dataframe as it is in .csv.gz files
+        :param df: Kibot raw dataframe as it is in .csv.gz files
         :return: a dataframe with `datetime` index and `open`, `high`,
             `low`, `close`, `vol` columns. If the input dataframe
             has only one column, the column name will be transformed to
@@ -125,7 +116,7 @@ class KibotS3DataLoader(vcdls3.AbstractS3DataLoader):
         # for BTSQ14.`
         if df.shape[1] > 1:
             # According to Kibot the columns are:
-            # Date,Time,Open,High,Low,Close,Volume
+            #   Date, Time, Open, High, Low, Close, Volume
             # Convert date and time into a datetime.
             df[0] = pd.to_datetime(df[0] + " " + df[1], format="%m/%d/%Y %H:%M")
             df.drop(columns=[1], inplace=True)
@@ -148,7 +139,7 @@ class KibotS3DataLoader(vcdls3.AbstractS3DataLoader):
         - Add column names
         - Check for monotonic index
 
-        :param df: kibot raw dataframe as it is in .csv.gz files
+        :param df: Kibot raw dataframe as it is in .csv.gz files
         :return: a dataframe with `datetime` index and `open`, `high`,
             `low`, `close`, `vol` columns.
         """

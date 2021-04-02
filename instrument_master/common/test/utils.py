@@ -92,7 +92,7 @@ class SqlWriterBackendTestCase(hut.TestCase):
 
     def _check_saved_data(self, table: str) -> None:
         """
-        Check data saved in Postgresql by test.
+        Check data saved in PostgreSQL by test.
 
         :param table: table name
         """

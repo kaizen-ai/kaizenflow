@@ -26,21 +26,16 @@
       - ```gateway/```: 
     - ```load/```
     - ```transform/```
-  - ```metadata/```
-    - Handle IB medata
-    - ```extract```
-      - Crawler
+  - ```metadata/```: Handle IB medata
+    - ```extract```: IB crawler
     - ```load/```
     - ```transform/```
       
-- ```kibot/```
-  - Kibot provider
+- ```kibot/```: Kibot provider
   - ```data/```
-    - ```extract/```
-      - Extract the data from the website and save it to S3
-    - ```load/```
-      - Load the data from S3 to 
-    - ```transform/```
+    - ```extract/```: extract the data from the website and save it to S3
+    - ```load/```: load the data from S3 into SQL
+    - ```transform/```: transform the data
   - ```metadata/```
     - ```extract/```
     - ```load/```

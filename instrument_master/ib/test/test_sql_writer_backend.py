@@ -14,7 +14,7 @@ import instrument_master.ib.sql_writer_backend as visqlw
 )
 class TestIbSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
     """
-    Test writing operation to Postgresql IM db.
+    Test writing operation to PostgreSQL IM db.
     """
 
     def setUp(self) -> None:

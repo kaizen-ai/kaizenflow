@@ -1,14 +1,14 @@
 #!/bin/bash -x
 
 if [[ 0 == 1 ]]; then
-instrument_master.kibot/data/extract/download.py \
+instrument_master/kibot/data/extract/download.py \
     --dataset 'sp_500_1min' \
     -u saggese@gmail.com -p s33f3c3c3 \
     --no_incremental
 fi;
 
 if [[ 1 == 1 ]]; then
-instrument_master.kibot/data/transform/convert_csv_to_pq.py --dataset all_forex_pairs_1min -v DEBUG
+instrument_master/kibot/data/transform/convert_csv_to_pq.py --dataset all_forex_pairs_1min -v DEBUG
 fi;
 
 ./dev_scripts/tg.py
