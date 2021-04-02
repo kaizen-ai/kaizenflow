@@ -146,10 +146,10 @@ endif
 # #############################################################################
 
 ifdef GITHUB_SHA
-IMAGE_RC_SHA:=$(GITHUB_SHA)
+	IMAGE_RC_SHA:=$(GITHUB_SHA)
 else
-# GITHUB_SHA not found. Setting IMAGE_RC_SHA from HEAD.
-IMAGE_RC_SHA:=$(shell git rev-parse HEAD)
+	# GITHUB_SHA not found. Setting IMAGE_RC_SHA from HEAD.
+	IMAGE_RC_SHA:=$(shell git rev-parse HEAD)
 endif
 
 # Use Docker buildkit or not.

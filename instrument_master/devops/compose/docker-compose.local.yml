@@ -13,6 +13,7 @@ services:
 
   im_postgres_local:
     image: postgres:13
+    # TODO(gp): -> Needed?
     container_name: im_postgres_local
     restart: "no"
     volumes:
