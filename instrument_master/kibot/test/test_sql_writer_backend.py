@@ -61,14 +61,14 @@ class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
             }
         )
         self._writer.insert_bulk_daily_data(df=df)
-        # Mock the situation, when loading process interrupted somehow.
-        # Literally delete the tail of the data.
+        # Mock the situation when the loading process is interrupted. To simulate
+        # this, by deleting the tail of the data.
         with self._writer.conn as conn:
             with conn.cursor() as curs:
                 curs.execute(
                     "DELETE FROM KibotDailyData WHERE date > '2021-01-01'"
                 )
-        # Get remains of pandas Dataframe to load.
+        # Get the remaining of pandas Dataframe to load.
         df = self._writer.get_remains_data_to_load(
             self._trade_symbol_id, df, vcdtyp.Frequency.Daily
         )

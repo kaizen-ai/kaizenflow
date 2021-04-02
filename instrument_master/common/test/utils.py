@@ -4,6 +4,7 @@ import os
 import pandas as pd
 
 import helpers.unit_test as hut
+import helpers.sql as hsql
 import instrument_master.common.db.init as vcdini
 import instrument_master.common.sql_writer_backend as vcsqlw
 
@@ -87,6 +88,7 @@ class SqlWriterBackendTestCase(hut.TestCase):
                             self._symbol_id,
                         ],
                     )
+            _LOG.debug("tables=%s", hsql.head_tables(self._writer.conn))
 
     def _get_test_string(self) -> str:
         string: str = self._get_test_name().replace("/", "").replace(".", "")

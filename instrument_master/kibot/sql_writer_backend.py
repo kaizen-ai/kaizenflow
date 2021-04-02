@@ -9,7 +9,7 @@ import instrument_master.common.sql_writer_backend as vcsqlw
 
 class KibotSqlWriterBackend(vcsqlw.AbstractSqlWriterBackend):
     """
-    Manager of CRUD operations on a database defined in db.sql.
+    Manager of CRUD operations on a database defined in `instrument_master/db`.
     """
 
     FREQ_ATTR_MAPPING = {
@@ -62,16 +62,6 @@ class KibotSqlWriterBackend(vcsqlw.AbstractSqlWriterBackend):
     ) -> None:
         """
         Insert daily data for a particular TradeSymbol entry.
-
-        :param trade_symbol_id: id of TradeSymbol
-        :param date: date string
-        :param open_val: open price
-        :param high_val: high price
-        :param low_val: low price
-        :param close_val: close price
-        :param volume_val: volume
-        :param average_val: average
-        :param bar_count_val: bar count
         """
         with self.conn:
             with self.conn.cursor() as curs:
@@ -97,7 +87,7 @@ class KibotSqlWriterBackend(vcsqlw.AbstractSqlWriterBackend):
         """
         Insert minute data for a particular TradeSymbol entry in bulk.
 
-        :param df: a dataframe from s3
+        :param df: a dataframe from S3
         """
         with self.conn:
             with self.conn.cursor() as curs:
@@ -125,16 +115,6 @@ class KibotSqlWriterBackend(vcsqlw.AbstractSqlWriterBackend):
     ) -> None:
         """
         Insert minute data for a particular TradeSymbol entry.
-
-        :param trade_symbol_id: id of TradeSymbol
-        :param date_time: date and time string
-        :param open_val: open price
-        :param high_val: high price
-        :param low_val: low price
-        :param close_val: close price
-        :param volume_val: volume
-        :param average_val: average
-        :param bar_count_val: bar count
         """
         with self.conn:
             with self.conn.cursor() as curs:
@@ -162,11 +142,6 @@ class KibotSqlWriterBackend(vcsqlw.AbstractSqlWriterBackend):
     ) -> None:
         """
         Insert tick data for a particular TradeSymbol entry.
-
-        :param trade_symbol_id: id of TradeSymbol
-        :param date_time: date and time string
-        :param price_val: price of the transaction
-        :param size_val: size of the transaction
         """
         with self.conn:
             with self.conn.cursor() as curs:

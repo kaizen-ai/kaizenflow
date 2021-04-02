@@ -119,7 +119,7 @@ ifeq ($(NO_FAST_TESTS), 'True')
 	@echo "No fast tests"
 else
 	_IMAGE=$(IMAGE_RC) \
-	_CMD="$(RUN_TESTS_DIR)/run_fast_tests.sh" \
+	_CMD="$(RUN_TESTS_DIR)/run_fast_tests.sh $(USER_OPTS)" \
 	make im._run_tests
 endif
 
@@ -127,6 +127,10 @@ endif
 im.run_all_fast_tests:
 	(cd ..; make run_fast_tests USER_OPTS="instrument_master")
 	make im.run_fast_tests
+
+im.run_all_fast_tests_coverage:
+	#(cd ..; make run_fast_tests USER_OPTS="--cov --cov-branch --cov-report term-missing --cov-report html --cov-report annotate")
+	make im.run_fast_tests USER_OPTS="--cov --cov-branch --cov-report term-missing --cov-report html --cov-report annotate"
 
 im.run_slow_tests:
 ifeq ($(NO_SLOW_TESTS), 'True')
