@@ -203,7 +203,7 @@ ifeq ($(NO_FAST_TESTS), 'True')
 	@echo "No fast tests"
 else
 	_IMAGE=$(IMAGE_DEV) \
-	_CMD="$(RUN_TESTS_DIR)/run_fast_tests.sh" \
+	_CMD="$(RUN_TESTS_DIR)/run_fast_tests.sh $(USER_OPTS)" \
 	make _run_tests
 endif
 

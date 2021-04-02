@@ -123,6 +123,11 @@ else
 	make im._run_tests
 endif
 
+# Run the tests with the base container and the tests needing a special container.
+im.run_all_fast_tests:
+	(cd ..; make run_fast_tests USER_OPTS="instrument_master")
+	make im.run_fast_tests
+
 im.run_slow_tests:
 ifeq ($(NO_SLOW_TESTS), 'True')
 	@echo "No slow tests"
