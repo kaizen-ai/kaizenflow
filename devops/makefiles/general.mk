@@ -132,8 +132,8 @@ else
 	J_PORT=$(J_PORT) \
 	IMAGE=$(IMAGE_DEV) \
 	docker-compose \
-		-f devops/compose/docker-compose-jupyter.yml \
 		-f $(DOCKER_COMPOSE_USER_SPACE) \
+		-f devops/compose/docker-compose-jupyter.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
@@ -503,8 +503,8 @@ else
 	J_PORT=19999 \
 	IMAGE=$(IMAGE_DEV) \
 	docker-compose \
-		-f devops/compose/docker-compose-jupyter.yml \
 		-f $(DOCKER_COMPOSE_USER_SPACE) \
+		-f devops/compose/docker-compose-jupyter.yml \
 		run \
 		--rm \
 		-l user=$(USER) \
