@@ -16,7 +16,7 @@ endif
 
 # Print all the makefile targets.
 targets:
-	find . -name "*.mk" -o -name "Makefile" | xargs -n 1 perl -ne 'if (/^\S+:$$/) { print $$_ }'
+	find . -name "*.mk" -o -name "Makefile" | xargs -n 1 perl -ne 'if (/^\S+:$$/) { print $$_ }' | sort
 
 # Print all the makefiles.
 makefiles:
