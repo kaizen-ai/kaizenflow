@@ -14,12 +14,12 @@ _LOG = logging.getLogger("amp" + __name__)
 # TODO(Amr): Extract the 2 distinct functions here
 # TODO(Amr): Map the functions onto `KibotContractType`, so you provide a type,
 # and get back a dataframe with its metadata
-# TODO(gp): We're fetching this from s3 & not kibot, how do we pick up the updates?
+# TODO(gp): We're fetching this from S3 and not kibot, how do we pick up the updates?
 # perhaps these should be move to `transform` stage and we should output pq files?
 # TODO(Amr): highlight the relation to `metadata/types`
 # TODO(Amr): perhaps these functions shou
 
-# TODO(gp): Might make sense to cache the metadata too to avoid s3 access.
+# TODO(gp): Might make sense to cache the metadata too to avoid S3 access.
 
 
 class S3Backend:

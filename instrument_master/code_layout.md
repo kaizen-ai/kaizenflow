@@ -1,60 +1,42 @@
 # Code Layout
 
-- Based on the container diagram, the code layout matches the different containers
-  that we have
+- The code layout matches the different software components that we have
 
-```text
-app/
-  # user interface to use IM
-common/
-  # code common to all the providers
-  data/
-    # code to handle the common data
-    extract/
-    load/
-    transform
-devops/
-  # scripts to handle infrastructure
-ib/
-  # Interactive Broker provider
-  connect/
-    # IB TWS interface
-  data/
-    # Handle IB data
-  metadata/
-    # Handle IB medata
-    extract
-      # Crawler
-      
-kibot
-  # Kibot provider
-  data/
-    extract/
-      # Extract the data from the website and save it to S3
-    load/
-      # Load the data from S3 to 
-    transform/
-      # 
-  metadata/
-    extract/
-    load/
-    transform/
-```
+- We separate the 3 ETL stages (extract, transform, and load) for both data and
+  metadata
+
+- ```app/```
+  - User interface to IM
+  - It contains all and only the code that is used to access the production data
+    (SQL, S3, and the conversion)
     
-
-types/  # standardized types (see data model above)
-loader/  # adapts all vendor loaders to a common interface
-vendors/
-   kibot/
-      extractor/
-      transformer/
-      loader/
-      types/  # vendor specific types
-      config.py  # s3 paths, credentials for vendor
-   eoddata/
-      extractor/
-      transformer/
-      loader/
-      types/
-      config.py
-```
+- ```common/```: code common to all providers
+  - ```data/```: code to handle the common data
+    - ```extract/```
+    - ```load/```
+    - ```transform/```
+  - ```db/```: code to handle the DB
+  
+- ```devops/```: scripts to handle infrastructure, with the usual conventions
+  
+- ```ib/```: Interactive Broker provider
+  - ```connect/```: IB TWS interface
+  - ```data/```: handle IB data
+    - ```extract/```
+      - ```gateway/```: 
+    - ```load/```
+    - ```transform/```
+  - ```metadata/```: Handle IB medata
+    - ```extract```: IB crawler
+    - ```load/```
+    - ```transform/```
+      
+- ```kibot/```: Kibot provider
+  - ```data/```
+    - ```extract/```: extract the data from the website and save it to S3
+    - ```load/```: load the data from S3 into SQL
+    - ```transform/```: transform the data
+  - ```metadata/```
+    - ```extract/```
+    - ```load/```
+    - ```transform/```

@@ -51,6 +51,7 @@ class Ticker:
     Sector: str
 
 
+# TODO(*): Move up, maybe even in helpers.
 DATE_TYPE = Union[str, "pandas.Timestamp", "datetime.datetime"]
 
 

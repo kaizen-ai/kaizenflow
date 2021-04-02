@@ -22,7 +22,8 @@ source ~/.bashrc
 
 export PYTHONPATH=/app:$PYTHONPATH
 echo "PYTHONPATH=$PYTHONPATH"
-python -c "import psycopg2"
+
+# Initialize the DB.
 ./instrument_master/devops/docker_scripts/init_im_db.py --db $POSTGRES_DB
 
 eval "$@"

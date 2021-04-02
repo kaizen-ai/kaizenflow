@@ -5,10 +5,11 @@ import pandas as pd
 
 import instrument_master.common.data.types as vcdtyp
 
+# TODO: file -> abstract_data_loader
 
 class AbstractDataLoader(abc.ABC):
     """
-    Reads data for symbols of a given asset and exchange.
+    Read data for symbols of a given asset, exchange, and frequency.
     """
     @abc.abstractmethod
     def read_data(

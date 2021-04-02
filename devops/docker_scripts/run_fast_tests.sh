@@ -2,7 +2,10 @@
 
 set -e
 
-OPTS="-vv -rpa --log-cli-level=INFO"
+USER_OPTS="$*"
+
+OPTS="-vv -rpa"
+#OPTS="$OPTS --log-cli-level=INFO"
 
 SKIPPED_TESTS="not slow and \
     not superslow and \
@@ -11,6 +14,6 @@ SKIPPED_TESTS="not slow and \
     not not_docker"
 
 # Run tests.
-cmd="pytest ${OPTS} -m '${SKIPPED_TESTS}'"
+cmd="pytest ${OPTS} -m '${SKIPPED_TESTS}' ${USER_OPTS}"
 echo "> cmd=$cmd"
 eval $cmd

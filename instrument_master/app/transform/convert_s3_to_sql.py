@@ -12,7 +12,7 @@ Usage examples:
       --asset_class stocks \
       --exchange NYSE
 
-- Convert daily data from S3 to SQL for AAPL, kibot provider, specifying connection:
+- Convert daily data from S3 to SQL for AAPL, Kibot provider, specifying connection:
   > convert_s3_to_sql.py \
       --provider kibot \
       --symbol AAPL \

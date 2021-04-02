@@ -12,11 +12,9 @@ import instrument_master.common.data.types as vcdtyp
 
 
 # TODO(*): Move it to data_loader.py
-# TODO(*): SQL -> Sql
 class AbstractSqlDataLoader(vcdlda.AbstractDataLoader):
     """
-    Interface for class which loads the data for a security from an SQL
-    backend.
+    Interface for class that loads the data from an SQL backend.
     """
 
     def __init__(
@@ -30,6 +28,7 @@ class AbstractSqlDataLoader(vcdlda.AbstractDataLoader):
             port=port,
         )
 
+    # TODO(*): Factor out the common part.
     def get_symbol_id(
         self,
         symbol: str,
@@ -121,17 +120,7 @@ class AbstractSqlDataLoader(vcdlda.AbstractDataLoader):
         normalize: bool = True,
     ) -> pd.DataFrame:
         """
-        Read ib data.
-
-        :param exchange: name of the exchange
-        :param symbol: symbol to get the data for
-        :param asset_class: asset class
-        :param frequency: `D` or `T` for daily or minutely data respectively
-        :param contract_type: required for asset class of type: `futures`
-        :param unadjusted: required for asset classes of type: `stocks` & `etfs`
-        :param nrows: if not None, return only the first nrows of the data
-        :param normalize: whether to normalize the dataframe by frequency
-        :return: a dataframe with the symbol data
+        Read data.
         """
         return self._read_data(
             exchange=exchange,
@@ -143,6 +132,8 @@ class AbstractSqlDataLoader(vcdlda.AbstractDataLoader):
     def close(self) -> None:
         self.conn.close()
 
+    # TODO(gp): 'abc.abstractstaticmethod' is deprecated since Python 3.3.
+    #  Use 'staticmethod' with 'abc.abstractmethod' instead.
     @abc.abstractstaticmethod
     def _get_table_name_by_frequency(frequency: vcdtyp.Frequency) -> str:
         """
@@ -164,6 +155,7 @@ class AbstractSqlDataLoader(vcdlda.AbstractDataLoader):
         trade_symbol_id = self.get_trade_symbol_id(symbol_id, exchange_id)
         table_name = self._get_table_name_by_frequency(frequency)
         limit = pexten.AsIs("ALL")
+        # TODO(*): Add LIMIT in SQL query only if nrows is specified.
         if nrows:
             dbg.dassert_lte(1, nrows)
             limit = nrows

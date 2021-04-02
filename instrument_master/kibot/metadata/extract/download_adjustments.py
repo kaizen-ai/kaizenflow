@@ -84,7 +84,7 @@ def _download_adjustments_data_for_symbol(symbol: str, tmp_dir: str) -> None:
     file_path = os.path.join(tmp_dir, vkmcon.ADJUSTMENTS_SUB_DIR, file_name)
     hio.to_file(file_name=file_path, lines=str(response.content, "utf-8"))
 
-    # Save to s3.
+    # Save to S3.
     aws_path = os.path.join(
         vkmcon.S3_PREFIX, vkmcon.ADJUSTMENTS_SUB_DIR, file_name
     )

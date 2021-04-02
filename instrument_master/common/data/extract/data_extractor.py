@@ -6,6 +6,7 @@ import pandas as pd
 import instrument_master.common.data.types as vcdtyp
 
 
+# TODO(gp): Rename file abstract_data_extractor.py
 class AbstractDataExtractor(abc.ABC):
     """
     Load data from external sources.
@@ -25,7 +26,7 @@ class AbstractDataExtractor(abc.ABC):
         dst_dir: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Extract the data, save it and return all data for symbol.
+        Extract the data for symbol, save , and return it.
 
         :param exchange: name of the exchange
         :param symbol: symbol to get the data for

@@ -28,7 +28,7 @@ if [ $SUBMODULE_SUPERPROJECT ]; then
     --get-regexp path \
     | grep $(basename "$(pwd)")$ \
     | awk '{print $2}')
-    echo "Running pre-commit for the Git $SUBMODULE_NAME submodule."
+    echo "Running pre-commit for the Git '$SUBMODULE_NAME' submodule."
     # The working dir is the submodule.
     WORK_DIR="/src/$SUBMODULE_NAME"
     REPO_ROOT=$SUBMODULE_SUPERPROJECT

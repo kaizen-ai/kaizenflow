@@ -20,6 +20,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(*): -> CheckRealtimeFeedCommand
 class CheckReadtimeFeedCommand(vkbcom.KibotCommand):
     def __init__(self) -> None:
         super().__init__(

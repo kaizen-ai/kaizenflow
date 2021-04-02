@@ -1,18 +1,17 @@
 """
 Import as:
-
 import instrument_master.common.data.load.file_path_generator as vcdlfi
 """
+
 import abc
 from typing import Optional
 
 import instrument_master.common.data.types as vcdtyp
 
 
-# TODO(*): -> S3FilePathGenerator
 class FilePathGenerator(abc.ABC):
     """
-    Generates path from specific security to the file storing the data on S3.
+    Generate path for specific security to store data on a file system (e.g., S3).
     """
 
     @abc.abstractmethod

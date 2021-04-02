@@ -7,7 +7,7 @@ import instrument_master.kibot.data.extract.download as vkdedo
 class TestKibotDownload(hut.TestCase):
     def test_extract_dataset_links(self) -> None:
         """
-        Test that extraction of dataset links from my account page works.
+        Test that extraction of dataset links from "My account" page works.
         """
         file_name = "my_account.html"
         file_name = os.path.join(self.get_input_dir(), file_name)
@@ -19,7 +19,7 @@ class TestKibotDownload(hut.TestCase):
         """
         Test that extraction of payload links from a dataset page works.
 
-        Use all_stocks_1min as an example
+        Use all_stocks_1min as an example.
         """
         file_name = "all_stocks_1min.html"
         file_name = os.path.join(self.get_input_dir(), file_name)

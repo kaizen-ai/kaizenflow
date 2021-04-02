@@ -1,20 +1,23 @@
+import logging
 import os
 
 import pandas as pd
 
 import helpers.unit_test as hut
+import helpers.sql as hsql
 import instrument_master.common.db.init as vcdini
 import instrument_master.common.sql_writer_backend as vcsqlw
 
+_LOG = logging.getLogger(__name__)
 
 class SqlWriterBackendTestCase(hut.TestCase):
     """
-    Helper class to test writing data to PostgreSQL.
+    Helper class to test writing data to IM PostgreSQL DB.
     """
 
     def setUp(self) -> None:
         super().setUp()
-        # Get postgresql connection parameters.
+        # Get PostgreSQL connection parameters.
         self._host = os.environ["POSTGRES_HOST"]
         self._port = os.environ["POSTGRES_PORT"]
         self._user = os.environ["POSTGRES_USER"]
@@ -26,7 +29,7 @@ class SqlWriterBackendTestCase(hut.TestCase):
             vcdini.get_init_sql_files(),
             force=True,
         )
-        # Define constant id-s for records across the test.
+        # Define constant IDs for records across the test.
         self._symbol_id = 10
         self._exchange_id = 20
         self._trade_symbol_id = 30
@@ -85,6 +88,7 @@ class SqlWriterBackendTestCase(hut.TestCase):
                             self._symbol_id,
                         ],
                     )
+            _LOG.debug("tables=%s", hsql.head_tables(self._writer.conn))
 
     def _get_test_string(self) -> str:
         string: str = self._get_test_name().replace("/", "").replace(".", "")
@@ -92,7 +96,7 @@ class SqlWriterBackendTestCase(hut.TestCase):
 
     def _check_saved_data(self, table: str) -> None:
         """
-        Check data saved in Postgresql by test.
+        Check data saved in PostgreSQL by test.
 
         :param table: table name
         """

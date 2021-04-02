@@ -13,18 +13,18 @@ import instrument_master.kibot.sql_writer_backend as vksqlw
 
 @pytest.mark.skipif(
     not vcdini.is_inside_im_container(),
-    reason="Testable only inside kibot container",
+    reason="Testable only inside IM container",
 )
 class TestSqlDataLoader1(hut.TestCase):
     """
-    Test writing operation to Postgresql kibot db.
+    Test writing operation to PostgreSQL Kibot DB.
     """
 
     def setUp(self) -> None:
         super().setUp()
-        # Get postgresql connection parameters.
+        # Get PostgreSQL connection parameters.
         host = os.environ["POSTGRES_HOST"]
-        port = os.environ["POSTGRES_PORT"]
+        port = int(os.environ["POSTGRES_PORT"])
         user = os.environ["POSTGRES_USER"]
         password = os.environ["POSTGRES_PASSWORD"]
         self.dbname = self._get_test_name().replace("/", "").replace(".", "")

@@ -224,7 +224,7 @@ class DatasetExtractor:
         self._download_file(
             row["Link"], local_file, dst_file, download_compressed
         )
-        # Copy to s3.
+        # Copy to S3.
         hs3.check_valid_s3_path(aws_file)
         cmd = "aws s3 cp %s %s" % (dst_file, aws_file)
         hsyste.system(cmd)
@@ -292,7 +292,7 @@ class DatasetExtractor:
         _LOG.debug("Storing %s dataset CSV file on S3", self.dataset)
         dataset_csv_file = os.path.join(converted_dir, f"{self.dataset}.csv")
         dataset_csv_s3_file = os.path.join(self.aws_dir, f"{self.dataset}.csv")
-        # Copy to s3.
+        # Copy to S3.
         hs3.check_valid_s3_path(dataset_csv_s3_file)
         cmd = "aws s3 cp %s %s" % (dataset_csv_file, dataset_csv_s3_file)
         hsyste.system(cmd)

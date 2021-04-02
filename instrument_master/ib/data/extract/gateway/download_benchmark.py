@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Benchmarking different approaches.
+Benchmark different approaches to download IB data.
 """
 
 import argparse
@@ -33,7 +33,9 @@ SETUP = dict(
 
 
 def _run_req_wrapper() -> None:
-    # Just run direct IB request.
+    """
+    Run direct IB request.
+    """
     args = SETUP.copy()
     ib = videgu.ib_connect(200, False)
     contract = ib.qualifyContracts(args.pop("contract"))[0]
@@ -62,7 +64,9 @@ def _run_req_wrapper() -> None:
 
 
 def _run_unrolling_download_data_ib_loop() -> None:
-    # Run latest code.
+    """
+    Run latest code.
+    """
     _LOG.info("Running unrolling_download_data_ib_loop code...")
     for mode, num_threads, dst_dir in [
         ("in_memory", "serial", "./in_memory"),
@@ -95,7 +99,9 @@ def _run_unrolling_download_data_ib_loop() -> None:
 
 
 def _run_save_historical_data_with_IB_loop() -> None:
-    # Run saving to separate files.
+    """
+    Run saving to separate files.
+    """
     _LOG.info("Running save_historical_data_with_IB_loop code...")
     file_name = "./save_ib_loop/experiment.csv"
     hio.create_enclosing_dir(file_name, incremental=True)
@@ -116,7 +122,9 @@ def _run_save_historical_data_with_IB_loop() -> None:
 
 
 def _run_download_data_IB_loop() -> None:
-    # Run loading by chunks different symbol sequentially.
+    """
+    Run loading by chunks different symbol sequentially.
+    """
     symbols = ["DA", "ES", "NQ"]
     _LOG.info("Running sequential downloading of %s", symbols)
     timer = htimer.Timer()
@@ -142,7 +150,9 @@ def _run_download_data_IB_loop() -> None:
 def _run_download_data_IB_loop_by_symbol(
     base_client_id: int, symbol: str
 ) -> None:
-    # Run loading by chunks.
+    """
+    Run loading by chunks.
+    """
     _LOG.info("Running download_data_IB_loop code for %s symbol...", symbol)
     file_name = "./simple_ib_loop/experiment.csv"
     hio.create_enclosing_dir(file_name, incremental=True)
