@@ -405,36 +405,6 @@ docker_release.all:
 	@echo "==> SUCCESS <=="
 
 # #############################################################################
-# Git.
-# #############################################################################
-
-# Pull all the repos.
-git_pull:
-	git pull --autostash
-	git submodule foreach 'git pull --autostash'
-
-# Clean all the repos.
-# TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
-# mistake.
-git_clean:
-	git clean -fd
-	git submodule foreach 'git clean -fd'
-	find . | \
-		grep -E "(tmp.joblib.unittest.cache|.pytest_cache|.mypy_cache|.ipynb_checkpoints|__pycache__|\.pyc|\.pyo$$)" | \
-		xargs rm -rf
-
-git_for:
-	$(CMD)
-	git submodule foreach '$(CMD)'
-
-# #############################################################################
-# Linter.
-# #############################################################################
-
-lint_branch:
-	bash pre-commit.sh run --files $(shell git diff --name-only master...) 2>&1 | tee linter_warnings.txt
-
-# #############################################################################
 # Self test.
 # #############################################################################
 
