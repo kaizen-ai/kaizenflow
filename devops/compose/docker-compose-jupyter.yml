@@ -1,26 +1,28 @@
 version: '3'
 
-# TODO(gp): derive from docker-compose or mix with it.
-
 services:
   jupyter_server:
     image: $IMAGE
-    restart: "no"
-    volumes:
-      - ../../:/app
-      - ~/.aws:/root/.aws
-      - ~/.config/gspread_pandas/:/root/.config/gspread_pandas/
-      - ../docker_build/fstab:/etc/fstab
     environment:
       - J_PORT=${J_PORT}
     ports:
       - "${J_PORT}:${J_PORT}"
     command: devops/docker_scripts/run_jupyter_server.sh
-    privileged: true
-    cap_add:
-      - SYS_ADMIN
+    extends:
+      user_space 
+
+  # TODO(gp): For some reason it doesn't work.
+  #  jupyter_server_test:
+  #    extends:
+  #      jupyter_server
+  #    command: jupyter notebook -h 2>&1 >/dev/null
 
   jupyter_server_test:
-    extends:
-      jupyter_server
+    image: $IMAGE
+    environment:
+      - J_PORT=${J_PORT}
+    ports:
+      - "${J_PORT}:${J_PORT}"
     command: jupyter notebook -h 2>&1 >/dev/null
+    extends:
+      user_space 
