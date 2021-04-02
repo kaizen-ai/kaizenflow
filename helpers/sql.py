@@ -7,7 +7,7 @@ import psycopg2.sql as psql
 
 import helpers.timer as htimer
 
-_log = logging.getLogger(__name__)
+_LOG = logging.getLogger(__name__)
 
 
 def get_connection(
@@ -21,6 +21,20 @@ def get_connection(
     connection = psycop.connect(
         dbname=dbname, host=host, user=user, port=port, password=password
     )
+    cursor = connection.cursor()
+    if autocommit:
+        connection.autocommit = True
+    return connection, cursor
+
+
+def get_connection_from_string(
+        conn_as_str: str,
+        autocommit: bool = True,
+) -> Tuple[psycop.extensions.connection, psycop.extensions.cursor]:
+    """ 
+    Create a connection from a string.
+    """
+    connection = psycop.connect(conn_as_str)
     cursor = connection.cursor()
     if autocommit:
         connection.autocommit = True
@@ -279,7 +293,8 @@ def find_common_columns(
     return obj
 
 
-# TODO(plyq): Tests.
+# TODO(plyq): Add tests.
+# TODO(*): Rename force -> overwrite or not_incremental.
 def create_database(
     connection: psycop.extensions.connection,
     db: str,
@@ -292,6 +307,7 @@ def create_database(
     :param db: database to create
     :param force: overwrite existing database
     """
+    _LOG.debug("connection=%s", connection)
     with connection.cursor() as cursor:
         if force:
             cursor.execute(

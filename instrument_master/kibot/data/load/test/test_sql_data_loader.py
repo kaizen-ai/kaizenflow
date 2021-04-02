@@ -22,7 +22,7 @@ class TestSqlDataLoader1(hut.TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        # Get postgresql connection parameters.
+        # Get PostgreSQL connection parameters.
         host = os.environ["POSTGRES_HOST"]
         port = int(os.environ["POSTGRES_PORT"])
         user = os.environ["POSTGRES_USER"]

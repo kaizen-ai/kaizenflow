@@ -8,13 +8,14 @@ import instrument_master.common.test.utils as vctuti
 import instrument_master.kibot.sql_writer_backend as vksqlw
 
 
+# TODO(*): -> TestKibotSqlWriterBackend1
 @pytest.mark.skipif(
     not vcdini.is_inside_im_container(),
     reason="Testable only inside IM container",
 )
 class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
     """
-    Test writing operation to PostgreSQL Kibot DB.
+    Test writing operation to PostgreSQL DB.
     """
 
     def setUp(self) -> None:
@@ -30,22 +31,21 @@ class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
 
     def test_ensure_symbol_exist1(self) -> None:
         """
-        Test adding a new symbol to Symbol table.
+        Test adding a new symbol to symbol table.
         """
         self._writer.ensure_symbol_exists(
             symbol=self._get_test_string(), asset_class=vcdtyp.AssetClass.Futures
         )
         self._check_saved_data(table="Symbol")
 
+    # TODO(*): -> remaining
     def test_get_remains_data_to_load(self) -> None:
         """
-        Slicing Pandas Dataframe to load.
-
-        This test, mock the situation, when loading process interrupted
-        somehow. Then, we need to load remaining data from the Pandas
-        Dataframe.
+        This test mocks the situation when the loading process was interrupted
+        We then need to load remaining data from the pandas Dataframe.
         """
         # Load the daily data.
+        # TODO(*): Extract the common code into a helper.
         self._prepare_tables(
             insert_symbol=True, insert_exchange=True, insert_trade_symbol=True
         )

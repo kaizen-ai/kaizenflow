@@ -1,4 +1,3 @@
-# TODO(*): Move to convert_s3_to_sql_kibot.py
 """
 Converts Kibot data on S3 from .csv.gz to SQL.
 """
@@ -14,6 +13,8 @@ import instrument_master.common.data.types as vcdtyp
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(*): Move to convert_s3_to_sql_kibot.py?
+# TODO(*): -> KibotS3ToSqlTransformer
 class S3ToSqlTransformer(vcdts3.AbstractS3ToSqlTransformer):
     @classmethod
     def transform(
