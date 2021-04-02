@@ -129,8 +129,9 @@ im.run_all_fast_tests:
 	make im.run_fast_tests
 
 im.run_all_fast_tests_coverage:
-	#(cd ..; make run_fast_tests USER_OPTS="--cov --cov-branch --cov-report term-missing --cov-report html --cov-report annotate")
+	(cd ..; make run_fast_tests USER_OPTS="--cov --cov-branch --cov-report term-missing --cov-report html --cov-report annotate instrument_master")
 	make im.run_fast_tests USER_OPTS="--cov --cov-branch --cov-report term-missing --cov-report html --cov-report annotate"
+	(cd ../htmlcov; python -m http.server 33333)
 
 im.run_slow_tests:
 ifeq ($(NO_SLOW_TESTS), 'True')
