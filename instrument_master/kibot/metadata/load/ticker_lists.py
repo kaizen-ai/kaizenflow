@@ -38,7 +38,6 @@ class TickerListsLoader:
     - 1    XOM    12/1/1999    102    "Exxon Mobil Corporation"    NYSE    "Integrated oil Companies"    "Energy"
     ```
     """
-
     # pylint: enable=line-too-long
 
     def get(self, ticker_list: str, listed: bool = True) -> List[vkmtyp.Ticker]:
@@ -47,7 +46,6 @@ class TickerListsLoader:
             vkmcon.TICKER_LISTS_SUB_DIR,
             f"{ticker_list}.txt",
         )
-
         lines = self._get_lines(s3_path=s3_path)
         listed_tickers, delisted_tickers = self._parse_lines(lines=lines)
         return listed_tickers if listed else delisted_tickers
@@ -66,31 +64,24 @@ class TickerListsLoader:
         """
         listed_tickers: List[vkmtyp.Ticker] = []
         delisted_tickers: List[vkmtyp.Ticker] = []
-
         state = ParsingState.Started
-
         for line in lines:
             if not line.strip():
                 # Skip empty lines.
                 continue
-
             if state == ParsingState.Started:
                 if line.strip() == "Listed:":
                     state = ParsingState.ListedSectionStarted
-
             elif state == ParsingState.ListedSectionStarted:
                 # First non-empty line after 'listed' section header is always the header.
                 state = ParsingState.HeaderSkipped
-
             elif state == ParsingState.HeaderSkipped:
                 if line.strip() == "Delisted:":
                     state = ParsingState.DelistedSectionStarted
                 else:
                     listed_tickers.append(self._get_ticker_from_line(line))
-
             elif state == ParsingState.DelistedSectionStarted:
                 delisted_tickers.append(self._get_ticker_from_line(line))
-
         return listed_tickers, delisted_tickers
 
     @staticmethod
@@ -104,8 +95,8 @@ class TickerListsLoader:
         """
         # pylint: enable=line-too-long
         args = line.split("\t")
-        # Remove new line from last element. Note: if we strip before splitting, the tab
-        # delimiters would be removed as well if a column is empty.
+        # Remove new line from last element. Note: if we strip before splitting,
+        # the tab delimiters would be removed as well if a column is empty.
         args[-1] = args[-1].strip()
         # Skip index col.
         args = args[1:]
