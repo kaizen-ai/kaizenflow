@@ -8,10 +8,6 @@ from typing import Any
 import instrument_master.common.data.load.data_loader as vcdlda
 import instrument_master.common.data.load.s3_data_loader as vcdls3
 import instrument_master.common.data.load.sql_data_loader as vcdlsq
-import instrument_master.ib.data.load.s3_data_loader as vidls3
-import instrument_master.ib.data.load.sql_data_loader as vidlsq
-import instrument_master.kibot.data.load.s3_data_loader as vkdls3
-import instrument_master.kibot.data.load.sql_data_loader as vkdlsq
 
 
 class LoaderFactory:
@@ -50,8 +46,10 @@ class LoaderFactory:
         """
         loader: vcdls3.AbstractS3DataLoader
         if provider == "kibot":
+            import instrument_master.kibot.data.load.s3_data_loader as vkdls3
             loader = vkdls3.KibotS3DataLoader()
         elif provider == "ib":
+            import instrument_master.ib.data.load.s3_data_loader as vidls3
             loader = vidls3.IbS3DataLoader()
         else:
             raise ValueError("S3 loader for %s is not implemented" % provider)
@@ -74,10 +72,12 @@ class LoaderFactory:
         """
         loader: vcdlsq.AbstractSqlDataLoader
         if provider == "kibot":
+            import instrument_master.kibot.data.load.sql_data_loader as vkdlsq
             loader = vkdlsq.KibotSqlDataLoader(
                 dbname=dbname, user=user, password=password, host=host, port=port
             )
         elif provider == "ib":
+            import instrument_master.ib.data.load.sql_data_loader as vidlsq
             loader = vidlsq.IbSqlDataLoader(
                 dbname=dbname, user=user, password=password, host=host, port=port
             )
