@@ -6,6 +6,7 @@ ECR_BASE_PATH=083233266530.dkr.ecr.us-east-2.amazonaws.com
 
 IM_REPO_BASE_PATH=$(ECR_BASE_PATH)/im
 IM_IMAGE_DEV=$(IM_REPO_BASE_PATH):latest
+IM_IMAGE_AIRFLOW_DEV=$(IM_REPO_BASE_PATH):latest-airflow
 IM_IMAGE_RC=$(IM_REPO_BASE_PATH):rc
 
 NO_SUPERSLOW_TESTS='True'
@@ -238,6 +239,15 @@ im.docker_build_image.rc:
 		--file devops/docker_build/dev.Dockerfile \
 		.
 
+im.docker_build_worker_image:
+	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
+	docker build \
+		--progress=plain \
+		--no-cache \
+		-t $(IM_IMAGE_AIRFLOW_DEV) \
+		--file devops/docker_build/im_db_loader_worker.dev.Dockerfile \
+		.
+
 im.docker_build_image_with_cache.rc:
 	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
 	docker build \
@@ -267,7 +277,7 @@ im.docker_release.latest:
 	make im.docker_tag_rc_image.latest
 	make im.docker_push_image.latest
 	@echo "==> SUCCESS <=="
-	
+
 # #############################################################################
 # Test IM workflow (RC)
 # #############################################################################
