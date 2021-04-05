@@ -123,7 +123,7 @@ class TestSqlDataLoader1(hut.TestCase):
 
     def test_read_data3(self) -> None:
         """
-        Test failed assertion for unexisting exchange.
+        Test failed assertion for invalid exchange.
         """
         # Get data.
         with self.assertRaises(AssertionError):
@@ -131,7 +131,7 @@ class TestSqlDataLoader1(hut.TestCase):
 
     def test_read_data4(self) -> None:
         """
-        Test failed assertion on for unexisting.
+        Test failed assertion for invalid ticker.
         """
         # Get data.
         with self.assertRaises(AssertionError):
