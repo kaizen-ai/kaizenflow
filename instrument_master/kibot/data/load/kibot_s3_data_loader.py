@@ -9,7 +9,7 @@ import helpers.dbg as dbg
 import helpers.s3 as hs3
 import instrument_master.common.data.load.s3_data_loader as vcdls3
 import instrument_master.common.data.types as vcdtyp
-import instrument_master.kibot.data.load.file_path_generator as vkdlfi
+import instrument_master.kibot.data.load.kibot_file_path_generator as vkdlfi
 
 _LOG = logging.getLogger(__name__)
 

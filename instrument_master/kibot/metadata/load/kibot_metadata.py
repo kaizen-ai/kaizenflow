@@ -12,7 +12,7 @@ from tqdm.autonotebook import tqdm
 import helpers.dbg as dbg
 import helpers.io_ as hio
 import instrument_master.common.data.types as vcdtyp
-import instrument_master.kibot.data.load.s3_data_loader as vkdls3
+import instrument_master.kibot.data.load.kibot_s3_data_loader as vkdls3
 import instrument_master.kibot.metadata.load.expiry_contract_mapper as vkmlex
 import instrument_master.kibot.metadata.load.s3_backend as vkmls3
 import instrument_master.kibot.metadata.types as vkmtyp

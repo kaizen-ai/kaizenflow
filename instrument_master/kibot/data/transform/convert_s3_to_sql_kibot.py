@@ -35,10 +35,10 @@ import instrument_master.common.data.transform.transform as vcdttr
 import instrument_master.kibot.data.config as vkdcon
 import instrument_master.kibot.data.load as vkdloa
 import instrument_master.kibot.data.load.dataset_name_parser as vkdlda
-import instrument_master.kibot.data.load.sql_data_loader as vkdlsq
-import instrument_master.kibot.data.transform.s3_to_sql_transformer as vkdts3
+import instrument_master.kibot.data.load.kibot_sql_data_loader as vkdlsq
+import instrument_master.kibot.data.transform.kibot_s3_to_sql_transformer as vkdts3
 import instrument_master.kibot.metadata.load.s3_backend as vkmls3
-import instrument_master.kibot.sql_writer_backend as vksqlw
+import instrument_master.kibot.kibot_sql_writer_backend as vksqlw
 
 _LOG = logging.getLogger(__name__)
 

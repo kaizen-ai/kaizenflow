@@ -73,8 +73,8 @@ def convert_s3_to_sql(
     )
     _LOG.debug("Saving '%s' data to database", symbol)
     if incremental:
-        df = sql_writer_backend.get_remains_data_to_load(
-            trade_symbol_id, df, frequency
+        df = sql_writer_backend.get_remaining_data_to_load(
+            df, trade_symbol_id=trade_symbol_id, frequency=frequency
         )
     else:
         sql_writer_backend.delete_data_by_trade_symbol_id(

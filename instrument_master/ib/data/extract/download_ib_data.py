@@ -41,7 +41,7 @@ import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.parser as hparse
 import instrument_master.common.data.types as vcdtyp
-import instrument_master.ib.data.extract.data_extractor as videda
+import instrument_master.ib.data.extract.ib_data_extractor as videda
 
 # from tqdm.notebook import tqdm
 

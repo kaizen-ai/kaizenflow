@@ -30,7 +30,7 @@ import helpers.dbg as dbg
 import helpers.env as henv
 import helpers.printing as hprint
 import instrument_master.kibot.data.load.futures_forward_contracts as vkdlfu
-import instrument_master.kibot.data.load.s3_data_loader as vkdls3
+import instrument_master.kibot.data.load.kibot_s3_data_loader as vkdls3
 import instrument_master.kibot.metadata.load.kibot_metadata as vkmlki
 
 # %%

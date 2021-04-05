@@ -21,10 +21,10 @@ class TransformerFactory:
         """
         transformer: vcdts3.AbstractS3ToSqlTransformer
         if provider == "kibot":
-            import instrument_master.kibot.data.transform.s3_to_sql_transformer as vkdts3
+            import instrument_master.kibot.data.transform.kibot_s3_to_sql_transformer as vkdts3
             transformer = vkdts3.S3ToSqlTransformer()
         elif provider == "ib":
-            import instrument_master.ib.data.transform.s3_to_sql_transformer as vidts3
+            import instrument_master.ib.data.transform.ib_s3_to_sql_transformer as vidts3
             transformer = vidts3.IbS3ToSqlTransformer()
         else:
             raise ValueError(

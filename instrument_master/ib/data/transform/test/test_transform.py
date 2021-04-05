@@ -5,10 +5,10 @@ import instrument_master.common.data.transform.transform as vcdttr
 import instrument_master.common.data.types as vcdtyp
 import instrument_master.common.db.init as vcdini
 import instrument_master.common.test.utils as vctuti
-import instrument_master.ib.data.load.s3_data_loader as vidls3
-import instrument_master.ib.data.load.sql_data_loader as vidlsq
-import instrument_master.ib.data.transform.s3_to_sql_transformer as vidts3
-import instrument_master.ib.sql_writer_backend as visqlw
+import instrument_master.ib.data.load.ib_s3_data_loader as vidls3
+import instrument_master.ib.data.load.ib_sql_data_loader as vidlsq
+import instrument_master.ib.data.transform.ib_s3_to_sql_transformer as vidts3
+import instrument_master.ib.ib_sql_writer_backend as visqlw
 
 
 @pytest.mark.skipif(

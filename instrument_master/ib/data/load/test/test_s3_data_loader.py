@@ -1,6 +1,6 @@
 import helpers.unit_test as hut
 import instrument_master.common.data.types as vcdtyp
-import instrument_master.ib.data.load.s3_data_loader as vidls3
+import instrument_master.ib.data.load.ib_s3_data_loader as vidls3
 
 
 class TestS3IbDataLoader1(hut.TestCase):

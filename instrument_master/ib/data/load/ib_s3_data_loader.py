@@ -1,7 +1,7 @@
 """
 Import as:
 
-instrument_master.ib.data.load.s3_data_loader ibs3
+instrument_master.ib.data.load.ib_s3_data_loader ibs3
 """
 
 import functools
@@ -14,7 +14,7 @@ import helpers.dbg as dbg
 import helpers.s3 as hs3
 import instrument_master.common.data.load.s3_data_loader as vcdls3
 import instrument_master.common.data.types as vcdtyp
-import instrument_master.ib.data.load.file_path_generator as vidlfi
+import instrument_master.ib.data.load.ib_file_path_generator as vidlfi
 
 _LOG = logging.getLogger(__name__)
 

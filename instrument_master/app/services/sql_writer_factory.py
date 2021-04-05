@@ -22,12 +22,12 @@ class SqlWriterFactory:
         """
         transformer: vcsqlw.AbstractSqlWriterBackend
         if provider == "kibot":
-            import instrument_master.kibot.sql_writer_backend as vksqlw
+            import instrument_master.kibot.kibot_sql_writer_backend as vksqlw
             transformer = vksqlw.KibotSqlWriterBackend(
                 dbname=dbname, user=user, password=password, host=host, port=port
             )
         elif provider == "ib":
-            import instrument_master.ib.sql_writer_backend as visqlw
+            import instrument_master.ib.ib_sql_writer_backend as visqlw
             transformer = visqlw.IbSqlWriterBackend(
                 dbname=dbname, user=user, password=password, host=host, port=port
             )

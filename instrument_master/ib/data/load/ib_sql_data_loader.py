@@ -1,7 +1,7 @@
 """
 Import as:
 
-import vendors_amp.ib.data.load.sql_data_loader as vidlsq
+import vendors_amp.ib.data.load.ib_sql_data_loader as vidlsq
 """
 import helpers.dbg as dbg
 import instrument_master.common.data.load.sql_data_loader as vcdlsq

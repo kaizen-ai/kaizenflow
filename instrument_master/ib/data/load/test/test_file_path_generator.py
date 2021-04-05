@@ -1,6 +1,6 @@
 import helpers.unit_test as hut
 import instrument_master.common.data.types as vcdtyp
-import instrument_master.ib.data.load.file_path_generator as vidlfi
+import instrument_master.ib.data.load.ib_file_path_generator as vidlfi
 
 
 class TestIbFilePathGenerator(hut.TestCase):

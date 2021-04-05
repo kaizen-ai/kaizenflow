@@ -8,10 +8,10 @@ from typing import Any
 import instrument_master.common.data.load.data_loader as vcdlda
 import instrument_master.common.data.load.s3_data_loader as vcdls3
 import instrument_master.common.data.load.sql_data_loader as vcdlsq
-import instrument_master.ib.data.load.s3_data_loader as vidls3
-import instrument_master.ib.data.load.sql_data_loader as vidlsq
-import instrument_master.kibot.data.load.s3_data_loader as vkdls3
-import instrument_master.kibot.data.load.sql_data_loader as vkdlsq
+import instrument_master.ib.data.load.ib_s3_data_loader as vidls3
+import instrument_master.ib.data.load.ib_sql_data_loader as vidlsq
+import instrument_master.kibot.data.load.kibot_s3_data_loader as vkdls3
+import instrument_master.kibot.data.load.kibot_sql_data_loader as vkdlsq
 
 
 class LoaderFactory:

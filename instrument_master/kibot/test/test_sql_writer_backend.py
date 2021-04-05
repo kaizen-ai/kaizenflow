@@ -5,7 +5,7 @@ import helpers.unit_test as hut
 import instrument_master.common.data.types as vcdtyp
 import instrument_master.common.db.init as vcdini
 import instrument_master.common.test.utils as vctuti
-import instrument_master.kibot.sql_writer_backend as vksqlw
+import instrument_master.kibot.kibot_sql_writer_backend as vksqlw
 
 
 # TODO(*): -> TestKibotSqlWriterBackend1
@@ -38,8 +38,7 @@ class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
         )
         self._check_saved_data(table="Symbol")
 
-    # TODO(*): -> remaining
-    def test_get_remains_data_to_load(self) -> None:
+    def test_get_remaining_data_to_load(self) -> None:
         """
         This test mocks the situation when the loading process was interrupted
         We then need to load remaining data from the pandas Dataframe.
@@ -69,8 +68,8 @@ class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
                     "DELETE FROM KibotDailyData WHERE date > '2021-01-01'"
                 )
         # Get the remaining of pandas Dataframe to load.
-        df = self._writer.get_remains_data_to_load(
-            self._trade_symbol_id, df, vcdtyp.Frequency.Daily
+        df = self._writer.get_remaining_data_to_load(
+            df, trade_symbol_id=self._trade_symbol_id, frequency=vcdtyp.Frequency.Daily
         )
         # Convert dataframe to string.
         txt = hut.convert_df_to_string(df)

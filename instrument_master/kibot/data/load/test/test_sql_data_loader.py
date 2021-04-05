@@ -7,8 +7,8 @@ import pytest
 import helpers.unit_test as hut
 import instrument_master.common.data.types as vcdtyp
 import instrument_master.common.db.init as vcdini
-import instrument_master.kibot.data.load.sql_data_loader as vkdlsq
-import instrument_master.kibot.sql_writer_backend as vksqlw
+import instrument_master.kibot.data.load.kibot_sql_data_loader as vkdlsq
+import instrument_master.kibot.kibot_sql_writer_backend as vksqlw
 
 
 @pytest.mark.skipif(

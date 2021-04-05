@@ -5,7 +5,7 @@ import helpers.unit_test as hut
 import instrument_master.common.data.types as vcdtyp
 import instrument_master.common.db.init as vcdini
 import instrument_master.common.test.utils as vctuti
-import instrument_master.ib.sql_writer_backend as visqlw
+import instrument_master.ib.ib_sql_writer_backend as visqlw
 
 
 @pytest.mark.skipif(
@@ -37,7 +37,7 @@ class TestIbSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
         )
         self._check_saved_data(table="Symbol")
 
-    def test_get_remains_data_to_load(self) -> None:
+    def test_get_remaining_data_to_load(self) -> None:
         """
         Slicing Pandas Dataframe to load.
 
@@ -68,9 +68,9 @@ class TestIbSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
         with self._writer.conn as conn:
             with conn.cursor() as curs:
                 curs.execute("DELETE FROM IbDailyData WHERE date > '2021-01-01'")
-        # Get remains of pandas Dataframe to load.
-        df = self._writer.get_remains_data_to_load(
-            self._trade_symbol_id, df, vcdtyp.Frequency.Daily
+        # Get remaining part of the pandas Dataframe to load.
+        df = self._writer.get_remaining_data_to_load(
+            df, trade_symbol_id=self._trade_symbol_id, frequency=vcdtyp.Frequency.Daily
         )
         # Convert dataframe to string.
         txt = hut.convert_df_to_string(df)

@@ -16,7 +16,7 @@ import instrument_master.common.data.extract.data_extractor as vcdeda
 import instrument_master.common.data.types as vcdtyp
 import instrument_master.ib.data.extract.gateway.download_data_ib_loop as videgd
 import instrument_master.ib.data.extract.gateway.utils as videgu
-import instrument_master.ib.data.load.file_path_generator as vidlfi
+import instrument_master.ib.data.load.ib_file_path_generator as vidlfi
 
 _LOG = logging.getLogger(__name__)
 
