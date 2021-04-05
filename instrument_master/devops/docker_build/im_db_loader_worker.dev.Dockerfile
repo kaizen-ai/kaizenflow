@@ -4,7 +4,7 @@ ENV BITNAMI_PKG_CHMOD="-R g+rwX" \
     BITNAMI_PKG_EXTRA_DIRS="/opt/bitnami/airflow/dags" \
     HOME="/" \
     PATH="/opt/bitnami/python/bin:/opt/bitnami/postgresql/bin:/opt/bitnami/common/bin:/opt/bitnami/airflow/venv/bin:/opt/bitnami/nami/bin:$PATH"
-COPY edgar/airflow/airflow_worker/prebuildfs /
+COPY devops/docker_build/airflow_files/airflow_worker/prebuildfs /
 RUN apt update && \
         apt install \
             ca-certificates \
@@ -62,7 +62,7 @@ RUN update-locale LANG=C.UTF-8 LC_MESSAGES=POSIX && \
     DEBIAN_FRONTEND=noninteractive dpkg-reconfigure locales
 RUN echo 'en_US.UTF-8 UTF-8' >> /etc/locale.gen && locale-gen
 
-COPY edgar/airflow/airflow_worker/rootfs /
+COPY devops/docker_build/airflow_files/airflow_worker/rootfs /
 RUN /opt/bitnami/scripts/locales/add-extra-locales.sh
 ENV AIRFLOW_DATABASE_HOST="postgresql" \
     AIRFLOW_DATABASE_NAME="bitnami_airflow" \
@@ -111,10 +111,13 @@ RUN pip install -r /requirements.txt
 WORKDIR /app
 # End of section
 
-# Some stuff to make work aws sli
+# Nasty code
+# Some stuff to make work aws cli
+# Anoter part for this nasty code is here instrument_master/devops/docker_build/entrypoints/entrypoint_worker.sh
 RUN echo "airflow     ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 RUN mkdir /home/airflow
 RUN chown 1001:1001 /home/airflow
+# End of nasty code
 
 # To use as worker form the original airflow recepie
 ENTRYPOINT [ "/app-entrypoint.sh" ]

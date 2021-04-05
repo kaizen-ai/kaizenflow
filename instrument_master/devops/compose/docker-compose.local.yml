@@ -1,18 +1,19 @@
 version: '3'
 
 services:
-  app:
-    image: ${IMAGE}
-    restart: "no"
-    depends_on:
-      - im_postgres_local
-    volumes:
-      - ../../../:/app
-      - ~/.aws:/root/.aws
-    env_file:
-      - ../env/local/im_postgres_config.env
-    working_dir: /app
-    entrypoint: /app/instrument_master/devops/docker_build/entrypoints/entrypoint_deploy.sh
+#  TODO(*): move to the right place. Also move targets from the makefile
+#  app:
+#    image: ${IMAGE}
+#    restart: "no"
+#    depends_on:
+#      - im_postgres_local
+#    volumes:
+#      - ../../../:/app
+#      - ~/.aws:/root/.aws
+#    env_file:
+#      - ../env/local/im_postgres_config.env
+#    working_dir: /app
+#    entrypoint: /app/instrument_master/devops/docker_build/entrypoints/entrypoint_deploy.sh
 
   im_postgres_local:
     image: postgres:13
@@ -27,60 +28,61 @@ services:
 
 
 ## AIRFLOW
-#  redis_local:
-#      image: docker.io/bitnami/redis:6.0-debian-10
-#      hostname: "{{.Service.Name}}-{{.Task.Slot}}"
-#      env_file:
-#        - ../.env/local/airflow.env
-#      volumes:
-#      - redis_data_local:/bitnami/redis/data
-#
-#  postgresql:
-#    image: docker.io/bitnami/postgresql:10-debian-10
-#    hostname: "{{.Service.Name}}-{{.Task.Slot}}"
-#    volumes:
-#      - postgresql_data_local:/bitnami/postgresql
-#    env_file:
-#      - ../.env/local/airflow_postgres.env
-#
-#  airflow-scheduler:
-#    image: docker.io/bitnami/airflow-scheduler:2-debian-10
-#    hostname: "{{.Service.Name}}-{{.Task.Slot}}"
-#    user: root
-#    env_file:
-#      - ../.env/local/airflow.env
-#    volumes:
-#      - airflow_scheduler_data_local:/bitnami
-#      - ../dags:/opt/bitnami/airflow/dags
-#
-#  airflow:
-#    image: docker.io/bitnami/airflow:2-debian-10
-#    hostname: "{{.Service.Name}}-{{.Task.Slot}}"
-#    user: root
-#    ports:
-#      - '8080:8080'
-#    env_file:
-#      - ../.env/local/airflow.env
-#    volumes:
-#      - airflow_data_local:/bitnami
-#      - ../airflow_configs/requirements.txt:/bitnami/python/requirements.txt
-#      - ../dags:/opt/bitnami/airflow/dags
-#
-#  airflow-worker-db-loader:
-#    image: ${AIRFLOW_IMAGE}
-#    hostname: "{{.Service.Name}}-{{.Task.Slot}}"
-#    env_file:
-#      - ../.env/local/airflow.env
-#      - ../.env/local/worker_config.env
-#      - ../.env/local/worker_crawler.env
-#      - ../.env/local/edgar_postgres_config.env
-#    volumes:
-#      - airflow_worker_crawler_data_local:/bitnami
-#      - airflow_worker_crawler_logs_local:/opt/bitnami/airflow/logs
-#      - ../dags:/opt/bitnami/airflow/dags
-#      - ../../../:/app
-#      - ~/.aws:/root/.aws
+  redis_local:
+      image: docker.io/bitnami/redis:6.0-debian-10
+      env_file:
+        - ../env/local/airflow.env
+      volumes:
+      - redis_data_local:/bitnami/redis/data
+
+  postgresql:
+    image: docker.io/bitnami/postgresql:10-debian-10
+    volumes:
+      - postgresql_data_local:/bitnami/postgresql
+    env_file:
+      - ../env/local/airflow_postgres.env
+
+  airflow-scheduler:
+    image: docker.io/bitnami/airflow-scheduler:2-debian-10
+    user: root
+    env_file:
+      - ../env/local/airflow.env
+    volumes:
+      - airflow_scheduler_data_local:/bitnami
+      - ../dags:/opt/bitnami/airflow/dags
+
+  airflow:
+    image: docker.io/bitnami/airflow:2-debian-10
+    user: root
+    ports:
+      - '8080:8080'
+    env_file:
+      - ../env/local/airflow.env
+    volumes:
+      - airflow_data_local:/bitnami
+      - ../docker_build/airflow_files/airflow_configs/requirements.txt:/bitnami/python/requirements.txt
+      - ../dags:/opt/bitnami/airflow/dags
+
+  airflow-worker-db-loader:
+    image: ${WORKER_IMAGE}
+    env_file:
+      - ../env/local/airflow.env
+      - ../env/local/worker_config.env
+      - ../env/local/worker_db_loader.env
+      - ../env/local/im_postgres_config.env
+    volumes:
+      - airflow_worker_db-loader_data_local:/bitnami
+      - airflow_worker_db-loader_logs_local:/opt/bitnami/airflow/logs
+      - ../dags:/opt/bitnami/airflow/dags
+      - ../../../:/app
+      - ~/.aws:/root/.aws
 
 
 volumes:
   im_postgres_data_local: {}
+  redis_data_local: {}
+  postgresql_data_local: {}
+  airflow_scheduler_data_local: {}
+  airflow_data_local: {}
+  airflow_worker_db-loader_data_local: {}
+  airflow_worker_db-loader_logs_local: {}

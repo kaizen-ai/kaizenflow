@@ -31,7 +31,7 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level)
     _LOG.info("Updating schema to DB %s...", args.db)
     vcdini.initialize_database(
         args.db, init_sql_files=vcdini.get_init_sql_files()
