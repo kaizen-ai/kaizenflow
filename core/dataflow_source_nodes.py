@@ -85,7 +85,7 @@ class KibotDataReader(cdataf.DataSource):
     def _lazy_load(self) -> None:
         if self.df is not None:
             return
-        self.df = vkibot.S3KibotDataLoader().read_data(
+        self.df = vkibot.KibotS3DataLoader().read_data(
             exchange="CME",
             asset_class=vkibot.AssetClass.Futures,
             frequency=self._frequency,
@@ -152,7 +152,7 @@ class KibotColumnReader(cdataf.DataSource):
             return
         dict_df = {}
         for s in self._symbols:
-            data = vkibot.S3KibotDataLoader().read_data(
+            data = vkibot.KibotS3DataLoader().read_data(
                 exchange="CME",
                 asset_class=vkibot.AssetClass.Futures,
                 frequency=self._frequency,

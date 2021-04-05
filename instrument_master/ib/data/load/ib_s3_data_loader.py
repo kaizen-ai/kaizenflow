@@ -1,7 +1,7 @@
 """
 Import as:
 
-instrument_master.ib.data.load.s3_data_loader ibs3
+instrument_master.ib.data.load.ib_s3_data_loader ibs3
 """
 
 import functools
@@ -12,14 +12,14 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.s3 as hs3
-import instrument_master.common.data.load.s3_data_loader as vcdls3
-import instrument_master.common.data.types as vcdtyp
-import instrument_master.ib.data.load.file_path_generator as vidlfi
+import instrument_master.common.data.load.s3_data_loader as icdls3
+import instrument_master.common.data.types as icdtyp
+import instrument_master.ib.data.load.ib_file_path_generator as iidlib
 
 _LOG = logging.getLogger(__name__)
 
 
-class IbS3DataLoader(vcdls3.AbstractS3DataLoader):
+class IbS3DataLoader(icdls3.AbstractS3DataLoader):
     """
     Reads IB data from S3.
     """
@@ -44,9 +44,9 @@ class IbS3DataLoader(vcdls3.AbstractS3DataLoader):
         self,
         exchange: str,
         symbol: str,
-        asset_class: vcdtyp.AssetClass,
-        frequency: vcdtyp.Frequency,
-        contract_type: Optional[vcdtyp.ContractType] = None,
+        asset_class: icdtyp.AssetClass,
+        frequency: icdtyp.Frequency,
+        contract_type: Optional[icdtyp.ContractType] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
@@ -77,20 +77,20 @@ class IbS3DataLoader(vcdls3.AbstractS3DataLoader):
     def _read_data(
         cls,
         symbol: str,
-        asset_class: vcdtyp.AssetClass,
-        frequency: vcdtyp.Frequency,
-        contract_type: Optional[vcdtyp.ContractType] = None,
+        asset_class: icdtyp.AssetClass,
+        frequency: icdtyp.Frequency,
+        contract_type: Optional[icdtyp.ContractType] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
     ) -> pd.DataFrame:
         # Generate path to retrieve data.
-        file_path = vidlfi.IbFilePathGenerator().generate_file_path(
+        file_path = iidlib.IbFilePathGenerator().generate_file_path(
             symbol=symbol,
             asset_class=asset_class,
             frequency=frequency,
             contract_type=contract_type,
             unadjusted=unadjusted,
-            ext=vcdtyp.Extension.CSV,
+            ext=icdtyp.Extension.CSV,
         )
         # Check that file exists.
         if hs3.is_s3_path(file_path):

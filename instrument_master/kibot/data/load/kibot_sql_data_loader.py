@@ -1,11 +1,11 @@
 import helpers.dbg as dbg
-import instrument_master.common.data.load.sql_data_loader as vcdlsq
-import instrument_master.common.data.types as vcdtyp
+import instrument_master.common.data.load.sql_data_loader as icdlsq
+import instrument_master.common.data.types as icdtyp
 
 
-class KibotSqlDataLoader(vcdlsq.AbstractSqlDataLoader):
+class KibotSqlDataLoader(icdlsq.AbstractSqlDataLoader):
     @staticmethod
-    def _get_table_name_by_frequency(frequency: vcdtyp.Frequency) -> str:
+    def _get_table_name_by_frequency(frequency: icdtyp.Frequency) -> str:
         """
         Get table name by predefined frequency.
 
@@ -13,11 +13,11 @@ class KibotSqlDataLoader(vcdlsq.AbstractSqlDataLoader):
         :return: table name in DB
         """
         table_name = ""
-        if frequency == vcdtyp.Frequency.Minutely:
+        if frequency == icdtyp.Frequency.Minutely:
             table_name = "KibotMinuteData"
-        elif frequency == vcdtyp.Frequency.Daily:
+        elif frequency == icdtyp.Frequency.Daily:
             table_name = "KibotDailyData"
-        elif frequency == vcdtyp.Frequency.Tick:
+        elif frequency == icdtyp.Frequency.Tick:
             table_name = "KibotTickData"
         dbg.dassert(table_name, f"Unknown frequency {frequency}")
         return table_name
