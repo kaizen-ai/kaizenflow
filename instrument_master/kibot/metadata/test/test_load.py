@@ -13,10 +13,8 @@ class TestTickerListLoader(hut.TestCase):
         lines = hio.from_file(
             file_name=os.path.join(self.get_input_dir(), "test.txt")
         ).split("\n")
-
         loader = vkmloa.TickerListsLoader()
         listed_tickers, delisted_tickers = loader._parse_lines(lines=lines)
-
         self.assertEqual(
             listed_tickers,
             [
@@ -31,7 +29,6 @@ class TestTickerListLoader(hut.TestCase):
                 )
             ],
         )
-
         self.assertEqual(
             delisted_tickers,
             [
@@ -50,9 +47,7 @@ class TestTickerListLoader(hut.TestCase):
     @pytest.mark.skip("Disabled waiting for PTask4139")
     def test_real_call(self) -> None:
         tickers = vkmloa.TickerListsLoader().get(ticker_list="dow_30_intraday")
-
         self.assertEqual(len(tickers), 43)
-
         self.assertEqual(
             tickers[0],
             vkmtyp.Ticker(
@@ -71,9 +66,7 @@ class TestAdjustmentsLoader(hut.TestCase):
     @pytest.mark.skip("Disabled waiting for PTask4139")
     def test_real_call(self) -> None:
         adjustments = vkmloa.AdjustmentsLoader().load(symbol="SPTN")
-
         self.assertEqual(len(adjustments), 58)
-
         self.assertEqual(
             adjustments[0],
             vkmtyp.Adjustment(

@@ -12,16 +12,16 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.s3 as hs3
-import instrument_master.common.data.extract.data_extractor as vcdeda
-import instrument_master.common.data.types as vcdtyp
-import instrument_master.ib.data.extract.gateway.download_data_ib_loop as videgd
-import instrument_master.ib.data.extract.gateway.utils as videgu
-import instrument_master.ib.data.load.file_path_generator as vidlfi
+import instrument_master.common.data.extract.data_extractor as icdeda
+import instrument_master.common.data.types as icdtyp
+import instrument_master.ib.data.extract.gateway.download_data_ib_loop as iidegd
+import instrument_master.ib.data.extract.gateway.utils as iidegu
+import instrument_master.ib.data.load.ib_file_path_generator as iidlib
 
 _LOG = logging.getLogger(__name__)
 
 
-class IbDataExtractor(vcdeda.AbstractDataExtractor):
+class IbDataExtractor(icdeda.AbstractDataExtractor):
     """
     Load data from IB and save it to S3.
     """
@@ -33,7 +33,7 @@ class IbDataExtractor(vcdeda.AbstractDataExtractor):
         if ib_connect_client_id is not None:
             self._ib_connect_client_id = ib_connect_client_id
         else:
-            self._ib_connect_client_id = videgu.get_free_client_id(
+            self._ib_connect_client_id = iidegu.get_free_client_id(
                 self._MAX_IB_CONNECTION_ATTEMPTS
             )
 
@@ -41,9 +41,9 @@ class IbDataExtractor(vcdeda.AbstractDataExtractor):
         self,
         exchange: str,
         symbol: str,
-        asset_class: vcdtyp.AssetClass,
-        frequency: vcdtyp.Frequency,
-        contract_type: Optional[vcdtyp.ContractType] = None,
+        asset_class: icdtyp.AssetClass,
+        frequency: icdtyp.Frequency,
+        contract_type: Optional[icdtyp.ContractType] = None,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
         incremental: Optional[bool] = None,
@@ -103,9 +103,9 @@ class IbDataExtractor(vcdeda.AbstractDataExtractor):
         part_files_dir: str,
         exchange: str,
         symbol: str,
-        asset_class: vcdtyp.AssetClass,
-        frequency: vcdtyp.Frequency,
-        contract_type: Optional[vcdtyp.ContractType] = None,
+        asset_class: icdtyp.AssetClass,
+        frequency: icdtyp.Frequency,
+        contract_type: Optional[icdtyp.ContractType] = None,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
         incremental: Optional[bool] = None,
@@ -128,7 +128,7 @@ class IbDataExtractor(vcdeda.AbstractDataExtractor):
         :param part_files_dir: place to keep results of each IB request
         """
         # Connect to IB.
-        ib_connection = videgu.ib_connect(
+        ib_connection = iidegu.ib_connect(
             self._ib_connect_client_id, is_notebook=False
         )
         # Save extracted data in parts.
@@ -163,9 +163,9 @@ class IbDataExtractor(vcdeda.AbstractDataExtractor):
         cls,
         part_files_dir: str,
         symbol: str,
-        asset_class: vcdtyp.AssetClass,
-        frequency: vcdtyp.Frequency,
-        contract_type: Optional[vcdtyp.ContractType] = None,
+        asset_class: icdtyp.AssetClass,
+        frequency: icdtyp.Frequency,
+        contract_type: Optional[icdtyp.ContractType] = None,
     ) -> pd.DataFrame:
         """
         Read data from parts, save it to archive.
@@ -178,12 +178,12 @@ class IbDataExtractor(vcdeda.AbstractDataExtractor):
         :return: a dataframe with the data
         """
         # Find main archive file location.
-        arch_file = vidlfi.IbFilePathGenerator().generate_file_path(
+        arch_file = iidlib.IbFilePathGenerator().generate_file_path(
             symbol=symbol,
             frequency=frequency,
             asset_class=asset_class,
             contract_type=contract_type,
-            ext=vcdtyp.Extension.CSV,
+            ext=icdtyp.Extension.CSV,
         )
         _, arch_name = os.path.split(arch_file)
         # Find files with partial data locations.
@@ -200,7 +200,7 @@ class IbDataExtractor(vcdeda.AbstractDataExtractor):
         # Read data.
         data: pd.DataFrame = pd.concat(
             [
-                videgd.load_historical_data(part_file)
+                iidegd.load_historical_data(part_file)
                 for part_file in part_files
                 if part_file != arch_name
             ]
@@ -216,19 +216,19 @@ class IbDataExtractor(vcdeda.AbstractDataExtractor):
     @staticmethod
     def get_default_part_files_dir(
         symbol: str,
-        frequency: vcdtyp.Frequency,
-        asset_class: vcdtyp.AssetClass,
-        contract_type: vcdtyp.ContractType,
+        frequency: icdtyp.Frequency,
+        asset_class: icdtyp.AssetClass,
+        contract_type: icdtyp.ContractType,
     ) -> str:
         """
         Return a `symbol` directory on S3 near the main archive file.
         """
-        arch_file = vidlfi.IbFilePathGenerator().generate_file_path(
+        arch_file = iidlib.IbFilePathGenerator().generate_file_path(
             symbol=symbol,
             frequency=frequency,
             asset_class=asset_class,
             contract_type=contract_type,
-            ext=vcdtyp.Extension.CSV,
+            ext=icdtyp.Extension.CSV,
         )
         arch_path, _ = os.path.split(arch_file)
         return os.path.join(arch_path, symbol)
@@ -239,9 +239,9 @@ class IbDataExtractor(vcdeda.AbstractDataExtractor):
         part_files_dir: str,
         exchange: str,
         symbol: str,
-        asset_class: vcdtyp.AssetClass,
-        frequency: vcdtyp.Frequency,
-        contract_type: Optional[vcdtyp.ContractType] = None,
+        asset_class: icdtyp.AssetClass,
+        frequency: icdtyp.Frequency,
+        contract_type: Optional[icdtyp.ContractType] = None,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
         incremental: Optional[bool] = None,
@@ -272,7 +272,7 @@ class IbDataExtractor(vcdeda.AbstractDataExtractor):
         :return: a list of failed intervals
         """
         # Get tasks.
-        tasks = videgu.get_tasks(
+        tasks = iidegu.get_tasks(
             ib=ib,
             target=self._get_ib_target(asset_class, contract_type),
             frequency=self._get_ib_frequency(frequency),
@@ -283,12 +283,12 @@ class IbDataExtractor(vcdeda.AbstractDataExtractor):
             exchange=exchange,
         )
         # Do tasks.
-        file_name = vidlfi.IbFilePathGenerator().generate_file_path(
+        file_name = iidlib.IbFilePathGenerator().generate_file_path(
             symbol=symbol,
             frequency=frequency,
             asset_class=asset_class,
             contract_type=contract_type,
-            ext=vcdtyp.Extension.CSV,
+            ext=icdtyp.Extension.CSV,
         )
         failed_tasks_intervals = []
         for (
@@ -300,7 +300,7 @@ class IbDataExtractor(vcdeda.AbstractDataExtractor):
             what_to_show,
             use_rth,
         ) in tasks:
-            saved_intervals = videgd.save_historical_data_by_intervals_IB_loop(
+            saved_intervals = iidegd.save_historical_data_by_intervals_IB_loop(
                 ib=ib,
                 contract=contract,
                 start_ts=start_ts_task,
@@ -316,7 +316,7 @@ class IbDataExtractor(vcdeda.AbstractDataExtractor):
             )
             # Find intervals with no data.
             for interval in saved_intervals:
-                file_name_for_part = videgd.historical_data_to_filename(
+                file_name_for_part = iidegd.historical_data_to_filename(
                     contract=contract,
                     start_ts=interval[0],
                     end_ts=interval[1],
@@ -326,7 +326,7 @@ class IbDataExtractor(vcdeda.AbstractDataExtractor):
                     use_rth=use_rth,
                     dst_dir=part_files_dir,
                 )
-                df_part = videgd.load_historical_data(file_name_for_part)
+                df_part = iidegd.load_historical_data(file_name_for_part)
                 if df_part.empty:
                     failed_tasks_intervals.append(interval)
         # Return failed intervals.
@@ -334,26 +334,26 @@ class IbDataExtractor(vcdeda.AbstractDataExtractor):
 
     @staticmethod
     def _get_ib_target(
-        asset_class: vcdtyp.AssetClass,
-        contract_type: Optional[vcdtyp.ContractType],
+        asset_class: icdtyp.AssetClass,
+        contract_type: Optional[icdtyp.ContractType],
     ) -> str:
         """
         Transform asset to a format known by IB gateway code.
         """
         target: str
         if (
-            asset_class == vcdtyp.AssetClass.Futures
-            and contract_type == vcdtyp.ContractType.Continuous
+            asset_class == icdtyp.AssetClass.Futures
+            and contract_type == icdtyp.ContractType.Continuous
         ):
             target = "continuous_futures"
         elif (
-            asset_class == vcdtyp.AssetClass.Futures
-            and contract_type == vcdtyp.ContractType.Expiry
+            asset_class == icdtyp.AssetClass.Futures
+            and contract_type == icdtyp.ContractType.Expiry
         ):
             target = "futures"
-        elif asset_class == vcdtyp.AssetClass.Stocks:
+        elif asset_class == icdtyp.AssetClass.Stocks:
             target = "stocks"
-        elif asset_class == vcdtyp.AssetClass.Forex:
+        elif asset_class == icdtyp.AssetClass.Forex:
             target = "forex"
         else:
             raise ValueError(
@@ -363,16 +363,16 @@ class IbDataExtractor(vcdeda.AbstractDataExtractor):
         return target
 
     @staticmethod
-    def _get_ib_frequency(frequency: vcdtyp.Frequency) -> str:
+    def _get_ib_frequency(frequency: icdtyp.Frequency) -> str:
         """
         Transform frequency to a format known by IB gateway code.
         """
         ib_frequency: str
-        if frequency == vcdtyp.Frequency.Daily:
+        if frequency == icdtyp.Frequency.Daily:
             ib_frequency = "day"
-        elif frequency == vcdtyp.Frequency.Hourly:
+        elif frequency == icdtyp.Frequency.Hourly:
             ib_frequency = "hour"
-        elif frequency == vcdtyp.Frequency.Minutely:
+        elif frequency == icdtyp.Frequency.Minutely:
             ib_frequency = "intraday"
         else:
             raise ValueError(

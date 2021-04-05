@@ -5,14 +5,14 @@ import pandas as pd
 import pytest
 
 import helpers.unit_test as hut
-import instrument_master.common.data.types as vcdtyp
-import instrument_master.common.db.init as vcdini
-import instrument_master.kibot.data.load.sql_data_loader as vkdlsq
-import instrument_master.kibot.sql_writer_backend as vksqlw
+import instrument_master.common.data.types as icdtyp
+import instrument_master.common.db.init as icdini
+import instrument_master.kibot.data.load.kibot_sql_data_loader as ikdlki
+import instrument_master.kibot.kibot_sql_writer_backend as ikkibo
 
 
 @pytest.mark.skipif(
-    not vcdini.is_inside_im_container(),
+    not icdini.is_inside_im_container(),
     reason="Testable only inside IM container",
 )
 class TestSqlDataLoader1(hut.TestCase):
@@ -29,20 +29,20 @@ class TestSqlDataLoader1(hut.TestCase):
         password = os.environ["POSTGRES_PASSWORD"]
         self.dbname = self._get_test_name().replace("/", "").replace(".", "")
         # Create database for test.
-        vcdini.create_database(
+        icdini.create_database(
             self.dbname,
-            vcdini.get_init_sql_files(),
+            icdini.get_init_sql_files(),
             force=True,
         )
         # Initialize writer class to test.
-        writer = vksqlw.KibotSqlWriterBackend(
+        writer = ikkibo.KibotSqlWriterBackend(
             self.dbname, user, password, host, port
         )
         # Add data to database.
         self._prepare_tables(writer)
         writer.close()
         # Create loader.
-        self._loader = vkdlsq.KibotSqlDataLoader(
+        self._loader = ikdlki.KibotSqlDataLoader(
             self.dbname, user, password, host, port
         )
 
@@ -50,7 +50,7 @@ class TestSqlDataLoader1(hut.TestCase):
         # Close connection.
         self._loader.conn.close()
         # Remove created database.
-        vcdini.remove_database(self.dbname)
+        icdini.remove_database(self.dbname)
         super().tearDown()
 
     def test_get_symbol_id1(self) -> None:
@@ -104,7 +104,7 @@ class TestSqlDataLoader1(hut.TestCase):
         Test correct minute data reading for ZYX9 on CME.
         """
         # Get data.
-        actual = self._loader._read_data("CME", "ZYX9", vcdtyp.Frequency.Minutely)
+        actual = self._loader._read_data("CME", "ZYX9", icdtyp.Frequency.Minutely)
         # Convert to string.
         actual_string = hut.convert_df_to_string(actual)
         # Compare with golden.
@@ -115,7 +115,7 @@ class TestSqlDataLoader1(hut.TestCase):
         Test correct daily data reading for ETF0 on LSE.
         """
         # Get data.
-        actual = self._loader._read_data("LSE", "ZYX9", vcdtyp.Frequency.Daily)
+        actual = self._loader._read_data("LSE", "ZYX9", icdtyp.Frequency.Daily)
         # Convert to string.
         actual_string = hut.convert_df_to_string(actual)
         # Compare with golden.
@@ -123,22 +123,22 @@ class TestSqlDataLoader1(hut.TestCase):
 
     def test_read_data3(self) -> None:
         """
-        Test failed assertion for unexisting exchange.
+        Test failed assertion for invalid exchange.
         """
         # Get data.
         with self.assertRaises(AssertionError):
-            self._loader._read_data("", "ZYX9", vcdtyp.Frequency.Daily)
+            self._loader._read_data("", "ZYX9", icdtyp.Frequency.Daily)
 
     def test_read_data4(self) -> None:
         """
-        Test failed assertion on for unexisting.
+        Test failed assertion for invalid ticker.
         """
         # Get data.
         with self.assertRaises(AssertionError):
-            self._loader._read_data("CME", "", vcdtyp.Frequency.Minutely)
+            self._loader._read_data("CME", "", icdtyp.Frequency.Minutely)
 
     @classmethod
-    def _prepare_tables(cls, writer: vksqlw.KibotSqlWriterBackend) -> None:
+    def _prepare_tables(cls, writer: ikkibo.KibotSqlWriterBackend) -> None:
         """
         Insert Symbol, Exchange and TradeSymbol entries to make test work.
 

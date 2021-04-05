@@ -5,7 +5,7 @@ import pandas as pd
 import psycopg2
 import psycopg2.extensions as pexten
 
-import instrument_master.common.data.types as vcdtyp
+import instrument_master.common.data.types as icdtyp
 
 
 # TODO: -> Why not AbstractSqlWriter?
@@ -17,12 +17,12 @@ class AbstractSqlWriterBackend(abc.ABC):
     # Provider-specific constant. Map frequency to table name and datetime field.
     # E.g.:
     # {
-    #      vcdtyp.Frequency.Daily: {
+    #      icdtyp.Frequency.Daily: {
     #         "table_name": "KibotDailyData",
     #         "datetime_field_name": "date",
     #     }
     # }
-    FREQ_ATTR_MAPPING: Dict[vcdtyp.Frequency, Dict[str, str]]
+    FREQ_ATTR_MAPPING: Dict[icdtyp.Frequency, Dict[str, str]]
 
     def __init__(
         self, dbname: str, user: str, password: str, host: str, port: int
@@ -38,7 +38,7 @@ class AbstractSqlWriterBackend(abc.ABC):
     def ensure_symbol_exists(
         self,
         symbol: str,
-        asset_class: vcdtyp.AssetClass,
+        asset_class: icdtyp.AssetClass,
     ) -> None:
         """
         Insert new symbol entry, if it does not exist.
@@ -153,21 +153,27 @@ class AbstractSqlWriterBackend(abc.ABC):
     def close(self) -> None:
         self.conn.close()
 
-    # TODO(*): -> remaining
-    # TODO(*): Move df before
-    def get_remains_data_to_load(
-        self, trade_symbol_id: int, df: pd.DataFrame, frequency: vcdtyp.Frequency
+    def get_remaining_data_to_load(
+        self, df: pd.DataFrame, trade_symbol_id: int, frequency: icdtyp.Frequency
     ) -> pd.DataFrame:
         """
-        Return the slice of pandas Dataframe for `trade_symbol_id` and `frequency`
-        that still needs to be loaded in the table.
+        Trim `df` based on what data was already loaded in the database.
 
-        :return: slice of pandas df to load
+        Find the maximum datetime for the given `trade_symbol_id` and
+        `frequency` that was already loaded in DB.
+        Return the slice of `df` from a pandas Dataframe where datetime > found
+        maximum datetime.
+
+        :param trade_symbol_id: id of TradeSymbol.
+        :param df: pandas Dataframe to load.
+        :param frequency: frequency of the data.
+        :return: slice of pandas Dataframe to load.
         """
         datetime_field_name = self.FREQ_ATTR_MAPPING[frequency][
             "datetime_field_name"
         ]
         table_name = self.FREQ_ATTR_MAPPING[frequency]["table_name"]
+        # Find the maximum datetime already loaded.
         with self.conn:
             with self.conn.cursor() as cur:
                 cur.execute(
@@ -176,17 +182,18 @@ class AbstractSqlWriterBackend(abc.ABC):
                     f"trade_symbol_id = {trade_symbol_id}"
                 )
                 max_datetime = cur.fetchone()[0]
-        # Trim the df, if needed.
+        # Trim the df based on the found maximum datetime.
         df[datetime_field_name] = pd.to_datetime(df[datetime_field_name])
         if max_datetime is not None:
             df = df[df[datetime_field_name] > pd.to_datetime(max_datetime)]
         return df
 
     def delete_data_by_trade_symbol_id(
-        self, trade_symbol_id: int, frequency: vcdtyp.Frequency
+        self, trade_symbol_id: int, frequency: icdtyp.Frequency
     ) -> None:
         """
-        Delete all data from table corresponding to `trade_symbol_id` and `frequency`.
+        Delete all data from table corresponding to `trade_symbol_id` and
+        `frequency`.
         """
         table_name = self.FREQ_ATTR_MAPPING[frequency]["table_name"]
         with self.conn:

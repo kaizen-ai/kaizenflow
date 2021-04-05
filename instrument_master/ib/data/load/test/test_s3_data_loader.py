@@ -1,6 +1,6 @@
 import helpers.unit_test as hut
-import instrument_master.common.data.types as vcdtyp
-import instrument_master.ib.data.load.s3_data_loader as vidls3
+import instrument_master.common.data.types as icdtyp
+import instrument_master.ib.data.load.ib_s3_data_loader as iidlib
 
 
 class TestS3IbDataLoader1(hut.TestCase):
@@ -10,7 +10,7 @@ class TestS3IbDataLoader1(hut.TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self._s3_data_loader = vidls3.IbS3DataLoader()
+        self._s3_data_loader = iidlib.IbS3DataLoader()
 
     def test_dtypes1(self) -> None:
         """
@@ -20,9 +20,9 @@ class TestS3IbDataLoader1(hut.TestCase):
         data = self._s3_data_loader.read_data(
             exchange="GLOBEX",
             symbol="ES",
-            asset_class=vcdtyp.AssetClass.Futures,
-            frequency=vcdtyp.Frequency.Daily,
-            contract_type=vcdtyp.ContractType.Continuous,
+            asset_class=icdtyp.AssetClass.Futures,
+            frequency=icdtyp.Frequency.Daily,
+            contract_type=icdtyp.ContractType.Continuous,
             unadjusted=None,
             nrows=1,
         )
@@ -39,9 +39,9 @@ class TestS3IbDataLoader1(hut.TestCase):
         data = self._s3_data_loader.read_data(
             exchange="GLOBEX",
             symbol="ES",
-            asset_class=vcdtyp.AssetClass.Futures,
-            frequency=vcdtyp.Frequency.Minutely,
-            contract_type=vcdtyp.ContractType.Continuous,
+            asset_class=icdtyp.AssetClass.Futures,
+            frequency=icdtyp.Frequency.Minutely,
+            contract_type=icdtyp.ContractType.Continuous,
             unadjusted=None,
             nrows=10,
         )
@@ -58,9 +58,9 @@ class TestS3IbDataLoader1(hut.TestCase):
         data = self._s3_data_loader.read_data(
             exchange="GLOBEX",
             symbol="ES",
-            asset_class=vcdtyp.AssetClass.Futures,
-            frequency=vcdtyp.Frequency.Daily,
-            contract_type=vcdtyp.ContractType.Continuous,
+            asset_class=icdtyp.AssetClass.Futures,
+            frequency=icdtyp.Frequency.Daily,
+            contract_type=icdtyp.ContractType.Continuous,
             unadjusted=True,
             nrows=10,
         )
@@ -77,9 +77,9 @@ class TestS3IbDataLoader1(hut.TestCase):
         data = self._s3_data_loader.read_data(
             exchange="GLOBEX",
             symbol="ES",
-            asset_class=vcdtyp.AssetClass.Futures,
-            frequency=vcdtyp.Frequency.Hourly,
-            contract_type=vcdtyp.ContractType.Continuous,
+            asset_class=icdtyp.AssetClass.Futures,
+            frequency=icdtyp.Frequency.Hourly,
+            contract_type=icdtyp.ContractType.Continuous,
             unadjusted=None,
             nrows=10,
         )
