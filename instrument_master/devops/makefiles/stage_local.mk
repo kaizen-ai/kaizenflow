@@ -1,6 +1,9 @@
+# TODO(gp): Move to im/airflow/devops/makefile
+
 im.docker_pull_related_images.local:
 	WORKER_IMAGE=$(IM_IMAGE_AIRFLOW_DEV) \
-	docker-compose -f  devops/compose/docker-compose.local.yml pull
+	docker-compose -f devops/compose/docker-compose.local.yml pull
+
 
 im.run_bash.local:
 	IMAGE=$(IM_IMAGE_DEV) \
@@ -22,7 +25,10 @@ im.run_convert_s3_to_sql_kibot.local:
 
 im.docker_run_stack.local:
 	WORKER_IMAGE=$(IM_IMAGE_AIRFLOW_DEV) \
-	docker stack deploy -c devops/compose/docker-compose.local.yml --resolve-image never im_airflow_stack_local
+	docker stack deploy \
+		-c devops/compose/docker-compose.local.yml \
+		--resolve-image never \
+		im_airflow_stack_local
 
 
 im.docker_down_stack.local:

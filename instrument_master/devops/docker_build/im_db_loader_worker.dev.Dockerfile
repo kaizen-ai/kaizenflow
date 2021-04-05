@@ -1,5 +1,10 @@
+# Build the Docker image for IM DB worker.
+
+# TODO(gp): Move to instrument_master/airflow/devops/docker_build
+
 FROM python:3.7-slim-buster
 
+# TODO(*): Factor out all the code below which is common to all the Airflow workers.
 ENV BITNAMI_PKG_CHMOD="-R g+rwX" \
     BITNAMI_PKG_EXTRA_DIRS="/opt/bitnami/airflow/dags" \
     HOME="/" \
@@ -97,7 +102,8 @@ ENV AIRFLOW_DATABASE_HOST="postgresql" \
     REDIS_PORT_NUMBER="6379" \
     REDIS_USER=""
 
-# App specific section
+# Worker specific section.
+# This is copied from instrument_master/devops/docker_build/dev.Dockerfile
 RUN apt-get update && \
     apt-get install gcc -y && \
     apt-get install python-dev -y && \
@@ -109,16 +115,14 @@ COPY devops/requirements.txt /
 RUN pip install -r /requirements.txt
 
 WORKDIR /app
-# End of section
 
-# Nasty code
-# Some stuff to make work aws cli
-# Anoter part for this nasty code is here instrument_master/devops/docker_build/entrypoints/entrypoint_worker.sh
+# Workaround to make work AWS CLI work.
+# The rest of this workaround is in
+# instrument_master/devops/docker_build/entrypoints/entrypoint_worker.sh
 RUN echo "airflow     ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 RUN mkdir /home/airflow
 RUN chown 1001:1001 /home/airflow
-# End of nasty code
 
-# To use as worker form the original airflow recepie
+# To use as worker form the original Airflow recipe.
 ENTRYPOINT [ "/app-entrypoint.sh" ]
 CMD [ "/run.sh" ]

@@ -6,8 +6,10 @@ ECR_BASE_PATH=083233266530.dkr.ecr.us-east-2.amazonaws.com
 
 IM_REPO_BASE_PATH=$(ECR_BASE_PATH)/im
 IM_IMAGE_DEV=$(IM_REPO_BASE_PATH):latest
-IM_IMAGE_AIRFLOW_DEV=$(IM_REPO_BASE_PATH):latest-airflow
 IM_IMAGE_RC=$(IM_REPO_BASE_PATH):rc
+
+# TODO(*): Use a different repo like im-airflow or call the images airflow-latest ?
+IM_IMAGE_AIRFLOW_DEV=$(IM_REPO_BASE_PATH):latest-airflow
 
 NO_SUPERSLOW_TESTS='True'
 
@@ -23,68 +25,6 @@ im.print_setup:
 	@echo "IM_REPO_BASE_PATH=$(IM_REPO_BASE_PATH)"
 	@echo "IM_IMAGE_DEV=$(IM_IMAGE_DEV)"
 	@echo "IM_IMAGE_RC=$(IM_IMAGE_RC)"
-
-# #############################################################################
-# MULTISTAGE.
-# #############################################################################
-im.docker_up.multistage:
-	docker-compose \
-		-f devops/compose/docker-compose.multistage.yml \
-		up -d
-
-# Stop multistage container including all dependencies.
-im.docker_down.multistage:
-	docker-compose \
-		-f devops/compose/docker-compose.multistage.yml \
-		down
-
-# #############################################################################
-# Development stage.
-# #############################################################################
-
-im.docker_pull:
-	docker pull $(IMAGE_DEV)
-
-# Run app container
-im.docker_bash.dev:
-	IMAGE=$(IMAGE_DEV) \
-	docker-compose \
-		-f devops/compose/docker-compose.dev.yml \
-		run \
-		--rm \
-		app \
-		bash
-
-# Run command in app
-im.docker_cmd.dev:
-	IMAGE=$(IMAGE_DEV) \
-	docker-compose \
-		-f devops/compose/docker-compose.dev.yml \
-		run \
-		--rm \
-		-l user=$(USER) \
-		app \
-		$(CMD)
-
-# Run app container w/o PostgreSQL.
-im.docker_bash:
-	IMAGE=$(IMAGE_DEV) \
-	docker-compose \
-		-f devops/compose/docker-compose.dev.yml \
-		run \
-		--rm \
-		-l user=$(USER) \
-		--no-deps \
-		--entrypoint=instrument_master/devops/docker_build/entrypoints/entrypoint_app_only.sh \
-		app \
-		bash
-
-# Stop local container including all dependencies.
-im.docker_down.dev:
-	IMAGE=$(IMAGE_DEV) \
-	docker-compose \
-		-f devops/compose/docker-compose.dev.yml \
-		down
 
 # #############################################################################
 # Local stage.
@@ -118,8 +58,8 @@ im.docker_cmd.local:
 		app \
 		$(CMD)
 
-# Run app container w/o PostgreSQL.
-im.docker_bash:
+# Run app container without PostgreSQL.
+im.docker_bash.local:
 	IMAGE=$(IMAGE_DEV) \
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
@@ -152,6 +92,67 @@ im.docker_rm.local:
 		down; \
 	docker volume rm \
 		compose_im_postgres_data_local
+
+# #############################################################################
+# Development stage.
+# #############################################################################
+
+# Run app container.
+im.docker_bash.dev:
+	IMAGE=$(IMAGE_DEV) \
+	docker-compose \
+		-f devops/compose/docker-compose.dev.yml \
+		run \
+		--rm \
+		app \
+		bash
+
+# Run command in app.
+im.docker_cmd.dev:
+	IMAGE=$(IMAGE_DEV) \
+	docker-compose \
+		-f devops/compose/docker-compose.dev.yml \
+		run \
+		--rm \
+		-l user=$(USER) \
+		app \
+		$(CMD)
+
+# Run app container without PostgreSQL.
+im.docker_bash_without_psql.dev:
+	IMAGE=$(IMAGE_DEV) \
+	docker-compose \
+		-f devops/compose/docker-compose.dev.yml \
+		run \
+		--rm \
+		-l user=$(USER) \
+		--no-deps \
+		--entrypoint=instrument_master/devops/docker_build/entrypoints/entrypoint_app_only.sh \
+		app \
+		bash
+
+# Stop local container including all dependencies.
+im.docker_down.dev:
+	IMAGE=$(IMAGE_DEV) \
+	docker-compose \
+		-f devops/compose/docker-compose.dev.yml \
+		down
+
+# #############################################################################
+# Multistage.
+# #############################################################################
+
+im.docker_up.multistage:
+	docker-compose \
+		-f devops/compose/docker-compose.multistage.yml \
+		-d \
+		up
+
+# Stop multistage container including all dependencies.
+im.docker_down.multistage:
+	docker-compose \
+		-f devops/compose/docker-compose.multistage.yml \
+		down
 
 # #############################################################################
 # Test IM workflow.

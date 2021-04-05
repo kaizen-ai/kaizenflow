@@ -25,9 +25,12 @@ services:
     env_file:
       - ../env/local/im_postgres_config.env
 
-
-
-## AIRFLOW
+  # ###########################################################################
+  # Airflow
+  # ###########################################################################
+ 
+  # It seems that Airflow needs this name.
+  # TODO(*): Check if that's true. Otherwise call it airflow-redis.
   redis_local:
       image: docker.io/bitnami/redis:6.0-debian-10
       env_file:
@@ -35,6 +38,8 @@ services:
       volumes:
       - redis_data_local:/bitnami/redis/data
 
+  # It seems that Airflow needs this name.
+  # TODO(*): Check if that's true. Otherwise call it ariflow-postgresql.
   postgresql:
     image: docker.io/bitnami/postgresql:10-debian-10
     volumes:
