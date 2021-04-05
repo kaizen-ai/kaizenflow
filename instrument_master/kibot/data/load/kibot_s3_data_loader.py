@@ -7,14 +7,14 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.s3 as hs3
-import instrument_master.common.data.load.s3_data_loader as vcdls3
-import instrument_master.common.data.types as vcdtyp
-import instrument_master.kibot.data.load.kibot_file_path_generator as vkdlfi
+import instrument_master.common.data.load.s3_data_loader as icdls3
+import instrument_master.common.data.types as icdtyp
+import instrument_master.kibot.data.load.kibot_file_path_generator as ikdlki
 
 _LOG = logging.getLogger(__name__)
 
 
-class KibotS3DataLoader(vcdls3.AbstractS3DataLoader):
+class KibotS3DataLoader(icdls3.AbstractS3DataLoader):
     # TODO(plyq): Uncomment once #1047 will be resolved. Use lru_cache for now.
     # @hcache.cache
     @functools.lru_cache(maxsize=64)
@@ -22,9 +22,9 @@ class KibotS3DataLoader(vcdls3.AbstractS3DataLoader):
         self,
         exchange: str,
         symbol: str,
-        asset_class: vcdtyp.AssetClass,
-        frequency: vcdtyp.Frequency,
-        contract_type: Optional[vcdtyp.ContractType] = None,
+        asset_class: icdtyp.AssetClass,
+        frequency: icdtyp.Frequency,
+        contract_type: Optional[icdtyp.ContractType] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
@@ -44,7 +44,7 @@ class KibotS3DataLoader(vcdls3.AbstractS3DataLoader):
 
     @classmethod
     def normalize(
-        cls, df: pd.DataFrame, frequency: vcdtyp.Frequency
+        cls, df: pd.DataFrame, frequency: icdtyp.Frequency
     ) -> pd.DataFrame:
         """
         Apply a normalizer function based on the frequency.
@@ -56,8 +56,8 @@ class KibotS3DataLoader(vcdls3.AbstractS3DataLoader):
         """
         # TODO(*): -> mapping or move it out
         MAPPING = {
-            vcdtyp.Frequency.Daily: cls._normalize_daily,
-            vcdtyp.Frequency.Minutely: cls._normalize_1_min,
+            icdtyp.Frequency.Daily: cls._normalize_daily,
+            icdtyp.Frequency.Minutely: cls._normalize_1_min,
         }
         if frequency not in MAPPING:
             dbg.dfatal(
@@ -70,20 +70,20 @@ class KibotS3DataLoader(vcdls3.AbstractS3DataLoader):
     def _read_data(
         cls,
         symbol: str,
-        asset_class: vcdtyp.AssetClass,
-        frequency: vcdtyp.Frequency,
-        contract_type: Optional[vcdtyp.ContractType] = None,
+        asset_class: icdtyp.AssetClass,
+        frequency: icdtyp.Frequency,
+        contract_type: Optional[icdtyp.ContractType] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
     ) -> pd.DataFrame:
-        file_path = vkdlfi.KibotFilePathGenerator().generate_file_path(
+        file_path = ikdlki.KibotFilePathGenerator().generate_file_path(
             symbol=symbol,
             asset_class=asset_class,
             frequency=frequency,
             contract_type=contract_type,
             unadjusted=unadjusted,
-            ext=vcdtyp.Extension.CSV,
+            ext=icdtyp.Extension.CSV,
         )
         if hs3.is_s3_path(file_path):
             dbg.dassert_is(

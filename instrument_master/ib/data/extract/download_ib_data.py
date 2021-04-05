@@ -40,8 +40,8 @@ import pandas as pd
 import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.parser as hparse
-import instrument_master.common.data.types as vcdtyp
-import instrument_master.ib.data.extract.ib_data_extractor as videda
+import instrument_master.common.data.types as icdtyp
+import instrument_master.ib.data.extract.ib_data_extractor as iideib
 
 # from tqdm.notebook import tqdm
 
@@ -61,7 +61,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         args, valid_actions=VALID_ACTIONS, default_actions=DEFAULT_ACTIONS
     )
     # Extract the data.
-    extractor = videda.IbDataExtractor()
+    extractor = iideib.IbDataExtractor()
     for symbol in args.symbol:
         part_files_dir = args.dst_dir
         if part_files_dir is None:
@@ -114,19 +114,19 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--asset_class",
-        type=vcdtyp.AssetClass,
+        type=icdtyp.AssetClass,
         help="Asset class (e.g. Futures)",
         required=True,
     )
     parser.add_argument(
         "--frequency",
-        type=vcdtyp.Frequency,
+        type=icdtyp.Frequency,
         help="Frequency of data (e.g. Minutely)",
         required=True,
     )
     parser.add_argument(
         "--contract_type",
-        type=vcdtyp.ContractType,
+        type=icdtyp.ContractType,
         help="Contract type (e.g. Expiry)",
         required=True,
     )

@@ -10,11 +10,11 @@ import tqdm
 
 import helpers.dbg as dbg
 import helpers.printing as hprint
-import instrument_master.common.data.load.s3_data_loader as vcdls3
-import instrument_master.common.data.load.sql_data_loader as vcdlsq
-import instrument_master.common.data.transform.s3_to_sql_transformer as vcdts3
-import instrument_master.common.data.types as vcdtyp
-import instrument_master.common.sql_writer_backend as vcsqlw
+import instrument_master.common.data.load.s3_data_loader as icdls3
+import instrument_master.common.data.load.sql_data_loader as icdlsq
+import instrument_master.common.data.transform.s3_to_sql_transformer as icdts3
+import instrument_master.common.data.types as icdtyp
+import instrument_master.common.sql_writer_backend as icsqlw
 
 _LOG = logging.getLogger(__name__)
 
@@ -27,14 +27,14 @@ _JOBLIB_VERBOSITY = 1
 def convert_s3_to_sql(
     symbol: str,
     exchange: str,
-    s3_data_loader: vcdls3.AbstractS3DataLoader,
-    sql_writer_backend: vcsqlw.AbstractSqlWriterBackend,
-    sql_data_loader: vcdlsq.AbstractSqlDataLoader,
-    s3_to_sql_transformer: vcdts3.AbstractS3ToSqlTransformer,
-    asset_class: vcdtyp.AssetClass,
-    frequency: vcdtyp.Frequency,
+    s3_data_loader: icdls3.AbstractS3DataLoader,
+    sql_writer_backend: icsqlw.AbstractSqlWriterBackend,
+    sql_data_loader: icdlsq.AbstractSqlDataLoader,
+    s3_to_sql_transformer: icdts3.AbstractS3ToSqlTransformer,
+    asset_class: icdtyp.AssetClass,
+    frequency: icdtyp.Frequency,
     exchange_id: int,
-    contract_type: Optional[vcdtyp.ContractType] = None,
+    contract_type: Optional[icdtyp.ContractType] = None,
     unadjusted: Optional[bool] = None,
     max_num_rows: Optional[int] = None,
     incremental: Optional[bool] = False,
@@ -80,11 +80,11 @@ def convert_s3_to_sql(
         sql_writer_backend.delete_data_by_trade_symbol_id(
             trade_symbol_id, frequency
         )
-    if frequency == vcdtyp.Frequency.Minutely:
+    if frequency == icdtyp.Frequency.Minutely:
         sql_writer_backend.insert_bulk_minute_data(df)
-    elif frequency == vcdtyp.Frequency.Daily:
+    elif frequency == icdtyp.Frequency.Daily:
         sql_writer_backend.insert_bulk_daily_data(df)
-    elif frequency == vcdtyp.Frequency.Tick:
+    elif frequency == icdtyp.Frequency.Tick:
         for _, row in df.iterrows():
             sql_writer_backend.insert_tick_data(
                 trade_symbol_id=row["trade_symbol_id"],

@@ -11,11 +11,11 @@ from tqdm.autonotebook import tqdm
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
-import instrument_master.common.data.types as vcdtyp
-import instrument_master.kibot.data.load.kibot_s3_data_loader as vkdls3
-import instrument_master.kibot.metadata.load.expiry_contract_mapper as vkmlex
-import instrument_master.kibot.metadata.load.s3_backend as vkmls3
-import instrument_master.kibot.metadata.types as vkmtyp
+import instrument_master.common.data.types as icdtyp
+import instrument_master.kibot.data.load.kibot_s3_data_loader as ikdlki
+import instrument_master.kibot.metadata.load.expiry_contract_mapper as ikmlex
+import instrument_master.kibot.metadata.load.s3_backend as ikmls3
+import instrument_master.kibot.metadata.types as ikmtyp
 
 _LOG = logging.getLogger(__name__)
 
@@ -113,23 +113,23 @@ class KibotMetadata:
 
     @classmethod
     def read_tickbidask_contract_metadata(cls) -> pd.DataFrame:
-        return vkmls3.S3Backend().read_tickbidask_contract_metadata()
+        return ikmls3.S3Backend().read_tickbidask_contract_metadata()
 
     @classmethod
     def read_kibot_exchange_mapping(cls) -> pd.DataFrame:
-        return vkmls3.S3Backend().read_kibot_exchange_mapping()
+        return ikmls3.S3Backend().read_kibot_exchange_mapping()
 
     @classmethod
     def read_continuous_contract_metadata(cls) -> pd.DataFrame:
-        return vkmls3.S3Backend().read_continuous_contract_metadata()
+        return ikmls3.S3Backend().read_continuous_contract_metadata()
 
     @classmethod
     def read_1min_contract_metadata(cls) -> pd.DataFrame:
-        return vkmls3.S3Backend().read_1min_contract_metadata()
+        return ikmls3.S3Backend().read_1min_contract_metadata()
 
     @classmethod
     def read_daily_contract_metadata(cls) -> pd.DataFrame:
-        return vkmls3.S3Backend().read_daily_contract_metadata()
+        return ikmls3.S3Backend().read_daily_contract_metadata()
 
     def get_kibot_symbols(self, contract_type: str = "1min") -> pd.Series:
         metadata = self.get_metadata(contract_type)
@@ -266,7 +266,7 @@ class KibotMetadata:
         # Extract SymbolBase, month, year and expiries from contract names.
         symbol_month_year = (
             one_min_contract_metadata["Symbol"]
-            .apply(vkmlex.ExpiryContractMapper.parse_expiry_contract)
+            .apply(ikmlex.ExpiryContractMapper.parse_expiry_contract)
             .apply(pd.Series)
         )
         symbol_month_year.columns = ["SymbolBase", "month", "year"]
@@ -356,7 +356,7 @@ class KibotMetadata:
 
         :param kibot_metadata: Kibot metadata dataframe
         kibot_to_cme_mapping = (
-            vkmls3.S3Backend().read_kibot_exchange_mapping()
+            ikmls3.S3Backend().read_kibot_exchange_mapping()
         )
         """
         kibot_to_cme_mapping = cls.read_kibot_exchange_mapping()
@@ -378,7 +378,7 @@ class ContractLifetimeComputer(abc.ABC):
     """
 
     @abc.abstractmethod
-    def compute_lifetime(self, contract_name: str) -> vkmtyp.ContractLifetime:
+    def compute_lifetime(self, contract_name: str) -> ikmtyp.ContractLifetime:
         """
         Compute the lifetime of a contract, e.g. 'CLJ17'.
 
@@ -401,18 +401,18 @@ class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
         dbg.dassert_lte(0, end_timedelta_days)
         self.end_timedelta_days = end_timedelta_days
 
-    def compute_lifetime(self, contract_name: str) -> vkmtyp.ContractLifetime:
-        df = vkdls3.KibotS3DataLoader().read_data(
+    def compute_lifetime(self, contract_name: str) -> ikmtyp.ContractLifetime:
+        df = ikdlki.KibotS3DataLoader().read_data(
             "Kibot",
             contract_name,
-            vcdtyp.AssetClass.Futures,
-            vcdtyp.Frequency.Daily,
-            vcdtyp.ContractType.Expiry,
+            icdtyp.AssetClass.Futures,
+            icdtyp.Frequency.Daily,
+            icdtyp.ContractType.Expiry,
         )
         start_date = pd.Timestamp(df.first_valid_index())
         end_date = pd.Timestamp(df.last_valid_index())
         end_date -= ptoffs.BDay(self.end_timedelta_days)
-        return vkmtyp.ContractLifetime(start_date, end_date)
+        return ikmtyp.ContractLifetime(start_date, end_date)
 
 
 class KibotHardcodedContractLifetimeComputer(ContractLifetimeComputer):
@@ -432,9 +432,9 @@ class KibotHardcodedContractLifetimeComputer(ContractLifetimeComputer):
         dbg.dassert_lte(0, end_timedelta_days)
         dbg.dassert_lt(end_timedelta_days, start_timedelta_days)
         self.end_timedelta_days = end_timedelta_days
-        self.ecm = vkmlex.ExpiryContractMapper()
+        self.ecm = ikmlex.ExpiryContractMapper()
 
-    def compute_lifetime(self, contract_name: str) -> vkmtyp.ContractLifetime:
+    def compute_lifetime(self, contract_name: str) -> ikmtyp.ContractLifetime:
         symbol, month, year = self.ecm.parse_expiry_contract(contract_name)
         year = self.ecm.parse_year(year)
         month = self.ecm.expiry_to_month_num(month)
@@ -461,7 +461,7 @@ class KibotHardcodedContractLifetimeComputer(ContractLifetimeComputer):
                 f"Contract lifetime for symbol=`{symbol}` not implemented"
             )
 
-        return vkmtyp.ContractLifetime(
+        return ikmtyp.ContractLifetime(
             pd.Timestamp(date - ptoffs.BDay(self.start_timedelta_days)),
             pd.Timestamp(date - ptoffs.BDay(self.end_timedelta_days)),
         )
@@ -566,7 +566,7 @@ class FuturesContractExpiryMapper:
         self.symbol_to_contracts = symbol_to_contracts
 
     def get_nth_contract(
-        self, symbol: str, date: vkmtyp.DATE_TYPE, n: int
+        self, symbol: str, date: ikmtyp.DATE_TYPE, n: int
     ) -> Optional[str]:
         """
         Return n-front contract corresponding to a given date and `n` offset.
@@ -604,8 +604,8 @@ class FuturesContractExpiryMapper:
     def get_nth_contracts(
         self,
         symbol: str,
-        start_date: vkmtyp.DATE_TYPE,
-        end_date: vkmtyp.DATE_TYPE,
+        start_date: ikmtyp.DATE_TYPE,
+        end_date: ikmtyp.DATE_TYPE,
         freq: str,
         n: int,
     ) -> Optional[pd.Series]:
@@ -647,8 +647,8 @@ class FuturesContractExpiryMapper:
     def get_contracts(
         self,
         symbols: List[str],
-        start_date: vkmtyp.DATE_TYPE,
-        end_date: vkmtyp.DATE_TYPE,
+        start_date: ikmtyp.DATE_TYPE,
+        end_date: ikmtyp.DATE_TYPE,
         freq: str,
     ) -> Optional[pd.DataFrame]:
         """

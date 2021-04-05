@@ -7,19 +7,19 @@ import logging
 import pandas as pd
 
 import helpers.dbg as dbg
-import instrument_master.common.data.transform.s3_to_sql_transformer as vcdts3
-import instrument_master.common.data.types as vcdtyp
+import instrument_master.common.data.transform.s3_to_sql_transformer as icdts3
+import instrument_master.common.data.types as icdtyp
 
 _LOG = logging.getLogger(__name__)
 
 
-class IbS3ToSqlTransformer(vcdts3.AbstractS3ToSqlTransformer):
+class IbS3ToSqlTransformer(icdts3.AbstractS3ToSqlTransformer):
     @classmethod
     def transform(
         cls,
         df: pd.DataFrame,
         trade_symbol_id: int,
-        frequency: vcdtyp.Frequency,
+        frequency: icdtyp.Frequency,
     ) -> pd.DataFrame:
         """
         Transform IB data loaded from S3 to load to SQL.
@@ -30,11 +30,11 @@ class IbS3ToSqlTransformer(vcdts3.AbstractS3ToSqlTransformer):
         :return: processed dataframe
         """
         # Transform dataframe.
-        if frequency == vcdtyp.Frequency.Minutely:
+        if frequency == icdtyp.Frequency.Minutely:
             df = cls._transform_minutely_df(df, trade_symbol_id)
-        elif frequency == vcdtyp.Frequency.Daily:
+        elif frequency == icdtyp.Frequency.Daily:
             df = cls._transform_daily_df(df, trade_symbol_id)
-        elif frequency == vcdtyp.Frequency.Tick:
+        elif frequency == icdtyp.Frequency.Tick:
             df = cls._transform_tick_df(df, trade_symbol_id)
         else:
             dbg.dfatal("Unknown frequency '%s'", frequency)

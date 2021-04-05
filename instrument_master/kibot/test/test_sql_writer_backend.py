@@ -2,18 +2,18 @@ import pandas as pd
 import pytest
 
 import helpers.unit_test as hut
-import instrument_master.common.data.types as vcdtyp
-import instrument_master.common.db.init as vcdini
-import instrument_master.common.test.utils as vctuti
-import instrument_master.kibot.kibot_sql_writer_backend as vksqlw
+import instrument_master.common.data.types as icdtyp
+import instrument_master.common.db.init as icdini
+import instrument_master.common.test.utils as ictuti
+import instrument_master.kibot.kibot_sql_writer_backend as ikkibo
 
 
 # TODO(*): -> TestKibotSqlWriterBackend1
 @pytest.mark.skipif(
-    not vcdini.is_inside_im_container(),
+    not icdini.is_inside_im_container(),
     reason="Testable only inside IM container",
 )
-class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
+class TestSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
     """
     Test writing operation to PostgreSQL DB.
     """
@@ -21,7 +21,7 @@ class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
     def setUp(self) -> None:
         super().setUp()
         # Initialize writer class to test.
-        self._writer = vksqlw.KibotSqlWriterBackend(
+        self._writer = ikkibo.KibotSqlWriterBackend(
             dbname=self._dbname,
             user=self._user,
             password=self._password,
@@ -34,7 +34,7 @@ class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
         Test adding a new symbol to symbol table.
         """
         self._writer.ensure_symbol_exists(
-            symbol=self._get_test_string(), asset_class=vcdtyp.AssetClass.Futures
+            symbol=self._get_test_string(), asset_class=icdtyp.AssetClass.Futures
         )
         self._check_saved_data(table="Symbol")
 
@@ -69,7 +69,9 @@ class TestSqlWriterBackend1(vctuti.SqlWriterBackendTestCase):
                 )
         # Get the remaining of pandas Dataframe to load.
         df = self._writer.get_remaining_data_to_load(
-            df, trade_symbol_id=self._trade_symbol_id, frequency=vcdtyp.Frequency.Daily
+            df,
+            trade_symbol_id=self._trade_symbol_id,
+            frequency=icdtyp.Frequency.Daily,
         )
         # Convert dataframe to string.
         txt = hut.convert_df_to_string(df)

@@ -1,7 +1,7 @@
 """
 Specify public methods and classes.
 
-Import as: import instrument_master.kibot as vkibot
+Import as: import instrument_master.kibot as ikibot
 """
 # Types
 from instrument_master.common.data.types import *  # pylint: disable=unused-import # NOQA

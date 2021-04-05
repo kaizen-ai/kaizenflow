@@ -1,21 +1,21 @@
 import pytest
 
 import helpers.unit_test as hut
-import instrument_master.common.data.transform.transform as vcdttr
-import instrument_master.common.data.types as vcdtyp
-import instrument_master.common.db.init as vcdini
-import instrument_master.common.test.utils as vctuti
-import instrument_master.ib.data.load.ib_s3_data_loader as vidls3
-import instrument_master.ib.data.load.ib_sql_data_loader as vidlsq
-import instrument_master.ib.data.transform.ib_s3_to_sql_transformer as vidts3
-import instrument_master.ib.ib_sql_writer_backend as visqlw
+import instrument_master.common.data.transform.transform as icdttr
+import instrument_master.common.data.types as icdtyp
+import instrument_master.common.db.init as icdini
+import instrument_master.common.test.utils as ictuti
+import instrument_master.ib.data.load.ib_s3_data_loader as iidlib3
+import instrument_master.ib.data.load.ib_sql_data_loader as iidlib
+import instrument_master.ib.data.transform.ib_s3_to_sql_transformer as iidtib
+import instrument_master.ib.ib_sql_writer_backend as iiibsq
 
 
 @pytest.mark.skipif(
-    not vcdini.is_inside_im_container(),
+    not icdini.is_inside_im_container(),
     reason="Testable only inside IM container",
 )
-class TestReadFromS3WriteToSql(vctuti.SqlWriterBackendTestCase):
+class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
     """
     Test migrating data from S3 to SQL for IB provider.
     """
@@ -23,16 +23,16 @@ class TestReadFromS3WriteToSql(vctuti.SqlWriterBackendTestCase):
     def setUp(self) -> None:
         super().setUp()
         # Initialize writer class to test.
-        self._writer = visqlw.IbSqlWriterBackend(
+        self._writer = iiibsq.IbSqlWriterBackend(
             dbname=self._dbname,
             user=self._user,
             password=self._password,
             host=self._host,
             port=self._port,
         )
-        self._s3_data_loader = vidls3.IbS3DataLoader()
-        self._s3_to_sql_transformer = vidts3.IbS3ToSqlTransformer()
-        self._sql_data_loader = vidlsq.IbSqlDataLoader(
+        self._s3_data_loader = iidlib3.IbS3DataLoader()
+        self._s3_to_sql_transformer = iidtib.IbS3ToSqlTransformer()
+        self._sql_data_loader = iidlib.IbSqlDataLoader(
             dbname=self._dbname,
             user=self._user,
             password=self._password,
@@ -61,9 +61,9 @@ class TestReadFromS3WriteToSql(vctuti.SqlWriterBackendTestCase):
         """
         exchange = "GLOBEX"
         symbol = "ES"
-        asset_class = vcdtyp.AssetClass.Futures
-        contract_type = contract_type = vcdtyp.ContractType.Continuous
-        frequency = vcdtyp.Frequency.Daily
+        asset_class = icdtyp.AssetClass.Futures
+        contract_type = contract_type = icdtyp.ContractType.Continuous
+        frequency = icdtyp.Frequency.Daily
         self._run_and_check_s3_to_sql(
             exchange=exchange,
             symbol=symbol,
@@ -89,9 +89,9 @@ class TestReadFromS3WriteToSql(vctuti.SqlWriterBackendTestCase):
         """
         exchange = "NYMEX"
         symbol = "HG"
-        asset_class = vcdtyp.AssetClass.Futures
-        contract_type = contract_type = vcdtyp.ContractType.Continuous
-        frequency = vcdtyp.Frequency.Daily
+        asset_class = icdtyp.AssetClass.Futures
+        contract_type = contract_type = icdtyp.ContractType.Continuous
+        frequency = icdtyp.Frequency.Daily
         self._run_and_check_s3_to_sql(
             exchange=exchange,
             symbol=symbol,
@@ -117,9 +117,9 @@ class TestReadFromS3WriteToSql(vctuti.SqlWriterBackendTestCase):
         """
         exchange = "GLOBEX"
         symbol = "ES"
-        asset_class = vcdtyp.AssetClass.Futures
-        contract_type = contract_type = vcdtyp.ContractType.Continuous
-        frequency = vcdtyp.Frequency.Minutely
+        asset_class = icdtyp.AssetClass.Futures
+        contract_type = contract_type = icdtyp.ContractType.Continuous
+        frequency = icdtyp.Frequency.Minutely
         self._run_and_check_s3_to_sql(
             exchange=exchange,
             symbol=symbol,
@@ -145,9 +145,9 @@ class TestReadFromS3WriteToSql(vctuti.SqlWriterBackendTestCase):
         """
         exchange = "NYMEX"
         symbol = "HG"
-        asset_class = vcdtyp.AssetClass.Futures
-        contract_type = contract_type = vcdtyp.ContractType.Continuous
-        frequency = vcdtyp.Frequency.Minutely
+        asset_class = icdtyp.AssetClass.Futures
+        contract_type = contract_type = icdtyp.ContractType.Continuous
+        frequency = icdtyp.Frequency.Minutely
         self._run_and_check_s3_to_sql(
             exchange=exchange,
             symbol=symbol,
@@ -160,9 +160,9 @@ class TestReadFromS3WriteToSql(vctuti.SqlWriterBackendTestCase):
         self,
         exchange: str,
         symbol: str,
-        asset_class: vcdtyp.AssetClass,
-        contract_type: vcdtyp.ContractType,
-        frequency: vcdtyp.Frequency,
+        asset_class: icdtyp.AssetClass,
+        contract_type: icdtyp.ContractType,
+        frequency: icdtyp.Frequency,
     ) -> None:
         """
         Run the whole lifecycle of data starting from reading from S3.
@@ -198,7 +198,7 @@ class TestReadFromS3WriteToSql(vctuti.SqlWriterBackendTestCase):
             exchange=exchange,
         )
         # Read, transform data from S3 and put to the database.
-        vcdttr.convert_s3_to_sql(**params_list)
+        icdttr.convert_s3_to_sql(**params_list)
         # Find what was written.
         df = self._sql_data_loader.read_data(
             exchange=exchange,

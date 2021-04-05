@@ -1,25 +1,25 @@
 import pandas as pd
 import psycopg2.extras as pextra
 
-import instrument_master.common.data.types as vcdtyp
-import instrument_master.common.sql_writer_backend as vcsqlw
+import instrument_master.common.data.types as icdtyp
+import instrument_master.common.sql_writer_backend as icsqlw
 
 
-class IbSqlWriterBackend(vcsqlw.AbstractSqlWriterBackend):
+class IbSqlWriterBackend(icsqlw.AbstractSqlWriterBackend):
     """
     Manager of CRUD operations on a database defined in db.sql.
     """
 
     FREQ_ATTR_MAPPING = {
-        vcdtyp.Frequency.Daily: {
+        icdtyp.Frequency.Daily: {
             "table_name": "IbDailyData",
             "datetime_field_name": "date",
         },
-        vcdtyp.Frequency.Minutely: {
+        icdtyp.Frequency.Minutely: {
             "table_name": "IbMinuteData",
             "datetime_field_name": "datetime",
         },
-        vcdtyp.Frequency.Tick: {
+        icdtyp.Frequency.Tick: {
             "table_name": "IbTickData",
             "datetime_field_name": "datetime",
         },

@@ -3,25 +3,25 @@ from typing import Optional
 import pandas as pd
 import psycopg2.extras as pextra
 
-import instrument_master.common.data.types as vcdtyp
-import instrument_master.common.sql_writer_backend as vcsqlw
+import instrument_master.common.data.types as icdtyp
+import instrument_master.common.sql_writer_backend as icsqlw
 
 
-class KibotSqlWriterBackend(vcsqlw.AbstractSqlWriterBackend):
+class KibotSqlWriterBackend(icsqlw.AbstractSqlWriterBackend):
     """
     Manager of CRUD operations on a database defined in `instrument_master/db`.
     """
 
     FREQ_ATTR_MAPPING = {
-        vcdtyp.Frequency.Daily: {
+        icdtyp.Frequency.Daily: {
             "table_name": "KibotDailyData",
             "datetime_field_name": "date",
         },
-        vcdtyp.Frequency.Minutely: {
+        icdtyp.Frequency.Minutely: {
             "table_name": "KibotMinuteData",
             "datetime_field_name": "datetime",
         },
-        vcdtyp.Frequency.Tick: {
+        icdtyp.Frequency.Tick: {
             "table_name": "KibotTickData",
             "datetime_field_name": "datetime",
         },
