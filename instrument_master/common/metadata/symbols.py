@@ -1,0 +1,75 @@
+"""
+Import as:
+
+import instrument_master.common.metadata.symbols as icmsym
+"""
+import abc
+import dataclasses
+from typing import List, Optional
+
+import instrument_master.common.data.types as icdtyp
+
+
+@dataclasses.dataclass
+class Symbol:
+    ticker: str
+    exchange: str
+    asset_class: icdtyp.AssetClass
+    contract_type: Optional[icdtyp.ContractType]
+
+    def is_selected(
+        self,
+        ticker: Optional[str],
+        exchange: Optional[str],
+        asset_class: Optional[icdtyp.AssetClass],
+        contract_type: Optional[icdtyp.ContractType],
+    ) -> bool:
+        """
+        Return `true` if symbol matches requirements.
+        """
+        matched = True
+        if ticker is not None and self.ticker != ticker:
+            matched = False
+        if exchange is not None and self.exchange != exchange:
+            matched = False
+        if asset_class is not None and self.asset_class != asset_class:
+            matched = False
+        if contract_type is not None and self.contract_type != contract_type:
+            matched = False
+        return matched
+
+
+class SymbolUniverse(abc.ABC):
+    """
+    Store available symbols.
+    """
+
+    @abc.abstractmethod
+    def get_all_symbols(self) -> List[Symbol]:
+        """
+        Return all the available symbols.
+        """
+
+    def get(
+        self,
+        ticker: Optional[str],
+        exchange: Optional[str],
+        asset_class: Optional[icdtyp.AssetClass],
+        contract_type: Optional[icdtyp.ContractType],
+    ) -> List[Symbol]:
+        """
+        Return all the available symbols based on different selection criteria.
+
+        E.g. `get(exchange="GLOBEX")` will return all symbols on GLOBEX.
+        """
+        matched_symbols = [
+            symbol
+            for symbol in self.get_all_symbols()
+            if symbol.is_selected(
+                ticker=ticker,
+                exchange=exchange,
+                asset_class=asset_class,
+                contract_type=contract_type,
+            )
+        ]
+        return matched_symbols
