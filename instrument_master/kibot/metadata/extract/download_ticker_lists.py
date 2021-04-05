@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
 """
-# Download all ticker lists and push them to s3.
-
+# Download all ticker lists and push them to S3.
 > download_ticker_lists.py
 """
 import logging
@@ -92,7 +91,7 @@ class DownloadTickerListsCommand(vkbcom.KibotCommand):
             hio.to_file(file_name=file_path, lines=str(response.content, "utf-8"))
             _LOG.info("Downloaded file to: %s", file_path)
 
-            # Save to s3.
+            # Save to S3.
             aws_path = os.path.join(
                 vkmcon.S3_PREFIX, vkmcon.TICKER_LISTS_SUB_DIR, file_name
             )

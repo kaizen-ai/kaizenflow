@@ -172,7 +172,6 @@ class TestFilePathGenerator(hut.TestCase):
 
     def _assert_file_path(self, args: dict, expected_file_path: str) -> None:
         generator = vkdlfi.KibotFilePathGenerator()
-
         actual = generator.generate_file_path(**args)
         expected = f"{vkdcon.S3_PREFIX}/{expected_file_path}"
         self.assertEqual(actual, expected)

@@ -2,7 +2,10 @@
 
 set -e
 
-OPTS="-vv -rpa --log-cli-level=INFO"
+USER_OPTS="$*"
+
+OPTS="-vv -rpa ${USER_OPTS}"
+#OPTS="$OPTS --log-cli-level=INFO"
 
 SKIPPED_TESTS="not slow and \
     not superslow and \
@@ -15,4 +18,4 @@ TEST_DIR="instrument_master"
 # Run tests.
 cmd="pytest ${OPTS} -m '${SKIPPED_TESTS}' ${TEST_DIR}"
 echo "> cmd=$cmd"
-eval $cmd
+eval "$cmd"

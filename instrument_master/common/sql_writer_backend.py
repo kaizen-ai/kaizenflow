@@ -8,9 +8,10 @@ import psycopg2.extensions as pexten
 import instrument_master.common.data.types as vcdtyp
 
 
+# TODO: -> Why not AbstractSqlWriter?
 class AbstractSqlWriterBackend(abc.ABC):
     """
-    Interface for manager of CRUD operations on a database defined in db.sql.
+    Interface for manager of CRUD operations on a database defined in db/sql.
     """
 
     # Provider-specific constant. Map frequency to table name and datetime field.
@@ -40,10 +41,7 @@ class AbstractSqlWriterBackend(abc.ABC):
         asset_class: vcdtyp.AssetClass,
     ) -> None:
         """
-        Insert new Symbol entry if it does not exist.
-
-        :param symbol: cymbol code
-        :param asset_class: asset class of the Symbol
+        Insert new symbol entry, if it does not exist.
         """
         with self.conn:
             with self.conn.cursor() as curs:
@@ -58,9 +56,7 @@ class AbstractSqlWriterBackend(abc.ABC):
         exchange: str,
     ) -> None:
         """
-        Insert new Exchange entry if it does not exist.
-
-        :param exchange: exchange code
+        Insert new exchange entry, if it does not exist.
         """
         with self.conn:
             with self.conn.cursor() as curs:
@@ -76,10 +72,7 @@ class AbstractSqlWriterBackend(abc.ABC):
         exchange_id: int,
     ) -> None:
         """
-        Insert new TradeSymbol entry if it does not exist.
-
-        :param symbol_id: id of Symbol
-        :param exchange_id: id of Exchange
+        Insert new (`symbol_id`, `exchange_id`) entry, if it does not exist.
         """
         with self.conn:
             with self.conn.cursor() as curs:
@@ -95,9 +88,9 @@ class AbstractSqlWriterBackend(abc.ABC):
         df: pd.DataFrame,
     ) -> None:
         """
-        Insert daily data for a particular TradeSymbol entry in bulk.
+        Insert daily data in bulk for the given `trade_symbol_id`.
 
-        :param df: a dataframe from s3
+        :param df: a dataframe with the data to insert (e.g., from S3)
         """
 
     @abc.abstractmethod
@@ -114,17 +107,7 @@ class AbstractSqlWriterBackend(abc.ABC):
         bar_count_val: Optional[int],
     ) -> None:
         """
-        Insert daily data for a particular TradeSymbol entry.
-
-        :param trade_symbol_id: id of TradeSymbol
-        :param date: date string
-        :param open_val: open price
-        :param high_val: high price
-        :param low_val: low price
-        :param close_val: close price
-        :param volume_val: volume
-        :param average_val: average
-        :param bar_count_val: bar count
+        Insert daily data for the given `trade_symbol_id`.
         """
 
     @abc.abstractmethod
@@ -133,9 +116,9 @@ class AbstractSqlWriterBackend(abc.ABC):
         df: pd.DataFrame,
     ) -> None:
         """
-        Insert minute data for a particular TradeSymbol entry in bulk.
+        Insert minute data in bulk for the given `trade_symbol_id`.
 
-        :param df: a dataframe from s3
+        :param df: a dataframe with the data to insert (e.g., from S3)
         """
 
     @abc.abstractmethod
@@ -152,17 +135,7 @@ class AbstractSqlWriterBackend(abc.ABC):
         bar_count_val: Optional[int],
     ) -> None:
         """
-        Insert minute data for a particular TradeSymbol entry.
-
-        :param trade_symbol_id: id of TradeSymbol
-        :param date_time: date and time string
-        :param open_val: open price
-        :param high_val: high price
-        :param low_val: low price
-        :param close_val: close price
-        :param volume_val: volume
-        :param average_val: average
-        :param bar_count_val: bar count
+        Insert minute data for the given `trade_symbol_id`.
         """
 
     @abc.abstractmethod
@@ -174,29 +147,22 @@ class AbstractSqlWriterBackend(abc.ABC):
         size_val: int,
     ) -> None:
         """
-        Insert tick data for a particular TradeSymbol entry.
-
-        :param trade_symbol_id: id of TradeSymbol
-        :param date_time: date and time string
-        :param price_val: price of the transaction
-        :param size_val: size of the transaction
+        Insert tick data for the given `trade_symbol_id` entry.
         """
 
     def close(self) -> None:
         self.conn.close()
 
+    # TODO(*): -> remaining
+    # TODO(*): Move df before
     def get_remains_data_to_load(
         self, trade_symbol_id: int, df: pd.DataFrame, frequency: vcdtyp.Frequency
     ) -> pd.DataFrame:
         """
-        Find the maximum date(time) for trade_symbol_id in a certain frequency
-        that already loaded and return a slice of data from a pandas Dataframe
-        where datetime > given maximum.
+        Return the slice of pandas Dataframe for `trade_symbol_id` and `frequency`
+        that still needs to be loaded in the table.
 
-        :param trade_symbol_id: id of TradeSymbol.
-        :param df: Pandas Dataframe to load.
-        :param frequency: frequency of the data.
-        :return: Slice of Pandas Dataframe to load.
+        :return: slice of pandas df to load
         """
         datetime_field_name = self.FREQ_ATTR_MAPPING[frequency][
             "datetime_field_name"
@@ -210,6 +176,7 @@ class AbstractSqlWriterBackend(abc.ABC):
                     f"trade_symbol_id = {trade_symbol_id}"
                 )
                 max_datetime = cur.fetchone()[0]
+        # Trim the df, if needed.
         df[datetime_field_name] = pd.to_datetime(df[datetime_field_name])
         if max_datetime is not None:
             df = df[df[datetime_field_name] > pd.to_datetime(max_datetime)]
@@ -219,11 +186,7 @@ class AbstractSqlWriterBackend(abc.ABC):
         self, trade_symbol_id: int, frequency: vcdtyp.Frequency
     ) -> None:
         """
-        Delete all data from table by given frequency and trade_symbol_id.
-
-        :param trade_symbol_id: id of TradeSymbol.
-        :param frequency: frequency of the data.
-        :return:
+        Delete all data from table corresponding to `trade_symbol_id` and `frequency`.
         """
         table_name = self.FREQ_ATTR_MAPPING[frequency]["table_name"]
         with self.conn:

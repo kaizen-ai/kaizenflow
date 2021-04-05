@@ -15,6 +15,7 @@ class DatasetNameParser:
         Frequency.Minutely
     """
 
+    # TODO(*): Move out and make it private?
     FREQ_PATH_MAPPING: Dict[str, vcdtyp.Frequency] = {
         v: k for k, v in vkdlfi.KibotFilePathGenerator.FREQ_PATH_MAPPING.items()
     }
@@ -37,7 +38,7 @@ class DatasetNameParser:
         dataset.
 
         :param dataset: dataset name, e.g. all_futures_contracts_1min
-        :return: tuple of asset class, contract type, frequency, and unadjusted
+        :return: tuple of (asset class, contract type, frequency, unadjusted)
         """
         asset_class = self._extract_asset_class(dataset)
         contract_type = self._extract_contract_type(dataset)

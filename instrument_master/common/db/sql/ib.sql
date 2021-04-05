@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS IbDailyData (
     close numeric,
     volume bigint,
     average numeric,
+    -- TODO(*): barCount -> bar_count
     barCount integer,
     UNIQUE (trade_symbol_id, date)
 );
@@ -15,7 +16,7 @@ CREATE TABLE IF NOT EXISTS IbDailyData (
 CREATE TABLE IF NOT EXISTS IbMinuteData (
     id integer PRIMARY KEY DEFAULT nextval('serial'),
     trade_symbol_id integer REFERENCES TradeSymbol,
-    datetime timestamp,
+    datetime timestamptz,
     open numeric,
     high numeric,
     low numeric,

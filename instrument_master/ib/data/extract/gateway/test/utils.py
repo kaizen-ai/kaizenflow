@@ -18,6 +18,7 @@ import instrument_master.ib.data.extract.gateway.utils as videgu
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): Use is_inside_im_container()
 IS_TWS_ENABLED = (
     os.environ.get("STAGE") == "TEST"
     and os.environ.get("IB_GW_CONNECTION_HOST") == "ib_connect_test"

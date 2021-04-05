@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+
+# TODO(*): Is this still needed or superseded by app/convert_s3_to_sql.py
 r"""
 Converts Kibot data on S3 from .csv.gz to SQL and inserts it into DB.
 

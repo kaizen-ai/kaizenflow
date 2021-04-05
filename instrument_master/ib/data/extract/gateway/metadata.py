@@ -1,3 +1,4 @@
+# TODO(*): Move to ib/medata and rename contract_metadata.py
 import logging
 import os
 from typing import List

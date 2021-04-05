@@ -7,7 +7,7 @@ import psycopg2.sql as psql
 
 import helpers.timer as htimer
 
-_log = logging.getLogger(__name__)
+_LOG = logging.getLogger(__name__)
 
 
 def get_connection(
@@ -21,6 +21,20 @@ def get_connection(
     connection = psycop.connect(
         dbname=dbname, host=host, user=user, port=port, password=password
     )
+    cursor = connection.cursor()
+    if autocommit:
+        connection.autocommit = True
+    return connection, cursor
+
+
+def get_connection_from_string(
+        conn_as_str: str,
+        autocommit: bool = True,
+) -> Tuple[psycop.extensions.connection, psycop.extensions.cursor]:
+    """ 
+    Create a connection from a string.
+    """
+    connection = psycop.connect(conn_as_str)
     cursor = connection.cursor()
     if autocommit:
         connection.autocommit = True
@@ -125,7 +139,7 @@ def get_indexes(connection: psycop.extensions.connection) -> pd.DataFrame:
     cursor = connection.cursor()
     for table in tables:
         query = (
-            """select * from pg_indexes where tablename = '{table}' """.format(
+            """SELECT * FROM pg_indexes WHERE tablename = '{table}' """.format(
                 table=table
             )
         )
@@ -164,6 +178,40 @@ def get_columns(
     return columns
 
 
+# ##################################################################################
+
+# TODO(plyq): Add tests.
+# TODO(*): Rename force -> overwrite or not_incremental.
+def create_database(
+        connection: psycop.extensions.connection,
+        db: str,
+        force: Optional[bool] = None,
+) -> None:
+    """
+    Create empty database.
+
+    :param connection: database connection
+    :param db: database to create
+    :param force: overwrite existing database
+    """
+    _LOG.debug("connection=%s", connection)
+    with connection.cursor() as cursor:
+        if force:
+            cursor.execute(
+                psql.SQL("DROP DATABASE IF EXISTS {};").format(
+                    psql.Identifier(db)
+                )
+            )
+        else:
+            raise ValueError("Database %s already exists" % db)
+        cursor.execute(
+            psql.SQL("CREATE DATABASE {};").format(psql.Identifier(db))
+        )
+
+
+# ##################################################################################
+
+
 def execute_query(
     connection: psycop.extensions.connection,
     query: str,
@@ -171,7 +219,7 @@ def execute_query(
     offset: Optional[int] = None,
     use_timer: bool = False,
     profile: bool = False,
-    verbose: bool = True,
+    verbose: bool = False,
 ) -> Union[None, pd.DataFrame]:
     """
     Execute a query.
@@ -210,31 +258,34 @@ def head_table(
     connection: psycop.extensions.connection,
     table: str,
     limit: int = 5,
-    as_txt: bool = False,
-) -> None:
+) -> str:
+    """
+    Report the head of the table as str.
+    """
+    txt = []
     query = "SELECT * FROM %s LIMIT %s " % (table, limit)
     df = execute_query(connection, query)
-    if as_txt:
-        # pd.options.display.max_columns = 1000
-        # pd.options.display.width = 130
-        print(df)
-    else:
-        import IPython
-
-        IPython.core.display.display(df)
+    # pd.options.display.max_columns = 1000
+    # pd.options.display.width = 130
+    txt.append(str(df))
+    txt = "\n".join(txt)
+    return txt
 
 
 def head_tables(
     connection: psycop.extensions.connection,
     tables: Optional[List[str]] = None,
     limit: int = 5,
-    as_txt: bool = False,
-) -> None:
+) -> str:
+    txt = []
     if tables is None:
         tables = get_table_names(connection)
     for table in tables:
-        print(("\n" + "#" * 80 + "\n" + table + "\n" + "#" * 80))
-        head_table(connection, table, limit=limit, as_txt=as_txt)
+        txt.append("\n" + "#" * 80 + "\n" + table + "\n" + "#" * 80)
+        txt_tmp = head_table(connection, table, limit=limit)
+        txt.append(txt_tmp)
+    txt = "\n".join(txt)
+    return txt
 
 
 def find_common_columns(
@@ -277,30 +328,3 @@ def find_common_columns(
             df, columns=["table1", "table2", "num_comm_cols", "common_cols"]
         )
     return obj
-
-
-# TODO(plyq): Tests.
-def create_database(
-    connection: psycop.extensions.connection,
-    db: str,
-    force: Optional[bool] = None,
-) -> None:
-    """
-    Create empty database.
-
-    :param connection: database connection
-    :param db: database to create
-    :param force: overwrite existing database
-    """
-    with connection.cursor() as cursor:
-        if force:
-            cursor.execute(
-                psql.SQL("DROP DATABASE IF EXISTS {};").format(
-                    psql.Identifier(db)
-                )
-            )
-        else:
-            raise ValueError("Database %s already exists" % db)
-        cursor.execute(
-            psql.SQL("CREATE DATABASE {};").format(psql.Identifier(db))
-        )

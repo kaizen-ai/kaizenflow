@@ -1,3 +1,5 @@
+# TODO(*): -> kibot_file_path_generator.py
+
 import os
 from typing import Optional, cast
 
@@ -37,9 +39,10 @@ class KibotFilePathGenerator(vcdlfi.FilePathGenerator):
         ext: vcdtyp.Extension = vcdtyp.Extension.Parquet,
     ) -> str:
         """
-        Get the path to a specific kibot dataset on S3.
+        Get the path to a specific Kibot dataset on S3.
 
-        Parameters as in `read_data`.
+        Parameters as in `read_data()`.
+
         :return: path to the file
         """
         freq_path = self.FREQ_PATH_MAPPING[frequency]

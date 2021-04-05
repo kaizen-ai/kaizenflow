@@ -1,9 +1,15 @@
 #!/usr/bin/env python
 
+# TODO(*): Move to ib/
+"""
+Connect to IB TWS to check if it works.
+"""
+
 import argparse
 import datetime
 import logging
 import os
+import sys
 import time
 
 import ib_insync
@@ -37,9 +43,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     ib = ib_insync.IB()
     host = os.environ["IB_GW_CONNECTION_HOST"]
     port = os.environ["IB_GW_CONNECTION_PORT"]
+    rc = -1
     for i in range(args.num_attempts):
         _LOG.info(
-            "Connecting to %s:%s, attempt %s/%s",
+            "Connecting to IB %s:%s, attempt %s/%s",
             host,
             port,
             i + 1,
@@ -48,14 +55,16 @@ def _main(parser: argparse.ArgumentParser) -> None:
         try:
             ib.connect(host=host, port=port)
             get_es_data(ib)
+            _LOG.info("Success")
+            rc = 0
         except (ConnectionError, TimeoutError) as exception:
             _LOG.warning("Failed: %s", exception)
             time.sleep(1)
             continue
         break
-    _LOG.info("Disconnecting")
+    _LOG.info("Disconnecting IB")
     ib.disconnect()
-    _LOG.info("Done")
+    sys.exit(rc)
 
 
 def _parse() -> argparse.ArgumentParser:

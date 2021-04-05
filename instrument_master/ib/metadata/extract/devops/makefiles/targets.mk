@@ -1,5 +1,8 @@
 ECR_BASE_PATH=083233266530.dkr.ecr.us-east-2.amazonaws.com
 
+# TODO(*): change code to save to S3 directly.
+IB_S3_METADATA_PATH=s3://external-p1/ib/metadata
+
 OPTS?=
 ib_metadata_crawler.docker_build:
 	docker build \
@@ -9,15 +12,22 @@ ib_metadata_crawler.docker_build:
 		.
 	docker image ls ib_metadata_crawler
 
+COPY_TO_S3?=False
+ifeq ($(COPY_TO_S3), True)
+	_CRAWLER_POST_COMMAND=aws s3 cp --recursive ${PWD}/outcome $(IB_S3_METADATA_PATH) && echo "Done!"
+else
+	_CRAWLER_POST_COMMAND=echo "Done!"
+endif
 ib_metadata_crawler.run:
 	docker run \
 		--rm \
 		-i \
-		-v ${PWD}:/outcome \
+		-v ${PWD}/outcome:/outcome \
 		ib_metadata_crawler \
 		scrapy crawl ibroker \
 		--loglevel INFO \
 		2>&1 | tee scrapy.log
+	$(_CRAWLER_POST_COMMAND)
 
 ib_metadata_crawler.bash:
 	docker run \

@@ -119,9 +119,19 @@ ifeq ($(NO_FAST_TESTS), 'True')
 	@echo "No fast tests"
 else
 	_IMAGE=$(IMAGE_RC) \
-	_CMD="$(RUN_TESTS_DIR)/run_fast_tests.sh" \
+	_CMD="$(RUN_TESTS_DIR)/run_fast_tests.sh $(USER_OPTS)" \
 	make im._run_tests
 endif
+
+# Run the tests with the base container and the tests needing a special container.
+im.run_all_fast_tests:
+	(cd ..; make run_fast_tests USER_OPTS="instrument_master")
+	make im.run_fast_tests
+
+im.run_all_fast_tests_coverage:
+	(cd ..; make run_fast_tests USER_OPTS="--cov --cov-branch --cov-report term-missing --cov-report html --cov-report annotate instrument_master")
+	make im.run_fast_tests USER_OPTS="--cov --cov-branch --cov-report term-missing --cov-report html --cov-report annotate"
+	(cd ../htmlcov; python -m http.server 33333)
 
 im.run_slow_tests:
 ifeq ($(NO_SLOW_TESTS), 'True')
@@ -146,10 +156,10 @@ endif
 # #############################################################################
 
 ifdef GITHUB_SHA
-IMAGE_RC_SHA:=$(GITHUB_SHA)
+	IMAGE_RC_SHA:=$(GITHUB_SHA)
 else
-# GITHUB_SHA not found. Setting IMAGE_RC_SHA from HEAD.
-IMAGE_RC_SHA:=$(shell git rev-parse HEAD)
+	# GITHUB_SHA not found. Setting IMAGE_RC_SHA from HEAD.
+	IMAGE_RC_SHA:=$(shell git rev-parse HEAD)
 endif
 
 # Use Docker buildkit or not.
