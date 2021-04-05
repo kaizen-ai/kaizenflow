@@ -5,9 +5,9 @@ services:
     image: ${IM_IMAGE_DEV}
     container_name: im_app_dev
     restart: "no"
-    entrypoint: /app/apps/im/docker_build/entrypoints/entrypoint_deploy.sh
+    entrypoint: /app/instrument_master/devops/docker_build/entrypoints/entrypoint_deploy.sh
     working_dir: /app
     env_file:
-      - ../.env/dev/postgres
+      - ../env/dev.postgres.env
     volumes:
       - ../../../:/app
