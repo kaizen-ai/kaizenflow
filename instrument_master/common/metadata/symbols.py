@@ -17,7 +17,7 @@ class Symbol:
     asset_class: icdtyp.AssetClass
     contract_type: Optional[icdtyp.ContractType]
 
-    def validate(
+    def is_selected(
         self,
         ticker: Optional[str],
         exchange: Optional[str],
@@ -39,16 +39,15 @@ class Symbol:
         return matched
 
 
-class SymbolList(abc.ABC):
+class SymbolUniverse(abc.ABC):
     """
     Store available symbols.
     """
 
-    @property
     @abc.abstractmethod
-    def symbol_list(self) -> List[Symbol]:
+    def get_all_symbols(self) -> List[Symbol]:
         """
-        Return available symbol list.
+        Return all the available symbols.
         """
 
     def get(
@@ -59,14 +58,14 @@ class SymbolList(abc.ABC):
         contract_type: Optional[icdtyp.ContractType],
     ) -> List[Symbol]:
         """
-        Return available symbols based on parameters.
+        Return all the available symbols based on different selection criteria.
 
         E.g. `get(exchange="GLOBEX")` will return all symbols on GLOBEX.
         """
         matched_symbols = [
             symbol
-            for symbol in self.symbol_list
-            if symbol.validate(
+            for symbol in self.get_all_symbols()
+            if symbol.is_selected(
                 ticker=ticker,
                 exchange=exchange,
                 asset_class=asset_class,
