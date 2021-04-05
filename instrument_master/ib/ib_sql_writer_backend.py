@@ -1,28 +1,26 @@
-from typing import Optional
-
 import pandas as pd
 import psycopg2.extras as pextra
 
-import instrument_master.common.data.types as vcdtyp
-import instrument_master.common.sql_writer_backend as vcsqlw
+import instrument_master.common.data.types as icdtyp
+import instrument_master.common.sql_writer_backend as icsqlw
 
 
-class KibotSqlWriterBackend(vcsqlw.AbstractSqlWriterBackend):
+class IbSqlWriterBackend(icsqlw.AbstractSqlWriterBackend):
     """
-    Manager of CRUD operations on a database defined in `instrument_master/db`.
+    Manager of CRUD operations on a database defined in db.sql.
     """
 
     FREQ_ATTR_MAPPING = {
-        vcdtyp.Frequency.Daily: {
-            "table_name": "KibotDailyData",
+        icdtyp.Frequency.Daily: {
+            "table_name": "IbDailyData",
             "datetime_field_name": "date",
         },
-        vcdtyp.Frequency.Minutely: {
-            "table_name": "KibotMinuteData",
+        icdtyp.Frequency.Minutely: {
+            "table_name": "IbMinuteData",
             "datetime_field_name": "datetime",
         },
-        vcdtyp.Frequency.Tick: {
-            "table_name": "KibotTickData",
+        icdtyp.Frequency.Tick: {
+            "table_name": "IbTickData",
             "datetime_field_name": "datetime",
         },
     }
@@ -40,12 +38,12 @@ class KibotSqlWriterBackend(vcsqlw.AbstractSqlWriterBackend):
             with self.conn.cursor() as curs:
                 pextra.execute_values(
                     curs,
-                    "INSERT INTO KibotDailyData "
-                    "(trade_symbol_id, date, open, high, low, close, volume) "
+                    "INSERT INTO IbDailyData "
+                    "(trade_symbol_id, date, open, high, low, close, volume, average, barCount) "
                     "VALUES %s ON CONFLICT DO NOTHING",
                     df.to_dict("records"),
                     template="(%(trade_symbol_id)s, %(date)s, %(open)s,"
-                    " %(high)s, %(low)s, %(close)s, %(volume)s)",
+                    " %(high)s, %(low)s, %(close)s, %(volume)s, %(average)s, %(barCount)s)",
                 )
 
     def insert_daily_data(
@@ -57,18 +55,28 @@ class KibotSqlWriterBackend(vcsqlw.AbstractSqlWriterBackend):
         low_val: float,
         close_val: float,
         volume_val: int,
-        average_val: Optional[float] = None,
-        bar_count_val: Optional[int] = None,
+        average_val: float,
+        bar_count_val: int,
     ) -> None:
         """
         Insert daily data for a particular TradeSymbol entry.
+
+        :param trade_symbol_id: id of TradeSymbol
+        :param date: date string
+        :param open_val: open price
+        :param high_val: high price
+        :param low_val: low price
+        :param close_val: close price
+        :param volume_val: volume
+        :param average_val: average
+        :param bar_count_val: bar count
         """
         with self.conn:
             with self.conn.cursor() as curs:
                 curs.execute(
-                    "INSERT INTO KibotDailyData "
-                    "(trade_symbol_id, date, open, high, low, close, volume) "
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
+                    "INSERT INTO IbDailyData "
+                    "(trade_symbol_id, date, open, high, low, close, volume, average, barCount) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
                     [
                         trade_symbol_id,
                         date,
@@ -77,6 +85,8 @@ class KibotSqlWriterBackend(vcsqlw.AbstractSqlWriterBackend):
                         low_val,
                         close_val,
                         volume_val,
+                        average_val,
+                        bar_count_val,
                     ],
                 )
 
@@ -87,18 +97,19 @@ class KibotSqlWriterBackend(vcsqlw.AbstractSqlWriterBackend):
         """
         Insert minute data for a particular TradeSymbol entry in bulk.
 
-        :param df: a dataframe from S3
+        :param df: a dataframe from s3
         """
         with self.conn:
             with self.conn.cursor() as curs:
                 pextra.execute_values(
                     curs,
-                    "INSERT INTO KibotMinuteData "
-                    "(trade_symbol_id, datetime, open, high, low, close, volume) "
+                    "INSERT INTO IbMinuteData "
+                    "(trade_symbol_id, datetime, open, high, low, close, "
+                    "volume, average, barCount) "
                     "VALUES %s ON CONFLICT DO NOTHING",
                     df.to_dict("records"),
                     template="(%(trade_symbol_id)s, %(datetime)s, %(open)s,"
-                    " %(high)s, %(low)s, %(close)s, %(volume)s)",
+                    " %(high)s, %(low)s, %(close)s, %(volume)s, %(average)s, %(barCount)s)",
                 )
 
     def insert_minute_data(
@@ -110,18 +121,29 @@ class KibotSqlWriterBackend(vcsqlw.AbstractSqlWriterBackend):
         low_val: float,
         close_val: float,
         volume_val: int,
-        average_val: Optional[float] = None,
-        bar_count_val: Optional[int] = None,
+        average_val: float,
+        bar_count_val: int,
     ) -> None:
         """
         Insert minute data for a particular TradeSymbol entry.
+
+        :param trade_symbol_id: id of TradeSymbol
+        :param date_time: date and time string
+        :param open_val: open price
+        :param high_val: high price
+        :param low_val: low price
+        :param close_val: close price
+        :param volume_val: volume
+        :param average_val: average
+        :param bar_count_val: bar count
         """
         with self.conn:
             with self.conn.cursor() as curs:
                 curs.execute(
-                    "INSERT INTO KibotMinuteData "
-                    "(trade_symbol_id, datetime, open, high, low, close, volume) "
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
+                    "INSERT INTO IbMinuteData "
+                    "(trade_symbol_id, datetime, open, high, low, close, "
+                    "volume, average, barCount) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
                     [
                         trade_symbol_id,
                         date_time,
@@ -130,6 +152,8 @@ class KibotSqlWriterBackend(vcsqlw.AbstractSqlWriterBackend):
                         low_val,
                         close_val,
                         volume_val,
+                        average_val,
+                        bar_count_val,
                     ],
                 )
 
@@ -142,11 +166,16 @@ class KibotSqlWriterBackend(vcsqlw.AbstractSqlWriterBackend):
     ) -> None:
         """
         Insert tick data for a particular TradeSymbol entry.
+
+        :param trade_symbol_id: id of TradeSymbol
+        :param date_time: date and time string
+        :param price_val: price of the transaction
+        :param size_val: size of the transaction
         """
         with self.conn:
             with self.conn.cursor() as curs:
                 curs.execute(
-                    "INSERT INTO KibotTickData "
+                    "INSERT INTO IbTickData "
                     "(trade_symbol_id, datetime, price, size) "
                     "VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
                     [
