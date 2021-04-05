@@ -24,6 +24,20 @@ im.print_setup:
 	@echo "IM_IMAGE_RC=$(IM_IMAGE_RC)"
 
 # #############################################################################
+# MULTISTAGE.
+# #############################################################################
+im.docker_up.multistage:
+	docker-compose \
+		-f devops/compose/docker-compose.multistage.yml \
+		up -d
+
+# Stop multistage container including all dependencies.
+im.docker_down.multistage:
+	docker-compose \
+		-f devops/compose/docker-compose.multistage.yml \
+		down
+
+# #############################################################################
 # Development.
 # #############################################################################
 
