@@ -46,11 +46,11 @@ class LoaderFactory:
         """
         loader: icdls3.AbstractS3DataLoader
         if provider == "kibot":
-            import instrument_master.kibot.data.load.s3_data_loader as vkdls3
+            import instrument_master.kibot.data.load.kibot_s3_data_loader as vkdls3
 
             loader = vkdls3.KibotS3DataLoader()
         elif provider == "ib":
-            import instrument_master.ib.data.load.s3_data_loader as vidls3
+            import instrument_master.ib.data.load.ib_s3_data_loader as vidls3
 
             loader = vidls3.IbS3DataLoader()
         else:
@@ -74,13 +74,13 @@ class LoaderFactory:
         """
         loader: icdlsq.AbstractSqlDataLoader
         if provider == "kibot":
-            import instrument_master.kibot.data.load.sql_data_loader as vkdlsq
+            import instrument_master.kibot.data.load.kibot_sql_data_loader as vkdlsq
 
             loader = vkdlsq.KibotSqlDataLoader(
                 dbname=dbname, user=user, password=password, host=host, port=port
             )
         elif provider == "ib":
-            import instrument_master.ib.data.load.sql_data_loader as vidlsq
+            import instrument_master.ib.data.load.ib_sql_data_loader as vidlsq
 
             loader = vidlsq.IbSqlDataLoader(
                 dbname=dbname, user=user, password=password, host=host, port=port
