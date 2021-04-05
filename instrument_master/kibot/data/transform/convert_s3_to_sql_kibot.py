@@ -31,14 +31,14 @@ import os
 
 import helpers.dbg as dbg
 import helpers.parser as hparse
-import instrument_master.common.data.transform.transform as vcdttr
-import instrument_master.kibot.data.config as vkdcon
-import instrument_master.kibot.data.load as vkdloa
-import instrument_master.kibot.data.load.dataset_name_parser as vkdlda
-import instrument_master.kibot.data.load.sql_data_loader as vkdlsq
-import instrument_master.kibot.data.transform.s3_to_sql_transformer as vkdts3
-import instrument_master.kibot.metadata.load.s3_backend as vkmls3
-import instrument_master.kibot.sql_writer_backend as vksqlw
+import instrument_master.common.data.transform.transform as icdttr
+import instrument_master.kibot.data.config as ikdcon
+import instrument_master.kibot.data.load as ikdloa
+import instrument_master.kibot.data.load.dataset_name_parser as ikdlda
+import instrument_master.kibot.data.load.kibot_sql_data_loader as ikdlki
+import instrument_master.kibot.data.transform.kibot_s3_to_sql_transformer as ikdtki
+import instrument_master.kibot.kibot_sql_writer_backend as ikkibo
+import instrument_master.kibot.metadata.load.s3_backend as ikmls3
 
 _LOG = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ def _parse() -> argparse.ArgumentParser:
         "--dataset",
         type=str,
         help="Process a specific dataset (or all datasets if omitted)",
-        choices=vkdcon.DATASETS,
+        choices=ikdcon.DATASETS,
         action="append",
         default=None,
     )
@@ -130,15 +130,15 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     dbg.shutup_chatty_modules()
     #
-    s3_to_sql_transformer = vkdts3.S3ToSqlTransformer()
+    s3_to_sql_transformer = ikdtki.S3ToSqlTransformer()
     #
-    kibot_data_loader = vkdloa.KibotS3DataLoader()
+    kibot_data_loader = ikdloa.KibotS3DataLoader()
     #
-    s3_backend = vkmls3.S3Backend()
+    s3_backend = ikmls3.S3Backend()
     #
-    dataset_name_parser = vkdlda.DatasetNameParser()
+    dataset_name_parser = ikdlda.DatasetNameParser()
     #
-    sql_writer_backed = vksqlw.KibotSqlWriterBackend(
+    sql_writer_backed = ikkibo.KibotSqlWriterBackend(
         dbname=args.dbname,
         user=args.dbuser,
         password=args.dbpass,
@@ -146,7 +146,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         port=args.dbport,
     )
     #
-    sql_data_loader = vkdlsq.KibotSqlDataLoader(
+    sql_data_loader = ikdlki.KibotSqlDataLoader(
         dbname=args.dbname,
         user=args.dbuser,
         password=args.dbpass,
@@ -160,7 +160,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Construct list of parameters to run.
     params_list = []
     # Go over selected datasets or all datasets.
-    datasets_to_process = args.dataset or vkdcon.DATASETS
+    datasets_to_process = args.dataset or ikdcon.DATASETS
     for dataset in datasets_to_process:
         # Get the symbols from S3.
         symbols = s3_backend.get_symbols_for_dataset(dataset)
@@ -194,7 +194,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             )
     _LOG.info("Found %i items to load to database", len(params_list))
     # Run converting.
-    vcdttr.convert_s3_to_sql_bulk(serial=args.serial, params_list=params_list)
+    icdttr.convert_s3_to_sql_bulk(serial=args.serial, params_list=params_list)
     _LOG.info("Closing database connection")
     sql_writer_backed.close()
     sql_data_loader.conn.close()

@@ -4,39 +4,39 @@ import os
 from typing import Optional, cast
 
 import helpers.dbg as dbg
-import instrument_master.common.data.load.file_path_generator as vcdlfi
-import instrument_master.common.data.types as vcdtyp
-import instrument_master.kibot.data.config as vkdcon
+import instrument_master.common.data.load.file_path_generator as icdlfi
+import instrument_master.common.data.types as icdtyp
+import instrument_master.kibot.data.config as ikdcon
 
 
-class KibotFilePathGenerator(vcdlfi.FilePathGenerator):
+class KibotFilePathGenerator(icdlfi.FilePathGenerator):
     FREQ_PATH_MAPPING = {
-        vcdtyp.Frequency.Daily: "daily",
-        vcdtyp.Frequency.Minutely: "1min",
-        vcdtyp.Frequency.Tick: "tick",
+        icdtyp.Frequency.Daily: "daily",
+        icdtyp.Frequency.Minutely: "1min",
+        icdtyp.Frequency.Tick: "tick",
     }
 
     CONTRACT_PATH_MAPPING = {
-        vcdtyp.ContractType.Continuous: "continuous_",
-        vcdtyp.ContractType.Expiry: "",
+        icdtyp.ContractType.Continuous: "continuous_",
+        icdtyp.ContractType.Expiry: "",
     }
 
     ASSET_TYPE_PREFIX = {
-        vcdtyp.AssetClass.ETFs: "all_etfs_",
-        vcdtyp.AssetClass.Stocks: "all_stocks_",
-        vcdtyp.AssetClass.Forex: "all_forex_pairs_",
-        vcdtyp.AssetClass.Futures: "all_futures",
-        vcdtyp.AssetClass.SP500: "sp_500_",
+        icdtyp.AssetClass.ETFs: "all_etfs_",
+        icdtyp.AssetClass.Stocks: "all_stocks_",
+        icdtyp.AssetClass.Forex: "all_forex_pairs_",
+        icdtyp.AssetClass.Futures: "all_futures",
+        icdtyp.AssetClass.SP500: "sp_500_",
     }
 
     def generate_file_path(
         self,
         symbol: str,
-        frequency: vcdtyp.Frequency,
-        asset_class: vcdtyp.AssetClass = vcdtyp.AssetClass.Futures,
-        contract_type: Optional[vcdtyp.ContractType] = None,
+        frequency: icdtyp.Frequency,
+        asset_class: icdtyp.AssetClass = icdtyp.AssetClass.Futures,
+        contract_type: Optional[icdtyp.ContractType] = None,
         unadjusted: Optional[bool] = None,
-        ext: vcdtyp.Extension = vcdtyp.Extension.Parquet,
+        ext: icdtyp.Extension = icdtyp.Extension.Parquet,
     ) -> str:
         """
         Get the path to a specific Kibot dataset on S3.
@@ -54,19 +54,19 @@ class KibotFilePathGenerator(vcdlfi.FilePathGenerator):
         )
         dir_name = f"{asset_class_prefix}{modifier}{freq_path}"
         file_path = os.path.join(dir_name, symbol)
-        if ext == vcdtyp.Extension.Parquet:
+        if ext == icdtyp.Extension.Parquet:
             # Parquet files are located in `pq/` subdirectory.
             file_path = os.path.join("pq", file_path)
             file_path += ".pq"
-        elif ext == vcdtyp.Extension.CSV:
+        elif ext == icdtyp.Extension.CSV:
             file_path += ".csv.gz"
         # TODO(amr): should we allow pointing to a local file here?
         # or rename the method to `generate_s3_path`?
-        file_path = os.path.join(vkdcon.S3_PREFIX, file_path)
+        file_path = os.path.join(ikdcon.S3_PREFIX, file_path)
         return file_path
 
     def _generate_contract_path_modifier(
-        self, contract_type: vcdtyp.ContractType
+        self, contract_type: icdtyp.ContractType
     ) -> str:
         contract_path = self.CONTRACT_PATH_MAPPING[contract_type]
         return f"_{contract_path}contracts_"
@@ -78,12 +78,13 @@ class KibotFilePathGenerator(vcdlfi.FilePathGenerator):
 
     def _generate_modifier(
         self,
-        asset_class: vcdtyp.AssetClass,
+        asset_class: icdtyp.AssetClass,
         unadjusted: Optional[bool] = None,
-        contract_type: Optional[vcdtyp.ContractType] = None,
+        contract_type: Optional[icdtyp.ContractType] = None,
     ) -> str:
         """
-        Generate a modifier to the file path, based on some asset class options.
+        Generate a modifier to the file path, based on some asset class
+        options.
 
         :param asset_class: asset class
         :param unadjusted: required for asset classes of type: `stocks` & `etfs`
@@ -91,7 +92,7 @@ class KibotFilePathGenerator(vcdlfi.FilePathGenerator):
         :return: a path modifier
         """
         modifier = ""
-        if asset_class == vcdtyp.AssetClass.Futures:
+        if asset_class == icdtyp.AssetClass.Futures:
             dbg.dassert_is_not(
                 contract_type,
                 None,
@@ -101,9 +102,9 @@ class KibotFilePathGenerator(vcdlfi.FilePathGenerator):
                 contract_type=contract_type
             )
         elif asset_class in [
-            vcdtyp.AssetClass.Stocks,
-            vcdtyp.AssetClass.ETFs,
-            vcdtyp.AssetClass.SP500,
+            icdtyp.AssetClass.Stocks,
+            icdtyp.AssetClass.ETFs,
+            icdtyp.AssetClass.SP500,
         ]:
             dbg.dassert_is_not(
                 unadjusted,
