@@ -38,7 +38,55 @@ im.docker_down.multistage:
 		down
 
 # #############################################################################
-# Development.
+# Development stage.
+# #############################################################################
+
+im.docker_pull:
+	docker pull $(IMAGE_DEV)
+
+# Run app container
+im.docker_bash.dev:
+	IMAGE=$(IMAGE_DEV) \
+	docker-compose \
+		-f devops/compose/docker-compose.dev.yml \
+		run \
+		--rm \
+		app \
+		bash
+
+# Run command in app
+im.docker_cmd.dev:
+	IMAGE=$(IMAGE_DEV) \
+	docker-compose \
+		-f devops/compose/docker-compose.dev.yml \
+		run \
+		--rm \
+		-l user=$(USER) \
+		app \
+		$(CMD)
+
+# Run app container w/o PostgreSQL.
+im.docker_bash:
+	IMAGE=$(IMAGE_DEV) \
+	docker-compose \
+		-f devops/compose/docker-compose.dev.yml \
+		run \
+		--rm \
+		-l user=$(USER) \
+		--no-deps \
+		--entrypoint=instrument_master/devops/docker_build/entrypoints/entrypoint_app_only.sh \
+		app \
+		bash
+
+# Stop local container including all dependencies.
+im.docker_down.dev:
+	IMAGE=$(IMAGE_DEV) \
+	docker-compose \
+		-f devops/compose/docker-compose.dev.yml \
+		down
+
+# #############################################################################
+# Local stage.
 # #############################################################################
 
 im.docker_pull:
