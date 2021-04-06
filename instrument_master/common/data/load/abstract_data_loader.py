@@ -51,6 +51,7 @@ class AbstractS3DataLoader(AbstractDataLoader):
     def __init__(self):
         self.MAPPING = {
             icdtyp.Frequency.Daily: self._normalize_daily,
+            icdtyp.Frequency.Hourly: self._normalize_1_hour,
             icdtyp.Frequency.Minutely: self._normalize_1_min,
         }
 
@@ -76,6 +77,15 @@ class AbstractS3DataLoader(AbstractDataLoader):
     def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
         """
         Abstract method for minutes data normalization.
+
+        :param df: Pandas DataFrame for the normalization.
+        :return: Normalized Pandas DataFrame
+        """
+
+    @abc.abstractstaticmethod
+    def _normalize_1_hour(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Abstract method for hour data normalization.
 
         :param df: Pandas DataFrame for the normalization.
         :return: Normalized Pandas DataFrame

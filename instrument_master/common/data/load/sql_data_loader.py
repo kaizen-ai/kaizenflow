@@ -7,12 +7,12 @@ import psycopg2
 import psycopg2.extensions as pexten
 
 import helpers.dbg as dbg
-import instrument_master.common.data.load.data_loader as vcdlda
+import instrument_master.common.data.load.abstract_data_loader as icdlab
 import instrument_master.common.data.types as vcdtyp
 
 
 # TODO(*): Move it to data_loader.py
-class AbstractSqlDataLoader(vcdlda.AbstractDataLoader):
+class AbstractSqlDataLoader(icdlab.AbstractDataLoader):
     """
     Interface for class that loads the data from an SQL backend.
     """
