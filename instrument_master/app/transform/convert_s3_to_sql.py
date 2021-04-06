@@ -31,6 +31,8 @@ import argparse
 import logging
 import os
 
+import pandas as pd
+
 import helpers.dbg as dbg
 import helpers.parser as hparse
 import instrument_master.app.services.loader_factory as vasloa
@@ -91,6 +93,13 @@ def _parse() -> argparse.ArgumentParser:
         help="Contract type (e.g. Expiry)",
         required=True,
     )
+    parser.add_argument("--start_ts",
+                        type=pd.Timestamp,
+                        help="Start timestamp. Example: 2021-02-01T00:00:00")
+    parser.add_argument("--end_ts",
+                        type=pd.Timestamp,
+                        help="Ending timestamp. Example: 2021-02-05T00:00:00")
+    parser.add_argument("--incremental", action="store_true", default=False)
     parser.add_argument(
         "--unadjusted",
         action="store_true",
@@ -203,6 +212,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 unadjusted=args.unadjusted,
                 exchange_id=exchange_id,
                 exchange=args.exchange,
+                incremental=args.incremental
             )
         )
     # Run converting.
