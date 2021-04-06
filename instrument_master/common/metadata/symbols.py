@@ -22,19 +22,21 @@ class Symbol:
     def __eq__(self, other: object) -> bool:
         dbg.dassert_isinstance(other, Symbol)
         other: Symbol
-        return self.to_tuple() == other.to_tuple()
+        return self._to_string_tuple() == other._to_string_tuple()
 
     def __hash__(self) -> int:
-        return hash(self.to_tuple())
+        return hash(self._to_string_tuple())
 
     def __str__(self) -> str:
-        string = "(%s)" % ", ".join([str(part) for part in self.to_tuple()])
+        string = "(%s)" % ", ".join(
+            [str(part) for part in self._to_string_tuple()]
+        )
         return string
 
     def __lt__(self, other: object) -> bool:
         dbg.dassert_isinstance(other, Symbol)
         other: Symbol
-        return self.to_tuple() < other.to_tuple()
+        return self._to_string_tuple() < other._to_string_tuple()
 
     def is_selected(
         self,
@@ -60,14 +62,14 @@ class Symbol:
             matched = False
         return matched
 
-    def to_tuple(
+    def _to_string_tuple(
         self,
-    ) -> Tuple[str, str, icdtyp.AssetClass, Optional[icdtyp.ContractType], str]:
+    ) -> Tuple[str, str, str, Optional[str], str]:
         return (
             self.ticker,
             self.exchange,
             self.asset_class.value,
-            "" if self.contract_type is None else self.contract_type.value,
+            self.contract_type.value if self.contract_type is not None else None,
             self.currency,
         )
 
