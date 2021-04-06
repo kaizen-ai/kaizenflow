@@ -38,6 +38,7 @@ class TestIbSymbolNamespace(hut.TestCase):
         # Add first 5 symbols.
         symbols_str += "\n".join([str(symbol) for symbol in symbols[:5]])
         # Add last 5 symbols.
+        symbols_str += "\n"
         symbols_str += "\n".join([str(symbol) for symbol in symbols[-5:]])
         self.check_string(symbols_str)
 
