@@ -6,6 +6,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import joblib
+import pandas as pd
 import tqdm
 
 import helpers.dbg as dbg
@@ -37,6 +38,8 @@ def convert_s3_to_sql(
     unadjusted: Optional[bool] = None,
     max_num_rows: Optional[int] = None,
     incremental: Optional[bool] = False,
+    start_ts: Optional[pd.Timestamp] = None,
+    end_ts: Optional[pd.Timestamp] = None,
 ) -> bool:
     """
     Convert a dataset from S3 for a symbol.
@@ -65,6 +68,8 @@ def convert_s3_to_sql(
         unadjusted=unadjusted,
         nrows=max_num_rows,
         normalize=False,
+        start_ts=start_ts,
+        end_ts=end_ts
     )
     _LOG.debug("Transforming '%s' data before saving to database", symbol)
     df = s3_to_sql_transformer.transform(

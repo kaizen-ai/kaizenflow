@@ -28,6 +28,8 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         """
         Read Kibot data.
@@ -40,6 +42,8 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
             unadjusted=unadjusted,
             nrows=nrows,
             normalize=normalize,
+            start_ts=start_ts,
+            end_ts=end_ts,
         )
 
     def _read_data(
@@ -51,6 +55,8 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         file_path = ikdlki.KibotFilePathGenerator().generate_file_path(
             symbol=symbol,
@@ -67,6 +73,9 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
         df = pd.read_csv(file_path, header=None, nrows=nrows)
         if normalize:
             df = self.normalize(df=df, frequency=frequency)
+        if start_ts or end_ts:
+            start_ts = start_ts or pd.Timestamp.min
+            end_ts = end_ts or pd.Timestamp.now()
         return df
 
     # TODO(gp): Call the column datetime_ET suffix.

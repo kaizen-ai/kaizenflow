@@ -94,11 +94,11 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
     )
     parser.add_argument("--start_ts",
-                        type=pd.Timestamp,
-                        help="Start timestamp. Example: 2021-02-01T00:00:00")
+        type=pd.Timestamp,
+        help="Start timestamp. Example: 2021-02-01T00:00:00")
     parser.add_argument("--end_ts",
-                        type=pd.Timestamp,
-                        help="Ending timestamp. Example: 2021-02-05T00:00:00")
+        type=pd.Timestamp,
+        help="Ending timestamp. Example: 2021-02-05T00:00:00")
     parser.add_argument("--incremental", action="store_true", default=False)
     parser.add_argument(
         "--unadjusted",

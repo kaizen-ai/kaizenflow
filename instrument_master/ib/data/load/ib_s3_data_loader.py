@@ -50,6 +50,8 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         """
         Read ib data.
@@ -62,6 +64,10 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
         :param unadjusted: required for asset classes of type: `stocks` & `etfs`
         :param nrows: if not None, return only the first nrows of the data
         :param normalize: whether to normalize the dataframe by frequency
+        :param start_ts: start time of data to read,
+            by default - the oldest available
+        :param end_ts: end time of data to read,
+            by default - now
         :return: a dataframe with the symbol data
         """
         return self._read_data(
@@ -72,6 +78,8 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
             unadjusted=unadjusted,
             nrows=nrows,
             normalize=normalize,
+            start_ts=start_ts,
+            end_ts=end_ts,
         )
 
     def _read_data(
@@ -83,6 +91,8 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         # Generate path to retrieve data.
         file_path = iidlib.IbFilePathGenerator().generate_file_path(
@@ -120,6 +130,15 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
             data[date_column] = pd.to_datetime(data[date_column])
         if normalize:
             data = self.normalize(df=data, frequency=frequency)
+        # TODO(Vlad): Replace with data[cls.S3_DATE_COLUMNS[0]] -> data.index,
+        # after #1209 will be merged, and we can add date column as index
+        # in the normalization method
+        # Filter out by dates boundaries.
+        if start_ts or end_ts:
+            start_ts = start_ts or pd.Timestamp.min
+            end_ts = end_ts or pd.Timestamp.now()
+            data = data[(data[cls.S3_DATE_COLUMNS[0]] > start_ts) &
+                        (data[cls.S3_DATE_COLUMNS[0]] <= end_ts)]
         return data
 
     @staticmethod
