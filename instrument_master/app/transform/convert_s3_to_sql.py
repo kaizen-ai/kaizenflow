@@ -146,7 +146,7 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level)
     dbg.shutup_chatty_modules()
     # Set up parameters for running.
     provider = args.provider

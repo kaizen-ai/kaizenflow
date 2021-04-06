@@ -1,6 +1,7 @@
 #!/bin/bash
-
-# This is used for docker_bash when we don't want to bring up the DB.
+#
+# Entrypoint for the app that doesn't contain PostgreSQL used in docker_bash.
+#
 
 set -e
 
