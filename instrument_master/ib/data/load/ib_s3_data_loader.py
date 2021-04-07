@@ -125,11 +125,10 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
     @staticmethod
     def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
         """
-        Normalize minutes data.
-        Not implemented yet.
+        Normalize minutes data. Not implemented yet.
 
-        :param df: Source data.
-        :return: Normalized Pandas DataFrame.
+        :param df: source data
+        :return: normalized data
         """
 
         return df
@@ -138,10 +137,11 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
     def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
         """
         Normalize daily data.
-        Convert date column to the Python datetime format.
 
-        :param df: Source data.
-        :return: Normalized Pandas DataFrame.
+        - Convert date column to the Python datetime format.
+
+        :param df: source data
+        :return: normalized data
         """
 
         df["date"] = df["date"].dt.date
@@ -150,10 +150,9 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
     @staticmethod
     def _normalize_1_hour(df: pd.DataFrame) -> pd.DataFrame:
         """
-        Hour data normalization.
-        Not implemented yet.
+        Hour data normalization. Not implemented yet.
 
-        :param df: Pandas DataFrame for the normalization.
-        :return: Normalized Pandas DataFrame
+        :param df: source data
+        :return: normalized data
         """
         return df
