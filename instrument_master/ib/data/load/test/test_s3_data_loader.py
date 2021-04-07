@@ -1,4 +1,4 @@
-import datetime as dt
+import datetime
 
 import helpers.unit_test as hut
 import instrument_master.common.data.types as icdtyp
@@ -105,4 +105,4 @@ class TestS3IbDataLoader1(hut.TestCase):
             nrows=10,
         )
         # Check if date columns is date type.
-        self.assertEqual(type(data["date"][0]), dt.date)
+        self.assertEqual(type(data["date"][0]), datetime.date)

@@ -132,6 +132,7 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
     def _normalize_1_hour(df: pd.DataFrame) -> pd.DataFrame:
         """
         Hour data normalization.
+        Not implemented yet.
 
         :param df: Pandas DataFrame for the normalization.
         :return: Normalized Pandas DataFrame
