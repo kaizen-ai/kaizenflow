@@ -5,8 +5,9 @@ import instrument_master.common.metadata.symbols as icmsym
 """
 import abc
 import dataclasses
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
+import helpers.dbg as dbg
 import instrument_master.common.data.types as icdtyp
 
 
@@ -16,6 +17,26 @@ class Symbol:
     exchange: str
     asset_class: icdtyp.AssetClass
     contract_type: Optional[icdtyp.ContractType]
+    currency: str
+
+    def __eq__(self, other: object) -> bool:
+        dbg.dassert_isinstance(other, Symbol)
+        other: Symbol
+        return self._to_string_tuple() == other._to_string_tuple()
+
+    def __hash__(self) -> int:
+        return hash(self._to_string_tuple())
+
+    def __str__(self) -> str:
+        string = "(%s)" % ", ".join(
+            [str(part) for part in self._to_string_tuple()]
+        )
+        return string
+
+    def __lt__(self, other: object) -> bool:
+        dbg.dassert_isinstance(other, Symbol)
+        other: Symbol
+        return self._to_string_tuple() < other._to_string_tuple()
 
     def is_selected(
         self,
@@ -23,9 +44,10 @@ class Symbol:
         exchange: Optional[str],
         asset_class: Optional[icdtyp.AssetClass],
         contract_type: Optional[icdtyp.ContractType],
+        currency: Optional[str],
     ) -> bool:
         """
-        Return `true` if symbol matches requirements.
+        Return `True` if symbol matches requirements.
         """
         matched = True
         if ticker is not None and self.ticker != ticker:
@@ -36,7 +58,20 @@ class Symbol:
             matched = False
         if contract_type is not None and self.contract_type != contract_type:
             matched = False
+        if currency is not None and self.currency != currency:
+            matched = False
         return matched
+
+    def _to_string_tuple(
+        self,
+    ) -> Tuple[str, str, str, Optional[str], str]:
+        return (
+            self.ticker,
+            self.exchange,
+            self.asset_class.value,
+            self.contract_type.value if self.contract_type is not None else None,
+            self.currency,
+        )
 
 
 class SymbolUniverse(abc.ABC):
@@ -56,6 +91,7 @@ class SymbolUniverse(abc.ABC):
         exchange: Optional[str],
         asset_class: Optional[icdtyp.AssetClass],
         contract_type: Optional[icdtyp.ContractType],
+        currency: Optional[str],
     ) -> List[Symbol]:
         """
         Return all the available symbols based on different selection criteria.
@@ -70,6 +106,7 @@ class SymbolUniverse(abc.ABC):
                 exchange=exchange,
                 asset_class=asset_class,
                 contract_type=contract_type,
+                currency=currency,
             )
         ]
         return matched_symbols
