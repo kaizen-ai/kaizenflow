@@ -36,13 +36,14 @@ import argparse
 import logging
 
 import pandas as pd
-
+from typing import List
 import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.parser as hparse
 import instrument_master.common.data.types as icdtyp
 import instrument_master.ib.data.extract.ib_data_extractor as iideib
-
+import instrument_master.ib.metadata.ib_symbols as iii
+import instrument_master.common.metadata.symbols as ss
 # from tqdm.notebook import tqdm
 
 _LOG = logging.getLogger(__name__)
@@ -53,6 +54,24 @@ VALID_ACTIONS = [_DOWNLOAD_ACTION, _PUSH_TO_S3_ACTION]
 DEFAULT_ACTIONS = [_DOWNLOAD_ACTION, _PUSH_TO_S3_ACTION]
 
 
+def _get_symbols_from_args(args: argparse.Namespace) -> List[ss.Symbol]:
+    """
+    Get list of symbols to extract.
+    """
+    # If all args are specified to extract only one symbol, return this symbol.
+    if args.symbol and args.exchange and args.asset_class and args.currency:
+        return [ss.Symbol(ticker=args_symbol, exchange=args.exchange, asset_class=args.asset_class, contract_type=args.contract_type, currency=args.currency) for args_symbol in args.symbol]
+    # Find all matched symbols otherwise.
+    symbol_universe = iii.IbSymbolUniverse()
+    if args.symbol is None:
+        args_symbols = [args.symbol]
+    else:
+        args_symbols = args.symbol
+    symbols: List[ss.Symbol] = []
+    for symbol in args_symbols:
+        symbols.extend(symbol_universe.get(ticker=symbol, exchange=args.exchange, asset_class=args.asset_class, contract_type=args.contract_type, currency=args.currency))
+    return symbols
+
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
@@ -60,28 +79,30 @@ def _main(parser: argparse.ArgumentParser) -> None:
     actions = hparse.select_actions(
         args, valid_actions=VALID_ACTIONS, default_actions=DEFAULT_ACTIONS
     )
+    # Get symbols to retrieve.
+    symbols = _get_symbols_from_args(args)
     # Extract the data.
     extractor = iideib.IbDataExtractor()
-    for symbol in args.symbol:
+    for symbol in symbols:
         part_files_dir = args.dst_dir
         if part_files_dir is None:
             part_files_dir = extractor.get_default_part_files_dir(
-                symbol=symbol,
+                symbol=symbol.ticker,
                 frequency=args.frequency,
-                asset_class=args.asset_class,
-                contract_type=args.contract_type,
+                asset_class=symbol.asset_class,
+                contract_type=symbol.contract_type,
             )
         # On local machine make sure that path exists.
         if not part_files_dir.startswith("s3://"):
             hio.create_dir(part_files_dir, incremental=True)
         if _DOWNLOAD_ACTION in actions:
             extractor.extract_data_parts_with_retry(
-                exchange=args.exchange,
-                symbol=symbol,
-                asset_class=args.asset_class,
+                exchange=symbol.exchange,
+                symbol=symbol.ticker,
+                asset_class=symbol.asset_class,
                 frequency=args.frequency,  
-                currency=args.currency,
-                contract_type=args.contract_type,
+                currency=symbol.currency,
+                contract_type=symbol.contract_type,
                 start_ts=args.start_ts,
                 end_ts=args.end_ts,
                 incremental=args.incremental,
@@ -90,10 +111,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
         if _PUSH_TO_S3_ACTION in actions:
             extractor.update_archive(
                 part_files_dir=part_files_dir,
-                symbol=symbol,
-                asset_class=args.asset_class,
+                symbol=symbol.ticker,
+                asset_class=symbol.asset_class,
                 frequency=args.frequency,
-                contract_type=args.contract_type,
+                contract_type=symbol.contract_type,
             )
 
 
