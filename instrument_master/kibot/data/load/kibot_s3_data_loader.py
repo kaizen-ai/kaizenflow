@@ -7,14 +7,14 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.s3 as hs3
-import instrument_master.common.data.load.s3_data_loader as icdls3
+import instrument_master.common.data.load.abstract_data_loader as icdlab
 import instrument_master.common.data.types as icdtyp
 import instrument_master.kibot.data.load.kibot_file_path_generator as ikdlki
 
 _LOG = logging.getLogger(__name__)
 
 
-class KibotS3DataLoader(icdls3.AbstractS3DataLoader):
+class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
     # TODO(plyq): Uncomment once #1047 will be resolved. Use lru_cache for now.
     # @hcache.cache
     @functools.lru_cache(maxsize=64)
@@ -42,33 +42,8 @@ class KibotS3DataLoader(icdls3.AbstractS3DataLoader):
             normalize=normalize,
         )
 
-    @classmethod
-    def normalize(
-        cls, df: pd.DataFrame, frequency: icdtyp.Frequency
-    ) -> pd.DataFrame:
-        """
-        Apply a normalizer function based on the frequency.
-
-        :param df: a dataframe that should be normalized
-        :param frequency: frequency of the data
-        :return: a normalized dataframe
-        :raises AssertionError: if frequency is not supported
-        """
-        # TODO(*): -> mapping or move it out
-        MAPPING = {
-            icdtyp.Frequency.Daily: cls._normalize_daily,
-            icdtyp.Frequency.Minutely: cls._normalize_1_min,
-        }
-        if frequency not in MAPPING:
-            dbg.dfatal(
-                "Support for frequency '%s' not implemented yet", frequency
-            )
-        normalizer = MAPPING[frequency]
-        return normalizer(df)
-
-    @classmethod
     def _read_data(
-        cls,
+        self,
         symbol: str,
         asset_class: icdtyp.AssetClass,
         frequency: icdtyp.Frequency,
@@ -91,7 +66,7 @@ class KibotS3DataLoader(icdls3.AbstractS3DataLoader):
             )
         df = pd.read_csv(file_path, header=None, nrows=nrows)
         if normalize:
-            df = cls.normalize(df=df, frequency=frequency)
+            df = self.normalize(df=df, frequency=frequency)
         return df
 
     # TODO(gp): Call the column datetime_ET suffix.
@@ -151,4 +126,14 @@ class KibotS3DataLoader(icdls3.AbstractS3DataLoader):
         # TODO(gp): Turn date into datetime using EOD timestamp. Check on Kibot.
         dbg.dassert(df.index.is_monotonic_increasing)
         dbg.dassert(df.index.is_unique)
+        return df
+
+    @staticmethod
+    def _normalize_1_hour(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Hour data normalization. Not implemented yet.
+
+        :param df: Pandas DataFrame for the normalization.
+        :return: Normalized Pandas DataFrame
+        """
         return df

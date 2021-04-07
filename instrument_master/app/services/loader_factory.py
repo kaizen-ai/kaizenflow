@@ -3,8 +3,7 @@ Import as: import instrument_master.app.services.loader_factory as iasloa.
 """
 from typing import Any
 
-import instrument_master.common.data.load.data_loader as icdlda
-import instrument_master.common.data.load.s3_data_loader as icdls3
+import instrument_master.common.data.load.abstract_data_loader as icdlab
 import instrument_master.common.data.load.sql_data_loader as icdlsq
 import instrument_master.ib.data.load.ib_s3_data_loader as iidlib3
 import instrument_master.ib.data.load.ib_sql_data_loader as iidlib
@@ -23,7 +22,7 @@ class LoaderFactory:
     @classmethod
     def get_loader(
         cls, storage_type: str, provider: str, **kwargs: Any
-    ) -> icdlda.AbstractDataLoader:
+    ) -> icdlab.AbstractDataLoader:
         """
         Return a data loader for the requested `storage_type` and `provider`.
 
@@ -41,14 +40,14 @@ class LoaderFactory:
         return loader
 
     @staticmethod
-    def _get_s3_loader(provider: str) -> icdls3.AbstractS3DataLoader:
+    def _get_s3_loader(provider: str) -> icdlab.AbstractS3DataLoader:
         """
         Return a data loader from S3 for the requested `provider`.
 
         :param provider: provider (e.g., kibot)
         :raises ValueError: if loader is not implemented for provider
         """
-        loader: icdls3.AbstractS3DataLoader
+        loader: icdlab.AbstractS3DataLoader
         if provider == "kibot":
             loader = ikdlki3.KibotS3DataLoader()
         elif provider == "ib":

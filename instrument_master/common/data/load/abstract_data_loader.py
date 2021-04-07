@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import instrument_master.common.data.load.abstract_data_loader as icdlab
+"""
+
 import abc
 import functools
 from typing import Optional
@@ -7,14 +13,117 @@ import psycopg2
 import psycopg2.extensions as pexten
 
 import helpers.dbg as dbg
-import instrument_master.common.data.load.data_loader as vcdlda
+import instrument_master.common.data.types as icdtyp
 import instrument_master.common.data.types as vcdtyp
 
 
-# TODO(*): Move it to data_loader.py
-class AbstractSqlDataLoader(vcdlda.AbstractDataLoader):
+class AbstractDataLoader(abc.ABC):
     """
-    Interface for class that loads the data from an SQL backend.
+    Abstract class for reading data for symbols of
+    a given asset, exchange, and frequency.
+
+    Concrete classes must specify:
+        - read_data method
+    """
+    @abc.abstractmethod
+    def read_data(
+        self,
+        exchange: str,
+        symbol: str,
+        asset_class: vcdtyp.AssetClass,
+        frequency: vcdtyp.Frequency,
+        contract_type: Optional[vcdtyp.ContractType] = None,
+        unadjusted: Optional[bool] = None,
+        nrows: Optional[int] = None,
+        normalize: bool = True,
+    ) -> pd.DataFrame:
+        """
+        Read data.
+
+        :param exchange: name of the exchange
+        :param symbol: symbol to get the data for
+        :param asset_class: asset class
+        :param frequency: `D` or `T` for daily or minutely data respectively
+        :param contract_type: required for asset class of type `futures`
+        :param unadjusted: required for asset classes of type `stocks` & `etfs`
+        :param nrows: if not None, return only the first nrows of the data
+        :param normalize: whether to normalize the dataframe based on frequency
+        :return: a dataframe with the data
+        """
+
+
+class AbstractS3DataLoader(AbstractDataLoader):
+    """
+    Interface for class reading data from S3.
+
+    Concrete classes must specify:
+        - _normalize_1_min method
+        - _normalize_1_hour method
+        - _normalize_daily method
+    """
+
+    def __init__(self):
+        self._normalizer_dict = {
+            icdtyp.Frequency.Daily: self._normalize_daily,
+            icdtyp.Frequency.Hourly: self._normalize_1_hour,
+            icdtyp.Frequency.Minutely: self._normalize_1_min,
+        }
+
+    def normalize(
+        self, df: pd.DataFrame, frequency: icdtyp.Frequency
+    ) -> pd.DataFrame:
+        """
+        Apply a normalizer function based on the frequency.
+
+        :param df: a dataframe that should be normalized
+        :param frequency: frequency of the data
+        :return: a normalized dataframe
+        :raises AssertionError: if frequency is not supported
+        """
+        dbg.dassert_in(frequency,
+                       self._normalizer_dict,
+                       "Frequency %s is not supported",
+                       frequency)
+        normalizer = self._normalizer_dict[frequency]
+        return normalizer(df)
+
+    @staticmethod
+    @abc.abstractmethod
+    def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Abstract method for minutes data normalization.
+
+        :param df: Pandas DataFrame for the normalization.
+        :return: Normalized Pandas DataFrame
+        """
+
+    @staticmethod
+    @abc.abstractmethod
+    def _normalize_1_hour(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Abstract method for hour data normalization.
+
+        :param df: Pandas DataFrame for the normalization.
+        :return: Normalized Pandas DataFrame
+        """
+
+    @staticmethod
+    @abc.abstractmethod
+    def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Abstract method for minutes data normalization.
+
+        :param df: Pandas DataFrame for the normalization.
+        :return: Normalized Pandas DataFrame
+        """
+
+
+class AbstractSqlDataLoader(AbstractDataLoader):
+    """
+    Interface class loading the data from an SQL backend.
+
+    Concrete classes must specify:
+    - _get_table_name_by_frequency method
     """
 
     def __init__(
@@ -28,7 +137,6 @@ class AbstractSqlDataLoader(vcdlda.AbstractDataLoader):
             port=port,
         )
 
-    # TODO(*): Factor out the common part.
     def get_symbol_id(
         self,
         symbol: str,
@@ -132,9 +240,8 @@ class AbstractSqlDataLoader(vcdlda.AbstractDataLoader):
     def close(self) -> None:
         self.conn.close()
 
-    # TODO(gp): 'abc.abstractstaticmethod' is deprecated since Python 3.3.
-    #  Use 'staticmethod' with 'abc.abstractmethod' instead.
-    @abc.abstractstaticmethod
+    @staticmethod
+    @abc.abstractmethod
     def _get_table_name_by_frequency(frequency: vcdtyp.Frequency) -> str:
         """
         Get table name by predefined frequency.
