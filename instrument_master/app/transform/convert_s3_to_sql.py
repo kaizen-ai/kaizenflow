@@ -31,13 +31,14 @@ import argparse
 import logging
 import os
 
+import pandas as pd
+
 import helpers.dbg as dbg
 import helpers.parser as hparse
 import instrument_master.app.services.loader_factory as vasloa
 import instrument_master.app.services.sql_writer_factory as vassql
 import instrument_master.app.services.transformer_factory as vastra
-import instrument_master.common.data.load.s3_data_loader as vcdls3
-import instrument_master.common.data.load.sql_data_loader as vcdlsq
+import instrument_master.common.data.load.abstract_data_loader as icdlab
 import instrument_master.common.data.transform.transform as vcdttr
 import instrument_master.common.data.types as vcdtyp
 
@@ -91,6 +92,13 @@ def _parse() -> argparse.ArgumentParser:
         help="Contract type (e.g. Expiry)",
         required=True,
     )
+    parser.add_argument("--start_ts",
+        type=pd.Timestamp,
+        help="Start timestamp. Example: 2021-02-01T00:00:00")
+    parser.add_argument("--end_ts",
+        type=pd.Timestamp,
+        help="Ending timestamp. Example: 2021-02-05T00:00:00")
+    parser.add_argument("--incremental", action="store_true", default=False)
     parser.add_argument(
         "--unadjusted",
         action="store_true",
@@ -150,7 +158,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.shutup_chatty_modules()
     # Set up parameters for running.
     provider = args.provider
-    s3_data_loader: vcdls3.AbstractS3DataLoader = vasloa.LoaderFactory.get_loader(
+    s3_data_loader: icdlab.AbstractDataLoader = vasloa.LoaderFactory.get_loader(
         storage_type="s3", provider=provider
     )
     s3_to_sql_transformer = vastra.TransformerFactory.get_s3_to_sql_transformer(
@@ -164,7 +172,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         host=args.dbhost,
         port=args.dbport,
     )
-    sql_data_loader: vcdlsq.AbstractSqlDataLoader = (
+    sql_data_loader: icdlab.AbstractDataLoader = (
         vasloa.LoaderFactory.get_loader(
             storage_type="sql",
             provider=provider,
@@ -203,6 +211,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 unadjusted=args.unadjusted,
                 exchange_id=exchange_id,
                 exchange=args.exchange,
+                incremental=args.incremental,
+                start_ts=args.start_ts,
+                end_ts=args.end_ts
             )
         )
     # Run converting.

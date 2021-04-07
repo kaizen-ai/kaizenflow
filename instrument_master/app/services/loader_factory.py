@@ -4,7 +4,6 @@ Import as: import instrument_master.app.services.loader_factory as iasloa.
 from typing import Any
 
 import instrument_master.common.data.load.abstract_data_loader as icdlab
-import instrument_master.common.data.load.sql_data_loader as icdlsq
 import instrument_master.ib.data.load.ib_s3_data_loader as iidlib3
 import instrument_master.ib.data.load.ib_sql_data_loader as iidlib
 import instrument_master.kibot.data.load.kibot_s3_data_loader as ikdlki3
@@ -59,7 +58,7 @@ class LoaderFactory:
     @staticmethod
     def _get_sql_loader(
         provider: str, dbname: str, user: str, password: str, host: str, port: int
-    ) -> icdlsq.AbstractSqlDataLoader:
+    ) -> icdlab.AbstractSqlDataLoader:
         """
         Return a data loader from SQL for the requested `provider`.
 
@@ -71,7 +70,7 @@ class LoaderFactory:
         :param port: database port
         :raises ValueError: if SQL loader is not implemented for provider
         """
-        loader: icdlsq.AbstractSqlDataLoader
+        loader: icdlab.AbstractSqlDataLoader
         if provider == "kibot":
             loader = ikdlki.KibotSqlDataLoader(
                 dbname=dbname, user=user, password=password, host=host, port=port

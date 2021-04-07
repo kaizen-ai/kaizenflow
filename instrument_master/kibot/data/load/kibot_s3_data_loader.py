@@ -28,6 +28,8 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         """
         Read Kibot data.
@@ -40,6 +42,8 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
             unadjusted=unadjusted,
             nrows=nrows,
             normalize=normalize,
+            start_ts=start_ts,
+            end_ts=end_ts,
         )
 
     def _read_data(
@@ -51,6 +55,8 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         file_path = ikdlki.KibotFilePathGenerator().generate_file_path(
             symbol=symbol,
@@ -64,10 +70,10 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
             dbg.dassert_is(
                 hs3.exists(file_path), True, msg=f"S3 key not found: {file_path}"
             )
-        df = pd.read_csv(file_path, header=None, nrows=nrows)
+        data = pd.read_csv(file_path, header=None, nrows=nrows)
         if normalize:
-            df = self.normalize(df=df, frequency=frequency)
-        return df
+            data = self.normalize(df=data, frequency=frequency)
+        return self._filter_by_dates(data, start_ts, end_ts)
 
     # TODO(gp): Call the column datetime_ET suffix.
     @staticmethod

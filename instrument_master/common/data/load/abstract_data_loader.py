@@ -36,6 +36,8 @@ class AbstractDataLoader(abc.ABC):
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         """
         Read data.
@@ -48,6 +50,8 @@ class AbstractDataLoader(abc.ABC):
         :param unadjusted: required for asset classes of type `stocks` & `etfs`
         :param nrows: if not None, return only the first nrows of the data
         :param normalize: whether to normalize the dataframe based on frequency
+        :param start_ts: start time of data to read
+        :param end_ts: end time of data to read
         :return: a dataframe with the data
         """
 
@@ -86,6 +90,26 @@ class AbstractS3DataLoader(AbstractDataLoader):
                        frequency)
         normalizer = self._normalizer_dict[frequency]
         return normalizer(df)
+
+    @staticmethod
+    def _filter_by_dates(
+        data: pd.DataFrame,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
+    ) -> pd.DataFrame:
+        """
+        Filter pandas DataFrame with a date range.
+
+        :param data: dataframe for filtering
+        :param start_ts: start time of data to read
+        :param end_ts: end time of data to read
+        :return: filtered data
+        """
+        if start_ts or end_ts:
+            start_ts = start_ts or pd.Timestamp.min
+            end_ts = end_ts or pd.Timestamp.now()
+            data = data[(data.index >= start_ts) & (data.index < end_ts)]
+        return data
 
     @staticmethod
     @abc.abstractmethod
