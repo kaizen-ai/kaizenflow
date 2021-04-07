@@ -9,12 +9,12 @@ import pytest
 
 import instrument_master.ib.data.extract.gateway.test.utils as videgt
 import instrument_master.ib.data.extract.gateway.utils as videgu
-
+import instrument_master.common.db.init as ini
 _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skipif(
-    not videgt.IS_TWS_ENABLED,
+    not ini.is_inside_im_container(),
     reason="Testable only inside IB container",
 )
 class Test_get_historical_data(videgt.IbExtractionTest):

@@ -1,12 +1,12 @@
 import logging
 import os
-
-import instrument_master.ib.data.extract.gateway.metadata as videgm
-
+import pandas as pd
 try:
     import ib_insync
 except ModuleNotFoundError:
     print("Can't find ib_insync")
+
+import instrument_master.ib.data.extract.gateway.metadata as videgm
 
 
 import helpers.dbg as dbg
@@ -26,6 +26,15 @@ class Test_ib_metadata1(hut.TestCase):
     def tearDownClass(cls):
         cls.ib.disconnect()
 
+    def _check_metadata_df(self, df: pd.DataFrame) -> None:
+        """
+        Filter contracts by expiration date to not update outcomes regularly.
+        """
+        filtered_df = df[(df["lastTradeDateOrContractMonth"] >= 20210101) & (df["lastTradeDateOrContractMonth"] < 20220101)]
+        filtered_df = filtered_df.reset_index(drop=True)
+        self.check_string(filtered_df.to_csv())
+
+
     def test1(self) -> None:
         """
         Create some metadata for NG.
@@ -38,7 +47,8 @@ class Test_ib_metadata1(hut.TestCase):
         ibmeta.update(self.ib, [contract])
         #
         df = ibmeta.load()
-        self.check_string(df.to_csv())
+        #
+        self._check_metadata_df(df)
 
     def test2(self) -> None:
         """
@@ -56,7 +66,7 @@ class Test_ib_metadata1(hut.TestCase):
         ibmeta.update(self.ib, [contract], append=True)
         #
         df = ibmeta.load()
-        self.check_string(df.to_csv())
+        self._check_metadata_df(df)
 
     def test3(self) -> None:
         """
@@ -74,4 +84,4 @@ class Test_ib_metadata1(hut.TestCase):
         ibmeta.update(self.ib, [contract], append=False)
         #
         df = ibmeta.load()
-        self.check_string(df.to_csv())
+        self._check_metadata_df(df)

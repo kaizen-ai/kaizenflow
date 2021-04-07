@@ -11,12 +11,12 @@ import helpers.dbg as dbg
 import instrument_master.ib.data.extract.gateway.download_data_ib_loop as videgd
 import instrument_master.ib.data.extract.gateway.test.utils as videgt
 import instrument_master.ib.data.extract.gateway.utils as videgu
-
+import instrument_master.common.db.init as ini
 _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skipif(
-    not videgt.IS_TWS_ENABLED,
+    not ini.is_inside_im_container(),
     reason="Testable only inside IB container",
 )
 class Test_get_historical_data(videgt.IbExtractionTest):
@@ -306,10 +306,11 @@ class Test_get_historical_data(videgt.IbExtractionTest):
         frequency = "hour"
         use_rth = False
         symbols = "ES".split()
+        currency = "USD"
         start_ts = pd.Timestamp("2020-12-09 18:00:00-05:00")
         end_ts = pd.Timestamp("2020-12-13 18:00:00-05:00")
         tasks = videgu.get_tasks(
-            self.ib, target, frequency, symbols, start_ts, end_ts, use_rth
+            ib=self.ib, target=target, frequency=frequency, currency=currency, symbols=symbols, start_ts=start_ts, end_ts=end_ts, use_rth=use_rth
         )
         #
         client_id_base = 5

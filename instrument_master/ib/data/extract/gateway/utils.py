@@ -351,20 +351,21 @@ def deallocate_ib(ib: ib_insync.ib.IB, deallocate_ib: bool) -> None:
 
 
 def select_assets(
-    ib, target: str, frequency: str, symbol: str, exchange: Optional[str] = None
+    ib, target: str, frequency: str, symbol: str, exchange: Optional[str] = None, currency: Optional[str]=None
 ):
     #
+    currency = currency if currency is not None else "USD"
     if target == "futures":
         exchange = "GLOBEX" if exchange is None else exchange
-        contract = ib_insync.Future(symbol, "202109", exchange, currency="USD")
+        contract = ib_insync.Future(symbol, "202109", exchange, currency=currency)
         what_to_show = "TRADES"
     if target == "continuous_futures":
         exchange = "GLOBEX" if exchange is None else exchange
-        contract = ib_insync.ContFuture(symbol, exchange, currency="USD")
+        contract = ib_insync.ContFuture(symbol, exchange, currency=currency)
         what_to_show = "TRADES"
     elif target == "stocks":
         exchange = "SMART" if exchange is None else exchange
-        contract = ib_insync.Stock(symbol, exchange, currency="USD")
+        contract = ib_insync.Stock(symbol, exchange, currency=currency)
         what_to_show = "TRADES"
     elif target == "forex":
         contract = ib_insync.Forex(symbol)
@@ -391,6 +392,7 @@ def get_tasks(
     ib: ib_insync.ib.IB,
     target: str,
     frequency: str,
+    currency: str,
     symbols: List[str],
     start_ts: pd.Timestamp,
     end_ts: pd.Timestamp,
@@ -405,6 +407,7 @@ def get_tasks(
     :param ib: active IB connection
     :param target: asset class like `future`, `continuous_future`, `forex`, ...
     :param frequency: tick frequency, e.g. `intraday`, `hour`, `day`
+    :param currency: symbols currency
     :param symbols: list of symbols
     :param start_ts: time of the first data row (the oldest avaialble if None)
     :param end_ts: time of the last data row (now if None)
@@ -415,7 +418,7 @@ def get_tasks(
     tasks = []
     for symbol in symbols:
         contract, duration_str, bar_size_setting, what_to_show = select_assets(
-            ib, target, frequency, symbol, exchange
+            ib, target, frequency, symbol, exchange, currency
         )
         if start_ts is None:
             start_ts = ib.reqHeadTimeStamp(

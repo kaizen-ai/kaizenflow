@@ -36,6 +36,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         target = "continuous_futures"
         frequency = "intraday"
         symbols = ["ES"]
+    currency = "USD"
     symbols = "ES CL NG".split()
     try:
         ib = videgu.ib_connect(0, is_notebook=False)
@@ -49,7 +50,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     end_ts = None
     # end_ts = pd.Timestamp("2020-12-23 18:00:00-05:00")
     tasks = videgu.get_tasks(
-        ib, target, frequency, symbols, start_ts, end_ts, use_rth
+        ib=ib, target=target, frequency=frequency, currency=currency, symbols=symbols, start_ts=start_ts, end_ts=end_ts, use_rth=use_rth
     )
     num_threads = 3
     num_threads = "serial"

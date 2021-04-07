@@ -37,6 +37,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args.exchange
     target = args.asset_class
     frequency = args.frequency
+    currency = "USD"
     ib = videgu.ib_connect(0, is_notebook=False)
     use_rth = False
     start_ts = None
@@ -46,7 +47,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     incremental = args.incremental
     client_id_base = 5
     tasks = videgu.get_tasks(
-        ib, target, frequency, symbols, start_ts, end_ts, use_rth
+        ib=ib, target=target, frequency=frequency, currency=currency, symbols=symbols, start_ts=start_ts, end_ts=end_ts, use_rth=use_rth
     )
     file_names = videgd.download_ib_data(
         client_id_base, tasks, incremental, dst_dir, num_threads

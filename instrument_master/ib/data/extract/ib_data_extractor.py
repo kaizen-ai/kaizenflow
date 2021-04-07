@@ -43,6 +43,7 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         symbol: str,
         asset_class: icdtyp.AssetClass,
         frequency: icdtyp.Frequency,
+        currency: str,
         contract_type: Optional[icdtyp.ContractType] = None,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
@@ -56,6 +57,7 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         :param symbol: symbol to get the data for
         :param asset_class: asset class
         :param frequency: `D` or `T` for daily or minutely data respectively
+        :param currency: contract currency
         :param contract_type: required for asset class of type `futures`
         :param start_ts: start time of data to extract,
             by default - the oldest available
@@ -82,6 +84,7 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
             symbol=symbol,
             asset_class=asset_class,
             frequency=frequency,
+            currency=currency,
             contract_type=contract_type,
             start_ts=start_ts,
             end_ts=end_ts,
@@ -105,6 +108,7 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         symbol: str,
         asset_class: icdtyp.AssetClass,
         frequency: icdtyp.Frequency,
+        currency: str,
         contract_type: Optional[icdtyp.ContractType] = None,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
@@ -117,6 +121,7 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         :param symbol: symbol to get the data for
         :param asset_class: asset class
         :param frequency: `D` or `T` for daily or minutely data respectively
+        :param currency: contract currency
         :param contract_type: required for asset class of type `futures`
         :param start_ts: start time of data to extract,
             by default - the oldest available
@@ -146,6 +151,7 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
                     symbol=symbol,
                     asset_class=asset_class,
                     frequency=frequency,
+                    currency=currency,
                     contract_type=contract_type,
                     start_ts=interval[0],
                     end_ts=interval[1],
@@ -241,6 +247,7 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         symbol: str,
         asset_class: icdtyp.AssetClass,
         frequency: icdtyp.Frequency,
+        currency: str,
         contract_type: Optional[icdtyp.ContractType] = None,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
@@ -261,6 +268,7 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         :param symbol: symbol to get the data for
         :param asset_class: asset class
         :param frequency: `D` or `T` for daily or minutely data respectively
+        :param currency: contract currency
         :param contract_type: required for asset class of type `futures`
         :param start_ts: start time of data to extract,
             by default - the oldest available
@@ -281,6 +289,7 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
             end_ts=end_ts,
             use_rth=False,
             exchange=exchange,
+            currency=currency,
         )
         # Do tasks.
         file_name = iidlib.IbFilePathGenerator().generate_file_path(

@@ -12,20 +12,10 @@ import helpers.dbg as dbg
 import helpers.unit_test as hut
 import instrument_master.ib.data.extract.gateway.download_data_ib_loop as videgd
 import instrument_master.ib.data.extract.gateway.save_historical_data_with_IB_loop as videgs
-import instrument_master.ib.data.extract.gateway.unrolling_download_data_ib_loop as videgu
+import instrument_master.ib.data.extract.gateway.unrolling_download_data_ib_loop as videgun
 import instrument_master.ib.data.extract.gateway.utils as videgu
 
 _LOG = logging.getLogger(__name__)
-
-
-# TODO(gp): Use is_inside_im_container()
-IS_TWS_ENABLED = (
-    os.environ.get("STAGE") == "TEST"
-    and os.environ.get("IB_GW_CONNECTION_HOST") == "ib_connect_test"
-) or (
-    os.environ.get("STAGE") == "LOCAL"
-    and os.environ.get("IB_GW_CONNECTION_HOST") == "ib_connect_local"
-)
 
 
 class IbExtractionTest(hut.TestCase):
@@ -133,7 +123,7 @@ class IbExtractionTest(hut.TestCase):
         what_to_show = "TRADES"
         mode = "in_memory"
         client_id = 2
-        df, ts_seq = videgu.get_historical_data(
+        df, ts_seq = videgun.get_historical_data(
             client_id,
             contract,
             start_ts,

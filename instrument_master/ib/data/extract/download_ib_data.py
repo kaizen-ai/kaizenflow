@@ -71,6 +71,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 asset_class=args.asset_class,
                 contract_type=args.contract_type,
             )
+        # On local machine make sure that path exists.
         if not part_files_dir.startswith("s3://"):
             hio.create_dir(part_files_dir, incremental=True)
         if _DOWNLOAD_ACTION in actions:
@@ -78,7 +79,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 exchange=args.exchange,
                 symbol=symbol,
                 asset_class=args.asset_class,
-                frequency=args.frequency,
+                frequency=args.frequency,  
+                currency=args.currency,
                 contract_type=args.contract_type,
                 start_ts=args.start_ts,
                 end_ts=args.end_ts,
@@ -104,30 +106,36 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="Symbols to process",
         action="append",
-        required=True,
+        required=False,
     )
     parser.add_argument(
         "--exchange",
         type=str,
         help="Selected Exchange",
-        required=True,
+        required=False,
     )
     parser.add_argument(
         "--asset_class",
         type=icdtyp.AssetClass,
         help="Asset class (e.g. Futures)",
-        required=True,
-    )
-    parser.add_argument(
-        "--frequency",
-        type=icdtyp.Frequency,
-        help="Frequency of data (e.g. Minutely)",
-        required=True,
+        required=False,
     )
     parser.add_argument(
         "--contract_type",
         type=icdtyp.ContractType,
         help="Contract type (e.g. Expiry)",
+        required=False,
+    )
+    parser.add_argument(
+        "--currency",
+        type=str,
+        help="Symbol currency (e.g. USD)",
+        required=False,
+    )
+    parser.add_argument(
+        "--frequency",
+        type=icdtyp.Frequency,
+        help="Frequency of data (e.g. Minutely)",
         required=True,
     )
     parser.add_argument("--start_ts", type=pd.Timestamp)
