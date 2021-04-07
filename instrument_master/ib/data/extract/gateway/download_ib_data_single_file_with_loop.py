@@ -7,8 +7,8 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.parser as hparse
-import instrument_master.ib.data.extract.gateway.download_data_ib_loop as videgd
-import instrument_master.ib.data.extract.gateway.utils as videgu
+import instrument_master.ib.data.extract.gateway.download_data_ib_loop as iidegd
+import instrument_master.ib.data.extract.gateway.utils as iidegu
 
 # from tqdm.notebook import tqdm
 
@@ -38,7 +38,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     target = args.asset_class
     frequency = args.frequency
     currency = "USD"
-    ib = videgu.ib_connect(0, is_notebook=False)
+    ib = iidegu.ib_connect(0, is_notebook=False)
     use_rth = False
     start_ts = None
     end_ts = None
@@ -46,10 +46,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dst_dir = args.dst_dir
     incremental = args.incremental
     client_id_base = 5
-    tasks = videgu.get_tasks(
-        ib=ib, target=target, frequency=frequency, currency=currency, symbols=symbols, start_ts=start_ts, end_ts=end_ts, use_rth=use_rth
+    tasks = iidegu.get_tasks(
+        ib=ib,
+        target=target,
+        frequency=frequency,
+        currency=currency,
+        symbols=symbols,
+        start_ts=start_ts,
+        end_ts=end_ts,
+        use_rth=use_rth,
     )
-    file_names = videgd.download_ib_data(
+    file_names = iidegd.download_ib_data(
         client_id_base, tasks, incremental, dst_dir, num_threads
     )
     _LOG.info("file_names=%s", file_names)

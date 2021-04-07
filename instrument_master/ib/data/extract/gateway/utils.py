@@ -351,7 +351,12 @@ def deallocate_ib(ib: ib_insync.ib.IB, deallocate_ib: bool) -> None:
 
 
 def select_assets(
-    ib, target: str, frequency: str, symbol: str, exchange: Optional[str] = None, currency: Optional[str]=None
+    ib,
+    target: str,
+    frequency: str,
+    symbol: str,
+    exchange: Optional[str] = None,
+    currency: Optional[str] = None,
 ):
     #
     currency = currency if currency is not None else "USD"

@@ -10,10 +10,10 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.unit_test as hut
-import instrument_master.ib.data.extract.gateway.download_data_ib_loop as videgd
-import instrument_master.ib.data.extract.gateway.save_historical_data_with_IB_loop as videgs
-import instrument_master.ib.data.extract.gateway.unrolling_download_data_ib_loop as videgun
-import instrument_master.ib.data.extract.gateway.utils as videgu
+import instrument_master.ib.data.extract.gateway.download_data_ib_loop as iidegd
+import instrument_master.ib.data.extract.gateway.save_historical_data_with_IB_loop as iidegs
+import instrument_master.ib.data.extract.gateway.unrolling_download_data_ib_loop as iidegun
+import instrument_master.ib.data.extract.gateway.utils as iidegu
 
 _LOG = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class IbExtractionTest(hut.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.ib = videgu.ib_connect(
+        self.ib = iidegu.ib_connect(
             sum(bytes(self._get_test_name(), encoding="UTF-8")), is_notebook=False
         )
 
@@ -44,7 +44,7 @@ class IbExtractionTest(hut.TestCase):
         """
         txt = []
         #
-        act = videgu.get_df_signature(df)
+        act = iidegu.get_df_signature(df)
         txt.append("signature=%s" % act)
         #
         if not df.empty:
@@ -66,14 +66,14 @@ class IbExtractionTest(hut.TestCase):
 
     def _req_historical_data_helper(self, end_ts, use_rth) -> Tuple[str, str]:
         """
-        Run videgu.req_historical_data() with some fixed params and return
+        Run iidegu.req_historical_data() with some fixed params and return
         short and long signature.
         """
         contract = ib_insync.ContFuture("ES", "GLOBEX", currency="USD")
         what_to_show = "TRADES"
         duration_str = "1 D"
         bar_size_setting = "1 hour"
-        df = videgu.req_historical_data(
+        df = iidegu.req_historical_data(
             self.ib,
             contract,
             end_ts,
@@ -96,7 +96,7 @@ class IbExtractionTest(hut.TestCase):
         contract = ib_insync.ContFuture("ES", "GLOBEX", currency="USD")
         what_to_show = "TRADES"
         duration_str = "1 D"
-        df, ts_seq = videgd.get_historical_data_with_IB_loop(
+        df, ts_seq = iidegd.get_historical_data_with_IB_loop(
             self.ib,
             contract,
             start_ts,
@@ -123,7 +123,7 @@ class IbExtractionTest(hut.TestCase):
         what_to_show = "TRADES"
         mode = "in_memory"
         client_id = 2
-        df, ts_seq = videgun.get_historical_data(
+        df, ts_seq = iidegun.get_historical_data(
             client_id,
             contract,
             start_ts,
@@ -179,7 +179,7 @@ class IbExtractionTest(hut.TestCase):
         duration_str = "1 D"
         file_name = os.path.join(self.get_scratch_space(), "output.csv")
         incremental = False
-        videgs.save_historical_data_with_IB_loop(
+        iidegs.save_historical_data_with_IB_loop(
             self.ib,
             contract,
             start_ts,
@@ -192,7 +192,7 @@ class IbExtractionTest(hut.TestCase):
             incremental,
         )
         # Load the data generated.
-        df = videgd.load_historical_data(file_name)
+        df = iidegd.load_historical_data(file_name)
         # Check.
         short_signature, long_signature = self.get_df_signatures(df)
         return df, short_signature, long_signature

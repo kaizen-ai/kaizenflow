@@ -1,17 +1,17 @@
 import logging
 import os
+
 import pandas as pd
+
 try:
     import ib_insync
 except ModuleNotFoundError:
     print("Can't find ib_insync")
 
-import instrument_master.ib.data.extract.gateway.metadata as videgm
-
-
 import helpers.dbg as dbg
 import helpers.unit_test as hut
-import instrument_master.ib.data.extract.gateway.utils as videgu
+import instrument_master.ib.data.extract.gateway.metadata as iidegm
+import instrument_master.ib.data.extract.gateway.utils as iidegu
 
 _LOG = logging.getLogger(__name__)
 
@@ -20,27 +20,18 @@ class Test_ib_metadata1(hut.TestCase):
     @classmethod
     def setUpClass(cls):
         dbg.shutup_chatty_modules()
-        cls.ib = videgu.ib_connect(0, is_notebook=False)
+        cls.ib = iidegu.ib_connect(0, is_notebook=False)
 
     @classmethod
     def tearDownClass(cls):
         cls.ib.disconnect()
-
-    def _check_metadata_df(self, df: pd.DataFrame) -> None:
-        """
-        Filter contracts by expiration date to not update outcomes regularly.
-        """
-        filtered_df = df[(df["lastTradeDateOrContractMonth"] >= 20210101) & (df["lastTradeDateOrContractMonth"] < 20220101)]
-        filtered_df = filtered_df.reset_index(drop=True)
-        self.check_string(filtered_df.to_csv())
-
 
     def test1(self) -> None:
         """
         Create some metadata for NG.
         """
         file_name = os.path.join(self.get_scratch_space(), "metadata.csv")
-        ibmeta = videgm.IbMetadata(file_name)
+        ibmeta = iidegm.IbMetadata(file_name)
         #
         symbol = "NG"
         contract = ib_insync.Future(symbol, includeExpired=True)
@@ -55,7 +46,7 @@ class Test_ib_metadata1(hut.TestCase):
         Create some metadata and then update more.
         """
         file_name = os.path.join(self.get_scratch_space(), "metadata.csv")
-        ibmeta = videgm.IbMetadata(file_name)
+        ibmeta = iidegm.IbMetadata(file_name)
         #
         symbol = "NG"
         contract = ib_insync.Future(symbol, includeExpired=True)
@@ -73,7 +64,7 @@ class Test_ib_metadata1(hut.TestCase):
         Test that append=False cleans up the file.
         """
         file_name = os.path.join(self.get_scratch_space(), "metadata.csv")
-        ibmeta = videgm.IbMetadata(file_name)
+        ibmeta = iidegm.IbMetadata(file_name)
         #
         symbol = "NG"
         contract = ib_insync.Future(symbol, includeExpired=True)
@@ -85,3 +76,14 @@ class Test_ib_metadata1(hut.TestCase):
         #
         df = ibmeta.load()
         self._check_metadata_df(df)
+
+    def _check_metadata_df(self, df: pd.DataFrame) -> None:
+        """
+        Filter contracts by expiration date to not update outcomes regularly.
+        """
+        filtered_df = df[
+            (df["lastTradeDateOrContractMonth"] >= 20210101)
+            & (df["lastTradeDateOrContractMonth"] < 20220101)
+        ]
+        filtered_df = filtered_df.reset_index(drop=True)
+        self.check_string(filtered_df.to_csv())

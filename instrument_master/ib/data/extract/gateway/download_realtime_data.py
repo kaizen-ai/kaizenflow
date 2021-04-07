@@ -7,7 +7,7 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.parser as hparse
-import instrument_master.ib.data.extract.gateway.utils as videgu
+import instrument_master.ib.data.extract.gateway.utils as iidegu
 
 # from tqdm.notebook import tqdm
 
@@ -39,7 +39,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     currency = "USD"
     symbols = "ES CL NG".split()
     try:
-        ib = videgu.ib_connect(0, is_notebook=False)
+        ib = iidegu.ib_connect(0, is_notebook=False)
         bars = ib.reqRealTimeBars(contract, 5, "MIDPOINT", False)
         bars.updateEvent += onBarUpdate
     finally:
@@ -49,15 +49,22 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # start_ts = pd.Timestamp("2020-12-13 18:00:00-05:00")
     end_ts = None
     # end_ts = pd.Timestamp("2020-12-23 18:00:00-05:00")
-    tasks = videgu.get_tasks(
-        ib=ib, target=target, frequency=frequency, currency=currency, symbols=symbols, start_ts=start_ts, end_ts=end_ts, use_rth=use_rth
+    tasks = iidegu.get_tasks(
+        ib=ib,
+        target=target,
+        frequency=frequency,
+        currency=currency,
+        symbols=symbols,
+        start_ts=start_ts,
+        end_ts=end_ts,
+        use_rth=use_rth,
     )
     num_threads = 3
     num_threads = "serial"
     dst_dir = args.dst_dir
     incremental = not args.not_incremental
     client_id_base = 5
-    file_names = videgu.download_ib_data(
+    file_names = iidegu.download_ib_data(
         client_id_base, tasks, incremental, dst_dir, num_threads
     )
     _LOG.info("file_names=%s", file_names)

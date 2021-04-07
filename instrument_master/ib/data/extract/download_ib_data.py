@@ -34,16 +34,18 @@ Usage examples:
 """
 import argparse
 import logging
+from typing import List
 
 import pandas as pd
-from typing import List
+
 import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.parser as hparse
 import instrument_master.common.data.types as icdtyp
+import instrument_master.common.metadata.symbols as icmsym
 import instrument_master.ib.data.extract.ib_data_extractor as iideib
-import instrument_master.ib.metadata.ib_symbols as iii
-import instrument_master.common.metadata.symbols as ss
+import instrument_master.ib.metadata.ib_symbols as iimibs
+
 # from tqdm.notebook import tqdm
 
 _LOG = logging.getLogger(__name__)
@@ -54,23 +56,41 @@ VALID_ACTIONS = [_DOWNLOAD_ACTION, _PUSH_TO_S3_ACTION]
 DEFAULT_ACTIONS = [_DOWNLOAD_ACTION, _PUSH_TO_S3_ACTION]
 
 
-def _get_symbols_from_args(args: argparse.Namespace) -> List[ss.Symbol]:
+def _get_symbols_from_args(args: argparse.Namespace) -> List[icmsym.Symbol]:
     """
     Get list of symbols to extract.
     """
     # If all args are specified to extract only one symbol, return this symbol.
     if args.symbol and args.exchange and args.asset_class and args.currency:
-        return [ss.Symbol(ticker=args_symbol, exchange=args.exchange, asset_class=args.asset_class, contract_type=args.contract_type, currency=args.currency) for args_symbol in args.symbol]
+        return [
+            icmsym.Symbol(
+                ticker=args_symbol,
+                exchange=args.exchange,
+                asset_class=args.asset_class,
+                contract_type=args.contract_type,
+                currency=args.currency,
+            )
+            for args_symbol in args.symbol
+        ]
     # Find all matched symbols otherwise.
-    symbol_universe = iii.IbSymbolUniverse()
+    symbol_universe = iimibs.IbSymbolUniverse()
     if args.symbol is None:
         args_symbols = [args.symbol]
     else:
         args_symbols = args.symbol
-    symbols: List[ss.Symbol] = []
+    symbols: List[icmsym.Symbol] = []
     for symbol in args_symbols:
-        symbols.extend(symbol_universe.get(ticker=symbol, exchange=args.exchange, asset_class=args.asset_class, contract_type=args.contract_type, currency=args.currency))
+        symbols.extend(
+            symbol_universe.get(
+                ticker=symbol,
+                exchange=args.exchange,
+                asset_class=args.asset_class,
+                contract_type=args.contract_type,
+                currency=args.currency,
+            )
+        )
     return symbols
+
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
@@ -100,7 +120,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 exchange=symbol.exchange,
                 symbol=symbol.ticker,
                 asset_class=symbol.asset_class,
-                frequency=args.frequency,  
+                frequency=args.frequency,
                 currency=symbol.currency,
                 contract_type=symbol.contract_type,
                 start_ts=args.start_ts,

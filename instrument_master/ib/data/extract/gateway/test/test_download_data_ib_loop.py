@@ -8,18 +8,19 @@ import pandas as pd
 import pytest
 
 import helpers.dbg as dbg
-import instrument_master.ib.data.extract.gateway.download_data_ib_loop as videgd
-import instrument_master.ib.data.extract.gateway.test.utils as videgt
-import instrument_master.ib.data.extract.gateway.utils as videgu
-import instrument_master.common.db.init as ini
+import instrument_master.common.db.init as icdini
+import instrument_master.ib.data.extract.gateway.download_data_ib_loop as iidegd
+import instrument_master.ib.data.extract.gateway.test.utils as iidegt
+import instrument_master.ib.data.extract.gateway.utils as iidegu
+
 _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skipif(
-    not ini.is_inside_im_container(),
+    not icdini.is_inside_im_container(),
     reason="Testable only inside IB container",
 )
-class Test_get_historical_data(videgt.IbExtractionTest):
+class Test_get_historical_data(iidegt.IbExtractionTest):
     def test_get_historical_data_with_IB_loop1(self) -> None:
         """
         Test getting 1 hr data for 1 full day.
@@ -309,8 +310,15 @@ class Test_get_historical_data(videgt.IbExtractionTest):
         currency = "USD"
         start_ts = pd.Timestamp("2020-12-09 18:00:00-05:00")
         end_ts = pd.Timestamp("2020-12-13 18:00:00-05:00")
-        tasks = videgu.get_tasks(
-            ib=self.ib, target=target, frequency=frequency, currency=currency, symbols=symbols, start_ts=start_ts, end_ts=end_ts, use_rth=use_rth
+        tasks = iidegu.get_tasks(
+            ib=self.ib,
+            target=target,
+            frequency=frequency,
+            currency=currency,
+            symbols=symbols,
+            start_ts=start_ts,
+            end_ts=end_ts,
+            use_rth=use_rth,
         )
         #
         client_id_base = 5
@@ -318,13 +326,13 @@ class Test_get_historical_data(videgt.IbExtractionTest):
         num_threads = "serial"
         dst_dir = self.get_scratch_space()
         incremental = False
-        file_names = videgd.download_ib_data(
+        file_names = iidegd.download_ib_data(
             client_id_base, tasks, incremental, dst_dir, num_threads
         )
         dbg.dassert_eq(len(file_names), 1)
         _LOG.debug("file_names=%s", file_names)
         # Load the data.
-        df = videgd.load_historical_data(file_names[0])
+        df = iidegd.load_historical_data(file_names[0])
         short_signature, long_signature = self.get_df_signatures(df)
         exp_short_signature = """
         signature=len=48 [2020-12-09 18:00:00-05:00, 2020-12-11 16:30:00-05:00]
