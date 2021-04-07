@@ -130,16 +130,8 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
             data[date_column] = pd.to_datetime(data[date_column])
         if normalize:
             data = self.normalize(df=data, frequency=frequency)
-        # TODO(Vlad): Replace with data[cls.S3_DATE_COLUMNS[0]] -> data.index,
-        # after #1209 will be merged, and we can add date column as index
-        # in the normalization method
-        # Filter out by dates boundaries.
-        if start_ts or end_ts:
-            start_ts = start_ts or pd.Timestamp.min
-            end_ts = end_ts or pd.Timestamp.now()
-            data = data[(data[cls.S3_DATE_COLUMNS[0]] > start_ts) &
-                        (data[cls.S3_DATE_COLUMNS[0]] <= end_ts)]
-        return data
+            data.set_index("date", drop=False, inplace=True)
+        return self._filter_by_dates(data, start_ts, end_ts)
 
     @staticmethod
     def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
@@ -149,7 +141,6 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
         :param df: source data
         :return: normalized data
         """
-
         return df
 
     @staticmethod

@@ -212,7 +212,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 unadjusted=args.unadjusted,
                 exchange_id=exchange_id,
                 exchange=args.exchange,
-                incremental=args.incremental
+                incremental=args.incremental,
+                start_ts=args.start_ts,
+                end_ts=args.end_ts
             )
         )
     # Run converting.

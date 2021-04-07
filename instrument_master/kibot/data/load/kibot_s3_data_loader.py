@@ -70,13 +70,10 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
             dbg.dassert_is(
                 hs3.exists(file_path), True, msg=f"S3 key not found: {file_path}"
             )
-        df = pd.read_csv(file_path, header=None, nrows=nrows)
+        data = pd.read_csv(file_path, header=None, nrows=nrows)
         if normalize:
-            df = self.normalize(df=df, frequency=frequency)
-        if start_ts or end_ts:
-            start_ts = start_ts or pd.Timestamp.min
-            end_ts = end_ts or pd.Timestamp.now()
-        return df
+            data = self.normalize(df=data, frequency=frequency)
+        return self._filter_by_dates(data, start_ts, end_ts)
 
     # TODO(gp): Call the column datetime_ET suffix.
     @staticmethod
