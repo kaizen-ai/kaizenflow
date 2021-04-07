@@ -44,7 +44,7 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
         "Bonds": None,
     }
 
-    def __init__(self, symbols_file: Optional[str]) -> None:
+    def __init__(self, symbols_file: Optional[str] = None) -> None:
         symbol_file = (
             self._get_latest_symbols_file()
             if symbols_file is None

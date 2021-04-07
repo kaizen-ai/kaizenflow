@@ -7,16 +7,17 @@ except ModuleNotFoundError:
 import pandas as pd
 import pytest
 
-import instrument_master.ib.data.extract.gateway.test.utils as videgt
+import instrument_master.common.db.init as icdini
+import instrument_master.ib.data.extract.gateway.test.utils as iidegt
 
 _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skipif(
-    not videgt.IS_TWS_ENABLED,
+    not icdini.is_inside_im_container(),
     reason="Testable only inside IB container",
 )
-class Test_get_historical_data(videgt.IbExtractionTest):
+class Test_get_historical_data(iidegt.IbExtractionTest):
     def test_save_historical_data_with_IB_loop1(self) -> None:
         """
         
