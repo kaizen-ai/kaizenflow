@@ -11,7 +11,8 @@ Usage examples:
       --frequency D \
       --contract_type continuous \
       --asset_class Futures \
-      --exchange GLOBEX
+      --exchange GLOBEX \
+      --currency USD
 
 - Download data by parts:
   > download_ib_data.py \
@@ -20,6 +21,7 @@ Usage examples:
       --contract_type continuous \
       --asset_class Futures \
       --exchange GLOBEX \
+      --currency USD \
       --action download \
       --dst_dir ./tmp
 
@@ -30,7 +32,16 @@ Usage examples:
       --contract_type continuous \
       --asset_class Futures \
       --exchange GLOBEX \
+      --currency USD \
       --action push \
+
+- Download data for all GLOBEX symbols with USD currency:
+  > download_ib_data.py \
+      --frequency D \
+      --exchange GLOBEX \
+      --currency USD
+
+
 """
 import argparse
 import logging
