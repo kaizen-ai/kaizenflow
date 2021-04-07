@@ -11,7 +11,6 @@ import tqdm
 import helpers.dbg as dbg
 import helpers.printing as hprint
 import instrument_master.common.data.load.abstract_data_loader as icdlab
-import instrument_master.common.data.load.sql_data_loader as icdlsq
 import instrument_master.common.data.transform.s3_to_sql_transformer as icdts3
 import instrument_master.common.data.types as icdtyp
 import instrument_master.common.sql_writer_backend as icsqlw
@@ -29,7 +28,7 @@ def convert_s3_to_sql(
     exchange: str,
     s3_data_loader: icdlab.AbstractS3DataLoader,
     sql_writer_backend: icsqlw.AbstractSqlWriterBackend,
-    sql_data_loader: icdlsq.AbstractSqlDataLoader,
+    sql_data_loader: icdlab.AbstractSqlDataLoader,
     s3_to_sql_transformer: icdts3.AbstractS3ToSqlTransformer,
     asset_class: icdtyp.AssetClass,
     frequency: icdtyp.Frequency,
