@@ -12,14 +12,14 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.s3 as hs3
-import instrument_master.common.data.load.s3_data_loader as icdls3
+import instrument_master.common.data.load.abstract_data_loader as icdlab
 import instrument_master.common.data.types as icdtyp
 import instrument_master.ib.data.load.ib_file_path_generator as iidlib
 
 _LOG = logging.getLogger(__name__)
 
 
-class IbS3DataLoader(icdls3.AbstractS3DataLoader):
+class IbS3DataLoader(icdlab.AbstractS3DataLoader):
     """
     Reads IB data from S3.
     """
@@ -71,17 +71,18 @@ class IbS3DataLoader(icdls3.AbstractS3DataLoader):
             contract_type=contract_type,
             unadjusted=unadjusted,
             nrows=nrows,
+            normalize=normalize,
         )
 
-    @classmethod
     def _read_data(
-        cls,
+        self,
         symbol: str,
         asset_class: icdtyp.AssetClass,
         frequency: icdtyp.Frequency,
         contract_type: Optional[icdtyp.ContractType] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
+        normalize: bool = True,
     ) -> pd.DataFrame:
         # Generate path to retrieve data.
         file_path = iidlib.IbFilePathGenerator().generate_file_path(
@@ -101,20 +102,57 @@ class IbS3DataLoader(icdls3.AbstractS3DataLoader):
         # cls.S3_COLUMNS.keys() -> list(cls.S3_COLUMNS.keys())
         # https://github.com/pandas-dev/pandas/issues/36928 fixed in Pandas 1.1.4
         data = pd.read_csv(
-            file_path, nrows=nrows, names=list(cls.S3_COLUMNS.keys())
+            file_path, nrows=nrows, names=list(self.S3_COLUMNS.keys())
         )
         # TODO(plyq): Reload ES data with a new extractor to have a header.
         # If header was already in data, remove it.
-        if list(data.iloc[0]) == list(cls.S3_COLUMNS.keys()):
+        if list(data.iloc[0]) == list(self.S3_COLUMNS.keys()):
             data = data[1:].reset_index(drop=True)
         # Cast columns to correct types.
         data = data.astype(
             {
-                key: cls.S3_COLUMNS[key]
-                for key in cls.S3_COLUMNS
-                if key not in cls.S3_DATE_COLUMNS
+                key: self.S3_COLUMNS[key]
+                for key in self.S3_COLUMNS
+                if key not in self.S3_DATE_COLUMNS
             }
         )
-        for date_column in cls.S3_DATE_COLUMNS:
+        for date_column in self.S3_DATE_COLUMNS:
             data[date_column] = pd.to_datetime(data[date_column])
+        if normalize:
+            data = self.normalize(df=data, frequency=frequency)
         return data
+
+    @staticmethod
+    def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Normalize minutes data. Not implemented yet.
+
+        :param df: source data
+        :return: normalized data
+        """
+
+        return df
+
+    @staticmethod
+    def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Normalize daily data.
+
+        - Convert date column to the Python datetime format.
+
+        :param df: source data
+        :return: normalized data
+        """
+
+        df["date"] = df["date"].dt.date
+        return df
+
+    @staticmethod
+    def _normalize_1_hour(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Hour data normalization. Not implemented yet.
+
+        :param df: source data
+        :return: normalized data
+        """
+        return df

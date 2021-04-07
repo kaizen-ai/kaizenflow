@@ -1,9 +1,9 @@
 import helpers.dbg as dbg
-import instrument_master.common.data.load.sql_data_loader as icdlsq
+import instrument_master.common.data.load.abstract_data_loader as icdlab
 import instrument_master.common.data.types as icdtyp
 
 
-class KibotSqlDataLoader(icdlsq.AbstractSqlDataLoader):
+class KibotSqlDataLoader(icdlab.AbstractSqlDataLoader):
     @staticmethod
     def _get_table_name_by_frequency(frequency: icdtyp.Frequency) -> str:
         """

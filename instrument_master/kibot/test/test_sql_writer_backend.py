@@ -59,6 +59,7 @@ class TestSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
                 "volume": [1000] * 3,
             }
         )
+        df["date"] = pd.to_datetime(df["date"])
         self._writer.insert_bulk_daily_data(df=df)
         # Mock the situation when the loading process is interrupted. To simulate
         # this, by deleting the tail of the data.
