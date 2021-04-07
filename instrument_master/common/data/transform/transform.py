@@ -6,12 +6,12 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import joblib
+import pandas as pd
 import tqdm
 
 import helpers.dbg as dbg
 import helpers.printing as hprint
-import instrument_master.common.data.load.s3_data_loader as icdls3
-import instrument_master.common.data.load.sql_data_loader as icdlsq
+import instrument_master.common.data.load.abstract_data_loader as icdlab
 import instrument_master.common.data.transform.s3_to_sql_transformer as icdts3
 import instrument_master.common.data.types as icdtyp
 import instrument_master.common.sql_writer_backend as icsqlw
@@ -27,9 +27,9 @@ _JOBLIB_VERBOSITY = 1
 def convert_s3_to_sql(
     symbol: str,
     exchange: str,
-    s3_data_loader: icdls3.AbstractS3DataLoader,
+    s3_data_loader: icdlab.AbstractS3DataLoader,
     sql_writer_backend: icsqlw.AbstractSqlWriterBackend,
-    sql_data_loader: icdlsq.AbstractSqlDataLoader,
+    sql_data_loader: icdlab.AbstractSqlDataLoader,
     s3_to_sql_transformer: icdts3.AbstractS3ToSqlTransformer,
     asset_class: icdtyp.AssetClass,
     frequency: icdtyp.Frequency,
@@ -38,6 +38,8 @@ def convert_s3_to_sql(
     unadjusted: Optional[bool] = None,
     max_num_rows: Optional[int] = None,
     incremental: Optional[bool] = False,
+    start_ts: Optional[pd.Timestamp] = None,
+    end_ts: Optional[pd.Timestamp] = None,
 ) -> bool:
     """
     Convert a dataset from S3 for a symbol.
@@ -65,7 +67,9 @@ def convert_s3_to_sql(
         contract_type=contract_type,
         unadjusted=unadjusted,
         nrows=max_num_rows,
-        normalize=False,
+        normalize=True,
+        start_ts=start_ts,
+        end_ts=end_ts
     )
     _LOG.debug("Transforming '%s' data before saving to database", symbol)
     df = s3_to_sql_transformer.transform(

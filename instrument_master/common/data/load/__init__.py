@@ -1,1 +1,1 @@
-from .data_loader import AbstractDataLoader  # noqa
+from .abstract_data_loader import AbstractDataLoader  # noqa

@@ -1,3 +1,6 @@
+import datetime
+import pandas as pd
+
 import helpers.unit_test as hut
 import instrument_master.common.data.types as icdtyp
 import instrument_master.ib.data.load.ib_s3_data_loader as iidlib
@@ -82,6 +85,43 @@ class TestS3IbDataLoader1(hut.TestCase):
             contract_type=icdtyp.ContractType.Continuous,
             unadjusted=None,
             nrows=10,
+        )
+        # Transform dataframe to string.
+        actual_string = hut.convert_df_to_string(data)
+        # Compare with expected.
+        self.check_string(actual_string, fuzzy_match=True)
+
+    def test_read_data_check_date_type(self) -> None:
+        """
+        Check date type of date field if frequency is daily.
+        """
+        # Load data.
+        data = self._s3_data_loader.read_data(
+            exchange="GLOBEX",
+            symbol="ES",
+            asset_class=icdtyp.AssetClass.Futures,
+            frequency=icdtyp.Frequency.Daily,
+            contract_type=icdtyp.ContractType.Continuous,
+            unadjusted=True,
+            nrows=10,
+        )
+        # Check if date columns is date type.
+        self.assertEqual(type(data["date"][0]), datetime.date)
+
+    def test_read_data_with_start_end_ts(self) -> None:
+        """
+        Test correctness of hourly ES data loading.
+        """
+        # Load data.
+        data = self._s3_data_loader.read_data(
+            exchange="GLOBEX",
+            symbol="ES",
+            asset_class=icdtyp.AssetClass.Futures,
+            frequency=icdtyp.Frequency.Hourly,
+            contract_type=icdtyp.ContractType.Continuous,
+            unadjusted=None,
+            start_ts=pd.to_datetime("2021-03-04 22:00:00-05:00"),
+            end_ts=pd.to_datetime("2021-03-05 05:00:00-05:00")
         )
         # Transform dataframe to string.
         actual_string = hut.convert_df_to_string(data)
