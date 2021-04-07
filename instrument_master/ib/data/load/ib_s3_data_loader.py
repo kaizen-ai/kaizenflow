@@ -154,7 +154,7 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
         :return: normalized data
         """
 
-        df["date"] = df["date"].dt.date
+        df["date"] = df["date"].apply(lambda x: x.date())
         return df
 
     @staticmethod

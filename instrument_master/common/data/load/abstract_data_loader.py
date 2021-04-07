@@ -36,6 +36,8 @@ class AbstractDataLoader(abc.ABC):
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         """
         Read data.
@@ -48,6 +50,8 @@ class AbstractDataLoader(abc.ABC):
         :param unadjusted: required for asset classes of type `stocks` & `etfs`
         :param nrows: if not None, return only the first nrows of the data
         :param normalize: whether to normalize the dataframe based on frequency
+        :param start_ts: start time of data to read
+        :param end_ts: end time of data to read
         :return: a dataframe with the data
         """
 

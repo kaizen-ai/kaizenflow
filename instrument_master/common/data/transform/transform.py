@@ -67,7 +67,7 @@ def convert_s3_to_sql(
         contract_type=contract_type,
         unadjusted=unadjusted,
         nrows=max_num_rows,
-        normalize=False,
+        normalize=True,
         start_ts=start_ts,
         end_ts=end_ts
     )
