@@ -7,7 +7,7 @@ from typing import Any
 
 import instrument_master.common.data.load.abstract_data_loader as icdlab
 
-# TODO: Move it out to app/
+# TODO(*): Move it out to app/
 
 
 class LoaderFactory:
