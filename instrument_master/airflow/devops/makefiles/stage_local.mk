@@ -1,4 +1,18 @@
-# TODO(gp): Move to im/airflow/devops/makefile
+# TODO(*): Use a different repo like im-airflow or call the images airflow-latest ?
+IM_IMAGE_AIRFLOW_DEV=$(IM_REPO_BASE_PATH):latest-airflow
+
+# Use Docker buildkit or not.
+# DOCKER_BUILDKIT=1
+DOCKER_BUILDKIT=0
+
+im.docker_build_worker_image:
+	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
+	docker build \
+		--progress=plain \
+		--no-cache \
+		-t $(IM_IMAGE_AIRFLOW_DEV) \
+		--file devops/docker_build/im_db_loader_worker.dev.Dockerfile \
+		.
 
 im.docker_pull_related_images.local:
 	WORKER_IMAGE=$(IM_IMAGE_AIRFLOW_DEV) \

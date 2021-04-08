@@ -8,9 +8,6 @@ IM_REPO_BASE_PATH=$(ECR_BASE_PATH)/im
 IM_IMAGE_DEV=$(IM_REPO_BASE_PATH):latest
 IM_IMAGE_RC=$(IM_REPO_BASE_PATH):rc
 
-# TODO(*): Use a different repo like im-airflow or call the images airflow-latest ?
-IM_IMAGE_AIRFLOW_DEV=$(IM_REPO_BASE_PATH):latest-airflow
-
 NO_SUPERSLOW_TESTS='True'
 
 RUN_TESTS_DIR="instrument_master/devops/docker_scripts/"
@@ -238,15 +235,6 @@ im.docker_build_image.rc:
 		-t $(IMAGE_RC) \
 		-t $(IM_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
 		--file devops/docker_build/dev.Dockerfile \
-		.
-
-im.docker_build_worker_image:
-	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
-	docker build \
-		--progress=plain \
-		--no-cache \
-		-t $(IM_IMAGE_AIRFLOW_DEV) \
-		--file devops/docker_build/im_db_loader_worker.dev.Dockerfile \
 		.
 
 im.docker_build_image_with_cache.rc:
