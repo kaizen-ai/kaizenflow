@@ -161,20 +161,3 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
         if not set(exchange).issubset(string.ascii_uppercase):
             return None
         return exchange
-
-
-class IbDownloadedSymbol(icmsym.SymbolUniverse):
-    """
-    Store symbols available on S3.
-    """
-
-    def __init__(self, symbols_file: Optional[str]) -> None:
-        self._symbols_list = self._find_all_s3_symbols()
-
-    def get_all_symbols(self) -> List[icmsym.Symbol]:
-        return self._symbols_list
-
-    # TODO(plyq): Implement.
-    def _find_all_s3_symbols(self) -> List[icmsym.Symbol]:
-        symbol_list: List[icmsym.Symbol] = []
-        return symbol_list
