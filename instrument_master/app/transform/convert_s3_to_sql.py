@@ -10,7 +10,8 @@ Usage examples:
       --frequency D \
       --contract_type continuous \
       --asset_class stocks \
-      --exchange NYSE
+      --exchange NYSE \
+      --currency USD
 
 - Convert daily data for AAPL, Kibot provider, specifying connection:
   > convert_s3_to_sql.py \
@@ -20,6 +21,7 @@ Usage examples:
       --contract_type continuous \
       --asset_class stocks \
       --exchange NYSE \
+      --currency USD \
       --dbname im_postgres_db_local \
       --dbhost im_postgres_local \
       --dbuser menjgbcvejlpcbejlc \
@@ -51,18 +53,67 @@ Usage examples:
 import argparse
 import logging
 import os
+from typing import List
+
+import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.parser as hparse
-import instrument_master.app.services.loader_factory as vasloa
-import instrument_master.app.services.sql_writer_factory as vassql
-import instrument_master.app.services.transformer_factory as vastra
-import instrument_master.common.data.load.s3_data_loader as vcdls3
-import instrument_master.common.data.load.sql_data_loader as vcdlsq
-import instrument_master.common.data.transform.transform as vcdttr
-import instrument_master.common.data.types as vcdtyp
+import instrument_master.app.services.file_path_generator_factory as iasfil
+import instrument_master.app.services.loader_factory as iasloa
+import instrument_master.app.services.sql_writer_factory as iassql
+import instrument_master.app.services.symbol_universe_factory as iassym
+import instrument_master.app.services.transformer_factory as iastra
+import instrument_master.common.data.load.abstract_data_loader as icdlab
+import instrument_master.common.data.transform.transform as icdttr
+import instrument_master.common.data.types as icdtyp
+import instrument_master.common.metadata.symbols as icmsym
 
 _LOG = logging.getLogger(__name__)
+
+
+def _get_symbols_from_args(args: argparse.Namespace) -> List[icmsym.Symbol]:
+    """
+    Get list of symbols to extract.
+    """
+    # If all args are specified to extract only one symbol, return this symbol.
+    if args.symbol and args.exchange and args.asset_class and args.currency:
+        return [
+            icmsym.Symbol(
+                ticker=args_symbol,
+                exchange=args.exchange,
+                asset_class=args.asset_class,
+                contract_type=args.contract_type,
+                currency=args.currency,
+            )
+            for args_symbol in args.symbol
+        ]
+    # Find all matched symbols otherwise.
+    symbol_universe = iassym.SymbolUniverseFactory.get_symbol_universe(
+        args.provider
+    )
+    file_path_generator = iasfil.FilePathGeneratorFactory.get_file_path_generator(
+        args.provider
+    )
+    if args.symbol is None:
+        args_symbols = [args.symbol]
+    else:
+        args_symbols = args.symbol
+    symbols: List[icmsym.Symbol] = []
+    for symbol in args_symbols:
+        symbols.extend(
+            symbol_universe.get(
+                ticker=symbol,
+                exchange=args.exchange,
+                asset_class=args.asset_class,
+                contract_type=args.contract_type,
+                currency=args.currency,
+                is_downloaded=True,
+                frequency=args.frequency,
+                path_generator=file_path_generator,
+            )
+        )
+    return symbols
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -86,32 +137,49 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="Symbols to process",
         action="append",
-        required=True,
+        required=False,
     )
     parser.add_argument(
         "--exchange",
         type=str,
         help="Selected Exchange",
-        required=True,
+        required=False,
     )
     parser.add_argument(
         "--asset_class",
-        type=vcdtyp.AssetClass,
+        type=icdtyp.AssetClass,
         help="Asset class (e.g. Futures)",
-        required=True,
+        required=False,
+    )
+    parser.add_argument(
+        "--currency",
+        type=str,
+        help="Symbol currency (e.g. USD)",
+        required=False,
     )
     parser.add_argument(
         "--frequency",
-        type=vcdtyp.Frequency,
+        type=icdtyp.Frequency,
         help="Frequency of data (e.g. Minutely)",
         required=True,
     )
     parser.add_argument(
         "--contract_type",
-        type=vcdtyp.ContractType,
+        type=icdtyp.ContractType,
         help="Contract type (e.g. Expiry)",
-        required=True,
+        required=False,
     )
+    parser.add_argument(
+        "--start_ts",
+        type=pd.Timestamp,
+        help="Start timestamp. Example: 2021-02-01T00:00:00",
+    )
+    parser.add_argument(
+        "--end_ts",
+        type=pd.Timestamp,
+        help="Ending timestamp. Example: 2021-02-05T00:00:00",
+    )
+    parser.add_argument("--incremental", action="store_true", default=False)
     parser.add_argument(
         "--unadjusted",
         action="store_true",
@@ -167,17 +235,18 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    dbg.init_logger(verbosity=args.log_level)
     dbg.shutup_chatty_modules()
     # Set up parameters for running.
     provider = args.provider
-    s3_data_loader: vcdls3.AbstractS3DataLoader = vasloa.LoaderFactory.get_loader(
+    symbols = _get_symbols_from_args(args)
+    s3_data_loader: icdlab.AbstractS3DataLoader = iasloa.LoaderFactory.get_loader(
         storage_type="s3", provider=provider
     )
-    s3_to_sql_transformer = vastra.TransformerFactory.get_s3_to_sql_transformer(
+    s3_to_sql_transformer = iastra.TransformerFactory.get_s3_to_sql_transformer(
         provider=provider
     )
-    sql_writer_backend = vassql.SqlWriterFactory.get_sql_writer_backend(
+    sql_writer_backend = iassql.SqlWriterFactory.get_sql_writer_backend(
         provider=provider,
         dbname=args.dbname,
         user=args.dbuser,
@@ -185,8 +254,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         host=args.dbhost,
         port=args.dbport,
     )
-    sql_data_loader: vcdlsq.AbstractSqlDataLoader = (
-        vasloa.LoaderFactory.get_loader(
+    sql_data_loader: icdlab.AbstractSqlDataLoader = (
+        iasloa.LoaderFactory.get_loader(
             storage_type="sql",
             provider=provider,
             dbname=args.dbname,
@@ -200,7 +269,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     sql_writer_backend.ensure_exchange_exists(args.exchange)
     exchange_id = sql_data_loader.get_exchange_id(args.exchange)
     # Select symbols to process.
-    symbols = args.symbol
     if args.max_num_assets is not None:
         _LOG.warning(
             "Selected only %d symbols as per user request", args.max_num_assets
@@ -212,22 +280,25 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for symbol in symbols:
         params_list.append(
             dict(
-                symbol=symbol,
+                symbol=symbol.ticker,
                 max_num_rows=args.max_num_rows,
                 s3_data_loader=s3_data_loader,
                 sql_writer_backend=sql_writer_backend,
                 sql_data_loader=sql_data_loader,
                 s3_to_sql_transformer=s3_to_sql_transformer,
-                asset_class=args.asset_class,
-                contract_type=args.contract_type,
+                asset_class=symbol.asset_class,
+                contract_type=symbol.contract_type,
                 frequency=args.frequency,
                 unadjusted=args.unadjusted,
                 exchange_id=exchange_id,
                 exchange=args.exchange,
+                incremental=args.incremental,
+                start_ts=args.start_ts,
+                end_ts=args.end_ts,
             )
         )
     # Run converting.
-    vcdttr.convert_s3_to_sql_bulk(serial=args.serial, params_list=params_list)
+    icdttr.convert_s3_to_sql_bulk(serial=args.serial, params_list=params_list)
     _LOG.info("Closing database connection")
     sql_writer_backend.close()
     sql_data_loader.conn.close()

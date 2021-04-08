@@ -19,7 +19,7 @@ class LoaderFactory:
     @classmethod
     def get_loader(
         cls, storage_type: str, provider: str, **kwargs: Any
-    ) -> icdlda.AbstractDataLoader:
+    ) -> icdlab.AbstractDataLoader:
         """
         Return a data loader for the requested `storage_type` and `provider`.
 
@@ -37,14 +37,14 @@ class LoaderFactory:
         return loader
 
     @staticmethod
-    def _get_s3_loader(provider: str) -> icdls3.AbstractS3DataLoader:
+    def _get_s3_loader(provider: str) -> icdlab.AbstractS3DataLoader:
         """
         Return a data loader from S3 for the requested `provider`.
 
         :param provider: provider (e.g., kibot)
         :raises ValueError: if loader is not implemented for provider
         """
-        loader: icdls3.AbstractS3DataLoader
+        loader: icdlab.AbstractS3DataLoader
         if provider == "kibot":
             import instrument_master.kibot.data.load.kibot_s3_data_loader as vkdls3
 
@@ -60,7 +60,7 @@ class LoaderFactory:
     @staticmethod
     def _get_sql_loader(
         provider: str, dbname: str, user: str, password: str, host: str, port: int
-    ) -> icdlsq.AbstractSqlDataLoader:
+    ) -> icdlab.AbstractSqlDataLoader:
         """
         Return a data loader from SQL for the requested `provider`.
 
@@ -72,7 +72,7 @@ class LoaderFactory:
         :param port: database port
         :raises ValueError: if SQL loader is not implemented for provider
         """
-        loader: icdlsq.AbstractSqlDataLoader
+        loader: icdlab.AbstractSqlDataLoader
         if provider == "kibot":
             import instrument_master.kibot.data.load.kibot_sql_data_loader as vkdlsq
 

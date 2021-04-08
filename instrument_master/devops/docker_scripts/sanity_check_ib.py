@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# TODO(*): Move to ib/
+# TODO(*): Move to ib/connect
 """
 Connect to IB TWS to check if it works.
 """

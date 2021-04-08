@@ -7,17 +7,18 @@ except ModuleNotFoundError:
 import pandas as pd
 import pytest
 
-import instrument_master.ib.data.extract.gateway.test.utils as videgt
-import instrument_master.ib.data.extract.gateway.utils as videgu
+import instrument_master.common.db.init as icdini
+import instrument_master.ib.data.extract.gateway.test.utils as iidegt
+import instrument_master.ib.data.extract.gateway.utils as iidegu
 
 _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skipif(
-    not videgt.IS_TWS_ENABLED,
+    not icdini.is_inside_im_container(),
     reason="Testable only inside IB container",
 )
-class Test_get_historical_data(videgt.IbExtractionTest):
+class Test_get_historical_data(iidegt.IbExtractionTest):
     def test_get_end_timestamp1(self) -> None:
         """
         Test get_end_timestamp() for ES in and outside regular trading hours
@@ -26,11 +27,11 @@ class Test_get_historical_data(videgt.IbExtractionTest):
         contract = ib_insync.ContFuture("ES", "GLOBEX", currency="USD")
         what_to_show = "TRADES"
         use_rth = True
-        ts1 = videgu.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
+        ts1 = iidegu.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
         _LOG.debug("ts1=%s", ts1)
         #
         use_rth = False
-        ts2 = videgu.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
+        ts2 = iidegu.get_end_timestamp(self.ib, contract, what_to_show, use_rth)
         _LOG.debug("ts2=%s", ts2)
 
     def test_req_historical_data1(self) -> None:
