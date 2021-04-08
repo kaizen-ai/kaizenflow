@@ -139,13 +139,6 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
             )
         else:
             # Not supported symbol.
-            _LOG.debug(
-                "Symbol %s %s %s %s is not supported",
-                ib_ticker,
-                ib_exchange,
-                ib_asset_class,
-                ib_currency,
-            )
             symbol = None
         return symbol
 
