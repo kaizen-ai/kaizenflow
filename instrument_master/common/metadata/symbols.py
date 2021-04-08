@@ -13,7 +13,6 @@ import helpers.s3 as hs3
 import instrument_master.common.data.load.file_path_generator as icdlfi
 import instrument_master.common.data.types as icdtyp
 
-
 _LOG = logging.getLogger(__name__)
 
 # TODO(*): Add unit test.
@@ -30,6 +29,7 @@ class Symbol:
     """
     Represent a specific Symbol in the universe supported by a provider.
     """
+
     # TODO(*): for symmetry with the rest of the code -> exchange, symbol,
     #  asset_class, contract_type, currency
     ticker: str
@@ -65,7 +65,8 @@ class Symbol:
         currency: Optional[str],
     ) -> bool:
         """
-        Return if a symbol matches the passed parameters and `None` matches anything.
+        Return if a symbol matches the passed parameters and `None` matches
+        anything.
         """
         if ticker is not None and self.ticker != ticker:
             return False
@@ -110,6 +111,7 @@ class SymbolUniverse(abc.ABC):
         asset_class: Optional[icdtyp.AssetClass],
         contract_type: Optional[icdtyp.ContractType],
         currency: Optional[str],
+        # TODO(*): is_data_available
         is_downloaded: Optional[bool] = None,
         frequency: Optional[icdtyp.Frequency] = None,
         path_generator: Optional[icdlfi.FilePathGenerator] = None,
@@ -117,8 +119,8 @@ class SymbolUniverse(abc.ABC):
         """
         Return all the available symbols based on different selection criteria.
 
-        E.g. `get(exchange="GLOBEX", is_downloaded=True)` will return
-        all the available on S3 symbols for GLOBEX exchange.
+        E.g. `get(exchange="GLOBEX", is_downloaded=True)` will return all the
+        symbols of GLOBEX exchange, for which data is available.
 
         :param is_downloaded: is data available for the requested . `frequency` and
             `path_generator` are used only if `is_downloaded` is True.
@@ -147,16 +149,17 @@ class SymbolUniverse(abc.ABC):
             if is_downloaded:
                 # Check if the path exists.
                 path = path_generator.generate_file_path(
-                        symbol=symbol.ticker,
-                        frequency=frequency,
-                        asset_class=symbol.asset_class,
-                        contract_type=symbol.contract_type,
-                        ext=icdtyp.Extension.CSV,
-                    )
+                    symbol=symbol.ticker,
+                    frequency=frequency,
+                    asset_class=symbol.asset_class,
+                    contract_type=symbol.contract_type,
+                    ext=icdtyp.Extension.CSV,
+                )
                 # TODO(*): Generalize this so we don't have to rely on S3.
                 if not hs3.exists(path):
-                    _LOG.debug("symbol=%s doesn't have the corresponding file %s",
-                               path)
+                    _LOG.debug(
+                        "symbol=%s doesn't have the corresponding file %s", path
+                    )
                     continue
             _LOG.debug("symbol=%s is part of the universe", path)
             matched_symbols.append(symbol)

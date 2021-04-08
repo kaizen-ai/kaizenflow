@@ -21,6 +21,7 @@ class AbstractDataLoader(abc.ABC):
     """
     Read data of a given frequency for symbols of a given asset and exchange.
     """
+
     @abc.abstractmethod
     def read_data(
         self,
@@ -75,10 +76,12 @@ class AbstractS3DataLoader(AbstractDataLoader):
         :return: the normalized dataframe
         :raises AssertionError: if frequency is not supported
         """
-        dbg.dassert_in(frequency,
-                       self._normalizer_dict,
-                       "Frequency %s is not supported",
-                       frequency)
+        dbg.dassert_in(
+            frequency,
+            self._normalizer_dict,
+            "Frequency %s is not supported",
+            frequency,
+        )
         normalizer = self._normalizer_dict[frequency]
         return normalizer(df)
 

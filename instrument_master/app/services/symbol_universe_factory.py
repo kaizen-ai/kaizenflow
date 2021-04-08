@@ -24,7 +24,6 @@ class SymbolUniverseFactory:
             symbol_universe = iimibs.IbSymbolUniverse()
         else:
             raise ValueError(
-                "Symbol universe for provider '%s' is not implemented"
-                % provider
+                "Symbol universe for provider '%s' is not implemented" % provider
             )
         return symbol_universe

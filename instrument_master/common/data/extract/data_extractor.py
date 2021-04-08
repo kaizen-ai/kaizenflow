@@ -9,7 +9,8 @@ import instrument_master.common.data.types as vcdtyp
 # TODO(*): Rename file abstract_data_extractor.py
 class AbstractDataExtractor(abc.ABC):
     """
-    Extract data from external sources (e.g., from IB TWS) and save / return it.
+    Extract data from external sources (e.g., from IB TWS) and save / return
+    it.
     """
 
     @abc.abstractmethod
