@@ -6,6 +6,7 @@ import helpers.unit_test as hut
 import instrument_master.common.data.types as icdtyp
 import instrument_master.common.metadata.symbols as icmsym
 import instrument_master.ib.data.config as iidcon
+import instrument_master.ib.data.load.ib_file_path_generator as iidlib
 import instrument_master.ib.metadata.ib_symbols as iimibs
 
 
@@ -13,6 +14,11 @@ class TestIbSymbolNamespace(hut.TestCase):
     """
     Test `IbSymbolNamespace` class.
     """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        hut.TestCase.setUpClass()
+        cls.ib_universe = iimibs.IbSymbolUniverse()
 
     def test_parse_symbols_file1(self) -> None:
         """
@@ -162,3 +168,65 @@ class TestIbSymbolNamespace(hut.TestCase):
             )
         )
         self.assert_equal(extracted_exchange, "NAMES")
+
+    @pytest.mark.slow("Parse real large file with symbols. Approx. 15 sec.")
+    def test_get_1(self) -> None:
+        """
+        Test that ES symbol is returned by request.
+        """
+        matched = self.ib_universe.get(
+            ticker="ES",
+            exchange="GLOBEX",
+            asset_class=icdtyp.AssetClass.Futures,
+            contract_type=icdtyp.ContractType.Continuous,
+            currency="USD",
+        )
+        self.assertEqual(len(matched), 1)
+
+    @pytest.mark.slow("Parse real large file with symbols. Approx. 15 sec.")
+    def test_get_2(self) -> None:
+        """
+        Test that NON_EXISTING symbol is returned by request.
+        """
+        matched = self.ib_universe.get(
+            ticker="NON_EXISTING",
+            exchange="GLOBEX",
+            asset_class=icdtyp.AssetClass.Futures,
+            contract_type=icdtyp.ContractType.Continuous,
+            currency="USD",
+        )
+        self.assertEqual(matched, [])
+
+    @pytest.mark.slow("Parse real large file with symbols. Approx. 15 sec.")
+    def test_get_3(self) -> None:
+        """
+        Test that NG symbol is in downloaded list.
+        """
+        matched = self.ib_universe.get(
+            ticker="NG",
+            exchange="NYMEX",
+            asset_class=icdtyp.AssetClass.Futures,
+            contract_type=icdtyp.ContractType.Continuous,
+            currency="USD",
+            is_downloaded=True,
+            frequency=icdtyp.Frequency.Minutely,
+            path_generator=iidlib.IbFilePathGenerator(),
+        )
+        self.assertEqual(len(matched), 1)
+
+    @pytest.mark.slow("Parse real large file with symbols. Approx. 15 sec.")
+    def test_get_4(self) -> None:
+        """
+        Test that NON_EXISTING symbol is not in the downloaded list.
+        """
+        matched = self.ib_universe.get(
+            ticker="NON_EXISTING",
+            exchange="GLOBEX",
+            asset_class=icdtyp.AssetClass.Futures,
+            contract_type=icdtyp.ContractType.Continuous,
+            currency="USD",
+            is_downloaded=True,
+            frequency=icdtyp.Frequency.Minutely,
+            path_generator=iidlib.IbFilePathGenerator(),
+        )
+        self.assertEqual(matched, [])
