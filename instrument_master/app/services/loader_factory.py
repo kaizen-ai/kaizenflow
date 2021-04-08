@@ -1,11 +1,11 @@
 """
-Import as: import instrument_master.app.services.loader_factory as iasloa.
+Import as:
+
+import instrument_master.app.services.loader_factory as iasloa
 """
 from typing import Any
 
-import instrument_master.common.data.load.data_loader as icdlda
-import instrument_master.common.data.load.s3_data_loader as icdls3
-import instrument_master.common.data.load.sql_data_loader as icdlsq
+import instrument_master.common.data.load.abstract_data_loader as icdlab
 
 # TODO: Move it out to app/
 
@@ -46,13 +46,13 @@ class LoaderFactory:
         """
         loader: icdlab.AbstractS3DataLoader
         if provider == "kibot":
-            import instrument_master.kibot.data.load.kibot_s3_data_loader as vkdls3
+            import instrument_master.kibot.data.load.kibot_s3_data_loader as ikdlki3
 
-            loader = vkdls3.KibotS3DataLoader()
+            loader = ikdlki3.KibotS3DataLoader()
         elif provider == "ib":
-            import instrument_master.ib.data.load.ib_s3_data_loader as vidls3
+            import instrument_master.ib.data.load.ib_s3_data_loader as iidlib3
 
-            loader = vidls3.IbS3DataLoader()
+            loader = iidlib3.IbS3DataLoader()
         else:
             raise ValueError("S3 loader for %s is not implemented" % provider)
         return loader
@@ -74,15 +74,15 @@ class LoaderFactory:
         """
         loader: icdlab.AbstractSqlDataLoader
         if provider == "kibot":
-            import instrument_master.kibot.data.load.kibot_sql_data_loader as vkdlsq
+            import instrument_master.kibot.data.load.kibot_sql_data_loader as ikdlki
 
-            loader = vkdlsq.KibotSqlDataLoader(
+            loader = ikdlki.KibotSqlDataLoader(
                 dbname=dbname, user=user, password=password, host=host, port=port
             )
         elif provider == "ib":
-            import instrument_master.ib.data.load.ib_sql_data_loader as vidlsq
+            import instrument_master.ib.data.load.ib_sql_data_loader as iidlib
 
-            loader = vidlsq.IbSqlDataLoader(
+            loader = iidlib.IbSqlDataLoader(
                 dbname=dbname, user=user, password=password, host=host, port=port
             )
         else:
