@@ -12,7 +12,7 @@ NO_SUPERSLOW_TESTS='True'
 
 RUN_TESTS_DIR="instrument_master/devops/docker_scripts/"
 
-IM_PG_PORT_LOCAL?=5432
+IM_PG_PORT_LOCAL?=5450
 
 # Target image for the common actions.
 IMAGE_DEV=$(IM_IMAGE_DEV)
@@ -31,11 +31,11 @@ im.docker_pull:
 	docker pull $(IMAGE_DEV)
 
 # Run app container, start a local PostgreSQL DB.
+# POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
+# -f devops/compose/docker-compose.yml
 im.docker_up.local:
 	IMAGE=$(IMAGE_DEV) \
-	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
-		-f devops/compose/docker-compose.yml \
 		-f devops/compose/docker-compose.local.yml \
 		run \
 		--rm \

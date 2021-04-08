@@ -1,3 +1,7 @@
+ECR_BASE_PATH=083233266530.dkr.ecr.us-east-2.amazonaws.com
+
+IM_REPO_BASE_PATH=$(ECR_BASE_PATH)/im
+
 # TODO(*): Use a different repo like im-airflow or call the images airflow-latest ?
 IM_IMAGE_AIRFLOW_DEV=$(IM_REPO_BASE_PATH):latest-airflow
 
@@ -14,9 +18,19 @@ im.docker_build_worker_image:
 		--file devops/docker_build/im_db_loader_worker.dev.Dockerfile \
 		.
 
+im.docker_build_worker_image_with_cache:
+	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
+	docker build \
+		--progress=plain \
+		-t $(IM_IMAGE_AIRFLOW_DEV) \
+		--file devops/docker_build/im_db_loader_worker.dev.Dockerfile \
+		.
+
 im.docker_pull_related_images.local:
 	WORKER_IMAGE=$(IM_IMAGE_AIRFLOW_DEV) \
-	docker-compose -f devops/compose/docker-compose.local.yml pull
+	docker-compose \
+		-f devops/compose/docker-compose.local.yml \
+		pull
 
 
 im.run_bash.local:
@@ -25,7 +39,8 @@ im.run_bash.local:
 		-f devops/compose/docker-compose.local.yml \
 		run \
 		--rm \
-        app bash
+        app \
+		bash
 
 
 im.run_convert_s3_to_sql_kibot.local:
@@ -34,7 +49,8 @@ im.run_convert_s3_to_sql_kibot.local:
 		-f devops/compose/docker-compose.local.yml \
 		run \
 		--rm \
-        app instrument_master/app/transform/convert_s3_to_sql.py $(PARAMS)
+        app \
+		instrument_master/app/transform/convert_s3_to_sql.py $(PARAMS)
 
 
 im.docker_run_stack.local:

@@ -9,7 +9,7 @@ ENV BITNAMI_PKG_CHMOD="-R g+rwX" \
     BITNAMI_PKG_EXTRA_DIRS="/opt/bitnami/airflow/dags" \
     HOME="/" \
     PATH="/opt/bitnami/python/bin:/opt/bitnami/postgresql/bin:/opt/bitnami/common/bin:/opt/bitnami/airflow/venv/bin:/opt/bitnami/nami/bin:$PATH"
-COPY devops/docker_build/airflow_files/airflow_worker/prebuildfs /
+COPY devops/airflow_worker/prebuildfs /
 RUN apt update && \
         apt install \
             ca-certificates \
@@ -67,7 +67,7 @@ RUN update-locale LANG=C.UTF-8 LC_MESSAGES=POSIX && \
     DEBIAN_FRONTEND=noninteractive dpkg-reconfigure locales
 RUN echo 'en_US.UTF-8 UTF-8' >> /etc/locale.gen && locale-gen
 
-COPY devops/docker_build/airflow_files/airflow_worker/rootfs /
+COPY devops/airflow_worker/rootfs /
 RUN /opt/bitnami/scripts/locales/add-extra-locales.sh
 ENV AIRFLOW_DATABASE_HOST="postgresql" \
     AIRFLOW_DATABASE_NAME="bitnami_airflow" \
@@ -111,7 +111,8 @@ RUN apt-get update && \
     apt-get install postgresql-client -y && \
     apt-get purge gcc -y
 
-COPY devops/requirements.txt /
+# This is copied from instrument_master/devops/docker_build/dev.Dockerfile
+COPY devops/docker_build/im_db_loader_worker.requirements.txt ./requirements.txt
 RUN pip install -r /requirements.txt
 
 WORKDIR /app
