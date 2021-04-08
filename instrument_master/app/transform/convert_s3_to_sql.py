@@ -36,6 +36,18 @@ Usage examples:
       --asset_class futures \
       --exchange NYMEX \
       --currency USD
+
+- Convert daily data from S3 to SQL for a bunch of symbols for IB for a date range:
+  > convert_s3_to_sql.py \
+      --provider ib \
+      --frequency D \
+      --contract_type continuous \
+      --asset_class futures \
+      --exchange NYMEX \
+      --currency USD \
+      --start_ts 20210101000000 \
+      --end_ts 20210301000000 \
+      --incremental
 """
 
 import argparse
