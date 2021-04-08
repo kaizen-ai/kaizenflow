@@ -43,11 +43,10 @@ def get_connection_details() -> str:
 
 def get_init_sql_files(custom_files: Optional[List[str]] = None) -> List[str]:
     """
-    Return the list of PostgreSQL initialization scripts in proper execution
-    order.
+    Return the PostgreSQL initialization scripts in proper execution order.
 
     :param custom_files: provider related init files
-    :return: all files to init database
+    :return: all files needed to initialize the database
     """
     # Common files.
     files = [
@@ -138,7 +137,7 @@ def remove_database(dbname: str) -> None:
     connection.close()
 
 
-# TODO(*): Is this in the right place?
+# TODO(*): Move it to common/utils.py
 def is_inside_im_container() -> bool:
     """
     Return whether we are running inside IM app.

@@ -72,6 +72,8 @@ import instrument_master.common.metadata.symbols as icmsym
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(*): Pass symbol, exchange, ... and add some unit testing to this.
+#  We can use playback for creating unit tests.
 def _get_symbols_from_args(args: argparse.Namespace) -> List[icmsym.Symbol]:
     """
     Get list of symbols to extract.

@@ -11,7 +11,7 @@ import instrument_master.common.data.types as vcdtyp
 
 class FilePathGenerator(abc.ABC):
     """
-    Generate path for specific security to store data on a file system (e.g., S3).
+    Generate file path for specific security to store data on a file system (e.g., S3).
     """
 
     @abc.abstractmethod
