@@ -7,7 +7,7 @@ from tqdm.auto import tqdm
 import core.finance as cfinan
 import helpers.dataframe as hdataf
 import helpers.dbg as dbg
-import instrument_master.common.data.load.data_loader as vcdlda
+import instrument_master.common.data.load.abstract_data_loader as icdlab
 import instrument_master.common.data.types as vcdtyp
 
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
@@ -19,7 +19,7 @@ class FuturesForwardContracts:
     """
 
     def __init__(
-        self, data_loader: vcdlda.AbstractDataLoader, disable_tqdm: bool = False
+        self, data_loader: icdlab.AbstractDataLoader, disable_tqdm: bool = False
     ) -> None:
         """
         Initialize by injecting a data loader.

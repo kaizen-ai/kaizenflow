@@ -8,6 +8,9 @@ IM_REPO_BASE_PATH=$(ECR_BASE_PATH)/im
 IM_IMAGE_DEV=$(IM_REPO_BASE_PATH):latest
 IM_IMAGE_RC=$(IM_REPO_BASE_PATH):rc
 
+# TODO(*): Use a different repo like im-airflow or call the images airflow-latest ?
+IM_IMAGE_AIRFLOW_DEV=$(IM_REPO_BASE_PATH):latest-airflow
+
 NO_SUPERSLOW_TESTS='True'
 
 RUN_TESTS_DIR="instrument_master/devops/docker_scripts/"
@@ -24,7 +27,7 @@ im.print_setup:
 	@echo "IM_IMAGE_RC=$(IM_IMAGE_RC)"
 
 # #############################################################################
-# Development.
+# Local stage.
 # #############################################################################
 
 im.docker_pull:
@@ -55,8 +58,8 @@ im.docker_cmd.local:
 		app \
 		$(CMD)
 
-# Run app container w/o PostgreSQL.
-im.docker_bash:
+# Run app container without PostgreSQL.
+im.docker_bash.local:
 	IMAGE=$(IMAGE_DEV) \
 	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
@@ -89,6 +92,67 @@ im.docker_rm.local:
 		down; \
 	docker volume rm \
 		compose_im_postgres_data_local
+
+# #############################################################################
+# Development stage.
+# #############################################################################
+
+# Run app container.
+im.docker_bash.dev:
+	IMAGE=$(IMAGE_DEV) \
+	docker-compose \
+		-f devops/compose/docker-compose.dev.yml \
+		run \
+		--rm \
+		app \
+		bash
+
+# Run command in app.
+im.docker_cmd.dev:
+	IMAGE=$(IMAGE_DEV) \
+	docker-compose \
+		-f devops/compose/docker-compose.dev.yml \
+		run \
+		--rm \
+		-l user=$(USER) \
+		app \
+		$(CMD)
+
+# Run app container without PostgreSQL.
+im.docker_bash_without_psql.dev:
+	IMAGE=$(IMAGE_DEV) \
+	docker-compose \
+		-f devops/compose/docker-compose.dev.yml \
+		run \
+		--rm \
+		-l user=$(USER) \
+		--no-deps \
+		--entrypoint=instrument_master/devops/docker_build/entrypoints/entrypoint_app_only.sh \
+		app \
+		bash
+
+# Stop local container including all dependencies.
+im.docker_down.dev:
+	IMAGE=$(IMAGE_DEV) \
+	docker-compose \
+		-f devops/compose/docker-compose.dev.yml \
+		down
+
+# #############################################################################
+# Multistage.
+# #############################################################################
+
+im.docker_up.multistage:
+	docker-compose \
+		-f devops/compose/docker-compose.multistage.yml \
+		-d \
+		up
+
+# Stop multistage container including all dependencies.
+im.docker_down.multistage:
+	docker-compose \
+		-f devops/compose/docker-compose.multistage.yml \
+		down
 
 # #############################################################################
 # Test IM workflow.
@@ -176,6 +240,15 @@ im.docker_build_image.rc:
 		--file devops/docker_build/dev.Dockerfile \
 		.
 
+im.docker_build_worker_image:
+	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
+	docker build \
+		--progress=plain \
+		--no-cache \
+		-t $(IM_IMAGE_AIRFLOW_DEV) \
+		--file devops/docker_build/im_db_loader_worker.dev.Dockerfile \
+		.
+
 im.docker_build_image_with_cache.rc:
 	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
 	docker build \
@@ -205,7 +278,7 @@ im.docker_release.latest:
 	make im.docker_tag_rc_image.latest
 	make im.docker_push_image.latest
 	@echo "==> SUCCESS <=="
-	
+
 # #############################################################################
 # Test IM workflow (RC)
 # #############################################################################

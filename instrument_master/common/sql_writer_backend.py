@@ -183,7 +183,6 @@ class AbstractSqlWriterBackend(abc.ABC):
                 )
                 max_datetime = cur.fetchone()[0]
         # Trim the df based on the found maximum datetime.
-        df[datetime_field_name] = pd.to_datetime(df[datetime_field_name])
         if max_datetime is not None:
             df = df[df[datetime_field_name] > pd.to_datetime(max_datetime)]
         return df

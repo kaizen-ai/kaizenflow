@@ -65,7 +65,7 @@ def validate_datetime(timestamp: DATETIME_TYPE) -> pd.Timestamp:
     return pd_timestamp
 
 
-def to_datetime(dates: Union[pd.Series, pd.Index]) -> Union[pd.Series, pd.Index]:
+def to_datetime(dates: Union[pd.Series, pd.Index], date_standard: Optional[str] = None) -> Union[pd.Series, pd.Index]:
     """
     Convert string dates to datetime.
 
@@ -73,9 +73,10 @@ def to_datetime(dates: Union[pd.Series, pd.Index]) -> Union[pd.Series, pd.Index]
     the dates to the end of period instead of the start.
 
     :param dates: series or index of dates to convert
+    :param date_standard: "standard" or "ISO_8601", `None` defaults to
+        "standard"
     :return: datetime dates
     """
-    # TODO(Julia): Support ISO 8601 weeks.
     # This function doesn't deal with mixed formats.
     dbg.dassert_isinstance(dates, Iterable)
     dbg.dassert(not isinstance(dates, str))
@@ -103,7 +104,8 @@ def to_datetime(dates: Union[pd.Series, pd.Index]) -> Union[pd.Series, pd.Index]
             datetime_dates = datetime_dates.map(shift_func)
         return datetime_dates
     # If standard conversion fails, attempt our own conversion.
-    format_determination_output = _determine_date_format(date_example)
+    date_standard = date_standard or "standard"
+    format_determination_output = _determine_date_format(date_example, date_standard)
     if format_determination_output is None:
         return datetime_dates
     format_, date_modification_func = format_determination_output
@@ -234,17 +236,17 @@ def _determine_date_format(
         _LOG.error("This format is not supported: '%s'", date)
         return
     next_char = date[4]
-    # TODO(Julia): Support `["-", ".", "/", " "]` separators.
-    if next_char == "-":
+    if next_char in ["-", ".", "/", " "]:
         if len(date) not in [7, 8]:
             _LOG.error("This format is not supported: '%s'", date)
             return
-        format_ += next_char
+        format_ += "-"
         next_char = date[5]
         if next_char == "W":
             # "2020-W14" format.
 
             def modify_weekly_date(x: str) -> str:
+                x = re.sub(r"[//.\s]", "-", x)
                 return x + "-6"
 
             date_modification_func = modify_weekly_date
@@ -252,16 +254,18 @@ def _determine_date_format(
         elif next_char == "S":
             # "2020-S1" - semi-annual format.
             def modify_semiannual_date(x: str) -> str:
+                x = re.sub(r"[//.\s]", "-", x)
                 return x.replace("S1", "06-30").replace("S2", "12-31")
 
             date_modification_func = modify_semiannual_date
             format_ += "%m-%d"
         elif next_char == "B":
             # "2020-B1" - bi-monthly format (every other month).
-            # We'll index by the start of the month starting with January,
-            # but let's check PiT.
+            # We'll index by the start of the month starting with January
+            # based on PiT.
 
             def modify_bimonthly_date(x: str) -> str:
+                x = re.sub(r"[//.\s]", "-", x)
                 bimonth_number = x[6]
                 month_number = int(bimonth_number) * 2 - 1
                 modified_x = f"{x[:5]}{month_number}-01"
@@ -272,8 +276,7 @@ def _determine_date_format(
         else:
             _LOG.error("This format is not supported: '%s'", date)
             return
-    elif next_char == "M":
-        # TODO(Julia): Check for string length.
+    elif next_char == "M" and len(date) == 7:
         # "1959M01" format.
 
         def modify_monthly_date(x: str) -> str:
@@ -284,7 +287,7 @@ def _determine_date_format(
             )[1]
             modified_x = f"{x[:4]}-{month_number}-{num_days_in_month}"
             return modified_x
-
+        
         date_modification_func = modify_monthly_date
         format_ += "-%m-%d"
     else:

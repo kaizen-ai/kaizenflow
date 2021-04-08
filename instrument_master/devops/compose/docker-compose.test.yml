@@ -12,7 +12,7 @@ services:
   # TODO(gp): -> im.postgres.test?
   im_postgres_test:
     image: postgres:13
-    # TODO(gp): -> Needed?
+    # TODO(gp): Not needed, remove.
     container_name: im_postgres_test
     restart: "no"
     env_file:
