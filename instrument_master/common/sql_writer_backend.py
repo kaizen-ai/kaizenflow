@@ -8,7 +8,7 @@ import psycopg2.extensions as pexten
 import instrument_master.common.data.types as icdtyp
 
 
-# TODO: -> Why not AbstractSqlWriter?
+# TODO(*): -> Why not AbstractSqlWriter?
 class AbstractSqlWriterBackend(abc.ABC):
     """
     Interface for manager of CRUD operations on a database defined in db/sql.
@@ -66,6 +66,8 @@ class AbstractSqlWriterBackend(abc.ABC):
                     [exchange],
                 )
 
+    # TODO(gp): What is trade_symbol? Why do we need this table together with symbol
+    #  and exchange.
     def ensure_trade_symbol_exists(
         self,
         symbol_id: int,

@@ -15,7 +15,7 @@ NO_SUPERSLOW_TESTS='True'
 
 RUN_TESTS_DIR="instrument_master/devops/docker_scripts/"
 
-IM_PG_PORT_LOCAL?=5550
+IM_PG_PORT_LOCAL?=5432
 
 # Target image for the common actions.
 IMAGE_DEV=$(IM_IMAGE_DEV)
