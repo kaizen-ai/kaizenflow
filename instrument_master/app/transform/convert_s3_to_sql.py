@@ -3,7 +3,7 @@ r"""
 Converts data from S3 to SQL and inserts it into DB.
 
 Usage examples:
-- Convert daily data from S3 to SQL for AAPL, and provider "kibot":
+- Convert daily data for AAPL and provider "kibot":
   > convert_s3_to_sql.py \
       --provider kibot \
       --symbol AAPL \
@@ -12,7 +12,7 @@ Usage examples:
       --asset_class stocks \
       --exchange NYSE
 
-- Convert daily data from S3 to SQL for AAPL, Kibot provider, specifying connection:
+- Convert daily data for AAPL, Kibot provider, specifying connection:
   > convert_s3_to_sql.py \
       --provider kibot \
       --symbol AAPL \
@@ -25,6 +25,27 @@ Usage examples:
       --dbuser menjgbcvejlpcbejlc \
       --dbpass eidvlbaresntlcdbresntdjlrs \
       --dbport 5432
+
+- Convert daily data for all continuous futures symbols for IB:
+  > convert_s3_to_sql.py \
+      --provider ib \
+      --frequency D \
+      --contract_type continuous \
+      --asset_class futures \
+      --exchange NYMEX \
+      --currency USD
+
+- Convert daily data for all continuous futures for IB for a date range:
+  > convert_s3_to_sql.py \
+      --provider ib \
+      --frequency D \
+      --contract_type continuous \
+      --asset_class futures \
+      --exchange NYMEX \
+      --currency USD \
+      --start_ts 20210101000000 \
+      --end_ts 20210301000000 \
+      --incremental
 """
 
 import argparse
