@@ -71,9 +71,13 @@
 ## Prerequisites
 
 - IB TWS or Gateway app [should be up](./ib/connect/README.md) on `research.p1`
-  with API port 4012. For example:
+  with API port 4012. To start IB Gateway app: 
 
   ```bash
+  > cd ~/amp/instrument_master/ib/connect
+  > make ib_connect.docker_build_image.rc && \
+    make ib_connect.docker_tag_latest.rc && \
+    make ib_connect.docker_tag_prod.latest
   > IB_CONNECT_USER=gpsagg314 \
     IB_CONNECT_PASSWORD=<password> \
     IB_CONNECT_VNC_PASSWORD=12345 \
