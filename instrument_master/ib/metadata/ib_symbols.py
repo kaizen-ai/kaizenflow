@@ -21,10 +21,11 @@ _LOG = logging.getLogger(__name__)
 
 class IbSymbolUniverse(icmsym.SymbolUniverse):
     """
-    Store symbols available to download with IB Gateway API.
+    Store symbols available in IB to download and already downloaded.
     """
 
     _S3_SYMBOL_FILE_PREFIX = os.path.join(iidcon.S3_METADATA_PREFIX, "symbols-")
+    # TODO(gp): Is this used?
     _S3_EXCHANGE_FILE_PREFIX = os.path.join(
         iidcon.S3_METADATA_PREFIX, "exchanges-"
     )
@@ -50,24 +51,32 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
             if symbols_file is None
             else symbols_file
         )
+        _LOG.debug("symbol_file=%s", symbol_file)
+        assert 0
         self._symbols_list = self._parse_symbols_file(symbol_file)
 
     def get_all_symbols(self) -> List[icmsym.Symbol]:
         return self._symbols_list
 
+    # TODO(gp): Make this static and cache it.
     @classmethod
     def _get_latest_symbols_file(cls) -> str:
         """
         Get the latest available file with symbols on S3.
         """
-        latest_file: str = max(hs3.ls(cls._S3_SYMBOL_FILE_PREFIX))
+        files = hs3.ls(cls._S3_SYMBOL_FILE_PREFIX)
+        _LOG.debug("files='%s'", files)
+        latest_file: str = max(files)
+        _LOG.debug("latest_file='%s'", latest_file)
         # Add a prefix.
         latest_file = os.path.join(iidcon.S3_METADATA_PREFIX, latest_file)
         dbg.dassert(
             hs3.exists(latest_file), "File %s doesn't exist" % latest_file
         )
+        _LOG.debug("latest_file='%s'", latest_file)
         return latest_file
 
+    # TODO(gp): Make this static and cache it.
     @classmethod
     def _parse_symbols_file(cls, symbols_file: str) -> List[icmsym.Symbol]:
         """

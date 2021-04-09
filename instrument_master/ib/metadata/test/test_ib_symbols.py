@@ -2,6 +2,7 @@ import os
 
 import pytest
 
+import helpers.dbg as dbg
 import helpers.unit_test as hut
 import instrument_master.common.data.types as icdtyp
 import instrument_master.common.metadata.symbols as icmsym
@@ -10,6 +11,7 @@ import instrument_master.ib.data.load.ib_file_path_generator as iidlib
 import instrument_master.ib.metadata.ib_symbols as iimibs
 
 
+# TODO(gp): -> TestIbSymbolUniverse
 class TestIbSymbolNamespace(hut.TestCase):
     """
     Test `IbSymbolNamespace` class.
@@ -17,6 +19,7 @@ class TestIbSymbolNamespace(hut.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
+        dbg.shutup_chatty_modules(verbose=True)
         hut.TestCase.setUpClass()
         cls.ib_universe = iimibs.IbSymbolUniverse()
 
