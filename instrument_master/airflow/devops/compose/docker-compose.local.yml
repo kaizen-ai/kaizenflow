@@ -65,7 +65,7 @@ services:
       - ../env/local/airflow.env
     volumes:
       - airflow_data_local:/bitnami
-      - ../airflow_files/airflow_configs/requirements.txt:/bitnami/python/requirements.txt
+      - ../airflow_configs/requirements.txt:/bitnami/python/requirements.txt
       - ../dags:/opt/bitnami/airflow/dags
     depends_on:
       - postgresql
