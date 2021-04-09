@@ -15,15 +15,15 @@ services:
 #    working_dir: /app
 #    entrypoint: /app/instrument_master/devops/docker_build/entrypoints/entrypoint_deploy.sh
 
-  im_postgres_local:
-    image: postgres:13
-    restart: "no"
-    volumes:
-      - im_postgres_data_local:/var/lib/postgresql/data
-    ports:
-      - 5432:5432
-    env_file:
-      - ../env/local/im_postgres_config.env
+#  im_postgres_local:
+#    image: postgres:13
+#    restart: "no"
+#    volumes:
+#      - im_postgres_data_local:/var/lib/postgresql/data
+#    ports:
+#      - 5432:5432
+#    env_file:
+#      - ../env/local/im_postgres_config.env
 
   # ###########################################################################
   # Airflow
@@ -84,7 +84,7 @@ services:
 
 
 volumes:
-  im_postgres_data_local: {}
+  #im_postgres_data_local: {}
   redis_data_local: {}
   postgresql_data_local: {}
   airflow_scheduler_data_local: {}
