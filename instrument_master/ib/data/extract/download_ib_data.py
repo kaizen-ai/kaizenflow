@@ -40,9 +40,8 @@ Usage examples:
       --frequency D \
       --exchange GLOBEX \
       --currency USD
-
-
 """
+
 import argparse
 import logging
 from typing import List
@@ -114,19 +113,23 @@ def _main(parser: argparse.ArgumentParser) -> None:
     symbols = _get_symbols_from_args(args)
     # Extract the data.
     extractor = iideib.IbDataExtractor()
+    _LOG.info("Found %s symbols", len(symbols))
     for symbol in symbols:
-        part_files_dir = args.dst_dir
-        if part_files_dir is None:
-            part_files_dir = extractor.get_default_part_files_dir(
+        _LOG.info("Processing symbol '%s'", symbol)
+        dst_dir = args.dst_dir
+        if dst_dir is None:
+            dst_dir = extractor.get_default_part_files_dir(
                 symbol=symbol.ticker,
                 frequency=args.frequency,
                 asset_class=symbol.asset_class,
                 contract_type=symbol.contract_type,
             )
-        # On local machine make sure that path exists.
-        if not part_files_dir.startswith("s3://"):
-            hio.create_dir(part_files_dir, incremental=True)
+        _LOG.info("dst_dir='%s'", dst_dir)
+        # If dst dir is on the Local machine, make sure that path exists.
+        if not dst_dir.startswith("s3://"):
+            hio.create_dir(dst_dir, incremental=True)
         if _DOWNLOAD_ACTION in actions:
+            _LOG.info("Downloading")
             extractor.extract_data_parts_with_retry(
                 exchange=symbol.exchange,
                 symbol=symbol.ticker,
@@ -137,11 +140,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 start_ts=args.start_ts,
                 end_ts=args.end_ts,
                 incremental=args.incremental,
-                part_files_dir=part_files_dir,
+                part_files_dir=dst_dir,
             )
         if _PUSH_TO_S3_ACTION in actions:
+            _LOG.info("Pushing to S3")
             extractor.update_archive(
-                part_files_dir=part_files_dir,
+                part_files_dir=dst_dir,
                 symbol=symbol.ticker,
                 asset_class=symbol.asset_class,
                 frequency=args.frequency,
