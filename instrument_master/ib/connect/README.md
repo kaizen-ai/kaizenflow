@@ -24,12 +24,11 @@
 
 ## Getting Started
 
-- All commands need to be executed from `amp` root directory
+- All commands need to be executed from the current directory
 
 ### Pull image
 
 ```bash
-> make docker_login
 > make ib_connect.docker_pull
 ```
 
@@ -39,12 +38,15 @@
 ### Create image
 
 ```bash
-> make ib_connect.docker_build.rc_image
+> make ib_connect.docker_build_image.rc
 > # Check that image is correct.
-> make ib_connect.docker_tag.rc_dev
+> make ib_connect.docker_tag_latest.rc
 ```
 
 ### Start app on localhost
+
+- Note that only one app can be opened at the same time.
+  It means if production app is up, no one can run this app.
 
 - You need to add a file with IB credentials to `~/.vnc/ib.credentials` like:
 
