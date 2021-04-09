@@ -40,9 +40,8 @@ Usage examples:
       --frequency D \
       --exchange GLOBEX \
       --currency USD
-
-
 """
+
 import argparse
 import logging
 from typing import List
@@ -67,40 +66,44 @@ VALID_ACTIONS = [_DOWNLOAD_ACTION, _PUSH_TO_S3_ACTION]
 DEFAULT_ACTIONS = [_DOWNLOAD_ACTION, _PUSH_TO_S3_ACTION]
 
 
-def _get_symbols_from_args(args: argparse.Namespace) -> List[icmsym.Symbol]:
+def _get_symbols_from_args(symbol: str, exchange: str, asset_class: str,
+                           contract_type: str, currency: str) -> List[icmsym.Symbol]:
     """
     Get list of symbols to extract.
     """
     # If all args are specified to extract only one symbol, return this symbol.
-    if args.symbol and args.exchange and args.asset_class and args.currency:
-        return [
+    if symbol and exchange and asset_class and currency:
+        ret = [
             icmsym.Symbol(
-                ticker=args_symbol,
-                exchange=args.exchange,
-                asset_class=args.asset_class,
-                contract_type=args.contract_type,
-                currency=args.currency,
+                ticker=s,
+                exchange=exchange,
+                asset_class=asset_class,
+                contract_type=contract_type,
+                currency=currency,
             )
-            for args_symbol in args.symbol
+            for s in symbol
         ]
+        _LOG.debug("ret=%s", ret)
+        return ret
     # Find all matched symbols otherwise.
     symbol_universe = iimibs.IbSymbolUniverse()
-    if args.symbol is None:
-        args_symbols = [args.symbol]
+    ret: List[icmsym.Symbol] = []
+    if symbol is None:
+        symbols = [symbol]
     else:
-        args_symbols = args.symbol
-    symbols: List[icmsym.Symbol] = []
-    for symbol in args_symbols:
-        symbols.extend(
+        symbols = symbol
+    for s in symbols:
+        ret.extend(
             symbol_universe.get(
-                ticker=symbol,
-                exchange=args.exchange,
-                asset_class=args.asset_class,
-                contract_type=args.contract_type,
-                currency=args.currency,
+                ticker=s,
+                exchange=exchange,
+                asset_class=asset_class,
+                contract_type=contract_type,
+                currency=currency,
             )
         )
-    return symbols
+    _LOG.debug("ret=%s", ret)
+    return ret
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
@@ -111,22 +114,34 @@ def _main(parser: argparse.ArgumentParser) -> None:
         args, valid_actions=VALID_ACTIONS, default_actions=DEFAULT_ACTIONS
     )
     # Get symbols to retrieve.
-    symbols = _get_symbols_from_args(args)
+    symbol = args.symbol
+    exchange = args.exchange
+    asset_class = args.asset_class
+    contract_type = args.contract_type
+    currency = args.currency
+    symbols = _get_symbols_from_args(symbol, exchange, contract_type, asset_class,
+                                     currency)
+    _LOG.info("symbols=%s", symbols)
+    assert 0
     # Extract the data.
     extractor = iideib.IbDataExtractor()
+    _LOG.info("Found %s symbols", len(symbols))
     for symbol in symbols:
-        part_files_dir = args.dst_dir
-        if part_files_dir is None:
-            part_files_dir = extractor.get_default_part_files_dir(
+        _LOG.info("Processing symbol '%s'", symbol)
+        dst_dir = args.dst_dir
+        if dst_dir is None:
+            dst_dir = extractor.get_default_part_files_dir(
                 symbol=symbol.ticker,
                 frequency=args.frequency,
                 asset_class=symbol.asset_class,
                 contract_type=symbol.contract_type,
             )
-        # On local machine make sure that path exists.
-        if not part_files_dir.startswith("s3://"):
-            hio.create_dir(part_files_dir, incremental=True)
+        _LOG.info("dst_dir='%s'", dst_dir)
+        # If dst dir is on the Local machine, make sure that path exists.
+        if not dst_dir.startswith("s3://"):
+            hio.create_dir(dst_dir, incremental=True)
         if _DOWNLOAD_ACTION in actions:
+            _LOG.info("Downloading")
             extractor.extract_data_parts_with_retry(
                 exchange=symbol.exchange,
                 symbol=symbol.ticker,
@@ -137,11 +152,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 start_ts=args.start_ts,
                 end_ts=args.end_ts,
                 incremental=args.incremental,
-                part_files_dir=part_files_dir,
+                part_files_dir=dst_dir,
             )
         if _PUSH_TO_S3_ACTION in actions:
+            _LOG.info("Pushing to S3")
             extractor.update_archive(
-                part_files_dir=part_files_dir,
+                part_files_dir=dst_dir,
                 symbol=symbol.ticker,
                 asset_class=symbol.asset_class,
                 frequency=args.frequency,

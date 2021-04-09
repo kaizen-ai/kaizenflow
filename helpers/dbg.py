@@ -735,17 +735,20 @@ def get_all_loggers() -> List:
     return loggers
 
 
-def get_matching_loggers(module_names: Union[str, Iterable[str]]) -> List:
+def get_matching_loggers(module_names: Union[str, Iterable[str]], verbose: bool) -> List:
     """
     Find loggers that match a name or a name in a set.
     """
-    loggers = get_all_loggers()
     if isinstance(module_names, str):
         module_names = [module_names]
+    loggers = get_all_loggers()
+    if verbose:
+        print("loggers=\n", "\n".join(map(str, loggers)))
+    #
     sel_loggers = []
     for module_name in module_names:
-        # print(module_name)
-        # print("\n".join(map(str, loggers)))
+        if verbose:
+            print("module_name=%s" % module_name)
         # TODO(gp): We should have a regex.
         # str(logger) looks like `<Logger tornado.application (DEBUG)>`
         sel_loggers_tmp = [
@@ -756,6 +759,8 @@ def get_matching_loggers(module_names: Union[str, Iterable[str]]) -> List:
         ]
         # print(sel_loggers_tmp)
         sel_loggers.extend(sel_loggers_tmp)
+    if verbose:
+        print("sel_loggers=%s" % sel_loggers)
     return sel_loggers
 
 
@@ -766,6 +771,8 @@ def shutup_chatty_modules(
     Reduce the verbosity for external modules that are very chatty.
     """
     module_names = [
+        "aiobotocore",
+        "asyncio",
         "boto",
         "boto3",
         "botocore",
@@ -778,7 +785,7 @@ def shutup_chatty_modules(
         "s3transfer",
         "urllib3",
     ]
-    loggers = get_matching_loggers(module_names)
+    loggers = get_matching_loggers(module_names, verbose)
     print("Shutting up %s modules" % len(loggers))
     loggers = sorted(loggers, key=lambda logger: logger.name)
     if verbose:

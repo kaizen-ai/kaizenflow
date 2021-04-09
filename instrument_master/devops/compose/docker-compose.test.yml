@@ -3,13 +3,12 @@ version: '3'
 services:
   app:
     image: ${IMAGE}
-    entrypoint: /app/instrument_master/devops/docker_build/entrypoints/entrypoint_deploy.sh
     depends_on:
       - im_postgres_test
     env_file:
       - ../env/test.env
+    entrypoint: /app/instrument_master/devops/docker_build/entrypoints/entrypoint_deploy.sh
 
-  # TODO(gp): -> im.postgres.test?
   im_postgres_test:
     image: postgres:13
     # TODO(gp): Not needed, remove.

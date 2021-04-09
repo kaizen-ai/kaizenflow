@@ -161,6 +161,6 @@ class SymbolUniverse(abc.ABC):
                         "symbol=%s doesn't have the corresponding file %s", path
                     )
                     continue
-            _LOG.debug("symbol=%s is part of the universe", path)
+            _LOG.debug("symbol=%s is part of the universe", symbol)
             matched_symbols.append(symbol)
         return matched_symbols

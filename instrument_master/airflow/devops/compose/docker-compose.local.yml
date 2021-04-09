@@ -65,8 +65,10 @@ services:
       - ../env/local/airflow.env
     volumes:
       - airflow_data_local:/bitnami
-      - ../docker_build/airflow_files/airflow_configs/requirements.txt:/bitnami/python/requirements.txt
+      - ../airflow_files/airflow_configs/requirements.txt:/bitnami/python/requirements.txt
       - ../dags:/opt/bitnami/airflow/dags
+    depends_on:
+      - postgresql
 
   airflow-worker-db-loader:
     image: ${WORKER_IMAGE}
