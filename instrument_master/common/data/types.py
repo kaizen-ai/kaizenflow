@@ -1,7 +1,7 @@
 """
 Import as:
 
-import instrument_master.common.data.types as icdtyp
+import instrument_master.common.types as icdtyp
 """
 import enum
 

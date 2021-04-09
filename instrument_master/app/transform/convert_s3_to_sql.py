@@ -3,7 +3,7 @@ r"""
 Converts data from S3 to SQL and inserts it into DB.
 
 Usage examples:
-- Convert daily data from S3 to SQL for AAPL, and provider "kibot":
+- Convert daily data for AAPL and provider "kibot":
   > convert_s3_to_sql.py \
       --provider kibot \
       --symbol AAPL \
@@ -13,7 +13,7 @@ Usage examples:
       --exchange NYSE \
       --currency USD
 
-- Convert daily data from S3 to SQL for AAPL, Kibot provider, specifying connection:
+- Convert daily data for AAPL, Kibot provider, specifying connection:
   > convert_s3_to_sql.py \
       --provider kibot \
       --symbol AAPL \
@@ -28,7 +28,7 @@ Usage examples:
       --dbpass eidvlbaresntlcdbresntdjlrs \
       --dbport 5432
 
-- Convert daily data from S3 to SQL for a bunch of symbols for IB:
+- Convert daily data for all continuous futures symbols for IB:
   > convert_s3_to_sql.py \
       --provider ib \
       --frequency D \
@@ -37,7 +37,7 @@ Usage examples:
       --exchange NYMEX \
       --currency USD
 
-- Convert daily data from S3 to SQL for a bunch of symbols for IB for a date range:
+- Convert daily data for all continuous futures for IB for a date range:
   > convert_s3_to_sql.py \
       --provider ib \
       --frequency D \
@@ -72,6 +72,8 @@ import instrument_master.common.metadata.symbols as icmsym
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(*): Pass symbol, exchange, ... and add some unit testing to this.
+#  We can use playback for creating unit tests.
 def _get_symbols_from_args(args: argparse.Namespace) -> List[icmsym.Symbol]:
     """
     Get list of symbols to extract.
