@@ -50,6 +50,10 @@ docker_kill_last:
 	docker ps -l
 	docker rm -f $(shell docker ps -l -q)
 
+docker_kill_all:
+	docker ps -a
+	docker rm -f $(shell docker ps -a -q)
+
 # #############################################################################
 # Git.
 # #############################################################################

@@ -19,12 +19,9 @@ import instrument_master.common.data.types as vcdtyp
 
 class AbstractDataLoader(abc.ABC):
     """
-    Abstract class for reading data for symbols of
-    a given asset, exchange, and frequency.
-
-    Concrete classes must specify:
-        - read_data method
+    Read data of a given frequency for symbols of a given asset and exchange.
     """
+
     @abc.abstractmethod
     def read_data(
         self,
@@ -59,11 +56,6 @@ class AbstractDataLoader(abc.ABC):
 class AbstractS3DataLoader(AbstractDataLoader):
     """
     Interface for class reading data from S3.
-
-    Concrete classes must specify:
-        - _normalize_1_min method
-        - _normalize_1_hour method
-        - _normalize_daily method
     """
 
     def __init__(self):
@@ -79,15 +71,17 @@ class AbstractS3DataLoader(AbstractDataLoader):
         """
         Apply a normalizer function based on the frequency.
 
-        :param df: a dataframe that should be normalized
+        :param df: a dataframe to be normalized
         :param frequency: frequency of the data
-        :return: a normalized dataframe
+        :return: the normalized dataframe
         :raises AssertionError: if frequency is not supported
         """
-        dbg.dassert_in(frequency,
-                       self._normalizer_dict,
-                       "Frequency %s is not supported",
-                       frequency)
+        dbg.dassert_in(
+            frequency,
+            self._normalizer_dict,
+            "Frequency %s is not supported",
+            frequency,
+        )
         normalizer = self._normalizer_dict[frequency]
         return normalizer(df)
 
@@ -101,53 +95,52 @@ class AbstractS3DataLoader(AbstractDataLoader):
         Filter pandas DataFrame with a date range.
 
         :param data: dataframe for filtering
-        :param start_ts: start time of data to read
-        :param end_ts: end time of data to read
+        :param start_ts: start time of data to read. `None` means the entire data
+        :param end_ts: end time of data to read. `None` means the current timestamp
         :return: filtered data
         """
+        # TODO(gp): Improve this.
         if start_ts or end_ts:
             start_ts = start_ts or pd.Timestamp.min
             end_ts = end_ts or pd.Timestamp.now()
             data = data[(data.index >= start_ts) & (data.index < end_ts)]
         return data
 
+    # TODO(*): -> _normalize_minute_data
     @staticmethod
     @abc.abstractmethod
     def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
         """
-        Abstract method for minutes data normalization.
+        Normalize minutely data.
 
-        :param df: Pandas DataFrame for the normalization.
-        :return: Normalized Pandas DataFrame
+        :param df: pandas df to normalize
+        :return: normalized pandas df
         """
 
     @staticmethod
     @abc.abstractmethod
     def _normalize_1_hour(df: pd.DataFrame) -> pd.DataFrame:
         """
-        Abstract method for hour data normalization.
+        Normalize hourly data.
 
-        :param df: Pandas DataFrame for the normalization.
-        :return: Normalized Pandas DataFrame
+        :param df: pandas df to normalize
+        :return: normalized pandas df
         """
 
     @staticmethod
     @abc.abstractmethod
     def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
         """
-        Abstract method for minutes data normalization.
+        Normalize daily data.
 
-        :param df: Pandas DataFrame for the normalization.
-        :return: Normalized Pandas DataFrame
+        :param df: pandas df to normalize
+        :return: normalized pandas df
         """
 
 
 class AbstractSqlDataLoader(AbstractDataLoader):
     """
-    Interface class loading the data from an SQL backend.
-
-    Concrete classes must specify:
-    - _get_table_name_by_frequency method
+    Interface class loading provider data from an SQL backend.
     """
 
     def __init__(
@@ -161,12 +154,13 @@ class AbstractSqlDataLoader(AbstractDataLoader):
             port=port,
         )
 
+    # TODO(*): Factor out common code.
     def get_symbol_id(
         self,
         symbol: str,
     ) -> int:
         """
-        Get primary key (id) of the Symbol entry by its symbol code.
+        Get primary key (id) by its symbol code (e.g., ES).
 
         :param symbol: symbol code, e.g. GOOGL
         :return: primary key (id)
@@ -187,9 +181,9 @@ class AbstractSqlDataLoader(AbstractDataLoader):
         exchange: str,
     ) -> int:
         """
-        Get primary key (id) of the Exchange entry by its name.
+        Get primary key (id) of the exchange by its name.
 
-        :param exchange: Name of the Exchange entry as defined in DB.
+        :param exchange: name of the Exchange entry as defined in DB
         :return: primary key (id)
         """
         exchange_id = -1

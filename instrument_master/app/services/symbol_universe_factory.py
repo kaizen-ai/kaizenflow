@@ -11,9 +11,9 @@ class SymbolUniverseFactory:
     @classmethod
     def get_symbol_universe(cls, provider: str) -> icmsym.SymbolUniverse:
         """
-        Get symbol universe for provider.
+        Get the universe of supported symbols for a given provider.
 
-        :param provider: provider (kibot, ...)
+        :param provider: provider (e.g., "kibot", "ib", ...)
         :raises ValueError: if SymbolUniverse is not implemented for provider
         """
         symbol_universe: icmsym.SymbolUniverse
@@ -24,7 +24,6 @@ class SymbolUniverseFactory:
             symbol_universe = iimibs.IbSymbolUniverse()
         else:
             raise ValueError(
-                "S3 to SQL transformer for provider '%s' is not implemented"
-                % provider
+                "Symbol universe for provider '%s' is not implemented" % provider
             )
         return symbol_universe
