@@ -11,7 +11,8 @@ class BaseClass:
     #  warning, so ignored it for now.
     @classmethod
     def from_dict(cls, d: dict):  # type: ignore
-        """Create a data class from a dict, ignoring additional arguments.
+        """
+        Create a data class from a dict, ignoring additional arguments.
 
         The full object can always be viewed in the WSDL file, and we can add
         fields to our custom types as needed.
@@ -40,8 +41,9 @@ class Symbol(BaseClass):
 
     @classmethod
     def from_csv_row(cls, row: Dict[str, str], exchange_code: str) -> "Symbol":
-        """Create a Symbol from a csv row, appends exchange code to symbol
-        code."""
+        """
+        Create a Symbol from a csv row, appends exchange code to symbol code.
+        """
         return cls(
             Code=f"{exchange_code}:{row['Code']}",
             Name=row["Name"],

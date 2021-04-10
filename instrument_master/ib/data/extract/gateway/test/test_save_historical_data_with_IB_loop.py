@@ -19,9 +19,6 @@ _LOG = logging.getLogger(__name__)
 )
 class Test_get_historical_data(iidegt.IbExtractionTest):
     def test_save_historical_data_with_IB_loop1(self) -> None:
-        """
-        
-        """
         # 2021-02-17 is a Wednesday and it's full day.
         start_ts = pd.Timestamp("2021-02-17 00:00:00")
         end_ts = start_ts + pd.DateOffset(days=1)

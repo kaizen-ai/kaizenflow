@@ -4,7 +4,9 @@ import airflow
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 
-P1_AIRFLOW_WORKER_DB_LOADER_QUEUE = os.environ["P1_AIRFLOW_WORKER_DB_LOADER_QUEUE"]
+P1_AIRFLOW_WORKER_DB_LOADER_QUEUE = os.environ[
+    "P1_AIRFLOW_WORKER_DB_LOADER_QUEUE"
+]
 STAGE = os.environ["STAGE"]
 SEND_EMAIL = STAGE not in ["LOCAL", "TEST"]
 
@@ -27,13 +29,13 @@ dag = DAG(
 test = BashOperator(
     task_id="test",
     bash_command='bash -c "/app/instrument_master/devops/docker_build/entrypoints/entrypoint_worker.sh '
-                 'instrument_master/app/transform/convert_s3_to_sql.py '
-                 '--provider kibot '
-                 '--symbol AAPL '
-                 '--frequency T '
-                 '--contract_type continuous '
-                 '--asset_class stocks '
-                 '--exchange NYSE"',
+    "instrument_master/app/transform/convert_s3_to_sql.py "
+    "--provider kibot "
+    "--symbol AAPL "
+    "--frequency T "
+    "--contract_type continuous "
+    "--asset_class stocks "
+    '--exchange NYSE"',
     dag=dag,
     queue=P1_AIRFLOW_WORKER_DB_LOADER_QUEUE,
 )

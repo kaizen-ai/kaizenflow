@@ -20,11 +20,11 @@
 # %autoreload 2
 
 import ib_insync
+
 print(ib_insync.__all__)
 
 import helpers.dbg as dbg
 import helpers.printing as pri
-import core.explore as exp
 import instrument_master.ib.data.extract.gateway.utils as ibutils
 
 # %% [markdown]
@@ -37,13 +37,17 @@ ib = ibutils.ib_connect(client_id=32, is_notebook=True)
 # # Basic
 
 # %%
-#print(pri.obj_to_str(ib, attr_mode="dir", callable_mode="all"))
+# print(pri.obj_to_str(ib, attr_mode="dir", callable_mode="all"))
 
 # %%
 ib.positions()
 
 # %%
-[v for v in ib.accountValues() if v.tag == 'NetLiquidationByCurrency' and v.currency == 'BASE']
+[
+    v
+    for v in ib.accountValues()
+    if v.tag == "NetLiquidationByCurrency" and v.currency == "BASE"
+]
 
 # %% [markdown]
 # ## Equity
@@ -54,18 +58,18 @@ contract = ib_insync.Contract(conId=270639)
 eq_contract = ibutils.to_contract_details(ib, contract)
 
 # %%
-contract = ib_insync.Stock('AMD', 'SMART', 'USD')
+contract = ib_insync.Stock("AMD", "SMART", "USD")
 eq_contract = ibutils.to_contract_details(ib, contract)
 
 # %%
-contract = ib_insync.Stock('INTC', 'SMART', 'USD', primaryExchange='NASDAQ')
+contract = ib_insync.Stock("INTC", "SMART", "USD", primaryExchange="NASDAQ")
 eq_contract = ibutils.to_contract_details(ib, contract)
 
 # %% [markdown]
 # ## Forex
 
 # %%
-contract = ib_insync.Forex('EURUSD')
+contract = ib_insync.Forex("EURUSD")
 forex_contract = ibutils.to_contract_details(ib, contract)
 
 # %%
@@ -75,7 +79,7 @@ print(pri.diff_strings(eq_contract, forex_contract))
 # ## CFD (contract for difference)
 
 # %%
-contract = ib_insync.CFD('IBUS30')
+contract = ib_insync.CFD("IBUS30")
 cfd_contract = ibutils.to_contract_details(ib, contract)
 
 # %%
@@ -85,7 +89,7 @@ print(pri.diff_strings(eq_contract, cfd_contract))
 # ## Futures
 
 # %%
-contract = ib_insync.Future('ES', '202109', 'GLOBEX')
+contract = ib_insync.Future("ES", "202109", "GLOBEX")
 fut_contract = ibutils.to_contract_details(ib, contract)
 
 # %%
@@ -95,21 +99,21 @@ print(pri.diff_strings(eq_contract, fut_contract, "eq", "fut"))
 # ## Continuous Futures
 
 # %%
-#contract = ib_insync.ContFuture('ES', '202109', 'GLOBEX')
-#fut_contract = ibutils.to_contract_details(ib, contract)
+# contract = ib_insync.ContFuture('ES', '202109', 'GLOBEX')
+# fut_contract = ibutils.to_contract_details(ib, contract)
 
 # %% [markdown]
 # ## Option
 
 # %%
-contract = ib_insync.Option('SPY', '202107', 240, 'C', 'SMART')
+contract = ib_insync.Option("SPY", "202107", 240, "C", "SMART")
 opt_contract = ibutils.to_contract_details(ib, contract)
 
 # %% [markdown]
 # ## Bond
 
 # %%
-contract = Bond(secIdType='ISIN', secId='US03076KAA60')
+contract = Bond(secIdType="ISIN", secId="US03076KAA60")
 bond_contract = ibutils.to_contract_details(ib, contract)
 
 # %% [markdown]
@@ -174,16 +178,16 @@ asset = ib_insync.ContFuture("ES", "Globex", "USD")
 ibutils.get_contract_details(ib, asset)
 
 # %%
-ibutils.get_end_timestamp(ib, contract, 'TRADES', useRTH=True)
+ibutils.get_end_timestamp(ib, contract, "TRADES", useRTH=True)
 
 # %% [markdown]
 # # Option chain
 
 # %%
-# Options on SPX next 3 
+# Options on SPX next 3
 
 # %%
-spx = ib_insync.Index('SPX', 'CBOE')
+spx = ib_insync.Index("SPX", "CBOE")
 print("type=%s %s" % (type(spx), spx))
 
 ib.qualifyContracts(spx)
@@ -215,25 +219,25 @@ spx_value
 ib.reqMarketDataType(4)
 
 if False:
-    contract = ib_insync.Stock('TSLA', 'SMART', 'USD')
-    whatToShow = 'TRADES'
+    contract = ib_insync.Stock("TSLA", "SMART", "USD")
+    whatToShow = "TRADES"
 elif False:
-    contract = ib_insync.Future('ES', '202109', 'GLOBEX')
-    whatToShow = 'TRADES'
+    contract = ib_insync.Future("ES", "202109", "GLOBEX")
+    whatToShow = "TRADES"
 elif False:
     contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
-    whatToShow = 'TRADES'
+    whatToShow = "TRADES"
 else:
-    contract = ib_insync.Forex('EURUSD')
-    whatToShow = 'MIDPOINT'
+    contract = ib_insync.Forex("EURUSD")
+    whatToShow = "MIDPOINT"
 
 if False:
-    durationStr = '1 Y'
-    barSizeSetting = '1 day'
-    #barSizeSetting='1 hour'
+    durationStr = "1 Y"
+    barSizeSetting = "1 day"
+    # barSizeSetting='1 hour'
 else:
-    durationStr = '1 D'
-    barSizeSetting = '1 hour'
+    durationStr = "1 D"
+    barSizeSetting = "1 hour"
 
 print("contract=", contract)
 print("whatToShow=", whatToShow)
@@ -245,33 +249,35 @@ ts = ib.reqHeadTimeStamp(contract, whatToShow=whatToShow, useRTH=True)
 print("ts=", ts)
 bars = ib.reqHistoricalData(
     contract,
-    endDateTime='',
+    endDateTime="",
     durationStr=durationStr,
     barSizeSetting=barSizeSetting,
     whatToShow=whatToShow,
     useRTH=True,
-    formatDate=1)
+    formatDate=1,
+)
 print("len(bars)=", len(bars))
 print(ib_insync.util.df(bars))
 
 # %%
-#icontract = ib_insync.Stock('TSLA', 'SMART', 'USD')
-contract = ib_insync.Forex('EURUSD')
+# icontract = ib_insync.Stock('TSLA', 'SMART', 'USD')
+contract = ib_insync.Forex("EURUSD")
 
 # Get the datetime of earliest available historical data for the contract.
-ib.reqHeadTimeStamp(contract, whatToShow='TRADES', useRTH=True)
+ib.reqHeadTimeStamp(contract, whatToShow="TRADES", useRTH=True)
 
 # %%
 print(contract)
 ib.reqMarketDataType(4)
 bars = ib.reqHistoricalData(
     contract,
-    endDateTime='20200101 01:01:01',
-    durationStr='60 D',
-    barSizeSetting='1 hour',
-    whatToShow='TRADES',
+    endDateTime="20200101 01:01:01",
+    durationStr="60 D",
+    barSizeSetting="1 hour",
+    whatToShow="TRADES",
     useRTH=True,
-    formatDate=1)
+    formatDate=1,
+)
 
 # %%
 print(bars[0])
@@ -285,29 +291,33 @@ display(df.tail())
 
 # %%
 ib.reqMarketDataType(1)
-contract = ib_insync.Forex('EURUSD')
+contract = ib_insync.Forex("EURUSD")
 
 bars = ib.reqHistoricalData(
-        contract,
-        endDateTime='',
-        durationStr='900 S',
-        barSizeSetting='10 secs',
-        whatToShow='MIDPOINT',
-        useRTH=True,
-        formatDate=1,
-        keepUpToDate=True)
+    contract,
+    endDateTime="",
+    durationStr="900 S",
+    barSizeSetting="10 secs",
+    whatToShow="MIDPOINT",
+    useRTH=True,
+    formatDate=1,
+    keepUpToDate=True,
+)
 
 print(bars[-1])
 
-# %%
-from IPython.display import display, clear_output
 import matplotlib.pyplot as plt
+
+# %%
+from IPython.display import clear_output, display
+
 
 def onBarUpdate(bars, hasNewBar):
     plt.close()
     plot = ib_insync.util.barplot(bars)
     clear_output(wait=True)
     display(plot)
+
 
 bars.updateEvent += onBarUpdate
 
@@ -324,7 +334,7 @@ def onBarUpdate(bars, hasNewBar):
 
 
 # %%
-bars = ib.reqRealTimeBars(contract, 5, 'MIDPOINT', False)
+bars = ib.reqRealTimeBars(contract, 5, "MIDPOINT", False)
 bars.updateEvent += onBarUpdate
 
 # %%
@@ -338,7 +348,7 @@ ib.cancelRealTimeBars(bars)
 # ## Streaming tick data
 
 # %%
-contracts = ('EURUSD', 'USDJPY', 'GBPUSD', 'USDCHF', 'USDCAD', 'AUDUSD')
+contracts = ("EURUSD", "USDJPY", "GBPUSD", "USDCHF", "USDCAD", "AUDUSD")
 contracts = [ib_insync.Forex(p) for p in contracts]
 ib.qualifyContracts(*contracts)
 
@@ -348,7 +358,7 @@ ib.qualifyContracts(*contracts)
 
 for contract in contracts:
     # https://ib-insync.readthedocs.io/api.html#ib_insync.ib.IB.reqMktData
-    genericTickList = ''
+    genericTickList = ""
     # Subscribe a stream of real time.
     snapshot = False
     # Request NBBO snapshot.
@@ -362,23 +372,34 @@ print(ticker)
 print(ticker.midpoint())
 
 # %%
-#ticker.marketPrice()
+# ticker.marketPrice()
 ticker.midpoint()
 
-# %%
-from IPython.display import display, clear_output
 import pandas as pd
+
+# %%
+from IPython.display import clear_output, display
 
 df = pd.DataFrame(
     index=[c.pair() for c in contracts],
-    columns=['bidSize', 'bid', 'ask', 'askSize', 'high', 'low', 'close'])
+    columns=["bidSize", "bid", "ask", "askSize", "high", "low", "close"],
+)
+
 
 def onPendingTickers(tickers):
     for t in tickers:
         df.loc[t.contract.pair()] = (
-            t.bidSize, t.bid, t.ask, t.askSize, t.high, t.low, t.close)
+            t.bidSize,
+            t.bid,
+            t.ask,
+            t.askSize,
+            t.high,
+            t.low,
+            t.close,
+        )
         clear_output(wait=True)
-    display(df)        
+    display(df)
+
 
 ib.pendingTickersEvent += onPendingTickers
 ib.sleep(10)
@@ -398,17 +419,17 @@ for contract in contracts:
 # https://interactivebrokers.github.io/tws-api/tick_data.html
 
 # %%
-ticker = ib.reqTickByTickData(eurusd, 'BidAsk')
+ticker = ib.reqTickByTickData(eurusd, "BidAsk")
 ib.sleep(2)
 print(ticker)
 
 # %%
-ticker = ib.reqTickByTickData(eurusd, 'BidAsk')
+ticker = ib.reqTickByTickData(eurusd, "BidAsk")
 ib.sleep(2)
 print(ticker)
 
 # %%
-ib.cancelTickByTickData(ticker.contract, 'BidAsk')
+ib.cancelTickByTickData(ticker.contract, "BidAsk")
 
 # %% [markdown]
 # ## Historical tick data
@@ -423,18 +444,20 @@ ib.cancelTickByTickData(ticker.contract, 'BidAsk')
 # %%
 import datetime
 
-start = ''
+start = ""
 end = datetime.datetime.now()
 print(start, end)
 number_of_ticks = 1000
 what_to_show = "BID_ASK"
 useRTH = False
-ticks = ib.reqHistoricalTicks(eurusd, start, end, number_of_ticks, what_to_show, useRTH)
+ticks = ib.reqHistoricalTicks(
+    eurusd, start, end, number_of_ticks, what_to_show, useRTH
+)
 
 print(len(ticks))
 df = ib_insync.util.df(ticks)
 df.drop(columns="tickAttribBidAsk", inplace=True)
-#df.index = [t.time for t in ticks]
+# df.index = [t.time for t in ticks]
 
 df.head(5)
 
@@ -468,19 +491,22 @@ display(df_fut)
 # ## Get the book
 
 # %%
-contract = ib_insync.Forex('EURUSD')
+contract = ib_insync.Forex("EURUSD")
 ib.qualifyContracts(contract)
 ticker = ib.reqMktDepth(contract)
 
 # %%
 ticker
 
-# %%
-from IPython.display import display, clear_output
 import pandas as pd
 
-df = pd.DataFrame(index=range(5),
-        columns='bidSize bidPrice askPrice askSize'.split())
+# %%
+from IPython.display import clear_output, display
+
+df = pd.DataFrame(
+    index=range(5), columns="bidSize bidPrice askPrice askSize".split()
+)
+
 
 def onTickerUpdate(ticker):
     bids = ticker.domBids
@@ -494,9 +520,10 @@ def onTickerUpdate(ticker):
     clear_output(wait=True)
     display(df)
 
+
 ticker.updateEvent += onTickerUpdate
 
-ib_insync.IB.sleep(15);
+ib_insync.IB.sleep(15)
 
 # %%
 ib.cancelMktDepth(contract)
@@ -530,10 +557,10 @@ if True:
     print("contract=", contract)
     #
     total_quantity = 2000
-    #total_quantity = 3900
+    # total_quantity = 3900
     limit_price = 1.1
 else:
-    contract = ib_insync.Future('ES', '202109', 'GLOBEX')
+    contract = ib_insync.Future("ES", "202109", "GLOBEX")
     ib.qualifyContracts(contract)
     print("contract=", contract)
     #
@@ -545,7 +572,7 @@ else:
 # %%
 # %%time
 total_quantity = 3900
-#limit_price = 1.1
+# limit_price = 1.1
 limit_price = 100
 order = ib_insync.LimitOrder("BUY", total_quantity, limit_price)
 print("order=", order)
@@ -553,7 +580,7 @@ print("order=", order)
 
 # %%
 def print_trade(trade):
-    #print("trade=", trade)
+    # print("trade=", trade)
     print("trade.contract=", trade.contract)
     print("trade.order=", trade.order)
     print("trade.orderStatus=", trade.orderStatus)
@@ -594,7 +621,7 @@ trade = ib.placeOrder(contract, order)
 print_trade(trade)
 
 # %%
-#print(ib.openTrades())
+# print(ib.openTrades())
 print(trade.orderStatus.status)
 
 # %%
@@ -623,12 +650,12 @@ print(tot_commission)
 
 # %%
 # See commission and margin impact without sending order.
-order = ib_insync.MarketOrder('SELL', 20000)
+order = ib_insync.MarketOrder("SELL", 20000)
 order_state = ib.whatIfOrder(contract, order)
 print(type(order_state))
 print(order_state)
 
-#str(order_state)
+# str(order_state)
 
 # %%
 order_state.dict()
@@ -639,18 +666,20 @@ order_state.dict()
 # %%
 newsProviders = ib.reqNewsProviders()
 print("newsProviders=", newsProviders)
-codes = '+'.join(np.code for np in newsProviders)
+codes = "+".join(np.code for np in newsProviders)
 
 #
-contract = ib_insync.Stock('AMD', 'SMART', 'USD')
-#contract = ib_insync.Future('ES')
+contract = ib_insync.Stock("AMD", "SMART", "USD")
+# contract = ib_insync.Future('ES')
 ib.qualifyContracts(contract)
 
 # reqHistoricalNews(conId, providerCodes, startDateTime, endDateTime, totalResults, historicalNewsOptions=None)
-startDateTime = ''
-endDateTime = ''
+startDateTime = ""
+endDateTime = ""
 totalResults = 10
-headlines = ib.reqHistoricalNews(contract.conId, codes, startDateTime, endDateTime, totalResults)
+headlines = ib.reqHistoricalNews(
+    contract.conId, codes, startDateTime, endDateTime, totalResults
+)
 
 print("\nlen(headlines)=", len(headlines))
 latest = headlines[0]
@@ -680,23 +709,23 @@ print("\narticle=", article)
 ib.reqMarketDataType(4)
 
 if False:
-    durationStr = '1 Y'
-    barSizeSetting = '1 day'
-    #barSizeSetting='1 hour'
+    durationStr = "1 Y"
+    barSizeSetting = "1 day"
+    # barSizeSetting='1 hour'
 else:
-    durationStr = '1 D'
-    barSizeSetting = '1 hour'
+    durationStr = "1 D"
+    barSizeSetting = "1 hour"
 
 if False:
-    contract = ib_insync.Stock('TSLA', 'SMART', 'USD')
-    whatToShow = 'TRADES'
+    contract = ib_insync.Stock("TSLA", "SMART", "USD")
+    whatToShow = "TRADES"
 elif True:
-    contract = ib_insync.Future('ES', '202109', 'GLOBEX')
-    whatToShow = 'TRADES'
+    contract = ib_insync.Future("ES", "202109", "GLOBEX")
+    whatToShow = "TRADES"
 else:
-    contract = ib_insync.Forex('EURUSD')
-    whatToShow = 'MIDPOINT'
-    
+    contract = ib_insync.Forex("EURUSD")
+    whatToShow = "MIDPOINT"
+
 print("contract=", contract)
 print("whatToShow=", whatToShow)
 print("durationStr=", durationStr)
@@ -707,35 +736,37 @@ ts = ib.reqHeadTimeStamp(contract, whatToShow=whatToShow, useRTH=True)
 print("ts=", ts)
 bars = ib.reqHistoricalData(
     contract,
-    endDateTime='',
+    endDateTime="",
     durationStr=durationStr,
     barSizeSetting=barSizeSetting,
     whatToShow=whatToShow,
     useRTH=True,
-    formatDate=1)
+    formatDate=1,
+)
 print("len(bars)=", len(bars))
 
 # %%
-#contract = Stock('TSLA', 'SMART', 'USD')
+# contract = Stock('TSLA', 'SMART', 'USD')
 contract = ib_insync.Forex("EURUSD")
-whatToShow = 'MIDPOINT'
+whatToShow = "MIDPOINT"
 ts = ib.reqHeadTimeStamp(contract, whatToShow=whatToShow, useRTH=True)
 print(ts)
-#assert 0
+# assert 0
 
 num_iter = 0
 max_iter = 5
-dt = ''
+dt = ""
 barsList = []
 while True:
     bars = ib.reqHistoricalData(
         contract,
         endDateTime=dt,
-        durationStr='10 D',
-        barSizeSetting='1 min',
-        whatToShow='MIDPOINT',
+        durationStr="10 D",
+        barSizeSetting="1 min",
+        whatToShow="MIDPOINT",
         useRTH=False,
-        formatDate=1)
+        formatDate=1,
+    )
     if not bars:
         break
     barsList.append(bars)
@@ -748,4 +779,4 @@ while True:
 # save to CSV file
 allBars = [b for bars in reversed(barsList) for b in bars]
 df = util.df(allBars)
-#df.to_csv(contract.symbol + '.csv')
+# df.to_csv(contract.symbol + '.csv')

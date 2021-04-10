@@ -100,9 +100,7 @@ ffc_obj._replace_contracts_with_data(srs)
 
 # %%
 contract_df = fcem.get_contracts(
-    ["NG" + str(j) for j in range(1, 13)],
-    "2010-01-01", "2015-12-31",
-    freq="B"
+    ["NG" + str(j) for j in range(1, 13)], "2010-01-01", "2015-12-31", freq="B"
 )
 
 # %%
@@ -145,18 +143,18 @@ res = dfm.apply_residualizer(
     model_kwargs={"n_components": 2},
     method="predict",
 ).apply_column_transformer(
-        transformer_func=csigna.compute_rolling_zscore,
-        transformer_kwargs={
-            "tau": 10,
-            "min_periods": 20,
-        },
-        col_mode="replace_all",
-        method="predict",
+    transformer_func=csigna.compute_rolling_zscore,
+    transformer_kwargs={
+        "tau": 10,
+        "min_periods": 20,
+    },
+    col_mode="replace_all",
+    method="predict",
 )
-#.apply_volatility_model(
+# .apply_volatility_model(
 #    cols=["NG" + str(j) + "_ret_0" for j in range(1, 13)],
 #    steps_ahead=2,
-#)
+# )
 
 
 # %%

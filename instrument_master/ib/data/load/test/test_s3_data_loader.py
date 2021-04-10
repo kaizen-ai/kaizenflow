@@ -1,4 +1,5 @@
 import datetime
+
 import pandas as pd
 
 import helpers.unit_test as hut
@@ -121,7 +122,7 @@ class TestS3IbDataLoader1(hut.TestCase):
             contract_type=icdtyp.ContractType.Continuous,
             unadjusted=None,
             start_ts=pd.to_datetime("2021-03-04 22:00:00-05:00"),
-            end_ts=pd.to_datetime("2021-03-05 05:00:00-05:00")
+            end_ts=pd.to_datetime("2021-03-05 05:00:00-05:00"),
         )
         # Transform dataframe to string.
         actual_string = hut.convert_df_to_string(data)
