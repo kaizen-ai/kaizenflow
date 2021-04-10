@@ -17,11 +17,9 @@
 # %autoreload 2
 
 import ib_insync
+
 print(ib_insync.__all__)
 
-import helpers.dbg as dbg
-import helpers.printing as pri
-import core.explore as exp
 import instrument_master.ib.data.extract.gateway.utils as ibutils
 
 # %%
@@ -30,9 +28,9 @@ ib = ibutils.ib_connect(client_id=33, is_notebook=True)
 # %%
 # Look for ES.
 
-#symbol = "ES"
+# symbol = "ES"
 symbol = "NG"
-#symbol = "CL"
+# symbol = "CL"
 contract = ib_insync.Future(symbol, includeExpired=True)
 df = ibutils.get_contract_details(ib, contract, simplify_df=False)
 
@@ -48,7 +46,7 @@ display(df)
 df
 
 # %%
-#df.reset_index(drop=True)
+# df.reset_index(drop=True)
 
 # %%
 import copy
@@ -60,7 +58,7 @@ def create_contracts(ib, contract, symbols):
     for symbol in symbols:
         contract_tmp = copy.copy(contract)
         contract_tmp.symbol = symbol
-        #ib.qualifyContracts(contract_tmp)
+        # ib.qualifyContracts(contract_tmp)
         contracts.append(contract_tmp)
     return contracts
 

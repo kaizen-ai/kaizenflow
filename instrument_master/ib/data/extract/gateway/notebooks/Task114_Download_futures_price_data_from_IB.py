@@ -20,11 +20,12 @@
 # %autoreload 2
 
 import ib_insync
+
 print(ib_insync.__all__)
 
+import core.explore as exp
 import helpers.dbg as dbg
 import helpers.printing as pri
-import core.explore as exp
 import instrument_master.ib.data.extract.gateway.utils as ibutils
 
 # %% [markdown]
@@ -38,6 +39,7 @@ ib = ibutils.ib_connect(client_id=100, is_notebook=True)
 
 # %%
 import logging
+
 #dbg.init_logger(verbosity=logging.DEBUG)
 dbg.init_logger(verbosity=logging.INFO)
 
@@ -96,10 +98,11 @@ df = ibutils.get_historical_data2(ib, contract, start_ts, end_ts, barSizeSetting
 
 # %%
 import pandas as pd
+
 contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
 whatToShow = 'TRADES'
 durationStr = '2 D'
-barSizeSetting = '1 min' 
+barSizeSetting = '1 min'
 useRTH = False
 #useRTH = True
 
@@ -191,10 +194,11 @@ dbg.shutup_chatty_modules(verbose=True)
 
 # %%
 import pandas as pd
+
 contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
 whatToShow = 'TRADES'
 durationStr = '2 D'
-barSizeSetting = '1 min' 
+barSizeSetting = '1 min'
 useRTH = False
 
 start_ts = pd.Timestamp("2018-01-28 15:00").tz_localize(tz="America/New_York")
@@ -206,22 +210,24 @@ print(len(tasks))
 ibutils.get_historical_data2(ib, tasks)
 
 # %% [markdown]
-# ## 
+# ##
 
 # %%
 # %load_ext autoreload
 # %autoreload 2
 
 import ib_insync
-print(ib_insync.__all__)
 
-import helpers.dbg as dbg
-import helpers.printing as pri
-import core.explore as exp
-import instrument_master.ib.data.extract.gateway.utils as ibutils
+print(ib_insync.__all__)
 
 # %%
 import logging
+
+import core.explore as exp
+import helpers.dbg as dbg
+import helpers.printing as pri
+import instrument_master.ib.data.extract.gateway.utils as ibutils
+
 dbg.init_logger(verbosity=logging.DEBUG)
 #dbg.init_logger(verbosity=logging.INFO)
 
@@ -263,7 +269,7 @@ ib = ibutils.ib_connect(8, is_notebook=True)
 contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
 whatToShow = 'TRADES'
 durationStr = '2 D'
-barSizeSetting = '1 hour' 
+barSizeSetting = '1 hour'
 useRTH = False
 
 start_ts = pd.Timestamp("2018-01-28 15:00").tz_localize(tz="America/New_York")
@@ -277,7 +283,7 @@ df = ibutils.get_historical_data2(tasks)
 # %%
 
 # %%
-df 
+df
 
 # %%
 df2 = ibutils.get_historical_data_with_IB_loop(ib, contract, start_ts, end_ts, durationStr,

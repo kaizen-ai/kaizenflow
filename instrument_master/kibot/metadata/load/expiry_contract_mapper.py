@@ -36,8 +36,8 @@ class ExpiryContractMapper:
         8: "Q",
         9: "U",
         10: "V",
-        11:"X",
-        12: "Z"
+        11: "X",
+        12: "Z",
     }
 
     _EXPIRY_TO_MONTH = {v: k for k, v in _MONTH_TO_EXPIRY.items()}
@@ -78,7 +78,9 @@ class ExpiryContractMapper:
         return base_symbol, month, year
 
     def parse_year(self, year: str) -> int:
-        """Convert 2 digit years to 4 digit years, e.g. 20 -> 2020 & 99 -> 1999."""
+        """
+        Convert 2 digit years to 4 digit years, e.g. 20 -> 2020 & 99 -> 1999.
+        """
         year = int(year)
         year = year + 2000 if year < 50 else year + 1900
         return year

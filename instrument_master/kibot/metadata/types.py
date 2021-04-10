@@ -1,9 +1,10 @@
 import dataclasses
 import enum
-import pandas as pd
 
 # TODO(Amr): add doc strings to these classes with examples.
 from typing import Union
+
+import pandas as pd
 
 
 class KibotContractType(enum.Enum):

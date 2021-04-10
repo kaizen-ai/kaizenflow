@@ -1,28 +1,28 @@
-#import logging
-#import os
+# import logging
+# import os
 #
-#import pandas as pd
-#import pytest
+# import pandas as pd
+# import pytest
 #
-#import core.finance as fin
-#import helpers.git as git
-#import helpers.system_interaction as si
-#import helpers.unit_test as hut
-#import vendors.cme.reader as cmer
-#import vendors.core.base_classes as etl_base
-#import vendors.core.config as etl_cfg
-#import vendors.csi.reader as csir
-#import vendors.etfs.utils as etfut
-#import vendors.first_rate.reader as frr  # type: ignore
-#import instrument_master.kibot.utils as kut
-#import vendors.pandas_datareader.utils as pdut  # type: ignore
+# import core.finance as fin
+# import helpers.git as git
+# import helpers.system_interaction as si
+# import helpers.unit_test as hut
+# import vendors.cme.reader as cmer
+# import vendors.core.base_classes as etl_base
+# import vendors.core.config as etl_cfg
+# import vendors.csi.reader as csir
+# import vendors.etfs.utils as etfut
+# import vendors.first_rate.reader as frr  # type: ignore
+# import instrument_master.kibot.utils as kut
+# import vendors.pandas_datareader.utils as pdut  # type: ignore
 #
 ## #############################################################################
 ## kibot/utils.py
 ## #############################################################################
 #
 #
-#class Test_kibot_utils1(hut.TestCase):
+# class Test_kibot_utils1(hut.TestCase):
 #    @pytest.mark.slow
 #    def test_read_data_pq1(self) -> None:
 #        # TODO(gp): Use unit test cache.
@@ -89,8 +89,8 @@
 ## TODO(gp, Julia): Fix this.
 ## TODO(gp, Julia): Remove pylint disable after fix.
 ## pylint: disable=no-member
-#@pytest.mark.skip(reason="# TODO(Julia): Enable this once #532 is fixed.")
-#class Test_kibot_MonthExpiry1(hut.TestCase):
+# @pytest.mark.skip(reason="# TODO(Julia): Enable this once #532 is fixed.")
+# class Test_kibot_MonthExpiry1(hut.TestCase):
 #    """
 #    Test the logic comparing and processing expiry contracts, e.g., ESH19
 #    """
@@ -111,7 +111,7 @@
 ## pylint: enable=no-member
 #
 #
-#class Test_kibot_utils_ExpiryContractMapper1(hut.TestCase):
+# class Test_kibot_utils_ExpiryContractMapper1(hut.TestCase):
 #    """
 #    Test parsing expiry contracts and sorting them.
 #    """
@@ -162,7 +162,7 @@
 #        self.assertListEqual(actual_result, expected_result)
 #
 #
-#class Test_kibot_utils_KibotMetadata(hut.TestCase):
+# class Test_kibot_utils_KibotMetadata(hut.TestCase):
 #    @pytest.mark.slow()
 #    def test_get_metadata1(self) -> None:
 #        kmd = kut.KibotMetadata()
@@ -193,7 +193,7 @@
 #        self.check_string(" ".join(expiries))
 #
 #
-#class Test_kibot_utils_ContractSymbolMapping(hut.TestCase):
+# class Test_kibot_utils_ContractSymbolMapping(hut.TestCase):
 #    def test_get_contract1(self) -> None:
 #        csm = kut.ContractSymbolMapping()
 #        contract = csm.get_contract("CL")
@@ -242,7 +242,7 @@
 #        self.assertListEqual(sorted(symbols), sorted(expected_result))
 #
 #
-#class TestComputeRet0FromMultiplePrices1(hut.TestCase):
+# class TestComputeRet0FromMultiplePrices1(hut.TestCase):
 #    def test1(self) -> None:
 #        # Read multiple futures.
 #        symbols = tuple("CL NG RB BZ".split())
@@ -262,7 +262,7 @@
 ## #############################################################################
 #
 #
-#class Test_pandas_datareader_utils1(hut.TestCase):
+# class Test_pandas_datareader_utils1(hut.TestCase):
 #    def test_get_multiple_data1(self) -> None:
 #        ydq = pdut.YahooDailyQuotes()
 #        tickers = "SPY IVV".split()

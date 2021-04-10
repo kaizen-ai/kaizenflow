@@ -1,14 +1,13 @@
 import csv
 from typing import Generator, Union
 
+import ib_metadata_crawler.items as it
 import scrapy
 import scrapy.http as http
 import scrapy.linkextractors as le
 import scrapy.loader as ldr
 import scrapy.loader.processors as pr
 import scrapy.signals as sig
-
-import ib_metadata_crawler.items as it
 
 
 class ExchangeLoader(ldr.ItemLoader):
@@ -67,7 +66,9 @@ class IbrokerSpider(scrapy.Spider):
     ) -> Generator[scrapy.Request, None, None]:
         for link in self.lx_regions.extract_links(response):
             yield scrapy.Request(
-                link.url, self.parse_region, cb_kwargs={"region": link.text},
+                link.url,
+                self.parse_region,
+                cb_kwargs={"region": link.text},
             )
 
     def parse_region(

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-"""Read EODData symbol list for exchanges from a directory."""
+"""
+Read EODData symbol list for exchanges from a directory.
+"""
 import csv
 import io
 import logging
