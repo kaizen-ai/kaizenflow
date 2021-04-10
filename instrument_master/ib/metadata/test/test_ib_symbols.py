@@ -11,7 +11,6 @@ import instrument_master.ib.metadata.ib_symbols as iimibs
 
 
 class TestIbSymbolUniverse(hut.TestCase):
-
     @classmethod
     def setUpClass(cls) -> None:
         # Disable the chatty modules when debugging with DEBUG verbosity. We need to

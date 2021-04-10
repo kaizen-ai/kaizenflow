@@ -32,7 +32,7 @@ if False:
     files = glob.glob(os.path.join(dir_name, "symbols*.csv"))
     dbg.dassert(len(files), 1)
     file_name = files[0]
-    
+
 file_name = "s3://external-p1/ib/metadata/symbols-2021-04-01-143112738505.csv"
 print("file_name=%s" % file_name)
 symbols = pd.read_csv(file_name, sep="\t")

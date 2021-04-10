@@ -3,9 +3,10 @@ Import as:
 
 import instrument_master.ib.metadata.ib_symbols as iimibs
 """
+
+import functools
 import logging
 import os
-import functools
 import string
 from typing import List, Optional
 
@@ -85,24 +86,28 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
         # | ICE Futures U.S. (NYBOT)               | Futures   | Cotton No. 2                   | CT           | CT       | USD      | https://ndcdyn.interactivebrokers.com/en/index.php?f=2222&exch=nybot&showcategories=FUTGRP                            |
         # | Korea Stock Exchange (KSE)             | Futures   | SAMSUNG ELECTRO-MECHANICS CO   | 009150       | 123      | KRW      | https://ndcdyn.interactivebrokers.com/en/index.php?f=2222&exch=kse&showcategories=FUTGRP
         # Find unique parsed symbols.
-        df = df.apply(
-            lambda row: IbSymbolUniverse._convert_df_to_row_to_symbol(
-                ib_ticker=row["ib_symbol"],
-                ib_exchange=row["market"],
-                ib_asset_class=row["product"],
-                ib_currency=row["currency"],
-            ),
-            axis=1,
-        ).dropna().unique()
+        df = (
+            df.apply(
+                lambda row: IbSymbolUniverse._convert_df_to_row_to_symbol(
+                    ib_ticker=row["ib_symbol"],
+                    ib_exchange=row["market"],
+                    ib_asset_class=row["product"],
+                    ib_currency=row["currency"],
+                ),
+                axis=1,
+            )
+            .dropna()
+            .unique()
+        )
         symbols = list(df)
         symbols.sort()
         _LOG.debug("Parsed %s", hprint.perc(len(symbols), df.shape[0]))
         return symbols
 
     # TODO(gp): Add support also for the exchanges.
-    #_S3_EXCHANGE_FILE_PREFIX = os.path.join(
+    # _S3_EXCHANGE_FILE_PREFIX = os.path.join(
     #    iidcon.S3_METADATA_PREFIX, "exchanges-"
-    #)
+    # )
 
     @staticmethod
     def _convert_df_to_row_to_symbol(
@@ -117,7 +122,9 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
         # Extract ticker.
         ticker = ib_ticker
         # Extract exchange.
-        exchange = IbSymbolUniverse._extract_exchange_code_from_full_name(ib_exchange)
+        exchange = IbSymbolUniverse._extract_exchange_code_from_full_name(
+            ib_exchange
+        )
         # Extract asset class.
         # TODO(plyq): Not covered: `ETF`, `Forex`, `SP500`, expiring `Futures`.
         ib_to_asset = {
@@ -140,7 +147,11 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
         # Extract currency.
         currency = ib_currency
         # Construct the Symbol object, if possible.
-        hprint.log(_LOG, logging.DEBUG, "ticker exchange asset_class contract_type currency")
+        hprint.log(
+            _LOG,
+            logging.DEBUG,
+            "ticker exchange asset_class contract_type currency",
+        )
         if ib_ticker and exchange and asset_class and currency:
             symbol = icmsym.Symbol(
                 ticker=ticker,
