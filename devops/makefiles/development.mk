@@ -63,6 +63,10 @@ git_pull:
 	git pull --autostash
 	git submodule foreach 'git pull --autostash'
 
+# Pull without changing branch.
+git_pull_master:
+	git fetch origin master:master
+
 # Clean all the repos.
 # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
 # mistake.

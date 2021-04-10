@@ -18,7 +18,7 @@ echo "DST_FILE=$DST_FILE"
 FILES=$(git difftool --name-only master...)
 echo $FILES
 
-tar czvf $DST_FILE $FILES
+tar czvf $DST_FILE $FILES || true
 
 echo
 echo "To apply the patch execute:"

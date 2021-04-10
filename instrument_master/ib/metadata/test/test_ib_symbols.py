@@ -2,6 +2,7 @@ import os
 
 import pytest
 
+import helpers.dbg as dbg
 import helpers.unit_test as hut
 import instrument_master.common.data.types as icdtyp
 import instrument_master.common.metadata.symbols as icmsym
@@ -10,6 +11,7 @@ import instrument_master.ib.data.load.ib_file_path_generator as iidlib
 import instrument_master.ib.metadata.ib_symbols as iimibs
 
 
+# TODO(gp): -> TestIbSymbolUniverse
 class TestIbSymbolNamespace(hut.TestCase):
     """
     Test `IbSymbolNamespace` class.
@@ -17,12 +19,21 @@ class TestIbSymbolNamespace(hut.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
+        # Disable the chatty modules when debugging with DEBUG verbosity. We need to
+        # disable the modules after they have been imported.
+        #dbg.shutup_chatty_modules(verbose=True)
         hut.TestCase.setUpClass()
-        cls.ib_universe = iimibs.IbSymbolUniverse()
+
+    def test_get_latest_symbols_file1(self) -> None:
+        """
+        Test that path to the latest file is full.
+        """
+        latest_file = iimibs.IbSymbolUniverse._get_latest_symbols_file()
+        self.assertRegex(latest_file, "^%s" % iidcon.S3_PREFIX)
 
     def test_parse_symbols_file1(self) -> None:
         """
-        Test parsing test file.
+        Test parsing a file checked in the repo.
         """
         symbols_file = os.path.join(self.get_input_dir(), "test_symbols.csv")
         symbols = iimibs.IbSymbolUniverse._parse_symbols_file(symbols_file)
@@ -33,7 +44,7 @@ class TestIbSymbolNamespace(hut.TestCase):
     @pytest.mark.slow("Parse real large file with symbols. Approx. 15 sec.")
     def test_parse_symbols_file2(self) -> None:
         """
-        Test parsing real file.
+        Test parsing the real file.
         """
         symbols_file = os.path.join(
             iidcon.S3_PREFIX, "metadata/symbols-2021-04-01-134738089177.csv"
@@ -48,37 +59,30 @@ class TestIbSymbolNamespace(hut.TestCase):
         symbols_str += "\n".join([str(symbol) for symbol in symbols[-5:]])
         self.check_string(symbols_str)
 
-    def test_get_latest_symbols_file1(self) -> None:
-        """
-        Test that path to the latest file is full.
-        """
-        latest_file = iimibs.IbSymbolUniverse._get_latest_symbols_file()
-        self.assertRegex(latest_file, "^%s" % iidcon.S3_PREFIX)
-
-    def test_convert_to_symbol1(self) -> None:
+    def test_convert_df_to_row_to_symbol1(self) -> None:
         """
         Test supported stocks symbol converting.
         """
-        converted_symbol = iimibs.IbSymbolUniverse._convert_to_symbol(
+        act = iimibs.IbSymbolUniverse._convert_df_to_row_to_symbol(
             ib_ticker="AA",
             ib_exchange="New York (NYSE)",
             ib_asset_class="Stocks",
             ib_currency="USD",
         )
-        expected_symbol = icmsym.Symbol(
+        exp = icmsym.Symbol(
             ticker="AA",
             exchange="NYSE",
             asset_class=icdtyp.AssetClass.Stocks,
             contract_type=None,
             currency="USD",
         )
-        self.assertEqual(converted_symbol, expected_symbol)
+        self.assertEqual(act, exp)
 
-    def test_convert_to_symbol2(self) -> None:
+    def test_convert_df_to_row_to_symbol2(self) -> None:
         """
         Test supported futures symbol converting.
         """
-        converted_symbol = iimibs.IbSymbolUniverse._convert_to_symbol(
+        converted_symbol = iimibs.IbSymbolUniverse._convert_df_to_row_to_symbol(
             ib_ticker="ZC",
             ib_exchange="CME part (ECBOT)",
             ib_asset_class="Futures",
@@ -93,11 +97,11 @@ class TestIbSymbolNamespace(hut.TestCase):
         )
         self.assertEqual(converted_symbol, expected_symbol)
 
-    def test_convert_to_symbol3(self) -> None:
+    def test_convert_df_to_row_to_symbol3(self) -> None:
         """
         Test symbol with unsupported exchange.
         """
-        converted_symbol = iimibs.IbSymbolUniverse._convert_to_symbol(
+        converted_symbol = iimibs.IbSymbolUniverse._convert_df_to_row_to_symbol(
             ib_ticker="AA",
             ib_exchange="No brackets exchange",
             ib_asset_class="Stocks",
@@ -105,11 +109,11 @@ class TestIbSymbolNamespace(hut.TestCase):
         )
         self.assertIsNone(converted_symbol)
 
-    def test_convert_to_symbol4(self) -> None:
+    def test_convert_df_to_row_to_symbol4(self) -> None:
         """
         Test symbol with unsupported asset class.
         """
-        converted_symbol = iimibs.IbSymbolUniverse._convert_to_symbol(
+        converted_symbol = iimibs.IbSymbolUniverse._convert_df_to_row_to_symbol(
             ib_ticker="AA",
             ib_exchange="New York (NYSE)",
             ib_asset_class="Warrants",
@@ -174,6 +178,7 @@ class TestIbSymbolNamespace(hut.TestCase):
         """
         Test that ES symbol is returned by request.
         """
+        ib_universe = iimibs.IbSymbolUniverse()
         matched = self.ib_universe.get(
             ticker="ES",
             exchange="GLOBEX",
@@ -188,7 +193,8 @@ class TestIbSymbolNamespace(hut.TestCase):
         """
         Test that NON_EXISTING symbol is returned by request.
         """
-        matched = self.ib_universe.get(
+        ib_universe = iimibs.IbSymbolUniverse()
+        matched = ib_universe.get(
             ticker="NON_EXISTING",
             exchange="GLOBEX",
             asset_class=icdtyp.AssetClass.Futures,
@@ -202,7 +208,8 @@ class TestIbSymbolNamespace(hut.TestCase):
         """
         Test that NG symbol is in downloaded list.
         """
-        matched = self.ib_universe.get(
+        ib_universe = iimibs.IbSymbolUniverse()
+        matched = ib_universe.get(
             ticker="NG",
             exchange="NYMEX",
             asset_class=icdtyp.AssetClass.Futures,
@@ -219,7 +226,8 @@ class TestIbSymbolNamespace(hut.TestCase):
         """
         Test that NON_EXISTING symbol is not in the downloaded list.
         """
-        matched = self.ib_universe.get(
+        ib_universe = iimibs.IbSymbolUniverse()
+        matched = ib_universe.get(
             ticker="NON_EXISTING",
             exchange="GLOBEX",
             asset_class=icdtyp.AssetClass.Futures,
