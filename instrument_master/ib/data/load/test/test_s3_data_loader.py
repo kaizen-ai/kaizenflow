@@ -27,6 +27,7 @@ class TestS3IbDataLoader1(hut.TestCase):
             asset_class=icdtyp.AssetClass.Futures,
             frequency=icdtyp.Frequency.Daily,
             contract_type=icdtyp.ContractType.Continuous,
+            currency="USD",
             unadjusted=None,
             nrows=1,
         )
@@ -46,6 +47,7 @@ class TestS3IbDataLoader1(hut.TestCase):
             asset_class=icdtyp.AssetClass.Futures,
             frequency=icdtyp.Frequency.Minutely,
             contract_type=icdtyp.ContractType.Continuous,
+            currency="USD",
             unadjusted=None,
             nrows=10,
         )
@@ -65,6 +67,7 @@ class TestS3IbDataLoader1(hut.TestCase):
             asset_class=icdtyp.AssetClass.Futures,
             frequency=icdtyp.Frequency.Daily,
             contract_type=icdtyp.ContractType.Continuous,
+            currency="USD",
             unadjusted=True,
             nrows=10,
         )
@@ -84,6 +87,7 @@ class TestS3IbDataLoader1(hut.TestCase):
             asset_class=icdtyp.AssetClass.Futures,
             frequency=icdtyp.Frequency.Hourly,
             contract_type=icdtyp.ContractType.Continuous,
+            currency="USD",
             unadjusted=None,
             nrows=10,
         )
@@ -103,6 +107,7 @@ class TestS3IbDataLoader1(hut.TestCase):
             asset_class=icdtyp.AssetClass.Futures,
             frequency=icdtyp.Frequency.Daily,
             contract_type=icdtyp.ContractType.Continuous,
+            currency="USD",
             unadjusted=True,
             nrows=10,
         )
@@ -120,6 +125,7 @@ class TestS3IbDataLoader1(hut.TestCase):
             asset_class=icdtyp.AssetClass.Futures,
             frequency=icdtyp.Frequency.Hourly,
             contract_type=icdtyp.ContractType.Continuous,
+            currency="USD",
             unadjusted=None,
             start_ts=pd.to_datetime("2021-03-04 22:00:00-05:00"),
             end_ts=pd.to_datetime("2021-03-05 05:00:00-05:00"),

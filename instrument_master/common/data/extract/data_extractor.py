@@ -20,9 +20,10 @@ class AbstractDataExtractor(abc.ABC):
         symbol: str,
         asset_class: vcdtyp.AssetClass,
         frequency: vcdtyp.Frequency,
-        # TODO(*): contract_type should come before frequency, since it identifies
-        #  the Symbol.
+        # TODO(*): contract_type and currency should come before
+        # frequency, since it identifies the Symbol.
         contract_type: Optional[vcdtyp.ContractType] = None,
+        currency: Optional[str]= None,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
         incremental: Optional[bool] = None,

@@ -2,18 +2,19 @@ version: '3'
 
 services:
 #  TODO(*): move to the right place. Also move targets from the makefile
-#  app:
-#    image: ${IMAGE}
-#    restart: "no"
-#    depends_on:
-#      - im_postgres_local
-#    volumes:
-#      - ../../../:/app
-#      - ~/.aws:/root/.aws
-#    env_file:
-#      - ../env/local/im_postgres_config.env
-#    working_dir: /app
-#    entrypoint: /app/instrument_master/devops/docker_build/entrypoints/entrypoint_deploy.sh
+  app:
+    image: ${IMAGE}
+    restart: "no"
+    depends_on:
+      - im_postgres_local
+    volumes:
+      - ../../../:/app
+      - ~/.aws:/root/.aws
+    env_file:
+      - ../env/local/im_postgres_config.env
+      - ../env/local/general.env
+    working_dir: /app
+    entrypoint: /app/instrument_master/devops/docker_build/entrypoints/entrypoint_deploy.sh
 
   im_postgres_local:
     image: postgres:13
