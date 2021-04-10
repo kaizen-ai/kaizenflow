@@ -70,10 +70,7 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         :return: a dataframe with the data
         :raises ValueError: if parameter values are not supported
         """
-        if currency is None:
-            raise ValueError(
-                "Currency should be specified for IB data extraction"
-            )
+        dbg.dassert_is_not(currency, None)
         part_files_dir = (
             self.get_default_part_files_dir(
                 symbol=symbol,

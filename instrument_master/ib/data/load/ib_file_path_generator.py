@@ -41,10 +41,8 @@ class IbFilePathGenerator(icdlfi.FilePathGenerator):
         :raises ValueError: if parameters are incompatible
         """
         # Check parameters.
-        if currency is None or exchange is None:
-            raise ValueError(
-                "Exchange and currency must be specified for IB path generation"
-            )
+        dbg.dassert_is_not(currency, None)
+        dbg.dassert_is_not(exchange, None)
         # Get asset class part.
         if (
             contract_type == icdtyp.ContractType.Continuous
