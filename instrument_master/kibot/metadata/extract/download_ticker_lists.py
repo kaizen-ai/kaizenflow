@@ -2,6 +2,7 @@
 
 """
 # Download all ticker lists and push them to S3.
+
 > download_ticker_lists.py
 """
 import logging

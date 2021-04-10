@@ -55,9 +55,6 @@ class ContractSymbolMapping:
         ]
         if contract_metadata.empty:
             _LOG.warning("No metadata for %s contract", contract)
-            print(list(self._metadata["Exchange_abbreviation"]+self._metadata["Exchange_symbol"]))
-
-            print("0-----------------------")
             return None
         # Seven exchange symbols are mapped to multiple contracts:
         # https://github.com/.../.../issues/2988#issuecomment-646351846.
@@ -73,7 +70,9 @@ class ContractSymbolMapping:
                 # `CONTINUOUS EUA CONTRACT` and
                 # `CONTINUOUS LONDON COCOA CONTRACT`. Return EUA.
                 return "UX"
-            kibot_symbol_list: List[str] = contract_metadata["Kibot_symbol"].tolist()
+            kibot_symbol_list: List[str] = contract_metadata[
+                "Kibot_symbol"
+            ].tolist()
             return kibot_symbol_list
         kibot_symbol: str = contract_metadata["Kibot_symbol"].iloc[0]
         return kibot_symbol

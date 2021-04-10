@@ -23,14 +23,9 @@
 
 import logging
 
-import pandas as pd
-
 import helpers.dbg as dbg
-import helpers.printing as print_
-import helpers.system_interaction as si
 
 # %%
-import os
 
 # %%
 # dbg.init_logger(verbosity=logging.DEBUG)
@@ -39,17 +34,15 @@ dbg.init_logger(verbosity=logging.INFO)
 _LOG = logging.getLogger(__name__)
 
 # %% run_control={"marked": false}
-#dbname=os.environ["POSTGRES_DB"]
-#host=os.environ["POSTGRES_HOST"]
-#port=int(os.environ["POSTGRES_PORT"])
-#user=os.environ["POSTGRES_USER"]
-#password=os.environ["POSTGRES_PASSWORD"]
+# dbname=os.environ["POSTGRES_DB"]
+# host=os.environ["POSTGRES_HOST"]
+# port=int(os.environ["POSTGRES_PORT"])
+# user=os.environ["POSTGRES_USER"]
+# password=os.environ["POSTGRES_PASSWORD"]
+
+import pandas.io.sql as sqlio
 
 import helpers.sql as hsql
-
-import pandas as pd
-import pandas.io.sql as sqlio
-import psycopg2
 
 conn_as_str = "user=menjgbcvejlpcbejlc password=eidvlbaresntlcdbresntdjlrs dbname=im_postgres_db_local host=im_postgres_local port=5550"
 conn, _ = hsql.get_connection_from_string(conn_as_str)

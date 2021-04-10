@@ -69,7 +69,7 @@ def convert_s3_to_sql(
         nrows=max_num_rows,
         normalize=True,
         start_ts=start_ts,
-        end_ts=end_ts
+        end_ts=end_ts,
     )
     _LOG.debug("Transforming '%s' data before saving to database", symbol)
     df = s3_to_sql_transformer.transform(

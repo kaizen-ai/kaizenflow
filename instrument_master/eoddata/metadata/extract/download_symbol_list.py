@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-"""Download symbol list for exchanges from EODData into a CSV.
+"""
+Download symbol list for exchanges from EODData into a CSV.
 
 API reference: http://ws.eoddata.com/data.asmx.
 
@@ -44,7 +45,9 @@ def get_client() -> zeep.Client:
 
 
 def _get_token() -> str:
-    """Login to EODData API using credentials in env vars and get a token."""
+    """
+    Login to EODData API using credentials in env vars and get a token.
+    """
     username = si.get_env_var("EODDATA_USERNAME")
     password = si.get_env_var("EODDATA_PASSWORD")
 
@@ -59,7 +62,9 @@ def _get_token() -> str:
 
 
 def _get_symbols(exchange_code: str, token: str) -> List[mtypes.Symbol]:
-    """Get a list of symbols for a certain exchange."""
+    """
+    Get a list of symbols for a certain exchange.
+    """
     _LOG.info("Getting symbols list for exchange: '%s'", exchange_code)
     response = get_client().service.SymbolList(
         Token=token, Exchange=exchange_code
@@ -81,7 +86,8 @@ def _get_symbols(exchange_code: str, token: str) -> List[mtypes.Symbol]:
 def _write_symbols_to_csv(
     exchange_code: str, symbols: List[mtypes.Symbol], dst_dir: str
 ) -> None:
-    """Write symbols to `<exchange_code>.csv` in the dst_dir.
+    """
+    Write symbols to `<exchange_code>.csv` in the dst_dir.
 
     Creates `dst_dir` if it doesn't exist.
     """
@@ -95,7 +101,9 @@ def _write_symbols_to_csv(
 
 
 def _get_exchanges(token: str) -> List[mtypes.Exchange]:
-    """Get a list of exchange names from EODData."""
+    """
+    Get a list of exchange names from EODData.
+    """
     _LOG.info("Getting exchanges from API ...")
     response = get_client().service.ExchangeList(Token=token)
 

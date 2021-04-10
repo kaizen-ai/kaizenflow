@@ -7,8 +7,10 @@ import instrument_master.eoddata.metadata.types as mtypes
 
 class Test_read_symbols_from_file(hut.TestCase):
     def test1(self) -> None:
-        """Confirm it reads the symbol, and the exchange code is added to the
-        symbol code."""
+        """
+        Confirm it reads the symbol, and the exchange code is added to the
+        symbol code.
+        """
         symbol_code = "AAMC"
         symbol_name = "Altisource Asset"
         input_f = self.get_input_dir() + "/test.csv"

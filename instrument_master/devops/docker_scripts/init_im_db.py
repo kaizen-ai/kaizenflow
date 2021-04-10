@@ -23,7 +23,10 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         # TODO(*): -> db_name?
-        "--db", action="store", help="Database to update", required=True
+        "--db",
+        action="store",
+        help="Database to update",
+        required=True,
     )
     hparse.add_verbosity_arg(parser)
     return parser
