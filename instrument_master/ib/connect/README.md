@@ -35,7 +35,7 @@
 - If the image is not available in ECR you can follow the instructions in
   [Create image](create-image)
 
-### Create image
+### Build image
 
 ```bash
 > make ib_connect.docker_build_image.rc
