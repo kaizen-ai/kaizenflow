@@ -17,7 +17,8 @@
 - Run the tests in the base Docker image:
 
   ```bash
-  > pytest vendors_amp
+  > make docker_bash
+  > pytest instrument_master
   ```
 
 - Run the tests that require IM Docker image:
@@ -71,9 +72,15 @@
 ## Prerequisites
 
 - IB TWS or Gateway app [should be up](./ib/connect/README.md) on `research.p1`
-  with API port 4012. For example:
+  with API port 4012
+
+- To start IB Gateway app: 
 
   ```bash
+  > cd instrument_master/ib/connect
+  > make ib_connect.docker_build_image.rc && \
+    make ib_connect.docker_tag_latest.rc && \
+    make ib_connect.docker_tag_prod.latest
   > IB_CONNECT_USER=gpsagg314 \
     IB_CONNECT_PASSWORD=<password> \
     IB_CONNECT_VNC_PASSWORD=12345 \
@@ -82,7 +89,7 @@
     make ib_connect.docker_up.prod
   ```
 
-- Testing that the connection to IB is up
+- Test that the connection to IB is up
   ```bash
   > make im.docker_up.local
   root@...:/app# ./instrument_master/devops/docker_scripts/sanity_check_ib.py
@@ -185,11 +192,11 @@
 - To copy data from S3 to SQL (e.g. HG continuous minutely data):
   ```bash
   cd instrument_master/app/transform
-  python convert_s3_to_sql.py \
-                --provider ib \
-                --symbol HG \
-                --frequency T \
-                --contract_type continuous \
-                --asset_class Futures \
-                --exchange NYMEX
+  convert_s3_to_sql.py \
+      --provider ib \
+      --symbol HG \
+      --frequency T \
+      --contract_type continuous \
+      --asset_class Futures \
+      --exchange NYMEX
   ```

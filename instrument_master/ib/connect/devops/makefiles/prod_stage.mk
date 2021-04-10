@@ -27,7 +27,7 @@ else
 	API_PORT=$(IB_CONNECT_API_PORT) \
 	VNC_PORT=$(IB_CONNECT_VNC_PORT) \
 	docker-compose \
-		-f instrument_master/ib/connect/compose/docker-compose.prod.yml \
+		-f devops/compose/docker-compose.prod.yml \
     run --rm \
 		-l user=$(USER) \
 		-l app="ib_connect" \
@@ -54,7 +54,7 @@ else
 	API_PORT=$(IB_CONNECT_API_PORT) \
 	VNC_PORT=$(IB_CONNECT_VNC_PORT) \
 	docker-compose \
-	  -f instrument_master/ib/connect/compose/docker-compose.prod.yml \
+	  -f devops/compose/docker-compose.prod.yml \
 		up \
 		-d
 endif
@@ -66,5 +66,5 @@ ib_connect.docker_down.prod:
 	API_PORT=$(IB_CONNECT_API_PORT) \
 	VNC_PORT=$(IB_CONNECT_VNC_PORT) \
 	docker-compose \
-		-f instrument_master/ib/connect/compose/docker-compose.prod.yml \
+		-f devops/compose/docker-compose.prod.yml \
 		down
