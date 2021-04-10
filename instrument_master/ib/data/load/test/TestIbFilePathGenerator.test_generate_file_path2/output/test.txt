@@ -1,1 +1,1 @@
-s3://external-p1/ib/stocks/minutely/TSLA.csv.gz
+s3://external-p1/ib/stocks/NSDQ/USD/minutely/TSLA.csv.gz

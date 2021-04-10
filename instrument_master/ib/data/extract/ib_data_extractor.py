@@ -43,8 +43,8 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         symbol: str,
         asset_class: icdtyp.AssetClass,
         frequency: icdtyp.Frequency,
-        currency: str,
         contract_type: Optional[icdtyp.ContractType] = None,
+        currency: Optional[str] = None,
         start_ts: Optional[pd.Timestamp] = None,
         end_ts: Optional[pd.Timestamp] = None,
         incremental: Optional[bool] = None,
@@ -68,13 +68,17 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
             True by default
         :param dst_dir: place to keep results of each IB request
         :return: a dataframe with the data
+        :raises ValueError: if parameter values are not supported
         """
+        dbg.dassert_is_not(currency, None)
         part_files_dir = (
             self.get_default_part_files_dir(
                 symbol=symbol,
                 frequency=frequency,
                 asset_class=asset_class,
                 contract_type=contract_type,
+                exchange=exchange,
+                currency=currency,
             )
             if dst_dir is None
             else dst_dir
@@ -95,8 +99,10 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         saved_data = self.update_archive(
             symbol=symbol,
             asset_class=asset_class,
-            frequency=frequency,
             contract_type=contract_type,
+            exchange=exchange,
+            currency=currency,
+            frequency=frequency,
             part_files_dir=part_files_dir,
         )
         return saved_data
@@ -170,16 +176,20 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         part_files_dir: str,
         symbol: str,
         asset_class: icdtyp.AssetClass,
+        contract_type: Optional[icdtyp.ContractType],
+        exchange: str,
+        currency: str,
         frequency: icdtyp.Frequency,
-        contract_type: Optional[icdtyp.ContractType] = None,
     ) -> pd.DataFrame:
         """
         Read data from parts, save it to archive.
 
         :param symbol: symbol to get the data for
         :param asset_class: asset class
-        :param frequency: `D` or `T` for daily or minutely data respectively
         :param contract_type: required for asset class of type `futures`
+        :param exchange: symbol exchange
+        :param currency: symbol currency
+        :param frequency: `D` or `T` for daily or minutely data respectively
         :param part_files_dir: place to keep results of each IB request
         :return: a dataframe with the data
         """
@@ -189,6 +199,8 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
             frequency=frequency,
             asset_class=asset_class,
             contract_type=contract_type,
+            exchange=exchange,
+            currency=currency,
             ext=icdtyp.Extension.CSV,
         )
         _, arch_name = os.path.split(arch_file)
@@ -225,6 +237,8 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         frequency: icdtyp.Frequency,
         asset_class: icdtyp.AssetClass,
         contract_type: icdtyp.ContractType,
+        exchange: str,
+        currency: str,
     ) -> str:
         """
         Return a `symbol` directory on S3 near the main archive file.
@@ -234,6 +248,8 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
             frequency=frequency,
             asset_class=asset_class,
             contract_type=contract_type,
+            exchange=exchange,
+            currency=currency,
             ext=icdtyp.Extension.CSV,
         )
         arch_path, _ = os.path.split(arch_file)
@@ -297,6 +313,8 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
             frequency=frequency,
             asset_class=asset_class,
             contract_type=contract_type,
+            exchange=exchange,
+            currency=currency,
             ext=icdtyp.Extension.CSV,
         )
         failed_tasks_intervals = []

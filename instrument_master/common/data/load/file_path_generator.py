@@ -21,9 +21,10 @@ class FilePathGenerator(abc.ABC):
         self,
         symbol: str,
         frequency: vcdtyp.Frequency,
-        # TODO(*): Let's remove this default.
-        asset_class: vcdtyp.AssetClass = vcdtyp.AssetClass.Futures,
+        asset_class: vcdtyp.AssetClass,
         contract_type: Optional[vcdtyp.ContractType] = None,
+        exchange: Optional[str] = None,
+        currency: Optional[str] = None,
         unadjusted: Optional[bool] = None,
         # TODO(*): Is this needed?
         ext: vcdtyp.Extension = vcdtyp.Extension.Parquet,
