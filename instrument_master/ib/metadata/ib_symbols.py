@@ -27,12 +27,14 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
     """
 
     def __init__(self, symbols_file: str) -> None:
+        # Name of the file storing the symbol universe.
         self._symbols_file = symbols_file
+        # List of the available symbols.
         self._symbols_list: Optional[List[str]] = None
 
     def get_all_symbols(self) -> List[icmsym.Symbol]:
         """
-        Return the symbol list from the file used in the constructor.
+        Return the symbol list from the file passed to the constructor.
         """
         if self._symbols_list is None:
             # Load the symbol list.
@@ -47,14 +49,15 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
         """
         Get the latest available file with symbols on S3.
         """
-        _S3_SYMBOL_FILE_PREFIX = os.path.join(iidcon.S3_METADATA_PREFIX, "symbols-")
-        files = hs3.ls(_S3_SYMBOL_FILE_PREFIX)
+        file_prefix = os.path.join(iidcon.S3_METADATA_PREFIX, "symbols-")
+        files = hs3.ls(file_prefix)
         _LOG.debug("files='%s'", files)
         # TODO(gp): Make it more robust with globbing.
         latest_file: str = max(files)
         _LOG.debug("latest_file='%s'", latest_file)
         # Add the prefix.
         latest_file = os.path.join(iidcon.S3_METADATA_PREFIX, latest_file)
+        # TODO(gp): No need to assume that it's on S3.
         dbg.dassert(hs3.exists(latest_file))
         return latest_file
 
@@ -63,11 +66,10 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
     def _parse_symbols_file(symbols_file: str) -> List[icmsym.Symbol]:
         """
         Read the passed file and return the list of symbols.
-
         """
         _LOG.info("Reading symbols from %s", symbols_file)
         # Prevent to transform values from "NA" to `np.nan`.
-        df: pd.DataFrame = pd.read_csv(
+        df = pd.read_csv(
             symbols_file,
             sep="\t",
             keep_default_na=False,
@@ -83,20 +85,16 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
         # | ICE Futures U.S. (NYBOT)               | Futures   | Cotton No. 2                   | CT           | CT       | USD      | https://ndcdyn.interactivebrokers.com/en/index.php?f=2222&exch=nybot&showcategories=FUTGRP                            |
         # | Korea Stock Exchange (KSE)             | Futures   | SAMSUNG ELECTRO-MECHANICS CO   | 009150       | 123      | KRW      | https://ndcdyn.interactivebrokers.com/en/index.php?f=2222&exch=kse&showcategories=FUTGRP
         # Find unique parsed symbols.
-        # TODO(gp): Split.
-        symbols = list(
-            df.apply(
-                lambda row: IbSymbolUniverse._convert_df_to_row_to_symbol(
-                    ib_ticker=row["ib_symbol"],
-                    ib_exchange=row["market"],
-                    ib_asset_class=row["product"],
-                    ib_currency=row["currency"],
-                ),
-                axis=1,
-            )
-            .dropna()
-            .unique()
-        )
+        df = df.apply(
+            lambda row: IbSymbolUniverse._convert_df_to_row_to_symbol(
+                ib_ticker=row["ib_symbol"],
+                ib_exchange=row["market"],
+                ib_asset_class=row["product"],
+                ib_currency=row["currency"],
+            ),
+            axis=1,
+        ).dropna().unique()
+        symbols = list(df)
         symbols.sort()
         _LOG.debug("Parsed %s", hprint.perc(len(symbols), df.shape[0]))
         return symbols
@@ -122,7 +120,7 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
         exchange = IbSymbolUniverse._extract_exchange_code_from_full_name(ib_exchange)
         # Extract asset class.
         # TODO(plyq): Not covered: `ETF`, `Forex`, `SP500`, expiring `Futures`.
-        _IB_TO_P1_ASSETS = {
+        ib_to_asset = {
             "Futures": icdtyp.AssetClass.Futures,
             "Indices": None,
             "Stocks": icdtyp.AssetClass.Stocks,
@@ -131,7 +129,7 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
             "Structured Products": None,
             "Bonds": None,
         }
-        asset_class = _IB_TO_P1_ASSETS[ib_asset_class]
+        asset_class = ib_to_asset[ib_asset_class]
         # Extract contract type.
         # TODO(plyq): Support expiring contracts.
         contract_type = (
@@ -159,8 +157,10 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
     @staticmethod
     def _extract_exchange_code_from_full_name(exchange: str) -> Optional[str]:
         """
-        The exchange code is inside the brackets or it is one word uppercase
+        The exchange code is inside the brackets or it is one word uppercase in
         exchange name.
+
+        E.g., Chicago Board Options Exchange (CBOE)
         """
         # Keep only what in brackets or string itself if there are no brackets.
         exchange: str = exchange.split("(")[-1].split(")")[0].strip()

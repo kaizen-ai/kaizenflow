@@ -10,11 +10,7 @@ import instrument_master.ib.data.load.ib_file_path_generator as iidlib
 import instrument_master.ib.metadata.ib_symbols as iimibs
 
 
-# TODO(gp): -> TestIbSymbolUniverse
-class TestIbSymbolNamespace(hut.TestCase):
-    """
-    Test `IbSymbolNamespace` class.
-    """
+class TestIbSymbolUniverse(hut.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -26,9 +22,9 @@ class TestIbSymbolNamespace(hut.TestCase):
 
     def test_get_latest_symbols_file1(self) -> None:
         """
-        Test that path to the latest file is full.
+        Get the latest file with the info.
         """
-        latest_file = iimibs.IbSymbolUniverse._get_latest_symbols_file()
+        latest_file = iimibs.IbSymbolUniverse.get_latest_symbols_file()
         self.assertRegex(latest_file, "^%s" % iidcon.S3_PREFIX)
 
     def test_parse_symbols_file1(self) -> None:
@@ -37,7 +33,7 @@ class TestIbSymbolNamespace(hut.TestCase):
         """
         symbols_file = os.path.join(self.get_input_dir(), "test_symbols.csv")
         symbols = iimibs.IbSymbolUniverse._parse_symbols_file(symbols_file)
-        # Construct string to check.
+        # Build string to check.
         symbols_str = "\n".join([str(symbol) for symbol in symbols])
         self.check_string(symbols_str)
 
@@ -188,6 +184,7 @@ class TestIbSymbolNamespace(hut.TestCase):
             contract_type=icdtyp.ContractType.Continuous,
             currency="USD",
         )
+        # TODO(gp): Use the actual outcome.
         self.assertEqual(len(matched), 1)
 
     @pytest.mark.slow("Around 15 sec.")
@@ -225,6 +222,7 @@ class TestIbSymbolNamespace(hut.TestCase):
             frequency=icdtyp.Frequency.Minutely,
             path_generator=iidlib.IbFilePathGenerator(),
         )
+        # TODO(gp): Use the actual outcome.
         self.assertEqual(len(matched), 1)
 
     @pytest.mark.slow("Around 15 sec.")

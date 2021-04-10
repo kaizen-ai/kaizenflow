@@ -23,12 +23,17 @@ import helpers.dbg as dbg
 # %%
 # !ls ..
 
-# %%
-dir_name = ".."
+# %% [markdown]
+# ## Symbols
 
-files = glob.glob(os.path.join(dir_name, "symbols*.csv"))
-dbg.dassert(len(files), 1)
-file_name = files[0]
+# %%
+if False:
+    dir_name = ".."
+    files = glob.glob(os.path.join(dir_name, "symbols*.csv"))
+    dbg.dassert(len(files), 1)
+    file_name = files[0]
+    
+file_name = "s3://external-p1/ib/metadata/symbols-2021-04-01-143112738505.csv"
 print("file_name=%s" % file_name)
 symbols = pd.read_csv(file_name, sep="\t")
 
@@ -37,9 +42,18 @@ print(len(symbols))
 symbols.head(3)
 
 # %%
-files = glob.glob(os.path.join(dir_name, "exchanges*.csv"))
-dbg.dassert(len(files), 1)
-file_name = files[0]
+symbols.groupby("product").count()
+
+# %% [markdown]
+# ## Exchanges
+
+# %%
+if False:
+    files = glob.glob(os.path.join(dir_name, "exchanges*.csv"))
+    dbg.dassert(len(files), 1)
+    file_name = files[0]
+file_name = "s3://external-p1/ib/metadata/exchanges-2021-04-01-143112738505.csv"
+
 print("file_name=%s" % file_name)
 exchanges = pd.read_csv(file_name, sep="\t")
 
