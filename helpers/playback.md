@@ -2,6 +2,7 @@
    * [Playback](#playback)
       * [Code and tests](#code-and-tests)
       * [Using playback](#using-playback)
+         * [Quickstart](#quickstart)
          * [Example 1: testing get_sum()](#example-1-testing-get_sum)
          * [Example 2: testing _render_plantuml() from render_md.py](#example-2-testing-_render_plantuml-from-render_mdpy)
 
@@ -67,6 +68,7 @@ def function_under_test(...) -> ...:
   ```
 
 - The function is called with:
+
   ```python
   a, b = complex_data_pipeline()
   c = get_sum(a, b)
