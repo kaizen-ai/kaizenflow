@@ -8,34 +8,30 @@ ib_connect.docker_pull:
 ## #############################################################################
 
 # Build images.
-ib_connect.docker_build.rc_image:
+ib_connect.docker_build_image.rc:
 	docker build \
 		--progress=plain \
 		--no-cache \
 		-t $(IB_CONNECT_RC_IMAGE) \
 		-t $(IB_CONNECT_RC_IMAGE_SHA) \
-		--file instrument_master/ib/connect/dev.Dockerfile .
+		--file devops/docker_build/Dockerfile ../../../
 
 # Push release candidate images.
-ib_connect.docker_push.rc_image:
+ib_connect.docker_push_image.rc:
 	docker push $(IB_CONNECT_RC_IMAGE)
 	docker push $(IB_CONNECT_RC_IMAGE_SHA)
 
-# Tag :rc image with :dev tag.
-ib_connect.docker_tag.rc_dev:
-	docker tag $(IB_CONNECT_RC_IMAGE) $(IB_CONNECT_DEV_IMAGE)
+# Tag :rc image with :latest tag.
+ib_connect.docker_tag_latest.rc:
+	docker tag $(IB_CONNECT_RC_IMAGE) $(IB_CONNECT_LATEST_IMAGE)
 
-# Push image with :dev tag.
-ib_connect.docker_push.dev_image:
-	docker push $(IB_CONNECT_DEV_IMAGE)
+# Push image with :latest tag.
+ib_connect.docker_push_image.latest:
+	docker push $(IB_CONNECT_LATEST_IMAGE)
 
-# Build images.
-ib_connect.docker_build.prod_image:
-	docker build \
-		--progress=plain \
-		--no-cache \
-		-t $(IB_CONNECT_PROD_IMAGE) \
-		--file instrument_master/ib/connect/prod.Dockerfile .
+# Tag :latest image with :prod tag.
+ib_connect.docker_tag_prod.latest:
+	docker tag $(IB_CONNECT_LATEST_IMAGE) $(IB_CONNECT_PROD_IMAGE)
 
 # Push prod images.
 ib_connect.docker_push.prod_image:

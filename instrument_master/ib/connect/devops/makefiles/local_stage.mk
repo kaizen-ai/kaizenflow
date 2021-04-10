@@ -13,13 +13,13 @@ ifeq ($(IB_CONNECT_VNC_PASSWORD),)
 	@echo "You need to provide IB_CONNECT_VNC_PASSWORD parameter. Example: 'IB_CONNECT_VNC_PASSWORD=12345 make ib_connect.docker_run.local'"
 else
 	IB_APP=$(IB_CONNECT_APP) \
-	IMAGE=$(IB_CONNECT_DEV_IMAGE) \
+	IMAGE=$(IB_CONNECT_LATEST_IMAGE) \
 	TRUSTED_IPS=$(IB_CONNECT_TRUSTED_IPS) \
 	VNC_PASSWORD=$(IB_CONNECT_VNC_PASSWORD) \
 	API_PORT=$(IB_CONNECT_API_PORT) \
 	VNC_PORT=$(IB_CONNECT_VNC_PORT) \
 	docker-compose \
-		-f instrument_master/ib/connect/compose/docker-compose.local.yml \
+		-f devops/compose/docker-compose.local.yml \
     run --rm \
 		-l user=$(USER) \
 		-l app="ib_connect" \
@@ -34,13 +34,13 @@ ifeq ($(IB_CONNECT_VNC_PASSWORD),)
 	@echo "You need to provide IB_CONNECT_VNC_PASSWORD parameter. Example: 'IB_CONNECT_VNC_PASSWORD=12345 make ib_connect.docker_up.local'"
 else
 	IB_APP=$(IB_CONNECT_APP) \
-	IMAGE=$(IB_CONNECT_DEV_IMAGE) \
+	IMAGE=$(IB_CONNECT_LATEST_IMAGE) \
 	TRUSTED_IPS=$(IB_CONNECT_TRUSTED_IPS) \
 	VNC_PASSWORD=$(IB_CONNECT_VNC_PASSWORD) \
 	API_PORT=$(IB_CONNECT_API_PORT) \
 	VNC_PORT=$(IB_CONNECT_VNC_PORT) \
 	docker-compose \
-	  -f instrument_master/ib/connect/compose/docker-compose.local.yml \
+	  -f devops/compose/docker-compose.local.yml \
 		up \
 		-d
 endif
@@ -48,9 +48,9 @@ endif
 # Stop services.
 ib_connect.docker_down.local:
 	IB_APP=$(IB_CONNECT_APP) \
-	IMAGE=$(IB_CONNECT_DEV_IMAGE) \
+	IMAGE=$(IB_CONNECT_LATEST_IMAGE) \
 	API_PORT=$(IB_CONNECT_API_PORT) \
 	VNC_PORT=$(IB_CONNECT_VNC_PORT) \
 	docker-compose \
-		-f instrument_master/ib/connect/compose/docker-compose.local.yml \
+		-f devops/compose/docker-compose.local.yml \
 		down

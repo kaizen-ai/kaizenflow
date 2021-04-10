@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-export PYTHONPATH=$PYTHONPATH:/amp
+export PYTHONPATH=$PYTHONPATH:/app
 
 # Create configurations for controller.
-CMD="python instrument_master/ib/connect/scripts/make_ib_controller_init_file.py \
+CMD="python /app/scripts/make_ib_controller_init_file.py \
      --user ${TWSUSERID} \
      --password ${TWSPASSWORD} \
      --stage ${STAGE}"
@@ -11,7 +11,7 @@ CMD="python instrument_master/ib/connect/scripts/make_ib_controller_init_file.py
 echo $CMD
 eval $CMD
 
-CMD="python instrument_master/ib/connect/scripts/make_jts_init_file.py \
+CMD="python /app/scripts/make_jts_init_file.py \
     --trusted_ips 127.0.0.1,${TRUSTED_IPS}"
 
 echo $CMD
