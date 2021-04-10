@@ -82,7 +82,7 @@ def function_under_test(...) -> ...:
 
   ```python
   import helpers.playback as hplayb
-
+  
   def get_sum(a: List[int], b: List[int]) -> Any:
       playback = hplayb.Playback("assert_equal")
       c = a + b

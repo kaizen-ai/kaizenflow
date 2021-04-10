@@ -253,7 +253,7 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
     return ret
 
 
-def log(logger, verbosity, *vals: List[str]) -> Tuple[str, List[str]]:
+def log(logger, verbosity, *vals: Any) -> Tuple[str, List[str]]:
     """
     _LOG.debug(to_log("ticker", "exchange"))
 
