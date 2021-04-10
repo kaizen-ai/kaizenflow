@@ -29,7 +29,7 @@ services:
   # ###########################################################################
   # Airflow
   # ###########################################################################
- 
+
   # It seems that Airflow needs this name.
   # TODO(*): Check if that's true. Otherwise call it airflow-redis.
   redis_local:
