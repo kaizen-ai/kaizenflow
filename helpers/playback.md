@@ -30,6 +30,20 @@
 
 ## Using playback
 
+###
+
+  ```python
+  def function_under_test(...) -> ...:
+      import helpers.playback as hplayb
+      playback = hplayb.Playback("assert_equal")
+      ...
+      res = ...
+      code = playback.run(res)
+      print(code)
+      return res
+  ```
+
+
 ### Example 1: testing `get_sum()`
 
 - Assume that we want unit test a function `get_sum()`
@@ -61,8 +75,10 @@
 - Instrument the code with `Playback`:
 
   ```python
+  import helpers.playback as hplayb
+
   def get_sum(a: List[int], b: List[int]) -> Any:
-      playback = plbck.Playback("assert_equal")
+      playback = hplayb.Playback("assert_equal")
       c = a + b
       code = playback.run(res)
       print(code)
@@ -71,7 +87,7 @@
 
 - Create the playback object
   ```python
-  playback = plbck.Playback("assert_equal")
+  playback = hplayb.Playback("assert_equal")
   ```
   which specifies:
   - The unit test mode: "check_string" or "assert_equal"
@@ -114,13 +130,13 @@
 - Add playback into the code:
   ```python
   ...
-  import helpers.playback as plbck
+  import helpers.playback as hplayb
   ...
   def _render_plantuml(
       in_txt: List[str], out_file: str, extension: str, dry_run: bool
   ) -> List[str]:
       # Generate test.
-      playback = plbck.Playback("check_string")
+      playback = hplayb.Playback("check_string")
       print(prnt.frame(playback.run(None)))
       ...
   ...
@@ -170,4 +186,3 @@
       # Check output
       self.check_string(act)
   ```
-

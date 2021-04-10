@@ -4,13 +4,17 @@ Import as:
 import helpers.printing as hprint
 """
 
+import logging
+import sys
 import tempfile
-from typing import Any, Dict, Iterable, List, Optional, cast
-
+from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.system_interaction as hsyste
+
+_LOG = logging.getLogger(__name__)
+
 
 # #############################################################################
 # Debug output
@@ -217,7 +221,65 @@ def round_digits(
     return res_as_str
 
 
-# #############################################################################
+# ##################################################################################
+
+
+def to_str(expression: str, frame_lev: int = 1) -> str:
+    """
+    Return a string representing the value of an expression like `exp=value`.
+
+    # This is similar to Python 3.8 f-string syntax `f"{foo=} {bar=}"`.
+    # We don't want to force to use Python 3.8 just for this feature.
+
+    # If expression is a space-separated compound expression, convert it into
+    # `exp1=val1, exp2=val2, ...`.
+
+    >>> x = 1
+    >>> to_str("x+1")
+    x+1=2
+    """
+    dbg.dassert_isinstance(expression, str)
+    if " " in expression:
+        # If expression is a list of space-separated expression, convert each in a
+        # string.
+        exprs = [v.lstrip().rstrip() for v in expression.split(" ")]
+        _to_str = lambda x: to_str(x, frame_lev=frame_lev + 2)
+        return ", ".join(list(map(_to_str, exprs)))
+
+    frame = sys._getframe(frame_lev)
+    ret = (
+        expression + "=" + repr(eval(expression, frame.f_globals, frame.f_locals))
+    )
+    return ret
+
+
+def log(logger, verbosity, *vals: List[str]) -> Tuple[str, List[str]]:
+    """
+    _LOG.debug(to_log("ticker", "exchange"))
+
+    is equivalent to statements like:
+
+    _LOG.debug("%s, %s", to_str("ticker"), to_str("exchange"))
+    _LOG.debug("ticker=%s, exchange=%s", ticker, exchange)
+    """
+    logger_verbosity = dbg.get_logger_verbosity()
+    # print("verbosity=%s logger_verbosity=%s" % (verbosity, logger_verbosity))
+    # We want to avoid the overhead of converting strings, so we evaluate the
+    # expressions only if we are going to print.
+    if verbosity >= logger_verbosity:
+        # We need to increment frame_lev since we are 2 levels deeper in the stack.
+        _to_str = lambda x: to_str(x, frame_lev=3)
+        num_vals = len(vals)
+        if num_vals == 1:
+            fstring = "%s"
+            vals = _to_str(vals[0])
+        else:
+            fstring = ", ".join(["%s"] * num_vals)
+            vals = list(map(_to_str, vals))
+        logger.log(verbosity, fstring, vals)
+
+
+# #################################################################################
 
 
 def type_to_string(type_as_str: str) -> str:
@@ -473,6 +535,7 @@ def dataframe_to_str(
     display_width: int = 10000,
 ) -> str:
     import pandas as pd
+
     with pd.option_context(
         "display.max_colwidth",
         max_colwidth,
@@ -502,6 +565,7 @@ def config_notebook(sns_set: bool = True) -> None:
     if sns_set:
         sns.set()
     import pandas as pd
+
     pd.set_option("display.max_rows", 500)
     pd.set_option("display.max_columns", 500)
     pd.set_option("display.width", 1000)
