@@ -1,8 +1,8 @@
-date object
-open float64
-high float64
-low float64
-close float64
-volume int64
-average float64
-barCount int64
+date         object
+open        float64
+high        float64
+low         float64
+close       float64
+volume        int64
+average     float64
+barCount      int64

@@ -1,6 +1,7 @@
 import os
 from typing import Optional
 
+import helpers.dbg as dbg
 import instrument_master.common.data.load.file_path_generator as icdlfi
 import instrument_master.common.data.types as icdtyp
 import instrument_master.ib.data.config as iidcon
@@ -24,8 +25,10 @@ class IbFilePathGenerator(icdlfi.FilePathGenerator):
         self,
         symbol: str,
         frequency: icdtyp.Frequency,
-        asset_class: icdtyp.AssetClass = icdtyp.AssetClass.Futures,
+        asset_class: icdtyp.AssetClass,
         contract_type: Optional[icdtyp.ContractType] = None,
+        exchange: Optional[str] = None,
+        currency: Optional[str] = None,
         unadjusted: Optional[bool] = None,
         ext: icdtyp.Extension = icdtyp.Extension.CSV,
     ) -> str:
@@ -36,7 +39,11 @@ class IbFilePathGenerator(icdlfi.FilePathGenerator):
 
         Parameters as in `read_data`.
         :return: path to the file
+        :raises ValueError: if parameters are incompatible
         """
+        # Check parameters.
+        dbg.dassert_is_not(currency, None)
+        dbg.dassert_is_not(exchange, None)
         # Get asset class part.
         if (
             contract_type == icdtyp.ContractType.Continuous
@@ -56,6 +63,6 @@ class IbFilePathGenerator(icdlfi.FilePathGenerator):
         file_name = "%s.%s" % (symbol, extension_part)
         # Construct full path.
         file_path = os.path.join(
-            iidcon.S3_PREFIX, asset_part, freq_part, file_name
+            iidcon.S3_PREFIX, asset_part, exchange, currency, freq_part, file_name
         )
         return file_path

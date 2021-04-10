@@ -219,16 +219,11 @@ endif
 # Images workflows.
 # #############################################################################
 
-ifdef GITHUB_SHA
-	IMAGE_RC_SHA:=$(GITHUB_SHA)
-else
-	# GITHUB_SHA not found. Setting IMAGE_RC_SHA from HEAD.
-	IMAGE_RC_SHA:=$(shell git rev-parse HEAD)
-endif
-
 # Use Docker buildkit or not.
 # DOCKER_BUILDKIT=1
 DOCKER_BUILDKIT=0
+GITHUB_SHA?=$(shell git rev-parse HEAD)
+IMAGE_RC_SHA:=$(GITHUB_SHA)
 
 im.docker_build_image.rc:
 	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \

@@ -35,6 +35,8 @@ class KibotFilePathGenerator(icdlfi.FilePathGenerator):
         frequency: icdtyp.Frequency,
         asset_class: icdtyp.AssetClass = icdtyp.AssetClass.Futures,
         contract_type: Optional[icdtyp.ContractType] = None,
+        exchange: Optional[str] = None,
+        currency: Optional[str] = None,
         unadjusted: Optional[bool] = None,
         ext: icdtyp.Extension = icdtyp.Extension.Parquet,
     ) -> str:

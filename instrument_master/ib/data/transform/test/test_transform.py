@@ -56,11 +56,13 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
                 --contract_type continuous \
                 --asset_class Futures \
                 --exchange GLOBEX \
+                --currency USD \
                 --max_num_rows 10
         ```
         """
         exchange = "GLOBEX"
         symbol = "ES"
+        currency = "USD"
         asset_class = icdtyp.AssetClass.Futures
         contract_type = contract_type = icdtyp.ContractType.Continuous
         frequency = icdtyp.Frequency.Daily
@@ -69,6 +71,7 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
             symbol=symbol,
             asset_class=asset_class,
             contract_type=contract_type,
+            currency=currency,
             frequency=frequency,
         )
 
@@ -84,11 +87,13 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
                 --contract_type continuous \
                 --asset_class Futures \
                 --exchange NYMEX \
+                --currency USD \
                 --max_num_rows 10
         ```
         """
         exchange = "NYMEX"
         symbol = "HG"
+        currency = "USD"
         asset_class = icdtyp.AssetClass.Futures
         contract_type = contract_type = icdtyp.ContractType.Continuous
         frequency = icdtyp.Frequency.Daily
@@ -97,6 +102,7 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
             symbol=symbol,
             asset_class=asset_class,
             contract_type=contract_type,
+            currency=currency,
             frequency=frequency,
         )
 
@@ -112,11 +118,13 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
                 --contract_type continuous \
                 --asset_class Futures \
                 --exchange GLOBEX \
+                --currency USD \
                 --max_num_rows 10
         ```
         """
         exchange = "GLOBEX"
         symbol = "ES"
+        currency = "USD"
         asset_class = icdtyp.AssetClass.Futures
         contract_type = contract_type = icdtyp.ContractType.Continuous
         frequency = icdtyp.Frequency.Minutely
@@ -125,6 +133,7 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
             symbol=symbol,
             asset_class=asset_class,
             contract_type=contract_type,
+            currency=currency,
             frequency=frequency,
         )
 
@@ -140,11 +149,13 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
                 --contract_type continuous \
                 --asset_class Futures \
                 --exchange NYMEX \
+                --currency USD \
                 --max_num_rows 10
         ```
         """
         exchange = "NYMEX"
         symbol = "HG"
+        currency = "USD"
         asset_class = icdtyp.AssetClass.Futures
         contract_type = contract_type = icdtyp.ContractType.Continuous
         frequency = icdtyp.Frequency.Minutely
@@ -153,6 +164,7 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
             symbol=symbol,
             asset_class=asset_class,
             contract_type=contract_type,
+            currency=currency,
             frequency=frequency,
         )
 
@@ -162,6 +174,7 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
         symbol: str,
         asset_class: icdtyp.AssetClass,
         contract_type: icdtyp.ContractType,
+        currency: str,
         frequency: icdtyp.Frequency,
     ) -> None:
         """
@@ -178,6 +191,7 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
         :param asset_class: symbol asset class
         :param contract_type: symbol contract type
         :param frequency: data frequency to return
+        :param currency: symbol currency
         """
         # Prepare database.
         self._writer.ensure_symbol_exists(symbol=symbol, asset_class=asset_class)
@@ -196,6 +210,7 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
             unadjusted=True,
             exchange_id=exchange_id,
             exchange=exchange,
+            currency=currency,
         )
         # Read, transform data from S3 and put to the database.
         icdttr.convert_s3_to_sql(**params_list)
