@@ -95,7 +95,7 @@ class Test_log(hut.TestCase):
 
     def test4(self) -> None:
         """
-        > pytest helpers/test/test_printing.py -o log_cli=true --dbg_verbosity DEBUG
+        > pytest -k Test_log::test4  -o log_cli=true --dbg_verbosity DEBUG
 
         should print something like:
 

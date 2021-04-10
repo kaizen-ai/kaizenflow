@@ -14,8 +14,8 @@ class Test_git1(hut.TestCase):
     Unfortunately we can't check the outcome of some of these functions since
     we don't know in which dir we are running.
 
-    Thus we test that the function completes and visually inspect the outcome,
-    if needed.
+    Thus we test that the function completes and visually inspect the
+    outcome, if needed.
     """
 
     def test_get_git_name1(self) -> None:
