@@ -12,13 +12,14 @@ from typing import List, Optional
 import pandas as pd
 
 import helpers.dbg as dbg
+import helpers.printing as hprint
 import helpers.s3 as hs3
-import helpers.printing as printing
 import instrument_master.common.data.types as icdtyp
 import instrument_master.common.metadata.symbols as icmsym
 import instrument_master.ib.data.config as iidcon
 
 _LOG = logging.getLogger(__name__)
+
 
 class IbSymbolUniverse(icmsym.SymbolUniverse):
     """
@@ -27,6 +28,7 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
 
     def __init__(self, symbols_file: str) -> None:
         self._symbols_file = symbols_file
+        self._symbols_list: Optional[List[str]] = None
 
     def get_all_symbols(self) -> List[icmsym.Symbol]:
         """
@@ -34,14 +36,14 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
         """
         if self._symbols_list is None:
             # Load the symbol list.
-            dbg.dassert_is_not(self._symbols_file)
-            _LOG.debug("symbol_file=%s", self._symbol_file)
-            self._symbols_list = self._parse_symbols_file(self._symbol_file)
+            dbg.dassert_is_not(self._symbols_file, None)
+            _LOG.debug("symbol_file=%s", self._symbols_file)
+            self._symbols_list = self._parse_symbols_file(self._symbols_file)
         return self._symbols_list
 
     @staticmethod
     @functools.lru_cache(maxsize=16)
-    def _get_latest_symbols_file() -> str:
+    def get_latest_symbols_file() -> str:
         """
         Get the latest available file with symbols on S3.
         """
@@ -63,7 +65,7 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
         Read the passed file and return the list of symbols.
 
         """
-        _LOG.debug("Reading symbols from %s", symbols_file)
+        _LOG.info("Reading symbols from %s", symbols_file)
         # Prevent to transform values from "NA" to `np.nan`.
         df: pd.DataFrame = pd.read_csv(
             symbols_file,
@@ -96,7 +98,7 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
             .unique()
         )
         symbols.sort()
-        _LOG.debug("Parsed %s", printing.perc(len(symbols), df.shape[0]))
+        _LOG.debug("Parsed %s", hprint.perc(len(symbols), df.shape[0]))
         return symbols
 
     # TODO(gp): Add support also for the exchanges.
@@ -104,7 +106,6 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
     #    iidcon.S3_METADATA_PREFIX, "exchanges-"
     #)
 
-    # TODO(gp): -> _convert_df_row_to_symbol
     @staticmethod
     def _convert_df_to_row_to_symbol(
         ib_ticker: str,
@@ -141,8 +142,7 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
         # Extract currency.
         currency = ib_currency
         # Construct the Symbol object, if possible.
-        _LOG_vals(logging.DEBUG, "ticker exchange asset_class contract_type currency".split())
-        #_LOG.debug("%s, %s, %s, %s, %s", to_str("ticker"), to_str("exchange"), to_str("asset_class"), to_str("contract_type"), to_str("currency"))
+        hprint.log(_LOG, logging.DEBUG, "ticker exchange asset_class contract_type currency")
         if ib_ticker and exchange and asset_class and currency:
             symbol = icmsym.Symbol(
                 ticker=ticker,

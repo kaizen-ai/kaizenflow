@@ -9,6 +9,7 @@ import sys
 import tempfile
 from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
 
+import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.system_interaction as hsyste
 
@@ -252,7 +253,7 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
     return ret
 
 
-def log(logger, verbosity, *vals: List[str]) -> Tuple[str, List[str]]:
+def log(logger, verbosity, *vals: Any) -> Tuple[str, List[str]]:
     """
     _LOG.debug(to_log("ticker", "exchange"))
 

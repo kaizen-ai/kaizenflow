@@ -2,7 +2,6 @@ import os
 
 import pytest
 
-import helpers.dbg as dbg
 import helpers.unit_test as hut
 import instrument_master.common.data.types as icdtyp
 import instrument_master.common.metadata.symbols as icmsym
@@ -21,7 +20,8 @@ class TestIbSymbolNamespace(hut.TestCase):
     def setUpClass(cls) -> None:
         # Disable the chatty modules when debugging with DEBUG verbosity. We need to
         # disable the modules after they have been imported.
-        #dbg.shutup_chatty_modules(verbose=True)
+        # import helpers.dbg as dbg
+        # dbg.shutup_chatty_modules(verbose=True)
         hut.TestCase.setUpClass()
 
     def test_get_latest_symbols_file1(self) -> None:
@@ -173,13 +173,15 @@ class TestIbSymbolNamespace(hut.TestCase):
         )
         self.assert_equal(extracted_exchange, "NAMES")
 
-    @pytest.mark.slow("Parse real large file with symbols. Approx. 15 sec.")
+    @pytest.mark.slow("Around 15 sec.")
     def test_get_1(self) -> None:
         """
         Test that ES symbol is returned by request.
         """
-        ib_universe = iimibs.IbSymbolUniverse()
-        matched = self.ib_universe.get(
+        # Parse real large file with symbols.
+        file_name = iimibs.IbSymbolUniverse.get_latest_symbols_file()
+        ib_universe = iimibs.IbSymbolUniverse(file_name)
+        matched = ib_universe.get(
             ticker="ES",
             exchange="GLOBEX",
             asset_class=icdtyp.AssetClass.Futures,
@@ -188,12 +190,14 @@ class TestIbSymbolNamespace(hut.TestCase):
         )
         self.assertEqual(len(matched), 1)
 
-    @pytest.mark.slow("Parse real large file with symbols. Approx. 15 sec.")
+    @pytest.mark.slow("Around 15 sec.")
     def test_get_2(self) -> None:
         """
         Test that NON_EXISTING symbol is returned by request.
         """
-        ib_universe = iimibs.IbSymbolUniverse()
+        # Parse real large file with symbols.
+        file_name = iimibs.IbSymbolUniverse.get_latest_symbols_file()
+        ib_universe = iimibs.IbSymbolUniverse(file_name)
         matched = ib_universe.get(
             ticker="NON_EXISTING",
             exchange="GLOBEX",
@@ -203,12 +207,14 @@ class TestIbSymbolNamespace(hut.TestCase):
         )
         self.assertEqual(matched, [])
 
-    @pytest.mark.slow("Parse real large file with symbols. Approx. 15 sec.")
+    @pytest.mark.slow("Around 15 sec.")
     def test_get_3(self) -> None:
         """
         Test that NG symbol is in downloaded list.
         """
-        ib_universe = iimibs.IbSymbolUniverse()
+        # Parse real large file with symbols.
+        file_name = iimibs.IbSymbolUniverse.get_latest_symbols_file()
+        ib_universe = iimibs.IbSymbolUniverse(file_name)
         matched = ib_universe.get(
             ticker="NG",
             exchange="NYMEX",
@@ -221,12 +227,14 @@ class TestIbSymbolNamespace(hut.TestCase):
         )
         self.assertEqual(len(matched), 1)
 
-    @pytest.mark.slow("Parse real large file with symbols. Approx. 15 sec.")
+    @pytest.mark.slow("Around 15 sec.")
     def test_get_4(self) -> None:
         """
         Test that NON_EXISTING symbol is not in the downloaded list.
         """
-        ib_universe = iimibs.IbSymbolUniverse()
+        # Parse real large file with symbols.
+        file_name = iimibs.IbSymbolUniverse.get_latest_symbols_file()
+        ib_universe = iimibs.IbSymbolUniverse(file_name)
         matched = ib_universe.get(
             ticker="NON_EXISTING",
             exchange="GLOBEX",
