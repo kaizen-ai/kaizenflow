@@ -24,36 +24,14 @@ _LOG = logging.getLogger(__name__)
 
 class IbSymbolUniverse(icmsym.SymbolUniverse):
     """
-    Store symbols available to download with IB Gateway API.
+    Store symbols available in IB and already downloaded.
     """
 
-    _S3_SYMBOL_FILE_PREFIX = os.path.join(iidcon.S3_METADATA_PREFIX, "symbols-")
-    _S3_EXCHANGE_FILE_PREFIX = os.path.join(
-        iidcon.S3_METADATA_PREFIX, "exchanges-"
-    )
-    _S3_FILE_SEPARATOR = "\t"
-    _S3_FILE_SYMBOL_COLUMN = "ib_symbol"
-    _S3_FILE_EXCHANGE_COLUMN = "market"
-    _S3_FILE_ASSET_CLASS_COLUMN = "product"
-    _S3_FILE_CURRENCY_COLUMN = "currency"
-    # TODO(plyq): Not covered: `ETF`, `Forex`, `SP500`, expiring `Futures`.
-    _IB_TO_P1_ASSETS = {
-        "Futures": icdtyp.AssetClass.Futures,
-        "Indices": None,
-        "Stocks": icdtyp.AssetClass.Stocks,
-        "Options": None,
-        "Warrants": None,
-        "Structured Products": None,
-        "Bonds": None,
-    }
-
-    def __init__(self, symbols_file: Optional[str] = None) -> None:
-        symbol_file = (
-            self._get_latest_symbols_file()
-            if symbols_file is None
-            else symbols_file
-        )
-        self._symbols_list = self._parse_symbols_file(symbol_file)
+    def __init__(self, symbols_file: str) -> None:
+        # Name of the file storing the symbol universe.
+        self._symbols_file = symbols_file
+        # List of the available symbols.
+        self._symbols_list: Optional[List[str]] = None
 
     def get_all_symbols(self) -> List[icmsym.Symbol]:
         """
@@ -66,21 +44,27 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
             self._symbols_list = self._parse_symbols_file(self._symbols_file)
         return self._symbols_list
 
-    @classmethod
-    def _get_latest_symbols_file(cls) -> str:
+    @staticmethod
+    @functools.lru_cache(maxsize=16)
+    def get_latest_symbols_file() -> str:
         """
         Get the latest available file with symbols on S3.
         """
-        latest_file: str = max(hs3.ls(cls._S3_SYMBOL_FILE_PREFIX))
-        # Add a prefix.
+        file_prefix = os.path.join(iidcon.S3_METADATA_PREFIX, "symbols-")
+        files = hs3.ls(file_prefix)
+        _LOG.debug("files='%s'", files)
+        # TODO(gp): Make it more robust with globbing.
+        latest_file: str = max(files)
+        _LOG.debug("latest_file='%s'", latest_file)
+        # Add the prefix.
         latest_file = os.path.join(iidcon.S3_METADATA_PREFIX, latest_file)
-        dbg.dassert(
-            hs3.exists(latest_file), "File %s doesn't exist" % latest_file
-        )
+        # TODO(gp): No need to assume that it's on S3.
+        dbg.dassert(hs3.exists(latest_file))
         return latest_file
 
-    @classmethod
-    def _parse_symbols_file(cls, symbols_file: str) -> List[icmsym.Symbol]:
+    @staticmethod
+    @functools.lru_cache(maxsize=16)
+    def _parse_symbols_file(symbols_file: str) -> List[icmsym.Symbol]:
         """
         Read the passed file and return the list of symbols.
         """

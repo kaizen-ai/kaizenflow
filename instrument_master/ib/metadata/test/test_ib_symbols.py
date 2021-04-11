@@ -10,13 +10,13 @@ import instrument_master.ib.data.load.ib_file_path_generator as iidlib
 import instrument_master.ib.metadata.ib_symbols as iimibs
 
 
-class TestIbSymbolNamespace(hut.TestCase):
-    """
-    Test `IbSymbolNamespace` class.
-    """
-
+class TestIbSymbolUniverse(hut.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        # Disable the chatty modules when debugging with DEBUG verbosity. We need to
+        # disable the modules after they have been imported.
+        # import helpers.dbg as dbg
+        # dbg.shutup_chatty_modules(verbose=True)
         hut.TestCase.setUpClass()
 
     def test_get_latest_symbols_file1(self) -> None:
