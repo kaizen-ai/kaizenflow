@@ -65,7 +65,9 @@ services:
       - ../env/local/airflow.env
     volumes:
       - airflow_data_local:/bitnami
-      - ../airflow_configs/requirements.txt:/bitnami/python/requirements.txt
+      # TODO(gp): Understand if this is really needed. Intermittently, the
+      # destination is a dir creating the container not to work.
+      #- ../airflow_configs/requirements.txt:/bitnami/python/requirements.txt
       - ../dags:/opt/bitnami/airflow/dags
     depends_on:
       - postgresql

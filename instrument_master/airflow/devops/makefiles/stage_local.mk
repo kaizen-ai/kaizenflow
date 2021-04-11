@@ -9,7 +9,7 @@ IM_IMAGE_AIRFLOW_DEV=$(IM_REPO_BASE_PATH):latest-airflow
 # DOCKER_BUILDKIT=1
 DOCKER_BUILDKIT=0
 
-im.docker_build_worker_image:
+im_airflow.docker_build_worker_image:
 	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
 	docker build \
 		--progress=plain \
@@ -18,7 +18,7 @@ im.docker_build_worker_image:
 		--file devops/docker_build/im_db_loader_worker.dev.Dockerfile \
 		.
 
-im.docker_build_worker_image_with_cache:
+im_airflow.docker_build_worker_image_with_cache:
 	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
 	docker build \
 		--progress=plain \
@@ -26,14 +26,13 @@ im.docker_build_worker_image_with_cache:
 		--file devops/docker_build/im_db_loader_worker.dev.Dockerfile \
 		.
 
-im.docker_pull_related_images.local:
+im_airflow.docker_pull_related_images.local:
 	WORKER_IMAGE=$(IM_IMAGE_AIRFLOW_DEV) \
 	docker-compose \
 		-f devops/compose/docker-compose.local.yml \
 		pull
 
-
-im.run_bash.local:
+im_airflow.run_bash.local:
 	IMAGE=$(IM_IMAGE_DEV) \
 	docker-compose \
 		-f devops/compose/docker-compose.local.yml \
@@ -42,18 +41,22 @@ im.run_bash.local:
         app \
 		bash
 
-
-
-
-im.docker_run_stack.local:
+im_airflow.docker_run_stack.local:
 	WORKER_IMAGE=$(IM_IMAGE_AIRFLOW_DEV) \
 	docker stack deploy \
 		-c devops/compose/docker-compose.local.yml \
 		--resolve-image never \
 		im_airflow_stack_local
 
+# TODO(gp): Remove this.
+#im_airflow.docker_only_airflow.local:
+#	WORKER_IMAGE=$(IM_IMAGE_AIRFLOW_DEV) \
+#	docker stack deploy \
+#		-c devops/compose/docker-compose-only-airflow.local.yml \
+#		--resolve-image never \
+#		im_airflow_stack_only
 
-im.docker_down_stack.local:
+im_airflow.docker_down_stack.local:
 	docker stack remove im_airflow_stack_local
 
-# make im.run_convert_s3_to_sql_kibot.local PARAMS="--provider kibot --symbol AAPL --frequency T --contract_type continuous --asset_class stocks --exchange NYSE"
+# make im_airflow.run_convert_s3_to_sql_kibot.local PARAMS="--provider kibot --symbol AAPL --frequency T --contract_type continuous --asset_class stocks --exchange NYSE"
