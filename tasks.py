@@ -134,3 +134,24 @@ def docker_login(ctx):
 # # To change output format you can use following --format flag with `docker stats` command.
 # # --format='table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}'
 # docker stats --no-stream $(IDS)
+
+
+
+@task
+def get_platform(c):
+    uname = c.run("uname -s").stdout.strip()
+    if uname == 'Darwin':
+        return "You paid the Apple tax!"
+    elif uname == 'Linux':
+        return "Year of Linux on the desktop!"
+
+
+@task
+def replace(c, path, search, replacement):
+    # Assume systems have sed, and that some (eg macOS w/ Homebrew) may
+    # have gsed, implying regular sed is BSD style.
+    has_gsed = c.run("which gsed", warn=True, hide=True)
+    # Set command to run accordingly
+    binary = "gsed" if has_gsed else "sed"
+    #c.run(f"{binary} -e 's/{search}/{replacement}/g' {path}")
+    c.run("sed")
