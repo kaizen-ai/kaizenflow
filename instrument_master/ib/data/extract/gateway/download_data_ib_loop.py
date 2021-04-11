@@ -1,6 +1,6 @@
 """
-Download data from IB using the "IB loop" approach (ie starting from the end of the
-interval and moving backwards).
+Download data from IB using the "IB loop" approach (ie starting from the end of
+the interval and moving backwards).
 """
 import datetime
 import logging
@@ -378,7 +378,7 @@ def load_historical_data(file_name: str, verbose: bool = False) -> pd.DataFrame:
     return df
 
 
-# ##################################################################################
+# #############################################################################
 
 # TODO(*): -> _process_workload().
 def process_workload(

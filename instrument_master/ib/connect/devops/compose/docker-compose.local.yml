@@ -2,17 +2,16 @@ version: '3'
 services:
   tws:
     image: ${IMAGE}
-    entrypoint: "instrument_master/ib/connect/entrypoint.sh"
+    entrypoint: "/app/entrypoint.sh"
     environment:
       - APP=${IB_APP}
       - VNC_PASSWORD=${VNC_PASSWORD}
       - TRUSTED_IPS=${TRUSTED_IPS}
-      - TWSUSERID=${TWSUSERID}
-      - TWSPASSWORD=${TWSPASSWORD}
       - VNC_PORT=${VNC_PORT}
       - API_PORT=${API_PORT}
     env_file:
-      - ../.env/prod.env
+      - ~/.vnc/ib.credentials
+      - ../env/local.env
     ports:
-      - "${API_PORT}:${API_PORT}"
       - "${VNC_PORT}:${VNC_PORT}"
+      - "${API_PORT}:${API_PORT}"

@@ -35,6 +35,7 @@ def convert_s3_to_sql(
     frequency: icdtyp.Frequency,
     exchange_id: int,
     contract_type: Optional[icdtyp.ContractType] = None,
+    currency: Optional[str] = None,
     unadjusted: Optional[bool] = None,
     max_num_rows: Optional[int] = None,
     incremental: Optional[bool] = False,
@@ -65,11 +66,12 @@ def convert_s3_to_sql(
         asset_class=asset_class,
         frequency=frequency,
         contract_type=contract_type,
+        currency=currency,
         unadjusted=unadjusted,
         nrows=max_num_rows,
         normalize=True,
         start_ts=start_ts,
-        end_ts=end_ts
+        end_ts=end_ts,
     )
     _LOG.debug("Transforming '%s' data before saving to database", symbol)
     df = s3_to_sql_transformer.transform(

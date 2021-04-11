@@ -14,7 +14,6 @@ import psycopg2.extensions as pexten
 
 import helpers.dbg as dbg
 import instrument_master.common.data.types as icdtyp
-import instrument_master.common.data.types as vcdtyp
 
 
 class AbstractDataLoader(abc.ABC):
@@ -27,9 +26,10 @@ class AbstractDataLoader(abc.ABC):
         self,
         exchange: str,
         symbol: str,
-        asset_class: vcdtyp.AssetClass,
-        frequency: vcdtyp.Frequency,
-        contract_type: Optional[vcdtyp.ContractType] = None,
+        asset_class: icdtyp.AssetClass,
+        frequency: icdtyp.Frequency,
+        contract_type: Optional[icdtyp.ContractType] = None,
+        currency: Optional[str] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
@@ -58,7 +58,7 @@ class AbstractS3DataLoader(AbstractDataLoader):
     Interface for class reading data from S3.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._normalizer_dict = {
             icdtyp.Frequency.Daily: self._normalize_daily,
             icdtyp.Frequency.Hourly: self._normalize_1_hour,
@@ -238,12 +238,15 @@ class AbstractSqlDataLoader(AbstractDataLoader):
         self,
         exchange: str,
         symbol: str,
-        asset_class: vcdtyp.AssetClass,
-        frequency: vcdtyp.Frequency,
-        contract_type: Optional[vcdtyp.ContractType] = None,
+        asset_class: icdtyp.AssetClass,
+        frequency: icdtyp.Frequency,
+        contract_type: Optional[icdtyp.ContractType] = None,
+        currency: Optional[str] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         """
         Read data.
@@ -260,7 +263,7 @@ class AbstractSqlDataLoader(AbstractDataLoader):
 
     @staticmethod
     @abc.abstractmethod
-    def _get_table_name_by_frequency(frequency: vcdtyp.Frequency) -> str:
+    def _get_table_name_by_frequency(frequency: icdtyp.Frequency) -> str:
         """
         Get table name by predefined frequency.
 
@@ -272,7 +275,7 @@ class AbstractSqlDataLoader(AbstractDataLoader):
         self,
         exchange: str,
         symbol: str,
-        frequency: vcdtyp.Frequency,
+        frequency: icdtyp.Frequency,
         nrows: Optional[int] = None,
     ) -> pd.DataFrame:
         exchange_id = self.get_exchange_id(exchange)

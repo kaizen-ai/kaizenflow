@@ -735,7 +735,9 @@ def get_all_loggers() -> List:
     return loggers
 
 
-def get_matching_loggers(module_names: Union[str, Iterable[str]], verbose: bool) -> List:
+def get_matching_loggers(
+    module_names: Union[str, Iterable[str]], verbose: bool
+) -> List:
     """
     Find loggers that match a name or a name in a set.
     """
@@ -765,7 +767,7 @@ def get_matching_loggers(module_names: Union[str, Iterable[str]], verbose: bool)
 
 
 def shutup_chatty_modules(
-        verbosity: int = logging.CRITICAL, verbose: bool = False
+    verbosity: int = logging.CRITICAL, verbose: bool = False
 ) -> None:
     """
     Reduce the verbosity for external modules that are very chatty.

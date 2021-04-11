@@ -8,28 +8,30 @@
 # TODO(gp): Improve this.
 
 echo "Creating patch ..."
-#hash_=$(svn info | \grep Revision | awk '{print $2}')
-hash_=$(git rev-parse --short HEAD)
-timestamp=$(timestamp)
-git_root=$(git rev-parse --show-toplevel)
-basename=$(basename $git_root)
-echo "git_root=$git_root"
-cd $git_root
-dst_file="$git_root/patch.$basename.$hash_.$timestamp.txt"
-echo "dst_file=$dst_file"
-git st -s $*
+HASH_=$(git rev-parse --short HEAD)
+TIMESTAMP=$(timestamp)
+GIT_ROOT=$(git rev-parse --show-toplevel)
+BASENAME=$(basename $GIT_ROOT)
+echo "GIT_ROOT=$GIT_ROOT"
+
+cd $GIT_ROOT
+DST_FILE="$git_root/patch.$BASENAME.$HASH_.$TIMESTAMP.txt"
+echo "DST_FILE=$DST_FILE"
+
+git status -s $*
 # Find all files modified (instead of --cached).
-git diff HEAD $* >$dst_file
+git diff HEAD $* >$DST_FILE
 
 echo
-echo "To apply the patch do git checkout to the correct revision and execute:"
-echo "> git apply "$dst_file
+echo "To apply the patch and execute:"
+echo "> git checkout $HASH_"
+echo "> git apply "$DST_FILE
 
 # Remote patch.
 echo
 echo "Remote patch:"
-file=$(basename $dst_file)
+FILE=$(basename $DST_FILE)
 #
-server="server"
-client_path="~/src/"
-echo "> scp $file $server: && ssh $server 'cd $client_path && git apply ~/$file'"
+SERVER="server"
+CLIENT_PATH="~/src/"
+echo "> scp $FILE $SERVER: && ssh $SERVER 'cd $CLIENT_PATH && git apply ~/$FILE'"

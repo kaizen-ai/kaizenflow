@@ -22,6 +22,8 @@ class TestIbFilePathGenerator(hut.TestCase):
             frequency=icdtyp.Frequency.Minutely,
             asset_class=icdtyp.AssetClass.Futures,
             contract_type=icdtyp.ContractType.Expiry,
+            exchange="GLOBEX",
+            currency="USD",
             ext=icdtyp.Extension.CSV,
         )
         # Compare with expected value.
@@ -37,6 +39,8 @@ class TestIbFilePathGenerator(hut.TestCase):
             frequency=icdtyp.Frequency.Minutely,
             asset_class=icdtyp.AssetClass.Stocks,
             contract_type=icdtyp.ContractType.Continuous,
+            exchange="NSDQ",
+            currency="USD",
             ext=icdtyp.Extension.CSV,
         )
         # Compare with expected value.
@@ -52,6 +56,8 @@ class TestIbFilePathGenerator(hut.TestCase):
             frequency=icdtyp.Frequency.Daily,
             asset_class=icdtyp.AssetClass.Futures,
             contract_type=icdtyp.ContractType.Expiry,
+            exchange="ECBOT",
+            currency="EUR",
             ext=icdtyp.Extension.CSV,
         )
         # Compare with expected value.

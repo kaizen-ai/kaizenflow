@@ -22,6 +22,7 @@ import helpers.git as git
 import helpers.io_ as hio
 import helpers.printing as hprint
 import helpers.system_interaction as hsyste
+import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
 
@@ -529,8 +530,13 @@ class TestCase(unittest.TestCase):
         # Set the default pandas options (see AmpTask1140).
         self.old_pd_options = get_pd_default_values()
         set_pd_default_values()
+        # Start the timer to measure the execution time of the test.
+        self._timer = htimer.Timer()
 
     def tearDown(self) -> None:
+        # Stop the timer to measure the execution time of the test.
+        self._timer.stop()
+        print("(%.2f s) " % self._timer.get_total_elapsed(), end="")
         # Recover the original default pandas options.
         pd.options = self.old_pd_options
         # Force matplotlib to close plots to decouple tests.
@@ -610,8 +616,8 @@ class TestCase(unittest.TestCase):
     def assert_equal(
         self, actual: str, expected: str, fuzzy_match: bool = False
     ) -> None:
-        dbg.dassert_in(type(actual), (bytes, str))
-        dbg.dassert_in(type(expected), (bytes, str))
+        dbg.dassert_in(type(actual), (bytes, str), "actual=%s", str(actual))
+        dbg.dassert_in(type(expected), (bytes, str), "expected=%s", str(expected))
         #
         dir_name = self._get_current_path()
         _LOG.debug("dir_name=%s", dir_name)

@@ -47,6 +47,7 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
         asset_class: icdtyp.AssetClass,
         frequency: icdtyp.Frequency,
         contract_type: Optional[icdtyp.ContractType] = None,
+        currency: Optional[str] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
@@ -61,6 +62,7 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
         :param asset_class: asset class
         :param frequency: `D` or `T` for daily or minutely data respectively
         :param contract_type: required for asset class of type: `futures`
+        :param currency: currency of the symbol
         :param unadjusted: required for asset classes of type: `stocks` & `etfs`
         :param nrows: if not None, return only the first nrows of the data
         :param normalize: whether to normalize the dataframe by frequency
@@ -75,6 +77,8 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
             asset_class=asset_class,
             frequency=frequency,
             contract_type=contract_type,
+            exchange=exchange,
+            currency=currency,
             unadjusted=unadjusted,
             nrows=nrows,
             normalize=normalize,
@@ -88,6 +92,8 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
         asset_class: icdtyp.AssetClass,
         frequency: icdtyp.Frequency,
         contract_type: Optional[icdtyp.ContractType] = None,
+        exchange: Optional[str] = None,
+        currency: Optional[str] = None,
         unadjusted: Optional[bool] = None,
         nrows: Optional[int] = None,
         normalize: bool = True,
@@ -100,6 +106,8 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
             asset_class=asset_class,
             frequency=frequency,
             contract_type=contract_type,
+            exchange=exchange,
+            currency=currency,
             unadjusted=unadjusted,
             ext=icdtyp.Extension.CSV,
         )

@@ -5,7 +5,6 @@ import instrument_master.common.db.init as vcdini
 
 
 class TestDbSchemaFile(hut.TestCase):
-
     def test_exist1(self) -> None:
         """
         Test that files with SQL schema exist.

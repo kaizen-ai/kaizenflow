@@ -1,7 +1,7 @@
 """
 Import as:
 
-import instrument_master.common.metadata.symbols as icmsym
+import instrument_master.common.metadata.symbols as mcmsym
 """
 import abc
 import dataclasses
@@ -14,6 +14,7 @@ import instrument_master.common.data.load.file_path_generator as icdlfi
 import instrument_master.common.data.types as icdtyp
 
 _LOG = logging.getLogger(__name__)
+
 
 # TODO(*): Add unit test.
 # TODO(*): If this represents a symbol we should use it in the other interfaces.
@@ -153,12 +154,16 @@ class SymbolUniverse(abc.ABC):
                     frequency=frequency,
                     asset_class=symbol.asset_class,
                     contract_type=symbol.contract_type,
+                    exchange=symbol.exchange,
+                    currency=symbol.currency,
                     ext=icdtyp.Extension.CSV,
                 )
                 # TODO(*): Generalize this so we don't have to rely on S3.
                 if not hs3.exists(path):
                     _LOG.debug(
-                        "symbol=%s doesn't have the corresponding file %s", path
+                        "symbol=%s doesn't have the corresponding file %s",
+                        symbol,
+                        path,
                     )
                     continue
             _LOG.debug("symbol=%s is part of the universe", symbol)
