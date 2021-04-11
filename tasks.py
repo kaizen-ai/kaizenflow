@@ -102,15 +102,8 @@ def docker_login(ctx):
     else:
         cmd = "docker login -u AWS -p $(aws ecr get-login --region us-east-2) https://$(ECR_REPO_BASE_PATH)"
     ctx.run(cmd)
-#
-# # Print all the makefile targets.
-# targets:
-# find . -name "*.mk" -o -name "Makefile" | xargs -n 1 perl -ne 'if (/^\S+:$$/) { print $$_ }'
-#
-# # Print all the makefiles.
-# makefiles:
-# find . -name "*.mk" -o -name "Makefile" | sort
-#
+
+
 # # List images in the logged in repo.
 # docker_repo_images:
 # docker image ls $(ECR_BASE_PATH)
@@ -137,21 +130,21 @@ def docker_login(ctx):
 
 
 
-@task
-def get_platform(c):
-    uname = c.run("uname -s").stdout.strip()
-    if uname == 'Darwin':
-        return "You paid the Apple tax!"
-    elif uname == 'Linux':
-        return "Year of Linux on the desktop!"
-
-
-@task
-def replace(c, path, search, replacement):
-    # Assume systems have sed, and that some (eg macOS w/ Homebrew) may
-    # have gsed, implying regular sed is BSD style.
-    has_gsed = c.run("which gsed", warn=True, hide=True)
-    # Set command to run accordingly
-    binary = "gsed" if has_gsed else "sed"
-    #c.run(f"{binary} -e 's/{search}/{replacement}/g' {path}")
-    c.run("sed")
+# @task
+# def get_platform(c):
+#     uname = c.run("uname -s").stdout.strip()
+#     if uname == 'Darwin':
+#         return "You paid the Apple tax!"
+#     elif uname == 'Linux':
+#         return "Year of Linux on the desktop!"
+#
+#
+# @task
+# def replace(c, path, search, replacement):
+#     # Assume systems have sed, and that some (eg macOS w/ Homebrew) may
+#     # have gsed, implying regular sed is BSD style.
+#     has_gsed = c.run("which gsed", warn=True, hide=True)
+#     # Set command to run accordingly
+#     binary = "gsed" if has_gsed else "sed"
+#     #c.run(f"{binary} -e 's/{search}/{replacement}/g' {path}")
+#     c.run("sed")
