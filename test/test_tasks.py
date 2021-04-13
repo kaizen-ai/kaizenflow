@@ -10,7 +10,6 @@ import helpers.unit_test as hut
 import helpers.printing as hprint
 import helpers.system_interaction as hsi
 import tasks
-from tasks import get_platform, replace
 
 
 class TestTasks(hut.TestCase):
@@ -20,11 +19,12 @@ class TestTasks(hut.TestCase):
         Invoke with dry run the given target.
         """
         cmd = "invoke --dry " + target
-        _, txt = hsi.system_to_string(cmd)
-        self.check_string(txt)
+        _, act = hsi.system_to_string(cmd)
+        act = hprint.remove_non_printable_chars(act)
+        self.check_string(act)
 
     def _build_mock_context_returning_ok(self):
-        ctx = MockContext(
+        ctx = invoke.MockContext(
             repeat=True,
             run={
             re.compile(".*"): invoke.Result(exited=0)
@@ -69,27 +69,10 @@ class TestTasks(hut.TestCase):
 
     def test_docker_login(self) -> None:
         stdout = "aws-cli/1.19.49 Python/3.7.6 Darwin/19.6.0 botocore/1.20.49\n"
-        ctx = MockContext(run={
+        ctx = invoke.MockContext(run={
             "aws --version": invoke.Result(stdout),
             re.compile("^docker login"): invoke.Result(exited=0)
         })
         tasks.docker_login(ctx)
         # Check the outcome.
         self._check_calls(ctx)
-
-    # def test_get_platform(self):
-    #     c = MockContext(run=Result("Darwin\n"))
-    #     print(get_platform(c))
-    #     assert 0
-    #     assert "Apple" in get_platform(c)
-    #     c = MockContext(run=Result("Linux\n"))
-    #     assert "desktop" in get_platform(c)
-    #
-    # def test_regular_sed(self):
-    #     expected_sed = "sed -e s/foo/bar/g file.txt"
-    #     c = MockContext(run={
-    #         "which gsed": Result(exited=1),
-    #         #expected_sed: invoke.Result(),
-    #     })
-    #     replace(c, 'file.txt', 'foo', 'bar')
-    #     c.run.assert_called_with(expected_sed)

@@ -355,7 +355,7 @@ docker_push_image.latest:
 docker_release.latest:
 	make docker_build_image_with_cache.rc
 	make run_fast_tests.rc
-	#make run_slow_tests.rc
+	make run_slow_tests.rc
 	make docker_tag_rc_image.latest
 	make docker_push_image.latest
 	@echo "==> SUCCESS <=="
