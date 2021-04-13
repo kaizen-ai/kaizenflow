@@ -366,4 +366,3 @@ date,open,high,low,close,volume,average,barCount
 2021-02-07 23:59:00-05:00,3897.25,3897.25,3897.0,3897.25,37,3897.05,19
 ts_seq=
 (datetime.datetime(2021, 2, 8, 0, 0, tzinfo=<DstTzInfo 'America/New_York' EST-1 day, 19:00:00 STD>), datetime.datetime(2021, 2, 7, 18, 0, tzinfo=<DstTzInfo 'America/New_York' EST-1 day, 19:00:00 STD>))
-(datetime.datetime(2021, 2, 7, 18, 0, tzinfo=<DstTzInfo 'America/New_York' EST-1 day, 19:00:00 STD>), datetime.datetime(2021, 2, 4, 18, 0, tzinfo=<DstTzInfo 'America/New_York' EST-1 day, 19:00:00 STD>))

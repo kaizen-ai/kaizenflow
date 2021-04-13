@@ -85,6 +85,25 @@ class IbExtractionTest(hut.TestCase):
         short_signature, long_signature = self.get_df_signatures(df)
         return short_signature, long_signature
 
+    def _ib_loop_generator_helper(
+        self,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        bar_size_setting: str,
+    ) -> Tuple[pd.DataFrame, str, str]:
+        """
+        Return concatenated dataframe from loop generator.
+        """
+        _LOG.debug("start_ts='%s' end_ts='%s'", start_ts, end_ts)
+        contract = ib_insync.ContFuture("ES", "GLOBEX", currency="USD")
+        what_to_show = "TRADES"
+        duration_str = "1 D"
+        df = pd.concat([df_ for _, df_, _ in iidegd.ib_loop_generator(ib=self.ib, contract=contract, start_ts=start_ts, end_ts=end_ts, duration_str=duration_str, bar_size_setting=bar_size_setting, what_to_show=what_to_show, use_rth=False)])
+        df = df.sort_index()
+        short_signature, long_signature = self.get_df_signatures(df)
+        return df, short_signature, long_signature
+
+
     def _get_historical_data_with_IB_loop_helper(
         self,
         start_ts: pd.Timestamp,
