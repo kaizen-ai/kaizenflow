@@ -33,9 +33,7 @@ class Test_get_historical_data(iidegt.IbExtractionTest):
             df,
             short_signature,
             long_signature,
-        ) = self._ib_loop_generator_helper(
-            start_ts, end_ts, bar_size_setting
-        )
+        ) = self._ib_loop_generator_helper(start_ts, end_ts, bar_size_setting)
         #
         act = "\n".join(map(str, df.index))
         # NOTE: IB returns also a bar at close 16:30 even if the frequency is hourly.
@@ -89,9 +87,7 @@ class Test_get_historical_data(iidegt.IbExtractionTest):
             df,
             short_signature,
             long_signature,
-        ) = self._ib_loop_generator_helper(
-            start_ts, end_ts, bar_size_setting
-        )
+        ) = self._ib_loop_generator_helper(start_ts, end_ts, bar_size_setting)
         #
         act = "\n".join(map(str, df.index))
         # NOTE: IB returns also a bar at close 16:30 even if the frequency is hourly.
@@ -111,7 +107,6 @@ class Test_get_historical_data(iidegt.IbExtractionTest):
         self.assert_equal(short_signature, exp_short_signature, fuzzy_match=True)
         #
         self.check_string(long_signature)
-
 
     def test_get_historical_data_with_IB_loop1(self) -> None:
         """

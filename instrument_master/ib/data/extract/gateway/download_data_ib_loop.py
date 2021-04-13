@@ -118,7 +118,7 @@ def ib_loop_generator(
                 start_ts,
             )
             df = videgu.truncate(df, start_ts=start_ts, end_ts=end_ts)
-            start_ts_reached = True 
+            start_ts_reached = True
         if not df.empty:
             yield i, df, ts_seq
         i += 1
@@ -195,7 +195,10 @@ def save_historical_data_by_intervals_IB_loop(
                     ~df_to_write.index.duplicated(keep="last")
                 ]
                 df_to_write.sort_index(inplace=True)
-            dbg.dassert_monotonic_index(df_to_write, "Most likely the data for selected interval already exist, try incremental mode.")
+            dbg.dassert_monotonic_index(
+                df_to_write,
+                "Most likely the data for selected interval already exist, try incremental mode.",
+            )
             # We appended data at step before, so re-write the file.
             df_to_write.to_csv(file_name_for_part, mode="w", header=True)
             _LOG.info("Saved partial data in '%s'", file_name_for_part)

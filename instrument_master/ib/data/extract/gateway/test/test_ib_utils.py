@@ -17,16 +17,26 @@ _LOG = logging.getLogger(__name__)
 class Test_utils1(iidegt.IbExtractionTest):
     def setUp(self) -> None:
         super().setUp()
-        self._truncate_df = pd.DataFrame({
-            "date": [pd.Timestamp("20200101120000"), pd.Timestamp("20200102120000"), pd.Timestamp("20200103120000")],
-            "value": [0, 1, 2],
-        }).set_index("date")
+        self._truncate_df = pd.DataFrame(
+            {
+                "date": [
+                    pd.Timestamp("20200101120000"),
+                    pd.Timestamp("20200102120000"),
+                    pd.Timestamp("20200103120000"),
+                ],
+                "value": [0, 1, 2],
+            }
+        ).set_index("date")
 
     def test_truncate1(self) -> None:
         """
         Test that upper bound is open and lower is close.
         """
-        actual = iidegu.truncate(self._truncate_df, pd.Timestamp("20200101120000"), pd.Timestamp("20200103120000"))
+        actual = iidegu.truncate(
+            self._truncate_df,
+            pd.Timestamp("20200101120000"),
+            pd.Timestamp("20200103120000"),
+        )
         expected_values = [0, 1]
         self.assertListEqual(list(actual["value"]), expected_values)
 
@@ -34,7 +44,11 @@ class Test_utils1(iidegt.IbExtractionTest):
         """
         Test if upper and lower bounds are not equal any indeces.
         """
-        actual = iidegu.truncate(self._truncate_df, pd.Timestamp("20200101120001"), pd.Timestamp("20200103120001"))
+        actual = iidegu.truncate(
+            self._truncate_df,
+            pd.Timestamp("20200101120001"),
+            pd.Timestamp("20200103120001"),
+        )
         expected_values = [1, 2]
         self.assertListEqual(list(actual["value"]), expected_values)
 
@@ -42,22 +56,35 @@ class Test_utils1(iidegt.IbExtractionTest):
         """
         Test if empty dataframe is returned if bounds not intersect indeces.
         """
-        actual = iidegu.truncate(self._truncate_df, pd.Timestamp("20210101120001"), pd.Timestamp("20210103120001"))
+        actual = iidegu.truncate(
+            self._truncate_df,
+            pd.Timestamp("20210101120001"),
+            pd.Timestamp("20210103120001"),
+        )
         self.assertTrue(actual.empty)
 
     def test_truncate4(self) -> None:
         """
         Test if empty dataframe is returned if bounds are too narrow.
         """
-        actual = iidegu.truncate(self._truncate_df, pd.Timestamp("20200101120001"), pd.Timestamp("20200101120002"))
+        actual = iidegu.truncate(
+            self._truncate_df,
+            pd.Timestamp("20200101120001"),
+            pd.Timestamp("20200101120002"),
+        )
         self.assertTrue(actual.empty)
 
     def test_truncate5(self) -> None:
         """
         Test if empty dataframe is returned if main dataframe is empty.
         """
-        actual = iidegu.truncate(pd.DataFrame(), pd.Timestamp("20200101120000"), pd.Timestamp("20210101120000"))
+        actual = iidegu.truncate(
+            pd.DataFrame(),
+            pd.Timestamp("20200101120000"),
+            pd.Timestamp("20210101120000"),
+        )
         self.assertTrue(actual.empty)
+
 
 @pytest.mark.skipif(
     not icdini.is_inside_im_container(),
