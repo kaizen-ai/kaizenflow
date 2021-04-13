@@ -5,7 +5,6 @@ import unittest
 import pytest
 
 import invoke
-from invoke import MockContext, Result
 
 import helpers.unit_test as hut
 import helpers.printing as hprint
@@ -28,7 +27,7 @@ class TestTasks(hut.TestCase):
         ctx = MockContext(
             repeat=True,
             run={
-            re.compile(".*"): Result(exited=0)
+            re.compile(".*"): invoke.Result(exited=0)
         })
         return ctx
 
@@ -71,8 +70,8 @@ class TestTasks(hut.TestCase):
     def test_docker_login(self) -> None:
         stdout = "aws-cli/1.19.49 Python/3.7.6 Darwin/19.6.0 botocore/1.20.49\n"
         ctx = MockContext(run={
-            "aws --version": Result(stdout),
-            re.compile("^docker login"): Result(exited=0)
+            "aws --version": invoke.Result(stdout),
+            re.compile("^docker login"): invoke.Result(exited=0)
         })
         tasks.docker_login(ctx)
         # Check the outcome.
@@ -90,7 +89,7 @@ class TestTasks(hut.TestCase):
     #     expected_sed = "sed -e s/foo/bar/g file.txt"
     #     c = MockContext(run={
     #         "which gsed": Result(exited=1),
-    #         #expected_sed: Result(),
+    #         #expected_sed: invoke.Result(),
     #     })
     #     replace(c, 'file.txt', 'foo', 'bar')
     #     c.run.assert_called_with(expected_sed)

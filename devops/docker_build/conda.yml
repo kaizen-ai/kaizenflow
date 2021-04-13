@@ -79,6 +79,7 @@ dependencies:
   - joblib
   - jsonpickle
   - pygraphviz              # For dataflow graph visualization.
+  - invoke
   # ############################################################################
   # Profiling
   # ############################################################################
