@@ -34,21 +34,20 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
             self._ib_connect_client_id = ib_connect_client_id
         else:
             self._ib_connect_client_id = iidegu.get_free_client_id(
-                self._MAX_IB_CONNECTION_ATTEMPTS
-            )
+                self._MAX_IB_CONNECTION_ATTEMPTS)
 
     def extract_data(
-        self,
-        exchange: str,
-        symbol: str,
-        asset_class: icdtyp.AssetClass,
-        frequency: icdtyp.Frequency,
-        contract_type: Optional[icdtyp.ContractType] = None,
-        currency: Optional[str] = None,
-        start_ts: Optional[pd.Timestamp] = None,
-        end_ts: Optional[pd.Timestamp] = None,
-        incremental: Optional[bool] = None,
-        dst_dir: Optional[str] = None,
+            self,
+            exchange: str,
+            symbol: str,
+            asset_class: icdtyp.AssetClass,
+            frequency: icdtyp.Frequency,
+            contract_type: Optional[icdtyp.ContractType] = None,
+            currency: Optional[str] = None,
+            start_ts: Optional[pd.Timestamp] = None,
+            end_ts: Optional[pd.Timestamp] = None,
+            incremental: Optional[bool] = None,
+            dst_dir: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Extract the data, save it and return all data for symbol.
@@ -71,18 +70,14 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         :raises ValueError: if parameter values are not supported
         """
         dbg.dassert_is_not(currency, None)
-        part_files_dir = (
-            self.get_default_part_files_dir(
-                symbol=symbol,
-                frequency=frequency,
-                asset_class=asset_class,
-                contract_type=contract_type,
-                exchange=exchange,
-                currency=currency,
-            )
-            if dst_dir is None
-            else dst_dir
-        )
+        part_files_dir = (self.get_default_part_files_dir(
+            symbol=symbol,
+            frequency=frequency,
+            asset_class=asset_class,
+            contract_type=contract_type,
+            exchange=exchange,
+            currency=currency,
+        ) if dst_dir is None else dst_dir)
         self.extract_data_parts_with_retry(
             exchange=exchange,
             symbol=symbol,
@@ -108,17 +103,17 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         return saved_data
 
     def extract_data_parts_with_retry(
-        self,
-        part_files_dir: str,
-        exchange: str,
-        symbol: str,
-        asset_class: icdtyp.AssetClass,
-        frequency: icdtyp.Frequency,
-        currency: str,
-        contract_type: Optional[icdtyp.ContractType] = None,
-        start_ts: Optional[pd.Timestamp] = None,
-        end_ts: Optional[pd.Timestamp] = None,
-        incremental: Optional[bool] = None,
+            self,
+            part_files_dir: str,
+            exchange: str,
+            symbol: str,
+            asset_class: icdtyp.AssetClass,
+            frequency: icdtyp.Frequency,
+            currency: str,
+            contract_type: Optional[icdtyp.ContractType] = None,
+            start_ts: Optional[pd.Timestamp] = None,
+            end_ts: Optional[pd.Timestamp] = None,
+            incremental: Optional[bool] = None,
     ) -> None:
         """
         Extract the data by chunks and save them.
@@ -139,15 +134,24 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         :param part_files_dir: place to keep results of each IB request
         """
         # Connect to IB.
-        ib_connection = iidegu.ib_connect(
-            self._ib_connect_client_id, is_notebook=False
+        ib_connection = iidegu.ib_connect(self._ib_connect_client_id,
+                                          is_notebook=False)
+        # Find right intervals for incremental mode.
+        left_intervals = self._get_init_intervals(
+            start_ts,
+            end_ts,
+            exchange=exchange,
+            symbol=symbol,
+            asset_class=asset_class,
+            frequency=frequency,
+            currency=currency,
+            contract_type=contract_type,
+            incremental=incremental,
         )
         # Save extracted data in parts.
-        left_intervals = [(start_ts, end_ts)]
         num_attempts_done = 0
-        while (
-            left_intervals and num_attempts_done < self._MAX_IB_DATA_LOAD_ATTEMPTS
-        ):
+        while (left_intervals
+               and num_attempts_done < self._MAX_IB_DATA_LOAD_ATTEMPTS):
             left_intervals_after_try = []
             for interval in left_intervals:
                 # Try to extract the data. Save unsuccessful intervals.
@@ -172,14 +176,14 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
 
     @classmethod
     def update_archive(
-        cls,
-        part_files_dir: str,
-        symbol: str,
-        asset_class: icdtyp.AssetClass,
-        contract_type: Optional[icdtyp.ContractType],
-        exchange: str,
-        currency: str,
-        frequency: icdtyp.Frequency,
+            cls,
+            part_files_dir: str,
+            symbol: str,
+            asset_class: icdtyp.AssetClass,
+            contract_type: Optional[icdtyp.ContractType],
+            exchange: str,
+            currency: str,
+            frequency: icdtyp.Frequency,
     ) -> pd.DataFrame:
         """
         Read data from parts, save it to archive.
@@ -205,24 +209,19 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         )
         _, arch_name = os.path.split(arch_file)
         # Find files with partial data locations.
-        part_file_names = (
-            hs3.ls("%s/" % part_files_dir)
-            if part_files_dir.startswith("s3://")
-            else os.listdir(part_files_dir)
-        )
+        part_file_names = (hs3.ls("%s/" % part_files_dir)
+                           if part_files_dir.startswith("s3://") else
+                           os.listdir(part_files_dir))
         part_files = [
             os.path.join(part_files_dir, file_name)
             for file_name in part_file_names
         ]
         _LOG.info("Union files in `%s` to `%s`", part_files_dir, arch_file)
         # Read data.
-        data: pd.DataFrame = pd.concat(
-            [
-                iidegd.load_historical_data(part_file)
-                for part_file in part_files
-                if part_file != arch_name
-            ]
-        )
+        data: pd.DataFrame = pd.concat([
+            iidegd.load_historical_data(part_file) for part_file in part_files
+            if part_file != arch_name
+        ])
         # Sort index.
         data = data.sort_index(ascending=True)
         dbg.dassert_monotonic_index(data)
@@ -233,12 +232,12 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
 
     @staticmethod
     def get_default_part_files_dir(
-        symbol: str,
-        frequency: icdtyp.Frequency,
-        asset_class: icdtyp.AssetClass,
-        contract_type: icdtyp.ContractType,
-        exchange: str,
-        currency: str,
+            symbol: str,
+            frequency: icdtyp.Frequency,
+            asset_class: icdtyp.AssetClass,
+            contract_type: icdtyp.ContractType,
+            exchange: str,
+            currency: str,
     ) -> str:
         """
         Return a `symbol` directory on S3 near the main archive file.
@@ -256,18 +255,18 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         return os.path.join(arch_path, symbol)
 
     def _extract_data_parts(
-        self,
-        ib: ib_insync.ib.IB,
-        part_files_dir: str,
-        exchange: str,
-        symbol: str,
-        asset_class: icdtyp.AssetClass,
-        frequency: icdtyp.Frequency,
-        currency: str,
-        contract_type: Optional[icdtyp.ContractType] = None,
-        start_ts: Optional[pd.Timestamp] = None,
-        end_ts: Optional[pd.Timestamp] = None,
-        incremental: Optional[bool] = None,
+            self,
+            ib: ib_insync.ib.IB,
+            part_files_dir: str,
+            exchange: str,
+            symbol: str,
+            asset_class: icdtyp.AssetClass,
+            frequency: icdtyp.Frequency,
+            currency: str,
+            contract_type: Optional[icdtyp.ContractType] = None,
+            start_ts: Optional[pd.Timestamp] = None,
+            end_ts: Optional[pd.Timestamp] = None,
+            incremental: Optional[bool] = None,
     ) -> List[Tuple[pd.Timestamp, pd.Timestamp]]:
         """
         Make a several requests to IB, each response is saved to a separate
@@ -319,13 +318,13 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         )
         failed_tasks_intervals = []
         for (
-            contract,
-            start_ts_task,
-            end_ts_task,
-            duration_str,
-            bar_size_setting,
-            what_to_show,
-            use_rth,
+                contract,
+                start_ts_task,
+                end_ts_task,
+                duration_str,
+                bar_size_setting,
+                what_to_show,
+                use_rth,
         ) in tasks:
             saved_intervals = iidegd.save_historical_data_by_intervals_IB_loop(
                 ib=ib,
@@ -361,22 +360,18 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
 
     @staticmethod
     def _get_ib_target(
-        asset_class: icdtyp.AssetClass,
-        contract_type: Optional[icdtyp.ContractType],
+            asset_class: icdtyp.AssetClass,
+            contract_type: Optional[icdtyp.ContractType],
     ) -> str:
         """
         Transform asset to a format known by IB gateway code.
         """
         target: str
-        if (
-            asset_class == icdtyp.AssetClass.Futures
-            and contract_type == icdtyp.ContractType.Continuous
-        ):
+        if (asset_class == icdtyp.AssetClass.Futures
+                and contract_type == icdtyp.ContractType.Continuous):
             target = "continuous_futures"
-        elif (
-            asset_class == icdtyp.AssetClass.Futures
-            and contract_type == icdtyp.ContractType.Expiry
-        ):
+        elif (asset_class == icdtyp.AssetClass.Futures
+              and contract_type == icdtyp.ContractType.Expiry):
             target = "futures"
         elif asset_class == icdtyp.AssetClass.Stocks:
             target = "stocks"
@@ -385,8 +380,7 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         else:
             raise ValueError(
                 "Couldn't find corresponding IB target for asset class %s and contract type %s"
-                % (asset_class, contract_type)
-            )
+                % (asset_class, contract_type))
         return target
 
     @staticmethod
@@ -403,6 +397,55 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
             ib_frequency = "intraday"
         else:
             raise ValueError(
-                "Couldn't find corresponding IB frequency for %s" % frequency
-            )
+                "Couldn't find corresponding IB frequency for %s" % frequency)
         return ib_frequency
+
+    def _get_init_intervals(
+            self,
+            start_ts: Optional[pd.Timestamp],
+            end_ts: Optional[pd.Timestamp],
+            symbol: str,
+            asset_class: icdtyp.AssetClass,
+            contract_type: Optional[icdtyp.ContractType],
+            exchange: str,
+            currency: str,
+            frequency: icdtyp.Frequency,
+            incremental: Optional[bool],
+    ) -> List[Tuple[Optional[pd.Timestamp], Optional[pd.Timestamp]]]:
+        """
+        Find starting intervals to load the data.
+
+        For non-incremental case it is just [`start_ts`, `end_ts`).
+        For incremental we remove already loaded piece.
+        """
+        # Nothing to do for non-incremental mode.
+        if not incremental:
+            return [(start_ts, end_ts)]
+        # For incremental mode, find first and last loaded timestamp.
+        arch_file = iidlib.IbFilePathGenerator().generate_file_path(
+            symbol=symbol,
+            frequency=frequency,
+            asset_class=asset_class,
+            contract_type=contract_type,
+            exchange=exchange,
+            currency=currency,
+            ext=icdtyp.Extension.CSV,
+        )
+        if not iidegu.check_file_exists(arch_file):
+            return [(start_ts, end_ts)]
+        df = iidegd.load_historical_data(arch_file)
+        min_ts = df.index.min()
+        max_ts = df.index.max()
+        # Find intervals to run.
+        intervals: List[
+            Tuple[Optional[pd.Timestamp], Optional[pd.Timestamp]]] = []
+        if end_ts is None or iidegu.to_ET(end_ts) > max_ts:
+            intervals.append((max_ts, end_ts))
+        if start_ts is None or iidegu.to_ET(start_ts) < min_ts:
+            intervals.append((start_ts, min_ts))
+        _LOG.warning(
+            "Incremental mode. Found file '%s': extracting data for %s",
+            arch_file,
+            intervals,
+        )
+        return intervals

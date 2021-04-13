@@ -131,7 +131,7 @@ im.docker_bash_without_psql.dev:
 		app \
 		bash
 
-# Stop local container including all dependencies.
+# Stop dev container including all dependencies.
 im.docker_down.dev:
 	IMAGE=$(IMAGE_DEV) \
 	docker-compose \

@@ -1,5 +1,5 @@
 import datetime
-
+import pytest
 import pandas as pd
 
 import helpers.unit_test as hut
@@ -112,7 +112,7 @@ class TestS3IbDataLoader1(hut.TestCase):
             nrows=10,
         )
         # Check if date columns is date type.
-        self.assertEqual(type(data["date"][0]), datetime.date)
+        self.assertIsInstance(data["date"][0], pd.Timestamp)
 
     def test_read_data_with_start_end_ts(self) -> None:
         """

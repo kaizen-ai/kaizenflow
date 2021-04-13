@@ -69,7 +69,8 @@ def convert_s3_to_sql(
         currency=currency,
         unadjusted=unadjusted,
         nrows=max_num_rows,
-        normalize=True,
+        # Don't change it. Normalization is for external purposes.
+        normalize=False,
         start_ts=start_ts,
         end_ts=end_ts,
     )

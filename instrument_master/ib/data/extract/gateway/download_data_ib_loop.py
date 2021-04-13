@@ -145,15 +145,6 @@ def save_historical_data_by_intervals_IB_loop(
     :param incremental: if the `file_name` already exists, resume downloading
         from the last date
     """
-    if incremental and os.path.exists(file_name):
-        df = load_historical_data(file_name)
-        end_ts = df.index.min()
-        _LOG.warning(
-            "Found file '%s': starting from end_ts=%s because incremental mode",
-            file_name,
-            end_ts,
-        )
-    #
     start_ts, end_ts = videgu.process_start_end_ts(start_ts, end_ts)
     #
     ib, deallocate_ib = videgu.allocate_ib(ib)
@@ -188,12 +179,7 @@ def save_historical_data_by_intervals_IB_loop(
                 dst_dir=part_files_dir,
             )
             # There can be already data from previous loop iteration.
-            already_exists = (
-                hs3.exists(file_name_for_part)
-                if file_name_for_part.startswith("s3://")
-                else os.path.exists(file_name_for_part)
-            )
-            if already_exists:
+            if videgu.check_file_exists(file_name_for_part):
                 df_to_write = pd.concat(
                     [df_tmp_part, load_historical_data(file_name_for_part)]
                 )

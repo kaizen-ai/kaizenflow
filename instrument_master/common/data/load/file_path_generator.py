@@ -3,7 +3,7 @@ Import as:
 
 import instrument_master.common.data.load.file_path_generator as vcdlfi
 """
-
+import functools
 import abc
 from typing import Optional
 
@@ -35,3 +35,14 @@ class FilePathGenerator(abc.ABC):
         Parameters as in `read_data`.
         :return: path to the file
         """
+
+    # TODO(gp): Do we really want to make it explicit?
+    # No one is interested in this file except SymbolUniverse class.
+    @staticmethod
+    @abc.abstractmethod
+    def get_latest_symbols_file() -> str:
+        """
+        Get the latest available file with symbols.
+        """
+
+

@@ -1,7 +1,7 @@
 import helpers.unit_test as hut
 import instrument_master.common.data.types as icdtyp
 import instrument_master.ib.data.load.ib_file_path_generator as iidlib
-
+import instrument_master.ib.data.config as iidcon
 
 class TestIbFilePathGenerator(hut.TestCase):
     """
@@ -11,6 +11,13 @@ class TestIbFilePathGenerator(hut.TestCase):
     def setUp(self) -> None:
         super().setUp()
         self._file_path_generator = iidlib.IbFilePathGenerator()
+
+    def test_get_latest_symbols_file1(self) -> None:
+        """
+        Get the latest file with the info.
+        """
+        latest_file = iidlib.IbFilePathGenerator.get_latest_symbols_file()
+        self.assertRegex(latest_file, "^%s" % iidcon.S3_PREFIX)
 
     def test_generate_file_path1(self) -> None:
         """

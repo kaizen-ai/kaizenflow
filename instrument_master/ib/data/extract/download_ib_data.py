@@ -56,7 +56,7 @@ import instrument_master.common.data.types as icdtyp
 import instrument_master.common.metadata.symbols as icmsym
 import instrument_master.ib.data.extract.ib_data_extractor as iideib
 import instrument_master.ib.metadata.ib_symbols as iimibs
-
+import instrument_master.ib.data.load.ib_file_path_generator as fpg
 # from tqdm.notebook import tqdm
 
 _LOG = logging.getLogger(__name__)
@@ -84,7 +84,11 @@ def _get_symbols_from_args(args: argparse.Namespace) -> List[icmsym.Symbol]:
             for args_symbol in args.symbol
         ]
     # Find all matched symbols otherwise.
-    symbol_universe = iimibs.IbSymbolUniverse()
+    # Get file with symbols.
+    latest_symbols_file = fpg.IbFilePathGenerator.get_latest_symbols_file()
+    # Get all symbols.
+    symbol_universe = iimibs.IbSymbolUniverse(symbols_file=latest_symbols_file)
+    # Keep only matched.
     if args.symbol is None:
         args_symbols = [args.symbol]
     else:
@@ -122,6 +126,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 frequency=args.frequency,
                 asset_class=symbol.asset_class,
                 contract_type=symbol.contract_type,
+                exchange=symbol.exchange,
+                currency=symbol.currency,
             )
         # On local machine make sure that path exists.
         if not part_files_dir.startswith("s3://"):
@@ -146,6 +152,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 asset_class=symbol.asset_class,
                 frequency=args.frequency,
                 contract_type=symbol.contract_type,
+                exchange=symbol.exchange,
+                currency=symbol.currency
             )
 
 

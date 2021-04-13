@@ -87,16 +87,14 @@ def _get_symbols_from_args(args: argparse.Namespace) -> List[icmsym.Symbol]:
                 asset_class=args.asset_class,
                 contract_type=args.contract_type,
                 currency=args.currency,
-            )
-            for args_symbol in args.symbol
+            ) for args_symbol in args.symbol
         ]
     # Find all matched symbols otherwise.
-    symbol_universe = iassym.SymbolUniverseFactory.get_symbol_universe(
-        args.provider
-    )
     file_path_generator = iasfil.FilePathGeneratorFactory.get_file_path_generator(
-        args.provider
-    )
+        args.provider)
+    latest_symbols_file = file_path_generator.get_latest_symbols_file()
+    symbol_universe = iassym.SymbolUniverseFactory.get_symbol_universe(
+        args.provider, symbols_file=latest_symbols_file)
     if args.symbol is None:
         args_symbols = [args.symbol]
     else:
@@ -113,15 +111,14 @@ def _get_symbols_from_args(args: argparse.Namespace) -> List[icmsym.Symbol]:
                 is_downloaded=True,
                 frequency=args.frequency,
                 path_generator=file_path_generator,
-            )
-        )
+            ))
     return symbols
 
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
         "--provider",
         type=str,
@@ -243,11 +240,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     provider = args.provider
     symbols = _get_symbols_from_args(args)
     s3_data_loader: icdlab.AbstractS3DataLoader = iasloa.LoaderFactory.get_loader(
-        storage_type="s3", provider=provider
-    )
+        storage_type="s3", provider=provider)
     s3_to_sql_transformer = iastra.TransformerFactory.get_s3_to_sql_transformer(
-        provider=provider
-    )
+        provider=provider)
     sql_writer_backend = iassql.SqlWriterFactory.get_sql_writer_backend(
         provider=provider,
         dbname=args.dbname,
@@ -265,18 +260,16 @@ def _main(parser: argparse.ArgumentParser) -> None:
             password=args.dbpass,
             host=args.dbhost,
             port=args.dbport,
-        )
-    )
+        ))
     _LOG.info("Connecting to database")
     sql_writer_backend.ensure_exchange_exists(args.exchange)
     exchange_id = sql_data_loader.get_exchange_id(args.exchange)
     # Select symbols to process.
     if args.max_num_assets is not None:
-        _LOG.warning(
-            "Selected only %d symbols as per user request", args.max_num_assets
-        )
+        _LOG.warning("Selected only %d symbols as per user request",
+                     args.max_num_assets)
         dbg.dassert_lte(1, args.max_num_assets)
-        symbols = symbols[: args.max_num_assets]
+        symbols = symbols[:args.max_num_assets]
     # Construct list of parameters.
     params_list = []
     for symbol in symbols:
@@ -293,12 +286,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 frequency=args.frequency,
                 unadjusted=args.unadjusted,
                 exchange_id=exchange_id,
-                exchange=args.exchange,
+                exchange=symbol.exchange,
+                currency=symbol.currency,
                 incremental=args.incremental,
                 start_ts=args.start_ts,
                 end_ts=args.end_ts,
-            )
-        )
+            ))
     # Run converting.
     icdttr.convert_s3_to_sql_bulk(serial=args.serial, params_list=params_list)
     _LOG.info("Closing database connection")

@@ -118,3 +118,10 @@ class KibotFilePathGenerator(icdlfi.FilePathGenerator):
                 unadjusted=cast(bool, unadjusted)
             )
         return modifier
+
+    @staticmethod
+    def get_latest_symbols_file() -> str:
+        """
+        Get the latest available file with symbols.
+        """
+        raise NotImplementedError
