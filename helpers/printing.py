@@ -5,6 +5,7 @@ import helpers.printing as hprint
 """
 
 import logging
+import re
 import sys
 import tempfile
 from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
@@ -550,6 +551,26 @@ def dataframe_to_str(
         res = str(df)
     return res
 
+
+def remove_non_printable_chars(txt: str) -> str:
+    # From https://stackoverflow.com/questions/14693701
+    # 7-bit and 8-bit C1 ANSI sequences
+    ansi_escape = re.compile(
+        r"""
+        \x1B  # ESC
+        (?:   # 7-bit C1 Fe (except CSI)
+            [@-Z\\-_]
+        |     # or [ for CSI, followed by a control sequence
+            \[
+            [0-?]*  # Parameter bytes
+            [ -/]*  # Intermediate bytes
+            [@-~]   # Final byte
+        )
+    """,
+        re.VERBOSE,
+    )
+    txt = ansi_escape.sub("", txt)
+    return txt
 
 # #############################################################################
 # Notebook output

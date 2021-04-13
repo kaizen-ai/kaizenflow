@@ -1,5 +1,4 @@
-# Remove macOS hidden files.
-.DS_Store
+.DS_Store   # macOS hidden files.
 .coverage
 .idea
 .ipynb_checkpoints
@@ -7,3 +6,4 @@
 .pytest_cache
 __pycache__
 tmp.joblib.unittest.cache
+venv

@@ -6,35 +6,12 @@ import re
 
 import helpers.dbg as dbg
 import helpers.parser as prsr
+import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-
-
-import re
-
-
-def _remove_non_printable(txt: str) -> str:
-    # From https://stackoverflow.com/questions/14693701
-    # 7-bit and 8-bit C1 ANSI sequences
-    ansi_escape = re.compile(
-        r"""
-        \x1B  # ESC
-        (?:   # 7-bit C1 Fe (except CSI)
-            [@-Z\\-_]
-        |     # or [ for CSI, followed by a control sequence
-            \[
-            [0-?]*  # Parameter bytes
-            [ -/]*  # Intermediate bytes
-            [@-~]   # Final byte
-        )
-    """,
-        re.VERBOSE,
-    )
-    txt = ansi_escape.sub("", txt)
-    return txt
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -56,7 +33,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
     txt = prsr.read_file(in_file_name)
     txt_tmp = "\n".join(txt)
-    txt_tmp = _remove_non_printable(txt_tmp)
+    txt_tmp = hprint.remove_non_printable(txt_tmp)
     txt_tmp = txt_tmp.split("\n")
     prsr.write_file(txt_tmp, out_file_name)
 

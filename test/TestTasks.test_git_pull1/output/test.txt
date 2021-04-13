@@ -1,0 +1,2 @@
+git pull --autostash
+git submodule foreach 'git pull --autostash'
