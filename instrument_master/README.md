@@ -12,6 +12,7 @@
       * [IB](#ib)
       * [Kibot](#kibot)
    * [Loading data into the DB](#loading-data-into-the-db)
+   * [TODO(*): incremental mode is not working for Kibot.](#todo-incremental-mode-is-not-working-for-kibot)
    * [Airflow](#airflow)
    * [TODO(*): Write DAG-s check it is working.](#todo-write-dag-s-check-it-is-working)
 
@@ -356,8 +357,7 @@
       --dataset sp_500_daily \
       --exchange NYSE
   ```
-  TODO(\*): incremental mode is not working for all providers. Run with
-  `--incremental --start_ts 20210401000000` to see.
+  # TODO(\*): incremental mode is not working for Kibot.
 
 # Airflow
 
