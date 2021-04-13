@@ -7,14 +7,11 @@
       * [Run dev stage](#run-dev-stage)
       * [Stop remaining PostgreSQL containers](#stop-remaining-postgresql-containers)
    * [Development flow using stages](#development-flow-using-stages)
-   * [TODO(*): Is it true? Reality is different.](#todo-is-it-true-reality-is-different)
    * [Extracting data to S3](#extracting-data-to-s3)
       * [IB](#ib)
       * [Kibot](#kibot)
    * [Loading data into the DB](#loading-data-into-the-db)
-   * [TODO(*): incremental mode is not working for Kibot.](#todo-incremental-mode-is-not-working-for-kibot)
    * [Airflow](#airflow)
-   * [TODO(*): Write DAG-s check it is working.](#todo-write-dag-s-check-it-is-working)
 
 
 
@@ -195,7 +192,7 @@
 
 - All stages can have separate docker-compose files.
 
-  # TODO(\*): Is it true? Reality is different.
+  `# TODO(\*): Is it true? Reality is different.`
 
   All stages must have separate targets in makefile to start and stop services.
 
@@ -357,9 +354,9 @@
       --dataset sp_500_daily \
       --exchange NYSE
   ```
-  # TODO(\*): incremental mode is not working for Kibot.
+  `# TODO(\*): Incremental mode is not working for Kibot.`
 
 # Airflow
 
 - Airflow is deployed for local stage.
-  # TODO(\*): Write DAG-s check it is working.
+  `# TODO(\*): Write DAG-s check it is working.`
