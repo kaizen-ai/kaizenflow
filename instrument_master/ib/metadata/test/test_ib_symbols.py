@@ -19,13 +19,6 @@ class TestIbSymbolUniverse(hut.TestCase):
         # dbg.shutup_chatty_modules(verbose=True)
         hut.TestCase.setUpClass()
 
-    def test_get_latest_symbols_file1(self) -> None:
-        """
-        Get the latest file with the info.
-        """
-        latest_file = iimibs.IbSymbolUniverse.get_latest_symbols_file()
-        self.assertRegex(latest_file, "^%s" % iidcon.S3_PREFIX)
-
     def test_parse_symbols_file1(self) -> None:
         """
         Test parsing a file checked in the repo.
@@ -174,7 +167,7 @@ class TestIbSymbolUniverse(hut.TestCase):
         Test that ES symbol is returned by request.
         """
         # Parse real large file with symbols.
-        file_name = iimibs.IbSymbolUniverse.get_latest_symbols_file()
+        file_name = iidlib.IbFilePathGenerator.get_latest_symbols_file()
         ib_universe = iimibs.IbSymbolUniverse(file_name)
         matched = ib_universe.get(
             ticker="ES",
@@ -192,7 +185,7 @@ class TestIbSymbolUniverse(hut.TestCase):
         Test that NON_EXISTING symbol is returned by request.
         """
         # Parse real large file with symbols.
-        file_name = iimibs.IbSymbolUniverse.get_latest_symbols_file()
+        file_name = iidlib.IbFilePathGenerator.get_latest_symbols_file()
         ib_universe = iimibs.IbSymbolUniverse(file_name)
         matched = ib_universe.get(
             ticker="NON_EXISTING",
@@ -209,7 +202,7 @@ class TestIbSymbolUniverse(hut.TestCase):
         Test that NG symbol is in downloaded list.
         """
         # Parse real large file with symbols.
-        file_name = iimibs.IbSymbolUniverse.get_latest_symbols_file()
+        file_name = iidlib.IbFilePathGenerator.get_latest_symbols_file()
         ib_universe = iimibs.IbSymbolUniverse(file_name)
         matched = ib_universe.get(
             ticker="NG",
@@ -230,7 +223,7 @@ class TestIbSymbolUniverse(hut.TestCase):
         Test that NON_EXISTING symbol is not in the downloaded list.
         """
         # Parse real large file with symbols.
-        file_name = iimibs.IbSymbolUniverse.get_latest_symbols_file()
+        file_name = iidlib.IbFilePathGenerator.get_latest_symbols_file()
         ib_universe = iimibs.IbSymbolUniverse(file_name)
         matched = ib_universe.get(
             ticker="NON_EXISTING",

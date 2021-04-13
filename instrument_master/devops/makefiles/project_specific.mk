@@ -8,14 +8,11 @@ IM_REPO_BASE_PATH=$(ECR_BASE_PATH)/im
 IM_IMAGE_DEV=$(IM_REPO_BASE_PATH):latest
 IM_IMAGE_RC=$(IM_REPO_BASE_PATH):rc
 
-# TODO(*): Use a different repo like im-airflow or call the images airflow-latest ?
-IM_IMAGE_AIRFLOW_DEV=$(IM_REPO_BASE_PATH):latest-airflow
-
 NO_SUPERSLOW_TESTS='True'
 
 RUN_TESTS_DIR="instrument_master/devops/docker_scripts/"
 
-IM_PG_PORT_LOCAL?=5550
+IM_PG_PORT_LOCAL?=5450
 
 # Target image for the common actions.
 IMAGE_DEV=$(IM_IMAGE_DEV)
@@ -34,11 +31,11 @@ im.docker_pull:
 	docker pull $(IMAGE_DEV)
 
 # Run app container, start a local PostgreSQL DB.
+# POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
+# -f devops/compose/docker-compose.yml
 im.docker_up.local:
 	IMAGE=$(IMAGE_DEV) \
-	POSTGRES_PORT=${IM_PG_PORT_LOCAL} \
 	docker-compose \
-		-f devops/compose/docker-compose.yml \
 		-f devops/compose/docker-compose.local.yml \
 		run \
 		--rm \
@@ -131,7 +128,7 @@ im.docker_bash_without_psql.dev:
 		app \
 		bash
 
-# Stop local container including all dependencies.
+# Stop dev container including all dependencies.
 im.docker_down.dev:
 	IMAGE=$(IMAGE_DEV) \
 	docker-compose \
@@ -233,15 +230,6 @@ im.docker_build_image.rc:
 		-t $(IMAGE_RC) \
 		-t $(IM_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
 		--file devops/docker_build/dev.Dockerfile \
-		.
-
-im.docker_build_worker_image:
-	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
-	docker build \
-		--progress=plain \
-		--no-cache \
-		-t $(IM_IMAGE_AIRFLOW_DEV) \
-		--file devops/docker_build/im_db_loader_worker.dev.Dockerfile \
 		.
 
 im.docker_build_image_with_cache.rc:

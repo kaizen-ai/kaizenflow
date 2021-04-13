@@ -136,15 +136,39 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
         )
         for date_column in self.S3_DATE_COLUMNS:
             data[date_column] = pd.to_datetime(data[date_column])
+        data = self._filter_by_dates(data, start_ts=start_ts, end_ts=end_ts)
         if normalize:
             data = self.normalize(df=data, frequency=frequency)
             data.set_index("date", drop=False, inplace=True)
-        return self._filter_by_dates(data, start_ts, end_ts)
+        return data
+
+    @staticmethod
+    def _filter_by_dates(
+        data: pd.DataFrame,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
+    ) -> pd.DataFrame:
+        """
+        Filter pandas DataFrame with a date range.
+
+        :param data: dataframe for filtering
+        :param start_ts: start time of data to read. `None` means the entire data
+        :param end_ts: end time of data to read. `None` means the current timestamp
+        :return: filtered data
+        """
+        # TODO(gp): Improve this.
+        if start_ts or end_ts:
+            start_ts = start_ts or pd.Timestamp.min
+            end_ts = end_ts or pd.Timestamp.now()
+            data = data[(data["date"] >= start_ts) & (data["date"] < end_ts)]
+        return data
 
     @staticmethod
     def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
         """
         Normalize minutes data. Not implemented yet.
+
+        It is used only for external purposes to return aligned data.
 
         :param df: source data
         :return: normalized data
@@ -154,21 +178,21 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
     @staticmethod
     def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
         """
-        Normalize daily data.
+        Normalize daily data. Not implemented yet.
 
-        - Convert date column to the Python datetime format.
+        It is used only for external purposes to return aligned data.
 
         :param df: source data
         :return: normalized data
         """
-
-        df["date"] = df["date"].apply(lambda x: x.date())
         return df
 
     @staticmethod
     def _normalize_1_hour(df: pd.DataFrame) -> pd.DataFrame:
         """
         Hour data normalization. Not implemented yet.
+
+        It is used only for external purposes to return aligned data.
 
         :param df: source data
         :return: normalized data
