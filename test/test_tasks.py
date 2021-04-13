@@ -50,21 +50,33 @@ class TestTasks(hut.TestCase):
     def test_print_setup1(self) -> None:
         target = "print_setup"
         self._dry_run(target)
+
+    def test_print_setup2(self) -> None:
+        target = "print_setup"
         self._check_output(target)
 
     def test_git_pull1(self) -> None:
         target = "git_pull"
         self._dry_run(target)
+
+    def test_git_pull2(self) -> None:
+        target = "git_pull"
         self._check_output(target)
 
     def test_git_pull_master1(self) -> None:
         target = "git_pull_master"
         self._dry_run(target)
+
+    def test_git_pull_master2(self) -> None:
+        target = "git_pull_master"
         self._check_output(target)
 
     def test_git_clean1(self) -> None:
         target = "git_clean"
         self._dry_run(target)
+
+    def test_git_clean2(self) -> None:
+        target = "git_clean"
         self._check_output(target)
 
     def test_docker_login(self) -> None:
