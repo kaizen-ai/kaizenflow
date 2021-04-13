@@ -1,12 +1,13 @@
+import functools
+import logging
 import os
 from typing import Optional
-import functools
-import helpers.s3 as hs3
+
 import helpers.dbg as dbg
+import helpers.s3 as hs3
 import instrument_master.common.data.load.file_path_generator as icdlfi
 import instrument_master.common.data.types as icdtyp
 import instrument_master.ib.data.config as iidcon
-import logging
 
 _LOG = logging.getLogger(__name__)
 
@@ -88,5 +89,3 @@ class IbFilePathGenerator(icdlfi.FilePathGenerator):
         # TODO(gp): No need to assume that it's on S3.
         dbg.dassert(hs3.exists(latest_file))
         return latest_file
-
-

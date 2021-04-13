@@ -4,12 +4,16 @@ Produce SymbolUniverse objects.
 Import as: import instrument_master.app.services.symbol_universe_factory as iassym
 """
 
-import instrument_master.common.metadata.symbols as icmsym
 from typing import Any
+
+import instrument_master.common.metadata.symbols as icmsym
+
 
 class SymbolUniverseFactory:
     @classmethod
-    def get_symbol_universe(cls, provider: str, **kwargs: Any) -> icmsym.SymbolUniverse:
+    def get_symbol_universe(
+        cls, provider: str, **kwargs: Any
+    ) -> icmsym.SymbolUniverse:
         """
         Get the universe of supported symbols for a given provider.
 

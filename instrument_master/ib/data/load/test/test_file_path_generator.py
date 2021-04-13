@@ -1,7 +1,8 @@
 import helpers.unit_test as hut
 import instrument_master.common.data.types as icdtyp
-import instrument_master.ib.data.load.ib_file_path_generator as iidlib
 import instrument_master.ib.data.config as iidcon
+import instrument_master.ib.data.load.ib_file_path_generator as iidlib
+
 
 class TestIbFilePathGenerator(hut.TestCase):
     """

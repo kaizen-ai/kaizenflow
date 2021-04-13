@@ -19,18 +19,18 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
     # @hcache.cache
     @functools.lru_cache(maxsize=64)
     def read_data(
-            self,
-            exchange: str,
-            symbol: str,
-            asset_class: icdtyp.AssetClass,
-            frequency: icdtyp.Frequency,
-            contract_type: Optional[icdtyp.ContractType] = None,
-            currency: Optional[str] = None,
-            unadjusted: Optional[bool] = None,
-            nrows: Optional[int] = None,
-            normalize: bool = True,
-            start_ts: Optional[pd.Timestamp] = None,
-            end_ts: Optional[pd.Timestamp] = None,
+        self,
+        exchange: str,
+        symbol: str,
+        asset_class: icdtyp.AssetClass,
+        frequency: icdtyp.Frequency,
+        contract_type: Optional[icdtyp.ContractType] = None,
+        currency: Optional[str] = None,
+        unadjusted: Optional[bool] = None,
+        nrows: Optional[int] = None,
+        normalize: bool = True,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         """
         Read Kibot data.
@@ -50,18 +50,18 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
         )
 
     def _read_data(
-            self,
-            symbol: str,
-            asset_class: icdtyp.AssetClass,
-            frequency: icdtyp.Frequency,
-            contract_type: Optional[icdtyp.ContractType] = None,
-            exchange: Optional[str] = None,
-            currency: Optional[str] = None,
-            unadjusted: Optional[bool] = None,
-            nrows: Optional[int] = None,
-            normalize: bool = True,
-            start_ts: Optional[pd.Timestamp] = None,
-            end_ts: Optional[pd.Timestamp] = None,
+        self,
+        symbol: str,
+        asset_class: icdtyp.AssetClass,
+        frequency: icdtyp.Frequency,
+        contract_type: Optional[icdtyp.ContractType] = None,
+        exchange: Optional[str] = None,
+        currency: Optional[str] = None,
+        unadjusted: Optional[bool] = None,
+        nrows: Optional[int] = None,
+        normalize: bool = True,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         file_path = ikdlki.KibotFilePathGenerator().generate_file_path(
             symbol=symbol,
@@ -74,24 +74,23 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
             ext=icdtyp.Extension.CSV,
         )
         if hs3.is_s3_path(file_path):
-            dbg.dassert_is(hs3.exists(file_path),
-                           True,
-                           msg=f"S3 key not found: {file_path}")
+            dbg.dassert_is(
+                hs3.exists(file_path), True, msg=f"S3 key not found: {file_path}"
+            )
         data = pd.read_csv(file_path, header=None, nrows=nrows)
-        data = self._filter_by_dates(data,
-                                     frequency=frequency,
-                                     start_ts=start_ts,
-                                     end_ts=end_ts)
+        data = self._filter_by_dates(
+            data, frequency=frequency, start_ts=start_ts, end_ts=end_ts
+        )
         if normalize:
             data = self.normalize(df=data, frequency=frequency)
         return data
 
     @staticmethod
     def _filter_by_dates(
-            data: pd.DataFrame,
-            frequency: icdtyp.Frequency,
-            start_ts: Optional[pd.Timestamp] = None,
-            end_ts: Optional[pd.Timestamp] = None,
+        data: pd.DataFrame,
+        frequency: icdtyp.Frequency,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         """
         Filter pandas DataFrame with a date range.
@@ -138,8 +137,7 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
             # According to Kibot the columns are:
             #   Date, Time, Open, High, Low, Close, Volume
             # Convert date and time into a datetime.
-            df[0] = pd.to_datetime(df[0] + " " + df[1],
-                                   format="%m/%d/%Y %H:%M")
+            df[0] = pd.to_datetime(df[0] + " " + df[1], format="%m/%d/%Y %H:%M")
             df.drop(columns=[1], inplace=True)
             # Rename columns.
             df.columns = "datetime open high low close vol".split()

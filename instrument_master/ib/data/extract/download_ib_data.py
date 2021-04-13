@@ -55,8 +55,9 @@ import helpers.parser as hparse
 import instrument_master.common.data.types as icdtyp
 import instrument_master.common.metadata.symbols as icmsym
 import instrument_master.ib.data.extract.ib_data_extractor as iideib
-import instrument_master.ib.metadata.ib_symbols as iimibs
 import instrument_master.ib.data.load.ib_file_path_generator as fpg
+import instrument_master.ib.metadata.ib_symbols as iimibs
+
 # from tqdm.notebook import tqdm
 
 _LOG = logging.getLogger(__name__)
@@ -153,7 +154,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 frequency=args.frequency,
                 contract_type=symbol.contract_type,
                 exchange=symbol.exchange,
-                currency=symbol.currency
+                currency=symbol.currency,
             )
 
 

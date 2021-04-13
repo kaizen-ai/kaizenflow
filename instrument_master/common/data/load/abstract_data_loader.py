@@ -20,20 +20,21 @@ class AbstractDataLoader(abc.ABC):
     """
     Read data of a given frequency for symbols of a given asset and exchange.
     """
+
     @abc.abstractmethod
     def read_data(
-            self,
-            exchange: str,
-            symbol: str,
-            asset_class: icdtyp.AssetClass,
-            frequency: icdtyp.Frequency,
-            contract_type: Optional[icdtyp.ContractType] = None,
-            currency: Optional[str] = None,
-            unadjusted: Optional[bool] = None,
-            nrows: Optional[int] = None,
-            normalize: bool = True,
-            start_ts: Optional[pd.Timestamp] = None,
-            end_ts: Optional[pd.Timestamp] = None,
+        self,
+        exchange: str,
+        symbol: str,
+        asset_class: icdtyp.AssetClass,
+        frequency: icdtyp.Frequency,
+        contract_type: Optional[icdtyp.ContractType] = None,
+        currency: Optional[str] = None,
+        unadjusted: Optional[bool] = None,
+        nrows: Optional[int] = None,
+        normalize: bool = True,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         """
         Read data.
@@ -56,6 +57,7 @@ class AbstractS3DataLoader(AbstractDataLoader):
     """
     Interface for class reading data from S3.
     """
+
     def __init__(self) -> None:
         self._normalizer_dict = {
             icdtyp.Frequency.Daily: self._normalize_daily,
@@ -63,8 +65,9 @@ class AbstractS3DataLoader(AbstractDataLoader):
             icdtyp.Frequency.Minutely: self._normalize_1_min,
         }
 
-    def normalize(self, df: pd.DataFrame,
-                  frequency: icdtyp.Frequency) -> pd.DataFrame:
+    def normalize(
+        self, df: pd.DataFrame, frequency: icdtyp.Frequency
+    ) -> pd.DataFrame:
         """
         Apply a normalizer function based on the frequency.
 
@@ -82,7 +85,6 @@ class AbstractS3DataLoader(AbstractDataLoader):
         normalizer = self._normalizer_dict[frequency]
         return normalizer(df)
 
-
     # TODO(*): -> _normalize_minute_data
     @staticmethod
     @abc.abstractmethod
@@ -93,6 +95,7 @@ class AbstractS3DataLoader(AbstractDataLoader):
         :param df: pandas df to normalize
         :return: normalized pandas df
         """
+
     @staticmethod
     @abc.abstractmethod
     def _normalize_1_hour(df: pd.DataFrame) -> pd.DataFrame:
@@ -102,6 +105,7 @@ class AbstractS3DataLoader(AbstractDataLoader):
         :param df: pandas df to normalize
         :return: normalized pandas df
         """
+
     @staticmethod
     @abc.abstractmethod
     def _normalize_daily(df: pd.DataFrame) -> pd.DataFrame:
@@ -117,8 +121,10 @@ class AbstractSqlDataLoader(AbstractDataLoader):
     """
     Interface class loading provider data from an SQL backend.
     """
-    def __init__(self, dbname: str, user: str, password: str, host: str,
-                 port: int):
+
+    def __init__(
+        self, dbname: str, user: str, password: str, host: str, port: int
+    ):
         self.conn: psycopg2.extensions.connection = psycopg2.connect(
             dbname=dbname,
             user=user,
@@ -129,8 +135,8 @@ class AbstractSqlDataLoader(AbstractDataLoader):
 
     # TODO(*): Factor out common code.
     def get_symbol_id(
-            self,
-            symbol: str,
+        self,
+        symbol: str,
     ) -> int:
         """
         Get primary key (id) by its symbol code (e.g., ES).
@@ -143,15 +149,15 @@ class AbstractSqlDataLoader(AbstractDataLoader):
             with self.conn.cursor() as curs:
                 curs.execute("SELECT id FROM Symbol WHERE code = %s", [symbol])
                 if curs.rowcount:
-                    (_symbol_id, ) = curs.fetchone()
+                    (_symbol_id,) = curs.fetchone()
                     symbol_id = _symbol_id
         if symbol_id == -1:
             dbg.dfatal(f"Could not find Symbol ${symbol}")
         return symbol_id
 
     def get_exchange_id(
-            self,
-            exchange: str,
+        self,
+        exchange: str,
     ) -> int:
         """
         Get primary key (id) of the exchange by its name.
@@ -162,19 +168,20 @@ class AbstractSqlDataLoader(AbstractDataLoader):
         exchange_id = -1
         with self.conn:
             with self.conn.cursor() as curs:
-                curs.execute("SELECT id FROM Exchange WHERE name = %s",
-                             [exchange])
+                curs.execute(
+                    "SELECT id FROM Exchange WHERE name = %s", [exchange]
+                )
                 if curs.rowcount:
-                    (_exchange_id, ) = curs.fetchone()
+                    (_exchange_id,) = curs.fetchone()
                     exchange_id = _exchange_id
         if exchange_id == -1:
             dbg.dfatal(f"Could not find Exchange ${exchange}")
         return exchange_id
 
     def get_trade_symbol_id(
-            self,
-            symbol_id: int,
-            exchange_id: int,
+        self,
+        symbol_id: int,
+        exchange_id: int,
     ) -> int:
         """
         Get primary key (id) of the TradeSymbol entry by its respective Symbol
@@ -193,11 +200,13 @@ class AbstractSqlDataLoader(AbstractDataLoader):
                     [symbol_id, exchange_id],
                 )
                 if curs.rowcount:
-                    (_trade_symbol_id, ) = curs.fetchone()
+                    (_trade_symbol_id,) = curs.fetchone()
                     trade_symbol_id = _trade_symbol_id
         if trade_symbol_id == -1:
-            dbg.dfatal(f"Could not find Trade Symbol with "
-                       f"symbol_id={symbol_id} and exchange_id={exchange_id}")
+            dbg.dfatal(
+                f"Could not find Trade Symbol with "
+                f"symbol_id={symbol_id} and exchange_id={exchange_id}"
+            )
         return trade_symbol_id
 
     # TODO(plyq): Uncomment once #1047 will be resolved.
@@ -205,18 +214,18 @@ class AbstractSqlDataLoader(AbstractDataLoader):
     # Use lru_cache for now.
     @functools.lru_cache(maxsize=64)
     def read_data(
-            self,
-            exchange: str,
-            symbol: str,
-            asset_class: icdtyp.AssetClass,
-            frequency: icdtyp.Frequency,
-            contract_type: Optional[icdtyp.ContractType] = None,
-            currency: Optional[str] = None,
-            unadjusted: Optional[bool] = None,
-            nrows: Optional[int] = None,
-            normalize: bool = True,
-            start_ts: Optional[pd.Timestamp] = None,
-            end_ts: Optional[pd.Timestamp] = None,
+        self,
+        exchange: str,
+        symbol: str,
+        asset_class: icdtyp.AssetClass,
+        frequency: icdtyp.Frequency,
+        contract_type: Optional[icdtyp.ContractType] = None,
+        currency: Optional[str] = None,
+        unadjusted: Optional[bool] = None,
+        nrows: Optional[int] = None,
+        normalize: bool = True,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         """
         Read data.
@@ -240,12 +249,13 @@ class AbstractSqlDataLoader(AbstractDataLoader):
         :param frequency: a predefined frequency
         :return: table name in DB
         """
+
     def _read_data(
-            self,
-            exchange: str,
-            symbol: str,
-            frequency: icdtyp.Frequency,
-            nrows: Optional[int] = None,
+        self,
+        exchange: str,
+        symbol: str,
+        frequency: icdtyp.Frequency,
+        nrows: Optional[int] = None,
     ) -> pd.DataFrame:
         exchange_id = self.get_exchange_id(exchange)
         symbol_id = self.get_symbol_id(symbol)

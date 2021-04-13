@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import instrument_master.kibot.data.load.kibot_file_path_generator as kfpgen
+"""
+
 # TODO(*): -> kibot_file_path_generator.py
 
 import os
@@ -67,6 +73,13 @@ class KibotFilePathGenerator(icdlfi.FilePathGenerator):
         file_path = os.path.join(ikdcon.S3_PREFIX, file_path)
         return file_path
 
+    @staticmethod
+    def get_latest_symbols_file() -> str:
+        """
+        Get the latest available file with symbols.
+        """
+        raise NotImplementedError
+
     def _generate_contract_path_modifier(
         self, contract_type: icdtyp.ContractType
     ) -> str:
@@ -118,10 +131,3 @@ class KibotFilePathGenerator(icdlfi.FilePathGenerator):
                 unadjusted=cast(bool, unadjusted)
             )
         return modifier
-
-    @staticmethod
-    def get_latest_symbols_file() -> str:
-        """
-        Get the latest available file with symbols.
-        """
-        raise NotImplementedError

@@ -6,7 +6,6 @@ import instrument_master.ib.metadata.ib_symbols as iimibs
 
 import functools
 import logging
-import os
 import string
 from typing import List, Optional
 
@@ -14,10 +13,8 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.printing as hprint
-import helpers.s3 as hs3
 import instrument_master.common.data.types as icdtyp
 import instrument_master.common.metadata.symbols as icmsym
-import instrument_master.ib.data.config as iidcon
 
 _LOG = logging.getLogger(__name__)
 

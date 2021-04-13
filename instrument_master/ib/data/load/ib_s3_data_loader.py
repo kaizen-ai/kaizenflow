@@ -144,9 +144,9 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
 
     @staticmethod
     def _filter_by_dates(
-            data: pd.DataFrame,
-            start_ts: Optional[pd.Timestamp] = None,
-            end_ts: Optional[pd.Timestamp] = None,
+        data: pd.DataFrame,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         """
         Filter pandas DataFrame with a date range.
@@ -163,12 +163,11 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
             data = data[(data["date"] >= start_ts) & (data["date"] < end_ts)]
         return data
 
-
     @staticmethod
     def _normalize_1_min(df: pd.DataFrame) -> pd.DataFrame:
         """
         Normalize minutes data. Not implemented yet.
-        
+
         It is used only for external purposes to return aligned data.
 
         :param df: source data
