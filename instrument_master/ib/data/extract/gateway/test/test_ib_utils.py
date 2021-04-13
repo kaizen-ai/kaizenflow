@@ -20,9 +20,9 @@ class Test_utils1(iidegt.IbExtractionTest):
         self._truncate_df = pd.DataFrame(
             {
                 "date": [
-                    pd.Timestamp("20200101120000"),
-                    pd.Timestamp("20200102120000"),
-                    pd.Timestamp("20200103120000"),
+                    pd.Timestamp("2020-01-01 12:00:00"),
+                    pd.Timestamp("2020-01-02 12:00:00"),
+                    pd.Timestamp("2020-01-03 12:00:00"),
                 ],
                 "value": [0, 1, 2],
             }
@@ -34,8 +34,8 @@ class Test_utils1(iidegt.IbExtractionTest):
         """
         actual = iidegu.truncate(
             self._truncate_df,
-            pd.Timestamp("20200101120000"),
-            pd.Timestamp("20200103120000"),
+            pd.Timestamp("2020-01-01 12:00:00"),
+            pd.Timestamp("2020-01-03 12:00:00"),
         )
         expected_values = [0, 1]
         self.assertListEqual(list(actual["value"]), expected_values)
@@ -46,8 +46,8 @@ class Test_utils1(iidegt.IbExtractionTest):
         """
         actual = iidegu.truncate(
             self._truncate_df,
-            pd.Timestamp("20200101120001"),
-            pd.Timestamp("20200103120001"),
+            pd.Timestamp("2020-01-01 12:00:01"),
+            pd.Timestamp("2020-01-03 12:00:01"),
         )
         expected_values = [1, 2]
         self.assertListEqual(list(actual["value"]), expected_values)
@@ -58,8 +58,8 @@ class Test_utils1(iidegt.IbExtractionTest):
         """
         actual = iidegu.truncate(
             self._truncate_df,
-            pd.Timestamp("20210101120001"),
-            pd.Timestamp("20210103120001"),
+            pd.Timestamp("2021-01-01 12:00:01"),
+            pd.Timestamp("2021-01-03 12:00:01"),
         )
         self.assertTrue(actual.empty)
 
@@ -69,8 +69,8 @@ class Test_utils1(iidegt.IbExtractionTest):
         """
         actual = iidegu.truncate(
             self._truncate_df,
-            pd.Timestamp("20200101120001"),
-            pd.Timestamp("20200101120002"),
+            pd.Timestamp("2020-01-01 12:00:01"),
+            pd.Timestamp("2020-01-01 12:00:02"),
         )
         self.assertTrue(actual.empty)
 
@@ -80,8 +80,8 @@ class Test_utils1(iidegt.IbExtractionTest):
         """
         actual = iidegu.truncate(
             pd.DataFrame(),
-            pd.Timestamp("20200101120000"),
-            pd.Timestamp("20210101120000"),
+            pd.Timestamp("2020-01-01 12:00:00"),
+            pd.Timestamp("2021-01-01 12:00:00"),
         )
         self.assertTrue(actual.empty)
 

@@ -197,7 +197,7 @@ def save_historical_data_by_intervals_IB_loop(
                 df_to_write.sort_index(inplace=True)
             dbg.dassert_monotonic_index(
                 df_to_write,
-                "Most likely the data for selected interval already exist, try incremental mode.",
+                "Most likely the data for selected interval already exists, try incremental mode.",
             )
             # We appended data at step before, so re-write the file.
             df_to_write.to_csv(file_name_for_part, mode="w", header=True)
