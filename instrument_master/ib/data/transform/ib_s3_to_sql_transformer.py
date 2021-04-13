@@ -85,6 +85,7 @@ class IbS3ToSqlTransformer(icdts3.AbstractS3ToSqlTransformer):
             "barCount",
         ]
         # Transform DataFrame from S3 to DB format.
+        df["date"] = df["date"].apply(lambda x: x.date())
         df["trade_symbol_id"] = trade_symbol_id
         return df
 

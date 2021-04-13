@@ -6,7 +6,6 @@ import instrument_master.ib.metadata.ib_symbols as iimibs
 
 import functools
 import logging
-import os
 import string
 from typing import List, Optional
 
@@ -14,10 +13,8 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.printing as hprint
-import helpers.s3 as hs3
 import instrument_master.common.data.types as icdtyp
 import instrument_master.common.metadata.symbols as icmsym
-import instrument_master.ib.data.config as iidcon
 
 _LOG = logging.getLogger(__name__)
 
@@ -43,24 +40,6 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
             _LOG.debug("symbol_file=%s", self._symbols_file)
             self._symbols_list = self._parse_symbols_file(self._symbols_file)
         return self._symbols_list
-
-    @staticmethod
-    @functools.lru_cache(maxsize=16)
-    def get_latest_symbols_file() -> str:
-        """
-        Get the latest available file with symbols on S3.
-        """
-        file_prefix = os.path.join(iidcon.S3_METADATA_PREFIX, "symbols-")
-        files = hs3.ls(file_prefix)
-        _LOG.debug("files='%s'", files)
-        # TODO(gp): Make it more robust with globbing.
-        latest_file: str = max(files)
-        _LOG.debug("latest_file='%s'", latest_file)
-        # Add the prefix.
-        latest_file = os.path.join(iidcon.S3_METADATA_PREFIX, latest_file)
-        # TODO(gp): No need to assume that it's on S3.
-        dbg.dassert(hs3.exists(latest_file))
-        return latest_file
 
     @staticmethod
     @functools.lru_cache(maxsize=16)

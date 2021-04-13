@@ -22,6 +22,7 @@ class TestKibotS3DataLoader(hut.TestCase):
         )
         self.check_string(df.head(10).to_string())
 
+    @pytest.mark.skip(reason="Not implemented yet")
     def test_read_data_with_start_end_ts(self) -> None:
         """
         Test correctness of hourly ES data loading.

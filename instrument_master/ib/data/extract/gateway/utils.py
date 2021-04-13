@@ -13,6 +13,7 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.printing as hprint
+import helpers.s3 as hs3
 
 # from tqdm.notebook import tqdm
 
@@ -210,9 +211,13 @@ def get_end_timestamp(
         use_rth,
         num_retry=num_retry,
     )
-    dbg.dassert(not bars.empty)
-    # Get the last timestamp.
-    last_ts = bars.index[-1]
+    # Set end timestamp to now if there are non any data.
+    if bars.empty:
+        _LOG.warning("No data found, set end_ts to now")
+        last_ts = pd.Timestamp.now()
+    else:
+        # Get the last timestamp.
+        last_ts = bars.index[-1]
     return last_ts
 
 
@@ -442,3 +447,13 @@ def get_tasks(
         )
         tasks.append(task)
     return tasks
+
+
+# TODO(*): Move to helpers.
+def check_file_exists(file_name: str) -> bool:
+    is_exist: bool = (
+        hs3.exists(file_name)
+        if file_name.startswith("s3://")
+        else os.path.exists(file_name)
+    )
+    return is_exist

@@ -85,27 +85,6 @@ class AbstractS3DataLoader(AbstractDataLoader):
         normalizer = self._normalizer_dict[frequency]
         return normalizer(df)
 
-    @staticmethod
-    def _filter_by_dates(
-        data: pd.DataFrame,
-        start_ts: Optional[pd.Timestamp] = None,
-        end_ts: Optional[pd.Timestamp] = None,
-    ) -> pd.DataFrame:
-        """
-        Filter pandas DataFrame with a date range.
-
-        :param data: dataframe for filtering
-        :param start_ts: start time of data to read. `None` means the entire data
-        :param end_ts: end time of data to read. `None` means the current timestamp
-        :return: filtered data
-        """
-        # TODO(gp): Improve this.
-        if start_ts or end_ts:
-            start_ts = start_ts or pd.Timestamp.min
-            end_ts = end_ts or pd.Timestamp.now()
-            data = data[(data.index >= start_ts) & (data.index < end_ts)]
-        return data
-
     # TODO(*): -> _normalize_minute_data
     @staticmethod
     @abc.abstractmethod

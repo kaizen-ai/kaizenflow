@@ -78,9 +78,40 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
                 hs3.exists(file_path), True, msg=f"S3 key not found: {file_path}"
             )
         data = pd.read_csv(file_path, header=None, nrows=nrows)
+        data = self._filter_by_dates(
+            data, frequency=frequency, start_ts=start_ts, end_ts=end_ts
+        )
         if normalize:
             data = self.normalize(df=data, frequency=frequency)
-        return self._filter_by_dates(data, start_ts, end_ts)
+        return data
+
+    @staticmethod
+    def _filter_by_dates(
+        data: pd.DataFrame,
+        frequency: icdtyp.Frequency,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
+    ) -> pd.DataFrame:
+        """
+        Filter pandas DataFrame with a date range.
+
+        :param data: dataframe for filtering
+        :param frequency: data frequency
+        :param start_ts: start time of data to read. `None` means the entire data
+        :param end_ts: end time of data to read. `None` means the current timestamp
+        :return: filtered data
+        """
+        # TODO(gp): Improve this.
+        if start_ts or end_ts:
+            start_ts = start_ts or pd.Timestamp.min
+            end_ts = end_ts or pd.Timestamp.now()
+        else:
+            # No need to cut the data.
+            return data
+        # Filter data.
+        # TODO(*): implement filtering for row Kibot data.
+        raise NotImplementedError
+        return data
 
     # TODO(gp): Call the column datetime_ET suffix.
     @staticmethod

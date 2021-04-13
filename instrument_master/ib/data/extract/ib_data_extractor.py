@@ -142,8 +142,19 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         ib_connection = iidegu.ib_connect(
             self._ib_connect_client_id, is_notebook=False
         )
+        # Find right intervals for incremental mode.
+        left_intervals = self._get_init_intervals(
+            start_ts,
+            end_ts,
+            exchange=exchange,
+            symbol=symbol,
+            asset_class=asset_class,
+            frequency=frequency,
+            currency=currency,
+            contract_type=contract_type,
+            incremental=incremental,
+        )
         # Save extracted data in parts.
-        left_intervals = [(start_ts, end_ts)]
         num_attempts_done = 0
         while (
             left_intervals and num_attempts_done < self._MAX_IB_DATA_LOAD_ATTEMPTS
@@ -406,3 +417,54 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
                 "Couldn't find corresponding IB frequency for %s" % frequency
             )
         return ib_frequency
+
+    @staticmethod
+    def _get_init_intervals(
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        symbol: str,
+        asset_class: icdtyp.AssetClass,
+        contract_type: Optional[icdtyp.ContractType],
+        exchange: str,
+        currency: str,
+        frequency: icdtyp.Frequency,
+        incremental: Optional[bool],
+    ) -> List[Tuple[Optional[pd.Timestamp], Optional[pd.Timestamp]]]:
+        """
+        Find starting intervals to load the data.
+
+        For non-incremental case it is just [`start_ts`, `end_ts`). For
+        incremental we remove already loaded piece.
+        """
+        # Nothing to do for non-incremental mode.
+        if not incremental:
+            return [(start_ts, end_ts)]
+        # For incremental mode, find first and last loaded timestamp.
+        arch_file = iidlib.IbFilePathGenerator().generate_file_path(
+            symbol=symbol,
+            frequency=frequency,
+            asset_class=asset_class,
+            contract_type=contract_type,
+            exchange=exchange,
+            currency=currency,
+            ext=icdtyp.Extension.CSV,
+        )
+        if not iidegu.check_file_exists(arch_file):
+            return [(start_ts, end_ts)]
+        df = iidegd.load_historical_data(arch_file)
+        min_ts = df.index.min()
+        max_ts = df.index.max()
+        # Find intervals to run.
+        intervals: List[
+            Tuple[Optional[pd.Timestamp], Optional[pd.Timestamp]]
+        ] = []
+        if end_ts is None or iidegu.to_ET(end_ts) > max_ts:
+            intervals.append((max_ts, end_ts))
+        if start_ts is None or iidegu.to_ET(start_ts) < min_ts:
+            intervals.append((start_ts, min_ts))
+        _LOG.warning(
+            "Incremental mode. Found file '%s': extracting data for %s",
+            arch_file,
+            intervals,
+        )
+        return intervals

@@ -91,11 +91,12 @@ def _get_symbols_from_args(args: argparse.Namespace) -> List[icmsym.Symbol]:
             for args_symbol in args.symbol
         ]
     # Find all matched symbols otherwise.
-    symbol_universe = iassym.SymbolUniverseFactory.get_symbol_universe(
-        args.provider
-    )
     file_path_generator = iasfil.FilePathGeneratorFactory.get_file_path_generator(
         args.provider
+    )
+    latest_symbols_file = file_path_generator.get_latest_symbols_file()
+    symbol_universe = iassym.SymbolUniverseFactory.get_symbol_universe(
+        args.provider, symbols_file=latest_symbols_file
     )
     if args.symbol is None:
         args_symbols = [args.symbol]
@@ -293,7 +294,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 frequency=args.frequency,
                 unadjusted=args.unadjusted,
                 exchange_id=exchange_id,
-                exchange=args.exchange,
+                exchange=symbol.exchange,
+                currency=symbol.currency,
                 incremental=args.incremental,
                 start_ts=args.start_ts,
                 end_ts=args.end_ts,

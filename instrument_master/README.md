@@ -4,9 +4,14 @@
    * [Run IM app](#run-im-app)
       * [Prerequisites](#prerequisites)
       * [Run locally for development](#run-locally-for-development)
+      * [Run dev stage](#run-dev-stage)
       * [Stop remaining PostgreSQL containers](#stop-remaining-postgresql-containers)
    * [Development flow using stages](#development-flow-using-stages)
+   * [Extracting data to S3](#extracting-data-to-s3)
+      * [IB](#ib)
+      * [Kibot](#kibot)
    * [Loading data into the DB](#loading-data-into-the-db)
+   * [Airflow](#airflow)
 
 
 
@@ -74,7 +79,7 @@
 - IB TWS or Gateway app [should be up](./ib/connect/README.md) on `research.p1`
   with API port 4012
 
-- To start IB Gateway app: 
+- To start IB Gateway app:
 
   ```bash
   > cd instrument_master/ib/connect
@@ -123,21 +128,61 @@
   ```
 
 - Basic run without PostgreSQL:
+
   ```bash
-  > make im.docker_bash
+  > make im.docker_bash.local
+  ```
+
+- Execute command inside the container and close:
+
+  ```bash
+  > make im.docker_cmd.local <your command>
+  ```
+
+## Run dev stage
+
+- Mostly the same as local stage but PostgreSQL is running on
+  `pg-im.multistage.p1::5432`.
+
+- Build dev image:
+  - Same image as for local stage.
+
+- Basic run with PostgreSQL:
+
+  ```bash
+  > make im.docker_bash.dev
+  ```
+
+- Basic run without PostgreSQL:
+
+  ```bash
+  > make im.docker_bash_without_psql.dev
+  ```
+
+- Execute command inside the container and close:
+
+  ```bash
+  > make im.docker_cmd.dev <your command>
   ```
 
 ## Stop remaining PostgreSQL containers
 
-- Stop a container:
+- Stop a container for local stage:
 
   ```bash
   > make im.docker_down.local
   ```
 
-- Stop a container and remove all data:
+- Stop a container and remove all data for local stage:
+
   ```bash
   > make im.docker_rm.local
+  ```
+
+- Stop a container for dev stage:
+
+  ```bash
+  > make im.docker_down.dev
   ```
 
 # Development flow using stages
@@ -145,8 +190,82 @@
 - Use `local` stages for development locally. Related: target in makefile
   `im.docker_up.local`
 
-- All stages can have separate docker-compose files. All stages must have
-  separate targets in makefile to start and stop services.
+- All stages can have separate docker-compose files.
+
+  `# TODO(\*): Is it true? Reality is different.`
+
+  All stages must have separate targets in makefile to start and stop services.
+
+- Use `make im.docker_command.<stage> <command>` to run described above commands
+  in production way.
+
+# Extracting data to S3
+
+- Bring up the stack:
+
+  ```bash
+  > make im.docker_up.local
+  ```
+
+## IB
+
+- To extract data from TWS (E.g. ES minutely data since 1 Jan 2020):
+
+  ```bash
+  cd instrument_master/ib/data/extract
+  download_ib_data.py \
+      --symbol ES \
+      --frequency T \
+      --exchange GLOBEX \
+      --asset_class Futures \
+      --contract_type continuous \
+      --currency USD  \
+      --start_ts 20200101000000 \
+      --incremental
+  ```
+
+- To download metadata:
+
+  ```bash
+  cd instrument_master/ib/metadata/extract
+  # Build image.
+  make ib_metadata_crawler.docker_build
+  # Run crawler.
+  make ib_metadata_crawler.run
+  ```
+
+- To extract a bunch of symbols (needed downloaded metadata):
+
+  ```bash
+  cd instrument_master/ib/data/extract
+  download_ib_data.py \
+      --frequency T \
+      --exchange GLOBEX \
+      --asset_class Futures \
+      --contract_type continuous \
+      --currency USD  \
+      --start_ts 20200101000000 \
+      --incremental
+  ```
+
+## Kibot
+
+- Download metadata firstly:
+
+  ```bash
+  # TODO(*): Doesn't work inside the container, needed AWS CLI
+  # or code refactoring to save on S3 directly. Logic part is OK.
+  python instrument_master/kibot/metadata/extract/download_ticker_lists.py
+  python instrument_master/kibot/metadata/extract/download_adjustments.py -u <user> -p <password>
+  ```
+
+- Extract the data from Kibot (E.g. SP500 daily data. To extract all remove
+  `--dataset` argument):
+  ```bash
+  # TODO(*): Doesn't work inside the container, needed AWS CLI
+  # or code refactoring to save on S3 directly. Logic part is OK.
+  python instrument_master/kibot/data/extract/download.py -u <user> -p <password> --dataset sp_500_daily
+  ```
 
 # Loading data into the DB
 
@@ -190,6 +309,7 @@
   ```
 
 - To copy data from S3 to SQL (e.g. HG continuous minutely data):
+
   ```bash
   cd instrument_master/app/transform
   convert_s3_to_sql.py \
@@ -198,5 +318,45 @@
       --frequency T \
       --contract_type continuous \
       --asset_class Futures \
-      --exchange NYMEX
+      --exchange NYMEX \
+      --currency USD
   ```
+
+  Or for Kibot:
+
+  ```bash
+  cd instrument_master/app/transform
+  convert_s3_to_sql.py \
+      --provider kibot \
+      --symbol AAPL \
+      --frequency T \
+      --asset_class sp_500 \
+      --exchange NYSE \
+      --currency USD
+  ```
+
+- A bunch of symbols e.g. for NYMEX exchange:
+  ```bash
+  cd instrument_master/app/transform
+  convert_s3_to_sql.py \
+      --provider ib \
+      --frequency T \
+      --contract_type continuous \
+      --asset_class Futures \
+      --exchange NYMEX \
+      --currency USD
+  ```
+  Or for Kibot (SP500 daily data):
+  ```bash
+  # TODO(*): Implement SymbolUniverse for Kibot to run app/transform/convert_s3_to_sql.py.
+  cd instrument_master/kibot/data/transform
+  convert_s3_to_sql_kibot.py \
+      --dataset sp_500_daily \
+      --exchange NYSE
+  ```
+  `# TODO(\*): Incremental mode is not working for Kibot.`
+
+# Airflow
+
+- Airflow is deployed for local stage.
+  `# TODO(\*): Write DAG-s check it is working.`
