@@ -1,20 +1,18 @@
-import os
 import re
-import unittest
 
-import pytest
-
-import invoke
-
-import helpers.unit_test as hut
 import helpers.printing as hprint
 import helpers.system_interaction as hsi
+import helpers.unit_test as hut
+import invoke
+import pytest
 import tasks
 
 
+@pytest.skip(reason="Update image required. "
+                    "Issue: https://app.zenhub.com/workspaces/particle-one-5e4448e6b9975964dfe1582f/issues/particledev/commodity_research/8226")
 class TestTasks(hut.TestCase):
 
-    def _dry_run(self, target:str) -> None:
+    def _dry_run(self, target: str) -> None:
         """
         Invoke with dry run the given target.
         """
@@ -27,8 +25,8 @@ class TestTasks(hut.TestCase):
         ctx = invoke.MockContext(
             repeat=True,
             run={
-            re.compile(".*"): invoke.Result(exited=0)
-        })
+                re.compile(".*"): invoke.Result(exited=0)
+            })
         return ctx
 
     def _check_calls(self, ctx: invoke.MockContext) -> None:
