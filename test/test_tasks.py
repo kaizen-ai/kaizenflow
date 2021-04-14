@@ -1,15 +1,24 @@
 import re
 
+import logging
 import helpers.printing as hprint
 import helpers.system_interaction as hsi
 import helpers.unit_test as hut
-import invoke
 import pytest
-import tasks
+import helpers.dbg as dbg
+
+dbg.init_logger()
+_LOG = logging.getLogger(__name__)
+# TODO(*): remove after images update
+try:
+    import invoke
+    import tasks
+except ModuleNotFoundError as e:
+    _LOG.error(e)
+    pytest.skip(reason="Update image required. "
+                       "Issue: https://app.zenhub.com/workspaces/particle-one-5e4448e6b9975964dfe1582f/issues/particledev/commodity_research/8226")
 
 
-@pytest.skip(reason="Update image required. "
-                    "Issue: https://app.zenhub.com/workspaces/particle-one-5e4448e6b9975964dfe1582f/issues/particledev/commodity_research/8226")
 class TestTasks(hut.TestCase):
 
     def _dry_run(self, target: str) -> None:
