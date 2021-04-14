@@ -10,15 +10,21 @@ import pytest
 dbg.init_logger()
 _LOG = logging.getLogger(__name__)
 # TODO(*): remove after images update
+
 try:
     import invoke
     import tasks
 except ModuleNotFoundError as e:
     _LOG.error(e)
-    pytestmark = pytest.mark.skip(True, reason="Update image required. "
-                                                 "Issue: https://app.zenhub.com/workspaces/particle-one-5e4448e6b9975964dfe1582f/issues/particledev/commodity_research/8226")
+
+    class Dummy:
+        def __init__(self):
+            self.MockContext = None
+    invoke = Dummy()
 
 
+@pytest.mark.skip(reason="Update image required. "
+                         "Issue: https://app.zenhub.com/workspaces/particle-one-5e4448e6b9975964dfe1582f/issues/particledev/commodity_research/8226")
 class TestTasks(hut.TestCase):
 
     def _dry_run(self, target: str) -> None:
