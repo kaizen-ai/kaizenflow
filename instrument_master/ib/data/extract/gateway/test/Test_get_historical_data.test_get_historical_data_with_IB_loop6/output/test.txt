@@ -38,4 +38,3 @@ date,open,high,low,close,volume,average,barCount
 ts_seq=
 (datetime.datetime(2021, 2, 9, 0, 0, tzinfo=<DstTzInfo 'America/New_York' EST-1 day, 19:00:00 STD>), datetime.datetime(2021, 2, 8, 18, 0, tzinfo=<DstTzInfo 'America/New_York' EST-1 day, 19:00:00 STD>))
 (datetime.datetime(2021, 2, 8, 18, 0, tzinfo=<DstTzInfo 'America/New_York' EST-1 day, 19:00:00 STD>), datetime.datetime(2021, 2, 7, 18, 0, tzinfo=<DstTzInfo 'America/New_York' EST-1 day, 19:00:00 STD>))
-(datetime.datetime(2021, 2, 7, 18, 0, tzinfo=<DstTzInfo 'America/New_York' EST-1 day, 19:00:00 STD>), datetime.datetime(2021, 2, 4, 18, 0, tzinfo=<DstTzInfo 'America/New_York' EST-1 day, 19:00:00 STD>))

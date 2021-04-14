@@ -318,6 +318,8 @@ def truncate(
 ) -> pd.DataFrame:
     _LOG.debug("Before truncation: df=%s", get_df_signature(df))
     _LOG.debug("df.head=\n%s\ndf.tail=\n%s", df.head(3), df.tail(3))
+    if df.empty:
+        return df
     dbg.dassert_in(type(df.index[0]), [datetime.date, pd.Timestamp])
     dbg.dassert_monotonic_index(df)
     start_ts = pd.Timestamp(start_ts)
