@@ -1,11 +1,11 @@
+import logging
 import re
 
-import logging
+import helpers.dbg as dbg
 import helpers.printing as hprint
 import helpers.system_interaction as hsi
 import helpers.unit_test as hut
 import pytest
-import helpers.dbg as dbg
 
 dbg.init_logger()
 _LOG = logging.getLogger(__name__)
@@ -15,9 +15,8 @@ try:
     import tasks
 except ModuleNotFoundError as e:
     _LOG.error(e)
-    pytest.skip()
-    pytest.mark.skip(reason="Update image required. "
-                       "Issue: https://app.zenhub.com/workspaces/particle-one-5e4448e6b9975964dfe1582f/issues/particledev/commodity_research/8226")
+    pytestmark = pytest.mark.skipif(True, reason="Update image required. "
+                                                 "Issue: https://app.zenhub.com/workspaces/particle-one-5e4448e6b9975964dfe1582f/issues/particledev/commodity_research/8226")
 
 
 class TestTasks(hut.TestCase):
