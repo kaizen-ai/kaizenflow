@@ -539,7 +539,16 @@ def git_stash_apply(mode: str, log_level: int = logging.DEBUG) -> None:
     hsyste.system(cmd, suppress_output=False, log_level=log_level)
 
 
-def git_add_update(log_level: int = logging.DEBUG) -> None:
+def git_add_update(
+    file_list: Optional[List[str]] = None, log_level: int = logging.DEBUG
+) -> None:
+    """
+    Add list of files to git.
+
+    If `file_list` is not specified, it adds all modified files.
+
+    :param file_list: list of files to `git add`
+    """
     _LOG.debug("# Adding all changed files to staging ...")
-    cmd = "git add -u"
+    cmd = "git add %s" % (" ".join(file_list) if file_list is not None else "-u")
     hsyste.system(cmd, suppress_output=False, log_level=log_level)
