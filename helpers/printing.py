@@ -11,8 +11,6 @@ import tempfile
 from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
 
 import helpers.dbg as dbg
-import helpers.io_ as hio
-import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
 
@@ -411,6 +409,9 @@ def diff_strings(
     txt2_descr: Optional[str] = None,
     width: int = 130,
 ) -> str:
+    # To avoid circular dependencies.
+    import helpers.io_ as hio
+
     # Write file.
     def _to_file(txt: str, txt_descr: Optional[str]) -> str:
         file_name = tempfile.NamedTemporaryFile().name
@@ -424,6 +425,9 @@ def diff_strings(
     file_name2 = _to_file(txt2, txt2_descr)
     #
     cmd = f"sdiff --width={width} {file_name1} {file_name2}"
+    # To avoid circular dependencies.
+    import helpers.system_interaction as hsyste
+
     _, txt = hsyste.system_to_string(
         cmd,
         # We don't care if they are different.
@@ -571,6 +575,7 @@ def remove_non_printable_chars(txt: str) -> str:
     )
     txt = ansi_escape.sub("", txt)
     return txt
+
 
 # #############################################################################
 # Notebook output

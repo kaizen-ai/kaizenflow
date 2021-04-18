@@ -11,6 +11,8 @@ import pprint
 import sys
 from typing import Any, Iterable, List, Optional, Tuple, Type, Union
 
+# This module should not depend on anything else than Python standard modules.
+
 _LOG = logging.getLogger(__name__)
 
 # #############################################################################
@@ -467,6 +469,7 @@ def dassert_list_of_strings(output: List[str], *args: Any) -> None:
 # Logger.
 # #############################################################################
 
+# TODO(gp): Separate this to helpers/log.py
 
 # From https://stackoverflow.com/questions/15411967
 def is_running_in_ipynb() -> bool:

@@ -18,7 +18,6 @@ import time
 from typing import Any, Callable, List, Optional, Tuple, Union
 
 import helpers.dbg as dbg
-import helpers.io_ as hio
 import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
@@ -313,7 +312,7 @@ def get_first_line(output: str) -> str:
 
 def system_to_one_line(cmd: str, *args: Any, **kwargs: Any) -> Tuple[int, str]:
     """
-    Execute a shell command and capture its output (expected to be a single
+    Execute a shell command, capturing its output (expected to be a single
     line).
 
     This is a thin wrapper around system_to_string().
@@ -455,6 +454,9 @@ def query_yes_no(question: str, abort_on_no: bool) -> bool:
 
 
 def create_executable_script(file_name: str, content: str) -> None:
+    # To avoid circular dependencies.
+    import helpers.io_ as hio
+
     dbg.dassert_isinstance(content, str)
     hio.to_file(file_name, content)
     cmd = "chmod +x " + file_name

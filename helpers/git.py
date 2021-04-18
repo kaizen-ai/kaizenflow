@@ -5,16 +5,20 @@ import helpers.git as git
 """
 
 import collections
+import functools
 import logging
 import os
 import re
 from typing import Dict, List, Optional, Tuple
 
-import helpers.datetime_ as hdatet
 import helpers.dbg as dbg
 import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
+
+# We refer to "Git" when we talk about the control system (e.g., "in a Git
+# repository") and `git` when we refer to implementation of Git as a program
+# installed in a computer.
 
 # TODO(gp): Check
 #  https://git-scm.com/book/en/v2/Appendix-B%3A-Embedding-Git-in-your-Applications-Dulwich
@@ -22,66 +26,36 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Avoid "stuttering": the module is already called "git", so no need
 #  to make reference to git again.
 
-
-# TODO(gp): -> get_user_name(). No stuttering.
-def get_git_name() -> str:
-    """
-    Return the git user name.
-    """
-    cmd = "git config --get user.name"
-    # TODO(gp): For some reason data is annotated as Any by mypy, instead of
-    # Tuple[int, str] so we need to cast it to the right value.
-    data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
-    _, output = data
-    return output
-
-
-# TODO(gp): Make the param mandatory.
-# TODO(gp): git_dir -> dir_name
-def get_branch_name(git_dir: str = ".") -> str:
-    """
-    Return the name of the Git branch we are in.
-
-    E.g., `master` or `PTask672_DEV_INFRA_Add_script_to_check_and_merge_PR`
-    """
-    dbg.dassert_exists(git_dir)
-    cmd = "cd %s && git rev-parse --abbrev-ref HEAD" % git_dir
-    data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
-    _, output = data
-    return output
-
-
 # TODO(gp): Add mem caching to some functions below. We assume that one doesn't
 #  change dir (which is a horrible idea) and thus we can memoize.
-# TODO(gp): -> is_submodule
-def is_inside_submodule(git_dir: str = ".") -> bool:
-    """
-    Return whether we are inside a Git submodule or in a Git supermodule.
-    """
-    cmd = []
-    cmd.append("cd %s" % git_dir)
-    cmd.append('cd "$(git rev-parse --show-toplevel)/.."')
-    cmd.append("(git rev-parse --is-inside-work-tree | grep -q true)")
-    cmd_as_str = " && ".join(cmd)
-    rc = hsyste.system(cmd_as_str, abort_on_error=False)
-    ret: bool = rc == 0
-    return ret
 
 
+# #############################################################################
+# Submodule functions
+# #############################################################################
+
+
+@functools.lru_cache()
 def get_client_root(super_module: bool) -> str:
     """
     Return the full path of the root of the Git client.
 
     E.g., `/Users/saggese/src/.../amp`.
 
-    :param super_module: if True use the root of the Git _super_module,
-        if we are in a submodule. Otherwise use the Git _sub_module root
+    :param super_module: if True use the root of the Git super_module,
+        if we are in a submodule. Otherwise use the Git sub_module root
     """
     if super_module and is_inside_submodule():
         # https://stackoverflow.com/questions/957928
+        # > cd /Users/saggese/src/.../amp
+        # > git rev-parse --show-superproject-working-tree
+        # /Users/saggese/src/...
         cmd = "git rev-parse --show-superproject-working-tree"
     else:
+        # > git rev-parse --show-toplevel
+        # /Users/saggese/src/.../amp
         cmd = "git rev-parse --show-toplevel"
+    # TODO(gp): Use system_to_one_line().
     _, out = hsyste.system_to_string(cmd)
     out = out.rstrip("\n")
     dbg.dassert_eq(len(out.split("\n")), 1, msg="Invalid out='%s'" % out)
@@ -89,17 +63,185 @@ def get_client_root(super_module: bool) -> str:
     return client_root
 
 
-def find_file_in_git_tree(file_in: str, super_module: bool = True) -> str:
+@functools.lru_cache()
+def is_inside_submodule(git_dir: str = ".") -> bool:
     """
-    Find the path of a file `file_in` in the outermost git submodule (i.e., in
-    the super-module).
+    Return whether a dir is inside a Git submodule or a Git supermodule.
+
+    We determine this checking if the current git repo is included
+    inside another git repo.
+    """
+    cmd = []
+    # - Find the git root of the current directory
+    # - Check if the dir one level up is a valid git repo
+    # Go to the dir.
+    cmd.append("cd %s" % git_dir)
+    # > cd instrument_master/
+    # > git rev-parse --show-toplevel
+    # /Users/saggese/src/.../amp
+    cmd.append('cd "$(git rev-parse --show-toplevel)/.."')
+    # > git rev-parse --is-inside-work-tree
+    # true
+    cmd.append("(git rev-parse --is-inside-work-tree | grep -q true)")
+    cmd_as_str = " && ".join(cmd)
+    rc = hsyste.system(cmd_as_str, abort_on_error=False)
+    ret: bool = rc == 0
+    return ret
+
+
+def _get_submodule_hash(dir_name: str) -> str:
+    """
+    Report the Git hash that a submodule (e.g., amp) is at from the point of
+    view of a supermodule.
+
+    > git ls-tree master | grep <dir_name>
+    """
+    dbg.dassert_exists(dir_name)
+    cmd = "git ls-tree master | grep %s" % dir_name
+    data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
+    _, output = data
+    # 160000 commit 0011776388b4c0582161eb2749b665fc45b87e7e  amp
+    _LOG.debug("output=%s", output)
+    data: List[str] = output.split()
+    _LOG.debug("data=%s", data)
+    git_hash = data[2]
+    return git_hash
+
+
+@functools.lru_cache()
+def get_path_from_supermodule() -> str:
+    """
+    Return the path to the Git repo including the Git submodule for a
+    submodule, and return empty for a supermodule. See AmpTask1017.
+
+    E.g.,
+    - for amp included in another repo returns 'amp'
+    - for amp without supermodule returns ''
+    """
+    # > cd /Users/saggese/src/.../amp
+    # > git rev-parse --show-superproject-working-tree
+    # /Users/saggese/src/...
+    #
+    # > cd /Users/saggese/src/...
+    # > git rev-parse --show-superproject-working-tree
+    # (No result)
+    cmd = "git rev-parse --show-superproject-working-tree"
+    submodule_superproject: str = hsyste.system_to_one_line(cmd)[1]
+    _LOG.debug("submodule_superproject=%s", submodule_superproject)
+    # > git config --file /Users/saggese/src/.../.gitmodules --get-regexp path
+    # submodule.amp.path amp
+    cmd = (
+        f"git config --file {submodule_superproject}/.gitmodules --get-regexp path"
+        '| grep $(basename "$(pwd)")'
+        "| awk '{ print $2 }'"
+    )
+    res: str = hsyste.system_to_one_line(cmd)[1]
+    _LOG.debug("res=%s", res)
+    return res
+
+
+def _get_hash(git_hash: str, short_hash: bool, num_digits: int = 8) -> str:
+    dbg.dassert_lte(1, num_digits)
+    if short_hash:
+        ret = git_hash[:num_digits]
+    else:
+        ret = git_hash
+    return ret
+
+
+def _group_hashes(head_hash: str, remh_hash: str, subm_hash: str) -> str:
+    """
+    head_hash: a
+    remh_hash: b
+    subm_hash: c
+    """
+    map_ = collections.OrderedDict()
+    map_["head_hash"] = head_hash
+    map_["remh_hash"] = remh_hash
+    if subm_hash:
+        map_["subm_hash"] = subm_hash
+    #
+    inv_map = collections.OrderedDict()
+    for k, v in map_.items():
+        if v not in inv_map:
+            inv_map[v] = [k]
+        else:
+            inv_map[v].append(k)
+    #
+    txt = []
+    for k, v in inv_map.items():
+        # Transform:
+        #   ('a2bfc704', ['head_hash', 'remh_hash'])
+        # into
+        #   'head_hash = remh_hash = a2bfc704'
+        txt.append("%s = %s" % (" = ".join(v), k))
+    txt = "\n".join(txt)
+    return txt
+
+
+def report_submodule_status(dir_names: List[str], short_hash: bool) -> str:
+    """
+    Return a string representing the status of the repos in `dir_names`.
+    """
+    txt = []
+    for dir_name in dir_names:
+        txt.append("dir_name='%s'" % dir_name)
+        txt.append("  is_inside_submodule: %s" % is_inside_submodule(dir_name))
+        #
+        branch_name = get_branch_name(dir_name)
+        if branch_name != "master":
+            branch_name = "!!! %s !!!" % branch_name
+        txt.append("  branch: %s" % branch_name)
+        #
+        head_hash = get_head_hash(dir_name)
+        head_hash = _get_hash(head_hash, short_hash)
+        txt.append("  head_hash: %s" % head_hash)
+        #
+        remh_hash = get_remote_head_hash(dir_name)
+        remh_hash = _get_hash(remh_hash, short_hash)
+        txt.append("  remh_hash: %s" % remh_hash)
+        #
+        if dir_name != ".":
+            subm_hash = _get_submodule_hash(dir_name)
+            subm_hash = _get_hash(subm_hash, short_hash)
+            txt.append("  subm_hash: %s" % subm_hash)
+    txt_as_str = "\n".join(txt)
+    return txt_as_str
+
+
+# #############################################################################
+
+
+@functools.lru_cache()
+def get_branch_name(dir_name: str = ".") -> str:
+    """
+    Return the name of the Git branch including a certain dir.
+
+    E.g., `master` or `AmpTask672_Add_script_to_check_and_merge_PR`
+    """
+    dbg.dassert_exists(dir_name)
+    # > git rev-parse --abbrev-ref HEAD
+    # master
+    cmd = "cd %s && git rev-parse --abbrev-ref HEAD" % dir_name
+    data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
+    _, output = data
+    return output
+
+
+@functools.lru_cache()
+def find_file_in_git_tree(file_name: str, super_module: bool = True) -> str:
+    """
+    Find the path of a file in a Git tree.
+
+    In practive we find the Git root and then search from there for the
+    file.
     """
     root_dir = get_client_root(super_module=super_module)
-    cmd = "find %s -name '%s' | grep -v .git" % (root_dir, file_in)
+    cmd = "find %s -name '%s' | grep -v .git" % (root_dir, file_name)
     _, file_name = hsyste.system_to_one_line(cmd)
     _LOG.debug("file_name=%s", file_name)
-    dbg.dassert(
-        file_name != "", "Can't find file '%s' in dir '%s'", file_in, root_dir
+    dbg.dassert_ne(
+        file_name, "", "Can't find file '%s' in dir '%s'", file_name, root_dir
     )
     file_name: str = os.path.abspath(file_name)
     dbg.dassert_exists(file_name)
@@ -113,9 +255,12 @@ def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
     E.g., "alphamatic/amp"
     """
     dbg.dassert_exists(git_dir)
-    cmd = "cd %s; (git remote -v | grep fetch)" % git_dir
+    # > git remote -v
+    # origin  git@github.com:alphamatic/amp (fetch)
+    # origin  git@github.com:alphamatic/amp (push)
+    cmd = "cd %s; (git remote -v | grep origin | grep fetch)" % git_dir
     # TODO(gp): Make it more robust, by checking both fetch and push.
-    # "origin  git@github.com:alphamatic/amp (fetch)"
+    #  "origin  git@github.com:alphamatic/amp (fetch)"
     _, output = hsyste.system_to_string(cmd)
     data: List[str] = output.split()
     _LOG.debug("data=%s", data)
@@ -140,7 +285,7 @@ def get_repo_symbolic_name(super_module: bool) -> str:
     """
     Return the name of the remote repo. E.g., "alphamatic/amp".
 
-    :param super_module: like get_client_root()
+    :param super_module: like in get_client_root()
     """
     # Get the git remote in the git_module.
     git_dir = get_client_root(super_module)
@@ -165,10 +310,10 @@ def _get_repo_map() -> Dict[str, str]:
 
 def get_all_repo_symbolic_names() -> List[str]:
     repo_map = _get_repo_map()
-    return repo_map.values()  # type: ignore
+    return list(repo_map.values())
 
 
-# TODO(gp): Found a better name.
+# TODO(gp): Find a better name.
 def get_repo_prefix(repo_github_name: str) -> str:
     """
     Return the symbolic name of a git repo.
@@ -227,23 +372,21 @@ def get_amp_abs_path() -> str:
     return amp_dir
 
 
-def get_submodule_hash(dir_name: str) -> str:
+def get_repo_dirs() -> List[str]:
     """
-    Report the Git hash that a submodule (e.g., amp) is at from the point of
-    view of a supermodule.
+    Return the list of the repo repositories, e.g., `[".", "amp", "infra"]`.
+    """
+    dir_names = ["."]
+    dirs = ["amp"]
+    for dir_name in dirs:
+        if os.path.exists(dir_name):
+            dir_names.append(dir_name)
+    return dir_names
 
-    > git ls-tree master | grep <dir_name>
-    """
-    dbg.dassert_exists(dir_name)
-    cmd = "git ls-tree master | grep %s" % dir_name
-    data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
-    _, output = data
-    # 160000 commit 0011776388b4c0582161eb2749b665fc45b87e7e  amp
-    _LOG.debug("output=%s", output)
-    data: List[str] = output.split()
-    _LOG.debug("data=%s", data)
-    git_hash = data[2]
-    return git_hash
+
+# #############################################################################
+# hash
+# #############################################################################
 
 
 def get_head_hash(dir_name: str) -> str:
@@ -284,87 +427,8 @@ def get_remote_head_hash(dir_name: str) -> str:
     return output
 
 
-def get_repo_dirs() -> List[str]:
-    """
-    Return the list of the repo repositories, e.g., `[".", "amp", "infra"]`.
-    """
-    dir_names = ["."]
-    dirs = ["amp"]
-    for dir_name in dirs:
-        if os.path.exists(dir_name):
-            dir_names.append(dir_name)
-    return dir_names
-
-
-def get_hash(git_hash: str, short_hash: bool, num_digits: int = 8) -> str:
-    dbg.dassert_lte(1, num_digits)
-    if short_hash:
-        ret = git_hash[:num_digits]
-    else:
-        ret = git_hash
-    return ret
-
-
-def _group_hashes(head_hash: str, remh_hash: str, subm_hash: str) -> str:
-    """
-    head_hash: a
-    remh_hash: b
-    subm_hash: c
-    """
-    map_ = collections.OrderedDict()
-    map_["head_hash"] = head_hash
-    map_["remh_hash"] = remh_hash
-    if subm_hash:
-        map_["subm_hash"] = subm_hash
-    #
-    inv_map = collections.OrderedDict()
-    for k, v in map_.items():
-        if v not in inv_map:
-            inv_map[v] = [k]
-        else:
-            inv_map[v].append(k)
-    #
-    txt = []
-    for k, v in inv_map.items():
-        # Transform:
-        #   ('a2bfc704', ['head_hash', 'remh_hash'])
-        # into
-        #   'head_hash = remh_hash = a2bfc704'
-        txt.append("%s = %s" % (" = ".join(v), k))
-    txt = "\n".join(txt)
-    return txt
-
-
-def report_submodule_status(dir_names: List[str], short_hash: bool) -> str:
-    """
-    Return a string representing the status of the repos in `dir_names`.
-    """
-    txt = []
-    for dir_name in dir_names:
-        txt.append("dir_name='%s'" % dir_name)
-        txt.append("  is_inside_submodule: %s" % is_inside_submodule(dir_name))
-        #
-        branch_name = get_branch_name(dir_name)
-        if branch_name != "master":
-            branch_name = "!!! %s !!!" % branch_name
-        txt.append("  branch: %s" % branch_name)
-        #
-        head_hash = get_head_hash(dir_name)
-        head_hash = get_hash(head_hash, short_hash)
-        txt.append("  head_hash: %s" % head_hash)
-        #
-        remh_hash = get_remote_head_hash(dir_name)
-        remh_hash = get_hash(remh_hash, short_hash)
-        txt.append("  remh_hash: %s" % remh_hash)
-        #
-        if dir_name != ".":
-            subm_hash = get_submodule_hash(dir_name)
-            subm_hash = get_hash(subm_hash, short_hash)
-            txt.append("  subm_hash: %s" % subm_hash)
-    txt_as_str = "\n".join(txt)
-    return txt_as_str
-
-
+# #############################################################################
+# Modified files
 # #############################################################################
 
 
@@ -470,6 +534,21 @@ def get_modified_files_in_branch(
 
 
 # #############################################################################
+# git commands.
+# #############################################################################
+
+# TODO(gp): -> get_user_name()
+@functools.lru_cache()
+def get_git_name() -> str:
+    """
+    Return the git user name.
+    """
+    cmd = "git config --get user.name"
+    # For some reason data is annotated as Any by mypy, instead of
+    # Tuple[int, str] so we need to cast it to the right value.
+    data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
+    _, output = data
+    return output
 
 
 def git_log(num_commits: int = 5, my_commits: bool = False) -> str:
@@ -494,12 +573,11 @@ def git_log(num_commits: int = 5, my_commits: bool = False) -> str:
     return txt
 
 
-# #############################################################################
-
-
 def git_stash_push(
     prefix: str, msg: Optional[str] = None, log_level: int = logging.DEBUG
 ) -> Tuple[str, bool]:
+    import helpers.datetime_ as hdatet
+
     user_name = hsyste.get_user_name()
     server_name = hsyste.get_server_name()
     timestamp = hdatet.get_timestamp()
