@@ -90,8 +90,8 @@ class Test_git_submodule1(hut.TestCase):
         func_call = "git.is_inside_submodule()"
         _helper(func_call)
 
-    def test_get_supermodule_git_repo1(self) -> None:
-        func_call = "git.get_supermodule_git_repo()"
+    def test_get_path_from_supermodule1(self) -> None:
+        func_call = "git.get_path_from_supermodule()"
         _helper(func_call)
 
 
