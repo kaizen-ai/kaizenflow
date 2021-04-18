@@ -1,7 +1,8 @@
 <!--ts-->
-   * [Run unit tests](#run-unit-tests)
-   * [Build image](#build-image)
-   * [Run IM app](#run-im-app)
+   * [Workflows](#workflows)
+      * [Run unit tests](#run-unit-tests)
+      * [Build image](#build-image)
+      * [Run IM app](#run-im-app)
       * [Prerequisites](#prerequisites)
       * [Run locally for development](#run-locally-for-development)
       * [Run dev stage](#run-dev-stage)
@@ -17,7 +18,9 @@
 
 <!--te-->
 
-# Run unit tests
+# Workflows
+
+## Run unit tests
 
 - Run the tests in the base Docker image:
 
@@ -31,7 +34,7 @@
   > make im.run_fast_tests
   ```
 
-# Build image
+## Build image
 
 - Build release candidate image:
 
@@ -56,7 +59,7 @@
   > make im.docker_push_image.latest
   ```
 
-# Run IM app
+## Run IM app
 
 - Pull image.
 

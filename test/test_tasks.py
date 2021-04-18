@@ -27,39 +27,6 @@ except ModuleNotFoundError as e:
                          "Issue: https://app.zenhub.com/workspaces/particle-one-5e4448e6b9975964dfe1582f/issues/particledev/commodity_research/8226")
 class TestTasks(hut.TestCase):
 
-    def _dry_run(self, target: str) -> None:
-        """
-        Invoke with dry run the given target.
-        """
-        cmd = "invoke --dry " + target
-        _, act = hsi.system_to_string(cmd)
-        act = hprint.remove_non_printable_chars(act)
-        self.check_string(act)
-
-    def _build_mock_context_returning_ok(self):
-        ctx = invoke.MockContext(
-            repeat=True,
-            run={
-                re.compile(".*"): invoke.Result(exited=0)
-            })
-        return ctx
-
-    def _check_calls(self, ctx: invoke.MockContext) -> None:
-        act = "\n".join(map(str, ctx.run.mock_calls))
-        act = hprint.remove_non_printable_chars(act)
-        self.check_string(act)
-
-    def _check_output(self, target: str) -> None:
-        """
-        Dry run target checking that the sequence of commands issued is the expected
-        one.
-        """
-        ctx = self._build_mock_context_returning_ok()
-        func = eval(f"tasks.{target}")
-        func(ctx)
-        # Check the outcome.
-        self._check_calls(ctx)
-
     def test_print_setup1(self) -> None:
         target = "print_setup"
         self._dry_run(target)
@@ -94,10 +61,66 @@ class TestTasks(hut.TestCase):
 
     def test_docker_login(self) -> None:
         stdout = "aws-cli/1.19.49 Python/3.7.6 Darwin/19.6.0 botocore/1.20.49\n"
-        ctx = invoke.MockContext(run={
-            "aws --version": invoke.Result(stdout),
-            re.compile("^docker login"): invoke.Result(exited=0)
-        })
+        ctx = invoke.MockContext(
+            run={
+                "aws --version": invoke.Result(stdout),
+                re.compile("^docker login"): invoke.Result(exited=0),
+            }
+        )
         tasks.docker_login(ctx)
+        # Check the outcome.
+        self._check_calls(ctx)
+
+    def test_docker_images_ls_repo(self) -> None:
+        target = "docker_images_ls_repo"
+        self._dry_run(target)
+
+    def test_docker_ps(self) -> None:
+        target = "docker_ps"
+        self._dry_run(target)
+
+    def test_docker_stats(self) -> None:
+        target = "docker_stats"
+        self._dry_run(target)
+
+    def test_docker_ps(self) -> None:
+        target = "docker_kill_last"
+        self._dry_run(target)
+
+    def test_docker_stats(self) -> None:
+        target = "docker_kill_all"
+        self._dry_run(target)
+
+    def _dry_run(self, target: str) -> None:
+        """
+        Invoke the given target with dry run.
+
+        This is used to test the commands that we can't actually
+        execute.
+        """
+        cmd = "invoke --dry " + target
+        _, act = hsi.system_to_string(cmd)
+        act = hprint.remove_non_printable_chars(act)
+        self.check_string(act)
+
+    def _build_mock_context_returning_ok(self):
+        ctx = invoke.MockContext(
+            repeat=True, run={re.compile(".*"): invoke.Result(exited=0)}
+        )
+        return ctx
+
+    def _check_calls(self, ctx: invoke.MockContext) -> None:
+        act = "\n".join(map(str, ctx.run.mock_calls))
+        act = hprint.remove_non_printable_chars(act)
+        self.check_string(act)
+
+    def _check_output(self, target: str) -> None:
+        """
+        Dry run target checking that the sequence of commands issued is the
+        expected one.
+        """
+        ctx = self._build_mock_context_returning_ok()
+        func = eval(f"tasks.{target}")
+        func(ctx)
         # Check the outcome.
         self._check_calls(ctx)
