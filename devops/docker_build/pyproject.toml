@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "amp"
+version = "0.1.0"
+description = ""
+authors = [""]
+
+[tool.poetry.dependencies]
+boto3 = "*"
+bs4 = "*"
+flaky = "*"
+fsspec = "*"
+gluonts = "*"
+invoke = "*"
+jsonpickle = "*"
+jupyter = "*"
+matplotlib = "*"
+mxnet = "*"
+networkx = "*"
+pandas = "^1.1.0"
+pyarrow = "*"
+pytest = "^6.0.0"
+pytest-cov = "*"
+pytest-instafail = "*"
+pytest-xdist = "*"
+python = "^3.7"
+pywavelets = "*"
+s3fs = "*"
+seaborn = "*"
+sklearn = "*"
+statsmodels = "*"
+psycopg2 = "*"
+tqdm = "*"
+requests = "*"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

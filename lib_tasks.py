@@ -329,6 +329,12 @@ def _get_git_hash() -> str:
     return git_hash
 
 
+def _get_image_githash():
+    base_image = get_default_value("ECR_BASE_PATH")
+    image_hash = base_image + ":" + _get_git_hash()
+    return image_hash
+
+
 def _to_abs_path(filename: str) -> str:
     filename = os.path.abspath(filename)
     dbg.dassert_exists(filename)
@@ -355,31 +361,37 @@ DOCKER_BUILDKIT = 0
 
 
 @task
-def docker_build_image_rc(ctx):
-    base_image = get_default_value("ECR_BASE_PATH")
-    #
+def docker_build_image_rc(ctx, cache=True):
+    """
+    Build a release candidate image.
+    """
     stage = "rc"
+    base_image = get_default_value("ECR_BASE_PATH")
     image_rc = _get_image(stage, base_image)
     #
-    image_hash = base_image + ":" + _get_git_hash()
+    image_hash = _get_image_githash()
     #
     dockerfile = "devops/docker_build/dev.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
     #
+    opts = "--no_cache" if not cache else ""
     cmd = rf"""
     DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
     time \
     docker build \
         --progress=plain \
-        --no-cache \
+        {opts} \
         -t {image_rc} \
         -t {image_hash} \
         -f {dockerfile} \
         .
     """
     _run(ctx, cmd)
-# docker image ls $(IMAGE_RC)
-#
+    #
+    cmd = r"docker image ls {image_rc}"
+    _run(ctx, cmd)
+
+
 # docker_build_image_with_cache.rc:
 # DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
 #     docker build \
@@ -390,10 +402,22 @@ def docker_build_image_rc(ctx):
 #     .
 # docker image ls $(IMAGE_RC)
 #
-# # Push the "rc" image to the registry.
-# docker_push_image.rc:
-# docker push $(IMAGE_RC)
-# docker push $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA)
+
+@task
+def docker_push_image_rc(ctx):
+    """
+    Push the "rc" image to the registry.
+    """
+    stage = "rc"
+    base_image = get_default_value("ECR_BASE_PATH")
+    image_rc = _get_image(stage, base_image)
+    #
+    image_hash = _get_image_githash()
+    cmd = f"docker push {image_rc}"
+    _run(ctx, cmd)
+    cmd = f"docker push {image_hash}"
+    _run(ctx, cmd)
+
 #
 # # Mark the "rc" image as "latest".
 # docker_tag_rc_image.latest:
