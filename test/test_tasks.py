@@ -9,8 +9,8 @@ import pytest
 
 dbg.init_logger()
 _LOG = logging.getLogger(__name__)
-# TODO(*): remove after images update
 
+# TODO(*): remove after images update
 try:
     import invoke
     import tasks
@@ -23,8 +23,7 @@ except ModuleNotFoundError as e:
     invoke = Dummy()
 
 
-@pytest.mark.skip(reason="Update image required. "
-                         "Issue: https://app.zenhub.com/workspaces/particle-one-5e4448e6b9975964dfe1582f/issues/particledev/commodity_research/8226")
+@pytest.mark.skip(reason="Update image required. PTask8226")
 class TestTasks(hut.TestCase):
 
     def test_print_setup1(self) -> None:
