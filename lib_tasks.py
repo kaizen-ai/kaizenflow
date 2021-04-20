@@ -43,6 +43,12 @@ def print_setup(ctx):
         print("%s=%s" % (v, get_default_value(v)))
 
 
+@task
+def activate_poetry(ctx):
+    cmd = '''cd devops/docker_build; FILE="$(poetry env info --path)/bin/activate"; echo "source $FILE"'''
+    ctx.run(cmd)
+
+
 # #############################################################################
 # Git.
 # #############################################################################
