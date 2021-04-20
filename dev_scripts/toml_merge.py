@@ -11,21 +11,20 @@ files.
 """
 
 import argparse
+import collections
+import copy
 import logging
+import pprint
+from typing import Any, List, MutableMapping
+
+import toml
 
 import helpers.dbg as dbg
 import helpers.parser as prsr
 
 _LOG = logging.getLogger(__name__)
 
-import collections
-import copy
-import pprint
-from typing import Dict, List
-
-import toml
-
-_DepDict = Dict[str, str]
+_DepDict = MutableMapping[str, Any]
 
 
 def _update(dict_merged: _DepDict, dict_new: _DepDict) -> _DepDict:
@@ -38,7 +37,7 @@ def _update(dict_merged: _DepDict, dict_new: _DepDict) -> _DepDict:
         if k in dict_merged:
             if v != dict_merged[k]:
                 raise ValueError(
-                    "Key '%s' is assigned to different values"
+                    "Key '%s' is assigned to different values '%s' and '%s'"
                     % (k, v, dict_merged[k])
                 )
         else:
@@ -50,7 +49,7 @@ def _merge_deps(dicts: List[_DepDict]) -> _DepDict:
     """
     Merge a list of dictionary in place.
     """
-    dict_merged = collections.OrderedDict()
+    dict_merged: _DepDict = collections.OrderedDict()
     for dict_new in dicts:
         dict_merged = _update(dict_merged, dict_new)
     return dict_merged

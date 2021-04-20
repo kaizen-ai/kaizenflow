@@ -20,7 +20,7 @@ except ModuleNotFoundError as e:
     _LOG.error(e)
 
     class Dummy:
-        def __init__(self):
+        def __init__(self) -> None:
             self.MockContext = None
 
     invoke = Dummy()
@@ -84,11 +84,11 @@ class TestTasks(hut.TestCase):
         target = "docker_stats"
         self._dry_run(target)
 
-    def test_docker_ps(self) -> None:
+    def test_docker_kill_last(self) -> None:
         target = "docker_kill_last"
         self._dry_run(target)
 
-    def test_docker_stats(self) -> None:
+    def test_docker_kill_all(self) -> None:
         target = "docker_kill_all"
         self._dry_run(target)
 
@@ -104,7 +104,7 @@ class TestTasks(hut.TestCase):
         act = hprint.remove_non_printable_chars(act)
         self.check_string(act)
 
-    def _build_mock_context_returning_ok(self):
+    def _build_mock_context_returning_ok(self) -> invoke.MockContext:
         ctx = invoke.MockContext(
             repeat=True, run={re.compile(".*"): invoke.Result(exited=0)}
         )

@@ -2,7 +2,7 @@ import functools
 import logging
 import os
 import re
-from typing import Any, Dict
+from typing import Any, Dict, Match
 
 from invoke import task
 
@@ -17,6 +17,11 @@ _LOG = logging.getLogger(__name__)
 
 # This is used to inject the default params.
 _DEFAULT_PARAMS = {}
+
+
+# NOTE: We need to use a `# type: ignore` for all the @task functions because
+# invoke infers argument type from the code and mypy annotations confuse it
+# (see https://github.com/pyinvoke/invoke/issues/357)
 
 
 def set_default_params(params: Dict[str, Any]) -> None:
@@ -36,7 +41,7 @@ def get_default_value(key: str) -> Any:
 
 
 @task
-def print_setup(ctx):
+def print_setup(ctx):  # type: ignore
     _ = ctx
     var_names = "ECR_BASE_PATH ECR_REPO_BASE_PATH".split()
     for v in var_names:
@@ -44,8 +49,13 @@ def print_setup(ctx):
 
 
 @task
-def activate_poetry(ctx):
-    cmd = '''cd devops/docker_build; FILE="$(poetry env info --path)/bin/activate"; echo "source $FILE"'''
+def activate_poetry(ctx):  # type: ignore
+    """
+    Print how to activate the virtual environment.
+    """
+    cmd = '''cd devops/docker_build; \
+            FILE="$(poetry env info --path)/bin/activate"; \
+            echo "source $FILE"'''
     ctx.run(cmd)
 
 
@@ -60,7 +70,7 @@ def activate_poetry(ctx):
 
 
 @task
-def git_pull(ctx):
+def git_pull(ctx):  # type: ignore
     """
     Pull all the repos.
     """
@@ -71,7 +81,7 @@ def git_pull(ctx):
 
 
 @task
-def git_pull_master(ctx):
+def git_pull_master(ctx):  # type: ignore
     """
     Pull master without changing branch.
     """
@@ -80,7 +90,7 @@ def git_pull_master(ctx):
 
 
 @task
-def git_clean(ctx):
+def git_clean(ctx):  # type: ignore
     """
     Clean all the repos.
     """
@@ -90,9 +100,11 @@ def git_clean(ctx):
     ctx.run(cmd)
     cmd = "git submodule foreach 'git clean -fd'"
     ctx.run(cmd)
-    cmd = f"""find . | \
+    # pylint: disable=line-too-long
+    cmd = r"""find . | \
     grep -E "(tmp.joblib.unittest.cache|.pytest_cache|.mypy_cache|.ipynb_checkpoints|__pycache__|\.pyc|\.pyo$$)" | \
     xargs rm -rf"""
+    # pylint: enable=line-too-long
     ctx.run(cmd)
 
 
@@ -102,7 +114,7 @@ def git_clean(ctx):
 
 
 @task
-def docker_images_ls_repo(ctx):
+def docker_images_ls_repo(ctx):  # type: ignore
     """
     List images in the logged in repo.
     """
@@ -112,7 +124,8 @@ def docker_images_ls_repo(ctx):
 
 
 @task
-def docker_ps(ctx):
+def docker_ps(ctx):  # type: ignore
+    # pylint: disable=line-too-long
     """
     List all running containers.
 
@@ -126,12 +139,14 @@ def docker_ps(ctx):
     docker ps \
         --format='table {{.ID}}\t{{.Label "user"}}\t{{.Image}}\t{{.Command}}\t{{.RunningFor}}\t{{.Status}}\t{{.Ports}}\t{{.Label "com.docker.compose.service"}}'
     """
+    # pylint: enable=line-too-long
     cmd = _remove_spaces(cmd)
     ctx.run(cmd)
 
 
 @task
-def docker_stats(ctx):
+def docker_stats(ctx):  # type: ignore
+    # pylint: disable=line-too-long
     """
     Report container stats, e.g., CPU, RAM.
 
@@ -143,12 +158,13 @@ def docker_stats(ctx):
     """
     # To change the output format you can use the following --format flags:
     # --format='table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}'
+    # pylint: enable=line-too-long
     cmd = "docker stats --no-stream $(IDS)"
     ctx.run(cmd)
 
 
 @task
-def docker_kill_last(ctx):
+def docker_kill_last(ctx):  # type: ignore
     """
     Kill the last Docker container started.
     """
@@ -157,7 +173,7 @@ def docker_kill_last(ctx):
 
 
 @task
-def docker_kill_all(ctx):
+def docker_kill_all(ctx):  # type: ignore
     """
     Kill all the Docker containers.
     """
@@ -175,14 +191,15 @@ def docker_kill_all(ctx):
 
 
 @functools.lru_cache()
-def _get_aws_cli_version():
+def _get_aws_cli_version() -> int:
     # > aws --version
     # aws-cli/1.19.49 Python/3.7.6 Darwin/19.6.0 botocore/1.20.49
     cmd = "aws --version"
     res = hsyste.system_to_one_line(cmd)[1]
     # Parse the output.
-    m = re.match("aws-cli/((\d+).\d+.\d+)\S", res)
+    m = re.match(r"aws-cli/((\d+).\d+.\d+)\S", res)
     dbg.dassert(m, "Can't parse '%s'", res)
+    m: Match[Any]
     version = m.group(1)
     _LOG.debug("version=%s", version)
     major_version = int(m.group(2))
@@ -191,7 +208,7 @@ def _get_aws_cli_version():
 
 
 @task
-def docker_login(ctx):
+def docker_login(ctx):  # type: ignore
     major_version = _get_aws_cli_version()
     if major_version == 1:
         cmd = "eval $(aws ecr get-login --no-include-email --region us-east-2)"
@@ -243,7 +260,7 @@ def _get_image(stage: str, base_image: str) -> str:
 
 
 def _docker_cmd(
-    ctx, stage: str, base_image: str, docker_compose: str, docker_cmd: str
+    ctx: Any, stage: str, base_image: str, docker_compose: str, cmd: str
 ) -> None:
     image = _get_image(stage, base_image)
     # devops/compose/docker-compose-user-space.yml
@@ -256,7 +273,7 @@ def _docker_cmd(
         --rm \
         -l user={user_name} \
         user_space \
-        {docker_cmd}"""
+        {cmd}"""
     if use_one_line_cmd:
         cmd = _remove_spaces(cmd)
     _LOG.debug("cmd=%s", cmd)
@@ -264,7 +281,7 @@ def _docker_cmd(
 
 
 @task
-def docker_bash(ctx, stage="local"):
+def docker_bash(ctx, stage="local"):  # type: ignore
     """
     Start a bash shell inside the container corresponding to a stage.
     """
@@ -275,7 +292,7 @@ def docker_bash(ctx, stage="local"):
 
 
 @task
-def docker_cmd(ctx, stage="local", cmd=""):
+def docker_cmd(ctx, stage="local", cmd=""):  # type: ignore
     """
     Execute the command `cmd` inside a container corresponding to a stage.
     """
@@ -287,7 +304,7 @@ def docker_cmd(ctx, stage="local", cmd=""):
 
 
 @task
-def docker_jupyter(ctx, stage, port=9999):
+def docker_jupyter(ctx, stage, port=9999):  # type: ignore
     """
     Run jupyter notebook server.
     """
@@ -334,13 +351,13 @@ def docker_jupyter(ctx, stage, port=9999):
 
 def _get_git_hash() -> str:
     cmd = "git rev-parse HEAD"
-    git_hash = hsyste.system_to_one_line(cmd)[1]
+    git_hash: str = hsyste.system_to_one_line(cmd)[1]
     _LOG.debug("git_hash=%s", git_hash)
     return git_hash
 
 
-def _get_image_githash():
-    base_image = get_default_value("ECR_BASE_PATH")
+def _get_image_githash() -> str:
+    base_image: str = get_default_value("ECR_BASE_PATH")
     image_hash = base_image + ":" + _get_git_hash()
     return image_hash
 
@@ -371,7 +388,7 @@ DOCKER_BUILDKIT = 0
 
 
 @task
-def docker_build_image_rc(ctx, cache=True):
+def docker_build_image_rc(ctx, cache=True):  # type: ignore
     """
     Build a release candidate image.
     """
@@ -415,7 +432,7 @@ def docker_build_image_rc(ctx, cache=True):
 
 
 @task
-def docker_push_image_rc(ctx):
+def docker_push_image_rc(ctx):  # type: ignore
     """
     Push the "rc" image to the registry.
     """
@@ -498,7 +515,7 @@ def docker_push_image_rc(ctx):
 
 
 @task
-def lint_docker_pull(ctx):
+def lint_docker_pull(ctx):  # type: ignore
     ecr_base_path = "083233266530.dkr.ecr.us-east-2.amazonaws.com"
     dev_tools_image_prod = f"{ecr_base_path}/dev_tools:prod"
     docker_login(ctx)
@@ -507,7 +524,7 @@ def lint_docker_pull(ctx):
 
 
 @task
-def lint_branch(ctx):
+def lint_branch(ctx):  # type: ignore
     cmd = "git diff --name-only master..."
     files = hsyste.system_to_string(cmd)[1]
     _LOG.info("Files to lint:\n%s", "\n".join(files))
