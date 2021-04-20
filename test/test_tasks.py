@@ -1,11 +1,12 @@
 import logging
 import re
 
+import pytest
+
 import helpers.dbg as dbg
 import helpers.printing as hprint
 import helpers.system_interaction as hsi
 import helpers.unit_test as hut
-import pytest
 
 dbg.init_logger()
 _LOG = logging.getLogger(__name__)
@@ -13,6 +14,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(*): remove after images update
 try:
     import invoke
+
     import tasks
 except ModuleNotFoundError as e:
     _LOG.error(e)
@@ -20,12 +22,12 @@ except ModuleNotFoundError as e:
     class Dummy:
         def __init__(self):
             self.MockContext = None
+
     invoke = Dummy()
 
 
 @pytest.mark.skip(reason="Update image required. PTask8226")
 class TestTasks(hut.TestCase):
-
     def test_print_setup1(self) -> None:
         target = "print_setup"
         self._dry_run(target)

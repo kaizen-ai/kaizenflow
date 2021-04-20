@@ -2,6 +2,7 @@ import functools
 import logging
 import os
 import re
+from typing import Any, Dict
 
 from invoke import task
 
@@ -10,8 +11,6 @@ from invoke import task
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.system_interaction as hsyste
-
-from typing import Any, Dict
 
 _LOG = logging.getLogger(__name__)
 
@@ -34,6 +33,7 @@ def get_default_value(key: str) -> Any:
 # #############################################################################
 # Set-up.
 # #############################################################################
+
 
 @task
 def print_setup(ctx):
@@ -90,7 +90,7 @@ def git_clean(ctx):
     ctx.run(cmd)
     cmd = "git submodule foreach 'git clean -fd'"
     ctx.run(cmd)
-    cmd = """find . | \
+    cmd = f"""find . | \
     grep -E "(tmp.joblib.unittest.cache|.pytest_cache|.mypy_cache|.ipynb_checkpoints|__pycache__|\.pyc|\.pyo$$)" | \
     xargs rm -rf"""
     ctx.run(cmd)
@@ -197,8 +197,10 @@ def docker_login(ctx):
         cmd = "eval $(aws ecr get-login --no-include-email --region us-east-2)"
     else:
         ecr_base_path = get_default_value("ECR_BASE_PATH")
-        cmd = ("docker login -u AWS -p $(aws ecr get-login --region us-east-2) " +
-               f"https://{ecr_base_path}")
+        cmd = (
+            "docker login -u AWS -p $(aws ecr get-login --region us-east-2) "
+            + f"https://{ecr_base_path}"
+        )
     ctx.run(cmd)
 
 
@@ -225,7 +227,7 @@ def _remove_spaces(cmd: str) -> str:
 use_one_line_cmd = False
 
 
-def _get_image(stage:str, base_image:str) -> str:
+def _get_image(stage: str, base_image: str) -> str:
     if stage == "dev":
         suffix = "latest"
     elif stage == "rc":
@@ -240,7 +242,9 @@ def _get_image(stage:str, base_image:str) -> str:
     return image
 
 
-def _docker_cmd(ctx, stage: str, base_image: str, docker_compose: str, docker_cmd: str) -> None:
+def _docker_cmd(
+    ctx, stage: str, base_image: str, docker_compose: str, docker_cmd: str
+) -> None:
     image = _get_image(stage, base_image)
     # devops/compose/docker-compose-user-space.yml
     dbg.dassert_exists(docker_compose)
@@ -409,6 +413,7 @@ def docker_build_image_rc(ctx, cache=True):
 # docker image ls $(IMAGE_RC)
 #
 
+
 @task
 def docker_push_image_rc(ctx):
     """
@@ -423,6 +428,7 @@ def docker_push_image_rc(ctx):
     _run(ctx, cmd)
     cmd = f"docker push {image_hash}"
     _run(ctx, cmd)
+
 
 #
 # # Mark the "rc" image as "latest".

@@ -15,16 +15,15 @@ import logging
 
 import helpers.dbg as dbg
 import helpers.parser as prsr
-import helpers.io_ as io_
 
 _LOG = logging.getLogger(__name__)
 
-from typing import Any, Dict, List
-
-import copy
 import collections
-import toml
+import copy
 import pprint
+from typing import Dict, List
+
+import toml
 
 _DepDict = Dict[str, str]
 
@@ -38,8 +37,10 @@ def _update(dict_merged: _DepDict, dict_new: _DepDict) -> _DepDict:
         v = dict_new[k]
         if k in dict_merged:
             if v != dict_merged[k]:
-                raise ValueError("Key '%s' is assigned to different values"
-                                 % (k, v, dict_merged[k]))
+                raise ValueError(
+                    "Key '%s' is assigned to different values"
+                    % (k, v, dict_merged[k])
+                )
         else:
             dict_merged[k] = v
     return dict_merged
@@ -62,8 +63,9 @@ def _merge_toml(pyprojs: List[_DepDict]) -> _DepDict:
     dbg.dassert_lte(1, len(pyprojs))
     pyproj = copy.deepcopy(pyprojs[0])
     for key in ["dependencies", "dev-dependencies"]:
-        pyproj_list = [curr_pyproj["tool"]["poetry"].get(key, {})
-                       for curr_pyproj in pyprojs]
+        pyproj_list = [
+            curr_pyproj["tool"]["poetry"].get(key, {}) for curr_pyproj in pyprojs
+        ]
         pyproj["tool"]["poetry"][key] = _merge_deps(pyproj_list)
     return pyproj
 
@@ -72,8 +74,12 @@ def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--in_file", action="append", help="Files to read", required=True)
-    parser.add_argument("--out_file", action="store", help="File to write", required=True)
+    parser.add_argument(
+        "--in_file", action="append", help="Files to read", required=True
+    )
+    parser.add_argument(
+        "--out_file", action="store", help="File to write", required=True
+    )
     prsr.add_verbosity_arg(parser)
     return parser
 
@@ -82,7 +88,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Load all the toml files requested as dictionaries.
-    pyprojs : List[_DepDict] = []
+    pyprojs: List[_DepDict] = []
     for file_name in args.in_file:
         pyproj = toml.load(file_name)
         _LOG.debug("file_name=%s:\n%s", file_name, pprint.pformat(pyproj))
@@ -93,10 +99,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Save.
     merged_toml = toml.dumps(merged_pyproj)
     _LOG.debug("merged_toml=%s", merged_toml)
-    #file_name = "/Users/saggese/src/lemonade/devops/docker_build/pyproject.toml"
-    #file_name = "/Users/saggese/src/lemonade/amp/devops/docker_build/pyproject.toml"
-    #pyproj2 = toml.load(file_name)
-    #print(pprint.pformat(pyproj2))
+    # file_name = "/Users/saggese/src/lemonade/devops/docker_build/pyproject.toml"
+    # file_name = "/Users/saggese/src/lemonade/amp/devops/docker_build/pyproject.toml"
+    # pyproj2 = toml.load(file_name)
+    # print(pprint.pformat(pyproj2))
 
     # > ../../dev_scripts/toml_merge.py
     # {'build-system': {'build-backend': 'poetry.masonry.api',
