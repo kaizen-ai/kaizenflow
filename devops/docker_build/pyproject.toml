@@ -5,6 +5,7 @@ description = ""
 authors = [""]
 
 [tool.poetry.dependencies]
+awscli = "*"
 boto3 = "*"
 bs4 = "*"
 flaky = "*"

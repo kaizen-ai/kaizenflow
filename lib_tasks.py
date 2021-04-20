@@ -185,7 +185,7 @@ def _get_aws_cli_version():
     dbg.dassert(m, "Can't parse '%s'", res)
     version = m.group(1)
     _LOG.debug("version=%s", version)
-    major_version = m.group(2)
+    major_version = int(m.group(2))
     _LOG.debug("major_version=%s", major_version)
     return major_version
 
@@ -492,10 +492,18 @@ def docker_push_image_rc(ctx):
 
 
 @task
+def lint_docker_pull(ctx):
+    ecr_base_path = "083233266530.dkr.ecr.us-east-2.amazonaws.com"
+    dev_tools_image_prod = f"{ecr_base_path}/dev_tools:prod"
+    docker_login(ctx)
+    cmd = f"docker pull {dev_tools_image_prod}"
+    ctx.run(cmd, pty=True)
+
+
+@task
 def lint_branch(ctx):
     cmd = "git diff --name-only master..."
     files = hsyste.system_to_string(cmd)[1]
     _LOG.info("Files to lint:\n%s", "\n".join(files))
-    files = " ".join(files)
     cmd = f"pre-commit.sh run --files $({cmd}) 2>&1 | tee linter_warnings.txt"
     ctx.run(cmd)
