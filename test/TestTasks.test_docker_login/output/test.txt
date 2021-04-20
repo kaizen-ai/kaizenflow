@@ -1,2 +1,1 @@
-call('aws --version', hide='out')
-call('docker login -u AWS -p $(aws ecr get-login --region us-east-2) https://$(ECR_REPO_BASE_PATH)')
+call('eval $(aws ecr get-login --no-include-email --region us-east-2)')

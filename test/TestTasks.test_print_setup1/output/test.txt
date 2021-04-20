@@ -1,5 +1,2 @@
-ECR_BASE_PATH='083233266530.dkr.ecr.us-east-2.amazonaws.com'
-ECR_REPO_BASE_PATH='083233266530.dkr.ecr.us-east-2.amazonaws.com/amp_env'
-DEV_TOOLS_IMAGE_PROD='083233266530.dkr.ecr.us-east-2.amazonaws.com/dev_tools:prod'
-IMAGE_DEV='083233266530.dkr.ecr.us-east-2.amazonaws.com/amp_env:latest'
-IMAGE_RC='083233266530.dkr.ecr.us-east-2.amazonaws.com/amp_env:rc'
+ECR_BASE_PATH=083233266530.dkr.ecr.us-east-2.amazonaws.com
+ECR_REPO_BASE_PATH=083233266530.dkr.ecr.us-east-2.amazonaws.com/amp_env

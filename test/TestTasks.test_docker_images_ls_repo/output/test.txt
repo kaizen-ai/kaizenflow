@@ -1,0 +1,2 @@
+eval $(aws ecr get-login --no-include-email --region us-east-2)
+docker image ls 083233266530.dkr.ecr.us-east-2.amazonaws.com
