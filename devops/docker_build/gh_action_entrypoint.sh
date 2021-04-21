@@ -7,8 +7,7 @@ source devops/docker_build/entrypoint/patch_environment_variables.sh
 
 mount -a || true
 
-source ~/.bashrc
-conda activate venv
+source ~/.bash_profile
 
 # Allow working with files outside a container.
 umask 000

@@ -36,7 +36,7 @@ done
 umask 000
 
 # TODO(gp): Why is this needed at all?
-# source ~/.bashrc
+# source ~/.bash_profile
 
 export PYTHONPATH=/app:$PYTHONPATH
 echo "PYTHONPATH=$PYTHONPATH"

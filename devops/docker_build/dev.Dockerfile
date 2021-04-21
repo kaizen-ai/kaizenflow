@@ -74,10 +74,12 @@ ENV DIR="devops/docker_scripts"
 RUN mkdir -p $APP_DIR/$DIR
 COPY $DIR $APP_DIR/$DIR
 
-RUN /bin/bash -c "./devops/docker_build/init/install_jupyter_extensions.sh"
+#RUN /bin/bash -c "which python3; 
+RUN /bin/sh -c "./devops/docker_build/init/install_jupyter_extensions.sh"
+#RUN /bin/bash -c "which python3"
 
 # Run repo-specific initialization scripts.
-RUN devops/docker_build/init.sh
+#RUN devops/docker_build/init.sh
 # This is not portable across BUILDKIT=1 and BUILDKIT=0 and it's not cached.
 #RUN --mount=source=.,target=/... ./devops/docker_build/init.sh
 

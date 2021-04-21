@@ -43,6 +43,7 @@ else
         ln -sf .${ENV_NAME} ${ENV_NAME}
 
         # Clean up.
+        # TODO(gp): Enable this.
         #poetry cache clear --all -q pypi
     else
         # Install with pip.
@@ -57,8 +58,9 @@ else
 fi;
 
 # Configure bashrc.
-echo "source ${ENV_NAME}/bin/activate" >>~/.bashrc
-echo "set -o vi" >>~/.bashrc
+BASH_INIT="~/.bash_profile"
+echo "source ${ENV_NAME}/bin/activate" >>$BASH_INIT
+echo "set -o vi" >>$BASH_INIT
 
 # Some tools refer to `python` and `pip`.
 ln -s /usr/bin/python3 /usr/bin/python
