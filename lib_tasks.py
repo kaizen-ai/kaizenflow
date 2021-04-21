@@ -415,7 +415,7 @@ def docker_build_image_rc(ctx, cache=True):  # type: ignore
     """
     _run(ctx, cmd)
     #
-    cmd = r"docker image ls {image_rc}"
+    cmd = f"docker image ls {image_rc}"
     _run(ctx, cmd)
 
 
