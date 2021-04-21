@@ -9,13 +9,12 @@ import helpers.unit_test as hut
 dbg.init_logger()
 _LOG = logging.getLogger(__name__)
 
-# TODO(*): remove after images update
 try:
     import invoke
 
     import tasks
 except ModuleNotFoundError as e:
-    _LOG.error(e)
+    print("Can't find invoke: %s" % str(e))
 
     class Dummy:
         def __init__(self) -> None:
@@ -99,18 +98,30 @@ class TestTasks(hut.TestCase):
         """
         cmd = "invoke --dry " + target
         _, act = hsi.system_to_string(cmd)
-        act = hprint.remove_non_printable_chars(act)
+        # TODO(gp): Unclear why pylint can't find this function.
+        # pylint: disable=no-member
+        act = hprint.remove_non_printable_chars(act)  # type: ignore
+        # pylint: enable=no-member
         self.check_string(act)
 
     def _build_mock_context_returning_ok(self) -> invoke.MockContext:
+        """
+        Build a MockContext catching any command and returning rc=0.
+        """
         ctx = invoke.MockContext(
             repeat=True, run={re.compile(".*"): invoke.Result(exited=0)}
         )
         return ctx
 
     def _check_calls(self, ctx: invoke.MockContext) -> None:
+        """
+        check_string() the sequence of commands issued in the context.
+        """
         act = "\n".join(map(str, ctx.run.mock_calls))
-        act = hprint.remove_non_printable_chars(act)
+        # TODO(gp): Unclear why pylint can't find this function.
+        # pylint: disable=no-member
+        act = hprint.remove_non_printable_chars(act)  # type: ignore
+        # pylint: enable=no-member
         self.check_string(act)
 
     def _check_output(self, target: str) -> None:

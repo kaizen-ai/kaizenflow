@@ -1,12 +1,11 @@
-import toml
+import pprint
 from io import StringIO
 from typing import Any, Dict
 
-import pandas as pd
-import pprint
+import toml
 
-import helpers.unit_test as hut
 import dev_scripts.toml_merge as toml_merge
+import helpers.unit_test as hut
 
 
 def _to_toml(txt: str) -> None:
@@ -18,28 +17,6 @@ def _to_toml(txt: str) -> None:
 
 
 class TestMergeToml(hut.TestCase):
-
-    @staticmethod
-    def _get_pyproj1() -> Dict[str, Any]:
-        pyproj = """
-        [tool.poetry]
-        name = "lem"
-        version = "0.1.0"
-        description = ""
-        authors = [""]
-
-        [tool.poetry.dependencies]
-        awscli = "*"
-        boto3 = "*"
-
-        [tool.poetry.dev-dependencies]
-
-        [build-system]
-        requires = ["poetry>=0.12"]
-        build-backend = "poetry.masonry.api"
-        """
-        return pyproj
-
     def test1(self) -> None:
         """
         Test that merging two equal toml files return the same one.
@@ -132,3 +109,24 @@ class TestMergeToml(hut.TestCase):
         # Call function to test.
         with self.assertRaises(ValueError):
             _ = toml_merge._merge_toml(pyprojs=pyprojs)
+
+    @staticmethod
+    def _get_pyproj1() -> Dict[str, Any]:
+        pyproj = """
+        [tool.poetry]
+        name = "lem"
+        version = "0.1.0"
+        description = ""
+        authors = [""]
+
+        [tool.poetry.dependencies]
+        awscli = "*"
+        boto3 = "*"
+
+        [tool.poetry.dev-dependencies]
+
+        [build-system]
+        requires = ["poetry>=0.12"]
+        build-backend = "poetry.masonry.api"
+        """
+        return pyproj

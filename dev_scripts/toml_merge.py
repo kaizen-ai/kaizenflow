@@ -11,7 +11,6 @@ files.
 """
 
 import argparse
-import collections
 import copy
 import logging
 import pprint
