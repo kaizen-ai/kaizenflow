@@ -238,7 +238,6 @@ def to_file(
     :param mode: file writing mode
     :param force_flush: whether to forcibly clear the file buffer
     """
-    # TODO(gp): create_enclosing_dir().
     # Verify that the file name is correct.
     dbg.dassert_is_not(file_name, None)
     dbg.dassert_ne(file_name, "")

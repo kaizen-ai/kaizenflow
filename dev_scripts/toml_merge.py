@@ -13,13 +13,16 @@ files.
 import argparse
 import copy
 import logging
+import os
 import pprint
 from typing import Any, List, MutableMapping
 
 import toml
 
 import helpers.dbg as dbg
+import helpers.io_ as io_
 import helpers.parser as prsr
+import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -88,6 +91,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Load all the toml files requested as dictionaries.
     pyprojs: List[_DepDict] = []
     for file_name in args.in_file:
+        file_name = os.path.abspath(file_name)
+        _LOG.info("Reading file '%s'", file_name)
         pyproj = toml.load(file_name)
         _LOG.debug("file_name=%s:\n%s", file_name, pprint.pformat(pyproj))
         pyprojs.append(pyproj)
@@ -95,21 +100,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     merged_pyproj = _merge_toml(pyprojs)
     _LOG.debug("merged_pyproj=%s", pprint.pformat(merged_pyproj))
     # Save.
+    merged_pyproj = hprint.sort_dictionary(merged_pyproj)
     merged_toml = toml.dumps(merged_pyproj)
     _LOG.debug("merged_toml=%s", merged_toml)
-    # file_name = "/Users/saggese/src/lemonade/devops/docker_build/pyproject.toml"
-    # file_name = "/Users/saggese/src/lemonade/amp/devops/docker_build/pyproject.toml"
-    # pyproj2 = toml.load(file_name)
-    # print(pprint.pformat(pyproj2))
-
-    # > ../../dev_scripts/toml_merge.py
-    # {'build-system': {'build-backend': 'poetry.masonry.api',
-    #                   'requires': ['poetry>=0.12']},
-    #  'tool': {'poetry': {'authors': [''],
-    #                      'dependencies': {'boto3': '*',
-    #                                       'bs4': '*',
-    #                                       'flaky': '*',
-    #                                       'fsspec': '*',
+    file_name = os.path.abspath(args.out_file)
+    io_.to_file(file_name, merged_toml)
+    _LOG.info("Result saved into '%s'", file_name)
 
 
 if __name__ == "__main__":

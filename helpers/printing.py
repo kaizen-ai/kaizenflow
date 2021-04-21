@@ -577,6 +577,20 @@ def remove_non_printable_chars(txt: str) -> str:
     return txt
 
 
+def sort_dictionary(dict_: Dict) -> Dict:
+    """
+    Sort a dictionary recursively using nested OrderedDict.
+    """
+    import collections
+    res = collections.OrderedDict()
+    for k, v in sorted(dict_.items()):
+        if isinstance(v, dict):
+            res[k] = sort_dictionary(v)
+        else:
+            res[k] = v
+    return res
+
+
 # #############################################################################
 # Notebook output
 # #############################################################################
