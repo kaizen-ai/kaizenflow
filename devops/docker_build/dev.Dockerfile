@@ -1,35 +1,49 @@
 # syntax = docker/dockerfile:experimental
 
-FROM continuumio/miniconda3:4.9.2
+#FROM continuumio/miniconda3:4.9.2
+#FROM python:3.7-slim-buster
+#FROM ubuntu:18.04
+FROM ubuntu:20.04
+#FROM alpine:3.7
 
 # TODO(gp): Trim this down. npm needed?
 RUN apt update && \
-    apt install -y cifs-utils && \
-    apt install -y git && \
-    apt install -y graphviz && \
-    apt install -y keyutils && \
-    apt install -y make && \
-    apt install -y npm && \
-    apt install -y s3fs && \
-    apt install -y vim && \
-    apt-get purge -y --auto-remove
+    apt install --no-install-recommends -y \
+      cifs-utils \
+      git \
+      keyutils \
+      make \
+      vim
+
+# apt install -y npm && \
+# apt install -y s3fs && \
+# apt install -y graphviz && \
+
+# Install pip.
+RUN apt install --no-install-recommends -y python3-venv python3-pip
+
+# Install poetry.
+RUN pip3 install poetry
+
+# Clean up.
+RUN apt-get purge -y --auto-remove
 
 # Mount external filesystems.
-RUN mkdir -p /s3/default00-bucket
-RUN mkdir -p /fsx/research
-COPY devops/docker_build/fstab /etc/fstab
+#RUN mkdir -p /s3/default00-bucket
+#RUN mkdir -p /fsx/research
+#COPY devops/docker_build/fstab /etc/fstab
 
 # Configure conda.
-RUN conda init bash
-RUN conda config --set default_threads 4
-RUN conda config --add channels conda-forge
-RUN conda config --show-sources
+#RUN conda init bash
+#RUN conda config --set default_threads 4
+#RUN conda config --add channels conda-forge
+#RUN conda config --show-sources
 
 ENV APP_DIR=/app
 
 # Create conda environment.
 ENV ENV_NAME="venv"
-RUN conda create -n $ENV_NAME python=3.7 -y
+#RUN conda create -n $ENV_NAME python=3.7 -y
 
 # We assume that the needed files to build the image are under
 # devops/{docker_build,docker_scripts}
