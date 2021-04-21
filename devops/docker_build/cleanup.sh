@@ -6,8 +6,7 @@
 set -e
 source ~/.bash_profile
 
-#DIRS="/usr/lib/gcc /app/tmp.pypoetry /root/.cache /tmp"
-DIRS="/app/tmp.pypoetry"
+DIRS="/usr/lib/gcc /app/tmp.pypoetry /root/.cache /tmp"
 
 du -hs $DIRS | sort -h
 

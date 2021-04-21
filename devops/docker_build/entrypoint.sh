@@ -4,12 +4,13 @@
 
 set -e
 
-source devops/docker_build/entrypoint/aws_credentials.sh
+devops/docker_build/entrypoint/aws_credentials.sh
+
+source ~/.bash_profile
+
 source devops/docker_build/entrypoint/patch_environment_variables.sh
 
 mount -a || true
-
-source ~/.bash_profile
 
 # Allow working with files outside a container.
 umask 000

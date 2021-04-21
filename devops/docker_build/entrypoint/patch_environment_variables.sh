@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# TODO(gp): We should merge it with `source dev_scripts/setenv_amp.sh`.
+
 set -e
 
 export PYTHONDONTWRITEBYTECODE=x
