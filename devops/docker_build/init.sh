@@ -13,7 +13,7 @@ run_inits () {
         ls -l "$1/$INIT_DIR/"*.sh
         for f in "$1/$INIT_DIR/"*.sh; do
             echo "# Running script: ${f}"
-            source "$f"
+            /bin/bash "$f"
         done
     else
         echo "ERROR: '$1' does not contain '$INIT_DIR' directory"

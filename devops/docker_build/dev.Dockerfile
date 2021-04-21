@@ -43,11 +43,24 @@ RUN apt-get purge -y --auto-remove
 #RUN conda config --add channels conda-forge
 #RUN conda config --show-sources
 
-ENV APP_DIR=/app
-
 # Create conda environment.
 ENV ENV_NAME="venv"
 #RUN conda create -n $ENV_NAME python=3.7 -y
+
+ENV APP_DIR=/app
+WORKDIR $APP_DIR
+
+# Copy the minimum amount of files needed to call install_requirements.sh so we
+# can cache it effectively.
+COPY devops/docker_build/pyproject.toml .
+COPY devops/docker_build/poetry.lock .
+COPY devops/docker_build/install_requirements.sh .
+COPY poetry.toml .
+
+# Install requirements.
+RUN /bin/bash -c "./install_requirements.sh"
+# This is not portable across BUILDKIT=1 and BUILDKIT=0 and it's not cached.
+#RUN --mount=source=.,target=/amp ./devops/docker_build/install_requirements.sh
 
 # We assume that the needed files to build the image are under
 # devops/{docker_build,docker_scripts}
@@ -60,15 +73,8 @@ COPY $DIR $APP_DIR/$DIR
 ENV DIR="devops/docker_scripts"
 RUN mkdir -p $APP_DIR/$DIR
 COPY $DIR $APP_DIR/$DIR
-    
-COPY poetry.toml $APP_DIR
 
-WORKDIR $APP_DIR
-
-# Install requirements.
-RUN devops/docker_build/install_requirements.sh
-# This is not portable across BUILDKIT=1 and BUILDKIT=0 and it's not cached.
-#RUN --mount=source=.,target=/amp ./devops/docker_build/install_requirements.sh
+RUN /bin/bash -c "./devops/docker_build/init/install_jupyter_extensions.sh"
 
 # Run repo-specific initialization scripts.
 RUN devops/docker_build/init.sh

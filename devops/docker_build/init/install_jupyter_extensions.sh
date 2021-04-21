@@ -6,24 +6,9 @@
 set -e
 source ~/.bashrc
 
-echo "# Setup Jupyter server"
-
-jupyter notebook --generate-config -y
-jupyter nbextension enable jupytext --py
-cat << EOT >> ~/.jupyter/jupyter_notebook_config.py
-#------------------------------------------------------------------------------
-# Jupytext
-#------------------------------------------------------------------------------
-c.NotebookApp.contents_manager_class = "jupytext.TextFileContentsManager"
-# Always pair ipynb notebooks to py files
-c.ContentsManager.default_jupytext_formats = "ipynb,py"
-# Use the percent format when saving as py
-c.ContentsManager.preferred_jupytext_formats_save = "py:percent"
-c.ContentsManager.outdated_text_notebook_margin = float("inf")
-EOT
-
 echo "# Install jupyter extensions"
 
+# Create jupyter data dir.
 DIR_NAME=$(jupyter --data-dir)
 echo "Jupyter data dir: $DIR_NAME"
 if [[ ! -d $DIR_NAME ]]; then
@@ -31,8 +16,8 @@ if [[ ! -d $DIR_NAME ]]; then
 fi;
 
 # Install extensions.
+# vim_binding/vim_binding
 extensions="
-vim_binding/vim_binding
 autosavetime/main
 code_prettify/code_prettify
 collapsible_headings/main
@@ -53,7 +38,7 @@ for v in $extensions; do
     eval $cmd
   fi;
 done;
-eval "jupyter nbextension disable vim_binding/vim_binding"
+#eval "jupyter nbextension disable vim_binding/vim_binding"
 
 # Disable configuration for nbextensions without explicit compatibility
 echo "{\"nbext_hide_incompat\": false}" > /root/.jupyter/nbconfig/common.json
@@ -69,4 +54,20 @@ if [[ -e vim_binding ]]; then
 fi
 git clone https://github.com/lambdalisue/jupyter-vim-binding vim_binding
 jupyter nbextension enable vim_binding/vim_binding
+
+echo "# Setup Jupyter server"
+
+jupyter notebook --generate-config -y
+jupyter nbextension enable jupytext --py
+cat << EOT >> ~/.jupyter/jupyter_notebook_config.py
+#------------------------------------------------------------------------------
+# Jupytext
+#------------------------------------------------------------------------------
+c.NotebookApp.contents_manager_class = "jupytext.TextFileContentsManager"
+# Always pair ipynb notebooks to py files
+c.ContentsManager.default_jupytext_formats = "ipynb,py"
+# Use the percent format when saving as py
+c.ContentsManager.preferred_jupytext_formats_save = "py:percent"
+c.ContentsManager.outdated_text_notebook_margin = float("inf")
+EOT
 

@@ -25,8 +25,8 @@ else
     echo "# Building environment with poetry"
 
     # Get the poetry files.
-    cp devops/docker_build/pyproject.toml .
-    cp devops/docker_build/poetry.lock .
+    #cp devops/docker_build/pyproject.toml .
+    #cp devops/docker_build/poetry.lock .
 
     # Print config.
     poetry config --list --local
@@ -41,6 +41,9 @@ else
 
         # poetry prepends a `.` to the env.
         ln -sf .${ENV_NAME} ${ENV_NAME}
+
+        # Clean up.
+        #poetry cache clear --all -q pypi
     else
         # Install with pip.
         echo "# Install with pip"
@@ -57,5 +60,6 @@ fi;
 echo "source ${ENV_NAME}/bin/activate" >>~/.bashrc
 echo "set -o vi" >>~/.bashrc
 
-# Some tools refer to `python`.
+# Some tools refer to `python` and `pip`.
 ln -s /usr/bin/python3 /usr/bin/python
+ln -s /usr/bin/pip3 /usr/bin/pip
