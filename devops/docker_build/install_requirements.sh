@@ -22,8 +22,9 @@ if [[ 0 == 1 ]]; then
 else
     echo "Building environment with poetry ..."
 
-    # Get the poetry file.
+    # Get the poetry files.
     cp devops/docker_build/pyproject.toml .
+    cp devops/docker_build/poetry.lock .
 
     # Print config.
     poetry config --list --local
@@ -31,16 +32,16 @@ else
     # Compute dependencies.
     poetry lock
 
-    if [[ 0 == 1 ]]; then
+    if [[ 1 == 1 ]]; then
         # Install with poetry.
         poetry install
     else
         # Install with pip.
         poetry export -f requirements.txt --output requirements.txt
 
-        python -m ${ENV_NAME} ./${ENV_NAME}
+        python3 -m ${ENV_NAME} ./${ENV_NAME}
         source ${ENV_NAME}/bin/activate
-        pip install --upgrade pip
-        pip install --no-deps -r requirements.txt
+        pip3 install --upgrade pip
+        pip3 install --no-deps -r requirements.txt
     fi;
 fi;

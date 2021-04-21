@@ -19,6 +19,10 @@ RUN apt update && \
 # apt install -y s3fs && \
 # apt install -y graphviz && \
 
+#RUN apt-get install python-psycopg2
+# This is needed to compile ujson (see https://github.com/alphamatic/lemonade/issues/155)
+RUN apt install --no-install-recommends -y build-essential autoconf libtool python3-dev
+
 # Install pip.
 RUN apt install --no-install-recommends -y python3-venv python3-pip
 
@@ -56,6 +60,8 @@ COPY $DIR $APP_DIR/$DIR
 ENV DIR="devops/docker_scripts"
 RUN mkdir -p $APP_DIR/$DIR
 COPY $DIR $APP_DIR/$DIR
+    
+COPY poetry.toml $APP_DIR
 
 WORKDIR $APP_DIR
 
