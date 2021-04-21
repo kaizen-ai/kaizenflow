@@ -419,18 +419,6 @@ def docker_build_image_rc(ctx, cache=True):  # type: ignore
     _run(ctx, cmd)
 
 
-# docker_build_image_with_cache.rc:
-# DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
-#     docker build \
-#            --progress=plain \
-#                       -t $(IMAGE_RC) \
-#                           -t $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
-#                                                     -f devops/docker_build/dev.Dockerfile \
-#     .
-# docker image ls $(IMAGE_RC)
-#
-
-
 @task
 def docker_push_image_rc(ctx):  # type: ignore
     """

@@ -10,7 +10,7 @@ from lib_tasks import *
 # Setup.
 # #############################################################################
 
-ECR_BASE_PATH = "083233266530.dkr.ecr.us-east-2.amazonaws.com"
+ECR_BASE_PATH = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
 
 DEV_TOOLS_IMAGE_PROD = f"{ECR_BASE_PATH}/dev_tools:prod"
 

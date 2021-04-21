@@ -32,9 +32,9 @@ RUN pip3 install poetry
 RUN apt-get purge -y --auto-remove
 
 # Mount external filesystems.
-#RUN mkdir -p /s3/default00-bucket
-#RUN mkdir -p /fsx/research
-#COPY devops/docker_build/fstab /etc/fstab
+RUN mkdir -p /s3/default00-bucket
+RUN mkdir -p /fsx/research
+COPY devops/docker_build/fstab /etc/fstab
 
 # Configure conda.
 #RUN conda init bash
@@ -49,6 +49,7 @@ ENV ENV_NAME="venv"
 ENV APP_DIR=/app
 WORKDIR $APP_DIR
 
+# Install requirements.
 # Copy the minimum amount of files needed to call install_requirements.sh so we
 # can cache it effectively.
 COPY devops/docker_build/pyproject.toml .
@@ -56,11 +57,9 @@ COPY devops/docker_build/poetry.lock .
 COPY devops/docker_build/install_requirements.sh .
 COPY poetry.toml .
 
-# Install requirements.
 RUN /bin/bash -c "./install_requirements.sh"
 # This is not portable across BUILDKIT=1 and BUILDKIT=0 and it's not cached.
 #RUN --mount=source=.,target=/amp ./devops/docker_build/install_requirements.sh
-
 
 # Run repo-specific initialization scripts.
 #RUN devops/docker_build/init.sh
@@ -70,13 +69,14 @@ RUN /bin/bash -c "./install_requirements.sh"
 COPY devops/docker_build/install_jupyter_extensions.sh .
 RUN /bin/sh -c "./install_jupyter_extensions.sh"
 
-###
-
 COPY devops/docker_build/cleanup.sh .
 RUN /bin/sh -c "./cleanup.sh"
 
-FROM ubuntu:20.04
+#
+# Multi-stage build.
+#
 
+FROM ubuntu:20.04
 
 # TODO(gp): Trim this down. npm needed?
 RUN apt update && \
@@ -87,17 +87,12 @@ RUN apt update && \
       make \
       vim
 
-# apt install -y npm && \
-# apt install -y s3fs && \
-# apt install -y graphviz && \
-
 # Clean up.
 RUN apt-get purge -y --auto-remove
 
-# Without this Docker "cannot normalize nothing".
+# Without this, Docker errors out with "cannot normalize nothing".
 ENV APP_DIR=/app
 
-# 
 COPY --from=builder $APP_DIR $APP_DIR
 
 # We assume that the needed files to build the image are under
@@ -111,8 +106,6 @@ COPY $DIR $APP_DIR/$DIR
 ENV DIR="devops/docker_scripts"
 RUN mkdir -p $APP_DIR/$DIR
 COPY $DIR $APP_DIR/$DIR
-
-#COPY devops/docker_build/entrypoint.sh /
 
 WORKDIR $APP_DIR
 
