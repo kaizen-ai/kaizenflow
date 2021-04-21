@@ -1,12 +1,28 @@
 #!/usr/bin/env bash
+#
+# Install Jupyter packages.
+#
 
 set -e
+source ~/.bashrc
 
-echo "Install jupyter extensions"
+echo "# Setup Jupyter server"
 
-conda activate venv
+jupyter notebook --generate-config -y
+jupyter nbextension enable jupytext --py
+cat << EOT >> ~/.jupyter/jupyter_notebook_config.py
+#------------------------------------------------------------------------------
+# Jupytext
+#------------------------------------------------------------------------------
+c.NotebookApp.contents_manager_class = "jupytext.TextFileContentsManager"
+# Always pair ipynb notebooks to py files
+c.ContentsManager.default_jupytext_formats = "ipynb,py"
+# Use the percent format when saving as py
+c.ContentsManager.preferred_jupytext_formats_save = "py:percent"
+c.ContentsManager.outdated_text_notebook_margin = float("inf")
+EOT
 
-conda info -e
+echo "# Install jupyter extensions"
 
 DIR_NAME=$(jupyter --data-dir)
 echo "Jupyter data dir: $DIR_NAME"
@@ -14,20 +30,7 @@ if [[ ! -d $DIR_NAME ]]; then
   mkdir -p $DIR_NAME
 fi;
 
-if [[ 0 == 1 ]]; then
-  VIM_DIR=$DIR_NAME/nbextensions/vim_binding
-  if [[ -d $VIM_DIR ]]; then
-      rm -rf $VIM_DIR
-  fi;
-  mkdir -p $VIM_DIR
-  cd $VIM_DIR
-  # vim bindings.
-  git clone https://github.com/lambdalisue/jupyter-vim-binding vim_binding
-  # Activate the extension.
-  jupyter nbextension enable vim_binding/vim_binding
-  exit
-fi;
-
+# Install extensions.
 extensions="
 vim_binding/vim_binding
 autosavetime/main
@@ -54,3 +57,16 @@ eval "jupyter nbextension disable vim_binding/vim_binding"
 
 # Disable configuration for nbextensions without explicit compatibility
 echo "{\"nbext_hide_incompat\": false}" > /root/.jupyter/nbconfig/common.json
+
+# Fix vim plugin extension (from dev_scripts/notebooks/fix_vim_plugin.sh).
+DIR=$(jupyter --data-dir)/nbextensions
+if [[ ! -e $DIR ]]; then
+    mkdir $DIR
+fi
+cd $DIR
+if [[ -e vim_binding ]]; then
+    rm -rf vim_binding
+fi
+git clone https://github.com/lambdalisue/jupyter-vim-binding vim_binding
+jupyter nbextension enable vim_binding/vim_binding
+

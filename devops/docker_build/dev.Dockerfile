@@ -75,6 +75,4 @@ RUN devops/docker_build/init.sh
 # This is not portable across BUILDKIT=1 and BUILDKIT=0 and it's not cached.
 #RUN --mount=source=.,target=/... ./devops/docker_build/init.sh
 
-RUN echo "conda activate venv" >> ~/.bashrc
-
 ENTRYPOINT ["./devops/docker_build/entrypoint.sh"]

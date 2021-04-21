@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 #
 # Install python packages.
+#
 
 set -e
 set -x
 
-echo "Installing ${ENV_NAME}"
+echo "# Installing ${ENV_NAME}"
 
 if [[ 0 == 1 ]]; then
     # Conda flow
+    echo "# Building environment with conda"
     update_env () {
         echo "Installing ${ENV_FILE} in ${ENV_NAME}"
         ENV_FILE=${1}
@@ -20,7 +22,7 @@ if [[ 0 == 1 ]]; then
 
     conda clean --all --yes
 else
-    echo "Building environment with poetry ..."
+    echo "# Building environment with poetry"
 
     # Get the poetry files.
     cp devops/docker_build/pyproject.toml .
@@ -34,9 +36,14 @@ else
 
     if [[ 1 == 1 ]]; then
         # Install with poetry.
+        echo "# Install with poetry"
         poetry install
+
+        # poetry prepends a `.` to the env.
+        ln -sf .${ENV_NAME} ${ENV_NAME}
     else
         # Install with pip.
+        echo "# Install with pip"
         poetry export -f requirements.txt --output requirements.txt
 
         python3 -m ${ENV_NAME} ./${ENV_NAME}
@@ -45,3 +52,10 @@ else
         pip3 install --no-deps -r requirements.txt
     fi;
 fi;
+
+# Configure bashrc.
+echo "source ${ENV_NAME}/bin/activate" >>~/.bashrc
+echo "set -o vi" >>~/.bashrc
+
+# Some tools refer to `python`.
+ln -s /usr/bin/python3 /usr/bin/python
