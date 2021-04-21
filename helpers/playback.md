@@ -34,7 +34,7 @@
 
 ## Using playback
 
-### Quickstart
+### Quick start
 
 ```python
 def function_under_test(...) -> ...:

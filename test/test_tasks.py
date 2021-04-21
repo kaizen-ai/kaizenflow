@@ -1,8 +1,6 @@
 import logging
 import re
 
-import pytest
-
 import helpers.dbg as dbg
 import helpers.printing as hprint
 import helpers.system_interaction as hsi
@@ -26,7 +24,6 @@ except ModuleNotFoundError as e:
     invoke = Dummy()
 
 
-@pytest.mark.skip(reason="Update image required. PTask8226")
 class TestTasks(hut.TestCase):
     def test_print_setup1(self) -> None:
         target = "print_setup"
@@ -66,6 +63,7 @@ class TestTasks(hut.TestCase):
             run={
                 "aws --version": invoke.Result(stdout),
                 re.compile("^docker login"): invoke.Result(exited=0),
+                re.compile("^eval"): invoke.Result(exited=0),
             }
         )
         tasks.docker_login(ctx)

@@ -49,7 +49,7 @@ def _merge_deps(dicts: List[_DepDict]) -> _DepDict:
     """
     Merge a list of dictionary in place.
     """
-    dict_merged: _DepDict = collections.OrderedDict()
+    dict_merged: _DepDict = {}
     for dict_new in dicts:
         dict_merged = _update(dict_merged, dict_new)
     return dict_merged

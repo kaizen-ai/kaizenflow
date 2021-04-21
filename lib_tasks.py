@@ -118,7 +118,7 @@ def docker_images_ls_repo(ctx):  # type: ignore
     """
     List images in the logged in repo.
     """
-    docker_login()
+    docker_login(ctx)
     ecr_base_path = get_default_value("ECR_BASE_PATH")
     ctx.run(f"docker image ls {ecr_base_path}")
 
