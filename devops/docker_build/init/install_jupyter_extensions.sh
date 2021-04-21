@@ -16,7 +16,9 @@ if [[ ! -d $DIR_NAME ]]; then
 fi;
 
 # Install extensions.
-# vim_binding/vim_binding
+jupyter contrib nbextension install
+
+# Enable extensions.
 extensions="
 autosavetime/main
 code_prettify/code_prettify
@@ -32,15 +34,10 @@ toc2/main
 spellchecker/main"
 
 for v in $extensions; do
-  cmd="jupyter nbextension enable $v"
-  echo "> $cmd"
-  if [[ 1 == 1 ]]; then
-    eval $cmd
-  fi;
+  jupyter nbextension enable $v
 done;
-#eval "jupyter nbextension disable vim_binding/vim_binding"
 
-# Disable configuration for nbextensions without explicit compatibility
+# Disable configuration for nbextensions without explicit compatibility.
 echo "{\"nbext_hide_incompat\": false}" > /root/.jupyter/nbconfig/common.json
 
 # Fix vim plugin extension (from dev_scripts/notebooks/fix_vim_plugin.sh).
@@ -55,7 +52,7 @@ fi
 git clone https://github.com/lambdalisue/jupyter-vim-binding vim_binding
 jupyter nbextension enable vim_binding/vim_binding
 
-echo "# Setup Jupyter server"
+echo "# Setup Jupytext"
 
 jupyter notebook --generate-config -y
 jupyter nbextension enable jupytext --py
@@ -70,4 +67,3 @@ c.ContentsManager.default_jupytext_formats = "ipynb,py"
 c.ContentsManager.preferred_jupytext_formats_save = "py:percent"
 c.ContentsManager.outdated_text_notebook_margin = float("inf")
 EOT
-

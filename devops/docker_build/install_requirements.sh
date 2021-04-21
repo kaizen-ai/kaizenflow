@@ -58,7 +58,7 @@ else
 fi;
 
 # Configure bashrc.
-BASH_INIT="~/.bash_profile"
+BASH_INIT=~/.bash_profile
 touch $BASH_INIT
 echo "source ${ENV_NAME}/bin/activate" >>$BASH_INIT
 echo "set -o vi" >>$BASH_INIT
