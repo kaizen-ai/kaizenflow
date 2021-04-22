@@ -23,44 +23,39 @@ if [[ 0 == 1 ]]; then
 else
     echo "# Building environment with poetry"
 
-    # Get the poetry files.
-    #cp devops/docker_build/pyproject.toml .
-    #cp devops/docker_build/poetry.lock .
-
     # Print config.
     poetry config --list --local
 
     # Compute dependencies.
     poetry lock
 
-    if [[ 1 == 1 ]]; then
+    if [[ 0 == 1 ]]; then
         # Install with poetry.
         echo "# Install with poetry"
         poetry install
 
         # poetry prepends a `.` to the env.
         ln -sf .${ENV_NAME} ${ENV_NAME}
-
-        # Clean up.
-        # TODO(gp): Enable this.
-        #poetry cache clear --all -q pypi
     else
         # Install with pip.
-        echo "# Install with pip"
-        poetry export -f requirements.txt --output requirements.txt
+        echo "# Install with venv + poetry"
+        #poetry export -f requirements.txt --output requirements.txt
 
-        python3 -m ${ENV_NAME} ./${ENV_NAME}
-        source ${ENV_NAME}/bin/activate
-        pip3 install --upgrade pip
-        pip3 install --no-deps -r requirements.txt
+        python3 -m ${ENV_NAME} /${ENV_NAME}
+        source /${ENV_NAME}/bin/activate
+        #pip3 install --upgrade pip
+        #pip3 install --no-deps -r requirements.txt
+        poetry install
+
+        # TODO(gp): Clean up.
     fi;
-fi;
 
-# Configure bashrc.
-BASH_INIT=~/.bash_profile
-touch $BASH_INIT
-echo "source $APP_DIR/${ENV_NAME}/bin/activate" >>$BASH_INIT
-echo "set -o vi" >>$BASH_INIT
+    poetry env list
+
+    # Clean up.
+    # TODO(gp): Enable this.
+    #poetry cache clear --all -q pypi
+fi;
 
 # Some tools refer to `python` and `pip`.
 ln -s /usr/bin/python3 /usr/bin/python
