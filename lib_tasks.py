@@ -496,6 +496,163 @@ def docker_push_image_rc(ctx):  # type: ignore
 # make docker_release.prod
 # @echo "==> SUCCESS <=="
 
+# # #############################################################################
+# # Run tests with "latest" image.
+# # #############################################################################
+#
+# print_debug_setup:
+# @echo "SUBMODULE_NAME=$(SUBMODULE_NAME)"
+# @echo "DOCKER_COMPOSE_USER_SPACE=${DOCKER_COMPOSE_USER_SPACE}"
+# @echo "NO_JUPYTER=$(NO_JUPYTER)"
+# ifeq ($(NO_JUPYTER), 'True')
+# @echo "  No Jupyter"
+# else
+# @echo "  Execute Jupyter"
+# endif
+# @echo "NO_FAST_TESTS=$(NO_FAST_TESTS)"
+# ifeq ($(NO_FAST_TESTS), 'True')
+# @echo "  Do not execute fast tests"
+# else
+# @echo "  Execute fast tests"
+# endif
+# @echo "NO_SLOW_TESTS=$(NO_SLOW_TESTS)"
+# ifeq ($(NO_SLOW_TESTS), 'True')
+# @echo "  Do not execute slow tests"
+# else
+# @echo "  Execute slow tests"
+# endif
+# @echo "NO_SUPERSLOW_TESTS=$(NO_SUPERSLOW_TESTS)"
+# ifeq ($(NO_SUPERSLOW_TESTS), 'True')
+# @echo "  Do not execute superslow tests"
+# else
+# @echo "  Execute superslow tests"
+# endif
+#
+# The user can pass another IMAGE to run tests in another image.
+
+# We need to pass the params from the callers.
+# E.g.,
+# > make run_*_tests _IMAGE=083233266530.dkr.ecr.us-east-2.amazonaws.com/amp_env:rc
+
+
+def _run_tests(ctx, stage, cmd):
+    base_image = get_default_value("ECR_BASE_PATH")
+    docker_compose = _get_amp_docker_compose_path()
+    _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
+
+
+@task
+def run_blank_tests(ctx, stage="dev"):
+    cmd = "(pytest -h >/dev/null)"
+    _run_tests(ctx, stage, cmd)
+
+
+@task
+def run_fast_tests(ctx, stage="dev", pytest_opts=""):
+    run_tests_dir = "devops/docker_scripts"
+    cmd = f"{run_tests_dir}/run_fast_tests.sh {pytest_opts}"
+    _run_tests(ctx, stage, cmd)
+
+
+@task
+def run_slow_tests(ctx, stage="dev", pytest_opts=""):
+    run_tests_dir = "devops/docker_scripts"
+    cmd = f"{run_tests_dir}/run_slow_tests.sh {pytest_opts}"
+    _run_tests(ctx, stage, cmd)
+
+
+@task
+def run_superslow_tests(ctx, stage="dev", pytest_opts=""):
+    run_tests_dir = "devops/docker_scripts"
+    cmd = f"{run_tests_dir}/run_superslow_tests.sh {pytest_opts}"
+    _run_tests(ctx, stage, cmd)
+
+
+# # #############################################################################
+# # GH actions tests for "latest" image.
+# # #############################################################################
+#
+# _run_tests.gh_action:
+# IMAGE=$(_IMAGE) \
+#     docker-compose \
+#     -f devops/compose/docker-compose.yml \
+#        -f devops/compose/docker-compose.gh_actions.yml \
+#     run \
+#     --rm \
+#     -l user=$(USER) \
+#     app \
+#     $(_CMD)
+#
+# run_fast_tests.gh_action:
+# ifeq ($(NO_FAST_TESTS), 'True')
+# @echo "No fast tests"
+# else
+# _IMAGE=$(IMAGE_DEV) \
+#     _CMD="$(RUN_TESTS_DIR)/run_fast_tests.sh" \
+#     make _run_tests.gh_action
+# endif
+#
+# run_slow_tests.gh_action:
+# ifeq ($(NO_SLOW_TESTS), 'True')
+# @echo "No slow tests"
+# else
+# _IMAGE=$(IMAGE_DEV) \
+#     _CMD="$(RUN_TESTS_DIR)/run_slow_tests.sh" \
+#     make _run_tests.gh_action
+# endif
+#
+# run_superslow_tests.gh_action:
+# ifeq ($(NO_SUPERSLOW_TESTS), 'True')
+# @echo "No superslow tests"
+# else
+# _IMAGE=$(IMAGE_DEV) \
+#     _CMD="$(RUN_TESTS_DIR)/run_superslow_tests.sh" \
+#     make _run_tests.gh_action
+# endif
+#
+# # #############################################################################
+# # GH actions tests for "rc" image.
+# # #############################################################################
+#
+# # Test using release candidate image via GH Actions.
+#
+# run_fast_tests.gh_action_rc:
+# ifeq ($(NO_FAST_TESTS), 'True')
+# @echo "No fast tests"
+# else
+# _IMAGE=$(IMAGE_RC) \
+#     _CMD="$(RUN_TESTS_DIR)/run_fast_tests.sh" \
+#     make _run_tests.gh_action
+# endif
+#
+# run_slow_tests.gh_action_rc:
+# ifeq ($(NO_SLOW_TESTS), 'True')
+# @echo "No slow tests"
+# else
+# _IMAGE=$(IMAGE_RC) \
+#     _CMD="$(RUN_TESTS_DIR)/run_slow_tests.sh" \
+#     make _run_tests.gh_action
+# endif
+#
+# run_superslow_tests.gh_action_rc:
+# ifeq ($(NO_SUPERSLOW_TESTS), 'True')
+# @echo "No superslow tests"
+# else
+# _IMAGE=$(IMAGE_RC) \
+#     _CMD="$(RUN_TESTS_DIR)/run_superslow_tests.sh" \
+#     make _run_tests.gh_action
+# endif
+#
+# docker_bash.gh_action_rc:
+# IMAGE=$(IMAGE_RC) \
+#     docker-compose \
+#     -f devops/compose/docker-compose.yml \
+#        -f devops/compose/docker-compose.gh_actions.yml \
+#     run \
+#     --rm \
+#     -l user=$(USER) \
+#     app \
+#     bash
 
 # #############################################################################
 # Linter.
@@ -511,6 +668,7 @@ def lint_docker_pull(ctx):  # type: ignore
     ctx.run(cmd, pty=True)
 
 
+# TODO(gp): Pass pre-commit phases.
 @task
 def lint_branch(ctx):  # type: ignore
     cmd = "git diff --name-only master..."
