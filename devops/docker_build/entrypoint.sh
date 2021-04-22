@@ -3,10 +3,9 @@
 # TODO(gp): Move all the PATH and PYTHONPATH to the entrypoint.
 
 set -e
+source ~/.bash_profile
 
 devops/docker_build/entrypoint/aws_credentials.sh
-
-source ~/.bash_profile
 
 source devops/docker_build/entrypoint/patch_environment_variables.sh
 
@@ -18,6 +17,9 @@ umask 000
 ./devops/docker_build/test/test_mount_fsx.sh
 ./devops/docker_build/test/test_mount_s3.sh
 ./devops/docker_build/test/test_volumes.sh
+
+echo "which python: " $(which python)
+echo "check pandas package: " $(python -c "import pandas; print(pandas)")
 
 #echo "PATH=$PATH"
 #echo "PYTHONPATH=$PYTHONPATH"

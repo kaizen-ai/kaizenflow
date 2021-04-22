@@ -71,32 +71,32 @@ RUN /bin/sh -c "./cleanup.sh"
 # Multi-stage build.
 #
 
-FROM ubuntu:20.04
-
-# TODO(gp): Trim this down. npm needed?
-RUN apt update && \
-    apt install --no-install-recommends -y \
-      cifs-utils \
-      git \
-      keyutils \
-      make \
-      vim
-
-# Clean up.
-RUN apt-get purge -y --auto-remove
+#FROM ubuntu:20.04
+#
+## TODO(gp): Trim this down. npm needed?
+#RUN apt update && \
+#    apt install --no-install-recommends -y \
+#      cifs-utils \
+#      git \
+#      keyutils \
+#      make \
+#      vim
+#
+## Clean up.
+#RUN apt-get purge -y --auto-remove
+#
+## We don't mount this yet.
+##COPY devops/docker_build/fstab /etc/fstab
+#
+## Without this, Docker errors out with "cannot normalize nothing".
+#ENV APP_DIR=/app
+#
+#COPY --from=builder $APP_DIR $APP_DIR
+#COPY --from=builder /root /root
 
 # Mount external filesystems.
 RUN mkdir -p /s3/default00-bucket
 RUN mkdir -p /fsx/research
-
-# We don't mount this yet.
-#COPY devops/docker_build/fstab /etc/fstab
-
-# Without this, Docker errors out with "cannot normalize nothing".
-ENV APP_DIR=/app
-
-COPY --from=builder $APP_DIR $APP_DIR
-COPY --from=builder /root /root
 
 # We assume that the needed files to build the image are under
 # devops/{docker_build,docker_scripts}

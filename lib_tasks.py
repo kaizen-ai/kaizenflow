@@ -323,8 +323,8 @@ def docker_jupyter(ctx, stage, port=9999):  # type: ignore
     cmd = rf"""IMAGE={image} \
     PORT={port} \
     docker-compose \
-        -f {docker_compose_jupyter} \
         -f {docker_compose} \
+        -f {docker_compose_jupyter} \
         run \
         --rm \
         -l user={user_name} \

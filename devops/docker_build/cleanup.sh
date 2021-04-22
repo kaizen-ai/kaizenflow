@@ -4,7 +4,6 @@
 #
 
 set -e
-source ~/.bash_profile
 
 DIRS="/usr/lib/gcc /app/tmp.pypoetry /root/.cache /tmp"
 

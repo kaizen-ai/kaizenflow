@@ -4,7 +4,6 @@
 #
 
 set -e
-set -x
 
 echo "# Installing ${ENV_NAME}"
 

@@ -4,7 +4,6 @@
 #
 
 set -e
-source ~/.bash_profile
 
 
 run_inits () {

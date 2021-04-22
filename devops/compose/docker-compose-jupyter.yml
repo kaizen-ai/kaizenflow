@@ -4,9 +4,9 @@ services:
   jupyter_server:
     image: $IMAGE
     environment:
-      - J_PORT=${J_PORT}
+      - PORT=${PORT}
     ports:
-      - "${J_PORT}:${J_PORT}"
+      - "${PORT}:${PORT}"
     command: devops/docker_scripts/run_jupyter_server.sh
     extends:
       user_space 
@@ -20,9 +20,9 @@ services:
   jupyter_server_test:
     image: $IMAGE
     environment:
-      - J_PORT=${J_PORT}
+      - PORT=${PORT}
     ports:
-      - "${J_PORT}:${J_PORT}"
+      - "${PORT}:${PORT}"
     command: jupyter notebook -h 2>&1 >/dev/null
     extends:
       user_space 
