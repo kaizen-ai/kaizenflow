@@ -1,4 +1,3 @@
-
                                                          0
 sharpe_ratio                                       2.36273
 sharpe_ratio_standard_error                        2.74063

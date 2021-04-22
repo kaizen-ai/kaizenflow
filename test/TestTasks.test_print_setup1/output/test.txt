@@ -1,2 +1,2 @@
-ECR_BASE_PATH=083233266530.dkr.ecr.us-east-2.amazonaws.com
-ECR_REPO_BASE_PATH=083233266530.dkr.ecr.us-east-2.amazonaws.com/amp_env
+ECR_BASE_PATH=665840871993.dkr.ecr.us-east-1.amazonaws.com
+ECR_REPO_BASE_PATH=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_env

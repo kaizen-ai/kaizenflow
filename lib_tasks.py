@@ -244,18 +244,17 @@ def _remove_spaces(cmd: str) -> str:
 use_one_line_cmd = False
 
 
-def _get_image(stage: str, base_image: str) -> str:
-    if stage == "dev":
-        suffix = "latest"
-    elif stage == "rc":
-        suffix = "rc"
-    elif stage == "local":
-        suffix = "local"
-    elif stage == "prod":
-        suffix = "prod"
-    else:
-        raise ValueError("Invalid stage='%s'" % stage)
-    image = base_image + ":" + suffix
+def _get_image(stage: str, base_image: Optional[str]=None) -> str:
+    """
+    665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local
+    """
+    # Docker refers the default image as "latest", although in our stage
+    # nomenclature we call it "dev".
+    dbg.dassert_in(stage, "local dev prod".split())
+    if base_image is None:
+        # 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
+        base_image = get_default_value("ECR_BASE_PATH") + "/" + get_default_value("BASE_IMAGE")
+    image = base_image + ":" + stage
     return image
 
 
@@ -336,17 +335,9 @@ def docker_jupyter(ctx, stage, port=9999):  # type: ignore
     ctx.run(cmd, pty=True)
 
 
-# # #############################################################################
-# # Images workflows.
-# # #############################################################################
-#
-# ifdef GITHUB_SHA
-# IMAGE_RC_SHA:=$(GITHUB_SHA)
-# else
-# # GITHUB_SHA not found. Setting IMAGE_RC_SHA from HEAD.
-# IMAGE_RC_SHA:=$(shell git rev-parse HEAD)
-# endif
-# IMAGE_RC?=$(IMAGE_RC)
+# #############################################################################
+# Images workflows.
+# #############################################################################
 
 
 def _get_git_hash() -> str:
@@ -356,6 +347,7 @@ def _get_git_hash() -> str:
     return git_hash
 
 
+# TODO(gp): Fold this in _get_image("hash")
 def _get_image_githash() -> str:
     base_image: str = get_default_value("ECR_BASE_PATH")
     image_hash = base_image + ":" + _get_git_hash()
@@ -381,20 +373,20 @@ DOCKER_BUILDKIT = 0
 
 
 # DEV image flow:
-# - A release candidate "rc" for the DEV image is built
-# - A qualification process (e.g., running all tests) is performed on the "rc"
+# - A "local" image which is a release candidate for the DEV image is built
+# - A qualification process (e.g., running all tests) is performed on the "local"
 #   image (typically through GitHub actions)
 # - If qualification is passed, it becomes "latest".
 
 
 @task
-def docker_build_image_rc(ctx, cache=True):  # type: ignore
+def docker_build_local_image(ctx, cache=True):  # type: ignore
     """
-    Build a release candidate image.
+    Build a local as a release candidate image.
     """
-    stage = "rc"
+    stage = "local"
     base_image = get_default_value("ECR_BASE_PATH")
-    image_rc = _get_image(stage, base_image)
+    image_local = _get_image(stage, base_image)
     #
     image_hash = _get_image_githash()
     #
@@ -408,132 +400,141 @@ def docker_build_image_rc(ctx, cache=True):  # type: ignore
     docker build \
         --progress=plain \
         {opts} \
-        -t {image_rc} \
+        -t {image_local} \
         -t {image_hash} \
         -f {dockerfile} \
         .
     """
     _run(ctx, cmd)
     #
-    cmd = f"docker image ls {image_rc}"
+    cmd = f"docker image ls {image_local}"
+    _run(ctx, cmd)
+
+
+# @task
+# def docker_push_image(ctx, stage):  # type: ignore
+#     """
+#     Push an image for the given `stage` to ECR.
+#     """
+#     base_image = get_default_value("ECR_BASE_PATH")
+#     image_local = _get_image(stage, base_image)
+#     #
+#     image_hash = _get_image_githash()
+#     cmd = f"docker push {image_local}"
+#     _run(ctx, cmd)
+#     cmd = f"docker push {image_hash}"
+#     _run(ctx, cmd)
+
+
+@task
+def docker_push_local_image_to_dev(ctx):  # type: ignore
+    """
+    Mark the "local" image as "dev" and "latest" and push to ECR.
+    """
+    image_local = _get_image("local")
+    #image_hash = _get_image_githash()
+    #
+    cmd = f"docker push {image_local}"
+    _run(ctx, cmd)
+    #
+    image_dev = _get_image("dev")
+    cmd = f"docker tag {image_local} {image_dev}"
+    _run(ctx, cmd)
+    cmd = f"docker push {image_dev}"
+    _run(ctx, cmd)
+    #
+    image_latest = _get_image("latest", base_image)
+    cmd = f"docker tag {image_local} {image_latest}"
+    _run(ctx, cmd)
+    cmd = f"docker push {image_latest}"
+    _run(ctx, cmd)
+
+
+# @task
+# def docker_push_image_latest(ctx):  # type: ignore
+#     """
+#     Push the "latest" image to the registry.
+#     """
+#     cmd = f"docker push {ecr_repo_base_path}:latest"
+#     _run(ctx, cmd)
+
+
+@task
+def docker_release_dev_image(ctx):  # type: ignore
+    """
+    Build, test, and release to ECR the latest image.
+    """
+    #docker_build_image_local(ctx, cache=True)
+    #run_fast_tests(ctx, stage="local")
+    #run_slow_tests(ctx, stage="local")
+    docker_push_local_image_to_dev(ctx)
+    _LOG.info("==> SUCCESS <==")
+
+
+# PROD image flow:
+# - PROD image has no release candidate
+# - The DEV image is qualified
+# - The PROD image is created from the DEV image by copying the code inside the
+#   image
+# - The PROD image becomes "prod".
+
+
+# TODO(gp): Remove redundancy with docker_build_local_image().
+@task
+def docker_build_image_prod(ctx, cache=False):  # type: ignore
+    """
+    Build a prod image.
+    """
+    stage = "prod"
+    image_local = _get_image(stage)
+    #
+    image_hash = _get_image_githash()
+    #
+    dockerfile = "devops/docker_build/prod.Dockerfile"
+    dockerfile = _to_abs_path(dockerfile)
+    #
+    opts = "--no_cache" if not cache else ""
+    cmd = rf"""
+    DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
+    time \
+    docker build \
+        --progress=plain \
+        {opts} \
+        -t {image_local} \
+        -t {image_hash} \
+        -f {dockerfile} \
+        .
+    """
+    _run(ctx, cmd)
+    #
+    cmd = f"docker image ls {image_local}"
     _run(ctx, cmd)
 
 
 @task
-def docker_push_image_rc(ctx):  # type: ignore
+def docker_release_image_prod(ctx, cache=False):  # type: ignore
     """
-    Push the "rc" image to the registry.
+    Build, test, and release to ECR the prod image.
     """
-    stage = "rc"
-    base_image = get_default_value("ECR_BASE_PATH")
-    image_rc = _get_image(stage, base_image)
+    # TODO(gp): Factor this out and reuse.
+    docker_build_local_image(ctx, cache=cache)
+    run_fast_tests(ctx, stage="local")
+    run_slow_tests(ctx, stage="local")
+    docker_tag_local_image_as_dev(ctx)
     #
-    image_hash = _get_image_githash()
-    cmd = f"docker push {image_rc}"
-    _run(ctx, cmd)
-    cmd = f"docker push {image_hash}"
-    _run(ctx, cmd)
+    docker_build_image_prod(ctx, cache=cache)
+    docker_push_image(ctx, stage="prod")
+    _LOG.info("==> SUCCESS <==")
 
 
-#
-# # Mark the "rc" image as "latest".
-# docker_tag_rc_image.latest:
-# docker tag $(IMAGE_RC) $(ECR_REPO_BASE_PATH):latest
-#
-# # Push the "latest" image to the registry.
-# docker_push_image.latest:
-# docker push $(ECR_REPO_BASE_PATH):latest
-#
-# docker_release.latest:
-# make docker_build_image_with_cache.rc
-# make run_fast_tests.rc
-# make run_slow_tests.rc
-# make docker_tag_rc_image.latest
-# make docker_push_image.latest
-# @echo "==> SUCCESS <=="
-#
-# # PROD image flow:
-# # - PROD image has no release candidate
-# # - The DEV image is qualified
-# # - The PROD image is created from the DEV image by copying the code inside the
-# #   image
-# # - The PROD image becomes "prod".
-# docker_build_image.prod:
-# ifdef IMAGE_PROD
-# DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) \
-#     docker build \
-#            --progress=plain \
-#                       --no-cache \
-#                       -t $(IMAGE_PROD) \
-#                           -t $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA) \
-#                                                     -f devops/docker_build/prod.Dockerfile \
-#     .
-# docker image ls $(IMAGE_PROD)
-# else
-# @echo "IMAGE_PROD is not defined"
-# endif
-#
-# # Push the "prod" image to the registry.
-# docker_push_image.prod:
-# ifdef IMAGE_PROD
-# docker push $(IMAGE_PROD)
-# docker push $(ECR_REPO_BASE_PATH):$(IMAGE_RC_SHA)
-# else
-# @echo "IMAGE_PROD is not defined"
-# endif
-#
-# docker_release.prod:
-# make docker_build_image_with_cache.rc
-# make run_fast_tests.rc
-# make run_slow_tests.rc
-# make docker_tag_rc_image.latest
-# make docker_build_image.prod
-# make docker_push_image.prod
-# @echo "==> SUCCESS <=="
-#
 # docker_release.all:
 # make docker_release.latest
 # make docker_release.prod
 # @echo "==> SUCCESS <=="
 
 # # #############################################################################
-# # Run tests with "latest" image.
+# # Run tests.
 # # #############################################################################
-#
-# print_debug_setup:
-# @echo "SUBMODULE_NAME=$(SUBMODULE_NAME)"
-# @echo "DOCKER_COMPOSE_USER_SPACE=${DOCKER_COMPOSE_USER_SPACE}"
-# @echo "NO_JUPYTER=$(NO_JUPYTER)"
-# ifeq ($(NO_JUPYTER), 'True')
-# @echo "  No Jupyter"
-# else
-# @echo "  Execute Jupyter"
-# endif
-# @echo "NO_FAST_TESTS=$(NO_FAST_TESTS)"
-# ifeq ($(NO_FAST_TESTS), 'True')
-# @echo "  Do not execute fast tests"
-# else
-# @echo "  Execute fast tests"
-# endif
-# @echo "NO_SLOW_TESTS=$(NO_SLOW_TESTS)"
-# ifeq ($(NO_SLOW_TESTS), 'True')
-# @echo "  Do not execute slow tests"
-# else
-# @echo "  Execute slow tests"
-# endif
-# @echo "NO_SUPERSLOW_TESTS=$(NO_SUPERSLOW_TESTS)"
-# ifeq ($(NO_SUPERSLOW_TESTS), 'True')
-# @echo "  Do not execute superslow tests"
-# else
-# @echo "  Execute superslow tests"
-# endif
-#
-# The user can pass another IMAGE to run tests in another image.
-
-# We need to pass the params from the callers.
-# E.g.,
-# > make run_*_tests _IMAGE=083233266530.dkr.ecr.us-east-2.amazonaws.com/amp_env:rc
-
 
 def _run_tests(ctx, stage, cmd):
     base_image = get_default_value("ECR_BASE_PATH")
@@ -611,7 +612,7 @@ def run_superslow_tests(ctx, stage="dev", pytest_opts=""):
 # endif
 #
 # # #############################################################################
-# # GH actions tests for "rc" image.
+# # GH actions tests for "local" image.
 # # #############################################################################
 #
 # # Test using release candidate image via GH Actions.
