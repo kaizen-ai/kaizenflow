@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
+import core.artificial_signal_generators as sig_gen
 import core.dataflow as cdataf
 import helpers.dbg as dbg
 import instrument_master.kibot as vkibot
@@ -31,6 +32,8 @@ def DataSourceNodeFactory(
         return KibotDataReader(nid, **source_node_kwargs)
     elif source_node_name == "kibot_multi_col":
         return KibotColumnReader(nid, **source_node_kwargs)
+    elif source_node_name == "arma":
+        return ArmaGenerator(nid, **source_node_kwargs)
     else:
         raise ValueError("Unsupported data source node %s", source_node_name)
 
@@ -163,3 +166,61 @@ class KibotColumnReader(cdataf.DataSource):
             data = data.loc[self._start_date : self._end_date]
             dict_df[s] = data
         self.df = pd.DataFrame.from_dict(dict_df)
+
+
+class ArmaGenerator(cdataf.DataSource):
+    def __init__(
+        self,
+        nid: str,
+        frequency: str,
+        start_date: _PANDAS_DATE_TYPE,
+        end_date: _PANDAS_DATE_TYPE,
+        ar_coeffs: Optional[List[float]] = None,
+        ma_coeffs: Optional[List[float]] = None,
+        scale: Optional[float] = None,
+        burnin: Optional[float] = None,
+        seed: Optional[float] = None,
+    ) -> None:
+        super().__init__(nid)
+        self._frequency = frequency
+        self._start_date = start_date
+        self._end_date = end_date
+        self._ar_coeffs = ar_coeffs or [0]
+        self._ma_coeffs = ma_coeffs or [0]
+        self._scale = scale or 1
+        self._burnin = burnin or 0
+        self._seed = seed
+        self._arma_process = sig_gen.ArmaProcess(
+            ar_coeffs=self._ar_coeffs,
+            ma_coeffs=self._ma_coeffs
+        )
+
+    def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
+        """
+        :return: training set as df
+        """
+        self._lazy_load()
+        return super().fit()
+
+    def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
+        self._lazy_load()
+        return super().predict()
+
+    def _lazy_load(self) -> None:
+        if self.df is not None:
+            return
+        rets = self._arma_process.generate_sample(
+            date_range_kwargs={
+                "start": self._start_date,
+                "end": self._end_date,
+                "freq": self._frequency,
+            },
+            scale=self._scale,
+            burnin=self._burnin,
+            seed=self._seed
+        )
+        prices = rets.cumsum()
+        prices.name = "close"
+        self.df = prices.to_frame()
+        self.df = self.df.loc[self._start_date : self._end_date]
+        self.df["vol"] = 100
