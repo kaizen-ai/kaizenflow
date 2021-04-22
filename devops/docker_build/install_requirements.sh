@@ -8,7 +8,7 @@ set -e
 echo "# Installing ${ENV_NAME}"
 
 if [[ 0 == 1 ]]; then
-    # Conda flow
+    # Conda flow.
     echo "# Building environment with conda"
     update_env () {
         echo "Installing ${ENV_FILE} in ${ENV_NAME}"
@@ -21,6 +21,7 @@ if [[ 0 == 1 ]]; then
 
     conda clean --all --yes
 else
+    # Poetry flow.
     echo "# Building environment with poetry"
 
     # Print config.
@@ -37,17 +38,17 @@ else
         # poetry prepends a `.` to the env.
         ln -sf .${ENV_NAME} ${ENV_NAME}
     else
-        # Install with pip.
+        # Install with poetry inside a venv.
         echo "# Install with venv + poetry"
-        #poetry export -f requirements.txt --output requirements.txt
 
         python3 -m ${ENV_NAME} /${ENV_NAME}
         source /${ENV_NAME}/bin/activate
-        #pip3 install --upgrade pip
-        #pip3 install --no-deps -r requirements.txt
         poetry install
 
-        # TODO(gp): Clean up.
+        # Export deps from poetry and install with pip.
+        #poetry export -f requirements.txt --output requirements.txt
+        #pip3 install --upgrade pip
+        #pip3 install --no-deps -r requirements.txt
     fi;
 
     poetry env list
