@@ -119,3 +119,82 @@ class PredictionDagRunner(FitPredictDagRunner):
             column_to_tags=self._column_to_tags_mapping,
             info=info,
         )
+
+
+class IncrementalDagRunner:
+    """
+    Class for running DAGs.
+    """
+
+    def __init__(
+        self,
+        config: cconfi.Config,
+        dag_builder: dtf.DagBuilder,
+        start: str,
+        end: str,
+        freq: str,
+        result_dir: str,
+        fit_state: cconfi.Config
+    ) -> None:
+        """
+        Initialize DAG.
+
+        :param config: config for DAG
+        :param dag_builder: `DagBuilder` instance
+        """
+        self.config = config
+        self._dag_builder = dag_builder
+        self._start = start
+        self._end = end
+        self._freq = freq
+        self._result_dir = result_dir
+        self._fit_state = fit_state
+        # Create DAG using DAG builder.
+        self.dag = self._dag_builder.get_dag(self.config)
+        #
+        dtf.set_fit_state(self.dag, self._fit_state)
+        #
+        self._methods = self._dag_builder.methods
+        self._column_to_tags_mapping = (
+            self._dag_builder.get_column_to_tags_mapping(self.config)
+        )
+        # Confirm that "fit" and "predict" are registered DAG methods.
+        dbg.dassert_in("fit", self._methods)
+        dbg.dassert_in("predict", self._methods)
+        result_nids = self.dag.get_sinks()
+        dbg.dassert_eq(len(result_nids), 1)
+        self._result_nid = result_nids[0]
+        # Create predict range
+        self._date_range = pd.date_range(start=self._start, end=self._end, freq=self._freq)
+
+    def predict(self):
+        result_bundles = []
+        for end_dt in self._date_range:
+            interval = [(None, end_dt)]
+            # Set prediction intervals
+            for input_nid in self.dag.get_sources():
+                self.dag.get_node(input_nid).set_predict_intervals(interval)
+                result_bundle = self._run_dag(self._result_nid, "predict")
+                result_bundles.append(result_bundle)
+        return result_bundles
+
+    def _run_dag(self, nid: str, method: str) -> dtf.ResultBundle:
+        """
+        Run DAG and return a ResultBundle.
+
+        :param nid: identifier of terminal node for execution
+        :param method: `Node` subclass method to be executed
+        :return: `ResultBundle` class containing `config`, `nid`, `method`,
+            result dataframe and DAG info
+        """
+        dbg.dassert_in(method, self._methods)
+        df_out = self.dag.run_leq_node(nid, method)["df_out"]
+        info = dtf.extract_info(self.dag, [method])
+        return dtf.ResultBundle(
+            config=self.config,
+            result_nid=nid,
+            method=method,
+            result_df=df_out,
+            column_to_tags=self._column_to_tags_mapping,
+            info=info,
+        )
