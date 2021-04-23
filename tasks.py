@@ -20,7 +20,7 @@ default_params = {
     # When testing a change to the build system in a branch you can use a different
     # image, e.g., `XYZ_tmp` to not interfere with the prod system.
     # "BASE_IMAGE": "amp_tmp",
-    "BASE_IMAGE": "amp_env",
+    "BASE_IMAGE": "amp",
 
     "NO_SUPERSLOW_TESTS": True,
 }

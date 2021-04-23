@@ -2,7 +2,7 @@ import functools
 import logging
 import os
 import re
-from typing import Any, Dict, Match
+from typing import Any, Dict, Match, Optional
 
 from invoke import task
 
@@ -210,12 +210,14 @@ def _get_aws_cli_version() -> int:
 @task
 def docker_login(ctx):  # type: ignore
     major_version = _get_aws_cli_version()
+    # TODO(gp): We should get this programmatically from ~/aws/.credentials
+    region = "us-east-1"
     if major_version == 1:
-        cmd = "eval $(aws ecr get-login --no-include-email --region us-east-2)"
+        cmd = f"eval $(aws ecr get-login --no-include-email --region {region})"
     else:
         ecr_base_path = get_default_value("ECR_BASE_PATH")
         cmd = (
-            "docker login -u AWS -p $(aws ecr get-login --region us-east-2) "
+            f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
             + f"https://{ecr_base_path}"
         )
     ctx.run(cmd)
@@ -384,10 +386,7 @@ def docker_build_local_image(ctx, cache=True):  # type: ignore
     """
     Build a local as a release candidate image.
     """
-    stage = "local"
-    base_image = get_default_value("ECR_BASE_PATH")
-    image_local = _get_image(stage, base_image)
-    #
+    image_local = _get_image("local")
     image_hash = _get_image_githash()
     #
     dockerfile = "devops/docker_build/dev.Dockerfile"
@@ -433,6 +432,8 @@ def docker_push_local_image_to_dev(ctx):  # type: ignore
     """
     image_local = _get_image("local")
     #image_hash = _get_image_githash()
+    #
+    docker_login(ctx)
     #
     cmd = f"docker push {image_local}"
     _run(ctx, cmd)
