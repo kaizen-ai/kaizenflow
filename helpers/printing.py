@@ -254,7 +254,7 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
 
 def log(logger, verbosity, *vals: Any) -> Tuple[str, List[str]]:
     """
-    _LOG.debug(to_log("ticker", "exchange"))
+    log(_LOG, logging.DEBUG, "ticker", "exchange")
 
     is equivalent to statements like:
 

@@ -2,6 +2,7 @@ import functools
 import logging
 import os
 import re
+import sys
 from typing import Any, Dict, Match, Optional
 
 from invoke import task
@@ -10,6 +11,7 @@ from invoke import task
 # this code needs to run with minimal dependencies and without Docker.
 import helpers.dbg as dbg
 import helpers.git as git
+import helpers.printing as hprint
 import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
@@ -35,6 +37,9 @@ def get_default_value(key: str) -> Any:
     return _DEFAULT_PARAMS[key]
 
 
+if not (("-d" in sys.argv) or ("--debug" in sys.argv)):
+    dbg.init_logger(verbosity=logging.INFO)
+
 # #############################################################################
 # Set-up.
 # #############################################################################
@@ -42,6 +47,7 @@ def get_default_value(key: str) -> Any:
 
 @task
 def print_setup(ctx):  # type: ignore
+    _LOG.info(">")
     _ = ctx
     var_names = "ECR_BASE_PATH ECR_REPO_BASE_PATH".split()
     for v in var_names:
@@ -53,6 +59,7 @@ def activate_poetry(ctx):  # type: ignore
     """
     Print how to activate the virtual environment.
     """
+    _LOG.info(">")
     cmd = '''cd devops/docker_build; \
             FILE="$(poetry env info --path)/bin/activate"; \
             echo "source $FILE"'''
@@ -74,6 +81,7 @@ def git_pull(ctx):  # type: ignore
     """
     Pull all the repos.
     """
+    _LOG.info(">")
     cmd = "git pull --autostash"
     ctx.run(cmd)
     cmd = "git submodule foreach 'git pull --autostash'"
@@ -85,6 +93,7 @@ def git_pull_master(ctx):  # type: ignore
     """
     Pull master without changing branch.
     """
+    _LOG.info(">")
     cmd = "git fetch origin master:master"
     ctx.run(cmd)
 
@@ -94,6 +103,7 @@ def git_clean(ctx):  # type: ignore
     """
     Clean all the repos.
     """
+    _LOG.info(">")
     # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
     #  mistake.
     cmd = "git clean -fd"
@@ -110,6 +120,7 @@ def git_clean(ctx):  # type: ignore
 
 @task
 def git_diff_master_files(ctx):  # type: ignore
+    _LOG.info(">")
     cmd = "git diff --name-only master..."
     ctx.run(cmd)
 
@@ -215,6 +226,7 @@ def _get_aws_cli_version() -> int:
 
 @task
 def docker_login(ctx):  # type: ignore
+    _LOG.info(">")
     major_version = _get_aws_cli_version()
     # TODO(gp): We should get this programmatically from ~/aws/.credentials
     region = "us-east-1"
@@ -248,10 +260,11 @@ def _remove_spaces(cmd: str) -> str:
     return cmd
 
 
-# TODO(gp): Pass through command line.
+# TODO(gp): Pass through command line using a global switch.
 use_one_line_cmd = False
 
 
+@functools.lru_cache()
 def _get_git_hash() -> str:
     cmd = "git rev-parse HEAD"
     git_hash: str = hsyste.system_to_one_line(cmd)[1]
@@ -259,32 +272,80 @@ def _get_git_hash() -> str:
     return git_hash
 
 
-def _get_image(stage: str, base_image: Optional[str] = None) -> str:
+def _check_image(image: str) -> None:
     """
-    665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local.
+    An image should look like:
+
+    665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local
     """
-    # Docker refers the default image as "latest", although in our stage
-    # nomenclature we call it "dev".
-    dbg.dassert_in(stage, "local dev prod hash".split())
+    internet_address_re = "^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
+    image_re = "([a-z0-9]+(-[a-z0-9]+)*)"
+    tag_re = "([a-z0-9]+(-[a-z0-9]+)*)"
+    m = re.match(f"^{internet_address_re}\/{image_re}:{tag_re}$", image)
+    dbg.dassert(m, "Invalid image: '%s'", image)
+
+
+def _check_base_image(base_image: str) -> None:
+    """
+    A base image should look like.
+
+    665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
+    """
+    internet_address_re = "([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
+    image_re = "([a-z0-9]+(-[a-z0-9]+)*)"
+    regex = f"^{internet_address_re}\/{image_re}$"
+    _LOG.debug("regex=%s", regex)
+    m = re.match(regex, base_image)
+    dbg.dassert(m, "Invalid base_image: '%s'", base_image)
+
+
+def _get_base_image(base_image: Optional[str]) -> str:
+    """
+    :return: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
+    """
     if base_image is None:
-        # 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
         base_image = (
             get_default_value("ECR_BASE_PATH")
             + "/"
             + get_default_value("BASE_IMAGE")
         )
+    _check_base_image(base_image)
+    return base_image
+
+
+def _get_image(stage: str, base_image: Optional[str] = None) -> str:
+    """
+    :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
+    :return: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local
+    """
+    # Docker refers the default image as "latest", although in our stage
+    # nomenclature we call it "dev".
+    dbg.dassert_in(stage, "local dev prod hash".split())
     if stage == "hash":
         stage = _get_git_hash()
+    # Get the base image.
+    base_image = _get_base_image(base_image)
+    _check_base_image(base_image)
+    # Get the full image.
     image = base_image + ":" + stage
+    _check_image(image)
     return image
 
 
 def _docker_cmd(
-    ctx: Any, stage: str, base_image: str, docker_compose: str, cmd: str
+    ctx: Any, stage: str, base_image: Optional[str], docker_compose: str, cmd: str
 ) -> None:
+    """
+    :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
+    :param docker_compose: e.g. devops/compose/docker-compose-user-space.yml
+    """
+    hprint.log(_LOG, logging.DEBUG, "stage base_image docker_compose cmd")
     image = _get_image(stage, base_image)
-    # devops/compose/docker-compose-user-space.yml
+    _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
+    #
+    _check_image(image)
     dbg.dassert_exists(docker_compose)
+    #
     user_name = hsyste.get_user_name()
     cmd = rf"""IMAGE={image} \
     docker-compose \
@@ -305,7 +366,8 @@ def docker_bash(ctx, stage="local"):  # type: ignore
     """
     Start a bash shell inside the container corresponding to a stage.
     """
-    base_image = get_default_value("ECR_BASE_PATH")
+    _LOG.info(">")
+    base_image = None
     docker_compose = _get_amp_docker_compose_path()
     cmd = "bash"
     _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
@@ -316,18 +378,20 @@ def docker_cmd(ctx, stage="local", cmd=""):  # type: ignore
     """
     Execute the command `cmd` inside a container corresponding to a stage.
     """
+    _LOG.info(">")
     dbg.dassert_ne(cmd, "")
-    base_image = get_default_value("ECR_BASE_PATH")
+    base_image = None
     docker_compose = _get_amp_docker_compose_path()
     # TODO(gp): Do we need to overwrite the entrypoint?
     _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
 
 
 @task
-def docker_jupyter(ctx, stage, port=9999):  # type: ignore
+def docker_jupyter(ctx, stage, port=9999, self_test=False):  # type: ignore
     """
     Run jupyter notebook server.
     """
+    _LOG.info(">")
     base_image = get_default_value("ECR_BASE_PATH")
     image = _get_image(stage, base_image)
     # devops/compose/docker-compose-user-space.yml
@@ -339,6 +403,7 @@ def docker_jupyter(ctx, stage, port=9999):  # type: ignore
     dbg.dassert_exists(docker_compose_jupyter)
     #
     user_name = hsyste.get_user_name()
+    service = "jupyter_server" if self_test else "jupyter_server_test"
     # TODO(gp): Not sure about the order of the -f files.
     cmd = rf"""IMAGE={image} \
     PORT={port} \
@@ -349,7 +414,7 @@ def docker_jupyter(ctx, stage, port=9999):  # type: ignore
         --rm \
         -l user={user_name} \
         --service-ports \
-        jupyter_server"""
+        {service}"""
     if use_one_line_cmd:
         cmd = _remove_spaces(cmd)
     _LOG.debug("cmd=%s", cmd)
@@ -380,7 +445,7 @@ DOCKER_BUILDKIT = 0
 
 
 # DEV image flow:
-# - A "local" image which is a release candidate for the DEV image is built
+# - A "local" image (which is a release candidate for the DEV image) is built
 # - A qualification process (e.g., running all tests) is performed on the "local"
 #   image (typically through GitHub actions)
 # - If qualification is passed, it becomes "latest".
@@ -391,9 +456,12 @@ def docker_build_local_image(ctx, cache=True):  # type: ignore
     """
     Build a local as a release candidate image.
     """
+    _LOG.info(">")
     image_local = _get_image("local")
     image_hash = _get_image("hash")
     #
+    _check_image(image_local)
+    _check_image(image_hash)
     dockerfile = "devops/docker_build/dev.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
     #
@@ -420,6 +488,7 @@ def docker_push_local_image_to_dev(ctx):  # type: ignore
     """
     Mark the "local" image as "dev" and "latest" and push to ECR.
     """
+    _LOG.info(">")
     docker_login(ctx)
     #
     image_local = _get_image("local")
@@ -444,8 +513,9 @@ def docker_release_dev_image(  # type: ignore
     ctx, cache=True, run_fast=True, run_slow=True, run_superslow=False
 ):
     """
-    Build, test, and release to ECR the latest image.
+    Build, test, and release to ECR the latest "dev" image.
     """
+    _LOG.info(">")
     # Build image.
     docker_build_local_image(ctx, cache=cache)
     # Run tests.
@@ -466,7 +536,7 @@ def docker_release_dev_image(  # type: ignore
 # - The DEV image is qualified
 # - The PROD image is created from the DEV image by copying the code inside the
 #   image
-# - The PROD image becomes "prod".
+# - The PROD image is tagged as "prod"
 
 
 # TODO(gp): Remove redundancy with docker_build_local_image().
@@ -475,8 +545,10 @@ def docker_build_image_prod(ctx, cache=False):  # type: ignore
     """
     Build a prod image.
     """
+    _LOG.info(">")
     image_prod = _get_image("prod")
     #
+    _check_image(image_prod)
     dockerfile = "devops/docker_build/prod.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
     #
@@ -504,6 +576,7 @@ def docker_release_prod_image(  # type: ignore
     """
     Build, test, and release to ECR the prod image.
     """
+    _LOG.info(">")
     # Build dev image.
     docker_build_local_image(ctx, cache=cache)
     docker_push_local_image_to_dev(ctx)
@@ -526,30 +599,38 @@ def docker_release_prod_image(  # type: ignore
 
 @task
 def docker_release_all(ctx):  # type: ignore
+    """
+    Release to ECT both dev and prod image.
+    """
     docker_release_dev_image(ctx)
     docker_release_prod_image(ctx)
     _LOG.info("==> SUCCESS <==")
 
 
-# # #############################################################################
-# # Run tests.
-# # #############################################################################
+# #############################################################################
+# Run tests.
+# #############################################################################
 
 
 def _run_tests(ctx: Any, stage: str, cmd: str) -> None:
-    base_image = get_default_value("ECR_BASE_PATH")
+    """
+    Run a command in the set-up to run tests.
+    """
+    base_image = None
     docker_compose = _get_amp_docker_compose_path()
     _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
 
 
 @task
 def run_blank_tests(ctx, stage="dev"):  # type: ignore
+    _LOG.info(">")
     cmd = "(pytest -h >/dev/null)"
     _run_tests(ctx, stage, cmd)
 
 
 @task
 def run_fast_tests(ctx, stage="dev", pytest_opts=""):  # type: ignore
+    _LOG.info(">")
     run_tests_dir = "devops/docker_scripts"
     cmd = f"{run_tests_dir}/run_fast_tests.sh {pytest_opts}"
     _run_tests(ctx, stage, cmd)
@@ -557,6 +638,7 @@ def run_fast_tests(ctx, stage="dev", pytest_opts=""):  # type: ignore
 
 @task
 def run_slow_tests(ctx, stage="dev", pytest_opts=""):  # type: ignore
+    _LOG.info(">")
     run_tests_dir = "devops/docker_scripts"
     cmd = f"{run_tests_dir}/run_slow_tests.sh {pytest_opts}"
     _run_tests(ctx, stage, cmd)
@@ -564,6 +646,7 @@ def run_slow_tests(ctx, stage="dev", pytest_opts=""):  # type: ignore
 
 @task
 def run_superslow_tests(ctx, stage="dev", pytest_opts=""):  # type: ignore
+    _LOG.info(">")
     run_tests_dir = "devops/docker_scripts"
     cmd = f"{run_tests_dir}/run_superslow_tests.sh {pytest_opts}"
     _run_tests(ctx, stage, cmd)
@@ -662,6 +745,7 @@ def run_superslow_tests(ctx, stage="dev", pytest_opts=""):  # type: ignore
 
 @task
 def lint_docker_pull(ctx):  # type: ignore
+    _LOG.info(">")
     ecr_base_path = "083233266530.dkr.ecr.us-east-2.amazonaws.com"
     dev_tools_image_prod = f"{ecr_base_path}/dev_tools:prod"
     docker_login(ctx)
@@ -669,7 +753,6 @@ def lint_docker_pull(ctx):  # type: ignore
     ctx.run(cmd, pty=True)
 
 
-# TODO(gp): Pass pre-commit phases.
 @task
 def lint(ctx, modified=True, branch=False, files="", phases=""):  # type: ignore
     """
@@ -680,6 +763,7 @@ def lint(ctx, modified=True, branch=False, files="", phases=""):  # type: ignore
     :param files: specify a space-separated list of files
     :param phases: specify the lint phases to execute
     """
+    _LOG.info(">")
     if modified:
         files = git.get_modified_files()
         files = " ".join(files)
@@ -688,7 +772,7 @@ def lint(ctx, modified=True, branch=False, files="", phases=""):  # type: ignore
         files = hsyste.system_to_string(cmd)[1]
         files = " ".join(files.split("\n"))
     dbg.dassert_ne(files, "")
-    _LOG.info("Files to lint:\n%s", "\n".join(files))
+    # _LOG.info("Files to lint:\n%s", "\n".join(files))
     cmd = (
         f"pre-commit.sh run {phases} --files {files} 2>&1 "
         + "| tee linter_warnings.txt"

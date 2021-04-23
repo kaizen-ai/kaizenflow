@@ -23,7 +23,7 @@ except ModuleNotFoundError as e:
     invoke = Dummy()
 
 
-class TestTasks(hut.TestCase):
+class TestDryRunTasks1(hut.TestCase):
     def test_print_setup1(self) -> None:
         target = "print_setup"
         self._dry_run(target)
@@ -134,3 +134,88 @@ class TestTasks(hut.TestCase):
         func(ctx)
         # Check the outcome.
         self._check_calls(ctx)
+
+
+class TestExecuteTasks1(hut.TestCase):
+    """
+    Execute tasks that don't change state of the system (e.g., commit images).
+    """
+
+    def test_print_setup1(self):
+        cmd = "print_setup"
+        hsi.system(cmd)
+
+    def test_docker_images_ls_repo1(self):
+        cmd = "invoke docker_images_ls_repo"
+        hsi.system(cmd)
+
+    def test_docker_ps(self):
+        cmd = "invoke docker_ps"
+        hsi.system(cmd)
+
+    def test_docker_stats(self):
+        cmd = "invoke docker_stats"
+        hsi.system(cmd)
+
+    def test_docker_login1(self):
+        cmd = "invoke docker_login"
+        hsi.system(cmd)
+
+    def test_docker_cmd1(self):
+        cmd = 'invoke docker_cmd --cmd="ls"'
+        hsi.system(cmd)
+
+    def test_docker_jupyter1(self):
+        cmd = "invoke docker_jupyter self_test=True"
+        hsi.system(cmd)
+
+
+class TestExecuteTasks2(hut.TestCase):
+    """
+    Execute tasks that change the state of the system but not using the.
+    """
+
+    def test_print_setup1(self):
+        cmd = "print_setup"
+        hsi.system(cmd)
+
+    def test_docker_images_ls_repo1(self):
+        cmd = "invoke docker_images_ls_repo"
+        hsi.system(cmd)
+
+    def test_docker_ps(self):
+        cmd = "invoke docker_ps"
+        hsi.system(cmd)
+
+    def test_docker_stats(self):
+        cmd = "invoke docker_stats"
+        hsi.system(cmd)
+
+    def test_docker_login1(self):
+        cmd = "invoke docker_login"
+        hsi.system(cmd)
+
+    def test_docker_cmd1(self):
+        cmd = 'invoke docker_cmd --cmd="ls"'
+        hsi.system(cmd)
+
+    def test_docker_jupyter1(self):
+        cmd = "invoke docker_jupyter self_test=True"
+        hsi.system(cmd)
+
+
+jjj
+#         make docker_login
+#         make docker_repo_images
+#         make docker_ps
+#         make docker_pull
+#         make docker_jupyter_test
+#         make docker_cmd.rc CMD="pytest --collect-only"
+#         @echo "==> SUCCESS <=="
+#
+# slow_self_tests:
+# make docker_build_image_with_cache.rc
+# make run_blank_tests.rc
+# make run_fast_tests.rc
+# make docker_build_image.prod
+# make run_slow_tests.rc
