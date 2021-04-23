@@ -74,12 +74,6 @@ def activate_poetry(ctx):  # type: ignore
 # Git.
 # #############################################################################
 
-# # Pull all the needed images from the registry.
-# docker_pull:
-# docker pull $(IMAGE_DEV)
-# docker pull $(DEV_TOOLS_IMAGE_PROD)
-
-
 @task
 def git_pull(ctx):  # type: ignore
     """
@@ -157,9 +151,11 @@ def docker_ps(ctx):  # type: ignore
     ```
     """
     # pylint: enable=line-too-long
-    fmt = (r'''table {{.ID}}\t{{.Label "user"}}\t{{.Image}}\t{{.Command}}''' +
-        r'\t{{.RunningFor}}\t{{.Status}}\t{{.Ports}}' +
-        r'\t{{.Label "com.docker.compose.service"}}')
+    fmt = (
+        r"""table {{.ID}}\t{{.Label "user"}}\t{{.Image}}\t{{.Command}}"""
+        + r"\t{{.RunningFor}}\t{{.Status}}\t{{.Ports}}"
+        + r'\t{{.Label "com.docker.compose.service"}}'
+    )
     cmd = f"docker ps --format='{fmt}'"
     cmd = _remove_spaces(cmd)
     ctx.run(cmd)
@@ -178,8 +174,10 @@ def docker_stats(ctx):  # type: ignore
     ```
     """
     # pylint: enable=line-too-long
-    fmt = (r'table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}' +
-           r'\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}')
+    fmt = (
+        r"table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+        + r"\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}"
+    )
     cmd = f"docker stats --no-stream --format='{fmt}'"
     ctx.run(cmd)
 
@@ -205,6 +203,23 @@ def docker_kill_all(ctx):  # type: ignore
 # #############################################################################
 # Docker development.
 # #############################################################################
+
+
+@task
+def docker_pull(ctx, stage=_STAGE):  # type: ignore
+    """
+    Pull all the needed images from the registry.
+    """
+    _LOG.info(">")
+    base_image = ""
+    image = _get_image(stage, base_image)
+    cmd = f"docker pull {image}"
+    ctx.run(cmd)
+    #
+    image = get_default_value("DEV_TOOLS_IMAGE_PROD")
+    _check_image(image)
+    cmd = f"docker pull {image}"
+    ctx.run(cmd)
 
 
 # In the following we use functions from `hsyste` instead of `ctx.run()` since
@@ -276,16 +291,18 @@ def _get_git_hash() -> str:
     return git_hash
 
 
+_INTERNET_ADDRESS_RE = r"^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
+_IMAGE_RE = r"[a-z0-9_-]+"
+_TAG_RE = r"[a-z0-9_-]+"
+
+
 def _check_image(image: str) -> None:
     """
     An image should look like:
 
     665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local
     """
-    internet_address_re = r"^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
-    image_re = r"([a-z0-9]+(-[a-z0-9]+)*)"
-    tag_re = r"([a-z0-9]+(-[a-z0-9]+)*)"
-    m = re.match(rf"^{internet_address_re}\/{image_re}:{tag_re}$", image)
+    m = re.match(rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_RE}:{_TAG_RE}$", image)
     dbg.dassert(m, "Invalid image: '%s'", image)
 
 
@@ -295,9 +312,7 @@ def _check_base_image(base_image: str) -> None:
 
     665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
     """
-    internet_address_re = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
-    image_re = r"([a-z0-9]+(-[a-z0-9]+)*)"
-    regex = rf"^{internet_address_re}\/{image_re}$"
+    regex = rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_RE}$"
     _LOG.debug("regex=%s", regex)
     m = re.match(regex, base_image)
     dbg.dassert(m, "Invalid base_image: '%s'", base_image)
@@ -392,7 +407,8 @@ def docker_cmd(ctx, stage=_STAGE, cmd=""):  # type: ignore
 
 @task
 def docker_jupyter(  # type: ignore
-        ctx, stage=_STAGE, port=9999, self_test=False, base_image=""):
+    ctx, stage=_STAGE, port=9999, self_test=False, base_image=""
+):
     """
     Run jupyter notebook server.
     """
@@ -622,6 +638,14 @@ def docker_release_all(ctx):  # type: ignore
 # Run tests.
 # #############################################################################
 
+_COV_PYTEST_OPTS = [
+    "--cov",
+    "--cov-branch",
+    "--cov-report term-missing",
+    "--cov-report html",
+    "--cov-report annotate",
+]
+
 
 def _run_tests(ctx: Any, stage: str, cmd: str) -> None:
     """
@@ -640,25 +664,32 @@ def run_blank_tests(ctx, stage=_STAGE):  # type: ignore
 
 
 @task
-def run_fast_tests(ctx, stage=_STAGE, pytest_opts=""):  # type: ignore
+def run_fast_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: ignore
     _LOG.info(">")
     run_tests_dir = "devops/docker_scripts"
+    if coverage:
+        pytest_opts += " " + " ".join(_COV_PYTEST_OPTS)
     cmd = f"{run_tests_dir}/run_fast_tests.sh {pytest_opts}"
     _run_tests(ctx, stage, cmd)
+    # (cd ../htmlcov; python -m http.server 33333)
 
 
 @task
-def run_slow_tests(ctx, stage=_STAGE, pytest_opts=""):  # type: ignore
+def run_slow_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: ignore
     _LOG.info(">")
     run_tests_dir = "devops/docker_scripts"
+    if coverage:
+        pytest_opts += " " + " ".join(_COV_PYTEST_OPTS)
     cmd = f"{run_tests_dir}/run_slow_tests.sh {pytest_opts}"
     _run_tests(ctx, stage, cmd)
 
 
 @task
-def run_superslow_tests(ctx, stage=_STAGE, pytest_opts=""):  # type: ignore
+def run_superslow_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: ignore
     _LOG.info(">")
     run_tests_dir = "devops/docker_scripts"
+    if coverage:
+        pytest_opts += " " + " ".join(_COV_PYTEST_OPTS)
     cmd = f"{run_tests_dir}/run_superslow_tests.sh {pytest_opts}"
     _run_tests(ctx, stage, cmd)
 
@@ -669,6 +700,7 @@ def pytest_clean(ctx):  # type: ignore
     Clean pytest artifacts.
     """
     import helpers.pytest_ as hpytest
+
     _LOG.info(">")
     hpytest.pytest_clean(".")
 

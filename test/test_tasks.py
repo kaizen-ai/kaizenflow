@@ -140,8 +140,7 @@ class TestDryRunTasks1(hut.TestCase):
         self._check_calls(ctx)
 
 
-@pytest.mark.skipif(hsi.is_inside_docker(),
-    reason="AmpTask165")
+@pytest.mark.skipif(hsi.is_inside_docker(), reason="AmpTask165")
 class TestExecuteTasks1(hut.TestCase):
     """
     Execute tasks that don't change state of the system (e.g., commit images).
@@ -149,10 +148,11 @@ class TestExecuteTasks1(hut.TestCase):
 
     def setUp(self):
         super().setUp()
+        ecr_base_path = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
         default_params = {
-            "ECR_BASE_PATH": "665840871993.dkr.ecr.us-east-1.amazonaws.com",
+            "ECR_BASE_PATH": ecr_base_path,
             "BASE_IMAGE": "amp_test",
-            "NO_SUPERSLOW_TESTS": True,
+            "DEV_TOOLS_IMAGE_PROD": f"{ecr_base_path}/dev_tools:prod"
         }
         tasks.set_default_params(default_params)
 
@@ -189,56 +189,38 @@ class TestExecuteTasks1(hut.TestCase):
         hsi.system(cmd)
 
 
-@pytest.mark.skipif(hsi.is_inside_docker(),
-                    reason="AmpTask165")
+@pytest.mark.skipif(hsi.is_inside_docker(), reason="AmpTask165")
 class TestExecuteTasks2(hut.TestCase):
     """
     Execute tasks that change the state of the system but not using the.
     """
 
-    def test_print_setup1(self) -> None:
-        cmd = "print_setup"
-        hsi.system(cmd)
-
-    def test_docker_images_ls_repo1(self) -> None:
-        cmd = "invoke docker_images_ls_repo"
-        hsi.system(cmd)
-
-    def test_docker_ps(self) -> None:
-        cmd = "invoke docker_ps"
-        hsi.system(cmd)
-
-    def test_docker_stats(self) -> None:
-        cmd = "invoke docker_stats"
-        hsi.system(cmd)
-
-    def test_docker_login1(self) -> None:
-        cmd = "invoke docker_login"
-        hsi.system(cmd)
-
-    def test_docker_cmd1(self) -> None:
-        cmd = 'invoke docker_cmd --cmd="ls"'
-        hsi.system(cmd)
-
     def test_docker_jupyter1(self) -> None:
-        cmd = "invoke docker_jupyter self_test=True"
+        cmd = "invoke docker_jupyter --self-test"
         hsi.system(cmd)
 
     def test_docker_pull1(self) -> None:
         cmd = "invoke docker_pull"
         hsi.system(cmd)
 
-        # Images workflows.
-        cmd = "invoke run_blank_tests"
-        hsi.system(cmd)
+    # Images workflows.
+
+    # TODO(gp): Implement.
 
     # Run tests.
     def test_run_blank_tests1(self) -> None:
         cmd = "invoke run_blank_tests"
         hsi.system(cmd)
 
-    def test_collect_only(self) -> None:
+    @pytest.mark.slow("Around 30 secs")
+    def test_collect_only1(self) -> None:
         cmd = "invoke docker_cmd --cmd='pytest --collect-only'"
+        hsi.system(cmd)
+
+    def test_collect_only2(self) -> None:
+        git_root = git.get_client_root(super_module=False)
+        dir_name = os.path.join(git_root, "helpers/test")
+        cmd = f"invoke docker_cmd --cmd='pytest {dir_name} --collect-only'"
         hsi.system(cmd)
 
     def test_run_fast_tests(self) -> None:
@@ -258,10 +240,10 @@ class TestExecuteTasks2(hut.TestCase):
         git_root = git.get_client_root(super_module=False)
         file_name = os.path.join(git_root, "helpers/dbg.py")
         dbg.dassert_exists(file_name)
-        cmd = f"invoke lint --files='{file_name}"
+        cmd = f"invoke lint --files='{file_name}'"
         hsi.system(cmd)
         #
-        cmd = f"invoke lint --files='{file_name} phases='black'"
+        cmd = f"invoke lint --files='{file_name}' phases='black'"
         hsi.system(cmd)
 
     # def test_(self):

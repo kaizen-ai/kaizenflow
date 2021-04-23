@@ -12,7 +12,6 @@ from lib_tasks import *
 
 ECR_BASE_PATH = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
 
-DEV_TOOLS_IMAGE_PROD = f"{ECR_BASE_PATH}/dev_tools:prod"
 
 default_params = {
     "ECR_BASE_PATH": ECR_BASE_PATH,
@@ -20,7 +19,7 @@ default_params = {
     # image, e.g., `XYZ_tmp` to not interfere with the prod system.
     # "BASE_IMAGE": "amp_tmp",
     "BASE_IMAGE": "amp",
-    "NO_SUPERSLOW_TESTS": True,
+    "DEV_TOOLS_IMAGE_PROD": f"{ECR_BASE_PATH}/dev_tools:prod"
 }
 
 
