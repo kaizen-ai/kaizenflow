@@ -1,5 +1,8 @@
+import datetime
 import logging
 from typing import Any, List, Optional, Tuple
+
+import pandas as pd
 
 import core.config as cconfi
 import helpers.dbg as dbg
@@ -8,6 +11,7 @@ from core.dataflow.result_bundle import PredictionResultBundle, ResultBundle
 from core.dataflow.visitors import extract_info
 
 _LOG = logging.getLogger(__name__)
+_PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
 class FitPredictDagRunner:
@@ -130,10 +134,10 @@ class IncrementalDagRunner:
         self,
         config: cconfi.Config,
         dag_builder: dtf.DagBuilder,
-        start: str,
-        end: str,
+        start: _PANDAS_DATE_TYPE,
+        end: _PANDAS_DATE_TYPE,
         freq: str,
-        result_dir: str,
+        # result_dir: str,
         fit_state: cconfi.Config
     ) -> None:
         """
@@ -141,13 +145,21 @@ class IncrementalDagRunner:
 
         :param config: config for DAG
         :param dag_builder: `DagBuilder` instance
+        :param start: first prediction datetime (e.g., first time at which we
+            generate a prediction in `predict` mode, using all available data
+            up to and including `start`)
+        :param end: last prediction datetime
+        :param freq: prediction frequency (typically the same as the frequency
+            of the underlying DAG)
+        :param fit_state: Config containing any learned state required for
+            initializing the DAG
         """
         self.config = config
         self._dag_builder = dag_builder
         self._start = start
         self._end = end
         self._freq = freq
-        self._result_dir = result_dir
+        # self._result_dir = result_dir
         self._fit_state = fit_state
         # Create DAG using DAG builder.
         self.dag = self._dag_builder.get_dag(self.config)
@@ -168,15 +180,25 @@ class IncrementalDagRunner:
         self._date_range = pd.date_range(start=self._start, end=self._end, freq=self._freq)
 
     def predict(self):
-        result_bundles = []
+        """
+        Generate a filtration and predict at each index of the filtration.
+
+        Here we use "filtration" as it is used in the context of stochastic
+        processes. To ensure that predictions are non-anticipating, we restrict
+        the model inputs to times up to and including the prediction time.
+
+        :return: a generator of result bundles (one result bundle for each
+            prediction)
+        """
         for end_dt in self._date_range:
+            # Cut off data at `end_dt`. Do not restrict the start datetime so
+            # so as not to adversely affect any required warm-up period.
             interval = [(None, end_dt)]
-            # Set prediction intervals
+            # Set prediction intervals and predict.
             for input_nid in self.dag.get_sources():
                 self.dag.get_node(input_nid).set_predict_intervals(interval)
                 result_bundle = self._run_dag(self._result_nid, "predict")
-                result_bundles.append(result_bundle)
-        return result_bundles
+                yield result_bundle
 
     def _run_dag(self, nid: str, method: str) -> dtf.ResultBundle:
         """
