@@ -1,11 +1,10 @@
 import logging
-import os
 import re
+from typing import Dict
 
 import pytest
 
 import helpers.dbg as dbg
-import helpers.git as git
 import helpers.printing as hprint
 import helpers.system_interaction as hsi
 import helpers.unit_test as hut
@@ -140,21 +139,21 @@ class TestDryRunTasks1(hut.TestCase):
         self._check_calls(ctx)
 
 
+def _get_default_params() -> Dict[str, str]:
+    ecr_base_path = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
+    default_params = {
+        "ECR_BASE_PATH": ecr_base_path,
+        "BASE_IMAGE": "amp_test",
+        "DEV_TOOLS_IMAGE_PROD": f"{ecr_base_path}/dev_tools:prod",
+    }
+    return default_params
+
+
 @pytest.mark.skipif(hsi.is_inside_docker(), reason="AmpTask165")
 class TestExecuteTasks1(hut.TestCase):
     """
     Execute tasks that don't change state of the system (e.g., commit images).
     """
-
-    def setUp(self):
-        super().setUp()
-        ecr_base_path = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
-        default_params = {
-            "ECR_BASE_PATH": ecr_base_path,
-            "BASE_IMAGE": "amp_test",
-            "DEV_TOOLS_IMAGE_PROD": f"{ecr_base_path}/dev_tools:prod"
-        }
-        tasks.set_default_params(default_params)
 
     def test_list(self) -> None:
         cmd = "invoke --list"
@@ -205,29 +204,40 @@ class TestExecuteTasks2(hut.TestCase):
 
     # Images workflows.
 
-    # TODO(gp): Implement.
+    def test_docker_build_local_image(self) -> None:
+        params = _get_default_params()
+        base_image = params["ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
+        cmd = f"invoke docker_build_local_image --cache --base-image={base_image}"
+        hsi.system(cmd)
+
+    @pytest.mark.skip("No prod image for amp yet")
+    def test_docker_build_prod_image(self) -> None:
+        params = _get_default_params()
+        base_image = params["ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
+        cmd = f"invoke docker_build_prod_image --cache --base-image={base_image}"
+        hsi.system(cmd)
 
     # Run tests.
     def test_run_blank_tests1(self) -> None:
         cmd = "invoke run_blank_tests"
         hsi.system(cmd)
 
+    @pytest.mark.skip
     @pytest.mark.slow("Around 30 secs")
     def test_collect_only1(self) -> None:
         cmd = "invoke docker_cmd --cmd='pytest --collect-only'"
         hsi.system(cmd)
 
     def test_collect_only2(self) -> None:
-        git_root = git.get_client_root(super_module=False)
-        dir_name = os.path.join(git_root, "helpers/test")
+        # We need to specify the dir independently of the git root since this will
+        # run inside a container.
+        dir_name = '$(dirname $(find . -name "test_dbg.py" -type f))'
         cmd = f"invoke docker_cmd --cmd='pytest {dir_name} --collect-only'"
         hsi.system(cmd)
 
     def test_run_fast_tests(self) -> None:
-        git_root = git.get_client_root(super_module=False)
-        file_name = os.path.join(git_root, "helpers/test/test_dbg.py")
-        dbg.dassert_exists(file_name)
-        cmd = f"invoke run_fast_tests --pytest_opts='{file_name}'"
+        file_name = '$(find . -name "test_dbg.py" -type f)'
+        cmd = f"invoke run_fast_tests --pytest-opts='{file_name}'"
         hsi.system(cmd)
 
     # Linter.
@@ -237,13 +247,8 @@ class TestExecuteTasks2(hut.TestCase):
 
     def test_lint1(self) -> None:
         # Get the pointer to amp.
-        git_root = git.get_client_root(super_module=False)
-        file_name = os.path.join(git_root, "helpers/dbg.py")
-        dbg.dassert_exists(file_name)
-        cmd = f"invoke lint --files='{file_name}'"
-        hsi.system(cmd)
-        #
-        cmd = f"invoke lint --files='{file_name}' phases='black'"
+        file_name = '$(find . -name "dbg.py" -type f)'
+        cmd = f"invoke lint --files='{file_name}' --phases='black'"
         hsi.system(cmd)
 
     # def test_(self):

@@ -74,6 +74,7 @@ def activate_poetry(ctx):  # type: ignore
 # Git.
 # #############################################################################
 
+
 @task
 def git_pull(ctx):  # type: ignore
     """
@@ -563,7 +564,7 @@ def docker_release_dev_image(  # type: ignore
 
 # TODO(gp): Remove redundancy with docker_build_local_image().
 @task
-def docker_build_image_prod(ctx, cache=False, base_image=""):  # type: ignore
+def docker_build_prod_image(ctx, cache=False, base_image=""):  # type: ignore
     """
     Build a prod image.
     """
@@ -608,7 +609,7 @@ def docker_release_prod_image(  # type: ignore
     docker_build_local_image(ctx, cache=cache)
     docker_push_local_image_to_dev(ctx)
     # Build prod image.
-    docker_build_image_prod(ctx, cache=cache)
+    docker_build_prod_image(ctx, cache=cache)
     # Run tests.
     stage = "prod"
     if run_fast:
@@ -659,7 +660,7 @@ def _run_tests(ctx: Any, stage: str, cmd: str) -> None:
 @task
 def run_blank_tests(ctx, stage=_STAGE):  # type: ignore
     _LOG.info(">")
-    cmd = "(pytest -h >/dev/null)"
+    cmd = '"pytest -h >/dev/null"'
     _run_tests(ctx, stage, cmd)
 
 
