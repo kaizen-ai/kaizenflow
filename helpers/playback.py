@@ -110,11 +110,12 @@ class Playback:
         expected_arg_count = cur_frame.f_back.f_code.co_argcount  # type: ignore
         if "kwargs" in self._kwargs:
             expected_arg_count += 1
-        dbg.dassert_eq(
-            expected_arg_count,
-            len(cur_frame.f_back.f_locals),  # type: ignore
-            msg="the Playback class should be the first thing instantiated in a function.",
-        )
+        # TODO(gp): Is this necessary?
+        # dbg.dassert_eq(
+        #    expected_arg_count,
+        #    len(cur_frame.f_back.f_locals),  # type: ignore
+        #    msg="the Playback class should be the first thing instantiated in a function.",
+        # )
         # If the function is a method, store the parent class so we can also create that
         # in the test
         if "self" in self._kwargs:

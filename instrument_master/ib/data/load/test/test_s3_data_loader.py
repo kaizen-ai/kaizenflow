@@ -1,3 +1,5 @@
+import pytest
+
 import pandas as pd
 
 import helpers.unit_test as hut
@@ -5,6 +7,7 @@ import instrument_master.common.data.types as icdtyp
 import instrument_master.ib.data.load.ib_s3_data_loader as iidlib
 
 
+@pytest.mark.skip("AmpTask161: Switch AM codebase to AM S3")
 class TestS3IbDataLoader1(hut.TestCase):
     """
     Test data loading correctness for Ib from S3.

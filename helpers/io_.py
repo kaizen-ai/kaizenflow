@@ -238,7 +238,6 @@ def to_file(
     :param mode: file writing mode
     :param force_flush: whether to forcibly clear the file buffer
     """
-    # TODO(gp): create_enclosing_dir().
     # Verify that the file name is correct.
     dbg.dassert_is_not(file_name, None)
     dbg.dassert_ne(file_name, "")
@@ -370,8 +369,9 @@ def serialize_custom_types_for_json_encoder(obj: Any) -> Any:
     E.g. dataframe {"A": [0, 1], "B": [0, 1]} will go to a list of dictionaries:
     [{"A": 0, "B": 0}, {"A": 1, "B": 1}] - each dictionary is for one row.
     """
-    import pandas as pd
     import numpy as np
+    import pandas as pd
+
     result = None
     if isinstance(obj, pd.DataFrame):
         result = obj.to_dict("records")
@@ -436,6 +436,7 @@ def load_df_from_json(path_to_json: str) -> "pd.DataFrame":
     :return:
     """
     import pandas as pd
+
     # Load the dict with the data.
     data = from_json(path_to_json)
     # Preprocess the dict to handle arrays with different length.
