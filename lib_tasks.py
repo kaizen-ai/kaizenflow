@@ -252,13 +252,20 @@ def _remove_spaces(cmd: str) -> str:
 use_one_line_cmd = False
 
 
+def _get_git_hash() -> str:
+    cmd = "git rev-parse HEAD"
+    git_hash: str = hsyste.system_to_one_line(cmd)[1]
+    _LOG.debug("git_hash=%s", git_hash)
+    return git_hash
+
+
 def _get_image(stage: str, base_image: Optional[str] = None) -> str:
     """
     665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local.
     """
     # Docker refers the default image as "latest", although in our stage
     # nomenclature we call it "dev".
-    dbg.dassert_in(stage, "local dev prod".split())
+    dbg.dassert_in(stage, "local dev prod hash".split())
     if base_image is None:
         # 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
         base_image = (
@@ -266,6 +273,8 @@ def _get_image(stage: str, base_image: Optional[str] = None) -> str:
             + "/"
             + get_default_value("BASE_IMAGE")
         )
+    if stage == "hash":
+        stage = _get_git_hash()
     image = base_image + ":" + stage
     return image
 
@@ -352,20 +361,6 @@ def docker_jupyter(ctx, stage, port=9999):  # type: ignore
 # #############################################################################
 
 
-def _get_git_hash() -> str:
-    cmd = "git rev-parse HEAD"
-    git_hash: str = hsyste.system_to_one_line(cmd)[1]
-    _LOG.debug("git_hash=%s", git_hash)
-    return git_hash
-
-
-# TODO(gp): Fold this in _get_image("hash")
-def _get_image_githash() -> str:
-    base_image: str = get_default_value("ECR_BASE_PATH")
-    image_hash = base_image + ":" + _get_git_hash()
-    return image_hash
-
-
 def _to_abs_path(filename: str) -> str:
     filename = os.path.abspath(filename)
     dbg.dassert_exists(filename)
@@ -397,7 +392,7 @@ def docker_build_local_image(ctx, cache=True):  # type: ignore
     Build a local as a release candidate image.
     """
     image_local = _get_image("local")
-    image_hash = _get_image_githash()
+    image_hash = _get_image("hash")
     #
     dockerfile = "devops/docker_build/dev.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
@@ -420,32 +415,21 @@ def docker_build_local_image(ctx, cache=True):  # type: ignore
     _run(ctx, cmd)
 
 
-# @task
-# def docker_push_image(ctx, stage):  # type: ignore
-#     """
-#     Push an image for the given `stage` to ECR.
-#     """
-#     base_image = get_default_value("ECR_BASE_PATH")
-#     image_local = _get_image(stage, base_image)
-#     #
-#     image_hash = _get_image_githash()
-#     cmd = f"docker push {image_local}"
-#     _run(ctx, cmd)
-#     cmd = f"docker push {image_hash}"
-#     _run(ctx, cmd)
-
-
 @task
 def docker_push_local_image_to_dev(ctx):  # type: ignore
     """
     Mark the "local" image as "dev" and "latest" and push to ECR.
     """
-    image_local = _get_image("local")
-    # image_hash = _get_image_githash()
-    #
     docker_login(ctx)
     #
+    image_local = _get_image("local")
     cmd = f"docker push {image_local}"
+    _run(ctx, cmd)
+    #
+    image_hash = _get_image("hash")
+    cmd = f"docker tag {image_local} {image_hash}"
+    _run(ctx, cmd)
+    cmd = f"docker push {image_hash}"
     _run(ctx, cmd)
     #
     image_dev = _get_image("dev")
@@ -453,31 +437,26 @@ def docker_push_local_image_to_dev(ctx):  # type: ignore
     _run(ctx, cmd)
     cmd = f"docker push {image_dev}"
     _run(ctx, cmd)
-    #
-    image_latest = _get_image("latest", base_image)
-    cmd = f"docker tag {image_local} {image_latest}"
-    _run(ctx, cmd)
-    cmd = f"docker push {image_latest}"
-    _run(ctx, cmd)
-
-
-# @task
-# def docker_push_image_latest(ctx):  # type: ignore
-#     """
-#     Push the "latest" image to the registry.
-#     """
-#     cmd = f"docker push {ecr_repo_base_path}:latest"
-#     _run(ctx, cmd)
 
 
 @task
-def docker_release_dev_image(ctx):  # type: ignore
+def docker_release_dev_image(  # type: ignore
+    ctx, cache=True, run_fast=True, run_slow=True, run_superslow=False
+):
     """
     Build, test, and release to ECR the latest image.
     """
-    # docker_build_image_local(ctx, cache=True)
-    # run_fast_tests(ctx, stage="local")
-    # run_slow_tests(ctx, stage="local")
+    # Build image.
+    docker_build_local_image(ctx, cache=cache)
+    # Run tests.
+    stage = "local"
+    if run_fast:
+        run_fast_tests(ctx, stage=stage)
+    if run_slow:
+        run_slow_tests(ctx, stage=stage)
+    if run_superslow:
+        run_superslow_tests(ctx, stage=stage)
+    # Push.
     docker_push_local_image_to_dev(ctx)
     _LOG.info("==> SUCCESS <==")
 
@@ -496,10 +475,7 @@ def docker_build_image_prod(ctx, cache=False):  # type: ignore
     """
     Build a prod image.
     """
-    stage = "prod"
-    image_local = _get_image(stage)
-    #
-    image_hash = _get_image_githash()
+    image_prod = _get_image("prod")
     #
     dockerfile = "devops/docker_build/prod.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
@@ -511,71 +487,83 @@ def docker_build_image_prod(ctx, cache=False):  # type: ignore
     docker build \
         --progress=plain \
         {opts} \
-        -t {image_local} \
-        -t {image_hash} \
+        -t {image_prod} \
         -f {dockerfile} \
         .
     """
     _run(ctx, cmd)
     #
-    cmd = f"docker image ls {image_local}"
+    cmd = f"docker image ls {image_prod}"
     _run(ctx, cmd)
 
 
 @task
-def docker_release_image_prod(ctx, cache=False):  # type: ignore
+def docker_release_prod_image(  # type: ignore
+    ctx, cache=False, run_fast=True, run_slow=True, run_superslow=False
+):
     """
     Build, test, and release to ECR the prod image.
     """
-    # TODO(gp): Factor this out and reuse.
+    # Build dev image.
     docker_build_local_image(ctx, cache=cache)
-    run_fast_tests(ctx, stage="local")
-    run_slow_tests(ctx, stage="local")
-    docker_tag_local_image_as_dev(ctx)
-    #
+    docker_push_local_image_to_dev(ctx)
+    # Build prod image.
     docker_build_image_prod(ctx, cache=cache)
-    docker_push_image(ctx, stage="prod")
+    # Run tests.
+    stage = "prod"
+    if run_fast:
+        run_fast_tests(ctx, stage=stage)
+    if run_slow:
+        run_slow_tests(ctx, stage=stage)
+    if run_superslow:
+        run_superslow_tests(ctx, stage=stage)
+    # Push prod image.
+    image_prod = _get_image("prod")
+    cmd = f"docker push {image_prod}"
+    _run(ctx, cmd)
     _LOG.info("==> SUCCESS <==")
 
 
-# docker_release.all:
-# make docker_release.latest
-# make docker_release.prod
-# @echo "==> SUCCESS <=="
+@task
+def docker_release_all(ctx):  # type: ignore
+    docker_release_dev_image(ctx)
+    docker_release_prod_image(ctx)
+    _LOG.info("==> SUCCESS <==")
+
 
 # # #############################################################################
 # # Run tests.
 # # #############################################################################
 
 
-def _run_tests(ctx, stage, cmd):
+def _run_tests(ctx: Any, stage: str, cmd: str) -> None:
     base_image = get_default_value("ECR_BASE_PATH")
     docker_compose = _get_amp_docker_compose_path()
     _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
 
 
 @task
-def run_blank_tests(ctx, stage="dev"):
+def run_blank_tests(ctx, stage="dev"):  # type: ignore
     cmd = "(pytest -h >/dev/null)"
     _run_tests(ctx, stage, cmd)
 
 
 @task
-def run_fast_tests(ctx, stage="dev", pytest_opts=""):
+def run_fast_tests(ctx, stage="dev", pytest_opts=""):  # type: ignore
     run_tests_dir = "devops/docker_scripts"
     cmd = f"{run_tests_dir}/run_fast_tests.sh {pytest_opts}"
     _run_tests(ctx, stage, cmd)
 
 
 @task
-def run_slow_tests(ctx, stage="dev", pytest_opts=""):
+def run_slow_tests(ctx, stage="dev", pytest_opts=""):  # type: ignore
     run_tests_dir = "devops/docker_scripts"
     cmd = f"{run_tests_dir}/run_slow_tests.sh {pytest_opts}"
     _run_tests(ctx, stage, cmd)
 
 
 @task
-def run_superslow_tests(ctx, stage="dev", pytest_opts=""):
+def run_superslow_tests(ctx, stage="dev", pytest_opts=""):  # type: ignore
     run_tests_dir = "devops/docker_scripts"
     cmd = f"{run_tests_dir}/run_superslow_tests.sh {pytest_opts}"
     _run_tests(ctx, stage, cmd)
@@ -683,11 +671,26 @@ def lint_docker_pull(ctx):  # type: ignore
 
 # TODO(gp): Pass pre-commit phases.
 @task
-def lint(ctx, files="", phases=""):  # type: ignore
-    if not files:
+def lint(ctx, modified=True, branch=False, files="", phases=""):  # type: ignore
+    """
+    Lint files.
+
+    :param modified: select the files modified in the client
+    :param branch: select the files modified in the current branch
+    :param files: specify a space-separated list of files
+    :param phases: specify the lint phases to execute
+    """
+    if modified:
+        files = git.get_modified_files()
+        files = " ".join(files)
+    elif branch:
         cmd = "git diff --name-only master..."
         files = hsyste.system_to_string(cmd)[1]
         files = " ".join(files.split("\n"))
+    dbg.dassert_ne(files, "")
     _LOG.info("Files to lint:\n%s", "\n".join(files))
-    cmd = f"pre-commit.sh run {phases} --files {files} 2>&1 | tee linter_warnings.txt"
+    cmd = (
+        f"pre-commit.sh run {phases} --files {files} 2>&1 "
+        + "| tee linter_warnings.txt"
+    )
     ctx.run(cmd)
