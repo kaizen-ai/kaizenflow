@@ -108,6 +108,12 @@ def git_clean(ctx):  # type: ignore
     ctx.run(cmd)
 
 
+@task
+def git_diff_master_files(ctx):  # type: ignore
+    cmd = "git diff --name-only master..."
+    ctx.run(cmd)
+
+
 # #############################################################################
 # Docker.
 # #############################################################################
@@ -246,16 +252,20 @@ def _remove_spaces(cmd: str) -> str:
 use_one_line_cmd = False
 
 
-def _get_image(stage: str, base_image: Optional[str]=None) -> str:
+def _get_image(stage: str, base_image: Optional[str] = None) -> str:
     """
-    665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local
+    665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local.
     """
     # Docker refers the default image as "latest", although in our stage
     # nomenclature we call it "dev".
     dbg.dassert_in(stage, "local dev prod".split())
     if base_image is None:
         # 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
-        base_image = get_default_value("ECR_BASE_PATH") + "/" + get_default_value("BASE_IMAGE")
+        base_image = (
+            get_default_value("ECR_BASE_PATH")
+            + "/"
+            + get_default_value("BASE_IMAGE")
+        )
     image = base_image + ":" + stage
     return image
 
@@ -431,7 +441,7 @@ def docker_push_local_image_to_dev(ctx):  # type: ignore
     Mark the "local" image as "dev" and "latest" and push to ECR.
     """
     image_local = _get_image("local")
-    #image_hash = _get_image_githash()
+    # image_hash = _get_image_githash()
     #
     docker_login(ctx)
     #
@@ -465,9 +475,9 @@ def docker_release_dev_image(ctx):  # type: ignore
     """
     Build, test, and release to ECR the latest image.
     """
-    #docker_build_image_local(ctx, cache=True)
-    #run_fast_tests(ctx, stage="local")
-    #run_slow_tests(ctx, stage="local")
+    # docker_build_image_local(ctx, cache=True)
+    # run_fast_tests(ctx, stage="local")
+    # run_slow_tests(ctx, stage="local")
     docker_push_local_image_to_dev(ctx)
     _LOG.info("==> SUCCESS <==")
 
@@ -536,6 +546,7 @@ def docker_release_image_prod(ctx, cache=False):  # type: ignore
 # # #############################################################################
 # # Run tests.
 # # #############################################################################
+
 
 def _run_tests(ctx, stage, cmd):
     base_image = get_default_value("ECR_BASE_PATH")
@@ -672,9 +683,11 @@ def lint_docker_pull(ctx):  # type: ignore
 
 # TODO(gp): Pass pre-commit phases.
 @task
-def lint_branch(ctx):  # type: ignore
-    cmd = "git diff --name-only master..."
-    files = hsyste.system_to_string(cmd)[1]
+def lint(ctx, files="", phases=""):  # type: ignore
+    if not files:
+        cmd = "git diff --name-only master..."
+        files = hsyste.system_to_string(cmd)[1]
+        files = " ".join(files.split("\n"))
     _LOG.info("Files to lint:\n%s", "\n".join(files))
-    cmd = f"pre-commit.sh run --files $({cmd}) 2>&1 | tee linter_warnings.txt"
+    cmd = f"pre-commit.sh run {phases} --files {files} 2>&1 | tee linter_warnings.txt"
     ctx.run(cmd)

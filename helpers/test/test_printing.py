@@ -115,9 +115,51 @@ class Test_log(hut.TestCase):
 
 
 class Test_sort_dictionary(hut.TestCase):
-
     def test1(self):
-        dict_ = {'tool': {'poetry': {'name': 'lem', 'version': '0.1.0', 'description': '', 'authors': [''], 'dependencies': {'awscli': '*', 'boto3': '*', 'flaky': '*', 'fsspec': '*', 'gluonts': '*', 'invoke': '*', 'jupyter': '*', 'matplotlib': '*', 'mxnet': '*', 'networkx': '*', 'pandas': '^1.1.0', 'psycopg2': '*', 'pyarrow': '*', 'pytest': '^6.0.0', 'pytest-cov': '*', 'pytest-instafail': '*', 'pytest-xdist': '*', 'python': '^3.7', 'pywavelets': '*', 's3fs': '*', 'seaborn': '*', 'sklearn': '*', 'statsmodels': '*', 'bs4': '*', 'jsonpickle': '*', 'lxml': '*', 'tqdm': '*', 'requests': '*'}, 'dev-dependencies': {}}}, 'build-system': {'requires': ['poetry>=0.12'], 'build-backend': 'poetry.masonry.api'}}
+        dict_ = {
+            "tool": {
+                "poetry": {
+                    "name": "lem",
+                    "version": "0.1.0",
+                    "description": "",
+                    "authors": [""],
+                    "dependencies": {
+                        "awscli": "*",
+                        "boto3": "*",
+                        "flaky": "*",
+                        "fsspec": "*",
+                        "gluonts": "*",
+                        "invoke": "*",
+                        "jupyter": "*",
+                        "matplotlib": "*",
+                        "mxnet": "*",
+                        "networkx": "*",
+                        "pandas": "^1.1.0",
+                        "psycopg2": "*",
+                        "pyarrow": "*",
+                        "pytest": "^6.0.0",
+                        "pytest-cov": "*",
+                        "pytest-instafail": "*",
+                        "pytest-xdist": "*",
+                        "python": "^3.7",
+                        "pywavelets": "*",
+                        "s3fs": "*",
+                        "seaborn": "*",
+                        "sklearn": "*",
+                        "statsmodels": "*",
+                        "bs4": "*",
+                        "jsonpickle": "*",
+                        "lxml": "*",
+                        "tqdm": "*",
+                        "requests": "*",
+                    },
+                    "dev-dependencies": {},
+                }
+            },
+            "build-system": {
+                "requires": ["poetry>=0.12"],
+                "build-backend": "poetry.masonry.api",
+            },
+        }
         act = hprint.sort_dictionary(dict_)
         self.check_string(pprint.pformat(act))
-

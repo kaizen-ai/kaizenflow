@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 """
-Merge two or more pyproject.toml files in a single one. This can be used to merge
-multiple poetry files.
+Merge two or more pyproject.toml files in a single one. This can be used to
+merge multiple poetry files.
 
 > toml_merge.py \
     --in_file devops/docker_build/pyproject.toml \

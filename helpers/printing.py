@@ -582,6 +582,7 @@ def sort_dictionary(dict_: Dict) -> Dict:
     Sort a dictionary recursively using nested OrderedDict.
     """
     import collections
+
     res = collections.OrderedDict()
     for k, v in sorted(dict_.items()):
         if isinstance(v, dict):
