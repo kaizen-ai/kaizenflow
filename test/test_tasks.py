@@ -2,6 +2,7 @@ import logging
 import re
 
 import helpers.dbg as dbg
+import helpers.git as git
 import helpers.printing as hprint
 import helpers.system_interaction as hsi
 import helpers.unit_test as hut
@@ -141,6 +142,10 @@ class TestExecuteTasks1(hut.TestCase):
     Execute tasks that don't change state of the system (e.g., commit images).
     """
 
+    def test_list(self):
+        cmd = "invoke --list"
+        hsi.system(cmd)
+
     def test_print_setup1(self):
         cmd = "print_setup"
         hsi.system(cmd)
@@ -203,13 +208,52 @@ class TestExecuteTasks2(hut.TestCase):
         cmd = "invoke docker_jupyter self_test=True"
         hsi.system(cmd)
 
+    def test_docker_pull1(self):
+        cmd = "invoke docker_pull"
+        hsi.system(cmd)
 
-jjj
-#         make docker_login
-#         make docker_repo_images
-#         make docker_ps
+        # Images workflows.
+        cmd = "invoke run_blank_tests"
+        hsi.system(cmd)
+
+    # Run tests.
+    def test_run_blank_tests1(self):
+        cmd = "invoke run_blank_tests"
+        hsi.system(cmd)
+
+    def test_run_fast_tests(self):
+        git_root = git.get_client_root(super_module=False)
+        file_name = os.path.join(git_root, "helpers/test/test_dbg.py")
+        dbg.dassert_exists(file_name)
+        cmd = f"invoke run_fast_tests --pytest_opts='{file_name}'"
+        hsi.system(cmd)
+
+    # Linter.
+    def test_lint_docker_pull1(self):
+        cmd = "invoke lint_docker_pull"
+        hsi.system(cmd)
+
+    def test_lint_docker_pull1(self):
+        cmd = "invoke lint_docker_pull"
+        hsi.system(cmd)
+
+    def test_lint1(self):
+        # Get the pointer to amp.
+        git_root = git.get_client_root(super_module=False)
+        file_name = os.path.join(git_root, "helpers/dbg.py")
+        dbg.dassert_exists(file_name)
+        cmd = f"invoke lint --files='{file_name}"
+        hsi.system(cmd)
+        #
+        cmd = f"invoke lint --files='{file_name} phases='black'"
+        hsi.system(cmd)
+
+    # def test_(self):
+    #     cmd = "invoke "
+    #     hsi.system(cmd)
+
+
 #         make docker_pull
-#         make docker_jupyter_test
 #         make docker_cmd.rc CMD="pytest --collect-only"
 #         @echo "==> SUCCESS <=="
 #

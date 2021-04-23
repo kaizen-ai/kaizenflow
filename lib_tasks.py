@@ -3,7 +3,7 @@ import logging
 import os
 import re
 import sys
-from typing import Any, Dict, Match, Optional
+from typing import Any, Dict, Match
 
 from invoke import task
 
@@ -299,11 +299,11 @@ def _check_base_image(base_image: str) -> None:
     dbg.dassert(m, "Invalid base_image: '%s'", base_image)
 
 
-def _get_base_image(base_image: Optional[str]) -> str:
+def _get_base_image(base_image: str) -> str:
     """
     :return: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
     """
-    if base_image is None:
+    if base_image == "":
         base_image = (
             get_default_value("ECR_BASE_PATH")
             + "/"
@@ -313,7 +313,7 @@ def _get_base_image(base_image: Optional[str]) -> str:
     return base_image
 
 
-def _get_image(stage: str, base_image: Optional[str] = None) -> str:
+def _get_image(stage: str, base_image: str) -> str:
     """
     :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
     :return: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local
@@ -333,7 +333,7 @@ def _get_image(stage: str, base_image: Optional[str] = None) -> str:
 
 
 def _docker_cmd(
-    ctx: Any, stage: str, base_image: Optional[str], docker_compose: str, cmd: str
+    ctx: Any, stage: str, base_image: str, docker_compose: str, cmd: str
 ) -> None:
     """
     :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
@@ -387,12 +387,11 @@ def docker_cmd(ctx, stage="local", cmd=""):  # type: ignore
 
 
 @task
-def docker_jupyter(ctx, stage, port=9999, self_test=False):  # type: ignore
+def docker_jupyter(ctx, stage, port=9999, self_test=False, base_image=""):  # type: ignore
     """
     Run jupyter notebook server.
     """
     _LOG.info(">")
-    base_image = get_default_value("ECR_BASE_PATH")
     image = _get_image(stage, base_image)
     # devops/compose/docker-compose-user-space.yml
     docker_compose = _get_amp_docker_compose_path()
@@ -451,14 +450,16 @@ DOCKER_BUILDKIT = 0
 # - If qualification is passed, it becomes "latest".
 
 
+# For base_image, we use "" as default instead None since pyinvoke can only infer
+# a single type.
 @task
-def docker_build_local_image(ctx, cache=True):  # type: ignore
+def docker_build_local_image(ctx, cache=True, base_image=""):  # type: ignore
     """
     Build a local as a release candidate image.
     """
     _LOG.info(">")
-    image_local = _get_image("local")
-    image_hash = _get_image("hash")
+    image_local = _get_image("local", base_image)
+    image_hash = _get_image("hash", base_image)
     #
     _check_image(image_local)
     _check_image(image_hash)
@@ -484,24 +485,24 @@ def docker_build_local_image(ctx, cache=True):  # type: ignore
 
 
 @task
-def docker_push_local_image_to_dev(ctx):  # type: ignore
+def docker_push_local_image_to_dev(ctx, base_image=""):  # type: ignore
     """
     Mark the "local" image as "dev" and "latest" and push to ECR.
     """
     _LOG.info(">")
     docker_login(ctx)
     #
-    image_local = _get_image("local")
+    image_local = _get_image("local", base_name)
     cmd = f"docker push {image_local}"
     _run(ctx, cmd)
     #
-    image_hash = _get_image("hash")
+    image_hash = _get_image("hash", base_name)
     cmd = f"docker tag {image_local} {image_hash}"
     _run(ctx, cmd)
     cmd = f"docker push {image_hash}"
     _run(ctx, cmd)
     #
-    image_dev = _get_image("dev")
+    image_dev = _get_image("dev", base_name)
     cmd = f"docker tag {image_local} {image_dev}"
     _run(ctx, cmd)
     cmd = f"docker push {image_dev}"
@@ -541,12 +542,12 @@ def docker_release_dev_image(  # type: ignore
 
 # TODO(gp): Remove redundancy with docker_build_local_image().
 @task
-def docker_build_image_prod(ctx, cache=False):  # type: ignore
+def docker_build_image_prod(ctx, cache=False, base_image=""):  # type: ignore
     """
     Build a prod image.
     """
     _LOG.info(">")
-    image_prod = _get_image("prod")
+    image_prod = _get_image("prod", base_name)
     #
     _check_image(image_prod)
     dockerfile = "devops/docker_build/prod.Dockerfile"
@@ -571,7 +572,12 @@ def docker_build_image_prod(ctx, cache=False):  # type: ignore
 
 @task
 def docker_release_prod_image(  # type: ignore
-    ctx, cache=False, run_fast=True, run_slow=True, run_superslow=False
+    ctx,
+    cache=False,
+    run_fast=True,
+    run_slow=True,
+    run_superslow=False,
+    base_image="",
 ):
     """
     Build, test, and release to ECR the prod image.
@@ -591,7 +597,7 @@ def docker_release_prod_image(  # type: ignore
     if run_superslow:
         run_superslow_tests(ctx, stage=stage)
     # Push prod image.
-    image_prod = _get_image("prod")
+    image_prod = _get_image("prod", base_image)
     cmd = f"docker push {image_prod}"
     _run(ctx, cmd)
     _LOG.info("==> SUCCESS <==")
@@ -771,8 +777,9 @@ def lint(ctx, modified=True, branch=False, files="", phases=""):  # type: ignore
         cmd = "git diff --name-only master..."
         files = hsyste.system_to_string(cmd)[1]
         files = " ".join(files.split("\n"))
+    dbg.dassert_isinstance(files, str)
     dbg.dassert_ne(files, "")
-    # _LOG.info("Files to lint:\n%s", "\n".join(files))
+    _LOG.info("Files to lint:\n%s", "\n".join(files.split("\n")))
     cmd = (
         f"pre-commit.sh run {phases} --files {files} 2>&1 "
         + "| tee linter_warnings.txt"
