@@ -278,10 +278,10 @@ def _check_image(image: str) -> None:
 
     665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local
     """
-    internet_address_re = "^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
-    image_re = "([a-z0-9]+(-[a-z0-9]+)*)"
-    tag_re = "([a-z0-9]+(-[a-z0-9]+)*)"
-    m = re.match(f"^{internet_address_re}\/{image_re}:{tag_re}$", image)
+    internet_address_re = r"^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
+    image_re = r"([a-z0-9]+(-[a-z0-9]+)*)"
+    tag_re = r"([a-z0-9]+(-[a-z0-9]+)*)"
+    m = re.match(rf"^{internet_address_re}\/{image_re}:{tag_re}$", image)
     dbg.dassert(m, "Invalid image: '%s'", image)
 
 
@@ -291,9 +291,9 @@ def _check_base_image(base_image: str) -> None:
 
     665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
     """
-    internet_address_re = "([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
-    image_re = "([a-z0-9]+(-[a-z0-9]+)*)"
-    regex = f"^{internet_address_re}\/{image_re}$"
+    internet_address_re = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
+    image_re = r"([a-z0-9]+(-[a-z0-9]+)*)"
+    regex = rf"^{internet_address_re}\/{image_re}$"
     _LOG.debug("regex=%s", regex)
     m = re.match(regex, base_image)
     dbg.dassert(m, "Invalid base_image: '%s'", base_image)
@@ -367,7 +367,7 @@ def docker_bash(ctx, stage="local"):  # type: ignore
     Start a bash shell inside the container corresponding to a stage.
     """
     _LOG.info(">")
-    base_image = None
+    base_image = ""
     docker_compose = _get_amp_docker_compose_path()
     cmd = "bash"
     _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
@@ -380,7 +380,7 @@ def docker_cmd(ctx, stage="local", cmd=""):  # type: ignore
     """
     _LOG.info(">")
     dbg.dassert_ne(cmd, "")
-    base_image = None
+    base_image = ""
     docker_compose = _get_amp_docker_compose_path()
     # TODO(gp): Do we need to overwrite the entrypoint?
     _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
@@ -492,17 +492,17 @@ def docker_push_local_image_to_dev(ctx, base_image=""):  # type: ignore
     _LOG.info(">")
     docker_login(ctx)
     #
-    image_local = _get_image("local", base_name)
+    image_local = _get_image("local", base_image)
     cmd = f"docker push {image_local}"
     _run(ctx, cmd)
     #
-    image_hash = _get_image("hash", base_name)
+    image_hash = _get_image("hash", base_image)
     cmd = f"docker tag {image_local} {image_hash}"
     _run(ctx, cmd)
     cmd = f"docker push {image_hash}"
     _run(ctx, cmd)
     #
-    image_dev = _get_image("dev", base_name)
+    image_dev = _get_image("dev", base_image)
     cmd = f"docker tag {image_local} {image_dev}"
     _run(ctx, cmd)
     cmd = f"docker push {image_dev}"
@@ -547,7 +547,7 @@ def docker_build_image_prod(ctx, cache=False, base_image=""):  # type: ignore
     Build a prod image.
     """
     _LOG.info(">")
-    image_prod = _get_image("prod", base_name)
+    image_prod = _get_image("prod", base_image)
     #
     _check_image(image_prod)
     dockerfile = "devops/docker_build/prod.Dockerfile"
@@ -622,7 +622,7 @@ def _run_tests(ctx: Any, stage: str, cmd: str) -> None:
     """
     Run a command in the set-up to run tests.
     """
-    base_image = None
+    base_image = ""
     docker_compose = _get_amp_docker_compose_path()
     _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
 

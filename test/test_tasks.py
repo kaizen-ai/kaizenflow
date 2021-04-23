@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 
 import helpers.dbg as dbg
@@ -121,7 +122,7 @@ class TestDryRunTasks1(hut.TestCase):
         act = "\n".join(map(str, ctx.run.mock_calls))
         # TODO(gp): Unclear why pylint can't find this function.
         # pylint: disable=no-member
-        act = hprint.remove_non_printable_chars(act)  # type: ignore
+        act = hprint.remove_non_printable_chars(act)
         # pylint: enable=no-member
         self.check_string(act)
 
@@ -142,35 +143,35 @@ class TestExecuteTasks1(hut.TestCase):
     Execute tasks that don't change state of the system (e.g., commit images).
     """
 
-    def test_list(self):
+    def test_list(self) -> None:
         cmd = "invoke --list"
         hsi.system(cmd)
 
-    def test_print_setup1(self):
+    def test_print_setup1(self) -> None:
         cmd = "print_setup"
         hsi.system(cmd)
 
-    def test_docker_images_ls_repo1(self):
+    def test_docker_images_ls_repo1(self) -> None:
         cmd = "invoke docker_images_ls_repo"
         hsi.system(cmd)
 
-    def test_docker_ps(self):
+    def test_docker_ps(self) -> None:
         cmd = "invoke docker_ps"
         hsi.system(cmd)
 
-    def test_docker_stats(self):
+    def test_docker_stats(self) -> None:
         cmd = "invoke docker_stats"
         hsi.system(cmd)
 
-    def test_docker_login1(self):
+    def test_docker_login1(self) -> None:
         cmd = "invoke docker_login"
         hsi.system(cmd)
 
-    def test_docker_cmd1(self):
+    def test_docker_cmd1(self) -> None:
         cmd = 'invoke docker_cmd --cmd="ls"'
         hsi.system(cmd)
 
-    def test_docker_jupyter1(self):
+    def test_docker_jupyter1(self) -> None:
         cmd = "invoke docker_jupyter self_test=True"
         hsi.system(cmd)
 
@@ -180,35 +181,35 @@ class TestExecuteTasks2(hut.TestCase):
     Execute tasks that change the state of the system but not using the.
     """
 
-    def test_print_setup1(self):
+    def test_print_setup1(self) -> None:
         cmd = "print_setup"
         hsi.system(cmd)
 
-    def test_docker_images_ls_repo1(self):
+    def test_docker_images_ls_repo1(self) -> None:
         cmd = "invoke docker_images_ls_repo"
         hsi.system(cmd)
 
-    def test_docker_ps(self):
+    def test_docker_ps(self) -> None:
         cmd = "invoke docker_ps"
         hsi.system(cmd)
 
-    def test_docker_stats(self):
+    def test_docker_stats(self) -> None:
         cmd = "invoke docker_stats"
         hsi.system(cmd)
 
-    def test_docker_login1(self):
+    def test_docker_login1(self) -> None:
         cmd = "invoke docker_login"
         hsi.system(cmd)
 
-    def test_docker_cmd1(self):
+    def test_docker_cmd1(self) -> None:
         cmd = 'invoke docker_cmd --cmd="ls"'
         hsi.system(cmd)
 
-    def test_docker_jupyter1(self):
+    def test_docker_jupyter1(self) -> None:
         cmd = "invoke docker_jupyter self_test=True"
         hsi.system(cmd)
 
-    def test_docker_pull1(self):
+    def test_docker_pull1(self) -> None:
         cmd = "invoke docker_pull"
         hsi.system(cmd)
 
@@ -217,11 +218,15 @@ class TestExecuteTasks2(hut.TestCase):
         hsi.system(cmd)
 
     # Run tests.
-    def test_run_blank_tests1(self):
+    def test_run_blank_tests1(self) -> None:
         cmd = "invoke run_blank_tests"
         hsi.system(cmd)
 
-    def test_run_fast_tests(self):
+    def test_collect_only(self) -> None:
+        cmd = "invoke docker_cmd --cmd='pytest --collect-only'"
+        hsi.system(cmd)
+
+    def test_run_fast_tests(self) -> None:
         git_root = git.get_client_root(super_module=False)
         file_name = os.path.join(git_root, "helpers/test/test_dbg.py")
         dbg.dassert_exists(file_name)
@@ -229,15 +234,11 @@ class TestExecuteTasks2(hut.TestCase):
         hsi.system(cmd)
 
     # Linter.
-    def test_lint_docker_pull1(self):
+    def test_lint_docker_pull1(self) -> None:
         cmd = "invoke lint_docker_pull"
         hsi.system(cmd)
 
-    def test_lint_docker_pull1(self):
-        cmd = "invoke lint_docker_pull"
-        hsi.system(cmd)
-
-    def test_lint1(self):
+    def test_lint1(self) -> None:
         # Get the pointer to amp.
         git_root = git.get_client_root(super_module=False)
         file_name = os.path.join(git_root, "helpers/dbg.py")
@@ -253,10 +254,6 @@ class TestExecuteTasks2(hut.TestCase):
     #     hsi.system(cmd)
 
 
-#         make docker_pull
-#         make docker_cmd.rc CMD="pytest --collect-only"
-#         @echo "==> SUCCESS <=="
-#
 # slow_self_tests:
 # make docker_build_image_with_cache.rc
 # make run_blank_tests.rc
