@@ -1,6 +1,7 @@
 import functools
 import logging
 import os
+import pprint
 import re
 import sys
 from typing import Any, Dict, Match
@@ -16,6 +17,8 @@ import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
 
+# By default we run against the dev image.
+_STAGE = "dev"
 
 # This is used to inject the default params.
 _DEFAULT_PARAMS = {}
@@ -29,6 +32,7 @@ _DEFAULT_PARAMS = {}
 def set_default_params(params: Dict[str, Any]) -> None:
     global _DEFAULT_PARAMS
     _DEFAULT_PARAMS = params
+    _LOG.debug("Assigning:\n%s", pprint.pformat(params))
 
 
 def get_default_value(key: str) -> Any:
@@ -49,7 +53,7 @@ if not (("-d" in sys.argv) or ("--debug" in sys.argv)):
 def print_setup(ctx):  # type: ignore
     _LOG.info(">")
     _ = ctx
-    var_names = "ECR_BASE_PATH ECR_REPO_BASE_PATH".split()
+    var_names = "ECR_BASE_PATH BASE_IMAGE".split()
     for v in var_names:
         print("%s=%s" % (v, get_default_value(v)))
 
@@ -152,11 +156,11 @@ def docker_ps(ctx):  # type: ignore
     2ece37303ec9  gp    083233266530....:latest  "./docker_build/entry.sh"  5 seconds ago  Up 4 seconds         user_space
     ```
     """
-    cmd = r"""
-    docker ps \
-        --format='table {{.ID}}\t{{.Label "user"}}\t{{.Image}}\t{{.Command}}\t{{.RunningFor}}\t{{.Status}}\t{{.Ports}}\t{{.Label "com.docker.compose.service"}}'
-    """
     # pylint: enable=line-too-long
+    fmt = (r'''table {{.ID}}\t{{.Label "user"}}\t{{.Image}}\t{{.Command}}''' +
+        r'\t{{.RunningFor}}\t{{.Status}}\t{{.Ports}}' +
+        r'\t{{.Label "com.docker.compose.service"}}')
+    cmd = f"docker ps --format='{fmt}'"
     cmd = _remove_spaces(cmd)
     ctx.run(cmd)
 
@@ -173,10 +177,10 @@ def docker_stats(ctx):  # type: ignore
     2ece37303ec9  ..._user_space_run_30  0.00%  15.74MiB / 31.07GiB   0.05%  351kB / 6.27kB  34.2MB / 12.3kB  4
     ```
     """
-    # To change the output format you can use the following --format flags:
-    # --format='table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}'
     # pylint: enable=line-too-long
-    cmd = "docker stats --no-stream $(IDS)"
+    fmt = (r'table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}' +
+           r'\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}')
+    cmd = f"docker stats --no-stream --format='{fmt}'"
     ctx.run(cmd)
 
 
@@ -362,7 +366,7 @@ def _docker_cmd(
 
 
 @task
-def docker_bash(ctx, stage="local"):  # type: ignore
+def docker_bash(ctx, stage=_STAGE):  # type: ignore
     """
     Start a bash shell inside the container corresponding to a stage.
     """
@@ -374,7 +378,7 @@ def docker_bash(ctx, stage="local"):  # type: ignore
 
 
 @task
-def docker_cmd(ctx, stage="local", cmd=""):  # type: ignore
+def docker_cmd(ctx, stage=_STAGE, cmd=""):  # type: ignore
     """
     Execute the command `cmd` inside a container corresponding to a stage.
     """
@@ -387,7 +391,8 @@ def docker_cmd(ctx, stage="local", cmd=""):  # type: ignore
 
 
 @task
-def docker_jupyter(ctx, stage, port=9999, self_test=False, base_image=""):  # type: ignore
+def docker_jupyter(  # type: ignore
+        ctx, stage=_STAGE, port=9999, self_test=False, base_image=""):
     """
     Run jupyter notebook server.
     """
@@ -402,7 +407,7 @@ def docker_jupyter(ctx, stage, port=9999, self_test=False, base_image=""):  # ty
     dbg.dassert_exists(docker_compose_jupyter)
     #
     user_name = hsyste.get_user_name()
-    service = "jupyter_server" if self_test else "jupyter_server_test"
+    service = "jupyter_server_test" if self_test else "jupyter_server"
     # TODO(gp): Not sure about the order of the -f files.
     cmd = rf"""IMAGE={image} \
     PORT={port} \
@@ -628,14 +633,14 @@ def _run_tests(ctx: Any, stage: str, cmd: str) -> None:
 
 
 @task
-def run_blank_tests(ctx, stage="dev"):  # type: ignore
+def run_blank_tests(ctx, stage=_STAGE):  # type: ignore
     _LOG.info(">")
     cmd = "(pytest -h >/dev/null)"
     _run_tests(ctx, stage, cmd)
 
 
 @task
-def run_fast_tests(ctx, stage="dev", pytest_opts=""):  # type: ignore
+def run_fast_tests(ctx, stage=_STAGE, pytest_opts=""):  # type: ignore
     _LOG.info(">")
     run_tests_dir = "devops/docker_scripts"
     cmd = f"{run_tests_dir}/run_fast_tests.sh {pytest_opts}"
@@ -643,7 +648,7 @@ def run_fast_tests(ctx, stage="dev", pytest_opts=""):  # type: ignore
 
 
 @task
-def run_slow_tests(ctx, stage="dev", pytest_opts=""):  # type: ignore
+def run_slow_tests(ctx, stage=_STAGE, pytest_opts=""):  # type: ignore
     _LOG.info(">")
     run_tests_dir = "devops/docker_scripts"
     cmd = f"{run_tests_dir}/run_slow_tests.sh {pytest_opts}"
@@ -651,11 +656,21 @@ def run_slow_tests(ctx, stage="dev", pytest_opts=""):  # type: ignore
 
 
 @task
-def run_superslow_tests(ctx, stage="dev", pytest_opts=""):  # type: ignore
+def run_superslow_tests(ctx, stage=_STAGE, pytest_opts=""):  # type: ignore
     _LOG.info(">")
     run_tests_dir = "devops/docker_scripts"
     cmd = f"{run_tests_dir}/run_superslow_tests.sh {pytest_opts}"
     _run_tests(ctx, stage, cmd)
+
+
+@task
+def pytest_clean(ctx):  # type: ignore
+    """
+    Clean pytest artifacts.
+    """
+    import helpers.pytest_ as hpytest
+    _LOG.info(">")
+    hpytest.pytest_clean(".")
 
 
 # # #############################################################################

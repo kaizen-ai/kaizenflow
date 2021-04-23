@@ -2,6 +2,8 @@ import logging
 import os
 import re
 
+import pytest
+
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.printing as hprint
@@ -102,7 +104,7 @@ class TestDryRunTasks1(hut.TestCase):
         _, act = hsi.system_to_string(cmd)
         # TODO(gp): Unclear why pylint can't find this function.
         # pylint: disable=no-member
-        act = hprint.remove_non_printable_chars(act)  # type: ignore
+        act = hprint.remove_non_printable_chars(act)
         # pylint: enable=no-member
         self.check_string(act)
 
@@ -138,17 +140,28 @@ class TestDryRunTasks1(hut.TestCase):
         self._check_calls(ctx)
 
 
+@pytest.mark.skipif(hsi.is_inside_docker(),
+    reason="AmpTask165")
 class TestExecuteTasks1(hut.TestCase):
     """
     Execute tasks that don't change state of the system (e.g., commit images).
     """
+
+    def setUp(self):
+        super().setUp()
+        default_params = {
+            "ECR_BASE_PATH": "665840871993.dkr.ecr.us-east-1.amazonaws.com",
+            "BASE_IMAGE": "amp_test",
+            "NO_SUPERSLOW_TESTS": True,
+        }
+        tasks.set_default_params(default_params)
 
     def test_list(self) -> None:
         cmd = "invoke --list"
         hsi.system(cmd)
 
     def test_print_setup1(self) -> None:
-        cmd = "print_setup"
+        cmd = "invoke print_setup"
         hsi.system(cmd)
 
     def test_docker_images_ls_repo1(self) -> None:
@@ -172,10 +185,12 @@ class TestExecuteTasks1(hut.TestCase):
         hsi.system(cmd)
 
     def test_docker_jupyter1(self) -> None:
-        cmd = "invoke docker_jupyter self_test=True"
+        cmd = "invoke docker_jupyter --self-test"
         hsi.system(cmd)
 
 
+@pytest.mark.skipif(hsi.is_inside_docker(),
+                    reason="AmpTask165")
 class TestExecuteTasks2(hut.TestCase):
     """
     Execute tasks that change the state of the system but not using the.
