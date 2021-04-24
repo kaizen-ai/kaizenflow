@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -133,7 +133,7 @@ class IncrementalDagRunner:
     def __init__(
         self,
         config: cconfi.Config,
-        dag_builder: dtf.DagBuilder,
+        dag_builder: DagBuilder,
         start: _PANDAS_DATE_TYPE,
         end: _PANDAS_DATE_TYPE,
         freq: str,
@@ -200,7 +200,7 @@ class IncrementalDagRunner:
                 result_bundle = self._run_dag(self._result_nid, "predict")
                 yield result_bundle
 
-    def _run_dag(self, nid: str, method: str) -> dtf.ResultBundle:
+    def _run_dag(self, nid: str, method: str) -> ResultBundle:
         """
         Run DAG and return a ResultBundle.
 
@@ -211,7 +211,7 @@ class IncrementalDagRunner:
         """
         dbg.dassert_in(method, self._methods)
         df_out = self.dag.run_leq_node(nid, method)["df_out"]
-        info = dtf.extract_info(self.dag, [method])
+        info = extract_info(self.dag, [method])
         return dtf.ResultBundle(
             config=self.config,
             result_nid=nid,
