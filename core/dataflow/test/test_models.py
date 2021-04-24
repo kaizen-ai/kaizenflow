@@ -1033,8 +1033,7 @@ if True:
 
 class TestContinuousSarimaxModel(hut.TestCase):
     """
-    Warning:
-        SARIMAX can give slightly different outputs on different machines.
+    Warning: SARIMAX can give slightly different outputs on different machines.
     """
 
     def test_fit1(self) -> None:
@@ -1083,7 +1082,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         df_out = csm.fit(data)["df_out"]
         # Package results.
-        act = self._package_results(config, df_out, decimals=2)
+        act = self._package_results(config, df_out, decimals=1)
         self.check_string(act)
 
     def test_compare_to_linear_regression1(self) -> None:
@@ -1185,7 +1184,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
         # Package results.
-        act = self._package_results(config, df_out, decimals=2)
+        act = self._package_results(config, df_out, decimals=1)
         self.check_string(act)
 
     def test_predict2(self) -> None:
@@ -1264,7 +1263,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
         # Package results.
-        act = self._package_results(config, df_out, decimals=2)
+        act = self._package_results(config, df_out, decimals=1)
         self.check_string(act)
 
     def test_predict_different_intervals_no_x1(self) -> None:
