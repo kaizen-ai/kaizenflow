@@ -109,6 +109,20 @@ jobs:
           sha: ${{ github.sha }}
           target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
+      - name: Send Telegram notification for success
+        if: ${{ success() && github.head_ref == "master" }}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
+          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
+          message: |
+            🎉 Fast tests succeded at master
+            Build failure '${{ github.workflow }}'
+            Repo: '${{ github.repository }}'
+            Branch: '$${{ github.head_ref }}'
+            Event: '${{ github.event_name }}'
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
       - name: Send Telegram notification for failure
         if: ${{ failure() }}
         #if: ${{ failure() && github.event_name == 'schedule' }}
@@ -118,8 +132,8 @@ jobs:
           token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
           message: |
             🧨 FAST TESTS FAILED
-            Build failure `${{ github.workflow }}`
-            Repo: ${{ github.repository }}
-            Branch: $${{ github.head_ref }}
-            Event: ${{ github.event_name }}
+            Build failure '${{ github.workflow }}'
+            Repo: '${{ github.repository }}'
+            Branch: '$${{ github.head_ref }}'
+            Event: '${{ github.event_name }}'
             https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
