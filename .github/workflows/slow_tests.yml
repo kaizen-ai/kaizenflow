@@ -1,49 +1,37 @@
-name: Fast tests
+name: Slow tests
 on:
-  pull_request:
-    types: [ opened, synchronize, reopened ]
-    branches:
-      - master
   push:
     branches:
-      - master
+      - "master"
   workflow_dispatch:
   schedule:
-    # Run this once a day even if there are no commit.
+    # Run once a day even if there are no commit.
     - cron:  '0 0 */1 * *'
 
 jobs:
-
-  Mark_commit:
+  Run_slow_tests_mark_commit:
     runs-on: ubuntu-latest
-    steps:
-      - name: Post status if was triggered manually
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        uses: Sibz/github-status-action@v1
-        with:
-          authToken: ${{ secrets.GITHUB_TOKEN }}
-          context: "Run_fast_tests"
-          description: 'Added to queue, waiting for free runner (manual run)'
-          state: pending
-          sha: ${{ github.sha }}
-          target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-      - name: Cancel previous runs
-        if: ${{ github.head_ref != 'master' }}
-        uses: styfle/cancel-workflow-action@0.9.0
-        with:
-          access_token: ${{ github.token }}
-
-  Run_fast_tests:
-    runs-on: ubuntu-latest
-    #runs-on: [self-hosted, FAST]
-
     steps:
       - name: Post status if was triggered manually
         if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: Sibz/github-status-action@v1
         with:
           authToken: ${{secrets.GITHUB_TOKEN}}
-          context: "Run_fast_tests"
+          context: "Run_slow_tests"
+          description: 'Added to queue, waiting for free runner (manual run)'
+          state: pending
+          sha: ${{ github.sha }}
+          target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+  Run_slow_tests:
+    runs-on: [SLOW]
+    steps:
+      - name: Post status if was triggered manually
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: Sibz/github-status-action@v1
+        with:
+          authToken: ${{secrets.GITHUB_TOKEN}}
+          context: "Run_slow_tests"
           description: 'Job in progress (manual run)'
           state: pending
           sha: ${{ github.sha }}
@@ -54,7 +42,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: us-east-2
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -67,59 +55,35 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: true
-          # TODO(gp): Not needed?
           ssh-key: ${{ secrets.GH_ACTION_SSH_PRIVATE_KEY }}
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r .github/gh_requirements.txt
-
       - name: Pull image
-        run: invoke docker_pull --mode="current"
+        run: make docker_pull
 
-      - name: Run fast tests
+      - name: Run slow tests
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-        run: invoke run_fast_tests
+        run: make run_slow_tests.gh_action
 
       - name: Post status if was triggered manually
         if: ${{ always() && github.event_name == 'workflow_dispatch' }}
         uses: Sibz/github-status-action@v1
         with:
           authToken: ${{secrets.GITHUB_TOKEN}}
-          context: "Run_fast_tests"
+          context: "Run_slow_tests"
           description: 'Job is done (manual run)'
           state: ${{ job.status }}
           sha: ${{ github.sha }}
           target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-      - name: Send Telegram notification for success
-        if: ${{ success() && github.head_ref == "master" }}
+      - name: Send Telegram notification
+        if: ${{ failure() && github.event_name == 'schedule' }}
         uses: appleboy/telegram-action@master
         with:
-          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
-          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
+          to: ${{ secrets.P1_TG_BUILD_MONITORING_CHANNEL_ID }}
+          token: ${{ secrets.P1_GH_BOT_TELEGRAM_TOKEN }}
           message: |
-            🎉 Fast tests succeded at master
-            Build failure '${{ github.workflow }}'
-            Repo: '${{ github.repository }}'
-            Branch: '$${{ github.head_ref }}'
-            Event: '${{ github.event_name }}'
-            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-      - name: Send Telegram notification for failure
-        if: ${{ failure() }}
-        #if: ${{ failure() && github.event_name == 'schedule' }}
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
-          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
-          message: |
-            🧨 FAST TESTS FAILED
-            Build failure '${{ github.workflow }}'
-            Repo: '${{ github.repository }}'
-            Branch: '$${{ github.head_ref }}'
-            Event: '${{ github.event_name }}'
+            Build failure `${{ github.workflow }}`
+            Repo: ${{ github.repository }}
             https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
