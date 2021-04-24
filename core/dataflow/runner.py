@@ -8,7 +8,7 @@ import core.config as cconfi
 import helpers.dbg as dbg
 from core.dataflow.builder import DagBuilder
 from core.dataflow.result_bundle import PredictionResultBundle, ResultBundle
-from core.dataflow.visitors import extract_info
+from core.dataflow.visitors import extract_info, set_fit_state
 
 _LOG = logging.getLogger(__name__)
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
@@ -164,7 +164,7 @@ class IncrementalDagRunner:
         # Create DAG using DAG builder.
         self.dag = self._dag_builder.get_dag(self.config)
         #
-        dtf.set_fit_state(self.dag, self._fit_state)
+        set_fit_state(self.dag, self._fit_state)
         #
         self._methods = self._dag_builder.methods
         self._column_to_tags_mapping = (
@@ -212,7 +212,7 @@ class IncrementalDagRunner:
         dbg.dassert_in(method, self._methods)
         df_out = self.dag.run_leq_node(nid, method)["df_out"]
         info = extract_info(self.dag, [method])
-        return dtf.ResultBundle(
+        return ResultBundle(
             config=self.config,
             result_nid=nid,
             method=method,
