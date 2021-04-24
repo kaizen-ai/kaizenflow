@@ -25,8 +25,8 @@ _DEFAULT_PARAMS = {}
 
 
 # NOTE: We need to use a `# type: ignore` for all the @task functions because
-# invoke infers argument type from the code and mypy annotations confuse it
-# (see https://github.com/pyinvoke/invoke/issues/357)
+# pyinvoke infers the argument type from the code and mypy annotations confuse
+# it (see https://github.com/pyinvoke/invoke/issues/357).
 
 
 def set_default_params(params: Dict[str, Any]) -> None:
@@ -703,6 +703,7 @@ def pytest_clean(ctx):  # type: ignore
     import helpers.pytest_ as hpytest
 
     _LOG.info(">")
+    _ = ctx
     hpytest.pytest_clean(".")
 
 
