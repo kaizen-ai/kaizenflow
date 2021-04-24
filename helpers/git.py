@@ -233,7 +233,7 @@ def find_file_in_git_tree(file_name: str, super_module: bool = True) -> str:
     """
     Find the path of a file in a Git tree.
 
-    In practive we find the Git root and then search from there for the
+    In practice we find the Git root and then search from there for the
     file.
     """
     root_dir = get_client_root(super_module=super_module)
@@ -248,26 +248,13 @@ def find_file_in_git_tree(file_name: str, super_module: bool = True) -> str:
     return file_name
 
 
-def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
+def _parse_github_repo_name(repo_name: str) -> str:
     """
-    Return the name of the repo in `git_dir`.
-
-    E.g., "alphamatic/amp"
+    Parse repo name from GitHub in the format:
+        git@github.com:alphamatic/amp
+        https://github.com/alphamatic/amp
     """
-    dbg.dassert_exists(git_dir)
-    # > git remote -v
-    # origin  git@github.com:alphamatic/amp (fetch)
-    # origin  git@github.com:alphamatic/amp (push)
-    cmd = "cd %s; (git remote -v | grep origin | grep fetch)" % git_dir
-    # TODO(gp): Make it more robust, by checking both fetch and push.
-    #  "origin  git@github.com:alphamatic/amp (fetch)"
-    _, output = hsyste.system_to_string(cmd)
-    data: List[str] = output.split()
-    _LOG.debug("data=%s", data)
-    dbg.dassert_eq(len(data), 3, "data='%s'", str(data))
-    # git@github.com:alphamatic/amp
-    repo_name = data[1]
-    m = re.match(r"^.*\.com:(.*)$", repo_name)
+    m = re.match(r"^\S+\.com[:/](.*)$", repo_name)
     dbg.dassert(m, "Can't parse '%s'", repo_name)
     repo_name = m.group(1)  # type: ignore
     _LOG.debug("repo_name=%s", repo_name)
@@ -278,6 +265,28 @@ def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
     suffix_to_remove = ".git"
     if repo_name.endswith(suffix_to_remove):
         repo_name = repo_name[: -len(suffix_to_remove)]
+    return repo_name
+
+
+def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
+    """
+    :return: the symbolic name of the repo in `git_dir`, e.g., "alphamatic/amp"
+    """
+    dbg.dassert_exists(git_dir)
+    cmd = "cd %s; (git remote -v | grep origin | grep fetch)" % git_dir
+    # TODO(gp): Make it more robust, by checking both fetch and push.
+    #  "origin  git@github.com:alphamatic/amp (fetch)"
+    _, output = hsyste.system_to_string(cmd)
+    # > git remote -v
+    # origin  git@github.com:alphamatic/amp (fetch)
+    # origin  git@github.com:alphamatic/amp (push)
+    data: List[str] = output.split()
+    _LOG.debug("data=%s", data)
+    dbg.dassert_eq(len(data), 3, "data='%s'", str(data))
+    # Extract the middle string, e.g., "git@github.com:alphamatic/amp"
+    repo_name = data[1]
+    #
+    repo_name = _parse_github_repo_name(repo_name)
     return repo_name
 
 
