@@ -328,12 +328,9 @@ class TestSmaModel(hut.TestCase):
         #
         output_df = dag.run_leq_node("sma", "fit")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
-        str_output = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
-            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
-        )
-        self.check_string(str_output)
+        # Package results.
+        act = self._package_results(config, info, output_df)
+        self.check_string(act)
 
     def test_fit_dag2(self) -> None:
         """
@@ -357,12 +354,9 @@ class TestSmaModel(hut.TestCase):
         #
         output_df = dag.run_leq_node("sma", "fit")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
-        str_output = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
-            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
-        )
-        self.check_string(str_output)
+        # Package results.
+        act = self._package_results(config, info, output_df)
+        self.check_string(act)
 
     def test_fit_dag3(self) -> None:
         """
@@ -386,12 +380,9 @@ class TestSmaModel(hut.TestCase):
         #
         output_df = dag.run_leq_node("sma", "fit")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
-        str_output = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
-            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
-        )
-        self.check_string(str_output)
+        # Package results.
+        act = self._package_results(config, info, output_df)
+        self.check_string(act)
 
     def test_predict_dag1(self) -> None:
         # Load test data.
@@ -418,12 +409,25 @@ class TestSmaModel(hut.TestCase):
         info = collections.OrderedDict()
         info["fit"] = cdataf.extract_info(dag, ["fit"])
         info["predict"] = cdataf.extract_info(dag, ["predict"])
-        str_output = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
-            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
-        )
-        self.check_string(str_output)
+        # Package results.
+        act = self._package_results(config, info, output_df)
+        self.check_string(act)
+
+    @staticmethod
+    def _package_results(
+        config: cconfi.Config,
+        info: collections.OrderedDict,
+        output_df: pd.DataFrame,
+    ) -> str:
+        act: List[str] = []
+        act.append(hprint.frame("config"))
+        act.append(str(config))
+        act.append(hprint.frame("info"))
+        act.append(str(ccbuild.get_config_from_nested_dict(info)))
+        act.append(hprint.frame("df_out"))
+        act.append(hut.convert_df_to_string(output_df, index=True))
+        act = "\n".join(act)
+        return act
 
     @staticmethod
     def _get_data() -> pd.DataFrame:
@@ -463,12 +467,9 @@ class TestVolatilityModel(hut.TestCase):
         #
         output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
-        str_output = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
-            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
-        )
-        self.check_string(str_output)
+        # Package results.
+        act = self._package_results1(config, info, output_df)
+        self.check_string(act)
 
     def test_fit_dag_correctness1(self) -> None:
         # Load test data.
@@ -495,12 +496,9 @@ class TestVolatilityModel(hut.TestCase):
         # Compare results.
         output_df = zscore_df.join(inverted_rets)
         info = cdataf.extract_info(dag, ["fit"])
-        str_output = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
-            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
-        )
-        self.check_string(str_output)
+        # Package results.
+        act = self._package_results1(config, info, output_df)
+        self.check_string(act)
 
     def test_predict_dag1(self) -> None:
         # Load test data.
@@ -525,12 +523,9 @@ class TestVolatilityModel(hut.TestCase):
         dag.run_leq_node("vol_model", "fit")
         output_df = dag.run_leq_node("vol_model", "predict")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
-        str_output = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
-            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
-        )
-        self.check_string(str_output)
+        # Package results.
+        act = self._package_results1(config, info, output_df)
+        self.check_string(act)
 
     def test_predict_dag_correctness1(self) -> None:
         # Load test data.
@@ -562,12 +557,9 @@ class TestVolatilityModel(hut.TestCase):
         # Compare results.
         output_df = zscore_df.join(inverted_rets)
         info = cdataf.extract_info(dag, ["fit"])
-        str_output = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
-            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
-        )
-        self.check_string(str_output)
+        # Package results.
+        act = self._package_results1(config, info, output_df)
+        self.check_string(act)
 
     def test_col_mode1(self) -> None:
         # Load test data.
@@ -588,12 +580,9 @@ class TestVolatilityModel(hut.TestCase):
         #
         output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
-        str_output = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
-            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
-        )
-        self.check_string(str_output)
+        # Package results.
+        act = self._package_results1(config, info, output_df)
+        self.check_string(act)
 
     def test_col_mode2(self) -> None:
         # Load test data.
@@ -614,12 +603,9 @@ class TestVolatilityModel(hut.TestCase):
         #
         output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
-        str_output = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
-            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
-        )
-        self.check_string(str_output)
+        # Package results.
+        act = self._package_results1(config, info, output_df)
+        self.check_string(act)
 
     def test_fit_multiple_columns(self) -> None:
         # Load test data.
@@ -640,12 +626,9 @@ class TestVolatilityModel(hut.TestCase):
         #
         output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
-        str_output = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('info')}\n{ccbuild.get_config_from_nested_dict(info)}\n"
-            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
-        )
-        self.check_string(str_output)
+        # Package results.
+        act = self._package_results1(config, info, output_df)
+        self.check_string(act)
 
     def test_multiple_columns_with_specified_tau(self) -> None:
         # Load test data.
@@ -692,7 +675,7 @@ class TestVolatilityModel(hut.TestCase):
         output = self._run_volatility_model(data, config)
         self.check_string(output.to_string())
 
-    def test_get_fit_state(self) -> None:
+    def test_get_fit_state1(self) -> None:
         data = self._get_data()
         config = cconfi.Config()
         config["cols"] = ["ret_0"]
@@ -700,14 +683,12 @@ class TestVolatilityModel(hut.TestCase):
         config["nan_mode"] = "leave_unchanged"
         node = cdataf.VolatilityModel("vol_model", **config.to_dict())
         output_df = node.fit(data)["df_out"]
-        str_output = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('state')}\n{node.get_fit_state()}\n"
-            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
-        )
-        self.check_string(str_output)
+        # Package results.
+        state = node.get_fit_state()
+        act = self._package_results2(config, state, output_df)
+        self.check_string(act)
 
-    def test_get_fit_state(self) -> None:
+    def test_get_fit_state2(self) -> None:
         data = self._get_data()
         config = cconfi.Config()
         config["cols"] = ["ret_0"]
@@ -724,12 +705,9 @@ class TestVolatilityModel(hut.TestCase):
         node = cdataf.VolatilityModel("vol_model", **config.to_dict())
         node.set_fit_state(state)
         output_df = node.predict(data)["df_out"]
-        str_output = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('state')}\n{state}\n"
-            f"{hprint.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
-        )
-        self.check_string(str_output)
+        # Package results.
+        act = self._package_results2(config, state, output_df)
+        self.check_string(act)
 
     def test_predict_with_predefined_state(self) -> None:
         data = self._get_data()
@@ -744,6 +722,36 @@ class TestVolatilityModel(hut.TestCase):
         node_predefined.set_fit_state(node_fit.get_fit_state())
         output_predefined = node_predefined.predict(data)["df_out"]
         pd.testing.assert_frame_equal(output_fit, output_predefined)
+
+    @staticmethod
+    def _package_results1(
+        config: cconfi.Config,
+        info: collections.OrderedDict,
+        output_df: pd.DataFrame,
+    ) -> str:
+        act: List[str] = []
+        act.append(hprint.frame("config"))
+        act.append(str(config))
+        act.append(hprint.frame("info"))
+        act.append(str(ccbuild.get_config_from_nested_dict(info)))
+        act.append(hprint.frame("df_out"))
+        act.append(hut.convert_df_to_string(output_df, index=True))
+        act = "\n".join(act)
+        return act
+
+    @staticmethod
+    def _package_results2(
+        config: cconfi.Config, state, output_df: pd.DataFrame
+    ) -> str:
+        act: List[str] = []
+        act.append(hprint.frame("config"))
+        act.append(str(config))
+        act.append(hprint.frame("state"))
+        act.append(str(state))
+        act.append(hprint.frame("df_out"))
+        act.append(hut.convert_df_to_string(output_df, index=True))
+        act = "\n".join(act)
+        return act
 
     @staticmethod
     def _get_data() -> pd.DataFrame:
@@ -794,14 +802,9 @@ class TestVolatilityModulator(hut.TestCase):
         )
         node = cdataf.VolatilityModulator("modulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
-        output_str = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('df_in')}\n"
-            f"{hut.convert_df_to_string(df_in, index=True)}\n"
-            f"{hprint.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(df_out, index=True)}\n"
-        )
-        self.check_string(output_str)
+        # Package results.
+        act = self._package_results(config, df_in, df_out)
+        self.check_string(act)
 
     def test_demodulate1(self) -> None:
         steps_ahead = 2
@@ -817,14 +820,9 @@ class TestVolatilityModulator(hut.TestCase):
         )
         node = cdataf.VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
-        output_str = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('df_in')}\n"
-            f"{hut.convert_df_to_string(df_in, index=True)}\n"
-            f"{hprint.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(df_out, index=True)}\n"
-        )
-        self.check_string(output_str)
+        # Package results.
+        act = self._package_results(config, df_in, df_out)
+        self.check_string(act)
 
     def test_col_mode1(self) -> None:
         steps_ahead = 2
@@ -842,14 +840,9 @@ class TestVolatilityModulator(hut.TestCase):
         )
         node = cdataf.VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
-        output_str = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('df_in')}\n"
-            f"{hut.convert_df_to_string(df_in, index=True)}\n"
-            f"{hprint.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(df_out, index=True)}\n"
-        )
-        self.check_string(output_str)
+        # Package results.
+        act = self._package_results(config, df_in, df_out)
+        self.check_string(act)
 
     def test_col_mode2(self) -> None:
         steps_ahead = 2
@@ -867,14 +860,23 @@ class TestVolatilityModulator(hut.TestCase):
         )
         node = cdataf.VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
-        output_str = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('df_in')}\n"
-            f"{hut.convert_df_to_string(df_in, index=True)}\n"
-            f"{hprint.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(df_out, index=True)}\n"
-        )
-        self.check_string(output_str)
+        # Package results.
+        act = self._package_results(config, df_in, df_out)
+        self.check_string(act)
+
+    @staticmethod
+    def _package_results(
+        config: cconfi.Config, df_in: pd.DataFrame, df_out: pd.DataFrame
+    ) -> str:
+        act: List[str] = []
+        act.append(hprint.frame("config"))
+        act.append(str(config))
+        act.append(hprint.frame("df_in"))
+        act.append(hut.convert_df_to_string(df_in, index=True))
+        act.append(hprint.frame("df_out"))
+        act.append(hut.convert_df_to_string(df_out, index=True))
+        act = "\n".join(act)
+        return act
 
     @staticmethod
     def _get_signal_and_fwd_vol(
@@ -991,11 +993,10 @@ if True:
             """
             Generate a dataframe of the following format:
 
-            EVENT_SENTIMENT_SCORE           zret_0         0
-            2010-01-01 00:00:00           0.496714 -0.138264
-            2010-01-01 00:01:00           0.647689  1.523030
-            2010-01-01 00:02:00          -0.234153 -0.234137
-            2010-01-01 00:03:00           1.579213  0.767435
+            EVENT_SENTIMENT_SCORE           zret_0         0 2010-01-01
+            00:00:00           0.496714 -0.138264 2010-01-01 00:01:00
+            0.647689  1.523030 2010-01-01 00:02:00          -0.234153
+            -0.234137 2010-01-01 00:03:00           1.579213  0.767435
             2010-01-01 00:04:00          -0.469474  0.542560
             """
             np.random.seed(42)
@@ -1041,12 +1042,9 @@ class TestContinuousSarimaxModel(hut.TestCase):
         config = self._get_config((1, 0, 1), (1, 0, 1, 3))
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         df_out = csm.fit(data)["df_out"]
-        output_str = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(df_out, index=True)}"
-        )
-        self.check_string(output_str)
+        # Package results.
+        act = self._package_results(config, df_out)
+        self.check_string(act)
 
     def test_fit_step_one1(self) -> None:
         """
@@ -1059,12 +1057,9 @@ class TestContinuousSarimaxModel(hut.TestCase):
         config["fit_kwargs"] = {"start_params": [0.9999, 0.0001, 1.57e-11]}
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         df_out = csm.fit(data)["df_out"]
-        output_str = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(df_out, index=True)}"
-        )
-        self.check_string(output_str)
+        # Package results.
+        act = self._package_results(config, df_out)
+        self.check_string(act)
 
     def test_fit_with_constant1(self) -> None:
         data = self._get_data([1], [])
@@ -1073,12 +1068,9 @@ class TestContinuousSarimaxModel(hut.TestCase):
         config["add_constant"] = True
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         df_out = csm.fit(data)["df_out"]
-        output_str = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(df_out, index=True)}"
-        )
-        self.check_string(output_str)
+        # Package results.
+        act = self._package_results(config, df_out)
+        self.check_string(act)
 
     def test_fit_no_x1(self) -> None:
         """
@@ -1090,12 +1082,9 @@ class TestContinuousSarimaxModel(hut.TestCase):
         config["x_vars"] = None
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         df_out = csm.fit(data)["df_out"]
-        output_str = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(df_out, index=True)}"
-        )
-        self.check_string(output_str)
+        # Package results.
+        act = self._package_results(config, df_out)
+        self.check_string(act)
 
     def test_compare_to_linear_regression1(self) -> None:
         """
@@ -1133,6 +1122,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         output_df["skl_sarimax_pred_diff"] = (
             output_df["skl_ret_0_1_hat"] - output_df["sarimax_ret_0_1_hat"]
         )
+        # TODO(gp): Factor this out.
         output_str = (
             f"{hprint.frame('sklearn_config')}\n{sklearn_config}\n"
             f"{hprint.frame('sarimax_config')}\n{sarimax_config}\n"
@@ -1177,6 +1167,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         output_df["skl_sarimax_pred_diff"] = (
             output_df["skl_ret_0_3_hat"] - output_df["sarimax_ret_0_3_hat"]
         )
+        # TODO(gp): Factor this out.
         output_str = (
             f"{hprint.frame('sklearn_config')}\n{sklearn_config}\n"
             f"{hprint.frame('sarimax_config')}\n{sarimax_config}\n"
@@ -1193,12 +1184,9 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
-        output_str = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(df_out, index=True)}"
-        )
-        self.check_string(output_str)
+        # Package results.
+        act = self._package_results(config, df_out)
+        self.check_string(act)
 
     def test_predict2(self) -> None:
         """
@@ -1211,12 +1199,9 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
-        output_str = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(df_out, index=True)}"
-        )
-        self.check_string(output_str)
+        # Package results.
+        act = self._package_results(config, df_out)
+        self.check_string(act)
 
     def test_predict_with_nan(self) -> None:
         """
@@ -1232,12 +1217,9 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
-        output_str = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(df_out, index=True)}"
-        )
-        self.check_string(output_str)
+        # Package results.
+        act = self._package_results(config, df_out)
+        self.check_string(act)
 
     def test_predict_different_intervals1(self) -> None:
         """
@@ -1281,12 +1263,9 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
-        output_str = (
-            f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(df_out, index=True)}"
-        )
-        self.check_string(output_str)
+        # Package results.
+        act = self._package_results(config, df_out)
+        self.check_string(act)
 
     def test_predict_different_intervals_no_x1(self) -> None:
         """
@@ -1321,12 +1300,24 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data)
         info = csm.get_info("fit")["model_summary"]
+        # TODO(gp): Use the idiom like `_package_results()` instead of all
+        # these unreadable f-strings.
         output_str = (
             f"{hut.convert_df_to_string(info['info'], index=True)}\n"
             f"{hut.convert_df_to_string(info['tests'], index=True)}\n"
             f"{hut.convert_df_to_string(info['coefs'], index=True)}"
         )
         self.check_string(output_str)
+
+    @staticmethod
+    def _package_results(config: cconfi.Config, df_out: pd.DataFrame) -> str:
+        act: List[str] = []
+        act.append(hprint.frame("config"))
+        act.append(str(config))
+        act.append(hprint.frame("df_out"))
+        act.append(hut.convert_df_to_string(df_out, index=True))
+        act = "\n".join(act)
+        return act
 
     @staticmethod
     def _get_data(
@@ -1388,6 +1379,8 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         cum_y_yhat = mrpp.fit(model_output)["df_out"]
         # TODO(Julia): Ask about creating a `TestFitPredictNode(hut.TestCase)`
         #     class that will take care of this piece.
+        # TODO(gp): Use the idiom like `_package_results()` instead of all
+        # these unreadable f-strings.
         output_str = (
             f"{hprint.frame('config')}\n{config}\n"
             f"{hprint.frame('df_in')}\n"

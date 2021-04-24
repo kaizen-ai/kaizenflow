@@ -298,6 +298,7 @@ def purify_txt_from_client(txt: str) -> str:
 def diff_files(
     file_name1: str, file_name2: str, tag: Optional[str] = None
 ) -> NoReturn:
+    msg = []
     # Diff to screen.
     _, res = hsyste.system_to_string(
         "echo; sdiff -l -w 150 %s %s" % (file_name1, file_name2),
@@ -305,24 +306,24 @@ def diff_files(
         log_level=logging.DEBUG,
     )
     if tag is not None:
-        _LOG.error("%s", "\n" + hprint.frame(tag))
-    _LOG.error(res)
-    # Report how to diff.
+        msg.append("\n" + hprint.frame(tag))
+    msg.append(res)
+    # Save a script to diff.
+    diff_script = "./tmp_diff.sh"
     vimdiff_cmd = "vimdiff %s %s" % (
         os.path.abspath(file_name1),
         os.path.abspath(file_name2),
     )
-    # Save a script to diff.
-    diff_script = "./tmp_diff.sh"
     hio.to_file(diff_script, vimdiff_cmd)
     cmd = "chmod +x " + diff_script
     hsyste.system(cmd)
-    msg = []
+    # Report how to diff.
     msg.append("Diff with:")
     msg.append("> " + vimdiff_cmd)
     msg.append("or running:")
     msg.append("> " + diff_script)
     msg_as_str = "\n".join(msg)
+    # This is not always shown.
     _LOG.error(msg_as_str)
     raise RuntimeError(msg_as_str)
 
@@ -341,7 +342,7 @@ def diff_strings(string1: str, string2: str, tag: Optional[str] = None) -> None:
     diff_files(file_name1, file_name2, tag)
 
 
-def diff_df_monotonic(df: pd.DataFrame):
+def diff_df_monotonic(df: pd.DataFrame) -> None:
     if not df.index.is_monotonic_increasing:
         df2 = df.copy()
         df2.sort_index(inplace=True)
