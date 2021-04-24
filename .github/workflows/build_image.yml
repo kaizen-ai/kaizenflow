@@ -65,7 +65,7 @@ jobs:
         #if: ${{ success() && github.ref == 'refs/heads/master' }}
         uses: appleboy/telegram-action@master
         with:
-          to: ${{ AM_BuildBot }}
+          to: ${{ secrets.AM_TG_BUILDBOT_NAME }}
           token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
           message: |
             A brand new image `amp` was successfully built.
