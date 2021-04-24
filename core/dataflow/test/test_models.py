@@ -1083,7 +1083,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         df_out = csm.fit(data)["df_out"]
         # Package results.
-        act = self._package_results(config, df_out, decimals=3)
+        act = self._package_results(config, df_out, decimals=2)
         self.check_string(act)
 
     def test_compare_to_linear_regression1(self) -> None:
@@ -1185,7 +1185,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
         # Package results.
-        act = self._package_results(config, df_out, decimals=3)
+        act = self._package_results(config, df_out, decimals=2)
         self.check_string(act)
 
     def test_predict2(self) -> None:
@@ -1264,7 +1264,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
         # Package results.
-        act = self._package_results(config, df_out, decimals=3)
+        act = self._package_results(config, df_out, decimals=2)
         self.check_string(act)
 
     def test_predict_different_intervals_no_x1(self) -> None:
@@ -1310,12 +1310,16 @@ class TestContinuousSarimaxModel(hut.TestCase):
         self.check_string(act)
 
     @staticmethod
-    def _package_results(config: cconfi.Config, df_out: pd.DataFrame, decimals=6) -> str:
+    def _package_results(
+        config: cconfi.Config, df_out: pd.DataFrame, decimals=6
+    ) -> str:
         act: List[str] = []
         act.append(hprint.frame("config"))
         act.append(str(config))
         act.append(hprint.frame("df_out"))
-        act.append(hut.convert_df_to_string(df_out, index=True, decimals=decimals))
+        act.append(
+            hut.convert_df_to_string(df_out, index=True, decimals=decimals)
+        )
         act = "\n".join(act)
         return act
 
