@@ -8,6 +8,100 @@ import pytest
 import helpers.git as git
 import helpers.unit_test as hut
 
+import tempfile
+
+
+class TestTestCase(hut.TestCase):
+
+    def test_get_input_dir1(self):
+        """
+        Test hut.get_input_dir().
+        """
+        act = self.get_input_dir()
+        act = hut.purify_txt_from_client(act)
+        exp = "$GIT_ROOT/helpers/test/TestTestCase.test_get_dir1/input"
+        self.assertEqual(act, exp)
+
+    def test_get_input_dir2(self):
+        test_class_name = "test_class"
+        test_method_name = "test_method"
+        act = self.get_input_dir(test_class_name, test_method_name)
+        act = hut.purify_txt_from_client(act)
+        #
+        exp = "$GIT_ROOT/helpers/test/test_class.test_method/input"
+        self.assertEqual(act, exp)
+
+    def test_get_output_dir1(self):
+        """
+        Test hut.get_output_dir().
+        """
+        act = self.get_output_dir()
+        act = hut.purify_txt_from_client(act)
+        exp = "$GIT_ROOT/helpers/test/TestTestCase.test_get_output_dir1/output"
+        self.assertEqual(act, exp)
+
+    def test_get_scratch_space1(self):
+        """
+        Test hut.get_scratch_space().
+        """
+        act = self.get_scratch_space()
+        act = hut.purify_txt_from_client(act)
+        exp = "$GIT_ROOT/helpers/test/TestTestCase.test_get_scratch_space1/tmp.scratch"
+        self.assertEqual(act, exp)
+
+    def test_get_scratch_space2(self):
+        test_class_name = "test_class"
+        test_method_name = "test_method"
+        act = self.get_scratch_space(test_class_name, test_method_name)
+        act = hut.purify_txt_from_client(act)
+        exp = "$GIT_ROOT/helpers/test/test_class.test_method/tmp.scratch"
+        self.assertEqual(act, exp)
+
+    def test_assert_equal1(self):
+        actual = "hello world"
+        expected = actual
+        self.assert_equal(actual, expected)
+
+    def test_assert_not_equal1(self):
+        actual = "hello world"
+        expected = "hello world "
+        tmp_dir = tempfile.gettempdir()
+        with self.assertRaises(RuntimeError) as cm:
+            self.assert_equal(actual, expected, dst_dir=tmp_dir)
+        self.check_string(str(cm))
+
+    def test_assert_not_equal2(self):
+        actual = "hello world"
+        expected = "hello world "
+        tmp_dir = tempfile.gettempdir()
+        self.assert_equal(actual, expected, assert_on_error=False, dst_dir=tmp_dir)
+        # Compute the signature from the dir.
+        act = hut.get_dir_signature(tmp_dir)
+        exp = ""
+        self.assertEqual(act, exp)
+
+    def test_assert_equal_fuzzy_match1(self):
+        actual = "hello world"
+        expected = "hello world "
+        is_equal = self.assert_equal(actual, expected, fuzzy_match=True)
+        self.assertTrue(is_equal)
+
+    def test_assert_equal5(self):
+        actual = "hello world"
+        expected = "hello world2"
+        with self.assertRaises(RuntimeError) as cm:
+            self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_check_string1(self):
+        act = "hello world"
+        self.check_string(act)
+
+    def test_check_string2(self):
+        base_dir_name = tempfile.gettempdir()
+        self.set_base_dir_name(base_dir_name)
+        #input_dir
+
+
 
 class Test_unit_test1(hut.TestCase):
     @pytest.mark.not_docker
