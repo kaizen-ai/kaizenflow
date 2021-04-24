@@ -96,7 +96,7 @@ jobs:
           target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Send Telegram notification for success
-        if: ${{ success() && github.head_ref == "master" }}
+        if: ${{ success() && github.head_ref == 'master' }}
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}

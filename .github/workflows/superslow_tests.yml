@@ -1,26 +1,41 @@
-name: Superslow tests
+name: Supersuperslow tests
 on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+    branches:
+      - master
+  push:
+    branches:
+      - master
   workflow_dispatch:
   schedule:
-    # Run this once a day.
+    # Run this once a day even if there are no commit.
     - cron:  '0 0 */1 * *'
 
 jobs:
-  Run_superslow_tests_mark_commit:
+
+  Mark_commit:
     runs-on: ubuntu-latest
     steps:
       - name: Post status if was triggered manually
         if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: Sibz/github-status-action@v1
         with:
-          authToken: ${{secrets.GITHUB_TOKEN}}
+          authToken: ${{ secrets.GITHUB_TOKEN }}
           context: "Run_superslow_tests"
           description: 'Added to queue, waiting for free runner (manual run)'
           state: pending
           sha: ${{ github.sha }}
           target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      - name: Cancel previous runs
+        if: ${{ github.head_ref != 'master' }}
+        uses: styfle/cancel-workflow-action@0.9.0
+        with:
+          access_token: ${{ github.token }}
+
   Run_superslow_tests:
-    runs-on: [SUPERSLOW]
+    runs-on: ubuntu-latest
+
     steps:
       - name: Post status if was triggered manually
         if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -32,12 +47,13 @@ jobs:
           state: pending
           sha: ${{ github.sha }}
           target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-2
+          aws-region: us-east-1
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -50,16 +66,22 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: true
+          # TODO(gp): Not needed?
           ssh-key: ${{ secrets.GH_ACTION_SSH_PRIVATE_KEY }}
 
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r .github/gh_requirements.txt
+
       - name: Pull image
-        run: make docker_pull
+        run: invoke docker_pull --mode="current"
 
       - name: Run superslow tests
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-        run: make run_superslow_tests.gh_action
+        run: invoke run_superslow_tests
 
       - name: Post status if was triggered manually
         if: ${{ always() && github.event_name == 'workflow_dispatch' }}
@@ -72,12 +94,30 @@ jobs:
           sha: ${{ github.sha }}
           target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-      - name: Send Telegram notification
-        if: ${{ failure() && github.event_name == 'schedule' }}
+      - name: Send Telegram notification for success
+        if: ${{ success() && github.head_ref == 'master' }}
         uses: appleboy/telegram-action@master
         with:
-          to: ${{ secrets.P1_TG_BUILD_MONITORING_CHANNEL_ID }}
-          token: ${{ secrets.P1_GH_BOT_TELEGRAM_TOKEN }}
+          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
+          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
           message: |
-            Build failure 'Superslow tests'.
+            🎉 superslow tests succeded at master
+            Build failure '${{ github.workflow }}'
+            Repo: '${{ github.repository }}'
+            Branch: '$${{ github.head_ref }}'
+            Event: '${{ github.event_name }}'
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Send Telegram notification for failure
+        if: ${{ failure() }}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
+          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
+          message: |
+            🧨 SUPERSLOW TESTS FAILED
+            Build failure '${{ github.workflow }}'
+            Repo: '${{ github.repository }}'
+            Branch: '$${{ github.head_ref }}'
+            Event: '${{ github.event_name }}'
             https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
