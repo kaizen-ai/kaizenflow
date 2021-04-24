@@ -24,6 +24,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: true
+          # TODO(gp): Not needed?
           ssh-key: ${{ secrets.GH_ACTION_SSH_PRIVATE_KEY }}
 
       - name: Install dependencies
@@ -78,7 +79,7 @@ jobs:
           token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
           message: |
             🎉 A new Docker image `amp` was successfully built. Please pull the new image.
-            See https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - name: Send Telegram notification for failure
         if: ${{ failure() }}
@@ -88,4 +89,4 @@ jobs:
           token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
           message: |
             🧨 IMAGE BUILD PROCESS FAILED
-            See https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

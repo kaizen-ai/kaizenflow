@@ -207,20 +207,32 @@ def docker_kill_all(ctx):  # type: ignore
 
 
 @task
-def docker_pull(ctx, stage=_STAGE):  # type: ignore
+def docker_pull(ctx, stage=_STAGE, mode="all"):  # type: ignore
     """
-    Pull all the needed images from the registry.
+    Pull images from the registry.
     """
     _LOG.info(">")
-    base_image = ""
-    image = _get_image(stage, base_image)
-    cmd = f"docker pull {image}"
-    ctx.run(cmd)
+    # Default is all the images.
+    if mode == "all":
+        mode = "current dev_tools"
+    # Parse the images.
+    image_tokens = [token.rstrip().lstrip() for token in mode.split()]
+    _LOG.info("image_tokens=%s", ", ".join(image_tokens))
     #
-    image = get_default_value("DEV_TOOLS_IMAGE_PROD")
-    _check_image(image)
-    cmd = f"docker pull {image}"
-    ctx.run(cmd)
+    for token in image_tokens:
+        if token == "":
+            continue
+        if token == "current":
+            base_image = ""
+            image = _get_image(stage, base_image)
+        elif token == "dev_tools":
+            image = get_default_value("DEV_TOOLS_IMAGE_PROD")
+        else:
+            raise ValueError("Can't recognize image token '%s'" % token)
+        _LOG.info("token='%s': image='%s'", token, image)
+        _check_image(image)
+        cmd = f"docker pull {image}"
+        ctx.run(cmd)
 
 
 # In the following we use functions from `hsyste` instead of `ctx.run()` since
@@ -796,16 +808,6 @@ def pytest_clean(ctx):  # type: ignore
 # #############################################################################
 # Linter.
 # #############################################################################
-
-
-@task
-def lint_docker_pull(ctx):  # type: ignore
-    _LOG.info(">")
-    ecr_base_path = "083233266530.dkr.ecr.us-east-2.amazonaws.com"
-    dev_tools_image_prod = f"{ecr_base_path}/dev_tools:prod"
-    docker_login(ctx)
-    cmd = f"docker pull {dev_tools_image_prod}"
-    ctx.run(cmd, pty=True)
 
 
 @task
