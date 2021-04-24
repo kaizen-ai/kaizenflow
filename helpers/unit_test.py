@@ -528,6 +528,8 @@ class TestCase(unittest.TestCase):
         # Print banner to signal starting of a new test.
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
         _LOG.debug("\n%s", hprint.frame(func_name))
+        # The base directory is the one including the class under test.
+        self.base_dir_name = os.path.dirname(inspect.getfile(self.__class__))
         # Set the default pandas options (see AmpTask1140).
         self.old_pd_options = get_pd_default_values()
         set_pd_default_values()
@@ -558,6 +560,7 @@ class TestCase(unittest.TestCase):
         dir_name = self.get_input_dir()
         hio.create_dir(dir_name, incremental=True)
         _LOG.info("Creating dir_name=%s", dir_name)
+        #
         dir_name = self.get_output_dir()
         hio.create_dir(dir_name, incremental=True)
         _LOG.info("Creating dir_name=%s", dir_name)
@@ -568,23 +571,18 @@ class TestCase(unittest.TestCase):
         test_method_name: Optional[str] = None,
     ) -> str:
         """
-        Return the path of the directory storing input data for this test
-        class.
+        Return the path of the directory storing input data for this test class.
 
         :return: dir name
         """
         dir_name = (
-            self._get_current_path(
-                test_class_name=test_class_name, test_method_name=test_method_name
-            )
-            + "/input"
+            self._get_current_path( test_class_name, test_method_name ) + "/input"
         )
         return dir_name
 
     def get_output_dir(self) -> str:
         """
-        Return the path of the directory storing output data for this test
-        class.
+        Return the path of the directory storing output data for this test class.
 
         :return: dir name
         """
@@ -617,8 +615,16 @@ class TestCase(unittest.TestCase):
     def assert_equal(
         self, actual: str, expected: str, fuzzy_match: bool = False
     ) -> None:
+        """
+        Assert if `actual` and `expected` are different and print info about the
+        comparison.
+        """
         dbg.dassert_in(type(actual), (bytes, str), "actual=%s", str(actual))
         dbg.dassert_in(type(expected), (bytes, str), "expected=%s", str(expected))
+        # TODO(gp): Add purify_text.
+        # # Remove reference from the current environment.
+        # if purify_text:
+        #     actual = purify_txt_from_client(actual)
         #
         dir_name = self._get_current_path()
         _LOG.debug("dir_name=%s", dir_name)
@@ -631,15 +637,17 @@ class TestCase(unittest.TestCase):
         )
 
     def check_string(
-        self,
-        actual: str,
-        fuzzy_match: bool = False,
-        purify_text: bool = False,
-        use_gzip: bool = False,
+            self,
+            actual: str,
+            fuzzy_match: bool = False,
+            purify_text: bool = False,
+            use_gzip: bool = False,
+            tag: str = "test",
     ) -> None:
         """
-        Check the actual outcome of a test against the expected outcomes
-        contained in the file and/or updates the golden reference file with the
+        Check the actual outcome of a test against the expected outcome
+        contained in the file.
+        If `--update_outcomes` is used, updates the golden reference file with the
         actual outcome.
 
         :param: purify_text: remove some artifacts (e.g., user names,
@@ -648,19 +656,26 @@ class TestCase(unittest.TestCase):
         """
         dbg.dassert_in(type(actual), (bytes, str))
         #
-        dir_name = self._get_current_path()
-        _LOG.debug("dir_name=%s", dir_name)
-        hio.create_dir(dir_name, incremental=True)
-        dbg.dassert_exists(dir_name)
-        # Get the expected outcome.
-        file_name = self.get_output_dir() + "/test.txt"
+        dir_name, file_name = _get_golden_outcome_file_name(tag)
         if use_gzip:
             file_name += ".gz"
         _LOG.debug("file_name=%s", file_name)
-        # Remove reference from the current purify.
+        # Remove reference from the current environment.
         if purify_text:
             actual = purify_txt_from_client(actual)
-        #
+
+        def _update_outcome(file_name_: str, actual_: str, use_gzip_: bool) -> None:
+            hio.create_enclosing_dir(file_name_, incremental=True)
+            hio.to_file(file_name_, actual_, use_gzip=use_gzip_)
+            # Add to git repo.
+            cmd = "git add %s" % file_name_
+            rc = hsyste.system(cmd, abort_on_error=False)
+            if rc:
+                _LOG.warning(
+                    "Can't run '%s': you need to add the file manually",
+                    cmd,
+                )
+
         if get_update_tests():
             # Determine whether outcome needs to be updated.
             outcome_updated = False
@@ -672,20 +687,13 @@ class TestCase(unittest.TestCase):
             else:
                 # The golden outcome doesn't exist.
                 outcome_updated = True
+            _LOG.debug("outcome_updated=%s", outcome_updated)
             if outcome_updated:
-                # Update the test result.
-                _LOG.warning("Test outcome updated ... ")
-                hio.to_file(file_name, actual, use_gzip=use_gzip)
-                # Add to git.
-                cmd = "git add %s" % file_name
-                rc = hsyste.system(cmd, abort_on_error=False)
-                if rc:
-                    _LOG.warning(
-                        "Can't run '%s': you need to add the file " "manually",
-                        cmd,
-                    )
+                # Update the golden outcome.
+                _LOG.warning("Golden outcome updated in '%s'", file_name)
+                _update_outcome(file_name, actual, use_gzip)
         else:
-            # Just check the test result.
+            # Check the test result.
             if os.path.exists(file_name):
                 # Golden outcome is available: check the actual outcome against
                 # the golden outcome.
@@ -695,32 +703,117 @@ class TestCase(unittest.TestCase):
                     actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match
                 )
             else:
-                # No golden outcome available: save the result in a tmp file.
-                tmp_file_name = file_name + ".tmp"
-                hio.to_file(tmp_file_name, actual)
-                msg = "Can't find golden in %s\nSaved actual outcome in %s" % (
-                    file_name,
-                    tmp_file_name,
+                # No golden outcome available: save the result.
+                _LOG.warning("Can't find golden outcome file '%s': updating it",
+                             file_name)
+                _update_outcome(file_name, actual, use_gzip)
+
+    def _get_golden_outcome_file_name(self, tag: str) -> Tuple[str, str]:
+        dir_name = self._get_current_path()
+        _LOG.debug("dir_name=%s", dir_name)
+        hio.create_dir(dir_name, incremental=True)
+        dbg.dassert_exists(dir_name)
+        # Get the expected outcome.
+        file_name = self.get_output_dir() + f"/{tag}.txt"
+        return dir_name, file_name
+
+    def check_dataframe(
+            self,
+            actual: pd.DataFrame,
+            err_threshold: float = 0.05,
+            tag: str = "test_df",
+    ) -> None:
+        """
+        Like check_string() but for pandas dataframes, instead of strings.
+        """
+        dbg.dassert_isinstance(actual, pd.DataFrame)
+        #
+        dir_name, file_name = _get_golden_outcome_file_name(tag)
+        _LOG.debug("file_name=%s", file_name)
+
+        def _compare_outcome(file_name_: str, actual_: pd.DataFrame, err_threshold_: float) -> bool:
+            dbg.dassert_lte(0, err_threshold_)
+            dbg.dassert_lte(err_threshold_, 1.0)
+            expected = pd.DataFrame.read_csv(file_name_)
+            ret = True
+            if actual_.columns != expected.columns:
+                _LOG.debug("Columns are different: %s != %s", str(actual_.columns), str(expected.columns))
+                ret = False
+            is_close = np.allclose(actual_, expected, rtol=err_threshold_, equal_nan=True)
+            if not is_close:
+                _LOG.debug("Dataframes are not close")
+                ret = False
+            _LOG.debug("ret=%s", ret)
+            return ret
+
+        def _update_outcome(file_name_: str, actual_: pd.DataFrame) -> None:
+            hio.create_enclosing_dir(file_name_, incremental=True)
+            actual_.to_csv(file_name)
+            # Add to git.
+            cmd = "git add %s" % file_name_
+            rc = hsyste.system(cmd, abort_on_error=False)
+            if rc:
+                _LOG.warning(
+                    "Can't run '%s': you need to add the file manually",
+                    cmd,
                 )
-                raise RuntimeError(msg)
+
+        file_exists = os.path.exists(file_name)
+        if get_update_tests():
+            # Determine whether outcome needs to be updated.
+            outcome_updated = False
+            if file_exists:
+                is_equal = _compare_outcome(file_name, actual, err_threshold)
+                if not is_equal:
+                    outcome_updated = True
+            else:
+                # The golden outcome doesn't exist.
+                outcome_updated = True
+            _LOG.debug("outcome_updated=%s", outcome_updated)
+            if outcome_updated:
+                # Update the golden outcome.
+                _LOG.warning("Golden outcome updated in '%s'", file_name)
+                _update_outcome(file_name, actual)
+        else:
+            # Check the test result.
+            if file_exists:
+                # Golden outcome is available: check the actual outcome against
+                # the golden outcome.
+                is_equal = _compare_outcome(file_name, actual, err_threshold)
+                if is_equal:
+                    test_name = self._get_test_name()
+                    _assert_equal(
+                        str(actual), str(expected), test_name, dir_name,
+                    )
+
+            else:
+                # No golden outcome available: save the result.
+                _LOG.warning("Can't find golden outcome file '%s': updating it",
+                             file_name)
+                _update_outcome(file_name, actual)
 
     def _get_test_name(self) -> str:
         """
-        :return: full test name as class.method.
+        Return the full test name as `/class.method`.
         """
+        # TODO(gp): Why do we need the leading "/".
         return "/%s.%s" % (self.__class__.__name__, self._testMethodName)
 
     def _get_current_path(
         self,
-        test_class_name: Optional[Any] = None,
-        test_method_name: Optional[Any] = None,
+        test_class_name: Optional[str] = None,
+        test_method_name: Optional[str] = None,
     ) -> str:
-        dir_name = os.path.dirname(inspect.getfile(self.__class__))
+        """
+        Return the name of the directory containing the input / output data
+        (e.g., ./core/dataflow/test/TestContinuousSarimaxModel.test_compare)
+        """
         if test_class_name is None:
             test_class_name = self.__class__.__name__
         if test_method_name is None:
             test_method_name = self._testMethodName
-        dir_name = dir_name + "/%s.%s" % (test_class_name, test_method_name)
+        # E.g., ./core/dataflow/test/TestContinuousSarimaxModel.test_compare
+        dir_name = self.base_dir_name + "/%s.%s" % (test_class_name, test_method_name)
         return dir_name
 
 

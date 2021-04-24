@@ -1300,7 +1300,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm.fit(data)
         info = csm.get_info("fit")["model_summary"]
         # TODO(gp): Use the idiom like `_package_results()` instead of all
-        # these unreadable f-strings.
+        #  these unreadable f-strings.
         act = (
             f"{hut.convert_df_to_string(info['info'], index=True)}\n"
             f"{hut.convert_df_to_string(info['tests'], index=True)}\n"
@@ -1381,9 +1381,9 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         )
         cum_y_yhat = mrpp.fit(model_output)["df_out"]
         # TODO(Julia): Ask about creating a `TestFitPredictNode(hut.TestCase)`
-        #     class that will take care of this piece.
+        #  class that will take care of this piece.
         # TODO(gp): Use the idiom like `_package_results()` instead of all
-        # these unreadable f-strings.
+        #  these unreadable f-strings.
         act = (
             f"{hprint.frame('config')}\n{config}\n"
             f"{hprint.frame('df_in')}\n"
