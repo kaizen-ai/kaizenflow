@@ -69,12 +69,23 @@ jobs:
 #        if: ${{ success() && github.ref == 'refs/heads/master' }}
 #        run: make docker_push_image.latest
 
-      - name: Send Telegram notification
+      - name: Send Telegram notification for success
+        if: ${{ success() }}
         #if: ${{ success() && github.ref == 'refs/heads/master' }}
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
           token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
           message: |
-            A new Docker image `amp` was successfully built. Please pull the new image.
-            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            🎉 A new Docker image `amp` was successfully built. Please pull the new image.
+            See https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Send Telegram notification for failure
+        if: ${{ failure() }}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
+          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
+          message: |
+            🧨 IMAGE BUILD PROCESS FAILED
+            See https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
