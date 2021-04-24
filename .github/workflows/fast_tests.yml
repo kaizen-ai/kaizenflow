@@ -35,7 +35,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: Sibz/github-status-action@v1
         with:
-          authToken: ${{secrets.GITHUB_TOKEN}}
+          authToken: ${{ secrets.GITHUB_TOKEN }}
           context: "Run_fast_tests"
           description: 'Added to queue, waiting for free runner (manual run)'
           state: pending
@@ -109,17 +109,6 @@ jobs:
           sha: ${{ github.sha }}
           target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-      - name: Send Telegram notification
-        if: ${{ failure() && github.event_name == 'schedule' }}
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.P1_TG_BUILD_MONITORING_CHANNEL_ID }}
-          token: ${{ secrets.P1_GH_BOT_TELEGRAM_TOKEN }}
-          message: |
-            Build failure `${{ github.workflow }}`
-            Repo: ${{ github.repository }}
-            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
       - name: Send Telegram notification for failure
         if: ${{ failure() }}
         #if: ${{ failure() && github.event_name == 'schedule' }}
@@ -131,4 +120,6 @@ jobs:
             🧨 FAST TESTS FAILED
             Build failure `${{ github.workflow }}`
             Repo: ${{ github.repository }}
+            Branch: $${{ github.head_ref }}
+            Event: ${{ github.event_name }}
             https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

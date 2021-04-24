@@ -46,8 +46,8 @@ class TestContinuousSkLearnModel(hut.TestCase):
         dag.add_node(node)
         dag.connect("data", "sklearn")
         #
-        output_df = dag.run_leq_node("sklearn", "fit")["df_out"]
-        self.check_string(output_df.to_string())
+        df_out = dag.run_leq_node("sklearn", "fit")["df_out"]
+        self.check_string(df_out.to_string())
 
     def test_fit_dag2(self) -> None:
         pred_lag = 2
@@ -67,8 +67,8 @@ class TestContinuousSkLearnModel(hut.TestCase):
         dag.add_node(node)
         dag.connect("data", "sklearn")
         #
-        output_df = dag.run_leq_node("sklearn", "fit")["df_out"]
-        self.check_string(output_df.to_string())
+        df_out = dag.run_leq_node("sklearn", "fit")["df_out"]
+        self.check_string(df_out.to_string())
 
     def test_fit_dag3(self) -> None:
         """
@@ -94,8 +94,8 @@ class TestContinuousSkLearnModel(hut.TestCase):
         dag.add_node(node)
         dag.connect("data", "sklearn")
         #
-        output_df = dag.run_leq_node("sklearn", "fit")["df_out"]
-        self.check_string(output_df.to_string())
+        df_out = dag.run_leq_node("sklearn", "fit")["df_out"]
+        self.check_string(df_out.to_string())
 
     def test_predict_dag1(self) -> None:
         pred_lag = 1
@@ -120,8 +120,8 @@ class TestContinuousSkLearnModel(hut.TestCase):
         dag.connect("data", "sklearn")
         #
         dag.run_leq_node("sklearn", "fit")
-        output_df = dag.run_leq_node("sklearn", "predict")["df_out"]
-        self.check_string(output_df.to_string())
+        df_out = dag.run_leq_node("sklearn", "predict")["df_out"]
+        self.check_string(df_out.to_string())
 
     def test_predict_dag2(self) -> None:
         pred_lag = 2
@@ -146,8 +146,8 @@ class TestContinuousSkLearnModel(hut.TestCase):
         dag.connect("data", "sklearn")
         #
         dag.run_leq_node("sklearn", "fit")
-        output_df = dag.run_leq_node("sklearn", "predict")["df_out"]
-        self.check_string(output_df.to_string())
+        df_out = dag.run_leq_node("sklearn", "predict")["df_out"]
+        self.check_string(df_out.to_string())
 
     def _get_config(self, steps_ahead: int) -> cconfi.Config:
         config = cconfi.Config()
@@ -200,8 +200,8 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         dag.add_node(node)
         dag.connect("data", "sklearn")
         #
-        output_df = dag.run_leq_node("sklearn", "fit")["df_out"]
-        self.check_string(output_df.to_string())
+        df_out = dag.run_leq_node("sklearn", "fit")["df_out"]
+        self.check_string(df_out.to_string())
 
     def test_predict_dag1(self) -> None:
         # Load test data.
@@ -227,8 +227,8 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         dag.connect("data", "sklearn")
         #
         dag.run_leq_node("sklearn", "fit")
-        output_df = dag.run_leq_node("sklearn", "predict")["df_out"]
-        self.check_string(output_df.to_string())
+        df_out = dag.run_leq_node("sklearn", "predict")["df_out"]
+        self.check_string(df_out.to_string())
 
     def _get_data(self) -> pd.DataFrame:
         """
@@ -262,8 +262,8 @@ class TestResidualizer(hut.TestCase):
         dag.add_node(node)
         dag.connect("data", "sklearn")
         #
-        output_df = dag.run_leq_node("sklearn", "fit")["df_out"]
-        self.check_string(output_df.to_string())
+        df_out = dag.run_leq_node("sklearn", "fit")["df_out"]
+        self.check_string(df_out.to_string())
 
     def test_predict_dag1(self) -> None:
         # Load test data.
@@ -289,8 +289,8 @@ class TestResidualizer(hut.TestCase):
         dag.connect("data", "sklearn")
         #
         dag.run_leq_node("sklearn", "fit")
-        output_df = dag.run_leq_node("sklearn", "predict")["df_out"]
-        self.check_string(output_df.to_string())
+        df_out = dag.run_leq_node("sklearn", "predict")["df_out"]
+        self.check_string(df_out.to_string())
 
     def _get_data(self) -> pd.DataFrame:
         """
@@ -326,10 +326,10 @@ class TestSmaModel(hut.TestCase):
         dag.add_node(node)
         dag.connect("data", "sma")
         #
-        output_df = dag.run_leq_node("sma", "fit")["df_out"]
+        df_out = dag.run_leq_node("sma", "fit")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
         # Package results.
-        act = self._package_results(config, info, output_df)
+        act = self._package_results(config, info, df_out)
         self.check_string(act)
 
     def test_fit_dag2(self) -> None:
@@ -352,10 +352,10 @@ class TestSmaModel(hut.TestCase):
         dag.add_node(node)
         dag.connect("data", "sma")
         #
-        output_df = dag.run_leq_node("sma", "fit")["df_out"]
+        df_out = dag.run_leq_node("sma", "fit")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
         # Package results.
-        act = self._package_results(config, info, output_df)
+        act = self._package_results(config, info, df_out)
         self.check_string(act)
 
     def test_fit_dag3(self) -> None:
@@ -378,10 +378,10 @@ class TestSmaModel(hut.TestCase):
         dag.add_node(node)
         dag.connect("data", "sma")
         #
-        output_df = dag.run_leq_node("sma", "fit")["df_out"]
+        df_out = dag.run_leq_node("sma", "fit")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
         # Package results.
-        act = self._package_results(config, info, output_df)
+        act = self._package_results(config, info, df_out)
         self.check_string(act)
 
     def test_predict_dag1(self) -> None:
@@ -405,19 +405,19 @@ class TestSmaModel(hut.TestCase):
         dag.connect("data", "sma")
         #
         dag.run_leq_node("sma", "fit")
-        output_df = dag.run_leq_node("sma", "predict")["df_out"]
+        df_out = dag.run_leq_node("sma", "predict")["df_out"]
         info = collections.OrderedDict()
         info["fit"] = cdataf.extract_info(dag, ["fit"])
         info["predict"] = cdataf.extract_info(dag, ["predict"])
         # Package results.
-        act = self._package_results(config, info, output_df)
+        act = self._package_results(config, info, df_out)
         self.check_string(act)
 
     @staticmethod
     def _package_results(
         config: cconfi.Config,
         info: collections.OrderedDict,
-        output_df: pd.DataFrame,
+        df_out: pd.DataFrame,
     ) -> str:
         act: List[str] = []
         act.append(hprint.frame("config"))
@@ -425,7 +425,7 @@ class TestSmaModel(hut.TestCase):
         act.append(hprint.frame("info"))
         act.append(str(ccbuild.get_config_from_nested_dict(info)))
         act.append(hprint.frame("df_out"))
-        act.append(hut.convert_df_to_string(output_df, index=True))
+        act.append(hut.convert_df_to_string(df_out, index=True))
         act = "\n".join(act)
         return act
 
@@ -465,10 +465,10 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(node)
         dag.connect("data", "vol_model")
         #
-        output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
+        df_out = dag.run_leq_node("vol_model", "fit")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
         # Package results.
-        act = self._package_results1(config, info, output_df)
+        act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
     def test_fit_dag_correctness1(self) -> None:
@@ -494,10 +494,10 @@ class TestVolatilityModel(hut.TestCase):
             "ret_0_inverted"
         )
         # Compare results.
-        output_df = zscore_df.join(inverted_rets)
+        df_out = zscore_df.join(inverted_rets)
         info = cdataf.extract_info(dag, ["fit"])
         # Package results.
-        act = self._package_results1(config, info, output_df)
+        act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
     def test_predict_dag1(self) -> None:
@@ -521,10 +521,10 @@ class TestVolatilityModel(hut.TestCase):
         dag.connect("data", "vol_model")
         #
         dag.run_leq_node("vol_model", "fit")
-        output_df = dag.run_leq_node("vol_model", "predict")["df_out"]
+        df_out = dag.run_leq_node("vol_model", "predict")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
         # Package results.
-        act = self._package_results1(config, info, output_df)
+        act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
     def test_predict_dag_correctness1(self) -> None:
@@ -555,10 +555,10 @@ class TestVolatilityModel(hut.TestCase):
             "ret_0_inverted"
         )
         # Compare results.
-        output_df = zscore_df.join(inverted_rets)
+        df_out = zscore_df.join(inverted_rets)
         info = cdataf.extract_info(dag, ["fit"])
         # Package results.
-        act = self._package_results1(config, info, output_df)
+        act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
     def test_col_mode1(self) -> None:
@@ -578,10 +578,10 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(node)
         dag.connect("data", "vol_model")
         #
-        output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
+        df_out = dag.run_leq_node("vol_model", "fit")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
         # Package results.
-        act = self._package_results1(config, info, output_df)
+        act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
     def test_col_mode2(self) -> None:
@@ -601,10 +601,10 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(node)
         dag.connect("data", "vol_model")
         #
-        output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
+        df_out = dag.run_leq_node("vol_model", "fit")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
         # Package results.
-        act = self._package_results1(config, info, output_df)
+        act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
     def test_fit_multiple_columns(self) -> None:
@@ -624,10 +624,10 @@ class TestVolatilityModel(hut.TestCase):
         dag.add_node(node)
         dag.connect("data", "vol_model")
         #
-        output_df = dag.run_leq_node("vol_model", "fit")["df_out"]
+        df_out = dag.run_leq_node("vol_model", "fit")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
         # Package results.
-        act = self._package_results1(config, info, output_df)
+        act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
     def test_multiple_columns_with_specified_tau(self) -> None:
@@ -682,10 +682,10 @@ class TestVolatilityModel(hut.TestCase):
         config["steps_ahead"] = 2
         config["nan_mode"] = "leave_unchanged"
         node = cdataf.VolatilityModel("vol_model", **config.to_dict())
-        output_df = node.fit(data)["df_out"]
+        df_out = node.fit(data)["df_out"]
         # Package results.
         state = node.get_fit_state()
-        act = self._package_results2(config, state, output_df)
+        act = self._package_results2(config, state, df_out)
         self.check_string(act)
 
     def test_get_fit_state2(self) -> None:
@@ -704,9 +704,9 @@ class TestVolatilityModel(hut.TestCase):
         }
         node = cdataf.VolatilityModel("vol_model", **config.to_dict())
         node.set_fit_state(state)
-        output_df = node.predict(data)["df_out"]
+        df_out = node.predict(data)["df_out"]
         # Package results.
-        act = self._package_results2(config, state, output_df)
+        act = self._package_results2(config, state, df_out)
         self.check_string(act)
 
     def test_predict_with_predefined_state(self) -> None:
@@ -727,7 +727,7 @@ class TestVolatilityModel(hut.TestCase):
     def _package_results1(
         config: cconfi.Config,
         info: collections.OrderedDict,
-        output_df: pd.DataFrame,
+        df_out: pd.DataFrame,
     ) -> str:
         act: List[str] = []
         act.append(hprint.frame("config"))
@@ -735,13 +735,13 @@ class TestVolatilityModel(hut.TestCase):
         act.append(hprint.frame("info"))
         act.append(str(ccbuild.get_config_from_nested_dict(info)))
         act.append(hprint.frame("df_out"))
-        act.append(hut.convert_df_to_string(output_df, index=True))
+        act.append(hut.convert_df_to_string(df_out, index=True))
         act = "\n".join(act)
         return act
 
     @staticmethod
     def _package_results2(
-        config: cconfi.Config, state, output_df: pd.DataFrame
+        config: cconfi.Config, state, df_out: pd.DataFrame
     ) -> str:
         act: List[str] = []
         act.append(hprint.frame("config"))
@@ -749,7 +749,7 @@ class TestVolatilityModel(hut.TestCase):
         act.append(hprint.frame("state"))
         act.append(str(state))
         act.append(hprint.frame("df_out"))
-        act.append(hut.convert_df_to_string(output_df, index=True))
+        act.append(hut.convert_df_to_string(df_out, index=True))
         act = "\n".join(act)
         return act
 
@@ -906,16 +906,16 @@ if True:
         def test_fit_dag1(self) -> None:
             dag = self._get_dag()
             #
-            output_df = dag.run_leq_node("deepar", "fit")["df_out"]
-            self.check_string(output_df.to_string())
+            df_out = dag.run_leq_node("deepar", "fit")["df_out"]
+            self.check_string(df_out.to_string())
 
         @pytest.mark.skip("Disabled because of PTask2440")
         def test_predict_dag1(self) -> None:
             dag = self._get_dag()
             #
             dag.run_leq_node("deepar", "fit")
-            output_df = dag.run_leq_node("deepar", "predict")["df_out"]
-            self.check_string(output_df.to_string())
+            df_out = dag.run_leq_node("deepar", "predict")["df_out"]
+            self.check_string(df_out.to_string())
 
         def _get_dag(self) -> cdataf.DAG:
             mxnet.random.seed(0)
@@ -984,10 +984,10 @@ if True:
             deepar = cdataf.DeepARGlobalModel(**config.to_dict())
             dag.add_node(deepar)
             dag.connect("local_ts", "deepar")
-            output_df = dag.run_leq_node("deepar", "fit")["df_out"]
+            df_out = dag.run_leq_node("deepar", "fit")["df_out"]
             expected_shape = (self._n_periods * (self._grid_len - 1), 1)
-            self.assertEqual(output_df.shape, expected_shape)
-            self.check_string(output_df.to_string())
+            self.assertEqual(df_out.shape, expected_shape)
+            self.check_string(df_out.to_string())
 
         def _get_local_ts(self) -> pd.DataFrame:
             """
@@ -1083,7 +1083,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         df_out = csm.fit(data)["df_out"]
         # Package results.
-        act = self._package_results(config, df_out)
+        act = self._package_results(config, df_out, decimals=5)
         self.check_string(act)
 
     def test_compare_to_linear_regression1(self) -> None:
@@ -1118,18 +1118,18 @@ class TestContinuousSarimaxModel(hut.TestCase):
         sarimax_out = sarimax_model.fit(data)["df_out"]
         sarimax_out.rename(columns=lambda x: "sarimax_" + x, inplace=True)
         # Compare outputs.
-        output_df = pd.concat([skl_out, sarimax_out], axis=1)
-        output_df["skl_sarimax_pred_diff"] = (
-            output_df["skl_ret_0_1_hat"] - output_df["sarimax_ret_0_1_hat"]
+        df_out = pd.concat([skl_out, sarimax_out], axis=1)
+        df_out["skl_sarimax_pred_diff"] = (
+            df_out["skl_ret_0_1_hat"] - df_out["sarimax_ret_0_1_hat"]
         )
         # TODO(gp): Factor this out.
-        output_str = (
+        act = (
             f"{hprint.frame('sklearn_config')}\n{sklearn_config}\n"
             f"{hprint.frame('sarimax_config')}\n{sarimax_config}\n"
             f"{hprint.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(output_df, index=True)}"
+            f"{hut.convert_df_to_string(df_out, index=True)}"
         )
-        self.check_string(output_str)
+        self.check_string(act)
 
     def test_compare_to_linear_regression2(self) -> None:
         """
@@ -1163,18 +1163,18 @@ class TestContinuousSarimaxModel(hut.TestCase):
         sarimax_out = sarimax_model.fit(data)["df_out"]
         sarimax_out.rename(columns=lambda x: "sarimax_" + x, inplace=True)
         # Compare outputs.
-        output_df = pd.concat([skl_out, sarimax_out], axis=1)
-        output_df["skl_sarimax_pred_diff"] = (
-            output_df["skl_ret_0_3_hat"] - output_df["sarimax_ret_0_3_hat"]
+        df_out = pd.concat([skl_out, sarimax_out], axis=1)
+        df_out["skl_sarimax_pred_diff"] = (
+            df_out["skl_ret_0_3_hat"] - df_out["sarimax_ret_0_3_hat"]
         )
         # TODO(gp): Factor this out.
-        output_str = (
+        act = (
             f"{hprint.frame('sklearn_config')}\n{sklearn_config}\n"
             f"{hprint.frame('sarimax_config')}\n{sarimax_config}\n"
             f"{hprint.frame('df_out')}\n"
-            f"{hut.convert_df_to_string(output_df, index=True)}"
+            f"{hut.convert_df_to_string(df_out, index=True)}"
         )
-        self.check_string(output_str)
+        self.check_string(act)
 
     def test_predict1(self) -> None:
         data = self._get_data([], [])
@@ -1185,7 +1185,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
         # Package results.
-        act = self._package_results(config, df_out)
+        act = self._package_results(config, df_out, decimals=5)
         self.check_string(act)
 
     def test_predict2(self) -> None:
@@ -1264,7 +1264,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
         # Package results.
-        act = self._package_results(config, df_out)
+        act = self._package_results(config, df_out, decimals=5)
         self.check_string(act)
 
     def test_predict_different_intervals_no_x1(self) -> None:
@@ -1302,20 +1302,20 @@ class TestContinuousSarimaxModel(hut.TestCase):
         info = csm.get_info("fit")["model_summary"]
         # TODO(gp): Use the idiom like `_package_results()` instead of all
         # these unreadable f-strings.
-        output_str = (
+        act = (
             f"{hut.convert_df_to_string(info['info'], index=True)}\n"
             f"{hut.convert_df_to_string(info['tests'], index=True)}\n"
             f"{hut.convert_df_to_string(info['coefs'], index=True)}"
         )
-        self.check_string(output_str)
+        self.check_string(act)
 
     @staticmethod
-    def _package_results(config: cconfi.Config, df_out: pd.DataFrame) -> str:
+    def _package_results(config: cconfi.Config, df_out: pd.DataFrame, decimals=6) -> str:
         act: List[str] = []
         act.append(hprint.frame("config"))
         act.append(str(config))
         act.append(hprint.frame("df_out"))
-        act.append(hut.convert_df_to_string(df_out, index=True))
+        act.append(hut.convert_df_to_string(df_out, index=True, decimals=decimals))
         act = "\n".join(act)
         return act
 
@@ -1381,14 +1381,14 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         #     class that will take care of this piece.
         # TODO(gp): Use the idiom like `_package_results()` instead of all
         # these unreadable f-strings.
-        output_str = (
+        act = (
             f"{hprint.frame('config')}\n{config}\n"
             f"{hprint.frame('df_in')}\n"
             f"{hut.convert_df_to_string(model_output, index=True)}\n"
             f"{hprint.frame('df_out')}\n"
             f"{hut.convert_df_to_string(cum_y_yhat, index=True)}\n"
         )
-        self.check_string(output_str)
+        self.check_string(act)
 
     def test_invert_zret_0_zscoring1(self) -> None:
         model_output = self._get_multihorizon_model_output(1)
@@ -1407,9 +1407,9 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         ret_0 = model_output["ret_0"]
         fwd_ret_0 = ret_0.shift(-1).rename("cumret_1_original")
         ret_0_from_result = cum_y_yhat[["cumret_1"]]
-        output_df = ret_0_from_result.join(fwd_ret_0, how="outer")
-        output_str = hut.convert_df_to_string(output_df, index=True)
-        self.check_string(output_str)
+        df_out = ret_0_from_result.join(fwd_ret_0, how="outer")
+        act = hut.convert_df_to_string(df_out, index=True)
+        self.check_string(act)
 
     def test_invert_zret_3_zscoring1(self) -> None:
         model_output = self._get_multihorizon_model_output(3)
@@ -1434,9 +1434,9 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         fwd_cumret_3 = cumret_3.shift(-3).rename("cumret_3_original")
         #
         cumret_3_from_result = cum_y_yhat[["cumret_3"]]
-        output_df = cumret_3_from_result.join(fwd_cumret_3, how="outer")
-        output_str = hut.convert_df_to_string(output_df, index=True)
-        self.check_string(output_str)
+        df_out = cumret_3_from_result.join(fwd_cumret_3, how="outer")
+        act = hut.convert_df_to_string(df_out, index=True)
+        self.check_string(act)
 
     @staticmethod
     def _get_series(seed: int = 24) -> pd.Series:
