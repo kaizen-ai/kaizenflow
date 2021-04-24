@@ -65,16 +65,9 @@ jobs:
         if: ${{ success() && github.ref == 'refs/heads/master' }}
         uses: appleboy/telegram-action@master
         with:
-          to: ${{ secrets.P1_TG_BUILD_MONITORING_CHANNEL_ID }}
-          token: ${{ secrets.P1_GH_BOT_TELEGRAM_TOKEN }}
+          to: ${{ AM_BuildBot }}
+          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
           message: |
-            A brand new image `amp_env` was successfully built.
-
+            A brand new image `amp` was successfully built.
             Please pull new image to use the latest version.
-            ```
-            # Authorize your client:
-            make docker_login
-            # Pull the latest version:
-            make docker_pull
-            ```
             https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
