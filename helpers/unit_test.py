@@ -784,9 +784,9 @@ class TestCase(unittest.TestCase):
 
         :param: purify_text: remove some artifacts (e.g., user names,
             directories, reference to Git client)
-
-        Raises if there is an error (unless `about_on_error` is False, which
-        should be used only for unit testing).
+        :return: outcome_updated, file_exists, is_equal
+        :raises: RuntimeError if there is an error unless `about_on_error` is
+            False, which should be used only for unit testing
         """
         _LOG.debug(hprint.to_str("fuzzy_match purify_text abort_on_error"))
         dbg.dassert_in(type(actual), (bytes, str))
@@ -868,12 +868,13 @@ class TestCase(unittest.TestCase):
         err_threshold: float = 0.05,
         tag: str = "test_df",
         abort_on_error: bool = True,
-    ) -> None:
+    ) -> Tuple[bool, bool, Optional[bool]]:
         """
         Like check_string() but for pandas dataframes, instead of strings.
 
-        Raises if there is an error (unless `about_on_error` is False, which
-        should be used only for unit testing).
+        :return: outcome_updated, file_exists, is_equal
+        :raises: RuntimeError if there is an error unless `about_on_error` is
+            False, which should be used only for unit testing
         """
         _LOG.debug(hprint.to_str("err_threshold tag abort_on_error"))
         dbg.dassert_isinstance(actual, pd.DataFrame)
@@ -883,15 +884,18 @@ class TestCase(unittest.TestCase):
 
         def _compare_outcome(
             file_name_: str, actual_: pd.DataFrame, err_threshold_: float
-        ) -> bool:
+        ) -> Tuple[bool, pd.DataFrame]:
             _LOG.debug(hprint.to_str("file_name_"))
+            _LOG.debug("actual_=\n%s", actual_)
             dbg.dassert_lte(0, err_threshold_)
             dbg.dassert_lte(err_threshold_, 1.0)
             # Load the expected df from file.
-            expected = pd.DataFrame.read_csv(file_name_)
+            expected = pd.read_csv(file_name_, index_col=0)
+            _LOG.debug("expected=\n%s", expected)
+            dbg.dassert_isinstance(expected, pd.DataFrame)
             ret = True
             # Compare columns.
-            if actual_.columns != expected.columns:
+            if actual_.columns.tolist() != expected.columns.tolist():
                 _LOG.debug(
                     "Columns are different: %s != %s",
                     str(actual_.columns),
@@ -899,6 +903,8 @@ class TestCase(unittest.TestCase):
                 )
                 ret = False
             # Compare the values.
+            _LOG.debug("actual_.shape=%s", str(actual_.shape))
+            _LOG.debug("expected.shape=%s", str(expected.shape))
             is_close = np.allclose(
                 actual_, expected, rtol=err_threshold_, equal_nan=True
             )
@@ -906,7 +912,7 @@ class TestCase(unittest.TestCase):
                 _LOG.debug("Dataframe values are not close")
                 ret = False
             _LOG.debug("ret=%s", ret)
-            return ret
+            return ret, expected
 
         def _update_outcome(file_name_: str, actual_: pd.DataFrame) -> None:
             _LOG.debug(hprint.to_str("file_name_"))
@@ -929,7 +935,7 @@ class TestCase(unittest.TestCase):
             _LOG.debug("Update golden outcomes")
             # Determine whether outcome needs to be updated.
             if file_exists:
-                is_equal = _compare_outcome(file_name, actual, err_threshold)
+                is_equal, _ = _compare_outcome(file_name, actual, err_threshold)
                 _LOG.debug(hprint.to_str("is_equal"))
                 if not is_equal:
                     outcome_updated = True
@@ -946,22 +952,27 @@ class TestCase(unittest.TestCase):
             if file_exists:
                 # Golden outcome is available: check the actual outcome against
                 # the golden outcome.
-                is_equal = _compare_outcome(file_name, actual, err_threshold)
-                if is_equal:
+                is_equal, expected = _compare_outcome(file_name, actual, err_threshold)
+                # If not equal, report debug information.
+                if not is_equal:
                     test_name = self._get_test_name()
                     _assert_equal(
                         str(actual),
                         str(expected),
                         test_name,
                         dir_name,
+                        fuzzy_match=False,
+                        abort_on_error=abort_on_error,
                     )
-
             else:
                 # No golden outcome available: save the result.
                 _LOG.warning(
                     "Can't find golden outcome file '%s': updating it", file_name
                 )
                 _update_outcome(file_name, actual)
+                is_equal = None
+        _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
+        return outcome_updated, file_exists, is_equal
 
     def _get_golden_outcome_file_name(self, tag: str) -> Tuple[str, str]:
         dir_name = self._get_current_path()
