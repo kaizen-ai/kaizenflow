@@ -580,13 +580,13 @@ def _get_logging_format(
         # %(module)s Module (name portion of filename).
         if True:
             log_format = (
-                "%(asctime)-5s %(levelname)-5s: %(funcName)-15s: %(message)s"
+                "%(asctime)-5s %(levelname)-5s: %(funcName)-30s: %(message)s"
             )
         else:
             # Super verbose.
             log_format = (
                 "%(asctime)-5s %(levelname)-5s: "
-                "%(module)s %(pathname)s %(filename)s %(funcName)-15s:%(lineno)-4d: "
+                "%(module)s %(pathname)s %(filename)s %(funcName)-30s:%(lineno)-4d: "
                 "%(message)s"
             )
         if date_format_mode == "time":
