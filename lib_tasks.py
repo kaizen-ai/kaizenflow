@@ -811,7 +811,7 @@ def pytest_clean(ctx):  # type: ignore
 
 
 @task
-def lint(ctx, modified=True, branch=False, files="", phases=""):  # type: ignore
+def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignore
     """
     Lint files.
 
@@ -829,6 +829,7 @@ def lint(ctx, modified=True, branch=False, files="", phases=""):  # type: ignore
         files = hsyste.system_to_string(cmd)[1]
         files = " ".join(files.split("\n"))
     dbg.dassert_isinstance(files, str)
+    _LOG.debug("files='%s'", str(files))
     dbg.dassert_ne(files, "")
     _LOG.info("Files to lint:\n%s", "\n".join(files.split("\n")))
     cmd = (

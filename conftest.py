@@ -57,7 +57,13 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
             hut.set_incremental_tests(True)
         if config.getoption("--dbg_verbosity"):
             print("\nWARNING: Setting verbosity level")
-            dbg.init_logger(config.getoption("--dbg_verbosity"))
+            # When we specifiy the debug verbosity we monkey patch the command
+            # line to add the '-s' option to pytest to not suppress the output.
+            # NOTE: monkey patching sys.argv is often fragile.
+            if "--dbg_verbosity" in dbg.get_command_line():
+                import sys
+                sys.argv.append("-s")
+                dbg.init_logger(config.getoption("--dbg_verbosity"), in_pytest=True)
 
     if "PYANNOTATE" in os.environ:
         print("\nWARNING: Collecting information about types through pyannotate")

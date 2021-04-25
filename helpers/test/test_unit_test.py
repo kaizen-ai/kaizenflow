@@ -1,20 +1,23 @@
 import datetime
+import logging
+import tempfile
 import unittest.mock as umock
 import uuid
 
 import pandas as pd
 import pytest
 
-import helpers.io_ as hio
+import helpers.dbg as dbg
 import helpers.git as git
+import helpers.io_ as hio
 import helpers.unit_test as hut
 
-import tempfile
+
+_LOG = logging.getLogger(__name__)
 
 
 class TestTestCase(hut.TestCase):
-
-    def test_get_input_dir1(self):
+    def test_get_input_dir1(self) -> None:
         """
         Test hut.get_input_dir().
         """
@@ -23,7 +26,7 @@ class TestTestCase(hut.TestCase):
         exp = "$GIT_ROOT/helpers/test/TestTestCase.test_get_input_dir1/input"
         self.assertEqual(act, exp)
 
-    def test_get_input_dir2(self):
+    def test_get_input_dir2(self) -> None:
         test_class_name = "test_class"
         test_method_name = "test_method"
         act = self.get_input_dir(test_class_name, test_method_name)
@@ -32,7 +35,7 @@ class TestTestCase(hut.TestCase):
         exp = "$GIT_ROOT/helpers/test/test_class.test_method/input"
         self.assertEqual(act, exp)
 
-    def test_get_output_dir1(self):
+    def test_get_output_dir1(self) -> None:
         """
         Test hut.get_output_dir().
         """
@@ -41,7 +44,7 @@ class TestTestCase(hut.TestCase):
         exp = "$GIT_ROOT/helpers/test/TestTestCase.test_get_output_dir1/output"
         self.assertEqual(act, exp)
 
-    def test_get_scratch_space1(self):
+    def test_get_scratch_space1(self) -> None:
         """
         Test hut.get_scratch_space().
         """
@@ -50,7 +53,7 @@ class TestTestCase(hut.TestCase):
         exp = "$GIT_ROOT/helpers/test/TestTestCase.test_get_scratch_space1/tmp.scratch"
         self.assertEqual(act, exp)
 
-    def test_get_scratch_space2(self):
+    def test_get_scratch_space2(self) -> None:
         test_class_name = "test_class"
         test_method_name = "test_method"
         act = self.get_scratch_space(test_class_name, test_method_name)
@@ -58,53 +61,53 @@ class TestTestCase(hut.TestCase):
         exp = "$GIT_ROOT/helpers/test/test_class.test_method/tmp.scratch"
         self.assertEqual(act, exp)
 
-    def test_assert_equal1(self):
+    def test_assert_equal1(self) -> None:
         actual = "hello world"
         expected = actual
         self.assert_equal(actual, expected)
 
-    def test_assert_not_equal1(self):
+    def test_assert_not_equal1(self) -> None:
         actual = "hello world"
         expected = "hello world "
-        tmp_dir = tempfile.gettempdir()
+        tmp_dir = tempfile.mkdtemp()
         with self.assertRaises(RuntimeError):
             self.assert_equal(actual, expected, dst_dir=tmp_dir)
 
-    def test_assert_not_equal2(self):
+    def test_assert_not_equal2(self) -> None:
         actual = "hello world"
         expected = "hello world "
-        tmp_dir = tempfile.gettempdir()
+        # Create a dir like /var/tmp/tmph_kun9xq
+        tmp_dir = tempfile.mkdtemp()
         self.assert_equal(actual, expected, abort_on_error=False, dst_dir=tmp_dir)
         # Compute the signature from the dir.
         act = hut.get_dir_signature(tmp_dir)
         act = hut.purify_txt_from_client(act)
+        act = act.replace(tmp_dir, "$TMP_DIR")
         exp = """
         len(file_names)=1
-        file_names=/var/tmp/tmp_diff.sh
-        ################################################################################
-        /var/tmp/tmp_diff.sh
-        ################################################################################
+        file_names=$TMP_DIR/tmp_diff.sh
+        # $TMP_DIR/tmp_diff.sh
         num_chars=155
         num_lines=1
         '''
-        vimdiff $GIT_ROOT/helpers/test/TestTestCase.test_assert_not_equal2/tmp.actual.txt $GIT_ROOT/helpers/test/TestTestCase.test_assert_not_equal2/tmp.expected.txt 
+        vimdiff $GIT_ROOT/helpers/test/TestTestCase.test_assert_not_equal2/tmp.actual.txt $GIT_ROOT/helpers/test/TestTestCase.test_assert_not_equal2/tmp.expected.txt
         '''
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_assert_equal_fuzzy_match1(self):
+    def test_assert_equal_fuzzy_match1(self) -> None:
         actual = "hello world"
         expected = "hello world "
         is_equal = self.assert_equal(actual, expected, fuzzy_match=True)
         self.assertTrue(is_equal)
 
-    def test_assert_equal5(self):
+    def test_assert_equal5(self) -> None:
         actual = "hello world"
         expected = "hello world2"
         with self.assertRaises(RuntimeError):
             self.assert_equal(actual, expected, fuzzy_match=True)
 
-    def test_check_string1(self):
+    def test_check_string1(self) -> None:
         """
         Compare the actual value to a matching golden outcome.
         """
@@ -114,7 +117,7 @@ class TestTestCase(hut.TestCase):
         self.assertTrue(file_exists)
         self.assertTrue(is_equal)
 
-    def test_check_string2(self):
+    def test_check_string2(self) -> None:
         """
         Compare the actual value to a mismatching golden outcome.
         """
@@ -124,7 +127,9 @@ class TestTestCase(hut.TestCase):
         try:
             # Modify the golden.
             hio.to_file(file_name, "hello world2")
-            outcome_updated, file_exists, is_equal = self.check_string(act, abort_on_error=False)
+            outcome_updated, file_exists, is_equal = self.check_string(
+                act, abort_on_error=False
+            )
             # Actual doesn't match the golden outcome.
             self.assertFalse(outcome_updated)
             self.assertTrue(file_exists)
@@ -133,7 +138,7 @@ class TestTestCase(hut.TestCase):
             # Clean up.
             hio.to_file(file_name, "hello world")
 
-    def test_check_string3(self):
+    def test_check_string3(self) -> None:
         """
         Compare the actual value to a mismatching golden outcome and udpate it.
         """
@@ -144,7 +149,9 @@ class TestTestCase(hut.TestCase):
         try:
             # Modify the golden.
             hio.to_file(file_name, "hello world2")
-            outcome_updated, file_exists, is_equal = self.check_string(act, abort_on_error=False)
+            outcome_updated, file_exists, is_equal = self.check_string(
+                act, abort_on_error=False
+            )
             # Actual doesn't match the golden outcome, and it was updated.
             self.assertTrue(outcome_updated)
             self.assertTrue(file_exists)

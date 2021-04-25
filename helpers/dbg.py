@@ -342,10 +342,13 @@ def dassert_dir_exists(
     Assert unless `dir_name` exists and it's a directory.
     """
     dir_name = os.path.abspath(dir_name)
-    is_ok = os.path.exists(dir_name) and os.path.isdir(dir_name)
-    if not is_ok:
-        txt = []
-        txt.append("dir='%s' doesn't exist or it's not a dir" % dir_name)
+    exists = os.path.exists(dir_name)
+    if not exists:
+        txt = "dir='%s' doesn't exist" % dir_name
+        _dfatal(txt, msg, *args)
+    is_dir = os.path.isdir(dir_name)
+    if not is_dir:
+        txt = "dir='%s' is not a dir" % dir_name
         _dfatal(txt, msg, *args)
 
 
@@ -580,13 +583,16 @@ def _get_logging_format(
         # %(module)s Module (name portion of filename).
         if True:
             log_format = (
-                "%(asctime)-5s %(levelname)-5s: %(funcName)-30s: %(message)s"
+                "%(asctime)-5s %(levelname)-5s:"
+                " %(funcName)-30s:%(lineno)-4d"
+                "%(message)s"
             )
         else:
             # Super verbose.
             log_format = (
-                "%(asctime)-5s %(levelname)-5s: "
-                "%(module)s %(pathname)s %(filename)s %(funcName)-30s:%(lineno)-4d: "
+                "%(asctime)-5s %(levelname)-5s:"
+                " %(module)s:%(pathname)s:%(filename)s"
+                "  %(funcName)-30s:%(lineno)-4d: "
                 "%(message)s"
             )
         if date_format_mode == "time":
@@ -615,6 +621,7 @@ def init_logger(
     force_print_format: bool = False,
     force_white: bool = True,
     force_no_warning: bool = False,
+    in_pytest: bool = False,
 ) -> None:
     """
     Send stderr and stdout to logging (optionally teeing the logs to file).
@@ -630,6 +637,8 @@ def init_logger(
     :param force_print_format: use the print format for the logging
     :param force_write: use white color for printing. This can pollute the
         output of a script when redirected to file with echo characters
+    :param in_pytest: True when we are running through pytest, so that we
+        can overwrite the default logger from pytest
     """
     if force_white:
         sys.stdout.write("\033[0m")
@@ -651,10 +660,9 @@ def init_logger(
     #     for handler in root_logger.handlers:
     #         handler.setLevel(verbosity)
     # Exit to avoid to replicate the same output multiple times.
-    if root_logger.handlers:
+    if not in_pytest and root_logger.handlers:
         print("WARNING: Logger already initialized: skipping")
         return
-    #
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(verbosity)
     # Decide whether to use verbose or print format.
