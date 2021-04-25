@@ -256,7 +256,7 @@ def get_dir_signature(dir_name: str, num_lines: Optional[int] = None) -> str:
         # Read file.
         txt_tmp = hio.from_file(file_name)
         # This seems unstable on different systems.
-        #txt.append("num_chars=%s" % len(txt_tmp))
+        # txt.append("num_chars=%s" % len(txt_tmp))
         txt_tmp = txt_tmp.split("\n")
         # Filter lines, if needed.
         txt.append("num_lines=%s" % len(txt_tmp))
@@ -337,6 +337,7 @@ def diff_files(
     tag: Optional[str] = None,
     abort_on_exit: bool = True,
     dst_dir: str = ".",
+    error_msg: str = "",
 ) -> None:
     """
     Compare the passed filenames and create script to compare them with
@@ -376,6 +377,8 @@ def diff_files(
     # This is not always shown.
     _LOG.error(msg_as_str)
     if abort_on_exit:
+        if error_msg:
+            msg_as_str = hprint.frame("error_msg") + "\n" + error_msg
         raise RuntimeError(msg_as_str)
 
 
@@ -529,6 +532,7 @@ def _assert_equal(
     fuzzy_match: bool = False,
     abort_on_error: bool = True,
     dst_dir: str = ".",
+    error_msg: str = "",
 ) -> bool:
     """
     Implement a better version of self.assertEqual() that reports mismatching
@@ -615,6 +619,7 @@ def _assert_equal(
             tag=tag,
             abort_on_exit=abort_on_error,
             dst_dir=dst_dir,
+            error_msg=error_msg,
         )
     _LOG.debug("-> is_equal=%s", is_equal)
     return is_equal
@@ -796,23 +801,6 @@ class TestCase(unittest.TestCase):
             _LOG.debug("Purifying actual")
             actual = purify_txt_from_client(actual)
         _LOG.debug("actual=\n%s", actual)
-
-        def _update_outcome(
-            file_name_: str, actual_: str, use_gzip_: bool
-        ) -> None:
-            _LOG.debug(hprint.to_str("file_name_"))
-            hio.to_file(file_name_, actual_, use_gzip=use_gzip_)
-            # Add to git repo.
-            if self.git_add:
-                cmd = "git add %s" % file_name_
-                _LOG.debug("> %s", cmd)
-                rc = hsyste.system(cmd, abort_on_error=False)
-                if rc:
-                    _LOG.warning(
-                        "Can't run '%s': you need to add the file manually",
-                        cmd,
-                    )
-
         outcome_updated = False
         file_exists = os.path.exists(file_name)
         _LOG.debug("file_exists=%s", file_exists)
@@ -832,7 +820,7 @@ class TestCase(unittest.TestCase):
             if outcome_updated:
                 # Update the golden outcome.
                 _LOG.warning("Golden outcome updated in '%s'", file_name)
-                _update_outcome(file_name, actual, use_gzip)
+                self._check_string_update_outcome(file_name, actual, use_gzip)
         else:
             # Check the test result.
             _LOG.debug("Check golden outcomes")
@@ -854,7 +842,7 @@ class TestCase(unittest.TestCase):
                 _LOG.warning(
                     "Can't find golden outcome file '%s': updating it", file_name
                 )
-                _update_outcome(file_name, actual, use_gzip)
+                self._check_string_update_outcome(file_name, actual, use_gzip)
                 is_equal = None
         _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal
@@ -886,7 +874,9 @@ class TestCase(unittest.TestCase):
             _LOG.debug("Update golden outcomes")
             # Determine whether outcome needs to be updated.
             if file_exists:
-                is_equal, _ = self._check_df_compare_outcome(file_name, actual, err_threshold)
+                is_equal, _ = self._check_df_compare_outcome(
+                    file_name, actual, err_threshold
+                )
                 _LOG.debug(hprint.to_str("is_equal"))
                 if not is_equal:
                     outcome_updated = True
@@ -916,20 +906,41 @@ class TestCase(unittest.TestCase):
                         dir_name,
                         fuzzy_match=False,
                         abort_on_error=abort_on_error,
+                        error_msg=self.error_msg,
                     )
             else:
                 # No golden outcome available: save the result.
                 _LOG.warning(
                     "Can't find golden outcome file '%s': updating it", file_name
                 )
-                _check_df_update_outcome(file_name, actual)
+                self._check_df_update_outcome(file_name, actual)
                 is_equal = None
         _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal
 
-    # ##########################################################################
+    # #########################################################################
 
-    def _check_df_update_outcome(self, file_name: str, actual: pd.DataFrame) -> None:
+    def _check_string_update_outcome(
+        self, file_name: str, actual: str, use_gzip: bool
+    ) -> None:
+        _LOG.debug(hprint.to_str("file_name"))
+        hio.to_file(file_name, actual, use_gzip=use_gzip)
+        # Add to git repo.
+        if self.git_add:
+            cmd = "git add %s" % file_name
+            _LOG.debug("> %s", cmd)
+            rc = hsyste.system(cmd, abort_on_error=False)
+            if rc:
+                _LOG.warning(
+                    "Can't run '%s': you need to add the file manually",
+                    cmd,
+                )
+
+    # #########################################################################
+
+    def _check_df_update_outcome(
+        self, file_name: str, actual: pd.DataFrame
+    ) -> None:
         _LOG.debug(hprint.to_str("file_name"))
         hio.create_enclosing_dir(file_name)
         actual.to_csv(file_name)
@@ -945,8 +956,7 @@ class TestCase(unittest.TestCase):
                 )
 
     def _check_df_compare_outcome(
-            self,
-            file_name: str, actual: pd.DataFrame, err_threshold: float
+        self, file_name: str, actual: pd.DataFrame, err_threshold: float
     ) -> Tuple[bool, pd.DataFrame]:
         _LOG.debug(hprint.to_str("file_name"))
         _LOG.debug("actual_=\n%s", actual)
@@ -961,7 +971,8 @@ class TestCase(unittest.TestCase):
         if actual.columns.tolist() != expected.columns.tolist():
             msg = "Columns are different:\n%s\n%s" % (
                 str(actual.columns),
-                str(expected.columns))
+                str(expected.columns),
+            )
             self._to_error(msg)
             ret = False
         # Compare the values.
@@ -991,17 +1002,16 @@ class TestCase(unittest.TestCase):
                 self._to_error(msg)
             else:
                 msg = (
-                        "Shapes are different:\n"
-                        "actual.shape=%s\n"
-                        "expected.shape=%s" % (
-                            str(actual.shape),
-                            str(expected.shape)))
+                    "Shapes are different:\n"
+                    "actual.shape=%s\n"
+                    "expected.shape=%s" % (str(actual.shape), str(expected.shape))
+                )
                 self._to_error(msg)
             ret = False
         _LOG.debug("ret=%s", ret)
         return ret, expected
 
-    # ##########################################################################
+    # #########################################################################
 
     def _get_golden_outcome_file_name(self, tag: str) -> Tuple[str, str]:
         dir_name = self._get_current_path()
@@ -1041,6 +1051,7 @@ class TestCase(unittest.TestCase):
     def _to_error(self, msg: str) -> None:
         self.error_msg += msg + "\n"
         _LOG.error(msg)
+
 
 # #############################################################################
 # Notebook testing.
