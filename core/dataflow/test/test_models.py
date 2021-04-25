@@ -803,7 +803,7 @@ class TestVolatilityModulator(hut.TestCase):
         node = cdataf.VolatilityModulator("modulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         # Package results.
-        act = self._package_results(config, df_in, df_out)
+        act = self._check_results(config, df_in, df_out)
         self.check_string(act)
 
     def test_demodulate1(self) -> None:
@@ -821,7 +821,7 @@ class TestVolatilityModulator(hut.TestCase):
         node = cdataf.VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         # Package results.
-        act = self._package_results(config, df_in, df_out)
+        act = self._check_results(config, df_in, df_out)
         self.check_string(act)
 
     def test_col_mode1(self) -> None:
@@ -841,7 +841,7 @@ class TestVolatilityModulator(hut.TestCase):
         node = cdataf.VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         # Package results.
-        act = self._package_results(config, df_in, df_out)
+        act = self._check_results(config, df_in, df_out)
         self.check_string(act)
 
     def test_col_mode2(self) -> None:
@@ -861,21 +861,20 @@ class TestVolatilityModulator(hut.TestCase):
         node = cdataf.VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         # Package results.
-        act = self._package_results(config, df_in, df_out)
+        act = self._check_results(config, df_in, df_out)
         self.check_string(act)
 
-    @staticmethod
-    def _package_results(
+    def _check_results(
+            self,
         config: cconfi.Config, df_in: pd.DataFrame, df_out: pd.DataFrame
     ) -> str:
         act: List[str] = []
         act.append(hprint.frame("config"))
         act.append(str(config))
-        act.append(hprint.frame("df_in"))
-        act.append(hut.convert_df_to_string(df_in, index=True))
-        act.append(hprint.frame("df_out"))
-        act.append(hut.convert_df_to_string(df_out, index=True))
         act = "\n".join(act)
+        self.check_string(act)
+        self.check_dataframe(df_in, tag="df_in", err_threshold=0.01)
+        self.check_dataframe(df_out, tag="df_out", err_threshold=0.01)
         return act
 
     @staticmethod
