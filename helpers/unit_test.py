@@ -492,10 +492,10 @@ def set_pd_default_values() -> None:
             continue
         full_key = "%s.%s" % (section, key)
         old_val = pd.get_option(full_key)
-        # _LOG.debug("full_key=%s: old_val=%s, new_val=%s", full_key, old_val, new_val)
         if old_val != new_val:
             _LOG.debug(
-                "-> Assigning a different value: full_key=%s, old_val=%s, new_val=%s",
+                "-> Assigning a different value: full_key=%s, "
+                "old_val=%s, new_val=%s",
                 full_key,
                 old_val,
                 new_val,
@@ -623,6 +623,9 @@ def _assert_equal(
         )
     _LOG.debug("-> is_equal=%s", is_equal)
     return is_equal
+
+
+# #############################################################################
 
 
 class TestCase(unittest.TestCase):

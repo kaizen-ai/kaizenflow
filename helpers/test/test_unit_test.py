@@ -50,7 +50,8 @@ class TestTestCase(hut.TestCase):
         """
         act = self.get_scratch_space()
         act = hut.purify_txt_from_client(act)
-        exp = "$GIT_ROOT/helpers/test/TestTestCase.test_get_scratch_space1/tmp.scratch"
+        exp = ("$GIT_ROOT/helpers/test/TestTestCase.test_get_scratch_space1"
+               "/tmp.scratch")
         self.assertEqual(act, exp)
 
     def test_get_scratch_space2(self) -> None:
@@ -83,6 +84,7 @@ class TestTestCase(hut.TestCase):
         act = hut.get_dir_signature(tmp_dir)
         act = hut.purify_txt_from_client(act)
         act = act.replace(tmp_dir, "$TMP_DIR")
+        # pylint: disable=line-too-long
         exp = """
         len(file_names)=1
         file_names=$TMP_DIR/tmp_diff.sh
@@ -92,6 +94,7 @@ class TestTestCase(hut.TestCase):
         vimdiff $GIT_ROOT/helpers/test/TestTestCase.test_assert_not_equal2/tmp.actual.txt $GIT_ROOT/helpers/test/TestTestCase.test_assert_not_equal2/tmp.expected.txt
         '''
         """
+        # pylint: enable=line-too-long
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_assert_equal_fuzzy_match1(self) -> None:
@@ -434,6 +437,7 @@ class Test_unit_test1(hut.TestCase):
     def test_purify_txt_from_client1(self) -> None:
         super_module_path = git.get_client_root(super_module=True)
         # TODO(gp): We should remove the current path.
+        # pylint: disable=line-too-long
         txt = r"""
 ************* Module input [pylint]
 $SUPER_MODULE/dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py: Your code has been rated at -10.00/10 (previous run: -10.00/10, +0.00) [pylint]
@@ -455,6 +459,7 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [E0602(und
 dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\s'. String constant might be missing an r prefix. [pylint]
 dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Name 're' is not defined [mypy]
 """
+        # pylint: enable=line-too-long
         act = hut.purify_txt_from_client(txt)
         self.assert_equal(act, exp)
 
