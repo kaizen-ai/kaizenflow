@@ -636,7 +636,7 @@ class TestCase(unittest.TestCase):
         # The base directory is the one including the class under test.
         self.base_dir_name = os.path.dirname(inspect.getfile(self.__class__))
         self.update_tests = get_update_tests()
-        self.add_git = True
+        self.git_add = True
         # Set the default pandas options (see AmpTask1140).
         self.old_pd_options = get_pd_default_values()
         set_pd_default_values()

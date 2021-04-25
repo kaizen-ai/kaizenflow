@@ -216,6 +216,7 @@ class TestCheckString1(hut.TestCase):
         act = "hello world"
         # Force updating the golden outcomes.
         self.update_tests = True
+        self.git_add = False
         tag = "test"
         _, file_name = self._get_golden_outcome_file_name(tag)
         try:
@@ -232,6 +233,7 @@ class TestCheckString1(hut.TestCase):
             if os.path.exists(file_name):
                 hio.delete_file(file_name)
             self.update_tests = False
+            self.git_add = True
         # Actual doesn't match the golden outcome and it was updated.
         self.assertTrue(outcome_updated)
         self.assertFalse(file_exists)
