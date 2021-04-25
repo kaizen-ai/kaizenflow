@@ -639,6 +639,8 @@ class TestCase(unittest.TestCase):
         self.base_dir_name = os.path.dirname(inspect.getfile(self.__class__))
         self.update_tests = get_update_tests()
         self.git_add = True
+        # Error message printed when comparing.
+        self.error_msg = ""
         # Set the default pandas options (see AmpTask1140).
         self.old_pd_options = get_pd_default_values()
         set_pd_default_values()
@@ -876,54 +878,6 @@ class TestCase(unittest.TestCase):
         #
         dir_name, file_name = self._get_golden_outcome_file_name(tag)
         _LOG.debug("file_name=%s", file_name)
-
-        def _compare_outcome(
-            file_name_: str, actual_: pd.DataFrame, err_threshold_: float
-        ) -> Tuple[bool, pd.DataFrame]:
-            _LOG.debug(hprint.to_str("file_name_"))
-            _LOG.debug("actual_=\n%s", actual_)
-            dbg.dassert_lte(0, err_threshold_)
-            dbg.dassert_lte(err_threshold_, 1.0)
-            # Load the expected df from file.
-            expected = pd.read_csv(file_name_, index_col=0)
-            _LOG.debug("expected=\n%s", expected)
-            dbg.dassert_isinstance(expected, pd.DataFrame)
-            ret = True
-            # Compare columns.
-            if actual_.columns.tolist() != expected.columns.tolist():
-                _LOG.debug(
-                    "Columns are different: %s != %s",
-                    str(actual_.columns),
-                    str(expected.columns),
-                )
-                ret = False
-            # Compare the values.
-            _LOG.debug("actual_.shape=%s", str(actual_.shape))
-            _LOG.debug("expected.shape=%s", str(expected.shape))
-            is_close = np.allclose(
-                actual_, expected, rtol=err_threshold_, equal_nan=True
-            )
-            if not is_close:
-                _LOG.debug("Dataframe values are not close")
-                ret = False
-            _LOG.debug("ret=%s", ret)
-            return ret, expected
-
-        def _update_outcome(file_name_: str, actual_: pd.DataFrame) -> None:
-            _LOG.debug(hprint.to_str("file_name_"))
-            hio.create_enclosing_dir(file_name_)
-            actual_.to_csv(file_name_)
-            # Add to git repo.
-            if self.git_add:
-                cmd = "git add %s" % file_name_
-                _LOG.debug("> %s", cmd)
-                rc = hsyste.system(cmd, abort_on_error=False)
-                if rc:
-                    _LOG.warning(
-                        "Can't run '%s': you need to add the file manually",
-                        cmd,
-                    )
-
         outcome_updated = False
         file_exists = os.path.exists(file_name)
         _LOG.debug(hprint.to_str("file_exists"))
@@ -932,7 +886,7 @@ class TestCase(unittest.TestCase):
             _LOG.debug("Update golden outcomes")
             # Determine whether outcome needs to be updated.
             if file_exists:
-                is_equal, _ = _compare_outcome(file_name, actual, err_threshold)
+                is_equal, _ = self._check_df_compare_outcome(file_name, actual, err_threshold)
                 _LOG.debug(hprint.to_str("is_equal"))
                 if not is_equal:
                     outcome_updated = True
@@ -943,13 +897,13 @@ class TestCase(unittest.TestCase):
             if outcome_updated:
                 # Update the golden outcome.
                 _LOG.warning("Golden outcome updated in '%s'", file_name)
-                _update_outcome(file_name, actual)
+                self._check_df_update_outcome(file_name, actual)
         else:
             # Check the test result.
             if file_exists:
                 # Golden outcome is available: check the actual outcome against
                 # the golden outcome.
-                is_equal, expected = _compare_outcome(
+                is_equal, expected = self._check_df_compare_outcome(
                     file_name, actual, err_threshold
                 )
                 # If not equal, report debug information.
@@ -968,10 +922,86 @@ class TestCase(unittest.TestCase):
                 _LOG.warning(
                     "Can't find golden outcome file '%s': updating it", file_name
                 )
-                _update_outcome(file_name, actual)
+                _check_df_update_outcome(file_name, actual)
                 is_equal = None
         _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal
+
+    # ##########################################################################
+
+    def _check_df_update_outcome(self, file_name: str, actual: pd.DataFrame) -> None:
+        _LOG.debug(hprint.to_str("file_name"))
+        hio.create_enclosing_dir(file_name)
+        actual.to_csv(file_name)
+        # Add to git repo.
+        if self.git_add:
+            cmd = "git add %s" % file_name
+            _LOG.debug("> %s", cmd)
+            rc = hsyste.system(cmd, abort_on_error=False)
+            if rc:
+                _LOG.warning(
+                    "Can't run '%s': you need to add the file manually",
+                    cmd,
+                )
+
+    def _check_df_compare_outcome(
+            self,
+            file_name: str, actual: pd.DataFrame, err_threshold: float
+    ) -> Tuple[bool, pd.DataFrame]:
+        _LOG.debug(hprint.to_str("file_name"))
+        _LOG.debug("actual_=\n%s", actual)
+        dbg.dassert_lte(0, err_threshold)
+        dbg.dassert_lte(err_threshold, 1.0)
+        # Load the expected df from file.
+        expected = pd.read_csv(file_name, index_col=0)
+        _LOG.debug("expected=\n%s", expected)
+        dbg.dassert_isinstance(expected, pd.DataFrame)
+        ret = True
+        # Compare columns.
+        if actual.columns.tolist() != expected.columns.tolist():
+            msg = "Columns are different:\n%s\n%s" % (
+                str(actual.columns),
+                str(expected.columns))
+            self._to_error(msg)
+            ret = False
+        # Compare the values.
+        _LOG.debug("actual_.shape=%s", str(actual.shape))
+        _LOG.debug("expected.shape=%s", str(expected.shape))
+        is_close = np.allclose(
+            actual, expected, rtol=err_threshold, equal_nan=True
+        )
+        if not is_close:
+            _LOG.error("Dataframe values are not close")
+            if actual.shape == expected.shape:
+                is_close = np.isclose(actual, expected, equal_nan=True)
+                #
+                actual_tmp = np.where(is_close, np.nan, actual)
+                msg = "actual=\n%s" % actual_tmp
+                self._to_error(msg)
+                #
+                expected_tmp = np.where(is_close, np.nan, expected)
+                msg = "expected=\n%s" % expected_tmp
+                self._to_error(msg)
+                #
+                err = np.abs((actual_tmp - expected_tmp) / actual_tmp)
+                msg = "err=\n%s" % err
+                self._to_error(msg)
+                max_err = np.nanmax(np.nanmax(err))
+                msg = "max_err=%.3f" % max_err
+                self._to_error(msg)
+            else:
+                msg = (
+                        "Shapes are different:\n"
+                        "actual.shape=%s\n"
+                        "expected.shape=%s" % (
+                            str(actual.shape),
+                            str(expected.shape)))
+                self._to_error(msg)
+            ret = False
+        _LOG.debug("ret=%s", ret)
+        return ret, expected
+
+    # ##########################################################################
 
     def _get_golden_outcome_file_name(self, tag: str) -> Tuple[str, str]:
         dir_name = self._get_current_path()
@@ -1008,6 +1038,9 @@ class TestCase(unittest.TestCase):
         )
         return dir_name
 
+    def _to_error(self, msg: str) -> None:
+        self.error_msg += msg + "\n"
+        _LOG.error(msg)
 
 # #############################################################################
 # Notebook testing.

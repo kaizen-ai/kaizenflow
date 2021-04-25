@@ -298,6 +298,19 @@ class TestCheckDataFrame1(hut.TestCase):
         self.assertFalse(outcome_updated)
         self.assertTrue(file_exists)
         self.assertFalse(is_equal)
+        exp_error_msg = """
+actual=
+[[ nan 1.06  nan]
+ [ nan  nan  nan]]
+expected=
+[[nan  1. nan]
+ [nan nan nan]]
+err=
+[[       nan 0.05660377        nan]
+ [       nan        nan        nan]]
+max_err=0.057
+        """
+        self.assert_equal(self.error_msg, exp_error_msg, fuzzy_match=True)
 
     def test_check_df_not_equal2(self) -> None:
         """
