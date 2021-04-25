@@ -334,7 +334,7 @@ def diff_files(
     file_name1: str,
     file_name2: str,
     tag: Optional[str] = None,
-    abort_on_exit=True,
+    abort_on_exit: bool = True,
     dst_dir: str = ".",
 ) -> None:
     """
@@ -382,7 +382,7 @@ def diff_strings(
     string1: str,
     string2: str,
     tag: Optional[str] = None,
-    abort_on_exit: bool =True,
+    abort_on_exit: bool = True,
     dst_dir: str = ".",
 ) -> None:
     """
@@ -413,7 +413,7 @@ def diff_strings(
 def diff_df_monotonic(
     df: pd.DataFrame,
     tag: Optional[str] = None,
-    abort_on_exit: bool =True,
+    abort_on_exit: bool = True,
     dst_dir: str = ".",
 ) -> None:
     """
@@ -436,6 +436,7 @@ def diff_df_monotonic(
 # #############################################################################
 
 
+# pylint: disable=protected-access
 def get_pd_default_values() -> pd._config.config.DictWrapper:
     import copy
 
@@ -947,7 +948,9 @@ class TestCase(unittest.TestCase):
             if file_exists:
                 # Golden outcome is available: check the actual outcome against
                 # the golden outcome.
-                is_equal, expected = _compare_outcome(file_name, actual, err_threshold)
+                is_equal, expected = _compare_outcome(
+                    file_name, actual, err_threshold
+                )
                 # If not equal, report debug information.
                 if not is_equal:
                     test_name = self._get_test_name()

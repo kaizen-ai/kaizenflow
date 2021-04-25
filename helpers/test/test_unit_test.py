@@ -4,16 +4,14 @@ import os
 import tempfile
 import unittest.mock as umock
 import uuid
-from typing import Any, List, Mapping, Optional, Tuple, Union
+from typing import Optional, Tuple
 
 import pandas as pd
 import pytest
 
-import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as hio
 import helpers.unit_test as hut
-
 
 _LOG = logging.getLogger(__name__)
 
@@ -111,7 +109,6 @@ class TestTestCase(hut.TestCase):
 
 
 class TestCheckString1(hut.TestCase):
-
     def test_check_string1(self) -> None:
         """
         Compare the actual value to a matching golden outcome.
@@ -243,45 +240,16 @@ class TestCheckString1(hut.TestCase):
 
 
 class TestCheckDataFrame1(hut.TestCase):
-
-    def _check_df_helper(self, act: pd.DataFrame,
-                         abort_on_error,
-                         err_threshold: float) -> Tuple[bool, bool, Optional[bool]]:
-        golden_outcomes = pd.DataFrame(
-            [[0, 1, 2],
-             [3, 4, 5]],
-            columns="a b c".split()
-        )
-        #
-        tag = "test_df"
-        _, file_name = self._get_golden_outcome_file_name(tag)
-        # Overwrite the golden file, so that --update_golden doesn't matter.
-        hio.create_enclosing_dir(file_name, incremental=True)
-        golden_outcomes.to_csv(file_name)
-        try:
-            outcome_updated, file_exists, is_equal = self.check_dataframe(act,
-                                                                          abort_on_error=abort_on_error,
-                                                                          err_threshold=err_threshold)
-
-        finally:
-            # Clean up.
-            golden_outcomes.to_csv(file_name)
-        return outcome_updated, file_exists, is_equal
-
     def test_check_df_equal1(self) -> None:
         """
         Compare the actual value of a df to a matching golden outcome.
         """
-        act = pd.DataFrame(
-            [[0, 1, 2],
-             [3, 4, 5]],
-            columns="a b c".split()
-        )
+        act = pd.DataFrame([[0, 1, 2], [3, 4, 5]], columns="a b c".split())
         abort_on_error = True
         err_threshold = 0.0001
-        outcome_updated, file_exists, is_equal = self._check_df_helper(act,
-                                                                       abort_on_error,
-                                                                       err_threshold)
+        outcome_updated, file_exists, is_equal = self._check_df_helper(
+            act, abort_on_error, err_threshold
+        )
         # Actual outcome matches the golden outcome and it wasn't updated.
         self.assertFalse(outcome_updated)
         self.assertTrue(file_exists)
@@ -291,16 +259,12 @@ class TestCheckDataFrame1(hut.TestCase):
         """
         Compare the actual value of a df to a matching golden outcome.
         """
-        act = pd.DataFrame(
-            [[0, 1.01, 2],
-             [3, 4, 5]],
-            columns="a b c".split()
-        )
+        act = pd.DataFrame([[0, 1.01, 2], [3, 4, 5]], columns="a b c".split())
         abort_on_error = True
         err_threshold = 0.05
-        outcome_updated, file_exists, is_equal = self._check_df_helper(act,
-                                                                       abort_on_error,
-            err_threshold)
+        outcome_updated, file_exists, is_equal = self._check_df_helper(
+            act, abort_on_error, err_threshold
+        )
         # Actual outcome matches the golden outcome and it wasn't updated.
         self.assertFalse(outcome_updated)
         self.assertTrue(file_exists)
@@ -310,16 +274,12 @@ class TestCheckDataFrame1(hut.TestCase):
         """
         Compare the actual value of a df to a matching golden outcome.
         """
-        act = pd.DataFrame(
-            [[0, 1.05, 2],
-             [3, 4, 5]],
-            columns="a b c".split()
-        )
+        act = pd.DataFrame([[0, 1.05, 2], [3, 4, 5]], columns="a b c".split())
         abort_on_error = True
         err_threshold = 0.05
-        outcome_updated, file_exists, is_equal = self._check_df_helper(act,
-                                                                       abort_on_error,
-                                                                       err_threshold)
+        outcome_updated, file_exists, is_equal = self._check_df_helper(
+            act, abort_on_error, err_threshold
+        )
         # Actual outcome matches the golden outcome and it wasn't updated.
         self.assertFalse(outcome_updated)
         self.assertTrue(file_exists)
@@ -329,16 +289,12 @@ class TestCheckDataFrame1(hut.TestCase):
         """
         Compare the actual value of a df to a not matching golden outcome.
         """
-        act = pd.DataFrame(
-            [[0, 1.06, 2],
-             [3, 4, 5]],
-            columns="a b c".split()
-        )
+        act = pd.DataFrame([[0, 1.06, 2], [3, 4, 5]], columns="a b c".split())
         abort_on_error = False
         err_threshold = 0.05
-        outcome_updated, file_exists, is_equal = self._check_df_helper(act,
-                                                                       abort_on_error,
-                                                                       err_threshold)
+        outcome_updated, file_exists, is_equal = self._check_df_helper(
+            act, abort_on_error, err_threshold
+        )
         # Actual outcome doesn't match the golden outcome and it wasn't updated.
         self.assertFalse(outcome_updated)
         self.assertTrue(file_exists)
@@ -348,16 +304,12 @@ class TestCheckDataFrame1(hut.TestCase):
         """
         Compare the actual value of a df to a not matching golden outcome.
         """
-        act = pd.DataFrame(
-            [[0, 1, 2],
-             [3, 4, 5]],
-            columns="a d c".split()
-        )
+        act = pd.DataFrame([[0, 1, 2], [3, 4, 5]], columns="a d c".split())
         abort_on_error = False
         err_threshold = 0.05
-        outcome_updated, file_exists, is_equal = self._check_df_helper(act,
-                                                                       abort_on_error,
-                                                                       err_threshold)
+        outcome_updated, file_exists, is_equal = self._check_df_helper(
+            act, abort_on_error, err_threshold
+        )
         # Actual outcome doesn't match the golden outcome and it wasn't updated.
         self.assertFalse(outcome_updated)
         self.assertTrue(file_exists)
@@ -367,15 +319,9 @@ class TestCheckDataFrame1(hut.TestCase):
         """
         Compare the actual value to a mismatching golden outcome and udpate it.
         """
-        act = pd.DataFrame(
-            [[0, 1, 2],
-             [3, 4, 5]],
-            columns="a b c".split()
-        )
+        act = pd.DataFrame([[0, 1, 2], [3, 4, 5]], columns="a b c".split())
         golden_outcome = pd.DataFrame(
-            [[0, 2, 2],
-             [3, 4, 5]],
-            columns="a b c".split()
+            [[0, 2, 2], [3, 4, 5]], columns="a b c".split()
         )
         # Force updating the golden outcomes.
         self.update_tests = True
@@ -409,11 +355,7 @@ class TestCheckDataFrame1(hut.TestCase):
         """
         Like test_check_df_not_equal1() but raising the exception.
         """
-        act = pd.DataFrame(
-            [[0, 1.06, 2],
-             [3, 4, 5]],
-            columns="a b c".split()
-        )
+        act = pd.DataFrame([[0, 1.06, 2], [3, 4, 5]], columns="a b c".split())
         abort_on_error = True
         err_threshold = 0.05
         with self.assertRaises(RuntimeError):
@@ -423,11 +365,7 @@ class TestCheckDataFrame1(hut.TestCase):
         """
         The golden outcome was missing and was added.
         """
-        act = pd.DataFrame(
-            [[0, 1, 2],
-             [3, 4, 5]],
-            columns="a b c".split()
-        )
+        act = pd.DataFrame([[0, 1, 2], [3, 4, 5]], columns="a b c".split())
         # Force updating the golden outcomes.
         self.update_tests = True
         # We don't want to add to git.
@@ -455,6 +393,27 @@ class TestCheckDataFrame1(hut.TestCase):
         self.assertFalse(is_equal)
         # Check golden.
         self.assert_equal(str(new_golden), str(act))
+
+    def _check_df_helper(
+        self, act: pd.DataFrame, abort_on_error: bool, err_threshold: float
+    ) -> Tuple[bool, bool, Optional[bool]]:
+        golden_outcomes = pd.DataFrame(
+            [[0, 1, 2], [3, 4, 5]], columns="a b c".split()
+        )
+        #
+        tag = "test_df"
+        _, file_name = self._get_golden_outcome_file_name(tag)
+        # Overwrite the golden file, so that --update_golden doesn't matter.
+        hio.create_enclosing_dir(file_name, incremental=True)
+        golden_outcomes.to_csv(file_name)
+        try:
+            outcome_updated, file_exists, is_equal = self.check_dataframe(
+                act, abort_on_error=abort_on_error, err_threshold=err_threshold
+            )
+        finally:
+            # Clean up.
+            golden_outcomes.to_csv(file_name)
+        return outcome_updated, file_exists, is_equal
 
 
 class Test_unit_test1(hut.TestCase):
@@ -491,6 +450,7 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Nam
         """
         Test case when client root path is equal to `/`
         """
+        # pylint: disable=redefined-outer-name
         git = umock.Mock()
         git.get_client_root.return_value = "/"
         txt = "/tmp/subdir1"
