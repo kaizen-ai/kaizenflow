@@ -636,6 +636,7 @@ class TestCase(unittest.TestCase):
         # The base directory is the one including the class under test.
         self.base_dir_name = os.path.dirname(inspect.getfile(self.__class__))
         self.update_tests = get_update_tests()
+        self.add_git = True
         # Set the default pandas options (see AmpTask1140).
         self.old_pd_options = get_pd_default_values()
         set_pd_default_values()
@@ -672,15 +673,6 @@ class TestCase(unittest.TestCase):
         self.base_dir_name = base_dir_name
         _LOG.debug("Setting base_dir_name to '%s'", self.base_dir_name)
         hio.create_dir(self.base_dir_name, incremental=True)
-
-    # def create_io_dirs(self) -> None:
-    #     dir_name = self.get_input_dir()
-    #     hio.create_dir(dir_name, incremental=True)
-    #     _LOG.info("Creating dir_name=%s", dir_name)
-    #     #
-    #     dir_name = self.get_output_dir()
-    #     hio.create_dir(dir_name, incremental=True)
-    #     _LOG.info("Creating dir_name=%s", dir_name)
 
     def get_input_dir(
         self,
@@ -807,14 +799,15 @@ class TestCase(unittest.TestCase):
             _LOG.debug(hprint.to_str("file_name_"))
             hio.to_file(file_name_, actual_, use_gzip=use_gzip_)
             # Add to git repo.
-            cmd = "git add %s" % file_name_
-            _LOG.debug("> %s", cmd)
-            rc = hsyste.system(cmd, abort_on_error=False)
-            if rc:
-                _LOG.warning(
-                    "Can't run '%s': you need to add the file manually",
-                    cmd,
-                )
+            if self.git_add:
+                cmd = "git add %s" % file_name_
+                _LOG.debug("> %s", cmd)
+                rc = hsyste.system(cmd, abort_on_error=False)
+                if rc:
+                    _LOG.warning(
+                        "Can't run '%s': you need to add the file manually",
+                        cmd,
+                    )
 
         outcome_updated = False
         file_exists = os.path.exists(file_name)
@@ -919,14 +912,15 @@ class TestCase(unittest.TestCase):
             hio.create_enclosing_dir(file_name_)
             actual_.to_csv(file_name_)
             # Add to git repo.
-            cmd = "git add %s" % file_name_
-            _LOG.debug("> %s", cmd)
-            rc = hsyste.system(cmd, abort_on_error=False)
-            if rc:
-                _LOG.warning(
-                    "Can't run '%s': you need to add the file manually",
-                    cmd,
-                )
+            if self.git_add:
+                cmd = "git add %s" % file_name_
+                _LOG.debug("> %s", cmd)
+                rc = hsyste.system(cmd, abort_on_error=False)
+                if rc:
+                    _LOG.warning(
+                        "Can't run '%s': you need to add the file manually",
+                        cmd,
+                    )
 
         outcome_updated = False
         file_exists = os.path.exists(file_name)

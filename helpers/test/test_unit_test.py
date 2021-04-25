@@ -166,6 +166,8 @@ class TestCheckString1(hut.TestCase):
         golden_outcome = "hello world2"
         # Force updating the golden outcomes.
         self.update_tests = True
+        self.git_add = False
+        #
         tag = "test"
         _, file_name = self._get_golden_outcome_file_name(tag)
         # Modify the golden.
@@ -180,6 +182,7 @@ class TestCheckString1(hut.TestCase):
             # Clean up.
             hio.to_file(file_name, golden_outcome)
             self.update_tests = False
+            self.git_add = True
         # Actual doesn't match the golden outcome and it was updated.
         self.assertTrue(outcome_updated)
         self.assertTrue(file_exists)
@@ -374,6 +377,8 @@ class TestCheckDataFrame1(hut.TestCase):
         )
         # Force updating the golden outcomes.
         self.update_tests = True
+        # We don't want to add to git.
+        self.git_add = False
         tag = "test_df"
         _, file_name = self._get_golden_outcome_file_name(tag)
         # Modify the golden.
@@ -390,6 +395,7 @@ class TestCheckDataFrame1(hut.TestCase):
             # Clean up.
             hio.to_file(file_name, golden_outcome)
             self.update_tests = False
+            self.git_add = True
         # Actual doesn't match the golden outcome and it was updated.
         self.assertTrue(outcome_updated)
         self.assertTrue(file_exists)
@@ -422,6 +428,8 @@ class TestCheckDataFrame1(hut.TestCase):
         )
         # Force updating the golden outcomes.
         self.update_tests = True
+        # We don't want to add to git.
+        self.git_add = False
         tag = "test_df"
         _, file_name = self._get_golden_outcome_file_name(tag)
         try:
@@ -438,6 +446,7 @@ class TestCheckDataFrame1(hut.TestCase):
             if os.path.exists(file_name):
                 hio.delete_file(file_name)
             self.update_tests = False
+            self.git_add = True
         # Actual doesn't match the golden outcome and it was updated.
         self.assertTrue(outcome_updated)
         self.assertFalse(file_exists)
