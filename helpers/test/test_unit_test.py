@@ -111,11 +111,21 @@ class TestTestCase(hut.TestCase):
         """
         Compare the actual value to a matching golden outcome.
         """
-        act = "hello world"
-        outcome_updated, file_exists, is_equal = self.check_string(act)
-        self.assertFalse(outcome_updated)
-        self.assertTrue(file_exists)
-        self.assertTrue(is_equal)
+        tag = "test"
+        _, file_name = self._get_golden_outcome_file_name(tag)
+        #
+        try:
+            # Overwrite the golden file, so that --update_golden doesn't matter.
+            hio.to_file(file_name, "hello world")
+            act = "hello world"
+            outcome_updated, file_exists, is_equal = self.check_string(act)
+            # Actual match the golden outcome and it wasn't updated.
+            self.assertFalse(outcome_updated)
+            self.assertTrue(file_exists)
+            self.assertTrue(is_equal)
+        finally:
+            # Clean up.
+            hio.to_file(file_name, "hello world")
 
     def test_check_string2(self) -> None:
         """
@@ -143,6 +153,7 @@ class TestTestCase(hut.TestCase):
         Compare the actual value to a mismatching golden outcome and udpate it.
         """
         act = "hello world"
+        # Force updating the golden outcomes.
         self.update_tests = True
         tag = "test"
         _, file_name = self._get_golden_outcome_file_name(tag)
@@ -152,7 +163,7 @@ class TestTestCase(hut.TestCase):
             outcome_updated, file_exists, is_equal = self.check_string(
                 act, abort_on_error=False
             )
-            # Actual doesn't match the golden outcome, and it was updated.
+            # Actual doesn't match the golden outcome and it was updated.
             self.assertTrue(outcome_updated)
             self.assertTrue(file_exists)
             self.assertFalse(is_equal)
@@ -164,6 +175,32 @@ class TestTestCase(hut.TestCase):
             hio.to_file(file_name, "hello world")
             self.update_tests = False
 
+    def test_check_string4(self) -> None:
+        """
+        The golden outcome was missing and was added.
+        """
+        act = "hello world"
+        # Force updating the golden outcomes.
+        self.update_tests = True
+        tag = "test"
+        _, file_name = self._get_golden_outcome_file_name(tag)
+        try:
+            # Remove the golden.
+            hio.delete_file(file_name)
+            outcome_updated, file_exists, is_equal = self.check_string(
+                act, abort_on_error=False
+            )
+            # Actual doesn't match the golden outcome and it was updated.
+            self.assertTrue(outcome_updated)
+            self.assertFalse(file_exists)
+            self.assertFalse(is_equal)
+            #
+            new_golden = hio.from_file(file_name)
+            self.assertEqual(new_golden, "hello world")
+        finally:
+            # Clean up.
+            hio.delete_file(file_name)
+            self.update_tests = False
 
 class Test_unit_test1(hut.TestCase):
     @pytest.mark.not_docker

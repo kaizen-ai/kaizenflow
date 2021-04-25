@@ -784,7 +784,9 @@ class TestCase(unittest.TestCase):
 
         :param: purify_text: remove some artifacts (e.g., user names,
             directories, reference to Git client)
-        Raises if there is an error.
+
+        Raises if there is an error (unless `about_on_error` is False, which
+        should be used only for unit testing).
         """
         _LOG.debug(hprint.to_str("fuzzy_match purify_text abort_on_error"))
         dbg.dassert_in(type(actual), (bytes, str))
@@ -802,10 +804,11 @@ class TestCase(unittest.TestCase):
         def _update_outcome(
             file_name_: str, actual_: str, use_gzip_: bool
         ) -> None:
-            hio.create_enclosing_dir(file_name_, incremental=True)
+            _LOG.debug(hprint.to_str("file_name_"))
             hio.to_file(file_name_, actual_, use_gzip=use_gzip_)
             # Add to git repo.
             cmd = "git add %s" % file_name_
+            _LOG.debug("> %s", cmd)
             rc = hsyste.system(cmd, abort_on_error=False)
             if rc:
                 _LOG.warning(
@@ -864,10 +867,15 @@ class TestCase(unittest.TestCase):
         actual: pd.DataFrame,
         err_threshold: float = 0.05,
         tag: str = "test_df",
+        abort_on_error: bool = True,
     ) -> None:
         """
         Like check_string() but for pandas dataframes, instead of strings.
+
+        Raises if there is an error (unless `about_on_error` is False, which
+        should be used only for unit testing).
         """
+        _LOG.debug(hprint.to_str("err_threshold tag abort_on_error"))
         dbg.dassert_isinstance(actual, pd.DataFrame)
         #
         dir_name, file_name = self._get_golden_outcome_file_name(tag)
@@ -876,10 +884,13 @@ class TestCase(unittest.TestCase):
         def _compare_outcome(
             file_name_: str, actual_: pd.DataFrame, err_threshold_: float
         ) -> bool:
+            _LOG.debug(hprint.to_str("file_name_"))
             dbg.dassert_lte(0, err_threshold_)
             dbg.dassert_lte(err_threshold_, 1.0)
+            # Load the expected df from file.
             expected = pd.DataFrame.read_csv(file_name_)
             ret = True
+            # Compare columns.
             if actual_.columns != expected.columns:
                 _LOG.debug(
                     "Columns are different: %s != %s",
@@ -887,20 +898,22 @@ class TestCase(unittest.TestCase):
                     str(expected.columns),
                 )
                 ret = False
+            # Compare the values.
             is_close = np.allclose(
                 actual_, expected, rtol=err_threshold_, equal_nan=True
             )
             if not is_close:
-                _LOG.debug("Dataframes are not close")
+                _LOG.debug("Dataframe values are not close")
                 ret = False
             _LOG.debug("ret=%s", ret)
             return ret
 
         def _update_outcome(file_name_: str, actual_: pd.DataFrame) -> None:
-            hio.create_enclosing_dir(file_name_, incremental=True)
+            _LOG.debug(hprint.to_str("file_name_"))
             actual_.to_csv(file_name)
-            # Add to git.
+            # Add to git repo.
             cmd = "git add %s" % file_name_
+            _LOG.debug("> %s", cmd)
             rc = hsyste.system(cmd, abort_on_error=False)
             if rc:
                 _LOG.warning(
@@ -908,12 +921,16 @@ class TestCase(unittest.TestCase):
                     cmd,
                 )
 
+        outcome_updated = False
         file_exists = os.path.exists(file_name)
-        if get_update_tests():
+        _LOG.debug(hprint.to_str("file_exists"))
+        is_equal: Optional[bool] = None
+        if self.update_tests:
+            _LOG.debug("Update golden outcomes")
             # Determine whether outcome needs to be updated.
-            outcome_updated = False
             if file_exists:
                 is_equal = _compare_outcome(file_name, actual, err_threshold)
+                _LOG.debug(hprint.to_str("is_equal"))
                 if not is_equal:
                     outcome_updated = True
             else:
