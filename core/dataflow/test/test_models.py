@@ -329,8 +329,7 @@ class TestSmaModel(hut.TestCase):
         df_out = dag.run_leq_node("sma", "fit")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
         # Package results.
-        act = self._package_results(config, info, df_out)
-        self.check_string(act)
+        self._check_results(config, info, df_out)
 
     def test_fit_dag2(self) -> None:
         """
@@ -355,8 +354,7 @@ class TestSmaModel(hut.TestCase):
         df_out = dag.run_leq_node("sma", "fit")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
         # Package results.
-        act = self._package_results(config, info, df_out)
-        self.check_string(act)
+        self._check_results(config, info, df_out)
 
     def test_fit_dag3(self) -> None:
         """
@@ -381,8 +379,7 @@ class TestSmaModel(hut.TestCase):
         df_out = dag.run_leq_node("sma", "fit")["df_out"]
         info = cdataf.extract_info(dag, ["fit"])
         # Package results.
-        act = self._package_results(config, info, df_out)
-        self.check_string(act)
+        self._check_results(config, info, df_out)
 
     def test_predict_dag1(self) -> None:
         # Load test data.
@@ -410,11 +407,10 @@ class TestSmaModel(hut.TestCase):
         info["fit"] = cdataf.extract_info(dag, ["fit"])
         info["predict"] = cdataf.extract_info(dag, ["predict"])
         # Package results.
-        act = self._package_results(config, info, df_out)
-        self.check_string(act)
+        self._check_results(config, info, df_out)
 
-    @staticmethod
-    def _package_results(
+    def _check_results(
+        self,
         config: cconfi.Config,
         info: collections.OrderedDict,
         df_out: pd.DataFrame,
@@ -422,12 +418,11 @@ class TestSmaModel(hut.TestCase):
         act: List[str] = []
         act.append(hprint.frame("config"))
         act.append(str(config))
-        act.append(hprint.frame("info"))
         act.append(str(ccbuild.get_config_from_nested_dict(info)))
-        act.append(hprint.frame("df_out"))
-        act.append(hut.convert_df_to_string(df_out, index=True))
         act = "\n".join(act)
-        return act
+        self.check_string(act)
+        #
+        self.check_dataframe(df_out, tag="df_out", err_threshold=0.01)
 
     @staticmethod
     def _get_data() -> pd.DataFrame:
@@ -785,6 +780,7 @@ class TestVolatilityModel(hut.TestCase):
 
 
 class TestVolatilityModulator(hut.TestCase):
+
     def test_modulate1(self) -> None:
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
@@ -802,9 +798,8 @@ class TestVolatilityModulator(hut.TestCase):
         )
         node = cdataf.VolatilityModulator("modulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
-        # Package results.
-        act = self._check_results(config, df_in, df_out)
-        self.check_string(act)
+        # Check results.
+        self._check_results(config, df_in, df_out)
 
     def test_demodulate1(self) -> None:
         steps_ahead = 2
@@ -820,9 +815,8 @@ class TestVolatilityModulator(hut.TestCase):
         )
         node = cdataf.VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
-        # Package results.
-        act = self._check_results(config, df_in, df_out)
-        self.check_string(act)
+        # Check results.
+        self._check_results(config, df_in, df_out)
 
     def test_col_mode1(self) -> None:
         steps_ahead = 2
@@ -840,9 +834,8 @@ class TestVolatilityModulator(hut.TestCase):
         )
         node = cdataf.VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
-        # Package results.
-        act = self._check_results(config, df_in, df_out)
-        self.check_string(act)
+        # Check results.
+        self._check_results(config, df_in, df_out)
 
     def test_col_mode2(self) -> None:
         steps_ahead = 2
@@ -860,13 +853,11 @@ class TestVolatilityModulator(hut.TestCase):
         )
         node = cdataf.VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
-        # Package results.
-        act = self._check_results(config, df_in, df_out)
-        self.check_string(act)
+        # Check results.
+        self._check_results(config, df_in, df_out)
 
     def _check_results(
-            self,
-        config: cconfi.Config, df_in: pd.DataFrame, df_out: pd.DataFrame
+        self, config: cconfi.Config, df_in: pd.DataFrame, df_out: pd.DataFrame
     ) -> str:
         act: List[str] = []
         act.append(hprint.frame("config"))
@@ -875,7 +866,6 @@ class TestVolatilityModulator(hut.TestCase):
         self.check_string(act)
         self.check_dataframe(df_in, tag="df_in", err_threshold=0.01)
         self.check_dataframe(df_out, tag="df_out", err_threshold=0.01)
-        return act
 
     @staticmethod
     def _get_signal_and_fwd_vol(
@@ -1040,9 +1030,8 @@ class TestContinuousSarimaxModel(hut.TestCase):
         config = self._get_config((1, 0, 1), (1, 0, 1, 3))
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         df_out = csm.fit(data)["df_out"]
-        # Package results.
-        act = self._package_results(config, df_out)
-        self.check_string(act)
+        # Check results.
+        self._check_results(config, df_out)
 
     def test_fit_step_one1(self) -> None:
         """
@@ -1055,9 +1044,8 @@ class TestContinuousSarimaxModel(hut.TestCase):
         config["fit_kwargs"] = {"start_params": [0.9999, 0.0001, 1.57e-11]}
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         df_out = csm.fit(data)["df_out"]
-        # Package results.
-        act = self._package_results(config, df_out)
-        self.check_string(act)
+        # Check results.
+        self._check_results(config, df_out)
 
     def test_fit_with_constant1(self) -> None:
         data = self._get_data([1], [])
@@ -1066,9 +1054,8 @@ class TestContinuousSarimaxModel(hut.TestCase):
         config["add_constant"] = True
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         df_out = csm.fit(data)["df_out"]
-        # Package results.
-        act = self._package_results(config, df_out)
-        self.check_string(act)
+        # Check results.
+        self._check_results(config, df_out)
 
     def test_fit_no_x1(self) -> None:
         """
@@ -1080,9 +1067,8 @@ class TestContinuousSarimaxModel(hut.TestCase):
         config["x_vars"] = None
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         df_out = csm.fit(data)["df_out"]
-        # Package results.
-        act = self._package_results(config, df_out, decimals=1)
-        self.check_string(act)
+        # Check results.
+        self._check_results(config, df_out, err_threshold=0.05)
 
     def test_compare_to_linear_regression1(self) -> None:
         """
@@ -1182,9 +1168,8 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
-        # Package results.
-        act = self._package_results(config, df_out, decimals=1)
-        self.check_string(act)
+        # Check results.
+        self._check_results(config, df_out, err_threshold=0.05)
 
     def test_predict2(self) -> None:
         """
@@ -1197,9 +1182,8 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
-        # Package results.
-        act = self._package_results(config, df_out)
-        self.check_string(act)
+        # Check results.
+        self._check_results(config, df_out)
 
     def test_predict_with_nan(self) -> None:
         """
@@ -1215,9 +1199,8 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
-        # Package results.
-        act = self._package_results(config, df_out)
-        self.check_string(act)
+        # Check results.
+        self._check_results(config, df_out)
 
     def test_predict_different_intervals1(self) -> None:
         """
@@ -1261,9 +1244,8 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
-        # Package results.
-        act = self._package_results(config, df_out, decimals=1)
-        self.check_string(act)
+        # Check results.
+        self._check_results(config, df_out, err_threshold=0.01)
 
     def test_predict_different_intervals_no_x1(self) -> None:
         """
@@ -1298,7 +1280,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data)
         info = csm.get_info("fit")["model_summary"]
-        # TODO(gp): Use the idiom like `_package_results()` instead of all
+        # TODO(gp): Use the idiom like `_check_results()` instead of all
         #  these unreadable f-strings.
         act = (
             f"{hut.convert_df_to_string(info['info'], index=True)}\n"
@@ -1307,19 +1289,16 @@ class TestContinuousSarimaxModel(hut.TestCase):
         )
         self.check_string(act)
 
-    @staticmethod
-    def _package_results(
-        config: cconfi.Config, df_out: pd.DataFrame, decimals=6
+    def _check_results(
+        self, config: cconfi.Config, df_out: pd.DataFrame, err_threshold=0.01
     ) -> str:
         act: List[str] = []
         act.append(hprint.frame("config"))
         act.append(str(config))
-        act.append(hprint.frame("df_out"))
-        act.append(
-            hut.convert_df_to_string(df_out, index=True, decimals=decimals)
-        )
         act = "\n".join(act)
-        return act
+        self.check_string(act)
+        #
+        self.check_dataframe(df_out, err_threshold=err_threshold)
 
     @staticmethod
     def _get_data(
@@ -1381,7 +1360,7 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         cum_y_yhat = mrpp.fit(model_output)["df_out"]
         # TODO(Julia): Ask about creating a `TestFitPredictNode(hut.TestCase)`
         #  class that will take care of this piece.
-        # TODO(gp): Use the idiom like `_package_results()` instead of all
+        # TODO(gp): Use the idiom like `_check_results()` instead of all
         #  these unreadable f-strings.
         act = (
             f"{hprint.frame('config')}\n{config}\n"

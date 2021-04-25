@@ -87,7 +87,6 @@ class TestTestCase(hut.TestCase):
         len(file_names)=1
         file_names=$TMP_DIR/tmp_diff.sh
         # $TMP_DIR/tmp_diff.sh
-        num_chars=155
         num_lines=1
         '''
         vimdiff $GIT_ROOT/helpers/test/TestTestCase.test_assert_not_equal2/tmp.actual.txt $GIT_ROOT/helpers/test/TestTestCase.test_assert_not_equal2/tmp.expected.txt

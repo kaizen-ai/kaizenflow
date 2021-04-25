@@ -255,7 +255,8 @@ def get_dir_signature(dir_name: str, num_lines: Optional[int] = None) -> str:
         txt.append("# " + file_name)
         # Read file.
         txt_tmp = hio.from_file(file_name)
-        txt.append("num_chars=%s" % len(txt_tmp))
+        # This seems unstable on different systems.
+        #txt.append("num_chars=%s" % len(txt_tmp))
         txt_tmp = txt_tmp.split("\n")
         # Filter lines, if needed.
         txt.append("num_lines=%s" % len(txt_tmp))
