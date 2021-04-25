@@ -916,7 +916,8 @@ class TestCase(unittest.TestCase):
 
         def _update_outcome(file_name_: str, actual_: pd.DataFrame) -> None:
             _LOG.debug(hprint.to_str("file_name_"))
-            actual_.to_csv(file_name)
+            hio.create_enclosing_dir(file_name_)
+            actual_.to_csv(file_name_)
             # Add to git repo.
             cmd = "git add %s" % file_name_
             _LOG.debug("> %s", cmd)

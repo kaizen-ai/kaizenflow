@@ -134,7 +134,7 @@ class TestCheckString1(hut.TestCase):
         self.assertTrue(file_exists)
         self.assertTrue(is_equal)
 
-    def test_check_string2(self) -> None:
+    def test_check_string_not_equal1(self) -> None:
         """
         Compare the actual value to a mismatching golden outcome.
         """
@@ -158,7 +158,7 @@ class TestCheckString1(hut.TestCase):
         self.assertTrue(file_exists)
         self.assertFalse(is_equal)
 
-    def test_check_string3(self) -> None:
+    def test_check_string_not_equal2(self) -> None:
         """
         Compare the actual value to a mismatching golden outcome and udpate it.
         """
@@ -175,19 +175,38 @@ class TestCheckString1(hut.TestCase):
             outcome_updated, file_exists, is_equal = self.check_string(
                 act, abort_on_error=False
             )
-            # Actual doesn't match the golden outcome and it was updated.
-            self.assertTrue(outcome_updated)
-            self.assertTrue(file_exists)
-            self.assertFalse(is_equal)
-            #
             new_golden = hio.from_file(file_name)
-            self.assertEqual(new_golden, "hello world")
         finally:
             # Clean up.
             hio.to_file(file_name, golden_outcome)
             self.update_tests = False
+        # Actual doesn't match the golden outcome and it was updated.
+        self.assertTrue(outcome_updated)
+        self.assertTrue(file_exists)
+        self.assertFalse(is_equal)
+        # The golden outcome was updated.
+        self.assertEqual(new_golden, "hello world")
 
-    def test_check_string4(self) -> None:
+    def test_check_string_not_equal3(self) -> None:
+        """
+        Like test_check_string_not_equal1() but raising the exception.
+        """
+        act = "hello world"
+        golden_outcome = "hello world2"
+        #
+        tag = "test"
+        _, file_name = self._get_golden_outcome_file_name(tag)
+        # Modify the golden.
+        hio.to_file(file_name, golden_outcome)
+        try:
+            # Check.
+            with self.assertRaises(RuntimeError):
+                self.check_string(act)
+        finally:
+            # Clean up.
+            hio.to_file(file_name, golden_outcome)
+
+    def test_check_string_missing1(self) -> None:
         """
         The golden outcome was missing and was added.
         """
@@ -303,7 +322,7 @@ class TestCheckDataFrame1(hut.TestCase):
 
     def test_check_df_not_equal1(self) -> None:
         """
-        Compare the actual value of a df to a matching golden outcome.
+        Compare the actual value of a df to a not matching golden outcome.
         """
         act = pd.DataFrame(
             [[0, 1.06, 2],
@@ -320,6 +339,111 @@ class TestCheckDataFrame1(hut.TestCase):
         self.assertTrue(file_exists)
         self.assertFalse(is_equal)
 
+    def test_check_df_not_equal2(self) -> None:
+        """
+        Compare the actual value of a df to a not matching golden outcome.
+        """
+        act = pd.DataFrame(
+            [[0, 1, 2],
+             [3, 4, 5]],
+            columns="a d c".split()
+        )
+        abort_on_error = False
+        err_threshold = 0.05
+        outcome_updated, file_exists, is_equal = self._check_df_helper(act,
+                                                                       abort_on_error,
+                                                                       err_threshold)
+        # Actual outcome doesn't match the golden outcome and it wasn't updated.
+        self.assertFalse(outcome_updated)
+        self.assertTrue(file_exists)
+        self.assertFalse(is_equal)
+
+    def test_check_df_not_equal3(self) -> None:
+        """
+        Compare the actual value to a mismatching golden outcome and udpate it.
+        """
+        act = pd.DataFrame(
+            [[0, 1, 2],
+             [3, 4, 5]],
+            columns="a b c".split()
+        )
+        golden_outcome = pd.DataFrame(
+            [[0, 2, 2],
+             [3, 4, 5]],
+            columns="a b c".split()
+        )
+        # Force updating the golden outcomes.
+        self.update_tests = True
+        tag = "test_df"
+        _, file_name = self._get_golden_outcome_file_name(tag)
+        # Modify the golden.
+        hio.create_enclosing_dir(file_name, incremental=True)
+        golden_outcome.to_csv(file_name)
+        try:
+            # Check.
+            outcome_updated, file_exists, is_equal = self.check_dataframe(
+                act, abort_on_error=False
+            )
+            #
+            new_golden = pd.read_csv(file_name, index_col=0)
+        finally:
+            # Clean up.
+            hio.to_file(file_name, golden_outcome)
+            self.update_tests = False
+        # Actual doesn't match the golden outcome and it was updated.
+        self.assertTrue(outcome_updated)
+        self.assertTrue(file_exists)
+        self.assertFalse(is_equal)
+        # Check golden.
+        self.assert_equal(str(new_golden), str(act))
+
+    def test_check_df_not_equal4(self) -> None:
+        """
+        Like test_check_df_not_equal1() but raising the exception.
+        """
+        act = pd.DataFrame(
+            [[0, 1.06, 2],
+             [3, 4, 5]],
+            columns="a b c".split()
+        )
+        abort_on_error = True
+        err_threshold = 0.05
+        with self.assertRaises(RuntimeError):
+            self._check_df_helper(act, abort_on_error, err_threshold)
+
+    def test_check_df_missing1(self) -> None:
+        """
+        The golden outcome was missing and was added.
+        """
+        act = pd.DataFrame(
+            [[0, 1, 2],
+             [3, 4, 5]],
+            columns="a b c".split()
+        )
+        # Force updating the golden outcomes.
+        self.update_tests = True
+        tag = "test_df"
+        _, file_name = self._get_golden_outcome_file_name(tag)
+        try:
+            # Remove the golden.
+            if os.path.exists(file_name):
+                hio.delete_file(file_name)
+            # Check.
+            outcome_updated, file_exists, is_equal = self.check_dataframe(
+                act, abort_on_error=False
+            )
+            new_golden = pd.read_csv(file_name, index_col=0)
+        finally:
+            # Clean up.
+            if os.path.exists(file_name):
+                hio.delete_file(file_name)
+            self.update_tests = False
+        # Actual doesn't match the golden outcome and it was updated.
+        self.assertTrue(outcome_updated)
+        self.assertFalse(file_exists)
+        self.assertFalse(is_equal)
+        # Check golden.
+        self.assert_equal(str(new_golden), str(act))
 
 
 class Test_unit_test1(hut.TestCase):
