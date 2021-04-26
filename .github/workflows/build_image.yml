@@ -4,14 +4,14 @@ on:
 
 jobs:
   Build_image:
-    runs-on: [self-hosted, CPU4_RAM16, SLOW]
+    runs-on: ubuntu-latest
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-2
+          aws-region: us-east-1
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -24,57 +24,69 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: true
+          # TODO(gp): Not needed?
           ssh-key: ${{ secrets.GH_ACTION_SSH_PRIVATE_KEY }}
 
-      - name: Build "rc" image
-        run: make docker_build_image.rc
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r .github/gh_requirements.txt
 
-      - name: Push image "rc" image
-        run: make docker_push_image.rc
-
-      - name: Run fast tests for "rc" image
-        if: ${{ success() }}
+      - name: Run 'docker_release_dev_image' workflow
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-        run: make run_fast_tests.gh_action_rc
+        run: invoke docker_release_dev_image
 
-      - name: Run slow tests for "rc" image
+#      - name: Push image "rc" image
+#        run: make docker_push_image.rc
+#
+#      - name: Run fast tests for "rc" image
+#        if: ${{ success() }}
+#        env:
+#          AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
+#          AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
+#        run: make run_fast_tests.gh_action_rc
+#
+#      - name: Run slow tests for "rc" image
+#        if: ${{ success() }}
+#        env:
+#          AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
+#          AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
+#        run: make run_slow_tests.gh_action_rc
+#
+#      - name: Run superslow tests for "rc" image
+#        if: ${{ success() }}
+#        env:
+#          AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
+#          AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
+#        run: make run_superslow_tests.gh_action_rc
+#
+#      - name: Add "latest" tag
+#        if: ${{ success() && github.ref == 'refs/heads/master' }}
+#        run: make docker_tag_rc_image.latest
+#
+#      - name: Push "latest" image
+#        if: ${{ success() && github.ref == 'refs/heads/master' }}
+#        run: make docker_push_image.latest
+
+      - name: Send Telegram notification for success
         if: ${{ success() }}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-        run: make run_slow_tests.gh_action_rc
-
-      - name: Run superslow tests for "rc" image
-        if: ${{ success() }}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-        run: make run_superslow_tests.gh_action_rc
-
-      - name: Add "latest" tag
-        if: ${{ success() && github.ref == 'refs/heads/master' }}
-        run: make docker_tag_rc_image.latest
-
-      - name: Push "latest" image
-        if: ${{ success() && github.ref == 'refs/heads/master' }}
-        run: make docker_push_image.latest
-
-      - name: Send Telegram notification
-        if: ${{ success() && github.ref == 'refs/heads/master' }}
+        #if: ${{ success() && github.ref == 'refs/heads/master' }}
         uses: appleboy/telegram-action@master
         with:
-          to: ${{ secrets.P1_TG_BUILD_MONITORING_CHANNEL_ID }}
-          token: ${{ secrets.P1_GH_BOT_TELEGRAM_TOKEN }}
+          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
+          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
           message: |
-            A brand new image `amp_env` was successfully built.
+            🎉 A new Docker image `amp` was successfully built. Please pull the new image.
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-            Please pull new image to use the latest version.
-            ```
-            # Authorize your client:
-            make docker_login
-            # Pull the latest version:
-            make docker_pull
-            ```
+      - name: Send Telegram notification for failure
+        if: ${{ failure() }}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
+          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
+          message: |
+            🧨 IMAGE BUILD PROCESS FAILED
             https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

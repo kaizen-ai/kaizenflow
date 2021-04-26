@@ -1,3 +1,5 @@
+import pytest
+
 import helpers.unit_test as hut
 import instrument_master.common.data.types as icdtyp
 import instrument_master.ib.data.config as iidcon
@@ -13,6 +15,7 @@ class TestIbFilePathGenerator(hut.TestCase):
         super().setUp()
         self._file_path_generator = iidlib.IbFilePathGenerator()
 
+    @pytest.mark.skip("AmpTask161: Switch AM codebase to AM S3")
     def test_get_latest_symbols_file1(self) -> None:
         """
         Get the latest file with the info.

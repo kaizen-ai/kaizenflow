@@ -1,10 +1,6 @@
 PWD=$(pwd)
 
 AMP=$PWD
-if [[ ! -d $AMP ]]; then
-    echo "AMP dir '$AMP' doesn' exist"
-    return -1
-fi;
 
 export PATH=$AMP/dev_scripts:$PATH
 export PATH=$AMP/dev_scripts/aws:$PATH

@@ -9,7 +9,8 @@ services:
       - ../../../:/app
       - ~/.aws:/root/.aws
       - ~/.config/gspread_pandas/:/root/.config/gspread_pandas
-      - ../docker_build/fstab:/etc/fstab
+      # No need to mount file systems.
+      #- ../docker_build/fstab:/etc/fstab
     # Move one dir down to include the entire git repo (see AmpTask1017).
     working_dir: /app/amp
     privileged: true

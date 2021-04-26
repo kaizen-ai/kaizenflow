@@ -1,7 +1,7 @@
 """
 Import as:
 
-import vendors_amp.ib.data.load.ib_sql_data_loader as vidlib
+import instrument_master.ib.data.load.ib_sql_data_loader as vidlib
 """
 import helpers.dbg as dbg
 import instrument_master.common.data.load.abstract_data_loader as icdlab

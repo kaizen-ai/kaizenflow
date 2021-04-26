@@ -2,16 +2,18 @@
 
 set -e
 
-OPTS="-vv -rpa --log-cli-level=INFO"
+USER_OPTS="$*"
+
+OPTS="-vv -rpa"
 
 # TODO(gp): Fix this pytest markers.
 SKIPPED_TESTS="slow and \
-    not superslow and \
-    not broken_deps and \
-    not need_data_dir and \
-    not not_docker"
+not superslow and \
+not broken_deps and \
+not need_data_dir and \
+not not_docker"
 
 # Run tests.
-cmd="pytest ${OPTS} -m '${SKIPPED_TESTS}'"
+cmd="pytest ${OPTS} -m '${SKIPPED_TESTS}' ${USER_OPTS}"
 echo "> cmd=$cmd"
 eval $cmd

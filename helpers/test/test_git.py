@@ -19,6 +19,18 @@ def _helper(func_call: str) -> None:
 
 
 class Test_git1(hut.TestCase):
+
+    def test_parse_github_repo_name1(self) -> None:
+        repo_name = "git@github.com:alphamatic/amp"
+        act = git._parse_github_repo_name(repo_name)
+        self.assertEqual(act, "alphamatic/amp")
+
+    def test_parse_github_repo_name2(self) -> None:
+        repo_name = "https://github.com/alphamatic/amp"
+        act = git._parse_github_repo_name(repo_name)
+        exp = "alphamatic/amp"
+        self.assertEqual(act, exp)
+
     def test_get_path_from_git_root1(self) -> None:
         file_name = "helpers/test/test_git.py"
         act = git.get_path_from_git_root(file_name, super_module=False)

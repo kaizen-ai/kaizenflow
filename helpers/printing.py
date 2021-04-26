@@ -244,7 +244,6 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
         exprs = [v.lstrip().rstrip() for v in expression.split(" ")]
         _to_str = lambda x: to_str(x, frame_lev=frame_lev + 2)
         return ", ".join(list(map(_to_str, exprs)))
-
     frame = sys._getframe(frame_lev)
     ret = (
         expression + "=" + repr(eval(expression, frame.f_globals, frame.f_locals))
@@ -254,7 +253,7 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
 
 def log(logger, verbosity, *vals: Any) -> Tuple[str, List[str]]:
     """
-    _LOG.debug(to_log("ticker", "exchange"))
+    log(_LOG, logging.DEBUG, "ticker", "exchange")
 
     is equivalent to statements like:
 
@@ -575,6 +574,21 @@ def remove_non_printable_chars(txt: str) -> str:
     )
     txt = ansi_escape.sub("", txt)
     return txt
+
+
+def sort_dictionary(dict_: Dict) -> Dict:
+    """
+    Sort a dictionary recursively using nested OrderedDict.
+    """
+    import collections
+
+    res = collections.OrderedDict()
+    for k, v in sorted(dict_.items()):
+        if isinstance(v, dict):
+            res[k] = sort_dictionary(v)
+        else:
+            res[k] = v
+    return res
 
 
 # #############################################################################

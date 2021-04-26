@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# TODO(gp): Merge into test_volumes.sh
+
 set -e
 
 MOUNT_POINT="/s3/default00-bucket"
