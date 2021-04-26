@@ -25,8 +25,9 @@ echo "AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION"
 echo "which python: " $(which python)
 echo "check pandas package: " $(python -c "import pandas; print(pandas)")
 
-#echo "PATH=$PATH"
-#echo "PYTHONPATH=$PYTHONPATH"
-#echo "entrypoint.sh: '$@'"
+echo "PATH=$PATH"
+echo "PYTHONPATH=$PYTHONPATH"
+echo "entrypoint.sh: '$@'"
+
 # TODO(gp): eval seems to be more general, but it creates a new executable.
 eval "$@"

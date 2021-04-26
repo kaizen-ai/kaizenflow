@@ -2,6 +2,8 @@ PWD=$(pwd)
 
 AMP=$PWD
 
+export PATH=.:$PATH
+export PATH=$AMP:$PATH
 export PATH=$AMP/dev_scripts:$PATH
 export PATH=$AMP/dev_scripts/aws:$PATH
 export PATH=$AMP/dev_scripts/git:$PATH
