@@ -29,4 +29,5 @@ alias i="invoke"
 alias il="invoke --list"
 
 # Activate the virtuel env.
-source venv/bin/activate
+VENV_DIR="$HOME/venv"
+source $VENV_DIR/bin/activate

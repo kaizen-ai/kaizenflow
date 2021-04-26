@@ -361,10 +361,9 @@ def diff_files(
     msg.append(res)
     # Save a script to diff.
     diff_script = os.path.join(dst_dir, "tmp_diff.sh")
-    vimdiff_cmd = "vimdiff %s %s" % (
-        os.path.abspath(file_name1),
-        os.path.abspath(file_name2),
-    )
+    file_name1 = os.path.relpath(file_name1, os.getcwd())
+    file_name2 = os.path.relpath(file_name2, os.getcwd())
+    vimdiff_cmd = "vimdiff %s %s" % (file_name1, file_name2)
     hio.to_file(diff_script, vimdiff_cmd)
     cmd = "chmod +x " + diff_script
     hsyste.system(cmd)
@@ -645,10 +644,14 @@ class TestCase(unittest.TestCase):
         _LOG.debug("\n%s", hprint.frame(func_name))
         # The base directory is the one including the class under test.
         self.base_dir_name = os.path.dirname(inspect.getfile(self.__class__))
+        _LOG.debug("base_dir_name=%s", self.base_dir_name)
         self.update_tests = get_update_tests()
         self.git_add = True
         # Error message printed when comparing.
         self.error_msg = ""
+        # True if the golden outcome of this test was updated.
+        self._test_was_updated = False
+        #
         # Set the default pandas options (see AmpTask1140).
         self.old_pd_options = get_pd_default_values()
         set_pd_default_values()
@@ -659,6 +662,11 @@ class TestCase(unittest.TestCase):
         # Stop the timer to measure the execution time of the test.
         self._timer.stop()
         print("(%.2f s) " % self._timer.get_total_elapsed(), end="")
+        # Report if the test was updated.
+        if self._test_was_updated:
+            print("(" + hprint.color_highlight("WARNING", "yellow") +
+                  ": Test was updated) ", end="")
+            self._test_was_updated = False
         # Recover the original default pandas options.
         pd.options = self.old_pd_options
         # Force matplotlib to close plots to decouple tests.
@@ -822,7 +830,6 @@ class TestCase(unittest.TestCase):
             _LOG.debug("outcome_updated=%s", outcome_updated)
             if outcome_updated:
                 # Update the golden outcome.
-                _LOG.warning("Golden outcome updated in '%s'", file_name)
                 self._check_string_update_outcome(file_name, actual, use_gzip)
         else:
             # Check the test result.
@@ -845,8 +852,10 @@ class TestCase(unittest.TestCase):
                 _LOG.warning(
                     "Can't find golden outcome file '%s': updating it", file_name
                 )
+                outcome_updated = True
                 self._check_string_update_outcome(file_name, actual, use_gzip)
                 is_equal = None
+        self._test_was_updated = outcome_updated
         _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal
 
@@ -889,7 +898,6 @@ class TestCase(unittest.TestCase):
             _LOG.debug("outcome_updated=%s", outcome_updated)
             if outcome_updated:
                 # Update the golden outcome.
-                _LOG.warning("Golden outcome updated in '%s'", file_name)
                 self._check_df_update_outcome(file_name, actual)
         else:
             # Check the test result.
@@ -916,8 +924,10 @@ class TestCase(unittest.TestCase):
                 _LOG.warning(
                     "Can't find golden outcome file '%s': updating it", file_name
                 )
+                outcome_updated = True
                 self._check_df_update_outcome(file_name, actual)
                 is_equal = None
+        self._test_was_updated = outcome_updated
         _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal
 
@@ -977,25 +987,34 @@ class TestCase(unittest.TestCase):
             self._to_error(msg)
             ret = False
         # Compare the values.
-        _LOG.debug("actual_.shape=%s", str(actual.shape))
+        _LOG.debug("actual.shape=%s", str(actual.shape))
         _LOG.debug("expected.shape=%s", str(expected.shape))
+        # From https://numpy.org/doc/stable/reference/generated/numpy.allclose.html
+        # absolute(a - b) <= (atol + rtol * absolute(b))
+        # absolute(a - b) / absolute(b)) <= rtol
         is_close = np.allclose(
             actual, expected, rtol=err_threshold, equal_nan=True
         )
         if not is_close:
             _LOG.error("Dataframe values are not close")
             if actual.shape == expected.shape:
-                is_close = np.isclose(actual, expected, equal_nan=True)
+                close_mask = np.isclose(actual, expected, equal_nan=True)
                 #
-                actual_tmp = np.where(is_close, np.nan, actual)
-                msg = "actual=\n%s" % actual_tmp
+                msg = "actual=\n%s" % actual
                 self._to_error(msg)
                 #
-                expected_tmp = np.where(is_close, np.nan, expected)
-                msg = "expected=\n%s" % expected_tmp
+                msg = "expected=\n%s" % expected
                 self._to_error(msg)
                 #
-                err = np.abs((actual_tmp - expected_tmp) / actual_tmp)
+                actual_masked = np.where(close_mask, np.nan, actual)
+                msg = "actual_masked=\n%s" % actual_masked
+                self._to_error(msg)
+                #
+                expected_masked = np.where(close_mask, np.nan, expected)
+                msg = "expected_masked=\n%s" % expected_masked
+                self._to_error(msg)
+                #
+                err = np.abs((actual_masked - expected_masked) / expected_masked)
                 msg = "err=\n%s" % err
                 self._to_error(msg)
                 max_err = np.nanmax(np.nanmax(err))

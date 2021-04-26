@@ -492,6 +492,9 @@ def reset_logger() -> None:
     importlib.reload(logging)
 
 
+_WARNING = "\033[33mWARNING\033[0m"
+
+
 class _ColoredFormatter(logging.Formatter):
 
     MAPPING = {
@@ -555,7 +558,7 @@ def _get_logging_format(
     :param force_no_warning:
     """
     if is_running_in_ipynb() and not force_no_warning:
-        print("WARNING: Running in Jupyter")
+        print(_WARNING + ": Running in Jupyter")
     verbose_format = not is_running_in_ipynb()
     #
     dassert(
@@ -661,7 +664,7 @@ def init_logger(
     #         handler.setLevel(verbosity)
     # Exit to avoid to replicate the same output multiple times.
     if not in_pytest and root_logger.handlers:
-        print("WARNING: Logger already initialized: skipping")
+        print(_WARNING + ": Logger already initialized: skipping")
         return
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(verbosity)

@@ -25,11 +25,14 @@ COLOR_MAP = {
     "none": "\033[0m",
     "purple": "\033[95m",
     "red": "\033[91m",
-    "yellow": "\033[93m",
+    "yellow": "\033[33m",
 }
 
 
 def color_highlight(text: str, color: str) -> str:
+    """
+    Return a colored string.
+    """
     return COLOR_MAP[color] + text + COLOR_MAP["none"]
 
 

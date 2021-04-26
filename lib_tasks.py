@@ -705,6 +705,12 @@ def run_slow_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: 
 
 
 @task
+def run_fast_slow_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: ignore
+    run_fast_tests(ctx, stage=stage, pytest_opts=pytest_opts, coverage=coverage)
+    run_slow_tests(ctx, stage=stage, pytest_opts=pytest_opts, coverage=coverage)
+
+
+@task
 def run_superslow_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: ignore
     _LOG.info(">")
     run_tests_dir = "devops/docker_scripts"
