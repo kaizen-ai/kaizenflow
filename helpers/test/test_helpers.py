@@ -162,10 +162,10 @@ class Test_numba_1(hut.TestCase):
 class Test_s3_1(hut.TestCase):
     def test_get_path1(self) -> None:
         file_path = (
-            "s3://default00-bucket/kibot/All_Futures_Continuous_Contracts_daily"
+            "s3://alphamatic-data/data/kibot/All_Futures_Continuous_Contracts_daily"
         )
         bucket_name, file_path = hs3.parse_path(file_path)
-        self.assertEqual(bucket_name, "default00-bucket")
+        self.assertEqual(bucket_name, "alphamatic-data")
         self.assertEqual(
             file_path, "kibot/All_Futures_Continuous_Contracts_daily"
         )
