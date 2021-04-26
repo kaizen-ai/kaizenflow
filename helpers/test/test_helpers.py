@@ -170,11 +170,11 @@ class Test_s3_1(hut.TestCase):
             file_path, "kibot/All_Futures_Continuous_Contracts_daily"
         )
 
-    @pytest.mark.slow
     def test_ls1(self) -> None:
-        file_path = os.path.join(
-            hs3.get_path(), "kibot/All_Futures_Continuous_Contracts_daily"
-        )
+        file_path = os.path.join(hs3.get_path(), "README.md")
+        _LOG.debug("file_path=%s", file_path)
+        # > aws s3 ls s3://alphamatic-data
+        #                   PRE data/
+        # 2021-04-06 1:17:44 48 README.md
         file_names = hs3.ls(file_path)
-        # We rely on the fact that Kibot data is not changing.
-        self.assertEqual(len(file_names), 253)
+        self.assertGreater(0, len(file_names))

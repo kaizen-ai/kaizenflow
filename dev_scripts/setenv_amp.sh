@@ -22,3 +22,6 @@ echo "# which gh="$(which gh)
 alias ghamp="gh --repo alphamatic/amp"
 alias ghdt="gh --repo alphamatic/dev_tools"
 alias ghlem="gh --repo alphamatic/lemonade"
+
+alias i="invoke"
+alias il="invoke --list"

@@ -25,7 +25,7 @@ def get_bucket() -> str:
     Make sure your ~/.aws/credentials uses the right key to access this
     bucket as default.
     """
-    s3_bucket = "default00-bucket"
+    s3_bucket = "alphamatic-data"
     return s3_bucket
 
 
@@ -206,7 +206,7 @@ def listdir(s3_path: str, mode: str = "recursive") -> List[str]:
 
 
 # TODO(GP): Maybe we should add an S3Path class which will contain
-# prefix, bucket_name and path attributes?
+#  prefix, bucket_name and path attributes?
 def parse_path(path: str) -> Tuple[str, str]:
     """
     Extract bucket name and a file or folder path from an s3 full path.
@@ -233,10 +233,10 @@ def parse_path(path: str) -> Tuple[str, str]:
 
 
 # TODO(Julia): When PTask418_PRICE_Convert_Kibot_data_from_csv is
-# merged, choose between this ls() and listdir() functions.
+#  merged, choose between this ls() and listdir() functions.
 def ls(file_path: str) -> List[str]:
     """
-    Return the file lists in `file_path`.
+    :return: return the file lists in `file_path`.
     """
     s3 = boto3.resource("s3")
     bucket_name, file_path = parse_path(file_path)
