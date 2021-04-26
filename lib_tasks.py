@@ -837,3 +837,15 @@ def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignor
         + "| tee linter_warnings.txt"
     )
     ctx.run(cmd)
+
+
+@task
+def get_amp_files(ctx):
+    _ = ctx
+    token = "***REMOVED***"
+    file_names = ["lib_tasks.py"]
+    for file_name in file_names:
+        cmd = (f"wget "
+               f"https://raw.githubusercontent.com/alphamatic/amp/master/{file_name}"
+               f"?token={token} -O {file_name}")
+        hsi.system(cmd)

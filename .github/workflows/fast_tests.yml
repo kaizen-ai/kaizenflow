@@ -116,7 +116,7 @@ jobs:
           to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
           token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
           message: |
-            🧨 FAST TESTS FAILED
+            💣 FAST TESTS FAILED
             Build failure '${{ github.workflow }}'
             Repo: '${{ github.repository }}'
             Branch: '$${{ github.head_ref }}'
