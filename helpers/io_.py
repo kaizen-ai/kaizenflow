@@ -18,6 +18,7 @@ import uuid
 from typing import Any, List, Optional
 
 import helpers.dbg as dbg
+import helpers.printing as hprint
 import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
@@ -150,26 +151,31 @@ def create_dir(
     """
     Create a directory `dir_name` if it doesn't exist.
 
-    - param incremental: if False then the directory is deleted and
+    :param incremental: if False then the directory is deleted and
         re-created, otherwise it skips
-    - param abort_if_exists:
-    - param ask_to_delete: if it is not incremental and the dir exists,
+    :param abort_if_exists:
+    :param ask_to_delete: if it is not incremental and the dir exists,
         asks before deleting
     """
+    _LOG.debug(hprint.to_str("dir_name incremental abort_if_exists ask_to_delete"))
     dbg.dassert_is_not(dir_name, None)
-    dbg.dassert(
-        os.path.normpath(dir_name) != ".", msg="Can't create the current dir"
-    )
+    dir_name = os.path.normpath(dir_name)
+    if os.path.normpath(dir_name) == ".":
+        _LOG.debug("Can't create dir '%s'", dir_name)
+    exists = os.path.exists(dir_name)
+    is_dir = os.path.isdir(dir_name)
+    _LOG.debug(hprint.to_str("dir_name exists is_dir"))
     if abort_if_exists:
         dbg.dassert_not_exists(dir_name)
     #                   dir exists / dir does not exist
     # incremental       no-op        mkdir
     # not incremental   rm+mkdir     mkdir
-    if os.path.isdir(dir_name):
-        if incremental:
+    if exists:
+        if incremental and is_dir:
             # The dir exists and we want to keep it it exists (i.e.,
             # incremental), so we are done.
             # os.chmod(dir_name, 0755)
+            _LOG.debug("The dir '%s' exists and incremental=True: exiting", dir_name)
             return
         if ask_to_delete:
             hsyste.query_yes_no(
@@ -191,6 +197,7 @@ def create_dir(
     try:
         os.makedirs(dir_name)
     except OSError as e:
+        _LOG.error(str(e))
         # It can happen that we try to create the directory while somebody else
         # created it, so we neutralize the corresponding exception.
         if e.errno == 17:
@@ -200,18 +207,29 @@ def create_dir(
             raise e
 
 
-# TODO(gp): Shouldn't be always incremental=False?
+def _is_valid_file_name(file_name: str) -> None:
+    #dbg.dassert_in(type(file_name), (str, unicode))
+    dbg.dassert_in(type(file_name), [str])
+    dbg.dassert_is_not(file_name, None)
+    dbg.dassert_ne(file_name, "")
+
+
+# TODO(gp): Don't use default incremental.
 def create_enclosing_dir(file_name: str, incremental: bool = False) -> str:
     """
     Create the dir enclosing file_name, if needed.
 
-    <incremental> has the same meaning as in create_dir().
+    :param incremental: same meaning as in `create_dir()`
     """
-    dbg.dassert_is_not(file_name, None)
-    # dbg.dassert_isinstance(file_name, str)
+    _LOG.debug(hprint.to_str("file_name incremental"))
+    _is_valid_file_name(file_name)
+    #
     dir_name = os.path.dirname(file_name)
-    if dir_name != "" and not os.path.isdir(dir_name):
-        create_dir(dir_name, incremental)
+    _LOG.debug(hprint.to_str("dir_name"))
+    if dir_name != "":
+        _LOG.debug("Creating dir_name='%s' for file_name='%s'", dir_name, file_name)
+        create_dir(dir_name, incremental=incremental)
+    dbg.dassert_dir_exists(dir_name, "file_name='%s'", file_name)
     return dir_name
 
 
@@ -238,20 +256,16 @@ def to_file(
     :param mode: file writing mode
     :param force_flush: whether to forcibly clear the file buffer
     """
-    # Verify that the file name is correct.
-    dbg.dassert_is_not(file_name, None)
-    dbg.dassert_ne(file_name, "")
+    _LOG.debug(hprint.to_str("file_name use_gzip mode force_flush"))
+    _is_valid_file_name(file_name)
     # Choose default writing mode based on compression.
     if mode is None:
         if use_gzip:
             mode = "wt"
         else:
             mode = "w"
-    # dbg.dassert_in(type(file_name), (str, unicode))
     # Create the enclosing dir, if needed.
-    dir_name = os.path.dirname(file_name)
-    if dir_name != "" and not os.path.isdir(dir_name):
-        create_dir(dir_name, incremental=True)
+    create_enclosing_dir(file_name, incremental=True)
     if use_gzip:
         # Check if user provided correct file name.
         if not file_name.endswith(("gz", "gzip")):
@@ -405,7 +419,6 @@ def to_json(file_name: str, obj: dict) -> None:
     dir_name = os.path.dirname(file_name)
     if dir_name != "" and not os.path.isdir(dir_name):
         create_dir(dir_name, incremental=True)
-
     with open(file_name, "w") as outfile:
         json.dump(
             obj,

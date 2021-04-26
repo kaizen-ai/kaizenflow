@@ -25,8 +25,8 @@ _DEFAULT_PARAMS = {}
 
 
 # NOTE: We need to use a `# type: ignore` for all the @task functions because
-# invoke infers argument type from the code and mypy annotations confuse it
-# (see https://github.com/pyinvoke/invoke/issues/357)
+# pyinvoke infers the argument type from the code and mypy annotations confuse
+# it (see https://github.com/pyinvoke/invoke/issues/357).
 
 
 def set_default_params(params: Dict[str, Any]) -> None:
@@ -207,20 +207,32 @@ def docker_kill_all(ctx):  # type: ignore
 
 
 @task
-def docker_pull(ctx, stage=_STAGE):  # type: ignore
+def docker_pull(ctx, stage=_STAGE, mode="all"):  # type: ignore
     """
-    Pull all the needed images from the registry.
+    Pull images from the registry.
     """
     _LOG.info(">")
-    base_image = ""
-    image = _get_image(stage, base_image)
-    cmd = f"docker pull {image}"
-    ctx.run(cmd)
+    # Default is all the images.
+    if mode == "all":
+        mode = "current dev_tools"
+    # Parse the images.
+    image_tokens = [token.rstrip().lstrip() for token in mode.split()]
+    _LOG.info("image_tokens=%s", ", ".join(image_tokens))
     #
-    image = get_default_value("DEV_TOOLS_IMAGE_PROD")
-    _check_image(image)
-    cmd = f"docker pull {image}"
-    ctx.run(cmd)
+    for token in image_tokens:
+        if token == "":
+            continue
+        if token == "current":
+            base_image = ""
+            image = _get_image(stage, base_image)
+        elif token == "dev_tools":
+            image = get_default_value("DEV_TOOLS_IMAGE_PROD")
+        else:
+            raise ValueError("Can't recognize image token '%s'" % token)
+        _LOG.info("token='%s': image='%s'", token, image)
+        _check_image(image)
+        cmd = f"docker pull {image}"
+        ctx.run(cmd)
 
 
 # In the following we use functions from `hsyste` instead of `ctx.run()` since
@@ -703,6 +715,7 @@ def pytest_clean(ctx):  # type: ignore
     import helpers.pytest_ as hpytest
 
     _LOG.info(">")
+    _ = ctx
     hpytest.pytest_clean(".")
 
 
@@ -798,17 +811,7 @@ def pytest_clean(ctx):  # type: ignore
 
 
 @task
-def lint_docker_pull(ctx):  # type: ignore
-    _LOG.info(">")
-    ecr_base_path = "083233266530.dkr.ecr.us-east-2.amazonaws.com"
-    dev_tools_image_prod = f"{ecr_base_path}/dev_tools:prod"
-    docker_login(ctx)
-    cmd = f"docker pull {dev_tools_image_prod}"
-    ctx.run(cmd, pty=True)
-
-
-@task
-def lint(ctx, modified=True, branch=False, files="", phases=""):  # type: ignore
+def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignore
     """
     Lint files.
 
@@ -826,6 +829,7 @@ def lint(ctx, modified=True, branch=False, files="", phases=""):  # type: ignore
         files = hsyste.system_to_string(cmd)[1]
         files = " ".join(files.split("\n"))
     dbg.dassert_isinstance(files, str)
+    _LOG.debug("files='%s'", str(files))
     dbg.dassert_ne(files, "")
     _LOG.info("Files to lint:\n%s", "\n".join(files.split("\n")))
     cmd = (
@@ -833,3 +837,15 @@ def lint(ctx, modified=True, branch=False, files="", phases=""):  # type: ignore
         + "| tee linter_warnings.txt"
     )
     ctx.run(cmd)
+
+
+@task
+def get_amp_files(ctx):
+    _ = ctx
+    token = "***REMOVED***"
+    file_names = ["lib_tasks.py"]
+    for file_name in file_names:
+        cmd = (f"wget "
+               f"https://raw.githubusercontent.com/alphamatic/amp/master/{file_name}"
+               f"?token={token} -O {file_name}")
+        hsi.system(cmd)

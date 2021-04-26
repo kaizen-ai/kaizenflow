@@ -4,6 +4,7 @@ Import as:
 import helpers.unit_test as hut
 """
 
+import glob
 import inspect
 import logging
 import os
@@ -11,7 +12,7 @@ import pprint
 import random
 import re
 import unittest
-from typing import Any, List, Mapping, NoReturn, Optional, Union
+from typing import Any, List, Mapping, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -233,6 +234,41 @@ def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
     return txt
 
 
+def get_dir_signature(dir_name: str, num_lines: Optional[int] = None) -> str:
+    """
+    Compute a string with the content of files in dir_name.
+
+    :param num_lines: number of lines to print for each file
+    """
+    # Find all the files under `dir_name`.
+    _LOG.debug("dir_name=%s", dir_name)
+    dbg.dassert_exists(dir_name)
+    file_names = glob.glob(os.path.join(dir_name, "*"), recursive=True)
+    file_names = sorted(file_names)
+    #
+    txt: List[str] = []
+    txt.append("len(file_names)=%s" % len(file_names))
+    txt.append("file_names=%s" % ", ".join(file_names))
+    # Scan the files.
+    for file_name in file_names:
+        _LOG.debug("file_name=%s", file_name)
+        txt.append("# " + file_name)
+        # Read file.
+        txt_tmp = hio.from_file(file_name)
+        # This seems unstable on different systems.
+        # txt.append("num_chars=%s" % len(txt_tmp))
+        txt_tmp = txt_tmp.split("\n")
+        # Filter lines, if needed.
+        txt.append("num_lines=%s" % len(txt_tmp))
+        if num_lines is not None:
+            dbg.dassert_lte(1, num_lines)
+            txt_tmp = txt_tmp[:num_lines]
+        txt.append("'''\n" + "\n".join(txt_tmp) + "\n'''")
+    # Concat.
+    txt = "\n".join(txt)
+    return txt
+
+
 # TODO(gp): Maybe it's more general than this file.
 def filter_text(regex: str, txt: str) -> str:
     """
@@ -296,159 +332,115 @@ def purify_txt_from_client(txt: str) -> str:
 
 
 def diff_files(
-    file_name1: str, file_name2: str, tag: Optional[str] = None
-) -> NoReturn:
+    file_name1: str,
+    file_name2: str,
+    tag: Optional[str] = None,
+    abort_on_exit: bool = True,
+    dst_dir: str = ".",
+    error_msg: str = "",
+) -> None:
+    """
+    Compare the passed filenames and create script to compare them with
+    vimdiff.
+
+    :param tag: add a banner the tag
+    :param abort_on_exit: whether to assert or not
+    :param dst_dir: dir where to save the comparing script
+    """
+    _LOG.debug(hprint.to_str("tag abort_on_exit dst_dir"))
+    msg = []
+    # Add tag.
+    if tag is not None:
+        msg.append("\n" + hprint.frame(tag))
     # Diff to screen.
     _, res = hsyste.system_to_string(
         "echo; sdiff -l -w 150 %s %s" % (file_name1, file_name2),
         abort_on_error=False,
         log_level=logging.DEBUG,
     )
-    if tag is not None:
-        _LOG.error("%s", "\n" + hprint.frame(tag))
-    _LOG.error(res)
-    # Report how to diff.
+    msg.append(res)
+    # Save a script to diff.
+    diff_script = os.path.join(dst_dir, "tmp_diff.sh")
     vimdiff_cmd = "vimdiff %s %s" % (
         os.path.abspath(file_name1),
         os.path.abspath(file_name2),
     )
-    # Save a script to diff.
-    diff_script = "./tmp_diff.sh"
     hio.to_file(diff_script, vimdiff_cmd)
     cmd = "chmod +x " + diff_script
     hsyste.system(cmd)
-    msg = []
+    # Report how to diff.
     msg.append("Diff with:")
     msg.append("> " + vimdiff_cmd)
     msg.append("or running:")
     msg.append("> " + diff_script)
     msg_as_str = "\n".join(msg)
+    # This is not always shown.
     _LOG.error(msg_as_str)
-    raise RuntimeError(msg_as_str)
+    if abort_on_exit:
+        if error_msg:
+            msg_as_str = hprint.frame("error_msg") + "\n" + error_msg
+        raise RuntimeError(msg_as_str)
 
 
-def diff_strings(string1: str, string2: str, tag: Optional[str] = None) -> None:
-    test_dir = "."
+def diff_strings(
+    string1: str,
+    string2: str,
+    tag: Optional[str] = None,
+    abort_on_exit: bool = True,
+    dst_dir: str = ".",
+) -> None:
+    """
+    Compare two strings using the diff_files() flow by creating a script to
+    compare with vimdiff.
+
+    :param dst_dir: where to save the intermediatary files
+    """
+    _LOG.debug(hprint.to_str("tag abort_on_exit dst_dir"))
     # Save the actual and expected strings to files.
-    file_name1 = "%s/tmp.string1.txt" % test_dir
+    file_name1 = "%s/tmp.string1.txt" % dst_dir
     hio.to_file(file_name1, string1)
     #
-    file_name2 = "%s/tmp.string2.txt" % test_dir
+    file_name2 = "%s/tmp.string2.txt" % dst_dir
     hio.to_file(file_name2, string2)
-    #
+    # Compare with diff_files.
     if tag is None:
         tag = "string1 vs string2"
-    diff_files(file_name1, file_name2, tag)
+    diff_files(
+        file_name1,
+        file_name2,
+        tag=tag,
+        abort_on_exit=abort_on_exit,
+        dst_dir=dst_dir,
+    )
 
 
-def diff_df_monotonic(df: pd.DataFrame):
+def diff_df_monotonic(
+    df: pd.DataFrame,
+    tag: Optional[str] = None,
+    abort_on_exit: bool = True,
+    dst_dir: str = ".",
+) -> None:
+    """
+    Check for a dataframe to be monotonic using the vimdiff flow from
+    diff_files().
+    """
+    _LOG.debug(hprint.to_str("abort_on_exit dst_dir"))
     if not df.index.is_monotonic_increasing:
         df2 = df.copy()
         df2.sort_index(inplace=True)
-        diff_strings(df.to_csv(), df2.to_csv())
+        diff_strings(
+            df.to_csv(),
+            df2.to_csv(),
+            tag=tag,
+            abort_on_exit=abort_on_exit,
+            dst_dir=dst_dir,
+        )
 
 
 # #############################################################################
 
 
-# TODO(gp): Make these functions static of TestCase.
-def _remove_spaces(obj: Any) -> str:
-    string = str(obj)
-    string = string.replace("\\n", "\n").replace("\\t", "\t")
-    # Convert multiple empty spaces (but not newlines) into a single one.
-    string = re.sub(r"[^\S\n]+", " ", string)
-    # Remove insignificant crap.
-    lines = []
-    for line in string.split("\n"):
-        # Remove leading and trailing spaces.
-        line = re.sub(r"^\s+", "", line)
-        line = re.sub(r"\s+$", "", line)
-        # Skip empty lines.
-        if line != "":
-            lines.append(line)
-    string = "\n".join(lines)
-    return string
-
-
-def _assert_equal(
-    actual: str,
-    expected: str,
-    full_test_name: str,
-    test_dir: str,
-    fuzzy_match: bool = False,
-) -> None:
-    """
-    Implement a better version of self.assertEqual() that reports mismatching
-    strings with sdiff and save them to files for further analysis with
-    vimdiff.
-
-    :param fuzzy: ignore differences in spaces and end of lines (see
-      `_remove_spaces`)
-    """
-
-    def _to_string(obj: str) -> str:
-        if isinstance(obj, dict):
-            ret = pprint.pformat(obj)
-        else:
-            ret = str(obj)
-        ret = ret.rstrip("\n")
-        return ret
-
-    # Convert to strings.
-    actual = _to_string(actual)
-    expected = _to_string(expected)
-    # Fuzzy match, if needed.
-    if fuzzy_match:
-        _LOG.debug("Using fuzzy match")
-        actual_orig = actual
-        actual = _remove_spaces(actual)
-        expected_orig = expected
-        expected = _remove_spaces(expected)
-    else:
-        actual_orig = actual
-        expected_orig = expected
-    # Check.
-    if expected != actual:
-        _LOG.info(
-            "%s", "\n" + hprint.frame("Test %s failed" % full_test_name, "=", 80)
-        )
-        if fuzzy_match:
-            # Set the following var to True to print the purified version (e.g.,
-            # tables too large).
-            print_purified_version = False
-            # print_purified_version = True
-            if print_purified_version:
-                expected = expected_orig
-                # actual = actual_orig
-        # Print the correct output, like:
-        # var = r'""""
-        # 2021-02-17 09:30:00-05:00
-        # 2021-02-17 10:00:00-05:00
-        # 2021-02-17 11:00:00-05:00
-        # """
-        _LOG.info("\n%s", hprint.frame("Actual variable", "#", 80))
-        txt = []
-        prefix = "var = r"
-        spaces = 0
-        # spaces = len(prefix)
-        txt.append(prefix + '"""')
-        txt.append(hprint.indent(actual_orig, spaces))
-        txt.append(hprint.indent('"""', spaces))
-        txt = "\n".join(txt)
-        print(txt)
-        # Save the actual and expected strings to files.
-        _LOG.debug("Actual:\n%s", actual)
-        act_file_name = "%s/tmp.actual.txt" % test_dir
-        hio.to_file(act_file_name, actual)
-        #
-        _LOG.debug("Expected:\n%s", expected)
-        exp_file_name = "%s/tmp.expected.txt" % test_dir
-        hio.to_file(exp_file_name, expected)
-        #
-        tag = "ACTUAL vs EXPECTED"
-        diff_files(act_file_name, exp_file_name, tag)
-
-
+# pylint: disable=protected-access
 def get_pd_default_values() -> pd._config.config.DictWrapper:
     import copy
 
@@ -500,10 +492,10 @@ def set_pd_default_values() -> None:
             continue
         full_key = "%s.%s" % (section, key)
         old_val = pd.get_option(full_key)
-        # _LOG.debug("full_key=%s: old_val=%s, new_val=%s", full_key, old_val, new_val)
         if old_val != new_val:
             _LOG.debug(
-                "-> Assigning a different value: full_key=%s, old_val=%s, new_val=%s",
+                "-> Assigning a different value: full_key=%s, "
+                "old_val=%s, new_val=%s",
                 full_key,
                 old_val,
                 new_val,
@@ -511,10 +503,134 @@ def set_pd_default_values() -> None:
         pd.set_option(full_key, new_val)
 
 
+# #############################################################################
+
+
+def _remove_spaces(obj: Any) -> str:
+    string = str(obj)
+    string = string.replace("\\n", "\n").replace("\\t", "\t")
+    # Convert multiple empty spaces (but not newlines) into a single one.
+    string = re.sub(r"[^\S\n]+", " ", string)
+    # Remove insignificant crap.
+    lines = []
+    for line in string.split("\n"):
+        # Remove leading and trailing spaces.
+        line = re.sub(r"^\s+", "", line)
+        line = re.sub(r"\s+$", "", line)
+        # Skip empty lines.
+        if line != "":
+            lines.append(line)
+    string = "\n".join(lines)
+    return string
+
+
+def _assert_equal(
+    actual: str,
+    expected: str,
+    full_test_name: str,
+    test_dir: str,
+    fuzzy_match: bool = False,
+    abort_on_error: bool = True,
+    dst_dir: str = ".",
+    error_msg: str = "",
+) -> bool:
+    """
+    Implement a better version of self.assertEqual() that reports mismatching
+    strings with sdiff and save them to files for further analysis with
+    vimdiff.
+
+    :param fuzzy: ignore differences in spaces and end of lines (see
+      `_remove_spaces`)
+    :return: whether `actual` and `expected` are equal, if `abort_on_error` is False
+    """
+    _LOG.debug(
+        hprint.to_str(
+            "full_test_name test_dir fuzzy_match abort_on_error dst_dir"
+        )
+    )
+
+    def _to_string(obj: str) -> str:
+        if isinstance(obj, dict):
+            ret = pprint.pformat(obj)
+        else:
+            ret = str(obj)
+        ret = ret.rstrip("\n")
+        return ret
+
+    # Convert to strings.
+    actual = _to_string(actual)
+    expected = _to_string(expected)
+    # Fuzzy match, if needed.
+    if fuzzy_match:
+        _LOG.debug("Using fuzzy match")
+        actual_orig = actual
+        actual = _remove_spaces(actual)
+        expected_orig = expected
+        expected = _remove_spaces(expected)
+    else:
+        actual_orig = actual
+        expected_orig = expected
+    # Check.
+    _LOG.debug("act='\n%s'", actual)
+    _LOG.debug("exp='\n%s'", expected)
+    is_equal = expected == actual
+    if not is_equal:
+        _LOG.error(
+            "%s",
+            "\n" + hprint.frame("Test '%s' failed" % full_test_name, "=", 80),
+        )
+        if fuzzy_match:
+            # Set the following var to True to print the purified version (e.g.,
+            # tables too large).
+            print_purified_version = False
+            # print_purified_version = True
+            if print_purified_version:
+                expected = expected_orig
+                # actual = actual_orig
+        # Print the correct output, like:
+        #   var = r'""""
+        #   2021-02-17 09:30:00-05:00
+        #   2021-02-17 10:00:00-05:00
+        #   2021-02-17 11:00:00-05:00
+        #   """
+        _LOG.info("# Actual variable")
+        txt = []
+        prefix = "var = r"
+        spaces = 0
+        # spaces = len(prefix)
+        txt.append(prefix + '"""')
+        txt.append(hprint.indent(actual_orig, spaces))
+        txt.append(hprint.indent('"""', spaces))
+        txt = "\n".join(txt)
+        _LOG.error(txt)
+        # Save the actual and expected strings to files.
+        _LOG.debug("Actual:\n'%s'", actual)
+        act_file_name = "%s/tmp.actual.txt" % test_dir
+        hio.to_file(act_file_name, actual)
+        #
+        _LOG.debug("Expected:\n'%s'", expected)
+        exp_file_name = "%s/tmp.expected.txt" % test_dir
+        hio.to_file(exp_file_name, expected)
+        #
+        tag = "ACTUAL vs EXPECTED"
+        diff_files(
+            act_file_name,
+            exp_file_name,
+            tag=tag,
+            abort_on_exit=abort_on_error,
+            dst_dir=dst_dir,
+            error_msg=error_msg,
+        )
+    _LOG.debug("-> is_equal=%s", is_equal)
+    return is_equal
+
+
+# #############################################################################
+
+
 class TestCase(unittest.TestCase):
     """
-    Class adding some auxiliary functions to make easy to save output of tests
-    as txt.
+    Add some functions to compare actual results to a golden outcome.
     """
 
     def setUp(self) -> None:
@@ -527,6 +643,12 @@ class TestCase(unittest.TestCase):
         # Print banner to signal starting of a new test.
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
         _LOG.debug("\n%s", hprint.frame(func_name))
+        # The base directory is the one including the class under test.
+        self.base_dir_name = os.path.dirname(inspect.getfile(self.__class__))
+        self.update_tests = get_update_tests()
+        self.git_add = True
+        # Error message printed when comparing.
+        self.error_msg = ""
         # Set the default pandas options (see AmpTask1140).
         self.old_pd_options = get_pd_default_values()
         set_pd_default_values()
@@ -553,13 +675,16 @@ class TestCase(unittest.TestCase):
                 _LOG.debug("Deleting %s", self._scratch_dir)
                 hio.delete_dir(self._scratch_dir)
 
-    def create_io_dirs(self) -> None:
-        dir_name = self.get_input_dir()
-        hio.create_dir(dir_name, incremental=True)
-        _LOG.info("Creating dir_name=%s", dir_name)
-        dir_name = self.get_output_dir()
-        hio.create_dir(dir_name, incremental=True)
-        _LOG.info("Creating dir_name=%s", dir_name)
+    def set_base_dir_name(self, base_dir_name: str) -> None:
+        """
+        Set the base directory for the input, output, and scratch directories.
+
+        This is used to override the standard location of the base
+        directory which is close to the class under test.
+        """
+        self.base_dir_name = base_dir_name
+        _LOG.debug("Setting base_dir_name to '%s'", self.base_dir_name)
+        hio.create_dir(self.base_dir_name, incremental=True)
 
     def get_input_dir(
         self,
@@ -572,11 +697,8 @@ class TestCase(unittest.TestCase):
 
         :return: dir name
         """
-        dir_name = (
-            self._get_current_path(
-                test_class_name=test_class_name, test_method_name=test_method_name
-            )
-            + "/input"
+        dir_name = os.path.join(
+            self._get_current_path(test_class_name, test_method_name), "input"
         )
         return dir_name
 
@@ -587,14 +709,14 @@ class TestCase(unittest.TestCase):
 
         :return: dir name
         """
-        dir_name = self._get_current_path() + "/output"
+        dir_name = os.path.join(self._get_current_path(), "output")
         return dir_name
 
     # TODO(gp): -> get_scratch_dir().
     def get_scratch_space(
         self,
-        test_class_name: Optional[Any] = None,
-        test_method_name: Optional[Any] = None,
+        test_class_name: Optional[str] = None,
+        test_method_name: Optional[str] = None,
     ) -> str:
         """
         Return the path of the directory storing scratch data for this test
@@ -614,10 +736,24 @@ class TestCase(unittest.TestCase):
         return self._scratch_dir
 
     def assert_equal(
-        self, actual: str, expected: str, fuzzy_match: bool = False
-    ) -> None:
+        self,
+        actual: str,
+        expected: str,
+        fuzzy_match: bool = False,
+        abort_on_error: bool = True,
+        dst_dir: str = ".",
+    ) -> bool:
+        """
+        Assert if `actual` and `expected` are different and print info about
+        the comparison.
+        """
+        _LOG.debug(hprint.to_str("fuzzy_match abort_on_error dst_dir"))
         dbg.dassert_in(type(actual), (bytes, str), "actual=%s", str(actual))
         dbg.dassert_in(type(expected), (bytes, str), "expected=%s", str(expected))
+        # TODO(gp): Add purify_text.
+        # # Remove reference from the current environment.
+        # if purify_text:
+        #     actual = purify_txt_from_client(actual)
         #
         dir_name = self._get_current_path()
         _LOG.debug("dir_name=%s", dir_name)
@@ -625,9 +761,16 @@ class TestCase(unittest.TestCase):
         dbg.dassert_exists(dir_name)
         #
         test_name = self._get_test_name()
-        _assert_equal(
-            actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match
+        is_equal = _assert_equal(
+            actual,
+            expected,
+            test_name,
+            dir_name,
+            fuzzy_match=fuzzy_match,
+            abort_on_error=abort_on_error,
+            dst_dir=dst_dir,
         )
+        return is_equal
 
     def check_string(
         self,
@@ -635,92 +778,282 @@ class TestCase(unittest.TestCase):
         fuzzy_match: bool = False,
         purify_text: bool = False,
         use_gzip: bool = False,
-    ) -> None:
+        tag: str = "test",
+        abort_on_error: bool = True,
+    ) -> Tuple[bool, bool, Optional[bool]]:
         """
-        Check the actual outcome of a test against the expected outcomes
-        contained in the file and/or updates the golden reference file with the
-        actual outcome.
+        Check the actual outcome of a test against the expected outcome
+        contained in the file. If `--update_outcomes` is used, updates the
+        golden reference file with the actual outcome.
 
         :param: purify_text: remove some artifacts (e.g., user names,
             directories, reference to Git client)
-        Raises if there is an error.
+        :return: outcome_updated, file_exists, is_equal
+        :raises: RuntimeError if there is an error unless `about_on_error` is
+            False, which should be used only for unit testing
         """
+        _LOG.debug(hprint.to_str("fuzzy_match purify_text abort_on_error"))
         dbg.dassert_in(type(actual), (bytes, str))
         #
+        dir_name, file_name = self._get_golden_outcome_file_name(tag)
+        if use_gzip:
+            file_name += ".gz"
+        _LOG.debug("file_name=%s", file_name)
+        # Remove reference from the current environment.
+        if purify_text:
+            _LOG.debug("Purifying actual")
+            actual = purify_txt_from_client(actual)
+        _LOG.debug("actual=\n%s", actual)
+        outcome_updated = False
+        file_exists = os.path.exists(file_name)
+        _LOG.debug("file_exists=%s", file_exists)
+        is_equal: Optional[bool] = None
+        if self.update_tests:
+            _LOG.debug("Update golden outcomes")
+            # Determine whether outcome needs to be updated.
+            if file_exists:
+                expected = hio.from_file(file_name, use_gzip=use_gzip)
+                is_equal = expected == actual
+                if not is_equal:
+                    outcome_updated = True
+            else:
+                # The golden outcome doesn't exist.
+                outcome_updated = True
+            _LOG.debug("outcome_updated=%s", outcome_updated)
+            if outcome_updated:
+                # Update the golden outcome.
+                _LOG.warning("Golden outcome updated in '%s'", file_name)
+                self._check_string_update_outcome(file_name, actual, use_gzip)
+        else:
+            # Check the test result.
+            _LOG.debug("Check golden outcomes")
+            if file_exists:
+                # Golden outcome is available: check the actual outcome against
+                # the golden outcome.
+                expected = hio.from_file(file_name, use_gzip=use_gzip)
+                test_name = self._get_test_name()
+                is_equal = _assert_equal(
+                    actual,
+                    expected,
+                    test_name,
+                    dir_name,
+                    fuzzy_match=fuzzy_match,
+                    abort_on_error=abort_on_error,
+                )
+            else:
+                # No golden outcome available: save the result.
+                _LOG.warning(
+                    "Can't find golden outcome file '%s': updating it", file_name
+                )
+                self._check_string_update_outcome(file_name, actual, use_gzip)
+                is_equal = None
+        _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
+        return outcome_updated, file_exists, is_equal
+
+    def check_dataframe(
+        self,
+        actual: pd.DataFrame,
+        err_threshold: float = 0.05,
+        tag: str = "test_df",
+        abort_on_error: bool = True,
+    ) -> Tuple[bool, bool, Optional[bool]]:
+        """
+        Like check_string() but for pandas dataframes, instead of strings.
+
+        :return: outcome_updated, file_exists, is_equal
+        :raises: RuntimeError if there is an error unless `about_on_error` is
+            False, which should be used only for unit testing
+        """
+        _LOG.debug(hprint.to_str("err_threshold tag abort_on_error"))
+        dbg.dassert_isinstance(actual, pd.DataFrame)
+        #
+        dir_name, file_name = self._get_golden_outcome_file_name(tag)
+        _LOG.debug("file_name=%s", file_name)
+        outcome_updated = False
+        file_exists = os.path.exists(file_name)
+        _LOG.debug(hprint.to_str("file_exists"))
+        is_equal: Optional[bool] = None
+        if self.update_tests:
+            _LOG.debug("Update golden outcomes")
+            # Determine whether outcome needs to be updated.
+            if file_exists:
+                is_equal, _ = self._check_df_compare_outcome(
+                    file_name, actual, err_threshold
+                )
+                _LOG.debug(hprint.to_str("is_equal"))
+                if not is_equal:
+                    outcome_updated = True
+            else:
+                # The golden outcome doesn't exist.
+                outcome_updated = True
+            _LOG.debug("outcome_updated=%s", outcome_updated)
+            if outcome_updated:
+                # Update the golden outcome.
+                _LOG.warning("Golden outcome updated in '%s'", file_name)
+                self._check_df_update_outcome(file_name, actual)
+        else:
+            # Check the test result.
+            if file_exists:
+                # Golden outcome is available: check the actual outcome against
+                # the golden outcome.
+                is_equal, expected = self._check_df_compare_outcome(
+                    file_name, actual, err_threshold
+                )
+                # If not equal, report debug information.
+                if not is_equal:
+                    test_name = self._get_test_name()
+                    _assert_equal(
+                        str(actual),
+                        str(expected),
+                        test_name,
+                        dir_name,
+                        fuzzy_match=False,
+                        abort_on_error=abort_on_error,
+                        error_msg=self.error_msg,
+                    )
+            else:
+                # No golden outcome available: save the result.
+                _LOG.warning(
+                    "Can't find golden outcome file '%s': updating it", file_name
+                )
+                self._check_df_update_outcome(file_name, actual)
+                is_equal = None
+        _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
+        return outcome_updated, file_exists, is_equal
+
+    # #########################################################################
+
+    def _check_string_update_outcome(
+        self, file_name: str, actual: str, use_gzip: bool
+    ) -> None:
+        _LOG.debug(hprint.to_str("file_name"))
+        hio.to_file(file_name, actual, use_gzip=use_gzip)
+        # Add to git repo.
+        if self.git_add:
+            cmd = "git add %s" % file_name
+            _LOG.debug("> %s", cmd)
+            rc = hsyste.system(cmd, abort_on_error=False)
+            if rc:
+                _LOG.warning(
+                    "Can't run '%s': you need to add the file manually",
+                    cmd,
+                )
+
+    # #########################################################################
+
+    def _check_df_update_outcome(
+        self, file_name: str, actual: pd.DataFrame
+    ) -> None:
+        _LOG.debug(hprint.to_str("file_name"))
+        hio.create_enclosing_dir(file_name)
+        actual.to_csv(file_name)
+        # Add to git repo.
+        if self.git_add:
+            cmd = "git add %s" % file_name
+            _LOG.debug("> %s", cmd)
+            rc = hsyste.system(cmd, abort_on_error=False)
+            if rc:
+                _LOG.warning(
+                    "Can't run '%s': you need to add the file manually",
+                    cmd,
+                )
+
+    def _check_df_compare_outcome(
+        self, file_name: str, actual: pd.DataFrame, err_threshold: float
+    ) -> Tuple[bool, pd.DataFrame]:
+        _LOG.debug(hprint.to_str("file_name"))
+        _LOG.debug("actual_=\n%s", actual)
+        dbg.dassert_lte(0, err_threshold)
+        dbg.dassert_lte(err_threshold, 1.0)
+        # Load the expected df from file.
+        expected = pd.read_csv(file_name, index_col=0)
+        _LOG.debug("expected=\n%s", expected)
+        dbg.dassert_isinstance(expected, pd.DataFrame)
+        ret = True
+        # Compare columns.
+        if actual.columns.tolist() != expected.columns.tolist():
+            msg = "Columns are different:\n%s\n%s" % (
+                str(actual.columns),
+                str(expected.columns),
+            )
+            self._to_error(msg)
+            ret = False
+        # Compare the values.
+        _LOG.debug("actual_.shape=%s", str(actual.shape))
+        _LOG.debug("expected.shape=%s", str(expected.shape))
+        is_close = np.allclose(
+            actual, expected, rtol=err_threshold, equal_nan=True
+        )
+        if not is_close:
+            _LOG.error("Dataframe values are not close")
+            if actual.shape == expected.shape:
+                is_close = np.isclose(actual, expected, equal_nan=True)
+                #
+                actual_tmp = np.where(is_close, np.nan, actual)
+                msg = "actual=\n%s" % actual_tmp
+                self._to_error(msg)
+                #
+                expected_tmp = np.where(is_close, np.nan, expected)
+                msg = "expected=\n%s" % expected_tmp
+                self._to_error(msg)
+                #
+                err = np.abs((actual_tmp - expected_tmp) / actual_tmp)
+                msg = "err=\n%s" % err
+                self._to_error(msg)
+                max_err = np.nanmax(np.nanmax(err))
+                msg = "max_err=%.3f" % max_err
+                self._to_error(msg)
+            else:
+                msg = (
+                    "Shapes are different:\n"
+                    "actual.shape=%s\n"
+                    "expected.shape=%s" % (str(actual.shape), str(expected.shape))
+                )
+                self._to_error(msg)
+            ret = False
+        _LOG.debug("ret=%s", ret)
+        return ret, expected
+
+    # #########################################################################
+
+    def _get_golden_outcome_file_name(self, tag: str) -> Tuple[str, str]:
         dir_name = self._get_current_path()
         _LOG.debug("dir_name=%s", dir_name)
         hio.create_dir(dir_name, incremental=True)
         dbg.dassert_exists(dir_name)
         # Get the expected outcome.
-        file_name = self.get_output_dir() + "/test.txt"
-        if use_gzip:
-            file_name += ".gz"
-        _LOG.debug("file_name=%s", file_name)
-        # Remove reference from the current purify.
-        if purify_text:
-            actual = purify_txt_from_client(actual)
-        #
-        if get_update_tests():
-            # Determine whether outcome needs to be updated.
-            outcome_updated = False
-            file_exists = os.path.exists(file_name)
-            if file_exists:
-                expected = hio.from_file(file_name, use_gzip=use_gzip)
-                if expected != actual:
-                    outcome_updated = True
-            else:
-                # The golden outcome doesn't exist.
-                outcome_updated = True
-            if outcome_updated:
-                # Update the test result.
-                _LOG.warning("Test outcome updated ... ")
-                hio.to_file(file_name, actual, use_gzip=use_gzip)
-                # Add to git.
-                cmd = "git add %s" % file_name
-                rc = hsyste.system(cmd, abort_on_error=False)
-                if rc:
-                    _LOG.warning(
-                        "Can't run '%s': you need to add the file " "manually",
-                        cmd,
-                    )
-        else:
-            # Just check the test result.
-            if os.path.exists(file_name):
-                # Golden outcome is available: check the actual outcome against
-                # the golden outcome.
-                expected = hio.from_file(file_name, use_gzip=use_gzip)
-                test_name = self._get_test_name()
-                _assert_equal(
-                    actual, expected, test_name, dir_name, fuzzy_match=fuzzy_match
-                )
-            else:
-                # No golden outcome available: save the result in a tmp file.
-                tmp_file_name = file_name + ".tmp"
-                hio.to_file(tmp_file_name, actual)
-                msg = "Can't find golden in %s\nSaved actual outcome in %s" % (
-                    file_name,
-                    tmp_file_name,
-                )
-                raise RuntimeError(msg)
+        file_name = self.get_output_dir() + f"/{tag}.txt"
+        return dir_name, file_name
 
     def _get_test_name(self) -> str:
         """
-        :return: full test name as class.method.
+        Return the full test name as `class.method`.
         """
-        return "/%s.%s" % (self.__class__.__name__, self._testMethodName)
+        return "%s.%s" % (self.__class__.__name__, self._testMethodName)
 
     def _get_current_path(
         self,
-        test_class_name: Optional[Any] = None,
-        test_method_name: Optional[Any] = None,
+        test_class_name: Optional[str] = None,
+        test_method_name: Optional[str] = None,
     ) -> str:
-        dir_name = os.path.dirname(inspect.getfile(self.__class__))
+        """
+        Return the name of the directory containing the input / output data
+        (e.g., ./core/dataflow/test/TestContinuousSarimaxModel.test_compare)
+        """
         if test_class_name is None:
             test_class_name = self.__class__.__name__
         if test_method_name is None:
             test_method_name = self._testMethodName
-        dir_name = dir_name + "/%s.%s" % (test_class_name, test_method_name)
+        # E.g., ./core/dataflow/test/TestContinuousSarimaxModel.test_compare
+        dir_name = self.base_dir_name + "/%s.%s" % (
+            test_class_name,
+            test_method_name,
+        )
         return dir_name
+
+    def _to_error(self, msg: str) -> None:
+        self.error_msg += msg + "\n"
+        _LOG.error(msg)
 
 
 # #############################################################################

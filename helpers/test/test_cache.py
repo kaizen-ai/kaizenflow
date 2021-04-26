@@ -406,8 +406,8 @@ class TestSpecificCache(hut.TestCase):
             self._testMethodName,
         )
         # Create temp directories to store the cache.
-        self.disk_cache_temp_dir = tempfile.gettempdir()
-        self.mem_cache_temp_dir = tempfile.gettempdir()
+        self.disk_cache_temp_dir = tempfile.mkdtemp()
+        self.mem_cache_temp_dir = tempfile.mkdtemp()
         # Clear global cache.
         hcache.clear_global_cache("mem", tag=self.cache_tag)
         hcache.clear_global_cache("disk", tag=self.cache_tag)
