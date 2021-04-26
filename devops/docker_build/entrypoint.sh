@@ -18,6 +18,10 @@ umask 000
 ./devops/docker_build/test/test_mount_s3.sh
 ./devops/docker_build/test/test_volumes.sh
 
+echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID"
+echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY"
+echo "AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION"
+
 echo "which python: " $(which python)
 echo "check pandas package: " $(python -c "import pandas; print(pandas)")
 

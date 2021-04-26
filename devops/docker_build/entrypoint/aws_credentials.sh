@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
+#
+# If ~/.aws exists loads the AWS credentials into the corresponding environment
+# variables.
+# 
 
 set -e
+
+# TODO(gp): Load also the AWS_DEFAULT_REGION.
 
 AWS_VOLUME="${HOME}/.aws"
 if [[ ! -d $AWS_VOLUME ]]; then
