@@ -1,4 +1,7 @@
 #!/bin/bash -e
+#
+# Build a thin virtual environment to run workflows on the dev machine.
+#
 
 python -m venv venv
 source venv/bin/activate
