@@ -2,6 +2,10 @@ PWD=$(pwd)
 
 AMP=$PWD
 
+# Activate the virtual env.
+VENV_DIR="$HOME/venv"
+source $VENV_DIR/bin/activate
+
 export PATH=.:$PATH
 export PATH=$AMP:$PATH
 export PATH=$AMP/dev_scripts:$PATH
@@ -27,7 +31,3 @@ alias ghlem="gh --repo alphamatic/lemonade"
 
 alias i="invoke"
 alias il="invoke --list"
-
-# Activate the virtuel env.
-VENV_DIR="$HOME/venv"
-source $VENV_DIR/bin/activate
