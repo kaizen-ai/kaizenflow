@@ -1,25 +1,27 @@
 #!/usr/bin/env python
 
 """
-Simple wrapper around ghi (GitHub Interface) to implement some typical
-workflows.
+Simple wrapper around gh (GitHub Command Line Interface) to implement some
+typical workflows.
 
 # Get all the data relative to issue #257:
-> ghi_show.py 257
-# Github:
-#257: ST: sources analysis
-https://github.com/.../issues/257
+  ```
+  > gh_show.py 257
+  # Github:
+  #257: ST: sources analysis
+  https://github.com/.../issues/257
 
-# Files in the repo:
-.../Task257_Sources_analysis.py
-.../Task257_Sources_analysis.ipynb
+  # Files in the repo:
+  .../Task257_Sources_analysis.py
+  .../Task257_Sources_analysis.ipynb
 
-# Files in the gdrive '/Users/saggese/GoogleDrive':
-'/Users/saggese/GoogleDrive/Tech/Task 257 - ST - Sources Analysis.gdoc'
-  https://docs.google.com/open?id=1B70mA0m5UovKmuzAq05XESlKNvToflBR1uqtcYGXhhM
+  # Files in the gdrive '/Users/saggese/GoogleDrive':
+  '/Users/saggese/GoogleDrive/Tech/Task 257 - ST - Sources Analysis.gdoc'
+    https://docs.google.com/open?id=1B70mA0m5UovKmuzAq05XESlKNvToflBR1uqtcYGXhhM
+  ```
 
 # Get all the data relative to issue #13 for a different GitHub repo:
-> ghi_show.py 13 --repo Amp
+> gh_show.py 13 --repo Amp
 """
 
 import argparse
@@ -40,7 +42,10 @@ _LOG = logging.getLogger(__name__)
 _COLOR = "green"
 
 
-def _parse_issue_title(txt):
+def _parse_issue_title(txt: str) -> Tuple[int, str]:
+    """
+    Convert GH issue to the corresponding branch.
+    """
     # #2649: Improvements to Nickel KG mapping
     m = re.match(r"#(\d+):\s*(.*)\s*", txt)
     dbg.dassert(m, "Can't parse '%s'", txt)
@@ -64,13 +69,19 @@ def _print_github_info(issue_num, repo_github_name):
     ghi_opts = ""
     if repo_github_name is not None:
         ghi_opts = "-- %s" % repo_github_name
-    cmd = "ghi show %d %s | head -1" % (issue_num, ghi_opts)
+
+    > gh --repo alphamatic/lemonade issue view 161
+    Switch AM codebase to AM S3
+    Open • gpsaggese opened about 3 days ago • 4 comments
+    Assignees: gpsaggese
+
+    cmd = "gh show %d %s | head -1" % (issue_num, ghi_opts)
     _, txt = si.system_to_string(cmd, abort_on_error=False)
-    print(txt)
+    _LOG.info("gh show=\n%s", txt)
     # Print url.
     git_repo_name = git.get_repo_symbolic_name(super_module=True)
     url_name = "https://github.com/%s/issues/%d" % (git_repo_name, issue_num)
-    print(url_name)
+    _LOG.info("url_name=%s", url_name)
     # github doesn't let ping this url.
     # url.check_url(url_name)
     #
@@ -138,24 +149,23 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "--only_github", action="store_true", help="Print only git hub info"
+        "--only_github", action="store_true", help="Print only GitHub info"
     )
     parser.add_argument(
-        "-s",
+        "-r",
         "--repo_symbolic_name",
         action="store",
-        choices=["Part", "Amp", "Lem"],
+        choices=["DevTools", "Amp", "Lem"],
         default=None,
         help="Refer to one of the repos through a symbolic name",
     )
     parser.add_argument(
-        "-r",
         "--repo_github_name",
         action="store",
         default="",
         help="Refer to one of the repos using full git name",
     )
-    parser.add_argument("positional", nargs="+", help="Github issue number")
+    parser.add_argument("positional", nargs="+", help="GitHub issue number")
     prsr.add_verbosity_arg(parser)
     return parser
 

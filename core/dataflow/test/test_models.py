@@ -1169,7 +1169,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
         # Check results.
-        self._check_results(config, df_out, err_threshold=0.15)
+        self._check_results(config, df_out, err_threshold=0.30)
 
     def test_predict2(self) -> None:
         """
@@ -1245,7 +1245,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
         # Check results.
-        self._check_results(config, df_out, err_threshold=0.01)
+        self._check_results(config, df_out, err_threshold=0.20)
 
     def test_predict_different_intervals_no_x1(self) -> None:
         """

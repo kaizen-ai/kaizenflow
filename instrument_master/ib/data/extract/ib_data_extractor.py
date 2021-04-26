@@ -285,8 +285,8 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         file.
 
         E.g. list of resultes files:
-        - s3://external-p1/ib/futures/daily/ESH1/ESH1.20200101.20210101.csv
-        - s3://external-p1/ib/futures/daily/ESH1/ESH1.20190101.20200101.csv
+        - s3://alphamatic-data/data/ib/futures/daily/ESH1/ESH1.20200101.20210101.csv
+        - s3://alphamatic-data/data/ib/futures/daily/ESH1/ESH1.20190101.20200101.csv
         - ...
 
         :param ib: IB connection

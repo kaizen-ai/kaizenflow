@@ -1,5 +1,5 @@
 # TODO(\*): Merge / reconcile S3_PREFIX in with instrument_master.kibot/data/config.py.
-S3_PREFIX = "s3://external-p1/kibot/metadata"
+S3_PREFIX = "s3://alphamatic-data/data/kibot/metadata"
 
 # TODO(amr): move common configs between data & metadata to
 # `instrument_master.kibot.config`
