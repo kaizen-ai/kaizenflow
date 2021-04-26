@@ -486,4 +486,3 @@
   - In the `markers` section add a name of a new tag
   - Afther a `:` add a short description
   - Keep tags in the alpabetical order
-  <!-- #endregion -->

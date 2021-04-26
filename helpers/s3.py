@@ -25,7 +25,7 @@ def get_bucket() -> str:
     Make sure your ~/.aws/credentials uses the right key to access this
     bucket as default.
     """
-    s3_bucket = "default00-bucket"
+    s3_bucket = "alphamatic-data"
     return s3_bucket
 
 
@@ -155,7 +155,7 @@ def listdir(s3_path: str, mode: str = "recursive") -> List[str]:
     List files in s3 directory.
 
     :param s3_path: the path to s3 directory, e.g.,
-        `s3://default00-bucket/kibot/`
+        `s3://alphamatic-data/data/kibot/`
     :param mode: recursive or non-recursive
         If recursive, will list all files in the directory
         recursively. If non-recursive, will list only the top-level
@@ -167,7 +167,7 @@ def listdir(s3_path: str, mode: str = "recursive") -> List[str]:
     if not s3_path.endswith("/"):
         s3_path = s3_path + "/"
     split_path = s3_path.split("/")
-    # For a s3://default00-bucket/kibot/All_Futures_Continuous_Contracts_daily
+    # For 's3://alphamatic-data/data/kibot/All_Futures_Continuous_Contracts_daily'
     # s3_path the split_path would be ['s3:', '', 'default00-bucket',
     # 'kibot', 'All_Futures_Continuous_Contracts_daily', ''].
     s3_bucket = split_path[2]
@@ -206,15 +206,15 @@ def listdir(s3_path: str, mode: str = "recursive") -> List[str]:
 
 
 # TODO(GP): Maybe we should add an S3Path class which will contain
-# prefix, bucket_name and path attributes?
+#  prefix, bucket_name and path attributes?
 def parse_path(path: str) -> Tuple[str, str]:
     """
     Extract bucket name and a file or folder path from an s3 full path.
 
     E.g., for
-        s3://default00-bucket/kibot/All_Futures_Continuous_Contracts_daily
+        s3://alphamatic-data/data/kibot/All_Futures_Continuous_Contracts_daily
     the result is:
-        bucket_name = "default00-bucket"
+        bucket_name = "alphamatic-data"
         path = "kibot/All_Futures_Continuous_Contracts_daily"
     """
     prefix = "s3://"
@@ -233,10 +233,10 @@ def parse_path(path: str) -> Tuple[str, str]:
 
 
 # TODO(Julia): When PTask418_PRICE_Convert_Kibot_data_from_csv is
-# merged, choose between this ls() and listdir() functions.
+#  merged, choose between this ls() and listdir() functions.
 def ls(file_path: str) -> List[str]:
     """
-    Return the file lists in `file_path`.
+    :return: return the file lists in `file_path`.
     """
     s3 = boto3.resource("s3")
     bucket_name, file_path = parse_path(file_path)
@@ -256,7 +256,7 @@ def get_last_modified(s3_path: str) -> datetime.datetime:
     Get last modified date of a file on S3.
 
     :param s3_path: the path to s3 directory, e.g.,
-        `s3://default00-bucket/kibot/`
+        `s3://alphamatic-data/data/kibot`
     :return: last modified date of the file
     """
     s3 = boto3.client("s3")

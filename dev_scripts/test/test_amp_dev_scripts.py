@@ -5,8 +5,10 @@ from typing import List, Tuple
 import pytest
 
 import dev_scripts.url as url
+import helpers.dbg as dbg
 import helpers.env as env
 import helpers.git as git
+import helpers.printing as hprint
 import helpers.system_interaction as si
 import helpers.unit_test as ut
 
@@ -38,9 +40,11 @@ class Test_url_py1(ut.TestCase):
         self.assertEqual(act, exp)
 
     def test_run1(self) -> None:
-        exec_name = git.find_file_in_git_tree("url.py")
+        exec_name = os.path.join(git.get_amp_abs_path(), "dev_scripts/url.py")
+        dbg.dassert_exists(exec_name)
+        _LOG.debug(hprint.to_str("exec_name"))
         cmd = (
-            "%s " % exec_name + "http://localhost:9999/notebooks/research/"
+            f"{exec_name} http://localhost:9999/notebooks/research/"
             "Task51_experiment_with_sklearn_pipeline/"
             "Task51_experiment_with_sklearn_pipeline.ipynb"
         )
