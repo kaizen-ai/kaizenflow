@@ -923,14 +923,12 @@ class TestCase(unittest.TestCase):
 
     # #########################################################################
 
-    def _check_string_update_outcome(
-        self, file_name: str, actual: str, use_gzip: bool
-    ) -> None:
-        _LOG.debug(hprint.to_str("file_name"))
-        hio.to_file(file_name, actual, use_gzip=use_gzip)
-        # Add to git repo.
+    def _git_add(self, file_name: str) -> None:
+        """
+        Add to git repo `file_name`, if needed.
+        """
         if self.git_add:
-            cmd = "git add %s" % file_name
+            cmd = "git add -u %s" % file_name
             _LOG.debug("> %s", cmd)
             rc = hsyste.system(cmd, abort_on_error=False)
             if rc:
@@ -938,6 +936,14 @@ class TestCase(unittest.TestCase):
                     "Can't run '%s': you need to add the file manually",
                     cmd,
                 )
+
+    def _check_string_update_outcome(
+        self, file_name: str, actual: str, use_gzip: bool
+    ) -> None:
+        _LOG.debug(hprint.to_str("file_name"))
+        hio.to_file(file_name, actual, use_gzip=use_gzip)
+        # Add to git repo.
+        self._git_add(file_name)
 
     # #########################################################################
 
@@ -948,15 +954,7 @@ class TestCase(unittest.TestCase):
         hio.create_enclosing_dir(file_name)
         actual.to_csv(file_name)
         # Add to git repo.
-        if self.git_add:
-            cmd = "git add %s" % file_name
-            _LOG.debug("> %s", cmd)
-            rc = hsyste.system(cmd, abort_on_error=False)
-            if rc:
-                _LOG.warning(
-                    "Can't run '%s': you need to add the file manually",
-                    cmd,
-                )
+        self._git_add(file_name)
 
     def _check_df_compare_outcome(
         self, file_name: str, actual: pd.DataFrame, err_threshold: float

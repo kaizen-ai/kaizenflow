@@ -41,6 +41,8 @@ def get_default_value(key: str) -> Any:
     return _DEFAULT_PARAMS[key]
 
 
+# Since it's not easy to add global opportunity
+# If one uses the debug option for `invoke` we turn off the code debugging.
 if not (("-d" in sys.argv) or ("--debug" in sys.argv)):
     dbg.init_logger(verbosity=logging.INFO)
 
@@ -521,7 +523,7 @@ def docker_build_local_image(ctx, cache=True, base_image=""):  # type: ignore
 @task
 def docker_push_local_image_to_dev(ctx, base_image=""):  # type: ignore
     """
-    Mark the "local" image as "dev" and "latest" and push to ECR.
+    (ONLY FOR CI/CD) Mark the "local" image as "dev" and "latest" and push to ECR.
     """
     _LOG.info(">")
     docker_login(ctx)
@@ -545,12 +547,17 @@ def docker_push_local_image_to_dev(ctx, base_image=""):  # type: ignore
 
 @task
 def docker_release_dev_image(  # type: ignore
-    ctx, cache=True, run_fast=True, run_slow=True, run_superslow=False
+    ctx, cache=True, just_build=False, run_fast=True, run_slow=True, run_superslow=False
 ):
     """
-    Build, test, and release to ECR the latest "dev" image.
+    (ONLY FOR CI/CD) Build, test, and release to ECR the latest "dev" image
+
+    :param: just_build skip all the tests and release the dev image.
     """
     _LOG.info(">")
+    if just_build:
+        _LOG.warning("Skipping all tests and releasing")
+        run_fast = run_slow = run_superslow = False
     # Build image.
     docker_build_local_image(ctx, cache=cache)
     # Run tests.
@@ -578,7 +585,7 @@ def docker_release_dev_image(  # type: ignore
 @task
 def docker_build_prod_image(ctx, cache=False, base_image=""):  # type: ignore
     """
-    Build a prod image.
+    (ONLY FOR CI/CD) Build a prod image.
     """
     _LOG.info(">")
     image_prod = _get_image("prod", base_image)
@@ -614,7 +621,7 @@ def docker_release_prod_image(  # type: ignore
     base_image="",
 ):
     """
-    Build, test, and release to ECR the prod image.
+    (ONLY FOR CI/CD) Build, test, and release to ECR the prod image.
     """
     _LOG.info(">")
     # Build dev image.
@@ -640,7 +647,7 @@ def docker_release_prod_image(  # type: ignore
 @task
 def docker_release_all(ctx):  # type: ignore
     """
-    Release to ECT both dev and prod image.
+    (ONLY FOR CI/CD) Release to ECT both dev and prod image.
     """
     docker_release_dev_image(ctx)
     docker_release_prod_image(ctx)
