@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Generator, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -181,7 +181,7 @@ class IncrementalDagRunner:
             start=self._start, end=self._end, freq=self._freq
         )
 
-    def predict(self):
+    def predict(self) -> Generator:
         """
         Generate a filtration and predict at each index of the filtration.
 
