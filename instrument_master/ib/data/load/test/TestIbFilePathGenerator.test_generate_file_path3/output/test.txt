@@ -1,1 +1,1 @@
-s3://external-p1/ib/Futures/ECBOT/EUR/daily/CLH21.csv.gz
+s3://alphamatic-data/data/ib/Futures/ECBOT/EUR/daily/CLH21.csv.gz
