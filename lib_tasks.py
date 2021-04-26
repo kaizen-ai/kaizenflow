@@ -58,16 +58,16 @@ def print_setup(ctx):  # type: ignore
         print("%s=%s" % (v, get_default_value(v)))
 
 
-@task
-def activate_poetry(ctx):  # type: ignore
-    """
-    Print how to activate the virtual environment.
-    """
-    _LOG.info(">")
-    cmd = '''cd devops/docker_build; \
-            FILE="$(poetry env info --path)/bin/activate"; \
-            echo "source $FILE"'''
-    ctx.run(cmd)
+# @task
+# def activate_poetry(ctx):  # type: ignore
+#     """
+#     Print how to activate the virtual environment.
+#     """
+#     _LOG.info(">")
+#     cmd = '''cd devops/docker_build; \
+#             FILE="$(poetry env info --path)/bin/activate"; \
+#             echo "source $FILE"'''
+#     ctx.run(cmd)
 
 
 # #############################################################################
@@ -292,7 +292,7 @@ def _remove_spaces(cmd: str) -> str:
     return cmd
 
 
-# TODO(gp): Pass through command line using a global switch.
+# TODO(gp): Pass through command line using a global switch or an env var.
 use_one_line_cmd = False
 
 
@@ -828,24 +828,39 @@ def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignor
         cmd = "git diff --name-only master..."
         files = hsyste.system_to_string(cmd)[1]
         files = " ".join(files.split("\n"))
+    #
     dbg.dassert_isinstance(files, str)
     _LOG.debug("files='%s'", str(files))
-    dbg.dassert_ne(files, "")
-    _LOG.info("Files to lint:\n%s", "\n".join(files.split("\n")))
+    files_as_list = files.split(" ")
+    files_as_list = [f for f in files_as_list if f != ""]
+    if len(files_as_list) == 0:
+        dbg.dfatal(
+            "You need specify one option among --modified, --branch, or --files"
+        )
+    dbg.dassert_lte(1, len(files_as_list))
+    _LOG.info("Files to lint:\n%s", "\n".join(files_as_list))
+    files_as_str = " ".join(files_as_list)
+    #
     cmd = (
-        f"pre-commit.sh run {phases} --files {files} 2>&1 "
+        f"pre-commit.sh run {phases} --files {files_as_str} 2>&1 "
         + "| tee linter_warnings.txt"
     )
     ctx.run(cmd)
 
 
+# TODO(gp): Finish this.
 @task
-def get_amp_files(ctx):
+def get_amp_files(ctx):  # type: ignore
+    """
+    Get some files that need to be copied across repos.
+    """
     _ = ctx
     token = "***REMOVED***"
     file_names = ["lib_tasks.py"]
     for file_name in file_names:
-        cmd = (f"wget "
-               f"https://raw.githubusercontent.com/alphamatic/amp/master/{file_name}"
-               f"?token={token} -O {file_name}")
-        hsi.system(cmd)
+        cmd = (
+            f"wget "
+            f"https://raw.githubusercontent.com/alphamatic/amp/master/{file_name}"
+            f"?token={token} -O {file_name}"
+        )
+        hsyste.system(cmd)
