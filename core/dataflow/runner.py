@@ -138,7 +138,7 @@ class IncrementalDagRunner:
         end: _PANDAS_DATE_TYPE,
         freq: str,
         # result_dir: str,
-        fit_state: cconfi.Config
+        fit_state: cconfi.Config,
     ) -> None:
         """
         Initialize DAG.
@@ -177,7 +177,9 @@ class IncrementalDagRunner:
         dbg.dassert_eq(len(result_nids), 1)
         self._result_nid = result_nids[0]
         # Create predict range
-        self._date_range = pd.date_range(start=self._start, end=self._end, freq=self._freq)
+        self._date_range = pd.date_range(
+            start=self._start, end=self._end, freq=self._freq
+        )
 
     def predict(self):
         """
