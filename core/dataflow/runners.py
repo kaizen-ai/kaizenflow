@@ -6,7 +6,7 @@ import pandas as pd
 
 import core.config as cconfi
 import helpers.dbg as dbg
-from core.dataflow.builder import DagBuilder
+from core.dataflow.builders import DagBuilder
 from core.dataflow.result_bundle import PredictionResultBundle, ResultBundle
 from core.dataflow.visitors import extract_info, set_fit_state
 

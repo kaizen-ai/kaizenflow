@@ -6,7 +6,7 @@ import sklearn
 import core.config as cconfi
 import core.event_study as cevent
 import core.signal_processing as csigna
-from core.dataflow.builder import DagBuilder
+from core.dataflow.builders import DagBuilder
 from core.dataflow.core import DAG
 from core.dataflow.models import SkLearnModel
 from core.dataflow.nodes import (
