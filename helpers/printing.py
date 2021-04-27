@@ -25,11 +25,14 @@ COLOR_MAP = {
     "none": "\033[0m",
     "purple": "\033[95m",
     "red": "\033[91m",
-    "yellow": "\033[93m",
+    "yellow": "\033[33m",
 }
 
 
 def color_highlight(text: str, color: str) -> str:
+    """
+    Return a colored string.
+    """
     return COLOR_MAP[color] + text + COLOR_MAP["none"]
 
 
@@ -425,9 +428,9 @@ def diff_strings(
     #
     cmd = f"sdiff --width={width} {file_name1} {file_name2}"
     # To avoid circular dependencies.
-    import helpers.system_interaction as hsyste
+    import helpers.system_interaction as hsinte
 
-    _, txt = hsyste.system_to_string(
+    _, txt = hsinte.system_to_string(
         cmd,
         # We don't care if they are different.
         abort_on_error=False,

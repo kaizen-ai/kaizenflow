@@ -1,9 +1,14 @@
+"""
+Import as:
+
+import helpers.test.test_helpers as htthel
+"""
+
 import logging
 import os
 
 import numpy as np
 import pandas as pd
-import pytest
 
 import helpers.csv as hcsv
 import helpers.env as henv
@@ -161,13 +166,11 @@ class Test_numba_1(hut.TestCase):
 
 class Test_s3_1(hut.TestCase):
     def test_get_path1(self) -> None:
-        file_path = (
-            "s3://alphamatic-data/data/kibot/All_Futures_Continuous_Contracts_daily"
-        )
+        file_path = "s3://alphamatic-data/data/kibot/All_Futures_Continuous_Contracts_daily"
         bucket_name, file_path = hs3.parse_path(file_path)
         self.assertEqual(bucket_name, "alphamatic-data")
         self.assertEqual(
-            file_path, "kibot/All_Futures_Continuous_Contracts_daily"
+            file_path, "data/kibot/All_Futures_Continuous_Contracts_daily"
         )
 
     def test_ls1(self) -> None:
@@ -177,4 +180,4 @@ class Test_s3_1(hut.TestCase):
         #                   PRE data/
         # 2021-04-06 1:17:44 48 README.md
         file_names = hs3.ls(file_path)
-        self.assertGreater(0, len(file_names))
+        self.assertGreater(len(file_names), 0)

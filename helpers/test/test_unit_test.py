@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.test.test_unit_test as ttutes
+"""
+
 import datetime
 import logging
 import os
@@ -11,9 +17,21 @@ import pytest
 
 import helpers.git as git
 import helpers.io_ as hio
+import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
+
+
+def _git_add(file_name: str) -> None:
+    cmd = "git add -u %s" % file_name
+    _LOG.debug("> %s", cmd)
+    rc = hsinte.system(cmd, abort_on_error=False)
+    if rc:
+        _LOG.warning(
+            "Can't run '%s': you need to add the file manually",
+            cmd,
+        )
 
 
 class TestTestCase(hut.TestCase):
@@ -50,8 +68,10 @@ class TestTestCase(hut.TestCase):
         """
         act = self.get_scratch_space()
         act = hut.purify_txt_from_client(act)
-        exp = ("$GIT_ROOT/helpers/test/TestTestCase.test_get_scratch_space1"
-               "/tmp.scratch")
+        exp = (
+            "$GIT_ROOT/helpers/test/TestTestCase.test_get_scratch_space1"
+            "/tmp.scratch"
+        )
         self.assertEqual(act, exp)
 
     def test_get_scratch_space2(self) -> None:
@@ -91,7 +111,7 @@ class TestTestCase(hut.TestCase):
         # $TMP_DIR/tmp_diff.sh
         num_lines=1
         '''
-        vimdiff $GIT_ROOT/helpers/test/TestTestCase.test_assert_not_equal2/tmp.actual.txt $GIT_ROOT/helpers/test/TestTestCase.test_assert_not_equal2/tmp.expected.txt
+        vimdiff helpers/test/TestTestCase.test_assert_not_equal2/tmp.actual.txt helpers/test/TestTestCase.test_assert_not_equal2/tmp.expected.txt
         '''
         """
         # pylint: enable=line-too-long
@@ -111,6 +131,11 @@ class TestTestCase(hut.TestCase):
 
 
 class TestCheckString1(hut.TestCase):
+    """
+    Note that not all the tests pass with `--update_outcomes`, since some test
+    exercise the logic in `--update_outcomes` itself.
+    """
+
     def test_check_string1(self) -> None:
         """
         Compare the actual value to a matching golden outcome.
@@ -129,6 +154,7 @@ class TestCheckString1(hut.TestCase):
         finally:
             # Clean up.
             hio.to_file(file_name, golden_outcome)
+            _git_add(file_name)
         self.assertFalse(outcome_updated)
         self.assertTrue(file_exists)
         self.assertTrue(is_equal)
@@ -152,6 +178,7 @@ class TestCheckString1(hut.TestCase):
         finally:
             # Clean up.
             hio.to_file(file_name, golden_outcome)
+            _git_add(file_name)
         # Actual doesn't match the golden outcome.
         self.assertFalse(outcome_updated)
         self.assertTrue(file_exists)
@@ -164,8 +191,7 @@ class TestCheckString1(hut.TestCase):
         act = "hello world"
         golden_outcome = "hello world2"
         # Force updating the golden outcomes.
-        self.update_tests = True
-        self.git_add = False
+        self.mock_update_tests()
         #
         tag = "test"
         _, file_name = self._get_golden_outcome_file_name(tag)
@@ -177,11 +203,11 @@ class TestCheckString1(hut.TestCase):
                 act, abort_on_error=False
             )
             new_golden = hio.from_file(file_name)
+            _git_add(file_name)
         finally:
             # Clean up.
             hio.to_file(file_name, golden_outcome)
-            self.update_tests = False
-            self.git_add = True
+            _git_add(file_name)
         # Actual doesn't match the golden outcome and it was updated.
         self.assertTrue(outcome_updated)
         self.assertTrue(file_exists)
@@ -207,6 +233,7 @@ class TestCheckString1(hut.TestCase):
         finally:
             # Clean up.
             hio.to_file(file_name, golden_outcome)
+            _git_add(file_name)
 
     def test_check_string_missing1(self) -> None:
         """
@@ -214,8 +241,7 @@ class TestCheckString1(hut.TestCase):
         """
         act = "hello world"
         # Force updating the golden outcomes.
-        self.update_tests = True
-        self.git_add = False
+        self.mock_update_tests()
         tag = "test"
         _, file_name = self._get_golden_outcome_file_name(tag)
         try:
@@ -231,8 +257,7 @@ class TestCheckString1(hut.TestCase):
             # Clean up.
             if os.path.exists(file_name):
                 hio.delete_file(file_name)
-            self.update_tests = False
-            self.git_add = True
+            _git_add(file_name)
         # Actual doesn't match the golden outcome and it was updated.
         self.assertTrue(outcome_updated)
         self.assertFalse(file_exists)
@@ -242,6 +267,11 @@ class TestCheckString1(hut.TestCase):
 
 
 class TestCheckDataFrame1(hut.TestCase):
+    """
+    Note that not all the tests pass with `--update_outcomes`, since some test
+    exercise the logic in `--update_outcomes` itself.
+    """
+
     def test_check_df_equal1(self) -> None:
         """
         Compare the actual value of a df to a matching golden outcome.
@@ -302,18 +332,26 @@ class TestCheckDataFrame1(hut.TestCase):
         self.assertTrue(file_exists)
         self.assertFalse(is_equal)
         exp_error_msg = """
-actual=
-[[ nan 1.06  nan]
- [ nan  nan  nan]]
-expected=
-[[nan  1. nan]
- [nan nan nan]]
-err=
-[[       nan 0.05660377        nan]
- [       nan        nan        nan]]
-max_err=0.057
+            actual=
+            a b c
+            0 0 1.06 2
+            1 3 4.00 5
+            expected=
+            a b c
+            0 0 1 2
+            1 3 4 5
+            actual_masked=
+            [[ nan 1.06 nan]
+            [ nan nan nan]]
+            expected_masked=
+            [[nan 1. nan]
+            [nan nan nan]]
+            err=
+            [[ nan 0.06 nan]
+            [ nan nan nan]]
+            max_err=0.060
         """
-        self.assert_equal(self.error_msg, exp_error_msg, fuzzy_match=True)
+        self.assert_equal(self._error_msg, exp_error_msg, fuzzy_match=True)
 
     def test_check_df_not_equal2(self) -> None:
         """
@@ -339,9 +377,7 @@ max_err=0.057
             [[0, 2, 2], [3, 4, 5]], columns="a b c".split()
         )
         # Force updating the golden outcomes.
-        self.update_tests = True
-        # We don't want to add to git.
-        self.git_add = False
+        self.mock_update_tests()
         tag = "test_df"
         _, file_name = self._get_golden_outcome_file_name(tag)
         # Modify the golden.
@@ -357,8 +393,7 @@ max_err=0.057
         finally:
             # Clean up.
             hio.to_file(file_name, golden_outcome)
-            self.update_tests = False
-            self.git_add = True
+            _git_add(file_name)
         # Actual doesn't match the golden outcome and it was updated.
         self.assertTrue(outcome_updated)
         self.assertTrue(file_exists)
@@ -382,9 +417,7 @@ max_err=0.057
         """
         act = pd.DataFrame([[0, 1, 2], [3, 4, 5]], columns="a b c".split())
         # Force updating the golden outcomes.
-        self.update_tests = True
-        # We don't want to add to git.
-        self.git_add = False
+        self.mock_update_tests()
         tag = "test_df"
         _, file_name = self._get_golden_outcome_file_name(tag)
         try:
@@ -400,8 +433,7 @@ max_err=0.057
             # Clean up.
             if os.path.exists(file_name):
                 hio.delete_file(file_name)
-            self.update_tests = False
-            self.git_add = True
+            _git_add(file_name)
         # Actual doesn't match the golden outcome and it was updated.
         self.assertTrue(outcome_updated)
         self.assertFalse(file_exists)
@@ -428,6 +460,7 @@ max_err=0.057
         finally:
             # Clean up.
             golden_outcomes.to_csv(file_name)
+            _git_add(file_name)
         return outcome_updated, file_exists, is_equal
 
 

@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import core.dataflow.test.test_models as dttmod
+"""
+
 import collections
 import logging
 import pprint
@@ -8,13 +14,13 @@ import numpy as np
 import pandas as pd
 import pytest
 import sklearn.decomposition as sdecom
-import sklearn.linear_model as slinea
+import sklearn.linear_model as slmode
 
-import core.artificial_signal_generators as cartif
-import core.config as cconfi
+import core.artificial_signal_generators as casgen
+import core.config as ccfg
 import core.config_builders as ccbuild
 import core.dataflow as cdataf
-import core.signal_processing as csigna
+import core.signal_processing as csproc
 import helpers.dbg as dbg
 import helpers.printing as hprint
 import helpers.unit_test as hut
@@ -40,7 +46,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         config = self._get_config(pred_lag)
         node = cdataf.ContinuousSkLearnModel(
             "sklearn",
-            model_func=slinea.Ridge,
+            model_func=slmode.Ridge,
             **config.to_dict(),
         )
         dag.add_node(node)
@@ -61,7 +67,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         config = self._get_config(pred_lag)
         node = cdataf.ContinuousSkLearnModel(
             "sklearn",
-            model_func=slinea.Ridge,
+            model_func=slmode.Ridge,
             **config.to_dict(),
         )
         dag.add_node(node)
@@ -72,7 +78,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
 
     def test_fit_dag3(self) -> None:
         """
-        Test `slinea.Lasso` model.
+        Test `slmode.Lasso` model.
 
         `Lasso` returns a one-dimensional array for a two-dimensional
         input.
@@ -88,7 +94,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         config = self._get_config(pred_lag)
         node = cdataf.ContinuousSkLearnModel(
             "sklearn",
-            model_func=slinea.Lasso,
+            model_func=slmode.Lasso,
             **config.to_dict(),
         )
         dag.add_node(node)
@@ -113,7 +119,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         config = self._get_config(pred_lag)
         node = cdataf.ContinuousSkLearnModel(
             "sklearn",
-            model_func=slinea.Ridge,
+            model_func=slmode.Ridge,
             **config.to_dict(),
         )
         dag.add_node(node)
@@ -139,7 +145,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         config = self._get_config(pred_lag)
         node = cdataf.ContinuousSkLearnModel(
             "sklearn",
-            model_func=slinea.Ridge,
+            model_func=slmode.Ridge,
             **config.to_dict(),
         )
         dag.add_node(node)
@@ -149,8 +155,8 @@ class TestContinuousSkLearnModel(hut.TestCase):
         df_out = dag.run_leq_node("sklearn", "predict")["df_out"]
         self.check_string(df_out.to_string())
 
-    def _get_config(self, steps_ahead: int) -> cconfi.Config:
-        config = cconfi.Config()
+    def _get_config(self, steps_ahead: int) -> ccfg.Config:
+        config = ccfg.Config()
         config["x_vars"] = ["x"]
         config["y_vars"] = ["y"]
         config["steps_ahead"] = steps_ahead
@@ -166,8 +172,8 @@ class TestContinuousSkLearnModel(hut.TestCase):
         """
         num_periods = 50
         total_steps = num_periods + lag + 1
-        rets = cartif.get_gaussian_walk(0, 0.2, total_steps, seed=10).diff()
-        noise = cartif.get_gaussian_walk(0, 0.02, total_steps, seed=1).diff()
+        rets = casgen.get_gaussian_walk(0, 0.2, total_steps, seed=10).diff()
+        noise = casgen.get_gaussian_walk(0, 0.02, total_steps, seed=1).diff()
         pred = rets.shift(-lag).loc[1:num_periods] + noise.loc[1:num_periods]
         resp = rets.loc[1:num_periods]
         idx = pd.date_range("2010-01-01", periods=num_periods, freq="T")
@@ -234,7 +240,7 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         """
         Generate multivariate normal returns.
         """
-        mn_process = cartif.MultivariateNormalProcess()
+        mn_process = casgen.MultivariateNormalProcess()
         mn_process.set_cov_from_inv_wishart_draw(dim=4, seed=0)
         realization = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
@@ -296,7 +302,7 @@ class TestResidualizer(hut.TestCase):
         """
         Generate multivariate normal returns.
         """
-        mn_process = cartif.MultivariateNormalProcess()
+        mn_process = casgen.MultivariateNormalProcess()
         mn_process.set_cov_from_inv_wishart_draw(dim=4, seed=0)
         realization = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
@@ -318,7 +324,7 @@ class TestSmaModel(hut.TestCase):
         dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cconfi.Config()
+        config = ccfg.Config()
         config["col"] = ["vol"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
@@ -342,7 +348,7 @@ class TestSmaModel(hut.TestCase):
         dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cconfi.Config()
+        config = ccfg.Config()
         config["col"] = ["vol"]
         config["steps_ahead"] = 2
         config["tau"] = 8
@@ -367,7 +373,7 @@ class TestSmaModel(hut.TestCase):
         dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cconfi.Config()
+        config = ccfg.Config()
         config["col"] = ["vol"]
         config["steps_ahead"] = 2
         config["col_mode"] = "merge_all"
@@ -393,7 +399,7 @@ class TestSmaModel(hut.TestCase):
         dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cconfi.Config()
+        config = ccfg.Config()
         config["col"] = ["vol"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
@@ -411,7 +417,7 @@ class TestSmaModel(hut.TestCase):
 
     def _check_results(
         self,
-        config: cconfi.Config,
+        config: ccfg.Config,
         info: collections.OrderedDict,
         df_out: pd.DataFrame,
     ) -> str:
@@ -431,7 +437,7 @@ class TestSmaModel(hut.TestCase):
 
         Use lag + noise as predictor.
         """
-        arma_process = cartif.ArmaProcess([0.45], [0])
+        arma_process = casgen.ArmaProcess([0.45], [0])
         date_range_kwargs = {"start": "2000-01-01", "periods": 40, "freq": "B"}
         date_range = pd.date_range(**date_range_kwargs)
         realization = arma_process.generate_sample(
@@ -452,7 +458,7 @@ class TestVolatilityModel(hut.TestCase):
         dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cconfi.Config()
+        config = ccfg.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "leave_unchanged"
@@ -474,7 +480,7 @@ class TestVolatilityModel(hut.TestCase):
         dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cconfi.Config()
+        config = ccfg.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "leave_unchanged"
@@ -507,7 +513,7 @@ class TestVolatilityModel(hut.TestCase):
         dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cconfi.Config()
+        config = ccfg.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "leave_unchanged"
@@ -534,7 +540,7 @@ class TestVolatilityModel(hut.TestCase):
         dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cconfi.Config()
+        config = ccfg.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "leave_unchanged"
@@ -564,7 +570,7 @@ class TestVolatilityModel(hut.TestCase):
         dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cconfi.Config()
+        config = ccfg.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["col_mode"] = "replace_all"
@@ -587,7 +593,7 @@ class TestVolatilityModel(hut.TestCase):
         dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cconfi.Config()
+        config = ccfg.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["col_mode"] = "replace_selected"
@@ -611,7 +617,7 @@ class TestVolatilityModel(hut.TestCase):
         dag = cdataf.DAG(mode="strict")
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = cconfi.Config()
+        config = ccfg.Config()
         config["cols"] = ["ret_0", "ret_0_2"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "leave_unchanged"
@@ -630,7 +636,7 @@ class TestVolatilityModel(hut.TestCase):
         data = self._get_data()
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config.
-        config = cconfi.Config()
+        config = ccfg.Config()
         config["cols"] = ["ret_0", "ret_0_2"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
@@ -645,7 +651,7 @@ class TestVolatilityModel(hut.TestCase):
         data = self._get_data()
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config.
-        config = cconfi.Config()
+        config = ccfg.Config()
         config["steps_ahead"] = 2
         config["nan_mode"] = "leave_unchanged"
         # Get outputs with `cols`=None and all specified.
@@ -662,7 +668,7 @@ class TestVolatilityModel(hut.TestCase):
         data = self._get_data()
         data[10] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config.
-        config = cconfi.Config()
+        config = ccfg.Config()
         config["cols"] = [10]
         config["steps_ahead"] = 2
         config["nan_mode"] = "leave_unchanged"
@@ -672,7 +678,7 @@ class TestVolatilityModel(hut.TestCase):
 
     def test_get_fit_state1(self) -> None:
         data = self._get_data()
-        config = cconfi.Config()
+        config = ccfg.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "leave_unchanged"
@@ -685,7 +691,7 @@ class TestVolatilityModel(hut.TestCase):
 
     def test_get_fit_state2(self) -> None:
         data = self._get_data()
-        config = cconfi.Config()
+        config = ccfg.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "leave_unchanged"
@@ -706,7 +712,7 @@ class TestVolatilityModel(hut.TestCase):
 
     def test_predict_with_predefined_state(self) -> None:
         data = self._get_data()
-        config = cconfi.Config()
+        config = ccfg.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "leave_unchanged"
@@ -720,7 +726,7 @@ class TestVolatilityModel(hut.TestCase):
 
     @staticmethod
     def _package_results1(
-        config: cconfi.Config,
+        config: ccfg.Config,
         info: collections.OrderedDict,
         df_out: pd.DataFrame,
     ) -> str:
@@ -736,7 +742,7 @@ class TestVolatilityModel(hut.TestCase):
 
     @staticmethod
     def _package_results2(
-        config: cconfi.Config, state, df_out: pd.DataFrame
+        config: ccfg.Config, state, df_out: pd.DataFrame
     ) -> str:
         act: List[str] = []
         act.append(hprint.frame("config"))
@@ -755,7 +761,7 @@ class TestVolatilityModel(hut.TestCase):
 
         Use lag + noise as predictor.
         """
-        arma_process = cartif.ArmaProcess([0.45], [0])
+        arma_process = casgen.ArmaProcess([0.45], [0])
         date_range_kwargs = {"start": "2000-01-01", "periods": 40, "freq": "B"}
         date_range = pd.date_range(**date_range_kwargs)
         realization = arma_process.generate_sample(
@@ -766,7 +772,7 @@ class TestVolatilityModel(hut.TestCase):
         return df
 
     @staticmethod
-    def _run_volatility_model(data: pd.DataFrame, config: cconfi.Config) -> str:
+    def _run_volatility_model(data: pd.DataFrame, config: ccfg.Config) -> str:
         data_source_node = cdataf.ReadDataFromDf("data", data)
         # Create DAG and test data node.
         dag = cdataf.DAG(mode="strict")
@@ -780,12 +786,11 @@ class TestVolatilityModel(hut.TestCase):
 
 
 class TestVolatilityModulator(hut.TestCase):
-
     def test_modulate1(self) -> None:
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
         # Get mock returns prediction 1 step ahead indexed by knowledge time.
-        y_hat = csigna.compute_smooth_moving_average(df_in["ret_0"], 4).shift(-1)
+        y_hat = csproc.compute_smooth_moving_average(df_in["ret_0"], 4).shift(-1)
         df_in["ret_1_hat"] = y_hat
         config = ccbuild.get_config_from_nested_dict(
             {
@@ -857,7 +862,7 @@ class TestVolatilityModulator(hut.TestCase):
         self._check_results(config, df_in, df_out)
 
     def _check_results(
-        self, config: cconfi.Config, df_in: pd.DataFrame, df_out: pd.DataFrame
+        self, config: ccfg.Config, df_in: pd.DataFrame, df_out: pd.DataFrame
     ) -> str:
         act: List[str] = []
         act.append(hprint.frame("config"))
@@ -871,12 +876,12 @@ class TestVolatilityModulator(hut.TestCase):
     def _get_signal_and_fwd_vol(
         steps_ahead: int,
     ) -> pd.DataFrame:
-        arma_process = cartif.ArmaProcess([0.45], [0])
+        arma_process = casgen.ArmaProcess([0.45], [0])
         date_range_kwargs = {"start": "2010-01-01", "periods": 40, "freq": "B"}
         signal = arma_process.generate_sample(
             date_range_kwargs=date_range_kwargs, scale=0.1, seed=42
         )
-        vol = csigna.compute_smooth_moving_average(signal, 16)
+        vol = csproc.compute_smooth_moving_average(signal, 16)
         fwd_vol = vol.shift(steps_ahead)
         return pd.concat(
             [signal.rename("ret_0"), fwd_vol.rename("vol_2_hat")], axis=1
@@ -908,7 +913,7 @@ if True:
 
         def _get_dag(self) -> cdataf.DAG:
             mxnet.random.seed(0)
-            data, _ = cartif.get_gluon_dataset(
+            data, _ = casgen.get_gluon_dataset(
                 dataset_name="m4_hourly",
                 train_length=100,
                 test_length=1,
@@ -922,7 +927,7 @@ if True:
             dag = cdataf.DAG(mode="strict")
             dag.add_node(data_source_node)
             # Load deepar config and create modeling node.
-            config = cconfi.Config()
+            config = ccfg.Config()
             config["x_vars"] = None
             config["y_vars"] = ["y"]
             config["trainer_kwargs"] = {"epochs": 1}
@@ -1002,8 +1007,8 @@ if True:
             local_ts.columns = self._x_vars + self._y_vars
             return local_ts
 
-        def _get_config(self) -> cconfi.Config:
-            config = cconfi.Config()
+        def _get_config(self) -> ccfg.Config:
+            config = ccfg.Config()
             config["nid"] = "deepar"
             config["trainer_kwargs"] = {"epochs": 1}
             config["estimator_kwargs"] = {
@@ -1080,7 +1085,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         # Train SkLearn model.
         sklearn_config = ccbuild.get_config_from_nested_dict(
             {
-                "model_func": slinea.LinearRegression,
+                "model_func": slmode.LinearRegression,
                 "x_vars": ["ret_0"],
                 "y_vars": ["ret_0"],
                 "steps_ahead": steps_ahead,
@@ -1125,7 +1130,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         # Train SkLearn model.
         sklearn_config = ccbuild.get_config_from_nested_dict(
             {
-                "model_func": slinea.LinearRegression,
+                "model_func": slmode.LinearRegression,
                 "x_vars": ["ret_0"],
                 "y_vars": ["ret_0"],
                 "steps_ahead": steps_ahead,
@@ -1169,7 +1174,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         csm.fit(data_fit)
         df_out = csm.predict(data_predict)["df_out"]
         # Check results.
-        self._check_results(config, df_out, err_threshold=0.30)
+        self._check_results(config, df_out, err_threshold=0.40)
 
     def test_predict2(self) -> None:
         """
@@ -1290,7 +1295,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         self.check_string(act)
 
     def _check_results(
-        self, config: cconfi.Config, df_out: pd.DataFrame, err_threshold=0.01
+        self, config: ccfg.Config, df_out: pd.DataFrame, err_threshold=0.01
     ) -> str:
         act: List[str] = []
         act.append(hprint.frame("config"))
@@ -1308,7 +1313,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         freq: str = "M",
         seed: int = 42,
     ) -> pd.DataFrame:
-        arma_process = cartif.ArmaProcess(ar_coeffs, ma_coeffs)
+        arma_process = casgen.ArmaProcess(ar_coeffs, ma_coeffs)
         date_range_kwargs = {
             "start": "2010-01-01",
             "periods": periods,
@@ -1317,14 +1322,14 @@ class TestContinuousSarimaxModel(hut.TestCase):
         y = arma_process.generate_sample(
             date_range_kwargs=date_range_kwargs, scale=0.1, seed=seed
         ).rename("ret_0")
-        x = csigna.compute_smooth_moving_average(y, 26).rename("x")
+        x = csproc.compute_smooth_moving_average(y, 26).rename("x")
         return pd.concat([x, y], axis=1)
 
     @staticmethod
     def _get_config(
         order: Tuple[int, int, int],
         seasonal_order: Optional[Tuple[int, int, int, int]] = None,
-    ) -> cconfi.Config:
+    ) -> ccfg.Config:
         config = ccbuild.get_config_from_nested_dict(
             {
                 "y_vars": ["ret_0"],
@@ -1411,7 +1416,7 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         cum_y_yhat = mrpp.fit(model_output)["df_out"]
         #
         ret_0 = model_output["ret_0"]
-        cumret_3 = csigna.accumulate(ret_0, 3)
+        cumret_3 = csproc.accumulate(ret_0, 3)
         fwd_cumret_3 = cumret_3.shift(-3).rename("cumret_3_original")
         #
         cumret_3_from_result = cum_y_yhat[["cumret_3"]]
@@ -1421,7 +1426,7 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
 
     @staticmethod
     def _get_series(seed: int = 24) -> pd.Series:
-        arma_process = cartif.ArmaProcess([1], [1])
+        arma_process = casgen.ArmaProcess([1], [1])
         date_range_kwargs = {"start": "2010-01-01", "periods": 50, "freq": "D"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range_kwargs, scale=0.1, seed=seed
@@ -1438,7 +1443,7 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         ).rename("ret_0")
         # Get volatility estimate indexed by knowledge time. Volatility delay
         # should be one.
-        fwd_vol = csigna.compute_smooth_moving_average(rets, 16).rename(
+        fwd_vol = csproc.compute_smooth_moving_average(rets, 16).rename(
             "vol_1_hat"
         )
         rets_zscored = (rets / fwd_vol.shift(1)).to_frame(name="ret_0_zscored")
@@ -1448,7 +1453,7 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         # Get mock returns predictions.
         model_output = [rets, fwd_vol, rets_zscored, fwd_rets_zscored]
         for i in range(1, steps_ahead + 1):
-            ret_hat = csigna.compute_smooth_moving_average(
+            ret_hat = csproc.compute_smooth_moving_average(
                 rets_zscored, tau=i + 1
             ).rename(lambda x: f"{x}_{i}_hat", axis=1)
             model_output.append(ret_hat)

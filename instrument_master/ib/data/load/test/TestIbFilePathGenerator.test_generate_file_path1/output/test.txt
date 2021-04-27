@@ -1,1 +1,0 @@
-s3://external-p1/ib/Futures/GLOBEX/USD/minutely/ESZ21.csv.gz

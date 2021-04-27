@@ -49,21 +49,28 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
 
     def pytest_collection_modifyitems(config: Any, items: Any) -> None:
         _ = items
+        import helpers.env as henv
+
+        print(henv.get_system_signature()[0])
+        _WARNING = "\033[33mWARNING\033[0m"
         if config.getoption("--update_outcomes"):
-            print("\nWARNING: Updating test outcomes")
+            print(f"\n{_WARNING}: Updating test outcomes")
             hut.set_update_tests(True)
         if config.getoption("--incremental"):
-            print("\nWARNING: Using incremental test mode")
+            print(f"\n{_WARNING}: Using incremental test mode")
             hut.set_incremental_tests(True)
         if config.getoption("--dbg_verbosity"):
-            print("\nWARNING: Setting verbosity level")
+            print(f"\n{_WARNING}: Setting verbosity level")
             # When we specifiy the debug verbosity we monkey patch the command
             # line to add the '-s' option to pytest to not suppress the output.
             # NOTE: monkey patching sys.argv is often fragile.
             if "--dbg_verbosity" in dbg.get_command_line():
                 import sys
+
                 sys.argv.append("-s")
-                dbg.init_logger(config.getoption("--dbg_verbosity"), in_pytest=True)
+                dbg.init_logger(
+                    config.getoption("--dbg_verbosity"), in_pytest=True
+                )
 
     if "PYANNOTATE" in os.environ:
         print("\nWARNING: Collecting information about types through pyannotate")
@@ -73,9 +80,10 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
         def pytest_collection_finish(session: Any) -> None:
             """
             Handle the pytest collection finish hook: configure pyannotate.
-            Explicitly delay importing `collect_types` until all tests have
-            been collected.  This gives gevent a chance to monkey patch the
-            world before importing pyannotate.
+
+            Explicitly delay importing `collect_types` until all tests
+            have been collected.  This gives gevent a chance to monkey
+            patch the world before importing pyannotate.
             """
             # mypy: Cannot find module named 'pyannotate_runtime'
             import pyannotate_runtime  # type: ignore
