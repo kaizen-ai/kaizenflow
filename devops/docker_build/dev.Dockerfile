@@ -6,6 +6,9 @@
 FROM ubuntu:20.04 AS builder
 #FROM alpine:3.7
 
+# TODO(gp): Move all this in `devops/docker_build/install_packages.sh`
+# so we can create a single smaller layer.
+
 # TODO(gp): Trim this down. npm needed?
 RUN apt update && \
     apt install --no-install-recommends -y \
@@ -56,6 +59,8 @@ RUN /bin/bash -c "./init_bash.sh"
 COPY devops/docker_build/install_jupyter_extensions.sh .
 RUN /bin/sh -c "./install_jupyter_extensions.sh"
 
+# TODO(gp): Move this in `devops/docker_build/install_packages.sh`, if
+# possible.
 COPY devops/docker_build/cleanup.sh .
 RUN /bin/sh -c "./cleanup.sh"
 

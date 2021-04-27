@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 #
-# Configure bash.
+# Configure bash profile.
 #
+
+# TODO(gp): -> init_bash_profile.sh
 
 set -e
 
