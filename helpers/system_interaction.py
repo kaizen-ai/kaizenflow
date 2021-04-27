@@ -376,6 +376,8 @@ def kill_process(
     :param timeout_in_secs: how many seconds to wait at most before giving up
     :param polltime_in_secs: how often to check for dead processes
     """
+    import tqdm
+
     pids, txt = get_pids()
     _LOG.info("Killing %d pids (%s)\n%s", len(pids), pids, "\n".join(txt))
     if not pids:
@@ -387,8 +389,6 @@ def kill_process(
             _LOG.warning(str(e))
     #
     _LOG.info("Waiting %d processes (%s) to die", len(pids), pids)
-    import tqdm
-
     for _ in tqdm.tqdm(range(int(timeout_in_secs / polltime_in_secs))):
         time.sleep(polltime_in_secs)
         pids, _ = get_pids()

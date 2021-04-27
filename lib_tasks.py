@@ -66,18 +66,6 @@ def print_setup(ctx):  # type: ignore
         print("%s=%s" % (v, get_default_value(v)))
 
 
-# @task
-# def activate_poetry(ctx):  # type: ignore
-#     """
-#     Print how to activate the virtual environment.
-#     """
-#     _LOG.info(">")
-#     cmd = '''cd devops/docker_build; \
-#             FILE="$(poetry env info --path)/bin/activate"; \
-#             echo "source $FILE"'''
-#     ctx.run(cmd)
-
-
 # #############################################################################
 # Git.
 # #############################################################################
@@ -108,7 +96,7 @@ def git_pull_master(ctx):  # type: ignore
 @task
 def git_clean(ctx):  # type: ignore
     """
-    Clean all the repos.
+    Clean the repo and its submodules.
     """
     _LOG.info(">")
     # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
@@ -127,10 +115,35 @@ def git_clean(ctx):  # type: ignore
 
 @task
 def git_diff_master_files(ctx):  # type: ignore
+    """
+    Report which files are changed in the current branch with respect to master.
+    """
     _LOG.info(">")
     cmd = "git diff --name-only master..."
     ctx.run(cmd)
 
+
+@task
+def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
+    """
+    Remove (both locally and remotely) the branches that are already into master.
+    """
+    _LOG.info(">")
+    # Get the branches to delete.
+    cmd = ("git branch -r --merged origin/master"
+        " | grep -v master" +
+        " | sed 's/origin\///'")
+    _, txt = hsinte.system_to_string(cmd)
+    branches = [b.rstrip().lstrip() for b in txt.split("\n")]
+    # Print and ask to continue.
+    _LOG.info("The branches to delete are:\n" + "\n".join(branches))
+    if confirm_delete:
+        hsinte.query_yes_no("Ok to delete these branches?", abort_on_no=True)
+    for branch in branches:
+        cmd = f"git push --delete origin {branch}"
+        ctx.run(cmd)
+    cmd = "git fetch --prune"
+    ctx.run(cmd)
 
 # #############################################################################
 # Docker.
@@ -728,6 +741,9 @@ def run_slow_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: 
 
 @task
 def run_fast_slow_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: ignore
+    """
+    Run both fast and slow tests.
+    """
     run_fast_tests(ctx, stage=stage, pytest_opts=pytest_opts, coverage=coverage)
     run_slow_tests(ctx, stage=stage, pytest_opts=pytest_opts, coverage=coverage)
 
