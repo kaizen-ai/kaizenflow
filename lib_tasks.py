@@ -550,7 +550,7 @@ def docker_push_local_image_to_dev(ctx, base_image=""):  # type: ignore
 
 @task
 def docker_release_dev_image(  # type: ignore
-    ctx, cache=True, just_build=False, run_fast=True, run_slow=True, run_superslow=False
+    ctx, cache=True, skip_tests=False, run_fast=True, run_slow=True, run_superslow=False
 ):
     """
     (ONLY FOR CI/CD) Build, test, and release to ECR the latest "dev" image
@@ -558,7 +558,7 @@ def docker_release_dev_image(  # type: ignore
     :param: just_build skip all the tests and release the dev image.
     """
     _LOG.info(">")
-    if just_build:
+    if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
         run_fast = run_slow = run_superslow = False
     # Build image.
@@ -870,6 +870,7 @@ def get_amp_files(ctx):  # type: ignore
     """
     Get some files that need to be copied across repos.
     """
+    _LOG.info(">")
     _ = ctx
     token = "***REMOVED***"
     file_names = ["lib_tasks.py"]
@@ -880,3 +881,57 @@ def get_amp_files(ctx):  # type: ignore
             f"?token={token} -O {file_name}"
         )
         hsyste.system(cmd)
+
+
+# #############################################################################
+# GitHub CLI.
+# #############################################################################
+
+
+@task
+def gh_run_list(ctx, mode="branch", status="all"):  # type: ignore
+    _LOG.info("> mode='%s'", mode)
+    cmd = "export NO_COLOR=1; gh run list"
+    # > gh run list
+    # ✓  Merge branch 'master' into AmpTask1251_Update_GH_actions_for_amp  Slow tests  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984377
+    # ✓  Merge branch 'master' into AmpTask1251_Update_GH_actions_for_amp  Fast tests  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984376
+    # X  Merge branch 'master' into AmpTask1251_Update_GH_actions_for_amp  Run linter  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984375
+    # X  Fix lint issue                                                    Fast tests  master                                 workflow_dispatch  788949955
+    if mode == "branch":
+        branch_name = git.get_branch_name()
+    elif mode == "master":
+        branch_name = "master"
+    elif mode == "all":
+        branch_name = None
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    if branch_name:
+        cmd += f" | grep {branch_name}"
+    if status != "all":
+        cmd += f" | grep {status}"
+    ctx.run(cmd)
+    # TODO(gp): The output is tab separated. Parse it with csv and then filter.
+
+
+@task
+def gh_workflow_run(ctx, mode="branch", tests="all"):  # type: ignore
+    if mode == "branch":
+        branch_name = git.get_branch_name()
+    elif mode == "master":
+        branch_name = "master"
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    _LOG.debug(hprint.to_str("branch_name"))
+    #
+    if tests == "all":
+        gh_tests = ["fast_tests", "slow_tests"]
+    else:
+        gh_tests = [tests]
+    _LOG.debug(hprint.to_str("gh_tests"))
+    for gh_test in gh_tests:
+        gh_test += ".yml"
+        # gh workflow run fast_tests.yml --ref AmpTask1251_Update_GH_actions_for_amp
+        cmd = f"gh workflow run {gh_test} --ref {branch_name}"
+        ctx.run(cmd)
+    #
+    gh_run_list(ctx, mode=mode)

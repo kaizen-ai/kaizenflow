@@ -44,5 +44,4 @@ alias ghlem="gh --repo alphamatic/lemonade"
 alias i="invoke"
 alias il="invoke --list"
 
-# Activate the virtuel env.
-source venv/bin/activate
+echo "==> SUCCESS <=="

@@ -27,8 +27,10 @@ else
     # Print config.
     poetry config --list --local
 
+    # TODO(gp): We prefer to compute the dependencies outside the container so
+    # we can source control the lock file.
     # Compute dependencies.
-    poetry lock
+    #poetry lock
 
     if [[ 0 == 1 ]]; then
         # Install with poetry.
