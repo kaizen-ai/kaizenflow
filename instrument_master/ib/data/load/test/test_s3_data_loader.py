@@ -1,10 +1,14 @@
-import pytest
+"""
+Import as:
+
+import instrument_master.ib.data.load.test.test_s3_data_loader as tsdloa
+"""
 
 import pandas as pd
 
 import helpers.unit_test as hut
-import instrument_master.common.data.types as icdtyp
-import instrument_master.ib.data.load.ib_s3_data_loader as iidlib
+import instrument_master.common.data.types as mcdtyp
+import instrument_master.ib.data.load.ib_s3_data_loader as isdloa
 
 
 class TestS3IbDataLoader1(hut.TestCase):
@@ -14,7 +18,7 @@ class TestS3IbDataLoader1(hut.TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self._s3_data_loader = iidlib.IbS3DataLoader()
+        self._s3_data_loader = isdloa.IbS3DataLoader()
 
     def test_dtypes1(self) -> None:
         """
@@ -24,9 +28,9 @@ class TestS3IbDataLoader1(hut.TestCase):
         data = self._s3_data_loader.read_data(
             exchange="GLOBEX",
             symbol="ES",
-            asset_class=icdtyp.AssetClass.Futures,
-            frequency=icdtyp.Frequency.Daily,
-            contract_type=icdtyp.ContractType.Continuous,
+            asset_class=mcdtyp.AssetClass.Futures,
+            frequency=mcdtyp.Frequency.Daily,
+            contract_type=mcdtyp.ContractType.Continuous,
             currency="USD",
             unadjusted=None,
             nrows=1,
@@ -44,9 +48,9 @@ class TestS3IbDataLoader1(hut.TestCase):
         data = self._s3_data_loader.read_data(
             exchange="GLOBEX",
             symbol="ES",
-            asset_class=icdtyp.AssetClass.Futures,
-            frequency=icdtyp.Frequency.Minutely,
-            contract_type=icdtyp.ContractType.Continuous,
+            asset_class=mcdtyp.AssetClass.Futures,
+            frequency=mcdtyp.Frequency.Minutely,
+            contract_type=mcdtyp.ContractType.Continuous,
             currency="USD",
             unadjusted=None,
             nrows=10,
@@ -64,9 +68,9 @@ class TestS3IbDataLoader1(hut.TestCase):
         data = self._s3_data_loader.read_data(
             exchange="GLOBEX",
             symbol="ES",
-            asset_class=icdtyp.AssetClass.Futures,
-            frequency=icdtyp.Frequency.Daily,
-            contract_type=icdtyp.ContractType.Continuous,
+            asset_class=mcdtyp.AssetClass.Futures,
+            frequency=mcdtyp.Frequency.Daily,
+            contract_type=mcdtyp.ContractType.Continuous,
             currency="USD",
             unadjusted=True,
             nrows=10,
@@ -84,9 +88,9 @@ class TestS3IbDataLoader1(hut.TestCase):
         data = self._s3_data_loader.read_data(
             exchange="GLOBEX",
             symbol="ES",
-            asset_class=icdtyp.AssetClass.Futures,
-            frequency=icdtyp.Frequency.Hourly,
-            contract_type=icdtyp.ContractType.Continuous,
+            asset_class=mcdtyp.AssetClass.Futures,
+            frequency=mcdtyp.Frequency.Hourly,
+            contract_type=mcdtyp.ContractType.Continuous,
             currency="USD",
             unadjusted=None,
             nrows=10,
@@ -104,9 +108,9 @@ class TestS3IbDataLoader1(hut.TestCase):
         data = self._s3_data_loader.read_data(
             exchange="GLOBEX",
             symbol="ES",
-            asset_class=icdtyp.AssetClass.Futures,
-            frequency=icdtyp.Frequency.Daily,
-            contract_type=icdtyp.ContractType.Continuous,
+            asset_class=mcdtyp.AssetClass.Futures,
+            frequency=mcdtyp.Frequency.Daily,
+            contract_type=mcdtyp.ContractType.Continuous,
             currency="USD",
             unadjusted=True,
             nrows=10,
@@ -122,9 +126,9 @@ class TestS3IbDataLoader1(hut.TestCase):
         data = self._s3_data_loader.read_data(
             exchange="GLOBEX",
             symbol="ES",
-            asset_class=icdtyp.AssetClass.Futures,
-            frequency=icdtyp.Frequency.Hourly,
-            contract_type=icdtyp.ContractType.Continuous,
+            asset_class=mcdtyp.AssetClass.Futures,
+            frequency=mcdtyp.Frequency.Hourly,
+            contract_type=mcdtyp.ContractType.Continuous,
             currency="USD",
             unadjusted=None,
             start_ts=pd.to_datetime("2021-03-04 22:00:00-05:00"),

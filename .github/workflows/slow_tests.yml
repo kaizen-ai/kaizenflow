@@ -75,7 +75,7 @@ jobs:
           pip install -r .github/gh_requirements.txt
 
       - name: Pull image
-        run: invoke docker_pull --mode="current"
+        run: invoke docker_pull --images="current"
 
       - name: Run slow tests
         env:

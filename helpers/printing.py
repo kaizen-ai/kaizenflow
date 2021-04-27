@@ -428,9 +428,9 @@ def diff_strings(
     #
     cmd = f"sdiff --width={width} {file_name1} {file_name2}"
     # To avoid circular dependencies.
-    import helpers.system_interaction as hsyste
+    import helpers.system_interaction as hsinte
 
-    _, txt = hsyste.system_to_string(
+    _, txt = hsinte.system_to_string(
         cmd,
         # We don't care if they are different.
         abort_on_error=False,

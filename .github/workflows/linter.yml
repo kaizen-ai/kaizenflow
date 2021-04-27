@@ -67,7 +67,7 @@ jobs:
           pip install -r .github/gh_requirements.txt
 
       - name: Pull image
-        run: invoke docker_pull --mode="dev_tools"
+        run: invoke docker_pull --images="dev_tools"
 
       - name: Switch branch
         run: |

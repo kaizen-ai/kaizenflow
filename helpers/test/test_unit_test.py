@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.test.test_unit_test as ttutes
+"""
+
 import datetime
 import logging
 import os
@@ -11,20 +17,22 @@ import pytest
 
 import helpers.git as git
 import helpers.io_ as hio
-import helpers.system_interaction as hsyste
+import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
+
 def _git_add(file_name: str) -> None:
     cmd = "git add -u %s" % file_name
     _LOG.debug("> %s", cmd)
-    rc = hsyste.system(cmd, abort_on_error=False)
+    rc = hsinte.system(cmd, abort_on_error=False)
     if rc:
         _LOG.warning(
             "Can't run '%s': you need to add the file manually",
             cmd,
         )
+
 
 class TestTestCase(hut.TestCase):
     def test_get_input_dir1(self) -> None:
@@ -60,8 +68,10 @@ class TestTestCase(hut.TestCase):
         """
         act = self.get_scratch_space()
         act = hut.purify_txt_from_client(act)
-        exp = ("$GIT_ROOT/helpers/test/TestTestCase.test_get_scratch_space1"
-               "/tmp.scratch")
+        exp = (
+            "$GIT_ROOT/helpers/test/TestTestCase.test_get_scratch_space1"
+            "/tmp.scratch"
+        )
         self.assertEqual(act, exp)
 
     def test_get_scratch_space2(self) -> None:

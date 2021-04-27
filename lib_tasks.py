@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import lib_tasks as ltasks
+"""
+
 import functools
 import logging
 import os
@@ -13,7 +19,7 @@ from invoke import task
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.printing as hprint
-import helpers.system_interaction as hsyste
+import helpers.system_interaction as hsinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -209,16 +215,16 @@ def docker_kill_all(ctx):  # type: ignore
 
 
 @task
-def docker_pull(ctx, stage=_STAGE, mode="all"):  # type: ignore
+def docker_pull(ctx, stage=_STAGE, images="all"):  # type: ignore
     """
     Pull images from the registry.
     """
     _LOG.info(">")
     # Default is all the images.
-    if mode == "all":
-        mode = "current dev_tools"
+    if images == "all":
+        images = "current dev_tools"
     # Parse the images.
-    image_tokens = [token.rstrip().lstrip() for token in mode.split()]
+    image_tokens = [token.rstrip().lstrip() for token in images.split()]
     _LOG.info("image_tokens=%s", ", ".join(image_tokens))
     #
     for token in image_tokens:
@@ -234,7 +240,7 @@ def docker_pull(ctx, stage=_STAGE, mode="all"):  # type: ignore
         _LOG.info("token='%s': image='%s'", token, image)
         _check_image(image)
         cmd = f"docker pull {image}"
-        ctx.run(cmd)
+        ctx.run(cmd, pty=True)
 
 
 # In the following we use functions from `hsyste` instead of `ctx.run()` since
@@ -246,7 +252,7 @@ def _get_aws_cli_version() -> int:
     # > aws --version
     # aws-cli/1.19.49 Python/3.7.6 Darwin/19.6.0 botocore/1.20.49
     cmd = "aws --version"
-    res = hsyste.system_to_one_line(cmd)[1]
+    res = hsinte.system_to_one_line(cmd)[1]
     # Parse the output.
     m = re.match(r"aws-cli/((\d+).\d+.\d+)\S", res)
     dbg.dassert(m, "Can't parse '%s'", res)
@@ -301,7 +307,7 @@ use_one_line_cmd = False
 @functools.lru_cache()
 def _get_git_hash() -> str:
     cmd = "git rev-parse HEAD"
-    git_hash: str = hsyste.system_to_one_line(cmd)[1]
+    git_hash: str = hsinte.system_to_one_line(cmd)[1]
     _LOG.debug("git_hash=%s", git_hash)
     return git_hash
 
@@ -380,7 +386,7 @@ def _docker_cmd(
     _check_image(image)
     dbg.dassert_exists(docker_compose)
     #
-    user_name = hsyste.get_user_name()
+    user_name = hsinte.get_user_name()
     cmd = rf"""IMAGE={image} \
     docker-compose \
         -f {docker_compose} \
@@ -437,7 +443,7 @@ def docker_jupyter(  # type: ignore
     docker_compose_jupyter = os.path.abspath(docker_compose_jupyter)
     dbg.dassert_exists(docker_compose_jupyter)
     #
-    user_name = hsyste.get_user_name()
+    user_name = hsinte.get_user_name()
     service = "jupyter_server_test" if self_test else "jupyter_server"
     # TODO(gp): Not sure about the order of the -f files.
     cmd = rf"""IMAGE={image} \
@@ -526,7 +532,8 @@ def docker_build_local_image(ctx, cache=True, base_image=""):  # type: ignore
 @task
 def docker_push_local_image_to_dev(ctx, base_image=""):  # type: ignore
     """
-    (ONLY FOR CI/CD) Mark the "local" image as "dev" and "latest" and push to ECR.
+    (ONLY FOR CI/CD) Mark the "local" image as "dev" and "latest" and push to
+    ECR.
     """
     _LOG.info(">")
     docker_login(ctx)
@@ -550,10 +557,15 @@ def docker_push_local_image_to_dev(ctx, base_image=""):  # type: ignore
 
 @task
 def docker_release_dev_image(  # type: ignore
-    ctx, cache=True, skip_tests=False, run_fast=True, run_slow=True, run_superslow=False
+    ctx,
+    cache=True,
+    skip_tests=False,
+    run_fast=True,
+    run_slow=True,
+    run_superslow=False,
 ):
     """
-    (ONLY FOR CI/CD) Build, test, and release to ECR the latest "dev" image
+    (ONLY FOR CI/CD) Build, test, and release to ECR the latest "dev" image.
 
     :param: just_build skip all the tests and release the dev image.
     """
@@ -728,11 +740,11 @@ def pytest_clean(ctx):  # type: ignore
     """
     Clean pytest artifacts.
     """
-    import helpers.pytest_ as hpytest
+    import helpers.pytest_ as hpytes
 
     _LOG.info(">")
     _ = ctx
-    hpytest.pytest_clean(".")
+    hpytes.pytest_clean(".")
 
 
 # # #############################################################################
@@ -842,7 +854,7 @@ def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignor
         files = " ".join(files)
     elif branch:
         cmd = "git diff --name-only master..."
-        files = hsyste.system_to_string(cmd)[1]
+        files = hsinte.system_to_string(cmd)[1]
         files = " ".join(files.split("\n"))
     #
     dbg.dassert_isinstance(files, str)
@@ -880,7 +892,7 @@ def get_amp_files(ctx):  # type: ignore
             f"https://raw.githubusercontent.com/alphamatic/amp/master/{file_name}"
             f"?token={token} -O {file_name}"
         )
-        hsyste.system(cmd)
+        hsinte.system(cmd)
 
 
 # #############################################################################
@@ -889,7 +901,7 @@ def get_amp_files(ctx):  # type: ignore
 
 
 @task
-def gh_run_list(ctx, mode="branch", status="all"):  # type: ignore
+def gh_run_list(ctx, branch="branch", status="all"):  # type: ignore
     _LOG.info("> mode='%s'", mode)
     cmd = "export NO_COLOR=1; gh run list"
     # > gh run list

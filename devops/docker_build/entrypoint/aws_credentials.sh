@@ -2,7 +2,7 @@
 #
 # If ~/.aws exists loads the AWS credentials into the corresponding environment
 # variables.
-# 
+#
 
 set -e
 

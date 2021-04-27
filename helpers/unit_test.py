@@ -22,7 +22,7 @@ import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as hio
 import helpers.printing as hprint
-import helpers.system_interaction as hsyste
+import helpers.system_interaction as hsinte
 import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
@@ -323,7 +323,7 @@ def purify_txt_from_client(txt: str) -> str:
     pwd = os.getcwd()
     txt = txt.replace(pwd, "$PWD")
     # Replace the user name with `$USER_NAME`.
-    user_name = hsyste.get_user_name()
+    user_name = hsinte.get_user_name()
     txt = txt.replace(user_name, "$USER_NAME")
     # Remove amp reference, if any.
     txt = remove_amp_references(txt)
@@ -353,7 +353,7 @@ def diff_files(
     if tag is not None:
         msg.append("\n" + hprint.frame(tag))
     # Diff to screen.
-    _, res = hsyste.system_to_string(
+    _, res = hsinte.system_to_string(
         "echo; sdiff -l -w 150 %s %s" % (file_name1, file_name2),
         abort_on_error=False,
         log_level=logging.DEBUG,
@@ -366,7 +366,7 @@ def diff_files(
     vimdiff_cmd = "vimdiff %s %s" % (file_name1, file_name2)
     hio.to_file(diff_script, vimdiff_cmd)
     cmd = "chmod +x " + diff_script
-    hsyste.system(cmd)
+    hsinte.system(cmd)
     # Report how to diff.
     msg.append("Diff with:")
     msg.append("> " + vimdiff_cmd)
@@ -668,8 +668,12 @@ class TestCase(unittest.TestCase):
         # Report if the test was updated
         if self._test_was_updated:
             if not self._overriden_update_tests:
-                print("(" + hprint.color_highlight("WARNING", "yellow") +
-                      ": Test was updated) ", end="")
+                print(
+                    "("
+                    + hprint.color_highlight("WARNING", "yellow")
+                    + ": Test was updated) ",
+                    end="",
+                )
             else:
                 # We forced an update from the unit test itself, so no need
                 # to report an update.
@@ -956,7 +960,7 @@ class TestCase(unittest.TestCase):
         if self._git_add:
             cmd = "git add -u %s" % file_name
             _LOG.debug("> %s", cmd)
-            rc = hsyste.system(cmd, abort_on_error=False)
+            rc = hsinte.system(cmd, abort_on_error=False)
             if rc:
                 _LOG.warning(
                     "Can't run '%s': you need to add the file manually",
@@ -1145,4 +1149,4 @@ def run_notebook(
     cmd.append("--ExecutePreprocessor.timeout=-1")
     # Execute.
     cmd_as_str = " ".join(cmd)
-    hsyste.system(cmd_as_str, abort_on_error=True)
+    hsinte.system(cmd_as_str, abort_on_error=True)

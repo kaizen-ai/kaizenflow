@@ -1,10 +1,16 @@
+"""
+Import as:
+
+import helpers.env as henv
+"""
+
 import logging
 import platform
 from typing import Tuple
 
 import helpers.git as git
-import helpers.system_interaction as hsyste
 import helpers.printing as hprint
+import helpers.system_interaction as hsinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -31,11 +37,11 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     # Add git signature.
     txt.append("# Git")
     cmd = "git branch --show-current"
-    _, branch_name = hsyste.system_to_one_line(cmd)
+    _, branch_name = hsinte.system_to_one_line(cmd)
     txt.append("branch_name='%s'" % branch_name)
     #
     cmd = "git rev-parse --short HEAD"
-    _, hash = hsyste.system_to_one_line(cmd)
+    _, hash = hsinte.system_to_one_line(cmd)
     txt.append("hash='%s'" % hash)
     #
     num_commits = 3

@@ -1,9 +1,14 @@
+"""
+Import as:
+
+import helpers.test.test_helpers as htthel
+"""
+
 import logging
 import os
 
 import numpy as np
 import pandas as pd
-import pytest
 
 import helpers.csv as hcsv
 import helpers.env as henv
@@ -161,9 +166,7 @@ class Test_numba_1(hut.TestCase):
 
 class Test_s3_1(hut.TestCase):
     def test_get_path1(self) -> None:
-        file_path = (
-            "s3://alphamatic-data/data/kibot/All_Futures_Continuous_Contracts_daily"
-        )
+        file_path = "s3://alphamatic-data/data/kibot/All_Futures_Continuous_Contracts_daily"
         bucket_name, file_path = hs3.parse_path(file_path)
         self.assertEqual(bucket_name, "alphamatic-data")
         self.assertEqual(
