@@ -494,6 +494,9 @@ def docker_build_local_image(ctx, cache=True, base_image=""):  # type: ignore
     Build a local as a release candidate image.
     """
     _LOG.info(">")
+    # Update poetry.
+    ctx.run("cd devops/docker_build/; poetry lock")
+    #
     image_local = _get_image("local", base_image)
     image_hash = _get_image("hash", base_image)
     #

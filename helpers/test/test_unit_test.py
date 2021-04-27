@@ -121,6 +121,11 @@ class TestTestCase(hut.TestCase):
 
 
 class TestCheckString1(hut.TestCase):
+    """
+    Note that not all the tests pass with `--update_outcomes`, since some test
+    exercise the logic in `--update_outcomes` itself.
+    """
+
     def test_check_string1(self) -> None:
         """
         Compare the actual value to a matching golden outcome.
@@ -176,8 +181,7 @@ class TestCheckString1(hut.TestCase):
         act = "hello world"
         golden_outcome = "hello world2"
         # Force updating the golden outcomes.
-        self.update_tests = True
-        self.git_add = False
+        self.mock_update_tests()
         #
         tag = "test"
         _, file_name = self._get_golden_outcome_file_name(tag)
@@ -194,8 +198,6 @@ class TestCheckString1(hut.TestCase):
             # Clean up.
             hio.to_file(file_name, golden_outcome)
             _git_add(file_name)
-            self.update_tests = False
-            self.git_add = True
         # Actual doesn't match the golden outcome and it was updated.
         self.assertTrue(outcome_updated)
         self.assertTrue(file_exists)
@@ -229,8 +231,7 @@ class TestCheckString1(hut.TestCase):
         """
         act = "hello world"
         # Force updating the golden outcomes.
-        self.update_tests = True
-        self.git_add = False
+        self.mock_update_tests()
         tag = "test"
         _, file_name = self._get_golden_outcome_file_name(tag)
         try:
@@ -247,8 +248,6 @@ class TestCheckString1(hut.TestCase):
             if os.path.exists(file_name):
                 hio.delete_file(file_name)
             _git_add(file_name)
-            self.update_tests = False
-            self.git_add = True
         # Actual doesn't match the golden outcome and it was updated.
         self.assertTrue(outcome_updated)
         self.assertFalse(file_exists)
@@ -258,6 +257,11 @@ class TestCheckString1(hut.TestCase):
 
 
 class TestCheckDataFrame1(hut.TestCase):
+    """
+    Note that not all the tests pass with `--update_outcomes`, since some test
+    exercise the logic in `--update_outcomes` itself.
+    """
+
     def test_check_df_equal1(self) -> None:
         """
         Compare the actual value of a df to a matching golden outcome.
@@ -363,9 +367,7 @@ class TestCheckDataFrame1(hut.TestCase):
             [[0, 2, 2], [3, 4, 5]], columns="a b c".split()
         )
         # Force updating the golden outcomes.
-        self.update_tests = True
-        # We don't want to add to git.
-        self.git_add = False
+        self.mock_update_tests()
         tag = "test_df"
         _, file_name = self._get_golden_outcome_file_name(tag)
         # Modify the golden.
@@ -382,8 +384,6 @@ class TestCheckDataFrame1(hut.TestCase):
             # Clean up.
             hio.to_file(file_name, golden_outcome)
             _git_add(file_name)
-            self.update_tests = False
-            self.git_add = True
         # Actual doesn't match the golden outcome and it was updated.
         self.assertTrue(outcome_updated)
         self.assertTrue(file_exists)
@@ -407,9 +407,7 @@ class TestCheckDataFrame1(hut.TestCase):
         """
         act = pd.DataFrame([[0, 1, 2], [3, 4, 5]], columns="a b c".split())
         # Force updating the golden outcomes.
-        self.update_tests = True
-        # We don't want to add to git.
-        self.git_add = False
+        self.mock_update_tests()
         tag = "test_df"
         _, file_name = self._get_golden_outcome_file_name(tag)
         try:
@@ -426,8 +424,6 @@ class TestCheckDataFrame1(hut.TestCase):
             if os.path.exists(file_name):
                 hio.delete_file(file_name)
             _git_add(file_name)
-            self.update_tests = False
-            self.git_add = True
         # Actual doesn't match the golden outcome and it was updated.
         self.assertTrue(outcome_updated)
         self.assertFalse(file_exists)

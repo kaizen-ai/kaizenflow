@@ -633,25 +633,28 @@ class TestCase(unittest.TestCase):
     """
 
     def setUp(self) -> None:
+        # Print banner to signal the start of a new test.
+        func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
+        _LOG.debug("\n%s", hprint.frame(func_name))
+        # Set the random seed.
         random.seed(20000101)
         np.random.seed(20000101)
         # Disable matplotlib plotting by overwriting the `show` function.
         plt.show = lambda: 0
         # Name of the dir with artifacts for this test.
         self._scratch_dir: Optional[str] = None
-        # Print banner to signal starting of a new test.
-        func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
-        _LOG.debug("\n%s", hprint.frame(func_name))
         # The base directory is the one including the class under test.
         self._base_dir_name = os.path.dirname(inspect.getfile(self.__class__))
         _LOG.debug("base_dir_name=%s", self._base_dir_name)
+        # Store whether a test needs to be updated or not.
         self._update_tests = get_update_tests()
-        self._git_add = True
-        # Error message printed when comparing.
-        self._error_msg = ""
-        # True if the golden outcome of this test was updated.
+        self._overriden_update_tests = False
+        # Store whether the golden outcome of this test was updated.
         self._test_was_updated = False
-        #
+        # Store whether the output files need to be added to git.
+        self._git_add = True
+        # Error message printed when comparing actual and expected outcome.
+        self._error_msg = ""
         # Set the default pandas options (see AmpTask1140).
         self._old_pd_options = get_pd_default_values()
         set_pd_default_values()
@@ -662,11 +665,15 @@ class TestCase(unittest.TestCase):
         # Stop the timer to measure the execution time of the test.
         self._timer.stop()
         print("(%.2f s) " % self._timer.get_total_elapsed(), end="")
-        # Report if the test was updated.
+        # Report if the test was updated
         if self._test_was_updated:
-            print("(" + hprint.color_highlight("WARNING", "yellow") +
-                  ": Test was updated) ", end="")
-            self._test_was_updated = False
+            if not self._overriden_update_tests:
+                print("(" + hprint.color_highlight("WARNING", "yellow") +
+                      ": Test was updated) ", end="")
+            else:
+                # We forced an update from the unit test itself, so no need
+                # to report an update.
+                pass
         # Recover the original default pandas options.
         pd.options = self._old_pd_options
         # Force matplotlib to close plots to decouple tests.
@@ -694,9 +701,14 @@ class TestCase(unittest.TestCase):
         _LOG.debug("Setting base_dir_name to '%s'", self._base_dir_name)
         hio.create_dir(self._base_dir_name, incremental=True)
 
-    def override_update_tests(self, value: bool) -> None:
-
-
+    def mock_update_tests(self) -> None:
+        """
+        When unit testing the unit test framework we want to test updating the
+        golden outcome.
+        """
+        self._update_tests = True
+        self._overriden_update_tests = True
+        self._git_add = False
 
     def get_input_dir(
         self,
@@ -937,7 +949,7 @@ class TestCase(unittest.TestCase):
 
     # #########################################################################
 
-    def _git_add(self, file_name: str) -> None:
+    def _git_add_file(self, file_name: str) -> None:
         """
         Add to git repo `file_name`, if needed.
         """
@@ -957,7 +969,7 @@ class TestCase(unittest.TestCase):
         _LOG.debug(hprint.to_str("file_name"))
         hio.to_file(file_name, actual, use_gzip=use_gzip)
         # Add to git repo.
-        self._git_add(file_name)
+        self._git_add_file(file_name)
 
     # #########################################################################
 
@@ -968,7 +980,7 @@ class TestCase(unittest.TestCase):
         hio.create_enclosing_dir(file_name)
         actual.to_csv(file_name)
         # Add to git repo.
-        self._git_add(file_name)
+        self._git_add_file(file_name)
 
     def _check_df_compare_outcome(
         self, file_name: str, actual: pd.DataFrame, err_threshold: float
