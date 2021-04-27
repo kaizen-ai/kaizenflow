@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import core.test.test_statistics as cttsta
+"""
+
 import logging
 from typing import List
 
@@ -5,9 +11,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import core.artificial_signal_generators as cartif
+import core.artificial_signal_generators as casgen
 import core.finance as cfinan
-import core.signal_processing as csigna
+import core.signal_processing as csproc
 import core.statistics as cstati
 import helpers.printing as hprint
 import helpers.unit_test as hut
@@ -16,7 +22,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestComputeMoments(hut.TestCase):
-
     def test1(self) -> None:
         series = self._get_series(seed=1)
         actual = cstati.compute_moments(series)
@@ -67,11 +72,12 @@ class TestComputeMoments(hut.TestCase):
         actual = cstati.compute_moments(series, nan_mode="ffill_and_drop_leading")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = cartif.ArmaProcess(arparams, maparams)
+        arma_process = casgen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -80,7 +86,6 @@ class TestComputeMoments(hut.TestCase):
 
 
 class TestComputeFracZero(hut.TestCase):
-
     def test1(self) -> None:
         data = [0.466667, 0.2, 0.13333, 0.2, 0.33333]
         index = [0, 1, 2, 3, 4]
@@ -133,6 +138,7 @@ class TestComputeFracZero(hut.TestCase):
     def test6(self) -> None:
         series = pd.Series([])
         cstati.compute_frac_zero(series)
+
     @staticmethod
     def _get_df(seed: int) -> pd.DataFrame:
         nrows = 15
@@ -154,7 +160,6 @@ class TestComputeFracZero(hut.TestCase):
 
 
 class TestComputeFracNan(hut.TestCase):
-
     def test1(self) -> None:
         data = [0.4, 0.133333, 0.133333, 0.133333, 0.2]
         index = [0, 1, 2, 3, 4]
@@ -207,6 +212,7 @@ class TestComputeFracNan(hut.TestCase):
     def test6(self) -> None:
         series = pd.Series([])
         cstati.compute_frac_nan(series)
+
     @staticmethod
     def _get_df(seed: int) -> pd.DataFrame:
         nrows = 15
@@ -280,11 +286,12 @@ class TestTTest1samp(hut.TestCase):
     def test4(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
         cstati.ttest_1samp(series)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = cartif.ArmaProcess(arparams, maparams)
+        arma_process = casgen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -314,6 +321,7 @@ class TestMultipleTests(hut.TestCase):
         actual = cstati.multipletests(series_with_nans, nan_mode="drop")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
@@ -369,12 +377,13 @@ class TestMultiTTest(hut.TestCase):
         actual = cstati.multi_ttest(df)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
     @staticmethod
     def _get_df_of_series(seed: int) -> pd.DataFrame:
         n_series = 7
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = cartif.ArmaProcess(arparams, maparams)
+        arma_process = casgen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         # Generating a dataframe from different series.
         df = pd.DataFrame(
@@ -390,7 +399,6 @@ class TestMultiTTest(hut.TestCase):
 
 
 class TestApplyNormalityTest(hut.TestCase):
-
     def test1(self) -> None:
         series = self._get_series(seed=1)
         actual = cstati.apply_normality_test(series)
@@ -432,11 +440,12 @@ class TestApplyNormalityTest(hut.TestCase):
     def test6(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
         cstati.apply_normality_test(series)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = cartif.ArmaProcess(arparams, maparams)
+        arma_process = casgen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -445,7 +454,6 @@ class TestApplyNormalityTest(hut.TestCase):
 
 
 class TestApplyAdfTest(hut.TestCase):
-
     def test1(self) -> None:
         series = self._get_series(seed=1)
         actual = cstati.apply_adf_test(series)
@@ -492,11 +500,12 @@ class TestApplyAdfTest(hut.TestCase):
     def test8(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
         cstati.apply_adf_test(series)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = cartif.ArmaProcess(arparams, maparams)
+        arma_process = casgen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -505,7 +514,6 @@ class TestApplyAdfTest(hut.TestCase):
 
 
 class TestApplyKpssTest(hut.TestCase):
-
     def test1(self) -> None:
         series = self._get_series(seed=1)
         actual = cstati.apply_kpss_test(series)
@@ -552,11 +560,12 @@ class TestApplyKpssTest(hut.TestCase):
     def test8(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
         cstati.apply_kpss_test(series)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = cartif.ArmaProcess(arparams, maparams)
+        arma_process = casgen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -565,7 +574,6 @@ class TestApplyKpssTest(hut.TestCase):
 
 
 class TestApplyLjungBoxTest(hut.TestCase):
-
     def test1(self) -> None:
         series = self._get_series(seed=1)
         actual = cstati.apply_ljung_box_test(series)
@@ -618,11 +626,12 @@ class TestApplyLjungBoxTest(hut.TestCase):
     def test9(self) -> None:
         series = pd.Series([np.nan for i in range(10)])
         cstati.apply_ljung_box_test(series)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = cartif.ArmaProcess(arparams, maparams)
+        arma_process = casgen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -631,7 +640,6 @@ class TestApplyLjungBoxTest(hut.TestCase):
 
 
 class TestComputeSpecialValueStats(hut.TestCase):
-
     def test1(self) -> None:
         """
         Test for default arguments.
@@ -654,11 +662,12 @@ class TestComputeSpecialValueStats(hut.TestCase):
     def test3(self) -> None:
         series = pd.Series([])
         cstati.compute_special_value_stats(series)
+
     @staticmethod
     def _get_messy_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = cartif.ArmaProcess(arparams, maparams)
+        arma_process = casgen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -671,7 +680,6 @@ class TestComputeSpecialValueStats(hut.TestCase):
 
 
 class TestCalculateHitRate(hut.TestCase):
-
     def test1(self) -> None:
         """
         Test for default parameters.
@@ -799,6 +807,7 @@ class TestCalculateHitRate(hut.TestCase):
     def test_nan(self) -> None:
         series = pd.Series([np.nan] * 10)
         cstati.calculate_hit_rate(series)
+
     @staticmethod
     def _get_test_series() -> pd.Series:
         series = pd.Series([0, -0.001, 0.001, -0.01, 0.01, -0.1, 0.1, -1, 1, 10])
@@ -806,7 +815,6 @@ class TestCalculateHitRate(hut.TestCase):
 
 
 class Test_compute_jensen_ratio(hut.TestCase):
-
     def test1(self) -> None:
         signal = self._get_signal(seed=1)
         actual = cstati.compute_jensen_ratio(
@@ -856,6 +864,7 @@ class Test_compute_jensen_ratio(hut.TestCase):
     def test6(self) -> None:
         signal = pd.Series([])
         cstati.compute_jensen_ratio(signal)
+
     @staticmethod
     def _get_signal(seed: int) -> pd.Series:
         np.random.seed(seed)
@@ -866,7 +875,6 @@ class Test_compute_jensen_ratio(hut.TestCase):
 
 
 class Test_compute_forecastability(hut.TestCase):
-
     def test1(self) -> None:
         signal = self._get_signal(seed=1)
         actual = cstati.compute_forecastability(
@@ -906,6 +914,7 @@ class Test_compute_forecastability(hut.TestCase):
     def test5(self) -> None:
         signal = self._get_signal(seed=1)
         cstati.compute_forecastability(signal)
+
     @staticmethod
     def _get_signal(seed: int) -> pd.Series:
         np.random.seed(seed)
@@ -916,7 +925,6 @@ class Test_compute_forecastability(hut.TestCase):
 
 
 class Test_compute_annualized_return_and_volatility(hut.TestCase):
-
     def test1(self) -> None:
         """
         Test for default parameters.
@@ -941,9 +949,10 @@ class Test_compute_annualized_return_and_volatility(hut.TestCase):
     def test3(self) -> None:
         series = pd.Series([])
         cstati.compute_annualized_return_and_volatility(series)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
-        arma_process = cartif.ArmaProcess([0], [0])
+        arma_process = casgen.ArmaProcess([0], [0])
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, scale=0.1, seed=seed
@@ -952,7 +961,6 @@ class Test_compute_annualized_return_and_volatility(hut.TestCase):
 
 
 class TestComputeMaxDrawdown(hut.TestCase):
-
     def test1(self) -> None:
         series = self._get_series(seed=1)
         actual = cstati.compute_max_drawdown(series)
@@ -967,14 +975,14 @@ class TestComputeMaxDrawdown(hut.TestCase):
 
     def test3(self) -> None:
         """
-        Smoke test for empty input
+        Smoke test for empty input.
         """
         series = pd.Series([])
         cstati.compute_max_drawdown(series)
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
-        arma_process = cartif.ArmaProcess([0], [0])
+        arma_process = casgen.ArmaProcess([0], [0])
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, scale=0.1, seed=seed
@@ -984,18 +992,9 @@ class TestComputeMaxDrawdown(hut.TestCase):
 
 class Test_compute_bet_stats(hut.TestCase):
 
-    def _check_results(self, rets_pos_bet_rets, actual) -> None:
-        act = []
-        act.append(hprint.frame('rets_pos'))
-        act.append(hut.convert_df_to_string(rets_pos_bet_rets, index=True, decimals=3))
-        act.append(hprint.frame('stats'))
-        act.append(hut.convert_df_to_string(actual, index=True, decimals=3))
-        act = "\n".join(act)
-        self.check_string(act, fuzzy_match=True)
-
     def test1(self) -> None:
         log_rets = Test_compute_bet_stats._get_series(42)
-        positions = csigna.compute_smooth_moving_average(log_rets, 4)
+        positions = csproc.compute_smooth_moving_average(log_rets, 4)
         actual = cstati.compute_bet_stats(positions, log_rets)
         bet_rets = cfinan.compute_returns_per_bet(positions, log_rets)
         rets_pos_bet_rets = pd.concat(
@@ -1005,7 +1004,7 @@ class Test_compute_bet_stats(hut.TestCase):
 
     def test2(self) -> None:
         log_rets = Test_compute_bet_stats._get_series(42)
-        positions = csigna.compute_smooth_moving_average(log_rets, 4)
+        positions = csproc.compute_smooth_moving_average(log_rets, 4)
         log_rets.iloc[:10] = np.nan
         actual = cstati.compute_bet_stats(positions, log_rets)
         bet_rets = cfinan.compute_returns_per_bet(positions, log_rets)
@@ -1024,10 +1023,20 @@ class Test_compute_bet_stats(hut.TestCase):
             {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
         )
         self._check_results(rets_pos_bet_rets, actual)
+    def _check_results(self, rets_pos_bet_rets, actual) -> None:
+        act = []
+        act.append(hprint.frame("rets_pos"))
+        act.append(
+            hut.convert_df_to_string(rets_pos_bet_rets, index=True, decimals=3)
+        )
+        act.append(hprint.frame("stats"))
+        act.append(hut.convert_df_to_string(actual, index=True, decimals=3))
+        act = "\n".join(act)
+        self.check_string(act, fuzzy_match=True)
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
-        arma_process = cartif.ArmaProcess([], [])
+        arma_process = casgen.ArmaProcess([], [])
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed, scale=0.1
@@ -1039,7 +1048,7 @@ class Test_compute_sharpe_ratio(hut.TestCase):
     def test1(self) -> None:
         ar_params: List[float] = []
         ma_params: List[float] = []
-        arma_process = cartif.ArmaProcess(ar_params, ma_params)
+        arma_process = casgen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},
             scale=1,
@@ -1053,7 +1062,7 @@ class Test_compute_sharpe_ratio_standard_error(hut.TestCase):
     def test1(self) -> None:
         ar_params: List[float] = []
         ma_params: List[float] = []
-        arma_process = cartif.ArmaProcess(ar_params, ma_params)
+        arma_process = casgen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},
             scale=1,
@@ -1064,7 +1073,6 @@ class Test_compute_sharpe_ratio_standard_error(hut.TestCase):
 
 
 class Test_compute_annualized_sharpe_ratio(hut.TestCase):
-
     def test1(self) -> None:
         """
         Demonstrate the approximate invariance of the annualized SR (at least
@@ -1075,15 +1083,15 @@ class Test_compute_annualized_sharpe_ratio(hut.TestCase):
         srs_sr = cstati.compute_annualized_sharpe_ratio(srs)
         np.testing.assert_almost_equal(srs_sr, -2.6182, decimal=3)
         # Resample to hourly and calculate SR.
-        hourly_srs = csigna.resample(srs, rule="60T").sum()
+        hourly_srs = csproc.resample(srs, rule="60T").sum()
         hourly_sr = cstati.compute_annualized_sharpe_ratio(hourly_srs)
         np.testing.assert_almost_equal(hourly_sr, -2.6483, decimal=3)
         # Resample to daily and calculate SR.
-        daily_srs = csigna.resample(srs, rule="D").sum()
+        daily_srs = csproc.resample(srs, rule="D").sum()
         daily_srs_sr = cstati.compute_annualized_sharpe_ratio(daily_srs)
         np.testing.assert_almost_equal(daily_srs_sr, -2.4890, decimal=3)
         # Resample to weekly and calculate SR.
-        weekly_srs = csigna.resample(srs, rule="W").sum()
+        weekly_srs = csproc.resample(srs, rule="W").sum()
         weekly_srs_sr = cstati.compute_annualized_sharpe_ratio(weekly_srs)
         np.testing.assert_almost_equal(weekly_srs_sr, -2.7717, decimal=3)
 
@@ -1122,8 +1130,9 @@ class Test_compute_annualized_sharpe_ratio(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         txt = f"Input:\n{df_string}\n\n" f"Output:\n{actual_string}\n"
         self.check_string(txt)
+
     def _generate_minutely_series(self, n_days: float, seed: int) -> pd.Series:
-        arma_process = cartif.ArmaProcess([], [])
+        arma_process = casgen.ArmaProcess([], [])
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": n_days * 24 * 60, "freq": "T"},
             scale=1,
@@ -1133,26 +1142,25 @@ class Test_compute_annualized_sharpe_ratio(hut.TestCase):
 
 
 class Test_compute_annualized_sharpe_ratio_standard_error(hut.TestCase):
-
     def test1(self) -> None:
         srs = self._generate_minutely_series(n_days=100, seed=10)
         # Calculate SR from minutely time series.
         srs_sr_se = cstati.compute_annualized_sharpe_ratio_standard_error(srs)
         np.testing.assert_almost_equal(srs_sr_se, 1.9108, decimal=3)
         # Resample to hourly and calculate SR.
-        hourly_srs = csigna.resample(srs, rule="60T").sum()
+        hourly_srs = csproc.resample(srs, rule="60T").sum()
         hourly_sr_se = cstati.compute_annualized_sharpe_ratio_standard_error(
             hourly_srs
         )
         np.testing.assert_almost_equal(hourly_sr_se, 1.9116, decimal=3)
         # Resample to daily and calculate SR.
-        daily_srs = csigna.resample(srs, rule="D").sum()
+        daily_srs = csproc.resample(srs, rule="D").sum()
         daily_sr_se_sr = cstati.compute_annualized_sharpe_ratio_standard_error(
             daily_srs
         )
         np.testing.assert_almost_equal(daily_sr_se_sr, 1.9192, decimal=3)
         # Resample to weekly and calculate SR.
-        weekly_srs = csigna.resample(srs, rule="W").sum()
+        weekly_srs = csproc.resample(srs, rule="W").sum()
         weekly_sr_se_sr = cstati.compute_annualized_sharpe_ratio_standard_error(
             weekly_srs
         )
@@ -1175,8 +1183,9 @@ class Test_compute_annualized_sharpe_ratio_standard_error(hut.TestCase):
         # Compare to SR annualized using `freq`.
         srs_sr_se = cstati.compute_annualized_sharpe_ratio_standard_error(srs)
         np.testing.assert_almost_equal(srs_sr_se, 1.9108, decimal=3)
+
     def _generate_minutely_series(self, n_days: float, seed: int) -> pd.Series:
-        arma_process = cartif.ArmaProcess([], [])
+        arma_process = casgen.ArmaProcess([], [])
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": n_days * 24 * 60, "freq": "T"},
             scale=1,
@@ -1189,7 +1198,7 @@ class Test_summarize_sharpe_ratio(hut.TestCase):
     def test1(self) -> None:
         ar_params: List[float] = []
         ma_params: List[float] = []
-        arma_process = cartif.ArmaProcess(ar_params, ma_params)
+        arma_process = casgen.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},
             scale=1,
@@ -1200,7 +1209,6 @@ class Test_summarize_sharpe_ratio(hut.TestCase):
 
 
 class Test_zscore_oos_sharpe_ratio(hut.TestCase):
-
     def test1(self) -> None:
         series = Test_zscore_oos_sharpe_ratio._get_series(42)
         oos_start = "2010-02-25"
@@ -1297,28 +1305,33 @@ class Test_zscore_oos_sharpe_ratio(hut.TestCase):
         series = Test_zscore_oos_sharpe_ratio._get_series(42)
         with self.assertRaises(AssertionError):
             _ = cstati.zscore_oos_sharpe_ratio(series, "2012-01-01")
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
-        arma_process = cartif.ArmaProcess([], [])
+        arma_process = casgen.ArmaProcess([], [])
         date_range = {"start": "2010-01-01", "periods": 100, "freq": "B"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed, scale=0.1
         )
         return series
 
-    
+
 class Test_sharpe_ratio_correlation_conversion(hut.TestCase):
     def test1(self) -> None:
         np.testing.assert_almost_equal(
-            6/5, 
-            cstati.apply_sharpe_ratio_correlation_conversion("Q", correlation=3/4)
+            6 / 5,
+            cstati.apply_sharpe_ratio_correlation_conversion(
+                "Q", correlation=3 / 4
+            ),
         )
         np.testing.assert_almost_equal(
-            3/4, 
-            cstati.apply_sharpe_ratio_correlation_conversion("Q", sharpe_ratio=6/5)
+            3 / 4,
+            cstati.apply_sharpe_ratio_correlation_conversion(
+                "Q", sharpe_ratio=6 / 5
+            ),
         )
-        
-        
+
+
 class Test_compute_drawdown_cdf(hut.TestCase):
     def test1(self) -> None:
         sharpe_ratio = 1
@@ -1426,7 +1439,6 @@ class Test_compute_max_drawdown_approximate_cdf(hut.TestCase):
 
 
 class TestComputeZeroDiffProportion(hut.TestCase):
-
     def test1(self) -> None:
         series = self._get_series(seed=1)
         actual = cstati.compute_zero_diff_proportion(series)
@@ -1552,6 +1564,7 @@ class TestComputeZeroDiffProportion(hut.TestCase):
             f"{hut.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         np.random.seed(seed=seed)
@@ -1582,6 +1595,7 @@ class TestGetInterarrivalTime(hut.TestCase):
         actual = cstati.get_interarrival_time(series, nan_mode="fill_with_zero")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         n = 100
@@ -1599,7 +1613,6 @@ class TestGetInterarrivalTime(hut.TestCase):
 
 
 class Test_compute_avg_turnover_and_holding_period(hut.TestCase):
-
     def test1(self) -> None:
         """
         Test for default parameters.
@@ -1645,7 +1658,7 @@ class Test_compute_avg_turnover_and_holding_period(hut.TestCase):
     def _get_pos(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = cartif.ArmaProcess(arparams, maparams)
+        arma_process = casgen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "D"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -1671,11 +1684,12 @@ class TestComputeInterarrivalTimeStats(hut.TestCase):
         actual = cstati.compute_interarrival_time_stats(series, nan_mode="ffill")
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
-        arma_process = cartif.ArmaProcess(arparams, maparams)
+        arma_process = casgen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
@@ -1686,7 +1700,6 @@ class TestComputeInterarrivalTimeStats(hut.TestCase):
 
 
 class Test_summarize_time_index_info(hut.TestCase):
-
     def test1(self) -> None:
         """
         Test for the case when index freq is not None.
