@@ -118,6 +118,23 @@ class TestDiskDataSource(hut.TestCase):
         return file_path
 
 
+class TestArmaGenerator(hut.TestCase):
+    def test1(self) -> None:
+        node = dtf.ArmaGenerator(
+            nid="source",
+            frequency="30T",
+            start_date="2010-01-04 09:00",
+            end_date="2010-01-04 17:00",
+            ar_coeffs=[0],
+            ma_coeffs=[0],
+            scale=0.1,
+            burnin=0,
+            seed=0,
+        )
+        df = node.fit()["df_out"]
+        self.check_string(df.to_string())
+
+
 # #############################################################################
 # Results processing
 # #############################################################################
