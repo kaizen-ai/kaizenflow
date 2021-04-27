@@ -286,16 +286,16 @@ class DiskDataSource(DataSource):
 
 class ArmaGenerator(DataSource):
     def __init__(
-            self,
-            nid: str,
-            frequency: str,
-            start_date: _PANDAS_DATE_TYPE,
-            end_date: _PANDAS_DATE_TYPE,
-            ar_coeffs: Optional[List[float]] = None,
-            ma_coeffs: Optional[List[float]] = None,
-            scale: Optional[float] = None,
-            burnin: Optional[float] = None,
-            seed: Optional[float] = None,
+        self,
+        nid: str,
+        frequency: str,
+        start_date: _PANDAS_DATE_TYPE,
+        end_date: _PANDAS_DATE_TYPE,
+        ar_coeffs: Optional[List[float]] = None,
+        ma_coeffs: Optional[List[float]] = None,
+        scale: Optional[float] = None,
+        burnin: Optional[float] = None,
+        seed: Optional[float] = None,
     ) -> None:
         super().__init__(nid)
         self._frequency = frequency
@@ -307,8 +307,7 @@ class ArmaGenerator(DataSource):
         self._burnin = burnin or 0
         self._seed = seed
         self._arma_process = cartif.ArmaProcess(
-            ar_coeffs=self._ar_coeffs,
-            ma_coeffs=self._ma_coeffs
+            ar_coeffs=self._ar_coeffs, ma_coeffs=self._ma_coeffs
         )
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
@@ -333,7 +332,7 @@ class ArmaGenerator(DataSource):
             },
             scale=self._scale,
             burnin=self._burnin,
-            seed=self._seed
+            seed=self._seed,
         )
         # Cumulatively sum to generate a price series (implicitly assumes the
         # returns are log returns; at small enough scales and short enough

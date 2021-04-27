@@ -141,14 +141,6 @@ class TestArmaGenerator(hut.TestCase):
 
 
 class TestVolatilityNormalizer(hut.TestCase):
-    @staticmethod
-    def _get_series(seed: int, periods: int = 44) -> pd.Series:
-        arma_process = sig_gen.ArmaProcess([0], [0])
-        date_range = {"start": "2010-01-01", "periods": periods, "freq": "B"}
-        series = arma_process.generate_sample(
-            date_range_kwargs=date_range, scale=0.1, seed=seed
-        )
-        return series
 
     def test_fit1(self) -> None:
         y = TestVolatilityNormalizer._get_series(42).rename("ret_0")
@@ -227,6 +219,14 @@ class TestVolatilityNormalizer(hut.TestCase):
             f"{predict_df_out_volatility}"
         )
         self.check_string(output_str)
+    @staticmethod
+    def _get_series(seed: int, periods: int = 44) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([0], [0])
+        date_range = {"start": "2010-01-01", "periods": periods, "freq": "B"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, scale=0.1, seed=seed
+        )
+        return series
 
 
 class Test_get_df_info_as_string(hut.TestCase):
