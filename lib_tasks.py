@@ -563,9 +563,13 @@ def docker_release_dev_image(  # type: ignore
     run_fast=True,
     run_slow=True,
     run_superslow=False,
+    push_to_repo=True,
 ):
     """
     (ONLY FOR CI/CD) Build, test, and release to ECR the latest "dev" image.
+
+    This can be used to test the entire flow from scratch by building an image,
+    running the tests, but not necessarily pushing.
 
     :param: just_build skip all the tests and release the dev image.
     """
@@ -584,7 +588,10 @@ def docker_release_dev_image(  # type: ignore
     if run_superslow:
         run_superslow_tests(ctx, stage=stage)
     # Push.
-    docker_push_local_image_to_dev(ctx)
+    if push_to_repo:
+        docker_push_local_image_to_dev(ctx)
+    else:
+        _LOG.warning("Skipping pushing image to repo as requested")
     _LOG.info("==> SUCCESS <==")
 
 

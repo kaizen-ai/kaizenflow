@@ -1,5 +1,0 @@
-cache-dir = "tmp.pypoetry"
-experimental.new-installer = true
-installer.parallel = true
-virtualenvs.create = true
-virtualenvs.in-project = true

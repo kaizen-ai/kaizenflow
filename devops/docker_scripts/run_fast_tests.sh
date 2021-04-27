@@ -5,7 +5,6 @@ set -e
 USER_OPTS="$*"
 
 OPTS="-vv -rpa"
-#OPTS="$OPTS --log-cli-level=INFO"
 
 SKIPPED_TESTS="not slow and \
 not superslow and \
