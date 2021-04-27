@@ -100,10 +100,9 @@ class TestFilterDataByMethod(hut.TestCase):
         act = hdataf.filter_data_by_method(
             data=data, filters=filters, mode=mode, info=info
         )
-        act = hut.convert_df_to_string(act)
-        act = str(act)
+        act = hut.convert_df_to_string(act, decimals=3)
         # Check output.
-        self.check_string(act)
+        self.check_string(act, fuzzy_match=True)
 
 
 class Test_apply_nan_mode(hut.TestCase):

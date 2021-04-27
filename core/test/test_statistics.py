@@ -965,10 +965,13 @@ class TestComputeMaxDrawdown(hut.TestCase):
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    # Smoke test for empty input
     def test3(self) -> None:
+        """
+        Smoke test for empty input
+        """
         series = pd.Series([])
         cstati.compute_max_drawdown(series)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arma_process = cartif.ArmaProcess([0], [0])
@@ -981,6 +984,15 @@ class TestComputeMaxDrawdown(hut.TestCase):
 
 class Test_compute_bet_stats(hut.TestCase):
 
+    def _check_results(self, rets_pos_bet_rets, actual) -> None:
+        act = []
+        act.append(hprint.frame('rets_pos'))
+        act.append(hut.convert_df_to_string(rets_pos_bet_rets, index=True, decimals=3))
+        act.append(hprint.frame('stats'))
+        act.append(hut.convert_df_to_string(actual, index=True, decimals=3))
+        act = "\n".join(act)
+        self.check_string(act, fuzzy_match=True)
+
     def test1(self) -> None:
         log_rets = Test_compute_bet_stats._get_series(42)
         positions = csigna.compute_smooth_moving_average(log_rets, 4)
@@ -989,13 +1001,7 @@ class Test_compute_bet_stats(hut.TestCase):
         rets_pos_bet_rets = pd.concat(
             {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
         )
-        output_str = (
-            f"{hprint.frame('rets_pos')}\n"
-            f"{hut.convert_df_to_string(rets_pos_bet_rets, index=True)}\n"
-            f"{hprint.frame('stats')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
-        )
-        self.check_string(output_str)
+        self._check_results(rets_pos_bet_rets, actual)
 
     def test2(self) -> None:
         log_rets = Test_compute_bet_stats._get_series(42)
@@ -1006,13 +1012,7 @@ class Test_compute_bet_stats(hut.TestCase):
         rets_pos_bet_rets = pd.concat(
             {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
         )
-        output_str = (
-            f"{hprint.frame('rets_pos')}\n"
-            f"{hut.convert_df_to_string(rets_pos_bet_rets, index=True)}\n"
-            f"{hprint.frame('stats')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
-        )
-        self.check_string(output_str)
+        self._check_results(rets_pos_bet_rets, actual)
 
     def test3(self) -> None:
         idx = pd.date_range("2010-12-29", freq="D", periods=8)
@@ -1023,13 +1023,8 @@ class Test_compute_bet_stats(hut.TestCase):
         rets_pos_bet_rets = pd.concat(
             {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
         )
-        output_str = (
-            f"{hprint.frame('rets_pos')}\n"
-            f"{hut.convert_df_to_string(rets_pos_bet_rets, index=True)}\n"
-            f"{hprint.frame('stats')}\n"
-            f"{hut.convert_df_to_string(actual, index=True)}"
-        )
-        self.check_string(output_str)
+        self._check_results(rets_pos_bet_rets, actual)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arma_process = cartif.ArmaProcess([], [])
@@ -1611,7 +1606,7 @@ class Test_compute_avg_turnover_and_holding_period(hut.TestCase):
         """
         pos = self._get_pos(seed=1)
         actual = cstati.compute_avg_turnover_and_holding_period(pos)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
         self.check_string(actual_string)
 
     def test2(self) -> None:
@@ -1620,8 +1615,8 @@ class Test_compute_avg_turnover_and_holding_period(hut.TestCase):
         """
         pos = self._get_pos(seed=1)
         actual = cstati.compute_avg_turnover_and_holding_period(pos, unit="M")
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
+        self.check_string(actual_string, fuzzy_match=True)
 
     def test3(self) -> None:
         """
@@ -1632,8 +1627,8 @@ class Test_compute_avg_turnover_and_holding_period(hut.TestCase):
         actual = cstati.compute_avg_turnover_and_holding_period(
             pos, nan_mode="fill_with_zero"
         )
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
+        self.check_string(actual_string, fuzzy_match=True)
 
     def test4(self) -> None:
         """
@@ -1643,8 +1638,9 @@ class Test_compute_avg_turnover_and_holding_period(hut.TestCase):
         actual = cstati.compute_avg_turnover_and_holding_period(
             pos, prefix="test_"
         )
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
+        self.check_string(actual_string, fuzzy_match=True)
+
     @staticmethod
     def _get_pos(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -1697,7 +1693,7 @@ class Test_summarize_time_index_info(hut.TestCase):
         """
         series = self._get_series(seed=1)
         actual = cstati.summarize_time_index_info(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
+        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
         self.check_string(actual_string)
 
     def test2(self) -> None:
@@ -1707,8 +1703,8 @@ class Test_summarize_time_index_info(hut.TestCase):
         series = self._get_series(seed=1)
         series = series.drop(series.index[1:3])
         actual = cstati.summarize_time_index_info(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
+        self.check_string(actual_string, fuzzy_match=True)
 
     def test3(self) -> None:
         """
@@ -1719,8 +1715,8 @@ class Test_summarize_time_index_info(hut.TestCase):
         series[-1] = np.nan
         series[5:25] = np.nan
         actual = cstati.summarize_time_index_info(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
+        self.check_string(actual_string, fuzzy_match=True)
 
     def test4(self) -> None:
         """
@@ -1733,8 +1729,8 @@ class Test_summarize_time_index_info(hut.TestCase):
         actual = cstati.summarize_time_index_info(
             series, nan_mode="fill_with_zero"
         )
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
+        self.check_string(actual_string, fuzzy_match=True)
 
     def test5(self) -> None:
         """
@@ -1742,8 +1738,8 @@ class Test_summarize_time_index_info(hut.TestCase):
         """
         series = self._get_series(seed=1)
         actual = cstati.summarize_time_index_info(series, prefix="test_")
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
+        self.check_string(actual_string, fuzzy_match=True)
 
     def test6(self) -> None:
         """
@@ -1752,8 +1748,8 @@ class Test_summarize_time_index_info(hut.TestCase):
         date_range_kwargs = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = pd.Series(np.nan, index=pd.date_range(**date_range_kwargs))
         actual = cstati.summarize_time_index_info(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
+        self.check_string(actual_string, fuzzy_match=True)
 
     def test7(self) -> None:
         """
@@ -1761,8 +1757,9 @@ class Test_summarize_time_index_info(hut.TestCase):
         """
         series = pd.Series(index=pd.DatetimeIndex([]))
         actual = cstati.summarize_time_index_info(series)
-        actual_string = hut.convert_df_to_string(actual, index=True)
-        self.check_string(actual_string)
+        actual_string = hut.convert_df_to_string(actual, index=True, decimals=3)
+        self.check_string(actual_string, fuzzy_match=True)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}

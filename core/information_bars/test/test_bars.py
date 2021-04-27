@@ -9,19 +9,22 @@ class TestBars(hut.TestCase):
         """Test that tick bar creation works."""
         file_path = self._get_input_file_path()
         actual = bars.get_tick_bars(file_path, threshold=10)
-        self.check_string(actual.to_csv())
+        actual_string = hut.convert_df_to_string(actual, decimals=3)
+        self.check_string(actual_string, fuzzy_match=True)
 
     def test_get_volume_bars(self) -> None:
         """Test that volume bar creation works."""
         file_path = self._get_input_file_path()
         actual = bars.get_volume_bars(file_path, threshold=10)
-        self.check_string(actual.to_csv())
+        actual_string = hut.convert_df_to_string(actual, decimals=3)
+        self.check_string(actual_string, fuzzy_match=True)
 
     def test_get_dollar_bars(self) -> None:
         """Test that dollar bar creation works."""
         file_path = self._get_input_file_path()
         actual = bars.get_dollar_bars(file_path, threshold=10)
-        self.check_string(actual.to_csv())
+        actual_string = hut.convert_df_to_string(actual, decimals=3)
+        self.check_string(actual_string, fuzzy_match=True) 
 
     def _get_input_file_path(self) -> str:
         """Get file path to input CSV file for a current test.

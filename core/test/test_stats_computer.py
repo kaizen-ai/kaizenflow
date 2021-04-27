@@ -14,8 +14,8 @@ class TestStatsComputer(hut.TestCase):
         srs = _get_srs()["returns"]
         stats_comp = cstats.StatsComputer()
         stats = stats_comp.summarize_time_index_info(srs)
-        str_output = hut.convert_df_to_string(stats, index=True)
-        self.check_string(str_output)
+        str_output = hut.convert_df_to_string(stats, index=True, decimals=3)
+        self.check_string(str_output, fuzzy_match=True)
 
 
 class TestSeriesStatsComputer(hut.TestCase):
@@ -23,8 +23,8 @@ class TestSeriesStatsComputer(hut.TestCase):
         srs = _get_srs()["returns"]
         stats_comp = cstats.SeriesStatsComputer()
         stats = stats_comp.calculate_stats(srs)
-        str_output = hut.convert_df_to_string(stats, index=True)
-        self.check_string(str_output)
+        str_output = hut.convert_df_to_string(stats, index=True, decimals=3)
+        self.check_string(str_output, fuzzy_match=True)
 
 
 class TestModelStatsComputer(hut.TestCase):
@@ -34,22 +34,22 @@ class TestModelStatsComputer(hut.TestCase):
         stats = stats_comp.calculate_stats(
             srs["pnl"], srs["positions"], srs["returns"]
         )
-        str_output = hut.convert_df_to_string(stats, index=True)
-        self.check_string(str_output)
+        str_output = hut.convert_df_to_string(stats, index=True, decimals=3)
+        self.check_string(str_output, fuzzy_match=True)
 
     def test_none_returns(self) -> None:
         srs = _get_srs()
         stats_comp = cstats.ModelStatsComputer()
         stats = stats_comp.calculate_stats(srs["pnl"], srs["positions"])
-        str_output = hut.convert_df_to_string(stats, index=True)
-        self.check_string(str_output)
+        str_output = hut.convert_df_to_string(stats, index=True, decimals=3)
+        self.check_string(str_output, fuzzy_match=True)
 
     def test_only_positions(self) -> None:
         srs = _get_srs()
         stats_comp = cstats.ModelStatsComputer()
         stats = stats_comp.calculate_stats(positions=srs["positions"])
-        str_output = hut.convert_df_to_string(stats, index=True)
-        self.check_string(str_output)
+        str_output = hut.convert_df_to_string(stats, index=True, decimals=3)
+        self.check_string(str_output, fuzzy_match=True)
 
 
 def _get_srs() -> pd.DataFrame:
