@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import lib_tasks as ltasks
+"""
+
 import functools
 import logging
 import os
@@ -13,7 +19,7 @@ from invoke import task
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.printing as hprint
-import helpers.system_interaction as hsyste
+import helpers.system_interaction as hsinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -41,6 +47,8 @@ def get_default_value(key: str) -> Any:
     return _DEFAULT_PARAMS[key]
 
 
+# Since it's not easy to add global opportunity
+# If one uses the debug option for `invoke` we turn off the code debugging.
 if not (("-d" in sys.argv) or ("--debug" in sys.argv)):
     dbg.init_logger(verbosity=logging.INFO)
 
@@ -207,16 +215,16 @@ def docker_kill_all(ctx):  # type: ignore
 
 
 @task
-def docker_pull(ctx, stage=_STAGE, mode="all"):  # type: ignore
+def docker_pull(ctx, stage=_STAGE, images="all"):  # type: ignore
     """
     Pull images from the registry.
     """
     _LOG.info(">")
     # Default is all the images.
-    if mode == "all":
-        mode = "current dev_tools"
+    if images == "all":
+        images = "current dev_tools"
     # Parse the images.
-    image_tokens = [token.rstrip().lstrip() for token in mode.split()]
+    image_tokens = [token.rstrip().lstrip() for token in images.split()]
     _LOG.info("image_tokens=%s", ", ".join(image_tokens))
     #
     for token in image_tokens:
@@ -232,7 +240,7 @@ def docker_pull(ctx, stage=_STAGE, mode="all"):  # type: ignore
         _LOG.info("token='%s': image='%s'", token, image)
         _check_image(image)
         cmd = f"docker pull {image}"
-        ctx.run(cmd)
+        ctx.run(cmd, pty=True)
 
 
 # In the following we use functions from `hsyste` instead of `ctx.run()` since
@@ -244,7 +252,7 @@ def _get_aws_cli_version() -> int:
     # > aws --version
     # aws-cli/1.19.49 Python/3.7.6 Darwin/19.6.0 botocore/1.20.49
     cmd = "aws --version"
-    res = hsyste.system_to_one_line(cmd)[1]
+    res = hsinte.system_to_one_line(cmd)[1]
     # Parse the output.
     m = re.match(r"aws-cli/((\d+).\d+.\d+)\S", res)
     dbg.dassert(m, "Can't parse '%s'", res)
@@ -299,7 +307,7 @@ use_one_line_cmd = False
 @functools.lru_cache()
 def _get_git_hash() -> str:
     cmd = "git rev-parse HEAD"
-    git_hash: str = hsyste.system_to_one_line(cmd)[1]
+    git_hash: str = hsinte.system_to_one_line(cmd)[1]
     _LOG.debug("git_hash=%s", git_hash)
     return git_hash
 
@@ -378,7 +386,7 @@ def _docker_cmd(
     _check_image(image)
     dbg.dassert_exists(docker_compose)
     #
-    user_name = hsyste.get_user_name()
+    user_name = hsinte.get_user_name()
     cmd = rf"""IMAGE={image} \
     docker-compose \
         -f {docker_compose} \
@@ -435,7 +443,7 @@ def docker_jupyter(  # type: ignore
     docker_compose_jupyter = os.path.abspath(docker_compose_jupyter)
     dbg.dassert_exists(docker_compose_jupyter)
     #
-    user_name = hsyste.get_user_name()
+    user_name = hsinte.get_user_name()
     service = "jupyter_server_test" if self_test else "jupyter_server"
     # TODO(gp): Not sure about the order of the -f files.
     cmd = rf"""IMAGE={image} \
@@ -492,6 +500,9 @@ def docker_build_local_image(ctx, cache=True, base_image=""):  # type: ignore
     Build a local as a release candidate image.
     """
     _LOG.info(">")
+    # Update poetry.
+    ctx.run("cd devops/docker_build/; poetry lock")
+    #
     image_local = _get_image("local", base_image)
     image_hash = _get_image("hash", base_image)
     #
@@ -521,7 +532,8 @@ def docker_build_local_image(ctx, cache=True, base_image=""):  # type: ignore
 @task
 def docker_push_local_image_to_dev(ctx, base_image=""):  # type: ignore
     """
-    Mark the "local" image as "dev" and "latest" and push to ECR.
+    (ONLY FOR CI/CD) Mark the "local" image as "dev" and "latest" and push to
+    ECR.
     """
     _LOG.info(">")
     docker_login(ctx)
@@ -545,12 +557,22 @@ def docker_push_local_image_to_dev(ctx, base_image=""):  # type: ignore
 
 @task
 def docker_release_dev_image(  # type: ignore
-    ctx, cache=True, run_fast=True, run_slow=True, run_superslow=False
+    ctx,
+    cache=True,
+    skip_tests=False,
+    run_fast=True,
+    run_slow=True,
+    run_superslow=False,
 ):
     """
-    Build, test, and release to ECR the latest "dev" image.
+    (ONLY FOR CI/CD) Build, test, and release to ECR the latest "dev" image.
+
+    :param: just_build skip all the tests and release the dev image.
     """
     _LOG.info(">")
+    if skip_tests:
+        _LOG.warning("Skipping all tests and releasing")
+        run_fast = run_slow = run_superslow = False
     # Build image.
     docker_build_local_image(ctx, cache=cache)
     # Run tests.
@@ -578,7 +600,7 @@ def docker_release_dev_image(  # type: ignore
 @task
 def docker_build_prod_image(ctx, cache=False, base_image=""):  # type: ignore
     """
-    Build a prod image.
+    (ONLY FOR CI/CD) Build a prod image.
     """
     _LOG.info(">")
     image_prod = _get_image("prod", base_image)
@@ -614,7 +636,7 @@ def docker_release_prod_image(  # type: ignore
     base_image="",
 ):
     """
-    Build, test, and release to ECR the prod image.
+    (ONLY FOR CI/CD) Build, test, and release to ECR the prod image.
     """
     _LOG.info(">")
     # Build dev image.
@@ -640,7 +662,7 @@ def docker_release_prod_image(  # type: ignore
 @task
 def docker_release_all(ctx):  # type: ignore
     """
-    Release to ECT both dev and prod image.
+    (ONLY FOR CI/CD) Release to ECT both dev and prod image.
     """
     docker_release_dev_image(ctx)
     docker_release_prod_image(ctx)
@@ -698,6 +720,12 @@ def run_slow_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: 
 
 
 @task
+def run_fast_slow_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: ignore
+    run_fast_tests(ctx, stage=stage, pytest_opts=pytest_opts, coverage=coverage)
+    run_slow_tests(ctx, stage=stage, pytest_opts=pytest_opts, coverage=coverage)
+
+
+@task
 def run_superslow_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: ignore
     _LOG.info(">")
     run_tests_dir = "devops/docker_scripts"
@@ -712,11 +740,11 @@ def pytest_clean(ctx):  # type: ignore
     """
     Clean pytest artifacts.
     """
-    import helpers.pytest_ as hpytest
+    import helpers.pytest_ as hpytes
 
     _LOG.info(">")
     _ = ctx
-    hpytest.pytest_clean(".")
+    hpytes.pytest_clean(".")
 
 
 # # #############################################################################
@@ -826,7 +854,7 @@ def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignor
         files = " ".join(files)
     elif branch:
         cmd = "git diff --name-only master..."
-        files = hsyste.system_to_string(cmd)[1]
+        files = hsinte.system_to_string(cmd)[1]
         files = " ".join(files.split("\n"))
     #
     dbg.dassert_isinstance(files, str)
@@ -854,6 +882,7 @@ def get_amp_files(ctx):  # type: ignore
     """
     Get some files that need to be copied across repos.
     """
+    _LOG.info(">")
     _ = ctx
     token = "***REMOVED***"
     file_names = ["lib_tasks.py"]
@@ -863,4 +892,58 @@ def get_amp_files(ctx):  # type: ignore
             f"https://raw.githubusercontent.com/alphamatic/amp/master/{file_name}"
             f"?token={token} -O {file_name}"
         )
-        hsyste.system(cmd)
+        hsinte.system(cmd)
+
+
+# #############################################################################
+# GitHub CLI.
+# #############################################################################
+
+
+@task
+def gh_run_list(ctx, branch="branch", status="all"):  # type: ignore
+    _LOG.info("> mode='%s'", mode)
+    cmd = "export NO_COLOR=1; gh run list"
+    # > gh run list
+    # ✓  Merge branch 'master' into AmpTask1251_Update_GH_actions_for_amp  Slow tests  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984377
+    # ✓  Merge branch 'master' into AmpTask1251_Update_GH_actions_for_amp  Fast tests  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984376
+    # X  Merge branch 'master' into AmpTask1251_Update_GH_actions_for_amp  Run linter  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984375
+    # X  Fix lint issue                                                    Fast tests  master                                 workflow_dispatch  788949955
+    if mode == "branch":
+        branch_name = git.get_branch_name()
+    elif mode == "master":
+        branch_name = "master"
+    elif mode == "all":
+        branch_name = None
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    if branch_name:
+        cmd += f" | grep {branch_name}"
+    if status != "all":
+        cmd += f" | grep {status}"
+    ctx.run(cmd)
+    # TODO(gp): The output is tab separated. Parse it with csv and then filter.
+
+
+@task
+def gh_workflow_run(ctx, mode="branch", tests="all"):  # type: ignore
+    if mode == "branch":
+        branch_name = git.get_branch_name()
+    elif mode == "master":
+        branch_name = "master"
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    _LOG.debug(hprint.to_str("branch_name"))
+    #
+    if tests == "all":
+        gh_tests = ["fast_tests", "slow_tests"]
+    else:
+        gh_tests = [tests]
+    _LOG.debug(hprint.to_str("gh_tests"))
+    for gh_test in gh_tests:
+        gh_test += ".yml"
+        # gh workflow run fast_tests.yml --ref AmpTask1251_Update_GH_actions_for_amp
+        cmd = f"gh workflow run {gh_test} --ref {branch_name}"
+        ctx.run(cmd)
+    #
+    gh_run_list(ctx, mode=mode)

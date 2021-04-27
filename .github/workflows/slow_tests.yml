@@ -51,9 +51,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -75,12 +75,13 @@ jobs:
           pip install -r .github/gh_requirements.txt
 
       - name: Pull image
-        run: invoke docker_pull --mode="current"
+        run: invoke docker_pull --images="current"
 
       - name: Run slow tests
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
         run: invoke run_slow_tests
 
       - name: Post status if was triggered manually

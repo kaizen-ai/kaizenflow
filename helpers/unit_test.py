@@ -22,7 +22,7 @@ import helpers.dbg as dbg
 import helpers.git as git
 import helpers.io_ as hio
 import helpers.printing as hprint
-import helpers.system_interaction as hsyste
+import helpers.system_interaction as hsinte
 import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
@@ -323,7 +323,7 @@ def purify_txt_from_client(txt: str) -> str:
     pwd = os.getcwd()
     txt = txt.replace(pwd, "$PWD")
     # Replace the user name with `$USER_NAME`.
-    user_name = hsyste.get_user_name()
+    user_name = hsinte.get_user_name()
     txt = txt.replace(user_name, "$USER_NAME")
     # Remove amp reference, if any.
     txt = remove_amp_references(txt)
@@ -353,7 +353,7 @@ def diff_files(
     if tag is not None:
         msg.append("\n" + hprint.frame(tag))
     # Diff to screen.
-    _, res = hsyste.system_to_string(
+    _, res = hsinte.system_to_string(
         "echo; sdiff -l -w 150 %s %s" % (file_name1, file_name2),
         abort_on_error=False,
         log_level=logging.DEBUG,
@@ -361,13 +361,12 @@ def diff_files(
     msg.append(res)
     # Save a script to diff.
     diff_script = os.path.join(dst_dir, "tmp_diff.sh")
-    vimdiff_cmd = "vimdiff %s %s" % (
-        os.path.abspath(file_name1),
-        os.path.abspath(file_name2),
-    )
+    file_name1 = os.path.relpath(file_name1, os.getcwd())
+    file_name2 = os.path.relpath(file_name2, os.getcwd())
+    vimdiff_cmd = "vimdiff %s %s" % (file_name1, file_name2)
     hio.to_file(diff_script, vimdiff_cmd)
     cmd = "chmod +x " + diff_script
-    hsyste.system(cmd)
+    hsinte.system(cmd)
     # Report how to diff.
     msg.append("Diff with:")
     msg.append("> " + vimdiff_cmd)
@@ -634,23 +633,30 @@ class TestCase(unittest.TestCase):
     """
 
     def setUp(self) -> None:
+        # Print banner to signal the start of a new test.
+        func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
+        _LOG.debug("\n%s", hprint.frame(func_name))
+        # Set the random seed.
         random.seed(20000101)
         np.random.seed(20000101)
         # Disable matplotlib plotting by overwriting the `show` function.
         plt.show = lambda: 0
         # Name of the dir with artifacts for this test.
         self._scratch_dir: Optional[str] = None
-        # Print banner to signal starting of a new test.
-        func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
-        _LOG.debug("\n%s", hprint.frame(func_name))
         # The base directory is the one including the class under test.
-        self.base_dir_name = os.path.dirname(inspect.getfile(self.__class__))
-        self.update_tests = get_update_tests()
-        self.git_add = True
-        # Error message printed when comparing.
-        self.error_msg = ""
+        self._base_dir_name = os.path.dirname(inspect.getfile(self.__class__))
+        _LOG.debug("base_dir_name=%s", self._base_dir_name)
+        # Store whether a test needs to be updated or not.
+        self._update_tests = get_update_tests()
+        self._overriden_update_tests = False
+        # Store whether the golden outcome of this test was updated.
+        self._test_was_updated = False
+        # Store whether the output files need to be added to git.
+        self._git_add = True
+        # Error message printed when comparing actual and expected outcome.
+        self._error_msg = ""
         # Set the default pandas options (see AmpTask1140).
-        self.old_pd_options = get_pd_default_values()
+        self._old_pd_options = get_pd_default_values()
         set_pd_default_values()
         # Start the timer to measure the execution time of the test.
         self._timer = htimer.Timer()
@@ -659,8 +665,21 @@ class TestCase(unittest.TestCase):
         # Stop the timer to measure the execution time of the test.
         self._timer.stop()
         print("(%.2f s) " % self._timer.get_total_elapsed(), end="")
+        # Report if the test was updated
+        if self._test_was_updated:
+            if not self._overriden_update_tests:
+                print(
+                    "("
+                    + hprint.color_highlight("WARNING", "yellow")
+                    + ": Test was updated) ",
+                    end="",
+                )
+            else:
+                # We forced an update from the unit test itself, so no need
+                # to report an update.
+                pass
         # Recover the original default pandas options.
-        pd.options = self.old_pd_options
+        pd.options = self._old_pd_options
         # Force matplotlib to close plots to decouple tests.
         plt.close()
         plt.clf()
@@ -682,9 +701,18 @@ class TestCase(unittest.TestCase):
         This is used to override the standard location of the base
         directory which is close to the class under test.
         """
-        self.base_dir_name = base_dir_name
-        _LOG.debug("Setting base_dir_name to '%s'", self.base_dir_name)
-        hio.create_dir(self.base_dir_name, incremental=True)
+        self._base_dir_name = base_dir_name
+        _LOG.debug("Setting base_dir_name to '%s'", self._base_dir_name)
+        hio.create_dir(self._base_dir_name, incremental=True)
+
+    def mock_update_tests(self) -> None:
+        """
+        When unit testing the unit test framework we want to test updating the
+        golden outcome.
+        """
+        self._update_tests = True
+        self._overriden_update_tests = True
+        self._git_add = False
 
     def get_input_dir(
         self,
@@ -808,7 +836,7 @@ class TestCase(unittest.TestCase):
         file_exists = os.path.exists(file_name)
         _LOG.debug("file_exists=%s", file_exists)
         is_equal: Optional[bool] = None
-        if self.update_tests:
+        if self._update_tests:
             _LOG.debug("Update golden outcomes")
             # Determine whether outcome needs to be updated.
             if file_exists:
@@ -822,7 +850,6 @@ class TestCase(unittest.TestCase):
             _LOG.debug("outcome_updated=%s", outcome_updated)
             if outcome_updated:
                 # Update the golden outcome.
-                _LOG.warning("Golden outcome updated in '%s'", file_name)
                 self._check_string_update_outcome(file_name, actual, use_gzip)
         else:
             # Check the test result.
@@ -845,8 +872,10 @@ class TestCase(unittest.TestCase):
                 _LOG.warning(
                     "Can't find golden outcome file '%s': updating it", file_name
                 )
+                outcome_updated = True
                 self._check_string_update_outcome(file_name, actual, use_gzip)
                 is_equal = None
+        self._test_was_updated = outcome_updated
         _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal
 
@@ -873,7 +902,7 @@ class TestCase(unittest.TestCase):
         file_exists = os.path.exists(file_name)
         _LOG.debug(hprint.to_str("file_exists"))
         is_equal: Optional[bool] = None
-        if self.update_tests:
+        if self._update_tests:
             _LOG.debug("Update golden outcomes")
             # Determine whether outcome needs to be updated.
             if file_exists:
@@ -889,7 +918,6 @@ class TestCase(unittest.TestCase):
             _LOG.debug("outcome_updated=%s", outcome_updated)
             if outcome_updated:
                 # Update the golden outcome.
-                _LOG.warning("Golden outcome updated in '%s'", file_name)
                 self._check_df_update_outcome(file_name, actual)
         else:
             # Check the test result.
@@ -909,19 +937,35 @@ class TestCase(unittest.TestCase):
                         dir_name,
                         fuzzy_match=False,
                         abort_on_error=abort_on_error,
-                        error_msg=self.error_msg,
+                        error_msg=self._error_msg,
                     )
             else:
                 # No golden outcome available: save the result.
                 _LOG.warning(
                     "Can't find golden outcome file '%s': updating it", file_name
                 )
+                outcome_updated = True
                 self._check_df_update_outcome(file_name, actual)
                 is_equal = None
+        self._test_was_updated = outcome_updated
         _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal
 
     # #########################################################################
+
+    def _git_add_file(self, file_name: str) -> None:
+        """
+        Add to git repo `file_name`, if needed.
+        """
+        if self._git_add:
+            cmd = "git add -u %s" % file_name
+            _LOG.debug("> %s", cmd)
+            rc = hsinte.system(cmd, abort_on_error=False)
+            if rc:
+                _LOG.warning(
+                    "Can't run '%s': you need to add the file manually",
+                    cmd,
+                )
 
     def _check_string_update_outcome(
         self, file_name: str, actual: str, use_gzip: bool
@@ -929,15 +973,7 @@ class TestCase(unittest.TestCase):
         _LOG.debug(hprint.to_str("file_name"))
         hio.to_file(file_name, actual, use_gzip=use_gzip)
         # Add to git repo.
-        if self.git_add:
-            cmd = "git add %s" % file_name
-            _LOG.debug("> %s", cmd)
-            rc = hsyste.system(cmd, abort_on_error=False)
-            if rc:
-                _LOG.warning(
-                    "Can't run '%s': you need to add the file manually",
-                    cmd,
-                )
+        self._git_add_file(file_name)
 
     # #########################################################################
 
@@ -948,15 +984,7 @@ class TestCase(unittest.TestCase):
         hio.create_enclosing_dir(file_name)
         actual.to_csv(file_name)
         # Add to git repo.
-        if self.git_add:
-            cmd = "git add %s" % file_name
-            _LOG.debug("> %s", cmd)
-            rc = hsyste.system(cmd, abort_on_error=False)
-            if rc:
-                _LOG.warning(
-                    "Can't run '%s': you need to add the file manually",
-                    cmd,
-                )
+        self._git_add_file(file_name)
 
     def _check_df_compare_outcome(
         self, file_name: str, actual: pd.DataFrame, err_threshold: float
@@ -979,25 +1007,34 @@ class TestCase(unittest.TestCase):
             self._to_error(msg)
             ret = False
         # Compare the values.
-        _LOG.debug("actual_.shape=%s", str(actual.shape))
+        _LOG.debug("actual.shape=%s", str(actual.shape))
         _LOG.debug("expected.shape=%s", str(expected.shape))
+        # From https://numpy.org/doc/stable/reference/generated/numpy.allclose.html
+        # absolute(a - b) <= (atol + rtol * absolute(b))
+        # absolute(a - b) / absolute(b)) <= rtol
         is_close = np.allclose(
             actual, expected, rtol=err_threshold, equal_nan=True
         )
         if not is_close:
             _LOG.error("Dataframe values are not close")
             if actual.shape == expected.shape:
-                is_close = np.isclose(actual, expected, equal_nan=True)
+                close_mask = np.isclose(actual, expected, equal_nan=True)
                 #
-                actual_tmp = np.where(is_close, np.nan, actual)
-                msg = "actual=\n%s" % actual_tmp
+                msg = "actual=\n%s" % actual
                 self._to_error(msg)
                 #
-                expected_tmp = np.where(is_close, np.nan, expected)
-                msg = "expected=\n%s" % expected_tmp
+                msg = "expected=\n%s" % expected
                 self._to_error(msg)
                 #
-                err = np.abs((actual_tmp - expected_tmp) / actual_tmp)
+                actual_masked = np.where(close_mask, np.nan, actual)
+                msg = "actual_masked=\n%s" % actual_masked
+                self._to_error(msg)
+                #
+                expected_masked = np.where(close_mask, np.nan, expected)
+                msg = "expected_masked=\n%s" % expected_masked
+                self._to_error(msg)
+                #
+                err = np.abs((actual_masked - expected_masked) / expected_masked)
                 msg = "err=\n%s" % err
                 self._to_error(msg)
                 max_err = np.nanmax(np.nanmax(err))
@@ -1045,14 +1082,14 @@ class TestCase(unittest.TestCase):
         if test_method_name is None:
             test_method_name = self._testMethodName
         # E.g., ./core/dataflow/test/TestContinuousSarimaxModel.test_compare
-        dir_name = self.base_dir_name + "/%s.%s" % (
+        dir_name = self._base_dir_name + "/%s.%s" % (
             test_class_name,
             test_method_name,
         )
         return dir_name
 
     def _to_error(self, msg: str) -> None:
-        self.error_msg += msg + "\n"
+        self._error_msg += msg + "\n"
         _LOG.error(msg)
 
 
@@ -1112,4 +1149,4 @@ def run_notebook(
     cmd.append("--ExecutePreprocessor.timeout=-1")
     # Execute.
     cmd_as_str = " ".join(cmd)
-    hsyste.system(cmd_as_str, abort_on_error=True)
+    hsinte.system(cmd_as_str, abort_on_error=True)

@@ -1,11 +1,17 @@
-# TODO(gp): Merge devops/compose/docker-compose-user-space.yml with
-# devops/compose/docker-compose.yml and remove the first one.
+# TODO(gp): docker-compose.yml is not used anywhere
+# - Merge devops/compose/docker-compose-user-space*.yml with
+# - Remove the current docker-compose.yml and rename
+#   devops/compose/docker-compose.yml to docker-compose.yml
 version: '3'
 
 services:
   user_space:
     image: $IMAGE
     restart: "no"
+    environment:
+      - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+      - AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
     volumes:
       # TODO(gp): Remove this since it's in docker-compose-jupyter.yml.
       - ../../:/app
