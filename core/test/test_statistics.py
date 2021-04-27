@@ -991,7 +991,6 @@ class TestComputeMaxDrawdown(hut.TestCase):
 
 
 class Test_compute_bet_stats(hut.TestCase):
-
     def test1(self) -> None:
         log_rets = Test_compute_bet_stats._get_series(42)
         positions = csproc.compute_smooth_moving_average(log_rets, 4)
@@ -1023,7 +1022,10 @@ class Test_compute_bet_stats(hut.TestCase):
             {"pos": positions, "rets": log_rets, "bet_rets": bet_rets}, axis=1
         )
         self._check_results(rets_pos_bet_rets, actual)
-    def _check_results(self, rets_pos_bet_rets, actual) -> None:
+
+    def _check_results(
+        self, rets_pos_bet_rets: pd.DataFrame, actual: pd.Series
+    ) -> None:
         act = []
         act.append(hprint.frame("rets_pos"))
         act.append(
@@ -1238,7 +1240,7 @@ class Test_zscore_oos_sharpe_ratio(hut.TestCase):
     def test3(self) -> None:
         series = Test_zscore_oos_sharpe_ratio._get_series(42)
         oos_start = "2010-02-25"
-        series.loc[oos_start:] = series.loc[oos_start:].apply(
+        series.loc[oos_start:] = series.loc[oos_start:].apply(  # type: ignore
             lambda x: 0.1 * x if x > 0 else x
         )
         sr_stats = cstati.zscore_oos_sharpe_ratio(series, oos_start)
@@ -1254,7 +1256,7 @@ class Test_zscore_oos_sharpe_ratio(hut.TestCase):
     def test4(self) -> None:
         series = Test_zscore_oos_sharpe_ratio._get_series(42)
         oos_start = "2010-02-25"
-        series.loc[oos_start:] = series.loc[oos_start:].apply(
+        series.loc[oos_start:] = series.loc[oos_start:].apply(  # type: ignore
             lambda x: 0.1 * x if x < 0 else x
         )
         sr_stats = cstati.zscore_oos_sharpe_ratio(series, oos_start)
@@ -1272,8 +1274,8 @@ class Test_zscore_oos_sharpe_ratio(hut.TestCase):
         series.iloc[:10] = np.nan
         series.iloc[40:50] = np.nan
         oos_start = "2010-02-25"
-        series.loc[oos_start:"2010-03-03"] = np.nan
-        series.loc["2010-04-01":"2010-04-30"] = np.nan
+        series.loc[oos_start:"2010-03-03"] = np.nan  # type: ignore
+        series.loc["2010-04-01":"2010-04-30"] = np.nan  # type: ignore
         sr_stats = cstati.zscore_oos_sharpe_ratio(series, oos_start)
         output_str = (
             f"OOS start: {oos_start}\n"
@@ -1289,8 +1291,8 @@ class Test_zscore_oos_sharpe_ratio(hut.TestCase):
         series.iloc[:10] = 0
         series.iloc[40:50] = 0
         oos_start = "2010-02-25"
-        series.loc[oos_start:"2010-03-03"] = np.nan
-        series.loc["2010-04-01":"2010-04-30"] = np.nan
+        series.loc[oos_start:"2010-03-03"] = np.nan  # type: ignore
+        series.loc["2010-04-01":"2010-04-30"] = np.nan  # type: ignore
         sr_stats = cstati.zscore_oos_sharpe_ratio(series, oos_start)
         output_str = (
             f"OOS start: {oos_start}\n"
