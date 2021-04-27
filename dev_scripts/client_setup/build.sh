@@ -5,7 +5,7 @@
 
 set -e
 
-VENV_DIR="$HOME/venv/client_setup"
+VENV_DIR="$HOME/src/venv/client_setup"
 if [[ -d $VENV_DIR ]]; then
     echo "Deleting old virtual environment in '$VENV_DIR'"
     rm -rf $VENV_DIR

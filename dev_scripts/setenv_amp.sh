@@ -3,7 +3,7 @@ PWD=$(pwd)
 AMP=$PWD
 
 echo "# Activate virtual env"
-VENV_DIR="$HOME/venv/client_setup"
+VENV_DIR="$HOME/src/venv/client_setup"
 cmd="source $VENV_DIR/bin/activate"
 echo "> $cmd"
 eval $cmd

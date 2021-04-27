@@ -60,7 +60,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _LOG.info(message)
     #
     tgn = tg.TelegramNotify()
-    tgn.notify(message)
+    tgn.send(message)
 
 
 if __name__ == "__main__":

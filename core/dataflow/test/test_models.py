@@ -420,7 +420,7 @@ class TestSmaModel(hut.TestCase):
         config: ccfg.Config,
         info: collections.OrderedDict,
         df_out: pd.DataFrame,
-    ) -> str:
+    ) -> None:
         act: List[str] = []
         act.append(hprint.frame("config"))
         act.append(str(config))

@@ -41,8 +41,8 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     txt.append("branch_name='%s'" % branch_name)
     #
     cmd = "git rev-parse --short HEAD"
-    _, hash = hsinte.system_to_one_line(cmd)
-    txt.append("hash='%s'" % hash)
+    _, hash_ = hsinte.system_to_one_line(cmd)
+    txt.append("hash='%s'" % hash_)
     #
     num_commits = 3
     if git_commit_type == "all":

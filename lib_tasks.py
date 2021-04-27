@@ -849,6 +849,8 @@ def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignor
     :param phases: specify the lint phases to execute
     """
     _LOG.info(">")
+    dbg.dassert_lte(int(modified) + int(branch) + int(files != ""), 1,
+                    msg="You can specify only one option among --modified, --branch, or --files")
     if modified:
         files = git.get_modified_files()
         files = " ".join(files)
@@ -902,21 +904,23 @@ def get_amp_files(ctx):  # type: ignore
 
 @task
 def gh_run_list(ctx, branch="branch", status="all"):  # type: ignore
-    _LOG.info("> mode='%s'", mode)
+    _LOG.info("> branch='%s'", branch)
     cmd = "export NO_COLOR=1; gh run list"
+    # pylint: disable=line-too-long
     # > gh run list
     # ✓  Merge branch 'master' into AmpTask1251_Update_GH_actions_for_amp  Slow tests  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984377
     # ✓  Merge branch 'master' into AmpTask1251_Update_GH_actions_for_amp  Fast tests  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984376
     # X  Merge branch 'master' into AmpTask1251_Update_GH_actions_for_amp  Run linter  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984375
     # X  Fix lint issue                                                    Fast tests  master                                 workflow_dispatch  788949955
-    if mode == "branch":
+    # pylint: enable=line-too-long
+    if branch == "branch":
         branch_name = git.get_branch_name()
-    elif mode == "master":
+    elif branch == "master":
         branch_name = "master"
-    elif mode == "all":
+    elif branch == "all":
         branch_name = None
     else:
-        raise ValueError("Invalid mode='%s'" % mode)
+        raise ValueError("Invalid mode='%s'" % branch)
     if branch_name:
         cmd += f" | grep {branch_name}"
     if status != "all":
@@ -926,13 +930,13 @@ def gh_run_list(ctx, branch="branch", status="all"):  # type: ignore
 
 
 @task
-def gh_workflow_run(ctx, mode="branch", tests="all"):  # type: ignore
-    if mode == "branch":
+def gh_workflow_run(ctx, branch="branch", tests="all"):  # type: ignore
+    if branch == "branch":
         branch_name = git.get_branch_name()
-    elif mode == "master":
+    elif branch == "master":
         branch_name = "master"
     else:
-        raise ValueError("Invalid mode='%s'" % mode)
+        raise ValueError("Invalid mode='%s'" % branch)
     _LOG.debug(hprint.to_str("branch_name"))
     #
     if tests == "all":
@@ -946,4 +950,4 @@ def gh_workflow_run(ctx, mode="branch", tests="all"):  # type: ignore
         cmd = f"gh workflow run {gh_test} --ref {branch_name}"
         ctx.run(cmd)
     #
-    gh_run_list(ctx, mode=mode)
+    gh_run_list(ctx, branch=branch)
