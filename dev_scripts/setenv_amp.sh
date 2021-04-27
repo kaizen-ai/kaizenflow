@@ -1,6 +1,8 @@
 PWD=$(pwd)
 
-AMP=$PWD
+# #############################################################################
+# PATH
+# #############################################################################
 
 echo "# Activate virtual env"
 VENV_DIR="$HOME/src/venv/client_setup"
@@ -11,7 +13,13 @@ eval $cmd
 echo "which python="$(which python)
 echo "python -v="$(python --version)
 
+# #############################################################################
+# PATH
+# #############################################################################
+
 echo "# Set path"
+AMP=$PWD
+
 export PATH=.:$PATH
 export PATH=$AMP:$PATH
 export PATH=$AMP/dev_scripts:$PATH
@@ -26,6 +34,10 @@ export PATH=$(echo $PATH | perl -e 'print join(":", grep { not $seen{$_}++ } spl
 echo "PATH=$PATH"
 
 echo $PATH | perl -e 'print join("\n", grep { not $seen{$_}++ } split(/:/, scalar <>))'
+
+# #############################################################################
+# PYTHONPATH
+# #############################################################################
 
 echo "# Set PYTHONPATH"
 export PYTHONPATH=$PWD:$PYTHONPATH
