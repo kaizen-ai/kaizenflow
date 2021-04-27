@@ -1,12 +1,19 @@
 import abc
+import datetime
 import logging
 from typing import Any, Dict, List, Optional
 
 import core.config as cconfi
+import core.config_builders as cfgb
 import core.finance as fin
 from core.dataflow.core import DAG, Node
-from core.dataflow.nodes import ArmaGenerator, ColumnTransformer, TimeBarResampler, TwapVwapComputer
 from core.dataflow.models import VolatilityModel
+from core.dataflow.nodes import (
+    ArmaGenerator,
+    ColumnTransformer,
+    TimeBarResampler,
+    TwapVwapComputer,
+)
 
 _LOG = logging.getLogger(__name__)
 
@@ -145,7 +152,9 @@ class ArmaReturnsBuilder(DagBuilder):
                 self._get_nid("rets/compute_ret_0"): {
                     "cols": ["twap", "vwap"],
                     "col_mode": "merge_all",
-                    "transformer_kwargs": {"mode": "pct_change",},
+                    "transformer_kwargs": {
+                        "mode": "pct_change",
+                    },
                 },
                 # Model volatility.
                 self._get_nid("rets/model_volatility"): {
@@ -182,14 +191,18 @@ class ArmaReturnsBuilder(DagBuilder):
         stage = "rets/filter_weekends"
         nid = self._get_nid(stage)
         node = ColumnTransformer(
-            nid, transformer_func=fin.set_weekends_to_nan, col_mode="replace_all",
+            nid,
+            transformer_func=fin.set_weekends_to_nan,
+            col_mode="replace_all",
         )
         tail_nid = self._append(dag, tail_nid, node)
         # Set non-ATH to NaN.
         stage = "rets/filter_ath"
         nid = self._get_nid(stage)
         node = ColumnTransformer(
-            nid, transformer_func=fin.set_non_ath_to_nan, **config[nid].to_dict(),
+            nid,
+            transformer_func=fin.set_non_ath_to_nan,
+            **config[nid].to_dict(),
         )
         tail_nid = self._append(dag, tail_nid, node)
         # Resample.
@@ -200,12 +213,15 @@ class ArmaReturnsBuilder(DagBuilder):
         # Compute TWAP and VWAP.
         stage = "rets/compute_wap"
         nid = self._get_nid(stage)
-        node = TwapVwapComputer(nid, **config[nid].to_dict(),)
+        node = TwapVwapComputer(
+            nid,
+            **config[nid].to_dict(),
+        )
         tail_nid = self._append(dag, tail_nid, node)
         # Compute returns.
         stage = "rets/compute_ret_0"
         nid = self._get_nid(stage)
-        node = dtf.ColumnTransformer(
+        node = ColumnTransformer(
             nid,
             transformer_func=fin.compute_ret_0,
             col_rename_func=lambda x: x + "_ret_0",
