@@ -15,7 +15,6 @@ class TestIbFilePathGenerator(hut.TestCase):
         super().setUp()
         self._file_path_generator = iidlib.IbFilePathGenerator()
 
-    @pytest.mark.skip("AmpTask161: Switch AM codebase to AM S3")
     def test_get_latest_symbols_file1(self) -> None:
         """
         Get the latest file with the info.
@@ -28,7 +27,7 @@ class TestIbFilePathGenerator(hut.TestCase):
         Test path for ESZ21.
         """
         # Generate path to symbol.
-        path = self._file_path_generator.generate_file_path(
+        act = self._file_path_generator.generate_file_path(
             symbol="ESZ21",
             frequency=icdtyp.Frequency.Minutely,
             asset_class=icdtyp.AssetClass.Futures,
@@ -38,14 +37,15 @@ class TestIbFilePathGenerator(hut.TestCase):
             ext=icdtyp.Extension.CSV,
         )
         # Compare with expected value.
-        self.check_string(path)
+        exp = "s3://alphamatic-data/data/ib/Futures/GLOBEX/USD/minutely/ESZ21.csv.gz"
+        self.assert_equal(act, exp)
 
     def test_generate_file_path2(self) -> None:
         """
         Test path for TSLA.
         """
         # Generate path to symbol.
-        path = self._file_path_generator.generate_file_path(
+        act = self._file_path_generator.generate_file_path(
             symbol="TSLA",
             frequency=icdtyp.Frequency.Minutely,
             asset_class=icdtyp.AssetClass.Stocks,
@@ -55,14 +55,15 @@ class TestIbFilePathGenerator(hut.TestCase):
             ext=icdtyp.Extension.CSV,
         )
         # Compare with expected value.
-        self.check_string(path)
+        exp = "s3://alphamatic-data/data/ib/stocks/NSDQ/USD/minutely/TSLA.csv.gz"
+        self.assert_equal(act, exp)
 
     def test_generate_file_path3(self) -> None:
         """
         Test path for CLH21.
         """
         # Generate path to symbol.
-        path = self._file_path_generator.generate_file_path(
+        act = self._file_path_generator.generate_file_path(
             symbol="CLH21",
             frequency=icdtyp.Frequency.Daily,
             asset_class=icdtyp.AssetClass.Futures,
@@ -72,4 +73,5 @@ class TestIbFilePathGenerator(hut.TestCase):
             ext=icdtyp.Extension.CSV,
         )
         # Compare with expected value.
-        self.check_string(path)
+        exp = "s3://alphamatic-data/data/ib/Futures/ECBOT/EUR/daily/CLH21.csv.gz"
+        self.assert_equal(act, exp)

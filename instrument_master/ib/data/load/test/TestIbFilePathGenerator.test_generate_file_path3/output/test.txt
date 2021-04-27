@@ -1,1 +1,0 @@
-s3://alphamatic-data/data/ib/Futures/ECBOT/EUR/daily/CLH21.csv.gz

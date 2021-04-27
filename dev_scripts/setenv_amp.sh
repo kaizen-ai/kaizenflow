@@ -25,11 +25,15 @@ export PATH=$AMP/dev_scripts/testing:$PATH
 export PATH=$(echo $PATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')
 echo "PATH=$PATH"
 
+echo $PATH | perl -e 'print join("\n", grep { not $seen{$_}++ } split(/:/, scalar <>))'
+
 echo "# Set PYTHONPATH"
 export PYTHONPATH=$PWD:$PYTHONPATH
 export PYTHONPATH=$(echo $PYTHONPATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')
 
 echo "PYTHONPATH=$PYTHONPATH"
+
+echo $PYTHONPATH | perl -e 'print join("\n", grep { not $seen{$_}++ } split(/:/, scalar <>))'
 
 echo "# Configure env"
 echo "which gh="$(which gh)

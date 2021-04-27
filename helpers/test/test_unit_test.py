@@ -337,7 +337,7 @@ class TestCheckDataFrame1(hut.TestCase):
             [ nan nan nan]]
             max_err=0.060
         """
-        self.assert_equal(self.error_msg, exp_error_msg, fuzzy_match=True)
+        self.assert_equal(self._error_msg, exp_error_msg, fuzzy_match=True)
 
     def test_check_df_not_equal2(self) -> None:
         """

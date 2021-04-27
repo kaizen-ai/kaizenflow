@@ -49,14 +49,17 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
 
     def pytest_collection_modifyitems(config: Any, items: Any) -> None:
         _ = items
+        import helpers.env as env
+        print(env.get_system_signature()[0])
+        _WARNING = "\033[33mWARNING\033[0m"
         if config.getoption("--update_outcomes"):
-            print("\nWARNING: Updating test outcomes")
+            print(f"\n{_WARNING}: Updating test outcomes")
             hut.set_update_tests(True)
         if config.getoption("--incremental"):
-            print("\nWARNING: Using incremental test mode")
+            print(f"\n{_WARNING}: Using incremental test mode")
             hut.set_incremental_tests(True)
         if config.getoption("--dbg_verbosity"):
-            print("\nWARNING: Setting verbosity level")
+            print(f"\n{_WARNING}: Setting verbosity level")
             # When we specifiy the debug verbosity we monkey patch the command
             # line to add the '-s' option to pytest to not suppress the output.
             # NOTE: monkey patching sys.argv is often fragile.

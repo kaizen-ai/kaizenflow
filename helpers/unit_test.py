@@ -643,17 +643,17 @@ class TestCase(unittest.TestCase):
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
         _LOG.debug("\n%s", hprint.frame(func_name))
         # The base directory is the one including the class under test.
-        self.base_dir_name = os.path.dirname(inspect.getfile(self.__class__))
-        _LOG.debug("base_dir_name=%s", self.base_dir_name)
-        self.update_tests = get_update_tests()
-        self.git_add = True
+        self._base_dir_name = os.path.dirname(inspect.getfile(self.__class__))
+        _LOG.debug("base_dir_name=%s", self._base_dir_name)
+        self._update_tests = get_update_tests()
+        self._git_add = True
         # Error message printed when comparing.
-        self.error_msg = ""
+        self._error_msg = ""
         # True if the golden outcome of this test was updated.
         self._test_was_updated = False
         #
         # Set the default pandas options (see AmpTask1140).
-        self.old_pd_options = get_pd_default_values()
+        self._old_pd_options = get_pd_default_values()
         set_pd_default_values()
         # Start the timer to measure the execution time of the test.
         self._timer = htimer.Timer()
@@ -668,7 +668,7 @@ class TestCase(unittest.TestCase):
                   ": Test was updated) ", end="")
             self._test_was_updated = False
         # Recover the original default pandas options.
-        pd.options = self.old_pd_options
+        pd.options = self._old_pd_options
         # Force matplotlib to close plots to decouple tests.
         plt.close()
         plt.clf()
@@ -690,9 +690,13 @@ class TestCase(unittest.TestCase):
         This is used to override the standard location of the base
         directory which is close to the class under test.
         """
-        self.base_dir_name = base_dir_name
-        _LOG.debug("Setting base_dir_name to '%s'", self.base_dir_name)
-        hio.create_dir(self.base_dir_name, incremental=True)
+        self._base_dir_name = base_dir_name
+        _LOG.debug("Setting base_dir_name to '%s'", self._base_dir_name)
+        hio.create_dir(self._base_dir_name, incremental=True)
+
+    def override_update_tests(self, value: bool) -> None:
+
+
 
     def get_input_dir(
         self,
@@ -816,7 +820,7 @@ class TestCase(unittest.TestCase):
         file_exists = os.path.exists(file_name)
         _LOG.debug("file_exists=%s", file_exists)
         is_equal: Optional[bool] = None
-        if self.update_tests:
+        if self._update_tests:
             _LOG.debug("Update golden outcomes")
             # Determine whether outcome needs to be updated.
             if file_exists:
@@ -882,7 +886,7 @@ class TestCase(unittest.TestCase):
         file_exists = os.path.exists(file_name)
         _LOG.debug(hprint.to_str("file_exists"))
         is_equal: Optional[bool] = None
-        if self.update_tests:
+        if self._update_tests:
             _LOG.debug("Update golden outcomes")
             # Determine whether outcome needs to be updated.
             if file_exists:
@@ -917,7 +921,7 @@ class TestCase(unittest.TestCase):
                         dir_name,
                         fuzzy_match=False,
                         abort_on_error=abort_on_error,
-                        error_msg=self.error_msg,
+                        error_msg=self._error_msg,
                     )
             else:
                 # No golden outcome available: save the result.
@@ -937,7 +941,7 @@ class TestCase(unittest.TestCase):
         """
         Add to git repo `file_name`, if needed.
         """
-        if self.git_add:
+        if self._git_add:
             cmd = "git add -u %s" % file_name
             _LOG.debug("> %s", cmd)
             rc = hsyste.system(cmd, abort_on_error=False)
@@ -1062,14 +1066,14 @@ class TestCase(unittest.TestCase):
         if test_method_name is None:
             test_method_name = self._testMethodName
         # E.g., ./core/dataflow/test/TestContinuousSarimaxModel.test_compare
-        dir_name = self.base_dir_name + "/%s.%s" % (
+        dir_name = self._base_dir_name + "/%s.%s" % (
             test_class_name,
             test_method_name,
         )
         return dir_name
 
     def _to_error(self, msg: str) -> None:
-        self.error_msg += msg + "\n"
+        self._error_msg += msg + "\n"
         _LOG.error(msg)
 
 
