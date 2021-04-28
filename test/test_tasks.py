@@ -15,6 +15,7 @@ _LOG = logging.getLogger(__name__)
 try:
     import invoke
 
+    # TODO(gp): We should separate what can be tested by
     import tasks
 except ModuleNotFoundError as e:
     print("Can't find invoke: %s" % str(e))
@@ -24,6 +25,15 @@ except ModuleNotFoundError as e:
             self.MockContext = None
 
     invoke = Dummy()
+
+
+class TestLibTasks1(hut.TestCase):
+
+    def test_get_build_tag1(self):
+        tasks.get_
+
+
+# #################################################################################
 
 
 class TestDryRunTasks1(hut.TestCase):
@@ -96,8 +106,7 @@ class TestDryRunTasks1(hut.TestCase):
         """
         Invoke the given target with dry run.
 
-        This is used to test the commands that we can't actually
-        execute.
+        This is used to test the commands that we can't actually execute.
         """
         cmd = "invoke --dry " + target + " | grep -v INFO"
         _, act = hsi.system_to_string(cmd)
@@ -250,15 +259,3 @@ class TestExecuteTasks2(hut.TestCase):
         file_name = '$(find . -name "dbg.py" -type f)'
         cmd = f"invoke lint --files='{file_name}' --phases='black'"
         hsi.system(cmd)
-
-    # def test_(self):
-    #     cmd = "invoke "
-    #     hsi.system(cmd)
-
-
-# slow_self_tests:
-# make docker_build_image_with_cache.rc
-# make run_blank_tests.rc
-# make run_fast_tests.rc
-# make docker_build_image.prod
-# make run_slow_tests.rc

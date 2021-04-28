@@ -31,19 +31,10 @@ def get_container_version() -> Optional[str]:
     return container_version
 
 
-def check_version() -> None:
-    """
-    Check that the code and container code have compatible version, otherwise
-    raises `RuntimeError`.
-    """
-    container_version = os.environ["CONTAINER_VERSION"]
-    if container_version is None:
-        return
+def _check_version(code_version: str, container_version: str) -> None:
     # We are running inside a container.
     # Keep the code and the container in sync by versioning both and requiring
     # to be the same.
-    code_version = get_code_version()
-    print("code_version={CODE_VERSION}, container_version={container_ver}")
     if container_version != code_version:
         msg = f"""
 This code is not in sync with the container:
@@ -52,6 +43,24 @@ You need to:
 - merge origin/master into your branch with `invoke git_merge_origin_master`
 - pull the latest container with `invoke docker_pull`
 """
-        msg = msg.rsplit().lstrip()
+        msg = msg.rstrip().lstrip()
         _LOG.error(msg)
         raise RuntimeError(msg)
+
+
+def check_version() -> None:
+    """
+    Check that the code and container code have compatible version, otherwise
+    raises `RuntimeError`.
+    """
+    env_var = "CONTAINER_VERSION"
+    if env_var not in os.environ:
+        _LOG.warning("The env var '%s' is not defined", env_var)
+        container_version = None
+    else:
+        container_version = os.environ[env_var]
+    code_version = get_code_version()
+    print(f"code_version={code_version}, container_version={container_version}")
+    if container_version is None:
+        return
+    _check_version(code_version, container_version)

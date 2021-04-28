@@ -4,6 +4,9 @@ Import as:
 import lib_tasks as ltasks
 """
 
+# TODO(gp): Move to helpers.lib_tasks? Do we need to move / rename also
+#  test_tasks.py?
+
 import functools
 import logging
 import os
@@ -519,23 +522,29 @@ def docker_kill_all(ctx):  # type: ignore
     ctx.run("docker ps -a")
     ctx.run("docker rm -f $(docker ps -a -q)")
 
-import helpers.datetime_ as datetime_
+
 import helpers.version as hvers
+import datetime
 
 
 @functools.lru_cache()
-def _get_build_tag():
+def _get_build_tag() -> str:
+    """
+    Return a string to tag the build.
+
+    E.g.,
+    build_tag=1.0.0.20210428_185840.
+        AmpTask1280_Use_versioning_to_keep_code_and_container_in_sync.
+        500a9e31ee70e51101c1b2eb82945c19992fa86e
+    """
+    code_ver = hvers.get_code_version()
+    # We can't use datetime_.get_timestamp() since we don't want to pick up
+    # the dependencies from pandas.
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     branch_name = git.get_branch_name()
     hash_ = git.get_head_hash()
-    timestamp = datetime_.get_timestamp()
-    #
-    code_ver = hvers.get_code_version()
-    build_tag = f"{code_ver}.{branch_name}.{hash_}.{timestamp}"
+    build_tag = f"{code_ver}.{timestamp}.{branch_name}.{hash_}"
     return build_tag
-
-
-# --build-arg "SOURCE_COMMIT=$SOURCE_COMMIT"
-# --build-arg "SOURCE_COMMIT=$SOURCE_COMMIT"
 
 
 # DEV image flow:
@@ -565,6 +574,9 @@ def docker_build_local_image(ctx, cache=True, base_image=""):  # type: ignore
     dockerfile = _to_abs_path(dockerfile)
     #
     opts = "--no_cache" if not cache else ""
+    # The container version is the version used from this code.
+    container_version = hvers.get_code_version()
+    build_tag = _get_build_tag()
     cmd = rf"""
     DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
     time \
@@ -574,9 +586,10 @@ def docker_build_local_image(ctx, cache=True, base_image=""):  # type: ignore
         -t {image_local} \
         -t {image_hash} \
         -f {dockerfile} \
-        --build-arg "SOURCE_COMMIT=$SOURCE_COMMIT" \
         .
     """
+    #--build-arg CONTAINER_VERSION={container_version} \
+    #                              --build-arg BUILD_TAG={build_tag} \
     _run(ctx, cmd)
     #
     cmd = f"docker image ls {image_local}"

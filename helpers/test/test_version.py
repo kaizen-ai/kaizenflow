@@ -22,4 +22,12 @@ class TestVersion1(hut.TestCase):
         _LOG.debug("container_version=%s", container_version)
 
     def test_check_version1(self) -> None:
+        code_version = "1.0.0"
+        container_version = "1.0.2"
+        with self.assertRaises(RuntimeError) as cm:
+            hvers._check_version(code_version, container_version)
+        act = str(cm.exception)
+        self.check_string(act)
+
+    def test_check_version2(self) -> None:
         hvers.check_version()
