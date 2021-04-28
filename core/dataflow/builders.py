@@ -61,6 +61,7 @@ class DagBuilder(abc.ABC):
         """
 
     @abc.abstractmethod
+    # TODO(*): Consider getting rid of the `dag` argument here.
     def get_dag(self, config: cconfi.Config, dag: Optional[DAG] = None) -> DAG:
         """
         Build DAG given `config`.
