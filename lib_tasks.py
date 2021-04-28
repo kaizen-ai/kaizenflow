@@ -241,6 +241,15 @@ def docker_kill_last(ctx):  # type: ignore
     ctx.run("docker rm -f $(docker ps -l -q)")
 
 
+@task
+def docker_kill_all(ctx):  # type: ignore
+    """
+    Kill all the Docker containers.
+    """
+    ctx.run("docker ps -a")
+    ctx.run("docker rm -f $(docker ps -a -q)")
+
+
 # #############################################################################
 # Docker development.
 # #############################################################################
@@ -420,26 +429,26 @@ def _docker_cmd(
     dbg.dassert_exists(docker_compose)
     #
     user_name = hsinte.get_user_name()
-    docker_cmd = rf"""IMAGE={image} \
+    docker_cmd_ = rf"""IMAGE={image} \
     docker-compose \
         -f {docker_compose} \
         run \
         --rm \
         -l user={user_name} \
     """
-    docker_cmd = docker_cmd.rstrip()
+    docker_cmd_ = docker_cmd_.rstrip()
     if entrypoint:
-        docker_cmd += rf"""
+        docker_cmd_ += rf"""
         user_space \
         {cmd}"""
     else:
-        docker_cmd += r"""
+        docker_cmd_ += r"""
         --entrypoint bash \
         user_space"""
     if use_one_line_cmd:
-        docker_cmd = _remove_spaces(docker_cmd)
-    _LOG.debug("cmd=%s", docker_cmd)
-    ctx.run(docker_cmd, pty=True)
+        docker_cmd_ = _remove_spaces(docker_cmd_)
+    _LOG.debug("cmd=%s", docker_cmd_)
+    ctx.run(docker_cmd_, pty=True)
 
 
 @task
@@ -526,15 +535,6 @@ def _run(ctx: Any, cmd: str) -> None:
 DOCKER_BUILDKIT = 0
 
 
-@task
-def docker_kill_all(ctx):  # type: ignore
-    """
-    Kill all the Docker containers.
-    """
-    ctx.run("docker ps -a")
-    ctx.run("docker rm -f $(docker ps -a -q)")
-
-
 @functools.lru_cache()
 def _get_build_tag() -> str:
     """
@@ -565,13 +565,20 @@ def _get_build_tag() -> str:
 # For base_image, we use "" as default instead None since pyinvoke can only infer
 # a single type.
 @task
-def docker_build_local_image(ctx, cache=True, base_image=""):  # type: ignore
+def docker_build_local_image(  # type: ignore
+    ctx, cache=True, base_image="", update_poetry=False
+):
     """
     Build a local as a release candidate image.
+
+    :param update_poetry: run poetry lock to update the packages
+    :param cache: use the cache
     """
     _LOG.info(">")
     # Update poetry.
-    ctx.run("cd devops/docker_build/; poetry lock")
+    if update_poetry:
+        cmd = "cd devops/docker_build/; poetry lock"
+        ctx.run(cmd)
     #
     image_local = _get_image("local", base_image)
     image_hash = _get_image("hash", base_image)

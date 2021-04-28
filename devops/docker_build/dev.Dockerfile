@@ -85,12 +85,11 @@ ENV DIR="devops/docker_scripts"
 RUN mkdir -p $APP_DIR/$DIR
 COPY $DIR $APP_DIR/$DIR
 
-# This is last since the build tag contains a timestamp that might be trigger
-# a re-build even though nothing has changed.
+# This is the last step since the build tag contains a timestamp that might
+# trigger a re-build even though nothing has changed.
 ARG BUILD_TAG
 ENV BUILD_TAG=$BUILD_TAG
 RUN echo "BUILD_TAG=$BUILD_TAG"
-
 
 WORKDIR $APP_DIR
 

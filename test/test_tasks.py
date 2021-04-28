@@ -100,12 +100,11 @@ class TestDryRunTasks1(hut.TestCase):
         """
         Invoke the given target with dry run.
 
-        This is used to test the commands that we can't actually
-        execute.
+        This is used to test the commands that we can't actually execute.
         """
-        cmd = "invoke --dry " + target + " | grep -v INFO | grep -v 'code_version='"
+        cmd = f"invoke --dry {target} | grep -v INFO | grep -v 'code_version='"
         _, act = hsinte.system_to_string(cmd)
-        # TODO(gp): Unclear why pylint can't find this function.
+        # TODO(gp): pylint doesn't find
         # pylint: disable=no-member
         act = hprint.remove_non_printable_chars(act)
         # pylint: enable=no-member

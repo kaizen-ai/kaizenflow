@@ -137,7 +137,7 @@ def dassert_lt(
 ) -> None:
     # pylint: disable=superfluous-parens
     if not (val1 < val2):
-        txt = "'%s' < '%s'" % (val1, val2)
+        txt = "%s < %s" % (val1, val2)
         _dfatal(txt, msg, *args)
 
 
@@ -146,7 +146,7 @@ def dassert_lte(
 ) -> None:
     # pylint: disable=superfluous-parens
     if not (val1 <= val2):
-        txt = "'%s' <= '%s'" % (val1, val2)
+        txt = "%s <= %s" % (val1, val2)
         _dfatal(txt, msg, *args)
 
 

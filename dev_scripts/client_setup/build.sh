@@ -3,7 +3,7 @@
 # Build a thin virtual environment to run workflows on the dev machine.
 #
 
-# TODO(gp): Use python 3.9 and keep this in sync with the
+# TODO(gp): Use python 3.9 and keep this in sync with
 # devops/docker_build/pyproject.toml
 
 set -e
