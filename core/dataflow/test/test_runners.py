@@ -25,7 +25,7 @@ class TestIncrementalDagRunner(hut.TestCase):
             start="2010-01-04 15:30",
             end="2010-01-04 15:45",
             freq="5T",
-            fit_state=fit_state
+            fit_state=fit_state,
         )
         result_bundles = list(dag_runner.predict())
         self.assertEqual(len(result_bundles), 4)
