@@ -7,7 +7,7 @@ import core.dataflow.test.test_models as dttmod
 import collections
 import logging
 import pprint
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import mxnet
 import numpy as np
@@ -420,7 +420,7 @@ class TestSmaModel(hut.TestCase):
         config: ccfg.Config,
         info: collections.OrderedDict,
         df_out: pd.DataFrame,
-    ) -> str:
+    ) -> None:
         act: List[str] = []
         act.append(hprint.frame("config"))
         act.append(str(config))
@@ -742,7 +742,7 @@ class TestVolatilityModel(hut.TestCase):
 
     @staticmethod
     def _package_results2(
-        config: ccfg.Config, state, df_out: pd.DataFrame
+        config: ccfg.Config, state: Dict[str, Any], df_out: pd.DataFrame
     ) -> str:
         act: List[str] = []
         act.append(hprint.frame("config"))
@@ -863,7 +863,7 @@ class TestVolatilityModulator(hut.TestCase):
 
     def _check_results(
         self, config: ccfg.Config, df_in: pd.DataFrame, df_out: pd.DataFrame
-    ) -> str:
+    ) -> None:
         act: List[str] = []
         act.append(hprint.frame("config"))
         act.append(str(config))
@@ -1213,10 +1213,10 @@ class TestContinuousSarimaxModel(hut.TestCase):
         """
         data = self._get_data([1], [], periods=120, freq="D")
         config = self._get_config((1, 0, 0))
-        data_fit = data.loc[:"2010-03-12"]
-        data_predict1 = data.loc["2010-03-12":"2010-04-02"]
-        data_predict2 = data.loc["2010-03-16":"2010-04-17"]
-        data_predict3 = data.loc["2010-04-01":"2010-04-27"]
+        data_fit = data.loc[:"2010-03-12"]  # type: ignore
+        data_predict1 = data.loc["2010-03-12":"2010-04-02"]  # type: ignore
+        data_predict2 = data.loc["2010-03-16":"2010-04-17"]  # type: ignore
+        data_predict3 = data.loc["2010-04-01":"2010-04-27"]  # type: ignore
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
         df_out1 = csm.predict(data_predict1)["df_out"]
@@ -1224,12 +1224,12 @@ class TestContinuousSarimaxModel(hut.TestCase):
         df_out3 = csm.predict(data_predict3)["df_out"]
         #
         pd.testing.assert_series_equal(
-            df_out1.loc["2010-03-25":"2010-03-29", "ret_0_3_hat"],
-            df_out2.loc["2010-03-25":"2010-03-29", "ret_0_3_hat"],
+            df_out1.loc["2010-03-25":"2010-03-29", "ret_0_3_hat"],  # type: ignore
+            df_out2.loc["2010-03-25":"2010-03-29", "ret_0_3_hat"],  # type: ignore
         )
         pd.testing.assert_series_equal(
-            df_out2.loc["2010-04-10":"2010-04-13", "ret_0_3_hat"],
-            df_out3.loc["2010-04-10":"2010-04-13", "ret_0_3_hat"],
+            df_out2.loc["2010-04-10":"2010-04-13", "ret_0_3_hat"],  # type: ignore
+            df_out3.loc["2010-04-10":"2010-04-13", "ret_0_3_hat"],  # type: ignore
         )
         df_out = pd.concat(
             [df_out1, df_out2["ret_0_3_hat"], df_out3["ret_0_3_hat"]], axis=1
@@ -1260,10 +1260,10 @@ class TestContinuousSarimaxModel(hut.TestCase):
         data.drop(columns=["x"], inplace=True)
         config = self._get_config((1, 0, 0))
         config["x_vars"] = None
-        data_fit = data.loc[:"2010-03-12"]
-        data_predict1 = data.loc["2010-03-12":"2010-04-02"]
-        data_predict2 = data.loc["2010-03-20":"2010-04-17"]
-        data_predict3 = data.loc["2010-04-01":"2010-04-27"]
+        data_fit = data.loc[:"2010-03-12"]  # type: ignore
+        data_predict1 = data.loc["2010-03-12":"2010-04-02"]  # type: ignore
+        data_predict2 = data.loc["2010-03-20":"2010-04-17"]  # type: ignore
+        data_predict3 = data.loc["2010-04-01":"2010-04-27"]  # type: ignore
         csm = cdataf.ContinuousSarimaxModel("model", **config.to_dict())
         csm.fit(data_fit)
         df_out1 = csm.predict(data_predict1)["df_out"]
@@ -1271,12 +1271,12 @@ class TestContinuousSarimaxModel(hut.TestCase):
         df_out3 = csm.predict(data_predict3)["df_out"]
         #
         pd.testing.assert_series_equal(
-            df_out1.loc["2010-03-26":"2010-04-01", "ret_0_3_hat"],
-            df_out2.loc["2010-03-26":"2010-04-01", "ret_0_3_hat"],
+            df_out1.loc["2010-03-26":"2010-04-01", "ret_0_3_hat"],  # type: ignore
+            df_out2.loc["2010-03-26":"2010-04-01", "ret_0_3_hat"],  # type: ignore
         )
         pd.testing.assert_series_equal(
-            df_out2.loc["2010-04-07":"2010-04-16", "ret_0_3_hat"],
-            df_out3.loc["2010-04-07":"2010-04-16", "ret_0_3_hat"],
+            df_out2.loc["2010-04-07":"2010-04-16", "ret_0_3_hat"],  # type: ignore
+            df_out3.loc["2010-04-07":"2010-04-16", "ret_0_3_hat"],  # type: ignore
         )
 
     def test_summary(self) -> None:
@@ -1295,8 +1295,11 @@ class TestContinuousSarimaxModel(hut.TestCase):
         self.check_string(act)
 
     def _check_results(
-        self, config: ccfg.Config, df_out: pd.DataFrame, err_threshold=0.01
-    ) -> str:
+        self,
+        config: ccfg.Config,
+        df_out: pd.DataFrame,
+        err_threshold: float = 0.01,
+    ) -> None:
         act: List[str] = []
         act.append(hprint.frame("config"))
         act.append(str(config))

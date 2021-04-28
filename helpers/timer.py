@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.timer as htimer
+"""
+
 import logging
 import time
 from typing import Any, Callable, Dict, Optional, Tuple, cast
@@ -52,7 +58,10 @@ class Timer:
         # For better accuracy stop the timer as first action.
         self._stop = time.time()
         # Update the total elapsed time.
-        dbg.dassert_lte(self._start, self._stop)
+        # Sometimes we get numerical error tripping this assertion
+        # (e.g., '1619552498.813126' <= '1619552498.805193') so we give
+        # a little slack to the assertion.
+        dbg.dassert_lte(self._start, self._stop + 1e-2)
         self._last_elapsed = cast(float, self._stop) - cast(float, self._start)
         self._total_elapsed += self._last_elapsed
         # Stop.

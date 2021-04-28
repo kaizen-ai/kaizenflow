@@ -8,7 +8,7 @@ import logging
 import re
 import sys
 import tempfile
-from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
+from typing import Any, Dict, Iterable, List, Optional, cast
 
 import helpers.dbg as dbg
 
@@ -225,6 +225,8 @@ def round_digits(
 
 # #############################################################################
 
+# TODO(gp): Move to dbg.py close to logging.
+
 
 def to_str(expression: str, frame_lev: int = 1) -> str:
     """
@@ -247,14 +249,16 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
         exprs = [v.lstrip().rstrip() for v in expression.split(" ")]
         _to_str = lambda x: to_str(x, frame_lev=frame_lev + 2)
         return ", ".join(list(map(_to_str, exprs)))
-    frame = sys._getframe(frame_lev)
+    frame_ = sys._getframe(frame_lev)  # pylint: disable=protected-access
     ret = (
-        expression + "=" + repr(eval(expression, frame.f_globals, frame.f_locals))
+        expression
+        + "="
+        + repr(eval(expression, frame_.f_globals, frame_.f_locals))
     )
     return ret
 
 
-def log(logger, verbosity, *vals: Any) -> Tuple[str, List[str]]:
+def log(logger, verbosity, *vals: Any) -> None:
     """
     log(_LOG, logging.DEBUG, "ticker", "exchange")
 
@@ -273,10 +277,10 @@ def log(logger, verbosity, *vals: Any) -> Tuple[str, List[str]]:
         num_vals = len(vals)
         if num_vals == 1:
             fstring = "%s"
-            vals = _to_str(vals[0])
+            vals = _to_str(vals[0])  # type: ignore
         else:
             fstring = ", ".join(["%s"] * num_vals)
-            vals = list(map(_to_str, vals))
+            vals = list(map(_to_str, vals))  # type: ignore
         logger.log(verbosity, fstring, vals)
 
 

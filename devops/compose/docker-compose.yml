@@ -6,7 +6,7 @@ services:
   app:
     image: ${IMAGE}
     volumes:
-      - ../../:/app
+      - ../..:/app
       - ~/.aws:/root/.aws
       - ../docker_build/fstab:/etc/fstab
     privileged: true

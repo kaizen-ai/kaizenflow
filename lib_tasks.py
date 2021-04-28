@@ -66,18 +66,6 @@ def print_setup(ctx):  # type: ignore
         print("%s=%s" % (v, get_default_value(v)))
 
 
-# @task
-# def activate_poetry(ctx):  # type: ignore
-#     """
-#     Print how to activate the virtual environment.
-#     """
-#     _LOG.info(">")
-#     cmd = '''cd devops/docker_build; \
-#             FILE="$(poetry env info --path)/bin/activate"; \
-#             echo "source $FILE"'''
-#     ctx.run(cmd)
-
-
 # #############################################################################
 # Git.
 # #############################################################################
@@ -108,7 +96,7 @@ def git_pull_master(ctx):  # type: ignore
 @task
 def git_clean(ctx):  # type: ignore
     """
-    Clean all the repos.
+    Clean the repo and its submodules.
     """
     _LOG.info(">")
     # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
@@ -127,8 +115,56 @@ def git_clean(ctx):  # type: ignore
 
 @task
 def git_diff_master_files(ctx):  # type: ignore
+    """
+    Report which files are changed in the current branch with respect to
+    master.
+    """
     _LOG.info(">")
     cmd = "git diff --name-only master..."
+    ctx.run(cmd)
+
+
+@task
+def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
+    """
+    Remove (both local and remote) branches that are already merged into
+    master.
+    """
+
+    def _delete_branches(find_cmd: str, delete_cmd: str, tag: str) -> None:
+        _, txt = hsinte.system_to_string(find_cmd, abort_on_error=False)
+        branches = hsinte.text_to_list(txt)
+        # Print and ask to continue.
+        _LOG.info(
+            "The %s branches to delete are %d:\n%s",
+            tag,
+            len(branches),
+            "\n".join(branches),
+        )
+        if not branches:
+            return
+        if confirm_delete:
+            hsinte.query_yes_no("Ok to delete these branches?", abort_on_no=True)
+        for branch in branches:
+            cmd = f"{delete_cmd} {branch}"
+            ctx.run(cmd)
+
+    _LOG.info(">")
+    # Delete local branches that are already merged into master.
+    # > git branch --merged
+    # * AmpTask1251_Update_GH_actions_for_amp_02
+    find_cmd = r"git branch --merged master | grep -v master | grep -v \*"
+    delete_cmd = "git branch -d"
+    _delete_branches(find_cmd, delete_cmd, "local")
+    # Get the branches to delete.
+    find_cmd = (
+        "git branch -r --merged origin/master"
+        + r" | grep -v master | sed 's/origin\///'"
+    )
+    delete_cmd = "git push origin --delete"
+    _delete_branches(find_cmd, delete_cmd, "remote")
+    #
+    cmd = "git fetch --prune"
     ctx.run(cmd)
 
 
@@ -563,9 +599,13 @@ def docker_release_dev_image(  # type: ignore
     run_fast=True,
     run_slow=True,
     run_superslow=False,
+    push_to_repo=True,
 ):
     """
     (ONLY FOR CI/CD) Build, test, and release to ECR the latest "dev" image.
+
+    This can be used to test the entire flow from scratch by building an image,
+    running the tests, but not necessarily pushing.
 
     :param: just_build skip all the tests and release the dev image.
     """
@@ -584,7 +624,10 @@ def docker_release_dev_image(  # type: ignore
     if run_superslow:
         run_superslow_tests(ctx, stage=stage)
     # Push.
-    docker_push_local_image_to_dev(ctx)
+    if push_to_repo:
+        docker_push_local_image_to_dev(ctx)
+    else:
+        _LOG.warning("Skipping pushing image to repo as requested")
     _LOG.info("==> SUCCESS <==")
 
 
@@ -721,6 +764,9 @@ def run_slow_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: 
 
 @task
 def run_fast_slow_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: ignore
+    """
+    Run both fast and slow tests.
+    """
     run_fast_tests(ctx, stage=stage, pytest_opts=pytest_opts, coverage=coverage)
     run_slow_tests(ctx, stage=stage, pytest_opts=pytest_opts, coverage=coverage)
 
@@ -849,6 +895,11 @@ def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignor
     :param phases: specify the lint phases to execute
     """
     _LOG.info(">")
+    dbg.dassert_lte(
+        int(modified) + int(branch) + int(files != ""),
+        1,
+        msg="You can specify only one option among --modified, --branch, or --files",
+    )
     if modified:
         files = git.get_modified_files()
         files = " ".join(files)
@@ -902,21 +953,23 @@ def get_amp_files(ctx):  # type: ignore
 
 @task
 def gh_run_list(ctx, branch="branch", status="all"):  # type: ignore
-    _LOG.info("> mode='%s'", mode)
+    _LOG.info("> branch='%s'", branch)
     cmd = "export NO_COLOR=1; gh run list"
+    # pylint: disable=line-too-long
     # > gh run list
     # ✓  Merge branch 'master' into AmpTask1251_Update_GH_actions_for_amp  Slow tests  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984377
     # ✓  Merge branch 'master' into AmpTask1251_Update_GH_actions_for_amp  Fast tests  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984376
     # X  Merge branch 'master' into AmpTask1251_Update_GH_actions_for_amp  Run linter  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984375
     # X  Fix lint issue                                                    Fast tests  master                                 workflow_dispatch  788949955
-    if mode == "branch":
+    # pylint: enable=line-too-long
+    if branch == "branch":
         branch_name = git.get_branch_name()
-    elif mode == "master":
+    elif branch == "master":
         branch_name = "master"
-    elif mode == "all":
+    elif branch == "all":
         branch_name = None
     else:
-        raise ValueError("Invalid mode='%s'" % mode)
+        raise ValueError("Invalid mode='%s'" % branch)
     if branch_name:
         cmd += f" | grep {branch_name}"
     if status != "all":
@@ -926,13 +979,13 @@ def gh_run_list(ctx, branch="branch", status="all"):  # type: ignore
 
 
 @task
-def gh_workflow_run(ctx, mode="branch", tests="all"):  # type: ignore
-    if mode == "branch":
+def gh_workflow_run(ctx, branch="branch", tests="all"):  # type: ignore
+    if branch == "branch":
         branch_name = git.get_branch_name()
-    elif mode == "master":
+    elif branch == "master":
         branch_name = "master"
     else:
-        raise ValueError("Invalid mode='%s'" % mode)
+        raise ValueError("Invalid mode='%s'" % branch)
     _LOG.debug(hprint.to_str("branch_name"))
     #
     if tests == "all":
@@ -946,4 +999,4 @@ def gh_workflow_run(ctx, mode="branch", tests="all"):  # type: ignore
         cmd = f"gh workflow run {gh_test} --ref {branch_name}"
         ctx.run(cmd)
     #
-    gh_run_list(ctx, mode=mode)
+    gh_run_list(ctx, branch=branch)

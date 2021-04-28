@@ -1,16 +1,15 @@
 """
-Import as:
-
-import helpers.system_interaction as hsyste
-
 Contain all the code needed to interact with the outside world, e.g., through
 system commands, env vars, ...
+
+Import as:
+
+import helpers.system_interaction as hsinte
 """
 
 import getpass
 import logging
 import os
-import shutil
 import signal
 import subprocess
 import sys
@@ -310,6 +309,15 @@ def get_first_line(output: str) -> str:
     return output
 
 
+def text_to_list(txt: str) -> List[str]:
+    """
+    Convert a string (e.g., from system_to_string) into a list of lines.
+    """
+    res = [line.rstrip().lstrip() for line in txt.split("\n")]
+    res = [line for line in res if line != ""]
+    return res
+
+
 def system_to_one_line(cmd: str, *args: Any, **kwargs: Any) -> Tuple[int, str]:
     """
     Execute a shell command, capturing its output (expected to be a single
@@ -376,6 +384,8 @@ def kill_process(
     :param timeout_in_secs: how many seconds to wait at most before giving up
     :param polltime_in_secs: how often to check for dead processes
     """
+    import tqdm
+
     pids, txt = get_pids()
     _LOG.info("Killing %d pids (%s)\n%s", len(pids), pids, "\n".join(txt))
     if not pids:
@@ -387,8 +397,6 @@ def kill_process(
             _LOG.warning(str(e))
     #
     _LOG.info("Waiting %d processes (%s) to die", len(pids), pids)
-    import tqdm
-
     for _ in tqdm.tqdm(range(int(timeout_in_secs / polltime_in_secs))):
         time.sleep(polltime_in_secs)
         pids, _ = get_pids()
@@ -465,10 +473,10 @@ def create_executable_script(file_name: str, content: str) -> None:
 
 # #############################################################################
 
+
 def is_inside_docker() -> bool:
     """
     Return whether we are inside a container or not.
     """
     # From https://stackoverflow.com/questions/23513045
     return os.path.exists("/.dockerenv")
-

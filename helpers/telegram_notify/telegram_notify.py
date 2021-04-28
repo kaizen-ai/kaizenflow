@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.telegram_notify.telegram_notify as tntnot
+"""
+
 import json
 import logging
 import os
@@ -6,63 +12,28 @@ import re
 import sys
 from typing import Optional
 
-import ipykernel
 import requests
 
 # Alternative that works for both Python 2 and 3:
-import requests.compat as reqc
+import requests.compat as rcompa
 
-import helpers.telegram_notify.config as tgcfg
-
-try:  # Python 3 (see Edit2 below for why this may not work in Python 2)
-    import notebook.notebookapp as ihnb
-except ImportError:  # Python 2
-    import warnings
-
-    import IPython.utils.shimmodule as iush
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=iush.ShimWarning)
-        import IPython.html.notebookapp as ihnb
+import helpers.telegram_notify.config as htncfg
 
 _LOG = logging.getLogger(__name__)
 
-
-def _get_launcher_name() -> str:
-    """Return the name of jupyter notebook or path to python file you are
-    running."""
-    launcher = sys.argv[0]
-    if os.path.basename(launcher) == "ipykernel_launcher.py":
-        match = re.search(
-            "kernel-(.*).json", ipykernel.connect.get_connection_file()
-        )
-        if match is None:
-            return launcher
-        kernel_id = match.group(1)
-        servers = ihnb.list_running_servers()
-        for ss in servers:
-            response = requests.get(
-                reqc.urljoin(ss["url"], "api/sessions"),
-                params={"token": ss.get("token", "")},
-            )
-            for nn in json.loads(response.text):
-                if nn["kernel"]["id"] == kernel_id:
-                    relative_path = nn["notebook"]["path"]
-                    return str(os.path.basename(relative_path))
-    return launcher
-
-
 # #############################################################################
-# Send message
+# TelegramNotebookNotify.
 # #############################################################################
 
 
-class TelegramNotify:
-    """Sends notifications."""
+class TelegramNotebookNotify:
+    """
+    Sends notifications.
+    """
 
     def __init__(self) -> None:
         self.launcher_name = _get_launcher_name()
-        self.token, self.chat_id = tgcfg.get_info()
+        self.token, self.chat_id = htncfg.get_info()
 
     def notify(self, message: str) -> None:
         msg = "<pre>{notebook_name}</pre>: {message}".format(
@@ -88,14 +59,46 @@ class TelegramNotify:
         ).content
 
 
-# #############################################################################
-# Send notifications using logging
-# #############################################################################
+def _get_launcher_name() -> str:
+    """
+    Return the name of jupyter notebook or path to python file you are running.
+    """
+    import ipykernel
+
+    try:  # Python 3 (see Edit2 below for why this may not work in Python 2)
+        import notebook.notebookapp as ihnb
+    except ImportError:  # Python 2
+        import warnings
+
+        import IPython.utils.shimmodule as iush
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=iush.ShimWarning)
+            import IPython.html.notebookapp as ihnb
+    launcher = sys.argv[0]
+    if os.path.basename(launcher) == "ipykernel_launcher.py":
+        match = re.search(
+            "kernel-(.*).json", ipykernel.connect.get_connection_file()
+        )
+        if match is None:
+            return launcher
+        kernel_id = match.group(1)
+        servers = ihnb.list_running_servers()
+        for ss in servers:
+            response = requests.get(
+                rcompa.urljoin(ss["url"], "api/sessions"),  # type: ignore
+                params={"token": ss.get("token", "")},
+            )
+            for nn in json.loads(response.text):
+                if nn["kernel"]["id"] == kernel_id:
+                    relative_path = nn["notebook"]["path"]
+                    return str(os.path.basename(relative_path))
+    return launcher
 
 
 class _RequestsHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> bytes:  # type: ignore
-        token, chat_id = tgcfg.get_info()
+        token, chat_id = htncfg.get_info()
         log_entry = self.format(record)
         payload = {"chat_id": chat_id, "text": log_entry, "parse_mode": "HTML"}
         return requests.post(
@@ -113,9 +116,35 @@ class _LogFormatter(logging.Formatter):
 
 
 def init_tglogger(log_level: int = logging.DEBUG) -> None:
+    """
+    Send notifications using logging.
+    """
     _tg_log = logging.getLogger("telegram_notify")
     _tg_log.setLevel(log_level)
     handler = _RequestsHandler()
     formatter = _LogFormatter()
     handler.setFormatter(formatter)
     _tg_log.handlers = [handler]
+
+
+# #############################################################################
+# TelegramNotify.
+# #############################################################################
+
+
+class TelegramNotify:
+    """
+    Send notifications.
+    """
+
+    def __init__(self) -> None:
+        self.token, self.chat_id = htncfg.get_info()
+
+    def send(self, text: str) -> Optional[bytes]:
+        payload = {"chat_id": self.chat_id, "text": text, "parse_mode": "HTML"}
+        return requests.post(
+            "https://api.telegram.org/bot{token}/sendMessage".format(
+                token=self.token
+            ),
+            data=payload,
+        ).content

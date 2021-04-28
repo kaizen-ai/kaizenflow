@@ -10,7 +10,7 @@ import os
 import numpy as np
 import pandas as pd
 
-import helpers.csv as hcsv
+import helpers.csv_helpers as hchelp
 import helpers.env as henv
 import helpers.io_ as hio
 import helpers.list as hlist
@@ -22,7 +22,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# hcsv.py
+# hchelp.py
 # #############################################################################
 
 
@@ -30,7 +30,9 @@ class Test_convert_csv_to_dict(hut.TestCase):
     def test1(self) -> None:
         dir_name = self.get_input_dir()
         test_csv_path = os.path.join(dir_name, "test.csv")
-        actual_result = hcsv.convert_csv_to_dict(test_csv_path, remove_nans=True)
+        actual_result = hchelp.convert_csv_to_dict(
+            test_csv_path, remove_nans=True
+        )
         expected_result = {
             "col1": ["a", "b", "c", "d"],
             "col2": ["a", "b"],
@@ -53,7 +55,7 @@ class Test_from_typed_csv(hut.TestCase):
         test_csv_path = os.path.join(dir_name, "test.csv")
         os.path.join(dir_name, "test.csv.types")
         actual_result = (
-            hcsv.from_typed_csv(test_csv_path)
+            hchelp.from_typed_csv(test_csv_path)
             .dtypes.apply(lambda x: x.name)
             .to_dict()
         )
@@ -78,7 +80,7 @@ class Test_to_typed_csv(hut.TestCase):
         test_csv_path = os.path.join(dir_name, "test.csv")
         test_csv_types_path = os.path.join(dir_name, "test.csv.types")
         df = pd.read_csv(test_csv_path)
-        hcsv.to_typed_csv(df, test_csv_path)
+        hchelp.to_typed_csv(df, test_csv_path)
         self.assertTrue(os.path.exists(test_csv_types_path))
         os.remove(test_csv_types_path)
 

@@ -5,8 +5,10 @@
 set -e
 source ~/.bash_profile
 
+# TODO(gp): -> set_aws_env_vars.sh.
 source devops/docker_build/entrypoint/aws_credentials.sh
 
+# TODO(gp): -> set_env_vars.sh.
 source devops/docker_build/entrypoint/patch_environment_variables.sh
 
 mount -a || true
@@ -14,6 +16,7 @@ mount -a || true
 # Allow working with files outside a container.
 umask 000
 
+# TODO(gp): Merge all this in a single script `devops/docker_build/test_setup.sh`.
 ./devops/docker_build/test/test_mount_fsx.sh
 ./devops/docker_build/test/test_mount_s3.sh
 ./devops/docker_build/test/test_volumes.sh
