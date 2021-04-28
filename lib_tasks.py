@@ -533,14 +533,14 @@ def _get_build_tag() -> str:
     Return a string to tag the build.
 
     E.g.,
-    build_tag=1.0.0.20210428_185840.
+    build_tag=1.0.0.20210428.
         AmpTask1280_Use_versioning_to_keep_code_and_container_in_sync.
         500a9e31ee70e51101c1b2eb82945c19992fa86e
     """
     code_ver = hvers.get_code_version()
     # We can't use datetime_.get_timestamp() since we don't want to pick up
     # the dependencies from pandas.
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.datetime.now().strftime("%Y%m%d")
     branch_name = git.get_branch_name()
     hash_ = git.get_head_hash()
     build_tag = f"{code_ver}.{timestamp}.{branch_name}.{hash_}"

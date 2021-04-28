@@ -9,9 +9,7 @@ FROM ubuntu:20.04 AS builder
 # Pass the build variables to the environment.
 ARG CONTAINER_VERSION
 ENV CONTAINER_VERSION=$CONTAINER_VERSION
-ARG BUILD_TAG
-ENV BUILD_TAG=$BUILD_TAG
-RUN echo "CONTAINER_VERSION=$CONTAINER_VERSION, BUILD_TAG=$BUILD_TAG"
+RUN echo "CONTAINER_VERSION=$CONTAINER_VERSION"
 
 # TODO(gp): Move all this in `devops/docker_build/install_packages.sh`
 # so we can create a single smaller layer.
@@ -86,6 +84,13 @@ COPY $DIR $APP_DIR/$DIR
 ENV DIR="devops/docker_scripts"
 RUN mkdir -p $APP_DIR/$DIR
 COPY $DIR $APP_DIR/$DIR
+
+# This is last since the build tag contains a timestamp that might be trigger
+# a re-build even though nothing has changed.
+ARG BUILD_TAG
+ENV BUILD_TAG=$BUILD_TAG
+RUN echo "BUILD_TAG=$BUILD_TAG"
+
 
 WORKDIR $APP_DIR
 

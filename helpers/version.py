@@ -61,12 +61,7 @@ def check_version() -> None:
     else:
         container_version = os.environ[env_var]
     code_version = get_code_version()
-    if "pytest" in sys.modules:
-        # Inside the unit tests we don't print anything to avoid to capture it in
-        # the output.
-        pass
-    else:
-        print(f"code_version={code_version}, container_version={container_version}")
+    print(f"code_version={code_version}, container_version={container_version}")
     if container_version is None:
         return
     _check_version(code_version, container_version)
