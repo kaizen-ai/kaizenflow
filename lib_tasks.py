@@ -583,13 +583,13 @@ def docker_build_local_image(ctx, cache=True, base_image=""):  # type: ignore
     docker build \
         --progress=plain \
         {opts} \
+        --build-arg CONTAINER_VERSION={container_version} \
+        --build-arg BUILD_TAG={build_tag} \
         -t {image_local} \
         -t {image_hash} \
         -f {dockerfile} \
         .
     """
-    #--build-arg CONTAINER_VERSION={container_version} \
-    #                              --build-arg BUILD_TAG={build_tag} \
     _run(ctx, cmd)
     #
     cmd = f"docker image ls {image_local}"

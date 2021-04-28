@@ -1,12 +1,17 @@
 # syntax = docker/dockerfile:experimental
 
-ENV CONTAINER_VERSION="1.0.0"
-
 #FROM continuumio/miniconda3:4.9.2
 #FROM python:3.7-slim-buster
 #FROM ubuntu:18.04
 FROM ubuntu:20.04 AS builder
 #FROM alpine:3.7
+
+# Pass the build variables to the environment.
+ARG CONTAINER_VERSION
+ENV CONTAINER_VERSION=$CONTAINER_VERSION
+ARG BUILD_TAG
+ENV BUILD_TAG=$BUILD_TAG
+RUN echo "CONTAINER_VERSION=$CONTAINER_VERSION, BUILD_TAG=$BUILD_TAG"
 
 # TODO(gp): Move all this in `devops/docker_build/install_packages.sh`
 # so we can create a single smaller layer.
