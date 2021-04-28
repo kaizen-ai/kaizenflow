@@ -310,6 +310,15 @@ def get_first_line(output: str) -> str:
     return output
 
 
+def text_to_list(txt: str) -> List[str]:
+    """
+    Convert a string (e.g., from system_to_string) into a list of lines.
+    """
+    res = [line.rstrip().lstrip() for line in txt.split("\n")]
+    res = [line for line in res if line != ""]
+    return res
+
+
 def system_to_one_line(cmd: str, *args: Any, **kwargs: Any) -> Tuple[int, str]:
     """
     Execute a shell command, capturing its output (expected to be a single

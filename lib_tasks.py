@@ -126,22 +126,36 @@ def git_diff_master_files(ctx):  # type: ignore
 @task
 def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     """
-    Remove (both locally and remotely) the branches that are already into master.
+    Remove (both local and remote) branches that are already merged into master.
     """
+    def _delete_branches(find_cmd: str, delete_cmd: str, tag: str) -> None:
+        _, txt = hsinte.system_to_string(find_cmd, abort_on_error=False)
+        branches = hsinte.text_to_list(txt)
+        # Print and ask to continue.
+        _LOG.info("The %s branches to delete are %d:\n%s", tag, len(branches), "\n".join(branches))
+        if not branches:
+            return
+        if confirm_delete:
+            hsinte.query_yes_no("Ok to delete these branches?", abort_on_no=True)
+        for branch in branches:
+            cmd = f"{delete_cmd} {branch}"
+            ctx.run(cmd)
     _LOG.info(">")
+    # Delete local branches that are already merged into master.
+    # > git branch --merged
+    # * AmpTask1251_Update_GH_actions_for_amp_02
+    find_cmd = ("git branch --merged master"
+           " | grep -v master" +
+           " | grep -v \*")
+    delete_cmd = "git branch -d"
+    _delete_branches(find_cmd, delete_cmd, "local")
     # Get the branches to delete.
-    cmd = ("git branch -r --merged origin/master"
+    find_cmd = ("git branch -r --merged origin/master"
         " | grep -v master" +
         " | sed 's/origin\///'")
-    _, txt = hsinte.system_to_string(cmd)
-    branches = [b.rstrip().lstrip() for b in txt.split("\n")]
-    # Print and ask to continue.
-    _LOG.info("The branches to delete are:\n" + "\n".join(branches))
-    if confirm_delete:
-        hsinte.query_yes_no("Ok to delete these branches?", abort_on_no=True)
-    for branch in branches:
-        cmd = f"git push --delete origin {branch}"
-        ctx.run(cmd)
+    delete_cmd = "git push origin --delete"
+    _delete_branches(find_cmd, delete_cmd, "remote")
+    #
     cmd = "git fetch --prune"
     ctx.run(cmd)
 
