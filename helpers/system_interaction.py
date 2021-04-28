@@ -1,4 +1,7 @@
 """
+Contain all the code needed to interact with the outside world, e.g., through
+system commands, env vars, ...
+
 Import as:
 
 import helpers.system_interaction as hsinte

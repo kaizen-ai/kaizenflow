@@ -3,7 +3,7 @@
 """
 Send a notification through Telegram. See README.md in helpers/telegram_notify.
 
-> cmd_to_check; tntnot.py -m "error=$?"
+> cmd_to_check; tg.py -m "error=$?"
 
 > ls; tntnot.py -m "error=$?"
 > ls /I_do_not_exist; tntnot.py -m "error=$?"
