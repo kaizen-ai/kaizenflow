@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.test.test_dataframe as httdat
+"""
+
 import collections
 import logging
 import os
@@ -19,6 +25,7 @@ class Test_filter_data_by_values1(hut.TestCase):
         filters = {"col_0": (1, 12), "col_1": (2, 11), "col_2": (3, 6)}
         info: collections.OrderedDict = collections.OrderedDict()
         filtered_data = hdataf.filter_data_by_values(data, filters, "and", info)
+        # TODO(gp): Factor out the common code.
         str_output = (
             f"{hprint.frame('data')}\n"
             f"{hut.convert_df_to_string(data, index=True)}\n"
@@ -52,7 +59,9 @@ class Test_filter_data_by_comparison(hut.TestCase):
         data = data.add_prefix("col_")
         filters = {"col_0": (("gt", 1), ("lt", 7)), "col_1": ("eq", 5)}
         info: collections.OrderedDict = collections.OrderedDict()
-        filtered_data = hdataf.filter_data_by_comparison(data, filters, "and", info)
+        filtered_data = hdataf.filter_data_by_comparison(
+            data, filters, "and", info
+        )
         str_output = (
             f"{hprint.frame('data')}\n"
             f"{hut.convert_df_to_string(data, index=True)}\n"
@@ -68,7 +77,9 @@ class Test_filter_data_by_comparison(hut.TestCase):
         data = data.add_prefix("col_")
         filters = {"col_0": ("gt", 2), "col_1": ("eq", 5)}
         info: collections.OrderedDict = collections.OrderedDict()
-        filtered_data = hdataf.filter_data_by_comparison(data, filters, "or", info)
+        filtered_data = hdataf.filter_data_by_comparison(
+            data, filters, "or", info
+        )
         str_output = (
             f"{hprint.frame('data')}\n"
             f"{hut.convert_df_to_string(data, index=True)}\n"
@@ -100,14 +111,12 @@ class TestFilterDataByMethod(hut.TestCase):
         act = hdataf.filter_data_by_method(
             data=data, filters=filters, mode=mode, info=info
         )
-        act = hut.convert_df_to_string(act)
-        act = str(act)
+        act = hut.convert_df_to_string(act, decimals=3)
         # Check output.
-        self.check_string(act)
+        self.check_string(act, fuzzy_match=True)
 
 
 class Test_apply_nan_mode(hut.TestCase):
-
     def test1(self) -> None:
         """
         Test for `mode=leave_unchanged`.
@@ -157,6 +166,7 @@ class Test_apply_nan_mode(hut.TestCase):
     def test6(self) -> None:
         series = pd.Series([])
         hdataf.apply_nan_mode(series)
+
     @staticmethod
     def _get_series_with_nans(seed: int) -> pd.Series:
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
