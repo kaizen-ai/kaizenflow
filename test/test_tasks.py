@@ -9,15 +9,18 @@ import helpers.printing as hprint
 import helpers.system_interaction as hsi
 import helpers.unit_test as hut
 
+# TODO(gp): We should separate what can be tested by lib_tasks.py and what
+#  should be tested as part of tasks.py
+
 dbg.init_logger()
 _LOG = logging.getLogger(__name__)
 
 try:
     import invoke
 
-    # TODO(gp): We should separate what can be tested by
     import tasks
 except ModuleNotFoundError as e:
+    # TODO(gp): Is this needed?
     print("Can't find invoke: %s" % str(e))
 
     class Dummy:
@@ -25,15 +28,6 @@ except ModuleNotFoundError as e:
             self.MockContext = None
 
     invoke = Dummy()
-
-
-class TestLibTasks1(hut.TestCase):
-
-    def test_get_build_tag1(self):
-        tasks.get_
-
-
-# #################################################################################
 
 
 class TestDryRunTasks1(hut.TestCase):
@@ -108,7 +102,7 @@ class TestDryRunTasks1(hut.TestCase):
 
         This is used to test the commands that we can't actually execute.
         """
-        cmd = "invoke --dry " + target + " | grep -v INFO"
+        cmd = "invoke --dry " + target + " | grep -v INFO | grep -v code_version"
         _, act = hsi.system_to_string(cmd)
         # TODO(gp): Unclear why pylint can't find this function.
         # pylint: disable=no-member
