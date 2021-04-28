@@ -1,5 +1,7 @@
 # syntax = docker/dockerfile:experimental
 
+ENV CONTAINER_VERSION="1.0.0"
+
 #FROM continuumio/miniconda3:4.9.2
 #FROM python:3.7-slim-buster
 #FROM ubuntu:18.04

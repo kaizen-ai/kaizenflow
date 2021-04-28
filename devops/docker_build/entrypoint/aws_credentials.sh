@@ -20,7 +20,7 @@ else
                 echo "Assigning AWS_ACCESS_KEY_ID='$value'"
                 export AWS_ACCESS_KEY_ID=$value
             elif [[ $key == 'aws_secret_access_key' ]]; then
-                echo "Assigning AWS_SECRET_ACCESS_KEY='$value'"
+                echo "Assigning AWS_SECRET_ACCESS_KEY='***'"
                 export AWS_SECRET_ACCESS_KEY=$value
             fi
         fi
