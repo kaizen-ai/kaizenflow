@@ -86,7 +86,7 @@ def _get_launcher_name() -> str:
         servers = ihnb.list_running_servers()
         for ss in servers:
             response = requests.get(
-                rcompa.urljoin(ss["url"], "api/sessions"),
+                rcompa.urljoin(ss["url"], "api/sessions"),  # type: ignore
                 params={"token": ss.get("token", "")},
             )
             for nn in json.loads(response.text):

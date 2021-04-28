@@ -7,7 +7,7 @@ import core.dataflow.test.test_models as dttmod
 import collections
 import logging
 import pprint
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import mxnet
 import numpy as np
@@ -742,7 +742,7 @@ class TestVolatilityModel(hut.TestCase):
 
     @staticmethod
     def _package_results2(
-            config: ccfg.Config, state: Dict[str, Any], df_out: pd.DataFrame
+        config: ccfg.Config, state: Dict[str, Any], df_out: pd.DataFrame
     ) -> str:
         act: List[str] = []
         act.append(hprint.frame("config"))
@@ -863,7 +863,7 @@ class TestVolatilityModulator(hut.TestCase):
 
     def _check_results(
         self, config: ccfg.Config, df_in: pd.DataFrame, df_out: pd.DataFrame
-    ) -> None
+    ) -> None:
         act: List[str] = []
         act.append(hprint.frame("config"))
         act.append(str(config))
@@ -1295,7 +1295,10 @@ class TestContinuousSarimaxModel(hut.TestCase):
         self.check_string(act)
 
     def _check_results(
-        self, config: ccfg.Config, df_out: pd.DataFrame, err_threshold=0.01
+        self,
+        config: ccfg.Config,
+        df_out: pd.DataFrame,
+        err_threshold: float = 0.01,
     ) -> None:
         act: List[str] = []
         act.append(hprint.frame("config"))

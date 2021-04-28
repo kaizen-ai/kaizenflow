@@ -158,8 +158,8 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     _delete_branches(find_cmd, delete_cmd, "local")
     # Get the branches to delete.
     find_cmd = (
-        "git branch -r --merged origin/master" +
-        r" | grep -v master | sed 's/origin\///'"
+        "git branch -r --merged origin/master"
+        + r" | grep -v master | sed 's/origin\///'"
     )
     delete_cmd = "git push origin --delete"
     _delete_branches(find_cmd, delete_cmd, "remote")
