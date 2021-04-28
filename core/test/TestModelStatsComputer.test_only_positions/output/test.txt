@@ -1,5 +1,5 @@
-                             0
-avg_turnover_(%)       142.852
-turnover_frequency       <Day>
-avg_holding_period    0.700025
-holding_period_units     <Day>
+                            0
+avg_turnover_(%)      142.852
+turnover_frequency      <Day>
+avg_holding_period        0.7
+holding_period_units    <Day>
