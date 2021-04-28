@@ -1,16 +1,7 @@
-"""
-Import as:
-
-import helpers.test.test_version as httver
-"""
-
 import logging
 
-# import helpers.dbg as dbg
 import helpers.unit_test as hut
 import helpers.version as hversi
-
-# import pytest
 
 
 _LOG = logging.getLogger(__name__)

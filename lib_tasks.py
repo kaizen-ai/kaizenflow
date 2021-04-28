@@ -405,7 +405,8 @@ def _get_image(stage: str, base_image: str) -> str:
 
 
 def _docker_cmd(
-    ctx: Any, stage: str, base_image: str, docker_compose: str, cmd: str
+    ctx: Any, stage: str, base_image: str, docker_compose: str, cmd: str,
+    entrypoint: bool = True
 ) -> None:
     """
     :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
@@ -419,22 +420,30 @@ def _docker_cmd(
     dbg.dassert_exists(docker_compose)
     #
     user_name = hsinte.get_user_name()
-    cmd = rf"""IMAGE={image} \
+    docker_cmd = rf"""IMAGE={image} \
     docker-compose \
         -f {docker_compose} \
         run \
         --rm \
         -l user={user_name} \
+    """
+    docker_cmd = docker_cmd.rstrip()
+    if entrypoint:
+        docker_cmd += rf"""
         user_space \
         {cmd}"""
+    else:
+        docker_cmd += r"""
+        --entrypoint bash \
+        user_space"""
     if use_one_line_cmd:
-        cmd = _remove_spaces(cmd)
-    _LOG.debug("cmd=%s", cmd)
-    ctx.run(cmd, pty=True)
+        docker_cmd = _remove_spaces(docker_cmd)
+    _LOG.debug("cmd=%s", docker_cmd)
+    ctx.run(docker_cmd, pty=True)
 
 
 @task
-def docker_bash(ctx, stage=_STAGE):  # type: ignore
+def docker_bash(ctx, stage=_STAGE, entrypoint=True):  # type: ignore
     """
     Start a bash shell inside the container corresponding to a stage.
     """
@@ -442,7 +451,7 @@ def docker_bash(ctx, stage=_STAGE):  # type: ignore
     base_image = ""
     docker_compose = _get_amp_docker_compose_path()
     cmd = "bash"
-    _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
+    _docker_cmd(ctx, stage, base_image, docker_compose, cmd, entrypoint=entrypoint)
 
 
 @task
@@ -526,15 +535,14 @@ def docker_kill_all(ctx):  # type: ignore
     ctx.run("docker rm -f $(docker ps -a -q)")
 
 
-
 @functools.lru_cache()
 def _get_build_tag() -> str:
     """
     Return a string to tag the build.
 
     E.g.,
-    build_tag=1.0.0.20210428.
-        AmpTask1280_Use_versioning_to_keep_code_and_container_in_sync.
+    build_tag=1.0.0-20210428-
+        AmpTask1280_Use_versioning_to_keep_code_and_container_in_sync-
         500a9e31ee70e51101c1b2eb82945c19992fa86e
     """
     code_ver = hversi.get_code_version()
@@ -543,7 +551,7 @@ def _get_build_tag() -> str:
     timestamp = datetime.datetime.now().strftime("%Y%m%d")
     branch_name = git.get_branch_name()
     hash_ = git.get_head_hash()
-    build_tag = f"{code_ver}.{timestamp}.{branch_name}.{hash_}"
+    build_tag = f"{code_ver}-{timestamp}-{branch_name}-{hash_}"
     return build_tag
 
 

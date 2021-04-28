@@ -103,7 +103,7 @@ class TestDryRunTasks1(hut.TestCase):
         This is used to test the commands that we can't actually
         execute.
         """
-        cmd = "invoke --dry " + target + " | grep -v INFO | grep -v code_version"
+        cmd = "invoke --dry " + target + " | grep -v INFO | grep -v 'code_version='"
         _, act = hsinte.system_to_string(cmd)
         # TODO(gp): Unclear why pylint can't find this function.
         # pylint: disable=no-member

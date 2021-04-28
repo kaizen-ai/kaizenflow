@@ -4,15 +4,14 @@ Import as:
 import helpers.version as hversi
 """
 
+# This file should depend only on Python standard package since it's used by
+# helpers/dbg.py, which is used everywhere.
+
 import logging
 import os
-
-# This file should depend only on Python standard package since it's used by helpers/dbg.py
-# which is used everywhere.
+from typing import Optional
 
 _LOG = logging.getLogger(__name__)
-
-from typing import Optional
 
 
 def get_code_version() -> str:
@@ -23,11 +22,15 @@ def get_code_version() -> str:
     return _CODE_VERSION
 
 
+# True if we are running inside a (Docker) container.
+IS_INSIDE_CONTAINER = os.path.exists("/.dockerenv")
+
+
 def get_container_version() -> Optional[str]:
     """
     Return the container version.
     """
-    if os.path.exists("/.dockerenv"):
+    if IS_INSIDE_CONTAINER:
         # We are running inside a container.
         # Keep the code and the container in sync by versioning both and requiring
         # to be the same.
@@ -59,14 +62,22 @@ def check_version() -> None:
     Check that the code and container code have compatible version, otherwise
     raises `RuntimeError`.
     """
+    # Get code version.
+    code_version = get_code_version()
+    # Get container version.
     env_var = "CONTAINER_VERSION"
     if env_var not in os.environ:
-        _LOG.warning("The env var '%s' is not defined", env_var)
-        container_version = None
+        if IS_INSIDE_CONTAINER:
+            raise NotImplemented(
+                f"The env var '{env_var}' should be defined when "
+                "running inside a container")
+        else:
+            container_version = None
     else:
         container_version = os.environ[env_var]
-    code_version = get_code_version()
-    print(f"code_version={code_version}, container_version={container_version}")
+    print(f"code_version={code_version}, "
+            f"container_version={container_version}, "
+            f"inside_container={IS_INSIDE_CONTAINER}")
     if container_version is None:
         return
     _check_version(code_version, container_version)

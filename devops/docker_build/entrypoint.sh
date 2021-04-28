@@ -25,8 +25,11 @@ echo "AWS_ACCESS_KEY_ID='$AWS_ACCESS_KEY_ID'"
 echo "AWS_SECRET_ACCESS_KEY='***'"
 echo "AWS_DEFAULT_REGION='$AWS_DEFAULT_REGION'"
 
-echo "which python: " $(which python)
-echo "check pandas package: " $(python -c "import pandas; print(pandas)")
+echo "CONTAINER_VERSION='$CONTAINER_VERSION'"
+echo "BUILD_TAG='$BUILD_TAG'"
+
+echo "which python: "$(which python)
+echo "check pandas package: "$(python -c "import pandas; print(pandas)")
 
 echo "PATH=$PATH"
 echo "PYTHONPATH=$PYTHONPATH"
