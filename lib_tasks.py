@@ -236,15 +236,6 @@ def docker_kill_last(ctx):  # type: ignore
     ctx.run("docker rm -f $(docker ps -l -q)")
 
 
-@task
-def docker_kill_all(ctx):  # type: ignore
-    """
-    Kill all the Docker containers.
-    """
-    ctx.run("docker ps -a")
-    ctx.run("docker rm -f $(docker ps -a -q)")
-
-
 # #############################################################################
 # Docker development.
 # #############################################################################
@@ -520,6 +511,32 @@ def _run(ctx: Any, cmd: str) -> None:
 # DOCKER_BUILDKIT = 1
 DOCKER_BUILDKIT = 0
 
+@task
+def docker_kill_all(ctx):  # type: ignore
+    """
+    Kill all the Docker containers.
+    """
+    ctx.run("docker ps -a")
+    ctx.run("docker rm -f $(docker ps -a -q)")
+
+import helpers.datetime_ as datetime_
+import helpers.version as hvers
+
+
+@functools.lru_cache()
+def _get_build_tag():
+    branch_name = git.get_branch_name()
+    hash_ = git.get_head_hash()
+    timestamp = datetime_.get_timestamp()
+    #
+    code_ver = hvers.get_code_version()
+    build_tag = f"{code_ver}.{branch_name}.{hash_}.{timestamp}"
+    return build_tag
+
+
+# --build-arg "SOURCE_COMMIT=$SOURCE_COMMIT"
+# --build-arg "SOURCE_COMMIT=$SOURCE_COMMIT"
+
 
 # DEV image flow:
 # - A "local" image (which is a release candidate for the DEV image) is built
@@ -557,6 +574,7 @@ def docker_build_local_image(ctx, cache=True, base_image=""):  # type: ignore
         -t {image_local} \
         -t {image_hash} \
         -f {dockerfile} \
+        --build-arg "SOURCE_COMMIT=$SOURCE_COMMIT" \
         .
     """
     _run(ctx, cmd)

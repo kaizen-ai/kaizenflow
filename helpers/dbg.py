@@ -11,23 +11,8 @@ import pprint
 import sys
 from typing import Any, Iterable, List, Optional, Tuple, Type, Union
 
-from helpers.version import *
-
-if os.path.exists("/.dockerenv"):
-    # We are running inside a container.
-    # Keep the code and the container in sync by versioning both and requiring
-    # to be the same.
-    container_version = os.environ["CONTAINER_VERSION"]
-    print("code_version={CODE_VERSION}, container_version={container_ver}")
-    if container_version != CODE_VERSION:
-        msg = f"""This code is not in sync with the container:
-    code_version={CODE_VERSION} != container_version={container_ver}")
-You need to:
-- merge origin/master into your branch with `invoke git_merge_origin_master`
-- pull the latest container with `invoke docker_pull`
-"""
-        raise RuntimeError(msg)
-
+import helpers.version as hversion
+hversion.check_version()
 
 # This module should not depend on anything else than Python standard modules.
 

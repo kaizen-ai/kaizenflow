@@ -360,6 +360,7 @@ def get_path_from_git_root(file_name: str, super_module: bool) -> str:
     return ret
 
 
+@functools.lru_cache()
 def get_amp_abs_path() -> str:
     """
     Return the absolute path of `amp` dir.
@@ -398,21 +399,22 @@ def get_repo_dirs() -> List[str]:
 # #############################################################################
 
 
-def get_head_hash(dir_name: str) -> str:
+def get_head_hash(dir_name: str = ".") -> str:
     """
     Report the hash that a Git repo is synced at.
 
     > git rev-parse HEAD
+    4759b3685f903e6c669096e960b248ec31c63b69
     """
     dbg.dassert_exists(dir_name)
     cmd = f"cd {dir_name} && git rev-parse HEAD"
     data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
     _, output = data
-    # 4759b3685f903e6c669096e960b248ec31c63b69
     return output
 
 
-def get_current_commit_hash(dir_name: str = "./") -> str:
+# TODO(gp): Use get_head_hash() and remove this.
+def get_current_commit_hash(dir_name: str = ".") -> str:
     dbg.dassert_exists(dir_name)
     cmd = f"cd {dir_name} && git rev-parse HEAD"
     data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
