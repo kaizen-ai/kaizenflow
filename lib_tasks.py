@@ -7,6 +7,7 @@ import lib_tasks as ltasks
 # TODO(gp): Move to helpers.lib_tasks? Do we need to move / rename also
 #  test_tasks.py?
 
+import datetime
 import functools
 import logging
 import os
@@ -23,6 +24,7 @@ import helpers.dbg as dbg
 import helpers.git as git
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
+import helpers.version as hversi
 
 _LOG = logging.getLogger(__name__)
 
@@ -514,6 +516,7 @@ def _run(ctx: Any, cmd: str) -> None:
 # DOCKER_BUILDKIT = 1
 DOCKER_BUILDKIT = 0
 
+
 @task
 def docker_kill_all(ctx):  # type: ignore
     """
@@ -522,9 +525,6 @@ def docker_kill_all(ctx):  # type: ignore
     ctx.run("docker ps -a")
     ctx.run("docker rm -f $(docker ps -a -q)")
 
-
-import helpers.version as hvers
-import datetime
 
 
 @functools.lru_cache()
@@ -537,7 +537,7 @@ def _get_build_tag() -> str:
         AmpTask1280_Use_versioning_to_keep_code_and_container_in_sync.
         500a9e31ee70e51101c1b2eb82945c19992fa86e
     """
-    code_ver = hvers.get_code_version()
+    code_ver = hversi.get_code_version()
     # We can't use datetime_.get_timestamp() since we don't want to pick up
     # the dependencies from pandas.
     timestamp = datetime.datetime.now().strftime("%Y%m%d")
@@ -575,7 +575,7 @@ def docker_build_local_image(ctx, cache=True, base_image=""):  # type: ignore
     #
     opts = "--no_cache" if not cache else ""
     # The container version is the version used from this code.
-    container_version = hvers.get_code_version()
+    container_version = hversi.get_code_version()
     build_tag = _get_build_tag()
     cmd = rf"""
     DOCKER_BUILDKIT={DOCKER_BUILDKIT} \

@@ -6,7 +6,7 @@ import pytest
 
 import helpers.dbg as dbg
 import helpers.printing as hprint
-import helpers.system_interaction as hsi
+import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
 
 # TODO(gp): We should separate what can be tested by lib_tasks.py and what
@@ -100,10 +100,11 @@ class TestDryRunTasks1(hut.TestCase):
         """
         Invoke the given target with dry run.
 
-        This is used to test the commands that we can't actually execute.
+        This is used to test the commands that we can't actually
+        execute.
         """
         cmd = "invoke --dry " + target + " | grep -v INFO | grep -v code_version"
-        _, act = hsi.system_to_string(cmd)
+        _, act = hsinte.system_to_string(cmd)
         # TODO(gp): Unclear why pylint can't find this function.
         # pylint: disable=no-member
         act = hprint.remove_non_printable_chars(act)
@@ -152,7 +153,7 @@ def _get_default_params() -> Dict[str, str]:
     return default_params
 
 
-@pytest.mark.skipif(hsi.is_inside_docker(), reason="AmpTask165")
+@pytest.mark.skipif(hsinte.is_inside_docker(), reason="AmpTask165")
 class TestExecuteTasks1(hut.TestCase):
     """
     Execute tasks that don't change state of the system (e.g., commit images).
@@ -160,38 +161,38 @@ class TestExecuteTasks1(hut.TestCase):
 
     def test_list(self) -> None:
         cmd = "invoke --list"
-        hsi.system(cmd)
+        hsinte.system(cmd)
 
     def test_print_setup1(self) -> None:
         cmd = "invoke print_setup"
-        hsi.system(cmd)
+        hsinte.system(cmd)
 
     def test_docker_images_ls_repo1(self) -> None:
         cmd = "invoke docker_images_ls_repo"
-        hsi.system(cmd)
+        hsinte.system(cmd)
 
     def test_docker_ps(self) -> None:
         cmd = "invoke docker_ps"
-        hsi.system(cmd)
+        hsinte.system(cmd)
 
     def test_docker_stats(self) -> None:
         cmd = "invoke docker_stats"
-        hsi.system(cmd)
+        hsinte.system(cmd)
 
     def test_docker_login1(self) -> None:
         cmd = "invoke docker_login"
-        hsi.system(cmd)
+        hsinte.system(cmd)
 
     def test_docker_cmd1(self) -> None:
         cmd = 'invoke docker_cmd --cmd="ls"'
-        hsi.system(cmd)
+        hsinte.system(cmd)
 
     def test_docker_jupyter1(self) -> None:
         cmd = "invoke docker_jupyter --self-test"
-        hsi.system(cmd)
+        hsinte.system(cmd)
 
 
-@pytest.mark.skipif(hsi.is_inside_docker(), reason="AmpTask165")
+@pytest.mark.skipif(hsinte.is_inside_docker(), reason="AmpTask165")
 class TestExecuteTasks2(hut.TestCase):
     """
     Execute tasks that change the state of the system but not using the.
@@ -199,11 +200,11 @@ class TestExecuteTasks2(hut.TestCase):
 
     def test_docker_jupyter1(self) -> None:
         cmd = "invoke docker_jupyter --self-test"
-        hsi.system(cmd)
+        hsinte.system(cmd)
 
     def test_docker_pull1(self) -> None:
         cmd = "invoke docker_pull"
-        hsi.system(cmd)
+        hsinte.system(cmd)
 
     # Images workflows.
 
@@ -211,45 +212,45 @@ class TestExecuteTasks2(hut.TestCase):
         params = _get_default_params()
         base_image = params["ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
         cmd = f"invoke docker_build_local_image --cache --base-image={base_image}"
-        hsi.system(cmd)
+        hsinte.system(cmd)
 
     @pytest.mark.skip("No prod image for amp yet")
     def test_docker_build_prod_image(self) -> None:
         params = _get_default_params()
         base_image = params["ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
         cmd = f"invoke docker_build_prod_image --cache --base-image={base_image}"
-        hsi.system(cmd)
+        hsinte.system(cmd)
 
     # Run tests.
     def test_run_blank_tests1(self) -> None:
         cmd = "invoke run_blank_tests"
-        hsi.system(cmd)
+        hsinte.system(cmd)
 
     @pytest.mark.skip
     @pytest.mark.slow("Around 30 secs")
     def test_collect_only1(self) -> None:
         cmd = "invoke docker_cmd --cmd='pytest --collect-only'"
-        hsi.system(cmd)
+        hsinte.system(cmd)
 
     def test_collect_only2(self) -> None:
         # We need to specify the dir independently of the git root since this will
         # run inside a container.
         dir_name = '$(dirname $(find . -name "test_dbg.py" -type f))'
         cmd = f"invoke docker_cmd --cmd='pytest {dir_name} --collect-only'"
-        hsi.system(cmd)
+        hsinte.system(cmd)
 
     def test_run_fast_tests(self) -> None:
         file_name = '$(find . -name "test_dbg.py" -type f)'
         cmd = f"invoke run_fast_tests --pytest-opts='{file_name}'"
-        hsi.system(cmd)
+        hsinte.system(cmd)
 
     # Linter.
     def test_lint_docker_pull1(self) -> None:
         cmd = "invoke lint_docker_pull"
-        hsi.system(cmd)
+        hsinte.system(cmd)
 
     def test_lint1(self) -> None:
         # Get the pointer to amp.
         file_name = '$(find . -name "dbg.py" -type f)'
         cmd = f"invoke lint --files='{file_name}' --phases='black'"
-        hsi.system(cmd)
+        hsinte.system(cmd)

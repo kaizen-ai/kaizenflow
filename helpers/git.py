@@ -12,7 +12,7 @@ import re
 from typing import Dict, List, Optional, Tuple
 
 import helpers.dbg as dbg
-import helpers.system_interaction as hsyste
+import helpers.system_interaction as hsinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ def get_client_root(super_module: bool) -> str:
         # /Users/saggese/src/.../amp
         cmd = "git rev-parse --show-toplevel"
     # TODO(gp): Use system_to_one_line().
-    _, out = hsyste.system_to_string(cmd)
+    _, out = hsinte.system_to_string(cmd)
     out = out.rstrip("\n")
     dbg.dassert_eq(len(out.split("\n")), 1, msg="Invalid out='%s'" % out)
     client_root: str = os.path.realpath(out)
@@ -84,7 +84,7 @@ def is_inside_submodule(git_dir: str = ".") -> bool:
     # true
     cmd.append("(git rev-parse --is-inside-work-tree | grep -q true)")
     cmd_as_str = " && ".join(cmd)
-    rc = hsyste.system(cmd_as_str, abort_on_error=False)
+    rc = hsinte.system(cmd_as_str, abort_on_error=False)
     ret: bool = rc == 0
     return ret
 
@@ -98,7 +98,7 @@ def _get_submodule_hash(dir_name: str) -> str:
     """
     dbg.dassert_exists(dir_name)
     cmd = "git ls-tree master | grep %s" % dir_name
-    data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
+    data: Tuple[int, str] = hsinte.system_to_one_line(cmd)
     _, output = data
     # 160000 commit 0011776388b4c0582161eb2749b665fc45b87e7e  amp
     _LOG.debug("output=%s", output)
@@ -126,7 +126,7 @@ def get_path_from_supermodule() -> str:
     # > git rev-parse --show-superproject-working-tree
     # (No result)
     cmd = "git rev-parse --show-superproject-working-tree"
-    submodule_superproject: str = hsyste.system_to_one_line(cmd)[1]
+    submodule_superproject: str = hsinte.system_to_one_line(cmd)[1]
     _LOG.debug("submodule_superproject=%s", submodule_superproject)
     # > git config --file /Users/saggese/src/.../.gitmodules --get-regexp path
     # submodule.amp.path amp
@@ -135,7 +135,7 @@ def get_path_from_supermodule() -> str:
         '| grep $(basename "$(pwd)")'
         "| awk '{ print $2 }'"
     )
-    res: str = hsyste.system_to_one_line(cmd)[1]
+    res: str = hsinte.system_to_one_line(cmd)[1]
     _LOG.debug("res=%s", res)
     return res
 
@@ -223,7 +223,7 @@ def get_branch_name(dir_name: str = ".") -> str:
     # > git rev-parse --abbrev-ref HEAD
     # master
     cmd = "cd %s && git rev-parse --abbrev-ref HEAD" % dir_name
-    data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
+    data: Tuple[int, str] = hsinte.system_to_one_line(cmd)
     _, output = data
     return output
 
@@ -238,7 +238,7 @@ def find_file_in_git_tree(file_name: str, super_module: bool = True) -> str:
     """
     root_dir = get_client_root(super_module=super_module)
     cmd = "find %s -name '%s' | grep -v .git" % (root_dir, file_name)
-    _, file_name = hsyste.system_to_one_line(cmd)
+    _, file_name = hsinte.system_to_one_line(cmd)
     _LOG.debug("file_name=%s", file_name)
     dbg.dassert_ne(
         file_name, "", "Can't find file '%s' in dir '%s'", file_name, root_dir
@@ -251,8 +251,10 @@ def find_file_in_git_tree(file_name: str, super_module: bool = True) -> str:
 def _parse_github_repo_name(repo_name: str) -> str:
     """
     Parse repo name from GitHub in the format:
+    ```
         git@github.com:alphamatic/amp
         https://github.com/alphamatic/amp
+    ```
     """
     m = re.match(r"^\S+\.com[:/](.*)$", repo_name)
     dbg.dassert(m, "Can't parse '%s'", repo_name)
@@ -276,7 +278,7 @@ def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
     cmd = "cd %s; (git remote -v | grep origin | grep fetch)" % git_dir
     # TODO(gp): Make it more robust, by checking both fetch and push.
     #  "origin  git@github.com:alphamatic/amp (fetch)"
-    _, output = hsyste.system_to_string(cmd)
+    _, output = hsinte.system_to_string(cmd)
     # > git remote -v
     # origin  git@github.com:alphamatic/amp (fetch)
     # origin  git@github.com:alphamatic/amp (push)
@@ -307,9 +309,9 @@ def _get_repo_map() -> Dict[str, str]:
     # TODO(gp): The proper fix is #PTask551.
     # Get info from the including repo, if possible.
     try:
-        import repo_config as repoco
+        import repo_config as rcfg
 
-        repo_map.update(repoco.REPO_MAP)
+        repo_map.update(rcfg.REPO_MAP)
     except ImportError:
         _LOG.debug("No including repo")
     dbg.dassert_no_duplicates(repo_map.keys())
@@ -355,7 +357,7 @@ def get_path_from_git_root(file_name: str, super_module: bool) -> str:
     end_idx = len(git_root)
     ret = abs_path[end_idx:]
     # cmd = "git ls-tree --full-name --name-only HEAD %s" % file_name
-    # _, git_file_name = hsyste.system_to_string(cmd)
+    # _, git_file_name = hsinte.system_to_string(cmd)
     # dbg.dassert_ne(git_file_name, "")
     return ret
 
@@ -403,12 +405,14 @@ def get_head_hash(dir_name: str = ".") -> str:
     """
     Report the hash that a Git repo is synced at.
 
+    ```
     > git rev-parse HEAD
     4759b3685f903e6c669096e960b248ec31c63b69
+    ```
     """
     dbg.dassert_exists(dir_name)
     cmd = f"cd {dir_name} && git rev-parse HEAD"
-    data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
+    data: Tuple[int, str] = hsinte.system_to_one_line(cmd)
     _, output = data
     return output
 
@@ -417,7 +421,7 @@ def get_head_hash(dir_name: str = ".") -> str:
 def get_current_commit_hash(dir_name: str = ".") -> str:
     dbg.dassert_exists(dir_name)
     cmd = f"cd {dir_name} && git rev-parse HEAD"
-    data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
+    data: Tuple[int, str] = hsinte.system_to_one_line(cmd)
     _, sha = data
     # 0011776388b4c0582161eb2749b665fc45b87e7e
     _LOG.debug("sha=%s", sha)
@@ -431,7 +435,7 @@ def get_remote_head_hash(dir_name: str) -> str:
     dbg.dassert_exists(dir_name)
     sym_name = get_repo_symbolic_name_from_dirname(dir_name)
     cmd = f"git ls-remote git@github.com:{sym_name} HEAD 2>/dev/null"
-    data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
+    data: Tuple[int, str] = hsinte.system_to_one_line(cmd)
     _, output = data
     # > git ls-remote git@github.com:alphamatic/amp HEAD 2>/dev/null
     # 921676624f6a5f3f36ab507baed1b886227ac2e6        HEAD
@@ -457,7 +461,7 @@ def _get_files(
     dir_name: str, cmd: str, remove_files_non_present: bool
 ) -> List[str]:
     cd_cmd = "cd %s && " % dir_name
-    _, output = hsyste.system_to_string(cd_cmd + cmd)
+    _, output = hsinte.system_to_string(cd_cmd + cmd)
     #
     files = output.split()
     files = [os.path.join(dir_name, f) for f in files]
@@ -557,7 +561,7 @@ def get_git_name() -> str:
     cmd = "git config --get user.name"
     # For some reason data is annotated as Any by mypy, instead of
     # Tuple[int, str] so we need to cast it to the right value.
-    data: Tuple[int, str] = hsyste.system_to_one_line(cmd)
+    data: Tuple[int, str] = hsinte.system_to_one_line(cmd)
     _, output = data
     return output
 
@@ -579,7 +583,7 @@ def git_log(num_commits: int = 5, my_commits: bool = False) -> str:
     if my_commits:
         cmd.append("--author $(git config user.name)")
     cmd = " ".join(cmd)
-    data: Tuple[int, str] = hsyste.system_to_string(cmd)
+    data: Tuple[int, str] = hsinte.system_to_string(cmd)
     _, txt = data
     return txt
 
@@ -589,8 +593,8 @@ def git_stash_push(
 ) -> Tuple[str, bool]:
     import helpers.datetime_ as hdatet
 
-    user_name = hsyste.get_user_name()
-    server_name = hsyste.get_server_name()
+    user_name = hsinte.get_user_name()
+    server_name = hsinte.get_server_name()
     timestamp = hdatet.get_timestamp()
     tag = "%s-%s-%s" % (user_name, server_name, timestamp)
     tag = prefix + "." + tag
@@ -601,10 +605,10 @@ def git_stash_push(
     if msg:
         push_msg += ": " + msg
     cmd += " -m '%s'" % push_msg
-    hsyste.system(cmd, suppress_output=False, log_level=log_level)
+    hsinte.system(cmd, suppress_output=False, log_level=log_level)
     # Check if we actually stashed anything.
     cmd = r"git stash list | \grep '%s' | wc -l" % tag
-    _, output = hsyste.system_to_string(cmd)
+    _, output = hsinte.system_to_string(cmd)
     was_stashed = int(output) > 0
     if not was_stashed:
         msg = "Nothing was stashed"
@@ -616,7 +620,7 @@ def git_stash_push(
 def git_stash_apply(mode: str, log_level: int = logging.DEBUG) -> None:
     _LOG.debug("# Checking stash head ...")
     cmd = "git stash list | head -3"
-    hsyste.system(cmd, suppress_output=False, log_level=log_level)
+    hsinte.system(cmd, suppress_output=False, log_level=log_level)
     #
     _LOG.debug("# Restoring local changes...")
     if mode == "pop":
@@ -625,7 +629,7 @@ def git_stash_apply(mode: str, log_level: int = logging.DEBUG) -> None:
         cmd = "git stash apply --quiet"
     else:
         raise ValueError("mode='%s'" % mode)
-    hsyste.system(cmd, suppress_output=False, log_level=log_level)
+    hsinte.system(cmd, suppress_output=False, log_level=log_level)
 
 
 def git_add_update(
@@ -640,4 +644,4 @@ def git_add_update(
     """
     _LOG.debug("# Adding all changed files to staging ...")
     cmd = "git add %s" % (" ".join(file_list) if file_list is not None else "-u")
-    hsyste.system(cmd, suppress_output=False, log_level=log_level)
+    hsinte.system(cmd, suppress_output=False, log_level=log_level)

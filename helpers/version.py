@@ -1,17 +1,22 @@
+"""
+Import as:
+
+import helpers.version as hversi
+"""
+
 import logging
 import os
-import sys
 
 # This file should depend only on Python standard package since it's used by helpers/dbg.py
 # which is used everywhere.
 
 _LOG = logging.getLogger(__name__)
 
-from typing import Any, Iterable, List, Optional, Tuple, Type, Union
+from typing import Optional
 
 
 def get_code_version() -> str:
-    """"
+    """
     Return the code version.
     """
     _CODE_VERSION = "1.0.0"
