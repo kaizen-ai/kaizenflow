@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import helpers.dbg as dbg
 import helpers.unit_test as hut
@@ -16,6 +16,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_Example(hut.TestCase):
-    def test_example1(self):
+    def test_example1(self) -> None:
         pass
 

@@ -26,6 +26,7 @@ import helpers.system_interaction as hsinte
 import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
+_LOG.setLevel(logging.INFO)
 
 # #############################################################################
 
@@ -348,21 +349,21 @@ def diff_files(
     :param dst_dir: dir where to save the comparing script
     """
     _LOG.debug(hprint.to_str("tag abort_on_exit dst_dir"))
+    file_name1 = os.path.relpath(file_name1, os.getcwd())
+    file_name2 = os.path.relpath(file_name2, os.getcwd())
     msg = []
     # Add tag.
     if tag is not None:
-        msg.append("\n" + hprint.frame(tag))
+        msg.append("\n" + hprint.frame(tag, '-'))
     # Diff to screen.
     _, res = hsinte.system_to_string(
-        "echo; sdiff -l -w 150 %s %s" % (file_name1, file_name2),
+        "echo; sdiff --expand-tabs -l -w 150 %s %s" % (file_name1, file_name2),
         abort_on_error=False,
         log_level=logging.DEBUG,
     )
     msg.append(res)
     # Save a script to diff.
     diff_script = os.path.join(dst_dir, "tmp_diff.sh")
-    file_name1 = os.path.relpath(file_name1, os.getcwd())
-    file_name2 = os.path.relpath(file_name2, os.getcwd())
     vimdiff_cmd = "vimdiff %s %s" % (file_name1, file_name2)
     hio.to_file(diff_script, vimdiff_cmd)
     cmd = "chmod +x " + diff_script
@@ -373,12 +374,13 @@ def diff_files(
     msg.append("or running:")
     msg.append("> " + diff_script)
     msg_as_str = "\n".join(msg)
-    # This is not always shown.
-    _LOG.error(msg_as_str)
+    # Append also error_msg to the current message.
+    if error_msg:
+        msg_as_str += "\n" + error_msg
     if abort_on_exit:
-        if error_msg:
-            msg_as_str = hprint.frame("error_msg") + "\n" + error_msg
         raise RuntimeError(msg_as_str)
+    else:
+        _LOG.error(msg_as_str)
 
 
 def diff_strings(
@@ -506,6 +508,9 @@ def set_pd_default_values() -> None:
 
 
 def _remove_spaces(obj: Any) -> str:
+    """
+    Remove spaces to implement fuzzy matching.
+    """
     string = str(obj)
     string = string.replace("\\n", "\n").replace("\\t", "\t")
     # Convert multiple empty spaces (but not newlines) into a single one.
@@ -523,6 +528,15 @@ def _remove_spaces(obj: Any) -> str:
     return string
 
 
+def _to_pretty_string(obj: str) -> str:
+    if isinstance(obj, dict):
+        ret = pprint.pformat(obj)
+    else:
+        ret = str(obj)
+    ret = ret.rstrip("\n")
+    return ret
+
+
 def _assert_equal(
     actual: str,
     expected: str,
@@ -538,7 +552,7 @@ def _assert_equal(
     strings with sdiff and save them to files for further analysis with
     vimdiff.
 
-    :param fuzzy: ignore differences in spaces and end of lines (see
+    :param fuzzy_match: ignore differences in spaces and end of lines (see
       `_remove_spaces`)
     :return: whether `actual` and `expected` are equal, if `abort_on_error` is False
     """
@@ -547,21 +561,12 @@ def _assert_equal(
             "full_test_name test_dir fuzzy_match abort_on_error dst_dir"
         )
     )
-
-    def _to_string(obj: str) -> str:
-        if isinstance(obj, dict):
-            ret = pprint.pformat(obj)
-        else:
-            ret = str(obj)
-        ret = ret.rstrip("\n")
-        return ret
-
     # Convert to strings.
-    actual = _to_string(actual)
-    expected = _to_string(expected)
+    actual = _to_pretty_string(actual)
+    expected = _to_pretty_string(expected)
     # Fuzzy match, if needed.
     if fuzzy_match:
-        _LOG.debug("Using fuzzy match")
+        _LOG.debug("# Using fuzzy match")
         actual_orig = actual
         actual = _remove_spaces(actual)
         expected_orig = expected
@@ -570,8 +575,8 @@ def _assert_equal(
         actual_orig = actual
         expected_orig = expected
     # Check.
-    _LOG.debug("act='\n%s'", actual)
-    _LOG.debug("exp='\n%s'", expected)
+    _LOG.debug("act=\n'%s'", actual)
+    _LOG.debug("exp=\n'%s'", expected)
     is_equal = expected == actual
     if not is_equal:
         _LOG.error(
@@ -579,29 +584,26 @@ def _assert_equal(
             "\n" + hprint.frame("Test '%s' failed" % full_test_name, "=", 80),
         )
         if fuzzy_match:
-            # Set the following var to True to print the purified version (e.g.,
-            # tables too large).
-            print_purified_version = False
-            # print_purified_version = True
-            if print_purified_version:
+            # Set True to print the purified version (e.g., tables too large).
+            if True:
                 expected = expected_orig
                 # actual = actual_orig
         # Print the correct output, like:
-        #   var = r'""""
+        #   exp = r'""""
         #   2021-02-17 09:30:00-05:00
         #   2021-02-17 10:00:00-05:00
         #   2021-02-17 11:00:00-05:00
         #   """
-        _LOG.info("# Actual variable")
         txt = []
-        prefix = "var = r"
+        txt.append(hprint.frame("The expected variable should be", '-'))
+        prefix = "exp = r"
         spaces = 0
         # spaces = len(prefix)
         txt.append(prefix + '"""')
         txt.append(hprint.indent(actual_orig, spaces))
         txt.append(hprint.indent('"""', spaces))
         txt = "\n".join(txt)
-        _LOG.error(txt)
+        error_msg += txt
         # Save the actual and expected strings to files.
         _LOG.debug("Actual:\n'%s'", actual)
         act_file_name = "%s/tmp.actual.txt" % test_dir

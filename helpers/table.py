@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Match
+from typing import Any, Dict, List, Match, Tuple
 
 import helpers.dbg as dbg
 import helpers.printing as hprint
@@ -15,18 +15,21 @@ def check_table(table: TABLE, cols: List[str]) -> None:
                        "Invalid row='%s' for cols='%s'", row, cols)
 
 
-def table_to_string(table: TABLE) -> str:
-    import helpers.playback as hplayb
-    playback = hplayb.Playback("assert_equal")
+def size(table: TABLE) -> Tuple[int, int]:
+    return len(table), len(table[0])
 
-    table_as_str = [[str(elem) for elem in row] for row in table]
+
+def table_to_string(table: TABLE) -> str:
+    # Convert the cells to strings.
+    table_as_str = [[str(cell) for cell in row] for row in table]
+    # Find the length of each columns.
     lens = [max(map(len, col)) for col in zip(*table_as_str)]
+    _LOG.debug(hprint.to_str("lens"))
+    # Print format.
     fmt = '\t'.join('{{:{}}}'.format(x) for x in lens)
     table = [fmt.format(*row) for row in table_as_str]
+    #
     res = '\n'.join(table)
-
-    code = playback.run(res)
-    print(code)
     return res
 
 

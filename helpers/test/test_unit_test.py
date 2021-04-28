@@ -16,6 +16,7 @@ import pandas as pd
 import pytest
 
 import helpers.git as git
+import helpers.printing as hprint
 import helpers.io_ as hio
 import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
@@ -34,6 +35,7 @@ def _git_add(file_name: str) -> None:
         )
 
 
+# TODO(gp): -> TestTestCase1
 class TestTestCase(hut.TestCase):
     def test_get_input_dir1(self) -> None:
         """
@@ -129,6 +131,99 @@ class TestTestCase(hut.TestCase):
         with self.assertRaises(RuntimeError):
             self.assert_equal(actual, expected, fuzzy_match=True)
 
+
+class Test_AssertEqual1(hut.TestCase):
+    def test_equal1(self) -> None:
+        """
+        Matching act and exp without fuzzy matching.
+        """
+        act = r"""
+completed       failure Lint    Run_linter
+completed       success Lint    Fast_tests
+completed       success Lint    Slow_tests
+"""
+        exp = r"""
+completed       failure Lint    Run_linter
+completed       success Lint    Fast_tests
+completed       success Lint    Slow_tests
+"""
+        test_name = self._get_test_name()
+        test_dir = self.get_scratch_space()
+        is_equal = hut._assert_equal(act, exp, test_name, test_dir)
+        _LOG.debug(hprint.to_str("is_equal"))
+        self.assertTrue(is_equal)
+
+    def test_equal2(self) -> None:
+        """
+        Matching act and exp with fuzzy matching.
+        """
+        act = r"""
+completed failure Lint Run_linter
+completed success Lint Fast_tests
+completed success Lint Slow_tests
+"""
+        exp = r"""
+completed       failure Lint    Run_linter
+completed       success Lint    Fast_tests
+completed       success Lint    Slow_tests
+"""
+        test_name = self._get_test_name()
+        test_dir = self.get_scratch_space()
+        fuzzy_match = True
+        is_equal = hut._assert_equal(act, exp, test_name, test_dir, fuzzy_match=fuzzy_match)
+        _LOG.debug(hprint.to_str("is_equal"))
+        self.assertTrue(is_equal)
+
+    def test_not_equal1(self) -> None:
+        """
+        Mismatching act and exp.
+        """
+        act = r"""
+completed failure Lint    Run_linter
+completed       success Lint    Fast_tests
+completed       success Lint    Slow_tests
+"""
+        exp = r"""
+completed       failure Lint    Run_linter
+completed       success Lint    Fast_tests
+completed       success Lint    Slow_tests
+"""
+        test_name = self._get_test_name()
+        test_dir = self.get_scratch_space()
+        fuzzy_match = False
+        with self.assertRaises(RuntimeError) as cm:
+            hut._assert_equal(act, exp, test_name, test_dir, fuzzy_match=fuzzy_match)
+        # Check that the assertion is what expected.
+        act = str(cm.exception)
+        exp = '''
+--------------------------------------------------------------------------------
+ACTUAL vs EXPECTED
+--------------------------------------------------------------------------------
+
+                                                                          (
+completed failure Lint    Run_linter                                      |  completed       failure Lint    Run_linter
+completed       success Lint    Fast_tests                                (
+completed       success Lint    Slow_tests                                (
+Diff with:
+> vimdiff helpers/test/Test_AssertEqual1.test_not_equal1/tmp.scratch/tmp.actual.txt helpers/test/Test_AssertEqual1.test_not_equal1/tmp.scratch/tmp.expected.txt
+or running:
+> ./tmp_diff.sh
+--------------------------------------------------------------------------------
+The expected variable should be
+--------------------------------------------------------------------------------
+exp = r"""
+
+completed failure Lint    Run_linter
+completed       success Lint    Fast_tests
+completed       success Lint    Slow_tests
+"""'''
+        if True:
+            # For debugging.
+            hio.to_file("act.txt", act)
+            hio.to_file("exp.txt", exp)
+        # We don't use self.assert_equal() since this is exactly we are testing,
+        # so we use a trusted function.
+        self.assertEqual(act, exp)
 
 class TestCheckString1(hut.TestCase):
     """

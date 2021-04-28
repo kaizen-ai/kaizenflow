@@ -22,6 +22,7 @@ import helpers.printing as hprint
 import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
+_LOG.setLevel(logging.INFO)
 
 # #############################################################################
 # Glob.
