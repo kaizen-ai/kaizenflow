@@ -10,12 +10,19 @@ _LOG = logging.getLogger(__name__)
 TABLE = List[List[str]]
 
 def check_table(table: TABLE, cols: List[str]) -> None:
+    """
+    Check whether the table is welformed (e.g., the list is rectangular).
+    """
     for row in table:
         dbg.dassert_eq(len(row), len(cols),
                        "Invalid row='%s' for cols='%s'", row, cols)
 
 
 def size(table: TABLE) -> Tuple[int, int]:
+    """
+    :return: number of columns x number of rows (same as numpy and pandas convention)
+    """
+
     return len(table), len(table[0])
 
 

@@ -225,6 +225,7 @@ completed       success Lint    Slow_tests
         # so we use a trusted function.
         self.assertEqual(act, exp)
 
+
 class TestCheckString1(hut.TestCase):
     """
     Note that not all the tests pass with `--update_outcomes`, since some test
