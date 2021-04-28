@@ -492,14 +492,15 @@ def reset_logger() -> None:
     importlib.reload(logging)
 
 
-_WARNING = "\033[33mWARNING\033[0m"
+WARNING = "\033[33mWARNING\033[0m"
 
 
 class _ColoredFormatter(logging.Formatter):
 
     MAPPING = {
-        # White.
-        "DEBUG": 37,
+        # White: 37.
+        # Blu.
+        "DEBUG": 34,
         # Cyan.
         "INFO": 36,
         # Yellow.
@@ -558,7 +559,7 @@ def _get_logging_format(
     :param force_no_warning:
     """
     if is_running_in_ipynb() and not force_no_warning:
-        print(_WARNING + ": Running in Jupyter")
+        print(WARNING + ": Running in Jupyter")
     verbose_format = not is_running_in_ipynb()
     #
     dassert(
@@ -573,30 +574,42 @@ def _get_logging_format(
         verbose_format = False
         #
     if verbose_format:
-        # TODO(gp): We would like to have filename.name.funcName:lineno all
-        #  justified on the 15.
+        # TODO(gp): We would like to have filename:name:funcName:lineno all
+        #  justified on 15 chars.
         #  See https://docs.python.org/3/howto/logging-cookbook.html#use-of
         #  -alternative-formatting-styles
         #  Something like:
         #   {{asctime}-5s {{filename}{name}{funcname}{linedo}d}-15s {message}
         #
         # %(pathname)s Full pathname of the source file where the logging call was
-        #   issued(if available).
+        #   issued (if available).
         # %(filename)s Filename portion of pathname.
         # %(module)s Module (name portion of filename).
         if True:
+            # The remote branches to delete are 3:
             log_format = (
-                "%(asctime)-5s %(levelname)-5s:"
-                " %(funcName)-30s:%(lineno)-4d"
-                "%(message)s"
+                # 04-28_08:08 INFO :
+                "%(asctime)-5s %(levelname)-5s"
+                # lib_tasks _delete_branches              
+                " %(module)-15s %(funcName)-20s"
+                # 142:
+                " %(lineno)-4d:"
+                " %(message)s"
             )
         else:
-            # Super verbose.
+            # Super verbose: to help with debugging print more info without trimming.
+            #
+            # 04-28_08:06
+            # DEBUG:
+            # system_interaction:
+            # /Users/saggese/src/lemonade1/amp/helpers/system_interaction.py:system_interaction.py
+            # _system       :
+            # 199 : rc=0
             log_format = (
-                "%(asctime)-5s %(levelname)-5s:"
-                " %(module)s:%(pathname)s:%(filename)s"
-                "  %(funcName)-30s:%(lineno)-4d: "
-                "%(message)s"
+                "%(asctime)-5s %(levelname)-5s"
+                " %(pathname)s %(funcName)-20s "
+                " %(lineno)d:"
+                " %(message)s"
             )
         if date_format_mode == "time":
             date_fmt = "%H:%M"
@@ -664,7 +677,7 @@ def init_logger(
     #         handler.setLevel(verbosity)
     # Exit to avoid to replicate the same output multiple times.
     if not in_pytest and root_logger.handlers:
-        print(_WARNING + ": Logger already initialized: skipping")
+        print(WARNING + ": Logger already initialized: skipping")
         return
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(verbosity)
@@ -707,6 +720,10 @@ def init_logger(
         file_handler.setFormatter(formatter)
         #
         print("Saving log to file '%s'" % log_filename)
+    #
+    _LOG.debug("Effective logging level=%s", _LOG.getEffectiveLevel())
+    # Shut up chatty modules.
+    shutup_chatty_modules(verbose=False)
     #
     # test_logger()
 
@@ -785,6 +802,10 @@ def shutup_chatty_modules(
 ) -> None:
     """
     Reduce the verbosity for external modules that are very chatty.
+
+    :param verbosity: level of verbosity used for chatty modules: the higher the
+        better
+    :param: verbose: print extra information
     """
     module_names = [
         "aiobotocore",
@@ -795,6 +816,7 @@ def shutup_chatty_modules(
         "fsspec",
         "hooks",
         "ib_insync",
+        "invoke",
         "matplotlib",
         "nose",
         "s3fs",
@@ -802,15 +824,17 @@ def shutup_chatty_modules(
         "urllib3",
     ]
     loggers = get_matching_loggers(module_names, verbose)
-    print("Shutting up %s modules" % len(loggers))
     loggers = sorted(loggers, key=lambda logger: logger.name)
-    if verbose:
-        print(
-            "Shutting up modules: (%d)\n%s"
-            % (len(loggers), "\n".join([logger.name for logger in loggers]))
-        )
     for logger in loggers:
         logger.setLevel(verbosity)
+    if len(loggers) > 0:
+        _LOG.debug("Shut up %d modules: %s",
+                   len(loggers), ", ".join([logger.name for logger in loggers]))
+        #if _LOG.getEffectiveLevel() < logging.DEBUG:
+        #    print(WARNING +
+        #       " Shutting up %d modules: %s"
+        #       % (len(loggers), ", ".join([logger.name for logger in loggers]))
+        #    )
 
 
 def test_logger() -> None:

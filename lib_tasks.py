@@ -4,13 +4,14 @@ Import as:
 import lib_tasks as ltasks
 """
 
+import csv
 import functools
 import logging
 import os
 import pprint
 import re
 import sys
-from typing import Any, Dict, Match
+from typing import Any, Dict, List, Match
 
 from invoke import task
 
@@ -20,6 +21,7 @@ import helpers.dbg as dbg
 import helpers.git as git
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
+import helpers.table as htable
 
 _LOG = logging.getLogger(__name__)
 
@@ -49,7 +51,9 @@ def get_default_value(key: str) -> Any:
 
 # Since it's not easy to add global opportunity
 # If one uses the debug option for `invoke` we turn off the code debugging.
-if not (("-d" in sys.argv) or ("--debug" in sys.argv)):
+if ("-d" in sys.argv) or ("--debug" in sys.argv):
+    dbg.init_logger(verbosity=logging.DEBUG)
+else:
     dbg.init_logger(verbosity=logging.INFO)
 
 # #############################################################################
@@ -127,44 +131,50 @@ def git_diff_master_files(ctx):  # type: ignore
 @task
 def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     """
-    Remove (both local and remote) branches that are already merged into
-    master.
+    Remove (both local and remote) branches that have been merged into master.
     """
+    _LOG.info(">")
+    #
+    cmd = "git fetch --all --prune"
+    ctx.run(cmd)
+    dbg.dassert(git.get_branch_name(), "master",
+                "You need to be on master to delete dead branches")
 
-    def _delete_branches(find_cmd: str, delete_cmd: str, tag: str) -> None:
+    def _delete_branches(tag: str) -> None:
         _, txt = hsinte.system_to_string(find_cmd, abort_on_error=False)
         branches = hsinte.text_to_list(txt)
-        # Print and ask to continue.
+        # Print info.
         _LOG.info(
-            "The %s branches to delete are %d:\n%s",
-            tag,
+            "There are %d %s branches to delete:\n%s",
             len(branches),
+            tag,
             "\n".join(branches),
         )
         if not branches:
+            # No branch to delete, then we are done.
             return
+        # Ask whether to continue.
         if confirm_delete:
-            hsinte.query_yes_no("Ok to delete these branches?", abort_on_no=True)
+            hsinte.query_yes_no(dbg.WARNING + f": Delete these {tag} branches?", abort_on_no=True)
         for branch in branches:
             cmd = f"{delete_cmd} {branch}"
             ctx.run(cmd)
 
-    _LOG.info(">")
     # Delete local branches that are already merged into master.
     # > git branch --merged
     # * AmpTask1251_Update_GH_actions_for_amp_02
     find_cmd = r"git branch --merged master | grep -v master | grep -v \*"
     delete_cmd = "git branch -d"
-    _delete_branches(find_cmd, delete_cmd, "local")
+    _delete_branches("local")
     # Get the branches to delete.
     find_cmd = (
         "git branch -r --merged origin/master"
         + r" | grep -v master | sed 's/origin\///'"
     )
     delete_cmd = "git push origin --delete"
-    _delete_branches(find_cmd, delete_cmd, "remote")
+    _delete_branches("remote")
     #
-    cmd = "git fetch --prune"
+    cmd = "git fetch --all --prune"
     ctx.run(cmd)
 
 
@@ -951,16 +961,21 @@ def get_amp_files(ctx):  # type: ignore
 # #############################################################################
 
 
+
+
 @task
-def gh_run_list(ctx, branch="branch", status="all"):  # type: ignore
-    _LOG.info("> branch='%s'", branch)
+def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
+    """
+    Report the status of the GH workflows in a branch.
+    """
+    _LOG.info("> " + hprint.to_str("branch status"))
     cmd = "export NO_COLOR=1; gh run list"
     # pylint: disable=line-too-long
     # > gh run list
-    # ✓  Merge branch 'master' into AmpTask1251_Update_GH_actions_for_amp  Slow tests  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984377
-    # ✓  Merge branch 'master' into AmpTask1251_Update_GH_actions_for_amp  Fast tests  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984376
-    # X  Merge branch 'master' into AmpTask1251_Update_GH_actions_for_amp  Run linter  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984375
-    # X  Fix lint issue                                                    Fast tests  master                                 workflow_dispatch  788949955
+    # ✓  Merge branch 'master' into AmpTask1251_ Slow tests  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984377
+    # ✓  Merge branch 'master' into AmpTask1251_ Fast tests  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984376
+    # X  Merge branch 'master' into AmpTask1251_ Run linter  AmpTask1251_Update_GH_actions_for_amp  pull_request       788984375
+    # X  Fix lint issue                          Fast tests  master                                 workflow_dispatch  788949955
     # pylint: enable=line-too-long
     if branch == "branch":
         branch_name = git.get_branch_name()
@@ -970,33 +985,56 @@ def gh_run_list(ctx, branch="branch", status="all"):  # type: ignore
         branch_name = None
     else:
         raise ValueError("Invalid mode='%s'" % branch)
-    if branch_name:
-        cmd += f" | grep {branch_name}"
-    if status != "all":
-        cmd += f" | grep {status}"
-    ctx.run(cmd)
-    # TODO(gp): The output is tab separated. Parse it with csv and then filter.
+    # The output is tab separated. Parse it with csv and then filter.
+    _, txt = hsinte.system_to_string(cmd)
+    _LOG.debug(hprint.to_str("txt"))
+    # completed  success  Merge pull...  Fast tests  master  push  2m18s  792511437
+    cols = ["status", "outcome", "descr", "workflow", "branch", "trigger", "time", "workflow_id"]
+    table = [line for line in csv.reader(txt.split("\n"), delimiter='\t')]
+    _LOG.debug(hprint.to_str("table"))
+    #
+    _LOG.debug("Filtering table")
+    table = htable.filter_table(table, cols, "branch", branch_name)
+    #assert 0
+    # if branch_name:
+    #     table = [line for line in table if line[col_to_idx["branch"]] == branch_name]
+    # if status:
+    #     table = [line for line in table if line[col_to_idx["status"]] == branch_name]
+    # _LOG.debug(hprint.to_str("table"))
+    #for line in csv.reader(txt.split("\n"), delimiter='\t'):
+    #    print(line)
+    # if branch_name:
+    #     cmd += f" | grep {branch_name}"
+    # if status != "all":
+    #     cmd += f" | grep {status}"
+    # ctx.run(cmd)
 
 
 @task
-def gh_workflow_run(ctx, branch="branch", tests="all"):  # type: ignore
+def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
+    """
+    Run GH workflows in a branch.
+    """
+    _LOG.info("> " + hprint.to_str("branch workflows"))
+    # Get the branch name.
     if branch == "branch":
         branch_name = git.get_branch_name()
     elif branch == "master":
         branch_name = "master"
     else:
-        raise ValueError("Invalid mode='%s'" % branch)
+        raise ValueError("Invalid branch='%s'" % branch)
     _LOG.debug(hprint.to_str("branch_name"))
-    #
-    if tests == "all":
+    # Get the workflows.
+    if workflows == "all":
         gh_tests = ["fast_tests", "slow_tests"]
     else:
-        gh_tests = [tests]
-    _LOG.debug(hprint.to_str("gh_tests"))
+        gh_tests = [workflows]
+    _LOG.debug(hprint.to_str("workflows"))
+    # Run.
     for gh_test in gh_tests:
         gh_test += ".yml"
         # gh workflow run fast_tests.yml --ref AmpTask1251_Update_GH_actions_for_amp
         cmd = f"gh workflow run {gh_test} --ref {branch_name}"
         ctx.run(cmd)
     #
-    gh_run_list(ctx, branch=branch)
+    gh_workflow_list(ctx, branch=branch)
