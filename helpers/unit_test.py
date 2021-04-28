@@ -66,6 +66,7 @@ def get_incremental_tests() -> bool:
 _CONFTEST_IN_PYTEST = False
 
 
+# TODO(gp): Use https://stackoverflow.com/questions/25188119
 def in_unit_test_mode() -> bool:
     """
     Return True if we are inside a pytest run.

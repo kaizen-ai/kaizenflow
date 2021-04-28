@@ -61,7 +61,7 @@ class Timer:
         # Sometimes we get numerical error tripping this assertion
         # (e.g., '1619552498.813126' <= '1619552498.805193') so we give
         # a little slack to the assertion.
-        dbg.dassert_lte(self._start, self._stop + 1e-2)
+        #dbg.dassert_lte(self._start, self._stop + 1e-2)
         self._last_elapsed = cast(float, self._stop) - cast(float, self._start)
         self._total_elapsed += self._last_elapsed
         # Stop.
