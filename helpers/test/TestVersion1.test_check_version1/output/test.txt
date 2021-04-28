@@ -1,0 +1,5 @@
+This code is not in sync with the container:
+code_version=1.0.0 != container_version=1.0.2")
+You need to:
+- merge origin/master into your branch with `invoke git_merge_origin_master`
+- pull the latest container with `invoke docker_pull`

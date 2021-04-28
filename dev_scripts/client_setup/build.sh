@@ -3,6 +3,9 @@
 # Build a thin virtual environment to run workflows on the dev machine.
 #
 
+# TODO(gp): Use python 3.9 and keep this in sync with
+# devops/docker_build/pyproject.toml
+
 set -e
 
 VENV_DIR="$HOME/src/venv/client_setup"
@@ -28,3 +31,5 @@ gh --version
 
 echo "# Activate the virtual env with:"
 echo "source $VENV_DIR/bin/activate"
+echo "  or"
+echo "source dev_scripts/setenv_amp.sh"

@@ -11,6 +11,10 @@ import pprint
 import sys
 from typing import Any, Iterable, List, Optional, Tuple, Type, Union
 
+import helpers.version as hversi
+
+hversi.check_version()
+
 # This module should not depend on anything else than Python standard modules.
 
 _LOG = logging.getLogger(__name__)
@@ -133,7 +137,7 @@ def dassert_lt(
 ) -> None:
     # pylint: disable=superfluous-parens
     if not (val1 < val2):
-        txt = "'%s' < '%s'" % (val1, val2)
+        txt = "%s < %s" % (val1, val2)
         _dfatal(txt, msg, *args)
 
 
@@ -142,7 +146,7 @@ def dassert_lte(
 ) -> None:
     # pylint: disable=superfluous-parens
     if not (val1 <= val2):
-        txt = "'%s' <= '%s'" % (val1, val2)
+        txt = "%s <= %s" % (val1, val2)
         _dfatal(txt, msg, *args)
 
 

@@ -5,6 +5,10 @@ import lib_tasks as ltasks
 """
 
 import csv
+# TODO(gp): Move to helpers.lib_tasks? Do we need to move / rename also
+#  test_tasks.py?
+
+import datetime
 import functools
 import logging
 import os
@@ -21,6 +25,7 @@ import helpers.dbg as dbg
 import helpers.git as git
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
+import helpers.version as hversi
 import helpers.table as htable
 
 _LOG = logging.getLogger(__name__)
@@ -423,7 +428,8 @@ def _get_image(stage: str, base_image: str) -> str:
 
 
 def _docker_cmd(
-    ctx: Any, stage: str, base_image: str, docker_compose: str, cmd: str
+    ctx: Any, stage: str, base_image: str, docker_compose: str, cmd: str,
+    entrypoint: bool = True
 ) -> None:
     """
     :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
@@ -437,22 +443,30 @@ def _docker_cmd(
     dbg.dassert_exists(docker_compose)
     #
     user_name = hsinte.get_user_name()
-    cmd = rf"""IMAGE={image} \
+    docker_cmd_ = rf"""IMAGE={image} \
     docker-compose \
         -f {docker_compose} \
         run \
         --rm \
         -l user={user_name} \
+    """
+    docker_cmd_ = docker_cmd_.rstrip()
+    if entrypoint:
+        docker_cmd_ += rf"""
         user_space \
         {cmd}"""
+    else:
+        docker_cmd_ += r"""
+        --entrypoint bash \
+        user_space"""
     if use_one_line_cmd:
-        cmd = _remove_spaces(cmd)
-    _LOG.debug("cmd=%s", cmd)
-    ctx.run(cmd, pty=True)
+        docker_cmd_ = _remove_spaces(docker_cmd_)
+    _LOG.debug("cmd=%s", docker_cmd_)
+    ctx.run(docker_cmd_, pty=True)
 
 
 @task
-def docker_bash(ctx, stage=_STAGE):  # type: ignore
+def docker_bash(ctx, stage=_STAGE, entrypoint=True):  # type: ignore
     """
     Start a bash shell inside the container corresponding to a stage.
     """
@@ -460,7 +474,7 @@ def docker_bash(ctx, stage=_STAGE):  # type: ignore
     base_image = ""
     docker_compose = _get_amp_docker_compose_path()
     cmd = "bash"
-    _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
+    _docker_cmd(ctx, stage, base_image, docker_compose, cmd, entrypoint=entrypoint)
 
 
 @task
@@ -535,6 +549,26 @@ def _run(ctx: Any, cmd: str) -> None:
 DOCKER_BUILDKIT = 0
 
 
+@functools.lru_cache()
+def _get_build_tag() -> str:
+    """
+    Return a string to tag the build.
+
+    E.g.,
+    build_tag=1.0.0-20210428-
+        AmpTask1280_Use_versioning_to_keep_code_and_container_in_sync-
+        500a9e31ee70e51101c1b2eb82945c19992fa86e
+    """
+    code_ver = hversi.get_code_version()
+    # We can't use datetime_.get_timestamp() since we don't want to pick up
+    # the dependencies from pandas.
+    timestamp = datetime.datetime.now().strftime("%Y%m%d")
+    branch_name = git.get_branch_name()
+    hash_ = git.get_head_hash()
+    build_tag = f"{code_ver}-{timestamp}-{branch_name}-{hash_}"
+    return build_tag
+
+
 # DEV image flow:
 # - A "local" image (which is a release candidate for the DEV image) is built
 # - A qualification process (e.g., running all tests) is performed on the "local"
@@ -545,13 +579,20 @@ DOCKER_BUILDKIT = 0
 # For base_image, we use "" as default instead None since pyinvoke can only infer
 # a single type.
 @task
-def docker_build_local_image(ctx, cache=True, base_image=""):  # type: ignore
+def docker_build_local_image(  # type: ignore
+    ctx, cache=True, base_image="", update_poetry=False
+):
     """
     Build a local as a release candidate image.
+
+    :param update_poetry: run poetry lock to update the packages
+    :param cache: use the cache
     """
     _LOG.info(">")
     # Update poetry.
-    ctx.run("cd devops/docker_build/; poetry lock")
+    if update_poetry:
+        cmd = "cd devops/docker_build/; poetry lock"
+        ctx.run(cmd)
     #
     image_local = _get_image("local", base_image)
     image_hash = _get_image("hash", base_image)
@@ -562,12 +603,17 @@ def docker_build_local_image(ctx, cache=True, base_image=""):  # type: ignore
     dockerfile = _to_abs_path(dockerfile)
     #
     opts = "--no_cache" if not cache else ""
+    # The container version is the version used from this code.
+    container_version = hversi.get_code_version()
+    build_tag = _get_build_tag()
     cmd = rf"""
     DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
     time \
     docker build \
         --progress=plain \
         {opts} \
+        --build-arg CONTAINER_VERSION={container_version} \
+        --build-arg BUILD_TAG={build_tag} \
         -t {image_local} \
         -t {image_hash} \
         -f {dockerfile} \
