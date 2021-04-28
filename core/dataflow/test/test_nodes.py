@@ -118,20 +118,29 @@ class TestDiskDataSource(hut.TestCase):
         return file_path
 
 
+class TestArmaGenerator(hut.TestCase):
+    def test1(self) -> None:
+        node = dtf.ArmaGenerator(
+            nid="source",
+            frequency="30T",
+            start_date="2010-01-04 09:00",
+            end_date="2010-01-04 17:00",
+            ar_coeffs=[0],
+            ma_coeffs=[0],
+            scale=0.1,
+            burnin=0,
+            seed=0,
+        )
+        df = node.fit()["df_out"]
+        self.check_string(df.to_string())
+
+
 # #############################################################################
 # Results processing
 # #############################################################################
 
 
 class TestVolatilityNormalizer(hut.TestCase):
-    @staticmethod
-    def _get_series(seed: int, periods: int = 44) -> pd.Series:
-        arma_process = sig_gen.ArmaProcess([0], [0])
-        date_range = {"start": "2010-01-01", "periods": periods, "freq": "B"}
-        series = arma_process.generate_sample(
-            date_range_kwargs=date_range, scale=0.1, seed=seed
-        )
-        return series
 
     def test_fit1(self) -> None:
         y = TestVolatilityNormalizer._get_series(42).rename("ret_0")
@@ -210,6 +219,14 @@ class TestVolatilityNormalizer(hut.TestCase):
             f"{predict_df_out_volatility}"
         )
         self.check_string(output_str)
+    @staticmethod
+    def _get_series(seed: int, periods: int = 44) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([0], [0])
+        date_range = {"start": "2010-01-01", "periods": periods, "freq": "B"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, scale=0.1, seed=seed
+        )
+        return series
 
 
 class Test_get_df_info_as_string(hut.TestCase):

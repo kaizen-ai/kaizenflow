@@ -4,4 +4,4 @@ end_time                  2013-04-30 00:00:00
 n_sampling_points                          38
 frequency                                None
 sampling_points_per_year                  9.5
-time_span_in_years                    3.24435
+time_span_in_years                      3.244
