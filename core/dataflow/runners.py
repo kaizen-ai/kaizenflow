@@ -193,14 +193,24 @@ class IncrementalDagRunner:
             prediction)
         """
         for end_dt in self._date_range:
-            # Cut off data at `end_dt`. Do not restrict the start datetime so
-            # so as not to adversely affect any required warm-up period.
-            interval = [(None, end_dt)]
-            # Set prediction intervals and predict.
-            for input_nid in self.dag.get_sources():
-                self.dag.get_node(input_nid).set_predict_intervals(interval)
-                result_bundle = self._run_dag(self._result_nid, "predict")
-                yield result_bundle
+            result_bundle = self.predict_at_datetime(end_dt)
+            yield result_bundle
+
+    def predict_at_datetime(self, dt) -> ResultBundle:
+        """
+        Generate a prediction as of `dt` (for a future point in time).
+
+        :param dt: point in time at which to generate a prediction
+        :return: populated `ResultBundle`
+        """
+        # Cut off data at `end_dt`. Do not restrict the start datetime so
+        # so as not to adversely affect any required warm-up period.
+        interval = [(None, dt)]
+        # Set prediction intervals and predict.
+        for input_nid in self.dag.get_sources():
+            self.dag.get_node(input_nid).set_predict_intervals(interval)
+        result_bundle = self._run_dag(self._result_nid, "predict")
+        return result_bundle
 
     def _run_dag(self, nid: str, method: str) -> ResultBundle:
         """
