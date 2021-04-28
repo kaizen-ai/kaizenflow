@@ -1,16 +1,12 @@
 """
 Import as:
 
-import helpers.system_interaction as hsyste
-
-Contain all the code needed to interact with the outside world, e.g., through
-system commands, env vars, ...
+import helpers.system_interaction as hsinte
 """
 
 import getpass
 import logging
 import os
-import shutil
 import signal
 import subprocess
 import sys
@@ -474,10 +470,10 @@ def create_executable_script(file_name: str, content: str) -> None:
 
 # #############################################################################
 
+
 def is_inside_docker() -> bool:
     """
     Return whether we are inside a container or not.
     """
     # From https://stackoverflow.com/questions/23513045
     return os.path.exists("/.dockerenv")
-

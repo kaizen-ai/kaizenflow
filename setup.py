@@ -1,25 +1,24 @@
-import os
-import sys
+# type: ignore
+"""
+Import as:
 
+import setup as setup
+"""
 
-from setuptools import setup, find_packages
-
-#sys.path.insert(
-#    0, os.path.join(os.path.dirname(__file__), "helpers")
-#)
+from setuptools import setup
 
 VERSION = "1.2"
 
 INSTALL_REQUIRES = [
-        "numpy >= 1.17.5",
-        "pandas >= 1.1.1",
-        "docker >= 4.3.1",
-        "jsonpickle >= 1.4.1",
-        "boto3 >= 1.14.51",
-        "botocore >= 1.17.51",
-        "psycopg2 >= 2.8.5",
-        "matplotlib >= 3.3.1",
-        "lxml >= 4.5.2",
+    "numpy >= 1.17.5",
+    "pandas >= 1.1.1",
+    "docker >= 4.3.1",
+    "jsonpickle >= 1.4.1",
+    "boto3 >= 1.14.51",
+    "botocore >= 1.17.51",
+    "psycopg2 >= 2.8.5",
+    "matplotlib >= 3.3.1",
+    "lxml >= 4.5.2",
 ]
 
 TEST_REQUIRES = ["pytest>=5.0.0"]

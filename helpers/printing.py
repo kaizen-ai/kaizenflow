@@ -249,7 +249,7 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
         exprs = [v.lstrip().rstrip() for v in expression.split(" ")]
         _to_str = lambda x: to_str(x, frame_lev=frame_lev + 2)
         return ", ".join(list(map(_to_str, exprs)))
-    frame_ = sys._getframe(frame_lev)
+    frame_ = sys._getframe(frame_lev)  # pylint: disable=protected-access
     ret = (
         expression
         + "="

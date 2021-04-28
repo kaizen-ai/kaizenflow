@@ -116,7 +116,8 @@ def git_clean(ctx):  # type: ignore
 @task
 def git_diff_master_files(ctx):  # type: ignore
     """
-    Report which files are changed in the current branch with respect to master.
+    Report which files are changed in the current branch with respect to
+    master.
     """
     _LOG.info(">")
     cmd = "git diff --name-only master..."
@@ -126,13 +127,20 @@ def git_diff_master_files(ctx):  # type: ignore
 @task
 def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     """
-    Remove (both local and remote) branches that are already merged into master.
+    Remove (both local and remote) branches that are already merged into
+    master.
     """
+
     def _delete_branches(find_cmd: str, delete_cmd: str, tag: str) -> None:
         _, txt = hsinte.system_to_string(find_cmd, abort_on_error=False)
         branches = hsinte.text_to_list(txt)
         # Print and ask to continue.
-        _LOG.info("The %s branches to delete are %d:\n%s", tag, len(branches), "\n".join(branches))
+        _LOG.info(
+            "The %s branches to delete are %d:\n%s",
+            tag,
+            len(branches),
+            "\n".join(branches),
+        )
         if not branches:
             return
         if confirm_delete:
@@ -140,24 +148,25 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
         for branch in branches:
             cmd = f"{delete_cmd} {branch}"
             ctx.run(cmd)
+
     _LOG.info(">")
     # Delete local branches that are already merged into master.
     # > git branch --merged
     # * AmpTask1251_Update_GH_actions_for_amp_02
-    find_cmd = ("git branch --merged master"
-           " | grep -v master" +
-           " | grep -v \*")
+    find_cmd = r"git branch --merged master | grep -v master | grep -v \*"
     delete_cmd = "git branch -d"
     _delete_branches(find_cmd, delete_cmd, "local")
     # Get the branches to delete.
-    find_cmd = ("git branch -r --merged origin/master"
-        " | grep -v master" +
-        " | sed 's/origin\///'")
+    find_cmd = (
+        "git branch -r --merged origin/master" +
+        r" | grep -v master | sed 's/origin\///'"
+    )
     delete_cmd = "git push origin --delete"
     _delete_branches(find_cmd, delete_cmd, "remote")
     #
     cmd = "git fetch --prune"
     ctx.run(cmd)
+
 
 # #############################################################################
 # Docker.
@@ -886,8 +895,11 @@ def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignor
     :param phases: specify the lint phases to execute
     """
     _LOG.info(">")
-    dbg.dassert_lte(int(modified) + int(branch) + int(files != ""), 1,
-                    msg="You can specify only one option among --modified, --branch, or --files")
+    dbg.dassert_lte(
+        int(modified) + int(branch) + int(files != ""),
+        1,
+        msg="You can specify only one option among --modified, --branch, or --files",
+    )
     if modified:
         files = git.get_modified_files()
         files = " ".join(files)
