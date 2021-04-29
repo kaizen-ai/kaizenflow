@@ -94,14 +94,23 @@ def git_pull(ctx):  # type: ignore
 
 
 @task
-def git_merge_origin_master(ctx):  # type: ignore
+def git_pull_master(ctx):  # type: ignore
     """
     Pull master without changing branch and then merge it to this branch.
     """
     _LOG.info(">")
-    # TODO(gp): Check that we are in a branch and that the branch is clean.
     cmd = "git fetch origin master:master"
     ctx.run(cmd)
+
+
+@task
+def git_merge_origin_master(ctx):  # type: ignore
+    """
+    Merge origin/master to this branch.
+    """
+    _LOG.info(">")
+    # TODO(gp): Check that we are in a branch and that the branch is clean.
+    git_pull_master(ctx)
     #
     cmd = "git merge master"
     ctx.run(cmd)

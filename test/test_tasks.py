@@ -30,51 +30,30 @@ except ModuleNotFoundError as e:
     invoke = Dummy()
 
 
+# TODO(gp): We should introspect lib_tasks.py and find all the functions decorated
+#  with `@tasks`, instead of maintaining a (incomplete) list of tasks.
 class TestDryRunTasks1(hut.TestCase):
-    def test_print_setup1(self) -> None:
+    """
+    - Run invoke in dry-run mode
+    - Capture its output
+    - Compare the output to the golden outcomes
+    """
+
+    def test_print_setup(self) -> None:
         target = "print_setup"
         self._dry_run(target)
 
-    def test_print_setup2(self) -> None:
-        target = "print_setup"
-        self._check_output(target)
-
-    def test_git_pull1(self) -> None:
+    def test_git_pull(self) -> None:
         target = "git_pull"
         self._dry_run(target)
 
-    def test_git_pull2(self) -> None:
-        target = "git_pull"
-        self._check_output(target)
-
-    def test_git_pull_master1(self) -> None:
+    def test_git_pull_master(self) -> None:
         target = "git_pull_master"
         self._dry_run(target)
 
-    def test_git_pull_master2(self) -> None:
-        target = "git_pull_master"
-        self._check_output(target)
-
-    def test_git_clean1(self) -> None:
+    def test_git_clean(self) -> None:
         target = "git_clean"
         self._dry_run(target)
-
-    def test_git_clean2(self) -> None:
-        target = "git_clean"
-        self._check_output(target)
-
-    def test_docker_login(self) -> None:
-        stdout = "aws-cli/1.19.49 Python/3.7.6 Darwin/19.6.0 botocore/1.20.49\n"
-        ctx = invoke.MockContext(
-            run={
-                "aws --version": invoke.Result(stdout),
-                re.compile("^docker login"): invoke.Result(exited=0),
-                re.compile("^eval"): invoke.Result(exited=0),
-            }
-        )
-        tasks.docker_login(ctx)
-        # Check the outcome.
-        self._check_calls(ctx)
 
     def test_docker_images_ls_repo(self) -> None:
         target = "docker_images_ls_repo"
@@ -104,13 +83,61 @@ class TestDryRunTasks1(hut.TestCase):
         """
         cmd = f"invoke --dry {target} | grep -v INFO | grep -v 'code_version='"
         _, act = hsinte.system_to_string(cmd)
-        # TODO(gp): pylint doesn't find
-        # pylint: disable=no-member
+        # TODO(gp): pylint doesn't find this because it uses the copy of helpers in
+        #  the container.
         act = hprint.remove_non_printable_chars(act)
-        # pylint: enable=no-member
         self.check_string(act)
 
-    def _build_mock_context_returning_ok(self) -> invoke.MockContext:
+
+# ###############
+
+
+class TestDryRunTasks2(hut.TestCase):
+    """
+    - Call the invoke task directly from Python
+    - `check_string()` the sequence of commands issued by the target is the expected
+      one using mocks to return ok for every system call.
+    """
+
+    def test_print_setup(self) -> None:
+        target = "print_setup"
+        self._check_output(target)
+
+    def test_git_pull(self) -> None:
+        target = "git_pull"
+        self._check_output(target)
+
+    def test_git_pull_master(self) -> None:
+        target = "git_pull_master"
+        self._check_output(target)
+
+    def test_git_clean2(self) -> None:
+        target = "git_clean"
+        self._check_output(target)
+
+    # #############################
+
+    def test_docker_login(self) -> None:
+        """
+        Instead of using _build_mock_context_returning_ok(), set the return values
+        more explicitly.
+        """
+        stdout = "aws-cli/1.19.49 Python/3.7.6 Darwin/19.6.0 botocore/1.20.49\n"
+        ctx = invoke.MockContext(
+            run={
+                "aws --version": invoke.Result(stdout),
+                re.compile("^docker login"): invoke.Result(exited=0),
+                re.compile("^eval"): invoke.Result(exited=0),
+            }
+        )
+        tasks.docker_login(ctx)
+        # Check the outcome.
+        self._check_calls(ctx)
+
+    # #############################
+
+    @staticmethod
+    def _build_mock_context_returning_ok() -> invoke.MockContext:
         """
         Build a MockContext catching any command and returning rc=0.
         """
@@ -124,10 +151,8 @@ class TestDryRunTasks1(hut.TestCase):
         check_string() the sequence of commands issued in the context.
         """
         act = "\n".join(map(str, ctx.run.mock_calls))
-        # TODO(gp): Unclear why pylint can't find this function.
-        # pylint: disable=no-member
+        # TODO(gp): pylint is using its copy of the helper code.
         act = hprint.remove_non_printable_chars(act)
-        # pylint: enable=no-member
         self.check_string(act)
 
     def _check_output(self, target: str) -> None:
@@ -142,7 +167,15 @@ class TestDryRunTasks1(hut.TestCase):
         self._check_calls(ctx)
 
 
+# ###############
+
+
 def _get_default_params() -> Dict[str, str]:
+    """
+    Get fake params pointing to a different image so we can test the code without
+    affecting the official images.
+    """
+
     ecr_base_path = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
     default_params = {
         "ECR_BASE_PATH": ecr_base_path,
@@ -194,7 +227,7 @@ class TestExecuteTasks1(hut.TestCase):
 @pytest.mark.skipif(hsinte.is_inside_docker(), reason="AmpTask165")
 class TestExecuteTasks2(hut.TestCase):
     """
-    Execute tasks that change the state of the system but not using the.
+    Execute tasks that change the state of the system but using a temp image.
     """
 
     def test_docker_jupyter1(self) -> None:
@@ -221,6 +254,7 @@ class TestExecuteTasks2(hut.TestCase):
         hsinte.system(cmd)
 
     # Run tests.
+
     def test_run_blank_tests1(self) -> None:
         cmd = "invoke run_blank_tests"
         hsinte.system(cmd)
@@ -244,6 +278,7 @@ class TestExecuteTasks2(hut.TestCase):
         hsinte.system(cmd)
 
     # Linter.
+
     def test_lint_docker_pull1(self) -> None:
         cmd = "invoke lint_docker_pull"
         hsinte.system(cmd)
