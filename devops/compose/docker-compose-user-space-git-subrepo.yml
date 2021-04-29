@@ -1,3 +1,7 @@
+# This is needed only for `amp` when it is used as submodule.
+# In this case we need to mount `lem` in the container (to make git work with
+# the supermodule) and then change dir to `amp`.
+
 version: '3'
 
 services:
