@@ -38,8 +38,7 @@ class Table:
 
         :return: number of columns x number of rows (same as numpy and pandas convention)
         """
-        dbg.dassert_lte(1, len(self._table))
-        return len(self._table), len(self._table[0])
+        return len(self._table), len(self._cols)
 
     def __str__(self) -> str:
         """
@@ -47,6 +46,7 @@ class Table:
         """
         table = copy.deepcopy(self._table)
         table.insert(0, self._cols)
+        table.insert(1, ["-"] * len(self._cols))
         # Convert the cells to strings.
         table_as_str = [[str(cell) for cell in row] for row in table]
         # Find the length of each columns.
@@ -56,32 +56,35 @@ class Table:
         fmt = ' '.join('{{:{}}}'.format(x) for x in lens)
         _LOG.debug(hprint.to_str("fmt"))
         # Format rows.
-        table = [fmt.format(*row) for row in table_as_str]
+        rows_as_str = [fmt.format(*row) for row in table_as_str]
+        # Remove trailing spaces.
+        rows_as_str = [row.rstrip() for row in rows_as_str]
         # Create string.
-        res = '\n'.join(table)
-        res += "size=%s", str(self.size())
+        res = '\n'.join(rows_as_str)
+        res += "\nsize=%s" % str(self.size())
         return res
 
     def __repr__(self) -> str:
         res = ""
-        res += "table=\n%s", "\n".join(map(str, self._table)))
-        res += "cols=%s", ", ".join(self._cols)
+        res += "cols=%s" % str(self._cols)
+        res += "\ntable=\n%s" % "\n".join(map(str, self._table))
+        res += "\nsize=%s" % str(self.size())
         return res
 
-    def filter_table(self, field: str, value: str) -> "Table":
+    def filter_rows(self, field: str, value: str) -> "Table":
         """
         Return a Table filtered with the criteria "field == value".
         """
-        _LOG.debug("self=%s", self.str())
+        _LOG.debug("self=\n%s", repr(self))
         # Filter the rows.
         dbg.dassert_in(field, self._col_to_idx.keys())
-        filtered_table = [row for row in self._table if
+        rows_filter = [row for row in self._table if
                           row[self._col_to_idx[field]] == value]
+        _LOG.debug(hprint.to_str("rows_filter"))
         # Build the resulting table.
-        table = Table(filtered_table, self._cols)
-        _LOG.debug("table=%s", str(table))
-        _LOG.debug("table.size()=%s", str(table.size()))
-        return table
+        table_filter = Table(rows_filter, self._cols)
+        _LOG.debug("table_filter=\n%s", repr(table_filter))
+        return table_filter
 
     @staticmethod
     def _check_table(table: TABLE, cols: List[str]) -> None:
@@ -91,6 +94,9 @@ class Table:
         dbg.dassert_isinstance(table, list)
         dbg.dassert_isinstance(cols, list)
         dbg.dassert_no_duplicates(cols)
+        # Columns have no leading or trailing spaces.
+        for col in cols:
+            dbg.dassert_eq(col, col.rstrip().lstrip())
         # Check that the list of lists is rectangular.
         for row in table:
             dbg.dassert_isinstance(table, list)
