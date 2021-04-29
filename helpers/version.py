@@ -72,7 +72,7 @@ def check_version() -> None:
             # This situation happens when GH Actions pull the image using invoke
             # inside their container (but not inside ours), thus there is no
             # CONTAINER_VERSION.
-            _LOG.warning("The env var should be defined when running inside a"
+            _LOG.warning("The env var %s should be defined when running inside a"
                 " container", env_var)
     else:
         container_version = os.environ[env_var]
