@@ -33,10 +33,13 @@ def table_to_string(table: TABLE) -> str:
     lens = [max(map(len, col)) for col in zip(*table_as_str)]
     _LOG.debug(hprint.to_str("lens"))
     # Print format.
-    fmt = '\t'.join('{{:{}}}'.format(x) for x in lens)
+    fmt = ' '.join('{{:{}}}'.format(x) for x in lens)
+    _LOG.debug(hprint.to_str("fmt"))
     table = [fmt.format(*row) for row in table_as_str]
     #
     res = '\n'.join(table)
+    print(res)
+    assert 0
     return res
 
 
