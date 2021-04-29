@@ -960,7 +960,7 @@ class TestCase(unittest.TestCase):
         Add to git repo `file_name`, if needed.
         """
         if self._git_add:
-            cmd = "git add %s" % file_name
+            cmd = "git add %s; git add -u %s" % (file_name, file_name)
             _LOG.debug("> %s", cmd)
             rc = hsinte.system(cmd, abort_on_error=False)
             if rc:
