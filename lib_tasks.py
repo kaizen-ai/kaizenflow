@@ -4,7 +4,6 @@ Import as:
 import lib_tasks as ltasks
 """
 
-import csv
 import datetime
 import functools
 import logging
@@ -1077,11 +1076,11 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
         "workflow_id",
     ]
     table = htable.Table.from_text(cols, txt, delimiter="\t")
-    #table = [line for line in csv.reader(txt.split("\n"), delimiter="\t")]
+    # table = [line for line in csv.reader(txt.split("\n"), delimiter="\t")]
     _LOG.debug(hprint.to_str("table"))
     #
     _LOG.debug("Filtering table")
-    table = table("branch", branch_name)
+    table = table.filter("branch", branch_name)
     # assert 0
     # if branch_name:
     #     table = [line for line in table if line[col_to_idx["branch"]] == branch_name]

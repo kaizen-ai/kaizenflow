@@ -79,7 +79,8 @@ class TestDryRunTasks1(hut.TestCase):
         """
         Invoke the given target with dry run.
 
-        This is used to test the commands that we can't actually execute.
+        This is used to test the commands that we can't actually
+        execute.
         """
         cmd = f"invoke --dry {target} | grep -v INFO | grep -v 'code_version='"
         _, act = hsinte.system_to_string(cmd)
@@ -89,7 +90,7 @@ class TestDryRunTasks1(hut.TestCase):
         self.check_string(act)
 
 
-# ###############
+# #############################################################################
 
 
 class TestDryRunTasks2(hut.TestCase):
@@ -115,12 +116,12 @@ class TestDryRunTasks2(hut.TestCase):
         target = "git_clean"
         self._check_output(target)
 
-    # #############################
+    # #########################################################################
 
     def test_docker_login(self) -> None:
         """
-        Instead of using _build_mock_context_returning_ok(), set the return values
-        more explicitly.
+        Instead of using _build_mock_context_returning_ok(), set the return
+        values more explicitly.
         """
         stdout = "aws-cli/1.19.49 Python/3.7.6 Darwin/19.6.0 botocore/1.20.49\n"
         ctx = invoke.MockContext(
@@ -134,7 +135,7 @@ class TestDryRunTasks2(hut.TestCase):
         # Check the outcome.
         self._check_calls(ctx)
 
-    # #############################
+    # #########################################################################
 
     @staticmethod
     def _build_mock_context_returning_ok() -> invoke.MockContext:
@@ -167,13 +168,13 @@ class TestDryRunTasks2(hut.TestCase):
         self._check_calls(ctx)
 
 
-# ###############
+# #############################################################################
 
 
 def _get_default_params() -> Dict[str, str]:
     """
-    Get fake params pointing to a different image so we can test the code without
-    affecting the official images.
+    Get fake params pointing to a different image so we can test the code
+    without affecting the official images.
     """
 
     ecr_base_path = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
