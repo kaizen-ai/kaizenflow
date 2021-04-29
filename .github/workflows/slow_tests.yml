@@ -1,7 +1,8 @@
 name: Slow tests
 on:
   pull_request:
-    types: [ opened, synchronize, reopened ]
+    # https://github.community/t/dont-run-actions-on-draft-pull-requests/16817/19
+    types: [opened, synchronize, reopened, ready_for_review]
     branches:
       - master
   push:
@@ -82,7 +83,10 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-        run: invoke run_slow_tests
+        # https://github.community/t/dont-run-actions-on-draft-pull-requests/16817/19
+        # Do not run on draft pull requests.
+        if: github.event.pull_request.draft == false
+        run: invoke run_fast_tests
 
       - name: Post status if was triggered manually
         if: ${{ always() && github.event_name == 'workflow_dispatch' }}

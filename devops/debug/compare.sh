@@ -19,14 +19,17 @@ fi;
 echo "DIR1=$DIR1"
 echo "DIR2=$DIR2"
 
-if [[ 1 == 1 ]]; then
+if [[ 0 == 1 ]]; then
     #vimdiff {$DIR1,$DIR2}/Makefile
     #vimdiff {$DIR1,$DIR2}/devops/makefiles/general.mk
     #vimdiff {$DIR1,$DIR2}/devops/makefiles/repo_specific.mk
 
-    diff_to_vimdiff.py --dir1 $DIR1/devops --dir2 $DIR2/devops
+    DIR="devops"
+    echo "Comparing $DIR"
+    diff_to_vimdiff.py --dir1 $DIR1/$DIR --dir2 $DIR2/$DIR
     # --only_different_files
 else
     DIR=".github/workflows"
+    echo "Comparing $DIR"
     diff_to_vimdiff.py --dir1 $DIR1/$DIR --dir2 $DIR2/$DIR
 fi;
