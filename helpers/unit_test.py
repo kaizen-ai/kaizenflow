@@ -355,7 +355,7 @@ def diff_files(
     msg = []
     # Add tag.
     if tag is not None:
-        msg.append("\n" + hprint.frame(tag, '-'))
+        msg.append("\n" + hprint.frame(tag, "-"))
     # Diff to screen.
     _, res = hsinte.system_to_string(
         "echo; sdiff --expand-tabs -l -w 150 %s %s" % (file_name1, file_name2),
@@ -380,8 +380,7 @@ def diff_files(
         msg_as_str += "\n" + error_msg
     if abort_on_exit:
         raise RuntimeError(msg_as_str)
-    else:
-        _LOG.error(msg_as_str)
+    _LOG.error(msg_as_str)
 
 
 def diff_strings(
@@ -596,7 +595,7 @@ def _assert_equal(
         #   2021-02-17 11:00:00-05:00
         #   """
         txt = []
-        txt.append(hprint.frame("The expected variable should be", '-'))
+        txt.append(hprint.frame("The expected variable should be", "-"))
         prefix = "exp = r"
         spaces = 0
         # spaces = len(prefix)

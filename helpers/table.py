@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.table as htable
+"""
+
 import copy
 import csv
 import logging
@@ -26,20 +32,6 @@ class Table:
         self._col_to_idx = {col: idx for idx, col in enumerate(self._cols)}
         _LOG.debug("col_to_idx=%s", str(self._col_to_idx))
 
-    @classmethod
-    def from_text(cls, cols: List[str], txt: str, delimiter: str) -> "Table":
-        dbg.dassert_isinstance(txt, str)
-        table = [line for line in csv.reader(txt.split("\n"), delimiter=delimiter)]
-        return cls(table, cols)
-
-    def size(self) -> Tuple[int, int]:
-        """
-        Return the size of the table.
-
-        :return: number of columns x number of rows (same as numpy and pandas convention)
-        """
-        return len(self._table), len(self._cols)
-
     def __str__(self) -> str:
         """
         Return a string representing the table with columns aligned.
@@ -53,14 +45,14 @@ class Table:
         lens = [max(map(len, col)) for col in zip(*table_as_str)]
         _LOG.debug(hprint.to_str("lens"))
         # Compute format for the columns.
-        fmt = ' '.join('{{:{}}}'.format(x) for x in lens)
+        fmt = " ".join("{{:{}}}".format(x) for x in lens)
         _LOG.debug(hprint.to_str("fmt"))
         # Format rows.
         rows_as_str = [fmt.format(*row) for row in table_as_str]
         # Remove trailing spaces.
         rows_as_str = [row.rstrip() for row in rows_as_str]
         # Create string.
-        res = '\n'.join(rows_as_str)
+        res = "\n".join(rows_as_str)
         res += "\nsize=%s" % str(self.size())
         return res
 
@@ -71,6 +63,22 @@ class Table:
         res += "\nsize=%s" % str(self.size())
         return res
 
+    @classmethod
+    def from_text(cls, cols: List[str], txt: str, delimiter: str) -> "Table":
+        dbg.dassert_isinstance(txt, str)
+        table = [
+            line for line in csv.reader(txt.split("\n"), delimiter=delimiter)
+        ]
+        return cls(table, cols)
+
+    def size(self) -> Tuple[int, int]:
+        """
+        Return the size of the table.
+
+        :return: number of columns x number of rows (same as numpy and pandas convention)
+        """
+        return len(self._table), len(self._cols)
+
     def filter_rows(self, field: str, value: str) -> "Table":
         """
         Return a Table filtered with the criteria "field == value".
@@ -78,8 +86,9 @@ class Table:
         _LOG.debug("self=\n%s", repr(self))
         # Filter the rows.
         dbg.dassert_in(field, self._col_to_idx.keys())
-        rows_filter = [row for row in self._table if
-                          row[self._col_to_idx[field]] == value]
+        rows_filter = [
+            row for row in self._table if row[self._col_to_idx[field]] == value
+        ]
         _LOG.debug(hprint.to_str("rows_filter"))
         # Build the resulting table.
         table_filter = Table(rows_filter, self._cols)
@@ -89,7 +98,8 @@ class Table:
     @staticmethod
     def _check_table(table: TABLE, cols: List[str]) -> None:
         """
-        Check that the table is wellformed (e.g., the list of lists is rectangular).
+        Check that the table is wellformed (e.g., the list of lists is
+        rectangular).
         """
         dbg.dassert_isinstance(table, list)
         dbg.dassert_isinstance(cols, list)
@@ -100,5 +110,6 @@ class Table:
         # Check that the list of lists is rectangular.
         for row in table:
             dbg.dassert_isinstance(table, list)
-            dbg.dassert_eq(len(row), len(cols),
-                           "Invalid row='%s' for cols='%s'", row, cols)
+            dbg.dassert_eq(
+                len(row), len(cols), "Invalid row='%s' for cols='%s'", row, cols
+            )

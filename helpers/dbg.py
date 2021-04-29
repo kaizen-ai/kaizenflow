@@ -594,7 +594,7 @@ def _get_logging_format(
             log_format = (
                 # 04-28_08:08 INFO :
                 "%(asctime)-5s %(levelname)-5s"
-                # lib_tasks _delete_branches              
+                # lib_tasks _delete_branches
                 " %(module)-15s %(funcName)-20s"
                 # 142:
                 " %(lineno)-4d:"
@@ -832,9 +832,12 @@ def shutup_chatty_modules(
     for logger in loggers:
         logger.setLevel(verbosity)
     if len(loggers) > 0:
-        _LOG.debug("Shut up %d modules: %s",
-                   len(loggers), ", ".join([logger.name for logger in loggers]))
-        #if _LOG.getEffectiveLevel() < logging.DEBUG:
+        _LOG.debug(
+            "Shut up %d modules: %s",
+            len(loggers),
+            ", ".join([logger.name for logger in loggers]),
+        )
+        # if _LOG.getEffectiveLevel() < logging.DEBUG:
         #    print(WARNING +
         #       " Shutting up %d modules: %s"
         #       % (len(loggers), ", ".join([logger.name for logger in loggers]))

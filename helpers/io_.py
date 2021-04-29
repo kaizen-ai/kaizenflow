@@ -19,7 +19,7 @@ from typing import Any, List, Optional
 
 import helpers.dbg as dbg
 import helpers.printing as hprint
-import helpers.system_interaction as hsyste
+import helpers.system_interaction as hsinte
 
 _LOG = logging.getLogger(__name__)
 _LOG.setLevel(logging.INFO)
@@ -46,7 +46,7 @@ def find_files(directory: str, pattern: str) -> List[str]:
 
 def find_regex_files(src_dir: str, regex: str) -> List[str]:
     cmd = 'find %s -name "%s"' % (src_dir, regex)
-    _, output = hsyste.system_to_string(cmd)
+    _, output = hsinte.system_to_string(cmd)
     file_names = [f for f in output.split("\n") if f != ""]
     _LOG.debug("Found %s files in %s", len(file_names), src_dir)
     _LOG.debug("\n".join(file_names))
@@ -74,7 +74,7 @@ def create_soft_link(src: str, dst: str) -> None:
     # Create the link. Note that the link source needs to be an absolute path.
     src = os.path.abspath(src)
     cmd = "ln -s %s %s" % (src, dst)
-    hsyste.system(cmd)
+    hsinte.system(cmd)
 
 
 def delete_file(file_name: str) -> None:
@@ -116,7 +116,7 @@ def delete_dir(
         return
     if change_perms and os.path.isdir(dir_):
         cmd = "chmod -R +rwx " + dir_
-        hsyste.system(cmd)
+        hsinte.system(cmd)
     i = 1
     while True:
         try:
@@ -158,7 +158,9 @@ def create_dir(
     :param ask_to_delete: if it is not incremental and the dir exists,
         asks before deleting
     """
-    _LOG.debug(hprint.to_str("dir_name incremental abort_if_exists ask_to_delete"))
+    _LOG.debug(
+        hprint.to_str("dir_name incremental abort_if_exists ask_to_delete")
+    )
     dbg.dassert_is_not(dir_name, None)
     dir_name = os.path.normpath(dir_name)
     if os.path.normpath(dir_name) == ".":
@@ -176,10 +178,12 @@ def create_dir(
             # The dir exists and we want to keep it it exists (i.e.,
             # incremental), so we are done.
             # os.chmod(dir_name, 0755)
-            _LOG.debug("The dir '%s' exists and incremental=True: exiting", dir_name)
+            _LOG.debug(
+                "The dir '%s' exists and incremental=True: exiting", dir_name
+            )
             return
         if ask_to_delete:
-            hsyste.query_yes_no(
+            hsinte.query_yes_no(
                 "Do you really want to delete dir '%s'?" % dir_name,
                 abort_on_no=True,
             )
@@ -209,7 +213,7 @@ def create_dir(
 
 
 def _is_valid_file_name(file_name: str) -> None:
-    #dbg.dassert_in(type(file_name), (str, unicode))
+    # dbg.dassert_in(type(file_name), (str, unicode))
     dbg.dassert_in(type(file_name), [str])
     dbg.dassert_is_not(file_name, None)
     dbg.dassert_ne(file_name, "")
@@ -228,7 +232,9 @@ def create_enclosing_dir(file_name: str, incremental: bool = False) -> str:
     dir_name = os.path.dirname(file_name)
     _LOG.debug(hprint.to_str("dir_name"))
     if dir_name != "":
-        _LOG.debug("Creating dir_name='%s' for file_name='%s'", dir_name, file_name)
+        _LOG.debug(
+            "Creating dir_name='%s' for file_name='%s'", dir_name, file_name
+        )
         create_dir(dir_name, incremental=incremental)
     dbg.dassert_dir_exists(dir_name, "file_name='%s'", file_name)
     return dir_name

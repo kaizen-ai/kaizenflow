@@ -1,26 +1,13 @@
 import logging
-from typing import Any, Dict, List, Tuple
 
-import helpers.dbg as dbg
-import helpers.unit_test as hut
 import helpers.printing as hprint
 import helpers.table as htable
+import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
 
 class TestTable1(hut.TestCase):
-    @staticmethod
-    def _get_table() -> htable.Table:
-        txt = """completed failure Lint Run_linter
-completed success Lint Fast_tests
-completed success Lint Slow_tests"""
-        cols = ["status", "outcome", "descr", "workflow"]
-        #table = [line for line in csv.reader(txt.split("\n"), delimiter=' ')]
-        #_LOG.debug(hprint.to_str("table"))
-        #_LOG.debug("size=%s", str(htable.size(table)))
-        table = htable.Table.from_text(cols, txt, delimiter=" ")
-        return table
 
     def test_from_text1(self) -> None:
         table = self._get_table()
@@ -120,6 +107,7 @@ size=(1, 4)
         exp = r"""
 cols=['status', 'outcome', 'descr', 'workflow']
 table=
+
 size=(0, 4)
 """
         act = repr(table_filter)
@@ -136,3 +124,15 @@ size=(0, 4)
         act = repr(table_filter)
         exp = repr(table)
         self.assert_equal(act, exp, fuzzy_match=False)
+
+    @staticmethod
+    def _get_table() -> htable.Table:
+        txt = """completed failure Lint Run_linter
+completed success Lint Fast_tests
+completed success Lint Slow_tests"""
+        cols = ["status", "outcome", "descr", "workflow"]
+        # table = [line for line in csv.reader(txt.split("\n"), delimiter=' ')]
+        # _LOG.debug(hprint.to_str("table"))
+        # _LOG.debug("size=%s", str(htable.size(table)))
+        table = htable.Table.from_text(cols, txt, delimiter=" ")
+        return table

@@ -16,8 +16,8 @@ import pandas as pd
 import pytest
 
 import helpers.git as git
-import helpers.printing as hprint
 import helpers.io_ as hio
+import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
 
@@ -170,7 +170,9 @@ completed       success Lint    Slow_tests
         test_name = self._get_test_name()
         test_dir = self.get_scratch_space()
         fuzzy_match = True
-        is_equal = hut._assert_equal(act, exp, test_name, test_dir, fuzzy_match=fuzzy_match)
+        is_equal = hut._assert_equal(
+            act, exp, test_name, test_dir, fuzzy_match=fuzzy_match
+        )
         _LOG.debug(hprint.to_str("is_equal"))
         self.assertTrue(is_equal)
 
@@ -192,7 +194,9 @@ completed       success Lint    Slow_tests
         test_dir = self.get_scratch_space()
         fuzzy_match = False
         with self.assertRaises(RuntimeError) as cm:
-            hut._assert_equal(act, exp, test_name, test_dir, fuzzy_match=fuzzy_match)
+            hut._assert_equal(
+                act, exp, test_name, test_dir, fuzzy_match=fuzzy_match
+            )
         # Check that the assertion is what expected.
         act = str(cm.exception)
         exp = '''
