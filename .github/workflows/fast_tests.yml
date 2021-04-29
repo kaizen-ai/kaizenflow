@@ -69,7 +69,7 @@ jobs:
         with:
           submodules: true
           # TODO(gp): Not needed?
-          ssh-key: ${{ secrets.GH_ACTION_SSH_PRIVATE_KEY }}
+          #ssh-key: ${{ secrets.GH_ACTION_SSH_PRIVATE_KEY }}
 
       - name: Install dependencies
         run: |
