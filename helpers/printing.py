@@ -242,6 +242,8 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
     >>> to_str("x+1")
     x+1=2
     """
+    # TODO(gp): If we pass an object it would be nice to find the name of it.
+    # E.g., https://github.com/pwwang/python-varname
     dbg.dassert_isinstance(expression, str)
     if " " in expression:
         # If expression is a list of space-separated expression, convert each in a
