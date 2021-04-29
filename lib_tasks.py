@@ -337,6 +337,9 @@ def _get_aws_cli_version() -> int:
 @task
 def docker_login(ctx):  # type: ignore
     _LOG.info(">")
+    if "CI" in os.environ:
+        _LOG.warning("Running inside GitHub Action: skipping `docker_login`")
+        return
     major_version = _get_aws_cli_version()
     # TODO(gp): We should get this programmatically from ~/aws/.credentials
     region = "us-east-1"
@@ -354,8 +357,10 @@ def docker_login(ctx):  # type: ignore
 def _get_amp_docker_compose_path() -> str:
     path = git.get_path_from_supermodule()
     if path != "":
+        _LOG.warning("amp is a submodule")
         docker_compose_path = "docker-compose-user-space-git-subrepo.yml"
     else:
+        _LOG.warning("amp is not a submodule")
         docker_compose_path = "docker-compose-user-space.yml"
     # Add the path.
     dir_name = "devops/compose"

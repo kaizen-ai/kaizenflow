@@ -22,8 +22,8 @@ def get_code_version() -> str:
     return _CODE_VERSION
 
 
-# True if we are running inside a (Docker) container.
-IS_INSIDE_CONTAINER = os.path.exists("/.dockerenv")
+# True if we are running inside a Docker container or inside GitHub Action.
+IS_INSIDE_CONTAINER = os.path.exists("/.dockerenv") or ("CI" in os.environ)
 
 
 def get_container_version() -> Optional[str]:
