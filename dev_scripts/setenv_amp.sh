@@ -1,4 +1,10 @@
+#
+# Configure the local (thin) client built with `dev_scripts/client_setup/build.sh`.
+# 
+
+# TODO(gp): -> dev_scripts -> dev_scripts_amp
 PWD=$(pwd)
+AMP=$PWD
 
 # #############################################################################
 # Virtual env
@@ -18,10 +24,11 @@ echo "python -v="$(python --version)
 # #############################################################################
 
 echo "# Set path"
-AMP=$PWD
 
 export PATH=.:$PATH
+
 export PATH=$AMP:$PATH
+
 export PATH=$AMP/dev_scripts:$PATH
 export PATH=$AMP/dev_scripts/aws:$PATH
 export PATH=$AMP/dev_scripts/git:$PATH
