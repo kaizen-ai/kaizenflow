@@ -23,12 +23,12 @@ TMUX_NAME="dev"
 CMD="source ${SETENV}"
 
 ##
-tmux new-session -d -s $TMUX_NAME -n "amp"
+tmux new-session -d -s $TMUX_NAME -n "---AMP---"
 # The first one window seems a problem.
 tmux send-keys -t $TMUX_NAME "white; cd ${DIR_NAME1} && $CMD" C-m C-m
 
 #
-tmux new-window -t $TMUX_NAME -n " "
+tmux new-window -t $TMUX_NAME -n "dbash"
 tmux send-keys -t $TMUX_NAME "green; cd ${DIR_NAME1} && $CMD" C-m C-m
 #
 tmux new-window -t $TMUX_NAME -n " "

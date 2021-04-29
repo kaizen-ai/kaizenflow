@@ -29,33 +29,31 @@ def _diff(dir1: str, dir2: str) -> str:
     """
     Run a diff command between the two dirs and save the output in a file.
     """
-    _LOG.info("Comparing dirs %s %s", dir1, dir2)
+    _LOG.info("\n%s", prnt.frame("Comparing file list in dirs '%s' vs '%s'" % (dir1, dir2)))
     dbg.dassert_exists(dir1)
     dbg.dassert_exists(dir2)
-    #
+    # Find all the files in both dirs.
     cmd = ""
     cmd += '(cd %s && find %s -name "*" | sort >/tmp/dir1) && ' % (os.path.dirname(dir1), os.path.basename(dir1))
     cmd += '(cd %s && find %s -name "*" | sort >/tmp/dir2)' % (os.path.dirname(dir2), os.path.basename(dir2))
     si.system(cmd, abort_on_error=True)
-    #
+    # Compare the file listings.
     cmd = "sdiff /tmp/dir1 /tmp/dir2"
     si.system(cmd, abort_on_error=False, suppress_output=False)
     #
     cmd = "vimdiff /tmp/dir1 /tmp/dir2"
-    print("# Diff with:\n> " + cmd)
-    #
-    dst_file = "/tmp/tmp.diff_to_vimdiff.txt"
+    print("# Diff file listing with:\n> " + cmd)
+    dst_file = "./tmp.diff_file_listings.txt"
     cmd = "diff --brief -r %s %s >%s" % (dir1, dir2, dst_file)
-    # We don't abort since diff rc != 0 in case of differences, which is a
-    # valid outcome.
+    # We don't abort since rc != 0 in case of differences, which is a valid outcome.
     si.system(cmd, abort_on_error=False)
-    print("# To see the diff\n> vi %s" % dst_file)
+    print("# To see the original file with the listing difference:\n> vi %s" % dst_file)
     input_file = dst_file
     #
     return input_file
 
 
-def _get_symbolic_filepath(dir1, dir2, file_name):
+def _get_symbolic_filepath(dir1: str, dir2: str, file_name: str) -> str:
     """
     Transform a path like:
         /Users/saggese/src/...2/amp/vendors/first_rate/utils.py
@@ -67,10 +65,11 @@ def _get_symbolic_filepath(dir1, dir2, file_name):
     return file_name
 
 
-def _parse_diff_output(input_file: str, dir1: str, dir2: str, args):
+def _parse_diff_output(input_file: str, dir1: str, dir2: str, args) -> None:
     """
-    Process the output of diff and creates a file with the corresponding.
+    Process the output of diff and creates a script to diff the diffenrent files.
     """
+    _LOG.info("\n%s", prnt.frame("Comparing file content in dirs '%s' vs '%s'" % (dir1, dir2)))
     output_file = args.output_file
     # Read.
     dbg.dassert_exists(input_file)
@@ -92,7 +91,6 @@ def _parse_diff_output(input_file: str, dir1: str, dir2: str, args):
             dbg.dassert(m, "Invalid line='%s'", line)
             file_name = "%s/%s" % (m.group(1), m.group(2))
             dbg.dassert_exists(file_name)
-            # Comment.
             dir_ = _get_symbolic_filepath(dir1, dir2, m.group(1))
             dirs = dir_.split("/")
             dir_ = dirs[0]
@@ -106,7 +104,7 @@ def _parse_diff_output(input_file: str, dir1: str, dir2: str, args):
             elif "$DIR2" in dir_:
                 sign = ">"
             else:
-                dfatal("Invalid dir_='%s'" % dir_)
+                dbg.dfatal("Invalid dir_='%s'" % dir_)
             if args.dir1_name is not None:
                 dir_ = dir_.replace("$DIR1", args.dir1_name)
             if args.dir2_name is not None:
@@ -185,7 +183,7 @@ def _parse_diff_output(input_file: str, dir1: str, dir2: str, args):
         io_.to_file(output_file, out)
         cmd = "chmod +x %s" % output_file
         si.system(cmd)
-        # 
+        #
         cmd = "./%s" % output_file
         print("Run script with:\n> " + cmd)
         # 
@@ -222,7 +220,7 @@ def _parse() -> argparse.ArgumentParser:
         "-o",
         "--output_file",
         action="store",
-        default="tmp.diff_to_vimdiff.sh",
+        default="tmp.diff_file_differences.sh",
         help="Output file. Don't specify anything for stdout",
     )
     parser.add_argument(
@@ -251,7 +249,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     dir1 = os.path.abspath(args.dir1)
     dir2 = os.path.abspath(args.dir2)
+    #
     diff_file = _diff(dir1, dir2)
+    #
     _parse_diff_output(diff_file, dir1, dir2, args)
 
 

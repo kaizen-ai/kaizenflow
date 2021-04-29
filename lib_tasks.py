@@ -289,6 +289,7 @@ def docker_pull(ctx, stage=_STAGE, images="all"):  # type: ignore
     Pull images from the registry.
     """
     _LOG.info(">")
+    docker_login(ctx)
     # Default is all the images.
     if images == "all":
         images = "current dev_tools"
