@@ -70,11 +70,11 @@ size=(3, 4)
         table = self._get_table()
         act = str(table)
         exp = r"""
-status    outcome descr workflow
--         -       -     -
-completed failure Lint  Run_linter
-completed success Lint  Fast_tests
-completed success Lint  Slow_tests
+status    | outcome | descr | workflow   |
+--------- | ------- | ----- | ---------- |
+completed | failure | Lint  | Run_linter |
+completed | success | Lint  | Fast_tests |
+completed | success | Lint  | Slow_tests |
 size=(3, 4)
 """
         exp = exp.rstrip().lstrip()

@@ -1079,21 +1079,19 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
     # table = [line for line in csv.reader(txt.split("\n"), delimiter="\t")]
     _LOG.debug(hprint.to_str("table"))
     #
-    _LOG.debug("Filtering table")
-    table = table.filter("branch", branch_name)
-    # assert 0
-    # if branch_name:
-    #     table = [line for line in table if line[col_to_idx["branch"]] == branch_name]
-    # if status:
-    #     table = [line for line in table if line[col_to_idx["status"]] == branch_name]
-    # _LOG.debug(hprint.to_str("table"))
-    # for line in csv.reader(txt.split("\n"), delimiter='\t'):
-    #    print(line)
-    # if branch_name:
-    #     cmd += f" | grep {branch_name}"
-    # if status != "all":
-    #     cmd += f" | grep {status}"
-    # ctx.run(cmd)
+    if branch != "all":
+        field = "branch"
+        value = branch_name
+        _LOG.info("Filtering table by %s=%s", field, value)
+        table = table.filter_rows(field, value)
+    #
+    if status != "all":
+        field = "status"
+        value = status
+        _LOG.info("Filtering table by %s=%s", field, value)
+        table = table.filter_rows(field, value)
+    #
+    print(str(table))
 
 
 @task

@@ -38,15 +38,18 @@ class Table:
         """
         table = copy.deepcopy(self._table)
         table.insert(0, self._cols)
-        table.insert(1, ["-"] * len(self._cols))
         # Convert the cells to strings.
         table_as_str = [[str(cell) for cell in row] for row in table]
         # Find the length of each columns.
-        lens = [max(map(len, col)) for col in zip(*table_as_str)]
-        _LOG.debug(hprint.to_str("lens"))
+        lengths = [max(map(len, col)) for col in zip(*table_as_str)]
+        _LOG.debug(hprint.to_str("lengths"))
         # Compute format for the columns.
-        fmt = " ".join("{{:{}}}".format(x) for x in lens)
+        fmt = " ".join("{{:{}}} |".format(x) for x in lengths)
         _LOG.debug(hprint.to_str("fmt"))
+        # Add the row separating the column names.
+        row_sep = ["-" * lenght for lenght in lengths]
+        table.insert(1, row_sep)
+        table_as_str = [[str(cell) for cell in row] for row in table]
         # Format rows.
         rows_as_str = [fmt.format(*row) for row in table_as_str]
         # Remove trailing spaces.
