@@ -5,9 +5,6 @@ import lib_tasks as ltasks
 """
 
 import csv
-# TODO(gp): Move to helpers.lib_tasks? Do we need to move / rename also
-#  test_tasks.py?
-
 import datetime
 import functools
 import logging
@@ -15,7 +12,7 @@ import os
 import pprint
 import re
 import sys
-from typing import Any, Dict, List, Match
+from typing import Any, Dict, Match
 
 from invoke import task
 
@@ -25,8 +22,11 @@ import helpers.dbg as dbg
 import helpers.git as git
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
-import helpers.version as hversi
 import helpers.table as htable
+import helpers.version as hversi
+
+# TODO(gp): Move to helpers.lib_tasks? Do we need to move / rename also
+#  test_tasks.py?
 
 _LOG = logging.getLogger(__name__)
 
@@ -60,6 +60,7 @@ if ("-d" in sys.argv) or ("--debug" in sys.argv):
     dbg.init_logger(verbosity=logging.DEBUG)
 else:
     dbg.init_logger(verbosity=logging.INFO)
+
 
 # #############################################################################
 # Set-up.
@@ -127,7 +128,7 @@ def git_clean(ctx):  # type: ignore
 
 
 @task
-def git_diff_master_files(ctx):  # type: ignore
+def git_branch_files(ctx):  # type: ignore
     """
     Report which files are changed in the current branch with respect to
     master.
@@ -164,7 +165,8 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
             return
         # Ask whether to continue.
         if confirm_delete:
-            hsinte.query_yes_no(dbg.WARNING + f": Delete these {tag} branches?", abort_on_no=True)
+            hsinte.query_yes_no(dbg.WARNING + f": Delete these {tag} branches?",
+                                abort_on_no=True)
         for branch in branches:
             cmd = f"{delete_cmd} {branch}"
             ctx.run(cmd)
@@ -177,8 +179,8 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     _delete_branches("local")
     # Get the branches to delete.
     find_cmd = (
-        "git branch -r --merged origin/master"
-        + r" | grep -v master | sed 's/origin\///'"
+            "git branch -r --merged origin/master"
+            + r" | grep -v master | sed 's/origin\///'"
     )
     delete_cmd = "git push origin --delete"
     _delete_branches("remote")
@@ -216,9 +218,9 @@ def docker_ps(ctx):  # type: ignore
     """
     # pylint: enable=line-too-long
     fmt = (
-        r"""table {{.ID}}\t{{.Label "user"}}\t{{.Image}}\t{{.Command}}"""
-        + r"\t{{.RunningFor}}\t{{.Status}}\t{{.Ports}}"
-        + r'\t{{.Label "com.docker.compose.service"}}'
+            r"""table {{.ID}}\t{{.Label "user"}}\t{{.Image}}\t{{.Command}}"""
+            + r"\t{{.RunningFor}}\t{{.Status}}\t{{.Ports}}"
+            + r'\t{{.Label "com.docker.compose.service"}}'
     )
     cmd = f"docker ps --format='{fmt}'"
     cmd = _remove_spaces(cmd)
@@ -239,8 +241,8 @@ def docker_stats(ctx):  # type: ignore
     """
     # pylint: enable=line-too-long
     fmt = (
-        r"table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
-        + r"\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}"
+            r"table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+            + r"\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}"
     )
     cmd = f"docker stats --no-stream --format='{fmt}'"
     ctx.run(cmd)
@@ -330,8 +332,8 @@ def docker_login(ctx):  # type: ignore
     else:
         ecr_base_path = get_default_value("ECR_BASE_PATH")
         cmd = (
-            f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
-            + f"https://{ecr_base_path}"
+                f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
+                + f"https://{ecr_base_path}"
         )
     ctx.run(cmd)
 
@@ -400,9 +402,9 @@ def _get_base_image(base_image: str) -> str:
     """
     if base_image == "":
         base_image = (
-            get_default_value("ECR_BASE_PATH")
-            + "/"
-            + get_default_value("BASE_IMAGE")
+                get_default_value("ECR_BASE_PATH")
+                + "/"
+                + get_default_value("BASE_IMAGE")
         )
     _check_base_image(base_image)
     return base_image
@@ -428,8 +430,8 @@ def _get_image(stage: str, base_image: str) -> str:
 
 
 def _docker_cmd(
-    ctx: Any, stage: str, base_image: str, docker_compose: str, cmd: str,
-    entrypoint: bool = True
+        ctx: Any, stage: str, base_image: str, docker_compose: str, cmd: str,
+        entrypoint: bool = True
 ) -> None:
     """
     :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
@@ -492,7 +494,7 @@ def docker_cmd(ctx, stage=_STAGE, cmd=""):  # type: ignore
 
 @task
 def docker_jupyter(  # type: ignore
-    ctx, stage=_STAGE, port=9999, self_test=False, base_image=""
+        ctx, stage=_STAGE, port=9999, self_test=False, base_image=""
 ):
     """
     Run jupyter notebook server.
@@ -580,7 +582,7 @@ def _get_build_tag() -> str:
 # a single type.
 @task
 def docker_build_local_image(  # type: ignore
-    ctx, cache=True, base_image="", update_poetry=False
+        ctx, cache=True, base_image="", update_poetry=False
 ):
     """
     Build a local as a release candidate image.
@@ -653,13 +655,13 @@ def docker_push_local_image_to_dev(ctx, base_image=""):  # type: ignore
 
 @task
 def docker_release_dev_image(  # type: ignore
-    ctx,
-    cache=True,
-    skip_tests=False,
-    run_fast=True,
-    run_slow=True,
-    run_superslow=False,
-    push_to_repo=True,
+        ctx,
+        cache=True,
+        skip_tests=False,
+        run_fast=True,
+        run_slow=True,
+        run_superslow=False,
+        push_to_repo=True,
 ):
     """
     (ONLY FOR CI/CD) Build, test, and release to ECR the latest "dev" image.
@@ -731,12 +733,12 @@ def docker_build_prod_image(ctx, cache=False, base_image=""):  # type: ignore
 
 @task
 def docker_release_prod_image(  # type: ignore
-    ctx,
-    cache=False,
-    run_fast=True,
-    run_slow=True,
-    run_superslow=False,
-    base_image="",
+        ctx,
+        cache=False,
+        run_fast=True,
+        run_slow=True,
+        run_superslow=False,
+        base_image="",
 ):
     """
     (ONLY FOR CI/CD) Build, test, and release to ECR the prod image.
@@ -802,7 +804,8 @@ def run_blank_tests(ctx, stage=_STAGE):  # type: ignore
 
 
 @task
-def run_fast_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: ignore
+def run_fast_tests(ctx, stage=_STAGE, pytest_opts="",
+                   coverage=False):  # type: ignore
     _LOG.info(">")
     run_tests_dir = "devops/docker_scripts"
     if coverage:
@@ -813,7 +816,8 @@ def run_fast_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: 
 
 
 @task
-def run_slow_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: ignore
+def run_slow_tests(ctx, stage=_STAGE, pytest_opts="",
+                   coverage=False):  # type: ignore
     _LOG.info(">")
     run_tests_dir = "devops/docker_scripts"
     if coverage:
@@ -823,7 +827,8 @@ def run_slow_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: 
 
 
 @task
-def run_fast_slow_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: ignore
+def run_fast_slow_tests(ctx, stage=_STAGE, pytest_opts="",
+                        coverage=False):  # type: ignore
     """
     Run both fast and slow tests.
     """
@@ -832,7 +837,8 @@ def run_fast_slow_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # t
 
 
 @task
-def run_superslow_tests(ctx, stage=_STAGE, pytest_opts="", coverage=False):  # type: ignore
+def run_superslow_tests(ctx, stage=_STAGE, pytest_opts="",
+                        coverage=False):  # type: ignore
     _LOG.info(">")
     run_tests_dir = "devops/docker_scripts"
     if coverage:
@@ -981,8 +987,8 @@ def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignor
     files_as_str = " ".join(files_as_list)
     #
     cmd = (
-        f"pre-commit.sh run {phases} --files {files_as_str} 2>&1 "
-        + "| tee linter_warnings.txt"
+            f"pre-commit.sh run {phases} --files {files_as_str} 2>&1 "
+            + "| tee linter_warnings.txt"
     )
     ctx.run(cmd)
 
@@ -1011,8 +1017,6 @@ def get_amp_files(ctx):  # type: ignore
 # #############################################################################
 
 
-
-
 @task
 def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
     """
@@ -1039,19 +1043,20 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
     _, txt = hsinte.system_to_string(cmd)
     _LOG.debug(hprint.to_str("txt"))
     # completed  success  Merge pull...  Fast tests  master  push  2m18s  792511437
-    cols = ["status", "outcome", "descr", "workflow", "branch", "trigger", "time", "workflow_id"]
+    cols = ["status", "outcome", "descr", "workflow", "branch", "trigger", "time",
+            "workflow_id"]
     table = [line for line in csv.reader(txt.split("\n"), delimiter='\t')]
     _LOG.debug(hprint.to_str("table"))
     #
     _LOG.debug("Filtering table")
     table = htable.filter_table(table, cols, "branch", branch_name)
-    #assert 0
+    # assert 0
     # if branch_name:
     #     table = [line for line in table if line[col_to_idx["branch"]] == branch_name]
     # if status:
     #     table = [line for line in table if line[col_to_idx["status"]] == branch_name]
     # _LOG.debug(hprint.to_str("table"))
-    #for line in csv.reader(txt.split("\n"), delimiter='\t'):
+    # for line in csv.reader(txt.split("\n"), delimiter='\t'):
     #    print(line)
     # if branch_name:
     #     cmd += f" | grep {branch_name}"
