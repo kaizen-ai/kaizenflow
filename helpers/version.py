@@ -40,23 +40,26 @@ def get_container_version() -> Optional[str]:
     return container_version
 
 
-def _check_version(code_version: str, container_version: str) -> None:
+def _check_version(code_version: str, container_version: str) -> bool:
     # We are running inside a container.
     # Keep the code and the container in sync by versioning both and requiring
     # to be the same.
-    if container_version != code_version:
+    is_ok = container_version == code_version
+    if not is_ok:
         msg = f"""
 -----------------------------------------------------------------------------
 This code is not in sync with the container:
-code_version={code_version} != container_version={container_version}"
+code_version={code_version} != container_version={container_version}
 -----------------------------------------------------------------------------
 You need to:
-- merge origin/master into your branch with `invoke git_merge_origin_master`
+- merge origin/master into your branch with `invoke git_merge_master`
 - pull the latest container with `invoke docker_pull`
 """
         msg = msg.rstrip().lstrip()
+        msg = "\033[31m%s\033[0m" % msg
         _LOG.error(msg)
-        raise RuntimeError(msg)
+        #raise RuntimeError(msg)
+    return is_ok
 
 
 def check_version() -> None:
