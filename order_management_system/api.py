@@ -200,29 +200,14 @@ class OMS:
     https://ib-insync.readthedocs.io/api.html#module-ib_insync.ib
     """
     def __init__(self):
-        self.trades = []
-        self.orders = []
+        self._trades = []
+        self._orders = []
         #
-        self.positions: Dict[Contract, Position] = {}
+        self._current_positions: Dict[Contract, Position] = {}
+
+    def get_current_positions(self) -> Dict[Contract, Position]:
+        return self._current_positions.copy()
     
-    def trades(self) -> List[Trade]:
-        """
-        List of all order trades from this session.
-        """
-        return self.trades
-
-    def orders(self) -> List[Order]:
-        """
-        List of all orders from this session.
-        """
-        return self.orders
-
-    def positions(self) -> List[Position]:
-        """
-        List of positions for the given account.
-        """
-        return self.positions.values()
-
     def __repr__(self):
         def _to_string(prefix, objs) -> str:
             ret = "%s=%d" % (prefix, len(objs))

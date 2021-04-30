@@ -1,11 +1,7 @@
 import logging
-import os
-from typing import Tuple
 
-import pandas as pd
 import pytest
 
-import helpers.dbg as dbg
 import helpers.unit_test as hut
 
 import order_management_system.api as omsapi
@@ -41,6 +37,7 @@ class Test_Contract1(hut.TestCase):
         #
         self.assertNotEqual(contract1, contract2)
 
+# TODO(*): Add type hints, docstrings.
 def _get_order1():
     order_id = 0
     action = "BUY"
@@ -102,6 +99,7 @@ def _get_position1():
     position = omsapi.Position(contract, position)
     return position
 
+# TODO(*): Test public functions, not private ones.
 class Test_Position1(hut.TestCase):
 
     def test1(self):
@@ -159,8 +157,10 @@ class Test_Position1(hut.TestCase):
         exp = "None"
         self.assert_equal(act, exp)
 
+
 class Test_OMS1(hut.TestCase):
 
+    @pytest.mark.skip
     def test1(self):
         contract = _get_contract1()
         order = _get_order1()
