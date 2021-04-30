@@ -46,8 +46,10 @@ def _check_version(code_version: str, container_version: str) -> None:
     # to be the same.
     if container_version != code_version:
         msg = f"""
+-----------------------------------------------------------------------------
 This code is not in sync with the container:
-code_version={code_version} != container_version={container_version}")
+code_version={code_version} != container_version={container_version}"
+-----------------------------------------------------------------------------
 You need to:
 - merge origin/master into your branch with `invoke git_merge_origin_master`
 - pull the latest container with `invoke docker_pull`
