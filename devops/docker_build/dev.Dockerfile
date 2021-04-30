@@ -53,8 +53,8 @@ RUN /bin/bash -c "./install_requirements.sh"
 # This is not portable across BUILDKIT=1 and BUILDKIT=0 and it's not cached.
 #RUN --mount=source=.,target=/amp ./devops/docker_build/install_requirements.sh
 
-COPY devops/docker_build/init_bash.sh .
-RUN /bin/bash -c "./init_bash.sh"
+#COPY devops/docker_build/init_bash.sh ~
+#RUN cp devops/docker_build/init_bash.sh"
 
 # Run repo-specific initialization scripts.
 #RUN devops/docker_build/init.sh

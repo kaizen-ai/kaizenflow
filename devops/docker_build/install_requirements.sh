@@ -63,3 +63,6 @@ fi;
 # Some tools refer to `python` and `pip`.
 ln -s /usr/bin/python3 /usr/bin/python
 ln -s /usr/bin/pip3 /usr/bin/pip
+
+# Update the bashrc.
+echo "\nset -o vi" >>~/.bashrc

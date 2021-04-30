@@ -140,6 +140,21 @@ def get_path_from_supermodule() -> str:
     return res
 
 
+@functools.lru_cache()
+def get_submodule_paths() -> List[str]:
+    """
+    Return the path of the submodules in this repo, e.g., `["amp"]` or `[]`.
+    """
+    # > git config --file .gitmodules --get-regexp path
+    # submodule.amp.path amp
+    cmd = "git config --file .gitmodules --get-regexp path | awk '{ print $2 }'"
+    _, txt = hsinte.system_to_string(cmd)
+    _LOG.debug("txt=%s", txt)
+    files = hsinte.text_to_list(txt)
+    _LOG.debug("files=%s", files)
+    return files
+
+
 def _get_hash(git_hash: str, short_hash: bool, num_digits: int = 8) -> str:
     dbg.dassert_lte(1, num_digits)
     if short_hash:
@@ -581,6 +596,8 @@ def git_log(num_commits: int = 5, my_commits: bool = False) -> str:
     )
     cmd.append("-%d" % num_commits)
     if my_commits:
+        # This doesn't work in a container if the user relies on `~/.gitconfig` to
+        # set the user name.
         cmd.append("--author $(git config user.name)")
     cmd = " ".join(cmd)
     data: Tuple[int, str] = hsinte.system_to_string(cmd)

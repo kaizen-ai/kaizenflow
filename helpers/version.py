@@ -18,7 +18,7 @@ def get_code_version() -> str:
     """
     Return the code version.
     """
-    _CODE_VERSION = "1.0.0"
+    _CODE_VERSION = "1.0.1"
     return _CODE_VERSION
 
 
@@ -40,21 +40,26 @@ def get_container_version() -> Optional[str]:
     return container_version
 
 
-def _check_version(code_version: str, container_version: str) -> None:
+def _check_version(code_version: str, container_version: str) -> bool:
     # We are running inside a container.
     # Keep the code and the container in sync by versioning both and requiring
     # to be the same.
-    if container_version != code_version:
+    is_ok = container_version == code_version
+    if not is_ok:
         msg = f"""
+-----------------------------------------------------------------------------
 This code is not in sync with the container:
-code_version={code_version} != container_version={container_version}")
+code_version={code_version} != container_version={container_version}
+-----------------------------------------------------------------------------
 You need to:
-- merge origin/master into your branch with `invoke git_merge_origin_master`
+- merge origin/master into your branch with `invoke git_merge_master`
 - pull the latest container with `invoke docker_pull`
 """
         msg = msg.rstrip().lstrip()
+        msg = "\033[31m%s\033[0m" % msg
         _LOG.error(msg)
-        raise RuntimeError(msg)
+        #raise RuntimeError(msg)
+    return is_ok
 
 
 def check_version() -> None:
@@ -76,9 +81,15 @@ def check_version() -> None:
                 " container", env_var)
     else:
         container_version = os.environ[env_var]
-    print(f"code_version={code_version}, "
-            f"container_version={container_version}, "
-            f"inside_container={IS_INSIDE_CONTAINER}")
+    # Print information.
+    msg = (f"inside_container={IS_INSIDE_CONTAINER}: "
+              f"code_version={code_version}, "
+              f"container_version={container_version}")
+    if IS_INSIDE_CONTAINER:
+        print(msg)
+    else:
+        _LOG.debug("%s", msg)
+    # Check version, if possible.
     if container_version is None:
         # No need to check.
         return

@@ -565,8 +565,7 @@ class TestCheckDataFrame1(hut.TestCase):
 
 
 class Test_unit_test1(hut.TestCase):
-    @pytest.mark.not_docker
-    @pytest.mark.amp
+
     def test_purify_txt_from_client1(self) -> None:
         super_module_path = git.get_client_root(super_module=True)
         # TODO(gp): We should remove the current path.

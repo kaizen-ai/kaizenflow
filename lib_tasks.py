@@ -103,9 +103,9 @@ def git_pull_master(ctx):  # type: ignore
 
 
 @task
-def git_merge_origin_master(ctx):  # type: ignore
+def git_merge_master(ctx):  # type: ignore
     """
-    Merge origin/master to this branch.
+    Merge `origin/master` into this branch.
     """
     _LOG.info(">")
     # TODO(gp): Check that we are in a branch and that the branch is clean.
@@ -113,6 +113,14 @@ def git_merge_origin_master(ctx):  # type: ignore
     #
     cmd = "git merge master"
     ctx.run(cmd)
+
+
+# TODO(gp): Add git_co(ctx)
+# git stash save your-file-name
+# git checkout master
+# # do whatever you had to do with master
+# git checkout staging
+# git stash pop
 
 
 @task
@@ -191,8 +199,8 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     _delete_branches("local")
     # Get the branches to delete.
     find_cmd = (
-        "git branch -r --merged origin/master"
-        + r" | grep -v master | sed 's/origin\///'"
+            "git branch -r --merged origin/master"
+            + r" | grep -v master | sed 's/origin\///'"
     )
     delete_cmd = "git push origin --delete"
     _delete_branches("remote")
@@ -230,9 +238,9 @@ def docker_ps(ctx):  # type: ignore
     """
     # pylint: enable=line-too-long
     fmt = (
-        r"""table {{.ID}}\t{{.Label "user"}}\t{{.Image}}\t{{.Command}}"""
-        + r"\t{{.RunningFor}}\t{{.Status}}\t{{.Ports}}"
-        + r'\t{{.Label "com.docker.compose.service"}}'
+            r"""table {{.ID}}\t{{.Label "user"}}\t{{.Image}}\t{{.Command}}"""
+            + r"\t{{.RunningFor}}\t{{.Status}}\t{{.Ports}}"
+            + r'\t{{.Label "com.docker.compose.service"}}'
     )
     cmd = f"docker ps --format='{fmt}'"
     cmd = _remove_spaces(cmd)
@@ -253,8 +261,8 @@ def docker_stats(ctx):  # type: ignore
     """
     # pylint: enable=line-too-long
     fmt = (
-        r"table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
-        + r"\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}"
+            r"table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+            + r"\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}"
     )
     cmd = f"docker stats --no-stream --format='{fmt}'"
     ctx.run(cmd)
@@ -348,8 +356,8 @@ def docker_login(ctx):  # type: ignore
     else:
         ecr_base_path = get_default_value("ECR_BASE_PATH")
         cmd = (
-            f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
-            + f"https://{ecr_base_path}"
+                f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
+                + f"https://{ecr_base_path}"
         )
     ctx.run(cmd)
 
@@ -420,9 +428,9 @@ def _get_base_image(base_image: str) -> str:
     """
     if base_image == "":
         base_image = (
-            get_default_value("ECR_BASE_PATH")
-            + "/"
-            + get_default_value("BASE_IMAGE")
+                get_default_value("ECR_BASE_PATH")
+                + "/"
+                + get_default_value("BASE_IMAGE")
         )
     _check_base_image(base_image)
     return base_image
@@ -448,12 +456,12 @@ def _get_image(stage: str, base_image: str) -> str:
 
 
 def _docker_cmd(
-    ctx: Any,
-    stage: str,
-    base_image: str,
-    docker_compose: str,
-    cmd: str,
-    entrypoint: bool = True,
+        ctx: Any,
+        stage: str,
+        base_image: str,
+        docker_compose: str,
+        cmd: str,
+        entrypoint: bool = True,
 ) -> None:
     """
     :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
@@ -518,7 +526,7 @@ def docker_cmd(ctx, stage=_STAGE, cmd=""):  # type: ignore
 
 @task
 def docker_jupyter(  # type: ignore
-    ctx, stage=_STAGE, port=9999, self_test=False, base_image=""
+        ctx, stage=_STAGE, port=9999, self_test=False, base_image=""
 ):
     """
     Run jupyter notebook server.
@@ -606,7 +614,7 @@ def _get_build_tag() -> str:
 # a single type.
 @task
 def docker_build_local_image(  # type: ignore
-    ctx, cache=True, base_image="", update_poetry=False
+        ctx, cache=True, base_image="", update_poetry=False
 ):
     """
     Build a local as a release candidate image.
@@ -679,13 +687,13 @@ def docker_push_local_image_to_dev(ctx, base_image=""):  # type: ignore
 
 @task
 def docker_release_dev_image(  # type: ignore
-    ctx,
-    cache=True,
-    skip_tests=False,
-    run_fast=True,
-    run_slow=True,
-    run_superslow=False,
-    push_to_repo=True,
+        ctx,
+        cache=True,
+        skip_tests=False,
+        run_fast=True,
+        run_slow=True,
+        run_superslow=False,
+        push_to_repo=True,
 ):
     """
     (ONLY FOR CI/CD) Build, test, and release to ECR the latest "dev" image.
@@ -757,12 +765,12 @@ def docker_build_prod_image(ctx, cache=False, base_image=""):  # type: ignore
 
 @task
 def docker_release_prod_image(  # type: ignore
-    ctx,
-    cache=False,
-    run_fast=True,
-    run_slow=True,
-    run_superslow=False,
-    base_image="",
+        ctx,
+        cache=False,
+        run_fast=True,
+        run_slow=True,
+        run_superslow=False,
+        base_image="",
 ):
     """
     (ONLY FOR CI/CD) Build, test, and release to ECR the prod image.
@@ -803,76 +811,126 @@ def docker_release_all(ctx):  # type: ignore
 # #############################################################################
 
 _COV_PYTEST_OPTS = [
-    "--cov",
+    # Only compute coverage for current project and not venv libraries.
+    "--cov=.",
     "--cov-branch",
+    # Report the missing lines.
+    # Name                 Stmts   Miss  Cover   Missing
+    # --------------------------------------------------
+    # myproj/__init__          2      0   100%
+    # myproj/myproj          257     13    94%   24-26, 99, 149, 233-236, 297-298, 369-370
+
     "--cov-report term-missing",
+    # Report data in `htmlcov`.
     "--cov-report html",
-    "--cov-report annotate",
+    # "--cov-report annotate",
 ]
-
-
-def _run_tests(ctx: Any, stage: str, cmd: str) -> None:
-    """
-    Run a command in the set-up to run tests.
-    """
-    base_image = ""
-    docker_compose = _get_amp_docker_compose_path()
-    _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
 
 
 @task
 def run_blank_tests(ctx, stage=_STAGE):  # type: ignore
     _LOG.info(">")
+    base_image = ""
+    docker_compose = _get_amp_docker_compose_path()
     cmd = '"pytest -h >/dev/null"'
-    _run_tests(ctx, stage, cmd)
+    _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
+
+
+def _run_tests(
+        ctx: Any, stage: str, skipped_tests: str, pytest_opts: str,
+        skip_submodules: bool,
+        coverage: bool,
+        collect_only: bool
+):
+    pytest_opts_tmp = [f'-m "{skipped_tests}"', pytest_opts]
+    if skip_submodules:
+        submodule_paths = git.get_submodule_paths()
+        _LOG.warning("Skipping %d submodules: %s", len(submodule_paths),
+                     submodule_paths)
+        pytest_opts_tmp.append(
+            " ".join(["--ignore %s" % path for path in submodule_paths]))
+    if coverage:
+        pytest_opts_tmp.append(" ".join(_COV_PYTEST_OPTS))
+    if collect_only:
+        _LOG.warning("Only collecting tests as per user request")
+        pytest_opts_tmp.append("--collect-only")
+        # Clean files.
+        ctx.run("rm -rf ./.coverage*")
+    # Concatenate the options.
+    _LOG.debug("pytest_opts_tmp=\n%s", str(pytest_opts_tmp))
+    pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
+    pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
+    # Run.
+    base_image = ""
+    docker_compose = _get_amp_docker_compose_path()
+    # We need to add some " to pass the string as it is to the container.
+    cmd = f"'pytest {pytest_opts}'"
+    _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
+    #
+    if coverage:
+        msg = """The coverage results in textual form are above.
+To browse the files annotate with coverage, start a server (not from the container):
+> (cd ./htmlcov; python -m http.server 33333)
+Go with your browser to `localhost:33333`
+"""
+        print(msg)
+
+
+_RUN_COMMON_OPTS = """
+:param pytest_opts: 
+"""
 
 
 @task
 def run_fast_tests(  # type: ignore
-    ctx, stage=_STAGE, pytest_opts="", coverage=False
-):
-    _LOG.info(">")
-    run_tests_dir = "devops/docker_scripts"
-    if coverage:
-        pytest_opts += " " + " ".join(_COV_PYTEST_OPTS)
-    cmd = f"{run_tests_dir}/run_fast_tests.sh {pytest_opts}"
-    _run_tests(ctx, stage, cmd)
-    # (cd ../htmlcov; python -m http.server 33333)
+        ctx, stage=_STAGE, pytest_opts="", skip_submodules=False, coverage=False,
+        collect_only=False):
+    f"""
+    Run fast tests.
+    {_RUN_COMMON_OPTS}
+    """
+    skipped_tests = "not slow and not superslow"
+    _run_tests(ctx, stage, skipped_tests, pytest_opts, skip_submodules, coverage,
+               collect_only)
 
 
 @task
 def run_slow_tests(  # type: ignore
-    ctx, stage=_STAGE, pytest_opts="", coverage=False
-):
-    _LOG.info(">")
-    run_tests_dir = "devops/docker_scripts"
-    if coverage:
-        pytest_opts += " " + " ".join(_COV_PYTEST_OPTS)
-    cmd = f"{run_tests_dir}/run_slow_tests.sh {pytest_opts}"
-    _run_tests(ctx, stage, cmd)
-
-
-@task
-def run_fast_slow_tests(  # type: ignore
-    ctx, stage=_STAGE, pytest_opts="", coverage=False
-):
+        ctx, stage=_STAGE, pytest_opts="", skip_submodules=False, coverage=False,
+        collect_only=False):
+    f"""
+    Run slow tests.
+    {_RUN_COMMON_OPTS}
     """
-    Run both fast and slow tests.
-    """
-    run_fast_tests(ctx, stage=stage, pytest_opts=pytest_opts, coverage=coverage)
-    run_slow_tests(ctx, stage=stage, pytest_opts=pytest_opts, coverage=coverage)
+    skipped_tests = "slow and not superslow"
+    _run_tests(ctx, stage, skipped_tests, pytest_opts, skip_submodules, coverage,
+               collect_only)
 
 
 @task
 def run_superslow_tests(  # type: ignore
-    ctx, stage=_STAGE, pytest_opts="", coverage=False
+        ctx, stage=_STAGE, pytest_opts="", skip_submodules=False, coverage=False,
+        collect_only=False):
+    f"""
+    Run superslow tests.
+    {_RUN_COMMON_OPTS}
+    """
+    skipped_tests = "not slow and superslow"
+    _run_tests(ctx, stage, skipped_tests, pytest_opts, skip_submodules, coverage,
+               collect_only)
+
+
+@task
+def run_fast_slow_tests(  # type: ignore
+        ctx, stage=_STAGE, pytest_opts="", coverage=False
 ):
-    _LOG.info(">")
-    run_tests_dir = "devops/docker_scripts"
-    if coverage:
-        pytest_opts += " " + " ".join(_COV_PYTEST_OPTS)
-    cmd = f"{run_tests_dir}/run_superslow_tests.sh {pytest_opts}"
-    _run_tests(ctx, stage, cmd)
+    f"""
+    Run fast and slowtests.
+    {_RUN_COMMON_OPTS}
+    """
+    skipped_tests = "not superslow"
+    _run_tests(ctx, stage, skipped_tests, pytest_opts, skip_submodules, coverage,
+               collect_only)
 
 
 @task
@@ -1015,8 +1073,8 @@ def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignor
     files_as_str = " ".join(files_as_list)
     #
     cmd = (
-        f"pre-commit.sh run {phases} --files {files_as_str} 2>&1 "
-        + "| tee linter_warnings.txt"
+            f"pre-commit.sh run {phases} --files {files_as_str} 2>&1 "
+            + "| tee linter_warnings.txt"
     )
     ctx.run(cmd)
 
@@ -1128,3 +1186,12 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
         ctx.run(cmd)
     #
     gh_workflow_list(ctx, branch=branch)
+
+# TODO(gp):
+# @task
+# def gh_workflow_passing(ctx, branch="branch", workflows="all"):  # type: ignore
+# For each workflow check if the last completed is success or failure
+# > gh run list | grep master | grep Fast
+# completed       success Fix broken log statement        Fast tests      master  schedule        2m20s   797849342
+# completed       success Fix broken log statement        Fast tests      master  push    2m7s    797789759
+# completed       success Another speculative fix for break       Fast tests      master  push    1m54s   797556212

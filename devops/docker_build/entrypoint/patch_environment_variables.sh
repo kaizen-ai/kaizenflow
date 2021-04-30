@@ -4,27 +4,52 @@
 
 set -e
 
-export PYTHONDONTWRITEBYTECODE=x
+# Print the name of this file, even if it's sourced.
+FILE_NAME="${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}"
+echo "##> $FILE_NAME"
 
-export PYTHONPATH="$(pwd):$PYTHONPATH"
+PWD=$(pwd)
+AMP=$PWD
+
+# #############################################################################
+# PATH
+# #############################################################################
+
+echo "# Set PATH"
+
+export PATH=.:$PATH
+
+export PATH=$AMP:$PATH
+export PATH=$AMP/dev_scripts:$PATH
+export PATH=$AMP/dev_scripts/aws:$PATH
+export PATH=$AMP/dev_scripts/git:$PATH
+export PATH=$AMP/dev_scripts/infra:$PATH
+export PATH=$AMP/dev_scripts/install:$PATH
+export PATH=$AMP/dev_scripts/notebooks:$PATH
+export PATH=$AMP/dev_scripts/testing:$PATH
+export PATH=$AMP/documentation/scripts:$PATH
+
+export PATH=$(echo $PATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')
+echo "PATH=$PATH"
+
+#echo $PATH | perl -e 'print join("\n", grep { not $seen{$_}++ } split(/:/, scalar <>))'
+
+# #############################################################################
+# PYTHONPATH
+# #############################################################################
+
+echo "# Set PYTHONPATH"
+export PYTHONPATH=$PWD:$PYTHONPATH
+
+export PYTHONPATH=$(echo $PYTHONPATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')
 
 echo "PYTHONPATH=$PYTHONPATH"
 
-# mypy path.
-MYPYPATH="$(pwd):$MYPYPATH"
+#echo $PYTHONPATH | perl -e 'print join("\n", grep { not $seen{$_}++ } split(/:/, scalar <>))'
 
-# Update path.
-export PATH="$(pwd):$PATH"
-export PATH="$(pwd)/dev_scripts:$PATH"
-export PATH="$(pwd)/dev_scripts/aws:$PATH"
-export PATH="$(pwd)/dev_scripts/git:$PATH"
-export PATH="$(pwd)/dev_scripts/infra:$PATH"
-export PATH="$(pwd)/dev_scripts/install:$PATH"
-export PATH="$(pwd)/dev_scripts/notebooks:$PATH"
-export PATH="$(pwd)/dev_scripts/testing:$PATH"
-export PATH="$(pwd)/documentation/scripts:$PATH"
+# #############################################################################
+# Configure environment
+# #############################################################################
 
-echo "PATH=$PATH"
-
-# TODO(gp): Is this needed? At least let's call it AMP_DIR.
-export AMP="."
+echo "# Configure env"
+export PYTHONDONTWRITEBYTECODE=x

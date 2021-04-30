@@ -19,10 +19,11 @@ class TestVersion1(hut.TestCase):
     def test_check_version1(self) -> None:
         code_version = "1.0.0"
         container_version = "1.0.2"
-        with self.assertRaises(RuntimeError) as cm:
-            hversi._check_version(code_version, container_version)
-        act = str(cm.exception)
-        self.check_string(act)
+        is_ok = hversi._check_version(code_version, container_version)
+        self.assertFalse(is_ok)
 
     def test_check_version2(self) -> None:
-        hversi.check_version()
+        code_version = "1.0.0"
+        container_version = "1.0.0"
+        is_ok = hversi._check_version(code_version, container_version)
+        self.assertTrue(is_ok)

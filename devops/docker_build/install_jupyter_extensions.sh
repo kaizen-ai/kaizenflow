@@ -4,7 +4,14 @@
 #
 
 set -e
-source ~/.bash_profile
+
+# Print the name of this file, even if it's sourced.
+FILE_NAME="${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}"
+echo "##> $FILE_NAME"
+
+# This is run while building Docker after the packages have been executed so we
+# need to activate the environment.
+source /${ENV_NAME}/bin/activate
 
 echo "# Install jupyter extensions"
 

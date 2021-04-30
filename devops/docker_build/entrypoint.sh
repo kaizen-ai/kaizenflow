@@ -1,14 +1,21 @@
 #!/usr/bin/env bash
 
-# TODO(gp): Move all the PATH and PYTHONPATH to the entrypoint.
-
 set -e
-source ~/.bash_profile
 
-# TODO(gp): -> set_aws_env_vars.sh.
+# Print the name of this file, even if it's sourced.
+FILE_NAME="${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}"
+echo "##> $FILE_NAME"
+
+echo "# Activate environment"
+source /${ENV_NAME}/bin/activate
+
+# TODO(gp): Since we execute bash in eval we lose this config.
+set -o vi
+
+# TODO(gp): -> set_aws_env_vars.sh
 source devops/docker_build/entrypoint/aws_credentials.sh
 
-# TODO(gp): -> set_env_vars.sh.
+# TODO(gp): -> set_env_vars.sh
 source devops/docker_build/entrypoint/patch_environment_variables.sh
 
 mount -a || true
