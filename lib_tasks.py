@@ -827,15 +827,6 @@ _COV_PYTEST_OPTS = [
 ]
 
 
-# def _run_tests_old(ctx: Any, stage: str, cmd: str) -> None:
-#     """
-#     Run a command in the set-up to run tests.
-#     """
-#     #base_image = ""
-#     #docker_compose = _get_amp_docker_compose_path()
-#     #_docker_cmd(ctx, stage, base_image, docker_compose, cmd)
-
-
 @task
 def run_blank_tests(ctx, stage=_STAGE):  # type: ignore
     _LOG.info(">")
@@ -903,54 +894,43 @@ def run_fast_tests(  # type: ignore
                collect_only)
 
 
-# @task
-# def run_slow_tests(  # type: ignore
-#         ctx, stage=_STAGE, pytest_opts="", skip_submodules=False, coverage=False,
-#         collect_only=False):
-#     f"""
-#     Run slow tests.
-#     {_RUN_COMMON_OPTS}
-#     """
-#     script = "run_tests.sh"
-#     # Slow tests don't include the fast tests.
-#     skipped_tests = "slow and not superslow"
-#     pytest_opts = " ".join([f'-m "{skipped_tests}"', pytest_opts])
-#     _run_tests(ctx, stage, script, pytest_opts, skip_submodules, coverage,
-#                collect_only)
-
-# @task
-# def run_slow_tests(  # type: ignore
-#     ctx, stage=_STAGE, pytest_opts="", coverage=False
-# ):
-#     _LOG.info(">")
-#     run_tests_dir = "devops/docker_scripts"
-#     if coverage:
-#         pytest_opts += " " + " ".join(_COV_PYTEST_OPTS)
-#     cmd = f"{run_tests_dir}/run_slow_tests.sh {pytest_opts}"
-#     _run_tests(ctx, stage, cmd)
-
-
-# @task
-# def run_fast_slow_tests(  # type: ignore
-#     ctx, stage=_STAGE, pytest_opts="", coverage=False
-# ):
-#     """
-#     Run both fast and slow tests.
-#     """
-#     run_fast_tests(ctx, stage=stage, pytest_opts=pytest_opts, coverage=coverage)
-#     run_slow_tests(ctx, stage=stage, pytest_opts=pytest_opts, coverage=coverage)
+@task
+def run_slow_tests(  # type: ignore
+        ctx, stage=_STAGE, pytest_opts="", skip_submodules=False, coverage=False,
+        collect_only=False):
+    f"""
+    Run slow tests.
+    {_RUN_COMMON_OPTS}
+    """
+    skipped_tests = "slow and not superslow"
+    _run_tests(ctx, stage, skipped_tests, pytest_opts, skip_submodules, coverage,
+               collect_only)
 
 
 @task
 def run_superslow_tests(  # type: ignore
+        ctx, stage=_STAGE, pytest_opts="", skip_submodules=False, coverage=False,
+        collect_only=False):
+    f"""
+    Run superslow tests.
+    {_RUN_COMMON_OPTS}
+    """
+    skipped_tests = "not slow and superslow"
+    _run_tests(ctx, stage, skipped_tests, pytest_opts, skip_submodules, coverage,
+               collect_only)
+
+
+@task
+def run_fast_slow_tests(  # type: ignore
         ctx, stage=_STAGE, pytest_opts="", coverage=False
 ):
-    _LOG.info(">")
-    run_tests_dir = "devops/docker_scripts"
-    if coverage:
-        pytest_opts += " " + " ".join(_COV_PYTEST_OPTS)
-    cmd = f"{run_tests_dir}/run_superslow_tests.sh {pytest_opts}"
-    _run_tests(ctx, stage, cmd)
+    f"""
+    Run fast and slowtests.
+    {_RUN_COMMON_OPTS}
+    """
+    skipped_tests = "not superslow"
+    _run_tests(ctx, stage, skipped_tests, pytest_opts, skip_submodules, coverage,
+               collect_only)
 
 
 @task

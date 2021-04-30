@@ -4,6 +4,10 @@
 
 set -e
 
+# Print the name of this file, even if it's sourced.
+FILE_NAME="${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}"
+echo "##> $FILE_NAME"
+
 PWD=$(pwd)
 AMP=$PWD
 
