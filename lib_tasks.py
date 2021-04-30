@@ -811,7 +811,8 @@ def docker_release_all(ctx):  # type: ignore
 # #############################################################################
 
 _COV_PYTEST_OPTS = [
-    "--cov",
+    # Only compute coverage for current project and not venv libraries.
+    "--cov=.",
     "--cov-branch",
     "--cov-report term-missing",
     "--cov-report html",
@@ -842,20 +843,22 @@ def run_fast_tests(  # type: ignore
 ):
     _LOG.info(">")
     run_tests_dir = "devops/docker_scripts"
-    pytest_opts_tmp = []
+    pytest_opts_tmp = [pytest_opts]
     if skip_submodules:
         submodule_paths = git.get_submodule_paths()
         _LOG.warning("Skipping %d submodules: %s", len(submodule_paths), submodule_paths)
         pytest_opts_tmp.append(" ".join(["--ignore %s" % path for path in  submodule_paths]))
     if coverage:
-        pytest_opts_tmp.append(" " + " ".join(_COV_PYTEST_OPTS))
+        pytest_opts_tmp.append(" ".join(_COV_PYTEST_OPTS))
     if collect_only:
-        _LOG.warning("Collecting tests only as per user request")
+        _LOG.warning("Only collecting tests as per user request")
         pytest_opts_tmp.append("--collect-only")
+        # Clean files.
+        ctx.run("rm -rf ./.coverage*")
     # Concatenate the options.
     _LOG.debug("pytest_opts_tmp=\n%s", str(pytest_opts_tmp))
-    pytest_opts_tmp = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
-    pytest_opts += pytest_opts_tmp.rstrip().lstrip()
+    pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
+    pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
     #
     cmd = f"{run_tests_dir}/run_fast_tests.sh {pytest_opts}"
     _run_tests(ctx, stage, cmd)
