@@ -69,12 +69,13 @@ def check_version() -> None:
     # Get container version.
     env_var = "CONTAINER_VERSION"
     if env_var not in os.environ:
+        container_version = None
         if IS_INSIDE_CONTAINER:
-            raise NotImplemented(
-                f"The env var '{env_var}' should be defined when "
-                "running inside a container")
-        else:
-            container_version = None
+            # This situation happens when GH Actions pull the image using invoke
+            # inside their container (but not inside ours), thus there is no
+            # CONTAINER_VERSION.
+            _LOG.warning("The env var %s should be defined when running inside a"
+                " container", env_var)
     else:
         container_version = os.environ[env_var]
     # Print information.
@@ -87,5 +88,6 @@ def check_version() -> None:
         _LOG.debug("%s", msg)
     # Check version, if possible.
     if container_version is None:
+        # No need to check.
         return
     _check_version(code_version, container_version)

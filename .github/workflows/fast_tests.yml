@@ -1,6 +1,5 @@
 name: Fast tests
 on:
-  on:
   pull_request:
     # https://github.community/t/dont-run-actions-on-draft-pull-requests/16817/19
     types: [opened, synchronize, reopened, ready_for_review]
