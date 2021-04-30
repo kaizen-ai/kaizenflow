@@ -65,4 +65,5 @@ ln -s /usr/bin/python3 /usr/bin/python
 ln -s /usr/bin/pip3 /usr/bin/pip
 
 # Update the bashrc.
-echo "\nset -o vi" >>~/.bashrc
+echo "" >>~/.bashrc
+echo "set -o vi" >>~/.bashrc

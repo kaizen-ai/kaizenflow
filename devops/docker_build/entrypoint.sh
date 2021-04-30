@@ -2,8 +2,8 @@
 
 set -e
 
-# Print the name of this file, even if it's sourced.
-FILE_NAME="${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}"
+# Print the name of this file.
+FILE_NAME="docker_build/entrypoint.sh"
 echo "##> $FILE_NAME"
 
 echo "# Activate environment"

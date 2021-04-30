@@ -5,8 +5,8 @@
 
 set -e
 
-# Print the name of this file, even if it's sourced.
-FILE_NAME="${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}"
+# Print the name of this file.
+FILE_NAME="docker_build/install_jupyter_extensions.sh"
 echo "##> $FILE_NAME"
 
 # This is run while building Docker after the packages have been executed so we
