@@ -814,9 +814,16 @@ _COV_PYTEST_OPTS = [
     # Only compute coverage for current project and not venv libraries.
     "--cov=.",
     "--cov-branch",
+    # Report the missing lines.
+    # Name                 Stmts   Miss  Cover   Missing
+    # --------------------------------------------------
+    # myproj/__init__          2      0   100%
+    # myproj/myproj          257     13    94%   24-26, 99, 149, 233-236, 297-298, 369-370
+
     "--cov-report term-missing",
+    # Report data in `htmlcov`.
     "--cov-report html",
-    "--cov-report annotate",
+    #"--cov-report annotate",
 ]
 
 
@@ -859,10 +866,16 @@ def run_fast_tests(  # type: ignore
     _LOG.debug("pytest_opts_tmp=\n%s", str(pytest_opts_tmp))
     pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
-    #
+    # Run.
     cmd = f"{run_tests_dir}/run_fast_tests.sh {pytest_opts}"
     _run_tests(ctx, stage, cmd)
-    # (cd ../htmlcov; python -m http.server 33333)
+    if coverage:
+        msg = """The coverage results in textual form are above.
+To browse the files annotate with coverage, start a server (not from the container):
+> (cd ./htmlcov; python -m http.server 33333)
+Go with your browser to `localhost:33333`
+"""
+        print(msg)
 
 
 @task
