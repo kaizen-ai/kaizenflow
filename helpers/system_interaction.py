@@ -309,6 +309,7 @@ def get_first_line(output: str) -> str:
     return output
 
 
+# TODO(gp): Move it to a more general file, e.g., `helpers/printing.py`?
 def text_to_list(txt: str) -> List[str]:
     """
     Convert a string (e.g., from system_to_string) into a list of lines.

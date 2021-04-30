@@ -75,9 +75,15 @@ def check_version() -> None:
             container_version = None
     else:
         container_version = os.environ[env_var]
-    print(f"code_version={code_version}, "
-            f"container_version={container_version}, "
-            f"inside_container={IS_INSIDE_CONTAINER}")
+    # Print information.
+    msg = (f"inside_container={IS_INSIDE_CONTAINER}: "
+              f"code_version={code_version}, "
+              f"container_version={container_version}")
+    if IS_INSIDE_CONTAINER:
+        print(msg)
+    else:
+        _LOG.debug("%s", msg)
+    # Check version, if possible.
     if container_version is None:
         return
     _check_version(code_version, container_version)

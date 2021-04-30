@@ -103,9 +103,9 @@ def git_pull_master(ctx):  # type: ignore
 
 
 @task
-def git_merge_origin_master(ctx):  # type: ignore
+def git_merge_master(ctx):  # type: ignore
     """
-    Merge origin/master to this branch.
+    Merge `origin/master` into this branch.
     """
     _LOG.info(">")
     # TODO(gp): Check that we are in a branch and that the branch is clean.
@@ -113,6 +113,14 @@ def git_merge_origin_master(ctx):  # type: ignore
     #
     cmd = "git merge master"
     ctx.run(cmd)
+
+
+# TODO(gp): Add git_co(ctx)
+# git stash save your-file-name
+# git checkout master
+# # do whatever you had to do with master
+# git checkout staging
+# git stash pop
 
 
 @task
@@ -829,12 +837,26 @@ def run_blank_tests(ctx, stage=_STAGE):  # type: ignore
 
 @task
 def run_fast_tests(  # type: ignore
-    ctx, stage=_STAGE, pytest_opts="", coverage=False
+    ctx, stage=_STAGE, pytest_opts="", skip_submodules=False, coverage=False,
+        collect_only=False,
 ):
     _LOG.info(">")
     run_tests_dir = "devops/docker_scripts"
+    pytest_opts_tmp = []
+    if skip_submodules:
+        submodule_paths = git.get_submodule_paths()
+        _LOG.warning("Skipping %d submodules: %s", len(submodule_paths), submodule_paths)
+        pytest_opts_tmp.append(" ".join(["--ignore %s" % path for path in  submodule_paths]))
     if coverage:
-        pytest_opts += " " + " ".join(_COV_PYTEST_OPTS)
+        pytest_opts_tmp.append(" " + " ".join(_COV_PYTEST_OPTS))
+    if collect_only:
+        _LOG.warning("Collecting tests only as per user request")
+        pytest_opts_tmp.append("--collect-only")
+    # Concatenate the options.
+    _LOG.debug("pytest_opts_tmp=\n%s", str(pytest_opts_tmp))
+    pytest_opts_tmp = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
+    pytest_opts += pytest_opts_tmp.rstrip().lstrip()
+    #
     cmd = f"{run_tests_dir}/run_fast_tests.sh {pytest_opts}"
     _run_tests(ctx, stage, cmd)
     # (cd ../htmlcov; python -m http.server 33333)
@@ -1128,3 +1150,13 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
         ctx.run(cmd)
     #
     gh_workflow_list(ctx, branch=branch)
+
+
+# TODO(gp):
+# @task
+# def gh_workflow_passing(ctx, branch="branch", workflows="all"):  # type: ignore
+# For each workflow check if the last completed is success or failure
+# > gh run list | grep master | grep Fast
+# completed       success Fix broken log statement        Fast tests      master  schedule        2m20s   797849342
+# completed       success Fix broken log statement        Fast tests      master  push    2m7s    797789759
+# completed       success Another speculative fix for break       Fast tests      master  push    1m54s   797556212

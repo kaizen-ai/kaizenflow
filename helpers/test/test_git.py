@@ -13,9 +13,12 @@ _LOG = logging.getLogger(__name__)
 # completes and visually inspect the outcome, if possible.
 
 
-def _helper(func_call: str) -> None:
+def _execute_func_call(func_call: str) -> None:
+    """
+    Execute a function call, e.g., `func_call = "git.get_modified_files()"`.
+    """
     act = eval(func_call)
-    _LOG.info("\n-> %s=\n  '%s'", func_call, act)
+    _LOG.debug("\n-> %s=\n  '%s'", func_call, act)
 
 
 class Test_git1(hut.TestCase):
@@ -38,32 +41,27 @@ class Test_git1(hut.TestCase):
 
     def test_get_repo_symbolic_name1(self) -> None:
         func_call = "git.get_repo_symbolic_name(super_module=True)"
-        _helper(func_call)
+        _execute_func_call(func_call)
 
     def test_get_repo_symbolic_name2(self) -> None:
         func_call = "git.get_repo_symbolic_name(super_module=False)"
-        _helper(func_call)
+        _execute_func_call(func_call)
 
     def test_get_modified_files1(self) -> None:
         func_call = "git.get_modified_files()"
-        _helper(func_call)
+        _execute_func_call(func_call)
 
     def test_get_previous_committed_files1(self) -> None:
         func_call = "git.get_previous_committed_files()"
-        _helper(func_call)
+        _execute_func_call(func_call)
 
     def test_git_log1(self) -> None:
         func_call = "git.git_log()"
-        _helper(func_call)
-
-    @pytest.mark.not_docker
-    def test_git_log2(self) -> None:
-        func_call = "git.git_log(my_commits=True)"
-        _helper(func_call)
+        _execute_func_call(func_call)
 
     def test_git_all_repo_symbolic_names1(self) -> None:
         func_call = "git.get_all_repo_symbolic_names()"
-        _helper(func_call)
+        _execute_func_call(func_call)
 
     def test_git_all_repo_symbolic_names2(self) -> None:
         all_repo_sym_names = git.get_all_repo_symbolic_names()
@@ -88,23 +86,27 @@ class Test_git1(hut.TestCase):
 class Test_git_submodule1(hut.TestCase):
     def test_get_client_root1(self) -> None:
         func_call = "git.get_client_root(super_module=True)"
-        _helper(func_call)
+        _execute_func_call(func_call)
 
     def test_get_client_root2(self) -> None:
         func_call = "git.get_client_root(super_module=False)"
-        _helper(func_call)
+        _execute_func_call(func_call)
 
     def test_get_repo_symbolic_name(self) -> None:
         func_call = "git.get_repo_symbolic_name(super_module=True)"
-        _helper(func_call)
+        _execute_func_call(func_call)
 
     def test_is_inside_submodule1(self) -> None:
         func_call = "git.is_inside_submodule()"
-        _helper(func_call)
+        _execute_func_call(func_call)
 
     def test_get_path_from_supermodule1(self) -> None:
         func_call = "git.get_path_from_supermodule()"
-        _helper(func_call)
+        _execute_func_call(func_call)
+
+    def test_get_path_from_supermodule1(self) -> None:
+        func_call = "git.get_submodule_paths()"
+        _execute_func_call(func_call)
 
 
 class Test_git_submodule2(hut.TestCase):
