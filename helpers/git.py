@@ -248,9 +248,7 @@ def report_submodule_status(dir_names: List[str], short_hash: bool) -> str:
 def _parse_github_repo_name(repo_name: str) -> str:
     """
     Parse a repo name from `git remote` in the format:
-        `git@github.com:alphamatic/amp`
-    or
-        `https://github.com/alphamatic/amp`
+    `git@github.com:alphamatic/amp` or `https://github.com/alphamatic/amp`
 
     and return "alphamatic/amp"
     """
@@ -293,7 +291,8 @@ def get_repo_full_name_from_dirname(dir_name: str) -> str:
 
 def get_repo_full_name_from_client(super_module: bool) -> str:
     """
-    Return the full name of the repo (e.g., "alphamatic/amp") from a Git client.
+    Return the full name of the repo (e.g., "alphamatic/amp") from a Git
+    client.
 
     :param super_module: like in get_client_root()
     """
@@ -306,12 +305,13 @@ def get_repo_full_name_from_client(super_module: bool) -> str:
 @functools.lru_cache()
 def _get_repo_short_to_full_name() -> Dict[str, str]:
     """
-    Return the map from short name (e.g., "amp") to full name ("alphamatic/amp").
+    Return the map from short name (e.g., "amp") to full name
+    ("alphamatic/amp").
     """
     repo_map = {
         "amp": "alphamatic/amp",
         "lem": "alphamatic/lemonade",
-        "dev_tools": "alphamatic/dev_tools"
+        "dev_tools": "alphamatic/dev_tools",
     }
     dbg.dassert_no_duplicates(repo_map.keys())
     dbg.dassert_no_duplicates(repo_map.values())
@@ -321,7 +321,8 @@ def _get_repo_short_to_full_name() -> Dict[str, str]:
 @functools.lru_cache()
 def _get_repo_full_to_short_name() -> Dict[str, str]:
     """
-    Return the map from full name ("alphamatic/amp") to short name (e.g., "amp").
+    Return the map from full name ("alphamatic/amp") to short name (e.g.,
+    "amp").
     """
     # Get the reverse map.
     repo_map = _get_repo_short_to_full_name()

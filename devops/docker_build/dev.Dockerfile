@@ -6,36 +6,19 @@
 FROM ubuntu:20.04 AS builder
 #FROM alpine:3.7
 
+# Clean up the installation.
+ENV CLEAN_UP_INSTALLATION=True
+
 # Pass the build variables to the environment.
 ARG CONTAINER_VERSION
 ENV CONTAINER_VERSION=$CONTAINER_VERSION
 RUN echo "CONTAINER_VERSION=$CONTAINER_VERSION"
 
-# TODO(gp): Move all this in `devops/docker_build/install_packages.sh`
-# so we can create a single smaller layer.
+# Install the needed packages.
+COPY devops/docker_build/install_packages.sh .
+RUN /bin/bash -c "./install_packages.sh"
 
-# TODO(gp): Trim this down. npm needed?
-RUN apt update && \
-    apt install --no-install-recommends -y \
-      cifs-utils \
-      git \
-      keyutils \
-      make \
-      vim
-
-# This is needed to compile ujson (see https://github.com/alphamatic/lemonade/issues/155)
-RUN apt install --no-install-recommends -y build-essential autoconf libtool python3-dev
-
-# Install pip.
-RUN apt install --no-install-recommends -y python3-venv python3-pip
-
-# Install poetry.
-RUN pip3 install poetry
-
-# Clean up.
-RUN apt-get purge -y --auto-remove
-
-# Create conda environment.
+# Name of the virtual environment to create.
 ENV ENV_NAME="venv"
 
 ENV APP_DIR=/app
@@ -53,11 +36,6 @@ RUN /bin/bash -c "./install_requirements.sh"
 
 COPY devops/docker_build/install_jupyter_extensions.sh .
 RUN /bin/sh -c "./install_jupyter_extensions.sh"
-
-# TODO(gp): Move this in `devops/docker_build/install_packages.sh`, if
-# possible.
-COPY devops/docker_build/cleanup.sh .
-RUN /bin/sh -c "./cleanup.sh"
 
 # Mount external filesystems.
 #RUN mkdir -p /s3/alphamatic-data

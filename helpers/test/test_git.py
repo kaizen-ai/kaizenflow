@@ -1,8 +1,6 @@
 import logging
 from typing import Optional
 
-import pytest
-
 import helpers.git as git
 import helpers.unit_test as hut
 
@@ -93,14 +91,13 @@ class Test_git_submodule2(hut.TestCase):
         self._helper_group_hashes(head_hash, remh_hash, subm_hash, exp)
 
     def _helper_group_hashes(
-            self, head_hash: str, remh_hash: str, subm_hash: Optional[str], exp: str
+        self, head_hash: str, remh_hash: str, subm_hash: Optional[str], exp: str
     ) -> None:
         act = git._group_hashes(head_hash, remh_hash, subm_hash)
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
 class Test_git_repo_name1(hut.TestCase):
-
     def test_parse_github_repo_name1(self) -> None:
         repo_name = "git@github.com:alphamatic/amp"
         act = git._parse_github_repo_name(repo_name)
@@ -158,7 +155,6 @@ class Test_git_repo_name1(hut.TestCase):
 
 
 class Test_git_path1(hut.TestCase):
-
     def test_get_path_from_git_root1(self) -> None:
         file_name = "helpers/test/test_git.py"
         act = git.get_path_from_git_root(file_name, super_module=False)
@@ -166,7 +162,6 @@ class Test_git_path1(hut.TestCase):
 
 
 class Test_git_modified_files1(hut.TestCase):
-
     def test_get_modified_files1(self) -> None:
         func_call = "git.get_modified_files()"
         _execute_func_call(func_call)
@@ -178,5 +173,3 @@ class Test_git_modified_files1(hut.TestCase):
     def test_git_log1(self) -> None:
         func_call = "git.git_log()"
         _execute_func_call(func_call)
-
-

@@ -6,6 +6,7 @@ import lib_tasks as ltasks
 
 import datetime
 import functools
+import json
 import logging
 import os
 import pprint
@@ -19,11 +20,11 @@ from invoke import task
 # this code needs to run with minimal dependencies and without Docker.
 import helpers.dbg as dbg
 import helpers.git as git
+import helpers.introspection as hintros
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.table as htable
 import helpers.version as hversi
-import helpers.introspection as hintros
 
 # TODO(gp): Move to helpers.lib_tasks? Do we need to move / rename also
 #  test_tasks.py?
@@ -209,8 +210,8 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     _delete_branches("local")
     # Get the branches to delete.
     find_cmd = (
-            "git branch -r --merged origin/master"
-            + r" | grep -v master | sed 's/origin\///'"
+        "git branch -r --merged origin/master"
+        + r" | grep -v master | sed 's/origin\///'"
     )
     delete_cmd = "git push origin --delete"
     _delete_branches("remote")
@@ -224,13 +225,16 @@ def git_create_branch(ctx, branch_name=""):  # type: ignore
     """
     Create and push upstream a branch called `branch_name`.
 
-    E.g.,
-    > git checkout -b LemTask169_Get_GH_actions_working_on_lemonade
-    > git push --set-upstream origin LemTask169_Get_GH_actions_working_on_lemonade
+    E.g., > git checkout -b
+    LemTask169_Get_GH_actions_working_on_lemonade > git push --set-
+    upstream origin LemTask169_Get_GH_actions_working_on_lemonade
     """
     _report_task()
-    dbg.dassert_eq(git.get_branch_name(), "master",
-                   "Typically you should branch from `master`")
+    dbg.dassert_eq(
+        git.get_branch_name(),
+        "master",
+        "Typically you should branch from `master`",
+    )
     # Fetch master.
     git_pull_master(ctx)
     # git checkout -b LemTask169_Get_GH_actions_working_on_lemonade
@@ -243,15 +247,15 @@ def git_create_branch(ctx, branch_name=""):  # type: ignore
 
 # TODO(gp): Add dev_scripts/git/git_create_patch*.sh
 
-#dev_scripts/git/git_backup.sh
+# dev_scripts/git/git_backup.sh
 
 # TODO(gp): dev_scripts/git/gcl
 
-#dev_scripts/git/gd_master.sh
+# dev_scripts/git/gd_master.sh
 
-#dev_scripts/git/git_branch.sh
+# dev_scripts/git/git_branch.sh
 
-#dev_scripts/git/git_branch_point.sh
+# dev_scripts/git/git_branch_point.sh
 
 # #############################################################################
 # Docker.
@@ -283,9 +287,9 @@ def docker_ps(ctx):  # type: ignore
     """
     # pylint: enable=line-too-long
     fmt = (
-            r"""table {{.ID}}\t{{.Label "user"}}\t{{.Image}}\t{{.Command}}"""
-            + r"\t{{.RunningFor}}\t{{.Status}}\t{{.Ports}}"
-            + r'\t{{.Label "com.docker.compose.service"}}'
+        r"""table {{.ID}}\t{{.Label "user"}}\t{{.Image}}\t{{.Command}}"""
+        + r"\t{{.RunningFor}}\t{{.Status}}\t{{.Ports}}"
+        + r'\t{{.Label "com.docker.compose.service"}}'
     )
     cmd = f"docker ps --format='{fmt}'"
     cmd = _remove_spaces(cmd)
@@ -307,8 +311,8 @@ def docker_stats(ctx):  # type: ignore
     # pylint: enable=line-too-long
     _report_task()
     fmt = (
-            r"table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
-            + r"\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}"
+        r"table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+        + r"\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}"
     )
     cmd = f"docker stats --no-stream --format='{fmt}'"
     ctx.run(cmd)
@@ -407,8 +411,8 @@ def docker_login(ctx):  # type: ignore
     else:
         ecr_base_path = get_default_value("ECR_BASE_PATH")
         cmd = (
-                f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
-                + f"https://{ecr_base_path}"
+            f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
+            + f"https://{ecr_base_path}"
         )
     ctx.run(cmd)
 
@@ -479,9 +483,9 @@ def _get_base_image(base_image: str) -> str:
     """
     if base_image == "":
         base_image = (
-                get_default_value("ECR_BASE_PATH")
-                + "/"
-                + get_default_value("BASE_IMAGE")
+            get_default_value("ECR_BASE_PATH")
+            + "/"
+            + get_default_value("BASE_IMAGE")
         )
     _check_base_image(base_image)
     return base_image
@@ -507,12 +511,12 @@ def _get_image(stage: str, base_image: str) -> str:
 
 
 def _docker_cmd(
-        ctx: Any,
-        stage: str,
-        base_image: str,
-        docker_compose: str,
-        cmd: str,
-        entrypoint: bool = True,
+    ctx: Any,
+    stage: str,
+    base_image: str,
+    docker_compose: str,
+    cmd: str,
+    entrypoint: bool = True,
 ) -> None:
     """
     :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
@@ -577,7 +581,7 @@ def docker_cmd(ctx, stage=_STAGE, cmd=""):  # type: ignore
 
 @task
 def docker_jupyter(  # type: ignore
-        ctx, stage=_STAGE, port=9999, self_test=False, base_image=""
+    ctx, stage=_STAGE, port=9999, self_test=False, base_image=""
 ):
     """
     Run jupyter notebook server.
@@ -665,7 +669,7 @@ def _get_build_tag() -> str:
 # a single type.
 @task
 def docker_build_local_image(  # type: ignore
-        ctx, cache=True, base_image="", update_poetry=False
+    ctx, cache=True, base_image="", update_poetry=False
 ):
     """
     Build a local as a release candidate image.
@@ -737,13 +741,13 @@ def docker_push_local_image_to_dev(ctx, base_image=""):  # type: ignore
 
 @task
 def docker_release_dev_image(  # type: ignore
-        ctx,
-        cache=True,
-        skip_tests=False,
-        run_fast=True,
-        run_slow=True,
-        run_superslow=False,
-        push_to_repo=True,
+    ctx,
+    cache=True,
+    skip_tests=False,
+    run_fast=True,
+    run_slow=True,
+    run_superslow=False,
+    push_to_repo=True,
 ):
     """
     (ONLY CI/CD) Build, test, and release to ECR the latest "dev" image.
@@ -815,12 +819,12 @@ def docker_build_prod_image(ctx, cache=False, base_image=""):  # type: ignore
 
 @task
 def docker_release_prod_image(  # type: ignore
-        ctx,
-        cache=False,
-        run_fast=True,
-        run_slow=True,
-        run_superslow=False,
-        base_image="",
+    ctx,
+    cache=False,
+    run_fast=True,
+    run_slow=True,
+    run_superslow=False,
+    base_image="",
 ):
     """
     (ONLY CI/CD) Build, test, and release to ECR the prod image.
@@ -867,12 +871,11 @@ _COV_PYTEST_OPTS = [
     "--cov-branch",
     # Report the missing lines.
     # Name                 Stmts   Miss  Cover   Missing
-    # --------------------------------------------------
+    # -------------------------------------------------------------------------
     # myproj/__init__          2      0   100%
-    # myproj/myproj          257     13    94%   24-26, 99, 149, 233-236, 297-298, 369-370
-
+    # myproj/myproj          257     13    94%   24-26, 99, 149, 233-236, 297-298
     "--cov-report term-missing",
-    # Report data in `htmlcov`.
+    # Report data in the directory `htmlcov`.
     "--cov-report html",
     # "--cov-report annotate",
 ]
@@ -891,18 +894,23 @@ def run_blank_tests(ctx, stage=_STAGE):  # type: ignore
 
 
 def _run_tests(
-        ctx: Any, stage: str, skipped_tests: str, pytest_opts: str,
-        skip_submodules: bool,
-        coverage: bool,
-        collect_only: bool
+    ctx: Any,
+    stage: str,
+    skipped_tests: str,
+    pytest_opts: str,
+    skip_submodules: bool,
+    coverage: bool,
+    collect_only: bool,
 ):
     pytest_opts_tmp = [f'-m "{skipped_tests}"', pytest_opts]
     if skip_submodules:
         submodule_paths = git.get_submodule_paths()
-        _LOG.warning("Skipping %d submodules: %s", len(submodule_paths),
-                     submodule_paths)
+        _LOG.warning(
+            "Skipping %d submodules: %s", len(submodule_paths), submodule_paths
+        )
         pytest_opts_tmp.append(
-            " ".join(["--ignore %s" % path for path in submodule_paths]))
+            " ".join(["--ignore %s" % path for path in submodule_paths])
+        )
     if coverage:
         pytest_opts_tmp.append(" ".join(_COV_PYTEST_OPTS))
     if collect_only:
@@ -932,61 +940,108 @@ Go with your browser to `localhost:33333`
 
 @task
 def run_fast_tests(  # type: ignore
-        ctx, stage=_STAGE, pytest_opts="", skip_submodules=False, coverage=False,
-        collect_only=False):
+    ctx,
+    stage=_STAGE,
+    pytest_opts="",
+    skip_submodules=False,
+    coverage=False,
+    collect_only=False,
+):
     """
     Run fast tests.
-    
+
     :param pytest_opts: pass options directly to pytest
-    :param skip_submodules: run tests only for the supermodule (e.g., in `lem` 
+    :param skip_submodules: run tests only for the supermodule (e.g., in `lem`
         skip the `amp` tests)
     :param coverage: run the tests collecting code coverage
     :param collect_only: only collect the tests but do not run the tests
     """
     _report_task()
     skipped_tests = "not slow and not superslow"
-    _run_tests(ctx, stage, skipped_tests, pytest_opts, skip_submodules, coverage,
-               collect_only)
+    _run_tests(
+        ctx,
+        stage,
+        skipped_tests,
+        pytest_opts,
+        skip_submodules,
+        coverage,
+        collect_only,
+    )
 
 
 @task
 def run_slow_tests(  # type: ignore
-        ctx, stage=_STAGE, pytest_opts="", skip_submodules=False, coverage=False,
-        collect_only=False):
+    ctx,
+    stage=_STAGE,
+    pytest_opts="",
+    skip_submodules=False,
+    coverage=False,
+    collect_only=False,
+):
     """
     Run slow tests.
     """
     _report_task()
     skipped_tests = "slow and not superslow"
-    _run_tests(ctx, stage, skipped_tests, pytest_opts, skip_submodules, coverage,
-               collect_only)
+    _run_tests(
+        ctx,
+        stage,
+        skipped_tests,
+        pytest_opts,
+        skip_submodules,
+        coverage,
+        collect_only,
+    )
 
 
 @task
 def run_superslow_tests(  # type: ignore
-        ctx, stage=_STAGE, pytest_opts="", skip_submodules=False, coverage=False,
-        collect_only=False):
+    ctx,
+    stage=_STAGE,
+    pytest_opts="",
+    skip_submodules=False,
+    coverage=False,
+    collect_only=False,
+):
     """
     Run superslow tests.
     """
     _report_task()
     skipped_tests = "not slow and superslow"
-    _run_tests(ctx, stage, skipped_tests, pytest_opts, skip_submodules, coverage,
-               collect_only)
+    _run_tests(
+        ctx,
+        stage,
+        skipped_tests,
+        pytest_opts,
+        skip_submodules,
+        coverage,
+        collect_only,
+    )
 
 
 @task
 def run_fast_slow_tests(  # type: ignore
-        ctx, stage=_STAGE, pytest_opts="", skip_submodules=False, coverage=False,
-        collect_only=False
+    ctx,
+    stage=_STAGE,
+    pytest_opts="",
+    skip_submodules=False,
+    coverage=False,
+    collect_only=False,
 ):
     """
     Run fast and slow tests.
     """
     _report_task()
     skipped_tests = "not superslow"
-    _run_tests(ctx, stage, skipped_tests, pytest_opts, skip_submodules, coverage,
-               collect_only)
+    _run_tests(
+        ctx,
+        stage,
+        skipped_tests,
+        pytest_opts,
+        skip_submodules,
+        coverage,
+        collect_only,
+    )
 
 
 @task
@@ -997,6 +1052,7 @@ def pytest_clean(ctx):  # type: ignore
     _report_task()
     _ = ctx
     import helpers.pytest_ as hpytes
+
     hpytes.pytest_clean(".")
 
 
@@ -1044,8 +1100,8 @@ def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignor
     files_as_str = " ".join(files_as_list)
     #
     cmd = (
-            f"pre-commit.sh run {phases} --files {files_as_str} 2>&1 "
-            + "| tee linter_warnings.txt"
+        f"pre-commit.sh run {phases} --files {files_as_str} 2>&1 "
+        + "| tee linter_warnings.txt"
     )
     ctx.run(cmd)
 
@@ -1169,14 +1225,23 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
 # completed       success Fix broken log statement        Fast tests      master  push    2m7s    797789759
 # completed       success Another speculative fix for break       Fast tests      master  push    1m54s   797556212
 
-import json
 
 
-def _get_gh_issue_title(repo: str, issue_id: int, as_git_branch_name: bool) -> str:
+def _get_gh_issue_title(
+    issue_id: int, repo: str="current", as_git_branch_name: bool=True,
+) -> str:
     """
-    Convert
+    Get the title of a GitHub issue.
 
+    :param as_git_branch_name: if True use a format without spaces.
+        e.g.,
     """
+    _report_task()
+    if repo == "current":
+        repo_full_name = git.get_repo_full_name_from_dirname(".")
+    else:
+        repo_full_name = repo
+    _LOG.info("repo_name=%s", repo_full_name)
     # > (export NO_COLOR=1; gh issue view 1251 --json title )
     # {"title":"Update GH actions for amp"}
     dbg.dassert_lte(1, issue_id)
@@ -1210,6 +1275,8 @@ def gh_issue_title(ctx, issue_id=0, git_repo=""):
 def gh_create_pr(ctx, git_repo=""):  # type: ignore
     """
     Create a draft PR for the current branch.
+
+    :param git_repo:
     """
     _report_task()
     branch_name = git.get_branch_name()

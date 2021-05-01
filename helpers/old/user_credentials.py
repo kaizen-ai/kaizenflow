@@ -100,8 +100,7 @@ def get_credentials() -> Dict[str, Any]:
     #
     conda_env_path = "~/.conda/envs"
     conda_env_path = os.path.expanduser(conda_env_path)
-    if server_name in (
-    ):
+    if server_name in ():
         conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
     if user_name == "saggese":
         # GP.
