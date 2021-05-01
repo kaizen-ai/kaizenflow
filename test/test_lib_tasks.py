@@ -16,8 +16,7 @@ class TestLibTasks1(hut.TestCase):
     def test_get_gh_issue_title1(self) -> None:
         issue_id = 1
         repo = "amp"
-        as_git_branch_name = True
-        act = ltasks._get_gh_issue_title(issue_id, repo, as_git_branch_name)
+        act = ltasks._get_gh_issue_title(issue_id, repo)
         exp = "AmpTask1_Bridge_Python_and_R"
         self.assert_equal(act, exp)
 
@@ -25,7 +24,7 @@ class TestLibTasks1(hut.TestCase):
         issue_id = 1
         repo = "lem"
         as_git_branch_name = True
-        act = ltasks._get_gh_issue_title(issue_id, repo, as_git_branch_name)
+        act = ltasks._get_gh_issue_title(issue_id, repo)
         exp = "AmpTask1_Bridge_Python_and_R"
         self.assert_equal(act, exp)
 
@@ -33,6 +32,6 @@ class TestLibTasks1(hut.TestCase):
         issue_id = 1
         repo = "dev"
         as_git_branch_name = True
-        act = ltasks._get_gh_issue_title(issue_id, repo, as_git_branch_name)
+        act = ltasks._get_gh_issue_title(issue_id, repo)
         exp = "AmpTask1_Bridge_Python_and_R"
         self.assert_equal(act, exp)

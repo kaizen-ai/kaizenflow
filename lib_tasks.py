@@ -1233,8 +1233,8 @@ def _get_gh_issue_title(
     """
     Get the title of a GitHub issue.
 
-    :param as_git_branch_name: if True use a format without spaces.
-        e.g.,
+    :param repo: `current` refer to the repo where we are, otherwise a repo short
+        name (e.g., "amp")
     """
     _report_task()
     # > (export NO_COLOR=1; gh issue view 1251 --json title )
@@ -1258,10 +1258,10 @@ def _get_gh_issue_title(
     # Add the `AmpTaskXYZ_...`
     if repo == "current":
         repo_full_name = git.get_repo_full_name_from_dirname(".")
+        repo_short_name = git.get_repo_name(repo_full_name, "full_name")
     else:
-        repo_full_name = repo
-    _LOG.info("repo_name=%s", repo_full_name)
-    repo_short_name = git.get_repo_short_name(repo_full_name)
+        repo_short_name = repo
+    _LOG.info("repo_short_name=%s", repo_short_name)
     task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
     _LOG.debug("task_prefix=%s", task_prefix)
     title = "%s%d_%s" % (task_prefix, issue_id, title)
