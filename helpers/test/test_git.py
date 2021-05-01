@@ -101,13 +101,13 @@ class Test_git_repo_name1(hut.TestCase):
     def test_parse_github_repo_name1(self) -> None:
         repo_name = "git@github.com:alphamatic/amp"
         act = git._parse_github_repo_name(repo_name)
-        self.assertEqual(act, "alphamatic/amp")
+        self.assert_equal(act, "alphamatic/amp")
 
     def test_parse_github_repo_name2(self) -> None:
         repo_name = "https://github.com/alphamatic/amp"
         act = git._parse_github_repo_name(repo_name)
         exp = "alphamatic/amp"
-        self.assertEqual(act, exp)
+        self.assert_equal(act, exp)
 
     def test_get_repo_full_name_from_dirname1(self) -> None:
         func_call = "git.get_repo_full_name_from_dirname(dir_name='.')"
@@ -121,37 +121,58 @@ class Test_git_repo_name1(hut.TestCase):
         func_call = "git.get_repo_full_name_from_client(super_module=False)"
         _execute_func_call(func_call)
 
-    def test_get_repo_full_name1(self) -> None:
+    def test_get_repo_name1(self) -> None:
         short_name = "amp"
-        act = git.get_repo_full_name(short_name)
+        mode = "short_name"
+        act = git.get_repo_name(short_name, mode)
         exp = "alphamatic/amp"
-        self.assertEqual(act, exp)
+        self.assert_equal(act, exp)
 
-    def test_get_repo_short_name1(self) -> None:
+    def test_get_repo_name2(self) -> None:
         full_name = "alphamatic/amp"
-        act = git.get_repo_short_name(full_name)
+        mode = "full_name"
+        act = git.get_repo_name(full_name, mode)
         exp = "amp"
-        self.assertEqual(act, exp)
+        self.assert_equal(act, exp)
 
-    def test_get_all_repo_full_names1(self) -> None:
-        func_call = "git.get_all_repo_full_names()"
-        _execute_func_call(func_call)
+    def test_get_repo_name3(self) -> None:
+        full_name = "alphamatic/lemonade"
+        mode = "full_name"
+        act = git.get_repo_name(full_name, mode)
+        exp = "lem"
+        self.assert_equal(act, exp)
 
-    def test_get_all_repo_full_names2(self) -> None:
-        all_repo_sym_names = git.get_all_repo_full_names()
-        for repo_sym_name in all_repo_sym_names:
-            repo_github_name = git.get_repo_short_name(repo_sym_name)
-            _LOG.debug(
-                hut.to_string("repo_sym_name")
-                + " -> "
-                + hut.to_string("repo_github_name")
-            )
-            git.get_repo_full_name(repo_github_name)
-            _LOG.debug(
-                hut.to_string("repo_sym_name")
-                + " -> "
-                + hut.to_string("repo_sym_name_tmpA")
-            )
+    def test_get_repo_name4(self) -> None:
+        full_name = "alphamatic/dev_tools"
+        mode = "full_name"
+        act = git.get_repo_name(full_name, mode)
+        exp = "dev_tools"
+        self.assert_equal(act, exp)
+
+    def test_get_all_repo_names1(self) -> None:
+        mode = "short_name"
+        act = git.get_all_repo_names(mode)
+        exp = ["amp", "dev_tools", "lem"]
+        self.assert_equal(str(act), str(exp))
+
+    def test_get_all_repo_names2(self) -> None:
+        mode = "full_name"
+        act = git.get_all_repo_names(mode)
+        exp = ["alphamatic/amp", "alphamatic/dev_tools", "alphamatic/lemonade"]
+        self.assert_equal(str(act), str(exp))
+
+    def test_get_repo_name_rountrip1(self) -> None:
+        """
+        Test round-trip transformation for get_repo_name().
+        """
+        # Get the short name for all the repos.
+        mode = "short_name"
+        all_repo_short_names = git.get_all_repo_names(mode)
+        # Round trip.
+        for repo_short_name in all_repo_short_names:
+            repo_full_name = git.get_repo_name(repo_short_name, "short_name")
+            repo_short_name_tmp = git.get_repo_name(repo_full_name, "full_name")
+            self.assert_equal(repo_short_name, repo_short_name_tmp)
 
 
 class Test_git_path1(hut.TestCase):

@@ -3,7 +3,7 @@
 # Install python packages.
 #
 
-set -e
+set -ex
 
 echo "# Installing ${ENV_NAME}"
 

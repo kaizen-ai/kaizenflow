@@ -54,7 +54,7 @@ echo "GH VERSION="$(gh --version)
 if [[ $CLEAN_UP_INSTALLATION ]]; then
     echo "Cleaning up installation..."
     apt-get purge -y --auto-remove
-    DIRS="/usr/lib/gcc /root/.cache /tmp"
+    DIRS="/root/.cache /tmp"
     du -hs $DIRS | sort -h
     rm -rf $DIRS
 else

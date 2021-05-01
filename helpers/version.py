@@ -18,7 +18,7 @@ def get_code_version() -> str:
     """
     Return the code version.
     """
-    _CODE_VERSION = "1.0.1"
+    _CODE_VERSION = "1.1.0"
     return _CODE_VERSION
 
 

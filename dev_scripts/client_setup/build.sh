@@ -21,13 +21,22 @@ source $VENV_DIR/bin/activate
 python -m pip install --upgrade pip
 pip install -r dev_scripts/client_setup/requirements.txt
 
-# Install GitHub CLI.
-# brew install gh
-# brew upgrade gh
+echo "aws version="$(aws --version)
+echo "invoke version="$(invoke --version)
+echo "poetry version="$(poetry --version)
 
-aws --version
-invoke --version
-gh --version
+# Update brew.
+brew update
+echo "brew version="$(brew --version)
+
+# Install GitHub CLI.
+brew install gh
+echo "gh version="$(gh --version)
+
+# Install dive.
+# https://github.com/wagoodman/dive
+#brew install dive
+#echo "dive version="$(dive --version)
 
 echo "# Activate the virtual env with:"
 echo "source $VENV_DIR/bin/activate"

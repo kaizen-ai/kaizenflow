@@ -1228,7 +1228,7 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
 
 
 def _get_gh_issue_title(
-    issue_id: int, repo: str="current", as_git_branch_name: bool=True,
+    issue_id: int, repo: str="current"
 ) -> str:
     """
     Get the title of a GitHub issue.
@@ -1237,11 +1237,6 @@ def _get_gh_issue_title(
         e.g.,
     """
     _report_task()
-    if repo == "current":
-        repo_full_name = git.get_repo_full_name_from_dirname(".")
-    else:
-        repo_full_name = repo
-    _LOG.info("repo_name=%s", repo_full_name)
     # > (export NO_COLOR=1; gh issue view 1251 --json title )
     # {"title":"Update GH actions for amp"}
     dbg.dassert_lte(1, issue_id)
@@ -1253,14 +1248,23 @@ def _get_gh_issue_title(
     _LOG.debug("dict_=\n%s", dict_)
     title = dict_["title"]
     _LOG.debug("title=%s", title)
-    if as_git_branch_name:
-        # Remove some annoying chars.
-        for char in ": + ( ) /".split():
-            title = title.replace(char, "")
-        # Replace multiple spaces with one.
-        title = re.sub(r"\s+", " ", title)
-        #
-        title = title.replace(" ", "_")
+    # Remove some annoying chars.
+    for char in ": + ( ) /".split():
+        title = title.replace(char, "")
+    # Replace multiple spaces with one.
+    title = re.sub(r"\s+", " ", title)
+    #
+    title = title.replace(" ", "_")
+    # Add the `AmpTaskXYZ_...`
+    if repo == "current":
+        repo_full_name = git.get_repo_full_name_from_dirname(".")
+    else:
+        repo_full_name = repo
+    _LOG.info("repo_name=%s", repo_full_name)
+    repo_short_name = git.get_repo_short_name(repo_full_name)
+    task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
+    _LOG.debug("task_prefix=%s", task_prefix)
+    title = "%s%d_%s" % (task_prefix, issue_id, title)
     return title
 
 
