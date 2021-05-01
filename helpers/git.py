@@ -263,13 +263,17 @@ def find_file_in_git_tree(file_name: str, super_module: bool = True) -> str:
     return file_name
 
 
+# #############################################################################
+# GitHub repository name
+# #############################################################################
+
+
 def _parse_github_repo_name(repo_name: str) -> str:
     """
-    Parse repo name from GitHub in the format:
-    ```
-        git@github.com:alphamatic/amp
-        https://github.com/alphamatic/amp
-    ```
+    Parse repo name from `git remote` in the format:
+    `git@github.com:alphamatic/amp`
+    or
+    `https://github.com/alphamatic/amp`
     """
     m = re.match(r"^\S+\.com[:/](.*)$", repo_name)
     dbg.dassert(m, "Can't parse '%s'", repo_name)
@@ -285,9 +289,10 @@ def _parse_github_repo_name(repo_name: str) -> str:
     return repo_name
 
 
+# TODO: -> get_repo_long_name_from_dirname
 def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
     """
-    :return: the symbolic name of the repo in `git_dir`, e.g., "alphamatic/amp"
+    :return: the symbolic name of the repo in `git_dir`, e.g., "alphamatic/amp".
     """
     dbg.dassert_exists(git_dir)
     cmd = "cd %s; (git remote -v | grep origin | grep fetch)" % git_dir
@@ -307,9 +312,10 @@ def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
     return repo_name
 
 
+# TODO: -> get_repo_long_name_from_client
 def get_repo_symbolic_name(super_module: bool) -> str:
     """
-    Return the name of the remote repo. E.g., "alphamatic/amp".
+    Return the name of the repo (e.g., "alphamatic/amp") from a Git client.
 
     :param super_module: like in get_client_root()
     """
@@ -319,19 +325,30 @@ def get_repo_symbolic_name(super_module: bool) -> str:
     return repo_name
 
 
-def _get_repo_map() -> Dict[str, str]:
-    repo_map = {"alphamatic/amp": "Amp"}
-    # TODO(gp): The proper fix is #PTask551.
-    # Get info from the including repo, if possible.
-    try:
-        import repo_config as rcfg
-
-        repo_map.update(rcfg.REPO_MAP)
-    except ImportError:
-        _LOG.debug("No including repo")
+@functools.lru_cache()
+def _get_repo_short_to_long_name() -> Dict[str, str]:
+    """
+    Return the map from short name (e.g., `amp`) to long name (`alphamatic/amp`).
+    """
+    repo_map = {
+        "amp": "alphamatic/amp",
+        "lem": "alphamatic/lemonade",
+        "dev_tools": "alphamatic/dev_tools"
+    }
     dbg.dassert_no_duplicates(repo_map.keys())
     dbg.dassert_no_duplicates(repo_map.values())
-    return repo_map.copy()
+    return repo_map
+
+
+@functools.lru_cache()
+def _get_repo_long_to_short_name() -> Dict[str, str]:
+    """
+    Return the map from long name (`alphamatic/amp`) to short name (e.g., `amp`).
+    """
+    # Get the reverse map.
+    repo_map = _get_repo_short_to_long_name()
+    inv_repo_map = {v: k for (k, v) in repo_map.items()}
+    return inv_repo_amp
 
 
 def get_all_repo_symbolic_names() -> List[str]:
@@ -340,24 +357,28 @@ def get_all_repo_symbolic_names() -> List[str]:
 
 
 # TODO(gp): Find a better name.
-def get_repo_prefix(repo_github_name: str) -> str:
+def get_repo_long_name(short_name: str) -> str:
     """
-    Return the symbolic name of a git repo.
+    Return the long name of a git repo based on its short name.
 
-    E.g., for "alphamatic/amp", the function returns "Amp".
+    E.g., `amp` -> `alphamatic/amp`.
     """
-    repo_map = _get_repo_map()
-    dbg.dassert_in(repo_github_name, repo_map, "Invalid repo github name")
-    return repo_map[repo_github_name]
+    repo_map = _get_repo_short_to_long_name()
+    dbg.dassert_in(short_name, repo_map, "Invalid short_name='%s'", short_name)
+    return repo_map[short_name]
 
 
-def get_repo_github_name(repo_symbolic_name: str) -> str:
-    # Get the reverse map.
-    repo_map = _get_repo_map()
-    inv_repo_map = {v: k for (k, v) in repo_map.items()}
-    #
-    dbg.dassert_in(repo_symbolic_name, inv_repo_map, "Invalid repo symbolic name")
-    return inv_repo_map[repo_symbolic_name]
+def get_repo_short_name(long_name: str) -> str:
+    """
+    Return the short name of a git repo based on its long name.
+
+    E.g., `alphamatic/amp` -> `amp`.
+    """
+    repo_map = _get_repo_long_to_short_name()
+    dbg.dassert_in(long_name, repo_map, "Invalid long_name='%s'", long_name)
+    return repo_map[long_name]
+
+#
 
 
 def get_path_from_git_root(file_name: str, super_module: bool) -> str:
