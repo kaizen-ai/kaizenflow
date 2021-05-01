@@ -950,7 +950,8 @@ def run_superslow_tests(  # type: ignore
 
 @task
 def run_fast_slow_tests(  # type: ignore
-        ctx, stage=_STAGE, pytest_opts="", coverage=False
+        ctx, stage=_STAGE, pytest_opts="", skip_submodules=False, coverage=False,
+        collect_only=False
 ):
     f"""
     Run fast and slow tests.

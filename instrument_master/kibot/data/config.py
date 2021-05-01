@@ -2,6 +2,8 @@ ENDPOINT = "http://www.kibot.com/"
 
 API_ENDPOINT = "http://api.kibot.com/"
 
+# TODO(gp): Factor out properly all the references to `alphamatic-data` in the
+# code base.
 S3_PREFIX = "s3://alphamatic-data/data/kibot"
 
 DATASETS = [
