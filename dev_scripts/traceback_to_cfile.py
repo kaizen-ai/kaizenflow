@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 """
-Add a description of what the script does and examples of command lines.
+Parse a file with a traceback and generates a cfile
 
-Check dev_scripts/linter.py to see an example of a script using this template.
+> pytest -x helpers/test/test_traceback.py --dbg | tee log.txt
+> dev_scripts/traceback_to_cfile.py -i log.txt
 """
 
 import argparse
@@ -11,8 +12,8 @@ import logging
 
 import helpers.dbg as dbg
 import helpers.parser as prsr
-
-# import helpers.system_interaction as si
+import helpers.printing as hprint
+import helpers.traceback_helper as htrace
 
 _LOG = logging.getLogger(__name__)
 
@@ -23,30 +24,27 @@ def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("positional", nargs="*", help="...")
-    parser.add_argument("--dst_dir", action="store", help="Destination dir")
+    prsr.add_input_output_args(parser, out_default="cfile")
     prsr.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Insert your code here.
-    # - Use _LOG.info(), _LOG.debug() instead of printing.
-    # - Use dbg.dassert_*() for assertion.
-    # - Use si.system() and si.system_to_string() to issue commands.
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=False)
+    # Parse files.
+    in_file_name, out_file_name = prsr.parse_input_output_args(args, clear_screen=True)
+    # Read file.
+    txt = prsr.read_file(in_file_name)
+    # Transform.
+    txt_tmp = "\n".join(txt)
+    cfile, traceback = htrace.parse_traceback(txt_tmp)
+    print(hprint.frame("traceback") + "\n" + traceback)
+    cfile_as_str = htrace.cfile_to_str(cfile)
+    print(hprint.frame("cfile") + "\n" + cfile_as_str)
+    # Write file.
+    prsr.write_file(cfile_as_str.split("\n"), out_file_name)
 
 
 if __name__ == "__main__":
     _main(_parse())
-
-
-Traceback (most recent call last):
-File "/app/amp/test/test_lib_tasks.py", line 27, in test_get_gh_issue_title2
-act = ltasks._get_gh_issue_title(issue_id, repo)
-File "/app/amp/lib_tasks.py", line 1265, in _get_gh_issue_title
-task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
-File "/app/amp/helpers/git.py", line 397, in get_task_prefix_from_repo_short_name
-if repo_short_name == "amp":
-NameError: name 'repo_short_name' is not defined

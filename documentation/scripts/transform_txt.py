@@ -171,7 +171,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     cmd = args.action
     max_lev = int(args.max_lev)
     #
-    in_file_name, out_file_name = prsr.parse_input_output_args(args)
+    in_file_name, out_file_name = prsr.parse_input_output_args(args, clear_screen=True)
     if cmd == "toc":
         table_of_content(in_file_name, max_lev)
     elif cmd == "format":

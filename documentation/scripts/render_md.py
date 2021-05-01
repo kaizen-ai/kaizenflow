@@ -197,7 +197,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Insert your code here.
     # Read file arguments.
-    in_file, out_file = prsr.parse_input_output_args(args)
+    in_file, out_file = prsr.parse_input_output_args(args, clear_screen=True)
     # Not support stdin and stdout.
     dbg.dassert_ne(in_file, "-")
     dbg.dassert_ne(out_file, "-")

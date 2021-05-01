@@ -24,16 +24,18 @@ def cfile_to_str(cfile: List[CFILE_ROW]) -> str:
     return "\n".join(map(cfile_row_to_str, cfile))
 
 
-def parse_traceback(txt: str) -> List[CFILE_ROW]:
+def parse_traceback(txt: str, purify_from_client: bool = True) -> Tuple[List[CFILE_ROW], str]:
     lines = txt.split("\n")
     state = "look_for"
     cfile: List[CFILE_ROW] = []
     i = 0
+    start_idx = end_idx = 0
     while i < len(lines):
         line = lines[i]
         _LOG.debug("state=%-10s i=%d: line=%s", state, i, line)
         if state == "look_for":
             if line.startswith("Traceback (most recent call last):"):
+                start_idx = i
                 # Update the state.
                 state = "parse"
                 i += 1
@@ -49,6 +51,9 @@ def parse_traceback(txt: str) -> List[CFILE_ROW]:
             line_num = int(m.group(2))
             func_name = m.group(3)
             _LOG.debug("  -> %s %d %s", file_name, line_num, func_name)
+            #
+            if purify_from_client:
+                file_name = file_name.replace("/app/amp/", "")
             # Parse the next line until the next `File...`.
             _LOG.debug("Search end of snippet")
             j = i + 1
@@ -72,6 +77,7 @@ def parse_traceback(txt: str) -> List[CFILE_ROW]:
             # Update the state.
             if not lines[j].startswith("  "):
                 _LOG.debug("  Found end of traceback")
+                end_idx = j
                 break
             else:
                 state = "parse"
@@ -79,4 +85,9 @@ def parse_traceback(txt: str) -> List[CFILE_ROW]:
                 continue
         #
         i += 1
-    return cfile
+    #
+    dbg.dassert_lte(1, start_idx)
+    dbg.dassert_lte(start_idx, end_idx)
+    dbg.dassert_lte(end_idx, len(lines))
+    traceback = "\n".join(lines[start_idx:end_idx])
+    return cfile, traceback

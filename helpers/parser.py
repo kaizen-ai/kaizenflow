@@ -143,6 +143,8 @@ def mark_action(action: str, actions: List[str]) -> Tuple[bool, List[str]]:
 
 def add_input_output_args(
     parser: argparse.ArgumentParser,
+    in_default: Optional[str] = None,
+    out_default: Optional[str] = None,
 ) -> argparse.ArgumentParser:
     """
     Add options to parse input and output file name.
@@ -150,24 +152,28 @@ def add_input_output_args(
     parser.add_argument(
         "-i",
         "--in_file_name",
-        required=True,
+        required=(in_default is None),
         type=str,
+        default=in_default,
         help="Input file or `-` for stdin",
     )
     parser.add_argument(
         "-o",
         "--out_file_name",
-        required=False,
+        required=(out_default is None),
         type=str,
-        default=None,
+        default=out_default,
         help="Output file or `-` for stdout",
     )
     return parser
 
 
 def parse_input_output_args(
-    args: argparse.Namespace, clear_screen: bool = True
+    args: argparse.Namespace, clear_screen: bool = False
 ) -> Tuple[str, str]:
+    """
+    :return input and output file name
+    """
     in_file_name = args.in_file_name
     out_file_name = args.out_file_name
     if out_file_name is None:
