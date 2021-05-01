@@ -21,68 +21,6 @@ def _execute_func_call(func_call: str) -> None:
     _LOG.debug("\n-> %s=\n  '%s'", func_call, act)
 
 
-class Test_git1(hut.TestCase):
-
-    def test_parse_github_repo_name1(self) -> None:
-        repo_name = "git@github.com:alphamatic/amp"
-        act = git._parse_github_repo_name(repo_name)
-        self.assertEqual(act, "alphamatic/amp")
-
-    def test_parse_github_repo_name2(self) -> None:
-        repo_name = "https://github.com/alphamatic/amp"
-        act = git._parse_github_repo_name(repo_name)
-        exp = "alphamatic/amp"
-        self.assertEqual(act, exp)
-
-    def test_get_path_from_git_root1(self) -> None:
-        file_name = "helpers/test/test_git.py"
-        act = git.get_path_from_git_root(file_name, super_module=False)
-        _LOG.debug("get_path_from_git_root()=%s", act)
-
-    def test_get_repo_symbolic_name1(self) -> None:
-        func_call = "git.get_repo_symbolic_name(super_module=True)"
-        _execute_func_call(func_call)
-
-    def test_get_repo_symbolic_name2(self) -> None:
-        func_call = "git.get_repo_symbolic_name(super_module=False)"
-        _execute_func_call(func_call)
-
-    def test_get_modified_files1(self) -> None:
-        func_call = "git.get_modified_files()"
-        _execute_func_call(func_call)
-
-    def test_get_previous_committed_files1(self) -> None:
-        func_call = "git.get_previous_committed_files()"
-        _execute_func_call(func_call)
-
-    def test_git_log1(self) -> None:
-        func_call = "git.git_log()"
-        _execute_func_call(func_call)
-
-    def test_git_all_repo_symbolic_names1(self) -> None:
-        func_call = "git.get_all_repo_symbolic_names()"
-        _execute_func_call(func_call)
-
-    def test_git_all_repo_symbolic_names2(self) -> None:
-        all_repo_sym_names = git.get_all_repo_symbolic_names()
-        for repo_sym_name in all_repo_sym_names:
-            repo_github_name = git.get_repo_github_name(repo_sym_name)
-            _LOG.debug(
-                hut.to_string("repo_sym_name")
-                + " -> "
-                + hut.to_string("repo_github_name")
-            )
-            git.get_repo_prefix(repo_github_name)
-            _LOG.debug(
-                hut.to_string("repo_sym_name")
-                + " -> "
-                + hut.to_string("repo_sym_name_tmpA")
-            )
-
-    def test_get_branch_name1(self) -> None:
-        _ = git.get_branch_name()
-
-
 class Test_git_submodule1(hut.TestCase):
     def test_get_client_root1(self) -> None:
         func_call = "git.get_client_root(super_module=True)"
@@ -92,9 +30,8 @@ class Test_git_submodule1(hut.TestCase):
         func_call = "git.get_client_root(super_module=False)"
         _execute_func_call(func_call)
 
-    def test_get_repo_symbolic_name(self) -> None:
-        func_call = "git.get_repo_symbolic_name(super_module=True)"
-        _execute_func_call(func_call)
+    def test_get_branch_name1(self) -> None:
+        _ = git.get_branch_name()
 
     def test_is_inside_submodule1(self) -> None:
         func_call = "git.is_inside_submodule()"
@@ -156,7 +93,90 @@ class Test_git_submodule2(hut.TestCase):
         self._helper_group_hashes(head_hash, remh_hash, subm_hash, exp)
 
     def _helper_group_hashes(
-        self, head_hash: str, remh_hash: str, subm_hash: Optional[str], exp: str
+            self, head_hash: str, remh_hash: str, subm_hash: Optional[str], exp: str
     ) -> None:
         act = git._group_hashes(head_hash, remh_hash, subm_hash)
         self.assert_equal(act, exp, fuzzy_match=True)
+
+
+class Test_git_repo_name1(hut.TestCase):
+
+    def test_parse_github_repo_name1(self) -> None:
+        repo_name = "git@github.com:alphamatic/amp"
+        act = git._parse_github_repo_name(repo_name)
+        self.assertEqual(act, "alphamatic/amp")
+
+    def test_parse_github_repo_name2(self) -> None:
+        repo_name = "https://github.com/alphamatic/amp"
+        act = git._parse_github_repo_name(repo_name)
+        exp = "alphamatic/amp"
+        self.assertEqual(act, exp)
+
+    def test_get_repo_full_name_from_dirname1(self) -> None:
+        func_call = "git.get_repo_full_name_from_dirname(dir_name='.')"
+        _execute_func_call(func_call)
+
+    def test_get_repo_full_name_from_client1(self) -> None:
+        func_call = "git.get_repo_full_name_from_client(super_module=True)"
+        _execute_func_call(func_call)
+
+    def test_get_repo_full_name_from_client2(self) -> None:
+        func_call = "git.get_repo_full_name_from_client(super_module=False)"
+        _execute_func_call(func_call)
+
+    def test_get_repo_full_name1(self) -> None:
+        short_name = "amp"
+        act = git.get_repo_full_name(short_name)
+        exp = "alphamatic/amp"
+        self.assertEqual(act, exp)
+
+    def test_get_repo_short_name1(self) -> None:
+        full_name = "alphamatic/amp"
+        act = git.get_repo_short_name(full_name)
+        exp = "amp"
+        self.assertEqual(act, exp)
+
+    def test_get_all_repo_full_names1(self) -> None:
+        func_call = "git.get_all_repo_full_names()"
+        _execute_func_call(func_call)
+
+    def test_get_all_repo_full_names2(self) -> None:
+        all_repo_sym_names = git.get_all_repo_full_names()
+        for repo_sym_name in all_repo_sym_names:
+            repo_github_name = git.get_repo_short_name(repo_sym_name)
+            _LOG.debug(
+                hut.to_string("repo_sym_name")
+                + " -> "
+                + hut.to_string("repo_github_name")
+            )
+            git.get_repo_full_name(repo_github_name)
+            _LOG.debug(
+                hut.to_string("repo_sym_name")
+                + " -> "
+                + hut.to_string("repo_sym_name_tmpA")
+            )
+
+
+class Test_git_path1(hut.TestCase):
+
+    def test_get_path_from_git_root1(self) -> None:
+        file_name = "helpers/test/test_git.py"
+        act = git.get_path_from_git_root(file_name, super_module=False)
+        _LOG.debug("get_path_from_git_root()=%s", act)
+
+
+class Test_git_modified_files1(hut.TestCase):
+
+    def test_get_modified_files1(self) -> None:
+        func_call = "git.get_modified_files()"
+        _execute_func_call(func_call)
+
+    def test_get_previous_committed_files1(self) -> None:
+        func_call = "git.get_previous_committed_files()"
+        _execute_func_call(func_call)
+
+    def test_git_log1(self) -> None:
+        func_call = "git.git_log()"
+        _execute_func_call(func_call)
+
+

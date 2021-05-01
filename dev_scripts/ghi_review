@@ -1,5 +1,0 @@
-#!/bin/bash -e
-
-source helpers.sh
-
-execute "ghi --no-pager list -g -L TO_REVIEW"

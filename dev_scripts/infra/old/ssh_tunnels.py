@@ -58,7 +58,7 @@ def _main() -> None:
     # env vars set by setenv.sh. This is also preventing Test_ssh_tunnel to be
     # run by Jenkins.
     # TODO(gp): Improve this.
-    repo_name = git.get_repo_symbolic_name(super_module=True)
+    repo_name = git.get_repo_full_name_from_client(super_module=True)
     exp_repo_name = ".../..."
     if repo_name != exp_repo_name:
         msg = "Need to run from repo '%s' and not from '%s'" % (
