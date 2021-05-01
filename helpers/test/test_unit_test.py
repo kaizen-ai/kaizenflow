@@ -99,7 +99,7 @@ class TestTestCase(hut.TestCase):
     def test_assert_not_equal2(self) -> None:
         actual = "hello world"
         expected = "hello world "
-        # Create a dir like /var/tmp/tmph_kun9xq
+        # Create a dir like `/var/tmp/tmph_kun9xq`.
         tmp_dir = tempfile.mkdtemp()
         self.assert_equal(actual, expected, abort_on_error=False, dst_dir=tmp_dir)
         # Compute the signature from the dir.
@@ -199,6 +199,7 @@ completed       success Lint    Slow_tests
             )
         # Check that the assertion is what expected.
         act = str(cm.exception)
+        act = hut.purify_txt_from_client(act)
         exp = '''
 --------------------------------------------------------------------------------
 ACTUAL vs EXPECTED
@@ -225,6 +226,7 @@ completed       success Lint    Slow_tests
             # For debugging.
             hio.to_file("act.txt", act)
             hio.to_file("exp.txt", exp)
+            self.assert_equal(act, exp, fuzzy_match=False)
         # We don't use self.assert_equal() since this is exactly we are testing,
         # so we use a trusted function.
         self.assertEqual(act, exp)
