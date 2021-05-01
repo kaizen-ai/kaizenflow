@@ -19,6 +19,7 @@ echo "# Set PATH"
 
 export PATH=.:$PATH
 
+# Amp.
 export PATH=$AMP:$PATH
 export PATH=$AMP/dev_scripts:$PATH
 export PATH=$AMP/dev_scripts/aws:$PATH
@@ -39,7 +40,9 @@ echo "PATH=$PATH"
 # #############################################################################
 
 echo "# Set PYTHONPATH"
-export PYTHONPATH=$PWD:$PYTHONPATH
+
+# Amp.
+export PYTHONPATH=$AMP:$PYTHONPATH
 
 export PYTHONPATH=$(echo $PYTHONPATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')
 

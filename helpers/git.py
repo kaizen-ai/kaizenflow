@@ -598,6 +598,7 @@ def git_log(num_commits: int = 5, my_commits: bool = False) -> str:
     if my_commits:
         # This doesn't work in a container if the user relies on `~/.gitconfig` to
         # set the user name.
+        # TODO(gp): We should use `get_git_name()`.
         cmd.append("--author $(git config user.name)")
     cmd = " ".join(cmd)
     data: Tuple[int, str] = hsinte.system_to_string(cmd)
