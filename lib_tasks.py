@@ -209,6 +209,34 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     ctx.run(cmd)
 
 
+@task
+def git_create_branch(ctx, branch_name=""):  # type: ignore
+    """
+    Create and push upstream a branch called `branch_name`.
+
+    E.g.,
+    > git checkout -b LemTask169_Get_GH_actions_working_on_lemonade
+    > git push --set-upstream origin LemTask169_Get_GH_actions_working_on_lemonade
+    """
+    # git checkout -b LemTask169_Get_GH_actions_working_on_lemonade
+    cmd = f"git checkout -b {branch_name}"
+    ctx.run(cmd)
+    # git push --set-upstream origin LemTask169_Get_GH_actions_working_on_lemonade
+    cmd = f"git push --set-upstream origin {branch_name}"
+    ctx.run(cmd)
+
+
+@task
+def git_create_pr(ctx):  # type: ignore
+    """
+    Create a draft PR for the current branch.
+    """
+    branch_name = git.get_branch_name()
+    _LOG.info("Creating PR '%s'", branch_name)
+    cmd = f'gh pr create --draft --title "{branch_name}" --body ""'
+    ctx.run(cmd)
+
+
 # #############################################################################
 # Docker.
 # #############################################################################
@@ -922,10 +950,11 @@ def run_superslow_tests(  # type: ignore
 
 @task
 def run_fast_slow_tests(  # type: ignore
-        ctx, stage=_STAGE, pytest_opts="", coverage=False
+        ctx, stage=_STAGE, pytest_opts="", skip_submodules=False, coverage=False,
+        collect_only=False
 ):
     f"""
-    Run fast and slowtests.
+    Run fast and slow tests.
     {_RUN_COMMON_OPTS}
     """
     skipped_tests = "not superslow"
@@ -944,92 +973,6 @@ def pytest_clean(ctx):  # type: ignore
     _ = ctx
     hpytes.pytest_clean(".")
 
-
-# # #############################################################################
-# # GH actions tests for "latest" image.
-# # #############################################################################
-#
-# _run_tests.gh_action:
-# IMAGE=$(_IMAGE) \
-#     docker-compose \
-#     -f devops/compose/docker-compose.yml \
-#        -f devops/compose/docker-compose.gh_actions.yml \
-#     run \
-#     --rm \
-#     -l user=$(USER) \
-#     app \
-#     $(_CMD)
-#
-# run_fast_tests.gh_action:
-# ifeq ($(NO_FAST_TESTS), 'True')
-# @echo "No fast tests"
-# else
-# _IMAGE=$(IMAGE_DEV) \
-#     _CMD="$(RUN_TESTS_DIR)/run_fast_tests.sh" \
-#     make _run_tests.gh_action
-# endif
-#
-# run_slow_tests.gh_action:
-# ifeq ($(NO_SLOW_TESTS), 'True')
-# @echo "No slow tests"
-# else
-# _IMAGE=$(IMAGE_DEV) \
-#     _CMD="$(RUN_TESTS_DIR)/run_slow_tests.sh" \
-#     make _run_tests.gh_action
-# endif
-#
-# run_superslow_tests.gh_action:
-# ifeq ($(NO_SUPERSLOW_TESTS), 'True')
-# @echo "No superslow tests"
-# else
-# _IMAGE=$(IMAGE_DEV) \
-#     _CMD="$(RUN_TESTS_DIR)/run_superslow_tests.sh" \
-#     make _run_tests.gh_action
-# endif
-#
-# # #############################################################################
-# # GH actions tests for "local" image.
-# # #############################################################################
-#
-# # Test using release candidate image via GH Actions.
-#
-# run_fast_tests.gh_action_rc:
-# ifeq ($(NO_FAST_TESTS), 'True')
-# @echo "No fast tests"
-# else
-# _IMAGE=$(IMAGE_RC) \
-#     _CMD="$(RUN_TESTS_DIR)/run_fast_tests.sh" \
-#     make _run_tests.gh_action
-# endif
-#
-# run_slow_tests.gh_action_rc:
-# ifeq ($(NO_SLOW_TESTS), 'True')
-# @echo "No slow tests"
-# else
-# _IMAGE=$(IMAGE_RC) \
-#     _CMD="$(RUN_TESTS_DIR)/run_slow_tests.sh" \
-#     make _run_tests.gh_action
-# endif
-#
-# run_superslow_tests.gh_action_rc:
-# ifeq ($(NO_SUPERSLOW_TESTS), 'True')
-# @echo "No superslow tests"
-# else
-# _IMAGE=$(IMAGE_RC) \
-#     _CMD="$(RUN_TESTS_DIR)/run_superslow_tests.sh" \
-#     make _run_tests.gh_action
-# endif
-#
-# docker_bash.gh_action_rc:
-# IMAGE=$(IMAGE_RC) \
-#     docker-compose \
-#     -f devops/compose/docker-compose.yml \
-#        -f devops/compose/docker-compose.gh_actions.yml \
-#     run \
-#     --rm \
-#     -l user=$(USER) \
-#     app \
-#     bash
 
 # #############################################################################
 # Linter.

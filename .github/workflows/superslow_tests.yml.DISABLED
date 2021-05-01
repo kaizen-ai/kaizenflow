@@ -1,7 +1,8 @@
 name: Supersuperslow tests
 on:
   pull_request:
-    types: [ opened, synchronize, reopened ]
+    # https://github.community/t/dont-run-actions-on-draft-pull-requests/16817/19
+    types: [opened, synchronize, reopened, ready_for_review]
     branches:
       - master
   push:
@@ -41,7 +42,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: Sibz/github-status-action@v1
         with:
-          authToken: ${{secrets.GITHUB_TOKEN}}
+          authToken: ${{ secrets.GITHUB_TOKEN }}
           context: "Run_superslow_tests"
           description: 'Job in progress (manual run)'
           state: pending
@@ -82,13 +83,16 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+        # https://github.community/t/dont-run-actions-on-draft-pull-requests/16817/19
+        # Do not run on draft pull requests.
+        if: github.event.pull_request.draft == false
         run: invoke run_superslow_tests
 
       - name: Post status if was triggered manually
         if: ${{ always() && github.event_name == 'workflow_dispatch' }}
         uses: Sibz/github-status-action@v1
         with:
-          authToken: ${{secrets.GITHUB_TOKEN}}
+          authToken: ${{ secrets.GITHUB_TOKEN }}
           context: "Run_superslow_tests"
           description: 'Job is done (manual run)'
           state: ${{ job.status }}
@@ -102,7 +106,7 @@ jobs:
           to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
           token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
           message: |
-            🎉 superslow tests succeded at master
+            🎉 Superslow tests succeded at master
             Build failure '${{ github.workflow }}'
             Repo: '${{ github.repository }}'
             Branch: '$${{ github.head_ref }}'
@@ -111,6 +115,7 @@ jobs:
 
       - name: Send Telegram notification for failure
         if: ${{ failure() }}
+        #if: ${{ failure() && github.event_name == 'schedule' }}
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}

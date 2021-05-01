@@ -3,15 +3,16 @@ on:
   workflow_dispatch:
 
 jobs:
+
   Build_image:
     runs-on: ubuntu-latest
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -25,7 +26,7 @@ jobs:
         with:
           submodules: true
           # TODO(gp): Not needed?
-          ssh-key: ${{ secrets.GH_ACTION_SSH_PRIVATE_KEY }}
+          #ssh-key: ${{ secrets.GH_ACTION_SSH_PRIVATE_KEY }}
 
       - name: Install dependencies
         run: |
@@ -34,41 +35,10 @@ jobs:
 
       - name: Run 'docker_release_dev_image' workflow
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
         run: invoke docker_release_dev_image
-
-#      - name: Push image "rc" image
-#        run: make docker_push_image.rc
-#
-#      - name: Run fast tests for "rc" image
-#        if: ${{ success() }}
-#        env:
-#          AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
-#          AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-#        run: make run_fast_tests.gh_action_rc
-#
-#      - name: Run slow tests for "rc" image
-#        if: ${{ success() }}
-#        env:
-#          AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
-#          AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-#        run: make run_slow_tests.gh_action_rc
-#
-#      - name: Run superslow tests for "rc" image
-#        if: ${{ success() }}
-#        env:
-#          AWS_ACCESS_KEY_ID: ${{ secrets.GH_ACTION_AWS_ACCESS_KEY_ID }}
-#          AWS_SECRET_ACCESS_KEY: ${{ secrets.GH_ACTION_AWS_SECRET_ACCESS_KEY }}
-#        run: make run_superslow_tests.gh_action_rc
-#
-#      - name: Add "latest" tag
-#        if: ${{ success() && github.ref == 'refs/heads/master' }}
-#        run: make docker_tag_rc_image.latest
-#
-#      - name: Push "latest" image
-#        if: ${{ success() && github.ref == 'refs/heads/master' }}
-#        run: make docker_push_image.latest
 
       - name: Send Telegram notification for success
         if: ${{ success() }}
@@ -89,4 +59,8 @@ jobs:
           token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
           message: |
             🧨 IMAGE BUILD PROCESS FAILED
+            Build failure '${{ github.workflow }}'
+            Repo: '${{ github.repository }}'
+            Branch: '$${{ github.head_ref }}'
+            Event: '${{ github.event_name }}'
             https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

@@ -17,6 +17,7 @@ jobs:
 
   Mark_commit:
     runs-on: ubuntu-latest
+
     steps:
       - name: Post status if was triggered manually
         if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -28,6 +29,7 @@ jobs:
           state: pending
           sha: ${{ github.sha }}
           target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
       - name: Cancel previous runs
         if: ${{ github.head_ref != 'master' }}
         uses: styfle/cancel-workflow-action@0.9.0

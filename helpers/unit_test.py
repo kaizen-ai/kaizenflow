@@ -305,6 +305,7 @@ def remove_amp_references(txt: str) -> str:
     """
     txt = re.sub("^amp/", "", txt, flags=re.MULTILINE)
     txt = re.sub("/amp/", "/", txt, flags=re.MULTILINE)
+    txt = re.sub(" amp/", " ", txt, flags=re.MULTILINE)
     txt = re.sub("/amp:", ":", txt, flags=re.MULTILINE)
     return txt
 
@@ -562,20 +563,22 @@ def _assert_equal(
             "full_test_name test_dir fuzzy_match abort_on_error dst_dir"
         )
     )
+    # 
+    _LOG.debug("Before any transformation:")
+    _LOG.debug("act=\n'%s'", actual)
+    _LOG.debug("exp=\n'%s'", expected)
     # Convert to strings.
     actual = _to_pretty_string(actual)
     expected = _to_pretty_string(expected)
     # Fuzzy match, if needed.
+    actual_orig = actual
+    expected_orig = expected
     if fuzzy_match:
         _LOG.debug("# Using fuzzy match")
-        actual_orig = actual
         actual = _remove_spaces(actual)
-        expected_orig = expected
         expected = _remove_spaces(expected)
-    else:
-        actual_orig = actual
-        expected_orig = expected
     # Check.
+    _LOG.debug("The values being compared are:")
     _LOG.debug("act=\n'%s'", actual)
     _LOG.debug("exp=\n'%s'", expected)
     is_equal = expected == actual
@@ -584,11 +587,6 @@ def _assert_equal(
             "%s",
             "\n" + hprint.frame("Test '%s' failed" % full_test_name, "=", 80),
         )
-        if fuzzy_match:
-            # Set True to print the purified version (e.g., tables too large).
-            if True:
-                expected = expected_orig
-                # actual = actual_orig
         # Print the correct output, like:
         #   exp = r'""""
         #   2021-02-17 09:30:00-05:00
@@ -605,16 +603,26 @@ def _assert_equal(
         txt.append(hprint.indent('"""', spaces))
         txt = "\n".join(txt)
         error_msg += txt
+        # Select what to save.
+        compare_orig = False
+        if compare_orig:
+            tag = "(ORIGINAL) ACTUAL vs EXPECTED"
+            actual = actual_orig
+            expected = expected_orig
+        else:
+            if fuzzy_match:
+                tag = "(FUZZY) ACTUAL vs EXPECTED"
+            else:
+                tag = "ACTUAL vs EXPECTED"
         # Save the actual and expected strings to files.
-        _LOG.debug("Actual:\n'%s'", actual)
         act_file_name = "%s/tmp.actual.txt" % test_dir
         hio.to_file(act_file_name, actual)
         #
-        _LOG.debug("Expected:\n'%s'", expected)
         exp_file_name = "%s/tmp.expected.txt" % test_dir
         hio.to_file(exp_file_name, expected)
         #
-        tag = "ACTUAL vs EXPECTED"
+        _LOG.debug("Actual:\n'%s'", actual)
+        _LOG.debug("Expected:\n'%s'", expected)
         diff_files(
             act_file_name,
             exp_file_name,

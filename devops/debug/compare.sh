@@ -19,7 +19,7 @@ fi;
 echo "DIR1=$DIR1"
 echo "DIR2=$DIR2"
 
-if [[ 0 == 1 ]]; then
+if [[ 1 == 1 ]]; then
     #vimdiff {$DIR1,$DIR2}/Makefile
     #vimdiff {$DIR1,$DIR2}/devops/makefiles/general.mk
     #vimdiff {$DIR1,$DIR2}/devops/makefiles/repo_specific.mk
