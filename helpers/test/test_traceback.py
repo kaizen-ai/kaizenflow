@@ -79,6 +79,5 @@ Traceback
             htrace.cfile_to_str(act_cfile), htrace.cfile_to_str(exp_cfile)
         )
         #
-        exp_traceback = """
-        """.rstrip().lstrip()
-        self.assert_equal(act_traceback, exp_traceback)
+        exp_traceback = None
+        self.assertIs(act_traceback, exp_traceback)

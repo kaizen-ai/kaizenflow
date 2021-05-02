@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import List, Match, Tuple
+from typing import List, Match, Optional, Tuple
 
 import helpers.dbg as dbg
 
@@ -22,7 +22,7 @@ def cfile_to_str(cfile: List[CFILE_ROW]) -> str:
 
 def parse_traceback(
     txt: str, purify_from_client: bool = True
-) -> Tuple[List[CFILE_ROW], str]:
+) -> Tuple[List[CFILE_ROW], Optional[str]]:
     lines = txt.split("\n")
     state = "look_for"
     cfile: List[CFILE_ROW] = []
@@ -83,6 +83,7 @@ def parse_traceback(
             if not lines[j].startswith("  "):
                 _LOG.debug("  Found end of traceback")
                 end_idx = j
+                state = "end"
                 break
             state = "parse"
             i = j
@@ -90,8 +91,15 @@ def parse_traceback(
         #
         i += 1
     #
-    dbg.dassert_lte(1, start_idx)
-    dbg.dassert_lte(start_idx, end_idx)
-    dbg.dassert_lte(end_idx, len(lines))
-    traceback = "\n".join(lines[start_idx:end_idx])
+    if state == "look_for":
+        # We didn't find a traceback.
+        cfile = []
+        traceback = None
+    elif state == "end":
+        dbg.dassert_lte(1, start_idx)
+        dbg.dassert_lte(start_idx, end_idx)
+        dbg.dassert_lte(end_idx, len(lines))
+        traceback = "\n".join(lines[start_idx:end_idx])
+    else:
+        raise ValueError("Invalid state='%s'" % state)
     return cfile, traceback

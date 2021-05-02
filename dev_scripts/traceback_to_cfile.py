@@ -12,8 +12,10 @@ Parse a file with a traceback and generates a cfile to be used with vim like:
 
 import argparse
 import logging
+import sys
 
 import helpers.dbg as dbg
+import helpers.io_ as hio
 import helpers.parser as prsr
 import helpers.printing as hprint
 import helpers.traceback_helper as htrace
@@ -36,12 +38,18 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=False)
     # Parse files.
-    in_file_name, out_file_name = prsr.parse_input_output_args(args, clear_screen=True)
+    in_file_name, out_file_name = prsr.parse_input_output_args(args,
+                                                               clear_screen=True)
+    if out_file_name != "-":
+        hio.delete_file(out_file_name)
     # Read file.
     txt = prsr.read_file(in_file_name)
     # Transform.
     txt_tmp = "\n".join(txt)
     cfile, traceback = htrace.parse_traceback(txt_tmp)
+    if traceback is None:
+        _LOG.error("Can't find traceback in the file")
+        sys.exit(-1)
     print(hprint.frame("traceback") + "\n" + traceback)
     cfile_as_str = htrace.cfile_to_str(cfile)
     print(hprint.frame("cfile") + "\n" + cfile_as_str)

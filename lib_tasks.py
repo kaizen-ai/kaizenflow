@@ -1048,6 +1048,10 @@ def run_fast_slow_tests(  # type: ignore
 def jump_to_pytest_error(ctx):  # type: ignore
     """
     Parse the traceback from pytest and navigate it with vim.
+
+    > pyt helpers/test/test_traceback.py
+    # There is a also an alias `ie`
+    > invoke jump_to_pytest_error
     """
     # Convert the traceback into a cfile.
     cmd = "dev_scripts/traceback_to_cfile.py -i tmp.pytest.log -o cfile"
