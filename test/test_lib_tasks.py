@@ -20,18 +20,17 @@ class TestLibTasks1(hut.TestCase):
         """
         Log in inside GitHub.
         """
-        if hsinte.is_inside_ci():
-            _LOG.warning("Inside CI: authorizing")
-            env_var = "GH_ACTION_ACCESS_TOKEN"
-            dbg.dassert_in(env_var, os.environ)
+        env_var = "GH_ACTION_ACCESS_TOKEN"
+        if env_var in os.environ:
+            _LOG.warning("Using env var '%s' to log in GitHub", env_var)
             cmd = "echo $GH_ACTION_ACCESS_TOKEN | gh auth login --with-token"
             hsinte.system(cmd)
         # Check that we are logged in.
         cmd = "gh auth status"
         hsinte.system(cmd)
 
-    @pytest.mark.skipif(hsinte.is_inside_ci(),
-                        reason="_gh_login() doesn't work in the CI.")
+    #@pytest.mark.skipif(hsinte.is_inside_ci(),
+    #                    reason="_gh_login() doesn't work in the CI.")
     def test_get_gh_issue_title1(self) -> None:
         self._gh_login()
         issue_id = 1
