@@ -1,12 +1,8 @@
 import logging
 import re
-from typing import Any, Dict, List, Tuple
-
-import pytest
+from typing import List, Match, Tuple
 
 import helpers.dbg as dbg
-import helpers.printing as hprint
-import helpers.system_interaction as hsinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -24,7 +20,9 @@ def cfile_to_str(cfile: List[CFILE_ROW]) -> str:
     return "\n".join(map(cfile_row_to_str, cfile))
 
 
-def parse_traceback(txt: str, purify_from_client: bool = True) -> Tuple[List[CFILE_ROW], str]:
+def parse_traceback(
+    txt: str, purify_from_client: bool = True
+) -> Tuple[List[CFILE_ROW], str]:
     lines = txt.split("\n")
     state = "look_for"
     cfile: List[CFILE_ROW] = []
@@ -47,6 +45,7 @@ def parse_traceback(txt: str, purify_from_client: bool = True) -> Tuple[List[CFI
             regex = r"^\s+File \"(\S+)\", line (\d+), in (\S+)$"
             m = re.match(regex, line)
             dbg.dassert(m, "Can't parse '%s'", line)
+            m: Match[Any]
             file_name = m.group(1)
             line_num = int(m.group(2))
             func_name = m.group(3)
@@ -60,18 +59,24 @@ def parse_traceback(txt: str, purify_from_client: bool = True) -> Tuple[List[CFI
             dbg.dassert_lte(j, len(lines))
             while j < len(lines):
                 _LOG.debug("  j=%d: line=%s", j, lines[j])
-                if lines[j].startswith("  File \"") or not lines[j].startswith("  "):
+                if lines[j].startswith('  File "') or not lines[j].startswith(
+                    "  "
+                ):
                     _LOG.debug("  Found end of snippet")
                     break
                 j += 1
             # Concatenate the lines into a single line.
-            code = lines[i + 1:j]
+            code = lines[i + 1 : j]
             _LOG.debug("  -> code: [%d, %d]\n%s", i, j, "\n".join(code))
             code = map(lambda x: x.rstrip().lstrip(), code)
             code_as_single_line = "/".join(code)
             _LOG.debug("  -> code_as_single_line=\n%s", code_as_single_line)
-                       # Assemble the result.
-            cfile_row = (file_name, line_num, func_name + ":" + code_as_single_line)
+            # Assemble the result.
+            cfile_row = (
+                file_name,
+                line_num,
+                func_name + ":" + code_as_single_line,
+            )
             _LOG.debug("  => cfile_row='%s'", cfile_row_to_str(cfile_row))
             cfile.append(cfile_row)
             # Update the state.
@@ -79,10 +84,9 @@ def parse_traceback(txt: str, purify_from_client: bool = True) -> Tuple[List[CFI
                 _LOG.debug("  Found end of traceback")
                 end_idx = j
                 break
-            else:
-                state = "parse"
-                i = j
-                continue
+            state = "parse"
+            i = j
+            continue
         #
         i += 1
     #

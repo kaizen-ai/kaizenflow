@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 
 """
-Parse a file with a traceback and generates a cfile
+Parse a file with a traceback and generates a cfile to be used with vim like:
+> vim -c "cfile cfile"
 
+# Run pytest and then navigate the stacktrace with vim:
 > pytest -x helpers/test/test_traceback.py --dbg | tee log.txt
 > dev_scripts/traceback_to_cfile.py -i log.txt
+> vim -c "cfile cfile"
 """
 
 import argparse

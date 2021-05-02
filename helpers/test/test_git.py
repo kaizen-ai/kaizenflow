@@ -39,7 +39,7 @@ class Test_git_submodule1(hut.TestCase):
         func_call = "git.get_path_from_supermodule()"
         _execute_func_call(func_call)
 
-    def test_get_path_from_supermodule1(self) -> None:
+    def test_get_submodule_paths1(self) -> None:
         func_call = "git.get_submodule_paths()"
         _execute_func_call(func_call)
 
@@ -173,6 +173,12 @@ class Test_git_repo_name1(hut.TestCase):
             repo_full_name = git.get_repo_name(repo_short_name, "short_name")
             repo_short_name_tmp = git.get_repo_name(repo_full_name, "full_name")
             self.assert_equal(repo_short_name, repo_short_name_tmp)
+
+    def test_get_task_prefix_from_repo_short_name1(self) -> None:
+        short_name = "dev_tools"
+        act = git.get_task_prefix_from_repo_short_name(short_name)
+        exp = "DevToolsTask"
+        self.assert_equal(act, exp)
 
 
 class Test_git_path1(hut.TestCase):

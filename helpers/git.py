@@ -166,7 +166,7 @@ def get_submodule_paths() -> List[str]:
     cmd = "git config --file .gitmodules --get-regexp path | awk '{ print $2 }'"
     _, txt = hsinte.system_to_string(cmd)
     _LOG.debug("txt=%s", txt)
-    files = hsinte.text_to_list(txt)
+    files : List[str] = hsinte.text_to_list(txt)
     _LOG.debug("files=%s", files)
     return files
 
@@ -394,14 +394,14 @@ def get_task_prefix_from_repo_short_name(short_name: str) -> str:
     Return the task prefix for a repo (e.g., "amp" -> "AmpTask").
     """
     # TODO(gp): Find a better way rather than centralizing the names of all repos.
-    if repo_short_name == "amp":
+    if short_name == "amp":
         prefix = "AmpTask"
-    elif repo_short_name == "lem":
+    elif short_name == "lem":
         prefix = "LemTask"
-    elif repo_short_name == "dev_tools":
+    elif short_name == "dev_tools":
         prefix = "DevToolsTask"
     else:
-        raise ValueError("Invalid repo_short_name='%s'", short_name)
+        raise ValueError("Invalid short_name='%s'", short_name)
     return prefix
 
 

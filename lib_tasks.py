@@ -1136,6 +1136,7 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
     Report the status of the GH workflows in a branch.
     """
     _report_task(hprint.to_str("branch status"))
+    _ = ctx
     #
     cmd = "export NO_COLOR=1; gh run list"
     # pylint: disable=line-too-long
@@ -1225,18 +1226,16 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
 # completed       success Fix broken log statement        Fast tests      master  push    2m7s    797789759
 # completed       success Another speculative fix for break       Fast tests      master  push    1m54s   797556212
 
+# #############################################################################
 
 
-def _get_gh_issue_title(
-    issue_id: int, repo: str="current"
-) -> str:
+def _get_gh_issue_title(issue_id: int, repo: str) -> str:
     """
     Get the title of a GitHub issue.
 
     :param repo: `current` refer to the repo where we are, otherwise a repo short
         name (e.g., "amp")
     """
-    _report_task()
     # > (export NO_COLOR=1; gh issue view 1251 --json title )
     # {"title":"Update GH actions for amp"}
     dbg.dassert_lte(1, issue_id)
@@ -1261,7 +1260,7 @@ def _get_gh_issue_title(
         repo_short_name = git.get_repo_name(repo_full_name, "full_name")
     else:
         repo_short_name = repo
-    _LOG.info("repo_short_name=%s", repo_short_name)
+    _LOG.debug("repo_short_name=%s", repo_short_name)
     task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
     _LOG.debug("task_prefix=%s", task_prefix)
     title = "%s%d_%s" % (task_prefix, issue_id, title)
@@ -1269,21 +1268,26 @@ def _get_gh_issue_title(
 
 
 @task
-def gh_issue_title(ctx, issue_id=0, git_repo=""):
+def gh_issue_title(ctx, issue_id, repo="current"):  # type: ignore
+    """
+    Print the title that corresponds to the given issue and repo.
+
+    E.g., AmpTask1251_Update_GH_actions_for_amp
+    """
+    _report_task()
     _ = ctx
     issue_id = int(issue_id)
-    print(_get_gh_issue_title(issue_id))
+    print(_get_gh_issue_title(issue_id, repo))
 
 
 @task
-def gh_create_pr(ctx, git_repo=""):  # type: ignore
+def gh_create_pr(ctx):  # type: ignore
     """
-    Create a draft PR for the current branch.
-
-    :param git_repo:
+    Create a draft PR for the current branch in the corresponding repo.
     """
     _report_task()
     branch_name = git.get_branch_name()
-    _LOG.info("Creating PR for '%s'", branch_name)
-    cmd = f'gh pr create --draft --title "{branch_name}" --body ""'
+    repo_full_name = git.get_repo_full_name_from_dirname(".")
+    _LOG.info("Creating PR for '%s' in %s", branch_name, repo_full_name)
+    cmd = f'gh pr create --repo {repo_full_name}--draft --title "{branch_name}" --body ""'
     ctx.run(cmd)

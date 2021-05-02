@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 
 """
-Print the failing tests from the last `pytest` run in all the (super and
-sub-module) repos.
+Print the failing tests from the last `pytest` run in all the (super and sub-
+module) repos.
 
+```
 > last_failures.py
 ...
 amp/dev_scripts/test/test_amp_dev_scripts.py
 amp/documentation/scripts/test/test_all.py
+```
 """
 
 import argparse
@@ -24,7 +26,7 @@ import helpers.printing as prnt
 _LOG = logging.getLogger(__name__)
 
 
-def _get_failed_tests(file_name):
+def _get_failed_tests(file_name: str) -> List[str]:
     tests = []
     # If path exists, parse the content.
     if os.path.exists(file_name):
