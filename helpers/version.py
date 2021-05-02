@@ -114,6 +114,12 @@ def _is_inside_docker() -> bool:
 def _is_inside_ci() -> bool:
     """
     Return whether we are running inside the Continuous Integration flow.
+
+    Note that this function returns:
+    - True when we are running in GitHub system but not in our
+      container (e.g., when we are inside an `invoke` workflow)
+    - False once we enter our containers, since we don't propagate the `CI` env
+      var through Docker compose
     """
     return "CI" in os.environ
 
