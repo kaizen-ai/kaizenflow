@@ -106,7 +106,7 @@ def git_pull(ctx):  # type: ignore
 @task
 def git_pull_master(ctx):  # type: ignore
     """
-    Pull master without changing branch and then merge it to this branch.
+    Pull master without changing branch.
     """
     _report_task()
     cmd = "git fetch origin master:master"
@@ -236,7 +236,8 @@ def git_create_branch(ctx, branch_name=""):  # type: ignore
         "Typically you should branch from `master`",
     )
     # Fetch master.
-    git_pull_master(ctx)
+    cmd = "git pull --autostash"
+    ctx.run(cmd)
     # git checkout -b LemTask169_Get_GH_actions_working_on_lemonade
     cmd = f"git checkout -b {branch_name}"
     ctx.run(cmd)

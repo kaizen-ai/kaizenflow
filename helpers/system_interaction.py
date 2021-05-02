@@ -481,3 +481,10 @@ def is_inside_docker() -> bool:
     """
     # From https://stackoverflow.com/questions/23513045
     return os.path.exists("/.dockerenv")
+
+
+def is_inside_ci() -> bool:
+    """
+    Return whether we are running inside the Continuous Integration flow.
+    """
+    return "CI" in os.environ
