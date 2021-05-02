@@ -22,15 +22,11 @@ def get_code_version() -> str:
     return _CODE_VERSION
 
 
-# True if we are running inside a Docker container or inside GitHub Action.
-IS_INSIDE_CONTAINER = os.path.exists("/.dockerenv") or ("CI" in os.environ)
-
-
 def get_container_version() -> Optional[str]:
     """
     Return the container version.
     """
-    if IS_INSIDE_CONTAINER:
+    if _is_inside_container():
         # We are running inside a container.
         # Keep the code and the container in sync by versioning both and requiring
         # to be the same.
@@ -69,11 +65,12 @@ def check_version() -> None:
     """
     # Get code version.
     code_version = get_code_version()
+    is_inside_container = _is_inside_container()
     # Get container version.
     env_var = "CONTAINER_VERSION"
     if env_var not in os.environ:
         container_version = None
-        if IS_INSIDE_CONTAINER:
+        if is_inside_container:
             # This situation happens when GH Actions pull the image using invoke
             # inside their container (but not inside ours), thus there is no
             # CONTAINER_VERSION.
@@ -85,12 +82,16 @@ def check_version() -> None:
     else:
         container_version = os.environ[env_var]
     # Print information.
+    is_inside_docker = _is_inside_docker()
+    is_inside_ci = _is_inside_ci()
     msg = (
-        f"inside_container={IS_INSIDE_CONTAINER}: "
-        f"code_version={code_version}, "
-        f"container_version={container_version}"
+        f"is_inside_container={is_inside_container}"
+        f": code_version={code_version}"
+        f", container_version={container_version}"
+        f", is_inside_docker={is_inside_docker}"
+        f", is_inside_ci={is_inside_ci}"
     )
-    if IS_INSIDE_CONTAINER:
+    if is_inside_container:
         print(msg)
     else:
         _LOG.debug("%s", msg)
@@ -99,3 +100,33 @@ def check_version() -> None:
         # No need to check.
         return
     _check_version(code_version, container_version)
+
+
+# Copied from helpers/system_interaction.py to avoid introducing dependencies.
+def _is_inside_docker() -> bool:
+    """
+    Return whether we are inside a Docker container or not.
+    """
+    # From https://stackoverflow.com/questions/23513045
+    return os.path.exists("/.dockerenv")
+
+
+def _is_inside_ci() -> bool:
+    """
+    Return whether we are running inside the Continuous Integration flow.
+
+    Note that this function returns:
+    - True when we are running in GitHub system but not in our
+      container (e.g., when we are inside an `invoke` workflow)
+    - False once we enter our containers, since we don't propagate the `CI` env
+      var through Docker compose
+    """
+    return "CI" in os.environ
+
+
+def _is_inside_container() -> bool:
+    """
+    Return whether we are running inside a Docker container or inside GitHub
+    Action.
+    """
+    return _is_inside_docker() or _is_inside_ci()

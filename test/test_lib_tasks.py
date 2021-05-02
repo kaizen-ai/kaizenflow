@@ -1,4 +1,5 @@
 import logging
+import os
 
 import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
@@ -11,20 +12,6 @@ class TestLibTasks1(hut.TestCase):
     def test_get_build_tag1(self) -> None:
         build_tag = ltasks._get_build_tag()
         _LOG.debug("build_tag=%s", build_tag)
-
-    def _gh_login(self) -> None:
-        """
-        Log in inside GitHub.
-        """
-        if hsinte.is_inside_ci():
-            _LOG.info("Inside CI: authorizing")
-            env_var = "GH_ACTION_ACCESS_TOKEN"
-            dbg.dassert(env_var, os.environ)
-            cmd = "echo $GH_ACTION_ACCESS_TOKEN | gh auth login --with-token"
-            hsinte.system(cmd)
-        # Check that we are logged in.
-        cmd = "gh auth status"
-        hsinte.system(cmd)
 
     def test_get_gh_issue_title1(self) -> None:
         self._gh_login()
@@ -49,3 +36,17 @@ class TestLibTasks1(hut.TestCase):
         act = ltasks._get_gh_issue_title(issue_id, repo)
         exp = "DevToolsTask1_Migration_from_amp"
         self.assert_equal(act, exp)
+
+    @staticmethod
+    def _gh_login() -> None:
+        """
+        Log in inside GitHub.
+        """
+        env_var = "GH_ACTION_ACCESS_TOKEN"
+        if env_var in os.environ:
+            _LOG.warning("Using env var '%s' to log in GitHub", env_var)
+            cmd = "echo $GH_ACTION_ACCESS_TOKEN | gh auth login --with-token"
+            hsinte.system(cmd)
+        # Check that we are logged in.
+        cmd = "gh auth status"
+        hsinte.system(cmd)

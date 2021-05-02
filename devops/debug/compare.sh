@@ -6,7 +6,7 @@
 GIT_CLIENT="lemonade1"
 echo "GIT_CLIENT=$GIT_CLIENT"
 
-if [[ 1 == 1 ]]; then
+if [[ 0 == 1 ]]; then
     # amp vs lemonade
     DIR1=$HOME/src/$GIT_CLIENT/amp
     DIR2=$HOME/src/$GIT_CLIENT
@@ -20,10 +20,6 @@ echo "DIR1=$DIR1"
 echo "DIR2=$DIR2"
 
 if [[ 1 == 1 ]]; then
-    #vimdiff {$DIR1,$DIR2}/Makefile
-    #vimdiff {$DIR1,$DIR2}/devops/makefiles/general.mk
-    #vimdiff {$DIR1,$DIR2}/devops/makefiles/repo_specific.mk
-
     DIR="devops"
     echo "Comparing $DIR"
     diff_to_vimdiff.py --dir1 $DIR1/$DIR --dir2 $DIR2/$DIR

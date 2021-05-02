@@ -902,7 +902,7 @@ def _run_tests(
     skip_submodules: bool,
     coverage: bool,
     collect_only: bool,
-):
+) -> None:
     pytest_opts_tmp = [f'-m "{skipped_tests}"', pytest_opts]
     if skip_submodules:
         submodule_paths = git.get_submodule_paths()
@@ -1046,16 +1046,24 @@ def run_fast_slow_tests(  # type: ignore
 
 
 @task
-def jump_to_pytest_error(ctx):  # type: ignore
+def jump_to_pytest_error(ctx, log_name=""):  # type: ignore
     """
     Parse the traceback from pytest and navigate it with vim.
 
     > pyt helpers/test/test_traceback.py
     > invoke jump_to_pytest_error
     # There is a also an alias `ie` for the previous command line.
+
+    > devops/debug/compare.sh 2>&1 | tee log.txt
+    > ie -l log.txt
+
+    :param log_name: the file with the traceback
     """
+    if not log_name:
+        log_name = "tmp.pytest.log"
+    _LOG.info("Reading %s", log_name)
     # Convert the traceback into a cfile.
-    cmd = "dev_scripts/traceback_to_cfile.py -i tmp.pytest.log -o cfile"
+    cmd = f"dev_scripts/traceback_to_cfile.py -i {log_name} -o cfile"
     ctx.run(cmd)
     # Read and navigate the cfile with vim.
     cmd = 'vim -c "cfile cfile"'
@@ -1262,7 +1270,9 @@ def _get_gh_issue_title(issue_id: int, repo: str) -> str:
     else:
         repo_short_name = repo
         repo_full_name = git.get_repo_name(repo_short_name, "short_name")
-    _LOG.debug("repo_short_name=%s repo_full_name=%s", repo_short_name, repo_full_name)
+    _LOG.debug(
+        "repo_short_name=%s repo_full_name=%s", repo_short_name, repo_full_name
+    )
     # > (export NO_COLOR=1; gh issue view 1251 --json title )
     # {"title":"Update GH actions for amp"}
     dbg.dassert_lte(1, issue_id)
@@ -1307,16 +1317,19 @@ def gh_create_pr(ctx):  # type: ignore
     Create a draft PR for the current branch in the corresponding repo.
     """
     _report_task()
+    # TODO(gp): Check whether the PR already exists.
     branch_name = git.get_branch_name()
     repo_full_name = git.get_repo_full_name_from_dirname(".")
     _LOG.info("Creating PR for '%s' in %s", branch_name, repo_full_name)
-    cmd = (f'gh pr create'
-           f' --repo {repo_full_name}'
-           ' --draft'
-           f' --title "{branch_name}"'
-           ' --body ""')
+    cmd = (
+        f"gh pr create"
+        f" --repo {repo_full_name}"
+        " --draft"
+        f' --title "{branch_name}"'
+        ' --body ""'
+    )
     ctx.run(cmd)
     # TODO(gp): Implement the rest of the flow.
     # Warning: 3 uncommitted changes
     # https://github.com/alphamatic/amp/pull/1298
-    #gh pr view https://github.com/alphamatic/amp/pull/1298 --repo alphamatic/amp --web
+    # gh pr view https://github.com/alphamatic/amp/pull/1298 --repo alphamatic/amp --web

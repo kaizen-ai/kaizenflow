@@ -488,3 +488,13 @@ def is_inside_ci() -> bool:
     Return whether we are running inside the Continuous Integration flow.
     """
     return "CI" in os.environ
+
+
+def is_running_in_ipynb() -> bool:
+    # From https://stackoverflow.com/questions/15411967
+    try:
+        _ = get_ipython().config  # type: ignore
+        res = True
+    except NameError:
+        res = False
+    return res
