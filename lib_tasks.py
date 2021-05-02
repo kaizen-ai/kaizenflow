@@ -1050,8 +1050,8 @@ def jump_to_pytest_error(ctx):  # type: ignore
     Parse the traceback from pytest and navigate it with vim.
 
     > pyt helpers/test/test_traceback.py
-    # There is a also an alias `ie`
     > invoke jump_to_pytest_error
+    # There is a also an alias `ie` for the previous command line.
     """
     # Convert the traceback into a cfile.
     cmd = "dev_scripts/traceback_to_cfile.py -i tmp.pytest.log -o cfile"
@@ -1131,6 +1131,7 @@ def get_amp_files(ctx):  # type: ignore
     """
     _report_task()
     _ = ctx
+    # TODO(gp): Move this inside `bashrc`.
     token = "***REMOVED***"
     file_names = ["lib_tasks.py"]
     for file_name in file_names:
