@@ -126,6 +126,7 @@ def _is_inside_ci() -> bool:
 
 def _is_inside_container() -> bool:
     """
-    Return whether we are running inside a Docker container or inside GitHub Action.
+    Return whether we are running inside a Docker container or inside GitHub
+    Action.
     """
     return _is_inside_docker() or _is_inside_ci()

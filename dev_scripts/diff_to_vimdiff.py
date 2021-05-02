@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 """
-Transform the output of `diff -r --brief dir1 dir2` into a script using vimdiff.
+Transform the output of `diff -r --brief dir1 dir2` into a script using
+vimdiff.
 
 # To clean up the crap in the dirs:
 > git status --ignored
@@ -15,6 +16,7 @@ import argparse
 import logging
 import os
 import re
+from typing import Any, Match
 
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -29,13 +31,22 @@ def _diff(dir1: str, dir2: str) -> str:
     """
     Run a diff command between the two dirs and save the output in a file.
     """
-    _LOG.info("\n%s", prnt.frame("Comparing file list in dirs '%s' vs '%s'" % (dir1, dir2)))
+    _LOG.info(
+        "\n%s",
+        prnt.frame("Comparing file list in dirs '%s' vs '%s'" % (dir1, dir2)),
+    )
     dbg.dassert_exists(dir1)
     dbg.dassert_exists(dir2)
     # Find all the files in both dirs.
     cmd = ""
-    cmd += '(cd %s && find %s -name "*" | sort >/tmp/dir1) && ' % (os.path.dirname(dir1), os.path.basename(dir1))
-    cmd += '(cd %s && find %s -name "*" | sort >/tmp/dir2)' % (os.path.dirname(dir2), os.path.basename(dir2))
+    cmd += '(cd %s && find %s -name "*" | sort >/tmp/dir1) && ' % (
+        os.path.dirname(dir1),
+        os.path.basename(dir1),
+    )
+    cmd += '(cd %s && find %s -name "*" | sort >/tmp/dir2)' % (
+        os.path.dirname(dir2),
+        os.path.basename(dir2),
+    )
     si.system(cmd, abort_on_error=True)
     # Compare the file listings.
     cmd = "sdiff /tmp/dir1 /tmp/dir2"
@@ -47,7 +58,10 @@ def _diff(dir1: str, dir2: str) -> str:
     cmd = "diff --brief -r %s %s >%s" % (dir1, dir2, dst_file)
     # We don't abort since rc != 0 in case of differences, which is a valid outcome.
     si.system(cmd, abort_on_error=False)
-    print("# To see the original file with the listing difference:\n> vi %s" % dst_file)
+    print(
+        "# To see the original file with the listing difference:\n> vi %s"
+        % dst_file
+    )
     input_file = dst_file
     #
     return input_file
@@ -56,6 +70,7 @@ def _diff(dir1: str, dir2: str) -> str:
 def _get_symbolic_filepath(dir1: str, dir2: str, file_name: str) -> str:
     """
     Transform a path like:
+
         /Users/saggese/src/...2/amp/vendors/first_rate/utils.py
     into:
         $DIR1/amp/vendors/first_rate/utils.py
@@ -67,9 +82,13 @@ def _get_symbolic_filepath(dir1: str, dir2: str, file_name: str) -> str:
 
 def _parse_diff_output(input_file: str, dir1: str, dir2: str, args) -> None:
     """
-    Process the output of diff and creates a script to diff the diffenrent files.
+    Process the output of diff and creates a script to diff the diffenrent
+    files.
     """
-    _LOG.info("\n%s", prnt.frame("Comparing file content in dirs '%s' vs '%s'" % (dir1, dir2)))
+    _LOG.info(
+        "\n%s",
+        prnt.frame("Comparing file content in dirs '%s' vs '%s'" % (dir1, dir2)),
+    )
     output_file = args.output_file
     # Read.
     dbg.dassert_exists(input_file)
@@ -89,14 +108,14 @@ def _parse_diff_output(input_file: str, dir1: str, dir2: str, args) -> None:
             # Only in /data/gp_wd/src/deploy_...1/: cfile
             m = re.match(r"^Only in (\S+): (\S+)$", line)
             dbg.dassert(m, "Invalid line='%s'", line)
+            m: Match[Any]
             file_name = "%s/%s" % (m.group(1), m.group(2))
-            #dbg.dassert_exists(file_name)
+            # dbg.dassert_exists(file_name)
             dir_ = _get_symbolic_filepath(dir1, dir2, m.group(1))
             dirs = dir_.split("/")
             dir_ = dirs[0]
             file_ = os.path.join(
-                *dirs[1:],
-                _get_symbolic_filepath(dir1, dir2, m.group(2))
+                *dirs[1:], _get_symbolic_filepath(dir1, dir2, m.group(2))
             )
             # Determine the direction.
             if "$DIR1" in dir_:
@@ -137,6 +156,7 @@ def _parse_diff_output(input_file: str, dir1: str, dir2: str, args) -> None:
             #   /data/gp_wd/src/...1/compustat/fiscal_calendar.py differ
             m = re.match(r"^Files (\S+) and (\S+) differ$", line)
             dbg.dassert(m, "Invalid line='%s'", line)
+            m: Match[Any]
             # Check.
             dbg.dassert_exists(m.group(1))
             dbg.dassert_exists(m.group(2))
@@ -186,9 +206,10 @@ def _parse_diff_output(input_file: str, dir1: str, dir2: str, args) -> None:
         #
         cmd = "./%s" % output_file
         print("Run script with:\n> " + cmd)
-        # 
+        #
         cmd = "kill -kill $(ps -ef | grep %s | awk '{print $2 }')" % output_file
         print("# To kill the script run:\n> " + cmd)
+
 
 # #############################################################################
 

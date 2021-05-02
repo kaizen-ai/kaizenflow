@@ -902,7 +902,7 @@ def _run_tests(
     skip_submodules: bool,
     coverage: bool,
     collect_only: bool,
-):
+) -> None:
     pytest_opts_tmp = [f'-m "{skipped_tests}"', pytest_opts]
     if skip_submodules:
         submodule_paths = git.get_submodule_paths()
@@ -1270,7 +1270,9 @@ def _get_gh_issue_title(issue_id: int, repo: str) -> str:
     else:
         repo_short_name = repo
         repo_full_name = git.get_repo_name(repo_short_name, "short_name")
-    _LOG.debug("repo_short_name=%s repo_full_name=%s", repo_short_name, repo_full_name)
+    _LOG.debug(
+        "repo_short_name=%s repo_full_name=%s", repo_short_name, repo_full_name
+    )
     # > (export NO_COLOR=1; gh issue view 1251 --json title )
     # {"title":"Update GH actions for amp"}
     dbg.dassert_lte(1, issue_id)
@@ -1319,13 +1321,15 @@ def gh_create_pr(ctx):  # type: ignore
     branch_name = git.get_branch_name()
     repo_full_name = git.get_repo_full_name_from_dirname(".")
     _LOG.info("Creating PR for '%s' in %s", branch_name, repo_full_name)
-    cmd = (f'gh pr create'
-           f' --repo {repo_full_name}'
-           ' --draft'
-           f' --title "{branch_name}"'
-           ' --body ""')
+    cmd = (
+        f"gh pr create"
+        f" --repo {repo_full_name}"
+        " --draft"
+        f' --title "{branch_name}"'
+        ' --body ""'
+    )
     ctx.run(cmd)
     # TODO(gp): Implement the rest of the flow.
     # Warning: 3 uncommitted changes
     # https://github.com/alphamatic/amp/pull/1298
-    #gh pr view https://github.com/alphamatic/amp/pull/1298 --repo alphamatic/amp --web
+    # gh pr view https://github.com/alphamatic/amp/pull/1298 --repo alphamatic/amp --web

@@ -1,10 +1,19 @@
+<!--ts-->
+
+
+
+
+<!--te-->
+
 - Build the local image and test it without pushing
+
   ```bash
   > invoke docker_release_dev_image --no-push-to-repo; tg.py
   ```
 
 - Check the size
-  ```
+
+  ```bash
   > docker run -it 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local bash
 
   ##> du -hs /* | sort -h
