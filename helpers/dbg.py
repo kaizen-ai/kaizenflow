@@ -478,8 +478,8 @@ def dassert_list_of_strings(output: List[str], *args: Any) -> None:
 
 # TODO(gp): Separate this to helpers/log.py
 
-# From https://stackoverflow.com/questions/15411967
-def is_running_in_ipynb() -> bool:
+# Copied from helpers/system_interaction.py to avoid circular imports.
+def _is_running_in_ipynb() -> bool:
     try:
         _ = get_ipython().config  # type: ignore
         res = True
@@ -496,6 +496,8 @@ def reset_logger() -> None:
     importlib.reload(logging)
 
 
+# TODO(gp): Make these generate from MAPPING below.
+INFO = "\033[36mINFO\033[0m"
 WARNING = "\033[33mWARNING\033[0m"
 
 
@@ -562,9 +564,9 @@ def _get_logging_format(
     :param force_verbose_format: force to use the verbose format
     :param force_no_warning:
     """
-    if is_running_in_ipynb() and not force_no_warning:
+    if _is_running_in_ipynb() and not force_no_warning:
         print(WARNING + ": Running in Jupyter")
-    verbose_format = not is_running_in_ipynb()
+    verbose_format = not _is_running_in_ipynb()
     #
     dassert(
         not (force_verbose_format and force_print_format),
@@ -683,6 +685,9 @@ def init_logger(
     if not in_pytest and root_logger.handlers:
         print(WARNING + ": Logger already initialized: skipping")
         return
+    #
+    print(INFO + ": > cmd='%s'" % get_command_line())
+    #
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(verbosity)
     # Decide whether to use verbose or print format.
@@ -723,7 +728,7 @@ def init_logger(
         root_logger.addHandler(file_handler)
         file_handler.setFormatter(formatter)
         #
-        print(WARNING + ": Saving log to file '%s'" % log_filename)
+        print(INFO + ": Saving log to file '%s'" % log_filename)
     #
     _LOG.debug("Effective logging level=%s", _LOG.getEffectiveLevel())
     # Shut up chatty modules.

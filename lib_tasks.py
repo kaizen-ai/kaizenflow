@@ -1046,16 +1046,24 @@ def run_fast_slow_tests(  # type: ignore
 
 
 @task
-def jump_to_pytest_error(ctx):  # type: ignore
+def jump_to_pytest_error(ctx, log_name=""):  # type: ignore
     """
     Parse the traceback from pytest and navigate it with vim.
 
     > pyt helpers/test/test_traceback.py
     > invoke jump_to_pytest_error
     # There is a also an alias `ie` for the previous command line.
+
+    > devops/debug/compare.sh 2>&1 | tee log.txt
+    > ie -l log.txt
+
+    :param log_name: the file with the traceback
     """
+    if not log_name:
+        log_name = "tmp.pytest.log"
+    _LOG.info("Reading %s", log_name)
     # Convert the traceback into a cfile.
-    cmd = "dev_scripts/traceback_to_cfile.py -i tmp.pytest.log -o cfile"
+    cmd = f"dev_scripts/traceback_to_cfile.py -i {log_name} -o cfile"
     ctx.run(cmd)
     # Read and navigate the cfile with vim.
     cmd = 'vim -c "cfile cfile"'
@@ -1307,6 +1315,7 @@ def gh_create_pr(ctx):  # type: ignore
     Create a draft PR for the current branch in the corresponding repo.
     """
     _report_task()
+    # TODO(gp): Check whether the PR already exists.
     branch_name = git.get_branch_name()
     repo_full_name = git.get_repo_full_name_from_dirname(".")
     _LOG.info("Creating PR for '%s' in %s", branch_name, repo_full_name)

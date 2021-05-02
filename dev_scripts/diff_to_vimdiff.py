@@ -90,7 +90,7 @@ def _parse_diff_output(input_file: str, dir1: str, dir2: str, args) -> None:
             m = re.match(r"^Only in (\S+): (\S+)$", line)
             dbg.dassert(m, "Invalid line='%s'", line)
             file_name = "%s/%s" % (m.group(1), m.group(2))
-            dbg.dassert_exists(file_name)
+            #dbg.dassert_exists(file_name)
             dir_ = _get_symbolic_filepath(dir1, dir2, m.group(1))
             dirs = dir_.split("/")
             dir_ = dirs[0]

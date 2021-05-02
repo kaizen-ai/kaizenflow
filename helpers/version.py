@@ -26,7 +26,7 @@ def get_container_version() -> Optional[str]:
     """
     Return the container version.
     """
-    if is_inside_container():
+    if _is_inside_container():
         # We are running inside a container.
         # Keep the code and the container in sync by versioning both and requiring
         # to be the same.

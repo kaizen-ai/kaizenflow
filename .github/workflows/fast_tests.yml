@@ -69,8 +69,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: true
-          # TODO(gp): Not needed?
-          #ssh-key: ${{ secrets.GH_ACTION_SSH_PRIVATE_KEY }}
+          token: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
 
       - name: Install dependencies
         run: |
