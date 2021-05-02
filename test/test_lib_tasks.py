@@ -1,4 +1,5 @@
 import logging
+import os
 
 import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
@@ -17,9 +18,9 @@ class TestLibTasks1(hut.TestCase):
         Log in inside GitHub.
         """
         if hsinte.is_inside_ci():
-            _LOG.info("Inside CI: authorizing")
+            _LOG.warning("Inside CI: authorizing")
             env_var = "GH_ACTION_ACCESS_TOKEN"
-            dbg.dassert(env_var, os.environ)
+            dbg.dassert_in(env_var, os.environ)
             cmd = "echo $GH_ACTION_ACCESS_TOKEN | gh auth login --with-token"
             hsinte.system(cmd)
         # Check that we are logged in.
