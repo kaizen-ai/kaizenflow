@@ -1310,5 +1310,13 @@ def gh_create_pr(ctx):  # type: ignore
     branch_name = git.get_branch_name()
     repo_full_name = git.get_repo_full_name_from_dirname(".")
     _LOG.info("Creating PR for '%s' in %s", branch_name, repo_full_name)
-    cmd = f'gh pr create --repo {repo_full_name}--draft --title "{branch_name}" --body ""'
+    cmd = (f'gh pr create'
+           f' --repo {repo_full_name}'
+           ' --draft'
+           f' --title "{branch_name}"'
+           ' --body ""')
     ctx.run(cmd)
+    # TODO(gp): Implement the rest of the flow.
+    # Warning: 3 uncommitted changes
+    # https://github.com/alphamatic/amp/pull/1298
+    #gh pr view https://github.com/alphamatic/amp/pull/1298 --repo alphamatic/amp --web
