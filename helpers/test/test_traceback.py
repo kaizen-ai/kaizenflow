@@ -58,3 +58,27 @@ Traceback (most recent call last):
     if repo_short_name == "amp":
         """.rstrip().lstrip()
         self.assert_equal(act_traceback, exp_traceback)
+
+    def test_parse2(self) -> None:
+        """
+        Parse an empty traceback file.
+        """
+        txt = """
+
+        TEST
+Traceback
+    TEST TEST TEST
+"""
+        act_cfile, act_traceback = htrace.parse_traceback(txt)
+        _LOG.debug("act_cfile=\n%s", act_cfile)
+        # pylint: disable=line-too-long
+        exp_cfile = [
+        ]
+        # pylint: enable=line-too-long
+        self.assert_equal(
+            htrace.cfile_to_str(act_cfile), htrace.cfile_to_str(exp_cfile)
+        )
+        #
+        exp_traceback = """
+        """.rstrip().lstrip()
+        self.assert_equal(act_traceback, exp_traceback)

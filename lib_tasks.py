@@ -1045,6 +1045,19 @@ def run_fast_slow_tests(  # type: ignore
 
 
 @task
+def jump_to_pytest_error(ctx):  # type: ignore
+    """
+    Parse the traceback from pytest and navigate it with vim.
+    """
+    # Convert the traceback into a cfile.
+    cmd = "dev_scripts/traceback_to_cfile.py -i tmp.pytest.log -o cfile"
+    ctx.run(cmd)
+    # Read and navigate the cfile with vim.
+    cmd = 'vim -c "cfile cfile"'
+    ctx.run(cmd, pty=True)
+
+
+@task
 def pytest_clean(ctx):  # type: ignore
     """
     Clean pytest artifacts.
@@ -1236,10 +1249,18 @@ def _get_gh_issue_title(issue_id: int, repo: str) -> str:
     :param repo: `current` refer to the repo where we are, otherwise a repo short
         name (e.g., "amp")
     """
+    # Handle the `repo`.
+    if repo == "current":
+        repo_full_name = git.get_repo_full_name_from_dirname(".")
+        repo_short_name = git.get_repo_name(repo_full_name, "full_name")
+    else:
+        repo_short_name = repo
+        repo_full_name = git.get_repo_name(repo_short_name, "short_name")
+    _LOG.debug("repo_short_name=%s repo_full_name=%s", repo_short_name, repo_full_name)
     # > (export NO_COLOR=1; gh issue view 1251 --json title )
     # {"title":"Update GH actions for amp"}
     dbg.dassert_lte(1, issue_id)
-    cmd = f"gh issue view {issue_id} --json title"
+    cmd = f"gh issue view {issue_id} --repo {repo_full_name} --json title"
     _, txt = hsinte.system_to_string(cmd)
     _LOG.debug("txt=\n%s", txt)
     # Parse json.
@@ -1255,12 +1276,6 @@ def _get_gh_issue_title(issue_id: int, repo: str) -> str:
     #
     title = title.replace(" ", "_")
     # Add the `AmpTaskXYZ_...`
-    if repo == "current":
-        repo_full_name = git.get_repo_full_name_from_dirname(".")
-        repo_short_name = git.get_repo_name(repo_full_name, "full_name")
-    else:
-        repo_short_name = repo
-    _LOG.debug("repo_short_name=%s", repo_short_name)
     task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
     _LOG.debug("task_prefix=%s", task_prefix)
     title = "%s%d_%s" % (task_prefix, issue_id, title)
