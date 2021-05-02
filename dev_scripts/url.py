@@ -52,7 +52,7 @@ def _get_prefixes() -> Tuple[str, str]:
     _LOG.warning(
         "jupyter_port not defined: using the default one %s", jupyter_port
     )
-    repo_name = git.get_repo_symbolic_name(super_module=False)
+    repo_name = git.get_repo_full_name_from_client(super_module=False)
     _LOG.debug("repo_name=%s", repo_name)
     github_prefix = "https://github.com/%s/blob/master" % repo_name
     jupyter_prefix = "http://localhost:%s/tree" % jupyter_port

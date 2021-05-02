@@ -713,7 +713,7 @@ def init_logger(
     if log_filename:
         # Create dir if it doesn't exist.
         log_dirname = os.path.dirname(log_filename)
-        if not os.path.exists(log_dirname):
+        if log_dirname != "" and not os.path.exists(log_dirname):
             os.mkdir(log_dirname)
         # Delete the file since we don't want to append.
         if os.path.exists(log_filename):
@@ -723,7 +723,7 @@ def init_logger(
         root_logger.addHandler(file_handler)
         file_handler.setFormatter(formatter)
         #
-        print("Saving log to file '%s'" % log_filename)
+        print(WARNING + ": Saving log to file '%s'" % log_filename)
     #
     _LOG.debug("Effective logging level=%s", _LOG.getEffectiveLevel())
     # Shut up chatty modules.

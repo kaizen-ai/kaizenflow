@@ -1,9 +1,3 @@
-"""
-Import as:
-
-import helpers.unit_test_skeleton as hutske
-"""
-
 import logging
 from typing import Any, Dict, List, Tuple
 

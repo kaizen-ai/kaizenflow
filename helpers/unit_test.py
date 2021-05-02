@@ -11,6 +11,7 @@ import os
 import pprint
 import random
 import re
+import traceback
 import unittest
 from typing import Any, List, Mapping, Optional, Tuple, Union
 
@@ -380,9 +381,14 @@ def diff_files(
     # Append also error_msg to the current message.
     if error_msg:
         msg_as_str += "\n" + error_msg
+    # Add also the stack trace to the logging error.
+    log_msg_as_str = (msg_as_str + "\n" +
+         hprint.frame("Traceback", '-') + "\n" +
+                      ''.join(traceback.format_stack()))
+    _LOG.error(log_msg_as_str)
+    # Assert.
     if abort_on_exit:
         raise RuntimeError(msg_as_str)
-    _LOG.error(msg_as_str)
 
 
 def diff_strings(

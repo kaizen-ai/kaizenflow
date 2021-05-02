@@ -87,7 +87,7 @@ def get_credentials() -> Dict[str, Any]:
     server_name = hsyste.get_server_name()
     _LOG.debug("user_name='%s'", user_name)
     _LOG.debug("server_name='%s'", server_name)
-    git_repo_name = git.get_repo_symbolic_name(super_module=True)
+    git_repo_name = git.get_repo_full_name_from_client(super_module=True)
     # Values to assign.
     git_user_name = ""
     git_user_email = ""
@@ -100,8 +100,7 @@ def get_credentials() -> Dict[str, Any]:
     #
     conda_env_path = "~/.conda/envs"
     conda_env_path = os.path.expanduser(conda_env_path)
-    if server_name in (
-    ):
+    if server_name in ():
         conda_sh_path = "/anaconda3/etc/profile.d/conda.sh"
     if user_name == "saggese":
         # GP.

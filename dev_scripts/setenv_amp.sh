@@ -62,5 +62,6 @@ alias ghlem="gh --repo alphamatic/lemonade"
 
 alias i="invoke"
 alias il="invoke --list"
+alias ie="invoke jump_to_pytest_error"
 
 echo "==> SUCCESS <=="

@@ -18,6 +18,7 @@ services:
       - ../..:/app
       - ~/.aws:/root/.aws
       - ~/.config/gspread_pandas/:/root/.config/gspread_pandas/
+      - ~/.config/gh:/root/.config/gh
       # No need to mount file systems.
       #- ../docker_build/fstab:/etc/fstab
     privileged: true

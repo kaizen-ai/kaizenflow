@@ -18,7 +18,7 @@ def get_code_version() -> str:
     """
     Return the code version.
     """
-    _CODE_VERSION = "1.0.1"
+    _CODE_VERSION = "1.1.0"
     return _CODE_VERSION
 
 
@@ -58,7 +58,7 @@ You need to:
         msg = msg.rstrip().lstrip()
         msg = "\033[31m%s\033[0m" % msg
         _LOG.error(msg)
-        #raise RuntimeError(msg)
+        # raise RuntimeError(msg)
     return is_ok
 
 
@@ -77,14 +77,19 @@ def check_version() -> None:
             # This situation happens when GH Actions pull the image using invoke
             # inside their container (but not inside ours), thus there is no
             # CONTAINER_VERSION.
-            _LOG.warning("The env var %s should be defined when running inside a"
-                " container", env_var)
+            _LOG.warning(
+                "The env var %s should be defined when running inside a"
+                " container",
+                env_var,
+            )
     else:
         container_version = os.environ[env_var]
     # Print information.
-    msg = (f"inside_container={IS_INSIDE_CONTAINER}: "
-              f"code_version={code_version}, "
-              f"container_version={container_version}")
+    msg = (
+        f"inside_container={IS_INSIDE_CONTAINER}: "
+        f"code_version={code_version}, "
+        f"container_version={container_version}"
+    )
     if IS_INSIDE_CONTAINER:
         print(msg)
     else:

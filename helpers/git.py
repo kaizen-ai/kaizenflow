@@ -31,7 +31,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# Submodule functions
+# Git submodule functions
 # #############################################################################
 
 
@@ -61,6 +61,22 @@ def get_client_root(super_module: bool) -> str:
     dbg.dassert_eq(len(out.split("\n")), 1, msg="Invalid out='%s'" % out)
     client_root: str = os.path.realpath(out)
     return client_root
+
+
+@functools.lru_cache()
+def get_branch_name(dir_name: str = ".") -> str:
+    """
+    Return the name of the Git branch including a certain dir.
+
+    E.g., `master` or `AmpTask672_Add_script_to_check_and_merge_PR`
+    """
+    dbg.dassert_exists(dir_name)
+    # > git rev-parse --abbrev-ref HEAD
+    # master
+    cmd = "cd %s && git rev-parse --abbrev-ref HEAD" % dir_name
+    data: Tuple[int, str] = hsinte.system_to_one_line(cmd)
+    _, output = data
+    return output
 
 
 @functools.lru_cache()
@@ -150,7 +166,7 @@ def get_submodule_paths() -> List[str]:
     cmd = "git config --file .gitmodules --get-regexp path | awk '{ print $2 }'"
     _, txt = hsinte.system_to_string(cmd)
     _LOG.debug("txt=%s", txt)
-    files = hsinte.text_to_list(txt)
+    files : List[str] = hsinte.text_to_list(txt)
     _LOG.debug("files=%s", files)
     return files
 
@@ -225,22 +241,173 @@ def report_submodule_status(dir_names: List[str], short_hash: bool) -> str:
 
 
 # #############################################################################
+# GitHub repository name
+# #############################################################################
+
+
+# All functions should take as input `repo_short_name` and have a switch `mode`
+# to distinguish full vs short repo name.
+
+
+def _parse_github_repo_name(repo_name: str) -> str:
+    """
+    Parse a repo name from `git remote` in the format:
+    `git@github.com:alphamatic/amp` or `https://github.com/alphamatic/amp`
+
+    and return "alphamatic/amp"
+    """
+    m = re.match(r"^\S+\.com[:/](.*)$", repo_name)
+    dbg.dassert(m, "Can't parse '%s'", repo_name)
+    repo_name = m.group(1)  # type: ignore
+    _LOG.debug("repo_name=%s", repo_name)
+    # We expect something like "alphamatic/amp".
+    m = re.match(r"^\S+/\S+$", repo_name)
+    dbg.dassert(m, "repo_name='%s'", repo_name)
+    # origin  git@github.com:.../ORG_....git (fetch)
+    suffix_to_remove = ".git"
+    if repo_name.endswith(suffix_to_remove):
+        repo_name = repo_name[: -len(suffix_to_remove)]
+    return repo_name
+
+
+def get_repo_full_name_from_dirname(dir_name: str) -> str:
+    """
+    :return: the full name of the repo in `git_dir`, e.g., "alphamatic/amp".
+    """
+    dbg.dassert_exists(dir_name)
+    #
+    cmd = "cd %s; (git remote -v | grep origin | grep fetch)" % dir_name
+    _, output = hsinte.system_to_string(cmd)
+    # > git remote -v
+    # origin  git@github.com:alphamatic/amp (fetch)
+    # origin  git@github.com:alphamatic/amp (push)
+    # TODO(gp): Make it more robust, by checking both fetch and push.
+    #  "origin  git@github.com:alphamatic/amp (fetch)"
+    data: List[str] = output.split()
+    _LOG.debug("data=%s", data)
+    dbg.dassert_eq(len(data), 3, "data='%s'", str(data))
+    # Extract the middle string, e.g., "git@github.com:alphamatic/amp"
+    repo_name = data[1]
+    #
+    repo_name = _parse_github_repo_name(repo_name)
+    return repo_name
+
+
+def get_repo_full_name_from_client(super_module: bool) -> str:
+    """
+    Return the full name of the repo (e.g., "alphamatic/amp") from a Git
+    client.
+
+    :param super_module: like in get_client_root()
+    """
+    # Get the git remote in the git_module.
+    git_dir = get_client_root(super_module)
+    repo_name = get_repo_full_name_from_dirname(git_dir)
+    return repo_name
 
 
 @functools.lru_cache()
-def get_branch_name(dir_name: str = ".") -> str:
+def _get_repo_short_to_full_name() -> Dict[str, str]:
     """
-    Return the name of the Git branch including a certain dir.
+    Return the map from short name (e.g., "amp") to full name
+    ("alphamatic/amp").
+    """
+    repo_map = {
+        "amp": "alphamatic/amp",
+        "lem": "alphamatic/lemonade",
+        "dev_tools": "alphamatic/dev_tools",
+    }
+    dbg.dassert_no_duplicates(repo_map.keys())
+    dbg.dassert_no_duplicates(repo_map.values())
+    return repo_map
 
-    E.g., `master` or `AmpTask672_Add_script_to_check_and_merge_PR`
+
+@functools.lru_cache()
+def _get_repo_full_to_short_name() -> Dict[str, str]:
     """
-    dbg.dassert_exists(dir_name)
-    # > git rev-parse --abbrev-ref HEAD
-    # master
-    cmd = "cd %s && git rev-parse --abbrev-ref HEAD" % dir_name
-    data: Tuple[int, str] = hsinte.system_to_one_line(cmd)
-    _, output = data
-    return output
+    Return the map from full name ("alphamatic/amp") to short name (e.g.,
+    "amp").
+    """
+    # Get the reverse map.
+    repo_map = _get_repo_short_to_full_name()
+    inv_repo_map = {v: k for (k, v) in repo_map.items()}
+    return inv_repo_map
+
+
+# TODO(gp): Use only `get_repo_name(..., mode)`.
+def get_repo_full_name(short_name: str) -> str:
+    """
+    Return the full name of a git repo based on its short name.
+
+    E.g., "amp" -> "alphamatic/amp"
+    """
+    repo_map = _get_repo_short_to_full_name()
+    dbg.dassert_in(short_name, repo_map, "Invalid short_name='%s'", short_name)
+    return repo_map[short_name]
+
+
+def get_repo_short_name(full_name: str) -> str:
+    """
+    Return the short name of a git repo based on its full name.
+
+    E.g., "alphamatic/amp" -> "amp"
+    """
+    repo_map = _get_repo_full_to_short_name()
+    dbg.dassert_in(full_name, repo_map, "Invalid full_name='%s'", full_name)
+    return repo_map[full_name]
+
+
+def get_repo_name(name: str, mode: str) -> str:
+    """
+    Return the full / short name of a git repo based on the alternative name.
+
+    :param mode: the values `full_name` or `short_name` determine how to interpret
+        `name`
+    """
+    if mode == "full_name":
+        ret = get_repo_short_name(name)
+    elif mode == "short_name":
+        ret = get_repo_full_name(name)
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    return ret
+
+
+def get_all_repo_names(mode: str) -> List[str]:
+    """
+    Return all the repo full or short names.
+
+    :param mode: if "full_name" return the full names (e.g., "alphamatic/amp")
+        if "short_name" return the short names (e.g., "amp")
+    """
+    if mode == "full_name":
+        repo_map = _get_repo_short_to_full_name()
+    elif mode == "short_name":
+        repo_map = _get_repo_full_to_short_name()
+    else:
+        raise ValueError("Invalid mode='%s'" % mode)
+    return sorted(list(repo_map.values()))
+
+
+def get_task_prefix_from_repo_short_name(short_name: str) -> str:
+    """
+    Return the task prefix for a repo (e.g., "amp" -> "AmpTask").
+    """
+    # TODO(gp): Find a better way rather than centralizing the names of all repos.
+    if short_name == "amp":
+        prefix = "AmpTask"
+    elif short_name == "lem":
+        prefix = "LemTask"
+    elif short_name == "dev_tools":
+        prefix = "DevToolsTask"
+    else:
+        raise ValueError("Invalid short_name='%s'", short_name)
+    return prefix
+
+
+# #############################################################################
+# Git path
+# #############################################################################
 
 
 @functools.lru_cache()
@@ -261,103 +428,6 @@ def find_file_in_git_tree(file_name: str, super_module: bool = True) -> str:
     file_name: str = os.path.abspath(file_name)
     dbg.dassert_exists(file_name)
     return file_name
-
-
-def _parse_github_repo_name(repo_name: str) -> str:
-    """
-    Parse repo name from GitHub in the format:
-    ```
-        git@github.com:alphamatic/amp
-        https://github.com/alphamatic/amp
-    ```
-    """
-    m = re.match(r"^\S+\.com[:/](.*)$", repo_name)
-    dbg.dassert(m, "Can't parse '%s'", repo_name)
-    repo_name = m.group(1)  # type: ignore
-    _LOG.debug("repo_name=%s", repo_name)
-    # We expect something like "alphamatic/amp".
-    m = re.match(r"^\S+/\S+$", repo_name)
-    dbg.dassert(m, "repo_name='%s'", repo_name)
-    # origin  git@github.com:.../ORG_....git (fetch)
-    suffix_to_remove = ".git"
-    if repo_name.endswith(suffix_to_remove):
-        repo_name = repo_name[: -len(suffix_to_remove)]
-    return repo_name
-
-
-def get_repo_symbolic_name_from_dirname(git_dir: str) -> str:
-    """
-    :return: the symbolic name of the repo in `git_dir`, e.g., "alphamatic/amp"
-    """
-    dbg.dassert_exists(git_dir)
-    cmd = "cd %s; (git remote -v | grep origin | grep fetch)" % git_dir
-    # TODO(gp): Make it more robust, by checking both fetch and push.
-    #  "origin  git@github.com:alphamatic/amp (fetch)"
-    _, output = hsinte.system_to_string(cmd)
-    # > git remote -v
-    # origin  git@github.com:alphamatic/amp (fetch)
-    # origin  git@github.com:alphamatic/amp (push)
-    data: List[str] = output.split()
-    _LOG.debug("data=%s", data)
-    dbg.dassert_eq(len(data), 3, "data='%s'", str(data))
-    # Extract the middle string, e.g., "git@github.com:alphamatic/amp"
-    repo_name = data[1]
-    #
-    repo_name = _parse_github_repo_name(repo_name)
-    return repo_name
-
-
-def get_repo_symbolic_name(super_module: bool) -> str:
-    """
-    Return the name of the remote repo. E.g., "alphamatic/amp".
-
-    :param super_module: like in get_client_root()
-    """
-    # Get the git remote in the git_module.
-    git_dir = get_client_root(super_module)
-    repo_name = get_repo_symbolic_name_from_dirname(git_dir)
-    return repo_name
-
-
-def _get_repo_map() -> Dict[str, str]:
-    repo_map = {"alphamatic/amp": "Amp"}
-    # TODO(gp): The proper fix is #PTask551.
-    # Get info from the including repo, if possible.
-    try:
-        import repo_config as rcfg
-
-        repo_map.update(rcfg.REPO_MAP)
-    except ImportError:
-        _LOG.debug("No including repo")
-    dbg.dassert_no_duplicates(repo_map.keys())
-    dbg.dassert_no_duplicates(repo_map.values())
-    return repo_map.copy()
-
-
-def get_all_repo_symbolic_names() -> List[str]:
-    repo_map = _get_repo_map()
-    return list(repo_map.values())
-
-
-# TODO(gp): Find a better name.
-def get_repo_prefix(repo_github_name: str) -> str:
-    """
-    Return the symbolic name of a git repo.
-
-    E.g., for "alphamatic/amp", the function returns "Amp".
-    """
-    repo_map = _get_repo_map()
-    dbg.dassert_in(repo_github_name, repo_map, "Invalid repo github name")
-    return repo_map[repo_github_name]
-
-
-def get_repo_github_name(repo_symbolic_name: str) -> str:
-    # Get the reverse map.
-    repo_map = _get_repo_map()
-    inv_repo_map = {v: k for (k, v) in repo_map.items()}
-    #
-    dbg.dassert_in(repo_symbolic_name, inv_repo_map, "Invalid repo symbolic name")
-    return inv_repo_map[repo_symbolic_name]
 
 
 def get_path_from_git_root(file_name: str, super_module: bool) -> str:
@@ -382,7 +452,7 @@ def get_amp_abs_path() -> str:
     """
     Return the absolute path of `amp` dir.
     """
-    repo_sym_name = get_repo_symbolic_name(super_module=False)
+    repo_sym_name = get_repo_full_name_from_client(super_module=False)
     if repo_sym_name == "alphamatic/amp":
         # If we are in the amp repo, then the git client root is the amp
         # directory.
@@ -399,6 +469,7 @@ def get_amp_abs_path() -> str:
     return amp_dir
 
 
+# TODO(gp): Is this needed?
 def get_repo_dirs() -> List[str]:
     """
     Return the list of the repo repositories, e.g., `[".", "amp", "infra"]`.
@@ -412,7 +483,7 @@ def get_repo_dirs() -> List[str]:
 
 
 # #############################################################################
-# hash
+# Git hash
 # #############################################################################
 
 
@@ -448,7 +519,7 @@ def get_remote_head_hash(dir_name: str) -> str:
     Report the hash that the remote Git repo is at.
     """
     dbg.dassert_exists(dir_name)
-    sym_name = get_repo_symbolic_name_from_dirname(dir_name)
+    sym_name = get_repo_full_name_from_dirname(dir_name)
     cmd = f"git ls-remote git@github.com:{sym_name} HEAD 2>/dev/null"
     data: Tuple[int, str] = hsinte.system_to_one_line(cmd)
     _, output = data

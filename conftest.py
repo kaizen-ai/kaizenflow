@@ -64,6 +64,8 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
         if config.getoption("--incremental"):
             print(f"\n{_WARNING}: Using incremental test mode")
             hut.set_incremental_tests(True)
+        # Set the verbosity level.
+        level = logging.INFO
         if config.getoption("--dbg_verbosity") or config.getoption("--dbg"):
             if config.getoption("--dbg_verbosity"):
                 level = config.getoption("--dbg_verbosity")
@@ -72,13 +74,13 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
             else:
                 raise ValueError("Can't get here")
             print(f"\n{_WARNING}: Setting verbosity level to %s" % level)
-            # When we specifiy the debug verbosity we monkey patch the command
+            # When we specify the debug verbosity we monkey patch the command
             # line to add the '-s' option to pytest to not suppress the output.
             # NOTE: monkey patching sys.argv is often fragile.
             import sys
 
             sys.argv.append("-s")
-            dbg.init_logger(level, in_pytest=True)
+        dbg.init_logger(level, in_pytest=True, log_filename="tmp.pytest_logger.log")
 
     if "PYANNOTATE" in os.environ:
         print("\nWARNING: Collecting information about types through pyannotate")

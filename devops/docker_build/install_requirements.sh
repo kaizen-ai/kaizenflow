@@ -3,7 +3,7 @@
 # Install python packages.
 #
 
-set -e
+set -ex
 
 echo "# Installing ${ENV_NAME}"
 
@@ -61,9 +61,18 @@ else
 fi;
 
 # Some tools refer to `python` and `pip`.
+# TODO(gp): Move to install_packages.sh
 ln -s /usr/bin/python3 /usr/bin/python
 ln -s /usr/bin/pip3 /usr/bin/pip
 
 # Update the bashrc.
 echo "" >>~/.bashrc
 echo "set -o vi" >>~/.bashrc
+
+# Clean up.
+if [[ $CLEAN_UP_INSTALLATION ]]; then
+    echo "Cleaning up installation..."
+    DIRS="/usr/lib/gcc /app/tmp.pypoetry /tmp"
+    du -hs $DIRS | sort -h
+    rm -rf $DIRS
+fi;

@@ -1,0 +1,10 @@
+#!/bin/bash
+#
+# A shortcut to save the output of a pytest run to a file for further processing.
+#
+
+# The automatic logging to file doesn't capture all the output of pytest.
+
+FILE=tmp.pytest.log
+echo "Saving output to $FILE"
+pytest $* 2>&1 | tee $FILE
