@@ -24,8 +24,8 @@ class TestLibTasks1(hut.TestCase):
             cmd = "echo $GH_ACTION_ACCESS_TOKEN | gh auth login --with-token"
             hsinte.system(cmd)
         # Check that we are logged in.
-        cmd = "gh auth status"
-        hsinte.system(cmd)
+        #cmd = "gh auth status"
+        #hsinte.system(cmd)
 
     def test_get_gh_issue_title1(self) -> None:
         self._gh_login()
