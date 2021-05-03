@@ -96,7 +96,7 @@ class Position:
     https://ib-insync.readthedocs.io/api.html#ib_insync.objects.Position
     """
 
-    def __init__(self, contract: Contract, position: float):
+    def __init__(self, contract: Contract, position: int):
         self.contract = contract
         # We don't allow a position with no shares.
         dbg.dassert_ne(0, position)
@@ -119,7 +119,7 @@ class Position:
         return NotImplemented
 
     @staticmethod
-    def update(lhs:"Position", rhs: "Position") -> Optional["Position"]:
+    def update(lhs: "Position", rhs: "Position") -> Optional["Position"]:
         """
         Update the position `lhs` using another position `rhs`.
         """
