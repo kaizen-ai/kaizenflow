@@ -212,15 +212,24 @@ class Trade:
     https://ib-insync.readthedocs.io/api.html#ib_insync.order.Trade
     """
 
-    def __init__(self, contract: Contract, order: Order, order_status: OrderStatus, timestamp: Optional[pd.Timestamp]=None):
+    def __init__(
+        self,
+        contract: Contract,
+        order: Order,
+        order_status: OrderStatus,
+        timestamp: Optional[pd.Timestamp] = None
+    ) -> None:
         self.contract = contract
         self.order = order
         dbg.dassert_lte(order_status.filled, order.total_quantity,
                         msg="Can't fill more than what was requested")
-        dbg.dassert_eq(order.total_quantity, order_status.filled + order_status.remaining,
-            msg="The filled and remaining shares must be the same as the total quantity")
+        dbg.dassert_eq(
+            order.total_quantity,
+            order_status.filled + order_status.remaining,
+            msg="The filled and remaining shares must be the same as the total quantity"
+        )
         self.order_status = order_status
-        self.timestamp = timestamp # TODO(gp): Implement fills.
+        self.timestamp = timestamp  # TODO(gp): Implement fills.
 
     def __repr__(self):
         ret = []
@@ -303,15 +312,23 @@ class OMS:
         """
         Update the current position given the executed trade.
         """
-        dbg.dassert_eq(len(set(self._current_positions)), len(self._current_positions),
-                       msg="All positions should be about different Contracts")
+        dbg.dassert_eq(
+            len(set(self._current_positions)),
+            len(self._current_positions),
+            msg="All positions should be about different Contracts"
+        )
         # Look for the contract corresponding to `trade` among the current positions.
-        contract = self._current_positions.get(trade.contract, None)
-        if contract is None:
+        contract = trade.contract
+        current_position = self._current_positions.get(contract, None)
+        if current_position is None:
             _LOG.debug("Adding new contract: %s", contract)
-            position = Position(trade.contract, trade.order.total_quantity)
+            position = Position(contract, trade.order.total_quantity)
         else:
-            position = Position.update(self._current_positions[contract], trade.to_position())
+            # Update the current position for `contract`.
+            position = Position.update(
+                current_position,
+                trade.to_position()
+            )
         _LOG.debug("position=%s", position)
         # Update the contract.
         if position is None:
@@ -319,5 +336,5 @@ class OMS:
                 _LOG.debug("Removing %s from %s", contract, self._current_positions)
                 del self._current_positions[contract]
         else:
-            _LOG.debug("Updating %s to %s", self._current_positions.get(contract, None), position)
+            _LOG.debug("Updating %s to %s", current_position, position)
             self._current_positions[contract] = position
