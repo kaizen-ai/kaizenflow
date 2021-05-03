@@ -29,3 +29,19 @@ else
     echo "Comparing $DIR"
     diff_to_vimdiff.py --dir1 $DIR1/$DIR --dir2 $DIR2/$DIR
 fi;
+
+# The file storing configuration that should be kept in sync are:
+# conftest.py
+# invoke.yaml
+# lib_tasks.py
+# mypy.ini
+# pre-commit.sh
+# pytest.ini
+# tasks.py
+# dev_scripts/client_setup/
+# dev_scripts/setenv_dev_tools.sh
+# .pre-commit-config.yaml
+# .gitignore
+# .dockerignore
+
+# TODO(gp): If a file is a link, do not compare.

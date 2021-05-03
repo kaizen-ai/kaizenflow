@@ -2,6 +2,9 @@
 
 set -e
 
+FILE_NAME="devops/docker_scripts/run_jupyter_server.sh"
+echo "##> $FILE_NAME"
+
 cmd="jupyter notebook --ip=* --port=${PORT} --allow-root"
 echo "> cmd=$cmd"
 eval $cmd

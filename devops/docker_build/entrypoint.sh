@@ -2,8 +2,7 @@
 
 set -e
 
-# Print the name of this file.
-FILE_NAME="docker_build/entrypoint.sh"
+FILE_NAME="devops/docker_build/entrypoint.sh"
 echo "##> $FILE_NAME"
 
 echo "# Activate environment"

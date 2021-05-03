@@ -3,10 +3,9 @@
 # Install Jupyter packages.
 #
 
-set -e
+set -ex
 
-# Print the name of this file.
-FILE_NAME="docker_build/install_jupyter_extensions.sh"
+FILE_NAME="devops/docker_build/install_jupyter_extensions.sh"
 echo "##> $FILE_NAME"
 
 # This is run while building Docker after the packages have been executed so we

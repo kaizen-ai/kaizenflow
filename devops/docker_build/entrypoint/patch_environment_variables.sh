@@ -4,8 +4,7 @@
 
 set -e
 
-# Print the name of this file.
-FILE_NAME="docker_build/entrypoint/patch_environment_variables.sh"
+FILE_NAME="devops/docker_build/entrypoint/patch_environment_variables.sh"
 echo "##> $FILE_NAME"
 
 PWD=$(pwd)

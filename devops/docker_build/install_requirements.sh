@@ -5,6 +5,9 @@
 
 set -ex
 
+FILE_NAME="devops/docker_build/install_requirements.sh"
+echo "##> $FILE_NAME"
+
 echo "# Installing ${ENV_NAME}"
 
 if [[ 0 == 1 ]]; then
