@@ -228,7 +228,7 @@ class OMS:
         pass
 
     def place_order(self, contract: Contract, order: Order, timestamp: Optional[pd.Timestamp]=None) -> Trade:
-        self.orders.append(order)
+        self._orders.append(order)
         # Assume that everything is filled.
         # TODO(gp): Here we can implement market impact and incomplete fills.
         status = "filled"
@@ -239,7 +239,7 @@ class OMS:
         order_status = OrderStatus(order.order_id, status, filled, remaining,
                 avg_fill_price)
         trade = Trade(contract, order, order_status, timestamp=timestamp)
-        self.trades.append(trade)
+        self._trades.append(trade)
         #
         self._update_positions(trade)
         return trade
@@ -248,21 +248,21 @@ class OMS:
         """
         Update the current position given the executed trade.
         """
-        dbg.dassert_eq(len(set(self.positions)), len(self.positions),
+        dbg.dassert_eq(len(set(self._current_positions)), len(self._current_positions),
                        msg="All positions should be about different Contracts")
         # Look for the contract corresponding to `trade` among the current positions.
-        contract = self.positions.get(trade.contract, None)
+        contract = self._current_positions.get(trade.contract, None)
         if contract is None:
             _LOG.debug("Adding new contract: %s", contract)
             position = Position(trade.contract, trade.order.total_quantity)
         else:
-            position = Position.update(self.positions[contract], trade.to_position())
+            position = Position.update(self._current_positions[contract], trade.to_position())
         _LOG.debug("position=%s", position)
         # Update the contract.
         if position is None:
-            if contract in self.positions:
-                _LOG.debug("Removing %s from %s", contract, self.positions)
-                del self.positions[contract]
+            if contract in self._current_positions:
+                _LOG.debug("Removing %s from %s", contract, self._current_positions)
+                del self._current_positions[contract]
         else:
-            _LOG.debug("Updating %s to %s", self.positions.get(contract, None), position)
-            self.positions[contract] = position
+            _LOG.debug("Updating %s to %s", self._current_positions.get(contract, None), position)
+            self._current_positions[contract] = position
