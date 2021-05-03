@@ -8,6 +8,7 @@ import helpers.printing as prn
 
 _LOG = logging.getLogger(__name__)
 
+
 class Contract:
     """
     Represent a financial instrument.
@@ -58,7 +59,9 @@ class Futures(Contract):
 class Stock(Contract):
     pass
 
+
 # #############################################################################
+
 
 class Order:
     """
@@ -154,7 +157,7 @@ class Position:
         return Position(lhs.contract, position)
 
     def __key(self):
-        return (self.contract, self.position)
+        return self.contract, self.position
 
 
 # #############################################################################
