@@ -19,4 +19,8 @@ python setup.py sdist
 # > ls -l dist/helpers-1.2.tar.gz
 # -rw-r--r--  1 saggese  staff  73344 May  3 12:41 dist/helpers-1.2.tar.gz
 
-path dist/*.tar.gz
+FILE=$(ls -1 dist/*.tar.gz)
+echo "FILE=$FILE"
+ls -l $FILE
+
+cp $FILE /Users/saggese/src/dev_tools/helpers.tar.gz

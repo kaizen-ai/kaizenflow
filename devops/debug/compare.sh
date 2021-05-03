@@ -6,7 +6,7 @@
 GIT_CLIENT="lemonade1"
 echo "GIT_CLIENT=$GIT_CLIENT"
 
-if [[ 0 == 1 ]]; then
+if [[ 1 == 1 ]]; then
     # amp vs lemonade
     DIR1=$HOME/src/$GIT_CLIENT/amp
     DIR2=$HOME/src/$GIT_CLIENT

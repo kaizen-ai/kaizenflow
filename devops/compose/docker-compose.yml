@@ -1,5 +1,7 @@
 # For local runs in user space.
 
+# TODO(gp): This is useless.
+
 version: '3'
 
 services:
