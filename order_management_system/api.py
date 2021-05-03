@@ -1,6 +1,7 @@
 import logging
+from typing import Dict, Optional
+
 import pandas as pd
-from typing import List, Dict, Optional, Set
 
 import helpers.dbg as dbg
 import helpers.printing as prn
@@ -29,9 +30,6 @@ class Contract:
             self.symbol, self.sec_type, self.currency, self.exchange
         )
 
-    def __key(self):
-        return (self.symbol, self.sec_type, self.currency, self.exchange)
-
     def __hash__(self):
         return hash(self.__key())
 
@@ -39,6 +37,9 @@ class Contract:
         if isinstance(other, Contract):
             return self.__key() == other.__key()
         return NotImplemented
+
+    def __key(self):
+        return (self.symbol, self.sec_type, self.currency, self.exchange)
 
 
 class ContinuousFutures(Contract):
@@ -91,6 +92,7 @@ class LimitOrder(Order):
 class Position:
     """
     Modelled after:
+
     https://ib-insync.readthedocs.io/api.html#ib_insync.objects.Position
     """
 
@@ -99,6 +101,22 @@ class Position:
         # We don't allow a position with no shares.
         dbg.dassert_ne(0, position)
         self.position = position
+
+    def __repr__(self):
+        ret = []
+        ret.append("contract=%s" % self.contract)
+        ret.append("position=%s" % self.position)
+        ret = "\n".join(ret)
+        ret = "Position:\n" + prn.indent(ret, 2)
+        return ret
+
+    def __hash__(self):
+        return hash(self.__key())
+
+    def __eq__(self, other):
+        if isinstance(other, Position):
+            return self.__key() == other.__key()
+        return NotImplemented
 
     @staticmethod
     def update(lhs:"Position", rhs: "Position") -> Optional["Position"]:
@@ -111,24 +129,8 @@ class Position:
             return None
         return Position(lhs.contract, position)
 
-    def __repr__(self):
-        ret = []
-        ret.append("contract=%s" % self.contract)
-        ret.append("position=%s" % self.position)
-        ret = "\n".join(ret)
-        ret = "Position:\n" + prn.indent(ret, 2)
-        return ret
-
     def __key(self):
         return (self.contract, self.position)
-
-    def __hash__(self):
-        return hash(self.__key())
-
-    def __eq__(self, other):
-        if isinstance(other, Position):
-            return self.__key() == other.__key()
-        return NotImplemented
 
 
 # #############################################################################
@@ -173,9 +175,6 @@ class Trade:
         self.order_status = order_status
         self.timestamp = timestamp # TODO(gp): Implement fills.
 
-    def to_position(self) -> Position:
-        return Position(self.contract, self.order_status.filled)
-
     def __repr__(self):
         ret = []
         ret.append("contract=%s" % self.contract)
@@ -186,9 +185,12 @@ class Trade:
         ret = "Trade:\n" + prn.indent(ret, 2)
         return ret
 
+    def to_position(self) -> Position:
+        return Position(self.contract, self.order_status.filled)
+
 
 # #############################################################################
-    
+
 # TODO(gp): Consider extending to support more accounts.
 class OMS:
     """
@@ -205,9 +207,6 @@ class OMS:
         #
         self._current_positions: Dict[Contract, Position] = {}
 
-    def get_current_positions(self) -> Dict[Contract, Position]:
-        return self._current_positions.copy()
-    
     def __repr__(self):
         def _to_string(prefix, objs) -> str:
             ret = "%s=%d" % (prefix, len(objs))
@@ -222,6 +221,9 @@ class OMS:
         ret = "\n".join(ret)
         ret = "OMS:\n" + prn.indent(ret, 2)
         return ret
+
+    def get_current_positions(self) -> Dict[Contract, Position]:
+        return self._current_positions.copy()
 
     # TODO(gp): To be implemented.
     def pnl(self):
