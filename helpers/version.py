@@ -11,6 +11,8 @@ import logging
 import os
 from typing import Optional
 
+from code_version import CODE_VERSION
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -18,8 +20,7 @@ def get_code_version() -> str:
     """
     Return the code version.
     """
-    _CODE_VERSION = "1.1.0"
-    return _CODE_VERSION
+    return CODE_VERSION
 
 
 def get_container_version() -> Optional[str]:

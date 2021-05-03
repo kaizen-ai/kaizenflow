@@ -37,9 +37,10 @@ export PATH=$AMP/dev_scripts/install:$PATH
 export PATH=$AMP/dev_scripts/notebooks:$PATH
 export PATH=$AMP/dev_scripts/testing:$PATH
 
+# Remove duplicates.
 export PATH=$(echo $PATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')
-echo "PATH=$PATH"
 
+# Print.
 echo $PATH | perl -e 'print join("\n", grep { not $seen{$_}++ } split(/:/, scalar <>))'
 
 # #############################################################################
@@ -48,14 +49,20 @@ echo $PATH | perl -e 'print join("\n", grep { not $seen{$_}++ } split(/:/, scala
 
 echo "# Set PYTHONPATH"
 export PYTHONPATH=$PWD:$PYTHONPATH
+
+# Remove duplicates.
 export PYTHONPATH=$(echo $PYTHONPATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')
 
-echo "PYTHONPATH=$PYTHONPATH"
-
+# Print.
 echo $PYTHONPATH | perl -e 'print join("\n", grep { not $seen{$_}++ } split(/:/, scalar <>))'
+
+# #############################################################################
+# Configure env.
+# #############################################################################
 
 echo "# Configure env"
 echo "which gh="$(which gh)
+# TODO(gp): Not sure this is needed.
 alias ghamp="gh --repo alphamatic/amp"
 alias ghdt="gh --repo alphamatic/dev_tools"
 alias ghlem="gh --repo alphamatic/lemonade"

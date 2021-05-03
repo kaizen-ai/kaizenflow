@@ -43,7 +43,8 @@ class TestLibTasks1(hut.TestCase):
         Log in inside GitHub.
         """
         env_var = "GH_ACTION_ACCESS_TOKEN"
-        if env_var in os.environ:
+        if os.environ.get(env_var, None):
+            # If the env var exists and it's not None.
             _LOG.warning("Using env var '%s' to log in GitHub", env_var)
             cmd = "echo $GH_ACTION_ACCESS_TOKEN | gh auth login --with-token"
             hsinte.system(cmd)

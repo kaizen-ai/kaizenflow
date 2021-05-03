@@ -8,6 +8,7 @@
 
 set -e
 
+# TODO(gp): -> amp.client_venv or amp.venv
 VENV_DIR="$HOME/src/venv/client_setup"
 if [[ -d $VENV_DIR ]]; then
     echo "Deleting old virtual environment in '$VENV_DIR'"
@@ -38,7 +39,5 @@ echo "gh version="$(gh --version)
 #brew install dive
 #echo "dive version="$(dive --version)
 
-echo "# Activate the virtual env with:"
-echo "source $VENV_DIR/bin/activate"
-echo "  or"
-echo "source dev_scripts/setenv_amp.sh"
+echo "# Configure your client with:"
+echo "> source dev_scripts/setenv_amp.sh"

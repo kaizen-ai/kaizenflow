@@ -31,7 +31,6 @@ COPY devops/docker_build/poetry.lock .
 COPY devops/docker_build/poetry.toml .
 COPY devops/docker_build/pyproject.toml .
 COPY devops/docker_build/install_requirements.sh .
-
 RUN /bin/bash -c "./install_requirements.sh"
 
 COPY devops/docker_build/install_jupyter_extensions.sh .
@@ -41,24 +40,13 @@ RUN /bin/sh -c "./install_jupyter_extensions.sh"
 #RUN mkdir -p /s3/alphamatic-data
 #RUN mkdir -p /fsx/research
 
-# We assume that the needed files to build the image are under
-# devops/{docker_build,docker_scripts}
-# We want to minimize the dependencies to avoid to invalidate Docker cache for
-# a change in files that doesn't matter for building the image.
-ENV DIR="devops/docker_build"
-RUN mkdir -p $APP_DIR/$DIR
-COPY $DIR $APP_DIR/$DIR
-
-ENV DIR="devops/docker_scripts"
-RUN mkdir -p $APP_DIR/$DIR
-COPY $DIR $APP_DIR/$DIR
-
 # This is the last step since the build tag contains a timestamp that might
 # trigger a re-build even though nothing has changed.
 ARG BUILD_TAG
 ENV BUILD_TAG=$BUILD_TAG
 RUN echo "BUILD_TAG=$BUILD_TAG"
 
+# TODO(gp): Is this needed?
 WORKDIR $APP_DIR
 
 ENTRYPOINT ["devops/docker_build/entrypoint.sh"]

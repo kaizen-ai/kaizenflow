@@ -6,8 +6,7 @@
 
 set -e
 
-# Print the name of this file.
-FILE_NAME="docker_build/entrypoint/aws_credentials.sh"
+FILE_NAME="devops/docker_build/entrypoint/aws_credentials.sh"
 echo "##> $FILE_NAME"
 
 AWS_VOLUME="${HOME}/.aws"

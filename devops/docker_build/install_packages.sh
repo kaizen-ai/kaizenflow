@@ -5,6 +5,9 @@
 
 set -ex
 
+FILE_NAME="devops/docker_build/install_packages.sh"
+echo "##> $FILE_NAME"
+
 DEBIAN_FRONTEND=noninteractive
 
 # Update the package listing, so we know what package exist.
@@ -20,6 +23,8 @@ apt-get install $APT_GET_OPTS cifs-utils
 apt-get install $APT_GET_OPTS git
 apt-get install $APT_GET_OPTS keyutils
 apt-get install $APT_GET_OPTS make
+
+# Install vim.
 apt-get install $APT_GET_OPTS vim
 
 # This is needed to compile ujson.
