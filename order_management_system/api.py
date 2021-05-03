@@ -16,18 +16,23 @@ class Contract:
     https://ib-insync.readthedocs.io/api.html#module-ib_insync.contract
     """
 
-    def __init__(self, symbol: str, sec_type: str, currency: Optional[str]=None,
-            exchange: Optional[str]=None):
+    def __init__(
+        self,
+        symbol: str,
+        sec_type: str,
+        exchange: Optional[str] = None,
+        currency: Optional[str] = None,
+    ):
         self.symbol = symbol
         dbg.dassert_in(sec_type, ("STK", "FUT"))
         self.sec_type = sec_type
         dbg.dassert_in(currency, ("USD", None))
-        self.currency = currency
         self.exchange = exchange
+        self.currency = currency
 
     def __repr__(self):
         return "Contract: symbol=%s, sec_type=%s, currency=%s, exchange=%s" % (
-            self.symbol, self.sec_type, self.currency, self.exchange
+            self.symbol, self.sec_type, self.exchange, self.currency
         )
 
     def __hash__(self):
@@ -36,17 +41,19 @@ class Contract:
     def __eq__(self, other):
         if isinstance(other, Contract):
             return self.__key() == other.__key()
-        return NotImplemented
+        return NotImplementedError
 
     def __key(self):
-        return (self.symbol, self.sec_type, self.currency, self.exchange)
+        return self.symbol, self.sec_type, self.exchange, self.currency
 
 
 class ContinuousFutures(Contract):
     pass
 
+
 class Futures(Contract):
     pass
+
 
 class Stock(Contract):
     pass
@@ -61,8 +68,23 @@ class Order:
     https://ib-insync.readthedocs.io/api.html#ib_insync.order.Order
     """
 
-    def __init__(self, order_id: int, action: str, total_quantity: float,
-            order_type: str, timestamp: Optional[pd.Timestamp] = None):
+    def __init__(
+        self,
+        order_id: int,
+        action: str,
+        total_quantity: float,
+        order_type: str,
+        timestamp: Optional[pd.Timestamp] = None
+    ):
+        """
+        Create an order.
+
+        :param order_id: The API client's order id.
+        :param action: Identifies the side. Generally available values are BUY, SELL...
+        :param total_quantity: The number of positions being bought/sold.
+        :param order_type: The order's type.
+        :param timestamp:
+        """
         self.order_id = order_id
         dbg.dassert_in(action, ("BUY", "SELL"))
         self.action = action
@@ -78,6 +100,7 @@ class Order:
             self.order_id, self.action, self.total_quantity, self.order_type, self.timestamp
         )
 
+
 class MarketOrder(Order):
     pass
 
@@ -89,6 +112,7 @@ class LimitOrder(Order):
 
 # #############################################################################
 
+
 class Position:
     """
     Modelled after:
@@ -96,7 +120,7 @@ class Position:
     https://ib-insync.readthedocs.io/api.html#ib_insync.objects.Position
     """
 
-    def __init__(self, contract: Contract, position: int):
+    def __init__(self, contract: Contract, position: float):
         self.contract = contract
         # We don't allow a position with no shares.
         dbg.dassert_ne(0, position)
@@ -229,7 +253,12 @@ class OMS:
     def pnl(self):
         pass
 
-    def place_order(self, contract: Contract, order: Order, timestamp: Optional[pd.Timestamp]=None) -> Trade:
+    def place_order(
+            self,
+            contract: Contract,
+            order: Order,
+            timestamp: Optional[pd.Timestamp] = None,
+    ) -> Trade:
         self._orders.append(order)
         # Assume that everything is filled.
         # TODO(gp): Here we can implement market impact and incomplete fills.
