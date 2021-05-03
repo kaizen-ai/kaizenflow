@@ -15,6 +15,9 @@ class Contract:
 
     Modelled after:
     https://ib-insync.readthedocs.io/api.html#module-ib_insync.contract
+
+    IB Documentation:
+    https://interactivebrokers.github.io/tws-api/classIBApi_1_1Contract.html
     """
 
     def __init__(
@@ -69,6 +72,9 @@ class Order:
 
     Modelled after:
     https://ib-insync.readthedocs.io/api.html#ib_insync.order.Order
+
+    IB Documentation:
+    https://interactivebrokers.github.io/tws-api/classIBApi_1_1Order.html
     """
 
     def __init__(
@@ -162,9 +168,23 @@ class Position:
 
 # #############################################################################
 
-class OrderStatus:
 
-    def __init__(self, order_id:int , status: str, filled: float, remaining: float, avg_fill_price: float):
+class OrderStatus:
+    """
+    Status of order.
+
+    IB Documentation:
+    https://interactivebrokers.github.io/tws-api/interfaceIBApi_1_1EWrapper.html#a17f2a02d6449710b6394d0266a353313
+    """
+
+    def __init__(
+        self,
+        order_id: int,
+        status: str,
+        filled: float,
+        remaining: float,
+        avg_fill_price: float
+    ) -> None:
         # Pointer to the corresponding Order.
         dbg.dassert_lte(0, order_id)
         self.order_id = order_id
@@ -218,6 +238,7 @@ class Trade:
 
 # #############################################################################
 
+
 # TODO(gp): Consider extending to support more accounts.
 class OMS:
     """
@@ -228,7 +249,7 @@ class OMS:
     Modelled after:
     https://ib-insync.readthedocs.io/api.html#module-ib_insync.ib
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self._trades = []
         self._orders = []
         #
@@ -257,10 +278,10 @@ class OMS:
         pass
 
     def place_order(
-            self,
-            contract: Contract,
-            order: Order,
-            timestamp: Optional[pd.Timestamp] = None,
+        self,
+        contract: Contract,
+        order: Order,
+        timestamp: Optional[pd.Timestamp] = None,
     ) -> Trade:
         self._orders.append(order)
         # Assume that everything is filled.
