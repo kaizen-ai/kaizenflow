@@ -16,10 +16,10 @@ _LOG = logging.getLogger(__name__)
 
 # #############################################################################
 
-# TODO(gp): Merge env in system_interaction or conda.py? Or split the functions.
+# TODO(gp): Merge env in system_interaction?
 
 
-def _get_version(lib_name: str) -> str:
+def _get_library_version(lib_name: str) -> str:
     try:
         cmd = "import %s" % lib_name
         # pylint: disable=exec-used
@@ -82,7 +82,7 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     libs = sorted(libs)
     failed_imports = 0
     for lib in libs:
-        version = _get_version(lib)
+        version = _get_library_version(lib)
         if version.startswith("ERROR"):
             failed_imports += 1
         packages.append((lib, version))

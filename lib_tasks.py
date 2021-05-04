@@ -130,6 +130,7 @@ def git_merge_master(ctx):  # type: ignore
 
 
 # TODO(gp): Add git_co(ctx)
+# Reuse git.git_stash_push() and git.stash_apply()
 # git stash save your-file-name
 # git checkout master
 # # do whatever you had to do with master
@@ -202,8 +203,8 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
                 dbg.WARNING + f": Delete these {tag} branches?", abort_on_no=True
             )
         for branch in branches:
-            cmd = f"{delete_cmd} {branch}"
-            ctx.run(cmd)
+            cmd_tmp = f"{delete_cmd} {branch}"
+            ctx.run(cmd_tmp)
 
     # Delete local branches that are already merged into master.
     # > git branch --merged
@@ -1003,10 +1004,12 @@ def find_test_class(ctx, class_name="", dir_name="."):
 # ###############
 
 
+# TODO: decorator_name -> pytest_mark
 def _find_test_decorator(decorator_name: str, file_names: List[str]) -> List[str]:
     """
     Find test files containing tests with a certain decorator `@pytest.mark.XYZ`.
     """
+    dbg.dassert_isinstance(file_names, list)
     # E.g.,
     #   @pytest.mark.slow(...)
     #   @pytest.mark.no_container
@@ -1048,16 +1051,33 @@ def find_test_decorator(ctx, decorator_name="", dir_name="."):
 
 # ###############
 
-def _run_tests(
-    ctx: Any,
-    stage: str,
-    skipped_tests: str,
+def _build_run_command_line(
     pytest_opts: str,
+    pytest_mark: str,
+    dir_name: str,
     skip_submodules: bool,
     coverage: bool,
     collect_only: bool,
-) -> None:
-    pytest_opts_tmp = [f'-m "{skipped_tests}"', pytest_opts]
+    #
+    skipped_tests: str,
+) -> str:
+    """
+    Same params as run_fast_tests().
+
+    :param skipped_tests: -m option for pytest
+    """
+    pytest_opts_tmp = []
+    if pytest_opts != "":
+        pytest_opts_tmp.append(pytest_opts)
+    if skipped_tests != "":
+        pytest_opts_tmp.insert(0, f'-m "{skipped_tests}"')
+    dir_name = dir_name or "."
+    file_names = _find_test_files(dir_name)
+    _LOG.debug("file_names=%s", file_names)
+    if pytest_mark != "":
+        file_names = _find_test_decorator(pytest_mark, file_names)
+        _LOG.debug("After pytest_mark='%s': file_names=%s", pytest_mark, file_names)
+        pytest_opts_tmp.extend(file_names)
     if skip_submodules:
         submodule_paths = git.get_submodule_paths()
         _LOG.warning(
@@ -1071,19 +1091,30 @@ def _run_tests(
     if collect_only:
         _LOG.warning("Only collecting tests as per user request")
         pytest_opts_tmp.append("--collect-only")
-        # Clean files.
-        ctx.run("rm -rf ./.coverage*")
     # Concatenate the options.
     _LOG.debug("pytest_opts_tmp=\n%s", str(pytest_opts_tmp))
     pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
+    cmd = f"pytest {pytest_opts}"
+    return cmd
+
+
+def _run_tests(
+        ctx: Any,
+        stage: str,
+        cmd: str,
+        collect_only: bool,
+    ):
+    if collect_only:
+        # Clean files.
+        ctx.run("rm -rf ./.coverage*")
     # Run.
     base_image = ""
     docker_compose = _get_amp_docker_compose_path()
     # We need to add some " to pass the string as it is to the container.
-    cmd = f"'pytest {pytest_opts}'"
+    cmd = f"'{cmd}'"
     _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
-    #
+    # Print message about coverage.
     if coverage:
         msg = """- The coverage results in textual form are above.
         
@@ -1099,6 +1130,8 @@ def run_fast_tests(  # type: ignore
     ctx,
     stage=_STAGE,
     pytest_opts="",
+    pytest_mark="",
+    dir_name="",
     skip_submodules=False,
     coverage=False,
     collect_only=False,
@@ -1106,21 +1139,29 @@ def run_fast_tests(  # type: ignore
     """
     Run fast tests.
 
-    :param pytest_opts: pass options directly to pytest
-    :param skip_submodules: run tests only for the supermodule (e.g., in `lem`
-        skip the `amp` tests)
-    :param coverage: run the tests collecting code coverage
-    :param collect_only: only collect the tests but do not run the tests
+    :param stage: select a specific stage for the Docker image
+    :param pytest_opts: option for pytest
+    :param pytest_mark: test list to select as `@pytest.mark.XYZ`
+    :param dir_name: dir to start searching for tests
+    :param skip_submodules: ignore all the dir inside a submodule
+    :param coverage: enable coverage computation
+    :param collect_only: do not run tests but show what will be executed
     """
     _report_task()
     skipped_tests = "not slow and not superslow"
+    cmd = _build_run_command_line(
+        pytest_opts,
+        pytest_mark,
+        dir_name,
+        skip_submodules,
+        coverage,
+        collect_only,
+        skipped_tests,
+    )
     _run_tests(
         ctx,
         stage,
-        skipped_tests,
-        pytest_opts,
-        skip_submodules,
-        coverage,
+        cmd,
         collect_only,
     )
 

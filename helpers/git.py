@@ -171,6 +171,13 @@ def get_submodule_paths() -> List[str]:
     return files
 
 
+def has_submodules() -> bool:
+    return len(get_submodule_paths()) > 0
+
+
+# ############
+
+
 def _get_hash(git_hash: str, short_hash: bool, num_digits: int = 8) -> str:
     dbg.dassert_lte(1, num_digits)
     if short_hash:

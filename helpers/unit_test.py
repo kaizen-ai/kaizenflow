@@ -819,6 +819,7 @@ class TestCase(unittest.TestCase):
         self,
         test_class_name: Optional[str] = None,
         test_method_name: Optional[str] = None,
+        use_absolute_path: bool = True,
     ) -> str:
         """
         Return the path of the directory storing scratch data for this test
@@ -830,7 +831,8 @@ class TestCase(unittest.TestCase):
         if self._scratch_dir is None:
             # Create the dir on the first invocation on a given test.
             curr_path = self._get_current_path(
-                test_class_name=test_class_name, test_method_name=test_method_name
+                test_class_name=test_class_name, test_method_name=test_method_name,
+                use_absolute_path=use_absolute_path
             )
             dir_name = os.path.join(curr_path, "tmp.scratch")
             hio.create_dir(dir_name, incremental=get_incremental_tests())
@@ -1146,6 +1148,7 @@ class TestCase(unittest.TestCase):
         self,
         test_class_name: Optional[str] = None,
         test_method_name: Optional[str] = None,
+        use_absolute_path: bool=True,
     ) -> str:
         """
         Return the name of the directory containing the input / output data
@@ -1155,11 +1158,13 @@ class TestCase(unittest.TestCase):
             test_class_name = self.__class__.__name__
         if test_method_name is None:
             test_method_name = self._testMethodName
-        # E.g., ./core/dataflow/test/TestContinuousSarimaxModel.test_compare
-        dir_name = self._base_dir_name + "/%s.%s" % (
+        dir_name = "%s.%s" % (
             test_class_name,
             test_method_name,
         )
+        if use_absolute_path:
+            # E.g., .../dataflow/test/TestContinuousSarimaxModel.test_compare
+            dir_name = os.path.join(self._base_dir_name, dir_name)
         return dir_name
 
     def _to_error(self, msg: str) -> None:

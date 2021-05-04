@@ -4,6 +4,8 @@
 import logging
 import os
 
+import pytest
+
 import helpers.git as git
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
@@ -57,6 +59,127 @@ class TestLibTasks1(hut.TestCase):
         cmd = "gh auth status"
         hsinte.system(cmd)
 
+
+class TestLibRunTests1(hut.TestCase):
+
+    def test_run_fast_tests1(self) -> None:
+        """
+        Basic run fast tests.
+        """
+        pytest_opts = ""
+        pytest_mark = ""
+        dir_name = ""
+        skip_submodules = False
+        coverage = False
+        collect_only = False
+        #
+        skipped_tests = "not slow and not superslow"
+        act = ltasks._build_run_command_line(
+            pytest_opts,
+            pytest_mark,
+            dir_name,
+            skip_submodules,
+            coverage,
+            collect_only,
+            skipped_tests)
+        exp = 'pytest -m "not slow and not superslow"'
+        self.assert_equal(act, exp)
+
+    def test_run_fast_tests2(self) -> None:
+        """
+        Coverage and collect-only.
+        """
+        pytest_opts = ""
+        pytest_mark = ""
+        dir_name = ""
+        skip_submodules = False
+        coverage = True
+        collect_only = True
+        #
+        skipped_tests = "not slow and not superslow"
+        act = ltasks._build_run_command_line(
+            pytest_opts,
+            pytest_mark,
+            dir_name,
+            skip_submodules,
+            coverage,
+            collect_only,
+            skipped_tests)
+        exp = r'pytest -m "not slow and not superslow" --cov=. --cov-branch --cov-report term-missing --cov-report html --collect-only'
+        self.assert_equal(act, exp)
+
+    @pytest.mark.skipif(not git.has_submodules(),
+            reason="Run only if this repo has are submodules")
+    def test_run_fast_tests3(self) -> None:
+        """
+        Skip submodules.
+        """
+        pytest_opts = ""
+        pytest_mark = ""
+        dir_name = ""
+        skip_submodules = True
+        coverage = False
+        collect_only = False
+        #
+        skipped_tests = ""
+        act = ltasks._build_run_command_line(
+            pytest_opts,
+            pytest_mark,
+            dir_name,
+            skip_submodules,
+            coverage,
+            collect_only,
+            skipped_tests)
+        exp = r''
+        self.assert_equal(act, exp)
+
+    def test_run_fast_tests4(self) -> None:
+        """
+        Select pytest_mark.
+        """
+        scratch_space = self.get_scratch_space(use_absolute_path=False)
+        dir_name = os.path.join(scratch_space, "test")
+        file_dict = {
+            "test_this.py":
+                hprint.dedent(
+                    """
+                    foo
+                    
+                    class TestHelloWorld(hut.TestCase):
+                        bar
+                    """),
+            "test_that.py":
+                hprint.dedent(
+                    """
+                    foo
+                    baz
+                    
+                    @pytest.mark.no_container
+                    class TestHello_World(hut.):
+                        bar
+                    """)
+        }
+        incremental = True
+        hut.create_test_dir(dir_name, incremental, file_dict)
+
+        pytest_opts = ""
+        pytest_mark = "no_container"
+        dir_name = scratch_space
+        skip_submodules = True
+        coverage = False
+        collect_only = False
+        #
+        skipped_tests = ""
+        act = ltasks._build_run_command_line(
+            pytest_opts,
+            pytest_mark,
+            dir_name,
+            skip_submodules,
+            coverage,
+            collect_only,
+            skipped_tests)
+        exp = 'pytest TestLibRunTests1.test_run_fast_tests4/tmp.scratch/test/test_that.py'
+        self.assert_equal(act, exp)
 
 class TestLibTasksRunTests1(hut.TestCase):
 
