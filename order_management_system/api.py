@@ -271,9 +271,9 @@ class OMS:
                 ret += "\n" + prn.indent("\n".join(map(str, objs)), 2)
             return ret
         ret = []
-        ret.append(_to_string("trades", self.trades))
-        ret.append(_to_string("orders", self.orders))
-        ret.append(_to_string("positions", sorted(self.positions)))
+        ret.append(_to_string("trades", self._trades))
+        ret.append(_to_string("orders", self._orders))
+        ret.append(_to_string("positions", sorted(self._current_positions)))
         #
         ret = "\n".join(ret)
         ret = "OMS:\n" + prn.indent(ret, 2)
@@ -292,6 +292,16 @@ class OMS:
         order: Order,
         timestamp: Optional[pd.Timestamp] = None,
     ) -> Trade:
+        """
+        Place an order, record trade, and update current position.
+
+        https://ib-insync.readthedocs.io/_modules/ib_insync/client.html#Client.placeOrder
+
+        :param contract:
+        :param order:
+        :param timestamp:
+        :return:
+        """
         self._orders.append(order)
         # Assume that everything is filled.
         # TODO(gp): Here we can implement market impact and incomplete fills.
@@ -308,7 +318,7 @@ class OMS:
         self._update_positions(trade)
         return trade
 
-    def _update_positions(self, trade: Trade):
+    def _update_positions(self, trade: Trade) -> None:
         """
         Update the current position given the executed trade.
         """
