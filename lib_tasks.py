@@ -671,7 +671,8 @@ def _get_build_tag() -> str:
         AmpTask1280_Use_versioning_to_keep_code_and_container_in_sync-
         500a9e31ee70e51101c1b2eb82945c19992fa86e
     """
-    code_ver = hversi.get_code_version()
+    dir_name = os.path.dirname(os.path.abspath(__file__))
+    code_ver = hversi.get_code_version(dir_name)
     # We can't use datetime_.get_timestamp() since we don't want to pick up
     # the dependencies from pandas.
     timestamp = datetime.datetime.now().strftime("%Y%m%d")
