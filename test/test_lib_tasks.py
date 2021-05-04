@@ -5,6 +5,7 @@ import logging
 import os
 
 import helpers.git as git
+import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
 import lib_tasks as ltasks
@@ -60,24 +61,130 @@ class TestLibTasks1(hut.TestCase):
 class TestLibTasksRunTests1(hut.TestCase):
 
     def test_find_test_files1(self) -> None:
+        """
+        Find all the test files in the current dir.
+        """
         files = ltasks._find_test_files()
         # For sure there are more than 1 test files: at least this one.
         self.assertGreater(len(files), 1)
 
     def test_find_test_files2(self) -> None:
+        """
+        Find all the test files from the top of the super module root.
+        """
         git_root = git.get_client_root(super_module=True)
         files = ltasks._find_test_files(git_root)
         # For sure there are more than 1 test files: at least this one.
         self.assertGreater(len(files), 1)
 
     def test_find_test_class1(self) -> None:
-        act = ltasks._find_test_class("TestLibTasksRunTests1")
-        act = list(map(hut.remove_amp_references, act))
+        """
+        Find the current test class.
+        """
+        git_root = git.get_client_root(super_module=True)
+        file_names = ltasks._find_test_files(git_root)
+        #
+        file_names = ltasks._find_test_class("TestLibTasksRunTests1", file_names)
+        act = hut.purify_file_names(file_names)
         exp = ["test/test_lib_tasks.py::TestLibTasksRunTests1"]
         self.assert_equal(str(act), str(exp))
 
-    def test_find_test_decorator1(self) -> None:
-        act = ltasks._find_test_decorator("no_container")
-        act = list(map(hut.remove_amp_references, act))
-        exp = []
+    def test_find_test_class2(self) -> None:
+        """
+        Find the current test class.
+        """
+        file_names = [__file__]
+        #
+        file_names = ltasks._find_test_class("TestLibTasksRunTests1", file_names)
+        act = hut.purify_file_names(file_names)
+        exp = ["test/test_lib_tasks.py::TestLibTasksRunTests1"]
         self.assert_equal(str(act), str(exp))
+
+    def test_find_test_class3(self) -> None:
+        """
+        Create synthetic code and look for a class.
+        """
+        scratch_space = self.get_scratch_space()
+        dir_name = os.path.join(scratch_space, "test")
+        file_dict = {
+            "test_this.py":
+                hprint.dedent(
+                    """
+                    foo
+                    
+                    class TestHelloWorld(hut.TestCase):
+                        bar
+                    """),
+            "test_that.py":
+                hprint.dedent(
+                    """
+                    foo
+                    baz
+                    
+                    class TestHello_World(hut.):
+                        bar
+                    """)
+        }
+        incremental = True
+        hut.create_test_dir(dir_name, incremental, file_dict)
+        #
+        file_names = ltasks._find_test_files(dir_name)
+        act_file_names = [os.path.relpath(d, scratch_space) for
+                          d in file_names]
+        exp_file_names = [
+            'test/test_that.py',
+            'test/test_this.py']
+        self.assert_equal(str(act_file_names), str(exp_file_names))
+        #
+        act = ltasks._find_test_class("TestHelloWorld", file_names)
+        act = hut.purify_file_names(act)
+        exp = ["test/TestLibTasksRunTests1.test_find_test_class3/tmp.scratch/"
+               "test/test_this.py::TestHelloWorld"]
+        self.assert_equal(str(act), str(exp))
+
+    def test_find_test_decorator1(self) -> None:
+        """
+        Find test functions in the "no_container" in synthetic code.
+        """
+        scratch_space = self.get_scratch_space()
+        dir_name = os.path.join(scratch_space, "test")
+        file_dict = {
+            "test_this.py":
+                hprint.dedent(
+                    """
+                    foo
+                    
+                    class TestHelloWorld(hut.TestCase):
+                        bar
+                    """),
+            "test_that.py":
+                hprint.dedent(
+                    """
+                    foo
+                    baz
+                    
+                    @pytest.mark.no_container
+                    class TestHello_World(hut.):
+                        bar
+                    """)
+        }
+        incremental = True
+        hut.create_test_dir(dir_name, incremental, file_dict)
+        #
+        file_names = ltasks._find_test_files(dir_name)
+        act = ltasks._find_test_decorator("no_container", file_names)
+        act = hut.purify_file_names(act)
+        exp = ["test/TestLibTasksRunTests1.test_find_test_decorator1/tmp.scratch/"
+               "test/test_that.py"]
+        self.assert_equal(str(act), str(exp))
+
+    def test_find_test_decorator2(self) -> None:
+        """
+        Find test functions in the "no_container" test list.
+        """
+        file_names = ["test/test_tasks.py"]
+        act = ltasks._find_test_decorator("no_container", file_names)
+        act = hut.purify_file_names(act)
+        exp = ['test/test_tasks.py']
+        self.assert_equal(str(act), str(exp))
+

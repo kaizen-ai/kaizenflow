@@ -916,6 +916,7 @@ def run_blank_tests(ctx, stage=_STAGE):  # type: ignore
     _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
 
 
+# ###############
 import glob
 
 def _find_test_files(dir_name: Optional[str] = None, use_absolute_path: bool=False) -> List[str]:
@@ -951,7 +952,7 @@ def _find_test_files(dir_name: Optional[str] = None, use_absolute_path: bool=Fal
     return file_names
 
 
-def _find_test_class(class_name: str, dir_name: Optional[str] = None) -> List[str]:
+def _find_test_class(class_name: str, file_names: List[str]) -> List[str]:
     """
     Find test file containing the class `class_name` and report it in a format
     compatible with pytest.
@@ -959,7 +960,6 @@ def _find_test_class(class_name: str, dir_name: Optional[str] = None) -> List[st
     E.g., for "TestLibTasksRunTests1" return
         "test/test_lib_tasks.py::TestLibTasksRunTests1"
     """
-    file_names = _find_test_files(dir_name)
     # > jackpy TestLibTasksRunTests1
     # test/test_lib_tasks.py:60:class TestLibTasksRunTests1(hut.TestCase):
     regex = r"^\s*class\s+(%s)\(" % re.escape(class_name)
@@ -971,14 +971,16 @@ def _find_test_class(class_name: str, dir_name: Optional[str] = None) -> List[st
         txt = hio.from_file(file_name)
         # Search for the class in each file.
         for i, line in enumerate(txt.split("\n")):
-            # _LOG.debug("file=%s i=%s: %s", file, i, line)
+            # _LOG.debug("file_name=%s i=%s: %s", file_name, i, line)
+            # TODO(gp): We should skip ```, """, '''
             m = re.match(regex, line)
             if m:
                 found_class_name = m.group(1)
-                _LOG.debug("  -> %s", found_class_name)
+                _LOG.debug("  %s:%d -> %s", line, i, found_class_name)
                 res_tmp = f"{file_name}::{found_class_name}"
                 _LOG.debug("res_tmp=%s", res_tmp)
                 res.append(res_tmp)
+    res = sorted(list(set(res)))
     return res
 
 
@@ -993,17 +995,23 @@ def find_test_class(ctx, class_name="", dir_name="."):
     _report_task()
     dbg.dassert(class_name != "", "You need to specify a class name")
     _ = ctx
-    res = _find_test_class(class_name, dir_name)
+    file_names = _find_test_files(dir_name)
+    res = _find_test_class(class_name, file_names)
     print(res)
 
 
-def _find_test_decorator(decorator_name: str, dir_name: Optional[str] = None) -> List[str]:
+# ###############
+
+
+def _find_test_decorator(decorator_name: str, file_names: List[str]) -> List[str]:
     """
     Find test files containing tests with a certain decorator `@pytest.mark.XYZ`.
     """
-    file_names = _find_test_files(dir_name)
-    # E.g., @pytest.mark.slow(...)
-    regex = r"^\s*@pytest.mark.%s\s*(\()" % re.escape(decorator_name)
+    # E.g.,
+    #   @pytest.mark.slow(...)
+    #   @pytest.mark.no_container
+    string = "@pytest.mark.%s" % decorator_name
+    regex = r"^\s*%s\s*[\(]?" % re.escape(string)
     _LOG.debug("regex='%s'", regex)
     res: List[str] = []
     # Scan all the files.
@@ -1012,12 +1020,16 @@ def _find_test_decorator(decorator_name: str, dir_name: Optional[str] = None) ->
         txt = hio.from_file(file_name)
         # Search for the class in each file.
         for i, line in enumerate(txt.split("\n")):
-            # _LOG.debug("file=%s i=%s: %s", file, i, line)
+            #_LOG.debug("file_name=%s i=%s: %s", file_name, i, line)
+            # TODO(gp): We should skip ```, """, '''
             m = re.match(regex, line)
             if m:
-                _LOG.debug("  -> found", found_class_name)
+                _LOG.debug("  -> found")
                 res.append(file_name)
+    #
+    res = sorted(list(set(res)))
     return res
+
 
 @task
 def find_test_decorator(ctx, decorator_name="", dir_name="."):
@@ -1025,14 +1037,16 @@ def find_test_decorator(ctx, decorator_name="", dir_name="."):
     Report test files containing `class_name` in a format compatible with pytest.
 
     :param class_name: the class to search
-    :param dir_name: the dir from which to search (default: .)
+    :param dir_name: the dir from which to search
     """
     _report_task()
-    dbg.dassert(class_name != "", "You need to specify a class name")
+    dbg.dassert(decorator_name != "", "You need to specify a decorator name")
     _ = ctx
-    res = _find_test_class(class_name, dir_name)
+    file_names = _find_test_files(dir_name)
+    res = _find_test_class(decorator_name, file_names)
     print(res)
 
+# ###############
 
 def _run_tests(
     ctx: Any,

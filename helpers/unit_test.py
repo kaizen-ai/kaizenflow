@@ -13,7 +13,7 @@ import random
 import re
 import traceback
 import unittest
-from typing import Any, List, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 # Minimize dependencies from installed packages.
 
@@ -39,8 +39,10 @@ except ImportError as e:
     print(_WARNING + ":" + str(e))
     _HAS_MATPLOTLIB=False
 
+
 # We use strings as type hints (e.g., 'pd.DataFrame') since we are not sure
 # we have the corresponding libraries installed.
+
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -238,8 +240,6 @@ def get_random_df(
     """
     Compute df with random data with `num_cols` columns and index obtained by
     calling `pd.date_range(**kwargs)`.
-
-    :return: df
     """
     if seed:
         np.random.seed(seed)
@@ -259,6 +259,22 @@ def get_df_signature(df: "pd.DataFrame", num_rows: int = 3) -> str:
         txt.append("df.tail=\n%s" % df.tail(num_rows))
     txt = "\n".join(txt)
     return txt
+
+
+def create_test_dir(dir_name: str, incremental: bool, file_dict: Dict[str, str]) -> None:
+    """
+    Create a directory `dir_name` with the files from `file_dict`.
+    `file_dict` is interpreted as pair of files relative to `dir_name` and content.
+    """
+    dbg.dassert_no_duplicates(file_dict.keys())
+    hio.create_dir(dir_name, incremental=incremental)
+    for file_name in file_dict:
+        dst_file_name = os.path.join(dir_name, file_name)
+        _LOG.debug("file_name=%s -> %s", file_name, dst_file_name)
+        hio.create_enclosing_dir(dst_file_name, incremental=incremental)
+        file_content = file_dict[file_name]
+        hio.to_file(dst_file_name, file_content)
+
 
 
 def get_dir_signature(dir_name: str, num_lines: Optional[int] = None) -> str:
@@ -336,6 +352,16 @@ def remove_amp_references(txt: str) -> str:
     return txt
 
 
+def purify_file_names(file_names: List[str]) -> List[str]:
+    """
+    Express file names in terms of the root of git repo, removing reference to amp.
+    """
+    git_root = git.get_client_root(super_module=True)
+    file_names = [os.path.relpath(f, git_root) for f in file_names]
+    file_names = list(map(remove_amp_references, file_names))
+    return file_names
+
+
 def purify_txt_from_client(txt: str) -> str:
     """
     Remove from a string all the information specific of a git client.
@@ -407,10 +433,11 @@ def diff_files(
     if error_msg:
         msg_as_str += "\n" + error_msg
     # Add also the stack trace to the logging error.
-    log_msg_as_str = (msg_as_str + "\n" +
-         hprint.frame("Traceback", '-') + "\n" +
-                      ''.join(traceback.format_stack()))
-    _LOG.error(log_msg_as_str)
+    if False:
+        log_msg_as_str = (msg_as_str + "\n" +
+             hprint.frame("Traceback", '-') + "\n" +
+                          ''.join(traceback.format_stack()))
+        _LOG.error(log_msg_as_str)
     # Assert.
     if abort_on_exit:
         raise RuntimeError(msg_as_str)
