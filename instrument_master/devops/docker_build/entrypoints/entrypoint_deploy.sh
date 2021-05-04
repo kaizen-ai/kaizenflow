@@ -21,7 +21,7 @@ done
 
 umask 000
 
-source ~/.bash_profile
+#source ~/.bash_profile
 
 export PYTHONPATH=/app:$PYTHONPATH
 echo "PYTHONPATH=$PYTHONPATH"

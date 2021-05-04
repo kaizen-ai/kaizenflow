@@ -338,6 +338,27 @@ def docker_kill_all(ctx):  # type: ignore
     ctx.run("docker ps -a")
     ctx.run("docker rm -f $(docker ps -a -q)")
 
+# docker system prune
+# docker container ps -f "status=exited"
+# docker container rm $(docker container ps -f "status=exited" -q)
+# docker rmi $(docker images --filter="dangling=true" -q)
+
+# Remove the images with hash
+# > docker image ls
+# REPOSITORY                                               TAG                                        IMAGE ID       CREATED         SIZE
+# 083233266530.dkr.ecr.us-east-2.amazonaws.com/im          07aea615a2aa9290f7362e99e1cc908876700821   d0889bf972bf   6 minutes ago   684MB
+# 083233266530.dkr.ecr.us-east-2.amazonaws.com/im          rc                                         d0889bf972bf   6 minutes ago   684MB
+# python                                                   3.7-slim-buster                            e7d86653f62f   14 hours ago    113MB
+# 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools   ce789e4718175fcdf6e4857581fef1c2a5ee81f3   2f64ade2c048   14 hours ago    2.02GB
+# 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools   local                                      2f64ade2c048   14 hours ago    2.02GB
+# 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools   d401a2a0bef90b9f047c65f8adb53b28ba05d536   1b11bf234c7f   15 hours ago    2.02GB
+# 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools   52ccd63edbc90020f450c074b7c7088a1806c5ac   90b70a55c367   15 hours ago    1.95GB
+# 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools   2995608a7d91157fc1a820869a6d18f018c3c598   0cb3858e85c6   15 hours ago    2.01GB
+# 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp         415376d58001e804e840bf3907293736ad62b232   e6ea837ab97f   18 hours ago    1.65GB
+# 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp         dev                                        e6ea837ab97f   18 hours ago    1.65GB
+# 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp         local                                      e6ea837ab97f   18 hours ago    1.65GB
+# 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp         9586cc2de70a4075b9fdcdb900476f8a0f324e3e   c75d2447da79   18 hours ago    1.65GB
+
 
 # #############################################################################
 # Docker development.

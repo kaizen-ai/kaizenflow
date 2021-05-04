@@ -35,28 +35,31 @@ def _get_version(lib_name: str) -> str:
 def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     txt = []
     # Add git signature.
-    txt.append("# Git")
-    cmd = "git branch --show-current"
-    _, branch_name = hsinte.system_to_one_line(cmd)
-    txt.append("branch_name='%s'" % branch_name)
-    #
-    cmd = "git rev-parse --short HEAD"
-    _, hash_ = hsinte.system_to_one_line(cmd)
-    txt.append("hash='%s'" % hash_)
-    #
-    num_commits = 3
-    if git_commit_type == "all":
-        txt.append("# Last commits:")
-        log_txt = git.git_log(num_commits=num_commits, my_commits=False)
-        txt.append(hprint.indent(log_txt))
-    elif git_commit_type == "mine":
-        txt.append("# Your last commits:")
-        log_txt = git.git_log(num_commits=num_commits, my_commits=True)
-        txt.append(hprint.indent(log_txt))
-    elif git_commit_type == "none":
-        pass
-    else:
-        raise ValueError("Invalid value='%s'" % git_commit_type)
+    try:
+        txt.append("# Git")
+        cmd = "git branch --show-current"
+        _, branch_name = hsinte.system_to_one_line(cmd)
+        txt.append("branch_name='%s'" % branch_name)
+        #
+        cmd = "git rev-parse --short HEAD"
+        _, hash_ = hsinte.system_to_one_line(cmd)
+        txt.append("hash='%s'" % hash_)
+        #
+        num_commits = 3
+        if git_commit_type == "all":
+            txt.append("# Last commits:")
+            log_txt = git.git_log(num_commits=num_commits, my_commits=False)
+            txt.append(hprint.indent(log_txt))
+        elif git_commit_type == "mine":
+            txt.append("# Your last commits:")
+            log_txt = git.git_log(num_commits=num_commits, my_commits=True)
+            txt.append(hprint.indent(log_txt))
+        elif git_commit_type == "none":
+            pass
+        else:
+            raise ValueError("Invalid value='%s'" % git_commit_type)
+    except RuntimeError as e:
+        _LOG.error(str(e))
     # Add package info.
     txt.append("# Packages")
     packages = []

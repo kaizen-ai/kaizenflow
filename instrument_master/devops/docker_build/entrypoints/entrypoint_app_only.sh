@@ -12,6 +12,6 @@ echo "PostgreSQL will not be started"
 
 umask 000
 
-source ~/.bash_profile
+#source ~/.bash_profile
 
 eval "$@"
