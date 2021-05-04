@@ -30,6 +30,7 @@ def check_version(dir_name: Optional[str]=None) -> None:
     code_version = get_code_version(dir_name)
     is_inside_container = _is_inside_container()
     # Get container version.
+    # TODO(gp): Use _get_container_version().
     env_var = "CONTAINER_VERSION"
     if env_var not in os.environ:
         container_version = None

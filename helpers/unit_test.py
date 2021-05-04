@@ -15,9 +15,32 @@ import traceback
 import unittest
 from typing import Any, List, Mapping, Optional, Tuple, Union
 
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
+# Minimize dependencies from installed packages.
+
+_WARNING = "\033[33mWARNING\033[0m"
+
+try:
+    import numpy as np
+    _HAS_NUMPY=True
+except ImportError as e:
+    print(_WARNING + ":" + str(e))
+    _HAS_NUMPY=False
+try:
+    import pandas as pd
+    _HAS_PANDAS=True
+except ImportError as e:
+    print(_WARNING + ":" + str(e))
+    _HAS_PANDAS=False
+
+try:
+    import matplotlib.pyplot as plt
+    _HAS_MATPLOTLIB = True
+except ImportError as e:
+    print(_WARNING + ":" + str(e))
+    _HAS_MATPLOTLIB=False
+
+# We use strings as type hints (e.g., 'pd.DataFrame') since we are not sure
+# we have the corresponding libraries installed.
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -82,7 +105,7 @@ def in_unit_test_mode() -> bool:
 
 
 def convert_df_to_string(
-    df: Union[pd.DataFrame, pd.Series],
+    df: Union["pd.DataFrame", "pd.Series"],
     n_rows: Optional[int] = None,
     title: Optional[str] = None,
     index: bool = False,
@@ -148,7 +171,7 @@ def convert_info_to_string(info: Mapping) -> str:
 
 
 def convert_df_to_json_string(
-    df: pd.DataFrame,
+    df: "pd.DataFrame",
     n_head: Optional[int] = 10,
     n_tail: Optional[int] = 10,
     columns_order: Optional[List[str]] = None,
@@ -211,7 +234,7 @@ def to_string(var: str) -> str:
 
 def get_random_df(
     num_cols: int, seed: Optional[int] = None, **kwargs: Any
-) -> pd.DataFrame:
+) -> "pd.DataFrame":
     """
     Compute df with random data with `num_cols` columns and index obtained by
     calling `pd.date_range(**kwargs)`.
@@ -225,7 +248,7 @@ def get_random_df(
     return df
 
 
-def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
+def get_df_signature(df: "pd.DataFrame", num_rows: int = 3) -> str:
     dbg.dassert_isinstance(df, pd.DataFrame)
     txt: List[str] = []
     txt.append("df.shape=%s" % str(df.shape))
@@ -424,7 +447,7 @@ def diff_strings(
 
 
 def diff_df_monotonic(
-    df: pd.DataFrame,
+    df: "pd.DataFrame",
     tag: Optional[str] = None,
     abort_on_exit: bool = True,
     dst_dir: str = ".",
@@ -450,7 +473,7 @@ def diff_df_monotonic(
 
 
 # pylint: disable=protected-access
-def get_pd_default_values() -> pd._config.config.DictWrapper:
+def get_pd_default_values() -> "pd._config.config.DictWrapper":
     import copy
 
     vals = copy.deepcopy(pd.options)
@@ -655,9 +678,11 @@ class TestCase(unittest.TestCase):
         _LOG.debug("\n%s", hprint.frame(func_name))
         # Set the random seed.
         random.seed(20000101)
-        np.random.seed(20000101)
+        if _HAS_NUMPY:
+            np.random.seed(20000101)
         # Disable matplotlib plotting by overwriting the `show` function.
-        plt.show = lambda: 0
+        if _HAS_MATPLOTLIB:
+            plt.show = lambda: 0
         # Name of the dir with artifacts for this test.
         self._scratch_dir: Optional[str] = None
         # The base directory is the one including the class under test.
@@ -673,8 +698,9 @@ class TestCase(unittest.TestCase):
         # Error message printed when comparing actual and expected outcome.
         self._error_msg = ""
         # Set the default pandas options (see AmpTask1140).
-        self._old_pd_options = get_pd_default_values()
-        set_pd_default_values()
+        if _HAS_PANDAS:
+            self._old_pd_options = get_pd_default_values()
+            set_pd_default_values()
         # Start the timer to measure the execution time of the test.
         self._timer = htimer.Timer()
 
@@ -696,10 +722,12 @@ class TestCase(unittest.TestCase):
                 # to report an update.
                 pass
         # Recover the original default pandas options.
-        pd.options = self._old_pd_options
+        if _HAS_PANDAS:
+            pd.options = self._old_pd_options
         # Force matplotlib to close plots to decouple tests.
-        plt.close()
-        plt.clf()
+        if _HAS_MATPLOTLIB:
+            plt.close()
+            plt.clf()
         # Delete the scratch dir, if needed.
         # TODO(gp): We would like to keep this if the test failed.
         #  I can't find an easy way to detect this situation.
@@ -898,7 +926,7 @@ class TestCase(unittest.TestCase):
 
     def check_dataframe(
         self,
-        actual: pd.DataFrame,
+        actual: "pd.DataFrame",
         err_threshold: float = 0.05,
         tag: str = "test_df",
         abort_on_error: bool = True,
@@ -995,7 +1023,7 @@ class TestCase(unittest.TestCase):
     # #########################################################################
 
     def _check_df_update_outcome(
-        self, file_name: str, actual: pd.DataFrame
+        self, file_name: str, actual: "pd.DataFrame",
     ) -> None:
         _LOG.debug(hprint.to_str("file_name"))
         hio.create_enclosing_dir(file_name)
@@ -1004,8 +1032,8 @@ class TestCase(unittest.TestCase):
         self._git_add_file(file_name)
 
     def _check_df_compare_outcome(
-        self, file_name: str, actual: pd.DataFrame, err_threshold: float
-    ) -> Tuple[bool, pd.DataFrame]:
+        self, file_name: str, actual: "pd.DataFrame", err_threshold: float
+    ) -> Tuple[bool, "pd.DataFrame"]:
         _LOG.debug(hprint.to_str("file_name"))
         _LOG.debug("actual_=\n%s", actual)
         dbg.dassert_lte(0, err_threshold)

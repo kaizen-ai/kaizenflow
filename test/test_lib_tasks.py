@@ -1,3 +1,6 @@
+# This should only test helper functions from `lib_tasks.py`.
+# `test_tasks.py` associated to `tasks.py` should test specific task targets.
+
 import logging
 import os
 

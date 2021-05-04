@@ -8,7 +8,8 @@ RUN apt-get update && \
     apt-get purge gcc -y
 
 # TODO(gp): Replace with poetry.
-COPY devops/requirements.txt /
-RUN pip install -r /requirements.txt
+COPY devops/docker_build/requirements.txt .
+# TODO(gp): Use venv.
+RUN pip install -r requirements.txt
 
 WORKDIR /app

@@ -26,8 +26,9 @@ import helpers.system_interaction as hsinte
 import helpers.table as htable
 import helpers.version as hversi
 
-# TODO(gp): Move to helpers.lib_tasks? Do we need to move / rename also
-#  test_tasks.py?
+# TODO(gp): Move to helpers.lib_tasks? Probably yes so we can share across repos
+#  (e.g., dev_tools)
+# TODO(gp): Do we need to move / rename also test_tasks.py?
 
 _LOG = logging.getLogger(__name__)
 
@@ -248,15 +249,10 @@ def git_create_branch(ctx, branch_name=""):  # type: ignore
 
 
 # TODO(gp): Add dev_scripts/git/git_create_patch*.sh
-
 # dev_scripts/git/git_backup.sh
-
-# TODO(gp): dev_scripts/git/gcl
-
+# dev_scripts/git/gcl
 # dev_scripts/git/gd_master.sh
-
 # dev_scripts/git/git_branch.sh
-
 # dev_scripts/git/git_branch_point.sh
 
 # #############################################################################
@@ -505,6 +501,7 @@ def _get_base_image(base_image: str) -> str:
     :return: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     if base_image == "":
+        # TODO(gp): Use os.path.join.
         base_image = (
             get_default_value("ECR_BASE_PATH")
             + "/"
@@ -622,6 +619,7 @@ def docker_jupyter(  # type: ignore
     user_name = hsinte.get_user_name()
     service = "jupyter_server_test" if self_test else "jupyter_server"
     # TODO(gp): Not sure about the order of the -f files.
+    # TODO(gp): docker_compose_jupyter should extend docker_compose.
     cmd = rf"""IMAGE={image} \
     PORT={port} \
     docker-compose \

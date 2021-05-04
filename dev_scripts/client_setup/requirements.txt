@@ -1,3 +1,8 @@
-awscli>=1.19
-invoke>=1.5.0
+awscli >= 1.19
+flaky
+invoke >= 1.5.0
 poetry
+pytest >= "6.0.0"
+pytest-cov
+pytest-instafail
+pytest-xdist
