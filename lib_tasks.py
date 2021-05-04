@@ -918,12 +918,9 @@ def run_blank_tests(ctx, stage=_STAGE):  # type: ignore
 
 import glob
 
-def _find_test_files(dir_name: Optional[str] = None, use_relative_path: bool=True) -> List[str]:
+def _find_test_files(dir_name: Optional[str] = None, use_absolute_path: bool=False) -> List[str]:
     """
     Find all the files containing test code in `dir_name`.
-
-    :
-
     """
     dir_name = dir_name or "."
     dbg.dassert_dir_exists(dir_name)
@@ -935,9 +932,18 @@ def _find_test_files(dir_name: Optional[str] = None, use_relative_path: bool=Tru
     file_names = glob.glob(path, recursive=True)
     _LOG.debug("Found %d files: %s", len(file_names), str(file_names))
     dbg.dassert_no_duplicates(file_names)
+    # Test files should always under a dir called `test`.
+    for file_name in file_names:
+        if "/old/" in file_name:
+            continue
+        dbg.dassert_eq(os.path.basename(os.path.dirname(file_name)), "test",
+                       "Test file '%s' needs to be under a `test` dir ", file_name)
+        dbg.dassert_not_in("notebook/", file_name,
+                           "Test file '%s' should not be under a `notebook` dir",
+                           file_name)
     # Make path relatives, if needed.
-    if use_relative_path:
-        file_names = [os.path.relpath(file_name, dir_name) for file_name in file_names]
+    if use_absolute_path:
+        file_names = [os.path.abspath(file_name) for file_name in file_names]
     #
     file_names = sorted(file_names)
     _LOG.debug("file_names=%s", file_names)
@@ -946,19 +952,26 @@ def _find_test_files(dir_name: Optional[str] = None, use_relative_path: bool=Tru
 
 
 def _find_test_class(class_name: str, dir_name: Optional[str] = None) -> List[str]:
+    """
+    Find test file containing the class `class_name` and report it in a format
+    compatible with pytest.
+
+    E.g., for "TestLibTasksRunTests1" return
+        "test/test_lib_tasks.py::TestLibTasksRunTests1"
+    """
     file_names = _find_test_files(dir_name)
     # > jackpy TestLibTasksRunTests1
     # test/test_lib_tasks.py:60:class TestLibTasksRunTests1(hut.TestCase):
     regex = r"^\s*class\s+(%s)\(" % re.escape(class_name)
     _LOG.debug("regex='%s'", regex)
-    res : List[str] = []
+    res: List[str] = []
     # Scan all the files.
     for file_name in file_names:
         _LOG.debug("file_name=%s", file_name)
         txt = hio.from_file(file_name)
-        # In each file search for the class.
+        # Search for the class in each file.
         for i, line in enumerate(txt.split("\n")):
-            #_LOG.debug("file=%s i=%s: %s", file, i, line)
+            # _LOG.debug("file=%s i=%s: %s", file, i, line)
             m = re.match(regex, line)
             if m:
                 found_class_name = m.group(1)
@@ -970,14 +983,55 @@ def _find_test_class(class_name: str, dir_name: Optional[str] = None) -> List[st
 
 
 @task
-def find_test_class(ctx, class_name="", dir_name=""):
+def find_test_class(ctx, class_name="", dir_name="."):
+    """
+    Report test files containing `class_name` in a format compatible with pytest.
+
+    :param class_name: the class to search
+    :param dir_name: the dir from which to search (default: .)
+    """
+    _report_task()
     dbg.dassert(class_name != "", "You need to specify a class name")
-    if dir_name == "":
-        # Use the python value for optional parameter.
-        dir_name = None
+    _ = ctx
     res = _find_test_class(class_name, dir_name)
     print(res)
 
+
+def _find_test_decorator(decorator_name: str, dir_name: Optional[str] = None) -> List[str]:
+    """
+    Find test files containing tests with a certain decorator `@pytest.mark.XYZ`.
+    """
+    file_names = _find_test_files(dir_name)
+    # E.g., @pytest.mark.slow(...)
+    regex = r"^\s*@pytest.mark.%s\s*(\()" % re.escape(decorator_name)
+    _LOG.debug("regex='%s'", regex)
+    res: List[str] = []
+    # Scan all the files.
+    for file_name in file_names:
+        _LOG.debug("file_name=%s", file_name)
+        txt = hio.from_file(file_name)
+        # Search for the class in each file.
+        for i, line in enumerate(txt.split("\n")):
+            # _LOG.debug("file=%s i=%s: %s", file, i, line)
+            m = re.match(regex, line)
+            if m:
+                _LOG.debug("  -> found", found_class_name)
+                res.append(file_name)
+    return res
+
+@task
+def find_test_decorator(ctx, decorator_name="", dir_name="."):
+    """
+    Report test files containing `class_name` in a format compatible with pytest.
+
+    :param class_name: the class to search
+    :param dir_name: the dir from which to search (default: .)
+    """
+    _report_task()
+    dbg.dassert(class_name != "", "You need to specify a class name")
+    _ = ctx
+    res = _find_test_class(class_name, dir_name)
+    print(res)
 
 
 def _run_tests(
@@ -1068,6 +1122,8 @@ def run_slow_tests(  # type: ignore
 ):
     """
     Run slow tests.
+
+    Same params as `run_fast_tests`.
     """
     _report_task()
     skipped_tests = "slow and not superslow"
@@ -1093,6 +1149,8 @@ def run_superslow_tests(  # type: ignore
 ):
     """
     Run superslow tests.
+
+    Same params as `run_fast_tests`.
     """
     _report_task()
     skipped_tests = "not slow and superslow"
@@ -1118,6 +1176,8 @@ def run_fast_slow_tests(  # type: ignore
 ):
     """
     Run fast and slow tests.
+
+    Same params as `run_fast_tests`.
     """
     _report_task()
     skipped_tests = "not superslow"

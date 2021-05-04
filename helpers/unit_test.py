@@ -332,6 +332,7 @@ def remove_amp_references(txt: str) -> str:
     txt = re.sub("/amp/", "/", txt, flags=re.MULTILINE)
     txt = re.sub(" amp/", " ", txt, flags=re.MULTILINE)
     txt = re.sub("/amp:", ":", txt, flags=re.MULTILINE)
+    txt = re.sub("^\./", "", txt, flags=re.MULTILINE)
     return txt
 
 

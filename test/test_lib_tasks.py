@@ -76,3 +76,8 @@ class TestLibTasksRunTests1(hut.TestCase):
         exp = ["test/test_lib_tasks.py::TestLibTasksRunTests1"]
         self.assert_equal(str(act), str(exp))
 
+    def test_find_test_decorator1(self) -> None:
+        act = ltasks._find_test_decorator("no_container")
+        act = list(map(hut.remove_amp_references, act))
+        exp = []
+        self.assert_equal(str(act), str(exp))
