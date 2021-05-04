@@ -4,9 +4,10 @@ RUN apt-get update && \
     apt-get install gcc -y && \
     apt-get install python-dev -y && \
     apt-get install libpq-dev -y && \
-    apt-get install postgresql-client -y &&\
+    apt-get install postgresql-client -y && \
     apt-get purge gcc -y
 
+# TODO(gp): Replace with poetry.
 COPY devops/requirements.txt /
 RUN pip install -r /requirements.txt
 

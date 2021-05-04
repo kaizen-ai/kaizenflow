@@ -57,6 +57,7 @@ def get_default_value(key: str) -> Any:
 
 # Since it's not easy to add global opportunity
 # If one uses the debug option for `invoke` we turn off the code debugging.
+# TODO(gp): Check http://docs.pyinvoke.org/en/1.0/concepts/library.html#modifying-core-parser-arguments
 if ("-d" in sys.argv) or ("--debug" in sys.argv):
     dbg.init_logger(verbosity=logging.DEBUG)
 else:
