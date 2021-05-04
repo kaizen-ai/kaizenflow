@@ -323,6 +323,7 @@ def filter_text(regex: str, txt: str) -> str:
     return txt
 
 
+# TODO(gp): -> purify_amp_references
 def remove_amp_references(txt: str) -> str:
     """
     Remove references to amp.

@@ -4,6 +4,7 @@
 import logging
 import os
 
+import helpers.git as git
 import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
 import lib_tasks as ltasks
@@ -54,3 +55,24 @@ class TestLibTasks1(hut.TestCase):
         # Check that we are logged in.
         cmd = "gh auth status"
         hsinte.system(cmd)
+
+
+class TestLibTasksRunTests1(hut.TestCase):
+
+    def test_find_test_files1(self) -> None:
+        files = ltasks._find_test_files()
+        # For sure there are more than 1 test files: at least this one.
+        self.assertGreater(len(files), 1)
+
+    def test_find_test_files2(self) -> None:
+        git_root = git.get_client_root(super_module=True)
+        files = ltasks._find_test_files(git_root)
+        # For sure there are more than 1 test files: at least this one.
+        self.assertGreater(len(files), 1)
+
+    def test_find_test_class1(self) -> None:
+        act = ltasks._find_test_class("TestLibTasksRunTests1")
+        act = list(map(hut.remove_amp_references, act))
+        exp = ["test/test_lib_tasks.py::TestLibTasksRunTests1"]
+        self.assert_equal(str(act), str(exp))
+

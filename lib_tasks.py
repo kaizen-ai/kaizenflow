@@ -12,7 +12,7 @@ import os
 import pprint
 import re
 import sys
-from typing import Any, Dict, Match
+from typing import Any, Dict, List, Match, Optional
 
 from invoke import task
 
@@ -20,6 +20,7 @@ from invoke import task
 # this code needs to run with minimal dependencies and without Docker.
 import helpers.dbg as dbg
 import helpers.git as git
+import helpers.io_ as hio
 import helpers.introspection as hintros
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
@@ -915,6 +916,70 @@ def run_blank_tests(ctx, stage=_STAGE):  # type: ignore
     _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
 
 
+import glob
+
+def _find_test_files(dir_name: Optional[str] = None, use_relative_path: bool=True) -> List[str]:
+    """
+    Find all the files containing test code in `dir_name`.
+
+    :
+
+    """
+    dir_name = dir_name or "."
+    dbg.dassert_dir_exists(dir_name)
+    _LOG.debug("dir_name=%s", dir_name)
+    # Find all the file names containing test code.
+    _LOG.info("Searching from '%s'", dir_name)
+    path = os.path.join(dir_name, "**", "test_*.py")
+    _LOG.debug("path=%s", path)
+    file_names = glob.glob(path, recursive=True)
+    _LOG.debug("Found %d files: %s", len(file_names), str(file_names))
+    dbg.dassert_no_duplicates(file_names)
+    # Make path relatives, if needed.
+    if use_relative_path:
+        file_names = [os.path.relpath(file_name, dir_name) for file_name in file_names]
+    #
+    file_names = sorted(file_names)
+    _LOG.debug("file_names=%s", file_names)
+    dbg.dassert_no_duplicates(file_names)
+    return file_names
+
+
+def _find_test_class(class_name: str, dir_name: Optional[str] = None) -> List[str]:
+    file_names = _find_test_files(dir_name)
+    # > jackpy TestLibTasksRunTests1
+    # test/test_lib_tasks.py:60:class TestLibTasksRunTests1(hut.TestCase):
+    regex = r"^\s*class\s+(%s)\(" % re.escape(class_name)
+    _LOG.debug("regex='%s'", regex)
+    res : List[str] = []
+    # Scan all the files.
+    for file_name in file_names:
+        _LOG.debug("file_name=%s", file_name)
+        txt = hio.from_file(file_name)
+        # In each file search for the class.
+        for i, line in enumerate(txt.split("\n")):
+            #_LOG.debug("file=%s i=%s: %s", file, i, line)
+            m = re.match(regex, line)
+            if m:
+                found_class_name = m.group(1)
+                _LOG.debug("  -> %s", found_class_name)
+                res_tmp = f"{file_name}::{found_class_name}"
+                _LOG.debug("res_tmp=%s", res_tmp)
+                res.append(res_tmp)
+    return res
+
+
+@task
+def find_test_class(ctx, class_name="", dir_name=""):
+    dbg.dassert(class_name != "", "You need to specify a class name")
+    if dir_name == "":
+        # Use the python value for optional parameter.
+        dir_name = None
+    res = _find_test_class(class_name, dir_name)
+    print(res)
+
+
+
 def _run_tests(
     ctx: Any,
     stage: str,
@@ -952,10 +1017,11 @@ def _run_tests(
     _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
     #
     if coverage:
-        msg = """The coverage results in textual form are above.
-To browse the files annotate with coverage, start a server (not from the container):
-> (cd ./htmlcov; python -m http.server 33333)
-Go with your browser to `localhost:33333`
+        msg = """- The coverage results in textual form are above.
+        
+- To browse the files annotate with coverage, start a server (not from the container):
+  > (cd ./htmlcov; python -m http.server 33333)
+  then go with your browser to `localhost:33333`
 """
         print(msg)
 
