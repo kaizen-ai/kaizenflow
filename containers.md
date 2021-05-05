@@ -4,6 +4,7 @@
 
 
 <!--te-->
+
 # Invariants
 
 - `compose` files should extend others

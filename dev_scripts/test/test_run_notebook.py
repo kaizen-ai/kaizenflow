@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import List
+from typing import List, Tuple
 
 import pytest
 
@@ -15,14 +15,22 @@ _LOG = logging.getLogger(__name__)
 
 @pytest.mark.slow
 class TestRunNotebook(hut.TestCase):
+
+    def _get_files(self) -> Tuple[str, str]:
+        amp_path = git.get_amp_abs_path()
+        exec_file = os.path.join(amp_path,
+                                 'dev_scripts/notebooks/run_notebook.py')
+        notebook_file = os.path.join(amp_path,
+                                     'dev_scripts/notebooks/test/test_run_notebook.ipynb')
+        return exec_file, notebook_file
+
     def test_main1(self) -> None:
         dst_dir = self.get_scratch_space()
-        amp_path = git.get_amp_abs_path()
+        exec_file, notebook_file = self._get_files()
         cmd = (
-            f"{os.path.join(amp_path, 'dev_scripts/notebooks/run_notebook.py')} "
+            f"{exec_file} "
             f"--dst_dir {dst_dir} "
-            f"--notebook "
-            f"{os.path.join(amp_path, 'dev_scripts/notebooks/test_run_notebook.ipynb')} "
+            f"--notebook {notebook_file} "
             "--function 'dev_scripts.test.test_run_notebook.build_configs()' "
             "--skip_on_error "
             "--num_threads 1"
@@ -31,12 +39,11 @@ class TestRunNotebook(hut.TestCase):
 
     def test_main2(self) -> None:
         dst_dir = self.get_scratch_space()
-        amp_path = git.get_amp_abs_path()
+        exec_file, notebook_file = self._get_files()
         cmd = (
-            f"{os.path.join(amp_path, 'dev_scripts/notebooks/run_notebook.py')} "
+            f"{exec_file} "
             f"--dst_dir {dst_dir} "
-            f"--notebook "
-            f"{os.path.join(amp_path, 'dev_scripts/notebooks/test_run_notebook.ipynb')} "
+            f"--notebook {notebook_file} "
             "--function 'dev_scripts.test.test_run_notebook.build_configs()' "
             "--skip_on_error "
             "--num_threads 3"
@@ -45,12 +52,11 @@ class TestRunNotebook(hut.TestCase):
 
     def test_main3(self) -> None:
         dst_dir = self.get_scratch_space()
-        amp_path = git.get_amp_abs_path()
+        exec_file, notebook_file = self._get_files()
         cmd = (
-            f"{os.path.join(amp_path, 'dev_scripts/notebooks/run_notebook.py')} "
+            f"{exec_file} "
             f"--dst_dir {dst_dir} "
-            f"--notebook "
-            f"{os.path.join(amp_path, 'dev_scripts/notebooks/test_run_notebook.ipynb')} "
+            f"--notebook {notebook_file} "
             "--function 'dev_scripts.test.test_run_notebook.build_configs()' "
             "--num_threads 3"
         )
