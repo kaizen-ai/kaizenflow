@@ -15,15 +15,6 @@ _LOG = logging.getLogger(__name__)
 
 @pytest.mark.slow
 class TestRunNotebook(hut.TestCase):
-
-    def _get_files(self) -> Tuple[str, str]:
-        amp_path = git.get_amp_abs_path()
-        exec_file = os.path.join(amp_path,
-                                 'dev_scripts/notebooks/run_notebook.py')
-        notebook_file = os.path.join(amp_path,
-                                     'dev_scripts/notebooks/test/test_run_notebook.ipynb')
-        return exec_file, notebook_file
-
     def test_main1(self) -> None:
         dst_dir = self.get_scratch_space()
         exec_file, notebook_file = self._get_files()
@@ -64,6 +55,16 @@ class TestRunNotebook(hut.TestCase):
         _LOG.warning("This command is supposed to fail")
         rc = si.system(cmd, abort_on_error=False)
         self.assertNotEqual(rc, 0)
+
+    def _get_files(self) -> Tuple[str, str]:
+        amp_path = git.get_amp_abs_path()
+        exec_file = os.path.join(
+            amp_path, "dev_scripts/notebooks/run_notebook.py"
+        )
+        notebook_file = os.path.join(
+            amp_path, "dev_scripts/notebooks/test/test_run_notebook.ipynb"
+        )
+        return exec_file, notebook_file
 
 
 def build_configs() -> List[cfg.Config]:

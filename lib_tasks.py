@@ -58,9 +58,11 @@ def get_default_value(key: str) -> Any:
     return _DEFAULT_PARAMS[key]
 
 
-# Since it's not easy to add global opportunity
+# Since it's not easy to add global command line options to invoke, we piggy
+# back the option that already exists.
 # If one uses the debug option for `invoke` we turn off the code debugging.
-# TODO(gp): Check http://docs.pyinvoke.org/en/1.0/concepts/library.html#modifying-core-parser-arguments
+# TODO(gp): Check http://docs.pyinvoke.org/en/1.0/concepts/library.html#
+#   modifying-core-parser-arguments
 if ("-d" in sys.argv) or ("--debug" in sys.argv):
     dbg.init_logger(verbosity=logging.DEBUG)
 else:
@@ -344,6 +346,7 @@ def docker_kill_all(ctx):  # type: ignore
 # docker container rm $(docker container ps -f "status=exited" -q)
 # docker rmi $(docker images --filter="dangling=true" -q)
 
+# pylint: disable=line-too-long
 # Remove the images with hash
 # > docker image ls
 # REPOSITORY                                               TAG                                        IMAGE ID       CREATED         SIZE
@@ -359,6 +362,7 @@ def docker_kill_all(ctx):  # type: ignore
 # 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp         dev                                        e6ea837ab97f   18 hours ago    1.65GB
 # 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp         local                                      e6ea837ab97f   18 hours ago    1.65GB
 # 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp         9586cc2de70a4075b9fdcdb900476f8a0f324e3e   c75d2447da79   18 hours ago    1.65GB
+# pylint: enable=line-too-long
 
 
 # #############################################################################
@@ -997,7 +1001,7 @@ def _find_test_class(class_name: str, file_names: List[str]) -> List[str]:
 
 
 @task
-def find_test_class(ctx, class_name="", dir_name="."):
+def find_test_class(ctx, class_name="", dir_name="."):  # type: ignore
     """
     Report test files containing `class_name` in a format compatible with
     pytest.
@@ -1037,10 +1041,12 @@ def _find_test_decorator(decorator_name: str, file_names: List[str]) -> List[str
         # Search for the class in each file.
         for i, line in enumerate(txt.split("\n")):
             # _LOG.debug("file_name=%s i=%s: %s", file_name, i, line)
-            # TODO(gp): We should skip ```, """, '''
+            # TODO(gp): We should skip ```, """, '''. We can add a function to
+            # remove all the comments, although we need to keep track of the
+            # line original numbers.
             m = re.match(regex, line)
             if m:
-                _LOG.debug("  -> found")
+                _LOG.debug("  -> found: %d:%s", i, line)
                 res.append(file_name)
     #
     res = sorted(list(set(res)))
@@ -1048,7 +1054,7 @@ def _find_test_decorator(decorator_name: str, file_names: List[str]) -> List[str
 
 
 @task
-def find_test_decorator(ctx, decorator_name="", dir_name="."):
+def find_test_decorator(ctx, decorator_name="", dir_name="."):  # type: ignore
     """
     Report test files containing `class_name` in a format compatible with
     pytest.
@@ -1123,7 +1129,7 @@ def _run_test_cmd(
     cmd: str,
     coverage: bool,
     collect_only: bool,
-):
+) -> None:
     if collect_only:
         # Clean files.
         ctx.run("rm -rf ./.coverage*")
@@ -1578,7 +1584,8 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
     gh_workflow_list(ctx, branch=branch)
 
 
-# TODO(gp):
+# TODO(gp): Implement this.
+# pylint: disable=line-too-long
 # @task
 # def gh_workflow_passing(ctx, branch="branch", workflows="all"):  # type: ignore
 # For each workflow check if the last completed is success or failure
@@ -1586,6 +1593,7 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
 # completed       success Fix broken log statement        Fast tests      master  schedule        2m20s   797849342
 # completed       success Fix broken log statement        Fast tests      master  push    2m7s    797789759
 # completed       success Another speculative fix for break       Fast tests      master  push    1m54s   797556212
+# pylint: enable=line-too-long
 
 # #############################################################################
 

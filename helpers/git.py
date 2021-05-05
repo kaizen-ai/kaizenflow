@@ -408,7 +408,7 @@ def get_task_prefix_from_repo_short_name(short_name: str) -> str:
     elif short_name == "dev_tools":
         prefix = "DevToolsTask"
     else:
-        raise ValueError("Invalid short_name='%s'", short_name)
+        raise ValueError("Invalid short_name='%s'" % short_name)
     return prefix
 
 

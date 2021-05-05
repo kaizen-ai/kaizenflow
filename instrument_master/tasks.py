@@ -1,10 +1,10 @@
 import logging
 
-_LOG = logging.getLogger(__name__)
-
 # We inline the code here since we need to make it visible to `invoke`,
 # although `from ... import *` is a despicable approach.
-from lib_tasks import *
+from lib_tasks import *  # noqa: F403 (unable to detect undefined names)
+
+_LOG = logging.getLogger(__name__)
 
 # #############################################################################
 # Setup.
@@ -23,4 +23,6 @@ default_params = {
 }
 
 
-set_default_params(default_params)
+set_default_params(
+    default_params
+)  # noqa: F405 (may be or defined from star imports)

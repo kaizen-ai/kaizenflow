@@ -498,9 +498,3 @@ def is_running_in_ipynb() -> bool:
     except NameError:
         res = False
     return res
-
-
-def is_inside_lemonade() -> bool:
-    """
-    
-    """

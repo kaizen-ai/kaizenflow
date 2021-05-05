@@ -15,6 +15,17 @@ import traceback
 import unittest
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
+import helpers.dbg as dbg
+import helpers.git as git
+import helpers.io_ as hio
+import helpers.printing as hprint
+import helpers.system_interaction as hsinte
+import helpers.timer as htimer
+
+# We use strings as type hints (e.g., 'pd.DataFrame') since we are not sure
+# we have the corresponding libraries installed.
+
+
 # Minimize dependencies from installed packages.
 
 _WARNING = "\033[33mWARNING\033[0m"
@@ -42,17 +53,6 @@ except ImportError as e:
     print(_WARNING + ":" + str(e))
     _HAS_MATPLOTLIB = False
 
-
-# We use strings as type hints (e.g., 'pd.DataFrame') since we are not sure
-# we have the corresponding libraries installed.
-
-
-import helpers.dbg as dbg
-import helpers.git as git
-import helpers.io_ as hio
-import helpers.printing as hprint
-import helpers.system_interaction as hsinte
-import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
 _LOG.setLevel(logging.INFO)
@@ -354,7 +354,7 @@ def remove_amp_references(txt: str) -> str:
     txt = re.sub("/amp/", "/", txt, flags=re.MULTILINE)
     txt = re.sub(" amp/", " ", txt, flags=re.MULTILINE)
     txt = re.sub("/amp:", ":", txt, flags=re.MULTILINE)
-    txt = re.sub("^\./", "", txt, flags=re.MULTILINE)
+    txt = re.sub(r"^\./", "", txt, flags=re.MULTILINE)
     return txt
 
 

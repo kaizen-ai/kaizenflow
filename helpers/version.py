@@ -68,15 +68,24 @@ def check_version(dir_name: Optional[str] = None) -> None:
 def get_code_version(dir_name: Optional[str] = None) -> str:
     """
     Return the code version.
+
+    :param dir_name: the path to the `version.txt` file. If None uses the dir
+        one level up with respect to the this file (i.e., `amp` dir)
     """
-    dir_name = dir_name or "."
+    if not dir_name:
+        # Use the version one level up.
+        dir_name = os.path.dirname(os.path.abspath(__file__))
+        dir_name = os.path.abspath(os.path.join(dir_name, ".."))
     # Load the version.
     file_name = os.path.join(dir_name, "version.txt")
     file_name = os.path.abspath(file_name)
-    assert os.path.exists(file_name), "Can't find file '%s'" % file_name
+    assert os.path.exists(file_name), "Can't find file '%s' for dir_name='%s'" % (
+        file_name,
+        dir_name,
+    )
     with open(file_name) as f:
         version = f.readline().rstrip()
-    # E.g., amp-1.0.0
+    # E.g., `amp-1.0.0`.
     assert re.match(
         r"^\S+-\d+\.\d+\.\d+$", version
     ), "Invalid version '%s' from %s" % (version, file_name)
@@ -120,13 +129,12 @@ def _get_container_version() -> Optional[str]:
     """
     Return the container version.
     """
+    container_version: Optional[str] = None
     if _is_inside_container():
         # We are running inside a container.
         # Keep the code and the container in sync by versioning both and requiring
         # to be the same.
         container_version = os.environ["CONTAINER_VERSION"]
-    else:
-        container_version = None
     return container_version
 
 

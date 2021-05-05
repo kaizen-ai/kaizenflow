@@ -37,7 +37,6 @@ if config is None:
 # %%
 if config["fail"]:
     raise ValueError("Fail.")
-else:
-    print("success")
+print("success")
 
 # %%
