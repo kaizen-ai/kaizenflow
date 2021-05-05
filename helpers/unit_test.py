@@ -13,11 +13,7 @@ import random
 import re
 import traceback
 import unittest
-from typing import Any, List, Mapping, Optional, Tuple, Union
-
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import helpers.dbg as dbg
 import helpers.git as git
@@ -25,6 +21,38 @@ import helpers.io_ as hio
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.timer as htimer
+
+# We use strings as type hints (e.g., 'pd.DataFrame') since we are not sure
+# we have the corresponding libraries installed.
+
+
+# Minimize dependencies from installed packages.
+
+_WARNING = "\033[33mWARNING\033[0m"
+
+try:
+    import numpy as np
+
+    _HAS_NUMPY = True
+except ImportError as e:
+    print(_WARNING + ":" + str(e))
+    _HAS_NUMPY = False
+try:
+    import pandas as pd
+
+    _HAS_PANDAS = True
+except ImportError as e:
+    print(_WARNING + ":" + str(e))
+    _HAS_PANDAS = False
+
+try:
+    import matplotlib.pyplot as plt
+
+    _HAS_MATPLOTLIB = True
+except ImportError as e:
+    print(_WARNING + ":" + str(e))
+    _HAS_MATPLOTLIB = False
+
 
 _LOG = logging.getLogger(__name__)
 _LOG.setLevel(logging.INFO)
@@ -82,7 +110,7 @@ def in_unit_test_mode() -> bool:
 
 
 def convert_df_to_string(
-    df: Union[pd.DataFrame, pd.Series],
+    df: Union["pd.DataFrame", "pd.Series"],
     n_rows: Optional[int] = None,
     title: Optional[str] = None,
     index: bool = False,
@@ -148,7 +176,7 @@ def convert_info_to_string(info: Mapping) -> str:
 
 
 def convert_df_to_json_string(
-    df: pd.DataFrame,
+    df: "pd.DataFrame",
     n_head: Optional[int] = 10,
     n_tail: Optional[int] = 10,
     columns_order: Optional[List[str]] = None,
@@ -211,12 +239,10 @@ def to_string(var: str) -> str:
 
 def get_random_df(
     num_cols: int, seed: Optional[int] = None, **kwargs: Any
-) -> pd.DataFrame:
+) -> "pd.DataFrame":
     """
     Compute df with random data with `num_cols` columns and index obtained by
     calling `pd.date_range(**kwargs)`.
-
-    :return: df
     """
     if seed:
         np.random.seed(seed)
@@ -225,7 +251,7 @@ def get_random_df(
     return df
 
 
-def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
+def get_df_signature(df: "pd.DataFrame", num_rows: int = 3) -> str:
     dbg.dassert_isinstance(df, pd.DataFrame)
     txt: List[str] = []
     txt.append("df.shape=%s" % str(df.shape))
@@ -236,6 +262,25 @@ def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
         txt.append("df.tail=\n%s" % df.tail(num_rows))
     txt = "\n".join(txt)
     return txt
+
+
+def create_test_dir(
+    dir_name: str, incremental: bool, file_dict: Dict[str, str]
+) -> None:
+    """
+    Create a directory `dir_name` with the files from `file_dict`.
+
+    `file_dict` is interpreted as pair of files relative to `dir_name`
+    and content.
+    """
+    dbg.dassert_no_duplicates(file_dict.keys())
+    hio.create_dir(dir_name, incremental=incremental)
+    for file_name in file_dict:
+        dst_file_name = os.path.join(dir_name, file_name)
+        _LOG.debug("file_name=%s -> %s", file_name, dst_file_name)
+        hio.create_enclosing_dir(dst_file_name, incremental=incremental)
+        file_content = file_dict[file_name]
+        hio.to_file(dst_file_name, file_content)
 
 
 def get_dir_signature(dir_name: str, num_lines: Optional[int] = None) -> str:
@@ -300,6 +345,7 @@ def filter_text(regex: str, txt: str) -> str:
     return txt
 
 
+# TODO(gp): -> purify_amp_references
 def remove_amp_references(txt: str) -> str:
     """
     Remove references to amp.
@@ -308,7 +354,19 @@ def remove_amp_references(txt: str) -> str:
     txt = re.sub("/amp/", "/", txt, flags=re.MULTILINE)
     txt = re.sub(" amp/", " ", txt, flags=re.MULTILINE)
     txt = re.sub("/amp:", ":", txt, flags=re.MULTILINE)
+    txt = re.sub(r"^\./", "", txt, flags=re.MULTILINE)
     return txt
+
+
+def purify_file_names(file_names: List[str]) -> List[str]:
+    """
+    Express file names in terms of the root of git repo, removing reference to
+    amp.
+    """
+    git_root = git.get_client_root(super_module=True)
+    file_names = [os.path.relpath(f, git_root) for f in file_names]
+    file_names = list(map(remove_amp_references, file_names))
+    return file_names
 
 
 def purify_txt_from_client(txt: str) -> str:
@@ -382,10 +440,15 @@ def diff_files(
     if error_msg:
         msg_as_str += "\n" + error_msg
     # Add also the stack trace to the logging error.
-    log_msg_as_str = (msg_as_str + "\n" +
-         hprint.frame("Traceback", '-') + "\n" +
-                      ''.join(traceback.format_stack()))
-    _LOG.error(log_msg_as_str)
+    if False:
+        log_msg_as_str = (
+            msg_as_str
+            + "\n"
+            + hprint.frame("Traceback", "-")
+            + "\n"
+            + "".join(traceback.format_stack())
+        )
+        _LOG.error(log_msg_as_str)
     # Assert.
     if abort_on_exit:
         raise RuntimeError(msg_as_str)
@@ -424,7 +487,7 @@ def diff_strings(
 
 
 def diff_df_monotonic(
-    df: pd.DataFrame,
+    df: "pd.DataFrame",
     tag: Optional[str] = None,
     abort_on_exit: bool = True,
     dst_dir: str = ".",
@@ -450,7 +513,7 @@ def diff_df_monotonic(
 
 
 # pylint: disable=protected-access
-def get_pd_default_values() -> pd._config.config.DictWrapper:
+def get_pd_default_values() -> "pd._config.config.DictWrapper":
     import copy
 
     vals = copy.deepcopy(pd.options)
@@ -569,7 +632,7 @@ def _assert_equal(
             "full_test_name test_dir fuzzy_match abort_on_error dst_dir"
         )
     )
-    # 
+    #
     _LOG.debug("Before any transformation:")
     _LOG.debug("act=\n'%s'", actual)
     _LOG.debug("exp=\n'%s'", expected)
@@ -655,9 +718,11 @@ class TestCase(unittest.TestCase):
         _LOG.debug("\n%s", hprint.frame(func_name))
         # Set the random seed.
         random.seed(20000101)
-        np.random.seed(20000101)
+        if _HAS_NUMPY:
+            np.random.seed(20000101)
         # Disable matplotlib plotting by overwriting the `show` function.
-        plt.show = lambda: 0
+        if _HAS_MATPLOTLIB:
+            plt.show = lambda: 0
         # Name of the dir with artifacts for this test.
         self._scratch_dir: Optional[str] = None
         # The base directory is the one including the class under test.
@@ -673,8 +738,9 @@ class TestCase(unittest.TestCase):
         # Error message printed when comparing actual and expected outcome.
         self._error_msg = ""
         # Set the default pandas options (see AmpTask1140).
-        self._old_pd_options = get_pd_default_values()
-        set_pd_default_values()
+        if _HAS_PANDAS:
+            self._old_pd_options = get_pd_default_values()
+            set_pd_default_values()
         # Start the timer to measure the execution time of the test.
         self._timer = htimer.Timer()
 
@@ -696,10 +762,12 @@ class TestCase(unittest.TestCase):
                 # to report an update.
                 pass
         # Recover the original default pandas options.
-        pd.options = self._old_pd_options
+        if _HAS_PANDAS:
+            pd.options = self._old_pd_options
         # Force matplotlib to close plots to decouple tests.
-        plt.close()
-        plt.clf()
+        if _HAS_MATPLOTLIB:
+            plt.close()
+            plt.clf()
         # Delete the scratch dir, if needed.
         # TODO(gp): We would like to keep this if the test failed.
         #  I can't find an easy way to detect this situation.
@@ -762,6 +830,7 @@ class TestCase(unittest.TestCase):
         self,
         test_class_name: Optional[str] = None,
         test_method_name: Optional[str] = None,
+        use_absolute_path: bool = True,
     ) -> str:
         """
         Return the path of the directory storing scratch data for this test
@@ -773,7 +842,9 @@ class TestCase(unittest.TestCase):
         if self._scratch_dir is None:
             # Create the dir on the first invocation on a given test.
             curr_path = self._get_current_path(
-                test_class_name=test_class_name, test_method_name=test_method_name
+                test_class_name=test_class_name,
+                test_method_name=test_method_name,
+                use_absolute_path=use_absolute_path,
             )
             dir_name = os.path.join(curr_path, "tmp.scratch")
             hio.create_dir(dir_name, incremental=get_incremental_tests())
@@ -898,7 +969,7 @@ class TestCase(unittest.TestCase):
 
     def check_dataframe(
         self,
-        actual: pd.DataFrame,
+        actual: "pd.DataFrame",
         err_threshold: float = 0.05,
         tag: str = "test_df",
         abort_on_error: bool = True,
@@ -995,7 +1066,9 @@ class TestCase(unittest.TestCase):
     # #########################################################################
 
     def _check_df_update_outcome(
-        self, file_name: str, actual: pd.DataFrame
+        self,
+        file_name: str,
+        actual: "pd.DataFrame",
     ) -> None:
         _LOG.debug(hprint.to_str("file_name"))
         hio.create_enclosing_dir(file_name)
@@ -1004,8 +1077,8 @@ class TestCase(unittest.TestCase):
         self._git_add_file(file_name)
 
     def _check_df_compare_outcome(
-        self, file_name: str, actual: pd.DataFrame, err_threshold: float
-    ) -> Tuple[bool, pd.DataFrame]:
+        self, file_name: str, actual: "pd.DataFrame", err_threshold: float
+    ) -> Tuple[bool, "pd.DataFrame"]:
         _LOG.debug(hprint.to_str("file_name"))
         _LOG.debug("actual_=\n%s", actual)
         dbg.dassert_lte(0, err_threshold)
@@ -1089,6 +1162,7 @@ class TestCase(unittest.TestCase):
         self,
         test_class_name: Optional[str] = None,
         test_method_name: Optional[str] = None,
+        use_absolute_path: bool = True,
     ) -> str:
         """
         Return the name of the directory containing the input / output data
@@ -1098,11 +1172,13 @@ class TestCase(unittest.TestCase):
             test_class_name = self.__class__.__name__
         if test_method_name is None:
             test_method_name = self._testMethodName
-        # E.g., ./core/dataflow/test/TestContinuousSarimaxModel.test_compare
-        dir_name = self._base_dir_name + "/%s.%s" % (
+        dir_name = "%s.%s" % (
             test_class_name,
             test_method_name,
         )
+        if use_absolute_path:
+            # E.g., .../dataflow/test/TestContinuousSarimaxModel.test_compare
+            dir_name = os.path.join(self._base_dir_name, dir_name)
         return dir_name
 
     def _to_error(self, msg: str) -> None:

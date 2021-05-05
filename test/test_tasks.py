@@ -186,6 +186,7 @@ def _get_default_params() -> Dict[str, str]:
     return default_params
 
 
+@pytest.mark.no_container
 @pytest.mark.skipif(hsinte.is_inside_docker(), reason="AmpTask165")
 class TestExecuteTasks1(hut.TestCase):
     """
@@ -225,6 +226,7 @@ class TestExecuteTasks1(hut.TestCase):
         hsinte.system(cmd)
 
 
+@pytest.mark.no_container
 @pytest.mark.skipif(hsinte.is_inside_docker(), reason="AmpTask165")
 class TestExecuteTasks2(hut.TestCase):
     """

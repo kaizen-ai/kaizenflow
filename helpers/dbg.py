@@ -499,6 +499,7 @@ def reset_logger() -> None:
 # TODO(gp): Make these generate from MAPPING below.
 INFO = "\033[36mINFO\033[0m"
 WARNING = "\033[33mWARNING\033[0m"
+ERROR = "\033[31mERROR\033[0m"
 
 
 class _ColoredFormatter(logging.Formatter):

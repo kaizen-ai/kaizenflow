@@ -1,6 +1,6 @@
 #
 # Configure the local (thin) client built with `dev_scripts/client_setup/build.sh`.
-# 
+#
 
 # TODO(gp): -> dev_scripts -> dev_scripts_amp
 PWD=$(pwd)
@@ -67,6 +67,22 @@ alias ghamp="gh --repo alphamatic/amp"
 alias ghdt="gh --repo alphamatic/dev_tools"
 alias ghlem="gh --repo alphamatic/lemonade"
 
+# `invoke` doesn't seem to allow to have a single configuration file and
+# doesn't allow to specify it through an env var, so we create an alias.
+# From https://github.com/pyinvoke/invoke/issues/543
+# This doesn't work:
+# > export INVOKE_RUNTIME_CONFIG=$(pwd)/invoke.yaml
+#
+# These don't work:
+# > export INVOKE_TASKS_AUTO_DASH_NAMES=0
+# > export INVOKE_RUN_ECHO=1
+#
+# This works:
+# > export INVOKE_DEBUG=1
+#
+# This doesn't work:
+# > INVOKE_OPTS="--config $(pwd)/invoke.yaml"
+# > alias invoke="invoke $INVOKE_OPTS"
 alias i="invoke"
 alias il="invoke --list"
 alias ie="invoke jump_to_pytest_error"

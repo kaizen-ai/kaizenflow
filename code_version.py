@@ -1,1 +1,0 @@
-CODE_VERSION = "amp-1.0.0"

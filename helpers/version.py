@@ -9,65 +9,27 @@ import helpers.version as hversi
 
 import logging
 import os
+import re
 from typing import Optional
-
-from code_version import CODE_VERSION
 
 _LOG = logging.getLogger(__name__)
 
 
-def get_code_version() -> str:
-    """
-    Return the code version.
-    """
-    return CODE_VERSION
+_INFO = "\033[36mINFO\033[0m"
+_WARNING = "\033[33mWARNING\033[0m"
+_ERROR = "\033[31mERROR\033[0m"
 
 
-def get_container_version() -> Optional[str]:
-    """
-    Return the container version.
-    """
-    if _is_inside_container():
-        # We are running inside a container.
-        # Keep the code and the container in sync by versioning both and requiring
-        # to be the same.
-        container_version = os.environ["CONTAINER_VERSION"]
-    else:
-        container_version = None
-    return container_version
-
-
-def _check_version(code_version: str, container_version: str) -> bool:
-    # We are running inside a container.
-    # Keep the code and the container in sync by versioning both and requiring
-    # to be the same.
-    is_ok = container_version == code_version
-    if not is_ok:
-        msg = f"""
------------------------------------------------------------------------------
-This code is not in sync with the container:
-code_version={code_version} != container_version={container_version}
------------------------------------------------------------------------------
-You need to:
-- merge origin/master into your branch with `invoke git_merge_master`
-- pull the latest container with `invoke docker_pull`
-"""
-        msg = msg.rstrip().lstrip()
-        msg = "\033[31m%s\033[0m" % msg
-        _LOG.error(msg)
-        # raise RuntimeError(msg)
-    return is_ok
-
-
-def check_version() -> None:
+def check_version(dir_name: Optional[str] = None) -> None:
     """
     Check that the code and container code have compatible version, otherwise
     raises `RuntimeError`.
     """
     # Get code version.
-    code_version = get_code_version()
+    code_version = get_code_version(dir_name)
     is_inside_container = _is_inside_container()
     # Get container version.
+    # TODO(gp): Use _get_container_version().
     env_var = "CONTAINER_VERSION"
     if env_var not in os.environ:
         container_version = None
@@ -75,10 +37,10 @@ def check_version() -> None:
             # This situation happens when GH Actions pull the image using invoke
             # inside their container (but not inside ours), thus there is no
             # CONTAINER_VERSION.
-            _LOG.warning(
-                "The env var %s should be defined when running inside a"
-                " container",
-                env_var,
+            print(
+                _WARNING
+                + f": The env var {env_var} should be defined when running inside a"
+                " container"
             )
     else:
         container_version = os.environ[env_var]
@@ -101,6 +63,33 @@ def check_version() -> None:
         # No need to check.
         return
     _check_version(code_version, container_version)
+
+
+def get_code_version(dir_name: Optional[str] = None) -> str:
+    """
+    Return the code version.
+
+    :param dir_name: the path to the `version.txt` file. If None uses the dir
+        one level up with respect to the this file (i.e., `amp` dir)
+    """
+    if not dir_name:
+        # Use the version one level up.
+        dir_name = os.path.dirname(os.path.abspath(__file__))
+        dir_name = os.path.abspath(os.path.join(dir_name, ".."))
+    # Load the version.
+    file_name = os.path.join(dir_name, "version.txt")
+    file_name = os.path.abspath(file_name)
+    assert os.path.exists(file_name), "Can't find file '%s' for dir_name='%s'" % (
+        file_name,
+        dir_name,
+    )
+    with open(file_name) as f:
+        version = f.readline().rstrip()
+    # E.g., `amp-1.0.0`.
+    assert re.match(
+        r"^\S+-\d+\.\d+\.\d+$", version
+    ), "Invalid version '%s' from %s" % (version, file_name)
+    return version
 
 
 # Copied from helpers/system_interaction.py to avoid introducing dependencies.
@@ -131,3 +120,41 @@ def _is_inside_container() -> bool:
     Action.
     """
     return _is_inside_docker() or _is_inside_ci()
+
+
+# End copy.
+
+
+def _get_container_version() -> Optional[str]:
+    """
+    Return the container version.
+    """
+    container_version: Optional[str] = None
+    if _is_inside_container():
+        # We are running inside a container.
+        # Keep the code and the container in sync by versioning both and requiring
+        # to be the same.
+        container_version = os.environ["CONTAINER_VERSION"]
+    return container_version
+
+
+def _check_version(code_version: str, container_version: str) -> bool:
+    # We are running inside a container.
+    # Keep the code and the container in sync by versioning both and requiring
+    # to be the same.
+    is_ok = container_version == code_version
+    if not is_ok:
+        msg = f"""
+-----------------------------------------------------------------------------
+This code is not in sync with the container:
+code_version='{code_version}' != container_version='{container_version}'
+-----------------------------------------------------------------------------
+You need to:
+- merge origin/master into your branch with `invoke git_merge_master`
+- pull the latest container with `invoke docker_pull`
+"""
+        msg = msg.rstrip().lstrip()
+        msg = "\033[31m%s\033[0m" % msg
+        print(msg)
+        # raise RuntimeError(msg)
+    return is_ok

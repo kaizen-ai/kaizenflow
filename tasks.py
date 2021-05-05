@@ -1,10 +1,10 @@
 import logging
 
-_LOG = logging.getLogger(__name__)
-
 # We inline the code here since we need to make it visible to `invoke`, although
 # `from ... import *` is bad practice.
 from lib_tasks import *
+
+_LOG = logging.getLogger(__name__)
 
 # #############################################################################
 # Setup.

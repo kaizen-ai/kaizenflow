@@ -19,6 +19,7 @@ python -m venv $VENV_DIR
 source $VENV_DIR/bin/activate
 
 # Install packages.
+# TODO(gp): Switch to poetry.
 python -m pip install --upgrade pip
 pip install -r dev_scripts/client_setup/requirements.txt
 

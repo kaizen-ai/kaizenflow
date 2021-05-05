@@ -6,13 +6,14 @@ import lib_tasks as ltasks
 
 import datetime
 import functools
+import glob
 import json
 import logging
 import os
 import pprint
 import re
 import sys
-from typing import Any, Dict, Match
+from typing import Any, Dict, List, Match, Optional
 
 from invoke import task
 
@@ -21,13 +22,15 @@ from invoke import task
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.introspection as hintros
+import helpers.io_ as hio
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.table as htable
 import helpers.version as hversi
 
-# TODO(gp): Move to helpers.lib_tasks? Do we need to move / rename also
-#  test_tasks.py?
+# TODO(gp): Move to helpers.lib_tasks? Probably yes so we can share across repos
+#  (e.g., dev_tools)
+# TODO(gp): Do we need to move / rename also test_tasks.py?
 
 _LOG = logging.getLogger(__name__)
 
@@ -55,8 +58,11 @@ def get_default_value(key: str) -> Any:
     return _DEFAULT_PARAMS[key]
 
 
-# Since it's not easy to add global opportunity
+# Since it's not easy to add global command line options to invoke, we piggy
+# back the option that already exists.
 # If one uses the debug option for `invoke` we turn off the code debugging.
+# TODO(gp): Check http://docs.pyinvoke.org/en/1.0/concepts/library.html#
+#   modifying-core-parser-arguments
 if ("-d" in sys.argv) or ("--debug" in sys.argv):
     dbg.init_logger(verbosity=logging.DEBUG)
 else:
@@ -127,6 +133,7 @@ def git_merge_master(ctx):  # type: ignore
 
 
 # TODO(gp): Add git_co(ctx)
+# Reuse git.git_stash_push() and git.stash_apply()
 # git stash save your-file-name
 # git checkout master
 # # do whatever you had to do with master
@@ -199,8 +206,8 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
                 dbg.WARNING + f": Delete these {tag} branches?", abort_on_no=True
             )
         for branch in branches:
-            cmd = f"{delete_cmd} {branch}"
-            ctx.run(cmd)
+            cmd_tmp = f"{delete_cmd} {branch}"
+            ctx.run(cmd_tmp)
 
     # Delete local branches that are already merged into master.
     # > git branch --merged
@@ -247,15 +254,10 @@ def git_create_branch(ctx, branch_name=""):  # type: ignore
 
 
 # TODO(gp): Add dev_scripts/git/git_create_patch*.sh
-
 # dev_scripts/git/git_backup.sh
-
-# TODO(gp): dev_scripts/git/gcl
-
+# dev_scripts/git/gcl
 # dev_scripts/git/gd_master.sh
-
 # dev_scripts/git/git_branch.sh
-
 # dev_scripts/git/git_branch_point.sh
 
 # #############################################################################
@@ -337,6 +339,30 @@ def docker_kill_all(ctx):  # type: ignore
     _report_task()
     ctx.run("docker ps -a")
     ctx.run("docker rm -f $(docker ps -a -q)")
+
+
+# docker system prune
+# docker container ps -f "status=exited"
+# docker container rm $(docker container ps -f "status=exited" -q)
+# docker rmi $(docker images --filter="dangling=true" -q)
+
+# pylint: disable=line-too-long
+# Remove the images with hash
+# > docker image ls
+# REPOSITORY                                               TAG                                        IMAGE ID       CREATED         SIZE
+# 083233266530.dkr.ecr.us-east-2.amazonaws.com/im          07aea615a2aa9290f7362e99e1cc908876700821   d0889bf972bf   6 minutes ago   684MB
+# 083233266530.dkr.ecr.us-east-2.amazonaws.com/im          rc                                         d0889bf972bf   6 minutes ago   684MB
+# python                                                   3.7-slim-buster                            e7d86653f62f   14 hours ago    113MB
+# 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools   ce789e4718175fcdf6e4857581fef1c2a5ee81f3   2f64ade2c048   14 hours ago    2.02GB
+# 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools   local                                      2f64ade2c048   14 hours ago    2.02GB
+# 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools   d401a2a0bef90b9f047c65f8adb53b28ba05d536   1b11bf234c7f   15 hours ago    2.02GB
+# 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools   52ccd63edbc90020f450c074b7c7088a1806c5ac   90b70a55c367   15 hours ago    1.95GB
+# 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools   2995608a7d91157fc1a820869a6d18f018c3c598   0cb3858e85c6   15 hours ago    2.01GB
+# 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp         415376d58001e804e840bf3907293736ad62b232   e6ea837ab97f   18 hours ago    1.65GB
+# 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp         dev                                        e6ea837ab97f   18 hours ago    1.65GB
+# 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp         local                                      e6ea837ab97f   18 hours ago    1.65GB
+# 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp         9586cc2de70a4075b9fdcdb900476f8a0f324e3e   c75d2447da79   18 hours ago    1.65GB
+# pylint: enable=line-too-long
 
 
 # #############################################################################
@@ -483,6 +509,7 @@ def _get_base_image(base_image: str) -> str:
     :return: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     if base_image == "":
+        # TODO(gp): Use os.path.join.
         base_image = (
             get_default_value("ECR_BASE_PATH")
             + "/"
@@ -600,6 +627,7 @@ def docker_jupyter(  # type: ignore
     user_name = hsinte.get_user_name()
     service = "jupyter_server_test" if self_test else "jupyter_server"
     # TODO(gp): Not sure about the order of the -f files.
+    # TODO(gp): docker_compose_jupyter should extend docker_compose.
     cmd = rf"""IMAGE={image} \
     PORT={port} \
     docker-compose \
@@ -649,7 +677,8 @@ def _get_build_tag() -> str:
         AmpTask1280_Use_versioning_to_keep_code_and_container_in_sync-
         500a9e31ee70e51101c1b2eb82945c19992fa86e
     """
-    code_ver = hversi.get_code_version()
+    dir_name = os.path.dirname(os.path.abspath(__file__))
+    code_ver = hversi.get_code_version(dir_name)
     # We can't use datetime_.get_timestamp() since we don't want to pick up
     # the dependencies from pandas.
     timestamp = datetime.datetime.now().strftime("%Y%m%d")
@@ -894,16 +923,185 @@ def run_blank_tests(ctx, stage=_STAGE):  # type: ignore
     _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
 
 
-def _run_tests(
-    ctx: Any,
-    stage: str,
-    skipped_tests: str,
+# #############################################################################
+
+
+def _find_test_files(
+    dir_name: Optional[str] = None, use_absolute_path: bool = False
+) -> List[str]:
+    """
+    Find all the files containing test code in `dir_name`.
+    """
+    dir_name = dir_name or "."
+    dbg.dassert_dir_exists(dir_name)
+    _LOG.debug("dir_name=%s", dir_name)
+    # Find all the file names containing test code.
+    _LOG.info("Searching from '%s'", dir_name)
+    path = os.path.join(dir_name, "**", "test_*.py")
+    _LOG.debug("path=%s", path)
+    file_names = glob.glob(path, recursive=True)
+    _LOG.debug("Found %d files: %s", len(file_names), str(file_names))
+    dbg.dassert_no_duplicates(file_names)
+    # Test files should always under a dir called `test`.
+    for file_name in file_names:
+        if "/old/" in file_name:
+            continue
+        dbg.dassert_eq(
+            os.path.basename(os.path.dirname(file_name)),
+            "test",
+            "Test file '%s' needs to be under a `test` dir ",
+            file_name,
+        )
+        dbg.dassert_not_in(
+            "notebook/",
+            file_name,
+            "Test file '%s' should not be under a `notebook` dir",
+            file_name,
+        )
+    # Make path relatives, if needed.
+    if use_absolute_path:
+        file_names = [os.path.abspath(file_name) for file_name in file_names]
+    #
+    file_names = sorted(file_names)
+    _LOG.debug("file_names=%s", file_names)
+    dbg.dassert_no_duplicates(file_names)
+    return file_names
+
+
+def _find_test_class(class_name: str, file_names: List[str]) -> List[str]:
+    """
+    Find test file containing the class `class_name` and report it in a format
+    compatible with pytest.
+
+    E.g., for "TestLibTasksRunTests1" return
+    "test/test_lib_tasks.py::TestLibTasksRunTests1"
+    """
+    # > jackpy TestLibTasksRunTests1
+    # test/test_lib_tasks.py:60:class TestLibTasksRunTests1(hut.TestCase):
+    regex = r"^\s*class\s+(%s)\(" % re.escape(class_name)
+    _LOG.debug("regex='%s'", regex)
+    res: List[str] = []
+    # Scan all the files.
+    for file_name in file_names:
+        _LOG.debug("file_name=%s", file_name)
+        txt = hio.from_file(file_name)
+        # Search for the class in each file.
+        for i, line in enumerate(txt.split("\n")):
+            # _LOG.debug("file_name=%s i=%s: %s", file_name, i, line)
+            # TODO(gp): We should skip ```, """, '''
+            m = re.match(regex, line)
+            if m:
+                found_class_name = m.group(1)
+                _LOG.debug("  %s:%d -> %s", line, i, found_class_name)
+                res_tmp = f"{file_name}::{found_class_name}"
+                _LOG.debug("res_tmp=%s", res_tmp)
+                res.append(res_tmp)
+    res = sorted(list(set(res)))
+    return res
+
+
+@task
+def find_test_class(ctx, class_name="", dir_name="."):  # type: ignore
+    """
+    Report test files containing `class_name` in a format compatible with
+    pytest.
+
+    :param class_name: the class to search
+    :param dir_name: the dir from which to search (default: .)
+    """
+    _report_task()
+    dbg.dassert(class_name != "", "You need to specify a class name")
+    _ = ctx
+    file_names = _find_test_files(dir_name)
+    res = _find_test_class(class_name, file_names)
+    print(res)
+
+
+# #############################################################################
+
+
+# TODO(gp): decorator_name -> pytest_mark
+def _find_test_decorator(decorator_name: str, file_names: List[str]) -> List[str]:
+    """
+    Find test files containing tests with a certain decorator
+    `@pytest.mark.XYZ`.
+    """
+    dbg.dassert_isinstance(file_names, list)
+    # E.g.,
+    #   @pytest.mark.slow(...)
+    #   @pytest.mark.no_container
+    string = "@pytest.mark.%s" % decorator_name
+    regex = r"^\s*%s\s*[\(]?" % re.escape(string)
+    _LOG.debug("regex='%s'", regex)
+    res: List[str] = []
+    # Scan all the files.
+    for file_name in file_names:
+        _LOG.debug("file_name=%s", file_name)
+        txt = hio.from_file(file_name)
+        # Search for the class in each file.
+        for i, line in enumerate(txt.split("\n")):
+            # _LOG.debug("file_name=%s i=%s: %s", file_name, i, line)
+            # TODO(gp): We should skip ```, """, '''. We can add a function to
+            # remove all the comments, although we need to keep track of the
+            # line original numbers.
+            m = re.match(regex, line)
+            if m:
+                _LOG.debug("  -> found: %d:%s", i, line)
+                res.append(file_name)
+    #
+    res = sorted(list(set(res)))
+    return res
+
+
+@task
+def find_test_decorator(ctx, decorator_name="", dir_name="."):  # type: ignore
+    """
+    Report test files containing `class_name` in a format compatible with
+    pytest.
+
+    :param class_name: the class to search
+    :param dir_name: the dir from which to search
+    """
+    _report_task()
+    dbg.dassert(decorator_name != "", "You need to specify a decorator name")
+    _ = ctx
+    file_names = _find_test_files(dir_name)
+    res = _find_test_class(decorator_name, file_names)
+    print(res)
+
+
+# #############################################################################
+
+
+def _build_run_command_line(
     pytest_opts: str,
+    pytest_mark: str,
+    dir_name: str,
     skip_submodules: bool,
     coverage: bool,
     collect_only: bool,
-) -> None:
-    pytest_opts_tmp = [f'-m "{skipped_tests}"', pytest_opts]
+    #
+    skipped_tests: str,
+) -> str:
+    """
+    Same params as run_fast_tests().
+
+    :param skipped_tests: -m option for pytest
+    """
+    pytest_opts_tmp = []
+    if pytest_opts != "":
+        pytest_opts_tmp.append(pytest_opts)
+    if skipped_tests != "":
+        pytest_opts_tmp.insert(0, f'-m "{skipped_tests}"')
+    dir_name = dir_name or "."
+    file_names = _find_test_files(dir_name)
+    _LOG.debug("file_names=%s", file_names)
+    if pytest_mark != "":
+        file_names = _find_test_decorator(pytest_mark, file_names)
+        _LOG.debug(
+            "After pytest_mark='%s': file_names=%s", pytest_mark, file_names
+        )
+        pytest_opts_tmp.extend(file_names)
     if skip_submodules:
         submodule_paths = git.get_submodule_paths()
         _LOG.warning(
@@ -917,33 +1115,78 @@ def _run_tests(
     if collect_only:
         _LOG.warning("Only collecting tests as per user request")
         pytest_opts_tmp.append("--collect-only")
-        # Clean files.
-        ctx.run("rm -rf ./.coverage*")
     # Concatenate the options.
     _LOG.debug("pytest_opts_tmp=\n%s", str(pytest_opts_tmp))
     pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
+    cmd = f"pytest {pytest_opts}"
+    return cmd
+
+
+def _run_test_cmd(
+    ctx: Any,
+    stage: str,
+    cmd: str,
+    coverage: bool,
+    collect_only: bool,
+) -> None:
+    if collect_only:
+        # Clean files.
+        ctx.run("rm -rf ./.coverage*")
     # Run.
     base_image = ""
     docker_compose = _get_amp_docker_compose_path()
     # We need to add some " to pass the string as it is to the container.
-    cmd = f"'pytest {pytest_opts}'"
+    cmd = f"'{cmd}'"
     _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
-    #
+    # Print message about coverage.
     if coverage:
-        msg = """The coverage results in textual form are above.
-To browse the files annotate with coverage, start a server (not from the container):
-> (cd ./htmlcov; python -m http.server 33333)
-Go with your browser to `localhost:33333`
+        msg = """- The coverage results in textual form are above.
+
+- To browse the files annotate with coverage, start a server (not from the container):
+  > (cd ./htmlcov; python -m http.server 33333)
+  then go with your browser to `localhost:33333`
 """
         print(msg)
 
 
+def _run_tests(
+    ctx: Any,
+    stage: str,
+    pytest_opts: str,
+    pytest_mark: str,
+    dir_name: str,
+    skip_submodules: bool,
+    coverage: bool,
+    collect_only: bool,
+    skipped_tests: str,
+) -> None:
+    cmd = _build_run_command_line(
+        pytest_opts,
+        pytest_mark,
+        dir_name,
+        skip_submodules,
+        coverage,
+        collect_only,
+        skipped_tests,
+    )
+    _run_test_cmd(
+        ctx,
+        stage,
+        cmd,
+        coverage,
+        collect_only,
+    )
+
+
+# TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
 @task
 def run_fast_tests(  # type: ignore
     ctx,
     stage=_STAGE,
     pytest_opts="",
+    pytest_mark="",
+    dir_name="",
     skip_submodules=False,
     coverage=False,
     collect_only=False,
@@ -951,23 +1194,54 @@ def run_fast_tests(  # type: ignore
     """
     Run fast tests.
 
-    :param pytest_opts: pass options directly to pytest
-    :param skip_submodules: run tests only for the supermodule (e.g., in `lem`
-        skip the `amp` tests)
-    :param coverage: run the tests collecting code coverage
-    :param collect_only: only collect the tests but do not run the tests
+    :param stage: select a specific stage for the Docker image
+    :param pytest_opts: option for pytest
+    :param pytest_mark: test list to select as `@pytest.mark.XYZ`
+    :param dir_name: dir to start searching for tests
+    :param skip_submodules: ignore all the dir inside a submodule
+    :param coverage: enable coverage computation
+    :param collect_only: do not run tests but show what will be executed
     """
     _report_task()
     skipped_tests = "not slow and not superslow"
     _run_tests(
         ctx,
         stage,
-        skipped_tests,
         pytest_opts,
+        pytest_mark,
+        dir_name,
         skip_submodules,
         coverage,
         collect_only,
+        skipped_tests,
     )
+
+
+# @task
+# def run_slow_tests(  # type: ignore
+#     ctx,
+#     stage=_STAGE,
+#     pytest_opts="",
+#     skip_submodules=False,
+#     coverage=False,
+#     collect_only=False,
+# ):
+#     """
+#     Run slow tests.
+#
+#     Same params as `run_fast_tests`.
+#     """
+#     _report_task()
+#     skipped_tests = "slow and not superslow"
+#     _run_tests(
+#         ctx,
+#         stage,
+#         skipped_tests,
+#         pytest_opts,
+#         skip_submodules,
+#         coverage,
+#         collect_only,
+#     )
 
 
 @task
@@ -975,6 +1249,8 @@ def run_slow_tests(  # type: ignore
     ctx,
     stage=_STAGE,
     pytest_opts="",
+    pytest_mark="",
+    dir_name="",
     skip_submodules=False,
     coverage=False,
     collect_only=False,
@@ -987,12 +1263,41 @@ def run_slow_tests(  # type: ignore
     _run_tests(
         ctx,
         stage,
-        skipped_tests,
         pytest_opts,
+        pytest_mark,
+        dir_name,
         skip_submodules,
         coverage,
         collect_only,
+        skipped_tests,
     )
+
+
+# @task
+# def run_superslow_tests(  # type: ignore
+#     ctx,
+#     stage=_STAGE,
+#     pytest_opts="",
+#     skip_submodules=False,
+#     coverage=False,
+#     collect_only=False,
+# ):
+#     """
+#     Run superslow tests.
+#
+#     Same params as `run_fast_tests`.
+#     """
+#     _report_task()
+#     skipped_tests = "not slow and superslow"
+#     _run_tests(
+#         ctx,
+#         stage,
+#         skipped_tests,
+#         pytest_opts,
+#         skip_submodules,
+#         coverage,
+#         collect_only,
+#     )
 
 
 @task
@@ -1000,6 +1305,8 @@ def run_superslow_tests(  # type: ignore
     ctx,
     stage=_STAGE,
     pytest_opts="",
+    pytest_mark="",
+    dir_name="",
     skip_submodules=False,
     coverage=False,
     collect_only=False,
@@ -1012,11 +1319,13 @@ def run_superslow_tests(  # type: ignore
     _run_tests(
         ctx,
         stage,
-        skipped_tests,
         pytest_opts,
+        pytest_mark,
+        dir_name,
         skip_submodules,
         coverage,
         collect_only,
+        skipped_tests,
     )
 
 
@@ -1025,6 +1334,8 @@ def run_fast_slow_tests(  # type: ignore
     ctx,
     stage=_STAGE,
     pytest_opts="",
+    pytest_mark="",
+    dir_name="",
     skip_submodules=False,
     coverage=False,
     collect_only=False,
@@ -1037,12 +1348,41 @@ def run_fast_slow_tests(  # type: ignore
     _run_tests(
         ctx,
         stage,
-        skipped_tests,
         pytest_opts,
+        pytest_mark,
+        dir_name,
         skip_submodules,
         coverage,
         collect_only,
+        skipped_tests,
     )
+
+
+# @task
+# def run_fast_slow_tests(  # type: ignore
+#     ctx,
+#     stage=_STAGE,
+#     pytest_opts="",
+#     skip_submodules=False,
+#     coverage=False,
+#     collect_only=False,
+# ):
+#     """
+#     Run fast and slow tests.
+#
+#     Same params as `run_fast_tests`.
+#     """
+#     _report_task()
+#     skipped_tests = "not superslow"
+#     _run_tests(
+#         ctx,
+#         stage,
+#         skipped_tests,
+#         pytest_opts,
+#         skip_submodules,
+#         coverage,
+#         collect_only,
+#     )
 
 
 @task
@@ -1244,7 +1584,8 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
     gh_workflow_list(ctx, branch=branch)
 
 
-# TODO(gp):
+# TODO(gp): Implement this.
+# pylint: disable=line-too-long
 # @task
 # def gh_workflow_passing(ctx, branch="branch", workflows="all"):  # type: ignore
 # For each workflow check if the last completed is success or failure
@@ -1252,6 +1593,7 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
 # completed       success Fix broken log statement        Fast tests      master  schedule        2m20s   797849342
 # completed       success Fix broken log statement        Fast tests      master  push    2m7s    797789759
 # completed       success Another speculative fix for break       Fast tests      master  push    1m54s   797556212
+# pylint: enable=line-too-long
 
 # #############################################################################
 
