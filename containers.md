@@ -1,3 +1,9 @@
+<!--ts-->
+   * [Invariants](#invariants)
+
+
+
+<!--te-->
 # Invariants
 
 - `compose` files should extend others

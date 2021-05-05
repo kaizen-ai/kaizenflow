@@ -12,7 +12,6 @@ import os
 import re
 from typing import Optional
 
-
 _LOG = logging.getLogger(__name__)
 
 
@@ -21,7 +20,7 @@ _WARNING = "\033[33mWARNING\033[0m"
 _ERROR = "\033[31mERROR\033[0m"
 
 
-def check_version(dir_name: Optional[str]=None) -> None:
+def check_version(dir_name: Optional[str] = None) -> None:
     """
     Check that the code and container code have compatible version, otherwise
     raises `RuntimeError`.
@@ -38,10 +37,11 @@ def check_version(dir_name: Optional[str]=None) -> None:
             # This situation happens when GH Actions pull the image using invoke
             # inside their container (but not inside ours), thus there is no
             # CONTAINER_VERSION.
-            print(_WARNING +
-                  f": The env var {env_var} should be defined when running inside a"
-                  " container"
-                  )
+            print(
+                _WARNING
+                + f": The env var {env_var} should be defined when running inside a"
+                " container"
+            )
     else:
         container_version = os.environ[env_var]
     # Print information.
@@ -65,7 +65,7 @@ def check_version(dir_name: Optional[str]=None) -> None:
     _check_version(code_version, container_version)
 
 
-def get_code_version(dir_name: Optional[str]=None) -> str:
+def get_code_version(dir_name: Optional[str] = None) -> str:
     """
     Return the code version.
     """
@@ -77,8 +77,9 @@ def get_code_version(dir_name: Optional[str]=None) -> str:
     with open(file_name) as f:
         version = f.readline().rstrip()
     # E.g., amp-1.0.0
-    assert re.match(r"^\S+-\d+\.\d+\.\d+$", version), \
-        "Invalid version '%s' from %s" % (version, file_name)
+    assert re.match(
+        r"^\S+-\d+\.\d+\.\d+$", version
+    ), "Invalid version '%s' from %s" % (version, file_name)
     return version
 
 

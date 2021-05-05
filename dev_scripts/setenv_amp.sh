@@ -1,6 +1,6 @@
 #
 # Configure the local (thin) client built with `dev_scripts/client_setup/build.sh`.
-# 
+#
 
 # TODO(gp): -> dev_scripts -> dev_scripts_amp
 PWD=$(pwd)

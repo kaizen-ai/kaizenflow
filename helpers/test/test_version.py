@@ -3,7 +3,6 @@ import logging
 import helpers.unit_test as hut
 import helpers.version as hversi
 
-
 _LOG = logging.getLogger(__name__)
 
 
@@ -30,4 +29,3 @@ class TestVersion1(hut.TestCase):
         container_version = "amp-1.0.0"
         is_ok = hversi._check_version(code_version, container_version)
         self.assertTrue(is_ok)
-

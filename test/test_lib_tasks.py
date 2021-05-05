@@ -61,7 +61,6 @@ class TestLibTasks1(hut.TestCase):
 
 
 class TestLibRunTests1(hut.TestCase):
-
     def test_run_fast_tests1(self) -> None:
         """
         Basic run fast tests.
@@ -81,7 +80,8 @@ class TestLibRunTests1(hut.TestCase):
             skip_submodules,
             coverage,
             collect_only,
-            skipped_tests)
+            skipped_tests,
+        )
         exp = 'pytest -m "not slow and not superslow"'
         self.assert_equal(act, exp)
 
@@ -104,12 +104,15 @@ class TestLibRunTests1(hut.TestCase):
             skip_submodules,
             coverage,
             collect_only,
-            skipped_tests)
+            skipped_tests,
+        )
         exp = r'pytest -m "not slow and not superslow" --cov=. --cov-branch --cov-report term-missing --cov-report html --collect-only'
         self.assert_equal(act, exp)
 
-    @pytest.mark.skipif(not git.has_submodules(),
-            reason="Run only if this repo has are submodules")
+    @pytest.mark.skipif(
+        not git.has_submodules(),
+        reason="Run only if this repo has are submodules",
+    )
     def test_run_fast_tests3(self) -> None:
         """
         Skip submodules.
@@ -129,8 +132,9 @@ class TestLibRunTests1(hut.TestCase):
             skip_submodules,
             coverage,
             collect_only,
-            skipped_tests)
-        exp = r''
+            skipped_tests,
+        )
+        exp = r""
         self.assert_equal(act, exp)
 
     def test_run_fast_tests4(self) -> None:
@@ -140,24 +144,24 @@ class TestLibRunTests1(hut.TestCase):
         scratch_space = self.get_scratch_space(use_absolute_path=False)
         dir_name = os.path.join(scratch_space, "test")
         file_dict = {
-            "test_this.py":
-                hprint.dedent(
-                    """
+            "test_this.py": hprint.dedent(
+                """
                     foo
-                    
+
                     class TestHelloWorld(hut.TestCase):
                         bar
-                    """),
-            "test_that.py":
-                hprint.dedent(
                     """
+            ),
+            "test_that.py": hprint.dedent(
+                """
                     foo
                     baz
-                    
+
                     @pytest.mark.no_container
                     class TestHello_World(hut.):
                         bar
-                    """)
+                    """
+            ),
         }
         incremental = True
         hut.create_test_dir(dir_name, incremental, file_dict)
@@ -177,12 +181,13 @@ class TestLibRunTests1(hut.TestCase):
             skip_submodules,
             coverage,
             collect_only,
-            skipped_tests)
-        exp = 'pytest TestLibRunTests1.test_run_fast_tests4/tmp.scratch/test/test_that.py'
+            skipped_tests,
+        )
+        exp = "pytest TestLibRunTests1.test_run_fast_tests4/tmp.scratch/test/test_that.py"
         self.assert_equal(act, exp)
 
-class TestLibTasksRunTests1(hut.TestCase):
 
+class TestLibTasksRunTests1(hut.TestCase):
     def test_find_test_files1(self) -> None:
         """
         Find all the test files in the current dir.
@@ -230,39 +235,38 @@ class TestLibTasksRunTests1(hut.TestCase):
         scratch_space = self.get_scratch_space()
         dir_name = os.path.join(scratch_space, "test")
         file_dict = {
-            "test_this.py":
-                hprint.dedent(
-                    """
+            "test_this.py": hprint.dedent(
+                """
                     foo
-                    
+
                     class TestHelloWorld(hut.TestCase):
                         bar
-                    """),
-            "test_that.py":
-                hprint.dedent(
                     """
+            ),
+            "test_that.py": hprint.dedent(
+                """
                     foo
                     baz
-                    
+
                     class TestHello_World(hut.):
                         bar
-                    """)
+                    """
+            ),
         }
         incremental = True
         hut.create_test_dir(dir_name, incremental, file_dict)
         #
         file_names = ltasks._find_test_files(dir_name)
-        act_file_names = [os.path.relpath(d, scratch_space) for
-                          d in file_names]
-        exp_file_names = [
-            'test/test_that.py',
-            'test/test_this.py']
+        act_file_names = [os.path.relpath(d, scratch_space) for d in file_names]
+        exp_file_names = ["test/test_that.py", "test/test_this.py"]
         self.assert_equal(str(act_file_names), str(exp_file_names))
         #
         act = ltasks._find_test_class("TestHelloWorld", file_names)
         act = hut.purify_file_names(act)
-        exp = ["test/TestLibTasksRunTests1.test_find_test_class3/tmp.scratch/"
-               "test/test_this.py::TestHelloWorld"]
+        exp = [
+            "test/TestLibTasksRunTests1.test_find_test_class3/tmp.scratch/"
+            "test/test_this.py::TestHelloWorld"
+        ]
         self.assert_equal(str(act), str(exp))
 
     def test_find_test_decorator1(self) -> None:
@@ -272,24 +276,24 @@ class TestLibTasksRunTests1(hut.TestCase):
         scratch_space = self.get_scratch_space()
         dir_name = os.path.join(scratch_space, "test")
         file_dict = {
-            "test_this.py":
-                hprint.dedent(
-                    """
+            "test_this.py": hprint.dedent(
+                """
                     foo
-                    
+
                     class TestHelloWorld(hut.TestCase):
                         bar
-                    """),
-            "test_that.py":
-                hprint.dedent(
                     """
+            ),
+            "test_that.py": hprint.dedent(
+                """
                     foo
                     baz
-                    
+
                     @pytest.mark.no_container
                     class TestHello_World(hut.):
                         bar
-                    """)
+                    """
+            ),
         }
         incremental = True
         hut.create_test_dir(dir_name, incremental, file_dict)
@@ -297,8 +301,10 @@ class TestLibTasksRunTests1(hut.TestCase):
         file_names = ltasks._find_test_files(dir_name)
         act = ltasks._find_test_decorator("no_container", file_names)
         act = hut.purify_file_names(act)
-        exp = ["test/TestLibTasksRunTests1.test_find_test_decorator1/tmp.scratch/"
-               "test/test_that.py"]
+        exp = [
+            "test/TestLibTasksRunTests1.test_find_test_decorator1/tmp.scratch/"
+            "test/test_that.py"
+        ]
         self.assert_equal(str(act), str(exp))
 
     def test_find_test_decorator2(self) -> None:
@@ -308,6 +314,5 @@ class TestLibTasksRunTests1(hut.TestCase):
         file_names = ["test/test_tasks.py"]
         act = ltasks._find_test_decorator("no_container", file_names)
         act = hut.purify_file_names(act)
-        exp = ['test/test_tasks.py']
+        exp = ["test/test_tasks.py"]
         self.assert_equal(str(act), str(exp))
-

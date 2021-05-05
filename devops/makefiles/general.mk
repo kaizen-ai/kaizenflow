@@ -36,7 +36,7 @@ docker_bash.rc:
 		-l user=$(USER) \
 		user_space \
 		bash
-	
+
 docker_bash.prod:
 ifdef IMAGE_PROD
 	IMAGE=$(IMAGE_PROD) \

@@ -31,7 +31,7 @@ print_setup:
 	@echo "DEV_TOOLS_IMAGE_PROD=$(DEV_TOOLS_IMAGE_PROD)"
 	@echo "IMAGE_DEV=$(IMAGE_DEV)"
 	@echo "IMAGE_RC=$(IMAGE_RC)"
-	
+
 # #############################################################################
 # Docker development.
 # #############################################################################

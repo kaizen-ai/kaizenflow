@@ -21,23 +21,26 @@ _WARNING = "\033[33mWARNING\033[0m"
 
 try:
     import numpy as np
-    _HAS_NUMPY=True
+
+    _HAS_NUMPY = True
 except ImportError as e:
     print(_WARNING + ":" + str(e))
-    _HAS_NUMPY=False
+    _HAS_NUMPY = False
 try:
     import pandas as pd
-    _HAS_PANDAS=True
+
+    _HAS_PANDAS = True
 except ImportError as e:
     print(_WARNING + ":" + str(e))
-    _HAS_PANDAS=False
+    _HAS_PANDAS = False
 
 try:
     import matplotlib.pyplot as plt
+
     _HAS_MATPLOTLIB = True
 except ImportError as e:
     print(_WARNING + ":" + str(e))
-    _HAS_MATPLOTLIB=False
+    _HAS_MATPLOTLIB = False
 
 
 # We use strings as type hints (e.g., 'pd.DataFrame') since we are not sure
@@ -261,10 +264,14 @@ def get_df_signature(df: "pd.DataFrame", num_rows: int = 3) -> str:
     return txt
 
 
-def create_test_dir(dir_name: str, incremental: bool, file_dict: Dict[str, str]) -> None:
+def create_test_dir(
+    dir_name: str, incremental: bool, file_dict: Dict[str, str]
+) -> None:
     """
     Create a directory `dir_name` with the files from `file_dict`.
-    `file_dict` is interpreted as pair of files relative to `dir_name` and content.
+
+    `file_dict` is interpreted as pair of files relative to `dir_name`
+    and content.
     """
     dbg.dassert_no_duplicates(file_dict.keys())
     hio.create_dir(dir_name, incremental=incremental)
@@ -274,7 +281,6 @@ def create_test_dir(dir_name: str, incremental: bool, file_dict: Dict[str, str])
         hio.create_enclosing_dir(dst_file_name, incremental=incremental)
         file_content = file_dict[file_name]
         hio.to_file(dst_file_name, file_content)
-
 
 
 def get_dir_signature(dir_name: str, num_lines: Optional[int] = None) -> str:
@@ -354,7 +360,8 @@ def remove_amp_references(txt: str) -> str:
 
 def purify_file_names(file_names: List[str]) -> List[str]:
     """
-    Express file names in terms of the root of git repo, removing reference to amp.
+    Express file names in terms of the root of git repo, removing reference to
+    amp.
     """
     git_root = git.get_client_root(super_module=True)
     file_names = [os.path.relpath(f, git_root) for f in file_names]
@@ -434,9 +441,13 @@ def diff_files(
         msg_as_str += "\n" + error_msg
     # Add also the stack trace to the logging error.
     if False:
-        log_msg_as_str = (msg_as_str + "\n" +
-             hprint.frame("Traceback", '-') + "\n" +
-                          ''.join(traceback.format_stack()))
+        log_msg_as_str = (
+            msg_as_str
+            + "\n"
+            + hprint.frame("Traceback", "-")
+            + "\n"
+            + "".join(traceback.format_stack())
+        )
         _LOG.error(log_msg_as_str)
     # Assert.
     if abort_on_exit:
@@ -621,7 +632,7 @@ def _assert_equal(
             "full_test_name test_dir fuzzy_match abort_on_error dst_dir"
         )
     )
-    # 
+    #
     _LOG.debug("Before any transformation:")
     _LOG.debug("act=\n'%s'", actual)
     _LOG.debug("exp=\n'%s'", expected)
@@ -831,8 +842,9 @@ class TestCase(unittest.TestCase):
         if self._scratch_dir is None:
             # Create the dir on the first invocation on a given test.
             curr_path = self._get_current_path(
-                test_class_name=test_class_name, test_method_name=test_method_name,
-                use_absolute_path=use_absolute_path
+                test_class_name=test_class_name,
+                test_method_name=test_method_name,
+                use_absolute_path=use_absolute_path,
             )
             dir_name = os.path.join(curr_path, "tmp.scratch")
             hio.create_dir(dir_name, incremental=get_incremental_tests())
@@ -1054,7 +1066,9 @@ class TestCase(unittest.TestCase):
     # #########################################################################
 
     def _check_df_update_outcome(
-        self, file_name: str, actual: "pd.DataFrame",
+        self,
+        file_name: str,
+        actual: "pd.DataFrame",
     ) -> None:
         _LOG.debug(hprint.to_str("file_name"))
         hio.create_enclosing_dir(file_name)
@@ -1148,7 +1162,7 @@ class TestCase(unittest.TestCase):
         self,
         test_class_name: Optional[str] = None,
         test_method_name: Optional[str] = None,
-        use_absolute_path: bool=True,
+        use_absolute_path: bool = True,
     ) -> str:
         """
         Return the name of the directory containing the input / output data

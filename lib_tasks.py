@@ -20,8 +20,8 @@ from invoke import task
 # this code needs to run with minimal dependencies and without Docker.
 import helpers.dbg as dbg
 import helpers.git as git
-import helpers.io_ as hio
 import helpers.introspection as hintros
+import helpers.io_ as hio
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.table as htable
@@ -336,6 +336,7 @@ def docker_kill_all(ctx):  # type: ignore
     _report_task()
     ctx.run("docker ps -a")
     ctx.run("docker rm -f $(docker ps -a -q)")
+
 
 # docker system prune
 # docker container ps -f "status=exited"
@@ -917,10 +918,13 @@ def run_blank_tests(ctx, stage=_STAGE):  # type: ignore
     _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
 
 
-# ###############
+# #############################################################################
 import glob
 
-def _find_test_files(dir_name: Optional[str] = None, use_absolute_path: bool=False) -> List[str]:
+
+def _find_test_files(
+    dir_name: Optional[str] = None, use_absolute_path: bool = False
+) -> List[str]:
     """
     Find all the files containing test code in `dir_name`.
     """
@@ -938,11 +942,18 @@ def _find_test_files(dir_name: Optional[str] = None, use_absolute_path: bool=Fal
     for file_name in file_names:
         if "/old/" in file_name:
             continue
-        dbg.dassert_eq(os.path.basename(os.path.dirname(file_name)), "test",
-                       "Test file '%s' needs to be under a `test` dir ", file_name)
-        dbg.dassert_not_in("notebook/", file_name,
-                           "Test file '%s' should not be under a `notebook` dir",
-                           file_name)
+        dbg.dassert_eq(
+            os.path.basename(os.path.dirname(file_name)),
+            "test",
+            "Test file '%s' needs to be under a `test` dir ",
+            file_name,
+        )
+        dbg.dassert_not_in(
+            "notebook/",
+            file_name,
+            "Test file '%s' should not be under a `notebook` dir",
+            file_name,
+        )
     # Make path relatives, if needed.
     if use_absolute_path:
         file_names = [os.path.abspath(file_name) for file_name in file_names]
@@ -959,7 +970,7 @@ def _find_test_class(class_name: str, file_names: List[str]) -> List[str]:
     compatible with pytest.
 
     E.g., for "TestLibTasksRunTests1" return
-        "test/test_lib_tasks.py::TestLibTasksRunTests1"
+    "test/test_lib_tasks.py::TestLibTasksRunTests1"
     """
     # > jackpy TestLibTasksRunTests1
     # test/test_lib_tasks.py:60:class TestLibTasksRunTests1(hut.TestCase):
@@ -988,7 +999,8 @@ def _find_test_class(class_name: str, file_names: List[str]) -> List[str]:
 @task
 def find_test_class(ctx, class_name="", dir_name="."):
     """
-    Report test files containing `class_name` in a format compatible with pytest.
+    Report test files containing `class_name` in a format compatible with
+    pytest.
 
     :param class_name: the class to search
     :param dir_name: the dir from which to search (default: .)
@@ -1001,13 +1013,14 @@ def find_test_class(ctx, class_name="", dir_name="."):
     print(res)
 
 
-# ###############
+# #############################################################################
 
 
 # TODO: decorator_name -> pytest_mark
 def _find_test_decorator(decorator_name: str, file_names: List[str]) -> List[str]:
     """
-    Find test files containing tests with a certain decorator `@pytest.mark.XYZ`.
+    Find test files containing tests with a certain decorator
+    `@pytest.mark.XYZ`.
     """
     dbg.dassert_isinstance(file_names, list)
     # E.g.,
@@ -1023,7 +1036,7 @@ def _find_test_decorator(decorator_name: str, file_names: List[str]) -> List[str
         txt = hio.from_file(file_name)
         # Search for the class in each file.
         for i, line in enumerate(txt.split("\n")):
-            #_LOG.debug("file_name=%s i=%s: %s", file_name, i, line)
+            # _LOG.debug("file_name=%s i=%s: %s", file_name, i, line)
             # TODO(gp): We should skip ```, """, '''
             m = re.match(regex, line)
             if m:
@@ -1037,7 +1050,8 @@ def _find_test_decorator(decorator_name: str, file_names: List[str]) -> List[str
 @task
 def find_test_decorator(ctx, decorator_name="", dir_name="."):
     """
-    Report test files containing `class_name` in a format compatible with pytest.
+    Report test files containing `class_name` in a format compatible with
+    pytest.
 
     :param class_name: the class to search
     :param dir_name: the dir from which to search
@@ -1049,7 +1063,9 @@ def find_test_decorator(ctx, decorator_name="", dir_name="."):
     res = _find_test_class(decorator_name, file_names)
     print(res)
 
-# ###############
+
+# #############################################################################
+
 
 def _build_run_command_line(
     pytest_opts: str,
@@ -1076,7 +1092,9 @@ def _build_run_command_line(
     _LOG.debug("file_names=%s", file_names)
     if pytest_mark != "":
         file_names = _find_test_decorator(pytest_mark, file_names)
-        _LOG.debug("After pytest_mark='%s': file_names=%s", pytest_mark, file_names)
+        _LOG.debug(
+            "After pytest_mark='%s': file_names=%s", pytest_mark, file_names
+        )
         pytest_opts_tmp.extend(file_names)
     if skip_submodules:
         submodule_paths = git.get_submodule_paths()
@@ -1100,11 +1118,11 @@ def _build_run_command_line(
 
 
 def _run_tests(
-        ctx: Any,
-        stage: str,
-        cmd: str,
-        collect_only: bool,
-    ):
+    ctx: Any,
+    stage: str,
+    cmd: str,
+    collect_only: bool,
+):
     if collect_only:
         # Clean files.
         ctx.run("rm -rf ./.coverage*")
@@ -1117,7 +1135,7 @@ def _run_tests(
     # Print message about coverage.
     if coverage:
         msg = """- The coverage results in textual form are above.
-        
+
 - To browse the files annotate with coverage, start a server (not from the container):
   > (cd ./htmlcov; python -m http.server 33333)
   then go with your browser to `localhost:33333`

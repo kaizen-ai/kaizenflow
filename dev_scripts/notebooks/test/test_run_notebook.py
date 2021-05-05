@@ -1,6 +1,7 @@
 # ---
 # jupyter:
 #   jupytext:
+#     formats: ipynb,py:percent
 #     text_representation:
 #       extension: .py
 #       format_name: percent
@@ -19,11 +20,8 @@
 # %load_ext autoreload
 # %autoreload 2
 
-import os
 
 import core.config_builders as cfgb
-import numpy as np 
-import pandas as pd
 
 # %%
 # Initialize config.

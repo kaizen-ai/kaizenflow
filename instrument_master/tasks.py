@@ -19,7 +19,7 @@ default_params = {
     # different image, e.g., `XYZ_tmp` to not interfere with the prod system:
     # "BASE_IMAGE": "..._tmp",
     "BASE_IMAGE": "im",
-    "DEV_TOOLS_IMAGE_PROD": f"{ECR_BASE_PATH}/dev_tools:prod"
+    "DEV_TOOLS_IMAGE_PROD": f"{ECR_BASE_PATH}/dev_tools:prod",
 }
 
 

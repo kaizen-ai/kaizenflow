@@ -166,7 +166,7 @@ def get_submodule_paths() -> List[str]:
     cmd = "git config --file .gitmodules --get-regexp path | awk '{ print $2 }'"
     _, txt = hsinte.system_to_string(cmd)
     _LOG.debug("txt=%s", txt)
-    files : List[str] = hsinte.text_to_list(txt)
+    files: List[str] = hsinte.text_to_list(txt)
     _LOG.debug("files=%s", files)
     return files
 
@@ -175,7 +175,7 @@ def has_submodules() -> bool:
     return len(get_submodule_paths()) > 0
 
 
-# ############
+# #############################################################################
 
 
 def _get_hash(git_hash: str, short_hash: bool, num_digits: int = 8) -> str:
