@@ -1117,10 +1117,11 @@ def _build_run_command_line(
     return cmd
 
 
-def _run_tests(
+def _run_test_cmd(
     ctx: Any,
     stage: str,
     cmd: str,
+    coverage: bool,
     collect_only: bool,
 ):
     if collect_only:
@@ -1143,6 +1144,36 @@ def _run_tests(
         print(msg)
 
 
+def _run_tests(
+    ctx : Any,
+    stage : str,
+    pytest_opts: str,
+    pytest_mark: str,
+    dir_name: str,
+    skip_submodules: bool,
+    coverage: bool,
+    collect_only: bool,
+        skipped_tests: str,
+) -> None:
+    cmd = _build_run_command_line(
+        pytest_opts,
+        pytest_mark,
+        dir_name,
+        skip_submodules,
+        coverage,
+        collect_only,
+        skipped_tests,
+    )
+    _run_test_cmd(
+        ctx,
+        stage,
+        cmd,
+        coverage,
+        collect_only,
+    )
+
+
+# TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
 @task
 def run_fast_tests(  # type: ignore
     ctx,
@@ -1167,102 +1198,178 @@ def run_fast_tests(  # type: ignore
     """
     _report_task()
     skipped_tests = "not slow and not superslow"
-    cmd = _build_run_command_line(
+    _run_tests(
+        ctx,
+        stage,
         pytest_opts,
         pytest_mark,
         dir_name,
         skip_submodules,
         coverage,
         collect_only,
-        skipped_tests,
-    )
-    _run_tests(
-        ctx,
-        stage,
-        cmd,
-        collect_only,
-    )
+    skipped_tests)
 
+
+# @task
+# def run_slow_tests(  # type: ignore
+#     ctx,
+#     stage=_STAGE,
+#     pytest_opts="",
+#     skip_submodules=False,
+#     coverage=False,
+#     collect_only=False,
+# ):
+#     """
+#     Run slow tests.
+#
+#     Same params as `run_fast_tests`.
+#     """
+#     _report_task()
+#     skipped_tests = "slow and not superslow"
+#     _run_tests(
+#         ctx,
+#         stage,
+#         skipped_tests,
+#         pytest_opts,
+#         skip_submodules,
+#         coverage,
+#         collect_only,
+#     )
 
 @task
 def run_slow_tests(  # type: ignore
-    ctx,
-    stage=_STAGE,
-    pytest_opts="",
-    skip_submodules=False,
-    coverage=False,
-    collect_only=False,
+        ctx,
+        stage=_STAGE,
+        pytest_opts="",
+        pytest_mark="",
+        dir_name="",
+        skip_submodules=False,
+        coverage=False,
+        collect_only=False,
 ):
     """
     Run slow tests.
-
-    Same params as `run_fast_tests`.
     """
     _report_task()
     skipped_tests = "slow and not superslow"
     _run_tests(
         ctx,
         stage,
-        skipped_tests,
         pytest_opts,
+        pytest_mark,
+        dir_name,
         skip_submodules,
         coverage,
         collect_only,
-    )
+        skipped_tests)
 
+
+# @task
+# def run_superslow_tests(  # type: ignore
+#     ctx,
+#     stage=_STAGE,
+#     pytest_opts="",
+#     skip_submodules=False,
+#     coverage=False,
+#     collect_only=False,
+# ):
+#     """
+#     Run superslow tests.
+#
+#     Same params as `run_fast_tests`.
+#     """
+#     _report_task()
+#     skipped_tests = "not slow and superslow"
+#     _run_tests(
+#         ctx,
+#         stage,
+#         skipped_tests,
+#         pytest_opts,
+#         skip_submodules,
+#         coverage,
+#         collect_only,
+#     )
 
 @task
 def run_superslow_tests(  # type: ignore
-    ctx,
-    stage=_STAGE,
-    pytest_opts="",
-    skip_submodules=False,
-    coverage=False,
-    collect_only=False,
+        ctx,
+        stage=_STAGE,
+        pytest_opts="",
+        pytest_mark="",
+        dir_name="",
+        skip_submodules=False,
+        coverage=False,
+        collect_only=False,
 ):
     """
     Run superslow tests.
-
-    Same params as `run_fast_tests`.
     """
     _report_task()
     skipped_tests = "not slow and superslow"
     _run_tests(
         ctx,
         stage,
-        skipped_tests,
         pytest_opts,
+        pytest_mark,
+        dir_name,
         skip_submodules,
         coverage,
         collect_only,
-    )
+        skipped_tests)
 
 
 @task
 def run_fast_slow_tests(  # type: ignore
-    ctx,
-    stage=_STAGE,
-    pytest_opts="",
-    skip_submodules=False,
-    coverage=False,
-    collect_only=False,
+        ctx,
+        stage=_STAGE,
+        pytest_opts="",
+        pytest_mark="",
+        dir_name="",
+        skip_submodules=False,
+        coverage=False,
+        collect_only=False,
 ):
     """
     Run fast and slow tests.
-
-    Same params as `run_fast_tests`.
     """
     _report_task()
     skipped_tests = "not superslow"
     _run_tests(
         ctx,
         stage,
-        skipped_tests,
         pytest_opts,
+        pytest_mark,
+        dir_name,
         skip_submodules,
         coverage,
         collect_only,
-    )
+        skipped_tests)
+
+# @task
+# def run_fast_slow_tests(  # type: ignore
+#     ctx,
+#     stage=_STAGE,
+#     pytest_opts="",
+#     skip_submodules=False,
+#     coverage=False,
+#     collect_only=False,
+# ):
+#     """
+#     Run fast and slow tests.
+#
+#     Same params as `run_fast_tests`.
+#     """
+#     _report_task()
+#     skipped_tests = "not superslow"
+#     _run_tests(
+#         ctx,
+#         stage,
+#         skipped_tests,
+#         pytest_opts,
+#         skip_submodules,
+#         coverage,
+#         collect_only,
+#     )
 
 
 @task
