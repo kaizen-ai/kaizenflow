@@ -25,6 +25,9 @@ sleep 1
 tail -f $(find $LOG_PATH -maxdepth 1 -type f -printf "%T@ %p\n" | sort -n | tail -n 1 | cut -d' ' -f 2-) &
 
 # Give enough time for a connection before trying to expose on 0.0.0.0:$(API_PORT)
+# TODO(gp): Is this needed?
+echo "Waiting 30 secs for TWS to come up before exposing the ports"
 sleep 30
-echo "Forking :::4001 onto 0.0.0.0:${API_PORT}\n"
+echo "Forking port..."
 socat TCP-LISTEN:${API_PORT},fork TCP:127.0.0.1:4001
+echo "Ready"

@@ -29,25 +29,37 @@ set_default_params(default_params)
 
 
 @task
-def im_tws_start_ib_interface(ctx, stage=_STAGE, ib_app="TWS"):
+def im_tws_start_ib_interface(ctx, stage=STAGE, ib_app=""):
+    """
+    i im_tws_start_ib_interface --stage local --ib-app="TWS"
+    """
     dbg.dassert_in(ib_app, ("TWS", "GATEWAY"))
     base_image = ""
-    image = _get_image(stage, base_image)
+    # 665840871993.dkr.ecr.us-east-1.amazonaws.com/im_tws:local
+    image = get_image(stage, base_image)
     # TODO(gp): Use `curl ifconfig.me` to get host's IP.
     trusted_ips = ""
-    #vnc_password = "12345"
+    vnc_password = "12345"
     vnc_port = 5901
-    api_port = 4003
-    cmd = ""
-
-
-# IB_APP=$(IB_CONNECT_APP) \
-    #         IMAGE=$(IB_CONNECT_LATEST_IMAGE) \
-    #         TRUSTED_IPS=$(IB_CONNECT_TRUSTED_IPS) \
-    #         VNC_PASSWORD=$(IB_CONNECT_VNC_PASSWORD) \
-    #         API_PORT=$(IB_CONNECT_API_PORT) \
-    #         VNC_PORT=$(IB_CONNECT_VNC_PORT) \
-    #         docker-compose \
-    #         -f devops/compose/docker-compose.local.yml \
-    #         up \
-    #         -d
+    ib_api_port = 4003
+    # TODO(gp): Rename API_PORT -> IB_API_PORT
+    # TODO(gp): Where is IB_APP defined?
+    cmd = rf"""
+    TWSUSERID="gpsagg314" \
+    TWSPASSWORD="test" \
+    IB_APP={ib_app} \
+    IMAGE="{image}" \
+    TRUSTED_IPS={trusted_ips} \
+    VNC_PASSWORD={vnc_password} \
+    VNC_PORT={vnc_port} \
+    API_PORT={ib_api_port} \
+    docker-compose \
+        -f devops/compose/docker-compose.local.yml \
+        run --rm \
+        -l user=$USER \
+        -l app="ib_connect" \
+        --service-ports \
+        tws \
+        /bin/bash
+    """
+    ctx.run(cmd)
