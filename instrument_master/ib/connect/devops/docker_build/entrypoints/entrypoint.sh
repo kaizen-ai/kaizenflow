@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 export PYTHONPATH=$PYTHONPATH:/app
 
 # Create configurations for controller.
@@ -7,14 +9,12 @@ CMD="python /app/scripts/make_ib_controller_init_file.py \
      --user ${TWSUSERID} \
      --password ${TWSPASSWORD} \
      --stage ${STAGE}"
-
-echo $CMD
+echo "> $CMD"
 eval $CMD
 
 CMD="python /app/scripts/make_jts_init_file.py \
     --trusted_ips 127.0.0.1,${TRUSTED_IPS}"
-
-echo $CMD
+echo "> $CMD"
 eval $CMD
 
 # Run controller.

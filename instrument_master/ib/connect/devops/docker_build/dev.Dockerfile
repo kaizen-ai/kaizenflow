@@ -46,12 +46,11 @@ COPY vnc/xvfb_init /etc/init.d/xvfb
 COPY vnc/vnc_init /etc/init.d/vnc
 COPY vnc/xvfb-daemon-run /usr/bin/xvfb-daemon-run
 
-#COPY ./helpers /app/helpers
 # TODO(gp): Why moving these files?
 COPY devops/docker_scripts /app/scripts
 COPY devops/docker_build/entrypoints/entrypoint.sh /app/entrypoint.sh
 
-# Install this last since it tends to change often.
+# Install `helpers` last since it tends to change often.
 
 # We can't install helpers from GitHub since there is no git inside the container.
 #RUN pip install git+ssh://git@github.com/alphamatic/amp.git
@@ -61,4 +60,3 @@ COPY devops/docker_build/entrypoints/entrypoint.sh /app/entrypoint.sh
 # > cp /Users/saggese/src/lemonade1/amp/dist/helpers-1.2.tar.gz .
 COPY helpers-1.2.tar.gz $INSTALL_DIR
 RUN pip install $INSTALL_DIR/helpers-1.2.tar.gz
-
