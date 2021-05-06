@@ -12,9 +12,11 @@ RUN apt-get update \
   && apt-get install -y socat \
   && apt-get install -y software-properties-common
 
-COPY devops/requirements.txt /requirements.txt
+ENV INSTALL_DIR="/install"
+RUN mkdir -p $INSTALL_DIR
+COPY devops/requirements.txt $INSTALL_DIR/requirements.txt
 # TODO(gp): Replace pip with poetry.
-RUN pip install -r /requirements.txt
+RUN pip install -r $INSTALL_DIR/requirements.txt
 
 # Setup IB TWS.
 RUN mkdir -p /opt/TWS
@@ -48,3 +50,15 @@ COPY vnc/xvfb-daemon-run /usr/bin/xvfb-daemon-run
 # TODO(gp): Why moving these files?
 COPY devops/docker_scripts /app/scripts
 COPY devops/docker_build/entrypoints/entrypoint.sh /app/entrypoint.sh
+
+# Install this last since it tends to change often.
+
+# We can't install helpers from GitHub since there is no git inside the container.
+#RUN pip install git+ssh://git@github.com/alphamatic/amp.git
+
+# > cd //amp
+# > helpers/build_helpers_package.sh
+# > cp /Users/saggese/src/lemonade1/amp/dist/helpers-1.2.tar.gz .
+COPY helpers-1.2.tar.gz $INSTALL_DIR
+RUN pip install $INSTALL_DIR/helpers-1.2.tar.gz
+

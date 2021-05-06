@@ -28,17 +28,17 @@ default_params = {
 set_default_params(default_params)
 
 
-@task
-def im_tws_start_ib_interface(ctx, stage=_STAGE, ib_app="TWS"):
-    dbg.dassert_in(ib_app, ("TWS", "GATEWAY"))
-    base_image = ""
-    image = _get_image(stage, base_image)
-    # curl ifconfig.me
-    trusted_ips = ""
-    vnc_password = ""
-    vnc_port = 5901
-    api_port = 4003
-    cmd = ""
+# @task
+# def im_tws_start_ib_interface(ctx, stage=_STAGE, ib_app="TWS"):
+#     dbg.dassert_in(ib_app, ("TWS", "GATEWAY"))
+#     base_image = ""
+#     image = _get_image(stage, base_image)
+#     # curl ifconfig.me
+#     trusted_ips = ""
+#     vnc_password = ""
+#     vnc_port = 5901
+#     api_port = 4003
+#     cmd = ""
 
 
 # IB_APP=$(IB_CONNECT_APP) \

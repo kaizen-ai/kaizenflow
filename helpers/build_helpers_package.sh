@@ -23,4 +23,4 @@ FILE=$(ls -1 dist/*.tar.gz)
 echo "FILE=$FILE"
 ls -l $FILE
 
-cp $FILE /Users/saggese/src/dev_tools/helpers.tar.gz
+#cp $FILE /Users/saggese/src/dev_tools/helpers.tar.gz
