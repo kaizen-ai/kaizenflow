@@ -25,8 +25,23 @@
 ## Getting Started
 
 - All commands need to be executed from the current directory
-  `//amp/instrument_master/ib/connect`
+  ```bash
+  > cd <amp>/instrument_master/ib/connect`
+  ```
+  
+## Create image
 
+- To build the `im_tws:local` image
+  ```bash
+  > invoke docker_build_local_image
+  ```
+
+- To release the image:
+  ```bash
+  > invoke docker_push_local_image_to_dev
+  ```
+
+<!---
 ### Pull image
 
 ```bash
@@ -44,11 +59,12 @@
 ...
 > make ib_connect.docker_tag_latest.rc
 ```
+-->
 
 ### Start app on localhost
 
-- Note that only one app can be opened at the same time.
-  It means if production app is up, no one can run this app.
+- Note that only one TWS app can be opened at the same time
+  - If the production app is up, no one can run the app even in local mode
 
 - You need to add a file with IB credentials to `~/.vnc/ib.credentials` like:
 

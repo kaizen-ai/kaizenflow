@@ -1,3 +1,5 @@
+# //amp/instrument_master/ib/connect/tasks.py
+
 import logging
 
 # We inline the code here since we need to make it visible to `invoke`, although
@@ -25,13 +27,27 @@ default_params = {
 
 set_default_params(default_params)
 
-# # Build images.
-# # # --no-cache
-# ib_connect.docker_build_image.rc:
-# 	DOCKER_BUILDKIT=0 \
-# 	docker build \
-# 		--progress=plain \
-# 		-t $(IB_CONNECT_RC_IMAGE) \
-# 		-t $(IB_CONNECT_RC_IMAGE_SHA) \
-# 		--file devops/docker_build/Dockerfile \
-# 		.
+
+@task
+def im_tws_start_ib_interface(ctx, stage=_STAGE, ib_app="TWS"):
+    dbg.dassert_in(ib_app, ("TWS", "GATEWAY"))
+    base_image = ""
+    image = _get_image(stage, base_image)
+    # curl ifconfig.me
+    trusted_ips = ""
+    vnc_password = ""
+    vnc_port = 5901
+    api_port = 4003
+    cmd = ""
+
+
+# IB_APP=$(IB_CONNECT_APP) \
+    #         IMAGE=$(IB_CONNECT_LATEST_IMAGE) \
+    #         TRUSTED_IPS=$(IB_CONNECT_TRUSTED_IPS) \
+    #         VNC_PASSWORD=$(IB_CONNECT_VNC_PASSWORD) \
+    #         API_PORT=$(IB_CONNECT_API_PORT) \
+    #         VNC_PORT=$(IB_CONNECT_VNC_PORT) \
+    #         docker-compose \
+    #         -f devops/compose/docker-compose.local.yml \
+    #         up \
+    #         -d
