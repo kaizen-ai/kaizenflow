@@ -667,18 +667,18 @@ def _run(ctx: Any, cmd: str) -> None:
 DOCKER_BUILDKIT = 0
 
 
-@functools.lru_cache()
-def _get_build_tag() -> str:
+def _get_build_tag(code_ver: str) -> str:
     """
     Return a string to tag the build.
 
     E.g.,
-    build_tag=1.0.0-20210428-
+    build_tag=
+        amp-1.0.0-20210428-
         AmpTask1280_Use_versioning_to_keep_code_and_container_in_sync-
         500a9e31ee70e51101c1b2eb82945c19992fa86e
+
+    :param code_ver: the value from hversi.get_code_version()
     """
-    dir_name = os.path.dirname(os.path.abspath(__file__))
-    code_ver = hversi.get_code_version(dir_name)
     # We can't use datetime_.get_timestamp() since we don't want to pick up
     # the dependencies from pandas.
     timestamp = datetime.datetime.now().strftime("%Y%m%d")
@@ -710,7 +710,7 @@ def docker_build_local_image(  # type: ignore
     _report_task()
     # Update poetry.
     if update_poetry:
-        cmd = "cd devops/docker_build/; poetry lock"
+        cmd = "cd devops/docker_build; poetry lock"
         ctx.run(cmd)
     #
     image_local = _get_image("local", base_image)
@@ -723,8 +723,8 @@ def docker_build_local_image(  # type: ignore
     #
     opts = "--no_cache" if not cache else ""
     # The container version is the version used from this code.
-    container_version = hversi.get_code_version()
-    build_tag = _get_build_tag()
+    container_version = hversi.get_code_version(".")
+    build_tag = _get_build_tag(container_version)
     cmd = rf"""
     DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
     time \
@@ -733,9 +733,9 @@ def docker_build_local_image(  # type: ignore
         {opts} \
         --build-arg CONTAINER_VERSION={container_version} \
         --build-arg BUILD_TAG={build_tag} \
-        -t {image_local} \
-        -t {image_hash} \
-        -f {dockerfile} \
+        --tag {image_local} \
+        --tag {image_hash} \
+        --file {dockerfile} \
         .
     """
     _run(ctx, cmd)

@@ -40,7 +40,8 @@
 
 ```bash
 > make ib_connect.docker_build_image.rc
-> # Check that image is correct.
+> # .. Check that image is correct ...
+...
 > make ib_connect.docker_tag_latest.rc
 ```
 
