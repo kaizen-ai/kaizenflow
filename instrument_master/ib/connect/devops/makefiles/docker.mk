@@ -8,13 +8,15 @@ ib_connect.docker_pull:
 ## #############################################################################
 
 # Build images.
+# # --no-cache 
 ib_connect.docker_build_image.rc:
+	DOCKER_BUILDKIT=0 \
 	docker build \
 		--progress=plain \
-		--no-cache \
 		-t $(IB_CONNECT_RC_IMAGE) \
 		-t $(IB_CONNECT_RC_IMAGE_SHA) \
-		--file devops/docker_build/Dockerfile ../../../
+		--file devops/docker_build/Dockerfile \
+		.
 
 # Push release candidate images.
 ib_connect.docker_push_image.rc:

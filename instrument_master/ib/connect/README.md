@@ -17,7 +17,7 @@
 
 # Interactive Brokers Gateway Docker
 
-- Docker container with:
+- This is a Docker container with:
   - TWS Gateway: v974.4g
   - [IB Controller](https://github.com/ib-controller/ib-controller/)
   - VNC
@@ -25,6 +25,7 @@
 ## Getting Started
 
 - All commands need to be executed from the current directory
+  `//amp/instrument_master/ib/connect`
 
 ### Pull image
 
