@@ -158,3 +158,5 @@
 - In the menu, `Go` -> `Connect to server...` enter
   - Go to `vnc://localhost:5901`
   - Then you should get prompted for the password
+- From command line
+  - `open vnc://localhost:5901`

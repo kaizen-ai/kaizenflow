@@ -29,5 +29,5 @@ tail -f $(find $LOG_PATH -maxdepth 1 -type f -printf "%T@ %p\n" | sort -n | tail
 echo "Waiting 30 secs for TWS to come up before exposing the ports"
 sleep 30
 echo "Forking port..."
-socat TCP-LISTEN:${API_PORT},fork TCP:127.0.0.1:4001
+socat TCP-LISTEN:${IB_API_PORT},fork TCP:127.0.0.1:4001
 echo "Ready"

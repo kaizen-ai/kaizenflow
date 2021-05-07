@@ -825,7 +825,7 @@ def shutup_chatty_modules(
         "botocore",
         "fsspec",
         "hooks",
-        "ib_insync",
+        #"ib_insync",
         "invoke",
         "matplotlib",
         "nose",

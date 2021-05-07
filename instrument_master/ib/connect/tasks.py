@@ -4,7 +4,16 @@ import logging
 
 # We inline the code here since we need to make it visible to `invoke`, although
 # `from ... import *` is bad practice.
-from lib_tasks import *
+#from lib_tasks import *
+
+from invoke import task
+
+import helpers.dbg as dbg
+from lib_tasks import (get_image,
+                       docker_build_local_image,
+                       set_default_params,
+                       STAGE)
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -27,11 +36,13 @@ default_params = {
 
 set_default_params(default_params)
 
+# i docker_build_local_image
+# i im_tws_start_ib_interface --stage local --ib-app="TWS"
+
 
 @task
 def im_tws_start_ib_interface(ctx, stage=STAGE, ib_app=""):
     """
-    i im_tws_start_ib_interface --stage local --ib-app="TWS"
     """
     dbg.dassert_in(ib_app, ("TWS", "GATEWAY"))
     base_image = ""
@@ -41,7 +52,9 @@ def im_tws_start_ib_interface(ctx, stage=STAGE, ib_app=""):
     trusted_ips = ""
     vnc_password = "12345"
     vnc_port = 5901
-    ib_api_port = 4003
+    ib_api_port = 4001
+    print(ib_api_port)
+    #ib_api_port = 4001
     # TODO(gp): Rename API_PORT -> IB_API_PORT
     # TODO(gp): Where is IB_APP defined?
     cmd = rf"""
@@ -50,9 +63,9 @@ def im_tws_start_ib_interface(ctx, stage=STAGE, ib_app=""):
     IB_APP={ib_app} \
     IMAGE="{image}" \
     TRUSTED_IPS={trusted_ips} \
-    VNC_PASSWORD={vnc_password} \
     VNC_PORT={vnc_port} \
-    API_PORT={ib_api_port} \
+    VNC_PASSWORD={vnc_password} \
+    IB_API_PORT={ib_api_port} \
     docker-compose \
         -f devops/compose/docker-compose.local.yml \
         run --rm \

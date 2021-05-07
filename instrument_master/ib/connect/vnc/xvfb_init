@@ -1,7 +1,9 @@
 #!/bin/bash -e
 
 XVFB=/usr/bin/Xvfb
-XVFBARGS="$DISPLAY -ac -screen 0 1024x768x16 +extension RANDR"
+# TODO(gp): Make the screen bigger.
+#XVFBARGS="$DISPLAY -ac -screen 0 1024x768x16 +extension RANDR"
+XVFBARGS="$DISPLAY -ac -screen 0 2048x1500x16 +extension RANDR"
 PIDFILE=/var/xvfb_${DISPLAY:1}.pid
 case "$1" in
   start)

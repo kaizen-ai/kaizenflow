@@ -4,11 +4,14 @@ services:
     image: ${IMAGE}
     entrypoint: "/app/entrypoint.sh"
     environment:
+      # TODO(gp): Unclear if it's needed. I can't find who uses this.
       - APP=${IB_APP}
-      - VNC_PASSWORD=${VNC_PASSWORD}
-      - TRUSTED_IPS=${TRUSTED_IPS}
+      # Needed by vnc scripts.
       - VNC_PORT=${VNC_PORT}
-      - API_PORT=${API_PORT}
+      - VNC_PASSWORD=${VNC_PASSWORD}
+      # These vars are needed by entrypoint.sh.
+      - TRUSTED_IPS=${TRUSTED_IPS}
+      - IB_API_PORT=${IB_API_PORT}
       - TWSUSERID=${TWSUSERID}
       - TWSPASSWORD=${TWSPASSWORD}
     env_file:
@@ -16,4 +19,4 @@ services:
       - ../env/local.env
     ports:
       - "${VNC_PORT}:${VNC_PORT}"
-      - "${API_PORT}:${API_PORT}"
+      - "${IB_API_PORT}:${IB_API_PORT}"
