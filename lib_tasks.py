@@ -778,6 +778,7 @@ def docker_release_dev_image(  # type: ignore
     run_slow=True,
     run_superslow=False,
     push_to_repo=True,
+    update_poetry=False,
 ):
     """
     (ONLY CI/CD) Build, test, and release to ECR the latest "dev" image.
@@ -785,14 +786,14 @@ def docker_release_dev_image(  # type: ignore
     This can be used to test the entire flow from scratch by building an image,
     running the tests, but not necessarily pushing.
 
-    :param: just_build skip all the tests and release the dev image.
+    :param skip_tests: skip all the tests and release the dev image
     """
     _report_task()
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
         run_fast = run_slow = run_superslow = False
     # Build image.
-    docker_build_local_image(ctx, cache=cache)
+    docker_build_local_image(ctx, cache=cache, update_poetry=update_poetry)
     # Run tests.
     stage = "local"
     if run_fast:
@@ -855,13 +856,14 @@ def docker_release_prod_image(  # type: ignore
     run_slow=True,
     run_superslow=False,
     base_image="",
+    update_poetry=False,
 ):
     """
     (ONLY CI/CD) Build, test, and release to ECR the prod image.
     """
     _report_task()
     # Build dev image.
-    docker_build_local_image(ctx, cache=cache)
+    docker_build_local_image(ctx, cache=cache, update_poetry=update_poetry)
     docker_push_local_image_to_dev(ctx)
     # Build prod image.
     docker_build_prod_image(ctx, cache=cache)
