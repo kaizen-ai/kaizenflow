@@ -28,22 +28,20 @@ import helpers.system_interaction as hsinte
 import helpers.table as htable
 import helpers.version as hversi
 
-# TODO(gp): Move to helpers.lib_tasks? Probably yes so we can share across repos
-#  (e.g., dev_tools)
-# TODO(gp): Do we need to move / rename also test_tasks.py?
+# TODO(gp): -> helpers.lib_tasks so we can share across repos (e.g., dev_tools)
+# TODO(gp): Do we need to move / rename test_tasks.py?
 
 _LOG = logging.getLogger(__name__)
+
+# #############################################################################
+# Default params.
+# #############################################################################
 
 # By default we run against the dev image.
 _STAGE = "dev"
 
 # This is used to inject the default params.
 _DEFAULT_PARAMS = {}
-
-
-# NOTE: We need to use a `# type: ignore` for all the @task functions because
-# pyinvoke infers the argument type from the code and mypy annotations confuse
-# it (see https://github.com/pyinvoke/invoke/issues/357).
 
 
 def set_default_params(params: Dict[str, Any]) -> None:
@@ -58,6 +56,13 @@ def get_default_value(key: str) -> Any:
     return _DEFAULT_PARAMS[key]
 
 
+def has_default_value(key: str) -> bool:
+    return key in _DEFAULT_PARAMS
+
+# #############################################################################
+# Utils.
+# #############################################################################
+
 # Since it's not easy to add global command line options to invoke, we piggy
 # back the option that already exists.
 # If one uses the debug option for `invoke` we turn off the code debugging.
@@ -67,6 +72,11 @@ if ("-d" in sys.argv) or ("--debug" in sys.argv):
     dbg.init_logger(verbosity=logging.DEBUG)
 else:
     dbg.init_logger(verbosity=logging.INFO)
+
+
+# NOTE: We need to use a `# type: ignore` for all the @task functions because
+# pyinvoke infers the argument type from the code and mypy annotations confuse
+# it (see https://github.com/pyinvoke/invoke/issues/357).
 
 
 def _report_task(txt: str = "") -> None:
@@ -369,6 +379,17 @@ def docker_kill_all(ctx):  # type: ignore
 # Docker development.
 # #############################################################################
 
+# TODO(gp):
+# We might want to organize the code in a base class using a Command pattern,
+# so that it's easier to generalize the code for multiple repos.
+#
+# class DockerCommand:
+#   def pull():
+#     ...
+#   def cmd():
+#     ...
+#
+# For now we pass the customizable part through the default params.
 
 @task
 def docker_pull(ctx, stage=_STAGE, images="all"):  # type: ignore
@@ -444,15 +465,34 @@ def docker_login(ctx):  # type: ignore
     ctx.run(cmd)
 
 
+def _get_base_docker_compose_path() -> str:
+    """
+    Return the base docker compose `devops/compose/docker-compose.yml`.
+    """
+    # Add the default path.
+    dir_name = "devops/compose"
+    # TODO(gp): Factor out the piece below.
+    docker_compose_path = "docker-compose.yml"
+    docker_compose_path = os.path.join(dir_name, docker_compose_path)
+    docker_compose_path = os.path.abspath(docker_compose_path)
+    return docker_compose_path
+
+
 def _get_amp_docker_compose_path() -> str:
+    """
+    Return the docker compose for `amp` as supermodule or `amp` as submodule.
+
+    E.g., `devops/compose/docker-compose_as_submodule.yml` and
+    `devops/compose/docker-compose_as_supermodule.yml`
+    """
     path = git.get_path_from_supermodule()
     if path != "":
         _LOG.warning("amp is a submodule")
-        docker_compose_path = "docker-compose-user-space-git-subrepo.yml"
+        docker_compose_path = "docker-compose_as_submodule.yml"
     else:
-        _LOG.warning("amp is not a submodule")
-        docker_compose_path = "docker-compose-user-space.yml"
-    # Add the path.
+        _LOG.warning("amp is a supermodule")
+        docker_compose_path = "docker-compose_as_supermodule.yml"
+    # Add the default path.
     dir_name = "devops/compose"
     docker_compose_path = os.path.join(dir_name, docker_compose_path)
     docker_compose_path = os.path.abspath(docker_compose_path)
@@ -477,7 +517,7 @@ def _get_git_hash() -> str:
     return git_hash
 
 
-_INTERNET_ADDRESS_RE = r"^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
+_INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
 _IMAGE_RE = r"[a-z0-9_-]+"
 _TAG_RE = r"[a-z0-9_-]+"
 
@@ -542,7 +582,7 @@ def _docker_cmd(
     ctx: Any,
     stage: str,
     base_image: str,
-    docker_compose: str,
+    #docker_compose: str,
     cmd: str,
     entrypoint: bool = True,
 ) -> None:
@@ -551,21 +591,30 @@ def _docker_cmd(
     :param docker_compose: e.g. devops/compose/docker-compose-user-space.yml
     """
     hprint.log(_LOG, logging.DEBUG, "stage base_image docker_compose cmd")
+    # Get the image.
     image = _get_image(stage, base_image)
     _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
-    #
     _check_image(image)
-    dbg.dassert_exists(docker_compose)
-    #
+    # Get the docker compose files.
+    docker_compose_files = []
+    docker_compose_files.append(_get_amp_docker_compose_path())
+    if
+
+    for docker_compose in docker_compose_files:
+        dbg.dassert_exists(docker_compose)
+    # Get the user.
     user_name = hsinte.get_user_name()
+    # Build command line.
     docker_cmd_ = rf"""IMAGE={image} \
     docker-compose \
-        -f {docker_compose} \
+        --file {docker_compose} \
         run \
         --rm \
         -l user={user_name} \
     """
+    # TODO(gp): Is this needed?
     docker_cmd_ = docker_cmd_.rstrip()
+    # Handle entrypoint.
     if entrypoint:
         docker_cmd_ += rf"""
         user_space \
@@ -574,6 +623,7 @@ def _docker_cmd(
         docker_cmd_ += r"""
         --entrypoint bash \
         user_space"""
+    # Clean up command line.
     if use_one_line_cmd:
         docker_cmd_ = _remove_spaces(docker_cmd_)
     _LOG.debug("cmd=%s", docker_cmd_)
@@ -587,10 +637,10 @@ def docker_bash(ctx, stage=_STAGE, entrypoint=True):  # type: ignore
     """
     _report_task()
     base_image = ""
-    docker_compose = _get_amp_docker_compose_path()
+    #docker_compose = _get_amp_docker_compose_path()
     cmd = "bash"
     _docker_cmd(
-        ctx, stage, base_image, docker_compose, cmd, entrypoint=entrypoint
+        ctx, stage, base_image, cmd, entrypoint=entrypoint
     )
 
 
@@ -602,11 +652,12 @@ def docker_cmd(ctx, stage=_STAGE, cmd=""):  # type: ignore
     _report_task()
     dbg.dassert_ne(cmd, "")
     base_image = ""
-    docker_compose = _get_amp_docker_compose_path()
+    #docker_compose = _get_amp_docker_compose_path()
     # TODO(gp): Do we need to overwrite the entrypoint?
-    _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
+    _docker_cmd(ctx, stage, base_image, cmd)
 
 
+# TODO(gp): This should go through _docker_cmd() although it's slightly different.
 @task
 def docker_jupyter(  # type: ignore
     ctx, stage=_STAGE, port=9999, self_test=False, base_image=""
@@ -631,8 +682,8 @@ def docker_jupyter(  # type: ignore
     cmd = rf"""IMAGE={image} \
     PORT={port} \
     docker-compose \
-        -f {docker_compose} \
-        -f {docker_compose_jupyter} \
+        --file {docker_compose} \
+        --file {docker_compose_jupyter} \
         run \
         --rm \
         -l user={user_name} \
@@ -733,9 +784,9 @@ def docker_build_local_image(  # type: ignore
         {opts} \
         --build-arg CONTAINER_VERSION={container_version} \
         --build-arg BUILD_TAG={build_tag} \
-        -t {image_local} \
-        -t {image_hash} \
-        -f {dockerfile} \
+        --tag {image_local} \
+        --tag {image_hash} \
+        --file {dockerfile} \
         .
     """
     _run(ctx, cmd)
@@ -918,9 +969,9 @@ def run_blank_tests(ctx, stage=_STAGE):  # type: ignore
     """
     _report_task()
     base_image = ""
-    docker_compose = _get_amp_docker_compose_path()
+    #docker_compose = _get_amp_docker_compose_path()
     cmd = '"pytest -h >/dev/null"'
-    _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
+    _docker_cmd(ctx, stage, base_image, cmd)
 
 
 # #############################################################################
@@ -1135,10 +1186,10 @@ def _run_test_cmd(
         ctx.run("rm -rf ./.coverage*")
     # Run.
     base_image = ""
-    docker_compose = _get_amp_docker_compose_path()
+    #docker_compose = _get_amp_docker_compose_path()
     # We need to add some " to pass the string as it is to the container.
     cmd = f"'{cmd}'"
-    _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
+    _docker_cmd(ctx, stage, base_image, cmd)
     # Print message about coverage.
     if coverage:
         msg = """- The coverage results in textual form are above.
@@ -1161,6 +1212,7 @@ def _run_tests(
     collect_only: bool,
     skipped_tests: str,
 ) -> None:
+    # Build the command line.
     cmd = _build_run_command_line(
         pytest_opts,
         pytest_mark,
@@ -1170,6 +1222,7 @@ def _run_tests(
         collect_only,
         skipped_tests,
     )
+    # Execute the command line.
     _run_test_cmd(
         ctx,
         stage,
@@ -1217,33 +1270,6 @@ def run_fast_tests(  # type: ignore
     )
 
 
-# @task
-# def run_slow_tests(  # type: ignore
-#     ctx,
-#     stage=_STAGE,
-#     pytest_opts="",
-#     skip_submodules=False,
-#     coverage=False,
-#     collect_only=False,
-# ):
-#     """
-#     Run slow tests.
-#
-#     Same params as `run_fast_tests`.
-#     """
-#     _report_task()
-#     skipped_tests = "slow and not superslow"
-#     _run_tests(
-#         ctx,
-#         stage,
-#         skipped_tests,
-#         pytest_opts,
-#         skip_submodules,
-#         coverage,
-#         collect_only,
-#     )
-
-
 @task
 def run_slow_tests(  # type: ignore
     ctx,
@@ -1271,33 +1297,6 @@ def run_slow_tests(  # type: ignore
         collect_only,
         skipped_tests,
     )
-
-
-# @task
-# def run_superslow_tests(  # type: ignore
-#     ctx,
-#     stage=_STAGE,
-#     pytest_opts="",
-#     skip_submodules=False,
-#     coverage=False,
-#     collect_only=False,
-# ):
-#     """
-#     Run superslow tests.
-#
-#     Same params as `run_fast_tests`.
-#     """
-#     _report_task()
-#     skipped_tests = "not slow and superslow"
-#     _run_tests(
-#         ctx,
-#         stage,
-#         skipped_tests,
-#         pytest_opts,
-#         skip_submodules,
-#         coverage,
-#         collect_only,
-#     )
 
 
 @task
@@ -1356,33 +1355,6 @@ def run_fast_slow_tests(  # type: ignore
         collect_only,
         skipped_tests,
     )
-
-
-# @task
-# def run_fast_slow_tests(  # type: ignore
-#     ctx,
-#     stage=_STAGE,
-#     pytest_opts="",
-#     skip_submodules=False,
-#     coverage=False,
-#     collect_only=False,
-# ):
-#     """
-#     Run fast and slow tests.
-#
-#     Same params as `run_fast_tests`.
-#     """
-#     _report_task()
-#     skipped_tests = "not superslow"
-#     _run_tests(
-#         ctx,
-#         stage,
-#         skipped_tests,
-#         pytest_opts,
-#         skip_submodules,
-#         coverage,
-#         collect_only,
-#     )
 
 
 @task
