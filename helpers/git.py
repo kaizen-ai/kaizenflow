@@ -105,6 +105,26 @@ def is_inside_submodule(git_dir: str = ".") -> bool:
     return ret
 
 
+def is_amp() -> bool:
+    """
+    Return whether we are inside `amp` and `amp` is a submodule.
+    """
+    repo_full_name = get_repo_full_name_from_dirname(".")
+    repo_short_name = get_repo_short_name(repo_full_name)
+    is_amp = repo_short_name == "amp"
+    return is_amp
+
+
+def is_lem() -> bool:
+    """
+    Return whether we are inside `lem` and `lem` is a submodule.
+    """
+    repo_full_name = get_repo_full_name_from_dirname(".")
+    repo_short_name = get_repo_short_name(repo_full_name)
+    is_lem = repo_short_name == "lem"
+    return is_lem
+
+
 # ##############
 
 

@@ -106,6 +106,7 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         }
         return default_params
 
+    @pytest.skipUnless(git.is_amp() & git.is_inside_submodule("."))
     def test_docker_bash1(self) -> None:
         params = self._get_default_params()
         ltasks.set_default_params(params)
@@ -133,6 +134,7 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    @pytest.skipUnless(git.is_amp() & git.is_inside_submodule("."))
     def test_docker_bash2(self) -> None:
         params = self._get_default_params()
         ltasks.set_default_params(params)
@@ -140,6 +142,34 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         base_image = ""
         cmd = "bash"
         entrypoint = True
+        act = ltasks._get_docker_cmd(
+            stage,
+            base_image,
+            cmd,
+            entrypoint=entrypoint
+        )
+        act = hut.purify_txt_from_client(act)
+        exp = r"""
+        IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
+            docker-compose \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml 
+            --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
+            run \
+            --rm \
+            -l user=$USER_NAME \
+            --entrypoint bash \
+            user_space
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    @pytest.skipUnless(git.is_lem())
+    def test_docker_bash3(self) -> None:
+        params = self._get_default_params()
+        ltasks.set_default_params(params)
+        stage = "dev"
+        base_image = ""
+        cmd = "bash"
+        entrypoint = False
         act = ltasks._get_docker_cmd(
             stage,
             base_image,

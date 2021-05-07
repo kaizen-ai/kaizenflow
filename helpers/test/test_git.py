@@ -35,6 +35,14 @@ class Test_git_submodule1(hut.TestCase):
         func_call = "git.is_inside_submodule()"
         _execute_func_call(func_call)
 
+    def test_is_amp(self) -> None:
+        func_call = "git.is_amp()"
+        _execute_func_call(func_call)
+
+    def test_is_lem(self) -> None:
+        func_call = "git.is_lem()"
+        _execute_func_call(func_call)
+
     def test_get_path_from_supermodule1(self) -> None:
         func_call = "git.get_path_from_supermodule()"
         _execute_func_call(func_call)
