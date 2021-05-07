@@ -41,6 +41,7 @@ _LOG = logging.getLogger(__name__)
 _STAGE = "dev"
 
 # This is used to inject the default params.
+# TODO(gp): Using a singleton here is not elegant but simple.
 _DEFAULT_PARAMS = {}
 
 
@@ -50,14 +51,20 @@ def set_default_params(params: Dict[str, Any]) -> None:
     _LOG.debug("Assigning:\n%s", pprint.pformat(params))
 
 
-def get_default_value(key: str) -> Any:
+def get_default_param(key: str) -> Any:
     dbg.dassert_in(key, _DEFAULT_PARAMS)
     dbg.dassert_isinstance(key, str)
     return _DEFAULT_PARAMS[key]
 
 
-def has_default_value(key: str) -> bool:
+def has_default_param(key: str) -> bool:
     return key in _DEFAULT_PARAMS
+
+
+def reset_default_params() -> None:
+    params: Dict[str, Any] = {}
+    set_default_params(params)
+
 
 # #############################################################################
 # Utils.
@@ -78,11 +85,39 @@ else:
 # pyinvoke infers the argument type from the code and mypy annotations confuse
 # it (see https://github.com/pyinvoke/invoke/issues/357).
 
+# In the following, when using `lru_cache`, we use functions from `hsyste`
+# instead of `ctx.run()` since otherwise `lru_cache` would cache `ctx`.
+
+# We prefer not to cache functions running `git` to avoid stale values if we
+# call git (e.g., if we cache Git hash and then we do a `git pull`).
+
 
 def _report_task(txt: str = "") -> None:
     func_name = hintros.get_function_name(count=1)
     msg = "## %s: %s" % (func_name, txt)
+    # TODO(gp): Do not print during unit tests.
     print(hprint.color_highlight(msg, color="purple"))
+
+
+# TODO(gp): Pass through command line using a global switch or an env var.
+use_one_line_cmd = False
+
+
+# TODO(gp): Move this to helpers.system_interaction and allow to add the switch
+#  globally.
+def _remove_spaces(cmd: str) -> str:
+    cmd = cmd.rstrip().lstrip()
+    cmd = cmd.replace("\\", "")
+    cmd = " ".join(cmd.split())
+    return cmd
+
+
+def _run(ctx: Any, cmd: str, *args: Any, **kwargs: Any) -> None:
+    _LOG.debug("cmd=%s", cmd)
+    if use_one_line_cmd:
+        cmd = _remove_spaces(cmd)
+    _LOG.debug("cmd=%s", cmd)
+    _run(ctx, cmd, *args, **kwargs)
 
 
 # #############################################################################
@@ -99,7 +134,7 @@ def print_setup(ctx):  # type: ignore
     _ = ctx
     var_names = "ECR_BASE_PATH BASE_IMAGE".split()
     for v in var_names:
-        print("%s=%s" % (v, get_default_value(v)))
+        print("%s=%s" % (v, get_default_param(v)))
 
 
 # #############################################################################
@@ -114,9 +149,9 @@ def git_pull(ctx):  # type: ignore
     """
     _report_task()
     cmd = "git pull --autostash"
-    ctx.run(cmd)
+    _run(ctx, cmd)
     cmd = "git submodule foreach 'git pull --autostash'"
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 @task
@@ -126,7 +161,7 @@ def git_pull_master(ctx):  # type: ignore
     """
     _report_task()
     cmd = "git fetch origin master:master"
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 @task
@@ -139,7 +174,7 @@ def git_merge_master(ctx):  # type: ignore
     git_pull_master(ctx)
     #
     cmd = "git merge master"
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 # TODO(gp): Add git_co(ctx)
@@ -160,15 +195,15 @@ def git_clean(ctx):  # type: ignore
     # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
     #  mistake.
     cmd = "git clean -fd"
-    ctx.run(cmd)
+    _run(ctx, cmd)
     cmd = "git submodule foreach 'git clean -fd'"
-    ctx.run(cmd)
+    _run(ctx, cmd)
     # pylint: disable=line-too-long
     cmd = r"""find . | \
     grep -E "(tmp.joblib.unittest.cache|.pytest_cache|.mypy_cache|.ipynb_checkpoints|__pycache__|\.pyc|\.pyo$$)" | \
     xargs rm -rf"""
     # pylint: enable=line-too-long
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 @task
@@ -179,7 +214,7 @@ def git_branch_files(ctx):  # type: ignore
     """
     _report_task()
     cmd = "git diff --name-only master..."
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 @task
@@ -190,7 +225,7 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     _report_task()
     #
     cmd = "git fetch --all --prune"
-    ctx.run(cmd)
+    _run(ctx, cmd)
     dbg.dassert(
         git.get_branch_name(),
         "master",
@@ -217,7 +252,7 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
             )
         for branch in branches:
             cmd_tmp = f"{delete_cmd} {branch}"
-            ctx.run(cmd_tmp)
+            _run(ctx, cmd_tmp)
 
     # Delete local branches that are already merged into master.
     # > git branch --merged
@@ -234,7 +269,7 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     _delete_branches("remote")
     #
     cmd = "git fetch --all --prune"
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 @task
@@ -254,13 +289,13 @@ def git_create_branch(ctx, branch_name=""):  # type: ignore
     )
     # Fetch master.
     cmd = "git pull --autostash"
-    ctx.run(cmd)
+    _run(ctx, cmd)
     # git checkout -b LemTask169_Get_GH_actions_working_on_lemonade
     cmd = f"git checkout -b {branch_name}"
-    ctx.run(cmd)
+    _run(ctx, cmd)
     # git push --set-upstream origin LemTask169_Get_GH_actions_working_on_lemonade
     cmd = f"git push --set-upstream origin {branch_name}"
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 # TODO(gp): Add dev_scripts/git/git_create_patch*.sh
@@ -282,8 +317,8 @@ def docker_images_ls_repo(ctx):  # type: ignore
     """
     _report_task()
     docker_login(ctx)
-    ecr_base_path = get_default_value("ECR_BASE_PATH")
-    ctx.run(f"docker image ls {ecr_base_path}")
+    ecr_base_path = get_default_param("ECR_BASE_PATH")
+    _run(ctx, f"docker image ls {ecr_base_path}")
 
 
 @task
@@ -306,7 +341,7 @@ def docker_ps(ctx):  # type: ignore
     )
     cmd = f"docker ps --format='{fmt}'"
     cmd = _remove_spaces(cmd)
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 @task
@@ -328,7 +363,7 @@ def docker_stats(ctx):  # type: ignore
         + r"\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}"
     )
     cmd = f"docker stats --no-stream --format='{fmt}'"
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 @task
@@ -337,8 +372,8 @@ def docker_kill_last(ctx):  # type: ignore
     Kill the last Docker container started.
     """
     _report_task()
-    ctx.run("docker ps -l")
-    ctx.run("docker rm -f $(docker ps -l -q)")
+    _run(ctx, "docker ps -l")
+    _run(ctx, "docker rm -f $(docker ps -l -q)")
 
 
 @task
@@ -347,8 +382,8 @@ def docker_kill_all(ctx):  # type: ignore
     Kill all the Docker containers.
     """
     _report_task()
-    ctx.run("docker ps -a")
-    ctx.run("docker rm -f $(docker ps -a -q)")
+    _run(ctx, "docker ps -a")
+    _run(ctx, "docker rm -f $(docker ps -a -q)")
 
 
 # docker system prune
@@ -412,17 +447,13 @@ def docker_pull(ctx, stage=_STAGE, images="all"):  # type: ignore
             base_image = ""
             image = _get_image(stage, base_image)
         elif token == "dev_tools":
-            image = get_default_value("DEV_TOOLS_IMAGE_PROD")
+            image = get_default_param("DEV_TOOLS_IMAGE_PROD")
         else:
             raise ValueError("Can't recognize image token '%s'" % token)
         _LOG.info("token='%s': image='%s'", token, image)
         _check_image(image)
         cmd = f"docker pull {image}"
-        ctx.run(cmd, pty=True)
-
-
-# In the following we use functions from `hsyste` instead of `ctx.run()` since
-# `lru_cache` would cache `ctx`.
+        _run(ctx, cmd, pty=True)
 
 
 @functools.lru_cache()
@@ -457,12 +488,12 @@ def docker_login(ctx):  # type: ignore
     if major_version == 1:
         cmd = f"eval $(aws ecr get-login --no-include-email --region {region})"
     else:
-        ecr_base_path = get_default_value("ECR_BASE_PATH")
+        ecr_base_path = get_default_param("ECR_BASE_PATH")
         cmd = (
             f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
             + f"https://{ecr_base_path}"
         )
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 def _get_base_docker_compose_path() -> str:
@@ -480,7 +511,7 @@ def _get_base_docker_compose_path() -> str:
 
 def _get_amp_docker_compose_path() -> str:
     """
-    Return the docker compose for `amp` as supermodule or `amp` as submodule.
+    Return the docker compose for `amp` as supermodule or as submodule.
 
     E.g., `devops/compose/docker-compose_as_submodule.yml` and
     `devops/compose/docker-compose_as_supermodule.yml`
@@ -499,17 +530,6 @@ def _get_amp_docker_compose_path() -> str:
     return docker_compose_path
 
 
-def _remove_spaces(cmd: str) -> str:
-    cmd = cmd.rstrip().lstrip()
-    cmd = " ".join(cmd.split())
-    return cmd
-
-
-# TODO(gp): Pass through command line using a global switch or an env var.
-use_one_line_cmd = False
-
-
-@functools.lru_cache()
 def _get_git_hash() -> str:
     cmd = "git rev-parse HEAD"
     git_hash: str = hsinte.system_to_one_line(cmd)[1]
@@ -551,9 +571,9 @@ def _get_base_image(base_image: str) -> str:
     if base_image == "":
         # TODO(gp): Use os.path.join.
         base_image = (
-            get_default_value("ECR_BASE_PATH")
-            + "/"
-            + get_default_value("BASE_IMAGE")
+                get_default_param("ECR_BASE_PATH")
+                + "/"
+                + get_default_param("BASE_IMAGE")
         )
     _check_base_image(base_image)
     return base_image
@@ -578,36 +598,37 @@ def _get_image(stage: str, base_image: str) -> str:
     return image
 
 
-def _docker_cmd(
-    ctx: Any,
+def _get_docker_cmd(
     stage: str,
     base_image: str,
-    #docker_compose: str,
     cmd: str,
     entrypoint: bool = True,
-) -> None:
+) -> str:
     """
     :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
-    :param docker_compose: e.g. devops/compose/docker-compose-user-space.yml
     """
-    hprint.log(_LOG, logging.DEBUG, "stage base_image docker_compose cmd")
+    hprint.log(_LOG, logging.DEBUG, "stage base_image cmd")
     # Get the image.
     image = _get_image(stage, base_image)
     _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
     _check_image(image)
     # Get the docker compose files.
     docker_compose_files = []
+    docker_compose_files.append(_get_base_docker_compose_path())
     docker_compose_files.append(_get_amp_docker_compose_path())
-    if
-
+    key = "DOCKER_COMPOSE_FILES"
+    if has_default_param(key):
+        docker_compose_files.append(get_default_param(key))
     for docker_compose in docker_compose_files:
         dbg.dassert_exists(docker_compose)
+    file_opt = " ".join(["--file %s" % dcf for dcf in docker_compose_files])
     # Get the user.
     user_name = hsinte.get_user_name()
     # Build command line.
+    # TODO(gp): Add an option to print the config.
     docker_cmd_ = rf"""IMAGE={image} \
     docker-compose \
-        --file {docker_compose} \
+        {file_opt} \
         run \
         --rm \
         -l user={user_name} \
@@ -623,11 +644,19 @@ def _docker_cmd(
         docker_cmd_ += r"""
         --entrypoint bash \
         user_space"""
-    # Clean up command line.
-    if use_one_line_cmd:
-        docker_cmd_ = _remove_spaces(docker_cmd_)
+    _LOG.debug("docker_cmd=%s", docker_cmd_)
+    return docker_cmd_
+
+
+def _docker_cmd(
+    ctx: Any,
+    docker_cmd_: str,
+) -> None:
+    """
+    :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
+    """
     _LOG.debug("cmd=%s", docker_cmd_)
-    ctx.run(docker_cmd_, pty=True)
+    _run(ctx, docker_cmd_, pty=True)
 
 
 @task
@@ -639,9 +668,13 @@ def docker_bash(ctx, stage=_STAGE, entrypoint=True):  # type: ignore
     base_image = ""
     #docker_compose = _get_amp_docker_compose_path()
     cmd = "bash"
-    _docker_cmd(
-        ctx, stage, base_image, cmd, entrypoint=entrypoint
+    docker_cmd_ = _get_docker_cmd(
+        stage,
+        base_image,
+        cmd,
+        entrypoint=entrypoint
     )
+    _docker_cmd(ctx, docker_cmd_)
 
 
 @task
@@ -689,10 +722,8 @@ def docker_jupyter(  # type: ignore
         -l user={user_name} \
         --service-ports \
         {service}"""
-    if use_one_line_cmd:
-        cmd = _remove_spaces(cmd)
     _LOG.debug("cmd=%s", cmd)
-    ctx.run(cmd, pty=True)
+    _run(ctx, cmd, pty=True)
 
 
 # #############################################################################
@@ -704,13 +735,6 @@ def _to_abs_path(filename: str) -> str:
     filename = os.path.abspath(filename)
     dbg.dassert_exists(filename)
     return filename
-
-
-def _run(ctx: Any, cmd: str) -> None:
-    if use_one_line_cmd:
-        cmd = _remove_spaces(cmd)
-    _LOG.debug("cmd=%s", cmd)
-    ctx.run(cmd, pty=True)
 
 
 # Use Docker buildkit or not.
@@ -762,7 +786,7 @@ def docker_build_local_image(  # type: ignore
     # Update poetry.
     if update_poetry:
         cmd = "cd devops/docker_build/; poetry lock"
-        ctx.run(cmd)
+        _run(ctx, cmd)
     #
     image_local = _get_image("local", base_image)
     image_hash = _get_image("hash", base_image)
@@ -1183,7 +1207,7 @@ def _run_test_cmd(
 ) -> None:
     if collect_only:
         # Clean files.
-        ctx.run("rm -rf ./.coverage*")
+        _run(ctx, "rm -rf ./.coverage*")
     # Run.
     base_image = ""
     #docker_compose = _get_amp_docker_compose_path()
@@ -1376,10 +1400,10 @@ def jump_to_pytest_error(ctx, log_name=""):  # type: ignore
     _LOG.info("Reading %s", log_name)
     # Convert the traceback into a cfile.
     cmd = f"dev_scripts/traceback_to_cfile.py -i {log_name} -o cfile"
-    ctx.run(cmd)
+    _run(ctx, cmd)
     # Read and navigate the cfile with vim.
     cmd = 'vim -c "cfile cfile"'
-    ctx.run(cmd, pty=True)
+    _run(ctx, cmd, pty=True)
 
 
 @task
@@ -1441,7 +1465,7 @@ def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignor
         f"pre-commit.sh run {phases} --files {files_as_str} 2>&1 "
         + "| tee linter_warnings.txt"
     )
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 # TODO(gp): Finish this.
@@ -1551,7 +1575,7 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
         gh_test += ".yml"
         # gh workflow run fast_tests.yml --ref AmpTask1251_Update_GH_actions_for_amp
         cmd = f"gh workflow run {gh_test} --ref {branch_name}"
-        ctx.run(cmd)
+        _run(ctx, cmd)
     #
     gh_workflow_list(ctx, branch=branch)
 
@@ -1642,7 +1666,7 @@ def gh_create_pr(ctx):  # type: ignore
         f' --title "{branch_name}"'
         ' --body ""'
     )
-    ctx.run(cmd)
+    _run(ctx, cmd)
     # TODO(gp): Implement the rest of the flow.
     # Warning: 3 uncommitted changes
     # https://github.com/alphamatic/amp/pull/1298

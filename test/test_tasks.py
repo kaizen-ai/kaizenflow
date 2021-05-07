@@ -176,7 +176,6 @@ def _get_default_params() -> Dict[str, str]:
     Get fake params pointing to a different image so we can test the code
     without affecting the official images.
     """
-
     ecr_base_path = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
     default_params = {
         "ECR_BASE_PATH": ecr_base_path,

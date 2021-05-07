@@ -390,7 +390,7 @@ def purify_txt_from_client(txt: str) -> str:
     txt = txt.replace(user_name, "$USER_NAME")
     # Remove amp reference, if any.
     txt = remove_amp_references(txt)
-    # TODO(gp): Remove conda_sh_path.
+    #assert 0, txt
     return txt
 
 

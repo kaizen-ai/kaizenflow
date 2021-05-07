@@ -105,6 +105,9 @@ def is_inside_submodule(git_dir: str = ".") -> bool:
     return ret
 
 
+# ##############
+
+
 def _get_submodule_hash(dir_name: str) -> str:
     """
     Report the Git hash that a submodule (e.g., amp) is at from the point of
@@ -134,6 +137,7 @@ def get_path_from_supermodule() -> str:
     - for amp included in another repo returns 'amp'
     - for amp without supermodule returns ''
     """
+    cmd = "git rev-parse --show-superproject-working-tree"
     # > cd /Users/saggese/src/.../amp
     # > git rev-parse --show-superproject-working-tree
     # /Users/saggese/src/...
@@ -141,16 +145,16 @@ def get_path_from_supermodule() -> str:
     # > cd /Users/saggese/src/...
     # > git rev-parse --show-superproject-working-tree
     # (No result)
-    cmd = "git rev-parse --show-superproject-working-tree"
     submodule_superproject: str = hsinte.system_to_one_line(cmd)[1]
     _LOG.debug("submodule_superproject=%s", submodule_superproject)
-    # > git config --file /Users/saggese/src/.../.gitmodules --get-regexp path
-    # submodule.amp.path amp
+    #
     cmd = (
         f"git config --file {submodule_superproject}/.gitmodules --get-regexp path"
         '| grep $(basename "$(pwd)")'
         "| awk '{ print $2 }'"
     )
+    # > git config --file /Users/saggese/src/.../.gitmodules --get-regexp path
+    # submodule.amp.path amp
     res: str = hsinte.system_to_one_line(cmd)[1]
     _LOG.debug("res=%s", res)
     return res
@@ -642,8 +646,9 @@ def get_modified_files_in_branch(
 
 
 # #############################################################################
-# git commands.
+# Git commands.
 # #############################################################################
+
 
 # TODO(gp): -> get_user_name()
 @functools.lru_cache()

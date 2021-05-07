@@ -3,6 +3,7 @@
 
 import logging
 import os
+from typing import Dict
 
 import pytest
 
@@ -58,6 +59,106 @@ class TestLibTasks1(hut.TestCase):
         # Check that we are logged in.
         cmd = "gh auth status"
         hsinte.system(cmd)
+
+
+class TestLibTasksRemoveSpaces1(hut.TestCase):
+
+    def test1(self) -> None:
+        txt = r"""
+            IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
+                docker-compose \
+                --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
+                run \
+                --rm \
+                -l user=$USER_NAME \
+                --entrypoint bash \
+                user_space
+            """
+        act = ltasks._remove_spaces(txt)
+        exp = ("IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev"
+               " docker-compose --file"
+               " $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml"
+               " run --rm -l user=$USER_NAME --entrypoint bash user_space")
+        self.assert_equal(act, exp, fuzzy_match=False)
+
+
+class TestLibTasksGetDockerCmd1(hut.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        ltasks.reset_default_params()
+
+    def tearDown(self):
+        ltasks.reset_default_params()
+        super().tearDown()
+
+    @staticmethod
+    def _get_default_params() -> Dict[str, str]:
+        """
+        Get fake params pointing to a different image so we can test the code
+        without affecting the official images.
+        """
+        ecr_base_path = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
+        default_params = {
+            "ECR_BASE_PATH": ecr_base_path,
+            "BASE_IMAGE": "amp_test",
+            "DEV_TOOLS_IMAGE_PROD": f"{ecr_base_path}/dev_tools:prod",
+        }
+        return default_params
+
+    def test_docker_bash1(self) -> None:
+        params = self._get_default_params()
+        ltasks.set_default_params(params)
+        stage = "dev"
+        base_image = ""
+        cmd = "bash"
+        entrypoint = False
+        act = ltasks._get_docker_cmd(
+            stage,
+            base_image,
+            cmd,
+            entrypoint=entrypoint
+        )
+        act = hut.purify_txt_from_client(act)
+        exp = r"""
+        IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
+            docker-compose \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml 
+            --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
+            run \
+            --rm \
+            -l user=$USER_NAME \
+            --entrypoint bash \
+            user_space
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test_docker_bash2(self) -> None:
+        params = self._get_default_params()
+        ltasks.set_default_params(params)
+        stage = "local"
+        base_image = ""
+        cmd = "bash"
+        entrypoint = True
+        act = ltasks._get_docker_cmd(
+            stage,
+            base_image,
+            cmd,
+            entrypoint=entrypoint
+        )
+        act = hut.purify_txt_from_client(act)
+        exp = r"""
+        IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
+            docker-compose \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml 
+            --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
+            run \
+            --rm \
+            -l user=$USER_NAME \
+            --entrypoint bash \
+            user_space
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
 
 
 class TestLibRunTests1(hut.TestCase):
