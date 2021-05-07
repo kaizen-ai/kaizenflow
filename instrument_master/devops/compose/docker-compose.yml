@@ -1,3 +1,7 @@
+#
+# Base compose for all the stages.
+#
+
 version: '3'
 
 services:

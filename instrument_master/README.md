@@ -20,6 +20,15 @@
 
 # Workflows
 
+- Build the image
+  ```bash
+  > invoke docker_build_local_image
+  ```
+
+- Build and test the image but do not push it to the repo
+
+<!---
+
 ## Run unit tests
 
 - Run the tests in the base Docker image:
@@ -58,6 +67,8 @@
   ```bash
   > make im.docker_push_image.latest
   ```
+
+-->
 
 ## Run IM app
 

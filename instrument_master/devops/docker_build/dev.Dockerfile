@@ -1,3 +1,7 @@
+#
+# 
+#
+# TODO(gp): This seems for both PostgreSQL and the app?
 FROM python:3.7-slim-buster
 
 RUN apt-get update && \

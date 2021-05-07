@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Entrypoint for the app that doesn't contain PostgreSQL used in docker_bash.
+# Entrypoint for an app without PostgreSQL DB. This is useful to run `docker_bash`.
 #
 
 set -e

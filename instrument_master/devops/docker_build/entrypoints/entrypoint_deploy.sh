@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Entrypoint for the app that contains PostgreSQL.
+# Entrypoint for an app that runs together with PostgreSQL.
 #
 
 set -e
