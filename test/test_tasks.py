@@ -12,7 +12,7 @@ import helpers.unit_test as hut
 # TODO(gp): We should separate what can be tested by lib_tasks.py and what
 #  should be tested as part of tasks.py
 
-dbg.init_logger()
+#dbg.init_logger()
 _LOG = logging.getLogger(__name__)
 
 try:
