@@ -4,7 +4,7 @@
 version: '3'
 
 services:
-  app:
+  base_app:
     cap_add:
       - SYS_ADMIN
     environment:
@@ -13,6 +13,7 @@ services:
       - AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
       - GH_ACTION_ACCESS_TOKEN=$GH_ACTION_ACCESS_TOKEN
     image: ${IMAGE}
+    # TODO(gp): I think this is needed only when mounting fstab.
     privileged: true
     restart: "no"
     volumes:
@@ -21,3 +22,37 @@ services:
       - ~/.config/gh:/root/.config/gh
       # No need to mount file systems.
       #- ../docker_build/fstab:/etc/fstab
+
+  # Mount `amp` when it is used as supermodule.
+  version: '3'
+
+  services:
+    app:
+      extends:
+        base_app 
+      volumes:
+        - ../../:/app
+
+  jupyter_server:
+    command: devops/docker_scripts/run_jupyter_server.sh
+    environment:
+      - PORT=${PORT}
+    extends:
+      app
+    ports:
+      - "${PORT}:${PORT}"
+
+  # TODO(gp): For some reason the following doesn't work.
+  #  jupyter_server_test:
+  #    command: jupyter notebook -h 2>&1 >/dev/null
+  #    extends:
+  #      jupyter_server
+
+  jupyter_server_test:
+    command: jupyter notebook -h 2>&1 >/dev/null
+    environment:
+      - PORT=${PORT}
+    extends:
+      app
+    ports:
+      - "${PORT}:${PORT}"

@@ -1,28 +1,30 @@
+#
+# Run jupyter server.
+#
+
 version: '3'
 
 services:
   jupyter_server:
-    image: $IMAGE
+    command: devops/docker_scripts/run_jupyter_server.sh
     environment:
       - PORT=${PORT}
-    ports:
-      - "${PORT}:${PORT}"
-    command: devops/docker_scripts/run_jupyter_server.sh
     extends:
       app
+    ports:
+      - "${PORT}:${PORT}"
 
-  # TODO(gp): For some reason it doesn't work.
+  # TODO(gp): For some reason the following doesn't work.
   #  jupyter_server_test:
+  #    command: jupyter notebook -h 2>&1 >/dev/null
   #    extends:
   #      jupyter_server
-  #    command: jupyter notebook -h 2>&1 >/dev/null
 
   jupyter_server_test:
-    image: $IMAGE
+    command: jupyter notebook -h 2>&1 >/dev/null
     environment:
       - PORT=${PORT}
-    ports:
-      - "${PORT}:${PORT}"
-    command: jupyter notebook -h 2>&1 >/dev/null
     extends:
       app
+    ports:
+      - "${PORT}:${PORT}"
