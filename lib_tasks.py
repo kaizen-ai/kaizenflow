@@ -601,6 +601,47 @@ def _get_image(stage: str, base_image: str) -> str:
     return image
 
 
+def _to_cmd(docker_cmd_: List[str]) -> str:
+    """
+    Convert a command encoded as a list of strings into a single command separated
+    by `\`.
+
+    E.g., convert
+    ```
+        ['IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev',
+            '\n        docker-compose',
+            '\n        --file amp/devops/compose/docker-compose.yml',
+            '\n        --file amp/devops/compose/docker-compose_as_submodule.yml',
+            '\n        --env-file devops/env/default.env']
+        ```
+    into
+        ```
+        docker_cmd=IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev \
+            docker-compose \
+            --file devops/compose/docker-compose.yml \
+            --file devops/compose/docker-compose_as_submodule.yml \
+            --env-file devops/env/default.env
+        ```
+    """
+    # Expand all strings into single lines.
+    _LOG.debug("docker_cmd=%s", docker_cmd_)
+    docker_cmd_tmp = []
+    for dc in docker_cmd_:
+        # Add a `\` at the end of each string.
+        dbg.dassert(not dc.endswith("\\"), "dc='%s'", dc)
+        dc += " \\"
+        docker_cmd_tmp.extend(dc.split("\n"))
+    docker_cmd_ = docker_cmd_tmp
+    # Remove empty lines.
+    docker_cmd_ = [cmd for cmd in docker_cmd_ if cmd.rstrip().lstrip() != ""]
+    # Package the command.
+    docker_cmd_ = "\n".join(docker_cmd_)
+    # Remove a `\` at the end, since it is not needed.
+    docker_cmd_ = docker_cmd_.rstrip("\\")
+    _LOG.debug("docker_cmd=%s", docker_cmd_)
+    return docker_cmd_
+
+
 def _get_docker_cmd(
     stage: str,
     base_image: str,
@@ -659,7 +700,11 @@ def _get_docker_cmd(
     env_file = "devops/env/default.env"
     docker_cmd_.append(rf"""
         --env-file {env_file}""")
-    # Add the command.
+    # - Add the `config` command for debugging purposes.
+    docker_config_cmd = docker_cmd_[:]
+    docker_config_cmd.append(rf"""
+        config""")
+    # - Add the `run` command.
     docker_cmd_.append(rf"""
         run \
         --rm""")
@@ -684,22 +729,13 @@ def _get_docker_cmd(
         docker_cmd_.append(rf"""
         --entrypoint bash \
         {service_name}""")
-    # Expand all strings into single lines.
-    _LOG.debug("docker_cmd=%s", docker_cmd_)
-    docker_cmd_tmp = []
-    for dc in docker_cmd_:
-        # Add a `\` at the end of each string.
-        dbg.dassert(not dc.endswith("\\"), "dc='%s'", dc)
-        dc += " \\"
-        docker_cmd_tmp.extend(dc.split("\n"))
-    docker_cmd_ = docker_cmd_tmp
-    # Remove empty lines.
-    docker_cmd_ = [l for l in docker_cmd_ if l.rstrip().lstrip() != ""]
-    # Package the command.
-    docker_cmd_ = "\n".join(docker_cmd_)
-    # Remove a `\` at the end, since it is not needed.
-    docker_cmd_ = docker_cmd_.rstrip("\\")
-    _LOG.debug("docker_cmd=%s", docker_cmd_)
+    # Print the config for debugging purpose.
+    docker_config_cmd = _to_cmd(docker_config_cmd)
+    _LOG.debug("docker_config_cmd=\n%s", docker_config_cmd)
+    _LOG.debug("docker_config=\n%s",
+        hsinte.system_to_string(docker_config_cmd)[1])
+    # Print the config for debugging purpose.
+    docker_cmd_ = _to_cmd(docker_cmd_)
     return docker_cmd_
 
 

@@ -214,7 +214,6 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml 
-            --file $GIT_ROOT/devops/compose/docker-compose_as_supermodule.yml \
             run \
             --rm \
             -l user=$USER_NAME \
@@ -318,9 +317,11 @@ class TestLibRunTests1(hut.TestCase):
             collect_only,
             skipped_tests,
         )
-        exp = r""
+        exp = r"pytest --ignore amp"
         self.assert_equal(act, exp)
 
+    @pytest.mark.skipif(not git.is_amp(),
+                        reason="Only run in amp")
     def test_run_fast_tests4(self) -> None:
         """
         Select pytest_mark.
@@ -491,6 +492,8 @@ class TestLibTasksRunTests1(hut.TestCase):
         ]
         self.assert_equal(str(act), str(exp))
 
+    @pytest.mark.skipif(not git.is_amp(),
+                        reason="Only run in amp")
     def test_find_test_decorator2(self) -> None:
         """
         Find test functions in the "no_container" test list.
