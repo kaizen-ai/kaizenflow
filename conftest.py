@@ -5,7 +5,6 @@ from typing import Any, Generator
 import helpers.dbg as dbg
 import helpers.unit_test as hut
 
-# Add custom options.
 
 # Hack to workaround pytest not happy with multiple redundant conftest.py
 # (bug #34).
@@ -27,6 +26,16 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
         # pylint: disable=protected-access
         hut._CONFTEST_IN_PYTEST = False
 
+    # Create a variable to store the object used by pytest to print independently
+    # of the capture mode.
+    # https://stackoverflow.com/questions/41794888
+    import pytest
+
+    @pytest.fixture(autouse=True)
+    def populate_globals(capsys):
+        hut._GLOBAL_CAPSYS = capsys
+
+    # Add custom options.
     def pytest_addoption(parser: Any) -> None:
         parser.addoption(
             "--update_outcomes",
@@ -80,6 +89,7 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
             import sys
 
             sys.argv.append("-s")
+            sys.argv.append("-o log_cli=true")
         dbg.init_logger(level, in_pytest=True, log_filename="tmp.pytest_logger.log")
 
     if "PYANNOTATE" in os.environ:

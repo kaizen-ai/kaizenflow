@@ -1,3 +1,5 @@
+WARNING: No module named 'pandas'
+WARNING: No module named 'matplotlib'
 ## docker_kill_all: 
 docker ps -a
 docker rm -f $(docker ps -a -q)

@@ -106,64 +106,104 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         }
         return default_params
 
-    @pytest.skipUnless(git.is_amp() & git.is_inside_submodule("."))
+    @pytest.mark.skipif(not hut.is_in_amp_as_submodule(),
+                        reason="Only run in amp as submodule")
     def test_docker_bash1(self) -> None:
+        """
+        Command for docker_bash target.
+        """
         params = self._get_default_params()
         ltasks.set_default_params(params)
         stage = "dev"
         base_image = ""
         cmd = "bash"
+        service_name = "app"
         entrypoint = False
         act = ltasks._get_docker_cmd(
             stage,
             base_image,
             cmd,
+            service_name=service_name,
             entrypoint=entrypoint
         )
         act = hut.purify_txt_from_client(act)
         exp = r"""
         IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
             docker-compose \
-            --file $GIT_ROOT/devops/compose/docker-compose.yml 
-            --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
             run \
             --rm \
             -l user=$USER_NAME \
             --entrypoint bash \
-            user_space
+            app
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.skipUnless(git.is_amp() & git.is_inside_submodule("."))
+    @pytest.mark.skipif(not hut.is_in_amp_as_submodule(),
+                        reason="Only run in amp as submodule")
     def test_docker_bash2(self) -> None:
+        """
+        Command for docker_bash with entrypoint.
+        """
         params = self._get_default_params()
         ltasks.set_default_params(params)
         stage = "local"
         base_image = ""
         cmd = "bash"
-        entrypoint = True
         act = ltasks._get_docker_cmd(
             stage,
             base_image,
             cmd,
-            entrypoint=entrypoint
         )
         act = hut.purify_txt_from_client(act)
         exp = r"""
-        IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
+        IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:local \
             docker-compose \
-            --file $GIT_ROOT/devops/compose/docker-compose.yml 
-            --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
             run \
             --rm \
             -l user=$USER_NAME \
-            --entrypoint bash \
-            user_space
+            app \
+            bash
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.skipUnless(git.is_lem())
+    @pytest.mark.skipif(not hut.is_in_amp_as_submodule(),
+                        reason="Only run in amp as submodule")
     def test_docker_bash3(self) -> None:
+        """
+        Command for docker_bash with some env vars.
+        """
+        params = self._get_default_params()
+        ltasks.set_default_params(params)
+        stage = "local"
+        base_image = ""
+        cmd = "bash"
+        env_vars = ["PORT=9999", "SKIP_RUN=1"]
+        act = ltasks._get_docker_cmd(
+            stage,
+            base_image,
+            cmd,
+            env_vars=env_vars
+        )
+        act = hut.purify_txt_from_client(act)
+        exp = r"""
+        IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:local \
+        PORT=9999 \
+        SKIP_RUN=1 \
+            docker-compose \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
+            run \
+            --rm \
+            -l user=$USER_NAME \
+            app \
+            bash
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    @pytest.mark.skipif(not hut.is_in_amp_as_supermodule(),
+                        reason="Only run in amp as supermodule")
+    def test_docker_bash4(self) -> None:
         params = self._get_default_params()
         ltasks.set_default_params(params)
         stage = "dev"
@@ -181,12 +221,12 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml 
-            --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
+            --file $GIT_ROOT/devops/compose/docker-compose_as_supermodule.yml \
             run \
             --rm \
             -l user=$USER_NAME \
             --entrypoint bash \
-            user_space
+            app
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 

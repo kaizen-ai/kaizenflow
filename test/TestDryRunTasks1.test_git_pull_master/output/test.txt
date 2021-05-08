@@ -1,2 +1,4 @@
+WARNING: No module named 'pandas'
+WARNING: No module named 'matplotlib'
 ## git_pull_master: 
 git fetch origin master:master

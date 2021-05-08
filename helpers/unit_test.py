@@ -11,6 +11,7 @@ import os
 import pprint
 import random
 import re
+import sys
 import traceback
 import unittest
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
@@ -35,14 +36,14 @@ try:
 
     _HAS_NUMPY = True
 except ImportError as e:
-    print(_WARNING + ":" + str(e))
+    print(_WARNING + ": " + str(e))
     _HAS_NUMPY = False
 try:
     import pandas as pd
 
     _HAS_PANDAS = True
 except ImportError as e:
-    print(_WARNING + ":" + str(e))
+    print(_WARNING + ": " + str(e))
     _HAS_PANDAS = False
 
 try:
@@ -50,7 +51,7 @@ try:
 
     _HAS_MATPLOTLIB = True
 except ImportError as e:
-    print(_WARNING + ":" + str(e))
+    print(_WARNING + ": " + str(e))
     _HAS_MATPLOTLIB = False
 
 
@@ -62,6 +63,7 @@ _LOG.setLevel(logging.INFO)
 # Global setter / getter for updating test.
 
 # This controls whether the output of a test is updated or not.
+# Set by conftest.py.
 _UPDATE_TESTS = False
 
 
@@ -79,6 +81,7 @@ def get_update_tests() -> bool:
 # Global setter / getter for incremental mode.
 
 # This is useful when a long test wants to reuse some data already generated.
+# Set by conftest.py.
 _INCREMENTAL_TESTS = False
 
 
@@ -97,6 +100,7 @@ _CONFTEST_IN_PYTEST = False
 
 
 # TODO(gp): Use https://stackoverflow.com/questions/25188119
+# -> is_in_unit_test()
 def in_unit_test_mode() -> bool:
     """
     Return True if we are inside a pytest run.
@@ -105,6 +109,37 @@ def in_unit_test_mode() -> bool:
     """
     return _CONFTEST_IN_PYTEST
 
+# #############################################################################
+
+
+# Set by conftest.py.
+_GLOBAL_CAPSYS = None
+
+
+def pytest_print(txt: str) -> None:
+    """
+    Print independently of the pytest output capture.
+    """
+
+    with _GLOBAL_CAPSYS.disabled():
+        sys.stdout.write(txt)
+
+# #############################################################################
+
+
+def is_in_amp_as_submodule():
+    """
+    Return whether we are in the `amp` repo and it's a submodule, e.g., of `lem`.
+    """
+    return git.is_amp() and git.is_inside_submodule(".")
+
+
+def is_in_amp_as_supermodule():
+    """
+    Return whether we are in the `amp` repo and it's a supermodule, i.e., `amp`
+    by itself.
+    """
+    return git.is_amp() and not git.is_inside_submodule(".")
 
 # #############################################################################
 
@@ -706,13 +741,13 @@ def _assert_equal(
 
 # #############################################################################
 
-
 class TestCase(unittest.TestCase):
     """
     Add some functions to compare actual results to a golden outcome.
     """
 
     def setUp(self) -> None:
+        #always_print()
         # Print banner to signal the start of a new test.
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
         _LOG.debug("\n%s", hprint.frame(func_name))
@@ -744,14 +779,16 @@ class TestCase(unittest.TestCase):
         # Start the timer to measure the execution time of the test.
         self._timer = htimer.Timer()
 
+
     def tearDown(self) -> None:
         # Stop the timer to measure the execution time of the test.
         self._timer.stop()
-        print("(%.2f s) " % self._timer.get_total_elapsed(), end="")
+        #print("(%.2f s) " % self._timer.get_total_elapsed(), end="")
+        pytest_print("(%.2f s) " % self._timer.get_total_elapsed())
         # Report if the test was updated
         if self._test_was_updated:
             if not self._overriden_update_tests:
-                print(
+                pytest_print(
                     "("
                     + hprint.color_highlight("WARNING", "yellow")
                     + ": Test was updated) ",

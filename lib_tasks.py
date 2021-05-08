@@ -26,6 +26,7 @@ import helpers.io_ as hio
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.table as htable
+import helpers.unit_test as hut
 import helpers.version as hversi
 
 # TODO(gp): -> helpers.lib_tasks so we can share across repos (e.g., dev_tools)
@@ -93,6 +94,9 @@ else:
 
 
 def _report_task(txt: str = "") -> None:
+    if hut.in_unit_test_mode():
+        # In unit test don't print anything.
+        return
     func_name = hintros.get_function_name(count=1)
     msg = "## %s: %s" % (func_name, txt)
     # TODO(gp): Do not print during unit tests.
@@ -107,9 +111,7 @@ use_one_line_cmd = False
 #  globally.
 def _remove_spaces(cmd: str) -> str:
     cmd = cmd.rstrip().lstrip()
-    #cmd = cmd.replace("\\", "")
-    cmd = re.sub(" \\ ", " ", cmd)
-    cmd = re.sub(" \\$", " ", cmd)
+    cmd = re.sub(r" \\\s*$", " ", cmd)
     cmd = " ".join(cmd.split())
     return cmd
 
@@ -604,17 +606,27 @@ def _get_docker_cmd(
     stage: str,
     base_image: str,
     cmd: str,
+    env_vars: Optional[List[str]] = None,
+    service_name: str = "app",
     entrypoint: bool = True,
 ) -> str:
     """
     :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
+    :param env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
     """
-    hprint.log(_LOG, logging.DEBUG, "stage base_image cmd")
+    hprint.log(_LOG, logging.DEBUG, "stage base_image cmd env_vars entrypoint")
+    docker_cmd_ :List[str] = []
     # Get the image.
     image = _get_image(stage, base_image)
     _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
     _check_image(image)
-    # Get the docker compose files.
+    docker_cmd_.append(f"IMAGE={image} \\")
+    # Handle extra env vars.
+    if env_vars:
+        dbg.dassert(env_vars, list)
+        for env_var in env_vars:
+            docker_cmd_.append(f"{env_var} \\")
+    # Handle the docker compose files.
     docker_compose_files = []
     docker_compose_files.append(_get_base_docker_compose_path())
     docker_compose_files.append(_get_amp_docker_compose_path())
@@ -623,29 +635,37 @@ def _get_docker_cmd(
         docker_compose_files.append(get_default_param(key))
     for docker_compose in docker_compose_files:
         dbg.dassert_exists(docker_compose)
-    file_opt = " ".join(["--file %s" % dcf for dcf in docker_compose_files])
+    file_opt = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
+    _LOG.debug(hprint.to_str("file_opt"))
     # Get the user.
     user_name = hsinte.get_user_name()
     # Build command line.
     # TODO(gp): Add an option to print the config.
-    docker_cmd_ = rf"""IMAGE={image} \
+    docker_cmd_.append(rf"""
     docker-compose \
         {file_opt} \
         run \
         --rm \
-        -l user={user_name} \
-    """
-    # TODO(gp): Is this needed?
-    docker_cmd_ = docker_cmd_.rstrip()
+        -l user={user_name} \ """.rstrip())
     # Handle entrypoint.
     if entrypoint:
-        docker_cmd_ += rf"""
-        user_space \
-        {cmd}"""
+        docker_cmd_.append(rf"""
+        {service_name} \
+        {cmd}""")
     else:
-        docker_cmd_ += r"""
+        docker_cmd_.append(rf"""
         --entrypoint bash \
-        user_space"""
+        {service_name}""")
+    #
+    _LOG.debug("docker_cmd=%s", docker_cmd_)
+    # Expand all strings into single lines.
+    docker_cmd_tmp = []
+    for dc in docker_cmd_:
+        docker_cmd_tmp.extend(dc.split("\n"))
+    docker_cmd_ = docker_cmd_tmp
+    # Remove empty lines.
+    docker_cmd_ = [l for l in docker_cmd_ if l.rstrip().lstrip() != ""]
+    docker_cmd_ = "\n".join(docker_cmd_)
     _LOG.debug("docker_cmd=%s", docker_cmd_)
     return docker_cmd_
 
@@ -687,12 +707,10 @@ def docker_cmd(ctx, stage=_STAGE, cmd=""):  # type: ignore
     dbg.dassert_ne(cmd, "")
     base_image = ""
     # TODO(gp): Do we need to overwrite the entrypoint?
-    entrypoint = False
     docker_cmd_ = _get_docker_cmd(
         stage,
         base_image,
-        cmd,
-        entrypoint=entrypoint
+        cmd
     )
     _docker_cmd(ctx, docker_cmd_)
 
@@ -731,6 +749,16 @@ def docker_jupyter(  # type: ignore
         {service}"""
     _LOG.debug("cmd=%s", cmd)
     _run(ctx, cmd, pty=True)
+    # IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev \
+    #     PORT=9999 \
+    #     docker-compose \
+    #         --file /Users/saggese/src/lemonade1/amp/devops/compose/docker-compose_as_submodule.yml \
+    #         --file /Users/saggese/src/lemonade1/amp/devops/compose/docker-compose-jupyter.yml \
+    #         run \
+    #         --rm \
+    #         -l user=saggese \
+    #         --service-ports \
+    #         jupyter_server_test
 
 
 # #############################################################################
