@@ -1,5 +1,3 @@
-WARNING: No module named 'pandas'
-WARNING: No module named 'matplotlib'
 ## git_clean: 
 git clean -fd
 git submodule foreach 'git clean -fd'

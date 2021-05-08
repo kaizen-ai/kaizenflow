@@ -179,12 +179,12 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         stage = "local"
         base_image = ""
         cmd = "bash"
-        env_vars = ["PORT=9999", "SKIP_RUN=1"]
+        extra_env_vars = ["PORT=9999", "SKIP_RUN=1"]
         act = ltasks._get_docker_cmd(
             stage,
             base_image,
             cmd,
-            env_vars=env_vars
+            extra_env_vars=extra_env_vars
         )
         act = hut.purify_txt_from_client(act)
         exp = r"""
@@ -216,6 +216,28 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
             cmd,
             entrypoint=entrypoint
         )
+        act = hut.purify_txt_from_client(act)
+        exp = r"""
+        IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
+            docker-compose \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml 
+            --file $GIT_ROOT/devops/compose/docker-compose_as_supermodule.yml \
+            run \
+            --rm \
+            -l user=$USER_NAME \
+            --entrypoint bash \
+            app
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    @pytest.mark.skipif(not hut.is_in_amp_as_submodule(),
+                        reason="Only run in amp as submodule")
+    def test_docker_jupyter1(self) -> None:
+        stage = "dev"
+        base_image = ""
+        port = 9999
+        self_test = True
+        act = ltasks._get_docker_jupyter_cmd(stage, base_image, port, self_test)
         act = hut.purify_txt_from_client(act)
         exp = r"""
         IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \

@@ -1,5 +1,3 @@
-WARNING: No module named 'pandas'
-WARNING: No module named 'matplotlib'
 ## print_setup: 
 ECR_BASE_PATH=665840871993.dkr.ecr.us-east-1.amazonaws.com
 BASE_IMAGE=amp

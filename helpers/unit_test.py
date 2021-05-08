@@ -747,7 +747,6 @@ class TestCase(unittest.TestCase):
     """
 
     def setUp(self) -> None:
-        #always_print()
         # Print banner to signal the start of a new test.
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
         _LOG.debug("\n%s", hprint.frame(func_name))
@@ -783,7 +782,6 @@ class TestCase(unittest.TestCase):
     def tearDown(self) -> None:
         # Stop the timer to measure the execution time of the test.
         self._timer.stop()
-        #print("(%.2f s) " % self._timer.get_total_elapsed(), end="")
         pytest_print("(%.2f s) " % self._timer.get_total_elapsed())
         # Report if the test was updated
         if self._test_was_updated:
@@ -792,7 +790,6 @@ class TestCase(unittest.TestCase):
                     "("
                     + hprint.color_highlight("WARNING", "yellow")
                     + ": Test was updated) ",
-                    end="",
                 )
             else:
                 # We forced an update from the unit test itself, so no need

@@ -1,5 +1,3 @@
-WARNING: No module named 'pandas'
-WARNING: No module named 'matplotlib'
 ## git_pull: 
 git pull --autostash
 git submodule foreach 'git pull --autostash'

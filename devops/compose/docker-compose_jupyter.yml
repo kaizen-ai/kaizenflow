@@ -9,7 +9,7 @@ services:
       - "${PORT}:${PORT}"
     command: devops/docker_scripts/run_jupyter_server.sh
     extends:
-      user_space
+      app
 
   # TODO(gp): For some reason it doesn't work.
   #  jupyter_server_test:
@@ -25,4 +25,4 @@ services:
       - "${PORT}:${PORT}"
     command: jupyter notebook -h 2>&1 >/dev/null
     extends:
-      user_space
+      app

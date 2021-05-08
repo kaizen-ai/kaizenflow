@@ -110,6 +110,10 @@ def _dfatal(
 
 
 def dassert(cond: Any, msg: Optional[str] = None, *args: Any) -> None:
+    # Handle the somehow frequent case of using `dassert` instead of another
+    # one, e.g., `dassert(y, list)`
+    if msg is not None:
+        assert isinstance(msg, str), f"You passed '{msg}' instead of str"
     if not cond:
         txt = "cond=%s" % cond
         _dfatal(txt, msg, *args)
