@@ -107,7 +107,9 @@ use_one_line_cmd = False
 #  globally.
 def _remove_spaces(cmd: str) -> str:
     cmd = cmd.rstrip().lstrip()
-    cmd = cmd.replace("\\", "")
+    #cmd = cmd.replace("\\", "")
+    cmd = re.sub(" \\ ", " ", cmd)
+    cmd = re.sub(" \\$", " ", cmd)
     cmd = " ".join(cmd.split())
     return cmd
 
@@ -117,7 +119,7 @@ def _run(ctx: Any, cmd: str, *args: Any, **kwargs: Any) -> None:
     if use_one_line_cmd:
         cmd = _remove_spaces(cmd)
     _LOG.debug("cmd=%s", cmd)
-    _run(ctx, cmd, *args, **kwargs)
+    ctx.run(cmd, *args, **kwargs)
 
 
 # #############################################################################
@@ -666,7 +668,6 @@ def docker_bash(ctx, stage=_STAGE, entrypoint=True):  # type: ignore
     """
     _report_task()
     base_image = ""
-    #docker_compose = _get_amp_docker_compose_path()
     cmd = "bash"
     docker_cmd_ = _get_docker_cmd(
         stage,
@@ -685,9 +686,15 @@ def docker_cmd(ctx, stage=_STAGE, cmd=""):  # type: ignore
     _report_task()
     dbg.dassert_ne(cmd, "")
     base_image = ""
-    #docker_compose = _get_amp_docker_compose_path()
     # TODO(gp): Do we need to overwrite the entrypoint?
-    _docker_cmd(ctx, stage, base_image, cmd)
+    entrypoint = False
+    docker_cmd_ = _get_docker_cmd(
+        stage,
+        base_image,
+        cmd,
+        entrypoint=entrypoint
+    )
+    _docker_cmd(ctx, docker_cmd_)
 
 
 # TODO(gp): This should go through _docker_cmd() although it's slightly different.
@@ -993,9 +1000,13 @@ def run_blank_tests(ctx, stage=_STAGE):  # type: ignore
     """
     _report_task()
     base_image = ""
-    #docker_compose = _get_amp_docker_compose_path()
     cmd = '"pytest -h >/dev/null"'
-    _docker_cmd(ctx, stage, base_image, cmd)
+    docker_cmd_ = _get_docker_cmd(
+        stage,
+        base_image,
+        cmd
+    )
+    _docker_cmd(ctx, docker_cmd_)
 
 
 # #############################################################################
@@ -1213,7 +1224,12 @@ def _run_test_cmd(
     #docker_compose = _get_amp_docker_compose_path()
     # We need to add some " to pass the string as it is to the container.
     cmd = f"'{cmd}'"
-    _docker_cmd(ctx, stage, base_image, cmd)
+    docker_cmd_ = _get_docker_cmd(
+        stage,
+        base_image,
+        cmd
+    )
+    _docker_cmd(ctx, docker_cmd_)
     # Print message about coverage.
     if coverage:
         msg = """- The coverage results in textual form are above.

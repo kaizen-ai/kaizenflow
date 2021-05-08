@@ -2,7 +2,9 @@ import logging
 import re
 from typing import Dict
 
+import invoke
 import pytest
+import tasks
 
 import helpers.dbg as dbg
 import helpers.printing as hprint
@@ -12,22 +14,7 @@ import helpers.unit_test as hut
 # TODO(gp): We should separate what can be tested by lib_tasks.py and what
 #  should be tested as part of tasks.py
 
-dbg.init_logger()
 _LOG = logging.getLogger(__name__)
-
-try:
-    import invoke
-
-    import tasks
-except ModuleNotFoundError as e:
-    # TODO(gp): Is this needed?
-    print("Can't find invoke: %s" % str(e))
-
-    class Dummy:
-        def __init__(self) -> None:
-            self.MockContext = None
-
-    invoke = Dummy()
 
 
 # TODO(gp): We should introspect lib_tasks.py and find all the functions decorated
@@ -229,7 +216,7 @@ class TestExecuteTasks1(hut.TestCase):
 @pytest.mark.skipif(hsinte.is_inside_docker(), reason="AmpTask165")
 class TestExecuteTasks2(hut.TestCase):
     """
-    Execute tasks that change the state of the system but using a temp image.
+    Execute tasks that change the state of the system but use a temporary image.
     """
 
     def test_docker_jupyter1(self) -> None:
