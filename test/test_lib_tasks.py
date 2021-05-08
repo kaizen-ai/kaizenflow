@@ -295,10 +295,8 @@ class TestLibRunTests1(hut.TestCase):
         exp = r'pytest -m "not slow and not superslow" --cov=. --cov-branch --cov-report term-missing --cov-report html --collect-only'
         self.assert_equal(act, exp)
 
-    @pytest.mark.skipif(
-        not git.has_submodules(),
-        reason="Run only if this repo has are submodules",
-    )
+    @pytest.mark.skipif(not hut.is_in_lem(),
+                        reason="Only run in lem")
     def test_run_fast_tests3(self) -> None:
         """
         Skip submodules.
