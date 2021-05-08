@@ -513,7 +513,7 @@ def _get_base_docker_compose_path() -> str:
     return docker_compose_path
 
 
-def _get_amp_docker_compose_path() -> str:
+def _get_amp_docker_compose_path() -> Optional[str]:
     """
     Return the docker compose for `amp` as supermodule or as submodule.
 
@@ -524,13 +524,12 @@ def _get_amp_docker_compose_path() -> str:
     if path != "":
         _LOG.warning("amp is a submodule")
         docker_compose_path = "docker-compose_as_submodule.yml"
+        # Add the default path.
+        dir_name = "devops/compose"
+        docker_compose_path = os.path.join(dir_name, docker_compose_path)
+        docker_compose_path = os.path.abspath(docker_compose_path)
     else:
-        _LOG.warning("amp is a supermodule")
-        docker_compose_path = "docker-compose_as_supermodule.yml"
-    # Add the default path.
-    dir_name = "devops/compose"
-    docker_compose_path = os.path.join(dir_name, docker_compose_path)
-    docker_compose_path = os.path.abspath(docker_compose_path)
+        docker_compose_path = None
     return docker_compose_path
 
 
@@ -637,7 +636,9 @@ def _get_docker_cmd(
     # - Handle the docker compose files.
     docker_compose_files = []
     docker_compose_files.append(_get_base_docker_compose_path())
-    docker_compose_files.append(_get_amp_docker_compose_path())
+    docker_compose_file_tmp = _get_amp_docker_compose_path()
+    if docker_compose_file_tmp:
+        docker_compose_files.append(docker_compose_file_tmp)
     # Add the compose files from command line.
     if extra_docker_compose_files:
         dbg.dassert_isinstance(extra_docker_compose_files, list)
@@ -654,11 +655,17 @@ def _get_docker_cmd(
     _LOG.debug(hprint.to_str("file_opts"))
     docker_cmd_.append(rf"""
         {file_opts}""")
+    # - Handle the env file.
+    env_file = "devops/env/default.env"
+    docker_cmd_.append(rf"""
+        --env-file {env_file}""")
+    # Add the command.
+    docker_cmd_.append(rf"""
+        run \
+        --rm""")
     # - Handle the user.
     user_name = hsinte.get_user_name()
     docker_cmd_.append(rf"""
-        run \
-        --rm \
         -l user={user_name}""")
     # - Handle the extra docker options.
     if extra_docker_run_opts:
@@ -744,7 +751,7 @@ def docker_cmd(ctx, stage=_STAGE, cmd=""):  # type: ignore
 def _get_docker_jupyter_cmd(stage: str, base_image: str, port: int, self_test: bool) -> str:
     cmd = ""
     extra_env_vars = [f"PORT={port}"]
-    extra_docker_compose_jupyter = ["devops/compose/docker-compose_jupyter.yml"]
+    #extra_docker_compose_jupyter = ["devops/compose/docker-compose_jupyter.yml"]
     extra_docker_run_opts = ["--service-ports"]
     service_name = "jupyter_server_test" if self_test else "jupyter_server"
     #
@@ -753,7 +760,6 @@ def _get_docker_jupyter_cmd(stage: str, base_image: str, port: int, self_test: b
         base_image,
         cmd,
         extra_env_vars=extra_env_vars,
-        extra_docker_compose_files=extra_docker_compose_jupyter,
         extra_docker_run_opts=extra_docker_run_opts,
         service_name=service_name,
     )
@@ -1261,7 +1267,6 @@ def _run_test_cmd(
         _run(ctx, "rm -rf ./.coverage*")
     # Run.
     base_image = ""
-    #docker_compose = _get_amp_docker_compose_path()
     # We need to add some " to pass the string as it is to the container.
     cmd = f"'{cmd}'"
     docker_cmd_ = _get_docker_cmd(

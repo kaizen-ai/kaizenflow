@@ -24,14 +24,11 @@ services:
       #- ../docker_build/fstab:/etc/fstab
 
   # Mount `amp` when it is used as supermodule.
-  version: '3'
-
-  services:
-    app:
-      extends:
-        base_app 
-      volumes:
-        - ../../:/app
+  app:
+    extends:
+      base_app 
+    volumes:
+      - ../../:/app
 
   jupyter_server:
     command: devops/docker_scripts/run_jupyter_server.sh
