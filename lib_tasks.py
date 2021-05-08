@@ -625,15 +625,15 @@ def _get_docker_cmd(
     image = _get_image(stage, base_image)
     _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
     _check_image(image)
-    docker_cmd_.append(f"IMAGE={image} \\")
+    docker_cmd_.append(f"IMAGE={image}")
     # - Handle extra env vars.
     if extra_env_vars:
         dbg.dassert_isinstance(extra_env_vars, list)
         for env_var in extra_env_vars:
-            docker_cmd_.append(f"{env_var} \\")
+            docker_cmd_.append(f"{env_var}")
     #
     docker_cmd_.append(rf"""
-        docker-compose \ """.rstrip())
+        docker-compose""")
     # - Handle the docker compose files.
     docker_compose_files = []
     docker_compose_files.append(_get_base_docker_compose_path())
@@ -653,26 +653,26 @@ def _get_docker_cmd(
     file_opts = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
     _LOG.debug(hprint.to_str("file_opts"))
     docker_cmd_.append(rf"""
-        {file_opts} \ """.rstrip())
+        {file_opts}""")
     # - Handle the user.
     user_name = hsinte.get_user_name()
     docker_cmd_.append(rf"""
         run \
         --rm \
-        -l user={user_name} \ """.rstrip())
+        -l user={user_name}""")
     # - Handle the extra docker options.
     if extra_docker_run_opts:
         dbg.dassert_isinstance(extra_docker_run_opts, list)
         extra_opts = " ".join(extra_docker_run_opts)
         docker_cmd_.append(rf"""
-        {extra_opts} \ """.rstrip())
+        {extra_opts}""")
     # - Handle entrypoint.
     if entrypoint:
         docker_cmd_.append(rf"""
-        {service_name} \ """.rstrip())
+        {service_name}""")
         if cmd:
             docker_cmd_.append(rf"""
-        {cmd} \ """.rstrip())
+        {cmd}""")
     else:
         docker_cmd_.append(rf"""
         --entrypoint bash \
@@ -681,11 +681,17 @@ def _get_docker_cmd(
     _LOG.debug("docker_cmd=%s", docker_cmd_)
     docker_cmd_tmp = []
     for dc in docker_cmd_:
+        # Add a `\` at the end of each string.
+        dbg.dassert(not dc.endswith("\\"), "dc='%s'", dc)
+        dc += " \\"
         docker_cmd_tmp.extend(dc.split("\n"))
     docker_cmd_ = docker_cmd_tmp
     # Remove empty lines.
     docker_cmd_ = [l for l in docker_cmd_ if l.rstrip().lstrip() != ""]
+    # Package the command.
     docker_cmd_ = "\n".join(docker_cmd_)
+    # Remove a `\` at the end, since it is not needed.
+    docker_cmd_ = docker_cmd_.rstrip("\\")
     _LOG.debug("docker_cmd=%s", docker_cmd_)
     return docker_cmd_
 

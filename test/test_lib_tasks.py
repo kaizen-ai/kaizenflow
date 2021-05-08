@@ -86,7 +86,8 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
 
     def setUp(self):
         super().setUp()
-        ltasks.reset_default_params()
+        params = self._get_default_params()
+        ltasks.set_default_params(params)
 
     def tearDown(self):
         ltasks.reset_default_params()
@@ -112,8 +113,6 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         """
         Command for docker_bash target.
         """
-        params = self._get_default_params()
-        ltasks.set_default_params(params)
         stage = "dev"
         base_image = ""
         cmd = "bash"
@@ -145,8 +144,6 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         """
         Command for docker_bash with entrypoint.
         """
-        params = self._get_default_params()
-        ltasks.set_default_params(params)
         stage = "local"
         base_image = ""
         cmd = "bash"
@@ -174,8 +171,6 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         """
         Command for docker_bash with some env vars.
         """
-        params = self._get_default_params()
-        ltasks.set_default_params(params)
         stage = "local"
         base_image = ""
         cmd = "bash"
@@ -204,8 +199,6 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
     @pytest.mark.skipif(not hut.is_in_amp_as_supermodule(),
                         reason="Only run in amp as supermodule")
     def test_docker_bash4(self) -> None:
-        params = self._get_default_params()
-        ltasks.set_default_params(params)
         stage = "dev"
         base_image = ""
         cmd = "bash"
@@ -241,14 +234,14 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         act = hut.purify_txt_from_client(act)
         exp = r"""
         IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
+        PORT=9999 \
             docker-compose \
-            --file $GIT_ROOT/devops/compose/docker-compose.yml 
-            --file $GIT_ROOT/devops/compose/docker-compose_as_supermodule.yml \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml --file devops/compose/docker-compose_jupyter.yml \
             run \
             --rm \
             -l user=$USER_NAME \
-            --entrypoint bash \
-            app
+            --service-ports \
+            jupyter_server_test
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
