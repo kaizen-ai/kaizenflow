@@ -124,22 +124,6 @@ def pytest_print(txt: str) -> None:
     with _GLOBAL_CAPSYS.disabled():
         sys.stdout.write(txt)
 
-# #############################################################################
-
-
-def is_in_amp_as_submodule():
-    """
-    Return whether we are in the `amp` repo and it's a submodule, e.g., of `lem`.
-    """
-    return git.is_amp() and git.is_inside_submodule(".")
-
-
-def is_in_amp_as_supermodule():
-    """
-    Return whether we are in the `amp` repo and it's a supermodule, i.e., `amp`
-    by itself.
-    """
-    return git.is_amp() and not git.is_inside_submodule(".")
 
 # #############################################################################
 
@@ -777,7 +761,6 @@ class TestCase(unittest.TestCase):
             set_pd_default_values()
         # Start the timer to measure the execution time of the test.
         self._timer = htimer.Timer()
-
 
     def tearDown(self) -> None:
         # Stop the timer to measure the execution time of the test.

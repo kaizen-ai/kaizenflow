@@ -107,7 +107,7 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         }
         return default_params
 
-    @pytest.mark.skipif(not hut.is_in_amp_as_submodule(),
+    @pytest.mark.skipif(not git.is_in_amp_as_submodule(),
                         reason="Only run in amp as submodule")
     def test_docker_bash1(self) -> None:
         """
@@ -138,7 +138,7 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skipif(not hut.is_in_amp_as_submodule(),
+    @pytest.mark.skipif(not git.is_in_amp_as_submodule(),
                         reason="Only run in amp as submodule")
     def test_docker_bash2(self) -> None:
         """
@@ -165,7 +165,7 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skipif(not hut.is_in_amp_as_submodule(),
+    @pytest.mark.skipif(not git.is_in_amp_as_submodule(),
                         reason="Only run in amp as submodule")
     def test_docker_bash3(self) -> None:
         """
@@ -196,7 +196,7 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skipif(not hut.is_in_amp_as_supermodule(),
+    @pytest.mark.skipif(not git.is_in_amp_as_supermodule(),
                         reason="Only run in amp as supermodule")
     def test_docker_bash4(self) -> None:
         stage = "dev"
@@ -223,7 +223,7 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skipif(not hut.is_in_amp_as_submodule(),
+    @pytest.mark.skipif(not git.is_in_amp_as_submodule(),
                         reason="Only run in amp as submodule")
     def test_docker_jupyter1(self) -> None:
         stage = "dev"
@@ -295,7 +295,7 @@ class TestLibRunTests1(hut.TestCase):
         exp = r'pytest -m "not slow and not superslow" --cov=. --cov-branch --cov-report term-missing --cov-report html --collect-only'
         self.assert_equal(act, exp)
 
-    @pytest.mark.skipif(not hut.is_in_lem(),
+    @pytest.mark.skipif(not git.is_lem(),
                         reason="Only run in lem")
     def test_run_fast_tests3(self) -> None:
         """

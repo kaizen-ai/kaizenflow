@@ -111,8 +111,8 @@ def is_amp() -> bool:
     """
     repo_full_name = get_repo_full_name_from_dirname(".")
     repo_short_name = get_repo_short_name(repo_full_name)
-    is_amp = repo_short_name == "amp"
-    return is_amp
+    res = repo_short_name == "amp"
+    return res
 
 
 def is_lem() -> bool:
@@ -121,8 +121,23 @@ def is_lem() -> bool:
     """
     repo_full_name = get_repo_full_name_from_dirname(".")
     repo_short_name = get_repo_short_name(repo_full_name)
-    is_lem = repo_short_name == "lem"
-    return is_lem
+    res = repo_short_name == "lem"
+    return res
+
+
+def is_in_amp_as_submodule():
+    """
+    Return whether we are in the `amp` repo and it's a submodule, e.g., of `lem`.
+    """
+    return is_amp() and is_inside_submodule(".")
+
+
+def is_in_amp_as_supermodule():
+    """
+    Return whether we are in the `amp` repo and it's a supermodule, i.e., `amp`
+    by itself.
+    """
+    return is_amp() and not is_inside_submodule(".")
 
 
 # ##############
