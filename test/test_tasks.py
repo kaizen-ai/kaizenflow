@@ -17,8 +17,6 @@ import tasks
 
 _LOG = logging.getLogger(__name__)
 
-try:
-    import invoke
 
 def _get_default_params() -> Dict[str, str]:
     """
