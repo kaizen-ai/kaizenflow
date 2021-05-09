@@ -46,6 +46,9 @@ def _frame(x: str, chars: str = "#", num_cols: int = 80) -> str:
     return ret
 
 
+# End of copy.
+
+
 def dfatal(message: str, assertion_type: Optional[Any] = None) -> None:
     """
     Print an error message and exits.
@@ -64,6 +67,8 @@ def dfatal(message: str, assertion_type: Optional[Any] = None) -> None:
 
 # TODO(gp): Would be nice to have a way to disable the assertions in certain
 #  builds, or at least know how much time is spent in the assertions.
+#  To disable we could have a fake_dbg.py that has all `dassert_*`, `logging`
+#   defined as `lambda x: 0`.
 
 
 # INVARIANT:
@@ -829,7 +834,7 @@ def shutup_chatty_modules(
         "botocore",
         "fsspec",
         "hooks",
-        "ib_insync",
+        # "ib_insync",
         "invoke",
         "matplotlib",
         "nose",

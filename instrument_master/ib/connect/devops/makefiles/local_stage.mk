@@ -8,6 +8,10 @@ IB_CONNECT_TRUSTED_IPS?=""
 IB_CONNECT_VNC_PASSWORD?=
 IB_CONNECT_API_PORT?=4003
 IB_CONNECT_VNC_PORT?=5901
+
+# TODO(gp): The difference between docker_run and docker_up seems to be daemon vs docker.
+# We can ignore for now.
+
 ib_connect.docker_run.local:
 ifeq ($(IB_CONNECT_VNC_PASSWORD),)
 	@echo "You need to provide IB_CONNECT_VNC_PASSWORD parameter. Example: 'IB_CONNECT_VNC_PASSWORD=12345 make ib_connect.docker_run.local'"

@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 """
-Create IB controller config.
+Create IB controller config from parameters passed from command line.
 
 Based on:
 https://github.com/ib-controller/ib-controller/blob/master/resources/IBController.ini
 
-Usage:
-    1. Create config with IB user/password:
-    > make_ib_controller_init_file.py --user username --password password
+# Create config with IB user/password:
+> make_ib_controller_init_file.py --user username --password password
 """
 import argparse
 import logging
@@ -103,6 +102,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         params["user"] = args.user
     if args.password is not None:
         params["password"] = args.password
+    # TODO(gp): Not sure why it's needed.
     if args.stage == "PROD":
         params["ExistingSessionDetectedAction"] = "primary"
     # Save to file.
