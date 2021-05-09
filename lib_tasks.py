@@ -947,19 +947,19 @@ def docker_push_local_image_to_dev(ctx, base_image=""):  # type: ignore
     #
     image_local = get_image("local", base_image)
     cmd = f"docker push {image_local}"
-    _run(ctx, cmd)
+    _run(ctx, cmd, pty=True)
     #
     image_hash = get_image("hash", base_image)
     cmd = f"docker tag {image_local} {image_hash}"
     _run(ctx, cmd)
     cmd = f"docker push {image_hash}"
-    _run(ctx, cmd)
+    _run(ctx, cmd, pty=True)
     #
     image_dev = get_image("dev", base_image)
     cmd = f"docker tag {image_local} {image_dev}"
     _run(ctx, cmd)
     cmd = f"docker push {image_dev}"
-    _run(ctx, cmd)
+    _run(ctx, cmd, pty=True)
 
 
 @task
@@ -1071,7 +1071,7 @@ def docker_release_prod_image(  # type: ignore
     # Push prod image.
     image_prod = get_image("prod", base_image)
     cmd = f"docker push {image_prod}"
-    _run(ctx, cmd)
+    _run(ctx, cmd, pty=True)
     _LOG.info("==> SUCCESS <==")
 
 
