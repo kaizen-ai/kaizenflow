@@ -430,6 +430,7 @@ def docker_kill_all(ctx):  # type: ignore
 #
 # For now we pass the customizable part through the default params.
 
+
 @task
 def docker_pull(ctx, stage=_STAGE, images="all"):  # type: ignore
     """
@@ -574,9 +575,9 @@ def _get_base_image(base_image: str) -> str:
     if base_image == "":
         # TODO(gp): Use os.path.join.
         base_image = (
-                get_default_param("ECR_BASE_PATH")
-                + "/"
-                + get_default_param("BASE_IMAGE")
+            get_default_param("ECR_BASE_PATH")
+            + "/"
+            + get_default_param("BASE_IMAGE")
         )
     _check_base_image(base_image)
     return base_image
@@ -602,9 +603,9 @@ def _get_image(stage: str, base_image: str) -> str:
 
 
 def _to_cmd(docker_cmd_: List[str]) -> str:
-    """
-    Convert a command encoded as a list of strings into a single command separated
-    by `\`.
+    r"""
+    Convert a command encoded as a list of strings into a single command
+    separated by `\`.
 
     E.g., convert
     ```
@@ -658,11 +659,14 @@ def _get_docker_cmd(
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
     :param print_config: print the docker config for debugging purposes
     """
-    hprint.log(_LOG, logging.DEBUG,
-               "stage base_image cmd extra_env_vars"
-               " extra_docker_compose_files extra_docker_run_opts"
-               " service_name entrypoint")
-    docker_cmd_ :List[str] = []
+    hprint.log(
+        _LOG,
+        logging.DEBUG,
+        "stage base_image cmd extra_env_vars"
+        " extra_docker_compose_files extra_docker_run_opts"
+        " service_name entrypoint",
+    )
+    docker_cmd_: List[str] = []
     # - Handle the image.
     image = _get_image(stage, base_image)
     _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
@@ -674,8 +678,10 @@ def _get_docker_cmd(
         for env_var in extra_env_vars:
             docker_cmd_.append(f"{env_var}")
     #
-    docker_cmd_.append(rf"""
-        docker-compose""")
+    docker_cmd_.append(
+        r"""
+        docker-compose"""
+    )
     # - Handle the docker compose files.
     docker_compose_files = []
     docker_compose_files.append(_get_base_docker_compose_path())
@@ -696,47 +702,66 @@ def _get_docker_cmd(
         dbg.dassert_exists(docker_compose)
     file_opts = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
     _LOG.debug(hprint.to_str("file_opts"))
-    docker_cmd_.append(rf"""
-        {file_opts}""")
+    docker_cmd_.append(
+        rf"""
+        {file_opts}"""
+    )
     # - Handle the env file.
     env_file = "devops/env/default.env"
-    docker_cmd_.append(rf"""
-        --env-file {env_file}""")
+    docker_cmd_.append(
+        rf"""
+        --env-file {env_file}"""
+    )
     # - Add the `config` command for debugging purposes.
-    docker_config_cmd = docker_cmd_[:]
-    docker_config_cmd.append(rf"""
-        config""")
+    docker_config_cmd : List[str] = docker_cmd_[:]
+    docker_config_cmd.append(
+        r"""
+        config"""
+    )
     # - Add the `run` command.
-    docker_cmd_.append(rf"""
+    docker_cmd_.append(
+        r"""
         run \
-        --rm""")
+        --rm"""
+    )
     # - Handle the user.
     user_name = hsinte.get_user_name()
-    docker_cmd_.append(rf"""
-        -l user={user_name}""")
+    docker_cmd_.append(
+        rf"""
+        -l user={user_name}"""
+    )
     # - Handle the extra docker options.
     if extra_docker_run_opts:
         dbg.dassert_isinstance(extra_docker_run_opts, list)
         extra_opts = " ".join(extra_docker_run_opts)
-        docker_cmd_.append(rf"""
-        {extra_opts}""")
+        docker_cmd_.append(
+            rf"""
+        {extra_opts}"""
+        )
     # - Handle entrypoint.
     if entrypoint:
-        docker_cmd_.append(rf"""
-        {service_name}""")
+        docker_cmd_.append(
+            rf"""
+        {service_name}"""
+        )
         if cmd:
-            docker_cmd_.append(rf"""
-        {cmd}""")
+            docker_cmd_.append(
+                rf"""
+        {cmd}"""
+            )
     else:
-        docker_cmd_.append(rf"""
+        docker_cmd_.append(
+            rf"""
         --entrypoint bash \
-        {service_name}""")
+        {service_name}"""
+        )
     # Print the config for debugging purpose.
     if print_docker_config:
         docker_config_cmd = _to_cmd(docker_config_cmd)
         _LOG.debug("docker_config_cmd=\n%s", docker_config_cmd)
-        _LOG.debug("docker_config=\n%s",
-                   hsinte.system_to_string(docker_config_cmd)[1])
+        _LOG.debug(
+            "docker_config=\n%s", hsinte.system_to_string(docker_config_cmd)[1]
+        )
     # Print the config for debugging purpose.
     docker_cmd_ = _to_cmd(docker_cmd_)
     return docker_cmd_
@@ -761,12 +786,7 @@ def docker_bash(ctx, stage=_STAGE, entrypoint=True):  # type: ignore
     _report_task()
     base_image = ""
     cmd = "bash"
-    docker_cmd_ = _get_docker_cmd(
-        stage,
-        base_image,
-        cmd,
-        entrypoint=entrypoint
-    )
+    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd, entrypoint=entrypoint)
     _docker_cmd(ctx, docker_cmd_)
 
 
@@ -779,17 +799,17 @@ def docker_cmd(ctx, stage=_STAGE, cmd=""):  # type: ignore
     dbg.dassert_ne(cmd, "")
     base_image = ""
     # TODO(gp): Do we need to overwrite the entrypoint?
-    docker_cmd_ = _get_docker_cmd(
-        stage,
-        base_image,
-        cmd
-    )
+    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd)
     _docker_cmd(ctx, docker_cmd_)
 
 
-def _get_docker_jupyter_cmd(stage: str, base_image: str, port: int, self_test: bool,
+def _get_docker_jupyter_cmd(
+    stage: str,
+    base_image: str,
+    port: int,
+    self_test: bool,
     print_docker_config: bool = False,
-    ) -> str:
+) -> str:
     cmd = ""
     extra_env_vars = [f"PORT={port}"]
     extra_docker_run_opts = ["--service-ports"]
@@ -809,7 +829,11 @@ def _get_docker_jupyter_cmd(stage: str, base_image: str, port: int, self_test: b
 
 @task
 def docker_jupyter(  # type: ignore
-    ctx, stage=_STAGE, base_image="", port=9999, self_test=False,
+    ctx,
+    stage=_STAGE,
+    base_image="",
+    port=9999,
+    self_test=False,
 ):
     """
     Run jupyter notebook server.
@@ -1088,11 +1112,7 @@ def run_blank_tests(ctx, stage=_STAGE):  # type: ignore
     _report_task()
     base_image = ""
     cmd = '"pytest -h >/dev/null"'
-    docker_cmd_ = _get_docker_cmd(
-        stage,
-        base_image,
-        cmd
-    )
+    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd)
     _docker_cmd(ctx, docker_cmd_)
 
 
@@ -1310,11 +1330,7 @@ def _run_test_cmd(
     base_image = ""
     # We need to add some " to pass the string as it is to the container.
     cmd = f"'{cmd}'"
-    docker_cmd_ = _get_docker_cmd(
-        stage,
-        base_image,
-        cmd
-    )
+    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd)
     _docker_cmd(ctx, docker_cmd_)
     # Print message about coverage.
     if coverage:

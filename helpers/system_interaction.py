@@ -498,6 +498,3 @@ def is_running_in_ipynb() -> bool:
     except NameError:
         res = False
     return res
-
-
-

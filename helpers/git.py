@@ -127,14 +127,15 @@ def is_lem() -> bool:
     return _is_repo("lem")
 
 
-def is_in_amp_as_submodule():
+def is_in_amp_as_submodule() -> bool:
     """
-    Return whether we are in the `amp` repo and it's a submodule, e.g., of `lem`.
+    Return whether we are in the `amp` repo and it's a submodule, e.g., of
+    `lem`.
     """
     return is_amp() and is_inside_submodule(".")
 
 
-def is_in_amp_as_supermodule():
+def is_in_amp_as_supermodule() -> bool:
     """
     Return whether we are in the `amp` repo and it's a supermodule, i.e., `amp`
     by itself.
@@ -142,7 +143,7 @@ def is_in_amp_as_supermodule():
     return is_amp() and not is_inside_submodule(".")
 
 
-# ##############
+# #############################################################################
 
 
 def _get_submodule_hash(dir_name: str) -> str:

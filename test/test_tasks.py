@@ -4,17 +4,32 @@ from typing import Dict
 
 import invoke
 import pytest
-import tasks
 
-import helpers.dbg as dbg
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
+import lib_tasks as ltasks
+import tasks
 
 # TODO(gp): We should separate what can be tested by lib_tasks.py and what
 #  should be tested as part of tasks.py
 
 _LOG = logging.getLogger(__name__)
+
+
+def _get_default_params() -> Dict[str, str]:
+    """
+    Get fake params pointing to a different image so we can test the code
+    without affecting the official images.
+    """
+    ecr_base_path = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
+    default_params = {
+        "ECR_BASE_PATH": ecr_base_path,
+        "BASE_IMAGE": "amp_test",
+        "DEV_TOOLS_IMAGE_PROD": f"{ecr_base_path}/dev_tools:prod",
+    }
+    return default_params
+
 
 
 # TODO(gp): We should introspect lib_tasks.py and find all the functions decorated
@@ -88,8 +103,12 @@ class TestDryRunTasks2(hut.TestCase):
     """
 
     def test_print_setup(self) -> None:
+        params = _get_default_params()
+        ltasks.set_default_params(params)
+        #
         target = "print_setup"
         self._check_output(target)
+        ltasks.reset_default_params()
 
     def test_git_pull(self) -> None:
         target = "git_pull"
@@ -158,20 +177,6 @@ class TestDryRunTasks2(hut.TestCase):
 # #############################################################################
 
 
-def _get_default_params() -> Dict[str, str]:
-    """
-    Get fake params pointing to a different image so we can test the code
-    without affecting the official images.
-    """
-    ecr_base_path = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
-    default_params = {
-        "ECR_BASE_PATH": ecr_base_path,
-        "BASE_IMAGE": "amp_test",
-        "DEV_TOOLS_IMAGE_PROD": f"{ecr_base_path}/dev_tools:prod",
-    }
-    return default_params
-
-
 @pytest.mark.no_container
 @pytest.mark.skipif(hsinte.is_inside_docker(), reason="AmpTask165")
 class TestExecuteTasks1(hut.TestCase):
@@ -216,7 +221,8 @@ class TestExecuteTasks1(hut.TestCase):
 @pytest.mark.skipif(hsinte.is_inside_docker(), reason="AmpTask165")
 class TestExecuteTasks2(hut.TestCase):
     """
-    Execute tasks that change the state of the system but use a temporary image.
+    Execute tasks that change the state of the system but use a temporary
+    image.
     """
 
     def test_docker_jupyter1(self) -> None:

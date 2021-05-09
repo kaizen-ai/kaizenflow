@@ -5,7 +5,6 @@ from typing import Any, Generator
 import helpers.dbg as dbg
 import helpers.unit_test as hut
 
-
 # Hack to workaround pytest not happy with multiple redundant conftest.py
 # (bug #34).
 if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
@@ -90,7 +89,9 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
 
             sys.argv.append("-s")
             sys.argv.append("-o log_cli=true")
-        dbg.init_logger(level, in_pytest=True, log_filename="tmp.pytest_logger.log")
+        dbg.init_logger(
+            level, in_pytest=True, log_filename="tmp.pytest_logger.log"
+        )
 
     if "PYANNOTATE" in os.environ:
         print("\nWARNING: Collecting information about types through pyannotate")

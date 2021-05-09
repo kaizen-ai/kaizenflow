@@ -31,6 +31,3 @@ default_params = {
 set_default_params(
     default_params
 )  # noqa: F405 (may be or defined from star imports)
-
-
-

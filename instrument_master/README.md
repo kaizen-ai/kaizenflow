@@ -1,7 +1,5 @@
 <!--ts-->
    * [Workflows](#workflows)
-      * [Run unit tests](#run-unit-tests)
-      * [Build image](#build-image)
       * [Run IM app](#run-im-app)
       * [Prerequisites](#prerequisites)
       * [Run locally for development](#run-locally-for-development)
@@ -21,6 +19,7 @@
 # Workflows
 
 - Build the image
+
   ```bash
   > invoke docker_build_local_image
   ```

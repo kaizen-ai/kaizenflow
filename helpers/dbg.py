@@ -192,7 +192,7 @@ def dassert_is(
     val1: Optional[str],
     val2: Optional[Any],
     msg: Optional[str] = None,
-    *args: Any
+    *args: Any,
 ) -> None:
     # pylint: disable=superfluous-parens
     if not (val1 is val2):
@@ -441,7 +441,7 @@ def dassert_array_has_same_type_element(
     obj2: Any,
     only_first_elem: bool,
     msg: Optional[str] = None,
-    *args: Any
+    *args: Any,
 ) -> None:
     """
     Check that two objects iterables like arrays (e.g., pd.Index) have elements

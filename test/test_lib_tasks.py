@@ -62,7 +62,6 @@ class TestLibTasks1(hut.TestCase):
 
 
 class TestLibTasksRemoveSpaces1(hut.TestCase):
-
     def test1(self) -> None:
         txt = r"""
             IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
@@ -75,40 +74,28 @@ class TestLibTasksRemoveSpaces1(hut.TestCase):
                 user_space
             """
         act = ltasks._remove_spaces(txt)
-        exp = ("IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev"
-               " docker-compose --file"
-               " $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml"
-               " run --rm -l user=$USER_NAME --entrypoint bash user_space")
+        exp = (
+            "IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev"
+            " docker-compose --file"
+            " $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml"
+            " run --rm -l user=$USER_NAME --entrypoint bash user_space"
+        )
         self.assert_equal(act, exp, fuzzy_match=False)
 
 
 class TestLibTasksGetDockerCmd1(hut.TestCase):
-
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         params = self._get_default_params()
         ltasks.set_default_params(params)
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         ltasks.reset_default_params()
         super().tearDown()
 
-    @staticmethod
-    def _get_default_params() -> Dict[str, str]:
-        """
-        Get fake params pointing to a different image so we can test the code
-        without affecting the official images.
-        """
-        ecr_base_path = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
-        default_params = {
-            "ECR_BASE_PATH": ecr_base_path,
-            "BASE_IMAGE": "amp_test",
-            "DEV_TOOLS_IMAGE_PROD": f"{ecr_base_path}/dev_tools:prod",
-        }
-        return default_params
-
-    @pytest.mark.skipif(not git.is_in_amp_as_submodule(),
-                        reason="Only run in amp as submodule")
+    @pytest.mark.skipif(
+        not git.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
+    )
     def test_docker_bash1(self) -> None:
         """
         Command for docker_bash target.
@@ -141,8 +128,9 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skipif(not git.is_in_amp_as_submodule(),
-                        reason="Only run in amp as submodule")
+    @pytest.mark.skipif(
+        not git.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
+    )
     def test_docker_bash2(self) -> None:
         """
         Command for docker_bash with entrypoint.
@@ -171,8 +159,9 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skipif(not git.is_in_amp_as_submodule(),
-                        reason="Only run in amp as submodule")
+    @pytest.mark.skipif(
+        not git.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
+    )
     def test_docker_bash3(self) -> None:
         """
         Command for docker_bash with some env vars.
@@ -205,13 +194,16 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skipif(not git.is_in_amp_as_supermodule(),
-                        reason="Only run in amp as supermodule")
+    @pytest.mark.skipif(
+        not git.is_in_amp_as_supermodule(),
+        reason="Only run in amp as supermodule",
+    )
     def test_docker_bash4(self) -> None:
         stage = "dev"
         base_image = ""
         cmd = "bash"
         entrypoint = False
+        print_docker_config = False
         act = ltasks._get_docker_cmd(
             stage,
             base_image,
@@ -233,16 +225,22 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skipif(not git.is_in_amp_as_submodule(),
-                        reason="Only run in amp as submodule")
+    @pytest.mark.skipif(
+        not git.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
+    )
     def test_docker_jupyter1(self) -> None:
         stage = "dev"
         base_image = ""
         port = 9999
         self_test = True
         print_docker_config = False
-        act = ltasks._get_docker_jupyter_cmd(stage, base_image, port, self_test,
-            print_docker_config=print_docker_config)
+        act = ltasks._get_docker_jupyter_cmd(
+            stage,
+            base_image,
+            port,
+            self_test,
+            print_docker_config=print_docker_config,
+        )
         act = hut.purify_txt_from_client(act)
         exp = r"""
         IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
@@ -257,6 +255,20 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
             jupyter_server_test
         """
         self.assert_equal(act, exp, fuzzy_match=True)
+
+    @staticmethod
+    def _get_default_params() -> Dict[str, str]:
+        """
+        Get fake params pointing to a different image so we can test the code
+        without affecting the official images.
+        """
+        ecr_base_path = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
+        default_params = {
+            "ECR_BASE_PATH": ecr_base_path,
+            "BASE_IMAGE": "amp_test",
+            "DEV_TOOLS_IMAGE_PROD": f"{ecr_base_path}/dev_tools:prod",
+        }
+        return default_params
 
 
 class TestLibRunTests1(hut.TestCase):
@@ -305,11 +317,11 @@ class TestLibRunTests1(hut.TestCase):
             collect_only,
             skipped_tests,
         )
-        exp = r'pytest -m "not slow and not superslow" --cov=. --cov-branch --cov-report term-missing --cov-report html --collect-only'
+        exp = (r'pytest -m "not slow and not superslow" --cov=. --cov-branch' 
+               r' --cov-report term-missing --cov-report html --collect-only')
         self.assert_equal(act, exp)
 
-    @pytest.mark.skipif(not git.is_lem(),
-                        reason="Only run in lem")
+    @pytest.mark.skipif(not git.is_lem(), reason="Only run in lem")
     def test_run_fast_tests3(self) -> None:
         """
         Skip submodules.
@@ -334,8 +346,7 @@ class TestLibRunTests1(hut.TestCase):
         exp = r"pytest --ignore amp"
         self.assert_equal(act, exp)
 
-    @pytest.mark.skipif(not git.is_amp(),
-                        reason="Only run in amp")
+    @pytest.mark.skipif(not git.is_amp(), reason="Only run in amp")
     def test_run_fast_tests4(self) -> None:
         """
         Select pytest_mark.
@@ -364,7 +375,7 @@ class TestLibRunTests1(hut.TestCase):
         }
         incremental = True
         hut.create_test_dir(dir_name, incremental, file_dict)
-
+        #
         pytest_opts = ""
         pytest_mark = "no_container"
         dir_name = scratch_space
@@ -506,8 +517,7 @@ class TestLibTasksRunTests1(hut.TestCase):
         ]
         self.assert_equal(str(act), str(exp))
 
-    @pytest.mark.skipif(not git.is_amp(),
-                        reason="Only run in amp")
+    @pytest.mark.skipif(not git.is_amp(), reason="Only run in amp")
     def test_find_test_decorator2(self) -> None:
         """
         Find test functions in the "no_container" test list.

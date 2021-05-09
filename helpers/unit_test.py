@@ -109,6 +109,7 @@ def in_unit_test_mode() -> bool:
     """
     return _CONFTEST_IN_PYTEST
 
+
 # #############################################################################
 
 
@@ -121,7 +122,7 @@ def pytest_print(txt: str) -> None:
     Print independently of the pytest output capture.
     """
 
-    with _GLOBAL_CAPSYS.disabled():
+    with _GLOBAL_CAPSYS.disabled():  # type: ignore
         sys.stdout.write(txt)
 
 
@@ -409,7 +410,6 @@ def purify_txt_from_client(txt: str) -> str:
     txt = txt.replace(user_name, "$USER_NAME")
     # Remove amp reference, if any.
     txt = remove_amp_references(txt)
-    #assert 0, txt
     return txt
 
 
@@ -724,6 +724,7 @@ def _assert_equal(
 
 
 # #############################################################################
+
 
 class TestCase(unittest.TestCase):
     """
