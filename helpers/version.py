@@ -67,7 +67,7 @@ def check_version(dir_name: Optional[str] = None) -> None:
 
 # TODO(gp): It's not clear how to generalize this for different containers.
 #  For `amp` makes sense to check at top of the repo.
-def get_code_version(dir_name: Optional[str] = None) -> str:
+def get_code_version(dir_name: Optional[str] = None) -> Optional[str]:
     """
     Return the code version.
 
@@ -100,17 +100,16 @@ def get_code_version(dir_name: Optional[str] = None) -> str:
     else:
         if dir_name_was_specified:
             # If the `dir_name` was specified, we expect to find the file.
-            assert version_file_exists, "Can't find file '%s' for dir_name='%s'" % (
+            assert (
+                version_file_exists
+            ), "Can't find file '%s' for dir_name='%s'" % (
                 file_name,
                 dir_name,
             )
         else:
             # If the `dir_name` was not specified, then it's ok not to find the
             # file.
-            print(
-                _WARNING
-                + ": Can't find versions.txt, so using version=None"
-            )
+            print(_WARNING + ": Can't find versions.txt, so using version=None")
             version = None
     return version
 

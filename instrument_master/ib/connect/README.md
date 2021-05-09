@@ -1,8 +1,7 @@
 <!--ts-->
    * [Interactive Brokers Gateway Docker](#interactive-brokers-gateway-docker)
       * [Getting Started](#getting-started)
-         * [Pull image](#pull-image)
-         * [Create image](#create-image)
+      * [Create image](#create-image)
          * [Start app on localhost](#start-app-on-localhost)
          * [Start app on production](#start-app-on-production)
          * [Additional start parameters](#additional-start-parameters)
@@ -28,10 +27,11 @@
   ```bash
   > cd <amp>/instrument_master/ib/connect`
   ```
-  
+
 ## Create image
 
 - To build the `im_tws:local` image
+
   ```bash
   > invoke docker_build_local_image
   ```
@@ -87,8 +87,8 @@
   > IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=GATEWAY make ib_connect.docker_up.local
   ```
 
-- You will now have the IB Gateway app running on port 4003 and VNC on 5901.
-  To specify custom ports run in a following way:
+- You will now have the IB Gateway app running on port 4003 and VNC on 5901. To
+  specify custom ports run in a following way:
 
   ```bash
   > IB_CONNECT_API_PORT=4015 IB_CONNECT_VNC_PORT=5915 IB_CONNECT_VNC_PASSWORD=12345 make ib_connect.docker_up.local
