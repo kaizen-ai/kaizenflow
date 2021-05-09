@@ -118,18 +118,21 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         cmd = "bash"
         service_name = "app"
         entrypoint = False
+        print_docker_config = False
         act = ltasks._get_docker_cmd(
             stage,
             base_image,
             cmd,
             service_name=service_name,
-            entrypoint=entrypoint
+            entrypoint=entrypoint,
+            print_docker_config=print_docker_config,
         )
         act = hut.purify_txt_from_client(act)
         exp = r"""
         IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
+            --env-file devops/env/default.env \
             run \
             --rm \
             -l user=$USER_NAME \
@@ -147,16 +150,19 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         stage = "local"
         base_image = ""
         cmd = "bash"
+        print_docker_config = False
         act = ltasks._get_docker_cmd(
             stage,
             base_image,
             cmd,
+            print_docker_config=print_docker_config,
         )
         act = hut.purify_txt_from_client(act)
         exp = r"""
         IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:local \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
+            --env-file devops/env/default.env \
             run \
             --rm \
             -l user=$USER_NAME \
@@ -175,11 +181,13 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         base_image = ""
         cmd = "bash"
         extra_env_vars = ["PORT=9999", "SKIP_RUN=1"]
+        print_docker_config = False
         act = ltasks._get_docker_cmd(
             stage,
             base_image,
             cmd,
-            extra_env_vars=extra_env_vars
+            extra_env_vars=extra_env_vars,
+            print_docker_config=print_docker_config,
         )
         act = hut.purify_txt_from_client(act)
         exp = r"""
@@ -188,6 +196,7 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         SKIP_RUN=1 \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
+            --env-file devops/env/default.env \
             run \
             --rm \
             -l user=$USER_NAME \
@@ -207,13 +216,15 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
             stage,
             base_image,
             cmd,
-            entrypoint=entrypoint
+            entrypoint=entrypoint,
+            print_docker_config=print_docker_config,
         )
         act = hut.purify_txt_from_client(act)
         exp = r"""
         IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
             docker-compose \
-            --file $GIT_ROOT/devops/compose/docker-compose.yml 
+            --file $GIT_ROOT/devops/compose/docker-compose.yml \
+            --env-file devops/env/default.env \
             run \
             --rm \
             -l user=$USER_NAME \
@@ -229,13 +240,16 @@ class TestLibTasksGetDockerCmd1(hut.TestCase):
         base_image = ""
         port = 9999
         self_test = True
-        act = ltasks._get_docker_jupyter_cmd(stage, base_image, port, self_test)
+        print_docker_config = False
+        act = ltasks._get_docker_jupyter_cmd(stage, base_image, port, self_test,
+            print_docker_config=print_docker_config)
         act = hut.purify_txt_from_client(act)
         exp = r"""
         IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
         PORT=9999 \
             docker-compose \
-            --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml --file devops/compose/docker-compose_jupyter.yml \
+            --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
+            --env-file devops/env/default.env \
             run \
             --rm \
             -l user=$USER_NAME \

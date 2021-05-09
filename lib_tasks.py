@@ -651,10 +651,12 @@ def _get_docker_cmd(
     extra_docker_run_opts: Optional[List[str]] = None,
     service_name: str = "app",
     entrypoint: bool = True,
+    print_docker_config: bool = False,
 ) -> str:
     """
     :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
+    :param print_config: print the docker config for debugging purposes
     """
     hprint.log(_LOG, logging.DEBUG,
                "stage base_image cmd extra_env_vars"
@@ -730,10 +732,11 @@ def _get_docker_cmd(
         --entrypoint bash \
         {service_name}""")
     # Print the config for debugging purpose.
-    docker_config_cmd = _to_cmd(docker_config_cmd)
-    _LOG.debug("docker_config_cmd=\n%s", docker_config_cmd)
-    _LOG.debug("docker_config=\n%s",
-        hsinte.system_to_string(docker_config_cmd)[1])
+    if print_docker_config:
+        docker_config_cmd = _to_cmd(docker_config_cmd)
+        _LOG.debug("docker_config_cmd=\n%s", docker_config_cmd)
+        _LOG.debug("docker_config=\n%s",
+                   hsinte.system_to_string(docker_config_cmd)[1])
     # Print the config for debugging purpose.
     docker_cmd_ = _to_cmd(docker_cmd_)
     return docker_cmd_
@@ -784,10 +787,11 @@ def docker_cmd(ctx, stage=_STAGE, cmd=""):  # type: ignore
     _docker_cmd(ctx, docker_cmd_)
 
 
-def _get_docker_jupyter_cmd(stage: str, base_image: str, port: int, self_test: bool) -> str:
+def _get_docker_jupyter_cmd(stage: str, base_image: str, port: int, self_test: bool,
+    print_docker_config: bool = False,
+    ) -> str:
     cmd = ""
     extra_env_vars = [f"PORT={port}"]
-    #extra_docker_compose_jupyter = ["devops/compose/docker-compose_jupyter.yml"]
     extra_docker_run_opts = ["--service-ports"]
     service_name = "jupyter_server_test" if self_test else "jupyter_server"
     #
@@ -798,6 +802,7 @@ def _get_docker_jupyter_cmd(stage: str, base_image: str, port: int, self_test: b
         extra_env_vars=extra_env_vars,
         extra_docker_run_opts=extra_docker_run_opts,
         service_name=service_name,
+        print_docker_config=print_docker_config,
     )
     return docker_cmd_
 
