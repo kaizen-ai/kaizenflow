@@ -5,7 +5,7 @@ import sys
 
 path = sys.argv[1]
 path_out = os.path.abspath(path)
-print(path_out)
+print(path_out, end="")
 
 if not os.path.exists(path_out):
     msg = "path '%s' converted to '%s' doesn't exist" % (path, path_out)
