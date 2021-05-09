@@ -35,7 +35,7 @@ import helpers.version as hversi
 _LOG = logging.getLogger(__name__)
 
 # By default we run against the dev image.
-_STAGE = "dev"
+STAGE = "dev"
 
 # This is used to inject the default params.
 _DEFAULT_PARAMS = {}
@@ -371,7 +371,7 @@ def docker_kill_all(ctx):  # type: ignore
 
 
 @task
-def docker_pull(ctx, stage=_STAGE, images="all"):  # type: ignore
+def docker_pull(ctx, stage=STAGE, images="all"):  # type: ignore
     """
     Pull images from the registry.
     """
@@ -389,7 +389,7 @@ def docker_pull(ctx, stage=_STAGE, images="all"):  # type: ignore
             continue
         if token == "current":
             base_image = ""
-            image = _get_image(stage, base_image)
+            image = get_image(stage, base_image)
         elif token == "dev_tools":
             image = get_default_value("DEV_TOOLS_IMAGE_PROD")
         else:
@@ -519,7 +519,7 @@ def _get_base_image(base_image: str) -> str:
     return base_image
 
 
-def _get_image(stage: str, base_image: str) -> str:
+def get_image(stage: str, base_image: str) -> str:
     """
     :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
     :return: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local
@@ -551,7 +551,7 @@ def _docker_cmd(
     :param docker_compose: e.g. devops/compose/docker-compose-user-space.yml
     """
     hprint.log(_LOG, logging.DEBUG, "stage base_image docker_compose cmd")
-    image = _get_image(stage, base_image)
+    image = get_image(stage, base_image)
     _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
     #
     _check_image(image)
@@ -581,7 +581,7 @@ def _docker_cmd(
 
 
 @task
-def docker_bash(ctx, stage=_STAGE, entrypoint=True):  # type: ignore
+def docker_bash(ctx, stage=STAGE, entrypoint=True):  # type: ignore
     """
     Start a bash shell inside the container corresponding to a stage.
     """
@@ -595,7 +595,7 @@ def docker_bash(ctx, stage=_STAGE, entrypoint=True):  # type: ignore
 
 
 @task
-def docker_cmd(ctx, stage=_STAGE, cmd=""):  # type: ignore
+def docker_cmd(ctx, stage=STAGE, cmd=""):  # type: ignore
     """
     Execute the command `cmd` inside a container corresponding to a stage.
     """
@@ -609,13 +609,13 @@ def docker_cmd(ctx, stage=_STAGE, cmd=""):  # type: ignore
 
 @task
 def docker_jupyter(  # type: ignore
-    ctx, stage=_STAGE, port=9999, self_test=False, base_image=""
+    ctx, stage=STAGE, port=9999, self_test=False, base_image=""
 ):
     """
     Run jupyter notebook server.
     """
     _report_task()
-    image = _get_image(stage, base_image)
+    image = get_image(stage, base_image)
     # devops/compose/docker-compose-user-space.yml
     docker_compose = _get_amp_docker_compose_path()
     dbg.dassert_exists(docker_compose)
@@ -667,18 +667,18 @@ def _run(ctx: Any, cmd: str) -> None:
 DOCKER_BUILDKIT = 0
 
 
-@functools.lru_cache()
-def _get_build_tag() -> str:
+def _get_build_tag(code_ver: str) -> str:
     """
     Return a string to tag the build.
 
     E.g.,
-    build_tag=1.0.0-20210428-
+    build_tag=
+        amp-1.0.0-20210428-
         AmpTask1280_Use_versioning_to_keep_code_and_container_in_sync-
         500a9e31ee70e51101c1b2eb82945c19992fa86e
+
+    :param code_ver: the value from hversi.get_code_version()
     """
-    dir_name = os.path.dirname(os.path.abspath(__file__))
-    code_ver = hversi.get_code_version(dir_name)
     # We can't use datetime_.get_timestamp() since we don't want to pick up
     # the dependencies from pandas.
     timestamp = datetime.datetime.now().strftime("%Y%m%d")
@@ -710,11 +710,11 @@ def docker_build_local_image(  # type: ignore
     _report_task()
     # Update poetry.
     if update_poetry:
-        cmd = "cd devops/docker_build/; poetry lock"
+        cmd = "cd devops/docker_build; poetry lock"
         ctx.run(cmd)
     #
-    image_local = _get_image("local", base_image)
-    image_hash = _get_image("hash", base_image)
+    image_local = get_image("local", base_image)
+    image_hash = get_image("hash", base_image)
     #
     _check_image(image_local)
     _check_image(image_hash)
@@ -723,8 +723,8 @@ def docker_build_local_image(  # type: ignore
     #
     opts = "--no_cache" if not cache else ""
     # The container version is the version used from this code.
-    container_version = hversi.get_code_version()
-    build_tag = _get_build_tag()
+    container_version = hversi.get_code_version(".")
+    build_tag = _get_build_tag(container_version)
     cmd = rf"""
     DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
     time \
@@ -733,9 +733,9 @@ def docker_build_local_image(  # type: ignore
         {opts} \
         --build-arg CONTAINER_VERSION={container_version} \
         --build-arg BUILD_TAG={build_tag} \
-        -t {image_local} \
-        -t {image_hash} \
-        -f {dockerfile} \
+        --tag {image_local} \
+        --tag {image_hash} \
+        --file {dockerfile} \
         .
     """
     _run(ctx, cmd)
@@ -752,17 +752,17 @@ def docker_push_local_image_to_dev(ctx, base_image=""):  # type: ignore
     _report_task()
     docker_login(ctx)
     #
-    image_local = _get_image("local", base_image)
+    image_local = get_image("local", base_image)
     cmd = f"docker push {image_local}"
     _run(ctx, cmd)
     #
-    image_hash = _get_image("hash", base_image)
+    image_hash = get_image("hash", base_image)
     cmd = f"docker tag {image_local} {image_hash}"
     _run(ctx, cmd)
     cmd = f"docker push {image_hash}"
     _run(ctx, cmd)
     #
-    image_dev = _get_image("dev", base_image)
+    image_dev = get_image("dev", base_image)
     cmd = f"docker tag {image_local} {image_dev}"
     _run(ctx, cmd)
     cmd = f"docker push {image_dev}"
@@ -778,6 +778,7 @@ def docker_release_dev_image(  # type: ignore
     run_slow=True,
     run_superslow=False,
     push_to_repo=True,
+    update_poetry=False,
 ):
     """
     (ONLY CI/CD) Build, test, and release to ECR the latest "dev" image.
@@ -785,14 +786,14 @@ def docker_release_dev_image(  # type: ignore
     This can be used to test the entire flow from scratch by building an image,
     running the tests, but not necessarily pushing.
 
-    :param: just_build skip all the tests and release the dev image.
+    :param skip_tests: skip all the tests and release the dev image
     """
     _report_task()
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
         run_fast = run_slow = run_superslow = False
     # Build image.
-    docker_build_local_image(ctx, cache=cache)
+    docker_build_local_image(ctx, cache=cache, update_poetry=update_poetry)
     # Run tests.
     stage = "local"
     if run_fast:
@@ -824,7 +825,7 @@ def docker_build_prod_image(ctx, cache=False, base_image=""):  # type: ignore
     (ONLY CI/CD) Build a prod image.
     """
     _report_task()
-    image_prod = _get_image("prod", base_image)
+    image_prod = get_image("prod", base_image)
     #
     _check_image(image_prod)
     dockerfile = "devops/docker_build/prod.Dockerfile"
@@ -855,13 +856,14 @@ def docker_release_prod_image(  # type: ignore
     run_slow=True,
     run_superslow=False,
     base_image="",
+    update_poetry=False,
 ):
     """
     (ONLY CI/CD) Build, test, and release to ECR the prod image.
     """
     _report_task()
     # Build dev image.
-    docker_build_local_image(ctx, cache=cache)
+    docker_build_local_image(ctx, cache=cache, update_poetry=update_poetry)
     docker_push_local_image_to_dev(ctx)
     # Build prod image.
     docker_build_prod_image(ctx, cache=cache)
@@ -874,7 +876,7 @@ def docker_release_prod_image(  # type: ignore
     if run_superslow:
         run_superslow_tests(ctx, stage=stage)
     # Push prod image.
-    image_prod = _get_image("prod", base_image)
+    image_prod = get_image("prod", base_image)
     cmd = f"docker push {image_prod}"
     _run(ctx, cmd)
     _LOG.info("==> SUCCESS <==")
@@ -912,7 +914,7 @@ _COV_PYTEST_OPTS = [
 
 
 @task
-def run_blank_tests(ctx, stage=_STAGE):  # type: ignore
+def run_blank_tests(ctx, stage=STAGE):  # type: ignore
     """
     (ONLY CI/CD) Test that pytest in the container works.
     """
@@ -1183,7 +1185,7 @@ def _run_tests(
 @task
 def run_fast_tests(  # type: ignore
     ctx,
-    stage=_STAGE,
+    stage=STAGE,
     pytest_opts="",
     pytest_mark="",
     dir_name="",
@@ -1247,7 +1249,7 @@ def run_fast_tests(  # type: ignore
 @task
 def run_slow_tests(  # type: ignore
     ctx,
-    stage=_STAGE,
+    stage=STAGE,
     pytest_opts="",
     pytest_mark="",
     dir_name="",
@@ -1303,7 +1305,7 @@ def run_slow_tests(  # type: ignore
 @task
 def run_superslow_tests(  # type: ignore
     ctx,
-    stage=_STAGE,
+    stage=STAGE,
     pytest_opts="",
     pytest_mark="",
     dir_name="",
@@ -1332,7 +1334,7 @@ def run_superslow_tests(  # type: ignore
 @task
 def run_fast_slow_tests(  # type: ignore
     ctx,
-    stage=_STAGE,
+    stage=STAGE,
     pytest_opts="",
     pytest_mark="",
     dir_name="",

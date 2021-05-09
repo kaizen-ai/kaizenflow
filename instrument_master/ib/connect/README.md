@@ -1,8 +1,7 @@
 <!--ts-->
    * [Interactive Brokers Gateway Docker](#interactive-brokers-gateway-docker)
       * [Getting Started](#getting-started)
-         * [Pull image](#pull-image)
-         * [Create image](#create-image)
+      * [Create image](#create-image)
          * [Start app on localhost](#start-app-on-localhost)
          * [Start app on production](#start-app-on-production)
          * [Additional start parameters](#additional-start-parameters)
@@ -17,7 +16,7 @@
 
 # Interactive Brokers Gateway Docker
 
-- Docker container with:
+- This is a Docker container with:
   - TWS Gateway: v974.4g
   - [IB Controller](https://github.com/ib-controller/ib-controller/)
   - VNC
@@ -25,7 +24,24 @@
 ## Getting Started
 
 - All commands need to be executed from the current directory
+  ```bash
+  > cd <amp>/instrument_master/ib/connect`
+  ```
 
+## Create image
+
+- To build the `im_tws:local` image
+
+  ```bash
+  > invoke docker_build_local_image
+  ```
+
+- To release the image:
+  ```bash
+  > invoke docker_push_local_image_to_dev
+  ```
+
+<!---
 ### Pull image
 
 ```bash
@@ -39,14 +55,16 @@
 
 ```bash
 > make ib_connect.docker_build_image.rc
-> # Check that image is correct.
+> # .. Check that image is correct ...
+...
 > make ib_connect.docker_tag_latest.rc
 ```
+-->
 
 ### Start app on localhost
 
-- Note that only one app can be opened at the same time.
-  It means if production app is up, no one can run this app.
+- Note that only one TWS app can be opened at the same time
+  - If the production app is up, no one can run the app even in local mode
 
 - You need to add a file with IB credentials to `~/.vnc/ib.credentials` like:
 
@@ -69,8 +87,8 @@
   > IB_CONNECT_VNC_PASSWORD=12345 IB_CONNECT_APP=GATEWAY make ib_connect.docker_up.local
   ```
 
-- You will now have the IB Gateway app running on port 4003 and VNC on 5901.
-  To specify custom ports run in a following way:
+- You will now have the IB Gateway app running on port 4003 and VNC on 5901. To
+  specify custom ports run in a following way:
 
   ```bash
   > IB_CONNECT_API_PORT=4015 IB_CONNECT_VNC_PORT=5915 IB_CONNECT_VNC_PASSWORD=12345 make ib_connect.docker_up.local
@@ -140,3 +158,5 @@
 - In the menu, `Go` -> `Connect to server...` enter
   - Go to `vnc://localhost:5901`
   - Then you should get prompted for the password
+- From command line
+  - `open vnc://localhost:5901`

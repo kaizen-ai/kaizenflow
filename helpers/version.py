@@ -65,30 +65,52 @@ def check_version(dir_name: Optional[str] = None) -> None:
     _check_version(code_version, container_version)
 
 
-def get_code_version(dir_name: Optional[str] = None) -> str:
+# TODO(gp): It's not clear how to generalize this for different containers.
+#  For `amp` makes sense to check at top of the repo.
+def get_code_version(dir_name: Optional[str] = None) -> Optional[str]:
     """
     Return the code version.
+
+    The code version is used when:
+    - the code starts in order to verify that the code and the containers are
+      compatible
+    - the container is built to know what version of the code was used
 
     :param dir_name: the path to the `version.txt` file. If None uses the dir
         one level up with respect to the this file (i.e., `amp` dir)
     """
+    dir_name_was_specified = False
     if not dir_name:
         # Use the version one level up.
         dir_name = os.path.dirname(os.path.abspath(__file__))
         dir_name = os.path.abspath(os.path.join(dir_name, ".."))
+    else:
+        dir_name_was_specified = True
     # Load the version.
     file_name = os.path.join(dir_name, "version.txt")
     file_name = os.path.abspath(file_name)
-    assert os.path.exists(file_name), "Can't find file '%s' for dir_name='%s'" % (
-        file_name,
-        dir_name,
-    )
-    with open(file_name) as f:
-        version = f.readline().rstrip()
-    # E.g., `amp-1.0.0`.
-    assert re.match(
-        r"^\S+-\d+\.\d+\.\d+$", version
-    ), "Invalid version '%s' from %s" % (version, file_name)
+    version_file_exists = os.path.exists(file_name)
+    if version_file_exists:
+        with open(file_name) as f:
+            version = f.readline().rstrip()
+        # E.g., `amp-1.0.0`.
+        assert re.match(
+            r"^\S+-\d+\.\d+\.\d+$", version
+        ), "Invalid version '%s' from %s" % (version, file_name)
+    else:
+        if dir_name_was_specified:
+            # If the `dir_name` was specified, we expect to find the file.
+            assert (
+                version_file_exists
+            ), "Can't find file '%s' for dir_name='%s'" % (
+                file_name,
+                dir_name,
+            )
+        else:
+            # If the `dir_name` was not specified, then it's ok not to find the
+            # file.
+            print(_WARNING + ": Can't find versions.txt, so using version=None")
+            version = None
     return version
 
 

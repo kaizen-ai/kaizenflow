@@ -5,12 +5,11 @@ Create jts config file.
 Based on:
 https://github.com/mvberg/ib-gateway-docker/blob/master/ib/jts.ini
 
-Usage:
-    1. Create default config file:
-    > make_jts_init_file.py
+# Create default config file:
+> make_jts_init_file.py
 
-    2. Create config on server (use your local IP instead of 33.3.33.3):
-    > make_jts_init_file.py --trusted_ips 127.0.0.1,33.3.33.3
+# Create config on server (use your local IP instead of 33.3.33.3):
+> make_jts_init_file.py --trusted_ips 127.0.0.1,33.3.33.3
 """
 import argparse
 import logging
@@ -20,9 +19,10 @@ import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.parser as hparse
 
-PATH_TO_CONFIG = "/root/Jts/jts.ini"
 _LOG = logging.getLogger(__name__)
-DEFAULT_CONFIG: Dict[str, Dict[str, Any]] = {
+
+_PATH_TO_CONFIG = "/root/Jts/jts.ini"
+_DEFAULT_CONFIG: Dict[str, Dict[str, Any]] = {
     "IBGateway": {
         "WriteDebug": "false",
         "TrustedIPs": "127.0.0.1",
@@ -74,8 +74,8 @@ def _save_config_to_file(config: Dict[str, Dict[str, Any]]) -> None:
         for item, value in config[section].items():
             string += "%s=%s\n" % (item, value)
     # Save text to file.
-    hio.create_enclosing_dir(PATH_TO_CONFIG, incremental=True)
-    hio.to_file(PATH_TO_CONFIG, string)
+    hio.create_enclosing_dir(_PATH_TO_CONFIG, incremental=True)
+    hio.to_file(_PATH_TO_CONFIG, string)
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -85,7 +85,7 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--trusted_ips",
         type=str,
-        help="Trusted IP-s split by comma",
+        help="Trusted IPs as a string separated by comma",
         action="store",
     )
     hparse.add_verbosity_arg(parser)
@@ -97,7 +97,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     dbg.shutup_chatty_modules()
     # Set up config to save.
-    params: Dict[str, Dict[str, Any]] = DEFAULT_CONFIG.copy()
+    params: Dict[str, Dict[str, Any]] = _DEFAULT_CONFIG.copy()
     # Add trusted IP-s.
     if args.trusted_ips is not None:
         params["IBGateway"]["TrustedIPs"] = args.trusted_ips

@@ -4,7 +4,6 @@ from typing import Dict
 
 import pytest
 
-import helpers.dbg as dbg
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
@@ -12,7 +11,7 @@ import helpers.unit_test as hut
 # TODO(gp): We should separate what can be tested by lib_tasks.py and what
 #  should be tested as part of tasks.py
 
-dbg.init_logger()
+# dbg.init_logger()
 _LOG = logging.getLogger(__name__)
 
 try:
