@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # TODO(gp): Move to instrument_master/airflow/devops/docker_build
+# TODO(gp): -> entrypoint_airflow_worker.sh
 
 set -e
 

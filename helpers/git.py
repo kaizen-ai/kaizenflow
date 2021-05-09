@@ -105,6 +105,47 @@ def is_inside_submodule(git_dir: str = ".") -> bool:
     return ret
 
 
+def _is_repo(repo_short_name: str) -> bool:
+    """
+    Return whether we are inside `amp` and `amp` is a submodule.
+    """
+    repo_full_name = get_repo_full_name_from_dirname(".")
+    return get_repo_short_name(repo_full_name) == repo_short_name
+
+
+def is_amp() -> bool:
+    """
+    Return whether we are inside `amp` and `amp` is a submodule.
+    """
+    return _is_repo("amp")
+
+
+def is_lem() -> bool:
+    """
+    Return whether we are inside `lem` and `lem` is a submodule.
+    """
+    return _is_repo("lem")
+
+
+def is_in_amp_as_submodule() -> bool:
+    """
+    Return whether we are in the `amp` repo and it's a submodule, e.g., of
+    `lem`.
+    """
+    return is_amp() and is_inside_submodule(".")
+
+
+def is_in_amp_as_supermodule() -> bool:
+    """
+    Return whether we are in the `amp` repo and it's a supermodule, i.e., `amp`
+    by itself.
+    """
+    return is_amp() and not is_inside_submodule(".")
+
+
+# #############################################################################
+
+
 def _get_submodule_hash(dir_name: str) -> str:
     """
     Report the Git hash that a submodule (e.g., amp) is at from the point of
@@ -134,6 +175,7 @@ def get_path_from_supermodule() -> str:
     - for amp included in another repo returns 'amp'
     - for amp without supermodule returns ''
     """
+    cmd = "git rev-parse --show-superproject-working-tree"
     # > cd /Users/saggese/src/.../amp
     # > git rev-parse --show-superproject-working-tree
     # /Users/saggese/src/...
@@ -141,16 +183,16 @@ def get_path_from_supermodule() -> str:
     # > cd /Users/saggese/src/...
     # > git rev-parse --show-superproject-working-tree
     # (No result)
-    cmd = "git rev-parse --show-superproject-working-tree"
     submodule_superproject: str = hsinte.system_to_one_line(cmd)[1]
     _LOG.debug("submodule_superproject=%s", submodule_superproject)
-    # > git config --file /Users/saggese/src/.../.gitmodules --get-regexp path
-    # submodule.amp.path amp
+    #
     cmd = (
         f"git config --file {submodule_superproject}/.gitmodules --get-regexp path"
         '| grep $(basename "$(pwd)")'
         "| awk '{ print $2 }'"
     )
+    # > git config --file /Users/saggese/src/.../.gitmodules --get-regexp path
+    # submodule.amp.path amp
     res: str = hsinte.system_to_one_line(cmd)[1]
     _LOG.debug("res=%s", res)
     return res
@@ -642,8 +684,9 @@ def get_modified_files_in_branch(
 
 
 # #############################################################################
-# git commands.
+# Git commands.
 # #############################################################################
+
 
 # TODO(gp): -> get_user_name()
 @functools.lru_cache()

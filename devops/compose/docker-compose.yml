@@ -1,17 +1,55 @@
-# For local runs in user space.
-
-# TODO(gp): This is useless.
-
+#
+# Basic setup to run as user and GitHub action.
+#
 version: '3'
 
 services:
-  app:
-    image: ${IMAGE}
-    volumes:
-      - ../..:/app
-      - ~/.aws:/root/.aws
-      # TODO(gp): No need to mount the filesystem.
-      #- ../docker_build/fstab:/etc/fstab
-    privileged: true
+  base_app:
     cap_add:
       - SYS_ADMIN
+    environment:
+      - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+      - AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
+      - GH_ACTION_ACCESS_TOKEN=$GH_ACTION_ACCESS_TOKEN
+    image: ${IMAGE}
+    # TODO(gp): I think this is needed only when mounting fstab.
+    privileged: true
+    restart: "no"
+    volumes:
+      - ~/.aws:/root/.aws
+      - ~/.config/gspread_pandas/:/root/.config/gspread_pandas/
+      - ~/.config/gh:/root/.config/gh
+      # No need to mount file systems.
+      #- ../docker_build/fstab:/etc/fstab
+
+  # Mount `amp` when it is used as supermodule.
+  app:
+    extends:
+      base_app
+    volumes:
+      - ../../:/app
+
+  jupyter_server:
+    command: devops/docker_scripts/run_jupyter_server.sh
+    environment:
+      - PORT=${PORT}
+    extends:
+      app
+    ports:
+      - "${PORT}:${PORT}"
+
+  # TODO(gp): For some reason the following doesn't work.
+  #  jupyter_server_test:
+  #    command: jupyter notebook -h 2>&1 >/dev/null
+  #    extends:
+  #      jupyter_server
+
+  jupyter_server_test:
+    command: jupyter notebook -h 2>&1 >/dev/null
+    environment:
+      - PORT=${PORT}
+    extends:
+      app
+    ports:
+      - "${PORT}:${PORT}"

@@ -1,4 +1,10 @@
 #!/bin/bash
+#
+# Create 3 PostgreSQL DBs.
+#
+
+# TODO(gp): Not sure it's needed
+# TODO(gp): -> create_multistage_psql_dbs.sh
 
 set -e
 set -u

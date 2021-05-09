@@ -1,3 +1,7 @@
+#
+# Instantiate the app and a local PostgreSQL DB.
+#
+
 version: '3'
 
 services:

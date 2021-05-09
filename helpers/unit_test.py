@@ -11,6 +11,7 @@ import os
 import pprint
 import random
 import re
+import sys
 import traceback
 import unittest
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
@@ -35,14 +36,14 @@ try:
 
     _HAS_NUMPY = True
 except ImportError as e:
-    print(_WARNING + ":" + str(e))
+    print(_WARNING + ": " + str(e))
     _HAS_NUMPY = False
 try:
     import pandas as pd
 
     _HAS_PANDAS = True
 except ImportError as e:
-    print(_WARNING + ":" + str(e))
+    print(_WARNING + ": " + str(e))
     _HAS_PANDAS = False
 
 try:
@@ -50,7 +51,7 @@ try:
 
     _HAS_MATPLOTLIB = True
 except ImportError as e:
-    print(_WARNING + ":" + str(e))
+    print(_WARNING + ": " + str(e))
     _HAS_MATPLOTLIB = False
 
 
@@ -62,6 +63,7 @@ _LOG.setLevel(logging.INFO)
 # Global setter / getter for updating test.
 
 # This controls whether the output of a test is updated or not.
+# Set by conftest.py.
 _UPDATE_TESTS = False
 
 
@@ -79,6 +81,7 @@ def get_update_tests() -> bool:
 # Global setter / getter for incremental mode.
 
 # This is useful when a long test wants to reuse some data already generated.
+# Set by conftest.py.
 _INCREMENTAL_TESTS = False
 
 
@@ -97,6 +100,7 @@ _CONFTEST_IN_PYTEST = False
 
 
 # TODO(gp): Use https://stackoverflow.com/questions/25188119
+# -> is_in_unit_test()
 def in_unit_test_mode() -> bool:
     """
     Return True if we are inside a pytest run.
@@ -104,6 +108,22 @@ def in_unit_test_mode() -> bool:
     This is set by conftest.py.
     """
     return _CONFTEST_IN_PYTEST
+
+
+# #############################################################################
+
+
+# Set by conftest.py.
+_GLOBAL_CAPSYS = None
+
+
+def pytest_print(txt: str) -> None:
+    """
+    Print independently of the pytest output capture.
+    """
+
+    with _GLOBAL_CAPSYS.disabled():  # type: ignore
+        sys.stdout.write(txt)
 
 
 # #############################################################################
@@ -390,7 +410,6 @@ def purify_txt_from_client(txt: str) -> str:
     txt = txt.replace(user_name, "$USER_NAME")
     # Remove amp reference, if any.
     txt = remove_amp_references(txt)
-    # TODO(gp): Remove conda_sh_path.
     return txt
 
 
@@ -747,15 +766,14 @@ class TestCase(unittest.TestCase):
     def tearDown(self) -> None:
         # Stop the timer to measure the execution time of the test.
         self._timer.stop()
-        print("(%.2f s) " % self._timer.get_total_elapsed(), end="")
+        pytest_print("(%.2f s) " % self._timer.get_total_elapsed())
         # Report if the test was updated
         if self._test_was_updated:
             if not self._overriden_update_tests:
-                print(
+                pytest_print(
                     "("
                     + hprint.color_highlight("WARNING", "yellow")
                     + ": Test was updated) ",
-                    end="",
                 )
             else:
                 # We forced an update from the unit test itself, so no need

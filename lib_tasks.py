@@ -26,24 +26,24 @@ import helpers.io_ as hio
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.table as htable
+import helpers.unit_test as hut
 import helpers.version as hversi
 
-# TODO(gp): Move to helpers.lib_tasks? Probably yes so we can share across repos
-#  (e.g., dev_tools)
-# TODO(gp): Do we need to move / rename also test_tasks.py?
+# TODO(gp): -> helpers.lib_tasks so we can share across repos (e.g., dev_tools)
+# TODO(gp): Do we need to move / rename test_tasks.py?
 
 _LOG = logging.getLogger(__name__)
+
+# #############################################################################
+# Default params.
+# #############################################################################
 
 # By default we run against the dev image.
 STAGE = "dev"
 
 # This is used to inject the default params.
+# TODO(gp): Using a singleton here is not elegant but simple.
 _DEFAULT_PARAMS = {}
-
-
-# NOTE: We need to use a `# type: ignore` for all the @task functions because
-# pyinvoke infers the argument type from the code and mypy annotations confuse
-# it (see https://github.com/pyinvoke/invoke/issues/357).
 
 
 def set_default_params(params: Dict[str, Any]) -> None:
@@ -52,11 +52,24 @@ def set_default_params(params: Dict[str, Any]) -> None:
     _LOG.debug("Assigning:\n%s", pprint.pformat(params))
 
 
-def get_default_value(key: str) -> Any:
+def get_default_param(key: str) -> Any:
     dbg.dassert_in(key, _DEFAULT_PARAMS)
     dbg.dassert_isinstance(key, str)
     return _DEFAULT_PARAMS[key]
 
+
+def has_default_param(key: str) -> bool:
+    return key in _DEFAULT_PARAMS
+
+
+def reset_default_params() -> None:
+    params: Dict[str, Any] = {}
+    set_default_params(params)
+
+
+# #############################################################################
+# Utils.
+# #############################################################################
 
 # Since it's not easy to add global command line options to invoke, we piggy
 # back the option that already exists.
@@ -69,10 +82,46 @@ else:
     dbg.init_logger(verbosity=logging.INFO)
 
 
+# NOTE: We need to use a `# type: ignore` for all the @task functions because
+# pyinvoke infers the argument type from the code and mypy annotations confuse
+# it (see https://github.com/pyinvoke/invoke/issues/357).
+
+# In the following, when using `lru_cache`, we use functions from `hsyste`
+# instead of `ctx.run()` since otherwise `lru_cache` would cache `ctx`.
+
+# We prefer not to cache functions running `git` to avoid stale values if we
+# call git (e.g., if we cache Git hash and then we do a `git pull`).
+
+
 def _report_task(txt: str = "") -> None:
+    if hut.in_unit_test_mode():
+        # In unit test don't print anything.
+        return
     func_name = hintros.get_function_name(count=1)
     msg = "## %s: %s" % (func_name, txt)
+    # TODO(gp): Do not print during unit tests.
     print(hprint.color_highlight(msg, color="purple"))
+
+
+# TODO(gp): Pass through command line using a global switch or an env var.
+use_one_line_cmd = False
+
+
+# TODO(gp): Move this to helpers.system_interaction and allow to add the switch
+#  globally.
+def _remove_spaces(cmd: str) -> str:
+    cmd = cmd.rstrip().lstrip()
+    cmd = re.sub(r" \\\s*$", " ", cmd, flags=re.MULTILINE)
+    cmd = " ".join(cmd.split())
+    return cmd
+
+
+def _run(ctx: Any, cmd: str, *args: Any, **kwargs: Any) -> None:
+    _LOG.debug("cmd=%s", cmd)
+    if use_one_line_cmd:
+        cmd = _remove_spaces(cmd)
+    _LOG.debug("cmd=%s", cmd)
+    ctx.run(cmd, *args, **kwargs)
 
 
 # #############################################################################
@@ -89,7 +138,7 @@ def print_setup(ctx):  # type: ignore
     _ = ctx
     var_names = "ECR_BASE_PATH BASE_IMAGE".split()
     for v in var_names:
-        print("%s=%s" % (v, get_default_value(v)))
+        print("%s=%s" % (v, get_default_param(v)))
 
 
 # #############################################################################
@@ -104,9 +153,9 @@ def git_pull(ctx):  # type: ignore
     """
     _report_task()
     cmd = "git pull --autostash"
-    ctx.run(cmd)
+    _run(ctx, cmd)
     cmd = "git submodule foreach 'git pull --autostash'"
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 @task
@@ -116,7 +165,7 @@ def git_pull_master(ctx):  # type: ignore
     """
     _report_task()
     cmd = "git fetch origin master:master"
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 @task
@@ -129,7 +178,7 @@ def git_merge_master(ctx):  # type: ignore
     git_pull_master(ctx)
     #
     cmd = "git merge master"
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 # TODO(gp): Add git_co(ctx)
@@ -150,15 +199,15 @@ def git_clean(ctx):  # type: ignore
     # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
     #  mistake.
     cmd = "git clean -fd"
-    ctx.run(cmd)
+    _run(ctx, cmd)
     cmd = "git submodule foreach 'git clean -fd'"
-    ctx.run(cmd)
+    _run(ctx, cmd)
     # pylint: disable=line-too-long
     cmd = r"""find . | \
     grep -E "(tmp.joblib.unittest.cache|.pytest_cache|.mypy_cache|.ipynb_checkpoints|__pycache__|\.pyc|\.pyo$$)" | \
     xargs rm -rf"""
     # pylint: enable=line-too-long
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 @task
@@ -169,7 +218,7 @@ def git_branch_files(ctx):  # type: ignore
     """
     _report_task()
     cmd = "git diff --name-only master..."
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 @task
@@ -180,7 +229,7 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     _report_task()
     #
     cmd = "git fetch --all --prune"
-    ctx.run(cmd)
+    _run(ctx, cmd)
     dbg.dassert(
         git.get_branch_name(),
         "master",
@@ -207,7 +256,7 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
             )
         for branch in branches:
             cmd_tmp = f"{delete_cmd} {branch}"
-            ctx.run(cmd_tmp)
+            _run(ctx, cmd_tmp)
 
     # Delete local branches that are already merged into master.
     # > git branch --merged
@@ -224,7 +273,7 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     _delete_branches("remote")
     #
     cmd = "git fetch --all --prune"
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 @task
@@ -244,13 +293,13 @@ def git_create_branch(ctx, branch_name=""):  # type: ignore
     )
     # Fetch master.
     cmd = "git pull --autostash"
-    ctx.run(cmd)
+    _run(ctx, cmd)
     # git checkout -b LemTask169_Get_GH_actions_working_on_lemonade
     cmd = f"git checkout -b {branch_name}"
-    ctx.run(cmd)
+    _run(ctx, cmd)
     # git push --set-upstream origin LemTask169_Get_GH_actions_working_on_lemonade
     cmd = f"git push --set-upstream origin {branch_name}"
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 # TODO(gp): Add dev_scripts/git/git_create_patch*.sh
@@ -272,8 +321,8 @@ def docker_images_ls_repo(ctx):  # type: ignore
     """
     _report_task()
     docker_login(ctx)
-    ecr_base_path = get_default_value("ECR_BASE_PATH")
-    ctx.run(f"docker image ls {ecr_base_path}")
+    ecr_base_path = get_default_param("ECR_BASE_PATH")
+    _run(ctx, f"docker image ls {ecr_base_path}")
 
 
 @task
@@ -296,7 +345,7 @@ def docker_ps(ctx):  # type: ignore
     )
     cmd = f"docker ps --format='{fmt}'"
     cmd = _remove_spaces(cmd)
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 @task
@@ -318,7 +367,7 @@ def docker_stats(ctx):  # type: ignore
         + r"\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}"
     )
     cmd = f"docker stats --no-stream --format='{fmt}'"
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 @task
@@ -327,8 +376,8 @@ def docker_kill_last(ctx):  # type: ignore
     Kill the last Docker container started.
     """
     _report_task()
-    ctx.run("docker ps -l")
-    ctx.run("docker rm -f $(docker ps -l -q)")
+    _run(ctx, "docker ps -l")
+    _run(ctx, "docker rm -f $(docker ps -l -q)")
 
 
 @task
@@ -337,8 +386,8 @@ def docker_kill_all(ctx):  # type: ignore
     Kill all the Docker containers.
     """
     _report_task()
-    ctx.run("docker ps -a")
-    ctx.run("docker rm -f $(docker ps -a -q)")
+    _run(ctx, "docker ps -a")
+    _run(ctx, "docker rm -f $(docker ps -a -q)")
 
 
 # docker system prune
@@ -369,6 +418,18 @@ def docker_kill_all(ctx):  # type: ignore
 # Docker development.
 # #############################################################################
 
+# TODO(gp):
+# We might want to organize the code in a base class using a Command pattern,
+# so that it's easier to generalize the code for multiple repos.
+#
+# class DockerCommand:
+#   def pull():
+#     ...
+#   def cmd():
+#     ...
+#
+# For now we pass the customizable part through the default params.
+
 
 @task
 def docker_pull(ctx, stage=STAGE, images="all"):  # type: ignore
@@ -391,17 +452,13 @@ def docker_pull(ctx, stage=STAGE, images="all"):  # type: ignore
             base_image = ""
             image = get_image(stage, base_image)
         elif token == "dev_tools":
-            image = get_default_value("DEV_TOOLS_IMAGE_PROD")
+            image = get_default_param("DEV_TOOLS_IMAGE_PROD")
         else:
             raise ValueError("Can't recognize image token '%s'" % token)
         _LOG.info("token='%s': image='%s'", token, image)
         _check_image(image)
         cmd = f"docker pull {image}"
-        ctx.run(cmd, pty=True)
-
-
-# In the following we use functions from `hsyste` instead of `ctx.run()` since
-# `lru_cache` would cache `ctx`.
+        _run(ctx, cmd, pty=True)
 
 
 @functools.lru_cache()
@@ -436,40 +493,47 @@ def docker_login(ctx):  # type: ignore
     if major_version == 1:
         cmd = f"eval $(aws ecr get-login --no-include-email --region {region})"
     else:
-        ecr_base_path = get_default_value("ECR_BASE_PATH")
+        ecr_base_path = get_default_param("ECR_BASE_PATH")
         cmd = (
             f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
             + f"https://{ecr_base_path}"
         )
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
-def _get_amp_docker_compose_path() -> str:
-    path = git.get_path_from_supermodule()
-    if path != "":
-        _LOG.warning("amp is a submodule")
-        docker_compose_path = "docker-compose-user-space-git-subrepo.yml"
-    else:
-        _LOG.warning("amp is not a submodule")
-        docker_compose_path = "docker-compose-user-space.yml"
-    # Add the path.
+def _get_base_docker_compose_path() -> str:
+    """
+    Return the base docker compose `devops/compose/docker-compose.yml`.
+    """
+    # Add the default path.
     dir_name = "devops/compose"
+    # TODO(gp): Factor out the piece below.
+    docker_compose_path = "docker-compose.yml"
     docker_compose_path = os.path.join(dir_name, docker_compose_path)
     docker_compose_path = os.path.abspath(docker_compose_path)
     return docker_compose_path
 
 
-def _remove_spaces(cmd: str) -> str:
-    cmd = cmd.rstrip().lstrip()
-    cmd = " ".join(cmd.split())
-    return cmd
+def _get_amp_docker_compose_path() -> Optional[str]:
+    """
+    Return the docker compose for `amp` as supermodule or as submodule.
+
+    E.g., `devops/compose/docker-compose_as_submodule.yml` and
+    `devops/compose/docker-compose_as_supermodule.yml`
+    """
+    path = git.get_path_from_supermodule()
+    if path != "":
+        _LOG.warning("amp is a submodule")
+        docker_compose_path = "docker-compose_as_submodule.yml"
+        # Add the default path.
+        dir_name = "devops/compose"
+        docker_compose_path = os.path.join(dir_name, docker_compose_path)
+        docker_compose_path = os.path.abspath(docker_compose_path)
+    else:
+        docker_compose_path = None
+    return docker_compose_path
 
 
-# TODO(gp): Pass through command line using a global switch or an env var.
-use_one_line_cmd = False
-
-
-@functools.lru_cache()
 def _get_git_hash() -> str:
     cmd = "git rev-parse HEAD"
     git_hash: str = hsinte.system_to_one_line(cmd)[1]
@@ -477,7 +541,7 @@ def _get_git_hash() -> str:
     return git_hash
 
 
-_INTERNET_ADDRESS_RE = r"^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
+_INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
 _IMAGE_RE = r"[a-z0-9_-]+"
 _TAG_RE = r"[a-z0-9_-]+"
 
@@ -511,9 +575,9 @@ def _get_base_image(base_image: str) -> str:
     if base_image == "":
         # TODO(gp): Use os.path.join.
         base_image = (
-            get_default_value("ECR_BASE_PATH")
+            get_default_param("ECR_BASE_PATH")
             + "/"
-            + get_default_value("BASE_IMAGE")
+            + get_default_param("BASE_IMAGE")
         )
     _check_base_image(base_image)
     return base_image
@@ -538,46 +602,180 @@ def get_image(stage: str, base_image: str) -> str:
     return image
 
 
-def _docker_cmd(
-    ctx: Any,
+def _to_cmd(docker_cmd_: List[str]) -> str:
+    r"""
+    Convert a command encoded as a list of strings into a single command
+    separated by `\`.
+
+    E.g., convert
+    ```
+        ['IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev',
+            '\n        docker-compose',
+            '\n        --file amp/devops/compose/docker-compose.yml',
+            '\n        --file amp/devops/compose/docker-compose_as_submodule.yml',
+            '\n        --env-file devops/env/default.env']
+        ```
+    into
+        ```
+        docker_cmd=IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev \
+            docker-compose \
+            --file devops/compose/docker-compose.yml \
+            --file devops/compose/docker-compose_as_submodule.yml \
+            --env-file devops/env/default.env
+        ```
+    """
+    # Expand all strings into single lines.
+    _LOG.debug("docker_cmd=%s", docker_cmd_)
+    docker_cmd_tmp = []
+    for dc in docker_cmd_:
+        # Add a `\` at the end of each string.
+        dbg.dassert(not dc.endswith("\\"), "dc='%s'", dc)
+        dc += " \\"
+        docker_cmd_tmp.extend(dc.split("\n"))
+    docker_cmd_ = docker_cmd_tmp
+    # Remove empty lines.
+    docker_cmd_ = [cmd for cmd in docker_cmd_ if cmd.rstrip().lstrip() != ""]
+    # Package the command.
+    docker_cmd_ = "\n".join(docker_cmd_)
+    # Remove a `\` at the end, since it is not needed.
+    docker_cmd_ = docker_cmd_.rstrip("\\")
+    _LOG.debug("docker_cmd=%s", docker_cmd_)
+    return docker_cmd_
+
+
+def _get_docker_cmd(
     stage: str,
     base_image: str,
-    docker_compose: str,
     cmd: str,
+    extra_env_vars: Optional[List[str]] = None,
+    extra_docker_compose_files: Optional[List[str]] = None,
+    extra_docker_run_opts: Optional[List[str]] = None,
+    service_name: str = "app",
     entrypoint: bool = True,
+    print_docker_config: bool = False,
+) -> str:
+    """
+    :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
+    :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
+    :param print_config: print the docker config for debugging purposes
+    """
+    hprint.log(
+        _LOG,
+        logging.DEBUG,
+        "stage base_image cmd extra_env_vars"
+        " extra_docker_compose_files extra_docker_run_opts"
+        " service_name entrypoint",
+    )
+    docker_cmd_: List[str] = []
+    # - Handle the image.
+    image = get_image(stage, base_image)
+    _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
+    _check_image(image)
+    docker_cmd_.append(f"IMAGE={image}")
+    # - Handle extra env vars.
+    if extra_env_vars:
+        dbg.dassert_isinstance(extra_env_vars, list)
+        for env_var in extra_env_vars:
+            docker_cmd_.append(f"{env_var}")
+    #
+    docker_cmd_.append(
+        r"""
+        docker-compose"""
+    )
+    # - Handle the docker compose files.
+    docker_compose_files = []
+    docker_compose_files.append(_get_base_docker_compose_path())
+    docker_compose_file_tmp = _get_amp_docker_compose_path()
+    if docker_compose_file_tmp:
+        docker_compose_files.append(docker_compose_file_tmp)
+    # Add the compose files from command line.
+    if extra_docker_compose_files:
+        dbg.dassert_isinstance(extra_docker_compose_files, list)
+        docker_compose_files.extend(extra_docker_compose_files)
+    # Add the compose files from the global params.
+    key = "DOCKER_COMPOSE_FILES"
+    if has_default_param(key):
+        docker_compose_files.append(get_default_param(key))
+    #
+    _LOG.debug(hprint.to_str("docker_compose_files"))
+    for docker_compose in docker_compose_files:
+        dbg.dassert_exists(docker_compose)
+    file_opts = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
+    _LOG.debug(hprint.to_str("file_opts"))
+    docker_cmd_.append(
+        rf"""
+        {file_opts}"""
+    )
+    # - Handle the env file.
+    env_file = "devops/env/default.env"
+    docker_cmd_.append(
+        rf"""
+        --env-file {env_file}"""
+    )
+    # - Add the `config` command for debugging purposes.
+    docker_config_cmd : List[str] = docker_cmd_[:]
+    docker_config_cmd.append(
+        r"""
+        config"""
+    )
+    # - Add the `run` command.
+    docker_cmd_.append(
+        r"""
+        run \
+        --rm"""
+    )
+    # - Handle the user.
+    user_name = hsinte.get_user_name()
+    docker_cmd_.append(
+        rf"""
+        -l user={user_name}"""
+    )
+    # - Handle the extra docker options.
+    if extra_docker_run_opts:
+        dbg.dassert_isinstance(extra_docker_run_opts, list)
+        extra_opts = " ".join(extra_docker_run_opts)
+        docker_cmd_.append(
+            rf"""
+        {extra_opts}"""
+        )
+    # - Handle entrypoint.
+    if entrypoint:
+        docker_cmd_.append(
+            rf"""
+        {service_name}"""
+        )
+        if cmd:
+            docker_cmd_.append(
+                rf"""
+        {cmd}"""
+            )
+    else:
+        docker_cmd_.append(
+            rf"""
+        --entrypoint bash \
+        {service_name}"""
+        )
+    # Print the config for debugging purpose.
+    if print_docker_config:
+        docker_config_cmd = _to_cmd(docker_config_cmd)
+        _LOG.debug("docker_config_cmd=\n%s", docker_config_cmd)
+        _LOG.debug(
+            "docker_config=\n%s", hsinte.system_to_string(docker_config_cmd)[1]
+        )
+    # Print the config for debugging purpose.
+    docker_cmd_ = _to_cmd(docker_cmd_)
+    return docker_cmd_
+
+
+def _docker_cmd(
+    ctx: Any,
+    docker_cmd_: str,
 ) -> None:
     """
     :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
-    :param docker_compose: e.g. devops/compose/docker-compose-user-space.yml
     """
-    hprint.log(_LOG, logging.DEBUG, "stage base_image docker_compose cmd")
-    image = get_image(stage, base_image)
-    _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
-    #
-    _check_image(image)
-    dbg.dassert_exists(docker_compose)
-    #
-    user_name = hsinte.get_user_name()
-    docker_cmd_ = rf"""IMAGE={image} \
-    docker-compose \
-        -f {docker_compose} \
-        run \
-        --rm \
-        -l user={user_name} \
-    """
-    docker_cmd_ = docker_cmd_.rstrip()
-    if entrypoint:
-        docker_cmd_ += rf"""
-        user_space \
-        {cmd}"""
-    else:
-        docker_cmd_ += r"""
-        --entrypoint bash \
-        user_space"""
-    if use_one_line_cmd:
-        docker_cmd_ = _remove_spaces(docker_cmd_)
     _LOG.debug("cmd=%s", docker_cmd_)
-    ctx.run(docker_cmd_, pty=True)
+    _run(ctx, docker_cmd_, pty=True)
 
 
 @task
@@ -587,11 +785,9 @@ def docker_bash(ctx, stage=STAGE, entrypoint=True):  # type: ignore
     """
     _report_task()
     base_image = ""
-    docker_compose = _get_amp_docker_compose_path()
     cmd = "bash"
-    _docker_cmd(
-        ctx, stage, base_image, docker_compose, cmd, entrypoint=entrypoint
-    )
+    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd, entrypoint=entrypoint)
+    _docker_cmd(ctx, docker_cmd_)
 
 
 @task
@@ -602,46 +798,50 @@ def docker_cmd(ctx, stage=STAGE, cmd=""):  # type: ignore
     _report_task()
     dbg.dassert_ne(cmd, "")
     base_image = ""
-    docker_compose = _get_amp_docker_compose_path()
     # TODO(gp): Do we need to overwrite the entrypoint?
-    _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
+    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd)
+    _docker_cmd(ctx, docker_cmd_)
+
+
+def _get_docker_jupyter_cmd(
+    stage: str,
+    base_image: str,
+    port: int,
+    self_test: bool,
+    print_docker_config: bool = False,
+) -> str:
+    cmd = ""
+    extra_env_vars = [f"PORT={port}"]
+    extra_docker_run_opts = ["--service-ports"]
+    service_name = "jupyter_server_test" if self_test else "jupyter_server"
+    #
+    docker_cmd_ = _get_docker_cmd(
+        stage,
+        base_image,
+        cmd,
+        extra_env_vars=extra_env_vars,
+        extra_docker_run_opts=extra_docker_run_opts,
+        service_name=service_name,
+        print_docker_config=print_docker_config,
+    )
+    return docker_cmd_
 
 
 @task
 def docker_jupyter(  # type: ignore
-    ctx, stage=STAGE, port=9999, self_test=False, base_image=""
+    ctx,
+    stage=STAGE,
+    base_image="",
+    port=9999,
+    self_test=False,
 ):
     """
     Run jupyter notebook server.
     """
     _report_task()
-    image = get_image(stage, base_image)
-    # devops/compose/docker-compose-user-space.yml
-    docker_compose = _get_amp_docker_compose_path()
-    dbg.dassert_exists(docker_compose)
     #
-    docker_compose_jupyter = "devops/compose/docker-compose-jupyter.yml"
-    docker_compose_jupyter = os.path.abspath(docker_compose_jupyter)
-    dbg.dassert_exists(docker_compose_jupyter)
-    #
-    user_name = hsinte.get_user_name()
-    service = "jupyter_server_test" if self_test else "jupyter_server"
-    # TODO(gp): Not sure about the order of the -f files.
-    # TODO(gp): docker_compose_jupyter should extend docker_compose.
-    cmd = rf"""IMAGE={image} \
-    PORT={port} \
-    docker-compose \
-        -f {docker_compose} \
-        -f {docker_compose_jupyter} \
-        run \
-        --rm \
-        -l user={user_name} \
-        --service-ports \
-        {service}"""
-    if use_one_line_cmd:
-        cmd = _remove_spaces(cmd)
-    _LOG.debug("cmd=%s", cmd)
-    ctx.run(cmd, pty=True)
+    docker_cmd_ = _get_docker_jupyter_cmd(stage, base_image, port, self_test)
+    _docker_cmd(ctx, docker_cmd_)
 
 
 # #############################################################################
@@ -653,13 +853,6 @@ def _to_abs_path(filename: str) -> str:
     filename = os.path.abspath(filename)
     dbg.dassert_exists(filename)
     return filename
-
-
-def _run(ctx: Any, cmd: str) -> None:
-    if use_one_line_cmd:
-        cmd = _remove_spaces(cmd)
-    _LOG.debug("cmd=%s", cmd)
-    ctx.run(cmd, pty=True)
 
 
 # Use Docker buildkit or not.
@@ -711,7 +904,7 @@ def docker_build_local_image(  # type: ignore
     # Update poetry.
     if update_poetry:
         cmd = "cd devops/docker_build; poetry lock"
-        ctx.run(cmd)
+        _run(ctx, cmd)
     #
     image_local = get_image("local", base_image)
     image_hash = get_image("hash", base_image)
@@ -920,9 +1113,9 @@ def run_blank_tests(ctx, stage=STAGE):  # type: ignore
     """
     _report_task()
     base_image = ""
-    docker_compose = _get_amp_docker_compose_path()
     cmd = '"pytest -h >/dev/null"'
-    _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
+    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd)
+    _docker_cmd(ctx, docker_cmd_)
 
 
 # #############################################################################
@@ -1134,13 +1327,13 @@ def _run_test_cmd(
 ) -> None:
     if collect_only:
         # Clean files.
-        ctx.run("rm -rf ./.coverage*")
+        _run(ctx, "rm -rf ./.coverage*")
     # Run.
     base_image = ""
-    docker_compose = _get_amp_docker_compose_path()
     # We need to add some " to pass the string as it is to the container.
     cmd = f"'{cmd}'"
-    _docker_cmd(ctx, stage, base_image, docker_compose, cmd)
+    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd)
+    _docker_cmd(ctx, docker_cmd_)
     # Print message about coverage.
     if coverage:
         msg = """- The coverage results in textual form are above.
@@ -1163,6 +1356,7 @@ def _run_tests(
     collect_only: bool,
     skipped_tests: str,
 ) -> None:
+    # Build the command line.
     cmd = _build_run_command_line(
         pytest_opts,
         pytest_mark,
@@ -1172,6 +1366,7 @@ def _run_tests(
         collect_only,
         skipped_tests,
     )
+    # Execute the command line.
     _run_test_cmd(
         ctx,
         stage,
@@ -1219,33 +1414,6 @@ def run_fast_tests(  # type: ignore
     )
 
 
-# @task
-# def run_slow_tests(  # type: ignore
-#     ctx,
-#     stage=_STAGE,
-#     pytest_opts="",
-#     skip_submodules=False,
-#     coverage=False,
-#     collect_only=False,
-# ):
-#     """
-#     Run slow tests.
-#
-#     Same params as `run_fast_tests`.
-#     """
-#     _report_task()
-#     skipped_tests = "slow and not superslow"
-#     _run_tests(
-#         ctx,
-#         stage,
-#         skipped_tests,
-#         pytest_opts,
-#         skip_submodules,
-#         coverage,
-#         collect_only,
-#     )
-
-
 @task
 def run_slow_tests(  # type: ignore
     ctx,
@@ -1273,33 +1441,6 @@ def run_slow_tests(  # type: ignore
         collect_only,
         skipped_tests,
     )
-
-
-# @task
-# def run_superslow_tests(  # type: ignore
-#     ctx,
-#     stage=_STAGE,
-#     pytest_opts="",
-#     skip_submodules=False,
-#     coverage=False,
-#     collect_only=False,
-# ):
-#     """
-#     Run superslow tests.
-#
-#     Same params as `run_fast_tests`.
-#     """
-#     _report_task()
-#     skipped_tests = "not slow and superslow"
-#     _run_tests(
-#         ctx,
-#         stage,
-#         skipped_tests,
-#         pytest_opts,
-#         skip_submodules,
-#         coverage,
-#         collect_only,
-#     )
 
 
 @task
@@ -1360,33 +1501,6 @@ def run_fast_slow_tests(  # type: ignore
     )
 
 
-# @task
-# def run_fast_slow_tests(  # type: ignore
-#     ctx,
-#     stage=_STAGE,
-#     pytest_opts="",
-#     skip_submodules=False,
-#     coverage=False,
-#     collect_only=False,
-# ):
-#     """
-#     Run fast and slow tests.
-#
-#     Same params as `run_fast_tests`.
-#     """
-#     _report_task()
-#     skipped_tests = "not superslow"
-#     _run_tests(
-#         ctx,
-#         stage,
-#         skipped_tests,
-#         pytest_opts,
-#         skip_submodules,
-#         coverage,
-#         collect_only,
-#     )
-
-
 @task
 def jump_to_pytest_error(ctx, log_name=""):  # type: ignore
     """
@@ -1406,10 +1520,10 @@ def jump_to_pytest_error(ctx, log_name=""):  # type: ignore
     _LOG.info("Reading %s", log_name)
     # Convert the traceback into a cfile.
     cmd = f"dev_scripts/traceback_to_cfile.py -i {log_name} -o cfile"
-    ctx.run(cmd)
+    _run(ctx, cmd)
     # Read and navigate the cfile with vim.
     cmd = 'vim -c "cfile cfile"'
-    ctx.run(cmd, pty=True)
+    _run(ctx, cmd, pty=True)
 
 
 @task
@@ -1471,7 +1585,7 @@ def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignor
         f"pre-commit.sh run {phases} --files {files_as_str} 2>&1 "
         + "| tee linter_warnings.txt"
     )
-    ctx.run(cmd)
+    _run(ctx, cmd)
 
 
 # TODO(gp): Finish this.
@@ -1581,7 +1695,7 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
         gh_test += ".yml"
         # gh workflow run fast_tests.yml --ref AmpTask1251_Update_GH_actions_for_amp
         cmd = f"gh workflow run {gh_test} --ref {branch_name}"
-        ctx.run(cmd)
+        _run(ctx, cmd)
     #
     gh_workflow_list(ctx, branch=branch)
 
@@ -1672,7 +1786,7 @@ def gh_create_pr(ctx):  # type: ignore
         f' --title "{branch_name}"'
         ' --body ""'
     )
-    ctx.run(cmd)
+    _run(ctx, cmd)
     # TODO(gp): Implement the rest of the flow.
     # Warning: 3 uncommitted changes
     # https://github.com/alphamatic/amp/pull/1298
