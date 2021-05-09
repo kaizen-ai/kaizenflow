@@ -1,7 +1,7 @@
 """
 Import as:
 
-import lib_tasks as ltasks
+import helpers.lib_tasks as ltasks
 """
 
 import datetime

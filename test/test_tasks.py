@@ -6,10 +6,10 @@ import invoke
 import pytest
 
 import helpers.dbg as dbg
+import helpers.lib_tasks as ltasks
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
-import lib_tasks as ltasks
 import tasks
 
 # TODO(gp): We should separate what can be tested by lib_tasks.py and what

@@ -4,8 +4,10 @@
 
 from setuptools import setup
 
-# Helper version.
-VERSION = "1.2"
+# Helper package version.
+# - v1.3: 2021-05-09
+#   - Move lib_tasks.py inside helpers
+VERSION = "1.3"
 
 INSTALL_REQUIRES = [
     #"numpy >= 1.17.5",
