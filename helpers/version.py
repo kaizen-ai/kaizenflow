@@ -89,12 +89,8 @@ def get_code_version(dir_name: Optional[str] = None) -> str:
     # Load the version.
     file_name = os.path.join(dir_name, "version.txt")
     file_name = os.path.abspath(file_name)
-    if dir_name_was_specified:
-        # If the `dir_name` was specified, we expect to find the file.
-        assert os.path.exists(file_name), "Can't find file '%s' for dir_name='%s'" % (
-            file_name,
-            dir_name,
-        )
+    version_file_exists = os.path.exists(file_name)
+    if version_file_exists:
         with open(file_name) as f:
             version = f.readline().rstrip()
         # E.g., `amp-1.0.0`.
@@ -102,12 +98,20 @@ def get_code_version(dir_name: Optional[str] = None) -> str:
             r"^\S+-\d+\.\d+\.\d+$", version
         ), "Invalid version '%s' from %s" % (version, file_name)
     else:
-        # If the `dir_name` was not specified, then it's ok not to find the file.
-        print(
-            _WARNING
-            + f": Can't find versions.txt to determine the version, so using None"
-        )
-        version = None
+        if dir_name_was_specified:
+            # If the `dir_name` was specified, we expect to find the file.
+            assert version_file_exists, "Can't find file '%s' for dir_name='%s'" % (
+                file_name,
+                dir_name,
+            )
+        else:
+            # If the `dir_name` was not specified, then it's ok not to find the
+            # file.
+            print(
+                _WARNING
+                + ": Can't find versions.txt, so using version=None"
+            )
+            version = None
     return version
 
 

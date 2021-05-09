@@ -2,7 +2,7 @@ import logging
 import re
 from typing import Dict
 
-import ib_insync
+#import ib_insync
 import pytest
 
 import helpers.dbg as dbg
@@ -18,6 +18,7 @@ _LOG = logging.getLogger(__name__)
 # Start docker_bash with
 # i docker_bash --stage="local"
 # ##> pytest instrument_master/ib/connect/test/test_im_tasks.py::TestImTwsStartIbInterface
+@pytest.mark.skip
 class TestImTwsStartIbInterface(hut.TestCase):
 
     def test1(self) -> None:
