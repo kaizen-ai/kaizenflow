@@ -1,8 +1,16 @@
 """
 Import as:
 
-import helpers.version as hversi
+import helpers.versioning as hversi
 """
+
+# This code implements version control for code
+# The code version is used in two circumstances:
+# 1) when any code using dbg.py (which is included everywhere) starts in order to
+#    verify that the running code and the container in which the code is running
+#    are compatible
+# 2) when a container is built to know what version of the code was used to build
+#    it
 
 # This file should depend only on Python standard package since it's used by
 # helpers/dbg.py, which is used everywhere.
@@ -20,13 +28,13 @@ _WARNING = "\033[33mWARNING\033[0m"
 _ERROR = "\033[31mERROR\033[0m"
 
 
-def check_version(dir_name: Optional[str] = None) -> None:
+def check_version(file_name: Optional[str] = None) -> None:
     """
     Check that the code and container code have compatible version, otherwise
     raises `RuntimeError`.
     """
     # Get code version.
-    code_version = get_code_version(dir_name)
+    code_version = get_code_version(file_name)
     is_inside_container = _is_inside_container()
     # Get container version.
     # TODO(gp): Use _get_container_version().
@@ -67,27 +75,20 @@ def check_version(dir_name: Optional[str] = None) -> None:
 
 # TODO(gp): It's not clear how to generalize this for different containers.
 #  For `amp` makes sense to check at top of the repo.
-def get_code_version(dir_name: Optional[str] = None) -> Optional[str]:
+def get_code_version(file_name: Optional[str] = None) -> Optional[str]:
     """
-    Return the code version.
+    Return the code version stored in `file_name`.
 
-    The code version is used when:
-    - the code starts in order to verify that the code and the containers are
-      compatible
-    - the container is built to know what version of the code was used
-
-    :param dir_name: the path to the `version.txt` file. If None uses the dir
+    :param file_name: the path to the `version.txt` file. If None uses the dir
         one level up with respect to the this file (i.e., `amp` dir)
     """
-    dir_name_was_specified = False
-    if not dir_name:
+    file_name_was_specified = False
+    if not file_name:
         # Use the version one level up.
-        dir_name = os.path.dirname(os.path.abspath(__file__))
-        dir_name = os.path.abspath(os.path.join(dir_name, ".."))
+        file_name = os.path.abspath(os.path.join(os.getcwd(), "version.txt"))
     else:
-        dir_name_was_specified = True
+        file_name_was_specified = True
     # Load the version.
-    file_name = os.path.join(dir_name, "version.txt")
     file_name = os.path.abspath(file_name)
     version_file_exists = os.path.exists(file_name)
     if version_file_exists:
@@ -98,53 +99,15 @@ def get_code_version(dir_name: Optional[str] = None) -> Optional[str]:
             r"^\S+-\d+\.\d+\.\d+$", version
         ), "Invalid version '%s' from %s" % (version, file_name)
     else:
-        if dir_name_was_specified:
-            # If the `dir_name` was specified, we expect to find the file.
-            assert (
-                version_file_exists
-            ), "Can't find file '%s' for dir_name='%s'" % (
-                file_name,
-                dir_name,
-            )
+        if file_name_was_specified:
+            # If the `file_name` was specified, we expect to find the file.
+            assert version_file_exists, "Can't find file '%s'" % file_name
         else:
-            # If the `dir_name` was not specified, then it's ok not to find the
+            # If the `file_name` was not specified, then it's ok not to find the
             # file.
-            print(_WARNING + ": Can't find versions.txt, so using version=None")
+            print(_WARNING + ": Can't find version.txt, so using version=None")
             version = None
     return version
-
-
-# Copied from helpers/system_interaction.py to avoid introducing dependencies.
-def _is_inside_docker() -> bool:
-    """
-    Return whether we are inside a Docker container or not.
-    """
-    # From https://stackoverflow.com/questions/23513045
-    return os.path.exists("/.dockerenv")
-
-
-def _is_inside_ci() -> bool:
-    """
-    Return whether we are running inside the Continuous Integration flow.
-
-    Note that this function returns:
-    - True when we are running in GitHub system but not in our
-      container (e.g., when we are inside an `invoke` workflow)
-    - False once we enter our containers, since we don't propagate the `CI` env
-      var through Docker compose
-    """
-    return "CI" in os.environ
-
-
-def _is_inside_container() -> bool:
-    """
-    Return whether we are running inside a Docker container or inside GitHub
-    Action.
-    """
-    return _is_inside_docker() or _is_inside_ci()
-
-
-# End copy.
 
 
 def _get_container_version() -> Optional[str]:
@@ -180,3 +143,39 @@ You need to:
         print(msg)
         # raise RuntimeError(msg)
     return is_ok
+
+
+# TODO(gp): The circular dependency might be gone now.
+# Copied from helpers/system_interaction.py to avoid introducing dependencies.
+
+
+def _is_inside_docker() -> bool:
+    """
+    Return whether we are inside a Docker container or not.
+    """
+    # From https://stackoverflow.com/questions/23513045
+    return os.path.exists("/.dockerenv")
+
+
+def _is_inside_ci() -> bool:
+    """
+    Return whether we are running inside the Continuous Integration flow.
+
+    Note that this function returns:
+    - True when we are running in GitHub system but not in our
+      container (e.g., when we are inside an `invoke` workflow)
+    - False once we enter our containers, since we don't propagate the `CI` env
+      var through Docker compose
+    """
+    return "CI" in os.environ
+
+
+def _is_inside_container() -> bool:
+    """
+    Return whether we are running inside a Docker container or inside GitHub
+    Action.
+    """
+    return _is_inside_docker() or _is_inside_ci()
+
+
+# End copy.

@@ -1,4 +1,3 @@
 # The build context for DEV is only devops.
 **
 !devops/**
-!poetry.toml

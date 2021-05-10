@@ -6,7 +6,7 @@
 GIT_CLIENT="lemonade1"
 echo "GIT_CLIENT=$GIT_CLIENT"
 
-if [[ 1 == 1 ]]; then
+if [[ 0 == 1 ]]; then
     # amp vs lemonade
     DIR1=$HOME/src/$GIT_CLIENT/amp
     DIR2=$HOME/src/$GIT_CLIENT
@@ -19,6 +19,14 @@ fi;
 echo "DIR1=$DIR1"
 echo "DIR2=$DIR2"
 
+# The file storing configuration that should be kept in sync are:
+for file in .dockerignore .gitignore .pre-commit-config.yaml conftest.py dev_scripts/setenv_dev_tools.sh invoke.yaml lib_tasks.py mypy.ini pre-commit.sh pytest.ini tasks.py
+do
+    vimdiff {$DIR1,$DIR2}/$file
+done;
+
+exit -1
+
 if [[ 1 == 1 ]]; then
     DIR="devops"
     echo "Comparing $DIR"
@@ -30,18 +38,6 @@ else
     diff_to_vimdiff.py --dir1 $DIR1/$DIR --dir2 $DIR2/$DIR
 fi;
 
-# The file storing configuration that should be kept in sync are:
-# conftest.py
-# invoke.yaml
-# lib_tasks.py
-# mypy.ini
-# pre-commit.sh
-# pytest.ini
-# tasks.py
-# dev_scripts/client_setup/
-# dev_scripts/setenv_dev_tools.sh
-# .pre-commit-config.yaml
-# .gitignore
-# .dockerignore
+#dev_scripts/client_setup/
 
 # TODO(gp): If a file is a link, do not compare.

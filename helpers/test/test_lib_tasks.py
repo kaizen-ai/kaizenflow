@@ -11,7 +11,7 @@ import helpers.git as git
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
-import lib_tasks as ltasks
+import helpers.lib_tasks as ltasks
 
 _LOG = logging.getLogger(__name__)
 
@@ -394,7 +394,8 @@ class TestLibRunTests1(hut.TestCase):
             collect_only,
             skipped_tests,
         )
-        exp = "pytest TestLibRunTests1.test_run_fast_tests4/tmp.scratch/test/test_that.py"
+        exp = ("pytest TestLibRunTests1.test_run_fast_tests4/tmp.scratch/"
+               "test/test_that.py")
         self.assert_equal(act, exp)
 
 
@@ -425,7 +426,7 @@ class TestLibTasksRunTests1(hut.TestCase):
         #
         file_names = ltasks._find_test_class("TestLibTasksRunTests1", file_names)
         act = hut.purify_file_names(file_names)
-        exp = ["test/test_lib_tasks.py::TestLibTasksRunTests1"]
+        exp = ["helpers/test/test_lib_tasks.py::TestLibTasksRunTests1"]
         self.assert_equal(str(act), str(exp))
 
     def test_find_test_class2(self) -> None:
@@ -436,7 +437,7 @@ class TestLibTasksRunTests1(hut.TestCase):
         #
         file_names = ltasks._find_test_class("TestLibTasksRunTests1", file_names)
         act = hut.purify_file_names(file_names)
-        exp = ["test/test_lib_tasks.py::TestLibTasksRunTests1"]
+        exp = ["helpers/test/test_lib_tasks.py::TestLibTasksRunTests1"]
         self.assert_equal(str(act), str(exp))
 
     def test_find_test_class3(self) -> None:
@@ -475,7 +476,7 @@ class TestLibTasksRunTests1(hut.TestCase):
         act = ltasks._find_test_class("TestHelloWorld", file_names)
         act = hut.purify_file_names(act)
         exp = [
-            "test/TestLibTasksRunTests1.test_find_test_class3/tmp.scratch/"
+            "helpers/test/TestLibTasksRunTests1.test_find_test_class3/tmp.scratch/"
             "test/test_this.py::TestHelloWorld"
         ]
         self.assert_equal(str(act), str(exp))
@@ -513,8 +514,8 @@ class TestLibTasksRunTests1(hut.TestCase):
         act = ltasks._find_test_decorator("no_container", file_names)
         act = hut.purify_file_names(act)
         exp = [
-            "test/TestLibTasksRunTests1.test_find_test_decorator1/tmp.scratch/"
-            "test/test_that.py"
+            "helpers/test/TestLibTasksRunTests1.test_find_test_decorator1/"
+            "tmp.scratch/test/test_that.py"
         ]
         self.assert_equal(str(act), str(exp))
 

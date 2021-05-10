@@ -1,7 +1,7 @@
 """
 Import as:
 
-import lib_tasks as ltasks
+import helpers.lib_tasks as ltasks
 """
 
 import datetime
@@ -27,7 +27,7 @@ import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.table as htable
 import helpers.unit_test as hut
-import helpers.version as hversi
+import helpers.versioning as hversi
 
 # TODO(gp): -> helpers.lib_tasks so we can share across repos (e.g., dev_tools)
 # TODO(gp): Do we need to move / rename test_tasks.py?
@@ -916,7 +916,7 @@ def docker_build_local_image(  # type: ignore
     #
     opts = "--no_cache" if not cache else ""
     # The container version is the version used from this code.
-    container_version = hversi.get_code_version(".")
+    container_version = hversi.get_code_version("./version.txt")
     build_tag = _get_build_tag(container_version)
     cmd = rf"""
     DOCKER_BUILDKIT={DOCKER_BUILDKIT} \

@@ -1,13 +1,21 @@
 import logging
+import os
 
+import helpers.git as git
 import helpers.unit_test as hut
-import helpers.version as hversi
+import helpers.versioning as hversi
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestVersion1(hut.TestCase):
+class TestVersioning1(hut.TestCase):
     def test_get_code_version1(self) -> None:
+        git_root = git.get_client_root(super_module=False)
+        file_name = os.path.join(git_root, "version.txt")
+        code_version = hversi.get_code_version(file_name)
+        _LOG.debug("code_version=%s", code_version)
+
+    def test_get_code_version2(self) -> None:
         code_version = hversi.get_code_version()
         _LOG.debug("code_version=%s", code_version)
 
@@ -16,7 +24,9 @@ class TestVersion1(hut.TestCase):
         _LOG.debug("container_version=%s", container_version)
 
     def test_check_version1(self) -> None:
-        hversi.check_version()
+        git_root = git.get_client_root(super_module=False)
+        file_name = os.path.join(git_root, "version.txt")
+        hversi.check_version(file_name)
 
     def test__check_version1(self) -> None:
         code_version = "amp-1.0.0"

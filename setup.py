@@ -2,10 +2,14 @@
 
 # TODO(gp): Use `poetry build` instead of specifying the dependencies here.
 
+from distutils.util import convert_path
 from setuptools import setup
 
-# Helper version.
-VERSION = "1.2"
+# From https://stackoverflow.com/questions/2058802
+main_ns = {}
+ver_path = convert_path('helpers/__init__.py')
+with open(ver_path) as ver_file:
+    exec(ver_file.read(), main_ns)
 
 INSTALL_REQUIRES = [
     #"numpy >= 1.17.5",
@@ -27,7 +31,7 @@ PACKAGES = [
 
 
 setup(
-    version=VERSION,
+    version=main_ns["__version__"],
     name="helpers",
     description="helpers",
     long_description="",

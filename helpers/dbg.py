@@ -11,7 +11,7 @@ import pprint
 import sys
 from typing import Any, Iterable, List, Optional, Tuple, Type, Union
 
-import helpers.version as hversi
+import helpers.versioning as hversi
 
 hversi.check_version()
 
