@@ -15,13 +15,13 @@ if [[ -d $VENV_DIR ]]; then
     rm -rf $VENV_DIR
 fi;
 echo "Creating virtual environment in '$VENV_DIR'"
-python -m venv $VENV_DIR
+python3 -m venv $VENV_DIR
 source $VENV_DIR/bin/activate
 
 # Install packages.
 # TODO(gp): Switch to poetry.
-python -m pip install --upgrade pip
-pip install -r dev_scripts/client_setup/requirements.txt
+python3 -m pip install --upgrade pip
+pip3 install -r dev_scripts/client_setup/requirements.txt
 
 echo "aws version="$(aws --version)
 echo "invoke version="$(invoke --version)

@@ -3,6 +3,7 @@
 #
 
 # TODO(gp): -> dev_scripts -> dev_scripts_amp
+
 PWD=$(pwd)
 AMP=$PWD
 
@@ -57,15 +58,11 @@ export PYTHONPATH=$(echo $PYTHONPATH | perl -e 'print join(":", grep { not $seen
 echo $PYTHONPATH | perl -e 'print join("\n", grep { not $seen{$_}++ } split(/:/, scalar <>))'
 
 # #############################################################################
-# Configure env.
+# Configure environment
 # #############################################################################
 
 echo "# Configure env"
 echo "which gh="$(which gh)
-# TODO(gp): Not sure this is needed.
-alias ghamp="gh --repo alphamatic/amp"
-alias ghdt="gh --repo alphamatic/dev_tools"
-alias ghlem="gh --repo alphamatic/lemonade"
 
 # `invoke` doesn't seem to allow to have a single configuration file and
 # doesn't allow to specify it through an env var, so we create an alias.
