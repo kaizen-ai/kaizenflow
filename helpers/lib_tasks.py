@@ -424,13 +424,13 @@ def git_create_patch(  # type: ignore
     _run(ctx, cmd)
     # Print message to apply the patch.
     remote_file = os.path.basename(dst_file)
+    abs_path_dst_file = os.path.abspath(dst_file)
     msg = f"""
 # To apply the patch and execute:
 > git checkout {hash_}
-> {cmd_inv} {dst_file}
+> {cmd_inv} {abs_path_dst_file}
 
 # To apply the patch to a remote client:
-> export FILE="{dst_file}"
 > export SERVER="server"
 > export CLIENT_PATH="~/src"
 > scp {dst_file} $SERVER:
