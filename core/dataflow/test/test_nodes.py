@@ -135,6 +135,21 @@ class TestArmaGenerator(hut.TestCase):
         self.check_string(df.to_string())
 
 
+class TestMultivariateNormalGenerator(hut.TestCase):
+    def test1(self) -> None:
+        node = dtf.MultivariateNormalGenerator(
+            nid="source",
+            frequency="30T",
+            start_date="2010-01-04 09:00",
+            end_date="2010-01-04 17:00",
+            dim=4,
+            seed=0,
+        )
+        df = node.fit()["df_out"]
+        str = hut.convert_df_to_string(df, index=True)
+        self.check_string(str)
+
+
 # #############################################################################
 # Results processing
 # #############################################################################
