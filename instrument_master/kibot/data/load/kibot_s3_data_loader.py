@@ -1,10 +1,10 @@
-# TODO(*): -> kibot_s3_data_loader
 import functools
 import logging
 from typing import Optional
 
 import pandas as pd
 
+import helpers.cache as hcache
 import helpers.dbg as dbg
 import helpers.s3 as hs3
 import instrument_master.common.data.load.abstract_data_loader as icdlab
@@ -15,9 +15,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
-    # TODO(plyq): Uncomment once #1047 will be resolved. Use lru_cache for now.
-    # @hcache.cache
-    @functools.lru_cache(maxsize=64)
+
     def read_data(
         self,
         exchange: str,
@@ -73,16 +71,29 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
             unadjusted=unadjusted,
             ext=icdtyp.Extension.CSV,
         )
-        if hs3.is_s3_path(file_path):
-            dbg.dassert_is(
-                hs3.exists(file_path), True, msg=f"S3 key not found: {file_path}"
-            )
-        data = pd.read_csv(file_path, header=None, nrows=nrows)
-        data = self._filter_by_dates(
-            data, frequency=frequency, start_ts=start_ts, end_ts=end_ts
-        )
+        data = self._read_csv(file_path, frequency, start_ts, end_ts, nrows)
         if normalize:
             data = self.normalize(df=data, frequency=frequency)
+        return data
+
+    @staticmethod
+    @hcache.cache
+    def _read_csv(file_path: str,
+                  frequency: icdtyp.Frequency,
+                  nrows: Optional[int] = None,
+                  start_ts: Optional[pd.Timestamp] = None,
+                  end_ts: Optional[pd.Timestamp] = None) -> pd.DataFrame:
+        """
+        Read data from S3 and cache it.
+        """
+        if hs3.is_s3_path(file_path):
+            dbg.dassert(
+                hs3.exists(file_path), "S3 key not found %s", file_path
+            )
+        data = pd.read_csv(file_path, header=None, nrows=nrows)
+        data = KibotS3DataLoader._filter_by_dates(
+            data, frequency=frequency, start_ts=start_ts, end_ts=end_ts
+        )
         return data
 
     @staticmethod
@@ -101,6 +112,7 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
         :param end_ts: end time of data to read. `None` means the current timestamp
         :return: filtered data
         """
+        _ = frequency
         # TODO(gp): Improve this.
         if start_ts or end_ts:
             start_ts = start_ts or pd.Timestamp.min
