@@ -285,6 +285,10 @@ class DiskDataSource(DataSource):
 
 
 class ArmaGenerator(DataSource):
+    """
+    A node for generating price data from ARMA process returns.
+    """
+
     def __init__(
         self,
         nid: str,
@@ -343,6 +347,67 @@ class ArmaGenerator(DataSource):
         self.df = self.df.loc[self._start_date : self._end_date]
         # Use constant volume (for now).
         self.df["vol"] = 100
+
+
+class MultivariateNormalGenerator(DataSource):
+    """
+    A node for generating price data from multivariate normal returns.
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        frequency: str,
+        start_date: _PANDAS_DATE_TYPE,
+        end_date: _PANDAS_DATE_TYPE,
+        dim: int,
+        seed: Optional[float] = None,
+    ) -> None:
+        super().__init__(nid)
+        self._frequency = frequency
+        self._start_date = start_date
+        self._end_date = end_date
+        self._dim = dim
+        self._seed = seed
+        self._multivariate_normal_process = cartif.MultivariateNormalProcess()
+        # Initialize process with appropriate dimension.
+        self._multivariate_normal_process.set_cov_from_inv_wishart_draw(
+            dim=self._dim, seed=self._seed
+        )
+
+    def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
+        """
+        :return: training set as df
+        """
+        self._lazy_load()
+        return super().fit()
+
+    def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
+        self._lazy_load()
+        return super().predict()
+
+    def _lazy_load(self) -> None:
+        if self.df is not None:
+            return
+        rets = self._multivariate_normal_process.generate_sample(
+            date_range_kwargs={
+                "start": self._start_date,
+                "end": self._end_date,
+                "freq": self._frequency,
+            },
+            seed=self._seed,
+        )
+        # Cumulatively sum to generate a price series (implicitly assumes the
+        # returns are log returns; at small enough scales and short enough
+        # times this is practically interchangeable with percentage returns).
+        prices = rets.cumsum()
+        prices = prices.rename(columns=lambda x: "MN" + str(x))
+        # Use constant volume (for now).
+        volume = pd.DataFrame(index=prices.index, columns=prices.columns,
+                              data=100)
+        df = pd.concat([prices, volume], axis=1, keys=["close", "vol"])
+        self.df = df
+        self.df = self.df.loc[self._start_date : self._end_date]
 
 
 # #############################################################################
