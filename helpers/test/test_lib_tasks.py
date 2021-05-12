@@ -53,6 +53,21 @@ def _build_mock_context_returning_ok() -> invoke.MockContext:
     return ctx
 
 
+def _gh_login() -> None:
+    """
+    Log in inside GitHub. This is needed by GitHub action.
+    """
+    env_var = "GH_ACTION_ACCESS_TOKEN"
+    if os.environ.get(env_var, None):
+        # If the env var exists and it's not None.
+        _LOG.warning("Using env var '%s' to log in GitHub", env_var)
+        cmd = "echo $GH_ACTION_ACCESS_TOKEN | gh auth login --with-token"
+        hsinte.system(cmd)
+    # Check that we are logged in.
+    cmd = "gh auth status"
+    hsinte.system(cmd)
+
+
 # #############################################################################
 
 
@@ -164,14 +179,17 @@ class TestDryRunTasks2(_TestClassHelper):
         self._check_output(target)
 
     def test_gh_create_pr(self) -> None:
+        _gh_login()
         target = "gh_create_pr(ctx)"
         self._check_output(target)
 
     def test_gh_issue_title(self) -> None:
+        _gh_login()
         target = "gh_issue_title(ctx, 1)"
         self._check_output(target)
 
     def test_gh_workflow_list(self) -> None:
+        _gh_login()
         target = "gh_workflow_list(ctx, branch='master')"
         self._check_output(target)
 
@@ -207,6 +225,8 @@ class TestDryRunTasks2(_TestClassHelper):
         # The output depends on the client, so don't check it.
         self._check_output(target, check=False)
 
+    @pytest.mark.skipif(hsinte.is_inside_ci(),
+            reason="Disabled because of AmpTask1321")
     def test_lint2(self) -> None:
         target = "lint(ctx, branch=True)"
         # The output depends on the client, so don't check it.
@@ -277,7 +297,7 @@ class TestLibTasks1(hut.TestCase):
         _LOG.debug("build_tag=%s", build_tag)
 
     def test_get_gh_issue_title1(self) -> None:
-        self._gh_login()
+        _gh_login()
         issue_id = 1
         repo = "amp"
         act = ltasks._get_gh_issue_title(issue_id, repo)
@@ -285,7 +305,7 @@ class TestLibTasks1(hut.TestCase):
         self.assert_equal(act, exp)
 
     def test_get_gh_issue_title2(self) -> None:
-        self._gh_login()
+        _gh_login()
         issue_id = 1
         repo = "lem"
         act = ltasks._get_gh_issue_title(issue_id, repo)
@@ -293,27 +313,12 @@ class TestLibTasks1(hut.TestCase):
         self.assert_equal(act, exp)
 
     def test_get_gh_issue_title3(self) -> None:
-        self._gh_login()
+        _gh_login()
         issue_id = 1
         repo = "dev_tools"
         act = ltasks._get_gh_issue_title(issue_id, repo)
         exp = "DevToolsTask1_Migration_from_amp"
         self.assert_equal(act, exp)
-
-    @staticmethod
-    def _gh_login() -> None:
-        """
-        Log in inside GitHub.
-        """
-        env_var = "GH_ACTION_ACCESS_TOKEN"
-        if os.environ.get(env_var, None):
-            # If the env var exists and it's not None.
-            _LOG.warning("Using env var '%s' to log in GitHub", env_var)
-            cmd = "echo $GH_ACTION_ACCESS_TOKEN | gh auth login --with-token"
-            hsinte.system(cmd)
-        # Check that we are logged in.
-        cmd = "gh auth status"
-        hsinte.system(cmd)
 
 
 # #############################################################################
@@ -803,6 +808,8 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
         files = ""
         self._helper(modified, branch, files)
 
+    @pytest.mark.skipif(hsinte.is_inside_ci(),
+            reason="Disabled because of AmpTask1321")
     def test_tar_branch1(self) -> None:
         """
         Exercise the code for:
