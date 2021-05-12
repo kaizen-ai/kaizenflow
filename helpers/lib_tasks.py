@@ -29,8 +29,6 @@ import helpers.table as htable
 import helpers.unit_test as hut
 import helpers.versioning as hversi
 
-# TODO(gp): -> helpers.lib_tasks so we can share across repos (e.g., dev_tools)
-# TODO(gp): Do we need to move / rename test_tasks.py?
 
 _LOG = logging.getLogger(__name__)
 
@@ -159,10 +157,7 @@ def _get_files_to_process(modified: bool, branch: bool, files: str) -> List[str]
     _LOG.debug("files='%s'", str(files))
     # Ensure that there are files to process.
     if not files_as_list:
-        dbg.dfatal(
-            "You need to specify one option among --modified, --branch, or --files"
-        )
-    dbg.dassert_lte(1, len(files_as_list))
+        _LOG.warning("No files were selected")
     return files_as_list
 
 # Copied from helpers.datetime_ to avoid dependency from pandas.
@@ -382,7 +377,7 @@ def git_create_patch(  # type: ignore
     :param branch: select the files modified in the current branch
     :param files: specify a space-separated list of files
     """
-    _report_task()
+    _report_task(hprint.to_str("mode modified branch files"))
     dbg.dassert_in(mode, ("tar", "diff"))
     # For now we just create a patch for the current submodule.
     super_module = False
@@ -402,6 +397,9 @@ def git_create_patch(  # type: ignore
     # Get the files.
     files_as_list = _get_files_to_process(modified, branch, files)
     _LOG.info("Files to save:\n%s", "\n".join(files_as_list))
+    if not files_as_list:
+        _LOG.warning("Nothing to patch: exiting")
+        return
     files_as_str = " ".join(files_as_list)
     #
     cmd = ""
@@ -1703,6 +1701,9 @@ def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignor
     # Get the files.
     files_as_list = _get_files_to_process(modified, branch, files)
     _LOG.info("Files to lint:\n%s", "\n".join(files_as_list))
+    if not files_as_list:
+        _LOG.warning("Nothing to lint: exiting")
+        return
     files_as_str = " ".join(files_as_list)
     #
     cmd = (
