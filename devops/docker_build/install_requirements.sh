@@ -48,6 +48,9 @@ else
 
         python3 -m ${ENV_NAME} /${ENV_NAME}
         source /${ENV_NAME}/bin/activate
+
+        pip3 install wheel
+
         poetry install
 
         # Export deps from poetry and install with pip.
@@ -75,7 +78,7 @@ echo "set -o vi" >>~/.bashrc
 # Clean up.
 if [[ $CLEAN_UP_INSTALLATION ]]; then
     echo "Cleaning up installation..."
-    DIRS="/usr/lib/gcc /app/tmp.pypoetry /tmp"
+    DIRS="/usr/lib/gcc /app/tmp.pypoetry /tmp/*"
     du -hs $DIRS | sort -h
     rm -rf $DIRS
 fi;

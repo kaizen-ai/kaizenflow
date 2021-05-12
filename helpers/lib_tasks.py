@@ -378,6 +378,7 @@ def git_create_patch(  # type: ignore
     :param files: specify a space-separated list of files
     """
     _report_task(hprint.to_str("mode modified branch files"))
+    _ = ctx
     dbg.dassert_in(mode, ("tar", "diff"))
     # For now we just create a patch for the current submodule.
     super_module = False
@@ -421,7 +422,9 @@ def git_create_patch(  # type: ignore
     _LOG.info("Creating the patch into %s", dst_file)
     dbg.dassert_ne(cmd, "")
     _LOG.debug("cmd=%s", cmd)
-    _run(ctx, cmd)
+    rc = hsinte.system(cmd, abort_on_error=False)
+    if not rc:
+        _LOG.warning("Command failed with rc=%d", rc)
     # Print message to apply the patch.
     remote_file = os.path.basename(dst_file)
     abs_path_dst_file = os.path.abspath(dst_file)
