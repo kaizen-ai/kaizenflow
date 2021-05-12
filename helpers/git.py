@@ -536,7 +536,7 @@ def get_repo_dirs() -> List[str]:
 # #############################################################################
 
 
-def get_head_hash(dir_name: str = ".") -> str:
+def get_head_hash(dir_name: str = ".", short_hash=False) -> str:
     """
     Report the hash that a Git repo is synced at.
 
@@ -546,7 +546,8 @@ def get_head_hash(dir_name: str = ".") -> str:
     ```
     """
     dbg.dassert_exists(dir_name)
-    cmd = f"cd {dir_name} && git rev-parse HEAD"
+    opts = "--short " if short_hash else " "
+    cmd = f"cd {dir_name} && git rev-parse {opts}HEAD"
     data: Tuple[int, str] = hsinte.system_to_one_line(cmd)
     _, output = data
     return output

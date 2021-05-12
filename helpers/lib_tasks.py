@@ -94,9 +94,6 @@ else:
 
 
 def _report_task(txt: str = "") -> None:
-    if hut.in_unit_test_mode():
-        # In unit test don't print anything.
-        return
     func_name = hintros.get_function_name(count=1)
     msg = "## %s: %s" % (func_name, txt)
     # TODO(gp): Do not print during unit tests.
@@ -123,6 +120,63 @@ def _run(ctx: Any, cmd: str, *args: Any, **kwargs: Any) -> None:
     _LOG.debug("cmd=%s", cmd)
     ctx.run(cmd, *args, **kwargs)
 
+
+def _get_files_to_process(modified: bool, branch: bool, files: str) -> List[str]:
+    """
+    Get a list of files to process that have been changed in the branch,
+    in the client, or passed by the user.
+    """
+    dbg.dassert_lte(
+        int(modified) + int(branch) + int(files != ""),
+        1,
+        msg="You can specify only one option among --modified, --branch, or --files",
+        )
+    if modified:
+        files = git.get_modified_files()
+        files = " ".join(files)
+    elif branch:
+        cmd = "git diff --name-only master..."
+        files = hsinte.system_to_string(cmd)[1]
+        files = " ".join(files.split("\n"))
+    #
+    dbg.dassert_isinstance(files, str)
+    _LOG.debug("files='%s'", str(files))
+    # Convert into a list.
+    files_as_list = files.split(" ")
+    files_as_list = [f for f in files_as_list if f != ""]
+    # Remove dirs.
+    files_tmp: List[str] = []
+    dirs_tmp: List[str] = []
+    for file in files_as_list:
+        _LOG.debug("file='%s' is a dir: skipping", file)
+        if os.path.isdir(file):
+            dirs_tmp.append(file)
+        else:
+            files_tmp.append(file)
+    if dirs_tmp:
+        _LOG.warning("Removing dirs: %s", ", ".join(dirs_tmp))
+    files_as_list = files_tmp
+    _LOG.debug("files='%s'", str(files))
+    # Ensure that there are files to process.
+    if not files_as_list:
+        dbg.dfatal(
+            "You need to specify one option among --modified, --branch, or --files"
+        )
+    dbg.dassert_lte(1, len(files_as_list))
+    return files_as_list
+
+# Copied from helpers.datetime_ to avoid dependency from pandas.
+
+
+def _get_timestamp(utc: bool = False) -> str:
+    if utc:
+        timestamp = datetime.datetime.utcnow()
+    else:
+        timestamp = datetime.datetime.now()
+    return timestamp.strftime("%Y%m%d_%H%M%S")
+
+
+# End copy.
 
 # #############################################################################
 # Set-up.
@@ -276,21 +330,33 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     _run(ctx, cmd)
 
 
+# TODO(gp): Allow to create it from a issue number.
 @task
-def git_create_branch(ctx, branch_name=""):  # type: ignore
+def git_create_branch(  # type: ignore
+        ctx, branch_name="", create_from_master=False):
     """
     Create and push upstream a branch called `branch_name`.
 
-    E.g., > git checkout -b
-    LemTask169_Get_GH_actions_working_on_lemonade > git push --set-
-    upstream origin LemTask169_Get_GH_actions_working_on_lemonade
+    E.g.,
+    ```
+    > git checkout -b LemTask169_Get_GH_actions
+    > git push --set- upstream origin LemTask169_Get_GH_actions
+    ```
+
+    :param branch_name: name of the branch to create (e.g.,
+        `LemTask169_Get_GH_actions`)
+    :param create_from_master: only branch from master
     """
     _report_task()
-    dbg.dassert_eq(
-        git.get_branch_name(),
-        "master",
-        "Typically you should branch from `master`",
-    )
+    dbg.dassert_ne(branch_name, "")
+    # Make sure we are branching from `master`, unless that's what the
+    # user wants.
+    curr_branch = git.get_branch_name()
+    if curr_branch != "master" and create_from_master:
+        dbg.dassert_eq(
+            "master",
+            "Typically you should branch from `master`",
+        )
     # Fetch master.
     cmd = "git pull --autostash"
     _run(ctx, cmd)
@@ -302,12 +368,87 @@ def git_create_branch(ctx, branch_name=""):  # type: ignore
     _run(ctx, cmd)
 
 
+@task
+def git_create_patch(  # type: ignore
+        ctx, mode="tar",
+        modified=False, branch=False, files=""):
+    """
+    Create a patch file for the entire repo client from the base revision.
+    This script accepts a list of files to package, if specified.
+
+    :param mode: "tar" creates a tar ball with all the files
+        "diff" creates a patch with the diff of the files
+    :param modified: select the files modified in the client
+    :param branch: select the files modified in the current branch
+    :param files: specify a space-separated list of files
+    """
+    _report_task()
+    dbg.dassert_in(mode, ("tar", "diff"))
+    # For now we just create a patch for the current submodule.
+    super_module = False
+    git_client_root = git.get_client_root(super_module)
+    hash_ = git.get_head_hash(git_client_root, short_hash=True)
+    timestamp = _get_timestamp(utc=False)
+    #
+    tag = os.path.basename(git_client_root)
+    dst_file = f"patch.{tag}.{hash_}.{timestamp}"
+    if mode == "tar":
+        dst_file += ".tgz"
+    elif mode == "diff":
+        dst_file += ".txt"
+    else:
+        dbg.dfatal("Invalid code path")
+    _LOG.debug("dst_file=%s", dst_file)
+    # Get the files.
+    files_as_list = _get_files_to_process(modified, branch, files)
+    _LOG.info("Files to save:\n%s", "\n".join(files_as_list))
+    files_as_str = " ".join(files_as_list)
+    #
+    cmd = ""
+    if modified or len(files) > 0:
+        if mode == "tar":
+            cmd = f"tar czvf {dst_file} {files_as_str}"
+            cmd_inv = "tar xvzf"
+        elif mode == "diff":
+            cmd = f"git diff HEAD {files_as_str} >{dst_file}"
+            cmd_inv = "git apply"
+    elif branch:
+        if mode == "tar":
+            cmd = f"tar czvf {dst_file} {files_as_str}"
+            cmd_inv = "tar xvzf"
+        elif mode == "diff":
+            cmd = f"git diff master... {files_as_str} >{dst_file}"
+            cmd_inv = "git apply "
+    # Create patch.
+    _LOG.info("Creating the patch into %s", dst_file)
+    dbg.dassert_ne(cmd, "")
+    _LOG.debug("cmd=%s", cmd)
+    _run(ctx, cmd)
+    # Print message to apply the patch.
+    remote_file = os.path.basename(dst_file)
+    msg = f"""
+# To apply the patch and execute:
+> git checkout {hash_}
+> {cmd_inv} {dst_file}
+
+# To apply the patch to a remote client:
+> export FILE="{dst_file}"
+> export SERVER="server"
+> export CLIENT_PATH="~/src"
+> scp {dst_file} $SERVER:
+> ssh $SERVER 'cd $CLIENT_PATH && {cmd_inv} ~/{remote_file}'"
+    """
+    print(msg)
+
+
 # TODO(gp): Add dev_scripts/git/git_create_patch*.sh
 # dev_scripts/git/git_backup.sh
 # dev_scripts/git/gcl
 # dev_scripts/git/gd_master.sh
 # dev_scripts/git/git_branch.sh
 # dev_scripts/git/git_branch_point.sh
+
+# amp/dev_scripts/create_class_diagram.sh
 
 # #############################################################################
 # Docker.
@@ -534,6 +675,7 @@ def _get_amp_docker_compose_path() -> Optional[str]:
     return docker_compose_path
 
 
+# TODO(gp): Isn't this in helper.git?
 def _get_git_hash() -> str:
     cmd = "git rev-parse HEAD"
     git_hash: str = hsinte.system_to_one_line(cmd)[1]
@@ -1336,11 +1478,14 @@ def _run_test_cmd(
     _docker_cmd(ctx, docker_cmd_)
     # Print message about coverage.
     if coverage:
-        msg = """- The coverage results in textual form are above.
+        msg = """
+- The coverage results in textual form are above
 
-- To browse the files annotate with coverage, start a server (not from the container):
+- To browse the files annotate with coverage, start a server (not from the
+  container):
   > (cd ./htmlcov; python -m http.server 33333)
-  then go with your browser to `localhost:33333`
+- Then go with your browser to `localhost:33333` to see which code is
+  covered
 """
         print(msg)
 
@@ -1544,7 +1689,6 @@ def pytest_clean(ctx):  # type: ignore
 # Linter.
 # #############################################################################
 
-
 @task
 def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignore
     """
@@ -1556,28 +1700,8 @@ def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignor
     :param phases: specify the lint phases to execute
     """
     _report_task()
-    dbg.dassert_lte(
-        int(modified) + int(branch) + int(files != ""),
-        1,
-        msg="You can specify only one option among --modified, --branch, or --files",
-    )
-    if modified:
-        files = git.get_modified_files()
-        files = " ".join(files)
-    elif branch:
-        cmd = "git diff --name-only master..."
-        files = hsinte.system_to_string(cmd)[1]
-        files = " ".join(files.split("\n"))
-    #
-    dbg.dassert_isinstance(files, str)
-    _LOG.debug("files='%s'", str(files))
-    files_as_list = files.split(" ")
-    files_as_list = [f for f in files_as_list if f != ""]
-    if len(files_as_list) == 0:
-        dbg.dfatal(
-            "You need specify one option among --modified, --branch, or --files"
-        )
-    dbg.dassert_lte(1, len(files_as_list))
+    # Get the files.
+    files_as_list = _get_files_to_process(modified, branch, files)
     _LOG.info("Files to lint:\n%s", "\n".join(files_as_list))
     files_as_str = " ".join(files_as_list)
     #
@@ -1757,7 +1881,7 @@ def _get_gh_issue_title(issue_id: int, repo: str) -> str:
 
 
 @task
-def gh_issue_title(ctx, issue_id, repo="current"):  # type: ignore
+def gh_issue_title(ctx, issue_id=0, repo="current"):  # type: ignore
     """
     Print the title that corresponds to the given issue and repo.
 
@@ -1766,9 +1890,11 @@ def gh_issue_title(ctx, issue_id, repo="current"):  # type: ignore
     _report_task()
     _ = ctx
     issue_id = int(issue_id)
+    dbg.dassert_lte(1, issue_id)
     print(_get_gh_issue_title(issue_id, repo))
 
 
+# TODO(gp): Allow to pass also a body.
 @task
 def gh_create_pr(ctx):  # type: ignore
     """
@@ -1791,3 +1917,6 @@ def gh_create_pr(ctx):  # type: ignore
     # Warning: 3 uncommitted changes
     # https://github.com/alphamatic/amp/pull/1298
     # gh pr view https://github.com/alphamatic/amp/pull/1298 --repo alphamatic/amp --web
+
+
+# TODO(gp): Add gh_open_pr to jump to the PR from this branch.

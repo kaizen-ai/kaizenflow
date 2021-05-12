@@ -13,7 +13,6 @@ class TestKibotS3DataLoader(hut.TestCase):
 
     @pytest.mark.slow
     def test1(self) -> None:
-        # Use the private method to avoid caching.
         df = self._s3_data_loader._read_data(
             symbol="XG",
             asset_class=icdtyp.AssetClass.Futures,

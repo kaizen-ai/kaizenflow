@@ -11,6 +11,7 @@ import re
 from typing import Callable, Iterable, Optional, Tuple, Union
 
 import dateutil.parser as dparse
+# TODO(gp): Try to remove / limit this dependency.
 import pandas as pd
 
 import helpers.dbg as dbg
