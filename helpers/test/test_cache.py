@@ -30,6 +30,30 @@ def _get_add_function() -> Callable:
     return fn
 
 
+class _TestClassHelper(hut.TestCase):
+    """
+    Test class helper that resets the cache at every test method invocation.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.cache_tag = "%s::%s" % (
+            self.__class__.__name__,
+            self._testMethodName,
+        )
+        hcache.destroy_global_cache("disk", tag=self.cache_tag)
+        hcache.destroy_global_cache("mem", tag=self.cache_tag)
+
+    def tearDown(self) -> None:
+        hcache.destroy_global_cache("disk", tag=self.cache_tag)
+        hcache.destroy_global_cache("mem", tag=self.cache_tag)
+        #
+        super().tearDown()
+
+
+# #############################################################################
+
+
 class TestCacheTag(hut.TestCase):
     def test1(self) -> None:
         """
@@ -42,19 +66,7 @@ class TestCacheTag(hut.TestCase):
         self.assertIn(cache_tag, disk_cache_name)
 
 
-class TestCacheFeatures(hut.TestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self.cache_tag = "%s::%s" % (
-            self.__class__.__name__,
-            self._testMethodName,
-        )
-
-    def tearDown(self) -> None:
-        hcache.destroy_global_cache("disk", tag=self.cache_tag)
-        hcache.destroy_global_cache("mem", tag=self.cache_tag)
-        #
-        super().tearDown()
+class TestCacheFeatures(_TestClassHelper):
 
     def test_without_caching1(self) -> None:
         """
@@ -398,13 +410,9 @@ class TestCacheFeatures(hut.TestCase):
         return f, cf
 
 
-class TestSpecificCache(hut.TestCase):
+class TestSpecificCache(_TestClassHelper):
     def setUp(self) -> None:
         super().setUp()
-        self.cache_tag = "%s::%s" % (
-            self.__class__.__name__,
-            self._testMethodName,
-        )
         # Create temp directories to store the cache.
         self.disk_cache_temp_dir = tempfile.mkdtemp()
         self.mem_cache_temp_dir = tempfile.mkdtemp()
@@ -413,12 +421,6 @@ class TestSpecificCache(hut.TestCase):
         hcache.clear_global_cache("disk", tag=self.cache_tag)
         # Create intrinsic and cached functions.
         self.f, self.cf = self._get_f_cf_functions()
-
-    def tearDown(self) -> None:
-        hcache.destroy_global_cache("disk", tag=self.cache_tag)
-        hcache.destroy_global_cache("mem", tag=self.cache_tag)
-        #
-        super().tearDown()
 
     def test_with_specific_cache(self) -> None:
         """
@@ -511,19 +513,7 @@ class TestSpecificCache(hut.TestCase):
         return f, cf
 
 
-class TestCachePerformance(hut.TestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self.cache_tag = "%s::%s" % (
-            self.__class__.__name__,
-            self._testMethodName,
-        )
-
-    def tearDown(self) -> None:
-        hcache.destroy_global_cache("disk", tag=self.cache_tag)
-        hcache.destroy_global_cache("mem", tag=self.cache_tag)
-        #
-        super().tearDown()
+class TestCachePerformance(_TestClassHelper):
 
     def test_performance_dataframe(self) -> None:
         """
@@ -610,19 +600,7 @@ class TestCachePerformance(hut.TestCase):
         return perf_diff
 
 
-class TestCacheDecorator(hut.TestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self.cache_tag = "%s::%s" % (
-            self.__class__.__name__,
-            self._testMethodName,
-        )
-
-    def tearDown(self) -> None:
-        hcache.destroy_global_cache("disk", tag=self.cache_tag)
-        hcache.destroy_global_cache("mem", tag=self.cache_tag)
-        #
-        super().tearDown()
+class TestCacheDecorator(_TestClassHelper):
 
     def test_decorated_function(self) -> None:
         """
@@ -693,3 +671,74 @@ class TestCacheDecorator(hut.TestCase):
         self.assertEqual(exp_cf_state, cf.get_last_cache_accessed())
         _LOG.debug("executed=%s", f.executed)
         self.assertEqual(exp_f_state, f.executed)
+
+
+# #############################################################################
+
+
+class TestAmpTask1407(_TestClassHelper):
+
+    def test1(self) -> None:
+        """
+        A class method can't be cached.
+        """
+
+        class _AmpTask1407Class:
+            def __init__(self, string: str) -> None:
+                self._string = string
+
+            @hcache.cache(tag=self.cache_tag)
+            def print(self, n: int) -> str:
+                string = ""
+                for _ in range(n):
+                    string += "hello" + ("o" * len(self._string)) + " "
+                return string
+
+        klass = _AmpTask1407Class("test")
+        with self.assertRaises(ValueError):
+            klass.print(5)
+
+
+    def test2(self) -> None:
+        """
+        A static method can be cached.
+        """
+
+        class _AmpTask1407Class:
+            def __init__(self, string: str) -> None:
+                self._string = string
+
+            @hcache.cache(tag=self.cache_tag)
+            def print(self, n: int) -> str:
+                string = ""
+                for _ in range(n):
+                    string += "hello" + ("o" * len(self._string)) + " "
+                return string
+
+            @staticmethod
+            @hcache.cache(tag=self.cache_tag)
+            def static_print(n: int) -> str:
+                print("--> hello: ", n)
+                string = ""
+                for _ in range(n):
+                    string += "hello" + ("o" * len("world")) + " "
+                return string
+
+        klass = _AmpTask1407Class("test")
+        klass.static_print(5)
+        self.assertEqual(klass.static_print.get_last_cache_accessed(),
+                         "no_cache")
+        #
+        klass.static_print(5)
+        self.assertEqual(klass.static_print.get_last_cache_accessed(),
+                         "mem")
+        klass.static_print(5)
+        self.assertEqual(klass.static_print.get_last_cache_accessed(),
+                         "mem")
+        #
+        klass.static_print(6)
+        self.assertEqual(klass.static_print.get_last_cache_accessed(),
+                         "no_cache")
+        klass.static_print(6)
+        self.assertEqual(klass.static_print.get_last_cache_accessed(),
+                         "mem")
