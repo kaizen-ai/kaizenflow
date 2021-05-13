@@ -76,7 +76,7 @@ class Node(NodeInterface):
     A node class that stores and retrieves its output values on a "per-method"
     basis.
 
-    TODO: Explain use case.
+    TODO(*): Explain use case.
     """
 
     def __init__(

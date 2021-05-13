@@ -1550,6 +1550,13 @@ def _run_test_cmd(
   covered
 """
         print(msg)
+        if hsinte.is_running_on_macos():
+            # Create and run a script to show the coverage in the browser.
+            script_txt = """(sleep 2; open http://localhost:33333) &
+(cd ./htmlcov; python -m http.server 33333)"""
+            script_name = "./tmp.coverage.sh"
+            hsinte.create_executable_script(script_name, script_txt)
+            hsinte.system(script_name)
 
 
 def _run_tests(

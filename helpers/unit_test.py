@@ -446,6 +446,7 @@ def diff_files(
     # Save a script to diff.
     diff_script = os.path.join(dst_dir, "tmp_diff.sh")
     vimdiff_cmd = "vimdiff %s %s" % (file_name1, file_name2)
+    # TODO(gp): Use create_executable_script().
     hio.to_file(diff_script, vimdiff_cmd)
     cmd = "chmod +x " + diff_script
     hsinte.system(cmd)

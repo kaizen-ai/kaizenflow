@@ -468,6 +468,7 @@ def create_executable_script(file_name: str, content: str) -> None:
 
     dbg.dassert_isinstance(content, str)
     hio.to_file(file_name, content)
+    # Make it executable.
     cmd = "chmod +x " + file_name
     system(cmd)
 
@@ -502,3 +503,8 @@ def is_running_in_ipynb() -> bool:
     except NameError:
         res = False
     return res
+
+
+# TODO(gp): Use this everywhere in the code base.
+def is_running_on_macos() -> bool:
+    return get_os_name() == "Darwin"
