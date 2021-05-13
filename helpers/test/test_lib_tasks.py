@@ -160,7 +160,7 @@ class TestDryRunTasks2(_TestClassHelper):
 
     def test_docker_images_ls_repo(self) -> None:
         target = "docker_images_ls_repo(ctx)"
-        self._check_output(target)
+        self._check_output(target, check=False)
 
     def test_docker_kill_all(self) -> None:
         target = "docker_kill_all(ctx)"
@@ -176,7 +176,7 @@ class TestDryRunTasks2(_TestClassHelper):
 
     def test_docker_pull(self) -> None:
         target = "docker_pull(ctx)"
-        self._check_output(target)
+        self._check_output(target, check=False)
 
     def test_docker_stats(self) -> None:
         target = "docker_stats(ctx)"
