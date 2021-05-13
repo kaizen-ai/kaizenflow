@@ -126,16 +126,33 @@ def _run(ctx: Any, cmd: str, *args: Any, **kwargs: Any) -> None:
     ctx.run(cmd, *args, **kwargs)
 
 
-def _get_files_to_process(modified: bool, branch: bool, files: str) -> List[str]:
+def _get_files_to_process(modified: bool, branch: bool, files: str,
+                          mutually_exclusive: bool) -> List[str]:
     """
     Get a list of files to process that have been changed in the branch,
     in the client, or passed by the user.
+
+    :param modified: return files modified in the client (i.e., changed with
+        respect to HEAD)
+    :param branch: return files modified with respect to the branch point
+    :param files: return files passed to this function
+    :param mutually_exclusive: ensure that all options are mutually exclusive
     """
-    dbg.dassert_lte(
-        int(modified) + int(branch) + int(files != ""),
-        1,
-        msg="You can specify only one option among --modified, --branch, or --files",
+    if mutually_exclusive:
+        # Only one option can be specified among --modified, --branch, and --files.
+        dbg.dassert_lte(
+            int(modified) + int(branch) + int(files != ""),
+            1,
+            msg="You can specify only one option among --modified, --branch, and "
+                "--files"
         )
+    else:
+        # Only one option can be specified among --modified and --branch.
+        dbg.dassert_lte(
+            int(modified) + int(branch),
+            1,
+            msg="You can specify only one option among --modified, --branch",
+            )
     if modified:
         files = git.get_modified_files()
         files = " ".join(files)
@@ -153,8 +170,8 @@ def _get_files_to_process(modified: bool, branch: bool, files: str) -> List[str]
     files_tmp: List[str] = []
     dirs_tmp: List[str] = []
     for file in files_as_list:
-        _LOG.debug("file='%s' is a dir: skipping", file)
         if os.path.isdir(file):
+            _LOG.debug("file='%s' is a dir: skipping", file)
             dirs_tmp.append(file)
         else:
             files_tmp.append(file)
@@ -369,9 +386,10 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
 # TODO(gp): Allow to create it from a issue number.
 @task
 def git_create_branch(  # type: ignore
-        ctx, branch_name="", create_from_master=False):
+        ctx, branch_name="", issue_id=0, repo="current", only_branch_from_master=True):
     """
-    Create and push upstream a branch called `branch_name`.
+    Create and push upstream branch `branch_name` or the branch corresponding to
+    `issue_id` in repo `repo`.
 
     E.g.,
     ```
@@ -381,18 +399,22 @@ def git_create_branch(  # type: ignore
 
     :param branch_name: name of the branch to create (e.g.,
         `LemTask169_Get_GH_actions`)
-    :param create_from_master: only branch from master
+    :param only_branch_from_master: only allow to branch from master
     """
     _report_task()
+    if issue_id > 0:
+        dbg.dassert_eq(branch_name, "", "You can't specify both issue and branch_name")
+        branch_name = _get_gh_issue_title(issue_id, repo)
+        _LOG.info("Issue %d in %s repo corresponds to '%s'", issue_id, repo, branch_name)
     dbg.dassert_ne(branch_name, "")
     # Make sure we are branching from `master`, unless that's what the
     # user wants.
     curr_branch = git.get_branch_name()
-    if curr_branch != "master" and create_from_master:
-        dbg.dassert_eq(
-            "master",
-            "Typically you should branch from `master`",
-        )
+    if curr_branch != "master":
+        if only_branch_from_master:
+            dbg.dfatal(
+                "You should branch from master and not from '%s'" % curr_branch
+            )
     # Fetch master.
     cmd = "git pull --autostash"
     _run(ctx, cmd)
@@ -432,34 +454,32 @@ def git_create_patch(  # type: ignore
     if mode == "tar":
         dst_file += ".tgz"
     elif mode == "diff":
-        dst_file += ".txt"
+        dst_file += ".patch"
     else:
         dbg.dfatal("Invalid code path")
     _LOG.debug("dst_file=%s", dst_file)
-    # Get the files.
-    files_as_list = _get_files_to_process(modified, branch, files)
-    _LOG.info("Files to save:\n%s", "\n".join(files_as_list))
-    if not files_as_list:
-        _LOG.warning("Nothing to patch: exiting")
-        return
-    files_as_str = " ".join(files_as_list)
-    #
+    # Prepare the patch command.
     cmd = ""
-    if modified or len(files) > 0:
-        if mode == "tar":
-            cmd = f"tar czvf {dst_file} {files_as_str}"
-            cmd_inv = "tar xvzf"
-        elif mode == "diff":
-            cmd = f"git diff HEAD {files_as_str} >{dst_file}"
-            cmd_inv = "git apply"
-    elif branch:
-        if mode == "tar":
-            cmd = f"tar czvf {dst_file} {files_as_str}"
-            cmd_inv = "tar xvzf"
-        elif mode == "diff":
-            cmd = f"git diff master... {files_as_str} >{dst_file}"
-            cmd_inv = "git apply "
-    # Create patch.
+    if mode == "tar":
+        # Get the files.
+        files_as_list = _get_files_to_process(modified, branch, files,
+                                              mutually_exclusive=False)
+        _LOG.info("Files to save:\n%s", "\n".join(files_as_list))
+        if not files_as_list:
+            _LOG.warning("Nothing to patch: exiting")
+            return
+        files_as_str = " ".join(files_as_list)
+        cmd = f"tar czvf {dst_file} {files_as_str}"
+        cmd_inv = "tar xvzf"
+    elif mode == "diff":
+        if modified:
+            cmd = f"git diff HEAD >{dst_file}"
+        elif branch:
+            cmd = f"git diff master... >{dst_file}"
+        else:
+            dbg.dfatal("You need to specify --modified or --branch")
+        cmd_inv = "git apply"
+    # Execute patch command.
     _LOG.info("Creating the patch into %s", dst_file)
     dbg.dassert_ne(cmd, "")
     _LOG.debug("cmd=%s", cmd)
@@ -1758,24 +1778,6 @@ def pytest_clean(ctx):  # type: ignore
 # Linter.
 # #############################################################################
 
-# SUBMODULE_SUPERPROJECT=$(git rev-parse --show-superproject-working-tree)
-#
-# if [ $SUBMODULE_SUPERPROJECT ]; then
-# # E.g., `amp`.
-# SUBMODULE_NAME=$(git config \
-#     --file $SUBMODULE_SUPERPROJECT/.gitmodules \
-#     --get-regexp path \
-#     | grep $(basename "$(pwd)")$ \
-#     | awk '{print $2}')
-# echo "Running pre-commit for the Git '$SUBMODULE_NAME' submodule."
-# # The working dir is the submodule.
-# WORK_DIR="/src/$SUBMODULE_NAME"
-# REPO_ROOT=$SUBMODULE_SUPERPROJECT
-# else
-# WORK_DIR="/src"
-# REPO_ROOT="$(pwd)"
-# fi
-
 
 def _get_lint_docker_cmd(precommit_cmd: str) -> str:
     superproject_path, submodule_path = git.get_path_from_supermodule()
@@ -1787,6 +1789,7 @@ def _get_lint_docker_cmd(precommit_cmd: str) -> str:
         work_dir = "/src"
         repo_root = os.getcwd()
     _LOG.debug("work_dir=%s repo_root=%s", work_dir, repo_root)
+    # TODO(gp): Do not hardwire the repo.
     #image = get_default_param("DEV_TOOLS_IMAGE_PROD")
     image="665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools:prod"
     #image="665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools:local"
@@ -1798,12 +1801,11 @@ def _get_lint_docker_cmd(precommit_cmd: str) -> str:
         {image} \
         "pre-commit {precommit_cmd}"
     """
-    # -v "{repo_root}/.pre-commit-config.yaml":/app/.pre-commit-config.yaml \
     return docker_cmd_
 
 
 @task
-def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignore
+def lint(ctx, modified=False, branch=False, files="", phases="", only_format=False):  # type: ignore
     """
     Lint files.
 
@@ -1811,19 +1813,25 @@ def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignor
     :param branch: select the files modified in the current branch
     :param files: specify a space-separated list of files
     :param phases: specify the lint phases to execute
+    :param only_format: run only the lint phases that format the code
     """
     _report_task()
-    # Get the files.
-    files_as_list = _get_files_to_process(modified, branch, files)
+    # Get the files to lint.
+    files_as_list = _get_files_to_process(modified, branch, files,
+                                          mutually_exclusive=True)
     _LOG.info("Files to lint:\n%s", "\n".join(files_as_list))
     if not files_as_list:
         _LOG.warning("Nothing to lint: exiting")
         return
     files_as_str = " ".join(files_as_list)
-    #
+    # Prepare the command line.
+    if only_format:
+        _LOG.warning("Running only formatting phases")
+        phases = "isort black"
     if phases:
         phases = phases.rstrip() + " "
     precommit_cmd = f"run -c /app/.pre-commit-config.yaml {phases}--files {files_as_str}"
+    # Execute command line.
     cmd = _get_lint_docker_cmd(precommit_cmd)
     cmd = f"{cmd} 2>&1 | tee linter_warnings.txt"
     _run(ctx, cmd)
@@ -1955,6 +1963,21 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
 # #############################################################################
 
 
+def _get_repo_full_name_from_cmd(repo: str) -> str:
+    """
+    Convert the `repo` from command line (e.g., "current", "amp", "lem") to the
+    repo full name.
+    """
+    if repo == "current":
+        repo_full_name = git.get_repo_full_name_from_dirname(".")
+    else:
+        repo_full_name = git.get_repo_name(repo, in_mode="short_name")
+    _LOG.debug(
+        "repo=%s -> repo_full_name=%s", repo, repo_full_name
+    )
+    return repo_full_name
+
+
 def _get_gh_issue_title(issue_id: int, repo: str) -> str:
     """
     Get the title of a GitHub issue.
@@ -1962,16 +1985,7 @@ def _get_gh_issue_title(issue_id: int, repo: str) -> str:
     :param repo: `current` refer to the repo where we are, otherwise a repo short
         name (e.g., "amp")
     """
-    # Handle the `repo`.
-    if repo == "current":
-        repo_full_name = git.get_repo_full_name_from_dirname(".")
-        repo_short_name = git.get_repo_name(repo_full_name, "full_name")
-    else:
-        repo_short_name = repo
-        repo_full_name = git.get_repo_name(repo_short_name, "short_name")
-    _LOG.debug(
-        "repo_short_name=%s repo_full_name=%s", repo_short_name, repo_full_name
-    )
+    repo_full_name = _get_repo_full_name_from_cmd(repo)
     # > (export NO_COLOR=1; gh issue view 1251 --json title )
     # {"title":"Update GH actions for amp"}
     dbg.dassert_lte(1, issue_id)
@@ -1984,13 +1998,14 @@ def _get_gh_issue_title(issue_id: int, repo: str) -> str:
     title = dict_["title"]
     _LOG.debug("title=%s", title)
     # Remove some annoying chars.
-    for char in ": + ( ) /".split():
+    for char in ": + ( ) / `".split():
         title = title.replace(char, "")
     # Replace multiple spaces with one.
     title = re.sub(r"\s+", " ", title)
     #
     title = title.replace(" ", "_")
     # Add the `AmpTaskXYZ_...`
+    repo_short_name = git.get_repo_name(repo_full_name, in_mode="full_name")
     task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
     _LOG.debug("task_prefix=%s", task_prefix)
     title = "%s%d_%s" % (task_prefix, issue_id, title)
@@ -2011,23 +2026,30 @@ def gh_issue_title(ctx, issue_id=0, repo="current"):  # type: ignore
     print(_get_gh_issue_title(issue_id, repo))
 
 
-# TODO(gp): Allow to pass also a body.
 @task
-def gh_create_pr(ctx):  # type: ignore
+def gh_create_pr(  # type: ignore
+        ctx, body="", draft=True, repo="current", title=""):
     """
     Create a draft PR for the current branch in the corresponding repo.
+
+    :param body: the body of the PR
+    :param draft: draft or ready-to-review PR
     """
     _report_task()
-    # TODO(gp): Check whether the PR already exists.
     branch_name = git.get_branch_name()
-    repo_full_name = git.get_repo_full_name_from_dirname(".")
-    _LOG.info("Creating PR for '%s' in %s", branch_name, repo_full_name)
+    if not title:
+        # Use the branch name as title.
+        title = branch_name
+    repo_full_name = _get_repo_full_name_from_cmd(repo)
+    _LOG.info("Creating PR with title '%s' for '%s' in %s", title, branch_name,
+            repo_full_name)
+    # TODO(gp): Check whether the PR already exists.
     cmd = (
-        f"gh pr create"
-        f" --repo {repo_full_name}"
-        " --draft"
-        f' --title "{branch_name}"'
-        ' --body ""'
+        f"gh pr create" +
+        f" --repo {repo_full_name}" +
+        (" --draft" if draft else "") +
+        f' --title "{title}"' +
+        f' --body {body}'
     )
     _run(ctx, cmd)
     # TODO(gp): Implement the rest of the flow.
@@ -2037,3 +2059,5 @@ def gh_create_pr(ctx):  # type: ignore
 
 
 # TODO(gp): Add gh_open_pr to jump to the PR from this branch.
+
+# TODO(gp): Add ./dev_scripts/testing/pytest_count_files.sh
