@@ -42,8 +42,8 @@ class DagBuilder(abc.ABC):
         # Make sure the nid_prefix ends with "/" (unless it is "").
         if self._nid_prefix and not self._nid_prefix.endswith("/"):
             _LOG.warning(
-                "Appended '/' to nid_prefix. To avoid this warning, "
-                "only pass nid prefixes ending in '/'."
+                "Appended '/' to nid_prefix '%s'. To avoid this warning, "
+                "only pass nid prefixes ending in '/'.", self._nid_prefix
             )
             self._nid_prefix += "/"
 
@@ -97,6 +97,7 @@ class DagBuilder(abc.ABC):
         :return: dictionary keyed by column names and with values that are
             lists of str tag names
         """
+        _ = self, config
         return None
 
     def _get_nid(self, stage_name: str) -> str:
@@ -115,7 +116,6 @@ class ArmaReturnsBuilder(DagBuilder):
 
         :return: reference config
         """
-
         config = cfgb.get_config_from_nested_dict(
             {
                 # Load prices.
