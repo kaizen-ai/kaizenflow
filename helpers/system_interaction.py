@@ -487,7 +487,11 @@ def is_inside_ci() -> bool:
     """
     Return whether we are running inside the Continuous Integration flow.
     """
-    return "CI" in os.environ
+    if "CI" not in os.environ:
+        ret = False
+    else:
+        ret = os.environ["CI"] != ""
+    return ret
 
 
 def is_running_in_ipynb() -> bool:

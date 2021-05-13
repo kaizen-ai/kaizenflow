@@ -62,10 +62,9 @@ def check_version(file_name: Optional[str] = None) -> None:
         f", is_inside_docker={is_inside_docker}"
         f", is_inside_ci={is_inside_ci}"
     )
-    if is_inside_container:
-        print(msg)
-    else:
-        _LOG.debug("%s", msg)
+    msg += (", CI_defined=%s" % ("CI" in os.environ) +
+        ", CI='%s'" % os.environ.get("CI", "nan"))
+    print(msg)
     # Check version, if possible.
     if container_version is None:
         # No need to check.
@@ -160,14 +159,12 @@ def _is_inside_docker() -> bool:
 def _is_inside_ci() -> bool:
     """
     Return whether we are running inside the Continuous Integration flow.
-
-    Note that this function returns:
-    - True when we are running in GitHub system but not in our
-      container (e.g., when we are inside an `invoke` workflow)
-    - False once we enter our containers, since we don't propagate the `CI` env
-      var through Docker compose
     """
-    return "CI" in os.environ
+    if "CI" not in os.environ:
+        ret = False
+    else:
+        ret = os.environ["CI"] != ""
+    return ret
 
 
 def _is_inside_container() -> bool:

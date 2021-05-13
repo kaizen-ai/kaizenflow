@@ -9,6 +9,9 @@ import helpers.unit_test as hut
 # (bug #34).
 if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
 
+    #import helpers.versioning as hversi
+    #hversi.check_version()
+
     # pylint: disable=protected-access
     hut._CONFTEST_ALREADY_PARSED = True
 

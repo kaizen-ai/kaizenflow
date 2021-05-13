@@ -90,7 +90,15 @@ else:
 # call git (e.g., if we cache Git hash and then we do a `git pull`).
 
 
+_IS_FIRST_CALL = False
+
+
 def _report_task(txt: str = "") -> None:
+    # On the first invocation report the version.
+    global _IS_FIRST_CALL
+    if _IS_FIRST_CALL:
+        _IS_FIRST_CALL = True
+        hversi.check_version()
     func_name = hintros.get_function_name(count=1)
     msg = "## %s: %s" % (func_name, txt)
     # TODO(gp): Do not print during unit tests.

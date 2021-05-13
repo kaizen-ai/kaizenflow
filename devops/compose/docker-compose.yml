@@ -12,6 +12,8 @@ services:
       - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
       - AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
       - GH_ACTION_ACCESS_TOKEN=$GH_ACTION_ACCESS_TOKEN
+      # This env var is used by GH Action to signal that we are inside the CI.
+      - CI=$CI
     image: ${IMAGE}
     # TODO(gp): I think this is needed only when mounting fstab.
     privileged: true

@@ -11,6 +11,7 @@ from typing import Tuple
 import helpers.git as git
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
+import helpers.versioning as hversi
 
 _LOG = logging.getLogger(__name__)
 
@@ -33,6 +34,8 @@ def _get_library_version(lib_name: str) -> str:
 
 
 def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
+    # TODO(gp): This should return a string that we append to the rest.
+    hversi.check_version()
     txt = []
     # Add git signature.
     try:
