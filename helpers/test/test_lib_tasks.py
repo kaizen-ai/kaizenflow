@@ -233,6 +233,9 @@ class TestDryRunTasks2(_TestClassHelper):
         hsinte.is_inside_ci(), reason="Disabled because of AmpTask1321"
     )
     def test_lint2(self) -> None:
+        _LOG.error("hsinte.is_inside_ci()=%s", hsinte.is_inside_ci())
+        _LOG.error("CI=%s", "CI" in os.environ)
+        assert 0
         target = "lint(ctx, branch=True)"
         # The output depends on the client, so don't check it.
         self._check_output(target, check=False)
