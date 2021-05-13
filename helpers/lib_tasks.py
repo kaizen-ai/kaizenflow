@@ -26,7 +26,6 @@ import helpers.io_ as hio
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.table as htable
-import helpers.unit_test as hut
 import helpers.versioning as hversi
 
 
@@ -91,7 +90,15 @@ else:
 # call git (e.g., if we cache Git hash and then we do a `git pull`).
 
 
+_IS_FIRST_CALL = False
+
+
 def _report_task(txt: str = "") -> None:
+    # On the first invocation report the version.
+    global _IS_FIRST_CALL
+    if _IS_FIRST_CALL:
+        _IS_FIRST_CALL = True
+        hversi.check_version()
     func_name = hintros.get_function_name(count=1)
     msg = "## %s: %s" % (func_name, txt)
     # TODO(gp): Do not print during unit tests.
@@ -660,7 +667,7 @@ def docker_login(ctx):  # type: ignore
     Log in the AM Docker repo on AWS.
     """
     _report_task()
-    if "CI" in os.environ:
+    if hsinte.is_inside_ci():
         _LOG.warning("Running inside GitHub Action: skipping `docker_login`")
         return
     major_version = _get_aws_cli_version()

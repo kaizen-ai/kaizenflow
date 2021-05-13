@@ -1,13 +1,40 @@
+import IPython
 import networkx as networ
+import pygraphviz
 
-# TODO(Paul): Update import according to rule.
-from IPython.display import Image
+import core.dataflow as dtf
+import helpers.dbg as dbg
+import helpers.io_ as hio
 
 
-# TODO(Paul): Add type hint for return value.
-def draw(graph: networ.Graph):
+def draw(dag: dtf.DAG) -> IPython.core.display.Image:
     """
-    Render NetworkX graph.
+    Render DAG in a notebook.
     """
+    agraph = _extract_agraph_from_dag(dag)
+    image = IPython.display.Image(agraph.draw(format="png", prog="dot"))
+    return image
+
+
+def save(dag: dtf.DAG, file_name: str = "graph.png") -> str:
+    """
+    Visualize DAG and save it to a file.
+    """
+    agraph = _extract_agraph_from_dag(dag)
+    # Save to file.
+    hio.create_enclosing_dir(file_name)
+    agraph.draw(file_name, prog="dot")
+    return file_name
+
+
+def _extract_agraph_from_dag(dag: dtf.DAG) -> pygraphviz.agraph.AGraph:
+    """
+    Extract a pygraphviz agraph from a DAG.
+    """
+    # Extract networkx DAG.
+    dbg.dassert_isinstance(dag, dtf.DAG)
+    graph = dag.dag
+    dbg.dassert_isinstance(graph, networ.Graph)
+    # Convert the DAG into a pygraphviz graph.
     agraph = networ.nx_agraph.to_agraph(graph)
-    return Image(agraph.draw(format="png", prog="dot"))
+    return agraph

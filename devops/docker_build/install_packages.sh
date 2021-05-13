@@ -55,11 +55,19 @@ apt-get update
 apt-get install $APT_GET_OPTS gh
 echo "GH VERSION="$(gh --version)
 
+# This is needed to install pygraphviz.
+# See https://github.com/alphamatic/amp/issues/1311
+# It needs tzdata so it needs to go after installing tzdata.
+apt-get install $APT_GET_OPTS libgraphviz-dev
+
+# This is needed to install dot.
+apt-get install $APT_GET_OPTS graphviz
+
 # Clean up.
 if [[ $CLEAN_UP_INSTALLATION ]]; then
     echo "Cleaning up installation..."
     apt-get purge -y --auto-remove
-    DIRS="/root/.cache /tmp"
+    DIRS="/root/.cache /tmp/*"
     du -hs $DIRS | sort -h
     rm -rf $DIRS
 else
