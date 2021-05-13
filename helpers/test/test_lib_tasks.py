@@ -10,10 +10,10 @@ import invoke
 import pytest
 
 import helpers.git as git
+import helpers.lib_tasks as ltasks
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
-import helpers.lib_tasks as ltasks
 
 _LOG = logging.getLogger(__name__)
 
@@ -55,7 +55,9 @@ def _build_mock_context_returning_ok() -> invoke.MockContext:
 
 def _gh_login() -> None:
     """
-    Log in inside GitHub. This is needed by GitHub action.
+    Log in inside GitHub.
+
+    This is needed by GitHub action.
     """
     env_var = "GH_ACTION_ACCESS_TOKEN"
     if os.environ.get(env_var, None):
@@ -207,8 +209,10 @@ class TestDryRunTasks2(_TestClassHelper):
         self._check_output(target)
 
     def test_git_create_branch(self) -> None:
-        target = ("git_create_branch(ctx, branch_name='test', "
-                  "create_from_master=False)")
+        target = (
+            "git_create_branch(ctx, branch_name='test', "
+            "create_from_master=False)"
+        )
         self._check_output(target)
 
     # This is an action with side effects so we can't test it.
@@ -225,8 +229,9 @@ class TestDryRunTasks2(_TestClassHelper):
         # The output depends on the client, so don't check it.
         self._check_output(target, check=False)
 
-    @pytest.mark.skipif(hsinte.is_inside_ci(),
-            reason="Disabled because of AmpTask1321")
+    @pytest.mark.skipif(
+        hsinte.is_inside_ci(), reason="Disabled because of AmpTask1321"
+    )
     def test_lint2(self) -> None:
         target = "lint(ctx, branch=True)"
         # The output depends on the client, so don't check it.
@@ -272,7 +277,7 @@ class TestDryRunTasks2(_TestClassHelper):
         act = hprint.remove_non_printable_chars(act)
         self.check_string(act)
 
-    def _check_output(self, target: str, check: bool=False) -> None:
+    def _check_output(self, target: str, check: bool = False) -> None:
         """
         Dry run target checking that the sequence of commands issued is the
         expected one.
@@ -289,8 +294,10 @@ class TestDryRunTasks2(_TestClassHelper):
 
 class TestLibTasks1(hut.TestCase):
     """
-    Test some auxiliary functions, e.g., `_get_build_tag`, `_get_gh_issue_title()`.
+    Test some auxiliary functions, e.g., `_get_build_tag`,
+    `_get_gh_issue_title()`.
     """
+
     def test_get_build_tag1(self) -> None:
         code_ver = "amp-1.0.0"
         build_tag = ltasks._get_build_tag(code_ver)
@@ -401,10 +408,7 @@ class TestLibTasksGetDockerCmd1(_TestClassHelper):
         cmd = "bash"
         print_docker_config = False
         act = ltasks._get_docker_cmd(
-            stage,
-            base_image,
-            cmd,
-            print_docker_config=print_docker_config,
+            stage, base_image, cmd, print_docker_config=print_docker_config
         )
         act = hut.purify_txt_from_client(act)
         exp = r"""
@@ -525,6 +529,7 @@ class TestLibRunTests1(hut.TestCase):
     """
     Test `_build_run_command_line()`.
     """
+
     def test_run_fast_tests1(self) -> None:
         """
         Basic run fast tests.
@@ -570,8 +575,10 @@ class TestLibRunTests1(hut.TestCase):
             collect_only,
             skipped_tests,
         )
-        exp = (r'pytest -m "not slow and not superslow" --cov=. --cov-branch'
-               r' --cov-report term-missing --cov-report html --collect-only')
+        exp = (
+            r'pytest -m "not slow and not superslow" --cov=. --cov-branch'
+            r" --cov-report term-missing --cov-report html --collect-only"
+        )
         self.assert_equal(act, exp)
 
     @pytest.mark.skipif(not git.is_lem(), reason="Only run in lem")
@@ -646,8 +653,10 @@ class TestLibRunTests1(hut.TestCase):
             collect_only,
             skipped_tests,
         )
-        exp = ("pytest TestLibRunTests1.test_run_fast_tests4/tmp.scratch/"
-               "test/test_that.py")
+        exp = (
+            "pytest TestLibRunTests1.test_run_fast_tests4/tmp.scratch/"
+            "test/test_that.py"
+        )
         self.assert_equal(act, exp)
 
 
@@ -801,6 +810,7 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
     def test_tar_modified1(self) -> None:
         """
         Exercise the code for:
+
         > invoke git_create_patch --mode="tar" --branch
         """
         modified = True
@@ -808,11 +818,13 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
         files = ""
         self._helper(modified, branch, files)
 
-    @pytest.mark.skipif(hsinte.is_inside_ci(),
-            reason="Disabled because of AmpTask1321")
+    @pytest.mark.skipif(
+        hsinte.is_inside_ci(), reason="Disabled because of AmpTask1321"
+    )
     def test_tar_branch1(self) -> None:
         """
         Exercise the code for:
+
         > invoke git_create_patch --mode="tar" --modified
         """
         modified = False
@@ -823,6 +835,7 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
     def test_tar_files1(self) -> None:
         """
         Exercise the code for:
+
         > invoke git_create_patch --mode="tar" --files "this file"
         """
         modified = False

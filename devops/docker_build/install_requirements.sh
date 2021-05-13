@@ -68,8 +68,12 @@ fi;
 
 # Some tools refer to `python` and `pip`.
 # TODO(gp): Move to install_packages.sh
-ln -s /usr/bin/python3 /usr/bin/python
-ln -s /usr/bin/pip3 /usr/bin/pip
+if [[ ! -e /usr/bin/python ]]; then
+    ln -s /usr/bin/python3 /usr/bin/python
+fi;
+if [[ ! -e /usr/bin/pip ]]; then
+    ln -s /usr/bin/pip3 /usr/bin/pip
+fi;
 
 # Update the bashrc.
 echo "" >>~/.bashrc

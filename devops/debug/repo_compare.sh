@@ -13,19 +13,21 @@ if [[ 0 == 1 ]]; then
 else
     # amp vs dev_tools
     DIR1=$HOME/src/$GIT_CLIENT/amp
-    DIR2=$HOME/src/dev_tools
+    DIR2=$HOME/src/dev_tools1
 fi;
 
 echo "DIR1=$DIR1"
 echo "DIR2=$DIR2"
 
-# The file storing configuration that should be kept in sync are:
-for file in .dockerignore .gitignore .pre-commit-config.yaml conftest.py dev_scripts/setenv_dev_tools.sh invoke.yaml lib_tasks.py mypy.ini pre-commit.sh pytest.ini tasks.py
-do
-    vimdiff {$DIR1,$DIR2}/$file
-done;
+if [[ 0 == 1 ]]; then
+    # The file storing configuration that should be kept in sync are:
+    for file in .dockerignore .gitignore .pre-commit-config.yaml conftest.py dev_scripts/setenv_dev_tools.sh invoke.yaml lib_tasks.py mypy.ini pre-commit.sh pytest.ini tasks.py
+    do
+        vimdiff {$DIR1,$DIR2}/$file
+    done;
 
-exit -1
+    exit -1
+fi;
 
 if [[ 1 == 1 ]]; then
     DIR="devops"
