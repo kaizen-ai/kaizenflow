@@ -20,6 +20,8 @@ from core.dataflow.core import Node
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(*): Create a dataflow types file.
+_COL_TYPE = Union[int, str]
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
@@ -803,6 +805,120 @@ class SeriesTransformer(Transformer, ColModeMixin):
             col_mode=self._col_mode,
         )
         #
+        info["df_transformed_info"] = get_df_info_as_string(df)
+        return df, info
+
+
+class MultiindexSeriesTransformer(Transformer, ColModeMixin):
+    """
+    Perform non-index modifying changes of columns.
+
+    When operating on multiple columns, this applies the transformer function
+    one series at a time. Additionally, NaN-handling is performed "locally"
+    (one series at a time, without regard to NaNs in other columns).
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        in_col_group: Tuple[_COL_TYPE],
+        out_col_group: Tuple[_COL_TYPE],
+        transformer_func: Callable[..., pd.DataFrame],
+        transformer_kwargs: Optional[Dict[str, Any]] = None,
+        nan_mode: Optional[str] = None,
+    ) -> None:
+        """
+        For reference, let
+          - N = df.columns.nlevels
+          - leaf_cols = df[in_col_group].columns
+
+        :param nid: unique node id
+        :param in_col_group: a group of cols specified by the first N - 1
+            levels
+        :param out_col_group: new output col group names
+        :param transformer_func: srs -> df
+        :param transformer_kwargs: transformer_func kwargs
+        :param nan_mode: `leave_unchanged` or `drop`. If `drop`, applies to
+            columns individually.
+        """
+        super().__init__(nid)
+        dbg.dassert_isinstance(in_col_group, tuple)
+        dbg.dassert_isinstance(out_col_group, tuple)
+        dbg.dassert_eq(len(in_col_group), len(out_col_group),
+                       msg="Column hierarchy depth must be preserved.")
+        self._in_col_group = in_col_group
+        self._out_col_group = out_col_group
+        self._transformer_func = transformer_func
+        self._transformer_kwargs = transformer_kwargs or {}
+        # Store the list of columns after the transformation.
+        self._nan_mode = nan_mode or "leave_unchanged"
+        self._leaf_cols = None
+
+    def _transform(
+            self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
+        # After indexing by `self._in_col_group`, we should have a flat column
+        # index.
+        dbg.dassert_eq(len(self._in_col_group), df.columns.nlevels - 1,
+                       "Dataframe multiindex column depth incompatible with config.")
+        dbg.dassert_not_in(self._out_col_group, df.columns,
+                           "Desired column names already present in dataframe.")
+        df_in = df
+        df = df[self._in_col_group].copy()
+        self._leaf_cols = df.columns.tolist()
+        idx = df.index
+        if self._nan_mode == "leave_unchanged":
+            pass
+        elif self._nan_mode == "drop":
+            df = df.dropna()
+        else:
+            raise ValueError(f"Unrecognized `nan_mode` {self._nan_mode}")
+        # Initialize container to store info (e.g., auxiliary stats) in the
+        # node..
+        info = collections.OrderedDict()
+        info["func_info"] = collections.OrderedDict()
+        func_info = info["func_info"]
+        srs_list = []
+        for col in self._leaf_cols:
+            col_info = collections.OrderedDict()
+            srs = df[col]
+            if self._nan_mode == "leave_unchanged":
+                pass
+            elif self._nan_mode == "drop":
+                srs = srs.dropna()
+            else:
+                raise ValueError(f"Unrecognized `nan_mode` {self._nan_mode}")
+            # Perform the column transformation operations.
+            # Introspect to see whether `_transformer_func` contains an `info`
+            # parameter. If so, inject an empty dict to be populated when
+            # `_transformer_func` is executed.
+            func_sig = inspect.signature(self._transformer_func)
+            if "info" in func_sig.parameters:
+                func_info = collections.OrderedDict()
+                srs = self._transformer_func(
+                    srs, info=col_info, **self._transformer_kwargs
+                )
+                func_info[col] = col_info
+            else:
+                srs = self._transformer_func(srs, **self._transformer_kwargs)
+            srs.name = col
+            srs_list.append(srs)
+        info["func_info"] = func_info
+        df = pd.concat(srs_list, axis=1)
+        df = pd.concat([df], axis=1, keys=self._out_col_group)
+        df = df.reindex(index=idx)
+        # TODO(Paul): Consider supporting the option of relaxing or
+        # foregoing this check.
+        dbg.dassert(
+            df.index.equals(df_in.index),
+            "Input/output indices differ but are expected to be the same!",
+        )
+        df = df.merge(
+            df_in,
+            how="outer",
+            left_index=True,
+            right_index=True,
+        )
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
 
