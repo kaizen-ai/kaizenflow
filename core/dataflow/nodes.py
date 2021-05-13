@@ -405,8 +405,9 @@ class MultivariateNormalGenerator(DataSource):
         prices = rets.cumsum()
         prices = prices.rename(columns=lambda x: "MN" + str(x))
         # Use constant volume (for now).
-        volume = pd.DataFrame(index=prices.index, columns=prices.columns,
-                              data=100)
+        volume = pd.DataFrame(
+            index=prices.index, columns=prices.columns, data=100
+        )
         df = pd.concat([prices, volume], axis=1, keys=["close", "vol"])
         self.df = df
         self.df = self.df.loc[self._start_date : self._end_date]
@@ -844,8 +845,11 @@ class MultiindexSeriesTransformer(Transformer, ColModeMixin):
         super().__init__(nid)
         dbg.dassert_isinstance(in_col_group, tuple)
         dbg.dassert_isinstance(out_col_group, tuple)
-        dbg.dassert_eq(len(in_col_group), len(out_col_group),
-                       msg="Column hierarchy depth must be preserved.")
+        dbg.dassert_eq(
+            len(in_col_group),
+            len(out_col_group),
+            msg="Column hierarchy depth must be preserved.",
+        )
         self._in_col_group = in_col_group
         self._out_col_group = out_col_group
         self._transformer_func = transformer_func
@@ -855,14 +859,20 @@ class MultiindexSeriesTransformer(Transformer, ColModeMixin):
         self._leaf_cols = None
 
     def _transform(
-            self, df: pd.DataFrame
+        self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         # After indexing by `self._in_col_group`, we should have a flat column
         # index.
-        dbg.dassert_eq(len(self._in_col_group), df.columns.nlevels - 1,
-                       "Dataframe multiindex column depth incompatible with config.")
-        dbg.dassert_not_in(self._out_col_group, df.columns,
-                           "Desired column names already present in dataframe.")
+        dbg.dassert_eq(
+            len(self._in_col_group),
+            df.columns.nlevels - 1,
+            "Dataframe multiindex column depth incompatible with config.",
+        )
+        dbg.dassert_not_in(
+            self._out_col_group,
+            df.columns,
+            "Desired column names already present in dataframe.",
+        )
         df_in = df
         df = df[self._in_col_group].copy()
         self._leaf_cols = df.columns.tolist()
