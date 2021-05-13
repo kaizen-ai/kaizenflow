@@ -98,7 +98,7 @@ class TestDryRunTasks1(hut.TestCase):
         self._dry_run(target)
 
     @pytest.mark.skipif(
-        hsinte.is_inside_ci(), reason="On GH Action the output is different"
+        hsinte.is_inside_ci(), reason="In CI the output is different")
     def test_docker_images_ls_repo(self) -> None:
         target = "docker_images_ls_repo"
         self._dry_run(target)
@@ -253,7 +253,7 @@ class TestDryRunTasks2(_TestClassHelper):
     # #########################################################################
 
     @pytest.mark.skipif(
-        hsinte.is_inside_ci(), reason="On GH Action the output is different"
+        hsinte.is_inside_ci(), reason="In CI the output is different")
     def test_docker_login(self) -> None:
         """
         Instead of using _build_mock_context_returning_ok(), set the return

@@ -667,7 +667,7 @@ def docker_login(ctx):  # type: ignore
     Log in the AM Docker repo on AWS.
     """
     _report_task()
-    if "CI" in os.environ:
+    if hsinte.is_inside_ci():
         _LOG.warning("Running inside GitHub Action: skipping `docker_login`")
         return
     major_version = _get_aws_cli_version()
