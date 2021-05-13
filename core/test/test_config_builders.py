@@ -8,10 +8,6 @@ import core.config as cfg
 import core.config_builders as cfgb
 import helpers.unit_test as hut
 
-# #############################################################################
-# core/config_builders.py
-# #############################################################################
-
 
 class TestGetConfigFromFlattened1(hut.TestCase):
     def test1(self) -> None:
