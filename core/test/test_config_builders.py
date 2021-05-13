@@ -39,16 +39,25 @@ class TestGetConfigFromFlattened1(hut.TestCase):
 class TestGetConfigFromNestedDict1(hut.TestCase):
     def test1(self) -> None:
         nested = {
-            "read_data": {"file_name": "foo_bar.txt", "nrows": 999,},
+            "read_data": {
+                "file_name": "foo_bar.txt",
+                "nrows": 999,
+            },
             "single_val": "hello",
-            "zscore": {"style": "gaz", "com": 28,},
+            "zscore": {
+                "style": "gaz",
+                "com": 28,
+            },
         }
         config = cfgb.get_config_from_nested_dict(nested)
         self.check_string(str(config))
 
     def test2(self) -> None:
         nested = {
-            "read_data": {"file_name": "foo_bar.txt", "nrows": 999,},
+            "read_data": {
+                "file_name": "foo_bar.txt",
+                "nrows": 999,
+            },
             "single_val": "hello",
             "zscore": cfg.Config(),
         }
@@ -56,7 +65,9 @@ class TestGetConfigFromNestedDict1(hut.TestCase):
         self.check_string(str(config))
 
 
-def _build_test_configs(symbols: Optional[List[str]] = None,) -> List[cfg.Config]:
+def _build_test_configs(
+    symbols: Optional[List[str]] = None,
+) -> List[cfg.Config]:
     config_template = cfg.Config()
     config_tmp = config_template.add_subconfig("read_data")
     config_tmp["symbol"] = None
@@ -77,7 +88,7 @@ def _build_test_configs(symbols: Optional[List[str]] = None,) -> List[cfg.Config
 class TestGetConfigsFromBuilder1(hut.TestCase):
     def test1(self) -> None:
         """
-        Build a config from
+        Build a config from.
         """
         config_builder = "core.test.test_config_builders._build_test_configs()"
         configs = cfgb.get_configs_from_builder(config_builder)
@@ -153,6 +164,7 @@ class TestBuildMultipleConfigs(hut.TestCase):
 def _get_test_config_1() -> cfg.Config:
     """
     Build a test config for Crude Oil asset.
+
     :return: Test config.
     """
     config = cfg.Config()
@@ -170,6 +182,7 @@ def _get_test_config_1() -> cfg.Config:
 def _get_test_config_2() -> cfg.Config:
     """
     Build a test config for Gold asset.
+
     :return: Test config.
     """
     config = cfg.Config()
@@ -230,7 +243,8 @@ class TestConfigIntersection(hut.TestCase):
 class TestConfigDifference(hut.TestCase):
     def test_varying_config_difference(self) -> None:
         """
-        Verify that differing parameters of different configs are what expected.
+        Verify that differing parameters of different configs are what
+        expected.
         """
         # Create two different configs.
         config_1 = _get_test_config_1()
@@ -257,8 +271,8 @@ class TestConfigDifference(hut.TestCase):
 
 class TestGetConfigDataframe(hut.TestCase):
     """
-    Compare manually constructed dfs and dfs created by `cfgb.get_configs_dataframe`
-    using `pd.DataFrame.equals()`
+    Compare manually constructed dfs and dfs created by
+    `cfgb.get_configs_dataframe` using `pd.DataFrame.equals()`
     """
 
     def test_all_params(self) -> None:
@@ -322,7 +336,8 @@ class TestGetConfigDataframe(hut.TestCase):
 class TestAddResultDir(hut.TestCase):
     def test_result_dir(self) -> None:
         """
-        `Verify that `cfgb.add_result_dir` adds correct value to correct param path.
+        `Verify that `cfgb.add_result_dir` adds correct value to correct param
+        path.
         """
         result_dir = "test/results"
         # Modify test config manually.
@@ -357,7 +372,8 @@ class TestSetExperimentResultDir(hut.TestCase):
 class TestAddConfigIdx(hut.TestCase):
     def test_add_config_idx(self) -> None:
         """
-        Verify that `cfgb.add_config_idx` adds correct index to correct param path.
+        Verify that `cfgb.add_config_idx` adds correct index to correct param
+        path.
         """
         # Assign id parameters through function.
         actual_configs = [
@@ -381,8 +397,8 @@ class TestAddConfigIdx(hut.TestCase):
 class TestGenerateDefaultConfigVariants(hut.TestCase):
     def test_add_var_params(self) -> None:
         """
-        Verify that Cartesian product of configs with varying parameters
-        is what expected.
+        Verify that Cartesian product of configs with varying parameters is
+        what expected.
         """
         # Prepare varying parameters.
         params_variants = {("build_targets", "target_asset"): ["Gasoil", "Soy"]}
