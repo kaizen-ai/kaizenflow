@@ -704,7 +704,7 @@ def _get_amp_docker_compose_path() -> Optional[str]:
     E.g., `devops/compose/docker-compose_as_submodule.yml` and
     `devops/compose/docker-compose_as_supermodule.yml`
     """
-    path = git.get_path_from_supermodule()
+    path, _ = git.get_path_from_supermodule()
     if path != "":
         _LOG.warning("amp is a submodule")
         docker_compose_path = "docker-compose_as_submodule.yml"
