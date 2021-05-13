@@ -836,7 +836,9 @@ class MultiindexSeriesTransformer(Transformer, ColModeMixin):
         :param nid: unique node id
         :param in_col_group: a group of cols specified by the first N - 1
             levels
-        :param out_col_group: new output col group names
+        :param out_col_group: new output col group names. This specifies the
+            names of the first N - 1 levels. The leaf_cols names remain the
+            same.
         :param transformer_func: srs -> df
         :param transformer_kwargs: transformer_func kwargs
         :param nan_mode: `leave_unchanged` or `drop`. If `drop`, applies to
@@ -854,8 +856,8 @@ class MultiindexSeriesTransformer(Transformer, ColModeMixin):
         self._out_col_group = out_col_group
         self._transformer_func = transformer_func
         self._transformer_kwargs = transformer_kwargs or {}
-        # Store the list of columns after the transformation.
         self._nan_mode = nan_mode or "leave_unchanged"
+        # The leaf col names are determined from the dataframe at runtime.
         self._leaf_cols = None
 
     def _transform(
@@ -868,6 +870,7 @@ class MultiindexSeriesTransformer(Transformer, ColModeMixin):
             df.columns.nlevels - 1,
             "Dataframe multiindex column depth incompatible with config.",
         )
+        # Do not allow overwriting existing columns.
         dbg.dassert_not_in(
             self._out_col_group,
             df.columns,
@@ -877,12 +880,6 @@ class MultiindexSeriesTransformer(Transformer, ColModeMixin):
         df = df[self._in_col_group].copy()
         self._leaf_cols = df.columns.tolist()
         idx = df.index
-        if self._nan_mode == "leave_unchanged":
-            pass
-        elif self._nan_mode == "drop":
-            df = df.dropna()
-        else:
-            raise ValueError(f"Unrecognized `nan_mode` {self._nan_mode}")
         # Initialize container to store info (e.g., auxiliary stats) in the
         # node..
         info = collections.OrderedDict()
@@ -914,11 +911,12 @@ class MultiindexSeriesTransformer(Transformer, ColModeMixin):
             srs.name = col
             srs_list.append(srs)
         info["func_info"] = func_info
+        # Combine the series representing leaf col transformations back into a
+        # single dataframe.
         df = pd.concat(srs_list, axis=1)
+        # Prefix the leaf col names with level(s) specified by "out_col_group".
         df = pd.concat([df], axis=1, keys=self._out_col_group)
         df = df.reindex(index=idx)
-        # TODO(Paul): Consider supporting the option of relaxing or
-        # foregoing this check.
         dbg.dassert(
             df.index.equals(df_in.index),
             "Input/output indices differ but are expected to be the same!",
