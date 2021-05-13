@@ -810,7 +810,7 @@ class SeriesTransformer(Transformer, ColModeMixin):
         return df, info
 
 
-class MultiindexSeriesTransformer(Transformer, ColModeMixin):
+class MultiindexSeriesTransformer(Transformer):
     """
     Perform non-index modifying changes of columns.
 
