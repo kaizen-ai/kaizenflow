@@ -25,14 +25,16 @@ def DataSourceNodeFactory(
     :return: data source node of appropriate type instantiated with kwargs
     """
     dbg.dassert(source_node_name)
-    if source_node_name == "disk":
+    if source_node_name == "arma":
+        return cdataf.ArmaGenerator(nid, **source_node_kwargs)
+    elif source_node_name == "disk":
         return cdataf.DiskDataSource(nid, **source_node_kwargs)
     elif source_node_name == "kibot":
         return KibotDataReader(nid, **source_node_kwargs)
     elif source_node_name == "kibot_multi_col":
         return KibotColumnReader(nid, **source_node_kwargs)
-    elif source_node_name == "arma":
-        return cdataf.ArmaGenerator(nid, **source_node_kwargs)
+    elif source_node_name == "multivariate_normal":
+        return cdataf.MultivariateNormalGenerator(nid, **source_node_kwargs)
     else:
         raise ValueError("Unsupported data source node %s", source_node_name)
 
