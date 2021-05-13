@@ -190,6 +190,40 @@ def print_setup(ctx):  # type: ignore
         print("%s=%s" % (v, get_default_param(v)))
 
 
+@task
+def print_tasks(  # type: ignore
+        ctx, as_python_code=False):
+    """
+    Print all the available tasks in `lib_tasks.py`.
+
+    These tasks might be exposed or not by different
+
+    :param as_python_code: print as python code so that it can be embed in a
+        `from helpers.lib_tasks import ...`
+    """
+    _report_task()
+    _ = ctx
+    func_names = []
+    # TODO(gp): Use __file__ instead of hardwiring the file.
+    cmd = '\grep "^@task" -A 1 helpers/lib_tasks.py | grep def'
+    # def print_setup(ctx):  # type: ignore
+    # def git_pull(ctx):  # type: ignore
+    # def git_pull_master(ctx):  # type: ignore
+    _, txt = hsinte.system_to_string(cmd)
+    for line in txt.split("\n"):
+        _LOG.debug("line=%s", line)
+        m = re.match("^def\s+(\S+)\(", line)
+        if m:
+            func_name = m.group(1)
+            _LOG.debug("  -> %s", func_name)
+            func_names.append(func_name)
+    func_names = sorted(func_names)
+    if as_python_code:
+        print("\n".join([f"{fn}," for fn in func_names]))
+    else:
+        print("\n".join(func_names))
+
+
 # #############################################################################
 # Git.
 # #############################################################################
@@ -378,6 +412,7 @@ def git_create_patch(  # type: ignore
     :param files: specify a space-separated list of files
     """
     _report_task(hprint.to_str("mode modified branch files"))
+    _ = ctx
     dbg.dassert_in(mode, ("tar", "diff"))
     # For now we just create a patch for the current submodule.
     super_module = False
@@ -421,7 +456,9 @@ def git_create_patch(  # type: ignore
     _LOG.info("Creating the patch into %s", dst_file)
     dbg.dassert_ne(cmd, "")
     _LOG.debug("cmd=%s", cmd)
-    _run(ctx, cmd)
+    rc = hsinte.system(cmd, abort_on_error=False)
+    if not rc:
+        _LOG.warning("Command failed with rc=%d", rc)
     # Print message to apply the patch.
     remote_file = os.path.basename(dst_file)
     abs_path_dst_file = os.path.abspath(dst_file)
@@ -627,6 +664,11 @@ def docker_login(ctx):  # type: ignore
         _LOG.warning("Running inside GitHub Action: skipping `docker_login`")
         return
     major_version = _get_aws_cli_version()
+    # docker login \
+    #   -u AWS \
+    #   -p eyJ... \
+    #   -e none \
+    #   https://665840871993.dkr.ecr.us-east-1.amazonaws.com
     # TODO(gp): We should get this programmatically from ~/aws/.credentials
     region = "us-east-1"
     if major_version == 1:
@@ -637,6 +679,8 @@ def docker_login(ctx):  # type: ignore
             f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
             + f"https://{ecr_base_path}"
         )
+    #cmd = ("aws ecr get-login-password" +
+    #       " | docker login --username AWS --password-stdin "
     _run(ctx, cmd)
 
 
@@ -825,9 +869,14 @@ def _get_docker_cmd(
     # - Handle the docker compose files.
     docker_compose_files = []
     docker_compose_files.append(_get_base_docker_compose_path())
-    docker_compose_file_tmp = _get_amp_docker_compose_path()
-    if docker_compose_file_tmp:
-        docker_compose_files.append(docker_compose_file_tmp)
+    #
+    repo_short_name = git.get_repo_short_name(
+        git.get_repo_full_name_from_dirname("."))
+    _LOG.debug("repo_short_name=%s", repo_short_name)
+    if repo_short_name == "amp":
+        docker_compose_file_tmp = _get_amp_docker_compose_path()
+        if docker_compose_file_tmp:
+            docker_compose_files.append(docker_compose_file_tmp)
     # Add the compose files from command line.
     if extra_docker_compose_files:
         dbg.dassert_isinstance(extra_docker_compose_files, list)
@@ -1024,7 +1073,7 @@ def _get_build_tag(code_ver: str) -> str:
 # DEV image flow:
 # - A "local" image (which is a release candidate for the DEV image) is built
 # - A qualification process (e.g., running all tests) is performed on the "local"
-#   image (typically through GitHub actions)
+#   image (e.g., through GitHub actions)
 # - If qualification is passed, it becomes "latest".
 
 
@@ -1035,10 +1084,10 @@ def docker_build_local_image(  # type: ignore
     ctx, cache=True, base_image="", update_poetry=False
 ):
     """
-    Build a local as a release candidate image.
+    Build a local image (i.e., a release candidate "dev" image).
 
-    :param update_poetry: run poetry lock to update the packages
     :param cache: use the cache
+    :param update_poetry: run poetry lock to update the packages
     """
     _report_task()
     # Update poetry.
@@ -1047,14 +1096,12 @@ def docker_build_local_image(  # type: ignore
         _run(ctx, cmd)
     #
     image_local = get_image("local", base_image)
-    image_hash = get_image("hash", base_image)
     #
     _check_image(image_local)
-    _check_image(image_hash)
     dockerfile = "devops/docker_build/dev.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
     #
-    opts = "--no_cache" if not cache else ""
+    opts = "--no-cache" if not cache else ""
     # The container version is the version used from this code.
     container_version = hversi.get_code_version("./version.txt")
     build_tag = _get_build_tag(container_version)
@@ -1067,7 +1114,6 @@ def docker_build_local_image(  # type: ignore
         --build-arg CONTAINER_VERSION={container_version} \
         --build-arg BUILD_TAG={build_tag} \
         --tag {image_local} \
-        --tag {image_hash} \
         --file {dockerfile} \
         .
     """
@@ -1078,26 +1124,27 @@ def docker_build_local_image(  # type: ignore
 
 
 @task
-def docker_push_local_image_to_dev(ctx, base_image=""):  # type: ignore
+def docker_tag_local_image_as_dev(ctx, base_image=""):  # type: ignore
     """
-    (ONLY CI/CD) Mark the "local" image as "dev" and "latest" and push to ECR.
+    (ONLY CI/CD) Mark the "local" image as "dev".
+    """
+    _report_task()
+    #
+    image_local = get_image("local", base_image)
+    image_dev = get_image("dev", base_image)
+    cmd = f"docker tag {image_local} {image_dev}"
+    _run(ctx, cmd)
+
+
+@task
+def docker_push_dev_image(ctx, base_image=""):  # type: ignore
+    """
+    (ONLY CI/CD) Push the "dev" image to ECR.
     """
     _report_task()
     docker_login(ctx)
     #
-    image_local = get_image("local", base_image)
-    cmd = f"docker push {image_local}"
-    _run(ctx, cmd, pty=True)
-    #
-    image_hash = get_image("hash", base_image)
-    cmd = f"docker tag {image_local} {image_hash}"
-    _run(ctx, cmd)
-    cmd = f"docker push {image_hash}"
-    _run(ctx, cmd, pty=True)
-    #
     image_dev = get_image("dev", base_image)
-    cmd = f"docker tag {image_local} {image_dev}"
-    _run(ctx, cmd)
     cmd = f"docker push {image_dev}"
     _run(ctx, cmd, pty=True)
 
@@ -1120,14 +1167,16 @@ def docker_release_dev_image(  # type: ignore
     running the tests, but not necessarily pushing.
 
     :param skip_tests: skip all the tests and release the dev image
+    :param push_to_repo: push the image to the repo
+    :param update_poetry: update package dependencies using poetry
     """
     _report_task()
+    # 1) Build "local" image.
+    docker_build_local_image(ctx, cache=cache, update_poetry=update_poetry)
+    # 2) Run tests for the "local" image.
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
         run_fast = run_slow = run_superslow = False
-    # Build image.
-    docker_build_local_image(ctx, cache=cache, update_poetry=update_poetry)
-    # Run tests.
     stage = "local"
     if run_fast:
         run_fast_tests(ctx, stage=stage)
@@ -1135,17 +1184,19 @@ def docker_release_dev_image(  # type: ignore
         run_slow_tests(ctx, stage=stage)
     if run_superslow:
         run_superslow_tests(ctx, stage=stage)
-    # Push.
+    # 3) Promote the "local" image to "dev".
+    docker_tag_local_image_as_dev(ctx)
+    # 4) Push the "local" image to ECR.
     if push_to_repo:
-        docker_push_local_image_to_dev(ctx)
+        docker_push_dev_image(ctx)
     else:
-        _LOG.warning("Skipping pushing image to repo as requested")
+        _LOG.warning("Skipping pushing dev image to repo, as requested")
     _LOG.info("==> SUCCESS <==")
 
 
 # PROD image flow:
 # - PROD image has no release candidate
-# - The DEV image is qualified
+# - Start from a DEV image already built and qualified
 # - The PROD image is created from the DEV image by copying the code inside the
 #   image
 # - The PROD image is tagged as "prod"
@@ -1153,7 +1204,7 @@ def docker_release_dev_image(  # type: ignore
 
 # TODO(gp): Remove redundancy with docker_build_local_image().
 @task
-def docker_build_prod_image(ctx, cache=False, base_image=""):  # type: ignore
+def docker_build_prod_image(ctx, cache=True, base_image=""):  # type: ignore
     """
     (ONLY CI/CD) Build a prod image.
     """
@@ -1164,15 +1215,15 @@ def docker_build_prod_image(ctx, cache=False, base_image=""):  # type: ignore
     dockerfile = "devops/docker_build/prod.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
     #
-    opts = "--no_cache" if not cache else ""
+    opts = "--no-cache" if not cache else ""
     cmd = rf"""
     DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
     time \
     docker build \
         --progress=plain \
         {opts} \
-        -t {image_prod} \
-        -f {dockerfile} \
+        --tag {image_prod} \
+        --file {dockerfile} \
         .
     """
     _run(ctx, cmd)
@@ -1184,23 +1235,26 @@ def docker_build_prod_image(ctx, cache=False, base_image=""):  # type: ignore
 @task
 def docker_release_prod_image(  # type: ignore
     ctx,
-    cache=False,
+    cache=True,
+    skip_tests=False,
     run_fast=True,
     run_slow=True,
     run_superslow=False,
     base_image="",
-    update_poetry=False,
+    push_to_repo=True,
 ):
     """
     (ONLY CI/CD) Build, test, and release to ECR the prod image.
+
+    Same options as `docker_release_dev_image`.
     """
     _report_task()
-    # Build dev image.
-    docker_build_local_image(ctx, cache=cache, update_poetry=update_poetry)
-    docker_push_local_image_to_dev(ctx)
-    # Build prod image.
+    # 1) Build prod image.
     docker_build_prod_image(ctx, cache=cache)
-    # Run tests.
+    # 2) Run tests.
+    if skip_tests:
+        _LOG.warning("Skipping all tests and releasing")
+        run_fast = run_slow = run_superslow = False
     stage = "prod"
     if run_fast:
         run_fast_tests(ctx, stage=stage)
@@ -1208,10 +1262,13 @@ def docker_release_prod_image(  # type: ignore
         run_slow_tests(ctx, stage=stage)
     if run_superslow:
         run_superslow_tests(ctx, stage=stage)
-    # Push prod image.
-    image_prod = get_image("prod", base_image)
-    cmd = f"docker push {image_prod}"
-    _run(ctx, cmd, pty=True)
+    # 3) Push prod image.
+    if push_to_repo:
+        image_prod = get_image("prod", base_image)
+        cmd = f"docker push {image_prod}"
+        _run(ctx, cmd, pty=True)
+    else:
+        _LOG.warning("Skipping pushing image to repo as requested")
     _LOG.info("==> SUCCESS <==")
 
 
@@ -1687,6 +1744,50 @@ def pytest_clean(ctx):  # type: ignore
 # Linter.
 # #############################################################################
 
+# SUBMODULE_SUPERPROJECT=$(git rev-parse --show-superproject-working-tree)
+#
+# if [ $SUBMODULE_SUPERPROJECT ]; then
+# # E.g., `amp`.
+# SUBMODULE_NAME=$(git config \
+#     --file $SUBMODULE_SUPERPROJECT/.gitmodules \
+#     --get-regexp path \
+#     | grep $(basename "$(pwd)")$ \
+#     | awk '{print $2}')
+# echo "Running pre-commit for the Git '$SUBMODULE_NAME' submodule."
+# # The working dir is the submodule.
+# WORK_DIR="/src/$SUBMODULE_NAME"
+# REPO_ROOT=$SUBMODULE_SUPERPROJECT
+# else
+# WORK_DIR="/src"
+# REPO_ROOT="$(pwd)"
+# fi
+
+
+def _get_lint_docker_cmd(precommit_cmd: str) -> str:
+    superproject_path, submodule_path = git.get_path_from_supermodule()
+    if superproject_path:
+        # We are running in a Git submodule.
+        work_dir = f"/src/{submodule_path}"
+        repo_root = superproject_path
+    else:
+        work_dir = "/src"
+        repo_root = os.getcwd()
+    _LOG.debug("work_dir=%s repo_root=%s", work_dir, repo_root)
+    #image = get_default_param("DEV_TOOLS_IMAGE_PROD")
+    image="665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools:prod"
+    #image="665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools:local"
+    docker_cmd_ = f"""docker run \
+        --rm \
+        -t \
+        -v "{repo_root}":/src \
+        --workdir={work_dir} \
+        {image} \
+        "pre-commit {precommit_cmd}"
+    """
+    # -v "{repo_root}/.pre-commit-config.yaml":/app/.pre-commit-config.yaml \
+    return docker_cmd_
+
+
 @task
 def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignore
     """
@@ -1706,10 +1807,11 @@ def lint(ctx, modified=False, branch=False, files="", phases=""):  # type: ignor
         return
     files_as_str = " ".join(files_as_list)
     #
-    cmd = (
-        f"pre-commit.sh run {phases} --files {files_as_str} 2>&1 "
-        + "| tee linter_warnings.txt"
-    )
+    if phases:
+        phases = phases.rstrip() + " "
+    precommit_cmd = f"run -c /app/.pre-commit-config.yaml {phases}--files {files_as_str}"
+    cmd = _get_lint_docker_cmd(precommit_cmd)
+    cmd = f"{cmd} 2>&1 | tee linter_warnings.txt"
     _run(ctx, cmd)
 
 

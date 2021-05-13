@@ -166,7 +166,7 @@ def _get_submodule_hash(dir_name: str) -> str:
 
 
 @functools.lru_cache()
-def get_path_from_supermodule() -> str:
+def get_path_from_supermodule() -> Tuple[str, str]:
     """
     Return the path to the Git repo including the Git submodule for a
     submodule, and return empty for a supermodule. See AmpTask1017.
@@ -176,26 +176,26 @@ def get_path_from_supermodule() -> str:
     - for amp without supermodule returns ''
     """
     cmd = "git rev-parse --show-superproject-working-tree"
-    # > cd /Users/saggese/src/.../amp
+    # > cd /Users/saggese/src/.../lemonade/amp
     # > git rev-parse --show-superproject-working-tree
-    # /Users/saggese/src/...
+    # /Users/saggese/src/.../lemonade
     #
-    # > cd /Users/saggese/src/...
+    # > cd /Users/saggese/src/.../lemonade
     # > git rev-parse --show-superproject-working-tree
     # (No result)
-    submodule_superproject: str = hsinte.system_to_one_line(cmd)[1]
-    _LOG.debug("submodule_superproject=%s", submodule_superproject)
+    superproject_path: str = hsinte.system_to_one_line(cmd)[1]
+    _LOG.debug("superproject_path='%s'", superproject_path)
     #
     cmd = (
-        f"git config --file {submodule_superproject}/.gitmodules --get-regexp path"
+        f"git config --file {superproject_path}/.gitmodules --get-regexp path"
         '| grep $(basename "$(pwd)")'
         "| awk '{ print $2 }'"
     )
     # > git config --file /Users/saggese/src/.../.gitmodules --get-regexp path
     # submodule.amp.path amp
-    res: str = hsinte.system_to_one_line(cmd)[1]
-    _LOG.debug("res=%s", res)
-    return res
+    submodule_path: str = hsinte.system_to_one_line(cmd)[1]
+    _LOG.debug("submodule_path='%s'", submodule_path)
+    return superproject_path, submodule_path
 
 
 @functools.lru_cache()
