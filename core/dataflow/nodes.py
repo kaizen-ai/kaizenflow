@@ -817,6 +817,32 @@ class MultiindexSeriesTransformer(Transformer):
     When operating on multiple columns, this applies the transformer function
     one series at a time. Additionally, NaN-handling is performed "locally"
     (one series at a time, without regard to NaNs in other columns).
+
+    Example: df like
+                          close                     vol
+                          MN0   MN1    MN2   MN3    MN0    MN1    MN2    MN3
+    2010-01-04 10:30:00 -2.62  8.81  14.93 -0.88  100.0  100.0  100.0  100.0
+    2010-01-04 11:00:00 -2.09  8.27  16.75 -0.92  100.0  100.0  100.0  100.0
+    2010-01-04 11:30:00 -2.52  6.97  12.56 -1.52  100.0  100.0  100.0  100.0
+    2010-01-04 12:00:00 -2.54  5.30   8.90 -1.54  100.0  100.0  100.0  100.0
+    2010-01-04 12:30:00 -1.91  2.02   4.65 -1.77  100.0  100.0  100.0  100.0
+
+    Then, e.g., to calculate, returns, we could take
+      - `in_col_group = "close",`
+      - `out_col_group = "ret_0",`
+    Notice that the trailing comma makes these tuples.
+
+    The transformer_func and `nan_mode` would operate on the price columns
+    individually and return one return column per price column, e.g.,
+    generating
+
+                          ret_0                   close                     vol
+                          MN0   MN1   MN2   MN3   MN0   MN1    MN2   MN3    MN0    MN1    MN2    MN3
+    2010-01-04 10:30:00 -0.02  0.11  0.16 -0.35 -2.62  8.81  14.93 -0.88  100.0  100.0  100.0  100.0
+    2010-01-04 11:00:00 -0.20 -0.06  0.12  0.04 -2.09  8.27  16.75 -0.92  100.0  100.0  100.0  100.0
+    2010-01-04 11:30:00  0.20 -0.16 -0.25  0.66 -2.52  6.97  12.56 -1.52  100.0  100.0  100.0  100.0
+    2010-01-04 12:00:00  0.01 -0.24 -0.29  0.01 -2.54  5.30   8.90 -1.54  100.0  100.0  100.0  100.0
+    2010-01-04 12:30:00 -0.25 -0.62 -0.48  0.15 -1.91  2.02   4.65 -1.77  100.0  100.0  100.0  100.0
     """
 
     def __init__(
@@ -824,7 +850,7 @@ class MultiindexSeriesTransformer(Transformer):
         nid: str,
         in_col_group: Tuple[_COL_TYPE],
         out_col_group: Tuple[_COL_TYPE],
-        transformer_func: Callable[..., pd.DataFrame],
+        transformer_func: Callable[..., pd.Series],
         transformer_kwargs: Optional[Dict[str, Any]] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
@@ -839,7 +865,7 @@ class MultiindexSeriesTransformer(Transformer):
         :param out_col_group: new output col group names. This specifies the
             names of the first N - 1 levels. The leaf_cols names remain the
             same.
-        :param transformer_func: srs -> df
+        :param transformer_func: srs -> srs
         :param transformer_kwargs: transformer_func kwargs
         :param nan_mode: `leave_unchanged` or `drop`. If `drop`, applies to
             columns individually.
@@ -908,6 +934,7 @@ class MultiindexSeriesTransformer(Transformer):
                 func_info[col] = col_info
             else:
                 srs = self._transformer_func(srs, **self._transformer_kwargs)
+            dbg.dassert_isinstance(srs, pd.Series)
             srs.name = col
             srs_list.append(srs)
         info["func_info"] = func_info
