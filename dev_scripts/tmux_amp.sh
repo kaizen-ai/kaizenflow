@@ -47,7 +47,6 @@ tmux new-session -d -s $TMUX_NAME -n "---AMP$IDX---"
 
 # The first one window seems a problem.
 tmux send-keys "white; cd ${AMP_DIR} && $CMD" C-m C-m
-
 #
 tmux new-window -n "dbash"
 tmux send-keys "green; cd ${AMP_DIR} && $CMD" C-m C-m
