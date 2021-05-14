@@ -425,17 +425,15 @@ class TestSmaModel(hut.TestCase):
         act.append(hprint.frame("config"))
         act.append(str(config))
         act.append(str(ccbuild.get_config_from_nested_dict(info)))
+        act.append(hprint.frame("df_out"))
+        act.append(hut.convert_df_to_string(df_out, index=True, decimals=2))
         act = "\n".join(act)
         self.check_string(act)
-        #
-        self.check_dataframe(df_out, tag="df_out", err_threshold=0.01)
 
     @staticmethod
     def _get_data() -> pd.DataFrame:
         """
         Generate "random returns".
-
-        Use lag + noise as predictor.
         """
         arma_process = casgen.ArmaProcess([0.45], [0])
         date_range_kwargs = {"start": "2000-01-01", "periods": 40, "freq": "B"}
