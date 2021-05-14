@@ -1304,6 +1304,12 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
     returns and column appends.
 
     TODO(*): There is a lot of code shared with `MultiindexSeriesTransformer`.
+        Can anything be shared?
+    TODO(*): We hit
+        ```
+        PerformanceWarning: indexing past lexsort depth may impact performance.
+        ```
+    TODO(*): Add tests.
     """
 
     def __init__(
