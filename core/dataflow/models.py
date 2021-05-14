@@ -1483,13 +1483,19 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
                     "cols": [
                         self._out_col_prefix + "vol",
                         self._out_col_prefix + "vol_" + str(self._steps_ahead),
-                        self._out_col_prefix + "vol_" + str(self._steps_ahead) + "_hat",
+                        self._out_col_prefix
+                        + "vol_"
+                        + str(self._steps_ahead)
+                        + "_hat",
                     ],
                     "col_mode": "replace_selected",
                 },
                 "demodulate_using_vol_pred": {
                     "signal_cols": [col],
-                    "volatility_col": self._out_col_prefix + "vol_" + str(self._steps_ahead) + "_hat",
+                    "volatility_col": self._out_col_prefix
+                    + "vol_"
+                    + str(self._steps_ahead)
+                    + "_hat",
                     "signal_steps_ahead": 0,
                     "volatility_steps_ahead": self._steps_ahead,
                     "col_mode": "replace_selected",
