@@ -160,7 +160,7 @@ class TestDryRunTasks2(_TestClassHelper):
 
     def test_docker_images_ls_repo(self) -> None:
         target = "docker_images_ls_repo(ctx)"
-        self._check_output(target)
+        self._check_output(target, check=False)
 
     def test_docker_kill_all(self) -> None:
         target = "docker_kill_all(ctx)"
@@ -176,15 +176,26 @@ class TestDryRunTasks2(_TestClassHelper):
 
     def test_docker_pull(self) -> None:
         target = "docker_pull(ctx)"
-        self._check_output(target)
+        self._check_output(target, check=False)
 
     def test_docker_stats(self) -> None:
         target = "docker_stats(ctx)"
         self._check_output(target)
 
-    def test_gh_create_pr(self) -> None:
+    def test_gh_create_pr1(self) -> None:
         _gh_login()
-        target = "gh_create_pr(ctx)"
+        target = "gh_create_pr(ctx, repo='amp', title='test')"
+        self._check_output(target)
+
+    def test_gh_create_pr2(self) -> None:
+        _gh_login()
+        target = ("gh_create_pr(ctx, body='hello_world', repo='amp', "
+            "title='test')")
+        self._check_output(target)
+
+    def test_gh_create_pr3(self) -> None:
+        _gh_login()
+        target = "gh_create_pr(ctx, draft=False, repo='amp', title='test')"
         self._check_output(target)
 
     def test_gh_issue_title(self) -> None:
@@ -210,12 +221,27 @@ class TestDryRunTasks2(_TestClassHelper):
         target = "git_clean(ctx)"
         self._check_output(target)
 
-    def test_git_create_branch(self) -> None:
+    def test_git_create_branch1(self) -> None:
         target = (
             "git_create_branch(ctx, branch_name='test', "
-            "create_from_master=False)"
+            "only_branch_from_master=False)"
         )
         self._check_output(target)
+
+    def test_git_create_branch2(self) -> None:
+        target = (
+            "git_create_branch(ctx, issue_id=1, repo='amp', "
+            "only_branch_from_master=False)"
+        )
+        self._check_output(target)
+
+    def test_git_create_branch3(self) -> None:
+        with self.assertRaises(AssertionError):
+            target = (
+                "git_create_branch(ctx, branch_name='test', issue_id=1, "
+                "only_branch_from_master=False)"
+            )
+            self._check_output(target, check=False)
 
     # This is an action with side effects so we can't test it.
     # def test_git_delete_merged_branches(self) -> None:
@@ -281,7 +307,7 @@ class TestDryRunTasks2(_TestClassHelper):
         act = hprint.remove_non_printable_chars(act)
         self.check_string(act)
 
-    def _check_output(self, target: str, check: bool = False) -> None:
+    def _check_output(self, target: str, check: bool = True) -> None:
         """
         Dry run target checking that the sequence of commands issued is the
         expected one.
@@ -331,6 +357,11 @@ class TestLibTasks1(hut.TestCase):
         exp = "DevToolsTask1_Migration_from_amp"
         self.assert_equal(act, exp)
 
+    def test_get_gh_issue_title4(self) -> None:
+        _gh_login()
+        issue_id = 1
+        repo = "current"
+        _ = ltasks._get_gh_issue_title(issue_id, repo)
 
 # #############################################################################
 
@@ -814,7 +845,6 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
     def test_tar_modified1(self) -> None:
         """
         Exercise the code for:
-
         > invoke git_create_patch --mode="tar" --branch
         """
         modified = True
@@ -828,7 +858,6 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
     def test_tar_branch1(self) -> None:
         """
         Exercise the code for:
-
         > invoke git_create_patch --mode="tar" --modified
         """
         modified = False
@@ -839,13 +868,29 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
     def test_tar_files1(self) -> None:
         """
         Exercise the code for:
-
         > invoke git_create_patch --mode="tar" --files "this file"
         """
+        ctx = _build_mock_context_returning_ok()
+        mode = "tar"
         modified = False
         branch = False
         files = __file__
-        self._helper(modified, branch, files)
+        ltasks.git_create_patch(ctx, mode, modified, branch, files)
+
+    def test_tar_files2(self) -> None:
+        """
+        Exercise the code for:
+        > invoke git_create_patch --mode="diff" --files "this file"
+
+        In this case one needs to specify --branch or --modified.
+        """
+        ctx = _build_mock_context_returning_ok()
+        mode = "diff"
+        modified = False
+        branch = False
+        files = __file__
+        with self.assertRaises(AssertionError):
+            ltasks.git_create_patch(ctx, mode, modified, branch, files)
 
     @staticmethod
     def _helper(modified: bool, branch: bool, files: str) -> None:

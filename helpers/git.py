@@ -406,19 +406,19 @@ def get_repo_short_name(full_name: str) -> str:
     return repo_map[full_name]
 
 
-def get_repo_name(name: str, mode: str) -> str:
+def get_repo_name(name: str, in_mode: str) -> str:
     """
     Return the full / short name of a git repo based on the alternative name.
 
-    :param mode: the values `full_name` or `short_name` determine how to interpret
+    :param in_mode: the values `full_name` or `short_name` determine how to interpret
         `name`
     """
-    if mode == "full_name":
+    if in_mode == "full_name":
         ret = get_repo_short_name(name)
-    elif mode == "short_name":
+    elif in_mode == "short_name":
         ret = get_repo_full_name(name)
     else:
-        raise ValueError("Invalid mode='%s'" % mode)
+        raise ValueError("Invalid mode='%s'" % in_mode)
     return ret
 
 
@@ -438,19 +438,19 @@ def get_all_repo_names(mode: str) -> List[str]:
     return sorted(list(repo_map.values()))
 
 
-def get_task_prefix_from_repo_short_name(short_name: str) -> str:
+def get_task_prefix_from_repo_short_name(repo_short_name: str) -> str:
     """
     Return the task prefix for a repo (e.g., "amp" -> "AmpTask").
     """
     # TODO(gp): Find a better way rather than centralizing the names of all repos.
-    if short_name == "amp":
+    if repo_short_name == "amp":
         prefix = "AmpTask"
-    elif short_name == "lem":
+    elif repo_short_name == "lem":
         prefix = "LemTask"
-    elif short_name == "dev_tools":
+    elif repo_short_name == "dev_tools":
         prefix = "DevToolsTask"
     else:
-        raise ValueError("Invalid short_name='%s'" % short_name)
+        raise ValueError("Invalid short_name='%s'" % repo_short_name)
     return prefix
 
 
