@@ -824,7 +824,10 @@ def git_add_update(
 def fetch_origin_master_if_needed():
     if hsinte.is_inside_ci():
         _LOG.warning("Running inside CI so fetching master")
-        cmd = 'git branch -a | egrep "^\s*master\s*$" | wc -l'
+        cmd = 'git branch -a'
+        _, txt = hsinte.system_to_string(cmd)
+        _LOG.debug("%s=%s", cmd, txt)
+        cmd = 'git branch -a | egrep "\s+master\s*$" | wc -l'
         # * (HEAD detached at pull/1337/merge)
         # master
         # remotes/origin/master
