@@ -146,7 +146,7 @@ class TestMultivariateNormalGenerator(hut.TestCase):
             seed=0,
         )
         df = node.fit()["df_out"]
-        str = hut.convert_df_to_string(df, index=True)
+        str = hut.convert_df_to_string(df, index=True, decimals=2)
         self.check_string(str)
 
 
