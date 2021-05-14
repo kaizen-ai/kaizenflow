@@ -3,6 +3,7 @@ from typing import Optional
 
 import helpers.git as git
 import helpers.unit_test as hut
+import helpers.system_interaction as hsinte
 
 _LOG = logging.getLogger(__name__)
 
@@ -206,10 +207,16 @@ class Test_git_modified_files1(hut.TestCase):
         _execute_func_call(func_call)
 
     def test_get_modified_files_in_branch1(self) -> None:
+        # This test needs a reference to Git master branch.
+        git.fetch_origin_master_if_needed()
+        #
         func_call = "git.get_modified_files_in_branch('master')"
         _execute_func_call(func_call)
 
     def test_get_summary_files_in_branch1(self) -> None:
+        # This test needs a reference to Git master branch.
+        git.fetch_origin_master_if_needed()
+        #
         func_call = "git.get_summary_files_in_branch('master')"
         _execute_func_call(func_call)
 

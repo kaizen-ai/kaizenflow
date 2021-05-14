@@ -819,3 +819,10 @@ def git_add_update(
     _LOG.debug("# Adding all changed files to staging ...")
     cmd = "git add %s" % (" ".join(file_list) if file_list is not None else "-u")
     hsinte.system(cmd, suppress_output=False, log_level=log_level)
+
+
+def fetch_origin_master_if_needed():
+    if hsinte.is_inside_ci():
+        _LOG.warning("Running inside CI so fetching master")
+        cmd = "git fetch origin master:refs/remotes/origin/master"
+        hsinte.system(cmd)
