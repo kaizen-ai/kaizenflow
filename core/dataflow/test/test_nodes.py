@@ -132,7 +132,8 @@ class TestArmaGenerator(hut.TestCase):
             seed=0,
         )
         df = node.fit()["df_out"]
-        self.check_string(df.to_string())
+        str = hut.convert_df_to_string(df, index=True, decimals=2)
+        self.check_string(str)
 
 
 class TestMultivariateNormalGenerator(hut.TestCase):

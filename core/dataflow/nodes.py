@@ -344,7 +344,8 @@ class ArmaGenerator(DataSource):
         # Cumulatively sum to generate a price series (implicitly assumes the
         # returns are log returns; at small enough scales and short enough
         # times this is practically interchangeable with percentage returns).
-        prices = rets.cumsum()
+        # TODO(*): Allow specification of annualized target volatility.
+        prices = np.exp(0.1 * rets.cumsum())
         prices.name = "close"
         self.df = prices.to_frame()
         self.df = self.df.loc[self._start_date : self._end_date]
