@@ -655,7 +655,7 @@ class MultiindexUnsupervisedSkLearnModel(
             len(self._in_col_group),
             df_in.columns.nlevels - 1,
             "Dataframe multiindex column depth incompatible with config.",
-            )
+        )
         # Do not allow overwriting existing columns.
         dbg.dassert_not_in(
             self._out_col_group,
@@ -663,7 +663,7 @@ class MultiindexUnsupervisedSkLearnModel(
             "Desired column names already present in dataframe.",
         )
         df = df_in[self._in_col_group].copy()
-        idx = df.index
+        df.index
         df = df_in.copy()
         # Determine index where no x_vars are NaN.
         x_vars = df.columns.tolist()
@@ -709,7 +709,7 @@ class MultiindexUnsupervisedSkLearnModel(
         return {"df_out": df_out}
 
     def _handle_nans(
-            self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
     ) -> None:
         if self._nan_mode == "raise":
             if idx.shape[0] != non_nan_idx.shape[0]:
@@ -719,6 +719,7 @@ class MultiindexUnsupervisedSkLearnModel(
             pass
         else:
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
+
 
 class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
     """
