@@ -7,7 +7,7 @@ import helpers.dbg as dbg
 import helpers.io_ as hio
 
 
-def draw(dag: dtf.DAG) -> IPython.core.display.Image:
+def plot(dag: dtf.DAG) -> IPython.core.display.Image:
     """
     Render DAG in a notebook.
     """
@@ -16,7 +16,7 @@ def draw(dag: dtf.DAG) -> IPython.core.display.Image:
     return image
 
 
-def save(dag: dtf.DAG, file_name: str = "graph.png") -> str:
+def save_plot(dag: dtf.DAG, file_name: str = "graph.png") -> str:
     """
     Visualize DAG and save it to a file.
     """

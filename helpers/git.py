@@ -12,6 +12,7 @@ import re
 from typing import Dict, List, Optional, Tuple
 
 import helpers.dbg as dbg
+import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 
 _LOG = logging.getLogger(__name__)
@@ -596,6 +597,9 @@ def _check_files(files: List[str]) -> List[str]:
 def _get_files(
     dir_name: str, cmd: str, remove_files_non_present: bool
 ) -> List[str]:
+    """
+    Execute a command `cmd` in `dir_name` and return the output.
+    """
     cd_cmd = "cd %s && " % dir_name
     _, output = hsinte.system_to_string(cd_cmd + cmd)
     #
@@ -664,7 +668,7 @@ def get_previous_committed_files(
 
 
 def get_modified_files_in_branch(
-    dir_name: str, dst_branch: str, remove_files_non_present: bool = True
+    dst_branch: str, dir_name: str = ".", remove_files_non_present: bool = True
 ) -> List[str]:
     """
     Return files modified in the current branch with respect to `dst_branch`.
@@ -682,6 +686,36 @@ def get_modified_files_in_branch(
     cmd = "git diff --name-only %s..." % dst_branch
     files = _get_files(dir_name, cmd, remove_files_non_present)
     return files
+
+
+def get_summary_files_in_branch(
+    dst_branch: str, dir_name: str = ".",
+):
+    """
+    Report summary of files in the current branch with respect to `dst_branch'.
+    
+    Same interface as `get_modified_files_in_branch`.
+    """
+    # File types (from https://git-scm.com/docs/git-diff).
+    file_types = [
+        ("added", "A"),
+        ("copied", "C"),
+        ("deleted", "D"),
+        ("modified", "M"),
+        ("renamed", "R"),
+        ("type changed", "T"),
+        ("unmerged", "U"),
+        ("unknown", "X"),
+        ("broken pairing", "B")]
+    res = ""
+    for tag, diff_type in file_types:
+        cmd = f"git diff --diff-filter={diff_type} --name-only {dst_branch}..."
+        files = _get_files(dir_name, cmd, remove_files_non_present=False)
+        if files:
+            res += f"# {tag}: {len(files)}\n"
+            res += hprint.indent("\n".join(files)) + "\n"
+    res = res.rstrip("\n")
+    return res
 
 
 # #############################################################################

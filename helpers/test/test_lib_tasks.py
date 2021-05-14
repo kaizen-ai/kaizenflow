@@ -378,7 +378,7 @@ class TestLibTasksRemoveSpaces1(hut.TestCase):
                 --entrypoint bash \
                 user_space
             """
-        act = ltasks._remove_spaces(txt)
+        act = ltasks._to_single_line_cmd(txt)
         exp = (
             "IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev"
             " docker-compose --file"

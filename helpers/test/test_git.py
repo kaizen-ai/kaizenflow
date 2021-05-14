@@ -205,6 +205,14 @@ class Test_git_modified_files1(hut.TestCase):
         func_call = "git.get_previous_committed_files()"
         _execute_func_call(func_call)
 
+    def test_get_modified_files_in_branch1(self) -> None:
+        func_call = "git.get_modified_files_in_branch('master')"
+        _execute_func_call(func_call)
+
+    def test_get_summary_files_in_branch1(self) -> None:
+        func_call = "git.get_summary_files_in_branch('master')"
+        _execute_func_call(func_call)
+
     def test_git_log1(self) -> None:
         func_call = "git.git_log()"
         _execute_func_call(func_call)
