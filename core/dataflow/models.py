@@ -1355,8 +1355,9 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
             "Dataframe multiindex column depth incompatible with config.",
         )
         dbg.dassert_eq(
-            df_in.columns.nlevels, 2,
-            "Only multiindices of depth=2 currently supported."
+            df_in.columns.nlevels,
+            2,
+            "Only multiindices of depth=2 currently supported.",
         )
         df = df_in[self._in_col_group].copy()
         self._leaf_cols = df.columns.tolist()
@@ -1398,8 +1399,9 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
             "Dataframe multiindex column depth incompatible with config.",
         )
         dbg.dassert_eq(
-            df_in.columns.nlevels, 2,
-            "Only multiindices of depth=2 currently supported."
+            df_in.columns.nlevels,
+            2,
+            "Only multiindices of depth=2 currently supported.",
         )
         df = df_in[self._in_col_group].copy()
         self._leaf_cols = df.columns.tolist()
@@ -1410,7 +1412,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
             dbg.dassert_in(
                 col,
                 self._taus.keys(),
-                msg=f"No `tau` for `col={col}` found. Check that model has been fit."
+                msg=f"No `tau` for `col={col}` found. Check that model has been fit.",
             )
             tau = self._taus[col]
             dbg.dassert(tau)
