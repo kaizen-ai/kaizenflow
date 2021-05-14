@@ -1353,7 +1353,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
             len(self._in_col_group),
             df_in.columns.nlevels - 1,
             "Dataframe multiindex column depth incompatible with config.",
-            )
+        )
         df = df_in[self._in_col_group].copy()
         self._leaf_cols = df.columns.tolist()
         idx = df.index
@@ -1362,9 +1362,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
         for col in self._leaf_cols:
             config = self._get_config(col=col, tau=self._tau)
             dag = self._get_dag(df[[col]], config)
-            df_out = dag.run_leq_node("drop_col", "fit")[
-                "df_out"
-            ]
+            df_out = dag.run_leq_node("drop_col", "fit")["df_out"]
             info[col] = extract_info(dag, ["fit"])
             if self._tau is None:
                 self._taus[col] = info[col]["compute_smooth_moving_average"][
@@ -1394,7 +1392,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
             len(self._in_col_group),
             df_in.columns.nlevels - 1,
             "Dataframe multiindex column depth incompatible with config.",
-            )
+        )
         df = df_in[self._in_col_group].copy()
         self._leaf_cols = df.columns.tolist()
         idx = df.index
@@ -1405,9 +1403,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
             dbg.dassert(tau)
             config = self._get_config(col=col, tau=tau)
             dag = self._get_dag(df[[col]], config)
-            df_out = dag.run_leq_node("drop_col", "predict")[
-                "df_out"
-            ]
+            df_out = dag.run_leq_node("drop_col", "predict")["df_out"]
             info[col] = extract_info(dag, ["predict"])
             df_out = pd.concat([df_out], axis=1, keys=[col])
             dfs.append(df_out)
@@ -1442,7 +1438,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
         self._info["fit"] = fit_state["_info['fit']"]
 
     def _get_config(
-            self, col: _COL_TYPE, tau: Optional[float] = None
+        self, col: _COL_TYPE, tau: Optional[float] = None
     ) -> cconfi.Config:
         """
         Generate a DAG config.
@@ -1468,8 +1464,8 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
                 "calculate_vol_pth_root": {
                     "cols": [
                         "vol",
-                         "vol_" + str(self._steps_ahead),
-                         "vol_" + str(self._steps_ahead) + "_hat",
+                        "vol_" + str(self._steps_ahead),
+                        "vol_" + str(self._steps_ahead) + "_hat",
                     ],
                     "col_mode": "replace_selected",
                 },
@@ -1481,13 +1477,13 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
                     "col_mode": "replace_selected",
                     "nan_mode": self._nan_mode,
                 },
-                "drop_col" : {
+                "drop_col": {
                     "method": "drop",
                     "method_kwargs": {
                         "columns": col,
                         "axis": 1,
-                    }
-                }
+                    },
+                },
             }
         )
         return config
@@ -1534,10 +1530,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
         tail_nid = self._append(dag, tail_nid, node)
         # Drop input column.
         nid = "drop_col"
-        node = DataframeMethodRunner(
-            nid,
-            **config[nid].to_dict()
-        )
+        node = DataframeMethodRunner(nid, **config[nid].to_dict())
         self._append(dag, tail_nid, node)
         return dag
 
