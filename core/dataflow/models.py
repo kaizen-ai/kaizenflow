@@ -1310,6 +1310,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
         PerformanceWarning: indexing past lexsort depth may impact performance.
         ```
     TODO(*): Add tests.
+    TODO(*): Ensure new column names do not collide with existing ones.
     """
 
     def __init__(
@@ -1318,6 +1319,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
         in_col_group: Tuple[_COL_TYPE],
         steps_ahead: int,
         p_moment: float = 2,
+        out_col_prefix: Optional[str] = None,
         tau: Optional[float] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
@@ -1334,6 +1336,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
         super().__init__(nid)
         dbg.dassert_isinstance(in_col_group, tuple)
         self._in_col_group = in_col_group
+        self._out_col_prefix = out_col_prefix or ""
         #
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(1, p_moment)
@@ -1466,11 +1469,11 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
             {
                 "calculate_vol_pth_power": {
                     "cols": [col],
-                    "col_rename_func": lambda x: "vol",
+                    "col_rename_func": lambda x: self._out_col_prefix + "vol",
                     "col_mode": "merge_all",
                 },
                 "compute_smooth_moving_average": {
-                    "col": ["vol"],
+                    "col": [self._out_col_prefix + "vol"],
                     "steps_ahead": self._steps_ahead,
                     "tau": tau,
                     "col_mode": "merge_all",
@@ -1478,15 +1481,15 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
                 },
                 "calculate_vol_pth_root": {
                     "cols": [
-                        "vol",
-                        "vol_" + str(self._steps_ahead),
-                        "vol_" + str(self._steps_ahead) + "_hat",
+                        self._out_col_prefix + "vol",
+                        self._out_col_prefix + "vol_" + str(self._steps_ahead),
+                        self._out_col_prefix + "vol_" + str(self._steps_ahead) + "_hat",
                     ],
                     "col_mode": "replace_selected",
                 },
                 "demodulate_using_vol_pred": {
                     "signal_cols": [col],
-                    "volatility_col": "vol_" + str(self._steps_ahead) + "_hat",
+                    "volatility_col": self._out_col_prefix + "vol_" + str(self._steps_ahead) + "_hat",
                     "signal_steps_ahead": 0,
                     "volatility_steps_ahead": self._steps_ahead,
                     "col_mode": "replace_selected",
