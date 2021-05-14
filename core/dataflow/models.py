@@ -24,6 +24,7 @@ from core.dataflow.core import DAG, Node
 from core.dataflow.nodes import (
     ColModeMixin,
     ColumnTransformer,
+    DataframeMethodRunner,
     FitPredictNode,
     ReadDataFromDf,
     get_df_info_as_string,
@@ -1309,7 +1310,6 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
         self,
         nid: str,
         in_col_group: Tuple[_COL_TYPE],
-        out_col_group: Tuple[_COL_TYPE],
         steps_ahead: int,
         p_moment: float = 2,
         tau: Optional[float] = None,
@@ -1327,14 +1327,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
         """
         super().__init__(nid)
         dbg.dassert_isinstance(in_col_group, tuple)
-        dbg.dassert_isinstance(out_col_group, tuple)
-        dbg.dassert_eq(
-            len(in_col_group),
-            len(out_col_group),
-            msg="Column hierarchy depth must be preserved.",
-        )
         self._in_col_group = in_col_group
-        self._out_col_group = out_col_group
         #
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(1, p_moment)
@@ -1355,12 +1348,6 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
             df_in.columns.nlevels - 1,
             "Dataframe multiindex column depth incompatible with config.",
             )
-        # Do not allow overwriting existing columns.
-        dbg.dassert_not_in(
-            self._out_col_group,
-            df_in.columns,
-            "Desired column names already present in dataframe.",
-        )
         df = df_in[self._in_col_group].copy()
         self._leaf_cols = df.columns.tolist()
         idx = df.index
@@ -1369,7 +1356,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
         for col in self._leaf_cols:
             config = self._get_config(col=col, tau=self._tau)
             dag = self._get_dag(df[[col]], config)
-            df_out = dag.run_leq_node("demodulate_using_vol_pred", "fit")[
+            df_out = dag.run_leq_node("drop_col", "fit")[
                 "df_out"
             ]
             info[col] = extract_info(dag, ["fit"])
@@ -1382,7 +1369,15 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
             df_out = pd.concat([df_out], axis=1, keys=[col])
             dfs.append(df_out)
         df_out = pd.concat(dfs, axis=1)
-        df_out = df_out.reindex(df_in.index)
+        df_out = df_out.reindex(idx)
+        df_out = df_out.swaplevel(i=0, j=1, axis=1)
+        df_out.sort_index(axis=1, level=0, inplace=True)
+        df_out = df_out.merge(
+            df_in,
+            how="outer",
+            left_index=True,
+            right_index=True,
+        )
         # TODO(*): merge with input.
         self._set_info("fit", info)
         return {"df_out": df_out}
@@ -1455,22 +1450,28 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
                     "nan_mode": self._nan_mode,
                 },
                 "calculate_vol_pth_root": {
-                    "cols": ["vol"
-                        self._vol_cols[col],
-                        self._fwd_vol_cols[col],
-                        self._fwd_vol_cols_hat[col],
+                    "cols": [
+                        "vol",
+                         "vol_" + str(self._steps_ahead),
+                         "vol_" + str(self._steps_ahead) + "_hat",
                     ],
                     "col_mode": "replace_selected",
                 },
                 "demodulate_using_vol_pred": {
                     "signal_cols": [col],
-                    "volatility_col": self._fwd_vol_cols_hat[col],
+                    "volatility_col": "vol_" + str(self._steps_ahead) + "_hat",
                     "signal_steps_ahead": 0,
                     "volatility_steps_ahead": self._steps_ahead,
-                    "col_rename_func": self._col_rename_func,
                     "col_mode": "replace_selected",
                     "nan_mode": self._nan_mode,
                 },
+                "drop_col" : {
+                    "method": "drop",
+                    "method_kwargs": {
+                        "columns": col,
+                        "axis": 1,
+                    }
+                }
             }
         )
         return config
@@ -1513,6 +1514,13 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
         nid = "demodulate_using_vol_pred"
         node = VolatilityModulator(
             nid, mode="demodulate", **config[nid].to_dict()
+        )
+        tail_nid = self._append(dag, tail_nid, node)
+        # Drop input column.
+        nid = "drop_col"
+        node = DataframeMethodRunner(
+            nid,
+            **config[nid].to_dict()
         )
         self._append(dag, tail_nid, node)
         return dag
