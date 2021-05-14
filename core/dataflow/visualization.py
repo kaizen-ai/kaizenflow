@@ -16,9 +16,9 @@ def draw(dag: dtf.DAG) -> IPython.core.display.Image:
     return image
 
 
-def save(dag: dtf.DAG, file_name: str = "graph.png") -> str:
+def draw_to_file(dag: dtf.DAG, file_name: str = "graph.png") -> str:
     """
-    Visualize DAG and save it to a file.
+    Save DAG rendering to a file.
     """
     agraph = _extract_agraph_from_dag(dag)
     # Save to file.

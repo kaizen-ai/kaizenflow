@@ -214,6 +214,9 @@ class TestDryRunTasks2(_TestClassHelper):
     #     self._check_output(target)
 
     def test_git_branch_files(self) -> None:
+        # This test needs a reference to Git master branch.
+        git.fetch_origin_master_if_needed()
+        #
         target = "git_branch_files(ctx)"
         self._check_output(target)
 
@@ -257,9 +260,6 @@ class TestDryRunTasks2(_TestClassHelper):
         # The output depends on the client, so don't check it.
         self._check_output(target, check=False)
 
-    @pytest.mark.skipif(
-        hsinte.is_inside_ci(), reason="Disabled because of AmpTask1321"
-    )
     def test_lint2(self) -> None:
         target = "lint(ctx, branch=True)"
         # The output depends on the client, so don't check it.
@@ -378,7 +378,7 @@ class TestLibTasksRemoveSpaces1(hut.TestCase):
                 --entrypoint bash \
                 user_space
             """
-        act = ltasks._remove_spaces(txt)
+        act = ltasks._to_single_line_cmd(txt)
         exp = (
             "IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev"
             " docker-compose --file"
@@ -847,14 +847,14 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
         Exercise the code for:
         > invoke git_create_patch --mode="tar" --branch
         """
+        # This test needs a reference to Git master branch.
+        git.fetch_origin_master_if_needed()
+        #
         modified = True
         branch = False
         files = ""
         self._helper(modified, branch, files)
 
-    @pytest.mark.skipif(
-        hsinte.is_inside_ci(), reason="Disabled because of AmpTask1321"
-    )
     def test_tar_branch1(self) -> None:
         """
         Exercise the code for:
@@ -870,6 +870,9 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
         Exercise the code for:
         > invoke git_create_patch --mode="tar" --files "this file"
         """
+        # This test needs a reference to Git master branch.
+        git.fetch_origin_master_if_needed()
+        #
         ctx = _build_mock_context_returning_ok()
         mode = "tar"
         modified = False
@@ -884,6 +887,9 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
 
         In this case one needs to specify --branch or --modified.
         """
+        # This test needs a reference to Git master branch.
+        git.fetch_origin_master_if_needed()
+        #
         ctx = _build_mock_context_returning_ok()
         mode = "diff"
         modified = False

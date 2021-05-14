@@ -24,7 +24,6 @@ from helpers.lib_tasks import (
     docker_tag_local_image_as_dev,
     find_test_class,
     find_test_decorator,
-    get_amp_files,
     gh_create_pr,
     gh_issue_title,
     gh_workflow_list,

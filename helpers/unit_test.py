@@ -598,6 +598,7 @@ def set_pd_default_values() -> None:
 # #############################################################################
 
 
+# TODO(gp): -> txt: str
 def _remove_spaces(obj: Any) -> str:
     """
     Remove spaces to implement fuzzy matching.
@@ -619,6 +620,28 @@ def _remove_spaces(obj: Any) -> str:
     return string
 
 
+def _remove_lines(txt: str) -> str:
+    """
+    Remove lines of separating characters long at least 20 characters.
+    """
+    txt_tmp : List[str] = []
+    for line in txt.split("\n"):
+        if re.match(r"^\s*[\#\-><=]{20,}\s*$", line):
+            continue
+        txt_tmp.append(line)
+    return "\n".join(txt_tmp)
+
+
+def _fuzzy_clean(txt: str) -> str:
+    """
+    Remove irrelevant artifacts to make string comparison less strict.
+    """
+    txt = _remove_spaces(txt)
+    txt = _remove_lines(txt)
+    return txt
+
+
+# TODO(gp): Use the one in hprint.
 def _to_pretty_string(obj: str) -> str:
     if isinstance(obj, dict):
         ret = pprint.pformat(obj)
@@ -644,7 +667,7 @@ def _assert_equal(
     vimdiff.
 
     :param fuzzy_match: ignore differences in spaces and end of lines (see
-      `_remove_spaces`)
+      `_fuzzy_clean`)
     :return: whether `actual` and `expected` are equal, if `abort_on_error` is False
     """
     _LOG.debug(
@@ -664,8 +687,8 @@ def _assert_equal(
     expected_orig = expected
     if fuzzy_match:
         _LOG.debug("# Using fuzzy match")
-        actual = _remove_spaces(actual)
-        expected = _remove_spaces(expected)
+        actual = _fuzzy_clean(actual)
+        expected = _fuzzy_clean(expected)
     # Check.
     _LOG.debug("The values being compared are:")
     _LOG.debug("act=\n'%s'", actual)

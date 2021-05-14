@@ -35,15 +35,18 @@ def _git_add(file_name: str) -> None:
         )
 
 
-# TODO(gp): -> TestTestCase1
-class TestTestCase(hut.TestCase):
+class TestTestCase1(hut.TestCase):
+    """
+    Test free-standing functions in unit_test.py
+    """
+
     def test_get_input_dir1(self) -> None:
         """
         Test hut.get_input_dir().
         """
         act = self.get_input_dir()
         act = hut.purify_txt_from_client(act)
-        exp = "$GIT_ROOT/helpers/test/TestTestCase.test_get_input_dir1/input"
+        exp = "$GIT_ROOT/helpers/test/TestTestCase1.test_get_input_dir1/input"
         self.assertEqual(act, exp)
 
     def test_get_input_dir2(self) -> None:
@@ -61,7 +64,7 @@ class TestTestCase(hut.TestCase):
         """
         act = self.get_output_dir()
         act = hut.purify_txt_from_client(act)
-        exp = "$GIT_ROOT/helpers/test/TestTestCase.test_get_output_dir1/output"
+        exp = "$GIT_ROOT/helpers/test/TestTestCase1.test_get_output_dir1/output"
         self.assertEqual(act, exp)
 
     def test_get_scratch_space1(self) -> None:
@@ -71,7 +74,7 @@ class TestTestCase(hut.TestCase):
         act = self.get_scratch_space()
         act = hut.purify_txt_from_client(act)
         exp = (
-            "$GIT_ROOT/helpers/test/TestTestCase.test_get_scratch_space1"
+            "$GIT_ROOT/helpers/test/TestTestCase1.test_get_scratch_space1"
             "/tmp.scratch"
         )
         self.assertEqual(act, exp)
@@ -83,6 +86,26 @@ class TestTestCase(hut.TestCase):
         act = hut.purify_txt_from_client(act)
         exp = "$GIT_ROOT/helpers/test/test_class.test_method/tmp.scratch"
         self.assertEqual(act, exp)
+
+    def _remove_lines1(self) -> None:
+        txt = r"""
+        #######################################################################
+        * Failed assertion *
+        'in1' not in '{'in1': 'out1'}'
+        ##
+        `in1` already receiving input from node n1
+        #########################################################################
+        ###################
+        """
+        act = hut._remove_spaces(txt)
+        exp = r"""
+        * Failed assertion *
+        'in1' not in '{'in1': 'out1'}'
+        ##
+        `in1` already receiving input from node n1
+        ###################
+        """
+        self.assert_equal(act, exp, fuzzy_match=False)
 
     def test_assert_equal1(self) -> None:
         actual = "hello world"
@@ -113,7 +136,7 @@ class TestTestCase(hut.TestCase):
         # $TMP_DIR/tmp_diff.sh
         num_lines=1
         '''
-        vimdiff helpers/test/TestTestCase.test_assert_not_equal2/tmp.actual.txt helpers/test/TestTestCase.test_assert_not_equal2/tmp.expected.txt
+        vimdiff helpers/test/TestTestCase1.test_assert_not_equal2/tmp.actual.txt helpers/test/TestTestCase1.test_assert_not_equal2/tmp.expected.txt
         '''
         """
         # pylint: enable=line-too-long
@@ -233,15 +256,25 @@ completed       success Lint    Slow_tests
 
 
 class TestCheckString1(hut.TestCase):
-    """
-    Note that not all the tests pass with `--update_outcomes`, since some test
-    exercise the logic in `--update_outcomes` itself.
-    """
+
+    @staticmethod
+    def _to_skip() -> bool:
+        """
+        We can't use @pytest.mark.skipif(hut.get_update_tests) since pytest
+        decides which tests need to be run before the variable is actually set.
+        """
+        to_skip = False
+        if hut.get_update_tests():
+            _LOG.warning("Skip this test since it exercises the logic for --update_outcomes")
+            to_skip = True
+        return to_skip
 
     def test_check_string1(self) -> None:
         """
         Compare the actual value to a matching golden outcome.
         """
+        if self._to_skip():
+            return
         act = "hello world"
         golden_outcome = "hello world"
         #
@@ -265,6 +298,8 @@ class TestCheckString1(hut.TestCase):
         """
         Compare the actual value to a mismatching golden outcome.
         """
+        if self._to_skip():
+            return
         act = "hello world"
         golden_outcome = "hello world2"
         #
@@ -290,6 +325,8 @@ class TestCheckString1(hut.TestCase):
         """
         Compare the actual value to a mismatching golden outcome and udpate it.
         """
+        if self._to_skip():
+            return
         act = "hello world"
         golden_outcome = "hello world2"
         # Force updating the golden outcomes.
@@ -321,6 +358,8 @@ class TestCheckString1(hut.TestCase):
         """
         Like test_check_string_not_equal1() but raising the exception.
         """
+        if self._to_skip():
+            return
         act = "hello world"
         golden_outcome = "hello world2"
         #
@@ -341,6 +380,8 @@ class TestCheckString1(hut.TestCase):
         """
         The golden outcome was missing and was added.
         """
+        if self._to_skip():
+            return
         act = "hello world"
         # Force updating the golden outcomes.
         self.mock_update_tests()

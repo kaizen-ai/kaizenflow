@@ -26,7 +26,7 @@ class NodeInterface(abc.ABC):
     accessors and, importantly, a unique identifier (`nid`) for building
     graphs of nodes. The `nid` is also useful for config purposes.
 
-    For nodes requiring fit/transform, we can subclass / provide a mixin with
+    For nodes requiring fit/transform, we can subclass/provide a mixin with
     the desired methods.
     """
 
@@ -62,7 +62,7 @@ class NodeInterface(abc.ABC):
     @staticmethod
     def _init_validation_helper(items: Optional[List[str]]) -> List[str]:
         """
-        Ensure that items are valid.
+        Ensure that items are valid and returns the validated items.
         """
         if items is None:
             return []
@@ -96,17 +96,17 @@ class Node(NodeInterface):
         Return the value of output `name` for the requested `method`.
         """
         dbg.dassert_in(
-            name,
-            self.output_names,
-            "%s is not an output of node %s!",
-            name,
-            self.nid,
-        )
-        dbg.dassert_in(
             method,
             self._output_vals.keys(),
             "%s of node %s has no output!",
             method,
+            self.nid,
+        )
+        dbg.dassert_in(
+            name,
+            self.output_names,
+            "%s is not an output of node %s!",
+            name,
             self.nid,
         )
         return self._output_vals[method][name]
@@ -236,7 +236,7 @@ class DAG:
                 _LOG.warning("Removing nid=%s", node.nid)
                 self.remove_node(node.nid)
         else:
-            dbg.dfatal("mode=%s", self.mode)
+            dbg.dfatal("Invalid mode='%s'", self.mode)
         # Add node.
         self._dag.add_node(node.nid, stage=node)
 
@@ -280,22 +280,22 @@ class DAG:
         # Ensure that parent node belongs to DAG (through `get_node` call).
         if isinstance(parent, tuple):
             parent_nid, parent_out = parent
-            dbg.dassert_in(parent_out, self.get_node(parent_nid).output_names)
         else:
             parent_nid = parent
             parent_out = hlist.assert_single_element_and_return(
                 self.get_node(parent_nid).output_names
             )
+        dbg.dassert_in(parent_out, self.get_node(parent_nid).output_names)
         # Automatically infer input name when the child has only one input.
         # Ensure that child node belongs to DAG (through `get_node` call).
         if isinstance(child, tuple):
             child_nid, child_in = child
-            dbg.dassert_in(child_in, self.get_node(child_nid).input_names)
         else:
             child_nid = child
             child_in = hlist.assert_single_element_and_return(
                 self.get_node(child_nid).input_names
             )
+        dbg.dassert_in(child_in, self.get_node(child_nid).input_names)
         # Ensure that `child_in` is not already hooked up to an output.
         for nid in self._dag.predecessors(child_nid):
             dbg.dassert_not_in(
@@ -314,9 +314,7 @@ class DAG:
         if not networ.is_directed_acyclic_graph(self._dag):
             self._dag.remove_edge(parent_nid, child_nid)
             dbg.dfatal(
-                "Creating edge {} -> {} introduces a cycle!".format(
-                    parent_nid, child_nid
-                )
+                f"Creating edge {parent_nid} -> {child_nid} introduces a cycle!"
             )
 
     def get_sources(self) -> List[str]:
