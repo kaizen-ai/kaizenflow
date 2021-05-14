@@ -824,5 +824,14 @@ def git_add_update(
 def fetch_origin_master_if_needed():
     if hsinte.is_inside_ci():
         _LOG.warning("Running inside CI so fetching master")
+        # See AmpTask1321 and AmpTask1338 for details.
         cmd = "git fetch origin master:refs/remotes/origin/master"
+        hsinte.system(cmd)
+        cmd = "git branch --track master origin/master"
+        hsinte.system(cmd)
+        cmd = "git branch -a"
+        # * (HEAD detached at pull/1337/merge)
+        # master
+        # remotes/origin/master
+        # remotes/pull/1337/merge
         hsinte.system(cmd)
