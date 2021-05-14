@@ -402,7 +402,7 @@ class MultivariateNormalGenerator(DataSource):
         # Cumulatively sum to generate a price series (implicitly assumes the
         # returns are log returns; at small enough scales and short enough
         # times this is practically interchangeable with percentage returns).
-        prices = rets.cumsum()
+        prices = 100 + rets.cumsum()
         prices = prices.rename(columns=lambda x: "MN" + str(x))
         # Use constant volume (for now).
         volume = pd.DataFrame(
