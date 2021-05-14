@@ -1384,27 +1384,37 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
+        dbg.dassert_eq(
+            len(self._in_col_group),
+            df_in.columns.nlevels - 1,
+            "Dataframe multiindex column depth incompatible with config.",
+            )
+        df = df_in[self._in_col_group].copy()
+        self._leaf_cols = df.columns.tolist()
+        idx = df.index
         info = collections.OrderedDict()
         dfs = []
-        for col in self._fit_cols:
-            dbg.dassert_not_in(self._vol_cols[col], df_in.columns)
+        for col in self._leaf_cols:
             tau = self._taus[col]
             dbg.dassert(tau)
             config = self._get_config(col=col, tau=tau)
-            dag = self._get_dag(df_in[[col]], config)
-            df_out = dag.run_leq_node("demodulate_using_vol_pred", "predict")[
+            dag = self._get_dag(df[[col]], config)
+            df_out = dag.run_leq_node("drop_col", "predict")[
                 "df_out"
             ]
             info[col] = extract_info(dag, ["predict"])
+            df_out = pd.concat([df_out], axis=1, keys=[col])
             dfs.append(df_out)
         df_out = pd.concat(dfs, axis=1)
-        df_out = self._apply_col_mode(
-            df_in.drop(df_out.columns.intersection(df_in.columns), 1),
-            df_out,
-            cols=self._fit_cols,
-            col_mode=self._col_mode,
+        df_out = df_out.reindex(idx)
+        df_out = df_out.swaplevel(i=0, j=1, axis=1)
+        df_out.sort_index(axis=1, level=0, inplace=True)
+        df_out = df_out.merge(
+            df_in,
+            how="outer",
+            left_index=True,
+            right_index=True,
         )
-        df_out = df_out.reindex(df_in.index)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
