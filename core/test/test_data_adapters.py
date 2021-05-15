@@ -212,11 +212,11 @@ if True:
             self.check_string(str_res)
 
     class TestTransformFromGluonForecasts(hut.TestCase):
-
         def test_transform1(self) -> None:
             forecasts = TestTransformFromGluonForecasts._get_mock_forecasts()
             df = adpt.transform_from_gluon_forecasts(forecasts)
             self.check_string(df.to_string())
+
         @staticmethod
         def _get_mock_forecasts(
             n_traces: int = 3,
@@ -253,11 +253,11 @@ class TestTransformToSklean(hut.TestCase):
 
 
 class TestTransformFromSklean(hut.TestCase):
-
     def test_transform1(self) -> None:
         sklearn_data = TestTransformFromSklean._get_sklearn_data()
         transformed_df = adpt.transform_from_sklearn(*sklearn_data)
         self.check_string(transformed_df.to_string())
+
     @staticmethod
     def _get_sklearn_data() -> Tuple[pd.Index, pd.DataFrame, pd.DataFrame]:
         np.random.seed(42)

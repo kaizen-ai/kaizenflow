@@ -41,7 +41,6 @@ class Test_set_weekends_to_nan(hut.TestCase):
 
 
 class Test_compute_inverse_volatility_weights(hut.TestCase):
-
     def test1(self) -> None:
         """
         Test for a clean input.
@@ -87,6 +86,7 @@ class Test_compute_inverse_volatility_weights(hut.TestCase):
         weights = fin.compute_inverse_volatility_weights(sample)
         output_txt = self._get_output_txt(sample, weights)
         self.check_string(output_txt)
+
     @staticmethod
     def _get_sample(seed: int) -> pd.DataFrame:
         mean = pd.Series([1, 2])
@@ -109,7 +109,6 @@ class Test_compute_inverse_volatility_weights(hut.TestCase):
 
 
 class Test_compute_prices_from_rets(hut.TestCase):
-
     def test1(self) -> None:
         sample = self._get_sample()
         sample["rets"] = fin.compute_ret_0(sample.price, mode="pct_change")
@@ -182,6 +181,7 @@ class Test_compute_prices_from_rets(hut.TestCase):
             sample.price, rets, "log_rets"
         )[-1]
         np.testing.assert_almost_equal(future_price_expected, future_price_actual)
+
     @staticmethod
     def _get_sample() -> pd.DataFrame:
         date_range = pd.date_range(start="2010-01-01", periods=40, freq="B")
@@ -191,7 +191,6 @@ class Test_compute_prices_from_rets(hut.TestCase):
 
 
 class Test_aggregate_log_rets(hut.TestCase):
-
     def test1(self) -> None:
         """
         Test for a clean input.
@@ -235,6 +234,7 @@ class Test_aggregate_log_rets(hut.TestCase):
         aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
         output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
         self.check_string(output_txt)
+
     @staticmethod
     def _get_sample(seed: int) -> pd.DataFrame:
         mean = pd.Series([1, 2])
@@ -263,7 +263,6 @@ class Test_aggregate_log_rets(hut.TestCase):
 
 
 class Test_compute_kratio(hut.TestCase):
-
     def test1(self) -> None:
         """
         Test for an clean input series.
@@ -283,6 +282,7 @@ class Test_compute_kratio(hut.TestCase):
         actual = fin.compute_kratio(series)
         expected = -0.85089
         np.testing.assert_almost_equal(actual, expected, decimal=3)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -296,12 +296,12 @@ class Test_compute_kratio(hut.TestCase):
 
 
 class Test_compute_drawdown(hut.TestCase):
-
     def test1(self) -> None:
         series = self._get_series(1)
         actual = fin.compute_drawdown(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -315,7 +315,6 @@ class Test_compute_drawdown(hut.TestCase):
 
 
 class Test_compute_time_under_water(hut.TestCase):
-
     def test1(self) -> None:
         series = Test_compute_time_under_water._get_series(42)
         drawdown = fin.compute_drawdown(series).rename("drawdown")
@@ -336,6 +335,7 @@ class Test_compute_time_under_water(hut.TestCase):
         )
         output = pd.concat([series, drawdown, time_under_water], axis=1)
         self.check_string(hut.convert_df_to_string(output, index=True))
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arma_process = sig_gen.ArmaProcess([], [])
@@ -347,7 +347,6 @@ class Test_compute_time_under_water(hut.TestCase):
 
 
 class Test_compute_turnover(hut.TestCase):
-
     def test1(self) -> None:
         """
         Test for default arguments.
@@ -390,6 +389,7 @@ class Test_compute_turnover(hut.TestCase):
         output_df = pd.concat([series, actual], axis=1)
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -403,7 +403,6 @@ class Test_compute_turnover(hut.TestCase):
 
 
 class Test_compute_average_holding_period(hut.TestCase):
-
     def test1(self) -> None:
         series = self._get_series_in_unit(seed=1)
         series[5:10] = np.nan
@@ -422,6 +421,7 @@ class Test_compute_average_holding_period(hut.TestCase):
         actual = fin.compute_average_holding_period(series, unit="M")
         expected = 0.05001
         np.testing.assert_almost_equal(actual, expected, decimal=3)
+
     @staticmethod
     def _get_series_in_unit(seed: int, freq: str = "D") -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -435,7 +435,6 @@ class Test_compute_average_holding_period(hut.TestCase):
 
 
 class Test_compute_bet_runs(hut.TestCase):
-
     def test1(self) -> None:
         positions = Test_compute_bet_runs._get_series(42)
         actual = fin.compute_bet_runs(positions)
@@ -499,6 +498,7 @@ class Test_compute_bet_runs(hut.TestCase):
         expected = pd.Series([1], index=[pd.Timestamp("2010-01-01")], dtype=float)
         actual = fin.compute_bet_runs(positions)
         pd.testing.assert_series_equal(actual, expected)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -512,7 +512,6 @@ class Test_compute_bet_runs(hut.TestCase):
 
 
 class Test_compute_bet_starts(hut.TestCase):
-
     def test1(self) -> None:
         positions = Test_compute_bet_starts._get_series(42)
         actual = fin.compute_bet_starts(positions)
@@ -609,6 +608,7 @@ class Test_compute_bet_starts(hut.TestCase):
         )
         actual = fin.compute_bet_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -622,7 +622,6 @@ class Test_compute_bet_starts(hut.TestCase):
 
 
 class Test_compute_bet_ends(hut.TestCase):
-
     def test1(self) -> None:
         positions = Test_compute_bet_ends._get_series(42)
         actual = fin.compute_bet_ends(positions)
@@ -719,6 +718,7 @@ class Test_compute_bet_ends(hut.TestCase):
         )
         actual = fin.compute_bet_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -732,7 +732,6 @@ class Test_compute_bet_ends(hut.TestCase):
 
 
 class Test_compute_signed_bet_lengths(hut.TestCase):
-
     def test1(self) -> None:
         positions = Test_compute_signed_bet_lengths._get_series(42)
         actual = fin.compute_signed_bet_lengths(positions)
@@ -871,6 +870,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
             f"{hut.convert_df_to_string(actual, index=True)}"
         )
         self.check_string(output_str)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -884,7 +884,6 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
 
 
 class Test_compute_returns_per_bet(hut.TestCase):
-
     def test1(self) -> None:
         """
         Test for clean input series.
@@ -946,6 +945,7 @@ class Test_compute_returns_per_bet(hut.TestCase):
             }
         )
         pd.testing.assert_series_equal(actual, expected)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arma_process = sig_gen.ArmaProcess([], [])

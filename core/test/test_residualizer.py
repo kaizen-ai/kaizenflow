@@ -163,7 +163,6 @@ class TestPcaFactorComputer1(hut.TestCase):
 
 
 class TestPcaFactorComputer2(hut.TestCase):
-
     def test1(self) -> None:
         num_samples = 100
         report_stats = False
@@ -183,6 +182,7 @@ class TestPcaFactorComputer2(hut.TestCase):
             num_samples, report_stats, stabilize_eig, window
         )
         self._check(comp, df_res)
+
     @staticmethod
     def _get_data(num_samples: int, report_stats: bool) -> Dict[str, Any]:
         # The desired covariance matrix.

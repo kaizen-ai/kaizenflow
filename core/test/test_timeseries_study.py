@@ -28,7 +28,6 @@ class TestTimeSeriesMinutelyStudy(hut.TestCase):
 
 
 class TestMapDictToDataframeTest1(hut.TestCase):
-
     def test1(self) -> None:
         stat_funcs = {
             "norm_": stats.apply_normality_test,
@@ -71,6 +70,7 @@ class TestMapDictToDataframeTest1(hut.TestCase):
         )
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])

@@ -24,7 +24,6 @@ if True:
     _LOG = logging.getLogger(__name__)
 
     class TestGeneratePredictions(hut.TestCase):
-
         @pytest.mark.skip("Disabled because of PTask2440")
         def test1(self) -> None:
             """
@@ -196,6 +195,7 @@ if True:
                 f"{prnt.frame('y/yhat')}\n{merged.to_string()}"
             )
             self.check_string(str_output)
+
         @staticmethod
         def _generate_test_series(
             random_state: int = 42,
