@@ -604,6 +604,8 @@ class MultiindexUnsupervisedSkLearnModel(
         """
         Specify the data and sklearn modeling parameters.
 
+        TODO(*): Factor out code shared with `UnsupervisedSkLearnModel`.
+
         :param nid: unique node id
         :param in_col_group: a group of cols specified by the first N - 1
             levels
