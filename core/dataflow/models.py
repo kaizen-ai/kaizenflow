@@ -605,6 +605,11 @@ class MultiindexUnsupervisedSkLearnModel(
         Specify the data and sklearn modeling parameters.
 
         :param nid: unique node id
+        :param in_col_group: a group of cols specified by the first N - 1
+            levels
+        :param out_col_group: new output col group names. This specifies the
+            names of the first N - 1 levels. The leaf_cols names remain the
+            same.
         :param model_func: an sklearn model
         :param model_kwargs: parameters to forward to the sklearn model
             (e.g., regularization constants)
