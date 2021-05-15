@@ -16,26 +16,6 @@ class Test_config1(hut.TestCase):
         config["hello"] = "world"
         self.check_string(str(config))
 
-    def _check_python(self, config: cfg.Config) -> str:
-        code = config.to_python()
-        _LOG.debug("code=%s", code)
-        config2 = cfg.Config.from_python(code)
-        #
-        act = []
-        act.append("config=%s" % str(config))
-        act.append("code=%s" % str(code))
-        act.append("config2=%s" % str(config2))
-        act = "\n".join(act)
-        self.assertEqual(str(config), str(config2))
-        return act
-
-    @staticmethod
-    def _get_flat_config1() -> cfg.Config:
-        config = cfg.Config()
-        config["hello"] = "world"
-        config["foo"] = [1, 2, 3]
-        return config
-
     def test_config2(self) -> None:
         """
         Test serialization / deserialization for flat config.
@@ -56,22 +36,6 @@ class Test_config1(hut.TestCase):
         self.assertEqual(config.get("nrows", None), 10000)
         #
         self.assertEqual(config.get("nrows_tmp", None), None)
-
-    @staticmethod
-    def _get_nested_config1() -> cfg.Config:
-        config = cfg.Config()
-        config["nrows"] = 10000
-        #
-        config.add_subconfig("read_data")
-        config["read_data"]["file_name"] = "foo_bar.txt"
-        config["read_data"]["nrows"] = 999
-        #
-        config["single_val"] = "hello"
-        #
-        config.add_subconfig("zscore")
-        config["zscore"]["style"] = "gaz"
-        config["zscore"]["com"] = 28
-        return config
 
     def test_get2(self) -> None:
         """
@@ -112,22 +76,6 @@ class Test_config1(hut.TestCase):
         #
         act = self._check_python(config)
         self.check_string(act)
-
-    @staticmethod
-    def _get_nested_config2() -> cfg.Config:
-        config = cfg.Config()
-        config["nrows"] = 10000
-        #
-        config_tmp = config.add_subconfig("read_data")
-        config_tmp["file_name"] = "foo_bar.txt"
-        config_tmp["nrows"] = 999
-        #
-        config["single_val"] = "hello"
-        #
-        config_tmp = config.add_subconfig("zscore")
-        config_tmp["style"] = "gaz"
-        config_tmp["com"] = 28
-        return config
 
     def test_config7(self) -> None:
         """
@@ -316,6 +264,58 @@ class Test_config1(hut.TestCase):
         # string = pprint.pformat(flattened, sort_dicts=False)
         string = pprint.pformat(flattened)
         self.check_string(string)
+
+    def _check_python(self, config: cfg.Config) -> str:
+        code = config.to_python()
+        _LOG.debug("code=%s", code)
+        config2 = cfg.Config.from_python(code)
+        #
+        act = []
+        act.append("config=%s" % str(config))
+        act.append("code=%s" % str(code))
+        act.append("config2=%s" % str(config2))
+        act = "\n".join(act)
+        self.assertEqual(str(config), str(config2))
+        return act
+
+    @staticmethod
+    def _get_flat_config1() -> cfg.Config:
+        config = cfg.Config()
+        config["hello"] = "world"
+        config["foo"] = [1, 2, 3]
+        return config
+
+    @staticmethod
+    def _get_nested_config1() -> cfg.Config:
+        config = cfg.Config()
+        config["nrows"] = 10000
+        #
+        config.add_subconfig("read_data")
+        config["read_data"]["file_name"] = "foo_bar.txt"
+        config["read_data"]["nrows"] = 999
+        #
+        config["single_val"] = "hello"
+        #
+        config.add_subconfig("zscore")
+        config["zscore"]["style"] = "gaz"
+        config["zscore"]["com"] = 28
+        return config
+
+    @staticmethod
+    def _get_nested_config2() -> cfg.Config:
+        config = cfg.Config()
+        config["nrows"] = 10000
+        #
+        config_tmp = config.add_subconfig("read_data")
+        config_tmp["file_name"] = "foo_bar.txt"
+        config_tmp["nrows"] = 999
+        #
+        config["single_val"] = "hello"
+        #
+        config_tmp = config.add_subconfig("zscore")
+        config_tmp["style"] = "gaz"
+        config_tmp["com"] = 28
+        return config
 
 
 class Test_subtract_config1(hut.TestCase):

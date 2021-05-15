@@ -1,7 +1,6 @@
 import logging
 import os
 
-
 import core.dataflow as dtf
 import helpers.unit_test as hut
 
@@ -9,7 +8,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_dataflow_core_visualization1(hut.TestCase):
-
     def test_draw1(self) -> None:
         """
         Build a DAG and draw it in IPython.

@@ -14,7 +14,8 @@ _LOG = logging.getLogger(__name__)
 def _crop_data_frame_in_batches(
     df: pd.DataFrame, chunksize: int
 ) -> List[pd.DataFrame]:
-    """Split df into chunks of chunksize.
+    """
+    Split df into chunks of chunksize.
 
     :param df: Dataframe to split
     :param chunksize: Number of rows in chunk
@@ -27,7 +28,8 @@ def _crop_data_frame_in_batches(
 
 
 class _StandardBars:
-    """Contains all of the logic to construct the standard bars from chapter 2.
+    """
+    Contains all of the logic to construct the standard bars from chapter 2.
     This class shouldn't be used directly. We have added functions to the
     package such as get_dollar_bars which will create an instance of this class
     and then construct the standard bars, to return to the user.
@@ -42,7 +44,8 @@ class _StandardBars:
         threshold: Union[float, int, pd.Series] = 50000,
         batch_size: int = 20000000,
     ):
-        """Construct the instance of the class.
+        """
+        Construct the instance of the class.
 
         :param metric: Type of imbalance bar to create. Example: dollar_imbalance.
         :param threshold:
@@ -77,7 +80,8 @@ class _StandardBars:
         to_csv: bool = False,
         output_path: Optional[str] = None,
     ) -> Union[pd.DataFrame, None]:
-        """Read csv file(s) or pd.DataFrame in batches and then constructs the
+        """
+        Read csv file(s) or pd.DataFrame in batches and then constructs the
         financial data structure in the form of a DataFrame. The csv file or
         DataFrame must have only 3 columns: date_time, price, & volume.
 
@@ -131,10 +135,32 @@ class _StandardBars:
         # Processed DataFrame is stored in .csv file, return None.
         return None
 
+    def run(self, data: Union[list, tuple, pd.DataFrame]) -> list:
+        """
+        Read a List, Tuple, or Dataframe and then constructs the financial data
+        structure in the form of a list. The List, Tuple, or DataFrame must
+        have only 3 attrs: date_time, price, & volume.
+
+        :param data: Dict or ndarray containing raw tick data
+        in the format[date_time, price, volume]
+        :return: Financial data structure
+        """
+        if isinstance(data, (list, tuple)):
+            values = data
+        elif isinstance(data, pd.DataFrame):
+            values = data.values
+        else:
+            raise ValueError("data is neither list nor tuple nor pd.DataFrame")
+        list_bars = self._extract_bars(data=values)
+        # Set flag to True: notify function to use cache.
+        self.flag = True
+        return list_bars
+
     def _batch_iterator(
         self, file_path_or_df: Union[str, Iterable[str], pd.DataFrame]
     ) -> Generator[pd.DataFrame, None, None]:
-        """Iterate over rows.
+        """
+        Iterate over rows.
 
         :param file_path_or_df: Path to the csv file(s) or Pandas Data Frame containing
         raw tick data in the format[date_time, price, volume]
@@ -165,28 +191,9 @@ class _StandardBars:
                 "iterable of strings, nor pd.DataFrame"
             )
 
-    def run(self, data: Union[list, tuple, pd.DataFrame]) -> list:
-        """Read a List, Tuple, or Dataframe and then constructs the financial
-        data structure in the form of a list. The List, Tuple, or DataFrame
-        must have only 3 attrs: date_time, price, & volume.
-
-        :param data: Dict or ndarray containing raw tick data
-        in the format[date_time, price, volume]
-        :return: Financial data structure
-        """
-        if isinstance(data, (list, tuple)):
-            values = data
-        elif isinstance(data, pd.DataFrame):
-            values = data.values
-        else:
-            raise ValueError("data is neither list nor tuple nor pd.DataFrame")
-        list_bars = self._extract_bars(data=values)
-        # Set flag to True: notify function to use cache.
-        self.flag = True
-        return list_bars
-
     def _read_first_row(self, file_path: str) -> None:
-        """Read first row of the CSV file.
+        """
+        Read first row of the CSV file.
 
         :param file_path: Path to the csv file containing raw tick data
         in the format[date_time, price, volume]
@@ -196,7 +203,8 @@ class _StandardBars:
         self._assert_csv(first_row)
 
     def _extract_bars(self, data: Union[list, tuple, np.ndarray]) -> list:
-        """Compile the various bars: dollar, volume, or tick, in a for loop.
+        """
+        Compile the various bars: dollar, volume, or tick, in a for loop.
 
         We did investigate the use of trying to solve this in a vectorised
         manner but found that a For loop worked well.
@@ -243,7 +251,9 @@ class _StandardBars:
         return list_bars
 
     def _reset_cache(self) -> None:
-        """Describe how cache should be reset when new bar is sampled."""
+        """
+        Describe how cache should be reset when new bar is sampled.
+        """
         self.open_price = None
         self.high_price, self.low_price = -np.inf, np.inf
         self.cum_statistics = {
@@ -255,7 +265,8 @@ class _StandardBars:
 
     @staticmethod
     def _assert_csv(test_batch: pd.DataFrame) -> None:
-        """Test that the csv file read has the format: date_time, price, and
+        """
+        Test that the csv file read has the format: date_time, price, and
         volume. If not then the user needs to create such a file. This format
         is in place to remove any unwanted overhead.
 
@@ -278,7 +289,8 @@ class _StandardBars:
             ) from ex
 
     def _update_high_low(self, price: float) -> Tuple[float, float]:
-        """Update the high and low prices using the current price.
+        """
+        Update the high and low prices using the current price.
 
         :param price: Current price
         :return: Updated high and low prices
@@ -302,10 +314,11 @@ class _StandardBars:
         low_price: float,
         list_bars: list,
     ) -> None:
-        """Construct a bar which has the following fields: date_time, open,
-        high, low, close, volume, cum_buy_volume, cum_ticks, cum_dollar_value.
-        These bars are appended to list_bars, which is later used to construct
-        the final bars DataFrame.
+        """
+        Construct a bar which has the following fields: date_time, open, high,
+        low, close, volume, cum_buy_volume, cum_ticks, cum_dollar_value. These
+        bars are appended to list_bars, which is later used to construct the
+        final bars DataFrame.
 
         :param date_time: Timestamp of the bar
         :param price: The current price
@@ -339,7 +352,8 @@ class _StandardBars:
         )
 
     def _apply_tick_rule(self, price: float) -> int:
-        """Apply the tick rule as defined on page 29 of Advances in Financial
+        """
+        Apply the tick rule as defined on page 29 of Advances in Financial
         Machine Learning.
 
         :param price: Price at time t
@@ -361,7 +375,8 @@ class _StandardBars:
     def _get_imbalance(
         self, price: float, signed_tick: int, volume: float
     ) -> float:
-        """Get the imbalance at a point in time, denoted as Theta_t.
+        """
+        Get the imbalance at a point in time, denoted as Theta_t.
 
         :param price: Price at t
         :param signed_tick: signed tick, using the tick rule
@@ -389,7 +404,8 @@ def get_dollar_bars(
     to_csv: bool = False,
     output_path: Optional[str] = None,
 ) -> pd.DataFrame:
-    """Create the dollar bars: date_time, open, high, low, close, volume,
+    """
+    Create the dollar bars: date_time, open, high, low, close, volume,
     cum_buy_volume, cum_ticks, cum_dollar_value.
 
     :param file_path_or_df: Path to the csv file(s) or Pandas Data Frame containing
@@ -407,7 +423,9 @@ def get_dollar_bars(
         metric="cum_dollar_value", threshold=threshold, batch_size=batch_size
     )
     dollar_bars = bars.batch_run(
-        file_path_or_df=file_path_or_df, to_csv=to_csv, output_path=output_path,
+        file_path_or_df=file_path_or_df,
+        to_csv=to_csv,
+        output_path=output_path,
     )
     return dollar_bars
 
@@ -419,7 +437,8 @@ def get_volume_bars(
     to_csv: bool = False,
     output_path: Optional[str] = None,
 ) -> pd.DataFrame:
-    """Create the volume bars: date_time, open, high, low, close, volume,
+    """
+    Create the volume bars: date_time, open, high, low, close, volume,
     cum_buy_volume, cum_ticks, cum_dollar_value.
 
     :param file_path_or_df: Path to the csv file(s) or Pandas Data Frame containing
@@ -437,7 +456,9 @@ def get_volume_bars(
         metric="cum_volume", threshold=threshold, batch_size=batch_size
     )
     volume_bars = bars.batch_run(
-        file_path_or_df=file_path_or_df, to_csv=to_csv, output_path=output_path,
+        file_path_or_df=file_path_or_df,
+        to_csv=to_csv,
+        output_path=output_path,
     )
     return volume_bars
 
@@ -449,7 +470,8 @@ def get_tick_bars(
     to_csv: bool = False,
     output_path: Optional[str] = None,
 ) -> pd.DataFrame:
-    """Create the tick bars: date_time, open, high, low, close, volume,
+    """
+    Create the tick bars: date_time, open, high, low, close, volume,
     cum_buy_volume, cum_ticks, cum_dollar_value.
 
     :param file_path_or_df: Path to the csv file(s) or Pandas Data Frame containing
@@ -467,6 +489,8 @@ def get_tick_bars(
         metric="cum_ticks", threshold=threshold, batch_size=batch_size
     )
     tick_bars = bars.batch_run(
-        file_path_or_df=file_path_or_df, to_csv=to_csv, output_path=output_path,
+        file_path_or_df=file_path_or_df,
+        to_csv=to_csv,
+        output_path=output_path,
     )
     return tick_bars

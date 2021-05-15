@@ -1,4 +1,5 @@
-"""Import as:
+"""
+Import as:
 
 import core.timeseries_study as tss
 """
@@ -19,7 +20,8 @@ _LOG = logging.getLogger(__name__)
 
 
 class _TimeSeriesAnalyzer:
-    """Perform basic study of time series, such as:
+    """
+    Perform basic study of time series, such as:
 
     - analysis at different time frequencies by resampling
     - plot time series for column
@@ -62,7 +64,9 @@ class _TimeSeriesAnalyzer:
         self,
         ax: Optional[mpl.axes.Axes] = None,
     ) -> Optional[mpl.figure.Figure]:
-        """Plot timeseries on its original time scale."""
+        """
+        Plot timeseries on its original time scale.
+        """
         func_name = intr.get_function_name()
         _LOG.debug(func_name)
         if func_name in self._disabled_methods:
@@ -89,7 +93,9 @@ class _TimeSeriesAnalyzer:
         last_n_years: Optional[int] = None,
         axes: Optional[List[mpl.axes.Axes]] = None,
     ) -> Optional[mpl.figure.Figure]:
-        """Resample yearly and then plot each year on a different plot."""
+        """
+        Resample yearly and then plot each year on a different plot.
+        """
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
             return
@@ -148,7 +154,9 @@ class _TimeSeriesAnalyzer:
     def boxplot_day_of_month(
         self, ax: Optional[mpl.axes.Axes] = None
     ) -> Optional[mpl.figure.Figure]:
-        """Plot the mean value of the timeseries for each day."""
+        """
+        Plot the mean value of the timeseries for each day.
+        """
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
             return
@@ -165,7 +173,9 @@ class _TimeSeriesAnalyzer:
     def boxplot_day_of_week(
         self, ax: Optional[mpl.axes.Axes] = None
     ) -> Optional[mpl.figure.Figure]:
-        """Plot the mean value of the timeseries for year."""
+        """
+        Plot the mean value of the timeseries for year.
+        """
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
             return
@@ -276,7 +286,8 @@ def map_dict_to_dataframe(
     add_prefix: bool = True,
     progress_bar: bool = True,
 ) -> pd.DataFrame:
-    """Apply and combine results of specified functions on a dict of series.
+    """
+    Apply and combine results of specified functions on a dict of series.
 
     :param dict_: dict of series to apply functions to.
     :param functions: dict with functions prefixes in keys and functions

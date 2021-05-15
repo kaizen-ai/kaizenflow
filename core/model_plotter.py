@@ -371,7 +371,7 @@ class ModelPlotter:
         for key in keys:
             plot.plot_holdings_diffs(pos[key], label=f"Holdings diffs {key}")
         plt.legend()
-    
+
     def plot_returns_and_predictions(
         self,
         keys: Optional[List[Any]] = None,

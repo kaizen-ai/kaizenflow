@@ -384,7 +384,8 @@ class ModelEvaluator:
         """
         Calculate positions from returns and predictions.
 
-        Rescales to target volatility over in-sample period (if provided).
+        Rescales to target volatility over in-sample period (if
+        provided).
         """
         position_dict = {}
         for key in tqdm(self.valid_keys):

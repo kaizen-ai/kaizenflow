@@ -1,8 +1,9 @@
 import logging
 import unittest
 
-import core.plotting as plot
 import pandas as pd
+
+import core.plotting as plot
 
 _LOG = logging.getLogger(__name__)
 

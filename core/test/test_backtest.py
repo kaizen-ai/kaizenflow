@@ -6,11 +6,6 @@ import pytest
 # TODO(gp): Remove after PTask2335.
 if True:
     import gluonts
-
-    # TODO(*): gluon needs these imports to work properly.
-    import gluonts.model.deepar as gmd  # isort: skip # noqa: F401 # pylint: disable=unused-import
-    import gluonts.model.predictor as gmp  # isort: skip # noqa: F401 # pylint: disable=unused-import
-    import gluonts.trainer as gt  # isort: skip # noqa: F401 # pylint: disable=unused-import
     import mxnet
     import numpy as np
     import pandas as pd
@@ -21,35 +16,14 @@ if True:
     import helpers.printing as prnt
     import helpers.unit_test as hut
 
+    # TODO(*): gluon needs these imports to work properly.
+    import gluonts.model.deepar as gmd  # isort: skip # noqa: F401 # pylint: disable=unused-import
+    import gluonts.model.predictor as gmp  # isort: skip # noqa: F401 # pylint: disable=unused-import
+    import gluonts.trainer as gt  # isort: skip # noqa: F401 # pylint: disable=unused-import
+
     _LOG = logging.getLogger(__name__)
 
     class TestGeneratePredictions(hut.TestCase):
-        @staticmethod
-        def _generate_test_series(
-            random_state: int = 42,
-            n_periods: int = 20,
-            ar: Iterable[float] = np.array([0.462, -0.288]),
-            ma: Iterable[float] = np.array([0.01]),
-        ) -> np.array:
-            return sig_gen._generate_arima_sample(
-                random_state=random_state, n_periods=n_periods, ar=ar, ma=ma
-            )
-
-        @staticmethod
-        def _generate_input_data(
-            num_x_vars: int,
-            n_periods: int = 20,
-            base_random_state: int = 0,
-            shift: int = 1,
-        ) -> pd.DataFrame:
-            return sig_gen.generate_arima_signal_and_response(
-                "2010-01-01",
-                "T",
-                n_periods,
-                num_x_vars,
-                base_random_state=base_random_state,
-                shift=shift,
-            )
 
         @pytest.mark.skip("Disabled because of PTask2440")
         def test1(self) -> None:
@@ -138,7 +112,9 @@ if True:
         @pytest.mark.skip("Disabled because of PTask2440")
         def test3(self) -> None:
             """
-            Generate y from a shift of an ARIMA series. Ignore x.
+            Generate y from a shift of an ARIMA series.
+
+            Ignore x.
             """
             mxnet.random.seed(0, ctx="all")
             df = TestGeneratePredictions._generate_input_data(
@@ -151,7 +127,9 @@ if True:
             trainer = gluonts.trainer.Trainer(epochs=1)
             prediction_length = 3
             estimator = gluonts.model.deepar.DeepAREstimator(
-                prediction_length=prediction_length, trainer=trainer, freq="T",
+                prediction_length=prediction_length,
+                trainer=trainer,
+                freq="T",
             )
             predictor = estimator.train(train_ts)
             #
@@ -177,7 +155,9 @@ if True:
         @pytest.mark.skip("Disabled because of PTask2440")
         def test4(self) -> None:
             """
-            Generate y using `m4_hourly` Gluon dataset. No `x_vars`.
+            Generate y using `m4_hourly` Gluon dataset.
+
+            No `x_vars`.
             """
             mxnet.random.seed(0, ctx="all")
             train_length = 500
@@ -216,3 +196,29 @@ if True:
                 f"{prnt.frame('y/yhat')}\n{merged.to_string()}"
             )
             self.check_string(str_output)
+        @staticmethod
+        def _generate_test_series(
+            random_state: int = 42,
+            n_periods: int = 20,
+            ar: Iterable[float] = np.array([0.462, -0.288]),
+            ma: Iterable[float] = np.array([0.01]),
+        ) -> np.array:
+            return sig_gen._generate_arima_sample(
+                random_state=random_state, n_periods=n_periods, ar=ar, ma=ma
+            )
+
+        @staticmethod
+        def _generate_input_data(
+            num_x_vars: int,
+            n_periods: int = 20,
+            base_random_state: int = 0,
+            shift: int = 1,
+        ) -> pd.DataFrame:
+            return sig_gen.generate_arima_signal_and_response(
+                "2010-01-01",
+                "T",
+                n_periods,
+                num_x_vars,
+                base_random_state=base_random_state,
+                shift=shift,
+            )
