@@ -13,7 +13,7 @@ import os
 import pprint
 import re
 import sys
-from typing import Any, Dict, List, Match, Optional
+from typing import Any, Dict, List, Match, Optional, Union
 
 from invoke import task
 
@@ -27,7 +27,6 @@ import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.table as htable
 import helpers.versioning as hversi
-
 
 _LOG = logging.getLogger(__name__)
 
@@ -101,7 +100,6 @@ def _report_task(txt: str = "") -> None:
         hversi.check_version()
     func_name = hintros.get_function_name(count=1)
     msg = "## %s: %s" % (func_name, txt)
-    # TODO(gp): Do not print during unit tests.
     print(hprint.color_highlight(msg, color="purple"))
 
 
@@ -111,17 +109,81 @@ use_one_line_cmd = False
 
 # TODO(gp): Move this to helpers.system_interaction and allow to add the switch
 #  globally.
-def _remove_spaces(cmd: str) -> str:
+def _to_single_line_cmd(cmd: Union[str, List[str]]) -> str:
+    """
+    Convert a multiline command (as a string or list of strings) into a single line.
+
+    E.g., convert
+        ```
+        IMAGE=665840871993.../amp:dev \
+            docker-compose \
+            --file devops/compose/docker-compose.yml \
+            --file devops/compose/docker-compose_as_submodule.yml \
+            --env-file devops/env/default.env
+        ```
+    into
+        ```
+        IMAGE=665840871993.../amp:dev docker-compose --file ...
+        ```
+    """
+    if isinstance(cmd, list):
+        cmd = " ".join(cmd)
+    dbg.dassert_isinstance(cmd, str)
     cmd = cmd.rstrip().lstrip()
+    # Remove `\` at the end of the line.
     cmd = re.sub(r" \\\s*$", " ", cmd, flags=re.MULTILINE)
+    # Use a single space between words in the command.
+    # TODO(gp): This is a bit dangerous if there are multiple spaces in a string
+    #  that for some reason are meaningful.
     cmd = " ".join(cmd.split())
     return cmd
+
+
+def _to_multi_line_cmd(docker_cmd_: List[str]) -> str:
+    r"""
+    Convert a command encoded as a list of strings into a single command
+    separated by `\`.
+
+    E.g., convert
+    ```
+        ['IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev',
+            '\n        docker-compose',
+            '\n        --file amp/devops/compose/docker-compose.yml',
+            '\n        --file amp/devops/compose/docker-compose_as_submodule.yml',
+            '\n        --env-file devops/env/default.env']
+        ```
+    into
+        ```
+        IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev \
+            docker-compose \
+            --file devops/compose/docker-compose.yml \
+            --file devops/compose/docker-compose_as_submodule.yml \
+            --env-file devops/env/default.env
+        ```
+    """
+    # Expand all strings into single lines.
+    _LOG.debug("docker_cmd=%s", docker_cmd_)
+    docker_cmd_tmp = []
+    for dc in docker_cmd_:
+        # Add a `\` at the end of each string.
+        dbg.dassert(not dc.endswith("\\"), "dc='%s'", dc)
+        dc += " \\"
+        docker_cmd_tmp.extend(dc.split("\n"))
+    docker_cmd_ = docker_cmd_tmp
+    # Remove empty lines.
+    docker_cmd_ = [cmd for cmd in docker_cmd_ if cmd.rstrip().lstrip() != ""]
+    # Package the command.
+    docker_cmd_ = "\n".join(docker_cmd_)
+    # Remove a `\` at the end, since it is not needed.
+    docker_cmd_ = docker_cmd_.rstrip("\\")
+    _LOG.debug("docker_cmd=%s", docker_cmd_)
+    return docker_cmd_
 
 
 def _run(ctx: Any, cmd: str, *args: Any, **kwargs: Any) -> None:
     _LOG.debug("cmd=%s", cmd)
     if use_one_line_cmd:
-        cmd = _remove_spaces(cmd)
+        cmd = _to_single_line_cmd(cmd)
     _LOG.debug("cmd=%s", cmd)
     ctx.run(cmd, *args, **kwargs)
 
@@ -220,7 +282,7 @@ def print_tasks(  # type: ignore
     """
     Print all the available tasks in `lib_tasks.py`.
 
-    These tasks might be exposed or not by different
+    These tasks might be exposed or not by different.
 
     :param as_python_code: print as python code so that it can be embed in a
         `from helpers.lib_tasks import ...`
@@ -324,8 +386,9 @@ def git_branch_files(ctx):  # type: ignore
     master.
     """
     _report_task()
-    cmd = "git diff --name-only master..."
-    _run(ctx, cmd)
+    _ = ctx
+    print("Difference between HEAD and master:\n" +
+          git.get_summary_files_in_branch("master", "."))
 
 
 @task
@@ -458,13 +521,16 @@ def git_create_patch(  # type: ignore
     else:
         dbg.dfatal("Invalid code path")
     _LOG.debug("dst_file=%s", dst_file)
+    # Summary of files.
+    _LOG.info("Difference between HEAD and master:\n%s",
+              git.get_summary_files_in_branch("master", "."))
     # Prepare the patch command.
     cmd = ""
     if mode == "tar":
         # Get the files.
         files_as_list = _get_files_to_process(modified, branch, files,
                                               mutually_exclusive=False)
-        _LOG.info("Files to save:\n%s", "\n".join(files_as_list))
+        _LOG.info("Files to save:\n%s", hprint.indent("\n".join(files_as_list)))
         if not files_as_list:
             _LOG.warning("Nothing to patch: exiting")
             return
@@ -547,7 +613,7 @@ def docker_ps(ctx):  # type: ignore
         + r'\t{{.Label "com.docker.compose.service"}}'
     )
     cmd = f"docker ps --format='{fmt}'"
-    cmd = _remove_spaces(cmd)
+    cmd = _to_single_line_cmd(cmd)
     _run(ctx, cmd)
 
 
@@ -813,47 +879,6 @@ def get_image(stage: str, base_image: str) -> str:
     return image
 
 
-def _to_cmd(docker_cmd_: List[str]) -> str:
-    r"""
-    Convert a command encoded as a list of strings into a single command
-    separated by `\`.
-
-    E.g., convert
-    ```
-        ['IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev',
-            '\n        docker-compose',
-            '\n        --file amp/devops/compose/docker-compose.yml',
-            '\n        --file amp/devops/compose/docker-compose_as_submodule.yml',
-            '\n        --env-file devops/env/default.env']
-        ```
-    into
-        ```
-        docker_cmd=IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev \
-            docker-compose \
-            --file devops/compose/docker-compose.yml \
-            --file devops/compose/docker-compose_as_submodule.yml \
-            --env-file devops/env/default.env
-        ```
-    """
-    # Expand all strings into single lines.
-    _LOG.debug("docker_cmd=%s", docker_cmd_)
-    docker_cmd_tmp = []
-    for dc in docker_cmd_:
-        # Add a `\` at the end of each string.
-        dbg.dassert(not dc.endswith("\\"), "dc='%s'", dc)
-        dc += " \\"
-        docker_cmd_tmp.extend(dc.split("\n"))
-    docker_cmd_ = docker_cmd_tmp
-    # Remove empty lines.
-    docker_cmd_ = [cmd for cmd in docker_cmd_ if cmd.rstrip().lstrip() != ""]
-    # Package the command.
-    docker_cmd_ = "\n".join(docker_cmd_)
-    # Remove a `\` at the end, since it is not needed.
-    docker_cmd_ = docker_cmd_.rstrip("\\")
-    _LOG.debug("docker_cmd=%s", docker_cmd_)
-    return docker_cmd_
-
-
 def _get_docker_cmd(
     stage: str,
     base_image: str,
@@ -973,13 +998,13 @@ def _get_docker_cmd(
         )
     # Print the config for debugging purpose.
     if print_docker_config:
-        docker_config_cmd = _to_cmd(docker_config_cmd)
+        docker_config_cmd = _to_multi_line_cmd(docker_config_cmd)
         _LOG.debug("docker_config_cmd=\n%s", docker_config_cmd)
         _LOG.debug(
             "docker_config=\n%s", hsinte.system_to_string(docker_config_cmd)[1]
         )
     # Print the config for debugging purpose.
-    docker_cmd_ = _to_cmd(docker_cmd_)
+    docker_cmd_ = _to_multi_line_cmd(docker_cmd_)
     return docker_cmd_
 
 
@@ -1132,6 +1157,7 @@ def docker_build_local_image(  # type: ignore
     # The container version is the version used from this code.
     container_version = hversi.get_code_version("./version.txt")
     build_tag = _get_build_tag(container_version)
+    # TODO(gp): Use _to_multi_line_cmd()
     cmd = rf"""
     DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
     time \
@@ -1229,7 +1255,7 @@ def docker_release_dev_image(  # type: ignore
 # - The PROD image is tagged as "prod"
 
 
-# TODO(gp): Remove redundancy with docker_build_local_image().
+# TODO(gp): Remove redundancy with docker_build_local_image(), if possible.
 @task
 def docker_build_prod_image(ctx, cache=True, base_image=""):  # type: ignore
     """
@@ -1242,6 +1268,7 @@ def docker_build_prod_image(ctx, cache=True, base_image=""):  # type: ignore
     dockerfile = "devops/docker_build/prod.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
     #
+    # TODO(gp): Use _to_multi_line_cmd()
     opts = "--no-cache" if not cache else ""
     cmd = rf"""
     DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
@@ -1419,21 +1446,41 @@ def _find_test_class(class_name: str, file_names: List[str]) -> List[str]:
     return res
 
 
+def _to_pbcopy(txt: str) -> None:
+    """
+    Save the content of txt in the system clipboard.
+    """
+    txt = txt.rstrip("\n")
+    if hsinte.is_running_on_macos():
+        # -n = no new line
+        cmd = f"echo -n '{txt}' | pbcopy"
+        hsinte.system(cmd)
+    else:
+        _LOG.warning("pbcopy works only on macOS")
+    print(txt)
+
+
+
 @task
-def find_test_class(ctx, class_name="", dir_name="."):  # type: ignore
+def find_test_class(ctx, class_name="", dir_name=".", pbcopy=False):  # type: ignore
     """
     Report test files containing `class_name` in a format compatible with
     pytest.
 
     :param class_name: the class to search
     :param dir_name: the dir from which to search (default: .)
+    :param pbcopy: save the result into the system clipboard (only on macOS)
     """
     _report_task()
     dbg.dassert(class_name != "", "You need to specify a class name")
     _ = ctx
     file_names = _find_test_files(dir_name)
     res = _find_test_class(class_name, file_names)
-    print(res)
+    res = " ".join(res)
+    if pbcopy:
+        _to_pbcopy(res)
+    else:
+        print(res)
 
 
 # #############################################################################
@@ -1486,6 +1533,7 @@ def find_test_decorator(ctx, decorator_name="", dir_name="."):  # type: ignore
     _ = ctx
     file_names = _find_test_files(dir_name)
     res = _find_test_class(decorator_name, file_names)
+    res = " ".join(res)
     print(res)
 
 
@@ -1537,6 +1585,7 @@ def _build_run_command_line(
     # Concatenate the options.
     _LOG.debug("pytest_opts_tmp=\n%s", str(pytest_opts_tmp))
     pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
+    # TODO(gp): Use _to_multi_line_cmd()
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
     cmd = f"pytest {pytest_opts}"
     return cmd
@@ -1548,6 +1597,7 @@ def _run_test_cmd(
     cmd: str,
     coverage: bool,
     collect_only: bool,
+    start_coverage_script: bool,
 ) -> None:
     if collect_only:
         # Clean files.
@@ -1570,7 +1620,7 @@ def _run_test_cmd(
   covered
 """
         print(msg)
-        if hsinte.is_running_on_macos():
+        if start_coverage_script and hsinte.is_running_on_macos():
             # Create and run a script to show the coverage in the browser.
             script_txt = """(sleep 2; open http://localhost:33333) &
 (cd ./htmlcov; python -m http.server 33333)"""
@@ -1589,6 +1639,7 @@ def _run_tests(
     coverage: bool,
     collect_only: bool,
     skipped_tests: str,
+    start_coverage_script: bool = True,
 ) -> None:
     # Build the command line.
     cmd = _build_run_command_line(
@@ -1607,6 +1658,7 @@ def _run_tests(
         cmd,
         coverage,
         collect_only,
+        start_coverage_script
     )
 
 
@@ -1779,7 +1831,7 @@ def pytest_clean(ctx):  # type: ignore
 # #############################################################################
 
 
-def _get_lint_docker_cmd(precommit_cmd: str) -> str:
+def _get_lint_docker_cmd(precommit_opts: str, run_bash: bool) -> str:
     superproject_path, submodule_path = git.get_path_from_supermodule()
     if superproject_path:
         # We are running in a Git submodule.
@@ -1793,19 +1845,30 @@ def _get_lint_docker_cmd(precommit_cmd: str) -> str:
     #image = get_default_param("DEV_TOOLS_IMAGE_PROD")
     image="665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools:prod"
     #image="665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools:local"
-    docker_cmd_ = f"""docker run \
-        --rm \
-        -t \
-        -v "{repo_root}":/src \
-        --workdir={work_dir} \
-        {image} \
-        "pre-commit {precommit_cmd}"
-    """
+    docker_cmd_ = ["docker run",
+        "--rm"]
+    if run_bash:
+        docker_cmd_.append("-it")
+    else:
+        docker_cmd_.append("-t")
+    docker_cmd_.extend([
+        f"-v '{repo_root}':/src",
+        f"--workdir={work_dir}",
+        f"{image}"])
+    # Build the command inside Docker.
+    cmd = f"'pre-commit {precommit_opts}'"
+    if run_bash:
+        _LOG.warning("Run bash instead of:\n  > %s", cmd)
+        cmd = "bash"
+    docker_cmd_.append(cmd)
+    #
+    docker_cmd_ = _to_single_line_cmd(docker_cmd_)
     return docker_cmd_
 
 
 @task
-def lint(ctx, modified=False, branch=False, files="", phases="", only_format=False):  # type: ignore
+def lint(ctx, modified=False, branch=False, files="", phases="", only_black=False,
+         stage="prod", run_bash=False):  # type: ignore
     """
     Lint files.
 
@@ -1813,9 +1876,12 @@ def lint(ctx, modified=False, branch=False, files="", phases="", only_format=Fal
     :param branch: select the files modified in the current branch
     :param files: specify a space-separated list of files
     :param phases: specify the lint phases to execute
-    :param only_format: run only the lint phases that format the code
+    :param only_black: run only the lint phases that format the code
+    :param run_bash: instead of running pre-commit, run bash to debug
     """
     _report_task()
+    #
+    docker_pull(ctx, stage=stage, images="dev_tools")
     # Get the files to lint.
     files_as_list = _get_files_to_process(modified, branch, files,
                                           mutually_exclusive=True)
@@ -1825,36 +1891,20 @@ def lint(ctx, modified=False, branch=False, files="", phases="", only_format=Fal
         return
     files_as_str = " ".join(files_as_list)
     # Prepare the command line.
-    if only_format:
-        _LOG.warning("Running only formatting phases")
-        phases = "isort black"
-    if phases:
-        phases = phases.rstrip() + " "
-    precommit_cmd = f"run -c /app/.pre-commit-config.yaml {phases}--files {files_as_str}"
+    if only_black:
+        _LOG.warning("Running only black")
+        phases = "run black"
+    precommit_opts = [
+        f"run {phases}",
+        "-c /app/.pre-commit-config.yaml",
+        f"--files {files_as_str}"]
+    precommit_opts = _to_single_line_cmd(precommit_opts)
     # Execute command line.
-    cmd = _get_lint_docker_cmd(precommit_cmd)
-    cmd = f"{cmd} 2>&1 | tee linter_warnings.txt"
-    _run(ctx, cmd)
-
-
-# TODO(gp): Finish this.
-@task
-def get_amp_files(ctx):  # type: ignore
-    """
-    Get some files that need to be copied across repos.
-    """
-    _report_task()
-    _ = ctx
-    # TODO(gp): Move this inside `bashrc`.
-    token = "***REMOVED***"
-    file_names = ["lib_tasks.py"]
-    for file_name in file_names:
-        cmd = (
-            f"wget "
-            f"https://raw.githubusercontent.com/alphamatic/amp/master/{file_name}"
-            f"?token={token} -O {file_name}"
-        )
-        hsinte.system(cmd)
+    cmd = _get_lint_docker_cmd(precommit_opts, run_bash)
+    cmd = f"({cmd}) 2>&1 | tee linter_warnings.txt"
+    # For bash we need a TTY.
+    pty = run_bash
+    _run(ctx, cmd, pty=pty)
 
 
 # #############################################################################
@@ -2044,6 +2094,7 @@ def gh_create_pr(  # type: ignore
     _LOG.info("Creating PR with title '%s' for '%s' in %s", title, branch_name,
             repo_full_name)
     # TODO(gp): Check whether the PR already exists.
+    # TODO(gp): Use _to_single_line_cmd
     cmd = (
         f"gh pr create" +
         f" --repo {repo_full_name}" +

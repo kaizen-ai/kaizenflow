@@ -132,7 +132,8 @@ class TestArmaGenerator(hut.TestCase):
             seed=0,
         )
         df = node.fit()["df_out"]
-        self.check_string(df.to_string())
+        str = hut.convert_df_to_string(df, index=True, decimals=2)
+        self.check_string(str)
 
 
 class TestMultivariateNormalGenerator(hut.TestCase):
@@ -143,10 +144,10 @@ class TestMultivariateNormalGenerator(hut.TestCase):
             start_date="2010-01-04 09:00",
             end_date="2010-01-04 17:00",
             dim=4,
-            seed=0,
+            seed=1,
         )
         df = node.fit()["df_out"]
-        str = hut.convert_df_to_string(df, index=True)
+        str = hut.convert_df_to_string(df, index=True, decimals=2)
         self.check_string(str)
 
 
@@ -156,7 +157,6 @@ class TestMultivariateNormalGenerator(hut.TestCase):
 
 
 class TestVolatilityNormalizer(hut.TestCase):
-
     def test_fit1(self) -> None:
         y = TestVolatilityNormalizer._get_series(42).rename("ret_0")
         y_hat = sigp.compute_smooth_moving_average(y, 28).rename("ret_0_hat")
@@ -234,6 +234,7 @@ class TestVolatilityNormalizer(hut.TestCase):
             f"{predict_df_out_volatility}"
         )
         self.check_string(output_str)
+
     @staticmethod
     def _get_series(seed: int, periods: int = 44) -> pd.Series:
         arma_process = sig_gen.ArmaProcess([0], [0])

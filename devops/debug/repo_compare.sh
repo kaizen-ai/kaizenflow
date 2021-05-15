@@ -19,27 +19,27 @@ fi;
 echo "DIR1=$DIR1"
 echo "DIR2=$DIR2"
 
+# Compare some configuration files.
 if [[ 0 == 1 ]]; then
-    # The file storing configuration that should be kept in sync are:
-    for file in .dockerignore .gitignore .pre-commit-config.yaml conftest.py dev_scripts/setenv_dev_tools.sh invoke.yaml lib_tasks.py mypy.ini pre-commit.sh pytest.ini tasks.py
+    for file in .dockerignore .gitignore conftest.py invoke.yaml mypy.ini pytest.ini tasks.py
     do
         vimdiff {$DIR1,$DIR2}/$file
     done;
-
-    exit -1
 fi;
 
-if [[ 1 == 1 ]]; then
+# Compare devops
+if [[ 0 == 1 ]]; then
     DIR="devops"
     echo "Comparing $DIR"
     diff_to_vimdiff.py --dir1 $DIR1/$DIR --dir2 $DIR2/$DIR
     # --only_different_files
-else
+fi;
+
+# Compare .github/workflows
+if [[ 1 == 1 ]]; then
     DIR=".github/workflows"
     echo "Comparing $DIR"
     diff_to_vimdiff.py --dir1 $DIR1/$DIR --dir2 $DIR2/$DIR
 fi;
-
-#dev_scripts/client_setup/
 
 # TODO(gp): If a file is a link, do not compare.
