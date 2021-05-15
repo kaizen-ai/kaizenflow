@@ -1692,7 +1692,7 @@ class Test_resample_df(hut.TestCase):
         )
         return txt
 
-    
+
 class Test_calculate_inverse(hut.TestCase):
     def test1(self) -> None:
         df = pd.DataFrame([[1, 2], [3, 4]])

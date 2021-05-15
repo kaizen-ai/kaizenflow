@@ -625,19 +625,19 @@ def apply_sharpe_ratio_correlation_conversion(
     :param freq: time series sampling frequency
     :param sharpe_ratio: annualized Sharpe ratio
     :param correlation: correlation coefficient
-    :return: annualized Sharpe ratio if correlation is provided; correlation 
+    :return: annualized Sharpe ratio if correlation is provided; correlation
         if annualized Sharpe ratio is provided.
     """
     points_per_year = hdataf.compute_points_per_year_for_given_freq(freq)
     if sharpe_ratio is not None and correlation is None:
         sharpe_ratio /= np.sqrt(points_per_year)
-        return sharpe_ratio / np.sqrt(1 - sharpe_ratio**2)
+        return sharpe_ratio / np.sqrt(1 - sharpe_ratio ** 2)
     if sharpe_ratio is None and correlation is not None:
-        sharpe_ratio = correlation / np.sqrt(1 + correlation**2)
+        sharpe_ratio = correlation / np.sqrt(1 + correlation ** 2)
         return sharpe_ratio * np.sqrt(points_per_year)
     raise ValueError(
-            "Precisely one of `sharpe_ratio` and `correlation` should not be `None`"
-        )
+        "Precisely one of `sharpe_ratio` and `correlation` should not be `None`"
+    )
 
 
 # #############################################################################
@@ -745,13 +745,13 @@ def compute_bet_stats(
     stats.update(bet_hit_rate)
     #
     avg_ret_winning_bets = log_rets_per_bet.loc[log_rets_per_bet > 0].mean()
-    stats["avg_return_winning_bets_(%)"] = 100 * cfinan.convert_log_rets_to_pct_rets(
-        avg_ret_winning_bets
-    )
+    stats[
+        "avg_return_winning_bets_(%)"
+    ] = 100 * cfinan.convert_log_rets_to_pct_rets(avg_ret_winning_bets)
     avg_ret_losing_bets = log_rets_per_bet.loc[log_rets_per_bet < 0].mean()
-    stats["avg_return_losing_bets_(%)"] = 100 * cfinan.convert_log_rets_to_pct_rets(
-        avg_ret_losing_bets
-    )
+    stats[
+        "avg_return_losing_bets_(%)"
+    ] = 100 * cfinan.convert_log_rets_to_pct_rets(avg_ret_losing_bets)
     avg_ret_long_bet = log_rets_per_bet.loc[bet_lengths > 0].mean()
     stats["avg_return_long_bet_(%)"] = 100 * cfinan.convert_log_rets_to_pct_rets(
         avg_ret_long_bet
@@ -1670,8 +1670,8 @@ def summarize_time_index_info(
     if not clear_srs.empty:
         if freq is None:
             clear_index_time_span = (clear_index[-1] - clear_index[0]).days
-            sampling_points_per_year = hdataf.compute_points_per_year_for_given_freq(
-                "D"
+            sampling_points_per_year = (
+                hdataf.compute_points_per_year_for_given_freq("D")
             )
         else:
             clear_index_time_span = len(srs[clear_index[0] : clear_index[-1]])

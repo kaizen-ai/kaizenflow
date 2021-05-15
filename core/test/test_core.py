@@ -16,7 +16,8 @@ class _Dataflow_helper(hut.TestCase):
         """
         Remove stages names from node_link_data dictionary.
 
-        The stage names refer to Node objects, which are not json serializable.
+        The stage names refer to Node objects, which are not json
+        serializable.
         """
         nld = node_link_data.copy()
         for data in nld["nodes"]:

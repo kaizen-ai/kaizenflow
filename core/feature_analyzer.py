@@ -14,7 +14,13 @@ _LOG = logging.getLogger(__name__)
 
 
 def _analyze_feature(
-        df: pd.DataFrame, y_var: str, x_var: str, use_intercept: bool, nan_mode: str, x_shift: int, report_stats: bool
+    df: pd.DataFrame,
+    y_var: str,
+    x_var: str,
+    use_intercept: bool,
+    nan_mode: str,
+    x_shift: int,
+    report_stats: bool,
 ) -> collections.OrderedDict:
     _LOG.debug("df=\n%s", df.head(3))
     _LOG.debug(
@@ -108,8 +114,10 @@ def analyze_features(
 
 
 class Reporter:
-    """Report results from `analyze_features()` in a heatmap with coefficient
-    values and p-values."""
+    """
+    Report results from `analyze_features()` in a heatmap with coefficient
+    values and p-values.
+    """
 
     def __init__(self, res_df: pd.DataFrame):
         self.res_df = res_df
@@ -160,8 +168,11 @@ class Reporter:
         return coeff_df_tmp
 
     @staticmethod
-    def _interpolate(val: float, max_val: float, min_col: float, max_col: float) -> int:
-        """Interpolate intensity in [min_col, max_col] based on val in 0,
+    def _interpolate(
+        val: float, max_val: float, min_col: float, max_col: float
+    ) -> int:
+        """
+        Interpolate intensity in [min_col, max_col] based on val in 0,
         max_val].
 
         :return: float value in [0, 1]
@@ -172,8 +183,14 @@ class Reporter:
         return int(res)
 
     @staticmethod
-    def _interpolate_rgb(val: float, max_val: float, min_rgb: Tuple[int, int, int], max_rgb: Tuple[int, int, int]) -> List[int]:
-        """Interpolate val in [0, max_val] in terms of the rgb colors.
+    def _interpolate_rgb(
+        val: float,
+        max_val: float,
+        min_rgb: Tuple[int, int, int],
+        max_rgb: Tuple[int, int, int],
+    ) -> List[int]:
+        """
+        Interpolate val in [0, max_val] in terms of the rgb colors.
 
         [min_rgb, max_rgb] by interpolating the 3 color channels.
         :return: triple representing the interpolated color

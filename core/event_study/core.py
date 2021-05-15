@@ -2,7 +2,6 @@
 See `documentation/technical/event_study_design.md` for design principles and
 notes on intended usage.
 
-
 Sketch of flow:
 
 events         grid_data -------------------
@@ -46,7 +45,9 @@ _LOG = logging.getLogger(__name__)
 
 
 def reindex_event_features(
-    events: pd.DataFrame, grid_data: pd.DataFrame, **kwargs,
+    events: pd.DataFrame,
+    grid_data: pd.DataFrame,
+    **kwargs,
 ) -> pd.DataFrame:
     """
     Reindex `events` so that it aligns with `grid_data`.
@@ -144,7 +145,8 @@ def build_local_timeseries(
 # TODO(Paul): Think about whether we want to add `freq` here or just remove it
 # everywhere.
 def unwrap_local_timeseries(
-    local_ts: pd.DataFrame, grid_data: pd.DataFrame,
+    local_ts: pd.DataFrame,
+    grid_data: pd.DataFrame,
 ) -> pd.DataFrame:
     """
     Convert relative times in local_ts back to grid_data and align values.

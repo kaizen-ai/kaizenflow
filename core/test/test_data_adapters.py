@@ -13,6 +13,7 @@ import helpers.unit_test as hut
 if True:
     import gluonts
     import gluonts.dataset.artificial as gda
+
     import gluonts.dataset.common as gdc  # isort: skip # noqa: F401 # pylint: disable=unused-import
 
     # TODO(*): gluon needs this import to work properly.
@@ -121,7 +122,10 @@ if True:
                 ta._df, ta._x_vars, ta._y_vars, ta._frequency
             )
             df = adpt.transform_from_gluon(
-                gluon_ts, ta._x_vars, ta._y_vars, index_name=ta._df.index.name,
+                gluon_ts,
+                ta._x_vars,
+                ta._y_vars,
+                index_name=ta._df.index.name,
             )
             self.check_string(df.to_string())
 
@@ -132,7 +136,10 @@ if True:
                 ta._df, None, ta._y_vars, ta._frequency
             )
             df = adpt.transform_from_gluon(
-                gluon_ts, None, ta._y_vars, index_name=ta._df.index.name,
+                gluon_ts,
+                None,
+                ta._y_vars,
+                index_name=ta._df.index.name,
             )
             self.check_string(df.to_string())
 
@@ -143,7 +150,10 @@ if True:
                 ta._df, ta._x_vars, ta._y_vars, ta._frequency
             )
             inverted_df = adpt.transform_from_gluon(
-                gluon_ts, ta._x_vars, ta._y_vars, index_name=ta._df.index.name,
+                gluon_ts,
+                ta._x_vars,
+                ta._y_vars,
+                index_name=ta._df.index.name,
             )
             inverted_df = inverted_df.astype(np.float64)
             pd.testing.assert_frame_equal(ta._df, inverted_df)
@@ -156,7 +166,10 @@ if True:
                 local_ts, ta._x_vars, ta._y_vars, ta._frequency
             )
             inverted_df = adpt.transform_from_gluon(
-                gluon_ts, ta._x_vars, ta._y_vars, index_name=ta._df.index.name,
+                gluon_ts,
+                ta._x_vars,
+                ta._y_vars,
+                index_name=ta._df.index.name,
             )
             inverted_df = inverted_df.astype(np.float64)
             pd.testing.assert_frame_equal(local_ts, inverted_df)
@@ -199,6 +212,11 @@ if True:
             self.check_string(str_res)
 
     class TestTransformFromGluonForecasts(hut.TestCase):
+        def test_transform1(self) -> None:
+            forecasts = TestTransformFromGluonForecasts._get_mock_forecasts()
+            df = adpt.transform_from_gluon_forecasts(forecasts)
+            self.check_string(df.to_string())
+
         @staticmethod
         def _get_mock_forecasts(
             n_traces: int = 3,
@@ -219,11 +237,6 @@ if True:
             ]
             return forecasts
 
-        def test_transform1(self) -> None:
-            forecasts = TestTransformFromGluonForecasts._get_mock_forecasts()
-            df = adpt.transform_from_gluon_forecasts(forecasts)
-            self.check_string(df.to_string())
-
 
 class TestTransformToSklean(hut.TestCase):
     def test_transform1(self) -> None:
@@ -240,6 +253,11 @@ class TestTransformToSklean(hut.TestCase):
 
 
 class TestTransformFromSklean(hut.TestCase):
+    def test_transform1(self) -> None:
+        sklearn_data = TestTransformFromSklean._get_sklearn_data()
+        transformed_df = adpt.transform_from_sklearn(*sklearn_data)
+        self.check_string(transformed_df.to_string())
+
     @staticmethod
     def _get_sklearn_data() -> Tuple[pd.Index, pd.DataFrame, pd.DataFrame]:
         np.random.seed(42)
@@ -249,8 +267,3 @@ class TestTransformFromSklean(hut.TestCase):
         x_vars = ta._x_vars
         x_vals = df[x_vars]
         return idx, x_vars, x_vals
-
-    def test_transform1(self) -> None:
-        sklearn_data = TestTransformFromSklean._get_sklearn_data()
-        transformed_df = adpt.transform_from_sklearn(*sklearn_data)
-        self.check_string(transformed_df.to_string())

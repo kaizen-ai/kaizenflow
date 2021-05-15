@@ -26,7 +26,8 @@ if True:
         num_samples: int,
         x_vars: Optional[List[str]] = None,
     ) -> gluonts.model.forecast.SampleForecast:
-        """Predict next values using trained predictor.
+        """
+        Predict next values using trained predictor.
 
         It is assumed that x_vars and y_vars are both indexed by knowledge times.
 
@@ -78,7 +79,8 @@ if True:
         num_samples: int,
         x_vars: Optional[List[str]] = None,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """Generate forward predictions using trained predictor.
+        """
+        Generate forward predictions using trained predictor.
 
         For each time step, generate `num_samples` predictions for each of
         `prediction_length` steps, take the mean across samples.

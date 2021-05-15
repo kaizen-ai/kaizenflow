@@ -1,4 +1,5 @@
-"""Import as:
+"""
+Import as:
 
 import core.config_builders as cfgb
 
@@ -12,8 +13,17 @@ import itertools
 import logging
 import os
 import re
-from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple,
-                    Union, cast)
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 import pandas as pd
 
@@ -26,7 +36,8 @@ _LOG = logging.getLogger(__name__)
 
 
 def get_config_from_flattened(flattened: Dict[Tuple[str], Any]) -> cfg.Config:
-    """Build a config from the flattened config representation.
+    """
+    Build a config from the flattened config representation.
 
     :param flattened: flattened config like result from `config.flatten()`
     :return: config object initialized from flattened representation
@@ -40,7 +51,8 @@ def get_config_from_flattened(flattened: Dict[Tuple[str], Any]) -> cfg.Config:
 
 
 def get_config_from_nested_dict(nested: Dict[str, Any]) -> cfg.Config:
-    """Build a config from a nested dict.
+    """
+    Build a config from a nested dict.
 
     :param nested: nested dict, with certain restrictions:
       - only leaf nodes may not be a dict
@@ -54,7 +66,8 @@ def get_config_from_nested_dict(nested: Dict[str, Any]) -> cfg.Config:
 
 
 def get_configs_from_builder(config_builder: str) -> List[cfg.Config]:
-    """Execute python code to.
+    """
+    Execute python code to.
 
     :param config_builder: full Python command to create the configs.
         E.g., `nlp.build_configs.build_PTask1088_configs()`
@@ -86,8 +99,10 @@ def get_configs_from_builder(config_builder: str) -> List[cfg.Config]:
 
 
 def get_config_from_env() -> Optional[cfg.Config]:
-    """Build a config passed through an environment variable, if possible, or
-    return None."""
+    """
+    Build a config passed through an environment variable, if possible, or
+    return None.
+    """
     config_vars = ["__CONFIG_BUILDER__", "__CONFIG_IDX__", "__CONFIG_DST_DIR__"]
     # Check the existence of any config var in env.
     if any(var in os.environ for var in config_vars):
@@ -124,7 +139,8 @@ def get_config_from_env() -> Optional[cfg.Config]:
 
 # TODO(*): Is this used anywhere?
 def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
-    """Assert if the list of configs contains no duplicates.
+    """
+    Assert if the list of configs contains no duplicates.
 
     :param configs: List of configs to run experiments on.
     """
@@ -136,7 +152,8 @@ def assert_on_duplicated_configs(configs: List[cfg.Config]) -> None:
 
 # TODO(*): Deprecate.
 def _flatten_config(config: cfg.Config) -> Dict[str, collections.abc.Hashable]:
-    """Flatten configs, join tuples of strings with "." and make vals hashable.
+    """
+    Flatten configs, join tuples of strings with "." and make vals hashable.
 
     Someday you may realize that you want to use "." in the strings of
     your keys. That likely won't be a very fun day.
@@ -151,7 +168,8 @@ def _flatten_config(config: cfg.Config) -> Dict[str, collections.abc.Hashable]:
 
 # TODO(*): Deprecate.
 def _flatten_configs(configs: Iterable[cfg.Config]) -> List[Dict[str, Any]]:
-    """Flatten configs, squash the str keys, and make vals hashable.
+    """
+    Flatten configs, squash the str keys, and make vals hashable.
 
     :param configs: configs
     :return: flattened config dicts
@@ -161,7 +179,8 @@ def _flatten_configs(configs: Iterable[cfg.Config]) -> List[Dict[str, Any]]:
 
 # TODO(*): Deprecate.
 def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
-    """Compare configs from list to find the common part.
+    """
+    Compare configs from list to find the common part.
 
     :param configs: A list of configs
     :return: A config with common part of all input configs.
@@ -172,7 +191,8 @@ def get_config_intersection(configs: List[cfg.Config]) -> cfg.Config:
 # TODO(*): Are the values of this ever used anywhere?
 # TODO(*): Try to deprecate. If needed, compose with `cfg.diff_configs()`.
 def get_config_difference(configs: List[cfg.Config]) -> Dict[str, List[Any]]:
-    """Find parameters in configs that are different and provide the varying
+    """
+    Find parameters in configs that are different and provide the varying
     values.
 
     :param configs: A list of configs.
@@ -212,7 +232,8 @@ def get_configs_dataframe(
     configs: List[cfg.Config],
     params_subset: Optional[Union[str, List[str]]] = None,
 ) -> pd.DataFrame:
-    """Convert the configs into a df with full nested names.
+    """
+    Convert the configs into a df with full nested names.
 
     The column names should correspond to `subconfig1.subconfig2.parameter`
     format, e.g.: `build_targets.target_asset`.
@@ -241,7 +262,8 @@ def get_configs_dataframe(
 
 
 def add_result_dir(dst_dir: str, configs: List[cfg.Config]) -> List[cfg.Config]:
-    """Add a result directory field to all configs in list.
+    """
+    Add a result directory field to all configs in list.
 
     :param dst_dir: Location of output directory
     :param configs: List of configs for experiments
@@ -257,7 +279,8 @@ def add_result_dir(dst_dir: str, configs: List[cfg.Config]) -> List[cfg.Config]:
 
 
 def set_experiment_result_dir(dst_dir: str, config: cfg.Config) -> cfg.Config:
-    """Set path to the experiment results file.
+    """
+    Set path to the experiment results file.
 
     :param dst_dir: Subdirectory with simulation results
     :param config: Config used for simulation
@@ -269,7 +292,8 @@ def set_experiment_result_dir(dst_dir: str, config: cfg.Config) -> cfg.Config:
 
 
 def add_config_idx(configs: List[cfg.Config]) -> List[cfg.Config]:
-    """Add the config id as parameter.
+    """
+    Add the config id as parameter.
 
     TODO(*): What is "the config id"? Why does my config have a `meta`? And why
         would this ever depend upon the order in which the configs appear in a
@@ -290,9 +314,11 @@ def add_config_idx(configs: List[cfg.Config]) -> List[cfg.Config]:
 
 
 def _generate_template_config(
-    config: cfg.Config, params_variants: Dict[Tuple[str, ...], Iterable[Any]],
+    config: cfg.Config,
+    params_variants: Dict[Tuple[str, ...], Iterable[Any]],
 ) -> cfg.Config:
-    """Assign `None` to variable parameters in KOTH config.
+    """
+    Assign `None` to variable parameters in KOTH config.
 
     A preliminary step required to generate multiple configs.
 
@@ -310,7 +336,8 @@ def generate_default_config_variants(
     template_config_builder: Callable,
     params_variants: Optional[Dict[Tuple[str, ...], Iterable[Any]]] = None,
 ) -> List[cfg.Config]:
-    """Build a list of config files for experiments.
+    """
+    Build a list of config files for experiments.
 
     TODO(*): What experiments? What is a KOTH-generating function?
 
@@ -333,7 +360,8 @@ def generate_default_config_variants(
 
 
 def load_configs(results_dir: str) -> List[cfg.Config]:
-    """Load all result pickles and save in order of corresponding configs.
+    """
+    Load all result pickles and save in order of corresponding configs.
 
     TODO(*): What results? Also, the function is called `load_configs()` and
         yet the 1-line summary starts by discussing loading results.
@@ -357,8 +385,8 @@ def build_multiple_configs(
     template_config: cfg.Config,
     params_variants: Dict[Tuple[str, ...], Iterable[Any]],
 ) -> List[cfg.Config]:
-    """Build configs from a template and the Cartesian product of given
-    keys/vals.
+    """
+    Build configs from a template and the Cartesian product of given keys/vals.
 
     Create multiple `cfg.Config` objects using the given config template and
     overwriting `None` or `_DUMMY_` parameter specified through a parameter

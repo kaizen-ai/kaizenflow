@@ -161,7 +161,9 @@ class TestDataFrameModeler(hut.TestCase):
 
     def _get_data(self, lag: int) -> pd.DataFrame:
         """
-        Generate "random returns". Use lag + noise as predictor.
+        Generate "random returns".
+
+        Use lag + noise as predictor.
         """
         num_periods = 100
         total_steps = num_periods + lag + 1

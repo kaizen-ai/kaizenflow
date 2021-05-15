@@ -376,7 +376,8 @@ def compute_prices_from_rets(
     mode: str,
 ) -> pd.Series:
     """
-    Compute price p_1 at moment t_1 with given price p_0 at t_0 and return ret_1
+    Compute price p_1 at moment t_1 with given price p_0 at t_0 and return
+    ret_1.
 
     This implies that input has ret_1 at moment t_1 and uses price p_0 from
     previous step t_0. If we have forward returns instead (ret_1 and p_0 are at

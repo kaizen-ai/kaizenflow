@@ -43,7 +43,8 @@ class DagBuilder(abc.ABC):
         if self._nid_prefix and not self._nid_prefix.endswith("/"):
             _LOG.warning(
                 "Appended '/' to nid_prefix '%s'. To avoid this warning, "
-                "only pass nid prefixes ending in '/'.", self._nid_prefix
+                "only pass nid prefixes ending in '/'.",
+                self._nid_prefix,
             )
             self._nid_prefix += "/"
 

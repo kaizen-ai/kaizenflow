@@ -41,26 +41,6 @@ class Test_set_weekends_to_nan(hut.TestCase):
 
 
 class Test_compute_inverse_volatility_weights(hut.TestCase):
-    @staticmethod
-    def _get_sample(seed: int) -> pd.DataFrame:
-        mean = pd.Series([1, 2])
-        cov = pd.DataFrame([[0.5, 0.2], [0.2, 0.3]])
-        date_range = {"start": "2010-01-01", "periods": 40, "freq": "B"}
-        mn_process = sig_gen.MultivariateNormalProcess(mean=mean, cov=cov)
-        sample = mn_process.generate_sample(date_range, seed=seed)
-        sample.rename(columns={0: "srs1", 1: "srs2"}, inplace=True)
-        return sample
-
-    @staticmethod
-    def _get_output_txt(sample: pd.DataFrame, weights: pd.Series) -> str:
-        sample_string = hut.convert_df_to_string(sample, index=True)
-        weights_string = hut.convert_df_to_string(weights, index=True)
-        txt = (
-            f"Input sample:\n{sample_string}\n\n"
-            f"Output weights:\n{weights_string}\n"
-        )
-        return txt
-
     def test1(self) -> None:
         """
         Test for a clean input.
@@ -85,8 +65,8 @@ class Test_compute_inverse_volatility_weights(hut.TestCase):
         """
         Test for an input with all-NaN column.
 
-        Results are not intended.
-        `weights` are `0` for all-NaN columns in the input.
+        Results are not intended. `weights` are `0` for all-NaN columns
+        in the input.
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, 0] = np.nan
@@ -98,8 +78,8 @@ class Test_compute_inverse_volatility_weights(hut.TestCase):
         """
         Test for an all-NaN input.
 
-        Results are not intended.
-        `weights` are `0` for all-NaN columns in the input.
+        Results are not intended. `weights` are `0` for all-NaN columns
+        in the input.
         """
         sample = self._get_sample(seed=1)
         sample.iloc[:, :] = np.nan
@@ -107,15 +87,28 @@ class Test_compute_inverse_volatility_weights(hut.TestCase):
         output_txt = self._get_output_txt(sample, weights)
         self.check_string(output_txt)
 
+    @staticmethod
+    def _get_sample(seed: int) -> pd.DataFrame:
+        mean = pd.Series([1, 2])
+        cov = pd.DataFrame([[0.5, 0.2], [0.2, 0.3]])
+        date_range = {"start": "2010-01-01", "periods": 40, "freq": "B"}
+        mn_process = sig_gen.MultivariateNormalProcess(mean=mean, cov=cov)
+        sample = mn_process.generate_sample(date_range, seed=seed)
+        sample.rename(columns={0: "srs1", 1: "srs2"}, inplace=True)
+        return sample
+
+    @staticmethod
+    def _get_output_txt(sample: pd.DataFrame, weights: pd.Series) -> str:
+        sample_string = hut.convert_df_to_string(sample, index=True)
+        weights_string = hut.convert_df_to_string(weights, index=True)
+        txt = (
+            f"Input sample:\n{sample_string}\n\n"
+            f"Output weights:\n{weights_string}\n"
+        )
+        return txt
+
 
 class Test_compute_prices_from_rets(hut.TestCase):
-    @staticmethod
-    def _get_sample() -> pd.DataFrame:
-        date_range = pd.date_range(start="2010-01-01", periods=40, freq="B")
-        sample = pd.DataFrame(index=date_range)
-        sample["price"] = np.random.uniform(low=0, high=1, size=40)
-        return sample
-    
     def test1(self) -> None:
         sample = self._get_sample()
         sample["rets"] = fin.compute_ret_0(sample.price, mode="pct_change")
@@ -124,7 +117,7 @@ class Test_compute_prices_from_rets(hut.TestCase):
         )
         sample = sample.dropna()
         np.testing.assert_array_almost_equal(sample.price_pred, sample.price)
-        
+
     def test2(self) -> None:
         sample = self._get_sample()
         sample["rets"] = fin.compute_ret_0(sample.price, mode="log_rets")
@@ -133,7 +126,7 @@ class Test_compute_prices_from_rets(hut.TestCase):
         )
         sample = sample.dropna()
         np.testing.assert_array_almost_equal(sample.price_pred, sample.price)
-        
+
     def test3(self) -> None:
         sample = self._get_sample()
         sample["rets"] = fin.compute_ret_0(sample.price, mode="diff")
@@ -142,7 +135,7 @@ class Test_compute_prices_from_rets(hut.TestCase):
         )
         sample = sample.dropna()
         np.testing.assert_array_almost_equal(sample.price_pred, sample.price)
-        
+
     def test4(self) -> None:
         """
         Check prices from forward returns.
@@ -154,7 +147,7 @@ class Test_compute_prices_from_rets(hut.TestCase):
         ).shift(1)
         sample = sample.dropna()
         np.testing.assert_array_almost_equal(sample.price_pred, sample.price)
-        
+
     def test5(self) -> None:
         """
         Check output with forward returns.
@@ -168,14 +161,16 @@ class Test_compute_prices_from_rets(hut.TestCase):
         )
         output_txt = hut.convert_df_to_string(sample, index=True)
         self.check_string(output_txt)
-        
+
     def test6(self) -> None:
         """
         Check future price prediction.
         """
         np.random.seed(1)
         sample = self._get_sample()
-        sample["ret_1"] = fin.compute_ret_0(sample.price, mode="log_rets").shift(-1)
+        sample["ret_1"] = fin.compute_ret_0(sample.price, mode="log_rets").shift(
+            -1
+        )
         future_price_expected = sample.iloc[-1, 0]
         # Drop latest date price.
         sample.dropna(inplace=True)
@@ -187,8 +182,59 @@ class Test_compute_prices_from_rets(hut.TestCase):
         )[-1]
         np.testing.assert_almost_equal(future_price_expected, future_price_actual)
 
-        
+    @staticmethod
+    def _get_sample() -> pd.DataFrame:
+        date_range = pd.date_range(start="2010-01-01", periods=40, freq="B")
+        sample = pd.DataFrame(index=date_range)
+        sample["price"] = np.random.uniform(low=0, high=1, size=40)
+        return sample
+
+
 class Test_aggregate_log_rets(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Test for a clean input.
+        """
+        sample = self._get_sample(seed=1)
+        weights = fin.compute_inverse_volatility_weights(sample)
+        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
+        self.check_string(output_txt)
+
+    def test2(self) -> None:
+        """
+        Test for an input with NaNs.
+        """
+        sample = self._get_sample(seed=1)
+        sample.iloc[1, 1] = np.nan
+        sample.iloc[0:5, 0] = np.nan
+        weights = fin.compute_inverse_volatility_weights(sample)
+        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
+        self.check_string(output_txt)
+
+    def test3(self) -> None:
+        """
+        Test for an input with all-NaN column.
+        """
+        sample = self._get_sample(seed=1)
+        sample.iloc[:, 0] = np.nan
+        weights = pd.Series([0.5, 0.5], index=["srs1", "srs2"], name="weights")
+        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
+        self.check_string(output_txt)
+
+    def test4(self) -> None:
+        """
+        Test for an all-NaN input.
+        """
+        sample = self._get_sample(seed=1)
+        sample.iloc[:, :] = np.nan
+        weights = pd.Series([0.5, 0.5], index=["srs1", "srs2"], name="weights")
+        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
+        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
+        self.check_string(output_txt)
+
     @staticmethod
     def _get_sample(seed: int) -> pd.DataFrame:
         mean = pd.Series([1, 2])
@@ -215,63 +261,8 @@ class Test_aggregate_log_rets(hut.TestCase):
         )
         return txt
 
-    def test1(self) -> None:
-        """
-        Test for a clean input.
-        """
-        sample = self._get_sample(seed=1)
-        weights = fin.compute_inverse_volatility_weights(sample)
-        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
-        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
-        self.check_string(output_txt)
-
-    def test2(self) -> None:
-        """
-        Test for an input with NaNs.
-        """
-        sample = self._get_sample(seed=1)
-        sample.iloc[1, 1] = np.nan
-        sample.iloc[0:5, 0] = np.nan
-        weights = fin.compute_inverse_volatility_weights(sample)
-        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
-        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
-        self.check_string(output_txt)
-
-    def test3(self) -> None:
-        """
-        Test for an input with all-NaN column.
-        """
-        sample = self._get_sample(seed=1)
-        sample.iloc[:, 0] = np.nan
-        weights = pd.Series([0.5, 0.5], index=["srs1", "srs2"], name="weights")
-        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
-        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
-        self.check_string(output_txt)
-
-    def test4(self) -> None:
-        """
-        Test for an all-NaN input.
-        """
-        sample = self._get_sample(seed=1)
-        sample.iloc[:, :] = np.nan
-        weights = pd.Series([0.5, 0.5], index=["srs1", "srs2"], name="weights")
-        aggregate_log_rets = fin.aggregate_log_rets(sample, weights)
-        output_txt = self._get_output_txt(sample, weights, aggregate_log_rets)
-        self.check_string(output_txt)
-
 
 class Test_compute_kratio(hut.TestCase):
-    @staticmethod
-    def _get_series(seed: int) -> pd.Series:
-        arparams = np.array([0.75, -0.25])
-        maparams = np.array([0.65, 0.35])
-        arma_process = sig_gen.ArmaProcess(arparams, maparams)
-        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
-        series = arma_process.generate_sample(
-            date_range_kwargs=date_range, seed=seed
-        )
-        return series
-
     def test1(self) -> None:
         """
         Test for an clean input series.
@@ -292,8 +283,6 @@ class Test_compute_kratio(hut.TestCase):
         expected = -0.85089
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
-
-class Test_compute_drawdown(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -305,23 +294,27 @@ class Test_compute_drawdown(hut.TestCase):
         )
         return series
 
+
+class Test_compute_drawdown(hut.TestCase):
     def test1(self) -> None:
         series = self._get_series(1)
         actual = fin.compute_drawdown(series)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-
-class Test_compute_time_under_water(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
-        arma_process = sig_gen.ArmaProcess([], [])
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
         )
         return series
 
+
+class Test_compute_time_under_water(hut.TestCase):
     def test1(self) -> None:
         series = Test_compute_time_under_water._get_series(42)
         drawdown = fin.compute_drawdown(series).rename("drawdown")
@@ -343,19 +336,17 @@ class Test_compute_time_under_water(hut.TestCase):
         output = pd.concat([series, drawdown, time_under_water], axis=1)
         self.check_string(hut.convert_df_to_string(output, index=True))
 
-
-class Test_compute_turnover(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
-        arparams = np.array([0.75, -0.25])
-        maparams = np.array([0.65, 0.35])
-        arma_process = sig_gen.ArmaProcess(arparams, maparams)
-        date_range = {"start": "1/1/2010", "periods": 40, "freq": "D"}
+        arma_process = sig_gen.ArmaProcess([], [])
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
-        ).rename("input")
+        )
         return series
 
+
+class Test_compute_turnover(hut.TestCase):
     def test1(self) -> None:
         """
         Test for default arguments.
@@ -399,19 +390,19 @@ class Test_compute_turnover(hut.TestCase):
         output_df_string = hut.convert_df_to_string(output_df, index=True)
         self.check_string(output_df_string)
 
-
-class Test_compute_average_holding_period(hut.TestCase):
     @staticmethod
-    def _get_series_in_unit(seed: int, freq: str = "D") -> pd.Series:
+    def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
         arma_process = sig_gen.ArmaProcess(arparams, maparams)
-        date_range = {"start": "1/1/2010", "periods": 40, "freq": freq}
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "D"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
-        )
+        ).rename("input")
         return series
 
+
+class Test_compute_average_holding_period(hut.TestCase):
     def test1(self) -> None:
         series = self._get_series_in_unit(seed=1)
         series[5:10] = np.nan
@@ -431,19 +422,19 @@ class Test_compute_average_holding_period(hut.TestCase):
         expected = 0.05001
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
-
-class Test_compute_bet_runs(hut.TestCase):
     @staticmethod
-    def _get_series(seed: int) -> pd.Series:
+    def _get_series_in_unit(seed: int, freq: str = "D") -> pd.Series:
         arparams = np.array([0.75, -0.25])
         maparams = np.array([0.65, 0.35])
         arma_process = sig_gen.ArmaProcess(arparams, maparams)
-        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": freq}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
         )
         return series
 
+
+class Test_compute_bet_runs(hut.TestCase):
     def test1(self) -> None:
         positions = Test_compute_bet_runs._get_series(42)
         actual = fin.compute_bet_runs(positions)
@@ -508,8 +499,6 @@ class Test_compute_bet_runs(hut.TestCase):
         actual = fin.compute_bet_runs(positions)
         pd.testing.assert_series_equal(actual, expected)
 
-
-class Test_compute_bet_starts(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -521,6 +510,8 @@ class Test_compute_bet_starts(hut.TestCase):
         )
         return series
 
+
+class Test_compute_bet_starts(hut.TestCase):
     def test1(self) -> None:
         positions = Test_compute_bet_starts._get_series(42)
         actual = fin.compute_bet_starts(positions)
@@ -618,8 +609,6 @@ class Test_compute_bet_starts(hut.TestCase):
         actual = fin.compute_bet_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
 
-
-class Test_compute_bet_ends(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -631,6 +620,8 @@ class Test_compute_bet_ends(hut.TestCase):
         )
         return series
 
+
+class Test_compute_bet_ends(hut.TestCase):
     def test1(self) -> None:
         positions = Test_compute_bet_ends._get_series(42)
         actual = fin.compute_bet_ends(positions)
@@ -728,8 +719,6 @@ class Test_compute_bet_ends(hut.TestCase):
         actual = fin.compute_bet_starts(positions)
         pd.testing.assert_series_equal(actual, expected)
 
-
-class Test_compute_signed_bet_lengths(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -741,6 +730,8 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         )
         return series
 
+
+class Test_compute_signed_bet_lengths(hut.TestCase):
     def test1(self) -> None:
         positions = Test_compute_signed_bet_lengths._get_series(42)
         actual = fin.compute_signed_bet_lengths(positions)
@@ -812,7 +803,7 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
 
     def test7(self) -> None:
         """
-        Test NaNs
+        Test NaNs.
         """
         idx = pd.to_datetime(["2010-01-01", "2010-01-02", "2010-01-03"])
         positions = pd.Series([1, np.nan, np.nan], index=idx)
@@ -880,17 +871,19 @@ class Test_compute_signed_bet_lengths(hut.TestCase):
         )
         self.check_string(output_str)
 
-
-class Test_compute_returns_per_bet(hut.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
-        arma_process = sig_gen.ArmaProcess([], [])
+        arparams = np.array([0.75, -0.25])
+        maparams = np.array([0.65, 0.35])
+        arma_process = sig_gen.ArmaProcess(arparams, maparams)
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = arma_process.generate_sample(
             date_range_kwargs=date_range, seed=seed
         )
         return series
 
+
+class Test_compute_returns_per_bet(hut.TestCase):
     def test1(self) -> None:
         """
         Test for clean input series.
@@ -952,3 +945,12 @@ class Test_compute_returns_per_bet(hut.TestCase):
             }
         )
         pd.testing.assert_series_equal(actual, expected)
+
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arma_process = sig_gen.ArmaProcess([], [])
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed
+        )
+        return series
