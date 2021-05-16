@@ -48,12 +48,14 @@ def _export_env_var(val_name: str, vals: List[Any]) -> List[str]:
     Create a snippet of bash script equivalent to the following:
 
     # Update variable.
+    ```
     PYTHONPATH=$CURR_DIR:$PYTHONPATH
     # Remove redundant paths.
     PYTHONPATH="$(echo $PYTHONPATH | perl -e
       'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')"
     echo "PYTHONPATH=$PYTHONPATH"
     echo $PYTHONPATH | $EXEC_PATH/print_paths.sh
+    ```
     """
     txt = []
     # Update variable.
@@ -146,7 +148,8 @@ def config_git(
 ) -> None:
     """
     Add to the bash script in `txt` instructions to:
-        - configure git user name and user email
+
+    - configure git user name and user email
     """
     _frame("Config git", txt)
     git_user_name = user_credentials["git_user_name"]
@@ -167,8 +170,9 @@ def config_git(
 def config_python(dirs: List[str], txt: str) -> None:
     """
     Add to the bash script `txt` instructions to configure python by:
-        - disable python caching
-        - appending the submodule path to $PYTHONPATH
+
+    - disable python caching
+    - appending the submodule path to $PYTHONPATH
     """
     _frame("Config python", txt)
     #

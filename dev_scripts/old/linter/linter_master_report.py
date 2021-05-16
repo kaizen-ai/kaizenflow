@@ -81,7 +81,9 @@ def _perform_linter_for_reference_branch(
 
 
 def _calculate_exit_status(
-    branch_dirty_status: bool, master_lints: int, branch_lints: int,
+    branch_dirty_status: bool,
+    master_lints: int,
+    branch_lints: int,
 ) -> Tuple[int, str]:
     """
     Calculate status and error message.
@@ -100,7 +102,10 @@ def _calculate_exit_status(
 
 
 def _compute_stats(
-    master_dirty: int, branch_dirty: int, master_lints: int, branch_lints: int,
+    master_dirty: int,
+    branch_dirty: int,
+    master_lints: int,
+    branch_lints: int,
 ) -> Tuple[bool, bool, int, str]:
     # Prepares a message and exit status
     master_dirty_status = master_dirty > 0
@@ -183,7 +188,9 @@ def _parse() -> argparse.ArgumentParser:
     )
     # Select files.
     parser.add_argument(
-        "--jenkins", action="store_true", help="",
+        "--jenkins",
+        action="store_true",
+        help="",
     )
     parser.add_argument("--base_commit_sha", type=str, required=False, help="")
     parser.add_argument("--head_branch_name", type=str, required=False, help="")

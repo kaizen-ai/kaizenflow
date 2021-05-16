@@ -1,19 +1,19 @@
-#import glob
-#import logging
-#import os
+# import glob
+# import logging
+# import os
 #
-#import pytest
+# import pytest
 #
-#import documentation.scripts.convert_txt_to_pandoc as dscttp
-#import documentation.scripts.lint_txt as dslt
-#import helpers.dbg as dbg
-#import helpers.git as git
-#import helpers.io_ as io_
-#import helpers.printing as prnt
-#import helpers.system_interaction as si
-#import helpers.unit_test as ut
+# import documentation.scripts.convert_txt_to_pandoc as dscttp
+# import documentation.scripts.lint_txt as dslt
+# import helpers.dbg as dbg
+# import helpers.git as git
+# import helpers.io_ as io_
+# import helpers.printing as prnt
+# import helpers.system_interaction as si
+# import helpers.unit_test as ut
 #
-#_LOG = logging.getLogger(__name__)
+# _LOG = logging.getLogger(__name__)
 #
 ## #############################################################################
 ## pandoc.py
@@ -21,7 +21,7 @@
 #
 #
 ## TODO(gp): Generalize to all users, or at least Jenkins.
-#class Test_pandoc1(ut.TestCase):
+# class Test_pandoc1(ut.TestCase):
 #    def _helper(self, in_file: str, action: str) -> str:
 #        exec_path = git.find_file_in_git_tree("pandoc.py")
 #        dbg.dassert_exists(exec_path)
@@ -90,7 +90,7 @@
 ## #############################################################################
 #
 #
-#def _run_preprocess(in_file: str, out_file: str) -> str:
+# def _run_preprocess(in_file: str, out_file: str) -> str:
 #    """
 #    Execute the end-to-end flow for convert_txt_to_pandoc.py returning
 #    the output as string.
@@ -112,7 +112,7 @@
 #
 #
 ## TODO(gp): -> Test_convert_txt_to_pandoc*
-#class Test_preprocess1(ut.TestCase):
+# class Test_preprocess1(ut.TestCase):
 #    """
 #    Check that the output of convert_txt_to_pandoc.py is the expected one
 #    using:
@@ -136,7 +136,7 @@
 #        self._helper()
 #
 #
-#class Test_preprocess2(ut.TestCase):
+# class Test_preprocess2(ut.TestCase):
 #    """
 #    Check that the output of convert_txt_to_pandoc.py is the expected one
 #    calling the library function directly.
@@ -199,8 +199,8 @@
 ## #############################################################################
 ## Python: nested functions
 ## #############################################################################
-#- Functions can be declared in the body of another function
-#- E.g., to hide utility functions in the scope of the function that uses them
+# - Functions can be declared in the body of another function
+# - E.g., to hide utility functions in the scope of the function that uses them
 #    ```python
 #    def print_integers(values):
 #
@@ -214,7 +214,7 @@
 #            if _is_integer(v):
 #                print(v)
 #    ```
-#"""
+# """
 #        exp = """
 ## Python: nested functions
 #  - Functions can be declared in the body of another function
@@ -233,7 +233,7 @@
 #                if _is_integer(v):
 #                    print(v)
 #        ```
-#"""
+# """
 #        self._helper_transform(txt_in, exp)
 #
 #
@@ -242,7 +242,7 @@
 ## #############################################################################
 #
 #
-#class Test_lint_txt1(ut.TestCase):
+# class Test_lint_txt1(ut.TestCase):
 #    def _helper_preprocess(self, txt: str, exp: str) -> None:
 #        act = dslt._preprocess(txt)
 #        self.assert_equal(act, exp)
@@ -250,43 +250,43 @@
 #    def test_preprocess1(self) -> None:
 #        txt = r"""$$E_{in} = \frac{1}{N} \sum_i e(h(\vx_i), y_i)$$"""
 #        exp = r"""$$
-#E_{in} = \frac{1}{N} \sum_i e(h(\vx_i), y_i)
-#$$"""
+# E_{in} = \frac{1}{N} \sum_i e(h(\vx_i), y_i)
+# $$"""
 #        self._helper_preprocess(txt, exp)
 #
 #    def test_preprocess2(self) -> None:
 #        txt = r"""$$E_{in}(\vw) = \frac{1}{N} \sum_i \big(
-#-y_i \log(\Pr(h(\vx) = 1|\vx)) - (1 - y_i) \log(1 - \Pr(h(\vx)=1|\vx))
-#\big)$$"""
+# -y_i \log(\Pr(h(\vx) = 1|\vx)) - (1 - y_i) \log(1 - \Pr(h(\vx)=1|\vx))
+# \big)$$"""
 #        exp = r"""$$
-#E_{in}(\vw) = \frac{1}{N} \sum_i \big(
-#-y_i \log(\Pr(h(\vx) = 1|\vx)) - (1 - y_i) \log(1 - \Pr(h(\vx)=1|\vx))
-#\big)
-#$$"""
+# E_{in}(\vw) = \frac{1}{N} \sum_i \big(
+# -y_i \log(\Pr(h(\vx) = 1|\vx)) - (1 - y_i) \log(1 - \Pr(h(\vx)=1|\vx))
+# \big)
+# $$"""
 #        self._helper_preprocess(txt, exp)
 #
 #    @staticmethod
 #    def _get_text1() -> str:
 #        txt = r"""* Gradient descent for logistic regression
-#- The typical implementations of gradient descent (basic or advanced) need two
+# - The typical implementations of gradient descent (basic or advanced) need two
 #  inputs:
 #    - The cost function $E_{in}(\vw)$ (to monitor convergence)
 #    - The gradient of the cost function
 #      $\frac{\partial E}{w_j} \text{ for all } j$ (to optimize)
-#- The cost function is:
+# - The cost function is:
 #    $$E_{in} = \frac{1}{N} \sum_i e(h(\vx_i), y_i)$$
 #
-#- In case of general probabilistic model $h(\vx)$ in \{0, 1\}):
+# - In case of general probabilistic model $h(\vx)$ in \{0, 1\}):
 #    $$
 #    E_{in}(\vw) = \frac{1}{N} \sum_i \big(
 #    -y_i \log(\Pr(h(\vx) = 1|\vx)) - (1 - y_i) \log(1 - \Pr(h(\vx)=1|\vx))
 #    \big)
 #    $$
 #
-#- In case of logistic regression in \{+1, -1\}:
+# - In case of logistic regression in \{+1, -1\}:
 #    $$E_{in}(\vw) = \frac{1}{N} \sum_i \log(1 + \exp(-y_i \vw^T \vx_i))$$
 #
-#- It can be proven that the function $E_{in}(\vw)$ to minimize is convex in
+# - It can be proven that the function $E_{in}(\vw)$ to minimize is convex in
 #  $\vw$ (sum of exponentials and flipped exponentials is convex and log is
 #  monotone)"""
 #        return txt
@@ -294,29 +294,29 @@
 #    def test_preprocess3(self) -> None:
 #        txt = self._get_text1()
 #        exp = r"""- STARGradient descent for logistic regression
-#- The typical implementations of gradient descent (basic or advanced) need two
+# - The typical implementations of gradient descent (basic or advanced) need two
 #  inputs:
 #    - The cost function $E_{in}(\vw)$ (to monitor convergence)
 #    - The gradient of the cost function
 #      $\frac{\partial E}{w_j} \text{ for all } j$ (to optimize)
-#- The cost function is:
+# - The cost function is:
 #    $$
 #    E_{in} = \frac{1}{N} \sum_i e(h(\vx_i), y_i)
 #    $$
 #
-#- In case of general probabilistic model $h(\vx)$ in \{0, 1\}):
+# - In case of general probabilistic model $h(\vx)$ in \{0, 1\}):
 #    $$
 #    E_{in}(\vw) = \frac{1}{N} \sum_i \big(
 #    -y_i \log(\Pr(h(\vx) = 1|\vx)) - (1 - y_i) \log(1 - \Pr(h(\vx)=1|\vx))
 #    \big)
 #    $$
 #
-#- In case of logistic regression in \{+1, -1\}:
+# - In case of logistic regression in \{+1, -1\}:
 #    $$
 #    E_{in}(\vw) = \frac{1}{N} \sum_i \log(1 + \exp(-y_i \vw^T \vx_i))
 #    $$
 #
-#- It can be proven that the function $E_{in}(\vw)$ to minimize is convex in
+# - It can be proven that the function $E_{in}(\vw)$ to minimize is convex in
 #  $\vw$ (sum of exponentials and flipped exponentials is convex and log is
 #  monotone)"""
 #        self._helper_preprocess(txt, exp)
@@ -356,16 +356,16 @@
 #        Run the text linter on a txt file.
 #        """
 #        txt = r"""
-#*  Good time management
+# *  Good time management
 #
-#1. choose the right tasks
+# 1. choose the right tasks
 #    -   avoid non-essential tasks
-#"""
+# """
 #        exp = r"""* Good time management
 #
-#1. Choose the right tasks
+# 1. Choose the right tasks
 #   - Avoid non-essential tasks
-#"""
+# """
 #        file_name = "test.txt"
 #        self._helper_process(txt, exp, file_name)
 #
@@ -375,32 +375,32 @@
 #        """
 #        txt = r"""
 ## Good
-#- Good time management
+# - Good time management
 #  1. choose the right tasks
 #    - Avoid non-essential tasks
 #
 ### Bad
-#-  Hello
+# -  Hello
 #    - World
-#"""
+# """
 #        exp = r"""<!--ts-->
 #   * [Good](#good)
 #      * [Bad](#bad)
 #
 #
 #
-#<!--te-->
+# <!--te-->
 ## Good
 #
-#- Good time management
+# - Good time management
 #  1. Choose the right tasks
 #  - Avoid non-essential tasks
 #
 ### Bad
 #
-#- Hello
+# - Hello
 #  - World
-#"""
+# """
 #        file_name = "test.md"
 #        self._helper_process(txt, exp, file_name)
 #
@@ -409,25 +409,25 @@
 #        Check that no replacement happens inside a ``` block.
 #        """
 #        txt = r"""<!--ts-->
-#<!--te-->
-#- Good
-#- Hello
-#```test
-#- hello
+# <!--te-->
+# - Good
+# - Hello
+# ```test
+# - hello
 #    - world
-#1) oh no!
-#```
-#"""
+# 1) oh no!
+# ```
+# """
 #        exp = r"""<!--ts-->
-#<!--te-->
-#- Good
-#- Hello
-#```test
-#- hello
+# <!--te-->
+# - Good
+# - Hello
+# ```test
+# - hello
 #    - world
-#1) oh no!
-#```
-#"""
+# 1) oh no!
+# ```
+# """
 #        file_name = "test.md"
 #        act = self._helper_process(txt, None, file_name)
 #        act = prnt.remove_empty_lines(act)
@@ -436,16 +436,16 @@
 #    @staticmethod
 #    def _get_text_problematic_for_prettier1() -> None:
 #        txt = r"""
-#* Python formatting
-#- Python has several built-in ways of formatting strings
+# * Python formatting
+# - Python has several built-in ways of formatting strings
 #  1) `%` format operator
 #  2) `format` and `str.format`
 #
 #
-#* `%` format operator
-#- Text template as a format string
+# * `%` format operator
+# - Text template as a format string
 #  - Values to insert are provided as a value or a `tuple`
-#"""
+# """
 #        return txt
 #
 #    def test_process_prettier_bug1(self) -> None:
@@ -455,15 +455,15 @@
 #        txt = self._get_text_problematic_for_prettier1()
 #        exp = r"""- Python formatting
 #
-#* Python has several built-in ways of formatting strings
+# * Python has several built-in ways of formatting strings
 #  1. `%` format operator
 #  2. `format` and `str.format`
 #
-#- `%` format operator
+# - `%` format operator
 #
-#* Text template as a format string
+# * Text template as a format string
 #  - Values to insert are provided as a value or a `tuple`
-#"""
+# """
 #        act = dslt._prettier(txt)
 #        self.assert_equal(act, exp)
 #
@@ -473,15 +473,15 @@
 #        """
 #        txt = self._get_text_problematic_for_prettier1()
 #        exp = r"""* Python formatting
-#- Python has several built-in ways of formatting strings
+# - Python has several built-in ways of formatting strings
 #
 #  1. `%` format operator
 #  2. `format` and `str.format`
 #
-#* `%` format operator
-#- Text template as a format string
+# * `%` format operator
+# - Text template as a format string
 #  - Values to insert are provided as a value or a `tuple`
-#"""
+# """
 #        file_name = "test.txt"
 #        self._helper_process(txt, exp, file_name)
 #
@@ -490,19 +490,19 @@
 #        Run the text linter on a txt file.
 #        """
 #        txt = r"""
-#* `str.format`
-#- Python 3 allows to format multiple values, e.g.,
+# * `str.format`
+# - Python 3 allows to format multiple values, e.g.,
 #   ```python
 #   key = 'my_var'
 #   value = 1.234
 #   ```
-#"""
+# """
 #        exp = r"""* `str.format`
-#- Python 3 allows to format multiple values, e.g.,
+# - Python 3 allows to format multiple values, e.g.,
 #  ```python
 #  key = 'my_var'
 #  value = 1.234
 #  ```
-#"""
+# """
 #        file_name = "test.txt"
 #        self._helper_process(txt, exp, file_name)

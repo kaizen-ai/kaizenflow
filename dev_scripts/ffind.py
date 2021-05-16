@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 """
-# Find all files / dirs whose name contains Task243, i.e., the regex "*Task243*"
+# Find all files/dirs whose name contains Task243, i.e., the regex "*Task243*"
+
 > ffind.py Task243
 
 # Look for files / dirs with name containing "stocktwits" in "this_dir"

@@ -24,12 +24,9 @@
 
 import logging
 
-import pandas as pd
-
 import helpers.dbg as dbg
 import helpers.env as env
 import helpers.printing as prnt
-import helpers.system_interaction as si
 
 # %%
 print(env.get_system_signature()[0])

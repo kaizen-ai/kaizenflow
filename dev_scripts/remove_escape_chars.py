@@ -2,7 +2,6 @@
 
 import argparse
 import logging
-import re
 
 import helpers.dbg as dbg
 import helpers.parser as prsr

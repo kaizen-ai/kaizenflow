@@ -3,7 +3,6 @@ from typing import Optional
 
 import helpers.git as git
 import helpers.unit_test as hut
-import helpers.system_interaction as hsinte
 
 _LOG = logging.getLogger(__name__)
 

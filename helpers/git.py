@@ -689,11 +689,12 @@ def get_modified_files_in_branch(
 
 
 def get_summary_files_in_branch(
-    dst_branch: str, dir_name: str = ".",
+    dst_branch: str,
+    dir_name: str = ".",
 ):
     """
     Report summary of files in the current branch with respect to `dst_branch'.
-    
+
     Same interface as `get_modified_files_in_branch`.
     """
     # File types (from https://git-scm.com/docs/git-diff).
@@ -706,7 +707,8 @@ def get_summary_files_in_branch(
         ("type changed", "T"),
         ("unmerged", "U"),
         ("unknown", "X"),
-        ("broken pairing", "B")]
+        ("broken pairing", "B"),
+    ]
     res = ""
     for tag, diff_type in file_types:
         cmd = f"git diff --diff-filter={diff_type} --name-only {dst_branch}..."
@@ -824,7 +826,7 @@ def git_add_update(
 def fetch_origin_master_if_needed():
     if hsinte.is_inside_ci():
         _LOG.warning("Running inside CI so fetching master")
-        cmd = 'git branch -a'
+        cmd = "git branch -a"
         _, txt = hsinte.system_to_string(cmd)
         _LOG.debug("%s=%s", cmd, txt)
         cmd = 'git branch -a | egrep "\s+master\s*$" | wc -l'

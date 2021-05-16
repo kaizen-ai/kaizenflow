@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-Diff a notebook against the HEAD version in git, removing notebook artifacts
-to make the differences easier to spot using vimdiff.
+Diff a notebook against the HEAD version in git, removing notebook artifacts to
+make the differences easier to spot using vimdiff.
 """
 
 # TODO(gp)
@@ -32,6 +32,7 @@ _LOG = logging.getLogger(__name__)
 def _convert(dir_name: str, ipynb_file: str, py_file: str) -> str:
     """
     Convert jupyter notebook into a python file suitable for diff-ing.
+
     :param dir_name: destination directory
     :param ipynb_file: absolute path of src file name
     :param py_file: basename of the dst python file (e.g., "notebook_new.py")

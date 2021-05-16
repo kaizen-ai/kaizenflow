@@ -1,4 +1,3 @@
-import functools
 import logging
 from typing import Optional
 
@@ -15,7 +14,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
-
     def read_data(
         self,
         exchange: str,
@@ -78,18 +76,18 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
 
     @staticmethod
     @hcache.cache
-    def _read_csv(file_path: str,
-                  frequency: icdtyp.Frequency,
-                  nrows: Optional[int] = None,
-                  start_ts: Optional[pd.Timestamp] = None,
-                  end_ts: Optional[pd.Timestamp] = None) -> pd.DataFrame:
+    def _read_csv(
+        file_path: str,
+        frequency: icdtyp.Frequency,
+        nrows: Optional[int] = None,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
+    ) -> pd.DataFrame:
         """
         Read data from S3 and cache it.
         """
         if hs3.is_s3_path(file_path):
-            dbg.dassert(
-                hs3.exists(file_path), "S3 key not found %s", file_path
-            )
+            dbg.dassert(hs3.exists(file_path), "S3 key not found %s", file_path)
         data = pd.read_csv(file_path, header=None, nrows=nrows)
         data = KibotS3DataLoader._filter_by_dates(
             data, frequency=frequency, start_ts=start_ts, end_ts=end_ts

@@ -13,7 +13,6 @@ import scipy
 import seaborn as sns
 import sklearn
 import statsmodels
-
 import utils.debug as dbg
 import utils.jos
 import utils.jstats
@@ -107,8 +106,8 @@ _keys_for_parallel = None
 def apply_to_dict_panel_parallel(
     obj, f, args, func_name=None, timed=False, n_jobs=None, verbose=0
 ):
-    from joblib import Parallel, delayed
     import dill
+    from joblib import Parallel, delayed
 
     if timed:
         timer = utils.timer.dtimer_start(0, func_name)
@@ -468,6 +467,7 @@ def filter_by_period(
 def filter_on_times(df, start_time, end_time, reverse=False):
     """
     Filter df keeping rows with index times in [start_time, end_times].
+
     - reverse: reverse the filtering
     """
     dbg.dassert_type_is(df, pd.DataFrame)
@@ -520,8 +520,8 @@ def drop_before_first_row_without_nans(df):
 # TODO(gp): Extend to work for a general value (e.g., 0.0)
 def filter_non_finite(obj, col_names=None, keep_finite=True, print_stats=False):
     """
-    Return the filtered obj (data frame, series, numpy array) removing
-    non-finite values in any column in col_names.
+    Return the filtered obj (data frame, series, numpy array) removing non-
+    finite values in any column in col_names.
     """
 
     # Select what we want to keep.
@@ -1328,8 +1328,8 @@ def plot_bootstrap_ccf(
     ax=None,
 ):
     """
-    lags describes how many days before / after today should we lag
-    for Plot*CrossCorrelation.
+    lags describes how many days before / after today should we lag for
+    Plot*CrossCorrelation.
     """
     dbg.dassert_eq(
         len(x_to_lag),

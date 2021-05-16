@@ -111,7 +111,8 @@ use_one_line_cmd = False
 #  globally.
 def _to_single_line_cmd(cmd: Union[str, List[str]]) -> str:
     """
-    Convert a multiline command (as a string or list of strings) into a single line.
+    Convert a multiline command (as a string or list of strings) into a single
+    line.
 
     E.g., convert
         ```
@@ -188,11 +189,12 @@ def _run(ctx: Any, cmd: str, *args: Any, **kwargs: Any) -> None:
     ctx.run(cmd, *args, **kwargs)
 
 
-def _get_files_to_process(modified: bool, branch: bool, files: str,
-                          mutually_exclusive: bool) -> List[str]:
+def _get_files_to_process(
+    modified: bool, branch: bool, files: str, mutually_exclusive: bool
+) -> List[str]:
     """
-    Get a list of files to process that have been changed in the branch,
-    in the client, or passed by the user.
+    Get a list of files to process that have been changed in the branch, in the
+    client, or passed by the user.
 
     :param modified: return files modified in the client (i.e., changed with
         respect to HEAD)
@@ -206,7 +208,7 @@ def _get_files_to_process(modified: bool, branch: bool, files: str,
             int(modified) + int(branch) + int(files != ""),
             1,
             msg="You can specify only one option among --modified, --branch, and "
-                "--files"
+            "--files",
         )
     else:
         # Only one option can be specified among --modified and --branch.
@@ -214,7 +216,7 @@ def _get_files_to_process(modified: bool, branch: bool, files: str,
             int(modified) + int(branch),
             1,
             msg="You can specify only one option among --modified, --branch",
-            )
+        )
     if modified:
         files = git.get_modified_files()
         files = " ".join(files)
@@ -245,6 +247,7 @@ def _get_files_to_process(modified: bool, branch: bool, files: str,
     if not files_as_list:
         _LOG.warning("No files were selected")
     return files_as_list
+
 
 # Copied from helpers.datetime_ to avoid dependency from pandas.
 
@@ -277,8 +280,7 @@ def print_setup(ctx):  # type: ignore
 
 
 @task
-def print_tasks(  # type: ignore
-        ctx, as_python_code=False):
+def print_tasks(ctx, as_python_code=False):  # type: ignore
     """
     Print all the available tasks in `lib_tasks.py`.
 
@@ -387,8 +389,10 @@ def git_branch_files(ctx):  # type: ignore
     """
     _report_task()
     _ = ctx
-    print("Difference between HEAD and master:\n" +
-          git.get_summary_files_in_branch("master", "."))
+    print(
+        "Difference between HEAD and master:\n"
+        + git.get_summary_files_in_branch("master", ".")
+    )
 
 
 @task
@@ -449,10 +453,11 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
 # TODO(gp): Allow to create it from a issue number.
 @task
 def git_create_branch(  # type: ignore
-        ctx, branch_name="", issue_id=0, repo="current", only_branch_from_master=True):
+    ctx, branch_name="", issue_id=0, repo="current", only_branch_from_master=True
+):
     """
-    Create and push upstream branch `branch_name` or the branch corresponding to
-    `issue_id` in repo `repo`.
+    Create and push upstream branch `branch_name` or the branch corresponding
+    to `issue_id` in repo `repo`.
 
     E.g.,
     ```
@@ -466,9 +471,13 @@ def git_create_branch(  # type: ignore
     """
     _report_task()
     if issue_id > 0:
-        dbg.dassert_eq(branch_name, "", "You can't specify both issue and branch_name")
+        dbg.dassert_eq(
+            branch_name, "", "You can't specify both issue and branch_name"
+        )
         branch_name = _get_gh_issue_title(issue_id, repo)
-        _LOG.info("Issue %d in %s repo corresponds to '%s'", issue_id, repo, branch_name)
+        _LOG.info(
+            "Issue %d in %s repo corresponds to '%s'", issue_id, repo, branch_name
+        )
     dbg.dassert_ne(branch_name, "")
     # Make sure we are branching from `master`, unless that's what the
     # user wants.
@@ -491,11 +500,11 @@ def git_create_branch(  # type: ignore
 
 @task
 def git_create_patch(  # type: ignore
-        ctx, mode="tar",
-        modified=False, branch=False, files=""):
+    ctx, mode="tar", modified=False, branch=False, files=""
+):
     """
-    Create a patch file for the entire repo client from the base revision.
-    This script accepts a list of files to package, if specified.
+    Create a patch file for the entire repo client from the base revision. This
+    script accepts a list of files to package, if specified.
 
     :param mode: "tar" creates a tar ball with all the files
         "diff" creates a patch with the diff of the files
@@ -522,14 +531,17 @@ def git_create_patch(  # type: ignore
         dbg.dfatal("Invalid code path")
     _LOG.debug("dst_file=%s", dst_file)
     # Summary of files.
-    _LOG.info("Difference between HEAD and master:\n%s",
-              git.get_summary_files_in_branch("master", "."))
+    _LOG.info(
+        "Difference between HEAD and master:\n%s",
+        git.get_summary_files_in_branch("master", "."),
+    )
     # Prepare the patch command.
     cmd = ""
     if mode == "tar":
         # Get the files.
-        files_as_list = _get_files_to_process(modified, branch, files,
-                                              mutually_exclusive=False)
+        files_as_list = _get_files_to_process(
+            modified, branch, files, mutually_exclusive=False
+        )
         _LOG.info("Files to save:\n%s", hprint.indent("\n".join(files_as_list)))
         if not files_as_list:
             _LOG.warning("Nothing to patch: exiting")
@@ -772,7 +784,7 @@ def docker_login(ctx):  # type: ignore
             f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
             + f"https://{ecr_base_path}"
         )
-    #cmd = ("aws ecr get-login-password" +
+    # cmd = ("aws ecr get-login-password" +
     #       " | docker login --username AWS --password-stdin "
     _run(ctx, cmd)
 
@@ -923,7 +935,8 @@ def _get_docker_cmd(
     docker_compose_files.append(_get_base_docker_compose_path())
     #
     repo_short_name = git.get_repo_short_name(
-        git.get_repo_full_name_from_dirname("."))
+        git.get_repo_full_name_from_dirname(".")
+    )
     _LOG.debug("repo_short_name=%s", repo_short_name)
     if repo_short_name == "amp":
         docker_compose_file_tmp = _get_amp_docker_compose_path()
@@ -954,7 +967,7 @@ def _get_docker_cmd(
         --env-file {env_file}"""
     )
     # - Add the `config` command for debugging purposes.
-    docker_config_cmd : List[str] = docker_cmd_[:]
+    docker_config_cmd: List[str] = docker_cmd_[:]
     docker_config_cmd.append(
         r"""
         config"""
@@ -1460,7 +1473,6 @@ def _to_pbcopy(txt: str) -> None:
     print(txt)
 
 
-
 @task
 def find_test_class(ctx, class_name="", dir_name=".", pbcopy=False):  # type: ignore
     """
@@ -1652,14 +1664,7 @@ def _run_tests(
         skipped_tests,
     )
     # Execute the command line.
-    _run_test_cmd(
-        ctx,
-        stage,
-        cmd,
-        coverage,
-        collect_only,
-        start_coverage_script
-    )
+    _run_test_cmd(ctx, stage, cmd, coverage, collect_only, start_coverage_script)
 
 
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
@@ -1842,19 +1847,17 @@ def _get_lint_docker_cmd(precommit_opts: str, run_bash: bool) -> str:
         repo_root = os.getcwd()
     _LOG.debug("work_dir=%s repo_root=%s", work_dir, repo_root)
     # TODO(gp): Do not hardwire the repo.
-    #image = get_default_param("DEV_TOOLS_IMAGE_PROD")
-    image="665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools:prod"
-    #image="665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools:local"
-    docker_cmd_ = ["docker run",
-        "--rm"]
+    # image = get_default_param("DEV_TOOLS_IMAGE_PROD")
+    image = "665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools:prod"
+    # image="665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools:local"
+    docker_cmd_ = ["docker run", "--rm"]
     if run_bash:
         docker_cmd_.append("-it")
     else:
         docker_cmd_.append("-t")
-    docker_cmd_.extend([
-        f"-v '{repo_root}':/src",
-        f"--workdir={work_dir}",
-        f"{image}"])
+    docker_cmd_.extend(
+        [f"-v '{repo_root}':/src", f"--workdir={work_dir}", f"{image}"]
+    )
     # Build the command inside Docker.
     cmd = f"'pre-commit {precommit_opts}'"
     if run_bash:
@@ -1867,8 +1870,16 @@ def _get_lint_docker_cmd(precommit_opts: str, run_bash: bool) -> str:
 
 
 @task
-def lint(ctx, modified=False, branch=False, files="", phases="", only_black=False,
-         stage="prod", run_bash=False):  # type: ignore
+def lint(
+    ctx,
+    modified=False,
+    branch=False,
+    files="",
+    phases="",
+    only_black=False,
+    stage="prod",
+    run_bash=False,
+):  # type: ignore
     """
     Lint files.
 
@@ -1883,8 +1894,9 @@ def lint(ctx, modified=False, branch=False, files="", phases="", only_black=Fals
     #
     docker_pull(ctx, stage=stage, images="dev_tools")
     # Get the files to lint.
-    files_as_list = _get_files_to_process(modified, branch, files,
-                                          mutually_exclusive=True)
+    files_as_list = _get_files_to_process(
+        modified, branch, files, mutually_exclusive=True
+    )
     _LOG.info("Files to lint:\n%s", "\n".join(files_as_list))
     if not files_as_list:
         _LOG.warning("Nothing to lint: exiting")
@@ -1897,7 +1909,8 @@ def lint(ctx, modified=False, branch=False, files="", phases="", only_black=Fals
     precommit_opts = [
         f"run {phases}",
         "-c /app/.pre-commit-config.yaml",
-        f"--files {files_as_str}"]
+        f"--files {files_as_str}",
+    ]
     precommit_opts = _to_single_line_cmd(precommit_opts)
     # Execute command line.
     cmd = _get_lint_docker_cmd(precommit_opts, run_bash)
@@ -2022,9 +2035,7 @@ def _get_repo_full_name_from_cmd(repo: str) -> str:
         repo_full_name = git.get_repo_full_name_from_dirname(".")
     else:
         repo_full_name = git.get_repo_name(repo, in_mode="short_name")
-    _LOG.debug(
-        "repo=%s -> repo_full_name=%s", repo, repo_full_name
-    )
+    _LOG.debug("repo=%s -> repo_full_name=%s", repo, repo_full_name)
     return repo_full_name
 
 
@@ -2078,7 +2089,8 @@ def gh_issue_title(ctx, issue_id=0, repo="current"):  # type: ignore
 
 @task
 def gh_create_pr(  # type: ignore
-        ctx, body="", draft=True, repo="current", title=""):
+    ctx, body="", draft=True, repo="current", title=""
+):
     """
     Create a draft PR for the current branch in the corresponding repo.
 
@@ -2091,16 +2103,20 @@ def gh_create_pr(  # type: ignore
         # Use the branch name as title.
         title = branch_name
     repo_full_name = _get_repo_full_name_from_cmd(repo)
-    _LOG.info("Creating PR with title '%s' for '%s' in %s", title, branch_name,
-            repo_full_name)
+    _LOG.info(
+        "Creating PR with title '%s' for '%s' in %s",
+        title,
+        branch_name,
+        repo_full_name,
+    )
     # TODO(gp): Check whether the PR already exists.
     # TODO(gp): Use _to_single_line_cmd
     cmd = (
-        f"gh pr create" +
-        f" --repo {repo_full_name}" +
-        (" --draft" if draft else "") +
-        f' --title "{title}"' +
-        f' --body {body}'
+        f"gh pr create"
+        + f" --repo {repo_full_name}"
+        + (" --draft" if draft else "")
+        + f' --title "{title}"'
+        + f" --body {body}"
     )
     _run(ctx, cmd)
     # TODO(gp): Implement the rest of the flow.

@@ -1,15 +1,11 @@
 """
+
 """
 
-import getpass
 import logging
 import os
 import shutil
-import signal
-import subprocess
-import sys
-import time
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import List, Optional
 
 import helpers.dbg as dbg
 import helpers.printing as hprint
@@ -27,15 +23,21 @@ def _pytest_show_artifacts(dir_name: str, tag: Optional[str] = None) -> List[str
     file_names: List[str] = []
     # Find pytest artifacts.
     cmd = 'find . -name ".pytest_cache" -type d'
-    _, output_tmp = hsi.system_to_string(cd_cmd + cmd, abort_on_error=abort_on_error)
+    _, output_tmp = hsi.system_to_string(
+        cd_cmd + cmd, abort_on_error=abort_on_error
+    )
     file_names.extend(output_tmp.split())
     #
     cmd = 'find . -name "__pycache__" -type d'
-    _, output_tmp = hsi.system_to_string(cd_cmd + cmd, abort_on_error=abort_on_error)
+    _, output_tmp = hsi.system_to_string(
+        cd_cmd + cmd, abort_on_error=abort_on_error
+    )
     file_names.extend(output_tmp.split())
     # Find .pyc artifacts.
     cmd = 'find . -name "*.pyc" -type f'
-    _, output_tmp = hsi.system_to_string(cd_cmd + cmd, abort_on_error=abort_on_error)
+    _, output_tmp = hsi.system_to_string(
+        cd_cmd + cmd, abort_on_error=abort_on_error
+    )
     file_names.extend(output_tmp.split())
     # Remove empty lines.
     file_names = hprint.remove_empty_lines_from_string_list(file_names)

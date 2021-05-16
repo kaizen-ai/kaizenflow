@@ -98,7 +98,8 @@ class TestDryRunTasks1(hut.TestCase):
         self._dry_run(target)
 
     @pytest.mark.skipif(
-        hsinte.is_inside_ci(), reason="In CI the output is different")
+        hsinte.is_inside_ci(), reason="In CI the output is different"
+    )
     def test_docker_images_ls_repo(self) -> None:
         target = "docker_images_ls_repo"
         self._dry_run(target)
@@ -189,8 +190,7 @@ class TestDryRunTasks2(_TestClassHelper):
 
     def test_gh_create_pr2(self) -> None:
         _gh_login()
-        target = ("gh_create_pr(ctx, body='hello_world', repo='amp', "
-            "title='test')")
+        target = "gh_create_pr(ctx, body='hello_world', repo='amp', title='test')"
         self._check_output(target)
 
     def test_gh_create_pr3(self) -> None:
@@ -279,7 +279,8 @@ class TestDryRunTasks2(_TestClassHelper):
     # #########################################################################
 
     @pytest.mark.skipif(
-        hsinte.is_inside_ci(), reason="In CI the output is different")
+        hsinte.is_inside_ci(), reason="In CI the output is different"
+    )
     def test_docker_login(self) -> None:
         """
         Instead of using _build_mock_context_returning_ok(), set the return
@@ -362,6 +363,7 @@ class TestLibTasks1(hut.TestCase):
         issue_id = 1
         repo = "current"
         _ = ltasks._get_gh_issue_title(issue_id, repo)
+
 
 # #############################################################################
 
@@ -845,6 +847,7 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
     def test_tar_modified1(self) -> None:
         """
         Exercise the code for:
+
         > invoke git_create_patch --mode="tar" --branch
         """
         # This test needs a reference to Git master branch.
@@ -858,6 +861,7 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
     def test_tar_branch1(self) -> None:
         """
         Exercise the code for:
+
         > invoke git_create_patch --mode="tar" --modified
         """
         modified = False
@@ -868,6 +872,7 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
     def test_tar_files1(self) -> None:
         """
         Exercise the code for:
+
         > invoke git_create_patch --mode="tar" --files "this file"
         """
         # This test needs a reference to Git master branch.
@@ -883,6 +888,7 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
     def test_tar_files2(self) -> None:
         """
         Exercise the code for:
+
         > invoke git_create_patch --mode="diff" --files "this file"
 
         In this case one needs to specify --branch or --modified.

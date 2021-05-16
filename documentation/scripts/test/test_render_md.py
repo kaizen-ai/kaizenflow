@@ -11,12 +11,14 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_render_md1(ut.TestCase):
-    """Test _uml_file_names method that returns output pathes"""
+    """
+    Test _uml_file_names method that returns output pathes.
+    """
 
     def test_uml_file_names1(self) -> None:
         """
-        Check output dir and file names correctness for absolute
-        destination path.
+        Check output dir and file names correctness for absolute destination
+        path.
         """
         dest_file = "/a/b/c/d/e.md"
         idx = 8
@@ -26,7 +28,9 @@ class Test_render_md1(ut.TestCase):
 
 
 class Test_render_md2(ut.TestCase):
-    """Test _render_command method that construct plantuml command"""
+    """
+    Test _render_command method that construct plantuml command.
+    """
 
     def test_render_command1(self) -> None:
         """
@@ -40,7 +44,8 @@ class Test_render_md2(ut.TestCase):
 
     def test_render_command2(self) -> None:
         """
-        Check assertion if extension is unknown when render command is building.
+        Check assertion if extension is unknown when render command is
+        building.
         """
         uml_file = "/a/b/c.puml"
         dest = "/d/e/f"
@@ -52,7 +57,10 @@ class Test_render_md2(ut.TestCase):
 
 
 class Test_render_md3(ut.TestCase):
-    """Test _render_plantuml method that adds strings with links to rendered images"""
+    """
+    Test _render_plantuml method that adds strings with links to rendered
+    images.
+    """
 
     def test_render_plantuml1(self) -> None:
         """
@@ -105,7 +113,9 @@ class Test_render_md3(ut.TestCase):
         self._check_str_after_render(in_text)
 
     def test_render_plantuml_playback1(self) -> None:
-        """Test real usage for instrument_master_architecture.md"""
+        """
+        Test real usage for instrument_master_architecture.md.
+        """
         # Define input variables
         file_name = "instrument_master_architecture.md.test"
         in_file = os.path.join(self.get_input_dir(), file_name)

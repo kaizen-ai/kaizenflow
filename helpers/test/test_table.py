@@ -8,7 +8,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestTable1(hut.TestCase):
-
     def test_from_text1(self) -> None:
         table = self._get_table()
         self.assertIsInstance(table, htable.Table)
@@ -23,32 +22,28 @@ completed success Lint Slow_tests"""
             htable.Table.from_text(cols, txt, delimiter=" ")
         act = str(cm.exception)
         exp = """
-################################################################################
-* Failed assertion *
-'3'
-==
-'4'
-Invalid row='['completed', 'success', 'Lint']' for cols='['status', 'outcome', 'descr', 'workflow']'
-################################################################################
+        * Failed assertion *
+        '3'
+        ==
+        '4'
+        Invalid row='['completed', 'success', 'Lint']' for cols='['status', 'outcome', 'descr', 'workflow']'
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_from_text_invalid2(self) -> None:
         txt = """completed failure Lint Run_linter
-completed success Lint Fast_tess
-completed success Lint Slow_tests"""
+        completed success Lint Fast_tess
+        completed success Lint Slow_tests"""
         cols = ["status", "outcome", "descr", "workflow", "EXTRA"]
         with self.assertRaises(AssertionError) as cm:
             htable.Table.from_text(cols, txt, delimiter=" ")
         act = str(cm.exception)
         exp = """
-################################################################################
-* Failed assertion *
-'4'
-==
-'5'
-Invalid row='['completed', 'failure', 'Lint', 'Run_linter']' for cols='['status', 'outcome', 'descr', 'workflow', 'EXTRA']'
-################################################################################
+        * Failed assertion *
+        '4'
+        ==
+        '5'
+        Invalid row='['completed', 'failure', 'Lint', 'Run_linter']' for cols='['status', 'outcome', 'descr', 'workflow', 'EXTRA']'
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 

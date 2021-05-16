@@ -1,6 +1,7 @@
 """
-Test all methods in run_tests.py script. In particular,
-tests correctness of a pytest command construction
+Test all methods in run_tests.py script.
+
+In particular, tests correctness of a pytest command construction
 """
 import argparse
 import logging
@@ -13,10 +14,14 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_PytestSuiteOptsBuilder1(ut.TestCase):
-    """Test methods inside run_tests._PytestSuiteOptionsBuilder class"""
+    """
+    Test methods inside run_tests._PytestSuiteOptionsBuilder class.
+    """
 
     def test_build1(self) -> None:
-        """Test build fast suite options for non-ci mode"""
+        """
+        Test build fast suite options for non-ci mode.
+        """
         # Get builder.
         opts_builder = rt._PytestSuiteOptionsBuilder("fast")
         # Build options.
@@ -25,7 +30,9 @@ class Test_PytestSuiteOptsBuilder1(ut.TestCase):
         self.assertCountEqual(opts, [])
 
     def test_build2(self) -> None:
-        """Test build slow suite options for non-ci mode"""
+        """
+        Test build slow suite options for non-ci mode.
+        """
         # Get builder.
         opts_builder = rt._PytestSuiteOptionsBuilder("slow")
         # Build options.
@@ -34,7 +41,9 @@ class Test_PytestSuiteOptsBuilder1(ut.TestCase):
         self.assertCountEqual(opts, ['-m "slow"'])
 
     def test_build_ci1(self) -> None:
-        """Test build fast suite options for ci mode"""
+        """
+        Test build fast suite options for ci mode.
+        """
         # Get builder.
         opts_builder = rt._PytestSuiteOptionsBuilder("fast")
         # Build options.
@@ -43,7 +52,9 @@ class Test_PytestSuiteOptsBuilder1(ut.TestCase):
         self.assertCountEqual(opts, ["--timeout=5"])
 
     def test_build_ci2(self) -> None:
-        """Test build superslow suite options for ci mode"""
+        """
+        Test build superslow suite options for ci mode.
+        """
         # Get builder.
         opts_builder = rt._PytestSuiteOptionsBuilder("superslow")
         # Build options.
@@ -52,7 +63,9 @@ class Test_PytestSuiteOptsBuilder1(ut.TestCase):
         self.assertCountEqual(opts, ["--timeout=1800", '-m "superslow"'])
 
     def test_init_unexisting1(self) -> None:
-        """Test build unexisting suite options"""
+        """
+        Test build unexisting suite options.
+        """
         with self.assertRaises(AssertionError) as cm:
             # Get builder.
             rt._PytestSuiteOptionsBuilder("suite123")
@@ -60,10 +73,14 @@ class Test_PytestSuiteOptsBuilder1(ut.TestCase):
 
 
 class Test_get_parallel_options1(ut.TestCase):
-    """Test run_tests._get_parallel_options method"""
+    """
+    Test run_tests._get_parallel_options method.
+    """
 
     def test1(self) -> None:
-        """Test all available cores usage"""
+        """
+        Test all available cores usage.
+        """
         # Look to log.
         with self.assertLogs(rt._LOG, level="WARNING") as cm:
             # Get number of parallel jobs.
@@ -74,7 +91,9 @@ class Test_get_parallel_options1(ut.TestCase):
         self._check_log(parallel=True, log_strings=cm.output)
 
     def test2(self) -> None:
-        """Test 1 core usage"""
+        """
+        Test 1 core usage.
+        """
         # Look to log.
         with self.assertLogs(rt._LOG, level="WARNING") as cm:
             # Get number of parallel jobs.
@@ -85,7 +104,9 @@ class Test_get_parallel_options1(ut.TestCase):
         self._check_log(parallel=False, log_strings=cm.output)
 
     def test3(self) -> None:
-        """Test 10 core usage"""
+        """
+        Test 10 core usage.
+        """
         # Look to log.
         with self.assertLogs(rt._LOG, level="WARNING") as cm:
             # Get number of parallel jobs.
@@ -101,7 +122,9 @@ class Test_get_parallel_options1(ut.TestCase):
         return int(joblib.cpu_count())
 
     def _check_log(self, parallel: bool, log_strings: List[str]) -> None:
-        """Check assert that expected mode message is present in the log"""
+        """
+        Check assert that expected mode message is present in the log.
+        """
         parallel_msg = "Parallel mode selected"
         serial_msg = "Serial mode selected"
         # Define what is expected depending on mode.
@@ -119,12 +142,14 @@ class Test_get_parallel_options1(ut.TestCase):
 
 
 class Test_build_pytest_opts1(ut.TestCase):
-    """Test run_tests._build_pytest_opts method"""
+    """
+    Test run_tests._build_pytest_opts method.
+    """
 
     def test_all_args1(self) -> None:
         """
-        Test options building if all args except override_pytest_arg
-        are presented and not default
+        Test options building if all args except override_pytest_arg are
+        presented and not default.
         """
         # Define incoming args.
         args = argparse.Namespace(
@@ -165,8 +190,8 @@ class Test_build_pytest_opts1(ut.TestCase):
 
     def test_all_args2(self) -> None:
         """
-        Test options building if all args except override_pytest_arg
-        are presented and default
+        Test options building if all args except override_pytest_arg are
+        presented and default.
         """
         # Define incoming args.
         args = argparse.Namespace(
@@ -196,7 +221,9 @@ class Test_build_pytest_opts1(ut.TestCase):
         )
 
     def test_override_args1(self) -> None:
-        """Test options building if override_pytest_arg is presented"""
+        """
+        Test options building if override_pytest_arg is presented.
+        """
         # Define incoming args.
         args = argparse.Namespace(
             test_suite="slow",
@@ -226,36 +253,38 @@ class Test_build_pytest_opts1(ut.TestCase):
 
 
 class Test_build_pytest_cmd1(ut.TestCase):
-    """Test run_tests._build_pytest_cmd method"""
+    """
+    Test run_tests._build_pytest_cmd method.
+    """
 
     def test_empty_args1(self) -> None:
         """
-        Test command building if args are options are empty and
-        test is specified.
+        Test command building if args are options are empty and test is
+        specified.
         """
         cmd = rt._build_pytest_cmd("test_me.py", [])
         self.assertEqual(cmd, "pytest test_me.py")
 
     def test_empty_args2(self) -> None:
         """
-        Test command building if args are options are empty and
-        test is not specified.
+        Test command building if args are options are empty and test is not
+        specified.
         """
         cmd = rt._build_pytest_cmd("", [])
         self.assertEqual(cmd, "pytest")
 
     def test_non_empty_args1(self) -> None:
         """
-        Test command building if args are options are presented and
-        test is specified.
+        Test command building if args are options are presented and test is
+        specified.
         """
         cmd = rt._build_pytest_cmd("test_me.py", ["--opt1", "--opt2=3"])
         self.assertEqual(cmd, "pytest --opt1 --opt2=3 test_me.py")
 
     def test_non_empty_args2(self) -> None:
         """
-        Test command building if args are options are presented and
-        test is not specified.
+        Test command building if args are options are presented and test is not
+        specified.
         """
         cmd = rt._build_pytest_cmd("", ["--opt1", "--opt2=3"])
         self.assertEqual(cmd, "pytest --opt1 --opt2=3")

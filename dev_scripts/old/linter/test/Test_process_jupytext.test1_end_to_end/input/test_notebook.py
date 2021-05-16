@@ -20,9 +20,6 @@
 # %autoreload 2
 
 import logging
-import pprint
-
-import tqdm.notebook as tqdm
 
 import helpers.dbg as dbg
 import helpers.env as env

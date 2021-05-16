@@ -28,10 +28,10 @@ def get_connection(
 
 
 def get_connection_from_string(
-        conn_as_str: str,
-        autocommit: bool = True,
+    conn_as_str: str,
+    autocommit: bool = True,
 ) -> Tuple[psycop.extensions.connection, psycop.extensions.cursor]:
-    """ 
+    """
     Create a connection from a string.
     """
     connection = psycop.connect(conn_as_str)
@@ -178,14 +178,14 @@ def get_columns(
     return columns
 
 
-# ##################################################################################
+# #############################################################################
 
 # TODO(plyq): Add tests.
 # TODO(*): Rename force -> overwrite or not_incremental.
 def create_database(
-        connection: psycop.extensions.connection,
-        db: str,
-        force: Optional[bool] = None,
+    connection: psycop.extensions.connection,
+    db: str,
+    force: Optional[bool] = None,
 ) -> None:
     """
     Create empty database.
@@ -209,7 +209,7 @@ def create_database(
         )
 
 
-# ##################################################################################
+# #############################################################################
 
 
 def execute_query(

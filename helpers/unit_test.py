@@ -624,7 +624,7 @@ def _remove_lines(txt: str) -> str:
     """
     Remove lines of separating characters long at least 20 characters.
     """
-    txt_tmp : List[str] = []
+    txt_tmp: List[str] = []
     for line in txt.split("\n"):
         if re.match(r"^\s*[\#\-><=]{20,}\s*$", line):
             continue

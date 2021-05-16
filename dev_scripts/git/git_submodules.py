@@ -3,8 +3,10 @@
 """
 Implement several Git workflows on multiple repos.
 
-# Show the current state of the submodules.
-> dev_scripts/git/git_submodules.py
+# Show the current state of the submodules:
+  ```
+  > dev_scripts/git/git_submodules.py
+  ```
 """
 
 import argparse
