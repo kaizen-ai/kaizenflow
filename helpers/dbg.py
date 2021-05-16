@@ -78,7 +78,8 @@ def dfatal(message: str, assertion_type: Optional[Any] = None) -> None:
 
 def _to_msg(msg: Optional[str], *args: Any) -> str:
     """
-    Format the error message with the params.
+    Format the error message `msg` using the params in `args`, like `msg %
+    args`.
     """
     if msg is None:
         # If there is no message, we should have no arguments to format.
@@ -101,6 +102,7 @@ def _dfatal(
     txt: Union[str, Iterable[str]], msg: Optional[str], *args: Any
 ) -> None:
     dfatal_txt = "* Failed assertion *\n"
+    # TODO(gp): This should be an iterable.
     if isinstance(txt, list):
         dfatal_txt += "\n".join(txt)
     else:
@@ -117,7 +119,9 @@ def dassert(cond: Any, msg: Optional[str] = None, *args: Any) -> None:
     # Handle the somehow frequent case of using `dassert` instead of another
     # one, e.g., `dassert(y, list)`
     if msg is not None:
-        assert isinstance(msg, str), f"You passed '{msg}' instead of str"
+        assert isinstance(msg, str), (
+            f"You passed '{msg}' or type '{type(msg)}' instead of str"
+        )
     if not cond:
         txt = "cond=%s" % cond
         _dfatal(txt, msg, *args)
@@ -126,7 +130,8 @@ def dassert(cond: Any, msg: Optional[str] = None, *args: Any) -> None:
 def dassert_eq(
     val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
-    if not val1 == val2:
+    cond = val1 == val2
+    if not cond:
         txt = "'%s'\n==\n'%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
 
@@ -134,17 +139,29 @@ def dassert_eq(
 def dassert_ne(
     val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
-    # pylint: disable=superfluous-parens
-    if not (val1 != val2):
+    cond = val1 != val2
+    if not cond:
         txt = "'%s'\n!=\n'%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
+
+
+def dassert_imply(
+    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
+) -> None:
+    cond = not val1 or val2
+    if not cond:
+        txt = "'%s' implies '%s'" % (val1, val2)
+        _dfatal(txt, msg, *args)
+
+
+# Comparison related.
 
 
 def dassert_lt(
     val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
-    # pylint: disable=superfluous-parens
-    if not (val1 < val2):
+    cond = val1 < val2
+    if not cond:
         txt = "%s < %s" % (val1, val2)
         _dfatal(txt, msg, *args)
 
@@ -152,8 +169,8 @@ def dassert_lt(
 def dassert_lte(
     val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
-    # pylint: disable=superfluous-parens
-    if not (val1 <= val2):
+    cond = val1 <= val2
+    if not cond:
         txt = "%s <= %s" % (val1, val2)
         _dfatal(txt, msg, *args)
 
@@ -164,22 +181,46 @@ def dassert_lgt(
     upper_bound: float,
     lower_bound_closed: bool,
     upper_bound_closed: bool,
+    msg: Optional[str] = None,
+    *args: Any,
 ) -> None:
+    """
+    Assert that `lower_bound <= x <= upper_bound`.
+
+    - param: lower_bound_closed, upper_bound_closed controls
+        the open-ness/close-ness of the interval extremes.
+    """
+    # `lower_bound <= or < x`.
     if lower_bound_closed:
-        dassert_lte(lower_bound, x)
+        dassert_lte(lower_bound, x, msg, *args)
     else:
-        dassert_lt(lower_bound, x)
+        dassert_lt(lower_bound, x, msg, *args)
+    # `x <= or < upper_bound`.
     if upper_bound_closed:
-        dassert_lte(x, upper_bound)
+        dassert_lte(x, upper_bound, msg, *args)
     else:
-        dassert_lt(x, upper_bound)
+        dassert_lt(x, upper_bound, msg, *args)
+
+
+def dassert_is_proportion(
+    x: float, msg: Optional[str] = None, *args: Any
+) -> None:
+    """
+    Assert that `0 <= x <= 1`.
+    """
+    lower_bound_closed = True
+    upper_bound_closed = True
+    dassert_lgt(0, x, 1, lower_bound_closed, upper_bound_closed, msg, *args)
+
+
+# Membership.
 
 
 def dassert_in(
     value: Any, valid_values: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
-    # pylint: disable=superfluous-parens
-    if not (value in valid_values):
+    cond = value in valid_values
+    if not cond:
         txt = "'%s' in '%s'" % (value, valid_values)
         _dfatal(txt, msg, *args)
 
@@ -187,9 +228,13 @@ def dassert_in(
 def dassert_not_in(
     value: Any, valid_values: Iterable[Any], msg: Optional[str] = None, *args: Any
 ) -> None:
-    if value in valid_values:
+    cond = value not in valid_values
+    if not cond:
         txt = "'%s' not in '%s'" % (value, valid_values)
         _dfatal(txt, msg, *args)
+
+
+# Type related.
 
 
 def dassert_is(
@@ -198,8 +243,8 @@ def dassert_is(
     msg: Optional[str] = None,
     *args: Any,
 ) -> None:
-    # pylint: disable=superfluous-parens
-    if not (val1 is val2):
+    cond = val1 is val2
+    if not cond:
         txt = "'%s' is '%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
 
@@ -207,8 +252,8 @@ def dassert_is(
 def dassert_is_not(
     val1: Any, val2: Optional[Any], msg: Optional[str] = None, *args: Any
 ) -> None:
-    # pylint: disable=superfluous-parens
-    if not (val1 is not val2):
+    cond = val1 is not val2
+    if not cond:
         txt = "'%s' is not '%s'" % (val1, val2)
         _dfatal(txt, msg, *args)
 
@@ -216,8 +261,9 @@ def dassert_is_not(
 def dassert_type_is(
     val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
-    # pylint: disable=superfluous-parens,unidiomatic-typecheck
-    if not (type(val1) is val2):
+    # pylint: disable=unidiomatic-typecheck
+    cond = type(val1) is val2
+    if not cond:
         txt = "type of '%s' is '%s' instead of '%s'" % (val1, type(val1), val2)
         _dfatal(txt, msg, *args)
 
@@ -225,8 +271,9 @@ def dassert_type_is(
 def dassert_type_in(
     val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
-    # pylint: disable=superfluous-parens,unidiomatic-typecheck
-    if not (type(val1) in val2):
+    # pylint: disable=unidiomatic-typecheck
+    cond = type(val1) in val2
+    if not cond:
         txt = "type of '%s' is '%s' not in '%s'" % (val1, type(val1), val2)
         _dfatal(txt, msg, *args)
 
@@ -234,7 +281,8 @@ def dassert_type_in(
 def dassert_isinstance(
     val1: Any, val2: type, msg: Optional[str] = None, *args: Any
 ) -> None:
-    if not isinstance(val1, val2):
+    cond = isinstance(val1, val2)
+    if not cond:
         txt = "instance of '%s' is '%s' instead of '%s'" % (
             val1,
             type(val1),
@@ -243,13 +291,7 @@ def dassert_isinstance(
         _dfatal(txt, msg, *args)
 
 
-def dassert_imply(
-    val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
-) -> None:
-    # pylint: disable=superfluous-parens
-    if not (not val1 or val2):
-        txt = "'%s' implies '%s'" % (val1, val2)
-        _dfatal(txt, msg, *args)
+# Set related.
 
 
 def dassert_set_eq(
@@ -270,7 +312,7 @@ def dassert_set_eq(
         _dfatal(txt, msg, *args)
 
 
-# TODO(gp): -> dassert_issubset
+# TODO(gp): -> dassert_issubset to match Python set function.
 def dassert_is_subset(
     val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
@@ -305,11 +347,14 @@ def dassert_not_intersection(
         _dfatal(txt, msg, *args)
 
 
+# Array related.
+
+
 def dassert_no_duplicates(
     val1: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
-    # pylint: disable=superfluous-parens
-    if not (len(set(val1)) == len(val1)):
+    cond = len(set(val1)) == len(val1)
+    if not cond:
         # Count the occurrences of each element of the seq.
         v_to_num = [(v, val1.count(v)) for v in set(val1)]
         # Build list of elems with duplicates.
@@ -326,8 +371,8 @@ def dassert_eq_all(
 ) -> None:
     val1 = list(val1)
     val2 = list(val2)
-    is_equal = val1 == val2
-    if not is_equal:
+    cond = val1 == val2
+    if not cond:
         # mask = val1 != val2
         txt = []
         txt.append("val1=%s\n%s" % (len(val1), val1))
@@ -336,96 +381,6 @@ def dassert_eq_all(
         # txt += "\n%s" % val1[mask]
         # txt += "\n%s" % val2[mask]
         _dfatal(txt, msg, *args)
-
-
-# TODO(*): -> _file_exists
-def dassert_exists(file_name: str, msg: Optional[str] = None, *args: Any) -> None:
-    file_name = os.path.abspath(file_name)
-    if not os.path.exists(file_name):
-        txt = []
-        txt.append("file='%s' doesn't exist" % file_name)
-        _dfatal(txt, msg, *args)
-
-
-def dassert_dir_exists(
-    dir_name: str, msg: Optional[str] = None, *args: Any
-) -> None:
-    """
-    Assert unless `dir_name` exists and it's a directory.
-    """
-    dir_name = os.path.abspath(dir_name)
-    exists = os.path.exists(dir_name)
-    if not exists:
-        txt = "dir='%s' doesn't exist" % dir_name
-        _dfatal(txt, msg, *args)
-    is_dir = os.path.isdir(dir_name)
-    if not is_dir:
-        txt = "dir='%s' is not a dir" % dir_name
-        _dfatal(txt, msg, *args)
-
-
-def dassert_not_exists(
-    file_name: str, msg: Optional[str] = None, *args: Any
-) -> None:
-    """
-    Ensure that a file or a dir `file_name` doesn't exist, otherwise raises.
-    """
-    file_name = os.path.abspath(file_name)
-    # pylint: disable=superfluous-parens,unneeded-not
-    if not (not os.path.exists(file_name)):
-        txt = []
-        txt.append("file='%s' already exists" % file_name)
-        _dfatal(txt, msg, *args)
-
-
-def dassert_file_extension(
-    file_name: str, exp_exts: Union[str, List[str]]
-) -> None:
-    # Handle single extension case.
-    if isinstance(exp_exts, str):
-        exp_exts = [exp_exts]
-    # Make sure extension starts with .
-    exp_exts = ["." + e if not e.startswith(".") else e for e in exp_exts]
-    # Check.
-    act_ext = os.path.splitext(file_name)[-1].lower()
-    dassert_in(
-        act_ext, exp_exts, "Invalid extension %s for %s", act_ext, file_name
-    )
-
-
-def dassert_strictly_increasing_index(
-    obj: Any, msg: Optional[str] = None, *args: Any
-) -> None:
-    # For some reason importing pandas is slow and we don't want to pay this
-    # start up cost unless we have to.
-    import pandas as pd
-
-    if isinstance(obj, pd.Index):
-        index = obj
-    else:
-        index = obj.index
-    # TODO(gp): Understand why mypy reports:
-    #   error: "dassert" gets multiple values for keyword argument "msg"
-    dassert(index.is_monotonic_increasing, msg=msg, *args)  # type: ignore
-    dassert(index.is_unique, msg=msg, *args)  # type: ignore
-
-
-def dassert_monotonic_index(
-    obj: Any, msg: Optional[str] = None, *args: Any
-) -> None:
-    # For some reason importing pandas is slow and we don't want to pay this
-    # start up cost unless we have to.
-    import pandas as pd
-
-    if isinstance(obj, pd.Index):
-        index = obj
-    else:
-        index = obj.index
-    # TODO(gp): Understand why mypy reports:
-    #   error: "dassert" gets multiple values for keyword argument "msg"
-    cond = index.is_monotonic_increasing or index.is_monotonic_decreasing
-    dassert(cond, msg=msg, *args)  # type: ignore
-    dassert(index.is_unique, msg=msg, *args)  # type: ignore
 
 
 def _get_first_type(obj: Iterable, tag: str) -> Type:
@@ -478,6 +433,123 @@ def dassert_list_of_strings(output: List[str], *args: Any) -> None:
     dassert_isinstance(output, list, *args)
     for line in output:
         dassert_isinstance(line, str, *args)
+
+
+# File related.
+
+
+# TODO(*): Deprecate this and use only `dassert_{file,dir}_exists()`.
+def dassert_exists(file_name: str, msg: Optional[str] = None, *args: Any) -> None:
+    file_name = os.path.abspath(file_name)
+    if not os.path.exists(file_name):
+        txt = []
+        txt.append("File '%s' doesn't exist" % file_name)
+        _dfatal(txt, msg, *args)
+
+
+def dassert_file_exists(
+    file_name: str, msg: Optional[str] = None, *args: Any
+) -> None:
+    """
+    Assert unless `file_name` exists and it's a file and not a directory.
+    """
+    file_name = os.path.abspath(file_name)
+    # `file_name` exists.
+    exists = os.path.exists(file_name)
+    if not exists:
+        txt = f"File '{file_name}' doesn't exist"
+        _dfatal(txt, msg, *args)
+    # `file_name` is a file.
+    is_file = os.path.isfile(file_name)
+    if not is_file:
+        txt = f"'{file_name}' is not a file"
+        _dfatal(txt, msg, *args)
+
+
+def dassert_dir_exists(
+    dir_name: str, msg: Optional[str] = None, *args: Any
+) -> None:
+    """
+    Assert unless `dir_name` exists and it's a directory.
+    """
+    dir_name = os.path.abspath(dir_name)
+    # `dir_name` exists.
+    exists = os.path.exists(dir_name)
+    if not exists:
+        txt = f"Dir '{dir_name}' doesn't exist"
+        _dfatal(txt, msg, *args)
+    # `dir_name` is a directory.
+    is_dir = os.path.isdir(dir_name)
+    if not is_dir:
+        txt = f"'{dir_name}' is not a dir"
+        _dfatal(txt, msg, *args)
+
+
+def dassert_not_exists(
+    file_name: str, msg: Optional[str] = None, *args: Any
+) -> None:
+    """
+    Ensure that a file or a dir `file_name` doesn't exist, raise otherwise.
+    """
+    file_name = os.path.abspath(file_name)
+    # pylint: disable=superfluous-parens,unneeded-not
+    if not (not os.path.exists(file_name)):
+        txt = []
+        txt.append("file='%s' already exists" % file_name)
+        _dfatal(txt, msg, *args)
+
+
+def dassert_file_extension(
+    file_name: str, exp_exts: Union[str, List[str]]
+) -> None:
+    # Handle single extension case.
+    if isinstance(exp_exts, str):
+        exp_exts = [exp_exts]
+    # Make sure extension starts with .
+    exp_exts = ["." + e if not e.startswith(".") else e for e in exp_exts]
+    # Check.
+    act_ext = os.path.splitext(file_name)[-1].lower()
+    dassert_in(
+        act_ext, exp_exts, "Invalid extension %s for %s", act_ext, file_name
+    )
+
+
+# Pandas related.
+
+
+def dassert_strictly_increasing_index(
+    obj: Any, msg: Optional[str] = None, *args: Any
+) -> None:
+    # For some reason importing pandas is slow and we don't want to pay this
+    # start up cost unless we have to.
+    import pandas as pd
+
+    if isinstance(obj, pd.Index):
+        index = obj
+    else:
+        index = obj.index
+    # TODO(gp): Understand why mypy reports:
+    #   error: "dassert" gets multiple values for keyword argument "msg"
+    dassert(index.is_monotonic_increasing, msg=msg, *args)  # type: ignore
+    dassert(index.is_unique, msg=msg, *args)  # type: ignore
+
+
+def dassert_monotonic_index(
+    obj: Any, msg: Optional[str] = None, *args: Any
+) -> None:
+    # For some reason importing pandas is slow and we don't want to pay this
+    # start up cost unless we have to.
+    import pandas as pd
+
+    if isinstance(obj, pd.Index):
+        index = obj
+    else:
+        index = obj.index
+    # TODO(gp): Understand why mypy reports:
+    #   error: "dassert" gets multiple values for keyword argument "msg"
+    cond = index.is_monotonic_increasing or index.is_monotonic_decreasing
+    dassert(cond, msg=msg, *args)  # type: ignore
+    dassert(index.is_unique, msg=msg, *args)  # type: ignore
 
 
 # #############################################################################

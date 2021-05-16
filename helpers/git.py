@@ -584,7 +584,11 @@ def get_remote_head_hash(dir_name: str) -> str:
 # #############################################################################
 
 
+# TODO(gp): -> _remove_files_non_present()
 def _check_files(files: List[str]) -> List[str]:
+    """
+    Build list of files in `files`, skipping the files that don't exist.
+    """
     files_tmp = []
     for f in files:
         if os.path.exists(f):
@@ -594,17 +598,20 @@ def _check_files(files: List[str]) -> List[str]:
     return files_tmp
 
 
-def _get_files(
+# TODO(gp): Move to system_interactions.py
+def system_to_files(
     dir_name: str, cmd: str, remove_files_non_present: bool
 ) -> List[str]:
     """
-    Execute a command `cmd` in `dir_name` and return the output.
+    Execute command `cmd` in `dir_name` and return the output as a list of
+    strings.
     """
     cd_cmd = "cd %s && " % dir_name
     _, output = hsinte.system_to_string(cd_cmd + cmd)
     #
     files = output.split()
     files = [os.path.join(dir_name, f) for f in files]
+    # Remove non-existent files, if needed.
     if remove_files_non_present:
         files = _check_files(files)
     return files
@@ -638,7 +645,7 @@ def get_modified_files(
     #   dev_scripts/infra/ssh_tunnels.py
     #   helpers/git.py
     cmd = "(git diff --cached --name-only; git ls-files -m) | sort | uniq"
-    files = _get_files(dir_name, cmd, remove_files_non_present)
+    files = system_to_files(dir_name, cmd, remove_files_non_present)
     return files
 
 
@@ -654,8 +661,9 @@ def get_previous_committed_files(
     Equivalent to `dev_scripts/git_previous_commit_files.sh`
 
     :param dir_name: directory with Git client
-    :param remove_files_non_present: remove the files that are not
-        currently present in the client
+    :param num_commits: how many commits in the past to consider
+    :param remove_files_non_present: remove the files that are not currently present
+        in the client
     :return: list of files
     """
     cmd = []
@@ -663,7 +671,7 @@ def get_previous_committed_files(
     cmd.append("$(git log --author $(git config user.name) -%d" % num_commits)
     cmd.append(r"""| \grep "^commit " | perl -pe 's/commit (.*)/$1/')""")
     cmd_as_str = " ".join(cmd)
-    files = _get_files(dir_name, cmd_as_str, remove_files_non_present)
+    files = system_to_files(dir_name, cmd_as_str, remove_files_non_present)
     return files
 
 
@@ -684,7 +692,7 @@ def get_modified_files_in_branch(
     :return: list of files
     """
     cmd = "git diff --name-only %s..." % dst_branch
-    files = _get_files(dir_name, cmd, remove_files_non_present)
+    files = system_to_files(dir_name, cmd, remove_files_non_present)
     return files
 
 
@@ -712,7 +720,7 @@ def get_summary_files_in_branch(
     res = ""
     for tag, diff_type in file_types:
         cmd = f"git diff --diff-filter={diff_type} --name-only {dst_branch}..."
-        files = _get_files(dir_name, cmd, remove_files_non_present=False)
+        files = system_to_files(dir_name, cmd, remove_files_non_present=False)
         if files:
             res += f"# {tag}: {len(files)}\n"
             res += hprint.indent("\n".join(files)) + "\n"
