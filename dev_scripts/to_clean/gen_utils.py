@@ -497,8 +497,8 @@ def drop_before_first_row_without_nans(df):
 # TODO(gp): Extend to work for a general value (e.g., 0.0)
 def filter_non_finite(obj, col_names=None, keep_finite=True, print_stats=False):
     """
-    Return the filtered obj (data frame, series, numpy array) removing
-    non-finite values in any column in col_names.
+    Return the filtered obj (data frame, series, numpy array) removing non-
+    finite values in any column in col_names.
     """
 
     # Select what we want to keep.

@@ -255,7 +255,6 @@ completed       success Lint    Slow_tests
 
 
 class TestCheckString1(hut.TestCase):
-
     def test_check_string1(self) -> None:
         """
         Compare the actual value to a matching golden outcome.
