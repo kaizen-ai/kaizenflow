@@ -88,6 +88,14 @@ else:
 # We prefer not to cache functions running `git` to avoid stale values if we
 # call git (e.g., if we cache Git hash and then we do a `git pull`).
 
+# pyinvoke `ctx.run()` is useful for unit testing, since it allows to:
+# - mock the result of a system call
+# - register the issued command line (to create the expected outcome of a test)
+# On the other side `system_interaction.py` contains many utilities that make
+# it easy to interact with the system.
+# Once AmpPart1347 is implemented we can replace all the `ctx.run()` with calls
+# to `system_interaction.py`.
+
 
 _IS_FIRST_CALL = False
 
@@ -98,13 +106,10 @@ def _report_task(txt: str = "") -> None:
     if _IS_FIRST_CALL:
         _IS_FIRST_CALL = True
         hversi.check_version()
+    # Print the name of the function.
     func_name = hintros.get_function_name(count=1)
     msg = "## %s: %s" % (func_name, txt)
     print(hprint.color_highlight(msg, color="purple"))
-
-
-# TODO(gp): Pass through command line using a global switch or an env var.
-use_one_line_cmd = False
 
 
 # TODO(gp): Move this to helpers.system_interaction and allow to add the switch
@@ -181,6 +186,10 @@ def _to_multi_line_cmd(docker_cmd_: List[str]) -> str:
     return docker_cmd_
 
 
+# TODO(gp): Pass through command line using a global switch or an env var.
+use_one_line_cmd = False
+
+
 def _run(ctx: Any, cmd: str, *args: Any, **kwargs: Any) -> None:
     _LOG.debug("cmd=%s", cmd)
     if use_one_line_cmd:
@@ -190,7 +199,11 @@ def _run(ctx: Any, cmd: str, *args: Any, **kwargs: Any) -> None:
 
 
 def _get_files_to_process(
-    modified: bool, branch: bool, files: str, mutually_exclusive: bool
+    modified: bool,
+    branch: bool,
+    files: str,
+    mutually_exclusive: bool,
+    remove_dirs: bool,
 ) -> List[str]:
     """
     Get a list of files to process that have been changed in the branch, in the
@@ -230,18 +243,19 @@ def _get_files_to_process(
     # Convert into a list.
     files_as_list = files.split(" ")
     files_as_list = [f for f in files_as_list if f != ""]
-    # Remove dirs.
-    files_tmp: List[str] = []
-    dirs_tmp: List[str] = []
-    for file in files_as_list:
-        if os.path.isdir(file):
-            _LOG.debug("file='%s' is a dir: skipping", file)
-            dirs_tmp.append(file)
-        else:
-            files_tmp.append(file)
-    if dirs_tmp:
-        _LOG.warning("Removing dirs: %s", ", ".join(dirs_tmp))
-    files_as_list = files_tmp
+    # Remove dirs, if needed.
+    if remove_dirs:
+        files_tmp: List[str] = []
+        dirs_tmp: List[str] = []
+        for file in files_as_list:
+            if os.path.isdir(file):
+                _LOG.debug("file='%s' is a dir: skipping", file)
+                dirs_tmp.append(file)
+            else:
+                files_tmp.append(file)
+        if dirs_tmp:
+            _LOG.warning("Removed dirs: %s", ", ".join(dirs_tmp))
+        files_as_list = files_tmp
     _LOG.debug("files='%s'", str(files))
     # Ensure that there are files to process.
     if not files_as_list:
@@ -280,7 +294,7 @@ def print_setup(ctx):  # type: ignore
 
 
 @task
-def print_tasks(ctx, as_python_code=False):  # type: ignore
+def print_tasks(ctx, as_code=False):  # type: ignore
     """
     Print all the available tasks in `lib_tasks.py`.
 
@@ -300,13 +314,13 @@ def print_tasks(ctx, as_python_code=False):  # type: ignore
     _, txt = hsinte.system_to_string(cmd)
     for line in txt.split("\n"):
         _LOG.debug("line=%s", line)
-        m = re.match("^def\s+(\S+)\(", line)
+        m = re.match(r"^def\s+(\S+)\(", line)
         if m:
             func_name = m.group(1)
             _LOG.debug("  -> %s", func_name)
             func_names.append(func_name)
     func_names = sorted(func_names)
-    if as_python_code:
+    if as_code:
         print("\n".join([f"{fn}," for fn in func_names]))
     else:
         print("\n".join(func_names))
@@ -450,14 +464,18 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     _run(ctx, cmd)
 
 
-# TODO(gp): Allow to create it from a issue number.
 @task
 def git_create_branch(  # type: ignore
-    ctx, branch_name="", issue_id=0, repo="current", only_branch_from_master=True
+    ctx,
+    branch_name="",
+    issue_id=0,
+    repo="current",
+    suffix="",
+    only_branch_from_master=True,
 ):
     """
-    Create and push upstream branch `branch_name` or the branch corresponding
-    to `issue_id` in repo `repo`.
+    Create and push upstream branch `branch_name` or the one corresponding to
+    `issue_id` in repo `repo`.
 
     E.g.,
     ```
@@ -467,20 +485,39 @@ def git_create_branch(  # type: ignore
 
     :param branch_name: name of the branch to create (e.g.,
         `LemTask169_Get_GH_actions`)
+    :param issue_id: use the canonical name for the branch corresponding to that
+        issue
+    :param repo: name of the GitHub repo that the `issue_id` belongs to
+        - "current" (default): the current repo
+        - short name (e.g., "amp", "lem") of the branch
+    :param suffix: suffix (e.g., "02") to add to the branch name when using issue_id
     :param only_branch_from_master: only allow to branch from master
     """
     _report_task()
     if issue_id > 0:
+        # User specified an issue id on GitHub.
         dbg.dassert_eq(
-            branch_name, "", "You can't specify both issue and branch_name"
+            branch_name, "", "You can't specify both --issue and --branch_name"
         )
         branch_name = _get_gh_issue_title(issue_id, repo)
         _LOG.info(
             "Issue %d in %s repo corresponds to '%s'", issue_id, repo, branch_name
         )
+        if suffix != "":
+            # Add the the suffix.
+            _LOG.debug("Adding suffix '%s' to '%s'", suffix, branch_name)
+            if suffix[0] in ("-", "_"):
+                _LOG.warning(
+                    "Suffix '%s' should not start with '%s': removing",
+                    suffix,
+                    suffix[0],
+                )
+                suffix = suffix.rstrip("-_")
+            branch_name += "_" + suffix
+    #
+    _LOG.info("branch_name='%s'", branch_name)
     dbg.dassert_ne(branch_name, "")
-    # Make sure we are branching from `master`, unless that's what the
-    # user wants.
+    # Make sure we are branching from `master`, unless that's what the user wants.
     curr_branch = git.get_branch_name()
     if curr_branch != "master":
         if only_branch_from_master:
@@ -493,14 +530,17 @@ def git_create_branch(  # type: ignore
     # git checkout -b LemTask169_Get_GH_actions_working_on_lemonade
     cmd = f"git checkout -b {branch_name}"
     _run(ctx, cmd)
-    # git push --set-upstream origin LemTask169_Get_GH_actions_working_on_lemonade
+    # TODO(gp): If the branch already exists, increase the number.
+    #   git checkout -b AmpTask1329_Review_code_in_core_03
+    #   fatal: A branch named 'AmpTask1329_Review_code_in_core_03' already exists.
+    #   saggese@gpmaclocal.local ==> RC: 128 <==
     cmd = f"git push --set-upstream origin {branch_name}"
     _run(ctx, cmd)
 
 
 @task
 def git_create_patch(  # type: ignore
-    ctx, mode="tar", modified=False, branch=False, files=""
+    ctx, mode="diff", modified=False, branch=False, files=""
 ):
     """
     Create a patch file for the entire repo client from the base revision. This
@@ -539,8 +579,13 @@ def git_create_patch(  # type: ignore
     cmd = ""
     if mode == "tar":
         # Get the files.
+        # We allow to specify files as a subset of files modified in the branch or
+        # in the client.
+        mutually_exclusive = False
+        # We don't allow to specify directories.
+        remove_dirs = True
         files_as_list = _get_files_to_process(
-            modified, branch, files, mutually_exclusive=False
+            modified, branch, files, mutually_exclusive, remove_dirs
         )
         _LOG.info("Files to save:\n%s", hprint.indent("\n".join(files_as_list)))
         if not files_as_list:
@@ -581,10 +626,27 @@ def git_create_patch(  # type: ignore
     print(msg)
 
 
+@task
+def git_last_commit(ctx, pbcopy=True):  # type: ignore
+    """
+    Print the status of the files in the previous commit.
+
+    :param pbcopy: save the result into the system clipboard (only on macOS)
+    """
+    cmd = 'git log -1 --name-status --pretty=""'
+    _run(ctx, cmd)
+    # Get the list of existing files.
+    files = git.get_previous_committed_files(".")
+    txt = "\n".join(files)
+    print(f"\n# The files modified are:\n{txt}")
+    # Save to clipboard.
+    res = " ".join(files)
+    _to_pbcopy(res, pbcopy)
+
+
 # TODO(gp): Add dev_scripts/git/git_create_patch*.sh
 # dev_scripts/git/git_backup.sh
 # dev_scripts/git/gcl
-# dev_scripts/git/gd_master.sh
 # dev_scripts/git/git_branch.sh
 # dev_scripts/git/git_branch_point.sh
 
@@ -610,7 +672,7 @@ def docker_images_ls_repo(ctx):  # type: ignore
 def docker_ps(ctx):  # type: ignore
     # pylint: disable=line-too-long
     """
-    List all running containers.
+    List all the running containers.
 
     ```
     > docker_ps
@@ -618,6 +680,7 @@ def docker_ps(ctx):  # type: ignore
     2ece37303ec9  gp    083233266530....:latest  "./docker_build/entry.sh"  5 seconds ago  Up 4 seconds         user_space
     ```
     """
+    _report_task()
     # pylint: enable=line-too-long
     fmt = (
         r"""table {{.ID}}\t{{.Label "user"}}\t{{.Image}}\t{{.Command}}"""
@@ -629,46 +692,81 @@ def docker_ps(ctx):  # type: ignore
     _run(ctx, cmd)
 
 
+def _get_last_container_id() -> str:
+    # Get the last started container.
+    cmd = "docker ps -l | grep -v 'CONTAINER ID'"
+    # CONTAINER ID   IMAGE          COMMAND                  CREATED
+    # 90897241b31a   eeb33fe1880a   "/bin/sh -c '/bin/ba…"   34 hours ago ...
+    _, txt = hsinte.system_to_one_line(cmd)
+    # Parse the output: there should be at least one line.
+    dbg.dassert_lte(1, len(txt.split(" ")), "Invalid output='%s'", txt)
+    container_id = txt.split(" ")[0]
+    return container_id
+
+
 @task
-def docker_stats(ctx):  # type: ignore
+def docker_stats(ctx, all=False):  # type: ignore
     # pylint: disable=line-too-long
     """
-    Report container stats, e.g., CPU, RAM.
+    Report last started Docker container stats, e.g., CPU, RAM.
 
     ```
     > docker_stats
     CONTAINER ID  NAME                   CPU %  MEM USAGE / LIMIT     MEM %  NET I/O         BLOCK I/O        PIDS
     2ece37303ec9  ..._user_space_run_30  0.00%  15.74MiB / 31.07GiB   0.05%  351kB / 6.27kB  34.2MB / 12.3kB  4
     ```
+
+    :param all: report stats for all the containers
     """
     # pylint: enable=line-too-long
-    _report_task()
+    _report_task(hprint.to_str("all"))
+    _ = ctx
     fmt = (
         r"table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
         + r"\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}"
     )
     cmd = f"docker stats --no-stream --format='{fmt}'"
-    _run(ctx, cmd)
+    _, txt = hsinte.system_to_string(cmd)
+    if all:
+        output = txt
+    else:
+        # Get the id of the last started container.
+        container_id = _get_last_container_id()
+        print(f"Last container id={container_id}")
+        # Parse the output looking for the given container.
+        txt = txt.split("\n")
+        output = []
+        # Save the header.
+        output.append(txt[0])
+        for line in txt[1:]:
+            if line.startswith(container_id):
+                output.append(line)
+        # There should be at most two rows: the header and the one corresponding to
+        # the container.
+        dbg.dassert_lte(
+            len(output), 2, "Invalid output='%s' for '%s'", output, txt
+        )
+        output = "\n".join(output)
+    print(output)
 
 
 @task
-def docker_kill_last(ctx):  # type: ignore
+def docker_kill(ctx, all=False):  # type: ignore
     """
     Kill the last Docker container started.
-    """
-    _report_task()
-    _run(ctx, "docker ps -l")
-    _run(ctx, "docker rm -f $(docker ps -l -q)")
 
-
-@task
-def docker_kill_all(ctx):  # type: ignore
+    :param all: kill all the containers (be careful!)
     """
-    Kill all the Docker containers.
-    """
-    _report_task()
-    _run(ctx, "docker ps -a")
-    _run(ctx, "docker rm -f $(docker ps -a -q)")
+    _report_task(hprint.to_str("all"))
+    # TODO(gp): Ask if we are sure and add a --just-do-it option.
+    # Last container.
+    opts = "-l"
+    if all:
+        opts = "-a"
+    # Print the containers that will be terminated.
+    _run(ctx, f"docker ps {opts}")
+    # Kill.
+    _run(ctx, f"docker rm -f $(docker ps {opts} -q)")
 
 
 # docker system prune
@@ -956,6 +1054,7 @@ def _get_docker_cmd(
         dbg.dassert_exists(docker_compose)
     file_opts = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
     _LOG.debug(hprint.to_str("file_opts"))
+    # TODO(gp): Use something like `.append(rf"{space}{...}")`
     docker_cmd_.append(
         rf"""
         {file_opts}"""
@@ -1429,8 +1528,7 @@ def _find_test_files(
 
 def _find_test_class(class_name: str, file_names: List[str]) -> List[str]:
     """
-    Find test file containing the class `class_name` and report it in a format
-    compatible with pytest.
+    Find test file containing `class_name` and report it in pytest format.
 
     E.g., for "TestLibTasksRunTests1" return
     "test/test_lib_tasks.py::TestLibTasksRunTests1"
@@ -1459,22 +1557,26 @@ def _find_test_class(class_name: str, file_names: List[str]) -> List[str]:
     return res
 
 
-def _to_pbcopy(txt: str) -> None:
+# TODO(gp): -> system_interaction.py ?
+def _to_pbcopy(txt: str, pbcopy: bool) -> None:
     """
     Save the content of txt in the system clipboard.
     """
     txt = txt.rstrip("\n")
+    if not pbcopy:
+        print(txt)
+        return
     if hsinte.is_running_on_macos():
         # -n = no new line
         cmd = f"echo -n '{txt}' | pbcopy"
         hsinte.system(cmd)
+        print(f"\n# Copied to system clipboard:\n{txt}")
     else:
         _LOG.warning("pbcopy works only on macOS")
-    print(txt)
 
 
 @task
-def find_test_class(ctx, class_name="", dir_name=".", pbcopy=False):  # type: ignore
+def find_test_class(ctx, class_name, dir_name=".", pbcopy=True):  # type: ignore
     """
     Report test files containing `class_name` in a format compatible with
     pytest.
@@ -1489,10 +1591,8 @@ def find_test_class(ctx, class_name="", dir_name=".", pbcopy=False):  # type: ig
     file_names = _find_test_files(dir_name)
     res = _find_test_class(class_name, file_names)
     res = " ".join(res)
-    if pbcopy:
-        _to_pbcopy(res)
-    else:
-        print(res)
+    # Print or copy to clipboard.
+    _to_pbcopy(res, pbcopy)
 
 
 # #############################################################################
@@ -1534,19 +1634,76 @@ def _find_test_decorator(decorator_name: str, file_names: List[str]) -> List[str
 @task
 def find_test_decorator(ctx, decorator_name="", dir_name="."):  # type: ignore
     """
-    Report test files containing `class_name` in a format compatible with
-    pytest.
+    Report test files containing `class_name` in pytest format.
 
     :param class_name: the class to search
     :param dir_name: the dir from which to search
     """
     _report_task()
-    dbg.dassert(decorator_name != "", "You need to specify a decorator name")
     _ = ctx
+    dbg.dassert_ne(decorator_name, "", "You need to specify a decorator name")
     file_names = _find_test_files(dir_name)
     res = _find_test_class(decorator_name, file_names)
     res = " ".join(res)
     print(res)
+
+
+# #############################################################################
+
+
+@task
+def find_check_string_output(  # type: ignore
+    ctx, class_name, method_name, as_python=True, pbcopy=True
+):
+    """
+    Find output of `check_string()` in the test running
+    class_name::method_name.
+
+    E.g., for `TestResultBundle::test_from_config1` return the content of the file
+        `./core/dataflow/test/TestResultBundle.test_from_config1/output/test.txt`
+
+    :param as_python: if True return the snippet of code that replaces the
+        `check_string()` with a `assert_equal`
+    :param pbcopy: save the result into the system clipboard (only on macOS)
+    """
+    _report_task()
+    _ = ctx
+    dbg.dassert_ne(class_name, "", "You need to specify a class name")
+    dbg.dassert_ne(method_name, "", "You need to specify a method name")
+    # Look for the directory named `class_name.method_name`.
+    cmd = f"find . -name '{class_name}.{method_name}' -type d"
+    # > find . -name "TestResultBundle.test_from_config1" -type d
+    # ./core/dataflow/test/TestResultBundle.test_from_config1
+    _, txt = hsinte.system_to_string(cmd, abort_on_error=False)
+    file_names = txt.split("\n")
+    if not txt:
+        dbg.dfatal(f"Can't find the requested dir with '{cmd}'")
+    if len(file_names) > 1:
+        dbg.dfatal(f"Found more than one dir with '{cmd}':\n{txt}")
+    dir_name = file_names[0]
+    # Find the only file underneath that dir.
+    dbg.dassert_dir_exists(dir_name)
+    cmd = f"find {dir_name} -name '*.txt' -type f"
+    _, file_name = hsinte.system_to_one_line(cmd)
+    dbg.dassert_file_exists(file_name)
+    # Read the content of the file.
+    _LOG.info("Found file '%s' for %s::%s", file_name, class_name, method_name)
+    txt = hio.from_file(file_name)
+    if as_python:
+        # Package the code snippet.
+        output = f"""
+        act = ""
+        exp = r\"\"\"
+{txt}
+        \"\"\".lstrip().rstrip()
+        self.assert_equal(act, exp)
+        """
+        output = output.lstrip().rstrip()
+    else:
+        output = txt
+    # Print or copy to clipboard.
+    _to_pbcopy(output, pbcopy)
+    return output
 
 
 # #############################################################################
@@ -1869,6 +2026,39 @@ def _get_lint_docker_cmd(precommit_opts: str, run_bash: bool) -> str:
     return docker_cmd_
 
 
+def _parse_linter_output(txt: str) -> str:
+    """
+    Parse the output of the linter and return a file suitable for vim quickfix.
+    """
+    stage: Optional[str] = None
+    output: List[str] = []
+    for i, line in enumerate(txt.split("\n")):
+        _LOG.debug("%d:line='%s'", i + 1, line)
+        # Tabs remover...............................................Passed
+        # isort......................................................Failed
+        # Don't commit to branch...............................^[[42mPassed^[[m
+        m = re.search("^(\S.*?)\.{10,}\S+?(Passed|Failed)\S*?$", line)
+        if m:
+            stage = m.group(1)
+            result = m.group(2)
+            _LOG.debug("  -> stage='%s' (%s)", stage, result)
+            continue
+        # core/dataflow/nodes.py:601:9: F821 undefined name '_check_col_names'
+        m = re.search("^(\S+):(\d+)[:\d+:]\s+(.*)$", line)
+        if m:
+            _LOG.debug("  -> Found a lint to parse: '%s'", line)
+            dbg.dassert_is_not(stage, None)
+            file_name = m.group(1)
+            line = int(m.group(2))
+            msg = m.group(3)
+            _LOG.debug(
+                "  -> file_name='%s' line=%d msg='%s'", file_name, line, msg
+            )
+            output.append(f"{file_name}:{line}:[{stage}] {msg}")
+    output_as_str = "\n".join(output)
+    return output_as_str
+
+
 @task
 def lint(
     ctx,
@@ -1876,9 +2066,10 @@ def lint(
     branch=False,
     files="",
     phases="",
-    only_black=False,
     stage="prod",
     run_bash=False,
+    run_lint=True,
+    parse_lint=True,
 ):  # type: ignore
     """
     Lint files.
@@ -1887,37 +2078,60 @@ def lint(
     :param branch: select the files modified in the current branch
     :param files: specify a space-separated list of files
     :param phases: specify the lint phases to execute
-    :param only_black: run only the lint phases that format the code
     :param run_bash: instead of running pre-commit, run bash to debug
+    :param run_lint: run linter step
+    :param parse_lint: parse linter output and generate vim cfile
     """
     _report_task()
+    lint_file_name = "linter_output.txt"
+    if run_lint:
+        docker_pull(ctx, stage=stage, images="dev_tools")
+        # Get the files to lint.
+        # For linting we can use only files modified in the client, in the branch, or
+        # specified.
+        mutually_exclusive = True
+        # pre-commit doesn't handle directories, but only files.
+        remove_dirs = True
+        files_as_list = _get_files_to_process(
+            modified, branch, files, mutually_exclusive, remove_dirs
+        )
+        _LOG.info("Files to lint:\n%s", "\n".join(files_as_list))
+        if not files_as_list:
+            _LOG.warning("Nothing to lint: exiting")
+            return
+        files_as_str = " ".join(files_as_list)
+        # Prepare the command line.
+        precommit_opts = [
+            f"run {phases}",
+            "-c /app/.pre-commit-config.yaml",
+            f"--files {files_as_str}",
+        ]
+        precommit_opts = _to_single_line_cmd(precommit_opts)
+        # Execute command line.
+        cmd = _get_lint_docker_cmd(precommit_opts, run_bash)
+        cmd = f"({cmd}) 2>&1 | tee {lint_file_name}"
+        if run_bash:
+            # We don't execute this command since pty=True corrupts the terminal
+            # session.
+            print("To get a bash session inside Docker run:")
+            print(cmd)
+            return
+        # Run.
+        _run(ctx, cmd)
+    else:
+        _LOG.warning("Skipping linter step, as per user request")
     #
-    docker_pull(ctx, stage=stage, images="dev_tools")
-    # Get the files to lint.
-    files_as_list = _get_files_to_process(
-        modified, branch, files, mutually_exclusive=True
-    )
-    _LOG.info("Files to lint:\n%s", "\n".join(files_as_list))
-    if not files_as_list:
-        _LOG.warning("Nothing to lint: exiting")
-        return
-    files_as_str = " ".join(files_as_list)
-    # Prepare the command line.
-    if only_black:
-        _LOG.warning("Running only black")
-        phases = "run black"
-    precommit_opts = [
-        f"run {phases}",
-        "-c /app/.pre-commit-config.yaml",
-        f"--files {files_as_str}",
-    ]
-    precommit_opts = _to_single_line_cmd(precommit_opts)
-    # Execute command line.
-    cmd = _get_lint_docker_cmd(precommit_opts, run_bash)
-    cmd = f"({cmd}) 2>&1 | tee linter_warnings.txt"
-    # For bash we need a TTY.
-    pty = run_bash
-    _run(ctx, cmd, pty=pty)
+    if parse_lint:
+        # Parse the linter output into a cfile.
+        _LOG.info("Parsing '%s'", lint_file_name)
+        txt = hio.from_file(lint_file_name)
+        cfile = _parse_linter_output(txt)
+        cfile_name = "./linter_warnings.txt"
+        hio.to_file(cfile_name, cfile)
+        _LOG.info("Saved cfile in '%s'", cfile_name)
+        print(cfile)
+    else:
+        _LOG.warning("Skipping lint parsing, as per user request")
 
 
 # #############################################################################
@@ -2074,17 +2288,24 @@ def _get_gh_issue_title(issue_id: int, repo: str) -> str:
 
 
 @task
-def gh_issue_title(ctx, issue_id=0, repo="current"):  # type: ignore
+def gh_issue_title(ctx, issue_id, repo="current", pbcopy=True):  # type: ignore
     """
-    Print the title that corresponds to the given issue and repo.
+    Print the title that corresponds to the given issue and repo. E.g.,
+    AmpTask1251_Update_GH_actions_for_amp.
 
-    E.g., AmpTask1251_Update_GH_actions_for_amp
+    :param pbcopy: save the result into the system clipboard (only on macOS)
     """
     _report_task()
     _ = ctx
     issue_id = int(issue_id)
     dbg.dassert_lte(1, issue_id)
-    print(_get_gh_issue_title(issue_id, repo))
+    res = _get_gh_issue_title(issue_id, repo)
+    # Print or copy to clipboard.
+    _to_pbcopy(res, pbcopy)
+
+
+# TODO(gp): Add unit test for
+# i gh_create_pr --no-draft --body="Misc changes while adding unit tests"
 
 
 @task
@@ -2116,13 +2337,14 @@ def gh_create_pr(  # type: ignore
         + f" --repo {repo_full_name}"
         + (" --draft" if draft else "")
         + f' --title "{title}"'
-        + f" --body {body}"
+        + f' --body "{body}"'
     )
     _run(ctx, cmd)
-    # TODO(gp): Implement the rest of the flow.
-    # Warning: 3 uncommitted changes
-    # https://github.com/alphamatic/amp/pull/1298
-    # gh pr view https://github.com/alphamatic/amp/pull/1298 --repo alphamatic/amp --web
+    # TODO(gp): Capture the output of the command and save the info in a
+    #  github_current_pr_info:
+    # Warning: 22 uncommitted changes
+    # Creating pull request for AmpTask1329_Review_code_in_core_04 into master in alphamatic/amp
+    # https://github.com/alphamatic/amp/pull/1337
 
 
 # TODO(gp): Add gh_open_pr to jump to the PR from this branch.

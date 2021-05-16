@@ -337,9 +337,9 @@ def transform_to_sklearn_old(
     """
     Transform pd.DataFrame into sklearn model inputs.
 
-    Sklearn requires separate feature and target inputs, both with range
-    index. To undo the transformation into sklrean format, we need the
-    original index and column names.
+    Sklearn requires separate feature and target inputs, both with range index. To
+    undo the transformation into sklearn format, we need the original index and
+    column names.
 
     :param df: input dataset
     :param x_vars: names of feature columns

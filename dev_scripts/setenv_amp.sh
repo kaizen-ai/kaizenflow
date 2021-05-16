@@ -81,7 +81,8 @@ echo "which gh="$(which gh)
 # > INVOKE_OPTS="--config $(pwd)/invoke.yaml"
 # > alias invoke="invoke $INVOKE_OPTS"
 alias i="invoke"
-alias il="invoke --list"
 alias ie="invoke jump_to_pytest_error"
+alias ih="invoke --help"
+alias il="invoke --list"
 
 echo "==> SUCCESS <=="

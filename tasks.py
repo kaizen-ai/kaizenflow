@@ -3,9 +3,8 @@ import logging
 import helpers.versioning as hversi
 
 # Expose the pytest targets.
-# TODO(gp): Write a script to extract the targets programmatically, for now
-#  they are extracted with:
-# > \grep "^@task" -A 1 helpers/lib_tasks.py | grep def
+# Extract with:
+# > i print_tasks --as-code
 from helpers.lib_tasks import (
     docker_bash,
     docker_build_local_image,
@@ -13,8 +12,7 @@ from helpers.lib_tasks import (
     docker_cmd,
     docker_images_ls_repo,
     docker_jupyter,
-    docker_kill_all,
-    docker_kill_last,
+    docker_kill,
     docker_login,
     docker_ps,
     docker_pull,
@@ -24,6 +22,7 @@ from helpers.lib_tasks import (
     docker_release_prod_image,
     docker_stats,
     docker_tag_local_image_as_dev,
+    find_check_string_output,
     find_test_class,
     find_test_decorator,
     gh_create_pr,
@@ -35,6 +34,7 @@ from helpers.lib_tasks import (
     git_create_branch,
     git_create_patch,
     git_delete_merged_branches,
+    git_last_commit,
     git_merge_master,
     git_pull,
     git_pull_master,
@@ -48,6 +48,7 @@ from helpers.lib_tasks import (
     run_fast_tests,
     run_slow_tests,
     run_superslow_tests,
+    # This is not an invoke target.
     set_default_params,
 )
 

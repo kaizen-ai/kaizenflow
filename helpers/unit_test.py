@@ -667,7 +667,7 @@ def _assert_equal(
     vimdiff.
 
     :param fuzzy_match: ignore differences in spaces and end of lines (see
-      `_fuzzy_clean`)
+      `_to_single_line_cmd`)
     :return: whether `actual` and `expected` are equal, if `abort_on_error` is False
     """
     _LOG.debug(
