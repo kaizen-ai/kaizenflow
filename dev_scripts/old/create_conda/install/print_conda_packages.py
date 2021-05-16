@@ -16,7 +16,10 @@ def _main():
     )
     prsr.add_verbosity_arg(parser)
     parser.add_argument(
-        "--conda_env_name", help="Environment name", type=str, required=True,
+        "--conda_env_name",
+        help="Environment name",
+        type=str,
+        required=True,
     )
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)

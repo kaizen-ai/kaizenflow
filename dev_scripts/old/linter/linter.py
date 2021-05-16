@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-"""Reformat and lint python and ipynb files.
+"""
+Reformat and lint python and ipynb files.
 
 This script uses the version of the files present on the disk and not what is
 staged for commit by git, thus you need to stage again after running it.
@@ -90,7 +91,8 @@ def _dassert_list_of_strings(output: List[str], *args: Any) -> None:
 
 
 def _annotate_output(output: List, executable: str) -> List:
-    """Annotate a list containing the output of a cmd line with the name of the
+    """
+    Annotate a list containing the output of a cmd line with the name of the
     executable used.
 
     :return: list of strings
@@ -104,7 +106,8 @@ def _annotate_output(output: List, executable: str) -> List:
 def _tee(
     cmd: str, executable: str, abort_on_error: bool
 ) -> Tuple[int, List[str]]:
-    """Execute command "cmd", capturing its output and removing empty lines.
+    """
+    Execute command "cmd", capturing its output and removing empty lines.
 
     :return: list of strings
     """
@@ -135,7 +138,8 @@ def _check_exec(tool: str) -> bool:
 
 
 def _filter_target_files(file_names: List[str]) -> List[str]:
-    """Keep only the files that:
+    """
+    Keep only the files that:
 
     - have extension .py, .ipynb, .txt or .md.
     - are not Jupyter checkpoints
@@ -162,7 +166,9 @@ def _filter_target_files(file_names: List[str]) -> List[str]:
 
 
 def _get_files(args: argparse.Namespace) -> List[str]:
-    """Return the list of files to process given the command line arguments."""
+    """
+    Return the list of files to process given the command line arguments.
+    """
     file_names: List[str] = []
     if args.files:
         _LOG.debug("Specified files")
@@ -218,7 +224,8 @@ def _list_to_str(list_: List[str]) -> str:
 def _get_files_to_lint(
     args: argparse.Namespace, file_names: List[str]
 ) -> List[str]:
-    """Get all the files that need to be linted.
+    """
+    Get all the files that need to be linted.
 
     Typically files to lint are python and notebooks.
     """
@@ -297,18 +304,23 @@ def _write_file_back(file_name: str, txt: List[str], txt_new: List[str]) -> None
 #   AttributeError: '_BasicHygiene' object has no attribute '_executable'
 # class _Action(abc.ABC):
 class _Action:
-    """Implemented as a Strategy pattern."""
+    """
+    Implemented as a Strategy pattern.
+    """
 
     def __init__(self, executable: str = "") -> None:
         self._executable = executable
 
     # @abc.abstractmethod
     def check_if_possible(self) -> bool:
-        """Check if the action can be executed."""
+        """
+        Check if the action can be executed.
+        """
         raise NotImplementedError
 
     def execute(self, file_name: str, pedantic: int) -> List[str]:
-        """Execute the action.
+        """
+        Execute the action.
 
         :param file_name: name of the file to process
         :param pendantic: True if it needs to be run in angry mode
@@ -329,7 +341,8 @@ class _Action:
 
 
 class _CheckFileProperty(_Action):
-    """Perform various checks based on property of a file:
+    """
+    Perform various checks based on property of a file:
 
     - check that file size doesn't exceed a certain threshould
     - check that notebook files are under a `notebooks` dir
@@ -356,7 +369,9 @@ class _CheckFileProperty(_Action):
 
     @staticmethod
     def _check_size(file_name: str) -> str:
-        """Check size of a file."""
+        """
+        Check size of a file.
+        """
         msg = ""
         max_size_in_bytes = 512 * 1024
         size_in_bytes = os.path.getsize(file_name)
@@ -370,7 +385,9 @@ class _CheckFileProperty(_Action):
 
     @staticmethod
     def _check_notebook_dir(file_name: str) -> str:
-        """# Check if that notebooks are under `notebooks` dir."""
+        """
+        # Check if that notebooks are under `notebooks` dir.
+        """
         msg = ""
         if is_ipynb_file(file_name):
             subdir_names = file_name.split("/")
@@ -383,7 +400,9 @@ class _CheckFileProperty(_Action):
 
     @staticmethod
     def _check_test_file_dir(file_name: str) -> str:
-        """Check if test files are under `test` dir."""
+        """
+        Check if test files are under `test` dir.
+        """
         msg = ""
         # TODO(gp): A little annoying that we use "notebooks" and "test".
         if is_py_file(file_name) and os.path.basename(file_name).startswith(
@@ -441,7 +460,9 @@ class _BasicHygiene(_Action):
 
 
 class _CompilePython(_Action):
-    """Check that the code is valid python."""
+    """
+    Check that the code is valid python.
+    """
 
     def check_if_possible(self) -> bool:
         # We don't need any special executable, so we can always run this action.
@@ -467,7 +488,9 @@ class _CompilePython(_Action):
 
 
 class _Autoflake(_Action):
-    """Remove unused imports and variables."""
+    """
+    Remove unused imports and variables.
+    """
 
     def __init__(self) -> None:
         executable = "autoflake"
@@ -493,7 +516,9 @@ class _Autoflake(_Action):
 
 
 class _Yapf(_Action):
-    """Apply yapf code formatter."""
+    """
+    Apply yapf code formatter.
+    """
 
     def __init__(self) -> None:
         executable = "yapf"
@@ -519,7 +544,9 @@ class _Yapf(_Action):
 
 
 class _Black(_Action):
-    """Apply black code formatter."""
+    """
+    Apply black code formatter.
+    """
 
     def __init__(self) -> None:
         executable = "black"
@@ -552,7 +579,9 @@ class _Black(_Action):
 
 
 class _Isort(_Action):
-    """Sort imports using isort."""
+    """
+    Sort imports using isort.
+    """
 
     def __init__(self) -> None:
         executable = "isort"
@@ -577,8 +606,9 @@ class _Isort(_Action):
 
 
 class _Flake8(_Action):
-    """Look for formatting and semantic issues in code and docstrings. It
-    relies on:
+    """
+    Look for formatting and semantic issues in code and docstrings. It relies
+    on:
 
     - mccabe
     - pycodestyle
@@ -1017,26 +1047,33 @@ class _IpynbFormat(_Action):
 
 # TODO(gp): Move in a more general file: probably system_interaction.
 def _is_under_dir(file_name: str, dir_name: str) -> bool:
-    """Return whether a file is under the given directory."""
+    """
+    Return whether a file is under the given directory.
+    """
     subdir_names = file_name.split("/")
     return dir_name in subdir_names
 
 
 def is_under_test_dir(file_name: str) -> bool:
-    """Return whether a file is under a test directory (which is called
-    "test")."""
+    """
+    Return whether a file is under a test directory (which is called "test").
+    """
     return _is_under_dir(file_name, "test")
 
 
 def is_test_input_output_file(file_name: str) -> bool:
-    """Return whether a file is used as input or output in a unit test."""
+    """
+    Return whether a file is used as input or output in a unit test.
+    """
     ret = is_under_test_dir(file_name)
     ret &= file_name.endswith(".txt")
     return ret
 
 
 def is_test_code(file_name: str) -> bool:
-    """Return whether a file contains unit test code."""
+    """
+    Return whether a file contains unit test code.
+    """
     ret = is_under_test_dir(file_name)
     ret &= os.path.basename(file_name).startswith("test_")
     ret &= file_name.endswith(".py")
@@ -1044,12 +1081,16 @@ def is_test_code(file_name: str) -> bool:
 
 
 def is_py_file(file_name: str) -> bool:
-    """Return whether a file is a python file."""
+    """
+    Return whether a file is a python file.
+    """
     return file_name.endswith(".py")
 
 
 def is_ipynb_file(file_name: str) -> bool:
-    """Return whether a file is a jupyter notebook file."""
+    """
+    Return whether a file is a jupyter notebook file.
+    """
     return file_name.endswith(".ipynb")
 
 
@@ -1066,7 +1107,9 @@ def from_ipynb_to_python_file(file_name: str) -> str:
 
 
 def is_paired_jupytext_file(file_name: str) -> bool:
-    """Return whether a file is a paired jupytext file."""
+    """
+    Return whether a file is a paired jupytext file.
+    """
     is_paired = (
         is_py_file(file_name)
         and os.path.exists(from_python_to_ipynb_file(file_name))
@@ -1217,7 +1260,8 @@ class _CustomPythonChecks(_Action):
 
     @staticmethod
     def _was_baptized(file_name: str, txt: List[str]) -> str:
-        """Check if code contains a declaration of how it needs to be imported.
+        """
+        Check if code contains a declaration of how it needs to be imported.
 
         Import as:
 
@@ -1261,7 +1305,8 @@ class _CustomPythonChecks(_Action):
     def _check_line_by_line(
         file_name: str, txt: List[str]
     ) -> Tuple[List[str], List[str]]:
-        """Apply various checks line by line.
+        """
+        Apply various checks line by line.
 
         - Check imports
         - Look for conflict markers
@@ -1360,7 +1405,8 @@ def _check_file_property(
 
 
 def _are_git_files_changed() -> bool:
-    """Check changes in the local repo.
+    """
+    Check changes in the local repo.
 
     If any file in the local repo changed, returns False.
     """
@@ -1444,7 +1490,9 @@ def _get_default_actions() -> List[str]:
 
 
 def _get_action_class(action: str) -> _Action:
-    """Return the function corresponding to the passed string."""
+    """
+    Return the function corresponding to the passed string.
+    """
     res = None
     for action_meta in _VALID_ACTIONS_META:
         name, rw, comment, class_ = action_meta
@@ -1459,8 +1507,9 @@ def _get_action_class(action: str) -> _Action:
 
 
 def _remove_not_possible_actions(actions: List[str]) -> List[str]:
-    """Check whether each action in "actions" can be executed and return a list
-    of the actions that can be executed.
+    """
+    Check whether each action in "actions" can be executed and return a list of
+    the actions that can be executed.
 
     :return: list of strings representing actions
     """
@@ -1521,7 +1570,8 @@ def _test_actions() -> None:
 def _lint(
     file_name: str, actions: List[str], pedantic: int, debug: bool
 ) -> List[str]:
-    """Execute all the actions on a filename.
+    """
+    Execute all the actions on a filename.
 
     Note that this is the unit of parallelization, i.e., we run all the
     actions on a single file to ensure that the actions are executed in

@@ -1,8 +1,5 @@
 import logging
 import os
-from typing import List, Tuple
-
-import pytest
 
 import dev_scripts.url as url
 import helpers.dbg as dbg

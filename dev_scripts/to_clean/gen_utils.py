@@ -12,14 +12,14 @@ import pandas as pd
 import scipy
 import seaborn as sns
 import statsmodels
-
-from helpers.csv import to_typed_csv
 import utils.debug as dbg
 import utils.jos
 import utils.jstats
 import utils.memoize as memoize
 import utils.sorted
 import utils.stats
+
+from helpers.csv import to_typed_csv
 
 _LOG = logging.getLogger(__name__)
 
@@ -83,8 +83,8 @@ _keys_for_parallel = None
 def apply_to_dict_panel_parallel(
     obj, f, args, func_name=None, timed=False, n_jobs=None, verbose=0
 ):
-    from joblib import Parallel, delayed
     import dill
+    from joblib import Parallel, delayed
 
     if timed:
         timer = utils.timer.dtimer_start(0, func_name)
@@ -444,6 +444,7 @@ def filter_by_period(
 def filter_on_times(df, start_time, end_time, reverse=False):
     """
     Filter df keeping rows with index times in [start_time, end_times].
+
     - reverse: reverse the filtering
     """
     dbg.dassert_type_is(df, pd.DataFrame)
@@ -1304,8 +1305,8 @@ def plot_bootstrap_ccf(
     ax=None,
 ):
     """
-    lags describes how many days before / after today should we lag
-    for Plot*CrossCorrelation.
+    lags describes how many days before / after today should we lag for
+    Plot*CrossCorrelation.
     """
     dbg.dassert_eq(
         len(x_to_lag),

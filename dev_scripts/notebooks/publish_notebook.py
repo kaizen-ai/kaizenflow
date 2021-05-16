@@ -82,7 +82,9 @@ _NOTEBOOK_KEEPER_ENTRY_POINT = f"{_NOTEBOOK_KEEPER_SRV}/save-file"
 
 def _add_tag(file_path: str, tag: str = "") -> str:
     """
-    By default, add current timestamp in the filename. Returns new filename.
+    By default, add current timestamp in the filename.
+
+    :return: new filename
     """
     name, extension = os.path.splitext(os.path.basename(file_path))
     if not tag:
@@ -94,6 +96,7 @@ def _export_html(path_to_notebook: str) -> str:
     """
     Accept ipynb, exports to html, adds a timestamp to the file name, and
     returns the name of the created file.
+
     :param path_to_notebook: The path to the file of the notebook e.g.:
         _data/relevance_and_event_relevance_exploration.ipynb
     :return: The name of the html file with a timestamp e.g.:
@@ -121,6 +124,7 @@ def _export_html(path_to_notebook: str) -> str:
 def _copy_to_remote_folder(path_to_file: str, remote_dst_path: str) -> None:
     """
     Copy file to a directory on the remote server.
+
     :param path_to_file: The path to the local file
         e.g.: /tmp/relevance_and_event_relevance_exploration.html
     :param dst_dir: The folder in which the file will be copied
@@ -139,6 +143,7 @@ def _export_to_webpath(path_to_notebook: str, dst_dir: str) -> str:
     """
     Create a folder if it does not exist. Export ipynb to html, to add a
     timestamp, moves to dst_dir.
+
     :param path_to_notebook: The path to the file of the notebook
         e.g.: _data/relevance_and_event_relevance_exploration.ipynb
     :param dst_dir: destination folder to move
@@ -159,6 +164,7 @@ def _export_to_webpath(path_to_notebook: str, dst_dir: str) -> str:
 def _get_path(path_or_url: str) -> str:
     """
     Get path from file, local link or github link.
+
     :param path_or_url: url to notebook/github, local path,
         e.g.: https://github.com/...ipynb
     :return: Path to file
@@ -185,6 +191,7 @@ def _get_path(path_or_url: str) -> str:
 def _get_file_from_git_branch(git_branch: str, git_path: str) -> str:
     """
     Checkout a file from a git branch and store it in a temporary location.
+
     :param git_branch: the branch name
         e.g. origin/PTask302_download_eurostat_data
     :param git_path: the relative path to the file
@@ -211,7 +218,8 @@ def _parse() -> argparse.ArgumentParser:
         _ACTION_OPEN: f"'--action {_ACTION_OPEN}' - Open selected notebook in a browser.",
     }
     parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawTextHelpFormatter,
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
         "-f",

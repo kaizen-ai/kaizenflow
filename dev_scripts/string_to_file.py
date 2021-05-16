@@ -11,14 +11,16 @@ import sys
 
 
 def _transform(string: str) -> str:
-    for v in ("'", "-", '"', ',', ":"):
+    for v in ("'", "-", '"', ",", ":"):
         string = string.replace(v, " ")
     # TODO(gp): Use regex.
     string = re.sub("\s+", "_", string)
     return string
 
+
 def _check(inp: str, act: str, exp: str) -> None:
     assert act == exp, "inp=%s\nact=%s\nexp=%s" % (inp, act, exp)
+
 
 def _test1() -> None:
     inp = "Effect of pessimism on long-, short- term equilibrium for aggregate- demand and supply"

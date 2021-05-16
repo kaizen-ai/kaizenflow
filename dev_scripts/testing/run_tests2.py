@@ -2,6 +2,7 @@
 
 """
 # To run the tests
+
 > run_tests2.py
 > run_tests2.py --test_suite slow
 
@@ -42,14 +43,18 @@ _LOG = logging.getLogger(__name__)
 
 @dataclasses.dataclass
 class _TestSuite:
-    """Class represents a test suite"""
+    """
+    Class represents a test suite.
+    """
 
     timeout: int
     marks: List[str] = dataclasses.field(default_factory=list)
 
 
 class _PytestSuiteOptionsBuilder:
-    """Represent methods to build pytest options depending on test_suite"""
+    """
+    Represent methods to build pytest options depending on test_suite.
+    """
 
     _available_suites = {
         "fast": _TestSuite(timeout=5),
@@ -62,14 +67,18 @@ class _PytestSuiteOptionsBuilder:
         self._test_suite = self._available_suites[test_suite_name]
 
     def build(self, ci: bool) -> List[str]:
-        """Build list of pytest options"""
+        """
+        Build list of pytest options.
+        """
         opts = self._marker_options()
         if ci:
             opts.extend(self._timeout_options())
         return opts
 
     def _check(self, test_suite_name: str) -> None:
-        """Check if test_suite is available"""
+        """
+        Check if test_suite is available.
+        """
         dbg.dassert_in(
             test_suite_name,
             self._available_suites,
@@ -124,7 +133,7 @@ def _get_real_number_of_cores_to_use(num_cpus: int) -> int:
 
 def _get_parallel_options(num_cpus: int) -> List[str]:
     """
-    Find num cores on which pytest will be executed
+    Find num cores on which pytest will be executed.
 
     :param num_cpus: num CPUs to use, if specified as -1 - will use all CPUs
     :return: list of options related to parallelizing
@@ -159,8 +168,9 @@ def _run_cleanup(cleanup: bool) -> None:
 
 def _build_pytest_opts(args: argparse.Namespace) -> Tuple[List[str], List[str]]:
     """
-    Build the command options for pytest from the command line.
-    Following args are used to build a list of options:
+    Build the command options for pytest from the command line. Following args
+    are used to build a list of options:
+
         - ci
         - coverage
         - extra_pytest_arg
@@ -214,7 +224,9 @@ def _build_pytest_cmd(target: str, opts: List[str]) -> str:
 
 
 def _info_about_coverage() -> None:
-    """Print instruction how to use coverage info and how to clean it up"""
+    """
+    Print instruction how to use coverage info and how to clean it up.
+    """
     message = (
         "Use https://coverage.readthedocs.io/en/stable/"
         "cmd.html#cmd-report to get custom reports. Some examples:\n"

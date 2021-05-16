@@ -1,14 +1,11 @@
 import logging
 import os
-from typing import List, Tuple
+from typing import List
 
 import pytest
 
-import dev_scripts.notebooks.process_jupytext as proc_jup
-import dev_scripts.url as url
 import helpers.conda as hco
 import helpers.dbg as dbg
-import helpers.env as env
 import helpers.git as git
 import helpers.io_ as io_
 import helpers.system_interaction as si
@@ -25,10 +22,12 @@ _LOG = logging.getLogger(__name__)
 #  annotations from pyannotate.
 
 
-@pytest.mark.skip('Deprecated after switch to Docker dev env')
+@pytest.mark.skip("Deprecated after switch to Docker dev env")
 class Test_set_env_amp(ut.TestCase):
     def test_setenv_py1(self) -> None:
-        """Find _setenv_amp.py executable and run it."""
+        """
+        Find _setenv_amp.py executable and run it.
+        """
         executable = git.find_file_in_git_tree(
             "_setenv_amp.py", super_module=False
         )
@@ -41,7 +40,9 @@ class Test_set_env_amp(ut.TestCase):
     # particular run of _setenv_amp.py.
     @pytest.mark.skipif('si.get_user_name() != "saggese"')
     def test_setenv_py2(self) -> None:
-        """Find _setenv_amp.py executable, run it, and freeze the output."""
+        """
+        Find _setenv_amp.py executable, run it, and freeze the output.
+        """
         executable = git.find_file_in_git_tree(
             "_setenv_amp.py", super_module=False
         )
@@ -57,7 +58,9 @@ class Test_set_env_amp(ut.TestCase):
         self.check_string(txt)
 
     def test_setenv_sh1(self) -> None:
-        """Execute setenv_amp.sh."""
+        """
+        Execute setenv_amp.sh.
+        """
         executable = git.find_file_in_git_tree(
             "setenv_amp.sh", super_module=False
         )
@@ -73,10 +76,11 @@ class Test_set_env_amp(ut.TestCase):
 # #############################################################################
 
 
-@pytest.mark.skip('Deprecated after switch to Docker dev env')
+@pytest.mark.skip("Deprecated after switch to Docker dev env")
 class Test_install_create_conda_py1(ut.TestCase):
     def _run_create_conda(self, cmd_opts: List[str], cleanup: bool) -> None:
-        """Run a create_conda command using custom options `cmd_opts`.
+        """
+        Run a create_conda command using custom options `cmd_opts`.
 
         :param cleanup: True if we want to cleanup the conda env instead of
             creating it.
@@ -101,8 +105,10 @@ class Test_install_create_conda_py1(ut.TestCase):
         si.system(cmd_tmp)
 
     def _helper(self, env_name: str, cmd_opts: List[str]) -> None:
-        """Run create_conda with custom options `cmd_opts` and then remove the
-        env."""
+        """
+        Run create_conda with custom options `cmd_opts` and then remove the
+        env.
+        """
         self._run_create_conda(cmd_opts, cleanup=False)
         #
         cmd = "conda activate %s && conda info --envs" % env_name
@@ -112,7 +118,9 @@ class Test_install_create_conda_py1(ut.TestCase):
 
     @pytest.mark.slow
     def test_create_conda_test_install1(self) -> None:
-        """Run create_conda with --test_install to exercise the script."""
+        """
+        Run create_conda with --test_install to exercise the script.
+        """
         cmd_opts = [""]
         env_name = "test_install"
         cmd_opts.append(f"--env_name {env_name}")
@@ -122,7 +130,9 @@ class Test_install_create_conda_py1(ut.TestCase):
 
     @pytest.mark.slow
     def test_create_conda_yaml1(self) -> None:
-        """Run create_conda.py with a single YAML file."""
+        """
+        Run create_conda.py with a single YAML file.
+        """
         yaml = """
 channels:
   - conda-forge
@@ -146,7 +156,9 @@ dependencies:
 
     @pytest.mark.slow
     def test_create_conda_yaml2(self) -> None:
-        """Run create_conda.py with two YAML files."""
+        """
+        Run create_conda.py with two YAML files.
+        """
         yaml1 = """
 channels:
   - conda-forge
@@ -183,9 +195,9 @@ dependencies:
 #
 #
 ## pylint: disable=too-many-public-methods
-#@pytest.mark.amp
-#@pytest.mark.skip(reason="Disabled because of AmpTask508")
-#class Test_linter_py1(ut.TestCase):
+# @pytest.mark.amp
+# @pytest.mark.skip(reason="Disabled because of AmpTask508")
+# class Test_linter_py1(ut.TestCase):
 #    def _write_input_file(self, txt: str, file_name: str) -> Tuple[str, str]:
 #        dir_name = self.get_scratch_space()
 #        dbg.dassert_is_not(file_name, None)
@@ -265,10 +277,10 @@ dependencies:
 #    @staticmethod
 #    def _get_horrible_python_code1() -> str:
 #        txt = r"""
-#import python
+# import python
 #
 #
-#if __name__ == "main":
+# if __name__ == "main":
 #    txt = "hello"
 #    m = re.search("\s", txt)
 #        """
@@ -307,12 +319,12 @@ dependencies:
 #        """Run linter.py as executable on some text."""
 #        txt = r"""
 ## Good
-#- Good time management
+# - Good time management
 #  1. choose the right tasks
 #    - Avoid non-essential tasks
 #
 ### Bad
-#-  Hello
+# -  Hello
 #    - World
 #        """
 #        # Run.
@@ -340,9 +352,9 @@ dependencies:
 #        """Executable with wrong shebang: error."""
 #        file_name = "exec.py"
 #        txt = """#!/bin/bash
-#hello
-#world
-#"""
+# hello
+# world
+# """
 #        is_executable = True
 #        exp = "exec.py:1: any executable needs to start with a shebang '#!/usr/bin/env python'"
 #        self._helper_check_shebang(file_name, txt, is_executable, exp)
@@ -351,9 +363,9 @@ dependencies:
 #        """Executable with the correct shebang: correct."""
 #        file_name = "exec.py"
 #        txt = """#!/usr/bin/env python
-#hello
-#world
-#"""
+# hello
+# world
+# """
 #        is_executable = True
 #        exp = ""
 #        self._helper_check_shebang(file_name, txt, is_executable, exp)
@@ -362,9 +374,9 @@ dependencies:
 #        """Non executable with a shebang: error."""
 #        file_name = "exec.py"
 #        txt = """#!/usr/bin/env python
-#hello
-#world
-#"""
+# hello
+# world
+# """
 #        is_executable = False
 #        exp = "exec.py:1: any executable needs to start with a shebang '#!/usr/bin/env python'"
 #        self._helper_check_shebang(file_name, txt, is_executable, exp)
@@ -373,9 +385,9 @@ dependencies:
 #        """Library without a shebang: correct."""
 #        file_name = "lib.py"
 #        txt = '''"""
-#Import as:
+# Import as:
 #
-#import _setenv_lib as selib
+# import _setenv_lib as selib
 #'''
 #        is_executable = False
 #        exp = ""
@@ -392,9 +404,9 @@ dependencies:
 #        """Correct import."""
 #        file_name = "lib.py"
 #        txt = '''"""
-#Import as:
+# Import as:
 #
-#import _setenv_lib as selib
+# import _setenv_lib as selib
 #'''
 #        exp = ""
 #        self._helper_was_baptized(file_name, txt, exp)
@@ -403,15 +415,15 @@ dependencies:
 #        """Invalid."""
 #        file_name = "lib.py"
 #        txt = """
-#Import as:
+# Import as:
 #
-#"""
+# """
 #        exp = '''lib.py:1: every library needs to describe how to be imported:
-#"""
-#Import as:
+# """
+# Import as:
 #
-#import foo.bar as fba
-#"""'''
+# import foo.bar as fba
+# """'''
 #        self._helper_was_baptized(file_name, txt, exp)
 #
 #    # #########################################################################
@@ -437,7 +449,7 @@ dependencies:
 #        txt = "from typing import List"
 #        exp = """# output
 ## txt_new
-#from typing import List"""
+# from typing import List"""
 #        self._helper_check_line_by_line(file_name, txt, exp)
 #
 #    def test_check_line_by_line2(self) -> None:
@@ -445,9 +457,9 @@ dependencies:
 #        file_name = "lib.py"
 #        txt = "from pandas import DataFrame"
 #        exp = """# output
-#lib.py:1: do not use 'from pandas import DataFrame' use 'import foo.bar as fba'
+# lib.py:1: do not use 'from pandas import DataFrame' use 'import foo.bar as fba'
 ## txt_new
-#f-r-o-m pandas import DataFrame"""
+# f-r-o-m pandas import DataFrame"""
 #        # To avoid the linter to complain.
 #        exp = exp.replace("-", "")
 #        self._helper_check_line_by_line(file_name, txt, exp)
@@ -457,9 +469,9 @@ dependencies:
 #        file_name = "lib.py"
 #        txt = "import pandas as a_very_long_name"
 #        exp = """# output
-#lib.py:1: the import shortcut 'a_very_long_name' in 'import pandas as a_very_long_name' is longer than 8 characters
+# lib.py:1: the import shortcut 'a_very_long_name' in 'import pandas as a_very_long_name' is longer than 8 characters
 ## txt_new
-#i-m-p-o-r-t pandas as a_very_long_name"""
+# i-m-p-o-r-t pandas as a_very_long_name"""
 #        # To avoid the linter to complain.
 #        exp = exp.replace("-", "")
 #        self._helper_check_line_by_line(file_name, txt, exp)
@@ -468,25 +480,25 @@ dependencies:
 #        """Conflict markers."""
 #        file_name = "lib.py"
 #        txt = """import pandas as pd
-#<-<-<-<-<-<-< HEAD
-#hello
-#=-=-=-=-=-=-=
-#world
-#>->->->->->->
-#"""
+# <-<-<-<-<-<-< HEAD
+# hello
+# =============================================================================
+# world
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# """
 #        txt = txt.replace("-", "")
 #        exp = """# output
-#lib.py:2: there are conflict markers
-#lib.py:4: there are conflict markers
-#lib.py:6: there are conflict markers
+# lib.py:2: there are conflict markers
+# lib.py:4: there are conflict markers
+# lib.py:6: there are conflict markers
 ## txt_new
-#import pandas as pd
-#<-<-<-<-<-<-< HEAD
-#hello
-#=-=-=-=-=-=-=
-#world
-#>->->->->->->
-#"""
+# import pandas as pd
+# <-<-<-<-<-<-< HEAD
+# hello
+# =============================================================================
+# world
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# """
 #        exp = exp.replace("-", "")
 #        self._helper_check_line_by_line(file_name, txt, exp)
 #
@@ -494,22 +506,22 @@ dependencies:
 #        file_name = "lib.py"
 #        # We use some _ to avoid getting a replacement from the linter here.
 #        txt = """
-#from typing import List
+# from typing import List
 #
 ## _#_#_#_#_#_#_#_##
 ## hello
 ## =_=_=_=_=_=
-#"""
+# """
 #        txt = txt.replace("_", "")
 #        exp = """# output
 ## txt_new
 #
-#from typing import List
+# from typing import List
 #
 ## #############################################################################
 ## hello
 ## =============================================================================
-#"""
+# """
 #        self._helper_check_line_by_line(file_name, txt, exp)
 #
 #    def test_check_line_by_line6(self) -> None:
@@ -518,22 +530,22 @@ dependencies:
 #        file_name = "lib.py"
 #        # We use some _ to avoid getting a replacement from the linter here.
 #        txt = """
-#from typing import List
+# from typing import List
 #
 ## _#_#_#_#_#_#_#_##
 ## hello
 ## =_=_=_=_=_='''
-#"""
+# """
 #        txt = txt.replace("_", "")
 #        exp = """# output
 ## txt_new
 #
-#from typing import List
+# from typing import List
 #
 ## #############################################################################
 ## hello
 ## ======'''
-#"""
+# """
 #        self._helper_check_line_by_line(file_name, txt, exp)
 #
 #    # #########################################################################
@@ -597,8 +609,8 @@ dependencies:
 #        self._helper_check_test_file_dir(file_name, exp)
 #
 #
-#@pytest.mark.amp
-#class Test_process_jupytext(ut.TestCase):
+# @pytest.mark.amp
+# class Test_process_jupytext(ut.TestCase):
 #    @pytest.mark.skip(
 #        "Latest version of jupytext fixed this problem (PTask1240)"
 #    )
@@ -624,32 +636,32 @@ dependencies:
 #
 #    def test2_is_jupytext_version_different_true(self) -> None:
 #        txt = """
-#--- expected
-#+++ actual
-#@@ -5,7 +5,7 @@
+# --- expected
+# +++ actual
+# @@ -5,7 +5,7 @@
 # #       extension: .py
 # #       format_name: percent
 # #       format_version: '1.3'
-#-#       jupytext_version: 1.3.3
-#+#       jupytext_version: 1.3.0
+# -#       jupytext_version: 1.3.3
+# +#       jupytext_version: 1.3.0
 # #   kernelspec:
 # #     display_name: Python [conda env:.conda-develop] *
 # #     language: python
-#"""
+# """
 #        self.assertTrue(proc_jup._is_jupytext_version_different(txt))
 #
 #    def test3_is_jupytext_version_different_false(self) -> None:
 #        txt = """
-#--- expected
-#+++ actual
-#@@ -5,7 +5,7 @@
+# --- expected
+# +++ actual
+# @@ -5,7 +5,7 @@
 # #       extension: .py
-#-#       format_name: percent
-#+#       format_name: plus
+# -#       format_name: percent
+# +#       format_name: plus
 # #       format_version: '1.3'
 # #       jupytext_version: 1.3.3
 # #   kernelspec:
 # #     display_name: Python [conda env:.conda-develop] *
 # #     language: python
-#"""
+# """
 #        self.assertFalse(proc_jup._is_jupytext_version_different(txt))

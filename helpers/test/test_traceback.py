@@ -72,8 +72,7 @@ Traceback
         act_cfile, act_traceback = htrace.parse_traceback(txt)
         _LOG.debug("act_cfile=\n%s", act_cfile)
         # pylint: disable=line-too-long
-        exp_cfile = [
-        ]
+        exp_cfile = []
         # pylint: enable=line-too-long
         self.assert_equal(
             htrace.cfile_to_str(act_cfile), htrace.cfile_to_str(exp_cfile)

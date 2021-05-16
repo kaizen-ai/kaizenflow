@@ -120,7 +120,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     pytest_mark_opts = []
     pytest_test = ""
     if test in ("fast", "slow", "superslow"):
-        market_opts : List[str] = []
+        market_opts: List[str] = []
         # The test lists are not overlapping.
         if test != "fast":
             # Fast tests don't have any tag.

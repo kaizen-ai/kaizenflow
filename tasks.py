@@ -1,5 +1,7 @@
 import logging
 
+import helpers.versioning as hversi
+
 # Expose the pytest targets.
 # TODO(gp): Write a script to extract the targets programmatically, for now
 #  they are extracted with:
@@ -46,11 +48,8 @@ from helpers.lib_tasks import (
     run_fast_tests,
     run_slow_tests,
     run_superslow_tests,
-    #
-    set_default_params
-    )
-import helpers.versioning as hversi
-
+    set_default_params,
+)
 
 _LOG = logging.getLogger(__name__)
 
@@ -72,7 +71,7 @@ default_params = {
     # image, e.g., `XYZ_tmp` to not interfere with the prod system.
     # "BASE_IMAGE": "amp_tmp",
     "BASE_IMAGE": "amp",
-    "DEV_TOOLS_IMAGE_PROD": f"{ECR_BASE_PATH}/dev_tools:prod"
+    "DEV_TOOLS_IMAGE_PROD": f"{ECR_BASE_PATH}/dev_tools:prod",
 }
 
 

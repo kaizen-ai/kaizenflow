@@ -62,8 +62,9 @@ def check_version(file_name: Optional[str] = None) -> None:
         f", is_inside_docker={is_inside_docker}"
         f", is_inside_ci={is_inside_ci}"
     )
-    msg += (", CI_defined=%s" % ("CI" in os.environ) +
-        ", CI='%s'" % os.environ.get("CI", "nan"))
+    msg += ", CI_defined=%s" % (
+        "CI" in os.environ
+    ) + ", CI='%s'" % os.environ.get("CI", "nan")
     print(msg)
     # Check version, if possible.
     if container_version is None:

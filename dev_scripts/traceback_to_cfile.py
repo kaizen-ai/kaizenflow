@@ -42,8 +42,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=False)
     # Parse files.
-    in_file_name, out_file_name = prsr.parse_input_output_args(args,
-                                                               clear_screen=True)
+    in_file_name, out_file_name = prsr.parse_input_output_args(
+        args, clear_screen=True
+    )
     if out_file_name != "-":
         hio.delete_file(out_file_name)
     # Read file.

@@ -48,7 +48,7 @@ class Test_to_datetime(hut.TestCase):
             [pd.Timestamp("2021-06-30"), pd.Timestamp("2021-12-31")]
         )
         pd.testing.assert_series_equal(actual, expected)
-        
+
     def test_semiannual2(self) -> None:
         srs = pd.Series(["2021/S1", "2021/S2"])
         actual = hdatet.to_datetime(srs)

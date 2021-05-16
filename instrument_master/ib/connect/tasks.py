@@ -3,13 +3,9 @@
 import logging
 
 from invoke import task
+from lib_tasks import STAGE, get_image, set_default_params
 
 import helpers.dbg as dbg
-from lib_tasks import (
-    STAGE,
-    get_image,
-    set_default_params,
-)
 
 # We inline the code here since we need to make it visible to `invoke`, although
 # `from ... import *` is bad practice.

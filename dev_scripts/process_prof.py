@@ -57,9 +57,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.custom_code:
         # Custom code for profiling.
         # Functions to analyze.
-        funcs = [
-            "_helper_table_extraction"
-        ]
+        funcs = ["_helper_table_extraction"]
         # Show ranked contributors.
         show_rank = True
         # Show who is called by <funcs>.

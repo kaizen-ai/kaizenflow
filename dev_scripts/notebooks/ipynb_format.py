@@ -10,7 +10,6 @@ import os
 import sys
 
 import nbformat as nbf
-
 from yapf.yapflib.file_resources import GetDefaultStyleForDir
 from yapf.yapflib.yapf_api import FormatCode
 

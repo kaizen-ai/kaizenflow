@@ -67,7 +67,6 @@ class TestCacheTag(hut.TestCase):
 
 
 class TestCacheFeatures(_TestClassHelper):
-
     def test_without_caching1(self) -> None:
         """
         Test that we get two executions of a function, if we execute two times,
@@ -514,7 +513,6 @@ class TestSpecificCache(_TestClassHelper):
 
 
 class TestCachePerformance(_TestClassHelper):
-
     def test_performance_dataframe(self) -> None:
         """
         Test performance of the cache over pandas DataFrame.
@@ -601,7 +599,6 @@ class TestCachePerformance(_TestClassHelper):
 
 
 class TestCacheDecorator(_TestClassHelper):
-
     def test_decorated_function(self) -> None:
         """
         Test decorator with both caches enabled.
@@ -677,7 +674,6 @@ class TestCacheDecorator(_TestClassHelper):
 
 
 class TestAmpTask1407(_TestClassHelper):
-
     def test1(self) -> None:
         """
         A class method can't be cached.
@@ -697,7 +693,6 @@ class TestAmpTask1407(_TestClassHelper):
         klass = _AmpTask1407Class("test")
         with self.assertRaises(ValueError):
             klass.print(5)
-
 
     def test2(self) -> None:
         """
@@ -726,19 +721,14 @@ class TestAmpTask1407(_TestClassHelper):
 
         klass = _AmpTask1407Class("test")
         klass.static_print(5)
-        self.assertEqual(klass.static_print.get_last_cache_accessed(),
-                         "no_cache")
+        self.assertEqual(klass.static_print.get_last_cache_accessed(), "no_cache")
         #
         klass.static_print(5)
-        self.assertEqual(klass.static_print.get_last_cache_accessed(),
-                         "mem")
+        self.assertEqual(klass.static_print.get_last_cache_accessed(), "mem")
         klass.static_print(5)
-        self.assertEqual(klass.static_print.get_last_cache_accessed(),
-                         "mem")
+        self.assertEqual(klass.static_print.get_last_cache_accessed(), "mem")
         #
         klass.static_print(6)
-        self.assertEqual(klass.static_print.get_last_cache_accessed(),
-                         "no_cache")
+        self.assertEqual(klass.static_print.get_last_cache_accessed(), "no_cache")
         klass.static_print(6)
-        self.assertEqual(klass.static_print.get_last_cache_accessed(),
-                         "mem")
+        self.assertEqual(klass.static_print.get_last_cache_accessed(), "mem")

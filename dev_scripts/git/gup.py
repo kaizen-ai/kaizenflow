@@ -2,6 +2,7 @@
 
 """
 Update a git client by:
+
 - stashing
 - rebasing
 - reapplying the stashed changes

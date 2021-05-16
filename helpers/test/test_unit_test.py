@@ -13,7 +13,6 @@ import uuid
 from typing import Optional, Tuple
 
 import pandas as pd
-import pytest
 
 import helpers.git as git
 import helpers.io_ as hio
@@ -37,7 +36,7 @@ def _git_add(file_name: str) -> None:
 
 class TestTestCase1(hut.TestCase):
     """
-    Test free-standing functions in unit_test.py
+    Test free-standing functions in unit_test.py.
     """
 
     def test_get_input_dir1(self) -> None:
@@ -87,26 +86,6 @@ class TestTestCase1(hut.TestCase):
         exp = "$GIT_ROOT/helpers/test/test_class.test_method/tmp.scratch"
         self.assertEqual(act, exp)
 
-    def _remove_lines1(self) -> None:
-        txt = r"""
-        #######################################################################
-        * Failed assertion *
-        'in1' not in '{'in1': 'out1'}'
-        ##
-        `in1` already receiving input from node n1
-        #########################################################################
-        ###################
-        """
-        act = hut._remove_spaces(txt)
-        exp = r"""
-        * Failed assertion *
-        'in1' not in '{'in1': 'out1'}'
-        ##
-        `in1` already receiving input from node n1
-        ###################
-        """
-        self.assert_equal(act, exp, fuzzy_match=False)
-
     def test_assert_equal1(self) -> None:
         actual = "hello world"
         expected = actual
@@ -153,6 +132,26 @@ class TestTestCase1(hut.TestCase):
         expected = "hello world2"
         with self.assertRaises(RuntimeError):
             self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def _remove_lines1(self) -> None:
+        txt = r"""
+        # #####################################################################
+        * Failed assertion *
+        'in1' not in '{'in1': 'out1'}'
+        ##
+        `in1` already receiving input from node n1
+        # #####################################################################
+        # #####################################################################
+        """
+        act = hut._remove_spaces(txt)
+        exp = r"""
+        * Failed assertion *
+        'in1' not in '{'in1': 'out1'}'
+        ##
+        `in1` already receiving input from node n1
+        # #####################################################################
+        """
+        self.assert_equal(act, exp, fuzzy_match=False)
 
 
 class Test_AssertEqual1(hut.TestCase):
@@ -256,18 +255,6 @@ completed       success Lint    Slow_tests
 
 
 class TestCheckString1(hut.TestCase):
-
-    @staticmethod
-    def _to_skip() -> bool:
-        """
-        We can't use @pytest.mark.skipif(hut.get_update_tests) since pytest
-        decides which tests need to be run before the variable is actually set.
-        """
-        to_skip = False
-        if hut.get_update_tests():
-            _LOG.warning("Skip this test since it exercises the logic for --update_outcomes")
-            to_skip = True
-        return to_skip
 
     def test_check_string1(self) -> None:
         """
@@ -407,6 +394,20 @@ class TestCheckString1(hut.TestCase):
         self.assertFalse(is_equal)
         #
         self.assertEqual(new_golden, "hello world")
+
+    @staticmethod
+    def _to_skip() -> bool:
+        """
+        We can't use @pytest.mark.skipif(hut.get_update_tests) since pytest
+        decides which tests need to be run before the variable is actually set.
+        """
+        to_skip = False
+        if hut.get_update_tests():
+            _LOG.warning(
+                "Skip this test since it exercises the logic for --update_outcomes"
+            )
+            to_skip = True
+        return to_skip
 
 
 class TestCheckDataFrame1(hut.TestCase):
@@ -608,7 +609,6 @@ class TestCheckDataFrame1(hut.TestCase):
 
 
 class Test_unit_test1(hut.TestCase):
-
     def test_purify_txt_from_client1(self) -> None:
         super_module_path = git.get_client_root(super_module=True)
         # TODO(gp): We should remove the current path.
