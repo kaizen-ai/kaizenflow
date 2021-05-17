@@ -36,15 +36,15 @@ class ContinuousSkLearnModel(
     # pylint: disable=too-many-ancestors
 
     def __init__(
-            self,
-            nid: str,
-            model_func: Callable[..., Any],
-            x_vars: _TO_LIST_MIXIN_TYPE,
-            y_vars: _TO_LIST_MIXIN_TYPE,
-            steps_ahead: int,
-            model_kwargs: Optional[Any] = None,
-            col_mode: Optional[str] = None,
-            nan_mode: Optional[str] = None,
+        self,
+        nid: str,
+        model_func: Callable[..., Any],
+        x_vars: _TO_LIST_MIXIN_TYPE,
+        y_vars: _TO_LIST_MIXIN_TYPE,
+        steps_ahead: int,
+        model_kwargs: Optional[Any] = None,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         Specify the data and sklearn modeling parameters.
@@ -205,7 +205,7 @@ class ContinuousSkLearnModel(
         return fwd_y_df
 
     def _handle_nans(
-            self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
     ) -> None:
         if self._nan_mode == "raise":
             if idx.shape[0] != non_nan_idx.shape[0]:
@@ -217,9 +217,9 @@ class ContinuousSkLearnModel(
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
     def _score(
-            self,
-            y_true: Union[pd.Series, pd.DataFrame],
-            y_pred: Union[pd.Series, pd.DataFrame],
+        self,
+        y_true: Union[pd.Series, pd.DataFrame],
+        y_pred: Union[pd.Series, pd.DataFrame],
     ) -> Optional[float]:
         """
         Compute accuracy for classification or R^2 score for regression.
@@ -239,7 +239,7 @@ class ContinuousSkLearnModel(
     #     processing to e.g., adjust for number of hypotheses tested).
     @staticmethod
     def _model_perf(
-            y: pd.DataFrame, y_hat: pd.DataFrame
+        y: pd.DataFrame, y_hat: pd.DataFrame
     ) -> collections.OrderedDict:
         info = collections.OrderedDict()
         # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
@@ -261,13 +261,13 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
     """
 
     def __init__(
-            self,
-            nid: str,
-            x_vars: _TO_LIST_MIXIN_TYPE,
-            y_vars: _TO_LIST_MIXIN_TYPE,
-            model_func: Callable[..., Any],
-            model_kwargs: Optional[Any] = None,
-            col_mode: Optional[str] = None,
+        self,
+        nid: str,
+        x_vars: _TO_LIST_MIXIN_TYPE,
+        y_vars: _TO_LIST_MIXIN_TYPE,
+        model_func: Callable[..., Any],
+        model_kwargs: Optional[Any] = None,
+        col_mode: Optional[str] = None,
     ) -> None:
         super().__init__(nid)
         self._model_func = model_func
@@ -352,7 +352,7 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
     # TODO(Paul): Add type hints.
     @staticmethod
     def _model_perf(
-            x: pd.DataFrame, y: pd.DataFrame, y_hat: pd.DataFrame
+        x: pd.DataFrame, y: pd.DataFrame, y_hat: pd.DataFrame
     ) -> collections.OrderedDict:
         _ = x
         info = collections.OrderedDict()
@@ -365,7 +365,7 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
         return info
 
     def _to_sklearn_format(
-            self, df: pd.DataFrame
+        self, df: pd.DataFrame
     ) -> Tuple[List[_COL_TYPE], np.array, List[_COL_TYPE], np.array]:
         x_vars = self._to_list(self._x_vars)
         y_vars = self._to_list(self._y_vars)
@@ -374,12 +374,12 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
 
     @staticmethod
     def _from_sklearn_format(
-            idx: pd.Index,
-            x_vars: List[_COL_TYPE],
-            x_vals: np.array,
-            y_vars: List[_COL_TYPE],
-            y_vals: np.array,
-            y_hat: np.array,
+        idx: pd.Index,
+        x_vars: List[_COL_TYPE],
+        x_vals: np.array,
+        y_vars: List[_COL_TYPE],
+        y_vals: np.array,
+        y_hat: np.array,
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         x = cdataa.transform_from_sklearn(idx, x_vars, x_vals)
         y = cdataa.transform_from_sklearn(idx, y_vars, y_vals)

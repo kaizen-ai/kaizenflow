@@ -6,10 +6,9 @@ import sklearn.linear_model as slmode
 import core.artificial_signal_generators as casgen
 import core.config as ccfg
 import helpers.unit_test as hut
-
 from core.dataflow.core import DAG
-from core.dataflow.nodes.sources import ReadDataFromDf
 from core.dataflow.nodes.sklearn_models import ContinuousSkLearnModel
+from core.dataflow.nodes.sources import ReadDataFromDf
 
 _LOG = logging.getLogger(__name__)
 
@@ -160,4 +159,3 @@ class TestContinuousSkLearnModel(hut.TestCase):
         idx = pd.date_range("2010-01-01", periods=num_periods, freq="T")
         df = pd.DataFrame.from_dict({"x": pred, "y": resp}).set_index(idx)
         return df
-

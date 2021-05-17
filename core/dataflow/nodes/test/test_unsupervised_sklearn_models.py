@@ -6,10 +6,12 @@ import sklearn.decomposition as sdecom
 import core.artificial_signal_generators as casgen
 import core.config_builders as ccbuild
 import helpers.unit_test as hut
-
 from core.dataflow.core import DAG
 from core.dataflow.nodes.sources import ReadDataFromDf
-from core.dataflow.nodes.unsupervised_sklearn_models import Residualizer, UnsupervisedSkLearnModel
+from core.dataflow.nodes.unsupervised_sklearn_models import (
+    Residualizer,
+    UnsupervisedSkLearnModel,
+)
 
 _LOG = logging.getLogger(__name__)
 
