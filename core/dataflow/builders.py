@@ -7,13 +7,13 @@ import core.config as cconfi
 import core.config_builders as cfgb
 import core.finance as fin
 from core.dataflow.core import DAG, Node
-from core.dataflow.models import VolatilityModel
 from core.dataflow.nodes.sources import ArmaGenerator
 from core.dataflow.nodes.transformers import (
     ColumnTransformer,
     TimeBarResampler,
     TwapVwapComputer,
 )
+from core.dataflow.nodes.volatility_models import VolatilityModel
 
 _LOG = logging.getLogger(__name__)
 

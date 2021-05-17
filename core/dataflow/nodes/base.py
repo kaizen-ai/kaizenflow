@@ -18,6 +18,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(*): Create a dataflow types file.
 _COL_TYPE = Union[int, str]
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
+_TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 
 # #############################################################################
@@ -367,3 +368,52 @@ class ColModeMixin:
             dbg.dfatal("Unsupported column mode `%s`", col_mode)
         dbg.dassert_no_duplicates(df_out.columns.tolist())
         return df_out
+
+
+class RegFreqMixin:
+    """
+    Requires input dataframe to have a well-defined frequency and unique cols.
+    """
+
+    @staticmethod
+    def _validate_input_df(df: pd.DataFrame) -> None:
+        """
+        Assert if df violates constraints, otherwise return `None`.
+        """
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert_no_duplicates(df.columns.tolist())
+        dbg.dassert(df.index.freq)
+
+
+class ToListMixin:
+    """
+    Supports callables that return lists.
+    """
+
+    @staticmethod
+    def _to_list(to_list: _TO_LIST_MIXIN_TYPE) -> List[_COL_TYPE]:
+        """
+        Return a list given its input.
+
+        - If the input is a list, the output is the same list.
+        - If the input is a function that returns a list, then the output of
+          the function is returned.
+
+        How this might arise in practice:
+          - A ColumnTransformer returns a number of x variables, with the
+            number dependent upon a hyperparameter expressed in config
+          - The column names of the x variables may be derived from the input
+            dataframe column names, not necessarily known until graph execution
+            (and not at construction)
+          - The ColumnTransformer output columns are merged with its input
+            columns (e.g., x vars and y vars are in the same DataFrame)
+        Post-merge, we need a way to distinguish the x vars and y vars.
+        Allowing a callable here allows us to pass in the ColumnTransformer's
+        method `transformed_col_names` and defer the call until graph
+        execution.
+        """
+        if callable(to_list):
+            to_list = to_list()
+        if isinstance(to_list, list):
+            return to_list
+        raise TypeError("Data type=`%s`" % type(to_list))
