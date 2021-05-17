@@ -12,13 +12,8 @@ import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
-from core.dataflow.nodes.base import (
-   ColModeMixin,
-   Transformer,
-)
-from core.dataflow.utils import (
-    get_df_info_as_string,
-)
+from core.dataflow.nodes.base import ColModeMixin, Transformer
+from core.dataflow.utils import get_df_info_as_string
 
 # TODO(*): Create a dataflow types file.
 _COL_TYPE = Union[int, str]
@@ -36,15 +31,15 @@ class ColumnTransformer(Transformer, ColModeMixin):
     """
 
     def __init__(
-            self,
-            nid: str,
-            transformer_func: Callable[..., pd.DataFrame],
-            transformer_kwargs: Optional[Dict[str, Any]] = None,
-            # TODO(Paul): May need to assume `List` instead.
-            cols: Optional[Iterable[str]] = None,
-            col_rename_func: Optional[Callable[[Any], Any]] = None,
-            col_mode: Optional[str] = None,
-            nan_mode: Optional[str] = None,
+        self,
+        nid: str,
+        transformer_func: Callable[..., pd.DataFrame],
+        transformer_kwargs: Optional[Dict[str, Any]] = None,
+        # TODO(Paul): May need to assume `List` instead.
+        cols: Optional[Iterable[str]] = None,
+        col_rename_func: Optional[Callable[[Any], Any]] = None,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         :param nid: unique node id
@@ -86,7 +81,7 @@ class ColumnTransformer(Transformer, ColModeMixin):
         return self._transformed_col_names
 
     def _transform(
-            self, df: pd.DataFrame
+        self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df_in = df.copy()
         df = df.copy()
@@ -144,15 +139,15 @@ class SeriesTransformer(Transformer, ColModeMixin):
     """
 
     def __init__(
-            self,
-            nid: str,
-            transformer_func: Callable[..., pd.DataFrame],
-            transformer_kwargs: Optional[Dict[str, Any]] = None,
-            # TODO(Paul): May need to assume `List` instead.
-            cols: Optional[Iterable[Union[int, str]]] = None,
-            col_rename_func: Optional[Callable[[Any], Any]] = None,
-            col_mode: Optional[str] = None,
-            nan_mode: Optional[str] = None,
+        self,
+        nid: str,
+        transformer_func: Callable[..., pd.DataFrame],
+        transformer_kwargs: Optional[Dict[str, Any]] = None,
+        # TODO(Paul): May need to assume `List` instead.
+        cols: Optional[Iterable[Union[int, str]]] = None,
+        col_rename_func: Optional[Callable[[Any], Any]] = None,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         :param nid: unique node id
@@ -194,7 +189,7 @@ class SeriesTransformer(Transformer, ColModeMixin):
         return self._transformed_col_names
 
     def _transform(
-            self, df: pd.DataFrame
+        self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df_in = df.copy()
         df = df.copy()
@@ -295,13 +290,13 @@ class MultiindexSeriesTransformer(Transformer):
     """
 
     def __init__(
-            self,
-            nid: str,
-            in_col_group: Tuple[_COL_TYPE],
-            out_col_group: Tuple[_COL_TYPE],
-            transformer_func: Callable[..., pd.Series],
-            transformer_kwargs: Optional[Dict[str, Any]] = None,
-            nan_mode: Optional[str] = None,
+        self,
+        nid: str,
+        in_col_group: Tuple[_COL_TYPE],
+        out_col_group: Tuple[_COL_TYPE],
+        transformer_func: Callable[..., pd.Series],
+        transformer_kwargs: Optional[Dict[str, Any]] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         For reference, let:
@@ -337,7 +332,7 @@ class MultiindexSeriesTransformer(Transformer):
         self._leaf_cols = None
 
     def _transform(
-            self, df: pd.DataFrame
+        self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         # After indexing by `self._in_col_group`, we should have a flat column
         # index.
@@ -345,7 +340,7 @@ class MultiindexSeriesTransformer(Transformer):
             len(self._in_col_group),
             df.columns.nlevels - 1,
             "Dataframe multiindex column depth incompatible with config.",
-            )
+        )
         # Do not allow overwriting existing columns.
         dbg.dassert_not_in(
             self._out_col_group,
@@ -410,10 +405,10 @@ class MultiindexSeriesTransformer(Transformer):
 
 class DataframeMethodRunner(Transformer):
     def __init__(
-            self,
-            nid: str,
-            method: str,
-            method_kwargs: Optional[Dict[str, Any]] = None,
+        self,
+        nid: str,
+        method: str,
+        method_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         super().__init__(nid)
         dbg.dassert(method)
@@ -422,7 +417,7 @@ class DataframeMethodRunner(Transformer):
         self._method_kwargs = method_kwargs or {}
 
     def _transform(
-            self, df: pd.DataFrame
+        self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
         df = getattr(df, self._method)(**self._method_kwargs)
@@ -437,12 +432,12 @@ class DataframeMethodRunner(Transformer):
 
 class Resample(Transformer):
     def __init__(
-            self,
-            nid: str,
-            rule: Union[pd.DateOffset, pd.Timedelta, str],
-            agg_func: str,
-            resample_kwargs: Optional[Dict[str, Any]] = None,
-            agg_func_kwargs: Optional[Dict[str, Any]] = None,
+        self,
+        nid: str,
+        rule: Union[pd.DateOffset, pd.Timedelta, str],
+        agg_func: str,
+        resample_kwargs: Optional[Dict[str, Any]] = None,
+        agg_func_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         :param nid: node identifier
@@ -459,7 +454,7 @@ class Resample(Transformer):
         self._agg_func_kwargs = agg_func_kwargs or {}
 
     def _transform(
-            self, df: pd.DataFrame
+        self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
         resampler = csigna.resample(df, rule=self._rule, **self._resample_kwargs)
@@ -472,18 +467,18 @@ class Resample(Transformer):
 
 class TimeBarResampler(Transformer):
     def __init__(
-            self,
-            nid: str,
-            rule: Union[pd.DateOffset, pd.Timedelta, str],
-            return_cols: Optional[list] = None,
-            return_agg_func: Optional[str] = None,
-            return_agg_func_kwargs: Optional[dict] = None,
-            price_cols: Optional[list] = None,
-            price_agg_func: Optional[str] = None,
-            price_agg_func_kwargs: Optional[list] = None,
-            volume_cols: Optional[list] = None,
-            volume_agg_func: Optional[str] = None,
-            volume_agg_func_kwargs: Optional[list] = None,
+        self,
+        nid: str,
+        rule: Union[pd.DateOffset, pd.Timedelta, str],
+        return_cols: Optional[list] = None,
+        return_agg_func: Optional[str] = None,
+        return_agg_func_kwargs: Optional[dict] = None,
+        price_cols: Optional[list] = None,
+        price_agg_func: Optional[str] = None,
+        price_agg_func_kwargs: Optional[list] = None,
+        volume_cols: Optional[list] = None,
+        volume_agg_func: Optional[str] = None,
+        volume_agg_func_kwargs: Optional[list] = None,
     ) -> None:
         """
         Resample time bars with returns, price, volume.
@@ -505,7 +500,7 @@ class TimeBarResampler(Transformer):
         self._volume_agg_func_kwargs = volume_agg_func_kwargs
 
     def _transform(
-            self, df: pd.DataFrame
+        self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
         df = cfinan.resample_time_bars(
@@ -529,11 +524,11 @@ class TimeBarResampler(Transformer):
 
 class TwapVwapComputer(Transformer):
     def __init__(
-            self,
-            nid: str,
-            rule: Union[pd.DateOffset, pd.Timedelta, str],
-            price_col: Any,
-            volume_col: Any,
+        self,
+        nid: str,
+        rule: Union[pd.DateOffset, pd.Timedelta, str],
+        price_col: Any,
+        volume_col: Any,
     ) -> None:
         """
         Calculate TWAP and VWAP prices from price and volume columns.
@@ -548,7 +543,7 @@ class TwapVwapComputer(Transformer):
         self._volume_col = volume_col
 
     def _transform(
-            self, df: pd.DataFrame
+        self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
         df = cfinan.compute_twap_vwap(

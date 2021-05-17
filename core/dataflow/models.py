@@ -21,19 +21,10 @@ import core.signal_processing as csigna
 import core.statistics as cstati
 import helpers.dbg as dbg
 from core.dataflow.core import DAG, Node
-from core.dataflow.utils import (
-    get_df_info_as_string,
-)
-from core.dataflow.nodes.base import (
-    FitPredictNode,
-)
-from core.dataflow.nodes.sources import (
-    ReadDataFromDf
-)
-from core.dataflow.nodes.transformers import(
-    ColModeMixin,
-    ColumnTransformer,
-)
+from core.dataflow.nodes.base import FitPredictNode
+from core.dataflow.nodes.sources import ReadDataFromDf
+from core.dataflow.nodes.transformers import ColModeMixin, ColumnTransformer
+from core.dataflow.utils import get_df_info_as_string
 from core.dataflow.visitors import extract_info
 
 _LOG = logging.getLogger(__name__)

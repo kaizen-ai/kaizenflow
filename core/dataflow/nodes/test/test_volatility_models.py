@@ -7,7 +7,6 @@ import core.finance as fin
 import core.signal_processing as sigp
 import helpers.printing as prnt
 import helpers.unit_test as hut
-
 from core.dataflow.nodes.volatility_models import VolatilityNormalizer
 
 _LOG = logging.getLogger(__name__)
@@ -100,4 +99,3 @@ class TestVolatilityNormalizer(hut.TestCase):
             date_range_kwargs=date_range, scale=0.1, seed=seed
         )
         return series
-

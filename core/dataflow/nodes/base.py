@@ -34,10 +34,10 @@ class FitPredictNode(Node, abc.ABC):
     """
 
     def __init__(
-            self,
-            nid: str,
-            inputs: Optional[List[str]] = None,
-            outputs: Optional[List[str]] = None,
+        self,
+        nid: str,
+        inputs: Optional[List[str]] = None,
+        outputs: Optional[List[str]] = None,
     ) -> None:
         if inputs is None:
             inputs = ["df_in"]
@@ -61,7 +61,7 @@ class FitPredictNode(Node, abc.ABC):
         pass
 
     def get_info(
-            self, method: str
+        self, method: str
     ) -> Optional[Union[str, collections.OrderedDict]]:
         # TODO(Paul): Add a dassert_getattr function to use here and in core.
         dbg.dassert_isinstance(method, str)
@@ -199,7 +199,7 @@ class Transformer(FitPredictNode, abc.ABC):
 
     @abc.abstractmethod
     def _transform(
-            self, df: pd.DataFrame
+        self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         """
         :return: df, info
@@ -218,10 +218,10 @@ class YConnector(FitPredictNode):
 
     # TODO(Paul): Support different input/output names.
     def __init__(
-            self,
-            nid: str,
-            connector_func: Callable[..., pd.DataFrame],
-            connector_kwargs: Optional[Any] = None,
+        self,
+        nid: str,
+        connector_func: Callable[..., pd.DataFrame],
+        connector_kwargs: Optional[Any] = None,
     ) -> None:
         """
         :param nid: unique node id
@@ -263,7 +263,7 @@ class YConnector(FitPredictNode):
 
     # pylint: disable=arguments-differ
     def fit(
-            self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
+        self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
     ) -> Dict[str, pd.DataFrame]:
         df_out, info = self._apply_connector_func(df_in1, df_in2)
         self._set_info("fit", info)
@@ -271,14 +271,14 @@ class YConnector(FitPredictNode):
 
     # pylint: disable=arguments-differ
     def predict(
-            self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
+        self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
     ) -> Dict[str, pd.DataFrame]:
         df_out, info = self._apply_connector_func(df_in1, df_in2)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
     def _apply_connector_func(
-            self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
+        self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
     ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
         self._df_in1_col_names = df_in1.columns.tolist()
         self._df_in2_col_names = df_in2.columns.tolist()
@@ -305,12 +305,12 @@ class ColModeMixin:
     """
 
     def _apply_col_mode(
-            self,
-            df_in: pd.DataFrame,
-            df_out: pd.DataFrame,
-            cols: Optional[List[Any]] = None,
-            col_rename_func: Optional[Callable[[Any], Any]] = None,
-            col_mode: Optional[str] = None,
+        self,
+        df_in: pd.DataFrame,
+        df_out: pd.DataFrame,
+        cols: Optional[List[Any]] = None,
+        col_rename_func: Optional[Callable[[Any], Any]] = None,
+        col_mode: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Merge transformed dataframe with original dataframe.
@@ -367,5 +367,3 @@ class ColModeMixin:
             dbg.dfatal("Unsupported column mode `%s`", col_mode)
         dbg.dassert_no_duplicates(df_out.columns.tolist())
         return df_out
-
-

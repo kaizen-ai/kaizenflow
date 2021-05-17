@@ -8,6 +8,7 @@ import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
+
 class TestDiskDataSource(hut.TestCase):
     def test_datetime_index_csv1(self) -> None:
         """

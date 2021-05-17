@@ -8,9 +8,7 @@ import core.config_builders as cfgb
 import core.finance as fin
 from core.dataflow.core import DAG, Node
 from core.dataflow.models import VolatilityModel
-from core.dataflow.nodes.sources import (
-    ArmaGenerator,
-)
+from core.dataflow.nodes.sources import ArmaGenerator
 from core.dataflow.nodes.transformers import (
     ColumnTransformer,
     TimeBarResampler,

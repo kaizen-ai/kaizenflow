@@ -7,7 +7,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def get_df_info_as_string(
-        df: pd.DataFrame, exclude_memory_usage: bool = True
+    df: pd.DataFrame, exclude_memory_usage: bool = True
 ) -> str:
     """
     Get dataframe info as string.

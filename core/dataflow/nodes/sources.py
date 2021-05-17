@@ -11,9 +11,7 @@ import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
-from core.dataflow.nodes.base import (
-    DataSource
-)
+from core.dataflow.nodes.base import DataSource
 
 # TODO(*): Create a dataflow types file.
 _COL_TYPE = Union[int, str]
@@ -34,13 +32,13 @@ class ReadDataFromDf(DataSource):
 
 class DiskDataSource(DataSource):
     def __init__(
-            self,
-            nid: str,
-            file_path: str,
-            timestamp_col: Optional[str] = None,
-            start_date: Optional[_PANDAS_DATE_TYPE] = None,
-            end_date: Optional[_PANDAS_DATE_TYPE] = None,
-            reader_kwargs: Optional[Dict[str, Any]] = None,
+        self,
+        nid: str,
+        file_path: str,
+        timestamp_col: Optional[str] = None,
+        start_date: Optional[_PANDAS_DATE_TYPE] = None,
+        end_date: Optional[_PANDAS_DATE_TYPE] = None,
+        reader_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Create data source node reading CSV or parquet data from disk.
@@ -101,16 +99,16 @@ class ArmaGenerator(DataSource):
     """
 
     def __init__(
-            self,
-            nid: str,
-            frequency: str,
-            start_date: _PANDAS_DATE_TYPE,
-            end_date: _PANDAS_DATE_TYPE,
-            ar_coeffs: Optional[List[float]] = None,
-            ma_coeffs: Optional[List[float]] = None,
-            scale: Optional[float] = None,
-            burnin: Optional[float] = None,
-            seed: Optional[float] = None,
+        self,
+        nid: str,
+        frequency: str,
+        start_date: _PANDAS_DATE_TYPE,
+        end_date: _PANDAS_DATE_TYPE,
+        ar_coeffs: Optional[List[float]] = None,
+        ma_coeffs: Optional[List[float]] = None,
+        scale: Optional[float] = None,
+        burnin: Optional[float] = None,
+        seed: Optional[float] = None,
     ) -> None:
         super().__init__(nid)
         self._frequency = frequency
@@ -167,13 +165,13 @@ class MultivariateNormalGenerator(DataSource):
     """
 
     def __init__(
-            self,
-            nid: str,
-            frequency: str,
-            start_date: _PANDAS_DATE_TYPE,
-            end_date: _PANDAS_DATE_TYPE,
-            dim: int,
-            seed: Optional[float] = None,
+        self,
+        nid: str,
+        frequency: str,
+        start_date: _PANDAS_DATE_TYPE,
+        end_date: _PANDAS_DATE_TYPE,
+        dim: int,
+        seed: Optional[float] = None,
     ) -> None:
         super().__init__(nid)
         self._frequency = frequency
@@ -224,5 +222,3 @@ class MultivariateNormalGenerator(DataSource):
         df = pd.concat([prices, volume], axis=1, keys=["close", "vol"])
         self.df = df
         self.df = self.df.loc[self._start_date : self._end_date]
-
-

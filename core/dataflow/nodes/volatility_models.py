@@ -6,8 +6,7 @@ import pandas as pd
 
 import core.finance as cfinan
 import helpers.dbg as dbg
-
-from core.dataflow.nodes.base import FitPredictNode, ColModeMixin
+from core.dataflow.nodes.base import ColModeMixin, FitPredictNode
 
 _LOG = logging.getLogger(__name__)
 
