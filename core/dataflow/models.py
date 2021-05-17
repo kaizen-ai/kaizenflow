@@ -1648,7 +1648,8 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
                 },
                 "rename": {
                     "cols": [col],
-                    "col_rename_func": lambda x: self._out_col_prefix + "0_voladj",
+                    "col_rename_func": lambda x: self._out_col_prefix
+                    + "0_voladj",
                     "col_mode": "replace_selected",
                 },
             }
@@ -1698,7 +1699,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
         # Rename modulated volatility column.
         nid = "rename"
         node = ColumnTransformer(
-                nid,
+            nid,
             transformer_func=lambda x: x,
             **config[nid].to_dict(),
         )
