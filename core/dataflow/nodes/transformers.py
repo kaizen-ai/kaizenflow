@@ -15,6 +15,9 @@ _LOG = logging.getLogger(__name__)
 from core.dataflow.nodes.base import (
    Transformer
 )
+from core.dataflow.utils import (
+    get_df_info_as_string,
+)
 
 # TODO(*): Create a dataflow types file.
 _COL_TYPE = Union[int, str]
