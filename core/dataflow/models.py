@@ -1515,7 +1515,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
         for col in self._leaf_cols:
             config = self._get_config(col=col, tau=self._tau)
             dag = self._get_dag(df[[col]], config)
-            df_out = dag.run_leq_node("drop_col", "fit")["df_out"]
+            df_out = dag.run_leq_node("rename", "fit")["df_out"]
             info[col] = extract_info(dag, ["fit"])
             if self._tau is None:
                 self._taus[col] = info[col]["compute_smooth_moving_average"][
@@ -1566,7 +1566,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
             dbg.dassert(tau)
             config = self._get_config(col=col, tau=tau)
             dag = self._get_dag(df[[col]], config)
-            df_out = dag.run_leq_node("drop_col", "predict")["df_out"]
+            df_out = dag.run_leq_node("rename", "predict")["df_out"]
             info[col] = extract_info(dag, ["predict"])
             df_out = pd.concat([df_out], axis=1, keys=[col])
             dfs.append(df_out)
@@ -1646,12 +1646,10 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
                     "col_mode": "replace_selected",
                     "nan_mode": self._nan_mode,
                 },
-                "drop_col": {
-                    "method": "drop",
-                    "method_kwargs": {
-                        "columns": col,
-                        "axis": 1,
-                    },
+                "rename": {
+                    "cols": [col],
+                    "col_rename_func": lambda x: self._out_col_prefix + "0_voladj",
+                    "col_mode": "replace_selected",
                 },
             }
         )
@@ -1697,10 +1695,14 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
             nid, mode="demodulate", **config[nid].to_dict()
         )
         tail_nid = self._append(dag, tail_nid, node)
-        # Drop input column.
-        nid = "drop_col"
-        node = DataframeMethodRunner(nid, **config[nid].to_dict())
-        self._append(dag, tail_nid, node)
+        # Rename modulated volatility column.
+        nid = "rename"
+        node = ColumnTransformer(
+                nid,
+            transformer_func=lambda x: x,
+            **config[nid].to_dict(),
+        )
+        tail_nid = self._append(dag, tail_nid, node)
         return dag
 
     @staticmethod
