@@ -3,18 +3,14 @@ import logging
 import pandas as pd
 
 import core.artificial_signal_generators as sig_gen
-import core.dataflow as dtf
 import core.finance as fin
 import core.signal_processing as sigp
 import helpers.printing as prnt
 import helpers.unit_test as hut
 
+from core.dataflow.nodes.volatility_models import VolatilityNormalizer
+
 _LOG = logging.getLogger(__name__)
-
-
-# #############################################################################
-# Results processing
-# #############################################################################
 
 
 class TestVolatilityNormalizer(hut.TestCase):
@@ -23,7 +19,7 @@ class TestVolatilityNormalizer(hut.TestCase):
         y_hat = sigp.compute_smooth_moving_average(y, 28).rename("ret_0_hat")
         df_in = pd.concat([y, y_hat], axis=1)
         #
-        vn = dtf.VolatilityNormalizer("normalize_volatility", "ret_0_hat", 0.1)
+        vn = VolatilityNormalizer("normalize_volatility", "ret_0_hat", 0.1)
         df_out = vn.fit(df_in)["df_out"]
         #
         volatility = 100 * df_out.apply(fin.compute_annualized_volatility)
@@ -43,7 +39,7 @@ class TestVolatilityNormalizer(hut.TestCase):
         y_hat = sigp.compute_smooth_moving_average(y, 28).rename("ret_0_hat")
         df_in = pd.concat([y, y_hat], axis=1)
         #
-        vn = dtf.VolatilityNormalizer(
+        vn = VolatilityNormalizer(
             "normalize_volatility",
             "ret_0_hat",
             0.1,
@@ -71,7 +67,7 @@ class TestVolatilityNormalizer(hut.TestCase):
         )
         predict_df_in = sigp.compute_smooth_moving_average(predict_df_in, 18)
         # Fit normalizer.
-        vn = dtf.VolatilityNormalizer("normalize_volatility", "ret_0_hat", 0.1)
+        vn = VolatilityNormalizer("normalize_volatility", "ret_0_hat", 0.1)
         fit_df_out = vn.fit(fit_df_in)["df_out"]
         # Predict.
         predict_df_out = vn.predict(predict_df_in)["df_out"]
@@ -105,14 +101,3 @@ class TestVolatilityNormalizer(hut.TestCase):
         )
         return series
 
-
-class Test_get_df_info_as_string(hut.TestCase):
-    def test1(self):
-        df = pd.DataFrame({"col_1": [1, 2], "col_2": [3, 4]})
-        info = dtf.get_df_info_as_string(df, exclude_memory_usage=False)
-        self.check_string(info)
-
-    def test2(self):
-        df = pd.DataFrame({"col_1": [1, 2], "col_2": [3, 4]})
-        info = dtf.get_df_info_as_string(df)
-        self.check_string(info)

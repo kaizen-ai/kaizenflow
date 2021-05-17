@@ -7,11 +7,13 @@ import pandas as pd
 import core.finance as cfinan
 import helpers.dbg as dbg
 
+from core.dataflow.nodes.base import FitPredictNode, ColModeMixin
+
 _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# Results processing
+# Volatility modeling
 # #############################################################################
 
 
@@ -75,10 +77,3 @@ class VolatilityNormalizer(FitPredictNode, ColModeMixin):
             col_mode=self._col_mode,
         )
         return {"df_out": df_out}
-
-
-# #############################################################################
-# Utilities
-# #############################################################################
-
-
