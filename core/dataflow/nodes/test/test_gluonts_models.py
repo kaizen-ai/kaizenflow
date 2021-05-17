@@ -31,7 +31,7 @@ if True:
             dag = self._get_dag()
             #
             df_out = dag.run_leq_node("deepar", "fit")["df_out"]
-            df_str = hut.convert_df_to_string(df_out, index=True, decimals=2)
+            df_str = hut.convert_df_to_string(df_out, index=True, decimals=1)
             self.check_string(df_str)
 
         def test_predict_dag1(self) -> None:
@@ -39,7 +39,7 @@ if True:
             #
             dag.run_leq_node("deepar", "fit")
             df_out = dag.run_leq_node("deepar", "predict")["df_out"]
-            df_str = hut.convert_df_to_string(df_out, index=True, decimals=2)
+            df_str = hut.convert_df_to_string(df_out, index=True, decimals=1)
             self.check_string(df_str)
 
         def _get_dag(self) -> DAG:
@@ -108,7 +108,7 @@ if True:
             dag.add_node(deepar)
             dag.connect("local_ts", "deepar")
             df_out = dag.run_leq_node("deepar", "fit")["df_out"]
-            df_str = hut.convert_df_to_string(df_out, index=True, decimals=2)
+            df_str = hut.convert_df_to_string(df_out, index=True, decimals=1)
             expected_shape = (self._n_periods * (self._grid_len - 1), 1)
             self.assertEqual(df_out.shape, expected_shape)
             self.check_string(df_str)
