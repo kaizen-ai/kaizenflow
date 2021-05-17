@@ -41,14 +41,14 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
     """
 
     def __init__(
-            self,
-            nid: str,
-            col: _TO_LIST_MIXIN_TYPE,
-            steps_ahead: int,
-            tau: Optional[float] = None,
-            min_tau_periods: Optional[float] = 2,
-            col_mode: Optional[str] = None,
-            nan_mode: Optional[str] = None,
+        self,
+        nid: str,
+        col: _TO_LIST_MIXIN_TYPE,
+        steps_ahead: int,
+        tau: Optional[float] = None,
+        min_tau_periods: Optional[float] = 2,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         Specify the data and sma modeling parameters.
@@ -189,7 +189,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         return fwd_y_df
 
     def _handle_nans(
-            self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
     ) -> None:
         if self._nan_mode == "raise":
             if idx.shape[0] != non_nan_idx.shape[0]:
@@ -254,7 +254,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
     #     processing to e.g., adjust for number of hypotheses tested).
     @staticmethod
     def _model_perf(
-            y: pd.DataFrame, y_hat: pd.DataFrame
+        y: pd.DataFrame, y_hat: pd.DataFrame
     ) -> collections.OrderedDict:
         info = collections.OrderedDict()
         # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
@@ -277,15 +277,15 @@ class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
     """
 
     def __init__(
-            self,
-            nid: str,
-            steps_ahead: int,
-            cols: Optional[_TO_LIST_MIXIN_TYPE] = None,
-            p_moment: float = 2,
-            tau: Optional[float] = None,
-            col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
-            col_mode: Optional[str] = None,
-            nan_mode: Optional[str] = None,
+        self,
+        nid: str,
+        steps_ahead: int,
+        cols: Optional[_TO_LIST_MIXIN_TYPE] = None,
+        p_moment: float = 2,
+        tau: Optional[float] = None,
+        col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         Specify the data and sma modeling parameters.
@@ -418,7 +418,7 @@ class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         dbg.dassert_not_intersection(cols, self._fwd_vol_cols_hat.values())
 
     def _get_config(
-            self, col: _COL_TYPE, tau: Optional[float] = None
+        self, col: _COL_TYPE, tau: Optional[float] = None
     ) -> cconfi.Config:
         """
         Generate a DAG config.
@@ -530,14 +530,14 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
     """
 
     def __init__(
-            self,
-            nid: str,
-            in_col_group: Tuple[_COL_TYPE],
-            steps_ahead: int,
-            p_moment: float = 2,
-            out_col_prefix: Optional[str] = None,
-            tau: Optional[float] = None,
-            nan_mode: Optional[str] = None,
+        self,
+        nid: str,
+        in_col_group: Tuple[_COL_TYPE],
+        steps_ahead: int,
+        p_moment: float = 2,
+        out_col_prefix: Optional[str] = None,
+        tau: Optional[float] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         Specify the data and sma modeling parameters.
@@ -572,7 +572,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
             len(self._in_col_group),
             df_in.columns.nlevels - 1,
             "Dataframe multiindex column depth incompatible with config.",
-            )
+        )
         dbg.dassert_eq(
             df_in.columns.nlevels,
             2,
@@ -616,7 +616,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
             len(self._in_col_group),
             df_in.columns.nlevels - 1,
             "Dataframe multiindex column depth incompatible with config.",
-            )
+        )
         dbg.dassert_eq(
             df_in.columns.nlevels,
             2,
@@ -672,7 +672,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
         self._info["fit"] = fit_state["_info['fit']"]
 
     def _get_config(
-            self, col: _COL_TYPE, tau: Optional[float] = None
+        self, col: _COL_TYPE, tau: Optional[float] = None
     ) -> cconfi.Config:
         """
         Generate a DAG config.
@@ -703,15 +703,15 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
                         + "vol_"
                         + str(self._steps_ahead)
                         + "_hat",
-                        ],
+                    ],
                     "col_mode": "replace_selected",
                 },
                 "demodulate_using_vol_pred": {
                     "signal_cols": [col],
                     "volatility_col": self._out_col_prefix
-                                      + "vol_"
-                                      + str(self._steps_ahead)
-                                      + "_hat",
+                    + "vol_"
+                    + str(self._steps_ahead)
+                    + "_hat",
                     "signal_steps_ahead": 0,
                     "volatility_steps_ahead": self._steps_ahead,
                     "col_mode": "replace_selected",
@@ -720,7 +720,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
                 "rename": {
                     "cols": [col],
                     "col_rename_func": lambda x: self._out_col_prefix
-                                                 + "0_voladj",
+                    + "0_voladj",
                     "col_mode": "replace_selected",
                 },
             }
@@ -810,16 +810,16 @@ class VolatilityModulator(FitPredictNode, ColModeMixin, ToListMixin):
     """
 
     def __init__(
-            self,
-            nid: str,
-            signal_cols: _TO_LIST_MIXIN_TYPE,
-            volatility_col: _COL_TYPE,
-            signal_steps_ahead: int,
-            volatility_steps_ahead: int,
-            mode: str,
-            col_rename_func: Optional[Callable[[Any], Any]] = None,
-            col_mode: Optional[str] = None,
-            nan_mode: Optional[str] = None,
+        self,
+        nid: str,
+        signal_cols: _TO_LIST_MIXIN_TYPE,
+        volatility_col: _COL_TYPE,
+        signal_steps_ahead: int,
+        volatility_steps_ahead: int,
+        mode: str,
+        col_rename_func: Optional[Callable[[Any], Any]] = None,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
     ) -> None:
         """
         :param nid: node identifier
@@ -899,6 +899,7 @@ class VolatilityModulator(FitPredictNode, ColModeMixin, ToListMixin):
             col_mode=self._col_mode,
         )
         return df_out
+
 
 class VolatilityNormalizer(FitPredictNode, ColModeMixin):
     def __init__(

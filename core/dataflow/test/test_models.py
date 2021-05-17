@@ -1,8 +1,5 @@
-import collections
 import logging
-from typing import Any, Dict, List
 
-import numpy as np
 import pandas as pd
 import sklearn.decomposition as sdecom
 import sklearn.linear_model as slmode
@@ -11,9 +8,6 @@ import core.artificial_signal_generators as casgen
 import core.config as ccfg
 import core.config_builders as ccbuild
 import core.dataflow as cdataf
-import core.signal_processing as csproc
-import helpers.dbg as dbg
-import helpers.printing as hprint
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -299,4 +293,3 @@ class TestResidualizer(hut.TestCase):
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
         )
         return realization
-

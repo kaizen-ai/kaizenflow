@@ -9,10 +9,12 @@ import core.artificial_signal_generators as casgen
 import core.config as ccfg
 import helpers.printing as hprint
 import helpers.unit_test as hut
-
-from core.dataflow.core import DAG, Node
+from core.dataflow.core import DAG
+from core.dataflow.nodes.gluonts_models import (
+    ContinuousDeepArModel,
+    DeepARGlobalModel,
+)
 from core.dataflow.nodes.sources import ReadDataFromDf
-from core.dataflow.nodes.gluonts_models import ContinuousDeepArModel, DeepARGlobalModel
 
 _LOG = logging.getLogger(__name__)
 
@@ -143,5 +145,3 @@ if True:
             config["x_vars"] = self._x_vars
             config["y_vars"] = self._y_vars
             return config
-
-

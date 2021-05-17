@@ -11,8 +11,10 @@ import core.config_builders as ccbuild
 import core.signal_processing as csproc
 import helpers.printing as hprint
 import helpers.unit_test as hut
-
-from core.dataflow.nodes.sarimax_models import ContinuousSarimaxModel, MultihorizonReturnsPredictionProcessor
+from core.dataflow.nodes.sarimax_models import (
+    ContinuousSarimaxModel,
+    MultihorizonReturnsPredictionProcessor,
+)
 
 _LOG = logging.getLogger(__name__)
 
@@ -106,7 +108,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         # Compare outputs.
         df_out = pd.concat([skl_out, sarimax_out], axis=1)
         df_out["skl_sarimax_pred_diff"] = (
-                df_out["skl_ret_0_1_hat"] - df_out["sarimax_ret_0_1_hat"]
+            df_out["skl_ret_0_1_hat"] - df_out["sarimax_ret_0_1_hat"]
         )
         # TODO(gp): Factor this out.
         act = (
@@ -151,7 +153,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         # Compare outputs.
         df_out = pd.concat([skl_out, sarimax_out], axis=1)
         df_out["skl_sarimax_pred_diff"] = (
-                df_out["skl_ret_0_3_hat"] - df_out["sarimax_ret_0_3_hat"]
+            df_out["skl_ret_0_3_hat"] - df_out["sarimax_ret_0_3_hat"]
         )
         # TODO(gp): Factor this out.
         act = (
@@ -292,10 +294,10 @@ class TestContinuousSarimaxModel(hut.TestCase):
         self.check_string(act)
 
     def _check_results(
-            self,
-            config: ccfg.Config,
-            df_out: pd.DataFrame,
-            err_threshold: float = 0.01,
+        self,
+        config: ccfg.Config,
+        df_out: pd.DataFrame,
+        err_threshold: float = 0.01,
     ) -> None:
         act: List[str] = []
         act.append(hprint.frame("config"))
@@ -307,11 +309,11 @@ class TestContinuousSarimaxModel(hut.TestCase):
 
     @staticmethod
     def _get_data(
-            ar_coeffs: List[int],
-            ma_coeffs: List[int],
-            periods: int = 100,
-            freq: str = "M",
-            seed: int = 42,
+        ar_coeffs: List[int],
+        ma_coeffs: List[int],
+        periods: int = 100,
+        freq: str = "M",
+        seed: int = 42,
     ) -> pd.DataFrame:
         arma_process = casgen.ArmaProcess(ar_coeffs, ma_coeffs)
         date_range_kwargs = {
@@ -327,8 +329,8 @@ class TestContinuousSarimaxModel(hut.TestCase):
 
     @staticmethod
     def _get_config(
-            order: Tuple[int, int, int],
-            seasonal_order: Optional[Tuple[int, int, int, int]] = None,
+        order: Tuple[int, int, int],
+        seasonal_order: Optional[Tuple[int, int, int, int]] = None,
     ) -> ccfg.Config:
         config = ccbuild.get_config_from_nested_dict(
             {
@@ -435,7 +437,7 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
 
     @staticmethod
     def _get_multihorizon_model_output(
-            steps_ahead: int, seed: int = 42
+        steps_ahead: int, seed: int = 42
     ) -> pd.DataFrame:
         # Get returns.
         rets = TestMultihorizonReturnsPredictionProcessor._get_series(

@@ -1,31 +1,23 @@
-import logging
-
-import pandas as pd
-
-import core.artificial_signal_generators as sig_gen
-import core.finance as fin
-import core.signal_processing as sigp
-import helpers.printing as prnt
-import helpers.unit_test as hut
-from core.dataflow.nodes.volatility_models import VolatilityNormalizer
-
 import collections
 import logging
 from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
-import sklearn.decomposition as sdecom
-import sklearn.linear_model as slmode
 
+import core.artificial_signal_generators as sig_gen
 import core.artificial_signal_generators as casgen
 import core.config as ccfg
 import core.config_builders as ccbuild
 import core.dataflow as cdataf
+import core.finance as fin
+import core.signal_processing as sigp
 import core.signal_processing as csproc
 import helpers.dbg as dbg
+import helpers.printing as prnt
 import helpers.printing as hprint
 import helpers.unit_test as hut
+from core.dataflow.nodes.volatility_models import VolatilityNormalizer
 
 _LOG = logging.getLogger(__name__)
 
@@ -131,10 +123,10 @@ class TestSmaModel(hut.TestCase):
         self._check_results(config, info, df_out)
 
     def _check_results(
-            self,
-            config: ccfg.Config,
-            info: collections.OrderedDict,
-            df_out: pd.DataFrame,
+        self,
+        config: ccfg.Config,
+        info: collections.OrderedDict,
+        df_out: pd.DataFrame,
     ) -> None:
         act: List[str] = []
         act.append(hprint.frame("config"))
@@ -439,9 +431,9 @@ class TestVolatilityModel(hut.TestCase):
 
     @staticmethod
     def _package_results1(
-            config: ccfg.Config,
-            info: collections.OrderedDict,
-            df_out: pd.DataFrame,
+        config: ccfg.Config,
+        info: collections.OrderedDict,
+        df_out: pd.DataFrame,
     ) -> str:
         act: List[str] = []
         act.append(hprint.frame("config"))
@@ -455,7 +447,7 @@ class TestVolatilityModel(hut.TestCase):
 
     @staticmethod
     def _package_results2(
-            config: ccfg.Config, state: Dict[str, Any], df_out: pd.DataFrame
+        config: ccfg.Config, state: Dict[str, Any], df_out: pd.DataFrame
     ) -> str:
         act: List[str] = []
         act.append(hprint.frame("config"))
@@ -575,7 +567,7 @@ class TestVolatilityModulator(hut.TestCase):
         self._check_results(config, df_in, df_out)
 
     def _check_results(
-            self, config: ccfg.Config, df_in: pd.DataFrame, df_out: pd.DataFrame
+        self, config: ccfg.Config, df_in: pd.DataFrame, df_out: pd.DataFrame
     ) -> None:
         act: List[str] = []
         act.append(hprint.frame("config"))
@@ -587,7 +579,7 @@ class TestVolatilityModulator(hut.TestCase):
 
     @staticmethod
     def _get_signal_and_fwd_vol(
-            steps_ahead: int,
+        steps_ahead: int,
     ) -> pd.DataFrame:
         arma_process = casgen.ArmaProcess([0.45], [0])
         date_range_kwargs = {"start": "2010-01-01", "periods": 40, "freq": "B"}

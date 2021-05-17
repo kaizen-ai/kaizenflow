@@ -417,5 +417,3 @@ class ToListMixin:
         if isinstance(to_list, list):
             return to_list
         raise TypeError("Data type=`%s`" % type(to_list))
-
-

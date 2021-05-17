@@ -1,7 +1,7 @@
 import collections
 import datetime
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -51,17 +51,17 @@ class ContinuousSarimaxModel(
     # pylint: disable=too-many-ancestors
 
     def __init__(
-            self,
-            nid: str,
-            y_vars: _TO_LIST_MIXIN_TYPE,
-            steps_ahead: int,
-            init_kwargs: Optional[Dict[str, Any]] = None,
-            fit_kwargs: Optional[Dict[str, Any]] = None,
-            x_vars: Optional[_TO_LIST_MIXIN_TYPE] = None,
-            add_constant: bool = False,
-            col_mode: Optional[str] = None,
-            nan_mode: Optional[str] = None,
-            disable_tqdm: bool = False,
+        self,
+        nid: str,
+        y_vars: _TO_LIST_MIXIN_TYPE,
+        steps_ahead: int,
+        init_kwargs: Optional[Dict[str, Any]] = None,
+        fit_kwargs: Optional[Dict[str, Any]] = None,
+        x_vars: Optional[_TO_LIST_MIXIN_TYPE] = None,
+        add_constant: bool = False,
+        col_mode: Optional[str] = None,
+        nan_mode: Optional[str] = None,
+        disable_tqdm: bool = False,
     ) -> None:
         """
         Initialize node for SARIMAX model.
@@ -189,7 +189,7 @@ class ContinuousSarimaxModel(
         return {"df_out": df_out}
 
     def _predict(
-            self, y: pd.DataFrame, x: Optional[pd.DataFrame]
+        self, y: pd.DataFrame, x: Optional[pd.DataFrame]
     ) -> pd.DataFrame:
         """
         Make n-step-ahead predictions.
@@ -204,7 +204,7 @@ class ContinuousSarimaxModel(
             pred_start = 1
         y_var = y.columns[0]
         for t in tqdm(
-                range(pred_start, pred_range + 1), disable=self._disable_tqdm
+            range(pred_start, pred_range + 1), disable=self._disable_tqdm
         ):
             # If `t` is larger than `y`, this selects the whole `y`.
             y_past = y.iloc[:t]
@@ -272,7 +272,7 @@ class ContinuousSarimaxModel(
         return x
 
     def _handle_nans(
-            self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
     ) -> None:
         if self._nan_mode == "raise":
             if idx.shape[0] != non_nan_idx.shape[0]:
@@ -297,11 +297,11 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode, ToListMixin):
     """
 
     def __init__(
-            self,
-            nid: str,
-            target_col: Any,
-            prediction_cols: _TO_LIST_MIXIN_TYPE,
-            volatility_col: Any,
+        self,
+        nid: str,
+        target_col: Any,
+        prediction_cols: _TO_LIST_MIXIN_TYPE,
+        volatility_col: Any,
     ):
         """
         :param nid: node identifier
@@ -379,7 +379,7 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode, ToListMixin):
 
 
 def _convert_sarimax_summary_to_dataframe(
-        summary: siolib.summary.Summary,
+    summary: siolib.summary.Summary,
 ) -> Dict[str, pd.DataFrame]:
     """
     Convert SARIMAX model summary to dataframes.
@@ -422,7 +422,7 @@ def _convert_sarimax_summary_to_dataframe(
 
 
 def _remove_datetime_info_from_sarimax(
-        summary: Dict[str, pd.DataFrame],
+    summary: Dict[str, pd.DataFrame],
 ) -> Dict[str, pd.DataFrame]:
     """
     Remove date and time from model summary.
