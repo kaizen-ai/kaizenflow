@@ -11,6 +11,7 @@ import core.config_builders as ccbuild
 import core.signal_processing as csproc
 import helpers.printing as hprint
 import helpers.unit_test as hut
+from core.dataflow.nodes.sklearn_models import ContinuousSkLearnModel
 from core.dataflow.nodes.sarimax_models import (
     ContinuousSarimaxModel,
     MultihorizonReturnsPredictionProcessor,
