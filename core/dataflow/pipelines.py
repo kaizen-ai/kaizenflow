@@ -9,11 +9,11 @@ import core.signal_processing as csigna
 from core.dataflow.builders import DagBuilder
 from core.dataflow.core import DAG
 from core.dataflow.models import SkLearnModel
-from core.dataflow.nodes import (
+from core.dataflow.nodes.base import YConnector
+from core.dataflow.nodes.transformers import (
     ColumnTransformer,
     DataframeMethodRunner,
     Resample,
-    YConnector,
 )
 
 _LOG = logging.getLogger(__name__)
