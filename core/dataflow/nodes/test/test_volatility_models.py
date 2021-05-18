@@ -17,7 +17,11 @@ import helpers.dbg as dbg
 import helpers.printing as prnt
 import helpers.printing as hprint
 import helpers.unit_test as hut
-from core.dataflow.nodes.volatility_models import SmaModel, VolatilityModel, VolatilityNormalizer
+from core.dataflow.nodes.volatility_models import (
+    SmaModel,
+    VolatilityModel,
+    VolatilityNormalizer,
+)
 
 _LOG = logging.getLogger(__name__)
 
@@ -139,11 +143,13 @@ class TestVolatilityModel(hut.TestCase):
     def test_fit_dag1(self) -> None:
         # Load test data.
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict({
-            "cols": ["ret_0"],
-            "steps_ahead": 2,
-            "nan_mode": "leave_unchanged",
-        })
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "cols": ["ret_0"],
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
         node = VolatilityModel("vol_model", **config.to_dict())
         df_out = node.fit(data)["df_out"]
         info = node.get_info("fit")
@@ -153,11 +159,13 @@ class TestVolatilityModel(hut.TestCase):
 
     def test_fit_dag_correctness1(self) -> None:
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict({
-            "cols": ["ret_0"],
-            "steps_ahead": 2,
-            "nan_mode": "leave_unchanged",
-        })
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "cols": ["ret_0"],
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
         node = VolatilityModel("vol_model", **config.to_dict())
         vol_adj_df = node.fit(data)["df_out"]
         # Invert volatility adjustment.
