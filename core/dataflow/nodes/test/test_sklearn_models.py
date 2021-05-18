@@ -4,56 +4,56 @@ import pandas as pd
 import sklearn.linear_model as slmode
 
 import core.artificial_signal_generators as casgen
-import core.config as ccfg
+import core.config_builders as cfgb
 import helpers.unit_test as hut
-from core.dataflow.core import DAG
 from core.dataflow.nodes.sklearn_models import ContinuousSkLearnModel
-from core.dataflow.nodes.sources import ReadDataFromDf
 
 _LOG = logging.getLogger(__name__)
 
 
 class TestContinuousSkLearnModel(hut.TestCase):
     def test_fit_dag1(self) -> None:
-        pred_lag = 1
         # Load test data.
-        data = self._get_data(pred_lag)
-        data_source_node = ReadDataFromDf("data", data)
-        # Create DAG and test data node.
-        dag = DAG(mode="strict")
-        dag.add_node(data_source_node)
+        data = self._get_data(1)
+        # Generate node config.
+        config = cfgb.get_config_from_nested_dict({
+            "x_vars": ["x"],
+            "y_vars": ["y"],
+            "steps_ahead": 1,
+            "model_kwargs": {
+                "alpha": 0.5,
+            }
+        })
         # Load sklearn config and create modeling node.
-        config = self._get_config(pred_lag)
         node = ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.Ridge,
             **config.to_dict(),
         )
-        dag.add_node(node)
-        dag.connect("data", "sklearn")
         #
-        df_out = dag.run_leq_node("sklearn", "fit")["df_out"]
+        df_out = node.fit(data)["df_out"]
         self.check_string(df_out.to_string())
 
     def test_fit_dag2(self) -> None:
-        pred_lag = 2
         # Load test data.
-        data = self._get_data(pred_lag)
-        data_source_node = ReadDataFromDf("data", data)
-        # Create DAG and test data node.
-        dag = DAG(mode="strict")
-        dag.add_node(data_source_node)
+        data = self._get_data(2)
+        # Generate node config.
+        config = cfgb.get_config_from_nested_dict({
+            "x_vars": ["x"],
+            "y_vars": ["y"],
+            "steps_ahead": 2,
+            "model_kwargs": {
+                "alpha": 0.5,
+            }
+        })
         # Load sklearn config and create modeling node.
-        config = self._get_config(pred_lag)
         node = ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.Ridge,
             **config.to_dict(),
         )
-        dag.add_node(node)
-        dag.connect("data", "sklearn")
         #
-        df_out = dag.run_leq_node("sklearn", "fit")["df_out"]
+        df_out = node.fit(data)["df_out"]
         self.check_string(df_out.to_string())
 
     def test_fit_dag3(self) -> None:
@@ -63,86 +63,73 @@ class TestContinuousSkLearnModel(hut.TestCase):
         `Lasso` returns a one-dimensional array for a two-dimensional
         input.
         """
-        pred_lag = 1
         # Load test data.
-        data = self._get_data(pred_lag)
-        data_source_node = ReadDataFromDf("data", data)
-        # Create DAG and test data node.
-        dag = DAG(mode="strict")
-        dag.add_node(data_source_node)
+        data = self._get_data(1)
         # Load sklearn config and create modeling node.
-        config = self._get_config(pred_lag)
+        config = cfgb.get_config_from_nested_dict({
+            "x_vars": ["x"],
+            "y_vars": ["y"],
+            "steps_ahead": 1,
+            "model_kwargs": {
+                "alpha": 0.5,
+            }
+        })
         node = ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.Lasso,
             **config.to_dict(),
         )
-        dag.add_node(node)
-        dag.connect("data", "sklearn")
         #
-        df_out = dag.run_leq_node("sklearn", "fit")["df_out"]
+        df_out = node.fit(data)["df_out"]
         self.check_string(df_out.to_string())
 
     def test_predict_dag1(self) -> None:
-        pred_lag = 1
         # Load test data.
-        data = self._get_data(pred_lag)
-        fit_interval = ("1776-07-04 12:00:00", "2010-01-01 00:29:00")
-        predict_interval = ("2010-01-01 00:30:00", "2100")
-        data_source_node = ReadDataFromDf("data", data)
-        data_source_node.set_fit_intervals([fit_interval])
-        data_source_node.set_predict_intervals([predict_interval])
+        data = self._get_data(1)
+        data_fit = data.loc[:"2010-01-01 00:29:00"]
+        data_predict = data.loc["2010-01-01 00:30:00":]
         # Create DAG and test data node.
-        dag = DAG(mode="strict")
-        dag.add_node(data_source_node)
         # Load sklearn config and create modeling node.
-        config = self._get_config(pred_lag)
+        config = cfgb.get_config_from_nested_dict({
+            "x_vars": ["x"],
+            "y_vars": ["y"],
+            "steps_ahead": 1,
+            "model_kwargs": {
+                "alpha": 0.5,
+            }
+        })
         node = ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.Ridge,
             **config.to_dict(),
         )
-        dag.add_node(node)
-        dag.connect("data", "sklearn")
-        #
-        dag.run_leq_node("sklearn", "fit")
-        df_out = dag.run_leq_node("sklearn", "predict")["df_out"]
+        node.fit(data_fit)
+        df_out = node.predict(data_predict)["df_out"]
         self.check_string(df_out.to_string())
 
     def test_predict_dag2(self) -> None:
-        pred_lag = 2
         # Load test data.
-        data = self._get_data(pred_lag)
-        fit_interval = ("1776-07-04 12:00:00", "2010-01-01 00:29:00")
-        predict_interval = ("2010-01-01 00:30:00", "2100")
-        data_source_node = ReadDataFromDf("data", data)
-        data_source_node.set_fit_intervals([fit_interval])
-        data_source_node.set_predict_intervals([predict_interval])
+        data = self._get_data(2)
+        data_fit = data.loc[:"2010-01-01 00:29:00"]
+        data_predict = data.loc["2010-01-01 00:30:00":]
         # Create DAG and test data node.
-        dag = DAG(mode="strict")
-        dag.add_node(data_source_node)
         # Load sklearn config and create modeling node.
-        config = self._get_config(pred_lag)
+        config = cfgb.get_config_from_nested_dict({
+            "x_vars": ["x"],
+            "y_vars": ["y"],
+            "steps_ahead": 2,
+            "model_kwargs": {
+                "alpha": 0.5,
+            }
+        })
         node = ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.Ridge,
             **config.to_dict(),
         )
-        dag.add_node(node)
-        dag.connect("data", "sklearn")
-        #
-        dag.run_leq_node("sklearn", "fit")
-        df_out = dag.run_leq_node("sklearn", "predict")["df_out"]
+        node.fit(data_fit)
+        df_out = node.predict(data_predict)["df_out"]
         self.check_string(df_out.to_string())
-
-    def _get_config(self, steps_ahead: int) -> ccfg.Config:
-        config = ccfg.Config()
-        config["x_vars"] = ["x"]
-        config["y_vars"] = ["y"]
-        config["steps_ahead"] = steps_ahead
-        config_kwargs = config.add_subconfig("model_kwargs")
-        config_kwargs["alpha"] = 0.5
-        return config
 
     def _get_data(self, lag: int) -> pd.DataFrame:
         """
