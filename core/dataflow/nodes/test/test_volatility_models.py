@@ -32,7 +32,7 @@ class TestSmaModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
         config = ccfg.Config()
-        config["col"] = ["vol"]
+        config["col"] = ["vol_sq"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
         node = cdataf.SmaModel("sma", **config.to_dict())
@@ -56,7 +56,7 @@ class TestSmaModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
         config = ccfg.Config()
-        config["col"] = ["vol"]
+        config["col"] = ["vol_sq"]
         config["steps_ahead"] = 2
         config["tau"] = 8
         config["nan_mode"] = "drop"
@@ -81,7 +81,7 @@ class TestSmaModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
         config = ccfg.Config()
-        config["col"] = ["vol"]
+        config["col"] = ["vol_sq"]
         config["steps_ahead"] = 2
         config["col_mode"] = "merge_all"
         config["nan_mode"] = "drop"
@@ -107,7 +107,7 @@ class TestSmaModel(hut.TestCase):
         dag.add_node(data_source_node)
         # Specify config and create modeling node.
         config = ccfg.Config()
-        config["col"] = ["vol"]
+        config["col"] = ["vol_sq"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "drop"
         node = cdataf.SmaModel("sma", **config.to_dict())
@@ -148,9 +148,9 @@ class TestSmaModel(hut.TestCase):
         realization = arma_process.generate_sample(
             date_range_kwargs=date_range_kwargs, seed=0
         )
-        vol = np.abs(realization) ** 2
-        vol.name = "vol"
-        df = pd.DataFrame(index=date_range, data=vol)
+        vol_sq = np.abs(realization) ** 2
+        vol_sq.name = "vol_sq"
+        df = pd.DataFrame(index=date_range, data=vol_sq)
         return df
 
 
