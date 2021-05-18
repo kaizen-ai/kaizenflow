@@ -26,11 +26,13 @@ class TestSmaModel(hut.TestCase):
     def test_fit_dag1(self) -> None:
         # Load test data.
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict({
-            "col": ["vol_sq"],
-            "steps_ahead": 2,
-            "nan_mode": "drop",
-        })
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "col": ["vol_sq"],
+                "steps_ahead": 2,
+                "nan_mode": "drop",
+            }
+        )
         # Specify config and create modeling node.
         node = cdataf.SmaModel("sma", **config.to_dict())
         #
@@ -45,12 +47,14 @@ class TestSmaModel(hut.TestCase):
         """
         # Load test data.
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict({
-            "col": ["vol_sq"],
-            "steps_ahead": 2,
-            "tau": 8,
-            "nan_mode": "drop",
-        })
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "col": ["vol_sq"],
+                "steps_ahead": 2,
+                "tau": 8,
+                "nan_mode": "drop",
+            }
+        )
         node = cdataf.SmaModel("sma", **config.to_dict())
         #
         df_out = node.fit(data)["df_out"]
@@ -64,12 +68,14 @@ class TestSmaModel(hut.TestCase):
         """
         # Load test data.
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict({
-            "col": ["vol_sq"],
-            "steps_ahead": 2,
-            "col_mode": "merge_all",
-            "nan_mode": "drop",
-        })
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "col": ["vol_sq"],
+                "steps_ahead": 2,
+                "col_mode": "merge_all",
+                "nan_mode": "drop",
+            }
+        )
         node = cdataf.SmaModel("sma", **config.to_dict())
         #
         df_out = node.fit(data)["df_out"]
@@ -81,15 +87,17 @@ class TestSmaModel(hut.TestCase):
         # Load test data.
         data = self._get_data()
         # Specify config and create modeling node.
-        config = ccbuild.get_config_from_nested_dict({
-            "col": ["vol_sq"],
-            "steps_ahead": 2,
-            "nan_mode": "drop",
-        })
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "col": ["vol_sq"],
+                "steps_ahead": 2,
+                "nan_mode": "drop",
+            }
+        )
         node = cdataf.SmaModel("sma", **config.to_dict())
         #
         node.fit(data.loc["2000-01-01":"2000-02-10"])
-        df_out = node.predict(data.loc["2000-01-20": "2000-02-23"])["df_out"]
+        df_out = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]
         info = collections.OrderedDict()
         info["fit"] = node.get_info("fit")
         info["predict"] = node.get_info("predict")
