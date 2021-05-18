@@ -135,6 +135,7 @@ class TestMultivariateNormalGenerator(hut.TestCase):
             start_date="2010-01-04 09:00",
             end_date="2010-01-04 17:00",
             dim=4,
+            target_volatility=10,
             seed=1,
         )
         df = node.fit()["df_out"]
