@@ -16,14 +16,16 @@ class TestContinuousSkLearnModel(hut.TestCase):
         # Load test data.
         data = self._get_data(1)
         # Generate node config.
-        config = cfgb.get_config_from_nested_dict({
-            "x_vars": ["x"],
-            "y_vars": ["y"],
-            "steps_ahead": 1,
-            "model_kwargs": {
-                "alpha": 0.5,
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "x_vars": ["x"],
+                "y_vars": ["y"],
+                "steps_ahead": 1,
+                "model_kwargs": {
+                    "alpha": 0.5,
+                },
             }
-        })
+        )
         # Load sklearn config and create modeling node.
         node = ContinuousSkLearnModel(
             "sklearn",
@@ -38,14 +40,16 @@ class TestContinuousSkLearnModel(hut.TestCase):
         # Load test data.
         data = self._get_data(2)
         # Generate node config.
-        config = cfgb.get_config_from_nested_dict({
-            "x_vars": ["x"],
-            "y_vars": ["y"],
-            "steps_ahead": 2,
-            "model_kwargs": {
-                "alpha": 0.5,
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "x_vars": ["x"],
+                "y_vars": ["y"],
+                "steps_ahead": 2,
+                "model_kwargs": {
+                    "alpha": 0.5,
+                },
             }
-        })
+        )
         # Load sklearn config and create modeling node.
         node = ContinuousSkLearnModel(
             "sklearn",
@@ -66,14 +70,16 @@ class TestContinuousSkLearnModel(hut.TestCase):
         # Load test data.
         data = self._get_data(1)
         # Load sklearn config and create modeling node.
-        config = cfgb.get_config_from_nested_dict({
-            "x_vars": ["x"],
-            "y_vars": ["y"],
-            "steps_ahead": 1,
-            "model_kwargs": {
-                "alpha": 0.5,
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "x_vars": ["x"],
+                "y_vars": ["y"],
+                "steps_ahead": 1,
+                "model_kwargs": {
+                    "alpha": 0.5,
+                },
             }
-        })
+        )
         node = ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.Lasso,
@@ -90,14 +96,16 @@ class TestContinuousSkLearnModel(hut.TestCase):
         data_predict = data.loc["2010-01-01 00:30:00":]
         # Create DAG and test data node.
         # Load sklearn config and create modeling node.
-        config = cfgb.get_config_from_nested_dict({
-            "x_vars": ["x"],
-            "y_vars": ["y"],
-            "steps_ahead": 1,
-            "model_kwargs": {
-                "alpha": 0.5,
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "x_vars": ["x"],
+                "y_vars": ["y"],
+                "steps_ahead": 1,
+                "model_kwargs": {
+                    "alpha": 0.5,
+                },
             }
-        })
+        )
         node = ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.Ridge,
@@ -114,14 +122,16 @@ class TestContinuousSkLearnModel(hut.TestCase):
         data_predict = data.loc["2010-01-01 00:30:00":]
         # Create DAG and test data node.
         # Load sklearn config and create modeling node.
-        config = cfgb.get_config_from_nested_dict({
-            "x_vars": ["x"],
-            "y_vars": ["y"],
-            "steps_ahead": 2,
-            "model_kwargs": {
-                "alpha": 0.5,
+        config = cfgb.get_config_from_nested_dict(
+            {
+                "x_vars": ["x"],
+                "y_vars": ["y"],
+                "steps_ahead": 2,
+                "model_kwargs": {
+                    "alpha": 0.5,
+                },
             }
-        })
+        )
         node = ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.Ridge,
