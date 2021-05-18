@@ -12,7 +12,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestContinuousSkLearnModel(hut.TestCase):
-    def test_fit_dag1(self) -> None:
+    def test1(self) -> None:
         # Load test data.
         data = self._get_data(1)
         # Generate node config.
@@ -24,6 +24,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
                 "model_kwargs": {
                     "alpha": 0.5,
                 },
+                "col_mode": "merge_all",
             }
         )
         # Load sklearn config and create modeling node.
@@ -34,12 +35,11 @@ class TestContinuousSkLearnModel(hut.TestCase):
         )
         #
         df_out = node.fit(data)["df_out"]
-        self.check_string(df_out.to_string())
+        df_str = hut.convert_df_to_string(df_out, index=True, decimals=3)
+        self.check_string(df_str)
 
-    def test_fit_dag2(self) -> None:
-        # Load test data.
+    def test2(self) -> None:
         data = self._get_data(2)
-        # Generate node config.
         config = cfgb.get_config_from_nested_dict(
             {
                 "x_vars": ["x"],
@@ -48,28 +48,26 @@ class TestContinuousSkLearnModel(hut.TestCase):
                 "model_kwargs": {
                     "alpha": 0.5,
                 },
+                "col_mode": "merge_all",
             }
         )
-        # Load sklearn config and create modeling node.
         node = ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.Ridge,
             **config.to_dict(),
         )
-        #
         df_out = node.fit(data)["df_out"]
-        self.check_string(df_out.to_string())
+        df_str = hut.convert_df_to_string(df_out, index=True, decimals=3)
+        self.check_string(df_str)
 
-    def test_fit_dag3(self) -> None:
+    def test3(self) -> None:
         """
         Test `slmode.Lasso` model.
 
         `Lasso` returns a one-dimensional array for a two-dimensional
         input.
         """
-        # Load test data.
         data = self._get_data(1)
-        # Load sklearn config and create modeling node.
         config = cfgb.get_config_from_nested_dict(
             {
                 "x_vars": ["x"],
@@ -85,17 +83,14 @@ class TestContinuousSkLearnModel(hut.TestCase):
             model_func=slmode.Lasso,
             **config.to_dict(),
         )
-        #
         df_out = node.fit(data)["df_out"]
-        self.check_string(df_out.to_string())
+        df_str = hut.convert_df_to_string(df_out, index=True, decimals=3)
+        self.check_string(df_str)
 
-    def test_predict_dag1(self) -> None:
-        # Load test data.
+    def test4(self) -> None:
         data = self._get_data(1)
         data_fit = data.loc[:"2010-01-01 00:29:00"]
         data_predict = data.loc["2010-01-01 00:30:00":]
-        # Create DAG and test data node.
-        # Load sklearn config and create modeling node.
         config = cfgb.get_config_from_nested_dict(
             {
                 "x_vars": ["x"],
@@ -104,6 +99,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
                 "model_kwargs": {
                     "alpha": 0.5,
                 },
+                "col_mode": "merge_all",
             }
         )
         node = ContinuousSkLearnModel(
@@ -113,15 +109,13 @@ class TestContinuousSkLearnModel(hut.TestCase):
         )
         node.fit(data_fit)
         df_out = node.predict(data_predict)["df_out"]
-        self.check_string(df_out.to_string())
+        df_str = hut.convert_df_to_string(df_out, index=True, decimals=3)
+        self.check_string(df_str)
 
-    def test_predict_dag2(self) -> None:
-        # Load test data.
+    def test5(self) -> None:
         data = self._get_data(2)
         data_fit = data.loc[:"2010-01-01 00:29:00"]
         data_predict = data.loc["2010-01-01 00:30:00":]
-        # Create DAG and test data node.
-        # Load sklearn config and create modeling node.
         config = cfgb.get_config_from_nested_dict(
             {
                 "x_vars": ["x"],
@@ -139,7 +133,8 @@ class TestContinuousSkLearnModel(hut.TestCase):
         )
         node.fit(data_fit)
         df_out = node.predict(data_predict)["df_out"]
-        self.check_string(df_out.to_string())
+        df_str = hut.convert_df_to_string(df_out, index=True, decimals=3)
+        self.check_string(df_str)
 
     def _get_data(self, lag: int) -> pd.DataFrame:
         """
