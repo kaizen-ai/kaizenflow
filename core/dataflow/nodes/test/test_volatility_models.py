@@ -23,7 +23,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestSmaModel(hut.TestCase):
-    def test_fit_dag1(self) -> None:
+    def test1(self) -> None:
         # Load test data.
         data = self._get_data()
         config = ccbuild.get_config_from_nested_dict(
@@ -41,7 +41,7 @@ class TestSmaModel(hut.TestCase):
         # Package results.
         self._check_results(config, info, df_out)
 
-    def test_fit_dag2(self) -> None:
+    def test2(self) -> None:
         """
         Specify `tau` parameter.
         """
@@ -62,7 +62,7 @@ class TestSmaModel(hut.TestCase):
         # Package results.
         self._check_results(config, info, df_out)
 
-    def test_fit_dag3(self) -> None:
+    def test3(self) -> None:
         """
         Specify `col_mode=='merge_all'`.
         """
@@ -83,7 +83,7 @@ class TestSmaModel(hut.TestCase):
         # Package results.
         self._check_results(config, info, df_out)
 
-    def test_predict_dag1(self) -> None:
+    def test4(self) -> None:
         # Load test data.
         data = self._get_data()
         # Specify config and create modeling node.
