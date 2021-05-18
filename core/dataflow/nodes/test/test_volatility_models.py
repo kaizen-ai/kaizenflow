@@ -17,7 +17,7 @@ import helpers.dbg as dbg
 import helpers.printing as prnt
 import helpers.printing as hprint
 import helpers.unit_test as hut
-from core.dataflow.nodes.volatility_models import VolatilityNormalizer
+from core.dataflow.nodes.volatility_models import SmaModel, VolatilityNormalizer
 
 _LOG = logging.getLogger(__name__)
 
@@ -34,8 +34,8 @@ class TestSmaModel(hut.TestCase):
             }
         )
         # Specify config and create modeling node.
-        node = cdataf.SmaModel("sma", **config.to_dict())
-        #
+        node = SmaModel("sma", **config.to_dict())
+        # Run `fit()` and get output dataframe.
         df_out = node.fit(data)["df_out"]
         info = node.get_info("fit")
         # Package results.
@@ -45,7 +45,6 @@ class TestSmaModel(hut.TestCase):
         """
         Specify `tau` parameter.
         """
-        # Load test data.
         data = self._get_data()
         config = ccbuild.get_config_from_nested_dict(
             {
@@ -55,18 +54,15 @@ class TestSmaModel(hut.TestCase):
                 "nan_mode": "drop",
             }
         )
-        node = cdataf.SmaModel("sma", **config.to_dict())
-        #
+        node = SmaModel("sma", **config.to_dict())
         df_out = node.fit(data)["df_out"]
         info = node.get_info("fit")
-        # Package results.
         self._check_results(config, info, df_out)
 
     def test3(self) -> None:
         """
         Specify `col_mode=='merge_all'`.
         """
-        # Load test data.
         data = self._get_data()
         config = ccbuild.get_config_from_nested_dict(
             {
@@ -76,17 +72,16 @@ class TestSmaModel(hut.TestCase):
                 "nan_mode": "drop",
             }
         )
-        node = cdataf.SmaModel("sma", **config.to_dict())
-        #
+        node = SmaModel("sma", **config.to_dict())
         df_out = node.fit(data)["df_out"]
         info = node.get_info("fit")
-        # Package results.
         self._check_results(config, info, df_out)
 
     def test4(self) -> None:
-        # Load test data.
+        """
+        Run `predict()` after `fit()`.
+        """
         data = self._get_data()
-        # Specify config and create modeling node.
         config = ccbuild.get_config_from_nested_dict(
             {
                 "col": ["vol_sq"],
@@ -94,10 +89,11 @@ class TestSmaModel(hut.TestCase):
                 "nan_mode": "drop",
             }
         )
-        node = cdataf.SmaModel("sma", **config.to_dict())
-        #
+        node = SmaModel("sma", **config.to_dict())
+        # Run `fit()`, then `predict()`.
         node.fit(data.loc["2000-01-01":"2000-02-10"])
         df_out = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]
+        # Extract info for both `fit()` and `predict()` stages.
         info = collections.OrderedDict()
         info["fit"] = node.get_info("fit")
         info["predict"] = node.get_info("predict")
@@ -110,6 +106,9 @@ class TestSmaModel(hut.TestCase):
         info: collections.OrderedDict,
         df_out: pd.DataFrame,
     ) -> None:
+        """
+        Convert inputs to a string and check against golden reference.
+        """
         act: List[str] = []
         act.append(hprint.frame("config"))
         act.append(str(config))
