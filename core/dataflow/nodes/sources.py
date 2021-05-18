@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 import core.artificial_signal_generators as cartif
+import core.finance as cfinan
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -171,6 +172,7 @@ class MultivariateNormalGenerator(DataSource):
         start_date: _PANDAS_DATE_TYPE,
         end_date: _PANDAS_DATE_TYPE,
         dim: int,
+        target_volatility: Optional[float] = None,
         seed: Optional[float] = None,
     ) -> None:
         super().__init__(nid)
@@ -178,6 +180,8 @@ class MultivariateNormalGenerator(DataSource):
         self._start_date = start_date
         self._end_date = end_date
         self._dim = dim
+        self._target_volatility = target_volatility
+        self._volatility_scale_factor = 1
         self._seed = seed
         self._multivariate_normal_process = cartif.MultivariateNormalProcess()
         # Initialize process with appropriate dimension.
@@ -189,16 +193,14 @@ class MultivariateNormalGenerator(DataSource):
         """
         :return: training set as df
         """
-        self._lazy_load()
+        self._lazy_load(fit=True)
         return super().fit()
 
     def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
-        self._lazy_load()
+        self._lazy_load(fit=False)
         return super().predict()
 
-    def _lazy_load(self) -> None:
-        if self.df is not None:
-            return
+    def _generate_returns(self, fit: bool) -> pd.DataFrame:
         rets = self._multivariate_normal_process.generate_sample(
             date_range_kwargs={
                 "start": self._start_date,
@@ -207,13 +209,22 @@ class MultivariateNormalGenerator(DataSource):
             },
             seed=self._seed,
         )
+        if self._target_volatility is None:
+            return rets
+        if fit:
+            avg_rets = rets.mean(axis=1)
+            vol = cfinan.compute_annualized_volatility(avg_rets)
+            self._volatility_scale_factor = self._target_volatility / vol
+        return rets * self._volatility_scale_factor
+
+    def _lazy_load(self, fit: bool) -> None:
+        if self.df is not None:
+            return
+        rets = self._generate_returns(fit)
         # Cumulatively sum to generate a price series (implicitly assumes the
         # returns are log returns; at small enough scales and short enough
         # times this is practically interchangeable with percentage returns).
-        # TODO(*): We hard-code a scale factor to make these look more
-        #     realistic, but it would be better to allow the user to specify
-        #     a target annualized volatility.
-        prices = np.exp(0.1 * rets.cumsum())
+        prices = np.exp(rets.cumsum())
         prices = prices.rename(columns=lambda x: "MN" + str(x))
         # Use constant volume (for now).
         volume = pd.DataFrame(
