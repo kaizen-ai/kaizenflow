@@ -5,51 +5,27 @@ col: ['vol_sq']
 steps_ahead: 2
 nan_mode: drop
 fit:
-  data:
-    fit:
-      fit_df_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 29 entries, 2000-01-03 to 2000-02-10
-      Freq: B
-      Data columns (total 1 columns):
-       #   Column  Non-Null Count  Dtype  
-      ---  ------  --------------  -----  
-       0   vol_sq  29 non-null     float64
-      dtypes: float64(1)
-  sma:
-    fit:
-      tau: 4.74999424577988
-      min_periods: 9
-      df_out_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 27 entries, 2000-01-03 to 2000-02-08
-      Freq: B
-      Data columns (total 2 columns):
-       #   Column        Non-Null Count  Dtype  
-      ---  ------        --------------  -----  
-       0   vol_sq_2      27 non-null     float64
-       1   vol_sq_2_hat  19 non-null     float64
-      dtypes: float64(2)
+  tau: 4.74999424577988
+  min_periods: 9
+  df_out_info: <class 'pandas.core.frame.DataFrame'>
+  DatetimeIndex: 27 entries, 2000-01-03 to 2000-02-08
+  Freq: B
+  Data columns (total 2 columns):
+   #   Column        Non-Null Count  Dtype  
+  ---  ------        --------------  -----  
+   0   vol_sq_2      27 non-null     float64
+   1   vol_sq_2_hat  19 non-null     float64
+  dtypes: float64(2)
 predict:
-  data:
-    predict:
-      predict_df_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 25 entries, 2000-01-20 to 2000-02-23
-      Freq: B
-      Data columns (total 1 columns):
-       #   Column  Non-Null Count  Dtype  
-      ---  ------  --------------  -----  
-       0   vol_sq  25 non-null     float64
-      dtypes: float64(1)
-  sma:
-    predict:
-      df_out_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 25 entries, 2000-01-20 to 2000-02-23
-      Freq: B
-      Data columns (total 2 columns):
-       #   Column        Non-Null Count  Dtype  
-      ---  ------        --------------  -----  
-       0   vol_sq_2      23 non-null     float64
-       1   vol_sq_2_hat  17 non-null     float64
-      dtypes: float64(2)
+  df_out_info: <class 'pandas.core.frame.DataFrame'>
+  DatetimeIndex: 25 entries, 2000-01-20 to 2000-02-23
+  Freq: B
+  Data columns (total 2 columns):
+   #   Column        Non-Null Count  Dtype  
+  ---  ------        --------------  -----  
+   0   vol_sq_2      23 non-null     float64
+   1   vol_sq_2_hat  17 non-null     float64
+  dtypes: float64(2)
 ################################################################################
 df_out
 ################################################################################
