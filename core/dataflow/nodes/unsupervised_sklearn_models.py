@@ -9,12 +9,12 @@ import pandas as pd
 import core.data_adapters as cdataa
 import helpers.dbg as dbg
 from core.dataflow.nodes.base import (
+    ColModeMixin,
     FitPredictNode,
     MultiColModeMixin,
     RegFreqMixin,
     ToListMixin,
 )
-from core.dataflow.nodes.transformers import ColModeMixin
 from core.dataflow.utils import get_df_info_as_string
 
 _LOG = logging.getLogger(__name__)
@@ -222,7 +222,7 @@ class MultiindexUnsupervisedSkLearnModel(
         return {"df_out": df_out}
 
 
-class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
+class Residualizer(FitPredictNode, RegFreqMixin, MultiColModeMixin):
     """
     Residualize using an sklearn model with `inverse_transform()`.
     """
@@ -230,8 +230,9 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
     def __init__(
         self,
         nid: str,
+        in_col_group: Tuple[_COL_TYPE],
+        out_col_group: Tuple[_COL_TYPE],
         model_func: Callable[..., Any],
-        x_vars: _TO_LIST_MIXIN_TYPE,
         model_kwargs: Optional[Any] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
@@ -240,22 +241,32 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
 
         :param nid: unique node id
         :param model_func: an sklearn model
-        :param x_vars: indexed by knowledge datetimes
         :param model_kwargs: parameters to forward to the sklearn model
             (e.g., regularization constants)
         """
         super().__init__(nid)
+        self._in_col_group = in_col_group
+        self._out_col_group = out_col_group
         self._model_func = model_func
         self._model_kwargs = model_kwargs or {}
-        self._x_vars = x_vars
         self._model = None
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return self._fit_predict_helper(df_in, fit=True)
+        df = self._preprocess_df(self._in_col_group, self._out_col_group, df_in)
+        df_out, info = self._fit_predict_helper(df, fit=True)
+        df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return self._fit_predict_helper(df_in, fit=False)
+        df = self._preprocess_df(self._in_col_group, self._out_col_group, df_in)
+        df_out, info = self._fit_predict_helper(df, fit=False)
+        df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("predict", info)
+        return {"df_out": df_out}
 
     def get_fit_state(self) -> Dict[str, Any]:
         fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
@@ -267,7 +278,7 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
 
     def _fit_predict_helper(
         self, df_in: pd.DataFrame, fit: bool = False
-    ) -> Dict[str, pd.DataFrame]:
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         """
         Factor out common flow for fit/predict.
 
@@ -278,7 +289,7 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
         self._validate_input_df(df_in)
         df = df_in.copy()
         # Determine index where no x_vars are NaN.
-        x_vars = self._to_list(self._x_vars)
+        x_vars = df.columns.to_list()
         non_nan_idx = df[x_vars].dropna().index
         dbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
@@ -304,13 +315,7 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
             model_attribute_info[k] = v
         info["model_attributes"] = model_attribute_info
         df_out = x_residual.reindex(index=df_in.index)
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        if fit:
-            self._set_info("fit", info)
-        else:
-            self._set_info("predict", info)
-        # Return targets and predictions.
-        return {"df_out": df_out}
+        return df_out, info
 
 
 class SkLearnInverseTransformer(

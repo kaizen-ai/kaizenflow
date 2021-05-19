@@ -402,6 +402,8 @@ class MultiColModeMixin:
             len(out_col_group),
             msg="Column hierarchy depth must be preserved.",
         )
+        dbg.dassert_lt(0, len(in_col_group),
+                       msg="Tuple `in_col_group` must be nonempty.")
         dbg.dassert_isinstance(df, pd.DataFrame)
         # Do not allow duplicate columns.
         dbg.dassert_no_duplicates(df.columns)

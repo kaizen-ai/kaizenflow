@@ -113,7 +113,8 @@ class TestResidualizer(hut.TestCase):
         # Load sklearn config and create modeling node.
         config = ccbuild.get_config_from_nested_dict(
             {
-                "x_vars": [0, 1, 2, 3],
+                "in_col_group": ("ret_0",),
+                "out_col_group": ("residual",),
                 "model_func": sdecom.PCA,
                 "model_kwargs": {"n_components": 2},
             }
@@ -133,7 +134,8 @@ class TestResidualizer(hut.TestCase):
         # Load sklearn config and create modeling node.
         config = ccbuild.get_config_from_nested_dict(
             {
-                "x_vars": [0, 1, 2, 3],
+                "in_col_group": ("ret_0",),
+                "out_col_group": ("residual",),
                 "model_func": sdecom.PCA,
                 "model_kwargs": {"n_components": 2},
             }
@@ -154,4 +156,9 @@ class TestResidualizer(hut.TestCase):
         realization = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
         )
-        return realization
+        realization = realization.rename(columns=lambda x: "MN" + str(x))
+        volume = pd.DataFrame(
+            index=realization.index, columns=realization.columns, data=100
+        )
+        data = pd.concat([realization, volume], axis=1, keys=["ret_0", "volume"])
+        return data
