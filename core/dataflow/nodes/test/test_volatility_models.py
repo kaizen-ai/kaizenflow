@@ -183,26 +183,18 @@ class TestVolatilityModel(hut.TestCase):
     def test_predict_dag1(self) -> None:
         # Load test data.
         data = self._get_data()
-        fit_interval = ("2000-01-01", "2000-02-10")
-        predict_interval = ("2000-01-20", "2000-02-23")
-        data_source_node = cdataf.ReadDataFromDf("data", data)
-        data_source_node.set_fit_intervals([fit_interval])
-        data_source_node.set_predict_intervals([predict_interval])
-        # Create DAG and test data node.
-        dag = cdataf.DAG(mode="strict")
-        dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = ccfg.Config()
-        config["cols"] = ["ret_0"]
-        config["steps_ahead"] = 2
-        config["nan_mode"] = "leave_unchanged"
-        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
-        dag.add_node(node)
-        dag.connect("data", "vol_model")
-        #
-        dag.run_leq_node("vol_model", "fit")
-        df_out = dag.run_leq_node("vol_model", "predict")["df_out"]
-        info = cdataf.extract_info(dag, ["fit"])
+        config = ccbuild.get_config_from_nested_dict({
+            "cols": ["ret_0"],
+            "steps_ahead": 2,
+            "nan_mode": "leave_unchanged",
+        })
+        node = VolatilityModel("vol_model", **config.to_dict())
+        node.fit(data.loc["2000-01-01": "2000-02-10"])
+        # TODO(*): Do not let the fit and predict intervals overlap.
+        df_out = node.predict(data.loc["2000-01-20": "2000-02-23"])["df_out"]
+        # TODO(*): Propagate `fit()` and `predict()` info.
+        info = node.get_info("fit")
         # Package results.
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
