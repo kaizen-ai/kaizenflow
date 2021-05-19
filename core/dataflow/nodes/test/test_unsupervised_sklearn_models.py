@@ -15,7 +15,10 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestUnsupervisedSkLearnModel(hut.TestCase):
-    def test_fit_dag1(self) -> None:
+    def test1(self) -> None:
+        """
+        Test `fit()` call.
+        """
         # Load test data.
         data = self._get_data()
         # Create sklearn config and modeling node.
@@ -32,7 +35,10 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         df_str = hut.convert_df_to_string(df_out.round(3), index=True)
         self.check_string(df_str)
 
-    def test_predict_dag1(self) -> None:
+    def test2(self) -> None:
+        """
+        Test `predict()` after `fit()`.
+        """
         data = self._get_data()
         config = ccbuild.get_config_from_nested_dict(
             {
