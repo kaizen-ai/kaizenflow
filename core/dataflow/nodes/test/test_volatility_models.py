@@ -281,6 +281,9 @@ class TestVolatilityModel(hut.TestCase):
         self.check_string(act)
 
     def test_fit_multiple_columns(self) -> None:
+        """
+        Model volatility for multiple columns (independently).
+        """
         # Load test data.
         data = self._get_data()
         # TODO(*): Rename this column
@@ -302,17 +305,23 @@ class TestVolatilityModel(hut.TestCase):
         self.check_string(act)
 
     def test_multiple_columns_with_specified_tau(self) -> None:
+        """
+        Ensure that explicit `tau` is used post-`fit()`.
+        """
         # Load test data.
         data = self._get_data()
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config.
-        config = ccfg.Config()
-        config["cols"] = ["ret_0", "ret_0_2"]
-        config["steps_ahead"] = 2
-        config["nan_mode"] = "drop"
-        config["tau"] = 10
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "cols": ["ret_0", "ret_0_2"],
+                "steps_ahead": 2,
+                "nan_mode": "drop",
+                "tau": 10,
+            }
+        )
         # Check if specified tau is used for all columns via learned taus property.
-        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
+        node = VolatilityModel("vol_model", **config.to_dict())
         node.fit(data)
         dbg.dassert_set_eq(node.taus.values(), [10])
 
