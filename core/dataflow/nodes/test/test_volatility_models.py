@@ -140,7 +140,7 @@ class TestSmaModel(hut.TestCase):
 
 
 class TestVolatilityModel(hut.TestCase):
-    def test_fit_dag1(self) -> None:
+    def test01(self) -> None:
         """
         Perform a typical `fit()` call.
         """
@@ -160,7 +160,7 @@ class TestVolatilityModel(hut.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
-    def test_fit_dag_correctness1(self) -> None:
+    def test02(self) -> None:
         """
         Check that the volatility adjustment can be inverted.
         """
@@ -186,7 +186,7 @@ class TestVolatilityModel(hut.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
-    def test_predict_dag1(self) -> None:
+    def test03(self) -> None:
         """
         Perform a typical `predict()` call.
         """
@@ -210,7 +210,7 @@ class TestVolatilityModel(hut.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
-    def test_predict_dag_correctness1(self) -> None:
+    def test04(self) -> None:
         """
         Check that the `predict()` volatility adjustment can be inverted.
         """
@@ -238,7 +238,7 @@ class TestVolatilityModel(hut.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
-    def test_col_mode1(self) -> None:
+    def test05(self) -> None:
         """
         Use "replace_all" column mode.
         """
@@ -259,7 +259,7 @@ class TestVolatilityModel(hut.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
-    def test_col_mode2(self) -> None:
+    def test06(self) -> None:
         """
         Use "replace_selected" column mode.
         """
@@ -280,7 +280,7 @@ class TestVolatilityModel(hut.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
-    def test_fit_multiple_columns(self) -> None:
+    def test07(self) -> None:
         """
         Model volatility for multiple columns (independently).
         """
@@ -304,7 +304,7 @@ class TestVolatilityModel(hut.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
-    def test_multiple_columns_with_specified_tau(self) -> None:
+    def test08(self) -> None:
         """
         Ensure that explicit `tau` is used post-`fit()`.
         """
@@ -325,7 +325,7 @@ class TestVolatilityModel(hut.TestCase):
         node.fit(data)
         dbg.dassert_set_eq(node.taus.values(), [10])
 
-    def test_fit_none_columns(self) -> None:
+    def test09(self) -> None:
         """
         Ensure equivalence of explicit and implicit column specification.
         """
@@ -357,7 +357,7 @@ class TestVolatilityModel(hut.TestCase):
             df_out2.to_string(),
         )
 
-    def test_fit_int_columns(self) -> None:
+    def test10(self) -> None:
         """
         Ensure that `int` columns are supported.
         """
@@ -377,7 +377,10 @@ class TestVolatilityModel(hut.TestCase):
         df_out = node.fit(data)["df_out"]
         self.check_string(df_out.to_string())
 
-    def test_get_fit_state1(self) -> None:
+    def test11(self) -> None:
+        """
+        Learn and store model state.
+        """
         data = self._get_data()
         config = ccfg.Config()
         config["cols"] = ["ret_0"]
@@ -390,7 +393,10 @@ class TestVolatilityModel(hut.TestCase):
         act = self._package_results2(config, state, df_out)
         self.check_string(act)
 
-    def test_get_fit_state2(self) -> None:
+    def test12(self) -> None:
+        """
+        Initialize model from saved state.
+        """
         data = self._get_data()
         config = ccfg.Config()
         config["cols"] = ["ret_0"]
@@ -411,7 +417,10 @@ class TestVolatilityModel(hut.TestCase):
         act = self._package_results2(config, state, df_out)
         self.check_string(act)
 
-    def test_predict_with_predefined_state(self) -> None:
+    def test13(self) -> None:
+        """
+        Compare results of initializing from state with relearning.
+        """
         data = self._get_data()
         config = ccfg.Config()
         config["cols"] = ["ret_0"]
