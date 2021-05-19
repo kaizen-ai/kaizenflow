@@ -20,11 +20,7 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
     def test_fit_dag1(self) -> None:
         # Load test data.
         data = self._get_data()
-        data_source_node = ReadDataFromDf("data", data)
-        # Create DAG and test data node.
-        dag = DAG(mode="strict")
-        dag.add_node(data_source_node)
-        # Load sklearn config and create modeling node.
+        # Create sklearn config and modeling node.
         config = ccbuild.get_config_from_nested_dict(
             {
                 "x_vars": [0, 1, 2, 3],
@@ -33,24 +29,13 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
             }
         )
         node = UnsupervisedSkLearnModel("sklearn", **config.to_dict())
-        dag.add_node(node)
-        dag.connect("data", "sklearn")
-        #
-        df_out = dag.run_leq_node("sklearn", "fit")["df_out"]
+        # Fit model.
+        df_out = node.fit(data)["df_out"]
         self.check_string(df_out.to_string())
 
     def test_predict_dag1(self) -> None:
         # Load test data.
         data = self._get_data()
-        data_source_node = ReadDataFromDf("data", data)
-        fit_interval = ("2000-01-03", "2000-01-31")
-        predict_interval = ("2000-02-01", "2000-02-25")
-        data_source_node.set_fit_intervals([fit_interval])
-        data_source_node.set_predict_intervals([predict_interval])
-        # Create DAG and test data node.
-        dag = DAG(mode="strict")
-        dag.add_node(data_source_node)
-        # Load sklearn config and create modeling node.
         config = ccbuild.get_config_from_nested_dict(
             {
                 "x_vars": [0, 1, 2, 3],
@@ -59,11 +44,8 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
             }
         )
         node = UnsupervisedSkLearnModel("sklearn", **config.to_dict())
-        dag.add_node(node)
-        dag.connect("data", "sklearn")
-        #
-        dag.run_leq_node("sklearn", "fit")
-        df_out = dag.run_leq_node("sklearn", "predict")["df_out"]
+        node.fit(data.loc["2000-01-03": "2000-01-31"])
+        df_out = node.predict(data.loc["2000-02-01":"2000-02-25"])["df_out"]
         self.check_string(df_out.to_string())
 
     def _get_data(self) -> pd.DataFrame:
