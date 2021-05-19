@@ -12,7 +12,7 @@ import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
-from core.dataflow.nodes.base import ColModeMixin, Transformer
+from core.dataflow.nodes.base import ColModeMixin, MultiColModeMixin, Transformer
 from core.dataflow.utils import get_df_info_as_string
 
 # TODO(*): Create a dataflow types file.
@@ -136,6 +136,8 @@ class ColumnTransformer(Transformer, ColModeMixin):
 class SeriesTransformer(Transformer, ColModeMixin):
     """
     Perform non-index modifying changes of columns.
+
+    TODO(*): Factor out code common with `MultiindexSeriesTransformer`.
     """
 
     def __init__(
@@ -254,7 +256,7 @@ class SeriesTransformer(Transformer, ColModeMixin):
         return df, info
 
 
-class MultiindexSeriesTransformer(Transformer):
+class MultiindexSeriesTransformer(Transformer, MultiColModeMixin):
     """
     Perform non-index modifying changes of columns.
 
@@ -334,21 +336,10 @@ class MultiindexSeriesTransformer(Transformer):
     def _transform(
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
-        # After indexing by `self._in_col_group`, we should have a flat column
-        # index.
-        dbg.dassert_eq(
-            len(self._in_col_group),
-            df.columns.nlevels - 1,
-            "Dataframe multiindex column depth incompatible with config.",
-        )
-        # Do not allow overwriting existing columns.
-        dbg.dassert_not_in(
-            self._out_col_group,
-            df.columns,
-            "Desired column names already present in dataframe.",
-        )
-        df_in = df
-        df = df[self._in_col_group].copy()
+        # Preprocess to extract relevant flat dataframe.
+        df_in = df.copy()
+        df = self._preprocess_df(self._in_col_group, self._out_col_group, df)
+        # Apply `transform()` function column-wise.
         self._leaf_cols = df.columns.tolist()
         idx = df.index
         # Initialize container to store info (e.g., auxiliary stats) in the
@@ -386,19 +377,9 @@ class MultiindexSeriesTransformer(Transformer):
         # Combine the series representing leaf col transformations back into a
         # single dataframe.
         df = pd.concat(srs_list, axis=1)
-        # Prefix the leaf col names with level(s) specified by "out_col_group".
-        df = pd.concat([df], axis=1, keys=self._out_col_group)
         df = df.reindex(index=idx)
-        dbg.dassert(
-            df.index.equals(df_in.index),
-            "Input/output indices differ but are expected to be the same!",
-        )
-        df = df.merge(
-            df_in,
-            how="outer",
-            left_index=True,
-            right_index=True,
-        )
+        # Add column levels and merge.
+        df = self._postprocess_df(self._out_col_group, df_in, df)
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
 

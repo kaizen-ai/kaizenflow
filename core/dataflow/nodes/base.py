@@ -436,6 +436,10 @@ class MultiColModeMixin:
         :return: a merge of `df_in` and `df_out`, using `out_col_group` keys as
             prefixes for `df_out` columns
         """
+        dbg.dassert(
+            df_out.index.equals(df_in.index),
+            "Input/output indices differ but are expected to be the same!",
+        )
         df_out = pd.concat([df_out], axis=1, keys=[out_col_group])
         df_out = df_out.merge(
             df_in,
