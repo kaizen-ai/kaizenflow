@@ -94,7 +94,7 @@ class UnsupervisedSkLearnModel(
         non_nan_idx = df[x_vars].dropna().index
         dbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
-        self._handle_nans(df.index, non_nan_idx)
+        _handle_nans(self._nan_mode, df.index, non_nan_idx)
         # Prepare x_vars in sklearn format.
         x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         if fit:
@@ -127,18 +127,6 @@ class UnsupervisedSkLearnModel(
             self._set_info("predict", info)
         dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
-
-    def _handle_nans(
-        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
-    ) -> None:
-        if self._nan_mode == "raise":
-            if idx.shape[0] != non_nan_idx.shape[0]:
-                nan_idx = idx.difference(non_nan_idx)
-                raise ValueError(f"NaNs detected at {nan_idx}")
-        elif self._nan_mode == "drop":
-            pass
-        else:
-            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
 
 class MultiindexUnsupervisedSkLearnModel(
@@ -235,7 +223,7 @@ class MultiindexUnsupervisedSkLearnModel(
         non_nan_idx = df.dropna().index
         dbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
-        self._handle_nans(df.index, non_nan_idx)
+        _handle_nans(self._nan_mode, df.index, non_nan_idx)
         # Prepare x_vars in sklearn format.
         x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         if fit:
@@ -272,18 +260,6 @@ class MultiindexUnsupervisedSkLearnModel(
             self._set_info("predict", info)
         dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
-
-    def _handle_nans(
-        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
-    ) -> None:
-        if self._nan_mode == "raise":
-            if idx.shape[0] != non_nan_idx.shape[0]:
-                nan_idx = idx.difference(non_nan_idx)
-                raise ValueError(f"NaNs detected at {nan_idx}")
-        elif self._nan_mode == "drop":
-            pass
-        else:
-            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
 
 class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
@@ -346,7 +322,7 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
         non_nan_idx = df[x_vars].dropna().index
         dbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
-        self._handle_nans(df.index, non_nan_idx)
+        _handle_nans(self._nan_mode, df.index, non_nan_idx)
         # Prepare x_vars in sklearn format.
         x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         if fit:
@@ -375,18 +351,6 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
             self._set_info("predict", info)
         # Return targets and predictions.
         return {"df_out": df_out}
-
-    def _handle_nans(
-        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
-    ) -> None:
-        if self._nan_mode == "raise":
-            if idx.shape[0] != non_nan_idx.shape[0]:
-                nan_idx = idx.difference(non_nan_idx)
-                raise ValueError(f"NaNs detected at {nan_idx}")
-        elif self._nan_mode == "drop":
-            pass
-        else:
-            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
 
 class SkLearnInverseTransformer(
@@ -462,7 +426,7 @@ class SkLearnInverseTransformer(
         non_nan_idx = df[x_vars].dropna().index
         dbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
-        self._handle_nans(df.index, non_nan_idx)
+        _handle_nans(self._nan_mode, df.index, non_nan_idx)
         # Prepare x_vars in sklearn format.
         x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         if fit:
@@ -482,7 +446,7 @@ class SkLearnInverseTransformer(
         trans_non_nan_idx = df[trans_x_vars].dropna().index
         dbg.dassert(not trans_non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
-        self._handle_nans(df.index, trans_non_nan_idx)
+        _handle_nans(self._nan_mode, df.index, trans_non_nan_idx)
         # Prepare trans_x_vars in sklearn format.
         trans_x_fit = cdataa.transform_to_sklearn(
             df.loc[non_nan_idx], trans_x_vars
@@ -504,14 +468,15 @@ class SkLearnInverseTransformer(
         dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
-    def _handle_nans(
-        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
-    ) -> None:
-        if self._nan_mode == "raise":
-            if idx.shape[0] != non_nan_idx.shape[0]:
-                nan_idx = idx.difference(non_nan_idx)
-                raise ValueError(f"NaNs detected at {nan_idx}")
-        elif self._nan_mode == "drop":
-            pass
-        else:
-            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
+
+def _handle_nans(
+        nan_mode: str, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+) -> None:
+    if nan_mode == "raise":
+        if idx.shape[0] != non_nan_idx.shape[0]:
+            nan_idx = idx.difference(non_nan_idx)
+            raise ValueError(f"NaNs detected at {nan_idx}")
+    elif nan_mode == "drop":
+        pass
+    else:
+        raise ValueError(f"Unrecognized nan_mode `{nan_mode}`")

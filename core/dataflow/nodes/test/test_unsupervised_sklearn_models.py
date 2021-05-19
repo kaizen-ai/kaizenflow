@@ -96,7 +96,9 @@ class TestMultiindexUnsupervisedSkLearnModel(hut.TestCase):
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
         )
         realization = realization.rename(columns=lambda x: "MN" + str(x))
-        volume = pd.DataFrame(index=realization.index, columns=realization.columns, data=100)
+        volume = pd.DataFrame(
+            index=realization.index, columns=realization.columns, data=100
+        )
         data = pd.concat([realization, volume], axis=1, keys=["ret_0", "volume"])
         return data
 
