@@ -193,15 +193,17 @@ class TestVolatilityModel(hut.TestCase):
         # Load test data.
         data = self._get_data()
         # Specify config and create modeling node.
-        config = ccbuild.get_config_from_nested_dict({
-            "cols": ["ret_0"],
-            "steps_ahead": 2,
-            "nan_mode": "leave_unchanged",
-        })
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "cols": ["ret_0"],
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
         node = VolatilityModel("vol_model", **config.to_dict())
-        node.fit(data.loc["2000-01-01": "2000-02-10"])
+        node.fit(data.loc["2000-01-01":"2000-02-10"])
         # TODO(*): Update the `predict()` interval.
-        df_out = node.predict(data.loc["2000-01-20": "2000-02-23"])["df_out"]
+        df_out = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]
         # TODO(*): Propagate `fit()` and `predict()` info.
         info = node.get_info("fit")
         # Package results.
@@ -213,14 +215,16 @@ class TestVolatilityModel(hut.TestCase):
         Check that the `predict()` volatility adjustment can be inverted.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict({
-            "cols": ["ret_0"],
-            "steps_ahead": 2,
-            "nan_mode": "leave_unchanged",
-        })
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "cols": ["ret_0"],
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
         node = VolatilityModel("vol_model", **config.to_dict())
-        node.fit(data.loc["2000-01-01": "2000-02-10"])
-        vol_adj_df = node.predict(data.loc["2000-01-20": "2000-02-23"])["df_out"]
+        node.fit(data.loc["2000-01-01":"2000-02-10"])
+        vol_adj_df = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]
         # Invert volatility adjustment.
         ret_0_vol_0_hat = vol_adj_df["ret_0_vol_2_hat"].shift(2)
         inverted_rets = (ret_0_vol_0_hat * vol_adj_df["ret_0_zscored"]).rename(
