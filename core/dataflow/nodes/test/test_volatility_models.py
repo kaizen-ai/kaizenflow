@@ -283,22 +283,20 @@ class TestVolatilityModel(hut.TestCase):
     def test_fit_multiple_columns(self) -> None:
         # Load test data.
         data = self._get_data()
+        # TODO(*): Rename this column
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
-        data_source_node = cdataf.ReadDataFromDf("data", data)
-        # Create DAG and test data node.
-        dag = cdataf.DAG(mode="strict")
-        dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = ccfg.Config()
-        config["cols"] = ["ret_0", "ret_0_2"]
-        config["steps_ahead"] = 2
-        config["nan_mode"] = "leave_unchanged"
-        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
-        dag.add_node(node)
-        dag.connect("data", "vol_model")
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "cols": ["ret_0", "ret_0_2"],
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
+        node = VolatilityModel("vol_model", **config.to_dict())
         #
-        df_out = dag.run_leq_node("vol_model", "fit")["df_out"]
-        info = cdataf.extract_info(dag, ["fit"])
+        df_out = node.fit(data)["df_out"]
+        info = node.get_info("fit")
         # Package results.
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
