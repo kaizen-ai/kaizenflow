@@ -191,7 +191,7 @@ class TestVolatilityModel(hut.TestCase):
         })
         node = VolatilityModel("vol_model", **config.to_dict())
         node.fit(data.loc["2000-01-01": "2000-02-10"])
-        # TODO(*): Do not let the fit and predict intervals overlap.
+        # TODO(*): Update the `predict()` interval.
         df_out = node.predict(data.loc["2000-01-20": "2000-02-23"])["df_out"]
         # TODO(*): Propagate `fit()` and `predict()` info.
         info = node.get_info("fit")
@@ -200,35 +200,24 @@ class TestVolatilityModel(hut.TestCase):
         self.check_string(act)
 
     def test_predict_dag_correctness1(self) -> None:
-        # Load test data.
         data = self._get_data()
-        fit_interval = ("2000-01-01", "2000-02-10")
-        predict_interval = ("2000-01-20", "2000-02-23")
-        data_source_node = cdataf.ReadDataFromDf("data", data)
-        data_source_node.set_fit_intervals([fit_interval])
-        data_source_node.set_predict_intervals([predict_interval])
-        # Create DAG and test data node.
-        dag = cdataf.DAG(mode="strict")
-        dag.add_node(data_source_node)
-        # Specify config and create modeling node.
-        config = ccfg.Config()
-        config["cols"] = ["ret_0"]
-        config["steps_ahead"] = 2
-        config["nan_mode"] = "leave_unchanged"
-        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
-        dag.add_node(node)
-        dag.connect("data", "vol_model")
-        #
-        dag.run_leq_node("vol_model", "fit")
-        zscore_df = dag.run_leq_node("vol_model", "predict")["df_out"]
-        # Invert z-scoring.
-        ret_0_vol_0_hat = zscore_df["ret_0_vol_2_hat"].shift(2)
-        inverted_rets = (ret_0_vol_0_hat * zscore_df["ret_0_zscored"]).rename(
+        config = ccbuild.get_config_from_nested_dict({
+            "cols": ["ret_0"],
+            "steps_ahead": 2,
+            "nan_mode": "leave_unchanged",
+        })
+        node = VolatilityModel("vol_model", **config.to_dict())
+        node.fit(data.loc["2000-01-01": "2000-02-10"])
+        vol_adj_df = node.predict(data.loc["2000-01-20": "2000-02-23"])["df_out"]
+        # Invert volatility adjustment.
+        ret_0_vol_0_hat = vol_adj_df["ret_0_vol_2_hat"].shift(2)
+        inverted_rets = (ret_0_vol_0_hat * vol_adj_df["ret_0_zscored"]).rename(
             "ret_0_inverted"
         )
         # Compare results.
-        df_out = zscore_df.join(inverted_rets)
-        info = cdataf.extract_info(dag, ["fit"])
+        df_out = vol_adj_df.join(inverted_rets)
+        # TODO(*): Propagate `fit()` and `predict()` info.
+        info = node.get_info("fit")
         # Package results.
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
