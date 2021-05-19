@@ -29,7 +29,8 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         node = UnsupervisedSkLearnModel("sklearn", **config.to_dict())
         # Fit model.
         df_out = node.fit(data)["df_out"]
-        self.check_string(df_out.to_string())
+        df_str = hut.convert_df_to_string(df_out.round(3), index=True)
+        self.check_string(df_str)
 
     def test_predict_dag1(self) -> None:
         data = self._get_data()
@@ -44,7 +45,8 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         node.fit(data.loc["2000-01-03":"2000-01-31"])
         # Predict.
         df_out = node.predict(data.loc["2000-02-01":"2000-02-25"])["df_out"]
-        self.check_string(df_out.to_string())
+        df_str = hut.convert_df_to_string(df_out.round(3), index=True)
+        self.check_string(df_str)
 
     def _get_data(self) -> pd.DataFrame:
         """
@@ -73,7 +75,8 @@ class TestResidualizer(hut.TestCase):
         node = Residualizer("sklearn", **config.to_dict())
         #
         df_out = node.fit(data)["df_out"]
-        self.check_string(df_out.to_string())
+        df_str = hut.convert_df_to_string(df_out.round(3), index=True)
+        self.check_string(df_str)
 
     def test_predict_dag1(self) -> None:
         # Load test data.
@@ -90,7 +93,8 @@ class TestResidualizer(hut.TestCase):
         node.fit(data.loc["2000-01-03":"2000-01-31"])
         # Predict.
         df_out = node.predict(data.loc["2000-02-01":"2000-02-25"])["df_out"]
-        self.check_string(df_out.to_string())
+        df_str = hut.convert_df_to_string(df_out.round(3), index=True)
+        self.check_string(df_str)
 
     def _get_data(self) -> pd.DataFrame:
         """
