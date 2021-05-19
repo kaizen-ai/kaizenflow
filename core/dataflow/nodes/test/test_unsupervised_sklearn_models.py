@@ -34,7 +34,6 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         self.check_string(df_out.to_string())
 
     def test_predict_dag1(self) -> None:
-        # Load test data.
         data = self._get_data()
         config = ccbuild.get_config_from_nested_dict(
             {
@@ -45,6 +44,7 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         )
         node = UnsupervisedSkLearnModel("sklearn", **config.to_dict())
         node.fit(data.loc["2000-01-03": "2000-01-31"])
+        # Predict.
         df_out = node.predict(data.loc["2000-02-01":"2000-02-25"])["df_out"]
         self.check_string(df_out.to_string())
 
@@ -64,10 +64,6 @@ class TestResidualizer(hut.TestCase):
     def test_fit_dag1(self) -> None:
         # Load test data.
         data = self._get_data()
-        data_source_node = ReadDataFromDf("data", data)
-        # Create DAG and test data node.
-        dag = DAG(mode="strict")
-        dag.add_node(data_source_node)
         # Load sklearn config and create modeling node.
         config = ccbuild.get_config_from_nested_dict(
             {
@@ -77,10 +73,8 @@ class TestResidualizer(hut.TestCase):
             }
         )
         node = Residualizer("sklearn", **config.to_dict())
-        dag.add_node(node)
-        dag.connect("data", "sklearn")
         #
-        df_out = dag.run_leq_node("sklearn", "fit")["df_out"]
+        df_out = node.fit(data)["df_out"]
         self.check_string(df_out.to_string())
 
     def test_predict_dag1(self) -> None:
