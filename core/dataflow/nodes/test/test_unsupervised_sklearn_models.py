@@ -7,6 +7,7 @@ import core.artificial_signal_generators as casgen
 import core.config_builders as ccbuild
 import helpers.unit_test as hut
 from core.dataflow.nodes.unsupervised_sklearn_models import (
+    MultiindexUnsupervisedSkLearnModel,
     Residualizer,
     UnsupervisedSkLearnModel,
 )
@@ -64,6 +65,40 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
         )
         return realization
+
+
+class TestMultiindexUnsupervisedSkLearnModel(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Test `fit()` call.
+        """
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "in_col_group": ("ret_0",),
+                "out_col_group": ("pca",),
+                "model_func": sdecom.PCA,
+                "model_kwargs": {"n_components": 2},
+            }
+        )
+        node = MultiindexUnsupervisedSkLearnModel("sklearn", **config.to_dict())
+        df_out = node.fit(data)["df_out"]
+        df_str = hut.convert_df_to_string(df_out.round(3), index=True)
+        self.check_string(df_str)
+
+    def _get_data(self) -> pd.DataFrame:
+        """
+        Generate multivariate normal returns.
+        """
+        mn_process = casgen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=4, seed=0)
+        realization = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
+        )
+        realization = realization.rename(columns=lambda x: "MN" + str(x))
+        volume = pd.DataFrame(index=realization.index, columns=realization.columns, data=100)
+        data = pd.concat([realization, volume], axis=1, keys=["ret_0", "volume"])
+        return data
 
 
 class TestResidualizer(hut.TestCase):
