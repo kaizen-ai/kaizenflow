@@ -376,6 +376,7 @@ class MultiColModeMixin:
     """
     Support pre and post-processing for multiindexed column dataframes.
     """
+
     def _preprocess_df(
         self,
         in_col_group: Tuple[_COL_TYPE],
@@ -409,7 +410,7 @@ class MultiColModeMixin:
             len(in_col_group),
             df.columns.nlevels - 1,
             "Dataframe multiindex column depth incompatible with config.",
-            )
+        )
         # Do not allow overwriting existing columns.
         dbg.dassert_not_in(
             out_col_group,

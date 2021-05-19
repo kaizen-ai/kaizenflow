@@ -8,7 +8,12 @@ import pandas as pd
 
 import core.data_adapters as cdataa
 import helpers.dbg as dbg
-from core.dataflow.nodes.base import FitPredictNode, RegFreqMixin, MultiColModeMixin, ToListMixin
+from core.dataflow.nodes.base import (
+    FitPredictNode,
+    MultiColModeMixin,
+    RegFreqMixin,
+    ToListMixin,
+)
 from core.dataflow.nodes.transformers import ColModeMixin
 from core.dataflow.utils import get_df_info_as_string
 
@@ -25,9 +30,7 @@ _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 # #############################################################################
 
 
-class AbstractUnsupervisedSkLearnModel(
-    FitPredictNode, RegFreqMixin, abc.ABC
-):
+class AbstractUnsupervisedSkLearnModel(FitPredictNode, RegFreqMixin, abc.ABC):
     def get_fit_state(self) -> Dict[str, Any]:
         fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
         return fit_state
@@ -37,7 +40,7 @@ class AbstractUnsupervisedSkLearnModel(
         self._info["fit"] = fit_state["_info['fit']"]
 
     def _fit_predict_helper(
-            self, df_in: pd.DataFrame, fit: bool = False
+        self, df_in: pd.DataFrame, fit: bool = False
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         """
         Factor out common flow for fit/predict.
@@ -153,7 +156,9 @@ class UnsupervisedSkLearnModel(
 
 
 class MultiindexUnsupervisedSkLearnModel(
-    AbstractUnsupervisedSkLearnModel, RegFreqMixin, MultiColModeMixin,
+    AbstractUnsupervisedSkLearnModel,
+    RegFreqMixin,
+    MultiColModeMixin,
 ):
     """
     Fit and transform an unsupervised sklearn model.
@@ -425,7 +430,7 @@ class SkLearnInverseTransformer(
 
 
 def _handle_nans(
-        nan_mode: str, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+    nan_mode: str, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
 ) -> None:
     if nan_mode == "raise":
         if idx.shape[0] != non_nan_idx.shape[0]:
