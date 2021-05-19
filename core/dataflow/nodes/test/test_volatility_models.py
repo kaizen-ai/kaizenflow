@@ -141,6 +141,9 @@ class TestSmaModel(hut.TestCase):
 
 class TestVolatilityModel(hut.TestCase):
     def test_fit_dag1(self) -> None:
+        """
+        Perform a typical `fit()` call.
+        """
         # Load test data.
         data = self._get_data()
         config = ccbuild.get_config_from_nested_dict(
@@ -158,6 +161,9 @@ class TestVolatilityModel(hut.TestCase):
         self.check_string(act)
 
     def test_fit_dag_correctness1(self) -> None:
+        """
+        Check that the volatility adjustment can be inverted.
+        """
         data = self._get_data()
         config = ccbuild.get_config_from_nested_dict(
             {
@@ -181,6 +187,9 @@ class TestVolatilityModel(hut.TestCase):
         self.check_string(act)
 
     def test_predict_dag1(self) -> None:
+        """
+        Perform a typical `predict()` call.
+        """
         # Load test data.
         data = self._get_data()
         # Specify config and create modeling node.
@@ -200,6 +209,9 @@ class TestVolatilityModel(hut.TestCase):
         self.check_string(act)
 
     def test_predict_dag_correctness1(self) -> None:
+        """
+        Check that the `predict()` volatility adjustment can be inverted.
+        """
         data = self._get_data()
         config = ccbuild.get_config_from_nested_dict({
             "cols": ["ret_0"],
