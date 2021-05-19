@@ -242,7 +242,6 @@ class TestVolatilityModel(hut.TestCase):
         """
         Use "replace_all" column mode.
         """
-        # Load test data.
         data = self._get_data()
         config = ccbuild.get_config_from_nested_dict(
             {
@@ -256,30 +255,28 @@ class TestVolatilityModel(hut.TestCase):
         #
         df_out = node.fit(data)["df_out"]
         info = node.get_info("fit")
-        # Package results.
+        #
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
     def test_col_mode2(self) -> None:
-        # Load test data.
+        """
+        Use "replace_selected" column mode.
+        """
         data = self._get_data()
-        data_source_node = cdataf.ReadDataFromDf("data", data)
-        # Create DAG and test data node.
-        dag = cdataf.DAG(mode="strict")
-        dag.add_node(data_source_node)
-        # Specify config and create modeling node.
-        config = ccfg.Config()
-        config["cols"] = ["ret_0"]
-        config["steps_ahead"] = 2
-        config["col_mode"] = "replace_selected"
-        config["nan_mode"] = "leave_unchanged"
-        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
-        dag.add_node(node)
-        dag.connect("data", "vol_model")
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "cols": ["ret_0"],
+                "steps_ahead": 2,
+                "col_mode": "replace_selected",
+                "nan_mode": "leave_unchanged",
+            }
+        )
+        node = VolatilityModel("vol_model", **config.to_dict())
         #
-        df_out = dag.run_leq_node("vol_model", "fit")["df_out"]
-        info = cdataf.extract_info(dag, ["fit"])
-        # Package results.
+        df_out = node.fit(data)["df_out"]
+        info = node.get_info("fit")
+        #
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
