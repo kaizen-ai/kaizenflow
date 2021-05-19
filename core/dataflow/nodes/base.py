@@ -369,6 +369,58 @@ class ColModeMixin:
         dbg.dassert_no_duplicates(df_out.columns.tolist())
         return df_out
 
+class MultiColModeMixin:
+    """
+
+    """
+    def _preprocess_df(
+        self,
+        in_col_group: Tuple[_COL_TYPE],
+        out_col_group: Tuple[_COL_TYPE],
+        df: pd.DataFrame,
+    ) -> pd.DataFrame:
+        # Perform col group checks.
+        dbg.dassert_isinstance(in_col_group, tuple)
+        dbg.dassert_isinstance(out_col_group, tuple)
+        dbg.dassert_eq(
+            len(in_col_group),
+            len(out_col_group),
+            msg="Column hierarchy depth must be preserved.",
+        )
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        # Do not allow duplicate columns.
+        dbg.dassert_no_duplicates(df.columns)
+        # Ensure compatibility between dataframe column levels and col groups.
+        dbg.dassert_eq(
+            len(in_col_group),
+            df.columns.nlevels - 1,
+            "Dataframe multiindex column depth incompatible with config.",
+            )
+        # Do not allow overwriting existing columns.
+        dbg.dassert_not_in(
+            out_col_group,
+            df.columns,
+            "Desired column names already present in dataframe.",
+        )
+        # Select single-column-level dataframe and return.
+        return df[in_col_group].copy()
+
+    def _postprocess_df(
+        self,
+        out_col_group: pd.DataFrame,
+        df_in: pd.DataFrame,
+        df_out: pd.DataFrame,
+    ) -> pd.DataFrame:
+        df_out = pd.concat([df_out], axis=1, keys=[out_col_group])
+        df_out = df_out.merge(
+            df_in,
+            how="outer",
+            left_index=True,
+            right_index=True,
+        )
+        dbg.dassert_no_duplicates(df_out.columns)
+        return df_out
+
 
 class RegFreqMixin:
     """
@@ -382,6 +434,7 @@ class RegFreqMixin:
         """
         dbg.dassert_isinstance(df, pd.DataFrame)
         dbg.dassert_no_duplicates(df.columns.tolist())
+
         dbg.dassert(df.index.freq)
 
 

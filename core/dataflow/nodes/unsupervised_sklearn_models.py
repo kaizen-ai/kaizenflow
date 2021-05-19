@@ -1,3 +1,4 @@
+import abc
 import collections
 import datetime
 import logging
@@ -7,7 +8,7 @@ import pandas as pd
 
 import core.data_adapters as cdataa
 import helpers.dbg as dbg
-from core.dataflow.nodes.base import FitPredictNode, RegFreqMixin, ToListMixin
+from core.dataflow.nodes.base import FitPredictNode, RegFreqMixin, MultiColModeMixin, ToListMixin
 from core.dataflow.nodes.transformers import ColModeMixin
 from core.dataflow.utils import get_df_info_as_string
 
@@ -22,6 +23,24 @@ _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 # #############################################################################
 # sklearn - unsupervised models
 # #############################################################################
+
+
+class AbstractUnsupervisedSkLearnModel(
+    FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin, abc.ABC
+):
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=True)
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=False)
+
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]):
+        self._model = fit_state["_model"]
+        self._info["fit"] = fit_state["_info['fit']"]
 
 
 class UnsupervisedSkLearnModel(
@@ -130,7 +149,7 @@ class UnsupervisedSkLearnModel(
 
 
 class MultiindexUnsupervisedSkLearnModel(
-    FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin
+    FitPredictNode, RegFreqMixin, MultiColModeMixin,
 ):
     """
     Fit and transform an unsupervised sklearn model.
@@ -178,10 +197,20 @@ class MultiindexUnsupervisedSkLearnModel(
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return self._fit_predict_helper(df_in, fit=True)
+        df = self._preprocess_df(self._in_col_group, self._out_col_group, df_in)
+        df_out, info = self._fit_predict_helper(df, fit=True)
+        df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return self._fit_predict_helper(df_in, fit=False)
+        df = self._preprocess_df(self._in_col_group, self._out_col_group, df_in)
+        df_out, info = self._fit_predict_helper(df, fit=False)
+        df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("predict", info)
+        return {"df_out": df_out}
 
     def get_fit_state(self) -> Dict[str, Any]:
         fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
@@ -202,21 +231,6 @@ class MultiindexUnsupervisedSkLearnModel(
         :return: transformed df_in
         """
         self._validate_input_df(df_in)
-        # After indexing by `self._in_col_group`, we should have a flat column
-        # index.
-        dbg.dassert_eq(
-            len(self._in_col_group),
-            df_in.columns.nlevels - 1,
-            "Dataframe multiindex column depth incompatible with config.",
-        )
-        # Do not allow overwriting existing columns.
-        dbg.dassert_not_in(
-            self._out_col_group,
-            df_in.columns,
-            "Desired column names already present in dataframe.",
-        )
-        df = df_in[self._in_col_group].copy()
-        df.index
         df = df_in.copy()
         # Determine index where no x_vars are NaN.
         x_vars = df.columns.tolist()
@@ -246,20 +260,8 @@ class MultiindexUnsupervisedSkLearnModel(
         info["model_attributes"] = model_attribute_info
         # Return targets and predictions.
         df_out = x_hat.reindex(index=df_in.index)
-        df_out = pd.concat([df_out], axis=1, keys=[self._out_col_group])
-        df_out = df_out.merge(
-            df_in,
-            how="outer",
-            left_index=True,
-            right_index=True,
-        )
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        if fit:
-            self._set_info("fit", info)
-        else:
-            self._set_info("predict", info)
         dbg.dassert_no_duplicates(df_out.columns)
-        return {"df_out": df_out}
+        return df_out, info
 
 
 class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
