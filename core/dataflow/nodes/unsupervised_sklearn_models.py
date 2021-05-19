@@ -1,3 +1,4 @@
+import abc
 import collections
 import datetime
 import logging
@@ -7,7 +8,12 @@ import pandas as pd
 
 import core.data_adapters as cdataa
 import helpers.dbg as dbg
-from core.dataflow.nodes.base import FitPredictNode, RegFreqMixin, ToListMixin
+from core.dataflow.nodes.base import (
+    FitPredictNode,
+    MultiColModeMixin,
+    RegFreqMixin,
+    ToListMixin,
+)
 from core.dataflow.nodes.transformers import ColModeMixin
 from core.dataflow.utils import get_df_info_as_string
 
@@ -24,8 +30,61 @@ _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 # #############################################################################
 
 
+class AbstractUnsupervisedSkLearnModel(FitPredictNode, RegFreqMixin, abc.ABC):
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]):
+        self._model = fit_state["_model"]
+        self._info["fit"] = fit_state["_info['fit']"]
+
+    def _fit_predict_helper(
+        self, df_in: pd.DataFrame, fit: bool = False
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
+        """
+        Factor out common flow for fit/predict.
+
+        :param df_in: as in `fit`/`predict`
+        :param fit: fits model iff `True`
+        :return: transformed df_in
+        """
+        self._validate_input_df(df_in)
+        df = df_in.copy()
+        # Determine index where no x_vars are NaN.
+        x_vars = df.columns.tolist()
+        non_nan_idx = df.dropna().index
+        dbg.dassert(not non_nan_idx.empty)
+        # Handle presence of NaNs according to `nan_mode`.
+        _handle_nans(self._nan_mode, df.index, non_nan_idx)
+        # Prepare x_vars in sklearn format.
+        x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
+        if fit:
+            # Define and fit model.
+            self._model = self._model_func(**self._model_kwargs)
+            self._model = self._model.fit(x_fit)
+        # Generate insample transformations and put in dataflow dataframe format.
+        x_transform = self._model.transform(x_fit)
+        #
+        num_cols = x_transform.shape[1]
+        x_hat = cdataa.transform_from_sklearn(
+            non_nan_idx, list(range(num_cols)), x_transform
+        )
+        info = collections.OrderedDict()
+        info["model_x_vars"] = x_vars
+        info["model_params"] = self._model.get_params()
+        model_attribute_info = collections.OrderedDict()
+        for k, v in vars(self._model).items():
+            model_attribute_info[k] = v
+        info["model_attributes"] = model_attribute_info
+        # Return targets and predictions.
+        df_out = x_hat.reindex(index=df_in.index)
+        dbg.dassert_no_duplicates(df_out.columns)
+        return df_out, info
+
+
 class UnsupervisedSkLearnModel(
-    FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin
+    AbstractUnsupervisedSkLearnModel, RegFreqMixin, ToListMixin, ColModeMixin
 ):
     """
     Fit and transform an unsupervised sklearn model.
@@ -61,10 +120,24 @@ class UnsupervisedSkLearnModel(
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return self._fit_predict_helper(df_in, fit=True)
+        df = self._preprocess_df(df_in)
+        df_out, info = self._fit_predict_helper(df, fit=True)
+        df_out = self._apply_col_mode(
+            df_in, df_out, cols=df.columns.to_list(), col_mode=self._col_mode
+        )
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return self._fit_predict_helper(df_in, fit=False)
+        df = self._preprocess_df(df_in)
+        df_out, info = self._fit_predict_helper(df, fit=False)
+        df_out = self._apply_col_mode(
+            df_in, df_out, cols=df.columns.to_list(), col_mode=self._col_mode
+        )
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("predict", info)
+        return {"df_out": df_out}
 
     def get_fit_state(self) -> Dict[str, Any]:
         fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
@@ -74,75 +147,18 @@ class UnsupervisedSkLearnModel(
         self._model = fit_state["_model"]
         self._info["fit"] = fit_state["_info['fit']"]
 
-    def _fit_predict_helper(
-        self, df_in: pd.DataFrame, fit: bool = False
-    ) -> Dict[str, pd.DataFrame]:
-        """
-        Factor out common flow for fit/predict.
-
-        :param df_in: as in `fit`/`predict`
-        :param fit: fits model iff `True`
-        :return: transformed df_in
-        """
-        self._validate_input_df(df_in)
-        df = df_in.copy()
-        # Determine index where no x_vars are NaN.
+    def _preprocess_df(self, df_in):
         if self._x_vars is None:
             x_vars = df_in.columns.tolist()
         else:
             x_vars = self._to_list(self._x_vars)
-        non_nan_idx = df[x_vars].dropna().index
-        dbg.dassert(not non_nan_idx.empty)
-        # Handle presence of NaNs according to `nan_mode`.
-        self._handle_nans(df.index, non_nan_idx)
-        # Prepare x_vars in sklearn format.
-        x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
-        if fit:
-            # Define and fit model.
-            self._model = self._model_func(**self._model_kwargs)
-            self._model = self._model.fit(x_fit)
-        # Generate insample transformations and put in dataflow dataframe format.
-        x_transform = self._model.transform(x_fit)
-        #
-        num_cols = x_transform.shape[1]
-        x_hat = cdataa.transform_from_sklearn(
-            non_nan_idx, list(range(num_cols)), x_transform
-        )
-        info = collections.OrderedDict()
-        info["model_x_vars"] = x_vars
-        info["model_params"] = self._model.get_params()
-        model_attribute_info = collections.OrderedDict()
-        for k, v in vars(self._model).items():
-            model_attribute_info[k] = v
-        info["model_attributes"] = model_attribute_info
-        # Return targets and predictions.
-        df_out = x_hat.reindex(index=df_in.index)
-        df_out = self._apply_col_mode(
-            df, df_out, cols=x_vars, col_mode=self._col_mode
-        )
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        if fit:
-            self._set_info("fit", info)
-        else:
-            self._set_info("predict", info)
-        dbg.dassert_no_duplicates(df_out.columns)
-        return {"df_out": df_out}
-
-    def _handle_nans(
-        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
-    ) -> None:
-        if self._nan_mode == "raise":
-            if idx.shape[0] != non_nan_idx.shape[0]:
-                nan_idx = idx.difference(non_nan_idx)
-                raise ValueError(f"NaNs detected at {nan_idx}")
-        elif self._nan_mode == "drop":
-            pass
-        else:
-            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
+        return df_in[x_vars].copy()
 
 
 class MultiindexUnsupervisedSkLearnModel(
-    FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin
+    AbstractUnsupervisedSkLearnModel,
+    RegFreqMixin,
+    MultiColModeMixin,
 ):
     """
     Fit and transform an unsupervised sklearn model.
@@ -190,100 +206,20 @@ class MultiindexUnsupervisedSkLearnModel(
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return self._fit_predict_helper(df_in, fit=True)
-
-    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return self._fit_predict_helper(df_in, fit=False)
-
-    def get_fit_state(self) -> Dict[str, Any]:
-        fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
-        return fit_state
-
-    def set_fit_state(self, fit_state: Dict[str, Any]):
-        self._model = fit_state["_model"]
-        self._info["fit"] = fit_state["_info['fit']"]
-
-    def _fit_predict_helper(
-        self, df_in: pd.DataFrame, fit: bool = False
-    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
-        """
-        Factor out common flow for fit/predict.
-
-        :param df_in: as in `fit`/`predict`
-        :param fit: fits model iff `True`
-        :return: transformed df_in
-        """
-        self._validate_input_df(df_in)
-        # After indexing by `self._in_col_group`, we should have a flat column
-        # index.
-        dbg.dassert_eq(
-            len(self._in_col_group),
-            df_in.columns.nlevels - 1,
-            "Dataframe multiindex column depth incompatible with config.",
-        )
-        # Do not allow overwriting existing columns.
-        dbg.dassert_not_in(
-            self._out_col_group,
-            df_in.columns,
-            "Desired column names already present in dataframe.",
-        )
-        df = df_in[self._in_col_group].copy()
-        df.index
-        df = df_in.copy()
-        # Determine index where no x_vars are NaN.
-        x_vars = df.columns.tolist()
-        non_nan_idx = df.dropna().index
-        dbg.dassert(not non_nan_idx.empty)
-        # Handle presence of NaNs according to `nan_mode`.
-        self._handle_nans(df.index, non_nan_idx)
-        # Prepare x_vars in sklearn format.
-        x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
-        if fit:
-            # Define and fit model.
-            self._model = self._model_func(**self._model_kwargs)
-            self._model = self._model.fit(x_fit)
-        # Generate insample transformations and put in dataflow dataframe format.
-        x_transform = self._model.transform(x_fit)
-        #
-        num_cols = x_transform.shape[1]
-        x_hat = cdataa.transform_from_sklearn(
-            non_nan_idx, list(range(num_cols)), x_transform
-        )
-        info = collections.OrderedDict()
-        info["model_x_vars"] = x_vars
-        info["model_params"] = self._model.get_params()
-        model_attribute_info = collections.OrderedDict()
-        for k, v in vars(self._model).items():
-            model_attribute_info[k] = v
-        info["model_attributes"] = model_attribute_info
-        # Return targets and predictions.
-        df_out = x_hat.reindex(index=df_in.index)
-        df_out = pd.concat([df_out], axis=1, keys=[self._out_col_group])
-        df_out = df_out.merge(
-            df_in,
-            how="outer",
-            left_index=True,
-            right_index=True,
-        )
+        df = self._preprocess_df(self._in_col_group, self._out_col_group, df_in)
+        df_out, info = self._fit_predict_helper(df, fit=True)
+        df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
         info["df_out_info"] = get_df_info_as_string(df_out)
-        if fit:
-            self._set_info("fit", info)
-        else:
-            self._set_info("predict", info)
-        dbg.dassert_no_duplicates(df_out.columns)
+        self._set_info("fit", info)
         return {"df_out": df_out}
 
-    def _handle_nans(
-        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
-    ) -> None:
-        if self._nan_mode == "raise":
-            if idx.shape[0] != non_nan_idx.shape[0]:
-                nan_idx = idx.difference(non_nan_idx)
-                raise ValueError(f"NaNs detected at {nan_idx}")
-        elif self._nan_mode == "drop":
-            pass
-        else:
-            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        df = self._preprocess_df(self._in_col_group, self._out_col_group, df_in)
+        df_out, info = self._fit_predict_helper(df, fit=False)
+        df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        self._set_info("predict", info)
+        return {"df_out": df_out}
 
 
 class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
@@ -346,7 +282,7 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
         non_nan_idx = df[x_vars].dropna().index
         dbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
-        self._handle_nans(df.index, non_nan_idx)
+        _handle_nans(self._nan_mode, df.index, non_nan_idx)
         # Prepare x_vars in sklearn format.
         x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         if fit:
@@ -375,18 +311,6 @@ class Residualizer(FitPredictNode, RegFreqMixin, ToListMixin):
             self._set_info("predict", info)
         # Return targets and predictions.
         return {"df_out": df_out}
-
-    def _handle_nans(
-        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
-    ) -> None:
-        if self._nan_mode == "raise":
-            if idx.shape[0] != non_nan_idx.shape[0]:
-                nan_idx = idx.difference(non_nan_idx)
-                raise ValueError(f"NaNs detected at {nan_idx}")
-        elif self._nan_mode == "drop":
-            pass
-        else:
-            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
 
 class SkLearnInverseTransformer(
@@ -462,7 +386,7 @@ class SkLearnInverseTransformer(
         non_nan_idx = df[x_vars].dropna().index
         dbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
-        self._handle_nans(df.index, non_nan_idx)
+        _handle_nans(self._nan_mode, df.index, non_nan_idx)
         # Prepare x_vars in sklearn format.
         x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         if fit:
@@ -482,7 +406,7 @@ class SkLearnInverseTransformer(
         trans_non_nan_idx = df[trans_x_vars].dropna().index
         dbg.dassert(not trans_non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
-        self._handle_nans(df.index, trans_non_nan_idx)
+        _handle_nans(self._nan_mode, df.index, trans_non_nan_idx)
         # Prepare trans_x_vars in sklearn format.
         trans_x_fit = cdataa.transform_to_sklearn(
             df.loc[non_nan_idx], trans_x_vars
@@ -504,14 +428,15 @@ class SkLearnInverseTransformer(
         dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
-    def _handle_nans(
-        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
-    ) -> None:
-        if self._nan_mode == "raise":
-            if idx.shape[0] != non_nan_idx.shape[0]:
-                nan_idx = idx.difference(non_nan_idx)
-                raise ValueError(f"NaNs detected at {nan_idx}")
-        elif self._nan_mode == "drop":
-            pass
-        else:
-            raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
+
+def _handle_nans(
+    nan_mode: str, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+) -> None:
+    if nan_mode == "raise":
+        if idx.shape[0] != non_nan_idx.shape[0]:
+            nan_idx = idx.difference(non_nan_idx)
+            raise ValueError(f"NaNs detected at {nan_idx}")
+    elif nan_mode == "drop":
+        pass
+    else:
+        raise ValueError(f"Unrecognized nan_mode `{nan_mode}`")
