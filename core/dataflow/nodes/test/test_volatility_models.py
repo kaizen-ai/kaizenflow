@@ -9,7 +9,6 @@ import core.artificial_signal_generators as sig_gen
 import core.artificial_signal_generators as casgen
 import core.config as ccfg
 import core.config_builders as ccbuild
-import core.dataflow as cdataf
 import core.finance as fin
 import core.signal_processing as sigp
 import core.signal_processing as csproc
@@ -17,7 +16,12 @@ import helpers.dbg as dbg
 import helpers.printing as prnt
 import helpers.printing as hprint
 import helpers.unit_test as hut
-from core.dataflow.nodes.volatility_models import SmaModel, VolatilityNormalizer
+from core.dataflow.nodes.volatility_models import (
+    SmaModel,
+    VolatilityModel,
+    VolatilityModulator,
+    VolatilityNormalizer,
+)
 
 _LOG = logging.getLogger(__name__)
 
@@ -136,246 +140,263 @@ class TestSmaModel(hut.TestCase):
 
 
 class TestVolatilityModel(hut.TestCase):
-    def test_fit_dag1(self) -> None:
+    def test01(self) -> None:
+        """
+        Perform a typical `fit()` call.
+        """
         # Load test data.
         data = self._get_data()
-        data_source_node = cdataf.ReadDataFromDf("data", data)
-        # Create DAG and test data node.
-        dag = cdataf.DAG(mode="strict")
-        dag.add_node(data_source_node)
-        # Specify config and create modeling node.
-        config = ccfg.Config()
-        config["cols"] = ["ret_0"]
-        config["steps_ahead"] = 2
-        config["nan_mode"] = "leave_unchanged"
-        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
-        dag.add_node(node)
-        dag.connect("data", "vol_model")
-        #
-        df_out = dag.run_leq_node("vol_model", "fit")["df_out"]
-        info = cdataf.extract_info(dag, ["fit"])
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "cols": ["ret_0"],
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
+        node = VolatilityModel("vol_model", **config.to_dict())
+        df_out = node.fit(data)["df_out"]
+        info = node.get_info("fit")
         # Package results.
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
-    def test_fit_dag_correctness1(self) -> None:
-        # Load test data.
+    def test02(self) -> None:
+        """
+        Check that the volatility adjustment can be inverted.
+        """
         data = self._get_data()
-        data_source_node = cdataf.ReadDataFromDf("data", data)
-        # Create DAG and test data node.
-        dag = cdataf.DAG(mode="strict")
-        dag.add_node(data_source_node)
-        # Specify config and create modeling node.
-        config = ccfg.Config()
-        config["cols"] = ["ret_0"]
-        config["steps_ahead"] = 2
-        config["nan_mode"] = "leave_unchanged"
-        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
-        dag.add_node(node)
-        dag.connect("data", "vol_model")
-        # Z-score.
-        zscore_df = dag.run_leq_node("vol_model", "fit")["df_out"]
-        # Invert z-scoring.
-        ret_0_vol_0_hat = zscore_df["ret_0_vol_2_hat"].shift(2)
-        inverted_rets = (ret_0_vol_0_hat * zscore_df["ret_0_zscored"]).rename(
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "cols": ["ret_0"],
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
+        node = VolatilityModel("vol_model", **config.to_dict())
+        vol_adj_df = node.fit(data)["df_out"]
+        # Invert volatility adjustment.
+        ret_0_vol_0_hat = vol_adj_df["ret_0_vol_2_hat"].shift(2)
+        inverted_rets = (ret_0_vol_0_hat * vol_adj_df["ret_0_zscored"]).rename(
             "ret_0_inverted"
         )
         # Compare results.
-        df_out = zscore_df.join(inverted_rets)
-        info = cdataf.extract_info(dag, ["fit"])
+        df_out = vol_adj_df.join(inverted_rets)
+        info = node.get_info("fit")
         # Package results.
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
-    def test_predict_dag1(self) -> None:
+    def test03(self) -> None:
+        """
+        Perform a typical `predict()` call.
+        """
         # Load test data.
         data = self._get_data()
-        fit_interval = ("2000-01-01", "2000-02-10")
-        predict_interval = ("2000-01-20", "2000-02-23")
-        data_source_node = cdataf.ReadDataFromDf("data", data)
-        data_source_node.set_fit_intervals([fit_interval])
-        data_source_node.set_predict_intervals([predict_interval])
-        # Create DAG and test data node.
-        dag = cdataf.DAG(mode="strict")
-        dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = ccfg.Config()
-        config["cols"] = ["ret_0"]
-        config["steps_ahead"] = 2
-        config["nan_mode"] = "leave_unchanged"
-        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
-        dag.add_node(node)
-        dag.connect("data", "vol_model")
-        #
-        dag.run_leq_node("vol_model", "fit")
-        df_out = dag.run_leq_node("vol_model", "predict")["df_out"]
-        info = cdataf.extract_info(dag, ["fit"])
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "cols": ["ret_0"],
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
+        node = VolatilityModel("vol_model", **config.to_dict())
+        node.fit(data.loc["2000-01-01":"2000-02-10"])
+        # TODO(*): Update the `predict()` interval.
+        df_out = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]
+        # TODO(*): Propagate `fit()` and `predict()` info.
+        info = node.get_info("fit")
         # Package results.
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
-    def test_predict_dag_correctness1(self) -> None:
-        # Load test data.
+    def test04(self) -> None:
+        """
+        Check that the `predict()` volatility adjustment can be inverted.
+        """
         data = self._get_data()
-        fit_interval = ("2000-01-01", "2000-02-10")
-        predict_interval = ("2000-01-20", "2000-02-23")
-        data_source_node = cdataf.ReadDataFromDf("data", data)
-        data_source_node.set_fit_intervals([fit_interval])
-        data_source_node.set_predict_intervals([predict_interval])
-        # Create DAG and test data node.
-        dag = cdataf.DAG(mode="strict")
-        dag.add_node(data_source_node)
-        # Specify config and create modeling node.
-        config = ccfg.Config()
-        config["cols"] = ["ret_0"]
-        config["steps_ahead"] = 2
-        config["nan_mode"] = "leave_unchanged"
-        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
-        dag.add_node(node)
-        dag.connect("data", "vol_model")
-        #
-        dag.run_leq_node("vol_model", "fit")
-        zscore_df = dag.run_leq_node("vol_model", "predict")["df_out"]
-        # Invert z-scoring.
-        ret_0_vol_0_hat = zscore_df["ret_0_vol_2_hat"].shift(2)
-        inverted_rets = (ret_0_vol_0_hat * zscore_df["ret_0_zscored"]).rename(
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "cols": ["ret_0"],
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
+        node = VolatilityModel("vol_model", **config.to_dict())
+        node.fit(data.loc["2000-01-01":"2000-02-10"])
+        vol_adj_df = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]
+        # Invert volatility adjustment.
+        ret_0_vol_0_hat = vol_adj_df["ret_0_vol_2_hat"].shift(2)
+        inverted_rets = (ret_0_vol_0_hat * vol_adj_df["ret_0_zscored"]).rename(
             "ret_0_inverted"
         )
         # Compare results.
-        df_out = zscore_df.join(inverted_rets)
-        info = cdataf.extract_info(dag, ["fit"])
+        df_out = vol_adj_df.join(inverted_rets)
+        # TODO(*): Propagate `fit()` and `predict()` info.
+        info = node.get_info("fit")
         # Package results.
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
-    def test_col_mode1(self) -> None:
-        # Load test data.
+    def test05(self) -> None:
+        """
+        Use "replace_all" column mode.
+        """
         data = self._get_data()
-        data_source_node = cdataf.ReadDataFromDf("data", data)
-        # Create DAG and test data node.
-        dag = cdataf.DAG(mode="strict")
-        dag.add_node(data_source_node)
-        # Specify config and create modeling node.
-        config = ccfg.Config()
-        config["cols"] = ["ret_0"]
-        config["steps_ahead"] = 2
-        config["col_mode"] = "replace_all"
-        config["nan_mode"] = "leave_unchanged"
-        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
-        dag.add_node(node)
-        dag.connect("data", "vol_model")
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "cols": ["ret_0"],
+                "steps_ahead": 2,
+                "col_mode": "replace_all",
+                "nan_mode": "leave_unchanged",
+            }
+        )
+        node = VolatilityModel("vol_model", **config.to_dict())
         #
-        df_out = dag.run_leq_node("vol_model", "fit")["df_out"]
-        info = cdataf.extract_info(dag, ["fit"])
-        # Package results.
-        act = self._package_results1(config, info, df_out)
-        self.check_string(act)
-
-    def test_col_mode2(self) -> None:
-        # Load test data.
-        data = self._get_data()
-        data_source_node = cdataf.ReadDataFromDf("data", data)
-        # Create DAG and test data node.
-        dag = cdataf.DAG(mode="strict")
-        dag.add_node(data_source_node)
-        # Specify config and create modeling node.
-        config = ccfg.Config()
-        config["cols"] = ["ret_0"]
-        config["steps_ahead"] = 2
-        config["col_mode"] = "replace_selected"
-        config["nan_mode"] = "leave_unchanged"
-        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
-        dag.add_node(node)
-        dag.connect("data", "vol_model")
+        df_out = node.fit(data)["df_out"]
+        info = node.get_info("fit")
         #
-        df_out = dag.run_leq_node("vol_model", "fit")["df_out"]
-        info = cdataf.extract_info(dag, ["fit"])
-        # Package results.
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
-    def test_fit_multiple_columns(self) -> None:
+    def test06(self) -> None:
+        """
+        Use "replace_selected" column mode.
+        """
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "cols": ["ret_0"],
+                "steps_ahead": 2,
+                "col_mode": "replace_selected",
+                "nan_mode": "leave_unchanged",
+            }
+        )
+        node = VolatilityModel("vol_model", **config.to_dict())
+        #
+        df_out = node.fit(data)["df_out"]
+        info = node.get_info("fit")
+        #
+        act = self._package_results1(config, info, df_out)
+        self.check_string(act)
+
+    def test07(self) -> None:
+        """
+        Model volatility for multiple columns (independently).
+        """
         # Load test data.
         data = self._get_data()
+        # TODO(*): Rename this column
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
-        data_source_node = cdataf.ReadDataFromDf("data", data)
-        # Create DAG and test data node.
-        dag = cdataf.DAG(mode="strict")
-        dag.add_node(data_source_node)
         # Specify config and create modeling node.
-        config = ccfg.Config()
-        config["cols"] = ["ret_0", "ret_0_2"]
-        config["steps_ahead"] = 2
-        config["nan_mode"] = "leave_unchanged"
-        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
-        dag.add_node(node)
-        dag.connect("data", "vol_model")
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "cols": ["ret_0", "ret_0_2"],
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
+        node = VolatilityModel("vol_model", **config.to_dict())
         #
-        df_out = dag.run_leq_node("vol_model", "fit")["df_out"]
-        info = cdataf.extract_info(dag, ["fit"])
+        df_out = node.fit(data)["df_out"]
+        info = node.get_info("fit")
         # Package results.
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
-    def test_multiple_columns_with_specified_tau(self) -> None:
+    def test08(self) -> None:
+        """
+        Ensure that explicit `tau` is used post-`fit()`.
+        """
         # Load test data.
         data = self._get_data()
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config.
-        config = ccfg.Config()
-        config["cols"] = ["ret_0", "ret_0_2"]
-        config["steps_ahead"] = 2
-        config["nan_mode"] = "drop"
-        config["tau"] = 10
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "cols": ["ret_0", "ret_0_2"],
+                "steps_ahead": 2,
+                "nan_mode": "drop",
+                "tau": 10,
+            }
+        )
         # Check if specified tau is used for all columns via learned taus property.
-        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
+        node = VolatilityModel("vol_model", **config.to_dict())
         node.fit(data)
         dbg.dassert_set_eq(node.taus.values(), [10])
 
-    def test_fit_none_columns(self) -> None:
+    def test09(self) -> None:
+        """
+        Ensure equivalence of explicit and implicit column specification.
+        """
         # Load test data.
         data = self._get_data()
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
-        # Specify config.
-        config = ccfg.Config()
-        config["steps_ahead"] = 2
-        config["nan_mode"] = "leave_unchanged"
-        # Get outputs with `cols`=None and all specified.
-        output_cols_none = self._run_volatility_model(data, config)
-        config["cols"] = ["ret_0", "ret_0_2"]
-        output_cols_specified = self._run_volatility_model(data, config)
+        # Specify config with columns implicit.
+        config1 = ccbuild.get_config_from_nested_dict(
+            {
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
+        node1 = VolatilityModel("vol_model", **config1.to_dict())
+        df_out1 = node1.fit(data)["df_out"]
+        # Specify config with explicit column names.
+        config2 = ccbuild.get_config_from_nested_dict(
+            {
+                "cols": ["ret_0", "ret_0_2"],
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
+        node2 = VolatilityModel("vol_model", **config2.to_dict())
+        df_out2 = node2.fit(data)["df_out"]
+        # TODO(*): Improve the string conversion.
         np.testing.assert_equal(
-            output_cols_none.to_string(),
-            output_cols_specified.to_string(),
+            df_out1.to_string(),
+            df_out2.to_string(),
         )
 
-    def test_fit_int_columns(self) -> None:
+    def test10(self) -> None:
+        """
+        Ensure that `int` columns are supported.
+        """
         # Load test data.
         data = self._get_data()
         data[10] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config.
-        config = ccfg.Config()
-        config["cols"] = [10]
-        config["steps_ahead"] = 2
-        config["nan_mode"] = "leave_unchanged"
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "cols": [10],
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
         # Get output with integer column names.
-        output = self._run_volatility_model(data, config)
-        self.check_string(output.to_string())
+        node = VolatilityModel("vol_model", **config.to_dict())
+        df_out = node.fit(data)["df_out"]
+        self.check_string(df_out.to_string())
 
-    def test_get_fit_state1(self) -> None:
+    def test11(self) -> None:
+        """
+        Learn and store model state.
+        """
         data = self._get_data()
         config = ccfg.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "leave_unchanged"
-        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
+        node = VolatilityModel("vol_model", **config.to_dict())
         df_out = node.fit(data)["df_out"]
         # Package results.
         state = node.get_fit_state()
         act = self._package_results2(config, state, df_out)
         self.check_string(act)
 
-    def test_get_fit_state2(self) -> None:
+    def test12(self) -> None:
+        """
+        Initialize model from saved state.
+        """
         data = self._get_data()
         config = ccfg.Config()
         config["cols"] = ["ret_0"]
@@ -389,23 +410,26 @@ class TestVolatilityModel(hut.TestCase):
             "_taus": {"ret_0": 10},
             "_info['fit']": None,
         }
-        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
+        node = VolatilityModel("vol_model", **config.to_dict())
         node.set_fit_state(state)
         df_out = node.predict(data)["df_out"]
         # Package results.
         act = self._package_results2(config, state, df_out)
         self.check_string(act)
 
-    def test_predict_with_predefined_state(self) -> None:
+    def test13(self) -> None:
+        """
+        Compare results of initializing from state with relearning.
+        """
         data = self._get_data()
         config = ccfg.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "leave_unchanged"
-        node_fit = cdataf.VolatilityModel("vol_model", **config.to_dict())
+        node_fit = VolatilityModel("vol_model", **config.to_dict())
         node_fit.fit(data)
         output_fit = node_fit.predict(data)["df_out"]
-        node_predefined = cdataf.VolatilityModel("vol_model", **config.to_dict())
+        node_predefined = VolatilityModel("vol_model", **config.to_dict())
         node_predefined.set_fit_state(node_fit.get_fit_state())
         output_predefined = node_predefined.predict(data)["df_out"]
         pd.testing.assert_frame_equal(output_fit, output_predefined)
@@ -457,19 +481,6 @@ class TestVolatilityModel(hut.TestCase):
         df = pd.DataFrame(index=date_range, data=realization)
         return df
 
-    @staticmethod
-    def _run_volatility_model(data: pd.DataFrame, config: ccfg.Config) -> str:
-        data_source_node = cdataf.ReadDataFromDf("data", data)
-        # Create DAG and test data node.
-        dag = cdataf.DAG(mode="strict")
-        dag.add_node(data_source_node)
-        # Create modeling node.
-        node = cdataf.VolatilityModel("vol_model", **config.to_dict())
-        dag.add_node(node)
-        dag.connect("data", "vol_model")
-        output = dag.run_leq_node("vol_model", "fit")["df_out"]
-        return output
-
 
 class TestVolatilityModulator(hut.TestCase):
     def test_modulate1(self) -> None:
@@ -487,7 +498,7 @@ class TestVolatilityModulator(hut.TestCase):
                 "mode": "modulate",
             }
         )
-        node = cdataf.VolatilityModulator("modulate", **config.to_dict())
+        node = VolatilityModulator("modulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         # Check results.
         self._check_results(config, df_in, df_out)
@@ -504,7 +515,7 @@ class TestVolatilityModulator(hut.TestCase):
                 "mode": "demodulate",
             }
         )
-        node = cdataf.VolatilityModulator("demodulate", **config.to_dict())
+        node = VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         # Check results.
         self._check_results(config, df_in, df_out)
@@ -523,7 +534,7 @@ class TestVolatilityModulator(hut.TestCase):
                 "col_mode": "merge_all",
             }
         )
-        node = cdataf.VolatilityModulator("demodulate", **config.to_dict())
+        node = VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         # Check results.
         self._check_results(config, df_in, df_out)
@@ -542,7 +553,7 @@ class TestVolatilityModulator(hut.TestCase):
                 "col_mode": "replace_selected",
             }
         )
-        node = cdataf.VolatilityModulator("demodulate", **config.to_dict())
+        node = VolatilityModulator("demodulate", **config.to_dict())
         df_out = node.fit(df_in)["df_out"]
         # Check results.
         self._check_results(config, df_in, df_out)
