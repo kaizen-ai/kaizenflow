@@ -333,50 +333,43 @@ class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         self._fwd_vol_cols_hat = {
             col: self._fwd_vol_cols[col] + "_hat" for col in self._fit_cols
         }
+        df_out, info = self._fit_predict_helper(df_in, fit=True)
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        df_out, info = self._fit_predict_helper(df_in, fit=False)
+        self._set_info("predict", info)
+        return {"df_out": df_out}
+
+    def _fit_predict_helper(self, df_in, fit):
         self._check_cols(df_in.columns.tolist())
         info = collections.OrderedDict()
         dfs = []
         for col in self._fit_cols:
             dbg.dassert_not_in(self._vol_cols[col], self._fit_cols)
-            config = self._get_config(col=col, tau=self._tau)
-            dag = self._get_dag(df_in[[col]], config)
-            df_out = dag.run_leq_node("demodulate_using_vol_pred", "fit")[
-                "df_out"
-            ]
-            info[col] = extract_info(dag, ["fit"])
-            if self._tau is None:
-                self._taus[col] = info[col]["compute_smooth_moving_average"][
-                    "fit"
-                ]["tau"]
+            if not fit:
+                tau = self._taus[col]
+                tau = self._taus[col]
             else:
-                self._taus[col] = self._tau
-            dfs.append(df_out)
-        df_out = pd.concat(dfs, axis=1)
-        df_out = self._apply_col_mode(
-            df_in.drop(df_out.columns.intersection(df_in.columns), 1),
-            df_out,
-            cols=self._fit_cols,
-            col_mode=self._col_mode,
-        )
-        df_out = df_out.reindex(df_in.index)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
-
-    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        self._validate_input_df(df_in)
-        self._check_cols(df_in.columns.tolist())
-        info = collections.OrderedDict()
-        dfs = []
-        for col in self._fit_cols:
-            dbg.dassert_not_in(self._vol_cols[col], df_in.columns)
-            tau = self._taus[col]
-            dbg.dassert(tau)
+                tau = self._tau
             config = self._get_config(col=col, tau=tau)
             dag = self._get_dag(df_in[[col]], config)
-            df_out = dag.run_leq_node("demodulate_using_vol_pred", "predict")[
+            if fit:
+                mode = "fit"
+            else:
+                mode = "predict"
+            df_out = dag.run_leq_node("demodulate_using_vol_pred", mode)[
                 "df_out"
             ]
-            info[col] = extract_info(dag, ["predict"])
+            info[col] = extract_info(dag, [mode])
+            if fit:
+                if self._tau is None:
+                    self._taus[col] = info[col]["compute_smooth_moving_average"][
+                        "fit"
+                    ]["tau"]
+                else:
+                    self._taus[col] = self._tau
             dfs.append(df_out)
         df_out = pd.concat(dfs, axis=1)
         df_out = self._apply_col_mode(
@@ -386,8 +379,7 @@ class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
             col_mode=self._col_mode,
         )
         df_out = df_out.reindex(df_in.index)
-        self._set_info("predict", info)
-        return {"df_out": df_out}
+        return df_out, info
 
     @property
     def taus(self) -> Dict[_COL_TYPE, Any]:
