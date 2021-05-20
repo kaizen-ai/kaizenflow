@@ -68,12 +68,12 @@ ret_0:
        0   ret_0_vol        29 non-null     float64
        1   ret_0_vol_2      27 non-null     float64
        2   ret_0_vol_2_hat  19 non-null     float64
-       3   ret_0_zscored    19 non-null     float64
+       3   ret_0_vol_adj    19 non-null     float64
       dtypes: float64(4)
 ################################################################################
 df_out
 ################################################################################
-               ret_0  ret_0_vol  ret_0_vol_2  ret_0_vol_2_hat  ret_0_zscored
+               ret_0  ret_0_vol  ret_0_vol_2  ret_0_vol_2_hat  ret_0_vol_adj
 2000-01-20  0.789749   0.789749     0.693337              NaN            NaN
 2000-01-21  0.799250   0.799250     1.806081              NaN            NaN
 2000-01-24  0.693337   0.693337     0.607578              NaN            NaN

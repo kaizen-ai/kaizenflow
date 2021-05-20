@@ -177,7 +177,7 @@ class TestVolatilityModel(hut.TestCase):
         vol_adj_df = node.fit(data)["df_out"]
         # Invert volatility adjustment.
         ret_0_vol_0_hat = vol_adj_df["ret_0_vol_2_hat"].shift(2)
-        inverted_rets = (ret_0_vol_0_hat * vol_adj_df["ret_0_zscored"]).rename(
+        inverted_rets = (ret_0_vol_0_hat * vol_adj_df["ret_0_vol_adj"]).rename(
             "ret_0_inverted"
         )
         # Compare results.
@@ -228,7 +228,7 @@ class TestVolatilityModel(hut.TestCase):
         vol_adj_df = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]
         # Invert volatility adjustment.
         ret_0_vol_0_hat = vol_adj_df["ret_0_vol_2_hat"].shift(2)
-        inverted_rets = (ret_0_vol_0_hat * vol_adj_df["ret_0_zscored"]).rename(
+        inverted_rets = (ret_0_vol_0_hat * vol_adj_df["ret_0_vol_adj"]).rename(
             "ret_0_inverted"
         )
         # Compare results.

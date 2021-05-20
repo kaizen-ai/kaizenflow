@@ -68,7 +68,7 @@ ret_0:
        0   ret_0_vol        40 non-null     float64
        1   ret_0_vol_2      38 non-null     float64
        2   ret_0_vol_2_hat  30 non-null     float64
-       3   ret_0_zscored    30 non-null     float64
+       3   ret_0_vol_adj    30 non-null     float64
       dtypes: float64(4)
 ret_0_2:
   load_data:
@@ -131,12 +131,12 @@ ret_0_2:
        0   ret_0_2_vol        40 non-null     float64
        1   ret_0_2_vol_2      38 non-null     float64
        2   ret_0_2_vol_2_hat  30 non-null     float64
-       3   ret_0_2_zscored    30 non-null     float64
+       3   ret_0_2_vol_adj    30 non-null     float64
       dtypes: float64(4)
 ################################################################################
 df_out
 ################################################################################
-               ret_0   ret_0_2  ret_0_vol  ret_0_vol_2  ret_0_vol_2_hat  ret_0_zscored  ret_0_2_vol  ret_0_2_vol_2  ret_0_2_vol_2_hat  ret_0_2_zscored
+               ret_0   ret_0_2  ret_0_vol  ret_0_vol_2  ret_0_vol_2_hat  ret_0_vol_adj  ret_0_2_vol  ret_0_2_vol_2  ret_0_2_vol_2_hat  ret_0_2_vol_adj
 2000-01-03  1.764052  0.715499   1.764052     1.516029              NaN            NaN     0.715499       0.190241                NaN              NaN
 2000-01-04  1.193981 -0.226037   1.193981     2.923106              NaN            NaN     0.226037       4.873882                NaN              NaN
 2000-01-05  1.516029 -0.190241   1.516029     3.182956              NaN            NaN     0.190241       2.673304                NaN              NaN

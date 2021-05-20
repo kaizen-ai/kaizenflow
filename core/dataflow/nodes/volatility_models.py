@@ -1,3 +1,4 @@
+import abc
 import collections
 import datetime
 import logging
@@ -268,7 +269,142 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         return info
 
 
-class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
+class AbstractVolatilityModel(FitPredictNode, abc.ABC):
+    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool, out_col_prefix: Optional[str] = None) -> Tuple[pd.DataFrame, collections.OrderedDict]:
+        """
+
+        :return:
+        """
+        info = collections.OrderedDict()
+        dfs = []
+        for col in df_in.columns:
+            name = out_col_prefix or col
+            name = str(name)
+            dbg.dassert_not_in(name + "_vol", self._fit_cols)
+            if not fit:
+                tau = self._taus[col]
+            else:
+                tau = self._tau
+            config = self._get_config(col=col, out_col_prefix=name, tau=tau)
+            dag = self._get_dag(df_in[[col]], config)
+            if fit:
+                mode = "fit"
+            else:
+                mode = "predict"
+            df_out = dag.run_leq_node("demodulate_using_vol_pred", mode)[
+                "df_out"
+            ]
+            info[col] = extract_info(dag, [mode])
+            if fit:
+                if self._tau is None:
+                    self._taus[col] = info[col]["compute_smooth_moving_average"][
+                        "fit"
+                    ]["tau"]
+                else:
+                    self._taus[col] = self._tau
+            dfs.append(df_out)
+        df_out = pd.concat(dfs, axis=1)
+        df_out = df_out.reindex(df_in.index)
+        return df_out, info
+
+    def _get_config(
+            self, col: _COL_TYPE, out_col_prefix: _COL_TYPE, tau: Optional[float] = None
+    ) -> cconfi.Config:
+        """
+        Generate a DAG config.
+
+        :param col: column whose volatility is to be modeled
+        :param tau: tau for SMA; if `None`, then to be learned
+        :return: a complete config to be used with `_get_dag()`
+        """
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "calculate_vol_pth_power": {
+                    "cols": [col],
+                    "col_rename_func": lambda x: out_col_prefix + "_vol",
+                    "col_mode": "merge_all",
+                },
+                "compute_smooth_moving_average": {
+                    "col": [out_col_prefix + "_vol"],
+                    "steps_ahead": self._steps_ahead,
+                    "tau": tau,
+                    "col_mode": "merge_all",
+                    "nan_mode": self._nan_mode,
+                },
+                "calculate_vol_pth_root": {
+                    "cols": [
+                        out_col_prefix + "_vol",
+                        out_col_prefix + "_vol_" + str(self._steps_ahead),
+                        out_col_prefix
+                        + "_vol_"
+                        + str(self._steps_ahead)
+                        + "_hat",
+                    ],
+                    "col_mode": "replace_selected",
+                },
+                "demodulate_using_vol_pred": {
+                    "signal_cols": [col],
+                    "volatility_col": out_col_prefix + "_vol_" + str(self._steps_ahead) + "_hat",
+                    "signal_steps_ahead": 0,
+                    "volatility_steps_ahead": self._steps_ahead,
+                    "col_rename_func": lambda x: out_col_prefix + "_vol_adj",
+                    "col_mode": "replace_selected",
+                    "nan_mode": self._nan_mode,
+                },
+            }
+        )
+        return config
+
+    def _get_dag(self, df_in: pd.DataFrame, config: cconfi.Config) -> DAG:
+        """
+        Build a DAG from data and config.
+
+        :param df_in: data over which to run DAG
+        :param config: config for configuring DAG nodes
+        :return: ready-to-run DAG
+        """
+        dag = DAG(mode="strict")
+        _LOG.debug("%s", config)
+        # Load `df_in`.
+        nid = "load_data"
+        node = ReadDataFromDf(nid, df_in)
+        tail_nid = self._append(dag, None, node)
+        # Raise volatility columns to pth power.
+        nid = "calculate_vol_pth_power"
+        node = ColumnTransformer(
+            nid,
+            transformer_func=lambda x: np.abs(x) ** self._p_moment,
+            **config[nid].to_dict(),
+        )
+        tail_nid = self._append(dag, tail_nid, node)
+        # Predict pth power of volatility using smooth moving average.
+        nid = "compute_smooth_moving_average"
+        node = SmaModel(nid, **config[nid].to_dict())
+        tail_nid = self._append(dag, tail_nid, node)
+        # Calculate the pth root of volatility columns.
+        nid = "calculate_vol_pth_root"
+        node = ColumnTransformer(
+            nid,
+            transformer_func=lambda x: np.abs(x) ** (1.0 / self._p_moment),
+            **config[nid].to_dict(),
+        )
+        tail_nid = self._append(dag, tail_nid, node)
+        # Divide returns by volatilty prediction.
+        nid = "demodulate_using_vol_pred"
+        node = VolatilityModulator(
+            nid, mode="demodulate", **config[nid].to_dict()
+        )
+        self._append(dag, tail_nid, node)
+        return dag
+
+    @staticmethod
+    def _append(dag: DAG, tail_nid: Optional[str], node: Node) -> str:
+        dag.add_node(node)
+        if tail_nid is not None:
+            dag.connect(tail_nid, node.nid)
+        return node.nid
+
+class VolatilityModel(AbstractVolatilityModel, RegFreqMixin, ColModeMixin, ToListMixin):
     """
     Fit and predict a smooth moving average volatility model.
 
@@ -333,53 +469,28 @@ class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         self._fwd_vol_cols_hat = {
             col: self._fwd_vol_cols[col] + "_hat" for col in self._fit_cols
         }
-        df_out, info = self._fit_predict_helper(df_in, fit=True)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
-
-    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df_out, info = self._fit_predict_helper(df_in, fit=False)
-        self._set_info("predict", info)
-        return {"df_out": df_out}
-
-    def _fit_predict_helper(self, df_in, fit):
         self._check_cols(df_in.columns.tolist())
-        info = collections.OrderedDict()
-        dfs = []
-        for col in self._fit_cols:
-            dbg.dassert_not_in(self._vol_cols[col], self._fit_cols)
-            if not fit:
-                tau = self._taus[col]
-                tau = self._taus[col]
-            else:
-                tau = self._tau
-            config = self._get_config(col=col, tau=tau)
-            dag = self._get_dag(df_in[[col]], config)
-            if fit:
-                mode = "fit"
-            else:
-                mode = "predict"
-            df_out = dag.run_leq_node("demodulate_using_vol_pred", mode)[
-                "df_out"
-            ]
-            info[col] = extract_info(dag, [mode])
-            if fit:
-                if self._tau is None:
-                    self._taus[col] = info[col]["compute_smooth_moving_average"][
-                        "fit"
-                    ]["tau"]
-                else:
-                    self._taus[col] = self._tau
-            dfs.append(df_out)
-        df_out = pd.concat(dfs, axis=1)
+        df_out, info = self._fit_predict_helper(df_in[self._fit_cols], fit=True)
         df_out = self._apply_col_mode(
             df_in.drop(df_out.columns.intersection(df_in.columns), 1),
             df_out,
             cols=self._fit_cols,
             col_mode=self._col_mode,
         )
-        df_out = df_out.reindex(df_in.index)
-        return df_out, info
+        self._set_info("fit", info)
+        return {"df_out": df_out}
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        self._check_cols(df_in.columns.tolist())
+        df_out, info = self._fit_predict_helper(df_in[self._fit_cols], fit=False)
+        df_out = self._apply_col_mode(
+            df_in.drop(df_out.columns.intersection(df_in.columns), 1),
+            df_out,
+            cols=self._fit_cols,
+            col_mode=self._col_mode,
+        )
+        self._set_info("predict", info)
+        return {"df_out": df_out}
 
     @property
     def taus(self) -> Dict[_COL_TYPE, Any]:
@@ -409,102 +520,8 @@ class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         dbg.dassert_not_intersection(cols, self._fwd_vol_cols.values())
         dbg.dassert_not_intersection(cols, self._fwd_vol_cols_hat.values())
 
-    def _get_config(
-        self, col: _COL_TYPE, tau: Optional[float] = None
-    ) -> cconfi.Config:
-        """
-        Generate a DAG config.
 
-        :param col: column whose volatility is to be modeled
-        :param tau: tau for SMA; if `None`, then to be learned
-        :return: a complete config to be used with `_get_dag()`
-        """
-        config = ccbuild.get_config_from_nested_dict(
-            {
-                "calculate_vol_pth_power": {
-                    "cols": [col],
-                    "col_rename_func": lambda x: f"{x}_vol",
-                    "col_mode": "merge_all",
-                },
-                "compute_smooth_moving_average": {
-                    "col": [self._vol_cols[col]],
-                    "steps_ahead": self._steps_ahead,
-                    "tau": tau,
-                    "col_mode": "merge_all",
-                    "nan_mode": self._nan_mode,
-                },
-                "calculate_vol_pth_root": {
-                    "cols": [
-                        self._vol_cols[col],
-                        self._fwd_vol_cols[col],
-                        self._fwd_vol_cols_hat[col],
-                    ],
-                    "col_mode": "replace_selected",
-                },
-                "demodulate_using_vol_pred": {
-                    "signal_cols": [col],
-                    "volatility_col": self._fwd_vol_cols_hat[col],
-                    "signal_steps_ahead": 0,
-                    "volatility_steps_ahead": self._steps_ahead,
-                    "col_rename_func": self._col_rename_func,
-                    "col_mode": "replace_selected",
-                    "nan_mode": self._nan_mode,
-                },
-            }
-        )
-        return config
-
-    def _get_dag(self, df_in: pd.DataFrame, config: cconfi.Config) -> DAG:
-        """
-        Build a DAG from data and config.
-
-        :param df_in: data over which to run DAG
-        :param config: config for configuring DAG nodes
-        :return: ready-to-run DAG
-        """
-        dag = DAG(mode="strict")
-        _LOG.debug("%s", config)
-        # Load `df_in`.
-        nid = "load_data"
-        node = ReadDataFromDf(nid, df_in)
-        tail_nid = self._append(dag, None, node)
-        # Raise volatility columns to pth power.
-        nid = "calculate_vol_pth_power"
-        node = ColumnTransformer(
-            nid,
-            transformer_func=lambda x: np.abs(x) ** self._p_moment,
-            **config[nid].to_dict(),
-        )
-        tail_nid = self._append(dag, tail_nid, node)
-        # Predict pth power of volatility using smooth moving average.
-        nid = "compute_smooth_moving_average"
-        node = SmaModel(nid, **config[nid].to_dict())
-        tail_nid = self._append(dag, tail_nid, node)
-        # Calculate the pth root of volatility columns.
-        nid = "calculate_vol_pth_root"
-        node = ColumnTransformer(
-            nid,
-            transformer_func=lambda x: np.abs(x) ** (1.0 / self._p_moment),
-            **config[nid].to_dict(),
-        )
-        tail_nid = self._append(dag, tail_nid, node)
-        # Divide returns by volatilty prediction.
-        nid = "demodulate_using_vol_pred"
-        node = VolatilityModulator(
-            nid, mode="demodulate", **config[nid].to_dict()
-        )
-        self._append(dag, tail_nid, node)
-        return dag
-
-    @staticmethod
-    def _append(dag: DAG, tail_nid: Optional[str], node: Node) -> str:
-        dag.add_node(node)
-        if tail_nid is not None:
-            dag.connect(tail_nid, node.nid)
-        return node.nid
-
-
-class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, MultiColModeMixin):
+class MultiindexVolatilityModel(AbstractVolatilityModel, RegFreqMixin, MultiColModeMixin):
     """
     Fit and predict a smooth moving average volatility model.
 
@@ -559,25 +576,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, MultiColModeMixin)
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
         df = self._preprocess_df(self._in_col_group, df_in)
-        self._leaf_cols = df.columns.tolist()
-        idx = df.index
-        info = collections.OrderedDict()
-        dfs = []
-        for col in self._leaf_cols:
-            config = self._get_config(col=col, tau=self._tau)
-            dag = self._get_dag(df[[col]], config)
-            df_out = dag.run_leq_node("rename", "fit")["df_out"]
-            info[col] = extract_info(dag, ["fit"])
-            if self._tau is None:
-                self._taus[col] = info[col]["compute_smooth_moving_average"][
-                    "fit"
-                ]["tau"]
-            else:
-                self._taus[col] = self._tau
-            df_out = pd.concat([df_out], axis=1, keys=[col])
-            dfs.append(df_out)
-        df_out = pd.concat(dfs, axis=1)
-        df_out = df_out.reindex(idx)
+        df_out = self._fit_predict_helper(df, fit=True)
         df_out = df_out.swaplevel(i=0, j=1, axis=1)
         df_out.sort_index(axis=1, level=0, inplace=True)
         df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
@@ -587,26 +586,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, MultiColModeMixin)
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
         df = self._preprocess_df(self._in_col_group, df_in)
-        self._leaf_cols = df.columns.tolist()
-        idx = df.index
-        info = collections.OrderedDict()
-        dfs = []
-        for col in self._leaf_cols:
-            dbg.dassert_in(
-                col,
-                self._taus.keys(),
-                msg=f"No `tau` for `col={col}` found. Check that model has been fit.",
-            )
-            tau = self._taus[col]
-            dbg.dassert(tau)
-            config = self._get_config(col=col, tau=tau)
-            dag = self._get_dag(df[[col]], config)
-            df_out = dag.run_leq_node("rename", "predict")["df_out"]
-            info[col] = extract_info(dag, ["predict"])
-            df_out = pd.concat([df_out], axis=1, keys=[col])
-            dfs.append(df_out)
-        df_out = pd.concat(dfs, axis=1)
-        df_out = df_out.reindex(idx)
+        df_out = self._fit_predict_helper(df, fit=False)
         df_out = df_out.swaplevel(i=0, j=1, axis=1)
         df_out.sort_index(axis=1, level=0, inplace=True)
         df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
