@@ -17,6 +17,7 @@ import helpers.printing as prnt
 import helpers.printing as hprint
 import helpers.unit_test as hut
 from core.dataflow.nodes.volatility_models import (
+    MultiindexVolatilityModel,
     SmaModel,
     VolatilityModel,
     VolatilityModulator,
@@ -481,6 +482,60 @@ class TestVolatilityModel(hut.TestCase):
         df = pd.DataFrame(index=date_range, data=realization)
         return df
 
+
+class TestMultiindexVolatilityModel(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Perform a typical `fit()` call.
+        """
+        # Load test data.
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "in_col_group": ("ret_0",),
+                "out_col_prefix": "rets_",
+                "steps_ahead": 2,
+                "nan_mode": "drop",
+            }
+        )
+        node = MultiindexVolatilityModel("vol_model", **config.to_dict())
+        df_out = node.fit(data)["df_out"]
+        info = node.get_info("fit")
+        # Package results.
+        act = self._package_results1(config, info, df_out)
+        self.check_string(act)
+
+    @staticmethod
+    def _package_results1(
+            config: ccfg.Config,
+            info: collections.OrderedDict,
+            df_out: pd.DataFrame,
+    ) -> str:
+        act: List[str] = []
+        act.append(hprint.frame("config"))
+        act.append(str(config))
+        act.append(hprint.frame("info"))
+        act.append(str(ccbuild.get_config_from_nested_dict(info)))
+        act.append(hprint.frame("df_out"))
+        act.append(hut.convert_df_to_string(df_out.round(2), index=True, decimals=2))
+        act = "\n".join(act)
+        return act
+
+    def _get_data(self) -> pd.DataFrame:
+        """
+        Generate multivariate normal returns.
+        """
+        mn_process = casgen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=2, seed=0)
+        realization = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
+        )
+        realization = realization.rename(columns=lambda x: "MN" + str(x))
+        volume = pd.DataFrame(
+            index=realization.index, columns=realization.columns, data=100
+        )
+        data = pd.concat([realization, volume], axis=1, keys=["ret_0", "volume"])
+        return data
 
 class TestVolatilityModulator(hut.TestCase):
     def test_modulate1(self) -> None:
