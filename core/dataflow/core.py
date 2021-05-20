@@ -16,11 +16,12 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): If this is private -> _NodeInterface.
 class NodeInterface(abc.ABC):
     """
     Abstract node class for creating DAGs of functions.
 
-    Common use case: Nodes wrap functions with a common method (e.g., `fit`).
+    Common use case: `Node`s wrap functions with a common method (e.g., `fit`).
 
     This class provides some convenient introspection (input/output names)
     accessors and, importantly, a unique identifier (`nid`) for building
@@ -68,6 +69,7 @@ class NodeInterface(abc.ABC):
             return []
         for item in items:
             dbg.dassert_isinstance(item, str)
+        dbg.dassert_no_duplicates(items)
         return items
 
 
@@ -89,6 +91,7 @@ class Node(NodeInterface):
         Implement the same interface as `NodeInterface`.
         """
         super().__init__(nid=nid, inputs=inputs, outputs=outputs)
+        # Dictionary method name -> output node name -> output.
         self._output_vals: Dict[str, Dict[str, Any]] = {}
 
     def get_output(self, method: str, name: str) -> Any:
@@ -158,10 +161,9 @@ class DAG:
         :param name: optional str identifier
         :param mode: determines how to handle an attempt to add a node that already
             belongs to the DAG:
-                - "strict": asserts
-                - "loose": deletes old node (also removes edges) and adds new
-                    node
-            mode = "loose" is useful for interactive notebooks and debugging.
+            - "strict": asserts
+            - "loose": deletes old node (also removes edges) and adds new
+                node. This is useful for interactive notebooks and debugging.
         """
         self._dag = networ.DiGraph()
         #
@@ -273,8 +275,10 @@ class DAG:
         output/input pairs, the additional input/output pairs are simply added
         to the existing edge (the previous ones are not overwritten).
 
-        :param parent: tuple of the form (nid, output)
-        :param child: tuple of the form (nid, input)
+        :param parent: tuple of the form (nid, output) or nid if it has a single
+            output
+        :param child: tuple of the form (nid, input) or just nid if it has a single
+            input
         """
         # Automatically infer output name when the parent has only one output.
         # Ensure that parent node belongs to DAG (through `get_node` call).

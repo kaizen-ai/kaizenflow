@@ -2,9 +2,6 @@
 Import as:
 
 import core.config_builders as cfgb
-
-# It is?
-Tested in: nlp/test_config_builders.py
 """
 
 import collections

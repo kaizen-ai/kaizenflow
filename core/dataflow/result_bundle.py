@@ -33,14 +33,13 @@ class ResultBundle(abc.ABC):
     ) -> None:
         """
         :param config: DAG config
-        :param result_nid: identifier of terminal node for which DAG was
-            executed
+        :param result_nid: identifier of terminal node for which DAG was executed
         :param method: method which was executed
         :param result_df: dataframe with results
-        :param column_to_tags: mapping of column names to tags
+        :param column_to_tags: mapping of column names to list of tags. E.g.,
+            `{"y_0": ["target_col", "step_0"], ...}`
         :param info: DAG execution info
-        :param payload: config with additional information, for example, meta
-            config
+        :param payload: config with additional information, e.g., meta config
         """
         self._config = config
         self._result_nid = result_nid
@@ -140,6 +139,11 @@ class ResultBundle(abc.ABC):
     def _search_mapping(
         value: Any, mapping: Optional[Dict[Any, List[Any]]]
     ) -> Optional[List[Any]]:
+        """
+        Look for a key `value` in the dictionary `mapping`.
+
+        Return the corresponding value or `None` if the key does not exist.
+        """
         if mapping is None:
             _LOG.warning("No mapping provided.")
             return None

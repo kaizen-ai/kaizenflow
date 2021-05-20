@@ -21,14 +21,19 @@ def remove_dates_with_no_data(
     Given a df indexed with timestamps, scan the data by date and filter out
     all the data when it's all nans.
 
+    :param report_stats: if True report information about the performed
+        operation
     :return: filtered df
     """
     # This is not strictly necessary.
     dbg.dassert_strictly_increasing_index(df)
-    #
+    # Store the dates of the days removed because of all NaNs.
     removed_days = []
+    # Accumulate the df for all the days that are not discarded.
     df_out = []
+    # Store the days processed.
     num_days = 0
+    # Scan the df by date.
     for date, df_tmp in df.groupby(df.index.date):
         if np.isnan(df_tmp).all(axis=1).all():
             _LOG.debug("No data on %s", date)
@@ -40,10 +45,11 @@ def remove_dates_with_no_data(
     dbg.dassert_strictly_increasing_index(df_out)
     #
     if report_stats:
+        # Stats for rows.
         _LOG.info("df.index in [%s, %s]", df.index.min(), df.index.max())
         removed_perc = hprint.perc(df.shape[0] - df_out.shape[0], df.shape[0])
         _LOG.info("Rows removed: %s", removed_perc)
-        #
+        # Stats for all days.
         removed_perc = hprint.perc(len(removed_days), num_days)
         _LOG.info("Number of removed days: %s", removed_perc)
         # Find week days.
@@ -51,13 +57,11 @@ def remove_dates_with_no_data(
         removed_perc = hprint.perc(len(removed_weekdays), len(removed_days))
         _LOG.info("Number of removed weekdays: %s", removed_perc)
         _LOG.info("Weekdays removed: %s", ", ".join(map(str, removed_weekdays)))
-        #
+        # Stats for weekend days.
         removed_perc = hprint.perc(
             len(removed_days) - len(removed_weekdays), len(removed_days)
         )
         _LOG.info("Number of removed weekend days: %s", removed_perc)
-        #
-
     return df_out
 
 
@@ -81,9 +85,11 @@ def set_non_ath_to_nan(
     """
     Filter according to active trading hours.
 
-    We assume time intervals are left closed, right open, labeled right.
+    We assume time intervals are:
+    - left closed, right open `[a, b)`
+    - labeled right
 
-    Row is not set to `np.nan` iff its `time` satisifies
+    Row is not set to `np.nan` iff its `time` satisfies:
       - `start_time < time`, and
       - `time <= end_time`
     """
@@ -508,9 +514,8 @@ def compute_volatility_normalization_factor(
     dbg.dassert_isinstance(srs, pd.Series)
     ppy = hdataf.infer_sampling_points_per_year(srs)
     srs = hdataf.apply_nan_mode(srs, mode="fill_with_zero")
-    scale_factor = target_volatility / (np.sqrt(ppy) * srs.std())
-    _LOG.debug("`scale_factor`=%f", scale_factor)
-    scale_factor = cast(float, scale_factor)
+    scale_factor: float = target_volatility / (np.sqrt(ppy) * srs.std())
+    _LOG.debug("scale_factor=%f", scale_factor)
     return scale_factor
 
 
