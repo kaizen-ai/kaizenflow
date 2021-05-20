@@ -34,7 +34,7 @@ from helpers.lib_tasks import (
     git_create_branch,
     git_create_patch,
     git_delete_merged_branches,
-    git_last_commit,
+    git_last_commit_files,
     git_merge_master,
     git_pull,
     git_pull_master,

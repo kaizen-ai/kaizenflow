@@ -18,7 +18,7 @@ class Test_config1(hut.TestCase):
 
     def test_config2(self) -> None:
         """
-        Test serialization / deserialization for flat config.
+        Test serialization/deserialization for flat config.
         """
         config = self._get_flat_config1()
         #

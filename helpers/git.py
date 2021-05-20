@@ -584,10 +584,10 @@ def get_remote_head_hash(dir_name: str) -> str:
 # #############################################################################
 
 
-# TODO(gp): -> _remove_files_non_present()
+# TODO(gp): -> remove_files_non_present() and move to system_interaction.py
 def _check_files(files: List[str]) -> List[str]:
     """
-    Build list of files in `files`, skipping the files that don't exist.
+    Return list of files from `files`, skipping the files that don't exist.
     """
     files_tmp = []
     for f in files:
@@ -595,6 +595,24 @@ def _check_files(files: List[str]) -> List[str]:
             files_tmp.append(f)
         else:
             _LOG.debug("File '%s' doesn't exist: skipping", f)
+    return files_tmp
+
+
+# TODO(gp): Move to system_interaction.py
+def remove_dirs(files: List[str]) -> List[str]:
+    """
+    Return list of files from `files`, skipping the files that are directories.
+    """
+    files_tmp: List[str] = []
+    dirs_tmp: List[str] = []
+    for file in files:
+        if os.path.isdir(file):
+            _LOG.debug("file='%s' is a dir: skipping", file)
+            dirs_tmp.append(file)
+        else:
+            files_tmp.append(file)
+    if dirs_tmp:
+        _LOG.warning("Removed dirs: %s", ", ".join(dirs_tmp))
     return files_tmp
 
 
