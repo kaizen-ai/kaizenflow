@@ -16,9 +16,9 @@ import core.signal_processing as csigna
 import core.statistics as cstati
 import helpers.dbg as dbg
 from core.dataflow.core import DAG, Node
-from core.dataflow.nodes.base import FitPredictNode, RegFreqMixin, ToListMixin
+from core.dataflow.nodes.base import FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin, MultiColModeMixin
 from core.dataflow.nodes.sources import ReadDataFromDf
-from core.dataflow.nodes.transformers import ColModeMixin, ColumnTransformer
+from core.dataflow.nodes.transformers import ColumnTransformer
 from core.dataflow.utils import get_df_info_as_string
 from core.dataflow.visitors import extract_info
 
@@ -512,7 +512,7 @@ class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         return node.nid
 
 
-class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
+class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, MultiColModeMixin):
     """
     Fit and predict a smooth moving average volatility model.
 
@@ -535,7 +535,6 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
         in_col_group: Tuple[_COL_TYPE],
         steps_ahead: int,
         p_moment: float = 2,
-        out_col_prefix: Optional[str] = None,
         tau: Optional[float] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
@@ -552,7 +551,6 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, ToListMixin):
         super().__init__(nid)
         dbg.dassert_isinstance(in_col_group, tuple)
         self._in_col_group = in_col_group
-        self._out_col_prefix = out_col_prefix or ""
         #
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(1, p_moment)

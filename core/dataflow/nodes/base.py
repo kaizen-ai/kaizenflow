@@ -423,13 +423,12 @@ class MultiColModeMixin:
             prefixes for `df_out` columns
         """
         dbg.dassert_isinstance(out_col_group, tuple)
-        dbg.dassert_lt(0, len(out_col_group),
-                       msg="Tuple `in_col_group` must be nonempty.")
         dbg.dassert(
             df_out.index.equals(df_in.index),
             "Input/output indices differ but are expected to be the same!",
         )
-        df_out = pd.concat([df_out], axis=1, keys=[out_col_group])
+        if out_col_group:
+            df_out = pd.concat([df_out], axis=1, keys=[out_col_group])
         # Do not allow overwriting existing columns.
         dbg.dassert_not_in(
             df_out.columns,

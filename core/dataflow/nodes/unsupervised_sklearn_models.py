@@ -206,7 +206,7 @@ class MultiindexUnsupervisedSkLearnModel(
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df = self._preprocess_df(self._in_col_group, self._out_col_group, df_in)
+        df = self._preprocess_df(self._in_col_group, df_in)
         df_out, info = self._fit_predict_helper(df, fit=True)
         df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
         info["df_out_info"] = get_df_info_as_string(df_out)
@@ -214,7 +214,7 @@ class MultiindexUnsupervisedSkLearnModel(
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df = self._preprocess_df(self._in_col_group, self._out_col_group, df_in)
+        df = self._preprocess_df(self._in_col_group, df_in)
         df_out, info = self._fit_predict_helper(df, fit=False)
         df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
         info["df_out_info"] = get_df_info_as_string(df_out)
@@ -253,7 +253,7 @@ class Residualizer(FitPredictNode, RegFreqMixin, MultiColModeMixin):
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df = self._preprocess_df(self._in_col_group, self._out_col_group, df_in)
+        df = self._preprocess_df(self._in_col_group, df_in)
         df_out, info = self._fit_predict_helper(df, fit=True)
         df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
         info["df_out_info"] = get_df_info_as_string(df_out)
@@ -261,7 +261,7 @@ class Residualizer(FitPredictNode, RegFreqMixin, MultiColModeMixin):
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df = self._preprocess_df(self._in_col_group, self._out_col_group, df_in)
+        df = self._preprocess_df(self._in_col_group, df_in)
         df_out, info = self._fit_predict_helper(df, fit=False)
         df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
         info["df_out_info"] = get_df_info_as_string(df_out)
