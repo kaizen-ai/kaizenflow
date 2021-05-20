@@ -380,7 +380,6 @@ class MultiColModeMixin:
     def _preprocess_df(
         self,
         in_col_group: Tuple[_COL_TYPE],
-        out_col_group: Tuple[_COL_TYPE],
         df: pd.DataFrame,
     ) -> pd.DataFrame:
         """
@@ -388,20 +387,11 @@ class MultiColModeMixin:
 
         :param in_col_group: a group of cols specified by the first N - 1
             levels
-        :param out_col_group: new output col group names. This specifies the
-            names of the first N - 1 levels. The leaf_cols names remain the
-            same.
         :param df: dataframe with a multiindexed column
         :return: single-level column index dataframe
         """
         # Perform col group checks.
         dbg.dassert_isinstance(in_col_group, tuple)
-        dbg.dassert_isinstance(out_col_group, tuple)
-        dbg.dassert_eq(
-            len(in_col_group),
-            len(out_col_group),
-            msg="Column hierarchy depth must be preserved.",
-        )
         dbg.dassert_lt(0, len(in_col_group),
                        msg="Tuple `in_col_group` must be nonempty.")
         dbg.dassert_isinstance(df, pd.DataFrame)
@@ -413,18 +403,12 @@ class MultiColModeMixin:
             df.columns.nlevels - 1,
             "Dataframe multiindex column depth incompatible with config.",
         )
-        # Do not allow overwriting existing columns.
-        dbg.dassert_not_in(
-            out_col_group,
-            df.columns,
-            "Desired column names already present in dataframe.",
-        )
         # Select single-column-level dataframe and return.
         return df[in_col_group].copy()
 
     def _postprocess_df(
         self,
-        out_col_group: pd.DataFrame,
+        out_col_group: Tuple[_COL_TYPE],
         df_in: pd.DataFrame,
         df_out: pd.DataFrame,
     ) -> pd.DataFrame:
@@ -438,11 +422,26 @@ class MultiColModeMixin:
         :return: a merge of `df_in` and `df_out`, using `out_col_group` keys as
             prefixes for `df_out` columns
         """
+        dbg.dassert_isinstance(out_col_group, tuple)
+        dbg.dassert_lt(0, len(out_col_group),
+                       msg="Tuple `in_col_group` must be nonempty.")
         dbg.dassert(
             df_out.index.equals(df_in.index),
             "Input/output indices differ but are expected to be the same!",
         )
         df_out = pd.concat([df_out], axis=1, keys=[out_col_group])
+        # Do not allow overwriting existing columns.
+        dbg.dassert_not_in(
+            df_out.columns,
+            df_in.columns,
+            "Output column names overlap with input column names."
+        )
+        # Ensure that column depth is preserved.
+        dbg.dassert_eq(
+            df_in.columns.nlevels,
+            df_out.columns.nlevels,
+            msg="Column hierarchy depth must be preserved."
+        )
         df_out = df_out.merge(
             df_in,
             how="outer",
