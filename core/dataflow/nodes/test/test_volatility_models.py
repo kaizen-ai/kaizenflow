@@ -5,6 +5,8 @@ from typing import Any, Dict, List
 import numpy as np
 import pandas as pd
 
+import pytest
+
 import core.artificial_signal_generators as sig_gen
 import core.artificial_signal_generators as casgen
 import core.config as ccfg
@@ -305,6 +307,7 @@ class TestVolatilityModel(hut.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
+    @pytest.mark.skip(msg="We no longer directly expose tau")
     def test08(self) -> None:
         """
         Ensure that explicit `tau` is used post-`fit()`.
@@ -403,17 +406,14 @@ class TestVolatilityModel(hut.TestCase):
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "leave_unchanged"
-        state = {
-            "_fit_cols": ["ret_0"],
-            "_vol_cols": {"ret_0": "ret_0_vol"},
-            "_fwd_vol_cols": {"ret_0": "ret_0_vol_2"},
-            "_fwd_vol_cols_hat": {"ret_0": "ret_0_vol_2_hat"},
-            "_taus": {"ret_0": 10},
-            "_info['fit']": None,
-        }
         node = VolatilityModel("vol_model", **config.to_dict())
-        node.set_fit_state(state)
-        df_out = node.predict(data)["df_out"]
+        node.fit(data)["df_out"]
+        # Package results.
+        state = node.get_fit_state()
+        # Load state.
+        node2 = VolatilityModel("vol_model", **config.to_dict())
+        node2.set_fit_state(state)
+        df_out = node2.predict(data)["df_out"]
         # Package results.
         act = self._package_results2(config, state, df_out)
         self.check_string(act)
