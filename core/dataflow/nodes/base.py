@@ -431,8 +431,8 @@ class MultiColModeMixin:
             df_out = pd.concat([df_out], axis=1, keys=[out_col_group])
         # Do not allow overwriting existing columns.
         dbg.dassert_not_in(
-            df_out.columns,
-            df_in.columns,
+            df_out.columns.to_list(),
+            df_in.columns.to_list(),
             "Output column names overlap with input column names."
         )
         # Ensure that column depth is preserved.

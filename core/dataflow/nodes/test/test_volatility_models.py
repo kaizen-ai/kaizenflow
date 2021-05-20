@@ -493,7 +493,6 @@ class TestMultiindexVolatilityModel(hut.TestCase):
         config = ccbuild.get_config_from_nested_dict(
             {
                 "in_col_group": ("ret_0",),
-                "out_col_prefix": "rets_",
                 "steps_ahead": 2,
                 "nan_mode": "drop",
             }

@@ -551,6 +551,8 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, MultiColModeMixin)
         super().__init__(nid)
         dbg.dassert_isinstance(in_col_group, tuple)
         self._in_col_group = in_col_group
+        self._out_col_group = in_col_group[:-1]
+        self._out_col_prefix = in_col_group[-1] + "_"
         #
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(1, p_moment)
@@ -564,19 +566,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, MultiColModeMixin)
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
-        # After indexing by `self._in_col_group`, we should have a flat column
-        # index.
-        dbg.dassert_eq(
-            len(self._in_col_group),
-            df_in.columns.nlevels - 1,
-            "Dataframe multiindex column depth incompatible with config.",
-        )
-        dbg.dassert_eq(
-            df_in.columns.nlevels,
-            2,
-            "Only multiindices of depth=2 currently supported.",
-        )
-        df = df_in[self._in_col_group].copy()
+        df = self._preprocess_df(self._in_col_group, df_in)
         self._leaf_cols = df.columns.tolist()
         idx = df.index
         info = collections.OrderedDict()
@@ -598,29 +588,13 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, MultiColModeMixin)
         df_out = df_out.reindex(idx)
         df_out = df_out.swaplevel(i=0, j=1, axis=1)
         df_out.sort_index(axis=1, level=0, inplace=True)
-        df_out = df_out.merge(
-            df_in,
-            how="outer",
-            left_index=True,
-            right_index=True,
-        )
-        # TODO(*): merge with input.
+        df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
-        dbg.dassert_eq(
-            len(self._in_col_group),
-            df_in.columns.nlevels - 1,
-            "Dataframe multiindex column depth incompatible with config.",
-        )
-        dbg.dassert_eq(
-            df_in.columns.nlevels,
-            2,
-            "Only multiindices of depth=2 currently supported.",
-        )
-        df = df_in[self._in_col_group].copy()
+        df = self._preprocess_df(self._in_col_group, df_in)
         self._leaf_cols = df.columns.tolist()
         idx = df.index
         info = collections.OrderedDict()
@@ -643,12 +617,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, MultiColModeMixin)
         df_out = df_out.reindex(idx)
         df_out = df_out.swaplevel(i=0, j=1, axis=1)
         df_out.sort_index(axis=1, level=0, inplace=True)
-        df_out = df_out.merge(
-            df_in,
-            how="outer",
-            left_index=True,
-            right_index=True,
-        )
+        df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
@@ -718,7 +687,7 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, MultiColModeMixin)
                 "rename": {
                     "cols": [col],
                     "col_rename_func": lambda x: self._out_col_prefix
-                    + "0_voladj",
+                    + "vol_adj",
                     "col_mode": "replace_selected",
                 },
             }
