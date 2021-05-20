@@ -600,6 +600,18 @@ def sort_dictionary(dict_: Dict) -> Dict:
     return res
 
 
+def to_pretty_str(obj: Any) -> str:
+    if isinstance(obj, dict):
+        import pprint
+
+        res = pprint.pformat(obj)
+        # import json
+        # res = json.dumps(obj, indent=4, sort_keys=True)
+    else:
+        res = str(obj)
+    return res
+
+
 # #############################################################################
 # Notebook output
 # #############################################################################
