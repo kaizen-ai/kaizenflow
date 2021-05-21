@@ -29,7 +29,7 @@ class Test_set_non_ath_to_nan1(hut.TestCase):
         datetime
         2016-01-05 09:28:00    NaN    NaN    NaN    NaN        NaN
         2016-01-05 09:29:00    NaN    NaN    NaN    NaN        NaN
-        2016-01-05 09:30:00  98.14  98.24  97.79  98.01   751857.0
+        2016-01-05 09:30:00    NaN    NaN    NaN    NaN        NaN
         2016-01-05 09:31:00  98.01  98.19  98.00  98.00   172584.0
         2016-01-05 09:32:00  97.99  98.04  97.77  97.77   189058.0
         2016-01-05 15:58:00  95.31  95.32  95.22  95.27   456235.0
@@ -39,6 +39,7 @@ class Test_set_non_ath_to_nan1(hut.TestCase):
         2016-01-05 16:02:00    NaN    NaN    NaN    NaN        NaN
         """
         self.assert_equal(str(act), exp, fuzzy_match=True)
+
     @staticmethod
     def _get_df() -> str:
         # From `s3://alphamatic-data/data/kibot/all_stocks_1min/AAPL.csv.gz`.
