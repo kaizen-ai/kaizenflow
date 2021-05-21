@@ -11,6 +11,8 @@ _LOG = logging.getLogger(__name__)
 
 class TestDiskDataSource(hut.TestCase):
 
+    # TODO(gp): We could factor out all the code in a single function to
+    #  focus the attention on what exactly changes in a test.
     def test_datetime_index_csv1(self) -> None:
         """
         Test CSV file using timestamps in the index.

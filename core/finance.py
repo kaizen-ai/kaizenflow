@@ -1,3 +1,11 @@
+"""
+Basic functions processing financial data.
+
+Import as:
+
+import core.finance as fin
+"""
+
 import datetime
 import logging
 from typing import Any, Dict, Optional, Union, cast
@@ -122,8 +130,124 @@ def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # #############################################################################
-# Returns calculation and helpers.
+# Resampling.
 # #############################################################################
+
+
+def resample(
+    df: pd.DataFrame, agg_interval: Union[str, pd.Timedelta, pd.DateOffset]
+) -> pd.DataFrame:
+    """
+    Resample returns (using sum) using our timing convention.
+    """
+    dbg.dassert_strictly_increasing_index(df)
+    resampler = csigna.resample(df, rule=agg_interval, closed="left")
+    rets = resampler.sum()
+    return rets
+
+
+# TODO(gp): Move to `dataflow/types.py`
+KWARGS = Dict[str, Any]
+
+
+def _resample_with_aggregate_function(
+    df: pd.DataFrame,
+    rule: str,
+    cols: List[str],
+    agg_func: str,
+    agg_func_kwargs: KWARGS,
+) -> pd.DataFrame:
+    """
+    Resample columns `cols` of `df` using the passed parameters.
+    """
+    dbg.dassert(not df.empty)
+    dbg.dassert_isinstance(cols, list)
+    dbg.dassert(cols, msg="`cols` must be nonempty.")
+    dbg.dassert_is_subset(cols, df.columns)
+    resampler = csigna.resample(df[cols], rule=rule)
+    resampled = resampler.agg(agg_func, **agg_func_kwargs)
+    return resampled
+
+
+def _merge(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
+    result_df = df1.merge(df2, how="outer", left_index=True, right_index=True)
+    dbg.dassert(result_df.index.freq)
+    return result_df
+
+
+def resample_time_bars(
+    df: pd.DataFrame,
+    rule: str,
+    *,
+    return_cols: Optional[List[str]] = None,
+    return_agg_func: Optional[str] = None,
+    return_agg_func_kwargs: Optional[KWARGS] = None,
+    price_cols: Optional[List[str]] = None,
+    price_agg_func: Optional[str] = None,
+    price_agg_func_kwargs: Optional[KWARGS] = None,
+    volume_cols: Optional[List[str]] = None,
+    volume_agg_func: Optional[str] = None,
+    volume_agg_func_kwargs: Optional[KWARGS] = None,
+) -> pd.DataFrame:
+    """
+    Convenience resampler for time bars.
+
+    Features:
+    - Respects causality
+    - Chooses sensible defaults:
+      - returns are summed
+      - prices are averaged
+      - volume is summed
+    - NaN intervals remain NaN
+    - Defaults may be overridden (e.g., choose `last` instead of `mean` for
+      price)
+
+    :param df: input dataframe with datetime index
+    :param rule: resampling frequency with pandas convention (e.g., "5T")
+    :param return_cols: columns containing returns
+    :param return_agg_func: aggregation function, default is "sum"
+    :param return_agg_func_kwargs: kwargs
+    :param price_cols: columns containing price
+    :param price_agg_func: aggregation function, default is "mean"
+    :param price_agg_func_kwargs: kwargs
+    :param volume_cols: columns containing volume
+    :param volume_agg_func: aggregation function, default is "sum"
+    :param volume_agg_func_kwargs: kwargs
+    :return: dataframe of resampled time bars with columns from `*_cols` variables,
+        although not in the same order as passed
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    result_df = pd.DataFrame()
+    # Maybe resample returns.
+    # TODO(gp): Consider refactoring this chunk of code in a separate helper
+    #  or merge the common code in _resample_with_aggregate_function().
+    #  The only differences between the 3 resampling of returns, prices, and volume
+    #  is the default value and _kwargs.
+    if return_cols:
+        return_agg_func = return_agg_func or "sum"
+        return_agg_func_kwargs = return_agg_func_kwargs or {"min_count": 1}
+        return_df = _resample_with_aggregate_function(
+            df, rule, return_cols, return_agg_func, return_agg_func_kwargs
+        )
+        result_df = _merge(result_df, return_df)
+    # Maybe resample prices.
+    if price_cols:
+        price_agg_func = price_agg_func or "mean"
+        # TODO(*): Explain the rationale of not using `min_count` for `mean`.
+        price_agg_func_kwargs = price_agg_func_kwargs or {}
+        price_df = _resample_with_aggregate_function(
+            df, rule, price_cols, price_agg_func, price_agg_func_kwargs
+        )
+        result_df = _merge(result_df, price_df)
+    # Maybe resample volume.
+    if volume_cols:
+        volume_agg_func = volume_agg_func or "sum"
+        volume_agg_func_kwargs = volume_agg_func_kwargs or {"min_count": 1}
+        volume_df = _resample_with_aggregate_function(
+            df, rule, volume_cols, volume_agg_func, volume_agg_func_kwargs
+        )
+        result_df = _merge(result_df, volume_df)
+    return result_df
 
 
 def resample_ohlcv_bars(
@@ -151,17 +275,12 @@ def resample_ohlcv_bars(
     :return: resampled OHLCV dataframe with same column names; if
         `add_twap_vwap`, then also includes "twap" and "vwap" columns.
     """
-
-    def _merge(df1, df2):
-        result_df = df1.merge(df2, how="outer", left_index=True, right_index=True)
-        dbg.dassert(result_df.index.freq)
-        return result_df
-
-    #
     dbg.dassert_isinstance(df, pd.DataFrame)
+    # Make sure that requested OHLCV columns are present in the dataframe.
     for col in [open_col, high_col, low_col, close_col, volume_col]:
         if col is not None:
             dbg.dassert_in(col, df.columns)
+    # Process each requested OHLCV column.
     result_df = pd.DataFrame()
     if open_col:
         open_df = resample_time_bars(
@@ -190,15 +309,17 @@ def resample_ohlcv_bars(
         )
         result_df = _merge(result_df, close_df)
     if volume_col:
+        # We rely on the default behavior of accumulating the volume.
         volume_df = resample_time_bars(
-            df[[volume_col]], rule=rule, volume_cols=[volume_col]
+            df[[volume_col]],
+            rule=rule,
+            volume_cols=[volume_col],
         )
         result_df = _merge(result_df, volume_df)
+    # Add TWAP / VWAP prices, if needed.
     if add_twap_vwap:
-        dbg.dassert(close_col)
-        dbg.dassert(volume_col)
-        dbg.dassert_not_in("twap", df.columns)
-        dbg.dassert_not_in("vwap", df.columns)
+        price_col: str
+        volume_col: str
         twap_vwap_df = compute_twap_vwap(
             df, rule=rule, price_col=close_col, volume_col=volume_col
         )
@@ -206,118 +327,35 @@ def resample_ohlcv_bars(
     return result_df
 
 
-def resample_time_bars(
-    df: pd.DataFrame,
-    rule: str,
-    *,
-    return_cols: Optional[list] = None,
-    return_agg_func: Optional[str] = None,
-    return_agg_func_kwargs: Optional[dict] = None,
-    price_cols: Optional[list] = None,
-    price_agg_func: Optional[str] = None,
-    price_agg_func_kwargs: Optional[list] = None,
-    volume_cols: Optional[list] = None,
-    volume_agg_func: Optional[str] = None,
-    volume_agg_func_kwargs: Optional[list] = None,
-) -> pd.DataFrame:
-    """
-    Convenience resampler for time bars.
-
-    Features:
-    - Respects causality
-    - Chooses sensible defaults:
-      - returns are summed
-      - prices are averaged
-      - volume is summed
-    - NaN intervals remain NaN
-    - Defaults may be overidden (e.g., choose `last` instead of `mean` for
-      price)
-
-    :param df: input dataframe with datetime index
-    :param rule: resampling frequency
-    :param return_cols: columns containing returns
-    :param return_agg_func: aggregation function
-    :param return_agg_func_kwargs: kwargs
-    :param price_cols: columns containing price
-    :param price_agg_func: aggregation function
-    :param price_agg_func_kwargs: kwargs
-    :param volume_cols: columns containing volume
-    :param volume_agg_func: aggregation function
-    :param volume_agg_func_kwargs: kwargs
-    :return: dataframe of resampled time bars
-    """
-    dbg.dassert_isinstance(df, pd.DataFrame)
-    # Helper
-    def _resample_financial(df, rule, cols, agg_func, agg_func_kwargs):
-        dbg.dassert(not df.empty)
-        dbg.dassert_isinstance(cols, list)
-        dbg.dassert(cols, msg="`cols` must be nonempty.")
-        dbg.dassert_is_subset(cols, df.columns)
-        resampler = csigna.resample(df[cols], rule=rule)
-        resampled = resampler.agg(agg_func, **agg_func_kwargs)
-        return resampled
-
-    result_df = pd.DataFrame()
-    # Maybe resample returns.
-    if return_cols:
-        return_agg_func = return_agg_func or "sum"
-        return_agg_func_kwargs = return_agg_func_kwargs or {"min_count": 1}
-        return_df = _resample_financial(
-            df, rule, return_cols, return_agg_func, return_agg_func_kwargs
-        )
-        result_df = result_df.merge(
-            return_df, how="outer", left_index=True, right_index=True
-        )
-        dbg.dassert(result_df.index.freq)
-    # Maybe resample prices.
-    if price_cols:
-        price_agg_func = price_agg_func or "mean"
-        price_agg_func_kwargs = price_agg_func_kwargs or {}
-        price_df = _resample_financial(
-            df, rule, price_cols, price_agg_func, price_agg_func_kwargs
-        )
-        result_df = result_df.merge(
-            price_df, how="outer", left_index=True, right_index=True
-        )
-        dbg.dassert(result_df.index.freq)
-    # Maybe resample volume.
-    if volume_cols:
-        volume_agg_func = volume_agg_func or "sum"
-        volume_agg_func_kwargs = volume_agg_func_kwargs or {"min_count": 1}
-        volume_df = _resample_financial(
-            df, rule, volume_cols, volume_agg_func, volume_agg_func_kwargs
-        )
-        result_df = result_df.merge(
-            volume_df, how="outer", left_index=True, right_index=True
-        )
-        dbg.dassert(result_df.index.freq)
-    return result_df
+# #############################################################################
+# Returns calculation and helpers.
+# #############################################################################
 
 
 def compute_twap_vwap(
     df: pd.DataFrame,
     rule: str,
     *,
-    price_col: Any,
-    volume_col: Any,
-) -> pd.Series:
+    price_col: str,
+    volume_col: str,
+) -> pd.DataFrame:
     """
-    Compute VWAP from price and volume.
+    Compute TWAP/VWAP from price and volume columns.
 
     :param df: input dataframe with datetime index
-    :param rule: resampling frequency and vwap aggregation window
+    :param rule: resampling frequency and TWAP/VWAP aggregation window
     :param price_col: price for bar
     :param volume_col: volume for bar
     :return: vwap series
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
     # TODO(*): Determine whether we really need this. Disabling for now to
-    # accommodate data that is not perfectly aligned with a pandas freq
-    # (e.g., Kibot).
+    #  accommodate data that is not perfectly aligned with a pandas freq
+    #  (e.g., Kibot).
     # dbg.dassert(df.index.freq)
     dbg.dassert_in(price_col, df.columns)
-    dbg.dassert_in(volume_col, df.columns)
     price = df[price_col]
+    dbg.dassert_in(volume_col, df.columns)
     volume = df[volume_col]
     # Weight price according to volume.
     volume_weighted_price = price.multiply(volume)
@@ -335,7 +373,9 @@ def compute_twap_vwap(
     twap = csigna.resample(price, rule=rule).mean()
     twap.loc[resampled_volume_weighted_price.isna()] = np.nan
     twap.name = "twap"
-    #
+    # Make sure columns are not overwritten by the new ones.
+    dbg.dassert_not_in(vwap.name, df.columns)
+    dbg.dassert_not_in(twap.name, df.columns)
     return pd.concat([vwap, twap], axis=1)
 
 
@@ -372,7 +412,7 @@ def compute_ret_0_from_multiple_prices(
     return rets
 
 
-# TODO(GPPJ): Add a decorator for handling multi-variate prices as in
+# TODO(*): Add a decorator for handling multi-variate prices as in
 #  https://github.com/.../.../issues/568
 
 
@@ -551,7 +591,8 @@ def compute_kratio(log_rets: pd.Series) -> float:
 
 
 def compute_drawdown(log_rets: pd.Series) -> pd.Series:
-    r"""Calculate drawdown of a time series of log returns.
+    r"""
+    Calculate drawdown of a time series of log returns.
 
     Define the drawdown at index location j to be
         d_j := max_{0 \leq i \leq j} \log(p_i / p_j)

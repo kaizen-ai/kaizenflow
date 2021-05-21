@@ -60,6 +60,7 @@ class NodeInterface(abc.ABC):
     def output_names(self) -> List[str]:
         return self._output_names
 
+    # TODO(gp): Consider using the more common approach with `_check_validity()`.
     @staticmethod
     def _init_validation_helper(items: Optional[List[str]]) -> List[str]:
         """
@@ -67,8 +68,10 @@ class NodeInterface(abc.ABC):
         """
         if items is None:
             return []
+        # Make sure the items are all non-empty strings.
         for item in items:
             dbg.dassert_isinstance(item, str)
+            dbg.dassert_ne(item, "")
         dbg.dassert_no_duplicates(items)
         return items
 
