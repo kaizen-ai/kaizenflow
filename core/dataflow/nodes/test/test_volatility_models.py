@@ -20,6 +20,7 @@ import helpers.printing as hprint
 import helpers.unit_test as hut
 from core.dataflow.nodes.volatility_models import (
     MultiindexVolatilityModel,
+    SingleColumnVolatilityModel,
     SmaModel,
     VolatilityModel,
     VolatilityModulator,
@@ -140,6 +141,85 @@ class TestSmaModel(hut.TestCase):
         vol_sq.name = "vol_sq"
         df = pd.DataFrame(index=date_range, data=vol_sq)
         return df
+
+
+class TestSingleColumnVolatilityModel(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Perform a typical `fit()` call.
+        """
+        # Load test data.
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "col": "ret_0",
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
+        node = SingleColumnVolatilityModel("vol_model", **config.to_dict())
+        df_out = node.fit(data)["df_out"]
+        info = node.get_info("fit")
+        # Package results.
+        act = self._package_results1(config, info, df_out)
+        self.check_string(act)
+
+    def test2(self) -> None:
+        """
+        Perform a typical `predict()` call.
+        """
+        # Load test data.
+        data = self._get_data()
+        # Specify config and create modeling node.
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "col": "ret_0",
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
+        node = SingleColumnVolatilityModel("vol_model", **config.to_dict())
+        node.fit(data.loc[:"2000-02-10"])
+        df_out = node.predict(data.loc[:"2000-02-23"])["df_out"]
+        info = collections.OrderedDict()
+        info["fit"] = node.get_info("fit")
+        info["predict"] = node.get_info("predict")
+        # Package results.
+        act = self._package_results1(config, info, df_out)
+        self.check_string(act)
+
+    @staticmethod
+    def _get_data() -> pd.DataFrame:
+        """
+        Generate "random returns".
+
+        Use lag + noise as predictor.
+        """
+        arma_process = casgen.ArmaProcess([0.45], [0])
+        date_range_kwargs = {"start": "2000-01-01", "periods": 40, "freq": "B"}
+        date_range = pd.date_range(**date_range_kwargs)
+        realization = arma_process.generate_sample(
+            date_range_kwargs=date_range_kwargs, seed=10
+        )
+        realization.name = "ret_0"
+        df = pd.DataFrame(index=date_range, data=realization)
+        return df
+
+    @staticmethod
+    def _package_results1(
+            config: ccfg.Config,
+            info: collections.OrderedDict,
+            df_out: pd.DataFrame,
+    ) -> str:
+        act: List[str] = []
+        act.append(hprint.frame("config"))
+        act.append(str(config))
+        act.append(hprint.frame("info"))
+        act.append(str(ccbuild.get_config_from_nested_dict(info)))
+        act.append(hprint.frame("df_out"))
+        act.append(hut.convert_df_to_string(df_out.round(2), index=True, decimals=2))
+        act = "\n".join(act)
+        return act
 
 
 class TestVolatilityModel(hut.TestCase):
@@ -501,6 +581,27 @@ class TestMultiindexVolatilityModel(hut.TestCase):
         df_out = node.fit(data)["df_out"]
         info = node.get_info("fit")
         # Package results.
+        act = self._package_results1(config, info, df_out)
+        self.check_string(act)
+
+    def test2(self) -> None:
+        """
+        Perform a typical `predict()` call.
+        """
+        # Load test data.
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "in_col_group": ("ret_0",),
+                "steps_ahead": 2,
+                "nan_mode": "drop",
+            }
+        )
+        node = MultiindexVolatilityModel("vol_model", **config.to_dict())
+        node.fit(data.loc[:"2000-01-31"])["df_out"]
+        # Package results.
+        df_out = node.predict(data)["df_out"]
+        info = node.get_info("predict")
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
