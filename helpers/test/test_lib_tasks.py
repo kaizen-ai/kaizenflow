@@ -201,9 +201,7 @@ class TestDryRunTasks2(_TestClassHandlingLibTasksSingleton):
 
     def test_gh_create_pr2(self) -> None:
         _gh_login()
-        target = (
-            "gh_create_pr(ctx, body='hello_world', repo='amp', title='test')"
-        )
+        target = "gh_create_pr(ctx, body='hello_world', repo='amp', title='test')"
         self._check_output(target)
 
     def test_gh_create_pr3(self) -> None:

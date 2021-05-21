@@ -2,7 +2,7 @@ import collections
 import logging
 import os
 import pprint
-from typing import Any, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -1130,8 +1130,8 @@ class TestProcessNonfinite1(hut.TestCase):
 
 class Test_compute_rolling_annualized_sharpe_ratio(hut.TestCase):
     def test1(self) -> None:
-        ar_params : List[float] = []
-        ma_params : List[float] = []
+        ar_params: List[float] = []
+        ma_params: List[float] = []
         arma_process = cartif.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},

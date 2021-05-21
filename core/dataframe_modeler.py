@@ -242,11 +242,10 @@ class DataFrameModeler:
         """
         Apply an unsupervised model and residualize.
         """
+        # TODO(*): the linter reports that the call to this class is incorrect.
         model = cdataf.Residualizer(
             nid="sklearn_residualizer",
             model_func=model_func,
-            # TODO(*): the linter reports that this param doesn't exist in the
-            # class.
             x_vars=x_vars,
             model_kwargs=model_kwargs,
             nan_mode=nan_mode,
@@ -488,7 +487,7 @@ class DataFrameModeler:
             _LOG.warning(
                 "`oos_start` dates are different.\n"
                 + "`oos_start` for merged `DataFrameModelers` was set to %s",
-                self.oos_start
+                self.oos_start,
             )
         info = collections.OrderedDict(
             {"info": cdataf.get_df_info_as_string(df_merged)}
