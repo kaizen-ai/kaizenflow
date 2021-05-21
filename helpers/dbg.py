@@ -500,28 +500,51 @@ def dassert_not_exists(
 
 
 def dassert_file_extension(
-    file_name: str, exp_exts: Union[str, List[str]]
+    file_name: str, extensions: Union[str, List[str]]
 ) -> None:
+    """
+    Ensure that file has one of the given extensions.
+
+    :param extensions: don't need to start with `.`, e.g., use `csv` instead of
+        `.csv`
+    """
     # Handle single extension case.
-    if isinstance(exp_exts, str):
-        exp_exts = [exp_exts]
+    if isinstance(extensions, str):
+        extensions = [extensions]
     # Make sure extension starts with .
-    exp_exts = ["." + e if not e.startswith(".") else e for e in exp_exts]
+    extensions = [f".{e}" if not e.startswith(".") else e for e in extensions]
     # Check.
     act_ext = os.path.splitext(file_name)[-1].lower()
     dassert_in(
-        act_ext, exp_exts, "Invalid extension %s for %s", act_ext, file_name
+        act_ext, extensions, "Invalid extension '%s' for file '%s'", act_ext,
+        file_name
     )
 
 
 # Pandas related.
 
+# TODO(gp): Consider moving these to `dbg_pandas.py` and avoid the implicit
+#  dependency from pandas.
+
+
+def dassert_index_is_datetime(obj: "pd.DataFrame",
+    msg: Optional[str] = None, *args: Any) -> None:
+    """
+    Ensure that the dataframe has an index containing datetimes.
+    """
+    import pandas as pd
+
+    # TODO(gp): Add support also for series.
+    dassert_isinstance(obj, pd.DataFrame, msg=msg, *args)
+    dassert_isinstance(df.index, pd.DatetimeIndex, msg=msg, *args)
+
 
 def dassert_strictly_increasing_index(
-    obj: Any, msg: Optional[str] = None, *args: Any
+    obj: Union["pd.Index", "pd.DataFrame", "pd.Series"], msg: Optional[str] = None, *args: Any
 ) -> None:
-    # For some reason importing pandas is slow and we don't want to pay this
-    # start up cost unless we have to.
+    """
+    Ensure that the dataframe has a strictly increasing index.
+    """
     import pandas as pd
 
     if isinstance(obj, pd.Index):
@@ -537,6 +560,9 @@ def dassert_strictly_increasing_index(
 def dassert_monotonic_index(
     obj: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
+    """
+    Ensure that the dataframe has a strictly increasing or decreasing index.
+    """
     # For some reason importing pandas is slow and we don't want to pay this
     # start up cost unless we have to.
     import pandas as pd

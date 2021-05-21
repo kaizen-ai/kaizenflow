@@ -1239,22 +1239,52 @@ class Test_get_swt(hut.TestCase):
 
 class Test_resample_srs(hut.TestCase):
 
+    # TODO(gp): Replace `check_string()` with `assert_equal()` to tests that benefit
+    #  from seeing / freezing the results, using a command like:
+    # ```
+    # > invoke find_check_string_output -c Test_resample_srs -m test_day_to_year1
+    # ```
+
     # Converting days to other units.
     def test_day_to_year1(self) -> None:
         """
         Test freq="D", unit="Y".
         """
         series = self._get_series(seed=1, periods=9, freq="D")
+        rule = "Y"
         actual_default = (
-            csigna.resample(series, rule="Y").sum().rename("Output in freq='Y'")
+            csigna.resample(series, rule=rule).sum().rename(f"Output in freq='{rule}'")
         )
         actual_closed_left = (
-            csigna.resample(series, rule="Y", closed="left")
+            csigna.resample(series, rule=rule, closed="left")
             .sum()
-            .rename("Output in freq='Y'")
+            .rename(f"Output in freq='{rule}'")
         )
-        txt = self._get_output_txt(series, actual_default, actual_closed_left)
-        self.check_string(txt)
+        act = self._get_output_txt(series, actual_default, actual_closed_left)
+        exp = r"""
+        Input:
+                    Input in freq='D'
+        2014-12-26           0.162435
+        2014-12-27           0.263693
+        2014-12-28           0.149701
+        2014-12-29          -0.010413
+        2014-12-30          -0.031170
+        2014-12-31          -0.174783
+        2015-01-01          -0.230455
+        2015-01-02          -0.132095
+        2015-01-03          -0.176312
+
+        Output with default arguments:
+                    Output in freq='Y'
+        2014-12-31            0.359463
+        2015-12-31           -0.538862
+
+        Output with closed='left':
+                    Output in freq='Y'
+        2014-12-31            0.534246
+        2015-12-31           -0.713644
+        """.lstrip().rstrip()
+        self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_day_to_month1(self) -> None:
         """

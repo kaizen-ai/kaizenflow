@@ -197,6 +197,14 @@ class Test_git_path1(hut.TestCase):
 
 
 class Test_git_modified_files1(hut.TestCase):
+
+    def setUp(self) -> None:
+        """
+        All these tests need a reference to Git master branch.
+        """
+        super().setUp()
+        git.fetch_origin_master_if_needed()
+
     def test_get_modified_files1(self) -> None:
         func_call = "git.get_modified_files()"
         _execute_func_call(func_call)
@@ -206,16 +214,10 @@ class Test_git_modified_files1(hut.TestCase):
         _execute_func_call(func_call)
 
     def test_get_modified_files_in_branch1(self) -> None:
-        # This test needs a reference to Git master branch.
-        git.fetch_origin_master_if_needed()
-        #
         func_call = "git.get_modified_files_in_branch('master')"
         _execute_func_call(func_call)
 
     def test_get_summary_files_in_branch1(self) -> None:
-        # This test needs a reference to Git master branch.
-        git.fetch_origin_master_if_needed()
-        #
         func_call = "git.get_summary_files_in_branch('master')"
         _execute_func_call(func_call)
 

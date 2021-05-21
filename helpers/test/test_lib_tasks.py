@@ -32,7 +32,11 @@ def _get_default_params() -> Dict[str, str]:
     return default_params
 
 
-class _TestClassHelper(hut.TestCase):
+class _TestClassHandlingLibTasksSingleton(hut.TestCase):
+    """
+    Test class injecting default parameters in the `lib_tasks` singleton on `setUp`
+    and cleaning up the singleton on `tearDown`.
+    """
     def setUp(self) -> None:
         super().setUp()
         params = _get_default_params()
@@ -139,7 +143,7 @@ class TestDryRunTasks1(hut.TestCase):
 # #############################################################################
 
 
-class TestDryRunTasks2(_TestClassHelper):
+class TestDryRunTasks2(_TestClassHandlingLibTasksSingleton):
     """
     - Call the invoke task directly from Python
     - `check_string()` that the sequence of commands issued by the target is the
@@ -404,7 +408,7 @@ class TestLibTasksRemoveSpaces1(hut.TestCase):
 # #############################################################################
 
 
-class TestLibTasksGetDockerCmd1(_TestClassHelper):
+class TestLibTasksGetDockerCmd1(_TestClassHandlingLibTasksSingleton):
     """
     Test `_get_docker_cmd()`.
     """
