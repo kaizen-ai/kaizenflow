@@ -1009,13 +1009,13 @@ pylint...................................................................
         exp = r"""
 core/dataflow/nodes.py:601:9:[flake8] F821 undefined name '_check_col_names'
 core/dataflow/nodes.py:608:9:[flake8] F821 undefined name '_check_col_names'
+core/finance.py:250:5:[flake8] E301 expected 1 blank line, found 0
+helpers/lib_tasks.py:2184:9:[flake8] F541 f-string is missing placeholders
 helpers/lib_tasks.py:302:12:[flake8] W605 invalid escape sequence '\g'
 helpers/lib_tasks.py:309:27:[flake8] W605 invalid escape sequence '\s'
 helpers/lib_tasks.py:309:31:[flake8] W605 invalid escape sequence '\S'
 helpers/lib_tasks.py:309:35:[flake8] W605 invalid escape sequence '\('
-helpers/lib_tasks.py:2184:9:[flake8] F541 f-string is missing placeholders
 helpers/test/test_dbg.py:71:25:[flake8] F821 undefined name 'y'
-core/finance.py:250:5:[flake8] E301 expected 1 blank line, found 0
 helpers/test/test_lib_tasks.py:225:5:[flake8] F811 redefinition of unused 'test_git_clean' from line 158
 """
         # pylint: enable=line-too-long
@@ -1077,10 +1077,10 @@ core/dataflow/builders.py:195: note: This violates the Liskov substitution princ
         # pylint: disable=line-too-long
         exp = r"""
 core/dataflow/builders.py:104:[pylint] [R1711(useless-return), DagBuilder.get_column_to_tags_mapping] Useless return at end of function or method
-core/dataflow/builders.py:195:[pylint] [W0221(arguments-differ), ArmaReturnsBuilder.get_dag] Parameters differ from overridden 'get_dag' method
 core/dataflow/builders.py:125:[mypy] error: Returning Any from function declared to return "str"  [no-any-return]
 core/dataflow/builders.py:195:[mypy] error: Argument 2 of "get_dag" is incompatible with supertype "DagBuilder"; supertype defines the argument type as "Optional[Any]"  [override]
 core/dataflow/builders.py:195:[mypy] note: This violates the Liskov substitution principle
+core/dataflow/builders.py:195:[pylint] [W0221(arguments-differ), ArmaReturnsBuilder.get_dag] Parameters differ from overridden 'get_dag' method
 """
         # pylint: enable=line-too-long
         self.assert_equal(act, exp, fuzzy_match=True)

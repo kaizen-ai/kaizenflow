@@ -429,12 +429,14 @@ def dassert_array_has_same_type_element(
         _dfatal(txt, msg, *args)
 
 
+# TODO(gp): -> is_list_of_strings
 def dassert_list_of_strings(
-    output: List[str], msg: Optional[str] = None, *args: Any
+    list_: List[str], msg: Optional[str] = None, *args: Any
 ) -> None:
-    dassert_isinstance(output, list, msg=msg, *args)
-    for line in output:
-        dassert_isinstance(line, str, msg=msg, *args)
+    # TODO(gp): Allow iterable?
+    dassert_isinstance(list_, list, msg=msg, *args)
+    for elem in list_:
+        dassert_isinstance(elem, str, msg=msg, *args)
 
 
 # File related.
@@ -565,6 +567,9 @@ def dassert_strictly_increasing_index(
     dassert(index.is_unique, msg=msg, *args)  # type: ignore
 
 
+# TODO(gp): Factor out common code related to extracting the index from several
+#  pandas data structures.
+# TODO(gp): Not sure it's used or useful?
 def dassert_monotonic_index(
     obj: Union["pandas.Index", "pandas.DataFrame", "pandas.Series"],
     msg: Optional[str] = None,
