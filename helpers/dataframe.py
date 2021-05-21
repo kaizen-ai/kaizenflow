@@ -1,8 +1,12 @@
 """
+Helper functions for processing pandas dataframes.
+
 Import as:
 
 import helpers.dataframe as hdataf
 """
+
+# TODO(gp): Consider merging with `core/pandas_helpers.py`.
 
 import collections
 import functools
