@@ -1,3 +1,5 @@
+import datetime
+import io
 import logging
 
 import numpy as np
@@ -10,6 +12,52 @@ import helpers.printing as prnt
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
+
+
+class Test_set_non_ath_to_nan1(hut.TestCase):
+
+    def test1(self) -> None:
+        """
+        Test for active trading hours in [9:30, 16:00].
+        """
+        df = self._get_df()
+        start_time = datetime.time(9, 30)
+        end_time = datetime.time(16, 0)
+        act = fin.set_non_ath_to_nan(df, start_time, end_time)
+        exp = """
+                              open   high    low  close        vol
+        datetime
+        2016-01-05 09:28:00    NaN    NaN    NaN    NaN        NaN
+        2016-01-05 09:29:00    NaN    NaN    NaN    NaN        NaN
+        2016-01-05 09:30:00    NaN    NaN    NaN    NaN        NaN
+        2016-01-05 09:31:00  98.01  98.19  98.00  98.00   172584.0
+        2016-01-05 09:32:00  97.99  98.04  97.77  97.77   189058.0
+        2016-01-05 15:58:00  95.31  95.32  95.22  95.27   456235.0
+        2016-01-05 15:59:00  95.28  95.36  95.22  95.32   729315.0
+        2016-01-05 16:00:00  95.32  95.40  95.32  95.40  3255752.0
+        2016-01-05 16:01:00    NaN    NaN    NaN    NaN        NaN
+        2016-01-05 16:02:00    NaN    NaN    NaN    NaN        NaN
+        """
+        self.assert_equal(str(act), exp, fuzzy_match=True)
+
+    @staticmethod
+    def _get_df() -> str:
+        # From `s3://alphamatic-data/data/kibot/all_stocks_1min/AAPL.csv.gz`.
+        txt = """
+datetime,open,high,low,close,vol
+2016-01-05 09:28:00,98.0,98.05,97.99,98.05,2241
+2016-01-05 09:29:00,98.04,98.13,97.97,98.13,14174
+2016-01-05 09:30:00,98.14,98.24,97.79,98.01,751857
+2016-01-05 09:31:00,98.01,98.19,98.0,98.0,172584
+2016-01-05 09:32:00,97.99,98.04,97.77,97.77,189058
+2016-01-05 15:58:00,95.31,95.32,95.22,95.27,456235
+2016-01-05 15:59:00,95.28,95.36,95.22,95.32,729315
+2016-01-05 16:00:00,95.32,95.4,95.32,95.4,3255752
+2016-01-05 16:01:00,95.4,95.42,95.4,95.42,4635
+2016-01-05 16:02:00,95.41,95.41,95.37,95.4,3926
+"""
+        df = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        return df
 
 
 class Test_set_weekends_to_nan(hut.TestCase):
@@ -38,6 +86,185 @@ class Test_set_weekends_to_nan(hut.TestCase):
         actual = fin.set_weekends_to_nan(df)
         actual_string = hut.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
+
+
+class Test_resample_time_bars1(hut.TestCase):
+
+    def test1(self) -> None:
+        """
+        Resampling with the same frequency of the data should not change
+        anything.
+        """
+        df = self._get_df()
+        #
+        rule = "1T"
+        df_out = self._resample_helper(df, rule)
+        # Check output.
+        act = self._compute_actual_output(df, df_out)
+        exp = """
+        df
+                             close      vol     ret_0
+        datetime
+        2016-01-04 09:30:00  94.70  1867590       NaN
+        2016-01-04 09:31:00  94.98   349119  0.002957
+        2016-01-04 09:32:00  95.33   419479  0.003685
+        2016-01-04 09:33:00  95.03   307383 -0.003147
+        2016-01-04 09:34:00  94.89   342218 -0.001473
+        2016-01-04 09:35:00  94.97   358280  0.000843
+        2016-01-04 09:36:00  95.21   266199  0.002527
+        2016-01-04 09:37:00  95.48   293074  0.002836
+        2016-01-04 09:38:00  95.95   581584  0.004922
+        2016-01-04 09:39:00  96.07   554872  0.001251
+        df_out
+                                        ret_0  close      vol
+        datetime
+        2016-01-04 09:30:00       NaN  94.70  1867590
+        2016-01-04 09:31:00  0.002957  94.98   349119
+        2016-01-04 09:32:00  0.003685  95.33   419479
+        2016-01-04 09:33:00 -0.003147  95.03   307383
+        2016-01-04 09:34:00 -0.001473  94.89   342218
+        2016-01-04 09:35:00  0.000843  94.97   358280
+        2016-01-04 09:36:00  0.002527  95.21   266199
+        2016-01-04 09:37:00  0.002836  95.48   293074
+        2016-01-04 09:38:00  0.004922  95.95   581584
+        2016-01-04 09:39:00  0.001251  96.07   554872
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test2(self) -> None:
+        """
+        Resample data with 1 min resolution with 5 mins intervals.
+        """
+        df = self._get_df()
+        #
+        rule = "5T"
+        df_out = self._resample_helper(df, rule)
+        # Check output.
+        act = self._compute_actual_output(df, df_out)
+        exp = """
+        df
+                             close      vol     ret_0
+        datetime
+        2016-01-04 09:30:00  94.70  1867590       NaN
+        2016-01-04 09:31:00  94.98   349119  0.002957
+        2016-01-04 09:32:00  95.33   419479  0.003685
+        2016-01-04 09:33:00  95.03   307383 -0.003147
+        2016-01-04 09:34:00  94.89   342218 -0.001473
+        2016-01-04 09:35:00  94.97   358280  0.000843
+        2016-01-04 09:36:00  95.21   266199  0.002527
+        2016-01-04 09:37:00  95.48   293074  0.002836
+        2016-01-04 09:38:00  95.95   581584  0.004922
+        2016-01-04 09:39:00  96.07   554872  0.001251
+        df_out
+                                ret_0    close      vol
+        datetime
+        2016-01-04 09:30:00       NaN  94.7000  1867590
+        2016-01-04 09:35:00  0.002865  95.0400  1776479
+        2016-01-04 09:40:00  0.011536  95.6775  1695729"""
+        self.assert_equal(act, exp, fuzzy_match=True)
+        # Check manually certain values for the returns.
+        self.assertTrue(np.isnan(df.loc["2016-01-04 09:30:00", "ret_0"]))
+        np.testing.assert_almost_equal(
+            df.loc["2016-01-04 09:31:00", "ret_0"],
+            (94.98 - 94.70) / 94.70,
+            decimal=6,
+        )
+        np.testing.assert_almost_equal(
+            df.loc["2016-01-04 09:39:00", "ret_0"],
+            (96.07 - 95.95) / 95.95,
+            decimal=6,
+        )
+        # The resampling is (a, b] with the label on b.
+        # The first interval corresponds to (9:30, 9:30] and is timestamped with
+        # 9:30am. The values are the same as the first row of the input.
+        timestamp = "2016-01-04 09:30:00"
+        for col in df.columns:
+            np.testing.assert_almost_equal(
+                df_out.loc[timestamp, col], df.loc[timestamp, col]
+            )
+        # The second interval corresponds to (9:30, 9:35] and is timestamped with
+        # 9:35am.
+        timestamp = "2016-01-04 09:35:00"
+        np.testing.assert_almost_equal(
+            df_out.loc[timestamp, "close"],
+            np.mean([94.98, 95.33, 95.03, 94.89, 94.97]),
+        )
+        np.testing.assert_almost_equal(
+            df_out.loc[timestamp, "vol"],
+            np.sum([349119, 419479, 307383, 342218, 358280]),
+        )
+        np.testing.assert_almost_equal(
+            df_out.loc[timestamp, "ret_0"],
+            np.sum([0.002957, 0.003685, -0.003147, -0.001473, 0.000843]),
+        )
+        # The last interval corresponds to (9:35, 9:40] and is timestamped with 9:40am.
+        # Note that the last timestamp (i.e., 9:40am) is missing so the average is
+        # on 4 values and not 1.
+        timestamp = "2016-01-04 09:40:00"
+        np.testing.assert_almost_equal(
+            df_out.loc[timestamp, "close"], np.mean([95.21, 95.48, 95.95, 96.07])
+        )
+        np.testing.assert_almost_equal(
+            df_out.loc[timestamp, "vol"], np.sum([266199, 293074, 581584, 554872])
+        )
+        np.testing.assert_almost_equal(
+            df_out.loc[timestamp, "ret_0"],
+            np.sum([0.002527, 0.002836, 0.004922, 0.001251]),
+        )
+    @staticmethod
+    def _get_df() -> str:
+        # From `s3://alphamatic-data/data/kibot/all_stocks_1min/AAPL.csv.gz`.
+        txt = """
+datetime,close,vol,ret_0
+2016-01-04 09:30:00,94.7,1867590,NaN
+2016-01-04 09:31:00,94.98,349119,0.002957
+2016-01-04 09:32:00,95.33,419479,0.003685
+2016-01-04 09:33:00,95.03,307383,-0.003147
+2016-01-04 09:34:00,94.89,342218,-0.001473
+2016-01-04 09:35:00,94.97,358280,0.000843
+2016-01-04 09:36:00,95.21,266199,0.002527
+2016-01-04 09:37:00,95.48,293074,0.002836
+2016-01-04 09:38:00,95.95,581584,0.004922
+2016-01-04 09:39:00,96.07,554872,0.001251
+"""
+        df = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        return df
+
+    @staticmethod
+    def _resample_helper(df: pd.DataFrame, rule: str) -> pd.DataFrame:
+        return_cols = ["ret_0"]
+        return_agg_func = None
+        return_agg_func_kwargs = None
+        #
+        price_cols = ["close"]
+        price_agg_func = None
+        price_agg_func_kwargs = None
+        #
+        volume_cols = ["vol"]
+        volume_agg_func = None
+        volume_agg_func_kwargs = None
+        df_out = fin.resample_time_bars(
+            df,
+            rule,
+            return_cols=return_cols,
+            return_agg_func=return_agg_func,
+            return_agg_func_kwargs=return_agg_func_kwargs,
+            price_cols=price_cols,
+            price_agg_func=price_agg_func,
+            price_agg_func_kwargs=price_agg_func_kwargs,
+            volume_cols=volume_cols,
+            volume_agg_func=volume_agg_func,
+            volume_agg_func_kwargs=volume_agg_func_kwargs,
+        )
+        return df_out
+
+    @staticmethod
+    def _compute_actual_output(df: pd.DataFrame, df_out: pd.DataFrame) -> str:
+        act = []
+        act.append(hut.convert_df_to_string(df, index=True, title="df"))
+        act.append(hut.convert_df_to_string(df_out, index=True, title="df_out"))
+        act = "\n".join(act)
+        return act
 
 
 class Test_compute_inverse_volatility_weights(hut.TestCase):

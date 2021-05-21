@@ -1533,7 +1533,7 @@ def get_dyadic_zscored(
 
 def resample(
     data: Union[pd.Series, pd.DataFrame],
-    **resample_kwargs: Any,
+    **resample_kwargs: Dict[str, Any],
 ) -> Union[pd.Series, pd.DataFrame]:
     """
     Execute series resampling with specified `.resample()` arguments.
@@ -1551,6 +1551,8 @@ def resample(
     :return: DatetimeIndexResampler object
     """
     dbg.dassert_in("rule", resample_kwargs, "Argument 'rule' must be specified")
+    # Unless specified by the user, the resampling intervals are intended as
+    # (a, b] with label on the right.
     if "closed" not in resample_kwargs:
         resample_kwargs["closed"] = "right"
     if "label" not in resample_kwargs:
