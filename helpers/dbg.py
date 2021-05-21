@@ -429,7 +429,9 @@ def dassert_array_has_same_type_element(
         _dfatal(txt, msg, *args)
 
 
-def dassert_list_of_strings(output: List[str], msg: Optional[str] = None, *args: Any) -> None:
+def dassert_list_of_strings(
+    output: List[str], msg: Optional[str] = None, *args: Any
+) -> None:
     dassert_isinstance(output, list, msg=msg, *args)
     for line in output:
         dassert_isinstance(line, str, msg=msg, *args)
