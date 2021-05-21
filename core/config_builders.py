@@ -32,6 +32,7 @@ import helpers.pickle_ as hpickle
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): -> get_config_from_flattened_config ?
 def get_config_from_flattened(flattened: Dict[Tuple[str], Any]) -> cfg.Config:
     """
     Build a config from the flattened config representation.

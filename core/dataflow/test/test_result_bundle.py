@@ -14,13 +14,44 @@ _LOG = logging.getLogger(__name__)
 class TestResultBundle(hut.TestCase):
     def test_to_config1(self) -> None:
         init_config = self._get_init_config()
+        # Initialize a `ResultBundle` using params from `init_config`.
         rb = dtf.ResultBundle(**init_config.to_dict())
+        # Check.
         actual_config = rb.to_config(commit_hash=False)
-        self.check_string(f"config without 'commit_hash' field:\n{actual_config}")
+        act = f"config without 'commit_hash' field:\n{actual_config}"
+        exp = r"""
+config without 'commit_hash' field:
+config: OrderedDict([('key', 'val')])
+result_nid: leaf_node
+method: fit
+result_df:    col0  col1  col2  col3  col4
+0     0     1     2     3     4
+column_to_tags: {'col0': ['feature_col'], 'col1': ['target_col', 'step_0'], 'col2': ['target_col', 'step_1'], 'col3': ['prediction_col', 'step_0'], 'col4': ['prediction_col', 'step_1']}
+info:
+  df_info: <class 'pandas.core.frame.DataFrame'>
+  RangeIndex: 1 entries, 0 to 0
+  Data columns (total 5 columns):
+   #   Column  Non-Null Count  Dtype
+  ---  ------  --------------  -----
+   0   col0    1 non-null      int64
+   1   col1    1 non-null      int64
+   2   col2    1 non-null      int64
+   3   col3    1 non-null      int64
+   4   col4    1 non-null      int64
+  dtypes: int64(5)
+payload: None
+class: ResultBundle
+        """.lstrip().rstrip()
+        self.assert_equal(act, exp)
 
     def test_from_config1(self) -> None:
+        """
+        Initialize a `ResultBundle` from a config.
+        """
         init_config = self._get_init_config()
+        # Initialize a `ResultBundle` from a config.
         rb = dtf.ResultBundle.from_config(init_config)
+        # Check.
         actual_config = rb.to_config(commit_hash=False)
         self.check_string(f"config without 'commit_hash' field:\n{actual_config}")
 
@@ -40,6 +71,7 @@ class TestResultBundle(hut.TestCase):
 
     @staticmethod
     def _get_init_config() -> cfg.Config:
+        # TODO(gp): Factor out common part.
         init_config = cfg.Config()
         init_config["config"] = cfgb.get_config_from_nested_dict({"key": "val"})
         init_config["result_nid"] = "leaf_node"

@@ -24,13 +24,17 @@ _LOG = logging.getLogger(__name__)
 class Config:
     """
     A hierarchical ordered dictionary storing configuration information.
+
+    Keys can only be strings. Values can be strings, ints, or another
+    `Config`.
     """
 
     def __init__(
         self,
+        # TODO(gp): Difficult to read and type hints are loose: try to improve.
         array: Union[
-            List[Tuple[str, Union[List[int], str]]],
             List[Tuple[str, Union[int, str]]],
+            List[Tuple[str, Union[List[int], str]]],
             None,
         ] = None,
     ) -> None:

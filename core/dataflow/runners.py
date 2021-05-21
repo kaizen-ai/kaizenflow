@@ -21,25 +21,32 @@ class FitPredictDagRunner:
 
     def __init__(self, config: cconfi.Config, dag_builder: DagBuilder) -> None:
         """
-        Initialize DAG.
 
         :param config: config for DAG
         :param dag_builder: `DagBuilder` instance
         """
+        # Save input parameters.
         self.config = config
         self._dag_builder = dag_builder
         # Create DAG using DAG builder.
         self.dag = self._dag_builder.get_dag(self.config)
+        _LOG.info("dag=%s", self.dag)
         self._methods = self._dag_builder.methods
+        _LOG.info("_methods=%s", self._methods)
         self._column_to_tags_mapping = (
             self._dag_builder.get_column_to_tags_mapping(self.config)
         )
+        _LOG.info("_column_to_tags_mapping=%s", self._column_to_tags_mapping)
         # Confirm that "fit" and "predict" are registered DAG methods.
+        # TODO(gp): Factor this out.
         dbg.dassert_in("fit", self._methods)
         dbg.dassert_in("predict", self._methods)
+        # Save the sink node.
+        # TODO(gp): Factor this out.
         result_nids = self.dag.get_sinks()
         dbg.dassert_eq(len(result_nids), 1)
         self._result_nid = result_nids[0]
+        _LOG.info("_result_nid=%s", self._result_nid)
 
     def set_fit_intervals(
         self, intervals: Optional[List[Tuple[Any, Any]]]

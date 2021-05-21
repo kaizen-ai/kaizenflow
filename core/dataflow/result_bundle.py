@@ -63,6 +63,8 @@ class ResultBundle(abc.ABC):
 
     @property
     def result_df(self) -> pd.DataFrame:
+        # TODO(gp): Ok to copy but we will make a copy at every access. Maybe we
+        #  can make a single copy and use only that.
         return self._result_df.copy()
 
     @property
@@ -72,6 +74,7 @@ class ResultBundle(abc.ABC):
     @property
     def tag_to_columns(self) -> Optional[Dict[Any, List[Any]]]:
         if self._column_to_tags is not None:
+            # TODO(gp): Cache it or compute it the first time.
             tag_to_columns: Dict[Any, List[Any]] = {}
             for column, tags in self._column_to_tags.items():
                 for tag in tags:
@@ -135,6 +138,7 @@ class ResultBundle(abc.ABC):
     def get_columns_for_tag(self, tag: Any) -> Optional[List[Any]]:
         return ResultBundle._search_mapping(tag, self.tag_to_columns)
 
+    # TODO(gp): value -> key?
     @staticmethod
     def _search_mapping(
         value: Any, mapping: Optional[Dict[Any, List[Any]]]
@@ -142,7 +146,8 @@ class ResultBundle(abc.ABC):
         """
         Look for a key `value` in the dictionary `mapping`.
 
-        Return the corresponding value or `None` if the key does not exist.
+        Return the corresponding value or `None` if the key does not
+        exist.
         """
         if mapping is None:
             _LOG.warning("No mapping provided.")
