@@ -1130,8 +1130,8 @@ class TestProcessNonfinite1(hut.TestCase):
 
 class Test_compute_rolling_annualized_sharpe_ratio(hut.TestCase):
     def test1(self) -> None:
-        ar_params = []
-        ma_params = []
+        ar_params : List[float] = []
+        ma_params : List[float] = []
         arma_process = cartif.ArmaProcess(ar_params, ma_params)
         realization = arma_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"},
@@ -1253,7 +1253,9 @@ class Test_resample_srs(hut.TestCase):
         series = self._get_series(seed=1, periods=9, freq="D")
         rule = "Y"
         actual_default = (
-            csigna.resample(series, rule=rule).sum().rename(f"Output in freq='{rule}'")
+            csigna.resample(series, rule=rule)
+            .sum()
+            .rename(f"Output in freq='{rule}'")
         )
         actual_closed_left = (
             csigna.resample(series, rule=rule, closed="left")

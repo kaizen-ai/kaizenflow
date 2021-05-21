@@ -197,7 +197,6 @@ class Test_git_path1(hut.TestCase):
 
 
 class Test_git_modified_files1(hut.TestCase):
-
     def setUp(self) -> None:
         """
         All these tests need a reference to Git master branch.

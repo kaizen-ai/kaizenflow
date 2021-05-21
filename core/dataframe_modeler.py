@@ -487,8 +487,8 @@ class DataFrameModeler:
         if self.oos_start != dfm.oos_start:
             _LOG.warning(
                 "`oos_start` dates are different.\n"
-                + "`oos_start` for merged `DataFrameModelers` was set to "
-                + f"{self.oos_start}."
+                + "`oos_start` for merged `DataFrameModelers` was set to %s",
+                self.oos_start
             )
         info = collections.OrderedDict(
             {"info": cdataf.get_df_info_as_string(df_merged)}
