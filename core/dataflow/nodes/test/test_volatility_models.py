@@ -4,7 +4,6 @@ from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
-
 import pytest
 
 import core.artificial_signal_generators as sig_gen
@@ -207,9 +206,9 @@ class TestSingleColumnVolatilityModel(hut.TestCase):
 
     @staticmethod
     def _package_results1(
-            config: ccfg.Config,
-            info: collections.OrderedDict,
-            df_out: pd.DataFrame,
+        config: ccfg.Config,
+        info: collections.OrderedDict,
+        df_out: pd.DataFrame,
     ) -> str:
         act: List[str] = []
         act.append(hprint.frame("config"))
@@ -217,7 +216,9 @@ class TestSingleColumnVolatilityModel(hut.TestCase):
         act.append(hprint.frame("info"))
         act.append(str(ccbuild.get_config_from_nested_dict(info)))
         act.append(hprint.frame("df_out"))
-        act.append(hut.convert_df_to_string(df_out.round(2), index=True, decimals=2))
+        act.append(
+            hut.convert_df_to_string(df_out.round(2), index=True, decimals=2)
+        )
         act = "\n".join(act)
         return act
 
@@ -607,9 +608,9 @@ class TestMultiindexVolatilityModel(hut.TestCase):
 
     @staticmethod
     def _package_results1(
-            config: ccfg.Config,
-            info: collections.OrderedDict,
-            df_out: pd.DataFrame,
+        config: ccfg.Config,
+        info: collections.OrderedDict,
+        df_out: pd.DataFrame,
     ) -> str:
         act: List[str] = []
         act.append(hprint.frame("config"))
@@ -617,7 +618,9 @@ class TestMultiindexVolatilityModel(hut.TestCase):
         act.append(hprint.frame("info"))
         act.append(str(ccbuild.get_config_from_nested_dict(info)))
         act.append(hprint.frame("df_out"))
-        act.append(hut.convert_df_to_string(df_out.round(2), index=True, decimals=2))
+        act.append(
+            hut.convert_df_to_string(df_out.round(2), index=True, decimals=2)
+        )
         act = "\n".join(act)
         return act
 
@@ -636,6 +639,7 @@ class TestMultiindexVolatilityModel(hut.TestCase):
         )
         data = pd.concat([realization, volume], axis=1, keys=["ret_0", "volume"])
         return data
+
 
 class TestVolatilityModulator(hut.TestCase):
     def test_modulate1(self) -> None:

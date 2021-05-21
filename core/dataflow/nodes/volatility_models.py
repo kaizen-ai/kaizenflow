@@ -1,4 +1,3 @@
-import abc
 import collections
 import datetime
 import logging
@@ -17,7 +16,13 @@ import core.signal_processing as csigna
 import core.statistics as cstati
 import helpers.dbg as dbg
 from core.dataflow.core import DAG, Node
-from core.dataflow.nodes.base import FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin, MultiColModeMixin
+from core.dataflow.nodes.base import (
+    ColModeMixin,
+    FitPredictNode,
+    MultiColModeMixin,
+    RegFreqMixin,
+    ToListMixin,
+)
 from core.dataflow.nodes.sources import ReadDataFromDf
 from core.dataflow.nodes.transformers import ColumnTransformer
 from core.dataflow.utils import get_df_info_as_string
@@ -271,14 +276,14 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
 
 class SingleColumnVolatilityModel(FitPredictNode):
     def __init__(
-            self,
-            nid: str,
-            steps_ahead: int,
-            col: _COL_TYPE,
-            p_moment: float = 2,
-            tau: Optional[float] = None,
-            nan_mode: Optional[str] = None,
-            out_col_prefix: Optional[str] = None,
+        self,
+        nid: str,
+        steps_ahead: int,
+        col: _COL_TYPE,
+        p_moment: float = 2,
+        tau: Optional[float] = None,
+        nan_mode: Optional[str] = None,
+        out_col_prefix: Optional[str] = None,
     ) -> None:
         """
 
@@ -303,7 +308,6 @@ class SingleColumnVolatilityModel(FitPredictNode):
         fit_state = {
             "_col": self._col,
             "_tau": self._tau,
-
             "_info['fit']": self._info["fit"],
             "_out_col_prefix": self._out_col_prefix,
         }
@@ -336,20 +340,21 @@ class SingleColumnVolatilityModel(FitPredictNode):
             mode = "fit"
         else:
             mode = "predict"
-        df_out = dag.run_leq_node("demodulate_using_vol_pred", mode)[
-            "df_out"
-        ]
+        df_out = dag.run_leq_node("demodulate_using_vol_pred", mode)["df_out"]
         info[self._col] = extract_info(dag, [mode])
         if self._learn_tau_on_fit and fit:
-            self._tau = info[self._col]["compute_smooth_moving_average"][
-                "fit"
-            ]["tau"]
+            self._tau = info[self._col]["compute_smooth_moving_average"]["fit"][
+                "tau"
+            ]
         df_out = df_out.reindex(df_in.index)
         self._set_info(mode, info)
         return df_out
 
     def _get_config(
-            self, col: _COL_TYPE, out_col_prefix: _COL_TYPE, tau: Optional[float] = None
+        self,
+        col: _COL_TYPE,
+        out_col_prefix: _COL_TYPE,
+        tau: Optional[float] = None,
     ) -> cconfi.Config:
         """
         Generate a DAG config.
@@ -380,12 +385,15 @@ class SingleColumnVolatilityModel(FitPredictNode):
                         + "_vol_"
                         + str(self._steps_ahead)
                         + "_hat",
-                        ],
+                    ],
                     "col_mode": "replace_selected",
                 },
                 "demodulate_using_vol_pred": {
                     "signal_cols": [col],
-                    "volatility_col": out_col_prefix + "_vol_" + str(self._steps_ahead) + "_hat",
+                    "volatility_col": out_col_prefix
+                    + "_vol_"
+                    + str(self._steps_ahead)
+                    + "_hat",
                     "signal_steps_ahead": 0,
                     "volatility_steps_ahead": self._steps_ahead,
                     "col_rename_func": lambda x: out_col_prefix + "_vol_adj",

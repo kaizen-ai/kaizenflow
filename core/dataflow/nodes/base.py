@@ -392,8 +392,9 @@ class MultiColModeMixin:
         """
         # Perform col group checks.
         dbg.dassert_isinstance(in_col_group, tuple)
-        dbg.dassert_lt(0, len(in_col_group),
-                       msg="Tuple `in_col_group` must be nonempty.")
+        dbg.dassert_lt(
+            0, len(in_col_group), msg="Tuple `in_col_group` must be nonempty."
+        )
         dbg.dassert_isinstance(df, pd.DataFrame)
         # Do not allow duplicate columns.
         dbg.dassert_no_duplicates(df.columns)
@@ -433,13 +434,13 @@ class MultiColModeMixin:
         dbg.dassert_not_in(
             df_out.columns.to_list(),
             df_in.columns.to_list(),
-            "Output column names overlap with input column names."
+            "Output column names overlap with input column names.",
         )
         # Ensure that column depth is preserved.
         dbg.dassert_eq(
             df_in.columns.nlevels,
             df_out.columns.nlevels,
-            msg="Column hierarchy depth must be preserved."
+            msg="Column hierarchy depth must be preserved.",
         )
         df_out = df_out.merge(
             df_in,
