@@ -4,6 +4,7 @@ from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import core.artificial_signal_generators as sig_gen
 import core.artificial_signal_generators as casgen
@@ -17,6 +18,8 @@ import helpers.printing as prnt
 import helpers.printing as hprint
 import helpers.unit_test as hut
 from core.dataflow.nodes.volatility_models import (
+    MultiindexVolatilityModel,
+    SingleColumnVolatilityModel,
     SmaModel,
     VolatilityModel,
     VolatilityModulator,
@@ -139,6 +142,87 @@ class TestSmaModel(hut.TestCase):
         return df
 
 
+class TestSingleColumnVolatilityModel(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Perform a typical `fit()` call.
+        """
+        # Load test data.
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "col": "ret_0",
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
+        node = SingleColumnVolatilityModel("vol_model", **config.to_dict())
+        df_out = node.fit(data)["df_out"]
+        info = node.get_info("fit")
+        # Package results.
+        act = self._package_results1(config, info, df_out)
+        self.check_string(act)
+
+    def test2(self) -> None:
+        """
+        Perform a typical `predict()` call.
+        """
+        # Load test data.
+        data = self._get_data()
+        # Specify config and create modeling node.
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "col": "ret_0",
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
+        node = SingleColumnVolatilityModel("vol_model", **config.to_dict())
+        node.fit(data.loc[:"2000-02-10"])
+        df_out = node.predict(data.loc[:"2000-02-23"])["df_out"]
+        info = collections.OrderedDict()
+        info["fit"] = node.get_info("fit")
+        info["predict"] = node.get_info("predict")
+        # Package results.
+        act = self._package_results1(config, info, df_out)
+        self.check_string(act)
+
+    @staticmethod
+    def _get_data() -> pd.DataFrame:
+        """
+        Generate "random returns".
+
+        Use lag + noise as predictor.
+        """
+        arma_process = casgen.ArmaProcess([0.45], [0])
+        date_range_kwargs = {"start": "2000-01-01", "periods": 40, "freq": "B"}
+        date_range = pd.date_range(**date_range_kwargs)
+        realization = arma_process.generate_sample(
+            date_range_kwargs=date_range_kwargs, seed=10
+        )
+        realization.name = "ret_0"
+        df = pd.DataFrame(index=date_range, data=realization)
+        return df
+
+    @staticmethod
+    def _package_results1(
+        config: ccfg.Config,
+        info: collections.OrderedDict,
+        df_out: pd.DataFrame,
+    ) -> str:
+        act: List[str] = []
+        act.append(hprint.frame("config"))
+        act.append(str(config))
+        act.append(hprint.frame("info"))
+        act.append(str(ccbuild.get_config_from_nested_dict(info)))
+        act.append(hprint.frame("df_out"))
+        act.append(
+            hut.convert_df_to_string(df_out.round(2), index=True, decimals=2)
+        )
+        act = "\n".join(act)
+        return act
+
+
 class TestVolatilityModel(hut.TestCase):
     def test01(self) -> None:
         """
@@ -176,7 +260,7 @@ class TestVolatilityModel(hut.TestCase):
         vol_adj_df = node.fit(data)["df_out"]
         # Invert volatility adjustment.
         ret_0_vol_0_hat = vol_adj_df["ret_0_vol_2_hat"].shift(2)
-        inverted_rets = (ret_0_vol_0_hat * vol_adj_df["ret_0_zscored"]).rename(
+        inverted_rets = (ret_0_vol_0_hat * vol_adj_df["ret_0_vol_adj"]).rename(
             "ret_0_inverted"
         )
         # Compare results.
@@ -227,7 +311,7 @@ class TestVolatilityModel(hut.TestCase):
         vol_adj_df = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]
         # Invert volatility adjustment.
         ret_0_vol_0_hat = vol_adj_df["ret_0_vol_2_hat"].shift(2)
-        inverted_rets = (ret_0_vol_0_hat * vol_adj_df["ret_0_zscored"]).rename(
+        inverted_rets = (ret_0_vol_0_hat * vol_adj_df["ret_0_vol_adj"]).rename(
             "ret_0_inverted"
         )
         # Compare results.
@@ -304,6 +388,7 @@ class TestVolatilityModel(hut.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
+    @pytest.mark.skip(msg="We no longer directly expose tau")
     def test08(self) -> None:
         """
         Ensure that explicit `tau` is used post-`fit()`.
@@ -402,17 +487,14 @@ class TestVolatilityModel(hut.TestCase):
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "leave_unchanged"
-        state = {
-            "_fit_cols": ["ret_0"],
-            "_vol_cols": {"ret_0": "ret_0_vol"},
-            "_fwd_vol_cols": {"ret_0": "ret_0_vol_2"},
-            "_fwd_vol_cols_hat": {"ret_0": "ret_0_vol_2_hat"},
-            "_taus": {"ret_0": 10},
-            "_info['fit']": None,
-        }
         node = VolatilityModel("vol_model", **config.to_dict())
-        node.set_fit_state(state)
-        df_out = node.predict(data)["df_out"]
+        node.fit(data)["df_out"]
+        # Package results.
+        state = node.get_fit_state()
+        # Load state.
+        node2 = VolatilityModel("vol_model", **config.to_dict())
+        node2.set_fit_state(state)
+        df_out = node2.predict(data)["df_out"]
         # Package results.
         act = self._package_results2(config, state, df_out)
         self.check_string(act)
@@ -480,6 +562,83 @@ class TestVolatilityModel(hut.TestCase):
         realization.name = "ret_0"
         df = pd.DataFrame(index=date_range, data=realization)
         return df
+
+
+class TestMultiindexVolatilityModel(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Perform a typical `fit()` call.
+        """
+        # Load test data.
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "in_col_group": ("ret_0",),
+                "steps_ahead": 2,
+                "nan_mode": "drop",
+            }
+        )
+        node = MultiindexVolatilityModel("vol_model", **config.to_dict())
+        df_out = node.fit(data)["df_out"]
+        info = node.get_info("fit")
+        # Package results.
+        act = self._package_results1(config, info, df_out)
+        self.check_string(act)
+
+    def test2(self) -> None:
+        """
+        Perform a typical `predict()` call.
+        """
+        # Load test data.
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "in_col_group": ("ret_0",),
+                "steps_ahead": 2,
+                "nan_mode": "drop",
+            }
+        )
+        node = MultiindexVolatilityModel("vol_model", **config.to_dict())
+        node.fit(data.loc[:"2000-01-31"])["df_out"]
+        # Package results.
+        df_out = node.predict(data)["df_out"]
+        info = node.get_info("predict")
+        act = self._package_results1(config, info, df_out)
+        self.check_string(act)
+
+    @staticmethod
+    def _package_results1(
+        config: ccfg.Config,
+        info: collections.OrderedDict,
+        df_out: pd.DataFrame,
+    ) -> str:
+        act: List[str] = []
+        act.append(hprint.frame("config"))
+        act.append(str(config))
+        act.append(hprint.frame("info"))
+        act.append(str(ccbuild.get_config_from_nested_dict(info)))
+        act.append(hprint.frame("df_out"))
+        act.append(
+            hut.convert_df_to_string(df_out.round(2), index=True, decimals=2)
+        )
+        act = "\n".join(act)
+        return act
+
+    def _get_data(self) -> pd.DataFrame:
+        """
+        Generate multivariate normal returns.
+        """
+        mn_process = casgen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=2, seed=0)
+        realization = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
+        )
+        realization = realization.rename(columns=lambda x: "MN" + str(x))
+        volume = pd.DataFrame(
+            index=realization.index, columns=realization.columns, data=100
+        )
+        data = pd.concat([realization, volume], axis=1, keys=["ret_0", "volume"])
+        return data
 
 
 class TestVolatilityModulator(hut.TestCase):

@@ -166,7 +166,7 @@ class ArmaReturnsBuilder(DagBuilder):
                 },
                 # Clip rets.
                 self._get_nid("rets/clip"): {
-                    "cols": ["vwap_ret_0_zscored"],
+                    "cols": ["vwap_ret_0_vol_adj"],
                     "col_mode": "replace_selected",
                 },
             }

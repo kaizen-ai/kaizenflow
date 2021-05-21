@@ -338,7 +338,7 @@ class MultiindexSeriesTransformer(Transformer, MultiColModeMixin):
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         # Preprocess to extract relevant flat dataframe.
         df_in = df.copy()
-        df = self._preprocess_df(self._in_col_group, self._out_col_group, df)
+        df = self._preprocess_df(self._in_col_group, df)
         # Apply `transform()` function column-wise.
         self._leaf_cols = df.columns.tolist()
         idx = df.index

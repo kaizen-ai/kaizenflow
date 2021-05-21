@@ -33,12 +33,12 @@ rets/model_volatility:
   steps_ahead: 2
   nan_mode: leave_unchanged
 rets/clip:
-  cols: ['vwap_ret_0_zscored']
+  cols: ['vwap_ret_0_vol_adj']
   col_mode: replace_selected
 ################################################################################
 df_out
 ################################################################################
-                         vwap      twap  twap_ret_0  vwap_ret_0  vwap_ret_0_vol  vwap_ret_0_vol_2  vwap_ret_0_vol_2_hat  vwap_ret_0_zscored
+                         vwap      twap  twap_ret_0  vwap_ret_0  vwap_ret_0_vol  vwap_ret_0_vol_2  vwap_ret_0_vol_2_hat  vwap_ret_0_vol_adj
 2010-01-04 09:00:00       NaN       NaN         NaN         NaN             NaN               NaN                   NaN                 NaN
 2010-01-04 09:05:00       NaN       NaN         NaN         NaN             NaN               NaN                   NaN                 NaN
 2010-01-04 09:10:00       NaN       NaN         NaN         NaN             NaN               NaN                   NaN                 NaN
