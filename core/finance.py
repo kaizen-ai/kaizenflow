@@ -8,7 +8,7 @@ import core.finance as fin
 
 import datetime
 import logging
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
