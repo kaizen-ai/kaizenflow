@@ -454,7 +454,35 @@ class SingleColumnVolatilityModel(FitPredictNode):
         return node.nid
 
 
-class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
+class _MultiColVolatilityModelMixin:
+    def _fit_predict_volatility_model(self, df: pd.DataFrame, fit: bool, out_col_prefix: Optional[str] = None) -> Tuple[List[pd.DataFrame], collections.OrderedDict]:
+        dfs = []
+        info = collections.OrderedDict()
+        for col in df.columns:
+            local_out_col_prefix = out_col_prefix or col
+            scvm = SingleColumnVolatilityModel(
+                "volatility",
+                steps_ahead=self._steps_ahead,
+                col=col,
+                p_moment=self._p_moment,
+                tau=self._tau,
+                nan_mode=self._nan_mode,
+                out_col_prefix=local_out_col_prefix,
+            )
+            if fit:
+                df_out = scvm.fit(df[[col]])["df_out"]
+                info_out = scvm.get_info("fit")
+                self._col_fit_state[col] = scvm.get_fit_state()
+            else:
+                scvm.set_fit_state(self._col_fit_state[col])
+                df_out = scvm.predict(df[[col]])["df_out"]
+                info_out = scvm.get_info("predict")
+            dfs.append(df_out)
+            info[col] = info_out
+        return dfs, info
+
+
+class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin, _MultiColVolatilityModelMixin):
     """
     Fit and predict a smooth moving average volatility model.
 
@@ -508,23 +536,8 @@ class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
         self._fit_cols = self._to_list(self._cols or df_in.columns.tolist())
-        dfs = []
-        info = collections.OrderedDict()
-        for col in self._fit_cols:
-            scvm = SingleColumnVolatilityModel(
-                "volatility",
-                steps_ahead=self._steps_ahead,
-                col=col,
-                p_moment=self._p_moment,
-                tau=self._tau,
-                nan_mode=self._nan_mode,
-                out_col_prefix=str(col),
-            )
-            df_out = scvm.fit(df_in[[col]])["df_out"]
-            info_out = scvm.get_info("fit")
-            dfs.append(df_out)
-            info[col] = info_out
-            self._col_fit_state[col] = scvm.get_fit_state()
+        df = df_in[self._fit_cols]
+        dfs, info = self._fit_predict_volatility_model(df, fit=True)
         df_out = pd.concat(dfs, axis=1)
         df_out = self._apply_col_mode(
             df_in.drop(df_out.columns.intersection(df_in.columns), 1),
@@ -538,23 +551,8 @@ class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
         self._fit_cols = self._to_list(self._cols or df_in.columns.tolist())
-        dfs = []
-        info = collections.OrderedDict()
-        for col in self._fit_cols:
-            scvm = SingleColumnVolatilityModel(
-                "volatility",
-                steps_ahead=self._steps_ahead,
-                col=col,
-                p_moment=self._p_moment,
-                tau=self._tau,
-                nan_mode=self._nan_mode,
-                out_col_prefix=str(col),
-            )
-            scvm.set_fit_state(self._col_fit_state[col])
-            df_out = scvm.predict(df_in[[col]])["df_out"]
-            info_out = scvm.get_info("predict")
-            dfs.append(df_out)
-            info[col] = info_out
+        df = df_in[self._fit_cols]
+        dfs, info = self._fit_predict_volatility_model(df, fit=False)
         df_out = pd.concat(dfs, axis=1)
         df_out = self._apply_col_mode(
             df_in.drop(df_out.columns.intersection(df_in.columns), 1),
@@ -579,7 +577,7 @@ class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         self._info["fit"] = fit_state["_info['fit']"]
 
 
-class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, MultiColModeMixin):
+class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, MultiColModeMixin, _MultiColVolatilityModelMixin):
     """
     Fit and predict a smooth moving average volatility model.
 
@@ -633,26 +631,8 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, MultiColModeMixin)
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
         df = self._preprocess_df(self._in_col_group, df_in)
-        dfs = []
-        info = collections.OrderedDict()
-        for col in df.columns:
-            scvm = SingleColumnVolatilityModel(
-                "volatility",
-                steps_ahead=self._steps_ahead,
-                col=col,
-                p_moment=self._p_moment,
-                tau=self._tau,
-                nan_mode=self._nan_mode,
-                out_col_prefix=self._out_col_prefix,
-            )
-            df_out = scvm.fit(df[[col]])["df_out"]
-            info_out = scvm.get_info("fit")
-            dfs.append(df_out)
-            info[col] = info_out
-            self._col_fit_state[col] = scvm.get_fit_state()
-        df_out = pd.concat(dfs, axis=1, keys=df.columns)
-        df_out = df_out.swaplevel(i=0, j=1, axis=1)
-        df_out.sort_index(axis=1, level=0, inplace=True)
+        dfs, info = self._fit_predict_volatility_model(df, fit=True, out_col_prefix=self._out_col_prefix)
+        df_out = self._insert_col_level(dfs, df.columns)
         df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
@@ -660,26 +640,8 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, MultiColModeMixin)
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
         df = self._preprocess_df(self._in_col_group, df_in)
-        dfs = []
-        info = collections.OrderedDict()
-        for col in df.columns:
-            scvm = SingleColumnVolatilityModel(
-                "volatility",
-                steps_ahead=self._steps_ahead,
-                col=col,
-                p_moment=self._p_moment,
-                tau=self._tau,
-                nan_mode=self._nan_mode,
-                out_col_prefix=self._out_col_prefix,
-            )
-            scvm.set_fit_state(self._col_fit_state[col])
-            df_out = scvm.predict(df[[col]])["df_out"]
-            info_out = scvm.get_info("predict")
-            dfs.append(df_out)
-            info[col] = info_out
-        df_out = pd.concat(dfs, axis=1, keys=df.columns)
-        df_out = df_out.swaplevel(i=0, j=1, axis=1)
-        df_out.sort_index(axis=1, level=0, inplace=True)
+        dfs, info = self._fit_predict_volatility_model(df, fit=False, out_col_prefix=self._out_col_prefix)
+        df_out = self._insert_col_level(dfs, df.columns)
         df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
@@ -694,6 +656,13 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, MultiColModeMixin)
     def set_fit_state(self, fit_state: Dict[str, Any]):
         self._col_fit_state = fit_state["_col_fit_state"]
         self._info["fit"] = fit_state["_info['fit']"]
+
+    def _insert_col_level(self, dfs: List[pd.DataFrame], keys: List[_COL_TYPE]) -> pd.DataFrame:
+        dbg.dassert_eq(len(dfs), len(keys))
+        df_out = pd.concat(dfs, axis=1, keys=keys)
+        df_out = df_out.swaplevel(i=0, j=1, axis=1)
+        df_out.sort_index(axis=1, level=0, inplace=True)
+        return df_out
 
 
 class VolatilityModulator(FitPredictNode, ColModeMixin, ToListMixin):
