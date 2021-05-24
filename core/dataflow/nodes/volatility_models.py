@@ -541,24 +541,6 @@ class VolatilityModel(
         self._fit_cols: List[_COL_TYPE] = []
         self._col_fit_state = {}
 
-    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
-        self._validate_input_df(df_in)
-        self._fit_cols = self._to_list(self._cols or df_in.columns.tolist())
-        df = df_in[self._fit_cols]
-        dfs, info = self._fit_predict_volatility_model(df, fit=fit)
-        df_out = pd.concat(dfs, axis=1)
-        df_out = self._apply_col_mode(
-            df_in.drop(df_out.columns.intersection(df_in.columns), 1),
-            df_out,
-            cols=self._fit_cols,
-            col_mode=self._col_mode,
-        )
-        if fit:
-            self._set_info("fit", info)
-        else:
-            self._set_info("predict", info)
-        return {"df_out": df_out}
-
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=True)
 
@@ -577,6 +559,24 @@ class VolatilityModel(
         self._fit_cols = fit_state["_fit_cols"]
         self._col_fit_state = fit_state["_col_fit_state"]
         self._info["fit"] = fit_state["_info['fit']"]
+
+    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
+        self._validate_input_df(df_in)
+        self._fit_cols = self._to_list(self._cols or df_in.columns.tolist())
+        df = df_in[self._fit_cols]
+        dfs, info = self._fit_predict_volatility_model(df, fit=fit)
+        df_out = pd.concat(dfs, axis=1)
+        df_out = self._apply_col_mode(
+            df_in.drop(df_out.columns.intersection(df_in.columns), 1),
+            df_out,
+            cols=self._fit_cols,
+            col_mode=self._col_mode,
+        )
+        if fit:
+            self._set_info("fit", info)
+        else:
+            self._set_info("predict", info)
+        return {"df_out": df_out}
 
 
 class MultiindexVolatilityModel(
@@ -632,20 +632,6 @@ class MultiindexVolatilityModel(
         #
         self._col_fit_state = {}
 
-    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
-        self._validate_input_df(df_in)
-        df = self._preprocess_df(self._in_col_group, df_in)
-        dfs, info = self._fit_predict_volatility_model(
-            df, fit=fit, out_col_prefix=self._out_col_prefix
-        )
-        df_out = self._insert_col_level(dfs, df.columns)
-        df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
-        if fit:
-            self._set_info("fit", info)
-        else:
-            self._set_info("predict", info)
-        return {"df_out": df_out}
-
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=True)
 
@@ -662,6 +648,20 @@ class MultiindexVolatilityModel(
     def set_fit_state(self, fit_state: Dict[str, Any]):
         self._col_fit_state = fit_state["_col_fit_state"]
         self._info["fit"] = fit_state["_info['fit']"]
+
+    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
+        self._validate_input_df(df_in)
+        df = self._preprocess_df(self._in_col_group, df_in)
+        dfs, info = self._fit_predict_volatility_model(
+            df, fit=fit, out_col_prefix=self._out_col_prefix
+        )
+        df_out = self._insert_col_level(dfs, df.columns)
+        df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
+        if fit:
+            self._set_info("fit", info)
+        else:
+            self._set_info("predict", info)
+        return {"df_out": df_out}
 
     def _insert_col_level(
         self, dfs: List[pd.DataFrame], keys: List[_COL_TYPE]
