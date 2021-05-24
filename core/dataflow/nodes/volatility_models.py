@@ -455,7 +455,9 @@ class SingleColumnVolatilityModel(FitPredictNode):
 
 
 class _MultiColVolatilityModelMixin:
-    def _fit_predict_volatility_model(self, df: pd.DataFrame, fit: bool, out_col_prefix: Optional[str] = None) -> Tuple[List[pd.DataFrame], collections.OrderedDict]:
+    def _fit_predict_volatility_model(
+        self, df: pd.DataFrame, fit: bool, out_col_prefix: Optional[str] = None
+    ) -> Tuple[List[pd.DataFrame], collections.OrderedDict]:
         dfs = []
         info = collections.OrderedDict()
         for col in df.columns:
@@ -482,7 +484,13 @@ class _MultiColVolatilityModelMixin:
         return dfs, info
 
 
-class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin, _MultiColVolatilityModelMixin):
+class VolatilityModel(
+    FitPredictNode,
+    RegFreqMixin,
+    ColModeMixin,
+    ToListMixin,
+    _MultiColVolatilityModelMixin,
+):
     """
     Fit and predict a smooth moving average volatility model.
 
@@ -577,7 +585,9 @@ class VolatilityModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin, _
         self._info["fit"] = fit_state["_info['fit']"]
 
 
-class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, MultiColModeMixin, _MultiColVolatilityModelMixin):
+class MultiindexVolatilityModel(
+    FitPredictNode, RegFreqMixin, MultiColModeMixin, _MultiColVolatilityModelMixin
+):
     """
     Fit and predict a smooth moving average volatility model.
 
@@ -631,7 +641,9 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, MultiColModeMixin,
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
         df = self._preprocess_df(self._in_col_group, df_in)
-        dfs, info = self._fit_predict_volatility_model(df, fit=True, out_col_prefix=self._out_col_prefix)
+        dfs, info = self._fit_predict_volatility_model(
+            df, fit=True, out_col_prefix=self._out_col_prefix
+        )
         df_out = self._insert_col_level(dfs, df.columns)
         df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
         self._set_info("fit", info)
@@ -640,7 +652,9 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, MultiColModeMixin,
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         self._validate_input_df(df_in)
         df = self._preprocess_df(self._in_col_group, df_in)
-        dfs, info = self._fit_predict_volatility_model(df, fit=False, out_col_prefix=self._out_col_prefix)
+        dfs, info = self._fit_predict_volatility_model(
+            df, fit=False, out_col_prefix=self._out_col_prefix
+        )
         df_out = self._insert_col_level(dfs, df.columns)
         df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
         self._set_info("predict", info)
@@ -657,7 +671,9 @@ class MultiindexVolatilityModel(FitPredictNode, RegFreqMixin, MultiColModeMixin,
         self._col_fit_state = fit_state["_col_fit_state"]
         self._info["fit"] = fit_state["_info['fit']"]
 
-    def _insert_col_level(self, dfs: List[pd.DataFrame], keys: List[_COL_TYPE]) -> pd.DataFrame:
+    def _insert_col_level(
+        self, dfs: List[pd.DataFrame], keys: List[_COL_TYPE]
+    ) -> pd.DataFrame:
         dbg.dassert_eq(len(dfs), len(keys))
         df_out = pd.concat(dfs, axis=1, keys=keys)
         df_out = df_out.swaplevel(i=0, j=1, axis=1)
