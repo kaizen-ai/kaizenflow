@@ -6,12 +6,19 @@ column indices are handled.
 Throughout, let `MN0`, `MN1`, etc., denote instrument symbols.
 Let `N` denote the column index depth of the input dataflow dataframe.
 
-## Case 1
+Multiindexed column conventions:
+  - leaf column names correspond to symbols
+  - input column groups specify column levels up to but not including leaves
+  - all leaves within the input column group are selected implicitly (e.g., no
+    need to explicitly enumerate all symbols in a universe)
+
+## CrossSectionalDfToDf
 
 Core transformation:
   - dataframe -> dataframe
-  - stateful
-  - may rename columns
+  - input columns processed cross-sectionally (e.g., each output column
+     typically depends upon all input columns)
+  - may or may not rename columns
   - e.g., columns transform like
     Input:
     ```
@@ -34,18 +41,11 @@ pca     ret_0           close
 0 1 2 3 MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3
 ```
 
-Column transformation assumptions:
-  - leaf column names correspond to symbols
-  - input column names specified up to leaves
-  - all leaves within the input column group are selected implicitly (e.g., no
-    need to explicitly enumerate all symbols in a universe)
-  - the user specifies the description of the output column group
-
 Comments:
   - The core transformation need not rename columns. Residualization is an
     example of this.
   - This transformation behavior makes sense when cross-sectional information
-    is important.
+    is important
 
 Examples:
   - Principcal component projection
@@ -56,11 +56,29 @@ User responsibilities:
   - specify input column tuple with `N - 1` levels
   - specify `N - 1`st output column name
 
-## Case 2
+Signatures:
+```
+def _preprocess(
+    df: pd.DataFrame,
+    in_col_group: Tuple(_COL_TYPE),
+) -> pd.DataFrame:
+```
+
+```
+# Here we can derive `out_col_group` from `in_col_group` and the user-supplied
+#  output column name.
+def _postprocess(
+    df_in: pd.DataFrame,
+    df_out: pd.DataFrame,
+    out_col_name: str,
+) -> pd.DataFrame
+```
+
+##  SrsToDf
 
 Core transformation:
   - series -> dataframe
-  - stateless
+  - columns are processed independently of each other
   - creates new column names (typically not dependent upon the name of the
     input series)
   - e.g., columns transform like
@@ -84,51 +102,41 @@ ret_0_lag_1     ret_0_lag_2     ret_0
 MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3
 ```
 
-Column transformation assumptions:
-  - leaf column names correspond to symbols
-  - input column names specified up to leaves
-  - all leaves within the input column group are selected implicitly (e.g., no
-    need to explicitly enumerate all symbols in a universe)
-  - output leaf column names are the same as the input leaf column names
-  - output column level names agree with input column level names up to the
-    name that immediately precedes the leaf column name.
-
 Examples:
   - Series decompositions (e.g., STL, Fourier coefficients, wavelet levels)
   - Signal filters (e.g., smooth moving averages, z-scoring, outlier processing)
   - Rolling features (e.g., moments, centered moments)
   - Lags
+  - Volatility modeling
 
 User responsibilities:
   - provide transformer function
   - specify input column tuple with `N - 1` levels
 
-## Case 3
+Signatures:
+```
+def _preprocess(
+    df: pd.DataFrame,
+    in_col_group: Tuple(_COL_TYPE),
+) -> pd.DataFrame:
+```
 
-Core transformation:
-  - series -> dataframe
-  - stateful
-  - creates new column names (typically not dependent upon the name of the
-    input series)
-  - e.g., columns transform like
-    Input:
-    ```
-    MN0
-    ```
-    Output:
-    ```
-    vol vol_hat
-    ```
+```
+def _postprocess(
+    df_in: pd.DataFrame,
+    df_out_group: Dict[str, pd.DataFrame],
+    out_col_prefix: Optional[str] = None,
+) -> pd.DataFrame
+"""
 
-User responsibilities:
-  - implement stateful node
-  - specify input column tuple with `N - 1` levels
+:param df_out_group: dataframes indexed by symbol
+"""
+```
 
-## Case 4
+## SrsToSrs
 
 Core transformation:
   - series -> series
-  - stateless
   - preserves series name
   - e.g., columns transform like
     Input:
@@ -151,23 +159,29 @@ ret_0_clipped
 MN0 MN1 MN2 MN3
 ```
 
-Column transformation assumptions:
-  - all leaves within the input column group are selected implicitly (e.g., no
-    need to explicitly enumerate all symbols in a universe)
-  - output leaf column names are the same as the input leaf column names
-  - output column level names agree with input column level names up to the
-    name that immediately precedes the leaf column name
+Comments:
+  - Output leaf column names should agree with input leaf column names
 
-User responsibilities:
-  - provide transformer function
-  - specify input column tuple with `N - 1` levels
-  - specify `N - 1`st output column name
+Signatures:
+```
+def _preprocess(
+    df: pd.DataFrame,
+    in_col_group: Tuple(_COL_TYPE),
+) -> pd.DataFrame:
+```
 
-## Case 5
+```
+def _postprocess(
+    df_in: pd.DataFrame,
+    srs_out_group: List[pd.Series],
+    out_col_name: str,
+) -> pd.DataFrame
+```
+
+## GroupedColumnDfToDf
 
 Core transformation:
   - dataframe -> dataframe
-  - stateful
   - e.g., columns transform like
     Input:
     ```
@@ -191,4 +205,4 @@ MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3
 
 User responsibilities:
   - provide transformer function
-  - specify input column tuple with `N - 1` levels
+  - specify input column tuples with `N - 1` levels
