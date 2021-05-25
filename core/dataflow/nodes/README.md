@@ -48,8 +48,8 @@ Comments:
     is important
 
 Examples:
-  - Principcal component projection
-  - Residualization
+  - principal component projection
+  - residualization
 
 User responsibilities:
   - implement stateful node
@@ -103,11 +103,11 @@ MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3
 ```
 
 Examples:
-  - Series decompositions (e.g., STL, Fourier coefficients, wavelet levels)
-  - Signal filters (e.g., smooth moving averages, z-scoring, outlier processing)
-  - Rolling features (e.g., moments, centered moments)
-  - Lags
-  - Volatility modeling
+  - series decompositions (e.g., STL, Fourier coefficients, wavelet levels)
+  - signal filters (e.g., smooth moving averages, z-scoring, outlier processing)
+  - rolling features (e.g., moments, centered moments)
+  - lags
+  - volatility modeling
 
 User responsibilities:
   - provide transformer function
