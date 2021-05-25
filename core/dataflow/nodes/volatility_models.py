@@ -503,7 +503,7 @@ class VolatilityModel(
         nan_mode: Optional[str] = None,
     ) -> None:
         """
-        Specify the data and Smooth Moving Average (SMA) modeling parameters.
+        Specify the data and smooth moving average (SMA) modeling parameters.
 
         :param nid: unique node id
         :param cols: name of columns to model

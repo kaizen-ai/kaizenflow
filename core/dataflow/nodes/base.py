@@ -186,8 +186,10 @@ class DataSource(FitPredictNode, abc.ABC):
 
 class Transformer(FitPredictNode, abc.ABC):
     """
-    Single-input single-output node that calls a user-defined stateless
-    transformation before `fit()` and `predict()`
+    Single-input single-output node calling a stateless transformation.
+
+    The transformation is user-defined and called before `fit()` and
+    `predict()`.
     """
 
     # TODO(Paul): Consider giving users the option of renaming the single
@@ -502,7 +504,7 @@ class ToListMixin:
 
         How this might arise in practice:
         - A `ColumnTransformer` returns a number of x variables, with the
-          number dependent upon a hyper-parameter expressed in config
+          number dependent upon a hyperparameter expressed in config
         - The column names of the x variables may be derived from the input
           dataframe column names, not necessarily known until graph execution
           (and not at construction)

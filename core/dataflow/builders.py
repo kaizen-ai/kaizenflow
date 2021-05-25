@@ -18,14 +18,13 @@ from core.dataflow.nodes.volatility_models import VolatilityModel
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Paul): Consider moving this to `core.py` or `dag_builder.py`
 class DagBuilder(abc.ABC):
     """
     Abstract class for creating DAGs.
 
     Concrete classes must specify:
       1) `get_config_template()`
-        - It returns a Config object that represents the parameters used to build
+        - It returns a `Config` object that represents the parameters used to build
           the DAG
         - The config can depend upon variables used in class initialization
         - A config can be incomplete, e.g., "_DUMMY_" is used for required
@@ -33,8 +32,8 @@ class DagBuilder(abc.ABC):
           a DAG
       2) `get_dag()`
         - It builds a DAG
-        - This function defines the DAG nodes and how they are connected to each
-          other. The passed-in config object tells this function how to
+        - Defines the DAG nodes and how they are connected to each other. The
+          passed-in config object tells this function how to
           configure/initialize the various nodes.
     """
 
@@ -98,7 +97,7 @@ class DagBuilder(abc.ABC):
         # TODO(*): Consider make this an abstractmethod.
         return ["fit", "predict"]
 
-    # TODO(gp): -> Dict[str, ... ?
+    # TODO(gp): -> tighten types along the lines of `Dict[Column, ...]`.
     def get_column_to_tags_mapping(
         self, config: cconfi.Config
     ) -> Optional[Dict[Any, List[str]]]:
@@ -114,13 +113,6 @@ class DagBuilder(abc.ABC):
     def _get_nid(self, stage_name: str) -> str:
         nid = self._nid_prefix + stage_name
         return nid
-
-    @staticmethod
-    def _append(dag: DAG, tail_nid: Optional[str], node: Node) -> str:
-        dag.add_node(node)
-        if tail_nid is not None:
-            dag.connect(tail_nid, node.nid)
-        return node.nid
 
 
 class ArmaReturnsBuilder(DagBuilder):
