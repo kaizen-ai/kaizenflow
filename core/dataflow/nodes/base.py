@@ -448,7 +448,7 @@ class MultiColModeMixin:
         if out_col_group:
             df_out = pd.concat([df_out], axis=1, keys=[out_col_group])
         df = merge_dataframes(df_in, df_out)
-        return df_out
+        return df
 
 
 class RegFreqMixin:
