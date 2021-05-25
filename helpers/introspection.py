@@ -40,7 +40,7 @@ def get_function_name(count: int = 0) -> str:
 
 
 # From https://github.com/bosswissam/pysize
-def get_size(obj: object, seen: Optional[set] = None) -> int:
+def get_size_in_bytes(obj: object, seen: Optional[set] = None) -> int:
     """
     Recursively find size of an object `obj` in bytes.
     """
@@ -58,18 +58,18 @@ def get_size(obj: object, seen: Optional[set] = None) -> int:
             if "__dict__" in cls.__dict__:
                 d = cls.__dict__["__dict__"]
                 if inspect.isgetsetdescriptor(d) or inspect.ismemberdescriptor(d):
-                    size += get_size(obj.__dict__, seen)
+                    size += get_size_in_bytes(obj.__dict__, seen)
                 break
     if isinstance(obj, dict):
-        size += sum((get_size(v, seen) for v in obj.values()))
-        size += sum((get_size(k, seen) for k in obj.keys()))
+        size += sum((get_size_in_bytes(v, seen) for v in obj.values()))
+        size += sum((get_size_in_bytes(k, seen) for k in obj.keys()))
     elif isinstance(obj, cabc.Iterable) and not isinstance(
         obj, (str, bytes, bytearray)
     ):
-        size += sum((get_size(i, seen) for i in obj))
+        size += sum((get_size_in_bytes(i, seen) for i in obj))
     if hasattr(obj, "__slots__"):  # can have __slots__ with __dict__
         size += sum(
-            get_size(getattr(obj, s), seen)
+            get_size_in_bytes(getattr(obj, s), seen)
             for s in obj.__slots__
             if hasattr(obj, s)
         )
