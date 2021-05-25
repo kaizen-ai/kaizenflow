@@ -38,9 +38,10 @@
   - Can specify if a block is present or not in a DAG
   - Should only include DAG node configuration parameters, and not information
     about DAG connectivity, which is specified in the DAG builder
+
 - Template configs:
   - Are incomplete configs, with some "mandatory" parameters unspecified but
-    identified, e.g., with "_DUMMY_"
+    identified, e.g., with `_DUMMY_`
   - Have reasonable defaults for specified parameters
     - This facilitates config extension (e.g., if we add additional parameters /
       flexibility in the future, then we should not have to regenerate old
@@ -51,13 +52,13 @@
 
 ## Config builders
 
-- Configs are built through functions that can complete a "template" config with
-  some parameters passed from the command line
+- `Config`s are built through functions that can complete a "template" config
+  with some parameters passed from the command line
 - E.g.,
   ```python
   def get_kibot_returns_config(symbol: str) -> cfg.Config:
       """
-      A template configuration for `get_kibot_returns_dag`.
+      A template configuration for `get_kibot_returns_dag()`.
       """
       ...
   ```
@@ -103,10 +104,10 @@
 - The DAG structure does not know about what data is exchanged between nodes.
   Structural assumptions, e.g., column names, can and should be expressed
   through the config
-  - `dataflow_core.py` does not impose any constraints on the type of data that
+  - `dataflow/core.py` does not impose any constraints on the type of data that
     can be exchanged
-  - In practice (e.g., all concrete classes for nodes in `dataflow.py`), we
-    assume that `pd.DataFrame`s are propagated
+  - In practice (e.g., all concrete classes for nodes), we assume that
+    `pd.DataFrame`s are propagated
   - The DAG `node`s are wrappers around pandas dataframes
     - E.g., if a node receives a column multi-index dataframe (e.g., with
       multiple instruments and multiple features per instruments), the node
@@ -212,7 +213,7 @@
   `volume`
   - Maybe the solution is to keep columns in the same dataframe either if they
     are processed in the same way (i.e., vectorized) or if the computing node
-    needs to have to have both features available (like sklearn model)
+    needs to have both features available (like sklearn model)
   - If close_price and volume are "independent", they should go in different
     branches of the graph using a "Y" split
 

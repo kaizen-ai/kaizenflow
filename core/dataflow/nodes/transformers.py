@@ -43,19 +43,20 @@ class ColumnTransformer(Transformer, ColModeMixin):
     ) -> None:
         """
         :param nid: unique node id
-        :param transformer_func: df -> df. The keyword `info` (if present) is
-            assumed to have a specific semantic meaning. If present,
+        :param transformer_func: df -> df
+            - The keyword `info` (if present) means that:
                 - An empty dict is passed in to this `info`
                 - The resulting (populated) dict is included in the node's
                   `_info`
-        :param transformer_kwargs: transformer_func kwargs
+        :param transformer_kwargs: `transformer_func` kwargs
         :param cols: columns to transform; `None` defaults to all available.
         :param col_rename_func: function for naming transformed columns, e.g.,
-            lambda x: "zscore_" + x
-        :param col_mode: `merge_all`, `replace_selected`, or `replace_all`.
-            Determines what columns are propagated by the node.
-        :param nan_mode: `leave_unchanged` or `drop`. If `drop`, applies to all
-            columns simultaneously.
+            `lambda x: "zscore_" + x`
+        :param col_mode: determines what columns are propagated by the node.
+            Same values as in `apply_col_mode()`.
+        :param nan_mode: determines how to handle NaNs
+            - `leave_unchanged` (default): do not process NaNs
+            - `drop`: it applies to all columns simultaneously.
         """
         super().__init__(nid)
         if cols is not None:
@@ -90,6 +91,7 @@ class ColumnTransformer(Transformer, ColModeMixin):
         if self._cols is None:
             dbg.dassert_set_eq(self._fit_cols, df.columns)
         df = df[self._fit_cols]
+        # Handle NaNs.
         idx = df.index
         if self._nan_mode == "leave_unchanged":
             pass
@@ -113,9 +115,10 @@ class ColumnTransformer(Transformer, ColModeMixin):
             info["func_info"] = func_info
         else:
             df = self._transformer_func(df, **self._transformer_kwargs)
+        # Reindex df to align it with the original data.
         df = df.reindex(index=idx)
-        # TODO(Paul): Consider supporting the option of relaxing or
-        # foregoing this check.
+        # TODO(Paul): Consider supporting the option of relaxing or foregoing this
+        #  check.
         dbg.dassert(
             df.index.equals(df_in.index),
             "Input/output indices differ but are expected to be the same!",
@@ -128,7 +131,7 @@ class ColumnTransformer(Transformer, ColModeMixin):
             col_rename_func=self._col_rename_func,
             col_mode=self._col_mode,
         )
-        #
+        # Update `info`.
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
 
@@ -338,6 +341,7 @@ class MultiindexSeriesTransformer(Transformer, MultiColModeMixin):
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         # Preprocess to extract relevant flat dataframe.
         df_in = df.copy()
+        # Preprocess according to `MultiColModeMixin`.
         df = self._preprocess_df(self._in_col_group, df)
         # Apply `transform()` function column-wise.
         self._leaf_cols = df.columns.tolist()
@@ -378,7 +382,7 @@ class MultiindexSeriesTransformer(Transformer, MultiColModeMixin):
         # single dataframe.
         df = pd.concat(srs_list, axis=1)
         df = df.reindex(index=idx)
-        # Add column levels and merge.
+        # Add column levels and merge according to `MultiColModeMixin`.
         df = self._postprocess_df(self._out_col_group, df_in, df)
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info

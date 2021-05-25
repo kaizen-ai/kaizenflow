@@ -89,6 +89,7 @@ class FitPredictDagRunner:
         :return: `ResultBundle` class containing `config`, `nid`, `method`,
             result dataframe and DAG info
         """
+        # TODO(gp): Factor out this in _run_dag_helper().
         dbg.dassert_in(method, self._methods)
         df_out = self.dag.run_leq_node(nid, method)["df_out"]
         info = extract_info(self.dag, [method])
@@ -112,12 +113,7 @@ class PredictionDagRunner(FitPredictDagRunner):
 
     def _run_dag(self, nid: str, method: str) -> PredictionResultBundle:
         """
-        Run DAG and return a `PredictionResultBundle`.
-
-        :param nid: identifier of terminal node for execution
-        :param method: `Node` subclass method to be executed
-        :return: `PredictionResultBundle` class containing `config`, `nid`,
-            `method`, result dataframe and DAG info
+        Same as super class but return a `PredictionResultBundle`.
         """
         dbg.dassert_in(method, self._methods)
         df_out = self.dag.run_leq_node(nid, method)["df_out"]

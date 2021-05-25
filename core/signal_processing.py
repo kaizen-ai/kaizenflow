@@ -1558,7 +1558,10 @@ def resample(
     if "label" not in resample_kwargs:
         resample_kwargs["label"] = "right"
     # Execute resampling with specified kwargs.
+    _LOG.debug("Resampling data with size=%s using kwargs='%s'", str(data.size),
+               str(resample_kwargs))
     resampled_data = data.resample(**resample_kwargs)
+    _LOG.debug("resampled_data.size=%s", str(resampled_data.size))
     return resampled_data
 
 
