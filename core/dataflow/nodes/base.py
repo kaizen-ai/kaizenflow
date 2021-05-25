@@ -10,7 +10,12 @@ import pandas as pd
 
 import helpers.dbg as dbg
 from core.dataflow.core import Node
-from core.dataflow.utils import get_df_info_as_string
+from core.dataflow.utils import (
+    convert_to_list,
+    get_df_info_as_string,
+    merge_dataframes,
+    validate_df_indices,
+)
 
 _LOG = logging.getLogger(__name__)
 
@@ -445,32 +450,10 @@ class MultiColModeMixin:
             prefixes for `df_out` columns
         """
         dbg.dassert_isinstance(out_col_group, tuple)
-        dbg.dassert(
-            df_out.index.equals(df_in.index),
-            "Input/output indices differ but are expected to be the same!",
-        )
         if out_col_group:
             df_out = pd.concat([df_out], axis=1, keys=[out_col_group])
-        # Do not allow overwriting existing columns.
-        dbg.dassert_not_in(
-            df_out.columns.to_list(),
-            df_in.columns.to_list(),
-            "Output column names overlap with input column names.",
-        )
-        # Ensure that column depth is preserved.
-        dbg.dassert_eq(
-            df_in.columns.nlevels,
-            df_out.columns.nlevels,
-            msg="Column hierarchy depth must be preserved.",
-        )
-        df_out = df_out.merge(
-            df_in,
-            how="outer",
-            left_index=True,
-            right_index=True,
-        )
-        dbg.dassert_no_duplicates(df_out.columns)
-        return df_out
+        df = merge_dataframes(df_in, df_out)
+        return df
 
 
 class RegFreqMixin:
@@ -483,9 +466,7 @@ class RegFreqMixin:
         """
         Assert if df violates constraints, otherwise return `None`.
         """
-        dbg.dassert_isinstance(df, pd.DataFrame)
-        dbg.dassert_no_duplicates(df.columns.tolist())
-        dbg.dassert(df.index.freq)
+        validate_df_indices(df)
 
 
 class ToListMixin:
@@ -495,31 +476,4 @@ class ToListMixin:
 
     @staticmethod
     def _to_list(to_list: _TO_LIST_MIXIN_TYPE) -> List[_COL_TYPE]:
-        """
-        Return a list given its input.
-
-        - If the input is a list, the output is the same list.
-        - If the input is a function that returns a list, then the output of
-          the function is returned.
-
-        How this might arise in practice:
-        - A `ColumnTransformer` returns a number of x variables, with the
-          number dependent upon a hyperparameter expressed in config
-        - The column names of the x variables may be derived from the input
-          dataframe column names, not necessarily known until graph execution
-          (and not at construction)
-        - The `ColumnTransformer` output columns are merged with its input
-          columns (e.g., x vars and y vars are in the same dataframe)
-        Post-merge, we need a way to distinguish the x vars and y vars.
-        Allowing a callable here allows us to pass in the `ColumnTransformer`'s
-        method `transformed_col_names()` and defer the call until graph
-        execution.
-        """
-        if callable(to_list):
-            to_list = to_list()
-        if isinstance(to_list, list):
-            # Check that the list of columns is not empty and has no duplicates.
-            dbg.dassert_lte(1, len(to_list))
-            dbg.dassert_no_duplicates(to_list)
-            return to_list
-        raise TypeError("Data type=`%s`" % type(to_list))
+        return convert_to_list(to_list)
