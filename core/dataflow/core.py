@@ -3,6 +3,7 @@ import itertools
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from tqdm.autonotebook import tqdm
 import networkx as networ
 
 import helpers.dbg as dbg
@@ -376,8 +377,11 @@ class DAG:
         )
         # The `ancestors` filter only returns nodes strictly less than `nid`,
         # and so we need to add `nid` back.
-        nids = itertools.chain(ancestors, [nid])
-        for n in nids:
+        nids = list(itertools.chain(ancestors, [nid]))
+        _LOG.info("Executing %d nodes for '%s':\n%s", len(nids), nid,
+                  " ".join(nids))
+        for n in tqdm(nids):
+            _LOG.info("Executing node '%s'", n)
             self._run_node(n, method)
         return self.get_node(nid).get_outputs(method)
 

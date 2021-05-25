@@ -18,15 +18,24 @@ from core.dataflow.nodes.volatility_models import VolatilityModel
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Paul): Consider moving this to `core.py`.
+# TODO(Paul): Consider moving this to `core.py` or `dag_builder.py`
 class DagBuilder(abc.ABC):
     """
     Abstract class for creating DAGs.
 
     Concrete classes must specify:
-      - a default configuration (which may depend upon variables used in class
-        initialization)
-      - the construction of a DAG
+      1) `get_config_template()`
+        - It returns a Config object that represents the parameters used to build
+          the DAG
+        - The config can depend upon variables used in class initialization
+        - A config can be incomplete, e.g., "_DUMMY_" is used for required
+          fields that must be defined before the config can be used to initialize
+          a DAG
+      2) `get_dag()`
+        - It builds a DAG
+        - This function defines the DAG nodes and how they are connected to each
+          other. The passed-in config object tells this function how to
+          configure/initialize the various nodes.
     """
 
     def __init__(self, nid_prefix: Optional[str] = None) -> None:
@@ -89,6 +98,7 @@ class DagBuilder(abc.ABC):
         # TODO(*): Consider make this an abstractmethod.
         return ["fit", "predict"]
 
+    # TODO(gp): -> Dict[str, ... ?
     def get_column_to_tags_mapping(
         self, config: cconfi.Config
     ) -> Optional[Dict[Any, List[str]]]:
@@ -104,6 +114,13 @@ class DagBuilder(abc.ABC):
     def _get_nid(self, stage_name: str) -> str:
         nid = self._nid_prefix + stage_name
         return nid
+
+    @staticmethod
+    def _append(dag: DAG, tail_nid: Optional[str], node: Node) -> str:
+        dag.add_node(node)
+        if tail_nid is not None:
+            dag.connect(tail_nid, node.nid)
+        return node.nid
 
 
 class ArmaReturnsBuilder(DagBuilder):
@@ -244,6 +261,7 @@ class ArmaReturnsBuilder(DagBuilder):
             **config[nid].to_dict(),
         )
         tail_nid = self._append(dag, tail_nid, node)
+        _ = tail_nid
         return dag
 
     @staticmethod

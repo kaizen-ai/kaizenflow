@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+# TODO(gp): Remove the duplicated imports.
 import core.artificial_signal_generators as sig_gen
 import core.artificial_signal_generators as casgen
 import core.config as ccfg
@@ -33,6 +34,7 @@ class TestSmaModel(hut.TestCase):
     def test1(self) -> None:
         # Load test data.
         data = self._get_data()
+        _LOG.debug("data=\n%s", str(data))
         config = ccbuild.get_config_from_nested_dict(
             {
                 "col": ["vol_sq"],
@@ -107,6 +109,32 @@ class TestSmaModel(hut.TestCase):
         # Package results.
         self._check_results(config, info, df_out)
 
+    @staticmethod
+    def _get_data() -> pd.DataFrame:
+        """
+        Generate "random returns" in the form:
+        ```
+                       vol_sq
+        2000-01-03   3.111881
+        2000-01-04   1.425590
+        2000-01-05   2.298345
+        2000-01-06   8.544551
+        ```
+        """
+        # Get ARMA random data with some correlation.
+        arma_process = casgen.ArmaProcess([0.45], [0])
+        date_range_kwargs = {"start": "2000-01-01", "periods": 40, "freq": "B"}
+        date_range = pd.date_range(**date_range_kwargs)
+        realization = arma_process.generate_sample(
+            date_range_kwargs=date_range_kwargs, seed=0
+        )
+        # Square the volatility.
+        vol_sq = np.abs(realization) ** 2
+        vol_sq.name = "vol_sq"
+        # Assemble the data in a dataframe.
+        df = pd.DataFrame(index=date_range, data=vol_sq)
+        return df
+
     def _check_results(
         self,
         config: ccfg.Config,
@@ -114,7 +142,7 @@ class TestSmaModel(hut.TestCase):
         df_out: pd.DataFrame,
     ) -> None:
         """
-        Convert inputs to a string and check against golden reference.
+        Convert inputs to a string and check it against golden reference.
         """
         act: List[str] = []
         act.append(hprint.frame("config"))
@@ -124,22 +152,6 @@ class TestSmaModel(hut.TestCase):
         act.append(hut.convert_df_to_string(df_out, index=True, decimals=2))
         act = "\n".join(act)
         self.check_string(act)
-
-    @staticmethod
-    def _get_data() -> pd.DataFrame:
-        """
-        Generate "random returns".
-        """
-        arma_process = casgen.ArmaProcess([0.45], [0])
-        date_range_kwargs = {"start": "2000-01-01", "periods": 40, "freq": "B"}
-        date_range = pd.date_range(**date_range_kwargs)
-        realization = arma_process.generate_sample(
-            date_range_kwargs=date_range_kwargs, seed=0
-        )
-        vol_sq = np.abs(realization) ** 2
-        vol_sq.name = "vol_sq"
-        df = pd.DataFrame(index=date_range, data=vol_sq)
-        return df
 
 
 class TestSingleColumnVolatilityModel(hut.TestCase):

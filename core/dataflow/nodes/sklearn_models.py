@@ -67,7 +67,7 @@ class ContinuousSkLearnModel(
         :param model_kwargs: parameters to forward to the sklearn model
             (e.g., regularization constants)
         :param col_mode: "merge_all" or "replace_all", as in
-            ColumnTransformer()
+            `ColumnTransformer()`
         :param nan_mode: "drop" or "raise"
         """
         super().__init__(nid)
@@ -138,6 +138,7 @@ class ContinuousSkLearnModel(
         df_out = self._apply_col_mode(
             df, df_out, cols=self._to_list(self._y_vars), col_mode=self._col_mode
         )
+        # Update `info`.
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
