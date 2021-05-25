@@ -10,7 +10,12 @@ import pandas as pd
 
 import helpers.dbg as dbg
 from core.dataflow.core import Node
-from core.dataflow.utils import convert_to_list, get_df_info_as_string, merge_dataframes, validate_df_indices
+from core.dataflow.utils import (
+    convert_to_list,
+    get_df_info_as_string,
+    merge_dataframes,
+    validate_df_indices,
+)
 
 _LOG = logging.getLogger(__name__)
 

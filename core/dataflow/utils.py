@@ -1,5 +1,6 @@
 import io
 import logging
+from typing import Callable, List, Union
 
 import pandas as pd
 
