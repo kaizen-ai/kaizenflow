@@ -476,4 +476,4 @@ class ToListMixin:
 
     @staticmethod
     def _to_list(to_list: _TO_LIST_MIXIN_TYPE) -> List[_COL_TYPE]:
-        convert_to_list(to_list)
+        return convert_to_list(to_list)
