@@ -254,6 +254,7 @@ class SeriesToDfTransformer(Transformer):
     """
     Wrap transformers using the `SeriesToDfColProcessor` pattern.
     """
+
     def __init__(
         self,
         nid: str,
@@ -291,7 +292,7 @@ class SeriesToDfTransformer(Transformer):
         self._leaf_cols = None
 
     def _transform(
-            self, df: pd.DataFrame
+        self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         # Preprocess to extract relevant flat dataframe.
         df_in = df.copy()
@@ -369,7 +370,8 @@ class SeriesToSeriesTransformer(Transformer):
         nan_mode: Optional[str] = None,
     ) -> None:
         """
-        For reference, let
+        For reference, let.
+
           - N = df.columns.nlevels
           - leaf_cols = df[in_col_group].columns
 
@@ -456,8 +458,6 @@ def _apply_func_to_series(
         srs = srs.dropna()
     else:
         raise ValueError(f"Unrecognized `nan_mode` {nan_mode}")
-    # Preserve original series name.
-    name = srs.name
     info = collections.OrderedDict()
     # Perform the column transformation operations.
     # Introspect to see whether `_transformer_func` contains an `info`

@@ -85,9 +85,7 @@ def compute_lagged_columns(
     return pd.concat(out_cols, axis=1)
 
 
-def compute_lags(
-    srs: pd.Series, lag_delay: int, num_lags: int
-) -> pd.DataFrame:
+def compute_lags(srs: pd.Series, lag_delay: int, num_lags: int) -> pd.DataFrame:
     """
     Compute `num_lags` lags of `srs` starting with a delay of `lag_delay`.
     """
