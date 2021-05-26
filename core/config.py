@@ -23,10 +23,13 @@ _LOG = logging.getLogger(__name__)
 
 class Config:
     """
-    A hierarchical ordered dictionary storing configuration information.
+    A nested ordered dictionary storing configuration information.
 
-    Keys can only be strings. Values can be strings, ints, or another
-    `Config`.
+    Keys can only be strings. Values can be strings, ints, or another `Config`.
+
+    We refer to configs as:
+    - "flat" when they have a single level
+    - "nested" when there are multiple levels
     """
 
     def __init__(
@@ -39,8 +42,8 @@ class Config:
         ] = None,
     ) -> None:
         """
-        :param array: array of (key, value), where value can be a python
-            type or a Config in case of nested config.
+        :param array: array of (key, value), where value can be a Python
+            type or a `Config` in case of a nested config.
         """
         # pylint: disable=unsubscriptable-object
         # TODO(gp): MutableMapping instead of disabling the lint?
@@ -98,7 +101,7 @@ class Config:
             if not tail_key:
                 # Tuple of a single element, then return the value.
                 # Note that the following call is not equivalent to
-                # self._config[head_key].
+                # `self._config[head_key]`.
                 ret = self.__getitem__(head_key)
             else:
                 # Recurse.
@@ -307,6 +310,9 @@ class Config:
 # #############################################################################
 
 
+# TODO(gp): Maybe -> config_operations.py ?
+
+
 def make_hashable(obj: Any) -> collections.abc.Hashable:
     """
     Coerce `obj` to a hashable type if not already hashable.
@@ -318,6 +324,7 @@ def make_hashable(obj: Any) -> collections.abc.Hashable:
     return tuple(obj)
 
 
+# TODO(gp): Add unit tests.
 def intersect_configs(configs: Iterable[Config]) -> Config:
     """
     Return a config formed by taking the intersection of configs.
@@ -368,6 +375,7 @@ def subtract_config(minuend: Config, subtrahend: Config) -> Config:
     return diff
 
 
+# TODO(gp): Add unit tests.
 def diff_configs(configs: Iterable[Config]) -> List[Config]:
     """
     Diff `Config`s with respect to their common intersection.
@@ -386,6 +394,7 @@ def diff_configs(configs: Iterable[Config]) -> List[Config]:
     return config_diffs
 
 
+# TODO(gp): Add unit tests.
 def convert_to_series(config: Config) -> pd.Series:
     """
     Convert config into a flattened series representation.
@@ -411,6 +420,7 @@ def convert_to_series(config: Config) -> pd.Series:
     return srs
 
 
+# TODO(gp): Add unit tests.
 def convert_to_dataframe(configs: Iterable[Config]) -> pd.DataFrame:
     """
     Convert multiple configs into flattened dataframe representation.
