@@ -10,12 +10,15 @@ import core.data_adapters as cdataa
 import helpers.dbg as dbg
 from core.dataflow.nodes.base import (
     ColModeMixin,
+    CrossSectionalDfToDfColProcessor,
     FitPredictNode,
-    MultiColModeMixin,
-    RegFreqMixin,
-    ToListMixin,
 )
-from core.dataflow.utils import get_df_info_as_string
+from core.dataflow.utils import (
+    convert_to_list,
+    get_df_info_as_string,
+    merge_dataframes,
+    validate_df_indices,
+)
 
 _LOG = logging.getLogger(__name__)
 
@@ -25,12 +28,7 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 
-# #############################################################################
-# sklearn - unsupervised models
-# #############################################################################
-
-
-class AbstractUnsupervisedSkLearnModel(FitPredictNode, RegFreqMixin, abc.ABC):
+class AbstractUnsupervisedSkLearnModel(FitPredictNode, abc.ABC):
     def get_fit_state(self) -> Dict[str, Any]:
         fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
         return fit_state
@@ -49,7 +47,7 @@ class AbstractUnsupervisedSkLearnModel(FitPredictNode, RegFreqMixin, abc.ABC):
         :param fit: fits model iff `True`
         :return: transformed df_in
         """
-        self._validate_input_df(df_in)
+        validate_df_indices(df_in)
         df = df_in.copy()
         # Determine index where no x_vars are NaN.
         x_vars = df.columns.tolist()
@@ -83,14 +81,10 @@ class AbstractUnsupervisedSkLearnModel(FitPredictNode, RegFreqMixin, abc.ABC):
         return df_out, info
 
 
-class UnsupervisedSkLearnModel(
-    AbstractUnsupervisedSkLearnModel, RegFreqMixin, ToListMixin, ColModeMixin
-):
+class UnsupervisedSkLearnModel(AbstractUnsupervisedSkLearnModel, ColModeMixin):
     """
     Fit and transform an unsupervised sklearn model.
     """
-
-    # pylint: disable=too-many-ancestors
 
     def __init__(
         self,
@@ -151,20 +145,16 @@ class UnsupervisedSkLearnModel(
         if self._x_vars is None:
             x_vars = df_in.columns.tolist()
         else:
-            x_vars = self._to_list(self._x_vars)
+            x_vars = convert_to_list(self._x_vars)
         return df_in[x_vars].copy()
 
 
 class MultiindexUnsupervisedSkLearnModel(
     AbstractUnsupervisedSkLearnModel,
-    RegFreqMixin,
-    MultiColModeMixin,
 ):
     """
     Fit and transform an unsupervised sklearn model.
     """
-
-    # pylint: disable=too-many-ancestors
 
     def __init__(
         self,
@@ -206,23 +196,33 @@ class MultiindexUnsupervisedSkLearnModel(
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df = self._preprocess_df(self._in_col_group, df_in)
+        df = CrossSectionalDfToDfColProcessor.preprocess(
+            df_in, self._in_col_group
+        )
         df_out, info = self._fit_predict_helper(df, fit=True)
-        df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
+        df_out = CrossSectionalDfToDfColProcessor.postprocess(
+            df_out, self._out_col_group
+        )
+        df_out = merge_dataframes(df_in, df_out)
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df = self._preprocess_df(self._in_col_group, df_in)
+        df = CrossSectionalDfToDfColProcessor.preprocess(
+            df_in, self._in_col_group
+        )
         df_out, info = self._fit_predict_helper(df, fit=False)
-        df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
+        df_out = CrossSectionalDfToDfColProcessor.postprocess(
+            df_out, self._out_col_group
+        )
+        df_out = merge_dataframes(df_in, df_out)
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
 
-class Residualizer(FitPredictNode, RegFreqMixin, MultiColModeMixin):
+class Residualizer(FitPredictNode):
     """
     Residualize using an sklearn model with `inverse_transform()`.
     """
@@ -253,17 +253,27 @@ class Residualizer(FitPredictNode, RegFreqMixin, MultiColModeMixin):
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df = self._preprocess_df(self._in_col_group, df_in)
+        df = CrossSectionalDfToDfColProcessor.preprocess(
+            df_in, self._in_col_group
+        )
         df_out, info = self._fit_predict_helper(df, fit=True)
-        df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
+        df_out = CrossSectionalDfToDfColProcessor.postprocess(
+            df_out, self._out_col_group
+        )
+        df_out = merge_dataframes(df_in, df_out)
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df = self._preprocess_df(self._in_col_group, df_in)
+        df = CrossSectionalDfToDfColProcessor.preprocess(
+            df_in, self._in_col_group
+        )
         df_out, info = self._fit_predict_helper(df, fit=False)
-        df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
+        df_out = CrossSectionalDfToDfColProcessor.postprocess(
+            df_out, self._out_col_group
+        )
+        df_out = merge_dataframes(df_in, df_out)
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
@@ -286,7 +296,7 @@ class Residualizer(FitPredictNode, RegFreqMixin, MultiColModeMixin):
         :param fit: fits model iff `True`
         :return: transformed df_in
         """
-        self._validate_input_df(df_in)
+        validate_df_indices(df_in)
         df = df_in.copy()
         # Determine index where no x_vars are NaN.
         x_vars = df.columns.to_list()
@@ -318,9 +328,7 @@ class Residualizer(FitPredictNode, RegFreqMixin, MultiColModeMixin):
         return df_out, info
 
 
-class SkLearnInverseTransformer(
-    FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin
-):
+class SkLearnInverseTransformer(FitPredictNode, ColModeMixin):
     """
     Inverse transform cols using an unsupervised sklearn model.
     """
@@ -352,8 +360,8 @@ class SkLearnInverseTransformer(
         super().__init__(nid)
         self._model_func = model_func
         self._model_kwargs = model_kwargs or {}
-        self._x_vars = self._to_list(x_vars)
-        self._trans_x_vars = self._to_list(trans_x_vars)
+        self._x_vars = convert_to_list(x_vars)
+        self._trans_x_vars = convert_to_list(trans_x_vars)
         dbg.dassert_not_intersection(self._x_vars, self._trans_x_vars)
         self._model = None
         self._col_mode = col_mode or "replace_all"
@@ -384,10 +392,10 @@ class SkLearnInverseTransformer(
         :param fit: fits model iff `True`
         :return: transformed df_in
         """
-        self._validate_input_df(df_in)
+        validate_df_indices(df_in)
         df = df_in.copy()
         # Determine index where no x_vars are NaN.
-        x_vars = self._to_list(self._x_vars)
+        x_vars = convert_to_list(self._x_vars)
         non_nan_idx = df[x_vars].dropna().index
         dbg.dassert(not non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
@@ -407,7 +415,7 @@ class SkLearnInverseTransformer(
             model_attribute_info[k] = v
         info["model_attributes"] = model_attribute_info
         # Determine index where no trans_x_vars are NaN.
-        trans_x_vars = self._to_list(self._trans_x_vars)
+        trans_x_vars = convert_to_list(self._trans_x_vars)
         trans_non_nan_idx = df[trans_x_vars].dropna().index
         dbg.dassert(not trans_non_nan_idx.empty)
         # Handle presence of NaNs according to `nan_mode`.
