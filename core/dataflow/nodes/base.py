@@ -543,6 +543,7 @@ class SeriesDfToDfColProcessor:
         df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
         # Swap column levels so that symbols are leaves.
         df = df.swaplevel(i=0, j=1, axis=1)
+        df.sort_index(axis=1, level=0, inplace=True)
         if col_group:
             df = pd.concat([df], axis=1, keys=[col_group])
         return df

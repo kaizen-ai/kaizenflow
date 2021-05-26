@@ -19,12 +19,11 @@ from core.dataflow.core import DAG, Node
 from core.dataflow.nodes.base import (
     ColModeMixin,
     FitPredictNode,
-    MultiColModeMixin,
-    RegFreqMixin,
+    SeriesDfToDfColProcessor,
 )
 from core.dataflow.nodes.sources import ReadDataFromDf
 from core.dataflow.nodes.transformers import ColumnTransformer
-from core.dataflow.utils import get_df_info_as_string, convert_to_list
+from core.dataflow.utils import get_df_info_as_string, convert_to_list, validate_df_indices, merge_dataframes
 from core.dataflow.visitors import extract_info
 
 _LOG = logging.getLogger(__name__)
@@ -35,7 +34,7 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 
-class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
+class SmaModel(FitPredictNode, ColModeMixin):
     """
     Fit and predict a smooth moving average (SMA) model.
     """
@@ -86,7 +85,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         self._metric = sklear.metrics.mean_absolute_error
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        self._validate_input_df(df_in)
+        validate_df_indices(df_in)
         df = df_in.copy()
         # Obtain index slice for which forward targets exist.
         dbg.dassert_lt(self._steps_ahead, df.index.size)
@@ -137,7 +136,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        self._validate_input_df(df_in)
+        validate_df_indices(df_in)
         df = df_in.copy()
         idx = df.index
         # Restrict to times where col has no NaNs.
@@ -449,8 +448,8 @@ class SingleColumnVolatilityModel(FitPredictNode):
 class _MultiColVolatilityModelMixin:
     def _fit_predict_volatility_model(
         self, df: pd.DataFrame, fit: bool, out_col_prefix: Optional[str] = None
-    ) -> Tuple[List[pd.DataFrame], collections.OrderedDict]:
-        dfs = []
+    ) -> Tuple[Dict[str, pd.DataFrame], collections.OrderedDict]:
+        dfs = {}
         info = collections.OrderedDict()
         for col in df.columns:
             local_out_col_prefix = out_col_prefix or col
@@ -471,14 +470,13 @@ class _MultiColVolatilityModelMixin:
                 scvm.set_fit_state(self._col_fit_state[col])
                 df_out = scvm.predict(df[[col]])["df_out"]
                 info_out = scvm.get_info("predict")
-            dfs.append(df_out)
+            dfs[col] = df_out
             info[col] = info_out
         return dfs, info
 
 
 class VolatilityModel(
     FitPredictNode,
-    RegFreqMixin,
     ColModeMixin,
     _MultiColVolatilityModelMixin,
 ):
@@ -554,12 +552,12 @@ class VolatilityModel(
         self._info["fit"] = fit_state["_info['fit']"]
 
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
-        self._validate_input_df(df_in)
+        validate_df_indices(df_in)
         # Get the columns.
         self._fit_cols = convert_to_list(self._cols or df_in.columns.tolist())
         df = df_in[self._fit_cols]
         dfs, info = self._fit_predict_volatility_model(df, fit=fit)
-        df_out = pd.concat(dfs, axis=1)
+        df_out = pd.concat(dfs.values(), axis=1)
         df_out = self._apply_col_mode(
             df_in.drop(df_out.columns.intersection(df_in.columns), 1),
             df_out,
@@ -574,22 +572,13 @@ class VolatilityModel(
 
 
 class MultiindexVolatilityModel(
-    FitPredictNode, RegFreqMixin, MultiColModeMixin, _MultiColVolatilityModelMixin
+    FitPredictNode, _MultiColVolatilityModelMixin
 ):
     """
     Fit and predict a smooth moving average volatility model.
 
     Wraps SmaModel internally, handling calculation of volatility from
     returns and column appends.
-
-    TODO(*): There is a lot of code shared with `MultiindexSeriesTransformer`.
-        Can anything be shared?
-    TODO(*): We hit
-        ```
-        PerformanceWarning: indexing past lexsort depth may impact performance.
-        ```
-    TODO(*): Add tests.
-    TODO(*): Ensure new column names do not collide with existing ones.
     """
 
     def __init__(
@@ -644,27 +633,18 @@ class MultiindexVolatilityModel(
         self._info["fit"] = fit_state["_info['fit']"]
 
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
-        self._validate_input_df(df_in)
-        df = self._preprocess_df(self._in_col_group, df_in)
+        validate_df_indices(df_in)
+        df = SeriesDfToDfColProcessor.preprocess(df_in, self._in_col_group)
         dfs, info = self._fit_predict_volatility_model(
             df, fit=fit, out_col_prefix=self._out_col_prefix
         )
-        df_out = self._insert_col_level(dfs, df.columns)
-        df_out = self._postprocess_df(self._out_col_group, df_in, df_out)
+        df_out = SeriesDfToDfColProcessor.postprocess(dfs, self._out_col_group)
+        df_out = merge_dataframes(df_in, df_out)
         if fit:
             self._set_info("fit", info)
         else:
             self._set_info("predict", info)
         return {"df_out": df_out}
-
-    def _insert_col_level(
-        self, dfs: List[pd.DataFrame], keys: List[_COL_TYPE]
-    ) -> pd.DataFrame:
-        dbg.dassert_eq(len(dfs), len(keys))
-        df_out = pd.concat(dfs, axis=1, keys=keys)
-        df_out = df_out.swaplevel(i=0, j=1, axis=1)
-        df_out.sort_index(axis=1, level=0, inplace=True)
-        return df_out
 
 
 class VolatilityModulator(FitPredictNode, ColModeMixin):
