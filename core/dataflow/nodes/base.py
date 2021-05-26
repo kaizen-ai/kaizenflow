@@ -403,6 +403,48 @@ class ColModeMixin:
 # #############################################################################
 
 
+class GroupedColDfToDfColProcessor:
+    """
+    Provides dataflow processing wrappers for dataframe-to-dataframe functions.
+
+    Examples:
+    1.  Suppose we want to learn one model per instrument given a dataframe
+        `df` with multilevel columns
+        ```
+        feat1           feat2           y
+        MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3
+        ```
+        Then, to `preprocess()` we pass in a list of tuples, i.e.,
+        `col_groups = [("feat1",), ("feat2",), ("y",)]. The function
+        `preprocess()` returns a dictionary keyed by `MN0`, ..., `MN3`, with
+        values consisting of dataframes with columns
+        ```
+        feat1 feat2 y
+        ```
+        Suppose the learning step returns a dataframe with column "y_hat" (one
+        dataframe for each input dataframe). We then apply `postprocess()` to
+        the dictionary of results, taking `col_group = (,)`, to obtain a single
+        dataframe with multilevel columns
+        ```
+        y_hat
+        MN0 MN1 MN2 MN3
+        ```
+    """
+    @staticmethod
+    def preprocess(
+            df: pd.DataFrame,
+            col_groups: List[Tuple[_COL_TYPE]],
+    ) -> Dict[_COL_TYPE, pd.DataFrame]:
+        raise NotImplementedError
+
+    @staticmethod
+    def postprocess(
+            dfs: Dict[_COL_TYPE, pd.DataFrame],
+            col_group: Tuple[_COL_TYPE],
+    ) -> pd.DataFrame:
+        raise NotImplementedError
+
+
 class CrossSectionalDfToDfColProcessor:
     """
     Provides dataflow processing wrappers for cross-sectional transformations.
@@ -535,7 +577,7 @@ class SeriesToDfColProcessor:
 
     @staticmethod
     def postprocess(
-        dfs: Dict[Tuple[_COL_TYPE], pd.DataFrame],
+        dfs: Dict[_COL_TYPE, pd.DataFrame],
         col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
         """

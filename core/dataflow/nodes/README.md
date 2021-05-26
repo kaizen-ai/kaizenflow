@@ -22,7 +22,3 @@ becomes
 y_2_hat         y_2             feat1           feat2           y_0
 MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3
 ```
-
-User responsibilities:
-  - provide transformer function
-  - specify input column tuples with `N - 1` levels
