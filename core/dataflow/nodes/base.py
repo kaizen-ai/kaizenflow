@@ -430,17 +430,18 @@ class GroupedColDfToDfColProcessor:
         MN0 MN1 MN2 MN3
         ```
     """
+
     @staticmethod
     def preprocess(
-            df: pd.DataFrame,
-            col_groups: List[Tuple[_COL_TYPE]],
+        df: pd.DataFrame,
+        col_groups: List[Tuple[_COL_TYPE]],
     ) -> Dict[_COL_TYPE, pd.DataFrame]:
         raise NotImplementedError
 
     @staticmethod
     def postprocess(
-            dfs: Dict[_COL_TYPE, pd.DataFrame],
-            col_group: Tuple[_COL_TYPE],
+        dfs: Dict[_COL_TYPE, pd.DataFrame],
+        col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
         raise NotImplementedError
 
