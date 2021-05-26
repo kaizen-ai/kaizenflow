@@ -214,32 +214,10 @@ class SeriesTransformer(Transformer, ColModeMixin):
         info["func_info"] = collections.OrderedDict()
         func_info = info["func_info"]
         srs_list = []
-        for col in df.columns:
-            col_info = collections.OrderedDict()
-            srs = df[col]
-            if self._nan_mode == "leave_unchanged":
-                pass
-            elif self._nan_mode == "drop":
-                srs = srs.dropna()
-            else:
-                raise ValueError(f"Unrecognized `nan_mode` {self._nan_mode}")
-            # Perform the column transformation operations.
-            # Introspect to see whether `_transformer_func` contains an `info`
-            # parameter. If so, inject an empty dict to be populated when
-            # `_transformer_func` is executed.
-            func_sig = inspect.signature(self._transformer_func)
-            if "info" in func_sig.parameters:
-                func_info = collections.OrderedDict()
-                srs = self._transformer_func(
-                    srs, info=col_info, **self._transformer_kwargs
-                )
+        for col in self._leaf_cols:
+            srs, col_info = _apply_func_to_series(df[col], self._nan_mode, self._transformer_func, self._transformer_kwargs)
+            if col_info is not None:
                 func_info[col] = col_info
-            else:
-                srs = self._transformer_func(srs, **self._transformer_kwargs)
-            if self._col_rename_func is not None:
-                srs.name = self._col_rename_func(col)
-            else:
-                srs.name = col
             srs_list.append(srs)
         info["func_info"] = func_info
         df = pd.concat(srs_list, axis=1)
@@ -348,37 +326,16 @@ class MultiindexSeriesTransformer(Transformer):
         df = SeriesToSeriesColProcessor.preprocess(df, self._in_col_group)
         # Apply `transform()` function column-wise.
         self._leaf_cols = df.columns.tolist()
-        df.index
         # Initialize container to store info (e.g., auxiliary stats) in the
-        # node..
+        # node.
         info = collections.OrderedDict()
         info["func_info"] = collections.OrderedDict()
         func_info = info["func_info"]
         srs_list = []
         for col in self._leaf_cols:
-            col_info = collections.OrderedDict()
-            srs = df[col]
-            if self._nan_mode == "leave_unchanged":
-                pass
-            elif self._nan_mode == "drop":
-                srs = srs.dropna()
-            else:
-                raise ValueError(f"Unrecognized `nan_mode` {self._nan_mode}")
-            # Perform the column transformation operations.
-            # Introspect to see whether `_transformer_func` contains an `info`
-            # parameter. If so, inject an empty dict to be populated when
-            # `_transformer_func` is executed.
-            func_sig = inspect.signature(self._transformer_func)
-            if "info" in func_sig.parameters:
-                func_info = collections.OrderedDict()
-                srs = self._transformer_func(
-                    srs, info=col_info, **self._transformer_kwargs
-                )
+            srs, col_info = _apply_func_to_series(df[col], self._nan_mode, self._transformer_func, self._transformer_kwargs)
+            if col_info is not None:
                 func_info[col] = col_info
-            else:
-                srs = self._transformer_func(srs, **self._transformer_kwargs)
-            dbg.dassert_isinstance(srs, pd.Series)
-            srs.name = col
             srs_list.append(srs)
         info["func_info"] = func_info
         # Combine the series representing leaf col transformations back into a
@@ -387,6 +344,47 @@ class MultiindexSeriesTransformer(Transformer):
         df = merge_dataframes(df_in, df)
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
+
+
+def _apply_func_to_series(
+        srs: pd.Series,
+        nan_mode: str,
+        func,
+        func_kwargs,
+    ) -> Tuple[pd.Series, Optional[collections.OrderedDict]]:
+    """
+    Apply `func` to `srs` with `func_kwargs` after first applying `nan_mode`.
+
+    This is mainly a wrapper for propagating `info` back when `func` supports
+    the parameter.
+
+    TODO(*): We should consider only having `nan_mode` as one of the
+    `func_kwargs`, since now many functions support it directly.
+    """
+    if nan_mode == "leave_unchanged":
+        pass
+    elif nan_mode == "drop":
+        srs = srs.dropna()
+    else:
+        raise ValueError(f"Unrecognized `nan_mode` {nan_mode}")
+    # Preserve original series name.
+    name = srs.name
+    info = collections.OrderedDict()
+    # Perform the column transformation operations.
+    # Introspect to see whether `_transformer_func` contains an `info`
+    # parameter. If so, inject an empty dict to be populated when
+    # `_transformer_func` is executed.
+    func_sig = inspect.signature(func)
+    if "info" in func_sig.parameters:
+        srs = func(
+            srs, info=info, **func_kwargs,
+        )
+    else:
+        srs = func(srs, **func_kwargs)
+        info = None
+    dbg.dassert_isinstance(srs, pd.Series)
+    srs.name = name
+    return srs, info
 
 
 class DataframeMethodRunner(Transformer):
