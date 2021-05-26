@@ -430,7 +430,7 @@ class ToListMixin:
 
 class CrossSectionalDfToDfColProcessor:
     """
-    Provides dataflow processing wrappers for cross-sectional transformation.
+    Provides dataflow processing wrappers for cross-sectional transformations.
 
     These helpers are useful when we want to apply an operation such as
     principal component projection or residualization to a family of
@@ -481,6 +481,15 @@ class CrossSectionalDfToDfColProcessor:
 
 
 class SeriesToDfColProcessor:
+    """
+    Provides dataflow processing wrappers for series-to-dataframe functions.
+
+    Examples of functions to wrap include:
+        - series decompositions (e.g., STL, Fourier coefficients, wavelet
+          levels)
+        - multiple lags
+        - volatility modeling
+    """
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
@@ -497,14 +506,19 @@ class SeriesToDfColProcessor:
         col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
         """
-        TODO(Paul): Complete docstring and provide examples.
+        Create a multi-indexed column dataframe from keys, values, `col_group`.
 
-        :param df:
-        :param col_group:
-        :return:
+        :param dfs: dataframes indexed by symbol.
+        :param col_group: column levels to prefix `df` columns with
+        :return: multi-level column dataframe
+            - leaf columns are symbols
+            - the next column level is defined by the columns of the dataframes
+              in `dfs` (which are to be the same).
+            - the initial levels are given by `col_group`
         """
         dbg.dassert_isinstance(dfs, dict)
         # Perform sanity checks on dataframe.
+        # TODO(*): Check non-emptiness of dict, dataframes.
         for symbol, df in dfs.items():
             dbg.dassert_isinstance(symbol, str)
             dbg.dassert_isinstance(df, pd.DataFrame)
@@ -526,6 +540,14 @@ class SeriesToDfColProcessor:
 
 
 class SeriesToSeriesColProcessor:
+    """
+    Provides dataflow processing wrappers for series-to-series functions.
+
+    Examples of functions to wrap include:
+        - signal filters (e.g., smooth moving averages, z-scoring, outlier
+          processing)
+        - rolling features (e.g., moments, centered moments)
+    """
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
@@ -542,11 +564,12 @@ class SeriesToSeriesColProcessor:
         col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
         """
-        TODO(Paul): Complete docstring and provide examples.
+        Create a multi-indexed column dataframe from `srs` and `col_group`.
 
-        :param df:
-        :param col_group:
-        :return:
+        :param srs: a list of symbols uniquely named (by symbol)
+        :param col_group: column levels to add
+        :return: multi-indexed column dataframe with series names as leaf
+            columns
         """
         # Perform basic type checks.
         dbg.dassert_isinstance(srs, list)
@@ -555,6 +578,8 @@ class SeriesToSeriesColProcessor:
         dbg.dassert_isinstance(col_group, tuple)
         # Create dataframe from series.
         df = pd.concat(srs, axis=1)
+        # Ensure that there are no duplicates.
+        dbg.dassert_no_duplicates(df.columns)
         if col_group:
             df = pd.concat([df], axis=1, keys=[col_group])
         return df
