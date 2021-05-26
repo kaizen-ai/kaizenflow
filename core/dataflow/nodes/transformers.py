@@ -12,8 +12,8 @@ import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
-from core.dataflow.nodes.base import ColModeMixin, MultiColModeMixin, Transformer
-from core.dataflow.utils import get_df_info_as_string
+from core.dataflow.nodes.base import ColModeMixin, Transformer, SeriesToSeriesColProcessor
+from core.dataflow.utils import get_df_info_as_string, merge_dataframes
 
 # TODO(*): Create a dataflow types file.
 _COL_TYPE = Union[int, str]
@@ -259,7 +259,7 @@ class SeriesTransformer(Transformer, ColModeMixin):
         return df, info
 
 
-class MultiindexSeriesTransformer(Transformer, MultiColModeMixin):
+class MultiindexSeriesTransformer(Transformer):
     """
     Perform non-index modifying changes of columns.
 
@@ -341,8 +341,7 @@ class MultiindexSeriesTransformer(Transformer, MultiColModeMixin):
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         # Preprocess to extract relevant flat dataframe.
         df_in = df.copy()
-        # Preprocess according to `MultiColModeMixin`.
-        df = self._preprocess_df(self._in_col_group, df)
+        df = SeriesToSeriesColProcessor.preprocess(df, self._in_col_group)
         # Apply `transform()` function column-wise.
         self._leaf_cols = df.columns.tolist()
         idx = df.index
@@ -380,10 +379,8 @@ class MultiindexSeriesTransformer(Transformer, MultiColModeMixin):
         info["func_info"] = func_info
         # Combine the series representing leaf col transformations back into a
         # single dataframe.
-        df = pd.concat(srs_list, axis=1)
-        df = df.reindex(index=idx)
-        # Add column levels and merge according to `MultiColModeMixin`.
-        df = self._postprocess_df(self._out_col_group, df_in, df)
+        df = SeriesToSeriesColProcessor.postprocess(srs_list, self._out_col_group)
+        df = merge_dataframes(df_in, df)
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
 

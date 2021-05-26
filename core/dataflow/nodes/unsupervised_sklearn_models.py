@@ -23,11 +23,6 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 
-# #############################################################################
-# sklearn - unsupervised models
-# #############################################################################
-
-
 class AbstractUnsupervisedSkLearnModel(FitPredictNode, abc.ABC):
     def get_fit_state(self) -> Dict[str, Any]:
         fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
