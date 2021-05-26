@@ -398,6 +398,7 @@ class ColModeMixin:
         return df_out
 
 
+# Deprecated. Use `validate_df_indices()`.
 class RegFreqMixin:
     """
     Require input dataframe to have a well-defined frequency and unique cols.
@@ -411,6 +412,7 @@ class RegFreqMixin:
         validate_df_indices(df)
 
 
+# Deprecated. Use `convert_to_list()`.
 class ToListMixin:
     """
     Support callables that return lists.
@@ -421,17 +423,26 @@ class ToListMixin:
         return convert_to_list(to_list)
 
 
+# #############################################################################
+# Column processing helpers
+# #############################################################################
+
+
 class CrossSectionalDfToDfColProcessor:
+    """
+    Provides dataflow processing wrappers for cross-sectional transformation.
+
+    These helpers are useful when we want to apply an operation such as
+    principal component projection or residualization to a family of
+    instruments.
+    """
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
         col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
         """
-
-        :param df:
-        :param col_group:
-        :return:
+        As in `_preprocess_cols()`.
         """
         return _preprocess_cols(df, col_group)
 
@@ -441,10 +452,17 @@ class CrossSectionalDfToDfColProcessor:
         col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
         """
+        Create a multi-indexed column dataframe from a single-indexed one.
 
-        :param df:
-        :param col_group:
-        :return:
+        :param df: a single-level column dataframe
+        :param col_group: a tuple of indices to insert
+        :return: a multi-indexed column dataframe. If `df` has columns
+            `MN0 MN1 MN2 MN3` and `col_group = "pca"`, then the output
+            dataframe has columns
+            ```
+            pca
+            MN0 MN1 MN2 MN3
+            ```
         """
         # Perform sanity checks on dataframe.
         dbg.dassert_isinstance(df, pd.DataFrame)
@@ -467,10 +485,7 @@ class SeriesDfToDfColProcessor:
         col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
         """
-
-        :param df:
-        :param col_group:
-        :return:
+        As in `_preprocess_cols()`.
         """
         return _preprocess_cols(df, col_group)
 
@@ -480,6 +495,7 @@ class SeriesDfToDfColProcessor:
         col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
         """
+        TODO(Paul): Complete docstring and provide examples.
 
         :param df:
         :param col_group:
@@ -509,23 +525,21 @@ class SeriesDfToDfColProcessor:
 class SeriesToSeriesColProcessor:
     @staticmethod
     def preprocess(
-            df: pd.DataFrame,
-            col_group: Tuple[_COL_TYPE],
+        df: pd.DataFrame,
+        col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
         """
-
-        :param df:
-        :param col_group:
-        :return:
+        As in `_preprocess_cols()`.
         """
         return _preprocess_cols(df, col_group)
 
     @staticmethod
     def postprocess(
-            srs: List[pd.Series],
-            col_group: Tuple[_COL_TYPE],
+        srs: List[pd.Series],
+        col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
         """
+        TODO(Paul): Complete docstring and provide examples.
 
         :param df:
         :param col_group:
@@ -543,14 +557,26 @@ class SeriesToSeriesColProcessor:
         return df
 
 def _preprocess_cols(
-        df: pd.DataFrame,
-        col_group: Tuple[_COL_TYPE],
+    df: pd.DataFrame,
+    col_group: Tuple[_COL_TYPE],
 ) -> pd.DataFrame:
     """
+    Extract a single-level column dataframe from a multi-indexed one.
 
-    :param df:
-    :param col_group:
-    :return:
+    :param df: multi-indexed column dataframe, e.g.,
+        ```
+        ret_0           close
+        MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3
+        ```
+    :param col_group: tuple specifying all but leaf instruments, which are
+        selected implicitly. E.g., `col_group = "ret_0"` extracts
+        `(ret_0, MN0)` through `(ret_0, MN3)`.
+    :return: a single-level column dataframe. E.g., a dataframe with
+        columns
+        ```
+        MN0 MN1 MN2 MN3
+        ```
+        extracted from the `ret_0` group.
     """
     # Perform `col_group` sanity checks.
     dbg.dassert_isinstance(col_group, tuple)
