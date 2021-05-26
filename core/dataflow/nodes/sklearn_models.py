@@ -176,7 +176,8 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         info["model_params"] = self._model.get_params()
         info["model_perf"] = self._model_perf(forward_y_df, forward_y_hat)
         info["model_score"] = self._score(
-            forward_y_df.loc[forward_y_non_nan_idx], forward_y_hat.loc[forward_y_non_nan_idx]
+            forward_y_df.loc[forward_y_non_nan_idx],
+            forward_y_hat.loc[forward_y_non_nan_idx],
         )
         # Return predictions.
         df_out = forward_y_df.merge(
