@@ -215,7 +215,12 @@ class SeriesTransformer(Transformer, ColModeMixin):
         func_info = info["func_info"]
         srs_list = []
         for col in self._leaf_cols:
-            srs, col_info = _apply_func_to_series(df[col], self._nan_mode, self._transformer_func, self._transformer_kwargs)
+            srs, col_info = _apply_func_to_series(
+                df[col],
+                self._nan_mode,
+                self._transformer_func,
+                self._transformer_kwargs,
+            )
             if col_info is not None:
                 func_info[col] = col_info
             srs_list.append(srs)
@@ -333,7 +338,12 @@ class MultiindexSeriesTransformer(Transformer):
         func_info = info["func_info"]
         srs_list = []
         for col in self._leaf_cols:
-            srs, col_info = _apply_func_to_series(df[col], self._nan_mode, self._transformer_func, self._transformer_kwargs)
+            srs, col_info = _apply_func_to_series(
+                df[col],
+                self._nan_mode,
+                self._transformer_func,
+                self._transformer_kwargs,
+            )
             if col_info is not None:
                 func_info[col] = col_info
             srs_list.append(srs)
@@ -347,11 +357,11 @@ class MultiindexSeriesTransformer(Transformer):
 
 
 def _apply_func_to_series(
-        srs: pd.Series,
-        nan_mode: str,
-        func,
-        func_kwargs,
-    ) -> Tuple[pd.Series, Optional[collections.OrderedDict]]:
+    srs: pd.Series,
+    nan_mode: str,
+    func,
+    func_kwargs,
+) -> Tuple[pd.Series, Optional[collections.OrderedDict]]:
     """
     Apply `func` to `srs` with `func_kwargs` after first applying `nan_mode`.
 
@@ -377,7 +387,9 @@ def _apply_func_to_series(
     func_sig = inspect.signature(func)
     if "info" in func_sig.parameters:
         srs = func(
-            srs, info=info, **func_kwargs,
+            srs,
+            info=info,
+            **func_kwargs,
         )
     else:
         srs = func(srs, **func_kwargs)

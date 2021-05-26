@@ -490,6 +490,7 @@ class SeriesToDfColProcessor:
         - multiple lags
         - volatility modeling
     """
+
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
@@ -548,6 +549,7 @@ class SeriesToSeriesColProcessor:
           processing)
         - rolling features (e.g., moments, centered moments)
     """
+
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
