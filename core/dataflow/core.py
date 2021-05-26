@@ -377,11 +377,9 @@ class DAG:
         )
         # The `ancestors` filter only returns nodes strictly less than `nid`,
         # and so we need to add `nid` back.
-        nids = list(itertools.chain(ancestors, [nid]))
-        _LOG.debug("Executing %d nodes for '%s':\n%s", len(nids), nid,
-                   " ".join(nids))
+        nids = itertools.chain(ancestors, [nid])
         if progress_bar:
-            nids = tqdm(nids)
+            nids = tqdm(list(nids))
         for n in nids:
             _LOG.debug("Executing node '%s'", n)
             self._run_node(n, method)
