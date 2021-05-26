@@ -11,7 +11,7 @@ from core.dataflow.nodes.transformers import SeriesToSeriesTransformer
 _LOG = logging.getLogger(__name__)
 
 
-class TestMultiindexSeriesTransformer(hut.TestCase):
+class TestSeriesToSeriesTransformer(hut.TestCase):
     def test1(self) -> None:
         """
         Test `fit()` call.
