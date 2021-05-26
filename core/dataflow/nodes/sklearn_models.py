@@ -10,7 +10,7 @@ import core.data_adapters as cdataa
 import core.signal_processing as csigna
 import core.statistics as cstati
 import helpers.dbg as dbg
-from core.dataflow.nodes.base import FitPredictNode
+from core.dataflow.nodes.base import FitPredictNode, GroupedColDfToDfColProcessor
 from core.dataflow.nodes.transformers import ColModeMixin
 from core.dataflow.utils import (
     convert_to_list,
@@ -171,7 +171,7 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         forward_y_hat = cdataa.transform_from_sklearn(
             non_nan_idx, forward_y_hat_vars, forward_y_hat
         )
-        # Generate basic perf cstati.
+        # Generate basic perf stats.
         info = collections.OrderedDict()
         info["model_params"] = self._model.get_params()
         info["model_perf"] = self._model_perf(forward_y_df, forward_y_hat)
@@ -191,8 +191,6 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
             col_mode=self._col_mode,
         )
         info["df_out_info"] = get_df_info_as_string(df_out)
-        # TODO(*): Consider adding state to `info` as follows.
-        # info["state"] = pickle.dumps(self._model)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
@@ -261,6 +259,88 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
             csigna.resample(pnl_rets, rule="1B").sum()
         )
         return info
+
+
+class MultiindexSkLearnModel(FitPredictNode):
+    """
+
+    """
+    def __init__(
+        self,
+        nid: str,
+        in_col_groups: List[Tuple[_COL_TYPE]],
+        out_col_group: Tuple[_COL_TYPE],
+        model_func: Callable[..., Any],
+        x_vars: List[_COL_TYPE],
+        y_vars: List[_COL_TYPE],
+        steps_ahead: int,
+        model_kwargs: Optional[Any] = None,
+        nan_mode: Optional[str] = None,
+    ) -> None:
+        super().__init__(nid)
+        dbg.dassert_isinstance(in_col_groups, list)
+        self._in_col_groups = in_col_groups
+        self._out_col_group = out_col_group
+        #
+        self._model_func = model_func
+        self._x_vars = x_vars
+        self._y_vars = y_vars
+        self._steps_ahead = steps_ahead
+        self._model_kwargs = model_kwargs
+        self._nan_mode = nan_mode
+        #
+        self._key_fit_state = {}
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=True)
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=False)
+
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {
+            "_key_fit_state": self._key_fit_state,
+            "_info['fit']": self._info["fit"],
+        }
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]):
+        self._key_fit_state = fit_state["_key_fit_state"]
+        self._info["fit"] = fit_state["_info['fit']"]
+
+    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
+        validate_df_indices(df_in)
+        dfs = GroupedColDfToDfColProcessor.preprocess(df_in, self._in_col_groups)
+        results = {}
+        info = collections.OrderedDict()
+        for key, df in dfs.items():
+            csklm = ContinuousSkLearnModel(
+                "sklearn",
+                model_func=self._model_func,
+                x_vars=self._x_vars,
+                y_vars=self._y_vars,
+                steps_ahead=self._steps_ahead,
+                model_kwargs=self._model_kwargs,
+                col_mode="replace_all",
+                nan_mode=self._nan_mode,
+            )
+            if fit:
+                df_out = csklm.fit(df)["df_out"]
+                info_out = csklm.get_info("fit")
+                self._key_fit_state[key] = csklm.get_fit_state()
+            else:
+                csklm.set_fit_state(self._key_fit_state[key])
+                df_out = csklm.predict(df)["df_out"]
+                info_out = csklm.get_info("predict")
+            results[key] = df_out
+            info[key] = info_out
+        df_out = GroupedColDfToDfColProcessor.postprocess(results, self._out_col_group)
+        df_out = merge_dataframes(df_in, df_out)
+        if fit:
+            self._set_info("fit", info)
+        else:
+            self._set_info("predict", info)
+        return {"df_out": df_out}
 
 
 class SkLearnModel(FitPredictNode, ColModeMixin):
