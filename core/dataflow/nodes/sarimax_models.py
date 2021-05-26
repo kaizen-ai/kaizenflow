@@ -11,9 +11,9 @@ from tqdm.autonotebook import tqdm
 
 import core.signal_processing as csigna
 import helpers.dbg as dbg
-from core.dataflow.nodes.base import FitPredictNode, RegFreqMixin, ToListMixin
+from core.dataflow.nodes.base import FitPredictNode
 from core.dataflow.nodes.transformers import ColModeMixin
-from core.dataflow.utils import get_df_info_as_string
+from core.dataflow.utils import get_df_info_as_string, convert_to_list, validate_df_indices
 
 _LOG = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 
 class ContinuousSarimaxModel(
-    FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin
+    FitPredictNode, ColModeMixin
 ):
     """
     A dataflow node for continuous SARIMAX model.
@@ -100,11 +100,11 @@ class ContinuousSarimaxModel(
         self._disable_tqdm = disable_tqdm
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        self._validate_input_df(df_in)
+        validate_df_indices(df_in)
         df = df_in.copy()
         idx = df.index
         # Get intersection of non-NaN `y` and `x`.
-        y_vars = self._to_list(self._y_vars)
+        y_vars = convert_to_list(self._y_vars)
         y_fit = df[y_vars]
         if self._nan_mode == "leave_unchanged":
             non_nan_idx = idx
@@ -139,7 +139,7 @@ class ContinuousSarimaxModel(
             fwd_y_hat, how="outer", left_index=True, right_index=True
         )
         df_out = self._apply_col_mode(
-            df, df_out, cols=self._to_list(self._y_vars), col_mode=self._col_mode
+            df, df_out, cols=convert_to_list(self._y_vars), col_mode=self._col_mode
         )
         # Add info.
         # TODO(Julia): Maybe add model performance to info.
@@ -152,11 +152,11 @@ class ContinuousSarimaxModel(
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        self._validate_input_df(df_in)
+        validate_df_indices(df_in)
         df = df_in.copy()
         idx = df.index
         # Get intersection of non-NaN `y` and `x`.
-        y_vars = self._to_list(self._y_vars)
+        y_vars = convert_to_list(self._y_vars)
         dbg.dassert_eq(len(y_vars), 1, "Only univariate `y` is supported")
         y_predict = df[y_vars]
         if self._x_vars is not None:
@@ -177,7 +177,7 @@ class ContinuousSarimaxModel(
             fwd_y_hat, how="outer", left_index=True, right_index=True
         )
         df_out = self._apply_col_mode(
-            df, df_out, cols=self._to_list(self._y_vars), col_mode=self._col_mode
+            df, df_out, cols=convert_to_list(self._y_vars), col_mode=self._col_mode
         )
         # Add info.
         info = collections.OrderedDict()
@@ -238,7 +238,7 @@ class ContinuousSarimaxModel(
         This way we predict `y_t` using `x_{t-n}`, ..., `x_{t-1}`, where `n` is
         `self._steps_ahead`.
         """
-        x_vars = self._to_list(self._x_vars)
+        x_vars = convert_to_list(self._x_vars)
         shift = self._steps_ahead
         # Shift index instead of series to extend the index.
         bkwd_x_df = df[x_vars].copy()
@@ -250,7 +250,7 @@ class ContinuousSarimaxModel(
         """
         Return dataframe of `steps_ahead` forward y values.
         """
-        y_vars = self._to_list(self._y_vars)
+        y_vars = convert_to_list(self._y_vars)
         mapper = lambda y: str(y) + "_%i" % self._steps_ahead
         fwd_y_df = df[y_vars].shift(-self._steps_ahead).rename(columns=mapper)
         return fwd_y_df
@@ -259,7 +259,7 @@ class ContinuousSarimaxModel(
         if not self._add_constant:
             return x
         if self._x_vars is not None:
-            self._x_vars = self._to_list(self._x_vars)
+            self._x_vars = convert_to_list(self._x_vars)
             dbg.dassert_not_in(
                 "const",
                 self._x_vars,
@@ -284,7 +284,7 @@ class ContinuousSarimaxModel(
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
 
-class MultihorizonReturnsPredictionProcessor(FitPredictNode, ToListMixin):
+class MultihorizonReturnsPredictionProcessor(FitPredictNode):
     """
     Process multi-horizon returns prediction.
 
@@ -317,7 +317,7 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode, ToListMixin):
         """
         super().__init__(nid)
         self._target_col = target_col
-        self._prediction_cols = self._to_list(prediction_cols)
+        self._prediction_cols = convert_to_list(prediction_cols)
         self._volatility_col = volatility_col
         self._max_steps_ahead = len(self._prediction_cols)
 
