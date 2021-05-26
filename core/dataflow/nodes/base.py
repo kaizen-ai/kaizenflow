@@ -416,22 +416,7 @@ class MultiColModeMixin:
         :param df: dataframe with a multiindexed column
         :return: single-level column index dataframe
         """
-        # Perform col group checks.
-        dbg.dassert_isinstance(in_col_group, tuple)
-        dbg.dassert_lt(
-            0, len(in_col_group), msg="Tuple `in_col_group` must be nonempty."
-        )
-        dbg.dassert_isinstance(df, pd.DataFrame)
-        # Do not allow duplicate columns.
-        dbg.dassert_no_duplicates(df.columns)
-        # Ensure compatibility between dataframe column levels and col groups.
-        dbg.dassert_eq(
-            len(in_col_group),
-            df.columns.nlevels - 1,
-            "Dataframe multiindex column depth incompatible with config.",
-        )
-        # Select single-column-level dataframe and return.
-        return df[in_col_group].copy()
+        return CrossSectionalDfToDfColProcessor.preprocess(df, in_col_group)
 
     def _postprocess_df(
         self,
@@ -477,3 +462,117 @@ class ToListMixin:
     @staticmethod
     def _to_list(to_list: _TO_LIST_MIXIN_TYPE) -> List[_COL_TYPE]:
         return convert_to_list(to_list)
+
+
+class CrossSectionalDfToDfColProcessor:
+    @staticmethod
+    def preprocess(
+        df: pd.DataFrame,
+        col_group: Tuple[_COL_TYPE],
+    ) -> pd.DataFrame:
+        """
+
+        :param df:
+        :param col_group:
+        :return:
+        """
+        return _preprocess_cols(df, col_group)
+
+    @staticmethod
+    def postprocess(
+        df: pd.DataFrame,
+        col_group: Tuple[_COL_TYPE],
+    ) -> pd.DataFrame:
+        """
+
+        :param df:
+        :param col_group:
+        :return:
+        """
+        # Perform sanity checks on dataframe.
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert_no_duplicates(df.columns)
+        dbg.dassert_eq(
+            1, df.columns.nlevels,
+        )
+        #
+        dbg.dassert_isinstance(col_group, tuple)
+        #
+        if col_group:
+            df = pd.concat([df], axis=1, keys=[col_group])
+        return df
+
+
+class SeriesDfToDfColProcessor:
+    @staticmethod
+    def preprocess(
+        df: pd.DataFrame,
+        col_group: Tuple[_COL_TYPE],
+    ) -> pd.DataFrame:
+        """
+
+        :param df:
+        :param col_group:
+        :return:
+        """
+        return _preprocess_cols(df, col_group)
+
+    @staticmethod
+    def postprocess(
+        dfs: Dict[str, pd.DataFrame],
+        col_group: Tuple[_COL_TYPE],
+    ) -> pd.DataFrame:
+        """
+
+        :param df:
+        :param col_group:
+        :return:
+        """
+        dbg.dassert_isinstance(dfs, dict)
+        # Perform sanity checks on dataframe.
+        for symbol, df in dfs.items():
+            dbg.dassert_isinstance(symbol, str)
+            dbg.dassert_isinstance(df, pd.DataFrame)
+            dbg.dassert_no_duplicates(df.columns)
+            dbg.dassert_eq(
+                1, df.columns.nlevels,
+            )
+        #
+        dbg.dassert_isinstance(col_group, tuple)
+        # Insert symbols as a column level.
+        df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
+        # Swap column levels so that symbols are leaves.
+        df = df.swaplevel(i=0, j=1, axis=1)
+        if col_group:
+            df = pd.concat([df], axis=1, keys=[col_group])
+        return df
+
+
+def _preprocess_cols(
+        df: pd.DataFrame,
+        col_group: Tuple[_COL_TYPE],
+) -> pd.DataFrame:
+    """
+
+    :param df:
+    :param col_group:
+    :return:
+    """
+    # Perform `col_group` sanity checks.
+    dbg.dassert_isinstance(col_group, tuple)
+    dbg.dassert_lt(
+        0, len(col_group), msg="Tuple `col_group` must be nonempty."
+    )
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    # Do not allow duplicate columns.
+    dbg.dassert_no_duplicates(df.columns)
+    # Ensure compatibility between dataframe column levels and col groups.
+    dbg.dassert_eq(
+        len(col_group),
+        df.columns.nlevels - 1,
+        "Dataframe multiindex column depth incompatible with config.",
+        )
+    # Select single-column-level dataframe and return.
+    if col_group:
+        df = df[col_group].copy()
+    return df

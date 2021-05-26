@@ -21,11 +21,10 @@ from core.dataflow.nodes.base import (
     FitPredictNode,
     MultiColModeMixin,
     RegFreqMixin,
-    ToListMixin,
 )
 from core.dataflow.nodes.sources import ReadDataFromDf
 from core.dataflow.nodes.transformers import ColumnTransformer
-from core.dataflow.utils import get_df_info_as_string
+from core.dataflow.utils import get_df_info_as_string, convert_to_list
 from core.dataflow.visitors import extract_info
 
 _LOG = logging.getLogger(__name__)
@@ -36,7 +35,7 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 
-class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
+class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin):
     """
     Fit and predict a smooth moving average (SMA) model.
     """
@@ -66,7 +65,7 @@ class SmaModel(FitPredictNode, RegFreqMixin, ColModeMixin, ToListMixin):
         :param nan_mode: as in `ContinuousSkLearnModel`
         """
         super().__init__(nid)
-        self._col = self._to_list(col)
+        self._col = convert_to_list(col)
         dbg.dassert_eq(len(self._col), 1)
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(
@@ -481,7 +480,6 @@ class VolatilityModel(
     FitPredictNode,
     RegFreqMixin,
     ColModeMixin,
-    ToListMixin,
     _MultiColVolatilityModelMixin,
 ):
     """
@@ -558,7 +556,7 @@ class VolatilityModel(
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
         self._validate_input_df(df_in)
         # Get the columns.
-        self._fit_cols = self._to_list(self._cols or df_in.columns.tolist())
+        self._fit_cols = convert_to_list(self._cols or df_in.columns.tolist())
         df = df_in[self._fit_cols]
         dfs, info = self._fit_predict_volatility_model(df, fit=fit)
         df_out = pd.concat(dfs, axis=1)
@@ -669,7 +667,7 @@ class MultiindexVolatilityModel(
         return df_out
 
 
-class VolatilityModulator(FitPredictNode, ColModeMixin, ToListMixin):
+class VolatilityModulator(FitPredictNode, ColModeMixin):
     """
     Modulate or demodulate signal by volatility.
 
@@ -721,7 +719,7 @@ class VolatilityModulator(FitPredictNode, ColModeMixin, ToListMixin):
         :param col_mode: as in `ColumnTransformer`
         """
         super().__init__(nid)
-        self._signal_cols = self._to_list(signal_cols)
+        self._signal_cols = convert_to_list(signal_cols)
         self._volatility_col = volatility_col
         dbg.dassert_lte(0, signal_steps_ahead)
         self._signal_steps_ahead = signal_steps_ahead
