@@ -73,6 +73,7 @@ class ColumnTransformer(Transformer, ColModeMixin):
         # Store the list of columns after the transformation.
         self._transformed_col_names = None
         self._nan_mode = nan_mode or "leave_unchanged"
+        # State of the object. This is set by derived classes.
         self._fit_cols = cols
 
     @property
@@ -454,8 +455,9 @@ class Resample(Transformer):
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
         resampler = csigna.resample(df, rule=self._rule, **self._resample_kwargs)
-        df = getattr(resampler, self._agg_func)(**self._agg_func_kwargs)
-        #
+        func = getattr(resampler, self._agg_func)
+        df = func(**self._agg_func_kwargs)
+        # Update `info`.
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info

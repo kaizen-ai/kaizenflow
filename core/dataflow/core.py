@@ -3,8 +3,8 @@ import itertools
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from tqdm.autonotebook import tqdm
 import networkx as networ
+from tqdm.autonotebook import tqdm
 
 import helpers.dbg as dbg
 import helpers.list as hlist
@@ -359,7 +359,9 @@ class DAG:
             self._run_node(nid, method)
         return {sink: self.get_node(sink).get_outputs(method) for sink in sinks}
 
-    def run_leq_node(self, nid: str, method: str, progress_bar: bool = True) -> Dict[str, Any]:
+    def run_leq_node(
+        self, nid: str, method: str, progress_bar: bool = True
+    ) -> Dict[str, Any]:
         """
         Execute DAG up to (and including) Node `nid` and returns output.
 
@@ -377,11 +379,9 @@ class DAG:
         )
         # The `ancestors` filter only returns nodes strictly less than `nid`,
         # and so we need to add `nid` back.
-        nids = list(itertools.chain(ancestors, [nid]))
-        _LOG.debug("Executing %d nodes for '%s':\n%s", len(nids), nid,
-                   " ".join(nids))
+        nids = itertools.chain(ancestors, [nid])
         if progress_bar:
-            nids = tqdm(nids)
+            nids = tqdm(list(nids))
         for n in nids:
             _LOG.debug("Executing node '%s'", n)
             self._run_node(n, method)
