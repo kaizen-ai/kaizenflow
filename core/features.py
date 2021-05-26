@@ -79,7 +79,7 @@ def compute_lagged_columns(
     out_cols = []
     dbg.dassert_isinstance(df, pd.DataFrame)
     for col in df.columns:
-        out_col = compute_lags(df[col])
+        out_col = compute_lags(df[col], lag_delay, num_lags)
         out_col.rename(columns=lambda x: str(col) + "_" + x)
         out_cols.append(out_col)
     return pd.concat(out_cols, axis=1)
