@@ -11,7 +11,11 @@ import core.backtest as cbackt
 import core.data_adapters as cdataa
 import helpers.dbg as dbg
 from core.dataflow.nodes.base import FitPredictNode
-from core.dataflow.utils import get_df_info_as_string, validate_df_indices, convert_to_list
+from core.dataflow.utils import (
+    convert_to_list,
+    get_df_info_as_string,
+    validate_df_indices,
+)
 
 _LOG = logging.getLogger(__name__)
 
