@@ -410,6 +410,38 @@ class CrossSectionalDfToDfColProcessor:
     These helpers are useful when we want to apply an operation such as
     principal component projection or residualization to a family of
     instruments.
+
+    Examples:
+    1.  Suppose we want to perform a principal component projection of
+        `MN0`, ..., `MN3` of the `ret_0` group of a dataframe `df` with
+        multilevel columns as follows:
+        ```
+        ret_0           close
+        MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3
+        ```
+        Then we invoke `preprocess()` with `col_group = "ret_0"`.
+        The principal component projection operates on a dataframe with columns
+        ```
+        MN0 MN1 MN2 MN3
+        ```
+        and returns a dataframe with columns
+        ```
+        0 1 2 3
+        ```
+        We apply `postprocess()` to this dataframe with `col_group = "pca'`
+        to obtain
+        ```
+        pca
+        0 1 2 3
+        ```
+    2.  If we perform residualization on `df` as given above instead of
+        principcal component projection, then column names are preserved
+        after the residualization, and we may apply `postprocess()` with
+        `col_group = "residual"` to obtian
+        ```
+        residual
+        MN0 MN1 MN2 MN3
+        ```
     """
 
     @staticmethod
@@ -464,6 +496,31 @@ class SeriesToDfColProcessor:
           levels)
         - multiple lags
         - volatility modeling
+
+    Examples:
+    1.  Suppose we want to add two lags of the columns `MN0`, ..., `MN3`
+        of the `ret_0` group of a dataframe `df` with multilevel columns as
+        follows:
+        ```
+        ret_0           close
+        MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3
+        ```
+        Then we invoke `preprocess()` with `col_group = "ret_0"`.
+        Two lags are computed for each column of the dataframe with columns
+        ```
+        MN0 MN1 MN2 MN3
+        ```
+        The results of the lag computation are represented by a dictionary with
+        keys `MN0`, ..., `MN3` and values consisting of dataframes with columns
+        ```
+        lag_1 lag_2
+        ```
+        We apply `postprocess()` to this dataframe with `col_group = ()` (an
+        empty tuple) to obtain
+        ```
+        lag_1           lag_2
+        MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3
+        ```
     """
 
     @staticmethod
@@ -567,6 +624,8 @@ def _preprocess_cols(
 ) -> pd.DataFrame:
     """
     Extract a single-level column dataframe from a multi-indexed one.
+
+    Typically, the last column index level corresponds to an instrument.
 
     :param df: multi-indexed column dataframe, e.g.,
         ```
