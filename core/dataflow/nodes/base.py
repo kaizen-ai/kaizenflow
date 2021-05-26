@@ -480,7 +480,7 @@ class CrossSectionalDfToDfColProcessor:
         return df
 
 
-class SeriesDfToDfColProcessor:
+class SeriesToDfColProcessor:
     @staticmethod
     def preprocess(
         df: pd.DataFrame,

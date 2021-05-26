@@ -19,7 +19,7 @@ from core.dataflow.core import DAG, Node
 from core.dataflow.nodes.base import (
     ColModeMixin,
     FitPredictNode,
-    SeriesDfToDfColProcessor,
+    SeriesToDfColProcessor,
 )
 from core.dataflow.nodes.sources import ReadDataFromDf
 from core.dataflow.nodes.transformers import ColumnTransformer
@@ -637,11 +637,11 @@ class MultiindexVolatilityModel(FitPredictNode, _MultiColVolatilityModelMixin):
 
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
         validate_df_indices(df_in)
-        df = SeriesDfToDfColProcessor.preprocess(df_in, self._in_col_group)
+        df = SeriesToDfColProcessor.preprocess(df_in, self._in_col_group)
         dfs, info = self._fit_predict_volatility_model(
             df, fit=fit, out_col_prefix=self._out_col_prefix
         )
-        df_out = SeriesDfToDfColProcessor.postprocess(dfs, self._out_col_group)
+        df_out = SeriesToDfColProcessor.postprocess(dfs, self._out_col_group)
         df_out = merge_dataframes(df_in, df_out)
         if fit:
             self._set_info("fit", info)
