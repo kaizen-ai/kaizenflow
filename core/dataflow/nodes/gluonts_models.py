@@ -10,8 +10,8 @@ import pandas as pd
 import core.backtest as cbackt
 import core.data_adapters as cdataa
 import helpers.dbg as dbg
-from core.dataflow.nodes.base import FitPredictNode, RegFreqMixin, ToListMixin
-from core.dataflow.utils import get_df_info_as_string
+from core.dataflow.nodes.base import FitPredictNode
+from core.dataflow.utils import get_df_info_as_string, validate_df_indices, convert_to_list
 
 _LOG = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 # #############################################################################
 
 
-class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
+class ContinuousDeepArModel(FitPredictNode):
     """
     A dataflow node for a DeepAR model.
 
@@ -102,17 +102,17 @@ class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
         )
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        self._validate_input_df(df_in)
+        validate_df_indices(df_in)
         df = df_in.copy()
         # Obtain index slice for which forward targets exist.
         dbg.dassert_lt(self._prediction_length, df.index.size)
         df_fit = df.iloc[: -self._prediction_length]
         #
         if self._x_vars is not None:
-            x_vars = self._to_list(self._x_vars)
+            x_vars = convert_to_list(self._x_vars)
         else:
             x_vars = None
-        y_vars = self._to_list(self._y_vars)
+        y_vars = convert_to_list(self._y_vars)
         # Transform dataflow local timeseries dataframe into gluon-ts format.
         gluon_train = cdataa.transform_to_gluon(
             df_fit, x_vars, y_vars, df_fit.index.freq.freqstr
@@ -145,13 +145,13 @@ class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        self._validate_input_df(df_in)
+        validate_df_indices(df_in)
         df = df_in.copy()
         if self._x_vars is not None:
-            x_vars = self._to_list(self._x_vars)
+            x_vars = convert_to_list(self._x_vars)
         else:
             x_vars = None
-        y_vars = self._to_list(self._y_vars)
+        y_vars = convert_to_list(self._y_vars)
         gluon_train = cdataa.transform_to_gluon(
             df, x_vars, y_vars, df.index.freq.freqstr
         )
@@ -185,7 +185,7 @@ class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
         """
         Return dataframe of `steps_ahead` forward y values.
         """
-        y_vars = self._to_list(self._y_vars)
+        y_vars = convert_to_list(self._y_vars)
         mapper = lambda y: str(y) + "_%i" % self._prediction_length
         # TODO(gp): Not sure if the following is needed.
         # [mapper(y) for y in y_vars]
@@ -196,7 +196,7 @@ class ContinuousDeepArModel(FitPredictNode, RegFreqMixin, ToListMixin):
         return fwd_y_df
 
 
-class DeepARGlobalModel(FitPredictNode, ToListMixin):
+class DeepARGlobalModel(FitPredictNode):
     """
     A dataflow node for a DeepAR model.
 
@@ -268,8 +268,8 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
         """
         dbg.dassert_isinstance(df_in, pd.DataFrame)
         dbg.dassert_no_duplicates(df_in.columns)
-        x_vars = self._to_list(self._x_vars)
-        y_vars = self._to_list(self._y_vars)
+        x_vars = convert_to_list(self._x_vars)
+        y_vars = convert_to_list(self._y_vars)
         df = df_in.copy()
         # Transform dataflow local timeseries dataframe into gluon-ts format.
         gluon_train = cdataa.transform_to_gluon(df, x_vars, y_vars, self._freq)
@@ -329,8 +329,8 @@ class DeepARGlobalModel(FitPredictNode, ToListMixin):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_isinstance(df_in, pd.DataFrame)
         dbg.dassert_no_duplicates(df_in.columns)
-        x_vars = self._to_list(self._x_vars)
-        y_vars = self._to_list(self._y_vars)
+        x_vars = convert_to_list(self._x_vars)
+        y_vars = convert_to_list(self._y_vars)
         df = df_in.copy()
         # Transform dataflow local timeseries dataframe into gluon-ts format.
         gluon_test = cdataa.transform_to_gluon(
