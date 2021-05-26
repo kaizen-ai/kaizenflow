@@ -1671,7 +1671,7 @@ def find_test_decorator(ctx, decorator_name="", dir_name="."):  # type: ignore
 
 @task
 def find_check_string_output(  # type: ignore
-    ctx, class_name, method_name, as_python=True, pbcopy=True
+    ctx, class_name, method_name, as_python=True, fuzzy_match=False, pbcopy=True
 ):
     """
     Find output of `check_string()` in the test running
@@ -1680,8 +1680,9 @@ def find_check_string_output(  # type: ignore
     E.g., for `TestResultBundle::test_from_config1` return the content of the file
         `./core/dataflow/test/TestResultBundle.test_from_config1/output/test.txt`
 
-    :param as_python: if True return the snippet of code that replaces the
+    :param as_python: if True return the snippet of Python code that replaces the
         `check_string()` with a `assert_equal`
+    :param fuzzy_match: if True return Python code with `fuzzy_match=True`
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
     _report_task()
@@ -1709,14 +1710,16 @@ def find_check_string_output(  # type: ignore
     txt = hio.from_file(file_name)
     if as_python:
         # Package the code snippet.
+        if not fuzzy_match:
+            # Align the output at the same level as 'exp = r...'.
+            num_spaces = 8
+            txt = hprint.indent(txt, num_spaces=num_spaces)
         output = f"""
-        act = ""
         exp = r\"\"\"
 {txt}
         \"\"\".lstrip().rstrip()
-        self.assert_equal(act, exp)
+        self.assert_equal(act, exp, fuzzy_match={fuzzy_match})
         """
-        output = output.lstrip().rstrip()
     else:
         output = txt
     # Print or copy to clipboard.
