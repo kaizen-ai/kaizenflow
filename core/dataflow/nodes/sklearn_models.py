@@ -10,9 +10,9 @@ import core.data_adapters as cdataa
 import core.signal_processing as csigna
 import core.statistics as cstati
 import helpers.dbg as dbg
-from core.dataflow.nodes.base import FitPredictNode, RegFreqMixin, ToListMixin
+from core.dataflow.nodes.base import FitPredictNode
 from core.dataflow.nodes.transformers import ColModeMixin
-from core.dataflow.utils import get_df_info_as_string
+from core.dataflow.utils import get_df_info_as_string, convert_to_list, validate_df_indices
 
 _LOG = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 
 class ContinuousSkLearnModel(
-    FitPredictNode, RegFreqMixin, ToListMixin, ColModeMixin
+    FitPredictNode, ColModeMixin
 ):
     """
     Fit and predict an sklearn model.
@@ -86,13 +86,13 @@ class ContinuousSkLearnModel(
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        self._validate_input_df(df_in)
+        validate_df_indices(df_in)
         df = df_in.copy()
         # Obtain index slice for which forward targets exist.
         dbg.dassert_lt(self._steps_ahead, df.index.size)
         idx = df.index[: -self._steps_ahead]
         # Determine index where no x_vars are NaN.
-        x_vars = self._to_list(self._x_vars)
+        x_vars = convert_to_list(self._x_vars)
         non_nan_idx_x = df.loc[idx][x_vars].dropna().index
         # Determine index where target is not NaN.
         fwd_y_df = self._get_fwd_y_df(df).loc[idx].dropna()
@@ -136,7 +136,7 @@ class ContinuousSkLearnModel(
         )
         df_out = df_out.reindex(idx)
         df_out = self._apply_col_mode(
-            df, df_out, cols=self._to_list(self._y_vars), col_mode=self._col_mode
+            df, df_out, cols=convert_to_list(self._y_vars), col_mode=self._col_mode
         )
         # Update `info`.
         info["df_out_info"] = get_df_info_as_string(df_out)
@@ -144,11 +144,11 @@ class ContinuousSkLearnModel(
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        self._validate_input_df(df_in)
+        validate_df_indices(df_in)
         df = df_in.copy()
         idx = df.index
         # Restrict to times where x_vars have no NaNs.
-        x_vars = self._to_list(self._x_vars)
+        x_vars = convert_to_list(self._x_vars)
         non_nan_idx = df.loc[idx][x_vars].dropna().index
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, non_nan_idx)
@@ -179,7 +179,7 @@ class ContinuousSkLearnModel(
         )
         df_out = df_out.reindex(idx)
         df_out = self._apply_col_mode(
-            df, df_out, cols=self._to_list(self._y_vars), col_mode=self._col_mode
+            df, df_out, cols=convert_to_list(self._y_vars), col_mode=self._col_mode
         )
         info["df_out_info"] = get_df_info_as_string(df_out)
         # TODO(*): Consider adding state to `info` as follows.
@@ -199,7 +199,7 @@ class ContinuousSkLearnModel(
         """
         Return dataframe of `steps_ahead` forward y values.
         """
-        y_vars = self._to_list(self._y_vars)
+        y_vars = convert_to_list(self._y_vars)
         mapper = lambda y: str(y) + "_%i" % self._steps_ahead
         # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
         fwd_y_df = df[y_vars].shift(-self._steps_ahead).rename(columns=mapper)
@@ -254,7 +254,7 @@ class ContinuousSkLearnModel(
         return info
 
 
-class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
+class SkLearnModel(FitPredictNode, ColModeMixin):
     """
     Fit and predict an sklearn model.
 
@@ -368,8 +368,8 @@ class SkLearnModel(FitPredictNode, ToListMixin, ColModeMixin):
     def _to_sklearn_format(
         self, df: pd.DataFrame
     ) -> Tuple[List[_COL_TYPE], np.array, List[_COL_TYPE], np.array]:
-        x_vars = self._to_list(self._x_vars)
-        y_vars = self._to_list(self._y_vars)
+        x_vars = convert_to_list(self._x_vars)
+        y_vars = convert_to_list(self._y_vars)
         x_vals, y_vals = cdataa.transform_to_sklearn_old(df, x_vars, y_vars)
         return x_vars, x_vals, y_vars, y_vals
 
