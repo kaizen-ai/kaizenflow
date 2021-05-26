@@ -14,6 +14,7 @@ _LOG = logging.getLogger(__name__)
 
 from core.dataflow.nodes.base import (
     ColModeMixin,
+    SeriesToDfColProcessor,
     SeriesToSeriesColProcessor,
     Transformer,
 )
@@ -144,7 +145,7 @@ class SeriesTransformer(Transformer, ColModeMixin):
     """
     Perform non-index modifying changes of columns.
 
-    TODO(*): Factor out code common with `MultiindexSeriesTransformer`.
+    TODO(*): Factor out code common with `SeriesToSeriesTransformer`.
     """
 
     def __init__(
@@ -221,6 +222,8 @@ class SeriesTransformer(Transformer, ColModeMixin):
                 self._transformer_func,
                 self._transformer_kwargs,
             )
+            dbg.dassert_isinstance(srs, pd.Series)
+            srs.name = col
             if col_info is not None:
                 func_info[col] = col_info
             srs_list.append(srs)
@@ -245,8 +248,86 @@ class SeriesTransformer(Transformer, ColModeMixin):
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
 
+class SeriesToDfTransformer(Transformer):
+    """
 
-class MultiindexSeriesTransformer(Transformer):
+    """
+    def __init__(
+        self,
+        nid: str,
+        in_col_group: Tuple[_COL_TYPE],
+        out_col_group: Tuple[_COL_TYPE],
+        transformer_func: Callable[..., pd.Series],
+        transformer_kwargs: Optional[Dict[str, Any]] = None,
+        nan_mode: Optional[str] = None,
+    ) -> None:
+        """
+        For reference, let
+          - N = df.columns.nlevels
+          - leaf_cols = df[in_col_group].columns
+
+        :param nid: unique node id
+        :param in_col_group: a group of cols specified by the first N - 1
+            levels
+        :param out_col_group: new output col group names. This specifies the
+            names of the first N - 1 levels. The leaf_cols names remain the
+            same.
+        :param transformer_func: srs -> srs
+        :param transformer_kwargs: transformer_func kwargs
+        :param nan_mode: `leave_unchanged` or `drop`. If `drop`, applies to
+            columns individually.
+        """
+        super().__init__(nid)
+        dbg.dassert_isinstance(in_col_group, tuple)
+        dbg.dassert_isinstance(out_col_group, tuple)
+        dbg.dassert_eq(
+            len(in_col_group),
+            len(out_col_group) - 1,
+            msg="Column hierarchy depth must be preserved.",
+        )
+        self._in_col_group = in_col_group
+        self._out_col_group = out_col_group
+        self._transformer_func = transformer_func
+        self._transformer_kwargs = transformer_kwargs or {}
+        self._nan_mode = nan_mode or "leave_unchanged"
+        # The leaf col names are determined from the dataframe at runtime.
+        self._leaf_cols = None
+
+    def _transform(
+            self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
+        # Preprocess to extract relevant flat dataframe.
+        df_in = df.copy()
+        df = SeriesToDfColProcessor.preprocess(df, self._in_col_group)
+        # Apply `transform()` function column-wise.
+        self._leaf_cols = df.columns.tolist()
+        # Initialize container to store info (e.g., auxiliary stats) in the
+        # node.
+        info = collections.OrderedDict()
+        info["func_info"] = collections.OrderedDict()
+        func_info = info["func_info"]
+        dfs = {}
+        for col in self._leaf_cols:
+            df, col_info = _apply_func_to_series(
+                df[col],
+                self._nan_mode,
+                self._transformer_func,
+                self._transformer_kwargs,
+            )
+            dbg.dassert_isinstance(df, pd.DataFrame)
+            if col_info is not None:
+                func_info[col] = col_info
+            dfs[col] = df
+        info["func_info"] = func_info
+        # Combine the series representing leaf col transformations back into a
+        # single dataframe.
+        df = SeriesToDfColProcessor.postprocess(dfs, self._out_col_group)
+        df = merge_dataframes(df_in, df)
+        info["df_transformed_info"] = get_df_info_as_string(df)
+        return df, info
+
+
+class SeriesToSeriesTransformer(Transformer):
     """
     Perform non-index modifying changes of columns.
 
@@ -291,8 +372,7 @@ class MultiindexSeriesTransformer(Transformer):
         nan_mode: Optional[str] = None,
     ) -> None:
         """
-        For reference, let:
-
+        For reference, let
           - N = df.columns.nlevels
           - leaf_cols = df[in_col_group].columns
 
@@ -344,6 +424,8 @@ class MultiindexSeriesTransformer(Transformer):
                 self._transformer_func,
                 self._transformer_kwargs,
             )
+            dbg.dassert_isinstance(srs, pd.Series)
+            srs.name = col
             if col_info is not None:
                 func_info[col] = col_info
             srs_list.append(srs)
@@ -361,7 +443,7 @@ def _apply_func_to_series(
     nan_mode: str,
     func,
     func_kwargs,
-) -> Tuple[pd.Series, Optional[collections.OrderedDict]]:
+) -> Tuple[Union[pd.Series, pd.DataFrame], Optional[collections.OrderedDict]]:
     """
     Apply `func` to `srs` with `func_kwargs` after first applying `nan_mode`.
 
@@ -386,17 +468,15 @@ def _apply_func_to_series(
     # `_transformer_func` is executed.
     func_sig = inspect.signature(func)
     if "info" in func_sig.parameters:
-        srs = func(
+        result = func(
             srs,
             info=info,
             **func_kwargs,
         )
     else:
-        srs = func(srs, **func_kwargs)
+        result = func(srs, **func_kwargs)
         info = None
-    dbg.dassert_isinstance(srs, pd.Series)
-    srs.name = name
-    return srs, info
+    return result, info
 
 
 class DataframeMethodRunner(Transformer):

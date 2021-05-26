@@ -6,7 +6,7 @@ import pandas as pd
 import core.artificial_signal_generators as casgen
 import core.config_builders as ccbuild
 import helpers.unit_test as hut
-from core.dataflow.nodes.transformers import MultiindexSeriesTransformer
+from core.dataflow.nodes.transformers import SeriesToSeriesTransformer
 
 _LOG = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class TestMultiindexSeriesTransformer(hut.TestCase):
                 "transformer_func": lambda x: x.pct_change(),
             }
         )
-        node = MultiindexSeriesTransformer("sklearn", **config.to_dict())
+        node = SeriesToSeriesTransformer("sklearn", **config.to_dict())
         df_out = node.fit(data)["df_out"]
         df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
         self.check_string(df_str)
