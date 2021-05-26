@@ -248,9 +248,10 @@ class SeriesTransformer(Transformer, ColModeMixin):
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
 
+
 class SeriesToDfTransformer(Transformer):
     """
-
+    Wrap transformers using the `SeriesToDfColProcessor` pattern.
     """
     def __init__(
         self,
@@ -308,16 +309,16 @@ class SeriesToDfTransformer(Transformer):
         func_info = info["func_info"]
         dfs = {}
         for col in self._leaf_cols:
-            df, col_info = _apply_func_to_series(
+            df_out, col_info = _apply_func_to_series(
                 df[col],
                 self._nan_mode,
                 self._transformer_func,
                 self._transformer_kwargs,
             )
-            dbg.dassert_isinstance(df, pd.DataFrame)
+            dbg.dassert_isinstance(df_out, pd.DataFrame)
             if col_info is not None:
                 func_info[col] = col_info
-            dfs[col] = df
+            dfs[col] = df_out
         info["func_info"] = func_info
         # Combine the series representing leaf col transformations back into a
         # single dataframe.
@@ -329,7 +330,7 @@ class SeriesToDfTransformer(Transformer):
 
 class SeriesToSeriesTransformer(Transformer):
     """
-    Perform non-index modifying changes of columns.
+    Wrap transformers using the `SeriesToSeriesColProcessor` pattern.
 
     When operating on multiple columns, this applies the transformer function
     one series at a time. Additionally, NaN-handling is performed "locally"
