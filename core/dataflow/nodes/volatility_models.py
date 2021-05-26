@@ -23,7 +23,12 @@ from core.dataflow.nodes.base import (
 )
 from core.dataflow.nodes.sources import ReadDataFromDf
 from core.dataflow.nodes.transformers import ColumnTransformer
-from core.dataflow.utils import get_df_info_as_string, convert_to_list, validate_df_indices, merge_dataframes
+from core.dataflow.utils import (
+    convert_to_list,
+    get_df_info_as_string,
+    merge_dataframes,
+    validate_df_indices,
+)
 from core.dataflow.visitors import extract_info
 
 _LOG = logging.getLogger(__name__)
@@ -571,9 +576,7 @@ class VolatilityModel(
         return {"df_out": df_out}
 
 
-class MultiindexVolatilityModel(
-    FitPredictNode, _MultiColVolatilityModelMixin
-):
+class MultiindexVolatilityModel(FitPredictNode, _MultiColVolatilityModelMixin):
     """
     Fit and predict a smooth moving average volatility model.
 

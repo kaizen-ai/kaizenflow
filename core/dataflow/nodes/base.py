@@ -436,6 +436,7 @@ class CrossSectionalDfToDfColProcessor:
     principal component projection or residualization to a family of
     instruments.
     """
+
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
@@ -468,7 +469,8 @@ class CrossSectionalDfToDfColProcessor:
         dbg.dassert_isinstance(df, pd.DataFrame)
         dbg.dassert_no_duplicates(df.columns)
         dbg.dassert_eq(
-            1, df.columns.nlevels,
+            1,
+            df.columns.nlevels,
         )
         #
         dbg.dassert_isinstance(col_group, tuple)
@@ -508,7 +510,8 @@ class SeriesDfToDfColProcessor:
             dbg.dassert_isinstance(df, pd.DataFrame)
             dbg.dassert_no_duplicates(df.columns)
             dbg.dassert_eq(
-                1, df.columns.nlevels,
+                1,
+                df.columns.nlevels,
             )
         #
         dbg.dassert_isinstance(col_group, tuple)
@@ -556,6 +559,7 @@ class SeriesToSeriesColProcessor:
             df = pd.concat([df], axis=1, keys=[col_group])
         return df
 
+
 def _preprocess_cols(
     df: pd.DataFrame,
     col_group: Tuple[_COL_TYPE],
@@ -580,9 +584,7 @@ def _preprocess_cols(
     """
     # Perform `col_group` sanity checks.
     dbg.dassert_isinstance(col_group, tuple)
-    dbg.dassert_lt(
-        0, len(col_group), msg="Tuple `col_group` must be nonempty."
-    )
+    dbg.dassert_lt(0, len(col_group), msg="Tuple `col_group` must be nonempty.")
     dbg.dassert_isinstance(df, pd.DataFrame)
     # Do not allow duplicate columns.
     dbg.dassert_no_duplicates(df.columns)
@@ -591,7 +593,7 @@ def _preprocess_cols(
         len(col_group),
         df.columns.nlevels - 1,
         "Dataframe multiindex column depth incompatible with config.",
-        )
+    )
     # Select single-column-level dataframe and return.
     if col_group:
         df = df[col_group].copy()

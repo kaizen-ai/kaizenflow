@@ -13,7 +13,12 @@ from core.dataflow.nodes.base import (
     CrossSectionalDfToDfColProcessor,
     FitPredictNode,
 )
-from core.dataflow.utils import get_df_info_as_string, validate_df_indices, convert_to_list, merge_dataframes
+from core.dataflow.utils import (
+    convert_to_list,
+    get_df_info_as_string,
+    merge_dataframes,
+    validate_df_indices,
+)
 
 _LOG = logging.getLogger(__name__)
 
@@ -76,9 +81,7 @@ class AbstractUnsupervisedSkLearnModel(FitPredictNode, abc.ABC):
         return df_out, info
 
 
-class UnsupervisedSkLearnModel(
-    AbstractUnsupervisedSkLearnModel, ColModeMixin
-):
+class UnsupervisedSkLearnModel(AbstractUnsupervisedSkLearnModel, ColModeMixin):
     """
     Fit and transform an unsupervised sklearn model.
     """
@@ -193,18 +196,26 @@ class MultiindexUnsupervisedSkLearnModel(
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df = CrossSectionalDfToDfColProcessor.preprocess(df_in, self._in_col_group)
+        df = CrossSectionalDfToDfColProcessor.preprocess(
+            df_in, self._in_col_group
+        )
         df_out, info = self._fit_predict_helper(df, fit=True)
-        df_out = CrossSectionalDfToDfColProcessor.postprocess(df_out, self._out_col_group)
+        df_out = CrossSectionalDfToDfColProcessor.postprocess(
+            df_out, self._out_col_group
+        )
         df_out = merge_dataframes(df_in, df_out)
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df = CrossSectionalDfToDfColProcessor.preprocess(df_in, self._in_col_group)
+        df = CrossSectionalDfToDfColProcessor.preprocess(
+            df_in, self._in_col_group
+        )
         df_out, info = self._fit_predict_helper(df, fit=False)
-        df_out = CrossSectionalDfToDfColProcessor.postprocess(df_out, self._out_col_group)
+        df_out = CrossSectionalDfToDfColProcessor.postprocess(
+            df_out, self._out_col_group
+        )
         df_out = merge_dataframes(df_in, df_out)
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("predict", info)
@@ -242,18 +253,26 @@ class Residualizer(FitPredictNode):
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df = CrossSectionalDfToDfColProcessor.preprocess(df_in, self._in_col_group)
+        df = CrossSectionalDfToDfColProcessor.preprocess(
+            df_in, self._in_col_group
+        )
         df_out, info = self._fit_predict_helper(df, fit=True)
-        df_out = CrossSectionalDfToDfColProcessor.postprocess(df_out, self._out_col_group)
+        df_out = CrossSectionalDfToDfColProcessor.postprocess(
+            df_out, self._out_col_group
+        )
         df_out = merge_dataframes(df_in, df_out)
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df = CrossSectionalDfToDfColProcessor.preprocess(df_in, self._in_col_group)
+        df = CrossSectionalDfToDfColProcessor.preprocess(
+            df_in, self._in_col_group
+        )
         df_out, info = self._fit_predict_helper(df, fit=False)
-        df_out = CrossSectionalDfToDfColProcessor.postprocess(df_out, self._out_col_group)
+        df_out = CrossSectionalDfToDfColProcessor.postprocess(
+            df_out, self._out_col_group
+        )
         df_out = merge_dataframes(df_in, df_out)
         info["df_out_info"] = get_df_info_as_string(df_out)
         self._set_info("predict", info)
@@ -309,9 +328,7 @@ class Residualizer(FitPredictNode):
         return df_out, info
 
 
-class SkLearnInverseTransformer(
-    FitPredictNode, ColModeMixin
-):
+class SkLearnInverseTransformer(FitPredictNode, ColModeMixin):
     """
     Inverse transform cols using an unsupervised sklearn model.
     """

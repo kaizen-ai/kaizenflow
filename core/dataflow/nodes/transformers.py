@@ -12,7 +12,11 @@ import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
-from core.dataflow.nodes.base import ColModeMixin, Transformer, SeriesToSeriesColProcessor
+from core.dataflow.nodes.base import (
+    ColModeMixin,
+    SeriesToSeriesColProcessor,
+    Transformer,
+)
 from core.dataflow.utils import get_df_info_as_string, merge_dataframes
 
 # TODO(*): Create a dataflow types file.
@@ -344,7 +348,7 @@ class MultiindexSeriesTransformer(Transformer):
         df = SeriesToSeriesColProcessor.preprocess(df, self._in_col_group)
         # Apply `transform()` function column-wise.
         self._leaf_cols = df.columns.tolist()
-        idx = df.index
+        df.index
         # Initialize container to store info (e.g., auxiliary stats) in the
         # node..
         info = collections.OrderedDict()

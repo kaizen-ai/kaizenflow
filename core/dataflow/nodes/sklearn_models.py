@@ -12,7 +12,11 @@ import core.statistics as cstati
 import helpers.dbg as dbg
 from core.dataflow.nodes.base import FitPredictNode
 from core.dataflow.nodes.transformers import ColModeMixin
-from core.dataflow.utils import get_df_info_as_string, convert_to_list, validate_df_indices
+from core.dataflow.utils import (
+    convert_to_list,
+    get_df_info_as_string,
+    validate_df_indices,
+)
 
 _LOG = logging.getLogger(__name__)
 
@@ -26,9 +30,7 @@ _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 # #############################################################################
 
 
-class ContinuousSkLearnModel(
-    FitPredictNode, ColModeMixin
-):
+class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
     """
     Fit and predict an sklearn model.
     """
@@ -136,7 +138,10 @@ class ContinuousSkLearnModel(
         )
         df_out = df_out.reindex(idx)
         df_out = self._apply_col_mode(
-            df, df_out, cols=convert_to_list(self._y_vars), col_mode=self._col_mode
+            df,
+            df_out,
+            cols=convert_to_list(self._y_vars),
+            col_mode=self._col_mode,
         )
         # Update `info`.
         info["df_out_info"] = get_df_info_as_string(df_out)
@@ -179,7 +184,10 @@ class ContinuousSkLearnModel(
         )
         df_out = df_out.reindex(idx)
         df_out = self._apply_col_mode(
-            df, df_out, cols=convert_to_list(self._y_vars), col_mode=self._col_mode
+            df,
+            df_out,
+            cols=convert_to_list(self._y_vars),
+            col_mode=self._col_mode,
         )
         info["df_out_info"] = get_df_info_as_string(df_out)
         # TODO(*): Consider adding state to `info` as follows.
