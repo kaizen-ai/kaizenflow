@@ -478,7 +478,7 @@ class SeriesToDfColProcessor:
 
     @staticmethod
     def postprocess(
-        dfs: Dict[str, pd.DataFrame],
+        dfs: Dict[Tuple[_COL_TYPE], pd.DataFrame],
         col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
         """
@@ -496,7 +496,6 @@ class SeriesToDfColProcessor:
         # Perform sanity checks on dataframe.
         # TODO(*): Check non-emptiness of dict, dataframes.
         for symbol, df in dfs.items():
-            dbg.dassert_isinstance(symbol, str)
             dbg.dassert_isinstance(df, pd.DataFrame)
             dbg.dassert_no_duplicates(df.columns)
             dbg.dassert_eq(
