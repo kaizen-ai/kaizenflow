@@ -97,29 +97,29 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         x_vars = convert_to_list(self._x_vars)
         non_nan_idx_x = df.loc[idx][x_vars].dropna().index
         # Determine index where target is not NaN.
-        fwd_y_df = self._get_fwd_y_df(df).loc[idx].dropna()
-        non_nan_idx_fwd_y = fwd_y_df.dropna().index
+        forward_y_df = self._get_forward_y_df(df).loc[idx].dropna()
+        non_nan_idx_forward_y = forward_y_df.dropna().index
         # Intersect non-NaN indices.
-        non_nan_idx = non_nan_idx_x.intersection(non_nan_idx_fwd_y)
+        non_nan_idx = non_nan_idx_x.intersection(non_nan_idx_forward_y)
         dbg.dassert(not non_nan_idx.empty)
-        fwd_y_df = fwd_y_df.loc[non_nan_idx]
+        forward_y_df = forward_y_df.loc[non_nan_idx]
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, non_nan_idx)
         # Prepare x_vars in sklearn format.
         x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
         # Prepare forward y_vars in sklearn format.
-        fwd_y_fit = cdataa.transform_to_sklearn(
-            fwd_y_df, fwd_y_df.columns.tolist()
+        forward_y_fit = cdataa.transform_to_sklearn(
+            forward_y_df, forward_y_df.columns.tolist()
         )
         # Define and fit model.
         self._model = self._model_func(**self._model_kwargs)
-        self._model = self._model.fit(x_fit, fwd_y_fit)
+        self._model = self._model.fit(x_fit, forward_y_fit)
         # Generate insample predictions and put in dataflow dataframe format.
-        fwd_y_hat = self._model.predict(x_fit)
+        forward_y_hat = self._model.predict(x_fit)
         #
-        fwd_y_hat_vars = [f"{y}_hat" for y in fwd_y_df.columns]
-        fwd_y_hat = cdataa.transform_from_sklearn(
-            non_nan_idx, fwd_y_hat_vars, fwd_y_hat
+        forward_y_hat_vars = [f"{y}_hat" for y in forward_y_df.columns]
+        forward_y_hat = cdataa.transform_from_sklearn(
+            non_nan_idx, forward_y_hat_vars, forward_y_hat
         )
         # TODO(Paul): Summarize model perf or make configurable.
         # TODO(Paul): Consider separating model eval from fit/predict.
@@ -130,11 +130,11 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         for k, v in vars(self._model).items():
             model_attribute_info[k] = v
         info["model_attributes"] = model_attribute_info
-        info["insample_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
-        info["insample_score"] = self._score(fwd_y_df, fwd_y_hat)
+        info["insample_perf"] = self._model_perf(forward_y_df, forward_y_hat)
+        info["insample_score"] = self._score(forward_y_df, forward_y_hat)
         # Return targets and predictions.
-        df_out = fwd_y_df.merge(
-            fwd_y_hat, how="outer", left_index=True, right_index=True
+        df_out = forward_y_df.merge(
+            forward_y_hat, how="outer", left_index=True, right_index=True
         )
         df_out = df_out.reindex(idx)
         df_out = self._apply_col_mode(
@@ -163,24 +163,24 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         dbg.dassert_is_not(
             self._model, None, "Model not found! Check if `fit` has been run."
         )
-        fwd_y_hat = self._model.predict(x_predict)
+        forward_y_hat = self._model.predict(x_predict)
         # Put predictions in dataflow dataframe format.
-        fwd_y_df = self._get_fwd_y_df(df).loc[non_nan_idx]
-        fwd_y_non_nan_idx = fwd_y_df.dropna().index
-        fwd_y_hat_vars = [f"{y}_hat" for y in fwd_y_df.columns]
-        fwd_y_hat = cdataa.transform_from_sklearn(
-            non_nan_idx, fwd_y_hat_vars, fwd_y_hat
+        forward_y_df = self._get_forward_y_df(df).loc[non_nan_idx]
+        forward_y_non_nan_idx = forward_y_df.dropna().index
+        forward_y_hat_vars = [f"{y}_hat" for y in forward_y_df.columns]
+        forward_y_hat = cdataa.transform_from_sklearn(
+            non_nan_idx, forward_y_hat_vars, forward_y_hat
         )
         # Generate basic perf cstati.
         info = collections.OrderedDict()
         info["model_params"] = self._model.get_params()
-        info["model_perf"] = self._model_perf(fwd_y_df, fwd_y_hat)
+        info["model_perf"] = self._model_perf(forward_y_df, forward_y_hat)
         info["model_score"] = self._score(
-            fwd_y_df.loc[fwd_y_non_nan_idx], fwd_y_hat.loc[fwd_y_non_nan_idx]
+            forward_y_df.loc[forward_y_non_nan_idx], forward_y_hat.loc[forward_y_non_nan_idx]
         )
         # Return predictions.
-        df_out = fwd_y_df.merge(
-            fwd_y_hat, how="outer", left_index=True, right_index=True
+        df_out = forward_y_df.merge(
+            forward_y_hat, how="outer", left_index=True, right_index=True
         )
         df_out = df_out.reindex(idx)
         df_out = self._apply_col_mode(
@@ -203,15 +203,15 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         self._model = fit_state["_model"]
         self._info["fit"] = fit_state["_info['fit']"]
 
-    def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _get_forward_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Return dataframe of `steps_ahead` forward y values.
         """
         y_vars = convert_to_list(self._y_vars)
         mapper = lambda y: str(y) + "_%i" % self._steps_ahead
-        # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
-        fwd_y_df = df[y_vars].shift(-self._steps_ahead).rename(columns=mapper)
-        return fwd_y_df
+        # TODO(Paul): Ensure that `forward_y_vars` and `y_vars` do not overlap.
+        forward_y_df = df[y_vars].shift(-self._steps_ahead).rename(columns=mapper)
+        return forward_y_df
 
     def _handle_nans(
         self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
