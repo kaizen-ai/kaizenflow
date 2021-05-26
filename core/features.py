@@ -76,6 +76,21 @@ def compute_lagged_columns(
     """
     Compute lags of each column in df.
     """
+    out_cols = []
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    for col in df.columns:
+        out_col = compute_lags(df[col])
+        out_col.rename(columns=lambda x: str(col) + "_" + x)
+        out_cols.append(out_col)
+    return pd.concat(out_cols, axis=1)
+
+
+def compute_lags(
+    srs: pd.Series, lag_delay: int, num_lags: int
+) -> pd.DataFrame:
+    """
+    Compute `num_lags` lags of `srs` starting with a delay of `lag_delay`.
+    """
     if lag_delay < 0:
         _LOG.warning(
             "Using anticausal features since lag_delay=%d < 0. This "
@@ -86,9 +101,9 @@ def compute_lagged_columns(
     #
     shifts = list(range(1 + lag_delay, 1 + lag_delay + num_lags))
     out_cols = []
-    for col in df.columns:
-        for num_shifts in shifts:
-            out_col = df[col].shift(num_shifts)
-            out_col.name += "_lag%i" % num_shifts
-            out_cols.append(out_col)
+    dbg.dassert_isinstance(srs, pd.Series)
+    for num_shifts in shifts:
+        out_col = srs.shift(num_shifts)
+        out_col.name = "lag%i" % num_shifts
+        out_cols.append(out_col)
     return pd.concat(out_cols, axis=1)

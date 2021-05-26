@@ -282,11 +282,6 @@ class SeriesToDfTransformer(Transformer):
         super().__init__(nid)
         dbg.dassert_isinstance(in_col_group, tuple)
         dbg.dassert_isinstance(out_col_group, tuple)
-        dbg.dassert_eq(
-            len(in_col_group),
-            len(out_col_group) - 1,
-            msg="Column hierarchy depth must be preserved.",
-        )
         self._in_col_group = in_col_group
         self._out_col_group = out_col_group
         self._transformer_func = transformer_func
