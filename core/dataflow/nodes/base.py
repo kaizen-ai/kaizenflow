@@ -452,9 +452,7 @@ class GroupedColDfToDfColProcessor:
         )
         dbg.dassert_no_duplicates(col_groups)
         # This is an implementation requirement that we may be able to relax.
-        dbg.dassert_lte(
-            1, len(col_groups)
-        )
+        dbg.dassert_lte(1, len(col_groups))
         #
         dbg.dassert_isinstance(df, pd.DataFrame)
         # Sanity check each column group tuple.

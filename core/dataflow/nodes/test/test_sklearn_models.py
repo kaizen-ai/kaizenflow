@@ -6,7 +6,10 @@ import sklearn.linear_model as slmode
 import core.artificial_signal_generators as casgen
 import core.config_builders as cfgb
 import helpers.unit_test as hut
-from core.dataflow.nodes.sklearn_models import ContinuousSkLearnModel, MultiindexSkLearnModel
+from core.dataflow.nodes.sklearn_models import (
+    ContinuousSkLearnModel,
+    MultiindexSkLearnModel,
+)
 
 _LOG = logging.getLogger(__name__)
 
@@ -160,7 +163,9 @@ class TestMultiindexSkLearnModel(hut.TestCase):
         # Generate node config.
         config = cfgb.get_config_from_nested_dict(
             {
-                "in_col_groups": [("ret_0",),],
+                "in_col_groups": [
+                    ("ret_0",),
+                ],
                 "out_col_group": (),
                 "x_vars": ["ret_0"],
                 "y_vars": ["ret_0"],
@@ -187,7 +192,9 @@ class TestMultiindexSkLearnModel(hut.TestCase):
         data_predict = data.loc["2000-01-31":]
         config = cfgb.get_config_from_nested_dict(
             {
-                "in_col_groups": [("ret_0",),],
+                "in_col_groups": [
+                    ("ret_0",),
+                ],
                 "out_col_group": (),
                 "x_vars": ["ret_0"],
                 "y_vars": ["ret_0"],
