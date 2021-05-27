@@ -280,7 +280,6 @@ class MultiindexSkLearnModel(FitPredictNode):
         nan_mode: Optional[str] = None,
     ) -> None:
         """
-
         Params not listed are as in `ContinuousSkLearnModel`.
 
         :param in_col_groups: list of tuples, each having length
