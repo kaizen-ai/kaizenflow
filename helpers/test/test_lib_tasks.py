@@ -1071,7 +1071,7 @@ drwx------ 4 root root  4096 May 13 12:54 repozqvepk0i
 5
 which python: /venv/bin/python
 check pandas package: <module 'pandas' from '/venv/lib/python3.8/site-packages/pandas/__init__.py'>
-PATH=/app/linters:/app/dev_scripts/notebooks:/app/documentation/scripts:/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PATH=/app/linters:/app/dev_scripts/eotebooks:/app/documentation/scripts:/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 PYTHONPATH=/app:
 cmd: 'pre-commit run -c /app/.pre-commit-config.yaml --files ./core/dataflow/builders.py'
 Don't commit to branch...................................................^[[42mPassed^[[m
@@ -1126,7 +1126,7 @@ core/dataflow/builders.py:195:[pylint] [W0221(arguments-differ), ArmaReturnsBuil
 class Test_find_check_string_output1(hut.TestCase):
 
     def test1(self) -> None:
-        """
+        e""
         Test `find_check_string_output()` by searching the `check_string` of
         this test.
         """

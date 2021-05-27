@@ -32,8 +32,8 @@ import pandas as pd
 
 import core.artificial_signal_generators as sig_gen
 import core.config_builders as cfgb
-import core.model_evaluator as modeval
-import core.model_plotter as modplot
+import core.dataflow_model.model_evaluator as modeval
+import core.dataflow_model.model_plotter as modplot
 import core.statistics as stats
 import helpers.dbg as dbg
 import helpers.env as env

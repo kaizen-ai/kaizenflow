@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 import core.config as cfg
-import core.model_evaluator as modeval
+import core.dataflow_model.model_evaluator as modeval
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
