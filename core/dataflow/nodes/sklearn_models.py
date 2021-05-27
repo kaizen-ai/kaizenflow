@@ -263,9 +263,7 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
 
 
 class MultiindexSkLearnModel(FitPredictNode):
-    """
-    
-    """
+    """"""
 
     def __init__(
         self,

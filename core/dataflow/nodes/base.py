@@ -10,9 +10,7 @@ import pandas as pd
 
 import helpers.dbg as dbg
 from core.dataflow.core import Node
-from core.dataflow.utils import (
-    get_df_info_as_string,
-)
+from core.dataflow.utils import get_df_info_as_string
 
 _LOG = logging.getLogger(__name__)
 
@@ -435,7 +433,9 @@ class GroupedColDfToDfColProcessor:
     ) -> Dict[_COL_TYPE, pd.DataFrame]:
         # Sanity check list-related properties of `col_groups`.
         dbg.dassert_isinstance(col_groups, list)
-        dbg.dassert_lt(0, len(col_groups), msg="Tuple `col_group` must be nonempty.")
+        dbg.dassert_lt(
+            0, len(col_groups), msg="Tuple `col_group` must be nonempty."
+        )
         dbg.dassert_no_duplicates(col_groups)
         #
         dbg.dassert_isinstance(df, pd.DataFrame)
