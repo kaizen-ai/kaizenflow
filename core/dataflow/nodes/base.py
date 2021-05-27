@@ -453,7 +453,7 @@ class GroupedColDfToDfColProcessor:
         dbg.dassert_no_duplicates(col_groups)
         # This is an implementation requirement that we may be able to relax.
         dbg.dassert_lte(
-            2, len(col_groups)
+            1, len(col_groups)
         )
         #
         dbg.dassert_isinstance(df, pd.DataFrame)
@@ -482,7 +482,7 @@ class GroupedColDfToDfColProcessor:
         df_out.sort_index(axis=1, level=-2, inplace=True)
         # To generate a dataframe for each key, generate tuples that key
         # up to the last two levels.
-        roots = [col_group[:-2] for col_group in col_groups]
+        roots = [col_group[:-1] for col_group in col_groups]
         # Get rid of any duplicates.
         roots = list(set(roots))
         _LOG.debug("col group roots=%s", roots)
