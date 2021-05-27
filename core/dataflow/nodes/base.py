@@ -449,7 +449,7 @@ class GroupedColDfToDfColProcessor:
             )
         # Determine output dataframe column names.
         out_col_names = [col_group[-1] for col_group in col_groups]
-        _LOG.info("out_col_names=%s", out_col_names)
+        _LOG.debug("out_col_names=%s", out_col_names)
         dbg.dassert_no_duplicates(out_col_names)
         # Determine keys.
         keys = df[col_groups[0]].columns.to_list()
@@ -464,7 +464,7 @@ class GroupedColDfToDfColProcessor:
         df_out.sort_index(axis=1, level=-2, inplace=True)
         # TODO(Paul): Add more comments and add tests.
         roots = list(set([col_group[:-2] for col_group in col_groups]))
-        _LOG.info("col group roots=%s", roots)
+        _LOG.debug("col group roots=%s", roots)
         dfs = {}
         for key in keys:
             local_dfs = []
@@ -481,7 +481,7 @@ class GroupedColDfToDfColProcessor:
         dfs: Dict[_COL_TYPE, pd.DataFrame],
         col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
-        raise NotImplementedError
+        return _postprocess_dataframe_dict(dfs, col_group)
 
 
 class CrossSectionalDfToDfColProcessor:
@@ -619,37 +619,7 @@ class SeriesToDfColProcessor:
         dfs: Dict[_COL_TYPE, pd.DataFrame],
         col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
-        """
-        Create a multi-indexed column dataframe from keys, values, `col_group`.
-
-        :param dfs: dataframes indexed by symbol.
-        :param col_group: column levels to prefix `df` columns with
-        :return: multi-level column dataframe
-            - leaf columns are symbols
-            - the next column level is defined by the columns of the dataframes
-              in `dfs` (which are to be the same).
-            - the initial levels are given by `col_group`
-        """
-        dbg.dassert_isinstance(dfs, dict)
-        # Perform sanity checks on dataframe.
-        # TODO(*): Check non-emptiness of dict, dataframes.
-        for symbol, df in dfs.items():
-            dbg.dassert_isinstance(df, pd.DataFrame)
-            dbg.dassert_no_duplicates(df.columns)
-            dbg.dassert_eq(
-                1,
-                df.columns.nlevels,
-            )
-        #
-        dbg.dassert_isinstance(col_group, tuple)
-        # Insert symbols as a column level.
-        df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
-        # Swap column levels so that symbols are leaves.
-        df = df.swaplevel(i=0, j=1, axis=1)
-        df.sort_index(axis=1, level=0, inplace=True)
-        if col_group:
-            df = pd.concat([df], axis=1, keys=[col_group])
-        return df
+        return _postprocess_dataframe_dict(dfs, col_group)
 
 
 class SeriesToSeriesColProcessor:
@@ -739,4 +709,41 @@ def _preprocess_cols(
     # Select single-column-level dataframe and return.
     if col_group:
         df = df[col_group].copy()
+    return df
+
+
+def _postprocess_dataframe_dict(
+    dfs: Dict[_COL_TYPE, pd.DataFrame],
+    col_group: Tuple[_COL_TYPE],
+) -> pd.DataFrame:
+    """
+    Create a multi-indexed column dataframe from keys, values, `col_group`.
+
+    :param dfs: dataframes indexed by symbol.
+    :param col_group: column levels to prefix `df` columns with
+    :return: multi-level column dataframe
+        - leaf columns are symbols
+        - the next column level is defined by the columns of the dataframes
+          in `dfs` (which are to be the same).
+        - the initial levels are given by `col_group`
+    """
+    dbg.dassert_isinstance(dfs, dict)
+    # Perform sanity checks on dataframe.
+    # TODO(*): Check non-emptiness of dict, dataframes.
+    for symbol, df in dfs.items():
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert_no_duplicates(df.columns)
+        dbg.dassert_eq(
+            1,
+            df.columns.nlevels,
+        )
+    #
+    dbg.dassert_isinstance(col_group, tuple)
+    # Insert symbols as a column level.
+    df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
+    # Swap column levels so that symbols are leaves.
+    df = df.swaplevel(i=0, j=1, axis=1)
+    df.sort_index(axis=1, level=0, inplace=True)
+    if col_group:
+        df = pd.concat([df], axis=1, keys=[col_group])
     return df

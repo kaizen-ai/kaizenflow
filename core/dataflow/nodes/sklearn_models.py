@@ -15,6 +15,7 @@ from core.dataflow.nodes.transformers import ColModeMixin
 from core.dataflow.utils import (
     convert_to_list,
     get_df_info_as_string,
+    merge_dataframes,
     validate_df_indices,
 )
 
@@ -338,6 +339,7 @@ class MultiindexSkLearnModel(FitPredictNode):
         df_out = GroupedColDfToDfColProcessor.postprocess(
             results, self._out_col_group
         )
+        df_out = df_out.reindex(df_in.index)
         df_out = merge_dataframes(df_in, df_out)
         if fit:
             self._set_info("fit", info)
