@@ -35,7 +35,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         )
         #
         df_out = node.fit(data)["df_out"]
-        df_str = hut.convert_df_to_string(df_out, index=True, decimals=3)
+        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
         self.check_string(df_str)
 
     def test2(self) -> None:
@@ -57,7 +57,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
             **config.to_dict(),
         )
         df_out = node.fit(data)["df_out"]
-        df_str = hut.convert_df_to_string(df_out, index=True, decimals=3)
+        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
         self.check_string(df_str)
 
     def test3(self) -> None:
@@ -84,7 +84,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
             **config.to_dict(),
         )
         df_out = node.fit(data)["df_out"]
-        df_str = hut.convert_df_to_string(df_out, index=True, decimals=3)
+        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
         self.check_string(df_str)
 
     def test4(self) -> None:
@@ -109,7 +109,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         )
         node.fit(data_fit)
         df_out = node.predict(data_predict)["df_out"]
-        df_str = hut.convert_df_to_string(df_out, index=True, decimals=3)
+        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
         self.check_string(df_str)
 
     def test5(self) -> None:
@@ -133,7 +133,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         )
         node.fit(data_fit)
         df_out = node.predict(data_predict)["df_out"]
-        df_str = hut.convert_df_to_string(df_out, index=True, decimals=3)
+        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
         self.check_string(df_str)
 
     def _get_data(self, lag: int) -> pd.DataFrame:
