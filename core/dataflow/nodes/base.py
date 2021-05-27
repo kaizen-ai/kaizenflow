@@ -11,10 +11,7 @@ import pandas as pd
 import helpers.dbg as dbg
 from core.dataflow.core import Node
 from core.dataflow.utils import (
-    convert_to_list,
     get_df_info_as_string,
-    merge_dataframes,
-    validate_df_indices,
 )
 
 _LOG = logging.getLogger(__name__)
@@ -436,7 +433,48 @@ class GroupedColDfToDfColProcessor:
         df: pd.DataFrame,
         col_groups: List[Tuple[_COL_TYPE]],
     ) -> Dict[_COL_TYPE, pd.DataFrame]:
-        raise NotImplementedError
+        # Sanity check list-related properties of `col_groups`.
+        dbg.dassert_isinstance(col_groups, list)
+        dbg.dassert_lt(0, len(col_groups), msg="Tuple `col_group` must be nonempty.")
+        dbg.dassert_no_duplicates(col_groups)
+        #
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        # Sanity check each column group tuple.
+        for col_group in col_groups:
+            dbg.dassert_isinstance(col_group, tuple)
+            dbg.dassert_eq(
+                len(col_group),
+                df.columns.nlevels - 1,
+                f"Dataframe multiindex column depth incompatible with {col_group}",
+            )
+        # Determine output dataframe column names.
+        out_col_names = [col_group[-1] for col_group in col_groups]
+        _LOG.info("out_col_names=%s", out_col_names)
+        dbg.dassert_no_duplicates(out_col_names)
+        # Determine keys.
+        keys = df[col_groups[0]].columns.to_list()
+        _LOG.debug("keys=%s", keys)
+        # Ensure all groups have the same keys.
+        for col_group in col_groups:
+            col_group_keys = df[col_group].columns.to_list()
+            dbg.dassert_set_eq(keys, col_group_keys)
+        # Swap levels so that keys are top level.
+        df_out = df.swaplevel(i=-2, j=-1, axis=1)
+        # Sort by keys
+        df_out.sort_index(axis=1, level=-2, inplace=True)
+        # TODO(Paul): Add more comments and add tests.
+        roots = list(set([col_group[:-2] for col_group in col_groups]))
+        _LOG.info("col group roots=%s", roots)
+        dfs = {}
+        for key in keys:
+            local_dfs = []
+            for root in roots:
+                local_df = df_out[root + (key,)]
+                local_df = local_df[out_col_names]
+                local_dfs.append(local_df)
+            local_df = pd.concat(local_dfs, axis=1)
+            dfs[key] = local_df
+        return dfs
 
     @staticmethod
     def postprocess(
@@ -688,6 +726,7 @@ def _preprocess_cols(
     # Perform `col_group` sanity checks.
     dbg.dassert_isinstance(col_group, tuple)
     dbg.dassert_lt(0, len(col_group), msg="Tuple `col_group` must be nonempty.")
+    #
     dbg.dassert_isinstance(df, pd.DataFrame)
     # Do not allow duplicate columns.
     dbg.dassert_no_duplicates(df.columns)
