@@ -1,1 +1,0 @@
-plantuml -tpng -o /d/e/f /a/b/c.puml
