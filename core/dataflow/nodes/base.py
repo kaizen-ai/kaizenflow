@@ -10,12 +10,7 @@ import pandas as pd
 
 import helpers.dbg as dbg
 from core.dataflow.core import Node
-from core.dataflow.utils import (
-    convert_to_list,
-    get_df_info_as_string,
-    merge_dataframes,
-    validate_df_indices,
-)
+from core.dataflow.utils import get_df_info_as_string
 
 _LOG = logging.getLogger(__name__)
 
@@ -436,14 +431,82 @@ class GroupedColDfToDfColProcessor:
         df: pd.DataFrame,
         col_groups: List[Tuple[_COL_TYPE]],
     ) -> Dict[_COL_TYPE, pd.DataFrame]:
-        raise NotImplementedError
+        """
+        Provides wrappers for transformations operating on many columns.
+
+        :param df: a dataframe with multilevel columns
+        :param col_groups: a collection of tuples specifying all but column
+            leaves. All tuples provided should provide access to the same
+            set of leaf values (the leaf column names are the same). All tuples
+            should have the same length.
+        :return: a dictionary of single-column-level dataframes indexed by the
+            selected leaf column names of `df`. To the single-column-level
+            dataframe has column names generated from the last tuple positions
+            of the tuples in `col_groups`.
+        """
+        # The list `col_groups` should be nonempty and not contain any
+        # duplicates.
+        dbg.dassert_isinstance(col_groups, list)
+        dbg.dassert_lt(
+            0, len(col_groups), msg="Tuple `col_group` must be nonempty."
+        )
+        dbg.dassert_no_duplicates(col_groups)
+        # This is an implementation requirement that we may be able to relax.
+        dbg.dassert_lte(1, len(col_groups))
+        #
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        # Sanity check each column group tuple.
+        for col_group in col_groups:
+            dbg.dassert_isinstance(col_group, tuple)
+            dbg.dassert_eq(
+                len(col_group),
+                df.columns.nlevels - 1,
+                f"Dataframe multiindex column depth incompatible with {col_group}",
+            )
+        # Determine output dataframe column names.
+        out_col_names = [col_group[-1] for col_group in col_groups]
+        _LOG.debug("out_col_names=%s", out_col_names)
+        dbg.dassert_no_duplicates(out_col_names)
+        # Determine keys (i.e., leaf column names).
+        keys = df[col_groups[0]].columns.to_list()
+        _LOG.debug("keys=%s", keys)
+        # Ensure all groups have the same keys.
+        for col_group in col_groups:
+            col_group_keys = df[col_group].columns.to_list()
+            dbg.dassert_set_eq(keys, col_group_keys)
+        # Swap levels in `df` so that keys are top level.
+        df_out = df.swaplevel(i=-2, j=-1, axis=1)
+        # Sort by keys for faster selection.
+        df_out.sort_index(axis=1, level=-2, inplace=True)
+        # To generate a dataframe for each key, generate tuples that key
+        # up to the last two levels.
+        roots = [col_group[:-1] for col_group in col_groups]
+        # Get rid of any duplicates.
+        roots = list(set(roots))
+        _LOG.debug("col group roots=%s", roots)
+        # Generate one dataframe per key.
+        dfs = {}
+        for key in keys:
+            local_dfs = []
+            for root in roots:
+                local_df = df_out[root + (key,)]
+                local_df = local_df[out_col_names]
+                local_dfs.append(local_df)
+            local_df = pd.concat(local_dfs, axis=1)
+            # Ensure that there is no column name ambiguity.
+            dbg.dassert_no_duplicates(local_df.columns.to_list())
+            dfs[key] = local_df
+        return dfs
 
     @staticmethod
     def postprocess(
         dfs: Dict[_COL_TYPE, pd.DataFrame],
         col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
-        raise NotImplementedError
+        """
+        As in `_postprocess_dataframe_dict()`.
+        """
+        return _postprocess_dataframe_dict(dfs, col_group)
 
 
 class CrossSectionalDfToDfColProcessor:
@@ -582,36 +645,9 @@ class SeriesToDfColProcessor:
         col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
         """
-        Create a multi-indexed column dataframe from keys, values, `col_group`.
-
-        :param dfs: dataframes indexed by symbol.
-        :param col_group: column levels to prefix `df` columns with
-        :return: multi-level column dataframe
-            - leaf columns are symbols
-            - the next column level is defined by the columns of the dataframes
-              in `dfs` (which are to be the same).
-            - the initial levels are given by `col_group`
+        As in `_postprocess_dataframe_dict()`.
         """
-        dbg.dassert_isinstance(dfs, dict)
-        # Perform sanity checks on dataframe.
-        # TODO(*): Check non-emptiness of dict, dataframes.
-        for symbol, df in dfs.items():
-            dbg.dassert_isinstance(df, pd.DataFrame)
-            dbg.dassert_no_duplicates(df.columns)
-            dbg.dassert_eq(
-                1,
-                df.columns.nlevels,
-            )
-        #
-        dbg.dassert_isinstance(col_group, tuple)
-        # Insert symbols as a column level.
-        df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
-        # Swap column levels so that symbols are leaves.
-        df = df.swaplevel(i=0, j=1, axis=1)
-        df.sort_index(axis=1, level=0, inplace=True)
-        if col_group:
-            df = pd.concat([df], axis=1, keys=[col_group])
-        return df
+        return _postprocess_dataframe_dict(dfs, col_group)
 
 
 class SeriesToSeriesColProcessor:
@@ -687,7 +723,9 @@ def _preprocess_cols(
     """
     # Perform `col_group` sanity checks.
     dbg.dassert_isinstance(col_group, tuple)
+    # TODO(Paul): Consider whether we want to allow the "degenerate case".
     dbg.dassert_lt(0, len(col_group), msg="Tuple `col_group` must be nonempty.")
+    #
     dbg.dassert_isinstance(df, pd.DataFrame)
     # Do not allow duplicate columns.
     dbg.dassert_no_duplicates(df.columns)
@@ -698,6 +736,46 @@ def _preprocess_cols(
         "Dataframe multiindex column depth incompatible with config.",
     )
     # Select single-column-level dataframe and return.
+    df = df[col_group].copy()
+    return df
+
+
+def _postprocess_dataframe_dict(
+    dfs: Dict[_COL_TYPE, pd.DataFrame],
+    col_group: Tuple[_COL_TYPE],
+) -> pd.DataFrame:
+    """
+    Create a multi-indexed column dataframe from keys, values, `col_group`.
+
+    :param dfs: dataframes indexed by symbol.
+    :param col_group: column levels to prefix `df` columns with
+    :return: multi-level column dataframe
+        - leaf columns are symbols
+        - the next column level is defined by the columns of the dataframes
+          in `dfs` (which are to be the same).
+        - the initial levels are given by `col_group`
+    """
+    dbg.dassert_isinstance(dfs, dict)
+    # Ensure that the dictionary is not empty.
+    dbg.dassert(dfs)
+    # Perform sanity checks on dataframe.
+    for symbol, df in dfs.items():
+        # Ensure that each values of `dfs` is a nonempty dataframe.
+        dbg.dassert_isinstance(df, pd.DataFrame)
+        dbg.dassert(not df.empty)
+        # Ensure that `df` columns do not have duplicates and are single-level.
+        dbg.dassert_no_duplicates(df.columns)
+        dbg.dassert_eq(
+            1,
+            df.columns.nlevels,
+        )
+    # Ensure that `col_group` is a (possibly empty) tuple.
+    dbg.dassert_isinstance(col_group, tuple)
+    # Insert symbols as a column level.
+    df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
+    # Swap column levels so that symbols are leaves.
+    df = df.swaplevel(i=0, j=1, axis=1)
+    df.sort_index(axis=1, level=0, inplace=True)
     if col_group:
-        df = df[col_group].copy()
+        df = pd.concat([df], axis=1, keys=[col_group])
     return df
