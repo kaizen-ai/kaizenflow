@@ -264,7 +264,7 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
 
 class MultiindexSkLearnModel(FitPredictNode):
     """
-    
+    Fit and predict multiple sklearn models.
     """
 
     def __init__(
@@ -279,6 +279,17 @@ class MultiindexSkLearnModel(FitPredictNode):
         model_kwargs: Optional[Any] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
+        """
+
+        Params not listed are as in `ContinuousSkLearnModel`.
+
+        :param in_col_groups: list of tuples, each having length
+            `df_in.columns.nlevels - 1`. Leaf values become keys (e.g., they
+            may be symbols), and the next-to-leaf level provides column names
+            of the dataframe with the `x_vars` and `y_vars`.
+        :param out_col_group: column level prefix of length
+            `df_in.columns.nlevels - 2`. It may be an empty tuple.
+        """
         super().__init__(nid)
         dbg.dassert_isinstance(in_col_groups, list)
         self._in_col_groups = in_col_groups
