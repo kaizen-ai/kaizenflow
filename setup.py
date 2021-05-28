@@ -39,7 +39,7 @@ setup(
     long_description_content_type="text/markdown",
     keywords=[],
     author="GP Saggese, Paul Smith",
-    author_email="gp@alphamatic.llc, paul@alphamatic.llc",
+    author_email="",
     maintainer="",
     maintainer_email="",
     url="",
