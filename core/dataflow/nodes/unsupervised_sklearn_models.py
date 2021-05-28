@@ -224,7 +224,9 @@ class MultiindexUnsupervisedSkLearnModel(
 
 class _ResidualizerMixin:
     def _fit_predict_residualizer(
-            self, df_in: pd.DataFrame, fit: bool,
+        self,
+        df_in: pd.DataFrame,
+        fit: bool,
     ) -> Tuple[Dict[str, pd.DataFrame], collections.OrderedDict]:
         """
         Factor out common flow for fit/predict.
