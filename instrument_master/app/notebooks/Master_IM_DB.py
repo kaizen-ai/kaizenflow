@@ -44,7 +44,7 @@ import pandas.io.sql as sqlio
 
 import helpers.sql as hsql
 
-conn_as_str = "user=menjgbcvejlpcbejlc password=eidvlbaresntlcdbresntdjlrs dbname=im_postgres_db_local host=im_postgres_local port=5550"
+#conn_as_str = "user= password= dbname=im_postgres_db_local host=im_postgres_local port=5550"
 conn, _ = hsql.get_connection_from_string(conn_as_str)
 
 db_names = hsql.get_db_names(conn)
