@@ -3,7 +3,7 @@
 if [[ 0 == 1 ]]; then
 instrument_master/kibot/data/extract/download.py \
     --dataset 'sp_500_1min' \
-    -u saggese@gmail.com -p s33f3c3c3 \
+    -u abc@xyz.com -p s33f3c3c3 \
     --no_incremental
 fi;
 

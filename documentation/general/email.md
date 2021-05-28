@@ -143,7 +143,7 @@
   Suject: [.../...] BUG: jupytext sync doesn't work anymore (#572)
   To: .../... <...@noreply.github.com>
   Cc:
-      Giacinto Paolo Saggese <saggese@gmail.com>,
+      Giacinto Paolo Saggese <abc@xyz.com>,
       Your activity <your_activity@noreply.github.com>
 
   > jupytext --sync --to py:percent research/PTask218_Large_price_movement_analysis_for_security.py

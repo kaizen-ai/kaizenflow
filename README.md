@@ -9,7 +9,7 @@
 
 - Create a tmux session for lemonade + amp set-up
   ```bash
-  > cd ~/src/commodity_research1
+  > cd ~/src
   > ./dev_scripts_p1/tmux_p1.sh part1
   ```
 - TODO(gp): It might be dependent on GP's set-up and needs to be generalized,

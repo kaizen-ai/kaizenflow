@@ -105,7 +105,7 @@ def get_credentials() -> Dict[str, Any]:
     if user_name == "saggese":
         # GP.
         git_user_name = "saggese"
-        git_user_email = "saggese@gmail.com"
+        git_user_email = "abc@xyz.com"
         if server_name.startswith("gpmac") or server_name.startswith(
             "giacintos-mbp"
         ):
@@ -127,7 +127,7 @@ def get_credentials() -> Dict[str, Any]:
     elif user_name == "paul":
         # Paul.
         git_user_name = "paul"
-        git_user_email = "smith.paul.anthony@gmail.com"
+        git_user_email = "abc@xyz.com"
         if server_name in ("Pauls-MacBook-Pro.local", "Pauls-MBP"):
             conda_sh_path = "/Users/paul/anaconda3/etc/profile.d/conda.sh"
             conda_env_path = "/Users/paul/.conda/envs"
