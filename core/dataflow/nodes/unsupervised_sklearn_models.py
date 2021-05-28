@@ -28,16 +28,8 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 
-class AbstractUnsupervisedSkLearnModel(FitPredictNode, abc.ABC):
-    def get_fit_state(self) -> Dict[str, Any]:
-        fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
-        return fit_state
-
-    def set_fit_state(self, fit_state: Dict[str, Any]):
-        self._model = fit_state["_model"]
-        self._info["fit"] = fit_state["_info['fit']"]
-
-    def _fit_predict_helper(
+class _UnsupervisedSkLearnModelMixin:
+    def _fit_predict_unsupervised_sklearn_model(
         self, df_in: pd.DataFrame, fit: bool = False
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         """
@@ -81,7 +73,7 @@ class AbstractUnsupervisedSkLearnModel(FitPredictNode, abc.ABC):
         return df_out, info
 
 
-class UnsupervisedSkLearnModel(AbstractUnsupervisedSkLearnModel, ColModeMixin):
+class UnsupervisedSkLearnModel(FitPredictNode, ColModeMixin, _UnsupervisedSkLearnModelMixin):
     """
     Fit and transform an unsupervised sklearn model.
     """
@@ -114,24 +106,10 @@ class UnsupervisedSkLearnModel(AbstractUnsupervisedSkLearnModel, ColModeMixin):
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df = self._preprocess_df(df_in)
-        df_out, info = self._fit_predict_helper(df, fit=True)
-        df_out = self._apply_col_mode(
-            df_in, df_out, cols=df.columns.to_list(), col_mode=self._col_mode
-        )
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
+        return self._fit_predict_helper(df_in, fit=True)
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df = self._preprocess_df(df_in)
-        df_out, info = self._fit_predict_helper(df, fit=False)
-        df_out = self._apply_col_mode(
-            df_in, df_out, cols=df.columns.to_list(), col_mode=self._col_mode
-        )
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        self._set_info("predict", info)
-        return {"df_out": df_out}
+        return self._fit_predict_helper(df_in, fit=False)
 
     def get_fit_state(self) -> Dict[str, Any]:
         fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
@@ -140,6 +118,19 @@ class UnsupervisedSkLearnModel(AbstractUnsupervisedSkLearnModel, ColModeMixin):
     def set_fit_state(self, fit_state: Dict[str, Any]):
         self._model = fit_state["_model"]
         self._info["fit"] = fit_state["_info['fit']"]
+
+    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool) -> Tuple[Dict[str, pd.DataFrame], collections.OrderedDict]:
+        df = self._preprocess_df(df_in)
+        df_out, info = self._fit_predict_unsupervised_sklearn_model(df, fit=fit)
+        df_out = self._apply_col_mode(
+            df_in, df_out, cols=df.columns.to_list(), col_mode=self._col_mode
+        )
+        info["df_out_info"] = get_df_info_as_string(df_out)
+        if fit:
+            self._set_info("fit", info)
+        else:
+            self._set_info("predict", info)
+        return {"df_out": df_out}
 
     def _preprocess_df(self, df_in):
         if self._x_vars is None:
@@ -150,7 +141,7 @@ class UnsupervisedSkLearnModel(AbstractUnsupervisedSkLearnModel, ColModeMixin):
 
 
 class MultiindexUnsupervisedSkLearnModel(
-    AbstractUnsupervisedSkLearnModel,
+    FitPredictNode, _UnsupervisedSkLearnModelMixin,
 ):
     """
     Fit and transform an unsupervised sklearn model.
@@ -196,29 +187,25 @@ class MultiindexUnsupervisedSkLearnModel(
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        df = CrossSectionalDfToDfColProcessor.preprocess(
-            df_in, self._in_col_group
-        )
-        df_out, info = self._fit_predict_helper(df, fit=True)
-        df_out = CrossSectionalDfToDfColProcessor.postprocess(
-            df_out, self._out_col_group
-        )
-        df_out = merge_dataframes(df_in, df_out)
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
+        return self._fit_predict_helper(df_in, fit=True)
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=False)
+
+    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool) -> Tuple[Dict[str, pd.DataFrame], collections.OrderedDict]:
         df = CrossSectionalDfToDfColProcessor.preprocess(
             df_in, self._in_col_group
         )
-        df_out, info = self._fit_predict_helper(df, fit=False)
+        df_out, info = self._fit_predict_unsupervised_sklearn_model(df, fit=fit)
         df_out = CrossSectionalDfToDfColProcessor.postprocess(
             df_out, self._out_col_group
         )
         df_out = merge_dataframes(df_in, df_out)
         info["df_out_info"] = get_df_info_as_string(df_out)
-        self._set_info("predict", info)
+        if fit:
+            self._set_info("fit", info)
+        else:
+            self._set_info("predict", info)
         return {"df_out": df_out}
 
 
