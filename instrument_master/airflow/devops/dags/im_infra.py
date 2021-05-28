@@ -13,7 +13,7 @@ SEND_EMAIL = STAGE not in ["LOCAL", "TEST"]
 default_args = {
     "owner": "airflow",
     "start_date": airflow.utils.dates.days_ago(1),
-    "email": ["malanin@particle.one", "kkonotopska@particle.one"],
+    "email": [],
     "email_on_failure": SEND_EMAIL,
     "email_on_retry": SEND_EMAIL,
 }
