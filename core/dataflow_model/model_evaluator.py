@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.model_evaluator as modeval
+import core.dataflow_model.model_evaluator as modeval
 """
 
 from __future__ import annotations
