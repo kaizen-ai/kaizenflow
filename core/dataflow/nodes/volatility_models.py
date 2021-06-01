@@ -337,7 +337,9 @@ class SingleColumnVolatilityModel(FitPredictNode):
             mode = "fit"
         else:
             mode = "predict"
-        df_out = dag.run_leq_node("demodulate_using_vol_pred", mode, progress_bar=self._progress_bar)["df_out"]
+        df_out = dag.run_leq_node(
+            "demodulate_using_vol_pred", mode, progress_bar=self._progress_bar
+        )["df_out"]
         info[self._col] = extract_info(dag, [mode])
         if self._learn_tau_on_fit and fit:
             self._tau = info[self._col]["compute_smooth_moving_average"]["fit"][
