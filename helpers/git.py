@@ -30,6 +30,9 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Add mem caching to some functions below. We assume that one doesn't
 #  change dir (which is a horrible idea) and thus we can memoize.
 
+# TODO(gp): Spell super_module and sub_module always in the same way in both
+#  comments and code. For simplicity (e.g., instead of `super_module` in code and
+#  `super-module` in comment) we might want to spell `supermodule` everywhere.
 
 # #############################################################################
 # Git submodule functions
@@ -465,10 +468,10 @@ def find_file_in_git_tree(file_name: str, super_module: bool = True) -> str:
     """
     Find the path of a file in a Git tree.
 
-    In practice we find the Git root and then search from there for the
-    file.
+    We get the Git root and then search for the file from there.
     """
     root_dir = get_client_root(super_module=super_module)
+    # TODO(gp): Use -not -path '*/\.git/*'
     cmd = "find %s -name '%s' | grep -v .git" % (root_dir, file_name)
     _, file_name = hsinte.system_to_one_line(cmd)
     _LOG.debug("file_name=%s", file_name)
@@ -486,7 +489,9 @@ def get_path_from_git_root(file_name: str, super_module: bool) -> str:
 
     :param super_module: like get_client_root()
     """
+    # Get Git root.
     git_root = get_client_root(super_module) + "/"
+    # TODO(gp): Use os.path.relpath()
     abs_path = os.path.abspath(file_name)
     dbg.dassert(abs_path.startswith(git_root))
     end_idx = len(git_root)
@@ -532,12 +537,43 @@ def get_repo_dirs() -> List[str]:
     return dir_names
 
 
+def purify_docker_file_from_git_client(file_name: str, super_module: bool) -> str:
+    """
+    Convert a file that was generated inside Docker to a file in the current
+    dir.
+
+    This operation is best effort since it might not be able to find a file in the
+    current repo. E.g., a file in Docker under a super-module is not in a sub-module.
+
+    E.g.,
+    - A file like '/app/amp/core/dataflow_model/utils.py', in a Docker container with
+      Git root in '/app' becomes 'amp/core/dataflow_model/utils.py'
+    - For a file like '/app/amp/core/dataflow_model/utils.py' outside Docker, we look
+      for the file 'dataflow_model/utils.py' in the current client and then normalize
+      with respect to the
+    """
+    # Clean up file name.
+    file_name = os.path.normpath(file_name)
+    #
+    file_name_tmp = hsinte.find_file_with_dir(file_name, ".")
+    if file_name_tmp is None:
+        # We didn't find the file in the current client: leave the file as it was.
+        _LOG.warning("Can't find the file_name corresponding to %s", file_name)
+    else:
+        # We have found the file.
+        file_name = file_name_tmp
+    #
+    file_name = get_path_from_git_root(file_name, super_module)
+    file_name = os.path.normpath(file_name)
+    return file_name
+
+
 # #############################################################################
 # Git hash
 # #############################################################################
 
 
-def get_head_hash(dir_name: str = ".", short_hash=False) -> str:
+def get_head_hash(dir_name: str = ".", short_hash: bool = False) -> str:
     """
     Report the hash that a Git repo is synced at.
 
@@ -584,57 +620,6 @@ def get_remote_head_hash(dir_name: str) -> str:
 # #############################################################################
 
 
-# TODO(gp): -> remove_files_non_present() and move to system_interaction.py
-def _check_files(files: List[str]) -> List[str]:
-    """
-    Return list of files from `files`, skipping the files that don't exist.
-    """
-    files_tmp = []
-    for f in files:
-        if os.path.exists(f):
-            files_tmp.append(f)
-        else:
-            _LOG.debug("File '%s' doesn't exist: skipping", f)
-    return files_tmp
-
-
-# TODO(gp): Move to system_interaction.py
-def remove_dirs(files: List[str]) -> List[str]:
-    """
-    Return list of files from `files`, skipping the files that are directories.
-    """
-    files_tmp: List[str] = []
-    dirs_tmp: List[str] = []
-    for file in files:
-        if os.path.isdir(file):
-            _LOG.debug("file='%s' is a dir: skipping", file)
-            dirs_tmp.append(file)
-        else:
-            files_tmp.append(file)
-    if dirs_tmp:
-        _LOG.warning("Removed dirs: %s", ", ".join(dirs_tmp))
-    return files_tmp
-
-
-# TODO(gp): Move to system_interactions.py
-def system_to_files(
-    dir_name: str, cmd: str, remove_files_non_present: bool
-) -> List[str]:
-    """
-    Execute command `cmd` in `dir_name` and return the output as a list of
-    strings.
-    """
-    cd_cmd = "cd %s && " % dir_name
-    _, output = hsinte.system_to_string(cd_cmd + cmd)
-    #
-    files = output.split()
-    files = [os.path.join(dir_name, f) for f in files]
-    # Remove non-existent files, if needed.
-    if remove_files_non_present:
-        files = _check_files(files)
-    return files
-
-
 def get_modified_files(
     dir_name: str = ".", remove_files_non_present: bool = True
 ) -> List[str]:
@@ -663,7 +648,7 @@ def get_modified_files(
     #   dev_scripts/infra/ssh_tunnels.py
     #   helpers/git.py
     cmd = "(git diff --cached --name-only; git ls-files -m) | sort | uniq"
-    files = system_to_files(dir_name, cmd, remove_files_non_present)
+    files: List[str] = hsinte.system_to_files(cmd, dir_name, remove_files_non_present)
     return files
 
 
@@ -689,7 +674,7 @@ def get_previous_committed_files(
     cmd.append("$(git log --author $(git config user.name) -%d" % num_commits)
     cmd.append(r"""| \grep "^commit " | perl -pe 's/commit (.*)/$1/')""")
     cmd_as_str = " ".join(cmd)
-    files = system_to_files(dir_name, cmd_as_str, remove_files_non_present)
+    files : List[str] = hsinte.system_to_files(cmd_as_str, dir_name, remove_files_non_present)
     return files
 
 
@@ -710,14 +695,14 @@ def get_modified_files_in_branch(
     :return: list of files
     """
     cmd = "git diff --name-only %s..." % dst_branch
-    files = system_to_files(dir_name, cmd, remove_files_non_present)
+    files : List[str] = hsinte.system_to_files(cmd, dir_name, remove_files_non_present)
     return files
 
 
 def get_summary_files_in_branch(
     dst_branch: str,
     dir_name: str = ".",
-):
+) -> str:
     """
     Report summary of files in the current branch with respect to `dst_branch'.
 
@@ -738,7 +723,9 @@ def get_summary_files_in_branch(
     res = ""
     for tag, diff_type in file_types:
         cmd = f"git diff --diff-filter={diff_type} --name-only {dst_branch}..."
-        files = system_to_files(dir_name, cmd, remove_files_non_present=False)
+        files = hsinte.system_to_files(
+            cmd, dir_name, remove_files_non_present=False
+        )
         if files:
             res += f"# {tag}: {len(files)}\n"
             res += hprint.indent("\n".join(files)) + "\n"
@@ -849,13 +836,19 @@ def git_add_update(
     hsinte.system(cmd, suppress_output=False, log_level=log_level)
 
 
-def fetch_origin_master_if_needed():
+def fetch_origin_master_if_needed() -> None:
+    """
+    If inside CI system, force fetching `master` branch from Git repo.
+
+    When testing a branch, `master` is not always fetched, but it might be
+    needed by tests.
+    """
     if hsinte.is_inside_ci():
         _LOG.warning("Running inside CI so fetching master")
         cmd = "git branch -a"
         _, txt = hsinte.system_to_string(cmd)
         _LOG.debug("%s=%s", cmd, txt)
-        cmd = 'git branch -a | egrep "\s+master\s*$" | wc -l'
+        cmd = r'git branch -a | egrep "\s+master\s*$" | wc -l'
         # * (HEAD detached at pull/1337/merge)
         # master
         # remotes/origin/master

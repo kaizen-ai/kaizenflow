@@ -256,16 +256,16 @@ def _get_files_to_process(
         files = files_from_user.split(" ")
     # Convert into a list.
     dbg.dassert_isinstance(files, list)
-    files: List[str] = [f for f in files if f != ""]
-    _LOG.debug("files='%s'", str(files))
+    files_to_process = [f for f in files if f != ""]
+    _LOG.debug("files_to_process='%s'", str(files_to_process))
     # Remove dirs, if needed.
     if remove_dirs:
-        git.remove_dirs(files)
-    _LOG.debug("files='%s'", str(files))
+        hsinte.remove_dirs(files_to_process)
+    _LOG.debug("files_to_process='%s'", str(files_to_process))
     # Ensure that there are files to process.
-    if not files:
+    if not files_to_process:
         _LOG.warning("No files were selected")
-    return files
+    return files_to_process
 
 
 # Copied from helpers.datetime_ to avoid dependency from pandas.
@@ -1988,7 +1988,7 @@ def jump_to_pytest_error(ctx, log_name=""):  # type: ignore
         log_name = "tmp.pytest.log"
     _LOG.info("Reading %s", log_name)
     # Convert the traceback into a cfile.
-    cmd = f"dev_scripts/traceback_to_cfile.py -i {log_name} -o cfile"
+    cmd = f"traceback_to_cfile.py -i {log_name} -o cfile"
     _run(ctx, cmd)
     # Read and navigate the cfile with vim.
     cmd = 'vim -c "cfile cfile"'
@@ -2093,10 +2093,11 @@ def lint(  # type: ignore
     last_commit=False,
     files="",
     phases="",
-    stage="prod",
+    only_format_steps=False,
+    #stage="prod",
     run_bash=False,
-    run_lint=True,
-    parse_lint=True,
+    run_linter_step=True,
+    parse_linter_output=True,
 ):
     """
     Lint files.
@@ -2106,14 +2107,24 @@ def lint(  # type: ignore
     :param last_commit: select the files modified in the previous commit
     :param files: specify a space-separated list of files
     :param phases: specify the lint phases to execute
+    :param only_format_steps: run only the formatting steps
     :param run_bash: instead of running pre-commit, run bash to debug
-    :param run_lint: run linter step
-    :param parse_lint: parse linter output and generate vim cfile
+    :param run_linter_step: run linter step
+    :param parse_linter_output: parse linter output and generate vim cfile
     """
     _report_task()
     lint_file_name = "linter_output.txt"
-    if run_lint:
-        docker_pull(ctx, stage=stage, images="dev_tools")
+    # Remove the file.
+    if os.path.exists(lint_file_name):
+        cmd = f"rm {lint_file_name}"
+        _run(ctx, cmd)
+    #
+    if only_format_steps:
+        dbg.dassert_eq(phases, "")
+        phases = "isort black"
+    if run_linter_step:
+        # We don't want to run this all the times.
+        # docker_pull(ctx, stage=stage, images="dev_tools")
         # Get the files to lint.
         # For linting we can use only files modified in the client, in the branch, or
         # specified.
@@ -2128,28 +2139,30 @@ def lint(  # type: ignore
             _LOG.warning("Nothing to lint: exiting")
             return
         files_as_str = " ".join(files_as_list)
-        # Prepare the command line.
-        precommit_opts = [
-            f"run {phases}",
-            "-c /app/.pre-commit-config.yaml",
-            f"--files {files_as_str}",
-        ]
-        precommit_opts = _to_single_line_cmd(precommit_opts)
-        # Execute command line.
-        cmd = _get_lint_docker_cmd(precommit_opts, run_bash)
-        cmd = f"({cmd}) 2>&1 | tee {lint_file_name}"
-        if run_bash:
-            # We don't execute this command since pty=True corrupts the terminal
-            # session.
-            print("To get a bash session inside Docker run:")
-            print(cmd)
-            return
-        # Run.
-        _run(ctx, cmd)
+        phases = phases.split(" ")
+        for phase in phases:
+            # Prepare the command line.
+            precommit_opts = [
+                f"run {phase}",
+                "-c /app/.pre-commit-config.yaml",
+                f"--files {files_as_str}",
+            ]
+            precommit_opts = _to_single_line_cmd(precommit_opts)
+            # Execute command line.
+            cmd = _get_lint_docker_cmd(precommit_opts, run_bash)
+            cmd = f"({cmd}) 2>&1 | tee -a {lint_file_name}"
+            if run_bash:
+                # We don't execute this command since pty=True corrupts the terminal
+                # session.
+                print("# To get a bash session inside Docker run:")
+                print(cmd)
+                return
+            # Run.
+            _run(ctx, cmd)
     else:
         _LOG.warning("Skipping linter step, as per user request")
     #
-    if parse_lint:
+    if parse_linter_output:
         # Parse the linter output into a cfile.
         _LOG.info("Parsing '%s'", lint_file_name)
         txt = hio.from_file(lint_file_name)
