@@ -7,3 +7,4 @@ pytest >= "6.0.0"
 pytest-cov
 pytest-instafail
 pytest-xdist
+python-dateutil

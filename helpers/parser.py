@@ -148,6 +148,10 @@ def add_input_output_args(
 ) -> argparse.ArgumentParser:
     """
     Add options to parse input and output file name.
+
+    :param in_default: default file to be used for input
+        - If `None`, it must be specified by the user
+    :param in_default: same as `in_default` but for output
     """
     parser.add_argument(
         "-i",

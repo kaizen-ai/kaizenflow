@@ -1,4 +1,5 @@
 import logging
+from typing import List, Tuple
 
 import helpers.dbg as dbg
 import helpers.unit_test as hut
@@ -238,6 +239,7 @@ class Test_dassert_lgt1(hut.TestCase):
     def test3(self) -> None:
         """
         Raise assertion since it is not true that `0 < 100 <= 3`.
+
         The formatting of the assertion is correct.
         """
         with self.assertRaises(AssertionError) as cm:
@@ -340,6 +342,63 @@ class Test_dassert_is_proportion1(hut.TestCase):
         Caught assertion while formatting message:
         'not enough arguments for format string'
         hello %s %s world
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class Test_dassert_container_type1(hut.TestCase):
+    def test1(self) -> None:
+        list_ = "a b c".split()
+        dbg.dassert_container_type(list_, List, str)
+
+    def test_assert1(self) -> None:
+        """
+        Check that assertion fails since a list is not a tuple.
+        """
+        list_ = "a b c".split()
+        with self.assertRaises(AssertionError) as cm:
+            dbg.dassert_container_type(list_, Tuple, str)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        instance of '['a', 'b', 'c']' is '<class 'list'>' instead of 'typing.Tuple'
+        obj='['a', 'b', 'c']'
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test_assert2(self) -> None:
+        """
+        Check that assertion fails since a list contains strings and ints.
+        """
+        list_ = ["a", 2, "c", "d"]
+        with self.assertRaises(AssertionError) as cm:
+            dbg.dassert_container_type(list_, list, str)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        instance of '2' is '<class 'int'>' instead of '<class 'str'>'
+        obj='['a', 2, 'c', 'd']'
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test_assert3(self) -> None:
+        """
+        Like `test_assert3()` but with a message.
+        """
+        list_ = ["a", 2, "c", "d"]
+        with self.assertRaises(AssertionError) as cm:
+            dbg.dassert_container_type(
+                list_, list, str, "list_ is %s homogeneous", "not"
+            )
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        instance of '2' is '<class 'int'>' instead of '<class 'str'>'
+        list_ is not homogeneous
+        obj='['a', 2, 'c', 'd']'
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 

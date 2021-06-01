@@ -365,8 +365,7 @@ def filter_text(regex: str, txt: str) -> str:
     return txt
 
 
-# TODO(gp): -> purify_amp_references
-def remove_amp_references(txt: str) -> str:
+def purify_amp_references(txt: str) -> str:
     """
     Remove references to amp.
     """
@@ -378,6 +377,14 @@ def remove_amp_references(txt: str) -> str:
     return txt
 
 
+def purify_app_references(txt: str) -> str:
+    """
+    Remove references to `/app`.
+    """
+    txt = re.sub("/app/", "", txt, flags=re.MULTILINE)
+    return txt
+
+
 def purify_file_names(file_names: List[str]) -> List[str]:
     """
     Express file names in terms of the root of git repo, removing reference to
@@ -385,7 +392,8 @@ def purify_file_names(file_names: List[str]) -> List[str]:
     """
     git_root = git.get_client_root(super_module=True)
     file_names = [os.path.relpath(f, git_root) for f in file_names]
-    file_names = list(map(remove_amp_references, file_names))
+    # TODO(gp): Add also `purify_app_references`.
+    file_names = list(map(purify_amp_references, file_names))
     return file_names
 
 
@@ -409,7 +417,7 @@ def purify_txt_from_client(txt: str) -> str:
     user_name = hsinte.get_user_name()
     txt = txt.replace(user_name, "$USER_NAME")
     # Remove amp reference, if any.
-    txt = remove_amp_references(txt)
+    txt = purify_amp_references(txt)
     return txt
 
 
@@ -951,7 +959,7 @@ class TestCase(unittest.TestCase):
             False, which should be used only for unit testing
         """
         _LOG.debug(hprint.to_str("fuzzy_match purify_text abort_on_error"))
-        dbg.dassert_in(type(actual), (bytes, str))
+        dbg.dassert_in(type(actual), (bytes, str), "actual='%s'", actual)
         #
         dir_name, file_name = self._get_golden_outcome_file_name(tag)
         if use_gzip:

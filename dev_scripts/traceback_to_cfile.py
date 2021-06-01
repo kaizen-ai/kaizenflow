@@ -22,18 +22,22 @@ import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.parser as prsr
 import helpers.printing as hprint
+import helpers.system_interaction as hsinte
 import helpers.traceback_helper as htrace
 
 _LOG = logging.getLogger(__name__)
 
 # #############################################################################
 
+_NEWEST_LOG_FILE = "__NEWEST_LOG_FILE__"
+
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    prsr.add_input_output_args(parser, out_default="cfile")
+    in_default = _NEWEST_LOG_FILE
+    prsr.add_input_output_args(parser, in_default=in_default, out_default="cfile")
     prsr.add_verbosity_arg(parser)
     return parser
 
@@ -45,6 +49,19 @@ def _main(parser: argparse.ArgumentParser) -> None:
     in_file_name, out_file_name = prsr.parse_input_output_args(
         args, clear_screen=True
     )
+    if in_file_name == _NEWEST_LOG_FILE:
+        cmd = 'find . -type f -name "*.log" | xargs ls -1 -t'
+        # > find . -type f -name "*.log" | xargs ls -1 -t
+        # ./run.log
+        # ./amp/core/dataflow_model/run_pipeline.py.log
+        # ./experiments/RH1E/result_1/run_notebook.1.log
+        # ./experiments/RH1E/result_0/run_notebook.0.log
+        dir_name = None
+        remove_files_non_present = False
+        files = hsinte.system_to_files(dir_name, cmd, remove_files_non_present)
+        # Pick the newest file.
+        in_file_name = files[0]
+    _LOG.info("in_file_name=%s", in_file_name)
     if out_file_name != "-":
         hio.delete_file(out_file_name)
     # Read file.

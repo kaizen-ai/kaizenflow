@@ -1,1 +1,3 @@
+# Keep this in sync with `dev_scripts/client_setup/requirements.txt`.
 invoke
+python-dateutil
