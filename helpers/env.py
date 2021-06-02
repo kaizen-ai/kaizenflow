@@ -5,7 +5,6 @@ import helpers.env as henv
 """
 
 import logging
-import platform
 from typing import List, Tuple
 
 import helpers.git as git
@@ -33,8 +32,16 @@ def _get_library_version(lib_name: str) -> str:
     return version
 
 
-def _append(txt: List[str], to_add: List[str], num_spaces: int=4) -> Tuple[List[str], List[str]]:
-    txt.extend([" " * num_spaces + line for txt_tmp in to_add for line in txt_tmp.split("\n")])
+def _append(
+    txt: List[str], to_add: List[str], num_spaces: int = 4
+) -> Tuple[List[str], List[str]]:
+    txt.extend(
+        [
+            " " * num_spaces + line
+            for txt_tmp in to_add
+            for line in txt_tmp.split("\n")
+        ]
+    )
     to_add: List[str] = []
     return txt, to_add
 
@@ -43,7 +50,7 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     # TODO(gp): This should return a string that we append to the rest.
     hversi.check_version()
     #
-    txt : List[str] = []
+    txt: List[str] = []
     # Add git signature.
     txt.append("# Git")
     txt_tmp: List[str] = []
@@ -76,6 +83,7 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     txt.append("# Machine info")
     txt_tmp: List[str] = []
     import platform
+
     uname = platform.uname()
     txt_tmp.append(f"system={uname.system}")
     txt_tmp.append(f"node name={uname.node}")
@@ -84,11 +92,12 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     txt_tmp.append(f"machine={uname.machine}")
     txt_tmp.append(f"processor={uname.processor}")
     import psutil
+
     txt_tmp.append("cpu count=%s" % psutil.cpu_count())
     txt_tmp.append("cpu freq=%s" % str(psutil.cpu_freq()))
     # TODO(gp): Report in MB or GB.
     txt_tmp.append("memory=%s" % str(psutil.virtual_memory()))
-    txt_tmp.append("disk usage=%s" % str(psutil.disk_usage('/')))
+    txt_tmp.append("disk usage=%s" % str(psutil.disk_usage("/")))
     txt, txt_tmp = _append(txt, txt_tmp)
     # Add package info.
     txt.append("# Packages")
@@ -116,7 +125,7 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
         if version.startswith("ERROR"):
             failed_imports += 1
         packages.append((lib, version))
-    #txt.extend(["%15s: %s" % (l, v) for (l, v) in packages])
+    # txt.extend(["%15s: %s" % (l, v) for (l, v) in packages])
     txt_tmp.extend(["%s: %s" % (l, v) for (l, v) in packages])
     txt, txt_tmp = _append(txt, txt_tmp)
     #

@@ -35,7 +35,7 @@ def _git_add(file_name: str) -> None:
         )
 
 
-# ################################################################################
+# #############################################################################
 
 
 class TestTestCase1(hut.TestCase):
@@ -109,7 +109,9 @@ class TestTestCase1(hut.TestCase):
         tmp_dir = tempfile.mkdtemp()
         self.assert_equal(actual, expected, abort_on_error=False, dst_dir=tmp_dir)
         # Compute the signature from the dir.
-        act = hut.get_dir_signature(tmp_dir, include_file_content=True, num_lines=None)
+        act = hut.get_dir_signature(
+            tmp_dir, include_file_content=True, num_lines=None
+        )
         act = hut.purify_txt_from_client(act)
         act = act.replace(tmp_dir, "$TMP_DIR")
         # pylint: disable=line-too-long
@@ -162,7 +164,7 @@ class TestTestCase1(hut.TestCase):
         self.assert_equal(act, exp, fuzzy_match=False)
 
 
-# ################################################################################
+# #############################################################################
 
 
 class Test_AssertEqual1(hut.TestCase):
@@ -264,11 +266,13 @@ completed       success Lint    Slow_tests
         self.assertEqual(act, exp)
 
     # For debugging: don't check this enabled.
-    @pytest.mark.skip(reason="This is only used to debug the debugging the infrastructure")
+    @pytest.mark.skip(
+        reason="This is only used to debug the debugging the infrastructure"
+    )
     def test_not_equal_debug(self) -> None:
         """
-        Create a mismatch on purpose to see how the suggested updated to expected
-        variable looks like.
+        Create a mismatch on purpose to see how the suggested updated to
+        expected variable looks like.
         """
         act = r"""empty
 start
@@ -283,7 +287,8 @@ end
         exp = "hello"
         self.assert_equal(act, exp, fuzzy_match=False)
 
-# ################################################################################
+
+# #############################################################################
 
 
 class TestCheckString1(hut.TestCase):
@@ -441,13 +446,13 @@ class TestCheckString1(hut.TestCase):
         return to_skip
 
 
-# ################################################################################
+# #############################################################################
 
 
 class TestCheckDataFrame1(hut.TestCase):
     """
-    Some of these tests can't pass with `--update_outcomes`, since they exercise
-    the logic in `--update_outcomes` itself.
+    Some of these tests can't pass with `--update_outcomes`, since they
+    exercise the logic in `--update_outcomes` itself.
 
     We can't use the standard way to make tests conditional:
     ```
@@ -667,7 +672,7 @@ class TestCheckDataFrame1(hut.TestCase):
         return outcome_updated, file_exists, is_equal
 
 
-# ################################################################################
+# #############################################################################
 
 
 class Test_unit_test1(hut.TestCase):
@@ -713,7 +718,7 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Nam
         self.assertEqual(act, exp)
 
 
-# ################################################################################
+# #############################################################################
 
 
 class TestDataframeToJson(hut.TestCase):
@@ -792,11 +797,10 @@ class TestDataframeToJson(hut.TestCase):
         self.check_string(output_str)
 
 
-# ################################################################################
+# #############################################################################
 
 
 class Test_get_dir_signature1(hut.TestCase):
-
     def test1(self):
         """
         Test dir signature excluding the file content.

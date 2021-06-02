@@ -133,9 +133,12 @@ Traceback (most recent call last):
         _LOG.debug("act_traceback=\n%s", act_traceback)
         # Compare cfile.
         act_cfile = htrace.cfile_to_str(act_cfile)
-        self.assert_equal(act_cfile, exp_cfile, fuzzy_match=True, purify_text=True)
+        self.assert_equal(
+            act_cfile, exp_cfile, fuzzy_match=True, purify_text=True
+        )
         # Compare traceback.
         # Handle `None`.
         act_traceback = str(act_traceback)
-        self.assert_equal(act_traceback, exp_traceback, fuzzy_match=True,
-                          purify_text=True)
+        self.assert_equal(
+            act_traceback, exp_traceback, fuzzy_match=True, purify_text=True
+        )

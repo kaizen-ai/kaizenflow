@@ -38,7 +38,6 @@ from helpers.lib_tasks import (
     git_merge_master,
     git_pull,
     git_pull_master,
-    traceback,
     lint,
     print_setup,
     print_tasks,
@@ -48,8 +47,8 @@ from helpers.lib_tasks import (
     run_fast_tests,
     run_slow_tests,
     run_superslow_tests,
-    # This is not an invoke target.
-    set_default_params,
+    set_default_params,  # This is not an invoke target.
+    traceback,
 )
 
 _LOG = logging.getLogger(__name__)

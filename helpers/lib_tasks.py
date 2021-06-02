@@ -2112,7 +2112,7 @@ def lint(  # type: ignore
     files="",
     phases="",
     only_format_steps=False,
-    #stage="prod",
+    # stage="prod",
     run_bash=False,
     run_linter_step=True,
     parse_linter_output=True,

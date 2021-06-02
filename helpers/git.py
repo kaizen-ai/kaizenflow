@@ -143,8 +143,8 @@ def is_in_amp_as_submodule() -> bool:
 # TODO(gp): supermodule -> super_module
 def is_in_amp_as_supermodule() -> bool:
     """
-    Return whether we are in the `amp` repo and it's a super-module, i.e., `amp`
-    by itself.
+    Return whether we are in the `amp` repo and it's a super-module, i.e.,
+    `amp` by itself.
     """
     return is_amp() and not is_inside_submodule(".")
 
@@ -537,7 +537,9 @@ def get_repo_dirs() -> List[str]:
     return dir_names
 
 
-def purify_docker_file_from_git_client(file_name: str, super_module: Optional[bool]) -> str:
+def purify_docker_file_from_git_client(
+    file_name: str, super_module: Optional[bool]
+) -> str:
     """
     Convert a file that was generated inside Docker to a file in the current
     dir.
@@ -658,7 +660,9 @@ def get_modified_files(
     #   dev_scripts/infra/ssh_tunnels.py
     #   helpers/git.py
     cmd = "(git diff --cached --name-only; git ls-files -m) | sort | uniq"
-    files: List[str] = hsinte.system_to_files(cmd, dir_name, remove_files_non_present)
+    files: List[str] = hsinte.system_to_files(
+        cmd, dir_name, remove_files_non_present
+    )
     return files
 
 
@@ -684,7 +688,9 @@ def get_previous_committed_files(
     cmd.append("$(git log --author $(git config user.name) -%d" % num_commits)
     cmd.append(r"""| \grep "^commit " | perl -pe 's/commit (.*)/$1/')""")
     cmd_as_str = " ".join(cmd)
-    files : List[str] = hsinte.system_to_files(cmd_as_str, dir_name, remove_files_non_present)
+    files: List[str] = hsinte.system_to_files(
+        cmd_as_str, dir_name, remove_files_non_present
+    )
     return files
 
 
@@ -705,7 +711,9 @@ def get_modified_files_in_branch(
     :return: list of files
     """
     cmd = "git diff --name-only %s..." % dst_branch
-    files : List[str] = hsinte.system_to_files(cmd, dir_name, remove_files_non_present)
+    files: List[str] = hsinte.system_to_files(
+        cmd, dir_name, remove_files_non_present
+    )
     return files
 
 
@@ -851,8 +859,8 @@ def fetch_origin_master_if_needed() -> None:
     """
     If inside CI system, force fetching `master` branch from Git repo.
 
-    When testing a branch, `master` is not always fetched, but it might be
-    needed by tests.
+    When testing a branch, `master` is not always fetched, but it might
+    be needed by tests.
     """
     if hsinte.is_inside_ci():
         _LOG.warning("Running inside CI so fetching master")

@@ -4,7 +4,6 @@ Import as:
 import helpers.unit_test as hut
 """
 
-import glob
 import inspect
 import logging
 import os
@@ -304,7 +303,9 @@ def create_test_dir(
         hio.to_file(dst_file_name, file_content)
 
 
-def get_dir_signature(dir_name: str, include_file_content: bool, num_lines: Optional[int]) -> str:
+def get_dir_signature(
+    dir_name: str, include_file_content: bool, num_lines: Optional[int]
+) -> str:
     """
     Compute a string with the content of the files in `dir_name`.
 
@@ -315,7 +316,7 @@ def get_dir_signature(dir_name: str, include_file_content: bool, num_lines: Opti
     # Find all the files under `dir_name`.
     _LOG.debug("dir_name=%s", dir_name)
     dbg.dassert_exists(dir_name)
-    #file_names = glob.glob(os.path.join(dir_name, "*"), recursive=True)
+    # file_names = glob.glob(os.path.join(dir_name, "*"), recursive=True)
     cmd = f'find {dir_name} -name "*"'
     remove_files_non_present = False
     file_names = hsinte.system_to_files(cmd, dir_name, remove_files_non_present)
@@ -403,7 +404,8 @@ def purify_app_references(txt: str) -> str:
 
 def purify_file_names(file_names: List[str]) -> List[str]:
     """
-    Express file names in terms of the root of git repo, removing reference to `amp`.
+    Express file names in terms of the root of git repo, removing reference to
+    `amp`.
     """
     git_root = git.get_client_root(super_module=True)
     file_names = [os.path.relpath(f, git_root) for f in file_names]
@@ -922,7 +924,8 @@ class TestCase(unittest.TestCase):
         dst_dir: str = ".",
     ) -> bool:
         """
-        Return if `actual` and `expected` are different and report the difference.
+        Return if `actual` and `expected` are different and report the
+        difference.
 
         Implement a better version of `self.assertEqual()` that reports mismatching
         strings with sdiff and save them to files for further analysis with
