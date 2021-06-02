@@ -1,3 +1,4 @@
+# Dir structure
 $GIT_ROOT/helpers/test/Test_get_dir_signature1.test2/input
 $GIT_ROOT/helpers/test/Test_get_dir_signature1.test2/input/result_0
 $GIT_ROOT/helpers/test/Test_get_dir_signature1.test2/input/result_0/config.txt
@@ -5,6 +6,7 @@ $GIT_ROOT/helpers/test/Test_get_dir_signature1.test2/input/result_0/run_notebook
 $GIT_ROOT/helpers/test/Test_get_dir_signature1.test2/input/result_1
 $GIT_ROOT/helpers/test/Test_get_dir_signature1.test2/input/result_1/config.txt
 $GIT_ROOT/helpers/test/Test_get_dir_signature1.test2/input/result_1/run_notebook.1.log
+# File signatures
 len(file_names)=4
 file_names=$GIT_ROOT/helpers/test/Test_get_dir_signature1.test2/input/result_0/config.txt, $GIT_ROOT/helpers/test/Test_get_dir_signature1.test2/input/result_0/run_notebook.0.log, $GIT_ROOT/helpers/test/Test_get_dir_signature1.test2/input/result_1/config.txt, $GIT_ROOT/helpers/test/Test_get_dir_signature1.test2/input/result_1/run_notebook.1.log
 # $GIT_ROOT/helpers/test/Test_get_dir_signature1.test2/input/result_0/config.txt
