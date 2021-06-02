@@ -303,37 +303,50 @@ def create_test_dir(
         hio.to_file(dst_file_name, file_content)
 
 
-def get_dir_signature(dir_name: str, num_lines: Optional[int] = None) -> str:
+def get_dir_signature(dir_name: str, include_file_content: bool, num_lines: Optional[int]) -> str:
     """
-    Compute a string with the content of files in dir_name.
+    Compute a string with the content of the files in `dir_name`.
 
+    :param include_file_content: include the content of the files, besides the
+        name of files and directories
     :param num_lines: number of lines to print for each file
     """
     # Find all the files under `dir_name`.
     _LOG.debug("dir_name=%s", dir_name)
     dbg.dassert_exists(dir_name)
-    file_names = glob.glob(os.path.join(dir_name, "*"), recursive=True)
+    #file_names = glob.glob(os.path.join(dir_name, "*"), recursive=True)
+    cmd = f'find {dir_name} -name "*"'
+    remove_files_non_present = False
+    file_names = hsinte.system_to_files(cmd, dir_name, remove_files_non_present)
     file_names = sorted(file_names)
     #
     txt: List[str] = []
-    txt.append("len(file_names)=%s" % len(file_names))
-    txt.append("file_names=%s" % ", ".join(file_names))
-    # Scan the files.
-    for file_name in file_names:
-        _LOG.debug("file_name=%s", file_name)
-        txt.append("# " + file_name)
-        # Read file.
-        txt_tmp = hio.from_file(file_name)
-        # This seems unstable on different systems.
-        # txt.append("num_chars=%s" % len(txt_tmp))
-        txt_tmp = txt_tmp.split("\n")
-        # Filter lines, if needed.
-        txt.append("num_lines=%s" % len(txt_tmp))
-        if num_lines is not None:
-            dbg.dassert_lte(1, num_lines)
-            txt_tmp = txt_tmp[:num_lines]
-        txt.append("'''\n" + "\n".join(txt_tmp) + "\n'''")
-    # Concat.
+    # Save the directory / file structure.
+    txt.append("\n".join(file_names))
+    #
+    if include_file_content:
+        # Remove the dirs.
+        file_names = hsinte.remove_dirs(file_names)
+        # Scan the files.
+        txt.append("len(file_names)=%s" % len(file_names))
+        txt.append("file_names=%s" % ", ".join(file_names))
+        for file_name in file_names:
+            _LOG.debug("file_name=%s", file_name)
+            txt.append("# " + file_name)
+            # Read file.
+            txt_tmp = hio.from_file(file_name)
+            # This seems unstable on different systems.
+            # txt.append("num_chars=%s" % len(txt_tmp))
+            txt_tmp = txt_tmp.split("\n")
+            # Filter lines, if needed.
+            txt.append("num_lines=%s" % len(txt_tmp))
+            if num_lines is not None:
+                dbg.dassert_lte(1, num_lines)
+                txt_tmp = txt_tmp[:num_lines]
+            txt.append("'''\n" + "\n".join(txt_tmp) + "\n'''")
+    else:
+        dbg.dassert_is(num_lines, None)
+    # Concat everything in a single string.
     txt = "\n".join(txt)
     return txt
 
@@ -387,8 +400,7 @@ def purify_app_references(txt: str) -> str:
 
 def purify_file_names(file_names: List[str]) -> List[str]:
     """
-    Express file names in terms of the root of git repo, removing reference to
-    amp.
+    Express file names in terms of the root of git repo, removing reference to `amp`.
     """
     git_root = git.get_client_root(super_module=True)
     file_names = [os.path.relpath(f, git_root) for f in file_names]
@@ -416,7 +428,9 @@ def purify_txt_from_client(txt: str) -> str:
     # Replace the user name with `$USER_NAME`.
     user_name = hsinte.get_user_name()
     txt = txt.replace(user_name, "$USER_NAME")
-    # Remove amp reference, if any.
+    # Remove `/app` references.
+    txt = purify_app_references(txt)
+    # Remove `amp` reference.
     txt = purify_amp_references(txt)
     return txt
 
@@ -665,13 +679,18 @@ def _assert_equal(
     full_test_name: str,
     test_dir: str,
     fuzzy_match: bool = False,
-    purify_text: bool = False,
     abort_on_error: bool = True,
     dst_dir: str = ".",
     error_msg: str = "",
 ) -> bool:
     """
-    Same interface as in `assert_equal()`.
+    Implement a better version of self.assertEqual() that reports mismatching
+    strings with sdiff and save them to files for further analysis with
+    vimdiff.
+
+    :param fuzzy_match: ignore differences in spaces and end of lines (see
+      `_to_single_line_cmd`)
+    :return: whether `actual` and `expected` are equal, if `abort_on_error` is False
     """
     _LOG.debug(
         hprint.to_str(
@@ -682,10 +701,9 @@ def _assert_equal(
     _LOG.debug("Before any transformation:")
     _LOG.debug("act=\n'%s'", actual)
     _LOG.debug("exp=\n'%s'", expected)
-    #
-    if purify_text:
-        _LOG.debug("Purifying actual")
-        actual = purify_txt_from_client(actual)
+    # Convert to strings.
+    actual = _to_pretty_string(actual)
+    expected = _to_pretty_string(expected)
     # Fuzzy match, if needed.
     actual_orig = actual
     expected_orig = expected
@@ -902,18 +920,12 @@ class TestCase(unittest.TestCase):
         actual: str,
         expected: str,
         fuzzy_match: bool = False,
-        purify_text: bool = False,
         abort_on_error: bool = True,
         dst_dir: str = ".",
     ) -> bool:
         """
-        Return if `actual` and `expected` are different and report the difference.
-
-        Implement a better version of `self.assertEqual()` that reports mismatching
-        strings with sdiff and save them to files for further analysis with
-        vimdiff.
-
-        The interface is similar to `check_string()`.
+        Assert if `actual` and `expected` are different and print info about
+        the comparison.
         """
         _LOG.debug(hprint.to_str("fuzzy_match abort_on_error dst_dir"))
         dbg.dassert_in(type(actual), (bytes, str), "actual=%s", str(actual))
@@ -935,7 +947,6 @@ class TestCase(unittest.TestCase):
             test_name,
             dir_name,
             fuzzy_match=fuzzy_match,
-            purify_text=purify_text,
             abort_on_error=abort_on_error,
             dst_dir=dst_dir,
         )
@@ -955,14 +966,11 @@ class TestCase(unittest.TestCase):
         contained in the file. If `--update_outcomes` is used, updates the
         golden reference file with the actual outcome.
 
-        :param fuzzy_match: ignore differences in spaces and end of lines (see
-          `_to_single_line_cmd`)
         :param: purify_text: remove some artifacts (e.g., user names,
             directories, reference to Git client)
         :return: outcome_updated, file_exists, is_equal
-        :raises: `RuntimeError` if there is a mismatch. If `about_on_error` is False
-            (which should be used only for unit testing) return the result but do not
-            assert
+        :raises: RuntimeError if there is an error unless `about_on_error` is
+            False, which should be used only for unit testing
         """
         _LOG.debug(hprint.to_str("fuzzy_match purify_text abort_on_error"))
         dbg.dassert_in(type(actual), (bytes, str), "actual='%s'", actual)
@@ -1009,8 +1017,6 @@ class TestCase(unittest.TestCase):
                     test_name,
                     dir_name,
                     fuzzy_match=fuzzy_match,
-                    # We have handled the purification of the output earlier.
-                    purify_text=False,
                     abort_on_error=abort_on_error,
                 )
             else:
@@ -1082,7 +1088,6 @@ class TestCase(unittest.TestCase):
                         test_name,
                         dir_name,
                         fuzzy_match=False,
-                        purify_text=False,
                         abort_on_error=abort_on_error,
                         error_msg=self._error_msg,
                     )
