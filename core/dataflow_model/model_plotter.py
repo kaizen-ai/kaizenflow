@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-import core.dataflow_model.model_evaluator as modeval
 import core.finance as fin
+import core.dataflow_model.model_evaluator as modeval
 import core.plotting as plot
 import core.statistics as stats
 import helpers.dbg as dbg
@@ -25,10 +25,7 @@ _LOG = logging.getLogger(__name__)
 
 class ModelPlotter:
     """
-    Wrap a `ModelEvaluator` with plotting functionality.
-
-    The meaning of parameters is the same as `ModelEvaluator`, unless
-    explicitly changed.
+    Wraps a ModelEvaluator with plotting functionality.
     """
 
     def __init__(
@@ -45,16 +42,16 @@ class ModelPlotter:
 
     def dump_json(self) -> str:
         """
-        Dump `ModelPlotter` instance to JSON string.
+        Dump underlying `self.model_evaluator` instance to json.
 
-        :return: JSON representation of this class
+        :return json representation of `self.model_evaluator`
         """
         return self.model_evaluator.dump_json()
 
     @classmethod
     def load_json(cls, json_str: str, keys_to_int: bool = True) -> ModelPlotter:
         """
-        Load `ModelPlotter` instance from JSON string.
+        Load `ModelPlotter` instance from json.
 
         :param json_str: the output of `ModelPlotter.load_json`
         :param keys_to_int: if `True`, convert dict keys to `int`
@@ -86,22 +83,22 @@ class ModelPlotter:
         - ACF and PACF
         - spectral density and spectrogram
 
-        :param keys: use all available if `None`
-        :param weights: average if `None`
-        :param resample_rule: resampling frequency to apply before plotting
+        :param keys: Use all available if `None`
+        :param weights: Average if `None`
+        :param mode: "all_available", "ins", or "oos"
+        :param target_volatility: Rescale portfolio to achieve
+            `target_volatility` on in-sample region
+        :param resample_rule: Resampling frequency to apply before plotting
         :param axes: a flat list of axes to plot on
         """
-        # Compute the returns.
         rets, _, _ = self.model_evaluator.aggregate_models(
             keys=keys,
             weights=weights,
             mode=mode,
             target_volatility=target_volatility,
         )
-        # Resample, if needed.
         if resample_rule is not None:
             rets = rets.resample(rule=resample_rule).sum(min_count=1)
-        # Plot.
         num_rows = 6
         if axes is None:
             fig = plt.figure(constrained_layout=True, figsize=(20, 5 * num_rows))
@@ -123,9 +120,9 @@ class ModelPlotter:
             ]
         # qq-plot against normal.
         plot.plot_qq(rets, ax=axes[0])
-        # Plot line and density plot.
+        # Plot lineplot and density plot.
         plot.plot_cols(rets, axes=axes[1:3])
-        # Plot PnL.
+        # Plot pnl.
         plot.plot_pnl({"rets pnl": rets}, ax=axes[3])
         # Plot ACF and PACF.
         plot.plot_autocorrelation(
@@ -151,24 +148,24 @@ class ModelPlotter:
         plot_drawdown_kwargs: Optional[dict] = None,
     ) -> None:
         """
-        Plot model/strategy performance.
+        Plot strategy performance.
 
         Plots include:
         - Cumulative returns
         - Rolling Sharpe Ratio
         - Drawdown
 
-        If a benchmark is provided, then also display:
-        - Cumulative returns against benchmark
-        - Rolling beta against benchmark
+        If a benchmark is provided, then
+        - Cumulative returns against benchmark is displayed
+        - Rolling beta against benchmark is displayed
 
-        :param keys: use all available if `None`
-        :param weights: average if `None`
+        :param keys: Use all available if `None`
+        :param weights: Average if `None`
         :param mode: "all_available", "ins", or "oos"
-        :param target_volatility: rescale portfolio to achieve `target_volatility`
-            on in-sample region
-        :param resample_rule: resampling frequency to apply before plotting
-        :param benchmark: benchmark returns to compare against
+        :param target_volatility: Rescale portfolio to achieve
+            `target_volatility` on in-sample region
+        :param resample_rule: Resampling frequency to apply before plotting
+        :param benchmark: Benchmark returns to compare against
         :param axes: a flat list of axes to plot on
         """
         # Obtain (log) returns.
@@ -194,7 +191,6 @@ class ModelPlotter:
         events = None
         if mode == "all_available" and self.model_evaluator.oos_start is not None:
             events = [(self.model_evaluator.oos_start, "OOS start")]
-        # Create the plots.
         if axes is None:
             # Set number of plots.
             if benchmark is not None:
