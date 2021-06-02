@@ -131,6 +131,7 @@ def is_lem() -> bool:
     return _is_repo("lem")
 
 
+# TODO(gp): submodule -> sub_module
 def is_in_amp_as_submodule() -> bool:
     """
     Return whether we are in the `amp` repo and it's a sub-module, e.g., of
@@ -139,6 +140,7 @@ def is_in_amp_as_submodule() -> bool:
     return is_amp() and is_inside_submodule(".")
 
 
+# TODO(gp): supermodule -> super_module
 def is_in_amp_as_supermodule() -> bool:
     """
     Return whether we are in the `amp` repo and it's a super-module, i.e., `amp`

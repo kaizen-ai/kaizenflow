@@ -593,6 +593,7 @@ def system_to_files(
     """
     if dir_name is None:
         dir_name = "."
+    dbg.dassert_dir_exists(dir_name)
     cmd = f"cd {dir_name} && {cmd}"
     _, output = system_to_string(cmd)
     # Remove empty lines.

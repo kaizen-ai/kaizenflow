@@ -38,7 +38,7 @@ from helpers.lib_tasks import (
     git_merge_master,
     git_pull,
     git_pull_master,
-    jump_to_pytest_error,
+    traceback,
     lint,
     print_setup,
     print_tasks,

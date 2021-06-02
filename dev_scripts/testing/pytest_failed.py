@@ -16,6 +16,7 @@ import argparse
 import json
 import logging
 import os
+from typing import List
 
 import helpers.dbg as dbg
 import helpers.git as git

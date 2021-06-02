@@ -37,8 +37,11 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     in_default = _NEWEST_LOG_FILE
-    prsr.add_input_output_args(parser, in_default=in_default, out_default="cfile")
-    prsr.add_verbosity_arg(parser)
+    parser = prsr.add_input_output_args(parser, in_default=in_default, out_default="cfile")
+    parser = prsr.add_bool(parser, "purify_from_client",
+                           default=True,
+                           help="Make references to files in the current client")
+    parser = prsr.add_verbosity_arg(parser)
     return parser
 
 
@@ -58,7 +61,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # ./experiments/RH1E/result_0/run_notebook.0.log
         dir_name = None
         remove_files_non_present = False
-        files = hsinte.system_to_files(dir_name, cmd, remove_files_non_present)
+        files = hsinte.system_to_files(cmd, dir_name, remove_files_non_present)
         # Pick the newest file.
         in_file_name = files[0]
     _LOG.info("in_file_name=%s", in_file_name)

@@ -1972,24 +1972,28 @@ def run_fast_slow_tests(  # type: ignore
 
 
 @task
-def jump_to_pytest_error(ctx, log_name=""):  # type: ignore
+def traceback(ctx, log_name="", purify=True):  # type: ignore
     """
     Parse the traceback from pytest and navigate it with vim.
 
     > pyt helpers/test/test_traceback.py
-    > invoke jump_to_pytest_error
-    # There is a also an alias `ie` for the previous command line.
+    > invoke traceback
+    # There is a also an alias `it` for the previous command line.
 
     > devops/debug/compare.sh 2>&1 | tee log.txt
     > ie -l log.txt
 
     :param log_name: the file with the traceback
     """
-    if not log_name:
-        log_name = "tmp.pytest.log"
     _LOG.info("Reading %s", log_name)
     # Convert the traceback into a cfile.
-    cmd = f"traceback_to_cfile.py -i {log_name} -o cfile"
+    cmd = []
+    cmd.append("traceback_to_cfile.py")
+    if log_name:
+        cmd.append(f"-i {log_name}")
+    cmd.append("-o cfile")
+    if
+    cmd = " ".join(cmd)
     _run(ctx, cmd)
     # Read and navigate the cfile with vim.
     cmd = 'vim -c "cfile cfile"'
@@ -2009,6 +2013,9 @@ def pytest_clean(ctx):  # type: ignore
 
 
 # TODO(gp): Consolidate the code from dev_scripts/testing here.
+
+
+# TODO(gp): ./dev_scripts/testing/pytest_failed.py
 
 # #############################################################################
 # Linter.
