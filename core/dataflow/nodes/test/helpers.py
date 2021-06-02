@@ -30,10 +30,14 @@ def test_get_set_state(
     state = node1.get_fit_state()
     # Predict using fitted node.
     df_out1 = node1.predict(predict_df)["df_out"]
-    expected = hut.convert_df_to_string(df_out1.round(decimals), index=True, decimals=decimals)
+    expected = hut.convert_df_to_string(
+        df_out1.round(decimals), index=True, decimals=decimals
+    )
     # Create a new node, set state, and predict.
     node2 = node("sklearn", **config.to_dict())
     node2.set_fit_state(state)
     df_out2 = node2.predict(predict_df)["df_out"]
-    actual = hut.convert_df_to_string(df_out2.round(decimals), index=True, decimals=decimals)
+    actual = hut.convert_df_to_string(
+        df_out2.round(decimals), index=True, decimals=decimals
+    )
     return expected, actual
