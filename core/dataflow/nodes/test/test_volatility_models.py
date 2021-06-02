@@ -136,7 +136,9 @@ class TestSmaModel(hut.TestCase):
         Convert inputs to a string and check it against golden reference.
         """
         decimals = 3
-        actual = hut.convert_df_to_string(df.round(decimals), index=True, decimals=decimals)
+        actual = hut.convert_df_to_string(
+            df.round(decimals), index=True, decimals=decimals
+        )
         self.check_string(actual)
 
 
