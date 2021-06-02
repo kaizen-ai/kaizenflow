@@ -1,11 +1,12 @@
 import logging
+from typing import Tuple
 
 import pandas as pd
 import sklearn.decomposition as sdecom
 
 import core.artificial_signal_generators as casgen
-import core.config_builders as ccbuild
 import core.config as cfg
+import core.config_builders as ccbuild
 import helpers.unit_test as hut
 from core.dataflow.core import Node
 from core.dataflow.nodes.unsupervised_sklearn_models import (
@@ -13,8 +14,6 @@ from core.dataflow.nodes.unsupervised_sklearn_models import (
     Residualizer,
     UnsupervisedSkLearnModel,
 )
-
-from typing import Tuple
 
 _LOG = logging.getLogger(__name__)
 
@@ -74,10 +73,7 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         fit_df = data.loc["2000-01-03":"2000-01-31"]
         predict_df = data.loc["2000-02-01":"2000-02-25"]
         expected, actual = _test_get_set_state(
-            fit_df,
-            predict_df,
-            config,
-            UnsupervisedSkLearnModel
+            fit_df, predict_df, config, UnsupervisedSkLearnModel
         )
         self.assert_equal(actual, expected)
 
@@ -148,10 +144,7 @@ class TestMultiindexUnsupervisedSkLearnModel(hut.TestCase):
         fit_df = data.loc["2000-01-03":"2000-01-31"]
         predict_df = data.loc["2000-02-01":"2000-02-25"]
         expected, actual = _test_get_set_state(
-            fit_df,
-            predict_df,
-            config,
-            MultiindexUnsupervisedSkLearnModel
+            fit_df, predict_df, config, MultiindexUnsupervisedSkLearnModel
         )
         self.assert_equal(actual, expected)
 
@@ -232,13 +225,9 @@ class TestResidualizer(hut.TestCase):
         fit_df = data.loc["2000-01-03":"2000-01-31"]
         predict_df = data.loc["2000-02-01":"2000-02-25"]
         expected, actual = _test_get_set_state(
-            fit_df,
-            predict_df,
-            config,
-            Residualizer
+            fit_df, predict_df, config, Residualizer
         )
         self.assert_equal(actual, expected)
-
 
     def _get_data(self) -> pd.DataFrame:
         """
@@ -258,10 +247,7 @@ class TestResidualizer(hut.TestCase):
 
 
 def _test_get_set_state(
-    fit_df: pd.DataFrame,
-    predict_df: pd.DataFrame,
-    config: cfg.Config,
-    node: Node
+    fit_df: pd.DataFrame, predict_df: pd.DataFrame, config: cfg.Config, node: Node
 ) -> Tuple[str, str]:
     """
     Helper for testing `get_fit_state()` and `set_fit_state()` methods.
