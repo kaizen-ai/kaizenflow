@@ -1,4 +1,3 @@
-import abc
 import collections
 import datetime
 import logging
@@ -73,7 +72,9 @@ class _UnsupervisedSkLearnModelMixin:
         return df_out, info
 
 
-class UnsupervisedSkLearnModel(FitPredictNode, ColModeMixin, _UnsupervisedSkLearnModelMixin):
+class UnsupervisedSkLearnModel(
+    FitPredictNode, ColModeMixin, _UnsupervisedSkLearnModelMixin
+):
     """
     Fit and transform an unsupervised sklearn model.
     """
@@ -119,7 +120,9 @@ class UnsupervisedSkLearnModel(FitPredictNode, ColModeMixin, _UnsupervisedSkLear
         self._model = fit_state["_model"]
         self._info["fit"] = fit_state["_info['fit']"]
 
-    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool) -> Tuple[Dict[str, pd.DataFrame], collections.OrderedDict]:
+    def _fit_predict_helper(
+        self, df_in: pd.DataFrame, fit: bool
+    ) -> Tuple[Dict[str, pd.DataFrame], collections.OrderedDict]:
         df = self._preprocess_df(df_in)
         df_out, info = self._fit_predict_unsupervised_sklearn_model(df, fit=fit)
         df_out = self._apply_col_mode(
@@ -141,7 +144,8 @@ class UnsupervisedSkLearnModel(FitPredictNode, ColModeMixin, _UnsupervisedSkLear
 
 
 class MultiindexUnsupervisedSkLearnModel(
-    FitPredictNode, _UnsupervisedSkLearnModelMixin,
+    FitPredictNode,
+    _UnsupervisedSkLearnModelMixin,
 ):
     """
     Fit and transform an unsupervised sklearn model.
@@ -192,7 +196,17 @@ class MultiindexUnsupervisedSkLearnModel(
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=False)
 
-    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool) -> Tuple[Dict[str, pd.DataFrame], collections.OrderedDict]:
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]):
+        self._model = fit_state["_model"]
+        self._info["fit"] = fit_state["_info['fit']"]
+
+    def _fit_predict_helper(
+        self, df_in: pd.DataFrame, fit: bool
+    ) -> Tuple[Dict[str, pd.DataFrame], collections.OrderedDict]:
         df = CrossSectionalDfToDfColProcessor.preprocess(
             df_in, self._in_col_group
         )
