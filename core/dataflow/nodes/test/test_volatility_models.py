@@ -27,6 +27,10 @@ from core.dataflow.nodes.volatility_models import (
     VolatilityNormalizer,
 )
 
+
+import core.dataflow.nodes.test.helpers as cdnth
+
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -101,6 +105,22 @@ class TestSmaModel(hut.TestCase):
         df_out = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]
         # Package results.
         self._check_results(df_out)
+
+    def test5(self) -> None:
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "col": ["vol_sq"],
+                "steps_ahead": 2,
+                "nan_mode": "drop",
+            }
+        )
+        fit_df = data.loc["2000-01-01":"2000-02-10"]
+        predict_df = data.loc["2000-01-20":"2000-02-23"]
+        expected, actual = cdnth.test_get_set_state(
+            fit_df, predict_df, config, SmaModel
+        )
+        self.assert_equal(actual, expected)
 
     @staticmethod
     def _get_data() -> pd.DataFrame:
