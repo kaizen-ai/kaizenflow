@@ -814,9 +814,8 @@ def docker_kill(  # type: ignore
 # Docker development.
 # #############################################################################
 
-# TODO(gp):
-# We might want to organize the code in a base class using a Command pattern,
-# so that it's easier to generalize the code for multiple repos.
+# TODO(gp): We might want to organize the code in a base class using a Command
+# pattern, so that it's easier to generalize the code for multiple repos.
 #
 # class DockerCommand:
 #   def pull():
@@ -2007,7 +2006,7 @@ def traceback(ctx, log_name="", purify=True):  # type: ignore
         cmd = 'vim -c "cfile cfile"'
         _run(ctx, cmd, pty=True)
     else:
-        _LOG.warning("Can't find %s", dst_file)
+        _LOG.warning("Can't find %s", dst_cfile)
 
 
 @task

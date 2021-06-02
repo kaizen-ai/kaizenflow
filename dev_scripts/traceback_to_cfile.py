@@ -17,6 +17,7 @@ navigate the stack trace.
 import argparse
 import logging
 import sys
+from typing import cast
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
@@ -47,6 +48,7 @@ def _parse() -> argparse.ArgumentParser:
         help_="Make references to files in the current client",
     )
     parser = prsr.add_verbosity_arg(parser)
+    cast(parser, argparse.ArgumentParser)
     return parser
 
 

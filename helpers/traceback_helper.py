@@ -75,8 +75,9 @@ def parse_traceback(
             #   File "/app/amp/test/test_lib_tasks.py", line 27, in test_get_gh
             #     act = ltasks._get_gh_issue_title(issue_id, repo)
             regex = r"^\s+File \"(\S+)\", line (\d+), in (\S+)$"
-            m: Match[Any] = re.match(regex, line)
+            m = re.match(regex, line)
             dbg.dassert(m, "Can't parse '%s'", line)
+            m: Match[Any]
             file_name = m.group(1)
             line_num = int(m.group(2))
             func_name = m.group(3)

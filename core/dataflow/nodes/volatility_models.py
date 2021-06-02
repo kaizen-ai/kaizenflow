@@ -182,7 +182,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
         fit_state = {"_tau": self._tau, "_info['fit']": self._info["fit"]}
         return fit_state
 
-    def set_fit_state(self, fit_state: Dict[str, Any]):
+    def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
         self._tau = fit_state["_tau"]
         self._info["fit"] = fit_state["_info['fit']"]
 

@@ -5,7 +5,8 @@ import helpers.versioning as hversi
 # Expose the pytest targets.
 # Extract with:
 # > i print_tasks --as-code
-from helpers.lib_tasks import (
+from helpers.lib_tasks import set_default_params  # This is not an invoke target.
+from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     docker_bash,
     docker_build_local_image,
     docker_build_prod_image,
@@ -47,7 +48,6 @@ from helpers.lib_tasks import (
     run_fast_tests,
     run_slow_tests,
     run_superslow_tests,
-    set_default_params,  # This is not an invoke target.
     traceback,
 )
 

@@ -10,7 +10,7 @@ import os
 import tempfile
 import unittest.mock as umock
 import uuid
-from typing import Optional, Tuple
+from typing import cast, Optional, Tuple
 
 import pandas as pd
 import pytest
@@ -801,7 +801,7 @@ class TestDataframeToJson(hut.TestCase):
 
 
 class Test_get_dir_signature1(hut.TestCase):
-    def test1(self):
+    def test1(self) -> None:
         """
         Test dir signature excluding the file content.
         """
@@ -823,7 +823,7 @@ class Test_get_dir_signature1(hut.TestCase):
         # pylint: enable=line-too-long
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test2(self):
+    def test2(self) -> None:
         """
         Test dir signature including the file content.
         """
@@ -836,4 +836,5 @@ class Test_get_dir_signature1(hut.TestCase):
         in_dir = self.get_input_dir()
         act = hut.get_dir_signature(in_dir, include_file_content, num_lines=None)
         act = hut.purify_txt_from_client(act)
+        cast(act, str)
         return act
