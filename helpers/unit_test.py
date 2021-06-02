@@ -665,18 +665,13 @@ def _assert_equal(
     full_test_name: str,
     test_dir: str,
     fuzzy_match: bool = False,
+    purify_text: bool = False,
     abort_on_error: bool = True,
     dst_dir: str = ".",
     error_msg: str = "",
 ) -> bool:
     """
-    Implement a better version of self.assertEqual() that reports mismatching
-    strings with sdiff and save them to files for further analysis with
-    vimdiff.
-
-    :param fuzzy_match: ignore differences in spaces and end of lines (see
-      `_to_single_line_cmd`)
-    :return: whether `actual` and `expected` are equal, if `abort_on_error` is False
+    Same interface as in `assert_equal()`.
     """
     _LOG.debug(
         hprint.to_str(
@@ -687,9 +682,10 @@ def _assert_equal(
     _LOG.debug("Before any transformation:")
     _LOG.debug("act=\n'%s'", actual)
     _LOG.debug("exp=\n'%s'", expected)
-    # Convert to strings.
-    actual = _to_pretty_string(actual)
-    expected = _to_pretty_string(expected)
+    #
+    if purify_text:
+        _LOG.debug("Purifying actual")
+        actual = purify_txt_from_client(actual)
     # Fuzzy match, if needed.
     actual_orig = actual
     expected_orig = expected
@@ -906,12 +902,18 @@ class TestCase(unittest.TestCase):
         actual: str,
         expected: str,
         fuzzy_match: bool = False,
+        purify_text: bool = False,
         abort_on_error: bool = True,
         dst_dir: str = ".",
     ) -> bool:
         """
-        Assert if `actual` and `expected` are different and print info about
-        the comparison.
+        Return if `actual` and `expected` are different and report the difference.
+
+        Implement a better version of `self.assertEqual()` that reports mismatching
+        strings with sdiff and save them to files for further analysis with
+        vimdiff.
+
+        The interface is similar to `check_string()`.
         """
         _LOG.debug(hprint.to_str("fuzzy_match abort_on_error dst_dir"))
         dbg.dassert_in(type(actual), (bytes, str), "actual=%s", str(actual))
@@ -933,6 +935,7 @@ class TestCase(unittest.TestCase):
             test_name,
             dir_name,
             fuzzy_match=fuzzy_match,
+            purify_text=purify_text,
             abort_on_error=abort_on_error,
             dst_dir=dst_dir,
         )
@@ -952,11 +955,14 @@ class TestCase(unittest.TestCase):
         contained in the file. If `--update_outcomes` is used, updates the
         golden reference file with the actual outcome.
 
+        :param fuzzy_match: ignore differences in spaces and end of lines (see
+          `_to_single_line_cmd`)
         :param: purify_text: remove some artifacts (e.g., user names,
             directories, reference to Git client)
         :return: outcome_updated, file_exists, is_equal
-        :raises: RuntimeError if there is an error unless `about_on_error` is
-            False, which should be used only for unit testing
+        :raises: `RuntimeError` if there is a mismatch. If `about_on_error` is False
+            (which should be used only for unit testing) return the result but do not
+            assert
         """
         _LOG.debug(hprint.to_str("fuzzy_match purify_text abort_on_error"))
         dbg.dassert_in(type(actual), (bytes, str), "actual='%s'", actual)
@@ -1003,6 +1009,8 @@ class TestCase(unittest.TestCase):
                     test_name,
                     dir_name,
                     fuzzy_match=fuzzy_match,
+                    # We have handled the purification of the output earlier.
+                    purify_text=False,
                     abort_on_error=abort_on_error,
                 )
             else:
@@ -1074,6 +1082,7 @@ class TestCase(unittest.TestCase):
                         test_name,
                         dir_name,
                         fuzzy_match=False,
+                        purify_text=False,
                         abort_on_error=abort_on_error,
                         error_msg=self._error_msg,
                     )

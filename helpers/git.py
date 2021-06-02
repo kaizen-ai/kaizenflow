@@ -119,21 +119,21 @@ def _is_repo(repo_short_name: str) -> bool:
 
 def is_amp() -> bool:
     """
-    Return whether we are inside `amp` and `amp` is a submodule.
+    Return whether we are inside `amp` and `amp` is a sub-module.
     """
     return _is_repo("amp")
 
 
 def is_lem() -> bool:
     """
-    Return whether we are inside `lem` and `lem` is a submodule.
+    Return whether we are inside `lem` and `lem` is a sub-module.
     """
     return _is_repo("lem")
 
 
 def is_in_amp_as_submodule() -> bool:
     """
-    Return whether we are in the `amp` repo and it's a submodule, e.g., of
+    Return whether we are in the `amp` repo and it's a sub-module, e.g., of
     `lem`.
     """
     return is_amp() and is_inside_submodule(".")
@@ -141,7 +141,7 @@ def is_in_amp_as_submodule() -> bool:
 
 def is_in_amp_as_supermodule() -> bool:
     """
-    Return whether we are in the `amp` repo and it's a supermodule, i.e., `amp`
+    Return whether we are in the `amp` repo and it's a super-module, i.e., `amp`
     by itself.
     """
     return is_amp() and not is_inside_submodule(".")
@@ -492,13 +492,11 @@ def get_path_from_git_root(file_name: str, super_module: bool) -> str:
     # Get Git root.
     git_root = get_client_root(super_module) + "/"
     # TODO(gp): Use os.path.relpath()
-    abs_path = os.path.abspath(file_name)
-    dbg.dassert(abs_path.startswith(git_root))
-    end_idx = len(git_root)
-    ret = abs_path[end_idx:]
-    # cmd = "git ls-tree --full-name --name-only HEAD %s" % file_name
-    # _, git_file_name = hsinte.system_to_string(cmd)
-    # dbg.dassert_ne(git_file_name, "")
+    # abs_path = os.path.abspath(file_name)
+    # dbg.dassert(abs_path.startswith(git_root))
+    # end_idx = len(git_root)
+    # ret = abs_path[end_idx:]
+    ret = os.path.relpath(file_name, git_root)
     return ret
 
 
@@ -552,19 +550,24 @@ def purify_docker_file_from_git_client(file_name: str, super_module: bool) -> st
       for the file 'dataflow_model/utils.py' in the current client and then normalize
       with respect to the
     """
+    _LOG.debug("file_name=%s", file_name)
     # Clean up file name.
     file_name = os.path.normpath(file_name)
+    _LOG.debug("file_name=%s", file_name)
     #
     file_name_tmp = hsinte.find_file_with_dir(file_name, ".")
+    _LOG.debug("file_name_tmp=%s", file_name_tmp)
     if file_name_tmp is None:
         # We didn't find the file in the current client: leave the file as it was.
-        _LOG.warning("Can't find the file_name corresponding to %s", file_name)
+        _LOG.warning("Can't find the file_name corresponding to '%s'", file_name)
     else:
         # We have found the file.
         file_name = file_name_tmp
+    _LOG.debug("file_name=%s", file_name)
     #
     file_name = get_path_from_git_root(file_name, super_module)
     file_name = os.path.normpath(file_name)
+    _LOG.debug("-> file_name='%s'", file_name)
     return file_name
 
 
