@@ -11,6 +11,7 @@ import core.artificial_signal_generators as sig_gen
 import core.artificial_signal_generators as casgen
 import core.config as ccfg
 import core.config_builders as ccbuild
+import core.dataflow.nodes.test.helpers as cdnth
 import core.finance as fin
 import core.signal_processing as sigp
 import core.signal_processing as csproc
@@ -26,10 +27,6 @@ from core.dataflow.nodes.volatility_models import (
     VolatilityModulator,
     VolatilityNormalizer,
 )
-
-
-import core.dataflow.nodes.test.helpers as cdnth
-
 
 _LOG = logging.getLogger(__name__)
 

@@ -1,13 +1,17 @@
+from typing import Tuple
+
 import pandas as pd
 
 import core.config as cfg
 import core.dataflow.core as cdc
 import helpers.unit_test as hut
 
-from typing import Tuple
 
 def test_get_set_state(
-    fit_df: pd.DataFrame, predict_df: pd.DataFrame, config: cfg.Config, node: cdc.Node
+    fit_df: pd.DataFrame,
+    predict_df: pd.DataFrame,
+    config: cfg.Config,
+    node: cdc.Node,
 ) -> Tuple[str, str]:
     """
     Helper for testing `get_fit_state()` and `set_fit_state()` methods.

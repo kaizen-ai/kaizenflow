@@ -242,4 +242,3 @@ class TestResidualizer(hut.TestCase):
         )
         data = pd.concat([realization, volume], axis=1, keys=["ret_0", "volume"])
         return data
-
