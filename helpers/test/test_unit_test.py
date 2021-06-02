@@ -10,7 +10,7 @@ import os
 import tempfile
 import unittest.mock as umock
 import uuid
-from typing import cast, Optional, Tuple
+from typing import Optional, Tuple
 
 import pandas as pd
 import pytest
@@ -836,5 +836,4 @@ class Test_get_dir_signature1(hut.TestCase):
         in_dir = self.get_input_dir()
         act = hut.get_dir_signature(in_dir, include_file_content, num_lines=None)
         act = hut.purify_txt_from_client(act)
-        cast(act, str)
-        return act
+        return act  # type: ignore[no-any-return]
