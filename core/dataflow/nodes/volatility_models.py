@@ -103,42 +103,25 @@ class SmaModel(FitPredictNode, ColModeMixin):
         # Intersect non-NaN indices.
         non_nan_idx = non_nan_idx_x.intersection(non_nan_idx_fwd_y)
         dbg.dassert(not non_nan_idx.empty)
-        fwd_y_df = fwd_y_df.loc[non_nan_idx]
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, non_nan_idx)
-        # Prepare `x_vars` in sklearn format.
-        x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], self._col)
-        # Prepare forward y_vars in sklearn format.
-        fwd_y_fit = cdataa.transform_to_sklearn(
-            fwd_y_df, fwd_y_df.columns.tolist()
-        )
         # Define and fit model.
         if self._must_learn_tau:
+            fwd_y_df = fwd_y_df.loc[non_nan_idx]
+            # Prepare forward y_vars in sklearn format.
+            fwd_y_fit = cdataa.transform_to_sklearn(
+                fwd_y_df, fwd_y_df.columns.tolist()
+            )
+            # Prepare `x_vars` in sklearn format.
+            x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], self._col)
             self._tau = self._learn_tau(x_fit, fwd_y_fit)
-        min_periods = self._get_min_periods(self._tau)
         _LOG.debug("tau=%s", self._tau)
-        # Update `info`.
-        info = collections.OrderedDict()
-        info["tau"] = self._tau
-        info["min_periods"] = min_periods
-        # Generate insample predictions and put in dataflow dataframe format.
-        fwd_y_hat = self._predict(x_fit)
-        fwd_y_hat_vars = [f"{y}_hat" for y in fwd_y_df.columns]
-        fwd_y_hat = cdataa.transform_from_sklearn(
-            non_nan_idx, fwd_y_hat_vars, fwd_y_hat
+        return self._predict_and_package_results(
+            df_in,
+            idx,
+            non_nan_idx,
+            fit=True
         )
-        # Return targets and predictions.
-        df_out = fwd_y_df.reindex(idx).merge(
-            fwd_y_hat.reindex(idx), left_index=True, right_index=True
-        )
-        dbg.dassert_no_duplicates(df_out.columns)
-        df_out = self._apply_col_mode(
-            df, df_out, cols=self._col, col_mode=self._col_mode
-        )
-        # Update `info`.
-        info["df_out_info"] = get_df_info_as_string(df_out)
-        self._set_info("fit", info)
-        return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         validate_df_indices(df_in)
@@ -148,17 +131,29 @@ class SmaModel(FitPredictNode, ColModeMixin):
         non_nan_idx = df.loc[idx][self._col].dropna().index
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, non_nan_idx)
-        # Transform `x_vars` to sklearn format.
-        x_predict = cdataa.transform_to_sklearn(df.loc[non_nan_idx], self._col)
         # Use trained model to generate predictions.
         dbg.dassert_is_not(
             self._tau,
             None,
             "Parameter tau not found! Check if `fit` has been run.",
         )
-        fwd_y_hat = self._predict(x_predict)
+        return self._predict_and_package_results(
+            df_in,
+            idx,
+            non_nan_idx,
+            fit=False
+        )
+
+    def _predict_and_package_results(self,
+            df_in: pd.DataFrame,
+            idx,
+            non_nan_idx,
+            fit: bool = True,
+        ) -> Dict[str, pd.DataFrame]:
+        data = cdataa.transform_to_sklearn(df_in.loc[non_nan_idx], self._col)
+        fwd_y_hat = self._predict(data)
+        fwd_y_df = self._get_fwd_y_df(df_in).loc[non_nan_idx]
         # Put predictions in dataflow dataframe format.
-        fwd_y_df = self._get_fwd_y_df(df).loc[non_nan_idx]
         fwd_y_hat_vars = [f"{y}_hat" for y in fwd_y_df.columns]
         fwd_y_hat = cdataa.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
@@ -170,12 +165,17 @@ class SmaModel(FitPredictNode, ColModeMixin):
         dbg.dassert_no_duplicates(df_out.columns)
         # Select columns for output.
         df_out = self._apply_col_mode(
-            df, df_out, cols=self._col, col_mode=self._col_mode
+            df_in, df_out, cols=self._col, col_mode=self._col_mode
         )
         # Update `info`.
         info = collections.OrderedDict()
+        info["tau"] = self._tau
+        info["min_periods"] = self._get_min_periods(self._tau)
         info["df_out_info"] = get_df_info_as_string(df_out)
-        self._set_info("predict", info)
+        if fit:
+            self._set_info("fit", info)
+        else:
+            self._set_info("predict", info)
         return {"df_out": df_out}
 
     def get_fit_state(self) -> Dict[str, Any]:
