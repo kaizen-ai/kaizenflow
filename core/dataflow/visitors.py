@@ -5,6 +5,7 @@ from typing import List
 
 import helpers.dbg as dbg
 from core.dataflow.core import DAG
+from core.dataflow.nodes.base import FitPredictNode
 
 _LOG = logging.getLogger(__name__)
 
@@ -33,13 +34,15 @@ def get_fit_state(dag: DAG) -> collections.OrderedDict:
     """
     Obtain node state learned during fit.
 
-    :param dag: dataflow DAG
+    :param dag: dataflow DAG consisting of `FitPredictNode`s
     :return: result of node `get_fit_state()` keyed by nid
     """
     dbg.dassert_isinstance(dag, DAG)
     fit_state = collections.OrderedDict()
     for nid in dag.dag.nodes():
-        node_fit_state = dag.get_node(nid).get_fit_state()
+        node = dag.get_node(nid)
+        dbg.dassert_isinstance(node, FitPredictNode)
+        node_fit_state = node.get_fit_state()
         fit_state[nid] = copy.copy(node_fit_state)
     return fit_state
 
@@ -48,7 +51,7 @@ def set_fit_state(dag: DAG, fit_state: collections.OrderedDict) -> None:
     """
     Initialize a DAG with pre-fit node state.
 
-    :param dag: dataflow DAG
+    :param dag: dataflow DAG consisting of `FitPredictNode`s
     :param fit_state: result of node `get_fit_state()` keyed by nid
     """
     dbg.dassert_isinstance(dag, DAG)
@@ -57,4 +60,6 @@ def set_fit_state(dag: DAG, fit_state: collections.OrderedDict) -> None:
     for nid in dag.dag.nodes():
         dbg.dassert_in(nid, fit_state.keys())
         node_fit_state = copy.copy(fit_state[nid])
-        dag.get_node(nid).set_fit_state(node_fit_state)
+        node = dag.get_node(nid)
+        dbg.dassert_isinstance(node, FitPredictNode)
+        node.set_fit_state(node_fit_state)
