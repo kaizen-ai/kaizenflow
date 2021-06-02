@@ -11,6 +11,7 @@ import core.artificial_signal_generators as sig_gen
 import core.artificial_signal_generators as casgen
 import core.config as ccfg
 import core.config_builders as ccbuild
+import core.dataflow.nodes.test.helpers as cdnth
 import core.finance as fin
 import core.signal_processing as sigp
 import core.signal_processing as csproc
@@ -46,9 +47,8 @@ class TestSmaModel(hut.TestCase):
         node = SmaModel("sma", **config.to_dict())
         # Run `fit()` and get output dataframe.
         df_out = node.fit(data)["df_out"]
-        info = node.get_info("fit")
         # Package results.
-        self._check_results(config, info, df_out)
+        self._check_results(df_out)
 
     def test2(self) -> None:
         """
@@ -65,8 +65,7 @@ class TestSmaModel(hut.TestCase):
         )
         node = SmaModel("sma", **config.to_dict())
         df_out = node.fit(data)["df_out"]
-        info = node.get_info("fit")
-        self._check_results(config, info, df_out)
+        self._check_results(df_out)
 
     def test3(self) -> None:
         """
@@ -83,8 +82,7 @@ class TestSmaModel(hut.TestCase):
         )
         node = SmaModel("sma", **config.to_dict())
         df_out = node.fit(data)["df_out"]
-        info = node.get_info("fit")
-        self._check_results(config, info, df_out)
+        self._check_results(df_out)
 
     def test4(self) -> None:
         """
@@ -102,12 +100,27 @@ class TestSmaModel(hut.TestCase):
         # Run `fit()`, then `predict()`.
         node.fit(data.loc["2000-01-01":"2000-02-10"])
         df_out = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]
-        # Extract info for both `fit()` and `predict()` stages.
-        info = collections.OrderedDict()
-        info["fit"] = node.get_info("fit")
-        info["predict"] = node.get_info("predict")
         # Package results.
-        self._check_results(config, info, df_out)
+        self._check_results(df_out)
+
+    def test5(self) -> None:
+        """
+        Test `get_fit_state()` and `set_fit_state()`.
+        """
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "col": ["vol_sq"],
+                "steps_ahead": 2,
+                "nan_mode": "drop",
+            }
+        )
+        fit_df = data.loc["2000-01-01":"2000-02-10"]
+        predict_df = data.loc["2000-01-01":"2000-02-23"]
+        expected, actual = cdnth.test_get_set_state(
+            fit_df, predict_df, config, SmaModel
+        )
+        self.assert_equal(actual, expected)
 
     @staticmethod
     def _get_data() -> pd.DataFrame:
@@ -137,21 +150,16 @@ class TestSmaModel(hut.TestCase):
 
     def _check_results(
         self,
-        config: ccfg.Config,
-        info: collections.OrderedDict,
-        df_out: pd.DataFrame,
+        df: pd.DataFrame,
     ) -> None:
         """
         Convert inputs to a string and check it against golden reference.
         """
-        act: List[str] = []
-        act.append(hprint.frame("config"))
-        act.append(str(config))
-        act.append(str(ccbuild.get_config_from_nested_dict(info)))
-        act.append(hprint.frame("df_out"))
-        act.append(hut.convert_df_to_string(df_out, index=True, decimals=2))
-        act = "\n".join(act)
-        self.check_string(act)
+        decimals = 3
+        actual = hut.convert_df_to_string(
+            df.round(decimals), index=True, decimals=decimals
+        )
+        self.check_string(actual)
 
 
 class TestSingleColumnVolatilityModel(hut.TestCase):
@@ -198,6 +206,25 @@ class TestSingleColumnVolatilityModel(hut.TestCase):
         # Package results.
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
+
+    def test3(self) -> None:
+        """
+        Test `get_fit_state()` and `set_fit_state()`.
+        """
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "col": "ret_0",
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
+        fit_df = data.loc["2000-01-01":"2000-02-10"]
+        predict_df = data.loc["2000-01-01":"2000-02-23"]
+        expected, actual = cdnth.test_get_set_state(
+            fit_df, predict_df, config, SingleColumnVolatilityModel
+        )
+        self.assert_equal(actual, expected)
 
     @staticmethod
     def _get_data() -> pd.DataFrame:
@@ -617,6 +644,25 @@ class TestMultiindexVolatilityModel(hut.TestCase):
         info = node.get_info("predict")
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
+
+    def test3(self) -> None:
+        """
+        Test `get_fit_state()` and `set_fit_state()`.
+        """
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "in_col_group": ("ret_0",),
+                "steps_ahead": 2,
+                "nan_mode": "drop",
+            }
+        )
+        fit_df = data.loc["2000-01-01":"2000-02-10"]
+        predict_df = data.loc["2000-01-01":"2000-02-23"]
+        expected, actual = cdnth.test_get_set_state(
+            fit_df, predict_df, config, MultiindexVolatilityModel
+        )
+        self.assert_equal(actual, expected)
 
     @staticmethod
     def _package_results1(
