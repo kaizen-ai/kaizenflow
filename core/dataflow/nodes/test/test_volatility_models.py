@@ -104,6 +104,9 @@ class TestSmaModel(hut.TestCase):
         self._check_results(df_out)
 
     def test5(self) -> None:
+        """
+        Test `get_fit_state()` and `set_fit_state()`.
+        """
         data = self._get_data()
         config = ccbuild.get_config_from_nested_dict(
             {
@@ -113,7 +116,7 @@ class TestSmaModel(hut.TestCase):
             }
         )
         fit_df = data.loc["2000-01-01":"2000-02-10"]
-        predict_df = data.loc["2000-01-20":"2000-02-23"]
+        predict_df = data.loc["2000-01-01":"2000-02-23"]
         expected, actual = cdnth.test_get_set_state(
             fit_df, predict_df, config, SmaModel
         )
@@ -203,6 +206,25 @@ class TestSingleColumnVolatilityModel(hut.TestCase):
         # Package results.
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
+
+    def test3(self) -> None:
+        """
+        Test `get_fit_state()` and `set_fit_state()`.
+        """
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "col": "ret_0",
+                "steps_ahead": 2,
+                "nan_mode": "leave_unchanged",
+            }
+        )
+        fit_df = data.loc["2000-01-01":"2000-02-10"]
+        predict_df = data.loc["2000-01-01":"2000-02-23"]
+        expected, actual = cdnth.test_get_set_state(
+            fit_df, predict_df, config, SingleColumnVolatilityModel
+        )
+        self.assert_equal(actual, expected)
 
     @staticmethod
     def _get_data() -> pd.DataFrame:
@@ -622,6 +644,25 @@ class TestMultiindexVolatilityModel(hut.TestCase):
         info = node.get_info("predict")
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
+
+    def test3(self) -> None:
+        """
+        Test `get_fit_state()` and `set_fit_state()`.
+        """
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "in_col_group": ("ret_0",),
+                "steps_ahead": 2,
+                "nan_mode": "drop",
+            }
+        )
+        fit_df = data.loc["2000-01-01":"2000-02-10"]
+        predict_df = data.loc["2000-01-01":"2000-02-23"]
+        expected, actual = cdnth.test_get_set_state(
+            fit_df, predict_df, config, MultiindexVolatilityModel
+        )
+        self.assert_equal(actual, expected)
 
     @staticmethod
     def _package_results1(

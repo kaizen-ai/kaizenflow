@@ -58,7 +58,7 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
 
     def test3(self) -> None:
         """
-        Test `get_fit_state()` and `set_fit_state()`
+        Test `get_fit_state()` and `set_fit_state()`.
         """
         data = self._get_data()
         config = ccbuild.get_config_from_nested_dict(
@@ -128,7 +128,7 @@ class TestMultiindexUnsupervisedSkLearnModel(hut.TestCase):
 
     def test3(self) -> None:
         """
-        Test `get_fit_state()` and `set_fit_state()`
+        Test `get_fit_state()` and `set_fit_state()`.
         """
         data = self._get_data()
         config = ccbuild.get_config_from_nested_dict(
@@ -209,7 +209,7 @@ class TestResidualizer(hut.TestCase):
 
     def test3(self) -> None:
         """
-        Test `get_fit_state()` and `set_fit_state()`
+        Test `get_fit_state()` and `set_fit_state()`.
         """
         data = self._get_data()
         config = ccbuild.get_config_from_nested_dict(
