@@ -556,7 +556,7 @@ def purify_docker_file_from_git_client(file_name: str, super_module: Optional[bo
         - True/False: the file is with respect to a Git repo
         - `None`: the file is returned as relative to current dir
     """
-    _LOG.debug("file_name=%s", file_name)
+    _LOG.debug("# Processing file_name='%s'", file_name)
     # Clean up file name.
     file_name = os.path.normpath(file_name)
     _LOG.debug("file_name=%s", file_name)

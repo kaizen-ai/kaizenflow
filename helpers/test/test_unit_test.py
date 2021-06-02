@@ -13,6 +13,7 @@ import uuid
 from typing import Optional, Tuple
 
 import pandas as pd
+import pytest
 
 import helpers.git as git
 import helpers.io_ as hio
@@ -113,6 +114,10 @@ class TestTestCase1(hut.TestCase):
         act = act.replace(tmp_dir, "$TMP_DIR")
         # pylint: disable=line-too-long
         exp = """
+        # Dir structure
+        $TMP_DIR
+        $TMP_DIR/tmp_diff.sh
+        # File signatures
         len(file_names)=1
         file_names=$TMP_DIR/tmp_diff.sh
         # $TMP_DIR/tmp_diff.sh
@@ -245,13 +250,12 @@ or running:
 The expected variable should be
 --------------------------------------------------------------------------------
 exp = r"""
-
 completed failure Lint    Run_linter
 completed       success Lint    Fast_tests
 completed       success Lint    Slow_tests
 """'''
-        if True:
-            # For debugging.
+        # For debugging: don't commit with this enabled.
+        if False:
             hio.to_file("act.txt", act)
             hio.to_file("exp.txt", exp)
             self.assert_equal(act, exp, fuzzy_match=False)
@@ -259,6 +263,25 @@ completed       success Lint    Slow_tests
         # so we use a trusted function.
         self.assertEqual(act, exp)
 
+    # For debugging: don't check this enabled.
+    @pytest.mark.skip(reason="This is only used to debug the debugging the infrastructure")
+    def test_not_equal_debug(self) -> None:
+        """
+        Create a mismatch on purpose to see how the suggested updated to expected
+        variable looks like.
+        """
+        act = r"""empty
+start
+
+completed failure Lint    Run_linter
+completed       success Lint    Fast_tests
+completed       success Lint    Slow_tests
+
+end
+
+"""
+        exp = "hello"
+        self.assert_equal(act, exp, fuzzy_match=False)
 
 # ################################################################################
 
@@ -423,8 +446,19 @@ class TestCheckString1(hut.TestCase):
 
 class TestCheckDataFrame1(hut.TestCase):
     """
-    Note that not all the tests pass with `--update_outcomes`, since some test
-    exercise the logic in `--update_outcomes` itself.
+    Some of these tests can't pass with `--update_outcomes`, since they exercise
+    the logic in `--update_outcomes` itself.
+
+    We can't use the standard way to make tests conditional:
+    ```
+    @pytest.mark.skipif(hut.get_update_tests())
+    ```
+    since the variable might not be set when pytest decides which tests to run. So
+    we use a not elegant but effective:
+    ```
+    if hut.get_update_tests():
+        return
+    ```
     """
 
     def test_check_df_equal1(self) -> None:
@@ -472,10 +506,15 @@ class TestCheckDataFrame1(hut.TestCase):
         self.assertTrue(file_exists)
         self.assertTrue(is_equal)
 
+    @pytest.mark.skipif(hut.get_update_tests(), reason="")
     def test_check_df_not_equal1(self) -> None:
         """
-        Compare the actual value of a df to a not matching golden outcome.
+        Compare the actual value of a df to a non-matching golden outcome.
         """
+        # This test can't pass with `--update_outcomes`, since it exercises the
+        # logic in `--update_outcomes` itself.
+        if hut.get_update_tests():
+            return
         act = pd.DataFrame([[0, 1.06, 2], [3, 4, 5]], columns="a b c".split())
         abort_on_error = False
         err_threshold = 0.05
@@ -508,10 +547,15 @@ class TestCheckDataFrame1(hut.TestCase):
         """
         self.assert_equal(self._error_msg, exp_error_msg, fuzzy_match=True)
 
+    @pytest.mark.skipif(hut.get_update_tests(), reason="")
     def test_check_df_not_equal2(self) -> None:
         """
         Compare the actual value of a df to a not matching golden outcome.
         """
+        # This test can't pass with `--update_outcomes`, since it exercises the
+        # logic in `--update_outcomes` itself.
+        if hut.get_update_tests():
+            return
         act = pd.DataFrame([[0, 1, 2], [3, 4, 5]], columns="a d c".split())
         abort_on_error = False
         err_threshold = 0.05
@@ -558,8 +602,12 @@ class TestCheckDataFrame1(hut.TestCase):
 
     def test_check_df_not_equal4(self) -> None:
         """
-        Like test_check_df_not_equal1() but raising the exception.
+        Like `test_check_df_not_equal1()` but raising the exception.
         """
+        # This test can't pass with `--update_outcomes`, since it exercises the
+        # logic in `--update_outcomes` itself.
+        if hut.get_update_tests():
+            return
         act = pd.DataFrame([[0, 1.06, 2], [3, 4, 5]], columns="a b c".split())
         abort_on_error = True
         err_threshold = 0.05
@@ -757,6 +805,7 @@ class Test_get_dir_signature1(hut.TestCase):
         act = self._helper(include_file_content)
         # pylint: disable=line-too-long
         exp = r"""
+        # Dir structure
         $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input
         $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_0
         $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_0/config.pkl

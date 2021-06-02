@@ -10,15 +10,19 @@ _LOG = logging.getLogger(__name__)
 
 class Test_Traceback1(hut.TestCase):
     def test_parse1(self) -> None:
+        """
+        Parse traceback with all files from Docker that actually exist in the
+        current repo.
+        """
         txt = """
 
         TEST
 Traceback
     TEST
 Traceback (most recent call last):
-  File "/app/amp/test/test_lib_tasks.py", line 27, in test_get_gh_issue_title2
+  File "/app/amp/helpers/test/test_lib_tasks.py", line 27, in test_get_gh_issue_title2
     act = ltasks._get_gh_issue_title(issue_id, repo)
-  File "/app/amp/lib_tasks.py", line 1265, in _get_gh_issue_title
+  File "/app/amp/helpers/lib_tasks.py", line 1265, in _get_gh_issue_title
     task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
   File "/app/amp/helpers/git.py", line 397, in get_task_prefix_from_repo_short_name
     if repo_short_name == "amp":
@@ -34,7 +38,7 @@ NameError: name 'repo_short_name' is not defined
                 "test_get_gh_issue_title2:act = ltasks._get_gh_issue_title(issue_id, repo)",
             ),
             (
-                "lib_tasks.py",
+                "helpers/lib_tasks.py",
                 1265,
                 "_get_gh_issue_title:task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)",
             ),
@@ -48,9 +52,9 @@ NameError: name 'repo_short_name' is not defined
         # pylint: enable=line-too-long
         exp_traceback = """
 Traceback (most recent call last):
-  File "$GIT_ROOT/test/test_lib_tasks.py", line 27, in test_get_gh_issue_title2
+  File "$GIT_ROOT/helpers/test/test_lib_tasks.py", line 27, in test_get_gh_issue_title2
     act = ltasks._get_gh_issue_title(issue_id, repo)
-  File "$GIT_ROOT/lib_tasks.py", line 1265, in _get_gh_issue_title
+  File "$GIT_ROOT/helpers/lib_tasks.py", line 1265, in _get_gh_issue_title
     task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
   File "$GIT_ROOT/helpers/git.py", line 397, in get_task_prefix_from_repo_short_name
     if repo_short_name == "amp":
