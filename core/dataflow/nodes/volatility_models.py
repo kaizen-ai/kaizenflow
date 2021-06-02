@@ -117,10 +117,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
             self._tau = self._learn_tau(x_fit, fwd_y_fit)
         _LOG.debug("tau=%s", self._tau)
         return self._predict_and_package_results(
-            df_in,
-            idx,
-            non_nan_idx,
-            fit=True
+            df_in, idx, non_nan_idx, fit=True
         )
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -138,18 +135,16 @@ class SmaModel(FitPredictNode, ColModeMixin):
             "Parameter tau not found! Check if `fit` has been run.",
         )
         return self._predict_and_package_results(
-            df_in,
-            idx,
-            non_nan_idx,
-            fit=False
+            df_in, idx, non_nan_idx, fit=False
         )
 
-    def _predict_and_package_results(self,
-            df_in: pd.DataFrame,
-            idx,
-            non_nan_idx,
-            fit: bool = True,
-        ) -> Dict[str, pd.DataFrame]:
+    def _predict_and_package_results(
+        self,
+        df_in: pd.DataFrame,
+        idx,
+        non_nan_idx,
+        fit: bool = True,
+    ) -> Dict[str, pd.DataFrame]:
         data = cdataa.transform_to_sklearn(df_in.loc[non_nan_idx], self._col)
         fwd_y_hat = self._predict(data)
         fwd_y_df = self._get_fwd_y_df(df_in).loc[non_nan_idx]
