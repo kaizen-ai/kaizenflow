@@ -46,9 +46,8 @@ class TestSmaModel(hut.TestCase):
         node = SmaModel("sma", **config.to_dict())
         # Run `fit()` and get output dataframe.
         df_out = node.fit(data)["df_out"]
-        info = node.get_info("fit")
         # Package results.
-        self._check_results(config, info, df_out)
+        self._check_results(df_out)
 
     def test2(self) -> None:
         """
@@ -65,8 +64,7 @@ class TestSmaModel(hut.TestCase):
         )
         node = SmaModel("sma", **config.to_dict())
         df_out = node.fit(data)["df_out"]
-        info = node.get_info("fit")
-        self._check_results(config, info, df_out)
+        self._check_results(df_out)
 
     def test3(self) -> None:
         """
@@ -83,8 +81,7 @@ class TestSmaModel(hut.TestCase):
         )
         node = SmaModel("sma", **config.to_dict())
         df_out = node.fit(data)["df_out"]
-        info = node.get_info("fit")
-        self._check_results(config, info, df_out)
+        self._check_results(df_out)
 
     def test4(self) -> None:
         """
@@ -102,12 +99,8 @@ class TestSmaModel(hut.TestCase):
         # Run `fit()`, then `predict()`.
         node.fit(data.loc["2000-01-01":"2000-02-10"])
         df_out = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]
-        # Extract info for both `fit()` and `predict()` stages.
-        info = collections.OrderedDict()
-        info["fit"] = node.get_info("fit")
-        info["predict"] = node.get_info("predict")
         # Package results.
-        self._check_results(config, info, df_out)
+        self._check_results(df_out)
 
     @staticmethod
     def _get_data() -> pd.DataFrame:
@@ -137,21 +130,14 @@ class TestSmaModel(hut.TestCase):
 
     def _check_results(
         self,
-        config: ccfg.Config,
-        info: collections.OrderedDict,
-        df_out: pd.DataFrame,
+        df: pd.DataFrame,
     ) -> None:
         """
         Convert inputs to a string and check it against golden reference.
         """
-        act: List[str] = []
-        act.append(hprint.frame("config"))
-        act.append(str(config))
-        act.append(str(ccbuild.get_config_from_nested_dict(info)))
-        act.append(hprint.frame("df_out"))
-        act.append(hut.convert_df_to_string(df_out, index=True, decimals=2))
-        act = "\n".join(act)
-        self.check_string(act)
+        decimals = 3
+        actual = hut.convert_df_to_string(df.round(decimals), index=True, decimals=decimals)
+        self.check_string(actual)
 
 
 class TestSingleColumnVolatilityModel(hut.TestCase):
