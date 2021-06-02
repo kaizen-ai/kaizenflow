@@ -1,6 +1,8 @@
 import logging
 from typing import Optional
 
+import pytest
+
 import helpers.git as git
 import helpers.unit_test as hut
 
@@ -223,3 +225,96 @@ class Test_git_modified_files1(hut.TestCase):
     def test_git_log1(self) -> None:
         func_call = "git.git_log()"
         _execute_func_call(func_call)
+
+
+class Test_purify_docker_file_from_git_client1(hut.TestCase):
+    """
+    Test for a file that:
+
+    - is not from Docker (e.g., it doesn't start with `/app`)
+    - exists in the repo
+    """
+
+    @pytest.mark.skipif(
+        not git.is_in_amp_as_supermodule(),
+        reason="Run only in amp as super-module",
+    )
+    def test1(self) -> None:
+        """
+        Test for a file in the repo with respect to the super-module.
+        """
+        super_module = True
+        exp = "helpers/test/test_git.py"
+        self._helper(super_module, exp)
+
+    @pytest.mark.skipif(
+        not git.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
+    )
+    def test2(self) -> None:
+        """
+        Test for a file in the repo with respect to the internal sub-module.
+        """
+        super_module = False
+        exp = "helpers/test/test_git.py"
+        self._helper(super_module, exp)
+
+    @pytest.mark.skipif(not git.is_lem(), reason="Run only in lem")
+    def test3(self) -> None:
+        """
+        Test for a file in the repo with respect to the internal sub-module.
+        """
+        super_module = True
+        exp = "amp/helpers/test/test_git.py"
+        self._helper(super_module, exp)
+
+    def _helper(self, super_module: bool, exp: str) -> None:
+        # Use this file since `purify_docker_file_from_git_client()` needs to do
+        # a `find` in the repo so we need to have a fixed file structure.
+        file_name = "amp/helpers/test/test_git.py"
+        act = git.purify_docker_file_from_git_client(file_name, super_module)
+        self.assertEqual(act, exp)
+
+
+class Test_purify_docker_file_from_git_client2(hut.TestCase):
+    """
+    Test for a file that is from Docker (e.g., it starts with `/app`)
+    """
+
+    @pytest.mark.skipif(
+        not git.is_in_amp_as_supermodule(),
+        reason="Run only in amp as super-module",
+    )
+    def test1(self) -> None:
+        """
+        Test for a file in the repo with respect to the super-module.
+        """
+        super_module = True
+        exp = "helpers/test/test_git.py"
+        self._helper(super_module, exp)
+
+    @pytest.mark.skipif(
+        not git.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
+    )
+    def test2(self) -> None:
+        """
+        Test for a file in the repo with respect to the internal sub-module.
+        """
+        super_module = False
+        exp = "helpers/test/test_git.py"
+        self._helper(super_module, exp)
+
+    @pytest.mark.skipif(not git.is_lem(), reason="Run only in lem")
+    def test3(self) -> None:
+        """
+        Test for a file in the repo with respect to the internal sub-module.
+        """
+        super_module = True
+        exp = "amp/helpers/test/test_git.py"
+        self._helper(super_module, exp)
+
+    def _helper(self, super_module: bool, exp: str) -> None:
+        # Use this file since `purify_docker_file_from_git_client()` needs to do
+        # a `find` in the repo so we need to have a fixed file structure.
+        file_name = "/app/amp/helpers/test/test_git.py"
+        act = git.purify_docker_file_from_git_client(file_name, super_module)
+        self.assertEqual(act, exp)

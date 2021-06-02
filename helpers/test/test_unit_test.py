@@ -13,6 +13,7 @@ import uuid
 from typing import Optional, Tuple
 
 import pandas as pd
+import pytest
 
 import helpers.git as git
 import helpers.io_ as hio
@@ -32,6 +33,9 @@ def _git_add(file_name: str) -> None:
             "Can't run '%s': you need to add the file manually",
             cmd,
         )
+
+
+# #############################################################################
 
 
 class TestTestCase1(hut.TestCase):
@@ -105,11 +109,17 @@ class TestTestCase1(hut.TestCase):
         tmp_dir = tempfile.mkdtemp()
         self.assert_equal(actual, expected, abort_on_error=False, dst_dir=tmp_dir)
         # Compute the signature from the dir.
-        act = hut.get_dir_signature(tmp_dir)
+        act = hut.get_dir_signature(
+            tmp_dir, include_file_content=True, num_lines=None
+        )
         act = hut.purify_txt_from_client(act)
         act = act.replace(tmp_dir, "$TMP_DIR")
         # pylint: disable=line-too-long
         exp = """
+        # Dir structure
+        $TMP_DIR
+        $TMP_DIR/tmp_diff.sh
+        # File signatures
         len(file_names)=1
         file_names=$TMP_DIR/tmp_diff.sh
         # $TMP_DIR/tmp_diff.sh
@@ -152,6 +162,9 @@ class TestTestCase1(hut.TestCase):
         # #####################################################################
         """
         self.assert_equal(act, exp, fuzzy_match=False)
+
+
+# #############################################################################
 
 
 class Test_AssertEqual1(hut.TestCase):
@@ -239,19 +252,43 @@ or running:
 The expected variable should be
 --------------------------------------------------------------------------------
 exp = r"""
-
 completed failure Lint    Run_linter
 completed       success Lint    Fast_tests
 completed       success Lint    Slow_tests
 """'''
-        if True:
-            # For debugging.
+        # For debugging: don't commit with this enabled.
+        if False:
             hio.to_file("act.txt", act)
             hio.to_file("exp.txt", exp)
             self.assert_equal(act, exp, fuzzy_match=False)
         # We don't use self.assert_equal() since this is exactly we are testing,
         # so we use a trusted function.
         self.assertEqual(act, exp)
+
+    # For debugging: don't check this enabled.
+    @pytest.mark.skip(
+        reason="This is only used to debug the debugging the infrastructure"
+    )
+    def test_not_equal_debug(self) -> None:
+        """
+        Create a mismatch on purpose to see how the suggested updated to
+        expected variable looks like.
+        """
+        act = r"""empty
+start
+
+completed failure Lint    Run_linter
+completed       success Lint    Fast_tests
+completed       success Lint    Slow_tests
+
+end
+
+"""
+        exp = "hello"
+        self.assert_equal(act, exp, fuzzy_match=False)
+
+
+# #############################################################################
 
 
 class TestCheckString1(hut.TestCase):
@@ -409,10 +446,24 @@ class TestCheckString1(hut.TestCase):
         return to_skip
 
 
+# #############################################################################
+
+
 class TestCheckDataFrame1(hut.TestCase):
     """
-    Note that not all the tests pass with `--update_outcomes`, since some test
+    Some of these tests can't pass with `--update_outcomes`, since they
     exercise the logic in `--update_outcomes` itself.
+
+    We can't use the standard way to make tests conditional:
+    ```
+    @pytest.mark.skipif(hut.get_update_tests())
+    ```
+    since the variable might not be set when pytest decides which tests to run. So
+    we use a not elegant but effective:
+    ```
+    if hut.get_update_tests():
+        return
+    ```
     """
 
     def test_check_df_equal1(self) -> None:
@@ -460,10 +511,15 @@ class TestCheckDataFrame1(hut.TestCase):
         self.assertTrue(file_exists)
         self.assertTrue(is_equal)
 
+    @pytest.mark.skipif(hut.get_update_tests(), reason="")
     def test_check_df_not_equal1(self) -> None:
         """
-        Compare the actual value of a df to a not matching golden outcome.
+        Compare the actual value of a df to a non-matching golden outcome.
         """
+        # This test can't pass with `--update_outcomes`, since it exercises the
+        # logic in `--update_outcomes` itself.
+        if hut.get_update_tests():
+            return
         act = pd.DataFrame([[0, 1.06, 2], [3, 4, 5]], columns="a b c".split())
         abort_on_error = False
         err_threshold = 0.05
@@ -496,10 +552,15 @@ class TestCheckDataFrame1(hut.TestCase):
         """
         self.assert_equal(self._error_msg, exp_error_msg, fuzzy_match=True)
 
+    @pytest.mark.skipif(hut.get_update_tests(), reason="")
     def test_check_df_not_equal2(self) -> None:
         """
         Compare the actual value of a df to a not matching golden outcome.
         """
+        # This test can't pass with `--update_outcomes`, since it exercises the
+        # logic in `--update_outcomes` itself.
+        if hut.get_update_tests():
+            return
         act = pd.DataFrame([[0, 1, 2], [3, 4, 5]], columns="a d c".split())
         abort_on_error = False
         err_threshold = 0.05
@@ -546,8 +607,12 @@ class TestCheckDataFrame1(hut.TestCase):
 
     def test_check_df_not_equal4(self) -> None:
         """
-        Like test_check_df_not_equal1() but raising the exception.
+        Like `test_check_df_not_equal1()` but raising the exception.
         """
+        # This test can't pass with `--update_outcomes`, since it exercises the
+        # logic in `--update_outcomes` itself.
+        if hut.get_update_tests():
+            return
         act = pd.DataFrame([[0, 1.06, 2], [3, 4, 5]], columns="a b c".split())
         abort_on_error = True
         err_threshold = 0.05
@@ -607,6 +672,9 @@ class TestCheckDataFrame1(hut.TestCase):
         return outcome_updated, file_exists, is_equal
 
 
+# #############################################################################
+
+
 class Test_unit_test1(hut.TestCase):
     def test_purify_txt_from_client1(self) -> None:
         super_module_path = git.get_client_root(super_module=True)
@@ -648,6 +716,9 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Nam
         exp = txt
         act = hut.purify_txt_from_client(txt)
         self.assertEqual(act, exp)
+
+
+# #############################################################################
 
 
 class TestDataframeToJson(hut.TestCase):
@@ -724,3 +795,45 @@ class TestDataframeToJson(hut.TestCase):
             test_dataframe, n_head=None, n_tail=None
         )
         self.check_string(output_str)
+
+
+# #############################################################################
+
+
+class Test_get_dir_signature1(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Test dir signature excluding the file content.
+        """
+        include_file_content = False
+        act = self._helper(include_file_content)
+        # pylint: disable=line-too-long
+        exp = r"""
+        # Dir structure
+        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input
+        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_0
+        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_0/config.pkl
+        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_0/config.txt
+        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_0/run_notebook.0.log
+        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_1
+        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_1/config.pkl
+        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_1/config.txt
+        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_1/run_notebook.1.log
+        """
+        # pylint: enable=line-too-long
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test2(self) -> None:
+        """
+        Test dir signature including the file content.
+        """
+        include_file_content = True
+        act = self._helper(include_file_content)
+        # The golden outcome is long and uninteresting so we use check_string.
+        self.check_string(act, fuzzy_match=True)
+
+    def _helper(self, include_file_content: bool) -> str:
+        in_dir = self.get_input_dir()
+        act = hut.get_dir_signature(in_dir, include_file_content, num_lines=None)
+        act = hut.purify_txt_from_client(act)
+        return act  # type: ignore[no-any-return]

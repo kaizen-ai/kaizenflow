@@ -590,16 +590,17 @@ def git_create_patch(  # type: ignore
         cmd_inv = "tar xvzf"
     elif mode == "diff":
         if modified:
-            cmd = f"git diff HEAD {files_as_str} >{dst_file}"
+            opts = "HEAD"
         elif branch:
-            cmd = f"git diff master... {files_as_str} >{dst_file}"
+            opts = "master..."
         elif last_commit:
-            cmd = f"git diff HEAD^ {files_as_str} >{dst_file}"
+            opts = "HEAD^"
         else:
             dbg.dfatal(
                 "You need to specify one among -modified, --branch, "
                 "--last-commit"
             )
+        cmd = f"git diff {opts} --binary {files_as_str} >{dst_file}"
         cmd_inv = "git apply"
     # Execute patch command.
     _LOG.info("Creating the patch into %s", dst_file)
@@ -813,9 +814,8 @@ def docker_kill(  # type: ignore
 # Docker development.
 # #############################################################################
 
-# TODO(gp):
-# We might want to organize the code in a base class using a Command pattern,
-# so that it's easier to generalize the code for multiple repos.
+# TODO(gp): We might want to organize the code in a base class using a Command
+# pattern, so that it's easier to generalize the code for multiple repos.
 #
 # class DockerCommand:
 #   def pull():
@@ -1593,6 +1593,7 @@ def _to_pbcopy(txt: str, pbcopy: bool) -> None:
         _LOG.warning("pbcopy works only on macOS")
 
 
+# TODO(gp): Extend this to accept only the test method.
 @task
 def find_test_class(ctx, class_name, dir_name=".", pbcopy=True):  # type: ignore
     """
@@ -1971,28 +1972,41 @@ def run_fast_slow_tests(  # type: ignore
 
 
 @task
-def jump_to_pytest_error(ctx, log_name=""):  # type: ignore
+def traceback(ctx, log_name="", purify=True):  # type: ignore
     """
     Parse the traceback from pytest and navigate it with vim.
 
     > pyt helpers/test/test_traceback.py
-    > invoke jump_to_pytest_error
-    # There is a also an alias `ie` for the previous command line.
+    > invoke traceback
+    # There is a also an alias `it` for the previous command line.
 
     > devops/debug/compare.sh 2>&1 | tee log.txt
     > ie -l log.txt
 
     :param log_name: the file with the traceback
     """
-    if not log_name:
-        log_name = "tmp.pytest.log"
-    _LOG.info("Reading %s", log_name)
+    _report_task()
+    #
+    dst_cfile = "cfile"
+    hio.delete_file(dst_cfile)
     # Convert the traceback into a cfile.
-    cmd = f"traceback_to_cfile.py -i {log_name} -o cfile"
+    cmd = []
+    cmd.append("traceback_to_cfile.py")
+    if log_name:
+        cmd.append(f"-i {log_name}")
+    cmd.append(f"-o {dst_cfile}")
+    if purify:
+        cmd.append("--purify_from_client")
+    else:
+        cmd.append("--no_purify_from_client")
+    cmd = " ".join(cmd)
     _run(ctx, cmd)
     # Read and navigate the cfile with vim.
-    cmd = 'vim -c "cfile cfile"'
-    _run(ctx, cmd, pty=True)
+    if os.path.exists(dst_cfile):
+        cmd = 'vim -c "cfile cfile"'
+        _run(ctx, cmd, pty=True)
+    else:
+        _LOG.warning("Can't find %s", dst_cfile)
 
 
 @task
@@ -2008,6 +2022,9 @@ def pytest_clean(ctx):  # type: ignore
 
 
 # TODO(gp): Consolidate the code from dev_scripts/testing here.
+
+
+# TODO(gp): ./dev_scripts/testing/pytest_failed.py
 
 # #############################################################################
 # Linter.
@@ -2094,7 +2111,7 @@ def lint(  # type: ignore
     files="",
     phases="",
     only_format_steps=False,
-    #stage="prod",
+    # stage="prod",
     run_bash=False,
     run_linter_step=True,
     parse_linter_output=True,

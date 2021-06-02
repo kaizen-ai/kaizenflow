@@ -37,9 +37,17 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     in_default = _NEWEST_LOG_FILE
-    prsr.add_input_output_args(parser, in_default=in_default, out_default="cfile")
-    prsr.add_verbosity_arg(parser)
-    return parser
+    parser = prsr.add_input_output_args(
+        parser, in_default=in_default, out_default="cfile"
+    )
+    parser = prsr.add_bool_arg(
+        parser,
+        "purify_from_client",
+        default=True,
+        help_="Make references to files in the current client",
+    )
+    parser = prsr.add_verbosity_arg(parser)
+    return parser  # type: ignore[no-any-return]
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
@@ -58,7 +66,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # ./experiments/RH1E/result_0/run_notebook.0.log
         dir_name = None
         remove_files_non_present = False
-        files = hsinte.system_to_files(dir_name, cmd, remove_files_non_present)
+        files = hsinte.system_to_files(cmd, dir_name, remove_files_non_present)
         # Pick the newest file.
         in_file_name = files[0]
     _LOG.info("in_file_name=%s", in_file_name)
@@ -68,7 +76,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     txt = prsr.read_file(in_file_name)
     # Transform.
     txt_tmp = "\n".join(txt)
-    cfile, traceback = htrace.parse_traceback(txt_tmp)
+    cfile, traceback = htrace.parse_traceback(
+        txt_tmp, purify_from_client=args.purify_from_client
+    )
     if traceback is None:
         _LOG.error("Can't find traceback in the file")
         sys.exit(-1)

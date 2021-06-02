@@ -5,8 +5,7 @@ import helpers.env as henv
 """
 
 import logging
-import platform
-from typing import Tuple
+from typing import List, Tuple
 
 import helpers.git as git
 import helpers.printing as hprint
@@ -26,43 +25,80 @@ def _get_library_version(lib_name: str) -> str:
         # pylint: disable=exec-used
         exec(cmd)
     except ImportError:
-        version = "ERROR: can't import"
+        version = "?"
     else:
         cmd = "%s.__version__" % lib_name
         version = eval(cmd)
     return version
 
 
+def _append(
+    txt: List[str], to_add: List[str], num_spaces: int = 4
+) -> Tuple[List[str], List[str]]:
+    txt.extend(
+        [
+            " " * num_spaces + line
+            for txt_tmp in to_add
+            for line in txt_tmp.split("\n")
+        ]
+    )
+    to_add: List[str] = []
+    return txt, to_add
+
+
 def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     # TODO(gp): This should return a string that we append to the rest.
     hversi.check_version()
-    txt = []
+    #
+    txt: List[str] = []
     # Add git signature.
+    txt.append("# Git")
+    txt_tmp: List[str] = []
     try:
-        txt.append("# Git")
         cmd = "git branch --show-current"
         _, branch_name = hsinte.system_to_one_line(cmd)
-        txt.append("branch_name='%s'" % branch_name)
+        txt_tmp.append("branch_name='%s'" % branch_name)
         #
         cmd = "git rev-parse --short HEAD"
         _, hash_ = hsinte.system_to_one_line(cmd)
-        txt.append("hash='%s'" % hash_)
+        txt_tmp.append("hash='%s'" % hash_)
         #
         num_commits = 3
         if git_commit_type == "all":
-            txt.append("# Last commits:")
+            txt_tmp.append("# Last commits:")
             log_txt = git.git_log(num_commits=num_commits, my_commits=False)
-            txt.append(hprint.indent(log_txt))
+            txt_tmp.append(hprint.indent(log_txt))
         elif git_commit_type == "mine":
-            txt.append("# Your last commits:")
+            txt_tmp.append("# Your last commits:")
             log_txt = git.git_log(num_commits=num_commits, my_commits=True)
-            txt.append(hprint.indent(log_txt))
+            txt_tmp.append(hprint.indent(log_txt))
         elif git_commit_type == "none":
             pass
         else:
             raise ValueError("Invalid value='%s'" % git_commit_type)
     except RuntimeError as e:
         _LOG.error(str(e))
+    txt, txt_tmp = _append(txt, txt_tmp)
+    # Add processor info.
+    txt.append("# Machine info")
+    txt_tmp: List[str] = []
+    import platform
+
+    uname = platform.uname()
+    txt_tmp.append(f"system={uname.system}")
+    txt_tmp.append(f"node name={uname.node}")
+    txt_tmp.append(f"release={uname.release}")
+    txt_tmp.append(f"version={uname.version}")
+    txt_tmp.append(f"machine={uname.machine}")
+    txt_tmp.append(f"processor={uname.processor}")
+    import psutil
+
+    txt_tmp.append("cpu count=%s" % psutil.cpu_count())
+    txt_tmp.append("cpu freq=%s" % str(psutil.cpu_freq()))
+    # TODO(gp): Report in MB or GB.
+    txt_tmp.append("memory=%s" % str(psutil.virtual_memory()))
+    txt_tmp.append("disk usage=%s" % str(psutil.disk_usage("/")))
+    txt, txt_tmp = _append(txt, txt_tmp)
     # Add package info.
     txt.append("# Packages")
     packages = []
@@ -89,7 +125,9 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
         if version.startswith("ERROR"):
             failed_imports += 1
         packages.append((lib, version))
-    txt.extend(["%15s: %s" % (l, v) for (l, v) in packages])
+    # txt.extend(["%15s: %s" % (l, v) for (l, v) in packages])
+    txt_tmp.extend(["%s: %s" % (l, v) for (l, v) in packages])
+    txt, txt_tmp = _append(txt, txt_tmp)
     #
     txt = "\n".join(txt)
     return txt, failed_imports

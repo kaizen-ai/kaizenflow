@@ -119,30 +119,32 @@ def _is_repo(repo_short_name: str) -> bool:
 
 def is_amp() -> bool:
     """
-    Return whether we are inside `amp` and `amp` is a submodule.
+    Return whether we are inside `amp` and `amp` is a sub-module.
     """
     return _is_repo("amp")
 
 
 def is_lem() -> bool:
     """
-    Return whether we are inside `lem` and `lem` is a submodule.
+    Return whether we are inside `lem` and `lem` is a sub-module.
     """
     return _is_repo("lem")
 
 
+# TODO(gp): submodule -> sub_module
 def is_in_amp_as_submodule() -> bool:
     """
-    Return whether we are in the `amp` repo and it's a submodule, e.g., of
+    Return whether we are in the `amp` repo and it's a sub-module, e.g., of
     `lem`.
     """
     return is_amp() and is_inside_submodule(".")
 
 
+# TODO(gp): supermodule -> super_module
 def is_in_amp_as_supermodule() -> bool:
     """
-    Return whether we are in the `amp` repo and it's a supermodule, i.e., `amp`
-    by itself.
+    Return whether we are in the `amp` repo and it's a super-module, i.e.,
+    `amp` by itself.
     """
     return is_amp() and not is_inside_submodule(".")
 
@@ -492,13 +494,11 @@ def get_path_from_git_root(file_name: str, super_module: bool) -> str:
     # Get Git root.
     git_root = get_client_root(super_module) + "/"
     # TODO(gp): Use os.path.relpath()
-    abs_path = os.path.abspath(file_name)
-    dbg.dassert(abs_path.startswith(git_root))
-    end_idx = len(git_root)
-    ret = abs_path[end_idx:]
-    # cmd = "git ls-tree --full-name --name-only HEAD %s" % file_name
-    # _, git_file_name = hsinte.system_to_string(cmd)
-    # dbg.dassert_ne(git_file_name, "")
+    # abs_path = os.path.abspath(file_name)
+    # dbg.dassert(abs_path.startswith(git_root))
+    # end_idx = len(git_root)
+    # ret = abs_path[end_idx:]
+    ret = os.path.relpath(file_name, git_root)
     return ret
 
 
@@ -537,7 +537,9 @@ def get_repo_dirs() -> List[str]:
     return dir_names
 
 
-def purify_docker_file_from_git_client(file_name: str, super_module: bool) -> str:
+def purify_docker_file_from_git_client(
+    file_name: str, super_module: Optional[bool]
+) -> str:
     """
     Convert a file that was generated inside Docker to a file in the current
     dir.
@@ -551,20 +553,30 @@ def purify_docker_file_from_git_client(file_name: str, super_module: bool) -> st
     - For a file like '/app/amp/core/dataflow_model/utils.py' outside Docker, we look
       for the file 'dataflow_model/utils.py' in the current client and then normalize
       with respect to the
+
+    :param super_module:
+        - True/False: the file is with respect to a Git repo
+        - `None`: the file is returned as relative to current dir
     """
+    _LOG.debug("# Processing file_name='%s'", file_name)
     # Clean up file name.
     file_name = os.path.normpath(file_name)
+    _LOG.debug("file_name=%s", file_name)
     #
     file_name_tmp = hsinte.find_file_with_dir(file_name, ".")
+    _LOG.debug("file_name_tmp=%s", file_name_tmp)
     if file_name_tmp is None:
         # We didn't find the file in the current client: leave the file as it was.
-        _LOG.warning("Can't find the file_name corresponding to %s", file_name)
+        _LOG.warning("Can't find the file_name corresponding to '%s'", file_name)
     else:
         # We have found the file.
         file_name = file_name_tmp
+    _LOG.debug("file_name=%s", file_name)
     #
-    file_name = get_path_from_git_root(file_name, super_module)
+    if super_module is not None:
+        file_name = get_path_from_git_root(file_name, super_module)
     file_name = os.path.normpath(file_name)
+    _LOG.debug("-> file_name='%s'", file_name)
     return file_name
 
 
@@ -648,7 +660,9 @@ def get_modified_files(
     #   dev_scripts/infra/ssh_tunnels.py
     #   helpers/git.py
     cmd = "(git diff --cached --name-only; git ls-files -m) | sort | uniq"
-    files: List[str] = hsinte.system_to_files(cmd, dir_name, remove_files_non_present)
+    files: List[str] = hsinte.system_to_files(
+        cmd, dir_name, remove_files_non_present
+    )
     return files
 
 
@@ -674,7 +688,9 @@ def get_previous_committed_files(
     cmd.append("$(git log --author $(git config user.name) -%d" % num_commits)
     cmd.append(r"""| \grep "^commit " | perl -pe 's/commit (.*)/$1/')""")
     cmd_as_str = " ".join(cmd)
-    files : List[str] = hsinte.system_to_files(cmd_as_str, dir_name, remove_files_non_present)
+    files: List[str] = hsinte.system_to_files(
+        cmd_as_str, dir_name, remove_files_non_present
+    )
     return files
 
 
@@ -695,7 +711,9 @@ def get_modified_files_in_branch(
     :return: list of files
     """
     cmd = "git diff --name-only %s..." % dst_branch
-    files : List[str] = hsinte.system_to_files(cmd, dir_name, remove_files_non_present)
+    files: List[str] = hsinte.system_to_files(
+        cmd, dir_name, remove_files_non_present
+    )
     return files
 
 
@@ -726,6 +744,7 @@ def get_summary_files_in_branch(
         files = hsinte.system_to_files(
             cmd, dir_name, remove_files_non_present=False
         )
+        _LOG.debug("files=%s", "\n".join(files))
         if files:
             res += f"# {tag}: {len(files)}\n"
             res += hprint.indent("\n".join(files)) + "\n"
@@ -840,8 +859,8 @@ def fetch_origin_master_if_needed() -> None:
     """
     If inside CI system, force fetching `master` branch from Git repo.
 
-    When testing a branch, `master` is not always fetched, but it might be
-    needed by tests.
+    When testing a branch, `master` is not always fetched, but it might
+    be needed by tests.
     """
     if hsinte.is_inside_ci():
         _LOG.warning("Running inside CI so fetching master")

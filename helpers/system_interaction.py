@@ -473,6 +473,15 @@ def create_executable_script(file_name: str, content: str) -> None:
     system(cmd)
 
 
+def _compute_file_signature(file_: str) -> Tuple[str, str]:
+    """
+    Check which files match enclosing dir name and basename.
+    """
+    enclosing_dir_name = os.path.basename(os.path.dirname(file_))
+    basename = os.path.basename(file_)
+    return (enclosing_dir_name, basename)
+
+
 def find_file_with_dir(file_name: str, root_dir: str = ".") -> Optional[str]:
     """
     Find a file matching basename and enclosing dir name starting from
@@ -500,14 +509,6 @@ def find_file_with_dir(file_name: str, root_dir: str = ".") -> Optional[str]:
         cmd, root_dir, remove_files_non_present, mode
     )
     _LOG.debug("files=\n%s", "\n".join(candidate_files))
-    def _compute_file_signature(file_: str) -> Tuple[str, str]:
-        """
-        Check which files match enclosing dir name and basename.
-        """
-        enclosing_dir_name = os.path.basename(os.path.dirname(file_))
-        basename = os.path.basename(file_)
-        return (enclosing_dir_name, basename)
-
     matching_files = []
     for file in sorted(candidate_files):
         is_equal = _compute_file_signature(file) == _compute_file_signature(
@@ -593,12 +594,16 @@ def system_to_files(
     """
     if dir_name is None:
         dir_name = "."
+    dbg.dassert_dir_exists(dir_name)
     cmd = f"cd {dir_name} && {cmd}"
     _, output = system_to_string(cmd)
-    #
+    # Remove empty lines.
     _LOG.debug("output=\n%s", output)
     files = output.split("\n")
+    files = [line.rstrip().rstrip() for line in files]
+    files = [line for line in files if line != ""]
     _LOG.debug("files=%s", " ".join(files))
+    # Convert to normalized paths.
     files = [os.path.join(dir_name, f) for f in files]
     files: List[str] = list(map(os.path.normpath, files))  # type: ignore
     # Remove non-existent files, if needed.
