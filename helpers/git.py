@@ -537,7 +537,7 @@ def get_repo_dirs() -> List[str]:
     return dir_names
 
 
-def purify_docker_file_from_git_client(file_name: str, super_module: bool) -> str:
+def purify_docker_file_from_git_client(file_name: str, super_module: Optional[bool]) -> str:
     """
     Convert a file that was generated inside Docker to a file in the current
     dir.
@@ -551,6 +551,10 @@ def purify_docker_file_from_git_client(file_name: str, super_module: bool) -> st
     - For a file like '/app/amp/core/dataflow_model/utils.py' outside Docker, we look
       for the file 'dataflow_model/utils.py' in the current client and then normalize
       with respect to the
+
+    :param super_module:
+        - True/False: the file is with respect to a Git repo
+        - `None`: the file is returned as relative to current dir
     """
     _LOG.debug("file_name=%s", file_name)
     # Clean up file name.
@@ -567,7 +571,8 @@ def purify_docker_file_from_git_client(file_name: str, super_module: bool) -> st
         file_name = file_name_tmp
     _LOG.debug("file_name=%s", file_name)
     #
-    file_name = get_path_from_git_root(file_name, super_module)
+    if super_module is not None:
+        file_name = get_path_from_git_root(file_name, super_module)
     file_name = os.path.normpath(file_name)
     _LOG.debug("-> file_name='%s'", file_name)
     return file_name

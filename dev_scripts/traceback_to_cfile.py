@@ -38,9 +38,9 @@ def _parse() -> argparse.ArgumentParser:
     )
     in_default = _NEWEST_LOG_FILE
     parser = prsr.add_input_output_args(parser, in_default=in_default, out_default="cfile")
-    parser = prsr.add_bool(parser, "purify_from_client",
+    parser = prsr.add_bool_arg(parser, "purify_from_client",
                            default=True,
-                           help="Make references to files in the current client")
+                           help_="Make references to files in the current client")
     parser = prsr.add_verbosity_arg(parser)
     return parser
 
@@ -71,7 +71,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     txt = prsr.read_file(in_file_name)
     # Transform.
     txt_tmp = "\n".join(txt)
-    cfile, traceback = htrace.parse_traceback(txt_tmp)
+    cfile, traceback = htrace.parse_traceback(txt_tmp, purify_from_client=args.purify_from_client)
     if traceback is None:
         _LOG.error("Can't find traceback in the file")
         sys.exit(-1)

@@ -140,8 +140,10 @@ def parse_traceback(
         cfile_tmp = []
         for cfile_row in cfile:
             file_name, line_num, text = cfile_row
+            # Leave the files relative to the current dir.
+            super_module = None
             file_name = git.purify_docker_file_from_git_client(
-                file_name, super_module=True
+                file_name, super_module=super_module
             )
             cfile_tmp.append((file_name, line_num, text))
         cfile = cfile_tmp

@@ -1985,19 +1985,28 @@ def traceback(ctx, log_name="", purify=True):  # type: ignore
 
     :param log_name: the file with the traceback
     """
-    _LOG.info("Reading %s", log_name)
+    _report_task()
+    #
+    dst_cfile = "cfile"
+    hio.delete_file(dst_cfile)
     # Convert the traceback into a cfile.
     cmd = []
     cmd.append("traceback_to_cfile.py")
     if log_name:
         cmd.append(f"-i {log_name}")
-    cmd.append("-o cfile")
-    if
+    cmd.append(f"-o {dst_cfile}")
+    if purify:
+        cmd.append("--purify_from_client")
+    else:
+        cmd.append("--no_purify_from_client")
     cmd = " ".join(cmd)
     _run(ctx, cmd)
     # Read and navigate the cfile with vim.
-    cmd = 'vim -c "cfile cfile"'
-    _run(ctx, cmd, pty=True)
+    if os.path.exists(dst_cfile):
+        cmd = 'vim -c "cfile cfile"'
+        _run(ctx, cmd, pty=True)
+    else:
+        _LOG.warning("Can't find %s", dst_file)
 
 
 @task
