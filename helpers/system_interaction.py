@@ -595,10 +595,13 @@ def system_to_files(
         dir_name = "."
     cmd = f"cd {dir_name} && {cmd}"
     _, output = system_to_string(cmd)
-    #
+    # Remove empty lines.
     _LOG.debug("output=\n%s", output)
     files = output.split("\n")
+    files = [line.rstrip().rstrip() for line in files]
+    files = [line for line in files if line != ""]
     _LOG.debug("files=%s", " ".join(files))
+    # Convert to normalized paths.
     files = [os.path.join(dir_name, f) for f in files]
     files: List[str] = list(map(os.path.normpath, files))  # type: ignore
     # Remove non-existent files, if needed.

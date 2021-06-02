@@ -590,16 +590,17 @@ def git_create_patch(  # type: ignore
         cmd_inv = "tar xvzf"
     elif mode == "diff":
         if modified:
-            cmd = f"git diff HEAD {files_as_str} >{dst_file}"
+            opts = "HEAD"
         elif branch:
-            cmd = f"git diff master... {files_as_str} >{dst_file}"
+            opts = "master..."
         elif last_commit:
-            cmd = f"git diff HEAD^ {files_as_str} >{dst_file}"
+            opts = "HEAD^"
         else:
             dbg.dfatal(
                 "You need to specify one among -modified, --branch, "
                 "--last-commit"
             )
+        cmd = f"git diff {opts} --binary {files_as_str} >{dst_file}"
         cmd_inv = "git apply"
     # Execute patch command.
     _LOG.info("Creating the patch into %s", dst_file)

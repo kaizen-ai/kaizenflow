@@ -106,7 +106,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
         fwd_y_df = fwd_y_df.loc[non_nan_idx]
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, non_nan_idx)
-        # Prepare x_vars in sklearn format.
+        # Prepare `x_vars` in sklearn format.
         x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], self._col)
         # Prepare forward y_vars in sklearn format.
         fwd_y_fit = cdataa.transform_to_sklearn(
@@ -148,7 +148,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
         non_nan_idx = df.loc[idx][self._col].dropna().index
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, non_nan_idx)
-        # Transform x_vars to sklearn format.
+        # Transform `x_vars` to sklearn format.
         x_predict = cdataa.transform_to_sklearn(df.loc[non_nan_idx], self._col)
         # Use trained model to generate predictions.
         dbg.dassert_is_not(

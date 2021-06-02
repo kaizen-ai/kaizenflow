@@ -726,6 +726,7 @@ def get_summary_files_in_branch(
         files = hsinte.system_to_files(
             cmd, dir_name, remove_files_non_present=False
         )
+        _LOG.debug("files=%s", "\n".join(files))
         if files:
             res += f"# {tag}: {len(files)}\n"
             res += hprint.indent("\n".join(files)) + "\n"

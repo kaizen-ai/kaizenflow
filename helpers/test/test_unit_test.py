@@ -34,6 +34,9 @@ def _git_add(file_name: str) -> None:
         )
 
 
+# ################################################################################
+
+
 class TestTestCase1(hut.TestCase):
     """
     Test free-standing functions in unit_test.py.
@@ -105,7 +108,7 @@ class TestTestCase1(hut.TestCase):
         tmp_dir = tempfile.mkdtemp()
         self.assert_equal(actual, expected, abort_on_error=False, dst_dir=tmp_dir)
         # Compute the signature from the dir.
-        act = hut.get_dir_signature(tmp_dir)
+        act = hut.get_dir_signature(tmp_dir, include_file_content=True, num_lines=None)
         act = hut.purify_txt_from_client(act)
         act = act.replace(tmp_dir, "$TMP_DIR")
         # pylint: disable=line-too-long
@@ -152,6 +155,9 @@ class TestTestCase1(hut.TestCase):
         # #####################################################################
         """
         self.assert_equal(act, exp, fuzzy_match=False)
+
+
+# ################################################################################
 
 
 class Test_AssertEqual1(hut.TestCase):
@@ -252,6 +258,9 @@ completed       success Lint    Slow_tests
         # We don't use self.assert_equal() since this is exactly we are testing,
         # so we use a trusted function.
         self.assertEqual(act, exp)
+
+
+# ################################################################################
 
 
 class TestCheckString1(hut.TestCase):
@@ -407,6 +416,9 @@ class TestCheckString1(hut.TestCase):
             )
             to_skip = True
         return to_skip
+
+
+# ################################################################################
 
 
 class TestCheckDataFrame1(hut.TestCase):
@@ -607,6 +619,9 @@ class TestCheckDataFrame1(hut.TestCase):
         return outcome_updated, file_exists, is_equal
 
 
+# ################################################################################
+
+
 class Test_unit_test1(hut.TestCase):
     def test_purify_txt_from_client1(self) -> None:
         super_module_path = git.get_client_root(super_module=True)
@@ -648,6 +663,9 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Nam
         exp = txt
         act = hut.purify_txt_from_client(txt)
         self.assertEqual(act, exp)
+
+
+# ################################################################################
 
 
 class TestDataframeToJson(hut.TestCase):
@@ -724,3 +742,45 @@ class TestDataframeToJson(hut.TestCase):
             test_dataframe, n_head=None, n_tail=None
         )
         self.check_string(output_str)
+
+
+# ################################################################################
+
+
+class Test_get_dir_signature1(hut.TestCase):
+
+    def test1(self):
+        """
+        Test dir signature excluding the file content.
+        """
+        include_file_content = False
+        act = self._helper(include_file_content)
+        # pylint: disable=line-too-long
+        exp = r"""
+        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input
+        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_0
+        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_0/config.pkl
+        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_0/config.txt
+        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_0/run_notebook.0.log
+        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_1
+        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_1/config.pkl
+        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_1/config.txt
+        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_1/run_notebook.1.log
+        """
+        # pylint: enable=line-too-long
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test2(self):
+        """
+        Test dir signature including the file content.
+        """
+        include_file_content = True
+        act = self._helper(include_file_content)
+        # The golden outcome is long and uninteresting so we use check_string.
+        self.check_string(act, fuzzy_match=True)
+
+    def _helper(self, include_file_content: bool) -> str:
+        in_dir = self.get_input_dir()
+        act = hut.get_dir_signature(in_dir, include_file_content, num_lines=None)
+        act = hut.purify_txt_from_client(act)
+        return act
