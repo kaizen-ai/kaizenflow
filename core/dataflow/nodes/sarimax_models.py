@@ -13,7 +13,7 @@ import core.signal_processing as csigna
 import helpers.dbg as dbg
 from core.dataflow.nodes.base import FitPredictNode
 from core.dataflow.nodes.transformers import ColModeMixin
-from core.dataflow.utils import get_df_info_as_string, convert_to_list, validate_df_indices
+import core.dataflow.utils as cdu
 
 _LOG = logging.getLogger(__name__)
 
@@ -100,11 +100,11 @@ class ContinuousSarimaxModel(
         self._disable_tqdm = disable_tqdm
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        validate_df_indices(df_in)
+        cdu.validate_df_indices(df_in)
         df = df_in.copy()
         idx = df.index
         # Get intersection of non-NaN `y` and `x`.
-        y_vars = convert_to_list(self._y_vars)
+        y_vars = cdu.convert_to_list(self._y_vars)
         y_fit = df[y_vars]
         if self._nan_mode == "leave_unchanged":
             non_nan_idx = idx
@@ -134,12 +134,13 @@ class ContinuousSarimaxModel(
         # `predict()`.
         fwd_y_hat = self._predict(y_fit, x_fit)
         # Package results.
-        fwd_y_df = self._get_fwd_y_df(df)
-        df_out = fwd_y_df.merge(
+        y_vars = cdu.convert_to_list(self._y_vars)
+        forward_y_df = cdu.get_forward_col(df, y_vars, self._steps_ahead)
+        df_out = forward_y_df.merge(
             fwd_y_hat, how="outer", left_index=True, right_index=True
         )
         df_out = self._apply_col_mode(
-            df, df_out, cols=convert_to_list(self._y_vars), col_mode=self._col_mode
+            df, df_out, cols=cdu.convert_to_list(self._y_vars), col_mode=self._col_mode
         )
         # Add info.
         # TODO(Julia): Maybe add model performance to info.
@@ -147,16 +148,16 @@ class ContinuousSarimaxModel(
         info["model_summary"] = _remove_datetime_info_from_sarimax(
             _convert_sarimax_summary_to_dataframe(self._model_results.summary())
         )
-        info["df_out_info"] = get_df_info_as_string(df_out)
+        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        validate_df_indices(df_in)
+        cdu.validate_df_indices(df_in)
         df = df_in.copy()
         idx = df.index
         # Get intersection of non-NaN `y` and `x`.
-        y_vars = convert_to_list(self._y_vars)
+        y_vars = cdu.convert_to_list(self._y_vars)
         dbg.dassert_eq(len(y_vars), 1, "Only univariate `y` is supported")
         y_predict = df[y_vars]
         if self._x_vars is not None:
@@ -172,19 +173,20 @@ class ContinuousSarimaxModel(
         self._handle_nans(idx, y_predict.index)
         fwd_y_hat = self._predict(y_predict, x_predict)
         # Package results.
-        fwd_y_df = self._get_fwd_y_df(df)
-        df_out = fwd_y_df.merge(
+        y_vars = cdu.convert_to_list(self._y_vars)
+        forward_y_df = cdu.get_forward_col(df, y_vars, self._steps_ahead)
+        df_out = forward_y_df.merge(
             fwd_y_hat, how="outer", left_index=True, right_index=True
         )
         df_out = self._apply_col_mode(
-            df, df_out, cols=convert_to_list(self._y_vars), col_mode=self._col_mode
+            df, df_out, cols=cdu.convert_to_list(self._y_vars), col_mode=self._col_mode
         )
         # Add info.
         info = collections.OrderedDict()
         info["model_summary"] = _remove_datetime_info_from_sarimax(
             _convert_sarimax_summary_to_dataframe(self._model_results.summary())
         )
-        info["df_out_info"] = get_df_info_as_string(df_out)
+        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
@@ -238,7 +240,7 @@ class ContinuousSarimaxModel(
         This way we predict `y_t` using `x_{t-n}`, ..., `x_{t-1}`, where `n` is
         `self._steps_ahead`.
         """
-        x_vars = convert_to_list(self._x_vars)
+        x_vars = cdu.convert_to_list(self._x_vars)
         shift = self._steps_ahead
         # Shift index instead of series to extend the index.
         bkwd_x_df = df[x_vars].copy()
@@ -246,20 +248,11 @@ class ContinuousSarimaxModel(
         mapper = lambda y: str(y) + "_bkwd_%i" % shift
         return bkwd_x_df.rename(columns=mapper)
 
-    def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Return dataframe of `steps_ahead` forward y values.
-        """
-        y_vars = convert_to_list(self._y_vars)
-        mapper = lambda y: str(y) + "_%i" % self._steps_ahead
-        fwd_y_df = df[y_vars].shift(-self._steps_ahead).rename(columns=mapper)
-        return fwd_y_df
-
     def _add_constant_to_x(self, x: pd.DataFrame) -> Optional[pd.DataFrame]:
         if not self._add_constant:
             return x
         if self._x_vars is not None:
-            self._x_vars = convert_to_list(self._x_vars)
+            self._x_vars = cdu.convert_to_list(self._x_vars)
             dbg.dassert_not_in(
                 "const",
                 self._x_vars,
@@ -317,21 +310,21 @@ class MultihorizonReturnsPredictionProcessor(FitPredictNode):
         """
         super().__init__(nid)
         self._target_col = target_col
-        self._prediction_cols = convert_to_list(prediction_cols)
+        self._prediction_cols = cdu.convert_to_list(prediction_cols)
         self._volatility_col = volatility_col
         self._max_steps_ahead = len(self._prediction_cols)
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df_out = self._process(df_in)
         info = collections.OrderedDict()
-        info["df_out_info"] = get_df_info_as_string(df_out)
+        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df_out = self._process(df_in)
         info = collections.OrderedDict()
-        info["df_out_info"] = get_df_info_as_string(df_out)
+        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
