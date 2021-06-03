@@ -11,6 +11,7 @@ import sklearn as sklear
 import core.config as cconfi
 import core.config_builders as ccbuild
 import core.data_adapters as cdataa
+import core.dataflow.utils as cdu
 import core.finance as cfinan
 import core.signal_processing as csigna
 import core.statistics as cstati
@@ -23,7 +24,6 @@ from core.dataflow.nodes.base import (
 )
 from core.dataflow.nodes.sources import ReadDataFromDf
 from core.dataflow.nodes.transformers import ColumnTransformer
-import core.dataflow.utils as cdu
 from core.dataflow.visitors import extract_info
 
 _LOG = logging.getLogger(__name__)

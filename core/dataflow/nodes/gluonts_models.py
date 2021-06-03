@@ -9,9 +9,9 @@ import pandas as pd
 
 import core.backtest as cbackt
 import core.data_adapters as cdataa
+import core.dataflow.utils as cdu
 import helpers.dbg as dbg
 from core.dataflow.nodes.base import FitPredictNode
-import core.dataflow.utils as cdu
 
 _LOG = logging.getLogger(__name__)
 

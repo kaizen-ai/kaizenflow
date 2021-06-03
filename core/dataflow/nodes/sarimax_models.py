@@ -9,11 +9,11 @@ import statsmodels.api as sm
 import statsmodels.iolib as siolib
 from tqdm.autonotebook import tqdm
 
+import core.dataflow.utils as cdu
 import core.signal_processing as csigna
 import helpers.dbg as dbg
 from core.dataflow.nodes.base import FitPredictNode
 from core.dataflow.nodes.transformers import ColModeMixin
-import core.dataflow.utils as cdu
 
 _LOG = logging.getLogger(__name__)
 
@@ -28,9 +28,7 @@ _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 # #############################################################################
 
 
-class ContinuousSarimaxModel(
-    FitPredictNode, ColModeMixin
-):
+class ContinuousSarimaxModel(FitPredictNode, ColModeMixin):
     """
     A dataflow node for continuous SARIMAX model.
 
@@ -140,7 +138,10 @@ class ContinuousSarimaxModel(
             fwd_y_hat, how="outer", left_index=True, right_index=True
         )
         df_out = self._apply_col_mode(
-            df, df_out, cols=cdu.convert_to_list(self._y_vars), col_mode=self._col_mode
+            df,
+            df_out,
+            cols=cdu.convert_to_list(self._y_vars),
+            col_mode=self._col_mode,
         )
         # Add info.
         # TODO(Julia): Maybe add model performance to info.
@@ -179,7 +180,10 @@ class ContinuousSarimaxModel(
             fwd_y_hat, how="outer", left_index=True, right_index=True
         )
         df_out = self._apply_col_mode(
-            df, df_out, cols=cdu.convert_to_list(self._y_vars), col_mode=self._col_mode
+            df,
+            df_out,
+            cols=cdu.convert_to_list(self._y_vars),
+            col_mode=self._col_mode,
         )
         # Add info.
         info = collections.OrderedDict()

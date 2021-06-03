@@ -116,7 +116,11 @@ def convert_to_list(to_list: _TO_LIST_MIXIN_TYPE) -> List[_COL_TYPE]:
     raise TypeError("Data type=`%s`" % type(to_list))
 
 
-def get_forward_col(df: pd.DataFrame, cols: Union[List[_COL_TYPE], Tuple[_COL_TYPE]], steps_ahead: int) -> pd.DataFrame:
+def get_forward_col(
+    df: pd.DataFrame,
+    cols: Union[List[_COL_TYPE], Tuple[_COL_TYPE]],
+    steps_ahead: int,
+) -> pd.DataFrame:
     """
     Obtain forward data values by shifting.
 

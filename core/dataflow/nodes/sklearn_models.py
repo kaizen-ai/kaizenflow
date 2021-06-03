@@ -7,12 +7,12 @@ import pandas as pd
 import sklearn as sklear
 
 import core.data_adapters as cdataa
+import core.dataflow.utils as cdu
 import core.signal_processing as csigna
 import core.statistics as cstati
 import helpers.dbg as dbg
 from core.dataflow.nodes.base import FitPredictNode, GroupedColDfToDfColProcessor
 from core.dataflow.nodes.transformers import ColModeMixin
-import core.dataflow.utils as cdu
 
 _LOG = logging.getLogger(__name__)
 
