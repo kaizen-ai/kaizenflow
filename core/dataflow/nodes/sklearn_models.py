@@ -187,7 +187,7 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         df_out = self._apply_col_mode(
             df,
             df_out,
-            cols=cdu.convert_to_list(self._y_vars),
+            cols=y_vars
             col_mode=self._col_mode,
         )
         info["df_out_info"] = cdu.get_df_info_as_string(df_out)

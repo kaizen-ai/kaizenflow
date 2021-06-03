@@ -103,10 +103,10 @@ class SmaModel(FitPredictNode, ColModeMixin):
         self._handle_nans(idx, non_nan_idx)
         # Define and fit model.
         if self._must_learn_tau:
-            fwd_y_df = forward_y_df.loc[non_nan_idx]
+            forward_y_df= forward_y_df.loc[non_nan_idx]
             # Prepare forward y_vars in sklearn format.
             fwd_y_fit = cdataa.transform_to_sklearn(
-                fwd_y_df, fwd_y_df.columns.tolist()
+                forward_y_df, forward_y_df.columns.tolist()
             )
             # Prepare `x_vars` in sklearn format.
             x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], self._col)
