@@ -11,6 +11,7 @@ import sklearn as sklear
 import core.config as cconfi
 import core.config_builders as ccbuild
 import core.data_adapters as cdataa
+import core.dataflow.utils as cdu
 import core.finance as cfinan
 import core.signal_processing as csigna
 import core.statistics as cstati
@@ -23,12 +24,6 @@ from core.dataflow.nodes.base import (
 )
 from core.dataflow.nodes.sources import ReadDataFromDf
 from core.dataflow.nodes.transformers import ColumnTransformer
-from core.dataflow.utils import (
-    convert_to_list,
-    get_df_info_as_string,
-    merge_dataframes,
-    validate_df_indices,
-)
 from core.dataflow.visitors import extract_info
 
 _LOG = logging.getLogger(__name__)
@@ -69,7 +64,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
         :param nan_mode: as in `ContinuousSkLearnModel`
         """
         super().__init__(nid)
-        self._col = convert_to_list(col)
+        self._col = cdu.convert_to_list(col)
         dbg.dassert_eq(len(self._col), 1)
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(
@@ -90,7 +85,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
         self._metric = sklear.metrics.mean_absolute_error
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        validate_df_indices(df_in)
+        cdu.validate_df_indices(df_in)
         df = df_in.copy()
         # Obtain index slice for which forward targets exist.
         dbg.dassert_lt(self._steps_ahead, df.index.size)
@@ -98,8 +93,9 @@ class SmaModel(FitPredictNode, ColModeMixin):
         # Determine index where no `x_vars` are NaN.
         non_nan_idx_x = df.loc[idx][self._col].dropna().index
         # Determine index where target is not NaN.
-        fwd_y_df = self._get_fwd_y_df(df).loc[idx].dropna()
-        non_nan_idx_fwd_y = fwd_y_df.dropna().index
+        forward_y_df = cdu.get_forward_cols(df, self._col, self._steps_ahead)
+        forward_y_df = forward_y_df.loc[idx].dropna()
+        non_nan_idx_fwd_y = forward_y_df.dropna().index
         # Intersect non-NaN indices.
         non_nan_idx = non_nan_idx_x.intersection(non_nan_idx_fwd_y)
         dbg.dassert(not non_nan_idx.empty)
@@ -107,10 +103,10 @@ class SmaModel(FitPredictNode, ColModeMixin):
         self._handle_nans(idx, non_nan_idx)
         # Define and fit model.
         if self._must_learn_tau:
-            fwd_y_df = fwd_y_df.loc[non_nan_idx]
+            forward_y_df= forward_y_df.loc[non_nan_idx]
             # Prepare forward y_vars in sklearn format.
             fwd_y_fit = cdataa.transform_to_sklearn(
-                fwd_y_df, fwd_y_df.columns.tolist()
+                forward_y_df, forward_y_df.columns.tolist()
             )
             # Prepare `x_vars` in sklearn format.
             x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], self._col)
@@ -121,7 +117,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
         )
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        validate_df_indices(df_in)
+        cdu.validate_df_indices(df_in)
         df = df_in.copy()
         idx = df.index
         # Restrict to times where col has no NaNs.
@@ -138,6 +134,14 @@ class SmaModel(FitPredictNode, ColModeMixin):
             df_in, idx, non_nan_idx, fit=False
         )
 
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {"_tau": self._tau, "_info['fit']": self._info["fit"]}
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
+        self._tau = fit_state["_tau"]
+        self._info["fit"] = fit_state["_info['fit']"]
+
     def _predict_and_package_results(
         self,
         df_in: pd.DataFrame,
@@ -147,14 +151,15 @@ class SmaModel(FitPredictNode, ColModeMixin):
     ) -> Dict[str, pd.DataFrame]:
         data = cdataa.transform_to_sklearn(df_in.loc[non_nan_idx], self._col)
         fwd_y_hat = self._predict(data)
-        fwd_y_df = self._get_fwd_y_df(df_in).loc[non_nan_idx]
+        forward_y_df = cdu.get_forward_cols(df_in, self._col, self._steps_ahead)
+        forward_y_df = forward_y_df.loc[non_nan_idx]
         # Put predictions in dataflow dataframe format.
-        fwd_y_hat_vars = [f"{y}_hat" for y in fwd_y_df.columns]
+        fwd_y_hat_vars = [f"{y}_hat" for y in forward_y_df.columns]
         fwd_y_hat = cdataa.transform_from_sklearn(
             non_nan_idx, fwd_y_hat_vars, fwd_y_hat
         )
         # Return targets and predictions.
-        df_out = fwd_y_df.reindex(idx).merge(
+        df_out = forward_y_df.reindex(idx).merge(
             fwd_y_hat.reindex(idx), left_index=True, right_index=True
         )
         dbg.dassert_no_duplicates(df_out.columns)
@@ -166,29 +171,12 @@ class SmaModel(FitPredictNode, ColModeMixin):
         info = collections.OrderedDict()
         info["tau"] = self._tau
         info["min_periods"] = self._get_min_periods(self._tau)
-        info["df_out_info"] = get_df_info_as_string(df_out)
+        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
         if fit:
             self._set_info("fit", info)
         else:
             self._set_info("predict", info)
         return {"df_out": df_out}
-
-    def get_fit_state(self) -> Dict[str, Any]:
-        fit_state = {"_tau": self._tau, "_info['fit']": self._info["fit"]}
-        return fit_state
-
-    def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
-        self._tau = fit_state["_tau"]
-        self._info["fit"] = fit_state["_info['fit']"]
-
-    def _get_fwd_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Return dataframe of `steps_ahead` forward y values.
-        """
-        mapper = lambda y: str(y) + "_%i" % self._steps_ahead
-        # TODO(Paul): Ensure that `fwd_y_vars` and `y_vars` do not overlap.
-        fwd_y_df = df[self._col].shift(-self._steps_ahead).rename(columns=mapper)
-        return fwd_y_df
 
     def _handle_nans(
         self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
@@ -560,9 +548,9 @@ class VolatilityModel(
         self._info["fit"] = fit_state["_info['fit']"]
 
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
-        validate_df_indices(df_in)
+        cdu.validate_df_indices(df_in)
         # Get the columns.
-        self._fit_cols = convert_to_list(self._cols or df_in.columns.tolist())
+        self._fit_cols = cdu.convert_to_list(self._cols or df_in.columns.tolist())
         df = df_in[self._fit_cols]
         dfs, info = self._fit_predict_volatility_model(df, fit=fit)
         df_out = pd.concat(dfs.values(), axis=1)
@@ -642,13 +630,13 @@ class MultiindexVolatilityModel(FitPredictNode, _MultiColVolatilityModelMixin):
         self._info["fit"] = fit_state["_info['fit']"]
 
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
-        validate_df_indices(df_in)
+        cdu.validate_df_indices(df_in)
         df = SeriesToDfColProcessor.preprocess(df_in, self._in_col_group)
         dfs, info = self._fit_predict_volatility_model(
             df, fit=fit, out_col_prefix=self._out_col_prefix
         )
         df_out = SeriesToDfColProcessor.postprocess(dfs, self._out_col_group)
-        df_out = merge_dataframes(df_in, df_out)
+        df_out = cdu.merge_dataframes(df_in, df_out)
         if fit:
             self._set_info("fit", info)
         else:
@@ -708,7 +696,7 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
         :param col_mode: as in `ColumnTransformer`
         """
         super().__init__(nid)
-        self._signal_cols = convert_to_list(signal_cols)
+        self._signal_cols = cdu.convert_to_list(signal_cols)
         self._volatility_col = volatility_col
         dbg.dassert_lte(0, signal_steps_ahead)
         self._signal_steps_ahead = signal_steps_ahead
@@ -723,14 +711,14 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df_out = self._process_signal(df_in)
         info = collections.OrderedDict()
-        info["df_out_info"] = get_df_info_as_string(df_out)
+        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df_out = self._process_signal(df_in)
         info = collections.OrderedDict()
-        info["df_out_info"] = get_df_info_as_string(df_out)
+        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
