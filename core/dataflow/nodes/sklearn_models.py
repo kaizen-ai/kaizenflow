@@ -94,7 +94,7 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         non_nan_idx_x = df.loc[idx][x_vars].dropna().index
         # Determine index where target is not NaN.
         y_vars = cdu.convert_to_list(self._y_vars)
-        forward_y_df = cdu.get_forward_cols(df, y_vars, self._steps_ahead)
+        forward_y_df = cdu.get_forward_col(df, y_vars, self._steps_ahead)
         forward_y_df = forward_y_df.loc[idx].dropna()
         non_nan_idx_forward_y = forward_y_df.dropna().index
         # Intersect non-NaN indices.
@@ -164,7 +164,7 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         forward_y_hat = self._model.predict(x_predict)
         # Put predictions in dataflow dataframe format.
         y_vars = cdu.convert_to_list(self._y_vars)
-        forward_y_df = cdu.get_forward_cols(df, y_vars, self._steps_ahead)
+        forward_y_df = cdu.get_forward_col(df, y_vars, self._steps_ahead)
         forward_y_df = forward_y_df.loc[non_nan_idx]
         forward_y_non_nan_idx = forward_y_df.dropna().index
         forward_y_hat_vars = [f"{y}_hat" for y in forward_y_df.columns]

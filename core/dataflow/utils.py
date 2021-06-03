@@ -1,6 +1,6 @@
 import io
 import logging
-from typing import Callable, List, Union
+from typing import Callable, List, Tuple, Union
 
 import pandas as pd
 
@@ -116,7 +116,7 @@ def convert_to_list(to_list: _TO_LIST_MIXIN_TYPE) -> List[_COL_TYPE]:
     raise TypeError("Data type=`%s`" % type(to_list))
 
 
-def get_forward_cols(df: pd.DataFrame, cols: List[_COL_TYPE], steps_ahead: int) -> pd.DataFrame:
+def get_forward_col(df: pd.DataFrame, cols: Union[List[_COL_TYPE], Tuple[_COL_TYPE]], steps_ahead: int) -> pd.DataFrame:
     """
     Obtain forward data values by shifting.
 
@@ -125,11 +125,16 @@ def get_forward_cols(df: pd.DataFrame, cols: List[_COL_TYPE], steps_ahead: int) 
         future values.
 
     :param df: input dataframe
-    :param col: columns to generate forward values for
+    :param cols: column to generate forward values for
+        - The `Tuple` type is useful for multiindexed columns
+        - The `List` type should be used with single-level columns
     :param steps_ahead: number of shifts
-    :return: dataframe of `steps_ahead` forward values of `df[cols]`
+    :return: dataframe of `steps_ahead` forward values of `df[col]`
     """
-    dbg.dassert_isinstance(cols, list)
+    if df.columns.nlevels == 1:
+        dbg.dassert_isinstance(cols, list)
+    else:
+        dbg.dassert_isinstance(cols, tuple)
     # Append to the column names the number of steps ahead generated.
     mapper = lambda x: str(x) + "_%i" % steps_ahead
     forward_df = df[cols].shift(-steps_ahead).rename(columns=mapper)
