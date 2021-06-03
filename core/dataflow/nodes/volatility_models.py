@@ -134,6 +134,14 @@ class SmaModel(FitPredictNode, ColModeMixin):
             df_in, idx, non_nan_idx, fit=False
         )
 
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {"_tau": self._tau, "_info['fit']": self._info["fit"]}
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
+        self._tau = fit_state["_tau"]
+        self._info["fit"] = fit_state["_info['fit']"]
+
     def _predict_and_package_results(
         self,
         df_in: pd.DataFrame,
@@ -169,14 +177,6 @@ class SmaModel(FitPredictNode, ColModeMixin):
         else:
             self._set_info("predict", info)
         return {"df_out": df_out}
-
-    def get_fit_state(self) -> Dict[str, Any]:
-        fit_state = {"_tau": self._tau, "_info['fit']": self._info["fit"]}
-        return fit_state
-
-    def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
-        self._tau = fit_state["_tau"]
-        self._info["fit"] = fit_state["_info['fit']"]
 
     def _handle_nans(
         self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
