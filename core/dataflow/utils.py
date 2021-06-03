@@ -144,3 +144,35 @@ def get_forward_cols(
     forward_df = df[cols].shift(-steps_ahead).rename(columns=mapper)
     dbg.dassert_not_intersection(forward_df.columns, df.columns)
     return forward_df
+
+
+def get_x_and_forward_y_df(
+    df: pd.DataFrame,
+    x_cols: List[_COL_TYPE],
+    y_cols: List[_COl_TYPE],
+    steps_ahead: int,
+) -> pd.DataFrame:
+    """
+    Return a dataframe consisting of `x_cols` and forward `y_cols`.
+
+    This function eliminates rows that contains NaNs (either in `x_cols` or in
+    the forward values of `y_cols`), which makes the resulting dataframe ready
+    for use in sklearn.
+    """
+    validate_df_indices(df)
+    # Obtain index slice for which forward targets exist.
+    dbg.dassert_lt(steps_ahead, df.index.size)
+    idx = df.index[: -steps_ahead]
+    # Determine index where no x_vars are NaN.
+    non_nan_idx_x = df.loc[idx][x_cols].dropna().index
+    # Determine index where target is not NaN.
+    forward_y_df = get_forward_cols(df, y_cols, steps_ahead)
+    forward_y_df = forward_y_df.loc[idx].dropna()
+    non_nan_idx_forward_y = forward_y_df.dropna().index
+    # Intersect non-NaN indices.
+    non_nan_idx = non_nan_idx_x.intersection(non_nan_idx_forward_y)
+    dbg.dassert(not non_nan_idx.empty)
+    x_df = df.loc[non_nan_idx][x_cols]
+    forward_y_df = forward_y_df.loc[non_nan_idx]
+    df_out = merge_dataframes(x_df, forward_y_df)
+    return df_out

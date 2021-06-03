@@ -85,35 +85,26 @@ class SmaModel(FitPredictNode, ColModeMixin):
         self._metric = sklear.metrics.mean_absolute_error
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        cdu.validate_df_indices(df_in)
-        df = df_in.copy()
-        # Obtain index slice for which forward targets exist.
-        dbg.dassert_lt(self._steps_ahead, df.index.size)
         idx = df.index[: -self._steps_ahead]
-        # Determine index where no `x_vars` are NaN.
-        non_nan_idx_x = df.loc[idx][self._col].dropna().index
-        # Determine index where target is not NaN.
-        forward_y_df = cdu.get_forward_cols(df, self._col, self._steps_ahead)
-        forward_y_df = forward_y_df.loc[idx].dropna()
-        non_nan_idx_fwd_y = forward_y_df.dropna().index
-        # Intersect non-NaN indices.
-        non_nan_idx = non_nan_idx_x.intersection(non_nan_idx_fwd_y)
-        dbg.dassert(not non_nan_idx.empty)
+        x_vars = self._col
+        y_vars = self._col
+        df = cdu.get_x_and_forward_y_df(df_in, x_vars, y_vars, self._steps_ahead)
+        forward_y_cols = df[~x_vars].columns
         # Handle presence of NaNs according to `nan_mode`.
-        self._handle_nans(idx, non_nan_idx)
+        self._handle_nans(idx, df.index)
         # Define and fit model.
         if self._must_learn_tau:
-            forward_y_df= forward_y_df.loc[non_nan_idx]
+            forward_y_df = df[forward_y_cols]
             # Prepare forward y_vars in sklearn format.
-            fwd_y_fit = cdataa.transform_to_sklearn(
+            forward_y_fit = cdataa.transform_to_sklearn(
                 forward_y_df, forward_y_df.columns.tolist()
             )
             # Prepare `x_vars` in sklearn format.
-            x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], self._col)
-            self._tau = self._learn_tau(x_fit, fwd_y_fit)
+            x_fit = cdataa.transform_to_sklearn(df.index, self._col)
+            self._tau = self._learn_tau(x_fit, forward_y_fit)
         _LOG.debug("tau=%s", self._tau)
         return self._predict_and_package_results(
-            df_in, idx, non_nan_idx, fit=True
+            df_in, idx, df.index, fit=True
         )
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
