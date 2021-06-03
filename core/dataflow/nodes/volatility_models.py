@@ -93,7 +93,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
         # Determine index where no `x_vars` are NaN.
         non_nan_idx_x = df.loc[idx][self._col].dropna().index
         # Determine index where target is not NaN.
-        forward_y_df = cdu.get_forward_col(df, self._col, self._steps_ahead)
+        forward_y_df = cdu.get_forward_cols(df, self._col, self._steps_ahead)
         forward_y_df = forward_y_df.loc[idx].dropna()
         non_nan_idx_fwd_y = forward_y_df.dropna().index
         # Intersect non-NaN indices.
@@ -151,7 +151,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
     ) -> Dict[str, pd.DataFrame]:
         data = cdataa.transform_to_sklearn(df_in.loc[non_nan_idx], self._col)
         fwd_y_hat = self._predict(data)
-        forward_y_df = cdu.get_forward_col(df_in, self._col, self._steps_ahead)
+        forward_y_df = cdu.get_forward_cols(df_in, self._col, self._steps_ahead)
         forward_y_df = forward_y_df.loc[non_nan_idx]
         # Put predictions in dataflow dataframe format.
         fwd_y_hat_vars = [f"{y}_hat" for y in forward_y_df.columns]

@@ -133,7 +133,7 @@ class ContinuousSarimaxModel(FitPredictNode, ColModeMixin):
         fwd_y_hat = self._predict(y_fit, x_fit)
         # Package results.
         y_vars = cdu.convert_to_list(self._y_vars)
-        forward_y_df = cdu.get_forward_col(df, y_vars, self._steps_ahead)
+        forward_y_df = cdu.get_forward_cols(df, y_vars, self._steps_ahead)
         df_out = forward_y_df.merge(
             fwd_y_hat, how="outer", left_index=True, right_index=True
         )
@@ -175,7 +175,7 @@ class ContinuousSarimaxModel(FitPredictNode, ColModeMixin):
         fwd_y_hat = self._predict(y_predict, x_predict)
         # Package results.
         y_vars = cdu.convert_to_list(self._y_vars)
-        forward_y_df = cdu.get_forward_col(df, y_vars, self._steps_ahead)
+        forward_y_df = cdu.get_forward_cols(df, y_vars, self._steps_ahead)
         df_out = forward_y_df.merge(
             fwd_y_hat, how="outer", left_index=True, right_index=True
         )

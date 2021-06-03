@@ -116,7 +116,7 @@ def convert_to_list(to_list: _TO_LIST_MIXIN_TYPE) -> List[_COL_TYPE]:
     raise TypeError("Data type=`%s`" % type(to_list))
 
 
-def get_forward_col(
+def get_forward_cols(
     df: pd.DataFrame,
     cols: Union[List[_COL_TYPE], Tuple[_COL_TYPE]],
     steps_ahead: int,
