@@ -12,12 +12,7 @@ import core.statistics as cstati
 import helpers.dbg as dbg
 from core.dataflow.nodes.base import FitPredictNode, GroupedColDfToDfColProcessor
 from core.dataflow.nodes.transformers import ColModeMixin
-from core.dataflow.utils import (
-    convert_to_list,
-    get_df_info_as_string,
-    merge_dataframes,
-    validate_df_indices,
-)
+import core.dataflow.utils as cdu
 
 _LOG = logging.getLogger(__name__)
 
@@ -89,16 +84,18 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        validate_df_indices(df_in)
+        cdu.validate_df_indices(df_in)
         df = df_in.copy()
         # Obtain index slice for which forward targets exist.
         dbg.dassert_lt(self._steps_ahead, df.index.size)
         idx = df.index[: -self._steps_ahead]
         # Determine index where no x_vars are NaN.
-        x_vars = convert_to_list(self._x_vars)
+        x_vars = cdu.convert_to_list(self._x_vars)
         non_nan_idx_x = df.loc[idx][x_vars].dropna().index
         # Determine index where target is not NaN.
-        forward_y_df = self._get_forward_y_df(df).loc[idx].dropna()
+        y_vars = cdu.convert_to_list(self._y_vars)
+        forward_y_df = cdu.get_forward_cols(df, y_vars, self._steps_ahead)
+        forward_y_df = forward_y_df.loc[idx].dropna()
         non_nan_idx_forward_y = forward_y_df.dropna().index
         # Intersect non-NaN indices.
         non_nan_idx = non_nan_idx_x.intersection(non_nan_idx_forward_y)
@@ -141,20 +138,20 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         df_out = self._apply_col_mode(
             df,
             df_out,
-            cols=convert_to_list(self._y_vars),
+            cols=cdu.convert_to_list(self._y_vars),
             col_mode=self._col_mode,
         )
         # Update `info`.
-        info["df_out_info"] = get_df_info_as_string(df_out)
+        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        validate_df_indices(df_in)
+        cdu.validate_df_indices(df_in)
         df = df_in.copy()
         idx = df.index
         # Restrict to times where x_vars have no NaNs.
-        x_vars = convert_to_list(self._x_vars)
+        x_vars = cdu.convert_to_list(self._x_vars)
         non_nan_idx = df.loc[idx][x_vars].dropna().index
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, non_nan_idx)
@@ -166,7 +163,9 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         )
         forward_y_hat = self._model.predict(x_predict)
         # Put predictions in dataflow dataframe format.
-        forward_y_df = self._get_forward_y_df(df).loc[non_nan_idx]
+        y_vars = cdu.convert_to_list(self._y_vars)
+        forward_y_df = cdu.get_forward_cols(df, y_vars, self._steps_ahead)
+        forward_y_df = forward_y_df.loc[non_nan_idx]
         forward_y_non_nan_idx = forward_y_df.dropna().index
         forward_y_hat_vars = [f"{y}_hat" for y in forward_y_df.columns]
         forward_y_hat = cdataa.transform_from_sklearn(
@@ -188,10 +187,10 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         df_out = self._apply_col_mode(
             df,
             df_out,
-            cols=convert_to_list(self._y_vars),
+            cols=cdu.convert_to_list(self._y_vars),
             col_mode=self._col_mode,
         )
-        info["df_out_info"] = get_df_info_as_string(df_out)
+        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
@@ -202,16 +201,6 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
     def set_fit_state(self, fit_state: Dict[str, Any]):
         self._model = fit_state["_model"]
         self._info["fit"] = fit_state["_info['fit']"]
-
-    def _get_forward_y_df(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Return dataframe of `steps_ahead` forward y values.
-        """
-        y_vars = convert_to_list(self._y_vars)
-        mapper = lambda y: str(y) + "_%i" % self._steps_ahead
-        # TODO(Paul): Ensure that `forward_y_vars` and `y_vars` do not overlap.
-        forward_y_df = df[y_vars].shift(-self._steps_ahead).rename(columns=mapper)
-        return forward_y_df
 
     def _handle_nans(
         self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
@@ -321,7 +310,7 @@ class MultiindexSkLearnModel(FitPredictNode):
         self._info["fit"] = fit_state["_info['fit']"]
 
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
-        validate_df_indices(df_in)
+        cdu.validate_df_indices(df_in)
         dfs = GroupedColDfToDfColProcessor.preprocess(df_in, self._in_col_groups)
         results = {}
         info = collections.OrderedDict()
@@ -350,7 +339,7 @@ class MultiindexSkLearnModel(FitPredictNode):
             results, self._out_col_group
         )
         df_out = df_out.reindex(df_in.index)
-        df_out = merge_dataframes(df_in, df_out)
+        df_out = cdu.merge_dataframes(df_in, df_out)
         if fit:
             self._set_info("fit", info)
         else:
@@ -410,7 +399,7 @@ class SkLearnModel(FitPredictNode, ColModeMixin):
         df_out = self._apply_col_mode(
             df, y_hat, cols=y_vars, col_mode=self._col_mode
         )
-        info["df_out_info"] = get_df_info_as_string(df_out)
+        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
@@ -434,7 +423,7 @@ class SkLearnModel(FitPredictNode, ColModeMixin):
         df_out = self._apply_col_mode(
             df, y_hat, cols=y_vars, col_mode=self._col_mode
         )
-        info["df_out_info"] = get_df_info_as_string(df_out)
+        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
@@ -472,8 +461,8 @@ class SkLearnModel(FitPredictNode, ColModeMixin):
     def _to_sklearn_format(
         self, df: pd.DataFrame
     ) -> Tuple[List[_COL_TYPE], np.array, List[_COL_TYPE], np.array]:
-        x_vars = convert_to_list(self._x_vars)
-        y_vars = convert_to_list(self._y_vars)
+        x_vars = cdu.convert_to_list(self._x_vars)
+        y_vars = cdu.convert_to_list(self._y_vars)
         x_vals, y_vals = cdataa.transform_to_sklearn_old(df, x_vars, y_vars)
         return x_vars, x_vals, y_vars, y_vals
 
