@@ -1,6 +1,8 @@
 import logging
+import os
 import re
 import tempfile
+from typing import List
 
 import helpers.dbg as dbg
 import helpers.system_interaction as hsyste
@@ -99,3 +101,121 @@ class Test_system2(hut.TestCase):
         exp = hsyste.system_to_string("uname -s")[1]
         _LOG.debug("exp=%s", exp)
         self.assertEqual(act, exp)
+
+
+# #############################################################################
+
+
+class Test_compute_file_signature1(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Compute the signature of a file using 1 enclosing dir.
+        """
+        file_name = "/app/amp/core/test/TestCheckSameConfigs.test_check_same_configs_error/output/test.txt"
+        dir_depth = 1
+        act = hsyste._compute_file_signature(file_name, dir_depth=dir_depth)
+        exp = ["output", "test.txt"]
+        self.assert_equal(str(act), str(exp))
+
+    def test2(self) -> None:
+        """
+        Compute the signature of a file using 2 enclosing dirs.
+        """
+        file_name = "/app/amp/core/test/TestCheckSameConfigs.test_check_same_configs_error/output/test.txt"
+        dir_depth = 2
+        act = hsyste._compute_file_signature(file_name, dir_depth=dir_depth)
+        exp = [
+            "TestCheckSameConfigs.test_check_same_configs_error",
+            "output",
+            "test.txt",
+        ]
+        self.assert_equal(str(act), str(exp))
+
+
+# #############################################################################
+
+
+class Test_find_file_with_dir1(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Check whether we can find this file using one enclosing dir.
+        """
+        # Use this file.
+        file_name = "helpers/test/test_system_interaction.py"
+        dir_depth = 1
+        act = hsyste.find_file_with_dir(file_name, dir_depth=dir_depth)
+        exp = r"""['helpers/test/test_system_interaction.py']"""
+        self.assert_equal(str(act), str(exp))
+
+    def test2(self) -> None:
+        """
+        Check whether we can find a test golden output using different number
+        of enclosing dirs.
+
+        With only 1 enclosing dir, we can't find it.
+        """
+        # Use only one dir which is not enough to identify the file.
+        # E.g., .../test/TestSqlWriterBackend1.test_insert_tick_data1/output/test.txt
+        dir_depth = 1
+        mode = "return_all_results"
+        act = self._helper(dir_depth, mode)
+        # For sure there are more than 100 tests.
+        self.assertGreater(len(act), 100)
+
+    def test3(self) -> None:
+        """
+        Like `test2`, but using 2 levels for sure we are going to identify the
+        file.
+        """
+        dir_depth = 2
+        mode = "return_all_results"
+        act = self._helper(dir_depth, mode)
+        _LOG.debug("Found %d matching files", len(act))
+        # There should be a single match.
+        exp = (
+            r"""['helpers/test/Test_find_file_with_dir1.test3/output/test.txt']"""
+        )
+        self.assert_equal(str(act), str(exp))
+        self.assertEqual(len(act), 1)
+
+    def test4(self) -> None:
+        """
+        Like `test2`, but using 2 levels for sure we are going to identify the
+        file and asserting in case we don't find a single result.
+        """
+        dir_depth = 2
+        mode = "assert_unless_one_result"
+        act = self._helper(dir_depth, mode)
+        _LOG.debug("Found %d matching files", len(act))
+        # There should be a single match.
+        exp = (
+            r"""['helpers/test/Test_find_file_with_dir1.test4/output/test.txt']"""
+        )
+        self.assert_equal(str(act), str(exp))
+        self.assertEqual(len(act), 1)
+
+    def test5(self) -> None:
+        """
+        Like `test2`, using more level than 2, again, we should have a single
+        result.
+        """
+        dir_depth = 3
+        mode = "assert_unless_one_result"
+        act = self._helper(dir_depth, mode)
+        _LOG.debug("Found %d matching files", len(act))
+        exp = (
+            r"""['helpers/test/Test_find_file_with_dir1.test5/output/test.txt']"""
+        )
+        self.assert_equal(str(act), str(exp))
+        self.assertEqual(len(act), 1)
+
+    def _helper(self, dir_depth: int, mode: str) -> List[str]:
+        # Create a fake golden outcome to be used in this test.
+        act = "hello world"
+        self.check_string(act)
+        # E.g., helpers/test/test_system_interaction.py::Test_find_file_with_dir1::test2/test.txt
+        file_name = os.path.join(self.get_output_dir(), "test.txt")
+        _LOG.debug("file_name=%s", file_name)
+        act = hsyste.find_file_with_dir(file_name, dir_depth=dir_depth, mode=mode)
+        _LOG.debug("Found %d matching files", len(act))
+        return act

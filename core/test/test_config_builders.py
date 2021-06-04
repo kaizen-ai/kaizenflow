@@ -103,7 +103,7 @@ class TestGetConfigFromEnv(hut.TestCase):
         """
         # Test that no config is created.
         actual_config = cfgb.get_config_from_env()
-        self.assertTrue(actual_config is None)
+        self.assertIs(actual_config, None)
 
 
 # #############################################################################
@@ -208,9 +208,11 @@ class TestCheckSameConfigs(hut.TestCase):
             _get_test_config_1(),
             _get_test_config_2(),
         ]
-        # Make sure fnction raises an error.
-        with self.assertRaises(AssertionError):
-            cfgb.assert_on_duplicated_configs(configs)
+        # Make sure function raises an error.
+        with self.assertRaises(AssertionError) as cm:
+            cfgb.validate_configs(configs)
+        act = str(cm.exception)
+        self.check_string(act, fuzzy_match=True)
 
 
 class TestConfigIntersection(hut.TestCase):
@@ -331,67 +333,6 @@ class TestGetConfigDataframe(hut.TestCase):
             {"build_model.activation": ["sigmoid", "sigmoid"]}
         )
         self.assertTrue(expected_result.equals(actual_result))
-
-
-class TestAddResultDir(hut.TestCase):
-    def test_result_dir(self) -> None:
-        """
-        `Verify that `cfgb.add_result_dir` adds correct value to correct param
-        path.
-        """
-        result_dir = "test/results"
-        # Modify test config manually.
-        expected_config = _get_test_config_1()
-        expected_config[("meta", "result_dir")] = result_dir
-        # Pass test config as one-item list and apply function.
-        actual_config = [_get_test_config_1()]
-        actual_config = cfgb.add_result_dir(result_dir, actual_config)
-        # Unpack and check.
-        actual_config = actual_config[0]
-        self.assertEqual(str(expected_config), str(actual_config))
-
-
-class TestSetExperimentResultDir(hut.TestCase):
-    def test_set_experiment_result_dir(self) -> None:
-        """
-        Verify that we add correct value with `set_experiment_result_dir`.
-        """
-        # Prepare result dir name.
-        sim_dir = "/data/tests/test_results"
-        actual_config = _get_test_config_1()
-        # Set using function.
-        actual_config = cfgb.set_experiment_result_dir(sim_dir, actual_config)
-        # Set result file name manually.
-        expected_config = _get_test_config_1()
-        expected_config[
-            ("meta", "experiment_result_dir")
-        ] = "/data/tests/test_results"
-        self.assert_equal(str(expected_config), str(actual_config))
-
-
-class TestAddConfigIdx(hut.TestCase):
-    def test_add_config_idx(self) -> None:
-        """
-        Verify that `cfgb.add_config_idx` adds correct index to correct param
-        path.
-        """
-        # Assign id parameters through function.
-        actual_configs = [
-            _get_test_config_1(),
-            _get_test_config_1(),
-        ]
-        actual_configs = cfgb.add_config_idx(actual_configs)
-        # Convert configs to string for comparison.
-        actual_configs = [str(config) for config in actual_configs]
-        # Assign id parameters manually.
-        expected_config_1 = _get_test_config_1()
-        expected_config_1[("meta", "id")] = 0
-        expected_config_2 = _get_test_config_1()
-        expected_config_2[("meta", "id")] = 1
-        # Convert configs to string for comparison.
-        expected_configs = [str(expected_config_1), str(expected_config_2)]
-        # Compare config lists element-wise.
-        self.assertEqual(expected_configs, actual_configs)
 
 
 class TestGenerateDefaultConfigVariants(hut.TestCase):

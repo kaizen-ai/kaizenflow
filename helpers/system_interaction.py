@@ -196,7 +196,7 @@ def _system(
     except OSError as e:
         rc = -1
         _LOG.error("error=%s", str(e))
-    _LOG.debug("rc=%s", rc)
+    _LOG.debug("  -> rc=%s", rc)
     if abort_on_error and rc != 0:
         msg = (
             "\n"
@@ -473,27 +473,41 @@ def create_executable_script(file_name: str, content: str) -> None:
     system(cmd)
 
 
-def _compute_file_signature(file_: str) -> Tuple[str, str]:
+def _compute_file_signature(file_name: str, dir_depth: int) -> Tuple:
     """
-    Check which files match enclosing dir name and basename.
+    Compute a signature for files using basename and `dir_depth` enclosing
+    dirs.
     """
-    enclosing_dir_name = os.path.basename(os.path.dirname(file_))
-    basename = os.path.basename(file_)
-    return (enclosing_dir_name, basename)
+    # Split a file like:
+    # /app/amp/core/test/TestCheckSameConfigs.test_check_same_configs_error/output/test.txt
+    # into
+    # ['', 'app', 'amp', 'core', 'test',
+    #   'TestCheckSameConfigs.test_check_same_configs_error', 'output', 'test.txt']
+    path = os.path.normpath(file_name)
+    paths = path.split(os.sep)
+    dbg.dassert_lte(1, dir_depth)
+    dbg.dassert_lte(dir_depth + 1, len(paths))
+    signature = paths[-(dir_depth + 1) :]
+    return signature
 
 
-def find_file_with_dir(file_name: str, root_dir: str = ".") -> Optional[str]:
+def find_file_with_dir(
+    file_name: str,
+    root_dir: str = ".",
+    dir_depth: int = 1,
+    mode: str = "return_all_results",
+) -> List[str]:
     """
-    Find a file matching basename and enclosing dir name starting from
+    Find a file matching basename and several enclosing dir name starting from
     `root_dir`.
 
-    E.g., find a file matching `amp/core/dataflow_model/utils.py` by looking for a
-    file with basename 'utils.py' under a dir 'dataflow_model'.
+    E.g., find a file matching `amp/core/dataflow_model/utils.py` with `dir_depth=1`
+    means looking for a file with basename 'utils.py' under a dir 'dataflow_model'.
 
-    :return:
-        - return `None` if no matching file was found
-        - return the match, if only one matching file was found
-        - assert if more than one files matching the pattern were found
+    :param dir_depth: how many enclosing dirs in order to declare a match
+    :param mode: control the returned list of files, like in
+        `select_result_file_from_list()`
+    :return: list of files found
     """
     _LOG.debug(hprint.to_str("file_name root_dir"))
     # Find all the files in the dir with the same basename.
@@ -504,32 +518,24 @@ def find_file_with_dir(file_name: str, root_dir: str = ".") -> Optional[str]:
     # ./amp/core/dataflow_model/utils.py
     # ./amp/instrument_master/common/test/utils.py
     remove_files_non_present = False
-    mode = "return_results"
+    mode_tmp = "return_all_results"
     candidate_files = system_to_files(
-        cmd, root_dir, remove_files_non_present, mode
+        cmd, root_dir, remove_files_non_present, mode_tmp
     )
     _LOG.debug("files=\n%s", "\n".join(candidate_files))
     matching_files = []
     for file in sorted(candidate_files):
-        is_equal = _compute_file_signature(file) == _compute_file_signature(
-            file_name
-        )
+        signature1 = _compute_file_signature(file, dir_depth)
+        signature2 = _compute_file_signature(file_name, dir_depth)
+        is_equal = signature1 == signature2
         _LOG.debug("found_file=%s -> is_equal=%s", file, is_equal)
         if is_equal:
             matching_files.append(file)
     _LOG.debug(
         "Found %d files:\n%s", len(matching_files), "\n".join(matching_files)
     )
-    # Process output.
-    if len(matching_files) == 0:
-        # Found no matching file: return `None`.
-        res = None
-    elif len(matching_files) == 1:
-        # Found a single match: return the only one.
-        res = matching_files[0]
-    else:
-        # Found more than one potential match: assert.
-        dbg.dfatal("Found found_files=\n%s", "\n".join(matching_files))
+    # Select the result based on mode.
+    res = select_result_file_from_list(matching_files, mode)
     return res
 
 
@@ -573,24 +579,42 @@ def remove_dirs(files: List[str]) -> List[str]:
     return files_tmp
 
 
-# TODO(gp): In general there are 2 patterns:
-# - assert unless there is exactly one
-# - return all of them
-# We can factor out this behavior inside system_to_files.
+def select_result_file_from_list(files: List[str], mode: str) -> List[str]:
+    """
+    Select a file from a list according to various approaches encoded in
+    `mode`.
+
+    :param mode:
+        - "return_all_results": return the list of files, whatever it is
+        - "assert_unless_one_result": assert unless there is a single file and return
+          the only file. Note that we still return a list to keep the interface
+          simple.
+    """
+    res: List[str] = []
+    if mode == "assert_unless_one_result":
+        # Expect to have a single result and return that.
+        if len(files) != 1:
+            dbg.dfatal("Found multiple files:\n%s" % "\n".join(files))
+        res = [files[0]]
+    elif mode == "return_all_results":
+        # Return all files.
+        res = files
+    else:
+        dbg.dfatal("Invalid mode='%s'" % mode)
+    return res
+
+
 def system_to_files(
     cmd: str,
     dir_name: str,
     remove_files_non_present: bool,
-    mode: str = "return_results",
+    mode: str = "return_all_results",
 ) -> List[str]:
     """
     Execute command `cmd` in `dir_name` and return the output as a list of
     strings.
 
-    :param mode: controls how the output is processed
-        - "return_results" (default): return the list of files, whatever it is
-        - "assert_unless_result": assert unless there is a single file. Note that we
-           still return a list
+    :param mode: like in `select_result_file_from_list()`
     """
     if dir_name is None:
         dir_name = "."
@@ -610,9 +634,7 @@ def system_to_files(
     if remove_files_non_present:
         files = remove_file_non_present(files)
     # Process output.
-    if mode == "assert_unless_one_result":
-        if len(files) != 1:
-            dbg.dfatal("Found multiple files=\n%s", "\n".join(files))
+    files = select_result_file_from_list(files, mode)
     return files
 
 

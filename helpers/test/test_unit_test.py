@@ -237,7 +237,7 @@ completed       success Lint    Slow_tests
         act = hut.purify_txt_from_client(act)
         exp = '''
 --------------------------------------------------------------------------------
-ACTUAL vs EXPECTED
+ACTUAL vs EXPECTED: Test_AssertEqual1.test_not_equal1
 --------------------------------------------------------------------------------
 
                                                                           (
@@ -249,15 +249,14 @@ Diff with:
 or running:
 > ./tmp_diff.sh
 --------------------------------------------------------------------------------
-The expected variable should be
+EXPECTED VARIABLE: Test_AssertEqual1.test_not_equal1
 --------------------------------------------------------------------------------
 exp = r"""
 completed failure Lint    Run_linter
 completed       success Lint    Fast_tests
 completed       success Lint    Slow_tests
 """'''
-        # For debugging: don't commit with this enabled.
-        if False:
+        if act != exp:
             hio.to_file("act.txt", act)
             hio.to_file("exp.txt", exp)
             self.assert_equal(act, exp, fuzzy_match=False)

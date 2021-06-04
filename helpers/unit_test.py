@@ -28,6 +28,7 @@ import helpers.timer as htimer
 
 # Minimize dependencies from installed packages.
 
+# TODO(gp): Use `hprint.color_highlight`.
 _WARNING = "\033[33mWARNING\033[0m"
 
 try:
@@ -62,7 +63,7 @@ _LOG.setLevel(logging.INFO)
 # Global setter / getter for updating test.
 
 # This controls whether the output of a test is updated or not.
-# Set by conftest.py.
+# Set by `conftest.py`.
 _UPDATE_TESTS = False
 
 
@@ -100,12 +101,12 @@ _CONFTEST_IN_PYTEST = False
 
 
 # TODO(gp): Use https://stackoverflow.com/questions/25188119
-# -> is_in_unit_test()
+# TODO(gp): -> is_in_unit_test()
 def in_unit_test_mode() -> bool:
     """
     Return True if we are inside a pytest run.
 
-    This is set by conftest.py.
+    This is set by `conftest.py`.
     """
     return _CONFTEST_IN_PYTEST
 
@@ -113,17 +114,29 @@ def in_unit_test_mode() -> bool:
 # #############################################################################
 
 
-# Set by conftest.py.
+# Set by `conftest.py`.
 _GLOBAL_CAPSYS = None
 
 
 def pytest_print(txt: str) -> None:
     """
-    Print independently of the pytest output capture.
+    Print bypassing `pytest` output capture.
     """
-
     with _GLOBAL_CAPSYS.disabled():  # type: ignore
         sys.stdout.write(txt)
+
+
+def pytest_warning(txt: str, prefix: str = "") -> None:
+    """
+    Print a warning bypassing `pytest` output capture.
+
+    :param prefix: prepend the message with a string
+    """
+    txt_tmp = ""
+    if prefix:
+        txt_tmp += prefix
+    txt_tmp += hprint.color_highlight("WARNING", "yellow") + f": {txt}"
+    pytest_print(txt_tmp)
 
 
 # #############################################################################
@@ -173,14 +186,14 @@ def convert_info_to_string(info: Mapping) -> str:
     """
     Convert info to string for verifying test results.
 
-    Info often contains pd.Series, so pandas context is provided
-    to print all rows and all contents.
+    Info often contains `pd.Series`, so pandas context is provided to print all rows
+    and all contents.
 
     :param info: info to convert to string
     :return: string representation of info
     """
     output = []
-    # Provide context for full representation of pd.Series in info.
+    # Provide context for full representation of `pd.Series` in info.
     with pd.option_context(
         "display.max_colwidth",
         int(1e6),
@@ -202,7 +215,7 @@ def convert_df_to_json_string(
     columns_order: Optional[List[str]] = None,
 ) -> str:
     """
-    Convert dataframe to pretty-printed json string.
+    Convert dataframe to pretty-printed JSON string.
 
     To select all rows of the dataframe, pass `n_head` as None.
 
@@ -668,7 +681,7 @@ def _fuzzy_clean(txt: str) -> str:
     return txt
 
 
-# TODO(gp): Use the one in hprint.
+# TODO(gp): Use the one in hprint. Is it even needed?
 def _to_pretty_string(obj: str) -> str:
     if isinstance(obj, dict):
         ret = pprint.pformat(obj)
@@ -691,6 +704,8 @@ def _assert_equal(
 ) -> bool:
     """
     Same interface as in `assert_equal()`.
+
+    :param full_test_name: e.g., `TestRunNotebook1.test2`
     """
     _LOG.debug(
         hprint.to_str(
@@ -729,7 +744,7 @@ def _assert_equal(
         #   2021-02-17 11:00:00-05:00
         #   """
         txt = []
-        txt.append(hprint.frame("The expected variable should be", "-"))
+        txt.append(hprint.frame(f"EXPECTED VARIABLE: {full_test_name}", "-"))
         # We always return the variable exactly as this should be, even if we could
         # make it look better through indentation in case of fuzzy match.
         txt.append(f'exp = r"""{actual_orig}"""')
@@ -738,14 +753,15 @@ def _assert_equal(
         # Select what to save.
         compare_orig = False
         if compare_orig:
-            tag = "(ORIGINAL) ACTUAL vs EXPECTED"
+            tag = "ORIGINAL ACTUAL vs EXPECTED"
             actual = actual_orig
             expected = expected_orig
         else:
             if fuzzy_match:
-                tag = "(FUZZY) ACTUAL vs EXPECTED"
+                tag = "FUZZY ACTUAL vs EXPECTED"
             else:
                 tag = "ACTUAL vs EXPECTED"
+        tag += f": {full_test_name}"
         # Save the actual and expected strings to files.
         act_file_name = "%s/tmp.actual.txt" % test_dir
         hio.to_file(act_file_name, actual)
@@ -793,7 +809,6 @@ class TestCase(unittest.TestCase):
         _LOG.debug("base_dir_name=%s", self._base_dir_name)
         # Store whether a test needs to be updated or not.
         self._update_tests = get_update_tests()
-        print("Setting to %s", get_update_tests())
         self._overriden_update_tests = False
         # Store whether the golden outcome of this test was updated.
         self._test_was_updated = False
@@ -815,11 +830,7 @@ class TestCase(unittest.TestCase):
         # Report if the test was updated
         if self._test_was_updated:
             if not self._overriden_update_tests:
-                pytest_print(
-                    "("
-                    + hprint.color_highlight("WARNING", "yellow")
-                    + ": Test was updated) ",
-                )
+                pytest_warning("Test was updated) ", prefix="(")
             else:
                 # We forced an update from the unit test itself, so no need
                 # to report an update.
@@ -1106,9 +1117,6 @@ class TestCase(unittest.TestCase):
                     )
             else:
                 # No golden outcome available: save the result.
-                _LOG.warning(
-                    "Can't find golden outcome file '%s': updating it", file_name
-                )
                 outcome_updated = True
                 self._check_df_update_outcome(file_name, actual)
                 is_equal = None
@@ -1123,14 +1131,30 @@ class TestCase(unittest.TestCase):
         Add to git repo `file_name`, if needed.
         """
         if self._git_add:
-            cmd = "git add %s; git add -u %s" % (file_name, file_name)
-            _LOG.debug("> %s", cmd)
+            # We need at least two dir to disambiguate.
+            dir_depth = 2
+            # Find the file relative to here.
+            super_module = None
+            file_name_tmp = git.purify_docker_file_from_git_client(
+                file_name, super_module, dir_depth=dir_depth
+            )
+            _LOG.debug(hprint.to_str("file_name file_name_tmp"))
+            if file_name_tmp.startswith("amp"):
+                # To add a file like
+                # amp/core/test/TestCheckSameConfigs.test_check_same_configs_error/output/test.txt
+                # we need to descend into `amp`.
+                file_name_in_amp = os.path.relpath(file_name_tmp, "amp")
+                cmd = "cd amp; git add -u %s" % file_name_in_amp
+            else:
+                cmd = "git add -u %s" % file_name_tmp
             rc = hsinte.system(cmd, abort_on_error=False)
             if rc:
-                _LOG.warning(
-                    "Can't run '%s': you need to add the file manually",
-                    cmd,
+                pytest_warning(
+                    f"Can't git add file\n'{file_name}' -> '{file_name_tmp}'\n"
+                    "You need to git add the file manually\n",
+                    prefix="\n",
                 )
+                pytest_print(f"> {cmd}\n")
 
     def _check_string_update_outcome(
         self, file_name: str, actual: str, use_gzip: bool
@@ -1150,6 +1174,7 @@ class TestCase(unittest.TestCase):
         _LOG.debug(hprint.to_str("file_name"))
         hio.create_enclosing_dir(file_name)
         actual.to_csv(file_name)
+        pytest_warning(f"Update golden outcome file '{file_name}'", prefix="\n")
         # Add to git repo.
         self._git_add_file(file_name)
 
