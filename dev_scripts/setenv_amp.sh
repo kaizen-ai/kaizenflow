@@ -82,7 +82,11 @@ echo "which gh="$(which gh)
 # > alias invoke="invoke $INVOKE_OPTS"
 alias i="invoke"
 alias it="invoke traceback"
+alias itpb="pbpaste | traceback_to_cfile.py -i - -o cfile"
 alias ih="invoke --help"
 alias il="invoke --list"
+
+# Print the aliases.
+alias
 
 echo "==> SUCCESS <=="

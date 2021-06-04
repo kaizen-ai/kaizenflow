@@ -313,6 +313,7 @@ class Config:
 # TODO(gp): Maybe -> config_operations.py ?
 
 
+# TODO(gp): -> _make_hashable
 def make_hashable(obj: Any) -> collections.abc.Hashable:
     """
     Coerce `obj` to a hashable type if not already hashable.

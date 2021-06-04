@@ -538,14 +538,16 @@ def get_repo_dirs() -> List[str]:
 
 
 def purify_docker_file_from_git_client(
-    file_name: str, super_module: Optional[bool]
+    file_name: str,
+    super_module: Optional[bool],
+    dir_depth: int = 1,
 ) -> str:
     """
-    Convert a file that was generated inside Docker to a file in the current
-    dir.
+    Convert a file or dir that was generated inside Docker to a file in the
+    current Git client.
 
-    This operation is best effort since it might not be able to find a file in the
-    current repo. E.g., a file in Docker under a super-module is not in a sub-module.
+    This operation is best effort since it might not be able to find the
+    corresponding file in the current repo.
 
     E.g.,
     - A file like '/app/amp/core/dataflow_model/utils.py', in a Docker container with
@@ -557,13 +559,17 @@ def purify_docker_file_from_git_client(
     :param super_module:
         - True/False: the file is with respect to a Git repo
         - `None`: the file is returned as relative to current dir
+    :param dir_depth: same meaning as in `find_file_with_dir()`
     """
     _LOG.debug("# Processing file_name='%s'", file_name)
+    dbg.dassert_isinstance(file_name, str)
     # Clean up file name.
     file_name = os.path.normpath(file_name)
     _LOG.debug("file_name=%s", file_name)
-    #
-    file_name_tmp = hsinte.find_file_with_dir(file_name, ".")
+    mode = "assert_unless_one_result"
+    file_name_tmp = hsinte.find_file_with_dir(
+        file_name, ".", dir_depth=dir_depth, mode=mode
+    )[0]
     _LOG.debug("file_name_tmp=%s", file_name_tmp)
     if file_name_tmp is None:
         # We didn't find the file in the current client: leave the file as it was.

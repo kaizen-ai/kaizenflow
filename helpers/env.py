@@ -125,7 +125,6 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
         if version.startswith("ERROR"):
             failed_imports += 1
         packages.append((lib, version))
-    # txt.extend(["%15s: %s" % (l, v) for (l, v) in packages])
     txt_tmp.extend(["%s: %s" % (l, v) for (l, v) in packages])
     txt, txt_tmp = _append(txt, txt_tmp)
     #
