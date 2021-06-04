@@ -103,9 +103,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
             x_fit = cdataa.transform_to_sklearn(df, self._col)
             self._tau = self._learn_tau(x_fit, forward_y_fit)
         _LOG.debug("tau=%s", self._tau)
-        return self._predict_and_package_results(
-            df_in, idx, df.index, fit=True
-        )
+        return self._predict_and_package_results(df_in, idx, df.index, fit=True)
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         cdu.validate_df_indices(df_in)

@@ -94,9 +94,7 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         # Prepare x_vars in sklearn format.
         x_fit = cdataa.transform_to_sklearn(df, x_vars)
         # Prepare forward y_vars in sklearn format.
-        forward_y_fit = cdataa.transform_to_sklearn(
-            df, forward_y_cols
-        )
+        forward_y_fit = cdataa.transform_to_sklearn(df, forward_y_cols)
         # Define and fit model.
         self._model = self._model_func(**self._model_kwargs)
         self._model = self._model.fit(x_fit, forward_y_fit)
@@ -116,7 +114,9 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         for k, v in vars(self._model).items():
             model_attribute_info[k] = v
         info["model_attributes"] = model_attribute_info
-        info["insample_perf"] = self._model_perf(df[forward_y_cols], forward_y_hat)
+        info["insample_perf"] = self._model_perf(
+            df[forward_y_cols], forward_y_hat
+        )
         info["insample_score"] = self._score(df[forward_y_cols], forward_y_hat)
         # Return targets and predictions.
         df_out = df[forward_y_cols].merge(

@@ -162,7 +162,7 @@ def get_x_and_forward_y_df(
     validate_df_indices(df)
     # Obtain index slice for which forward targets exist.
     dbg.dassert_lt(steps_ahead, df.index.size)
-    idx = df.index[: -steps_ahead]
+    idx = df.index[:-steps_ahead]
     # Determine index where no x_vars are NaN.
     non_nan_idx_x = df.loc[idx][x_cols].dropna().index
     # Determine index where target is not NaN.
