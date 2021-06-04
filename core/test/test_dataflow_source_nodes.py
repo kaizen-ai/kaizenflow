@@ -15,4 +15,5 @@ class TestKibotEquityReader(hut.TestCase):
             "2018-01-02 10:00:00",
         )
         df = node.fit()["df_out"]
-        self.check_dataframe(df)
+        df_str = hut.convert_df_to_string(df, index=True)
+        self.check_string(df_str)

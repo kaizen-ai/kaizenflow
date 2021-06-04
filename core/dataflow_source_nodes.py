@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Union
 import pandas as pd
 
 import core.dataflow as cdataf
+import core.finance as cfinan
 import helpers.dbg as dbg
 import instrument_master.kibot as vkibot
 
@@ -31,6 +32,8 @@ def DataSourceNodeFactory(
         return cdataf.DiskDataSource(nid, **source_node_kwargs)
     elif source_node_name == "kibot":
         return KibotDataReader(nid, **source_node_kwargs)
+    elif source_node_name == "kibot_equities":
+        return KibotEquityReader(nid, **source_node_kwargs)
     elif source_node_name == "kibot_multi_col":
         return KibotColumnReader(nid, **source_node_kwargs)
     elif source_node_name == "multivariate_normal":
@@ -219,6 +222,7 @@ class KibotEquityReader(cdataf.DataSource):
             data = data.loc[self._start_date : self._end_date]
             # Rename column for volume so that it adheres with our conventions.
             data = data.rename(columns={"vol": "volume"})
+            data = cfinan.resample_ohlcv_bars(data, rule=self._frequency.value)
             dfs[symbol] = data
         # Create a dataframe with multiindexed columns.
         df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
