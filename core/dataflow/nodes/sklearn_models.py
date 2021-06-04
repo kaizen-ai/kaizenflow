@@ -88,7 +88,7 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         x_vars = cdu.convert_to_list(self._x_vars)
         y_vars = cdu.convert_to_list(self._y_vars)
         df = cdu.get_x_and_forward_y_df(df_in, x_vars, y_vars, self._steps_ahead)
-        forward_y_cols = df[~x_vars].columns
+        forward_y_cols = df.drop(x_vars, axis=1).columns.to_list()
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, df.index)
         # Prepare x_vars in sklearn format.
@@ -124,7 +124,7 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         )
         df_out = df_out.reindex(idx)
         df_out = self._apply_col_mode(
-            df,
+            df_in,
             df_out,
             cols=y_vars,
             col_mode=self._col_mode,

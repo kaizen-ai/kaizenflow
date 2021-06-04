@@ -149,7 +149,7 @@ def get_forward_cols(
 def get_x_and_forward_y_df(
     df: pd.DataFrame,
     x_cols: List[_COL_TYPE],
-    y_cols: List[_COl_TYPE],
+    y_cols: List[_COL_TYPE],
     steps_ahead: int,
 ) -> pd.DataFrame:
     """

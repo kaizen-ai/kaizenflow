@@ -85,11 +85,11 @@ class SmaModel(FitPredictNode, ColModeMixin):
         self._metric = sklear.metrics.mean_absolute_error
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        idx = df.index[: -self._steps_ahead]
+        idx = df_in.index[: -self._steps_ahead]
         x_vars = self._col
         y_vars = self._col
         df = cdu.get_x_and_forward_y_df(df_in, x_vars, y_vars, self._steps_ahead)
-        forward_y_cols = df[~x_vars].columns
+        forward_y_cols = df.drop(x_vars, axis=1).columns
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, df.index)
         # Define and fit model.
@@ -100,7 +100,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
                 forward_y_df, forward_y_df.columns.tolist()
             )
             # Prepare `x_vars` in sklearn format.
-            x_fit = cdataa.transform_to_sklearn(df.index, self._col)
+            x_fit = cdataa.transform_to_sklearn(df, self._col)
             self._tau = self._learn_tau(x_fit, forward_y_fit)
         _LOG.debug("tau=%s", self._tau)
         return self._predict_and_package_results(
