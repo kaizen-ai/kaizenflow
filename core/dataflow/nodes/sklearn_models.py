@@ -84,40 +84,28 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        cdu.validate_df_indices(df_in)
-        df = df_in.copy()
-        # Obtain index slice for which forward targets exist.
-        dbg.dassert_lt(self._steps_ahead, df.index.size)
-        idx = df.index[: -self._steps_ahead]
-        # Determine index where no x_vars are NaN.
+        idx = df_in.index[: -self._steps_ahead]
         x_vars = cdu.convert_to_list(self._x_vars)
-        non_nan_idx_x = df.loc[idx][x_vars].dropna().index
-        # Determine index where target is not NaN.
         y_vars = cdu.convert_to_list(self._y_vars)
-        forward_y_df = cdu.get_forward_cols(df, y_vars, self._steps_ahead)
-        forward_y_df = forward_y_df.loc[idx].dropna()
-        non_nan_idx_forward_y = forward_y_df.dropna().index
-        # Intersect non-NaN indices.
-        non_nan_idx = non_nan_idx_x.intersection(non_nan_idx_forward_y)
-        dbg.dassert(not non_nan_idx.empty)
-        forward_y_df = forward_y_df.loc[non_nan_idx]
-        # Handle presence of NaNs according to `nan_mode`.
-        self._handle_nans(idx, non_nan_idx)
-        # Prepare x_vars in sklearn format.
-        x_fit = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
-        # Prepare forward y_vars in sklearn format.
-        forward_y_fit = cdataa.transform_to_sklearn(
-            forward_y_df, forward_y_df.columns.tolist()
+        df = cdu.get_x_and_forward_y_fit_df(
+            df_in, x_vars, y_vars, self._steps_ahead
         )
+        forward_y_cols = df.drop(x_vars, axis=1).columns.to_list()
+        # Handle presence of NaNs according to `nan_mode`.
+        self._handle_nans(idx, df.index)
+        # Prepare x_vars in sklearn format.
+        x_fit = cdataa.transform_to_sklearn(df, x_vars)
+        # Prepare forward y_vars in sklearn format.
+        forward_y_fit = cdataa.transform_to_sklearn(df, forward_y_cols)
         # Define and fit model.
         self._model = self._model_func(**self._model_kwargs)
         self._model = self._model.fit(x_fit, forward_y_fit)
         # Generate insample predictions and put in dataflow dataframe format.
         forward_y_hat = self._model.predict(x_fit)
         #
-        forward_y_hat_vars = [f"{y}_hat" for y in forward_y_df.columns]
+        forward_y_hat_vars = [f"{y}_hat" for y in forward_y_cols]
         forward_y_hat = cdataa.transform_from_sklearn(
-            non_nan_idx, forward_y_hat_vars, forward_y_hat
+            df.index, forward_y_hat_vars, forward_y_hat
         )
         # TODO(Paul): Summarize model perf or make configurable.
         # TODO(Paul): Consider separating model eval from fit/predict.
@@ -128,17 +116,19 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         for k, v in vars(self._model).items():
             model_attribute_info[k] = v
         info["model_attributes"] = model_attribute_info
-        info["insample_perf"] = self._model_perf(forward_y_df, forward_y_hat)
-        info["insample_score"] = self._score(forward_y_df, forward_y_hat)
+        info["insample_perf"] = self._model_perf(
+            df[forward_y_cols], forward_y_hat
+        )
+        info["insample_score"] = self._score(df[forward_y_cols], forward_y_hat)
         # Return targets and predictions.
-        df_out = forward_y_df.merge(
+        df_out = df[forward_y_cols].merge(
             forward_y_hat, how="outer", left_index=True, right_index=True
         )
         df_out = df_out.reindex(idx)
         df_out = self._apply_col_mode(
-            df,
+            df_in,
             df_out,
-            cols=cdu.convert_to_list(self._y_vars),
+            cols=y_vars,
             col_mode=self._col_mode,
         )
         # Update `info`.
