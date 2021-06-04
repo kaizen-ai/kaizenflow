@@ -146,7 +146,7 @@ def get_forward_cols(
     return forward_df
 
 
-def get_x_and_forward_y_df(
+def get_x_and_forward_y_fit_df(
     df: pd.DataFrame,
     x_cols: List[_COL_TYPE],
     y_cols: List[_COL_TYPE],

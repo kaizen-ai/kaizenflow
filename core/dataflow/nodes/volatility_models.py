@@ -88,7 +88,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
         idx = df_in.index[: -self._steps_ahead]
         x_vars = self._col
         y_vars = self._col
-        df = cdu.get_x_and_forward_y_df(df_in, x_vars, y_vars, self._steps_ahead)
+        df = cdu.get_x_and_forward_y_fit_df(df_in, x_vars, y_vars, self._steps_ahead)
         forward_y_cols = df.drop(x_vars, axis=1).columns
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, df.index)
