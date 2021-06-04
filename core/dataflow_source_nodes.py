@@ -186,6 +186,7 @@ class KibotEquityReader(cdataf.DataSource):
         Reads equity OHLCV data.
         """
         super().__init__(nid)
+        dbg.dassert_isinstance(symbols, list)
         self._symbols = symbols
         self._frequency = (
             vkibot.Frequency(frequency)
@@ -222,6 +223,7 @@ class KibotEquityReader(cdataf.DataSource):
             data = data.loc[self._start_date : self._end_date]
             # Rename column for volume so that it adheres with our conventions.
             data = data.rename(columns={"vol": "volume"})
+            # Ensure data is on a uniform frequency grid.
             data = cfinan.resample_ohlcv_bars(data, rule=self._frequency.value)
             dfs[symbol] = data
         # Create a dataframe with multiindexed columns.
