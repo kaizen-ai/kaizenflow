@@ -155,9 +155,12 @@ def get_x_and_forward_y_df(
     """
     Return a dataframe consisting of `x_cols` and forward `y_cols`.
 
-    This function eliminates rows that contains NaNs (either in `x_cols` or in
-    the forward values of `y_cols`), which makes the resulting dataframe ready
-    for use in sklearn.
+    This function eliminates rows that contains NaNs (either in `x_cols`
+    or in the forward values of `y_cols`), which makes the resulting
+    dataframe ready for use in sklearn.
+
+    TODO(*): Consider not dropping NaNs in this function but rather
+        leaving that to the caller.
     """
     validate_df_indices(df)
     # Obtain index slice for which forward targets exist.
@@ -171,8 +174,11 @@ def get_x_and_forward_y_df(
     non_nan_idx_forward_y = forward_y_df.dropna().index
     # Intersect non-NaN indices.
     non_nan_idx = non_nan_idx_x.intersection(non_nan_idx_forward_y)
+    # Ensure that the intersection is not empty.
     dbg.dassert(not non_nan_idx.empty)
+    # Define the dataframes of x and forward y values.
     x_df = df.loc[non_nan_idx][x_cols]
     forward_y_df = forward_y_df.loc[non_nan_idx]
+    # Merge x and forward y dataframes into one.
     df_out = merge_dataframes(x_df, forward_y_df)
     return df_out
