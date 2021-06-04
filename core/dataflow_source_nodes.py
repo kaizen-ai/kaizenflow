@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Union
 import pandas as pd
 
 import core.dataflow as cdataf
+import core.finance as cfinan
 import helpers.dbg as dbg
 import instrument_master.kibot as vkibot
 
@@ -31,6 +32,8 @@ def DataSourceNodeFactory(
         return cdataf.DiskDataSource(nid, **source_node_kwargs)
     elif source_node_name == "kibot":
         return KibotDataReader(nid, **source_node_kwargs)
+    elif source_node_name == "kibot_equities":
+        return KibotEquityReader(nid, **source_node_kwargs)
     elif source_node_name == "kibot_multi_col":
         return KibotColumnReader(nid, **source_node_kwargs)
     elif source_node_name == "multivariate_normal":
@@ -167,3 +170,65 @@ class KibotColumnReader(cdataf.DataSource):
             data = data.loc[self._start_date : self._end_date]
             dict_df[s] = data
         self.df = pd.DataFrame.from_dict(dict_df)
+
+
+class KibotEquityReader(cdataf.DataSource):
+    def __init__(
+        self,
+        nid: str,
+        symbols: List[str],
+        frequency: Union[str, vkibot.Frequency],
+        start_date: Optional[_PANDAS_DATE_TYPE] = None,
+        end_date: Optional[_PANDAS_DATE_TYPE] = None,
+        nrows: Optional[int] = None,
+    ) -> None:
+        """
+        Reads equity OHLCV data.
+        """
+        super().__init__(nid)
+        dbg.dassert_isinstance(symbols, list)
+        self._symbols = symbols
+        self._frequency = (
+            vkibot.Frequency(frequency)
+            if isinstance(frequency, str)
+            else frequency
+        )
+        self._start_date = start_date
+        self._end_date = end_date
+        self._nrows = nrows
+
+    def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
+        self._lazy_load()
+        return super().fit()
+
+    def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
+        self._lazy_load()
+        return super().predict()
+
+    def _lazy_load(self) -> None:
+        if self.df is not None:
+            return
+        dfs = {}
+        for symbol in self._symbols:
+            data = vkibot.KibotS3DataLoader().read_data(
+                # TODO(*): This is required, but is it used?
+                exchange="NYSE",
+                asset_class=vkibot.AssetClass.Stocks,
+                frequency=self._frequency,
+                symbol=symbol,
+                # TODO(*): Pass this through as an option.
+                unadjusted=False,
+                nrows=self._nrows,
+            )
+            data = data.loc[self._start_date : self._end_date]
+            # Rename column for volume so that it adheres with our conventions.
+            data = data.rename(columns={"vol": "volume"})
+            # Ensure data is on a uniform frequency grid.
+            data = cfinan.resample_ohlcv_bars(data, rule=self._frequency.value)
+            dfs[symbol] = data
+        # Create a dataframe with multiindexed columns.
+        df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
+        # Swap column levels so that symbols are leaves.
+        df = df.swaplevel(i=0, j=1, axis=1)
+        df.sort_index(axis=1, level=0, inplace=True)
+        self.df = df
