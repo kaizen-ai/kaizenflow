@@ -21,7 +21,6 @@ class TestRunNotebook1(hut.TestCase):
         """
         cmd = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs1()'",
-            "--skip_on_error",
             "--num_threads 'serial'",
         ]
         # pylint: enable=line-too-long
@@ -40,8 +39,8 @@ $GIT_ROOT/dev_scripts/test/TestRunNotebook1.test1/tmp.scratch/result_1/run_noteb
 $GIT_ROOT/dev_scripts/test/TestRunNotebook1.test1/tmp.scratch/result_1/simple_notebook.1.ipynb
 $GIT_ROOT/dev_scripts/test/TestRunNotebook1.test1/tmp.scratch/result_1/success.txt"""
         # pylint: disable=line-too-long
-        rc = self._run_notebook_helper(cmd, exp)
-        self.assertEqual(rc, 0)
+        exp_pass = True
+        self._run_notebook_helper(cmd, exp_pass, exp)
 
     @pytest.mark.slow
     def test2(self) -> None:
@@ -69,8 +68,8 @@ $GIT_ROOT/dev_scripts/test/TestRunNotebook1.test2/tmp.scratch/result_1/run_noteb
 $GIT_ROOT/dev_scripts/test/TestRunNotebook1.test2/tmp.scratch/result_1/simple_notebook.1.ipynb
 $GIT_ROOT/dev_scripts/test/TestRunNotebook1.test2/tmp.scratch/result_1/success.txt"""
         # pylint: disable=line-too-long
-        rc = self._run_notebook_helper(cmd, exp)
-        self.assertEqual(rc, 0)
+        exp_pass = True
+        self._run_notebook_helper(cmd, exp_pass, exp)
 
     @pytest.mark.slow
     def test3(self) -> None:
@@ -102,8 +101,8 @@ $GIT_ROOT/dev_scripts/test/TestRunNotebook1.test3/tmp.scratch/result_2/config.pk
 $GIT_ROOT/dev_scripts/test/TestRunNotebook1.test3/tmp.scratch/result_2/config.txt
 $GIT_ROOT/dev_scripts/test/TestRunNotebook1.test3/tmp.scratch/result_2/run_notebook.2.log"""
         # pylint: disable=line-too-long
-        rc = self._run_notebook_helper(cmd, exp)
-        self.assertNotEqual(rc, 0)
+        exp_pass = False
+        self._run_notebook_helper(cmd, exp_pass, exp)
 
     @staticmethod
     def _get_files() -> Tuple[str, str]:
@@ -121,7 +120,7 @@ $GIT_ROOT/dev_scripts/test/TestRunNotebook1.test3/tmp.scratch/result_2/run_noteb
         dbg.dassert_file_exists(notebook_file)
         return exec_file, notebook_file
 
-    def _run_notebook_helper(self, cmd: List[str], exp: str) -> int:
+    def _run_notebook_helper(self, cmd: List[str], exp_pass: bool, exp: str) -> None:
         # Build command line.
         dst_dir = self.get_scratch_space()
         exec_file, notebook_file = self._get_files()
@@ -133,14 +132,19 @@ $GIT_ROOT/dev_scripts/test/TestRunNotebook1.test3/tmp.scratch/result_2/run_noteb
         cmd_tmp.extend(cmd)
         cmd = " ".join(cmd_tmp)
         # Run command.
-        rc = si.system(cmd, abort_on_error=False)
+        abort_on_error = exp_pass
+        _LOG.debug("exp_pass=%s abort_on_error=%s", exp_pass, abort_on_error)
+        rc = si.system(cmd, abort_on_error=exp_pass, suppress_output=False)
+        if exp_pass:
+            self.assertEqual(rc, 0)
+        else:
+            self.assertNotEqual(rc, 0)
         # Compute and compare the dir signature.
         act = hut.get_dir_signature(
             dst_dir, include_file_content=False, num_lines=None
         )
         act = hut.purify_txt_from_client(act)
         self.assert_equal(act, exp, fuzzy_match=True)
-        return rc
 
 
 def _build_config(values: List[bool]) -> List[cfg.Config]:

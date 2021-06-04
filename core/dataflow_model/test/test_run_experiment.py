@@ -24,7 +24,6 @@ class TestRunExperiment1(hut.TestCase):
         """
         cmd = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs1()'",
-            "--skip_on_error",
             "--num_threads 'serial'",
         ]
         # pylint: enable=line-too-long
@@ -41,8 +40,8 @@ $GIT_ROOT/core/dataflow_model/test/TestRunExperiment1.test1/tmp.scratch/result_1
 $GIT_ROOT/core/dataflow_model/test/TestRunExperiment1.test1/tmp.scratch/result_1/run_experiment.1.log
 $GIT_ROOT/core/dataflow_model/test/TestRunExperiment1.test1/tmp.scratch/result_1/success.txt"""
         # pylint: disable=line-too-long
-        rc = self._run_experiment_helper(cmd, exp)
-        self.assertEqual(rc, 0)
+        exp_pass = True
+        self._run_experiment_helper(cmd, exp_pass, exp)
 
     @pytest.mark.slow
     def test2(self) -> None:
@@ -67,8 +66,8 @@ $GIT_ROOT/core/dataflow_model/test/TestRunExperiment1.test2/tmp.scratch/result_1
 $GIT_ROOT/core/dataflow_model/test/TestRunExperiment1.test2/tmp.scratch/result_1/run_experiment.1.log
 $GIT_ROOT/core/dataflow_model/test/TestRunExperiment1.test2/tmp.scratch/result_1/success.txt"""
         # pylint: disable=line-too-long
-        rc = self._run_experiment_helper(cmd, exp)
-        self.assertEqual(rc, 0)
+        exp_pass = True
+        self._run_experiment_helper(cmd, exp_pass, exp)
 
     @pytest.mark.slow
     def test3(self) -> None:
@@ -77,6 +76,7 @@ $GIT_ROOT/core/dataflow_model/test/TestRunExperiment1.test2/tmp.scratch/result_1
         """
         cmd = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
+            "--skip_on_error",
             "--num_threads 3",
         ]
         _LOG.warning("This command is supposed to fail")
@@ -98,10 +98,10 @@ $GIT_ROOT/core/dataflow_model/test/TestRunExperiment1.test3/tmp.scratch/result_2
 $GIT_ROOT/core/dataflow_model/test/TestRunExperiment1.test3/tmp.scratch/result_2/config.txt
 $GIT_ROOT/core/dataflow_model/test/TestRunExperiment1.test3/tmp.scratch/result_2/run_experiment.2.log"""
         # pylint: disable=line-too-long
-        rc = self._run_experiment_helper(cmd, exp)
-        self.assertNotEqual(rc, 0)
+        exp_pass = False
+        self._run_experiment_helper(cmd, exp_pass, exp)
 
-    def _run_experiment_helper(self, cmd: List[str], exp: str) -> int:
+    def _run_experiment_helper(self, cmd: List[str], exp_pass: bool, exp: str) -> None:
         amp_path = git.get_amp_abs_path()
         # Get the executable.
         exec_file = os.path.join(
@@ -118,11 +118,16 @@ $GIT_ROOT/core/dataflow_model/test/TestRunExperiment1.test3/tmp.scratch/result_2
         cmd_tmp.extend(cmd)
         cmd = " ".join(cmd_tmp)
         # Run command.
-        rc = si.system(cmd, abort_on_error=False)
+        abort_on_error = exp_pass
+        _LOG.debug("exp_pass=%s abort_on_error=%s", exp_pass, abort_on_error)
+        rc = si.system(cmd, abort_on_error=abort_on_error, suppress_output=False)
+        if exp_pass:
+            self.assertEqual(rc, 0)
+        else:
+            self.assertNotEqual(rc, 0)
         # Compute and compare the dir signature.
         act = hut.get_dir_signature(
             dst_dir, include_file_content=False, num_lines=None
         )
         act = hut.purify_txt_from_client(act)
         self.assert_equal(act, exp, fuzzy_match=True)
-        return rc

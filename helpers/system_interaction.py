@@ -196,7 +196,7 @@ def _system(
     except OSError as e:
         rc = -1
         _LOG.error("error=%s", str(e))
-    _LOG.debug("rc=%s", rc)
+    _LOG.debug("  -> rc=%s", rc)
     if abort_on_error and rc != 0:
         msg = (
             "\n"
