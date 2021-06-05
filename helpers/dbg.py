@@ -522,6 +522,11 @@ def dassert_not_exists(
 ) -> None:
     """
     Ensure that a file or a dir `file_name` doesn't exist, raise otherwise.
+
+    Of course, we don't need to distinguish between
+    `dassert_file_not_exists()` and `dassert_dir_not_exists()` because
+    if something doesn't exist, we can't make a distinction of what it
+    is.
     """
     file_name = os.path.abspath(file_name)
     # pylint: disable=superfluous-parens,unneeded-not
@@ -563,7 +568,7 @@ def dassert_file_extension(
 
 
 def dassert_index_is_datetime(
-    df: "pandas.DataFrame", msg: Optional[str] = None, *args: Any
+    df: "pd.DataFrame", msg: Optional[str] = None, *args: Any
 ) -> None:
     """
     Ensure that the dataframe has an index containing datetimes.
@@ -576,7 +581,7 @@ def dassert_index_is_datetime(
 
 
 def dassert_strictly_increasing_index(
-    obj: Union["pandas.Index", "pandas.DataFrame", "pandas.Series"],
+    obj: Union["pd.Index", "pd.DataFrame", "pd.Series"],
     msg: Optional[str] = None,
     *args: Any,
 ) -> None:
@@ -599,7 +604,7 @@ def dassert_strictly_increasing_index(
 #  pandas data structures.
 # TODO(gp): Not sure it's used or useful?
 def dassert_monotonic_index(
-    obj: Union["pandas.Index", "pandas.DataFrame", "pandas.Series"],
+    obj: Union["pd.Index", "pd.DataFrame", "pd.Series"],
     msg: Optional[str] = None,
     *args: Any,
 ) -> None:
@@ -687,6 +692,10 @@ class _LocalTimeZoneFormatter:
         return s
 
 
+# [mypy] error: Definition of "converter" in base class
+# "_LocalTimeZoneFormatter" is incompatible with definition in base class
+# "Formatter"
+# type: ignore[misc]
 class _ColoredFormatter(_LocalTimeZoneFormatter, logging.Formatter):
     """
     Logging formatter using colors for different levels.

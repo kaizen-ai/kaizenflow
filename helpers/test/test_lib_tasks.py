@@ -914,7 +914,7 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
         """
         Exercise the code for:
 
-        > invoke git_create_patch ... --last_commit
+        > invoke git_create_patch ... --last-commit
         """
         # This test needs a reference to Git master branch.
         git.fetch_origin_master_if_needed()
@@ -952,7 +952,7 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
         > invoke git_create_patch --mode="diff" --files "this file"
 
         In this case one needs to specify at least one --branch, --modified,
-        --last_commit option.
+        --last-commit option.
         """
         # This test needs a reference to Git master branch.
         git.fetch_origin_master_if_needed()
@@ -973,7 +973,7 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
         '0'
         ==
         '1'
-        You need to specify exactly one among --modified, --branch, --last_commit
+        You need to specify exactly one among --modified, --branch, --last-commit
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
@@ -1290,7 +1290,7 @@ class Test_get_files_to_process1(hut.TestCase):
         '2'
         ==
         '1'
-        You need to specify exactly one option among --modified, --branch, --last_commit, and --files
+        You need to specify exactly one option among --modified, --branch, --last-commit, and --files
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
@@ -1320,7 +1320,7 @@ class Test_get_files_to_process1(hut.TestCase):
         '2'
         ==
         '1'
-        You need to specify exactly one option among --modified, --branch, --last_commit, and --files
+        You need to specify exactly one option among --modified, --branch, --last-commit, and --files
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 

@@ -4,9 +4,9 @@ Run a notebook given a config or a list of configs.
 
 # Use example:
 > run_notebook.py \
-    --dst_dir nlp/test_results \
     --notebook nlp/notebooks/NLP_RP_pipeline.ipynb \
     --config_builder "nlp.build_configs.build_PTask1088_configs()" \
+    --dst_dir nlp/test_results \
     --num_threads 2
 """
 
@@ -14,7 +14,7 @@ import argparse
 import logging
 import os
 import sys
-from typing import Optional
+from typing import Optional, cast
 
 import joblib
 import tqdm
@@ -146,7 +146,9 @@ def _parse() -> argparse.ArgumentParser:
         help="Publish each notebook after it executes",
     )
     parser = prsr.add_verbosity_arg(parser)
-    return parser
+    # TODO(gp): For some reason, not even this makes mypy happy.
+    # cast(argparse.ArgumentParser, parser)
+    return parser  # type: ignore
 
 
 # TODO(gp): Make the notebook save the config that it sees. This might

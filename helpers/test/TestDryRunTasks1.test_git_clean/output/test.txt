@@ -1,6 +1,4 @@
-## git_clean: 
+## git_clean: dry_run=False
 git clean -fd
 git submodule foreach 'git clean -fd'
-find . | \
-    grep -E "(tmp.joblib.unittest.cache|.pytest_cache|.mypy_cache|.ipynb_checkpoints|__pycache__|\.pyc|\.pyo$$)" | \
-    xargs rm -rf
+find . -name '*\.pyc' -o -name '*\.pyo' -o -name '.coverage' -o -name '.ipynb_checkpoints' -o -name '.mypy_cache' -o -name '.pytest_cache' -o -name '__pycache__' -o -name 'cfile' -o -name 'tmp.*' -o -name '*.tmp' | sort | xargs rm -rf

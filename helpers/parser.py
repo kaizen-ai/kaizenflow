@@ -196,8 +196,11 @@ def read_file(file_name: str) -> List[str]:
     Read file or stdin (represented by `-`), returning an array of lines.
     """
     if file_name == "-":
+        _LOG.info("Reading from stdin")
         f = sys.stdin
     else:
+        _LOG.info("Reading from '%s'", file_name)
+        # pylint: disable=consider-using-with
         f = open(file_name, "r")
     # Read.
     txt = []
@@ -210,10 +213,11 @@ def read_file(file_name: str) -> List[str]:
 
 def write_file(txt: List[str], file_name: str) -> None:
     """
-    Write txt in a file or stdin (represented by `-`).
+    Write txt in a file or stdout (represented by `-`).
     """
     if file_name == "-":
         print("\n".join(txt))
     else:
         with open(file_name, "w") as f:
             f.write("\n".join(txt))
+        _LOG.info("Written file '%s'", file_name)
