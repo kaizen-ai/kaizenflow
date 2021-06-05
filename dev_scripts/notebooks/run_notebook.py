@@ -4,9 +4,9 @@ Run a notebook given a config or a list of configs.
 
 # Use example:
 > run_notebook.py \
-    --dst_dir nlp/test_results \
     --notebook nlp/notebooks/NLP_RP_pipeline.ipynb \
     --config_builder "nlp.build_configs.build_PTask1088_configs()" \
+    --dst_dir nlp/test_results \
     --num_threads 2
 """
 

@@ -127,9 +127,9 @@ def parse_traceback(
         cfile = []
         traceback = None
     elif state == "end":
-        dbg.dassert_lte(1, start_idx)
+        dbg.dassert_lte(0, start_idx)
         dbg.dassert_lte(start_idx, end_idx)
-        dbg.dassert_lte(end_idx, len(lines))
+        dbg.dassert_lt(end_idx, len(lines))
         traceback = "\n".join(lines[start_idx:end_idx])
     else:
         raise ValueError("Invalid state='%s'" % state)

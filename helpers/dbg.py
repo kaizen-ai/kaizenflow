@@ -522,6 +522,10 @@ def dassert_not_exists(
 ) -> None:
     """
     Ensure that a file or a dir `file_name` doesn't exist, raise otherwise.
+
+    Of course, we don't need to distinguish between `dassert_file_not_exists()` and
+    `dassert_dir_not_exists()` because if something doesn't exist, we can't make a
+    distinction of what it is.
     """
     file_name = os.path.abspath(file_name)
     # pylint: disable=superfluous-parens,unneeded-not

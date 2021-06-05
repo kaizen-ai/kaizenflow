@@ -236,14 +236,14 @@ def _get_files_to_process(
             + int(len(files_from_user) > 0),
             1,
             msg="You need to specify exactly one option among --modified, --branch, "
-            "--last_commit, and --files",
+            "--last-commit, and --files",
         )
     else:
         dbg.dassert_eq(
             int(modified) + int(branch) + int(last_commit),
             1,
             msg="You need to specify exactly one among --modified, --branch, "
-            "--last_commit",
+            "--last-commit",
         )
     if modified:
         files = git.get_modified_files(".")
@@ -381,23 +381,65 @@ def git_merge_master(ctx):  # type: ignore
 
 
 @task
-def git_clean(ctx):  # type: ignore
+def git_clean(ctx, dry_run=False):  # type: ignore
     """
-    Clean the repo and its submodules.
+    Clean the repo and its submodules from artifacts.
+
+    Run `git status --ignored` to see what it's skipped.
     """
-    _report_task()
+    _report_task(hprint.to_str("dry_run"))
     # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
     #  mistake.
-    cmd = "git clean -fd"
+    # Clean recursively.
+    git_clean_cmd = "git clean -fd"
+    if dry_run:
+        git_clean_cmd += " --dry-run"
+    cmd = git_clean_cmd
     _run(ctx, cmd)
-    cmd = "git submodule foreach 'git clean -fd'"
+    cmd = f"git submodule foreach '{git_clean_cmd}'"
     _run(ctx, cmd)
-    # pylint: disable=line-too-long
-    cmd = r"""find . | \
-    grep -E "(tmp.joblib.unittest.cache|.pytest_cache|.mypy_cache|.ipynb_checkpoints|__pycache__|\.pyc|\.pyo$$)" | \
-    xargs rm -rf"""
-    # pylint: enable=line-too-long
+    # Delete other files.
+    to_delete = [
+        "*\.pyc",
+        "*\.pyo",
+        ".coverage",
+        ".ipynb_checkpoints",
+        ".mypy_cache",
+        ".pytest_cache",
+        "__pycache__",
+        "cfile",
+        "tmp.*",
+        "*.tmp",
+    ]
+    opts = [f"-name '{opt}'" for opt in to_delete]
+    opts = " -o ".join(opts)
+    cmd = f"find . {opts} | sort"
+    if not dry_run:\
+        cmd += " | xargs rm -rf"
     _run(ctx, cmd)
+
+
+def _delete_branches(tag: str) -> None:
+    _, txt = hsinte.system_to_string(find_cmd, abort_on_error=False)
+    branches = hsinte.text_to_list(txt)
+    # Print info.
+    _LOG.info(
+        "There are %d %s branches to delete:\n%s",
+        len(branches),
+        tag,
+        "\n".join(branches),
+    )
+    if not branches:
+        # No branch to delete, then we are done.
+        return
+    # Ask whether to continue.
+    if confirm_delete:
+        hsinte.query_yes_no(
+            dbg.WARNING + f": Delete these {tag} branches?", abort_on_no=True
+        )
+    for branch in branches:
+        cmd_tmp = f"{delete_cmd} {branch}"
+        _run(ctx, cmd_tmp)
 
 
 @task
@@ -414,28 +456,6 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
         "master",
         "You need to be on master to delete dead branches",
     )
-
-    def _delete_branches(tag: str) -> None:
-        _, txt = hsinte.system_to_string(find_cmd, abort_on_error=False)
-        branches = hsinte.text_to_list(txt)
-        # Print info.
-        _LOG.info(
-            "There are %d %s branches to delete:\n%s",
-            len(branches),
-            tag,
-            "\n".join(branches),
-        )
-        if not branches:
-            # No branch to delete, then we are done.
-            return
-        # Ask whether to continue.
-        if confirm_delete:
-            hsinte.query_yes_no(
-                dbg.WARNING + f": Delete these {tag} branches?", abort_on_no=True
-            )
-        for branch in branches:
-            cmd_tmp = f"{delete_cmd} {branch}"
-            _run(ctx, cmd_tmp)
 
     # Delete local branches that are already merged into master.
     # > git branch --merged
@@ -1604,7 +1624,7 @@ def find_test_class(ctx, class_name, dir_name=".", pbcopy=True):  # type: ignore
     :param dir_name: the dir from which to search (default: .)
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
-    _report_task()
+    _report_task("class_name dir_name pbcopy")
     dbg.dassert(class_name != "", "You need to specify a class name")
     _ = ctx
     file_names = _find_test_files(dir_name)
@@ -2354,7 +2374,7 @@ def gh_issue_title(ctx, issue_id, repo="current", pbcopy=True):  # type: ignore
 
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
-    _report_task()
+    _report_task(hprint.to_str("issue_id repo"))
     _ = ctx
     issue_id = int(issue_id)
     dbg.dassert_lte(1, issue_id)
