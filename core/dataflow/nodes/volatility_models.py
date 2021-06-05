@@ -136,8 +136,8 @@ class SmaModel(FitPredictNode, ColModeMixin):
     def _predict_and_package_results(
         self,
         df_in: pd.DataFrame,
-        idx,
-        non_nan_idx,
+        idx: pd.Index,
+        non_nan_idx: pd.Index,
         fit: bool = True,
     ) -> Dict[str, pd.DataFrame]:
         data = cdataa.transform_to_sklearn(df_in.loc[non_nan_idx], self._col)
