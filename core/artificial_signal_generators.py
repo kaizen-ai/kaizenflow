@@ -296,9 +296,7 @@ class PoissonProcess:
         """
         index = pd.date_range(**date_range_kwargs)
         nsample = index.size
-        rv = sp.stats.poisson(
-            mu=self.mu
-        )
+        rv = sp.stats.poisson(mu=self.mu)
         data = rv.rvs(size=nsample, random_state=seed)
         return pd.Series(index=index, data=data, name="Poisson")
 

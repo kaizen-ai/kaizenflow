@@ -5,9 +5,9 @@ import pandas as pd
 
 import core.artificial_signal_generators as casgen
 import core.config_builders as ccbuild
-import helpers.unit_test as hut
-import core.dataflow.nodes.transformers as cdnt
 import core.dataflow.nodes.test.helpers as cdnth
+import core.dataflow.nodes.transformers as cdnt
+import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
@@ -83,7 +83,6 @@ class TestTwapVwapComputer(hut.TestCase):
         df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
         self.check_string(df_str)
 
-
     def _get_data(self) -> pd.DataFrame:
         """
 
@@ -109,6 +108,6 @@ class TestTwapVwapComputer(hut.TestCase):
             date_range_kwargs=date_range_kwargs,
             seed=100,
         )
-        volume.name ="volume"
+        volume.name = "volume"
         df = pd.concat([prices, volume], axis=1)
         return df
