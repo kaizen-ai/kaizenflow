@@ -41,3 +41,30 @@ def test_get_set_state(
         df_out2.round(decimals), index=True, decimals=decimals
     )
     return expected, actual
+
+
+def get_fit_predict_outputs(
+    data: pd.DataFrame,
+    node: cdc.Node,
+    decimals: float = 3,
+) -> Tuple[str, str]:
+    """
+    Get `node` outputs from both `fit()` and `predict()` calls on `data`.
+
+    In the case of a transformer, these should be identical.
+
+    :param node: initialized Node
+    :param decimals: decimal precision of dataframe outputs
+    :return: dataframes as strings
+    """
+    # Generate output from `fit()` and `predict()` calls.
+    df_fit_out = node.fit(data)["df_out"]
+    df_predict_out = node.predict(data)["df_out"]
+    # Convert dataframes to strings.
+    fit = hut.convert_df_to_string(
+        df_fit_out.round(decimals), index=True, decimals=decimals
+    )
+    predict = hut.convert_df_to_string(
+        df_predict_out.round(decimals), index=True, decimals=decimals
+    )
+    return fit, predict

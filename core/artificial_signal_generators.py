@@ -275,6 +275,32 @@ class MultivariateNormalProcess:
         raise ValueError(f"Unsupported type {type(obj)}")
 
 
+class PoissonProcess:
+    """
+    A thin wrapper around sp.stats.poisson, with Pandas support.
+    """
+
+    def __init__(self, mu: float) -> None:
+        """
+        Set shape parameter.
+        """
+        self.mu = mu
+
+    def generate_sample(
+        self, date_range_kwargs: Dict[str, Any], seed: Optional[int] = None
+    ) -> pd.Series:
+        """
+        Generate a Poisson sample over index.
+
+        https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.poisson.html
+        """
+        index = pd.date_range(**date_range_kwargs)
+        nsample = index.size
+        rv = sp.stats.poisson(mu=self.mu)
+        data = rv.rvs(size=nsample, random_state=seed)
+        return pd.Series(index=index, data=data, name="Poisson")
+
+
 def generate_arima_signal_and_response(
     start_date: str,
     freq: str,

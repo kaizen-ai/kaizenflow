@@ -5,8 +5,9 @@ import pandas as pd
 
 import core.artificial_signal_generators as casgen
 import core.config_builders as ccbuild
+import core.dataflow.nodes.test.helpers as cdnth
+import core.dataflow.nodes.transformers as cdnt
 import helpers.unit_test as hut
-from core.dataflow.nodes.transformers import SeriesToSeriesTransformer
 
 _LOG = logging.getLogger(__name__)
 
@@ -24,10 +25,26 @@ class TestSeriesToSeriesTransformer(hut.TestCase):
                 "transformer_func": lambda x: x.pct_change(),
             }
         )
-        node = SeriesToSeriesTransformer("sklearn", **config.to_dict())
+        node = cdnt.SeriesToSeriesTransformer("sklearn", **config.to_dict())
         df_out = node.fit(data)["df_out"]
         df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
         self.check_string(df_str)
+
+    def test2(self) -> None:
+        """
+        Test `predict()` call.
+        """
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "in_col_group": ("close",),
+                "out_col_group": ("ret_0",),
+                "transformer_func": lambda x: x.pct_change(),
+            }
+        )
+        node = cdnt.SeriesToSeriesTransformer("sklearn", **config.to_dict())
+        expected, actual = cdnth.get_fit_predict_outputs(data, node)
+        self.assert_equal(actual, expected)
 
     def _get_data(self) -> pd.DataFrame:
         """
@@ -45,3 +62,66 @@ class TestSeriesToSeriesTransformer(hut.TestCase):
         )
         data = pd.concat([realization, volume], axis=1, keys=["close", "volume"])
         return data
+
+
+class TestTwapVwapComputer(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Test building 5-min TWAP/VWAP bars from 1-min close/volume bars.
+        """
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "rule": "5T",
+                "price_col": "close",
+                "volume_col": "volume",
+            }
+        )
+        node = cdnt.TwapVwapComputer("twapvwap", **config.to_dict())
+        df_out = node.fit(data)["df_out"]
+        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        self.check_string(df_str)
+
+    def test2(self) -> None:
+        """
+        Test `predict()` call.
+        """
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "rule": "5T",
+                "price_col": "close",
+                "volume_col": "volume",
+            }
+        )
+        node = cdnt.TwapVwapComputer("twapvwap", **config.to_dict())
+        expected, actual = cdnth.get_fit_predict_outputs(data, node)
+        self.assert_equal(actual, expected)
+
+    def _get_data(self) -> pd.DataFrame:
+        """
+        Generate AR(1) returns and Poisson volume.
+        """
+        date_range_kwargs = {
+            "start": "2001-01-04 09:30:00",
+            "end": "2001-01-04 10:00:00",
+            "freq": "T",
+        }
+        ar_params = [0.5]
+        arma_process = casgen.ArmaProcess(ar_params, [])
+        rets = arma_process.generate_sample(
+            date_range_kwargs=date_range_kwargs,
+            scale=1,
+            burnin=0,
+            seed=100,
+        )
+        prices = np.exp(0.25 * rets.cumsum())
+        prices.name = "close"
+        poisson_process = casgen.PoissonProcess(mu=100)
+        volume = poisson_process.generate_sample(
+            date_range_kwargs=date_range_kwargs,
+            seed=100,
+        )
+        volume.name = "volume"
+        df = pd.concat([prices, volume], axis=1)
+        return df
