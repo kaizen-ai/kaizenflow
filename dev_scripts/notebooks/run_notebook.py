@@ -14,7 +14,7 @@ import argparse
 import logging
 import os
 import sys
-from typing import Optional
+from typing import cast, Optional
 
 import joblib
 import tqdm
@@ -146,6 +146,7 @@ def _parse() -> argparse.ArgumentParser:
         help="Publish each notebook after it executes",
     )
     parser = prsr.add_verbosity_arg(parser)
+    cast(argparse.ArgumentParser, parser)
     return parser
 
 

@@ -200,6 +200,7 @@ def read_file(file_name: str) -> List[str]:
         f = sys.stdin
     else:
         _LOG.info("Reading from '%s'", file_name)
+        # pylint: disable=consider-using-with
         f = open(file_name, "r")
     # Read.
     txt = []

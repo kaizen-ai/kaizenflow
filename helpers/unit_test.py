@@ -56,7 +56,7 @@ except ImportError as e:
 
 
 _LOG = logging.getLogger(__name__)
-#_LOG.setLevel(logging.INFO)
+# _LOG.setLevel(logging.INFO)
 
 # #############################################################################
 
@@ -985,7 +985,7 @@ class TestCase(unittest.TestCase):
         use_gzip: bool = False,
         tag: str = "test",
         abort_on_error: bool = True,
-        action_on_missing_golden=_ACTION_ON_MISSING_GOLDEN,
+        action_on_missing_golden: str = _ACTION_ON_MISSING_GOLDEN,
     ) -> Tuple[bool, bool, Optional[bool]]:
         """
         Check the actual outcome of a test against the expected outcome
@@ -1054,15 +1054,15 @@ class TestCase(unittest.TestCase):
                 )
             else:
                 # No golden outcome available.
-                _LOG.warning(
-                    "Can't find golden outcome file '%s'", file_name
-                )
+                _LOG.warning("Can't find golden outcome file '%s'", file_name)
                 if action_on_missing_golden == "assert":
                     # Save the result to a temporary file and assert.
                     file_name += ".tmp"
                     hio.to_file(file_name, actual, use_gzip=use_gzip)
-                    msg = ("The golden outcome doesn't exist: saved the actual "
-                        f"output in '{file_name}'")
+                    msg = (
+                        "The golden outcome doesn't exist: saved the actual "
+                        f"output in '{file_name}'"
+                    )
                     _LOG.error(msg)
                     if abort_on_error:
                         dbg.dfatal(msg)
@@ -1073,8 +1073,10 @@ class TestCase(unittest.TestCase):
                     self._check_string_update_outcome(file_name, actual, use_gzip)
                     is_equal = None
                 else:
-                    dbg.dfatal("Invalid action_on_missing_golden=" +
-                               f"'{action_on_missing_golden}'")
+                    dbg.dfatal(
+                        "Invalid action_on_missing_golden="
+                        + f"'{action_on_missing_golden}'"
+                    )
         self._test_was_updated = outcome_updated
         _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal
@@ -1085,7 +1087,7 @@ class TestCase(unittest.TestCase):
         err_threshold: float = 0.05,
         tag: str = "test_df",
         abort_on_error: bool = True,
-        action_on_missing_golden=_ACTION_ON_MISSING_GOLDEN,
+        action_on_missing_golden: str = _ACTION_ON_MISSING_GOLDEN,
     ) -> Tuple[bool, bool, Optional[bool]]:
         """
         Like `check_string()` but for pandas dataframes, instead of strings.
@@ -1140,16 +1142,16 @@ class TestCase(unittest.TestCase):
                     )
             else:
                 # No golden outcome available.
-                _LOG.warning(
-                    "Can't find golden outcome file '%s'", file_name
-                )
+                _LOG.warning("Can't find golden outcome file '%s'", file_name)
                 if action_on_missing_golden == "assert":
                     # Save the result to a temporary file and assert.
                     file_name += ".tmp"
                     hio.create_enclosing_dir(file_name)
                     actual.to_csv(file_name)
-                    msg = ("The golden outcome doesn't exist: saved the actual "
-                           f"output in '{file_name}'")
+                    msg = (
+                        "The golden outcome doesn't exist: saved the actual "
+                        f"output in '{file_name}'"
+                    )
                     _LOG.error(msg)
                     if abort_on_error:
                         dbg.dfatal(msg)
@@ -1160,8 +1162,10 @@ class TestCase(unittest.TestCase):
                     self._check_df_update_outcome(file_name, actual)
                     is_equal = None
                 else:
-                    dbg.dfatal("Invalid action_on_missing_golden=" +
-                               f"'{action_on_missing_golden}'")
+                    dbg.dfatal(
+                        "Invalid action_on_missing_golden="
+                        + f"'{action_on_missing_golden}'"
+                    )
         self._test_was_updated = outcome_updated
         _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal

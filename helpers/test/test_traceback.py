@@ -115,6 +115,7 @@ Traceback (most recent call last):
             txt, purify_from_client, exp_cfile, exp_traceback
         )
 
+    # pylint: disable=line-too-long
     # TODO(gp): Add test and fix for the following traceback:
     # Traceback (most recent call last):
     #   File "/Users/saggese/src/venv/amp.client_venv/bin/invoke", line 8, in <module>
@@ -152,7 +153,7 @@ Traceback (most recent call last):
     #     signature2 = _compute_file_signature(file_name, dir_depth)
     #     ^
     # SyntaxError: invalid syntax
-
+    # pylint: enable=line-too-long
 
     def _parse_traceback_helper(
         self,

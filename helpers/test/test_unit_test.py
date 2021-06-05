@@ -6,7 +6,6 @@ import helpers.test.test_unit_test as ttutes
 
 import datetime
 import logging
-import os
 import tempfile
 import unittest.mock as umock
 import uuid
@@ -43,8 +42,9 @@ def _to_skip_on_update_outcomes() -> bool:
     Some tests can't pass with `--update_outcomes`, since they exercise the
     logic in `--update_outcomes` itself.
 
-    We can't always use `@pytest.mark.skipif(hut.get_update_tests)` since pytest
-    decides which tests need to be run before the variable is actually set.
+    We can't always use `@pytest.mark.skipif(hut.get_update_tests)`
+    since pytest decides which tests need to be run before the variable
+    is actually set.
     """
     to_skip = False
     if hut.get_update_tests():
@@ -420,8 +420,8 @@ class TestCheckString1(hut.TestCase):
 
     def test_check_string_missing1(self) -> None:
         """
-        When running with --update_outcomes, the golden outcome was missing and so
-        it was added.
+        When running with --update_outcomes, the golden outcome was missing and
+        so it was added.
 
         This tests the code path when action_on_missing_golden="update".
         """
@@ -455,7 +455,8 @@ class TestCheckString1(hut.TestCase):
     def test_check_string_missing2(self) -> None:
         """
         Without running with --update_outcomes, the golden outcome was missing,
-        action_on_missing_golden="assert", and the unit test framework asserted.
+        action_on_missing_golden="assert", and the unit test framework
+        asserted.
         """
         if _to_skip_on_update_outcomes():
             return
@@ -676,8 +677,8 @@ class TestCheckDataFrame1(hut.TestCase):
 
     def test_check_df_missing1(self) -> None:
         """
-        When running with --update_outcomes, the golden outcome was missing and so
-        it was added.
+        When running with --update_outcomes, the golden outcome was missing and
+        so it was added.
 
         This tests the code path when action_on_missing_golden="update".
         """
@@ -712,7 +713,8 @@ class TestCheckDataFrame1(hut.TestCase):
     def test_check_df_missing2(self) -> None:
         """
         Without running with --update_outcomes, the golden outcome was missing,
-        action_on_missing_golden="assert", and the unit test framework asserted.
+        action_on_missing_golden="assert", and the unit test framework
+        asserted.
         """
         if _to_skip_on_update_outcomes():
             return
@@ -798,15 +800,17 @@ class TestCheckDataFrame1(hut.TestCase):
 class Test_check_string_debug1(hut.TestCase):
     def test1(self) -> None:
         act = "hello"
-        #action_on_missing_golden = "assert"
+        # action_on_missing_golden = "assert"
         action_on_missing_golden = "update"
         self.check_string(act, action_on_missing_golden=action_on_missing_golden)
 
     def test2(self) -> None:
         act = pd.DataFrame([[0, 1, 2], [3, 4, 5]], columns="a b c".split())
-        #action_on_missing_golden = "assert"
+        # action_on_missing_golden = "assert"
         action_on_missing_golden = "update"
-        self.check_dataframe(act, action_on_missing_golden=action_on_missing_golden)
+        self.check_dataframe(
+            act, action_on_missing_golden=action_on_missing_golden
+        )
 
 
 # #############################################################################

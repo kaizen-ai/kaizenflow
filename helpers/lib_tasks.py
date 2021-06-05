@@ -400,26 +400,42 @@ def git_clean(ctx, dry_run=False):  # type: ignore
     _run(ctx, cmd)
     # Delete other files.
     to_delete = [
-        "*\.pyc",
-        "*\.pyo",
-        ".coverage",
-        ".ipynb_checkpoints",
-        ".mypy_cache",
-        ".pytest_cache",
-        "__pycache__",
-        "cfile",
-        "tmp.*",
-        "*.tmp",
+        r"*\.pyc",
+        r"*\.pyo",
+        r".coverage",
+        r".ipynb_checkpoints",
+        r".mypy_cache",
+        r".pytest_cache",
+        r"__pycache__",
+        r"cfile",
+        r"tmp.*",
+        r"*.tmp",
     ]
     opts = [f"-name '{opt}'" for opt in to_delete]
     opts = " -o ".join(opts)
     cmd = f"find . {opts} | sort"
-    if not dry_run:\
+    if not dry_run:
         cmd += " | xargs rm -rf"
     _run(ctx, cmd)
 
 
-def _delete_branches(tag: str) -> None:
+def _delete_branches(tag: str, confirm_delete: bool) -> None:
+    if tag == "local":
+        # Delete local branches that are already merged into master.
+        # > git branch --merged
+        # * AmpTask1251_Update_GH_actions_for_amp_02
+        find_cmd = r"git branch --merged master | grep -v master | grep -v \*"
+        delete_cmd = "git branch -d"
+    elif tag == "remote":
+        # Get the branches to delete.
+        find_cmd = (
+            "git branch -r --merged origin/master"
+            + r" | grep -v master | sed 's/origin\///'"
+        )
+        delete_cmd = "git push origin --delete"
+    else:
+        raise ValueError(f"Invalid tag='{tag}'")
+    # TODO(gp): Use system_to_lines
     _, txt = hsinte.system_to_string(find_cmd, abort_on_error=False)
     branches = hsinte.text_to_list(txt)
     # Print info.
@@ -448,28 +464,17 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     Remove (both local and remote) branches that have been merged into master.
     """
     _report_task()
-    #
-    cmd = "git fetch --all --prune"
-    _run(ctx, cmd)
     dbg.dassert(
         git.get_branch_name(),
         "master",
         "You need to be on master to delete dead branches",
     )
-
-    # Delete local branches that are already merged into master.
-    # > git branch --merged
-    # * AmpTask1251_Update_GH_actions_for_amp_02
-    find_cmd = r"git branch --merged master | grep -v master | grep -v \*"
-    delete_cmd = "git branch -d"
-    _delete_branches("local")
-    # Get the branches to delete.
-    find_cmd = (
-        "git branch -r --merged origin/master"
-        + r" | grep -v master | sed 's/origin\///'"
-    )
-    delete_cmd = "git push origin --delete"
-    _delete_branches("remote")
+    #
+    cmd = "git fetch --all --prune"
+    _run(ctx, cmd)
+    # Delete local and remote branches that are already merged into master.
+    _delete_branches("local", confirm_delete)
+    _delete_branches("remote", confirm_delete)
     #
     cmd = "git fetch --all --prune"
     _run(ctx, cmd)
