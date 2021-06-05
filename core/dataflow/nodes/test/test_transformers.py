@@ -67,8 +67,7 @@ class TestSeriesToSeriesTransformer(hut.TestCase):
 class TestTwapVwapComputer(hut.TestCase):
     def test1(self) -> None:
         """
-
-        :return:
+        Test building 5-min TWAP/VWAP bars from 1-min close/volume bars.
         """
         data = self._get_data()
         config = ccbuild.get_config_from_nested_dict(
@@ -83,10 +82,25 @@ class TestTwapVwapComputer(hut.TestCase):
         df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
         self.check_string(df_str)
 
+    def test2(self) -> None:
+        """
+        Test `predict()` call.
+        """
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "rule": "5T",
+                "price_col": "close",
+                "volume_col": "volume",
+            }
+        )
+        node = cdnt.TwapVwapComputer("twapvwap", **config.to_dict())
+        expected, actual = cdnth.get_fit_predict_outputs(data, node)
+        self.assert_equal(actual, expected)
+
     def _get_data(self) -> pd.DataFrame:
         """
-
-        :return:
+        Generate AR(1) returns and Poisson volume.
         """
         date_range_kwargs = {
             "start": "2001-01-04 09:30:00",
