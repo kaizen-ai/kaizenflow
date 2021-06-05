@@ -419,7 +419,7 @@ def git_clean(ctx, dry_run=False):  # type: ignore
     _run(ctx, cmd)
 
 
-def _delete_branches(tag: str, confirm_delete: bool) -> None:
+def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
     if tag == "local":
         # Delete local branches that are already merged into master.
         # > git branch --merged

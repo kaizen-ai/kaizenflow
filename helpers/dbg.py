@@ -692,10 +692,10 @@ class _LocalTimeZoneFormatter:
         return s
 
 
-# type: ignore[misc]
 # [mypy] error: Definition of "converter" in base class
 # "_LocalTimeZoneFormatter" is incompatible with definition in base class
 # "Formatter"
+# type: ignore[misc]
 class _ColoredFormatter(_LocalTimeZoneFormatter, logging.Formatter):
     """
     Logging formatter using colors for different levels.

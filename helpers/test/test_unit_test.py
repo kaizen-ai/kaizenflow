@@ -27,6 +27,7 @@ _LOG = logging.getLogger(__name__)
 def _git_add(file_name: str) -> None:
     # TODO(gp): Not sure this is needed. If not, delete the calls to this.
     return
+    # pylint: disable=unreachable
     cmd = "git add -u %s" % file_name
     _LOG.debug("> %s", cmd)
     rc = hsinte.system(cmd, abort_on_error=False)
