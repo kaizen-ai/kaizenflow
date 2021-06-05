@@ -163,10 +163,8 @@ class SmaModel(FitPredictNode, ColModeMixin):
         info["tau"] = self._tau
         info["min_periods"] = self._get_min_periods(self._tau)
         info["df_out_info"] = cdu.get_df_info_as_string(df_out)
-        if fit:
-            self._set_info("fit", info)
-        else:
-            self._set_info("predict", info)
+        method = "fit" if fit else "predict"
+        self._set_info(method, info)
         return {"df_out": df_out}
 
     def _handle_nans(
@@ -307,10 +305,7 @@ class SingleColumnVolatilityModel(FitPredictNode):
             tau = self._tau
         config = self._get_config(col=self._col, out_col_prefix=name, tau=tau)
         dag = self._get_dag(df_in[[self._col]], config)
-        if fit:
-            mode = "fit"
-        else:
-            mode = "predict"
+        mode = "fit" if fit else "predict"
         df_out = dag.run_leq_node(
             "demodulate_using_vol_pred", mode, progress_bar=self._progress_bar
         )["df_out"]
@@ -551,10 +546,8 @@ class VolatilityModel(
             cols=self._fit_cols,
             col_mode=self._col_mode,
         )
-        if fit:
-            self._set_info("fit", info)
-        else:
-            self._set_info("predict", info)
+        method = "fit" if fit else "predict"
+        self._set_info(method, info)
         return {"df_out": df_out}
 
 
@@ -628,10 +621,8 @@ class MultiindexVolatilityModel(FitPredictNode, _MultiColVolatilityModelMixin):
         )
         df_out = SeriesToDfColProcessor.postprocess(dfs, self._out_col_group)
         df_out = cdu.merge_dataframes(df_in, df_out)
-        if fit:
-            self._set_info("fit", info)
-        else:
-            self._set_info("predict", info)
+        method = "fit" if fit else "predict"
+        self._set_info(method, info)
         return {"df_out": df_out}
 
 

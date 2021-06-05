@@ -330,10 +330,8 @@ class MultiindexSkLearnModel(FitPredictNode):
         )
         df_out = df_out.reindex(df_in.index)
         df_out = cdu.merge_dataframes(df_in, df_out)
-        if fit:
-            self._set_info("fit", info)
-        else:
-            self._set_info("predict", info)
+        method = "fit" if fit else "predict"
+        self._set_info(method, info)
         return {"df_out": df_out}
 
 
