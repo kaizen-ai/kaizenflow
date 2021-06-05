@@ -129,10 +129,8 @@ class UnsupervisedSkLearnModel(
             df_in, df_out, cols=df.columns.to_list(), col_mode=self._col_mode
         )
         info["df_out_info"] = get_df_info_as_string(df_out)
-        if fit:
-            self._set_info("fit", info)
-        else:
-            self._set_info("predict", info)
+        method = "fit" if fit else "predict"
+        self._set_info(method, info)
         return {"df_out": df_out}
 
     def _preprocess_df(self, df_in):
@@ -216,10 +214,8 @@ class MultiindexUnsupervisedSkLearnModel(
         )
         df_out = merge_dataframes(df_in, df_out)
         info["df_out_info"] = get_df_info_as_string(df_out)
-        if fit:
-            self._set_info("fit", info)
-        else:
-            self._set_info("predict", info)
+        method = "fit" if fit else "predict"
+        self._set_info(method, info)
         return {"df_out": df_out}
 
 
@@ -324,10 +320,8 @@ class Residualizer(FitPredictNode, _ResidualizerMixin):
         )
         df_out = merge_dataframes(df_in, df_out)
         info["df_out_info"] = get_df_info_as_string(df_out)
-        if fit:
-            self._set_info("fit", info)
-        else:
-            self._set_info("predict", info)
+        method = "fit" if fit else "predict"
+        self._set_info(method, info)
         return {"df_out": df_out}
 
 
