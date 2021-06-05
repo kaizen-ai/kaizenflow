@@ -114,13 +114,6 @@ class DagBuilder(abc.ABC):
         nid = self._nid_prefix + stage_name
         return nid
 
-    @staticmethod
-    def _append(dag: DAG, tail_nid: Optional[str], node: Node) -> str:
-        dag.add_node(node)
-        if tail_nid is not None:
-            dag.connect(tail_nid, node.nid)
-        return node.nid
-
 
 class ArmaReturnsBuilder(DagBuilder):
     """
@@ -262,3 +255,10 @@ class ArmaReturnsBuilder(DagBuilder):
         tail_nid = self._append(dag, tail_nid, node)
         _ = tail_nid
         return dag
+
+    @staticmethod
+    def _append(dag: DAG, tail_nid: Optional[str], node: Node) -> str:
+        dag.add_node(node)
+        if tail_nid is not None:
+            dag.connect(tail_nid, node.nid)
+        return node.nid
