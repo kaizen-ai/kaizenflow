@@ -145,7 +145,7 @@ class Test_find_file_with_dir1(hut.TestCase):
         dir_depth = 1
         act = hsyste.find_file_with_dir(file_name, dir_depth=dir_depth)
         exp = r"""['helpers/test/test_system_interaction.py']"""
-        self.assert_equal(str(act), str(exp))
+        self.assert_equal(str(act), str(exp), purify_text=True)
 
     def test2(self) -> None:
         """
@@ -175,7 +175,7 @@ class Test_find_file_with_dir1(hut.TestCase):
         exp = (
             r"""['helpers/test/Test_find_file_with_dir1.test3/output/test.txt']"""
         )
-        self.assert_equal(str(act), str(exp))
+        self.assert_equal(str(act), str(exp), purify_text=True)
         self.assertEqual(len(act), 1)
 
     def test4(self) -> None:
@@ -191,7 +191,7 @@ class Test_find_file_with_dir1(hut.TestCase):
         exp = (
             r"""['helpers/test/Test_find_file_with_dir1.test4/output/test.txt']"""
         )
-        self.assert_equal(str(act), str(exp))
+        self.assert_equal(str(act), str(exp), purify_text=True)
         self.assertEqual(len(act), 1)
 
     def test5(self) -> None:
@@ -206,7 +206,7 @@ class Test_find_file_with_dir1(hut.TestCase):
         exp = (
             r"""['helpers/test/Test_find_file_with_dir1.test5/output/test.txt']"""
         )
-        self.assert_equal(str(act), str(exp))
+        self.assert_equal(str(act), str(exp), purify_text=True)
         self.assertEqual(len(act), 1)
 
     def _helper(self, dir_depth: int, mode: str) -> List[str]:

@@ -979,3 +979,27 @@ class Test_get_dir_signature1(hut.TestCase):
         act = hut.get_dir_signature(in_dir, include_file_content, num_lines=None)
         act = hut.purify_txt_from_client(act)
         return act  # type: ignore[no-any-return]
+
+
+# #############################################################################
+
+
+class Test_purify_txt_from_client1(hut.TestCase):
+    def test1(self) -> None:
+        txt = "amp/helpers/test/test_system_interaction.py"
+        exp = "helpers/test/test_system_interaction.py"
+        self._helper(txt, exp)
+
+    def test2(self) -> None:
+        txt = "amp/helpers/test/test_system_interaction.py"
+        exp = "helpers/test/test_system_interaction.py"
+        self._helper(txt, exp)
+
+    def test3(self) -> None:
+        txt = "['amp/helpers/test/test_system_interaction.py']"
+        exp = "['helpers/test/test_system_interaction.py']"
+        self._helper(txt, exp)
+
+    def _helper(self, txt: str, exp: str) -> None:
+        act = hut.purify_txt_from_client(txt)
+        self.assertEqual(act, exp)

@@ -1,5 +1,4 @@
-"""
-Import as:
+""" Import as:
 
 import helpers.unit_test as hut
 """
@@ -399,11 +398,16 @@ def purify_amp_references(txt: str) -> str:
     """
     Remove references to amp.
     """
-    txt = re.sub("^amp/", "", txt, flags=re.MULTILINE)
-    txt = re.sub("/amp/", "/", txt, flags=re.MULTILINE)
-    txt = re.sub(" amp/", " ", txt, flags=re.MULTILINE)
-    txt = re.sub("/amp:", ":", txt, flags=re.MULTILINE)
+    # E.g., `amp/helpers/test/...`
+    txt = re.sub(r"^\s*amp\/", "", txt, flags=re.MULTILINE)
+    # E.g., `['amp/helpers/test/...`
+    txt = re.sub(r"'amp\/", "'", txt, flags=re.MULTILINE)
+    txt = re.sub(r"\/amp\/", "/", txt, flags=re.MULTILINE)
+    # E.g., `vimdiff helpers/test/...`
+    txt = re.sub(r"\s+amp\/", " ", txt, flags=re.MULTILINE)
+    txt = re.sub(r"\/amp:", ":", txt, flags=re.MULTILINE)
     txt = re.sub(r"^\./", "", txt, flags=re.MULTILINE)
+    _LOG.debug("After purify_amp_references: txt='\n%s'", txt)
     return txt
 
 
@@ -720,6 +724,7 @@ def _assert_equal(
     if purify_text:
         _LOG.debug("Purifying actual")
         actual = purify_txt_from_client(actual)
+        _LOG.debug("act='\n%s'", actual)
     # Fuzzy match, if needed.
     actual_orig = actual
     expected_orig = expected
@@ -951,11 +956,6 @@ class TestCase(unittest.TestCase):
         _LOG.debug(hprint.to_str("fuzzy_match abort_on_error dst_dir"))
         dbg.dassert_in(type(actual), (bytes, str), "actual=%s", str(actual))
         dbg.dassert_in(type(expected), (bytes, str), "expected=%s", str(expected))
-        # TODO(gp): Add purify_text.
-        # # Remove reference from the current environment.
-        # if purify_text:
-        #     actual = purify_txt_from_client(actual)
-        #
         dir_name = self._get_current_path()
         _LOG.debug("dir_name=%s", dir_name)
         hio.create_dir(dir_name, incremental=True)

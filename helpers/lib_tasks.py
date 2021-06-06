@@ -257,10 +257,12 @@ def _get_files_to_process(
     # Convert into a list.
     dbg.dassert_isinstance(files, list)
     files_to_process = [f for f in files if f != ""]
+    # We need to remove `amp` to avoid copying the entire tree.
+    files_to_process = [f for f in files_to_process if f != "amp"]
     _LOG.debug("files_to_process='%s'", str(files_to_process))
     # Remove dirs, if needed.
     if remove_dirs:
-        hsinte.remove_dirs(files_to_process)
+        files_to_process = hsinte.remove_dirs(files_to_process)
     _LOG.debug("files_to_process='%s'", str(files_to_process))
     # Ensure that there are files to process.
     if not files_to_process:
@@ -572,8 +574,11 @@ def git_create_patch(  # type: ignore
     """
     _report_task(hprint.to_str("mode modified branch last_commit files"))
     _ = ctx
+    # TODO(gp): Check that the current branch is up to date with master to avoid
+    #  failures when we try to merge the patch.
     dbg.dassert_in(mode, ("tar", "diff"))
     # For now we just create a patch for the current submodule.
+    # TODO(gp): Extend this to handle also nested repos.
     super_module = False
     git_client_root = git.get_client_root(super_module)
     hash_ = git.get_head_hash(git_client_root, short_hash=True)
