@@ -125,3 +125,67 @@ class TestTwapVwapComputer(hut.TestCase):
         volume.name = "volume"
         df = pd.concat([prices, volume], axis=1)
         return df
+
+
+class TestMultiindexTwapVwapComputer(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Test building 5-min TWAP/VWAP bars from 1-min close/volume bars.
+        """
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "rule": "5T",
+                "price_col_group": ("close",),
+                "volume_col_group": ("volume",),
+                "out_col_group": (),
+            }
+        )
+        node = cdnt.MultiindexTwapVwapComputer("twapvwap", **config.to_dict())
+        df_out = node.fit(data)["df_out"]
+        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        self.check_string(df_str)
+
+    def test2(self) -> None:
+        """
+        Test `predict()` call.
+        """
+        data = self._get_data()
+        config = ccbuild.get_config_from_nested_dict(
+            {
+                "rule": "5T",
+                "price_col_group": ("close",),
+                "volume_col_group": ("volume",),
+                "out_col_group": (),
+            }
+        )
+        node = cdnt.MultiindexTwapVwapComputer("twapvwap", **config.to_dict())
+        expected, actual = cdnth.get_fit_predict_outputs(data, node)
+        self.assert_equal(actual, expected)
+
+    def _get_data(self) -> pd.DataFrame:
+        """
+        Generate AR(1) returns and Poisson volume.
+        """
+        date_range_kwargs = {
+            "start": "2001-01-04 09:30:00",
+            "end": "2001-01-04 10:00:00",
+            "freq": "T",
+        }
+        mn_process = casgen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=4, seed=402)
+        rets = mn_process.generate_sample(
+            date_range_kwargs=date_range_kwargs, seed=343
+        )
+        rets = rets.rename(columns=lambda x: "MN" + str(x))
+        prices = np.exp(0.1 * rets.cumsum())
+        poisson_process = casgen.PoissonProcess(mu=100)
+        volume_srs = poisson_process.generate_sample(
+            date_range_kwargs=date_range_kwargs,
+            seed=100,
+        )
+        volume = pd.DataFrame(index=volume_srs.index, columns=rets.columns)
+        for col in volume.columns:
+            volume[col] = volume_srs
+        df = pd.concat([prices, volume], axis=1, keys=["close", "volume"])
+        return df
