@@ -7,11 +7,11 @@ import pandas as pd
 import sklearn as sklear
 
 import core.data_adapters as cdataa
+import core.dataflow.nodes.base as cdnb
 import core.dataflow.utils as cdu
 import core.signal_processing as csigna
 import core.statistics as cstati
 import helpers.dbg as dbg
-import core.dataflow.nodes.base as cdnb
 
 _LOG = logging.getLogger(__name__)
 
@@ -300,7 +300,9 @@ class MultiindexSkLearnModel(cdnb.FitPredictNode):
 
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
         cdu.validate_df_indices(df_in)
-        dfs = cdnb.GroupedColDfToDfColProcessor.preprocess(df_in, self._in_col_groups)
+        dfs = cdnb.GroupedColDfToDfColProcessor.preprocess(
+            df_in, self._in_col_groups
+        )
         results = {}
         info = collections.OrderedDict()
         for key, df in dfs.items():

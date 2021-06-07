@@ -7,10 +7,10 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 import pandas as pd
 
 import core.dataflow.nodes.base as cdnb
+import core.dataflow.utils as cdu
 import core.finance as cfinan
 import core.signal_processing as csigna
 import helpers.dbg as dbg
-import core.dataflow.utils as cdu
 
 _LOG = logging.getLogger(__name__)
 
