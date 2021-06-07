@@ -421,7 +421,9 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
         info["func_info"] = func_info
         # Combine the series representing leaf col transformations back into a
         # single dataframe.
-        df = cdnb.SeriesToSeriesColProcessor.postprocess(srs_list, self._out_col_group)
+        df = cdnb.SeriesToSeriesColProcessor.postprocess(
+            srs_list, self._out_col_group
+        )
         df = merge_dataframes(df_in, df)
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
@@ -629,12 +631,12 @@ class TwapVwapComputer(cdnb.Transformer):
 
 class MultiindexTwapVwapComputer(cdnb.Transformer):
     def __init__(
-            self,
-            nid: str,
-            rule: _RESAMPLING_RULE_TYPE,
-            price_col_group: Tuple[_COL_TYPE],
-            volume_col_group: Tuple[_COL_TYPE],
-            out_col_group: Tuple[_COL_TYPE],
+        self,
+        nid: str,
+        rule: _RESAMPLING_RULE_TYPE,
+        price_col_group: Tuple[_COL_TYPE],
+        volume_col_group: Tuple[_COL_TYPE],
+        out_col_group: Tuple[_COL_TYPE],
     ) -> None:
         """
         Calculate TWAP and VWAP prices from price and volume columns.
@@ -650,7 +652,7 @@ class MultiindexTwapVwapComputer(cdnb.Transformer):
         self._out_col_group = out_col_group
 
     def _transform(
-            self, df: pd.DataFrame
+        self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         price_df = cdnb.preprocess_multiindex_cols(df, self._price_col_group)
         volume_df = cdnb.preprocess_multiindex_cols(df, self._volume_col_group)

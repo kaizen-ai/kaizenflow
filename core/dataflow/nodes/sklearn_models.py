@@ -11,7 +11,11 @@ import core.dataflow.utils as cdu
 import core.signal_processing as csigna
 import core.statistics as cstati
 import helpers.dbg as dbg
-from core.dataflow.nodes.base import ColModeMixin, FitPredictNode, GroupedColDfToDfColProcessor
+from core.dataflow.nodes.base import (
+    ColModeMixin,
+    FitPredictNode,
+    GroupedColDfToDfColProcessor,
+)
 
 _LOG = logging.getLogger(__name__)
 
