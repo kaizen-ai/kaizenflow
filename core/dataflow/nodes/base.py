@@ -8,9 +8,9 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
+import core.dataflow.core as cdc
+import core.dataflow.utils as cdu
 import helpers.dbg as dbg
-from core.dataflow.core import Node
-from core.dataflow.utils import get_df_info_as_string
 
 _LOG = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 # #############################################################################
 
 
-class FitPredictNode(Node, abc.ABC):
+class FitPredictNode(cdc.Node, abc.ABC):
     """
     Define an abstract class with sklearn-style `fit` and `predict` functions.
 
@@ -134,7 +134,7 @@ class DataSource(FitPredictNode, abc.ABC):
         dbg.dassert(not fit_df.empty)
         # Update `info`.
         info = collections.OrderedDict()
-        info["fit_df_info"] = get_df_info_as_string(fit_df)
+        info["fit_df_info"] = cdu.get_df_info_as_string(fit_df)
         self._set_info("fit", info)
         return {self.output_names[0]: fit_df}
 
@@ -166,7 +166,7 @@ class DataSource(FitPredictNode, abc.ABC):
         dbg.dassert(not predict_df.empty)
         # Update `info`.
         info = collections.OrderedDict()
-        info["predict_df_info"] = get_df_info_as_string(predict_df)
+        info["predict_df_info"] = cdu.get_df_info_as_string(predict_df)
         self._set_info("predict", info)
         return {self.output_names[0]: predict_df}
 
@@ -303,7 +303,7 @@ class YConnector(FitPredictNode):
         # TODO(Paul): Add meaningful info.
         df_out = self._connector_func(df_in1, df_in2, **self._connector_kwargs)
         info = collections.OrderedDict()
-        info["df_merged_info"] = get_df_info_as_string(df_out)
+        info["df_merged_info"] = cdu.get_df_info_as_string(df_out)
         return df_out, info
 
     @staticmethod
@@ -556,9 +556,9 @@ class CrossSectionalDfToDfColProcessor:
         col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
         """
-        As in `_preprocess_cols()`.
+        As in `preprocess_multiindex_cols()`.
         """
-        return _preprocess_cols(df, col_group)
+        return preprocess_multiindex_cols(df, col_group)
 
     @staticmethod
     def postprocess(
@@ -635,9 +635,9 @@ class SeriesToDfColProcessor:
         col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
         """
-        As in `_preprocess_cols()`.
+        As in `preprocess_multiindex_cols()`.
         """
-        return _preprocess_cols(df, col_group)
+        return preprocess_multiindex_cols(df, col_group)
 
     @staticmethod
     def postprocess(
@@ -666,9 +666,9 @@ class SeriesToSeriesColProcessor:
         col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
         """
-        As in `_preprocess_cols()`.
+        As in `preprocess_multiindex_cols()`.
         """
-        return _preprocess_cols(df, col_group)
+        return preprocess_multiindex_cols(df, col_group)
 
     @staticmethod
     def postprocess(
@@ -697,7 +697,7 @@ class SeriesToSeriesColProcessor:
         return df
 
 
-def _preprocess_cols(
+def preprocess_multiindex_cols(
     df: pd.DataFrame,
     col_group: Tuple[_COL_TYPE],
 ) -> pd.DataFrame:

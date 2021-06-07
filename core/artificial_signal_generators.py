@@ -278,6 +278,9 @@ class MultivariateNormalProcess:
 class PoissonProcess:
     """
     A thin wrapper around sp.stats.poisson, with Pandas support.
+
+    We interpret the values as the number of events that occurred in the last
+    interval.
     """
 
     def __init__(self, mu: float) -> None:

@@ -9,11 +9,10 @@ import statsmodels.api as sm
 import statsmodels.iolib as siolib
 from tqdm.autonotebook import tqdm
 
+import core.dataflow.nodes.base as cdnb
 import core.dataflow.utils as cdu
 import core.signal_processing as csigna
 import helpers.dbg as dbg
-from core.dataflow.nodes.base import FitPredictNode
-from core.dataflow.nodes.transformers import ColModeMixin
 
 _LOG = logging.getLogger(__name__)
 
@@ -28,7 +27,7 @@ _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 # #############################################################################
 
 
-class ContinuousSarimaxModel(FitPredictNode, ColModeMixin):
+class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
     """
     A dataflow node for continuous SARIMAX model.
 
@@ -281,7 +280,7 @@ class ContinuousSarimaxModel(FitPredictNode, ColModeMixin):
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
 
 
-class MultihorizonReturnsPredictionProcessor(FitPredictNode):
+class MultihorizonReturnsPredictionProcessor(cdnb.FitPredictNode):
     """
     Process multi-horizon returns prediction.
 

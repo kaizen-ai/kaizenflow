@@ -7,12 +7,11 @@ import pandas as pd
 import sklearn as sklear
 
 import core.data_adapters as cdataa
+import core.dataflow.nodes.base as cdnb
 import core.dataflow.utils as cdu
 import core.signal_processing as csigna
 import core.statistics as cstati
 import helpers.dbg as dbg
-from core.dataflow.nodes.base import FitPredictNode, GroupedColDfToDfColProcessor
-from core.dataflow.nodes.transformers import ColModeMixin
 
 _LOG = logging.getLogger(__name__)
 
@@ -26,7 +25,7 @@ _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 # #############################################################################
 
 
-class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
+class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
     """
     Fit and predict an sklearn model.
     """
@@ -241,7 +240,7 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         return info
 
 
-class MultiindexSkLearnModel(FitPredictNode):
+class MultiindexSkLearnModel(cdnb.FitPredictNode):
     """
     Fit and predict multiple sklearn models.
     """
@@ -301,7 +300,9 @@ class MultiindexSkLearnModel(FitPredictNode):
 
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
         cdu.validate_df_indices(df_in)
-        dfs = GroupedColDfToDfColProcessor.preprocess(df_in, self._in_col_groups)
+        dfs = cdnb.GroupedColDfToDfColProcessor.preprocess(
+            df_in, self._in_col_groups
+        )
         results = {}
         info = collections.OrderedDict()
         for key, df in dfs.items():
@@ -325,7 +326,7 @@ class MultiindexSkLearnModel(FitPredictNode):
                 info_out = csklm.get_info("predict")
             results[key] = df_out
             info[key] = info_out
-        df_out = GroupedColDfToDfColProcessor.postprocess(
+        df_out = cdnb.GroupedColDfToDfColProcessor.postprocess(
             results, self._out_col_group
         )
         df_out = df_out.reindex(df_in.index)
@@ -335,7 +336,7 @@ class MultiindexSkLearnModel(FitPredictNode):
         return {"df_out": df_out}
 
 
-class SkLearnModel(FitPredictNode, ColModeMixin):
+class SkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
     """
     Fit and predict an sklearn model.
 
