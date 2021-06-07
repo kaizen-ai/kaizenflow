@@ -326,7 +326,7 @@ class MultiindexSkLearnModel(cdnb.FitPredictNode):
                 info_out = csklm.get_info("predict")
             results[key] = df_out
             info[key] = info_out
-        df_out = GroupedColDfToDfColProcessor.postprocess(
+        df_out = cdnb.GroupedColDfToDfColProcessor.postprocess(
             results, self._out_col_group
         )
         df_out = df_out.reindex(df_in.index)
