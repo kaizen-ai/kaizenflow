@@ -11,11 +11,7 @@ import core.dataflow.utils as cdu
 import core.signal_processing as csigna
 import core.statistics as cstati
 import helpers.dbg as dbg
-from core.dataflow.nodes.base import (
-    ColModeMixin,
-    FitPredictNode,
-    GroupedColDfToDfColProcessor,
-)
+import core.dataflow.nodes.base as cdnb
 
 _LOG = logging.getLogger(__name__)
 
@@ -29,7 +25,7 @@ _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 # #############################################################################
 
 
-class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
+class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
     """
     Fit and predict an sklearn model.
     """
@@ -244,7 +240,7 @@ class ContinuousSkLearnModel(FitPredictNode, ColModeMixin):
         return info
 
 
-class MultiindexSkLearnModel(FitPredictNode):
+class MultiindexSkLearnModel(cdnb.FitPredictNode):
     """
     Fit and predict multiple sklearn models.
     """
@@ -304,7 +300,7 @@ class MultiindexSkLearnModel(FitPredictNode):
 
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
         cdu.validate_df_indices(df_in)
-        dfs = GroupedColDfToDfColProcessor.preprocess(df_in, self._in_col_groups)
+        dfs = cdnb.GroupedColDfToDfColProcessor.preprocess(df_in, self._in_col_groups)
         results = {}
         info = collections.OrderedDict()
         for key, df in dfs.items():
@@ -338,7 +334,7 @@ class MultiindexSkLearnModel(FitPredictNode):
         return {"df_out": df_out}
 
 
-class SkLearnModel(FitPredictNode, ColModeMixin):
+class SkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
     """
     Fit and predict an sklearn model.
 

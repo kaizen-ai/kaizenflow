@@ -10,10 +10,9 @@ import core.dataflow.nodes.base as cdnb
 import core.finance as cfinan
 import core.signal_processing as csigna
 import helpers.dbg as dbg
+import core.dataflow.utils as cdu
 
 _LOG = logging.getLogger(__name__)
-
-from core.dataflow.utils import get_df_info_as_string, merge_dataframes
 
 # TODO(*): Create a dataflow types file.
 _COL_TYPE = Union[int, str]
@@ -129,7 +128,7 @@ class ColumnTransformer(cdnb.Transformer, cdnb.ColModeMixin):
             col_mode=self._col_mode,
         )
         # Update `info`.
-        info["df_transformed_info"] = get_df_info_as_string(df)
+        info["df_transformed_info"] = cdu.get_df_info_as_string(df)
         return df, info
 
 
@@ -237,7 +236,7 @@ class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
             col_mode=self._col_mode,
         )
         #
-        info["df_transformed_info"] = get_df_info_as_string(df)
+        info["df_transformed_info"] = cdu.get_df_info_as_string(df)
         return df, info
 
 
@@ -311,8 +310,8 @@ class SeriesToDfTransformer(cdnb.Transformer):
         # Combine the series representing leaf col transformations back into a
         # single dataframe.
         df = cdnb.SeriesToDfColProcessor.postprocess(dfs, self._out_col_group)
-        df = merge_dataframes(df_in, df)
-        info["df_transformed_info"] = get_df_info_as_string(df)
+        df = cdu.merge_dataframes(df_in, df)
+        info["df_transformed_info"] = cdu.get_df_info_as_string(df)
         return df, info
 
 
@@ -424,8 +423,8 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
         df = cdnb.SeriesToSeriesColProcessor.postprocess(
             srs_list, self._out_col_group
         )
-        df = merge_dataframes(df_in, df)
-        info["df_transformed_info"] = get_df_info_as_string(df)
+        df = cdu.merge_dataframes(df_in, df)
+        info["df_transformed_info"] = cdu.get_df_info_as_string(df)
         return df, info
 
 
@@ -491,7 +490,7 @@ class DataframeMethodRunner(cdnb.Transformer):
         dbg.dassert_isinstance(df, pd.DataFrame)
         #
         info = collections.OrderedDict()
-        info["df_transformed_info"] = get_df_info_as_string(df)
+        info["df_transformed_info"] = cdu.get_df_info_as_string(df)
         return df, info
 
 
@@ -532,7 +531,7 @@ class Resample(cdnb.Transformer):
         df = func(**self._agg_func_kwargs)
         # Update `info`.
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        info["df_transformed_info"] = get_df_info_as_string(df)
+        info["df_transformed_info"] = cdu.get_df_info_as_string(df)
         return df, info
 
 
@@ -589,7 +588,7 @@ class TimeBarResampler(cdnb.Transformer):
         )
         #
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        info["df_transformed_info"] = get_df_info_as_string(df)
+        info["df_transformed_info"] = cdu.get_df_info_as_string(df)
         return df, info
 
 
@@ -625,7 +624,7 @@ class TwapVwapComputer(cdnb.Transformer):
         )
         #
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        info["df_transformed_info"] = get_df_info_as_string(df)
+        info["df_transformed_info"] = cdu.get_df_info_as_string(df)
         return df, info
 
 
@@ -679,5 +678,5 @@ class MultiindexTwapVwapComputer(cdnb.Transformer):
         if self._out_col_group:
             df = pd.concat([df], axis=1, keys=[self._out_col_group])
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        info["df_transformed_info"] = get_df_info_as_string(df)
+        info["df_transformed_info"] = cdu.get_df_info_as_string(df)
         return df, info
