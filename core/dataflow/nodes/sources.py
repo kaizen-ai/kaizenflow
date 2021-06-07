@@ -230,6 +230,6 @@ class MultivariateNormalGenerator(DataSource):
         volume = pd.DataFrame(
             index=prices.index, columns=prices.columns, data=100
         )
-        df = pd.concat([prices, volume], axis=1, keys=["close", "vol"])
+        df = pd.concat([prices, volume], axis=1, keys=["close", "volume"])
         self.df = df
         self.df = self.df.loc[self._start_date : self._end_date]
