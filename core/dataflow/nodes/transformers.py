@@ -6,31 +6,22 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import pandas as pd
 
+import core.dataflow.nodes.base as cdnb
 import core.finance as cfinan
 import core.signal_processing as csigna
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
-from core.dataflow.nodes.base import (
-    ColModeMixin,
-    SeriesToDfColProcessor,
-    SeriesToSeriesColProcessor,
-    Transformer,
-)
 from core.dataflow.utils import get_df_info_as_string, merge_dataframes
 
 # TODO(*): Create a dataflow types file.
 _COL_TYPE = Union[int, str]
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
+_RESAMPLING_RULE_TYPE = Union[pd.DateOffset, pd.Timedelta, str]
 
 
-# #############################################################################
-# Transformer nodes
-# #############################################################################
-
-
-class ColumnTransformer(Transformer, ColModeMixin):
+class ColumnTransformer(cdnb.Transformer, cdnb.ColModeMixin):
     """
     Perform non-index modifying changes of columns.
     """
@@ -142,7 +133,7 @@ class ColumnTransformer(Transformer, ColModeMixin):
         return df, info
 
 
-class SeriesTransformer(Transformer, ColModeMixin):
+class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
     """
     Perform non-index modifying changes of columns.
 
@@ -250,7 +241,7 @@ class SeriesTransformer(Transformer, ColModeMixin):
         return df, info
 
 
-class SeriesToDfTransformer(Transformer):
+class SeriesToDfTransformer(cdnb.Transformer):
     """
     Wrap transformers using the `SeriesToDfColProcessor` pattern.
     """
@@ -296,7 +287,7 @@ class SeriesToDfTransformer(Transformer):
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         # Preprocess to extract relevant flat dataframe.
         df_in = df.copy()
-        df = SeriesToDfColProcessor.preprocess(df, self._in_col_group)
+        df = cdnb.SeriesToDfColProcessor.preprocess(df, self._in_col_group)
         # Apply `transform()` function column-wise.
         self._leaf_cols = df.columns.tolist()
         # Initialize container to store info (e.g., auxiliary stats) in the
@@ -319,13 +310,13 @@ class SeriesToDfTransformer(Transformer):
         info["func_info"] = func_info
         # Combine the series representing leaf col transformations back into a
         # single dataframe.
-        df = SeriesToDfColProcessor.postprocess(dfs, self._out_col_group)
+        df = cdnb.SeriesToDfColProcessor.postprocess(dfs, self._out_col_group)
         df = merge_dataframes(df_in, df)
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
 
 
-class SeriesToSeriesTransformer(Transformer):
+class SeriesToSeriesTransformer(cdnb.Transformer):
     """
     Wrap transformers using the `SeriesToSeriesColProcessor` pattern.
 
@@ -406,7 +397,7 @@ class SeriesToSeriesTransformer(Transformer):
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         # Preprocess to extract relevant flat dataframe.
         df_in = df.copy()
-        df = SeriesToSeriesColProcessor.preprocess(df, self._in_col_group)
+        df = cdnb.SeriesToSeriesColProcessor.preprocess(df, self._in_col_group)
         # Apply `transform()` function column-wise.
         self._leaf_cols = df.columns.tolist()
         # Initialize container to store info (e.g., auxiliary stats) in the
@@ -430,7 +421,7 @@ class SeriesToSeriesTransformer(Transformer):
         info["func_info"] = func_info
         # Combine the series representing leaf col transformations back into a
         # single dataframe.
-        df = SeriesToSeriesColProcessor.postprocess(srs_list, self._out_col_group)
+        df = cdnb.SeriesToSeriesColProcessor.postprocess(srs_list, self._out_col_group)
         df = merge_dataframes(df_in, df)
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info
@@ -475,7 +466,7 @@ def _apply_func_to_series(
     return result, info
 
 
-class DataframeMethodRunner(Transformer):
+class DataframeMethodRunner(cdnb.Transformer):
     def __init__(
         self,
         nid: str,
@@ -502,7 +493,12 @@ class DataframeMethodRunner(Transformer):
         return df, info
 
 
-class Resample(Transformer):
+# #############################################################################
+# Resamplers
+# #############################################################################
+
+
+class Resample(cdnb.Transformer):
     def __init__(
         self,
         nid: str,
@@ -538,7 +534,7 @@ class Resample(Transformer):
         return df, info
 
 
-class TimeBarResampler(Transformer):
+class TimeBarResampler(cdnb.Transformer):
     def __init__(
         self,
         nid: str,
@@ -595,13 +591,13 @@ class TimeBarResampler(Transformer):
         return df, info
 
 
-class TwapVwapComputer(Transformer):
+class TwapVwapComputer(cdnb.Transformer):
     def __init__(
         self,
         nid: str,
-        rule: Union[pd.DateOffset, pd.Timedelta, str],
-        price_col: Any,
-        volume_col: Any,
+        rule: _RESAMPLING_RULE_TYPE,
+        price_col: _COL_TYPE,
+        volume_col: _COL_TYPE,
     ) -> None:
         """
         Calculate TWAP and VWAP prices from price and volume columns.
@@ -626,6 +622,60 @@ class TwapVwapComputer(Transformer):
             volume_col=self._volume_col,
         )
         #
+        info: collections.OrderedDict[str, Any] = collections.OrderedDict()
+        info["df_transformed_info"] = get_df_info_as_string(df)
+        return df, info
+
+
+class MultiindexTwapVwapComputer(cdnb.Transformer):
+    def __init__(
+            self,
+            nid: str,
+            rule: _RESAMPLING_RULE_TYPE,
+            price_col_group: Tuple[_COL_TYPE],
+            volume_col_group: Tuple[_COL_TYPE],
+            out_col_group: Tuple[_COL_TYPE],
+    ) -> None:
+        """
+        Calculate TWAP and VWAP prices from price and volume columns.
+
+        This function wraps `compute_twap_vwap()`. Params as in that function.
+        """
+        super().__init__(nid)
+        self._rule = rule
+        self._price_col_group = price_col_group
+        self._volume_col_group = volume_col_group
+        self._price_col_name = price_col_group[-1]
+        self._volume_col_name = volume_col_group[-1]
+        self._out_col_group = out_col_group
+
+    def _transform(
+            self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
+        price_df = cdnb.preprocess_multiindex_cols(df, self._price_col_group)
+        volume_df = cdnb.preprocess_multiindex_cols(df, self._volume_col_group)
+        dbg.dassert_eq_all(price_df.columns, volume_df.columns)
+        dfs = {}
+        for col in price_df.columns:
+            price_col = price_df[col]
+            price_col.name = self._price_col_name
+            volume_col = volume_df[col]
+            volume_col.name = self._volume_col_name
+            df = pd.concat([price_col, volume_col], axis=1)
+            df = cfinan.compute_twap_vwap(
+                df,
+                self._rule,
+                price_col=self._price_col_name,
+                volume_col=self._volume_col_name,
+            )
+            dfs[col] = df
+        # Insert symbols as a column level.
+        df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
+        # Swap column levels so that symbols are leaves.
+        df = df.swaplevel(i=0, j=1, axis=1)
+        df.sort_index(axis=1, level=0, inplace=True)
+        if self._out_col_group:
+            df = pd.concat([df], axis=1, keys=[self._out_col_group])
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
         info["df_transformed_info"] = get_df_info_as_string(df)
         return df, info

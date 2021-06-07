@@ -556,9 +556,9 @@ class CrossSectionalDfToDfColProcessor:
         col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
         """
-        As in `_preprocess_cols()`.
+        As in `preprocess_multiindex_cols()`.
         """
-        return _preprocess_cols(df, col_group)
+        return preprocess_multiindex_cols(df, col_group)
 
     @staticmethod
     def postprocess(
@@ -635,9 +635,9 @@ class SeriesToDfColProcessor:
         col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
         """
-        As in `_preprocess_cols()`.
+        As in `preprocess_multiindex_cols()`.
         """
-        return _preprocess_cols(df, col_group)
+        return preprocess_multiindex_cols(df, col_group)
 
     @staticmethod
     def postprocess(
@@ -666,9 +666,9 @@ class SeriesToSeriesColProcessor:
         col_group: Tuple[_COL_TYPE],
     ) -> pd.DataFrame:
         """
-        As in `_preprocess_cols()`.
+        As in `preprocess_multiindex_cols()`.
         """
-        return _preprocess_cols(df, col_group)
+        return preprocess_multiindex_cols(df, col_group)
 
     @staticmethod
     def postprocess(
@@ -697,7 +697,7 @@ class SeriesToSeriesColProcessor:
         return df
 
 
-def _preprocess_cols(
+def preprocess_multiindex_cols(
     df: pd.DataFrame,
     col_group: Tuple[_COL_TYPE],
 ) -> pd.DataFrame:

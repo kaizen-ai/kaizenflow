@@ -12,8 +12,7 @@ from tqdm.autonotebook import tqdm
 import core.dataflow.utils as cdu
 import core.signal_processing as csigna
 import helpers.dbg as dbg
-from core.dataflow.nodes.base import FitPredictNode
-from core.dataflow.nodes.transformers import ColModeMixin
+from core.dataflow.nodes.base import ColModeMixin, FitPredictNode
 
 _LOG = logging.getLogger(__name__)
 
