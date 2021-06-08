@@ -100,16 +100,16 @@ def _get_all_files(dirs: List[str], exts: Optional[List[str]]) -> List[str]:
 
 
 def _get_files_to_replace(
-    file_names: List[str], old_string: str
+    file_names: List[str], old_regex: str
 ) -> Tuple[List[str], str]:
     """
-    Return the list of files that contain `old_string` and the corresponding cfile.
+    Return the list of files that contain `old_regex` and the corresponding cfile.
     """
     # Look for files with values.
     res = []
     file_names_to_process = []
     for f in file_names:
-        found, res_tmp = _look_for(f, old_string)
+        found, res_tmp = _look_for(f, old_regex)
         _LOG.debug("File='%s', found=%s, res_tmp=\n%s", f, found, res_tmp)
         res.extend(res_tmp)
         if found:
@@ -121,9 +121,9 @@ def _get_files_to_replace(
     return file_names_to_process, txt
 
 
-def _look_for(file_name: str, old_string: str) -> Tuple[bool, List[str]]:
+def _look_for(file_name: str, old_regex: str) -> Tuple[bool, List[str]]:
     """
-    Look for `old_string` in `file_name` returning if it was found and the
+    Look for `old_regex` in `file_name` returning if it was found and the
     corresponding cfile entry.
     """
     txt = hio.from_file(file_name, encoding=_ENCODING)
@@ -131,7 +131,7 @@ def _look_for(file_name: str, old_string: str) -> Tuple[bool, List[str]]:
     res = []
     found = False
     for i, line in enumerate(txt):
-        m = re.search(old_string, line)
+        m = re.search(old_regex, line)
         if m:
             # ./install/create_conda.py:21:import helpers.helper_io as hio
             res.append("%s:%s:%s" % (file_name, i + 1, line))
@@ -143,7 +143,7 @@ def _look_for(file_name: str, old_string: str) -> Tuple[bool, List[str]]:
 
 
 def _replace_with_perl(
-    file_name: str, old_string: str, new_string: str, backup: bool
+    file_name: str, old_regex: str, new_regex: str, backup: bool
 ) -> None:
     perl_opts = []
     perl_opts.append("-p")
@@ -151,7 +151,7 @@ def _replace_with_perl(
         perl_opts.append("-i.bak")
     else:
         perl_opts.append("-i")
-    if "/" in old_string or "/" in new_string:
+    if "/" in old_regex or "/" in new_regex:
         sep = "|"
     else:
         sep = "/"
@@ -159,9 +159,9 @@ def _replace_with_perl(
     regex = ""
     regex += "s" + sep
     # regex += "\\b"
-    regex += old_string
+    regex += old_regex
     regex += sep
-    regex += new_string
+    regex += new_regex
     regex += sep
     regex += "g"
     # regex = r"s%s\\b%s%s%s%sg" % (sep, args.old, sep, args.new, sep)
@@ -174,7 +174,7 @@ def _replace_with_perl(
 
 
 def _replace_with_python(
-    file_name: str, old_string: str, new_string: str, backup: bool
+    file_name: str, old_regex: str, new_regex: str, backup: bool
 ):
     if backup:
         cmd = "cp %s %s.bak" % (file_name, file_name)
@@ -184,7 +184,7 @@ def _replace_with_python(
     lines_out = []
     for line in lines:
         _LOG.debug("line='%s'", line)
-        line_new = re.sub(old_string, new_string, line)
+        line_new = re.sub(old_regex, new_regex, line)
         if line_new != line:
             _LOG.debug("    -> line_new='%s'", line_new)
         lines_out.append(line_new)
@@ -194,13 +194,13 @@ def _replace_with_python(
 
 def _replace(
     file_names_to_process: List[str],
-    old_string: str,
-    new_string: str,
+    old_regex: str,
+    new_regex: str,
     backup: bool,
     mode: str,
 ) -> None:
     """
-    Replace `old_string` with `new_string` in the given files using perl or Python.
+    Replace `old_regex` with `new_regex` in the given files using perl or Python.
 
     :param backup: make a backup of the file before the replacement
     :param mode: `replace_with_perl` or `replace_with_python`
@@ -213,16 +213,16 @@ def _replace(
     for file_name in file_names_to_process:
         _LOG.info("* _replace %s", file_name)
         if mode == "replace_with_perl":
-            _replace_with_perl(file_name, old_string, new_string, backup)
+            _replace_with_perl(file_name, old_regex, new_regex, backup)
         elif mode == "replace_with_python":
-            _replace_with_python(file_name, old_string, new_string, backup)
+            _replace_with_python(file_name, old_regex, new_regex, backup)
         else:
             raise ValueError("Invalid mode='%s'" % mode)
 
 
-def _replace_repeated_lines(file_name: str, new_string: str) -> None:
+def _replace_repeated_lines(file_name: str, new_regex: str) -> None:
     """
-    Remove consecutive lines in `file_name` that are equal and contain `new_string`.
+    Remove consecutive lines in `file_name` that are equal and contain `new_regex`.
 
     This is equivalent to Linux `uniq`.
     """
@@ -232,7 +232,7 @@ def _replace_repeated_lines(file_name: str, new_string: str) -> None:
     prev_line = None
     for line in lines:
         _LOG.debug("line='%s'", line)
-        if new_string not in line:
+        if new_regex not in line:
             # Emit.
             lines_out.append(line)
         else:
@@ -241,7 +241,7 @@ def _replace_repeated_lines(file_name: str, new_string: str) -> None:
                 lines_out.append(line)
             else:
                 _LOG.debug("    -> skipped line")
-            prev_line = line
+        prev_line = line
     lines_out = "\n".join(lines_out)
     hio.to_file(file_name, lines_out)
 
@@ -264,17 +264,17 @@ def _custom1(args: argparse.Namespace) -> None:
     #
     file_names = _get_all_files(dirs, exts)
     txt = ""
-    for old_string, new_string in to_replace:
-        print(hprint.frame("%s -> %s" % (old_string, new_string)))
+    for old_regex, new_regex in to_replace:
+        print(hprint.frame("%s -> %s" % (old_regex, new_regex)))
         file_names_to_process, txt_tmp = _get_files_to_replace(
-            file_names, old_string
+            file_names, old_regex
         )
         dbg.dassert_lte(1, len(file_names_to_process))
         # Replace.
         if preview:
             txt += txt_tmp
         else:
-            _replace(file_names_to_process, old_string, new_string, backup, mode)
+            _replace(file_names_to_process, old_regex, new_regex, backup, mode)
     hio.to_file("./cfile", txt)
     if preview:
         _LOG.warning("Preview only as required. Results saved in ./cfile")
@@ -285,16 +285,28 @@ def _custom2(args: argparse.Namespace) -> None:
     """
     Implement AmpTask1403.
     """
-    to_replace = [
-        # (r"printing\.", "hprint."),
-        #("import helpers.config", "import core.config")
-        ("import core.config as ccfg", "import core.config as cconfig"),
-        ("import core.config as cconfi", "import core.config as cconfig"),
-        ("import core.config as cconfig", "import core.config as cconfig"),
-        ("import core.config as cfg", "import core.config as cconfig"),
-        ("import core.config_builders as ccbuild", "import core.config as cconfig"),
-        ("import core.config_builders as cfgb", "import core.config as cconfig"),
-    ]
+    if False:
+        to_replace = [
+            "import core.config as ccfg",
+            "import core.config as cconfi",
+            "import core.config as cconfig",
+            "import core.config as cfg",
+            "import core.config_builders as ccbuild",
+            "import core.config_builders as cfgb",
+        ]
+        to_replace = [(f"^{s}$", "import core.config as cconfig") for s, d in to_replace]
+    else:
+        to_replace = [
+            # (r"printing\.", "hprint."),
+            #("import helpers.config", "import core.config")
+            "ccfg",
+            "cconfi",
+            "cconfig",
+            "cfg",
+            "ccbuild",
+            "cfgb",
+        ]
+        to_replace = [(f"{s}\.", "ccfg.") for s, d in to_replace]
     dirs = ["."]
     exts = ["py", "ipynb"]
     backup = args.backup
@@ -304,19 +316,19 @@ def _custom2(args: argparse.Namespace) -> None:
     file_names = _get_all_files(dirs, exts)
     # Store the replacement points.
     txt = ""
-    for old_string, new_string in to_replace:
-        print(hprint.frame("%s -> %s" % (old_string, new_string)))
+    for old_regex, new_regex in to_replace:
+        print(hprint.frame("%s -> %s" % (old_regex, new_regex)))
         file_names_to_process, txt_tmp = _get_files_to_replace(
-            file_names, old_string
+            file_names, old_regex
         )
         dbg.dassert_lte(1, len(file_names_to_process))
         # Replace.
         if preview:
             txt += txt_tmp
         else:
-            _replace(file_names_to_process, old_string, new_string, backup, mode)
+            _replace(file_names_to_process, old_regex, new_regex, backup, mode)
             for file_name in file_names_to_process:
-                _replace_repeated_lines(file_name, new_string)
+                _replace_repeated_lines(file_name, new_regex)
     hio.to_file("./cfile", txt)
     if preview:
         _LOG.warning("Preview only as required. Results saved in ./cfile")
@@ -328,17 +340,17 @@ def _custom2(args: argparse.Namespace) -> None:
 
 
 def _get_files_to_rename(
-    file_names: List[str], old_string: str, new_string: str
+    file_names: List[str], old_regex: str, new_regex: str
 ) -> Tuple[List[str], Dict[str, str]]:
-    # Look for files containing "old_string".
+    # Look for files containing "old_regex".
     file_map: Dict[str, str] = {}
     file_names_to_process = []
     for f in file_names:
         dirname = os.path.dirname(f)
         basename = os.path.basename(f)
-        found = old_string in basename
+        found = old_regex in basename
         if found:
-            new_basename = basename.replace(old_string, new_string)
+            new_basename = basename.replace(old_regex, new_regex)
             _LOG.debug("File='%s', found=%s", f, found)
             file_names_to_process.append(f)
             file_map[f] = os.path.join(dirname, new_basename)
