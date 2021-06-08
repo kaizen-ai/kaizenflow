@@ -5,7 +5,7 @@ import pandas as pd
 import sklearn.linear_model as slm
 
 import core.artificial_signal_generators as sig_gen
-import core.config as cfg
+import core.config as cconfig
 import core.dataflow as dtf
 import core.dataframe_modeler as dfmod
 import helpers.printing as prnt
@@ -151,8 +151,8 @@ class TestDataFrameModeler(hut.TestCase):
         str_output = hut.convert_df_to_string(dfm.df, index=True)
         self.check_string(str_output)
 
-    def _get_config(self, steps_ahead: int) -> cfg.Config:
-        config = cfg.Config()
+    def _get_config(self, steps_ahead: int) -> cconfig.Config:
+        config = cconfig.Config()
         config["x_vars"] = ["x"]
         config["y_vars"] = ["y"]
         config["steps_ahead"] = steps_ahead

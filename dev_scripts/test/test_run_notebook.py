@@ -4,8 +4,7 @@ from typing import List, Tuple
 
 import pytest
 
-import core.config as cfg
-import core.config_builders as cfgb
+import core.config as cconfig
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.system_interaction as si
@@ -147,10 +146,10 @@ $GIT_ROOT/dev_scripts/test/TestRunNotebook1.test3/tmp.scratch/result_2/run_noteb
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
-def _build_config(values: List[bool]) -> List[cfg.Config]:
-    config_template = cfg.Config()
+def _build_config(values: List[bool]) -> List[cconfig.Config]:
+    config_template = cconfig.Config()
     config_template["fail"] = None
-    configs = cfgb.build_multiple_configs(config_template, {("fail",): values})
+    configs = cconfig.build_multiple_configs(config_template, {("fail",): values})
     # Duplicate configs are not allowed, so we need to add identifiers to make
     # each config unique.
     for i, config in enumerate(configs):
@@ -158,7 +157,7 @@ def _build_config(values: List[bool]) -> List[cfg.Config]:
     return configs
 
 
-def build_configs1() -> List[cfg.Config]:
+def build_configs1() -> List[cconfig.Config]:
     """
     Build 2 configs that won't make the notebook to fail.
     """
@@ -167,7 +166,7 @@ def build_configs1() -> List[cfg.Config]:
     return configs
 
 
-def build_configs2() -> List[cfg.Config]:
+def build_configs2() -> List[cconfig.Config]:
     """
     Build 3 configs with one failing.
     """

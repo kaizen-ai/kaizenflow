@@ -4,8 +4,7 @@ from typing import List, Optional, cast
 
 import pandas as pd
 
-import core.config as cfg
-import core.config_builders as cfgb
+import core.config as cconfig
 import helpers.unit_test as hut
 
 
@@ -20,7 +19,7 @@ class TestGetConfigFromFlattened1(hut.TestCase):
                 (("zscore", "com"), 28),
             ]
         )
-        config = cfgb.get_config_from_flattened(flattened)
+        config = cconfig.get_config_from_flattened(flattened)
         self.check_string(str(config))
 
     def test2(self) -> None:
@@ -29,10 +28,10 @@ class TestGetConfigFromFlattened1(hut.TestCase):
                 (("read_data", "file_name"), "foo_bar.txt"),
                 (("read_data", "nrows"), 999),
                 (("single_val",), "hello"),
-                (("zscore",), cfg.Config()),
+                (("zscore",), cconfig.Config()),
             ]
         )
-        config = cfgb.get_config_from_flattened(flattened)
+        config = cconfig.get_config_from_flattened(flattened)
         self.check_string(str(config))
 
 
@@ -49,7 +48,7 @@ class TestGetConfigFromNestedDict1(hut.TestCase):
                 "com": 28,
             },
         }
-        config = cfgb.get_config_from_nested_dict(nested)
+        config = cconfig.get_config_from_nested_dict(nested)
         self.check_string(str(config))
 
     def test2(self) -> None:
@@ -59,16 +58,16 @@ class TestGetConfigFromNestedDict1(hut.TestCase):
                 "nrows": 999,
             },
             "single_val": "hello",
-            "zscore": cfg.Config(),
+            "zscore": cconfig.Config(),
         }
-        config = cfgb.get_config_from_nested_dict(nested)
+        config = cconfig.get_config_from_nested_dict(nested)
         self.check_string(str(config))
 
 
 def _build_test_configs(
     symbols: Optional[List[str]] = None,
-) -> List[cfg.Config]:
-    config_template = cfg.Config()
+) -> List[cconfig.Config]:
+    config_template = cconfig.Config()
     config_tmp = config_template.add_subconfig("read_data")
     config_tmp["symbol"] = None
     config_tmp = config_template.add_subconfig("resample")
@@ -91,7 +90,7 @@ class TestGetConfigsFromBuilder1(hut.TestCase):
         Build a config from.
         """
         config_builder = "core.test.test_config_builders._build_test_configs()"
-        configs = cfgb.get_configs_from_builder(config_builder)
+        configs = cconfig.get_configs_from_builder(config_builder)
         txt = pprint.pformat(configs)
         self.check_string(txt)
 
@@ -102,7 +101,7 @@ class TestGetConfigFromEnv(hut.TestCase):
         Verify that if there are no config env variables, no config is created.
         """
         # Test that no config is created.
-        actual_config = cfgb.get_config_from_env()
+        actual_config = cconfig.get_config_from_env()
         self.assertIs(actual_config, None)
 
 
@@ -112,7 +111,7 @@ class TestGetConfigFromEnv(hut.TestCase):
 class TestBuildMultipleConfigs(hut.TestCase):
     def test_existing_path(self) -> None:
         # Create config template.
-        config_template = cfg.Config()
+        config_template = cconfig.Config()
         config_tmp = config_template.add_subconfig("read_data")
         config_tmp["symbol"] = None
         config_tmp = config_template.add_subconfig("resample")
@@ -123,14 +122,14 @@ class TestBuildMultipleConfigs(hut.TestCase):
             ("resample", "rule"): ["5T", "7T", "10T"],
         }
         # Check the results.
-        actual_result = cfgb.build_multiple_configs(
+        actual_result = cconfig.build_multiple_configs(
             config_template, params_variants
         )
         self.check_string(str(actual_result))
 
     def test_non_existent_path(self) -> None:
         # Create config template.
-        config_template = cfg.Config()
+        config_template = cconfig.Config()
         config_tmp = config_template.add_subconfig("read_data")
         config_tmp["symbol"] = None
         config_tmp = config_template.add_subconfig("resample")
@@ -142,11 +141,11 @@ class TestBuildMultipleConfigs(hut.TestCase):
         }
         # Check the results.
         with self.assertRaises(ValueError):
-            _ = cfgb.build_multiple_configs(config_template, params_variants)
+            _ = cconfig.build_multiple_configs(config_template, params_variants)
 
     def test_not_nan_parameter(self) -> None:
         # Create config template.
-        config_template = cfg.Config()
+        config_template = cconfig.Config()
         config_tmp = config_template.add_subconfig("read_data")
         config_tmp["symbol"] = "CL"
         config_tmp = config_template.add_subconfig("resample")
@@ -158,16 +157,16 @@ class TestBuildMultipleConfigs(hut.TestCase):
         }
         # Check the results.
         with self.assertRaises(ValueError):
-            _ = cfgb.build_multiple_configs(config_template, params_variants)
+            _ = cconfig.build_multiple_configs(config_template, params_variants)
 
 
-def _get_test_config_1() -> cfg.Config:
+def _get_test_config_1() -> cconfig.Config:
     """
     Build a test config for Crude Oil asset.
 
     :return: Test config.
     """
-    config = cfg.Config()
+    config = cconfig.Config()
     tmp_config = config.add_subconfig("build_model")
     tmp_config["activation"] = "sigmoid"
     tmp_config = config.add_subconfig("build_targets")
@@ -179,13 +178,13 @@ def _get_test_config_1() -> cfg.Config:
     return config
 
 
-def _get_test_config_2() -> cfg.Config:
+def _get_test_config_2() -> cconfig.Config:
     """
     Build a test config for Gold asset.
 
     :return: Test config.
     """
-    config = cfg.Config()
+    config = cconfig.Config()
     tmp_config = config.add_subconfig("build_model")
     tmp_config["activation"] = "sigmoid"
     tmp_config = config.add_subconfig("build_targets")
@@ -210,7 +209,7 @@ class TestCheckSameConfigs(hut.TestCase):
         ]
         # Make sure function raises an error.
         with self.assertRaises(AssertionError) as cm:
-            cfgb.validate_configs(configs)
+            cconfig.validate_configs(configs)
         act = str(cm.exception)
         self.check_string(act, fuzzy_match=True)
 
@@ -224,7 +223,7 @@ class TestConfigIntersection(hut.TestCase):
         # TODO(*): Bad unit testing fomr! What are these configs?
         config_1 = _get_test_config_1()
         config_2 = _get_test_config_2()
-        intersection = cfgb.get_config_intersection([config_1, config_2])
+        intersection = cconfig.get_config_intersection([config_1, config_2])
         self.check_string(str(intersection))
 
     def test_same_config_intersection(self) -> None:
@@ -235,7 +234,7 @@ class TestConfigIntersection(hut.TestCase):
         # TODO(*): Bad unit testing form! What is this config?
         test_config = _get_test_config_1()
         # FInd intersection of two same configs.
-        actual_intersection = cfgb.get_config_intersection(
+        actual_intersection = cconfig.get_config_intersection(
             [test_config, test_config]
         )
         # Verify that intersection is equal to initial config.
@@ -252,7 +251,7 @@ class TestConfigDifference(hut.TestCase):
         config_1 = _get_test_config_1()
         config_2 = _get_test_config_2()
         # Compute variation between configs.
-        actual_difference = cfgb.get_config_difference([config_1, config_2])
+        actual_difference = cconfig.get_config_difference([config_1, config_2])
         # Define expected variation.
         expected_difference = {
             "build_targets.target_asset": ["Crude Oil", "Gold"]
@@ -266,7 +265,7 @@ class TestConfigDifference(hut.TestCase):
         # Create test config.
         config = _get_test_config_1()
         # Compute difference between two instances of same config.
-        actual_difference = cfgb.get_config_difference([config, config])
+        actual_difference = cconfig.get_config_difference([config, config])
         # Verify that the difference is empty.
         self.assertFalse(actual_difference)
 
@@ -274,7 +273,7 @@ class TestConfigDifference(hut.TestCase):
 class TestGetConfigDataframe(hut.TestCase):
     """
     Compare manually constructed dfs and dfs created by
-    `cfgb.get_configs_dataframe` using `pd.DataFrame.equals()`
+    `cconfig.get_configs_dataframe` using `pd.DataFrame.equals()`
     """
 
     def test_all_params(self) -> None:
@@ -285,7 +284,7 @@ class TestGetConfigDataframe(hut.TestCase):
         config_1 = _get_test_config_1()
         config_2 = _get_test_config_2()
         # Convert configs to dataframe.
-        actual_result = cfgb.get_configs_dataframe([config_1, config_2])
+        actual_result = cconfig.get_configs_dataframe([config_1, config_2])
         # Create expected dataframe and one with function.
         expected_result = pd.DataFrame(
             {
@@ -308,7 +307,7 @@ class TestGetConfigDataframe(hut.TestCase):
         config_1 = _get_test_config_1()
         config_2 = _get_test_config_2()
         # Convert configs to df, keeping only varying params.
-        actual_result = cfgb.get_configs_dataframe(
+        actual_result = cconfig.get_configs_dataframe(
             [config_1, config_2], params_subset="difference"
         )
         # Create expected dataframe and one with function.
@@ -325,7 +324,7 @@ class TestGetConfigDataframe(hut.TestCase):
         config_1 = _get_test_config_1()
         config_2 = _get_test_config_2()
         # Convert configs to df, keeping arbitrary parameter.
-        actual_result = cfgb.get_configs_dataframe(
+        actual_result = cconfig.get_configs_dataframe(
             [config_1, config_2], params_subset=["build_model.activation"]
         )
         # Create expected dataframe and one with function.
@@ -344,7 +343,7 @@ class TestGenerateDefaultConfigVariants(hut.TestCase):
         # Prepare varying parameters.
         params_variants = {("build_targets", "target_asset"): ["Gasoil", "Soy"]}
         # Pass test config builder to generating function.
-        actual_configs = cfgb.generate_default_config_variants(
+        actual_configs = cconfig.generate_default_config_variants(
             _get_test_config_1, params_variants
         )
         # Convert configs to string for comparison.

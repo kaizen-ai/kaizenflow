@@ -16,7 +16,7 @@ import jsonpickle  # type: ignore
 import jsonpickle.ext.pandas as jepand  # type: ignore
 import pandas as pd
 
-import core.config as cconfi
+import core.config as cconfig
 import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.printing as hprint
@@ -69,10 +69,10 @@ def to_python_code(obj: Any) -> str:
             'pd.Series(data=%s, index=%s, name="%s", dtype=%s)'
             % (obj.tolist(), obj.index, obj.name, obj.dtype)
         )
-    elif isinstance(obj, cconfi.Config):
-        # Config -> python_code -> "cconfi.Config.from_python(python_code)"
+    elif isinstance(obj, cconfig.Config):
+        # Config -> python_code -> "cconfig.Config.from_python(python_code)"
         val = obj.to_python()
-        output.append('cconfi.Config.from_python("%s")' % val)
+        output.append('cconfig.Config.from_python("%s")' % val)
     else:
         # Use `jsonpickle` for serialization.
         _LOG.warning(
@@ -335,7 +335,7 @@ class Playback:
                     dict,
                     pd.DataFrame,
                     pd.Series,
-                    cconfi.Config,
+                    cconfig.Config,
                 ),
             ):
                 self._append("{0} = jsonpickle.decode({0})".format(key), 2)

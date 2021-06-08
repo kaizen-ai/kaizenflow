@@ -6,8 +6,7 @@ import pandas as pd
 import sklearn.linear_model as slmode
 
 import core.artificial_signal_generators as casgen
-import core.config as ccfg
-import core.config_builders as ccbuild
+import core.config as cconfig
 import core.signal_processing as csproc
 import helpers.printing as hprint
 import helpers.unit_test as hut
@@ -83,7 +82,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         data.drop(columns=["x"], inplace=True)
         steps_ahead = 1
         # Train SkLearn model.
-        sklearn_config = ccbuild.get_config_from_nested_dict(
+        sklearn_config = cconfig.get_config_from_nested_dict(
             {
                 "model_func": slmode.LinearRegression,
                 "x_vars": ["ret_0"],
@@ -128,7 +127,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
         data.drop(columns=["x"], inplace=True)
         steps_ahead = 3
         # Train SkLearn model.
-        sklearn_config = ccbuild.get_config_from_nested_dict(
+        sklearn_config = cconfig.get_config_from_nested_dict(
             {
                 "model_func": slmode.LinearRegression,
                 "x_vars": ["ret_0"],
@@ -296,7 +295,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
 
     def _check_results(
         self,
-        config: ccfg.Config,
+        config: cconfig.Config,
         df_out: pd.DataFrame,
         err_threshold: float = 0.01,
     ) -> None:
@@ -332,8 +331,8 @@ class TestContinuousSarimaxModel(hut.TestCase):
     def _get_config(
         order: Tuple[int, int, int],
         seasonal_order: Optional[Tuple[int, int, int, int]] = None,
-    ) -> ccfg.Config:
-        config = ccbuild.get_config_from_nested_dict(
+    ) -> cconfig.Config:
+        config = cconfig.get_config_from_nested_dict(
             {
                 "y_vars": ["ret_0"],
                 "steps_ahead": 3,
@@ -351,7 +350,7 @@ class TestContinuousSarimaxModel(hut.TestCase):
 class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
     def test1(self) -> None:
         model_output = self._get_multihorizon_model_output(3)
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "target_col": "ret_0_zscored",
                 "prediction_cols": [
@@ -381,7 +380,7 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
 
     def test_invert_zret_0_zscoring1(self) -> None:
         model_output = self._get_multihorizon_model_output(1)
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "target_col": "ret_0_zscored",
                 "prediction_cols": ["ret_0_zscored_1_hat"],
@@ -402,7 +401,7 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
 
     def test_invert_zret_3_zscoring1(self) -> None:
         model_output = self._get_multihorizon_model_output(3)
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "target_col": "ret_0_zscored",
                 "prediction_cols": [

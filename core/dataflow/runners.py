@@ -4,7 +4,7 @@ from typing import Any, Generator, List, Optional, Tuple, Union
 
 import pandas as pd
 
-import core.config as cconfi
+import core.config as cconfig
 import helpers.dbg as dbg
 from core.dataflow.builders import DagBuilder
 from core.dataflow.result_bundle import PredictionResultBundle, ResultBundle
@@ -19,7 +19,7 @@ class FitPredictDagRunner:
     Class for running DAGs.
     """
 
-    def __init__(self, config: cconfi.Config, dag_builder: DagBuilder) -> None:
+    def __init__(self, config: cconfig.Config, dag_builder: DagBuilder) -> None:
         """
 
         :param config: config for DAG
@@ -135,13 +135,13 @@ class IncrementalDagRunner:
 
     def __init__(
         self,
-        config: cconfi.Config,
+        config: cconfig.Config,
         dag_builder: DagBuilder,
         start: _PANDAS_DATE_TYPE,
         end: _PANDAS_DATE_TYPE,
         freq: str,
         # result_dir: str,
-        fit_state: cconfi.Config,
+        fit_state: cconfig.Config,
     ) -> None:
         """
         Initialize DAG.

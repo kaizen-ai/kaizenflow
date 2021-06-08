@@ -3,8 +3,7 @@ import logging
 
 import pandas as pd
 
-import core.config as cfg
-import core.config_builders as cfgb
+import core.config as cconfig
 import core.dataflow as dtf
 import helpers.unit_test as hut
 
@@ -70,10 +69,10 @@ class: ResultBundle
         self.assertListEqual(actual, expected)
 
     @staticmethod
-    def _get_init_config() -> cfg.Config:
+    def _get_init_config() -> cconfig.Config:
         # TODO(gp): Factor out common part.
-        init_config = cfg.Config()
-        init_config["config"] = cfgb.get_config_from_nested_dict({"key": "val"})
+        init_config = cconfig.Config()
+        init_config["config"] = cconfig.get_config_from_nested_dict({"key": "val"})
         init_config["result_nid"] = "leaf_node"
         init_config["method"] = "fit"
         df = pd.DataFrame([range(5)], columns=[f"col{i}" for i in range(5)])
@@ -167,9 +166,9 @@ class TestPredictionResultBundle(hut.TestCase):
             pd.testing.assert_series_equal(prediction, expected[tag][1])
 
     @staticmethod
-    def _get_init_config() -> cfg.Config:
-        init_config = cfg.Config()
-        init_config["config"] = cfgb.get_config_from_nested_dict({"key": "val"})
+    def _get_init_config() -> cconfig.Config:
+        init_config = cconfig.Config()
+        init_config["config"] = cconfig.get_config_from_nested_dict({"key": "val"})
         init_config["result_nid"] = "leaf_node"
         init_config["method"] = "fit"
         df = pd.DataFrame([range(5)], columns=[f"col{i}" for i in range(5)])

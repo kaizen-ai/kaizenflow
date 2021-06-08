@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 import core.artificial_signal_generators as casgen
-import core.config as ccfg
+import core.config as cconfig
 import helpers.printing as hprint
 import helpers.unit_test as hut
 from core.dataflow.core import DAG
@@ -58,7 +58,7 @@ if True:
             dag = DAG(mode="strict")
             dag.add_node(data_source_node)
             # Load deepar config and create modeling node.
-            config = ccfg.Config()
+            config = cconfig.Config()
             config["x_vars"] = None
             config["y_vars"] = ["y"]
             config["trainer_kwargs"] = {"epochs": 1}
@@ -137,8 +137,8 @@ if True:
             local_ts.columns = self._x_vars + self._y_vars
             return local_ts
 
-        def _get_config(self) -> ccfg.Config:
-            config = ccfg.Config()
+        def _get_config(self) -> cconfig.Config:
+            config = cconfig.Config()
             config["nid"] = "deepar"
             config["trainer_kwargs"] = {"epochs": 1}
             config["estimator_kwargs"] = {

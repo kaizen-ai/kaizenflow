@@ -5,7 +5,7 @@ from typing import Any, Optional
 
 import pandas as pd
 
-import core.config as cconfi
+import core.config as cconfig
 import helpers.io_ as hio
 import helpers.playback as hplayb
 import helpers.system_interaction as hsyste
@@ -193,21 +193,21 @@ class TestPlaybackInputOutput1(hut.TestCase):
 
     def test15(self) -> None:
         """
-        Test for cconfi.Config inputs with check_string.
+        Test for cconfig.Config inputs with check_string.
         """
         # Create inputs.
-        a = cconfi.Config([("meta", "meta value 1"), ("list", [1, 2])])
-        b = cconfi.Config([("meta", "meta value 2")])
+        a = cconfig.Config([("meta", "meta value 1"), ("list", [1, 2])])
+        b = cconfig.Config([("meta", "meta value 2")])
         # Generate, freeze and execute a unit test.
         self._helper("check_string", a=a, b=b)
 
     def test16(self) -> None:
         """
-        Test for cconfi.Config inputs with assert_equal.
+        Test for cconfig.Config inputs with assert_equal.
         """
         # Create inputs.
-        a = cconfi.Config([("meta", "meta value 1"), ("list", [1, 2])])
-        b = cconfi.Config([("meta", "meta value 2")])
+        a = cconfig.Config([("meta", "meta value 1"), ("list", [1, 2])])
+        b = cconfig.Config([("meta", "meta value 2")])
         # Generate, freeze and execute a unit test.
         self._helper("assert_equal", a=a, b=b)
 
@@ -234,8 +234,8 @@ class TestPlaybackInputOutput1(hut.TestCase):
                 c.update(a)
                 c.update(b)
                 return p.run(c)
-            if isinstance(a, cconfi.Config) and isinstance(b, cconfi.Config):
-                c = cconfi.Config()
+            if isinstance(a, cconfig.Config) and isinstance(b, cconfig.Config):
+                c = cconfig.Config()
                 c.update(a)
                 c.update(b)
                 return p.run(c)
@@ -250,8 +250,8 @@ class TestPlaybackInputOutput1(hut.TestCase):
                 c.update(a)
                 c.update(b)
                 return p.run(c)
-            if isinstance(a, cconfi.Config) and isinstance(b, cconfi.Config):
-                c = cconfi.Config()
+            if isinstance(a, cconfig.Config) and isinstance(b, cconfig.Config):
+                c = cconfig.Config()
                 c.update(a)
                 c.update(b)
                 return p.run(c)
@@ -374,14 +374,14 @@ class TestToPythonCode1(hut.TestCase):
 
     def test_config1(self) -> None:
         """
-        Test cconfi.Config.
+        Test cconfig.Config.
         """
-        config = cconfi.Config()
+        config = cconfig.Config()
         config["var1"] = "val1"
-        config["var2"] = cconfi.Config([("var3", 10), ("var4", "val4")])
+        config["var2"] = cconfig.Config([("var3", 10), ("var4", "val4")])
         self._check(
             config,
-            "cconfi.Config.from_python(\"Config([('var1', 'val1'), "
+            "cconfig.Config.from_python(\"Config([('var1', 'val1'), "
             "('var2', Config([('var3', 10), ('var4', 'val4')]))])\")",
         )
 

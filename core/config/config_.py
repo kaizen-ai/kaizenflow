@@ -1,8 +1,6 @@
-"""
-Import as:
-
-import core.config as cfg
-"""
+# This file is called `config_.py` and not `config.py` to avoid circular
+# imports from the fact that also the package `core/config` can be imported as
+# `import config`.
 
 import collections
 import copy
@@ -216,7 +214,7 @@ class Config:
         Return python code that builds, when executed, the current object.
         """
         config_as_str = str(self.to_dict())
-        # We don't need `cfg.` since we are inside the config module.
+        # We don't need `cconfig.` since we are inside the config module.
         config_as_str = config_as_str.replace("OrderedDict", "Config")
         if check:
             # Check that the object can be reconstructed.

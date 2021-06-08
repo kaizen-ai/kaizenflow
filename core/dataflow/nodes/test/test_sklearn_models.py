@@ -4,7 +4,7 @@ import pandas as pd
 import sklearn.linear_model as slmode
 
 import core.artificial_signal_generators as casgen
-import core.config_builders as cfgb
+import core.config as cconfig
 import helpers.unit_test as hut
 from core.dataflow.nodes.sklearn_models import (
     ContinuousSkLearnModel,
@@ -19,7 +19,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         # Load test data.
         data = self._get_data(1)
         # Generate node config.
-        config = cfgb.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "x_vars": ["x"],
                 "y_vars": ["y"],
@@ -43,7 +43,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
 
     def test2(self) -> None:
         data = self._get_data(2)
-        config = cfgb.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "x_vars": ["x"],
                 "y_vars": ["y"],
@@ -71,7 +71,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         input.
         """
         data = self._get_data(1)
-        config = cfgb.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "x_vars": ["x"],
                 "y_vars": ["y"],
@@ -94,7 +94,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         data = self._get_data(1)
         data_fit = data.loc[:"2010-01-01 00:29:00"]
         data_predict = data.loc["2010-01-01 00:30:00":]
-        config = cfgb.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "x_vars": ["x"],
                 "y_vars": ["y"],
@@ -119,7 +119,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
         data = self._get_data(2)
         data_fit = data.loc[:"2010-01-01 00:29:00"]
         data_predict = data.loc["2010-01-01 00:30:00":]
-        config = cfgb.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "x_vars": ["x"],
                 "y_vars": ["y"],
@@ -161,7 +161,7 @@ class TestMultiindexSkLearnModel(hut.TestCase):
         # Load test data.
         data = self._get_data()
         # Generate node config.
-        config = cfgb.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "in_col_groups": [
                     ("ret_0",),
@@ -190,7 +190,7 @@ class TestMultiindexSkLearnModel(hut.TestCase):
         data = self._get_data()
         data_fit = data.loc[:"2000-01-31"]
         data_predict = data.loc["2000-01-31":]
-        config = cfgb.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "in_col_groups": [
                     ("ret_0",),

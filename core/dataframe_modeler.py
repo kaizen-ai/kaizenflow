@@ -18,8 +18,7 @@ import numpy as np
 import pandas as pd
 from tqdm.autonotebook import tqdm
 
-import core.config as cconfi
-import core.config_builders as ccbuild
+import core.config as cconfig
 import core.dataflow as cdataf
 import core.finance as cfinan
 import core.plotting as cplott
@@ -86,7 +85,7 @@ class DataFrameModeler:
           - if `self.oos_start` is `None`, it is saved as is. Otherwise, it is
             converted to `str`
           - if `self.info` is `None`, it is saved as is. Otherwise, it is saved
-            as `cconfi.Config.to_python()`
+            as `cconfig.Config.to_python()`
 
         :return: json with "df", "oos_start" and "info" fields
         """
@@ -101,7 +100,7 @@ class DataFrameModeler:
         # Convert info to string.
         if self.info is not None:
             try:
-                info = ccbuild.get_config_from_nested_dict(self.info)
+                info = cconfig.get_config_from_nested_dict(self.info)
                 info = info.to_python()
             except ValueError:
                 _LOG.warning("Failed to serialize `info`.")
@@ -135,7 +134,7 @@ class DataFrameModeler:
         # Load info.
         info = json_str["info"]
         if info is not None:
-            info = cconfi.Config.from_python(info).to_dict()
+            info = cconfig.Config.from_python(info).to_dict()
         #
         modeler = cls(df=df, oos_start=oos_start, info=info)
         return modeler

@@ -8,8 +8,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import pandas as pd
 
-import core.config as cconfi
-import core.config_builders as ccbuild
+import core.config as cconfig
 import helpers.dbg as dbg
 import helpers.git as git
 
@@ -23,13 +22,13 @@ class ResultBundle(abc.ABC):
 
     def __init__(
         self,
-        config: cconfi.Config,
+        config: cconfig.Config,
         result_nid: str,
         method: str,
         result_df: pd.DataFrame,
         column_to_tags: Optional[Dict[Any, List[Any]]] = None,
         info: Optional[collections.OrderedDict] = None,
-        payload: Optional[cconfi.Config] = None,
+        payload: Optional[cconfig.Config] = None,
     ) -> None:
         """
         :param config: DAG config
@@ -50,7 +49,7 @@ class ResultBundle(abc.ABC):
         self._payload = payload
 
     @property
-    def config(self) -> cconfi.Config:
+    def config(self) -> cconfig.Config:
         return self._config.copy()
 
     @property
@@ -87,20 +86,20 @@ class ResultBundle(abc.ABC):
             return self._info.copy()
 
     @property
-    def payload(self) -> Optional[cconfi.Config]:
+    def payload(self) -> Optional[cconfig.Config]:
         return self._payload
 
     @payload.setter
-    def payload(self, value: Optional[cconfi.Config]) -> None:
+    def payload(self, value: Optional[cconfig.Config]) -> None:
         self._payload = value
 
-    def to_config(self, commit_hash: bool = True) -> cconfi.Config:
+    def to_config(self, commit_hash: bool = True) -> cconfig.Config:
         """
         Represent class state as config.
 
         :param commit_hash: whether to include current commit hash
         """
-        serialized_bundle = cconfi.Config()
+        serialized_bundle = cconfig.Config()
         serialized_bundle["config"] = self._config
         serialized_bundle["result_nid"] = self._result_nid
         serialized_bundle["method"] = self._method
@@ -108,7 +107,7 @@ class ResultBundle(abc.ABC):
         serialized_bundle["column_to_tags"] = self._column_to_tags
         info = self._info
         if info is not None:
-            info = ccbuild.get_config_from_nested_dict(info)
+            info = cconfig.get_config_from_nested_dict(info)
         serialized_bundle["info"] = info
         serialized_bundle["payload"] = self._payload
         serialized_bundle["class"] = self.__class__.__name__
@@ -117,7 +116,7 @@ class ResultBundle(abc.ABC):
         return serialized_bundle
 
     @classmethod
-    def from_config(cls, serialized_bundle: cconfi.Config) -> ResultBundle:
+    def from_config(cls, serialized_bundle: cconfig.Config) -> ResultBundle:
         """
         Initialize `ResultBundle` from config.
         """

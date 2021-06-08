@@ -19,7 +19,7 @@ from typing import Optional, cast
 import joblib
 import tqdm
 
-import core.config as cfg
+import core.config as cconfig
 import core.dataflow_model.utils as cdtfut
 import helpers.dbg as dbg
 import helpers.io_ as io_
@@ -34,7 +34,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def _run_notebook(
-    config: cfg.Config,
+    config: cconfig.Config,
     notebook_file: str,
     num_attempts: int,
     abort_on_error: bool,

@@ -4,7 +4,7 @@ import pandas as pd
 import sklearn.decomposition as sdecom
 
 import core.artificial_signal_generators as casgen
-import core.config_builders as ccbuild
+import core.config as cconfig
 import core.dataflow.nodes.test.helpers as cdnth
 import helpers.unit_test as hut
 from core.dataflow.nodes.unsupervised_sklearn_models import (
@@ -24,7 +24,7 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         # Load test data.
         data = self._get_data()
         # Create sklearn config and modeling node.
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "x_vars": [0, 1, 2, 3],
                 "model_func": sdecom.PCA,
@@ -42,7 +42,7 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         Test `predict()` after `fit()`.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "x_vars": [0, 1, 2, 3],
                 "model_func": sdecom.PCA,
@@ -61,7 +61,7 @@ class TestUnsupervisedSkLearnModel(hut.TestCase):
         Test `get_fit_state()` and `set_fit_state()`.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "x_vars": [0, 1, 2, 3],
                 "model_func": sdecom.PCA,
@@ -93,7 +93,7 @@ class TestMultiindexUnsupervisedSkLearnModel(hut.TestCase):
         Test `fit()` call.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "in_col_group": ("ret_0",),
                 "out_col_group": ("pca",),
@@ -111,7 +111,7 @@ class TestMultiindexUnsupervisedSkLearnModel(hut.TestCase):
         Test `predict()` after `fit()`.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "in_col_group": ("ret_0",),
                 "out_col_group": ("pca",),
@@ -131,7 +131,7 @@ class TestMultiindexUnsupervisedSkLearnModel(hut.TestCase):
         Test `get_fit_state()` and `set_fit_state()`.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "in_col_group": ("ret_0",),
                 "out_col_group": ("pca",),
@@ -171,7 +171,7 @@ class TestResidualizer(hut.TestCase):
         # Load test data.
         data = self._get_data()
         # Load sklearn config and create modeling node.
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "in_col_group": ("ret_0",),
                 "out_col_group": ("residual",),
@@ -192,7 +192,7 @@ class TestResidualizer(hut.TestCase):
         # Load test data.
         data = self._get_data()
         # Load sklearn config and create modeling node.
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "in_col_group": ("ret_0",),
                 "out_col_group": ("residual",),
@@ -212,7 +212,7 @@ class TestResidualizer(hut.TestCase):
         Test `get_fit_state()` and `set_fit_state()`.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "in_col_group": ("ret_0",),
                 "out_col_group": ("residual",),

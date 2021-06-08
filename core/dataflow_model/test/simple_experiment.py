@@ -1,11 +1,11 @@
 import logging
 
-import core.config as cfg
+import core.config as cconfig
 
 _LOG = logging.getLogger(__name__)
 
 
-def run_experiment(config: cfg.Config) -> None:
+def run_experiment(config: cconfig.Config) -> None:
     """
     This experiment fails/succeeds depending on the return code stored inside
     the config.

@@ -15,8 +15,7 @@ import os
 import sys
 from typing import List, Optional, Tuple
 
-import core.config as cfg
-import core.config_builders as cfgb
+import core.config as cconfig
 import helpers.dbg as dbg
 import helpers.io_ as io_
 import helpers.pickle_ as hpickle
@@ -101,8 +100,8 @@ def add_experiment_arg(
 
 
 def skip_configs_already_executed(
-    configs: List[cfg.Config], incremental: bool
-) -> Tuple[List[cfg.Config], int]:
+    configs: List[cconfig.Config], incremental: bool
+) -> Tuple[List[cconfig.Config], int]:
     """
     Remove from the list the configs that have already been executed.
     """
@@ -130,14 +129,14 @@ def mark_config_as_success(experiment_result_dir: str) -> None:
     io_.to_file(file_name, "success")
 
 
-def setup_experiment_dir(config: cfg.Config) -> None:
+def setup_experiment_dir(config: cconfig.Config) -> None:
     """
     Set up the directory and the book-keeping artifacts for the experiment
     running `config`.
 
     :return: whether we need to run this config or not
     """
-    dbg.dassert_isinstance(config, cfg.Config)
+    dbg.dassert_isinstance(config, cconfig.Config)
     # Create subdirectory structure for experiment results.
     experiment_result_dir = config[("meta", "experiment_result_dir")]
     _LOG.info("Creating experiment dir '%s'", experiment_result_dir)
@@ -153,10 +152,10 @@ def setup_experiment_dir(config: cfg.Config) -> None:
 
 
 def select_config(
-    configs: List[cfg.Config],
+    configs: List[cconfig.Config],
     index: Optional[int],
     start_from_index: Optional[int],
-) -> List[cfg.Config]:
+) -> List[cconfig.Config]:
     """
     Select configs to run based on the command line parameters.
 
@@ -165,7 +164,7 @@ def select_config(
     :param start_from_index: index of a config to start execution from, if not `None`
     :return: list of configs to execute
     """
-    dbg.dassert_container_type(configs, List, cfg.Config)
+    dbg.dassert_container_type(configs, List, cconfig.Config)
     dbg.dassert_lte(1, len(configs))
     if index is not None:
         index = int(index)
@@ -183,11 +182,11 @@ def select_config(
         dbg.dassert_lt(start_from_index, len(configs))
         configs = [c for idx, c in enumerate(configs) if idx >= start_from_index]
     _LOG.info("Selected %s configs", len(configs))
-    dbg.dassert_container_type(configs, List, cfg.Config)
+    dbg.dassert_container_type(configs, List, cconfig.Config)
     return configs
 
 
-def get_configs_from_command_line(args: argparse.Namespace) -> List[cfg.Config]:
+def get_configs_from_command_line(args: argparse.Namespace) -> List[cconfig.Config]:
     """
     Return all the configs to run given the command line interface.
 
@@ -197,7 +196,7 @@ def get_configs_from_command_line(args: argparse.Namespace) -> List[cfg.Config]:
     """
     # Build the map with the config parameters.
     config_builder = args.config_builder
-    configs = cfgb.get_configs_from_builder(config_builder)
+    configs = cconfig.get_configs_from_builder(config_builder)
     params = {
         "config_builder": args.config_builder,
         "dst_dir": args.dst_dir,
@@ -205,7 +204,7 @@ def get_configs_from_command_line(args: argparse.Namespace) -> List[cfg.Config]:
     if hasattr(args, "experiment_builder"):
         params["experiment_builder"] = args.experiment_builder
     # Patch the configs with the command line parameters.
-    configs = cfgb.patch_configs(configs, params)
+    configs = cconfig.patch_configs(configs, params)
     _LOG.info("Generated %d configs from the builder", len(configs))
     # Select the configs based on command line options.
     index = args.index
@@ -229,7 +228,7 @@ def get_configs_from_command_line(args: argparse.Namespace) -> List[cfg.Config]:
     return configs
 
 
-def report_failed_experiments(configs: List[cfg.Config], rcs: List[int]) -> int:
+def report_failed_experiments(configs: List[cconfig.Config], rcs: List[int]) -> int:
     """
     Report failing experiments.
 

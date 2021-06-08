@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 import core.artificial_signal_generators as casgen
-import core.config_builders as ccbuild
+import core.config as cconfig
 import core.dataflow.nodes.test.helpers as cdnth
 import core.dataflow.nodes.transformers as cdnt
 import helpers.unit_test as hut
@@ -18,7 +18,7 @@ class TestSeriesToSeriesTransformer(hut.TestCase):
         Test `fit()` call.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "in_col_group": ("close",),
                 "out_col_group": ("ret_0",),
@@ -35,7 +35,7 @@ class TestSeriesToSeriesTransformer(hut.TestCase):
         Test `predict()` call.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "in_col_group": ("close",),
                 "out_col_group": ("ret_0",),
@@ -70,7 +70,7 @@ class TestTwapVwapComputer(hut.TestCase):
         Test building 5-min TWAP/VWAP bars from 1-min close/volume bars.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "rule": "5T",
                 "price_col": "close",
@@ -87,7 +87,7 @@ class TestTwapVwapComputer(hut.TestCase):
         Test `predict()` call.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "rule": "5T",
                 "price_col": "close",
@@ -133,7 +133,7 @@ class TestMultiindexTwapVwapComputer(hut.TestCase):
         Test building 5-min TWAP/VWAP bars from 1-min close/volume bars.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "rule": "5T",
                 "price_col_group": ("close",),
@@ -151,7 +151,7 @@ class TestMultiindexTwapVwapComputer(hut.TestCase):
         Test `predict()` call.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "rule": "5T",
                 "price_col_group": ("close",),

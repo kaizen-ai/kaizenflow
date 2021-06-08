@@ -3,8 +3,7 @@ import datetime
 import logging
 from typing import Any, Dict, List, Optional
 
-import core.config as cconfi
-import core.config_builders as cfgb
+import core.config as cconfig
 import core.finance as fin
 from core.dataflow.core import DAG, Node
 from core.dataflow.nodes.sources import ArmaGenerator
@@ -61,7 +60,7 @@ class DagBuilder(abc.ABC):
         return self._nid_prefix
 
     @abc.abstractmethod
-    def get_config_template(self) -> cconfi.Config:
+    def get_config_template(self) -> cconfig.Config:
         """
         Return a config template compatible with `self.get_dag`.
 
@@ -71,7 +70,7 @@ class DagBuilder(abc.ABC):
 
     @abc.abstractmethod
     # TODO(*): Consider getting rid of the `dag` argument here.
-    def get_dag(self, config: cconfi.Config, dag: Optional[DAG] = None) -> DAG:
+    def get_dag(self, config: cconfig.Config, dag: Optional[DAG] = None) -> DAG:
         """
         Build DAG given `config`.
 
@@ -99,7 +98,7 @@ class DagBuilder(abc.ABC):
 
     # TODO(gp): -> tighten types along the lines of `Dict[Column, ...]`.
     def get_column_to_tags_mapping(
-        self, config: cconfi.Config
+        self, config: cconfig.Config
     ) -> Optional[Dict[Any, List[str]]]:
         """
         Get a dictionary of result nid column names to semantic tags.
@@ -120,13 +119,13 @@ class ArmaReturnsBuilder(DagBuilder):
     Pipeline for generating filtered returns from an ARMA process.
     """
 
-    def get_config_template(self) -> cconfi.Config:
+    def get_config_template(self) -> cconfig.Config:
         """
         Return a reference configuration.
 
         :return: reference config
         """
-        config = cfgb.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 # Load prices.
                 self._get_nid("rets/read_data"): {
@@ -182,7 +181,7 @@ class ArmaReturnsBuilder(DagBuilder):
         )
         return config
 
-    def get_dag(self, config: cconfi.Config, mode: str = "strict") -> DAG:
+    def get_dag(self, config: cconfig.Config, mode: str = "strict") -> DAG:
         """
         Generate pipeline DAG.
 
