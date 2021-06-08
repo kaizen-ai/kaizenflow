@@ -281,32 +281,7 @@ def _custom1(args: argparse.Namespace) -> None:
         sys.exit(0)
 
 
-def _custom2(args: argparse.Namespace) -> None:
-    """
-    Implement AmpTask1403.
-    """
-    if False:
-        to_replace = [
-            "import core.config as ccfg",
-            "import core.config as cconfi",
-            "import core.config as cconfig",
-            "import core.config as cfg",
-            "import core.config_builders as ccbuild",
-            "import core.config_builders as cfgb",
-        ]
-        to_replace = [(f"^{s}$", "import core.config as cconfig") for s, d in to_replace]
-    else:
-        to_replace = [
-            # (r"printing\.", "hprint."),
-            #("import helpers.config", "import core.config")
-            "ccfg",
-            "cconfi",
-            "cconfig",
-            "cfg",
-            "ccbuild",
-            "cfgb",
-        ]
-        to_replace = [(f"{s}\.", "ccfg.") for s, d in to_replace]
+def _custom2_helper(args: argparse.Namespace, to_replace: List[Tuple[str, str]]) -> None:
     dirs = ["."]
     exts = ["py", "ipynb"]
     backup = args.backup
@@ -314,6 +289,7 @@ def _custom2(args: argparse.Namespace) -> None:
     mode = "replace_with_python"
     #
     file_names = _get_all_files(dirs, exts)
+    #file_names = ["amp/core/dataflow/nodes/test/test_volatility_models.py"]
     # Store the replacement points.
     txt = ""
     for old_regex, new_regex in to_replace:
@@ -321,7 +297,9 @@ def _custom2(args: argparse.Namespace) -> None:
         file_names_to_process, txt_tmp = _get_files_to_replace(
             file_names, old_regex
         )
-        dbg.dassert_lte(1, len(file_names_to_process))
+        #dbg.dassert_lte(1, len(file_names_to_process))
+        if len(file_names_to_process) < 1:
+            _LOG.warning("Didn't find files to replace")
         # Replace.
         if preview:
             txt += txt_tmp
@@ -333,6 +311,35 @@ def _custom2(args: argparse.Namespace) -> None:
     if preview:
         _LOG.warning("Preview only as required. Results saved in ./cfile")
         sys.exit(0)
+
+
+def _custom2(args: argparse.Namespace) -> None:
+    """
+    Implement AmpTask1403.
+    """
+    to_replace = [
+        "import core.config as ccfg",
+        "import core.config as cconfi",
+        "import core.config as cconfig",
+        "import core.config as cfg",
+        "import core.config_builders as ccbuild",
+        "import core.config_builders as cfgb",
+    ]
+    to_replace = [(f"^{s}$", "import core.config as cconfig") for s in to_replace]
+    _custom2_helper(args, to_replace)
+    #
+    to_replace = [
+        # (r"printing\.", "hprint."),
+        #("import helpers.config", "import core.config")
+        "ccfg",
+        "cconfi",
+        "cconfig",
+        "cfg",
+        "ccbuild",
+        "cfgb",
+    ]
+    to_replace = [(f"{s}\.", "ccfg.") for s in to_replace]
+    _custom2_helper(args, to_replace)
 
 # #############################################################################
 # Rename files.
