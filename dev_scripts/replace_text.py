@@ -211,7 +211,7 @@ def _replace(
         hprint.indent("\n".join(file_names_to_process)),
     )
     for file_name in file_names_to_process:
-        _LOG.info("* Processing %s", file_name)
+        _LOG.info("* _replace %s", file_name)
         if mode == "replace_with_perl":
             _replace_with_perl(file_name, old_string, new_string, backup)
         elif mode == "replace_with_python":
@@ -220,23 +220,28 @@ def _replace(
             raise ValueError("Invalid mode='%s'" % mode)
 
 
-def _replace_repeated_lines(file_name: str) -> None:
+def _replace_repeated_lines(file_name: str, new_string: str) -> None:
     """
-    Remove consecutive lines in `file_name` that are exactly equal.
+    Remove consecutive lines in `file_name` that are equal and contain `new_string`.
 
     This is equivalent to Linux `uniq`.
     """
+    _LOG.info("* _replace_repeated_lines %s", file_name)
     lines = hio.from_file(file_name, encoding=_ENCODING).split("\n")
     lines_out = []
     prev_line = None
     for line in lines:
         _LOG.debug("line='%s'", line)
-        if line != prev_line:
+        if new_string not in line:
             # Emit.
             lines_out.append(line)
-            prev_line = line
         else:
-            _LOG.debug("    -> skipped line")
+            if line != prev_line:
+                # Emit.
+                lines_out.append(line)
+            else:
+                _LOG.debug("    -> skipped line")
+            prev_line = line
     lines_out = "\n".join(lines_out)
     hio.to_file(file_name, lines_out)
 
@@ -311,7 +316,7 @@ def _custom2(args: argparse.Namespace) -> None:
         else:
             _replace(file_names_to_process, old_string, new_string, backup, mode)
             for file_name in file_names_to_process:
-                _replace_repeated_lines(file_name)
+                _replace_repeated_lines(file_name, new_string)
     hio.to_file("./cfile", txt)
     if preview:
         _LOG.warning("Preview only as required. Results saved in ./cfile")
@@ -357,6 +362,9 @@ def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--revert_all", action="store_true", help="Revert all the files before processing"
     )
     parser.add_argument("--custom_flow", action="store", type=str)
     parser.add_argument(
@@ -407,6 +415,17 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(args.log_level)
+    if args.revert_all:
+        # Revert all the files but this one. Use at your own risk.
+        _LOG.warning("Reverting all files but this one")
+        cmd = [r"git status -s",
+            r"grep -v dev_scripts/replace_text.py",
+            r'grep -v "\?"',
+            r"awk '{print $2}'",
+            r"xargs git checkout --"]
+        cmd = " | ".join(cmd)
+        print(f"> {cmd}")
+        hsyste.system(cmd)
     if args.custom_flow:
         eval("%s(args)" % args.custom_flow)
     else:
