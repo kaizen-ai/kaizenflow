@@ -1,22 +1,19 @@
 #!/usr/bin/env python
 
 r"""
-Replace an instance of text in all py, ipynb, and txt files or in filenames.
+- Replace an instance of text in all py, ipynb, and txt files or in filenames.
+- Git rename the names of files based on certain criteria.
 
+# Replace an import with a new one.
 > replace_text.py \
-        --old "import core.finance" \
+        --old "import core.fin" \
         --new "import core.finance" \
-        --preview
-
-> replace_text.py \
-        --old "alphamatic/kibot/All_Futures" \
-        --new "alphamatic/kibot/All_Futures" \
         --preview
 
 # Custom flow:
 > replace_text.py --custom_flow _custom1
 
-# Replace in scripts:
+# Replace text in a specific directory:
 > replace_text.py \
         --old "exec " \
         --new "execute " \
@@ -38,7 +35,7 @@ import os
 import pprint
 import re
 import sys
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
@@ -57,18 +54,14 @@ _LOG = logging.getLogger(__name__)
 _ENCODING = "ISO-8859-1"
 
 
-def _get_extensions(exts: str) -> List[str]:
-    # exts = "py,ipynb,txt"
-    exts = exts.split(",")
-    _LOG.info("Extensions: %s", exts)
-    return exts
-
-
-def _get_all_files(dirs: List[str], exts: str) -> List[str]:
+def _get_all_files(dirs: List[str], exts: Optional[List[str]]) -> List[str]:
     """
-    :param exts: if None, no filtering by extentions
+    Find all the files with the given extensions in files under `dirs`.
+
+    :param exts: if None, no filtering by extensions
     """
     if exts is not None:
+        # Extensions are specified.
         dbg.dassert_isinstance(exts, list)
         dbg.dassert_lte(1, len(exts))
         for ext in exts:
@@ -78,15 +71,18 @@ def _get_all_files(dirs: List[str], exts: str) -> List[str]:
     file_names = []
     for d in dirs:
         _LOG.debug("Processing dir '%s'", d)
-        if exts is None:
+        if exts is not None:
+            # Extensions are specified: find all the files with the given extensions.
             for ext in exts:
                 file_names_tmp = hio.find_files(d, "*." + ext)
                 _LOG.debug("ext=%s -> found %s files", ext, len(file_names_tmp))
+                file_names.extend(file_names_tmp)
         else:
+            # No extension: find all files.
             file_names_tmp = hio.find_files(d, "*")
             _LOG.debug("exts=%s -> found %s files", exts, len(file_names_tmp))
             file_names.extend(file_names_tmp)
-    # Filter files.
+    # Exclude some files.
     file_names = [f for f in file_names if ".ipynb_checkpoints" not in f]
     file_names = [f for f in file_names if "__pycache__" not in f]
     file_names = [f for f in file_names if ".mypy_cache" not in f]
@@ -94,7 +90,7 @@ def _get_all_files(dirs: List[str], exts: str) -> List[str]:
     file_names = [f for f in file_names if "replace_text.py" not in f]
     file_names = [f for f in file_names if ".git/" not in f]
     file_names = [f for f in file_names if os.path.basename(f) != "cfile"]
-    _LOG.info("Found %s target files", len(file_names))
+    _LOG.info("Found %s target files with extension '%s'", len(file_names), str(exts))
     return file_names
 
 
@@ -106,6 +102,9 @@ def _get_all_files(dirs: List[str], exts: str) -> List[str]:
 def _get_files_to_replace(
     file_names: List[str], old_string: str
 ) -> Tuple[List[str], str]:
+    """
+    Return the list of files that contain `old_string` and the corresponding cfile.
+    """
     # Look for files with values.
     res = []
     file_names_to_process = []
@@ -123,6 +122,10 @@ def _get_files_to_replace(
 
 
 def _look_for(file_name: str, old_string: str) -> Tuple[bool, List[str]]:
+    """
+    Look for `old_string` in `file_name` returning if it was found and the
+    corresponding cfile entry.
+    """
     txt = hio.from_file(file_name, encoding=_ENCODING)
     txt = txt.split("\n")
     res = []
@@ -196,6 +199,12 @@ def _replace(
     backup: bool,
     mode: str,
 ) -> None:
+    """
+    Replace `old_string` with `new_string` in the given files using perl or Python.
+
+    :param backup: make a backup of the file before the replacement
+    :param mode: `replace_with_perl` or `replace_with_python`
+    """
     _LOG.info(
         "Found %s files:\n%s",
         len(file_names_to_process),
@@ -209,6 +218,27 @@ def _replace(
             _replace_with_python(file_name, old_string, new_string, backup)
         else:
             raise ValueError("Invalid mode='%s'" % mode)
+
+
+def _replace_repeated_lines(file_name: str) -> None:
+    """
+    Remove consecutive lines in `file_name` that are exactly equal.
+
+    This is equivalent to Linux `uniq`.
+    """
+    lines = hio.from_file(file_name, encoding=_ENCODING).split("\n")
+    lines_out = []
+    prev_line = None
+    for line in lines:
+        _LOG.debug("line='%s'", line)
+        if line != prev_line:
+            # Emit.
+            lines_out.append(line)
+            prev_line = line
+        else:
+            _LOG.debug("    -> skipped line")
+    lines_out = "\n".join(lines_out)
+    hio.to_file(file_name, lines_out)
 
 
 # #############################################################################
@@ -280,6 +310,8 @@ def _custom2(args: argparse.Namespace) -> None:
             txt += txt_tmp
         else:
             _replace(file_names_to_process, old_string, new_string, backup, mode)
+            for file_name in file_names_to_process:
+                _replace_repeated_lines(file_name)
     hio.to_file("./cfile", txt)
     if preview:
         _LOG.warning("Preview only as required. Results saved in ./cfile")
@@ -383,11 +415,15 @@ def _main(parser: argparse.ArgumentParser) -> None:
         if dirs is None:
             dirs = ["."]
         _LOG.info("dirs=%s", dirs)
+        # Parse the extensions.
         if args.ext == "None":
             exts = None
         else:
-            exts = _get_extensions(args.ext)
+            exts = args.ext
+            # exts = "py,ipynb,txt"
+            exts = exts.split(",")
         _LOG.info("extensions=%s", exts)
+        # Find all the files with the correct extension.
         file_names = _get_all_files(dirs, exts)
         if args.action == "replace":
             # Replace.
