@@ -246,6 +246,45 @@ def _custom1(args: argparse.Namespace) -> None:
         sys.exit(0)
 
 
+def _custom2(args: argparse.Namespace) -> None:
+    """
+    Implement AmpTask1403.
+    """
+    to_replace = [
+        # (r"printing\.", "hprint."),
+        #("import helpers.config", "import core.config")
+        ("import core.config as ccfg", "import core.config as cconfig"),
+        ("import core.config as cconfi", "import core.config as cconfig"),
+        ("import core.config as cconfig", "import core.config as cconfig"),
+        ("import core.config as cfg", "import core.config as cconfig"),
+        ("import core.config_builders as ccbuild", "import core.config as cconfig"),
+        ("import core.config_builders as cfgb", "import core.config as cconfig"),
+    ]
+    dirs = ["."]
+    exts = ["py", "ipynb"]
+    backup = args.backup
+    preview = args.preview
+    mode = "replace_with_python"
+    #
+    file_names = _get_all_files(dirs, exts)
+    # Store the replacement points.
+    txt = ""
+    for old_string, new_string in to_replace:
+        print(hprint.frame("%s -> %s" % (old_string, new_string)))
+        file_names_to_process, txt_tmp = _get_files_to_replace(
+            file_names, old_string
+        )
+        dbg.dassert_lte(1, len(file_names_to_process))
+        # Replace.
+        if preview:
+            txt += txt_tmp
+        else:
+            _replace(file_names_to_process, old_string, new_string, backup, mode)
+    hio.to_file("./cfile", txt)
+    if preview:
+        _LOG.warning("Preview only as required. Results saved in ./cfile")
+        sys.exit(0)
+
 # #############################################################################
 # Rename files.
 # #############################################################################
