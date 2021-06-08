@@ -475,8 +475,8 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     cmd = "git fetch --all --prune"
     _run(ctx, cmd)
     # Delete local and remote branches that are already merged into master.
-    _delete_branches("local", confirm_delete)
-    _delete_branches("remote", confirm_delete)
+    _delete_branches(ctx, "local", confirm_delete)
+    _delete_branches(ctx, "remote", confirm_delete)
     #
     cmd = "git fetch --all --prune"
     _run(ctx, cmd)
