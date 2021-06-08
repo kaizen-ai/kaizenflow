@@ -3,7 +3,7 @@ from typing import Optional
 
 import sklearn
 
-import core.config as cconfi
+import core.config as cconfig
 import core.event_study as cevent
 import core.signal_processing as csigna
 from core.dataflow.builders import DagBuilder
@@ -24,11 +24,11 @@ class EventStudyBuilder(DagBuilder):
     Configurable pipeline for running event studies.
     """
 
-    def get_config_template(self) -> cconfi.Config:
+    def get_config_template(self) -> cconfig.Config:
         """
         Return a reference configuration for the event study pipeline.
         """
-        config = cconfi.Config()
+        config = cconfig.Config()
         #
         stage = "resample_events"
         config_tmp = config.add_subconfig(self._get_nid(stage))
@@ -59,7 +59,7 @@ class EventStudyBuilder(DagBuilder):
         config_kwargs["alpha"] = 0.5
         return config
 
-    def get_dag(self, config: cconfi.Config, dag: Optional[DAG] = None) -> DAG:
+    def get_dag(self, config: cconfig.Config, dag: Optional[DAG] = None) -> DAG:
         """
         Implement a pipeline for running event studies.
 

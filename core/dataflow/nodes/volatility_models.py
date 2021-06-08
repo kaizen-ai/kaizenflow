@@ -8,8 +8,7 @@ import pandas as pd
 import scipy as sp
 import sklearn as sklear
 
-import core.config as cconfi
-import core.config_builders as ccbuild
+import core.config as cconfig
 import core.data_adapters as cdataa
 import core.dataflow.utils as cdu
 import core.finance as cfinan
@@ -323,7 +322,7 @@ class SingleColumnVolatilityModel(FitPredictNode):
         col: _COL_TYPE,
         out_col_prefix: _COL_TYPE,
         tau: Optional[float] = None,
-    ) -> cconfi.Config:
+    ) -> cconfig.Config:
         """
         Generate a DAG config.
 
@@ -331,7 +330,7 @@ class SingleColumnVolatilityModel(FitPredictNode):
         :param tau: tau for SMA; if `None`, then to be learned
         :return: a complete config to be used with `_get_dag()`
         """
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "calculate_vol_pth_power": {
                     "cols": [col],
@@ -372,7 +371,7 @@ class SingleColumnVolatilityModel(FitPredictNode):
         )
         return config
 
-    def _get_dag(self, df_in: pd.DataFrame, config: cconfi.Config) -> DAG:
+    def _get_dag(self, df_in: pd.DataFrame, config: cconfig.Config) -> DAG:
         """
         Build a DAG from data and config.
 

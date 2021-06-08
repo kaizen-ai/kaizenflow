@@ -2,13 +2,13 @@ import logging
 import pprint
 from typing import Any
 
-import core.config as cfg
+import core.config as cconfig
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
 
-def _check_roundtrip_transformation(self_: Any, config: cfg.Config) -> str:
+def _check_roundtrip_transformation(self_: Any, config: cconfig.Config) -> str:
     """
     Convert a config into Python code and back.
 
@@ -18,7 +18,7 @@ def _check_roundtrip_transformation(self_: Any, config: cfg.Config) -> str:
     code = config.to_python()
     _LOG.debug("code=%s", code)
     # Build a config from Python code.
-    config2 = cfg.Config.from_python(code)
+    config2 = cconfig.Config.from_python(code)
     # Verify that the round-trip transformation is correct.
     self_.assertEqual(str(config), str(config2))
     # Build the signature of the test.
@@ -34,7 +34,7 @@ class Test_flat_config1(hut.TestCase):
         """
         Set a key and print a flat config.
         """
-        config = cfg.Config()
+        config = cconfig.Config()
         config["hello"] = "world"
         act = str(config)
         exp = r"""
@@ -62,7 +62,7 @@ class Test_flat_config1(hut.TestCase):
         """
         Test Config.get().
         """
-        config = cfg.Config()
+        config = cconfig.Config()
         config["nrows"] = 10000
         # Look up the key.
         self.assertEqual(config["nrows"], 10000)
@@ -71,7 +71,7 @@ class Test_flat_config1(hut.TestCase):
         self.assertEqual(config.get("nrows_tmp", None), None)
 
     def test_config_with_function(self) -> None:
-        config = cfg.Config()
+        config = cconfig.Config()
         config[
             "filters"
         ] = "[(<function _filter_relevance at 0x7fe4e35b1a70>, {'thr': 90})]"
@@ -81,7 +81,7 @@ class Test_flat_config1(hut.TestCase):
         self.assertEqual(actual_result, expected_result)
 
     def test_config_with_object(self) -> None:
-        config = cfg.Config()
+        config = cconfig.Config()
         config[
             "dag_builder"
         ] = "<dataflow_p1.task2538_pipeline.ArPredictorBuilder object at 0x7fd7a9ddd190>"
@@ -91,11 +91,11 @@ class Test_flat_config1(hut.TestCase):
         self.assertEqual(actual_result, expected_result)
 
     @staticmethod
-    def _get_flat_config1() -> cfg.Config:
+    def _get_flat_config1() -> cconfig.Config:
         """
         Build a flat (i.e., non-nested) config.
         """
-        config = cfg.Config()
+        config = cconfig.Config()
         config["hello"] = "world"
         config["foo"] = [1, 2, 3]
         return config
@@ -307,7 +307,7 @@ class Test_nested_config1(hut.TestCase):
         self.assertEqual(elem, "hello_world3")
 
     def test_update1(self) -> None:
-        config1 = cfg.Config()
+        config1 = cconfig.Config()
         #
         config_tmp = config1.add_subconfig("read_data")
         config_tmp["file_name"] = "foo_bar.txt"
@@ -319,7 +319,7 @@ class Test_nested_config1(hut.TestCase):
         config_tmp["style"] = "gaz"
         config_tmp["com"] = 28
         #
-        config2 = cfg.Config()
+        config2 = cconfig.Config()
         #
         config_tmp = config2.add_subconfig("write_data")
         config_tmp["file_name"] = "baz.txt"
@@ -353,7 +353,7 @@ class Test_nested_config1(hut.TestCase):
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_update2(self) -> None:
-        config1 = cfg.Config()
+        config1 = cconfig.Config()
         #
         config_tmp = config1.add_subconfig("read_data")
         config_tmp["file_name"] = "foo_bar.txt"
@@ -365,7 +365,7 @@ class Test_nested_config1(hut.TestCase):
         config_tmp["style"] = "gaz"
         config_tmp["com"] = 28
         #
-        config2 = cfg.Config()
+        config2 = cconfig.Config()
         #
         config_tmp = config2.add_subconfig("read_data")
         config_tmp["file_name"] = "baz.txt"
@@ -401,20 +401,20 @@ class Test_nested_config1(hut.TestCase):
         """
         Generate a config of `{"key1": {"key0": }}` structure.
         """
-        subconfig = cfg.Config()
+        subconfig = cconfig.Config()
         subconfig.add_subconfig("key0")
         #
-        config = cfg.Config()
+        config = cconfig.Config()
         config_tmp = config.add_subconfig("key1")
         config_tmp.update(subconfig)
         #
-        expected_result = cfg.Config()
+        expected_result = cconfig.Config()
         config_tmp = expected_result.add_subconfig("key1")
         config_tmp.add_subconfig("key0")
         self.assertEqual(str(config), str(expected_result))
 
     def test_flatten1(self) -> None:
-        config = cfg.Config()
+        config = cconfig.Config()
         #
         config_tmp = config.add_subconfig("read_data")
         config_tmp["file_name"] = "foo_bar.txt"
@@ -438,7 +438,7 @@ class Test_nested_config1(hut.TestCase):
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_flatten2(self) -> None:
-        config = cfg.Config()
+        config = cconfig.Config()
         #
         config_tmp = config.add_subconfig("read_data")
         config_tmp["file_name"] = "foo_bar.txt"
@@ -459,8 +459,8 @@ class Test_nested_config1(hut.TestCase):
         self.assert_equal(act, exp, fuzzy_match=True)
 
     @staticmethod
-    def _get_nested_config1() -> cfg.Config:
-        config = cfg.Config()
+    def _get_nested_config1() -> cconfig.Config:
+        config = cconfig.Config()
         config["nrows"] = 10000
         #
         config.add_subconfig("read_data")
@@ -475,8 +475,8 @@ class Test_nested_config1(hut.TestCase):
         return config
 
     @staticmethod
-    def _get_nested_config2() -> cfg.Config:
-        config = cfg.Config()
+    def _get_nested_config2() -> cconfig.Config:
+        config = cconfig.Config()
         config["nrows"] = 10000
         #
         config_tmp = config.add_subconfig("read_data")
@@ -496,17 +496,17 @@ class Test_nested_config1(hut.TestCase):
 
 class Test_subtract_config1(hut.TestCase):
     def test_test1(self) -> None:
-        config1 = cfg.Config()
+        config1 = cconfig.Config()
         config1[("l0",)] = "1st_floor"
         config1[["l1", "l2"]] = "2nd_floor"
         config1[["r1", "r2", "r3"]] = [1, 2]
         #
-        config2 = cfg.Config()
+        config2 = cconfig.Config()
         config2["l0"] = "Euro_1nd_floor"
         config2[["l1", "l2"]] = "2nd_floor"
         config2[["r1", "r2", "r3"]] = [1, 2]
         #
-        diff = cfg.subtract_config(config1, config2)
+        diff = cconfig.subtract_config(config1, config2)
         # Check.
         act = str(diff)
         exp = r"""
@@ -515,18 +515,18 @@ class Test_subtract_config1(hut.TestCase):
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_test2(self) -> None:
-        config1 = cfg.Config()
+        config1 = cconfig.Config()
         config1[("l0",)] = "1st_floor"
         config1[["l1", "l2"]] = "2nd_floor"
         config1[["r1", "r2", "r3"]] = [1, 2, 3]
         #
-        config2 = cfg.Config()
+        config2 = cconfig.Config()
         config2["l0"] = "Euro_1nd_floor"
         config2[["l1", "l2"]] = "2nd_floor"
         config2[["r1", "r2", "r3"]] = [1, 2]
-        config2["empty"] = cfg.Config()
+        config2["empty"] = cconfig.Config()
         #
-        diff = cfg.subtract_config(config1, config2)
+        diff = cconfig.subtract_config(config1, config2)
         # Check.
         act = str(diff)
         exp = r"""

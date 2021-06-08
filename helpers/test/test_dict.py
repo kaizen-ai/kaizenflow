@@ -1,6 +1,6 @@
 import logging
 
-import core.config as cconfi
+import core.config as cconfig
 import helpers.dict as hdict
 import helpers.unit_test as hut
 
@@ -85,7 +85,7 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         """
         Test flat case with empty Config value.
         """
-        config = cconfi.Config()
+        config = cconfig.Config()
         dict_ = {"key0": config, "key1": "value1"}
         actual_result = list(hdict.get_nested_dict_iterator(dict_))
         expected_result = [(("key0",), config), (("key1",), "value1")]
@@ -95,7 +95,7 @@ class Test_get_nested_dict_iterator(hut.TestCase):
         """
         Test nexted case with empty Config value.
         """
-        config = cconfi.Config()
+        config = cconfig.Config()
         dict_ = {"key0": {"key00": config}, "key1": "value1"}
         actual_result = list(hdict.get_nested_dict_iterator(dict_))
         expected_result = [(("key0", "key00"), config), (("key1",), "value1")]

@@ -2,7 +2,7 @@ from typing import Tuple
 
 import pandas as pd
 
-import core.config as cfg
+import core.config as cconfig
 import core.dataflow.core as cdc
 import helpers.unit_test as hut
 
@@ -10,7 +10,7 @@ import helpers.unit_test as hut
 def test_get_set_state(
     fit_df: pd.DataFrame,
     predict_df: pd.DataFrame,
-    config: cfg.Config,
+    config: cconfig.Config,
     node: cdc.Node,
     decimals: float = 3,
 ) -> Tuple[str, str]:

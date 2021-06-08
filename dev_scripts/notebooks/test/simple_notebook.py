@@ -21,11 +21,11 @@
 # %autoreload 2
 
 
-import core.config_builders as cfgb
+import core.config as cconfig
 
 # %%
 # Initialize config.
-config = cfgb.get_config_from_env()
+config = cconfig.get_config_from_env()
 
 # %% [markdown]
 # # Execute

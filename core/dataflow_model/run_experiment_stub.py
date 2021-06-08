@@ -14,7 +14,7 @@ import importlib
 import logging
 import re
 
-import core.config_builders as cfgb
+import core.config as cconfig
 import helpers.dbg as dbg
 import helpers.parser as prsr
 
@@ -66,7 +66,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     }
     # Get the config.
     config_idx = int(args.config_idx)
-    config = cfgb.get_config_from_params(config_idx, params)
+    config = cconfig.get_config_from_params(config_idx, params)
     _LOG.info("config=\n%s", config)
     # Execute the `experiment_builder.`
     # E.g., `core.dataflow_model.master_experiment.run_experiment`

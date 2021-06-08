@@ -9,8 +9,7 @@ import pytest
 # TODO(gp): Remove the duplicated imports.
 import core.artificial_signal_generators as sig_gen
 import core.artificial_signal_generators as casgen
-import core.config as ccfg
-import core.config_builders as ccbuild
+import core.config as cconfig
 import core.dataflow.nodes.test.helpers as cdnth
 import core.finance as fin
 import core.signal_processing as sigp
@@ -36,7 +35,7 @@ class TestSmaModel(hut.TestCase):
         # Load test data.
         data = self._get_data()
         _LOG.debug("data=\n%s", str(data))
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "col": ["vol_sq"],
                 "steps_ahead": 2,
@@ -55,7 +54,7 @@ class TestSmaModel(hut.TestCase):
         Specify `tau` parameter.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "col": ["vol_sq"],
                 "steps_ahead": 2,
@@ -72,7 +71,7 @@ class TestSmaModel(hut.TestCase):
         Specify `col_mode=='merge_all'`.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "col": ["vol_sq"],
                 "steps_ahead": 2,
@@ -89,7 +88,7 @@ class TestSmaModel(hut.TestCase):
         Run `predict()` after `fit()`.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "col": ["vol_sq"],
                 "steps_ahead": 2,
@@ -108,7 +107,7 @@ class TestSmaModel(hut.TestCase):
         Test `get_fit_state()` and `set_fit_state()`.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "col": ["vol_sq"],
                 "steps_ahead": 2,
@@ -169,7 +168,7 @@ class TestSingleColumnVolatilityModel(hut.TestCase):
         """
         # Load test data.
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "col": "ret_0",
                 "steps_ahead": 2,
@@ -190,7 +189,7 @@ class TestSingleColumnVolatilityModel(hut.TestCase):
         # Load test data.
         data = self._get_data()
         # Specify config and create modeling node.
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "col": "ret_0",
                 "steps_ahead": 2,
@@ -212,7 +211,7 @@ class TestSingleColumnVolatilityModel(hut.TestCase):
         Test `get_fit_state()` and `set_fit_state()`.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "col": "ret_0",
                 "steps_ahead": 2,
@@ -245,7 +244,7 @@ class TestSingleColumnVolatilityModel(hut.TestCase):
 
     @staticmethod
     def _package_results1(
-        config: ccfg.Config,
+        config: cconfig.Config,
         info: collections.OrderedDict,
         df_out: pd.DataFrame,
     ) -> str:
@@ -253,7 +252,7 @@ class TestSingleColumnVolatilityModel(hut.TestCase):
         act.append(hprint.frame("config"))
         act.append(str(config))
         act.append(hprint.frame("info"))
-        act.append(str(ccbuild.get_config_from_nested_dict(info)))
+        act.append(str(cconfig.get_config_from_nested_dict(info)))
         act.append(hprint.frame("df_out"))
         act.append(
             hut.convert_df_to_string(df_out.round(2), index=True, decimals=2)
@@ -269,7 +268,7 @@ class TestVolatilityModel(hut.TestCase):
         """
         # Load test data.
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "cols": ["ret_0"],
                 "steps_ahead": 2,
@@ -288,7 +287,7 @@ class TestVolatilityModel(hut.TestCase):
         Check that the volatility adjustment can be inverted.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "cols": ["ret_0"],
                 "steps_ahead": 2,
@@ -316,7 +315,7 @@ class TestVolatilityModel(hut.TestCase):
         # Load test data.
         data = self._get_data()
         # Specify config and create modeling node.
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "cols": ["ret_0"],
                 "steps_ahead": 2,
@@ -338,7 +337,7 @@ class TestVolatilityModel(hut.TestCase):
         Check that the `predict()` volatility adjustment can be inverted.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "cols": ["ret_0"],
                 "steps_ahead": 2,
@@ -366,7 +365,7 @@ class TestVolatilityModel(hut.TestCase):
         Use "replace_all" column mode.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "cols": ["ret_0"],
                 "steps_ahead": 2,
@@ -387,7 +386,7 @@ class TestVolatilityModel(hut.TestCase):
         Use "replace_selected" column mode.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "cols": ["ret_0"],
                 "steps_ahead": 2,
@@ -412,7 +411,7 @@ class TestVolatilityModel(hut.TestCase):
         # TODO(*): Rename this column
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config and create modeling node.
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "cols": ["ret_0", "ret_0_2"],
                 "steps_ahead": 2,
@@ -436,7 +435,7 @@ class TestVolatilityModel(hut.TestCase):
         data = self._get_data()
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config.
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "cols": ["ret_0", "ret_0_2"],
                 "steps_ahead": 2,
@@ -457,7 +456,7 @@ class TestVolatilityModel(hut.TestCase):
         data = self._get_data()
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config with columns implicit.
-        config1 = ccbuild.get_config_from_nested_dict(
+        config1 = cconfig.get_config_from_nested_dict(
             {
                 "steps_ahead": 2,
                 "nan_mode": "leave_unchanged",
@@ -466,7 +465,7 @@ class TestVolatilityModel(hut.TestCase):
         node1 = VolatilityModel("vol_model", **config1.to_dict())
         df_out1 = node1.fit(data)["df_out"]
         # Specify config with explicit column names.
-        config2 = ccbuild.get_config_from_nested_dict(
+        config2 = cconfig.get_config_from_nested_dict(
             {
                 "cols": ["ret_0", "ret_0_2"],
                 "steps_ahead": 2,
@@ -489,7 +488,7 @@ class TestVolatilityModel(hut.TestCase):
         data = self._get_data()
         data[10] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config.
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "cols": [10],
                 "steps_ahead": 2,
@@ -506,7 +505,7 @@ class TestVolatilityModel(hut.TestCase):
         Learn and store model state.
         """
         data = self._get_data()
-        config = ccfg.Config()
+        config = cconfig.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "leave_unchanged"
@@ -522,7 +521,7 @@ class TestVolatilityModel(hut.TestCase):
         Initialize model from saved state.
         """
         data = self._get_data()
-        config = ccfg.Config()
+        config = cconfig.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "leave_unchanged"
@@ -543,7 +542,7 @@ class TestVolatilityModel(hut.TestCase):
         Compare results of initializing from state with relearning.
         """
         data = self._get_data()
-        config = ccfg.Config()
+        config = cconfig.Config()
         config["cols"] = ["ret_0"]
         config["steps_ahead"] = 2
         config["nan_mode"] = "leave_unchanged"
@@ -557,7 +556,7 @@ class TestVolatilityModel(hut.TestCase):
 
     @staticmethod
     def _package_results1(
-        config: ccfg.Config,
+        config: cconfig.Config,
         info: collections.OrderedDict,
         df_out: pd.DataFrame,
     ) -> str:
@@ -565,7 +564,7 @@ class TestVolatilityModel(hut.TestCase):
         act.append(hprint.frame("config"))
         act.append(str(config))
         act.append(hprint.frame("info"))
-        act.append(str(ccbuild.get_config_from_nested_dict(info)))
+        act.append(str(cconfig.get_config_from_nested_dict(info)))
         act.append(hprint.frame("df_out"))
         act.append(hut.convert_df_to_string(df_out, index=True))
         act = "\n".join(act)
@@ -573,7 +572,7 @@ class TestVolatilityModel(hut.TestCase):
 
     @staticmethod
     def _package_results2(
-        config: ccfg.Config, state: Dict[str, Any], df_out: pd.DataFrame
+        config: cconfig.Config, state: Dict[str, Any], df_out: pd.DataFrame
     ) -> str:
         act: List[str] = []
         act.append(hprint.frame("config"))
@@ -610,7 +609,7 @@ class TestMultiindexVolatilityModel(hut.TestCase):
         """
         # Load test data.
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "in_col_group": ("ret_0",),
                 "steps_ahead": 2,
@@ -630,7 +629,7 @@ class TestMultiindexVolatilityModel(hut.TestCase):
         """
         # Load test data.
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "in_col_group": ("ret_0",),
                 "steps_ahead": 2,
@@ -650,7 +649,7 @@ class TestMultiindexVolatilityModel(hut.TestCase):
         Test `get_fit_state()` and `set_fit_state()`.
         """
         data = self._get_data()
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "in_col_group": ("ret_0",),
                 "steps_ahead": 2,
@@ -666,7 +665,7 @@ class TestMultiindexVolatilityModel(hut.TestCase):
 
     @staticmethod
     def _package_results1(
-        config: ccfg.Config,
+        config: cconfig.Config,
         info: collections.OrderedDict,
         df_out: pd.DataFrame,
     ) -> str:
@@ -674,7 +673,7 @@ class TestMultiindexVolatilityModel(hut.TestCase):
         act.append(hprint.frame("config"))
         act.append(str(config))
         act.append(hprint.frame("info"))
-        act.append(str(ccbuild.get_config_from_nested_dict(info)))
+        act.append(str(cconfig.get_config_from_nested_dict(info)))
         act.append(hprint.frame("df_out"))
         act.append(
             hut.convert_df_to_string(df_out.round(2), index=True, decimals=2)
@@ -706,7 +705,7 @@ class TestVolatilityModulator(hut.TestCase):
         # Get mock returns prediction 1 step ahead indexed by knowledge time.
         y_hat = csproc.compute_smooth_moving_average(df_in["ret_0"], 4).shift(-1)
         df_in["ret_1_hat"] = y_hat
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "signal_cols": ["ret_1_hat"],
                 "volatility_col": "vol_2_hat",
@@ -723,7 +722,7 @@ class TestVolatilityModulator(hut.TestCase):
     def test_demodulate1(self) -> None:
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "signal_cols": ["ret_0"],
                 "volatility_col": "vol_2_hat",
@@ -740,7 +739,7 @@ class TestVolatilityModulator(hut.TestCase):
     def test_col_mode1(self) -> None:
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "signal_cols": ["ret_0"],
                 "volatility_col": "vol_2_hat",
@@ -759,7 +758,7 @@ class TestVolatilityModulator(hut.TestCase):
     def test_col_mode2(self) -> None:
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
-        config = ccbuild.get_config_from_nested_dict(
+        config = cconfig.get_config_from_nested_dict(
             {
                 "signal_cols": ["ret_0"],
                 "volatility_col": "vol_2_hat",
@@ -776,7 +775,7 @@ class TestVolatilityModulator(hut.TestCase):
         self._check_results(config, df_in, df_out)
 
     def _check_results(
-        self, config: ccfg.Config, df_in: pd.DataFrame, df_out: pd.DataFrame
+        self, config: cconfig.Config, df_in: pd.DataFrame, df_out: pd.DataFrame
     ) -> None:
         act: List[str] = []
         act.append(hprint.frame("config"))

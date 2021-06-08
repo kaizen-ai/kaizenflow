@@ -4,7 +4,7 @@ from typing import Any, Dict
 import numpy as np
 import pandas as pd
 
-import core.config as cfg
+import core.config as cconfig
 import core.dataflow_model.model_evaluator as modeval
 import helpers.unit_test as hut
 
@@ -31,10 +31,10 @@ class TestModelEvaluator(hut.TestCase):
         self.assertEqual(evaluator.oos_start, loaded_evaluator.oos_start)
 
     @staticmethod
-    def _get_input_data(periods: int = 5) -> cfg.Config:
+    def _get_input_data(periods: int = 5) -> cconfig.Config:
         date_range = pd.date_range(start="2010-01-01", periods=periods)
         keys = [0, 1]
-        config = cfg.Config()
+        config = cconfig.Config()
         config["returns"] = {
             key: pd.Series(np.array(range(periods)) + key, index=date_range)
             for key in keys

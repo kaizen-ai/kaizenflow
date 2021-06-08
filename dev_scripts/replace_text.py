@@ -4,7 +4,7 @@ r"""
 - Replace an instance of text in all py, ipynb, and txt files or in filenames.
 - Git rename the names of files based on certain criteria.
 
-# Replace an import with a new one.
+# Replace an import with a new one:
 > replace_text.py \
         --old "import core.fin" \
         --new "import core.finance" \
@@ -13,6 +13,9 @@ r"""
 # Custom flow:
 > replace_text.py --custom_flow _custom1
 
+# Custome flow for AmpTask14
+> replace_text.py --custom_flow _custom2 --revert_all
+
 # Replace text in a specific directory:
 > replace_text.py \
         --old "exec " \
@@ -20,6 +23,7 @@ r"""
         --preview \
         --dirs dev_scripts \
         --exts None
+
 
 # To revert all files but this one:
 > gs -s | \
@@ -286,7 +290,7 @@ def _custom1(args: argparse.Namespace) -> None:
         sys.exit(0)
 
 
-def _custom2_helper(
+def _fix_AmpTask1403_helper(
     args: argparse.Namespace, to_replace: List[Tuple[str, str]]
 ) -> None:
     dirs = ["."]
@@ -320,7 +324,7 @@ def _custom2_helper(
         sys.exit(0)
 
 
-def _custom2(args: argparse.Namespace) -> None:
+def _fix_AmpTask1403(args: argparse.Namespace) -> None:
     """
     Implement AmpTask1403.
     """
@@ -333,7 +337,7 @@ def _custom2(args: argparse.Namespace) -> None:
         "import core.config_builders as cfgb",
     ]
     to_replace = [(f"^{s}$", "import core.config as cconfig") for s in to_replace]
-    _custom2_helper(args, to_replace)
+    _fix_AmpTask1403_helper(args, to_replace)
     #
     to_replace = [
         # (r"printing\.", "hprint."),
@@ -346,7 +350,7 @@ def _custom2(args: argparse.Namespace) -> None:
         "cfgb",
     ]
     to_replace = [(rf"{s}\.", "cconfig.") for s in to_replace]
-    _custom2_helper(args, to_replace)
+    _fix_AmpTask1403_helper(args, to_replace)
 
 
 # #############################################################################

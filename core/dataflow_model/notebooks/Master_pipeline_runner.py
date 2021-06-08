@@ -19,7 +19,7 @@
 import logging
 import os
 
-import core.config_builders as ccbuild
+import core.config as cconfig
 import core.dataflow as cdataf
 import helpers.dbg as dbg
 import helpers.env as henv
@@ -36,7 +36,7 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprint.config_notebook()
 
 # %%
-config = ccbuild.get_config_from_env()
+config = cconfig.get_config_from_env()
 
 # %%
 dag_config = config.pop("DAG")
@@ -61,7 +61,7 @@ if "set_predict_intervals" in config["meta"].to_dict():
 fit_result_bundle = dag_runner.fit()
 
 # %%
-payload = ccbuild.get_config_from_nested_dict({"config": config})
+payload = cconfig.get_config_from_nested_dict({"config": config})
 
 # %%
 if "run_oos" in config["meta"].to_dict().keys() and config["meta"]:

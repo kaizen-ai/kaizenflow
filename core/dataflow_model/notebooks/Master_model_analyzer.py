@@ -31,7 +31,7 @@ import numpy as np
 import pandas as pd
 
 import core.artificial_signal_generators as sig_gen
-import core.config_builders as cfgb
+import core.config as cconfig
 import core.dataflow_model.model_evaluator as modeval
 import core.dataflow_model.model_plotter as modplot
 import core.statistics as stats
@@ -52,7 +52,7 @@ prnt.config_notebook()
 # # Notebook config
 
 # %%
-eval_config = cfgb.get_config_from_nested_dict(
+eval_config = cconfig.get_config_from_nested_dict(
     {
         "target_volatility": 0.1,
         "oos_start": "2007-01-01",

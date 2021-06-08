@@ -17,7 +17,7 @@ import sys
 import joblib
 import tqdm
 
-import core.config as cfg
+import core.config as cconfig
 import core.dataflow_model.utils as cdtfut
 import helpers.dbg as dbg
 import helpers.git as git
@@ -33,7 +33,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def _run_experiment(
-    config: cfg.Config,
+    config: cconfig.Config,
     num_attempts: int,
     abort_on_error: bool,
 ) -> int:

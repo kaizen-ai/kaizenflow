@@ -24,8 +24,7 @@ import pathlib
 import numpy as np
 import pandas as pd
 
-import core.config as cconfi
-import core.config_builders as ccbuild
+import core.config as cconfig
 import core.finance as cfina
 import core.model_evaluator as cmodel
 import core.model_plotter as modplot
@@ -130,10 +129,10 @@ def get_config_diffs(
         and `tag_col` is not None, add tags to config diffs dataframe
     :return: config diffs dataframe
     """
-    diffs = cconfi.diff_configs(config_dict.values())
+    diffs = cconfig.diff_configs(config_dict.values())
     non_empty_diffs = [diff for diff in diffs if len(diff) > 1]
     if non_empty_diffs:
-        config_diffs = cconfi.convert_to_dataframe(diffs).dropna(
+        config_diffs = cconfig.convert_to_dataframe(diffs).dropna(
             how="all", axis=1
         )
     else:
