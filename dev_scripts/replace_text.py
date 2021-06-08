@@ -43,7 +43,7 @@ import helpers.parser as hparse
 import helpers.printing as hprint
 import helpers.system_interaction as hsyste
 
-# TODO(gp):
+# TODO(gp): 
 #  - allow to read a cfile with a subset of files / points to replace
 #  - allow to work with no filter
 #  - fix the help
@@ -90,7 +90,9 @@ def _get_all_files(dirs: List[str], exts: Optional[List[str]]) -> List[str]:
     file_names = [f for f in file_names if "replace_text.py" not in f]
     file_names = [f for f in file_names if ".git/" not in f]
     file_names = [f for f in file_names if os.path.basename(f) != "cfile"]
-    _LOG.info("Found %s target files with extension '%s'", len(file_names), str(exts))
+    _LOG.info(
+        "Found %s target files with extension '%s'", len(file_names), str(exts)
+    )
     return file_names
 
 
@@ -103,7 +105,8 @@ def _get_files_to_replace(
     file_names: List[str], old_regex: str
 ) -> Tuple[List[str], str]:
     """
-    Return the list of files that contain `old_regex` and the corresponding cfile.
+    Return the list of files that contain `old_regex` and the corresponding
+    cfile.
     """
     # Look for files with values.
     res = []
@@ -175,7 +178,7 @@ def _replace_with_perl(
 
 def _replace_with_python(
     file_name: str, old_regex: str, new_regex: str, backup: bool
-):
+) -> None:
     if backup:
         cmd = "cp %s %s.bak" % (file_name, file_name)
         hsyste.system(cmd)
@@ -200,7 +203,8 @@ def _replace(
     mode: str,
 ) -> None:
     """
-    Replace `old_regex` with `new_regex` in the given files using perl or Python.
+    Replace `old_regex` with `new_regex` in the given files using perl or
+    Python.
 
     :param backup: make a backup of the file before the replacement
     :param mode: `replace_with_perl` or `replace_with_python`
@@ -222,7 +226,8 @@ def _replace(
 
 def _replace_repeated_lines(file_name: str, new_regex: str) -> None:
     """
-    Remove consecutive lines in `file_name` that are equal and contain `new_regex`.
+    Remove consecutive lines in `file_name` that are equal and contain
+    `new_regex`.
 
     This is equivalent to Linux `uniq`.
     """
@@ -281,7 +286,9 @@ def _custom1(args: argparse.Namespace) -> None:
         sys.exit(0)
 
 
-def _custom2_helper(args: argparse.Namespace, to_replace: List[Tuple[str, str]]) -> None:
+def _custom2_helper(
+    args: argparse.Namespace, to_replace: List[Tuple[str, str]]
+) -> None:
     dirs = ["."]
     exts = ["py", "ipynb"]
     backup = args.backup
@@ -289,7 +296,7 @@ def _custom2_helper(args: argparse.Namespace, to_replace: List[Tuple[str, str]])
     mode = "replace_with_python"
     #
     file_names = _get_all_files(dirs, exts)
-    #file_names = ["amp/core/dataflow/nodes/test/test_volatility_models.py"]
+    # file_names = ["amp/core/dataflow/nodes/test/test_volatility_models.py"]
     # Store the replacement points.
     txt = ""
     for old_regex, new_regex in to_replace:
@@ -297,7 +304,7 @@ def _custom2_helper(args: argparse.Namespace, to_replace: List[Tuple[str, str]])
         file_names_to_process, txt_tmp = _get_files_to_replace(
             file_names, old_regex
         )
-        #dbg.dassert_lte(1, len(file_names_to_process))
+        # dbg.dassert_lte(1, len(file_names_to_process))
         if len(file_names_to_process) < 1:
             _LOG.warning("Didn't find files to replace")
         # Replace.
@@ -330,7 +337,7 @@ def _custom2(args: argparse.Namespace) -> None:
     #
     to_replace = [
         # (r"printing\.", "hprint."),
-        #("import helpers.config", "import core.config")
+        # ("import helpers.config", "import core.config")
         "ccfg",
         "cconfi",
         "cconfig",
@@ -338,8 +345,9 @@ def _custom2(args: argparse.Namespace) -> None:
         "ccbuild",
         "cfgb",
     ]
-    to_replace = [(f"{s}\.", "ccfg.") for s in to_replace]
+    to_replace = [(rf"{s}\.", "cconfig.") for s in to_replace]
     _custom2_helper(args, to_replace)
+
 
 # #############################################################################
 # Rename files.
@@ -383,7 +391,9 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
-        "--revert_all", action="store_true", help="Revert all the files before processing"
+        "--revert_all",
+        action="store_true",
+        help="Revert all the files before processing",
     )
     parser.add_argument("--custom_flow", action="store", type=str)
     parser.add_argument(
@@ -437,11 +447,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.revert_all:
         # Revert all the files but this one. Use at your own risk.
         _LOG.warning("Reverting all files but this one")
-        cmd = [r"git status -s",
+        cmd = [
+            r"git status -s",
             r"grep -v dev_scripts/replace_text.py",
             r'grep -v "\?"',
             r"awk '{print $2}'",
-            r"xargs git checkout --"]
+            r"xargs git checkout --",
+        ]
         cmd = " | ".join(cmd)
         print(f"> {cmd}")
         hsyste.system(cmd)
