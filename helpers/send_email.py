@@ -24,9 +24,9 @@ def send_email(
     server = smtplib.SMTP("smtp.gmail.com", 587)
     server.starttls()
     if email_address is None:
-        email_address = os.environ["EMAIL_ADDRESS"]
+        email_address = os.environ["AM_EMAIL_ADDRESS"]
     if email_password is None:
-        email_password = os.environ["EMAIL_PASSWORD"]
+        email_password = os.environ["AM_EMAIL_PASSWORD"]
     server.login(email_address, email_password)
     msg = emmult.MIMEMultipart()
     msg["From"] = email_address
