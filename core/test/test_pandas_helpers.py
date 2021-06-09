@@ -140,11 +140,6 @@ class TestDfRollingApply(hut.TestCase):
         )
         #
         df_tmp = df.loc["2009-01-09 05:00:00":"2009-01-09 09:00:00"]  # type: ignore
-        exp_val = [0.592, 0.746]
-        np.testing.assert_array_almost_equal(df_tmp.mean().tolist(), exp_val)
-        np.testing.assert_array_almost_equal(
-            df_act.loc["2009-01-04 09:00:00"].tolist(), exp_val
-        )
         exp_val = [0.608, 0.620]
         np.testing.assert_array_almost_equal(df_tmp.mean().tolist(), exp_val)
         np.testing.assert_array_almost_equal(
