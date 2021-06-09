@@ -1,4 +1,5 @@
 import logging
+import os
 
 import helpers.versioning as hversi
 
@@ -64,7 +65,7 @@ _LOG = logging.getLogger(__name__)
 hversi.check_version("./version.txt")
 
 # TODO(gp): Move it to lib_tasks.
-ECR_BASE_PATH = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
+ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
 
 
 default_params = {

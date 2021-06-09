@@ -122,7 +122,7 @@ def _to_single_line_cmd(cmd: Union[str, List[str]]) -> str:
 
     E.g., convert
         ```
-        IMAGE=665840871993.../amp:dev \
+        IMAGE=.../amp:dev \
             docker-compose \
             --file devops/compose/docker-compose.yml \
             --file devops/compose/docker-compose_as_submodule.yml \
@@ -130,7 +130,7 @@ def _to_single_line_cmd(cmd: Union[str, List[str]]) -> str:
         ```
     into
         ```
-        IMAGE=665840871993.../amp:dev docker-compose --file ...
+        IMAGE=.../amp:dev docker-compose --file ...
         ```
     """
     if isinstance(cmd, list):
@@ -153,7 +153,7 @@ def _to_multi_line_cmd(docker_cmd_: List[str]) -> str:
 
     E.g., convert
     ```
-        ['IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev',
+        ['IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev',
             '\n        docker-compose',
             '\n        --file amp/devops/compose/docker-compose.yml',
             '\n        --file amp/devops/compose/docker-compose_as_submodule.yml',
@@ -161,7 +161,7 @@ def _to_multi_line_cmd(docker_cmd_: List[str]) -> str:
         ```
     into
         ```
-        IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev \
+        IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev \
             docker-compose \
             --file devops/compose/docker-compose.yml \
             --file devops/compose/docker-compose_as_submodule.yml \
@@ -721,7 +721,7 @@ def docker_ps(ctx):  # type: ignore
     ```
     > docker_ps
     CONTAINER ID  user  IMAGE                    COMMAND                    CREATED        STATUS        PORTS  service
-    2ece37303ec9  gp    083233266530....:latest  "./docker_build/entry.sh"  5 seconds ago  Up 4 seconds         user_space
+    2ece37303ec9  gp    *****....:latest  "./docker_build/entry.sh"  5 seconds ago  Up 4 seconds         user_space
     ```
     """
     _report_task()
@@ -825,19 +825,19 @@ def docker_kill(  # type: ignore
 # pylint: disable=line-too-long
 # Remove the images with hash
 # > docker image ls
-# REPOSITORY                                               TAG                                        IMAGE ID       CREATED         SIZE
-# 083233266530.dkr.ecr.us-east-2.amazonaws.com/im          07aea615a2aa9290f7362e99e1cc908876700821   d0889bf972bf   6 minutes ago   684MB
-# 083233266530.dkr.ecr.us-east-2.amazonaws.com/im          rc                                         d0889bf972bf   6 minutes ago   684MB
-# python                                                   3.7-slim-buster                            e7d86653f62f   14 hours ago    113MB
-# 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools   ce789e4718175fcdf6e4857581fef1c2a5ee81f3   2f64ade2c048   14 hours ago    2.02GB
-# 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools   local                                      2f64ade2c048   14 hours ago    2.02GB
-# 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools   d401a2a0bef90b9f047c65f8adb53b28ba05d536   1b11bf234c7f   15 hours ago    2.02GB
-# 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools   52ccd63edbc90020f450c074b7c7088a1806c5ac   90b70a55c367   15 hours ago    1.95GB
-# 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools   2995608a7d91157fc1a820869a6d18f018c3c598   0cb3858e85c6   15 hours ago    2.01GB
-# 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp         415376d58001e804e840bf3907293736ad62b232   e6ea837ab97f   18 hours ago    1.65GB
-# 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp         dev                                        e6ea837ab97f   18 hours ago    1.65GB
-# 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp         local                                      e6ea837ab97f   18 hours ago    1.65GB
-# 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp         9586cc2de70a4075b9fdcdb900476f8a0f324e3e   c75d2447da79   18 hours ago    1.65GB
+# REPOSITORY                                        TAG                                        IMAGE ID       CREATED         SIZE
+# *****.dkr.ecr.us-east-2.amazonaws.com/im          07aea615a2aa9290f7362e99e1cc908876700821   d0889bf972bf   6 minutes ago   684MB
+# *****.dkr.ecr.us-east-2.amazonaws.com/im          rc                                         d0889bf972bf   6 minutes ago   684MB
+# python                                            3.7-slim-buster                            e7d86653f62f   14 hours ago    113MB
+# *****.dkr.ecr.us-east-1.amazonaws.com/dev_tools   ce789e4718175fcdf6e4857581fef1c2a5ee81f3   2f64ade2c048   14 hours ago    2.02GB
+# *****.dkr.ecr.us-east-1.amazonaws.com/dev_tools   local                                      2f64ade2c048   14 hours ago    2.02GB
+# *****.dkr.ecr.us-east-1.amazonaws.com/dev_tools   d401a2a0bef90b9f047c65f8adb53b28ba05d536   1b11bf234c7f   15 hours ago    2.02GB
+# *****.dkr.ecr.us-east-1.amazonaws.com/dev_tools   52ccd63edbc90020f450c074b7c7088a1806c5ac   90b70a55c367   15 hours ago    1.95GB
+# *****.dkr.ecr.us-east-1.amazonaws.com/dev_tools   2995608a7d91157fc1a820869a6d18f018c3c598   0cb3858e85c6   15 hours ago    2.01GB
+# *****.dkr.ecr.us-east-1.amazonaws.com/amp         415376d58001e804e840bf3907293736ad62b232   e6ea837ab97f   18 hours ago    1.65GB
+# *****.dkr.ecr.us-east-1.amazonaws.com/amp         dev                                        e6ea837ab97f   18 hours ago    1.65GB
+# *****.dkr.ecr.us-east-1.amazonaws.com/amp         local                                      e6ea837ab97f   18 hours ago    1.65GB
+# *****.dkr.ecr.us-east-1.amazonaws.com/amp         9586cc2de70a4075b9fdcdb900476f8a0f324e3e   c75d2447da79   18 hours ago    1.65GB
 # pylint: enable=line-too-long
 
 
@@ -918,7 +918,7 @@ def docker_login(ctx):  # type: ignore
     #   -u AWS \
     #   -p eyJ... \
     #   -e none \
-    #   https://665840871993.dkr.ecr.us-east-1.amazonaws.com
+    #   https://*****.dkr.ecr.us-east-1.amazonaws.com
     # TODO(gp): We should get this programmatically from ~/aws/.credentials
     region = "us-east-1"
     if major_version == 1:
@@ -985,7 +985,7 @@ def _check_image(image: str) -> None:
     """
     An image should look like:
 
-    665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local
+    *****.dkr.ecr.us-east-1.amazonaws.com/amp:local
     """
     m = re.match(rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_RE}:{_TAG_RE}$", image)
     dbg.dassert(m, "Invalid image: '%s'", image)
@@ -995,7 +995,7 @@ def _check_base_image(base_image: str) -> None:
     """
     A base image should look like.
 
-    665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
+    *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     regex = rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_RE}$"
     _LOG.debug("regex=%s", regex)
@@ -1005,7 +1005,7 @@ def _check_base_image(base_image: str) -> None:
 
 def _get_base_image(base_image: str) -> str:
     """
-    :return: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
+    :return: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     if base_image == "":
         # TODO(gp): Use os.path.join.
@@ -1020,8 +1020,8 @@ def _get_base_image(base_image: str) -> str:
 
 def get_image(stage: str, base_image: str) -> str:
     """
-    :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
-    :return: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    :return: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp:local
     """
     # Docker refers the default image as "latest", although in our stage
     # nomenclature we call it "dev".
@@ -1049,7 +1049,7 @@ def _get_docker_cmd(
     print_docker_config: bool = False,
 ) -> str:
     """
-    :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
     :param print_config: print the docker config for debugging purposes
     """
@@ -1174,7 +1174,7 @@ def _docker_cmd(
     docker_cmd_: str,
 ) -> None:
     """
-    :param base_image: e.g., 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _LOG.debug("cmd=%s", docker_cmd_)
     _run(ctx, docker_cmd_, pty=True)
@@ -2245,8 +2245,9 @@ def _get_lint_docker_cmd(precommit_opts: str, run_bash: bool) -> str:
     _LOG.debug("work_dir=%s repo_root=%s", work_dir, repo_root)
     # TODO(gp): Do not hardwire the repo.
     # image = get_default_param("DEV_TOOLS_IMAGE_PROD")
-    image = "665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools:prod"
-    # image="665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools:local"
+    # image="*****.dkr.ecr.us-east-1.amazonaws.com/dev_tools:local"
+    ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
+    image = f"{ecr_base_path}/dev_tools:prod"
     docker_cmd_ = ["docker run", "--rm"]
     if run_bash:
         docker_cmd_.append("-it")
