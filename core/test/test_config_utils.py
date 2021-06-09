@@ -356,8 +356,7 @@ class Test_build_config_diff_dataframe1(hut.TestCase):
         config1 = _get_test_config1()
         config2 = _get_test_config2()
         #
-        act = cconfig.build_config_diff_dataframe(
-            {"1": config1, "2": config2})
+        act = cconfig.build_config_diff_dataframe({"1": config1, "2": config2})
         act = hut.convert_df_to_string(act, index=True)
         #
         exp = pd.DataFrame(
@@ -374,8 +373,7 @@ class Test_build_config_diff_dataframe1(hut.TestCase):
         """
         config1 = _get_test_config1()
         #
-        act = cconfig.build_config_diff_dataframe(
-            {"1": config1, "2": config1})
+        act = cconfig.build_config_diff_dataframe({"1": config1, "2": config1})
         act = hut.convert_df_to_string(act, index=True)
         #
         exp = """
@@ -394,7 +392,8 @@ class Test_build_config_diff_dataframe1(hut.TestCase):
         config3 = _get_test_config3()
         #
         act = cconfig.build_config_diff_dataframe(
-            {"1": config1, "2": config2, "3": config3})
+            {"1": config1, "2": config2, "3": config3}
+        )
         act = hut.convert_df_to_string(act, index=True)
         #
         exp = """

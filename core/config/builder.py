@@ -4,23 +4,12 @@ Import as:
 import core.config.builder as cfgb
 """
 
-import collections
 import importlib
 import itertools
 import logging
 import os
 import re
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, cast
 
 import core.config.config_ as cconfig
 import core.config.utils as cfgut

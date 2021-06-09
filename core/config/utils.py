@@ -118,7 +118,9 @@ def intersect_configs(configs: Iterable[cconfig.Config]) -> cconfig.Config:
     return intersection
 
 
-def subtract_config(minuend: cconfig.Config, subtrahend: cconfig.Config) -> cconfig.Config:
+def subtract_config(
+    minuend: cconfig.Config, subtrahend: cconfig.Config
+) -> cconfig.Config:
     """
     Return a `Config` defined via minuend - subtrahend.
 
@@ -211,11 +213,13 @@ def build_config_diff_dataframe(
     diffs = diff_configs(config_dict.values())
     _LOG.debug("diffs=\n%s", configs_to_str(diffs))
     # Remove empty configs.
-    non_empty_diffs = [(k, v) for (diff, k, v) in zip(diffs, config_dict.keys(), config_dict.values()) if len(diff) > 0]
+    non_empty_diffs = [
+        (k, v)
+        for (diff, k, v) in zip(diffs, config_dict.keys(), config_dict.values())
+        if len(diff) > 0
+    ]
     if non_empty_diffs:
-        config_diffs = convert_to_dataframe(diffs).dropna(
-            how="all", axis=1
-        )
+        config_diffs = convert_to_dataframe(diffs).dropna(how="all", axis=1)
     else:
         config_diffs = pd.DataFrame(index=range(len(diffs)))
     # If tags are the same, still add them to `config_diffs`.

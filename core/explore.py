@@ -299,7 +299,7 @@ def _get_unique_elements_in_column(df: pd.DataFrame, col_name: str) -> List[Any]
         # TypeError: unhashable type: 'list'
         _LOG.error("Column '%s' has unhashable types", col_name)
         vals = list(set(map(str, df[col_name])))
-    cast(list, vals)
+    cast(List[Any], vals)
     return vals
 
 
