@@ -3,7 +3,7 @@ import logging
 import pytest
 
 import helpers.unit_test as hut
-import order_management_system.api as omsapi
+import oms.api as omsapi
 
 _LOG = logging.getLogger(__name__)
 

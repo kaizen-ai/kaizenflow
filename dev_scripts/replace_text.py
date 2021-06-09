@@ -361,7 +361,8 @@ def _prerelease_cleanup(args: argparse.Namespace) -> None:
     """
     # From longest to shortest to avoid nested replacements.
     to_replace = [
-            ("instrument_master", "im")
+        ("instrument_master", "im"),
+        ("order_management_system", "oms")
     ]
     dirs = ["."]
     #exts = ["py", "ipynb", "md", "txt"]
