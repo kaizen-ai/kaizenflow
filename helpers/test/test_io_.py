@@ -14,22 +14,6 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
-# #############################################################################
-# henv.py
-# #############################################################################
-
-
-class Test_env1(hut.TestCase):
-    def test_get_system_signature1(self) -> None:
-        txt = henv.get_system_signature()
-        _LOG.debug(txt)
-
-
-# #############################################################################
-# hio.py
-# #############################################################################
-
-
 class Test_load_df_from_json(hut.TestCase):
     def test1(self) -> None:
         test_json_path = os.path.join(self.get_input_dir(), "test.json")
