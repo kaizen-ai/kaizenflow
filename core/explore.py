@@ -1067,7 +1067,7 @@ def ols_regress(
                         figsize=tsplot_figsize
                     )
                 if jointplot_:
-                    # Perform scatter cplott.
+                    # Perform scatter plot.
                     if jointplot_height is None:
                         jointplot_height = cplott.FIG_SIZE[1]
                     jointplot(

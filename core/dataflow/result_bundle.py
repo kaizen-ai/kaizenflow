@@ -1,3 +1,4 @@
+# TODO(gp): Is this needed?
 from __future__ import annotations
 
 import abc
@@ -157,6 +158,7 @@ class ResultBundle(abc.ABC):
         return mapping[value]
 
 
+# TODO(gp): Add a docstring explaining the difference with `ResultBundle`.
 class PredictionResultBundle(ResultBundle):
     @property
     def feature_col_names(self) -> List[Any]:
