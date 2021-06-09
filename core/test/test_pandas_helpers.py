@@ -38,7 +38,7 @@ class TestDfRollingApply(hut.TestCase):
         """
         df_str = pri.dedent(
             """
-         ,A,B
+        ,A,B
         2018-01-01,0.47,0.01
         2018-01-02,0.83,0.43
         2018-01-04,0.81,0.79
@@ -60,7 +60,8 @@ class TestDfRollingApply(hut.TestCase):
         # Check.
         exp_val = [0.720, 0.574]
         np.testing.assert_array_almost_equal(
-            df.loc["2018-01-01":"2018-01-06"].mean().tolist(), exp_val
+            df.loc["2018-01-01":"2018-01-06"].mean().tolist(),  # type: ignore
+            exp_val,
         )
         np.testing.assert_array_almost_equal(
             df_act.loc["2018-01-06"].tolist(), exp_val
@@ -131,14 +132,14 @@ class TestDfRollingApply(hut.TestCase):
             df, window, func, timestamps=resampled_index
         )
         # Check.
-        df_tmp = df.loc["2009-01-04 05:00:00":"2009-01-04 09:00:00"]
+        df_tmp = df.loc["2009-01-04 05:00:00":"2009-01-04 09:00:00"]  # type: ignore
         exp_val = [0.592, 0.746]
         np.testing.assert_array_almost_equal(df_tmp.mean().tolist(), exp_val)
         np.testing.assert_array_almost_equal(
             df_act.loc["2009-01-04 09:00:00"].tolist(), exp_val
         )
         #
-        df_tmp = df.loc["2009-01-09 05:00:00":"2009-01-09 09:00:00"]
+        df_tmp = df.loc["2009-01-09 05:00:00":"2009-01-09 09:00:00"]  # type: ignore
         exp_val = [0.608, 0.620]
         np.testing.assert_array_almost_equal(df_tmp.mean().tolist(), exp_val)
         np.testing.assert_array_almost_equal(

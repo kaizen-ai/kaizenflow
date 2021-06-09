@@ -4,30 +4,33 @@ Import as:
 import helpers.list as hlist
 """
 
+# TODO(gp): -> `list_helpers.py` or maybe `python_helpers` with all code about
+#  general Python functions.
+
 from typing import Any, List, Set
 
 import helpers.dbg as dbg
 
 
+# TODO(gp): -> return_single_element, return_single_element_or_assert?
 def assert_single_element_and_return(list_: List[Any]) -> Any:
     """
-    Assert that list `l` has a single element and return it.
+    Assert that the passed list has a single element and return that single
+    element.
 
-    :param list_: list
-    :return: returns the unique element of the list
+    :return: return the unique element in the list
     """
     dbg.dassert_isinstance(list_, list)
     dbg.dassert_eq(len(list_), 1, "List has %d elements!", len(list_))
     return list_[0]
 
 
-def find_duplicates(list_: List) -> List:
+def find_duplicates(list_: List[Any]) -> List[Any]:
     """
     Find the elements duplicated in a list.
     """
     dbg.dassert_isinstance(list_, list)
     # Count the occurrences of each element of the seq.
-    # TODO(gp): Consider replacing with pd.Series.value_counts.
     set_l = set(list_)
     v_to_num = [(v, list_.count(v)) for v in set_l]
     # Build list of elems with duplicates.
@@ -35,7 +38,7 @@ def find_duplicates(list_: List) -> List:
     return res
 
 
-def remove_duplicates(list_: List) -> List:
+def remove_duplicates(list_: List[Any]) -> List[Any]:
     """
     Remove the elements duplicated in a list, without changing the order.
     """

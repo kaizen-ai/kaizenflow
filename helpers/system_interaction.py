@@ -157,38 +157,38 @@ def _system(
     try:
         stdout = subprocess.PIPE
         stderr = subprocess.STDOUT
-        p = subprocess.Popen(
+        with subprocess.Popen(
             cmd, shell=True, executable="/bin/bash", stdout=stdout, stderr=stderr
-        )
-        output = ""
-        if blocking:
-            # Blocking call: get the output.
-            while True:
-                line = p.stdout.readline().decode("utf-8")  # type: ignore
-                if not line:
-                    break
-                if not suppress_output:
-                    print((line.rstrip("\n")))
-                output += line
-            p.stdout.close()  # type: ignore
-            rc = p.wait()
-        else:
-            # Not blocking.
-            # Wait until process terminates (without using p.wait()).
-            max_cnt = 20
-            cnt = 0
-            while p.poll() is None:
-                # Process hasn't exited yet, let's wait some time.
-                time.sleep(0.1)
-                cnt += 1
-                _LOG.debug("cnt=%s, rc=%s", cnt, p.returncode)
-                if cnt > max_cnt:
-                    break
-            if cnt > max_cnt:
-                # Timeout: we assume it worked.
-                rc = 0
+        ) as p:
+            output = ""
+            if blocking:
+                # Blocking call: get the output.
+                while True:
+                    line = p.stdout.readline().decode("utf-8")  # type: ignore
+                    if not line:
+                        break
+                    if not suppress_output:
+                        print((line.rstrip("\n")))
+                    output += line
+                p.stdout.close()  # type: ignore
+                rc = p.wait()
             else:
-                rc = p.returncode
+                # Not blocking.
+                # Wait until process terminates (without using p.wait()).
+                max_cnt = 20
+                cnt = 0
+                while p.poll() is None:
+                    # Process hasn't exited yet, let's wait some time.
+                    time.sleep(0.1)
+                    cnt += 1
+                    _LOG.debug("cnt=%s, rc=%s", cnt, p.returncode)
+                    if cnt > max_cnt:
+                        break
+                if cnt > max_cnt:
+                    # Timeout: we assume it worked.
+                    rc = 0
+                else:
+                    rc = p.returncode
         if suppress_error is not None:
             dbg.dassert_isinstance(suppress_error, set)
             if rc in suppress_error:
@@ -473,10 +473,13 @@ def create_executable_script(file_name: str, content: str) -> None:
     system(cmd)
 
 
-def _compute_file_signature(file_name: str, dir_depth: int) -> Tuple:
+def _compute_file_signature(file_name: str, dir_depth: int) -> Optional[List]:
     """
     Compute a signature for files using basename and `dir_depth` enclosing
     dirs.
+
+    :return: tuple of extracted enclosing dirs
+        - E.g., `("core", "dataflow_model", "utils.py")`
     """
     # Split a file like:
     # /app/amp/core/test/TestCheckSameConfigs.test_check_same_configs_error/output/test.txt
@@ -486,8 +489,17 @@ def _compute_file_signature(file_name: str, dir_depth: int) -> Tuple:
     path = os.path.normpath(file_name)
     paths = path.split(os.sep)
     dbg.dassert_lte(1, dir_depth)
-    dbg.dassert_lte(dir_depth + 1, len(paths))
-    signature = paths[-(dir_depth + 1) :]
+    if dir_depth + 1 > len(paths):
+        _LOG.warning(
+            "Can't compute signature of file_name='%s' with"
+            " dir_depth=%s, len(paths)=%s",
+            file_name,
+            dir_depth,
+            len(paths),
+        )
+        signature = None
+    else:
+        signature = paths[-(dir_depth + 1) :]
     return signature
 
 
@@ -593,8 +605,12 @@ def select_result_file_from_list(files: List[str], mode: str) -> List[str]:
     res: List[str] = []
     if mode == "assert_unless_one_result":
         # Expect to have a single result and return that.
-        if len(files) != 1:
-            dbg.dfatal("Found multiple files:\n%s" % "\n".join(files))
+        if len(files) == 0:
+            dbg.dfatal("mode=%s: didn't find file" % mode)
+        elif len(files) > 1:
+            dbg.dfatal(
+                "mode=%s: found multiple files:\n%s" % (mode, "\n".join(files))
+            )
         res = [files[0]]
     elif mode == "return_all_results":
         # Return all files.

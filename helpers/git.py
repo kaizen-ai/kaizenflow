@@ -541,7 +541,8 @@ def purify_docker_file_from_git_client(
     file_name: str,
     super_module: Optional[bool],
     dir_depth: int = 1,
-) -> str:
+    mode: str = "return_all_results",
+) -> Tuple[bool, str]:
     """
     Convert a file or dir that was generated inside Docker to a file in the
     current Git client.
@@ -560,30 +561,39 @@ def purify_docker_file_from_git_client(
         - True/False: the file is with respect to a Git repo
         - `None`: the file is returned as relative to current dir
     :param dir_depth: same meaning as in `find_file_with_dir()`
+    :param mode: same as `system_interaction.select_result_file_from_list()`
+    :return: the best guess for the file name corresponding to `file_name`
     """
     _LOG.debug("# Processing file_name='%s'", file_name)
     dbg.dassert_isinstance(file_name, str)
     # Clean up file name.
     file_name = os.path.normpath(file_name)
     _LOG.debug("file_name=%s", file_name)
-    mode = "assert_unless_one_result"
-    file_name_tmp = hsinte.find_file_with_dir(
+    file_names = hsinte.find_file_with_dir(
         file_name, ".", dir_depth=dir_depth, mode=mode
-    )[0]
-    _LOG.debug("file_name_tmp=%s", file_name_tmp)
-    if file_name_tmp is None:
+    )
+    _LOG.debug("file_names=%s", file_names)
+    if len(file_names) == 0:
         # We didn't find the file in the current client: leave the file as it was.
-        _LOG.warning("Can't find the file_name corresponding to '%s'", file_name)
-    else:
+        _LOG.warning("Can't find file corresponding to '%s'", file_name)
+        found = False
+    elif len(file_names) == 1:
         # We have found the file.
-        file_name = file_name_tmp
-    _LOG.debug("file_name=%s", file_name)
-    #
-    if super_module is not None:
-        file_name = get_path_from_git_root(file_name, super_module)
-    file_name = os.path.normpath(file_name)
-    _LOG.debug("-> file_name='%s'", file_name)
-    return file_name
+        file_name = file_names[0]
+        _LOG.debug("file_name=%s", file_name)
+        #
+        if super_module is not None:
+            file_name = get_path_from_git_root(file_name, super_module)
+        file_name = os.path.normpath(file_name)
+        found = True
+    else:
+        _LOG.warning(
+            "Found multiple potential files corresponding to '%s'", file_name
+        )
+        file_name = ",".join(file_names)
+        found = False
+    _LOG.debug("-> found=%s file_name='%s'", found, file_name)
+    return (found, file_name)
 
 
 # #############################################################################
