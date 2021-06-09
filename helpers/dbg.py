@@ -852,7 +852,7 @@ def _get_logging_format(
             log_format = (
                 # 04-28_08:08 INFO :
                 "%(asctime)-5s %(levelname)-5s"
-                # .../src/lemonade1/amp/helpers/system_interaction.py
+                # .../src/lem1/amp/helpers/system_interaction.py
                 # _system       :
                 " %(pathname)s %(funcName)-20s "
                 # 199: ...

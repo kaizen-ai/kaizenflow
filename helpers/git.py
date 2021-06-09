@@ -182,11 +182,11 @@ def get_path_from_supermodule() -> Tuple[str, str]:
     - for amp without supermodule returns ''
     """
     cmd = "git rev-parse --show-superproject-working-tree"
-    # > cd /Users/saggese/src/.../lemonade/amp
+    # > cd /Users/saggese/src/.../lem/amp
     # > git rev-parse --show-superproject-working-tree
-    # /Users/saggese/src/.../lemonade
+    # /Users/saggese/src/.../lem
     #
-    # > cd /Users/saggese/src/.../lemonade
+    # > cd /Users/saggese/src/.../lem
     # > git rev-parse --show-superproject-working-tree
     # (No result)
     superproject_path: str = hsinte.system_to_one_line(cmd)[1]

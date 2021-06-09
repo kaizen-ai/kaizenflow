@@ -1191,8 +1191,8 @@ class TestCase(unittest.TestCase):
                 # To add a file like
                 # amp/core/test/TestCheckSameConfigs.test_check_same_configs_error/output/test.txt
                 # we need to descend into `amp`.
-                # TODO(gp): This needs to be generalized to lemonade. We should
-                #  `cd` in the dir of the repo that includes the file.
+                # TODO(gp): This needs to be generalized to lem. We should `cd`
+                # in the dir of the repo that includes the file.
                 file_name_in_amp = os.path.relpath(file_name_tmp, "amp")
                 cmd = "cd amp; git add -u %s" % file_name_in_amp
             else:

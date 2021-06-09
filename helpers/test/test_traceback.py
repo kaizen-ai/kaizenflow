@@ -204,20 +204,20 @@ class Test_Traceback1(hut.TestCase):
     #   File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
     #   File "<frozen importlib._bootstrap_external>", line 855, in exec_module
     #   File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
-    #   File "/Users/saggese/src/lemonade1/amp/tasks.py", line 8, in <module>
+    #   File "/Users/saggese/src/lem1/amp/tasks.py", line 8, in <module>
     #     from helpers.lib_tasks import set_default_params  # This is not an invoke target.
-    #   File "/Users/saggese/src/lemonade1/amp/helpers/lib_tasks.py", line 23, in <module>
+    #   File "/Users/saggese/src/lem1/amp/helpers/lib_tasks.py", line 23, in <module>
     #     import helpers.git as git
-    #   File "/Users/saggese/src/lemonade1/amp/helpers/git.py", line 16, in <module>
+    #   File "/Users/saggese/src/lem1/amp/helpers/git.py", line 16, in <module>
     #     import helpers.system_interaction as hsinte
-    #   File "/Users/saggese/src/lemonade1/amp/helpers/system_interaction.py", line 529
+    #   File "/Users/saggese/src/lem1/amp/helpers/system_interaction.py", line 529
     #     signature2 = _compute_file_signature(file_name, dir_depth)
     #     ^
     # SyntaxError: invalid syntax
     # Traceback (most recent call last):
-    #   File "/Users/saggese/src/lemonade1/amp/dev_scripts/tg.py", line 21, in <module>
+    #   File "/Users/saggese/src/lem1/amp/dev_scripts/tg.py", line 21, in <module>
     #     import helpers.system_interaction as hsinte
-    #   File "/Users/saggese/src/lemonade1/amp/helpers/system_interaction.py", line 529
+    #   File "/Users/saggese/src/lem1/amp/helpers/system_interaction.py", line 529
     #     signature2 = _compute_file_signature(file_name, dir_depth)
     #     ^
     # SyntaxError: invalid syntax

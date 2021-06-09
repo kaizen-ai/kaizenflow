@@ -5,11 +5,11 @@
 
 set -x
 
-GIT_CLIENT="lemonade1"
+GIT_CLIENT="lem1"
 echo "GIT_CLIENT=$GIT_CLIENT"
 
 if [[ 0 == 1 ]]; then
-    # amp vs lemonade
+    # amp vs lem
     DIR1=$HOME/src/$GIT_CLIENT/amp
     DIR2=$HOME/src/$GIT_CLIENT
 
