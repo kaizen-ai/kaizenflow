@@ -96,7 +96,7 @@ def is_inside_submodule(git_dir: str = ".") -> bool:
     # - Check if the dir one level up is a valid git repo
     # Go to the dir.
     cmd.append("cd %s" % git_dir)
-    # > cd instrument_master/
+    # > cd im/
     # > git rev-parse --show-toplevel
     # /Users/saggese/src/.../amp
     cmd.append('cd "$(git rev-parse --show-toplevel)/.."')

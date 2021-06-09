@@ -135,7 +135,7 @@ def function_under_test(...) -> ...:
 
 ### Example 2: testing `_render_plantuml()` from `render_md.py`
 
-- Copy real `instrument_master_architecture.md` to a test location
+- Copy real `im_architecture.md` to a test location
 
 - Add playback into the code:
 
@@ -153,7 +153,7 @@ def function_under_test(...) -> ...:
   ...
   ```
 
-- Run `render_md.py -i instrument_master_architecture.md`
+- Run `render_md.py -i im_architecture.md`
 
 - The following output is prompted:
 
@@ -167,7 +167,7 @@ def function_under_test(...) -> ...:
       def test1(self) -> None:
           # Define input variables
           in_txt = ["<!--ts-->", ..., "", "> **GP:**: Not urgent", ""]
-          out_file = "instrument_master_architecture.md"
+          out_file = "im_architecture.md"
           extension = "png"
           dry_run = False
           # Call function to test
@@ -181,9 +181,9 @@ def function_under_test(...) -> ...:
   Also some cosmetic changes are needed and code is ready to paste to the existing test:
   ```python
   def test_render_plantuml_playback1(self) -> None:
-      """Test real usage for instrument_master_architecture.md.test"""
+      """Test real usage for im_architecture.md.test"""
       # Define input variables
-      file_name = "instrument_master_architecture.md.test"
+      file_name = "im_architecture.md.test"
       in_file = os.path.join(self.get_input_dir(), file_name)
       in_txt = io_.from_file(in_file).split("\n")
       out_file = os.path.join(self.get_scratch_space(), file_name)
