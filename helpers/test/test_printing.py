@@ -14,6 +14,9 @@ class Test_printing1(hut.TestCase):
             _LOG.debug(hprint.color_highlight(c, c))
 
 
+# #############################################################################
+
+
 class Test_to_str1(hut.TestCase):
     def test1(self) -> None:
         x = 1
@@ -75,6 +78,9 @@ class Test_to_str1(hut.TestCase):
         self.assertEqual(act, exp)
 
 
+# #############################################################################
+
+
 class Test_log(hut.TestCase):
     def test1(self) -> None:
         dbg.test_logger()
@@ -112,6 +118,9 @@ class Test_log(hut.TestCase):
         _ = x, y, z
         for verb in [logging.DEBUG, logging.INFO]:
             hprint.log(_LOG, verb, "x y z")
+
+
+# #############################################################################
 
 
 class Test_sort_dictionary(hut.TestCase):
@@ -163,3 +172,92 @@ class Test_sort_dictionary(hut.TestCase):
         }
         act = hprint.sort_dictionary(dict_)
         self.check_string(pprint.pformat(act))
+
+
+# #############################################################################
+
+
+class Test_indent1(hut.TestCase):
+    def test1(self) -> None:
+        txt = """foo
+
+class TestHelloWorld(hut.TestCase):
+    bar
+"""
+        act = hprint.indent(txt, 2)
+        exp = """  foo
+
+  class TestHelloWorld(hut.TestCase):
+      bar
+"""
+        self.assert_equal(act, exp, fuzzy_match=False)
+
+
+# #############################################################################
+
+
+class Test_dedent1(hut.TestCase):
+    def test1(self) -> None:
+        txt = """
+        foo
+
+        class TestHelloWorld(hut.TestCase):
+            bar
+"""
+        act = hprint.dedent(txt)
+        exp = """foo
+
+class TestHelloWorld(hut.TestCase):
+    bar"""
+        self.assert_equal(act, exp, fuzzy_match=False)
+
+    def test2(self) -> None:
+        txt = r"""
+        read_data:
+          file_name: foo_bar.txt
+          nrows: 999
+        single_val: hello
+        zscore:
+          style: gaz
+          com: 28
+        """
+        act = hprint.dedent(txt)
+        exp = """read_data:
+  file_name: foo_bar.txt
+  nrows: 999
+single_val: hello
+zscore:
+  style: gaz
+  com: 28"""
+        self.assert_equal(act, exp, fuzzy_match=False)
+
+    def test_roundtrip1(self) -> None:
+        """
+        Verify that `indent` and `dedent` are inverse of each other.
+        """
+        txt1 = """foo
+
+class TestHelloWorld(hut.TestCase):
+    bar"""
+        txt2 = hprint.indent(txt1, 3)
+        txt3 = hprint.dedent(txt2)
+        self.assert_equal(txt1, txt3, fuzzy_match=False)
+
+
+# #############################################################################
+
+
+class Test_align_on_left1(hut.TestCase):
+    def test1(self) -> None:
+        txt = """foo
+
+class TestHelloWorld(hut.TestCase):
+    bar
+"""
+        act = hprint.align_on_left(txt)
+        exp = """foo
+
+class TestHelloWorld(hut.TestCase):
+bar
+"""
+        self.assert_equal(act, exp, fuzzy_match=False)

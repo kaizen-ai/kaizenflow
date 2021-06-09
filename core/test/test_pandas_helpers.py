@@ -38,7 +38,7 @@ class TestDfRollingApply(hut.TestCase):
         """
         df_str = pri.dedent(
             """
-         ,A,B
+        ,A,B
         2018-01-01,0.47,0.01
         2018-01-02,0.83,0.43
         2018-01-04,0.81,0.79

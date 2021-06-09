@@ -23,6 +23,7 @@ import helpers.dbg as dbg
 import helpers.git as git
 import helpers.introspection as hintros
 import helpers.io_ as hio
+import helpers.list as hlist
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.table as htable
@@ -1746,6 +1747,7 @@ def find_check_string_output(  # type: ignore
             num_spaces = 8
             txt = hprint.indent(txt, num_spaces=num_spaces)
         output = f"""
+        act =
         exp = r\"\"\"
 {txt}
         \"\"\".lstrip().rstrip()
@@ -1768,11 +1770,14 @@ def _build_run_command_line(
     skip_submodules: bool,
     coverage: bool,
     collect_only: bool,
-    #
+    tee_to_file: bool,
+    # Different params than the `run_*_tests()`.
     skipped_tests: str,
 ) -> str:
     """
-    Same params as run_fast_tests().
+    Build the pytest run command.
+
+    Same params as `run_fast_tests()`.
 
     :param skipped_tests: -m option for pytest
     """
@@ -1809,6 +1814,8 @@ def _build_run_command_line(
     # TODO(gp): Use _to_multi_line_cmd()
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
     cmd = f"pytest {pytest_opts}"
+    if tee_to_file:
+        cmd += " 2>&1 | tee tmp.pytest.log"
     return cmd
 
 
@@ -1859,6 +1866,7 @@ def _run_tests(
     skip_submodules: bool,
     coverage: bool,
     collect_only: bool,
+    tee_to_file: bool,
     skipped_tests: str,
     start_coverage_script: bool = True,
 ) -> None:
@@ -1870,6 +1878,7 @@ def _run_tests(
         skip_submodules,
         coverage,
         collect_only,
+        tee_to_file,
         skipped_tests,
     )
     # Execute the command line.
@@ -1887,6 +1896,7 @@ def run_fast_tests(  # type: ignore
     skip_submodules=False,
     coverage=False,
     collect_only=False,
+    tee_to_file=False,
 ):
     """
     Run fast tests.
@@ -1898,6 +1908,7 @@ def run_fast_tests(  # type: ignore
     :param skip_submodules: ignore all the dir inside a submodule
     :param coverage: enable coverage computation
     :param collect_only: do not run tests but show what will be executed
+    :param tee_to_file: save output of pytest in `tmp.pytest.log`
     """
     _report_task()
     skipped_tests = "not slow and not superslow"
@@ -1910,6 +1921,7 @@ def run_fast_tests(  # type: ignore
         skip_submodules,
         coverage,
         collect_only,
+        tee_to_file,
         skipped_tests,
     )
 
@@ -1924,9 +1936,12 @@ def run_slow_tests(  # type: ignore
     skip_submodules=False,
     coverage=False,
     collect_only=False,
+    tee_to_file=False,
 ):
     """
     Run slow tests.
+
+    Same params as `invoke run_fast_tests`.
     """
     _report_task()
     skipped_tests = "slow and not superslow"
@@ -1939,6 +1954,7 @@ def run_slow_tests(  # type: ignore
         skip_submodules,
         coverage,
         collect_only,
+        tee_to_file,
         skipped_tests,
     )
 
@@ -1953,9 +1969,12 @@ def run_superslow_tests(  # type: ignore
     skip_submodules=False,
     coverage=False,
     collect_only=False,
+    tee_to_file=False,
 ):
     """
     Run superslow tests.
+
+    Same params as `invoke run_fast_tests`.
     """
     _report_task()
     skipped_tests = "not slow and superslow"
@@ -1968,6 +1987,7 @@ def run_superslow_tests(  # type: ignore
         skip_submodules,
         coverage,
         collect_only,
+        tee_to_file,
         skipped_tests,
     )
 
@@ -1982,9 +2002,12 @@ def run_fast_slow_tests(  # type: ignore
     skip_submodules=False,
     coverage=False,
     collect_only=False,
+    tee_to_file=False,
 ):
     """
     Run fast and slow tests.
+
+    Same params as `invoke run_fast_tests`.
     """
     _report_task()
     skipped_tests = "not superslow"
@@ -1997,6 +2020,7 @@ def run_fast_slow_tests(  # type: ignore
         skip_submodules,
         coverage,
         collect_only,
+        tee_to_file,
         skipped_tests,
     )
 
@@ -2006,14 +2030,16 @@ def traceback(ctx, log_name="", purify=True):  # type: ignore
     """
     Parse the traceback from pytest and navigate it with vim.
 
-    > pyt helpers/test/test_traceback.py
-    > invoke traceback
-    # There is a also an alias `it` for the previous command line.
-
-    > devops/debug/compare.sh 2>&1 | tee log.txt
-    > ie -l log.txt
+    ```
+    # Run a unit test.
+    > pytest helpers/test/test_traceback.py 2>&1 | tee tmp.pytest.log
+    > pytest.sh helpers/test/test_traceback.py
+    # Parse the traceback
+    > invoke traceback -i tmp.pytest.log
+    ```
 
     :param log_name: the file with the traceback
+    :param purify: purify the filenames from client (e.g., from running inside Docker)
     """
     _report_task()
     #
@@ -2025,6 +2051,7 @@ def traceback(ctx, log_name="", purify=True):  # type: ignore
     if log_name:
         cmd.append(f"-i {log_name}")
     cmd.append(f"-o {dst_cfile}")
+    # Purify the file names.
     if purify:
         cmd.append("--purify_from_client")
     else:
@@ -2054,7 +2081,125 @@ def pytest_clean(ctx):  # type: ignore
 # TODO(gp): Consolidate the code from dev_scripts/testing here.
 
 
-# TODO(gp): ./dev_scripts/testing/pytest_failed.py
+@task
+def pytest_freeze_failed_test_list(  # type: ignore
+        ctx, confirm=False):
+    """
+    Copy last list of failed tests so as not overwrite with successive pytest runs.
+    """
+    _report_task()
+    dir_name = "."
+    pytest_failed_tests_file = os.path.join(dir_name, ".pytest_cache/v/cache/lastfailed")
+    frozen_failed_tests_file = "tmp.pytest_cache.lastfailed"
+    if os.path.exists(frozen_failed_tests_file) and not confirm:
+        dbg.dfatal("File {frozen_failed_tests_file} already exists. Re-run with --confirm to overwrite")
+    _LOG.info(f"Copying '{pytest_failed_tests_file}' to '{frozen_failed_tests_file}'")
+    # Make a copy of the pytest file.
+    dbg.dassert_file_exists(pytest_failed_tests_file)
+    cmd = f"cp {pytest_failed_tests_file} {frozen_failed_tests_file}"
+    _run(ctx, cmd)
+
+
+def _get_failed_tests(file_name: str) -> List[str]:
+    dbg.dassert_file_exists(file_name)
+    # {
+    # "vendors/test/test_vendors.py::Test_gp::test1": true,
+    # "vendors/test/test_vendors.py::Test_kibot_utils1::...": true,
+    # }
+    txt = hio.from_file(file_name)
+    vals = json.loads(txt)
+    dbg.dassert_isinstance(vals, dict)
+    tests = [k for k, v in vals.items() if v]
+    return tests
+
+
+@task
+def pytest_failed(  # type: ignore
+        ctx, use_frozen_list=True, target_type="tests", file_name="",
+        refresh=False, pbcopy=True):
+    """
+    Process the list of failed tests from a pytest run.
+
+    The workflow is:
+    ```
+    # Run a lot of tests, e.g., the entire regression suite.
+    > pytest ...
+    # Some tests have failed. Freeze the output of pytest so we can re-run only some
+    # of them.
+    > invoke pytest_freeze_failed_test_list
+    #
+    > invoke pytest_find_failed_tests
+    ```
+
+    :param use_frozen_list: use the copied list or the one generated by pytest
+    :param target_type: specify what to print about the tests
+        - tests (default): print the tests in a single line
+        - files: print the name of the files containing files
+        - classes: print the name of all classes
+    :param file_name: specify the file name containing the pytest file to parse
+    :param refresh: force to update the frozen file from the current pytest file
+    """
+    _report_task()
+    _ = ctx
+    if refresh:
+        pytest_freeze_failed_test_list(ctx, confirm=True)
+    # Read file.
+    if not file_name:
+        dir_name = "."
+        pytest_failed_tests_file = os.path.join(dir_name, ".pytest_cache/v/cache/lastfailed")
+        frozen_failed_tests_file = "tmp.pytest_cache.lastfailed"
+        if use_frozen_list:
+            if os.path.exists(pytest_failed_tests_file) and not os.path.exists(frozen_failed_tests_file):
+                _LOG.warning("Freezing the pytest outcomes")
+                pytest_freeze_failed_test_list(ctx)
+            file_name = frozen_failed_tests_file
+        else:
+            file_name = pytest_failed_tests_file
+    _LOG.info("Reading file_name='%s'", file_name)
+    dbg.dassert_file_exists(file_name)
+    # E.g., vendors/test/test_vendors.py::Test_gp::test1
+    tests = _get_failed_tests(file_name)
+    _LOG.debug("tests=%s", str(tests))
+    # Process the tests.
+    targets = []
+    for test in tests:
+        data = test.split("::")
+        dbg.dassert_lte(len(data), 3, "Can't parse '%s'", test)
+        # E.g., dev_scripts/testing/test/test_run_tests.py
+        # E.g., helpers/test/helpers/test/test_list.py::Test_list_1
+        # E.g., core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test5
+        file_name = test_class = test_method = ""
+        if len(data) >= 1:
+            file_name = data[0]
+        if len(data) >= 2:
+            test_class = data[1]
+        if len(data) >= 3:
+            test_method = data[2]
+        _LOG.debug("test=%s -> (%s, %s, %s)", test, file_name, test_class, test_method)
+        if not os.path.exists(file_name):
+            _LOG.warning("Can't find file '%s'", file_name)
+        if target_type == "tests":
+            targets.append(test)
+        elif target_type == "files":
+            dbg.dassert_ne(file_name, "")
+            targets.append(file_name)
+        elif target_type == "classes":
+            dbg.dassert_ne(file_name, "")
+            dbg.dassert_ne(test_class, "")
+            targets.append(f"{file_name}::{test_class}")
+        else:
+            dbg.dfatal(f"Invalid target_type='{target_type}'")
+    # Package the output.
+    _LOG.debug("res=%s", str(targets))
+    targets = hlist.remove_duplicates(targets)
+    _LOG.info("Found %d pytest '%s' targets", len(targets), target_type)
+    dbg.dassert_isinstance(targets, list)
+    res = " ".join(targets)
+    _LOG.debug("res=%s", str(res))
+    #
+    _to_pbcopy(res, pbcopy)
+    return res
+
 
 # #############################################################################
 # Linter.

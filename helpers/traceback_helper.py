@@ -74,7 +74,7 @@ def parse_traceback(
             # The file looks like:
             #   File "/app/amp/test/test_lib_tasks.py", line 27, in test_get_gh
             #     act = ltasks._get_gh_issue_title(issue_id, repo)
-            regex = r"^\s+File \"(\S+)\", line (\d+), in (\S+)$"
+            regex = r"^\s*File \"(\S+)\", line (\d+), in (\S+)$"
             m = re.match(regex, line)
             dbg.dassert(m, "Can't parse '%s'", line)
             m: Match[Any]
@@ -143,8 +143,9 @@ def parse_traceback(
             file_name, line_num, text = cfile_row
             # Leave the files relative to the current dir.
             super_module = None
-            file_name = git.purify_docker_file_from_git_client(
-                file_name, super_module=super_module
+            mode = "return_all_results"
+            _, file_name = git.purify_docker_file_from_git_client(
+                file_name, super_module=super_module, mode=mode
             )
             cfile_tmp.append((file_name, line_num, text))
         cfile = cfile_tmp

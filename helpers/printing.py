@@ -88,34 +88,85 @@ def frame(
     return ret
 
 
-def indent(str_: str, num_spaces: int = 2) -> str:
+def prepend(txt: str, prefix: str) -> str:
     """
-    Add `num_spaces` spaces before each line of the string `str_`.
+    Add `prefix` before each line of the string `txt`.
     """
-    return prepend(str_, " " * num_spaces)
+    lines = [prefix + curr_line for curr_line in txt.split("\n")]
+    res = "\n".join(lines)
+    return res
 
 
-def dedent(txt: str) -> str:
+def indent(txt: str, num_spaces: int = 2) -> str:
     """
-    Remove all extra leadning / trailing spaces and empty lines.
+    Add `num_spaces` spaces before each line of the passed string.
+    """
+    spaces = " " * num_spaces
+    txt_out = []
+    for curr_line in txt.split("\n"):
+        if curr_line.lstrip().rstrip() == "":
+            # Do not prepend any space to a line with only white characters.
+            txt_out.append("")
+            continue
+        txt_out.append(spaces + curr_line)
+    res = "\n".join(txt_out)
+    return res
+
+
+def dedent(txt: str, remove_empty_leading_trailing_lines: bool = True) -> str:
+    """
+    Remove from each line the minimum number of spaces to align the text on the
+    left.
+
+    It is the opposite of `indent()`.
+
+    :param remove_empty_leading_trailing_lines: if True, remove all the empty lines
+        at the beginning and at the end
+    """
+    if remove_empty_leading_trailing_lines:
+        txt = txt.rstrip("\n").lstrip("\n")
+    # Find the minimum number of leading spaces.
+    min_num_spaces = None
+    for curr_line in txt.split("\n"):
+        _LOG.debug("min_num_spaces=%s: curr_line='%s'", min_num_spaces, curr_line)
+        # Skip empty lines.
+        if curr_line.lstrip().rstrip() == "":
+            _LOG.debug("  -> Skipping empty line")
+            continue
+        m = re.search("^(\s*)", curr_line)
+        dbg.dassert(m)
+        curr_num_spaces = len(m.group(1))
+        _LOG.debug("  -> curr_num_spaces=%s", curr_num_spaces)
+        if min_num_spaces is None or curr_num_spaces < min_num_spaces:
+            min_num_spaces = curr_num_spaces
+    _LOG.debug("min_num_spaces=%s", min_num_spaces)
+    #
+    txt_out = []
+    for curr_line in txt.split("\n"):
+        _LOG.debug("curr_line='%s'", curr_line)
+        # Skip empty lines.
+        if curr_line.lstrip().rstrip() == "":
+            txt_out.append("")
+            continue
+        dbg.dassert_lte(min_num_spaces, len(curr_line))
+        txt_out.append(curr_line[min_num_spaces:])
+    res = "\n".join(txt_out)
+    return res
+
+
+def align_on_left(txt: str) -> str:
+    """
+    Remove all leading/trailing spaces for each line.
     """
     txt_out = []
     for curr_line in txt.split("\n"):
         curr_line = curr_line.rstrip(" ").lstrip(" ")
-        if curr_line:
-            txt_out.append(curr_line)
-    return "\n".join(txt_out)
+        txt_out.append(curr_line)
+    res = "\n".join(txt_out)
+    return res
 
 
-def prepend(str_: str, prefix: str) -> str:
-    """
-    Add `prefix` before each line of the string `str_`.
-    """
-    # lines = ["<" + prefix + curr_line + ">" for curr_line in str_.split("\n")]
-    lines = [prefix + curr_line for curr_line in str_.split("\n")]
-    return "\n".join(lines)
-
-
+# TODO(gp): Is this used? It looks very thin.
 def remove_empty_lines_from_string_list(arr: List[str]) -> List[str]:
     """
     Remove empty lines from a list of strings.

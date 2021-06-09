@@ -1182,7 +1182,7 @@ class TestCase(unittest.TestCase):
             dir_depth = 2
             # Find the file relative to here.
             super_module = None
-            file_name_tmp = git.purify_docker_file_from_git_client(
+            _, file_name_tmp = git.purify_docker_file_from_git_client(
                 file_name, super_module, dir_depth=dir_depth
             )
             _LOG.debug(hprint.to_str("file_name file_name_tmp"))

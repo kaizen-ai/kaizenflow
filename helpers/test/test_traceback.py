@@ -2,6 +2,7 @@ import logging
 from typing import List
 
 import helpers.dbg as dbg
+import helpers.printing as hprint
 import helpers.traceback_helper as htrace
 import helpers.unit_test as hut
 
@@ -16,19 +17,19 @@ class Test_Traceback1(hut.TestCase):
         """
         txt = """
 
-        TEST
-Traceback
-    TEST
-Traceback (most recent call last):
-  File "/app/amp/helpers/test/test_lib_tasks.py", line 27, in test_get_gh_issue_title2
-    act = ltasks._get_gh_issue_title(issue_id, repo)
-  File "/app/amp/helpers/lib_tasks.py", line 1265, in _get_gh_issue_title
-    task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
-  File "/app/amp/helpers/git.py", line 397, in get_task_prefix_from_repo_short_name
-    if repo_short_name == "amp":
-NameError: name 'repo_short_name' is not defined
-    TEST TEST TEST
-"""
+                TEST
+        Traceback
+            TEST
+        Traceback (most recent call last):
+          File "/app/amp/helpers/test/test_lib_tasks.py", line 27, in test_get_gh_issue_title2
+            act = ltasks._get_gh_issue_title(issue_id, repo)
+          File "/app/amp/helpers/lib_tasks.py", line 1265, in _get_gh_issue_title
+            task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
+          File "/app/amp/helpers/git.py", line 397, in get_task_prefix_from_repo_short_name
+            if repo_short_name == "amp":
+        NameError: name 'repo_short_name' is not defined
+            TEST TEST TEST
+        """
         purify_from_client = True
         # pylint: disable=line-too-long
         exp_cfile = [
@@ -51,14 +52,14 @@ NameError: name 'repo_short_name' is not defined
         exp_cfile = htrace.cfile_to_str(exp_cfile)
         # pylint: enable=line-too-long
         exp_traceback = """
-Traceback (most recent call last):
-  File "$GIT_ROOT/helpers/test/test_lib_tasks.py", line 27, in test_get_gh_issue_title2
-    act = ltasks._get_gh_issue_title(issue_id, repo)
-  File "$GIT_ROOT/helpers/lib_tasks.py", line 1265, in _get_gh_issue_title
-    task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
-  File "$GIT_ROOT/helpers/git.py", line 397, in get_task_prefix_from_repo_short_name
-    if repo_short_name == "amp":
-        """.rstrip().lstrip()
+        Traceback (most recent call last):
+          File "$GIT_ROOT/helpers/test/test_lib_tasks.py", line 27, in test_get_gh_issue_title2
+            act = ltasks._get_gh_issue_title(issue_id, repo)
+          File "$GIT_ROOT/helpers/lib_tasks.py", line 1265, in _get_gh_issue_title
+            task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
+          File "$GIT_ROOT/helpers/git.py", line 397, in get_task_prefix_from_repo_short_name
+            if repo_short_name == "amp":
+        """
         self._parse_traceback_helper(
             txt, purify_from_client, exp_cfile, exp_traceback
         )
@@ -69,10 +70,10 @@ Traceback (most recent call last):
         """
         txt = """
 
-        TEST
-Traceback
-    TEST TEST TEST
-"""
+                TEST
+        Traceback
+            TEST TEST TEST
+        """
         purify_from_client = True
         exp_cfile: List[htrace.CFILE_ROW] = []
         exp_cfile = htrace.cfile_to_str(exp_cfile)
@@ -87,15 +88,16 @@ Traceback
         """
         # Use references to this file so that we are independent from the file
         # layout.
+        # pylint: disable=line-too-long
         txt = """
-Traceback (most recent call last):
-  File "./helpers/test/test_traceback.py", line 146, in <module>
-    _main(_parse())
-  File "./helpers/test/test_traceback.py", line 105, in _main
-    configs = cdtfut.get_configs_from_command_line(args)
-  File "/app/amp/./helpers/test/test_traceback.py", line 228, in get_configs_from_command_line
-    "config_builder": args.config_builder,
-"""
+        Traceback (most recent call last):
+          File "./helpers/test/test_traceback.py", line 146, in <module>
+            _main(_parse())
+          File "./helpers/test/test_traceback.py", line 105, in _main
+            configs = cdtfut.get_configs_from_command_line(args)
+          File "/app/amp/./helpers/test/test_traceback.py", line 228, in get_configs_from_command_line
+            "config_builder": args.config_builder,
+        """
         purify_from_client = True
         exp_cfile = """
         helpers/test/test_traceback.py:146:<module>:_main(_parse())
@@ -103,14 +105,80 @@ Traceback (most recent call last):
         helpers/test/test_traceback.py:228:get_configs_from_command_line:"config_builder": args.config_builder,
         """
         exp_traceback = """
-Traceback (most recent call last):
-  File "./helpers/test/test_traceback.py", line 146, in <module>
-    _main(_parse())
-  File "./helpers/test/test_traceback.py", line 105, in _main
-    configs = cdtfut.get_configs_from_command_line(args)
-  File "$GIT_ROOT/./helpers/test/test_traceback.py", line 228, in get_configs_from_command_line
-    "config_builder": args.config_builder,
+        Traceback (most recent call last):
+          File "./helpers/test/test_traceback.py", line 146, in <module>
+            _main(_parse())
+          File "./helpers/test/test_traceback.py", line 105, in _main
+            configs = cdtfut.get_configs_from_command_line(args)
+          File "$GIT_ROOT/./helpers/test/test_traceback.py", line 228, in get_configs_from_command_line
+            "config_builder": args.config_builder,
         """
+        # pylint: enable=line-too-long
+        self._parse_traceback_helper(
+            txt, purify_from_client, exp_cfile, exp_traceback
+        )
+
+    def test_parse3(self) -> None:
+        """
+        Parse a traceback file with both files from Docker and local files.
+        """
+        # Use references to this file so that we are independent from the file
+        # layout.
+        # pylint: disable=line-too-long
+        txt = """
+        collected 6 items
+        
+        helpers/test/test_lib_tasks.py::Test_pytest_failed1::test_classes1 (0.02 s) FAILED [ 16%]
+        
+        =================================== FAILURES ===================================
+        ______________________ Test_pytest_failed1.test_classes1 _______________________
+        Traceback (most recent call last):
+          File "/app/amp/helpers/test/test_lib_tasks.py", line 1460, in test_classes1
+            self._helper(file_name, target_type, exp)
+          File "/app/amp/helpers/test/test_lib_tasks.py", line 1440, in _helper
+            act = ltasks.pytest_failed(ctx, use_frozen_list=use_frozen_list,
+          File "/venv/lib/python3.8/site-packages/invoke/tasks.py", line 127, in __call__
+            result = self.body(*args, **kwargs)
+          File "/app/amp/helpers/lib_tasks.py", line 2140, in pytest_failed
+            dbg.dassert(m, "Invalid test='%s'", test)
+          File "/app/amp/helpers/dbg.py", line 129, in dassert
+            _dfatal(txt, msg, *args)
+          File "/app/amp/helpers/dbg.py", line 117, in _dfatal
+            dfatal(dfatal_txt)
+          File "/app/amp/helpers/dbg.py", line 63, in dfatal
+            raise assertion_type(ret)
+        kAssertionError:
+        ################################################################################
+        * Failed assertion *
+        cond=None
+        Invalid test='dev_scripts/testing/test/test_run_tests.py'
+        """
+        # pylint: enable=line-too-long
+        purify_from_client = False
+        exp_cfile = """
+        $GIT_ROOT/helpers/test/test_lib_tasks.py:1460:test_classes1:self._helper(file_name, target_type, exp)
+        $GIT_ROOT/helpers/test/test_lib_tasks.py:1440:_helper:act = ltasks.pytest_failed(ctx, use_frozen_list=use_frozen_list,
+        /venv/lib/python3.8/site-packages/invoke/tasks.py:127:__call__:result = self.body(*args, **kwargs)
+        $GIT_ROOT/helpers/lib_tasks.py:2140:pytest_failed:dbg.dassert(m, "Invalid test='%s'", test)
+        $GIT_ROOT/helpers/dbg.py:129:dassert:_dfatal(txt, msg, *args)
+        $GIT_ROOT/helpers/dbg.py:117:_dfatal:dfatal(dfatal_txt)
+        $GIT_ROOT/helpers/dbg.py:63:dfatal:raise assertion_type(ret)"""
+        exp_traceback = r"""
+        Traceback (most recent call last):
+          File "$GIT_ROOT/helpers/test/test_lib_tasks.py", line 1460, in test_classes1
+            self._helper(file_name, target_type, exp)
+          File "$GIT_ROOT/helpers/test/test_lib_tasks.py", line 1440, in _helper
+            act = ltasks.pytest_failed(ctx, use_frozen_list=use_frozen_list,
+          File "/venv/lib/python3.8/site-packages/invoke/tasks.py", line 127, in __call__
+            result = self.body(*args, **kwargs)
+          File "$GIT_ROOT/helpers/lib_tasks.py", line 2140, in pytest_failed
+            dbg.dassert(m, "Invalid test='%s'", test)
+          File "$GIT_ROOT/helpers/dbg.py", line 129, in dassert
+            _dfatal(txt, msg, *args)
+          File "$GIT_ROOT/helpers/dbg.py", line 117, in _dfatal
+            dfatal(dfatal_txt)
+          File "$GIT_ROOT/helpers/dbg.py", line 63, in dfatal
+            raise assertion_type(ret)"""
         self._parse_traceback_helper(
             txt, purify_from_client, exp_cfile, exp_traceback
         )
@@ -155,6 +223,7 @@ Traceback (most recent call last):
     # SyntaxError: invalid syntax
     # pylint: enable=line-too-long
 
+
     def _parse_traceback_helper(
         self,
         txt: str,
@@ -165,6 +234,7 @@ Traceback (most recent call last):
         dbg.dassert_isinstance(txt, str)
         dbg.dassert_isinstance(exp_cfile, str)
         dbg.dassert_isinstance(exp_traceback, str)
+        txt = hprint.dedent(txt)
         # Run the function under test.
         act_cfile, act_traceback = htrace.parse_traceback(
             txt, purify_from_client=purify_from_client
@@ -173,12 +243,14 @@ Traceback (most recent call last):
         _LOG.debug("act_traceback=\n%s", act_traceback)
         # Compare cfile.
         act_cfile = htrace.cfile_to_str(act_cfile)
+        exp_cfile = hprint.dedent(exp_cfile)
         self.assert_equal(
             act_cfile, exp_cfile, fuzzy_match=True, purify_text=True
         )
         # Compare traceback.
         # Handle `None`.
         act_traceback = str(act_traceback)
+        exp_traceback = hprint.dedent(exp_traceback)
         self.assert_equal(
             act_traceback, exp_traceback, fuzzy_match=True, purify_text=True
         )
