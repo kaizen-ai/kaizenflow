@@ -1734,7 +1734,7 @@ def find_check_string_output(  # type: ignore
     dir_name = file_names[0]
     # Find the only file underneath that dir.
     dbg.dassert_dir_exists(dir_name)
-    cmd = f"find {dir_name} -name '*.txt' -type f"
+    cmd = f"find {dir_name} -name 'test.txt' -type f"
     _, file_name = hsinte.system_to_one_line(cmd)
     dbg.dassert_file_exists(file_name)
     # Read the content of the file.
@@ -2198,12 +2198,22 @@ def pytest_failed(  # type: ignore
         if target_type == "tests":
             targets.append(test)
         elif target_type == "files":
-            dbg.dassert_ne(file_name, "")
-            targets.append(file_name)
+            if file_name != "":
+                targets.append(file_name)
+            else:
+                _LOG.warning(
+                    "Skipping test='%s' since file_name='%s'", test, file_name
+                )
         elif target_type == "classes":
-            dbg.dassert_ne(file_name, "")
-            dbg.dassert_ne(test_class, "")
-            targets.append(f"{file_name}::{test_class}")
+            if file_name != "" and test_class != "":
+                targets.append(f"{file_name}::{test_class}")
+            else:
+                _LOG.warning(
+                    "Skipping test='%s' since file_name='%s', test_class='%s'",
+                    test,
+                    file_name,
+                    test_class,
+                )
         else:
             dbg.dfatal(f"Invalid target_type='{target_type}'")
     # Package the output.

@@ -8,7 +8,7 @@ import logging
 import re
 import sys
 import tempfile
-from typing import Any, Dict, Iterable, List, Optional, cast
+from typing import Any, Dict, Iterable, List, Match, Optional, cast
 
 import helpers.dbg as dbg
 
@@ -312,7 +312,7 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
     return ret
 
 
-def log(logger: logging.Logger, verbosity, *vals: Any) -> None:
+def log(logger: logging.Logger, verbosity: int, *vals: Any) -> None:
     """
     log(_LOG, logging.DEBUG, "ticker", "exchange")
 
