@@ -7,7 +7,7 @@
 
 ## Setting up a tmux session
 
-- Create a tmux session for lemonade + amp set-up
+- Create a tmux session for lem + amp set-up
   ```bash
   > cd ~/src
   > ./dev_scripts_p1/tmux_p1.sh part1

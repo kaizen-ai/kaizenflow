@@ -347,7 +347,6 @@
      [S&P500]
      [S&P600]
      [S&P1500]
-     [S&P1500_ISAM]
     }
     note left of universe: Universe of companies\n as Tickers/GVKEYs.
 

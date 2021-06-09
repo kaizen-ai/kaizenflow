@@ -57,6 +57,6 @@ COPY devops/docker_build/entrypoints/entrypoint.sh /app/entrypoint.sh
 
 # > cd //amp
 # > helpers/build_helpers_package.sh
-# > cp /Users/saggese/src/lemonade1/amp/dist/helpers-1.2.tar.gz .
+# > cp /Users/saggese/src/lem1/amp/dist/helpers-1.2.tar.gz .
 COPY helpers-1.2.tar.gz $INSTALL_DIR
 RUN pip install $INSTALL_DIR/helpers-1.2.tar.gz

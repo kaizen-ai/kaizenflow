@@ -30,7 +30,7 @@ import core.model_evaluator as cmodel
 import core.model_plotter as modplot
 import core.plotting as plot
 import core.signal_processing as csigna
-import dataflow_lemonade.futures_returns.pipeline as dlfrp
+import dataflow_lem.futures_returns.pipeline as dlfrp
 import helpers.dbg as dbg
 import helpers.env as henv
 import helpers.io_ as hio
@@ -147,7 +147,7 @@ def get_config_diffs(
 # # Load RH2E results
 
 # %%
-exp_dir = "/Users/paul/src/alphamatic/lemonade/experiments/RH2E_experiments/run1"
+exp_dir = "/Users/paul/src/alphamatic/lem/experiments/RH2E_experiments/run1"
 
 # %%
 rbs = load_files(exp_dir, "result_bundle.pkl")

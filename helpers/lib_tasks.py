@@ -546,7 +546,7 @@ def git_create_branch(  # type: ignore
     # Fetch master.
     cmd = "git pull --autostash"
     _run(ctx, cmd)
-    # git checkout -b LemTask169_Get_GH_actions_working_on_lemonade
+    # git checkout -b LemTask169_Get_GH_actions_working_on_lem
     cmd = f"git checkout -b {branch_name}"
     _run(ctx, cmd)
     # TODO(gp): If the branch already exists, increase the number.
