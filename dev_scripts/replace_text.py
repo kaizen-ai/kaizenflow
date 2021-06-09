@@ -355,6 +355,45 @@ def _fix_AmpTask1403(args: argparse.Namespace) -> None:
     _fix_AmpTask1403_helper(args, to_replace)
 
 
+def _prerelease_cleanup(args: argparse.Namespace) -> None:
+    """
+    Implement AmpTask1403.
+    """
+    # From longest to shortest to avoid nested replacements.
+    to_replace = [
+        ("instrument_master", "im"),
+        ("order_management_system", "oms")
+    ]
+    dirs = ["."]
+    #exts = ["py", "ipynb", "md", "txt"]
+    exts = None
+    backup = args.backup
+    preview = args.preview
+    mode = "replace_with_python"
+    #
+    file_names = _get_all_files(dirs, exts)
+    # file_names = ["amp/core/dataflow/nodes/test/test_volatility_models.py"]
+    # Store the replacement points.
+    txt = ""
+    for old_regex, new_regex in to_replace:
+        print(hprint.frame("%s -> %s" % (old_regex, new_regex)))
+        file_names_to_process, txt_tmp = _get_files_to_replace(
+            file_names, old_regex
+        )
+        # dbg.dassert_lte(1, len(file_names_to_process))
+        if len(file_names_to_process) < 1:
+            _LOG.warning("Didn't find files to replace")
+        # Replace.
+        if preview:
+            txt += txt_tmp
+        else:
+            _replace(file_names_to_process, old_regex, new_regex, backup, mode)
+    hio.to_file("./cfile", txt)
+    if preview:
+        _LOG.warning("Preview only as required. Results saved in ./cfile")
+        sys.exit(0)
+
+
 # #############################################################################
 # Rename files.
 # #############################################################################

@@ -720,14 +720,14 @@ Automate some common workflows with jupytext.
 > find . -name "*.ipynb" | grep -v ipynb_checkpoints | head -3 | xargs -t -L 1 process_jupytext.py --action sync --file
 
 Pair
-> process_jupytext.py -f instrument_master.kibot/data_exploratory_analysis.ipynb --action pair
+> process_jupytext.py -f im.kibot/data_exploratory_analysis.ipynb --action pair
 
 Test
-> process_jupytext.py -f instrument_master.kibot/data_exploratory_analysis.ipynb --action test
-> process_jupytext.py -f instrument_master.kibot/data_exploratory_analysis.ipynb --action test_strict
+> process_jupytext.py -f im.kibot/data_exploratory_analysis.ipynb --action test
+> process_jupytext.py -f im.kibot/data_exploratory_analysis.ipynb --action test_strict
 
 Sync
-> process_jupytext.py -f instrument_master.kibot/data_exploratory_analysis.ipynb --action sync
+> process_jupytext.py -f im.kibot/data_exploratory_analysis.ipynb --action sync
 ```
 
 **_dev_scripts/notebooks/publish_notebook.py_**

@@ -7,7 +7,7 @@ import pandas as pd
 import core.dataflow as cdataf
 import core.finance as cfinan
 import helpers.dbg as dbg
-import instrument_master.kibot as vkibot
+import im.kibot as vkibot
 
 _LOG = logging.getLogger(__name__)
 

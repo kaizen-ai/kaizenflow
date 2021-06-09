@@ -528,7 +528,7 @@ def find_file_with_dir(
     # > find . -name "utils.py"
     # ./amp/core/dataflow/utils.py
     # ./amp/core/dataflow_model/utils.py
-    # ./amp/instrument_master/common/test/utils.py
+    # ./amp/im/common/test/utils.py
     remove_files_non_present = False
     mode_tmp = "return_all_results"
     candidate_files = system_to_files(

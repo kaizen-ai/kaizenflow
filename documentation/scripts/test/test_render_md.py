@@ -114,10 +114,10 @@ class Test_render_md3(ut.TestCase):
 
     def test_render_plantuml_playback1(self) -> None:
         """
-        Test real usage for instrument_master_architecture.md.
+        Test real usage for im_architecture.md.
         """
         # Define input variables
-        file_name = "instrument_master_architecture.md.test"
+        file_name = "im_architecture.md.test"
         in_file = os.path.join(self.get_input_dir(), file_name)
         in_txt = io_.from_file(in_file).split("\n")
         out_file = os.path.join(self.get_scratch_space(), file_name)
