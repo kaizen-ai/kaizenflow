@@ -15,7 +15,8 @@ import helpers.dbg as dbg
 # TODO(gp): -> return_single_element, return_single_element_or_assert?
 def assert_single_element_and_return(list_: List[Any]) -> Any:
     """
-    Assert that the passed list has a single element and return that single element.
+    Assert that the passed list has a single element and return that single
+    element.
 
     :return: return the unique element in the list
     """

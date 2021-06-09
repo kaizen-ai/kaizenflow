@@ -127,9 +127,9 @@ class Test_Traceback1(hut.TestCase):
         # pylint: disable=line-too-long
         txt = """
         collected 6 items
-        
+
         helpers/test/test_lib_tasks.py::Test_pytest_failed1::test_classes1 (0.02 s) FAILED [ 16%]
-        
+
         =================================== FAILURES ===================================
         ______________________ Test_pytest_failed1.test_classes1 _______________________
         Traceback (most recent call last):
@@ -148,7 +148,7 @@ class Test_Traceback1(hut.TestCase):
           File "/app/amp/helpers/dbg.py", line 63, in dfatal
             raise assertion_type(ret)
         kAssertionError:
-        ################################################################################
+        # #####################################################################
         * Failed assertion *
         cond=None
         Invalid test='dev_scripts/testing/test/test_run_tests.py'
@@ -222,7 +222,6 @@ class Test_Traceback1(hut.TestCase):
     #     ^
     # SyntaxError: invalid syntax
     # pylint: enable=line-too-long
-
 
     def _parse_traceback_helper(
         self,

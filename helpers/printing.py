@@ -133,8 +133,9 @@ def dedent(txt: str, remove_empty_leading_trailing_lines: bool = True) -> str:
         if curr_line.lstrip().rstrip() == "":
             _LOG.debug("  -> Skipping empty line")
             continue
-        m = re.search("^(\s*)", curr_line)
+        m = re.search(r"^(\s*)", curr_line)
         dbg.dassert(m)
+        m: Match[Any]
         curr_num_spaces = len(m.group(1))
         _LOG.debug("  -> curr_num_spaces=%s", curr_num_spaces)
         if min_num_spaces is None or curr_num_spaces < min_num_spaces:
@@ -311,7 +312,7 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
     return ret
 
 
-def log(logger, verbosity, *vals: Any) -> None:
+def log(logger: logging.Logger, verbosity, *vals: Any) -> None:
     """
     log(_LOG, logging.DEBUG, "ticker", "exchange")
 
