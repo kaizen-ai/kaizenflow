@@ -1,10 +1,12 @@
+import os
+
 ENDPOINT = "http://www.kibot.com/"
 
 API_ENDPOINT = "http://api.kibot.com/"
 
-# TODO(gp): Factor out properly all the references to `alphamatic-data` in the
-# code base.
-S3_PREFIX = "s3://alphamatic-data/data/kibot"
+# TODO(gp): Factor out properly all the references to this in the code base.
+S3_BUCKET = os.environ['AM_S3_BUCKET']
+S3_PREFIX = f"s3://{S3_BUCKER}/data/kibot"
 
 DATASETS = [
     "adjustments",

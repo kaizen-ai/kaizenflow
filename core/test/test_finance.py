@@ -41,7 +41,7 @@ class Test_set_non_ath_to_nan1(hut.TestCase):
 
     @staticmethod
     def _get_df() -> pd.DataFrame:
-        # From `s3://alphamatic-data/data/kibot/all_stocks_1min/AAPL.csv.gz`.
+        # From `s3://*****-data/data/kibot/all_stocks_1min/AAPL.csv.gz`.
         txt = """
 datetime,open,high,low,close,vol
 2016-01-05 09:28:00,98.0,98.05,97.99,98.05,2241
@@ -213,7 +213,7 @@ class Test_resample_time_bars1(hut.TestCase):
 
     @staticmethod
     def _get_df() -> pd.DataFrame:
-        # From `s3://alphamatic-data/data/kibot/all_stocks_1min/AAPL.csv.gz`.
+        # From `s3://*****-data/data/kibot/all_stocks_1min/AAPL.csv.gz`.
         txt = """
 datetime,close,vol,ret_0
 2016-01-04 09:30:00,94.7,1867590,NaN
@@ -366,7 +366,7 @@ class Test_resample_ohlcv_bars1(hut.TestCase):
         """
         Return a df without NaNs.
         """
-        # From `s3://alphamatic-data/data/kibot/all_stocks_1min/AAPL.csv.gz`.
+        # From `s3://*****-data/data/kibot/all_stocks_1min/AAPL.csv.gz`.
         txt = """
 datetime,open,high,low,close,vol
 2016-01-04 09:30:00,95.23,95.23,94.66,94.7,1867590
@@ -576,7 +576,7 @@ class Test_compute_twap_vwap1(hut.TestCase):
         """
         Return a df without NaNs.
         """
-        # From `s3://alphamatic-data/data/kibot/all_stocks_1min/AAPL.csv.gz`.
+        # From `s3://*****-data/data/kibot/all_stocks_1min/AAPL.csv.gz`.
         txt = """
 datetime,close,vol
 2016-01-04 09:30:00,94.7,1867590
@@ -608,7 +608,7 @@ datetime,close,vol
         """
         Compute a df with NaNs.
         """
-        # From `s3://alphamatic-data/data/kibot/all_stocks_1min/AAPL.csv.gz`.
+        # From `s3://*****-data/data/kibot/all_stocks_1min/AAPL.csv.gz`.
         txt = """
 datetime,close,vol
 2016-01-04 09:30:00,NaN,1867590

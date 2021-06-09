@@ -1,5 +1,8 @@
+import os
+
 # TODO(\*): Merge / reconcile S3_PREFIX in with im.kibot/data/config.py.
-S3_PREFIX = "s3://alphamatic-data/data/kibot/metadata"
+S3_BUCKET = os.environ['AM_S3_BUCKET']
+S3_PREFIX = f"s3://{S3_BUCKET}/data/kibot/metadata"
 
 # TODO(amr): move common configs between data & metadata to
 # `im.kibot.config`
