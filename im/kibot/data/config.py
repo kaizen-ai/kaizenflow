@@ -6,7 +6,7 @@ API_ENDPOINT = "http://api.kibot.com/"
 
 # TODO(gp): Factor out properly all the references to this in the code base.
 S3_BUCKET = os.environ['AM_S3_BUCKET']
-S3_PREFIX = f"s3://{S3_BUCKER}/data/kibot"
+S3_PREFIX = f"s3://{S3_BUCKET}/data/kibot"
 
 DATASETS = [
     "adjustments",

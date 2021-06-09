@@ -79,5 +79,5 @@ class TestIbFilePathGenerator(hut.TestCase):
         )
         # Compare with expected value.
         S3_BUCKET = os.environ['AM_S3_BUCKET']
-        exp = "s3://{S3_BUCKET}/data/ib/Futures/ECBOT/EUR/daily/CLH21.csv.gz"
+        exp = f"s3://{S3_BUCKET}/data/ib/Futures/ECBOT/EUR/daily/CLH21.csv.gz"
         self.assert_equal(act, exp)

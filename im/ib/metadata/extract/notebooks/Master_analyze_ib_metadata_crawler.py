@@ -35,7 +35,7 @@ if False:
 
 S3_BUCKET = os.environ['AM_S3_BUCKET']
 file_name = (
-    "s3://{S3_BUCKET}/data/ib/metadata/symbols-2021-04-01-143112738505.csv"
+    f"s3://{S3_BUCKET}/data/ib/metadata/symbols-2021-04-01-143112738505.csv"
 )
 print("file_name=%s" % file_name)
 symbols = pd.read_csv(file_name, sep="\t")

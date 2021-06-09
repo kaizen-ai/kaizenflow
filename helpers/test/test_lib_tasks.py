@@ -500,7 +500,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         )
         act = hut.purify_txt_from_client(act)
         ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
-        exp = r"""
+        exp = fr"""
         IMAGE={ecr_base_path}/amp_test:local \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
@@ -534,7 +534,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         )
         act = hut.purify_txt_from_client(act)
         ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
-        exp = r"""
+        exp = fr"""
         IMAGE={ecr_base_path}.dkr.ecr.us-east-1.amazonaws.com/amp_test:local \
         PORT=9999 \
         SKIP_RUN=1 \
@@ -568,7 +568,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         )
         act = hut.purify_txt_from_client(act)
         ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
-        exp = r"""
+        exp = fr"""
         IMAGE={ecr_base_path}.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml \
