@@ -1,3 +1,4 @@
+# TODO(gp): Is this needed?
 from __future__ import annotations
 
 import abc
@@ -157,6 +158,7 @@ class ResultBundle(abc.ABC):
         return mapping[value]
 
 
+# TODO(gp): Add a docstring explaining the difference with `ResultBundle`.
 class PredictionResultBundle(ResultBundle):
     @property
     def feature_col_names(self) -> List[Any]:
@@ -287,5 +289,7 @@ def load_result_bundle_from_config(
     :return: result bundle instance
     """
     result_bundle_class = eval(result_bundle_config["class"])
-    result_bundle = result_bundle_class.from_config(result_bundle_config)
+    result_bundle: ResultBundle = result_bundle_class.from_config(
+        result_bundle_config
+    )
     return result_bundle

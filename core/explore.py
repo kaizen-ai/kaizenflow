@@ -299,7 +299,7 @@ def _get_unique_elements_in_column(df: pd.DataFrame, col_name: str) -> List[Any]
         # TypeError: unhashable type: 'list'
         _LOG.error("Column '%s' has unhashable types", col_name)
         vals = list(set(map(str, df[col_name])))
-    cast(list, vals)
+    cast(List[Any], vals)
     return vals
 
 
@@ -1067,7 +1067,7 @@ def ols_regress(
                         figsize=tsplot_figsize
                     )
                 if jointplot_:
-                    # Perform scatter cplott.
+                    # Perform scatter plot.
                     if jointplot_height is None:
                         jointplot_height = cplott.FIG_SIZE[1]
                     jointplot(
