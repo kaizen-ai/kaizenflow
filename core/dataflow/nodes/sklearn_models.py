@@ -83,20 +83,25 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         self._nan_mode = nan_mode or "raise"
 
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: True):
-        idx = df_in.index[: -self._steps_ahead] if fit else df_in.index
+        # Materialize names of x and y vars.
         x_vars = cdu.convert_to_list(self._x_vars)
         y_vars = cdu.convert_to_list(self._y_vars)
+        # Get x and forward y df.
         if fit:
+            # This df has no NaNs.
             df = cdu.get_x_and_forward_y_fit_df(
                 df_in, x_vars, y_vars, self._steps_ahead
             )
         else:
+            # This df has no `x_vars` NaNs.
             df = cdu.get_x_and_forward_y_predict_df(
                 df_in, x_vars, y_vars, self._steps_ahead
             )
+        # Isolate the forward y piece of `df`.
         forward_y_cols = df.drop(x_vars, axis=1).columns.to_list()
         forward_y_df = df[forward_y_cols]
         # Handle presence of NaNs according to `nan_mode`.
+        idx = df_in.index[: -self._steps_ahead] if fit else df_in.index
         self._handle_nans(idx, df.index)
         # Prepare x_vars in sklearn format.
         x_vals = cdataa.transform_to_sklearn(df, x_vars)
@@ -111,6 +116,7 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         )
         # Generate predictions.
         forward_y_hat = self._model.predict(x_vals)
+        # Generate dataframe from sklearn predictions.
         forward_y_hat_vars = [f"{y}_hat" for y in forward_y_cols]
         forward_y_hat = cdataa.transform_from_sklearn(
             df.index, forward_y_hat_vars, forward_y_hat
