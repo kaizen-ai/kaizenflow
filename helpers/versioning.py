@@ -66,6 +66,13 @@ def check_version(file_name: Optional[str] = None) -> None:
         "CI" in os.environ
     ) + ", CI='%s'" % os.environ.get("CI", "nan")
     print(msg)
+    # Check which env vars are defined.
+    msg = "  ->"
+    for env_var in ["AM_ECR_BASE_PATH", "AM_S3_BUCKET", "AM_TELEGRAM_TOKEN",
+            "AWS_ACCESS_KEY_ID", "AWS_DEFAULT_REGION", "AWS_SECRET_ACCESS_KEY",
+            "GH_ACTION_ACCESS_TOKEN"]:
+        msg += " %s=%s" % (env_var, env_var in os.environ)
+    print(msg)
     # Check version, if possible.
     if container_version is None:
         # No need to check.
