@@ -82,6 +82,20 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
         self._nan_mode = nan_mode or "raise"
 
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=True)
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=False)
+
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]):
+        self._model = fit_state["_model"]
+        self._info["fit"] = fit_state["_info['fit']"]
+
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: True):
         # Materialize names of x and y vars.
         x_vars = cdu.convert_to_list(self._x_vars)
@@ -150,20 +164,6 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         mode = "fit" if fit else "predict"
         self._set_info(mode, info)
         return {"df_out": df_out}
-
-    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return self._fit_predict_helper(df_in, fit=True)
-
-    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        return self._fit_predict_helper(df_in, fit=False)
-
-    def get_fit_state(self) -> Dict[str, Any]:
-        fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
-        return fit_state
-
-    def set_fit_state(self, fit_state: Dict[str, Any]):
-        self._model = fit_state["_model"]
-        self._info["fit"] = fit_state["_info['fit']"]
 
     def _handle_nans(
         self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
