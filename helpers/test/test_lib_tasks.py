@@ -24,7 +24,7 @@ def _get_default_params() -> Dict[str, str]:
     Get fake params pointing to a different image so we can test the code
     without affecting the official images.
     """
-    ecr_base_path = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
+    ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
     default_params = {
         "ECR_BASE_PATH": ecr_base_path,
         "BASE_IMAGE": "amp_test",
@@ -421,7 +421,7 @@ class TestLibTasks1(hut.TestCase):
 class TestLibTasksRemoveSpaces1(hut.TestCase):
     def test1(self) -> None:
         txt = r"""
-            IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
+            IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
                 docker-compose \
                 --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
                 run \
@@ -432,7 +432,7 @@ class TestLibTasksRemoveSpaces1(hut.TestCase):
             """
         act = ltasks._to_single_line_cmd(txt)
         exp = (
-            "IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev"
+            "IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev"
             " docker-compose --file"
             " $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml"
             " run --rm -l user=$USER_NAME --entrypoint bash user_space"
@@ -471,7 +471,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         )
         act = hut.purify_txt_from_client(act)
         exp = r"""
-        IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
+        IMAGE=*****/amp_test:dev \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
             --env-file devops/env/default.env \
@@ -499,7 +499,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         )
         act = hut.purify_txt_from_client(act)
         exp = r"""
-        IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:local \
+        IMAGE=*****/amp_test:local \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
             --env-file devops/env/default.env \
@@ -532,7 +532,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         )
         act = hut.purify_txt_from_client(act)
         exp = r"""
-        IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:local \
+        IMAGE=*****/amp_test:local \
         PORT=9999 \
         SKIP_RUN=1 \
             docker-compose \
@@ -565,7 +565,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         )
         act = hut.purify_txt_from_client(act)
         exp = r"""
-        IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
+        IMAGE=*****/amp_test:dev \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml \
             --env-file devops/env/default.env \
@@ -595,7 +595,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         )
         act = hut.purify_txt_from_client(act)
         exp = r"""
-        IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
+        IMAGE=*****/amp_test:dev \
         PORT=9999 \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \

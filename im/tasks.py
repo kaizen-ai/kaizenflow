@@ -2,6 +2,7 @@
 # //amp/im/tasks.py
 #
 import logging
+import os
 
 # We inline the code here since we need to make it visible to `invoke`,
 # although `from ... import *` is a despicable approach.
@@ -14,7 +15,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 # TODO(gp): We could move this into lib_tasks.py if really constant.
-ECR_BASE_PATH = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
+ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
 
 
 default_params = {

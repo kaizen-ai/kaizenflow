@@ -1,9 +1,10 @@
 import getpass
+import os
 from typing import Tuple
 
 import helpers.dbg as dbg
 
-NOTIFY_JUPYTER_TOKEN = "***REMOVED***"
+NOTIFY_JUPYTER_TOKEN = os.environ["AM_TELEGRAM_TOKEN"]
 
 
 def get_info() -> Tuple[str, str]:

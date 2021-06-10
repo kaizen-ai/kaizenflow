@@ -25,7 +25,7 @@ def get_bucket() -> str:
     Make sure your ~/.aws/credentials uses the right key to access this
     bucket as default.
     """
-    s3_bucket = "alphamatic-data"
+    s3_bucket = os.environ['AM_S3_BUCKET']
     return s3_bucket
 
 
@@ -155,7 +155,7 @@ def listdir(s3_path: str, mode: str = "recursive") -> List[str]:
     List files in s3 directory.
 
     :param s3_path: the path to s3 directory, e.g.,
-        `s3://alphamatic-data/data/kibot/`
+        `s3://*****/data/kibot/`
     :param mode: recursive or non-recursive
         If recursive, will list all files in the directory
         recursively. If non-recursive, will list only the top-level
@@ -167,7 +167,7 @@ def listdir(s3_path: str, mode: str = "recursive") -> List[str]:
     if not s3_path.endswith("/"):
         s3_path = s3_path + "/"
     split_path = s3_path.split("/")
-    # For 's3://alphamatic-data/data/kibot/All_Futures_Continuous_Contracts_daily'
+    # For 's3://*****/data/kibot/All_Futures_Continuous_Contracts_daily'
     # s3_path the split_path would be ['s3:', '', 'default00-bucket',
     # 'kibot', 'All_Futures_Continuous_Contracts_daily', ''].
     s3_bucket = split_path[2]
@@ -212,9 +212,9 @@ def parse_path(path: str) -> Tuple[str, str]:
     Extract bucket name and a file or folder path from an s3 full path.
 
     E.g., for
-        s3://alphamatic-data/data/kibot/All_Futures_Continuous_Contracts_daily
+        s3://*****/data/kibot/All_Futures_Continuous_Contracts_daily
     the result is:
-        bucket_name = "alphamatic-data"
+        bucket_name = "*****"
         path = "kibot/All_Futures_Continuous_Contracts_daily"
     """
     prefix = "s3://"
@@ -256,7 +256,7 @@ def get_last_modified(s3_path: str) -> datetime.datetime:
     Get last modified date of a file on S3.
 
     :param s3_path: the path to s3 directory, e.g.,
-        `s3://alphamatic-data/data/kibot`
+        `s3://*****/data/kibot`
     :return: last modified date of the file
     """
     s3 = boto3.client("s3")

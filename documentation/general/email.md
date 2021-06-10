@@ -123,7 +123,7 @@
   GP Saggese <notifications@github.com>
   to
       .../... (...@noreply.github.com),
-      me (saggese@gmail)
+      me (...@gmail.com)
       Your (your_activity@noreply.github.com)
 
   A TOC (table of contents) for our md documentation might help navigating it,

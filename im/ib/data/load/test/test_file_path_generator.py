@@ -4,6 +4,8 @@ Import as:
 import im.ib.data.load.test.test_file_path_generator as tfpgen
 """
 
+import os
+
 import helpers.unit_test as hut
 import im.common.data.types as mcdtyp
 import im.ib.data.config as midcfg
@@ -41,7 +43,8 @@ class TestIbFilePathGenerator(hut.TestCase):
             ext=mcdtyp.Extension.CSV,
         )
         # Compare with expected value.
-        exp = "s3://alphamatic-data/data/ib/Futures/GLOBEX/USD/minutely/ESZ21.csv.gz"
+        S3_BUCKET = os.environ['AM_S3_BUCKET']
+        exp = f"s3://{S3_BUCKET}/data/ib/Futures/GLOBEX/USD/minutely/ESZ21.csv.gz"
         self.assert_equal(act, exp)
 
     def test_generate_file_path2(self) -> None:
@@ -59,7 +62,8 @@ class TestIbFilePathGenerator(hut.TestCase):
             ext=mcdtyp.Extension.CSV,
         )
         # Compare with expected value.
-        exp = "s3://alphamatic-data/data/ib/stocks/NSDQ/USD/minutely/TSLA.csv.gz"
+        S3_BUCKET = os.environ['AM_S3_BUCKET']
+        exp = f"s3://{S3_BUCKET}/data/ib/stocks/NSDQ/USD/minutely/TSLA.csv.gz"
         self.assert_equal(act, exp)
 
     def test_generate_file_path3(self) -> None:
@@ -77,5 +81,6 @@ class TestIbFilePathGenerator(hut.TestCase):
             ext=mcdtyp.Extension.CSV,
         )
         # Compare with expected value.
-        exp = "s3://alphamatic-data/data/ib/Futures/ECBOT/EUR/daily/CLH21.csv.gz"
+        S3_BUCKET = os.environ['AM_S3_BUCKET']
+        exp = f"s3://{S3_BUCKET}/data/ib/Futures/ECBOT/EUR/daily/CLH21.csv.gz"
         self.assert_equal(act, exp)

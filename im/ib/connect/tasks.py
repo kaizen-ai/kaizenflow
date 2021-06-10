@@ -1,6 +1,7 @@
 # //amp/im/ib/connect/tasks.py
 
 import logging
+import os
 
 from invoke import task
 from lib_tasks import STAGE, get_image, set_default_params
@@ -18,7 +19,7 @@ _LOG = logging.getLogger(__name__)
 # Setup.
 # #############################################################################
 
-ECR_BASE_PATH = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
+ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
 
 
 default_params = {
@@ -41,7 +42,7 @@ set_default_params(default_params)
 def im_tws_start_ib_interface(ctx, stage=STAGE, ib_app=""):
     dbg.dassert_in(ib_app, ("TWS", "GATEWAY"))
     base_image = ""
-    # 665840871993.dkr.ecr.us-east-1.amazonaws.com/im_tws:local
+    # ****.dkr.ecr.us-east-1.amazonaws.com/im_tws:local
     image = get_image(stage, base_image)
     # TODO(gp): Use `curl ifconfig.me` to get host's IP.
     trusted_ips = ""

@@ -14,7 +14,7 @@
 - Check the size
 
   ```bash
-  > docker run -it 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local bash
+  > docker run -it *****.dkr.ecr.us-east-1.amazonaws.com/amp:local bash
 
   ##> du -hs /* | sort -h
 
