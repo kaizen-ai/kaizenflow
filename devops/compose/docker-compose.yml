@@ -19,8 +19,9 @@ services:
       - CI=$CI
     image: ${IMAGE}
     # TODO(gp): I think this is needed only when mounting fstab.
-    privileged: true
+    #privileged: true
     restart: "no"
+    user: "${AM_UID}:${AM_GID}"
     volumes:
       - ~/.aws:/root/.aws
       - ~/.config/gspread_pandas/:/root/.config/gspread_pandas/
@@ -42,6 +43,7 @@ services:
     extends:
       app
     ports:
+      # TODO(gp): Rename `AM_PORT`.
       - "${PORT}:${PORT}"
 
   # TODO(gp): For some reason the following doesn't work.

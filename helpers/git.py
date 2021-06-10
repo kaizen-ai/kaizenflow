@@ -12,6 +12,7 @@ import re
 from typing import Dict, List, Optional, Tuple
 
 import helpers.dbg as dbg
+import helpers.io_ as hio
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 
@@ -369,9 +370,15 @@ def _get_repo_short_to_full_name() -> Dict[str, str]:
     """
     repo_map = {
         "amp": "alphamatic/amp",
-        "lem": "alphamatic/lemonade",
+        #"lem": "alphamatic/lemonade",
         "dev_tools": "alphamatic/dev_tools",
     }
+    # TODO(gp): We should actually ask Git where the supermodule is.
+    file_name = "./repo_config.py"
+    dbg.dassert_file_exists(file_name)
+    txt = hio.from_file(file_name)
+    exec(txt, globals())
+    repo_map.update(get_repo_map())
     dbg.dassert_no_duplicates(repo_map.keys())
     dbg.dassert_no_duplicates(repo_map.values())
     return repo_map

@@ -922,7 +922,7 @@ def docker_login(ctx):  # type: ignore
     # TODO(gp): We should get this programmatically from ~/aws/.credentials
     region = "us-east-1"
     if major_version == 1:
-        cmd = f"eval $(aws ecr get-login --no-include-email --region {region})"
+        cmd = f"eval $(aws ecr get-login --profile am --no-include-email --region {region})"
     else:
         ecr_base_path = get_default_param("ECR_BASE_PATH")
         cmd = (
