@@ -90,6 +90,7 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
             df_in, x_vars, y_vars, self._steps_ahead
         )
         forward_y_cols = df.drop(x_vars, axis=1).columns.to_list()
+        forward_y_df = df[forward_y_cols]
         # Handle presence of NaNs according to `nan_mode`.
         self._handle_nans(idx, df.index)
         # Prepare x_vars in sklearn format.
@@ -118,7 +119,7 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         info["insample_perf"] = self._model_perf(
             df[forward_y_cols], forward_y_hat
         )
-        info["insample_score"] = self._score(df[forward_y_cols], forward_y_hat)
+        info["insample_score"] = self._score(forward_y_df, forward_y_hat)
         # Return targets and predictions.
         df_out = df[forward_y_cols].merge(
             forward_y_hat, how="outer", left_index=True, right_index=True
@@ -136,30 +137,29 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        cdu.validate_df_indices(df_in)
-        df = df_in.copy()
-        idx = df.index
-        # Restrict to times where x_vars have no NaNs.
+        idx = df_in.index
         x_vars = cdu.convert_to_list(self._x_vars)
-        non_nan_idx = df.loc[idx][x_vars].dropna().index
+        y_vars = cdu.convert_to_list(self._y_vars)
+        df = cdu.get_x_and_forward_y_predict_df(
+            df_in, x_vars, y_vars, self._steps_ahead
+        )
+        forward_y_cols = df.drop(x_vars, axis=1).columns.to_list()
+        forward_y_df = df[forward_y_cols]
         # Handle presence of NaNs according to `nan_mode`.
-        self._handle_nans(idx, non_nan_idx)
+        self._handle_nans(idx, df.index)
         # Transform x_vars to sklearn format.
-        x_predict = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
+        x_predict = cdataa.transform_to_sklearn(df, x_vars)
         # Use trained model to generate predictions.
         dbg.dassert_is_not(
             self._model, None, "Model not found! Check if `fit` has been run."
         )
         forward_y_hat = self._model.predict(x_predict)
         # Put predictions in dataflow dataframe format.
-        y_vars = cdu.convert_to_list(self._y_vars)
-        forward_y_df = cdu.get_forward_cols(df, y_vars, self._steps_ahead)
-        forward_y_df = forward_y_df.loc[non_nan_idx]
-        forward_y_non_nan_idx = forward_y_df.dropna().index
         forward_y_hat_vars = [f"{y}_hat" for y in forward_y_df.columns]
         forward_y_hat = cdataa.transform_from_sklearn(
-            non_nan_idx, forward_y_hat_vars, forward_y_hat
+            df.index, forward_y_hat_vars, forward_y_hat
         )
+        forward_y_non_nan_idx = forward_y_df.dropna().index
         # Generate basic perf stats.
         info = collections.OrderedDict()
         info["model_params"] = self._model.get_params()
@@ -174,7 +174,7 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         )
         df_out = df_out.reindex(idx)
         df_out = self._apply_col_mode(
-            df,
+            df_in,
             df_out,
             cols=y_vars,
             col_mode=self._col_mode,

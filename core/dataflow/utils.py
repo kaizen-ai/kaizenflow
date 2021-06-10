@@ -182,3 +182,28 @@ def get_x_and_forward_y_fit_df(
     # Merge x and forward y dataframes into one.
     df_out = merge_dataframes(x_df, forward_y_df)
     return df_out
+
+
+def get_x_and_forward_y_predict_df(
+    df: pd.DataFrame,
+    x_cols: List[_COL_TYPE],
+    y_cols: List[_COL_TYPE],
+    steps_ahead: int,
+) -> pd.DataFrame:
+    """
+    Return a dataframe consisting of `x_cols` and forward `y_cols`.
+
+    Differs from `fit` version in that there is no requirement here that the
+    forward y values be non-NaN.
+    """
+    validate_df_indices(df)
+    # Determine index where no x_vars are NaN.
+    x_df = df[x_cols].dropna()
+    non_nan_idx_x = x_df.index
+    dbg.dassert(not non_nan_idx_x.empty)
+    # Determine index where target is not NaN.
+    forward_y_df = get_forward_cols(df, y_cols, steps_ahead)
+    forward_y_df = forward_y_df.loc[non_nan_idx_x]
+    # Merge x and forward y dataframes into one.
+    df_out = merge_dataframes(x_df, forward_y_df)
+    return df_out
