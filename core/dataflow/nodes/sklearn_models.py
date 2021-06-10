@@ -111,12 +111,12 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
             df = cdu.get_x_and_forward_y_predict_df(
                 df_in, x_vars, y_vars, self._steps_ahead
             )
-        # Isolate the forward y piece of `df`.
-        forward_y_cols = df.drop(x_vars, axis=1).columns.to_list()
-        forward_y_df = df[forward_y_cols]
         # Handle presence of NaNs according to `nan_mode`.
         idx = df_in.index[: -self._steps_ahead] if fit else df_in.index
         self._handle_nans(idx, df.index)
+        # Isolate the forward y piece of `df`.
+        forward_y_cols = df.drop(x_vars, axis=1).columns.to_list()
+        forward_y_df = df[forward_y_cols]
         # Prepare x_vars in sklearn format.
         x_vals = cdataa.transform_to_sklearn(df, x_vars)
         if fit:
@@ -135,10 +135,7 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         forward_y_hat = cdataa.transform_from_sklearn(
             df.index, forward_y_hat_vars, forward_y_hat
         )
-        if fit:
-            score_idx = forward_y_df.index
-        else:
-            score_idx = forward_y_df.dropna().index
+        score_idx = forward_y_df.index if fit else forward_y_df.dropna().index
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         info["model_params"] = self._model.get_params()
