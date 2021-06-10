@@ -4,6 +4,8 @@ Import as:
 import im.ib.data.load.test.test_file_path_generator as tfpgen
 """
 
+import os
+
 import helpers.unit_test as hut
 import im.common.data.types as mcdtyp
 import im.ib.data.config as midcfg
@@ -60,6 +62,7 @@ class TestIbFilePathGenerator(hut.TestCase):
             ext=mcdtyp.Extension.CSV,
         )
         # Compare with expected value.
+        S3_BUCKET = os.environ['AM_S3_BUCKET']
         exp = f"s3://{S3_BUCKET}/data/ib/stocks/NSDQ/USD/minutely/TSLA.csv.gz"
         self.assert_equal(act, exp)
 

@@ -457,7 +457,7 @@ def purify_txt_from_client(txt: str) -> str:
     txt = purify_amp_references(txt)
     # Remove
     for env_var in ["AM_ECR_BASE_PATH", "AM_S3_BUCKET", "AM_TELEGRAM_TOKEN"]:
-        txt = txt.replace(os.environ["env_var"], "*****")
+        txt = txt.replace(os.environ[env_var], "*****")
     return txt
 
 

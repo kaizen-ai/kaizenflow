@@ -470,9 +470,8 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             print_docker_config=print_docker_config,
         )
         act = hut.purify_txt_from_client(act)
-        ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
-        exp = rf"""
-        IMAGE={ecr_base_path}/amp_test:dev \
+        exp = r"""
+        IMAGE=*****/amp_test:dev \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
             --env-file devops/env/default.env \
@@ -499,9 +498,8 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             stage, base_image, cmd, print_docker_config=print_docker_config
         )
         act = hut.purify_txt_from_client(act)
-        ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
-        exp = fr"""
-        IMAGE={ecr_base_path}/amp_test:local \
+        exp = r"""
+        IMAGE=*****/amp_test:local \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
             --env-file devops/env/default.env \
@@ -533,9 +531,8 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             print_docker_config=print_docker_config,
         )
         act = hut.purify_txt_from_client(act)
-        ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
-        exp = fr"""
-        IMAGE={ecr_base_path}.dkr.ecr.us-east-1.amazonaws.com/amp_test:local \
+        exp = r"""
+        IMAGE=*****/amp_test:local \
         PORT=9999 \
         SKIP_RUN=1 \
             docker-compose \
@@ -567,9 +564,8 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             print_docker_config=print_docker_config,
         )
         act = hut.purify_txt_from_client(act)
-        ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
-        exp = fr"""
-        IMAGE={ecr_base_path}.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
+        exp = r"""
+        IMAGE=*****/amp_test:dev \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml \
             --env-file devops/env/default.env \
@@ -598,9 +594,8 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             print_docker_config=print_docker_config,
         )
         act = hut.purify_txt_from_client(act)
-        ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
-        exp = rf"""
-        IMAGE={ecr_base_path}/amp_test:dev \
+        exp = r"""
+        IMAGE=*****/amp_test:dev \
         PORT=9999 \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml --file $GIT_ROOT/devops/compose/docker-compose_as_submodule.yml \
