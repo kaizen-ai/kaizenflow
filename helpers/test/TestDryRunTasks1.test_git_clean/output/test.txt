@@ -1,4 +1,3 @@
-  -> AM_ECR_BASE_PATH=True AM_S3_BUCKET=True AM_TELEGRAM_TOKEN=True AWS_ACCESS_KEY_ID=True AWS_DEFAULT_REGION=True AWS_SECRET_ACCESS_KEY=True GH_ACTION_ACCESS_TOKEN=True
 ## git_clean: dry_run=False
 git clean -fd
 git submodule foreach 'git clean -fd'
