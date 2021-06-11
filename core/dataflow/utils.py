@@ -38,11 +38,11 @@ def merge_dataframes(
     """
     Safely merges identically indexed `df1` and `df2`.
 
-    This merge function checks that
-      - `df1` and `df2` have equal indices
-      - `df1` and `df2` have no column duplicates
-      - `df1` and `df2` do not share column names
-      - `df1` and `df2` have the same column levels
+    This merge function checks that `df1` and `df2`
+      - have equal indices
+      - have no column duplicates
+      - do not share column names
+      - have the same column levels
 
     :return: merge of `df1` and `df2` on their (identical) index
     """
@@ -195,6 +195,9 @@ def get_x_and_forward_y_predict_df(
 
     Differs from `fit` version in that there is no requirement here that the
     forward y values be non-NaN.
+
+    TODO(Paul): Consider combining with `get_x_and_forward_y_fit_df()` and
+        parametrizing instead.
     """
     validate_df_indices(df)
     # Determine index where no x_vars are NaN.
