@@ -13,12 +13,14 @@ _LOG = logging.getLogger(__name__)
 class Test_s3_get_credentials1(hut.TestCase):
     def test1(self) -> None:
         profile = "am"
-        _ = hs3.get_aws_credentials(profile)
+        res = hs3.get_aws_credentials(profile)
+        _LOG.debug("res=%s", str(res))
 
     def test2(self) -> None:
         profile = "I don't exist"
         with self.assertRaises(configparser.NoSectionError) as cm:
-            hs3.get_aws_credentials(profile)
+            res = hs3.get_aws_credentials(profile)
+            _LOG.debug("res=%s", str(res))
         act = str(cm.exception)
         exp = r'''No section: "I don't exist"'''
         self.assert_equal(act, exp)

@@ -54,3 +54,13 @@
   ```bash
   > invoke run_fast_tests
   ```
+
+# AWS credentials
+
+- AWS credentials are passed from the user `~/.aws` directory that is
+  bind-mounted to the Docker container
+- The container passes also through the env vars "AWS_ACCESS_KEY_ID",
+  "AWS_SECRET_ACCESS_KEY", "AWS_DEFAULT_REGION"
+  - These env vars are empty by default
+  - For GitHub Actions we pass the credentials through the env vars and GH
+    secrets
