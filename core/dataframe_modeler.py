@@ -138,7 +138,7 @@ class DataFrameModeler:
         self,
         node_class: cdataf.FitPredictNode,
         node_kwargs: Dict[str, Any],
-        method: str = "fit"
+        method: str = "fit",
     ) -> DataFrameModeler:
         """
         Applies dataflow node to dataframe.
@@ -192,11 +192,11 @@ class DataFrameModeler:
         Apply an unsupervised model and residualize.
         """
         node_class = cdataf.Residualizer
-        node_kwargs ={
+        node_kwargs = {
             "model_func": model_func,
             "x_vars": x_vars,
             "model_kwargs": model_kwargs,
-            "nan_mode": nan_mode
+            "nan_mode": nan_mode,
         }
         return self.apply_node(node_class, node_kwargs, method)
 
