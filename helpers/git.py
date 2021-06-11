@@ -370,7 +370,6 @@ def _get_repo_short_to_full_name() -> Dict[str, str]:
     """
     repo_map = {
         "amp": "alphamatic/amp",
-        #"lem": "alphamatic/lemonade",
         "dev_tools": "alphamatic/dev_tools",
     }
     # TODO(gp): We should actually ask Git where the supermodule is.
