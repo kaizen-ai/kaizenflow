@@ -85,9 +85,7 @@ class TestDataFrameModeler(hut.TestCase):
         node_class = dtf.ContinuousSkLearnModel
         output = df_modeler.apply_node(node_class, config.to_dict())
         output_df = output.df
-        str_output = (
-            f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
-        )
+        str_output = hut.convert_df_to_string(output_df.round(3), index=True, decimals=3)
         self.check_string(str_output)
 
     def test_apply_sklearn_model_predict_with_oos(self) -> None:
@@ -98,9 +96,7 @@ class TestDataFrameModeler(hut.TestCase):
         node_class = dtf.ContinuousSkLearnModel
         output = df_modeler.apply_node(node_class, config.to_dict(), method="predict")
         output_df = output.df
-        str_output = (
-            f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
-        )
+        str_output = hut.convert_df_to_string(output_df.round(3), index=True, decimals=3)
         self.check_string(str_output)
 
     def test_apply_sklearn_model_fit_without_oos(self) -> None:
@@ -111,9 +107,7 @@ class TestDataFrameModeler(hut.TestCase):
         node_class = dtf.ContinuousSkLearnModel
         output = df_modeler.apply_node(node_class, config.to_dict())
         output_df = output.df
-        str_output = (
-            f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
-        )
+        str_output = hut.convert_df_to_string(output_df.round(3), index=True, decimals=3)
         self.check_string(str_output)
 
     def test_apply_sklearn_model_predict_without_oos(self) -> None:
