@@ -457,7 +457,10 @@ def purify_txt_from_client(txt: str) -> str:
     txt = purify_amp_references(txt)
     # Remove
     for env_var in ["AM_ECR_BASE_PATH", "AM_S3_BUCKET", "AM_TELEGRAM_TOKEN"]:
-        txt = txt.replace(os.environ[env_var], "*****")
+        dbg.dassert_in(env_var, os.environ)
+        val = os.environ[env_var]
+        dbg.dassert_ne(val, "", "Env var '%s' can't be empty", env_var)
+        txt = txt.replace(val, "*****")
     return txt
 
 

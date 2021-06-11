@@ -32,7 +32,7 @@ def _get_aws_config(file_name: str) -> str:
 
 
 @functools.lru_cache()
-def get_credentials(profile: str) -> Tuple[str, str, str]:
+def get_aws_credentials(profile: str = "am") -> Tuple[str, str, str]:
     """
     Read the AWS credentials for a given profile.
 
@@ -63,12 +63,12 @@ def get_bucket() -> str:
     bucket as default.
     """
     env_var = 'AM_S3_BUCKET'
-    dbg.dassert_in(env_var)
+    dbg.dassert_in(env_var, os.environ)
     s3_bucket = os.environ[env_var]
     return s3_bucket
 
 
-# TODO(gp): -> get_s3_bucket_path() ?
+# TODO(gp): -> get_bucket_path() ?
 def get_path() -> str:
     """
     Return the path corresponding to the default s3 bucket.
@@ -139,6 +139,7 @@ def exists(s3_path: str) -> bool:
     return ret
 
 
+# TODO(gp): Replace with `is_s3_path()`.
 def is_valid_s3_path(s3_path: str) -> bool:
     return s3_path.startswith("s3://")
 
