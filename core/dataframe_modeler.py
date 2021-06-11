@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.dataframe_modeler as cdataf
+import core.dataframe_modeler as cdatam
 """
 
 from __future__ import annotations
@@ -143,6 +143,18 @@ class DataFrameModeler:
     # Dataflow nodes
     # #########################################################################
 
+    def apply_node(
+        self,
+        node_class: cdataf.FitPredictNode,
+        node_kwargs: Dict[str, Any],
+        method: str = "fit"
+    ) -> DataFrameModeler:
+        node = node_class(
+            nid=node_class.__name__,
+            **node_kwargs,
+        )
+        return self._run_model(node, method)
+
     def apply_column_transformer(
         self,
         transformer_func: Callable[..., pd.DataFrame],
@@ -157,78 +169,16 @@ class DataFrameModeler:
         """
         Apply a function to a select of columns.
         """
-        model = cdataf.ColumnTransformer(
-            nid="column_transformer",
-            transformer_func=transformer_func,
-            transformer_kwargs=transformer_kwargs,
-            cols=cols,
-            col_rename_func=col_rename_func,
-            col_mode=col_mode,
-            nan_mode=nan_mode,
-        )
-        return self._run_model(model, method)
-
-    def apply_series_transformer(
-        self,
-        transformer_func: Callable[..., pd.DataFrame],
-        transformer_kwargs: Optional[Dict[str, Any]] = None,
-        # TODO(Paul): May need to assume `List` instead.
-        cols: Optional[Iterable[str]] = None,
-        col_rename_func: Optional[Callable[[Any], Any]] = None,
-        col_mode: Optional[str] = None,
-        nan_mode: Optional[str] = None,
-        method: str = "fit",
-    ) -> DataFrameModeler:
-        """
-        Apply a function to a select of columns.
-        """
-        model = cdataf.SeriesTransformer(
-            nid="column_transformer",
-            transformer_func=transformer_func,
-            transformer_kwargs=transformer_kwargs,
-            cols=cols,
-            col_rename_func=col_rename_func,
-            col_mode=col_mode,
-            nan_mode=nan_mode,
-        )
-        return self._run_model(model, method)
-
-    def apply_dataframe_method_runner(
-        self,
-        dataframe_method: str,
-        method_kwargs: Optional[Dict[str, Any]] = None,
-        method: str = "fit",
-    ) -> DataFrameModeler:
-        """
-        Execute a dataframe method.
-        """
-        model = cdataf.DataframeMethodRunner(
-            nid="dataframe_method_runner",
-            method=dataframe_method,
-            method_kwargs=method_kwargs,
-        )
-        return self._run_model(model, method)
-
-    def apply_resampler(
-        self,
-        rule: str,
-        agg_func: str,
-        resample_kwargs: Optional[Dict[str, Any]] = None,
-        agg_func_kwargs: Optional[Dict[str, Any]] = None,
-        method: str = "fit",
-    ) -> DataFrameModeler:
-        """
-        Resample the dataframe (causally, by default).
-        """
-        agg_func_kwargs = agg_func_kwargs or {}
-        model = cdataf.Resample(
-            nid="resample",
-            rule=rule,
-            agg_func=agg_func,
-            resample_kwargs=resample_kwargs,
-            agg_func_kwargs=agg_func_kwargs,
-        )
-        return self._run_model(model, method)
+        node_class = cdataf.ColumnTransformer
+        node_kwargs = {
+            "transformer_func": transformer_func,
+            "transformer_kwargs": transformer_kwargs,
+            "cols": cols,
+            "col_rename_func": col_rename_func,
+            "col_mode": col_mode,
+            "nan_mode": nan_mode,
+        }
+        return self.apply_node(node_class, node_kwargs, method)
 
     def apply_residualizer(
         self,
@@ -241,7 +191,7 @@ class DataFrameModeler:
         """
         Apply an unsupervised model and residualize.
         """
-        # TODO(*): the linter reports that the call to this class is incorrect.
+
         model = cdataf.Residualizer(
             nid="sklearn_residualizer",
             model_func=model_func,
@@ -267,17 +217,17 @@ class DataFrameModeler:
 
         Both x and y vars should be indexed by knowledge time.
         """
-        model = cdataf.ContinuousSkLearnModel(
-            nid="sklearn",
-            model_func=model_func,
-            x_vars=x_vars,
-            y_vars=y_vars,
-            steps_ahead=steps_ahead,
-            model_kwargs=model_kwargs,
-            col_mode=col_mode,
-            nan_mode=nan_mode,
-        )
-        return self._run_model(model, method)
+        node_class = cdataf.ContinuousSkLearnModel
+        node_kwargs ={
+            "model_func": model_func,
+            "x_vars": x_vars,
+            "y_vars": y_vars,
+            "steps_ahead": steps_ahead,
+            "model_kwargs": model_kwargs,
+            "col_mode": col_mode,
+            "nan_mode": nan_mode
+        }
+        return self.apply_node(node_class, node_kwargs, method)
 
     def apply_sklearn_inverse_transformer(
         self,
@@ -303,28 +253,6 @@ class DataFrameModeler:
         )
         return self._run_model(model, method)
 
-    def apply_sma_model(
-        self,
-        col: str,
-        steps_ahead: int,
-        tau: Optional[float] = None,
-        col_mode: Optional[str] = "merge_all",
-        nan_mode: Optional[str] = "drop",
-        method: str = "fit",
-    ) -> DataFrameModeler:
-        """
-        Apply a smooth moving average model.
-        """
-        model = cdataf.SmaModel(
-            nid="sma_model",
-            col=[col],
-            steps_ahead=steps_ahead,
-            tau=tau,
-            col_mode=col_mode,
-            nan_mode=nan_mode,
-        )
-        return self._run_model(model, method)
-
     def apply_unsupervised_sklearn_model(
         self,
         model_func: Callable[..., Any],
@@ -344,64 +272,6 @@ class DataFrameModeler:
             model_kwargs=model_kwargs,
             col_mode=col_mode,
             nan_mode=nan_mode,
-        )
-        return self._run_model(model, method)
-
-    def apply_volatility_model(
-        self,
-        cols: List[str],
-        steps_ahead: int,
-        p_moment: float = 2,
-        tau: Optional[float] = None,
-        col_rename_func: Callable[[Any], Any] = lambda x: f"{x}_zscored",
-        col_mode: Optional[str] = None,
-        nan_mode: Optional[str] = "drop",
-        method: str = "fit",
-    ) -> DataFrameModeler:
-        """
-        Model volatility.
-        """
-        model = cdataf.VolatilityModel(
-            nid="volatility_model",
-            cols=cols,
-            steps_ahead=steps_ahead,
-            p_moment=p_moment,
-            tau=tau,
-            col_rename_func=col_rename_func,
-            col_mode=col_mode,
-            nan_mode=nan_mode,
-        )
-        return self._run_model(model, method)
-
-    def apply_sarimax_model(
-        self,
-        y_vars: Union[List[str], Callable[[], List[str]]],
-        steps_ahead: int,
-        init_kwargs: Optional[Dict[str, Any]] = None,
-        fit_kwargs: Optional[Dict[str, Any]] = None,
-        x_vars: Optional[Union[List[str], Callable[[], List[str]]]] = None,
-        add_constant: bool = False,
-        col_mode: Optional[str] = "merge_all",
-        nan_mode: Optional[str] = "drop",
-        method: str = "fit",
-        disable_tqdm: bool = False,
-    ) -> DataFrameModeler:
-        """
-        Apply a supervised sklearn model.
-
-        Both x and y vars should be indexed by knowledge time.
-        """
-        model = cdataf.ContinuousSarimaxModel(
-            nid="sarimax",
-            y_vars=y_vars,
-            steps_ahead=steps_ahead,
-            init_kwargs=init_kwargs,
-            fit_kwargs=fit_kwargs,
-            x_vars=x_vars,
-            add_constant=add_constant,
-            col_mode=col_mode,
-            nan_mode=nan_mode,
-            disable_tqdm=disable_tqdm,
         )
         return self._run_model(model, method)
 
