@@ -79,6 +79,8 @@ jobs:
 
       - name: Pull image
         if: github.event.pull_request.draft == false
+        env:
+          AM_ECR_BASE_PATH: ${{ secrets.AM_ECR_BASE_PATH }}
         run: invoke docker_pull --images="current"
 
       - name: Run fast tests
