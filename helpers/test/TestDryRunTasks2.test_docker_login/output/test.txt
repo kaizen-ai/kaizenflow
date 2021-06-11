@@ -1,1 +1,1 @@
-call('eval $(aws ecr get-login --no-include-email --region us-east-1)')
+call('eval $(aws ecr get-login --profile am --no-include-email --region us-east-1)')
