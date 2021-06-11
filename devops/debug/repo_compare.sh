@@ -3,15 +3,15 @@
 # Compare the build system of different repos.
 #
 
-GIT_CLIENT="lem1"
+GIT_CLIENT="lemonade2"
 echo "GIT_CLIENT=$GIT_CLIENT"
 
-if [[ 0 == 1 ]]; then
-    # amp vs lem
+if [[ 1 == 1 ]]; then
+    # amp vs lem.
     DIR1=$HOME/src/$GIT_CLIENT/amp
     DIR2=$HOME/src/$GIT_CLIENT
 else
-    # amp vs dev_tools
+    # amp vs dev_tools.
     DIR1=$HOME/src/$GIT_CLIENT/amp
     DIR2=$HOME/src/dev_tools1
 fi;
