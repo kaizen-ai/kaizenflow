@@ -33,11 +33,6 @@ _LOG = logging.getLogger(__name__)
 class DataFrameModeler:
     """
     Wrap common dataframe modeling and exploratory analysis functionality.
-
-    TODO(*): Add
-      - seasonal decomposition
-      - stats (e.g., stationarity, autocorrelation)
-      - correlation / clustering options
     """
 
     def __init__(
@@ -139,16 +134,21 @@ class DataFrameModeler:
         modeler = cls(df=df, oos_start=oos_start, info=info)
         return modeler
 
-    # #########################################################################
-    # Dataflow nodes
-    # #########################################################################
-
     def apply_node(
         self,
         node_class: cdataf.FitPredictNode,
         node_kwargs: Dict[str, Any],
         method: str = "fit"
     ) -> DataFrameModeler:
+        """
+        Applies dataflow node to dataframe.
+
+        :param node_class: a dataflow `FitPredictNode`
+        :param node_kwargs: kwargs for node initialization
+        :param method: "fit" or "predict"
+        :return: a `DataFrameModeler` object whose dataframe is given by the
+            output of the `FitPredictNode`
+        """
         node = node_class(
             nid=node_class.__name__,
             **node_kwargs,
@@ -191,89 +191,14 @@ class DataFrameModeler:
         """
         Apply an unsupervised model and residualize.
         """
-
-        model = cdataf.Residualizer(
-            nid="sklearn_residualizer",
-            model_func=model_func,
-            x_vars=x_vars,
-            model_kwargs=model_kwargs,
-            nan_mode=nan_mode,
-        )
-        return self._run_model(model, method)
-
-    def apply_sklearn_model(
-        self,
-        model_func: Callable[..., Any],
-        x_vars: Union[List[str], Callable[[], List[str]]],
-        y_vars: Union[List[str], Callable[[], List[str]]],
-        steps_ahead: int,
-        model_kwargs: Optional[Any] = None,
-        col_mode: Optional[str] = "merge_all",
-        nan_mode: Optional[str] = "drop",
-        method: str = "fit",
-    ) -> DataFrameModeler:
-        """
-        Apply a supervised sklearn model.
-
-        Both x and y vars should be indexed by knowledge time.
-        """
-        node_class = cdataf.ContinuousSkLearnModel
+        node_class = cdataf.Residualizer
         node_kwargs ={
             "model_func": model_func,
             "x_vars": x_vars,
-            "y_vars": y_vars,
-            "steps_ahead": steps_ahead,
             "model_kwargs": model_kwargs,
-            "col_mode": col_mode,
             "nan_mode": nan_mode
         }
         return self.apply_node(node_class, node_kwargs, method)
-
-    def apply_sklearn_inverse_transformer(
-        self,
-        model_func: Callable[..., Any],
-        x_vars: Union[List[str], Callable[[], List[str]]],
-        trans_x_vars: Union[List[str], Callable[[], List[str]]],
-        model_kwargs: Optional[Any] = None,
-        col_mode: Optional[str] = "merge_all",
-        nan_mode: Optional[str] = "drop",
-        method: str = "fit",
-    ) -> DataFrameModeler:
-        """
-        Apply an unsupervised model, e.g., PCA.
-        """
-        model = cdataf.SkLearnInverseTransformer(
-            nid="sklearn_inverse_transformer",
-            model_func=model_func,
-            x_vars=x_vars,
-            trans_x_vars=trans_x_vars,
-            model_kwargs=model_kwargs,
-            col_mode=col_mode,
-            nan_mode=nan_mode,
-        )
-        return self._run_model(model, method)
-
-    def apply_unsupervised_sklearn_model(
-        self,
-        model_func: Callable[..., Any],
-        x_vars: Union[List[str], Callable[[], List[str]]],
-        model_kwargs: Optional[Any] = None,
-        col_mode: Optional[str] = "merge_all",
-        nan_mode: Optional[str] = "drop",
-        method: str = "fit",
-    ) -> DataFrameModeler:
-        """
-        Apply an unsupervised model, e.g., PCA.
-        """
-        model = cdataf.UnsupervisedSkLearnModel(
-            nid="unsupervised_sklearn",
-            model_func=model_func,
-            x_vars=x_vars,
-            model_kwargs=model_kwargs,
-            col_mode=col_mode,
-            nan_mode=nan_mode,
-        )
-        return self._run_model(model, method)
 
     # #########################################################################
     # Convenience methods
