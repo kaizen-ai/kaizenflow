@@ -8,7 +8,6 @@ import core.artificial_signal_generators as sig_gen
 import core.config as cconfig
 import core.dataflow as dtf
 import core.dataframe_modeler as dfmod
-import helpers.printing as prnt
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -82,10 +81,11 @@ class TestDataFrameModeler(hut.TestCase):
         data = self._get_data(pred_lag)
         config = self._get_config(pred_lag)
         df_modeler = dfmod.DataFrameModeler(df=data, oos_start="2010-03-01")
-        output = df_modeler.apply_sklearn_model(**config.to_dict())
+        node_class = dtf.ContinuousSkLearnModel
+        output = df_modeler.apply_node(node_class, config.to_dict())
         output_df = output.df
-        str_output = (
-            f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
+        str_output = hut.convert_df_to_string(
+            output_df.round(3), index=True, decimals=3
         )
         self.check_string(str_output)
 
@@ -94,12 +94,13 @@ class TestDataFrameModeler(hut.TestCase):
         data = self._get_data(pred_lag)
         config = self._get_config(pred_lag)
         df_modeler = dfmod.DataFrameModeler(df=data, oos_start="2010-03-01")
-        output = df_modeler.apply_sklearn_model(
-            **config.to_dict(), method="predict"
+        node_class = dtf.ContinuousSkLearnModel
+        output = df_modeler.apply_node(
+            node_class, config.to_dict(), method="predict"
         )
         output_df = output.df
-        str_output = (
-            f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
+        str_output = hut.convert_df_to_string(
+            output_df.round(3), index=True, decimals=3
         )
         self.check_string(str_output)
 
@@ -108,10 +109,11 @@ class TestDataFrameModeler(hut.TestCase):
         data = self._get_data(pred_lag)
         config = self._get_config(pred_lag)
         df_modeler = dfmod.DataFrameModeler(df=data)
-        output = df_modeler.apply_sklearn_model(**config.to_dict())
+        node_class = dtf.ContinuousSkLearnModel
+        output = df_modeler.apply_node(node_class, config.to_dict())
         output_df = output.df
-        str_output = (
-            f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
+        str_output = hut.convert_df_to_string(
+            output_df.round(3), index=True, decimals=3
         )
         self.check_string(str_output)
 
@@ -120,8 +122,9 @@ class TestDataFrameModeler(hut.TestCase):
         data = self._get_data(pred_lag)
         config = self._get_config(pred_lag)
         df_modeler = dfmod.DataFrameModeler(df=data)
+        node_class = dtf.ContinuousSkLearnModel
         with self.assertRaises(AssertionError):
-            df_modeler.apply_sklearn_model(**config.to_dict(), method="predict")
+            df_modeler.apply_node(node_class, config.to_dict(), method="predict")
 
     def test_merge(self) -> None:
         df1 = pd.DataFrame(
@@ -146,6 +149,7 @@ class TestDataFrameModeler(hut.TestCase):
         config["y_vars"] = ["y"]
         config["steps_ahead"] = steps_ahead
         config["model_func"] = slm.LinearRegression
+        config["col_mode"] = "merge_all"
         return config
 
     def _get_data(self, lag: int) -> pd.DataFrame:
