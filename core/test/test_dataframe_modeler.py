@@ -82,7 +82,8 @@ class TestDataFrameModeler(hut.TestCase):
         data = self._get_data(pred_lag)
         config = self._get_config(pred_lag)
         df_modeler = dfmod.DataFrameModeler(df=data, oos_start="2010-03-01")
-        output = df_modeler.apply_sklearn_model(**config.to_dict())
+        node_class = dtf.ContinuousSkLearnModel
+        output = df_modeler.apply_node(node_class, config.to_dict())
         output_df = output.df
         str_output = (
             f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
@@ -94,9 +95,8 @@ class TestDataFrameModeler(hut.TestCase):
         data = self._get_data(pred_lag)
         config = self._get_config(pred_lag)
         df_modeler = dfmod.DataFrameModeler(df=data, oos_start="2010-03-01")
-        output = df_modeler.apply_sklearn_model(
-            **config.to_dict(), method="predict"
-        )
+        node_class = dtf.ContinuousSkLearnModel
+        output = df_modeler.apply_node(node_class, config.to_dict(), method="predict")
         output_df = output.df
         str_output = (
             f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
@@ -108,7 +108,8 @@ class TestDataFrameModeler(hut.TestCase):
         data = self._get_data(pred_lag)
         config = self._get_config(pred_lag)
         df_modeler = dfmod.DataFrameModeler(df=data)
-        output = df_modeler.apply_sklearn_model(**config.to_dict())
+        node_class = dtf.ContinuousSkLearnModel
+        output = df_modeler.apply_node(node_class, config.to_dict())
         output_df = output.df
         str_output = (
             f"{prnt.frame('df_out')}\n{hut.convert_df_to_string(output_df, index=True)}\n"
@@ -120,8 +121,9 @@ class TestDataFrameModeler(hut.TestCase):
         data = self._get_data(pred_lag)
         config = self._get_config(pred_lag)
         df_modeler = dfmod.DataFrameModeler(df=data)
+        node_class = dtf.ContinuousSkLearnModel
         with self.assertRaises(AssertionError):
-            df_modeler.apply_sklearn_model(**config.to_dict(), method="predict")
+            df_modeler.apply_node(node_class, config.to_dict(), method="predict")
 
     def test_merge(self) -> None:
         df1 = pd.DataFrame(
@@ -146,6 +148,7 @@ class TestDataFrameModeler(hut.TestCase):
         config["y_vars"] = ["y"]
         config["steps_ahead"] = steps_ahead
         config["model_func"] = slm.LinearRegression
+        config["col_mode"] = "merge_all"
         return config
 
     def _get_data(self, lag: int) -> pd.DataFrame:
