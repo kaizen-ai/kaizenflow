@@ -2541,6 +2541,7 @@ def _get_gh_issue_title(issue_id: int, repo: str) -> str:
     title = re.sub(r"\s+", " ", title)
     #
     title = title.replace(" ", "_")
+    title = title.replace("-", "_")
     # Add the `AmpTaskXYZ_...`
     repo_short_name = git.get_repo_name(repo_full_name, in_mode="full_name")
     task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)

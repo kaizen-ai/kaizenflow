@@ -38,11 +38,11 @@ def merge_dataframes(
     """
     Safely merges identically indexed `df1` and `df2`.
 
-    This merge function checks that
-      - `df1` and `df2` have equal indices
-      - `df1` and `df2` have no column duplicates
-      - `df1` and `df2` do not share column names
-      - `df1` and `df2` have the same column levels
+    This merge function checks that `df1` and `df2`
+      - have equal indices
+      - have no column duplicates
+      - do not share column names
+      - have the same column levels
 
     :return: merge of `df1` and `df2` on their (identical) index
     """
@@ -179,6 +179,34 @@ def get_x_and_forward_y_fit_df(
     # Define the dataframes of x and forward y values.
     x_df = df.loc[non_nan_idx][x_cols]
     forward_y_df = forward_y_df.loc[non_nan_idx]
+    # Merge x and forward y dataframes into one.
+    df_out = merge_dataframes(x_df, forward_y_df)
+    return df_out
+
+
+def get_x_and_forward_y_predict_df(
+    df: pd.DataFrame,
+    x_cols: List[_COL_TYPE],
+    y_cols: List[_COL_TYPE],
+    steps_ahead: int,
+) -> pd.DataFrame:
+    """
+    Return a dataframe consisting of `x_cols` and forward `y_cols`.
+
+    Differs from `fit` version in that there is no requirement here that the
+    forward y values be non-NaN.
+
+    TODO(Paul): Consider combining with `get_x_and_forward_y_fit_df()` and
+        parametrizing instead.
+    """
+    validate_df_indices(df)
+    # Determine index where no x_vars are NaN.
+    x_df = df[x_cols].dropna()
+    non_nan_idx_x = x_df.index
+    dbg.dassert(not non_nan_idx_x.empty)
+    # Determine index where target is not NaN.
+    forward_y_df = get_forward_cols(df, y_cols, steps_ahead)
+    forward_y_df = forward_y_df.loc[non_nan_idx_x]
     # Merge x and forward y dataframes into one.
     df_out = merge_dataframes(x_df, forward_y_df)
     return df_out

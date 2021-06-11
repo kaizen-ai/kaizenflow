@@ -83,31 +83,59 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        idx = df_in.index[: -self._steps_ahead]
+        return self._fit_predict_helper(df_in, fit=True)
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=False)
+
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]):
+        self._model = fit_state["_model"]
+        self._info["fit"] = fit_state["_info['fit']"]
+
+    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: True):
+        # Materialize names of x and y vars.
         x_vars = cdu.convert_to_list(self._x_vars)
         y_vars = cdu.convert_to_list(self._y_vars)
-        df = cdu.get_x_and_forward_y_fit_df(
-            df_in, x_vars, y_vars, self._steps_ahead
-        )
-        forward_y_cols = df.drop(x_vars, axis=1).columns.to_list()
+        # Get x and forward y df.
+        if fit:
+            # This df has no NaNs.
+            df = cdu.get_x_and_forward_y_fit_df(
+                df_in, x_vars, y_vars, self._steps_ahead
+            )
+        else:
+            # This df has no `x_vars` NaNs.
+            df = cdu.get_x_and_forward_y_predict_df(
+                df_in, x_vars, y_vars, self._steps_ahead
+            )
         # Handle presence of NaNs according to `nan_mode`.
+        idx = df_in.index[: -self._steps_ahead] if fit else df_in.index
         self._handle_nans(idx, df.index)
+        # Isolate the forward y piece of `df`.
+        forward_y_cols = df.drop(x_vars, axis=1).columns.to_list()
+        forward_y_df = df[forward_y_cols]
         # Prepare x_vars in sklearn format.
-        x_fit = cdataa.transform_to_sklearn(df, x_vars)
-        # Prepare forward y_vars in sklearn format.
-        forward_y_fit = cdataa.transform_to_sklearn(df, forward_y_cols)
-        # Define and fit model.
-        self._model = self._model_func(**self._model_kwargs)
-        self._model = self._model.fit(x_fit, forward_y_fit)
-        # Generate insample predictions and put in dataflow dataframe format.
-        forward_y_hat = self._model.predict(x_fit)
-        #
+        x_vals = cdataa.transform_to_sklearn(df, x_vars)
+        if fit:
+            # Prepare forward y_vars in sklearn format.
+            forward_y_fit = cdataa.transform_to_sklearn(df, forward_y_cols)
+            # Define and fit model.
+            self._model = self._model_func(**self._model_kwargs)
+            self._model = self._model.fit(x_vals, forward_y_fit)
+        dbg.dassert(
+            self._model, "Model not found! Check if `fit()` has been run."
+        )
+        # Generate predictions.
+        forward_y_hat = self._model.predict(x_vals)
+        # Generate dataframe from sklearn predictions.
         forward_y_hat_vars = [f"{y}_hat" for y in forward_y_cols]
         forward_y_hat = cdataa.transform_from_sklearn(
             df.index, forward_y_hat_vars, forward_y_hat
         )
-        # TODO(Paul): Summarize model perf or make configurable.
-        # TODO(Paul): Consider separating model eval from fit/predict.
+        score_idx = forward_y_df.index if fit else forward_y_df.dropna().index
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         info["model_params"] = self._model.get_params()
@@ -115,12 +143,11 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         for k, v in vars(self._model).items():
             model_attribute_info[k] = v
         info["model_attributes"] = model_attribute_info
-        info["insample_perf"] = self._model_perf(
-            df[forward_y_cols], forward_y_hat
+        info["model_score"] = self._score(
+            forward_y_df.loc[score_idx],
+            forward_y_hat.loc[score_idx],
         )
-        info["insample_score"] = self._score(df[forward_y_cols], forward_y_hat)
-        # Return targets and predictions.
-        df_out = df[forward_y_cols].merge(
+        df_out = forward_y_df.merge(
             forward_y_hat, how="outer", left_index=True, right_index=True
         )
         df_out = df_out.reindex(idx)
@@ -130,66 +157,10 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
             cols=y_vars,
             col_mode=self._col_mode,
         )
-        # Update `info`.
         info["df_out_info"] = cdu.get_df_info_as_string(df_out)
-        self._set_info("fit", info)
+        mode = "fit" if fit else "predict"
+        self._set_info(mode, info)
         return {"df_out": df_out}
-
-    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        cdu.validate_df_indices(df_in)
-        df = df_in.copy()
-        idx = df.index
-        # Restrict to times where x_vars have no NaNs.
-        x_vars = cdu.convert_to_list(self._x_vars)
-        non_nan_idx = df.loc[idx][x_vars].dropna().index
-        # Handle presence of NaNs according to `nan_mode`.
-        self._handle_nans(idx, non_nan_idx)
-        # Transform x_vars to sklearn format.
-        x_predict = cdataa.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
-        # Use trained model to generate predictions.
-        dbg.dassert_is_not(
-            self._model, None, "Model not found! Check if `fit` has been run."
-        )
-        forward_y_hat = self._model.predict(x_predict)
-        # Put predictions in dataflow dataframe format.
-        y_vars = cdu.convert_to_list(self._y_vars)
-        forward_y_df = cdu.get_forward_cols(df, y_vars, self._steps_ahead)
-        forward_y_df = forward_y_df.loc[non_nan_idx]
-        forward_y_non_nan_idx = forward_y_df.dropna().index
-        forward_y_hat_vars = [f"{y}_hat" for y in forward_y_df.columns]
-        forward_y_hat = cdataa.transform_from_sklearn(
-            non_nan_idx, forward_y_hat_vars, forward_y_hat
-        )
-        # Generate basic perf stats.
-        info = collections.OrderedDict()
-        info["model_params"] = self._model.get_params()
-        info["model_perf"] = self._model_perf(forward_y_df, forward_y_hat)
-        info["model_score"] = self._score(
-            forward_y_df.loc[forward_y_non_nan_idx],
-            forward_y_hat.loc[forward_y_non_nan_idx],
-        )
-        # Return predictions.
-        df_out = forward_y_df.merge(
-            forward_y_hat, how="outer", left_index=True, right_index=True
-        )
-        df_out = df_out.reindex(idx)
-        df_out = self._apply_col_mode(
-            df,
-            df_out,
-            cols=y_vars,
-            col_mode=self._col_mode,
-        )
-        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
-        self._set_info("predict", info)
-        return {"df_out": df_out}
-
-    def get_fit_state(self) -> Dict[str, Any]:
-        fit_state = {"_model": self._model, "_info['fit']": self._info["fit"]}
-        return fit_state
-
-    def set_fit_state(self, fit_state: Dict[str, Any]):
-        self._model = fit_state["_model"]
-        self._info["fit"] = fit_state["_info['fit']"]
 
     def _handle_nans(
         self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
@@ -221,23 +192,6 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         # is already `NaN`.
         y_true = y_true.loc[: y_true.last_valid_index()]
         return metric(y_true, y_pred.loc[y_true.index])
-
-    # TODO(Paul): Consider omitting this (and relying on downstream
-    #     processing to e.g., adjust for number of hypotheses tested).
-    @staticmethod
-    def _model_perf(
-        y: pd.DataFrame, y_hat: pd.DataFrame
-    ) -> collections.OrderedDict:
-        info = collections.OrderedDict()
-        # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
-        pnl_rets = y.multiply(
-            y_hat.rename(columns=lambda x: x.replace("_hat", ""))
-        )
-        info["pnl_rets"] = pnl_rets
-        info["sr"] = cstati.compute_annualized_sharpe_ratio(
-            csigna.resample(pnl_rets, rule="1B").sum()
-        )
-        return info
 
 
 class MultiindexSkLearnModel(cdnb.FitPredictNode):

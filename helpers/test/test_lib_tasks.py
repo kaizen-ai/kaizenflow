@@ -174,7 +174,7 @@ class TestDryRunTasks1(hut.TestCase):
         execute.
         """
         opts = "--dry" if dry_run else ""
-        cmd = f"invoke {opts} {target} | grep -v INFO | grep -v 'code_version='"
+        cmd = f"invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
         _, act = hsinte.system_to_string(cmd)
         act = hprint.remove_non_printable_chars(act)
         self.check_string(act)
