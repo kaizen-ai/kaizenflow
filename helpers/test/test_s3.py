@@ -1,3 +1,4 @@
+import configparser
 import logging
 import os
 
@@ -6,11 +7,26 @@ import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
+class Test_s3_get_credentials1(hut.TestCase):
 
-class Test_s3_1(hut.TestCase):
+    def test1(self) -> None:
+        profile = "am"
+        _ = hs3.get_credentials(profile)
+
+    def test2(self) -> None:
+        profile = "I don't exist"
+        with self.assertRaises(configparser.NoSectionError) as cm:
+            hs3.get_credentials(profile)
+        act = str(cm.exception)
+        exp = r'''No section: "I don't exist"'''
+        self.assert_equal(act, exp)
+
+
+class Test_s3_2(hut.TestCase):
+
     def test_get_path1(self) -> None:
-        S3_BUCKET = os.environ['AM_S3_BUCKET']
-        file_path = f"s3://{S3_BUCKET}/data/kibot/All_Futures_Continuous_Contracts_daily"
+        s3_bucket = s3.get_bucket()
+        file_path = f"s3://{s3_bucket}/data/kibot/All_Futures_Continuous_Contracts_daily"
         bucket_name, file_path = hs3.parse_path(file_path)
         self.assertEqual(bucket_name, S3_BUCKET)
         self.assertEqual(

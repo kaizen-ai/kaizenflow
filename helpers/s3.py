@@ -5,6 +5,7 @@ import helpers.s3 as hs3
 """
 
 import datetime
+import functools
 import logging
 import os
 from typing import Any, Dict, List, Tuple
@@ -17,6 +18,42 @@ import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
 
+import configparser
+
+
+def _get_aws_config(file_name: str) -> str:
+    file_name = os.path.join(os.path.expanduser('~'), ".aws", file_name)
+    dbg.dassert_file_exists(file_name)
+    # Read the config.
+    config = configparser.RawConfigParser()
+    config.read(file_name)
+    _LOG.debug("config.sections=%s", config.sections())
+    return config
+
+
+@functools.lru_cache()
+def get_credentials(profile: str) -> Tuple[str, str, str]:
+    """
+    Read the AWS credentials for a given profile.
+
+    :return: access_key_id, aws_secret_access_key, aws_region
+    """
+    # > more ~/.aws/credentials
+    # [am]
+    # aws_access_key_id=AKI...
+    # aws_secret_access_key=mhg..
+    file_name = "credentials"
+    config = _get_aws_config(file_name)
+    access_key_id = config.get(profile, "aws_access_key_id")
+    aws_secret_access_key = config.get(profile, "aws_secret_access_key")
+    # > more ~/.aws/config
+    # [profile am]
+    # region = us-east-1
+    file_name = 'config'
+    config = _get_aws_config(file_name)
+    aws_region = config.get(profile, "region")
+    return access_key_id, aws_secret_access_key, aws_region
+
 
 def get_bucket() -> str:
     """
@@ -25,7 +62,9 @@ def get_bucket() -> str:
     Make sure your ~/.aws/credentials uses the right key to access this
     bucket as default.
     """
-    s3_bucket = os.environ['AM_S3_BUCKET']
+    env_var = 'AM_S3_BUCKET'
+    dbg.dassert_in(env_var)
+    s3_bucket = os.environ[env_var]
     return s3_bucket
 
 
@@ -44,7 +83,7 @@ def is_s3_path(path: str) -> bool:
 
 def get_s3fs_root_path() -> str:
     """
-    Return the path where S3 is mounted on the filesystem.
+    Return the path where S3 is mounted in the filesystem.
     """
     path = "/s3"
     if hsyste.get_os_name() == "Darwin":
