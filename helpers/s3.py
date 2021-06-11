@@ -4,25 +4,23 @@ Import as:
 import helpers.s3 as hs3
 """
 
+import configparser
 import datetime
 import functools
 import logging
 import os
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import boto3
-import botocore
 
 import helpers.dbg as dbg
 import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
 
-import configparser
 
-
-def _get_aws_config(file_name: str) -> str:
-    file_name = os.path.join(os.path.expanduser('~'), ".aws", file_name)
+def _get_aws_config(file_name: str) -> configparser.RawConfigParser:
+    file_name = os.path.join(os.path.expanduser("~"), ".aws", file_name)
     dbg.dassert_file_exists(file_name)
     # Read the config.
     config = configparser.RawConfigParser()
@@ -32,27 +30,28 @@ def _get_aws_config(file_name: str) -> str:
 
 
 @functools.lru_cache()
-def get_aws_credentials(profile: str = "am") -> Tuple[str, str, str]:
+def get_aws_credentials(profile: Optional[str] = None) -> Tuple[str, str, str]:
     """
     Read the AWS credentials for a given profile.
 
     :return: access_key_id, aws_secret_access_key, aws_region
     """
+    profile = profile or "am"
     # > more ~/.aws/credentials
     # [am]
     # aws_access_key_id=AKI...
     # aws_secret_access_key=mhg..
     file_name = "credentials"
     config = _get_aws_config(file_name)
-    access_key_id = config.get(profile, "aws_access_key_id")
+    aws_access_key_id = config.get(profile, "aws_access_key_id")
     aws_secret_access_key = config.get(profile, "aws_secret_access_key")
     # > more ~/.aws/config
     # [profile am]
     # region = us-east-1
-    file_name = 'config'
+    file_name = "config"
     config = _get_aws_config(file_name)
     aws_region = config.get(profile, "region")
-    return access_key_id, aws_secret_access_key, aws_region
+    return aws_access_key_id, aws_secret_access_key, aws_region
 
 
 def get_bucket() -> str:
@@ -62,7 +61,7 @@ def get_bucket() -> str:
     Make sure your ~/.aws/credentials uses the right key to access this
     bucket as default.
     """
-    env_var = 'AM_S3_BUCKET'
+    env_var = "AM_S3_BUCKET"
     dbg.dassert_in(env_var, os.environ)
     s3_bucket = os.environ[env_var]
     return s3_bucket
@@ -118,15 +117,42 @@ def get_fsx_root_path() -> str:
 # #############################################################################
 
 
-def exists(s3_path: str) -> bool:
+def _get_boto3_resource(profile: Optional[str] = None) -> boto3.resource:
+    aws_access_key_id, aws_secret_access_key, aws_region = get_aws_credentials(
+        profile=profile
+    )
+    s3 = boto3.resource(
+        "s3",
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key,
+        region_name=aws_region,
+    )
+    return s3
+
+
+def _get_boto3_client(profile: Optional[str] = None) -> boto3.client:
+    aws_access_key_id, aws_secret_access_key, aws_region = get_aws_credentials(
+        profile=profile
+    )
+    s3 = boto3.client(
+        "s3",
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key,
+        region_name=aws_region,
+    )
+    return s3
+
+
+def exists(s3_path: str, profile: Optional[str] = None) -> bool:
     """
     Check if path exists in s3.
 
     :raise: exception if checking the s3 key fails.
     """
-    bucket, key = parse_path(s3_path)
+    import botocore
 
-    s3 = boto3.resource("s3")
+    bucket, key = parse_path(s3_path)
+    s3 = _get_boto3_resource(profile=profile)
     try:
         s3.Object(bucket, key).load()
         ret = True
@@ -148,7 +174,9 @@ def check_valid_s3_path(s3_path: str) -> None:
     dbg.dassert(is_valid_s3_path(s3_path), "Invalid S3 file='%s'", s3_path)
 
 
-def _list_s3_keys(s3_bucket: str, dir_path: str) -> List[str]:
+def _list_s3_keys(
+    s3_bucket: str, dir_path: str, profile: Optional[str] = None
+) -> List[str]:
     """
     List s3 keys.
 
@@ -166,7 +194,7 @@ def _list_s3_keys(s3_bucket: str, dir_path: str) -> List[str]:
     :return: list of paths
     """
     # Create an s3 object to query.
-    s3 = boto3.client("s3")
+    s3 = _get_boto3_client(profile=profile)
     # Query until the response is not truncated.
     AMAZON_MAX_INT = 2147483647
     continuation_token = None
@@ -190,7 +218,9 @@ def _list_s3_keys(s3_bucket: str, dir_path: str) -> List[str]:
     return contents_keys
 
 
-def listdir(s3_path: str, mode: str = "recursive") -> List[str]:
+def listdir(
+    s3_path: str, mode: str = "recursive", profile: Optional[str] = None
+) -> List[str]:
     """
     List files in s3 directory.
 
@@ -212,7 +242,7 @@ def listdir(s3_path: str, mode: str = "recursive") -> List[str]:
     # 'kibot', 'All_Futures_Continuous_Contracts_daily', ''].
     s3_bucket = split_path[2]
     dir_path = "/".join(split_path[3:])
-    file_names = _list_s3_keys(s3_bucket, dir_path)
+    file_names = _list_s3_keys(s3_bucket, dir_path, profile=profile)
     # Filter file names that do not start with the initial `dir_path`,
     # remove `dir_path` from the file names.
     file_names = [
@@ -220,17 +250,15 @@ def listdir(s3_path: str, mode: str = "recursive") -> List[str]:
         for file_name in file_names
         if file_name.startswith(dir_path)
     ]
-    # In s3 file system, there is no such thing as directories (the
-    # dir_path is just a part of a file name). So to extract top-level
-    # components of a directory, we need to extract the first parts of
-    # the file names inside this directory.
+    # In s3 file system, there is no such thing as directories (the dir_path is just
+    # a part of a file name). So to extract top-level components of a directory, we
+    # need to extract the first parts of the file names inside this directory.
     #
-    # Let's say we are trying to list the contents of `upper_dir`,
-    # which contains `lower_dir1` with a `lower_dir1/file_name1` file.
-    # At this point, file_names would be `[lower_dir1/file_name1]`
-    # If the `mode` is `non-recursive`, we extract `lower-dir` from
-    # each file name in this list. If the `mode` is `recursive`, we
-    # leave the file names untouched.
+    # Let's say we are trying to list the contents of `upper_dir`, which contains
+    # `lower_dir1` with a `lower_dir1/file_name1` file. At this point, file_names
+    # would be `[lower_dir1/file_name1]` If the `mode` is `non-recursive`, we
+    # extract `lower-dir` from each file name in this list. If the `mode` is
+    # `recursive`, we leave the file names untouched.
     if mode == "recursive":
         paths = file_names
     elif mode == "non-recursive":
@@ -272,13 +300,13 @@ def parse_path(path: str) -> Tuple[str, str]:
     return bucket_name, ret
 
 
-# TODO(Julia): When PTask418_PRICE_Convert_Kibot_data_from_csv is
-#  merged, choose between this ls() and listdir() functions.
-def ls(file_path: str) -> List[str]:
+# TODO(Julia): When PTask418_PRICE_Convert_Kibot_data_from_csv is merged, choose
+#  between this ls() and listdir() functions.
+def ls(file_path: str, profile: Optional[str] = None) -> List[str]:
     """
     :return: return the file lists in `file_path`.
     """
-    s3 = boto3.resource("s3")
+    s3 = _get_boto3_resource(profile=profile)
     bucket_name, file_path = parse_path(file_path)
     _LOG.debug("bucket_name=%s, file_path=%s", bucket_name, file_path)
     # pylint: disable=no-member
@@ -291,7 +319,9 @@ def ls(file_path: str) -> List[str]:
     return file_names
 
 
-def get_last_modified(s3_path: str) -> datetime.datetime:
+def get_last_modified(
+    s3_path: str, profile: Optional[str] = None
+) -> datetime.datetime:
     """
     Get last modified date of a file on S3.
 
@@ -299,7 +329,7 @@ def get_last_modified(s3_path: str) -> datetime.datetime:
         `s3://*****/data/kibot`
     :return: last modified date of the file
     """
-    s3 = boto3.client("s3")
+    s3 = _get_boto3_client(profile=profile)
     bucket_name, file_path = parse_path(s3_path)
     response = s3.head_object(Bucket=bucket_name, Key=file_path)
     date_time: datetime.datetime = response["LastModified"].replace(tzinfo=None)
