@@ -56,7 +56,7 @@ def check_version(file_name: Optional[str] = None) -> None:
     is_inside_docker = _is_inside_docker()
     is_inside_ci = _is_inside_ci()
     msg = (
-        f"  -> is_inside_container={is_inside_container}"
+        f">>ENV<<: is_inside_container={is_inside_container}"
         f": code_version={code_version}"
         f", container_version={container_version}"
         f", is_inside_docker={is_inside_docker}"
@@ -65,6 +65,13 @@ def check_version(file_name: Optional[str] = None) -> None:
     msg += ", CI_defined=%s" % (
         "CI" in os.environ
     ) + ", CI='%s'" % os.environ.get("CI", "nan")
+    print(msg)
+    # Check which env vars are defined.
+    msg = ">>ENV<<:"
+    for env_var in ["AM_ECR_BASE_PATH", "AM_S3_BUCKET", "AM_TELEGRAM_TOKEN",
+            "AWS_ACCESS_KEY_ID", "AWS_DEFAULT_REGION", "AWS_SECRET_ACCESS_KEY",
+            "GH_ACTION_ACCESS_TOKEN"]:
+        msg += " %s=%s" % (env_var, env_var in os.environ)
     print(msg)
     # Check version, if possible.
     if container_version is None:
