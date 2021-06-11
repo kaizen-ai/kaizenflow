@@ -1,11 +1,13 @@
 import os
 
+import helpers.s3 as hs3
+
 ENDPOINT = "http://www.kibot.com/"
 
 API_ENDPOINT = "http://api.kibot.com/"
 
-# TODO(gp): Factor out properly all the references to this in the code base.
-S3_BUCKET = os.environ['AM_S3_BUCKET']
+# TODO(gp): Inline this reference everywhere, if needed.
+S3_BUCKET = hs3.get_bucket()
 S3_PREFIX = f"s3://{S3_BUCKET}/data/kibot"
 
 DATASETS = [

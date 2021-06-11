@@ -43,20 +43,24 @@ echo "# docker-compose=$DOCKER_COMPOSE_VER"
 DOCKER_VER=$(docker --version)
 echo "# docker=$DOCKER_VER"
 
-# Update brew.
-brew update
-BREW_VER=$(brew --version)
-echo "# brew version=$BREW_VER"
+# TODO(gp): Install this only on Mac.
 
-# Install GitHub CLI.
-brew install gh
-GH_VER=$(gh --version)
-echo "# gh version=$GH_VER"
+if [[ $(uname) == "Darwin" ]]; then
+    # Update brew.
+    brew update
+    BREW_VER=$(brew --version)
+    echo "# brew version=$BREW_VER"
 
-# Install dive.
-# https://github.com/wagoodman/dive
-#brew install dive
-#echo "dive version="$(dive --version)
+    # Install GitHub CLI.
+    brew install gh
+    GH_VER=$(gh --version)
+    echo "# gh version=$GH_VER"
+
+    # Install dive.
+    # https://github.com/wagoodman/dive
+    #brew install dive
+    #echo "dive version="$(dive --version)
+fi;
 
 echo "# Configure your client with:"
 echo "> source dev_scripts/setenv_amp.sh"

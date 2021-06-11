@@ -392,14 +392,7 @@ class TestLibTasks1(hut.TestCase):
         exp = "AmpTask1_Bridge_Python_and_R"
         self.assert_equal(act, exp)
 
-    def test_get_gh_issue_title2(self) -> None:
-        _gh_login()
-        issue_id = 1
-        repo = "lem"
-        act = ltasks._get_gh_issue_title(issue_id, repo)
-        exp = "LemTask1_Adapt_the_usual_infra_from_my_codebase"
-        self.assert_equal(act, exp)
-
+    # TODO(gp): This test should be moved to `dev_tools`.
     def test_get_gh_issue_title3(self) -> None:
         _gh_login()
         issue_id = 1

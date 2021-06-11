@@ -19,8 +19,11 @@ source devops/docker_build/entrypoint/patch_environment_variables.sh
 
 mount -a || true
 
+echo "UID="$(id -u)
+echo "GID="$(id -g)
+
 # Allow working with files outside a container.
-umask 000
+#umask 000
 
 # TODO(gp): Merge all this in a single script `devops/docker_build/test_setup.sh`.
 ./devops/docker_build/test/test_mount_fsx.sh
