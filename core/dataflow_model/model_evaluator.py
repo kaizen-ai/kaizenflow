@@ -162,7 +162,7 @@ class ModelEvaluator:
             dbg.dassert(self.volume, msg="No volume data supplied")
             series_dict = self.volume
         elif series == "volatility":
-            dbg.dassert(self.volatility, msg="No volume data supplied")
+            dbg.dassert(self.volatility, msg="No volatility data supplied")
             series_dict = self.volatility
         else:
             raise ValueError(f"Unrecognized series `{series}`.")
@@ -504,6 +504,36 @@ class ModelEvaluator:
         if keys_to_int:
             series_dict = {int(key): srs for key, srs in series_dict.items()}
         return series_dict
+
+
+def build_model_evaluator_from_df(
+    df: pd.DataFrame,
+    returns_col_group: tuple,
+    predictions_col_group: tuple,
+    target_volatility: Optional[float] = None,
+    oos_start: Optional[Any] = None,
+) -> ModelEvaluator:
+    """
+    Build a `ModelEvaluator` from a multiindexed column dataframe.
+
+    :param df: multiindexed column dataframe
+    :param returns_col_group: df.columns.nlevels - 1 depth tuple
+    :param predictions_col_group: df.columns.nlevels - 1 depth tuple
+    :param target_volatility: as in `ModelEvaluator`
+    :param oos_start: as in `ModelEvaluator`
+    :return: initialized `ModelEvaluator`
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert_lt(1, df.columns.nlevels)
+    returns = df[returns_col_group].to_dict(orient="series")
+    predictions = df[predictions_col_group].to_dict(orient="series")
+    model_evaluator = ModelEvaluator(
+        returns=returns,
+        predictions=predictions,
+        target_volatility=target_volatility,
+        oos_start=oos_start,
+    )
+    return model_evaluator
 
 
 class PnlComputer:
