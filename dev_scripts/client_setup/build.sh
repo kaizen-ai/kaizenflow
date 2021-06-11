@@ -43,6 +43,9 @@ echo "# docker-compose=$DOCKER_COMPOSE_VER"
 DOCKER_VER=$(docker --version)
 echo "# docker=$DOCKER_VER"
 
+# TODO(gp): Install this only on Mac.
+
+if [[ 
 # Update brew.
 brew update
 BREW_VER=$(brew --version)
