@@ -52,9 +52,12 @@ class TickerListsLoader:
 
     @staticmethod
     def _get_lines(s3_path: str) -> List[str]:
-        return [
-            line[0] for line in pd.read_csv(s3_path, sep="/t").values.tolist()
-        ]
+        aws_profile = "am"
+        # TODO(gp): Is it \t?
+        sep = "/t"
+        lines = pdhelp.read_csv(s3_path, aws_profile=aws_profile sep=sep).values.tolist()
+        res = [line[0] for line in lines]
+        return res
 
     def _parse_lines(
         self, lines: List[str]

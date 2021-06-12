@@ -5,6 +5,7 @@ import pandas as pd
 
 import helpers.cache as hcache
 import helpers.dbg as dbg
+import helpers.pandas_helpers as pdhelp
 import helpers.s3 as hs3
 import im.common.data.load.abstract_data_loader as icdlab
 import im.common.data.types as icdtyp
@@ -86,9 +87,8 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
         """
         Read data from S3 and cache it.
         """
-        if hs3.is_s3_path(file_path):
-            dbg.dassert(hs3.exists(file_path), "S3 key not found %s", file_path)
-        data = pd.read_csv(file_path, header=None, nrows=nrows)
+        data = pdhelp.read_csv(file_path, header=None, nrows=nrows,
+                aws_profile="am")
         data = KibotS3DataLoader._filter_by_dates(
             data, frequency=frequency, start_ts=start_ts, end_ts=end_ts
         )

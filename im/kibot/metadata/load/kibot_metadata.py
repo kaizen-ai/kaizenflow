@@ -11,6 +11,7 @@ from tqdm.autonotebook import tqdm
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
+import helpers.pandas_helpers as pdhelp
 import im.common.data.types as icdtyp
 import im.kibot.data.load.kibot_s3_data_loader as ikdlki
 import im.kibot.metadata.load.expiry_contract_mapper as ikmlex
@@ -541,7 +542,8 @@ class FuturesContractLifetimes:
         for symbol in symbols:
             file_name = os.path.join(self._get_dir_name(), symbol + ".csv")
             dbg.dassert_exists(file_name)
-            df = pd.read_csv(file_name, index_col=0)
+            aws_profile = "am"
+            df = pdhelp.read_csv(file_name, aws_profile=aws_profile, index_col=0)
             dbg.dassert_eq(
                 df.columns.tolist(),
                 ["symbol", "contract", "start_date", "end_date"],
