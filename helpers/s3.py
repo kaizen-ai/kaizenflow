@@ -30,7 +30,9 @@ def _get_aws_config(file_name: str) -> configparser.RawConfigParser:
 
 
 @functools.lru_cache()
-def get_aws_credentials(aws_profile: Optional[str] = None) -> Tuple[str, str, str]:
+def get_aws_credentials(
+    aws_profile: Optional[str] = None,
+) -> Tuple[str, str, str]:
     """
     Read the AWS credentials for a given profile.
 
@@ -68,7 +70,7 @@ def get_aws_credentials(aws_profile: Optional[str] = None) -> Tuple[str, str, st
     aws_access_key_id = config.get(aws_profile, "aws_access_key_id")
     aws_secret_access_key = config.get(aws_profile, "aws_secret_access_key")
     # > more ~/.aws/config
-    # [profile am]
+    # [am]
     # region = us-east-1
     file_name = "config"
     config = _get_aws_config(file_name)

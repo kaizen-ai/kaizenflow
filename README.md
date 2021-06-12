@@ -10,6 +10,7 @@
 
 
 <!--te-->
+
 # How to setup
 
 ## Documentation
@@ -43,6 +44,7 @@
 ## Setting up
 
 - Build the thin virtual env on the dev machine
+
   ```bash
   > dev_scripts/client_setup/build.sh
   ```
@@ -59,6 +61,7 @@
 ## Docker
 
 - Create a docker bash to run interactively (e.g., `pytest` or command lines)
+
   ```bash
   # Pull the container.
   > invoke docker_pull

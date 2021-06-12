@@ -17,11 +17,10 @@
 # %autoreload 2
 
 
-import os
 import pandas as pd
 
-import helpers.s3 as hs3
 import helpers.pd_helpers as pdhelp
+import helpers.s3 as hs3
 
 # %%
 S3_BUCKET = hs3.get_bucket()

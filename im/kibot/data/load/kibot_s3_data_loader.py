@@ -3,10 +3,9 @@ from typing import Optional
 
 import pandas as pd
 
+import core.pandas_helpers as pdhelp
 import helpers.cache as hcache
 import helpers.dbg as dbg
-import helpers.pandas_helpers as pdhelp
-import helpers.s3 as hs3
 import im.common.data.load.abstract_data_loader as icdlab
 import im.common.data.types as icdtyp
 import im.kibot.data.load.kibot_file_path_generator as ikdlki
@@ -87,8 +86,9 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
         """
         Read data from S3 and cache it.
         """
-        data = pdhelp.read_csv(file_path, header=None, nrows=nrows,
-                aws_profile="am")
+        data = pdhelp.read_csv(
+            file_path, header=None, nrows=nrows, aws_profile="am"
+        )
         data = KibotS3DataLoader._filter_by_dates(
             data, frequency=frequency, start_ts=start_ts, end_ts=end_ts
         )

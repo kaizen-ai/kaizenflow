@@ -10,8 +10,8 @@ from typing import Optional
 
 import pandas as pd
 
+import core.pandas_helpers as pdhelp
 import helpers.dbg as dbg
-import helpers.pandas_helpers as pdhelp
 import helpers.s3 as hs3
 import im.common.data.load.abstract_data_loader as icdlab
 import im.common.data.types as icdtyp
@@ -121,7 +121,7 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
         # cls.S3_COLUMNS.keys() -> list(cls.S3_COLUMNS.keys())
         # https://github.com/pandas-dev/pandas/issues/36928 fixed in Pandas 1.1.4
         aws_profile = "am"
-        names = list(self.S3_COLUMNS.keys()
+        names = list(self.S3_COLUMNS.keys())
         data = pdhelp.read_csv(
             file_path, aws_profile=aws_profile, nrows=nrows, names=names
         )

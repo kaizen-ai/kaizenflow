@@ -4,9 +4,9 @@ from typing import List, Optional
 
 import pandas as pd
 
+import core.pandas_helpers as pdhelp
 import helpers.dbg as dbg
 import helpers.s3 as hs3
-import helpers.pandas_helpers as pdhelp
 import im.kibot.data.config as vkdcon
 import im.kibot.metadata.config as vkmcon
 
@@ -49,7 +49,10 @@ class S3Backend:
             vkmcon.S3_PREFIX, "All_Futures_Contracts_1min.csv.gz"
         )
         _LOG.debug("file_name=%s", file_name)
-        df = pdhelp.read_csv(file_name, index_col=0, nrows=self._max_rows, aws_profile="am")
+        df = pdhelp.read_csv(
+            file_name, aws_profile="am", index_col=0, nrows=self._max_rows,
+            encoding = "utf-8"
+        )
         df = df.iloc[:, 1:]
         _LOG.debug("df=\n%s", df.head(3))
         _LOG.debug("df.shape=%s", df.shape)
@@ -77,7 +80,9 @@ class S3Backend:
         )
         hs3.check_valid_s3_path(file_name)
         _LOG.debug("file_name=%s", file_name)
-        df = pdhelp.read_csv(file_name, aws_profile="am", index_col=0, nrows=self._max_rows)
+        df = pdhelp.read_csv(
+            file_name, aws_profile="am", index_col=0, nrows=self._max_rows
+        )
         df = df.iloc[:, 1:]
         _LOG.debug("df=\n%s", df.head(3))
         _LOG.debug("df.shape=%s", df.shape)
@@ -184,7 +189,9 @@ class S3Backend:
     def read_kibot_exchange_mapping() -> pd.DataFrame:
         file_name = os.path.join(vkmcon.S3_PREFIX, "kibot_to_exchange.csv")
         hs3.check_valid_s3_path(file_name)
-        kibot_to_cme_mapping = pdhelp.read_csv(file_name, aws_profile="am", index_col="Kibot_symbol")
+        kibot_to_cme_mapping = pdhelp.read_csv(
+            file_name, aws_profile="am", index_col="Kibot_symbol"
+        )
         return kibot_to_cme_mapping
 
     @staticmethod

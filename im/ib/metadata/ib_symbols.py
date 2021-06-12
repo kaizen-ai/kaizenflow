@@ -9,8 +9,6 @@ import logging
 import string
 from typing import List, Optional
 
-import pandas as pd
-
 import helpers.dbg as dbg
 import helpers.printing as hprint
 import im.common.data.types as icdtyp
