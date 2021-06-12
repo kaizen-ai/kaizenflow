@@ -39,16 +39,25 @@ def get_aws_credentials(profile: Optional[str] = None) -> Tuple[str, str, str]:
     # If the AWS credentials are passed through env vars, they override the config
     # file.
     # TODO(gp): AWS_DEFAULT_REGION -> AWS_REGION
-    env_vars = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_DEFAULT_REGION"]
-    env_var_override = any(env_var in os.environ and os.environ[env_var] != "" for env_var in env_vars)
+    env_vars = [
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_DEFAULT_REGION",
+    ]
+    env_var_override = any(
+        env_var in os.environ and os.environ[env_var] != ""
+        for env_var in env_vars
+    )
     if env_var_override:
         _LOG.warning("Using AWS credentials from env vars")
         # If one variable is defined all should be defined.
         for env_var in env_vars:
             _LOG.debug("'%s' in env vars=%s", env_var, env_var in os.environ)
-            _LOG.debug("'%s' != ''=%s", env_var, os.environ.get(env_var, None) != "")
+            _LOG.debug(
+                "'%s' != ''=%s", env_var, os.environ.get(env_var, None) != ""
+            )
             dbg.dassert_in(env_var, os.environ)
-        return tuple([os.environ[env_var] for env_var in env_vars])
+        return tuple(os.environ[env_var] for env_var in env_vars)
     profile = profile or "am"
     # > more ~/.aws/credentials
     # [am]

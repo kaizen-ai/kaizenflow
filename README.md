@@ -1,3 +1,15 @@
+<!--ts-->
+   * [How to setup](#how-to-setup)
+      * [Documentation](#documentation)
+      * [Setting up a tmux session](#setting-up-a-tmux-session)
+      * [Development flow](#development-flow)
+      * [Setting up](#setting-up)
+      * [Docker](#docker)
+   * [AWS credentials](#aws-credentials)
+
+
+
+<!--te-->
 # How to setup
 
 ## Documentation
@@ -12,8 +24,8 @@
   > cd ~/src
   > ./dev_scripts_p1/tmux_p1.sh part1
   ```
-- TODO(gp): It might be dependent on GP's set-up and needs to be generalized,
-  if worth it for general consumption
+- TODO(gp): It might be dependent on GP's set-up and needs to be generalized, if
+  worth it for general consumption
 
 ## Development flow
 
@@ -29,14 +41,17 @@
   - The code for the client setup is under `dev_scripts/client_setup`
 
 ## Setting up
+
 - Build the thin virtual env on the dev machine
-  ```
+  ```bash
   > dev_scripts/client_setup/build.sh
   ```
 
 - Activate the virtual env
+
   ```bash
   > source dev_scripts/client_setup/activate.sh
+  ```
 
 - Configure the env
   - `source dev_scripts/setenv_amp.sh`
@@ -44,7 +59,7 @@
 ## Docker
 
 - Create a docker bash to run interactively (e.g., `pytest` or command lines)
-  ```
+  ```bash
   # Pull the container.
   > invoke docker_pull
   > invoke docker_bash
