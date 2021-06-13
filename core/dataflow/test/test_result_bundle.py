@@ -71,23 +71,26 @@ class: ResultBundle
     @staticmethod
     def _get_init_config() -> cconfig.Config:
         # TODO(gp): Factor out common part.
-        init_config = cconfig.Config()
-        init_config["config"] = cconfig.get_config_from_nested_dict({"key": "val"})
-        init_config["result_nid"] = "leaf_node"
-        init_config["method"] = "fit"
         df = pd.DataFrame([range(5)], columns=[f"col{i}" for i in range(5)])
-        init_config["result_df"] = df
-        init_config["column_to_tags"] = {
-            "col0": ["feature_col"],
-            "col1": ["target_col", "step_0"],
-            "col2": ["target_col", "step_1"],
-            "col3": ["prediction_col", "step_0"],
-            "col4": ["prediction_col", "step_1"],
-        }
-        init_config["info"] = collections.OrderedDict(
-            {"df_info": dtf.get_df_info_as_string(df)}
-        )
-        init_config["payload"] = None
+        init_config = cconfig.get_config_from_nested_dict({
+            "config": {
+                "key": "val",
+            },
+            "result_nid": "leaf_node",
+            "method": "fit",
+            "result_df": df,
+            "column_to_tags": {
+                "col0": ["feature_col"],
+                "col1": ["target_col", "step_0"],
+                "col2": ["target_col", "step_1"],
+                "col3": ["prediction_col", "step_0"],
+                "col4": ["prediction_col", "step_1"],
+            },
+            "info": {
+                "df_info": dtf.get_df_info_as_string(df)
+            },
+            "payload": None
+        })
         return init_config
 
 
