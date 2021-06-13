@@ -121,12 +121,15 @@ class ResultBundle(abc.ABC):
         """
         Initialize `ResultBundle` from config.
         """
+        column_to_tags = serialized_bundle["column_to_tags"]
+        if column_to_tags:
+            column_to_tags = column_to_tags.to_dict()
         rb = cls(
             config=serialized_bundle["config"],
             result_nid=serialized_bundle["result_nid"],
             method=serialized_bundle["method"],
             result_df=serialized_bundle["result_df"],
-            column_to_tags=serialized_bundle["column_to_tags"],
+            column_to_tags=column_to_tags,
             info=serialized_bundle["info"],
             payload=serialized_bundle["payload"],
         )
