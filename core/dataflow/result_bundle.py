@@ -49,6 +49,20 @@ class ResultBundle(abc.ABC):
         self._info = info
         self._payload = payload
 
+    def __str__(self) -> str:
+        """
+        Return the string representation.
+        """
+        return str(self.to_config())
+
+    def __repr__(self) -> str:
+        """
+        Return an unambiguous representation the same as str().
+
+        This is used by Jupyter notebook when printing.
+        """
+        return str(self)
+
     @property
     def config(self) -> cconfig.Config:
         return self._config.copy()

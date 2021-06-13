@@ -30,6 +30,18 @@ class TestResultBundle(hut.TestCase):
         actual_config = rb.to_config(commit_hash=False)
         self.check_string(f"config without 'commit_hash' field:\n{actual_config}")
 
+    def test_to_dict_and_back(self) -> None:
+        init_config = self._get_init_config()
+        # Initialize a `ResultBundle` from a config.
+        result_bundle = dtf.ResultBundle.from_config(init_config)
+        # This pattern is used in `master_experiment.py` before pickling.
+        rb_as_dict = result_bundle.to_config().to_dict()
+        # After unpickling, we convert to a `Config`, then to a `ResultBundle`.
+        result_bundle_2 = dtf.ResultBundle.from_config(
+            cconfig.get_config_from_nested_dict(rb_as_dict)
+        )
+        self.assert_equal(str(result_bundle), str(result_bundle_2))
+
     def test_get_tags_for_column1(self) -> None:
         init_config = self._get_init_config()
         rb = dtf.ResultBundle(**init_config.to_dict())
@@ -48,25 +60,25 @@ class TestResultBundle(hut.TestCase):
     def _get_init_config() -> cconfig.Config:
         # TODO(gp): Factor out common part.
         df = pd.DataFrame([range(5)], columns=[f"col{i}" for i in range(5)])
-        init_config = cconfig.get_config_from_nested_dict({
-            "config": {
-                "key": "val",
-            },
-            "result_nid": "leaf_node",
-            "method": "fit",
-            "result_df": df,
-            "column_to_tags": {
-                "col0": ["feature_col"],
-                "col1": ["target_col", "step_0"],
-                "col2": ["target_col", "step_1"],
-                "col3": ["prediction_col", "step_0"],
-                "col4": ["prediction_col", "step_1"],
-            },
-            "info": {
-                "df_info": dtf.get_df_info_as_string(df)
-            },
-            "payload": None
-        })
+        init_config = cconfig.get_config_from_nested_dict(
+            {
+                "config": {
+                    "key": "val",
+                },
+                "result_nid": "leaf_node",
+                "method": "fit",
+                "result_df": df,
+                "column_to_tags": {
+                    "col0": ["feature_col"],
+                    "col1": ["target_col", "step_0"],
+                    "col2": ["target_col", "step_1"],
+                    "col3": ["prediction_col", "step_0"],
+                    "col4": ["prediction_col", "step_1"],
+                },
+                "info": {"df_info": dtf.get_df_info_as_string(df)},
+                "payload": None,
+            }
+        )
         return init_config
 
 
@@ -147,7 +159,9 @@ class TestPredictionResultBundle(hut.TestCase):
     @staticmethod
     def _get_init_config() -> cconfig.Config:
         init_config = cconfig.Config()
-        init_config["config"] = cconfig.get_config_from_nested_dict({"key": "val"})
+        init_config["config"] = cconfig.get_config_from_nested_dict(
+            {"key": "val"}
+        )
         init_config["result_nid"] = "leaf_node"
         init_config["method"] = "fit"
         df = pd.DataFrame([range(5)], columns=[f"col{i}" for i in range(5)])
