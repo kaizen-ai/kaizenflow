@@ -19,6 +19,7 @@ import os
 import pandas as pd
 
 import helpers.dbg as dbg
+import helpers.s3 as hs3
 
 # %%
 # !ls ..
@@ -33,7 +34,7 @@ if False:
     dbg.dassert(len(files), 1)
     file_name = files[0]
 
-S3_BUCKET = os.environ['AM_S3_BUCKET']
+S3_BUCKET = hs3.get_bucket()
 file_name = (
     f"s3://{S3_BUCKET}/data/ib/metadata/symbols-2021-04-01-143112738505.csv"
 )

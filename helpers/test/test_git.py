@@ -145,13 +145,6 @@ class Test_git_repo_name1(hut.TestCase):
         exp = "amp"
         self.assert_equal(act, exp)
 
-    def test_get_repo_name3(self) -> None:
-        full_name = "alphamatic/lemonade"
-        mode = "full_name"
-        act = git.get_repo_name(full_name, mode)
-        exp = "lem"
-        self.assert_equal(act, exp)
-
     def test_get_repo_name4(self) -> None:
         full_name = "alphamatic/dev_tools"
         mode = "full_name"
@@ -162,13 +155,13 @@ class Test_git_repo_name1(hut.TestCase):
     def test_get_all_repo_names1(self) -> None:
         mode = "short_name"
         act = git.get_all_repo_names(mode)
-        exp = ["amp", "dev_tools", "lem"]
+        exp = ["amp", "dev_tools"]
         self.assert_equal(str(act), str(exp))
 
     def test_get_all_repo_names2(self) -> None:
         mode = "full_name"
         act = git.get_all_repo_names(mode)
-        exp = ["alphamatic/amp", "alphamatic/dev_tools", "alphamatic/lemonade"]
+        exp = ["alphamatic/amp", "alphamatic/dev_tools"]
         self.assert_equal(str(act), str(exp))
 
     def test_get_repo_name_rountrip1(self) -> None:

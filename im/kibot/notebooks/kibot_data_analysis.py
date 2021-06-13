@@ -20,8 +20,10 @@
 import os
 import pandas as pd
 
+import helpers.s3 as hs3
+
 # %%
-S3_BUCKET = os.environ['AM_S3_BUCKET']
+S3_BUCKET = hs3.get_bucket()
 file = f"s3://{S3_BUCKET}/data/kibot/sp_500_1min/AAPL.csv.gz"
 
 df = pd.read_csv(file)
