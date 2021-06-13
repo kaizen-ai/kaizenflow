@@ -17,31 +17,7 @@ class TestResultBundle(hut.TestCase):
         rb = dtf.ResultBundle(**init_config.to_dict())
         # Check.
         actual_config = rb.to_config(commit_hash=False)
-        act = f"config without 'commit_hash' field:\n{actual_config}"
-        exp = r"""
-config without 'commit_hash' field:
-config: OrderedDict([('key', 'val')])
-result_nid: leaf_node
-method: fit
-result_df:    col0  col1  col2  col3  col4
-0     0     1     2     3     4
-column_to_tags: {'col0': ['feature_col'], 'col1': ['target_col', 'step_0'], 'col2': ['target_col', 'step_1'], 'col3': ['prediction_col', 'step_0'], 'col4': ['prediction_col', 'step_1']}
-info:
-  df_info: <class 'pandas.core.frame.DataFrame'>
-  RangeIndex: 1 entries, 0 to 0
-  Data columns (total 5 columns):
-   #   Column  Non-Null Count  Dtype
-  ---  ------  --------------  -----
-   0   col0    1 non-null      int64
-   1   col1    1 non-null      int64
-   2   col2    1 non-null      int64
-   3   col3    1 non-null      int64
-   4   col4    1 non-null      int64
-  dtypes: int64(5)
-payload: None
-class: ResultBundle
-        """.lstrip().rstrip()
-        self.assert_equal(act, exp)
+        self.check_string(f"config without 'commit_hash' field:\n{actual_config}")
 
     def test_from_config1(self) -> None:
         """
