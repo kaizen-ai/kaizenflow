@@ -18,6 +18,7 @@ import os
 
 import pandas as pd
 
+import core.pandas_helpers as pdhelp
 import helpers.dbg as dbg
 import helpers.s3 as hs3
 
@@ -38,8 +39,9 @@ S3_BUCKET = hs3.get_bucket()
 file_name = (
     f"s3://{S3_BUCKET}/data/ib/metadata/symbols-2021-04-01-143112738505.csv"
 )
+aws_profile = "am"
 print("file_name=%s" % file_name)
-symbols = pd.read_csv(file_name, sep="\t")
+symbols = pdhelp.read_csv(file_name, aws_profile=aws_profile, sep="\t")
 
 print(len(symbols))
 
@@ -61,7 +63,7 @@ file_name = (
 )
 
 print("file_name=%s" % file_name)
-exchanges = pd.read_csv(file_name, sep="\t")
+exchanges = pd.read_csv(file_name, aws_profile=aws_profile, sep="\t")
 
 print(len(exchanges))
 

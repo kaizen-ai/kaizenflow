@@ -359,7 +359,10 @@ def load_historical_data(file_name: str, verbose: bool = False) -> pd.DataFrame:
     `save_historical_data_with_IB_loop()`.
     """
     _LOG.debug("file_name=%s", file_name)
-    df = pd.read_csv(file_name, parse_dates=True, index_col=0)
+    aws_profile = "am"
+    df = pdhelp.read_csv(
+        file_name, aws_profile=aws_profile, parse_dates=True, index_col=0
+    )
     # dbg.dassert_isinstance(df.index[0], pd.Timestamp)
     if verbose:
         _LOG.info(

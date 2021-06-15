@@ -9,8 +9,6 @@ import logging
 import string
 from typing import List, Optional
 
-import pandas as pd
-
 import helpers.dbg as dbg
 import helpers.printing as hprint
 import im.common.data.types as icdtyp
@@ -49,8 +47,9 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
         """
         _LOG.info("Reading symbols from %s", symbols_file)
         # Prevent to transform values from "NA" to `np.nan`.
-        df = pd.read_csv(
+        df = pdhelp.read_csv(
             symbols_file,
+            aws_profile="am",
             sep="\t",
             keep_default_na=False,
             na_values=["_"],
