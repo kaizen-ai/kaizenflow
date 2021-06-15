@@ -49,6 +49,20 @@ class ResultBundle(abc.ABC):
         self._info = info
         self._payload = payload
 
+    def __str__(self) -> str:
+        """
+        Return the string representation.
+        """
+        return str(self.to_config())
+
+    def __repr__(self) -> str:
+        """
+        Return an unambiguous representation the same as str().
+
+        This is used by Jupyter notebook when printing.
+        """
+        return str(self)
+
     @property
     def config(self) -> cconfig.Config:
         return self._config.copy()
@@ -121,13 +135,19 @@ class ResultBundle(abc.ABC):
         """
         Initialize `ResultBundle` from config.
         """
+        column_to_tags = serialized_bundle["column_to_tags"]
+        if column_to_tags:
+            column_to_tags = column_to_tags.to_dict()
+        info = serialized_bundle["info"]
+        if info:
+            info = info.to_dict()
         rb = cls(
             config=serialized_bundle["config"],
             result_nid=serialized_bundle["result_nid"],
             method=serialized_bundle["method"],
             result_df=serialized_bundle["result_df"],
-            column_to_tags=serialized_bundle["column_to_tags"],
-            info=serialized_bundle["info"],
+            column_to_tags=column_to_tags,
+            info=info,
             payload=serialized_bundle["payload"],
         )
         return rb
