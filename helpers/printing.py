@@ -592,6 +592,7 @@ def type_obj_to_str(obj: Any) -> str:
     return ret
 
 
+# TODO(gp): Move to pandas_helpers.
 def dataframe_to_str(
     df: Any,
     max_columns: int = 10000,
@@ -663,6 +664,15 @@ def to_pretty_str(obj: Any) -> str:
         res = str(obj)
     return res
 
+
+# TODO(gp): Move to pandas_helpers.
+def df_to_short_str(tag: str, df: "pd.DataFrame") -> str:
+    txt = ""
+    tag = tag or "df"
+    txt += f"# {tag}=\n%s" % df.head(3)
+    txt += "\n# shape=\n%s" % str(df.shape)
+    #txt += "\n# dtypes=\n%s" % str(df.dtypes)
+    return txt
 
 # #############################################################################
 # Notebook output

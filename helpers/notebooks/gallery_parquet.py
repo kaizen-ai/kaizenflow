@@ -229,23 +229,25 @@ print(partitioning.parse("/2009/11/3"))
 
 #partitioning.discover()
 
-# %% [markdown]
-# ## Read subset of columns for everything
+# %%
+# !ls /app/data
 
 # %%
-import pyarrow.dataset as ds
+dir_name = "/app/data"
 
-import numpy as np
+# Read data back.
+dataset = ds.dataset(dir_name,
+                     format="parquet",
+                     partitioning="hive")
 
-# %%
-# How to merge PQ files
-
-# We can filter by year, month, stock and then all save in the same dir
-
-# %%
-partitioning = 
+print("\n".join(dataset.files))
 
 # %%
-df.schema
+# Read everything.
+df2 = dataset.to_table().to_pandas()
+
+print(df_to_str(df2))
 
 # %%
+print(df2["instr"].unique())
+print(df2.index)

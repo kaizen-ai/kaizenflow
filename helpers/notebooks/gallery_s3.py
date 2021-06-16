@@ -16,18 +16,21 @@
 # https://s3fs.readthedocs.io/en/latest/
 
 # %%
+# %load_ext autoreload
+# %autoreload 3
+
+# %%
 import s3fs
 
 import helpers.s3 as hs3
 
 # %%
 profile = "am"
-aws_access_key_id, aws_secret_access_key, aws_region = hs3.get_aws_credentials(
-    profile=profile
-)
 
 # %%
-s3 = s3fs.S3FileSystem(anon=False, key=aws_access_key_id, secret=aws_secret_access_key)
+#s3 = s3fs.S3FileSystem(anon=False, key=aws_access_key_id, secret=aws_secret_access_key)
+
+s3 = hs3.get_s3fs(profile)
 
 # %%
 bucket = hs3.get_bucket()
@@ -35,10 +38,8 @@ print("bucket=%s" % bucket)
 s3.ls(bucket)
 
 # %%
-import pandas as pd
+s3.ls(bucket)
 
-date = "2010-01-01"
-start_date = pd.Timestamp(date, tz="America/New_York")
-start_date.replace(hour=23, minute=30)
-
-#pd.date_range()
+# %%
+import os
+print(os.environ["AWS_DEFAULT_REGION"])

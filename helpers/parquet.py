@@ -8,12 +8,19 @@ template.
 """
 
 import argparse
+import datetime
 import logging
+import random
 
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
+import pyarrow.dataset as ds
 
 import helpers.dbg as dbg
+import helpers.io_ as hio
 import helpers.parser as prsr
+import helpers.printing as hprint
 
 # import helpers.system_interaction as si
 
@@ -32,11 +39,12 @@ def _get_df(date) -> pd.DataFrame:
     2000-01-03    0     A    85    86
     """
     instruments = "A B C D E".split()
-    start_date = pd.Timestamp(date, tz="America/New_York")
-    start_date.replace(hour=9, minute=30)
-    end_date = pd.Timestamp(date, tz="America/New_York")
-    end_date.replace(hour=16, minute=0)
-    df_idx = pd.date_range(start_date, end_date, freq="5M")
+    date = pd.Timestamp(date, tz="America/New_York")
+    start_date = date.replace(hour=9, minute=30)
+    end_date = date.replace(hour=16, minute=0)
+    df_idx = pd.date_range(start_date, end_date, freq="5T")
+    _LOG.debug("df_idx=[%s, %s]", min(df_idx), max(df_idx))
+    _LOG.debug("len(df_idx)=%s", len(df_idx))
     random.seed(1000)
     # For each instruments generate random data.
     df = []
@@ -46,9 +54,11 @@ def _get_df(date) -> pd.DataFrame:
                                "val1": [random.randint(0, 100) for k in range(len(df_idx))],
                                "val2": [random.randint(0, 100) for k in range(len(df_idx))],
                                }, index=df_idx)
+        _LOG.debug(hprint.df_to_short_str("df_tmp", df_tmp))
         df.append(df_tmp)
     # Create a single df for all the instruments.
     df = pd.concat(df)
+    _LOG.debug(hprint.df_to_short_str("df", df))
     return df
 
 
@@ -79,11 +89,23 @@ def _save_data_as_pq_without_extra_cols(df, dst_dir):
     pass
 
 
-def _date_exists(date, dst_dir) -> bool:
+def _date_exists(date: datetime.datetime, dst_dir: str) -> bool:
     """
-    Check if the partition corresponding to `date` under `dst_dir` exists.
+    Check if the data corresponding to `date` under `dst_dir` already exists.
     """
-    return False
+    # /app/data/idx=0/year=2000/month=1/02e3265d515e4fb88ebe1a72a405fc05.parquet
+    subdirs = glob.glob(f"{dst_dir}/idx=*")
+    suffix = os.path.join("year=%s" % date.year, "month=%s" % date.month)
+    _LOG.debug("suffix=%s", suffix)
+    found = False
+    for subdir in sorted(subdirs):
+        file_name = os.path.join(subdir, suffix)
+        exists = os.path.exists(file_name)
+        _LOG.debug("file_name=%s -> exists=%s", file_name, exists)
+        if exists:
+            found = True
+            break
+    return found
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -107,14 +129,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # - Use si.system() and si.system_to_string() to issue commands.
     dst_dir = args.dst_dir
     #
-    hio.create_dir(dst_dir, incremental=True)
+    hio.create_dir(dst_dir, incremental=args.incremental)
     # Get all the dates with s3.list
     dates = get_available_dates()
-    dbg.dassert_strictly_increasing_index(dates)
+    #dbg.dassert_strictly_increasing_index(dates)
     _LOG.info("dates=%s [%s, %s]", len(dates), min(dates), max(dates))
     # Scan the dates.
     for date in dates:
-        if incremental and _date_exists(date, dst_dir):
+        if args.incremental and _date_exists(date, dst_dir):
             _LOG.info("Skipping processing of date '%s since incremental mode'", date)
             continue
         # Read data.
