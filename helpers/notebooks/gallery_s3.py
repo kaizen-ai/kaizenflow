@@ -33,3 +33,12 @@ s3 = s3fs.S3FileSystem(anon=False, key=aws_access_key_id, secret=aws_secret_acce
 bucket = hs3.get_bucket()
 print("bucket=%s" % bucket)
 s3.ls(bucket)
+
+# %%
+import pandas as pd
+
+date = "2010-01-01"
+start_date = pd.Timestamp(date, tz="America/New_York")
+start_date.replace(hour=23, minute=30)
+
+#pd.date_range()

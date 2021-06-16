@@ -167,6 +167,25 @@ def _get_boto3_client(aws_profile: Optional[str] = None) -> boto3.client:
     return s3
 
 
+def get_s3fs(aws_profile: Optional[str] = None) -> str:
+    # From https://stackoverflow.com/questions/62562945
+    aws_access_key_id, aws_secret_access_key, aws_region = hs3.get_aws_credentials(
+        aws_profile=aws_profile
+    )
+    # Horrible hack: for some reason S3FileSystem doesn't allow to pass
+    # `aws_region` but always use the env var.
+    success = False
+    try:
+        old_value = os.environ["AWS_DEFAULT_REGION"]
+        os.environ["AWS_DEFAULT_REGION"] = aws_region
+        s3 = s3fs.core.S3FileSystem(anon=False, key=aws_access_key_id, secret=aws_secret_access_key)
+        success = True
+    finally:
+        os.environ["AWS_DEFAULT_REGION"] = old_value
+    dbg.dassert(success)
+    return s3
+
+
 def exists(s3_path: str, aws_profile: Optional[str] = None) -> bool:
     """
     Check if path exists in s3.
