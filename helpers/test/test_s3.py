@@ -10,15 +10,18 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.skip("AmpTask1477")
 class Test_s3_get_credentials1(hut.TestCase):
     def test1(self) -> None:
-        profile = "am"
-        _ = hs3.get_aws_credentials(profile)
+        aws_profile = "am"
+        res = hs3.get_aws_credentials(aws_profile)
+        _LOG.debug("res=%s", str(res))
 
     def test2(self) -> None:
-        profile = "I don't exist"
+        aws_profile = "I don't exist"
         with self.assertRaises(configparser.NoSectionError) as cm:
-            hs3.get_aws_credentials(profile)
+            res = hs3.get_aws_credentials(aws_profile)
+            _LOG.debug("res=%s", str(res))
         act = str(cm.exception)
         exp = r'''No section: "I don't exist"'''
         self.assert_equal(act, exp)

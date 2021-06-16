@@ -152,12 +152,18 @@ class Test_git_repo_name1(hut.TestCase):
         exp = "dev_tools"
         self.assert_equal(act, exp)
 
+    @pytest.mark.skipif(
+        not git.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
+    )
     def test_get_all_repo_names1(self) -> None:
         mode = "short_name"
         act = git.get_all_repo_names(mode)
         exp = ["amp", "dev_tools"]
         self.assert_equal(str(act), str(exp))
 
+    @pytest.mark.skipif(
+        not git.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
+    )
     def test_get_all_repo_names2(self) -> None:
         mode = "full_name"
         act = git.get_all_repo_names(mode)

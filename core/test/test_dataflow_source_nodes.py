@@ -4,6 +4,7 @@ import core.dataflow_source_nodes as cdsn
 import helpers.unit_test as hut
 
 
+@pytest.mark.skip("AmpTask1477")
 class TestKibotEquityReader(hut.TestCase):
     @pytest.mark.slow
     def test1(self) -> None:

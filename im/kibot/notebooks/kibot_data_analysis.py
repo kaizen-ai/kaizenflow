@@ -17,19 +17,19 @@
 # %autoreload 2
 
 
-import os
 import pandas as pd
 
+import helpers.pd_helpers as pdhelp
 import helpers.s3 as hs3
 
 # %%
 S3_BUCKET = hs3.get_bucket()
-file = f"s3://{S3_BUCKET}/data/kibot/sp_500_1min/AAPL.csv.gz"
+file_name = f"s3://{S3_BUCKET}/data/kibot/sp_500_1min/AAPL.csv.gz"
 
-df = pd.read_csv(file)
+df = pdhelp.read_csv(file_name, aws_profile="am")
 df.head(5)
 
 # %%
-file = f"s3://{S3_BUCKET}/data/kibot/pq/sp_500_1min/AAPL.pq"
-
-pd.read_parquet(file)
+file_name = f"s3://{S3_BUCKET}/data/kibot/pq/sp_500_1min/AAPL.pq"
+# TODO(gp): Create a `pdhelp.read_parquet()`.
+pd.read_parquet(file_name)

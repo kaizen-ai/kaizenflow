@@ -6,7 +6,7 @@ Import as:
 import helpers.dataframe as hdataf
 """
 
-# TODO(gp): Consider merging with `core/pandas_helpers.py`.
+# TODO(gp): Consider merging with `helpers/pandas_helpers.py`.
 
 import collections
 import functools

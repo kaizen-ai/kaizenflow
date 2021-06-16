@@ -30,27 +30,51 @@ def _get_aws_config(file_name: str) -> configparser.RawConfigParser:
 
 
 @functools.lru_cache()
-def get_aws_credentials(profile: Optional[str] = None) -> Tuple[str, str, str]:
+def get_aws_credentials(
+    aws_profile: Optional[str] = None,
+) -> Tuple[str, str, str]:
     """
     Read the AWS credentials for a given profile.
 
     :return: access_key_id, aws_secret_access_key, aws_region
     """
-    profile = profile or "am"
+    # If the AWS credentials are passed through env vars, they override the config
+    # file.
+    # TODO(gp): AWS_DEFAULT_REGION -> AWS_REGION
+    env_vars = [
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_DEFAULT_REGION",
+    ]
+    env_var_override = any(
+        env_var in os.environ and os.environ[env_var] != ""
+        for env_var in env_vars
+    )
+    if env_var_override:
+        _LOG.warning("Using AWS credentials from env vars")
+        # If one variable is defined all should be defined.
+        for env_var in env_vars:
+            _LOG.debug("'%s' in env vars=%s", env_var, env_var in os.environ)
+            _LOG.debug(
+                "'%s' != ''=%s", env_var, os.environ.get(env_var, None) != ""
+            )
+            dbg.dassert_in(env_var, os.environ)
+        return tuple(os.environ[env_var] for env_var in env_vars)
+    aws_profile = aws_profile or "am"
     # > more ~/.aws/credentials
     # [am]
     # aws_access_key_id=AKI...
     # aws_secret_access_key=mhg..
     file_name = "credentials"
     config = _get_aws_config(file_name)
-    aws_access_key_id = config.get(profile, "aws_access_key_id")
-    aws_secret_access_key = config.get(profile, "aws_secret_access_key")
+    aws_access_key_id = config.get(aws_profile, "aws_access_key_id")
+    aws_secret_access_key = config.get(aws_profile, "aws_secret_access_key")
     # > more ~/.aws/config
-    # [profile am]
+    # [am]
     # region = us-east-1
     file_name = "config"
     config = _get_aws_config(file_name)
-    aws_region = config.get(profile, "region")
+    aws_region = config.get(aws_profile, "region")
     return aws_access_key_id, aws_secret_access_key, aws_region
 
 
@@ -117,9 +141,9 @@ def get_fsx_root_path() -> str:
 # #############################################################################
 
 
-def _get_boto3_resource(profile: Optional[str] = None) -> boto3.resource:
+def _get_boto3_resource(aws_profile: Optional[str] = None) -> boto3.resource:
     aws_access_key_id, aws_secret_access_key, aws_region = get_aws_credentials(
-        profile=profile
+        aws_profile=aws_profile
     )
     s3 = boto3.resource(
         "s3",
@@ -130,9 +154,9 @@ def _get_boto3_resource(profile: Optional[str] = None) -> boto3.resource:
     return s3
 
 
-def _get_boto3_client(profile: Optional[str] = None) -> boto3.client:
+def _get_boto3_client(aws_profile: Optional[str] = None) -> boto3.client:
     aws_access_key_id, aws_secret_access_key, aws_region = get_aws_credentials(
-        profile=profile
+        aws_profile=aws_profile
     )
     s3 = boto3.client(
         "s3",
@@ -143,7 +167,7 @@ def _get_boto3_client(profile: Optional[str] = None) -> boto3.client:
     return s3
 
 
-def exists(s3_path: str, profile: Optional[str] = None) -> bool:
+def exists(s3_path: str, aws_profile: Optional[str] = None) -> bool:
     """
     Check if path exists in s3.
 
@@ -152,7 +176,7 @@ def exists(s3_path: str, profile: Optional[str] = None) -> bool:
     import botocore
 
     bucket, key = parse_path(s3_path)
-    s3 = _get_boto3_resource(profile=profile)
+    s3 = _get_boto3_resource(aws_profile=aws_profile)
     try:
         s3.Object(bucket, key).load()
         ret = True
@@ -175,7 +199,7 @@ def check_valid_s3_path(s3_path: str) -> None:
 
 
 def _list_s3_keys(
-    s3_bucket: str, dir_path: str, profile: Optional[str] = None
+    s3_bucket: str, dir_path: str, aws_profile: Optional[str] = None
 ) -> List[str]:
     """
     List s3 keys.
@@ -194,7 +218,7 @@ def _list_s3_keys(
     :return: list of paths
     """
     # Create an s3 object to query.
-    s3 = _get_boto3_client(profile=profile)
+    s3 = _get_boto3_client(aws_profile=aws_profile)
     # Query until the response is not truncated.
     AMAZON_MAX_INT = 2147483647
     continuation_token = None
@@ -219,7 +243,7 @@ def _list_s3_keys(
 
 
 def listdir(
-    s3_path: str, mode: str = "recursive", profile: Optional[str] = None
+    s3_path: str, mode: str = "recursive", aws_profile: Optional[str] = None
 ) -> List[str]:
     """
     List files in s3 directory.
@@ -242,7 +266,7 @@ def listdir(
     # 'kibot', 'All_Futures_Continuous_Contracts_daily', ''].
     s3_bucket = split_path[2]
     dir_path = "/".join(split_path[3:])
-    file_names = _list_s3_keys(s3_bucket, dir_path, profile=profile)
+    file_names = _list_s3_keys(s3_bucket, dir_path, aws_profile=aws_profile)
     # Filter file names that do not start with the initial `dir_path`,
     # remove `dir_path` from the file names.
     file_names = [
@@ -302,11 +326,11 @@ def parse_path(path: str) -> Tuple[str, str]:
 
 # TODO(Julia): When PTask418_PRICE_Convert_Kibot_data_from_csv is merged, choose
 #  between this ls() and listdir() functions.
-def ls(file_path: str, profile: Optional[str] = None) -> List[str]:
+def ls(file_path: str, aws_profile: Optional[str] = None) -> List[str]:
     """
     :return: return the file lists in `file_path`.
     """
-    s3 = _get_boto3_resource(profile=profile)
+    s3 = _get_boto3_resource(aws_profile=aws_profile)
     bucket_name, file_path = parse_path(file_path)
     _LOG.debug("bucket_name=%s, file_path=%s", bucket_name, file_path)
     # pylint: disable=no-member
@@ -320,7 +344,7 @@ def ls(file_path: str, profile: Optional[str] = None) -> List[str]:
 
 
 def get_last_modified(
-    s3_path: str, profile: Optional[str] = None
+    s3_path: str, aws_profile: Optional[str] = None
 ) -> datetime.datetime:
     """
     Get last modified date of a file on S3.
@@ -329,7 +353,7 @@ def get_last_modified(
         `s3://*****/data/kibot`
     :return: last modified date of the file
     """
-    s3 = _get_boto3_client(profile=profile)
+    s3 = _get_boto3_client(aws_profile=aws_profile)
     bucket_name, file_path = parse_path(s3_path)
     response = s3.head_object(Bucket=bucket_name, Key=file_path)
     date_time: datetime.datetime = response["LastModified"].replace(tzinfo=None)

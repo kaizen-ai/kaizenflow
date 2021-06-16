@@ -2,17 +2,22 @@
 Package with general pandas helpers.
 """
 
+# TODO(gp): Merge into helpers/pandas_helpers.py
+
 import collections
 import logging
+import os
 import types
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
+import botocore
 import numpy as np
 import pandas as pd
+import s3fs
 from tqdm.auto import tqdm
 
-import core.residualizer as res
 import helpers.dbg as dbg
+import helpers.s3 as hs3
 import helpers.printing as pri
 
 _LOG = logging.getLogger(__name__)
@@ -78,7 +83,7 @@ def _loop(
     i: int,
     ts: Union[int, pd.Timestamp, str],
     df: pd.DataFrame,
-    func: Union[Callable, res.PcaFactorComputer],
+    func: Callable,
     window: int,
     metadata: Optional[Dict[str, Any]],
     abort_on_error: bool,
@@ -146,7 +151,7 @@ def _loop(
 def df_rolling_apply(
     df: pd.DataFrame,
     window: int,
-    func: Union[Callable, res.PcaFactorComputer],
+    func: Callable,
     timestamps: Optional[pd.DatetimeIndex] = None,
     convert_to_df: bool = True,
     progress_bar: bool = False,
@@ -242,3 +247,42 @@ def df_rolling_apply(
     else:
         result = idx_to_df
     return result
+
+
+# #############################################################################
+
+
+def read_csv(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
+    """
+    Read a CSV file into a `pd.DataFrame` handling the S3 profile, if needed.
+    """
+    if hs3.is_s3_path(file_name):
+        # For S3 files we need to have a aws_profile.
+        dbg.dassert_in("aws_profile", kwargs)
+        aws_profile = kwargs.pop("aws_profile")
+        # TODO(gp): Is a file visible
+        dbg.dassert(
+            hs3.exists(file_name, aws_profile=aws_profile),
+            "S3 file '%s' not found for aws_profile '%s'",
+            file_name,
+            aws_profile,
+        )
+        # From https://stackoverflow.com/questions/62562945
+        aws_access_key_id, aws_secret_access_key, aws_region = hs3.get_aws_credentials(
+            aws_profile=aws_profile
+        )
+        # Horrible hack: for some reason S3FileSystem doesn't allow to pass
+        # `aws_region` but always use the env var.
+        old_value = os.environ["AWS_DEFAULT_REGION"]
+        os.environ["AWS_DEFAULT_REGION"] = aws_region
+        s3 = s3fs.core.S3FileSystem(anon=False, key=aws_access_key_id, secret=aws_secret_access_key)
+        file_name = s3.open(file_name)
+        os.environ["AWS_DEFAULT_REGION"] = old_value
+        _LOG.debug("S3 file_name=%s", file_name)
+    else:
+        dbg.dassert_not_in("aws_profile", kwargs)
+    _LOG.debug("file_name=%s", file_name)
+    _LOG.debug("args=%s", str(args))
+    _LOG.debug("kwargs=%s", str(kwargs))
+    df = pd.read_csv(file_name, *args, **kwargs)
+    return df

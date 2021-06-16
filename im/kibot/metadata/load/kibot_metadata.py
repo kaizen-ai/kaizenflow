@@ -9,6 +9,7 @@ import pandas as pd
 import pandas.tseries.offsets as ptoffs
 from tqdm.autonotebook import tqdm
 
+import core.pandas_helpers as pdhelp
 import helpers.dbg as dbg
 import helpers.io_ as hio
 import im.common.data.types as icdtyp
@@ -541,7 +542,8 @@ class FuturesContractLifetimes:
         for symbol in symbols:
             file_name = os.path.join(self._get_dir_name(), symbol + ".csv")
             dbg.dassert_exists(file_name)
-            df = pd.read_csv(file_name, index_col=0)
+            aws_profile = "am"
+            df = pdhelp.read_csv(file_name, aws_profile=aws_profile, index_col=0)
             dbg.dassert_eq(
                 df.columns.tolist(),
                 ["symbol", "contract", "start_date", "end_date"],

@@ -11,8 +11,9 @@ source /${ENV_NAME}/bin/activate
 # TODO(gp): Since we execute bash in eval we lose this config.
 set -o vi
 
+# We use ~/.aws to pass the credentials.
 # TODO(gp): -> set_aws_env_vars.sh
-source devops/docker_build/entrypoint/aws_credentials.sh
+#source devops/docker_build/entrypoint/aws_credentials.sh
 
 # TODO(gp): -> set_env_vars.sh
 source devops/docker_build/entrypoint/patch_environment_variables.sh
