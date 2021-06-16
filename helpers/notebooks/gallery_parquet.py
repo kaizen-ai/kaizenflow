@@ -157,23 +157,32 @@ print(df_to_str(df2))
 df2 = dataset.to_table(filter=ds.field("idx") < 3).to_pandas()
 print(df_to_str(df2))
 
+# %% [markdown]
+# ## Add year-month partitions
+
 # %%
+df = get_df()
 df["year"] = df.index.year
 df["month"] = df.index.month
 
-df.head()
+print(df_to_str(df))
 
 # %%
-table.schema
+table = pa.Table.from_pandas(df)
+
+print("table=\n%s" % table)
 
 # %%
 base = "."
-dir_name =  os.path.join(base, "parquet_dataset_partitioned3")
+dir_name =  os.path.join(base, "pq_partitioned2")
 os.system("rm -rf %s" % dir_name)
 
 pq.write_to_dataset(table,
                     dir_name,
                     partition_cols=['idx', "year", "month"])
+
+# %%
+# !ls $dir_name
 
 # %%
 # !ls $dir_name/idx=0/year=2000/month=1
@@ -186,44 +195,14 @@ dataset = ds.dataset(dir_name,
 
 print("\n".join(dataset.files))
 
-# %% [markdown]
-# ## Partition manually
-
-# %%
-from pyarrow.dataset import DirectoryPartitioning
-
-partitioning = DirectoryPartitioning(pa.schema([("year", pa.int16()), ("month", pa.int8()), ("day", pa.int8())]))
-print(partitioning.parse("/2009/11/3"))
-
-#partitioning.discover()
-
-# %% [markdown]
-# ## Read subset of columns for everything
-
 # %%
 # Read data back.
 dataset = ds.dataset(dir_name,
                      format="parquet",
                      partitioning="hive")
 
-print("\n".join(dataset.files))
-
-dataset.to_table(filter=ds.field('idx') == 2).to_pandas()
-
-# %% [markdown]
-# ## Read everything
-
-# %%
-# Read only one column.
-
-df2 = pq.read_table("example.pq", columns=["idx", "val1"])
-print(df2)
-
-df2 = df2.to_pandas()
-print(df2)
-
-# %%
-print(pa)
+df2 = dataset.to_table(filter=ds.field('idx') == 2).to_pandas()
+print(df_to_str(df2))
 
 # %%
 # We could scan manually and create the dirs manually if we don't want to add
@@ -238,6 +217,20 @@ for day, df_tmp in grouped:
     grouped2 = df_tmp.groupby("idx")
     for id_, df_tmp2 in grouped2:
         print(day, id_, df_tmp2)
+
+# %% [markdown]
+# ## Partition manually
+
+# %%
+from pyarrow.dataset import DirectoryPartitioning
+
+partitioning = DirectoryPartitioning(pa.schema([("year", pa.int16()), ("month", pa.int8()), ("day", pa.int8())]))
+print(partitioning.parse("/2009/11/3"))
+
+#partitioning.discover()
+
+# %% [markdown]
+# ## Read subset of columns for everything
 
 # %%
 import pyarrow.dataset as ds
