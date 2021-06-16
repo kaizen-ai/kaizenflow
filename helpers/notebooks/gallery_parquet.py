@@ -30,6 +30,7 @@ import pyarrow.dataset as ds
 import numpy as np
 
 import helpers.dbg as dbg
+import helpers.io_ as hio
 
 dbg.init_logger(verbosity=logging.INFO)
 _LOG = logging.getLogger(__name__)
@@ -211,12 +212,67 @@ base = "."
 dir_name =  os.path.join(base, "parquet_dataset_partitioned2")
 os.system("rm -rf %s" % dir_name)
 
-grouped = df.groupby(lambda x: x.day)
-for day, df_tmp in grouped:
-    print(day, df_tmp)
-    grouped2 = df_tmp.groupby("idx")
-    for id_, df_tmp2 in grouped2:
-        print(day, id_, df_tmp2)
+schemas = []
+
+schema = pa.Table.from_pandas(df).schema
+print(schema)
+#assert 0
+# idx: int64
+# instr: string
+# val1: int64
+# val2: int64
+# year: int64
+# month: int64
+
+#grouped = df.groupby(lambda x: x.day)
+group_by_idx = df.groupby("idx")
+for idx, df_tmp in group_by_idx:
+    _LOG.debug("idx=%s -> df.shape=%s", idx, str(df_tmp.shape))
+    #
+    group_by_year = df_tmp.groupby(lambda x: x.year)
+    for year, df_tmp2 in group_by_year:
+        _LOG.debug("year=%s -> df.shape=%s", year, str(df_tmp2.shape))
+        #
+        group_by_month = df_tmp2.groupby(lambda x: x.month)
+        for month, df_tmp3 in group_by_month:
+            _LOG.debug("month=%s -> df.shape=%s", month, str(df_tmp3.shape))
+            #file_name = "df_in_one_file.pq"
+            #pq.write_table(table, file_name)
+            # /app/data/idx=0/year=2000/month=1/02e3265d515e4fb88ebe1a72a405fc05.parquet
+            subdir_name = os.path.join(dir_name, f"idx={idx}", f"year={year}", f"month={month}")
+            table = pa.Table.from_pandas(df_tmp3, schema=schema)
+            schemas.append(table.schema)
+            #print(df_tmp3)
+            #print(table.schema)
+#             pq.write_to_dataset(table,
+#                     subdir_name, schema=schema)
+            file_name = os.path.join(subdir_name, "df_out.pq")
+            hio.create_enclosing_dir(file_name)
+            pq.write_table(table, file_name)
+
+# %%
+schemas[0] == schemas[4]
+
+# %%
+schemas
+
+# %%
+
+# %%
+# !ls $dir_name/idx=0/year=2000/month=1
+
+# %%
+# Read data back.
+# https://github.com/dask/dask/issues/4194
+#src_dir = f"{dir_name}/idx=0/year=2000/month=1"
+src_dir = f"{dir_name}/idx=0/year=2000"
+dataset = ds.dataset(src_dir,
+                     format="parquet",
+                     partitioning="hive")
+
+df2 = dataset.to_table().to_pandas()
+#print(df_to_str(df2))
+print("\n".join(dataset.files))
 
 # %% [markdown]
 # ## Partition manually
