@@ -344,8 +344,10 @@ def compute_twap_vwap(
     #  (e.g., Kibot).
     # dbg.dassert(df.index.freq)
     dbg.dassert_in(price_col, df.columns)
-    price = df[price_col]
     dbg.dassert_in(volume_col, df.columns)
+    # Drop NaNs in relevant columns.
+    df = df[[price_col, volume_col]].dropna()
+    price = df[price_col]
     volume = df[volume_col]
     # Weight price according to volume.
     volume_weighted_price = price.multiply(volume)
