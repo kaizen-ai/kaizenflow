@@ -554,6 +554,7 @@ class Test_compute_twap_vwap1(hut.TestCase):
         """
         Compute VWAP/TWAP at 5 min frequency on 1 min data.
         """
+        # TODO(*): Put the relevant data close to the test.
         df = self._get_df_with_nans()
         rule = "5T"
         df_out = self._helper(df, rule)
@@ -561,13 +562,13 @@ class Test_compute_twap_vwap1(hut.TestCase):
         act = self._compute_actual_output(df_out)
         exp = r"""
         df_out
-                                  vwap       twap
+                                  vwap     twap
         datetime
-        2016-01-04 09:30:00        NaN        NaN
-        2016-01-04 09:35:00  95.069539  95.040000
-        2016-01-04 09:40:00  77.787865  95.833333
-        2016-01-04 09:45:00        NaN        NaN
-        2016-01-04 09:50:00  95.563357  95.562500
+        2016-01-04 09:30:00        NaN      NaN
+        2016-01-04 09:35:00  95.069539  95.0550
+        2016-01-04 09:40:00  96.008590  96.0100
+        2016-01-04 09:45:00        NaN      NaN
+        2016-01-04 09:50:00  95.563357  95.5625
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 

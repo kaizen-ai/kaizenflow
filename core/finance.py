@@ -345,10 +345,13 @@ def compute_twap_vwap(
     # dbg.dassert(df.index.freq)
     dbg.dassert_in(price_col, df.columns)
     dbg.dassert_in(volume_col, df.columns)
-    # Drop NaNs in relevant columns.
-    df = df[[price_col, volume_col]].dropna()
+    # Only use rows where both price and volume are non-NaN.
+    non_nan_idx = df[[price_col, volume_col]].dropna().index
+    nan_idx = df.index.difference(non_nan_idx)
     price = df[price_col]
+    price.loc[nan_idx] = np.nan
     volume = df[volume_col]
+    volume.loc[nan_idx] = np.nan
     # Weight price according to volume.
     volume_weighted_price = price.multiply(volume)
     # Resample using `rule`.
@@ -368,7 +371,8 @@ def compute_twap_vwap(
     # Make sure columns are not overwritten by the new ones.
     dbg.dassert_not_in(vwap.name, df.columns)
     dbg.dassert_not_in(twap.name, df.columns)
-    return pd.concat([vwap, twap], axis=1)
+    df_out = pd.concat([vwap, twap], axis=1)
+    return df_out
 
 
 def compute_ret_0(
