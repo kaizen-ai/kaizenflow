@@ -1319,7 +1319,7 @@ def get_trend_residual_decomp(
 
 def get_swt(
     sig: Union[pd.DataFrame, pd.Series],
-    wavelet: str,
+    wavelet: Optional[str] = None,
     depth: Optional[int] = None,
     timing_mode: Optional[str] = None,
     output_mode: Optional[str] = None,
@@ -1361,6 +1361,7 @@ def get_swt(
     :return: see `output_mode`
     """
     # Choice of wavelet may significantly impact results.
+    wavelet = wavelet or "haar"
     _LOG.debug("wavelet=`%s`", wavelet)
     if isinstance(sig, pd.DataFrame):
         dbg.dassert_eq(
@@ -1505,6 +1506,29 @@ def _reindex_by_knowledge_time(
     :level: wavelet level
     """
     return srs.shift(width * 2 ** (level - 1) - width // 2)
+
+
+def compute_swt_std(
+    sig: Union[pd.DataFrame, pd.Series],
+    wavelet: Optional[str] = None,
+    depth: Optional[int] = None,
+    timing_mode: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Get swt std using levels up to `depth`.
+
+    Params as in `get_swt()`.
+    """
+    df = get_swt(
+        sig,
+        wavelet=wavelet,
+        depth=depth,
+        timing_mode=timing_mode,
+        output_mode="detail",
+    )
+    srs = np.sqrt(np.square(df).sum(axis=1, skipna=False))
+    srs.name = "swt_std"
+    return srs.to_frame()
 
 
 def get_dyadic_zscored(
