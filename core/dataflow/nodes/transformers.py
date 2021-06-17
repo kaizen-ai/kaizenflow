@@ -123,7 +123,7 @@ class ColumnTransformer(cdnb.Transformer, cdnb.ColModeMixin):
         df = self._apply_col_mode(
             df_in,
             df,
-            cols=df_in.columns.tolist(),
+            cols=self._fit_cols,
             col_rename_func=self._col_rename_func,
             col_mode=self._col_mode,
         )
