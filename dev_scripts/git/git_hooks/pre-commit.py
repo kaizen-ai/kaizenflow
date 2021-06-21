@@ -1,19 +1,35 @@
 #!/usr/bin/env python
 
 """
-This is a git commit-hook which can be used to check if huge files where
-accidentally added to the staging area and are about to be committed.
+This is a git commit-hook used to check if:
+1) if we are committing to `master` directly
+2) if the author / email was set properly
+3) files in the staging area larger than `max_file_size` variable
 
-If there is a file which is bigger then the given "max_file_size"-
-variable, the script will exit non-zero and abort the commit.
+- In case of violations the script will exit non-zero and abort the commit.
 """
+
+# TODO(gp): Check these hooks
+# https://github.com/pre-commit/pre-commit-hooks/tree/master/pre_commit_hooks
+# https://github.com/pre-commit/pre-commit-hooks/blob/master/pre_commit_hooks/check_ast.py
+# https://github.com/pre-commit/pre-commit-hooks/blob/master/pre_commit_hooks/check_added_large_files.py
+# https://github.com/pre-commit/pre-commit-hooks/blob/master/pre_commit_hooks/check_merge_conflict.py
+# https://code-maven.com/enforcing-commit-message-format-in-git
 
 import os
 import subprocess
 import sys
 
 
-def sizeof_fmt(num):
+def _system_to_string(cmd):
+    text = subprocess.check_output(
+            cmd,
+        stderr=subprocess.STDOUT,
+    ).decode("utf-8")
+    return txt
+
+
+def _sizeof_fmt(num):
     """
     This function will return a human-readable filesize-string like "3.5 MB"
     for it's given 'num'-parameter.
@@ -26,7 +42,7 @@ def sizeof_fmt(num):
         num /= 1024.0
 
 
-def _main():
+def _check_file_size():
     # The maximum file-size in KB (= 1024 byte) for a file to be committed:
     max_file_size = 512
     # The path to the git-binary:
@@ -37,11 +53,9 @@ def _main():
         )
         # Check all files in the staging-area, i.e., everything but un-staged files.
         # TODO(gp): Check only staged files.
-        text = subprocess.check_output(
-            [git_binary_path, "status", "--porcelain", "-uno"],
-            stderr=subprocess.STDOUT,
-        ).decode("utf-8")
-        file_list = text.splitlines()
+        cmd = [git_binary_path, "status", "--porcelain", "-uno"]
+        txt = system_to_string(cmd)
+        file_list = txt.splitlines()
         print(file_list)
         # Check all files:
         for file_s in file_list:
@@ -52,7 +66,7 @@ def _main():
                     print(
                         (
                             "'" + file_s[3:] + "' is too huge to be commited!",
-                            "(" + sizeof_fmt(stat.st_size) + ")",
+                            "(" + _sizeof_fmt(stat.st_size) + ")",
                         )
                     )
                     sys.exit(1)
@@ -65,15 +79,21 @@ def _main():
         print("Oops...")
         sys.exit(12)
 
-    # https://github.com/pre-commit/pre-commit-hooks/tree/master/pre_commit_hooks
-    # https://github.com/pre-commit/pre-commit-hooks/blob/master/pre_commit_hooks/check_ast.py
-    # https://github.com/pre-commit/pre-commit-hooks/blob/master/pre_commit_hooks/check_added_large_files.py
-    # https://github.com/pre-commit/pre-commit-hooks/blob/master/pre_commit_hooks/check_merge_conflict.py
+# #############################################################################
 
-    # https://code-maven.com/enforcing-commit-message-format-in-git
+
+def _check_author():
+    cmd = [git_binary_path, "var", "author"]
+    txt = system_to_string(cmd)
+    print(txt)
+
+#!/bin/sh
+#AUTHORINFO=$(git var GIT_AUTHOR_IDENT) || exit 1
+#NAME=$(printf '%s\n' "${AUTHORINFO}" | sed -n 's/^\(.*\) <.*$/\1/p')
+#EMAIL=$(printf '%s\n' "${AUTHORINFO}" | sed -n 's/^.* <\(.*\)> .*$/\1/p')
 
 
 if __name__ == "__main__":
-    print("git pre-commit hook ...")
-    # _main()
-    sys.exit(0)
+    print("Running git pre-commit hook ...")
+    _check_author()
+    sys.exit(-1)
