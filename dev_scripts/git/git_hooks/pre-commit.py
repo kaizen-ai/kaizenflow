@@ -87,6 +87,7 @@ def _check_author():
     txt = system_to_string(cmd)
     print(txt)
 
+
 #!/bin/sh
 #AUTHORINFO=$(git var GIT_AUTHOR_IDENT) || exit 1
 #NAME=$(printf '%s\n' "${AUTHORINFO}" | sed -n 's/^\(.*\) <.*$/\1/p')
@@ -97,3 +98,4 @@ if __name__ == "__main__":
     print("Running git pre-commit hook ...")
     _check_author()
     sys.exit(-1)
+    assert 0
