@@ -28,6 +28,9 @@ _LOG = logging.getLogger(__name__)
 
 _HOOKS = ["pre-commit", "commit-msg"]
 
+# > git rev-parse --git-path hooks
+# /Users/saggese/src/lemonade2/.git/modules/amp/hooks
+
 
 def _main():
     parser = argparse.ArgumentParser(
