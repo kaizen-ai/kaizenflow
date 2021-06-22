@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 """
-This is a git commit-hook used to check if: 1) if we are committing to `master`
-directly 2) if the author / email was set properly 3) files in the staging area
-larger than `_MAX_FILE_SIZE_IN_KB` variable.
+This is a git commit-hook used to check if:
+- if we are committing to `master` directly
+- if the author / email was set properly
+- files in the staging area larger than `_MAX_FILE_SIZE_IN_KB` variable.
 
 - In case of violations the script will exit non-zero and abort the commit.
 """
