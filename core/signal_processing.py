@@ -1531,6 +1531,29 @@ def compute_swt_std(
     return srs.to_frame()
 
 
+def compute_swt_sum(
+    sig: Union[pd.DataFrame, pd.Series],
+    wavelet: Optional[str] = None,
+    depth: Optional[int] = None,
+    timing_mode: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Get swt hf using levels up to `depth`.
+
+    Params as in `get_swt()`.
+    """
+    df = get_swt(
+        sig,
+        wavelet=wavelet,
+        depth=depth,
+        timing_mode=timing_mode,
+        output_mode="detail",
+    )
+    srs = -1 * df.sum(axis=1, skipna=False)
+    srs.name = "swt_sum"
+    return srs.to_frame()
+
+
 def get_dyadic_zscored(
     sig: pd.Series, demean: bool = False, **kwargs: Any
 ) -> pd.DataFrame:
