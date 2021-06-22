@@ -210,6 +210,35 @@ class Test_dassert_misc1(hut.TestCase):
             dbg.dassert_no_duplicates(a)
         self.check_string(str(cm.exception))
 
+    # dassert_is_sorted
+
+    def test_is_sorted1(self) -> None:
+        a = [1, 2, 3]
+        dbg.dassert_is_sorted(a)
+
+    def test_is_sorted2(self) -> None:
+        with self.assertRaises(AssertionError) as cm:
+            a = [1, 2, 4, 3]
+            dbg.dassert_is_sorted(a)
+        self.check_string(str(cm.exception))
+
+    def test_is_sorted3(self) -> None:
+        """
+        Test an array that is sorted descending.
+        """
+        a = [3, 2, 2]
+        dbg.dassert_is_sorted(a, sort_kwargs={"reverse": True})
+
+    def test_is_sorted4(self) -> None:
+        """
+        Test an array that is not sorted descending.
+        """
+        with self.assertRaises(AssertionError) as cm:
+            a = [1, 2, 4, 3]
+            sort_kwargs={"reverse": True}
+            dbg.dassert_is_sorted(a, sort_kwargs=sort_kwargs)
+        self.check_string(str(cm.exception))
+
     # dassert_eq_all
 
     def test_eq_all1(self) -> None:
