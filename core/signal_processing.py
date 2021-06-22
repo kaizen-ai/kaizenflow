@@ -1538,7 +1538,7 @@ def compute_swt_sum(
     timing_mode: Optional[str] = None,
 ) -> pd.DataFrame:
     """
-    Get swt hf using levels up to `depth`.
+    Get swt coeffcient sums using levels up to `depth`.
 
     Params as in `get_swt()`.
     """
@@ -1605,8 +1605,11 @@ def resample(
     if "label" not in resample_kwargs:
         resample_kwargs["label"] = "right"
     # Execute resampling with specified kwargs.
-    _LOG.debug("Resampling data with size=%s using kwargs='%s'", str(data.size),
-               str(resample_kwargs))
+    _LOG.debug(
+        "Resampling data with size=%s using kwargs='%s'",
+        str(data.size),
+        str(resample_kwargs),
+    )
     resampled_data = data.resample(**resample_kwargs)
     _LOG.debug("resampled_data.size=%s", str(resampled_data.size))
     return resampled_data
