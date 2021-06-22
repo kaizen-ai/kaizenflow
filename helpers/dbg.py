@@ -281,7 +281,7 @@ def dassert_type_in(
 
 
 def dassert_isinstance(
-    val1: Any, val2: type, msg: Optional[str] = None, *args: Any
+    val1: Any, val2: Union[type, Iterable[type]], msg: Optional[str] = None, *args: Any
 ) -> None:
     cond = isinstance(val1, val2)
     if not cond:
@@ -355,6 +355,23 @@ def dassert_not_intersection(
 def dassert_no_duplicates(
     val1: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
+    cond = len(set(val1)) == len(val1)
+    if not cond:
+        # Count the occurrences of each element of the seq.
+        v_to_num = [(v, val1.count(v)) for v in set(val1)]
+        # Build list of elems with duplicates.
+        dups = [v for v, n in v_to_num if n > 1]
+        txt = []
+        txt.append("val1=" + pprint.pformat(val1))
+        txt.append("has duplicates")
+        txt.append(",".join(map(str, dups)))
+        _dfatal(txt, msg, *args)
+
+
+def dassert_is_sorted(
+    val1: Union[list, tuple], msg: Optional[str] = None, *args: Any
+) -> None:
+    dbg.dassert_isinstance()
     cond = len(set(val1)) == len(val1)
     if not cond:
         # Count the occurrences of each element of the seq.

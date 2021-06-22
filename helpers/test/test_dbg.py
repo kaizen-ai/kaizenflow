@@ -113,43 +113,57 @@ class Test_dassert_eq1(hut.TestCase):
 
 # TODO(gp): Break it in piece.
 class Test_dassert_misc1(hut.TestCase):
-    def test1(self) -> None:
+
+    # dassert_in
+
+    def test_in1(self) -> None:
         dbg.dassert_in("a", "abc")
 
-    def test2(self) -> None:
+    def test_in2(self) -> None:
         with self.assertRaises(AssertionError) as cm:
             dbg.dassert_in("a", "xyz".split())
         self.check_string(str(cm.exception))
 
     # dassert_is
 
-    def test3(self) -> None:
+    def test_is1(self) -> None:
         a = None
         dbg.dassert_is(a, None)
 
-    def test4(self) -> None:
+    def test_is2(self) -> None:
         with self.assertRaises(AssertionError) as cm:
             dbg.dassert_is("a", None)
         self.check_string(str(cm.exception))
 
     # dassert_isinstance
 
-    def test5(self) -> None:
+    def test_is_instance1(self) -> None:
         dbg.dassert_isinstance("a", str)
 
-    def test6(self) -> None:
+    def test_is_instance2(self) -> None:
         with self.assertRaises(AssertionError) as cm:
             dbg.dassert_isinstance("a", int)
         self.check_string(str(cm.exception))
 
+    def test_is_instance3(self) -> None:
+        dbg.dassert_isinstance("a", (str, int))
+
+    def test_is_instance4(self) -> None:
+        dbg.dassert_isinstance(5.0, (float, int))
+
+    def test_is_instance5(self) -> None:
+        with self.assertRaises(AssertionError) as cm:
+            dbg.dassert_isinstance("a", (float, int))
+        self.check_string(str(cm.exception))
+
     # dassert_set_eq
 
-    def test7(self) -> None:
+    def test_set_eq1(self) -> None:
         a = [1, 2, 3]
         b = [2, 3, 1]
         dbg.dassert_set_eq(a, b)
 
-    def test8(self) -> None:
+    def test_set_eq2(self) -> None:
         with self.assertRaises(AssertionError) as cm:
             a = [1, 2, 3]
             b = [2, 2, 1]
@@ -158,12 +172,12 @@ class Test_dassert_misc1(hut.TestCase):
 
     # dassert_is_subset
 
-    def test9(self) -> None:
+    def test_is_subset1(self) -> None:
         a = [1, 2]
         b = [2, 1, 3]
         dbg.dassert_is_subset(a, b)
 
-    def test10(self) -> None:
+    def test_is_subset2(self) -> None:
         with self.assertRaises(AssertionError) as cm:
             a = [1, 2, 3]
             b = [4, 2, 1]
@@ -172,12 +186,12 @@ class Test_dassert_misc1(hut.TestCase):
 
     # dassert_not_intersection
 
-    def test11(self) -> None:
+    def test_not_intersection1(self) -> None:
         a = [1, 2, 3]
         b = [4, 5]
         dbg.dassert_not_intersection(a, b)
 
-    def test12(self) -> None:
+    def test_not_intersection2(self) -> None:
         with self.assertRaises(AssertionError) as cm:
             a = [1, 2, 3]
             b = [4, 2, 1]
@@ -186,11 +200,11 @@ class Test_dassert_misc1(hut.TestCase):
 
     # dassert_no_duplicates
 
-    def test13(self) -> None:
+    def test_no_duplicates1(self) -> None:
         a = [1, 2, 3]
         dbg.dassert_no_duplicates(a)
 
-    def test14(self) -> None:
+    def test_no_duplicates2(self) -> None:
         with self.assertRaises(AssertionError) as cm:
             a = [1, 3, 3]
             dbg.dassert_no_duplicates(a)
@@ -198,12 +212,12 @@ class Test_dassert_misc1(hut.TestCase):
 
     # dassert_eq_all
 
-    def test15(self) -> None:
+    def test_eq_all1(self) -> None:
         a = [1, 2, 3]
         b = [1, 2, 3]
         dbg.dassert_eq_all(a, b)
 
-    def test16(self) -> None:
+    def test_eq_all2(self) -> None:
         with self.assertRaises(AssertionError) as cm:
             a = [1, 2, 3]
             b = [1, 2, 4]
