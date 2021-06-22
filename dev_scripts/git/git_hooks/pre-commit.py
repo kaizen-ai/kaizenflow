@@ -19,7 +19,7 @@ import logging
 import os
 import subprocess
 import sys
-from typing import Tuple
+from typing import List, Tuple
 
 _LOG = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ _MAX_FILE_SIZE_IN_KB = 512
 
 def _system_to_string(
     cmd: str, abort_on_error: bool = True, verbose: bool = False
-    ) -> Tuple[int, str]:
+) -> Tuple[int, str]:
     assert isinstance(cmd, str), "Type of '%s' is %s" % (str(cmd), type(cmd))
     if verbose:
         print(f"> {cmd}")
