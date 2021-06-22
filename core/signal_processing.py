@@ -1531,6 +1531,29 @@ def compute_swt_std(
     return srs.to_frame()
 
 
+def compute_swt_sum(
+    sig: Union[pd.DataFrame, pd.Series],
+    wavelet: Optional[str] = None,
+    depth: Optional[int] = None,
+    timing_mode: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Get swt coeffcient sums using levels up to `depth`.
+
+    Params as in `get_swt()`.
+    """
+    df = get_swt(
+        sig,
+        wavelet=wavelet,
+        depth=depth,
+        timing_mode=timing_mode,
+        output_mode="detail",
+    )
+    srs = -1 * df.sum(axis=1, skipna=False)
+    srs.name = "swt_sum"
+    return srs.to_frame()
+
+
 def get_dyadic_zscored(
     sig: pd.Series, demean: bool = False, **kwargs: Any
 ) -> pd.DataFrame:
@@ -1582,8 +1605,11 @@ def resample(
     if "label" not in resample_kwargs:
         resample_kwargs["label"] = "right"
     # Execute resampling with specified kwargs.
-    _LOG.debug("Resampling data with size=%s using kwargs='%s'", str(data.size),
-               str(resample_kwargs))
+    _LOG.debug(
+        "Resampling data with size=%s using kwargs='%s'",
+        str(data.size),
+        str(resample_kwargs),
+    )
     resampled_data = data.resample(**resample_kwargs)
     _LOG.debug("resampled_data.size=%s", str(resampled_data.size))
     return resampled_data
