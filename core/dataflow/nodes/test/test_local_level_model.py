@@ -1,4 +1,5 @@
 import logging
+
 import pandas as pd
 
 import core.artificial_signal_generators as casgen
@@ -6,6 +7,7 @@ import core.dataflow.nodes.local_level_model as cdnllm
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
+
 
 class TestLocalLevelModel(hut.TestCase):
     def test1(self) -> None:

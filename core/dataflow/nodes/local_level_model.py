@@ -8,7 +8,6 @@ import core.dataflow.nodes.base as cdnb
 import core.dataflow.utils as cdu
 import core.signal_processing as csigna
 import core.statistics as cstati
-
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -46,7 +45,9 @@ class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=False)
 
-    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool) -> Dict[str, pd.DataFrame]:
+    def _fit_predict_helper(
+        self, df_in: pd.DataFrame, fit: bool
+    ) -> Dict[str, pd.DataFrame]:
         col = cdu.convert_to_list(self._col)
         dbg.dassert_eq(len(col), 1)
         col = col[0]
@@ -71,17 +72,14 @@ class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         info["tau_from_input"] = tau
         info["tau_for_ema"] = self._tau
         df_out = self._apply_col_mode(
-            df_in,
-            sma,
-            cols=[col],
-            col_mode=self._col_mode
+            df_in, sma, cols=[col], col_mode=self._col_mode
         )
         method = "fit" if fit else "predict"
         self._set_info(method, info)
         return {"df_out": df_out}
 
     def _handle_nans(
-            self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
     ) -> None:
         if self._nan_mode == "raise":
             if idx.shape[0] != non_nan_idx.shape[0]:

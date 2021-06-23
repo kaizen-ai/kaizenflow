@@ -294,8 +294,17 @@ def compute_local_level_model_stats(
         prefix + "snr",
         prefix + "kalman_gain",
         prefix + "com",
-        ]
-    result_values = [gamma0, gamma1, var_epsilon, var_eta, rho1, snr, kalman_gain, com]
+    ]
+    result_values = [
+        gamma0,
+        gamma1,
+        var_epsilon,
+        var_eta,
+        rho1,
+        snr,
+        kalman_gain,
+        com,
+    ]
     result = pd.Series(data=result_values, index=result_index, name=srs.name)
     return result
 
