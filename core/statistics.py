@@ -260,7 +260,10 @@ def compute_local_level_model_stats(
        y_t = \mu_t + \epsilon_t
        \mu_{t + 1} = \mu_t + \eta_t
 
-    This is equivalent to modeling `srs` of {y_t} as ARIMA(0,1,1).
+    This is equivalent to modeling `srs` of {y_t} as a random walk + noise at
+    steady-state, or as ARIMA(0,1,1).
+
+    See Harvey, Section 4.1.2, page 175.
     """
     prefix = prefix or ""
     dbg.dassert_isinstance(srs, pd.Series)
