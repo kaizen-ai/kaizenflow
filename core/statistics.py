@@ -264,6 +264,8 @@ def compute_local_level_model_stats(
     gamma1 = srs.multiply(srs.shift(1)).mean()
     if gamma1 > 0:
         _LOG.warning(f"gamma1=`{gamma1}` should be negative if a local level model is appropriate.")
+    var_eps = -1 * gamma1
+    var_eta = gamma0 - 2 * var_eps
     rho1 = gamma1 / gamma0
     snr = -1 / rho1 - 2
     p = 0.5 * (np.sqrt(snr ** 2 + 4 * snr))
@@ -272,12 +274,14 @@ def compute_local_level_model_stats(
     result_index = [
         prefix + "gamma0",
         prefix + "gamma1",
+        prefix + "var_eps",
+        prefix + "var_eta",
         prefix + "rho1",
         prefix + "snr",
         prefix + "kalman_gain",
         prefix + "com",
         ]
-    result_values = [gamma0, gamma1, rho1, snr, kalman_gain, com]
+    result_values = [gamma0, gamma1, var_eps, var_eta, rho1, snr, kalman_gain, com]
     result = pd.Series(data=result_values, index=result_index, name=srs.name)
     return result
 
