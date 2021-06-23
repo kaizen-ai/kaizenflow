@@ -386,17 +386,17 @@ def skip_apply_func(
 # #############################################################################
 
 
-def _calculate_tau_from_com(com: float) -> Union[float, np.float]:
+def calculate_tau_from_com(com: float) -> Union[float, np.float]:
     """
     Transform center-of-mass (com) into tau parameter.
 
-    This is the function inverse of `_calculate_com_from_tau`.
+    This is the function inverse of `calculate_com_from_tau`.
     """
     dbg.dassert_lt(0, com)
     return 1.0 / np.log(1 + 1.0 / com)
 
 
-def _calculate_com_from_tau(tau: float) -> Union[float, np.float]:
+def calculate_com_from_tau(tau: float) -> Union[float, np.float]:
     """
     Transform tau parameter into center-of-mass (com).
 
@@ -455,7 +455,7 @@ def compute_ema(
     _LOG.debug("width = %0.2f", np.sqrt(depth) * tau)
     _LOG.debug("aspect ratio = %0.2f", np.sqrt(1 + 1.0 / depth))
     _LOG.debug("tau = %0.2f", tau)
-    com = _calculate_com_from_tau(tau)
+    com = calculate_com_from_tau(tau)
     _LOG.debug("com = %0.2f", com)
     signal_hat = signal.copy()
     for _ in range(0, depth):
@@ -1161,7 +1161,7 @@ def compute_ipca(
         msg="Dimension should be greater than or equal to the number of principal components.",
     )
     dbg.dassert_lt(0, tau)
-    com = _calculate_com_from_tau(tau)
+    com = calculate_com_from_tau(tau)
     alpha = 1.0 / (com + 1.0)
     _LOG.debug("com = %0.2f", com)
     _LOG.debug("alpha = %0.2f", alpha)
