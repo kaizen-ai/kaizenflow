@@ -263,7 +263,7 @@ def compute_local_level_model_stats(
     gamma0 = srs.multiply(srs).mean()
     gamma1 = srs.multiply(srs.shift(1)).mean()
     if gamma1 > 0:
-        LOG.warning(f"gamma1=`{gamma1}` should be negative if a local level model is appropriate.")
+        _LOG.warning(f"gamma1=`{gamma1}` should be negative if a local level model is appropriate.")
     rho1 = gamma1 / gamma0
     snr = -1 / rho1 - 2
     p = 0.5 * (np.sqrt(snr ** 2 + 4 * snr))
