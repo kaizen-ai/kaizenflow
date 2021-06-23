@@ -26,7 +26,7 @@ class TestLocalLevelModel(hut.TestCase):
         """
         Generate "random returns".
         """
-        arma_process = casgen.ArmaProcess([0], [0])
+        arma_process = casgen.ArmaProcess([0.0], [-0.1])
         date_range_kwargs = {"start": "2000-01-01", "periods": 40, "freq": "B"}
         date_range = pd.date_range(**date_range_kwargs)
         realization = arma_process.generate_sample(

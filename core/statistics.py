@@ -270,12 +270,12 @@ def compute_local_level_model_stats(
     diff = srs.diff()
     gamma0 = diff.multiply(diff).mean()
     gamma1 = diff.multiply(diff.shift(1)).mean()
-    if gamma1 > 0:
-        _LOG.warning(f"gamma1=`{gamma1}` should be negative if a local level model is appropriate.")
     # This is the variance of \epsilon.
     var_epsilon = -1 * gamma1
+    dbg.dassert_lte(0, var_epsilon)
     # This is the variance of \eta.
     var_eta = gamma0 - 2 * var_epsilon
+    dbg.dassert_lte(0, var_eta)
     # This is the first autocorrelation coefficient.
     rho1 = gamma1 / gamma0
     # The signal-to-noise ratio `snr` is commonly denoted `q`.
