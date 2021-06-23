@@ -10,7 +10,7 @@ import logging
 import os
 import pprint
 import sys
-from typing import Any, Iterable, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 from dateutil import tz
 
@@ -270,6 +270,7 @@ def dassert_type_is(
         _dfatal(txt, msg, *args)
 
 
+# TODO(gp): This is redundant with dassert_isinstance(..., (str, float)).
 def dassert_type_in(
     val1: Any, val2: Any, msg: Optional[str] = None, *args: Any
 ) -> None:
@@ -281,7 +282,7 @@ def dassert_type_in(
 
 
 def dassert_isinstance(
-    val1: Any, val2: type, msg: Optional[str] = None, *args: Any
+    val1: Any, val2: Union[type, Iterable[type]], msg: Optional[str] = None, *args: Any
 ) -> None:
     cond = isinstance(val1, val2)
     if not cond:
@@ -362,9 +363,25 @@ def dassert_no_duplicates(
         # Build list of elems with duplicates.
         dups = [v for v, n in v_to_num if n > 1]
         txt = []
-        txt.append("val1=" + pprint.pformat(val1))
+        txt.append("val1=\n" + pprint.pformat(val1))
         txt.append("has duplicates")
         txt.append(",".join(map(str, dups)))
+        _dfatal(txt, msg, *args)
+
+
+def dassert_is_sorted(
+        val1: Union[List, Tuple], sort_kwargs: Optional[Dict[Any, Any]] = None, msg: Optional[str] = None, *args: Any
+) -> None:
+    # TODO(gp): Extend for pd.Series using the proper method.
+    dassert_isinstance(val1, (list, tuple))
+    sort_kwargs = {} if sort_kwargs is None else sort_kwargs
+    sorted_val1 = sorted(val1, **sort_kwargs)
+    cond = sorted_val1 == val1
+    if not cond:
+        txt = []
+        txt.append("val1=\n" + pprint.pformat(val1))
+        txt.append("is not sorted")
+        txt.append("sorted(val1)=\n" + pprint.pformat(sorted_val1))
         _dfatal(txt, msg, *args)
 
 
