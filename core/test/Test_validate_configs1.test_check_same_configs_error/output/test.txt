@@ -1,7 +1,8 @@
 
 ################################################################################
 * Failed assertion *
-val1=['build_model:\n'
+val1=
+['build_model:\n'
  '  activation: sigmoid\n'
  'build_targets:\n'
  '  target_asset: Crude Oil\n'
