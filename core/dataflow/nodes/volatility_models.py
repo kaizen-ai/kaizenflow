@@ -228,23 +228,6 @@ class SmaModel(FitPredictNode, ColModeMixin):
         )
         return x_sma.values
 
-    # TODO(Paul): Consider omitting this (and relying on downstream
-    #     processing to e.g., adjust for number of hypotheses tested).
-    @staticmethod
-    def _model_perf(
-        y: pd.DataFrame, y_hat: pd.DataFrame
-    ) -> collections.OrderedDict:
-        info = collections.OrderedDict()
-        # info["hitrate"] = pip._compute_model_hitrate(self.model, x, y)
-        pnl_rets = y.multiply(
-            y_hat.rename(columns=lambda x: x.replace("_hat", ""))
-        )
-        info["pnl_rets"] = pnl_rets
-        info["sr"] = cstati.compute_annualized_sharpe_ratio(
-            csigna.resample(pnl_rets, rule="1B").sum()
-        )
-        return info
-
 
 class SingleColumnVolatilityModel(FitPredictNode):
     def __init__(
