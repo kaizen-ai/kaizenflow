@@ -51,7 +51,7 @@ def get_aws_credentials(
         env_var in os.environ and os.environ[env_var] != ""
         for env_var in env_vars
     )
-    if False and env_var_override:
+    if env_var_override:
         _LOG.warning("Using AWS credentials from env vars")
         # If one variable is defined all should be defined.
         for env_var in env_vars:
