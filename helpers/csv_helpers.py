@@ -146,6 +146,7 @@ def csv_mapreduce(
     out_dir: str,
     key_func: Callable,
     chunk_preprocessor: Union[None, Callable],
+        # TODO(gp): -> chunk_size
     chunksize: int = 1000000,
 ) -> None:
     """

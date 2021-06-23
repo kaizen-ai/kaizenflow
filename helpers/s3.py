@@ -12,6 +12,7 @@ import os
 from typing import Any, Dict, List, Optional, Tuple
 
 import boto3
+import s3fs
 
 import helpers.dbg as dbg
 import helpers.system_interaction as hsyste
@@ -164,6 +165,18 @@ def _get_boto3_client(aws_profile: Optional[str] = None) -> boto3.client:
         aws_secret_access_key=aws_secret_access_key,
         region_name=aws_region,
     )
+    return s3
+
+
+def get_s3fs(aws_profile: Optional[str] = None) -> str:
+    # From https://stackoverflow.com/questions/62562945
+    aws_access_key_id, aws_secret_access_key, aws_region = get_aws_credentials(
+        aws_profile=aws_profile
+    )
+    #_LOG.info("aws_region=%s", aws_region)
+    print("aws_region=%s", aws_region)
+    s3 = s3fs.core.S3FileSystem(anon=False, key=aws_access_key_id, secret=aws_secret_access_key,
+                                client_kwargs={'region_name': aws_region})
     return s3
 
 
