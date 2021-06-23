@@ -249,6 +249,39 @@ def compute_special_value_stats(
     return result
 
 
+def compute_local_level_model_stats(
+    srs: pd.Series,
+    prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Compute statistics assuming a steady-state local level model.
+
+    This is equivalent to modeling `srs` as ARIMA(0,1,1).
+    """
+    prefix = prefix or ""
+    dbg.dassert_isinstance(srs, pd.Series)
+    gamma0 = srs.multiply(srs).mean()
+    gamma1 = srs.multiply(srs.shift(1)).mean()
+    if gamma1 > 0:
+        LOG.warning(f"gamma1=`{gamma1}` should be negative if a local level model is appropriate.")
+    rho1 = gamma1 / gamma0
+    snr = -1 / rho1 - 2
+    p = 0.5 * (np.sqrt(snr ** 2 + 4 * snr))
+    kalman_gain = p / (p + 1)
+    com = 1 / kalman_gain - 1
+    result_index = [
+        prefix + "gamma0",
+        prefix + "gamma1",
+        prefix + "rho1",
+        prefix + "snr",
+        prefix + "kalman_gain",
+        prefix + "com",
+        ]
+    result_values = [gamma0, gamma1, rho1, snr, kalman_gain, com]
+    result = pd.Series(data=result_values, index=result_index, name=srs.name)
+    return result
+
+
 # #############################################################################
 # Sharpe ratio
 # #############################################################################
