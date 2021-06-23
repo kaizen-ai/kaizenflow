@@ -53,7 +53,8 @@ class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         srs = df_in[col]
         if self._nan_mode == "drop":
             srs = srs.dropna()
-        self._handle_nans(df_in.index, srs.index)
+        idx = df_in.index
+        self._handle_nans(idx, srs.index)
         # Calculate local-level model stats.
         stats = cstati.compute_local_level_model_stats(srs)
         com = stats["com"]
@@ -65,6 +66,7 @@ class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         sma = csigna.compute_smooth_moving_average(srs, tau=self._tau)
         sma.name = str(col) + "_ewma"
         sma = sma.to_frame()
+        sma = sma.reindex(idx)
         #
         info = collections.OrderedDict()
         info["stats"] = stats
