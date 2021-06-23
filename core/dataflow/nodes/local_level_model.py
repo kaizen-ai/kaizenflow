@@ -25,14 +25,13 @@ class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
     def __init__(
         self,
         nid: str,
-        col: _TO_LIST_MIXIN_TYPE,
+        cols: _TO_LIST_MIXIN_TYPE,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
         super().__init__(nid)
-        self._col = col
+        self._cols = cols
         self._col_mode = col_mode
-        dbg.dassert_eq(len(self._col), 1)
         if nan_mode is None:
             self._nan_mode = "raise"
         else:
@@ -48,9 +47,9 @@ class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
     def _fit_predict_helper(
         self, df_in: pd.DataFrame, fit: bool
     ) -> Dict[str, pd.DataFrame]:
-        col = cdu.convert_to_list(self._col)
-        dbg.dassert_eq(len(col), 1)
-        col = col[0]
+        cols = cdu.convert_to_list(self._cols)
+        dbg.dassert_eq(len(cols), 1, msg="`LocalLevelModel` only supports a single column.")
+        col = cols[0]
         srs = df_in[col]
         if self._nan_mode == "drop":
             srs = srs.dropna()

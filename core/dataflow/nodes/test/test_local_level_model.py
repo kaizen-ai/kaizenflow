@@ -16,7 +16,7 @@ class TestLocalLevelModel(hut.TestCase):
         # Generate node config.
         node = cdnllm.LocalLevelModel(
             "llm",
-            col=["close"],
+            cols=["close"],
             col_mode="merge_all",
         )
         #
