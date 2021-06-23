@@ -14,7 +14,7 @@ class TestLocalLevelModel(hut.TestCase):
         # Generate node config.
         node = cdnllm.LocalLevelModel(
             "llm",
-            col=["ret_0"],
+            col=["close"],
             col_mode="merge_all",
         )
         #
@@ -32,6 +32,7 @@ class TestLocalLevelModel(hut.TestCase):
         realization = arma_process.generate_sample(
             date_range_kwargs=date_range_kwargs, seed=10
         )
-        realization.name = "ret_0"
+        realization = realization.cumsum()
+        realization.name = "close"
         df = pd.DataFrame(index=date_range, data=realization)
         return df
