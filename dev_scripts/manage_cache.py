@@ -10,7 +10,7 @@ def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("positional", nargs=1, choices=["reset_cache"])
+    parser.add_argument("positional", nargs=1, choices=["info", "reset_cache"])
     prsr.add_verbosity_arg(parser)
     return parser
 
@@ -22,6 +22,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if action == "reset_cache":
         hcac.reset_cache("disk", tag=None)
         hcac.reset_cache("mem", tag=None)
+    elif action == "info":
     else:
         dbg.dfatal("Invalid action='%s'" % action)
 

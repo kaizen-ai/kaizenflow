@@ -1,7 +1,7 @@
 <!--ts-->
    * [Cache](#cache)
       * [How it works](#how-it-works)
-         * [File level](#file-level)
+         * [Disk level](#file-level)
          * [Memory level](#memory-level)
 
 
@@ -12,61 +12,79 @@
 ## How it works
 
 - `Cache` is provided as a decorator function `@hcac.cache` that may be used on
-  any function or regular class method.
+  any function or regular class method
+  
+- `Cache` works in code and in Python notebooks with `%autoreload`
+- `Cache` tracks changes in the source code of the wrapped function
+  - For performance reasons, it checks the code only one time unless the pointer to
+    the function is changed, e.g. in notebooks
 
 - By default, it uses two levels of caching:
   - `Memory` level
-  - `File` level
+  - `Disk` level
 
-- Whenever a call is being made to the wrapped function
-  - Firstly `Memory` level is being checked;
-  - If there's no hit, `File` level is checked;
-  - If there's no hit again, the wrapped function is called.
+- When a call is made to the wrapped function:
+  - Firstly `Memory` level is being checked
+  - If there's no hit in the `Memory`, `Disk` level is checked
+  - If there's no hit in `Disk` level, the wrapped function is called
+  - The result is then stored in both `Disk` and `Memory` levels
 
-- The result is then stored in both `File` and `Memory` levels.
+- `Cache` is equipped with a `get_last_cache_accessed()` method to understand if 
+  the call hit the cache and on which level
 
-- `Cache` is equipped with level tracing via `get_last_cache_accessed` method so
-  there is a way to understand if the call hit the cache and on which level.
+### Disk level
 
-- `Cache` works also in Python notebooks with `%autoreload`.
-- `Cache` traces source code of the wrapped function and tracks its changes
-  - For performance reasons, it checks the code only one time unless pointer to
-    the function is changed, e.g. in notebooks.
-
-### File level
-
-- `File` level is implemented via
-  [joblib.Memory](https://joblib.readthedocs.io/en/latest/generated/joblib.Memory.html).
+- `Disk` level is implemented via
+  [joblib.Memory](https://joblib.readthedocs.io/en/latest/generated/joblib.Memory.html)
 
 ### Memory level
 
 - Initially, the idea was to use
   [functools.lru_cache](https://docs.python.org/3/library/functools.html#functools.lru_cache)
-  for memory cache.
+  for memory cache
 
 - Pros:
 
-  1. Standard library implementation.
-  2. Quietly fast in-memory implementation.
+  1. Standard library implementation
+  2. Quietly fast in-memory implementation
 
 - Cons:
 
-  1. Only hashable arguments are supported.
-  2. No access to cache -- no ability to check if item is in cache or not.
-  3. Does not work properly in notebooks.
+  1. Only hashable arguments are supported
+  2. No access to cache -- no ability to check if item is in cache or not
+  3. Does not work properly in notebooks
 
-- Because Cons outweighed Pros, it was decided to implement `Memory` level as
+- Because Cons outweighed Pros, we decided to implement `Memory` level as
   [joblib.Memory](https://joblib.readthedocs.io/en/latest/generated/joblib.Memory.html)
-  but over [`tmpfs`](https://uk.wikipedia.org/wiki/Tmpfs).
-- Basically, reuse the same `File` level cache but over a RAM-based disk. This
-  implementation overcomes all listed Cons, albeit it is slightly slower.
+  but over [`tmpfs`](https://uk.wikipedia.org/wiki/Tmpfs)
+- In this way we reuse the same code for `Disk` level cache but over a RAM-based disk
+  - This implementation overcomes all the Cons listed aboeve, although it is
+    slightly slower than the pure `functools.lru_cache` approach
 
-### Global / Local Cache
+### Global cache
 
-- By default, all cached functions save their cache in the default "global" `tmp.cache...` folder.
+- By default, all cached functions save their cached values in the default "global"
+  cache
+- The cache is global in the sense that serves all the functions of a Git client,
+  yet it is unique per-user and per-client
+- In fact, it's stored in a folder `$GIT_ROOT/tmp.cache.{mem,disk}.[tag]`
+- This global cache is being managed via global functions named `*_global_cache`,
+  e.g., `set_global_cache()`
+  
+### Tagged global cache
 
-- This global cache is being managed via global functions via global functions named `*_global_cache`, e.g., `set_global_cache`.
+- A global cache can be specific of different applications (e.g., for unit tests vs
+  normal code)
+  - It is controlled through the `tag` parameter
+  - The global cache corresponds to `tag = None`
 
-- It is possible to create cache-specific functions (e.g., to share it across clients and users) using `disk_cache_directory` and / or `mem_cache_directory` parameters in decorator or in `Cached` class constructor.
+### Function-specific cache
 
-- If cache is set for the function, it can be managed with `.set_cache_directory()`, `.get_cache_directory()`, `.destroy_cache()` and `.clear_cache()` methods.
+- It is possible to create function-specific caches (e.g., to share the result of a
+  function across clients and users)
+- In this case the client needs to set `disk_cache_directory` and / or
+  `mem_cache_directory` parameters in the decorator or in the `Cached` class constructor
+- If cache is set for the function, it can be managed with `.set_cache_directory()`,
+`.get_cache_directory()`, `.destroy_cache()` and `.clear_cache()` methods.
+  
+

@@ -110,6 +110,7 @@ def _check_author() -> None:
 # #############################################################################
 
 
+# From helpers/introspection.py
 def _sizeof_fmt(num: float) -> str:
     """
     Return a human-readable string for a filesize (e.g., "3.5 MB").
