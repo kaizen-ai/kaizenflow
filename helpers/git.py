@@ -379,23 +379,46 @@ def get_repo_full_name_from_client(super_module: bool) -> str:
     return repo_name
 
 
+# /////////////////////////////////////////////////////////////////////////
+
+
+def _get_repo_config_code() -> str:
+    """
+    Return the text of the code stored in `repo_config.py`.
+    """
+    # TODO(gp): We should actually ask Git where the supermodule is.
+    file_name = "./repo_config.py"
+    dbg.dassert_file_exists(file_name)
+    code = hio.from_file(file_name)
+    return code
+
+
+def _decorate_with_host_name(dict_: Dict[str, str], host_name: str) -> Dict[str, str]:
+    res = {k: f"{host_name}/{v}" for k, v in dict_.iteritems()}
+    return res
+
+
 @functools.lru_cache()
-def _get_repo_short_to_full_name() -> Dict[str, str]:
+def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
     """
     Return the map from short name (e.g., "amp") to full name
     (e.g., "alphamatic/amp") using the information in `repo_config.py`
     """
+    # From short name to long name.
     repo_map = {
         "amp": "alphamatic/amp",
         "dev_tools": "alphamatic/dev_tools",
     }
+    if include_host_name:
+        host_name = "github.com"
+        repo_map = _decorate_with_host_name(repo_map, host_name)
     # Read the info from the current repo.
-    # TODO(gp): We should actually ask Git where the supermodule is.
-    file_name = "./repo_config.py"
-    dbg.dassert_file_exists(file_name)
-    txt = hio.from_file(file_name)
-    exec(txt, globals())
+    code = _get_repo_config_code()
+    exec(code, globals())
     current_repo_map = get_repo_map()
+    if include_host_name:
+        host_name = get_host_name()
+        current_repo_map = _decorate_with_host_name(current_repo_map, host_name)
     # Update the map.
     dbg.dassert_not_intersection(repo_map.keys(), current_repo_map.keys())
     repo_map.update(get_repo_map())
@@ -403,91 +426,76 @@ def _get_repo_short_to_full_name() -> Dict[str, str]:
     return repo_map
 
 
-@functools.lru_cache()
-def _get_repo_full_to_short_name() -> Dict[str, str]:
-    """
-    Return the map from full name ("alphamatic/amp") to short name (e.g.,
-    "amp").
-    """
-    # Get the reverse map.
-    repo_map = _get_repo_short_to_full_name()
-    inv_repo_map = {v: k for (k, v) in repo_map.items()}
-    return inv_repo_map
-
-
-# TODO(gp): Instead of `get_repo_full_name()` and `get_repo_short_name()` we should
-#  use only `get_repo_name(..., mode)`, passing `mode=full_name` or `mode=short_name`.
-def get_repo_full_name(short_name: str) -> str:
-    """
-    Return the full name of a Git repo based on its short name.
-
-    E.g., "amp" -> "alphamatic/amp"
-    """
-    repo_map = _get_repo_short_to_full_name()
-    dbg.dassert_in(short_name, repo_map, "Invalid short_name='%s'", short_name)
-    return repo_map[short_name]
-
-
-def get_repo_short_name(full_name: str) -> str:
-    """
-    Return the short name of a Git repo based on its full name.
-
-    E.g., "alphamatic/amp" -> "amp"
-    """
-    repo_map = _get_repo_full_to_short_name()
-    dbg.dassert_in(full_name, repo_map, "Invalid full_name='%s'", full_name)
-    return repo_map[full_name]
+# def get_repo_short_name(full_name: str) -> str:
+#     """
+#     Return the short name of a Git repo based on its full name.
+#
+#     E.g., "alphamatic/amp" -> "amp"
+#     """
+#     repo_map = _get_repo_full_to_short_name()
+#     dbg.dassert_in(full_name, repo_map, "Invalid full_name='%s'", full_name)
+#     return repo_map[full_name]
 
 
 # /////////////////////////////////////////////////////////////////////////
 
 
-def get_repo_name(name: str, in_mode: str) -> str:
+def get_complete_repo_map(in_mode: str) -> str:
     """
     Return the full / short name of a Git repo based on the alternative name.
 
     :param in_mode: the values `full_name` or `short_name` determine how to interpret
         `name`
     """
+    repo_map = _get_repo_short_to_full_name()
     if in_mode == "full_name":
-        ret = get_repo_short_name(name)
+        # Compute the reverse map.
+        repo_map = {v: k for (k, v) in repo_map.items()}
     elif in_mode == "short_name":
-        ret = get_repo_full_name(name)
+        pass
     else:
-        raise ValueError("Invalid mode='%s'" % in_mode)
+        raise ValueError("Invalid in_mode='%s'" % in_mode)
+    return repo_map
+
+
+def get_repo_name(name: str, in_mode: str) -> str:
+    """
+    Return the full/short name of a Git repo based on the other name.
+
+    :param in_mode: the values `full_name` or `short_name` determine how to interpret
+        `name`
+    """
+    repo_map = get_complate_repo_map(in_mode)
+    dbg.dassert_in(name, repo_map, "Invalid name='%s' for in_mode='%s'", full_name, in_mode)
+    ret = repo_map[name]
     return ret
 
 
-def get_all_repo_names(mode: str) -> List[str]:
+def get_all_repo_names(in_mode: str) -> List[str]:
     """
     Return the names (full or short depending on `mode`) of all the Git repos.
 
-    :param mode: if "full_name" return the full names (e.g., "alphamatic/amp")
+    :param in_mode: if "full_name" return the full names (e.g., "alphamatic/amp")
         if "short_name" return the short names (e.g., "amp")
     """
-    if mode == "full_name":
-        repo_map = _get_repo_short_to_full_name()
-    elif mode == "short_name":
-        repo_map = _get_repo_full_to_short_name()
-    else:
-        raise ValueError("Invalid mode='%s'" % mode)
+    repo_map = get_complete_repo_map(in_mode)
     return sorted(list(repo_map.values()))
 
 
-def get_task_prefix_from_repo_short_name(repo_short_name: str) -> str:
+def get_task_prefix_from_repo_short_name(short_name: str) -> str:
     """
     Return the task prefix for a repo (e.g., "amp" -> "AmpTask").
     """
-    if repo_short_name == "amp":
+    if short_name == "amp":
         prefix = "AmpTask"
-    elif repo_short_name == "dev_tools":
+    elif short_name == "dev_tools":
         prefix = "DevToolsTask"
     else:
         # We assume that we can build the prefix from the name (e.g., "lem" ->
         # "LemTask").
         # TODO(gp): A more general approach is to save this information inside
-        # `repo_config.py`.
-        prefix = repo_short_name.capitalize() + "Task"
+        #  `repo_config.py`.
+        prefix = short_name.capitalize() + "Task"
     return prefix
 
 
