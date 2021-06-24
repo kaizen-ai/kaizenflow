@@ -488,7 +488,7 @@ def git_create_branch(  # type: ignore
     ctx,
     branch_name="",
     issue_id=0,
-    repo="current",
+    repo_short_name="current",
     suffix="",
     only_branch_from_master=True,
 ):
@@ -506,7 +506,7 @@ def git_create_branch(  # type: ignore
         `LemTask169_Get_GH_actions`)
     :param issue_id: use the canonical name for the branch corresponding to that
         issue
-    :param repo: name of the GitHub repo_short_name that the `issue_id` belongs to
+    :param repo_short_name: name of the GitHub repo_short_name that the `issue_id` belongs to
         - "current" (default): the current repo_short_name
         - short name (e.g., "amp", "lem") of the branch
     :param suffix: suffix (e.g., "02") to add to the branch name when using issue_id
@@ -518,9 +518,12 @@ def git_create_branch(  # type: ignore
         dbg.dassert_eq(
             branch_name, "", "You can't specify both --issue and --branch_name"
         )
-        branch_name = _get_gh_issue_title(issue_id, repo)
+        branch_name = _get_gh_issue_title(issue_id, repo_short_name)
         _LOG.info(
-            "Issue %d in %s repo_short_name corresponds to '%s'", issue_id, repo, branch_name
+            "Issue %d in %s repo_short_name corresponds to '%s'",
+            issue_id,
+            repo_short_name,
+            branch_name,
         )
         if suffix != "":
             # Add the the suffix.
@@ -562,8 +565,8 @@ def git_create_patch(  # type: ignore
     ctx, mode="diff", modified=False, branch=False, last_commit=False, files=""
 ):
     """
-    Create a patch file for the entire repo_short_name client from the base revision. This
-    script accepts a list of files to package, if specified.
+    Create a patch file for the entire repo_short_name client from the base
+    revision. This script accepts a list of files to package, if specified.
 
     :param mode: what kind of patch to create
         - "diff": (default) creates a patch with the diff of the files
@@ -1403,7 +1406,9 @@ def docker_release_dev_image(  # type: ignore
     if push_to_repo:
         docker_push_dev_image(ctx)
     else:
-        _LOG.warning("Skipping pushing dev image to repo_short_name, as requested")
+        _LOG.warning(
+            "Skipping pushing dev image to repo_short_name, as requested"
+        )
     _LOG.info("==> SUCCESS <==")
 
 
@@ -2512,8 +2517,14 @@ def _get_repo_full_name_from_cmd(repo_short_name: str) -> str:
             ".", include_host_name=True
         )
     else:
-        repo_full_name_with_host = git.get_repo_name(repo_short_name, in_mode="short_name", include_host_name=True)
-    _LOG.debug("repo_short_name=%s -> repo_full_name_with_host=%s", repo_short_name, repo_full_name_with_host)
+        repo_full_name_with_host = git.get_repo_name(
+            repo_short_name, in_mode="short_name", include_host_name=True
+        )
+    _LOG.debug(
+        "repo_short_name=%s -> repo_full_name_with_host=%s",
+        repo_short_name,
+        repo_full_name_with_host,
+    )
     return repo_full_name_with_host
 
 
@@ -2528,7 +2539,9 @@ def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> str:
     # > (export NO_COLOR=1; gh issue view 1251 --json title )
     # {"title":"Update GH actions for amp"}
     dbg.dassert_lte(1, issue_id)
-    cmd = f"gh issue view {issue_id} --repo {repo_full_name_with_host} --json title"
+    cmd = (
+        f"gh issue view {issue_id} --repo {repo_full_name_with_host} --json title"
+    )
     _, txt = hsinte.system_to_string(cmd)
     _LOG.debug("txt=\n%s", txt)
     # Parse json.
@@ -2554,8 +2567,8 @@ def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> str:
 @task
 def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # type: ignore
     """
-    Print the title that corresponds to the given issue and repo_short_name. E.g.,
-    AmpTask1251_Update_GH_actions_for_amp.
+    Print the title that corresponds to the given issue and repo_short_name.
+    E.g., AmpTask1251_Update_GH_actions_for_amp.
 
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
@@ -2577,7 +2590,8 @@ def gh_create_pr(  # type: ignore
     ctx, body="", draft=True, repo_short_name="current", title=""
 ):
     """
-    Create a draft PR for the current branch in the corresponding repo_short_name.
+    Create a draft PR for the current branch in the corresponding
+    repo_short_name.
 
     :param body: the body of the PR
     :param draft: draft or ready-to-review PR
@@ -2598,7 +2612,7 @@ def gh_create_pr(  # type: ignore
     # TODO(gp): Use _to_single_line_cmd
     cmd = (
         "gh pr create"
-        + f" --repo {repo_full_name_with_host}"
+        + f" --repo_short_name {repo_full_name_with_host}"
         + (" --draft" if draft else "")
         + f' --title "{title}"'
         + f' --body "{body}"'

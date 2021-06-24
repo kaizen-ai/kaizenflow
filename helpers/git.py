@@ -9,7 +9,7 @@ import functools
 import logging
 import os
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Match, Optional, Tuple
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
@@ -321,6 +321,7 @@ def _parse_github_repo_name(repo_name: str) -> Tuple[str, str]:
         # Try tp parse the HTTPS format, e.g., `https://github.com/alphamatic/amp`
         m = re.match(r"^https://(\S+.com)/(\S+)$", repo_name)
     dbg.dassert(m, "Can't parse '%s'", repo_name)
+    m: Match[str]
     host_name = m.group(1)
     repo_name = m.group(2)
     _LOG.debug("host_name=%s repo_name=%s", host_name, repo_name)
@@ -392,7 +393,7 @@ def _get_repo_config_code() -> str:
     # TODO(gp): We should actually ask Git where the super-module is.
     file_name = "./repo_config.py"
     dbg.dassert_file_exists(file_name)
-    code = hio.from_file(file_name)
+    code: str = hio.from_file(file_name)
     return code
 
 
@@ -422,7 +423,8 @@ def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
         repo_map = _decorate_with_host_name(repo_map, host_name)
     # Read the info from the current repo.
     code = _get_repo_config_code()
-    exec(code, globals())
+    # Make the linter happy creating this symbol that comes from the `exec()`.
+    exec(code, globals())  # pylint: disable=exec-used
     current_repo_map = get_repo_map()
     if include_host_name:
         host_name = get_host_name()
@@ -437,7 +439,9 @@ def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
 # /////////////////////////////////////////////////////////////////////////
 
 
-def get_complete_repo_map(in_mode: str, include_host_name: bool = False) -> str:
+def get_complete_repo_map(
+    in_mode: str, include_host_name: bool = False
+) -> Dict[str, str]:
     """
     Return the full / short name of a Git repo based on the alternative name.
 
