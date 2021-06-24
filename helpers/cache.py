@@ -31,11 +31,11 @@ _LOG_LEVEL = logging.DEBUG
 # #############################################################################
 
 
-def get_cache_types() -> Tuple[str]:
+def get_cache_types() -> List[str]:
     """
     Return the types (aka levels) of the cache.
     """
-    return ("mem", "disk")
+    return ["mem", "disk"]
 
 
 def _check_valid_cache_type(cache_type: str) -> None:
@@ -80,7 +80,8 @@ _MEMORY_TMPFS_PATH = os.getenv(
 
 def get_cache_name(cache_type: str, tag: Optional[str] = None) -> str:
     """
-    Get the canonical cache name (e.g., "tmp.cache.mem.tag") for a type of cache.
+    Get the canonical cache name (e.g., "tmp.cache.mem.tag") for a type of
+    cache.
 
     :param cache_type: type of a cache
     :param tag: optional unique tag of the cache, empty by default
@@ -117,7 +118,7 @@ def get_cache_path(cache_type: str, tag: Optional[str] = None) -> str:
 
 
 def _create_cache_backend(
-        cache_type: str, tag: Optional[str] = None
+    cache_type: str, tag: Optional[str] = None
 ) -> joblib.Memory:
     """
     Create an object storing a cache.
@@ -265,7 +266,7 @@ class Cached:
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         # TODO(gp): Use helpers/timer.
-        perf_counter_start = None
+        perf_counter_start = 0.0
         if self._set_verbose_mode:
             perf_counter_start = time.perf_counter()
         # Execute the cached function.
@@ -287,7 +288,7 @@ class Cached:
         if self._set_verbose_mode:
             perf_counter = time.perf_counter() - perf_counter_start
             obj_size = hintro.get_size_in_bytes(obj)
-            obj_size_as_str = hintro.format_size(obj_size )
+            obj_size_as_str = hintro.format_size(obj_size)
             _LOG.info(
                 "Data for '%s' (size=%s) was retrieved from %s in %f sec",
                 self._func.__name__,
@@ -317,7 +318,8 @@ class Cached:
 
     def clear_cache(self, cache_type: Optional[str] = None) -> None:
         """
-        Clear all caches or a cache by type. Only works in function-specific case.
+        Clear all caches or a cache by type. Only works in function-specific
+        case.
 
         :param cache_type: type of a cache to clear, or `None` to clear all caches
         """
@@ -325,12 +327,12 @@ class Cached:
             # Clear both.
             self.clear_cache("mem")
             self.clear_cache("disk")
-            # dbg.assert_is_not(self._disk_cache_directory, None,
+            # dbg.dassert_is_not(self._disk_cache_directory, None,
             #         "Cannot clear the global disk cache")
             # disk_cache = self._get_cache("disk")
             # disk_cache.clear()
             # #
-            # dbg.assert_is_not(self._mem_cache_directory, None,
+            # dbg.dassert_is_not(self._mem_cache_directory, None,
             #                   "Cannot clear the global mem cache")
             # mem_cache = self._get_cache("mem")
             # mem_cache.clear()
@@ -340,9 +342,12 @@ class Cached:
             elif cache_type == "disk":
                 cache_path = self._disk_cache_directory
             if cache_path is None:
-                dbg.assert_is_not(cache_path, None,
+                dbg.dassert_is_not(
+                    cache_path,
+                    None,
                     "Cannot clear the global %s cache",
-                    cache_type)
+                    cache_type,
+                )
             cache_backend = self._get_cache(cache_type)
             cache_backend.clear()
 
@@ -358,11 +363,14 @@ class Cached:
             cache_path = self._mem_cache_directory
         else:
             cache_path = self._disk_cache_directory
-        dbg.dassert_is_not(cache_path, None,
-            "Cannot destroy global %s cache", cache_type
+        dbg.dassert_is_not(
+            cache_path, None, "Cannot destroy global %s cache", cache_type
         )
         # Paranoia dfatal: maybe we can prompt the user to confirm.
-        dbg.dfatal("Remove this dfatal() to destroy %s cache '%s'" % (cache_type, cache_path))
+        dbg.dfatal(
+            "Remove this dfatal() to destroy %s cache '%s'"
+            % (cache_type, cache_path)
+        )
         hio.delete_dir(cache_path)
 
     def set_cache_directory(
@@ -374,7 +382,6 @@ class Cached:
         :param cache_type: type of a cache
         :param cache_path: cache directory or None for global cache
             - If `None` is passed then use global cache.
-
         """
         _check_valid_cache_type(cache_type)
         if cache_type == "mem":
@@ -385,7 +392,8 @@ class Cached:
 
     def get_cache_directory(self, cache_type: str) -> Optional[str]:
         """
-        Get the cache directory for a cache type, `None` if global cache is used.
+        Get the cache directory for a cache type, `None` if global cache is
+        used.
 
         :param cache_type: type of a cache
         :return: directory for specific cache or None if global cache is used
