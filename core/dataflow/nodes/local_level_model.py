@@ -48,7 +48,9 @@ class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         self, df_in: pd.DataFrame, fit: bool
     ) -> Dict[str, pd.DataFrame]:
         cols = cdu.convert_to_list(self._cols)
-        dbg.dassert_eq(len(cols), 1, msg="`LocalLevelModel` only supports a single column.")
+        dbg.dassert_eq(
+            len(cols), 1, msg="`LocalLevelModel` only supports a single column."
+        )
         col = cols[0]
         srs = df_in[col]
         if self._nan_mode == "drop":
