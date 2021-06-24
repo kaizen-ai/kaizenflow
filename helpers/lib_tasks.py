@@ -1622,6 +1622,7 @@ def _to_pbcopy(txt: str, pbcopy: bool) -> None:
         print(f"\n# Copied to system clipboard:\n{txt}")
     else:
         _LOG.warning("pbcopy works only on macOS")
+        print(txt)
 
 
 # TODO(gp): Extend this to accept only the test method.
