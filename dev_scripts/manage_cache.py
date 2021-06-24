@@ -32,21 +32,31 @@ def _main(parser: argparse.ArgumentParser) -> None:
     action = args.action
     cache_types = hcac.get_cache_types()
     tag = None
-    if action == "clear_global_cache":
+    actions = [
+        "clear_cache",
+        "clear_mem_cache",
+        "clear_disk_cache",
+        "list",
+        "print_cache_info",
+        "warm_up"]
+    dbg.dassert_in(action, actions)
+    if action == "clear_cache":
         print("cache_types=%s" % str(cache_types))
         for cache_type in cache_types:
             hcac.clear_global_cache(cache_type, tag=tag)
-    elif action == "clear_mem_global_cache":
+    elif action == "clear_mem_cache":
         hcac.clear_global_cache("mem", tag=tag)
-    elif action == "clear_disk_global_cache":
+    elif action == "clear_disk_cache":
         hcac.clear_global_cache("disk", tag=tag)
-    elif action == "print_global_cache_info":
+    elif action == "print_cache_info":
         print("cache_types=%s" % str(cache_types))
         for cache_type in cache_types:
             cache_info = hcac.get_cache_size_info(cache_type, tag=tag)
             print(cache_info)
     elif action == "warm_up":
         _warm_up_cache()
+    elif action == "list":
+        print("Valid actions are:\n%s" % "\n".join(actions))
     else:
         dbg.dfatal("Invalid action='%s'" % action)
 

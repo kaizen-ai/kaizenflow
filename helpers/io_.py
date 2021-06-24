@@ -344,6 +344,7 @@ def from_file(
     return data
 
 
+# TODO(gp): Use hintro.format_size
 def get_size_as_str(file_name: str) -> str:
     if os.path.exists(file_name):
         size_in_bytes = os.path.getsize(file_name)
