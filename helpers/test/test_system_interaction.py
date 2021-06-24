@@ -219,3 +219,11 @@ class Test_find_file_with_dir1(hut.TestCase):
         act = hsyste.find_file_with_dir(file_name, dir_depth=dir_depth, mode=mode)
         _LOG.debug("Found %d matching files", len(act))
         return act
+
+
+# #############################################################################
+
+
+class Test_Linux_commands1(hut.TestCase):
+    def test_du1(self) -> None:
+        hsyste.du(".")

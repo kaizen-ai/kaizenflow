@@ -11,7 +11,7 @@ import functools
 import logging
 import os
 import time
-from typing import Any, Callable, Optional, Tuple, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 import joblib
 import joblib.func_inspect as jfunci

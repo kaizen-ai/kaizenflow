@@ -24,6 +24,43 @@ _LOG = logging.getLogger(__name__)
 
 # #############################################################################
 
+
+def is_inside_docker() -> bool:
+    """
+    Return whether we are inside a container or not.
+    """
+    # From https://stackoverflow.com/questions/23513045
+    return os.path.exists("/.dockerenv")
+
+
+def is_inside_ci() -> bool:
+    """
+    Return whether we are running inside the Continuous Integration flow.
+    """
+    if "CI" not in os.environ:
+        ret = False
+    else:
+        ret = os.environ["CI"] != ""
+    return ret
+
+
+def is_running_in_ipynb() -> bool:
+    # From https://stackoverflow.com/questions/15411967
+    try:
+        _ = get_ipython().config  # type: ignore
+        res = True
+    except NameError:
+        res = False
+    return res
+
+
+# TODO(gp): Use this everywhere in the code base.
+def is_running_on_macos() -> bool:
+    return get_os_name() == "Darwin"
+
+
+# #############################################################################
+
 _USER_NAME = None
 
 
@@ -76,6 +113,9 @@ def get_env_var(env_var_name: str) -> str:
 
 
 # #############################################################################
+# system(), system_to_string()
+# #############################################################################
+
 
 # pylint: disable=too-many-branches,too-many-statements,too-many-arguments,too-many-locals
 def _system(
@@ -294,6 +334,11 @@ def system_to_string(
     return rc, output
 
 
+# #############################################################################
+# system_to_one_line()
+# #############################################################################
+
+
 def get_first_line(output: str) -> str:
     """
     Return the first (and only) line from a string.
@@ -331,6 +376,116 @@ def system_to_one_line(cmd: str, *args: Any, **kwargs: Any) -> Tuple[int, str]:
     return rc, output
 
 
+# #############################################################################
+# system_to_files()
+# #############################################################################
+
+
+def to_normal_paths(files: List[str]) -> List[str]:
+    files: List[str] = list(map(os.path.normpath, files))  # type: ignore
+    return files
+
+
+def to_absolute_paths(files: List[str]) -> List[str]:
+    files: List[str] = list(map(os.path.abspath, files))  # type: ignore
+    return files
+
+
+def remove_file_non_present(files: List[str]) -> List[str]:
+    """
+    Return list of files from `files` excluding the files that don't exist.
+    """
+    files_tmp = []
+    for f in files:
+        if os.path.exists(f):
+            files_tmp.append(f)
+        else:
+            _LOG.warning("File '%s' doesn't exist: skipping", f)
+    return files_tmp
+
+
+def remove_dirs(files: List[str]) -> List[str]:
+    """
+    Return list of files from `files` excluding the files that are directories.
+    """
+    files_tmp: List[str] = []
+    dirs_tmp: List[str] = []
+    for file in files:
+        if os.path.isdir(file):
+            _LOG.debug("file='%s' is a dir: skipping", file)
+            dirs_tmp.append(file)
+        else:
+            files_tmp.append(file)
+    if dirs_tmp:
+        _LOG.warning("Removed dirs: %s", ", ".join(dirs_tmp))
+    return files_tmp
+
+
+def select_result_file_from_list(files: List[str], mode: str) -> List[str]:
+    """
+    Select a file from a list according to various approaches encoded in
+    `mode`.
+
+    :param mode:
+        - "return_all_results": return the list of files, whatever it is
+        - "assert_unless_one_result": assert unless there is a single file and return
+          the only file. Note that we still return a list to keep the interface
+          simple.
+    """
+    res: List[str] = []
+    if mode == "assert_unless_one_result":
+        # Expect to have a single result and return that.
+        if len(files) == 0:
+            dbg.dfatal("mode=%s: didn't find file" % mode)
+        elif len(files) > 1:
+            dbg.dfatal(
+                "mode=%s: found multiple files:\n%s" % (mode, "\n".join(files))
+            )
+        res = [files[0]]
+    elif mode == "return_all_results":
+        # Return all files.
+        res = files
+    else:
+        dbg.dfatal("Invalid mode='%s'" % mode)
+    return res
+
+
+def system_to_files(
+        cmd: str,
+        dir_name: str,
+        remove_files_non_present: bool,
+        mode: str = "return_all_results",
+) -> List[str]:
+    """
+    Execute command `cmd` in `dir_name` and return the output as a list of
+    strings.
+
+    :param mode: like in `select_result_file_from_list()`
+    """
+    if dir_name is None:
+        dir_name = "."
+    dbg.dassert_dir_exists(dir_name)
+    cmd = f"cd {dir_name} && {cmd}"
+    _, output = system_to_string(cmd)
+    # Remove empty lines.
+    _LOG.debug("output=\n%s", output)
+    files = output.split("\n")
+    files = [line.rstrip().rstrip() for line in files]
+    files = [line for line in files if line != ""]
+    _LOG.debug("files=%s", " ".join(files))
+    # Convert to normalized paths.
+    files = [os.path.join(dir_name, f) for f in files]
+    files: List[str] = list(map(os.path.normpath, files))  # type: ignore
+    # Remove non-existent files, if needed.
+    if remove_files_non_present:
+        files = remove_file_non_present(files)
+    # Process output.
+    files = select_result_file_from_list(files, mode)
+    return files
+
+
+# #############################################################################
+# Functions handling processes
 # #############################################################################
 
 
@@ -408,24 +563,8 @@ def kill_process(
     _LOG.info("Processes dead")
 
 
-def check_exec(tool: str) -> bool:
-    """
-    Check if an executable can be executed.
-
-    :return: True if the executables "tool" can be executed.
-    """
-    suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
-    cmd = "which %s" % tool
-    abort_on_error = False
-    rc = system(
-        cmd,
-        abort_on_error=abort_on_error,
-        suppress_output=suppress_output,
-        log_level=logging.DEBUG,
-    )
-    return rc == 0
-
-
+# #############################################################################
+# User interaction
 # #############################################################################
 
 
@@ -462,6 +601,29 @@ def query_yes_no(question: str, abort_on_no: bool) -> bool:
     return ret
 
 
+# #############################################################################
+# Functions similar to Linux commands.
+# #############################################################################
+
+
+def check_exec(tool: str) -> bool:
+    """
+    Check if an executable can be executed.
+
+    :return: True if the executables "tool" can be executed.
+    """
+    suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
+    cmd = "which %s" % tool
+    abort_on_error = False
+    rc = system(
+        cmd,
+        abort_on_error=abort_on_error,
+        suppress_output=suppress_output,
+        log_level=logging.DEBUG,
+    )
+    return rc == 0
+
+
 def create_executable_script(file_name: str, content: str) -> None:
     # To avoid circular dependencies.
     import helpers.io_ as hio
@@ -471,6 +633,19 @@ def create_executable_script(file_name: str, content: str) -> None:
     # Make it executable.
     cmd = "chmod +x " + file_name
     system(cmd)
+
+
+def du(path_name: str) -> int:
+    """
+    Return the size of a file or a directory (recursively).
+    """
+    dbg.dassert_exists(path_name)
+    cmd = f"du -d 0 {path_name}" + "| awk '{print $1}'"
+    # > du -d 0 core
+    # 13M    core
+    _, txt = system_to_one_line(cmd)
+    size_in_bytes = int(txt)
+    return size_in_bytes
 
 
 def _compute_file_signature(file_name: str, dir_depth: int) -> Optional[List]:
@@ -504,10 +679,10 @@ def _compute_file_signature(file_name: str, dir_depth: int) -> Optional[List]:
 
 
 def find_file_with_dir(
-    file_name: str,
-    root_dir: str = ".",
-    dir_depth: int = 1,
-    mode: str = "return_all_results",
+        file_name: str,
+        root_dir: str = ".",
+        dir_depth: int = 1,
+        mode: str = "return_all_results",
 ) -> List[str]:
     """
     Find a file matching basename and several enclosing dir name starting from
@@ -549,143 +724,3 @@ def find_file_with_dir(
     # Select the result based on mode.
     res = select_result_file_from_list(matching_files, mode)
     return res
-
-
-def to_normal_paths(files: List[str]) -> List[str]:
-    files: List[str] = list(map(os.path.normpath, files))  # type: ignore
-    return files
-
-
-def to_absolute_paths(files: List[str]) -> List[str]:
-    files: List[str] = list(map(os.path.abspath, files))  # type: ignore
-    return files
-
-
-def remove_file_non_present(files: List[str]) -> List[str]:
-    """
-    Return list of files from `files` excluding the files that don't exist.
-    """
-    files_tmp = []
-    for f in files:
-        if os.path.exists(f):
-            files_tmp.append(f)
-        else:
-            _LOG.warning("File '%s' doesn't exist: skipping", f)
-    return files_tmp
-
-
-def remove_dirs(files: List[str]) -> List[str]:
-    """
-    Return list of files from `files` excluding the files that are directories.
-    """
-    files_tmp: List[str] = []
-    dirs_tmp: List[str] = []
-    for file in files:
-        if os.path.isdir(file):
-            _LOG.debug("file='%s' is a dir: skipping", file)
-            dirs_tmp.append(file)
-        else:
-            files_tmp.append(file)
-    if dirs_tmp:
-        _LOG.warning("Removed dirs: %s", ", ".join(dirs_tmp))
-    return files_tmp
-
-
-def select_result_file_from_list(files: List[str], mode: str) -> List[str]:
-    """
-    Select a file from a list according to various approaches encoded in
-    `mode`.
-
-    :param mode:
-        - "return_all_results": return the list of files, whatever it is
-        - "assert_unless_one_result": assert unless there is a single file and return
-          the only file. Note that we still return a list to keep the interface
-          simple.
-    """
-    res: List[str] = []
-    if mode == "assert_unless_one_result":
-        # Expect to have a single result and return that.
-        if len(files) == 0:
-            dbg.dfatal("mode=%s: didn't find file" % mode)
-        elif len(files) > 1:
-            dbg.dfatal(
-                "mode=%s: found multiple files:\n%s" % (mode, "\n".join(files))
-            )
-        res = [files[0]]
-    elif mode == "return_all_results":
-        # Return all files.
-        res = files
-    else:
-        dbg.dfatal("Invalid mode='%s'" % mode)
-    return res
-
-
-def system_to_files(
-    cmd: str,
-    dir_name: str,
-    remove_files_non_present: bool,
-    mode: str = "return_all_results",
-) -> List[str]:
-    """
-    Execute command `cmd` in `dir_name` and return the output as a list of
-    strings.
-
-    :param mode: like in `select_result_file_from_list()`
-    """
-    if dir_name is None:
-        dir_name = "."
-    dbg.dassert_dir_exists(dir_name)
-    cmd = f"cd {dir_name} && {cmd}"
-    _, output = system_to_string(cmd)
-    # Remove empty lines.
-    _LOG.debug("output=\n%s", output)
-    files = output.split("\n")
-    files = [line.rstrip().rstrip() for line in files]
-    files = [line for line in files if line != ""]
-    _LOG.debug("files=%s", " ".join(files))
-    # Convert to normalized paths.
-    files = [os.path.join(dir_name, f) for f in files]
-    files: List[str] = list(map(os.path.normpath, files))  # type: ignore
-    # Remove non-existent files, if needed.
-    if remove_files_non_present:
-        files = remove_file_non_present(files)
-    # Process output.
-    files = select_result_file_from_list(files, mode)
-    return files
-
-
-# #############################################################################
-
-
-def is_inside_docker() -> bool:
-    """
-    Return whether we are inside a container or not.
-    """
-    # From https://stackoverflow.com/questions/23513045
-    return os.path.exists("/.dockerenv")
-
-
-def is_inside_ci() -> bool:
-    """
-    Return whether we are running inside the Continuous Integration flow.
-    """
-    if "CI" not in os.environ:
-        ret = False
-    else:
-        ret = os.environ["CI"] != ""
-    return ret
-
-
-def is_running_in_ipynb() -> bool:
-    # From https://stackoverflow.com/questions/15411967
-    try:
-        _ = get_ipython().config  # type: ignore
-        res = True
-    except NameError:
-        res = False
-    return res
-
-
-# TODO(gp): Use this everywhere in the code base.
-def is_running_on_macos() -> bool:
-    return get_os_name() == "Darwin"
