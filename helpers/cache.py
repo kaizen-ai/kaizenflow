@@ -171,6 +171,14 @@ def get_global_cache(cache_type: str, tag: Optional[str] = None) -> joblib.Memor
     return global_cache
 
 
+def get_cache_size_info(cache_type: str, tag: Optional[str] = None) -> str:
+    path = get_cache_path(cache_type, tag=tag)
+    size_in_bytes = hsyste.du(path)
+    size_as_str = hintro.format_size(size_in_bytes)
+    txt = "'%s' cache in '%s' has size=%s" % (cache_type, path, size_as_str)
+    return txt
+
+
 def set_global_cache(cache_type: str, cache_backend: joblib.Memory) -> None:
     """
     Set global cache by cache type.
@@ -195,11 +203,15 @@ def clear_global_cache(cache_type: str, tag: Optional[str] = None) -> None:
     :param tag: optional unique tag of the cache, empty by default
     """
     _check_valid_cache_type(cache_type)
+    _LOG.info("# Before resetting cache: %s", get_cache_size_info(cache_type, tag=tag))
+    #
     _LOG.warning(
         "Resetting %s cache '%s'", cache_type, get_cache_path(cache_type, tag)
     )
     disk_cache = get_global_cache(cache_type, tag)
     disk_cache.clear(warn=True)
+    #
+    _LOG.info("# After resetting cache: %s", get_cache_size_info(cache_type, tag=tag))
 
 
 def destroy_global_cache(cache_type: str, tag: Optional[str] = None) -> None:
@@ -210,9 +222,12 @@ def destroy_global_cache(cache_type: str, tag: Optional[str] = None) -> None:
     :param tag: optional unique tag of the cache, empty by default
     """
     _check_valid_cache_type(cache_type)
+    _LOG.info("# Before destroying cache: %s", get_cache_size_info(cache_type, tag=tag))
+    #
     cache_path = get_cache_path(cache_type, tag)
     _LOG.warning("Destroying %s cache '%s'", cache_type, cache_path)
     hio.delete_dir(cache_path)
+    _LOG.info("# After destroying cache: %s", get_cache_size_info(cache_type, tag=tag))
 
 
 # #############################################################################
@@ -238,7 +253,7 @@ class Cached:
         func: Callable,
         use_mem_cache: bool = True,
         use_disk_cache: bool = True,
-        set_verbose_mode: bool = True,
+        set_verbose_mode: bool = False,
         tag: Optional[str] = None,
         disk_cache_directory: Optional[str] = None,
         mem_cache_directory: Optional[str] = None,
@@ -290,10 +305,10 @@ class Cached:
             obj_size = hintro.get_size_in_bytes(obj)
             obj_size_as_str = hintro.format_size(obj_size)
             _LOG.info(
-                "Data for '%s' (size=%s) was retrieved from %s in %f sec",
+                "Cache data for '%s' was retrieved from '%s' cache (size=%s time=%.2f s)",
                 self._func.__name__,
-                obj_size_as_str,
                 self.get_last_cache_accessed(),
+                obj_size_as_str,
                 perf_counter,
             )
         return obj

@@ -640,11 +640,13 @@ def du(path_name: str) -> int:
     Return the size of a file or a directory (recursively).
     """
     dbg.dassert_exists(path_name)
-    cmd = f"du -d 0 {path_name}" + "| awk '{print $1}'"
+    cmd = f"du -d 0 {path_name}" + " | awk '{print $1}'"
     # > du -d 0 core
-    # 13M    core
+    # 20    core
     _, txt = system_to_one_line(cmd)
-    size_in_bytes = int(txt)
+    _LOG.debug("txt=%s", txt)
+    # `du` returns size in KB.
+    size_in_bytes = int(txt) * 1024
     return size_in_bytes
 
 
