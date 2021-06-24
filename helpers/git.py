@@ -334,7 +334,9 @@ def _parse_github_repo_name(repo_name: str) -> Tuple[str, str]:
     return host_name, repo_name
 
 
-def get_repo_full_name_from_dirname(dir_name: str, include_host_name: bool) -> str:
+def get_repo_full_name_from_dirname(
+    dir_name: str, include_host_name: bool
+) -> str:
     """
     Return the full name of the repo in `git_dir`, e.g., "alphamatic/amp".
 
@@ -369,7 +371,8 @@ def get_repo_full_name_from_dirname(dir_name: str, include_host_name: bool) -> s
 
 def get_repo_full_name_from_client(super_module: bool) -> str:
     """
-    Return the full name of the repo (e.g., "alphamatic/amp") from a Git client.
+    Return the full name of the repo (e.g., "alphamatic/amp") from a Git
+    client.
 
     :param super_module: like in get_client_root()
     """
@@ -386,14 +389,19 @@ def _get_repo_config_code() -> str:
     """
     Return the text of the code stored in `repo_config.py`.
     """
-    # TODO(gp): We should actually ask Git where the supermodule is.
+    # TODO(gp): We should actually ask Git where the super-module is.
     file_name = "./repo_config.py"
     dbg.dassert_file_exists(file_name)
     code = hio.from_file(file_name)
     return code
 
 
-def _decorate_with_host_name(dict_: Dict[str, str], host_name: str) -> Dict[str, str]:
+def _decorate_with_host_name(
+    dict_: Dict[str, str], host_name: str
+) -> Dict[str, str]:
+    """
+    Prepend the host name to all the values of the passed dictionary.
+    """
     res = {k: f"{host_name}/{v}" for k, v in dict_.iteritems()}
     return res
 
@@ -401,8 +409,8 @@ def _decorate_with_host_name(dict_: Dict[str, str], host_name: str) -> Dict[str,
 @functools.lru_cache()
 def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
     """
-    Return the map from short name (e.g., "amp") to full name
-    (e.g., "alphamatic/amp") using the information in `repo_config.py`
+    Return the map from short name (e.g., "amp") to full name (e.g.,
+    "alphamatic/amp") using the information in `repo_config.py`
     """
     # From short name to long name.
     repo_map = {
@@ -424,17 +432,6 @@ def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
     repo_map.update(get_repo_map())
     dbg.dassert_no_duplicates(repo_map.values())
     return repo_map
-
-
-# def get_repo_short_name(full_name: str) -> str:
-#     """
-#     Return the short name of a Git repo based on its full name.
-#
-#     E.g., "alphamatic/amp" -> "amp"
-#     """
-#     repo_map = _get_repo_full_to_short_name()
-#     dbg.dassert_in(full_name, repo_map, "Invalid full_name='%s'", full_name)
-#     return repo_map[full_name]
 
 
 # /////////////////////////////////////////////////////////////////////////
@@ -466,7 +463,9 @@ def get_repo_name(name: str, in_mode: str) -> str:
         `name`
     """
     repo_map = get_complate_repo_map(in_mode)
-    dbg.dassert_in(name, repo_map, "Invalid name='%s' for in_mode='%s'", full_name, in_mode)
+    dbg.dassert_in(
+        name, repo_map, "Invalid name='%s' for in_mode='%s'", full_name, in_mode
+    )
     ret = repo_map[name]
     return ret
 

@@ -116,7 +116,7 @@ class Test_git_repo_name1(hut.TestCase):
 
     def test_parse_github_repo_name2(self) -> None:
         repo_name = "https://github.com/alphamatic/amp"
-        act = git._parse_github_repo_name(repo_name)
+        git._parse_github_repo_name(repo_name)
         host_name, repo_name = git._parse_github_repo_name(repo_name)
         self.assert_equal(host_name, "github.com")
         self.assert_equal(repo_name, "alphamatic/amp")
