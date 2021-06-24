@@ -19,7 +19,7 @@ _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
     """
-    Fit and predict a smooth moving average (SMA) model.
+    Fit and predict a steady-state local level model.
     """
 
     def __init__(
@@ -63,17 +63,17 @@ class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
             self._tau = tau
         # Compute EWMA.
         _LOG.debug(f"Computing ewma with tau={self._tau}.")
-        sma = csigna.compute_smooth_moving_average(srs, tau=self._tau)
-        sma.name = str(col) + "_ewma"
-        sma = sma.to_frame()
-        sma = sma.reindex(idx)
+        ewma = csigna.compute_smooth_moving_average(srs, tau=self._tau)
+        ewma.name = str(col) + "_ewma"
+        ewma = ewma.to_frame()
+        ewma = ewma.reindex(idx)
         #
         info = collections.OrderedDict()
         info["stats"] = stats
         info["tau_from_input"] = tau
         info["tau_for_ema"] = self._tau
         df_out = self._apply_col_mode(
-            df_in, sma, cols=[col], col_mode=self._col_mode
+            df_in, ewma, cols=[col], col_mode=self._col_mode
         )
         method = "fit" if fit else "predict"
         self._set_info(method, info)
