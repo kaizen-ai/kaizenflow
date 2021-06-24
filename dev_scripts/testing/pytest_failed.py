@@ -58,7 +58,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for dir_name in dir_names:
         if os.path.exists(dir_name):
             # Print the long name of the repo.
-            repo_name = git.get_repo_full_name_from_dirname(dir_name)
+            repo_name = git.get_repo_full_name_from_dirname(dir_name, include_host_name=False)
             _LOG.debug("\n%s", prnt.frame(repo_name))
             # Print the failed tests.
             file_name = os.path.join(dir_name, ".pytest_cache/v/cache/lastfailed")

@@ -64,7 +64,7 @@ class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         if fit:
             self._tau = tau
         # Compute EWMA.
-        _LOG.debug(f"Computing ewma with tau={self._tau}.")
+        _LOG.debug("Computing ewma with tau=%s", self._tau)
         ewma = csigna.compute_smooth_moving_average(srs, tau=self._tau)
         ewma.name = str(col) + "_ewma"
         ewma = ewma.to_frame()

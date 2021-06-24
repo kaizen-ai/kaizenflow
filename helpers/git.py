@@ -114,8 +114,8 @@ def _is_repo(repo_short_name: str) -> bool:
     """
     Return whether we are inside `amp` and `amp` is a submodule.
     """
-    repo_full_name = get_repo_full_name_from_dirname(".")
-    return get_repo_short_name(repo_full_name) == repo_short_name
+    repo_full_name = get_repo_full_name_from_dirname(".", include_host_name=False)
+    return get_repo_name(repo_full_name, in_mode="short_name") == repo_short_name
 
 
 def is_amp() -> bool:
@@ -378,7 +378,7 @@ def get_repo_full_name_from_client(super_module: bool) -> str:
     """
     # Get the Git remote in the dir containing the Git repo.
     git_dir = get_client_root(super_module)
-    repo_name = get_repo_full_name_from_dirname(git_dir)
+    repo_name = get_repo_full_name_from_dirname(git_dir, include_host_name=False)
     return repo_name
 
 
@@ -672,7 +672,7 @@ def get_remote_head_hash(dir_name: str) -> str:
     Report the hash that the remote Git repo is at.
     """
     dbg.dassert_exists(dir_name)
-    sym_name = get_repo_full_name_from_dirname(dir_name)
+    sym_name = get_repo_full_name_from_dirname(dir_name, include_host_name=False)
     cmd = f"git ls-remote git@github.com:{sym_name} HEAD 2>/dev/null"
     data: Tuple[int, str] = hsinte.system_to_one_line(cmd)
     _, output = data

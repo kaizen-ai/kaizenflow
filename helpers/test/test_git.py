@@ -134,7 +134,11 @@ class Test_git_repo_name1(hut.TestCase):
         self.assert_equal(repo_name, "alphamatic/amp")
 
     def test_get_repo_full_name_from_dirname1(self) -> None:
-        func_call = "git.get_repo_full_name_from_dirname(dir_name='.')"
+        func_call = "git.get_repo_full_name_from_dirname(dir_name='.', include_host_name=False)"
+        _execute_func_call(func_call)
+
+    def test_get_repo_full_name_from_dirname2(self) -> None:
+        func_call = "git.get_repo_full_name_from_dirname(dir_name='.', include_host_name=True)"
         _execute_func_call(func_call)
 
     def test_get_repo_full_name_from_client1(self) -> None:

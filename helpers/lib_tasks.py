@@ -1080,7 +1080,7 @@ def _get_docker_cmd(
     docker_compose_files = []
     docker_compose_files.append(_get_base_docker_compose_path())
     #
-    dir_name = git.get_repo_full_name_from_dirname(".")
+    dir_name = git.get_repo_full_name_from_dirname(".", include_host_name=False)
     repo_short_name = git.get_repo_name(dir_name, in_mode="short")
     _LOG.debug("repo_short_name=%s", repo_short_name)
     if repo_short_name == "amp":
