@@ -268,8 +268,9 @@ def compute_local_level_model_stats(
     prefix = prefix or ""
     dbg.dassert_isinstance(srs, pd.Series)
     diff = srs.diff()
-    gamma0 = diff.multiply(diff).mean()
-    gamma1 = diff.multiply(diff.shift(1)).mean()
+    demeaned_diff = diff - diff.mean()
+    gamma0 = demeaned_diff.multiply(demeaned_diff).mean()
+    gamma1 = demeaned_diff.multiply(demeaned_diff.shift(1)).mean()
     # This is the variance of \epsilon.
     var_epsilon = -1 * gamma1
     dbg.dassert_lte(0, var_epsilon)
