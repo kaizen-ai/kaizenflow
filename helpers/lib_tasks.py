@@ -386,7 +386,7 @@ def git_merge_master(ctx):  # type: ignore
 @task
 def git_clean(ctx, dry_run=False):  # type: ignore
     """
-    Clean the repo and its submodules from artifacts.
+    Clean the repo_short_name and its submodules from artifacts.
 
     Run `git status --ignored` to see what it's skipped.
     """
@@ -494,7 +494,7 @@ def git_create_branch(  # type: ignore
 ):
     """
     Create and push upstream branch `branch_name` or the one corresponding to
-    `issue_id` in repo `repo`.
+    `issue_id` in repo_short_name `repo_short_name`.
 
     E.g.,
     ```
@@ -506,8 +506,8 @@ def git_create_branch(  # type: ignore
         `LemTask169_Get_GH_actions`)
     :param issue_id: use the canonical name for the branch corresponding to that
         issue
-    :param repo: name of the GitHub repo that the `issue_id` belongs to
-        - "current" (default): the current repo
+    :param repo: name of the GitHub repo_short_name that the `issue_id` belongs to
+        - "current" (default): the current repo_short_name
         - short name (e.g., "amp", "lem") of the branch
     :param suffix: suffix (e.g., "02") to add to the branch name when using issue_id
     :param only_branch_from_master: only allow to branch from master
@@ -520,7 +520,7 @@ def git_create_branch(  # type: ignore
         )
         branch_name = _get_gh_issue_title(issue_id, repo)
         _LOG.info(
-            "Issue %d in %s repo corresponds to '%s'", issue_id, repo, branch_name
+            "Issue %d in %s repo_short_name corresponds to '%s'", issue_id, repo, branch_name
         )
         if suffix != "":
             # Add the the suffix.
@@ -562,7 +562,7 @@ def git_create_patch(  # type: ignore
     ctx, mode="diff", modified=False, branch=False, last_commit=False, files=""
 ):
     """
-    Create a patch file for the entire repo client from the base revision. This
+    Create a patch file for the entire repo_short_name client from the base revision. This
     script accepts a list of files to package, if specified.
 
     :param mode: what kind of patch to create
@@ -704,7 +704,7 @@ def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
 @task
 def docker_images_ls_repo(ctx):  # type: ignore
     """
-    List images in the logged in repo.
+    List images in the logged in repo_short_name.
     """
     _report_task()
     docker_login(ctx)
@@ -907,7 +907,7 @@ def _get_aws_cli_version() -> int:
 @task
 def docker_login(ctx):  # type: ignore
     """
-    Log in the AM Docker repo on AWS.
+    Log in the AM Docker repo_short_name on AWS.
     """
     _report_task()
     if hsinte.is_inside_ci():
@@ -1081,7 +1081,7 @@ def _get_docker_cmd(
     docker_compose_files.append(_get_base_docker_compose_path())
     #
     dir_name = git.get_repo_full_name_from_dirname(".", include_host_name=False)
-    repo_short_name = git.get_repo_name(dir_name, in_mode="short")
+    repo_short_name = git.get_repo_name(dir_name, in_mode="full_name")
     _LOG.debug("repo_short_name=%s", repo_short_name)
     if repo_short_name == "amp":
         docker_compose_file_tmp = _get_amp_docker_compose_path()
@@ -1380,7 +1380,7 @@ def docker_release_dev_image(  # type: ignore
     running the tests, but not necessarily pushing.
 
     :param skip_tests: skip all the tests and release the dev image
-    :param push_to_repo: push the image to the repo
+    :param push_to_repo: push the image to the repo_short_name
     :param update_poetry: update package dependencies using poetry
     """
     _report_task()
@@ -1403,7 +1403,7 @@ def docker_release_dev_image(  # type: ignore
     if push_to_repo:
         docker_push_dev_image(ctx)
     else:
-        _LOG.warning("Skipping pushing dev image to repo, as requested")
+        _LOG.warning("Skipping pushing dev image to repo_short_name, as requested")
     _LOG.info("==> SUCCESS <==")
 
 
@@ -1482,7 +1482,7 @@ def docker_release_prod_image(  # type: ignore
         cmd = f"docker push {image_prod}"
         _run(ctx, cmd, pty=True)
     else:
-        _LOG.warning("Skipping pushing image to repo as requested")
+        _LOG.warning("Skipping pushing image to repo_short_name as requested")
     _LOG.info("==> SUCCESS <==")
 
 
@@ -2243,7 +2243,7 @@ def _get_lint_docker_cmd(precommit_opts: str, run_bash: bool) -> str:
         work_dir = "/src"
         repo_root = os.getcwd()
     _LOG.debug("work_dir=%s repo_root=%s", work_dir, repo_root)
-    # TODO(gp): Do not hardwire the repo.
+    # TODO(gp): Do not hardwire the repo_short_name.
     # image = get_default_param("DEV_TOOLS_IMAGE_PROD")
     # image="*****.dkr.ecr.us-east-1.amazonaws.com/dev_tools:local"
     ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
@@ -2501,34 +2501,34 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
 # #############################################################################
 
 
-def _get_repo_full_name_from_cmd(repo: str) -> str:
+def _get_repo_full_name_from_cmd(repo_short_name: str) -> str:
     """
-    Convert the `repo` from command line (e.g., "current", "amp", "lem") to the
-    repo full name.
+    Convert the `repo_short_name` from command line (e.g., "current", "amp",
+    "lem") to the repo_short_name full name without host name.
     """
-    repo_full_name: str
-    if repo == "current":
-        repo_full_name = git.get_repo_full_name_from_dirname(
+    repo_full_name_with_host: str
+    if repo_short_name == "current":
+        repo_full_name_with_host = git.get_repo_full_name_from_dirname(
             ".", include_host_name=True
         )
     else:
-        repo_full_name = git.get_repo_name(repo, in_mode="short_name")
-    _LOG.debug("repo=%s -> repo_full_name=%s", repo, repo_full_name)
-    return repo_full_name
+        repo_full_name_with_host = git.get_repo_name(repo_short_name, in_mode="short_name", include_host_name=True)
+    _LOG.debug("repo_short_name=%s -> repo_full_name_with_host=%s", repo_short_name, repo_full_name_with_host)
+    return repo_full_name_with_host
 
 
-def _get_gh_issue_title(issue_id: int, repo: str) -> str:
+def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> str:
     """
     Get the title of a GitHub issue.
 
-    :param repo: `current` refer to the repo where we are, otherwise a repo short
-        name (e.g., "amp")
+    :param repo_short_name: `current` refer to the repo_short_name where we are, otherwise
+        a repo_short_name short name (e.g., "amp")
     """
-    repo_full_name = _get_repo_full_name_from_cmd(repo)
+    repo_full_name_with_host = _get_repo_full_name_from_cmd(repo_short_name)
     # > (export NO_COLOR=1; gh issue view 1251 --json title )
     # {"title":"Update GH actions for amp"}
     dbg.dassert_lte(1, issue_id)
-    cmd = f"gh issue view {issue_id} --repo {repo_full_name} --json title"
+    cmd = f"gh issue view {issue_id} --repo {repo_full_name_with_host} --json title"
     _, txt = hsinte.system_to_string(cmd)
     _LOG.debug("txt=\n%s", txt)
     # Parse json.
@@ -2545,7 +2545,6 @@ def _get_gh_issue_title(issue_id: int, repo: str) -> str:
     title = title.replace(" ", "_")
     title = title.replace("-", "_")
     # Add the `AmpTaskXYZ_...`
-    repo_short_name = git.get_repo_name(repo_full_name, in_mode="full_name")
     task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
     _LOG.debug("task_prefix=%s", task_prefix)
     title = "%s%d_%s" % (task_prefix, issue_id, title)
@@ -2553,18 +2552,18 @@ def _get_gh_issue_title(issue_id: int, repo: str) -> str:
 
 
 @task
-def gh_issue_title(ctx, issue_id, repo="current", pbcopy=True):  # type: ignore
+def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # type: ignore
     """
-    Print the title that corresponds to the given issue and repo. E.g.,
+    Print the title that corresponds to the given issue and repo_short_name. E.g.,
     AmpTask1251_Update_GH_actions_for_amp.
 
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
-    _report_task(hprint.to_str("issue_id repo"))
+    _report_task(hprint.to_str("issue_id repo_short_name"))
     _ = ctx
     issue_id = int(issue_id)
     dbg.dassert_lte(1, issue_id)
-    res = _get_gh_issue_title(issue_id, repo)
+    res = _get_gh_issue_title(issue_id, repo_short_name)
     # Print or copy to clipboard.
     _to_pbcopy(res, pbcopy)
 
@@ -2575,10 +2574,10 @@ def gh_issue_title(ctx, issue_id, repo="current", pbcopy=True):  # type: ignore
 
 @task
 def gh_create_pr(  # type: ignore
-    ctx, body="", draft=True, repo="current", title=""
+    ctx, body="", draft=True, repo_short_name="current", title=""
 ):
     """
-    Create a draft PR for the current branch in the corresponding repo.
+    Create a draft PR for the current branch in the corresponding repo_short_name.
 
     :param body: the body of the PR
     :param draft: draft or ready-to-review PR
@@ -2588,18 +2587,18 @@ def gh_create_pr(  # type: ignore
     if not title:
         # Use the branch name as title.
         title = branch_name
-    repo_full_name = _get_repo_full_name_from_cmd(repo)
+    repo_full_name_with_host = _get_repo_full_name_from_cmd(repo_short_name)
     _LOG.info(
         "Creating PR with title '%s' for '%s' in %s",
         title,
         branch_name,
-        repo_full_name,
+        repo_full_name_with_host,
     )
     # TODO(gp): Check whether the PR already exists.
     # TODO(gp): Use _to_single_line_cmd
     cmd = (
         "gh pr create"
-        + f" --repo {repo_full_name}"
+        + f" --repo {repo_full_name_with_host}"
         + (" --draft" if draft else "")
         + f' --title "{title}"'
         + f' --body "{body}"'

@@ -115,7 +115,7 @@ def _is_repo(repo_short_name: str) -> bool:
     Return whether we are inside `amp` and `amp` is a submodule.
     """
     repo_full_name = get_repo_full_name_from_dirname(".", include_host_name=False)
-    return get_repo_name(repo_full_name, in_mode="short_name") == repo_short_name
+    return get_repo_name(repo_full_name, in_mode="full_name") == repo_short_name
 
 
 def is_amp() -> bool:
@@ -402,7 +402,7 @@ def _decorate_with_host_name(
     """
     Prepend the host name to all the values of the passed dictionary.
     """
-    res = {k: f"{host_name}/{v}" for k, v in dict_.iteritems()}
+    res = {k: f"{host_name}/{v}" for k, v in dict_.items()}
     return res
 
 
@@ -437,14 +437,14 @@ def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
 # /////////////////////////////////////////////////////////////////////////
 
 
-def get_complete_repo_map(in_mode: str) -> str:
+def get_complete_repo_map(in_mode: str, include_host_name: bool = False) -> str:
     """
     Return the full / short name of a Git repo based on the alternative name.
 
     :param in_mode: the values `full_name` or `short_name` determine how to interpret
         `name`
     """
-    repo_map = _get_repo_short_to_full_name()
+    repo_map = _get_repo_short_to_full_name(include_host_name)
     if in_mode == "full_name":
         # Compute the reverse map.
         repo_map = {v: k for (k, v) in repo_map.items()}
@@ -452,33 +452,38 @@ def get_complete_repo_map(in_mode: str) -> str:
         pass
     else:
         raise ValueError("Invalid in_mode='%s'" % in_mode)
+    _LOG.debug("For in_mode='%s', repo_map=\n%s", in_mode, str(repo_map))
     return repo_map
 
 
-def get_repo_name(name: str, in_mode: str) -> str:
+def get_repo_name(
+    name: str, in_mode: str, include_host_name: bool = False
+) -> str:
     """
     Return the full/short name of a Git repo based on the other name.
 
     :param in_mode: the values `full_name` or `short_name` determine how to interpret
         `name`
     """
-    repo_map = get_complate_repo_map(in_mode)
+    repo_map = get_complete_repo_map(in_mode, include_host_name)
     dbg.dassert_in(
-        name, repo_map, "Invalid name='%s' for in_mode='%s'", full_name, in_mode
+        name, repo_map, "Invalid name='%s' for in_mode='%s'", name, in_mode
     )
     ret = repo_map[name]
     return ret
 
 
-def get_all_repo_names(in_mode: str) -> List[str]:
+def get_all_repo_names(
+    in_mode: str, include_host_name: bool = False
+) -> List[str]:
     """
     Return the names (full or short depending on `mode`) of all the Git repos.
 
     :param in_mode: if "full_name" return the full names (e.g., "alphamatic/amp")
         if "short_name" return the short names (e.g., "amp")
     """
-    repo_map = get_complete_repo_map(in_mode)
-    return sorted(list(repo_map.values()))
+    repo_map = get_complete_repo_map(in_mode, include_host_name)
+    return sorted(list(repo_map.keys()))
 
 
 def get_task_prefix_from_repo_short_name(short_name: str) -> str:
