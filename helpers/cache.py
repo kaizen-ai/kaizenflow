@@ -172,7 +172,6 @@ def get_global_cache(cache_type: str, tag: Optional[str] = None) -> joblib.Memor
 
 
 def get_cache_size_info(cache_type: str, tag: Optional[str] = None) -> str:
-    path = get_cache_path(cache_type, tag=tag)
     size_in_bytes = hsyste.du(path)
     size_as_str = hintro.format_size(size_in_bytes)
     txt = "'%s' cache in '%s' has size=%s" % (cache_type, path, size_as_str)
@@ -339,19 +338,12 @@ class Cached:
         :param cache_type: type of a cache to clear, or `None` to clear all caches
         """
         if cache_type is None:
-            # Clear both.
-            self.clear_cache("mem")
-            self.clear_cache("disk")
-            # dbg.dassert_is_not(self._disk_cache_directory, None,
-            #         "Cannot clear the global disk cache")
-            # disk_cache = self._get_cache("disk")
-            # disk_cache.clear()
-            # #
-            # dbg.dassert_is_not(self._mem_cache_directory, None,
-            #                   "Cannot clear the global mem cache")
-            # mem_cache = self._get_cache("mem")
-            # mem_cache.clear()
+            # Clear all caches.
+            for cache_type in get_cache_types():
+                self.clear_cache(cache_type)
+            return
         else:
+            _LOG.info("# Before resetting cache: %s", get_cache_size_info(cache_type, tag=tag))
             if cache_type == "mem":
                 cache_path = self._mem_cache_directory
             elif cache_type == "disk":
@@ -363,8 +355,12 @@ class Cached:
                     "Cannot clear the global %s cache",
                     cache_type,
                 )
+            _LOG.warning(
+                "Resetting %s cache '%s'", cache_type, get_cache_path(cache_type, tag)
+            )
             cache_backend = self._get_cache(cache_type)
             cache_backend.clear()
+            _LOG.info("# After resetting cache: %s", get_cache_size_info(cache_type, tag=tag))
 
     def destroy_cache(self, cache_type: str) -> None:
         """
