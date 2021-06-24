@@ -2509,7 +2509,7 @@ def _get_repo_full_name_from_cmd(repo: str) -> str:
     """
     repo_full_name: str
     if repo == "current":
-        repo_full_name = git.get_repo_full_name_from_dirname(".")
+        repo_full_name = git.get_repo_full_name_from_dirname(".", include_host_name=True)
     else:
         repo_full_name = git.get_repo_name(repo, in_mode="short_name")
     _LOG.debug("repo=%s -> repo_full_name=%s", repo, repo_full_name)

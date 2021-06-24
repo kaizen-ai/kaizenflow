@@ -11,3 +11,7 @@ def get_repo_map() -> Dict[str, str]:
     repo_map = {
     }
     return repo_map
+
+
+def get_host_name() -> str:
+    return "github.com"

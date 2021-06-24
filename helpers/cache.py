@@ -257,7 +257,7 @@ class Cached:
         if self._set_verbose_mode:
             perf_counter = time.perf_counter() - perf_counter_start
             _LOG.info(
-                "data was retrieved from %s in %f sec",
+                "Data was retrieved from %s in %f sec",
                 self.get_last_cache_accessed(),
                 perf_counter,
             )
