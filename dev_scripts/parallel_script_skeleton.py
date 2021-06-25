@@ -46,7 +46,7 @@ def _func(val1: int, val2: str,
     return res
 
 
-def _get_workload() -> Tuple[Callable, List[hjoblib.TASK]]:
+def _get_workload() -> hjoblib.WORKLOAD:
     tasks = []
     for _ in range(5):
         # val1, val2

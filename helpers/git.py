@@ -8,6 +8,7 @@ import collections
 import functools
 import logging
 import os
+import pprint
 import re
 from typing import Dict, List, Match, Optional, Tuple
 
@@ -421,6 +422,7 @@ def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
     if include_host_name:
         host_name = "github.com"
         repo_map = _decorate_with_host_name(repo_map, host_name)
+    _LOG.debug("include_host_name=%s, repo_map=\n%s", include_host_name, pprint.pformat(repo_map))
     # Read the info from the current repo.
     code = _get_repo_config_code()
     # Make the linter happy creating this symbol that comes from the `exec()`.
@@ -429,10 +431,12 @@ def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
     if include_host_name:
         host_name = get_host_name()
         current_repo_map = _decorate_with_host_name(current_repo_map, host_name)
+    _LOG.debug("include_host_name=%s, current_repo_map=\n%s", include_host_name, pprint.pformat(current_repo_map))
     # Update the map.
     dbg.dassert_not_intersection(repo_map.keys(), current_repo_map.keys())
     repo_map.update(get_repo_map())
     dbg.dassert_no_duplicates(repo_map.values())
+    _LOG.debug("include_host_name=%s, repo_map=\n%s", include_host_name, pprint.pformat(repo_map))
     return repo_map
 
 
@@ -456,7 +460,7 @@ def get_complete_repo_map(
         pass
     else:
         raise ValueError("Invalid in_mode='%s'" % in_mode)
-    _LOG.debug("For in_mode='%s', repo_map=\n%s", in_mode, str(repo_map))
+    _LOG.debug("For in_mode=%s, include_host_name=%s, repo_map=\n%s", in_mode, include_host_name, pprint.pformat(repo_map))
     return repo_map
 
 
