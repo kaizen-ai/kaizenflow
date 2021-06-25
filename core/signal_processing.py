@@ -1508,14 +1508,14 @@ def _reindex_by_knowledge_time(
     return srs.shift(width * 2 ** (level - 1) - width // 2)
 
 
-def compute_swt_std(
+def compute_swt_var(
     sig: Union[pd.DataFrame, pd.Series],
     wavelet: Optional[str] = None,
     depth: Optional[int] = None,
     timing_mode: Optional[str] = None,
 ) -> pd.DataFrame:
     """
-    Get swt std using levels up to `depth`.
+    Get swt var using levels up to `depth`.
 
     Params as in `get_swt()`.
     """
@@ -1526,8 +1526,8 @@ def compute_swt_std(
         timing_mode=timing_mode,
         output_mode="detail",
     )
-    srs = np.sqrt(np.square(df).sum(axis=1, skipna=False))
-    srs.name = "swt_std"
+    srs = np.square(df).sum(axis=1, skipna=False)
+    srs.name = "swt_var"
     return srs.to_frame()
 
 
