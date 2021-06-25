@@ -339,10 +339,7 @@ def compute_centered_gaussian_log_likelihood(
     # Extract observations and variance, with optional shift applied.
     obs = df[observation_col]
     var = df[variance_col].shift(variance_shifts)
-    dbg.dassert(
-        not (var <= 0).any(),
-        msg="Variance values must be positive."
-    )
+    dbg.dassert(not (var <= 0).any(), msg="Variance values must be positive.")
     if square_variance_col:
         var = np.square(var)
     # Restrict to relevant data and drop any rows with NaNs.
