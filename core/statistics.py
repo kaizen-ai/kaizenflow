@@ -363,7 +363,12 @@ def compute_centered_gaussian_loglikelihood(
     data_term = -0.5 * (np.log(var) + np.square(obs).divide(var))
     log_likelihoods = constant_term + data_term
     log_likelihoods.name = prefix + "loglikelihood"
-    return log_likelihoods.reindex(df.index)
+    # Compute observations normalized by standard deviations.
+    adj_obs = obs.divide(np.sqrt(var))
+    adj_obs.name = prefix + "normalized_observations"
+    # Construct output dataframe.
+    df_out = pd.concat([adj_obs, log_likelihoods], axis=1)
+    return df_out
 
 
 # #############################################################################
