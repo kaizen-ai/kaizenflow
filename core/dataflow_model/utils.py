@@ -24,6 +24,7 @@ import helpers.printing as hprint
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): Use `add_parallel_processing_arg()`.
 def add_experiment_arg(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:

@@ -7,7 +7,7 @@ import helpers.cache as hcache
 """
 
 # TODO(gp): For code application, we might want to delete memory cache.
-# lru_cache doesn't survive different activations
+#  lru_cache doesn't survive different activations
 
 import copy
 import functools
