@@ -310,7 +310,7 @@ def compute_local_level_model_stats(
     return result
 
 
-def compute_centered_gaussian_log_likelihood(
+def compute_centered_gaussian_loglikelihood(
     df: pd.DataFrame,
     observation_col: str,
     variance_col: str,
@@ -318,12 +318,13 @@ def compute_centered_gaussian_log_likelihood(
     variance_shifts: int = 0,
 ) -> pd.Series:
     """
-    Return the log-likelihoods of supposed draws from centered Gaussians.
+    Return the loglikelihoods of independent draws from centered Gaussians.
 
-    A higher log-likelihood score means more likely rather than less.
+    A higher loglikelihood score means that the model of independent
+    Gaussian draws with given variances is a better fit.
 
-    The log-likelihood of the series of observations may be obtained by
-    summing the individual log-likelihoods.
+    The loglikelihood of the series of observations may be obtained by
+    summing the individual loglikelihood values.
 
     :param df: dataframe with float observation and variance columns
     :param observation_col: name of column containing observations
@@ -331,9 +332,9 @@ def compute_centered_gaussian_log_likelihood(
     :square_variance_col: if `True`, square the values in `variance_col`
         (use this if the column contains standard deviations)
     :variance_shifts: number of shifts to apply to `variance_col` prior to
-        calculating log-likelihood. Use this if `variance_col` contains forward
+        calculating loglikelihood. Use this if `variance_col` contains forward
         predictions.
-    :return: series of log-likelihoods
+    :return: series of loglikelihoods
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
     # Extract observations and variance, with optional shift applied.
@@ -350,7 +351,7 @@ def compute_centered_gaussian_log_likelihood(
     n_obs = idx.size
     _LOG.debug("Number of non-NaN observations=%i", n_obs)
     dbg.dassert_lt(0, n_obs)
-    # Perform log-likelihood calculation.
+    # Perform loglikelihood calculation.
     # This term only depends upon the presence of an observation. We preserve
     # it here to facilitate comparisons across series with different numbers of
     # observations.
