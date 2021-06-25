@@ -8,13 +8,27 @@ import helpers.system_interaction as hsyste
 
 
 @hcac.cache(set_verbose_mode=True)
-def _test() -> str:
+def _func() -> str:
     txt = "#" * 1024 ** 2
     return txt
 
 
-def _warm_up_cache():
-    _ = _test()
+def _test():
+    _ = _func()
+
+
+def _test2():
+    tag = None
+    hcac.clear_global_cache("mem", tag=tag)
+    path = "/tmp/cache.function"
+    _func.set_cache_directory("disk", path)
+    #
+    _func.clear_cache(cache_type="disk")
+    #
+    _func()
+    hcac.clear_global_cache("mem", tag=tag)
+    #
+    _func()
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -38,7 +52,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         "clear_disk_cache",
         "list",
         "print_cache_info",
-        "warm_up"]
+        "test"]
     dbg.dassert_in(action, actions)
     if action == "clear_cache":
         print("cache_types=%s" % str(cache_types))
@@ -51,10 +65,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     elif action == "print_cache_info":
         print("cache_types=%s" % str(cache_types))
         for cache_type in cache_types:
-            cache_info = hcac.get_cache_size_info(cache_type, tag=tag)
+            path = hcac.get_path(cache_type, tag=tag)
+            cache_info = hcac.get_cache_size_info(path, cache_type)
             print(cache_info)
-    elif action == "warm_up":
-        _warm_up_cache()
+    elif action == "test":
+        _test2()
     elif action == "list":
         print("Valid actions are:\n%s" % "\n".join(actions))
     else:

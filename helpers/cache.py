@@ -6,6 +6,9 @@ Import as:
 import helpers.cache as hcache
 """
 
+# TODO(gp): For code application, we might want to delete memory cache.
+# lru_cache doesn't survive different activations
+
 import copy
 import functools
 import logging
@@ -171,7 +174,7 @@ def get_global_cache(cache_type: str, tag: Optional[str] = None) -> joblib.Memor
     return global_cache
 
 
-def get_cache_size_info(cache_type: str, tag: Optional[str] = None) -> str:
+def get_cache_size_info(path: str, cache_type: str) -> str:
     size_in_bytes = hsyste.du(path)
     size_as_str = hintro.format_size(size_in_bytes)
     txt = "'%s' cache in '%s' has size=%s" % (cache_type, path, size_as_str)
@@ -194,39 +197,29 @@ def set_global_cache(cache_type: str, cache_backend: joblib.Memory) -> None:
         _DISK_CACHE = cache_backend
 
 
-def clear_global_cache(cache_type: str, tag: Optional[str] = None) -> None:
+def clear_global_cache(cache_type: str, tag: Optional[str] = None, destroy: bool = False) -> None:
     """
     Reset a cache by cache type.
 
     :param cache_type: type of a cache
     :param tag: optional unique tag of the cache, empty by default
+    :param destroy: remove physical directory
     """
     _check_valid_cache_type(cache_type)
-    _LOG.info("# Before resetting cache: %s", get_cache_size_info(cache_type, tag=tag))
+    cache_path = get_cache_path(cache_type, tag)
+    _LOG.info("# Before reset: %s", get_cache_size_info(cache_path, cache_type))
     #
     _LOG.warning(
-        "Resetting %s cache '%s'", cache_type, get_cache_path(cache_type, tag)
+        "Resetting %s cache '%s'", cache_type, cache_path
     )
-    disk_cache = get_global_cache(cache_type, tag)
-    disk_cache.clear(warn=True)
+    if destroy:
+        _LOG.warning("Destroying ...")
+        hio.delete_dir(cache_path)
+    else:
+        cache_backend = get_global_cache(cache_type, tag)
+        cache_backend.clear(warn=True)
     #
-    _LOG.info("# After resetting cache: %s", get_cache_size_info(cache_type, tag=tag))
-
-
-def destroy_global_cache(cache_type: str, tag: Optional[str] = None) -> None:
-    """
-    Destroy a cache by cache type and remove physical directory.
-
-    :param cache_type: type of a cache
-    :param tag: optional unique tag of the cache, empty by default
-    """
-    _check_valid_cache_type(cache_type)
-    _LOG.info("# Before destroying cache: %s", get_cache_size_info(cache_type, tag=tag))
-    #
-    cache_path = get_cache_path(cache_type, tag)
-    _LOG.warning("Destroying %s cache '%s'", cache_type, cache_path)
-    hio.delete_dir(cache_path)
-    _LOG.info("# After destroying cache: %s", get_cache_size_info(cache_type, tag=tag))
+    _LOG.info("# After reset: %s", get_cache_size_info(cache_path, cache_type))
 
 
 # #############################################################################
@@ -304,7 +297,7 @@ class Cached:
             obj_size = hintro.get_size_in_bytes(obj)
             obj_size_as_str = hintro.format_size(obj_size)
             _LOG.info(
-                "Cache data for '%s' was retrieved from '%s' cache (size=%s time=%.2f s)",
+                "  --> Cache data for '%s' was retrieved from '%s' cache (size=%s time=%.2f s)",
                 self._func.__name__,
                 self.get_last_cache_accessed(),
                 obj_size_as_str,
@@ -330,60 +323,61 @@ class Cached:
     # Function-specific cache.
     # ///////////////////////////////////////////////////////////////////////////
 
-    def clear_cache(self, cache_type: Optional[str] = None) -> None:
+    # TODO(gp): In the end, only disk cache makes sense for function-specific cache.
+    #  The memory one is always in memory.
+
+    def clear_cache(self, cache_type: str, destroy: bool =False) -> None:
         """
         Clear all caches or a cache by type. Only works in function-specific
         case.
 
         :param cache_type: type of a cache to clear, or `None` to clear all caches
         """
-        if cache_type is None:
-            # Clear all caches.
-            for cache_type in get_cache_types():
-                self.clear_cache(cache_type)
-            return
-        else:
-            _LOG.info("# Before resetting cache: %s", get_cache_size_info(cache_type, tag=tag))
-            if cache_type == "mem":
-                cache_path = self._mem_cache_directory
-            elif cache_type == "disk":
-                cache_path = self._disk_cache_directory
-            if cache_path is None:
-                dbg.dassert_is_not(
-                    cache_path,
-                    None,
-                    "Cannot clear the global %s cache",
-                    cache_type,
-                )
-            _LOG.warning(
-                "Resetting %s cache '%s'", cache_type, get_cache_path(cache_type, tag)
-            )
-            cache_backend = self._get_cache(cache_type)
-            cache_backend.clear()
-            _LOG.info("# After resetting cache: %s", get_cache_size_info(cache_type, tag=tag))
-
-    def destroy_cache(self, cache_type: str) -> None:
-        """
-        Destroy a cache by cache type and remove physical directory. Only works
-        in cache-specific case.
-
-        :param cache_type: type of a cache
-        """
         _check_valid_cache_type(cache_type)
         if cache_type == "mem":
             cache_path = self._mem_cache_directory
-        else:
+        elif cache_type == "disk":
             cache_path = self._disk_cache_directory
-        dbg.dassert_is_not(
-            cache_path, None, "Cannot destroy global %s cache", cache_type
-        )
-        # Paranoia dfatal: maybe we can prompt the user to confirm.
-        dbg.dfatal(
-            "Remove this dfatal() to destroy %s cache '%s'"
-            % (cache_type, cache_path)
-        )
-        hio.delete_dir(cache_path)
+        _LOG.info("# Before reset: %s", get_cache_size_info(cache_path, cache_type))
+        _LOG.warning(
+            "Resetting '%s' cache for function '%s' in dir '%s'", cache_type,
+            self._func.__name__,
+            cache_path)
+        if destroy:
+            _LOG.warning("Destroying cache...")
+            hio.delete_dir(cache_path)
+        else:
+            cache_backend = self._get_cache(cache_type)
+            cache_backend.clear()
+        _LOG.info("# After reset: %s", get_cache_size_info(cache_path, cache_type))
 
+    # def destroy_cache(self, cache_type: str) -> None:
+    #     """
+    #     Destroy a cache by cache type and remove physical directory. Only works
+    #     in cache-specific case.
+    #
+    #     :param cache_type: type of a cache
+    #     """
+    #     if cache_type is None:
+    #         # Destroy all caches.
+    #         for cache_type in get_cache_types():
+    #             self.destroy_cache(cache_type)
+    #         return
+    #     else:
+    #         _check_valid_cache_type(cache_type)
+    #         if cache_type == "mem":
+    #             cache_path = self._mem_cache_directory
+    #         elif cache_type == "disk":
+    #             cache_path = self._disk_cache_directory
+    #         _LOG.info("# Before destroy: %s", get_cache_size_info(cache_path))
+    #         _LOG.warning(
+    #             "Destroy '%s' cache for function '%s' in dir '%s'",
+    #             cache_type,
+    #             self._func.__name__,
+    #             cache_path)
+    #         hio.delete_dir(cache_path)
+    #         _LOG.info("# After destroy: %s", get_cache_size_info(cache_path))
+    #
     def set_cache_directory(
         self, cache_type: str, cache_path: Optional[str]
     ) -> None:
