@@ -310,6 +310,61 @@ def compute_local_level_model_stats(
     return result
 
 
+def compute_centered_gaussian_log_likelihood(
+    df: pd.DataFrame,
+    observation_col: str,
+    variance_col: str,
+    square_variance_col: bool = False,
+    variance_shifts: int = 0,
+) -> pd.Series:
+    """
+    Return the log-likelihoods of supposed draws from centered Gaussians.
+
+    A higher log-likelihood score means more likely rather than less.
+
+    The log-likelihood of the series of observations may be obtained by
+    summing the individual log-likelihoods.
+
+    :param df: dataframe with float observation and variance columns
+    :param observation_col: name of column containing observations
+    :param variance_col: name of column containing variances
+    :square_variance_col: if `True`, square the values in `variance_col`
+        (use this if the column contains standard deviations
+    :variance_shifts: number of shifts to preapply to `variance_col`
+        prior to calculating log-likelihood. Use this if `variance_col`
+        contains forward predictions.
+    :return: series of log-likelihoods
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    # Extract observations and variance, with optional shift applied.
+    obs = df[observation_col]
+    var = df[variance_col].shift(variance_shifts)
+    dbg.dassert(
+        not (var <= 0).any(),
+        msg="Variance values must be positive."
+    )
+    if square_variance_col:
+        var = np.square(var)
+    # Restrict to relevant data and drop any rows with NaNs.
+    idx = pd.concat([obs, var], axis=1).dropna().index
+    obs = obs.loc[idx]
+    var = var.loc[idx]
+    # Ensure that there is at least one observation.
+    n_obs = idx.size
+    _LOG.debug("Number of non-NaN observations=%i", n_obs)
+    dbg.dassert_lt(0, n_obs)
+    # Perform log-likelihood calculation.
+    # This term only depends upon the presence of an observation. We preserve
+    # it here to facilitate comparisons across series with different numbers of
+    # observations.
+    constant_term = -0.5 * np.log(2 * np.pi)
+    # This term depends upon the observation values and variances.
+    data_term = -0.5 * (np.log(var) + np.square(obs).divide(var))
+    log_likelihoods = constant_term + data_term
+    log_likelihoods.name = "log_likelihood"
+    return log_likelihoods.reindex(df.index)
+
+
 # #############################################################################
 # Sharpe ratio
 # #############################################################################
