@@ -316,6 +316,7 @@ def compute_centered_gaussian_loglikelihood(
     variance_col: str,
     square_variance_col: bool = False,
     variance_shifts: int = 0,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """
     Return the loglikelihoods of independent draws from centered Gaussians.
@@ -334,8 +335,10 @@ def compute_centered_gaussian_loglikelihood(
     :variance_shifts: number of shifts to apply to `variance_col` prior to
         calculating loglikelihood. Use this if `variance_col` contains forward
         predictions.
+    :prefix: prefix to add to name of output series
     :return: series of loglikelihoods
     """
+    prefix = prefix or ""
     dbg.dassert_isinstance(df, pd.DataFrame)
     # Extract observations and variance, with optional shift applied.
     obs = df[observation_col]
@@ -359,7 +362,7 @@ def compute_centered_gaussian_loglikelihood(
     # This term depends upon the observation values and variances.
     data_term = -0.5 * (np.log(var) + np.square(obs).divide(var))
     log_likelihoods = constant_term + data_term
-    log_likelihoods.name = "log_likelihood"
+    log_likelihoods.name = prefix + "loglikelihood"
     return log_likelihoods.reindex(df.index)
 
 
