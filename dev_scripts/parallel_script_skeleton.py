@@ -9,9 +9,13 @@ template.
 
 import argparse
 import logging
+import pprint
 import os
+import sys
+import time
 from typing import Any, Dict, List, Tuple
 
+import joblib
 from tqdm.autonotebook import tqdm
 
 import helpers.dbg as dbg
@@ -33,17 +37,22 @@ def _func(val1: int, val2: str,
           **kwargs: Any,
           ) -> str:
     res = f"val1={val1} val2={val2} kwargs={kwargs} incremental={incremental} abort_on_error={abort_on_error}"
+    _LOG.debug("res=%s", res)
+    time.sleep(1)
     if val1 == -1:
         if abort_on_error:
             raise ValueError(f"Error: {res}")
     return res
 
 
-def _decorate_kwargs(kwargs: Dict) -> Dict:
+# #############################################################################
+
+
+def _decorate_kwargs(kwargs: Dict, incremental: bool, abort_on_error: bool) -> Dict:
     kwargs = kwargs.copy()
-    kwargs = {
+    kwargs.update({
         "incremental": incremental,
-        "abort_on_error": abort_on_error}
+        "abort_on_error": abort_on_error})
     return kwargs
 
 
@@ -76,24 +85,27 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Prepare the workload.
     func = _func
     tasks = []
-    # val1, val2
-    task = ((5, 6), {"hello": "world", "good": "bye"})
-    tasks.append(task)
+    for _ in range(5):
+        # val1, val2
+        task = ((5, 6), {"hello": "world", "good": "bye"})
+        tasks.append(task)
+    #task = ((-1, 7), {"hello2": "world2", "good2": "bye2"})
+    #tasks.append(task)
     if args.dry_run:
-        for i, task in tqdm.tqdm(enumerate(tasks)):
-            print(printing.frame("Task %s / %s" % (i + 1, len(tasks))))
+        for i, task in tqdm(enumerate(tasks)):
+            print("\n" + hprint.frame("Task %s / %s" % (i + 1, len(tasks))))
             print(pprint.pformat(task))
         _LOG.warning("Exiting without executing, as per user request")
         sys.exit(0)
     # Run.
     if num_threads == "serial":
         res = []
-        for i, task in tqdm.tqdm(enumerate(tasks)):
-            _LOG.debug("\n%s", printing.frame("Task %s / %s" % (i + 1, len(tasks))))
+        for i, task in tqdm(enumerate(tasks)):
+            _LOG.debug("\n%s", hprint.frame("Task %s / %s" % (i + 1, len(tasks))))
             #
             res_tmp = func(
                 *task[0],
-                **_decorate_kwargs(task[1])
+                **_decorate_kwargs(task[1], incremental, abort_on_error)
             )
             res.append(res_tmp)
     else:
@@ -103,7 +115,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         res = joblib.Parallel(n_jobs=num_threads, verbose=50)(
             joblib.delayed(func)(
                 *task[0],
-                **_decorate_kwargs(task[1])
+                **_decorate_kwargs(task[1], incremental, abort_on_error)
             )
             for task in tasks
         )
