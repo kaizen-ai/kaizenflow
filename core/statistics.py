@@ -329,10 +329,10 @@ def compute_centered_gaussian_log_likelihood(
     :param observation_col: name of column containing observations
     :param variance_col: name of column containing variances
     :square_variance_col: if `True`, square the values in `variance_col`
-        (use this if the column contains standard deviations
-    :variance_shifts: number of shifts to preapply to `variance_col`
-        prior to calculating log-likelihood. Use this if `variance_col`
-        contains forward predictions.
+        (use this if the column contains standard deviations)
+    :variance_shifts: number of shifts to apply to `variance_col` prior to
+        calculating log-likelihood. Use this if `variance_col` contains forward
+        predictions.
     :return: series of log-likelihoods
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
