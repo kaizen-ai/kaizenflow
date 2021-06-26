@@ -39,11 +39,14 @@ def get_function_name(count: int = 0) -> str:
     return func_name
 
 
-# From https://github.com/bosswissam/pysize
+# #############################################################################
+
+
 def get_size_in_bytes(obj: object, seen: Optional[set] = None) -> int:
     """
     Recursively find size of an object `obj` in bytes.
     """
+    # From https://github.com/bosswissam/pysize
     size = sys.getsizeof(obj)
     if seen is None:
         seen = set()
@@ -74,6 +77,21 @@ def get_size_in_bytes(obj: object, seen: Optional[set] = None) -> int:
             if hasattr(obj, s)
         )
     return size
+
+
+def format_size(num: float) -> str:
+    """
+    Return a human-readable string for a filesize (e.g., "3.5 MB").
+    """
+    # From http://stackoverflow.com/questions/1094841
+    for x in ["bytes", "KB", "MB", "GB", "TB"]:
+        if num < 1024.0:
+            return "%3.1f %s" % (num, x)
+        num /= 1024.0
+    assert 0, "Invalid num='%s'" % num
+
+
+# #############################################################################
 
 
 def get_methods(obj: Any, access: str = "all") -> List[str]:

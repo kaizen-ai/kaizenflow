@@ -8,8 +8,9 @@ import collections
 import functools
 import logging
 import os
+import pprint
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Match, Optional, Tuple
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
@@ -89,12 +90,12 @@ def is_inside_submodule(git_dir: str = ".") -> bool:
     """
     Return whether a dir is inside a Git submodule or a Git supermodule.
 
-    We determine this checking if the current git repo is included
-    inside another git repo.
+    We determine this checking if the current Git repo is included
+    inside another Git repo.
     """
     cmd = []
     # - Find the git root of the current directory
-    # - Check if the dir one level up is a valid git repo
+    # - Check if the dir one level up is a valid Git repo
     # Go to the dir.
     cmd.append("cd %s" % git_dir)
     # > cd im/
@@ -114,8 +115,8 @@ def _is_repo(repo_short_name: str) -> bool:
     """
     Return whether we are inside `amp` and `amp` is a submodule.
     """
-    repo_full_name = get_repo_full_name_from_dirname(".")
-    return get_repo_short_name(repo_full_name) == repo_short_name
+    repo_full_name = get_repo_full_name_from_dirname(".", include_host_name=False)
+    return get_repo_name(repo_full_name, in_mode="full_name") == repo_short_name
 
 
 def is_amp() -> bool:
@@ -305,17 +306,26 @@ def report_submodule_status(dir_names: List[str], short_hash: bool) -> str:
 # to distinguish full vs short repo name.
 
 
-def _parse_github_repo_name(repo_name: str) -> str:
+def _parse_github_repo_name(repo_name: str) -> Tuple[str, str]:
     """
-    Parse a repo name from `git remote` in the format:
-    `git@github.com:alphamatic/amp` or `https://github.com/alphamatic/amp`
+    Parse a repo name from `git remote`.
 
-    and return "alphamatic/amp"
+    The supported formats are both SSH and HTTPS, e.g.,
+    - `git@github.com:alphamatic/amp`
+    - `https://github.com/alphamatic/amp`
+
+    For both of these strings the function returns ("github.com", "alphamatic/amp").
     """
-    m = re.match(r"^\S+\.com[:/](.*)$", repo_name)
+    # Try to parse the SSH format, e.g., `git@github.com:alphamatic/amp`
+    m = re.match(r"^git@(\S+.com):(\S+)$", repo_name)
+    if not m:
+        # Try tp parse the HTTPS format, e.g., `https://github.com/alphamatic/amp`
+        m = re.match(r"^https://(\S+.com)/(\S+)$", repo_name)
     dbg.dassert(m, "Can't parse '%s'", repo_name)
-    repo_name = m.group(1)  # type: ignore
-    _LOG.debug("repo_name=%s", repo_name)
+    m: Match[str]
+    host_name = m.group(1)
+    repo_name = m.group(2)
+    _LOG.debug("host_name=%s repo_name=%s", host_name, repo_name)
     # We expect something like "alphamatic/amp".
     m = re.match(r"^\S+/\S+$", repo_name)
     dbg.dassert(m, "repo_name='%s'", repo_name)
@@ -323,11 +333,19 @@ def _parse_github_repo_name(repo_name: str) -> str:
     suffix_to_remove = ".git"
     if repo_name.endswith(suffix_to_remove):
         repo_name = repo_name[: -len(suffix_to_remove)]
-    return repo_name
+    return host_name, repo_name
 
 
-def get_repo_full_name_from_dirname(dir_name: str) -> str:
+def get_repo_full_name_from_dirname(
+    dir_name: str, include_host_name: bool
+) -> str:
     """
+    Return the full name of the repo in `git_dir`, e.g., "alphamatic/amp".
+
+    This function relies on `git remote` to gather the required information.
+
+    :param include_hostname: prepend also the GitHub hostname, e.g., returning
+        "github.com/alphamatic/amp"
     :return: the full name of the repo in `git_dir`, e.g., "alphamatic/amp".
     """
     dbg.dassert_exists(dir_name)
@@ -344,9 +362,13 @@ def get_repo_full_name_from_dirname(dir_name: str) -> str:
     dbg.dassert_eq(len(data), 3, "data='%s'", str(data))
     # Extract the middle string, e.g., "git@github.com:alphamatic/amp"
     repo_name = data[1]
-    #
-    repo_name = _parse_github_repo_name(repo_name)
-    return repo_name
+    # Parse the string.
+    host_name, repo_name = _parse_github_repo_name(repo_name)
+    if include_host_name:
+        res = f"{host_name}/{repo_name}"
+    else:
+        res = repo_name
+    return res
 
 
 def get_repo_full_name_from_client(super_module: bool) -> str:
@@ -356,113 +378,154 @@ def get_repo_full_name_from_client(super_module: bool) -> str:
 
     :param super_module: like in get_client_root()
     """
-    # Get the git remote in the git_module.
+    # Get the Git remote in the dir containing the Git repo.
     git_dir = get_client_root(super_module)
-    repo_name = get_repo_full_name_from_dirname(git_dir)
+    repo_name = get_repo_full_name_from_dirname(git_dir, include_host_name=False)
     return repo_name
 
 
+# /////////////////////////////////////////////////////////////////////////
+
+
+def _get_repo_config_code() -> str:
+    """
+    Return the text of the code stored in `repo_config.py`.
+    """
+    # TODO(gp): We should actually ask Git where the super-module is.
+    file_name = "./repo_config.py"
+    dbg.dassert_file_exists(file_name)
+    code: str = hio.from_file(file_name)
+    return code
+
+
+def _decorate_with_host_name(
+    dict_: Dict[str, str], host_name: str
+) -> Dict[str, str]:
+    """
+    Prepend the host name to all the values of the passed dictionary.
+    """
+    res = {k: f"{host_name}/{v}" for k, v in dict_.items()}
+    return res
+
+
 @functools.lru_cache()
-def _get_repo_short_to_full_name() -> Dict[str, str]:
+def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
     """
-    Return the map from short name (e.g., "amp") to full name
-    ("alphamatic/amp").
+    Return the map from short name (e.g., "amp") to full name (e.g.,
+    "alphamatic/amp") using the information in `repo_config.py`
     """
+    # From short name to long name.
     repo_map = {
         "amp": "alphamatic/amp",
         "dev_tools": "alphamatic/dev_tools",
     }
-    # TODO(gp): We should actually ask Git where the supermodule is.
-    file_name = "./repo_config.py"
-    dbg.dassert_file_exists(file_name)
-    txt = hio.from_file(file_name)
-    exec(txt, globals())
+    if include_host_name:
+        host_name = "github.com"
+        repo_map = _decorate_with_host_name(repo_map, host_name)
+    _LOG.debug(
+        "include_host_name=%s, repo_map=\n%s",
+        include_host_name,
+        pprint.pformat(repo_map),
+    )
+    # Read the info from the current repo.
+    code = _get_repo_config_code()
+    # TODO(gp): make the linter happy creating this symbol that comes from the
+    # `exec()`.
+    exec(code, globals())  # pylint: disable=exec-used
+    current_repo_map = get_repo_map()
+    if include_host_name:
+        host_name = get_host_name()
+        current_repo_map = _decorate_with_host_name(current_repo_map, host_name)
+    _LOG.debug(
+        "include_host_name=%s, current_repo_map=\n%s",
+        include_host_name,
+        pprint.pformat(current_repo_map),
+    )
+    # Update the map.
+    dbg.dassert_not_intersection(repo_map.keys(), current_repo_map.keys())
     repo_map.update(get_repo_map())
-    dbg.dassert_no_duplicates(repo_map.keys())
     dbg.dassert_no_duplicates(repo_map.values())
+    _LOG.debug(
+        "include_host_name=%s, repo_map=\n%s",
+        include_host_name,
+        pprint.pformat(repo_map),
+    )
     return repo_map
 
 
-@functools.lru_cache()
-def _get_repo_full_to_short_name() -> Dict[str, str]:
+# /////////////////////////////////////////////////////////////////////////
+
+
+def get_complete_repo_map(
+    in_mode: str, include_host_name: bool = False
+) -> Dict[str, str]:
     """
-    Return the map from full name ("alphamatic/amp") to short name (e.g.,
-    "amp").
-    """
-    # Get the reverse map.
-    repo_map = _get_repo_short_to_full_name()
-    inv_repo_map = {v: k for (k, v) in repo_map.items()}
-    return inv_repo_map
-
-
-# TODO(gp): Use only `get_repo_name(..., mode)`.
-def get_repo_full_name(short_name: str) -> str:
-    """
-    Return the full name of a git repo based on its short name.
-
-    E.g., "amp" -> "alphamatic/amp"
-    """
-    repo_map = _get_repo_short_to_full_name()
-    dbg.dassert_in(short_name, repo_map, "Invalid short_name='%s'", short_name)
-    return repo_map[short_name]
-
-
-def get_repo_short_name(full_name: str) -> str:
-    """
-    Return the short name of a git repo based on its full name.
-
-    E.g., "alphamatic/amp" -> "amp"
-    """
-    repo_map = _get_repo_full_to_short_name()
-    dbg.dassert_in(full_name, repo_map, "Invalid full_name='%s'", full_name)
-    return repo_map[full_name]
-
-
-def get_repo_name(name: str, in_mode: str) -> str:
-    """
-    Return the full / short name of a git repo based on the alternative name.
+    Return the full / short name of a Git repo based on the alternative name.
 
     :param in_mode: the values `full_name` or `short_name` determine how to interpret
         `name`
     """
+    repo_map = _get_repo_short_to_full_name(include_host_name)
     if in_mode == "full_name":
-        ret = get_repo_short_name(name)
+        # Compute the reverse map.
+        repo_map = {v: k for (k, v) in repo_map.items()}
     elif in_mode == "short_name":
-        ret = get_repo_full_name(name)
+        pass
     else:
-        raise ValueError("Invalid mode='%s'" % in_mode)
+        raise ValueError("Invalid in_mode='%s'" % in_mode)
+    _LOG.debug(
+        "For in_mode=%s, include_host_name=%s, repo_map=\n%s",
+        in_mode,
+        include_host_name,
+        pprint.pformat(repo_map),
+    )
+    return repo_map
+
+
+def get_repo_name(
+    name: str, in_mode: str, include_host_name: bool = False
+) -> str:
+    """
+    Return the full/short name of a Git repo based on the other name.
+
+    :param in_mode: the values `full_name` or `short_name` determine how to interpret
+        `name`
+    """
+    repo_map = get_complete_repo_map(in_mode, include_host_name)
+    dbg.dassert_in(
+        name, repo_map, "Invalid name='%s' for in_mode='%s'", name, in_mode
+    )
+    ret = repo_map[name]
     return ret
 
 
-def get_all_repo_names(mode: str) -> List[str]:
+def get_all_repo_names(
+    in_mode: str, include_host_name: bool = False
+) -> List[str]:
     """
-    Return all the repo full or short names.
+    Return the names (full or short depending on `mode`) of all the Git repos.
 
-    :param mode: if "full_name" return the full names (e.g., "alphamatic/amp")
+    :param in_mode: if "full_name" return the full names (e.g., "alphamatic/amp")
         if "short_name" return the short names (e.g., "amp")
     """
-    if mode == "full_name":
-        repo_map = _get_repo_short_to_full_name()
-    elif mode == "short_name":
-        repo_map = _get_repo_full_to_short_name()
-    else:
-        raise ValueError("Invalid mode='%s'" % mode)
-    return sorted(list(repo_map.values()))
+    repo_map = get_complete_repo_map(in_mode, include_host_name)
+    return sorted(list(repo_map.keys()))
 
 
-def get_task_prefix_from_repo_short_name(repo_short_name: str) -> str:
+def get_task_prefix_from_repo_short_name(short_name: str) -> str:
     """
     Return the task prefix for a repo (e.g., "amp" -> "AmpTask").
     """
-    # TODO(gp): Find a better way rather than centralizing the names of all repos.
-    if repo_short_name == "amp":
+    if short_name == "amp":
         prefix = "AmpTask"
-    elif repo_short_name == "lem":
-        prefix = "LemTask"
-    elif repo_short_name == "dev_tools":
+    elif short_name == "dev_tools":
         prefix = "DevToolsTask"
     else:
-        raise ValueError("Invalid short_name='%s'" % repo_short_name)
+        # We assume that we can build the prefix from the name (e.g., "lem" ->
+        # "LemTask").
+        # TODO(gp): A more general approach is to save this information inside
+        #  `repo_config.py`.
+        prefix = short_name.capitalize() + "Task"
     return prefix
 
 
@@ -640,7 +703,7 @@ def get_remote_head_hash(dir_name: str) -> str:
     Report the hash that the remote Git repo is at.
     """
     dbg.dassert_exists(dir_name)
-    sym_name = get_repo_full_name_from_dirname(dir_name)
+    sym_name = get_repo_full_name_from_dirname(dir_name, include_host_name=False)
     cmd = f"git ls-remote git@github.com:{sym_name} HEAD 2>/dev/null"
     data: Tuple[int, str] = hsinte.system_to_one_line(cmd)
     _, output = data

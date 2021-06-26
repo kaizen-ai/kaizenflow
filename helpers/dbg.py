@@ -282,9 +282,12 @@ def dassert_type_in(
 
 
 def dassert_isinstance(
-    val1: Any, val2: Union[type, Iterable[type]], msg: Optional[str] = None, *args: Any
+    val1: Any,
+    val2: Union[type, Iterable[type]],
+    msg: Optional[str] = None,
+    *args: Any,
 ) -> None:
-    cond = isinstance(val1, val2)
+    cond = isinstance(val1, val2)  # type: ignore[arg-type]
     if not cond:
         txt = "instance of '%s' is '%s' instead of '%s'" % (
             val1,
@@ -370,7 +373,10 @@ def dassert_no_duplicates(
 
 
 def dassert_is_sorted(
-        val1: Union[List, Tuple], sort_kwargs: Optional[Dict[Any, Any]] = None, msg: Optional[str] = None, *args: Any
+    val1: Union[List, Tuple],
+    sort_kwargs: Optional[Dict[Any, Any]] = None,
+    msg: Optional[str] = None,
+    *args: Any,
 ) -> None:
     # TODO(gp): Extend for pd.Series using the proper method.
     dassert_isinstance(val1, (list, tuple))
@@ -712,8 +718,9 @@ class _LocalTimeZoneFormatter:
 # [mypy] error: Definition of "converter" in base class
 # "_LocalTimeZoneFormatter" is incompatible with definition in base class
 # "Formatter"
-# type: ignore[misc]
-class _ColoredFormatter(_LocalTimeZoneFormatter, logging.Formatter):
+class _ColoredFormatter(  # type: ignore[misc]
+    _LocalTimeZoneFormatter, logging.Formatter
+):
     """
     Logging formatter using colors for different levels.
     """
@@ -721,19 +728,16 @@ class _ColoredFormatter(_LocalTimeZoneFormatter, logging.Formatter):
     MAPPING = {
         # White: 37.
         # Blu.
-        "DEBUG": 34,
+        "DEBUG": (34, "DEBUG"),
         # Cyan.
-        "INFO": 36,
+        "INFO": (36, "INFO "),
         # Yellow.
-        "WARNING": 33,
+        "WARNING": (33, "WARN "),
         # Red.
-        "ERROR": 31,
+        "ERROR": (31, "ERROR"),
         # White on red background.
-        "CRITICAL": 41,
+        "CRITICAL": (41, "CRTCL"),
     }
-
-    PREFIX = "\033["
-    SUFFIX = "\033[0m"
 
     def __init__(self, log_format: str, date_format: str):
         super().__init__(log_format, date_format)
@@ -744,11 +748,13 @@ class _ColoredFormatter(_LocalTimeZoneFormatter, logging.Formatter):
         # as per our conventions.
         levelname = colored_record.levelname
         # Use white as default.
-        seq = self.MAPPING.get(levelname, 37)
+        prefix = "\033["
+        suffix = "\033[0m"
+        assert levelname in self.MAPPING, "Can't find info '%s'"
+        color_code, tag = self.MAPPING[levelname]
         # Align the level name.
-        levelname = "%-5s" % levelname
         colored_levelname = "{0}{1}m{2}{3}".format(
-            self.PREFIX, seq, levelname, self.SUFFIX
+            prefix, color_code, tag, suffix
         )
         colored_record.levelname = colored_levelname
         return logging.Formatter.format(self, colored_record)

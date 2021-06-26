@@ -248,17 +248,19 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 
     def test_gh_create_pr1(self) -> None:
         _gh_login()
-        target = "gh_create_pr(ctx, repo='amp', title='test')"
+        target = "gh_create_pr(ctx, repo_short_name='amp', title='test')"
         self._check_output(target)
 
     def test_gh_create_pr2(self) -> None:
         _gh_login()
-        target = "gh_create_pr(ctx, body='hello_world', repo='amp', title='test')"
+        target = "gh_create_pr(ctx, body='hello_world', repo_short_name='amp', title='test')"
         self._check_output(target)
 
     def test_gh_create_pr3(self) -> None:
         _gh_login()
-        target = "gh_create_pr(ctx, draft=False, repo='amp', title='test')"
+        target = (
+            "gh_create_pr(ctx, draft=False, repo_short_name='amp', title='test')"
+        )
         self._check_output(target)
 
     def test_gh_issue_title(self) -> None:
@@ -292,7 +294,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 
     def test_git_create_branch2(self) -> None:
         target = (
-            "git_create_branch(ctx, issue_id=1, repo='amp', "
+            "git_create_branch(ctx, issue_id=1, repo_short_name='amp', "
             "only_branch_from_master=False)"
         )
         self._check_output(target)

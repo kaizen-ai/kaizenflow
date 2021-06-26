@@ -16,6 +16,9 @@ import helpers.printing as hprint
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+
+
 def add_bool_arg(
     parser: argparse.ArgumentParser,
     name: str,
@@ -34,6 +37,9 @@ def add_bool_arg(
     return parser
 
 
+# #############################################################################
+
+
 def add_verbosity_arg(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument(
         "-v",
@@ -45,6 +51,8 @@ def add_verbosity_arg(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
     return parser
 
 
+# #############################################################################
+# Command line options related to selection actions.
 # #############################################################################
 
 
@@ -139,6 +147,8 @@ def mark_action(action: str, actions: List[str]) -> Tuple[bool, List[str]]:
 
 
 # #############################################################################
+# Command line options for input/output processing.
+# #############################################################################
 
 
 def add_input_output_args(
@@ -221,3 +231,39 @@ def write_file(txt: List[str], file_name: str) -> None:
         with open(file_name, "w") as f:
             f.write("\n".join(txt))
         _LOG.info("Written file '%s'", file_name)
+
+
+# #############################################################################
+# Command line options for parallel processing.
+# #############################################################################
+
+
+def add_parallel_processing_arg(
+    parser: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
+    parser.add_argument(
+        "--num_threads",
+        action="store",
+        help="""
+Number of threads to use:
+- '-1' to use all CPUs;
+- '1' to use one-thread at the time but using the parallel execution;
+- 'serial' to serialize the execution without using parallel execution""",
+        required=True,
+    )
+    parser.add_argument(
+        "--dry_run",
+        action="store_true",
+        help="Print workload and exit without running",
+    )
+    parser.add_argument(
+        "--no_incremental",
+        action="store_true",
+        help="Skip workload already performed",
+    )
+    parser.add_argument(
+        "--skip_on_error",
+        action="store_true",
+        help="Continue execution after encountering an error",
+    )
+    return parser

@@ -41,12 +41,14 @@ class _TestClassHelper(hut.TestCase):
             self.__class__.__name__,
             self._testMethodName,
         )
-        hcache.destroy_global_cache("disk", tag=self.cache_tag)
-        hcache.destroy_global_cache("mem", tag=self.cache_tag)
+        for cache_type in hcache.get_cache_types():
+            hcache.clear_global_cache(cache_type, tag=self.cache_tag,
+                    destroy=True)
 
     def tearDown(self) -> None:
-        hcache.destroy_global_cache("disk", tag=self.cache_tag)
-        hcache.destroy_global_cache("mem", tag=self.cache_tag)
+        for cache_type in hcache.get_cache_types():
+            hcache.clear_global_cache(cache_type, tag=self.cache_tag,
+                    destroy=True)
         #
         super().tearDown()
 

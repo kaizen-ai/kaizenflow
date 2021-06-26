@@ -24,6 +24,7 @@ import helpers.printing as hprint
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): Use `add_parallel_processing_arg()`.
 def add_experiment_arg(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
@@ -186,7 +187,9 @@ def select_config(
     return configs
 
 
-def get_configs_from_command_line(args: argparse.Namespace) -> List[cconfig.Config]:
+def get_configs_from_command_line(
+    args: argparse.Namespace,
+) -> List[cconfig.Config]:
     """
     Return all the configs to run given the command line interface.
 
@@ -228,7 +231,9 @@ def get_configs_from_command_line(args: argparse.Namespace) -> List[cconfig.Conf
     return configs
 
 
-def report_failed_experiments(configs: List[cconfig.Config], rcs: List[int]) -> int:
+def report_failed_experiments(
+    configs: List[cconfig.Config], rcs: List[int]
+) -> int:
     """
     Report failing experiments.
 

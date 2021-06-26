@@ -110,17 +110,35 @@ class Test_git_submodule2(hut.TestCase):
 class Test_git_repo_name1(hut.TestCase):
     def test_parse_github_repo_name1(self) -> None:
         repo_name = "git@github.com:alphamatic/amp"
-        act = git._parse_github_repo_name(repo_name)
-        self.assert_equal(act, "alphamatic/amp")
+        host_name, repo_name = git._parse_github_repo_name(repo_name)
+        self.assert_equal(host_name, "github.com")
+        self.assert_equal(repo_name, "alphamatic/amp")
 
     def test_parse_github_repo_name2(self) -> None:
         repo_name = "https://github.com/alphamatic/amp"
-        act = git._parse_github_repo_name(repo_name)
-        exp = "alphamatic/amp"
-        self.assert_equal(act, exp)
+        git._parse_github_repo_name(repo_name)
+        host_name, repo_name = git._parse_github_repo_name(repo_name)
+        self.assert_equal(host_name, "github.com")
+        self.assert_equal(repo_name, "alphamatic/amp")
+
+    def test_parse_github_repo_name3(self) -> None:
+        repo_name = "git@github.fake.com:alphamatic/amp"
+        host_name, repo_name = git._parse_github_repo_name(repo_name)
+        self.assert_equal(host_name, "github.fake.com")
+        self.assert_equal(repo_name, "alphamatic/amp")
+
+    def test_parse_github_repo_name4(self) -> None:
+        repo_name = "https://github.fake.com/alphamatic/amp"
+        host_name, repo_name = git._parse_github_repo_name(repo_name)
+        self.assert_equal(host_name, "github.fake.com")
+        self.assert_equal(repo_name, "alphamatic/amp")
 
     def test_get_repo_full_name_from_dirname1(self) -> None:
-        func_call = "git.get_repo_full_name_from_dirname(dir_name='.')"
+        func_call = "git.get_repo_full_name_from_dirname(dir_name='.', include_host_name=False)"
+        _execute_func_call(func_call)
+
+    def test_get_repo_full_name_from_dirname2(self) -> None:
+        func_call = "git.get_repo_full_name_from_dirname(dir_name='.', include_host_name=True)"
         _execute_func_call(func_call)
 
     def test_get_repo_full_name_from_client1(self) -> None:

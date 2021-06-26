@@ -2,6 +2,7 @@
 
 """
 This is a git commit-hook used to check if:
+
 - if we are committing to `master` directly
 - if the author / email was set properly
 - files in the staging area larger than `_MAX_FILE_SIZE_IN_KB` variable.
@@ -110,6 +111,7 @@ def _check_author() -> None:
 # #############################################################################
 
 
+# From helpers/introspection.py
 def _sizeof_fmt(num: float) -> str:
     """
     Return a human-readable string for a filesize (e.g., "3.5 MB").

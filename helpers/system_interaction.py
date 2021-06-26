@@ -24,6 +24,43 @@ _LOG = logging.getLogger(__name__)
 
 # #############################################################################
 
+
+def is_inside_docker() -> bool:
+    """
+    Return whether we are inside a container or not.
+    """
+    # From https://stackoverflow.com/questions/23513045
+    return os.path.exists("/.dockerenv")
+
+
+def is_inside_ci() -> bool:
+    """
+    Return whether we are running inside the Continuous Integration flow.
+    """
+    if "CI" not in os.environ:
+        ret = False
+    else:
+        ret = os.environ["CI"] != ""
+    return ret
+
+
+def is_running_in_ipynb() -> bool:
+    # From https://stackoverflow.com/questions/15411967
+    try:
+        _ = get_ipython().config  # type: ignore
+        res = True
+    except NameError:
+        res = False
+    return res
+
+
+# TODO(gp): Use this everywhere in the code base.
+def is_running_on_macos() -> bool:
+    return get_os_name() == "Darwin"
+
+
+# #############################################################################
+
 _USER_NAME = None
 
 
@@ -76,6 +113,9 @@ def get_env_var(env_var_name: str) -> str:
 
 
 # #############################################################################
+# system(), system_to_string()
+# #############################################################################
+
 
 # pylint: disable=too-many-branches,too-many-statements,too-many-arguments,too-many-locals
 def _system(
@@ -294,6 +334,11 @@ def system_to_string(
     return rc, output
 
 
+# #############################################################################
+# system_to_one_line()
+# #############################################################################
+
+
 def get_first_line(output: str) -> str:
     """
     Return the first (and only) line from a string.
@@ -332,223 +377,8 @@ def system_to_one_line(cmd: str, *args: Any, **kwargs: Any) -> Tuple[int, str]:
 
 
 # #############################################################################
-
-
-def get_process_pids(
-    keep_line: Callable[[str], bool]
-) -> Tuple[List[int], List[str]]:
-    """
-    Find all the processes corresponding to `ps ax` filtered line by line with
-    `keep_line()`.
-
-    :return: list of pids and filtered output of `ps ax`
-    """
-    cmd = "ps ax"
-    rc, txt = system_to_string(cmd, abort_on_error=False)
-    _LOG.debug("txt=\n%s", txt)
-    pids: List[int] = []
-    txt_out: List[str] = []
-    if rc == 0:
-        for line in txt.split("\n"):
-            _LOG.debug("line=%s", line)
-            # PID   TT  STAT      TIME COMMAND
-            if "PID" in line and "TT" in line and "STAT" in line:
-                txt_out.append(line)
-                continue
-            keep = keep_line(line)
-            _LOG.debug("  keep=%s", keep)
-            if not keep:
-                continue
-            # > ps ax | grep 'ssh -i' | grep localhost
-            # 19417   ??  Ss     0:00.39 ssh -i /Users/gp/.ssh/id_rsa -f -nNT \
-            #           -L 19999:localhost:19999 gp@54.172.40.4
-            fields = line.split()
-            try:
-                pid = int(fields[0])
-            except ValueError as e:
-                _LOG.error("Can't parse fields '%s' from line '%s'", fields, line)
-                raise e
-            _LOG.debug("pid=%s", pid)
-            pids.append(pid)
-            txt_out.append(line)
-    return pids, txt_out
-
-
-def kill_process(
-    get_pids: Callable[[], Tuple[List[int], str]],
-    timeout_in_secs: int = 5,
-    polltime_in_secs: float = 0.1,
-) -> None:
-    """
-    Kill all the processes returned by the function `get_pids()`.
-
-    :param timeout_in_secs: how many seconds to wait at most before giving up
-    :param polltime_in_secs: how often to check for dead processes
-    """
-    import tqdm
-
-    pids, txt = get_pids()
-    _LOG.info("Killing %d pids (%s)\n%s", len(pids), pids, "\n".join(txt))
-    if not pids:
-        return
-    for pid in pids:
-        try:
-            os.kill(pid, signal.SIGKILL)
-        except ProcessLookupError as e:
-            _LOG.warning(str(e))
-    #
-    _LOG.info("Waiting %d processes (%s) to die", len(pids), pids)
-    for _ in tqdm.tqdm(range(int(timeout_in_secs / polltime_in_secs))):
-        time.sleep(polltime_in_secs)
-        pids, _ = get_pids()
-        if not pids:
-            break
-    pids, txt = get_pids()
-    dbg.dassert_eq(len(pids), 0, "Processes are still alive:%s", "\n".join(txt))
-    _LOG.info("Processes dead")
-
-
-def check_exec(tool: str) -> bool:
-    """
-    Check if an executable can be executed.
-
-    :return: True if the executables "tool" can be executed.
-    """
-    suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
-    cmd = "which %s" % tool
-    abort_on_error = False
-    rc = system(
-        cmd,
-        abort_on_error=abort_on_error,
-        suppress_output=suppress_output,
-        log_level=logging.DEBUG,
-    )
-    return rc == 0
-
-
+# system_to_files()
 # #############################################################################
-
-
-def query_yes_no(question: str, abort_on_no: bool) -> bool:
-    """
-    Ask a yes/no question via raw_input() and return their answer.
-
-    "question" is a string that is presented to the user.
-    "default" is the presumed answer if the user just hits <Enter>.
-        It must be "yes" (the default), "no" or None (meaning
-        an answer is required of the user).
-
-    The "answer" return value is True for "yes" or False for "no".
-    """
-    valid = {
-        "yes": True,
-        "y": True,
-        #
-        "no": False,
-        "n": False,
-    }
-    prompt = " [y/n] "
-    while True:
-        sys.stdout.write(question + prompt)
-        choice = input().lower()
-        if choice in valid:
-            ret = valid[choice]
-            break
-    _LOG.debug("ret=%s", ret)
-    if abort_on_no:
-        if not ret:
-            print("You answer no: exiting")
-            sys.exit(-1)
-    return ret
-
-
-def create_executable_script(file_name: str, content: str) -> None:
-    # To avoid circular dependencies.
-    import helpers.io_ as hio
-
-    dbg.dassert_isinstance(content, str)
-    hio.to_file(file_name, content)
-    # Make it executable.
-    cmd = "chmod +x " + file_name
-    system(cmd)
-
-
-def _compute_file_signature(file_name: str, dir_depth: int) -> Optional[List]:
-    """
-    Compute a signature for files using basename and `dir_depth` enclosing
-    dirs.
-
-    :return: tuple of extracted enclosing dirs
-        - E.g., `("core", "dataflow_model", "utils.py")`
-    """
-    # Split a file like:
-    # /app/amp/core/test/TestCheckSameConfigs.test_check_same_configs_error/output/test.txt
-    # into
-    # ['', 'app', 'amp', 'core', 'test',
-    #   'TestCheckSameConfigs.test_check_same_configs_error', 'output', 'test.txt']
-    path = os.path.normpath(file_name)
-    paths = path.split(os.sep)
-    dbg.dassert_lte(1, dir_depth)
-    if dir_depth + 1 > len(paths):
-        _LOG.warning(
-            "Can't compute signature of file_name='%s' with"
-            " dir_depth=%s, len(paths)=%s",
-            file_name,
-            dir_depth,
-            len(paths),
-        )
-        signature = None
-    else:
-        signature = paths[-(dir_depth + 1) :]
-    return signature
-
-
-def find_file_with_dir(
-    file_name: str,
-    root_dir: str = ".",
-    dir_depth: int = 1,
-    mode: str = "return_all_results",
-) -> List[str]:
-    """
-    Find a file matching basename and several enclosing dir name starting from
-    `root_dir`.
-
-    E.g., find a file matching `amp/core/dataflow_model/utils.py` with `dir_depth=1`
-    means looking for a file with basename 'utils.py' under a dir 'dataflow_model'.
-
-    :param dir_depth: how many enclosing dirs in order to declare a match
-    :param mode: control the returned list of files, like in
-        `select_result_file_from_list()`
-    :return: list of files found
-    """
-    _LOG.debug(hprint.to_str("file_name root_dir"))
-    # Find all the files in the dir with the same basename.
-    base_name = os.path.basename(file_name)
-    cmd = rf"find . -name '{base_name}' -not -path '*/\.git/*'"
-    # > find . -name "utils.py"
-    # ./amp/core/dataflow/utils.py
-    # ./amp/core/dataflow_model/utils.py
-    # ./amp/im/common/test/utils.py
-    remove_files_non_present = False
-    mode_tmp = "return_all_results"
-    candidate_files = system_to_files(
-        cmd, root_dir, remove_files_non_present, mode_tmp
-    )
-    _LOG.debug("files=\n%s", "\n".join(candidate_files))
-    matching_files = []
-    for file in sorted(candidate_files):
-        signature1 = _compute_file_signature(file, dir_depth)
-        signature2 = _compute_file_signature(file_name, dir_depth)
-        is_equal = signature1 == signature2
-        _LOG.debug("found_file=%s -> is_equal=%s", file, is_equal)
-        if is_equal:
-            matching_files.append(file)
-    _LOG.debug(
-        "Found %d files:\n%s", len(matching_files), "\n".join(matching_files)
-    )
-    # Select the result based on mode.
-    res = select_result_file_from_list(matching_files, mode)
-    return res
 
 
 def to_normal_paths(files: List[str]) -> List[str]:
@@ -655,37 +485,247 @@ def system_to_files(
 
 
 # #############################################################################
+# Functions handling processes
+# #############################################################################
 
 
-def is_inside_docker() -> bool:
+def get_process_pids(
+    keep_line: Callable[[str], bool]
+) -> Tuple[List[int], List[str]]:
     """
-    Return whether we are inside a container or not.
+    Find all the processes corresponding to `ps ax` filtered line by line with
+    `keep_line()`.
+
+    :return: list of pids and filtered output of `ps ax`
     """
-    # From https://stackoverflow.com/questions/23513045
-    return os.path.exists("/.dockerenv")
+    cmd = "ps ax"
+    rc, txt = system_to_string(cmd, abort_on_error=False)
+    _LOG.debug("txt=\n%s", txt)
+    pids: List[int] = []
+    txt_out: List[str] = []
+    if rc == 0:
+        for line in txt.split("\n"):
+            _LOG.debug("line=%s", line)
+            # PID   TT  STAT      TIME COMMAND
+            if "PID" in line and "TT" in line and "STAT" in line:
+                txt_out.append(line)
+                continue
+            keep = keep_line(line)
+            _LOG.debug("  keep=%s", keep)
+            if not keep:
+                continue
+            # > ps ax | grep 'ssh -i' | grep localhost
+            # 19417   ??  Ss     0:00.39 ssh -i /Users/gp/.ssh/id_rsa -f -nNT \
+            #           -L 19999:localhost:19999 gp@54.172.40.4
+            fields = line.split()
+            try:
+                pid = int(fields[0])
+            except ValueError as e:
+                _LOG.error("Can't parse fields '%s' from line '%s'", fields, line)
+                raise e
+            _LOG.debug("pid=%s", pid)
+            pids.append(pid)
+            txt_out.append(line)
+    return pids, txt_out
 
 
-def is_inside_ci() -> bool:
+def kill_process(
+    get_pids: Callable[[], Tuple[List[int], str]],
+    timeout_in_secs: int = 5,
+    polltime_in_secs: float = 0.1,
+) -> None:
     """
-    Return whether we are running inside the Continuous Integration flow.
+    Kill all the processes returned by the function `get_pids()`.
+
+    :param timeout_in_secs: how many seconds to wait at most before giving up
+    :param polltime_in_secs: how often to check for dead processes
     """
-    if "CI" not in os.environ:
-        ret = False
-    else:
-        ret = os.environ["CI"] != ""
+    import tqdm
+
+    pids, txt = get_pids()
+    _LOG.info("Killing %d pids (%s)\n%s", len(pids), pids, "\n".join(txt))
+    if not pids:
+        return
+    for pid in pids:
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError as e:
+            _LOG.warning(str(e))
+    #
+    _LOG.info("Waiting %d processes (%s) to die", len(pids), pids)
+    for _ in tqdm.tqdm(range(int(timeout_in_secs / polltime_in_secs))):
+        time.sleep(polltime_in_secs)
+        pids, _ = get_pids()
+        if not pids:
+            break
+    pids, txt = get_pids()
+    dbg.dassert_eq(len(pids), 0, "Processes are still alive:%s", "\n".join(txt))
+    _LOG.info("Processes dead")
+
+
+# #############################################################################
+# User interaction
+# #############################################################################
+
+
+def query_yes_no(question: str, abort_on_no: bool) -> bool:
+    """
+    Ask a yes/no question via raw_input() and return their answer.
+
+    "question" is a string that is presented to the user.
+    "default" is the presumed answer if the user just hits <Enter>.
+        It must be "yes" (the default), "no" or None (meaning
+        an answer is required of the user).
+
+    The "answer" return value is True for "yes" or False for "no".
+    """
+    valid = {
+        "yes": True,
+        "y": True,
+        #
+        "no": False,
+        "n": False,
+    }
+    prompt = " [y/n] "
+    while True:
+        sys.stdout.write(question + prompt)
+        choice = input().lower()
+        if choice in valid:
+            ret = valid[choice]
+            break
+    _LOG.debug("ret=%s", ret)
+    if abort_on_no:
+        if not ret:
+            print("You answer no: exiting")
+            sys.exit(-1)
     return ret
 
 
-def is_running_in_ipynb() -> bool:
-    # From https://stackoverflow.com/questions/15411967
-    try:
-        _ = get_ipython().config  # type: ignore
-        res = True
-    except NameError:
-        res = False
+# #############################################################################
+# Functions similar to Linux commands.
+# #############################################################################
+
+
+def check_exec(tool: str) -> bool:
+    """
+    Check if an executable can be executed.
+
+    :return: True if the executables "tool" can be executed.
+    """
+    suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
+    cmd = "which %s" % tool
+    abort_on_error = False
+    rc = system(
+        cmd,
+        abort_on_error=abort_on_error,
+        suppress_output=suppress_output,
+        log_level=logging.DEBUG,
+    )
+    return rc == 0
+
+
+def create_executable_script(file_name: str, content: str) -> None:
+    # To avoid circular dependencies.
+    import helpers.io_ as hio
+
+    dbg.dassert_isinstance(content, str)
+    hio.to_file(file_name, content)
+    # Make it executable.
+    cmd = "chmod +x " + file_name
+    system(cmd)
+
+
+def du(path_name: str) -> int:
+    """
+    Return the size of a file or a directory (recursively).
+    """
+    if not os.path.exists(path_name):
+        _LOG.warning("Path '%s' doesn't exist")
+        return 0
+    dbg.dassert_exists(path_name)
+    cmd = f"du -d 0 {path_name}" + " | awk '{print $1}'"
+    # > du -d 0 core
+    # 20    core
+    _, txt = system_to_one_line(cmd)
+    _LOG.debug("txt=%s", txt)
+    # `du` returns size in KB.
+    size_in_bytes = int(txt) * 1024
+    return size_in_bytes
+
+
+def _compute_file_signature(file_name: str, dir_depth: int) -> Optional[List]:
+    """
+    Compute a signature for files using basename and `dir_depth` enclosing
+    dirs.
+
+    :return: tuple of extracted enclosing dirs
+        - E.g., `("core", "dataflow_model", "utils.py")`
+    """
+    # Split a file like:
+    # /app/amp/core/test/TestCheckSameConfigs.test_check_same_configs_error/output/test.txt
+    # into
+    # ['', 'app', 'amp', 'core', 'test',
+    #   'TestCheckSameConfigs.test_check_same_configs_error', 'output', 'test.txt']
+    path = os.path.normpath(file_name)
+    paths = path.split(os.sep)
+    dbg.dassert_lte(1, dir_depth)
+    if dir_depth + 1 > len(paths):
+        _LOG.warning(
+            "Can't compute signature of file_name='%s' with"
+            " dir_depth=%s, len(paths)=%s",
+            file_name,
+            dir_depth,
+            len(paths),
+        )
+        signature = None
+    else:
+        signature = paths[-(dir_depth + 1) :]
+    return signature
+
+
+def find_file_with_dir(
+    file_name: str,
+    root_dir: str = ".",
+    dir_depth: int = 1,
+    mode: str = "return_all_results",
+) -> List[str]:
+    """
+    Find a file matching basename and several enclosing dir name starting from
+    `root_dir`.
+
+    E.g., find a file matching `amp/core/dataflow_model/utils.py` with `dir_depth=1`
+    means looking for a file with basename 'utils.py' under a dir 'dataflow_model'.
+
+    :param dir_depth: how many enclosing dirs in order to declare a match
+    :param mode: control the returned list of files, like in
+        `select_result_file_from_list()`
+    :return: list of files found
+    """
+    _LOG.debug(hprint.to_str("file_name root_dir"))
+    # Find all the files in the dir with the same basename.
+    base_name = os.path.basename(file_name)
+    cmd = rf"find . -name '{base_name}' -not -path '*/\.git/*'"
+    # > find . -name "utils.py"
+    # ./amp/core/dataflow/utils.py
+    # ./amp/core/dataflow_model/utils.py
+    # ./amp/im/common/test/utils.py
+    remove_files_non_present = False
+    mode_tmp = "return_all_results"
+    candidate_files = system_to_files(
+        cmd, root_dir, remove_files_non_present, mode_tmp
+    )
+    _LOG.debug("files=\n%s", "\n".join(candidate_files))
+    matching_files = []
+    for file in sorted(candidate_files):
+        signature1 = _compute_file_signature(file, dir_depth)
+        signature2 = _compute_file_signature(file_name, dir_depth)
+        is_equal = signature1 == signature2
+        _LOG.debug("found_file=%s -> is_equal=%s", file, is_equal)
+        if is_equal:
+            matching_files.append(file)
+    _LOG.debug(
+        "Found %d files:\n%s", len(matching_files), "\n".join(matching_files)
+    )
+    # Select the result based on mode.
+    res = select_result_file_from_list(matching_files, mode)
     return res
-
-
-# TODO(gp): Use this everywhere in the code base.
-def is_running_on_macos() -> bool:
-    return get_os_name() == "Darwin"

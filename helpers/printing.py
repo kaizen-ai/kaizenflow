@@ -282,13 +282,14 @@ def round_digits(
 
 def to_str(expression: str, frame_lev: int = 1) -> str:
     """
-    Return a string representing the value of an expression like `exp=value`.
+    Return a string with the value of a variable / expression / multiple
+    variables.
 
-    # This is similar to Python 3.8 f-string syntax `f"{foo=} {bar=}"`.
-    # We don't want to force to use Python 3.8 just for this feature.
+    If expression is a space-separated compound expression, convert it into
+    `exp1=val1, exp2=val2, ...`.
 
-    # If expression is a space-separated compound expression, convert it into
-    # `exp1=val1, exp2=val2, ...`.
+    This is similar to Python 3.8 f-string syntax `f"{foo=} {bar=}"`.
+    We don't want to force to use Python 3.8 just for this feature.
 
     >>> x = 1
     >>> to_str("x+1")
@@ -671,8 +672,9 @@ def df_to_short_str(tag: str, df: "pd.DataFrame") -> str:
     tag = tag or "df"
     txt += f"# {tag}=\n%s" % df.head(3)
     txt += "\n# shape=\n%s" % str(df.shape)
-    #txt += "\n# dtypes=\n%s" % str(df.dtypes)
+    # txt += "\n# dtypes=\n%s" % str(df.dtypes)
     return txt
+
 
 # #############################################################################
 # Notebook output

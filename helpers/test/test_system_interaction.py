@@ -111,7 +111,10 @@ class Test_compute_file_signature1(hut.TestCase):
         """
         Compute the signature of a file using 1 enclosing dir.
         """
-        file_name = "/app/amp/core/test/TestCheckSameConfigs.test_check_same_configs_error/output/test.txt"
+        file_name = (
+            "/app/amp/core/test/TestCheckSameConfigs."
+            + "test_check_same_configs_error/output/test.txt"
+        )
         dir_depth = 1
         act = hsyste._compute_file_signature(file_name, dir_depth=dir_depth)
         exp = ["output", "test.txt"]
@@ -121,7 +124,10 @@ class Test_compute_file_signature1(hut.TestCase):
         """
         Compute the signature of a file using 2 enclosing dirs.
         """
-        file_name = "/app/amp/core/test/TestCheckSameConfigs.test_check_same_configs_error/output/test.txt"
+        file_name = (
+            "/app/amp/core/test/TestCheckSameConfigs."
+            + "test_check_same_configs_error/output/test.txt"
+        )
         dir_depth = 2
         act = hsyste._compute_file_signature(file_name, dir_depth=dir_depth)
         exp = [
@@ -216,6 +222,16 @@ class Test_find_file_with_dir1(hut.TestCase):
         # E.g., helpers/test/test_system_interaction.py::Test_find_file_with_dir1::test2/test.txt
         file_name = os.path.join(self.get_output_dir(), "test.txt")
         _LOG.debug("file_name=%s", file_name)
-        act = hsyste.find_file_with_dir(file_name, dir_depth=dir_depth, mode=mode)
+        act: List[str] = hsyste.find_file_with_dir(
+            file_name, dir_depth=dir_depth, mode=mode
+        )
         _LOG.debug("Found %d matching files", len(act))
         return act
+
+
+# #############################################################################
+
+
+class Test_Linux_commands1(hut.TestCase):
+    def test_du1(self) -> None:
+        hsyste.du(".")
