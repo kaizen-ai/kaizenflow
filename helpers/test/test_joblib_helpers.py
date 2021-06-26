@@ -1,7 +1,7 @@
 import logging
 import random
 import time
-from typing import Any, Callable, List, Tuple
+from typing import Any
 
 import helpers.joblib_helpers as hjoblib
 import helpers.unit_test as hut
@@ -20,8 +20,10 @@ def _func(
     #
     **kwargs: Any,
 ) -> str:
-    res = (f"val1={val1} val2={val2} kwargs={kwargs} incremental={incremental}" +
-        f"abort_on_error={abort_on_error}")
+    res = (
+        f"val1={val1} val2={val2} kwargs={kwargs} incremental={incremental}"
+        + f"abort_on_error={abort_on_error}"
+    )
     _LOG.debug("res=%s", res)
     time.sleep(0.1)
     if val1 == -1:
@@ -54,7 +56,7 @@ def _get_workload1() -> hjoblib.WORKLOAD:
     return workload
 
 
-def _get_workload2() -> Tuple[Callable, List[hjoblib.TASK]]:
+def _get_workload2() -> hjoblib.WORKLOAD:
     """
     Return a workload for `_func()` that fails.
     """

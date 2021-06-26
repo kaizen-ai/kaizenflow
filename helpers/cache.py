@@ -14,7 +14,7 @@ import functools
 import logging
 import os
 import time
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, List, Optional, Tuple, Union, cast
 
 import joblib
 import joblib.func_inspect as jfunci
@@ -339,7 +339,7 @@ class Cached:
         elif cache_type == "disk":
             cache_path = self._disk_cache_directory
         dbg.dassert_is_not(cache_path, None)
-        cache_path: str
+        cast(str, cache_path)
         _LOG.info(
             "# Before reset: %s", get_cache_size_info(cache_path, cache_type)
         )

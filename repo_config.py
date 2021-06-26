@@ -9,7 +9,7 @@ def get_repo_map() -> Dict[str, str]:
     """
     Return a mapping of short repo name -> long repo name.
     """
-    repo_map = {}
+    repo_map: Dict[str, str] = {}
     return repo_map
 
 

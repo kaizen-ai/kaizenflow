@@ -11,7 +11,7 @@ import argparse
 import logging
 import os
 import time
-from typing import Any, Callable, List, Tuple
+from typing import Any
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
@@ -34,8 +34,10 @@ def _func(
     #
     **kwargs: Any,
 ) -> str:
-    res = (f"val1={val1} val2={val2} kwargs={kwargs} incremental={incremental}" +
-        f "abort_on_error={abort_on_error}")
+    res = (
+        f"val1={val1} val2={val2} kwargs={kwargs} incremental={incremental}"
+        + f"abort_on_error={abort_on_error}"
+    )
     _LOG.debug("res=%s", res)
     time.sleep(1)
     if val1 == -1:

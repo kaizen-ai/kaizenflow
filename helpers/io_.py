@@ -282,7 +282,8 @@ def to_file(
     else:
         # Open regular text file.
         f = open(  # pylint: disable=consider-using-with
-                file_name, mode, buffering=0 if mode == "a" else -1)
+            file_name, mode, buffering=0 if mode == "a" else -1
+        )
     # Write file contents.
     f.writelines(lines)
     f.close()
@@ -333,7 +334,8 @@ def from_file(
     else:
         # Open regular text file.
         f = open(  # pylint: disable=consider-using-with
-                file_name, "r", encoding=encoding)
+            file_name, "r", encoding=encoding
+        )
     try:
         # Read data.
         data: str = f.read()
