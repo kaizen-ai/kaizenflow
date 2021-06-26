@@ -282,7 +282,8 @@ def round_digits(
 
 def to_str(expression: str, frame_lev: int = 1) -> str:
     """
-    Return a string with the value of a variable / expression / multiple variables.
+    Return a string with the value of a variable / expression / multiple
+    variables.
 
     If expression is a space-separated compound expression, convert it into
     `exp1=val1, exp2=val2, ...`.
@@ -671,8 +672,9 @@ def df_to_short_str(tag: str, df: "pd.DataFrame") -> str:
     tag = tag or "df"
     txt += f"# {tag}=\n%s" % df.head(3)
     txt += "\n# shape=\n%s" % str(df.shape)
-    #txt += "\n# dtypes=\n%s" % str(df.dtypes)
+    # txt += "\n# dtypes=\n%s" % str(df.dtypes)
     return txt
+
 
 # #############################################################################
 # Notebook output

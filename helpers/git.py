@@ -425,7 +425,8 @@ def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
     _LOG.debug("include_host_name=%s, repo_map=\n%s", include_host_name, pprint.pformat(repo_map))
     # Read the info from the current repo.
     code = _get_repo_config_code()
-    # Make the linter happy creating this symbol that comes from the `exec()`.
+    # TODO(gp): make the linter happy creating this symbol that comes from the
+    # `exec()`.
     exec(code, globals())  # pylint: disable=exec-used
     current_repo_map = get_repo_map()
     if include_host_name:

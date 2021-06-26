@@ -258,7 +258,9 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 
     def test_gh_create_pr3(self) -> None:
         _gh_login()
-        target = "gh_create_pr(ctx, draft=False, repo_short_name='amp', title='test')"
+        target = (
+            "gh_create_pr(ctx, draft=False, repo_short_name='amp', title='test')"
+        )
         self._check_output(target)
 
     def test_gh_issue_title(self) -> None:

@@ -238,7 +238,9 @@ def write_file(txt: List[str], file_name: str) -> None:
 # #############################################################################
 
 
-def add_parallel_processing_arg(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+def add_parallel_processing_arg(
+    parser: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
     parser.add_argument(
         "--num_threads",
         action="store",

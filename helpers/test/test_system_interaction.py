@@ -111,7 +111,8 @@ class Test_compute_file_signature1(hut.TestCase):
         """
         Compute the signature of a file using 1 enclosing dir.
         """
-        file_name = "/app/amp/core/test/TestCheckSameConfigs.test_check_same_configs_error/output/test.txt"
+        file_name = ("/app/amp/core/test/TestCheckSameConfigs." +
+            "test_check_same_configs_error/output/test.txt")
         dir_depth = 1
         act = hsyste._compute_file_signature(file_name, dir_depth=dir_depth)
         exp = ["output", "test.txt"]
@@ -121,7 +122,8 @@ class Test_compute_file_signature1(hut.TestCase):
         """
         Compute the signature of a file using 2 enclosing dirs.
         """
-        file_name = "/app/amp/core/test/TestCheckSameConfigs.test_check_same_configs_error/output/test.txt"
+        file_name = ("/app/amp/core/test/TestCheckSameConfigs." +
+            "test_check_same_configs_error/output/test.txt")
         dir_depth = 2
         act = hsyste._compute_file_signature(file_name, dir_depth=dir_depth)
         exp = [

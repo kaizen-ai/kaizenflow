@@ -197,7 +197,9 @@ def set_global_cache(cache_type: str, cache_backend: joblib.Memory) -> None:
         _DISK_CACHE = cache_backend
 
 
-def clear_global_cache(cache_type: str, tag: Optional[str] = None, destroy: bool = False) -> None:
+def clear_global_cache(
+    cache_type: str, tag: Optional[str] = None, destroy: bool = False
+) -> None:
     """
     Reset a cache by cache type.
 
@@ -209,9 +211,7 @@ def clear_global_cache(cache_type: str, tag: Optional[str] = None, destroy: bool
     cache_path = get_cache_path(cache_type, tag)
     _LOG.info("# Before reset: %s", get_cache_size_info(cache_path, cache_type))
     #
-    _LOG.warning(
-        "Resetting %s cache '%s'", cache_type, cache_path
-    )
+    _LOG.warning("Resetting %s cache '%s'", cache_type, cache_path)
     if destroy:
         _LOG.warning("Destroying ...")
         hio.delete_dir(cache_path)
@@ -326,7 +326,7 @@ class Cached:
     # TODO(gp): In the end, only disk cache makes sense for function-specific cache.
     #  The memory one is always in memory.
 
-    def clear_cache(self, cache_type: str, destroy: bool =False) -> None:
+    def clear_cache(self, cache_type: str, destroy: bool = False) -> None:
         """
         Clear all caches or a cache by type. Only works in function-specific
         case.
@@ -338,18 +338,26 @@ class Cached:
             cache_path = self._mem_cache_directory
         elif cache_type == "disk":
             cache_path = self._disk_cache_directory
-        _LOG.info("# Before reset: %s", get_cache_size_info(cache_path, cache_type))
+        dbg.dassert_is_not(cache_path, None)
+        cache_path: str
+        _LOG.info(
+            "# Before reset: %s", get_cache_size_info(cache_path, cache_type)
+        )
         _LOG.warning(
-            "Resetting '%s' cache for function '%s' in dir '%s'", cache_type,
+            "Resetting '%s' cache for function '%s' in dir '%s'",
+            cache_type,
             self._func.__name__,
-            cache_path)
+            cache_path,
+        )
         if destroy:
             _LOG.warning("Destroying cache...")
             hio.delete_dir(cache_path)
         else:
             cache_backend = self._get_cache(cache_type)
             cache_backend.clear()
-        _LOG.info("# After reset: %s", get_cache_size_info(cache_path, cache_type))
+        _LOG.info(
+            "# After reset: %s", get_cache_size_info(cache_path, cache_type)
+        )
 
     # def destroy_cache(self, cache_type: str) -> None:
     #     """

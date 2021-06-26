@@ -451,10 +451,10 @@ def select_result_file_from_list(files: List[str], mode: str) -> List[str]:
 
 
 def system_to_files(
-        cmd: str,
-        dir_name: str,
-        remove_files_non_present: bool,
-        mode: str = "return_all_results",
+    cmd: str,
+    dir_name: str,
+    remove_files_non_present: bool,
+    mode: str = "return_all_results",
 ) -> List[str]:
     """
     Execute command `cmd` in `dir_name` and return the output as a list of
@@ -681,10 +681,10 @@ def _compute_file_signature(file_name: str, dir_depth: int) -> Optional[List]:
 
 
 def find_file_with_dir(
-        file_name: str,
-        root_dir: str = ".",
-        dir_depth: int = 1,
-        mode: str = "return_all_results",
+    file_name: str,
+    root_dir: str = ".",
+    dir_depth: int = 1,
+    mode: str = "return_all_results",
 ) -> List[str]:
     """
     Find a file matching basename and several enclosing dir name starting from

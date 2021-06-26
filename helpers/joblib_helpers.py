@@ -6,18 +6,12 @@ import helpers.joblib_helpers as hjoblib
 
 import logging
 import pprint
-import os
-import sys
-import time
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import joblib
 from tqdm.autonotebook import tqdm
 
-import helpers.dbg as dbg
-import helpers.io_ as hio
 import helpers.printing as hprint
-import helpers.parser as prsr
 
 # import helpers.system_interaction as si
 
@@ -32,16 +26,22 @@ TASK = Tuple[Tuple[Any], Dict[str, Any]]
 WORKLOAD = Tuple[Callable, TASK]
 
 
-def _decorate_kwargs(kwargs: Dict, incremental: bool, abort_on_error: bool) -> Dict:
+def _decorate_kwargs(
+    kwargs: Dict, incremental: bool, abort_on_error: bool
+) -> Dict:
     kwargs = kwargs.copy()
-    kwargs.update({
-        "incremental": incremental,
-        "abort_on_error": abort_on_error})
+    kwargs.update({"incremental": incremental, "abort_on_error": abort_on_error})
     return kwargs
 
 
-def parallel_execute(func: Callable, tasks: List[TASK], dry_run: bool,
-                     num_threads: str, incremental: bool, abort_on_error: bool) -> Optional[List[Any]]:
+def parallel_execute(
+    func: Callable,
+    tasks: List[TASK],
+    dry_run: bool,
+    num_threads: str,
+    incremental: bool,
+    abort_on_error: bool,
+) -> Optional[List[Any]]:
     _LOG.info(hprint.to_str("dry_run num_threads incremental abort_on_error"))
     if dry_run:
         for i, task in tqdm(enumerate(tasks)):
@@ -57,18 +57,16 @@ def parallel_execute(func: Callable, tasks: List[TASK], dry_run: bool,
             _LOG.debug("task=%s", pprint.pformat(task))
             #
             res_tmp = func(
-                *task[0],
-                **_decorate_kwargs(task[1], incremental, abort_on_error)
+                *task[0], **_decorate_kwargs(task[1], incremental, abort_on_error)
             )
             res.append(res_tmp)
     else:
-        num_threads = int(num_threads)
+        num_threads = int(num_threads)  # type: ignore[assignment]
         # -1 is interpreted by joblib like for all cores.
         _LOG.info("Using %d threads", num_threads)
         res = joblib.Parallel(n_jobs=num_threads, verbose=50)(
             joblib.delayed(func)(
-                *task[0],
-                **_decorate_kwargs(task[1], incremental, abort_on_error)
+                *task[0], **_decorate_kwargs(task[1], incremental, abort_on_error)
             )
             for task in tasks
         )

@@ -281,7 +281,8 @@ def to_file(
         f = gzip.open(file_name, mode)
     else:
         # Open regular text file.
-        f = open(file_name, mode, buffering=0 if mode == "a" else -1)
+        f = open(  # pylint: disable=consider-using-with
+                file_name, mode, buffering=0 if mode == "a" else -1)
     # Write file contents.
     f.writelines(lines)
     f.close()
@@ -331,7 +332,8 @@ def from_file(
         f = gzip.open(file_name, "rt", encoding=encoding)
     else:
         # Open regular text file.
-        f = open(file_name, "r", encoding=encoding)
+        f = open(  # pylint: disable=consider-using-with
+                file_name, "r", encoding=encoding)
     try:
         # Read data.
         data: str = f.read()
@@ -401,7 +403,7 @@ def serialize_custom_types_for_json_encoder(obj: Any) -> Any:
         result = obj.to_dict()
     elif isinstance(obj, np.int64):
         result = int(obj)
-    elif isinstance(obj, np.float):
+    elif isinstance(obj, np.float64):
         result = float(obj)
     elif isinstance(obj, uuid.UUID):
         result = str(obj)
@@ -449,6 +451,7 @@ def from_json(file_name: str) -> dict:
     return data
 
 
+# TODO(gp): -> pandas_helpers.py
 def load_df_from_json(path_to_json: str) -> "pd.DataFrame":
     """
     Load a dataframe from a json file.

@@ -9,20 +9,14 @@ template.
 
 import argparse
 import logging
-import pprint
 import os
-import sys
 import time
-from typing import Any, Callable, Dict, List, Tuple
-
-import joblib
-from tqdm.autonotebook import tqdm
+from typing import Any, Callable, List, Tuple
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
-import helpers.printing as hprint
-import helpers.parser as prsr
 import helpers.joblib_helpers as hjoblib
+import helpers.parser as prsr
 
 # import helpers.system_interaction as si
 
@@ -31,13 +25,17 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def _func(val1: int, val2: str,
-          #
-          incremental: bool, abort_on_error: bool,
-          #
-          **kwargs: Any,
-          ) -> str:
-    res = f"val1={val1} val2={val2} kwargs={kwargs} incremental={incremental} abort_on_error={abort_on_error}"
+def _func(
+    val1: int,
+    val2: str,
+    #
+    incremental: bool,
+    abort_on_error: bool,
+    #
+    **kwargs: Any,
+) -> str:
+    res = (f"val1={val1} val2={val2} kwargs={kwargs} incremental={incremental}" +
+        f "abort_on_error={abort_on_error}")
     _LOG.debug("res=%s", res)
     time.sleep(1)
     if val1 == -1:
@@ -52,8 +50,8 @@ def _get_workload() -> hjoblib.WORKLOAD:
         # val1, val2
         task = ((5, 6), {"hello": "world", "good": "bye"})
         tasks.append(task)
-    #task = ((-1, 7), {"hello2": "world2", "good2": "bye2"})
-    #tasks.append(task)
+    # task = ((-1, 7), {"hello2": "world2", "good2": "bye2"})
+    # tasks.append(task)
     return (_func, tasks)
 
 
@@ -89,7 +87,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     incremental = not args.no_incremental
     abort_on_error = not args.skip_on_error
     # Execute.
-    res = hjoblib.parallel_execute(func, tasks, dry_run, num_threads, incremental, abort_on_error)
+    res = hjoblib.parallel_execute(
+        func, tasks, dry_run, num_threads, incremental, abort_on_error
+    )
     _ = res
 
 

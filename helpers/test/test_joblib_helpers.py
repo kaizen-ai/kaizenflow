@@ -1,27 +1,27 @@
 import logging
-import os
-import re
 import random
 import time
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, List, Tuple
 
-import helpers.dbg as dbg
-import helpers.system_interaction as hsyste
-import helpers.unit_test as hut
 import helpers.joblib_helpers as hjoblib
+import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
 # #############################################################################
 
 
-def _func(val1: int, val2: str,
-          #
-          incremental: bool, abort_on_error: bool,
-          #
-          **kwargs: Any,
-          ) -> str:
-    res = f"val1={val1} val2={val2} kwargs={kwargs} incremental={incremental} abort_on_error={abort_on_error}"
+def _func(
+    val1: int,
+    val2: str,
+    #
+    incremental: bool,
+    abort_on_error: bool,
+    #
+    **kwargs: Any,
+) -> str:
+    res = (f"val1={val1} val2={val2} kwargs={kwargs} incremental={incremental}" +
+        f"abort_on_error={abort_on_error}")
     _LOG.debug("res=%s", res)
     time.sleep(0.1)
     if val1 == -1:
@@ -30,7 +30,9 @@ def _func(val1: int, val2: str,
     return res
 
 
-def _randomize_workload(workload: hjoblib.WORKLOAD, seed: int = 1) -> hjoblib.WORKLOAD:
+def _randomize_workload(
+    workload: hjoblib.WORKLOAD, seed: int = 1
+) -> hjoblib.WORKLOAD:
     tasks = workload[1]
     random.seed(seed)
     random.shuffle(tasks)
@@ -48,7 +50,7 @@ def _get_workload1() -> hjoblib.WORKLOAD:
         tasks.append(task)
     workload = (_func, tasks)
     # Randomize workload.
-    workload = _randomize_workload(workload)
+    workload: hjoblib.WORKLOAD = _randomize_workload(workload)
     return workload
 
 
@@ -61,19 +63,20 @@ def _get_workload2() -> Tuple[Callable, List[hjoblib.TASK]]:
     task = ((-1, 7), {"hello2": "world2", "good2": "bye2"})
     workload[1].append(task)
     # Randomize workload.
-    workload = _randomize_workload(workload)
+    workload: hjoblib.WORKLOAD = _randomize_workload(workload)
     return workload
 
 
 class Test_parallel_execute1(hut.TestCase):
-
     def test_dry_run1(self) -> None:
         func, tasks = _get_workload1()
         dry_run = True
         num_threads = "serial"
         incremental = True
         abort_on_error = True
-        res = hjoblib.parallel_execute(func, tasks, dry_run, num_threads, incremental, abort_on_error)
+        res = hjoblib.parallel_execute(
+            func, tasks, dry_run, num_threads, incremental, abort_on_error
+        )
         _LOG.debug("res=%s", str(res))
         self.assertIs(res, None)
 
@@ -87,7 +90,9 @@ class Test_parallel_execute1(hut.TestCase):
         incremental = True
         abort_on_error = True
         #
-        self._helper_success(func, tasks, dry_run, num_threads, incremental, abort_on_error)
+        self._helper_success(
+            func, tasks, dry_run, num_threads, incremental, abort_on_error
+        )
 
     def test_parallel1(self) -> None:
         """
@@ -99,7 +104,9 @@ class Test_parallel_execute1(hut.TestCase):
         incremental = True
         abort_on_error = True
         #
-        self._helper_success(func, tasks, dry_run, num_threads, incremental, abort_on_error)
+        self._helper_success(
+            func, tasks, dry_run, num_threads, incremental, abort_on_error
+        )
 
     def test_parallel2(self) -> None:
         """
@@ -111,7 +118,9 @@ class Test_parallel_execute1(hut.TestCase):
         incremental = True
         abort_on_error = True
         #
-        self._helper_success(func, tasks, dry_run, num_threads, incremental, abort_on_error)
+        self._helper_success(
+            func, tasks, dry_run, num_threads, incremental, abort_on_error
+        )
 
     def test_parallel3(self) -> None:
         """
@@ -123,16 +132,19 @@ class Test_parallel_execute1(hut.TestCase):
         incremental = True
         abort_on_error = False
         #
-        res = hjoblib.parallel_execute(func, tasks, dry_run, num_threads, incremental, abort_on_error)
+        res = hjoblib.parallel_execute(
+            func, tasks, dry_run, num_threads, incremental, abort_on_error
+        )
         _LOG.debug("res=%s", str(res))
         act = str(sorted(res))
         # pylint: disable=line-too-long
         exp = [
             "val1=0 val2=0 kwargs={'hello0': 'world0', 'good': 'bye'} incremental=True abort_on_error=False",
-             "val1=1 val2=2 kwargs={'hello1': 'world2', 'good': 'bye'} incremental=True abort_on_error=False",
-             "val1=2 val2=4 kwargs={'hello2': 'world4', 'good': 'bye'} incremental=True abort_on_error=False",
-             "val1=3 val2=6 kwargs={'hello3': 'world6', 'good': 'bye'} incremental=True abort_on_error=False",
-             "val1=4 val2=8 kwargs={'hello4': 'world8', 'good': 'bye'} incremental=True abort_on_error=False"]
+            "val1=1 val2=2 kwargs={'hello1': 'world2', 'good': 'bye'} incremental=True abort_on_error=False",
+            "val1=2 val2=4 kwargs={'hello2': 'world4', 'good': 'bye'} incremental=True abort_on_error=False",
+            "val1=3 val2=6 kwargs={'hello3': 'world6', 'good': 'bye'} incremental=True abort_on_error=False",
+            "val1=4 val2=8 kwargs={'hello4': 'world8', 'good': 'bye'} incremental=True abort_on_error=False",
+        ]
         # pylint: enable=line-too-long
         exp = str(exp)
         self.assert_equal(act, exp)
@@ -147,7 +159,9 @@ class Test_parallel_execute1(hut.TestCase):
         incremental = True
         abort_on_error = True
         #
-        self._helper_fail(func, tasks, dry_run, num_threads, incremental, abort_on_error)
+        self._helper_fail(
+            func, tasks, dry_run, num_threads, incremental, abort_on_error
+        )
 
     def test_parallel_fail1(self) -> None:
         """
@@ -159,7 +173,9 @@ class Test_parallel_execute1(hut.TestCase):
         incremental = True
         abort_on_error = True
         #
-        self._helper_fail(func, tasks, dry_run, num_threads, incremental, abort_on_error)
+        self._helper_fail(
+            func, tasks, dry_run, num_threads, incremental, abort_on_error
+        )
 
     def test_parallel_fail2(self) -> None:
         """
@@ -171,18 +187,22 @@ class Test_parallel_execute1(hut.TestCase):
         incremental = True
         abort_on_error = True
         #
-        self._helper_fail(func, tasks, dry_run, num_threads, incremental, abort_on_error)
+        self._helper_fail(
+            func, tasks, dry_run, num_threads, incremental, abort_on_error
+        )
 
     def _helper_success(self, *args: Any, **kwargs: Any) -> None:
         res = hjoblib.parallel_execute(*args, **kwargs)
         _LOG.debug("res=%s", str(res))
         act = str(sorted(res))
         # pylint: disable=line-too-long
-        exp = ["val1=0 val2=0 kwargs={'hello0': 'world0', 'good': 'bye'} incremental=True abort_on_error=True",
-               "val1=1 val2=2 kwargs={'hello1': 'world2', 'good': 'bye'} incremental=True abort_on_error=True",
-               "val1=2 val2=4 kwargs={'hello2': 'world4', 'good': 'bye'} incremental=True abort_on_error=True",
-               "val1=3 val2=6 kwargs={'hello3': 'world6', 'good': 'bye'} incremental=True abort_on_error=True",
-               "val1=4 val2=8 kwargs={'hello4': 'world8', 'good': 'bye'} incremental=True abort_on_error=True"]
+        exp = [
+            "val1=0 val2=0 kwargs={'hello0': 'world0', 'good': 'bye'} incremental=True abort_on_error=True",
+            "val1=1 val2=2 kwargs={'hello1': 'world2', 'good': 'bye'} incremental=True abort_on_error=True",
+            "val1=2 val2=4 kwargs={'hello2': 'world4', 'good': 'bye'} incremental=True abort_on_error=True",
+            "val1=3 val2=6 kwargs={'hello3': 'world6', 'good': 'bye'} incremental=True abort_on_error=True",
+            "val1=4 val2=8 kwargs={'hello4': 'world8', 'good': 'bye'} incremental=True abort_on_error=True",
+        ]
         # pylint: enable=line-too-long
         exp = str(exp)
         self.assert_equal(act, exp)

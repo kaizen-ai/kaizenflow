@@ -2,6 +2,7 @@
 
 """
 This is a git commit-hook used to check if:
+
 - if we are committing to `master` directly
 - if the author / email was set properly
 - files in the staging area larger than `_MAX_FILE_SIZE_IN_KB` variable.

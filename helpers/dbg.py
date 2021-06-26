@@ -282,9 +282,12 @@ def dassert_type_in(
 
 
 def dassert_isinstance(
-    val1: Any, val2: Union[type, Iterable[type]], msg: Optional[str] = None, *args: Any
+    val1: Any,
+    val2: Union[type, Iterable[type]],
+    msg: Optional[str] = None,
+    *args: Any,
 ) -> None:
-    cond = isinstance(val1, val2)
+    cond = isinstance(val1, val2)  # type: ignore[arg-type]
     if not cond:
         txt = "instance of '%s' is '%s' instead of '%s'" % (
             val1,
@@ -370,7 +373,10 @@ def dassert_no_duplicates(
 
 
 def dassert_is_sorted(
-        val1: Union[List, Tuple], sort_kwargs: Optional[Dict[Any, Any]] = None, msg: Optional[str] = None, *args: Any
+    val1: Union[List, Tuple],
+    sort_kwargs: Optional[Dict[Any, Any]] = None,
+    msg: Optional[str] = None,
+    *args: Any,
 ) -> None:
     # TODO(gp): Extend for pd.Series using the proper method.
     dassert_isinstance(val1, (list, tuple))
@@ -712,7 +718,6 @@ class _LocalTimeZoneFormatter:
 # [mypy] error: Definition of "converter" in base class
 # "_LocalTimeZoneFormatter" is incompatible with definition in base class
 # "Formatter"
-# type: ignore[misc]
 class _ColoredFormatter(_LocalTimeZoneFormatter, logging.Formatter):
     """
     Logging formatter using colors for different levels.

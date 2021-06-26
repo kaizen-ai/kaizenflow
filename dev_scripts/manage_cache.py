@@ -4,7 +4,6 @@ import argparse
 import helpers.cache as hcac
 import helpers.dbg as dbg
 import helpers.parser as prsr
-import helpers.system_interaction as hsyste
 
 
 @hcac.cache(set_verbose_mode=True)
@@ -13,11 +12,11 @@ def _func() -> str:
     return txt
 
 
-def _test():
+def _test() -> None:
     _ = _func()
 
 
-def _test2():
+def _test2() -> None:
     tag = None
     hcac.clear_global_cache("mem", tag=tag)
     path = "/tmp/cache.function"
@@ -52,7 +51,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         "clear_disk_cache",
         "list",
         "print_cache_info",
-        "test"]
+        "test",
+    ]
     dbg.dassert_in(action, actions)
     if action == "clear_cache":
         print("cache_types=%s" % str(cache_types))
@@ -65,7 +65,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     elif action == "print_cache_info":
         print("cache_types=%s" % str(cache_types))
         for cache_type in cache_types:
-            path = hcac.get_path(cache_type, tag=tag)
+            path = hcac.get_cache_path(cache_type, tag=tag)
             cache_info = hcac.get_cache_size_info(path, cache_type)
             print(cache_info)
     elif action == "test":
