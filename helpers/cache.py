@@ -359,33 +359,6 @@ class Cached:
             "# After reset: %s", get_cache_size_info(cache_path, cache_type)
         )
 
-    # def destroy_cache(self, cache_type: str) -> None:
-    #     """
-    #     Destroy a cache by cache type and remove physical directory. Only works
-    #     in cache-specific case.
-    #
-    #     :param cache_type: type of a cache
-    #     """
-    #     if cache_type is None:
-    #         # Destroy all caches.
-    #         for cache_type in get_cache_types():
-    #             self.destroy_cache(cache_type)
-    #         return
-    #     else:
-    #         _check_valid_cache_type(cache_type)
-    #         if cache_type == "mem":
-    #             cache_path = self._mem_cache_directory
-    #         elif cache_type == "disk":
-    #             cache_path = self._disk_cache_directory
-    #         _LOG.info("# Before destroy: %s", get_cache_size_info(cache_path))
-    #         _LOG.warning(
-    #             "Destroy '%s' cache for function '%s' in dir '%s'",
-    #             cache_type,
-    #             self._func.__name__,
-    #             cache_path)
-    #         hio.delete_dir(cache_path)
-    #         _LOG.info("# After destroy: %s", get_cache_size_info(cache_path))
-    #
     def set_cache_directory(
         self, cache_type: str, cache_path: Optional[str]
     ) -> None:

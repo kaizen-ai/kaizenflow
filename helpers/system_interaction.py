@@ -639,6 +639,9 @@ def du(path_name: str) -> int:
     """
     Return the size of a file or a directory (recursively).
     """
+    if not os.path.exists(path_name):
+        _LOG.warning("Path '%s' doesn't exist")
+        return 0
     dbg.dassert_exists(path_name)
     cmd = f"du -d 0 {path_name}" + " | awk '{print $1}'"
     # > du -d 0 core

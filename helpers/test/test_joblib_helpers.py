@@ -22,7 +22,7 @@ def _func(
 ) -> str:
     res = (
         f"val1={val1} val2={val2} kwargs={kwargs} incremental={incremental}"
-        + f"abort_on_error={abort_on_error}"
+        + f" abort_on_error={abort_on_error}"
     )
     _LOG.debug("res=%s", res)
     time.sleep(0.1)
