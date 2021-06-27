@@ -19,14 +19,13 @@ import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
-
 # #############################################################################
 
 # A task is composed by the parameters (e.g., *args and **kwargs) to call the
 # function.
 TASK = Tuple[Tuple[Any], Dict[str, Any]]
 
-WORKLOAD = Tuple[Callable, TASK]
+WORKLOAD = Tuple[Callable, str, TASK]
 
 
 def _file_logging_decorator(func: Callable) -> Callable:
@@ -38,6 +37,7 @@ def _file_logging_decorator(func: Callable) -> Callable:
         # Extract parameters for the wrapper.
         task_idx = kwargs.pop("pe_task_idx")
         task_len = kwargs.pop("pe_task_len")
+        func_name = kwargs.pop("pe_func_name")
         abort_on_error = kwargs.pop("pe_abort_on_error")
         log_file = kwargs.pop("pe_log_file")
         # Save some information about the function execution.
@@ -45,6 +45,7 @@ def _file_logging_decorator(func: Callable) -> Callable:
         memento = htimer.dtimer_start(logging.DEBUG, "Execute %s" % func.__name__)
         txt.append("# task=%s/%s" % (task_idx + 1, task_len))
         txt.append("func=%s" % func.__name__)
+        txt.append("func_name=%s" % func_name)
         txt.append("args=\n%s" % hprint.indent(str(args)))
         txt.append("kwargs=\n%s" % hprint.indent(str(kwargs)))
         try:
@@ -92,7 +93,8 @@ def _file_logging_decorator(func: Callable) -> Callable:
 
 
 def _decorate_kwargs(
-    kwargs: Dict, task_idx: int, task_len: int, incremental: bool, abort_on_error: bool,
+        kwargs: Dict, task_idx: int, task_len: int, func_name: str,
+        incremental: bool, abort_on_error: bool,
         log_file: str,
 ) -> Dict:
     """
@@ -103,6 +105,8 @@ def _decorate_kwargs(
     kwargs.update({
         "pe_task_idx": task_idx,
         "pe_task_len": task_len,
+        "pe_func_name": func_name,
+        # This is a parameter for the function, so we don't prepend `pe_`.
         "incremental": incremental,
         "pe_abort_on_error": abort_on_error,
         "pe_log_file": log_file
@@ -128,14 +132,32 @@ def _decorate_kwargs(
 
 
 def parallel_execute(
-    func: Callable,
-    tasks: List[TASK],
-    dry_run: bool,
-    num_threads: str,
-    incremental: bool,
-    abort_on_error: bool,
-    log_file: str,
+        func: Callable,
+        func_name: str,
+        tasks: List[TASK],
+        dry_run: bool,
+        num_threads: str,
+        incremental: bool,
+        abort_on_error: bool,
+        log_file: str,
 ) -> Optional[List[Any]]:
+    """
+    Run a workload in parallel.
+
+    :param func: function to call in each thread
+    :param func_name: string invocation of the function for logging purposes
+        (e.g., vltbut.get_bar_data_for_date_interval)
+    :param tasks: list of args and kwargs to use when calling `func`
+    :param dry_run: if True, print the workload and exit without executing it
+    :param num_threads: joblib parameter to control how many threads to use
+    :param incremental: parameter passed to the function to execute, to control if
+        we want to re-execute workload already executed or not
+    :param abort_on_error: if True, stop executing the workload if one task asserts,
+        or continue
+    :param log_file: file used to log information about the execution
+
+    :return: list with the results from executing `func`
+    """
     _LOG.info(hprint.to_str("dry_run num_threads incremental abort_on_error"))
     _LOG.info("Saving log info in '%s'", log_file)
     _LOG.info("Number of tasks=%s", len(tasks))
@@ -151,12 +173,15 @@ def parallel_execute(
     task_len = len(tasks)
     if num_threads == "serial":
         res = []
-        for i, task in tqdm(enumerate(tasks), total=len(tasks), desc="Processing tasks"):
+        for i, task in tqdm(enumerate(tasks), total=len(tasks),
+                            desc="Processing tasks"):
             _LOG.debug("\n%s", hprint.frame("Task %s / %s" % (i + 1, len(tasks))))
             _LOG.debug("task=%s", pprint.pformat(task))
             # Execute.
             res_tmp = wrapped_func(
-                *task[0], **_decorate_kwargs(task[1], i, task_len, incremental, abort_on_error, log_file)
+                *task[0],
+                **_decorate_kwargs(task[1], i, task_len, func_name, incremental,
+                                   abort_on_error, log_file)
             )
             res.append(res_tmp)
     else:
@@ -165,7 +190,9 @@ def parallel_execute(
         _LOG.info("Using %d threads", num_threads)
         res = joblib.Parallel(n_jobs=num_threads, verbose=100)(
             joblib.delayed(wrapped_func)(
-                *task[0], **_decorate_kwargs(task[1], i, task_len, incremental, abort_on_error, log_file)
+                *task[0],
+                **_decorate_kwargs(task[1], i, task_len, func_name, incremental,
+                                   abort_on_error, log_file)
             )
             for task in tasks
         )

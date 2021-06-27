@@ -17,6 +17,7 @@ import time
 from typing import Any, Callable, List, Optional, Tuple, Union
 
 import helpers.dbg as dbg
+import helpers.introspection as hintro
 import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
@@ -568,17 +569,15 @@ def kill_process(
 # #############################################################################
 
 
-def query_yes_no(question: str, abort_on_no: bool) -> bool:
+def query_yes_no(question: str, abort_on_no: bool = True) -> bool:
     """
     Ask a yes/no question via raw_input() and return their answer.
 
-    "question" is a string that is presented to the user.
-    "default" is the presumed answer if the user just hits <Enter>.
-        It must be "yes" (the default), "no" or None (meaning
-        an answer is required of the user).
-
-    The "answer" return value is True for "yes" or False for "no".
+    :param question: string with the question presented to the user
+    :return: True for "yes" or False for "no"
     """
+    dbg.dassert_isinstance(question, str)
+    dbg.dassert_isinstance(abort_on_no, bool)
     valid = {
         "yes": True,
         "y": True,
@@ -635,9 +634,11 @@ def create_executable_script(file_name: str, content: str) -> None:
     system(cmd)
 
 
-def du(path_name: str) -> int:
+def du(path_name: str, human_format: bool = False) -> Union[int, str]:
     """
-    Return the size of a file or a directory (recursively).
+    Return the size in bytes of a file or a directory (recursively).
+
+    :param human_format: represent the size in KB, MB instead of bytes.
     """
     if not os.path.exists(path_name):
         _LOG.warning("Path '%s' doesn't exist")
@@ -650,7 +651,11 @@ def du(path_name: str) -> int:
     _LOG.debug("txt=%s", txt)
     # `du` returns size in KB.
     size_in_bytes = int(txt) * 1024
-    return size_in_bytes
+    if human_format:
+        size = hintro.format_size(size_in_bytes)
+    else:
+        size = size_in_bytes
+    return size
 
 
 def _compute_file_signature(file_name: str, dir_depth: int) -> Optional[List]:
