@@ -22,7 +22,8 @@ _LOG = logging.getLogger(__name__)
 
 # #############################################################################
 
-# A task is composed by the parameters (e.g., *args and **kwargs) to call the function.
+# A task is composed by the parameters (e.g., *args and **kwargs) to call the
+# function.
 TASK = Tuple[Tuple[Any], Dict[str, Any]]
 
 WORKLOAD = Tuple[Callable, TASK]
@@ -137,6 +138,7 @@ def parallel_execute(
 ) -> Optional[List[Any]]:
     _LOG.info(hprint.to_str("dry_run num_threads incremental abort_on_error"))
     _LOG.info("Saving log info in '%s'", log_file)
+    _LOG.info("Number of tasks=%s", len(tasks))
     if dry_run:
         for i, task in tqdm(enumerate(tasks)):
             print("\n" + hprint.frame("Task %s / %s" % (i + 1, len(tasks))))
@@ -149,8 +151,8 @@ def parallel_execute(
     task_len = len(tasks)
     if num_threads == "serial":
         res = []
-        for i, task in tqdm(enumerate(tasks)):
-            _LOG.debug("\n%s", hprint.frame("Task %s/%s" % (i + 1, task_len)))
+        for i, task in tqdm(enumerate(tasks), total=len(tasks), desc="Processing tasks"):
+            _LOG.debug("\n%s", hprint.frame("Task %s / %s" % (i + 1, len(tasks))))
             _LOG.debug("task=%s", pprint.pformat(task))
             # Execute.
             res_tmp = wrapped_func(
@@ -161,7 +163,7 @@ def parallel_execute(
         num_threads = int(num_threads)  # type: ignore[assignment]
         # -1 is interpreted by joblib like for all cores.
         _LOG.info("Using %d threads", num_threads)
-        res = joblib.Parallel(n_jobs=num_threads, verbose=50)(
+        res = joblib.Parallel(n_jobs=num_threads, verbose=100)(
             joblib.delayed(wrapped_func)(
                 *task[0], **_decorate_kwargs(task[1], i, task_len, incremental, abort_on_error, log_file)
             )
