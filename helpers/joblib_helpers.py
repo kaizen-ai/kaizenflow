@@ -17,8 +17,6 @@ import helpers.io_ as hio
 import helpers.timer as htimer
 import helpers.printing as hprint
 
-# import helpers.system_interaction as si
-
 _LOG = logging.getLogger(__name__)
 
 
@@ -30,17 +28,17 @@ TASK = Tuple[Tuple[Any], Dict[str, Any]]
 WORKLOAD = Tuple[Callable, TASK]
 
 
-def _abort_on_error_handler(func: Callable) -> Callable:
+def _file_logging_decorator(func: Callable) -> Callable:
     """
     Decorator to handle execution logging of the function and the abort_on_error behavior.
     """
 
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         # Extract parameters for the wrapper.
-        task_idx = kwargs.pop("task_idx")
-        task_len = kwargs.pop("task_len")
-        abort_on_error = kwargs.pop("abort_on_error")
-        log_file = kwargs.pop("log_file")
+        task_idx = kwargs.pop("pe_task_idx")
+        task_len = kwargs.pop("pe_task_len")
+        abort_on_error = kwargs.pop("pe_abort_on_error")
+        log_file = kwargs.pop("pe_log_file")
         # Save some information about the function execution.
         txt = []
         memento = htimer.dtimer_start(logging.DEBUG, "Execute %s" % func.__name__)
@@ -66,11 +64,11 @@ def _abort_on_error_handler(func: Callable) -> Callable:
         txt.append("end_ts=%s" % end_ts)
         txt.append("error=%s" % error)
         # Update log file.
-        txt = "\n".join(txt)
+        txt = "\n" + hprint.frame(start_ts) + "\n" + "\n".join(txt)
         _LOG.debug("txt=\n%s" % hprint.indent(txt))
-        txt = "\n" + hprint.frame(start_ts) + "\n" + txt
         hio.to_file(log_file, txt, mode="a")
         if error:
+            _LOG.error(msg)
             # The execution wasn't successful.
             if abort_on_error:
                 _LOG.error("Aborting since abort_on_error=%s", abort_on_error)
@@ -100,13 +98,32 @@ def _decorate_kwargs(
     Pass the book-keeping parameters from `parallel_execute()` to the wrapped func.
     """
     kwargs = kwargs.copy()
+    # We prepend `pe_` (as in parallel_execution) to avoid collisions.
     kwargs.update({
-        "task_idx": task_idx,
-        "task_len": task_len,
-        "incremental": incremental, "abort_on_error": abort_on_error,
-        "log_file": log_file
+        "pe_task_idx": task_idx,
+        "pe_task_len": task_len,
+        "incremental": incremental,
+        "pe_abort_on_error": abort_on_error,
+        "pe_log_file": log_file
     })
     return kwargs
+
+
+# def abort_on_error_handler(func: Callable) -> Callable:
+#     """
+#     Decorator to handle execution logging of the function and the abort_on_error behavior.
+#     """
+#
+#     def wrapper(*args: Any, **kwargs: Any) -> Any:
+#         abort_on_error = kwargs.pop("abort_on_error")
+#         try:
+#             ret = func(*args, **kwargs)
+#         except RuntimeError as e:
+#
+#
+#     wrapper.__name__ = func.__name__
+#     wrapper.__doc__ = func.__doc__
+#     return wrapper
 
 
 def parallel_execute(
@@ -127,7 +144,7 @@ def parallel_execute(
         _LOG.warning("Exiting without executing, as per user request")
         return None
     # Apply the wrapper to handle `abort_on_error`.
-    wrapped_func = _abort_on_error_handler(func)
+    wrapped_func = _file_logging_decorator(func)
     # Run.
     task_len = len(tasks)
     if num_threads == "serial":
