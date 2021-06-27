@@ -6,6 +6,8 @@ import helpers.dbg as dbg
 import helpers.parser as prsr
 
 
+# Example functions for testing.
+
 @hcac.cache(set_verbose_mode=True)
 def _func() -> str:
     txt = "#" * 1024 ** 2
@@ -28,6 +30,9 @@ def _test2() -> None:
     hcac.clear_global_cache("mem", tag=tag)
     #
     _func()
+
+
+# ##############################################################################
 
 
 def _parse() -> argparse.ArgumentParser:

@@ -154,6 +154,11 @@ def dtimer_stop(idx: int) -> Tuple[str, int]:
     return msg, elapsed_time
 
 
+# #############################################################################
+# Context manager.
+# #############################################################################
+
+
 class TimedScope:
     def __init__(self, log_level: int, message: str):
         self._log_level = log_level
@@ -170,7 +175,11 @@ class TimedScope:
             self.elapsed_time = dtimer_stop(self._idx)
 
 
+# #############################################################################
 # Decorator.
+# #############################################################################
+
+
 def timed(f: Callable) -> Callable:
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         # if hasattr(f, "__name__"):
