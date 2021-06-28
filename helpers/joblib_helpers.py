@@ -6,6 +6,7 @@ import helpers.joblib_helpers as hjoblib
 
 import logging
 import pprint
+import random
 import functools
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -130,6 +131,15 @@ def _decorate_kwargs(
 #     wrapper.__name__ = func.__name__
 #     wrapper.__doc__ = func.__doc__
 #     return wrapper
+
+
+def randomize_workload(
+    workload: WORKLOAD, seed: int = 1
+) -> WORKLOAD:
+    tasks = workload[1]
+    random.seed(seed)
+    random.shuffle(tasks)
+    return (workload[0], tasks)
 
 
 def parallel_execute(
