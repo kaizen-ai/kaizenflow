@@ -13,8 +13,6 @@ template.
 import argparse
 import logging
 import os
-import time
-from typing import Any
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
@@ -33,7 +31,12 @@ def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--dst_dir", action="store", default="./tmp.parallel_script_skeleton", help="Destination dir")
+    parser.add_argument(
+        "--dst_dir",
+        action="store",
+        default="./tmp.parallel_script_skeleton",
+        help="Destination dir",
+    )
     parser.add_argument(
         "--clean_dst_dir",
         action="store_true",
@@ -50,10 +53,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Prepare the workload.
     randomize = True
-    #randomize = False
+    # randomize = False
     seed = 3
-    #func, tasks = helpers.test.test_joblib_helpers.get_workload1(randomize, seed=seed)
-    func, tasks = helpers.test.test_joblib_helpers.get_workload2(randomize, seed=seed)
+    # func, tasks = helpers.test.test_joblib_helpers.get_workload1(randomize, seed=seed)
+    func, tasks = helpers.test.test_joblib_helpers.get_workload2(
+        randomize, seed=seed
+    )
     func_name = "func"
     print(hjoblib.tasks_to_string(func, func_name, tasks))
     # Create the dst dir.
@@ -67,7 +72,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     log_file = os.path.join(dst_dir, "parallel_execute.log")
     # Execute.
     res = hjoblib.parallel_execute(
-        func, func_name, tasks, dry_run, num_threads, incremental, abort_on_error,
+        func,
+        func_name,
+        tasks,
+        dry_run,
+        num_threads,
+        incremental,
+        abort_on_error,
         log_file,
     )
     print("res=\n%s" % "\n".join(map(str, res)))

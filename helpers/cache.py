@@ -217,8 +217,8 @@ def clear_global_cache(
     :param destroy: remove physical directory
     """
     if cache_type is None:
-        for cache_type in get_cache_types():
-            self.clear_global_cache(cache_type, tag=tag, destroy=destroy)
+        for cache_type_tmp in get_cache_types():
+            self.clear_global_cache(cache_type_tmp, tag=tag, destroy=destroy)
         return
     _check_valid_cache_type(cache_type)
     cache_path = get_cache_path(cache_type, tag)
@@ -329,12 +329,16 @@ class Cached:
         txt.append("has function-specific cache=%s" % has_func_cache)
         if has_func_cache:
             for cache_type in get_cache_types():
-                txt.append("local %s cache path=%s" % cache_type,
-                           self.get_cache_path(cache_type))
+                txt.append(
+                    "local %s cache path=%s" % cache_type,
+                    self.get_cache_path(cache_type),
+                )
         else:
             # Global cache.
             txt.append("global %s cache path=%s" % get_cache_path(cache_type))
-
+        # TODO(gp): Finish this.
+        txt = "\n".join(txt)
+        return txt
 
     def get_last_cache_accessed(self) -> str:
         """
@@ -360,18 +364,21 @@ class Cached:
     def has_function_specific_cache(self) -> bool:
         has_func_cache = any(
             self.get_cache_path(cache_type) is not None
-            for cache_type in get_cache_types())
+            for cache_type in get_cache_types()
+        )
         return has_func_cache
 
-    def clear_cache(self, cache_type: Optional[str], destroy: bool = False) -> None:
+    def clear_cache(
+        self, cache_type: Optional[str], destroy: bool = False
+    ) -> None:
         """
         Clear a function-specific cache by type.
 
         :param cache_type: type of a cache to clear, or `None` to clear all caches
         """
         if cache_type is None:
-            for cache_type in get_cache_types():
-                self.clear_cache(cache_type, destroy=destroy)
+            for cache_type_tmp in get_cache_types():
+                self.clear_cache(cache_type_tmp, destroy=destroy)
             return
         #
         _check_valid_cache_type(cache_type)
@@ -397,9 +404,7 @@ class Cached:
         info_after = get_cache_size_info(cache_path, cache_type)
         _LOG.info("# Info: %s -> %s", info_before, info_after)
 
-    def set_cache_path(
-        self, cache_type: str, cache_path: Optional[str]
-    ) -> None:
+    def set_cache_path(self, cache_type: str, cache_path: Optional[str]) -> None:
         """
         Set the path for the function-specific cache for a cache type.
 

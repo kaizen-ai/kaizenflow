@@ -7,17 +7,16 @@ import helpers.joblib_helpers as hjoblib
 import logging
 import pprint
 import random
-import functools
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import joblib
 from tqdm.autonotebook import tqdm
 
-import helpers.dbg as dbg
 import helpers.datetime_ as hdatetime
+import helpers.dbg as dbg
 import helpers.io_ as hio
-import helpers.timer as htimer
 import helpers.printing as hprint
+import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
 
@@ -32,7 +31,8 @@ WORKLOAD = Tuple[Callable, str, TASK]
 
 def _file_logging_decorator(func: Callable) -> Callable:
     """
-    Decorator to handle execution logging of the function and the abort_on_error behavior.
+    Decorator to handle execution logging of the function and the
+    abort_on_error behavior.
     """
 
     def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -70,7 +70,7 @@ def _file_logging_decorator(func: Callable) -> Callable:
         txt.append("error=%s" % error)
         # Update log file.
         txt = "\n" + hprint.frame(start_ts) + "\n" + "\n".join(txt)
-        _LOG.debug("txt=\n%s" % hprint.indent(txt))
+        _LOG.debug("txt=\n%s", hprint.indent(txt))
         hio.to_file(log_file, txt, mode="a")
         if error:
             _LOG.error(msg)
@@ -78,9 +78,9 @@ def _file_logging_decorator(func: Callable) -> Callable:
             if abort_on_error:
                 _LOG.error("Aborting since abort_on_error=%s", abort_on_error)
                 raise e
-            else:
-                _LOG.error("Continuing execution since abort_on_error=%s",
-                           abort_on_error)
+            _LOG.error(
+                "Continuing execution since abort_on_error=%s", abort_on_error
+            )
         else:
             # The execution was successful.
             pass
@@ -96,24 +96,31 @@ def _file_logging_decorator(func: Callable) -> Callable:
 
 
 def _decorate_kwargs(
-        kwargs: Dict, task_idx: int, task_len: int, func_name: str,
-        incremental: bool, abort_on_error: bool,
-        log_file: str,
+    kwargs: Dict,
+    task_idx: int,
+    task_len: int,
+    func_name: str,
+    incremental: bool,
+    abort_on_error: bool,
+    log_file: str,
 ) -> Dict:
     """
-    Pass the book-keeping parameters from `parallel_execute()` to the wrapped func.
+    Pass the book-keeping parameters from `parallel_execute()` to the wrapped
+    func.
     """
     kwargs = kwargs.copy()
     # We prepend `pe_` (as in parallel_execution) to avoid collisions.
-    kwargs.update({
-        "pe_task_idx": task_idx,
-        "pe_task_len": task_len,
-        "pe_func_name": func_name,
-        # This is a parameter for the function, so we don't prepend `pe_`.
-        "incremental": incremental,
-        "pe_abort_on_error": abort_on_error,
-        "pe_log_file": log_file
-    })
+    kwargs.update(
+        {
+            "pe_task_idx": task_idx,
+            "pe_task_len": task_len,
+            "pe_func_name": func_name,
+            # This is a parameter for the function, so we don't prepend `pe_`.
+            "incremental": incremental,
+            "pe_abort_on_error": abort_on_error,
+            "pe_log_file": log_file,
+        }
+    )
     return kwargs
 
 
@@ -144,7 +151,7 @@ def randomize_workload(
     return (workload[0], tasks)
 
 
-def tasks_to_string(func: Callable, func_name: str, tasks: List[TASK]) ->str:
+def tasks_to_string(func: Callable, func_name: str, tasks: List[TASK]) -> str:
     dbg.dassert_isinstance(func, Callable)
     dbg.dassert_isinstance(func_name, str)
     dbg.dassert_container_type(tasks, List, tuple)
@@ -159,14 +166,14 @@ def tasks_to_string(func: Callable, func_name: str, tasks: List[TASK]) ->str:
 
 
 def parallel_execute(
-        func: Callable,
-        func_name: str,
-        tasks: List[TASK],
-        dry_run: bool,
-        num_threads: str,
-        incremental: bool,
-        abort_on_error: bool,
-        log_file: str,
+    func: Callable,
+    func_name: str,
+    tasks: List[TASK],
+    dry_run: bool,
+    num_threads: str,
+    incremental: bool,
+    abort_on_error: bool,
+    log_file: str,
 ) -> Optional[List[Any]]:
     """
     Run a workload in parallel.
@@ -201,15 +208,23 @@ def parallel_execute(
     task_len = len(tasks)
     if num_threads == "serial":
         res = []
-        for i, task in tqdm(enumerate(tasks), total=len(tasks),
-                            desc="Serial tasks"):
+        for i, task in tqdm(
+            enumerate(tasks), total=len(tasks), desc="Serial tasks"
+        ):
             _LOG.debug("\n%s", hprint.frame("Task %s / %s" % (i + 1, len(tasks))))
             _LOG.debug("task=%s", pprint.pformat(task))
             # Execute.
             res_tmp = wrapped_func(
                 *task[0],
-                **_decorate_kwargs(task[1], i, task_len, func_name, incremental,
-                                   abort_on_error, log_file)
+                **_decorate_kwargs(
+                    task[1],
+                    i,
+                    task_len,
+                    func_name,
+                    incremental,
+                    abort_on_error,
+                    log_file,
+                )
             )
             res.append(res_tmp)
     else:
@@ -221,8 +236,15 @@ def parallel_execute(
         res = joblib.Parallel(n_jobs=num_threads, verbose=100)(
             joblib.delayed(wrapped_func)(
                 *task[0],
-                **_decorate_kwargs(task[1], i, task_len, func_name, incremental,
-                                   abort_on_error, log_file)
+                **_decorate_kwargs(
+                    task[1],
+                    i,
+                    task_len,
+                    func_name,
+                    incremental,
+                    abort_on_error,
+                    log_file,
+                )
             )
             for i, task in tqdm_
         )

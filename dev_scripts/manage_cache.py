@@ -5,8 +5,8 @@ import helpers.cache as hcac
 import helpers.dbg as dbg
 import helpers.parser as prsr
 
-
 # Example functions for testing.
+
 
 @hcac.cache(set_verbose_mode=True)
 def _func() -> str:
@@ -22,7 +22,7 @@ def _test2() -> None:
     tag = None
     hcac.clear_global_cache("mem", tag=tag)
     path = "/tmp/cache.function"
-    _func.set_cache_directory("disk", path)
+    _func.set_cache_path("disk", path)
     #
     _func.clear_cache(cache_type="disk")
     #
@@ -32,7 +32,7 @@ def _test2() -> None:
     _func()
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def _parse() -> argparse.ArgumentParser:

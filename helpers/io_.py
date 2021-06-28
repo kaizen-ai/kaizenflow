@@ -286,7 +286,7 @@ def to_file(
         f = gzip.open(file_name, mode)
     else:
         # Open regular text file.
-        #buffering = 0 if mode == "a" else -1
+        # buffering = 0 if mode == "a" else -1
         buffering = 0 if force_flush else -1
         f = open(  # pylint: disable=consider-using-with
             file_name, mode, buffering=buffering
