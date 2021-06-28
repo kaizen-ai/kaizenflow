@@ -432,13 +432,13 @@ class TestSpecificCache(_TestClassHelper):
         # Execute the second time: verify that it is *NOT* executed.
         self._check_cache_state(3, 4, exp_f_state=False, exp_cf_state="mem")
         # Restore back to global cache.
-        self.cf.set_cache_directory("mem", None)
-        self.cf.set_cache_directory("disk", None)
+        self.cf.set_cache_path("mem", None)
+        self.cf.set_cache_path("disk", None)
         # Verify that function is executed with global cache.
         self._check_cache_state(3, 4, exp_f_state=True, exp_cf_state="no_cache")
         # Restore back specific cache.
-        self.cf.set_cache_directory("disk", self.disk_cache_temp_dir)
-        self.cf.set_cache_directory("mem", self.mem_cache_temp_dir)
+        self.cf.set_cache_path("disk", self.disk_cache_temp_dir)
+        self.cf.set_cache_path("mem", self.mem_cache_temp_dir)
         # Verify that it is *NOT* executed with specific cache.
         self._check_cache_state(3, 4, exp_f_state=False, exp_cf_state="mem")
 
@@ -504,8 +504,8 @@ class TestSpecificCache(_TestClassHelper):
         # Create the cached function.
         cf = hcache.Cached(
             f,
-            disk_cache_directory=self.disk_cache_temp_dir,
-            mem_cache_directory=self.mem_cache_temp_dir,
+            disk_cache_path=self.disk_cache_temp_dir,
+            mem_cache_path=self.mem_cache_temp_dir,
             tag=self.cache_tag,
         )
         cf.clear_cache("disk")

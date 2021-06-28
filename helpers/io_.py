@@ -6,6 +6,8 @@ Import as:
 import helpers.io_ as hio
 """
 
+# TODO(gp): -> io_helpers
+
 import datetime
 import fnmatch
 import gzip
@@ -22,7 +24,10 @@ import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 
 _LOG = logging.getLogger(__name__)
+
+# Set logging level of this file.
 _LOG.setLevel(logging.INFO)
+
 
 # #############################################################################
 # Glob.
@@ -245,7 +250,7 @@ def create_enclosing_dir(file_name: str, incremental: bool = False) -> str:
 # #############################################################################
 
 
-# TODO(saggese): We should have lines first since it is an input param.
+# TODO(saggese): We should have `lines` first since it is an input param.
 def to_file(
     file_name: str,
     lines: str,
@@ -281,8 +286,10 @@ def to_file(
         f = gzip.open(file_name, mode)
     else:
         # Open regular text file.
+        # buffering = 0 if mode == "a" else -1
+        buffering = 0 if force_flush else -1
         f = open(  # pylint: disable=consider-using-with
-            file_name, mode, buffering=0 if mode == "a" else -1
+            file_name, mode, buffering=buffering
         )
     # Write file contents.
     f.writelines(lines)
