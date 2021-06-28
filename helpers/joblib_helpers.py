@@ -13,7 +13,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import joblib
 from tqdm.autonotebook import tqdm
 
-import helpers.datetime_
+import helpers.dbg as dbg
+import helpers.datetime_ as hdatetime
 import helpers.io_ as hio
 import helpers.timer as htimer
 import helpers.printing as hprint
@@ -50,7 +51,7 @@ def _file_logging_decorator(func: Callable) -> Callable:
         txt.append("args=\n%s" % hprint.indent(str(args)))
         txt.append("kwargs=\n%s" % hprint.indent(str(kwargs)))
         # `start_ts` needs to be before running the function.
-        start_ts = helpers.datetime_.get_timestamp()
+        start_ts = hdatetime.get_timestamp()
         try:
             res = func(*args, **kwargs)
             error = False
@@ -64,7 +65,7 @@ def _file_logging_decorator(func: Callable) -> Callable:
         _ = msg
         txt.append("elapsed_time_in_secs=%s" % elapsed_time)
         txt.append("start_ts=%s" % start_ts)
-        end_ts = helpers.datetime_.get_timestamp()
+        end_ts = hdatetime.get_timestamp()
         txt.append("end_ts=%s" % end_ts)
         txt.append("error=%s" % error)
         # Update log file.
@@ -134,12 +135,27 @@ def _decorate_kwargs(
 
 
 def randomize_workload(
-    workload: WORKLOAD, seed: int = 1
+    workload: WORKLOAD, seed: Optional[int] = None
 ) -> WORKLOAD:
     tasks = workload[1]
+    seed = seed or 42
     random.seed(seed)
     random.shuffle(tasks)
     return (workload[0], tasks)
+
+
+def tasks_to_string(func: Callable, func_name: str, tasks: List[TASK]) ->str:
+    dbg.dassert_isinstance(func, Callable)
+    dbg.dassert_isinstance(func_name, str)
+    dbg.dassert_container_type(tasks, List, tuple)
+    txt = []
+    txt.append("func=%s" % func.__name__)
+    txt.append("func_name=%s" % func_name)
+    for i, task in tqdm(enumerate(tasks)):
+        txt.append("\n" + hprint.frame("Task %s / %s" % (i + 1, len(tasks))))
+        txt.append("task=%s" % pprint.pformat(task))
+    txt = "\n".join(txt)
+    return txt
 
 
 def parallel_execute(
@@ -169,13 +185,14 @@ def parallel_execute(
 
     :return: list with the results from executing `func`
     """
+    dbg.dassert_isinstance(func, Callable)
+    dbg.dassert_isinstance(func_name, str)
+    dbg.dassert_container_type(tasks, List, tuple)
     _LOG.info(hprint.to_str("dry_run num_threads incremental abort_on_error"))
     _LOG.info("Saving log info in '%s'", log_file)
     _LOG.info("Number of tasks=%s", len(tasks))
     if dry_run:
-        for i, task in tqdm(enumerate(tasks)):
-            print("\n" + hprint.frame("Task %s / %s" % (i + 1, len(tasks))))
-            print("task=%s" % pprint.pformat(task))
+        print(tasks_to_string(func, func_name, tasks))
         _LOG.warning("Exiting without executing, as per user request")
         return None
     # Apply the wrapper to handle `abort_on_error`.

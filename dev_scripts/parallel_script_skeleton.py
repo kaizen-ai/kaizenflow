@@ -50,9 +50,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Prepare the workload.
     randomize = True
-    func, tasks = helpers.test.test_joblib_helpers.get_workload1(randomize)
-    #func, tasks = helpers.test.test_joblib_helpers.get_workload2(randomize)
+    #randomize = False
+    seed = 3
+    #func, tasks = helpers.test.test_joblib_helpers.get_workload1(randomize, seed=seed)
+    func, tasks = helpers.test.test_joblib_helpers.get_workload2(randomize, seed=seed)
     func_name = "func"
+    print(hjoblib.tasks_to_string(func, func_name, tasks))
     # Create the dst dir.
     dst_dir = os.path.abspath(args.dst_dir)
     hio.create_dir(dst_dir, incremental=not args.clean_dst_dir)
@@ -64,10 +67,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     log_file = os.path.join(dst_dir, "parallel_execute.log")
     # Execute.
     res = hjoblib.parallel_execute(
-        func, tasks, func_name, dry_run, num_threads, incremental, abort_on_error,
+        func, func_name, tasks, dry_run, num_threads, incremental, abort_on_error,
         log_file,
     )
-    _ = res
+    print("res=\n%s" % "\n".join(map(str, res)))
 
 
 if __name__ == "__main__":

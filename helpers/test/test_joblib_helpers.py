@@ -1,7 +1,7 @@
 import logging
 import os
 import time
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Optional
 
 import helpers.joblib_helpers as hjoblib
 import helpers.unit_test as hut
@@ -11,6 +11,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): -> function
 def func(
     val1: int,
     val2: str,
@@ -29,7 +30,7 @@ def func(
     return res
 
 
-def get_workload1(randomize: bool) -> hjoblib.WORKLOAD:
+def get_workload1(randomize: bool, seed: Optional[int]=None) -> hjoblib.WORKLOAD:
     """
     Return a workload for `func()` that succeeds.
     """
@@ -41,11 +42,11 @@ def get_workload1(randomize: bool) -> hjoblib.WORKLOAD:
     workload = (func, tasks)
     if randomize:
         # Randomize workload.
-        workload: hjoblib.WORKLOAD = hjoblib.randomize_workload(workload)
+        workload: hjoblib.WORKLOAD = hjoblib.randomize_workload(workload, seed=seed)
     return workload
 
 
-def get_workload2(randomize: bool) -> hjoblib.WORKLOAD:
+def get_workload2(randomize: bool, seed: Optional[int]=None) -> hjoblib.WORKLOAD:
     """
     Return a workload for `func()` that fails.
     """
@@ -55,7 +56,7 @@ def get_workload2(randomize: bool) -> hjoblib.WORKLOAD:
     workload[1].append(task)
     if randomize:
         # Randomize workload.
-        workload: hjoblib.WORKLOAD = hjoblib.randomize_workload(workload)
+        workload: hjoblib.WORKLOAD = hjoblib.randomize_workload(workload, seed=seed)
     return workload
 
 
@@ -182,6 +183,19 @@ class Test_parallel_execute1(hut.TestCase):
         self._helper_fail(
             func, tasks, num_threads, abort_on_error, exp
         )
+
+    # def test_serial_fail2(self) -> None:
+    #     """
+    #     Execute serially a workload that fails, but with abort_on_error=False.
+    #     """
+    #     func, tasks = get_workload2(randomize=False)
+    #     num_threads = "serial"
+    #     abort_on_error = True
+    #     exp = self.exp_workload2
+    #     #
+    #     self._helper_fail(
+    #         func, tasks, num_threads, abort_on_error, exp
+    #     )
 
     @staticmethod
     def _outcome_to_string(outcome: List[str]) -> str:
