@@ -25,46 +25,46 @@ import helpers.parser as prsr
 
 _LOG = logging.getLogger(__name__)
 
-# #############################################################################
-
-
-def _func(
-    val1: int,
-    val2: str,
-    **kwargs: Any,
-) -> str:
-    incremental = kwargs.pop("incremental")
-    res = (
-        f"val1={val1} val2={val2} kwargs={kwargs} incremental={incremental}"
-    )
-    _LOG.debug("res=%s", res)
-    time.sleep(0.1)
-    if val1 == -1:
-        raise ValueError(f"Error: {res}")
-    return res
-
-
-def _get_workload1() -> hjoblib.WORKLOAD:
-    """
-    Workload without any failing tasks.
-    """
-    tasks = []
-    for _ in range(5):
-        # val1, val2
-        task = ((5, 6), {"hello": "world", "good": "bye"})
-        tasks.append(task)
-    return (_func, tasks)
-
-
-def _get_workload2() -> hjoblib.WORKLOAD:
-    """
-    Workload including a failing task.
-    """
-    _func, tasks = _get_workload1()
-    # Add a task triggering a failure.
-    task = ((-1, 7), {"hello2": "world2", "good2": "bye2"})
-    tasks.append(task)
-    return (_func, tasks)
+# # #############################################################################
+#
+#
+# def _func(
+#     val1: int,
+#     val2: str,
+#     **kwargs: Any,
+# ) -> str:
+#     incremental = kwargs.pop("incremental")
+#     res = (
+#         f"val1={val1} val2={val2} kwargs={kwargs} incremental={incremental}"
+#     )
+#     _LOG.debug("res=%s", res)
+#     time.sleep(0.1)
+#     if val1 == -1:
+#         raise ValueError(f"Error: {res}")
+#     return res
+#
+#
+# def _get_workload1() -> hjoblib.WORKLOAD:
+#     """
+#     Workload without any failing tasks.
+#     """
+#     tasks = []
+#     for _ in range(5):
+#         # val1, val2
+#         task = ((5, 6), {"hello": "world", "good": "bye"})
+#         tasks.append(task)
+#     return (_func, tasks)
+#
+#
+# def _get_workload2() -> hjoblib.WORKLOAD:
+#     """
+#     Workload including a failing task.
+#     """
+#     _func, tasks = _get_workload1()
+#     # Add a task triggering a failure.
+#     task = ((-1, 7), {"hello2": "world2", "good2": "bye2"})
+#     tasks.append(task)
+#     return (_func, tasks)
 
 
 # #############################################################################
@@ -89,8 +89,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Prepare the workload.
-    func, tasks = _get_workload1()
-    #func, tasks = _get_workload2()
+    func, tasks = helpers.test.test_joblib_helpers._get_workload1()
+    #func, tasks = helpers.test.test_joblib_helpers._get_workload2()
     # Create the dst dir.
     dst_dir = os.path.abspath(args.dst_dir)
     hio.create_dir(dst_dir, incremental=not args.clean_dst_dir)
