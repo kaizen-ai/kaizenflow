@@ -48,6 +48,8 @@ def _file_logging_decorator(func: Callable) -> Callable:
         txt.append("func_name=%s" % func_name)
         txt.append("args=\n%s" % hprint.indent(str(args)))
         txt.append("kwargs=\n%s" % hprint.indent(str(kwargs)))
+        # `start_ts` needs to be before running the function.
+        start_ts = helpers.datetime_.get_timestamp()
         try:
             res = func(*args, **kwargs)
             error = False
@@ -59,8 +61,7 @@ def _file_logging_decorator(func: Callable) -> Callable:
         _LOG.debug("error=%s", error)
         msg, elapsed_time = htimer.dtimer_stop(memento)
         _ = msg
-        txt.append("elapsed_time=%s" % elapsed_time)
-        start_ts = helpers.datetime_.get_timestamp()
+        txt.append("elapsed_time_in_secs=%s" % elapsed_time)
         txt.append("start_ts=%s" % start_ts)
         end_ts = helpers.datetime_.get_timestamp()
         txt.append("end_ts=%s" % end_ts)
@@ -174,7 +175,7 @@ def parallel_execute(
     if num_threads == "serial":
         res = []
         for i, task in tqdm(enumerate(tasks), total=len(tasks),
-                            desc="Processing tasks"):
+                            desc="Serial tasks"):
             _LOG.debug("\n%s", hprint.frame("Task %s / %s" % (i + 1, len(tasks))))
             _LOG.debug("task=%s", pprint.pformat(task))
             # Execute.
@@ -188,13 +189,15 @@ def parallel_execute(
         num_threads = int(num_threads)  # type: ignore[assignment]
         # -1 is interpreted by joblib like for all cores.
         _LOG.info("Using %d threads", num_threads)
+        # From https://stackoverflow.com/questions/24983493
+        tqdm_ = tqdm(enumerate(tasks), total=len(tasks), desc="Parallel tasks")
         res = joblib.Parallel(n_jobs=num_threads, verbose=100)(
             joblib.delayed(wrapped_func)(
                 *task[0],
                 **_decorate_kwargs(task[1], i, task_len, func_name, incremental,
                                    abort_on_error, log_file)
             )
-            for task in tasks
+            for i, task in tqdm_
         )
     _LOG.info("Saved log info in '%s'", log_file)
     return res
