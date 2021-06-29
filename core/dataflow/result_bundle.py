@@ -137,13 +137,17 @@ class ResultBundle(abc.ABC):
         config = self.to_config(commit_hash)
         return config.to_dict()
 
-    @classmethod
-    def from_dict(cls, bundle_as_dict: collections.OrderedDict) -> ResultBundle:
+    @staticmethod
+    def from_dict(result_bundle_dict: collections.OrderedDict) -> ResultBundle:
         """
         Initialize `ResultBundle` from a nested dict.
         """
-        config = cconfig.get_config_from_nested_dict(bundle_as_dict)
-        return cls.from_config(config)
+        result_bundle_config = cconfig.get_config_from_nested_dict(result_bundle_dict)
+        result_bundle_class = eval(result_bundle_config["class"])
+        result_bundle: ResultBundle = result_bundle_class.from_config(
+          result_bundle_config
+        )
+        return result_bundle
 
     @classmethod
     def from_config(cls, serialized_bundle: cconfig.Config) -> ResultBundle:
