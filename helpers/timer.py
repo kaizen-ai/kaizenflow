@@ -121,7 +121,7 @@ _DTIMER_INFO: Dict[int, Any] = {}
 
 def dtimer_start(log_level: int, message: str) -> int:
     """
-    - return: memento of the timer.
+    :return: memento of the timer.
     """
     _LOG.log(log_level, "%s ...", message)
     idx = len(_DTIMER_INFO)
@@ -130,16 +130,9 @@ def dtimer_start(log_level: int, message: str) -> int:
     return idx
 
 
-def stop_timer(timer: Timer) -> str:
-    timer.stop()
-    elapsed_time = round(timer.get_elapsed(), 3)
-    msg = "%.3f s" % elapsed_time
-    return msg
-
-
 def dtimer_stop(idx: int) -> Tuple[str, int]:
     """
-    - return:
+    :return:
       - message as as string
       - time in seconds (int)
     """
@@ -154,7 +147,28 @@ def dtimer_stop(idx: int) -> Tuple[str, int]:
     return msg, elapsed_time
 
 
+# TODO(gp): Is this useful / used?
+def stop_timer(timer: Timer) -> str:
+    timer.stop()
+    elapsed_time = round(timer.get_elapsed(), 3)
+    msg = "%.3f s" % elapsed_time
+    return msg
+
+
+# #############################################################################
+# Context manager.
+# #############################################################################
+
 class TimedScope:
+    """
+    Measure the execution time of a block of code.
+
+    E.g.,
+    ```
+    with htimer.TimedScope(logging.INFO, "Work") as ts:
+        ... work work work ...
+    ```
+    """
     def __init__(self, log_level: int, message: str):
         self._log_level = log_level
         self._message = message
@@ -170,16 +184,27 @@ class TimedScope:
             self.elapsed_time = dtimer_stop(self._idx)
 
 
+# #############################################################################
 # Decorator.
+# #############################################################################
+
+
 def timed(f: Callable) -> Callable:
+    """
+    Decorator adding a timer around the invocation of a function.
+    """
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        # if hasattr(f, "__name__"):
         func_name = f.__name__
-        # else:
-        #    func_name = dbg.get_function_name()
+        #
         timer = dtimer_start(0, func_name)
         v = f(*args, **kwargs)
         dtimer_stop(timer)
         return v
 
     return wrapper
+
+
+# #############################################################################
+
+# TODO(gp): Add an object that accumulates the times from multiple timers.
+#  E.g., use a dict for message -> time

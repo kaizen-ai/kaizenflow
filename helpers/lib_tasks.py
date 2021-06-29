@@ -2612,7 +2612,7 @@ def gh_create_pr(  # type: ignore
     # TODO(gp): Use _to_single_line_cmd
     cmd = (
         "gh pr create"
-        + f" --repo_short_name {repo_full_name_with_host}"
+        + f" --repo {repo_full_name_with_host}"
         + (" --draft" if draft else "")
         + f' --title "{title}"'
         + f' --body "{body}"'

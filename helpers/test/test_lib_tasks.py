@@ -89,9 +89,7 @@ class _CheckDryRunTestCase(hut.TestCase):
 
 def _gh_login() -> None:
     """
-    Log in inside GitHub.
-
-    This is needed by GitHub actions.
+    Log in inside GitHub. This is needed by GitHub actions.
     """
     env_var = "GH_ACTION_ACCESS_TOKEN"
     if os.environ.get(env_var, None):
@@ -1385,6 +1383,131 @@ class Test_get_files_to_process1(hut.TestCase):
             remove_dirs,
         )
         self.assertEqual(files, [__file__])
+
+
+# #############################################################################
+
+
+class Test_pytest_failed1(hut.TestCase):
+
+    def _build_pytest_file_helper(self, txt: str) -> str:
+        txt = hprint.dedent(txt)
+        file_name = os.path.join(self.get_scratch_space(), "input.txt")
+        hio.to_file(file_name, txt)
+        return file_name
+
+    def _build_pytest_file1(self) -> str:
+        txt = """
+        {
+            "dev_scripts/testing/test/test_run_tests.py": true,
+            "dev_scripts/testing/test/test_run_tests2.py": true,
+            "helpers/test/test_printing.py::Test_dedent1::test2": true,
+            "documentation/scripts/test/test_all.py": true,
+            "documentation/scripts/test/test_render_md.py": true,
+            "helpers/test/helpers/test/test_list.py::Test_list_1": true,
+            "helpers/test/test_cache.py::TestAmpTask1407": true
+        }
+        """
+        return self._build_pytest_file_helper(txt)
+
+    def _build_pytest_file2(self) -> str:
+        txt = """
+        {
+            "core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_compare_to_linear_regression1": true,
+            "core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_compare_to_linear_regression2": true,
+            "core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_fit1": true,
+            "core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_fit_no_x1": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel::test1": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel::test2": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel::test3": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel::test1": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel::test2": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel::test3": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test1": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test2": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test3": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test4": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test5": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test01": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test02": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test03": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test04": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test05": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test06": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test07": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test09": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test10": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test11": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test12": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test13": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_col_mode1": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_col_mode2": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_demodulate1": true,
+            "core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_modulate1": true,
+            "core/dataflow/test/test_builders.py::TestArmaReturnsBuilder::test1": true,
+            "core/dataflow/test/test_runners.py::TestIncrementalDagRunner::test1": true,
+            "core/dataflow_model/test/test_model_evaluator.py::TestModelEvaluator::test_dump_json1": true,
+            "core/dataflow_model/test/test_model_evaluator.py::TestModelEvaluator::test_load_json1": true,
+            "core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1::test1": true,
+            "core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1::test2": true,
+            "core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1::test3": true,
+            "core/test/test_config.py::Test_subtract_config1::test_test1": true,
+            "core/test/test_config.py::Test_subtract_config1::test_test2": true,
+            "core/test/test_dataframe_modeler.py::TestDataFrameModeler::test_dump_json1": true,
+            "core/test/test_dataframe_modeler.py::TestDataFrameModeler::test_load_json1": true,
+            "core/test/test_dataframe_modeler.py::TestDataFrameModeler::test_load_json2": true,
+            "dev_scripts/test/test_run_notebook.py::TestRunNotebook1::test1": true,
+            "dev_scripts/test/test_run_notebook.py::TestRunNotebook1::test2": true,
+            "dev_scripts/test/test_run_notebook.py::TestRunNotebook1::test3": true,
+            "helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test2": true,
+            "helpers/test/test_printing.py::Test_dedent1::test2": true
+        }
+        """
+        return self._build_pytest_file_helper(txt)
+
+    def _helper(self, file_name: str, target_type: str, exp: str) -> None:
+        ctx = _build_mock_context_returning_ok()
+        # It is a dummy parameter when `file_name` is specified.
+        use_frozen_list = True
+        act = ltasks.pytest_failed(ctx, use_frozen_list=use_frozen_list,
+            target_type=target_type, file_name=file_name, pbcopy=False)
+        self.assert_equal(act, exp)
+
+    def test_tests1(self) -> None:
+        file_name = self._build_pytest_file1()
+        target_type = "tests"
+        exp = r"""helpers/test/test_printing.py::Test_dedent1::test2"""
+        self._helper(file_name, target_type, exp)
+
+    def test_files1(self) -> None:
+        file_name = self._build_pytest_file1()
+        target_type = "files"
+        exp = r"""helpers/test/test_printing.py"""
+        self._helper(file_name, target_type, exp)
+
+    def test_classes1(self) -> None:
+        file_name = self._build_pytest_file1()
+        target_type = "classes"
+        exp = r"""helpers/test/test_printing.py::Test_dedent1"""
+        self._helper(file_name, target_type, exp)
+
+    def test_tests2(self) -> None:
+        file_name = self._build_pytest_file2()
+        target_type = "tests"
+        exp = r"""core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_compare_to_linear_regression1 core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_compare_to_linear_regression2 core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_fit1 core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_fit_no_x1 core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel::test1 core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel::test2 core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel::test3 core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel::test1 core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel::test2 core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel::test3 core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test1 core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test2 core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test3 core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test4 core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test5 core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test01 core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test02 core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test03 core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test04 core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test05 core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test06 core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test07 core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test09 core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test10 core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test11 core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test12 core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test13 core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_col_mode1 core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_col_mode2 core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_demodulate1 core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_modulate1 core/dataflow/test/test_builders.py::TestArmaReturnsBuilder::test1 core/dataflow/test/test_runners.py::TestIncrementalDagRunner::test1 core/dataflow_model/test/test_model_evaluator.py::TestModelEvaluator::test_dump_json1 core/dataflow_model/test/test_model_evaluator.py::TestModelEvaluator::test_load_json1 core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1::test1 core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1::test2 core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1::test3 core/test/test_config.py::Test_subtract_config1::test_test1 core/test/test_config.py::Test_subtract_config1::test_test2 core/test/test_dataframe_modeler.py::TestDataFrameModeler::test_dump_json1 core/test/test_dataframe_modeler.py::TestDataFrameModeler::test_load_json1 core/test/test_dataframe_modeler.py::TestDataFrameModeler::test_load_json2 dev_scripts/test/test_run_notebook.py::TestRunNotebook1::test1 dev_scripts/test/test_run_notebook.py::TestRunNotebook1::test2 dev_scripts/test/test_run_notebook.py::TestRunNotebook1::test3 helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test2 helpers/test/test_printing.py::Test_dedent1::test2"""
+        self._helper(file_name, target_type, exp)
+
+    def test_files2(self) -> None:
+        file_name = self._build_pytest_file2()
+        target_type = "files"
+        exp = r"""core/dataflow/nodes/test/test_sarimax_models.py core/dataflow/nodes/test/test_volatility_models.py core/dataflow/test/test_builders.py core/dataflow/test/test_runners.py core/dataflow_model/test/test_model_evaluator.py core/dataflow_model/test/test_run_experiment.py core/test/test_config.py core/test/test_dataframe_modeler.py dev_scripts/test/test_run_notebook.py helpers/test/test_lib_tasks.py helpers/test/test_printing.py"""
+        self._helper(file_name, target_type, exp)
+
+    def test_classes2(self) -> None:
+        file_name = self._build_pytest_file2()
+        target_type = "classes"
+        exp = r"""core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator core/dataflow/test/test_builders.py::TestArmaReturnsBuilder core/dataflow/test/test_runners.py::TestIncrementalDagRunner core/dataflow_model/test/test_model_evaluator.py::TestModelEvaluator core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1 core/test/test_config.py::Test_subtract_config1 core/test/test_dataframe_modeler.py::TestDataFrameModeler dev_scripts/test/test_run_notebook.py::TestRunNotebook1 helpers/test/test_lib_tasks.py::Test_find_check_string_output1 helpers/test/test_printing.py::Test_dedent1"""
+        self._helper(file_name, target_type, exp)
 
 
 # #############################################################################

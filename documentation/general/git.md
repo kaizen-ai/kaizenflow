@@ -28,7 +28,7 @@
       * [Rebasing](#rebasing)
       * [Merging pull requests](#merging-pull-requests)
    * [Submodules](#submodules)
-      * [To check if p1 and amp are in sync](#to-check-if-p1-and-amp-are-in-sync)
+      * [To check if supermodule and amp are in sync](#to-check-if-supermodule-and-amp-are-in-sync)
       * [Roll forward git submodules pointers:](#roll-forward-git-submodules-pointers)
       * [To clean all the repos](#to-clean-all-the-repos)
       * [Pull a branch without checkout](#pull-a-branch-without-checkout)
@@ -40,18 +40,19 @@
 
 # Before you start
 
-- GitHub is the place where we keep our code.
-- `git` is the tool (program) for version control.
-- We interact with GitHub via `git`.
+- GitHub is the place where we keep our code
+- `git` is the tool (program) for version control
+- We interact with GitHub via `git`
+
 - Use `public key` for authorization
   - You can add a new `public key` here
     [GH -> Personal settings -> SSH keys](https://github.com/settings/keys)
   - More details about what is `public key` you can find in [ssh.md](ssh.md)
-- Read first 3 chapters of [Git book](https://git-scm.com/book/en/v2)
-- Read about
-  [Git Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules) You have
-  to understand what it is, we use them a lot and there is no way to develop
-  without them in our environment.
+
+## Readings
+- Read at least the first 3 chapters of [Git book](https://git-scm.com/book/en/v2)
+- Read about [Git Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
+  - We use Git submodules to compose and share code about repos 
 
 # Workflow
 
@@ -668,9 +669,13 @@ version, and stage #3 is the version you are merging from.
 
 # Submodules
 
+## Adding a submodule
+
+- Following the instructions in https://git-scm.com/book/en/v2/Git-Tools-Submodules 
+
 ## Working in a submodule
 
-When you work in a submodule, the flow should be like:
+- When you work in a submodule, the flow should be like:
 
   - Create a branch in a submodule
   - Do your job
@@ -679,7 +684,7 @@ When you work in a submodule, the flow should be like:
 
 ## Updating a submodule to the latest commit
 
-After the submodule PR is merged:
+- After the submodule PR is merged:
 
   - Checkout the submodule in the master branch and do `git pull`
   - In the main repo, create a branch like `PTask1234_update_submodule`
@@ -687,7 +692,7 @@ After the submodule PR is merged:
   - Commit changes, push
   - Create a PR
 
-## To check if p1 and amp are in sync
+## To check if supermodule and amp are in sync
 
 - Run the script:
   ```bash

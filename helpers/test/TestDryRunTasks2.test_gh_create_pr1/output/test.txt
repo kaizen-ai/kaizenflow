@@ -1,1 +1,1 @@
-call('gh pr create --repo_short_name github.com/alphamatic/amp --draft --title "test" --body ""')
+call('gh pr create --repo github.com/alphamatic/amp --draft --title "test" --body ""')
