@@ -310,22 +310,22 @@ def compute_local_level_model_stats(
     return result
 
 
-def compute_centered_gaussian_loglikelihood(
+def compute_centered_gaussian_log_likelihood(
     df: pd.DataFrame,
     observation_col: str,
     variance_col: str,
     square_variance_col: bool = False,
     variance_shifts: int = 0,
     prefix: Optional[str] = None,
-) -> pd.Series:
+) -> pd.DataFrame:
     """
-    Return the loglikelihoods of independent draws from centered Gaussians.
+    Return the log-likelihoods of independent draws from centered Gaussians.
 
-    A higher loglikelihood score means that the model of independent
+    A higher log-likelihood score means that the model of independent
     Gaussian draws with given variances is a better fit.
 
-    The loglikelihood of the series of observations may be obtained by
-    summing the individual loglikelihood values.
+    The log-likelihood of the series of observations may be obtained by
+    summing the individual log-likelihood values.
 
     :param df: dataframe with float observation and variance columns
     :param observation_col: name of column containing observations
@@ -333,10 +333,10 @@ def compute_centered_gaussian_loglikelihood(
     :square_variance_col: if `True`, square the values in `variance_col`
         (use this if the column contains standard deviations)
     :variance_shifts: number of shifts to apply to `variance_col` prior to
-        calculating loglikelihood. Use this if `variance_col` contains forward
+        calculating log-likelihood. Use this if `variance_col` contains forward
         predictions.
     :prefix: prefix to add to name of output series
-    :return: series of loglikelihoods
+    :return: dataframe of log-likelihoods and adjusted observations
     """
     prefix = prefix or ""
     dbg.dassert_isinstance(df, pd.DataFrame)
@@ -354,7 +354,7 @@ def compute_centered_gaussian_loglikelihood(
     n_obs = idx.size
     _LOG.debug("Number of non-NaN observations=%i", n_obs)
     dbg.dassert_lt(0, n_obs)
-    # Perform loglikelihood calculation.
+    # Perform log-likelihood calculation.
     # This term only depends upon the presence of an observation. We preserve
     # it here to facilitate comparisons across series with different numbers of
     # observations.
@@ -362,7 +362,7 @@ def compute_centered_gaussian_loglikelihood(
     # This term depends upon the observation values and variances.
     data_term = -0.5 * (np.log(var) + np.square(obs).divide(var))
     log_likelihoods = constant_term + data_term
-    log_likelihoods.name = prefix + "loglikelihood"
+    log_likelihoods.name = prefix + "log_likelihood"
     # Compute observations normalized by standard deviations.
     adj_obs = obs.divide(np.sqrt(var))
     adj_obs.name = prefix + "normalized_observations"

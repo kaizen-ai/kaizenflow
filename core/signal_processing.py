@@ -1513,6 +1513,7 @@ def compute_swt_var(
     wavelet: Optional[str] = None,
     depth: Optional[int] = None,
     timing_mode: Optional[str] = None,
+    axis: int = 1,
 ) -> pd.DataFrame:
     """
     Get swt var using levels up to `depth`.
@@ -1526,7 +1527,9 @@ def compute_swt_var(
         timing_mode=timing_mode,
         output_mode="detail",
     )
-    srs = np.square(df).sum(axis=1, skipna=False)
+    if axis == 0:
+        df = df.dropna()
+    srs = np.square(df).sum(axis=axis, skipna=False)
     srs.name = "swt_var"
     return srs.to_frame()
 
