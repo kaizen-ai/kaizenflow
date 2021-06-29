@@ -130,6 +130,21 @@ class ResultBundle(abc.ABC):
             serialized_bundle["commit_hash"] = git.get_current_commit_hash()
         return serialized_bundle
 
+    def to_dict(self, commit_hash: bool = True) -> collections.OrderedDict:
+        """
+        Represent class state as an ordered dict.
+        """
+        config = self.to_config(commit_hash)
+        return config.to_dict()
+
+    @classmethod
+    def from_dict(cls, bundle_as_dict: collections.OrderedDict) -> ResultBundle:
+        """
+        Initialize `ResultBundle` from a nested dict.
+        """
+        config = cconfig.get_config_from_nested_dict(bundle_as_dict)
+        return cls.from_config(config)
+
     @classmethod
     def from_config(cls, serialized_bundle: cconfig.Config) -> ResultBundle:
         """
