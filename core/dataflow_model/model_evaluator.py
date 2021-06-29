@@ -797,10 +797,23 @@ def build_model_evaluator_from_result_bundle_dicts(
     target_volatility: Optional[float] = None,
     oos_start: Optional[Any] = None,
 ) -> ModelEvaluator:
+    """
+    :param result_bundle_dicts: dict of `ResultBundle`s, each of which was
+        generated using `ResultBundle.to_dict()`
+    :param returns_col: column of `ResultBundle.result_df` to use as the column
+        representing returns
+    :param predictions_col: like `returns_col`, but for predictions
+    :param target_volatility: as in `ModelEvaluator`
+    :param oos_start: as in `ModelEvaluator`
+    :return: `ModelEvaluator` initialized with returns and predictions from
+       result bundles
+    """
+    # Convert each `ResultBundle` dict into a `ResultBundle` class object.
     result_bundles = {
         k: cdataf.ResultBundle.from_dict(v)
         for k, v in result_bundle_dicts.items()
     }
+    # Extract returns and predictions from result bundles.
     returns = {}
     predictions = {}
     for key, rb in result_bundles.items():
@@ -813,6 +826,7 @@ def build_model_evaluator_from_result_bundle_dicts(
         dbg.dassert_in(predictions_col, df.columns)
         # TODO(Paul): Same as for `returns_col`.
         predictions[key] = df[predictions_col]
+    # Initialize `ModelEvaluator`.
     evaluator = ModelEvaluator(
         returns=returns,
         predictions=predictions,
