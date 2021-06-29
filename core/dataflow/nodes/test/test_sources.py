@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Any
 
 import pandas as pd
 
@@ -11,18 +12,15 @@ _LOG = logging.getLogger(__name__)
 
 class TestDiskDataSource(hut.TestCase):
 
-    # TODO(gp): We could factor out all the code in a single function to
-    #  focus the attention on what exactly changes in a test.
     def test_datetime_index_csv1(self) -> None:
         """
         Test CSV file using timestamps in the index.
         """
         df = TestDiskDataSource._generate_df()
-        file_path = self._save_df(df, ".csv")
+        #
+        ext = ".csv"
         timestamp_col = None
-        dds = dtf.DiskDataSource("read_data", file_path, timestamp_col)
-        loaded_df = dds.fit()["df_out"]
-        self.check_string(loaded_df.to_string())
+        self._helper(df, ext, timestamp_col)
 
     def test_datetime_col_csv1(self) -> None:
         """
@@ -30,22 +28,20 @@ class TestDiskDataSource(hut.TestCase):
         """
         df = TestDiskDataSource._generate_df()
         df = df.reset_index()
-        file_path = self._save_df(df, ".csv")
+        #
+        ext = ".csv"
         timestamp_col = "timestamp"
-        dds = dtf.DiskDataSource("read_data", file_path, timestamp_col)
-        loaded_df = dds.fit()["df_out"]
-        self.check_string(loaded_df.to_string())
+        self._helper(df, ext, timestamp_col)
 
     def test_datetime_index_parquet1(self) -> None:
         """
         Test Parquet file using timestamps in the index.
         """
         df = TestDiskDataSource._generate_df()
-        file_path = self._save_df(df, ".pq")
+        #
+        ext = ".pq"
         timestamp_col = None
-        dds = dtf.DiskDataSource("read_data", file_path, timestamp_col)
-        loaded_df = dds.fit()["df_out"]
-        self.check_string(loaded_df.to_string())
+        self._helper(df, ext, timestamp_col)
 
     def test_datetime_col_parquet1(self) -> None:
         """
@@ -53,11 +49,10 @@ class TestDiskDataSource(hut.TestCase):
         """
         df = TestDiskDataSource._generate_df()
         df = df.reset_index()
-        file_path = self._save_df(df, ".pq")
+        #
+        ext = ".pq"
         timestamp_col = "timestamp"
-        dds = dtf.DiskDataSource("read_data", file_path, timestamp_col)
-        loaded_df = dds.fit()["df_out"]
-        self.check_string(loaded_df.to_string())
+        self._helper(df, ext, timestamp_col)
 
     def test_filter_dates1(self) -> None:
         """
@@ -65,17 +60,13 @@ class TestDiskDataSource(hut.TestCase):
         timestamps in the index.
         """
         df = TestDiskDataSource._generate_df()
-        file_path = self._save_df(df, ".csv")
+        #
+        ext = ".csv"
         timestamp_col = None
-        dds = dtf.DiskDataSource(
-            "read_data",
-            file_path,
-            timestamp_col,
-            start_date="2010-01-02",
-            end_date="2010-01-05",
-        )
-        loaded_df = dds.fit()["df_out"]
-        self.check_string(loaded_df.to_string())
+        dds_kwargs = {
+            "start_date": "2010-01-02",
+            "end_date": "2010-01-05"}
+        self._helper(df, ext, timestamp_col, **dds_kwargs)
 
     def test_filter_dates_open_boundary1(self) -> None:
         """
@@ -83,16 +74,13 @@ class TestDiskDataSource(hut.TestCase):
         timestamps in the index.
         """
         df = TestDiskDataSource._generate_df()
-        file_path = self._save_df(df, ".csv")
+        #
+        ext = ".csv"
         timestamp_col = None
-        dds = dtf.DiskDataSource(
-            "read_data",
-            file_path,
-            timestamp_col,
-            start_date="2010-01-02",
-        )
-        loaded_df = dds.fit()["df_out"]
-        self.check_string(loaded_df.to_string())
+        dds_kwargs = {
+        "start_date": "2010-01-02"
+        }
+        self._helper(df, ext, timestamp_col, **dds_kwargs)
 
     @staticmethod
     def _generate_df(num_periods: int = 10) -> pd.DataFrame:
@@ -121,6 +109,20 @@ class TestDiskDataSource(hut.TestCase):
         else:
             raise ValueError("Invalid extension='%s'" % ext)
         return file_path
+
+    def _helper(self, df: pd.DataFrame, ext: str, timestamp_col: str, **dds_kwargs: Any) -> None:
+        """
+        Instantiate a `DiskDataSource` with the passed parameter, run it and check.
+        """
+        # Save the data with the proper extension.
+        file_path = self._save_df(df, ext)
+        # Instantiate node.
+        dds = dtf.DiskDataSource("read_data", file_path, timestamp_col, **dds_kwargs)
+        # Run node.
+        loaded_df = dds.fit()["df_out"]
+        # Check output.
+        act_result = loaded_df.to_string()
+        self.check_string(act_result)
 
 
 class TestArmaGenerator(hut.TestCase):
