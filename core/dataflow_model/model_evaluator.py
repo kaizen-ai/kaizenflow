@@ -9,12 +9,14 @@ from __future__ import annotations
 import functools
 import json
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 
+import core.dataflow as cdataf
+import core.dataflow_model.utils as cdmu
 import core.finance as fin
 import core.signal_processing as sigp
 import core.statistics as stats
@@ -787,3 +789,32 @@ class TransactionCostModeler:
             dbg.dassert(not srs[:oos_start].dropna().empty)
             dbg.dassert(not srs[oos_start:].dropna().empty)
         dbg.dassert(srs.index.freq)
+
+
+def build_model_evaluator_from_result_bundle_dicts(
+    result_bundle_dicts: collections.OrderedDict,
+    returns_col: str,
+    predictions_col: str,
+    target_volatility: Optional[float] = None,
+    oos_start: Optional[Any] = None,
+) -> ModelEvaluator:
+    result_bundles = {k: cdataf.ResultBundle.from_dict(v) for k, v in result_bundle_dicts.items()}
+    returns = {}
+    predictions = {}
+    for key, rb in result_bundles.items():
+        df = rb.result_df
+        dbg.dassert_in(returns_col, df.columns)
+        # TODO(Paul): if `rb` is a `PredictionResultBundle`, we should warn if
+        #     if the provided `returns_col` disagrees with any that the bundle
+        #     provides. We may also want to load the provided one by default.
+        returns[key] = df[returns_col]
+        dbg.dassert_in(predictions_col, df.columns)
+        # TODO(Paul): Same as for `returns_col`.
+        predictions[key] = df[predictions_col]
+    evaluator = ModelEvaluator(
+        returns=returns,
+        predictions=predictions,
+        target_volatility=target_volatility,
+        oos_start=oos_start,
+    )
+    return evaluator

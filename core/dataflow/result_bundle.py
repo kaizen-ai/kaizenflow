@@ -315,20 +315,3 @@ class PredictionResultBundle(ResultBundle):
             tag,
         )
         return selected_cols_for_tag[0]
-
-
-def load_result_bundle_from_config(
-    result_bundle_config: collections.OrderedDict,
-) -> ResultBundle:
-    """
-    Load result bundle from its config.
-
-    :param result_bundle_config: result bundle config generated using
-        `to_config()` method
-    :return: result bundle instance
-    """
-    result_bundle_class = eval(result_bundle_config["class"])
-    result_bundle: ResultBundle = result_bundle_class.from_config(
-        result_bundle_config
-    )
-    return result_bundle
