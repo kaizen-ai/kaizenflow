@@ -656,9 +656,8 @@ def purify_docker_file_from_git_client(
         file_name = os.path.normpath(file_name)
         found = True
     else:
-        _LOG.warning(
-            "Found multiple potential files corresponding to '%s'", file_name
-        )
+        _LOG.warning("Found multiple potential files corresponding to '%s'",
+            file_name)
         file_name = ",".join(file_names)
         found = False
     _LOG.debug("-> found=%s file_name='%s'", found, file_name)

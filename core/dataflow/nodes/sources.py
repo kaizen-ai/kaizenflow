@@ -25,6 +25,10 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
 class ReadDataFromDf(DataSource):
+    """
+    `DataSource` node that accepts data as a DataFrame passed through the constructor.
+    """
+
     def __init__(self, nid: str, df: pd.DataFrame) -> None:
         super().__init__(nid)
         dbg.dassert_isinstance(df, pd.DataFrame)
@@ -42,10 +46,10 @@ class DiskDataSource(DataSource):
         reader_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
-        Create data source node reading CSV or parquet data from disk.
+        Create data source node reading CSV or Parquet data from disk.
 
         :param nid: node identifier
-        :param file_path: path to the file
+        :param file_path: path to the file to read with ".csv" or ".pq" extension
         # TODO(*): Don't the readers support this already?
         :param timestamp_col: name of the timestamp column. If `None`, assume
             that index contains timestamps
@@ -62,14 +66,25 @@ class DiskDataSource(DataSource):
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
         """
-        :return: training set as df
+        Load the data on the first invocation and then delegate to the base class.
+
+        We don't need to implement `predict()` since the data is read only on the
+        first call to `fit()`, so the behavior of the base class is sufficient.
+
+        :return: dict from output name to DataFrame
         """
         self._lazy_load()
         return super().fit()
 
     def _read_data(self) -> None:
+        """
+        Read the data from the file based on the extension.
+        """
+        # Get the extension.
         ext = os.path.splitext(self._file_path)[-1]
+        # Select the reading method based on the extension.
         if ext == ".csv":
+            # Assume that the first column is the index, unless specified.
             if "index_col" not in self._reader_kwargs:
                 self._reader_kwargs["index_col"] = 0
             read_data = pd.read_csv
@@ -77,17 +92,27 @@ class DiskDataSource(DataSource):
             read_data = pd.read_parquet
         else:
             raise ValueError("Invalid file extension='%s'" % ext)
+        # Read the data.
         self.df = read_data(self._file_path, **self._reader_kwargs)
 
     def _process_data(self) -> None:
+        # Use the specified timestamp column as index, if needed.
         if self._timestamp_col is not None:
             self.df.set_index(self._timestamp_col, inplace=True)
+        # Convert index in timestamps.
         self.df.index = pd.to_datetime(self.df.index)
         dbg.dassert_strictly_increasing_index(self.df)
+        # Filter by start / end date.
+        # TODO(gp): Not sure that a view is enough to force discarding the unused
+        #  rows in the DataFrame. Maybe do a copy, delete the old data, and call the
+        #  garbage collector.
         self.df = self.df.loc[self._start_date : self._end_date]
         dbg.dassert(not self.df.empty, "Dataframe is empty")
 
     def _lazy_load(self) -> None:
+        """
+        Load the data if it was not already done.
+        """
         if self.df is not None:
             return
         self._read_data()
