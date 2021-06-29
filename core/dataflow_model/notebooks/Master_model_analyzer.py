@@ -5,11 +5,11 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.4.2
+#       jupytext_version: 1.11.2
 #   kernelspec:
-#     display_name: Python [conda env:.conda-develop] *
+#     display_name: Python 3
 #     language: python
-#     name: conda-env-.conda-develop-py
+#     name: python3
 # ---
 
 # %% [markdown]
@@ -34,19 +34,18 @@ import core.artificial_signal_generators as sig_gen
 import core.config as cconfig
 import core.dataflow_model.model_evaluator as modeval
 import core.dataflow_model.model_plotter as modplot
+import core.dataflow_model.utils as cdmu
 import core.statistics as stats
 import helpers.dbg as dbg
-import helpers.env as env
-import helpers.printing as prnt
 
 # %%
 dbg.init_logger(verbosity=logging.INFO)
 
 _LOG = logging.getLogger(__name__)
 
-_LOG.info("%s", env.get_system_signature()[0])
+# _LOG.info("%s", env.get_system_signature()[0])
 
-prnt.config_notebook()
+# prnt.config_notebook()
 
 # %% [markdown]
 # # Notebook config
@@ -54,11 +53,17 @@ prnt.config_notebook()
 # %%
 eval_config = cconfig.get_config_from_nested_dict(
     {
-        "target_volatility": 0.1,
-        "oos_start": "2007-01-01",
+        "exp_dir": "/app/experiment1",
+        "model_evaluator_kwargs": {
+            "returns_col": "ret_0_vol_adj_2",
+            "predictions_col": "ret_0_vol_adj_2_hat",
+            "target_volatility": 0.1,
+            "oos_start": "2017-01-01",
+        },
         "bh_adj_threshold": 0.1,
         "resample_rule": "W",
         "mode": "ins",
+        "target_volatility": 0.1,
     }
 )
 
@@ -100,12 +105,24 @@ preds = pred_df.to_dict(orient="series")
 # # Initialize ModelEvaluator and ModelPlotter
 
 # %%
-evaluator = modeval.ModelEvaluator(
-    returns=rets,
-    predictions=preds,
-    target_volatility=eval_config["target_volatility"],
-    oos_start=eval_config["oos_start"],
-)
+if eval_config.get("exp_dir", None) is None:
+    evaluator = modeval.ModelEvaluator(
+        returns=rets,
+        predictions=preds,
+        target_volatility=eval_config[
+            "model_evaluator_kwargs", "target_volatility"
+        ],
+        oos_start=eval_config["model_evaluator_kwargs", "oos_start"],
+    )
+else:
+    rbs_dicts = cdmu.load_experiment_artifacts(
+        eval_config["exp_dir"], "result_bundle.pkl"
+    )
+    evaluator = modeval.build_model_evaluator_from_result_bundle_dicts(
+        rbs_dicts,
+        **eval_config["model_evaluator_kwargs"].to_dict(),
+    )
+
 plotter = modplot.ModelPlotter(evaluator)
 
 # %%
