@@ -18,30 +18,15 @@
 
 import collections
 import logging
-import os
-import pathlib
+from typing import Optional
 
-import numpy as np
 import pandas as pd
 
 import core.config as cconfig
-import core.dataflow as cdataf
-import core.finance as cfina
 import core.dataflow_model.model_evaluator as cmodel
 import core.dataflow_model.model_plotter as modplot
 import core.dataflow_model.utils as cdmu
-import core.plotting as plot
-import core.signal_processing as csigna
-import dataflow_lemonade.futures_returns.pipeline as dlfrp
 import helpers.dbg as dbg
-import helpers.env as henv
-import helpers.io_ as hio
-import helpers.pickle_ as hpickl
-import helpers.printing as hprint
-
-from typing import Any, Dict, Iterable, Optional
-
-from tqdm.auto import tqdm
 
 # %%
 dbg.init_logger(verbosity=logging.INFO)
@@ -78,24 +63,26 @@ def get_config_diffs(
         config_diffs[tag_col] = tags
     return config_diffs
 
+
 # %%
-notebook_config = cconfig.get_config_from_nested_dict({
-    "exp_dir": "/app/experiment1",
-    "model_evaluator_kwargs": {
-        "returns_col": "ret_0_vol_adj_2",
-        "predictions_col": "ret_0_vol_adj_2_hat",
-        "target_volatility": 0.1,
-        "oos_start": "2017-01-01",
-    },
-})
+notebook_config = cconfig.get_config_from_nested_dict(
+    {
+        "exp_dir": "/app/experiment1",
+        "model_evaluator_kwargs": {
+            "returns_col": "ret_0_vol_adj_2",
+            "predictions_col": "ret_0_vol_adj_2_hat",
+            "target_volatility": 0.1,
+            "oos_start": "2017-01-01",
+        },
+    }
+)
 
 # %% [markdown]
 # # Load results
 
 # %%
 rbs_dicts = cdmu.load_experiment_artifacts(
-    notebook_config["exp_dir"],
-    "result_bundle.pkl"
+    notebook_config["exp_dir"], "result_bundle.pkl"
 )
 
 # %%

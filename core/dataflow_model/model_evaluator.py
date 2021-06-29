@@ -9,14 +9,13 @@ from __future__ import annotations
 import functools
 import json
 import logging
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 
 import core.dataflow as cdataf
-import core.dataflow_model.utils as cdmu
 import core.finance as fin
 import core.signal_processing as sigp
 import core.statistics as stats
@@ -798,7 +797,10 @@ def build_model_evaluator_from_result_bundle_dicts(
     target_volatility: Optional[float] = None,
     oos_start: Optional[Any] = None,
 ) -> ModelEvaluator:
-    result_bundles = {k: cdataf.ResultBundle.from_dict(v) for k, v in result_bundle_dicts.items()}
+    result_bundles = {
+        k: cdataf.ResultBundle.from_dict(v)
+        for k, v in result_bundle_dicts.items()
+    }
     returns = {}
     predictions = {}
     for key, rb in result_bundles.items():

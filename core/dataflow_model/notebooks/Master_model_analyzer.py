@@ -37,8 +37,6 @@ import core.dataflow_model.model_plotter as modplot
 import core.dataflow_model.utils as cdmu
 import core.statistics as stats
 import helpers.dbg as dbg
-import helpers.env as env
-import helpers.printing as prnt
 
 # %%
 dbg.init_logger(verbosity=logging.INFO)
@@ -111,13 +109,14 @@ if eval_config.get("exp_dir", None) is None:
     evaluator = modeval.ModelEvaluator(
         returns=rets,
         predictions=preds,
-        target_volatility=eval_config["model_evaluator_kwargs", "target_volatility"],
+        target_volatility=eval_config[
+            "model_evaluator_kwargs", "target_volatility"
+        ],
         oos_start=eval_config["model_evaluator_kwargs", "oos_start"],
     )
 else:
     rbs_dicts = cdmu.load_experiment_artifacts(
-        eval_config["exp_dir"],
-        "result_bundle.pkl"
+        eval_config["exp_dir"], "result_bundle.pkl"
     )
     evaluator = modeval.build_model_evaluator_from_result_bundle_dicts(
         rbs_dicts,
