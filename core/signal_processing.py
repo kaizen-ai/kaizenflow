@@ -1563,9 +1563,13 @@ def get_swt_var_summary(
     depth: Optional[int] = None,
     timing_mode: Optional[str] = None,
 ) -> pd.DataFrame:
-    swt_var = csigna.compute_swt_var(sig, wavelet=wavelet, depth=depth, timing_mode=timing_mode, axis=0)
+    swt_var = csigna.compute_swt_var(
+        sig, wavelet=wavelet, depth=depth, timing_mode=timing_mode, axis=0
+    )
     dbg.dassert_in("swt_var", swt_var.columns)
-    srs = csigna.compute_swt_var(sig, wavelet=wavelet, depth=depth, timing_mode=timing_mode, axis=1)
+    srs = csigna.compute_swt_var(
+        sig, wavelet=wavelet, depth=depth, timing_mode=timing_mode, axis=1
+    )
     fvi = srs.first_valid_index()
     decomp = swt_var / srs.loc[fvi:].count()
     decomp["cum_swt_var"] = decomp["swt_var"].cumsum()
