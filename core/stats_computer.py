@@ -10,7 +10,6 @@ import pandas as pd
 
 import core.finance as cfinan
 import core.statistics as cstati
-import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -125,7 +124,9 @@ class StatsComputer:
             raise ValueError
 
     @staticmethod
-    def calculate_bet_stats(positions: pd.Series, returns: pd.Series) -> pd.Series:
+    def calculate_bet_stats(
+        positions: pd.Series, returns: pd.Series
+    ) -> pd.Series:
         name = "bets"
         bets = cstati.compute_bet_stats(positions, returns[positions.index])
         bets.name = name
