@@ -1557,6 +1557,23 @@ def compute_swt_sum(
     return srs.to_frame()
 
 
+def get_swt_var_summary(
+    sig: Union[pd.DataFrame, pd.Series],
+    wavelet: Optional[str] = None,
+    depth: Optional[int] = None,
+    timing_mode: Optional[str] = None,
+) -> pd.DataFrame:
+    swt_var = csigna.compute_swt_var(sig, wavelet=wavelet, depth=depth, timing_mode=timing_mode, axis=0)
+    dbg.dassert_in("swt_var", swt_var.columns)
+    srs = csigna.compute_swt_var(sig, wavelet=wavelet, depth=depth, timing_mode=timing_mode, axis=1)
+    fvi = srs.first_valid_index()
+    decomp = swt_var / srs.loc[fvi:].count()
+    decomp["cum_swt_var"] = decomp["swt_var"].cumsum()
+    decomp["perc"] = decomp["swt_var"] / sig.loc[fvi:].var()
+    decomp["cum_perc"] = decomp["perc"].cumsum()
+    return decomp
+
+
 def get_dyadic_zscored(
     sig: pd.Series, demean: bool = False, **kwargs: Any
 ) -> pd.DataFrame:
