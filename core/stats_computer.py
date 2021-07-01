@@ -5,11 +5,14 @@ import core.stats_computer as cstats
 """
 
 import logging
+import functools
 
 import pandas as pd
 
 import core.finance as cfinan
 import core.statistics as cstati
+
+from typing import Optional
 
 _LOG = logging.getLogger(__name__)
 
@@ -18,56 +21,57 @@ class StatsComputer:
     """
     Allows to get particular piece of stats instead of the whole stats table.
     """
+    def compute_stats(self, srs: pd.Series, mode: Optional[str] = None):
+        stats = []
+        stats.append(self.compute_sampling_stats(srs))
+        stats.append(self.compute_summary_stats(srs))
+        stats.append(self.compute_stationarity_stats(srs))
+        stats.append(self.compute_normality_stats(srs))
+        # stats.append(self.compute_autocorrelation_stats(srs))
+        stats.append(self.compute_spectral_stats(srs))
+        stats.append(self.compute_signal_quality_stats(srs))
+        if mode is not None:
+            stats.append(self.compute_finance_stats(srs, mode))
+        names = [stat.name for stat in stats]
+        result = pd.concat(stats, axis=0, keys=names)
+        result.name = srs.name
+        return result
 
-    @staticmethod
-    def compute_sampling_stats(srs: pd.Series) -> pd.Series:
+    def compute_sampling_stats(self, srs: pd.Series) -> pd.Series:
         name = "sampling"
-        #
-        time_index_info = cstati.summarize_time_index_info(srs)
-        time_index_info.name = name
-        #
-        special_value_stats = cstati.compute_special_value_stats(srs)
-        special_value_stats.name = name
-        return pd.concat([time_index_info, special_value_stats])
+        functions = [
+            cstati.summarize_time_index_info,
+            cstati.compute_special_value_stats
+        ]
+        return self._compute_stat_functions(srs, name, functions)
 
-    @staticmethod
-    def compute_summary_stats(srs: pd.Series) -> pd.Series:
+    def compute_summary_stats(self, srs: pd.Series) -> pd.Series:
         name = "summary"
-        #
-        moments = cstati.compute_moments(srs)
-        moments.name = name
-        #
-        descriptive = srs.describe()
-        descriptive.name = name
-        #
-        jensen = cstati.compute_jensen_ratio(srs)
-        jensen.name = name
-        #
-        ttest = cstati.ttest_1samp(srs)
-        ttest.name = name
         # TODO(*): Add
         #   - var and std assuming zero mean
-        return pd.concat([moments, descriptive])
+        functions = [
+            cstati.compute_moments,
+            cstati.compute_jensen_ratio,
+            lambda x: x.describe(),
+            cstati.ttest_1samp,
+        ]
+        return self._compute_stat_functions(srs, name, functions)
 
-    @staticmethod
-    def compute_stationarity_stats(srs: pd.Series) -> pd.Series:
+    def compute_stationarity_stats(self, srs: pd.Series) -> pd.Series:
         name = "stationarity"
-        #
-        adf = cstati.apply_adf_test(srs, prefix="adf_")
-        adf.name = name
-        #
-        kpss = cstati.apply_kpss_test(srs, prefix="kpss_")
-        kpss.name = name
-        return pd.concat([adf, kpss])
+        functions = [
+            functools.partial(cstati.apply_adf_test, prefix="adf_"),
+            functools.partial(cstati.apply_kpss_test, prefix="kpss_")
+        ]
+        return self._compute_stat_functions(srs, name, functions)
 
-    @staticmethod
-    def compute_normality_stats(srs: pd.Series) -> pd.Series:
+    def compute_normality_stats(self, srs: pd.Series) -> pd.Series:
         name = "normality"
-        #
-        normality = cstati.apply_normality_test(srs)
-        normality.name = name
+        functions = [
+            cstati.apply_normality_test,
+        ]
         # TODO(*): cstati.compute_centered_gaussian_log_likelihood
-        return pd.concat([normality])
+        return self._compute_stat_functions(srs, name, functions)
 
     @staticmethod
     def compute_autocorrelation_stats(srs: pd.Series) -> pd.Series:
@@ -77,28 +81,26 @@ class StatsComputer:
         #     Change default lags reported.
         raise NotImplementedError
 
-    @staticmethod
-    def compute_spectral_stats(srs: pd.Series) -> pd.Series:
-        # TODO(Paul): `compute_forecastability()` goes here.
-        raise NotImplementedError
+    def compute_spectral_stats(self, srs: pd.Series) -> pd.Series:
+        name = "spectral"
+        functions = [
+            cstati.compute_forecastability,
+        ]
+        return self._compute_stat_functions(srs, name, functions)
 
-    @staticmethod
-    def compute_signal_quality_stats(srs: pd.Series) -> pd.Series:
+    def compute_signal_quality_stats(self, srs: pd.Series) -> pd.Series:
         name = "signal_quality"
-        #
-        sharpe_ratio = cstati.summarize_sharpe_ratio(srs)
-        sharpe_ratio.name = name
-        #
-        ttest = cstati.ttest_1samp(srs)
-        ttest.name = name
-        #
+        functions = [
+            cstati.summarize_sharpe_ratio,
+            cstati.ttest_1samp,
+        ]
+        result = self._compute_stat_functions(srs, name, functions)
         kratio = pd.Series(cfinan.compute_kratio(srs), index=["kratio"])
         kratio.name = name
         #
-        return pd.concat([sharpe_ratio, ttest, kratio])
+        return pd.concat([result, kratio])
 
-    @staticmethod
-    def compute_finance_stats(srs: pd.Series, mode: str) -> pd.Series:
+    def compute_finance_stats(self, srs: pd.Series, mode: str) -> pd.Series:
         """
         Assumes `srs` is a PnL curve.
 
@@ -106,22 +108,18 @@ class StatsComputer:
         """
         name = "finance"
         if mode == "pnl":
-            ret_and_vol = cstati.compute_annualized_return_and_volatility(srs)
-            ret_and_vol.name = name
-            #
-            drawdown = cstati.compute_max_drawdown(srs)
-            drawdown.name = name
-            #
-            hit_rate = cstati.calculate_hit_rate(srs)
-            hit_rate.name = name
-            #
-            return pd.concat([ret_and_vol, drawdown, hit_rate])
+            functions = [
+                cstati.compute_annualized_return_and_volatility,
+                cstati.compute_max_drawdown,
+                cstati.calculate_hit_rate
+            ]
         elif mode == "positions":
-            turnover = cstati.compute_avg_turnover_and_holding_period(srs)
-            turnover.name = name
-            return pd.concat([turnover])
+            functions = [
+                cstati.compute_avg_turnover_and_holding_period
+            ]
         else:
             raise ValueError
+        return self._compute_stat_functions(srs, name, functions)
 
     @staticmethod
     def calculate_bet_stats(
@@ -135,3 +133,13 @@ class StatsComputer:
     # TODO(Paul): Add correlation for calculating
     #   - correlation of pnl to rets
     #   - correlation of predictions to rets
+
+    @staticmethod
+    def _compute_stat_functions(
+        srs: pd.Series,
+        name: str,
+        functions: list,
+    ) -> pd.Series:
+        stats = [function(srs).rename(name) for function in functions]
+        return pd.concat(stats)
+
