@@ -5,12 +5,15 @@ import os
 import pytest
 
 import helpers.s3 as hs3
+import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skip("AmpTask1477")
+@pytest.mark.skipif(
+    hsinte.is_inside_ci(), reason="In CI there is no AWS credentials file"
+)
 class Test_s3_get_credentials1(hut.TestCase):
     def test1(self) -> None:
         aws_profile = "am"

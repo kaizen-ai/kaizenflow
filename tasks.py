@@ -40,6 +40,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     git_merge_master,
     git_pull,
     git_pull_master,
+    git_rename_branch,
     lint,
     print_setup,
     print_tasks,

@@ -569,11 +569,12 @@ def kill_process(
 # #############################################################################
 
 
-def query_yes_no(question: str, abort_on_no: bool = True) -> bool:
+def query_yes_no(question: str, abort_on_no: bool) -> bool:
     """
-    Ask a yes/no question via raw_input() and return their answer.
+    Ask a yes/no question via `raw_input()` and return their answer.
 
     :param question: string with the question presented to the user
+    :param abort_on_no: exit if the user answers "no"
     :return: True for "yes" or False for "no"
     """
     dbg.dassert_isinstance(question, str)

@@ -10,7 +10,6 @@ import im.kibot.metadata.test.mocking.mock_kibot_metadata as mkmd
 MAX_ROWS = 500
 
 
-@pytest.mark.skip("AmpTask1477")
 class TestKibotMetadata(hut.TestCase):
     @pytest.mark.slow()
     def test_get_metadata_slow1(self) -> None:

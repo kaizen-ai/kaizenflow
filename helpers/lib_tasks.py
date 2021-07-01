@@ -13,7 +13,7 @@ import os
 import pprint
 import re
 import sys
-from typing import Any, Dict, List, Match, Optional, Union
+from typing import Any, Dict, List, Match, Optional, Tuple, Union
 
 from invoke import task
 
@@ -690,6 +690,32 @@ def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
     # Save to clipboard.
     res = " ".join(files)
     _to_pbcopy(res, pbcopy)
+
+
+@task
+def git_rename_branch(ctx, new_branch_name):  # type: ignore
+    """
+    Rename current branch both locally and remotely.
+    """
+    _report_task()
+    #
+    old_branch_name = git.get_branch_name(".")
+    dbg.dassert_ne(old_branch_name, new_branch_name)
+    msg = (f"Do you want to rename the current branch '{old_branch_name}' to "
+           f"'{new_branch_name}'")
+    hsinte.query_yes_no(msg, abort_on_no=True)
+    # https://stackoverflow.com/questions/6591213/how-do-i-rename-a-local-git-branch
+    # To rename a local branch:
+    # git branch -m <oldname> <newname>
+    cmd = f"git branch -m {new_branch_name}"
+    _run(ctx, cmd)
+    # git push origin -u <newname>
+    cmd = f"git push origin {new_branch_name}"
+    _run(ctx, cmd)
+    # git push origin --delete <oldname>
+    cmd = f"git push origin --delete {branch_name}"
+    _run(ctx, cmd)
+    print("Done")
 
 
 # TODO(gp): Add the following scripts:
@@ -2506,26 +2532,38 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
 # #############################################################################
 
 
-def _get_repo_full_name_from_cmd(repo_short_name: str) -> str:
+def _get_repo_full_name_from_cmd(repo_short_name: str) -> Tuple[str, str]:
     """
     Convert the `repo_short_name` from command line (e.g., "current", "amp",
     "lem") to the repo_short_name full name without host name.
     """
     repo_full_name_with_host: str
     if repo_short_name == "current":
+        # Get the repo name from the current repo.
         repo_full_name_with_host = git.get_repo_full_name_from_dirname(
             ".", include_host_name=True
         )
+        # Compute the short repo name corresponding to "current".
+        repo_full_name = git.get_repo_full_name_from_dirname(
+            ".", include_host_name=False
+        )
+        ret_repo_short_name = git.get_repo_name(
+            repo_full_name, in_mode="full_name", include_host_name=False
+        )
+
     else:
+        # Get the repo name using the short -> full name mapping.
         repo_full_name_with_host = git.get_repo_name(
             repo_short_name, in_mode="short_name", include_host_name=True
         )
+        ret_repo_short_name = repo_short_name
     _LOG.debug(
-        "repo_short_name=%s -> repo_full_name_with_host=%s",
+        "repo_short_name=%s -> repo_full_name_with_host=%s ret_repo_short_name=%s",
         repo_short_name,
         repo_full_name_with_host,
+        ret_repo_short_name,
     )
-    return repo_full_name_with_host
+    return repo_full_name_with_host, ret_repo_short_name
 
 
 def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> str:
@@ -2535,7 +2573,8 @@ def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> str:
     :param repo_short_name: `current` refer to the repo_short_name where we are, otherwise
         a repo_short_name short name (e.g., "amp")
     """
-    repo_full_name_with_host = _get_repo_full_name_from_cmd(repo_short_name)
+    repo_full_name_with_host, repo_short_name = _get_repo_full_name_from_cmd(
+        repo_short_name)
     # > (export NO_COLOR=1; gh issue view 1251 --json title )
     # {"title":"Update GH actions for amp"}
     dbg.dassert_lte(1, issue_id)
@@ -2557,7 +2596,7 @@ def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> str:
     #
     title = title.replace(" ", "_")
     title = title.replace("-", "_")
-    # Add the `AmpTaskXYZ_...`
+    # Add the prefix `AmpTaskXYZ_...`
     task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
     _LOG.debug("task_prefix=%s", task_prefix)
     title = "%s%d_%s" % (task_prefix, issue_id, title)
@@ -2601,7 +2640,8 @@ def gh_create_pr(  # type: ignore
     if not title:
         # Use the branch name as title.
         title = branch_name
-    repo_full_name_with_host = _get_repo_full_name_from_cmd(repo_short_name)
+    repo_full_name_with_host, repo_short_name = _get_repo_full_name_from_cmd(
+        repo_short_name)
     _LOG.info(
         "Creating PR with title '%s' for '%s' in %s",
         title,

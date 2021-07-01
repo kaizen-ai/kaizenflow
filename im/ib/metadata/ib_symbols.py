@@ -9,7 +9,9 @@ import logging
 import string
 from typing import List, Optional
 
+import core.pandas_helpers as pdhelp
 import helpers.dbg as dbg
+import helpers.s3 as hs3
 import helpers.printing as hprint
 import im.common.data.types as icdtyp
 import im.common.metadata.symbols as icmsym
@@ -47,12 +49,16 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
         """
         _LOG.info("Reading symbols from %s", symbols_file)
         # Prevent to transform values from "NA" to `np.nan`.
+        if hs3.is_s3_path(symbols_file):
+            kwargs = {"aws_profile": "am"}
+        else:
+            kwargs = {}
         df = pdhelp.read_csv(
             symbols_file,
-            aws_profile="am",
             sep="\t",
             keep_default_na=False,
             na_values=["_"],
+            **kwargs
         )
         _LOG.debug("head=%s", df.head())
         # The df looks like:

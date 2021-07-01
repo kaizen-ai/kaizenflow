@@ -256,33 +256,22 @@ def read_csv(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
     """
     Read a CSV file into a `pd.DataFrame` handling the S3 profile, if needed.
     """
+    _LOG.debug("file_name=%s", file_name)
     if hs3.is_s3_path(file_name):
-        # For S3 files we need to have a aws_profile.
+        # For S3 files we need to have an aws_profile.
         dbg.dassert_in("aws_profile", kwargs)
         aws_profile = kwargs.pop("aws_profile")
-        # TODO(gp): Is a file visible
-        dbg.dassert(
-            hs3.exists(file_name, aws_profile=aws_profile),
-            "S3 file '%s' not found for aws_profile '%s'",
-            file_name,
-            aws_profile,
-        )
-        # From https://stackoverflow.com/questions/62562945
-        aws_access_key_id, aws_secret_access_key, aws_region = hs3.get_aws_credentials(
-            aws_profile=aws_profile
-        )
-        # Horrible hack: for some reason S3FileSystem doesn't allow to pass
-        # `aws_region` but always use the env var.
-        old_value = os.environ["AWS_DEFAULT_REGION"]
-        os.environ["AWS_DEFAULT_REGION"] = aws_region
-        s3 = s3fs.core.S3FileSystem(anon=False, key=aws_access_key_id, secret=aws_secret_access_key)
-        file_name = s3.open(file_name)
-        os.environ["AWS_DEFAULT_REGION"] = old_value
-        _LOG.debug("S3 file_name=%s", file_name)
+        s3fs = hs3.get_s3fs(aws_profile)
+        stream = s3fs.open(file_name)
     else:
-        dbg.dassert_not_in("aws_profile", kwargs)
-    _LOG.debug("file_name=%s", file_name)
+        dbg.dassert_not_in("aws_profile", kwargs,
+                           "You should not pass 'aws_profile' for files like %s that are not on S3",
+                           file_name)
+        stream = file_name
     _LOG.debug("args=%s", str(args))
     _LOG.debug("kwargs=%s", str(kwargs))
-    df = pd.read_csv(file_name, *args, **kwargs)
+    if file_name.endswith(".gz") or file_name.endswith(".gzip"):
+        dbg.dassert_not_in("compression", kwargs)
+        kwargs["compression"] = "gzip"
+    df = pd.read_csv(stream, *args, **kwargs)
     return df
