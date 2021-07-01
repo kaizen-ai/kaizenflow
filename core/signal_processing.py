@@ -730,6 +730,67 @@ def compute_rolling_kurtosis(
     return kurt
 
 
+def compute_centered_gaussian_log_likelihood(
+    df: pd.DataFrame,
+    observation_col: str,
+    variance_col: str,
+    square_variance_col: bool = False,
+    variance_shifts: int = 0,
+    prefix: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Return the log-likelihoods of independent draws from centered Gaussians.
+
+    A higher log-likelihood score means that the model of independent
+    Gaussian draws with given variances is a better fit.
+
+    The log-likelihood of the series of observations may be obtained by
+    summing the individual log-likelihood values.
+
+    :param df: dataframe with float observation and variance columns
+    :param observation_col: name of column containing observations
+    :param variance_col: name of column containing variances
+    :square_variance_col: if `True`, square the values in `variance_col`
+        (use this if the column contains standard deviations)
+    :variance_shifts: number of shifts to apply to `variance_col` prior to
+        calculating log-likelihood. Use this if `variance_col` contains forward
+        predictions.
+    :prefix: prefix to add to name of output series
+    :return: dataframe of log-likelihoods and adjusted observations
+    """
+    prefix = prefix or ""
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    # Extract observations and variance, with optional shift applied.
+    obs = df[observation_col]
+    var = df[variance_col].shift(variance_shifts)
+    dbg.dassert(not (var <= 0).any(), msg="Variance values must be positive.")
+    if square_variance_col:
+        var = np.square(var)
+    # Restrict to relevant data and drop any rows with NaNs.
+    idx = pd.concat([obs, var], axis=1).dropna().index
+    obs = obs.loc[idx]
+    var = var.loc[idx]
+    # Ensure that there is at least one observation.
+    n_obs = idx.size
+    _LOG.debug("Number of non-NaN observations=%i", n_obs)
+    dbg.dassert_lt(0, n_obs)
+    # Perform log-likelihood calculation.
+    # This term only depends upon the presence of an observation. We preserve
+    # it here to facilitate comparisons across series with different numbers of
+    # observations.
+    constant_term = -0.5 * np.log(2 * np.pi)
+    # This term depends upon the observation values and variances.
+    data_term = -0.5 * (np.log(var) + np.square(obs).divide(var))
+    log_likelihoods = constant_term + data_term
+    log_likelihoods.name = prefix + "log_likelihood"
+    # Compute observations normalized by standard deviations.
+    adj_obs = obs.divide(np.sqrt(var))
+    adj_obs.name = prefix + "normalized_observations"
+    # Construct output dataframe.
+    df_out = pd.concat([adj_obs, log_likelihoods], axis=1)
+    return df_out
+
+
 # #############################################################################
 # Rolling Sharpe ratio
 # #############################################################################
@@ -790,6 +851,7 @@ def compute_rolling_sharpe_ratio(
 # #############################################################################
 
 
+# TODO(Paul): Change the interface so that the two series are cols of a df.
 def compute_rolling_cov(
     srs1: Union[pd.DataFrame, pd.Series],
     srs2: Union[pd.DataFrame, pd.Series],
@@ -1555,27 +1617,6 @@ def compute_swt_sum(
     srs = -1 * df.sum(axis=1, skipna=False)
     srs.name = "swt_sum"
     return srs.to_frame()
-
-
-def get_swt_var_summary(
-    sig: Union[pd.DataFrame, pd.Series],
-    wavelet: Optional[str] = None,
-    depth: Optional[int] = None,
-    timing_mode: Optional[str] = None,
-) -> pd.DataFrame:
-    swt_var = csigna.compute_swt_var(
-        sig, wavelet=wavelet, depth=depth, timing_mode=timing_mode, axis=0
-    )
-    dbg.dassert_in("swt_var", swt_var.columns)
-    srs = csigna.compute_swt_var(
-        sig, wavelet=wavelet, depth=depth, timing_mode=timing_mode, axis=1
-    )
-    fvi = srs.first_valid_index()
-    decomp = swt_var / srs.loc[fvi:].count()
-    decomp["cum_swt_var"] = decomp["swt_var"].cumsum()
-    decomp["perc"] = decomp["swt_var"] / sig.loc[fvi:].var()
-    decomp["cum_perc"] = decomp["perc"].cumsum()
-    return decomp
 
 
 def get_dyadic_zscored(
