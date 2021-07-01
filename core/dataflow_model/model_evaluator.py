@@ -19,6 +19,7 @@ import core.dataflow as cdataf
 import core.finance as fin
 import core.signal_processing as sigp
 import core.statistics as stats
+import core.stats_computer as cstats
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -81,6 +82,7 @@ class ModelEvaluator:
         self.pos = self._calculate_positions()
         # Calculate pnl streams.
         self.pnls = self._calculate_pnls(self.rets, self.pos)
+        self.stats_computer = cstats.StatsComputer()
 
     def dump_json(self) -> str:
         """
@@ -284,14 +286,15 @@ class ModelEvaluator:
             stats_dict[key] = stats_val
         stats_df = pd.concat(stats_dict, axis=1)
         # Calculate BH adjustment of pvals.
-        adj_pvals = stats.multipletests(stats_df.loc["pval"], nan_mode="drop")
+        adj_pvals = stats.multipletests(stats_df.loc["signal_quality"].loc["sr.pval"], nan_mode="drop")
+        adj_pvals = pd.concat([adj_pvals.to_frame().transpose()], keys=["signal_quality"])
         stats_df = pd.concat(
-            [stats_df.transpose(), adj_pvals], axis=1
-        ).transpose()
-        return stats_df
+            [stats_df, adj_pvals], axis=0
+        )
+        return stats_df.sort_index(level=0)
 
-    @staticmethod
     def _calculate_model_stats(
+        self,
         *,
         returns: Optional[pd.Series] = None,
         positions: Optional[pd.Series] = None,
@@ -310,50 +313,37 @@ class ModelEvaluator:
         }
         dbg.dassert_eq(len(freqs), 1, "Series have different frequencies.")
         # Calculate stats.
-        stats_dict = {}
+        name = "stats"
+        results = []
         if pnl is not None:
-            stats_dict[0] = stats.summarize_sharpe_ratio(pnl)
-            stats_dict[1] = stats.ttest_1samp(pnl)
-            stats_dict[2] = pd.Series(
-                fin.compute_kratio(pnl), index=["kratio"], name=pnl.name
-            )
-            stats_dict[3] = stats.compute_annualized_return_and_volatility(pnl)
-            stats_dict[4] = stats.compute_max_drawdown(pnl)
-            stats_dict[5] = stats.summarize_time_index_info(pnl)
-            stats_dict[6] = stats.calculate_hit_rate(pnl)
-            stats_dict[10] = stats.compute_jensen_ratio(pnl)
-            stats_dict[11] = stats.compute_forecastability(pnl)
-            stats_dict[13] = stats.compute_moments(pnl)
-            stats_dict[14] = stats.compute_special_value_stats(pnl)
+            results.append(self.stats_computer.compute_stats(pnl, time_series_type="pnl").rename(name))
         if pnl is not None and returns is not None:
-            stats_dict[7] = pd.Series(
-                pnl.corr(returns), index=["corr_to_underlying"], name=returns.name
+            corr = pd.Series(
+                pnl.corr(returns), index=["corr_to_underlying"], name=name
             )
+            results.append(pd.concat([corr], keys=["correlation"]))
         if positions is not None and returns is not None:
-            stats_dict[8] = stats.compute_bet_stats(
-                positions, returns[positions.index]
-            )
+            bets = self.stats_computer.compute_bet_stats(positions=positions, returns=returns[positions.index])
+            bets.name = name
+            results.append(pd.concat([bets], keys=["bets"]))
             # TODO(*): Use `predictions` instead.
-            stats_dict[12] = pd.Series(
+            corr = pd.Series(
                 positions.corr(returns),
                 index=["prediction_corr"],
-                name=returns.name,
+                name=name
             )
+            results.append(pd.concat([corr], keys=["correlation"]))
         if positions is not None:
-            stats_dict[9] = stats.compute_avg_turnover_and_holding_period(
-                positions
-            )
+            finance = self.stats_computer.compute_finance_stats(positions, time_series_type="positions")
+            results.append(pd.concat([finance], keys=["finance"]))
         # Z-score OOS SRs.
         if oos_start is not None and pnl is not None:
             dbg.dassert(pnl[:oos_start].any())
             dbg.dassert(pnl[oos_start:].any())
-            stats_dict[15] = stats.zscore_oos_sharpe_ratio(pnl, oos_start)
-        # Sort dict by integer keys.
-        stats_dict = dict(sorted(stats_dict.items()))
-        # Combine stats into one series indexed by stats names.
-        stats_srs = pd.concat(stats_dict).droplevel(0)
-        stats_srs.name = "stats"
-        return stats_srs
+            oos_sr = stats.zscore_oos_sharpe_ratio(pnl, oos_start).rename(name)
+            results.append(pd.concat([oos_sr]), keys=["signal_quality"])
+        result = pd.concat(results, axis=0)
+        return result.sort_index(level=0)
 
     def _get_series_as_df(
         self,
