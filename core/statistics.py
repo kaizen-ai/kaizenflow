@@ -85,7 +85,7 @@ def summarize_time_index_info(
     else:
         clear_index_time_span = 0
     result["time_span_in_years"] = (
-            clear_index_time_span / sampling_points_per_year
+        clear_index_time_span / sampling_points_per_year
     )
     result = pd.Series(result, dtype="object")
     result.index = prefix + result.index
@@ -113,7 +113,7 @@ def compute_special_value_stats(
         prefix + "frac_constant",
         prefix + "num_finite_samples",
         prefix + "num_unique_values",
-        ]
+    ]
     nan_result = pd.Series(np.nan, index=result_index, name=srs.name)
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
@@ -220,11 +220,11 @@ def count_num_unique_values(data: pd.Series) -> Union[int, float, np.float]:
 
 
 def compute_zero_diff_proportion(
-        srs: pd.Series,
-        atol: Optional[float] = None,
-        rtol: Optional[float] = None,
-        nan_mode: Optional[str] = None,
-        prefix: Optional[str] = None,
+    srs: pd.Series,
+    atol: Optional[float] = None,
+    rtol: Optional[float] = None,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
 ) -> pd.Series:
     """
     Compute proportion of unvarying periods in a series.
@@ -260,7 +260,7 @@ def compute_zero_diff_proportion(
     result_index = [
         prefix + "approx_const_count",
         prefix + "approx_const_frac",
-        ]
+    ]
     if data.shape[0] < 2:
         _LOG.warning(
             "Input series `%s` with size '%d' is too small",
@@ -444,7 +444,7 @@ def apply_adf_test(
         prefix + "critical_values_5%",
         prefix + "critical_values_10%",
         prefix + "ic_best",
-        ]
+    ]
     nan_result = pd.Series(
         data=np.nan,
         index=result_index,
@@ -519,7 +519,7 @@ def apply_kpss_test(
         prefix + "critical_values_1%",
         prefix + "critical_values_5%",
         prefix + "critical_values_10%",
-        ]
+    ]
     nan_result = pd.Series(
         data=np.nan,
         index=result_index,
@@ -579,7 +579,7 @@ def apply_normality_test(
     result_index = [
         prefix + "stat",
         prefix + "pval",
-        ]
+    ]
     nan_result = pd.Series(data=np.nan, index=result_index, name=srs.name)
     if data.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
@@ -613,9 +613,7 @@ def compute_centered_gaussian_total_log_likelihood(
     var_srs = pd.Series(index=srs.index, data=var, name=name)
     df = pd.concat([srs, var_srs], axis=1)
     df_out = csigna.compute_centered_gaussian_log_likelihood(
-        df,
-        observation_col=srs.name,
-        variance_col=name
+        df, observation_col=srs.name, variance_col=name
     )
     log_likelihood = df_out["log_likelihood"].sum()
     result = pd.Series(
@@ -662,7 +660,7 @@ def apply_ljung_box_test(
     columns = [
         prefix + "stat",
         prefix + "pval",
-        ]
+    ]
     # Make an output for empty or too short inputs.
     nan_result = pd.DataFrame([[np.nan, np.nan]], columns=columns)
     if data.empty:
@@ -1399,7 +1397,7 @@ def compute_avg_turnover_and_holding_period(
         prefix + "turnover_frequency",
         prefix + "avg_holding_period",
         prefix + "holding_period_units",
-        ]
+    ]
     avg_holding_period = cfinan.compute_average_holding_period(
         pos=pos, unit=unit, nan_mode=nan_mode
     )
@@ -1652,7 +1650,7 @@ def compute_local_level_model_stats(
         prefix + "snr",
         prefix + "kalman_gain",
         prefix + "com",
-        ]
+    ]
     result_values = [
         gamma0,
         gamma1,
@@ -1805,9 +1803,9 @@ def convert_splits_to_string(splits: collections.OrderedDict) -> str:
 
 
 def _compute_denominator_and_package(
-        reduction: Union[float, np.ndarray],
-        data: Union[pd.Series, pd.DataFrame],
-        axis: Optional[float] = None,
+    reduction: Union[float, np.ndarray],
+    data: Union[pd.Series, pd.DataFrame],
+    axis: Optional[float] = None,
 ) -> Union[float, pd.Series]:
     """
     Normalize and package `reduction` according to `axis` and `data` metadata.
