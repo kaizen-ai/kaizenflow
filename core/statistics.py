@@ -599,6 +599,33 @@ def apply_normality_test(
     return result
 
 
+def compute_centered_gaussian_total_log_likelihood(
+    srs: pd.Series,
+    prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Compute the log likelihood that `srs` came from a centered Gaussian.
+    """
+    prefix = prefix or ""
+    # Calculate variance assuming a population mean of zero.
+    var = np.square(srs).mean()
+    name = str(srs.name) + "var"
+    var_srs = pd.Series(index=srs.index, data=var, name=name)
+    df = pd.concat([srs, var_srs], axis=1)
+    df_out = csigna.compute_centered_gaussian_log_likelihood(
+        df,
+        observation_col=srs.name,
+        variance_col=name
+    )
+    log_likelihood = df_out["log_likelihood"].sum()
+    result = pd.Series(
+        data=[log_likelihood, var],
+        index=[prefix + "log_likelihood", prefix + "centered_var"],
+        name=srs.name,
+    )
+    return result
+
+
 # #############################################################################
 # Autocorrelation statistics
 # #############################################################################

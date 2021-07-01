@@ -71,6 +71,7 @@ class StatsComputer:
             functools.partial(
                 cstati.apply_normality_test, prefix="omnibus_null_normal_"
             ),
+            cstati.compute_centered_gaussian_total_log_likelihood,
         ]
         # TODO(*): cstati.compute_centered_gaussian_log_likelihood
         return self._compute_stat_functions(srs, name, functions)
