@@ -7,6 +7,7 @@ import pandas as pd
 import core.dataflow.nodes.base as cdnb
 import core.dataflow.utils as cdu
 import core.signal_processing as csigna
+import core.statistics as cstati
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -57,7 +58,7 @@ class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         idx = df_in.index
         self._handle_nans(idx, srs.index)
         # Calculate local-level model stats.
-        stats = csigna.compute_local_level_model_stats(srs)
+        stats = cstati.compute_local_level_model_stats(srs)
         com = stats["com"]
         tau = csigna.calculate_tau_from_com(com)
         if fit:
