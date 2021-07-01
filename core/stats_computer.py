@@ -4,15 +4,14 @@ Import as:
 import core.stats_computer as cstats
 """
 
-import logging
 import functools
+import logging
+from typing import Optional
 
 import pandas as pd
 
 import core.finance as cfinan
 import core.statistics as cstati
-
-from typing import Optional
 
 _LOG = logging.getLogger(__name__)
 
@@ -21,6 +20,7 @@ class StatsComputer:
     """
     Allows to get particular piece of stats instead of the whole stats table.
     """
+
     def compute_stats(self, srs: pd.Series, mode: Optional[str] = None):
         stats = []
         stats.append(self.compute_sampling_stats(srs))
@@ -41,7 +41,7 @@ class StatsComputer:
         name = "sampling"
         functions = [
             cstati.summarize_time_index_info,
-            cstati.compute_special_value_stats
+            cstati.compute_special_value_stats,
         ]
         return self._compute_stat_functions(srs, name, functions)
 
@@ -61,7 +61,7 @@ class StatsComputer:
         name = "stationarity"
         functions = [
             functools.partial(cstati.apply_adf_test, prefix="adf_"),
-            functools.partial(cstati.apply_kpss_test, prefix="kpss_")
+            functools.partial(cstati.apply_kpss_test, prefix="kpss_"),
         ]
         return self._compute_stat_functions(srs, name, functions)
 
@@ -111,12 +111,10 @@ class StatsComputer:
             functions = [
                 cstati.compute_annualized_return_and_volatility,
                 cstati.compute_max_drawdown,
-                cstati.calculate_hit_rate
+                cstati.calculate_hit_rate,
             ]
         elif mode == "positions":
-            functions = [
-                cstati.compute_avg_turnover_and_holding_period
-            ]
+            functions = [cstati.compute_avg_turnover_and_holding_period]
         else:
             raise ValueError
         return self._compute_stat_functions(srs, name, functions)
@@ -142,4 +140,3 @@ class StatsComputer:
     ) -> pd.Series:
         stats = [function(srs).rename(name) for function in functions]
         return pd.concat(stats)
-
