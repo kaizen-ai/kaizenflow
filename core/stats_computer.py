@@ -68,7 +68,9 @@ class StatsComputer:
     def compute_normality_stats(self, srs: pd.Series) -> pd.Series:
         name = "normality"
         functions = [
-            functools.partial(cstati.apply_normality_test, prefix="omnibus_null_normal_"),
+            functools.partial(
+                cstati.apply_normality_test, prefix="omnibus_null_normal_"
+            ),
         ]
         # TODO(*): cstati.compute_centered_gaussian_log_likelihood
         return self._compute_stat_functions(srs, name, functions)
