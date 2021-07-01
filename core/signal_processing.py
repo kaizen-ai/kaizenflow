@@ -1633,8 +1633,16 @@ def compute_swt_covar(
     covar_name = "swt_covar" if col1 != col2 else "swt_var"
     results.append(prod.sum(axis=axis, skipna=False).rename(covar_name))
     if col1 != col2:
-        results.append(np.square(col1_df).sum(axis=axis, skipna=False).rename(str(col1) + "_swt_var"))
-        results.append(np.square(col2_df).sum(axis=axis, skipna=False).rename(str(col2) + "_swt_var"))
+        results.append(
+            np.square(col1_df)
+            .sum(axis=axis, skipna=False)
+            .rename(str(col1) + "_swt_var")
+        )
+        results.append(
+            np.square(col2_df)
+            .sum(axis=axis, skipna=False)
+            .rename(str(col2) + "_swt_var")
+        )
     return pd.concat(results, axis=1)
 
 
