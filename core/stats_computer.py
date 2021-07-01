@@ -26,22 +26,15 @@ class StatsComputer:
         self, srs: pd.Series, time_series_type: Optional[str] = None
     ) -> pd.Series:
         stats = []
-        with htimer.TimedScope(logging.INFO, "Computing samplings stats") as ts:
-            stats.append(self.compute_sampling_stats(srs))
-        with htimer.TimedScope(logging.INFO, "Computing summary stats") as ts:
-            stats.append(self.compute_summary_stats(srs))
-        with htimer.TimedScope(logging.INFO, "Computing stationarity stats") as ts:
-            stats.append(self.compute_stationarity_stats(srs))
-        with htimer.TimedScope(logging.INFO, "Computing normality stats") as ts:
-            stats.append(self.compute_normality_stats(srs))
+        stats.append(self.compute_sampling_stats(srs))
+        stats.append(self.compute_summary_stats(srs))
+        stats.append(self.compute_stationarity_stats(srs))
+        stats.append(self.compute_normality_stats(srs))
         # stats.append(self.compute_autocorrelation_stats(srs))
-        with htimer.TimedScope(logging.INFO, "Computing spectral stats") as ts:
-            stats.append(self.compute_spectral_stats(srs))
-        with htimer.TimedScope(logging.INFO, "Computing signal quality stats") as ts:
-            stats.append(self.compute_signal_quality_stats(srs))
+        stats.append(self.compute_spectral_stats(srs))
+        stats.append(self.compute_signal_quality_stats(srs))
         if time_series_type is not None:
-            with htimer.TimedScope(logging.INFO, "Computing finance stats") as ts:
-                stats.append(self.compute_finance_stats(srs, time_series_type))
+            stats.append(self.compute_finance_stats(srs, time_series_type))
         names = [stat.name for stat in stats]
         result = pd.concat(stats, axis=0, keys=names)
         result.name = srs.name
@@ -159,5 +152,8 @@ class StatsComputer:
         name: str,
         functions: list,
     ) -> pd.Series:
-        stats = [function(srs).rename(name) for function in functions]
+        stats = []
+        for function in functions:
+            with htimer.TimedScope(logging.INFO, function.__name__):
+                stats.append(function(srs).rename(name))
         return pd.concat(stats)
