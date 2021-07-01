@@ -780,6 +780,37 @@ def compute_swt_var_summary(
     return decomp
 
 
+def compute_swt_covar_summary(
+    df: pd.DataFrame,
+    col1: str,
+    col2: str,
+    wavelet: Optional[str] = None,
+    depth: Optional[int] = None,
+    timing_mode: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Compute swt var using scales up to `depth`.
+
+    Params as in `csigna.get_swt()`.
+    """
+    dbg.dassert_ne(col1, col2)
+    swt_covar = csigna.compute_swt_covar(
+        df, col1, col2, wavelet=wavelet, depth=depth, timing_mode=timing_mode, axis=0
+    )
+    dbg.dassert_in("swt_covar", swt_covar.columns)
+    srs = csigna.compute_swt_covar(
+        df, col1, col2, wavelet=wavelet, depth=depth, timing_mode=timing_mode, axis=1
+    )
+    fvi = srs.first_valid_index()
+    decomp = swt_covar / srs.loc[fvi:].count()
+    var1_col = str(col1) + "_swt_var"
+    var2_col = str(col2) + "_swt_var"
+    dbg.dassert_in(var1_col, decomp.columns)
+    dbg.dassert_in(var2_col, decomp.columns)
+    decomp["swt_corr"] = decomp["swt_covar"].divide(np.sqrt(decomp[var1_col].multiply(decomp[var2_col])))
+    return decomp
+
+
 # #############################################################################
 # Sharpe ratio
 # #############################################################################
