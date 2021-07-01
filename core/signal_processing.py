@@ -1582,18 +1582,69 @@ def compute_swt_var(
 
     Params as in `get_swt()`.
     """
-    df = get_swt(
+    if isinstance(sig, pd.Series):
+        sig = sig.to_frame()
+    dbg.dassert_eq(len(sig.columns), 1)
+    col = sig.columns[0]
+    df = compute_swt_covar(
         sig,
+        col1=col,
+        col2=col,
         wavelet=wavelet,
         depth=depth,
         timing_mode=timing_mode,
-        output_mode="detail",
+        axis=axis,
     )
+    dbg.dassert_in("swt_var", df.columns)
+    return df
+
+
+def compute_swt_covar(
+    df: pd.DataFrame,
+    col1: str,
+    col2: str,
+    wavelet: Optional[str] = None,
+    depth: Optional[int] = None,
+    timing_mode: Optional[str] = None,
+    axis: int = 1,
+) -> pd.DataFrame:
+    """
+    Get swt covar using levels up to `depth`.
+
+    Params as in `get_swt()`.
+    """
+    dfs = {}
+    for col in [col1, col2]:
+        dfs[col] = get_swt(
+            df[col],
+            wavelet=wavelet,
+            depth=depth,
+            timing_mode=timing_mode,
+            output_mode="detail",
+        )
+    prod = dfs[col1].multiply(dfs[col2])
+    fvi = prod.first_valid_index()
+    col1_df = dfs[col1].loc[fvi:]
+    col2_df = dfs[col2].loc[fvi:]
     if axis == 0:
-        df = df.dropna()
-    srs = np.square(df).sum(axis=axis, skipna=False)
-    srs.name = "swt_var"
-    return srs.to_frame()
+        prod = prod.dropna()
+        col1_df = col1_df.dropna()
+        col2_df = col2_df.dropna()
+    results = []
+    covar_name = "swt_covar" if col1 != col2 else "swt_var"
+    results.append(prod.sum(axis=axis, skipna=False).rename(covar_name))
+    if col1 != col2:
+        results.append(
+            np.square(col1_df)
+            .sum(axis=axis, skipna=False)
+            .rename(str(col1) + "_swt_var")
+        )
+        results.append(
+            np.square(col2_df)
+            .sum(axis=axis, skipna=False)
+            .rename(str(col2) + "_swt_var")
+        )
+    return pd.concat(results, axis=1)
 
 
 def compute_swt_sum(

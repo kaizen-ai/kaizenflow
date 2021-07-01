@@ -780,6 +780,51 @@ def compute_swt_var_summary(
     return decomp
 
 
+def compute_swt_covar_summary(
+    df: pd.DataFrame,
+    col1: str,
+    col2: str,
+    wavelet: Optional[str] = None,
+    depth: Optional[int] = None,
+    timing_mode: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Compute swt var using scales up to `depth`.
+
+    Params as in `csigna.get_swt()`.
+    """
+    dbg.dassert_ne(col1, col2)
+    swt_covar = csigna.compute_swt_covar(
+        df,
+        col1,
+        col2,
+        wavelet=wavelet,
+        depth=depth,
+        timing_mode=timing_mode,
+        axis=0,
+    )
+    dbg.dassert_in("swt_covar", swt_covar.columns)
+    srs = csigna.compute_swt_covar(
+        df,
+        col1,
+        col2,
+        wavelet=wavelet,
+        depth=depth,
+        timing_mode=timing_mode,
+        axis=1,
+    )
+    fvi = srs.first_valid_index()
+    decomp = swt_covar / srs.loc[fvi:].count()
+    var1_col = str(col1) + "_swt_var"
+    var2_col = str(col2) + "_swt_var"
+    dbg.dassert_in(var1_col, decomp.columns)
+    dbg.dassert_in(var2_col, decomp.columns)
+    decomp["swt_corr"] = decomp["swt_covar"].divide(
+        np.sqrt(decomp[var1_col].multiply(decomp[var2_col]))
+    )
+    return decomp
+
+
 # #############################################################################
 # Sharpe ratio
 # #############################################################################
@@ -1041,7 +1086,7 @@ def compute_sharpe_ratio_prediction_interval_inflation_factor(
 
 
 def apply_sharpe_ratio_correlation_conversion(
-    freq: str,
+    points_per_year: float,
     sharpe_ratio: Optional[float] = None,
     correlation: Optional[float] = None,
 ) -> float:
@@ -1049,12 +1094,12 @@ def apply_sharpe_ratio_correlation_conversion(
     Convert annualized SR to correlation or vice-versa.
 
     :param freq: time series sampling frequency
+    :param participation_rate: fraction of non-NaN values given `freq`
     :param sharpe_ratio: annualized Sharpe ratio
     :param correlation: correlation coefficient
     :return: annualized Sharpe ratio if correlation is provided; correlation
         if annualized Sharpe ratio is provided.
     """
-    points_per_year = hdataf.compute_points_per_year_for_given_freq(freq)
     if sharpe_ratio is not None and correlation is None:
         sharpe_ratio /= np.sqrt(points_per_year)
         return sharpe_ratio / np.sqrt(1 - sharpe_ratio ** 2)

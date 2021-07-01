@@ -1237,6 +1237,33 @@ class Test_get_swt(hut.TestCase):
         return output_str
 
 
+class Test_compute_swt_var(hut.TestCase):
+    def test1(self) -> None:
+        srs = self._get_data(seed=0)
+        swt_var = csigna.compute_swt_var(srs, depth=6)
+        actual = swt_var.count().values[0]
+        np.testing.assert_equal(actual, 1179)
+
+    def test2(self) -> None:
+        srs = self._get_data(seed=0)
+        swt_var = csigna.compute_swt_var(srs, depth=6)
+        actual = swt_var.sum()
+        np.testing.assert_allclose(actual, [1102.66], atol=0.01)
+
+    def test3(self) -> None:
+        srs = self._get_data(seed=0)
+        swt_var = csigna.compute_swt_var(srs, depth=6, axis=1)
+        actual = swt_var.sum()
+        np.testing.assert_allclose(actual, [1102.66], atol=0.01)
+
+    def _get_data(self, seed: int) -> pd.Series:
+        process = cartif.ArmaProcess([], [])
+        realization = process.generate_sample(
+            {"start": "2000-01-01", "end": "2005-01-01", "freq": "B"}, seed=seed
+        )
+        return realization
+
+
 class Test_resample_srs(hut.TestCase):
 
     # TODO(gp): Replace `check_string()` with `assert_equal()` to tests that benefit
