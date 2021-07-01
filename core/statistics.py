@@ -1086,7 +1086,7 @@ def compute_sharpe_ratio_prediction_interval_inflation_factor(
 
 
 def apply_sharpe_ratio_correlation_conversion(
-    freq: str,
+    points_per_year: float,
     sharpe_ratio: Optional[float] = None,
     correlation: Optional[float] = None,
 ) -> float:
@@ -1094,12 +1094,12 @@ def apply_sharpe_ratio_correlation_conversion(
     Convert annualized SR to correlation or vice-versa.
 
     :param freq: time series sampling frequency
+    :param participation_rate: fraction of non-NaN values given `freq`
     :param sharpe_ratio: annualized Sharpe ratio
     :param correlation: correlation coefficient
     :return: annualized Sharpe ratio if correlation is provided; correlation
         if annualized Sharpe ratio is provided.
     """
-    points_per_year = hdataf.compute_points_per_year_for_given_freq(freq)
     if sharpe_ratio is not None and correlation is None:
         sharpe_ratio /= np.sqrt(points_per_year)
         return sharpe_ratio / np.sqrt(1 - sharpe_ratio ** 2)

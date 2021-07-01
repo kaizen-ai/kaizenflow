@@ -1320,18 +1320,18 @@ class Test_zscore_oos_sharpe_ratio(hut.TestCase):
 
 class Test_sharpe_ratio_correlation_conversion(hut.TestCase):
     def test1(self) -> None:
-        np.testing.assert_almost_equal(
-            6 / 5,
-            cstati.apply_sharpe_ratio_correlation_conversion(
-                "Q", correlation=3 / 4
-            ),
+        actual = cstati.apply_sharpe_ratio_correlation_conversion(
+            points_per_year=252 * 78,
+            sharpe_ratio=3
         )
-        np.testing.assert_almost_equal(
-            3 / 4,
-            cstati.apply_sharpe_ratio_correlation_conversion(
-                "Q", sharpe_ratio=6 / 5
-            ),
+        np.testing.assert_allclose(actual, 0.0214, atol=0.0001)
+
+    def test2(self) -> None:
+        actual = cstati.apply_sharpe_ratio_correlation_conversion(
+            points_per_year=252 * 78,
+            correlation=0.0214
         )
+        np.testing.assert_allclose(actual, 3, atol=0.01)
 
 
 class Test_compute_drawdown_cdf(hut.TestCase):
@@ -1340,13 +1340,13 @@ class Test_compute_drawdown_cdf(hut.TestCase):
         volatility = 0.15
         drawdown = 0.05
         time = 1
-        probalility = cstati.compute_drawdown_cdf(
+        probability = cstati.compute_drawdown_cdf(
             sharpe_ratio=sharpe_ratio,
             volatility=volatility,
             drawdown=drawdown,
             time=time,
         )
-        np.testing.assert_almost_equal(probalility, 0.52500, decimal=3)
+        np.testing.assert_almost_equal(probability, 0.52500, decimal=3)
 
     def test2(self) -> None:
         sharpe_ratio = 3
