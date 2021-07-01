@@ -62,6 +62,7 @@ def get_aws_credentials(
             dbg.dassert_in(env_var, os.environ)
         return tuple(os.environ[env_var] for env_var in env_vars)
     aws_profile = aws_profile or "am"
+    _LOG.debug("Getting credentials for aws_profile=%s", aws_profile)
     # > more ~/.aws/credentials
     # [am]
     # aws_access_key_id=AKI...
@@ -173,9 +174,9 @@ def get_s3fs(aws_profile: Optional[str] = None) -> str:
     aws_access_key_id, aws_secret_access_key, aws_region = get_aws_credentials(
         aws_profile=aws_profile
     )
-    #_LOG.info("aws_region=%s", aws_region)
-    print("aws_region=%s", aws_region)
-    s3 = s3fs.core.S3FileSystem(anon=False, key=aws_access_key_id, secret=aws_secret_access_key,
+    _LOG.debug("aws_region=%s", aws_region)
+    s3 = s3fs.core.S3FileSystem(anon=False, key=aws_access_key_id,
+                                secret=aws_secret_access_key,
                                 client_kwargs={'region_name': aws_region})
     return s3
 

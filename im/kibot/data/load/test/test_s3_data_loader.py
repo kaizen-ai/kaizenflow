@@ -6,7 +6,6 @@ import im.common.data.types as icdtyp
 import im.kibot.data.load as vkdloa
 
 
-@pytest.mark.skip("AmpTask1477")
 class TestKibotS3DataLoader(hut.TestCase):
     def setUp(self) -> None:
         super().setUp()

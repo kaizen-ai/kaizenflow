@@ -12,7 +12,6 @@ import im.common.data.types as mcdtyp
 import im.ib.data.load.ib_s3_data_loader as isdloa
 
 
-@pytest.mark.skip("AmpTask1477")
 class TestS3IbDataLoader1(hut.TestCase):
     """
     Test data loading correctness for Ib from S3.
