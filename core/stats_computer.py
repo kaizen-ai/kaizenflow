@@ -21,7 +21,7 @@ class StatsComputer:
     Allows to get particular piece of stats instead of the whole stats table.
     """
 
-    def compute_stats(self, srs: pd.Series, mode: Optional[str] = None):
+    def compute_stats(self, srs: pd.Series, ts_type: Optional[str] = None):
         stats = []
         stats.append(self.compute_sampling_stats(srs))
         stats.append(self.compute_summary_stats(srs))
@@ -30,8 +30,8 @@ class StatsComputer:
         # stats.append(self.compute_autocorrelation_stats(srs))
         stats.append(self.compute_spectral_stats(srs))
         stats.append(self.compute_signal_quality_stats(srs))
-        if mode is not None:
-            stats.append(self.compute_finance_stats(srs, mode))
+        if ts_type is not None:
+            stats.append(self.compute_finance_stats(srs, ts_type))
         names = [stat.name for stat in stats]
         result = pd.concat(stats, axis=0, keys=names)
         result.name = srs.name
@@ -51,9 +51,9 @@ class StatsComputer:
         #   - var and std assuming zero mean
         functions = [
             cstati.compute_moments,
+            functools.partial(cstati.ttest_1samp, prefix="null_mean_zero_"),
             cstati.compute_jensen_ratio,
             lambda x: x.describe(),
-            cstati.ttest_1samp,
         ]
         return self._compute_stat_functions(srs, name, functions)
 
@@ -68,7 +68,7 @@ class StatsComputer:
     def compute_normality_stats(self, srs: pd.Series) -> pd.Series:
         name = "normality"
         functions = [
-            cstati.apply_normality_test,
+            functools.partial(cstati.apply_normality_test, prefix="omnibus_null_normal_"),
         ]
         # TODO(*): cstati.compute_centered_gaussian_log_likelihood
         return self._compute_stat_functions(srs, name, functions)
@@ -100,20 +100,20 @@ class StatsComputer:
         #
         return pd.concat([result, kratio])
 
-    def compute_finance_stats(self, srs: pd.Series, mode: str) -> pd.Series:
+    def compute_finance_stats(self, srs: pd.Series, ts_type: str) -> pd.Series:
         """
         Assumes `srs` is a PnL curve.
 
         :mode: pnl, positions
         """
         name = "finance"
-        if mode == "pnl":
+        if ts_type == "pnl":
             functions = [
                 cstati.compute_annualized_return_and_volatility,
                 cstati.compute_max_drawdown,
                 cstati.calculate_hit_rate,
             ]
-        elif mode == "positions":
+        elif ts_type == "positions":
             functions = [cstati.compute_avg_turnover_and_holding_period]
         else:
             raise ValueError
