@@ -1248,13 +1248,13 @@ class Test_compute_swt_var(hut.TestCase):
         srs = self._get_data(seed=0)
         swt_var = csigna.compute_swt_var(srs, depth=6)
         actual = swt_var.sum()
-        np.testing.assert_allclose(actual, [1102.66], atol=.01)
+        np.testing.assert_allclose(actual, [1102.66], atol=0.01)
 
     def test3(self) -> None:
         srs = self._get_data(seed=0)
         swt_var = csigna.compute_swt_var(srs, depth=6, axis=1)
-        actual = swt_var.sum().values[0]
-        np.testing.assert_allclose(actual, [1102.66], atol=.01)
+        actual = swt_var.sum()
+        np.testing.assert_allclose(actual, [1102.66], atol=0.01)
 
     def _get_data(self, seed: int) -> pd.Series:
         process = cartif.ArmaProcess([], [])

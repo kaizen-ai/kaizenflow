@@ -1586,8 +1586,15 @@ def compute_swt_var(
         sig = sig.to_frame()
     dbg.dassert_eq(len(sig.columns), 1)
     col = sig.columns[0]
-    df = compute_swt_covar(sig, col1=col, col2=col, wavelet=wavelet, depth=depth,
-                      timing_mode=timing_mode, axis=axis)
+    df = compute_swt_covar(
+        sig,
+        col1=col,
+        col2=col,
+        wavelet=wavelet,
+        depth=depth,
+        timing_mode=timing_mode,
+        axis=axis,
+    )
     dbg.dassert_in("swt_var", df.columns)
     return df
 
