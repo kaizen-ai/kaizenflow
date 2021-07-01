@@ -23,7 +23,7 @@ import core.dataflow as cdataf
 import core.finance as cfinan
 import core.plotting as cplott
 import core.signal_processing as csigna
-import core.statistics as cstati
+import core.stats_computer as cstats
 import core.timeseries_study as ctimes
 import helpers.dbg as dbg
 
@@ -56,6 +56,7 @@ class DataFrameModeler:
             oos_start = pd.Timestamp(oos_start)
         self.oos_start = oos_start or None
         self.info = info or None
+        self.stats_computer = cstats.StatsComputer()
 
     @property
     def ins_df(self) -> pd.DataFrame:
@@ -153,7 +154,7 @@ class DataFrameModeler:
             nid=node_class.__name__,
             **node_kwargs,
         )
-        return self._run_model(node, method)
+        return self._run_node(node, method)
 
     def apply_column_transformer(
         self,
@@ -227,7 +228,7 @@ class DataFrameModeler:
             col_mode=col_mode,
             nan_mode=nan_mode,
         )
-        return self._run_model(model, method)
+        return self._run_node(model, method)
 
     def set_non_ath_to_nan(
         self,
@@ -244,7 +245,7 @@ class DataFrameModeler:
             col_mode="replace_all",
             transformer_kwargs={"start_time": start_time, "end_time": end_time},
         )
-        return self._run_model(model, method)
+        return self._run_node(model, method)
 
     def set_weekends_to_nan(self, method: str = "fit") -> DataFrameModeler:
         """
@@ -255,7 +256,7 @@ class DataFrameModeler:
             transformer_func=cfinan.set_weekends_to_nan,
             col_mode="replace_all",
         )
-        return self._run_model(model, method)
+        return self._run_node(model, method)
 
     def merge(
         self,
@@ -297,6 +298,7 @@ class DataFrameModeler:
         cols: Optional[List[Any]] = None,
         progress_bar: bool = True,
         mode: str = "ins",
+        ts_type: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Calculate stats for selected columns.
@@ -305,7 +307,9 @@ class DataFrameModeler:
         # Calculate stats.
         stats_dict = {}
         for col in tqdm(df.columns, disable=not progress_bar):
-            stats_val = self._calculate_series_stats(df[col])
+            stats_val = self.stats_computer.compute_stats(
+                df[col], ts_type=ts_type
+            )
             stats_dict[col] = stats_val
         stats_df = pd.concat(stats_dict, axis=1)
         return stats_df
@@ -653,7 +657,7 @@ class DataFrameModeler:
             return self.df[cols]
         raise ValueError(f"Unrecognized mode `{mode}`")
 
-    def _run_model(
+    def _run_node(
         self, model: cdataf.FitPredictNode, method: str
     ) -> DataFrameModeler:
         info = collections.OrderedDict()
@@ -674,23 +678,3 @@ class DataFrameModeler:
             raise ValueError(f"Unrecognized method `{method}`.")
         dfm = DataFrameModeler(df_out, oos_start, info)
         return dfm
-
-    @staticmethod
-    def _calculate_series_stats(srs: pd.Series) -> pd.Series:
-        """
-        Calculate stats for a single series.
-        """
-        stats_dict = {}
-        stats_dict[0] = cstati.summarize_time_index_info(srs)
-        stats_dict[1] = cstati.compute_jensen_ratio(srs)
-        stats_dict[2] = cstati.compute_forecastability(srs)
-        stats_dict[3] = cstati.compute_moments(srs)
-        stats_dict[4] = cstati.compute_special_value_stats(srs)
-        stats_dict[5] = cstati.apply_normality_test(srs, prefix="normality_")
-        stats_dict[6] = cstati.apply_adf_test(srs, prefix="adf_")
-        stats_dict[7] = cstati.apply_kpss_test(srs, prefix="kpss_")
-        # Sort dict by integer keys.
-        stats_dict = dict(sorted(stats_dict.items()))
-        stats_srs = pd.concat(stats_dict).droplevel(0)
-        stats_srs.name = "stats"
-        return stats_srs

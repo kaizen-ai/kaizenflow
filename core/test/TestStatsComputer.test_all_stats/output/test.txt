@@ -1,7 +1,0 @@
-                                            0
-start_time                2015-01-01 00:00:00
-end_time                  2015-02-19 00:00:00
-n_sampling_points                          50
-frequency                               <Day>
-sampling_points_per_year               365.25
-time_span_in_years                      0.137

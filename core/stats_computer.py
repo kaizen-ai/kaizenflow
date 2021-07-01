@@ -4,6 +4,7 @@ Import as:
 import core.stats_computer as cstats
 """
 
+import functools
 import logging
 from typing import Optional
 
@@ -11,7 +12,6 @@ import pandas as pd
 
 import core.finance as cfinan
 import core.statistics as cstati
-import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -21,205 +21,124 @@ class StatsComputer:
     Allows to get particular piece of stats instead of the whole stats table.
     """
 
-    @staticmethod
-    def summarize_time_index_info(srs: pd.Series) -> pd.Series:
-        return cstati.summarize_time_index_info(srs)
+    def compute_stats(self, srs: pd.Series, ts_type: Optional[str] = None):
+        stats = []
+        stats.append(self.compute_sampling_stats(srs))
+        stats.append(self.compute_summary_stats(srs))
+        stats.append(self.compute_stationarity_stats(srs))
+        stats.append(self.compute_normality_stats(srs))
+        # stats.append(self.compute_autocorrelation_stats(srs))
+        stats.append(self.compute_spectral_stats(srs))
+        stats.append(self.compute_signal_quality_stats(srs))
+        if ts_type is not None:
+            stats.append(self.compute_finance_stats(srs, ts_type))
+        names = [stat.name for stat in stats]
+        result = pd.concat(stats, axis=0, keys=names)
+        result.name = srs.name
+        return result
+
+    def compute_sampling_stats(self, srs: pd.Series) -> pd.Series:
+        name = "sampling"
+        functions = [
+            cstati.summarize_time_index_info,
+            cstati.compute_special_value_stats,
+        ]
+        return self._compute_stat_functions(srs, name, functions)
+
+    def compute_summary_stats(self, srs: pd.Series) -> pd.Series:
+        name = "summary"
+        # TODO(*): Add
+        #   - var and std assuming zero mean
+        functions = [
+            cstati.compute_moments,
+            functools.partial(cstati.ttest_1samp, prefix="null_mean_zero_"),
+            cstati.compute_jensen_ratio,
+            lambda x: x.describe(),
+        ]
+        return self._compute_stat_functions(srs, name, functions)
+
+    def compute_stationarity_stats(self, srs: pd.Series) -> pd.Series:
+        name = "stationarity"
+        functions = [
+            functools.partial(cstati.apply_adf_test, prefix="adf_"),
+            functools.partial(cstati.apply_kpss_test, prefix="kpss_"),
+        ]
+        return self._compute_stat_functions(srs, name, functions)
+
+    def compute_normality_stats(self, srs: pd.Series) -> pd.Series:
+        name = "normality"
+        functions = [
+            functools.partial(
+                cstati.apply_normality_test, prefix="omnibus_null_normal_"
+            ),
+        ]
+        # TODO(*): cstati.compute_centered_gaussian_log_likelihood
+        return self._compute_stat_functions(srs, name, functions)
 
     @staticmethod
-    def compute_jensen_ratio(srs: pd.Series) -> pd.Series:
-        return cstati.compute_jensen_ratio(srs)
+    def compute_autocorrelation_stats(srs: pd.Series) -> pd.Series:
+        # name = "autocorrelation"
+        # ljung_box = cstati.apply_ljung_box_test(srs)
+        # TODO(Paul): Only return pvals. Rename according to test and lag.
+        #     Change default lags reported.
+        raise NotImplementedError
 
-    @staticmethod
-    def compute_forecastability(srs: pd.Series) -> pd.Series:
-        return cstati.compute_forecastability(srs)
+    def compute_spectral_stats(self, srs: pd.Series) -> pd.Series:
+        name = "spectral"
+        functions = [
+            cstati.compute_forecastability,
+        ]
+        return self._compute_stat_functions(srs, name, functions)
 
-    @staticmethod
-    def compute_moments(srs: pd.Series) -> pd.Series:
-        return cstati.compute_moments(srs)
+    def compute_signal_quality_stats(self, srs: pd.Series) -> pd.Series:
+        name = "signal_quality"
+        functions = [
+            cstati.summarize_sharpe_ratio,
+            cstati.ttest_1samp,
+        ]
+        result = self._compute_stat_functions(srs, name, functions)
+        kratio = pd.Series(cfinan.compute_kratio(srs), index=["kratio"])
+        kratio.name = name
+        #
+        return pd.concat([result, kratio])
 
-    @staticmethod
-    def compute_special_value_stats(srs: pd.Series) -> pd.Series:
-        return cstati.compute_special_value_stats(srs)
+    def compute_finance_stats(self, srs: pd.Series, ts_type: str) -> pd.Series:
+        """
+        Assumes `srs` is a PnL curve.
 
-    @staticmethod
-    def apply_normality_test(srs: pd.Series) -> pd.Series:
-        return cstati.apply_normality_test(srs, prefix="normality_")
-
-    @staticmethod
-    def apply_stationarity_tests(srs: pd.Series) -> pd.Series:
-        return pd.concat(
-            [
-                cstati.apply_adf_test(srs, prefix="adf_"),
-                cstati.apply_kpss_test(srs, prefix="kpss_"),
+        :mode: pnl, positions
+        """
+        name = "finance"
+        if ts_type == "pnl":
+            functions = [
+                cstati.compute_annualized_return_and_volatility,
+                cstati.compute_max_drawdown,
+                cstati.calculate_hit_rate,
             ]
-        )
+        elif ts_type == "positions":
+            functions = [cstati.compute_avg_turnover_and_holding_period]
+        else:
+            raise ValueError
+        return self._compute_stat_functions(srs, name, functions)
 
     @staticmethod
-    def summarize_sharpe_ratio(srs: pd.Series) -> pd.Series:
-        return cstati.summarize_sharpe_ratio(srs)
-
-    @staticmethod
-    def ttest_1samp(srs: pd.Series) -> pd.Series:
-        return cstati.ttest_1samp(srs)
-
-    @staticmethod
-    def compute_kratio(srs: pd.Series) -> pd.Series:
-        return pd.Series(cfinan.compute_kratio(srs), index=["kratio"])
-
-    @staticmethod
-    def compute_annualized_return_and_volatility(srs: pd.Series) -> pd.Series:
-        return cstati.compute_annualized_return_and_volatility(srs)
-
-    @staticmethod
-    def compute_max_drawdown(srs: pd.Series) -> pd.Series:
-        return cstati.compute_max_drawdown(srs)
-
-    @staticmethod
-    def calculate_hit_rate(srs: pd.Series) -> pd.Series:
-        return cstati.calculate_hit_rate(srs)
-
-    @staticmethod
-    def compute_avg_turnover_and_holding_period(srs: pd.Series) -> pd.Series:
-        return cstati.compute_avg_turnover_and_holding_period(srs)
-
-
-class PnlReturnsMixin:
-    """
-    Add methods with pnl and returns inputs.
-    """
-
-    @staticmethod
-    def calculate_corr_to_underlying(
-        pnl: pd.Series, returns: pd.Series
-    ) -> pd.Series:
-        return pd.Series(pnl.corr(returns), index=["corr_to_underlying"])
-
-    def _calculate_pnl_returns_stats(
-        self,
-        pnl: pd.Series,
-        returns: pd.Series,
-    ) -> pd.Series:
-        """
-        Calculate stats for methods with pnl and returns inputs.
-        """
-        if pnl is None or returns is None:
-            return None
-        dbg.dassert_isinstance(pnl, pd.Series)
-        dbg.dassert_isinstance(returns, pd.Series)
-        return self.calculate_corr_to_underlying(pnl, returns)
-
-
-class PositionsReturnsMixin:
-    """
-    Add methods with positions and returns inputs.
-    """
-
-    @staticmethod
-    def compute_bet_stats(positions: pd.Series, returns: pd.Series) -> pd.Series:
-        return cstati.compute_bet_stats(positions, returns[positions.index])
-
-    @staticmethod
-    def compute_prediction_corr(
+    def calculate_bet_stats(
         positions: pd.Series, returns: pd.Series
     ) -> pd.Series:
-        return pd.Series(positions.corr(returns), index=["prediction_corr"])
+        name = "bets"
+        bets = cstati.compute_bet_stats(positions, returns[positions.index])
+        bets.name = name
+        return bets
 
-    def _calculate_positions_returns_stats(
-        self,
-        positions: pd.Series,
-        returns: pd.Series,
+    # TODO(Paul): Add correlation for calculating
+    #   - correlation of pnl to rets
+    #   - correlation of predictions to rets
+
+    @staticmethod
+    def _compute_stat_functions(
+        srs: pd.Series,
+        name: str,
+        functions: list,
     ) -> pd.Series:
-        """
-        Calculate stats for methods with positions and returns inputs.
-        """
-        if positions is None or returns is None:
-            return None
-        dbg.dassert_isinstance(positions, pd.Series)
-        dbg.dassert_isinstance(returns, pd.Series)
-        stats_vals = pd.concat(
-            [
-                self.compute_bet_stats(positions, returns),
-                self.compute_prediction_corr(positions, returns),
-            ]
-        )
-        return stats_vals
-
-
-class SeriesStatsComputer(StatsComputer):
-    """
-    Class for series stats only.
-    """
-
-    def calculate_stats(self, srs: pd.Series) -> pd.Series:
-        """
-        Calculate all available stats as in dataframe_modeler.
-        """
-        dbg.dassert_isinstance(srs, pd.Series)
-        stats_vals = pd.concat(
-            [
-                self.summarize_time_index_info(srs),
-                self.compute_jensen_ratio(srs),
-                self.compute_forecastability(srs),
-                self.compute_moments(srs),
-                self.compute_special_value_stats(srs),
-                self.apply_normality_test(srs),
-                self.apply_stationarity_tests(srs),
-            ]
-        )
-        return stats_vals
-
-
-class ModelStatsComputer(StatsComputer, PnlReturnsMixin, PositionsReturnsMixin):
-    """
-    Class for model stats only.
-    """
-
-    def calculate_stats(
-        self,
-        pnl: Optional[pd.Series] = None,
-        positions: Optional[pd.Series] = None,
-        returns: Optional[pd.Series] = None,
-    ) -> pd.Series:
-        """
-        Calculate all available stats as in model_evaluator.
-        """
-        dbg.dassert(
-            not pd.isna([pnl, positions, returns]).all(),
-            "At least one input series should be not `None`.",
-        )
-        freqs = {
-            srs.index.freq for srs in [pnl, positions, returns] if srs is not None
-        }
-        dbg.dassert_eq(len(freqs), 1, "Series have different frequencies.")
-        stats_vals = pd.Series()
-        if pnl is not None:
-            stats_vals = pd.concat(
-                [
-                    self.summarize_sharpe_ratio(pnl),
-                    self.ttest_1samp(pnl),
-                    self.compute_kratio(pnl),
-                    self.compute_annualized_return_and_volatility(pnl),
-                    self.compute_max_drawdown(pnl),
-                    self.summarize_time_index_info(pnl),
-                    self.calculate_hit_rate(pnl),
-                    self.compute_jensen_ratio(pnl),
-                    self.compute_forecastability(pnl),
-                    self.compute_moments(pnl),
-                    self.compute_special_value_stats(pnl),
-                ]
-            )
-        if positions is not None:
-            stats_vals = pd.concat(
-                [
-                    stats_vals,
-                    self.compute_avg_turnover_and_holding_period(positions),
-                ]
-            )
-        stats_vals = pd.concat(
-            [
-                stats_vals,
-                self._calculate_pnl_returns_stats(pnl, returns),
-                self._calculate_positions_returns_stats(positions, returns),
-            ]
-        )
-        return stats_vals
+        stats = [function(srs).rename(name) for function in functions]
+        return pd.concat(stats)
