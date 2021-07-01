@@ -21,7 +21,9 @@ class StatsComputer:
     Allows to get particular piece of stats instead of the whole stats table.
     """
 
-    def compute_stats(self, srs: pd.Series, ts_type: Optional[str] = None) -> pd.Series:
+    def compute_stats(
+        self, srs: pd.Series, ts_type: Optional[str] = None
+    ) -> pd.Series:
         stats = []
         stats.append(self.compute_sampling_stats(srs))
         stats.append(self.compute_summary_stats(srs))
