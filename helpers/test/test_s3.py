@@ -10,7 +10,6 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skip("AmpTask1477")
 class Test_s3_get_credentials1(hut.TestCase):
     def test1(self) -> None:
         aws_profile = "am"

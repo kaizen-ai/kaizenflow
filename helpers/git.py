@@ -305,6 +305,8 @@ def report_submodule_status(dir_names: List[str], short_hash: bool) -> str:
 # All functions should take as input `repo_short_name` and have a switch `mode`
 # to distinguish full vs short repo name.
 
+# TODO(gp): Maybe rename full -> long to keep it more symmetric "short vs long".
+
 
 def _parse_github_repo_name(repo_name: str) -> Tuple[str, str]:
     """
