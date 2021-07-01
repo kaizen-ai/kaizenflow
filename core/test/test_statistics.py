@@ -1321,15 +1321,13 @@ class Test_zscore_oos_sharpe_ratio(hut.TestCase):
 class Test_sharpe_ratio_correlation_conversion(hut.TestCase):
     def test1(self) -> None:
         actual = cstati.apply_sharpe_ratio_correlation_conversion(
-            points_per_year=252 * 78,
-            sharpe_ratio=3
+            points_per_year=252 * 78, sharpe_ratio=3
         )
         np.testing.assert_allclose(actual, 0.0214, atol=0.0001)
 
     def test2(self) -> None:
         actual = cstati.apply_sharpe_ratio_correlation_conversion(
-            points_per_year=252 * 78,
-            correlation=0.0214
+            points_per_year=252 * 78, correlation=0.0214
         )
         np.testing.assert_allclose(actual, 3, atol=0.01)
 
