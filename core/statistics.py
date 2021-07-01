@@ -608,10 +608,11 @@ def compute_centered_gaussian_total_log_likelihood(
     """
     prefix = prefix or ""
     # Calculate variance assuming a population mean of zero.
-    var = np.square(srs).mean()
+    srs_sq = np.square(srs)
+    var = srs_sq.mean()
     n_obs = srs.count()
     constant_term = -0.5 * (np.log(2 * np.pi) + np.log(var)) * n_obs
-    data_term = -0.5 * np.square(srs).divide(var)
+    data_term = -0.5 * srs_sq.sum() / var
     log_likelihood = constant_term + data_term
     result = pd.Series(
         data=[log_likelihood, var],
