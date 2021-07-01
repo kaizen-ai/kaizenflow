@@ -21,7 +21,9 @@ class StatsComputer:
     Allows to get particular piece of stats instead of the whole stats table.
     """
 
-    def compute_stats(self, srs: pd.Series, ts_type: Optional[str] = None):
+    def compute_stats(
+        self, srs: pd.Series, ts_type: Optional[str] = None
+    ) -> pd.Series:
         stats = []
         stats.append(self.compute_sampling_stats(srs))
         stats.append(self.compute_summary_stats(srs))
@@ -71,6 +73,7 @@ class StatsComputer:
             functools.partial(
                 cstati.apply_normality_test, prefix="omnibus_null_normal_"
             ),
+            cstati.compute_centered_gaussian_total_log_likelihood,
         ]
         # TODO(*): cstati.compute_centered_gaussian_log_likelihood
         return self._compute_stat_functions(srs, name, functions)

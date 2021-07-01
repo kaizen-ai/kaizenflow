@@ -20,6 +20,7 @@ import statsmodels
 import statsmodels.api as sm
 
 import core.finance as cfinan
+import core.signal_processing as csigna
 import helpers.dataframe as hdataf
 import helpers.dbg as dbg
 
@@ -27,45 +28,104 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# Descriptive statistics
+# Sampling statistics: start, end, frequency, NaNs, infs, etc.
 # #############################################################################
 
 
-# TODO(Paul): Double-check axes in used in calculation.
-def compute_moments(
+def summarize_time_index_info(
     srs: pd.Series,
     nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
     """
-    Calculate, mean, standard deviation, skew, and kurtosis.
+    Return summarized information about datetime index of the input.
 
-    :param srs: input series for computing moments
+    :param srs: pandas series of floats
     :param nan_mode: argument for hdataf.apply_nan_mode()
-    :param prefix: optional prefix for metrics' outcome
-    :return: series of computed moments
+    :param prefix: optional prefix for output's index
+    :return: series with information about input's index
     """
     dbg.dassert_isinstance(srs, pd.Series)
     nan_mode = nan_mode or "drop"
     prefix = prefix or ""
-    data = replace_infs_with_nans(srs)
-    data = hdataf.apply_nan_mode(data, mode=nan_mode)
-    result_index = [
-        prefix + "mean",
-        prefix + "std",
-        prefix + "skew",
-        prefix + "kurtosis",
-    ]
-    if data.empty:
+    original_index = srs.index
+    # Assert that input series has a sorted datetime index.
+    dbg.dassert_isinstance(original_index, pd.DatetimeIndex)
+    dbg.dassert_strictly_increasing_index(original_index)
+    freq = original_index.freq
+    clear_srs = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    clear_index = clear_srs.index
+    result = {}
+    if clear_srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
-        nan_result = pd.Series(np.nan, index=result_index, name=srs.name)
+        result["start_time"] = np.nan
+        result["end_time"] = np.nan
+    else:
+        result["start_time"] = clear_index[0]
+        result["end_time"] = clear_index[-1]
+    result["n_sampling_points"] = len(clear_index)
+    result["frequency"] = freq
+    if freq is None:
+        sampling_points_per_year = clear_srs.resample("Y").count().mean()
+    else:
+        sampling_points_per_year = hdataf.compute_points_per_year_for_given_freq(
+            freq
+        )
+    result["sampling_points_per_year"] = sampling_points_per_year
+    # Compute input time span as a number of `freq` units in
+    # `clear_index`.
+    if not clear_srs.empty:
+        if freq is None:
+            clear_index_time_span = (clear_index[-1] - clear_index[0]).days
+            sampling_points_per_year = (
+                hdataf.compute_points_per_year_for_given_freq("D")
+            )
+        else:
+            clear_index_time_span = len(srs[clear_index[0] : clear_index[-1]])
+    else:
+        clear_index_time_span = 0
+    result["time_span_in_years"] = (
+        clear_index_time_span / sampling_points_per_year
+    )
+    result = pd.Series(result, dtype="object")
+    result.index = prefix + result.index
+    return result
+
+
+def compute_special_value_stats(
+    srs: pd.Series,
+    prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Calculate special value statistics in time series.
+
+    :param srs: pandas series of floats
+    :param prefix: optional prefix for metrics' outcome
+    :return: series of statistics
+    """
+    prefix = prefix or ""
+    dbg.dassert_isinstance(srs, pd.Series)
+    result_index = [
+        prefix + "n_rows",
+        prefix + "frac_zero",
+        prefix + "frac_nan",
+        prefix + "frac_inf",
+        prefix + "frac_constant",
+        prefix + "num_finite_samples",
+        prefix + "num_unique_values",
+    ]
+    nan_result = pd.Series(np.nan, index=result_index, name=srs.name)
+    if srs.empty:
+        _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
-    # TODO(*): re-applyg stricter sp.stats nan_policy after we handle inf's.
     result_values = [
-        data.mean(),
-        data.std(),
-        sp.stats.skew(data, nan_policy="omit"),
-        sp.stats.kurtosis(data, nan_policy="omit"),
+        len(srs),
+        compute_frac_zero(srs),
+        compute_frac_nan(srs),
+        compute_frac_inf(srs),
+        compute_zero_diff_proportion(srs).iloc[1],
+        count_num_finite_samples(srs),
+        count_num_unique_values(srs),
     ]
     result = pd.Series(data=result_values, index=result_index, name=srs.name)
     return result
@@ -159,216 +219,565 @@ def count_num_unique_values(data: pd.Series) -> Union[int, float, np.float]:
     return count_num_finite_samples(srs)
 
 
-def _compute_denominator_and_package(
-    reduction: Union[float, np.ndarray],
-    data: Union[pd.Series, pd.DataFrame],
-    axis: Optional[float] = None,
-) -> Union[float, pd.Series]:
-    """
-    Normalize and package `reduction` according to `axis` and `data` metadata.
-
-    This is a helper function used for several `compute_frac_*` functions:
-    - It determines the denominator to use in normalization (for the `frac`
-      part)
-    - It packages the output so that it has index/column information as
-      appropriate
-
-    :param reduction: contains a reduction of `data` along `axis`
-    :param data: numeric series or dataframe
-    :param axis: indicates row or column or else `None` for ignoring 2d
-        structure
-    """
-    if isinstance(data, pd.Series):
-        df = data.to_frame()
-    else:
-        df = data
-    nrows, ncols = df.shape
-    # Ensure that there is data available.
-    # TODO(Paul): Consider adding a check on the column data type.
-    if nrows == 0 or ncols == 0:
-        _LOG.warning("No data available!")
-        return np.nan
-    # Determine the correct denominator based on `axis`.
-    if axis is None:
-        denom = nrows * ncols
-    elif axis == 0:
-        denom = nrows
-    elif axis == 1:
-        denom = ncols
-    else:
-        raise ValueError("axis=%i" % axis)
-    normalized = reduction / denom
-    # Return float or pd.Series as appropriate based on dimensions and axis.
-    if isinstance(normalized, float):
-        dbg.dassert(not axis)
-        return normalized
-    dbg.dassert_isinstance(normalized, np.ndarray)
-    if axis == 0:
-        return pd.Series(data=normalized, index=df.columns)
-    if axis == 1:
-        return pd.Series(data=normalized, index=df.index)
-    raise ValueError("axis=`%s` but expected to be `0` or `1`!" % axis)
-
-
-def compute_special_value_stats(
+def compute_zero_diff_proportion(
     srs: pd.Series,
+    atol: Optional[float] = None,
+    rtol: Optional[float] = None,
+    nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.Series:
     """
-    Calculate special value statistics in time series.
+    Compute proportion of unvarying periods in a series.
+
+    https://numpy.org/doc/stable/reference/generated/numpy.isclose.html
 
     :param srs: pandas series of floats
+    :param atol: as in numpy.isclose
+    :param rtol: as in numpy.isclose
+    :param nan_mode: argument for hdataf.apply_nan_mode()
+        If `nan_mode` is "leave_unchanged":
+          - consecutive `NaN`s are not counted as a constant period
+          - repeated values with `NaN` in between are not counted as a constant
+            period
+        If `nan_mode` is "drop":
+          - the denominator is reduced by the number of `NaN` and `inf` values
+          - repeated values with `NaN` in between are counted as a constant
+            period
+        If `nan_mode` is "ffill":
+          - consecutive `NaN`s are counted as a constant period
+          - repeated values with `NaN` in between are counted as a constant
+            period
     :param prefix: optional prefix for metrics' outcome
-    :return: series of statistics
+    :return: series with proportion of unvarying periods
     """
-    prefix = prefix or ""
     dbg.dassert_isinstance(srs, pd.Series)
+    atol = atol or 0
+    rtol = rtol or 1e-05
+    nan_mode = nan_mode or "leave_unchanged"
+    prefix = prefix or ""
+    srs = srs.replace([np.inf, -np.inf], np.nan)
+    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
     result_index = [
-        prefix + "n_rows",
-        prefix + "frac_zero",
-        prefix + "frac_nan",
-        prefix + "frac_inf",
-        prefix + "frac_constant",
-        prefix + "num_finite_samples",
-        prefix + "num_unique_values",
+        prefix + "approx_const_count",
+        prefix + "approx_const_frac",
     ]
-    nan_result = pd.Series(np.nan, index=result_index, name=srs.name)
-    if srs.empty:
-        _LOG.warning("Empty input series `%s`", srs.name)
+    if data.shape[0] < 2:
+        _LOG.warning(
+            "Input series `%s` with size '%d' is too small",
+            srs.name,
+            data.shape[0],
+        )
+        nan_result = pd.Series(data=np.nan, index=result_index, name=srs.name)
         return nan_result
+    # Compute if neighboring elements are equal within the given tolerance.
+    equal_ngb_srs = np.isclose(data.shift(1)[1:], data[1:], atol=atol, rtol=rtol)
+    # Compute number and proportion of equals among all neighbors pairs.
+    approx_const_count = equal_ngb_srs.sum()
+    n_pairs = data.shape[0] - 1
+    approx_const_frac = approx_const_count / n_pairs
+    result_values = [approx_const_count, approx_const_frac]
+    res = pd.Series(data=result_values, index=result_index, name=srs.name)
+    return res
+
+
+# #############################################################################
+# Summary statistics: location, spread, shape
+# #############################################################################
+
+
+# TODO(Paul): Double-check axes in used in calculation.
+def compute_moments(
+    srs: pd.Series,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Calculate, mean, standard deviation, skew, and kurtosis.
+
+    :param srs: input series for computing moments
+    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param prefix: optional prefix for metrics' outcome
+    :return: series of computed moments
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    nan_mode = nan_mode or "drop"
+    prefix = prefix or ""
+    data = replace_infs_with_nans(srs)
+    data = hdataf.apply_nan_mode(data, mode=nan_mode)
+    result_index = [
+        prefix + "mean",
+        prefix + "std",
+        prefix + "skew",
+        prefix + "kurtosis",
+    ]
+    if data.empty:
+        _LOG.warning("Empty input series `%s`", srs.name)
+        nan_result = pd.Series(np.nan, index=result_index, name=srs.name)
+        return nan_result
+    # TODO(*): re-applyg stricter sp.stats nan_policy after we handle inf's.
     result_values = [
-        len(srs),
-        compute_frac_zero(srs),
-        compute_frac_nan(srs),
-        compute_frac_inf(srs),
-        compute_zero_diff_proportion(srs).iloc[1],
-        count_num_finite_samples(srs),
-        count_num_unique_values(srs),
+        data.mean(),
+        data.std(),
+        sp.stats.skew(data, nan_policy="omit"),
+        sp.stats.kurtosis(data, nan_policy="omit"),
     ]
     result = pd.Series(data=result_values, index=result_index, name=srs.name)
     return result
 
 
-def compute_local_level_model_stats(
+def compute_jensen_ratio(
+    signal: pd.Series,
+    p_norm: float = 2,
+    inf_mode: Optional[str] = None,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Calculate a ratio >= 1 with equality only when Jensen's inequality holds.
+
+    Definition and derivation:
+      - The result is the p-th root of the expectation of the p-th power of
+        abs(f), divided by the expectation of abs(f). If we apply Jensen's
+        inequality to (abs(signal)**p)**(1/p), renormalizing the lower bound to
+        1, then the upper bound is the valued calculated by this function.
+      - An alternative derivation is to apply Holder's inequality to `signal`,
+        using the constant function `1` on the support of the `signal` as the
+        2nd function.
+
+    Interpretation:
+      - If we apply this function to returns in the case where the expected
+        value of returns is 0 and we take p_norm = 2, then the result of this
+        function can be interpreted as a renormalized realized volatility.
+      - For a Gaussian signal, the expected value is np.sqrt(np.pi / 2), which
+        is approximately 1.25. This holds regardless of the volatility of the
+        Gaussian (so the measure is scale invariant).
+      - For a stationary function, the expected value does not change with
+        sampled series length.
+      - For a signal that is t-distributed with 4 dof, the expected value is
+        approximately 1.41.
+    """
+    dbg.dassert_isinstance(signal, pd.Series)
+    # Require that we evaluate a norm.
+    dbg.dassert_lte(1, p_norm)
+    # TODO(*): Maybe add l-infinity support. For many stochastic signals, we
+    # should not expect a finite value in the continuous limit.
+    dbg.dassert(np.isfinite(p_norm))
+    # Set reasonable defaults for inf and nan modes.
+    inf_mode = inf_mode or "drop"
+    nan_mode = nan_mode or "drop"
+    prefix = prefix or ""
+    data = hdataf.apply_nan_mode(signal, mode=nan_mode)
+    nan_result = pd.Series(
+        data=np.nan, index=[prefix + "jensen_ratio"], name=signal.name
+    )
+    dbg.dassert(not data.isna().any())
+    # Handle infs.
+    # TODO(*): apply special functions for inf_mode after #2624 is completed.
+    has_infs = (~data.apply(np.isfinite)).any()
+    if has_infs:
+        if inf_mode == "return_nan":
+            # According to a strict interpretation, each norm is infinite, and
+            # and so their quotient is undefined.
+            return nan_result
+        if inf_mode == "drop":
+            # Replace inf values with np.nan and drop.
+            data = data.replace([-np.inf, np.inf], np.nan).dropna()
+        else:
+            raise ValueError(f"Unrecognized inf_mode `{inf_mode}")
+    dbg.dassert(data.apply(np.isfinite).all())
+    # Return NaN if there is no data.
+    if data.size == 0:
+        _LOG.warning("Empty input signal `%s`", signal.name)
+        return nan_result
+    # Calculate norms.
+    lp = sp.linalg.norm(data, ord=p_norm)
+    l1 = sp.linalg.norm(data, ord=1)
+    # Ignore support where `signal` has NaNs.
+    scaled_support = data.size ** (1 - 1 / p_norm)
+    jensen_ratio = scaled_support * lp / l1
+    res = pd.Series(
+        data=[jensen_ratio], index=[prefix + "jensen_ratio"], name=signal.name
+    )
+    return res
+
+
+# #############################################################################
+# Stationarity statistics
+# #############################################################################
+
+
+# TODO(*): Maybe add `inf_mode`.
+def apply_adf_test(
+    srs: pd.Series,
+    maxlag: Optional[int] = None,
+    regression: Optional[str] = None,
+    autolag: Optional[str] = None,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Implement a wrapper around statsmodels' adfuller test.
+
+    :param srs: pandas series of floats
+    :param maxlag: as in stattools.adfuller
+    :param regression: as in stattools.adfuller
+    :param autolag: as in stattools.adfuller
+    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param prefix: optional prefix for metrics' outcome
+    :return: test statistic, pvalue, and related info
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    regression = regression or "c"
+    autolag = autolag or "AIC"
+    nan_mode = nan_mode or "drop"
+    prefix = prefix or ""
+    # Hack until we factor out inf handling.
+    srs = srs.replace([np.inf, -np.inf], np.nan)
+    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
+    result_index = [
+        prefix + "stat",
+        prefix + "pval",
+        prefix + "used_lag",
+        prefix + "nobs",
+        prefix + "critical_values_1%",
+        prefix + "critical_values_5%",
+        prefix + "critical_values_10%",
+        prefix + "ic_best",
+    ]
+    nan_result = pd.Series(
+        data=np.nan,
+        index=result_index,
+        name=data.name,
+    )
+    if data.empty:
+        _LOG.warning("Empty input series `%s`", srs.name)
+        return nan_result
+    try:
+        # The output of sm.tsa.stattools.adfuller in this case can only be
+        # of the length 6 so ignore the lint.
+        (
+            adf_stat,
+            pval,
+            usedlag,
+            nobs,
+            critical_values,
+            icbest,
+        ) = sm.tsa.stattools.adfuller(
+            data.values, maxlag=maxlag, regression=regression, autolag=autolag
+        )
+    except ValueError as inst:
+        # This can raise if there are not enough data points, but the number
+        # required can depend upon the input parameters.
+        _LOG.warning(inst)
+        return nan_result
+        #
+    result_values = [
+        adf_stat,
+        pval,
+        usedlag,
+        nobs,
+        critical_values["1%"],
+        critical_values["5%"],
+        critical_values["10%"],
+        icbest,
+    ]
+    result = pd.Series(data=result_values, index=result_index, name=data.name)
+    return result
+
+
+def apply_kpss_test(
+    srs: pd.Series,
+    regression: Optional[str] = None,
+    nlags: Optional[Union[int, str]] = None,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Implement a wrapper around statsmodels' KPSS test.
+
+    http://debis.deu.edu.tr/userweb//onder.hanedar/dosyalar/kpss.pdf
+
+    :param srs: pandas series of floats
+    :param regression: as in stattools.kpss
+    :param nlags: as in stattools.kpss
+    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param prefix: optional prefix for metrics' outcome
+    :return: test statistic, pvalue, and related info
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    regression = regression or "c"
+    nan_mode = nan_mode or "drop"
+    nlags = nlags or "auto"
+    prefix = prefix or ""
+    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.kpss.html
+    result_index = [
+        prefix + "stat",
+        prefix + "pval",
+        prefix + "lags",
+        prefix + "critical_values_1%",
+        prefix + "critical_values_5%",
+        prefix + "critical_values_10%",
+    ]
+    nan_result = pd.Series(
+        data=np.nan,
+        index=result_index,
+        name=data.name,
+    )
+    if data.empty:
+        _LOG.warning("Empty input series `%s`", srs.name)
+        return nan_result
+    try:
+        (
+            kpss_stat,
+            pval,
+            lags,
+            critical_values,
+        ) = sm.tsa.stattools.kpss(data.values, regression=regression, nlags=nlags)
+    except (ValueError, OverflowError):
+        # This can raise if there are not enough data points, but the number
+        # required can depend upon the input parameters.
+        # TODO(Julia): Debug OverflowError.
+        return nan_result
+        #
+    result_values = [
+        kpss_stat,
+        pval,
+        lags,
+        critical_values["1%"],
+        critical_values["5%"],
+        critical_values["10%"],
+    ]
+    result = pd.Series(data=result_values, index=result_index, name=data.name)
+    return result
+
+
+# #############################################################################
+# Normality statistics
+# #############################################################################
+
+
+def apply_normality_test(
+    srs: pd.Series,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Test (indep) null hypotheses that each col is normally distributed.
+
+    An omnibus test of normality that combines skew and kurtosis.
+
+    :param prefix: optional prefix for metrics' outcome
+    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :return: series with statistics and p-value
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    nan_mode = nan_mode or "drop"
+    prefix = prefix or ""
+    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    result_index = [
+        prefix + "stat",
+        prefix + "pval",
+    ]
+    nan_result = pd.Series(data=np.nan, index=result_index, name=srs.name)
+    if data.empty:
+        _LOG.warning("Empty input series `%s`", srs.name)
+        return nan_result
+    try:
+        stat, pval = sp.stats.normaltest(data, nan_policy="raise")
+    except ValueError as inst:
+        # This can raise if there are not enough data points, but the number
+        # required can depend upon the input parameters.
+        _LOG.warning(inst)
+        return nan_result
+    result_values = [
+        stat,
+        pval,
+    ]
+    result = pd.Series(data=result_values, index=result_index, name=data.name)
+    return result
+
+
+def compute_centered_gaussian_total_log_likelihood(
     srs: pd.Series,
     prefix: Optional[str] = None,
 ) -> pd.Series:
     """
-    Compute statistics assuming a steady-state local level model.
-
-    E.g.,
-       y_t = \mu_t + \epsilon_t
-       \mu_{t + 1} = \mu_t + \eta_t
-
-    This is equivalent to modeling `srs` of {y_t} as a random walk + noise at
-    steady-state, or as ARIMA(0,1,1).
-
-    See Harvey, Section 4.1.2, page 175.
+    Compute the log likelihood that `srs` came from a centered Gaussian.
     """
     prefix = prefix or ""
-    dbg.dassert_isinstance(srs, pd.Series)
-    diff = srs.diff()
-    demeaned_diff = diff - diff.mean()
-    gamma0 = demeaned_diff.multiply(demeaned_diff).mean()
-    gamma1 = demeaned_diff.multiply(demeaned_diff.shift(1)).mean()
-    # This is the variance of \epsilon.
-    var_epsilon = -1 * gamma1
-    dbg.dassert_lte(0, var_epsilon)
-    # This is the variance of \eta.
-    var_eta = gamma0 - 2 * var_epsilon
-    dbg.dassert_lte(0, var_eta)
-    # This is the first autocorrelation coefficient.
-    rho1 = gamma1 / gamma0
-    # The signal-to-noise ratio `snr` is commonly denoted `q`.
-    snr = var_eta / var_epsilon
-    p = 0.5 * (snr + np.sqrt(snr ** 2 + 4 * snr))
-    # Equivalent to EMA lambda in m_t = (1 - \lambda) m_{t - 1} + \lambda y_t.
-    kalman_gain = p / (p + 1)
-    # Convert to center-of-mass.
-    com = 1 / kalman_gain - 1
-    result_index = [
-        prefix + "gamma0",
-        prefix + "gamma1",
-        prefix + "var_epsilon",
-        prefix + "var_eta",
-        prefix + "rho1",
-        prefix + "snr",
-        prefix + "kalman_gain",
-        prefix + "com",
-    ]
-    result_values = [
-        gamma0,
-        gamma1,
-        var_epsilon,
-        var_eta,
-        rho1,
-        snr,
-        kalman_gain,
-        com,
-    ]
-    result = pd.Series(data=result_values, index=result_index, name=srs.name)
+    # Calculate variance assuming a population mean of zero.
+    var = np.square(srs).mean()
+    name = str(srs.name) + "var"
+    var_srs = pd.Series(index=srs.index, data=var, name=name)
+    df = pd.concat([srs, var_srs], axis=1)
+    df_out = csigna.compute_centered_gaussian_log_likelihood(
+        df, observation_col=srs.name, variance_col=name
+    )
+    log_likelihood = df_out["log_likelihood"].sum()
+    result = pd.Series(
+        data=[log_likelihood, var],
+        index=[prefix + "log_likelihood", prefix + "centered_var"],
+        name=srs.name,
+    )
     return result
 
 
-def compute_centered_gaussian_log_likelihood(
-    df: pd.DataFrame,
-    observation_col: str,
-    variance_col: str,
-    square_variance_col: bool = False,
-    variance_shifts: int = 0,
+# #############################################################################
+# Autocorrelation statistics
+# #############################################################################
+
+
+def apply_ljung_box_test(
+    srs: pd.Series,
+    lags: Optional[Union[int, pd.Series]] = None,
+    model_df: Optional[int] = None,
+    period: Optional[int] = None,
+    return_df: Optional[bool] = None,
+    nan_mode: Optional[str] = None,
     prefix: Optional[str] = None,
 ) -> pd.DataFrame:
     """
-    Return the log-likelihoods of independent draws from centered Gaussians.
+    Implement a wrapper around statsmodels' Ljung-Box test.
 
-    A higher log-likelihood score means that the model of independent
-    Gaussian draws with given variances is a better fit.
-
-    The log-likelihood of the series of observations may be obtained by
-    summing the individual log-likelihood values.
-
-    :param df: dataframe with float observation and variance columns
-    :param observation_col: name of column containing observations
-    :param variance_col: name of column containing variances
-    :square_variance_col: if `True`, square the values in `variance_col`
-        (use this if the column contains standard deviations)
-    :variance_shifts: number of shifts to apply to `variance_col` prior to
-        calculating log-likelihood. Use this if `variance_col` contains forward
-        predictions.
-    :prefix: prefix to add to name of output series
-    :return: dataframe of log-likelihoods and adjusted observations
+    :param srs: pandas series of floats
+    :param lags: as in diagnostic.acorr_ljungbox
+    :param model_df: as in diagnostic.acorr_ljungbox
+    :param period: as in diagnostic.acorr_ljungbox
+    :param return_df: as in diagnostic.acorr_ljungbox
+    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param prefix: optional prefix for metrics' outcome
+    :return: test statistic, pvalue
     """
+    dbg.dassert_isinstance(srs, pd.Series)
+    model_df = model_df or 0
+    return_df = return_df or True
+    nan_mode = nan_mode or "drop"
     prefix = prefix or ""
-    dbg.dassert_isinstance(df, pd.DataFrame)
-    # Extract observations and variance, with optional shift applied.
-    obs = df[observation_col]
-    var = df[variance_col].shift(variance_shifts)
-    dbg.dassert(not (var <= 0).any(), msg="Variance values must be positive.")
-    if square_variance_col:
-        var = np.square(var)
-    # Restrict to relevant data and drop any rows with NaNs.
-    idx = pd.concat([obs, var], axis=1).dropna().index
-    obs = obs.loc[idx]
-    var = var.loc[idx]
-    # Ensure that there is at least one observation.
-    n_obs = idx.size
-    _LOG.debug("Number of non-NaN observations=%i", n_obs)
-    dbg.dassert_lt(0, n_obs)
-    # Perform log-likelihood calculation.
-    # This term only depends upon the presence of an observation. We preserve
-    # it here to facilitate comparisons across series with different numbers of
-    # observations.
-    constant_term = -0.5 * np.log(2 * np.pi)
-    # This term depends upon the observation values and variances.
-    data_term = -0.5 * (np.log(var) + np.square(obs).divide(var))
-    log_likelihoods = constant_term + data_term
-    log_likelihoods.name = prefix + "log_likelihood"
-    # Compute observations normalized by standard deviations.
-    adj_obs = obs.divide(np.sqrt(var))
-    adj_obs.name = prefix + "normalized_observations"
-    # Construct output dataframe.
-    df_out = pd.concat([adj_obs, log_likelihoods], axis=1)
-    return df_out
+    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
+    # https://www.statsmodels.org/stable/generated/statsmodels.stats.diagnostic.acorr_ljungbox.html
+    columns = [
+        prefix + "stat",
+        prefix + "pval",
+    ]
+    # Make an output for empty or too short inputs.
+    nan_result = pd.DataFrame([[np.nan, np.nan]], columns=columns)
+    if data.empty:
+        _LOG.warning("Empty input series `%s`", srs.name)
+        return nan_result
+    try:
+        result = sm.stats.diagnostic.acorr_ljungbox(
+            data.values,
+            lags=lags,
+            model_df=model_df,
+            period=period,
+            return_df=return_df,
+        )
+    except ValueError as inst:
+        _LOG.warning(inst)
+        return nan_result
+    #
+    if return_df:
+        df_result = result
+    else:
+        df_result = pd.DataFrame(result).T
+    df_result.columns = columns
+    return df_result
+
+
+# #############################################################################
+# Spectral statistics
+# #############################################################################
+
+
+def compute_forecastability(
+    signal: pd.Series,
+    mode: str = "welch",
+    inf_mode: Optional[str] = None,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
+) -> pd.Series:
+    r"""Compute frequency-domain-based "forecastability" of signal.
+
+    Reference: https://arxiv.org/abs/1205.4591
+
+    `signal` is assumed to be second-order stationary.
+
+    Denote the forecastability estimator by \Omega(\cdot).
+    Let x_t, y_t be time series. Properties of \Omega include:
+    a) \Omega(y_t) = 0 iff y_t is white noise
+    b) scale and shift-invariant:
+         \Omega(a y_t + b) = \Omega(y_t) for real a, b, a \neq 0.
+    c) max sub-additivity for uncorrelated processes:
+         \Omega(\alpha x_t + \sqrt{1 - \alpha^2} y_t) \leq
+         \max\{\Omega(x_t), \Omega(y_t)\},
+       if \E(x_t y_s) = 0 for all s, t \in \Z;
+       equality iff alpha \in \{0, 1\}.
+    """
+    dbg.dassert_isinstance(signal, pd.Series)
+    nan_mode = nan_mode or "fill_with_zero"
+    inf_mode = inf_mode or "drop"
+    prefix = prefix or ""
+    data = hdataf.apply_nan_mode(signal, mode=nan_mode)
+    has_infs = (~data.apply(np.isfinite)).any()
+    if has_infs:
+        if inf_mode == "return_nan":
+            return nan_result
+        if inf_mode == "drop":
+            # Replace inf with np.nan and drop.
+            data = data.replace([-np.inf, np.inf], np.nan).dropna()
+        else:
+            raise ValueError(f"Unrecognized inf_mode `{inf_mode}")
+    dbg.dassert(data.apply(np.isfinite).all())
+    # Return NaN if there is no data.
+    if data.size == 0:
+        _LOG.warning("Empty input signal `%s`", signal.name)
+        nan_result = pd.Series(
+            data=np.nan, index=[prefix + "forecastability"], name=signal.name
+        )
+        return nan_result
+    if mode == "welch":
+        _, psd = sp.signal.welch(data)
+    elif mode == "periodogram":
+        # TODO(Paul): Maybe log a warning about inconsistency of periodogram
+        #     for estimating power spectral density.
+        _, psd = sp.signal.periodogram(data)
+    else:
+        raise ValueError("Unsupported mode=`%s`" % mode)
+    forecastability = 1 - sp.stats.entropy(psd, base=psd.size)
+    res = pd.Series(
+        data=[forecastability],
+        index=[prefix + "forecastability"],
+        name=signal.name,
+    )
+    return res
+
+
+def compute_swt_var_summary(
+    sig: Union[pd.DataFrame, pd.Series],
+    wavelet: Optional[str] = None,
+    depth: Optional[int] = None,
+    timing_mode: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Compute swt var using scales up to `depth`.
+
+    Params as in `csigna.get_swt()`.
+    """
+    swt_var = csigna.compute_swt_var(
+        sig, wavelet=wavelet, depth=depth, timing_mode=timing_mode, axis=0
+    )
+    dbg.dassert_in("swt_var", swt_var.columns)
+    srs = csigna.compute_swt_var(
+        sig, wavelet=wavelet, depth=depth, timing_mode=timing_mode, axis=1
+    )
+    fvi = srs.first_valid_index()
+    decomp = swt_var / srs.loc[fvi:].count()
+    decomp["cum_swt_var"] = decomp["swt_var"].cumsum()
+    decomp["perc"] = decomp["swt_var"] / sig.loc[fvi:].var()
+    decomp["cum_perc"] = decomp["perc"].cumsum()
+    return decomp
 
 
 # #############################################################################
@@ -631,6 +1040,37 @@ def compute_sharpe_ratio_prediction_interval_inflation_factor(
     return se_inflation_factor
 
 
+def apply_sharpe_ratio_correlation_conversion(
+    freq: str,
+    sharpe_ratio: Optional[float] = None,
+    correlation: Optional[float] = None,
+) -> float:
+    """
+    Convert annualized SR to correlation or vice-versa.
+
+    :param freq: time series sampling frequency
+    :param sharpe_ratio: annualized Sharpe ratio
+    :param correlation: correlation coefficient
+    :return: annualized Sharpe ratio if correlation is provided; correlation
+        if annualized Sharpe ratio is provided.
+    """
+    points_per_year = hdataf.compute_points_per_year_for_given_freq(freq)
+    if sharpe_ratio is not None and correlation is None:
+        sharpe_ratio /= np.sqrt(points_per_year)
+        return sharpe_ratio / np.sqrt(1 - sharpe_ratio ** 2)
+    if sharpe_ratio is None and correlation is not None:
+        sharpe_ratio = correlation / np.sqrt(1 + correlation ** 2)
+        return sharpe_ratio * np.sqrt(points_per_year)
+    raise ValueError(
+        "Precisely one of `sharpe_ratio` and `correlation` should not be `None`"
+    )
+
+
+# #############################################################################
+# Drawdown statistics
+# #############################################################################
+
+
 def compute_drawdown_cdf(
     sharpe_ratio: float,
     volatility: float,
@@ -736,30 +1176,30 @@ def compute_max_drawdown_approximate_cdf(
     return probability
 
 
-def apply_sharpe_ratio_correlation_conversion(
-    freq: str,
-    sharpe_ratio: Optional[float] = None,
-    correlation: Optional[float] = None,
-) -> float:
+def compute_max_drawdown(
+    log_rets: pd.Series,
+    prefix: Optional[str] = None,
+) -> pd.Series:
     """
-    Convert annualized SR to correlation or vice-versa.
+    Calculate max drawdown statistic.
 
-    :param freq: time series sampling frequency
-    :param sharpe_ratio: annualized Sharpe ratio
-    :param correlation: correlation coefficient
-    :return: annualized Sharpe ratio if correlation is provided; correlation
-        if annualized Sharpe ratio is provided.
+    :param log_rets: pandas series of log returns
+    :param prefix: optional prefix for metrics' outcome
+    :return: max drawdown as a negative percentage loss
     """
-    points_per_year = hdataf.compute_points_per_year_for_given_freq(freq)
-    if sharpe_ratio is not None and correlation is None:
-        sharpe_ratio /= np.sqrt(points_per_year)
-        return sharpe_ratio / np.sqrt(1 - sharpe_ratio ** 2)
-    if sharpe_ratio is None and correlation is not None:
-        sharpe_ratio = correlation / np.sqrt(1 + correlation ** 2)
-        return sharpe_ratio * np.sqrt(points_per_year)
-    raise ValueError(
-        "Precisely one of `sharpe_ratio` and `correlation` should not be `None`"
+    dbg.dassert_isinstance(log_rets, pd.Series)
+    prefix = prefix or ""
+    result_index = [prefix + "max_drawdown_(%)"]
+    nan_result = pd.Series(
+        index=result_index, name=log_rets.name, dtype="float64"
     )
+    if log_rets.empty:
+        _LOG.warning("Empty input series `%s`", log_rets.name)
+        return nan_result
+    pct_drawdown = cfinan.compute_perc_loss_from_high_water_mark(log_rets)
+    max_drawdown = -100 * (pct_drawdown.max())
+    result = pd.Series(data=max_drawdown, index=result_index, name=log_rets.name)
+    return result
 
 
 # #############################################################################
@@ -801,30 +1241,9 @@ def compute_annualized_return_and_volatility(
     return result
 
 
-def compute_max_drawdown(
-    log_rets: pd.Series,
-    prefix: Optional[str] = None,
-) -> pd.Series:
-    """
-    Calculate max drawdown statistic.
-
-    :param log_rets: pandas series of log returns
-    :param prefix: optional prefix for metrics' outcome
-    :return: max drawdown as a negative percentage loss
-    """
-    dbg.dassert_isinstance(log_rets, pd.Series)
-    prefix = prefix or ""
-    result_index = [prefix + "max_drawdown_(%)"]
-    nan_result = pd.Series(
-        index=result_index, name=log_rets.name, dtype="float64"
-    )
-    if log_rets.empty:
-        _LOG.warning("Empty input series `%s`", log_rets.name)
-        return nan_result
-    pct_drawdown = cfinan.compute_perc_loss_from_high_water_mark(log_rets)
-    max_drawdown = -100 * (pct_drawdown.max())
-    result = pd.Series(data=max_drawdown, index=result_index, name=log_rets.name)
-    return result
+# #############################################################################
+# Bet statistics
+# #############################################################################
 
 
 def compute_bet_stats(
@@ -888,6 +1307,11 @@ def compute_bet_stats(
     return srs
 
 
+# #############################################################################
+# Hit rate: MDA
+# #############################################################################
+
+
 def calculate_hit_rate(
     srs: pd.Series,
     alpha: Optional[float] = None,
@@ -940,6 +1364,48 @@ def calculate_hit_rate(
     result_values_pct = [100 * point_estimate, 100 * hit_lower, 100 * hit_upper]
     result = pd.Series(data=result_values_pct, index=result_index, name=srs.name)
     return result
+
+
+# #############################################################################
+# Turnover statistics
+# #############################################################################
+
+
+def compute_avg_turnover_and_holding_period(
+    pos: pd.Series,
+    unit: Optional[str] = None,
+    nan_mode: Optional[str] = None,
+    prefix: Optional[str] = None,
+) -> pd.Series:
+    """
+    Compute average turnover and holding period for a sequence of positions.
+
+    :param pos: pandas series of positions
+    :param unit: desired output holding period unit (e.g. 'B', 'W', 'M', etc.)
+    :param nan_mode: argument for hdataf.apply_nan_mode()
+    :param prefix: optional prefix for metrics' outcome
+    :return: average turnover, holding period and index frequency
+    """
+    dbg.dassert_isinstance(pos, pd.Series)
+    dbg.dassert(pos.index.freq)
+    pos_freq = pos.index.freq
+    unit = unit or pos_freq
+    nan_mode = nan_mode or "ffill"
+    prefix = prefix or ""
+    result_index = [
+        prefix + "avg_turnover_(%)",
+        prefix + "turnover_frequency",
+        prefix + "avg_holding_period",
+        prefix + "holding_period_units",
+    ]
+    avg_holding_period = cfinan.compute_average_holding_period(
+        pos=pos, unit=unit, nan_mode=nan_mode
+    )
+    avg_turnover = 100 * (1 / avg_holding_period)
+    #
+    result_values = [avg_turnover, unit, avg_holding_period, unit]
+    res = pd.Series(data=result_values, index=result_index, name=pos.name)
+    return res
 
 
 # #############################################################################
@@ -1053,449 +1519,9 @@ def multi_ttest(
     return res
 
 
-def apply_normality_test(
-    srs: pd.Series,
-    nan_mode: Optional[str] = None,
-    prefix: Optional[str] = None,
-) -> pd.Series:
-    """
-    Test (indep) null hypotheses that each col is normally distributed.
-
-    An omnibus test of normality that combines skew and kurtosis.
-
-    :param prefix: optional prefix for metrics' outcome
-    :param nan_mode: argument for hdataf.apply_nan_mode()
-    :return: series with statistics and p-value
-    """
-    dbg.dassert_isinstance(srs, pd.Series)
-    nan_mode = nan_mode or "drop"
-    prefix = prefix or ""
-    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
-    result_index = [
-        prefix + "stat",
-        prefix + "pval",
-    ]
-    nan_result = pd.Series(data=np.nan, index=result_index, name=srs.name)
-    if data.empty:
-        _LOG.warning("Empty input series `%s`", srs.name)
-        return nan_result
-    try:
-        stat, pval = sp.stats.normaltest(data, nan_policy="raise")
-    except ValueError as inst:
-        # This can raise if there are not enough data points, but the number
-        # required can depend upon the input parameters.
-        _LOG.warning(inst)
-        return nan_result
-    result_values = [
-        stat,
-        pval,
-    ]
-    result = pd.Series(data=result_values, index=result_index, name=data.name)
-    return result
-
-
-# TODO(*): Maybe add `inf_mode`.
-def apply_adf_test(
-    srs: pd.Series,
-    maxlag: Optional[int] = None,
-    regression: Optional[str] = None,
-    autolag: Optional[str] = None,
-    nan_mode: Optional[str] = None,
-    prefix: Optional[str] = None,
-) -> pd.Series:
-    """
-    Implement a wrapper around statsmodels' adfuller test.
-
-    :param srs: pandas series of floats
-    :param maxlag: as in stattools.adfuller
-    :param regression: as in stattools.adfuller
-    :param autolag: as in stattools.adfuller
-    :param nan_mode: argument for hdataf.apply_nan_mode()
-    :param prefix: optional prefix for metrics' outcome
-    :return: test statistic, pvalue, and related info
-    """
-    dbg.dassert_isinstance(srs, pd.Series)
-    regression = regression or "c"
-    autolag = autolag or "AIC"
-    nan_mode = nan_mode or "drop"
-    prefix = prefix or ""
-    # Hack until we factor out inf handling.
-    srs = srs.replace([np.inf, -np.inf], np.nan)
-    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
-    # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.adfuller.html
-    result_index = [
-        prefix + "stat",
-        prefix + "pval",
-        prefix + "used_lag",
-        prefix + "nobs",
-        prefix + "critical_values_1%",
-        prefix + "critical_values_5%",
-        prefix + "critical_values_10%",
-        prefix + "ic_best",
-    ]
-    nan_result = pd.Series(
-        data=np.nan,
-        index=result_index,
-        name=data.name,
-    )
-    if data.empty:
-        _LOG.warning("Empty input series `%s`", srs.name)
-        return nan_result
-    try:
-        # The output of sm.tsa.stattools.adfuller in this case can only be
-        # of the length 6 so ignore the lint.
-        (
-            adf_stat,
-            pval,
-            usedlag,
-            nobs,
-            critical_values,
-            icbest,
-        ) = sm.tsa.stattools.adfuller(
-            data.values, maxlag=maxlag, regression=regression, autolag=autolag
-        )
-    except ValueError as inst:
-        # This can raise if there are not enough data points, but the number
-        # required can depend upon the input parameters.
-        _LOG.warning(inst)
-        return nan_result
-        #
-    result_values = [
-        adf_stat,
-        pval,
-        usedlag,
-        nobs,
-        critical_values["1%"],
-        critical_values["5%"],
-        critical_values["10%"],
-        icbest,
-    ]
-    result = pd.Series(data=result_values, index=result_index, name=data.name)
-    return result
-
-
-def apply_kpss_test(
-    srs: pd.Series,
-    regression: Optional[str] = None,
-    nlags: Optional[Union[int, str]] = None,
-    nan_mode: Optional[str] = None,
-    prefix: Optional[str] = None,
-) -> pd.Series:
-    """
-    Implement a wrapper around statsmodels' KPSS test.
-
-    http://debis.deu.edu.tr/userweb//onder.hanedar/dosyalar/kpss.pdf
-
-    :param srs: pandas series of floats
-    :param regression: as in stattools.kpss
-    :param nlags: as in stattools.kpss
-    :param nan_mode: argument for hdataf.apply_nan_mode()
-    :param prefix: optional prefix for metrics' outcome
-    :return: test statistic, pvalue, and related info
-    """
-    dbg.dassert_isinstance(srs, pd.Series)
-    regression = regression or "c"
-    nan_mode = nan_mode or "drop"
-    nlags = nlags or "auto"
-    prefix = prefix or ""
-    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
-    # https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.kpss.html
-    result_index = [
-        prefix + "stat",
-        prefix + "pval",
-        prefix + "lags",
-        prefix + "critical_values_1%",
-        prefix + "critical_values_5%",
-        prefix + "critical_values_10%",
-    ]
-    nan_result = pd.Series(
-        data=np.nan,
-        index=result_index,
-        name=data.name,
-    )
-    if data.empty:
-        _LOG.warning("Empty input series `%s`", srs.name)
-        return nan_result
-    try:
-        (
-            kpss_stat,
-            pval,
-            lags,
-            critical_values,
-        ) = sm.tsa.stattools.kpss(data.values, regression=regression, nlags=nlags)
-    except (ValueError, OverflowError):
-        # This can raise if there are not enough data points, but the number
-        # required can depend upon the input parameters.
-        # TODO(Julia): Debug OverflowError.
-        return nan_result
-        #
-    result_values = [
-        kpss_stat,
-        pval,
-        lags,
-        critical_values["1%"],
-        critical_values["5%"],
-        critical_values["10%"],
-    ]
-    result = pd.Series(data=result_values, index=result_index, name=data.name)
-    return result
-
-
-def apply_ljung_box_test(
-    srs: pd.Series,
-    lags: Optional[Union[int, pd.Series]] = None,
-    model_df: Optional[int] = None,
-    period: Optional[int] = None,
-    return_df: Optional[bool] = None,
-    nan_mode: Optional[str] = None,
-    prefix: Optional[str] = None,
-) -> pd.DataFrame:
-    """
-    Implement a wrapper around statsmodels' Ljung-Box test.
-
-    :param srs: pandas series of floats
-    :param lags: as in diagnostic.acorr_ljungbox
-    :param model_df: as in diagnostic.acorr_ljungbox
-    :param period: as in diagnostic.acorr_ljungbox
-    :param return_df: as in diagnostic.acorr_ljungbox
-    :param nan_mode: argument for hdataf.apply_nan_mode()
-    :param prefix: optional prefix for metrics' outcome
-    :return: test statistic, pvalue
-    """
-    dbg.dassert_isinstance(srs, pd.Series)
-    model_df = model_df or 0
-    return_df = return_df or True
-    nan_mode = nan_mode or "drop"
-    prefix = prefix or ""
-    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
-    # https://www.statsmodels.org/stable/generated/statsmodels.stats.diagnostic.acorr_ljungbox.html
-    columns = [
-        prefix + "stat",
-        prefix + "pval",
-    ]
-    # Make an output for empty or too short inputs.
-    nan_result = pd.DataFrame([[np.nan, np.nan]], columns=columns)
-    if data.empty:
-        _LOG.warning("Empty input series `%s`", srs.name)
-        return nan_result
-    try:
-        result = sm.stats.diagnostic.acorr_ljungbox(
-            data.values,
-            lags=lags,
-            model_df=model_df,
-            period=period,
-            return_df=return_df,
-        )
-    except ValueError as inst:
-        _LOG.warning(inst)
-        return nan_result
-    #
-    if return_df:
-        df_result = result
-    else:
-        df_result = pd.DataFrame(result).T
-    df_result.columns = columns
-    return df_result
-
-
-def compute_jensen_ratio(
-    signal: pd.Series,
-    p_norm: float = 2,
-    inf_mode: Optional[str] = None,
-    nan_mode: Optional[str] = None,
-    prefix: Optional[str] = None,
-) -> pd.Series:
-    """
-    Calculate a ratio >= 1 with equality only when Jensen's inequality holds.
-
-    Definition and derivation:
-      - The result is the p-th root of the expectation of the p-th power of
-        abs(f), divided by the expectation of abs(f). If we apply Jensen's
-        inequality to (abs(signal)**p)**(1/p), renormalizing the lower bound to
-        1, then the upper bound is the valued calculated by this function.
-      - An alternative derivation is to apply Holder's inequality to `signal`,
-        using the constant function `1` on the support of the `signal` as the
-        2nd function.
-
-    Interpretation:
-      - If we apply this function to returns in the case where the expected
-        value of returns is 0 and we take p_norm = 2, then the result of this
-        function can be interpreted as a renormalized realized volatility.
-      - For a Gaussian signal, the expected value is np.sqrt(np.pi / 2), which
-        is approximately 1.25. This holds regardless of the volatility of the
-        Gaussian (so the measure is scale invariant).
-      - For a stationary function, the expected value does not change with
-        sampled series length.
-      - For a signal that is t-distributed with 4 dof, the expected value is
-        approximately 1.41.
-    """
-    dbg.dassert_isinstance(signal, pd.Series)
-    # Require that we evaluate a norm.
-    dbg.dassert_lte(1, p_norm)
-    # TODO(*): Maybe add l-infinity support. For many stochastic signals, we
-    # should not expect a finite value in the continuous limit.
-    dbg.dassert(np.isfinite(p_norm))
-    # Set reasonable defaults for inf and nan modes.
-    inf_mode = inf_mode or "drop"
-    nan_mode = nan_mode or "drop"
-    prefix = prefix or ""
-    data = hdataf.apply_nan_mode(signal, mode=nan_mode)
-    nan_result = pd.Series(
-        data=np.nan, index=[prefix + "jensen_ratio"], name=signal.name
-    )
-    dbg.dassert(not data.isna().any())
-    # Handle infs.
-    # TODO(*): apply special functions for inf_mode after #2624 is completed.
-    has_infs = (~data.apply(np.isfinite)).any()
-    if has_infs:
-        if inf_mode == "return_nan":
-            # According to a strict interpretation, each norm is infinite, and
-            # and so their quotient is undefined.
-            return nan_result
-        if inf_mode == "drop":
-            # Replace inf values with np.nan and drop.
-            data = data.replace([-np.inf, np.inf], np.nan).dropna()
-        else:
-            raise ValueError(f"Unrecognized inf_mode `{inf_mode}")
-    dbg.dassert(data.apply(np.isfinite).all())
-    # Return NaN if there is no data.
-    if data.size == 0:
-        _LOG.warning("Empty input signal `%s`", signal.name)
-        return nan_result
-    # Calculate norms.
-    lp = sp.linalg.norm(data, ord=p_norm)
-    l1 = sp.linalg.norm(data, ord=1)
-    # Ignore support where `signal` has NaNs.
-    scaled_support = data.size ** (1 - 1 / p_norm)
-    jensen_ratio = scaled_support * lp / l1
-    res = pd.Series(
-        data=[jensen_ratio], index=[prefix + "jensen_ratio"], name=signal.name
-    )
-    return res
-
-
-def compute_forecastability(
-    signal: pd.Series,
-    mode: str = "welch",
-    inf_mode: Optional[str] = None,
-    nan_mode: Optional[str] = None,
-    prefix: Optional[str] = None,
-) -> pd.Series:
-    r"""Compute frequency-domain-based "forecastability" of signal.
-
-    Reference: https://arxiv.org/abs/1205.4591
-
-    `signal` is assumed to be second-order stationary.
-
-    Denote the forecastability estimator by \Omega(\cdot).
-    Let x_t, y_t be time series. Properties of \Omega include:
-    a) \Omega(y_t) = 0 iff y_t is white noise
-    b) scale and shift-invariant:
-         \Omega(a y_t + b) = \Omega(y_t) for real a, b, a \neq 0.
-    c) max sub-additivity for uncorrelated processes:
-         \Omega(\alpha x_t + \sqrt{1 - \alpha^2} y_t) \leq
-         \max\{\Omega(x_t), \Omega(y_t)\},
-       if \E(x_t y_s) = 0 for all s, t \in \Z;
-       equality iff alpha \in \{0, 1\}.
-    """
-    dbg.dassert_isinstance(signal, pd.Series)
-    nan_mode = nan_mode or "fill_with_zero"
-    inf_mode = inf_mode or "drop"
-    prefix = prefix or ""
-    data = hdataf.apply_nan_mode(signal, mode=nan_mode)
-    has_infs = (~data.apply(np.isfinite)).any()
-    if has_infs:
-        if inf_mode == "return_nan":
-            return nan_result
-        if inf_mode == "drop":
-            # Replace inf with np.nan and drop.
-            data = data.replace([-np.inf, np.inf], np.nan).dropna()
-        else:
-            raise ValueError(f"Unrecognized inf_mode `{inf_mode}")
-    dbg.dassert(data.apply(np.isfinite).all())
-    # Return NaN if there is no data.
-    if data.size == 0:
-        _LOG.warning("Empty input signal `%s`", signal.name)
-        nan_result = pd.Series(
-            data=np.nan, index=[prefix + "forecastability"], name=signal.name
-        )
-        return nan_result
-    if mode == "welch":
-        _, psd = sp.signal.welch(data)
-    elif mode == "periodogram":
-        # TODO(Paul): Maybe log a warning about inconsistency of periodogram
-        #     for estimating power spectral density.
-        _, psd = sp.signal.periodogram(data)
-    else:
-        raise ValueError("Unsupported mode=`%s`" % mode)
-    forecastability = 1 - sp.stats.entropy(psd, base=psd.size)
-    res = pd.Series(
-        data=[forecastability],
-        index=[prefix + "forecastability"],
-        name=signal.name,
-    )
-    return res
-
-
-def compute_zero_diff_proportion(
-    srs: pd.Series,
-    atol: Optional[float] = None,
-    rtol: Optional[float] = None,
-    nan_mode: Optional[str] = None,
-    prefix: Optional[str] = None,
-) -> pd.Series:
-    """
-    Compute proportion of unvarying periods in a series.
-
-    https://numpy.org/doc/stable/reference/generated/numpy.isclose.html
-
-    :param srs: pandas series of floats
-    :param atol: as in numpy.isclose
-    :param rtol: as in numpy.isclose
-    :param nan_mode: argument for hdataf.apply_nan_mode()
-        If `nan_mode` is "leave_unchanged":
-          - consecutive `NaN`s are not counted as a constant period
-          - repeated values with `NaN` in between are not counted as a constant
-            period
-        If `nan_mode` is "drop":
-          - the denominator is reduced by the number of `NaN` and `inf` values
-          - repeated values with `NaN` in between are counted as a constant
-            period
-        If `nan_mode` is "ffill":
-          - consecutive `NaN`s are counted as a constant period
-          - repeated values with `NaN` in between are counted as a constant
-            period
-    :param prefix: optional prefix for metrics' outcome
-    :return: series with proportion of unvarying periods
-    """
-    dbg.dassert_isinstance(srs, pd.Series)
-    atol = atol or 0
-    rtol = rtol or 1e-05
-    nan_mode = nan_mode or "leave_unchanged"
-    prefix = prefix or ""
-    srs = srs.replace([np.inf, -np.inf], np.nan)
-    data = hdataf.apply_nan_mode(srs, mode=nan_mode)
-    result_index = [
-        prefix + "approx_const_count",
-        prefix + "approx_const_frac",
-    ]
-    if data.shape[0] < 2:
-        _LOG.warning(
-            "Input series `%s` with size '%d' is too small",
-            srs.name,
-            data.shape[0],
-        )
-        nan_result = pd.Series(data=np.nan, index=result_index, name=srs.name)
-        return nan_result
-    # Compute if neighboring elements are equal within the given tolerance.
-    equal_ngb_srs = np.isclose(data.shift(1)[1:], data[1:], atol=atol, rtol=rtol)
-    # Compute number and proportion of equals among all neighbors pairs.
-    approx_const_count = equal_ngb_srs.sum()
-    n_pairs = data.shape[0] - 1
-    approx_const_frac = approx_const_count / n_pairs
-    result_values = [approx_const_count, approx_const_frac]
-    res = pd.Series(data=result_values, index=result_index, name=srs.name)
-    return res
+# #############################################################################
+# Interarrival time statistics
+# #############################################################################
 
 
 def get_interarrival_time(
@@ -1573,41 +1599,70 @@ def compute_interarrival_time_stats(
     return res
 
 
-def compute_avg_turnover_and_holding_period(
-    pos: pd.Series,
-    unit: Optional[str] = None,
-    nan_mode: Optional[str] = None,
+# #############################################################################
+# Local level model statistics
+# #############################################################################
+
+
+def compute_local_level_model_stats(
+    srs: pd.Series,
     prefix: Optional[str] = None,
 ) -> pd.Series:
     """
-    Compute average turnover and holding period for a sequence of positions.
+    Compute statistics assuming a steady-state local level model.
 
-    :param pos: pandas series of positions
-    :param unit: desired output holding period unit (e.g. 'B', 'W', 'M', etc.)
-    :param nan_mode: argument for hdataf.apply_nan_mode()
-    :param prefix: optional prefix for metrics' outcome
-    :return: average turnover, holding period and index frequency
+    E.g.,
+       y_t = \mu_t + \epsilon_t
+       \mu_{t + 1} = \mu_t + \eta_t
+
+    This is equivalent to modeling `srs` of {y_t} as a random walk + noise at
+    steady-state, or as ARIMA(0,1,1).
+
+    See Harvey, Section 4.1.2, page 175.
     """
-    dbg.dassert_isinstance(pos, pd.Series)
-    dbg.dassert(pos.index.freq)
-    pos_freq = pos.index.freq
-    unit = unit or pos_freq
-    nan_mode = nan_mode or "ffill"
     prefix = prefix or ""
+    dbg.dassert_isinstance(srs, pd.Series)
+    diff = srs.diff()
+    demeaned_diff = diff - diff.mean()
+    gamma0 = demeaned_diff.multiply(demeaned_diff).mean()
+    gamma1 = demeaned_diff.multiply(demeaned_diff.shift(1)).mean()
+    # This is the variance of \epsilon.
+    var_epsilon = -1 * gamma1
+    dbg.dassert_lte(0, var_epsilon)
+    # This is the variance of \eta.
+    var_eta = gamma0 - 2 * var_epsilon
+    dbg.dassert_lte(0, var_eta)
+    # This is the first autocorrelation coefficient.
+    rho1 = gamma1 / gamma0
+    # The signal-to-noise ratio `snr` is commonly denoted `q`.
+    snr = var_eta / var_epsilon
+    p = 0.5 * (snr + np.sqrt(snr ** 2 + 4 * snr))
+    # Equivalent to EMA lambda in m_t = (1 - \lambda) m_{t - 1} + \lambda y_t.
+    kalman_gain = p / (p + 1)
+    # Convert to center-of-mass.
+    com = 1 / kalman_gain - 1
     result_index = [
-        prefix + "avg_turnover_(%)",
-        prefix + "turnover_frequency",
-        prefix + "avg_holding_period",
-        prefix + "holding_period_units",
+        prefix + "gamma0",
+        prefix + "gamma1",
+        prefix + "var_epsilon",
+        prefix + "var_eta",
+        prefix + "rho1",
+        prefix + "snr",
+        prefix + "kalman_gain",
+        prefix + "com",
     ]
-    avg_holding_period = cfinan.compute_average_holding_period(
-        pos=pos, unit=unit, nan_mode=nan_mode
-    )
-    avg_turnover = 100 * (1 / avg_holding_period)
-    #
-    result_values = [avg_turnover, unit, avg_holding_period, unit]
-    res = pd.Series(data=result_values, index=result_index, name=pos.name)
-    return res
+    result_values = [
+        gamma0,
+        gamma1,
+        var_epsilon,
+        var_eta,
+        rho1,
+        snr,
+        kalman_gain,
+        com,
+    ]
+    result = pd.Series(data=result_values, index=result_index, name=srs.name)
+    return result
 
 
 # #############################################################################
@@ -1747,61 +1802,52 @@ def convert_splits_to_string(splits: collections.OrderedDict) -> str:
     return txt
 
 
-def summarize_time_index_info(
-    srs: pd.Series,
-    nan_mode: Optional[str] = None,
-    prefix: Optional[str] = None,
-) -> pd.Series:
+def _compute_denominator_and_package(
+    reduction: Union[float, np.ndarray],
+    data: Union[pd.Series, pd.DataFrame],
+    axis: Optional[float] = None,
+) -> Union[float, pd.Series]:
     """
-    Return summarized information about datetime index of the input.
+    Normalize and package `reduction` according to `axis` and `data` metadata.
 
-    :param srs: pandas series of floats
-    :param nan_mode: argument for hdataf.apply_nan_mode()
-    :param prefix: optional prefix for output's index
-    :return: series with information about input's index
+    This is a helper function used for several `compute_frac_*` functions:
+    - It determines the denominator to use in normalization (for the `frac`
+      part)
+    - It packages the output so that it has index/column information as
+      appropriate
+
+    :param reduction: contains a reduction of `data` along `axis`
+    :param data: numeric series or dataframe
+    :param axis: indicates row or column or else `None` for ignoring 2d
+        structure
     """
-    dbg.dassert_isinstance(srs, pd.Series)
-    nan_mode = nan_mode or "drop"
-    prefix = prefix or ""
-    original_index = srs.index
-    # Assert that input series has a sorted datetime index.
-    dbg.dassert_isinstance(original_index, pd.DatetimeIndex)
-    dbg.dassert_strictly_increasing_index(original_index)
-    freq = original_index.freq
-    clear_srs = hdataf.apply_nan_mode(srs, mode=nan_mode)
-    clear_index = clear_srs.index
-    result = {}
-    if clear_srs.empty:
-        _LOG.warning("Empty input series `%s`", srs.name)
-        result["start_time"] = np.nan
-        result["end_time"] = np.nan
+    if isinstance(data, pd.Series):
+        df = data.to_frame()
     else:
-        result["start_time"] = clear_index[0]
-        result["end_time"] = clear_index[-1]
-    result["n_sampling_points"] = len(clear_index)
-    result["frequency"] = freq
-    if freq is None:
-        sampling_points_per_year = clear_srs.resample("Y").count().mean()
+        df = data
+    nrows, ncols = df.shape
+    # Ensure that there is data available.
+    # TODO(Paul): Consider adding a check on the column data type.
+    if nrows == 0 or ncols == 0:
+        _LOG.warning("No data available!")
+        return np.nan
+    # Determine the correct denominator based on `axis`.
+    if axis is None:
+        denom = nrows * ncols
+    elif axis == 0:
+        denom = nrows
+    elif axis == 1:
+        denom = ncols
     else:
-        sampling_points_per_year = hdataf.compute_points_per_year_for_given_freq(
-            freq
-        )
-    result["sampling_points_per_year"] = sampling_points_per_year
-    # Compute input time span as a number of `freq` units in
-    # `clear_index`.
-    if not clear_srs.empty:
-        if freq is None:
-            clear_index_time_span = (clear_index[-1] - clear_index[0]).days
-            sampling_points_per_year = (
-                hdataf.compute_points_per_year_for_given_freq("D")
-            )
-        else:
-            clear_index_time_span = len(srs[clear_index[0] : clear_index[-1]])
-    else:
-        clear_index_time_span = 0
-    result["time_span_in_years"] = (
-        clear_index_time_span / sampling_points_per_year
-    )
-    result = pd.Series(result, dtype="object")
-    result.index = prefix + result.index
-    return result
+        raise ValueError("axis=%i" % axis)
+    normalized = reduction / denom
+    # Return float or pd.Series as appropriate based on dimensions and axis.
+    if isinstance(normalized, float):
+        dbg.dassert(not axis)
+        return normalized
+    dbg.dassert_isinstance(normalized, np.ndarray)
+    if axis == 0:
+        return pd.Series(data=normalized, index=df.columns)
+    if axis == 1:
+        return pd.Series(data=normalized, index=df.index)
+    raise ValueError("axis=`%s` but expected to be `0` or `1`!" % axis)
