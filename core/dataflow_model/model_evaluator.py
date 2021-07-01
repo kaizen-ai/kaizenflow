@@ -286,11 +286,13 @@ class ModelEvaluator:
             stats_dict[key] = stats_val
         stats_df = pd.concat(stats_dict, axis=1)
         # Calculate BH adjustment of pvals.
-        adj_pvals = stats.multipletests(stats_df.loc["signal_quality"].loc["sr.pval"], nan_mode="drop")
-        adj_pvals = pd.concat([adj_pvals.to_frame().transpose()], keys=["signal_quality"])
-        stats_df = pd.concat(
-            [stats_df, adj_pvals], axis=0
+        adj_pvals = stats.multipletests(
+            stats_df.loc["signal_quality"].loc["sr.pval"], nan_mode="drop"
         )
+        adj_pvals = pd.concat(
+            [adj_pvals.to_frame().transpose()], keys=["signal_quality"]
+        )
+        stats_df = pd.concat([stats_df, adj_pvals], axis=0)
         return stats_df.sort_index(level=0)
 
     def _calculate_model_stats(
@@ -316,25 +318,31 @@ class ModelEvaluator:
         name = "stats"
         results = []
         if pnl is not None:
-            results.append(self.stats_computer.compute_stats(pnl, time_series_type="pnl").rename(name))
+            results.append(
+                self.stats_computer.compute_stats(
+                    pnl, time_series_type="pnl"
+                ).rename(name)
+            )
         if pnl is not None and returns is not None:
             corr = pd.Series(
                 pnl.corr(returns), index=["corr_to_underlying"], name=name
             )
             results.append(pd.concat([corr], keys=["correlation"]))
         if positions is not None and returns is not None:
-            bets = self.stats_computer.compute_bet_stats(positions=positions, returns=returns[positions.index])
+            bets = self.stats_computer.compute_bet_stats(
+                positions=positions, returns=returns[positions.index]
+            )
             bets.name = name
             results.append(pd.concat([bets], keys=["bets"]))
             # TODO(*): Use `predictions` instead.
             corr = pd.Series(
-                positions.corr(returns),
-                index=["prediction_corr"],
-                name=name
+                positions.corr(returns), index=["prediction_corr"], name=name
             )
             results.append(pd.concat([corr], keys=["correlation"]))
         if positions is not None:
-            finance = self.stats_computer.compute_finance_stats(positions, time_series_type="positions")
+            finance = self.stats_computer.compute_finance_stats(
+                positions, time_series_type="positions"
+            )
             results.append(pd.concat([finance], keys=["finance"]))
         # Z-score OOS SRs.
         if oos_start is not None and pnl is not None:

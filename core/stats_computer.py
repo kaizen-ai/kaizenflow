@@ -52,7 +52,10 @@ class StatsComputer:
         # TODO(*): Add
         #   - var and std assuming zero mean
         functions = [
-            functools.partial(cstati.compute_moments, prefix="scipy.",),
+            functools.partial(
+                cstati.compute_moments,
+                prefix="scipy.",
+            ),
             functools.partial(cstati.ttest_1samp, prefix="null_mean_zero."),
             cstati.compute_jensen_ratio,
             lambda x: x.describe(),
@@ -75,7 +78,7 @@ class StatsComputer:
             ),
             functools.partial(
                 cstati.compute_centered_gaussian_total_log_likelihood,
-                prefix="centered_gaussian."
+                prefix="centered_gaussian.",
             ),
         ]
         # TODO(*): cstati.compute_centered_gaussian_log_likelihood
@@ -108,7 +111,9 @@ class StatsComputer:
         #
         return pd.concat([result, kratio])
 
-    def compute_finance_stats(self, srs: pd.Series, time_series_type: str) -> pd.Series:
+    def compute_finance_stats(
+        self, srs: pd.Series, time_series_type: str
+    ) -> pd.Series:
         """
         Assumes `srs` is a PnL curve.
 
