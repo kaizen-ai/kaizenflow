@@ -5,6 +5,7 @@ import os
 import pytest
 
 import helpers.s3 as hs3
+import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
