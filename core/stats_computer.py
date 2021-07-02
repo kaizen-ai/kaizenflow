@@ -12,6 +12,7 @@ import pandas as pd
 
 import core.finance as cfinan
 import core.statistics as cstati
+import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
 
@@ -22,18 +23,31 @@ class StatsComputer:
     """
 
     def compute_stats(
-        self, srs: pd.Series, ts_type: Optional[str] = None
+        self, srs: pd.Series, time_series_type: Optional[str] = None
     ) -> pd.Series:
         stats = []
-        stats.append(self.compute_sampling_stats(srs))
-        stats.append(self.compute_summary_stats(srs))
-        stats.append(self.compute_stationarity_stats(srs))
-        stats.append(self.compute_normality_stats(srs))
+        with htimer.TimedScope(logging.DEBUG, "Computing samplings stats") as ts:
+            stats.append(self.compute_sampling_stats(srs))
+        with htimer.TimedScope(logging.DEBUG, "Computing summary stats") as ts:
+            stats.append(self.compute_summary_stats(srs))
+        with htimer.TimedScope(
+            logging.DEBUG, "Computing stationarity stats"
+        ) as ts:
+            stats.append(self.compute_stationarity_stats(srs))
+        with htimer.TimedScope(logging.DEBUG, "Computing normality stats") as ts:
+            stats.append(self.compute_normality_stats(srs))
         # stats.append(self.compute_autocorrelation_stats(srs))
-        stats.append(self.compute_spectral_stats(srs))
-        stats.append(self.compute_signal_quality_stats(srs))
-        if ts_type is not None:
-            stats.append(self.compute_finance_stats(srs, ts_type))
+        with htimer.TimedScope(logging.DEBUG, "Computing spectral stats") as ts:
+            stats.append(self.compute_spectral_stats(srs))
+        with htimer.TimedScope(
+            logging.DEBUG, "Computing signal quality stats"
+        ) as ts:
+            stats.append(self.compute_signal_quality_stats(srs))
+        if time_series_type is not None:
+            with htimer.TimedScope(
+                logging.DEBUG, "Computing finance stats"
+            ) as ts:
+                stats.append(self.compute_finance_stats(srs, time_series_type))
         names = [stat.name for stat in stats]
         result = pd.concat(stats, axis=0, keys=names)
         result.name = srs.name
@@ -52,8 +66,11 @@ class StatsComputer:
         # TODO(*): Add
         #   - var and std assuming zero mean
         functions = [
-            cstati.compute_moments,
-            functools.partial(cstati.ttest_1samp, prefix="null_mean_zero_"),
+            functools.partial(
+                cstati.compute_moments,
+                prefix="scipy.",
+            ),
+            functools.partial(cstati.ttest_1samp, prefix="null_mean_zero."),
             cstati.compute_jensen_ratio,
             lambda x: x.describe(),
         ]
@@ -61,9 +78,13 @@ class StatsComputer:
 
     def compute_stationarity_stats(self, srs: pd.Series) -> pd.Series:
         name = "stationarity"
+        # Restrict the number of lags because
+        #   1. On long time series, auto-selection is time-consuming
+        #   2. In practice, the focus is typically on lower order lags
+        lags = 16
         functions = [
-            functools.partial(cstati.apply_adf_test, prefix="adf_"),
-            functools.partial(cstati.apply_kpss_test, prefix="kpss_"),
+            functools.partial(cstati.apply_adf_test, maxlag=lags, prefix="adf."),
+            functools.partial(cstati.apply_kpss_test, nlags=lags, prefix="kpss."),
         ]
         return self._compute_stat_functions(srs, name, functions)
 
@@ -71,9 +92,12 @@ class StatsComputer:
         name = "normality"
         functions = [
             functools.partial(
-                cstati.apply_normality_test, prefix="omnibus_null_normal_"
+                cstati.apply_normality_test, prefix="omnibus_null_normal."
             ),
-            cstati.compute_centered_gaussian_total_log_likelihood,
+            functools.partial(
+                cstati.compute_centered_gaussian_total_log_likelihood,
+                prefix="centered_gaussian.",
+            ),
         ]
         # TODO(*): cstati.compute_centered_gaussian_log_likelihood
         return self._compute_stat_functions(srs, name, functions)
@@ -97,7 +121,7 @@ class StatsComputer:
         name = "signal_quality"
         functions = [
             cstati.summarize_sharpe_ratio,
-            cstati.ttest_1samp,
+            functools.partial(cstati.ttest_1samp, prefix="sr."),
         ]
         result = self._compute_stat_functions(srs, name, functions)
         kratio = pd.Series(cfinan.compute_kratio(srs), index=["kratio"])
@@ -105,28 +129,30 @@ class StatsComputer:
         #
         return pd.concat([result, kratio])
 
-    def compute_finance_stats(self, srs: pd.Series, ts_type: str) -> pd.Series:
+    def compute_finance_stats(
+        self, srs: pd.Series, time_series_type: str
+    ) -> pd.Series:
         """
         Assumes `srs` is a PnL curve.
 
         :mode: pnl, positions
         """
         name = "finance"
-        if ts_type == "pnl":
+        if time_series_type == "pnl":
             functions = [
                 cstati.compute_annualized_return_and_volatility,
                 cstati.compute_max_drawdown,
                 cstati.calculate_hit_rate,
             ]
-        elif ts_type == "positions":
+        elif time_series_type == "positions":
             functions = [cstati.compute_avg_turnover_and_holding_period]
         else:
             raise ValueError
         return self._compute_stat_functions(srs, name, functions)
 
     @staticmethod
-    def calculate_bet_stats(
-        positions: pd.Series, returns: pd.Series
+    def compute_bet_stats(
+        *, positions: pd.Series, returns: pd.Series
     ) -> pd.Series:
         name = "bets"
         bets = cstati.compute_bet_stats(positions, returns[positions.index])
