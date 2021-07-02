@@ -288,7 +288,7 @@ class ModelEvaluator:
         # Calculate BH adjustment of pvals.
         adj_pvals = stats.multipletests(
             stats_df.loc["signal_quality"].loc["sr.pval"], nan_mode="drop"
-        )
+        ).rename("sr.adj_pval")
         adj_pvals = pd.concat(
             [adj_pvals.to_frame().transpose()], keys=["signal_quality"]
         )

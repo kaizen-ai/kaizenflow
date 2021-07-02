@@ -608,10 +608,14 @@ def compute_centered_gaussian_total_log_likelihood(
     """
     prefix = prefix or ""
     # Calculate variance assuming a population mean of zero.
-    srs_sq_sum = np.square(srs).sum()
-    n_obs = srs.count()
-    var = srs_sq_sum / n_obs
-    log_likelihood= -0.5 * (-0.5 + np.log(2 * np.pi) + np.log(var)) * n_obs
+    var = np.square(srs).mean()
+    name = str(srs.name) + "var"
+    var_srs = pd.Series(index=srs.index, data=var, name=name)
+    df = pd.concat([srs, var_srs], axis=1)
+    df_out = csigna.compute_centered_gaussian_log_likelihood(
+        df, observation_col=srs.name, variance_col=name
+    )
+    log_likelihood = df_out["log_likelihood"].sum()
     result = pd.Series(
         data=[log_likelihood, var],
         index=[prefix + "log_likelihood", prefix + "centered_var"],

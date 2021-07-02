@@ -26,21 +26,21 @@ class StatsComputer:
         self, srs: pd.Series, time_series_type: Optional[str] = None
     ) -> pd.Series:
         stats = []
-        with htimer.TimedScope(logging.INFO, "Computing samplings stats") as ts:
+        with htimer.TimedScope(logging.DEBUG, "Computing samplings stats") as ts:
             stats.append(self.compute_sampling_stats(srs))
-        with htimer.TimedScope(logging.INFO, "Computing summary stats") as ts:
+        with htimer.TimedScope(logging.DEBUG, "Computing summary stats") as ts:
             stats.append(self.compute_summary_stats(srs))
-        with htimer.TimedScope(logging.INFO, "Computing stationarity stats") as ts:
+        with htimer.TimedScope(logging.DEBUG, "Computing stationarity stats") as ts:
             stats.append(self.compute_stationarity_stats(srs))
-        with htimer.TimedScope(logging.INFO, "Computing normality stats") as ts:
+        with htimer.TimedScope(logging.DEBUG, "Computing normality stats") as ts:
             stats.append(self.compute_normality_stats(srs))
         # stats.append(self.compute_autocorrelation_stats(srs))
-        with htimer.TimedScope(logging.INFO, "Computing spectral stats") as ts:
+        with htimer.TimedScope(logging.DEBUG, "Computing spectral stats") as ts:
             stats.append(self.compute_spectral_stats(srs))
-        with htimer.TimedScope(logging.INFO, "Computing signal quality stats") as ts:
+        with htimer.TimedScope(logging.DEBUG, "Computing signal quality stats") as ts:
             stats.append(self.compute_signal_quality_stats(srs))
         if time_series_type is not None:
-            with htimer.TimedScope(logging.INFO, "Computing finance stats") as ts:
+            with htimer.TimedScope(logging.DEBUG, "Computing finance stats") as ts:
                 stats.append(self.compute_finance_stats(srs, time_series_type))
         names = [stat.name for stat in stats]
         result = pd.concat(stats, axis=0, keys=names)
@@ -72,9 +72,13 @@ class StatsComputer:
 
     def compute_stationarity_stats(self, srs: pd.Series) -> pd.Series:
         name = "stationarity"
+        # Restrict the number of lags because
+        #   1. On long time series, auto-selection is time-consuming
+        #   2. In practice, the focus is typically on lower order lags
+        lags = 16
         functions = [
-            functools.partial(cstati.apply_adf_test, prefix="adf."),
-            functools.partial(cstati.apply_kpss_test, prefix="kpss."),
+            functools.partial(cstati.apply_adf_test, maxlag=lags, prefix="adf."),
+            functools.partial(cstati.apply_kpss_test, nlags=lags, prefix="kpss."),
         ]
         return self._compute_stat_functions(srs, name, functions)
 
