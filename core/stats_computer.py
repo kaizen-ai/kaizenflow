@@ -30,17 +30,23 @@ class StatsComputer:
             stats.append(self.compute_sampling_stats(srs))
         with htimer.TimedScope(logging.DEBUG, "Computing summary stats") as ts:
             stats.append(self.compute_summary_stats(srs))
-        with htimer.TimedScope(logging.DEBUG, "Computing stationarity stats") as ts:
+        with htimer.TimedScope(
+            logging.DEBUG, "Computing stationarity stats"
+        ) as ts:
             stats.append(self.compute_stationarity_stats(srs))
         with htimer.TimedScope(logging.DEBUG, "Computing normality stats") as ts:
             stats.append(self.compute_normality_stats(srs))
         # stats.append(self.compute_autocorrelation_stats(srs))
         with htimer.TimedScope(logging.DEBUG, "Computing spectral stats") as ts:
             stats.append(self.compute_spectral_stats(srs))
-        with htimer.TimedScope(logging.DEBUG, "Computing signal quality stats") as ts:
+        with htimer.TimedScope(
+            logging.DEBUG, "Computing signal quality stats"
+        ) as ts:
             stats.append(self.compute_signal_quality_stats(srs))
         if time_series_type is not None:
-            with htimer.TimedScope(logging.DEBUG, "Computing finance stats") as ts:
+            with htimer.TimedScope(
+                logging.DEBUG, "Computing finance stats"
+            ) as ts:
                 stats.append(self.compute_finance_stats(srs, time_series_type))
         names = [stat.name for stat in stats]
         result = pd.concat(stats, axis=0, keys=names)
