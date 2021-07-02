@@ -293,7 +293,7 @@ class ModelEvaluator:
             [adj_pvals.to_frame().transpose()], keys=["signal_quality"]
         )
         stats_df = pd.concat([stats_df, adj_pvals], axis=0)
-        return stats_df.sort_index(level=0)
+        return stats_df
 
     def _calculate_model_stats(
         self,
@@ -351,7 +351,7 @@ class ModelEvaluator:
             oos_sr = stats.zscore_oos_sharpe_ratio(pnl, oos_start).rename(name)
             results.append(pd.concat([oos_sr]), keys=["signal_quality"])
         result = pd.concat(results, axis=0)
-        return result.sort_index(level=0)
+        return result
 
     def _get_series_as_df(
         self,
