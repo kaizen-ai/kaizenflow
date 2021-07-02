@@ -18,6 +18,10 @@ import helpers.printing as pri
 _LOG = logging.getLogger(__name__)
 
 
+# Placeholder value used in configs, when configs are built in multiple phases.
+DUMMY = "__DUMMY__"
+
+
 class Config:
     """
     A nested ordered dictionary storing configuration information.

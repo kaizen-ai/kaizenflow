@@ -855,7 +855,6 @@ def _get_logging_format(
         # %(filename)s Filename portion of pathname.
         # %(module)s Module (name portion of filename).
         if True:
-            # The remote branches to delete are 3:
             log_format = (
                 # 04-28_08:08 INFO :
                 "%(asctime)-5s %(levelname)-5s"
@@ -865,7 +864,7 @@ def _get_logging_format(
                 log_format += " [%(resource_use)-40s]"
             log_format += (
                 # lib_tasks _delete_branches
-                " %(module)-15s: %(funcName)-30s:"
+                " %(module)-20s: %(funcName)-30s:"
                 # 142: ...
                 " %(lineno)-4d:"
                 " %(message)s"

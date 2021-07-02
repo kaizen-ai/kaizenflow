@@ -53,8 +53,8 @@ class EventStudyBuilder(DagBuilder):
         #
         stage = "model"
         config_tmp = config.add_subconfig(self._get_nid(stage))
-        config_tmp["x_vars"] = ["_DUMMY_"]
-        config_tmp["y_vars"] = ["_DUMMY_"]
+        config_tmp["x_vars"] = [cconfig.DUMMY]
+        config_tmp["y_vars"] = [cconfig.DUMMY]
         config_kwargs = config_tmp.add_subconfig("model_kwargs")
         config_kwargs["alpha"] = 0.5
         return config

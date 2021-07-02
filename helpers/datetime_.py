@@ -24,10 +24,15 @@ _LOG = logging.getLogger(__name__)
 DATETIME_TYPE = Union[pd.Timestamp, datetime.datetime]
 
 
-def get_timestamp(utc: bool = False) -> str:
-    if utc:
+def get_timestamp(tz: Optional[str] = None) -> str:
+    if tz == "utc":
         timestamp = datetime.datetime.utcnow()
+    elif tz == "et":
+        # Return in ET.
+        import pytz
+        timestamp = datetime.datetime.now(pytz.timezone('EST'))
     else:
+        dbg.dassert_is(tz, None)
         timestamp = datetime.datetime.now()
     return timestamp.strftime("%Y%m%d_%H%M%S")
 
