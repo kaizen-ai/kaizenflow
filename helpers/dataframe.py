@@ -255,3 +255,16 @@ def compute_points_per_year_for_given_freq(freq: str) -> float:
         return points_per_year
     except ZeroDivisionError:
         return 0.0
+
+def compute_count_per_year(data: Union[pd.Series, pd.DataFrame]) -> float:
+    """
+    Return data.count() divided by the length of `data` in years.
+    """
+    freq = data.index.freq
+    dbg.dassert(freq, msg="`data` must have a `DatetimeIndex` with a `freq`")
+    # Calculate the time span of `data` in years.
+    points_per_year = compute_points_per_year_for_given_freq(freq)
+    span_in_years = data.size / points_per_year
+    # Determine the number of non-NaN/inf/etc. data points per year.
+    count_per_year = data.count() / span_in_years
+    return count_per_year

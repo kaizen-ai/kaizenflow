@@ -1111,6 +1111,43 @@ def apply_sharpe_ratio_correlation_conversion(
     )
 
 
+def compute_implied_correlation(pnl: pd.Series) -> float:
+    """
+    Infer correlation of prediction with returns given PnL.
+
+    The inferred correlation is an estimate based on the following assumptions:
+      1. Returns are Gaussian
+      2. Positions are proportional to predictions
+      3. Every value of `pnl` corresponds to a unique position and prediction
+         (so the pnl frequency is the same as the prediction frequency)
+    The principle is to estimate the correlation from the Sharpe ratio of
+    `pnl`. This function addresses the issue of calculating the appropriate
+    scaling factors required to perform the conversion correctly.
+
+    :param pnl: PnL stream with `freq`
+    :return: estimated correlation of the predictions that, when combined with
+        returns, generated `pnl`
+    """
+    count_per_year = hdataf.compute_count_per_year(pnl)
+    sr = compute_annualized_sharpe_ratio(pnl)
+    corr = apply_sharpe_ratio_correlation_conversion(count_per_year, sharpe_ratio=sr)
+    return corr
+
+
+def compute_implied_sharpe_ratio(srs: pd.Series, corr: float) -> float:
+    """
+    Infer implied Sharpe ratio given `corr` and predictions at `srs` non-NaNs.
+
+    Same assumptions as `compute_implied_correlation()`, and `srs` must have a
+    `DatetimeIndex` with a `freq`. The values of `srs` are not used directly,
+    but rather only the knowledge of whether they are included in
+    `srs.count()`, e.g., are non-NaN, non-inf, etc.
+    """
+    count_per_year = hdataf.compute_count_per_year(srs)
+    sr = apply_sharpe_ratio_correlation_conversion(count_per_year, correlation=corr)
+    return sr
+
+
 # #############################################################################
 # Drawdown statistics
 # #############################################################################
