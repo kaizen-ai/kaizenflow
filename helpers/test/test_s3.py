@@ -20,15 +20,6 @@ class Test_s3_get_credentials1(hut.TestCase):
         res = hs3.get_aws_credentials(aws_profile)
         _LOG.debug("res=%s", str(res))
 
-    def test2(self) -> None:
-        aws_profile = "I don't exist"
-        with self.assertRaises(configparser.NoSectionError) as cm:
-            res = hs3.get_aws_credentials(aws_profile)
-            _LOG.debug("res=%s", str(res))
-        act = str(cm.exception)
-        exp = r'''No section: "I don't exist"'''
-        self.assert_equal(act, exp)
-
 
 class Test_s3_1(hut.TestCase):
     def test_get_path1(self) -> None:
