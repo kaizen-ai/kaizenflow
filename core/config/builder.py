@@ -223,7 +223,7 @@ def build_multiple_configs(
     Build configs from a template and the Cartesian product of given keys/vals.
 
     Create multiple `cconfig.Config` objects using the given config template and
-    overwriting `None` or `_DUMMY_` parameter specified through a parameter
+    overwriting `None` or `cconfig.DUMMY` parameter specified through a parameter
     path and several possible elements:
         param_path: Tuple(str) -> param_values: Iterable[Any]
     A parameter path is represented by a tuple of nested names.
@@ -267,11 +267,11 @@ def build_multiple_configs(
             conf_tmp.check_params([param_path[-1]])
             if not (
                 conf_tmp[param_path[-1]] is None
-                or conf_tmp[param_path[-1]] == "_DUMMY_"
+                or conf_tmp[param_path[-1]] == cconfig.DUMMY
             ):
                 raise ValueError(
                     "Trying to change a parameter that is not `None` or "
-                    "`'_DUMMY_'`. Parameter path is %s" % str(param_path)
+                    "`'cconfig.DUMMY'`. Parameter path is %s" % str(param_path)
                 )
             conf_tmp[param_path[-1]] = param_val
         param_configs.append(config_var)

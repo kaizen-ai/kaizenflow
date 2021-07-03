@@ -26,7 +26,7 @@ class DagBuilder(abc.ABC):
         - It returns a `Config` object that represents the parameters used to build
           the DAG
         - The config can depend upon variables used in class initialization
-        - A config can be incomplete, e.g., "_DUMMY_" is used for required
+        - A config can be incomplete, e.g., `cconfig.DUMMY` is used for required
           fields that must be defined before the config can be used to initialize
           a DAG
       2) `get_dag()`

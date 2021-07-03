@@ -11,6 +11,7 @@ from tqdm.autonotebook import tqdm
 
 import core.pandas_helpers as pdhelp
 import helpers.dbg as dbg
+import helpers.s3 as hs3
 import helpers.io_ as hio
 import im.common.data.types as icdtyp
 import im.kibot.data.load.kibot_s3_data_loader as ikdlki
@@ -542,8 +543,11 @@ class FuturesContractLifetimes:
         for symbol in symbols:
             file_name = os.path.join(self._get_dir_name(), symbol + ".csv")
             dbg.dassert_exists(file_name)
-            aws_profile = "am"
-            df = pdhelp.read_csv(file_name, aws_profile=aws_profile, index_col=0)
+            if hs3.is_s3_path(file_name):
+                kwargs = {"aws_profile": "am"}
+            else:
+                kwargs = {}
+            df = pdhelp.read_csv(file_name, index_col=0, **kwargs)
             dbg.dassert_eq(
                 df.columns.tolist(),
                 ["symbol", "contract", "start_date", "end_date"],
