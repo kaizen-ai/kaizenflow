@@ -330,7 +330,9 @@ class ModelEvaluator:
             )
             results.append(pd.concat([corr], keys=["correlation"]))
         if pnl is not None and returns is not None:
-            corr = pd.Series(pnl.corr(returns), index=["pnl_corr_to_underlying"], name=name)
+            corr = pd.Series(
+                pnl.corr(returns), index=["pnl_corr_to_underlying"], name=name
+            )
             results.append(pd.concat([corr], keys=["correlation"]))
         if positions is not None and returns is not None:
             bets = self.stats_computer.compute_bet_stats(
