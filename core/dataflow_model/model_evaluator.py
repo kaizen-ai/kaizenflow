@@ -323,9 +323,15 @@ class ModelEvaluator:
                     pnl, time_series_type="pnl"
                 ).rename(name)
             )
+            corr = pd.Series(
+                stats.compute_implied_correlation(pnl),
+                index=["prediction_corr_implied_by_pnl"],
+                name=name,
+            )
+            results.append(pd.concat([corr], keys=["correlation"]))
         if pnl is not None and returns is not None:
             corr = pd.Series(
-                pnl.corr(returns), index=["corr_to_underlying"], name=name
+                pnl.corr(returns), index=["pnl_corr_to_underlying"], name=name
             )
             results.append(pd.concat([corr], keys=["correlation"]))
         if positions is not None and returns is not None:
@@ -335,10 +341,17 @@ class ModelEvaluator:
             bets.name = name
             results.append(pd.concat([bets], keys=["bets"]))
             # TODO(*): Use `predictions` instead.
+            prediction_corr = positions.corr(returns)
             corr = pd.Series(
-                positions.corr(returns), index=["prediction_corr"], name=name
+                prediction_corr, index=["prediction_corr"], name=name
             )
             results.append(pd.concat([corr], keys=["correlation"]))
+            sr = pd.Series(
+                stats.compute_implied_sharpe_ratio(pnl, prediction_corr),
+                index=["sr_implied_by_prediction_corr"],
+                name=name,
+            )
+            results.append(pd.concat([sr], keys=["signal_quality"]))
         if positions is not None:
             finance = self.stats_computer.compute_finance_stats(
                 positions, time_series_type="positions"
