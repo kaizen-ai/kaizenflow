@@ -1130,7 +1130,9 @@ def compute_implied_correlation(pnl: pd.Series) -> float:
     """
     count_per_year = hdataf.compute_count_per_year(pnl)
     sr = compute_annualized_sharpe_ratio(pnl)
-    corr = apply_sharpe_ratio_correlation_conversion(count_per_year, sharpe_ratio=sr)
+    corr = apply_sharpe_ratio_correlation_conversion(
+        count_per_year, sharpe_ratio=sr
+    )
     return corr
 
 
@@ -1138,13 +1140,15 @@ def compute_implied_sharpe_ratio(srs: pd.Series, corr: float) -> float:
     """
     Infer implied Sharpe ratio given `corr` and predictions at `srs` non-NaNs.
 
-    Same assumptions as `compute_implied_correlation()`, and `srs` must have a
-    `DatetimeIndex` with a `freq`. The values of `srs` are not used directly,
-    but rather only the knowledge of whether they are included in
-    `srs.count()`, e.g., are non-NaN, non-inf, etc.
+    Same assumptions as `compute_implied_correlation()`, and `srs` must
+    have a `DatetimeIndex` with a `freq`. The values of `srs` are not
+    used directly, but rather only the knowledge of whether they are
+    included in `srs.count()`, e.g., are non-NaN, non-inf, etc.
     """
     count_per_year = hdataf.compute_count_per_year(srs)
-    sr = apply_sharpe_ratio_correlation_conversion(count_per_year, correlation=corr)
+    sr = apply_sharpe_ratio_correlation_conversion(
+        count_per_year, correlation=corr
+    )
     return sr
 
 

@@ -256,6 +256,7 @@ def compute_points_per_year_for_given_freq(freq: str) -> float:
     except ZeroDivisionError:
         return 0.0
 
+
 def compute_count_per_year(data: Union[pd.Series, pd.DataFrame]) -> float:
     """
     Return data.count() divided by the length of `data` in years.
