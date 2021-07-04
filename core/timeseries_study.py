@@ -71,7 +71,7 @@ class _TimeSeriesAnalyzer:
         _LOG.debug(func_name)
         if func_name in self._disabled_methods:
             _LOG.debug("Skipping '%s' as per user request", func_name)
-            return
+            return None
         #
         ax = self._time_series.plot(ax=ax)
         ax.set_title(
@@ -98,7 +98,7 @@ class _TimeSeriesAnalyzer:
         """
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
-            return
+            return None
         # Split by year.
         time_series = self._time_series.dropna()
         yearly_resample = time_series.resample("y")
@@ -111,7 +111,7 @@ class _TimeSeriesAnalyzer:
         num_plots = years_to_plot_data_mask.sum()
         if num_plots == 0:
             _LOG.warning("Not enough data to plot year-by-year.")
-            return
+            return None
         if axes is None:
             # Create as many subplots as years.
             _, axes = plot.get_multiple_plots(
@@ -159,7 +159,7 @@ class _TimeSeriesAnalyzer:
         """
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
-            return
+            return None
         #
         self._boxplot(self._time_series, self._time_series.index.day, ax=ax)
         ax = ax or plt.gca()
@@ -178,7 +178,7 @@ class _TimeSeriesAnalyzer:
         """
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
-            return
+            return None
         #
         self._boxplot(self._time_series, self._time_series.index.dayofweek, ax=ax)
         ax = ax or plt.gca()
@@ -253,7 +253,7 @@ class TimeSeriesMinutelyStudy(_TimeSeriesAnalyzer):
     ) -> Optional[mpl.figure.Figure]:
         func_name = intr.get_function_name()
         if self._need_to_skip(func_name):
-            return
+            return None
         #
         self._boxplot(self._time_series, self._time_series.index.hour, ax=ax)
         ax = ax or plt.gca()
@@ -303,7 +303,7 @@ def map_dict_to_dataframe(
     all_func_outs = []
     dict_items = dict_.items()
     if progress_bar:
-        dict_items = tqdm(dict_.items())
+        dict_items = tqdm(dict_.items(), desc="map_dict_to_df")
     for key, series in dict_items:
         # Apply all functions in `functions` to `series`.
         key_func_outs = []

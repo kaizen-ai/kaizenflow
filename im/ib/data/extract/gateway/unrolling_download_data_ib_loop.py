@@ -191,7 +191,7 @@ def get_historical_data_from_tasks(
     df = []
     ib = videgu.ib_connect(client_id, is_notebook=False)
     if use_prograss_bar:
-        tasks = tqdm(tasks)
+        tasks = tqdm(tasks, desc="Getting historical data from tasks")
     for task in tasks:
         _LOG.debug("task='%s'", task)
         (

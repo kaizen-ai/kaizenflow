@@ -14,7 +14,7 @@ import argparse
 import logging
 import os
 import sys
-from typing import Optional, cast
+from typing import Optional
 
 import joblib
 import tqdm
@@ -176,7 +176,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Execute.
     if num_threads == "serial":
         rcs = []
-        for config in tqdm.tqdm(configs):
+        for config in tqdm.tqdm(configs, desc="Running notebooks"):
             i = int(config[("meta", "id")])
             _LOG.debug("\n%s", printing.frame("Config %s" % i))
             #

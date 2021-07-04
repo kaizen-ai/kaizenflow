@@ -210,7 +210,7 @@ def check_file_size(abort_on_error: bool = True) -> None:
             stat = os.stat(file_name)
             size = stat.st_size
             size_as_str = _sizeof_fmt(stat.st_size)
-            _LOG.debug(f"%s: %s", file_name, size_as_str)
+            _LOG.debug("%s: %s", file_name, size_as_str)
             if not file_name.endswith(".ipynb"):
                 if size > _MAX_FILE_SIZE_IN_KB * 1024:
                     # File is to big, abort the commit.

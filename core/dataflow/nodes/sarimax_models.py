@@ -209,7 +209,9 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
             pred_start = 1
         y_var = y.columns[0]
         for t in tqdm(
-            range(pred_start, pred_range + 1), disable=self._disable_tqdm
+            range(pred_start, pred_range + 1),
+            disable=self._disable_tqdm,
+            desc="ContinuosSarimax predict",
         ):
             # If `t` is larger than `y`, this selects the whole `y`.
             y_past = y.iloc[:t]

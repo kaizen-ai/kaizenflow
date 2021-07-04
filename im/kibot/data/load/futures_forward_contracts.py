@@ -52,7 +52,9 @@ class FuturesForwardContracts:
                 2010-01-14  79.88  80.47
         """
         data = []
-        for column in tqdm(df.columns, disable=self._disable_tqdm):
+        for column in tqdm(
+            df.columns, disable=self._disable_tqdm, desc="Processing columns"
+        ):
             contract_srs = df[column]
             market_data = self._replace_contracts_with_data(contract_srs)
             data_srs = market_data[col]
@@ -88,7 +90,12 @@ class FuturesForwardContracts:
         contracts = srs.unique().tolist()
         # Extract relevant data subseries for each contract and put in list.
         data_subseries = []
-        for contract in tqdm(contracts, leave=False, disable=self._disable_tqdm):
+        for contract in tqdm(
+            contracts,
+            leave=False,
+            disable=self._disable_tqdm,
+            desc="Replacing contracts with data",
+        ):
             # Load contract data.
             data = self._data_loader.read_data(
                 "Kibot",

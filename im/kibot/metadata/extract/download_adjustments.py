@@ -30,6 +30,7 @@ _JOBLIB_VERBOSITY = 1
 
 
 # TODO(amr): make more general and provide as helper.
+# TODO(gp): Replace this with helpers/parallel.py
 def _execute_loop(
     func: Callable,
     kwargs_list: Iterable[dict],
@@ -39,7 +40,7 @@ def _execute_loop(
     """
     Execute a function with a list of kwargs serially or in parallel.
     """
-    tqdm_ = tqdm.tqdm(kwargs_list, total=total)
+    tqdm_ = tqdm.tqdm(kwargs_list, total=total, desc="Executing loop")
 
     if not serial:
         joblib.Parallel(n_jobs=_JOBLIB_NUM_CPUS, verbose=_JOBLIB_VERBOSITY)(

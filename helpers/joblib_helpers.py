@@ -5,6 +5,7 @@ import helpers.joblib_helpers as hjoblib
 """
 
 import logging
+import os
 import pprint
 import random
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -29,6 +30,23 @@ TASK = Tuple[Tuple[Any], Dict[str, Any]]
 WORKLOAD = Tuple[Callable, str, TASK]
 
 
+# def _func(*args: Any, **kwargs: Any) -> str:
+#     """
+#     Execute the function task.
+#
+#     Note that the function task doesn't have to be the function that we intend to
+#     cache. Calling the function to cache might be a side effect. E.g., if there are
+#     multiple functions that are caching data.
+#
+#     :return: string representing information about the cached function execution.
+#     """
+#     pass
+#
+#
+# def _get_workload(args: argparse.Namespace) -> Tuple[Callable, str, List[hjoblib.TASK], str, str]:
+#     pass
+
+
 def _file_logging_decorator(func: Callable) -> Callable:
     """
     Decorator to handle execution logging of the function and the
@@ -36,12 +54,30 @@ def _file_logging_decorator(func: Callable) -> Callable:
     """
 
     def wrapper(*args: Any, **kwargs: Any) -> Any:
+        # `start_ts` needs to be before running the function.
+        start_ts = hdatetime.get_timestamp("et")
         # Extract parameters for the wrapper.
         task_idx = kwargs.pop("pe_task_idx")
         task_len = kwargs.pop("pe_task_len")
+        tag = "%s/%s (%s)" % (task_idx + 1, task_len, start_ts)
+        _LOG.info(hprint.frame(tag, "*"))
         func_name = kwargs.pop("pe_func_name")
         abort_on_error = kwargs.pop("pe_abort_on_error")
         log_file = kwargs.pop("pe_log_file")
+        # log_to_file = True
+        log_to_file = False
+        if log_to_file:
+            dst_dir = os.path.dirname(os.path.abspath(log_file))
+            print(dst_dir)
+            hio.create_dir(dst_dir, incremental=True)
+            file_name = os.path.join(
+                dst_dir, f"{func_name}.{task_idx + 1}_{task_len}.log"
+            )
+            _LOG.warning("Logging to %s", file_name)
+            file_handler = logging.FileHandler(file_name)
+            root_logger = logging.getLogger()
+            root_logger.addHandler(file_handler)
+
         # Save some information about the function execution.
         txt = []
         memento = htimer.dtimer_start(logging.DEBUG, "Execute %s" % func.__name__)
@@ -50,8 +86,6 @@ def _file_logging_decorator(func: Callable) -> Callable:
         txt.append("func_name=%s" % func_name)
         txt.append("args=\n%s" % hprint.indent(str(args)))
         txt.append("kwargs=\n%s" % hprint.indent(str(kwargs)))
-        # `start_ts` needs to be before running the function.
-        start_ts = hdatetime.get_timestamp()
         try:
             res = func(*args, **kwargs)
             error = False
@@ -60,16 +94,17 @@ def _file_logging_decorator(func: Callable) -> Callable:
             res = None
             error = True
             _LOG.error("Execution failed:\n%s", txt)
-        _LOG.debug("error=%s", error)
+        txt.append("func_res=\n%s" % hprint.indent(str(res)))
         msg, elapsed_time = htimer.dtimer_stop(memento)
         _ = msg
         txt.append("elapsed_time_in_secs=%s" % elapsed_time)
         txt.append("start_ts=%s" % start_ts)
-        end_ts = hdatetime.get_timestamp()
+        end_ts = hdatetime.get_timestamp("et")
         txt.append("end_ts=%s" % end_ts)
         txt.append("error=%s" % error)
         # Update log file.
-        txt = "\n" + hprint.frame(start_ts) + "\n" + "\n".join(txt)
+        tag = "%s/%s (%s)" % (task_idx + 1, task_len, start_ts)
+        txt = "\n" + hprint.frame(tag) + "\n" + "\n".join(txt)
         _LOG.debug("txt=\n%s", hprint.indent(txt))
         hio.to_file(log_file, txt, mode="a")
         if error:
@@ -77,7 +112,7 @@ def _file_logging_decorator(func: Callable) -> Callable:
             # The execution wasn't successful.
             if abort_on_error:
                 _LOG.error("Aborting since abort_on_error=%s", abort_on_error)
-                raise e
+                raise e  # noqa: F821
             _LOG.error(
                 "Continuing execution since abort_on_error=%s", abort_on_error
             )
@@ -158,7 +193,7 @@ def tasks_to_string(func: Callable, func_name: str, tasks: List[TASK]) -> str:
     txt = []
     txt.append("func=%s" % func.__name__)
     txt.append("func_name=%s" % func_name)
-    for i, task in tqdm(enumerate(tasks)):
+    for i, task in enumerate(tasks):
         txt.append("\n" + hprint.frame("Task %s / %s" % (i + 1, len(tasks))))
         txt.append("task=%s" % pprint.pformat(task))
     txt = "\n".join(txt)
@@ -209,7 +244,7 @@ def parallel_execute(
     if num_threads == "serial":
         res = []
         for i, task in tqdm(
-            enumerate(tasks), total=len(tasks), desc="Serial tasks"
+            enumerate(tasks), total=len(tasks), desc="Running serial tasks"
         ):
             _LOG.debug("\n%s", hprint.frame("Task %s / %s" % (i + 1, len(tasks))))
             _LOG.debug("task=%s", pprint.pformat(task))
@@ -224,7 +259,7 @@ def parallel_execute(
                     incremental,
                     abort_on_error,
                     log_file,
-                )
+                ),
             )
             res.append(res_tmp)
     else:
@@ -232,8 +267,13 @@ def parallel_execute(
         # -1 is interpreted by joblib like for all cores.
         _LOG.info("Using %d threads", num_threads)
         # From https://stackoverflow.com/questions/24983493
-        tqdm_ = tqdm(enumerate(tasks), total=len(tasks), desc="Parallel tasks")
-        res = joblib.Parallel(n_jobs=num_threads, verbose=100)(
+        tqdm_ = tqdm(
+            enumerate(tasks), total=len(tasks), desc="Running parallel tasks"
+        )
+        # backend = "threading"
+        # backend = "multiprocessing"
+        backend = "loky"
+        res = joblib.Parallel(n_jobs=num_threads, backend=backend, verbose=200)(
             joblib.delayed(wrapped_func)(
                 *task[0],
                 **_decorate_kwargs(
@@ -244,7 +284,7 @@ def parallel_execute(
                     incremental,
                     abort_on_error,
                     log_file,
-                )
+                ),
             )
             for i, task in tqdm_
         )
