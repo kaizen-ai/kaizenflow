@@ -91,14 +91,20 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     txt_tmp.append(f"version={uname.version}")
     txt_tmp.append(f"machine={uname.machine}")
     txt_tmp.append(f"processor={uname.processor}")
-    import psutil
+    try:
+        import psutil
 
-    txt_tmp.append("cpu count=%s" % psutil.cpu_count())
-    txt_tmp.append("cpu freq=%s" % str(psutil.cpu_freq()))
-    # TODO(gp): Report in MB or GB.
-    txt_tmp.append("memory=%s" % str(psutil.virtual_memory()))
-    txt_tmp.append("disk usage=%s" % str(psutil.disk_usage("/")))
-    txt, txt_tmp = _append(txt, txt_tmp)
+        has_psutil = True
+    except ModuleNotFoundError as e:
+        print(e)
+        has_psutil = False
+    if has_psutil:
+        txt_tmp.append("cpu count=%s" % psutil.cpu_count())
+        txt_tmp.append("cpu freq=%s" % str(psutil.cpu_freq()))
+        # TODO(gp): Report in MB or GB.
+        txt_tmp.append("memory=%s" % str(psutil.virtual_memory()))
+        txt_tmp.append("disk usage=%s" % str(psutil.disk_usage("/")))
+        txt, txt_tmp = _append(txt, txt_tmp)
     # Add package info.
     txt.append("# Packages")
     packages = []

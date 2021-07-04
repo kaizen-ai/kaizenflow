@@ -759,7 +759,10 @@ def _assert_equal(
         txt.append(hprint.frame(f"EXPECTED VARIABLE: {full_test_name}", "-"))
         # We always return the variable exactly as this should be, even if we could
         # make it look better through indentation in case of fuzzy match.
-        txt.append(f'exp = r"""{actual_orig}"""')
+        if actual_orig.startswith('"'):
+            txt.append(f"exp = r'''{actual_orig}'''")
+        else:
+            txt.append(f'exp = r"""{actual_orig}"""')
         txt = "\n".join(txt)
         error_msg += txt
         # Select what to save.

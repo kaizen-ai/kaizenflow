@@ -12,8 +12,6 @@ import pprint
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
 
-from dateutil import tz
-
 # import helpers.versioning as hversi
 # hversi.check_version()
 
@@ -685,6 +683,19 @@ class _LocalTimeZoneFormatter:
     Override logging.Formatter to use an aware datetime object.
     """
 
+    def __init__(self, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        try:
+            # TODO(gp): Automatically detect the time zone. It might be complicated in
+            #  Docker.
+            from dateutil import tz
+
+            # self._tzinfo = pytz.timezone('America/New_York')
+            self._tzinfo = tz.gettz("America/New_York")
+        except ModuleNotFoundError as e:
+            print("Can't import dateutil: using UTC\n%s" % str(e))
+            self._tzinfo = None
+
     def converter(self, timestamp: float) -> datetime.datetime:
         # To make the linter happy and respecting the signature of the
         # superclass method.
@@ -693,12 +704,9 @@ class _LocalTimeZoneFormatter:
         dt = datetime.datetime.utcfromtimestamp(timestamp)
         # Convert it to an aware datetime object in UTC time.
         dt = dt.replace(tzinfo=datetime.timezone.utc)
-        # TODO(gp): Automatically detect the time zone. It might be complicated in
-        #  Docker.
-        # tzinfo = pytz.timezone('America/New_York')
-        tzinfo = tz.gettz("America/New_York")
-        # Convert it to your local timezone (still aware)
-        dt = dt.astimezone(tzinfo)
+        if self._tzinfo is not None:
+            # Convert it to desired timezone.
+            dt = dt.astimezone(self._tzinfo)
         return dt
 
     def formatTime(
