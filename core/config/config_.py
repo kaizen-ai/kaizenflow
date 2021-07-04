@@ -6,7 +6,7 @@ import collections
 import copy
 import logging
 import re
-from typing import Any, Dict, Iterable, List, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -26,99 +26,165 @@ class Config:
     """
     A nested ordered dictionary storing configuration information.
 
-    Keys can only be strings. Values can be strings, ints, or another `Config`.
+    Keys can only be strings.
+    Values can be a Python type or another `Config`.
 
     We refer to configs as:
     - "flat" when they have a single level
+        - E.g., `config = {"hello": "world"}`
     - "nested" when there are multiple levels
+        - E.g., `config = {"hello": {"cruel", "world"}}`
     """
+
+    # A simple or compound key that can be used to access a Config.
+    Key = Union[str, Iterable[str]]
 
     def __init__(
         self,
-        # TODO(gp): Difficult to read and type hints are loose: try to improve.
-        array: Union[
-            List[Tuple[str, Union[int, str]]],
-            List[Tuple[str, Union[List[int], str]]],
-            None,
-        ] = None,
+        array: Optional[List[Tuple[str, Any]]] = None,
     ) -> None:
         """
-        :param array: array of (key, value), where value can be a Python type or a
+        Build a config from a list of (key, value).
+
+        :param array: list of (key, value), where value can be a Python type or a
             `Config` in case of a nested config.
         """
-        # pylint: disable=unsubscriptable-object
         # TODO(gp): MutableMapping instead of disabling the lint?
+        # pylint: disable=unsubscriptable-object
         self._config: collections.OrderedDict[
             str, Any
         ] = collections.OrderedDict()
         if array is not None:
             for k, v in array:
+                dbg.dassert_isinstance(k, str)
                 self._config[k] = v
 
-    def __setitem__(self, key: Union[str, Iterable[str]], val: Any) -> None:
+    def __setitem__(self, key: Key, val: Any) -> None:
         """
-        Set/update `key` to `val`.
+        Set/update `key` to `val`, equivalent to `dict[key] = val`.
 
         If `key` is an iterable of keys, then the key hierarchy is
         navigated/created and the leaf value added/updated with `val`.
         """
+        _LOG.debug("key=%s, config=%s", key, self)
         if intr.is_iterable(key):
+            # Extract the first element of the nested key.
             head_key, tail_key = key[0], key[1:]  # type: ignore
             _LOG.debug(
-                "key=%s -> head_key=%s tail_key=%s", key, head_key, tail_key
+                "key='%s' -> head_key='%s', tail_key='%s'",
+                key,
+                head_key,
+                tail_key,
             )
             dbg.dassert_isinstance(head_key, str, "Keys can only be string")
             if not tail_key:
                 # Tuple of a single element, then set the value.
-                # Note that the following call is not equivalent to
-                # `self._config[head_key]`.
                 self.__setitem__(head_key, val)
             else:
-                # Recurse.
+                # Composed key: recurse on the rest of the key.
+                _LOG.debug(
+                    "head_key='%s', self._config=%s", head_key, self._config
+                )
                 subconfig = self.get(head_key, None) or self.add_subconfig(
                     head_key
                 )
                 dbg.dassert_isinstance(subconfig, Config)
                 subconfig.__setitem__(tail_key, val)
             return
+        # Base case: key is a string, config is a dict.
         _LOG.debug("key=%s", key)
         dbg.dassert_isinstance(key, str, "Keys can only be string")
+        dbg.dassert_isinstance(self._config, dict)
         self._config[key] = val  # type: ignore
 
-    def __getitem__(self, key: Union[str, Iterable[str]]) -> Any:
+    def __getitem__(self, key: Key) -> Any:
         """
-        Get value for `key` or assert, if it doesn't exist.
+        Get value for `key` or raise `KeyError` if it doesn't exist.
 
-        If `key` is an iterable of keys (e.g., `("read_data",
-        "file_name")`, then the hierarchy is navigated until the
-        corresponding element is found or we assert if the element
-        doesn't exist.
+        If `key` is an iterable of keys (e.g., `("read_data", "file_name")`, then
+        the hierarchy is navigated until the corresponding element is found or we
+        raise if the element doesn't exist.
+
+        When we report an error about a missing key, we print only the keys of the
+        Config at the current level of the recursion and not the original Config
+        (which is also not directly accessible inside the recursion), e.g.,
+        `key='nrows_tmp' not in ['nrows', 'nrows2']`
+
+        :raises KeyError: if the (nested) key is not found in the `Config`.
         """
+        _LOG.debug("key=%s, config=%s", key, self)
+        # Check if the key is nested.
         if intr.is_iterable(key):
+            # Extract the first element of the nested key.
             head_key, tail_key = key[0], key[1:]  # type: ignore
             _LOG.debug(
-                "key=%s -> head_key=%s tail_key=%s", key, head_key, tail_key
+                "key='%s' -> head_key='%s', tail_key='%s'",
+                key,
+                head_key,
+                tail_key,
             )
+            dbg.dassert_isinstance(head_key, str, "Keys can only be string")
             if not tail_key:
                 # Tuple of a single element, then return the value.
-                # Note that the following call is not equivalent to
-                # `self._config[head_key]`.
                 ret = self.__getitem__(head_key)
             else:
-                # Recurse.
-                dbg.dassert_isinstance(head_key, str, "Keys can only be string")
-                dbg.dassert_in(head_key, self._config.keys())
-                ret = self._config[head_key].__getitem__(tail_key)
+                # Composed key: recurse on the rest of the key.
+                _LOG.debug(
+                    "head_key='%s', self._config=%s", head_key, self._config
+                )
+                if head_key not in self._config:
+                    raise KeyError(
+                        f"key='{head_key}' not in '{list(self._config.keys())}'"
+                    )
+                _LOG.debug(
+                    "head_key='%s' tail_key='%s' in config=%s",
+                    head_key,
+                    tail_key,
+                    self._config,
+                )
+                next_config = self._config[head_key]
+                _LOG.debug("next_config=%s", self._config)
+                if isinstance(next_config, Config):
+                    # Recurse.
+                    ret = next_config.__getitem__(tail_key)
+                else:
+                    # There are more keys to process but we have reached the leaves
+                    # of the config, then we assert.
+                    raise KeyError(
+                        f"tail_key='{tail_key}' not in '{next_config}'"
+                    )
             return ret
+        # Base case: key is a string, config is a dict.
         _LOG.debug("key=%s", key)
         dbg.dassert_isinstance(key, str, "Keys can only be string")
-        dbg.dassert_in(key, self._config.keys())
+        dbg.dassert_isinstance(self._config, dict)
+        if key not in self._config:
+            raise KeyError(f"key='{key}' not in '{list(self._config.keys())}'")
         ret = self._config[key]  # type: ignore
         return ret
 
+    def __contains__(self, key: Key) -> bool:
+        """
+        Implement membership operator like `key in config`.
+
+        If `key` is nested, the hierarchy of Config objects is
+        navigated.
+        """
+        # This is implemented lazily (or Pythonically) with a try-catch around
+        # accessing the key.
+        _LOG.debug("key=%s, config=\n%s", key, self)
+        try:
+            val = self.__getitem__(key)
+            _LOG.debug("Found val=%s", val)
+            found = True
+        except KeyError as e:
+            _LOG.debug("e=%s", e)
+            found = False
+        return found
+
     def __str__(self) -> str:
         """
-        Return the string representation.
+        Return a short string representation of this `Config`.
         """
         txt = []
         for k, v in self._config.items():
@@ -140,15 +206,16 @@ class Config:
 
     def __repr__(self) -> str:
         """
-        Return an unambiguous representation the same as str().
+        Return an unambiguous representation of this `Config`
 
-        This is used by Jupyter notebook when printing.
+        For now it's the same as `str()`. This is used by Jupyter
+        notebook when printing.
         """
         return str(self)
 
     def __len__(self) -> int:
         """
-        Return len of underlying dict.
+        Return number of keys, i.e., the length of the underlying dict.
 
         This enables calculating `len()` as with a dict and also enables
         bool evaluation of a `Config` object for truth value testing.
@@ -163,7 +230,7 @@ class Config:
 
     def update(self, config: "Config") -> None:
         """
-        Update `self` with `config`.
+        Equivalent to `dict.update(config)`.
 
         Some features of the update:
         - Updates leaf values in self from values in `config`
@@ -174,19 +241,30 @@ class Config:
         for path, val in flattened.items():
             self.__setitem__(path, val)
 
-    def get(self, key: str, val: Any) -> Any:
+    def get(self, key: Key, *args: Any) -> Any:
         """
         Equivalent to `dict.get(key, default_val)`.
 
-        It has the same functionality as `__getitem__` but returning
+        It has the same functionality as `__getitem__()` but returning
         `val` if the value corresponding to `key` doesn't exist.
         """
         try:
             ret = self.__getitem__(key)
-        except AssertionError:
-            # TODO(gp): We should throw/catch a KeyError exception, instead of a
-            #  generic AssertionError.
-            ret = val
+        except KeyError as e:
+            # No key: use the default val if it was passed or asserts.
+            _LOG.debug("e=%s", e)
+            if args:
+                # There should be only one element.
+                dbg.dassert_eq(
+                    len(args),
+                    1,
+                    "There should be only one parameter passed, instead there is %s",
+                    str(args),
+                )
+                ret = args[0]
+            else:
+                # No parameter found, then raise.
+                raise e
         return ret
 
     def pop(self, key: str) -> Any:
