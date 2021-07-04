@@ -523,8 +523,6 @@ class ModelEvaluator:
         return series_dict
 
 
-# TODO(gp): Maybe make it a classmethod builder for ModelEvaluator called `build_from_df`,
-#  so we can avoid stuttering and encapsulate the code more.
 def build_model_evaluator_from_df(
     df: pd.DataFrame,
     returns_col_group: tuple,
