@@ -21,13 +21,23 @@ _LOG = logging.getLogger(__name__)
 # Debug output
 # #############################################################################
 
-COLOR_MAP = {
-    "blue": "\033[94m",
-    "green": "\033[92m",
-    "none": "\033[0m",
-    "purple": "\033[95m",
-    "red": "\033[91m",
-    "yellow": "\033[33m",
+_COLOR_MAP = {
+    "blue": 94,
+    "green": 92,
+    "white": 0,
+    "purple": 95,
+    "red": 91,
+    "yellow": 33,
+    # Blu.
+    "DEBUG": 34,
+    # Cyan.
+    "INFO": 36,
+    # Yellow.
+    "WARNING": 33,
+    # Red.
+    "ERROR": 31,
+    # White on red background.
+    "CRITICAL": 41,
 }
 
 
@@ -35,7 +45,12 @@ def color_highlight(text: str, color: str) -> str:
     """
     Return a colored string.
     """
-    return COLOR_MAP[color] + text + COLOR_MAP["none"]
+    prefix = "\033["
+    suffix = "\033[0m"
+    dbg.dassert_in(color, _COLOR_MAP)
+    color_code = _COLOR_MAP[color]
+    txt = f"{prefix}{color_code}m{text}{suffix}"
+    return txt
 
 
 def clear_screen() -> None:

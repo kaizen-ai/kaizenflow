@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 r"""
-Run an experiment given a list of configs.
+Run an experiment consisting of multiple model runs based on the passed
+- `config_builder`, which describes DAG and configs
+- `experiment_builder`, which describes the model driver
 
 # Run an RH1E pipeline using 2 threads:
 > run_experiment.py \
     --experiment_builder "core.dataflow_model.master_experiment.run_experiment" \
-    --config_builder "dataflow_lem.RH1E.task89_config_builder.build_15min_ar_model_configs()" \
+    --config_builder "dataflow_lem.RH1E.config.build_15min_model_configs()" \
     --dst_dir experiment1 \
     --num_threads 2
 """
@@ -13,6 +15,7 @@ import argparse
 import logging
 import os
 import sys
+from typing import cast
 
 import joblib
 import tqdm
@@ -89,6 +92,7 @@ def _run_experiment(
     else:
         # Mark as success.
         cdtfut.mark_config_as_success(experiment_result_dir)
+    rc = cast(int, rc)
     return rc
 
 
@@ -106,7 +110,7 @@ def _parse() -> argparse.ArgumentParser:
         help="File storing the pipeline to iterate over",
     )
     parser = prsr.add_verbosity_arg(parser)
-    return parser
+    return parser  # type: ignore
 
 
 # TODO(gp): Use `joblib_helpers`.

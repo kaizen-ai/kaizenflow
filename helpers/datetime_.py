@@ -30,7 +30,8 @@ def get_timestamp(tz: Optional[str] = None) -> str:
     elif tz == "et":
         # Return in ET.
         import pytz
-        timestamp = datetime.datetime.now(pytz.timezone('EST'))
+
+        timestamp = datetime.datetime.now(pytz.timezone("EST"))
     else:
         dbg.dassert_is(tz, None)
         timestamp = datetime.datetime.now()
@@ -194,7 +195,7 @@ def _shift_to_period_end(
     pattern = re.compile("|".join(month_aliases), re.IGNORECASE)
     match = pattern.search(date)
     if match is None:
-        return
+        return None
     span = match.span()
     date_without_month = f"{date[:span[0]]}{date[span[1]:]}".strip()
     if len(date_without_month) == 4 and date_without_month.isdigit():
@@ -247,12 +248,12 @@ def _determine_date_format(
         return format_, modify_quarterly_data
     else:
         _LOG.error("This format is not supported: '%s'", date)
-        return
+        return None
     next_char = date[4]
     if next_char in ["-", ".", "/", " "]:
         if len(date) not in [7, 8]:
             _LOG.error("This format is not supported: '%s'", date)
-            return
+            return None
         format_ += "-"
         next_char = date[5]
         if next_char == "W":
@@ -288,7 +289,7 @@ def _determine_date_format(
             format_ += "%m-%d"
         else:
             _LOG.error("This format is not supported: '%s'", date)
-            return
+            return None
     elif next_char == "M" and len(date) == 7:
         # "1959M01" format.
 
@@ -305,5 +306,5 @@ def _determine_date_format(
         format_ += "-%m-%d"
     else:
         _LOG.error("This format is not supported: '%s'", date)
-        return
+        return None
     return format_, date_modification_func

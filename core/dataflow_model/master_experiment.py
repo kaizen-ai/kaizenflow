@@ -1,3 +1,7 @@
+"""
+Entry point for `run_experiment.py`.
+"""
+
 import logging
 
 import core.config as cconfig
@@ -11,8 +15,8 @@ def run_experiment(config: cconfig.Config) -> None:
     """
     Implement the master experiment to:
 
-    - create a DAG
-    - run it
+    - create a DAG from the passed config
+    - run the DAG
     - save the generated `ResultBundle`
 
     All parameters are passed through a `Config`.

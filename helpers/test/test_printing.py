@@ -10,7 +10,7 @@ _LOG = logging.getLogger(__name__)
 
 class Test_printing1(hut.TestCase):
     def test_color_highlight1(self) -> None:
-        for c in hprint.COLOR_MAP:
+        for c in hprint._COLOR_MAP:
             _LOG.debug(hprint.color_highlight(c, c))
 
 

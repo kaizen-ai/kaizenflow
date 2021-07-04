@@ -12,6 +12,18 @@
 #     name: python3
 # ---
 
+# %% [markdown]
+# # Description
+#
+# This notebook is the entry point for `run_notebook.py`
+# It is conceptually equivalent to `core/dataflow_model/master_experiment.py` for the `run_experiment.py` flow
+#
+# This notebook:
+# - get a config from the environment
+# - create a DAG from the passed config
+# - run the DAG
+# - save the generated `ResultBundle`
+
 # %%
 # %load_ext autoreload
 # %autoreload 2
@@ -74,6 +86,7 @@ else:
 result_bundle.payload = payload
 
 # %%
+# TODO(gp): Use  `cdtfut.save_experiment_result_bundle(config, result_bundle)`
 try:
     path = os.path.join(
         config["meta", "experiment_result_dir"], "result_bundle.pkl"
