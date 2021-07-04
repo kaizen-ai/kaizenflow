@@ -381,7 +381,7 @@ class DAG:
         # and so we need to add `nid` back.
         nids = itertools.chain(ancestors, [nid])
         if progress_bar:
-            nids = tqdm(list(nids))
+            nids = tqdm(list(nids), desc="run_leq_node")
         for n in nids:
             _LOG.debug("Executing node '%s'", n)
             self._run_node(n, method)

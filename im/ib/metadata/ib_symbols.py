@@ -11,8 +11,8 @@ from typing import List, Optional
 
 import core.pandas_helpers as pdhelp
 import helpers.dbg as dbg
-import helpers.s3 as hs3
 import helpers.printing as hprint
+import helpers.s3 as hs3
 import im.common.data.types as icdtyp
 import im.common.metadata.symbols as icmsym
 

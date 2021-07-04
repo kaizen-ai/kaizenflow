@@ -568,7 +568,11 @@ def _run(args) -> int:  # type: ignore
                     "clean_up_artifacts": not args.no_clean_up_artifacts,
                 },
             )
-            tqdm_ = tqdm.tqdm(to_download.iterrows(), total=len(to_download))
+            tqdm_ = tqdm.tqdm(
+                to_download.iterrows(),
+                total=len(to_download),
+                desc="Downloading Kibot data",
+            )
             # Run dataset downloads.
             if not args.serial:
                 joblib.Parallel(

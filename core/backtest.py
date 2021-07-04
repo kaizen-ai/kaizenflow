@@ -126,7 +126,7 @@ if True:
         else:
             trunc_len = prediction_length
         #
-        for i in tqdm(range(df.shape[0])):
+        for i in tqdm(range(df.shape[0]), desc="Running backtest"):
             if use_feat_dynamic_real and i < prediction_length:
                 # If there are no covariates to make forward prediction on,
                 # return NaN predictions.

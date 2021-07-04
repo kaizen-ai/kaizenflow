@@ -359,7 +359,7 @@ def print_column_variability(
     """
     print(("# df.columns=%s" % hprint.list_to_str(df.columns)))
     res = []
-    for c in tauton.tqdm(df.columns):
+    for c in tauton.tqdm(df.columns, desc="Computing column variability"):
         vals = _get_unique_elements_in_column(df, c)
         try:
             min_val = min(vals)
@@ -736,7 +736,11 @@ def rolling_pca_over_time(
     timestamps = corr_df.index.get_level_values(0).unique()
     eigval = np.zeros((timestamps.shape[0], df.shape[1]))
     eigvec = np.zeros((timestamps.shape[0], df.shape[1], df.shape[1]))
-    for i, dt in tauton.tqdm(enumerate(timestamps), total=timestamps.shape[0]):
+    for i, dt in tauton.tqdm(
+        enumerate(timestamps),
+        total=timestamps.shape[0],
+        desc="Computing rolling PCA",
+    ):
         eigval[i], eigvec[i] = _get_eigvals_eigvecs(corr_df, dt, sort_eigvals)
     # Package results.
     eigval_df = pd.DataFrame(eigval, index=timestamps)

@@ -6,6 +6,7 @@ import core.dataflow_model.model_evaluator as modeval
 
 from __future__ import annotations
 
+import collections
 import functools
 import json
 import logging
@@ -27,7 +28,7 @@ _LOG = logging.getLogger(__name__)
 
 class ModelEvaluator:
     """
-    Evaluates performance of financial models for returns.
+    Evaluate performance of financial models for returns.
     """
 
     def __init__(
@@ -276,7 +277,7 @@ class ModelEvaluator:
         oos_start = None
         if mode == "all_available" and self.oos_start is not None:
             oos_start = self.oos_start
-        for key in tqdm(keys):
+        for key in tqdm(keys, desc="Calculating stats"):
             stats_val = self._calculate_model_stats(
                 returns=rets[key],
                 positions=pos[key],
@@ -400,7 +401,7 @@ class ModelEvaluator:
         provided).
         """
         position_dict = {}
-        for key in tqdm(self.valid_keys):
+        for key in tqdm(self.valid_keys, desc="Calculating positions"):
             position_computer = PositionComputer(
                 returns=self.rets[key],
                 predictions=self.preds[key],
@@ -423,7 +424,7 @@ class ModelEvaluator:
         Calculate returns from positions.
         """
         pnls = {}
-        for key in tqdm(returns.keys()):
+        for key in tqdm(returns.keys(), "Calculating pnls"):
             pnl_computer = PnlComputer(
                 returns=returns[key], positions=positions[key]
             )
@@ -458,19 +459,23 @@ class ModelEvaluator:
         valid_keys = []
         for k, v in input_dict.items():
             if v.empty:
-                _LOG.warning("Empty series for `k`=%s", str(k))
+                _LOG.warning("Empty series for experiment key=%s", str(k))
                 continue
             if v.dropna().empty:
-                _LOG.warning("All NaN series for `k`=%s", str(k))
+                _LOG.warning("All NaN series for experiment key=%s", str(k))
             if oos_start is not None:
                 if v[:oos_start].dropna().empty:
-                    _LOG.warning("All-NaN in-sample for `k`=%s", str(k))
+                    _LOG.warning(
+                        "All-NaN in-sample for experiment key=%s", str(k)
+                    )
                     continue
                 if v[oos_start:].dropna().empty:
-                    _LOG.warning("All-NaN out-of-sample for `k`=%s", str(k))
+                    _LOG.warning(
+                        "All-NaN out-of-sample for experiment key=%s", str(k)
+                    )
                     continue
             if v.index.freq is None:
-                _LOG.warning("No `freq` for series for `k`=%s", str(k))
+                _LOG.warning("No `freq` for series for experiment key=%s", str(k))
                 continue
             valid_keys.append(k)
         return valid_keys
@@ -518,6 +523,8 @@ class ModelEvaluator:
         return series_dict
 
 
+# TODO(gp): Maybe make it a classmethod builder for ModelEvaluator called `build_from_df`,
+#  so we can avoid stuttering and encapsulate the code more.
 def build_model_evaluator_from_df(
     df: pd.DataFrame,
     returns_col_group: tuple,
@@ -546,6 +553,9 @@ def build_model_evaluator_from_df(
         oos_start=oos_start,
     )
     return model_evaluator
+
+
+# #############################################################################
 
 
 class PnlComputer:
@@ -584,6 +594,9 @@ class PnlComputer:
         dbg.dassert_isinstance(srs, pd.Series)
         dbg.dassert(not srs.dropna().empty)
         dbg.dassert(srs.index.freq)
+
+
+# #############################################################################
 
 
 class PositionComputer:
@@ -741,6 +754,9 @@ class PositionComputer:
         dbg.dassert(srs.index.freq)
 
 
+# #############################################################################
+
+
 class TransactionCostModeler:
     """
     Estimates transaction costs.
@@ -779,17 +795,18 @@ class TransactionCostModeler:
 
     def _return_srs(self, srs: pd.Series, mode: str) -> pd.Series:
         if mode == "ins":
-            return srs[: self.oos_start]
+            ret = srs[: self.oos_start]
         elif mode == "all_available":
-            return srs
+            ret = srs
         elif mode == "oos":
             dbg.dassert(
                 self.oos_start,
                 msg="Must set `oos_start` to run `oos`",
             )
-            return srs[self.oos_start :]
+            ret = srs[self.oos_start :]
         else:
             raise ValueError(f"Invalid mode `{mode}`!")
+        return ret
 
     @staticmethod
     def _validate_series(srs: pd.Series, oos_start: Optional[float]) -> None:

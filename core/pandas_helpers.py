@@ -6,19 +6,16 @@ Package with general pandas helpers.
 
 import collections
 import logging
-import os
 import types
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
-import botocore
 import numpy as np
 import pandas as pd
-import s3fs
 from tqdm.auto import tqdm
 
 import helpers.dbg as dbg
-import helpers.s3 as hs3
 import helpers.printing as pri
+import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
@@ -215,7 +212,7 @@ def df_rolling_apply(
         dbg.dassert_eq_all(df.iloc[idxs_loc].index, idxs)
         iter_ = idxs_loc
     if progress_bar:
-        iter_ = tqdm(iter_)
+        iter_ = tqdm(iter_, desc="Roll applying")
     for i in iter_:
         ts = df.index[i]
         _LOG.debug(pri.frame("i=%s ts=%s"), i, ts)
@@ -264,9 +261,12 @@ def read_csv(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
         s3fs = hs3.get_s3fs(aws_profile)
         stream = s3fs.open(file_name)
     else:
-        dbg.dassert_not_in("aws_profile", kwargs,
-                           "You should not pass 'aws_profile' for files like %s that are not on S3",
-                           file_name)
+        dbg.dassert_not_in(
+            "aws_profile",
+            kwargs,
+            "You should not pass 'aws_profile' for files like %s that are not on S3",
+            file_name,
+        )
         stream = file_name
     _LOG.debug("args=%s", str(args))
     _LOG.debug("kwargs=%s", str(kwargs))

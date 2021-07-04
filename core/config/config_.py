@@ -68,20 +68,12 @@ class Config:
         """
         _LOG.debug("key=%s, config=%s", key, self)
         if intr.is_iterable(key):
-            # Extract the first element of the nested key.
-            head_key, tail_key = key[0], key[1:]  # type: ignore
-            _LOG.debug(
-                "key='%s' -> head_key='%s', tail_key='%s'",
-                key,
-                head_key,
-                tail_key,
-            )
-            dbg.dassert_isinstance(head_key, str, "Keys can only be string")
+            head_key, tail_key = self._parse_compound_key(key)
             if not tail_key:
                 # Tuple of a single element, then set the value.
                 self.__setitem__(head_key, val)
             else:
-                # Composed key: recurse on the rest of the key.
+                # Compound key: recurse on the tail of the key.
                 _LOG.debug(
                     "head_key='%s', self._config=%s", head_key, self._config
                 )
@@ -92,9 +84,7 @@ class Config:
                 subconfig.__setitem__(tail_key, val)
             return
         # Base case: key is a string, config is a dict.
-        _LOG.debug("key=%s", key)
-        dbg.dassert_isinstance(key, str, "Keys can only be string")
-        dbg.dassert_isinstance(self._config, dict)
+        dbg.dassert(self._check_base_case(key))
         self._config[key] = val  # type: ignore
 
     def __getitem__(self, key: Key) -> Any:
@@ -115,49 +105,28 @@ class Config:
         _LOG.debug("key=%s, config=%s", key, self)
         # Check if the key is nested.
         if intr.is_iterable(key):
-            # Extract the first element of the nested key.
-            head_key, tail_key = key[0], key[1:]  # type: ignore
-            _LOG.debug(
-                "key='%s' -> head_key='%s', tail_key='%s'",
-                key,
-                head_key,
-                tail_key,
-            )
-            dbg.dassert_isinstance(head_key, str, "Keys can only be string")
+            head_key, tail_key = self._parse_compound_key(key)
             if not tail_key:
                 # Tuple of a single element, then return the value.
                 ret = self.__getitem__(head_key)
             else:
-                # Composed key: recurse on the rest of the key.
-                _LOG.debug(
-                    "head_key='%s', self._config=%s", head_key, self._config
-                )
+                # Compound key: recurse on the tail of the key.
                 if head_key not in self._config:
                     raise KeyError(
                         f"key='{head_key}' not in '{list(self._config.keys())}'"
                     )
-                _LOG.debug(
-                    "head_key='%s' tail_key='%s' in config=%s",
-                    head_key,
-                    tail_key,
-                    self._config,
-                )
-                next_config = self._config[head_key]
-                _LOG.debug("next_config=%s", self._config)
-                if isinstance(next_config, Config):
+                subconfig = self._config[head_key]
+                _LOG.debug("subconfig=%s", self._config)
+                if isinstance(subconfig, Config):
                     # Recurse.
-                    ret = next_config.__getitem__(tail_key)
+                    ret = subconfig.__getitem__(tail_key)
                 else:
                     # There are more keys to process but we have reached the leaves
                     # of the config, then we assert.
-                    raise KeyError(
-                        f"tail_key='{tail_key}' not in '{next_config}'"
-                    )
+                    raise KeyError(f"tail_key='{tail_key}' not in '{subconfig}'")
             return ret
         # Base case: key is a string, config is a dict.
-        _LOG.debug("key=%s", key)
-        dbg.dassert_isinstance(key, str, "Keys can only be string")
-        dbg.dassert_isinstance(self._config, dict)
+        dbg.dassert(self._check_base_case(key))
         if key not in self._config:
             raise KeyError(f"key='{key}' not in '{list(self._config.keys())}'")
         ret = self._config[key]  # type: ignore
@@ -369,6 +338,21 @@ class Config:
             "Invalid %s='%s' in config=\n%s"
             % (key, self._config[key], pri.indent(str(self)))
         )
+
+    def _parse_compound_key(self, key: Key) -> Tuple[str, Iterable[str]]:
+        dbg.dassert(intr.is_iterable(key), "Key='%s' is not iterable", key)
+        head_key, tail_key = key[0], key[1:]  # type: ignore
+        _LOG.debug(
+            "key='%s' -> head_key='%s', tail_key='%s'", key, head_key, tail_key
+        )
+        dbg.dassert_isinstance(head_key, str, "Keys can only be string")
+        return head_key, tail_key
+
+    def _check_base_case(self, key: Key) -> bool:
+        _LOG.debug("key=%s", key)
+        dbg.dassert_isinstance(key, str, "Keys can only be string")
+        dbg.dassert_isinstance(self._config, dict)
+        return True
 
     def _to_dict_except_for_leaves(self) -> Dict[str, Any]:
         """

@@ -12,18 +12,19 @@ import core.dataflow_model.utils as cdtfut
 import argparse
 import collections
 import glob
+import json
 import logging
 import os
 import re
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-import pandas as pd
+from tqdm.autonotebook import tqdm
 
 import core.config as cconfig
 import core.dataflow as dtg
 import helpers.dbg as dbg
-import helpers.io_ as io_
+import helpers.io_ as hio
 import helpers.pickle_ as hpickle
 import helpers.printing as hprint
 
@@ -133,7 +134,7 @@ def mark_config_as_success(experiment_result_dir: str) -> None:
     """
     file_name = os.path.join(experiment_result_dir, "success.txt")
     _LOG.info("Creating file_name='%s'", file_name)
-    io_.to_file(file_name, "success")
+    hio.to_file(file_name, "success")
 
 
 def setup_experiment_dir(config: cconfig.Config) -> None:
@@ -147,7 +148,7 @@ def setup_experiment_dir(config: cconfig.Config) -> None:
     # Create subdirectory structure for experiment results.
     experiment_result_dir = config[("meta", "experiment_result_dir")]
     _LOG.info("Creating experiment dir '%s'", experiment_result_dir)
-    io_.create_dir(experiment_result_dir, incremental=True)
+    hio.create_dir(experiment_result_dir, incremental=True)
     # Prepare book-keeping files.
     file_name = os.path.join(experiment_result_dir, "config.pkl")
     _LOG.debug("Saving '%s'", file_name)
@@ -155,7 +156,7 @@ def setup_experiment_dir(config: cconfig.Config) -> None:
     #
     file_name = os.path.join(experiment_result_dir, "config.txt")
     _LOG.debug("Saving '%s'", file_name)
-    io_.to_file(file_name, str(config))
+    hio.to_file(file_name, str(config))
 
 
 def select_config(
@@ -312,7 +313,7 @@ def load_experiment_artifacts(
     subdirs = [d for d in glob.glob(f"{src_dir}/result_*") if os.path.isdir(d)]
     _LOG.info("Found %d experiment subdirs in '%s'", len(subdirs), src_dir)
     # Build a mapping from "config_idx" to "experiment_dir".
-    config_idx_to_dir = {}
+    config_idx_to_dir: Dict[int, str] = {}
     for subdir in subdirs:
         _LOG.debug("subdir='%s'", subdir)
         # E.g., `result_123"
@@ -331,11 +332,11 @@ def load_experiment_artifacts(
         selected_keys = [key for key in sorted(config_idxs) if key in idxs_l]
     # Iterate over experiment directories.
     results = collections.OrderedDict()
-    for key in selected_keys:
+    for key in tqdm(selected_keys, desc="Loading artifacts"):
         subdir = config_idx_to_dir[key]
         dbg.dassert_dir_exists(subdir)
         file_name_tmp = os.path.join(src_dir, subdir, file_name)
-        _LOG.info("Loading '%s'", file_name_tmp)
+        _LOG.debug("Loading '%s'", file_name_tmp)
         if not os.path.exists(file_name_tmp):
             _LOG.warning("Can't find '{file_name_tmp}': skipping")
             continue

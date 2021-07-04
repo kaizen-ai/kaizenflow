@@ -130,7 +130,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Execute.
     if num_threads == "serial":
         rcs = []
-        for i, config in tqdm.tqdm(enumerate(configs)):
+        for i, config in tqdm.tqdm(
+            enumerate(configs), desc="Running experiments"
+        ):
             _LOG.debug("\n%s", printing.frame("Config %s" % i))
             #
             rc = _run_experiment(

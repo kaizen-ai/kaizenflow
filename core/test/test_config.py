@@ -3,6 +3,7 @@ import pprint
 from typing import Any
 
 import core.config as cconfig
+import helpers.printing as hprint
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -337,7 +338,7 @@ class Test_nested_config_misc1(hut.TestCase):
         config1 = _get_nested_config1()
         config2 = _get_nested_config2()
         #
-        self.assertEqual(str(config1), str(config2))
+        self.assert_equal(str(config1), str(config2))
 
 
 # #############################################################################
@@ -424,32 +425,8 @@ class Test_nested_config_update1(hut.TestCase):
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_update2(self) -> None:
-        config1 = cconfig.Config()
-        #
-        config_tmp = config1.add_subconfig("read_data")
-        config_tmp["file_name"] = "foo_bar.txt"
-        config_tmp["nrows"] = 999
-        #
-        config1["single_val"] = "hello"
-        #
-        config_tmp = config1.add_subconfig("zscore")
-        config_tmp["style"] = "gaz"
-        config_tmp["com"] = 28
-        #
-        config2 = cconfig.Config()
-        #
-        config_tmp = config2.add_subconfig("read_data")
-        config_tmp["file_name"] = "baz.txt"
-        config_tmp["nrows"] = 999
-        #
-        config2["single_val"] = "goodbye"
-        #
-        config_tmp = config2.add_subconfig("zscore")
-        config_tmp["style"] = "super"
-        #
-        config_tmp = config2.add_subconfig("extra_zscore")
-        config_tmp["style"] = "universal"
-        config_tmp["tau"] = 32
+        config1 = _get_nested_config3()
+        config2 = _get_nested_config5()
         #
         config1.update(config2)
         # Check.
@@ -472,17 +449,25 @@ class Test_nested_config_update1(hut.TestCase):
         """
         Generate a config of `{"key1": {"key0": }}` structure.
         """
+        config = cconfig.Config()
+        config_tmp = config.add_subconfig("key1")
+        #
         subconfig = cconfig.Config()
         subconfig.add_subconfig("key0")
         #
-        config = cconfig.Config()
-        config_tmp = config.add_subconfig("key1")
         config_tmp.update(subconfig)
         #
         expected_result = cconfig.Config()
         config_tmp = expected_result.add_subconfig("key1")
         config_tmp.add_subconfig("key0")
-        self.assertEqual(str(config), str(expected_result))
+        #
+        self.assert_equal(str(config), str(expected_result))
+        exp = r"""
+        key1:
+          key0:
+        """
+        exp = hprint.dedent(exp)
+        self.assert_equal(str(config), exp)
 
 
 # #############################################################################
@@ -705,6 +690,7 @@ def _get_nested_config3() -> cconfig.Config:
     config_tmp = config.add_subconfig("zscore")
     config_tmp["style"] = "gaz"
     config_tmp["com"] = 28
+    #
     _LOG.debug("config=\n%s", config)
     return config
 
@@ -733,5 +719,40 @@ def _get_nested_config4() -> cconfig.Config:
     config_tmp = config.add_subconfig("zscore2")
     config_tmp["style"] = "gaz"
     config_tmp["com"] = 28
+    #
+    _LOG.debug("config=\n%s", config)
+    return config
+
+
+def _get_nested_config5() -> cconfig.Config:
+    """
+    Build a nested config, that looks like:
+        ```
+        read_data:
+          file_name: baz.txt
+          nrows: 999
+        single_val: goodbye
+        zscore:
+          style: super
+        extra_zscore:
+          style: universal
+          tau: 32
+        ```
+    """
+    config = cconfig.Config()
+    #
+    config_tmp = config.add_subconfig("read_data")
+    config_tmp["file_name"] = "baz.txt"
+    config_tmp["nrows"] = 999
+    #
+    config["single_val"] = "goodbye"
+    #
+    config_tmp = config.add_subconfig("zscore")
+    config_tmp["style"] = "super"
+    #
+    config_tmp = config.add_subconfig("extra_zscore")
+    config_tmp["style"] = "universal"
+    config_tmp["tau"] = 32
+    #
     _LOG.debug("config=\n%s", config)
     return config

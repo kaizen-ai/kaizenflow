@@ -11,8 +11,8 @@ from tqdm.autonotebook import tqdm
 
 import core.pandas_helpers as pdhelp
 import helpers.dbg as dbg
-import helpers.s3 as hs3
 import helpers.io_ as hio
+import helpers.s3 as hs3
 import im.common.data.types as icdtyp
 import im.kibot.data.load.kibot_s3_data_loader as ikdlki
 import im.kibot.metadata.load.expiry_contract_mapper as ikmlex
@@ -505,7 +505,7 @@ class FuturesContractLifetimes:
         dbg.dassert_type_is(symbols, list)
         hio.create_dir(self.root_dir_name, incremental=True)
         #
-        for symbol in tqdm(symbols):
+        for symbol in tqdm(symbols, desc="Processing futures contract lifetimes"):
             # For each symbol, get all the expiries.
             contracts = kb.get_expiry_contracts(symbol)
             _LOG.debug("Found %s contracts for symbol %s", len(contracts), symbol)

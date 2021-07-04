@@ -306,7 +306,9 @@ class DataFrameModeler:
         df = self._get_df(cols=cols, mode=mode)
         # Calculate stats.
         stats_dict = {}
-        for col in tqdm(df.columns, disable=not progress_bar):
+        for col in tqdm(
+            df.columns, disable=not progress_bar, desc="Calculating stats"
+        ):
             stats_val = self.stats_computer.compute_stats(
                 df[col], time_series_type=time_series_type
             )
