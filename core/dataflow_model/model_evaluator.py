@@ -571,7 +571,9 @@ class ModelEvaluator2:
         target_col: Optional[str] = None,
         oos_start: Optional[Any] = None,
     ) -> None:
-        """"""
+        """
+        
+        """
         self._data = (data,)
         dbg.dassert(data, msg="Data set must be nonempty.")
         self._prediction_col = prediction_col
@@ -581,47 +583,6 @@ class ModelEvaluator2:
         # Expose oos_start and valid_keys
         self.oos_start = oos_start
         self.available_keys = list(self._data.keys())
-
-    def _calculate_pnl(
-        self,
-        keys: Optional[List[Any]] = None,
-    ) -> Dict[Any, pd.DataFrame]:
-        """
-        Helper for calculating positions and PnL from returns and predictions.
-        """
-        keys = keys or self.available_keys
-        dbg.dassert_is_subset(keys, self.available_keys)
-        #
-        returns = {
-            k: self._data[k][self._target_col].rename("returns") for k in keys
-        }
-        predictions = {
-            k: self._data[k][self._prediction_col].rename("predictions")
-            for k in keys
-        }
-        positions = {}
-        for k in tqdm(returns.keys(), "Calculating positions"):
-            position_computer = PositionComputer(
-                returns=returns[k],
-                predictions=predictions[k],
-            )
-            # TODO(*): Expose `mode`.
-            positions[k] = position_computer.compute_positions(mode="raw").rename(
-                "positions"
-            )
-        pnls = {}
-        for k in tqdm(positions.keys(), "Calculating PnL"):
-            pnl_computer = PnlComputer(
-                returns=returns[k],
-                positions=positions[k],
-            )
-            pnls[k] = pnl_computer.compute_pnl().rename("pnl")
-        pnl_dict = {}
-        for k in keys:
-            pnl_dict[k] = pd.concat(
-                [returns[k], predictions[k], positions[k], pnls[k]], axis=1
-            )
-        return pnl_dict
 
     def get_series_dict(
         self,
@@ -642,26 +603,6 @@ class ModelEvaluator2:
         dbg.dassert_in(series, ["returns", "predictions", "positions", "pnl"])
         series_dict = {k: v[series] for k, v in pnl_dict.items()}
         return self._trim_time_range(series_dict, mode=mode)
-
-    def _trim_time_range(
-        self,
-        data_dict: Dict[Any, Union[pd.Series, pd.DataFrame]],
-        mode: str = "ins",
-    ) -> Dict[Any, Union[pd.Series, pd.DataFrame]]:
-        if mode == "all_available":
-            trimmed = {k: v for k, v in data_dict.items()}
-        elif mode == "ins":
-            trimmed = {
-                k: v[k].loc[: self.oos_start] for k, v in data_dict.items()
-            }
-        elif mode == "oos":
-            dbg.dassert(self.oos_start, msg="No `oos_start` set!")
-            trimmed = {
-                k: v[k].loc[self.oos_start :] for k, v in data_dict.items()
-            }
-        else:
-            raise ValueError(f"Unrecognized mode `{mode}`.")
-        return trimmed
 
     def aggregate_models(
         self,
@@ -716,6 +657,67 @@ class ModelEvaluator2:
         )
         stats_df = pd.concat([stats_df, adj_pvals], axis=0)
         return stats_df
+
+    def _calculate_pnl(
+        self,
+        keys: Optional[List[Any]] = None,
+    ) -> Dict[Any, pd.DataFrame]:
+        """
+        Helper for calculating positions and PnL from returns and predictions.
+        """
+        keys = keys or self.available_keys
+        dbg.dassert_is_subset(keys, self.available_keys)
+        #
+        returns = {
+            k: self._data[k][self._target_col].rename("returns") for k in keys
+        }
+        predictions = {
+            k: self._data[k][self._prediction_col].rename("predictions")
+            for k in keys
+        }
+        positions = {}
+        for k in tqdm(returns.keys(), "Calculating positions"):
+            position_computer = PositionComputer(
+                returns=returns[k],
+                predictions=predictions[k],
+            )
+            # TODO(*): Expose `mode`.
+            positions[k] = position_computer.compute_positions(mode="raw").rename(
+                "positions"
+            )
+        pnls = {}
+        for k in tqdm(positions.keys(), "Calculating PnL"):
+            pnl_computer = PnlComputer(
+                returns=returns[k],
+                positions=positions[k],
+            )
+            pnls[k] = pnl_computer.compute_pnl().rename("pnl")
+        pnl_dict = {}
+        for k in keys:
+            pnl_dict[k] = pd.concat(
+                [returns[k], predictions[k], positions[k], pnls[k]], axis=1
+            )
+        return pnl_dict
+
+    def _trim_time_range(
+        self,
+        data_dict: Dict[Any, Union[pd.Series, pd.DataFrame]],
+        mode: str = "ins",
+    ) -> Dict[Any, Union[pd.Series, pd.DataFrame]]:
+        if mode == "all_available":
+            trimmed = {k: v for k, v in data_dict.items()}
+        elif mode == "ins":
+            trimmed = {
+                k: v[k].loc[: self.oos_start] for k, v in data_dict.items()
+            }
+        elif mode == "oos":
+            dbg.dassert(self.oos_start, msg="No `oos_start` set!")
+            trimmed = {
+                k: v[k].loc[self.oos_start :] for k, v in data_dict.items()
+            }
+        else:
+            raise ValueError(f"Unrecognized mode `{mode}`.")
+        return trimmed
 
 
 # #############################################################################
