@@ -308,9 +308,7 @@ class DataFrameModeler:
         for col in tqdm(
             df.columns, disable=not progress_bar, desc="Calculating stats"
         ):
-            stats_val = self.stats_computer.compute_time_series_stats(
-                df[col]
-            )
+            stats_val = self.stats_computer.compute_time_series_stats(df[col])
             stats_dict[col] = stats_val
         stats_df = pd.concat(stats_dict, axis=1)
         return stats_df

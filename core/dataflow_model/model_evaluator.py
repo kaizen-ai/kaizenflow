@@ -16,10 +16,10 @@ import pandas as pd
 from tqdm.auto import tqdm
 
 import core.dataflow as cdataf
+import core.dataflow_model.stats_computer as cstats
 import core.finance as fin
 import core.signal_processing as sigp
 import core.statistics as stats
-import core.dataflow_model.stats_computer as cstats
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -40,9 +40,7 @@ class ModelEvaluator:
         target_col: Optional[str] = None,
         oos_start: Optional[Any] = None,
     ) -> None:
-        """
-        
-        """
+        """"""
         self._data = data
         dbg.dassert(data, msg="Data set must be nonempty.")
         self._prediction_col = prediction_col
@@ -69,7 +67,11 @@ class ModelEvaluator:
         :param mode: "all_available", "ins", or "oos"
         :return: Dictionary of rescaled series
         """
-        pnl_dict = self._calculate_pnl(keys, position_method=position_method, target_volatility=target_volatility)
+        pnl_dict = self._calculate_pnl(
+            keys,
+            position_method=position_method,
+            target_volatility=target_volatility,
+        )
         dbg.dassert_in(series, ["returns", "predictions", "positions", "pnl"])
         series_dict = {k: v[series] for k, v in pnl_dict.items()}
         return self._trim_time_range(series_dict, mode=mode)
@@ -107,7 +109,9 @@ class ModelEvaluator:
         pnl_srs = pnl_df.squeeze()
         pnl_srs.name = "portfolio_pnl"
         #
-        pos_df = pd.concat({k: v["positions"] for k, v in pnl_dict.items()}, axis=1)
+        pos_df = pd.concat(
+            {k: v["positions"] for k, v in pnl_dict.items()}, axis=1
+        )
         pos_df = pos_df.apply(lambda x: x * col_map[x.name]).sum(
             axis=1, min_count=1
         )
@@ -152,7 +156,11 @@ class ModelEvaluator:
         :param mode: "all_available", "ins", or "oos"
         :return: Dataframe of statistics with `keys` as columns
         """
-        pnl_dict = self._calculate_pnl(keys, position_method=position_method, target_volatility=target_volatility)
+        pnl_dict = self._calculate_pnl(
+            keys,
+            position_method=position_method,
+            target_volatility=target_volatility,
+        )
         pnl_dict = self._trim_time_range(pnl_dict, mode=mode)
         stats_dict = {}
         for key in tqdm(pnl_dict.keys(), desc="Calculating stats"):
@@ -201,10 +209,8 @@ class ModelEvaluator:
             )
             positions[k] = position_computer.compute_positions(
                 prediction_strategy=position_method,
-                target_volatility = target_volatility,
-            ).rename(
-                "positions"
-            )
+                target_volatility=target_volatility,
+            ).rename("positions")
         pnls = {}
         for k in tqdm(positions.keys(), "Calculating PnL"):
             pnl_computer = PnlComputer(
@@ -228,14 +234,10 @@ class ModelEvaluator:
         if mode == "all_available":
             trimmed = {k: v for k, v in data_dict.items()}
         elif mode == "ins":
-            trimmed = {
-                k: v.loc[: self.oos_start] for k, v in data_dict.items()
-            }
+            trimmed = {k: v.loc[: self.oos_start] for k, v in data_dict.items()}
         elif mode == "oos":
             dbg.dassert(self.oos_start, msg="No `oos_start` set!")
-            trimmed = {
-                k: v.loc[self.oos_start :] for k, v in data_dict.items()
-            }
+            trimmed = {k: v.loc[self.oos_start :] for k, v in data_dict.items()}
         else:
             raise ValueError(f"Unrecognized mode `{mode}`.")
         return trimmed
@@ -534,7 +536,7 @@ def build_model_evaluator_from_result_bundle_dicts(
         data_dict[key] = df
     # Initialize `ModelEvaluator`.
     evaluator = ModelEvaluator(
-        data = data_dict,
+        data=data_dict,
         prediction_col=predictions_col,
         target_col=returns_col,
         oos_start=oos_start,

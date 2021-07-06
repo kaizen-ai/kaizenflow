@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-import core.finance as fin
 import core.dataflow_model.model_evaluator as modeval
+import core.finance as fin
 import core.plotting as plot
 import core.statistics as stats
 import helpers.dbg as dbg

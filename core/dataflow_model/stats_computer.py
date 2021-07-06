@@ -137,9 +137,7 @@ class StatsComputer:
             name = "finance"
             functions = [cstati.compute_avg_turnover_and_holding_period]
             stats = self._compute_stat_functions(positions, name, functions)
-            results.append(
-                pd.concat([stats], keys=["finance"])
-            )
+            results.append(pd.concat([stats], keys=["finance"]))
         if pnl_col is not None:
             pnl = df[pnl_col]
             results.append(self.compute_time_series_stats(pnl))
