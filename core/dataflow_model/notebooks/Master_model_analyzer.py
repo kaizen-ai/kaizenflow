@@ -37,8 +37,6 @@ import core.dataflow_model.model_plotter as modplot
 import core.dataflow_model.utils as cdmu
 import core.statistics as stats
 import helpers.dbg as dbg
-import helpers.env as env
-import helpers.printing as prnt
 
 # %%
 dbg.init_logger(verbosity=logging.INFO)
@@ -102,7 +100,9 @@ pred_df = (
 # %%
 data_dict = {}
 for k in pred_df.columns:
-    data_dict[k] = pd.concat([rets[k].rename("returns"), pred_df[k].rename("predictions")], axis=1) 
+    data_dict[k] = pd.concat(
+        [rets[k].rename("returns"), pred_df[k].rename("predictions")], axis=1
+    )
 
 # %% [markdown]
 # # Initialize ModelEvaluator and ModelPlotter
@@ -117,8 +117,7 @@ if eval_config.get("exp_dir", None) is None:
     )
 else:
     rbs_dicts = cdmu.load_experiment_artifacts(
-        eval_config["exp_dir"],
-        "result_bundle.pkl"
+        eval_config["exp_dir"], "result_bundle.pkl"
     )
     evaluator = modeval.build_model_evaluator_from_result_bundle_dicts(
         rbs_dicts,
@@ -133,7 +132,9 @@ plotter.plot_multiple_tests_adjustment(
 )
 
 # %%
-pnl_stats = evaluator.calculate_stats(mode=eval_config["mode"], target_volatility=eval_config["target_volatility"])
+pnl_stats = evaluator.calculate_stats(
+    mode=eval_config["mode"], target_volatility=eval_config["target_volatility"]
+)
 pnl_stats.loc[["signal_quality", "correlation"]]
 
 # %%
@@ -151,7 +152,10 @@ plotter.plot_correlation_matrix(
 )
 
 # %%
-col_mask = pnl_stats.loc["signal_quality"].loc["sr.adj_pval"] < eval_config["bh_adj_threshold"]
+col_mask = (
+    pnl_stats.loc["signal_quality"].loc["sr.adj_pval"]
+    < eval_config["bh_adj_threshold"]
+)
 selected = pnl_stats.loc[:, col_mask].columns.to_list()
 
 # %%
