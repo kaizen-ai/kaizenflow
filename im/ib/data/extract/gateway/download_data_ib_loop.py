@@ -421,7 +421,7 @@ def download_ib_data(
     ],
     incremental: bool,
     dst_dir: str,
-    num_threads: str,
+    num_threads: Union[str, int],
 ) -> List[str]:
     _LOG.info("Tasks=%s\n%s", len(tasks), "\n".join(map(str, tasks)))
     hio.create_dir(dst_dir, incremental=True)

@@ -1,4 +1,4 @@
-# Test created for test_playback.get_result_ae.
+# Test created for helpers.test.test_playback.get_result_ae.
 
 import helpers.unit_test as hut
 import jsonpickle

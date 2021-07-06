@@ -60,7 +60,7 @@ def get_aws_credentials(
                 "'%s' != ''=%s", env_var, os.environ.get(env_var, None) != ""
             )
             dbg.dassert_in(env_var, os.environ)
-        return tuple(os.environ[env_var] for env_var in env_vars)
+        return tuple(os.environ[env_var] for env_var in env_vars)  # type: ignore
     aws_profile = aws_profile or "am"
     _LOG.debug("Getting credentials for aws_profile=%s", aws_profile)
     # > more ~/.aws/credentials
@@ -169,15 +169,18 @@ def _get_boto3_client(aws_profile: Optional[str] = None) -> boto3.client:
     return s3
 
 
-def get_s3fs(aws_profile: Optional[str] = None) -> str:
+def get_s3fs(aws_profile: Optional[str] = None) -> s3fs.core.S3FileSystem:
     # From https://stackoverflow.com/questions/62562945
     aws_access_key_id, aws_secret_access_key, aws_region = get_aws_credentials(
         aws_profile=aws_profile
     )
     _LOG.debug("aws_region=%s", aws_region)
-    s3 = s3fs.core.S3FileSystem(anon=False, key=aws_access_key_id,
-                                secret=aws_secret_access_key,
-                                client_kwargs={'region_name': aws_region})
+    s3 = s3fs.core.S3FileSystem(
+        anon=False,
+        key=aws_access_key_id,
+        secret=aws_secret_access_key,
+        client_kwargs={"region_name": aws_region},
+    )
     return s3
 
 
