@@ -571,9 +571,8 @@ class ModelEvaluator2:
         target_col: Optional[str] = None,
         oos_start: Optional[Any] = None,
     ) -> None:
-        """
-        """
-        self._data = data,
+        """"""
+        self._data = (data,)
         dbg.dassert(data, msg="Data set must be nonempty.")
         self._prediction_col = prediction_col
         self._target_col = target_col
@@ -593,8 +592,13 @@ class ModelEvaluator2:
         keys = keys or self.available_keys
         dbg.dassert_is_subset(keys, self.available_keys)
         #
-        returns = {k: self._data[k][self._target_col].rename("returns") for k in keys}
-        predictions = {k: self._data[k][self._prediction_col].rename("predictions") for k in keys}
+        returns = {
+            k: self._data[k][self._target_col].rename("returns") for k in keys
+        }
+        predictions = {
+            k: self._data[k][self._prediction_col].rename("predictions")
+            for k in keys
+        }
         positions = {}
         for k in tqdm(returns.keys(), "Calculating positions"):
             position_computer = PositionComputer(
@@ -602,7 +606,9 @@ class ModelEvaluator2:
                 predictions=predictions[k],
             )
             # TODO(*): Expose `mode`.
-            positions[k] = position_computer.compute_positions(mode="raw").rename("positions")
+            positions[k] = position_computer.compute_positions(mode="raw").rename(
+                "positions"
+            )
         pnls = {}
         for k in tqdm(positions.keys(), "Calculating PnL"):
             pnl_computer = PnlComputer(
@@ -612,7 +618,9 @@ class ModelEvaluator2:
             pnls[k] = pnl_computer.compute_pnl().rename("pnl")
         pnl_dict = {}
         for k in keys:
-            pnl_dict[k] = pd.concat([returns[k], predictions[k], positions[k], pnls[k]], axis=1)
+            pnl_dict[k] = pd.concat(
+                [returns[k], predictions[k], positions[k], pnls[k]], axis=1
+            )
         return pnl_dict
 
     def get_series_dict(
@@ -638,7 +646,7 @@ class ModelEvaluator2:
     def _trim_time_range(
         self,
         data_dict: Dict[Any, Union[pd.Series, pd.DataFrame]],
-        mode: str = "ins"
+        mode: str = "ins",
     ) -> Dict[Any, Union[pd.Series, pd.DataFrame]]:
         if mode == "all_available":
             trimmed = {k: v for k, v in data_dict.items()}
