@@ -583,7 +583,6 @@ class ModelEvaluator2:
         self.oos_start = oos_start
         self.available_keys = list(self._data.keys())
 
-
     def _calculate_pnl(
         self,
         keys: Optional[List[Any]] = None,
@@ -598,18 +597,17 @@ class ModelEvaluator2:
         predictions = {k: self._data[k][self._prediction_col].rename("predictions") for k in keys}
         positions = {}
         for k in tqdm(returns.keys(), "Calculating positions"):
-            rets = returns[k]
-            preds = predictions[k]
             position_computer = PositionComputer(
-                returns=rets,
-                predictions=preds,
+                returns=returns[k],
+                predictions=predictions[k],
             )
-            positions[k] = position_computer.compute_positions(mode=mode).rename("positions")
+            # TODO(*): Expose `mode`.
+            positions[k] = position_computer.compute_positions(mode="raw").rename("positions")
         pnls = {}
-        for k in tqdm(positions.keys(), "Calculating PnLs"):
+        for k in tqdm(positions.keys(), "Calculating PnL"):
             pnl_computer = PnlComputer(
-                returns=returns,
-                positions=positions,
+                returns=returns[k],
+                positions=positions[k],
             )
             pnls[k] = pnl_computer.compute_pnl().rename("pnl")
         pnl_dict = {}
@@ -693,14 +691,14 @@ class ModelEvaluator2:
         pnl_dict = self._trim_time_range(pnl_dict, mode=mode)
         stats_dict = {}
         for key in tqdm(pnl_dict.keys(), desc="Calculating stats"):
-            stas_val = self._stats_computer.compute_finance_stats(
+            stats_dict[key] = self._stats_computer.compute_finance_stats(
                 pnl_dict[key],
                 returns_col="returns",
                 predictions_col="predictions",
                 positions_col="positions",
                 pnl_col="pnl",
             )
-            stats_dict[key] = stats_val
+        stats_df = pd.concat(stats_dict, axis=1)
         # Calculate BH adjustment of pvals.
         adj_pvals = stats.multipletests(
             stats_df.loc["signal_quality"].loc["sr.pval"], nan_mode="drop"
