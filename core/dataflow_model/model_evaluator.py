@@ -43,21 +43,21 @@ class ModelEvaluator:
         """"""
         self._data = data
         dbg.dassert(data, msg="Data set must be nonempty.")
-        self._prediction_col = prediction_col
-        self._target_col = target_col
-        #
-        self._stats_computer = cstats.StatsComputer()
-        # Expose oos_start and valid_keys for `ModelPlotter()`.
+        # Use plain attributes (Item #44).
+        self.prediction_col = prediction_col
+        self.target_col = target_col
         self.oos_start = oos_start
+        #
         self.valid_keys = list(self._data.keys())
+        self._stats_computer = cstats.StatsComputer()
 
     def get_series_dict(
         self,
         series: str,
         keys: Optional[List[Any]] = None,
-        mode: Optional[str] = None,
         position_method: Optional[str] = None,
         target_volatility: Optional[float] = None,
+        mode: Optional[str] = None,
     ) -> Dict[Any, pd.Series]:
         """
         Return series for requested keys over requested range.
@@ -65,6 +65,8 @@ class ModelEvaluator:
         :param series: "returns", "predictions", "positions", or "pnl"
         :param keys: Use all available if `None`
         :param mode: "all_available", "ins", or "oos"
+        :position_method: as in `PositionComputer.compute_positions()`
+        :target_volatility: as in `PositionComputer.compute_positions()`
         :return: Dictionary of rescaled series
         """
         pnl_dict = self._calculate_pnl(
@@ -89,8 +91,8 @@ class ModelEvaluator:
 
         :param keys: Use all available if `None`
         :param weights: Average if `None`
-        :param target_volatility: Rescale portfolio to achieve
-            `target_volatility` on in-sample region
+        :position_method: as in `PositionComputer.compute_positions()`
+        :target_volatility: as in `PositionComputer.compute_positions()`
         :param mode: "all_available", "ins", or "oos"
         :return: aggregate pnl stream, position stream, statistics
         """
@@ -153,6 +155,8 @@ class ModelEvaluator:
         Calculate performance characteristics of selected models.
 
         :param keys: Use all available if `None`
+        :position_method: as in `PositionComputer.compute_positions()`
+        :target_volatility: as in `PositionComputer.compute_positions()`
         :param mode: "all_available", "ins", or "oos"
         :return: Dataframe of statistics with `keys` as columns
         """
@@ -190,15 +194,19 @@ class ModelEvaluator:
     ) -> Dict[Any, pd.DataFrame]:
         """
         Helper for calculating positions and PnL from returns and predictions.
+
+        :param keys: Use all available if `None`
+        :position_method: as in `PositionComputer.compute_positions()`
+        :target_volatility: as in `PositionComputer.compute_positions()`
         """
         keys = keys or self.valid_keys
         dbg.dassert_is_subset(keys, self.valid_keys)
         #
         returns = {
-            k: self._data[k][self._target_col].rename("returns") for k in keys
+            k: self._data[k][self.target_col].rename("returns") for k in keys
         }
         predictions = {
-            k: self._data[k][self._prediction_col].rename("predictions")
+            k: self._data[k][self.prediction_col].rename("predictions")
             for k in keys
         }
         positions = {}
@@ -230,6 +238,9 @@ class ModelEvaluator:
         data_dict: Dict[Any, Union[pd.Series, pd.DataFrame]],
         mode: Optional[str] = None,
     ) -> Dict[Any, Union[pd.Series, pd.DataFrame]]:
+        """
+        Helper to trim to in-sample/out-of-sample region.
+        """
         mode = mode or "ins"
         if mode == "all_available":
             trimmed = {k: v for k, v in data_dict.items()}
@@ -315,9 +326,9 @@ class PositionComputer:
     def compute_positions(
         self,
         target_volatility: Optional[float] = None,
-        mode: Optional[str] = None,
         prediction_strategy: Optional[str] = None,
         volatility_strategy: Optional[str] = None,
+        mode: Optional[str] = None,
         **kwargs: Any,
     ) -> pd.Series:
         """
@@ -325,9 +336,9 @@ class PositionComputer:
 
         :param target_volatility: generate positions to achieve target
             volatility on in-sample region.
-        :param mode: "all_available", "ins", or "oos"
         :param prediction_strategy: "raw", "kernel", "squash", "binarize"
         :param volatility_strategy: "rescale", "rolling" (not yet implemented)
+        :param mode: "all_available", "ins", or "oos"
         :return: series of positions
         """
         mode = mode or "ins"
@@ -514,6 +525,8 @@ def build_model_evaluator_from_result_bundle_dicts(
     oos_start: Optional[Any] = None,
 ) -> ModelEvaluator:
     """
+    Initialize a `ModelEvaluator` from `ResultBundle`s.
+
     :param result_bundle_dicts: dict of `ResultBundle`s, each of which was
         generated using `ResultBundle.to_dict()`
     :param returns_col: column of `ResultBundle.result_df` to use as the column
