@@ -20,10 +20,10 @@ from tqdm.autonotebook import tqdm
 
 import core.config as cconfig
 import core.dataflow as cdataf
+import core.dataflow_model.stats_computer as cstats
 import core.finance as cfinan
 import core.plotting as cplott
 import core.signal_processing as csigna
-import core.dataflow_model.stats_computer as cstats
 import core.timeseries_study as ctimes
 import helpers.dbg as dbg
 
