@@ -7,7 +7,7 @@ Import as:
 import core.dataflow_model.utils as cdtfut
 """
 
-# TODO(gp): experiment_utils.py
+# TODO(gp): -> experiment_utils.py
 
 import argparse
 import collections
@@ -17,7 +17,7 @@ import logging
 import os
 import re
 import sys
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Match, Optional, Tuple, cast
 
 from tqdm.autonotebook import tqdm
 
@@ -25,34 +25,34 @@ import core.config as cconfig
 import core.dataflow as dtg
 import helpers.dbg as dbg
 import helpers.io_ as hio
+import helpers.parser as prsr
 import helpers.pickle_ as hpickle
 import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): Use `add_parallel_processing_arg()`.
 def add_experiment_arg(
     parser: argparse.ArgumentParser,
+    dst_dir_required: bool,
+    dst_dir_default: Optional[str] = None,
 ) -> argparse.ArgumentParser:
     """
-    Add common command line options to run the experiments.
+    Add common command line options to run experiments and notebooks.
+
+    :param dst_dir_required: whether the user must specify a destination directory
+        or not. If not, a default value should be passed through `dst_dir_default`
+    :param dst_dir_default: a default destination dir
     """
+    parser = prsr.add_dst_dir_arg(
+        parser, dst_dir_required=dst_dir_required, dst_dir_default=dst_dir_default
+    )
+    parser = prsr.add_parallel_processing_arg(parser)
     parser.add_argument(
-        "--dst_dir",
+        "--index",
         action="store",
-        required=True,
-        help="Directory storing the results",
-    )
-    parser.add_argument(
-        "--clean_dst_dir",
-        action="store_true",
-        help="Delete the destination dir before running experiments",
-    )
-    parser.add_argument(
-        "--no_incremental",
-        action="store_true",
-        help="Skip experiments already performed",
+        default=None,
+        help="Run a single experiment corresponding to the i-th config",
     )
     parser.add_argument(
         "--config_builder",
@@ -64,49 +64,17 @@ def add_experiment_arg(
         """,
     )
     parser.add_argument(
-        "--skip_on_error",
-        action="store_true",
-        help="Continue execution of experiments after encountering an error",
-    )
-    parser.add_argument(
-        "--index",
-        action="store",
-        default=None,
-        help="Run a single experiment corresponding to the i-th config",
-    )
-    parser.add_argument(
         "--start_from_index",
         action="store",
         default=None,
         help="Run experiments starting from a specified index",
     )
-    parser.add_argument(
-        "--only_print_configs",
-        action="store_true",
-        help="Print the configs and exit",
-    )
-    parser.add_argument(
-        "--dry_run",
-        action="store_true",
-        help="Print configs and exit without running",
-    )
-    # TODO(gp): Add an option to run a short experiment to sanity check the flow.
-    parser.add_argument(
-        "--num_attempts",
-        default=1,
-        type=int,
-        help="Repeat running the experiment up to `num_attempts` times",
-        required=False,
-    )
-    parser.add_argument(
-        "--num_threads",
-        action="store",
-        help="Number of threads to use (-1 to use all CPUs)",
-        required=True,
-    )
-    return parser
+    return parser  # type: ignore
 
 
+# TODO(gp): Generalize this logic for `parallel_execute`.
+#  Each task writes in a directory and if it terminates, the success.txt file is
+#  written.
 def skip_configs_already_executed(
     configs: List[cconfig.Config], incremental: bool
 ) -> Tuple[List[cconfig.Config], int]:
@@ -319,6 +287,7 @@ def load_experiment_artifacts(
         # E.g., `result_123"
         m = re.match(r"^result_(\d+)$", os.path.basename(subdir))
         dbg.dassert(m)
+        cast(Match[str], m)
         key = int(m.group(1))
         dbg.dassert_not_in(key, config_idx_to_dir)
         config_idx_to_dir[key] = subdir

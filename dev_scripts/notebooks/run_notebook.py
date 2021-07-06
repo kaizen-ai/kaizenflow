@@ -13,18 +13,14 @@ Run a notebook given a config or a list of configs.
 import argparse
 import logging
 import os
-import sys
 from typing import Optional
-
-import joblib
-import tqdm
 
 import core.config as cconfig
 import core.dataflow_model.utils as cdtfut
+import helpers.datetime_ as hdatetime
 import helpers.dbg as dbg
-import helpers.io_ as io_
+import helpers.joblib_helpers as hjoblib
 import helpers.parser as prsr
-import helpers.printing as printing
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -36,9 +32,10 @@ _LOG = logging.getLogger(__name__)
 def _run_notebook(
     config: cconfig.Config,
     notebook_file: str,
-    num_attempts: int,
-    abort_on_error: bool,
     publish: bool,
+    #
+    incremental: bool,
+    num_attempts: int,
 ) -> Optional[int]:
     """
     Run a notebook for a specific `Config`.
@@ -52,6 +49,7 @@ def _run_notebook(
     :return: if notebook is skipped ("success.txt" file already exists), return
         `None`; otherwise, return `rc`
     """
+    _ = incremental
     cdtfut.setup_experiment_dir(config)
     # Prepare the destination file.
     idx = config[("meta", "id")]
@@ -101,14 +99,10 @@ def _run_notebook(
             break
     if rc != 0:
         # The notebook run wasn't successful.
-        _LOG.error("Execution failed for experiment %d", idx)
-        if abort_on_error:
-            dbg.dfatal("Aborting")
-        else:
-            _LOG.error("Continuing execution of next experiments")
+        msg = f"Execution failed for experiment {idx}"
+        _LOG.error(msg)
+        raise RuntimeError(msg)
     else:
-        # Mark as success.
-        cdtfut.mark_config_as_success(experiment_result_dir)
         # Convert to HTML and publish.
         if publish:
             _LOG.info("Publishing notebook %d", idx)
@@ -124,7 +118,40 @@ def _run_notebook(
             )
             log_file = log_file.replace(".log", ".html.log")
             si.system(cmd, output_file=log_file)
+        # Mark as success.
+        cdtfut.mark_config_as_success(experiment_result_dir)
     return rc
+
+
+def _get_workload(args: argparse.Namespace) -> hjoblib.Workload:
+    """
+    Prepare the workload using the parameters from command line.
+    """
+    # Get the configs to run.
+    configs = cdtfut.get_configs_from_command_line(args)
+    # Get the notebook file.
+    notebook_file = os.path.abspath(args.notebook)
+    dbg.dassert_exists(notebook_file)
+    #
+    publish = args.publish_notebook
+    # Prepare the tasks.
+    tasks = []
+    for config in configs:
+        task : joblib.Task = (
+            # args.
+            (config, notebook_file, publish),
+            # kwargs.
+            {},
+        )
+        tasks.append(task)
+    #
+    func_name = "_run_notebook"
+    workload = (_run_notebook, func_name, tasks)
+    hjoblib.validate_workload(workload)
+    return workload
+
+
+# #############################################################################
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -132,7 +159,7 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     # Add common experiment options.
-    parser = cdtfut.add_experiment_arg(parser)
+    parser = cdtfut.add_experiment_arg(parser, dst_dir_required=True)
     # Add notebook options.
     parser.add_argument(
         "--notebook",
@@ -161,50 +188,37 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create the dst dir.
-    dst_dir = os.path.abspath(args.dst_dir)
-    io_.create_dir(dst_dir, incremental=not args.clean_dst_dir)
-    # Get the configs to run.
-    configs = cdtfut.get_configs_from_command_line(args)
-    # Get the notebook file.
-    notebook_file = os.path.abspath(args.notebook)
-    dbg.dassert_exists(notebook_file)
+    dst_dir, clean_dst_dir = prsr.parse_dst_dir_arg(args)
+    _ = clean_dst_dir
+    # Prepare the workload.
+    workload = _get_workload(args)
     # Parse command-line options.
-    num_attempts = args.num_attempts
-    abort_on_error = not args.skip_on_error
-    publish = args.publish_notebook
+    dry_run = args.dry_run
     num_threads = args.num_threads
+    incremental = not args.no_incremental
+    abort_on_error = not args.skip_on_error
+    num_attempts = args.num_attempts
+    # Prepare the log file.
+    timestamp = hdatetime.get_timestamp("et")
+    log_file = os.path.join(dst_dir, f"log.{timestamp}.txt")
+    _LOG.info("log_file='%s'", log_file)
     # Execute.
-    if num_threads == "serial":
-        rcs = []
-        for config in tqdm.tqdm(configs, desc="Running notebooks"):
-            i = int(config[("meta", "id")])
-            _LOG.debug("\n%s", printing.frame("Config %s" % i))
-            #
-            rc = _run_notebook(
-                config,
-                notebook_file,
-                num_attempts,
-                abort_on_error,
-                publish,
-            )
-            rcs.append(rc)
-    else:
-        num_threads = int(num_threads)
-        # -1 is interpreted by joblib like for all cores.
-        _LOG.info("Using %d threads", num_threads)
-        rcs = joblib.Parallel(n_jobs=num_threads, verbose=50)(
-            joblib.delayed(_run_notebook)(
-                config,
-                notebook_file,
-                num_attempts,
-                abort_on_error,
-                publish,
-            )
-            for config in configs
-        )
-    # Report failing experiments.
-    rc = cdtfut.report_failed_experiments(configs, rcs)
-    sys.exit(rc)
+    hjoblib.parallel_execute(
+        workload,
+        dry_run,
+        num_threads,
+        incremental,
+        abort_on_error,
+        num_attempts,
+        log_file,
+    )
+    #
+    _LOG.info("dst_dir='%s'", dst_dir)
+    _LOG.info("log_file='%s'", log_file)
+    # TODO(gp): Move this inside the framework.
+    # # Report failing experiments.
+    # rc = cdtfut.report_failed_experiments(configs, rcs)
+    # sys.exit(rc)
 
 
 if __name__ == "__main__":
