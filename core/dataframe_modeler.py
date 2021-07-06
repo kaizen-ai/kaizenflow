@@ -290,15 +290,14 @@ class DataFrameModeler:
         return DataFrameModeler(df_merged, oos_start=self.oos_start, info=info)
 
     # #########################################################################
-    # Dataframe stats and plotting
+    # Dataframe plotting
     # #########################################################################
 
-    def calculate_stats(
+    def compute_time_series_stats(
         self,
         cols: Optional[List[Any]] = None,
         progress_bar: bool = True,
         mode: str = "ins",
-        time_series_type: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Calculate stats for selected columns.
@@ -309,8 +308,8 @@ class DataFrameModeler:
         for col in tqdm(
             df.columns, disable=not progress_bar, desc="Calculating stats"
         ):
-            stats_val = self.stats_computer.compute_stats(
-                df[col], time_series_type=time_series_type
+            stats_val = self.stats_computer.compute_time_series_stats(
+                df[col]
             )
             stats_dict[col] = stats_val
         stats_df = pd.concat(stats_dict, axis=1)

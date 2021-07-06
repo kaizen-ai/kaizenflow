@@ -136,27 +136,30 @@ class StatsComputer:
             positions = df[positions_col]
             name = "finance"
             functions = [cstati.compute_avg_turnover_and_holding_period]
+            stats = self._compute_stat_functions(positions, name, functions)
             results.append(
-                self._compute_stat_functions(positions, name, functions)
+                pd.concat([stats], keys=["finance"])
             )
         if pnl_col is not None:
             pnl = df[pnl_col]
             results.append(self.compute_time_series_stats(pnl))
-            name = "finance"
+            name = "pnl"
             functions = [
                 cstati.compute_annualized_return_and_volatility,
                 cstati.compute_max_drawdown,
                 cstati.calculate_hit_rate,
             ]
-            results.append(self._compute_stat_functions(pnl, name, functions))
+            stats = self._compute_stat_functions(pnl, name, functions)
+            results.append(pd.concat([stats], keys=["finance"]))
             corr = pd.Series(
-                stats.compute_implied_correlation(pnl),
+                cstati.compute_implied_correlation(pnl),
                 index=["prediction_corr_implied_by_pnl"],
                 name=name,
             )
             results.append(pd.concat([corr], keys=["correlation"]))
         # Currently we do not calculate individual prediction/returns stats.
         if returns_col is not None and predictions_col is not None:
+            name = "pnl"
             returns = df[returns_col]
             predictions = df[predictions_col]
             prediction_corr = predictions.corr(returns)
@@ -173,10 +176,10 @@ class StatsComputer:
         if returns_col is not None and positions_col is not None:
             returns = df[returns_col]
             positions = df[positions_col]
-            name = "bets"
+            name = "pnl"
             bets = cstati.compute_bet_stats(positions, returns)
             bets.name = name
-            results.append(bets)
+            results.append(pd.concat([bets], keys=["bets"]))
         if returns_col is not None and pnl_col is not None:
             returns = df[returns_col]
             pnl = df[pnl_col]
@@ -187,7 +190,7 @@ class StatsComputer:
         # No predictions and positions calculations yet.
         # No predictions and PnL calculations yet.
         # No positions and PnL calculations yet.
-        return results
+        return pd.concat(results, axis=0)
 
     @staticmethod
     def _compute_stat_functions(
