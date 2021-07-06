@@ -23,7 +23,7 @@ import core.dataflow as cdataf
 import core.finance as cfinan
 import core.plotting as cplott
 import core.signal_processing as csigna
-import core.stats_computer as cstats
+import core.dataflow_model.stats_computer as cstats
 import core.timeseries_study as ctimes
 import helpers.dbg as dbg
 
