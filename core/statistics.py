@@ -825,6 +825,29 @@ def compute_swt_covar_summary(
     return decomp
 
 
+def compute_swt_coeffs(
+    srs1: pd.Series,
+    srs2: pd.Series,
+    wavelet: Optional[str] = None,
+    depth: Optional[int] = None,
+    timing_mode: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    """
+    swt1 = csigna.get_swt(srs1, wavelet=wavelet, depth=depth, timing_mode=timing_mode, output_mode="detail")
+    swt1 = swt1.dropna()
+    counts = swt1.count().rename("counts")
+    var = compute_swt_var_summary(srs1, wavelet=wavelet, depth=depth, timing_mode=timing_mode)
+    covar = swt1.multiply(srs2, axis=0).sum(axis=0).divide(swt1.count()).rename("covar")
+    rho = covar.divide(np.sqrt(var["swt_var"]) * np.sqrt(srs2.var())).rename("rho")
+    sr = swt1.multiply(srs2, axis=0).apply(compute_annualized_sharpe_ratio).rename("SR")
+    sr_se = swt1.multiply(srs2, axis=0).apply(compute_annualized_sharpe_ratio_standard_error).rename("SE(SR)")
+    beta = rho.divide(np.sqrt(var["swt_var"])).multiply(np.sqrt(srs2.var())).rename("beta")
+    beta_se = np.sqrt((srs2.var() / var["swt_var"])).rename("SE(beta)")
+    zs = rho.divide(np.sqrt(var["swt_var"])).rename("beta_z_scored")
+    return pd.concat([counts, var, covar, rho, sr, sr_se, beta, beta_se, zs], axis=1)
+
+
 # #############################################################################
 # Sharpe ratio
 # #############################################################################
