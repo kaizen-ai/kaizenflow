@@ -554,6 +554,165 @@ def build_model_evaluator_from_df(
 
 
 # #############################################################################
+# Model Evaluator 2
+# #############################################################################
+
+
+class ModelEvaluator2:
+    """
+    Evaluate performance of financial models for returns.
+    """
+
+    def __init__(
+        self,
+        data: Dict[str, pd.DataFrame],
+        *,
+        prediction_col: Optional[str] = None,
+        target_col: Optional[str] = None,
+        oos_start: Optional[Any] = None,
+    ) -> None:
+        """
+        """
+        self._data = data,
+        dbg.dassert(data, msg="Data set must be nonempty.")
+        self._prediction_col = prediction_col
+        self._target_col = target_col
+        #
+        self._stats_computer = cstats.StatsComputer()
+        # Expose oos_start and valid_keys
+        self.oos_start = oos_start
+        self.available_keys = list(self._data.keys())
+
+
+    def _calculate_pnl(
+        self,
+        keys: Optional[List[Any]] = None,
+    ) -> Dict[Any, pd.DataFrame]:
+        """
+        Helper for calculating positions and PnL from returns and predictions.
+        """
+        keys = keys or self.available_keys
+        dbg.dassert_is_subset(keys, self.available_keys)
+        #
+        returns = {k: self._data[k][self._target_col].rename("returns") for k in keys}
+        predictions = {k: self._data[k][self._prediction_col].rename("predictions") for k in keys}
+        positions = {}
+        for k in tqdm(returns.keys(), "Calculating positions"):
+            rets = returns[k]
+            preds = predictions[k]
+            position_computer = PositionComputer(
+                returns=rets,
+                predictions=preds,
+            )
+            positions[k] = position_computer.compute_positions(mode=mode).rename("positions")
+        pnls = {}
+        for k in tqdm(positions.keys(), "Calculating PnLs"):
+            pnl_computer = PnlComputer(
+                returns=returns,
+                positions=positions,
+            )
+            pnls[k] = pnl_computer.compute_pnl().rename("pnl")
+        pnl_dict = {}
+        for k in keys:
+            pnl_dict[k] = pd.concat([returns[k], predictions[k], positions[k], pnls[k]], axis=1)
+        return pnl_dict
+
+    def get_series_dict(
+        self,
+        series: str,
+        keys: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+        # TODO(*): Add positions strategy option?
+    ) -> Dict[Any, pd.Series]:
+        """
+        Return pnls for requested keys over requested range.
+
+        :param series: "returns", "predictions", "positions", or "pnl"
+        :param keys: Use all available if `None`
+        :param mode: "all_available", "ins", or "oos"
+        :return: Dictionary of rescaled PnL curves
+        """
+        pnl_dict = self._calculate_pnl(keys)
+        dbg.dassert_in(series, ["returns", "predictions", "positions", "pnl"])
+        series_dict = {k: v[series] for k, v in pnl_dict.items()}
+        return self._trim_time_range(series_dict, mode=mode)
+
+    def _trim_time_range(
+        self,
+        data_dict: Dict[Any, Union[pd.Series, pd.DataFrame]],
+        mode: str = "ins"
+    ) -> Dict[Any, Union[pd.Series, pd.DataFrame]]:
+        if mode == "all_available":
+            trimmed = {k: v for k, v in data_dict.items()}
+        elif mode == "ins":
+            trimmed = {
+                k: v[k].loc[: self.oos_start] for k, v in data_dict.items()
+            }
+        elif mode == "oos":
+            dbg.dassert(self.oos_start, msg="No `oos_start` set!")
+            trimmed = {
+                k: v[k].loc[self.oos_start :] for k, v in data_dict.items()
+            }
+        else:
+            raise ValueError(f"Unrecognized mode `{mode}`.")
+        return trimmed
+
+    def aggregate_models(
+        self,
+        keys: Optional[List[Any]] = None,
+        weights: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+        target_volatility: Optional[float] = None,
+    ) -> Tuple[pd.Series, pd.Series, pd.Series]:
+        """
+        Combine selected pnls.
+
+        :param keys: Use all available if `None`
+        :param weights: Average if `None`
+        :param mode: "all_available", "ins", or "oos"
+        :param target_volatility: Rescale portfolio to achieve
+            `target_volatility` on in-sample region
+        :return: aggregate pnl stream, position stream, statistics
+        """
+        # Used by `ModelPlotter()`
+        raise NotImplementedError()
+
+    def calculate_stats(
+        self,
+        keys: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """
+        Calculate performance characteristics of selected models.
+
+        :param keys: Use all available if `None`
+        :param mode: "all_available", "ins", or "oos"
+        :return: Dataframe of statistics with `keys` as columns
+        """
+        pnl_dict = self._calculate_pnl(keys)
+        pnl_dict = self._trim_time_range(pnl_dict, mode=mode)
+        stats_dict = {}
+        for key in tqdm(pnl_dict.keys(), desc="Calculating stats"):
+            stas_val = self._stats_computer.compute_finance_stats(
+                pnl_dict[key],
+                returns_col="returns",
+                predictions_col="predictions",
+                positions_col="positions",
+                pnl_col="pnl",
+            )
+            stats_dict[key] = stats_val
+        # Calculate BH adjustment of pvals.
+        adj_pvals = stats.multipletests(
+            stats_df.loc["signal_quality"].loc["sr.pval"], nan_mode="drop"
+        ).rename("sr.adj_pval")
+        adj_pvals = pd.concat(
+            [adj_pvals.to_frame().transpose()], keys=["signal_quality"]
+        )
+        stats_df = pd.concat([stats_df, adj_pvals], axis=0)
+        return stats_df
+
+
+# #############################################################################
 
 
 class PnlComputer:
