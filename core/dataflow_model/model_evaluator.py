@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import collections
 import functools
-import json
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -20,7 +19,7 @@ import core.dataflow as cdataf
 import core.finance as fin
 import core.signal_processing as sigp
 import core.statistics as stats
-import core.stats_computer as cstats
+import core.dataflow_model.stats_computer as cstats
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
