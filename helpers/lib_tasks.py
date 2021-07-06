@@ -701,8 +701,10 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
     #
     old_branch_name = git.get_branch_name(".")
     dbg.dassert_ne(old_branch_name, new_branch_name)
-    msg = (f"Do you want to rename the current branch '{old_branch_name}' to "
-           f"'{new_branch_name}'")
+    msg = (
+        f"Do you want to rename the current branch '{old_branch_name}' to "
+        f"'{new_branch_name}'"
+    )
     hsinte.query_yes_no(msg, abort_on_no=True)
     # https://stackoverflow.com/questions/6591213/how-do-i-rename-a-local-git-branch
     # To rename a local branch:
@@ -713,7 +715,7 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
     cmd = f"git push origin {new_branch_name}"
     _run(ctx, cmd)
     # git push origin --delete <oldname>
-    cmd = f"git push origin --delete {branch_name}"
+    cmd = f"git push origin --delete {old_branch_name}"
     _run(ctx, cmd)
     print("Done")
 
@@ -2574,7 +2576,8 @@ def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> str:
         a repo_short_name short name (e.g., "amp")
     """
     repo_full_name_with_host, repo_short_name = _get_repo_full_name_from_cmd(
-        repo_short_name)
+        repo_short_name
+    )
     # > (export NO_COLOR=1; gh issue view 1251 --json title )
     # {"title":"Update GH actions for amp"}
     dbg.dassert_lte(1, issue_id)
@@ -2641,7 +2644,8 @@ def gh_create_pr(  # type: ignore
         # Use the branch name as title.
         title = branch_name
     repo_full_name_with_host, repo_short_name = _get_repo_full_name_from_cmd(
-        repo_short_name)
+        repo_short_name
+    )
     _LOG.info(
         "Creating PR with title '%s' for '%s' in %s",
         title,

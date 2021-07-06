@@ -7,7 +7,7 @@ _LOG = logging.getLogger(__name__)
 
 def run_experiment(config: cconfig.Config) -> None:
     """
-    This experiment fails/succeeds depending on the return code stored inside
+    This experiment fails/succeeds depending on the param `fail` stored inside
     the config.
     """
     _LOG.info("config=\n%s", config)
