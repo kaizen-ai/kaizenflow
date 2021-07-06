@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-import core.finance as fin
 import core.dataflow_model.model_evaluator as modeval
+import core.finance as fin
 import core.plotting as plot
 import core.statistics as stats
 import helpers.dbg as dbg
@@ -420,7 +420,7 @@ class ModelPlotter:
         :param mode: "all_available", "ins", or "oos"
         """
         multipletests_plot_kwargs = multipletests_plot_kwargs or {}
-        pnls = self.model_evaluator.get_series_dict("pnls", keys=keys, mode=mode)
+        pnls = self.model_evaluator.get_series_dict("pnl", keys=keys, mode=mode)
         pvals = {k: stats.ttest_1samp(v).loc["pval"] for k, v in pnls.items()}
         plot.multipletests_plot(
             pd.Series(pvals), threshold, axes=axes, **multipletests_plot_kwargs
@@ -443,7 +443,7 @@ class ModelPlotter:
         :param resample_rule: Resampling frequency to apply before plotting
         """
         keys = keys or self.model_evaluator.valid_keys
-        pnls = self.model_evaluator.get_series_dict("pnls", keys=keys, mode=mode)
+        pnls = self.model_evaluator.get_series_dict("pnl", keys=keys, mode=mode)
         aggregate_pnl, _, _ = self.model_evaluator.aggregate_models(
             keys=keys, weights=weights, mode=mode
         )
@@ -490,7 +490,7 @@ class ModelPlotter:
         """
         Plot correlation matrix together with dendrogram.
 
-        :param series: "returns", "predictions", "positions", or "pnls"
+        :param series: "returns", "predictions", "positions", or "pnl"
         :param keys: Use all available if `None`
         :param mode: "all_available", "ins", or "oos"
         """
@@ -512,7 +512,7 @@ class ModelPlotter:
         """
         Plot dendrogram of correlation of selected series.
 
-        :param series: "returns", "predictions", "positions", or "pnls"
+        :param series: "returns", "predictions", "positions", or "pnl"
         :param keys: Use all available if `None`
         :param mode: "all_available", "ins", or "oos"
         """
@@ -535,7 +535,7 @@ class ModelPlotter:
         """
         Plot one time series per plot.
 
-        :param series: "returns", "predictions", "positions", or "pnls"
+        :param series: "returns", "predictions", "positions", or "pnl"
         :param keys: Use all available if `None`
         :param mode: "all_available", "ins", or "oos"
         :param resample_rule: Resampling frequency to apply before plotting
