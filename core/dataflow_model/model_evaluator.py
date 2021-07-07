@@ -51,33 +51,6 @@ class ModelEvaluator:
         self.valid_keys = list(self._data.keys())
         self._stats_computer = cstats.StatsComputer()
 
-    def get_series_dict(
-        self,
-        series: str,
-        keys: Optional[List[Any]] = None,
-        position_method: Optional[str] = None,
-        target_volatility: Optional[float] = None,
-        mode: Optional[str] = None,
-    ) -> Dict[Any, pd.Series]:
-        """
-        Return series for requested keys over requested range.
-
-        :param series: "returns", "predictions", "positions", or "pnl"
-        :param keys: Use all available if `None`
-        :param mode: "all_available", "ins", or "oos"
-        :position_method: as in `PositionComputer.compute_positions()`
-        :target_volatility: as in `PositionComputer.compute_positions()`
-        :return: Dictionary of rescaled series
-        """
-        pnl_dict = self._calculate_pnl(
-            keys,
-            position_method=position_method,
-            target_volatility=target_volatility,
-        )
-        dbg.dassert_in(series, ["returns", "predictions", "positions", "pnl"])
-        series_dict = {k: v[series] for k, v in pnl_dict.items()}
-        return self._trim_time_range(series_dict, mode=mode)
-
     def aggregate_models(
         self,
         keys: Optional[List[Any]] = None,
@@ -91,15 +64,15 @@ class ModelEvaluator:
 
         :param keys: Use all available if `None`
         :param weights: Average if `None`
-        :position_method: as in `PositionComputer.compute_positions()`
-        :target_volatility: as in `PositionComputer.compute_positions()`
+        :param position_method: as in `PositionComputer.compute_positions()`
+        :param target_volatility: as in `PositionComputer.compute_positions()`
         :param mode: "all_available", "ins", or "oos"
         :return: aggregate pnl stream, position stream, statistics
         """
         keys = keys or self.valid_keys
         dbg.dassert_is_subset(keys, self.valid_keys)
         mode = mode or "ins"
-        pnl_dict = self._calculate_pnl(keys=keys, position_method=position_method)
+        pnl_dict = self.compute_pnl(keys=keys, position_method=position_method, mode=mode)
         pnl_df = pd.concat({k: v["pnl"] for k, v in pnl_dict.items()}, axis=1)
         weights = weights or [1 / len(keys)] * len(keys)
         dbg.dassert_eq(len(keys), len(weights))
@@ -136,7 +109,6 @@ class ModelEvaluator:
             pnl_srs *= scale_factor
             pos_srs *= scale_factor
         portfolio_dict = {"positions": pos_srs, "pnl": pnl_srs}
-        portfolio_dict = self._trim_time_range(portfolio_dict, mode=mode)
         aggregate_stats = self._stats_computer.compute_finance_stats(
             pd.DataFrame.from_dict(portfolio_dict),
             positions_col="positions",
@@ -155,17 +127,17 @@ class ModelEvaluator:
         Calculate performance characteristics of selected models.
 
         :param keys: Use all available if `None`
-        :position_method: as in `PositionComputer.compute_positions()`
-        :target_volatility: as in `PositionComputer.compute_positions()`
+        :param position_method: as in `PositionComputer.compute_positions()`
+        :param target_volatility: as in `PositionComputer.compute_positions()`
         :param mode: "all_available", "ins", or "oos"
         :return: Dataframe of statistics with `keys` as columns
         """
-        pnl_dict = self._calculate_pnl(
+        pnl_dict = self.compute_pnl(
             keys,
             position_method=position_method,
             target_volatility=target_volatility,
+            mode=mode,
         )
-        pnl_dict = self._trim_time_range(pnl_dict, mode=mode)
         stats_dict = {}
         for key in tqdm(pnl_dict.keys(), desc="Calculating stats"):
             stats_dict[key] = self._stats_computer.compute_finance_stats(
@@ -186,18 +158,19 @@ class ModelEvaluator:
         stats_df = pd.concat([stats_df, adj_pvals], axis=0)
         return stats_df
 
-    def _calculate_pnl(
+    def compute_pnl(
         self,
         keys: Optional[List[Any]] = None,
         position_method: Optional[str] = None,
         target_volatility: Optional[float] = None,
+        mode: Optional[str] = None,
     ) -> Dict[Any, pd.DataFrame]:
         """
         Helper for calculating positions and PnL from returns and predictions.
 
         :param keys: Use all available if `None`
-        :position_method: as in `PositionComputer.compute_positions()`
-        :target_volatility: as in `PositionComputer.compute_positions()`
+        :param position_method: as in `PositionComputer.compute_positions()`
+        :param target_volatility: as in `PositionComputer.compute_positions()`
         """
         keys = keys or self.valid_keys
         dbg.dassert_is_subset(keys, self.valid_keys)
@@ -231,6 +204,7 @@ class ModelEvaluator:
             pnl_dict[k] = pd.concat(
                 [returns[k], predictions[k], positions[k], pnls[k]], axis=1
             )
+        pnl_dict = self._trim_time_range(pnl_dict, mode=mode)
         return pnl_dict
 
     def _trim_time_range(
