@@ -721,6 +721,12 @@ def compute_forecastability(
     prefix = prefix or ""
     data = hdataf.apply_nan_mode(signal, mode=nan_mode)
     has_infs = (~data.apply(np.isfinite)).any()
+    # Make an output for empty or too short inputs.
+    nan_result = pd.Series(
+        data=[np.nan],
+        index=[prefix + "forecastability"],
+        name=signal.name,
+    )
     if has_infs:
         if inf_mode == "return_nan":
             return nan_result
@@ -823,6 +829,41 @@ def compute_swt_covar_summary(
         np.sqrt(decomp[var1_col].multiply(decomp[var2_col]))
     )
     return decomp
+
+
+def compute_swt_coeffs(
+    srs1: pd.Series,
+    srs2: pd.Series,
+    wavelet: Optional[str] = None,
+    depth: Optional[int] = None,
+    timing_mode: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Get approximate coefficients.
+    """
+    swt1 = csigna.get_swt(
+        srs1,
+        wavelet=wavelet,
+        depth=depth,
+        timing_mode=timing_mode,
+        output_mode="detail",
+    )
+    swt1 = swt1.dropna()
+    counts = swt1.count().rename("counts")
+    var = compute_swt_var_summary(
+        srs1, wavelet=wavelet, depth=depth, timing_mode=timing_mode
+    )["swt_var"]
+    covar = (
+        swt1.multiply(srs2, axis=0)
+        .sum(axis=0)
+        .divide(swt1.count())
+        .rename("covar")
+    )
+    rho = covar.divide(np.sqrt(var) * np.sqrt(srs2.var())).rename("rho")
+    beta = covar.divide(var).rename("beta")
+    beta_se = np.sqrt(srs2.var() / var.multiply(counts)).rename("SE(beta)")
+    zs = beta.divide(beta_se).rename("beta_z_scored")
+    return pd.concat([counts, var, covar, rho, beta, beta_se, zs], axis=1)
 
 
 # #############################################################################
