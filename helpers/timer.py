@@ -159,16 +159,18 @@ def stop_timer(timer: Timer) -> str:
 # Context manager.
 # #############################################################################
 
+
 class TimedScope:
     """
     Measure the execution time of a block of code.
 
-    E.g.,
-    ```
-    with htimer.TimedScope(logging.INFO, "Work") as ts:
-        ... work work work ...
-    ```
+    Use example
+        ```
+        with htimer.TimedScope(logging.INFO, "Work") as ts:
+            ... work work work ...
+        ```
     """
+
     def __init__(self, log_level: int, message: str):
         self._log_level = log_level
         self._message = message
@@ -193,6 +195,7 @@ def timed(f: Callable) -> Callable:
     """
     Decorator adding a timer around the invocation of a function.
     """
+
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         func_name = f.__name__
         #

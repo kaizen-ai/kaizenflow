@@ -22,9 +22,7 @@ class StatsComputer:
     Allows to get particular piece of stats instead of the whole stats table.
     """
 
-    def compute_stats(
-        self, srs: pd.Series, time_series_type: Optional[str] = None
-    ) -> pd.Series:
+    def compute_time_series_stats(self, srs: pd.Series) -> pd.Series:
         stats = []
         with htimer.TimedScope(logging.DEBUG, "Computing samplings stats") as ts:
             stats.append(self.compute_sampling_stats(srs))
@@ -43,11 +41,6 @@ class StatsComputer:
             logging.DEBUG, "Computing signal quality stats"
         ) as ts:
             stats.append(self.compute_signal_quality_stats(srs))
-        if time_series_type is not None:
-            with htimer.TimedScope(
-                logging.DEBUG, "Computing finance stats"
-            ) as ts:
-                stats.append(self.compute_finance_stats(srs, time_series_type))
         names = [stat.name for stat in stats]
         result = pd.concat(stats, axis=0, keys=names)
         result.name = srs.name
@@ -130,38 +123,72 @@ class StatsComputer:
         return pd.concat([result, kratio])
 
     def compute_finance_stats(
-        self, srs: pd.Series, time_series_type: str
-    ) -> pd.Series:
-        """
-        Assumes `srs` is a PnL curve.
-
-        :mode: pnl, positions
-        """
-        name = "finance"
-        if time_series_type == "pnl":
+        self,
+        df: pd.DataFrame,
+        *,
+        returns_col: Optional[str] = None,
+        predictions_col: Optional[str] = None,
+        positions_col: Optional[str] = None,
+        pnl_col: Optional[str] = None,
+    ) -> pd.DataFrame:
+        results = []
+        if positions_col is not None:
+            positions = df[positions_col]
+            name = "finance"
+            functions = [cstati.compute_avg_turnover_and_holding_period]
+            stats = self._compute_stat_functions(positions, name, functions)
+            results.append(pd.concat([stats], keys=["finance"]))
+        if pnl_col is not None:
+            pnl = df[pnl_col]
+            results.append(self.compute_time_series_stats(pnl))
+            name = "pnl"
             functions = [
                 cstati.compute_annualized_return_and_volatility,
                 cstati.compute_max_drawdown,
                 cstati.calculate_hit_rate,
             ]
-        elif time_series_type == "positions":
-            functions = [cstati.compute_avg_turnover_and_holding_period]
-        else:
-            raise ValueError
-        return self._compute_stat_functions(srs, name, functions)
-
-    @staticmethod
-    def compute_bet_stats(
-        *, positions: pd.Series, returns: pd.Series
-    ) -> pd.Series:
-        name = "bets"
-        bets = cstati.compute_bet_stats(positions, returns[positions.index])
-        bets.name = name
-        return bets
-
-    # TODO(Paul): Add correlation for calculating
-    #   - correlation of pnl to rets
-    #   - correlation of predictions to rets
+            stats = self._compute_stat_functions(pnl, name, functions)
+            results.append(pd.concat([stats], keys=["finance"]))
+            corr = pd.Series(
+                cstati.compute_implied_correlation(pnl),
+                index=["prediction_corr_implied_by_pnl"],
+                name=name,
+            )
+            results.append(pd.concat([corr], keys=["correlation"]))
+        # Currently we do not calculate individual prediction/returns stats.
+        if returns_col is not None and predictions_col is not None:
+            name = "pnl"
+            returns = df[returns_col]
+            predictions = df[predictions_col]
+            prediction_corr = predictions.corr(returns)
+            corr = pd.Series(
+                prediction_corr, index=["prediction_corr"], name=name
+            )
+            results.append(pd.concat([corr], keys=["correlation"]))
+            sr = pd.Series(
+                cstati.compute_implied_sharpe_ratio(predictions, prediction_corr),
+                index=["sr_implied_by_prediction_corr"],
+                name=name,
+            )
+            results.append(pd.concat([sr], keys=["signal_quality"]))
+        if returns_col is not None and positions_col is not None:
+            returns = df[returns_col]
+            positions = df[positions_col]
+            name = "pnl"
+            bets = cstati.compute_bet_stats(positions, returns)
+            bets.name = name
+            results.append(pd.concat([bets], keys=["bets"]))
+        if returns_col is not None and pnl_col is not None:
+            returns = df[returns_col]
+            pnl = df[pnl_col]
+            corr = pd.Series(
+                pnl.corr(returns), index=["pnl_corr_to_underlying"], name=name
+            )
+            results.append(pd.concat([corr], keys=["correlation"]))
+        # No predictions and positions calculations yet.
+        # No predictions and PnL calculations yet.
+        # No positions and PnL calculations yet.
+        return pd.concat(results, axis=0)
 
     @staticmethod
     def _compute_stat_functions(

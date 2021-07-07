@@ -53,11 +53,10 @@ _LOG = logging.getLogger(__name__)
 # %%
 eval_config = cconfig.get_config_from_nested_dict(
     {
-        "exp_dir": "/app/experiment1",
+        # "exp_dir": "/app/experiment1",
         "model_evaluator_kwargs": {
             "returns_col": "ret_0_vol_adj_2",
             "predictions_col": "ret_0_vol_adj_2_hat",
-            "target_volatility": 0.1,
             "oos_start": "2017-01-01",
         },
         "bh_adj_threshold": 0.1,
@@ -99,7 +98,11 @@ pred_df = (
 )
 
 # %%
-preds = pred_df.to_dict(orient="series")
+data_dict = {}
+for k in pred_df.columns:
+    data_dict[k] = pd.concat(
+        [rets[k].rename("returns"), pred_df[k].rename("predictions")], axis=1
+    )
 
 # %% [markdown]
 # # Initialize ModelEvaluator and ModelPlotter
@@ -107,11 +110,9 @@ preds = pred_df.to_dict(orient="series")
 # %%
 if eval_config.get("exp_dir", None) is None:
     evaluator = modeval.ModelEvaluator(
-        returns=rets,
-        predictions=preds,
-        target_volatility=eval_config[
-            "model_evaluator_kwargs", "target_volatility"
-        ],
+        data=data_dict,
+        target_col="returns",
+        prediction_col="predictions",
         oos_start=eval_config["model_evaluator_kwargs", "oos_start"],
     )
 else:
@@ -131,12 +132,14 @@ plotter.plot_multiple_tests_adjustment(
 )
 
 # %%
-pnl_stats = evaluator.calculate_stats(mode=eval_config["mode"])
-pnl_stats
+pnl_stats = evaluator.calculate_stats(
+    mode=eval_config["mode"], target_volatility=eval_config["target_volatility"]
+)
+pnl_stats.loc[["signal_quality", "correlation"]]
 
 # %%
 plotter.plot_correlation_matrix(
-    series="pnls",
+    series="pnl",
     resample_rule=eval_config["resample_rule"],
     mode=eval_config["mode"],
 )
@@ -149,7 +152,10 @@ plotter.plot_correlation_matrix(
 )
 
 # %%
-col_mask = pnl_stats.loc["adj_pval"] < eval_config["bh_adj_threshold"]
+col_mask = (
+    pnl_stats.loc["signal_quality"].loc["sr.adj_pval"]
+    < eval_config["bh_adj_threshold"]
+)
 selected = pnl_stats.loc[:, col_mask].columns.to_list()
 
 # %%

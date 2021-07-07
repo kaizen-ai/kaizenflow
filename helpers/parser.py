@@ -8,12 +8,16 @@ import argparse
 import logging
 import os
 import sys
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import helpers.dbg as dbg
+import helpers.io_ as hio
 import helpers.printing as hprint
+import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
+
+# TODO(gp): arg -> args
 
 
 # #############################################################################
@@ -49,6 +53,91 @@ def add_verbosity_arg(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
         help="Set the logging level",
     )
     return parser
+
+
+# TODO(gp): Use this everywhere.
+def parse_verbosity_args(
+    args: argparse.Namespace, *args_: Any, **kwargs: Any
+) -> None:
+    dbg.init_logger(verbosity=args.log_level, *args_, **kwargs)
+
+
+# #############################################################################
+# Command line options for handling the destination dir.
+# #############################################################################
+
+
+def add_dst_dir_arg(
+    parser: argparse.ArgumentParser,
+    dst_dir_required: bool,
+    dst_dir_default: Optional[str] = None,
+) -> argparse.ArgumentParser:
+    """
+    Add command line options related to destination dir.
+
+    E.g., `--dst_dir`, `--clean_dst_dir`
+    """
+    # TODO(gp): Add unit test to check this.
+    # A required dst_dir implies no default dst_dir.
+    dbg.dassert_imply(
+        dst_dir_required,
+        not dst_dir_default,
+        "Since dst_dir_required='%s', you need to specify a default "
+        "destination dir, instead of dst_dir_default='%s'",
+        dst_dir_required,
+        dst_dir_default,
+    )
+    # If dst_dir is not required, then a default dst_dir must be specified.
+    dbg.dassert_imply(
+        not dst_dir_required,
+        dst_dir_default,
+        "Since dst_dir_required='%s', you can't specify a default "
+        "destination dir, dst_dir_default='%s'",
+        dst_dir_required,
+        dst_dir_default,
+    )
+    parser.add_argument(
+        "--dst_dir",
+        action="store",
+        default=dst_dir_default,
+        required=dst_dir_required,
+        help="Directory storing the results",
+    )
+    parser.add_argument(
+        "--clean_dst_dir",
+        action="store_true",
+        help="Delete the destination dir before running",
+    )
+    parser.add_argument(
+        "--no_confirm",
+        action="store_true",
+        help="Do not confirm before deleting dst dir",
+    )
+    return parser
+
+
+def parse_dst_dir_arg(args: argparse.Namespace) -> Tuple[str, bool]:
+    """
+    Process the command line options related to destination dir.
+
+    :return: a tuple (dst_dir, clean_dst_dir)
+        - dst_dir: the destination dir
+        - clean_dst_dir: whether to clean the destination dir or not
+    """
+    dst_dir = args.dst_dir
+    _LOG.debug("dst_dir=%s", dst_dir)
+    clean_dst_dir = False
+    if args.clean_dst_dir:
+        if os.path.exists(dst_dir):
+            _LOG.warning("Found that dir '%s' already exists", dst_dir)
+            if not args.no_confirm:
+                clean_dst_dir = hsyste.query_yes_no(
+                    "Do you want to delete the dir '%s'" % dst_dir,
+                    abort_on_no=True,
+                )
+    hio.create_dir(dst_dir, incremental=True)
+    _LOG.debug("clean_dst_dir=%s", clean_dst_dir)
+    return dst_dir, clean_dst_dir
 
 
 # #############################################################################
@@ -265,5 +354,12 @@ Number of threads to use:
         "--skip_on_error",
         action="store_true",
         help="Continue execution after encountering an error",
+    )
+    parser.add_argument(
+        "--num_attempts",
+        default=1,
+        type=int,
+        help="Repeat running an experiment up to `num_attempts` times",
+        required=False,
     )
     return parser

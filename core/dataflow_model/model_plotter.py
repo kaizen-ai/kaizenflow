@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-import core.finance as fin
 import core.dataflow_model.model_evaluator as modeval
+import core.finance as fin
 import core.plotting as plot
 import core.statistics as stats
 import helpers.dbg as dbg
@@ -39,29 +39,6 @@ class ModelPlotter:
         """
         dbg.dassert_isinstance(model_evaluator, modeval.ModelEvaluator)
         self.model_evaluator = model_evaluator
-
-    def dump_json(self) -> str:
-        """
-        Dump underlying `self.model_evaluator` instance to json.
-
-        :return json representation of `self.model_evaluator`
-        """
-        return self.model_evaluator.dump_json()
-
-    @classmethod
-    def load_json(cls, json_str: str, keys_to_int: bool = True) -> ModelPlotter:
-        """
-        Load `ModelPlotter` instance from json.
-
-        :param json_str: the output of `ModelPlotter.load_json`
-        :param keys_to_int: if `True`, convert dict keys to `int`
-        :return: `ModelPlotter` instance
-        """
-        evaluator = modeval.ModelEvaluator.load_json(
-            json_str, keys_to_int=keys_to_int
-        )
-        plotter = cls(evaluator)
-        return plotter
 
     def plot_rets_signal_analysis(
         self,
@@ -364,12 +341,9 @@ class ModelPlotter:
         """
         Plot holding diffs (per key).
         """
-        keys = keys or self.model_evaluator.valid_keys
-        pos = self.model_evaluator.get_series_dict(
-            "positions", keys=keys, mode=mode
-        )
-        for key in keys:
-            plot.plot_holdings_diffs(pos[key], label=f"Holdings diffs {key}")
+        pnl_dict = self.model_evaluator.compute_pnl(keys=keys, mode=mode)
+        for k, v in pnl_dict.items():
+            plot.plot_holding_diffs(v["positions"], label=f"Holdings diffs {k}")
         plt.legend()
 
     def plot_returns_and_predictions(
@@ -386,20 +360,14 @@ class ModelPlotter:
         :param mode: "all_available", "ins", or "oos"
         :param resample_rule: Resampling frequency to apply before plotting
         """
-        keys = keys or self.model_evaluator.valid_keys
-        rets = self.model_evaluator.get_series_dict(
-            "returns", keys=keys, mode=mode
-        )
-        preds = self.model_evaluator.get_series_dict(
-            "predictions", keys=keys, mode=mode
-        )
+        pnl_dict = self.model_evaluator.compute_pnl(keys=keys, mode=mode)
         if axes is None:
             _, axes = plot.get_multiple_plots(
                 len(keys), 1, y_scale=5, sharex=True, sharey=True
             )
             plt.suptitle("Returns and predictions over time", y=1.01)
         for idx, key in enumerate(keys):
-            y_yhat = pd.concat([rets[key], preds[key]], axis=1)
+            y_yhat = pnl_dict[key][["returns", "predictions"]]
             if resample_rule is not None:
                 y_yhat = y_yhat.resample(rule=resample_rule).sum(min_count=1)
             y_yhat.plot(ax=axes[idx], title=f"Model {key}")
@@ -420,8 +388,11 @@ class ModelPlotter:
         :param mode: "all_available", "ins", or "oos"
         """
         multipletests_plot_kwargs = multipletests_plot_kwargs or {}
-        pnls = self.model_evaluator.get_series_dict("pnls", keys=keys, mode=mode)
-        pvals = {k: stats.ttest_1samp(v).loc["pval"] for k, v in pnls.items()}
+        pnl_dict = self.model_evaluator.compute_pnl(keys=keys, mode=mode)
+        pvals = {
+            k: stats.ttest_1samp(v["pnl"]).loc["pval"]
+            for k, v in pnl_dict.items()
+        }
         plot.multipletests_plot(
             pd.Series(pvals), threshold, axes=axes, **multipletests_plot_kwargs
         )
@@ -442,8 +413,9 @@ class ModelPlotter:
         :param mode: "all_available", "ins", or "oos"
         :param resample_rule: Resampling frequency to apply before plotting
         """
-        keys = keys or self.model_evaluator.valid_keys
-        pnls = self.model_evaluator.get_series_dict("pnls", keys=keys, mode=mode)
+        pnl_dict = self.model_evaluator.compute_pnl(keys=keys, mode=mode)
+        # Extract only the PnL series from `pnl_dict`.
+        pnls = {k: v["pnl"] for k, v in pnl_dict.items()}
         aggregate_pnl, _, _ = self.model_evaluator.aggregate_models(
             keys=keys, weights=weights, mode=mode
         )
@@ -490,7 +462,7 @@ class ModelPlotter:
         """
         Plot correlation matrix together with dendrogram.
 
-        :param series: "returns", "predictions", "positions", or "pnls"
+        :param series: "returns", "predictions", "positions", or "pnl"
         :param keys: Use all available if `None`
         :param mode: "all_available", "ins", or "oos"
         """
@@ -512,7 +484,7 @@ class ModelPlotter:
         """
         Plot dendrogram of correlation of selected series.
 
-        :param series: "returns", "predictions", "positions", or "pnls"
+        :param series: "returns", "predictions", "positions", or "pnl"
         :param keys: Use all available if `None`
         :param mode: "all_available", "ins", or "oos"
         """
@@ -535,15 +507,15 @@ class ModelPlotter:
         """
         Plot one time series per plot.
 
-        :param series: "returns", "predictions", "positions", or "pnls"
+        :param series: "returns", "predictions", "positions", or "pnl"
         :param keys: Use all available if `None`
         :param mode: "all_available", "ins", or "oos"
         :param resample_rule: Resampling frequency to apply before plotting
         """
         plot_time_series_dict_kwargs = plot_time_series_dict_kwargs or {}
-        series_dict = self.model_evaluator.get_series_dict(
-            series, keys=keys, mode=mode
-        )
+        pnl_dict = self.model_evaluator.compute_pnl(keys=keys, mode=mode)
+        dbg.dassert_in(series, ["returns", "predictions", "positions", "pnl"])
+        series_dict = {k: v[series] for k, v in pnl_dict.items()}
         if resample_rule is not None:
             for k, v in series_dict.items():
                 series_dict[k] = v.resample(rule=resample_rule).sum(min_count=1)
@@ -589,9 +561,9 @@ class ModelPlotter:
         mode: Optional[str] = None,
         resample_rule: Optional[str] = None,
     ) -> pd.DataFrame:
-        series_dict = self.model_evaluator.get_series_dict(
-            series, keys=keys, mode=mode
-        )
+        pnl_dict = self.model_evaluator.compute_pnl(keys=keys, mode=mode)
+        dbg.dassert_in(series, ["returns", "predictions", "positions", "pnl"])
+        series_dict = {k: v[series] for k, v in pnl_dict.items()}
         if resample_rule is not None:
             for k, v in series_dict.items():
                 series_dict[k] = v.resample(rule=resample_rule).sum(min_count=1)

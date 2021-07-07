@@ -339,7 +339,8 @@ class Config:
             % (key, self._config[key], pri.indent(str(self)))
         )
 
-    def _parse_compound_key(self, key: Key) -> Tuple[str, Iterable[str]]:
+    @staticmethod
+    def _parse_compound_key(key: Key) -> Tuple[str, Iterable[str]]:
         dbg.dassert(intr.is_iterable(key), "Key='%s' is not iterable", key)
         head_key, tail_key = key[0], key[1:]  # type: ignore
         _LOG.debug(

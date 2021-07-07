@@ -14,19 +14,15 @@ Run an experiment consisting of multiple model runs based on the passed
 import argparse
 import logging
 import os
-import sys
 from typing import cast
-
-import joblib
-import tqdm
 
 import core.config as cconfig
 import core.dataflow_model.utils as cdtfut
+import helpers.datetime_ as hdatetime
 import helpers.dbg as dbg
 import helpers.git as git
-import helpers.io_ as hio
+import helpers.joblib_helpers as hjoblib
 import helpers.parser as prsr
-import helpers.printing as printing
 import helpers.system_interaction as hsinte
 
 _LOG = logging.getLogger(__name__)
@@ -37,8 +33,9 @@ _LOG = logging.getLogger(__name__)
 
 def _run_experiment(
     config: cconfig.Config,
+    #
+    incremental: bool,
     num_attempts: int,
-    abort_on_error: bool,
 ) -> int:
     """
     Run a pipeline for a specific `Config`.
@@ -46,10 +43,10 @@ def _run_experiment(
     :param config: config for the experiment
     :param num_attempts: maximum number of times to attempt running the
         notebook
-    :param abort_on_error: if `True`, raise an error
     :return: rc from executing the pipeline
     """
     dbg.dassert_eq(1, num_attempts, "Multiple attempts not supported yet")
+    _ = incremental
     cdtfut.setup_experiment_dir(config)
     # Execute experiment.
     # TODO(gp): Rename id -> idx everywhere
@@ -82,13 +79,13 @@ def _run_experiment(
         cmd, output_file=log_file, suppress_output=False, abort_on_error=False
     )
     _LOG.info("Executed cmd")
+    # TODO(gp): We don't really have to catch the error and rethrow since the outer
+    #  layer handles the exceptions.
     if rc != 0:
         # The notebook run wasn't successful.
-        _LOG.error("Execution failed for experiment %d", idx)
-        if abort_on_error:
-            dbg.dfatal("Aborting on experiment error")
-        else:
-            _LOG.error("Continuing execution for next experiments")
+        msg = f"Execution failed for experiment {idx}"
+        _LOG.error(msg)
+        raise RuntimeError(msg)
     else:
         # Mark as success.
         cdtfut.mark_config_as_success(experiment_result_dir)
@@ -96,12 +93,38 @@ def _run_experiment(
     return rc
 
 
+def _get_workload(args: argparse.Namespace) -> hjoblib.Workload:
+    """
+    Prepare the workload using the parameters from command line.
+    """
+    # Get the configs to run.
+    configs = cdtfut.get_configs_from_command_line(args)
+    # Prepare the tasks.
+    tasks = []
+    for config in configs:
+        task = (
+            # args.
+            (config,),
+            # kwargs.
+            {},
+        )
+        tasks.append(task)
+    #
+    func_name = "_run_experiment"
+    workload = (_run_experiment, func_name, tasks)
+    hjoblib.validate_workload(workload)
+    return workload
+
+
+# #############################################################################
+
+
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     # Add common experiment options.
-    parser = cdtfut.add_experiment_arg(parser)
+    parser = cdtfut.add_experiment_arg(parser, dst_dir_required=True)
     # Add pipeline options.
     parser.add_argument(
         "--experiment_builder",
@@ -113,49 +136,37 @@ def _parse() -> argparse.ArgumentParser:
     return parser  # type: ignore
 
 
-# TODO(gp): Use `joblib_helpers`.
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create the dst dir.
-    dst_dir = os.path.abspath(args.dst_dir)
-    hio.create_dir(dst_dir, incremental=not args.clean_dst_dir)
-    # Get the configs to run.
-    configs = cdtfut.get_configs_from_command_line(args)
+    dst_dir, clean_dst_dir = prsr.parse_dst_dir_arg(args)
+    _ = clean_dst_dir
+    # Prepare the workload.
+    workload = _get_workload(args)
     # Parse command-line options.
-    num_attempts = args.num_attempts
-    abort_on_error = not args.skip_on_error
+    dry_run = args.dry_run
     num_threads = args.num_threads
-    # TODO(gp): Try to factor out this. Pass a function and a list of params.
+    incremental = not args.no_incremental
+    abort_on_error = not args.skip_on_error
+    num_attempts = args.num_attempts
+    # Prepare the log file.
+    timestamp = hdatetime.get_timestamp("et")
+    log_file = os.path.join(dst_dir, f"log.{timestamp}.txt")
+    _LOG.info("log_file='%s'", log_file)
     # Execute.
-    if num_threads == "serial":
-        rcs = []
-        for i, config in tqdm.tqdm(
-            enumerate(configs), desc="Running experiments"
-        ):
-            _LOG.debug("\n%s", printing.frame("Config %s" % i))
-            #
-            rc = _run_experiment(
-                config,
-                num_attempts,
-                abort_on_error,
-            )
-            rcs.append(rc)
-    else:
-        num_threads = int(num_threads)
-        # -1 is interpreted by joblib like for all cores.
-        _LOG.info("Using %d threads", num_threads)
-        rcs = joblib.Parallel(n_jobs=num_threads, verbose=50)(
-            joblib.delayed(_run_experiment)(
-                config,
-                num_attempts,
-                abort_on_error,
-            )
-            for config in configs
-        )
-    # Report failing experiments.
-    rc = cdtfut.report_failed_experiments(configs, rcs)
-    sys.exit(rc)
+    hjoblib.parallel_execute(
+        workload,
+        dry_run,
+        num_threads,
+        incremental,
+        abort_on_error,
+        num_attempts,
+        log_file,
+    )
+    #
+    _LOG.info("dst_dir='%s'", dst_dir)
+    _LOG.info("log_file='%s'", log_file)
 
 
 if __name__ == "__main__":

@@ -571,7 +571,7 @@ def kill_process(
 # #############################################################################
 
 
-def query_yes_no(question: str, abort_on_no: bool) -> bool:
+def query_yes_no(question: str, abort_on_no: bool = True) -> bool:
     """
     Ask a yes/no question via `raw_input()` and return their answer.
 
@@ -655,9 +655,9 @@ def du(path_name: str, human_format: bool = False) -> Union[int, str]:
     # `du` returns size in KB.
     size_in_bytes = int(txt) * 1024
     if human_format:
-        size = hintro.format_size(size_in_bytes)
+        size: str = hintro.format_size(size_in_bytes)
     else:
-        size = size_in_bytes
+        size: int = size_in_bytes
     return size
 
 
@@ -737,40 +737,3 @@ def find_file_with_dir(
     # Select the result based on mode.
     res = select_result_file_from_list(matching_files, mode)
     return res
-
-
-# #############################################################################
-
-
-def is_inside_docker() -> bool:
-    """
-    Return whether we are inside a container or not.
-    """
-    # From https://stackoverflow.com/questions/23513045
-    return os.path.exists("/.dockerenv")
-
-
-def is_inside_ci() -> bool:
-    """
-    Return whether we are running inside the Continuous Integration flow.
-    """
-    if "CI" not in os.environ:
-        ret = False
-    else:
-        ret = os.environ["CI"] != ""
-    return ret
-
-
-def is_running_in_ipynb() -> bool:
-    # From https://stackoverflow.com/questions/15411967
-    try:
-        _ = get_ipython().config  # type: ignore
-        res = True
-    except NameError:
-        res = False
-    return res
-
-
-# TODO(gp): Use this everywhere in the code base.
-def is_running_on_macos() -> bool:
-    return get_os_name() == "Darwin"

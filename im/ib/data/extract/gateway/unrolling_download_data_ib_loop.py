@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple, Union
 
 try:
     import ib_insync
@@ -406,7 +406,7 @@ def get_historical_data(
     what_to_show: str,
     use_rth: bool,
     mode: str,
-    num_threads: str = "serial",
+    num_threads: Union[str, int] = "serial",
     incremental: bool = False,
     dst_dir: Optional[Any] = None,
     use_progress_bar: bool = False,
