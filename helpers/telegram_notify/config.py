@@ -16,10 +16,7 @@ def get_info() -> Tuple[str, str]:
     # https://api.telegram.org/bot<telegram_token>/getUpdates and get your chat id.
     # (If you are using @NotifyJupyterBot, go to
     # https://api.telegram.org/bot***REMOVED***/getUpdates )
-    if user == "julia":
-        telegram_token = NOTIFY_JUPYTER_TOKEN
-        chat_id = "35712077"
-    elif user == "saggese":
+    if user in ("saggese", "root"):
         telegram_token = NOTIFY_JUPYTER_TOKEN
         chat_id = "967103049"
     else:
