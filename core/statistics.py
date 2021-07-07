@@ -833,6 +833,7 @@ def compute_swt_coeffs(
     timing_mode: Optional[str] = None,
 ) -> pd.DataFrame:
     """
+    Get approximate coefficients.
     """
     swt1 = csigna.get_swt(srs1, wavelet=wavelet, depth=depth, timing_mode=timing_mode, output_mode="detail")
     swt1 = swt1.dropna()
@@ -840,12 +841,10 @@ def compute_swt_coeffs(
     var = compute_swt_var_summary(srs1, wavelet=wavelet, depth=depth, timing_mode=timing_mode)["swt_var"]
     covar = swt1.multiply(srs2, axis=0).sum(axis=0).divide(swt1.count()).rename("covar")
     rho = covar.divide(np.sqrt(var) * np.sqrt(srs2.var())).rename("rho")
-    sr = swt1.multiply(srs2, axis=0).apply(compute_annualized_sharpe_ratio).rename("SR")
-    sr_se = swt1.multiply(srs2, axis=0).apply(compute_annualized_sharpe_ratio_standard_error).rename("SE(SR)")
-    beta = rho.divide(np.sqrt(var)).multiply(np.sqrt(srs2.var())).rename("beta")
-    beta_se = np.sqrt(srs2.var() / var).rename("SE(beta)")
-    zs = rho.divide(np.sqrt(var)).rename("beta_z_scored")
-    return pd.concat([counts, var, covar, rho, sr, sr_se, beta, beta_se, zs], axis=1)
+    beta = covar.divide(var).rename("beta")
+    beta_se = np.sqrt(srs2.var() / var.multiply(counts)).rename("SE(beta)")
+    zs = beta.divide(beta_se).rename("beta_z_scored")
+    return pd.concat([counts, var, covar, rho, beta, beta_se, zs], axis=1)
 
 
 # #############################################################################
