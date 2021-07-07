@@ -76,8 +76,11 @@ class ModelEvaluator:
         dbg.dassert_is_subset(keys, self.valid_keys)
         mode = mode or "ins"
         pnl_dict = self.compute_pnl(
-            keys=keys, position_method=position_method, mode=mode,
-            returns_shift=returns_shift, predictions_shift=predictions_shift,
+            keys=keys,
+            position_method=position_method,
+            mode=mode,
+            returns_shift=returns_shift,
+            predictions_shift=predictions_shift,
         )
         pnl_df = pd.concat({k: v["pnl"] for k, v in pnl_dict.items()}, axis=1)
         weights = weights or [1 / len(keys)] * len(keys)
@@ -196,10 +199,15 @@ class ModelEvaluator:
         dbg.dassert_is_subset(keys, self.valid_keys)
         #
         returns = {
-            k: self._data[k][self.target_col].shift(returns_shift).rename("returns") for k in keys
+            k: self._data[k][self.target_col]
+            .shift(returns_shift)
+            .rename("returns")
+            for k in keys
         }
         predictions = {
-            k: self._data[k][self.prediction_col].shift(predictions_shift).rename("predictions")
+            k: self._data[k][self.prediction_col]
+            .shift(predictions_shift)
+            .rename("predictions")
             for k in keys
         }
         positions = {}
