@@ -40,9 +40,6 @@ class ModelEvaluator:
         target_col: Optional[str] = None,
         oos_start: Optional[Any] = None,
     ) -> None:
-        """
-        
-        """
         self._data = data
         dbg.dassert(data, msg="Data set must be nonempty.")
         # Use plain attributes (Item #44).
@@ -418,8 +415,7 @@ class PositionComputer:
                 msg="Must set `oos_start` to run `oos`",
             )
             return srs[self.oos_start :]
-        else:
-            raise ValueError(f"Invalid mode `{mode}`!")
+        raise ValueError(f"Invalid mode `{mode}`!")
 
     @staticmethod
     def _validate_series(srs: pd.Series, oos_start: Optional[float]) -> None:

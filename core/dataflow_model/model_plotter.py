@@ -343,9 +343,7 @@ class ModelPlotter:
         """
         pnl_dict = self.model_evaluator.compute_pnl(keys=keys, mode=mode)
         for k, v in pnl_dict.items():
-            plot.plot_holding_diffs(
-                v["positions"], label=f"Holdings diffs {k}"
-            )
+            plot.plot_holding_diffs(v["positions"], label=f"Holdings diffs {k}")
         plt.legend()
 
     def plot_returns_and_predictions(
