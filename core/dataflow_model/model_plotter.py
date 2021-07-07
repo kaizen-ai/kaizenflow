@@ -367,7 +367,7 @@ class ModelPlotter:
             )
             plt.suptitle("Returns and predictions over time", y=1.01)
         for idx, key in enumerate(keys):
-            y_yhat = pnl_dict[["returns", "predictions"]]
+            y_yhat = pnl_dict[key][["returns", "predictions"]]
             if resample_rule is not None:
                 y_yhat = y_yhat.resample(rule=resample_rule).sum(min_count=1)
             y_yhat.plot(ax=axes[idx], title=f"Model {key}")
