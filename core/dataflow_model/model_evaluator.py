@@ -518,8 +518,10 @@ class TransactionCostModeler:
         dbg.dassert(srs.index.freq)
 
 
+# TODO(gp): Maybe make it a classmethod builder for ModelEvaluator called
+#  `build_from_result_bundle_dicts`.
 def build_model_evaluator_from_result_bundle_dicts(
-    result_bundle_dicts: collections.OrderedDict,
+    result_bundle_dicts: collections.OrderedDict[cdataf.ResultBundle],
     returns_col: str,
     predictions_col: str,
     oos_start: Optional[Any] = None,
