@@ -56,6 +56,8 @@ class ModelEvaluator:
         weights: Optional[List[Any]] = None,
         position_method: Optional[str] = None,
         target_volatility: Optional[float] = None,
+        returns_shift: Optional[int] = 0,
+        predictions_shift: Optional[int] = 0,
         mode: Optional[str] = None,
     ) -> Tuple[pd.Series, pd.Series, pd.Series]:
         """
@@ -65,6 +67,8 @@ class ModelEvaluator:
         :param weights: Average if `None`
         :param position_method: as in `PositionComputer.compute_positions()`
         :param target_volatility: as in `PositionComputer.compute_positions()`
+        :param returns_shift: as in `compute_pnl()`
+        :param predictions_shift: as in `compute_pnl()`
         :param mode: "all_available", "ins", or "oos"
         :return: aggregate pnl stream, position stream, statistics
         """
@@ -72,7 +76,8 @@ class ModelEvaluator:
         dbg.dassert_is_subset(keys, self.valid_keys)
         mode = mode or "ins"
         pnl_dict = self.compute_pnl(
-            keys=keys, position_method=position_method, mode=mode
+            keys=keys, position_method=position_method, mode=mode,
+            returns_shift=returns_shift, predictions_shift=predictions_shift,
         )
         pnl_df = pd.concat({k: v["pnl"] for k, v in pnl_dict.items()}, axis=1)
         weights = weights or [1 / len(keys)] * len(keys)
@@ -122,6 +127,8 @@ class ModelEvaluator:
         keys: Optional[List[Any]] = None,
         position_method: Optional[str] = None,
         target_volatility: Optional[float] = None,
+        returns_shift: Optional[int] = 0,
+        predictions_shift: Optional[int] = 0,
         mode: Optional[str] = None,
     ) -> pd.DataFrame:
         """
@@ -130,6 +137,8 @@ class ModelEvaluator:
         :param keys: Use all available if `None`
         :param position_method: as in `PositionComputer.compute_positions()`
         :param target_volatility: as in `PositionComputer.compute_positions()`
+        :param returns_shift: as in `compute_pnl()`
+        :param predictions_shift: as in `compute_pnl()`
         :param mode: "all_available", "ins", or "oos"
         :return: Dataframe of statistics with `keys` as columns
         """
@@ -137,6 +146,8 @@ class ModelEvaluator:
             keys,
             position_method=position_method,
             target_volatility=target_volatility,
+            returns_shift=returns_shift,
+            predictions_shift=predictions_shift,
             mode=mode,
         )
         stats_dict = {}
@@ -164,6 +175,8 @@ class ModelEvaluator:
         keys: Optional[List[Any]] = None,
         position_method: Optional[str] = None,
         target_volatility: Optional[float] = None,
+        returns_shift: Optional[int] = 0,
+        predictions_shift: Optional[int] = 0,
         mode: Optional[str] = None,
     ) -> Dict[Any, pd.DataFrame]:
         """
@@ -172,15 +185,21 @@ class ModelEvaluator:
         :param keys: Use all available if `None`
         :param position_method: as in `PositionComputer.compute_positions()`
         :param target_volatility: as in `PositionComputer.compute_positions()`
+        :param returns_shift: number of shifts to pre-apply to returns col
+        :param predictions_shift: number of shifts to pre-apply to predictions
+            col
+        :param mode: "all_available", "ins", or "oos"
+        :return: dict of dataframes with columns ["returns", "predictions",
+            "positions", "pnl"]
         """
         keys = keys or self.valid_keys
         dbg.dassert_is_subset(keys, self.valid_keys)
         #
         returns = {
-            k: self._data[k][self.target_col].rename("returns") for k in keys
+            k: self._data[k][self.target_col].shift(returns_shift).rename("returns") for k in keys
         }
         predictions = {
-            k: self._data[k][self.prediction_col].rename("predictions")
+            k: self._data[k][self.prediction_col].shift(predictions_shift).rename("predictions")
             for k in keys
         }
         positions = {}
