@@ -343,7 +343,9 @@ class ModelPlotter:
         """
         pnl_dict = self.model_evaluator.compute_pnl(keys=keys, mode=mode)
         for k, v in pnl_dict.items():
-            plot.plot_holdings_diffs(v["positions"], label=f"Holdings diffs {key}")
+            plot.plot_holding_diffs(
+                v["positions"], label=f"Holdings diffs {k}"
+            )
         plt.legend()
 
     def plot_returns_and_predictions(
@@ -389,7 +391,10 @@ class ModelPlotter:
         """
         multipletests_plot_kwargs = multipletests_plot_kwargs or {}
         pnl_dict = self.model_evaluator.compute_pnl(keys=keys, mode=mode)
-        pvals = {k: stats.ttest_1samp(v["pnl"]).loc["pval"] for k, v in pnl_dict.items()}
+        pvals = {
+            k: stats.ttest_1samp(v["pnl"]).loc["pval"]
+            for k, v in pnl_dict.items()
+        }
         plot.multipletests_plot(
             pd.Series(pvals), threshold, axes=axes, **multipletests_plot_kwargs
         )
@@ -412,7 +417,7 @@ class ModelPlotter:
         """
         pnl_dict = self.model_evaluator.compute_pnl(keys=keys, mode=mode)
         # Extract only the PnL series from `pnl_dict`.
-        pnls = {k: v["pnl"] for k, v in pnls.items()}
+        pnls = {k: v["pnl"] for k, v in pnl_dict.items()}
         aggregate_pnl, _, _ = self.model_evaluator.aggregate_models(
             keys=keys, weights=weights, mode=mode
         )

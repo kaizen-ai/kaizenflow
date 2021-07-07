@@ -40,7 +40,9 @@ class ModelEvaluator:
         target_col: Optional[str] = None,
         oos_start: Optional[Any] = None,
     ) -> None:
-        """"""
+        """
+        
+        """
         self._data = data
         dbg.dassert(data, msg="Data set must be nonempty.")
         # Use plain attributes (Item #44).
@@ -72,7 +74,9 @@ class ModelEvaluator:
         keys = keys or self.valid_keys
         dbg.dassert_is_subset(keys, self.valid_keys)
         mode = mode or "ins"
-        pnl_dict = self.compute_pnl(keys=keys, position_method=position_method, mode=mode)
+        pnl_dict = self.compute_pnl(
+            keys=keys, position_method=position_method, mode=mode
+        )
         pnl_df = pd.concat({k: v["pnl"] for k, v in pnl_dict.items()}, axis=1)
         weights = weights or [1 / len(keys)] * len(keys)
         dbg.dassert_eq(len(keys), len(weights))
@@ -217,7 +221,7 @@ class ModelEvaluator:
         """
         mode = mode or "ins"
         if mode == "all_available":
-            trimmed = {k: v for k, v in data_dict.items()}
+            trimmed = data_dict
         elif mode == "ins":
             trimmed = {k: v.loc[: self.oos_start] for k, v in data_dict.items()}
         elif mode == "oos":
@@ -343,8 +347,8 @@ class PositionComputer:
             volatility_strategy=volatility_strategy,
         )
 
+    @staticmethod
     def _multiply_kernel(
-        self,
         predictions: pd.Series,
         tau: float,
         delay: int,
@@ -361,8 +365,8 @@ class PositionComputer:
         adjusted_preds = zscored_preds.multiply(scale_factors)
         return adjusted_preds
 
+    @staticmethod
     def _squash(
-        self,
         predictions: pd.Series,
         tau: float,
         delay: int,
@@ -401,8 +405,7 @@ class PositionComputer:
             positions = scale_factor * predictions
             positions.name = "positions"
             return self._return_srs(positions, mode=mode)
-        else:
-            raise ValueError(f"Unrecognized strategy `{volatility_strategy}`!")
+        raise ValueError(f"Unrecognized strategy `{volatility_strategy}`!")
 
     def _return_srs(self, srs: pd.Series, mode: str) -> pd.Series:
         if mode == "ins":
