@@ -929,6 +929,7 @@ def plot_heatmap(
             figsize=figsize,
         )
         g.ax_heatmap.set_title(title)
+        return
     else:
         raise RuntimeError("Invalid mode='%s'" % mode)
     ax.tick_params(axis="y", labelright=True, labelleft=False, labelrotation=0)
