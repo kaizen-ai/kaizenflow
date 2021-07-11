@@ -6,6 +6,29 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
+class TestRollingFitPredictDagRunner(hut.TestCase):
+    """
+    Test the ArmaReturnsBuilder pipeline.
+    """
+
+    def test1(self) -> None:
+        dag_builder = dtf.ArmaReturnsBuilder()
+        config = dag_builder.get_config_template()
+        dag = dag_builder.get_dag(config)
+        #
+        dag_runner = dtf.RollingFitPredictDagRunner(
+            config=config,
+            dag_builder=dag_builder,
+            start="2010-01-04 09:30",
+            end="2010-01-04 15:30",
+            retraining_frequency="H",
+            training_period_lookback=4,
+        )
+        result_bundle_pairs = list(dag_runner.fit_predict())
+        # TODO(Paul): Use a proper testing function.
+        self.assertTrue(len(result_bundle_pairs) == 2)
+
+
 class TestIncrementalDagRunner(hut.TestCase):
     """
     Test the ArmaReturnsBuilder pipeline.
