@@ -168,12 +168,12 @@ class RollingFitPredictDagRunner:
     def _generate_retraining_dates(self) -> pd.DatetimeIndex:
         # Populate an initial index of candidate retraining dates.
         idx = pd.date_range(
-            start=self._start,
-            end=self._end,
-            freq=self._retraining_frequency
+            start=self._start, end=self._end, freq=self._retraining_frequency
         )
         # Shift the start of the index by the lookback amount.
-        lookback = str(self._training_period_lookback) + self._retraining_frequency
+        lookback = (
+            str(self._training_period_lookback) + self._retraining_frequency
+        )
         idx = idx.shift(freq=lookback)
         # Trim end of date range back to `self._end`.
         # TODO(Paul): Add back `self._end`.
@@ -189,10 +189,15 @@ class RollingFitPredictDagRunner:
             prediction)
         """
         for end_dt in self._retraining_dates:
-            fit_result_bundle, predict_result_bundle = self.fit_predict_at_datetime(end_dt)
+            (
+                fit_result_bundle,
+                predict_result_bundle,
+            ) = self.fit_predict_at_datetime(end_dt)
             yield fit_result_bundle, predict_result_bundle
 
-    def fit_predict_at_datetime(self, datetime) -> Tuple[ResultBundle, ResultBundle]:
+    def fit_predict_at_datetime(
+        self, datetime
+    ) -> Tuple[ResultBundle, ResultBundle]:
         """
         Fit at `datetime`.
 
@@ -202,7 +207,7 @@ class RollingFitPredictDagRunner:
         idx = pd.date_range(
             end=datetime,
             freq=self._retraining_frequency,
-            periods=self._training_period_lookback
+            periods=self._training_period_lookback,
         )
         start_datetime = idx[0]
         fit_interval = [(start_datetime, datetime)]

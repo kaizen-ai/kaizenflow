@@ -14,7 +14,7 @@ class TestRollingFitPredictDagRunner(hut.TestCase):
     def test1(self) -> None:
         dag_builder = dtf.ArmaReturnsBuilder()
         config = dag_builder.get_config_template()
-        dag = dag_builder.get_dag(config)
+        dag_builder.get_dag(config)
         #
         dag_runner = dtf.RollingFitPredictDagRunner(
             config=config,
