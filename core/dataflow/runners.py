@@ -165,22 +165,6 @@ class RollingFitPredictDagRunner:
         #
         self._retraining_dates = self._generate_retraining_dates()
 
-    def _generate_retraining_dates(self) -> pd.DatetimeIndex:
-        # Populate an initial index of candidate retraining dates.
-        idx = pd.date_range(
-            start=self._start, end=self._end, freq=self._retraining_frequency
-        )
-        # Shift the start of the index by the lookback amount.
-        lookback = (
-            str(self._training_period_lookback) + self._retraining_frequency
-        )
-        idx = idx.shift(freq=lookback)
-        # Trim end of date range back to `self._end`.
-        # TODO(Paul): Add back `self._end`.
-        idx = idx[idx < self._end]
-        dbg.dassert(not idx.empty)
-        return idx
-
     def fit_predict(self) -> Generator:
         """
         Generate a filtration and predict at each index of the filtration.
@@ -223,6 +207,22 @@ class RollingFitPredictDagRunner:
             self.dag.get_node(input_nid).set_predict_intervals(predict_interval)
         predict_result_bundle = self._run_dag(self._result_nid, "predict")
         return fit_result_bundle, predict_result_bundle
+
+    def _generate_retraining_dates(self) -> pd.DatetimeIndex:
+        # Populate an initial index of candidate retraining dates.
+        idx = pd.date_range(
+            start=self._start, end=self._end, freq=self._retraining_frequency
+        )
+        # Shift the start of the index by the lookback amount.
+        lookback = (
+            str(self._training_period_lookback) + self._retraining_frequency
+        )
+        idx = idx.shift(freq=lookback)
+        # Trim end of date range back to `self._end`.
+        # TODO(Paul): Add back `self._end`.
+        idx = idx[idx < self._end]
+        dbg.dassert(not idx.empty)
+        return idx
 
     def _run_dag(self, nid: str, method: str) -> ResultBundle:
         """
