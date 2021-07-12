@@ -598,11 +598,7 @@ class Test_compute_twap_vwap1(hut.TestCase):
         timestamp = "2016-01-04 09:31:00"
         np.testing.assert_almost_equal(
             df_out.loc[timestamp, "vwap"],
-            (
-                    94.7 * 1867590
-                    + 94.98 * 349119
-            )
-            / (1867590 + 349119),
+            (94.7 * 1867590 + 94.98 * 349119) / (1867590 + 349119),
         )
         np.testing.assert_almost_equal(
             df_out.loc[timestamp, "twap"],
@@ -613,14 +609,14 @@ class Test_compute_twap_vwap1(hut.TestCase):
         np.testing.assert_almost_equal(
             df_out.loc[timestamp, "vwap"],
             (
-                    95.33 * 419479
-                    + 95.03 * 307383
-                    + 94.89 * 342218
-                    + 94.97 * 358280
-                    + 95.21 * 266199
+                95.33 * 419479
+                + 95.03 * 307383
+                + 94.89 * 342218
+                + 94.97 * 358280
+                + 95.21 * 266199
             )
             / (419479 + 307383 + 342218 + 358280 + 266199),
-            )
+        )
         np.testing.assert_almost_equal(
             df_out.loc[timestamp, "twap"],
             np.mean([95.33, 95.03, 94.89, 94.97, 95.21]),
@@ -631,7 +627,7 @@ class Test_compute_twap_vwap1(hut.TestCase):
             df_out.loc[timestamp, "vwap"],
             (95.66 * 262623 + 95.57 * 179722 + 95.61 * 173244)
             / (262623 + 179722 + 173244),
-            )
+        )
         np.testing.assert_almost_equal(
             df_out.loc[timestamp, "twap"], np.mean([95.66, 95.57, 95.61])
         )
@@ -701,11 +697,17 @@ datetime,close,vol
         return df
 
     @staticmethod
-    def _helper(df: pd.DataFrame, rule: str, offset: Optional[str] = None) -> pd.DataFrame:
+    def _helper(
+        df: pd.DataFrame, rule: str, offset: Optional[str] = None
+    ) -> pd.DataFrame:
         price_col = "close"
         volume_col = "vol"
         df_out = fin.compute_twap_vwap(
-            df, rule, price_col=price_col, volume_col=volume_col, offset=offset,
+            df,
+            rule,
+            price_col=price_col,
+            volume_col=volume_col,
+            offset=offset,
         )
         return df_out
 
