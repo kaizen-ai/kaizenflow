@@ -1,5 +1,7 @@
 import logging
 
+import numpy as np
+
 import core.dataflow as dtf
 import helpers.unit_test as hut
 
@@ -21,12 +23,11 @@ class TestRollingFitPredictDagRunner(hut.TestCase):
             dag_builder=dag_builder,
             start="2010-01-04 09:30",
             end="2010-01-04 15:30",
-            retraining_frequency="H",
-            training_period_lookback=4,
+            retraining_freq="H",
+            retraining_lookback=4,
         )
         result_bundle_pairs = list(dag_runner.fit_predict())
-        # TODO(Paul): Use a proper testing function.
-        self.assertTrue(len(result_bundle_pairs) == 2)
+        np.testing.assert_equal(len(result_bundle_pairs), 2)
 
 
 class TestIncrementalDagRunner(hut.TestCase):
