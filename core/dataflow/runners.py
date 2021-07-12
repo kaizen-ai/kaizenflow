@@ -187,7 +187,8 @@ class RollingFitPredictDagRunner:
             yield fit_result_bundle, predict_result_bundle
 
     def fit_predict_at_datetime(
-        self, datetime: _PANDAS_DATE_TYPE,
+        self,
+        datetime: _PANDAS_DATE_TYPE,
     ) -> Tuple[ResultBundle, ResultBundle]:
         """
         Fit at `datetime` and then predict.
@@ -200,7 +201,7 @@ class RollingFitPredictDagRunner:
         idx = pd.date_range(
             end=datetime,
             freq=self._retraining_freq,
-            periods=self._retraining_lookback
+            periods=self._retraining_lookback,
         )
         start_datetime = idx[0]
         fit_interval = [(start_datetime, datetime)]
@@ -238,27 +239,22 @@ class RollingFitPredictDagRunner:
         :return: (re)training dates
         """
         # Populate an initial index of candidate retraining dates.
-        grid = pd.date_range(
-            start=start, end=end, freq=retraining_freq
-        )
+        grid = pd.date_range(start=start, end=end, freq=retraining_freq)
         # The ability to compute a nonempty `idx` is the first sanity-check.
         dbg.dassert(
-            not grid.empty,
-            msg="Not enough data for requested training schedule!"
+            not grid.empty, msg="Not enough data for requested training schedule!"
         )
         dbg.dassert_isinstance(retraining_lookback, int)
         # Ensure that `grid` has enough lookback points.
         dbg.dassert_lt(
             retraining_lookback,
             grid.size,
-            msg="Input data does not have %i periods" % retraining_lookback
+            msg="Input data does not have %i periods" % retraining_lookback,
         )
         # Shift the start of the index by the lookback amount. The new start
         # represents the first data point that will be used in (the first)
         # training.
-        lookback = (
-            str(retraining_lookback) + retraining_freq
-        )
+        lookback = str(retraining_lookback) + retraining_freq
         idx = grid.shift(freq=lookback)
         # Trim end of date range back to `end`. This is needed because the
         # previous `shift()` also moves the end of the index.
