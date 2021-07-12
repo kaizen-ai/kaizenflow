@@ -599,6 +599,7 @@ class TwapVwapComputer(cdnb.Transformer):
         rule: _RESAMPLING_RULE_TYPE,
         price_col: _COL_TYPE,
         volume_col: _COL_TYPE,
+        offset: Optional[str] = None,
     ) -> None:
         """
         Calculate TWAP and VWAP prices from price and volume columns.
@@ -611,6 +612,7 @@ class TwapVwapComputer(cdnb.Transformer):
         self._rule = rule
         self._price_col = price_col
         self._volume_col = volume_col
+        self._offset = offset
 
     def _transform(
         self, df: pd.DataFrame
@@ -621,6 +623,7 @@ class TwapVwapComputer(cdnb.Transformer):
             self._rule,
             price_col=self._price_col,
             volume_col=self._volume_col,
+            offset=self._offset,
         )
         #
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()

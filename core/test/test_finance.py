@@ -1,6 +1,7 @@
 import datetime
 import io
 import logging
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -572,6 +573,65 @@ class Test_compute_twap_vwap1(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    def test_with_offset(self) -> None:
+        """
+        Compute VWAP/TWAP at 5 min frequency on 1 min data.
+        """
+        df = self._get_df_with_no_nans()
+        rule = "5T"
+        offset = "1T"
+        df_out = self._helper(df, rule, offset)
+        # Compute output.
+        act = self._compute_actual_output(df_out)
+        exp = r"""
+        df_out
+                                  vwap       twap
+        datetime
+        2016-01-04 09:31:00  94.744098  94.840000
+        2016-01-04 09:36:00  95.091617  95.086000
+        2016-01-04 09:41:00  95.883415  95.842000
+        2016-01-04 09:46:00  95.368620  95.372000
+        2016-01-04 09:51:00  95.619653  95.613333
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+        # The first interval is (9:26, 9:31].
+        timestamp = "2016-01-04 09:31:00"
+        np.testing.assert_almost_equal(
+            df_out.loc[timestamp, "vwap"],
+            (94.7 * 1867590 + 94.98 * 349119) / (1867590 + 349119),
+        )
+        np.testing.assert_almost_equal(
+            df_out.loc[timestamp, "twap"],
+            np.mean([94.7, 94.98]),
+        )
+        # The second interval is (9:31, 9:36].
+        timestamp = "2016-01-04 09:36:00"
+        np.testing.assert_almost_equal(
+            df_out.loc[timestamp, "vwap"],
+            (
+                95.33 * 419479
+                + 95.03 * 307383
+                + 94.89 * 342218
+                + 94.97 * 358280
+                + 95.21 * 266199
+            )
+            / (419479 + 307383 + 342218 + 358280 + 266199),
+        )
+        np.testing.assert_almost_equal(
+            df_out.loc[timestamp, "twap"],
+            np.mean([95.33, 95.03, 94.89, 94.97, 95.21]),
+        )
+        # The last interval is (9:46, 9:51].
+        timestamp = "2016-01-04 09:51:00"
+        np.testing.assert_almost_equal(
+            df_out.loc[timestamp, "vwap"],
+            (95.66 * 262623 + 95.57 * 179722 + 95.61 * 173244)
+            / (262623 + 179722 + 173244),
+        )
+        np.testing.assert_almost_equal(
+            df_out.loc[timestamp, "twap"], np.mean([95.66, 95.57, 95.61])
+        )
+
     @staticmethod
     def _get_df_with_no_nans() -> pd.DataFrame:
         """
@@ -637,11 +697,17 @@ datetime,close,vol
         return df
 
     @staticmethod
-    def _helper(df: pd.DataFrame, rule: str) -> pd.DataFrame:
+    def _helper(
+        df: pd.DataFrame, rule: str, offset: Optional[str] = None
+    ) -> pd.DataFrame:
         price_col = "close"
         volume_col = "vol"
         df_out = fin.compute_twap_vwap(
-            df, rule, price_col=price_col, volume_col=volume_col
+            df,
+            rule,
+            price_col=price_col,
+            volume_col=volume_col,
+            offset=offset,
         )
         return df_out
 
