@@ -167,24 +167,25 @@ class RollingFitPredictDagRunner:
         self._result_nid = result_nids[0]
         _LOG.info("_result_nid=%s", self._result_nid)
         # Generate retraining dates.
-        self._retraining_dates = self._generate_retraining_dates(
+        self._retraining_datetimes = self._generate_retraining_datetimes(
             start=self._start,
             end=self._end,
             retraining_freq=self._retraining_freq,
             retraining_lookback=self._retraining_lookback,
         )
-        _LOG.info("_retraining_dates=%s", self._retraining_dates)
+        _LOG.info("_retraining_datetimes=%s", self._retraining_datetimes)
 
     def fit_predict(self) -> Generator:
         """
         Fit at each retraining date and predict until next retraining date.
         """
-        for end_dt in self._retraining_dates:
+        for training_datetime in self._retraining_datetimes:
             (
                 fit_result_bundle,
                 predict_result_bundle,
-            ) = self.fit_predict_at_datetime(end_dt)
-            yield fit_result_bundle, predict_result_bundle
+            ) = self.fit_predict_at_datetime(training_datetime)
+            training_datetime_str = training_datetime.strftime("%Y%m%d_%H%M%S")
+            yield training_datetime_str, fit_result_bundle, predict_result_bundle
 
     def fit_predict_at_datetime(
         self,
@@ -222,7 +223,7 @@ class RollingFitPredictDagRunner:
         return fit_result_bundle, predict_result_bundle
 
     @staticmethod
-    def _generate_retraining_dates(
+    def _generate_retraining_datetimes(
         start: _PANDAS_DATE_TYPE,
         end: _PANDAS_DATE_TYPE,
         retraining_freq: str,

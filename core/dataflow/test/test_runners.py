@@ -26,8 +26,8 @@ class TestRollingFitPredictDagRunner(hut.TestCase):
             retraining_freq="H",
             retraining_lookback=4,
         )
-        result_bundle_pairs = list(dag_runner.fit_predict())
-        np.testing.assert_equal(len(result_bundle_pairs), 2)
+        result_bundles = list(dag_runner.fit_predict())
+        np.testing.assert_equal(len(result_bundles), 2)
 
 
 class TestIncrementalDagRunner(hut.TestCase):
