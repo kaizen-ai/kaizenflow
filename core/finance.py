@@ -328,6 +328,7 @@ def compute_twap_vwap(
     *,
     price_col: str,
     volume_col: str,
+    offset: Optional[str] = None
 ) -> pd.DataFrame:
     """
     Compute TWAP/VWAP from price and volume columns.
@@ -356,16 +357,16 @@ def compute_twap_vwap(
     volume_weighted_price = price.multiply(volume)
     # Resample using `rule`.
     resampled_volume_weighted_price = csigna.resample(
-        volume_weighted_price, rule=rule
+        volume_weighted_price, rule=rule, offset=offset,
     ).sum(min_count=1)
-    resampled_volume = csigna.resample(volume, rule=rule).sum(min_count=1)
+    resampled_volume = csigna.resample(volume, rule=rule, offset=offset).sum(min_count=1)
     # Complete the VWAP calculation.
     vwap = resampled_volume_weighted_price.divide(resampled_volume)
     # Replace infs with NaNs.
     vwap = vwap.replace([-np.inf, np.inf], np.nan)
     vwap.name = "vwap"
     # Calculate TWAP, but preserve NaNs for all-NaN bars.
-    twap = csigna.resample(price, rule=rule).mean()
+    twap = csigna.resample(price, rule=rule, offset=offset).mean()
     twap.loc[resampled_volume_weighted_price.isna()] = np.nan
     twap.name = "twap"
     # Make sure columns are not overwritten by the new ones.
