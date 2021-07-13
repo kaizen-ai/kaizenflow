@@ -189,23 +189,23 @@ class RollingFitPredictDagRunner:
 
     def fit_predict_at_datetime(
         self,
-        datetime: _PANDAS_DATE_TYPE,
+        datetime_: _PANDAS_DATE_TYPE,
     ) -> Tuple[ResultBundle, ResultBundle]:
         """
         Fit at `datetime` and then predict.
 
-        :param datetime: point in time at which to train (historically) and then
+        :param datetime_: point in time at which to train (historically) and then
             predict (one step ahead)
         :return: populated fit and predict `ResultBundle`s
         """
         # Determine fit interval.
         idx = pd.date_range(
-            end=datetime,
+            end=datetime_,
             freq=self._retraining_freq,
             periods=self._retraining_lookback,
         )
         start_datetime = idx[0]
-        fit_interval = [(start_datetime, datetime)]
+        fit_interval = [(start_datetime, datetime_)]
         # Set fit interval on DAG.
         for input_nid in self.dag.get_sources():
             self.dag.get_node(input_nid).set_fit_intervals(fit_interval)
@@ -307,10 +307,10 @@ class IncrementalDagRunner:
 
         :param config: config for DAG
         :param dag_builder: `DagBuilder` instance
-        :param start: first prediction datetime (e.g., first time at which we
+        :param start: first prediction datetime_ (e.g., first time at which we
             generate a prediction in `predict` mode, using all available data
             up to and including `start`)
-        :param end: last prediction datetime
+        :param end: last prediction datetime_
         :param freq: prediction frequency (typically the same as the frequency
             of the underlying DAG)
         :param fit_state: Config containing any learned state required for
@@ -358,14 +358,14 @@ class IncrementalDagRunner:
             result_bundle = self.predict_at_datetime(end_dt)
             yield result_bundle
 
-    def predict_at_datetime(self, dt) -> ResultBundle:
+    def predict_at_datetime(self, dt: _PANDAS_DATE_TYPE) -> ResultBundle:
         """
         Generate a prediction as of `dt` (for a future point in time).
 
         :param dt: point in time at which to generate a prediction
         :return: populated `ResultBundle`
         """
-        # Cut off data at `end_dt`. Do not restrict the start datetime so
+        # Cut off data at `end_dt`. Do not restrict the start datetime_ so
         # so as not to adversely affect any required warm-up period.
         interval = [(None, dt)]
         # Set prediction intervals and predict.

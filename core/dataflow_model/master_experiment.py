@@ -69,11 +69,11 @@ def run_rolling_experiment(config: cconfig.Config) -> None:
         cdtfut.save_experiment_result_bundle(
             config,
             fit_rb,
-            file_name="fit_result_bundle_" + training_datetime_str + ".pkl"
+            file_name="fit_result_bundle_" + training_datetime_str + ".pkl",
         )
         pred_rb.payload = payload
         cdtfut.save_experiment_result_bundle(
             config,
             pred_rb,
-            file_name="predict_result_bundle_" + training_datetime_str + ".pkl"
+            file_name="predict_result_bundle_" + training_datetime_str + ".pkl",
         )
