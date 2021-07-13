@@ -214,7 +214,9 @@ class RollingFitPredictDagRunner:
         predict_result_bundle = self._run_predict(predict_interval, datetime_)
         return fit_result_bundle, predict_result_bundle
 
-    def _run_fit(self, interval: Tuple[_PANDAS_DATE_TYPE, _PANDAS_DATE_TYPE]) -> ResultBundle:
+    def _run_fit(
+        self, interval: Tuple[_PANDAS_DATE_TYPE, _PANDAS_DATE_TYPE]
+    ) -> ResultBundle:
         # Set fit interval on DAG.
         for input_nid in self.dag.get_sources():
             self.dag.get_node(input_nid).set_fit_intervals([interval])
@@ -234,7 +236,7 @@ class RollingFitPredictDagRunner:
     def _run_predict(
         self,
         interval: Tuple[_PANDAS_DATE_TYPE, _PANDAS_DATE_TYPE],
-        oos_start=_PANDAS_DATE_TYPE
+        oos_start=_PANDAS_DATE_TYPE,
     ) -> ResultBundle:
         # Set predict interval on DAG.
         for input_nid in self.dag.get_sources():
