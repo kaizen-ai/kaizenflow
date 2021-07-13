@@ -19,9 +19,8 @@ import re
 import sys
 from typing import Any, Dict, Iterable, List, Match, Optional, Tuple, cast
 
-from tqdm.autonotebook import tqdm
-
 import pandas as pd
+from tqdm.autonotebook import tqdm
 
 import core.config as cconfig
 import core.dataflow as dtg
@@ -332,7 +331,9 @@ def load_experiment_artifacts(
 
 
 def load_rolling_experiment_out_of_sample_df(
-        src_dir: str, file_name_prefix: str, selected_idxs: Optional[Iterable[int]] = None
+    src_dir: str,
+    file_name_prefix: str,
+    selected_idxs: Optional[Iterable[int]] = None,
 ) -> Dict[int, Any]:
     """
     Load all the files in dirs under `src_dir` that match `file_name_prefix*`.
