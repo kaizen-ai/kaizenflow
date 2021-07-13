@@ -238,13 +238,17 @@ def report_failed_experiments(
 
 
 def save_experiment_result_bundle(
-    config: cconfig.Config, result_bundle: dtg.ResultBundle
+    config: cconfig.Config,
+    result_bundle: dtg.ResultBundle,
+    prefix: Optional[str] = None,
 ) -> None:
     """
     Save the `ResultBundle` from running `Config`.
     """
+    prefix = prefix or ""
+    # TODO(Paul): Consider having the caller provide the dir instead.
     path = os.path.join(
-        config["meta", "experiment_result_dir"], "result_bundle.pkl"
+        config["meta", "experiment_result_dir"], prefix + "result_bundle.pkl"
     )
     # TODO(gp): This should be a method of `ResultBundle`.
     obj = result_bundle.to_config().to_dict()
