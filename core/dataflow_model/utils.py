@@ -21,8 +21,11 @@ from typing import Any, Dict, Iterable, List, Match, Optional, Tuple, cast
 
 from tqdm.autonotebook import tqdm
 
+import pandas as pd
+
 import core.config as cconfig
 import core.dataflow as dtg
+import core.signal_processing as csigna
 import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.parser as prsr
@@ -325,4 +328,71 @@ def load_experiment_artifacts(
         else:
             raise ValueError(f"Unsupported file type='{file_name_tmp}'")
         results[key] = res
+    return results
+
+
+def load_rolling_experiment_out_of_sample_df(
+        src_dir: str, file_name_prefix: str, selected_idxs: Optional[Iterable[int]] = None
+) -> Dict[int, Any]:
+    """
+    Load all the files in dirs under `src_dir` that match `file_name_prefix*`.
+
+    Like `load_experiment_artifacts()`, except adapted to picking up prediction
+    `ResultBundle`s from a rolling run. This function stitches together
+    out-of-sample predictions from consecutive runs to form a single
+    out-of-sample dataframe.
+
+    TODO(*): Factor out code in common with `load_experiment_artifacts()`.
+    TODO(*): Generalize to loading fit `ResultBundle`s.
+    """
+    _LOG.info("# Load artifacts '%s' from '%s'", file_name_prefix, src_dir)
+    # Retrieve all the subdirectories in `src_dir`.
+    subdirs = [d for d in glob.glob(f"{src_dir}/result_*") if os.path.isdir(d)]
+    _LOG.info("Found %d experiment subdirs in '%s'", len(subdirs), src_dir)
+    # Build a mapping from "config_idx" to "experiment_dir".
+    config_idx_to_dir: Dict[int, str] = {}
+    for subdir in subdirs:
+        _LOG.debug("subdir='%s'", subdir)
+        # E.g., `result_123"
+        m = re.match(r"^result_(\d+)$", os.path.basename(subdir))
+        dbg.dassert(m)
+        cast(Match[str], m)
+        key = int(m.group(1))
+        dbg.dassert_not_in(key, config_idx_to_dir)
+        config_idx_to_dir[key] = subdir
+    # Specify the indices of files to load.
+    config_idxs = config_idx_to_dir.keys()
+    if selected_idxs is None:
+        selected_keys = sorted(config_idxs)
+    else:
+        idxs_l = set(selected_idxs)
+        dbg.dassert_is_subset(idxs_l, set(config_idxs))
+        selected_keys = [key for key in sorted(config_idxs) if key in idxs_l]
+    # Iterate over experiment directories.
+    results = collections.OrderedDict()
+    for key in tqdm(selected_keys, desc="Loading artifacts"):
+        subdir = config_idx_to_dir[key]
+        dbg.dassert_dir_exists(subdir)
+        # TODO(*): Sort these explicitly. Currently we rely on an implicit
+        # order.
+        files = glob.glob(os.path.join(src_dir, subdir, file_name_prefix) + "*")
+        dfs = []
+        for file_name_tmp in files:
+            _LOG.debug("Loading '%s'", file_name_tmp)
+            if not os.path.exists(file_name_tmp):
+                _LOG.warning("Can't find '{file_name_tmp}': skipping")
+                continue
+            if file_name_tmp.endswith(".pkl"):
+                # Load pickle files.
+                res = hpickle.from_pickle(
+                    file_name_tmp, log_level=logging.DEBUG, verbose=False
+                )
+            else:
+                raise ValueError(f"Unsupported file type='{file_name_tmp}'")
+            dfs.append(res["result_df"])
+        if dfs:
+            df = pd.concat(dfs, axis=0)
+            dbg.dassert_strictly_increasing_index(df)
+            df = csigna.resample(df, rule=dfs[0].index.freq).sum(min_count=1)
+            results[key] = df
     return results
