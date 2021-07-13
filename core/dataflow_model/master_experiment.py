@@ -63,11 +63,17 @@ def run_rolling_experiment(config: cconfig.Config) -> None:
         config["meta"]["retraining_freq"],
         config["meta"]["retraining_lookback"],
     )
-    # TODO(gp): Maybe save the drawing to file?
-    # cdataf.draw(dag_runner.dag)
-    for training_datetime_str, fit_result_bundle, predict_result_bundle in dag_runner.fit_predict():
+    for training_datetime_str, fit_rb, pred_rb in dag_runner.fit_predict():
         payload = cconfig.get_config_from_nested_dict({"config": config})
-        fit_result_bundle.payload = payload
-        predict_result_bundle.payload = payload
-        cdtfut.save_experiment_result_bundle(config, fit_result_bundle, prefix = training_datetime_str + "_fit_")
-        cdtfut.save_experiment_result_bundle(config, predict_result_bundle, prefix = training_datetime_str + "_predict_")
+        fit_rb.payload = payload
+        cdtfut.save_experiment_result_bundle(
+            config,
+            fit_rb,
+            file_name="fit_result_bundle_" + training_datetime_str + ".pkl"
+        )
+        pred_rb.payload = payload
+        cdtfut.save_experiment_result_bundle(
+            config,
+            pred_rb,
+            file_name="predict_result_bundle_" + training_datetime_str + ".pkl"
+        )
