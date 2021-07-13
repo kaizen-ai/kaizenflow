@@ -1,9 +1,33 @@
 import logging
 
+import numpy as np
+
 import core.dataflow as dtf
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
+
+
+class TestRollingFitPredictDagRunner(hut.TestCase):
+    """
+    Test the ArmaReturnsBuilder pipeline.
+    """
+
+    def test1(self) -> None:
+        dag_builder = dtf.ArmaReturnsBuilder()
+        config = dag_builder.get_config_template()
+        dag_builder.get_dag(config)
+        #
+        dag_runner = dtf.RollingFitPredictDagRunner(
+            config=config,
+            dag_builder=dag_builder,
+            start="2010-01-04 09:30",
+            end="2010-01-04 15:30",
+            retraining_freq="H",
+            retraining_lookback=4,
+        )
+        result_bundles = list(dag_runner.fit_predict())
+        np.testing.assert_equal(len(result_bundles), 2)
 
 
 class TestIncrementalDagRunner(hut.TestCase):

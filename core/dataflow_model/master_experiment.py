@@ -50,3 +50,30 @@ def run_experiment(config: cconfig.Config) -> None:
     # TODO(gp): We could return a `ResultBundle` and have
     # `run_experiment_stub.py` save it.
     cdtfut.save_experiment_result_bundle(config, result_bundle)
+
+
+def run_rolling_experiment(config: cconfig.Config) -> None:
+    _LOG.debug("config=\n%s", config)
+    dag_config = config.pop("DAG")
+    dag_runner = cdataf.RollingFitPredictDagRunner(
+        dag_config,
+        config["meta"]["dag_builder"],
+        config["meta"]["start"],
+        config["meta"]["end"],
+        config["meta"]["retraining_freq"],
+        config["meta"]["retraining_lookback"],
+    )
+    for training_datetime_str, fit_rb, pred_rb in dag_runner.fit_predict():
+        payload = cconfig.get_config_from_nested_dict({"config": config})
+        fit_rb.payload = payload
+        cdtfut.save_experiment_result_bundle(
+            config,
+            fit_rb,
+            file_name="fit_result_bundle_" + training_datetime_str + ".pkl",
+        )
+        pred_rb.payload = payload
+        cdtfut.save_experiment_result_bundle(
+            config,
+            pred_rb,
+            file_name="predict_result_bundle_" + training_datetime_str + ".pkl",
+        )

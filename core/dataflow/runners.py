@@ -128,6 +128,165 @@ class PredictionDagRunner(FitPredictDagRunner):
         )
 
 
+class RollingFitPredictDagRunner:
+    """
+    Class for periodic re-fitting of models.
+    """
+
+    def __init__(
+        self,
+        config: cconfig.Config,
+        dag_builder: DagBuilder,
+        start: _PANDAS_DATE_TYPE,
+        end: _PANDAS_DATE_TYPE,
+        retraining_freq: str,
+        retraining_lookback: int,
+    ) -> None:
+        # Save input parameters.
+        self.config = config
+        self._dag_builder = dag_builder
+        self._start = start
+        self._end = end
+        self._retraining_freq = retraining_freq
+        self._retraining_lookback = retraining_lookback
+        # Create DAG using DAG builder.
+        self.dag = self._dag_builder.get_dag(self.config)
+        _LOG.info("dag=%s", self.dag)
+        self._methods = self._dag_builder.methods
+        _LOG.info("_methods=%s", self._methods)
+        self._column_to_tags_mapping = (
+            self._dag_builder.get_column_to_tags_mapping(self.config)
+        )
+        _LOG.info("_column_to_tags_mapping=%s", self._column_to_tags_mapping)
+        # Confirm that "fit" and "predict" are registered DAG methods.
+        dbg.dassert_in("fit", self._methods)
+        dbg.dassert_in("predict", self._methods)
+        # Save the sink node.
+        result_nids = self.dag.get_sinks()
+        dbg.dassert_eq(len(result_nids), 1)
+        self._result_nid = result_nids[0]
+        _LOG.info("_result_nid=%s", self._result_nid)
+        # Generate retraining dates.
+        self._retraining_datetimes = self._generate_retraining_datetimes(
+            start=self._start,
+            end=self._end,
+            retraining_freq=self._retraining_freq,
+            retraining_lookback=self._retraining_lookback,
+        )
+        _LOG.info("_retraining_datetimes=%s", self._retraining_datetimes)
+
+    def fit_predict(self) -> Generator:
+        """
+        Fit at each retraining date and predict until next retraining date.
+        """
+        for training_datetime in self._retraining_datetimes:
+            (
+                fit_result_bundle,
+                predict_result_bundle,
+            ) = self.fit_predict_at_datetime(training_datetime)
+            training_datetime_str = training_datetime.strftime("%Y%m%d_%H%M%S")
+            yield training_datetime_str, fit_result_bundle, predict_result_bundle
+
+    def fit_predict_at_datetime(
+        self,
+        datetime_: _PANDAS_DATE_TYPE,
+    ) -> Tuple[ResultBundle, ResultBundle]:
+        """
+        Fit at `datetime` and then predict.
+
+        :param datetime_: point in time at which to train (historically) and then
+            predict (one step ahead)
+        :return: populated fit and predict `ResultBundle`s
+        """
+        # Determine fit interval.
+        idx = pd.date_range(
+            end=datetime_,
+            freq=self._retraining_freq,
+            periods=self._retraining_lookback,
+        )
+        start_datetime = idx[0]
+        fit_interval = [(start_datetime, datetime_)]
+        # Set fit interval on DAG.
+        for input_nid in self.dag.get_sources():
+            self.dag.get_node(input_nid).set_fit_intervals(fit_interval)
+        # Fit.
+        fit_result_bundle = self._run_dag(self._result_nid, "fit")
+        # Determine predict interval.
+        idx = idx.shift(freq=self._retraining_freq)
+        end_datetime = idx[-1]
+        predict_interval = [(start_datetime, end_datetime)]
+        # Set predict interval on DAG.
+        for input_nid in self.dag.get_sources():
+            self.dag.get_node(input_nid).set_predict_intervals(predict_interval)
+        # Predict.
+        predict_result_bundle = self._run_dag(self._result_nid, "predict")
+        return fit_result_bundle, predict_result_bundle
+
+    @staticmethod
+    def _generate_retraining_datetimes(
+        start: _PANDAS_DATE_TYPE,
+        end: _PANDAS_DATE_TYPE,
+        retraining_freq: str,
+        retraining_lookback: int,
+    ) -> pd.DatetimeIndex:
+        """
+        Generate an index of retraining dates based on specs.
+
+        :param start: start of available data for use in training
+        :param end: end of available data for use in training
+        :param retraining_freq: how often to retrain
+        :param retraining_lookback: number of periods of past data to include
+            in retraining, expressed in integral units of `retraining_freq`
+        :return: (re)training dates
+        """
+        # Populate an initial index of candidate retraining dates.
+        grid = pd.date_range(start=start, end=end, freq=retraining_freq)
+        # The ability to compute a nonempty `idx` is the first sanity-check.
+        dbg.dassert(
+            not grid.empty, msg="Not enough data for requested training schedule!"
+        )
+        dbg.dassert_isinstance(retraining_lookback, int)
+        # Ensure that `grid` has enough lookback points.
+        dbg.dassert_lt(
+            retraining_lookback,
+            grid.size,
+            msg="Input data does not have %i periods" % retraining_lookback,
+        )
+        # Shift the start of the index by the lookback amount. The new start
+        # represents the first data point that will be used in (the first)
+        # training.
+        lookback = str(retraining_lookback) + retraining_freq
+        idx = grid.shift(freq=lookback)
+        # Trim end of date range back to `end`. This is needed because the
+        # previous `shift()` also moves the end of the index.
+        # TODO(Paul): Add back `end` for a fit-only step.
+        idx = idx[idx < end]
+        #
+        dbg.dassert(not idx.empty)
+        return idx
+
+    def _run_dag(self, nid: str, method: str) -> ResultBundle:
+        """
+        Run DAG and return a ResultBundle.
+
+        :param nid: identifier of terminal node for execution
+        :param method: `Node` subclass method to be executed
+        :return: `ResultBundle` class containing `config`, `nid`, `method`,
+            result dataframe and DAG info
+        """
+        dbg.dassert_in(method, self._methods)
+        df_out = self.dag.run_leq_node(nid, method)["df_out"]
+        info = extract_info(self.dag, [method])
+        return ResultBundle(
+            config=self.config,
+            result_nid=nid,
+            method=method,
+            result_df=df_out,
+            column_to_tags=self._column_to_tags_mapping,
+            info=info,
+        )
+
+
 class IncrementalDagRunner:
     """
     Class for running DAGs.
@@ -148,10 +307,10 @@ class IncrementalDagRunner:
 
         :param config: config for DAG
         :param dag_builder: `DagBuilder` instance
-        :param start: first prediction datetime (e.g., first time at which we
+        :param start: first prediction datetime_ (e.g., first time at which we
             generate a prediction in `predict` mode, using all available data
             up to and including `start`)
-        :param end: last prediction datetime
+        :param end: last prediction datetime_
         :param freq: prediction frequency (typically the same as the frequency
             of the underlying DAG)
         :param fit_state: Config containing any learned state required for
@@ -199,14 +358,14 @@ class IncrementalDagRunner:
             result_bundle = self.predict_at_datetime(end_dt)
             yield result_bundle
 
-    def predict_at_datetime(self, dt) -> ResultBundle:
+    def predict_at_datetime(self, dt: _PANDAS_DATE_TYPE) -> ResultBundle:
         """
         Generate a prediction as of `dt` (for a future point in time).
 
         :param dt: point in time at which to generate a prediction
         :return: populated `ResultBundle`
         """
-        # Cut off data at `end_dt`. Do not restrict the start datetime so
+        # Cut off data at `end_dt`. Do not restrict the start datetime_ so
         # so as not to adversely affect any required warm-up period.
         interval = [(None, dt)]
         # Set prediction intervals and predict.

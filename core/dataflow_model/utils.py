@@ -238,14 +238,15 @@ def report_failed_experiments(
 
 
 def save_experiment_result_bundle(
-    config: cconfig.Config, result_bundle: dtg.ResultBundle
+    config: cconfig.Config,
+    result_bundle: dtg.ResultBundle,
+    file_name: str = "result_bundle.pkl",
 ) -> None:
     """
     Save the `ResultBundle` from running `Config`.
     """
-    path = os.path.join(
-        config["meta", "experiment_result_dir"], "result_bundle.pkl"
-    )
+    # TODO(Paul): Consider having the caller provide the dir instead.
+    path = os.path.join(config["meta", "experiment_result_dir"], file_name)
     # TODO(gp): This should be a method of `ResultBundle`.
     obj = result_bundle.to_config().to_dict()
     hpickle.to_pickle(obj, path)
