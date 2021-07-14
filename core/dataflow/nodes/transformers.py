@@ -494,6 +494,29 @@ class DataframeMethodRunner(cdnb.Transformer):
         return df, info
 
 
+class FunctionWrapper(cdnb.Transformer):
+    def __init__(
+        self,
+        nid: str,
+        func: Callable,
+        func_kwargs: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(nid)
+        self._func = func
+        self._func_kwargs = func_kwargs or {}
+
+    def _transform(
+        self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
+        df = df.copy()
+        df_out = self._func(df, **self._func_kwargs)
+        dbg.dassert_isinstance(df_out, pd.DataFrame)
+        # Update `info`.
+        info: collections.OrderedDict[str, Any] = collections.OrderedDict()
+        info["df_transformed_info"] = cdu.get_df_info_as_string(df_out)
+        return df_out, info
+
+
 # #############################################################################
 # Resamplers
 # #############################################################################

@@ -1,3 +1,4 @@
+import io
 import logging
 
 import numpy as np
@@ -62,6 +63,52 @@ class TestSeriesToSeriesTransformer(hut.TestCase):
         )
         data = pd.concat([realization, volume], axis=1, keys=["close", "volume"])
         return data
+
+
+class TestFunctionWrapper(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Test `fit()` call.
+        """
+        data = self._get_df()
+
+        def multiply(df: pd.DataFrame, col1: str, col2: str) -> pd.DataFrame:
+            product = (df[col1] * df[col2]).rename("pv")
+            return product.to_frame()
+
+        config = cconfig.get_config_from_nested_dict(
+            {
+                "func": multiply,
+                "func_kwargs": {
+                    "col1": "close",
+                    "col2": "volume",
+                },
+            }
+        )
+        node = cdnt.FunctionWrapper("sklearn", **config.to_dict())
+        actual = node.fit(data)["df_out"]
+        txt = """
+datetime,pv
+2016-01-04 09:30:00,1.769e+08
+2016-01-04 09:31:00,3.316e+07
+2016-01-04 09:32:00,3.999e+07
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        pd.testing.assert_frame_equal(actual, expected, rtol=1e-2)
+
+    @staticmethod
+    def _get_df() -> pd.DataFrame:
+        """
+        Return a df without NaNs.
+        """
+        txt = """
+datetime,close,volume
+2016-01-04 09:30:00,94.7,1867590
+2016-01-04 09:31:00,94.98,349119
+2016-01-04 09:32:00,95.33,419479
+"""
+        df = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        return df
 
 
 class TestTwapVwapComputer(hut.TestCase):
