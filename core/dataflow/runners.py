@@ -205,22 +205,56 @@ class RollingFitPredictDagRunner:
             periods=self._retraining_lookback,
         )
         start_datetime = idx[0]
-        fit_interval = [(start_datetime, datetime_)]
-        # Set fit interval on DAG.
-        for input_nid in self.dag.get_sources():
-            self.dag.get_node(input_nid).set_fit_intervals(fit_interval)
-        # Fit.
-        fit_result_bundle = self._run_dag(self._result_nid, "fit")
+        fit_interval = (start_datetime, datetime_)
+        fit_result_bundle = self._run_fit(fit_interval)
         # Determine predict interval.
         idx = idx.shift(freq=self._retraining_freq)
         end_datetime = idx[-1]
-        predict_interval = [(start_datetime, end_datetime)]
+        predict_interval = (start_datetime, end_datetime)
+        predict_result_bundle = self._run_predict(predict_interval, datetime_)
+        return fit_result_bundle, predict_result_bundle
+
+    def _run_fit(
+        self, interval: Tuple[_PANDAS_DATE_TYPE, _PANDAS_DATE_TYPE]
+    ) -> ResultBundle:
+        # Set fit interval on DAG.
+        for input_nid in self.dag.get_sources():
+            self.dag.get_node(input_nid).set_fit_intervals([interval])
+        # Fit.
+        method = "fit"
+        df_out = self.dag.run_leq_node(self._result_nid, method)["df_out"]
+        info = extract_info(self.dag, [method])
+        return ResultBundle(
+            config=self.config,
+            result_nid=self._result_nid,
+            method=method,
+            result_df=df_out,
+            column_to_tags=self._column_to_tags_mapping,
+            info=info,
+        )
+
+    def _run_predict(
+        self,
+        interval: Tuple[_PANDAS_DATE_TYPE, _PANDAS_DATE_TYPE],
+        oos_start=_PANDAS_DATE_TYPE,
+    ) -> ResultBundle:
         # Set predict interval on DAG.
         for input_nid in self.dag.get_sources():
-            self.dag.get_node(input_nid).set_predict_intervals(predict_interval)
+            self.dag.get_node(input_nid).set_predict_intervals([interval])
         # Predict.
-        predict_result_bundle = self._run_dag(self._result_nid, "predict")
-        return fit_result_bundle, predict_result_bundle
+        method = "predict"
+        df_out = self.dag.run_leq_node(self._result_nid, method)["df_out"]
+        # Restrict `df_out` to out-of-sample portion.
+        df_out = df_out.loc[oos_start:]
+        info = extract_info(self.dag, [method])
+        return ResultBundle(
+            config=self.config,
+            result_nid=self._result_nid,
+            method=method,
+            result_df=df_out,
+            column_to_tags=self._column_to_tags_mapping,
+            info=info,
+        )
 
     @staticmethod
     def _generate_retraining_datetimes(
