@@ -71,16 +71,18 @@ class TestFunctionWrapper(hut.TestCase):
         Test `fit()` call.
         """
         data = self._get_df()
+
         def multiply(df: pd.DataFrame, col1: str, col2: str) -> pd.DataFrame:
             product = (df[col1] * df[col2]).rename("pv")
             return product.to_frame()
+
         config = cconfig.get_config_from_nested_dict(
             {
                 "func": multiply,
                 "func_kwargs": {
                     "col1": "close",
                     "col2": "volume",
-                }
+                },
             }
         )
         node = cdnt.FunctionWrapper("sklearn", **config.to_dict())
