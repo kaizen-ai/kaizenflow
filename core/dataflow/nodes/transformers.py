@@ -510,6 +510,7 @@ class FunctionWrapper(cdnb.Transformer):
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         df = df.copy()
         df_out = self._func(df, **self._func_kwargs)
+        dbg.dassert_isinstance(df_out, pd.DataFrame)
         # Update `info`.
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
         info["df_transformed_info"] = cdu.get_df_info_as_string(df_out)
