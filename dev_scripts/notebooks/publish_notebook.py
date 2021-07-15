@@ -57,11 +57,10 @@ from typing import BinaryIO, List, Tuple
 import requests
 
 import helpers.dbg as dbg
-import helpers.git as git
-import helpers.s3 as hs3
 import helpers.io_ as hio
 import helpers.open as opn
 import helpers.parser as prsr
+import helpers.s3 as hs3
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -104,7 +103,8 @@ def _add_tag(file_name: str, tag: str = "") -> str:
 
 def _export_notebook_to_html(ipynb_file_name: str) -> str:
     """
-    Export a notebook as HTML in the same location, adding a timestamp to file name.
+    Export a notebook as HTML in the same location, adding a timestamp to file
+    name.
 
     :param ipynb_file_name: path to the notebook file
         E.g., `.../event_relevance_exploration.ipynb`
@@ -149,15 +149,19 @@ def _export_notebook_to_dir(ipynb_file_name: str, dst_dir: str) -> str:
     return html_dst_path
 
 
-def _post_to_s3(local_src_path: str, s3_path: str, aws_profile: str, sub_dir: str) -> None:
+def _post_to_s3(
+    local_src_path: str, s3_path: str, aws_profile: str, sub_dir: str
+) -> None:
     # TODO(gp): Pass s3_path through the credentials.
     dbg.dassert(
-        not s3_path.startswith("s3:") and
-        s3_path.endswith("notebooks"), "Invalid s3_path='%s'", s3_path)
+        not s3_path.startswith("s3:") and s3_path.endswith("notebooks"),
+        "Invalid s3_path='%s'",
+        s3_path,
+    )
     basename = os.path.basename(local_src_path)
     remote_path = f"s3://{s3_path}/{basename}"
     if sub_dir:
-        remote_path += "/" + subdir
+        remote_path += "/" + sub_dir
     # TODO(gp): Make sure the S3 dir exists.
     s3fs = hs3.get_s3fs(aws_profile)
     dbg.dassert_file_exists(local_src_path)
@@ -218,8 +222,11 @@ def _get_publish_notebook_path() -> str:
     path = os.environ.get(env_var, None)
     if path is None:
         default_path = "/local/home/share/publish_notebook"
-        _LOG.warning("The env var '%s' is not defined assuming path='%s'",
-                     env_var, default_path)
+        _LOG.warning(
+            "The env var '%s' is not defined assuming path='%s'",
+            env_var,
+            default_path,
+        )
         path = default_path
     return path
 
@@ -281,7 +288,7 @@ def _parse() -> argparse.ArgumentParser:
 - open: convert notebook and opens it in the local browser
 - publish: publish notebook in a local directory
 - post: publish notebook through a webservice
-"""
+""",
     )
     prsr.add_verbosity_arg(parser)
     return parser
@@ -324,7 +331,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         else:
             sub_dir = ""
         dbg.dassert_is_not(args.s3_path, None, "You need to specify --s3_path")
-        dbg.dassert_is_not(args.aws_profile, None, "You need to specify --aws_profile")
+        dbg.dassert_is_not(
+            args.aws_profile, None, "You need to specify --aws_profile"
+        )
         _post_to_s3(html_file_name, args.s3_path, args.aws_profile, sub_dir)
     elif args.action == "post_on_server":
         pub_file_name = os.path.basename(html_file_name)

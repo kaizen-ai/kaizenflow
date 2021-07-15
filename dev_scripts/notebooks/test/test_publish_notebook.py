@@ -21,8 +21,8 @@ class Test_publish_notebook1(hut.TestCase):
     def test_publish_local_notebook1(self) -> None:
         amp_dir = git.get_amp_abs_path()
         file_name = os.path.join(
-            amp_dir,
-            "core/dataflow_model/notebooks/Master_pipeline_runner.ipynb")
+            amp_dir, "core/dataflow_model/notebooks/Master_pipeline_runner.ipynb"
+        )
         cmd = []
         cmd.append("publish_notebook.py")
         cmd.append("--action publish")

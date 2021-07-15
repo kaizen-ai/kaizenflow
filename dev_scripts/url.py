@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 """
-Convert a URL or a path into different formats, e.g., Jupyter URL, GitHub, Git path.
+Convert a URL or a path into different formats, e.g., Jupyter URL, GitHub, Git
+path.
 
 > url.py https://github.com/.../.../Task229_Exploratory_analysis_of_ST_data.ipynb
 file_name=
@@ -17,18 +18,13 @@ http://localhost:10001/tree/oil/ST/Task229_Exploratory_analysis_of_ST_data.ipynb
 import argparse
 import logging
 import os
-import re
 import sys
-from typing import Tuple
-
-import requests
 
 import helpers.dbg as dbg
-import helpers.network as hnetwor
 import helpers.git as git
+import helpers.network as hnetwor
 import helpers.parser as hparse
 import helpers.printing as hprint
-import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
 

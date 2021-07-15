@@ -44,7 +44,7 @@ def get_connection_from_string(
     return connection, cursor
 
 
-# ##################################################################
+# #############################################################################
 
 
 def get_engine_version(connection: psycop.extensions.connection) -> str:

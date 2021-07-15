@@ -1,16 +1,12 @@
-import argparse
 import logging
 import os
 import re
-import sys
-from typing import Tuple
+from typing import Optional, Tuple
 
 import requests
 
 import helpers.dbg as dbg
 import helpers.git as git
-import helpers.parser as hparse
-import helpers.printing as hprint
 import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
@@ -32,10 +28,10 @@ def check_url(url: str) -> None:
         _LOG.warning("url '%s' doesn't exist", url)
 
 
-def get_prefixes(jupyter_port: int = None) -> Tuple[str, str]:
+def get_prefixes(jupyter_port: Optional[int] = None) -> Tuple[str, str]:
     """
-    Return the prefixes that a file should have under a GitHub repo and a Jupyter
-    notebook.
+    Return the prefixes that a file should have under a GitHub repo and a
+    Jupyter notebook.
     """
     hsyste.get_user_name()
     if jupyter_port is None:
@@ -52,8 +48,8 @@ def get_prefixes(jupyter_port: int = None) -> Tuple[str, str]:
 
 def get_file_name(url: str) -> str:
     """
-    Given an URL from GitHub or from Jupyter server extract the path corresponding to
-    the file.
+    Given an URL from GitHub or from Jupyter server extract the path
+    corresponding to the file.
 
     E.g.,
     - http://localhost:10001/notebooks/research/...

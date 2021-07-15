@@ -1,5 +1,5 @@
 """
-Support opening a file
+Support opening a file.
 
 Import as:
 
@@ -46,8 +46,8 @@ def _cmd_open_pdf(file_name: str, os_name: str) -> str:
     Get OS-specific command to open a PDF file.
     """
     os_cmds = {
-        "Darwin":
-            ("/usr/bin/osascript << EOF\n"
+        "Darwin": (
+            "/usr/bin/osascript << EOF\n"
             f'set theFile to POSIX file "{file_name}" as alias\n'
             'tell application "Skim"\n'
             "activate\n"
@@ -56,7 +56,8 @@ def _cmd_open_pdf(file_name: str, os_name: str) -> str:
             "if (count of theDocs) > 0 then revert theDocs\n"
             "open theFile\n"
             "end tell\n"
-            "EOF\n")
+            "EOF\n"
+        )
     }
     dbg.dassert_in(os_name, os_cmds)
     return os_cmds[os_name]
@@ -72,13 +73,15 @@ def open_file(file_name: str) -> None:
     extension = extension.lower()
     # Make sure file exists.
     _LOG.info(
-        "\n%s", hprint.frame(f"Opening {extension} file '{file_name}'", char1="<",
-                             char2=">")
+        "\n%s",
+        hprint.frame(
+            f"Opening {extension} file '{file_name}'", char1="<", char2=">"
+        ),
     )
     dbg.dassert_exists(file_name)
     # Get opening command.
     os_name = hsyste.get_os_name()
-    cmd: str
+    cmd: Optional[str]
     if extension == "pdf":
         cmd = _cmd_open_pdf(file_name, os_name)
     elif extension == "html":
