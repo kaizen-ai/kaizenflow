@@ -18,6 +18,9 @@ def get_connection(
     password: str,
     autocommit: bool = True,
 ) -> Tuple[psycop.extensions.connection, psycop.extensions.cursor]:
+    """
+    Create a connection and cursor for a SQL database.
+    """
     connection = psycop.connect(
         dbname=dbname, host=host, user=user, port=port, password=password
     )
@@ -39,6 +42,9 @@ def get_connection_from_string(
     if autocommit:
         connection.autocommit = True
     return connection, cursor
+
+
+# ##################################################################
 
 
 def get_engine_version(connection: psycop.extensions.connection) -> str:
@@ -70,6 +76,24 @@ def get_db_names(connection: psycop.extensions.connection) -> List[str]:
     dbs = list(zip(*cursor.fetchall()))[0]
     dbs = sorted(dbs)
     return dbs
+
+
+def get_table_names(connection: psycop.extensions.connection) -> List[str]:
+    """
+    Report the name of the tables.
+
+    E.g., tables=['entities', 'events', 'stories', 'taxonomy']
+    """
+    query = """
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_type = 'BASE TABLE'
+        AND table_schema = 'public'
+    """
+    cursor = connection.cursor()
+    cursor.execute(query)
+    tables = [x[0] for x in cursor.fetchall()]
+    return tables
 
 
 def get_table_size(
@@ -112,24 +136,6 @@ def get_table_size(
         cols = "table_name row_estimate total index toast table".split()
         df = df[cols]
     return df
-
-
-def get_table_names(connection: psycop.extensions.connection) -> List[str]:
-    """
-    Report the name of the tables.
-
-    E.g., tables=['entities', 'events', 'stories', 'taxonomy']
-    """
-    query = """
-        SELECT table_name
-        FROM information_schema.tables
-        WHERE table_type = 'BASE TABLE'
-        AND table_schema = 'public'
-    """
-    cursor = connection.cursor()
-    cursor.execute(query)
-    tables = [x[0] for x in cursor.fetchall()]
-    return tables
 
 
 # TODO(gp): Test / fix this.

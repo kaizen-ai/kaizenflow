@@ -1,11 +1,16 @@
 """
+Support opening a file
+
 Import as:
 
 import helpers.open as hopen
 """
 
+# TODO(gp): -> open_file or move it to system_interaction.py
+
 import logging
 import os
+from typing import Optional
 
 import helpers.dbg as dbg
 import helpers.printing as hprint
@@ -16,61 +21,70 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def _cmd_open_html(file_name: str, os_name: str) -> str:
+def _cmd_open_html(file_name: str, os_name: str) -> Optional[str]:
     """
-    Get OS-based command to open html file.
+    Get OS-specific command to open an HTML file.
     """
+    # Retrieve the executable.
     os_cmds = {
         "Darwin": "open",
         "Windows": "start",
         "Linux": "xdg-open",
     }
     dbg.dassert_in(os_name, os_cmds)
-    full_cmd = "%s %s" % (os_cmds[os_name], file_name)
+    exec_name = os_cmds[os_name]
+    if not hsyste.check_exec(exec_name):
+        _LOG.warning("Can't execute the command '%s' on this platform", exec_name)
+        return None
+    # Build the command.
+    full_cmd = f"{exec_name} {file_name}"
     return full_cmd
 
 
 def _cmd_open_pdf(file_name: str, os_name: str) -> str:
     """
-    Get OS-based command to open pdf file.
+    Get OS-specific command to open a PDF file.
     """
-    os_full_cmds = {
-        "Darwin": "/usr/bin/osascript << EOF\n"
-        'set theFile to POSIX file "%s" as alias\n'
-        'tell application "Skim"\n'
-        "activate\n"
-        "set theDocs to get documents whose path is "
-        "(get POSIX path of theFile)\n"
-        "if (count of theDocs) > 0 then revert theDocs\n"
-        "open theFile\n"
-        "end tell\n"
-        "EOF\n" % file_name
+    os_cmds = {
+        "Darwin":
+            ("/usr/bin/osascript << EOF\n"
+            f'set theFile to POSIX file "{file_name}" as alias\n'
+            'tell application "Skim"\n'
+            "activate\n"
+            "set theDocs to get documents whose path is "
+            "(get POSIX path of theFile)\n"
+            "if (count of theDocs) > 0 then revert theDocs\n"
+            "open theFile\n"
+            "end tell\n"
+            "EOF\n")
     }
-    dbg.dassert_in(os_name, os_full_cmds)
-    return os_full_cmds[os_name]
+    dbg.dassert_in(os_name, os_cmds)
+    return os_cmds[os_name]
 
 
 def open_file(file_name: str) -> None:
     """
-    Open file if extension is supported.
+    Open file locally if its extension is supported.
     """
-    # Define file format.
-    suffix = os.path.split(file_name)[-1].split(".")[-1]
-    # Check file.
+    # Detect file format by the (last) extension.
+    # E.g., 'hello.html.txt' is considered a txt file.
+    extension = os.path.split(file_name)[-1].split(".")[-1]
+    extension = extension.lower()
+    # Make sure file exists.
     _LOG.info(
-        "\n%s", hprint.frame("Open %s" % suffix.upper(), char1="<", char2=">")
+        "\n%s", hprint.frame(f"Opening {extension} file '{file_name}'", char1="<",
+                             char2=">")
     )
     dbg.dassert_exists(file_name)
-    _LOG.debug("Opening file='%s'", file_name)
-    # Define OS.
+    # Get opening command.
     os_name = hsyste.get_os_name()
-    # Define open command for OS.
     cmd: str
-    if suffix == "pdf":
+    if extension == "pdf":
         cmd = _cmd_open_pdf(file_name, os_name)
-    elif suffix == "html":
+    elif extension == "html":
         cmd = _cmd_open_html(file_name, os_name)
     else:
-        dbg.dassert(False, "Open .%s files is not supported yet." % suffix)
+        dbg.dfatal(f"Opening '{extension}' files is not supported yet")
     # Run command.
-    hsyste.system(cmd)
+    if cmd is not None:
+        hsyste.system(cmd)
