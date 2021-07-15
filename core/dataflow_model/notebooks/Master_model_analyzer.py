@@ -53,7 +53,7 @@ _LOG = logging.getLogger(__name__)
 # %%
 eval_config = cconfig.get_config_from_nested_dict(
     {
-        # "exp_dir": "/app/experiment1",
+        "exp_dir": "/app/experiment1",
         "model_evaluator_kwargs": {
             "returns_col": "ret_0_vol_adj_2",
             "predictions_col": "ret_0_vol_adj_2_hat",
@@ -116,10 +116,10 @@ if eval_config.get("exp_dir", None) is None:
         oos_start=eval_config["model_evaluator_kwargs", "oos_start"],
     )
 else:
-    rbs_dicts = cdmu.load_experiment_artifacts(
+    rbs_dicts = cdmu.yield_experiment_artifacts(
         eval_config["exp_dir"], "result_bundle.pkl"
     )
-    evaluator = modeval.build_model_evaluator_from_result_bundle_dicts(
+    evaluator = modeval.build_model_evaluator_from_result_bundles(
         rbs_dicts,
         **eval_config["model_evaluator_kwargs"].to_dict(),
     )
@@ -212,5 +212,3 @@ plotter.plot_returns_and_predictions(
     resample_rule=eval_config["resample_rule"],
     mode=eval_config["mode"],
 )
-
-# %%
