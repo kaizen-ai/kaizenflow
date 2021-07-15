@@ -6,10 +6,9 @@ import core.dataflow_model.model_evaluator as modeval
 
 from __future__ import annotations
 
-import collections
 import functools
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -520,8 +519,8 @@ class TransactionCostModeler:
 
 # TODO(gp): Maybe make it a classmethod builder for ModelEvaluator called
 #  `build_from_result_bundle_dicts`.
-def build_model_evaluator_from_result_bundle_dicts(
-    result_bundle_dicts: collections.OrderedDict[cdataf.ResultBundle],
+def build_model_evaluator_from_result_bundles(
+    result_bundle_pairs: Iterable[Tuple[int, cdataf.ResultBunel]],
     returns_col: str,
     predictions_col: str,
     oos_start: Optional[Any] = None,
@@ -529,8 +528,7 @@ def build_model_evaluator_from_result_bundle_dicts(
     """
     Initialize a `ModelEvaluator` from `ResultBundle`s.
 
-    :param result_bundle_dicts: dict of `ResultBundle`s, each of which was
-        generated using `ResultBundle.to_dict()`
+    :param result_bundle_pairs:
     :param returns_col: column of `ResultBundle.result_df` to use as the column
         representing returns
     :param predictions_col: like `returns_col`, but for predictions
@@ -538,17 +536,14 @@ def build_model_evaluator_from_result_bundle_dicts(
     :return: `ModelEvaluator` initialized with returns and predictions from
        result bundles
     """
-    # Convert each `ResultBundle` dict into a `ResultBundle` class object.
-    result_bundles = {
-        k: cdataf.ResultBundle.from_dict(v)
-        for k, v in result_bundle_dicts.items()
-    }
     data_dict = {}
-    for key, rb in result_bundles.items():
-        df = rb.result_df
+    # Convert each `ResultBundle` dict into a `ResultBundle` class object.
+    for key, value in result_bundle_pairs:
+        result_bundle = cdataf.ResultBundle.from_dict(value)
+        df = result_bundle.result_df
         dbg.dassert_in(returns_col, df.columns)
         dbg.dassert_in(predictions_col, df.columns)
-        data_dict[key] = df
+        data_dict[key] = df[[returns_col, predictions_col]]
     # Initialize `ModelEvaluator`.
     evaluator = ModelEvaluator(
         data=data_dict,
