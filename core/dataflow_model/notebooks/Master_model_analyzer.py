@@ -53,7 +53,7 @@ _LOG = logging.getLogger(__name__)
 # %%
 eval_config = cconfig.get_config_from_nested_dict(
     {
-        # "exp_dir": "/app/experiment1",
+        "exp_dir": "/app/experiment1/",
         "model_evaluator_kwargs": {
             "returns_col": "ret_0_vol_adj_2",
             "predictions_col": "ret_0_vol_adj_2_hat",
@@ -97,13 +97,6 @@ pred_df = (
     .multiply(pred_df)
 )
 
-# %%
-data_dict = {}
-for k in pred_df.columns:
-    data_dict[k] = pd.concat(
-        [rets[k].rename("returns"), pred_df[k].rename("predictions")], axis=1
-    )
-
 # %% [markdown]
 # # Initialize ModelEvaluator and ModelPlotter
 
@@ -116,11 +109,11 @@ if eval_config.get("exp_dir", None) is None:
         oos_start=eval_config["model_evaluator_kwargs", "oos_start"],
     )
 else:
-    rbs_dicts = cdmu.load_experiment_artifacts(
-        eval_config["exp_dir"], "result_bundle.pkl"
+    result_bundles = cdmu.yield_experiment_artifacts(
+        eval_config["exp_dir"], "result_bundle.pkl",
     )
-    evaluator = modeval.build_model_evaluator_from_result_bundle_dicts(
-        rbs_dicts,
+    evaluator = modeval.build_model_evaluator_from_result_bundles(
+        result_bundles,
         **eval_config["model_evaluator_kwargs"].to_dict(),
     )
 

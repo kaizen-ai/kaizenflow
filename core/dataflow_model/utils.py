@@ -254,6 +254,58 @@ def save_experiment_result_bundle(
     hpickle.to_pickle(obj, path)
 
 
+def yield_experiment_artifacts(
+    src_dir: str, file_name: str, selected_idxs: Optional[Iterable[int]] = None
+) -> Iterable[Tuple[int, Any]]:
+    _LOG.info("# Load artifacts '%s' from '%s'", file_name, src_dir)
+    # Retrieve all the subdirectories in `src_dir`.
+    subdirs = [d for d in glob.glob(f"{src_dir}/result_*") if os.path.isdir(d)]
+    _LOG.info("Found %d experiment subdirs in '%s'", len(subdirs), src_dir)
+    # Build a mapping from "config_idx" to "experiment_dir".
+    config_idx_to_dir: Dict[int, str] = {}
+    for subdir in subdirs:
+        _LOG.debug("subdir='%s'", subdir)
+        # E.g., `result_123"
+        m = re.match(r"^result_(\d+)$", os.path.basename(subdir))
+        dbg.dassert(m)
+        cast(Match[str], m)
+        key = int(m.group(1))
+        dbg.dassert_not_in(key, config_idx_to_dir)
+        config_idx_to_dir[key] = subdir
+    # Specify the indices of files to load.
+    config_idxs = config_idx_to_dir.keys()
+    if selected_idxs is None:
+        selected_keys = sorted(config_idxs)
+    else:
+        idxs_l = set(selected_idxs)
+        dbg.dassert_is_subset(idxs_l, set(config_idxs))
+        selected_keys = [key for key in sorted(config_idxs) if key in idxs_l]
+    # Iterate over experiment directories.
+    for key in tqdm(selected_keys, desc="Loading artifacts"):
+        subdir = config_idx_to_dir[key]
+        dbg.dassert_dir_exists(subdir)
+        file_name_tmp = os.path.join(src_dir, subdir, file_name)
+        _LOG.debug("Loading '%s'", file_name_tmp)
+        if not os.path.exists(file_name_tmp):
+            _LOG.warning("Can't find '{file_name_tmp}': skipping")
+            continue
+        if file_name_tmp.endswith(".pkl"):
+            # Load pickle files.
+            res = hpickle.from_pickle(
+                file_name_tmp, log_level=logging.DEBUG, verbose=False
+            )
+        elif file_name_tmp.endswith(".json"):
+            # Load JSON files.
+            with open(file_name_tmp, "r") as file:
+                res = json.load(file)
+        elif file_name_tmp.endswith(".txt"):
+            # Load txt files.
+            res = hio.from_file(file_name_tmp)
+        else:
+            raise ValueError(f"Unsupported file type='{file_name_tmp}'")
+        yield key, res
+
+
 # TODO(gp): We might want also to compare to the original experiments Configs.
 def load_experiment_artifacts(
     src_dir: str, file_name: str, selected_idxs: Optional[Iterable[int]] = None
@@ -279,55 +331,13 @@ def load_experiment_artifacts(
     :param selected_idxs: specific experiment indices to load
         - `None` (default) loads all available indices
     """
-    _LOG.info("# Load artifacts '%s' from '%s'", file_name, src_dir)
-    # Retrieve all the subdirectories in `src_dir`.
-    subdirs = [d for d in glob.glob(f"{src_dir}/result_*") if os.path.isdir(d)]
-    _LOG.info("Found %d experiment subdirs in '%s'", len(subdirs), src_dir)
-    # Build a mapping from "config_idx" to "experiment_dir".
-    config_idx_to_dir: Dict[int, str] = {}
-    for subdir in subdirs:
-        _LOG.debug("subdir='%s'", subdir)
-        # E.g., `result_123"
-        m = re.match(r"^result_(\d+)$", os.path.basename(subdir))
-        dbg.dassert(m)
-        cast(Match[str], m)
-        key = int(m.group(1))
-        dbg.dassert_not_in(key, config_idx_to_dir)
-        config_idx_to_dir[key] = subdir
-    # Specify the indices of files to load.
-    config_idxs = config_idx_to_dir.keys()
-    if selected_idxs is None:
-        selected_keys = sorted(config_idxs)
-    else:
-        idxs_l = set(selected_idxs)
-        dbg.dassert_is_subset(idxs_l, set(config_idxs))
-        selected_keys = [key for key in sorted(config_idxs) if key in idxs_l]
-    # Iterate over experiment directories.
-    results = collections.OrderedDict()
-    for key in tqdm(selected_keys, desc="Loading artifacts"):
-        subdir = config_idx_to_dir[key]
-        dbg.dassert_dir_exists(subdir)
-        file_name_tmp = os.path.join(src_dir, subdir, file_name)
-        _LOG.debug("Loading '%s'", file_name_tmp)
-        if not os.path.exists(file_name_tmp):
-            _LOG.warning("Can't find '{file_name_tmp}': skipping")
-            continue
-        if file_name_tmp.endswith(".pkl"):
-            # Load pickle files.
-            res = hpickle.from_pickle(
-                file_name_tmp, log_level=logging.DEBUG, verbose=False
-            )
-        elif file_name_tmp.endswith(".json"):
-            # Load JSON files.
-            with open(file_name_tmp, "r") as file:
-                res = json.load(file)
-        elif file_name_tmp.endswith(".txt"):
-            # Load txt files.
-            res = hio.from_file(file_name_tmp)
-        else:
-            raise ValueError(f"Unsupported file type='{file_name_tmp}'")
-        results[key] = res
-    return results
+    artifact_tuples = yield_experiment_artifacts(
+        src_dir, file_name, selected_idxs
+    )
+    artifacts = collections.OrderedDict()
+    for key, artifact in artifact_tuples:
+        artifacts[key] = artifact
+    return artifacts
 
 
 def load_rolling_experiment_out_of_sample_df(
