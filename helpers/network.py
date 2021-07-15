@@ -46,6 +46,7 @@ def get_prefixes(jupyter_port: Optional[int] = None) -> Tuple[str, str]:
     return github_prefix, jupyter_prefix
 
 
+# TODO(gp): -> get_canonical_file_name_from_url
 def get_file_name(url: str) -> str:
     """
     Given an URL from GitHub or from Jupyter server extract the path
