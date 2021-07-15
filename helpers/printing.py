@@ -330,6 +330,7 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
     return ret
 
 
+# TODO(gp): Move to dbg.log (or dbg.logging_helpers)
 def log(logger: logging.Logger, verbosity: int, *vals: Any) -> None:
     """
     log(_LOG, logging.DEBUG, "ticker", "exchange")
@@ -377,13 +378,20 @@ def type_to_string(type_as_str: str) -> str:
     return type_as_str
 
 
+def type_obj_to_str(obj: Any) -> str:
+    ret = "(%s) %s" % (type(obj), obj)
+    return ret
+
+
+# #############################################################################
+
+
 def format_list(
     list_: List[Any],
     sep: str = " ",
     max_n: Optional[int] = None,
     tag: Optional[str] = None,
 ) -> str:
-    sep = " "
     # sep = ", "
     if max_n is None:
         max_n = 10
@@ -440,44 +448,66 @@ def list_to_str(
     return txt
 
 
-# TODO(gp): -> set_diff_to_str
-def print_set_diff(
+def set_diff_to_str(
     obj1: Iterable,
     obj2: Iterable,
     obj1_name: str = "obj1",
     obj2_name: str = "obj2",
+    sep_char: str = " ",
     add_space: bool = False,
-) -> None:
-    def _to_string(obj: Iterable) -> str:
-        return " ".join(map(str, obj))
+) -> str:
+    """
+    Compute the difference between two sequence of data.
 
-    print("# %s vs %s" % (obj1_name, obj2_name))
+    :param sep_char: print the objects using `sep_char` as separating char
+    :param add_space: add empty lines to make the output more readable
+    """
+
+    def _to_string(obj: Iterable) -> str:
+        obj = sorted(list(obj))
+        if sep_char == "\n":
+            txt = indent("\n" + sep_char.join(map(str, obj)))
+        else:
+            txt = sep_char.join(map(str, obj))
+        return txt
+
+    res: List[str] = []
+    # obj1.
     obj1 = set(obj1)
     dbg.dassert_lte(1, len(obj1))
-    print("* %s: (%s) %s" % (obj1_name, len(obj1), _to_string(obj1)))
+    res.append("* %s: (%s) %s" % (obj1_name, len(obj1), _to_string(obj1)))
     if add_space:
-        print()
-    #
+        res.append("")
+    # obj2.
     obj2 = set(obj2)
     dbg.dassert_lte(1, len(obj2))
-    print("* %s: (%s) %s" % (obj2_name, len(obj2), _to_string(obj2)))
+    res.append("* %s: (%s) %s" % (obj2_name, len(obj2), _to_string(obj2)))
     if add_space:
-        print()
-    #
+        res.append("")
+    # obj1 intersect obj2.
     intersection = obj1.intersection(obj2)
-    print("* intersect=(%s) %s" % (len(intersection), _to_string(intersection)))
+    res.append(
+        "* intersect=(%s) %s" % (len(intersection), _to_string(intersection))
+    )
     if add_space:
-        print()
-    #
+        res.append("")
+    # obj1 - obj2.
     diff = obj1 - obj2
-    print("* %s-%s=(%s) %s" % (obj1_name, obj2_name, len(diff), _to_string(diff)))
+    res.append(
+        "* %s-%s=(%s) %s" % (obj1_name, obj2_name, len(diff), _to_string(diff))
+    )
     if add_space:
-        print()
-    #
+        res.append("")
+    # obj2 - obj1.
     diff = obj2 - obj1
-    print("* %s-%s=(%s) %s" % (obj2_name, obj1_name, len(diff), _to_string(diff)))
+    res.append(
+        "* %s-%s=(%s) %s" % (obj2_name, obj1_name, len(diff), _to_string(diff))
+    )
     if add_space:
-        print()
+        res.append("")
+    #
+    res = "\n".join(res)
+    return res
 
 
 def diff_strings(
@@ -605,11 +635,7 @@ def obj_to_str(
     return "\n".join(ret)
 
 
-def type_obj_to_str(obj: Any) -> str:
-    ret = "(%s) %s" % (type(obj), obj)
-    return ret
-
-
+# TODO(gp): This seems redundant with hut.convert_df_to_string.
 # TODO(gp): Move to pandas_helpers.
 def dataframe_to_str(
     df: Any,
@@ -656,6 +682,7 @@ def remove_non_printable_chars(txt: str) -> str:
     return txt
 
 
+# TODO(gp): Maybe move to python_helpers since it's not about printing.
 def sort_dictionary(dict_: Dict) -> Dict:
     """
     Sort a dictionary recursively using nested OrderedDict.
@@ -697,7 +724,7 @@ def df_to_short_str(tag: str, df: "pd.DataFrame") -> str:
 # Notebook output
 # #############################################################################
 
-# TODO(gp): Move to explore.py
+# TODO(gp): Move to explore.py or notebook.py
 
 
 def config_notebook(sns_set: bool = True) -> None:

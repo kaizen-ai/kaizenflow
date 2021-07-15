@@ -38,7 +38,7 @@ def run_experiment(config: cconfig.Config) -> None:
             **config["meta", "set_predict_intervals", "func_kwargs"].to_dict()
         )
     fit_result_bundle = dag_runner.fit()
-    # Process paylod.
+    # Process payload.
     payload = cconfig.get_config_from_nested_dict({"config": config})
     if "run_oos" in config["meta"].to_dict().keys() and config["meta"]:
         result_bundle = dag_runner.predict()
