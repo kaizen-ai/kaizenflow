@@ -23,7 +23,7 @@ class Test_url_py1(ut.TestCase):
             "http://localhost:10001/notebooks/oil/ST/"
             + "Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
         )
-        act = hnetwo._get_file_name(url_tmp)
+        act = hnetwo.get_file_name(url_tmp)
         exp = "oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
         self.assertEqual(act, exp)
 
@@ -32,7 +32,7 @@ class Test_url_py1(ut.TestCase):
             "https://github.com/.../.../blob/"
             + "master/oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
         )
-        act = hnetwo._get_file_name(url_tmp)
+        act = hnetwo.get_file_name(url_tmp)
         exp = "oil/ST/Task229_Exploratory_analysis_of_ST_data_part1.ipynb"
         self.assertEqual(act, exp)
 
