@@ -331,7 +331,9 @@ def load_experiment_artifacts(
     :param selected_idxs: specific experiment indices to load
         - `None` (default) loads all available indices
     """
-    artifact_tuples = yield_experiment_artifacts(src_dir, file_name, selected_idxs)
+    artifact_tuples = yield_experiment_artifacts(
+        src_dir, file_name, selected_idxs
+    )
     artifacts = collections.OrderedDict()
     for key, artifact in artifact_tuples:
         artifacts[key] = artifact
