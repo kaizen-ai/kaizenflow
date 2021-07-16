@@ -145,34 +145,43 @@ def _export_notebook_to_dir(ipynb_file_name: str, dst_dir: str) -> str:
     hio.create_dir(dst_dir, incremental=True)
     cmd = f"mv {html_src_path} {html_dst_path}"
     si.system(cmd)
-    _LOG.info("Generated '%s'", html_dst_path)
+    _LOG.info("Generated HTML file '%s'", html_dst_path)
     return html_dst_path
 
 
-def _post_to_s3(
-    local_src_path: str, s3_path: str, aws_profile: str, sub_dir: str
-) -> None:
+def _post_to_s3(local_src_path: str, s3_path: str, aws_profile: str) -> None:
+    """
+    Export a notebook as HTML to S3.
+
+    :param local_src_path: the path of the local ipynb to export
+    :param s3_path: full S3 path starting with `s3://` and ending with `/notebooks`
+    :param aws_profile: the profile to use
+    """
+    dbg.dassert_file_exists(local_src_path)
     # TODO(gp): Pass s3_path through the credentials.
     dbg.dassert(
-        not s3_path.startswith("s3:") and s3_path.endswith("notebooks"),
-        "Invalid s3_path='%s'",
+        s3_path.startswith("s3://"),
+        "S3 path needs to start with `s3://`, instead s3_path='%s'",
         s3_path,
     )
+    dbg.dassert(
+        s3_path.endswith("/notebooks"),
+        "S3 path needs to point to a `notebooks` dir, instead s3_path='%s'",
+        s3_path,
+    )
+    # Compute the full S3 path.
     basename = os.path.basename(local_src_path)
     remote_path = f"s3://{s3_path}/{basename}"
-    if sub_dir:
-        remote_path += "/" + sub_dir
     # TODO(gp): Make sure the S3 dir exists.
-    s3fs = hs3.get_s3fs(aws_profile)
-    dbg.dassert_file_exists(local_src_path)
     _LOG.info("Copying '%s' to '%s'", local_src_path, remote_path)
+    s3fs = hs3.get_s3fs(aws_profile, force_use_aws_profile=True)
     s3fs.put(local_src_path, remote_path)
     # TODO(gp): Allow to access the file directly at an URL like:
     #  https://alphamatic-data.s3.amazonaws.com/notebooks/Master_model_analyzer.20210715_014438.html
 
 
 # TODO(gp): This can be more general than this file.
-def _post_to_remote_server(local_src_path: str, remote_dst_path: str) -> None:
+def _post_to_webserver(local_src_path: str, remote_dst_path: str) -> None:
     """
     Copy file to a directory on the remote server using HTTP post.
 
@@ -251,25 +260,19 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=False,
         type=str,
-        help="The branch from which the notebook file will be checked out",
+        help="The Git branch containing the notebook, if different than `master`",
     )
     parser.add_argument(
         "--publish_notebook_dir",
         action="store",
         default=None,
-        help="The name of the dir where to save the HTML file",
-    )
-    parser.add_argument(
-        "--sub_dir",
-        action="store",
-        default="",
-        help="The sub_dir in the publish_notebook where to save the HTML file",
+        help="Dir where to save the HTML file",
     )
     parser.add_argument(
         "--s3_path",
         action="store",
         default=None,
-        help="The path on S3 to publish the notebook (e.g., `alphamatic-data/notebooks`)",
+        help="S3 path to publish the notebook (e.g., `s3://alphamatic-data/notebooks`)",
     )
     parser.add_argument(
         "--aws_profile",
@@ -282,12 +285,19 @@ def _parse() -> argparse.ArgumentParser:
         "--action",
         action="store",
         default=["convert"],
-        choices=["publish", "open", "convert", "post_on_s3", "post_on_server"],
+        choices=[
+            "convert",
+            "open",
+            "publish_locally",
+            "publish_on_s3",
+            "publish_on_webserver",
+        ],
         help="""
-- convert (default): convert notebook to HTML
-- open: convert notebook and opens it in the local browser
-- publish: publish notebook in a local directory
-- post: publish notebook through a webservice
+- convert (default): convert notebook to HTML in the current dir
+- open: convert notebook and open it in the local browser
+- publish_locally: publish notebook in a central local directory
+- publish_on_s3: publish notebook on S3
+- publish_on_webserver: publish notebook through a webservice
 """,
     )
     prsr.add_verbosity_arg(parser)
@@ -302,43 +312,41 @@ def _main(parser: argparse.ArgumentParser) -> None:
         src_file_name = _get_file_from_git_branch(args.branch, args.file)
     else:
         src_file_name = _get_path(args.file)
+    # Process the action.
     if args.action == "convert":
         # Convert to HTML.
-        _export_notebook_to_html(src_file_name)
+        dst_dir = "."
+        _export_notebook_to_dir(src_file_name, dst_dir)
     elif args.action == "open":
         # Convert to HTML.
-        html_file_name = _export_notebook_to_html(src_file_name)
+        dst_dir = "."
+        html_file_name = _export_notebook_to_dir(src_file_name, dst_dir)
         # Open.
         opn.open_file(html_file_name)
-        print(f"HTML file is saved at '{html_file_name}'")
-    elif args.action == "publish":
+    elif args.action == "publish_locally":
         # Convert to HTML.
         if args.publish_notebook_dir is not None:
             dst_dir = args.publish_notebook_dir
         else:
             dst_dir = _get_publish_notebook_path()
         dbg.dassert_dir_exists(dst_dir)
-        if args.sub_dir:
-            dst_dir = os.path.join(dst_dir, args.sub_dir)
         hio.create_dir(dst_dir, incremental=True)
-        html_file_name = _export_notebook_to_dir(src_file_name, dst_dir)
-        print(f"HTML file is saved at '{html_file_name}'")
-    elif args.action == "post_on_s3":
-        # Convert to HTML.
-        html_file_name = _export_notebook_to_html(src_file_name)
-        if args.sub_dir:
-            sub_dir = args.sub_dir
-        else:
-            sub_dir = ""
+        _export_notebook_to_dir(src_file_name, dst_dir)
+    elif args.action == "publish_on_s3":
+        # Check command line.
         dbg.dassert_is_not(args.s3_path, None, "You need to specify --s3_path")
         dbg.dassert_is_not(
             args.aws_profile, None, "You need to specify --aws_profile"
         )
-        _post_to_s3(html_file_name, args.s3_path, args.aws_profile, sub_dir)
-    elif args.action == "post_on_server":
-        pub_file_name = os.path.basename(html_file_name)
-        remote_dst_path = os.path.join(args.sub_dir, pub_file_name)
-        _post_to_remote_server(html_file_name, remote_dst_path)
+        # Convert to HTML.
+        dst_dir = "."
+        html_file_name = _export_notebook_to_dir(src_file_name, dst_dir)
+        # Copy to S3.
+        _post_to_s3(html_file_name, args.s3_path, args.aws_profile)
+        # TODO(gp): Remove the file or save it directly in a temp dir.
+    elif args.action == "publish_on_webserver":
+        remote_dst_path = os.path.basename(html_file_name)
+        _post_to_webserver(html_file_name, remote_dst_path)
     else:
         dbg.dfatal(f"Invalid action='{args.action}'")
 

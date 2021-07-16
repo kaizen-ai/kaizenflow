@@ -1,24 +1,18 @@
 import logging
 import os
-from typing import Any, Dict, List, Tuple
 
-import pytest
-
-import helpers.dbg as dbg
 import helpers.git as git
-import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
-
-# To avoid linter removing this.
-_ = dbg, hprint, hsinte, pytest, Any, Dict, List, Tuple
-
 
 _LOG = logging.getLogger(__name__)
 
 
 class Test_publish_notebook1(hut.TestCase):
     def test_publish_local_notebook1(self) -> None:
+        """
+        Publish locally a notebook as HTML.
+        """
         amp_dir = git.get_amp_abs_path()
         file_name = os.path.join(
             amp_dir, "core/dataflow_model/notebooks/Master_pipeline_runner.ipynb"
@@ -31,3 +25,13 @@ class Test_publish_notebook1(hut.TestCase):
         cmd.append(f"--publish_notebook_dir {dst_dir}")
         cmd = " ".join(cmd)
         hsinte.system(cmd)
+
+
+# TODO(gp): Test different actions
+
+# TODO(gp): Add test for something like:
+#  > publish_notebook.py \
+#   --file http://127.0.0.1:2908/notebooks/notebooks/AmpTask40_Optimizer.ipynb \
+#   --action post_on_s3 \
+#   --s3_path s3://.../notebooks \
+#   --aws_profile am
