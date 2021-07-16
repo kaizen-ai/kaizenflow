@@ -337,7 +337,9 @@ def compute_twap_vwap(
     :param rule: resampling frequency and TWAP/VWAP aggregation window
     :param price_col: price for bar
     :param volume_col: volume for bar
-    :return: vwap series
+    :param offset: offset in the Pandas format (e.g., `1T`) used to shift the
+        sampling
+    :return: twap and vwap price series
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
     # TODO(*): Determine whether we really need this. Disabling for now to
