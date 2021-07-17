@@ -154,6 +154,11 @@ class ModelEvaluator:
         )
         stats_dict = {}
         for key in tqdm(pnl_dict.keys(), desc="Calculating stats"):
+            if pnl_dict[key].empty:
+                _LOG.warning("PnL series for key=%i is empty.", key)
+                continue
+            if pnl_dict[key].dropna().empty:
+                _LOG.warning("PnL series for key%i is all-NaN.", key)
             stats_dict[key] = self._stats_computer.compute_finance_stats(
                 pnl_dict[key],
                 returns_col="returns",
