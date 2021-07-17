@@ -57,10 +57,11 @@ from typing import BinaryIO, List, Tuple
 import requests
 
 import helpers.dbg as dbg
+import helpers.git as git
+import helpers.s3 as hs3
 import helpers.io_ as hio
 import helpers.open as opn
 import helpers.parser as prsr
-import helpers.s3 as hs3
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -103,8 +104,7 @@ def _add_tag(file_name: str, tag: str = "") -> str:
 
 def _export_notebook_to_html(ipynb_file_name: str) -> str:
     """
-    Export a notebook as HTML in the same location, adding a timestamp to file
-    name.
+    Export a notebook as HTML in the same location, adding a timestamp to file name.
 
     :param ipynb_file_name: path to the notebook file
         E.g., `.../event_relevance_exploration.ipynb`
@@ -159,19 +159,15 @@ def _post_to_s3(local_src_path: str, s3_path: str, aws_profile: str) -> None:
     """
     dbg.dassert_file_exists(local_src_path)
     # TODO(gp): Pass s3_path through the credentials.
-    dbg.dassert(
-        s3_path.startswith("s3://"),
-        "S3 path needs to start with `s3://`, instead s3_path='%s'",
-        s3_path,
-    )
-    dbg.dassert(
-        s3_path.endswith("/notebooks"),
-        "S3 path needs to point to a `notebooks` dir, instead s3_path='%s'",
-        s3_path,
-    )
+    dbg.dassert(s3_path.startswith("s3://"),
+                "S3 path needs to start with `s3://`, instead s3_path='%s'",
+                s3_path)
+    dbg.dassert(s3_path.endswith("/notebooks"),
+                "S3 path needs to point to a `notebooks` dir, instead s3_path='%s'",
+                s3_path)
     # Compute the full S3 path.
     basename = os.path.basename(local_src_path)
-    remote_path = f"s3://{s3_path}/{basename}"
+    remote_path = os.path.join(s3_path, basename)
     # TODO(gp): Make sure the S3 dir exists.
     _LOG.info("Copying '%s' to '%s'", local_src_path, remote_path)
     s3fs = hs3.get_s3fs(aws_profile, force_use_aws_profile=True)
@@ -226,20 +222,6 @@ def _get_path(path_or_url: str) -> str:
     return ret
 
 
-def _get_publish_notebook_path() -> str:
-    env_var = "AM_PUBLISH_NOTEBOOK_PATH"
-    path = os.environ.get(env_var, None)
-    if path is None:
-        default_path = "/local/home/share/publish_notebook"
-        _LOG.warning(
-            "The env var '%s' is not defined assuming path='%s'",
-            env_var,
-            default_path,
-        )
-        path = default_path
-    return path
-
-
 # #############################################################################
 
 
@@ -285,28 +267,72 @@ def _parse() -> argparse.ArgumentParser:
         "--action",
         action="store",
         default=["convert"],
-        choices=[
-            "convert",
-            "open",
-            "publish_locally",
-            "publish_on_s3",
-            "publish_on_webserver",
-        ],
+        choices=["convert", "open", "publish_locally", "publish_on_s3",
+                 "publish_on_webserver"],
         help="""
 - convert (default): convert notebook to HTML in the current dir
 - open: convert notebook and open it in the local browser
 - publish_locally: publish notebook in a central local directory
 - publish_on_s3: publish notebook on S3
 - publish_on_webserver: publish notebook through a webservice
-""",
+"""
     )
     prsr.add_verbosity_arg(parser)
     return parser
 
 
+def _get_s3_path(args) -> str:
+    if args.s3_path:
+        s3_path = args.s3_path
+    else:
+        env_var = "AM_PUBLISH_NOTEBOOK_S3_PATH"
+        dbg.dassert_in(env_var, os.environ, "The env needs to set env var '%s'", env_var)
+        s3_path = os.environ[env_var]
+    return s3_path
+
+
+def _get_aws_profile(args) -> str:
+    if args.aws_profile:
+        aws_profile = args.aws_profile
+    else:
+        env_var = "AM_PUBLISH_NOTEBOOK_AWS_PROFILE"
+        dbg.dassert_in(env_var, os.environ, "The env needs to set env var '%s'", env_var)
+        aws_profile = os.environ[env_var]
+    return aws_profile
+
+
+import sys
+
+
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
+    if args.action == "open":
+        # Open an existing HTML notebook.
+        src_file_name = args.file
+        if False:
+            cmd = f"aws s3 presign --expires-in 36000 {src_file_name}"
+            _, url = si.system_to_one_line(cmd)
+            _LOG.info("url=%s", url)
+            local_file_name = os.path.basename(src_file_name)
+            #cmd = f"wget {url} -O {local_file_name}"
+            #si.system(cmd)
+            req = requests.get(url)
+            open(local_file_name, 'wb').write(req.content)
+
+        # We use AWS CLI to minimize the dependencies from Python packages.
+        aws_profile = _get_aws_profile(args)
+        # Check that the file exists.
+        cmd = f"aws s3 ls --profile {aws_profile} {src_file_name}"
+        si.system(cmd)
+        # Copy.
+        local_file_name = os.path.basename(src_file_name)
+        cmd = f"aws s3 cp --profile {aws_profile} {src_file_name} {local_file_name}"
+        si.system(cmd)
+        _LOG.info("Copied remote url to '%s'", local_file_name)
+        #
+        opn.open_file(local_file_name)
+        sys.exit(0)
     # Compute the path of the src file.
     if args.branch:
         src_file_name = _get_file_from_git_branch(args.branch, args.file)
@@ -316,33 +342,26 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.action == "convert":
         # Convert to HTML.
         dst_dir = "."
-        _export_notebook_to_dir(src_file_name, dst_dir)
-    elif args.action == "open":
-        # Convert to HTML.
-        dst_dir = "."
         html_file_name = _export_notebook_to_dir(src_file_name, dst_dir)
-        # Open.
+        # Try to open.
         opn.open_file(html_file_name)
     elif args.action == "publish_locally":
         # Convert to HTML.
         if args.publish_notebook_dir is not None:
             dst_dir = args.publish_notebook_dir
         else:
-            dst_dir = _get_publish_notebook_path()
+            env_var = "AM_PUBLISH_NOTEBOOK_LOCAL_PATH"
+            dbg.dassert_in(env_var, os.environ, "The env needs to set env var '%s'", env_var)
+            dst_dir = os.environ[env_var]
         dbg.dassert_dir_exists(dst_dir)
         hio.create_dir(dst_dir, incremental=True)
         _export_notebook_to_dir(src_file_name, dst_dir)
     elif args.action == "publish_on_s3":
-        # Check command line.
-        dbg.dassert_is_not(args.s3_path, None, "You need to specify --s3_path")
-        dbg.dassert_is_not(
-            args.aws_profile, None, "You need to specify --aws_profile"
-        )
         # Convert to HTML.
         dst_dir = "."
         html_file_name = _export_notebook_to_dir(src_file_name, dst_dir)
         # Copy to S3.
-        _post_to_s3(html_file_name, args.s3_path, args.aws_profile)
+        _post_to_s3(html_file_name, s3_path, aws_profile)
         # TODO(gp): Remove the file or save it directly in a temp dir.
     elif args.action == "publish_on_webserver":
         remote_dst_path = os.path.basename(html_file_name)

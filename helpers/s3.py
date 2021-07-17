@@ -12,8 +12,21 @@ import os
 import pprint
 from typing import Any, Dict, List, Optional, Tuple
 
-import boto3
-import s3fs
+
+_WARNING = "\033[33mWARNING\033[0m"
+
+try:
+    import boto3
+except ModuleNotFoundError:
+    _module = "boto3"
+    print(_WARNING + f": Can't find {module} : continuing")
+
+try:
+    import s3fs
+except ModuleNotFoundError:
+    _module = "s3fs"
+    print(_WARNING + f": Can't find {module}: continuing")
+
 
 import helpers.dbg as dbg
 import helpers.system_interaction as hsyste
