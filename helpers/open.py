@@ -38,6 +38,10 @@ def _cmd_open_html(file_name: str, os_name: str) -> Optional[str]:
         return None
     # Build the command.
     full_cmd = f"{exec_name} {file_name}"
+    if os_name == "Linux":
+        _LOG.warning(
+            "To open files faster launch in background '%s &'", exec_name
+        )
     return full_cmd
 
 
@@ -90,4 +94,5 @@ def open_file(file_name: str) -> None:
         dbg.dfatal(f"Opening '{extension}' files is not supported yet")
     # Run command.
     if cmd is not None:
-        hsyste.system(cmd)
+        _LOG.info("%s", cmd)
+        hsyste.system(cmd, suppress_output=False)

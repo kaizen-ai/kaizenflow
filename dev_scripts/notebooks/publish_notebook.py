@@ -6,51 +6,27 @@ This script performs several actions on a Jupyter notebook, such as:
 
 # Open a notebook in the browser
 
-- The following command opens a local notebook as HTML into the browser:
+- The following command opens an archived notebook as HTML into the browser:
   ```
   > publish_notebook.py \
-      --file nlp/notebooks/PTask768_event_filtering.ipynb \
+      --file s3://.../notebooks/PTask768_event_filtering.html \
       --action open
   ```
 
-- Detailed flow:
-    - Convert a local notebook into HTML format
-    - Save the HTML document to a temporary location, adding a timestamp to the
-      name
-    - On a local computer
-      - Open the HTML document using the system default browser
-    - On the dev server
-      - Return the full path to the file as a result.
-
 # Publish a notebook
 
-- The following command publishes a local notebook as HTML on the dev server.
   ```
   > publish_notebook.py \
       --file nlp/notebooks/PTask768_event_filtering.ipynb \
-      --action publish
+      --action publish_on_S3
   ```
-
-- Detailed flow:
-    - On a local computer:
-      - Convert a local notebook into HTML format
-      - Save the HTML document to a temporary location, adding a timestamp to the
-        name
-      - Copy it to the publishing location on the dev server
-      - Print the path to the published HTML document and a command to open it
-        using an ssh tunnel
-
-    - On the dev server:
-      - Convert a locally available notebook to the HTML format.
-      - Add a timestamp to the name
-      - Copy the HTML page to the publishing location on the dev server
-      - Print a link to the file, and a command to open it using ssh tunneling
 """
 
 import argparse
 import datetime
 import logging
 import os
+import sys
 import tempfile
 from typing import BinaryIO, List, Tuple
 
@@ -171,7 +147,7 @@ def _post_to_s3(local_src_path: str, s3_path: str, aws_profile: str) -> None:
     )
     # Compute the full S3 path.
     basename = os.path.basename(local_src_path)
-    remote_path = f"s3://{s3_path}/{basename}"
+    remote_path = os.path.join(s3_path, basename)
     # TODO(gp): Make sure the S3 dir exists.
     _LOG.info("Copying '%s' to '%s'", local_src_path, remote_path)
     s3fs = hs3.get_s3fs(aws_profile, force_use_aws_profile=True)
@@ -226,18 +202,28 @@ def _get_path(path_or_url: str) -> str:
     return ret
 
 
-def _get_publish_notebook_path() -> str:
-    env_var = "AM_PUBLISH_NOTEBOOK_PATH"
-    path = os.environ.get(env_var, None)
-    if path is None:
-        default_path = "/local/home/share/publish_notebook"
-        _LOG.warning(
-            "The env var '%s' is not defined assuming path='%s'",
-            env_var,
-            default_path,
+def _get_s3_path(args: argparse.Namespace) -> str:
+    if args.s3_path:
+        s3_path = args.s3_path
+    else:
+        env_var = "AM_PUBLISH_NOTEBOOK_S3_PATH"
+        dbg.dassert_in(
+            env_var, os.environ, "The env needs to set env var '%s'", env_var
         )
-        path = default_path
-    return path
+        s3_path = os.environ[env_var]
+    return s3_path
+
+
+def _get_aws_profile(args: argparse.Namespace) -> str:
+    if args.aws_profile:
+        aws_profile = args.aws_profile
+    else:
+        env_var = "AM_PUBLISH_NOTEBOOK_AWS_PROFILE"
+        dbg.dassert_in(
+            env_var, os.environ, "The env needs to set env var '%s'", env_var
+        )
+        aws_profile = os.environ[env_var]
+    return aws_profile
 
 
 # #############################################################################
@@ -265,18 +251,21 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--publish_notebook_dir",
         action="store",
+        type=str,
         default=None,
         help="Dir where to save the HTML file",
     )
     parser.add_argument(
         "--s3_path",
         action="store",
+        type=str,
         default=None,
         help="S3 path to publish the notebook (e.g., `s3://alphamatic-data/notebooks`)",
     )
     parser.add_argument(
         "--aws_profile",
         action="store",
+        type=str,
         default=None,
         help="The AWS profile to use from `.aws/credentials`",
     )
@@ -294,7 +283,7 @@ def _parse() -> argparse.ArgumentParser:
         ],
         help="""
 - convert (default): convert notebook to HTML in the current dir
-- open: convert notebook and open it in the local browser
+- open: open an existing notebook on S3 it in the local browser
 - publish_locally: publish notebook in a central local directory
 - publish_on_s3: publish notebook on S3
 - publish_on_webserver: publish notebook through a webservice
@@ -307,6 +296,24 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
+    if args.action == "open":
+        # Open an existing HTML notebook.
+        src_file_name = args.file
+        # We use AWS CLI to minimize the dependencies from Python packages.
+        aws_profile = _get_aws_profile(args)
+        # Check that the file exists.
+        cmd = f"aws s3 ls --profile {aws_profile} {src_file_name}"
+        si.system(cmd)
+        # Copy.
+        local_file_name = os.path.basename(src_file_name)
+        cmd = (
+            f"aws s3 cp --profile {aws_profile} {src_file_name} {local_file_name}"
+        )
+        si.system(cmd)
+        _LOG.info("Copied remote url to '%s'", local_file_name)
+        #
+        opn.open_file(local_file_name)
+        sys.exit(0)
     # Compute the path of the src file.
     if args.branch:
         src_file_name = _get_file_from_git_branch(args.branch, args.file)
@@ -316,33 +323,30 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.action == "convert":
         # Convert to HTML.
         dst_dir = "."
-        _export_notebook_to_dir(src_file_name, dst_dir)
-    elif args.action == "open":
-        # Convert to HTML.
-        dst_dir = "."
         html_file_name = _export_notebook_to_dir(src_file_name, dst_dir)
-        # Open.
+        # Try to open.
         opn.open_file(html_file_name)
     elif args.action == "publish_locally":
         # Convert to HTML.
         if args.publish_notebook_dir is not None:
             dst_dir = args.publish_notebook_dir
         else:
-            dst_dir = _get_publish_notebook_path()
+            env_var = "AM_PUBLISH_NOTEBOOK_LOCAL_PATH"
+            dbg.dassert_in(
+                env_var, os.environ, "The env needs to set env var '%s'", env_var
+            )
+            dst_dir = os.environ[env_var]
         dbg.dassert_dir_exists(dst_dir)
         hio.create_dir(dst_dir, incremental=True)
         _export_notebook_to_dir(src_file_name, dst_dir)
     elif args.action == "publish_on_s3":
-        # Check command line.
-        dbg.dassert_is_not(args.s3_path, None, "You need to specify --s3_path")
-        dbg.dassert_is_not(
-            args.aws_profile, None, "You need to specify --aws_profile"
-        )
         # Convert to HTML.
         dst_dir = "."
         html_file_name = _export_notebook_to_dir(src_file_name, dst_dir)
         # Copy to S3.
-        _post_to_s3(html_file_name, args.s3_path, args.aws_profile)
+        s3_path = _get_s3_path(args)
+        aws_profile = _get_aws_profile(args)
+        _post_to_s3(html_file_name, s3_path, aws_profile)
         # TODO(gp): Remove the file or save it directly in a temp dir.
     elif args.action == "publish_on_webserver":
         remote_dst_path = os.path.basename(html_file_name)
