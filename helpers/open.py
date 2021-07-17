@@ -39,7 +39,9 @@ def _cmd_open_html(file_name: str, os_name: str) -> Optional[str]:
     # Build the command.
     full_cmd = f"{exec_name} {file_name}"
     if os_name == "Linux":
-        _LOG.warning("To open files faster launch in background '%s &'", exec_name)
+        _LOG.warning(
+            "To open files faster launch in background '%s &'", exec_name
+        )
     return full_cmd
 
 

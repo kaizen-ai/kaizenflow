@@ -12,20 +12,19 @@ import os
 import pprint
 from typing import Any, Dict, List, Optional, Tuple
 
-
 _WARNING = "\033[33mWARNING\033[0m"
 
 try:
     import boto3
 except ModuleNotFoundError:
     _module = "boto3"
-    print(_WARNING + f": Can't find {module} : continuing")
+    print(_WARNING + f": Can't find {_module} : continuing")
 
 try:
     import s3fs
 except ModuleNotFoundError:
     _module = "s3fs"
-    print(_WARNING + f": Can't find {module}: continuing")
+    print(_WARNING + f": Can't find {_module}: continuing")
 
 
 import helpers.dbg as dbg
@@ -284,7 +283,7 @@ def _list_s3_keys(
             Bucket=s3_bucket,
             Prefix=dir_path,
             MaxKeys=AMAZON_MAX_INT,
-            **continuation_arg
+            **continuation_arg,
         )
         # Extract the `Key` from each element.
         keys = [content["Key"] for content in s3_objects["Contents"]]

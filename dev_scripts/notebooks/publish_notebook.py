@@ -6,62 +6,37 @@ This script performs several actions on a Jupyter notebook, such as:
 
 # Open a notebook in the browser
 
-- The following command opens a local notebook as HTML into the browser:
+- The following command opens an archived notebook as HTML into the browser:
   ```
   > publish_notebook.py \
-      --file nlp/notebooks/PTask768_event_filtering.ipynb \
+      --file s3://.../notebooks/PTask768_event_filtering.html \
       --action open
   ```
 
-- Detailed flow:
-    - Convert a local notebook into HTML format
-    - Save the HTML document to a temporary location, adding a timestamp to the
-      name
-    - On a local computer
-      - Open the HTML document using the system default browser
-    - On the dev server
-      - Return the full path to the file as a result.
-
 # Publish a notebook
 
-- The following command publishes a local notebook as HTML on the dev server.
   ```
   > publish_notebook.py \
       --file nlp/notebooks/PTask768_event_filtering.ipynb \
-      --action publish
+      --action publish_on_S3
   ```
-
-- Detailed flow:
-    - On a local computer:
-      - Convert a local notebook into HTML format
-      - Save the HTML document to a temporary location, adding a timestamp to the
-        name
-      - Copy it to the publishing location on the dev server
-      - Print the path to the published HTML document and a command to open it
-        using an ssh tunnel
-
-    - On the dev server:
-      - Convert a locally available notebook to the HTML format.
-      - Add a timestamp to the name
-      - Copy the HTML page to the publishing location on the dev server
-      - Print a link to the file, and a command to open it using ssh tunneling
 """
 
 import argparse
 import datetime
 import logging
 import os
+import sys
 import tempfile
 from typing import BinaryIO, List, Tuple
 
 import requests
 
 import helpers.dbg as dbg
-import helpers.git as git
-import helpers.s3 as hs3
 import helpers.io_ as hio
 import helpers.open as opn
 import helpers.parser as prsr
+import helpers.s3 as hs3
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
@@ -104,7 +79,8 @@ def _add_tag(file_name: str, tag: str = "") -> str:
 
 def _export_notebook_to_html(ipynb_file_name: str) -> str:
     """
-    Export a notebook as HTML in the same location, adding a timestamp to file name.
+    Export a notebook as HTML in the same location, adding a timestamp to file
+    name.
 
     :param ipynb_file_name: path to the notebook file
         E.g., `.../event_relevance_exploration.ipynb`
@@ -159,12 +135,16 @@ def _post_to_s3(local_src_path: str, s3_path: str, aws_profile: str) -> None:
     """
     dbg.dassert_file_exists(local_src_path)
     # TODO(gp): Pass s3_path through the credentials.
-    dbg.dassert(s3_path.startswith("s3://"),
-                "S3 path needs to start with `s3://`, instead s3_path='%s'",
-                s3_path)
-    dbg.dassert(s3_path.endswith("/notebooks"),
-                "S3 path needs to point to a `notebooks` dir, instead s3_path='%s'",
-                s3_path)
+    dbg.dassert(
+        s3_path.startswith("s3://"),
+        "S3 path needs to start with `s3://`, instead s3_path='%s'",
+        s3_path,
+    )
+    dbg.dassert(
+        s3_path.endswith("/notebooks"),
+        "S3 path needs to point to a `notebooks` dir, instead s3_path='%s'",
+        s3_path,
+    )
     # Compute the full S3 path.
     basename = os.path.basename(local_src_path)
     remote_path = os.path.join(s3_path, basename)
@@ -222,6 +202,30 @@ def _get_path(path_or_url: str) -> str:
     return ret
 
 
+def _get_s3_path(args: argparse.Namespace) -> str:
+    if args.s3_path:
+        s3_path = args.s3_path
+    else:
+        env_var = "AM_PUBLISH_NOTEBOOK_S3_PATH"
+        dbg.dassert_in(
+            env_var, os.environ, "The env needs to set env var '%s'", env_var
+        )
+        s3_path = os.environ[env_var]
+    return s3_path
+
+
+def _get_aws_profile(args: argparse.Namespace) -> str:
+    if args.aws_profile:
+        aws_profile = args.aws_profile
+    else:
+        env_var = "AM_PUBLISH_NOTEBOOK_AWS_PROFILE"
+        dbg.dassert_in(
+            env_var, os.environ, "The env needs to set env var '%s'", env_var
+        )
+        aws_profile = os.environ[env_var]
+    return aws_profile
+
+
 # #############################################################################
 
 
@@ -247,18 +251,21 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--publish_notebook_dir",
         action="store",
+        type=str,
         default=None,
         help="Dir where to save the HTML file",
     )
     parser.add_argument(
         "--s3_path",
         action="store",
+        type=str,
         default=None,
         help="S3 path to publish the notebook (e.g., `s3://alphamatic-data/notebooks`)",
     )
     parser.add_argument(
         "--aws_profile",
         action="store",
+        type=str,
         default=None,
         help="The AWS profile to use from `.aws/credentials`",
     )
@@ -267,41 +274,23 @@ def _parse() -> argparse.ArgumentParser:
         "--action",
         action="store",
         default=["convert"],
-        choices=["convert", "open", "publish_locally", "publish_on_s3",
-                 "publish_on_webserver"],
+        choices=[
+            "convert",
+            "open",
+            "publish_locally",
+            "publish_on_s3",
+            "publish_on_webserver",
+        ],
         help="""
 - convert (default): convert notebook to HTML in the current dir
-- open: convert notebook and open it in the local browser
+- open: open an existing notebook on S3 it in the local browser
 - publish_locally: publish notebook in a central local directory
 - publish_on_s3: publish notebook on S3
 - publish_on_webserver: publish notebook through a webservice
-"""
+""",
     )
     prsr.add_verbosity_arg(parser)
     return parser
-
-
-def _get_s3_path(args) -> str:
-    if args.s3_path:
-        s3_path = args.s3_path
-    else:
-        env_var = "AM_PUBLISH_NOTEBOOK_S3_PATH"
-        dbg.dassert_in(env_var, os.environ, "The env needs to set env var '%s'", env_var)
-        s3_path = os.environ[env_var]
-    return s3_path
-
-
-def _get_aws_profile(args) -> str:
-    if args.aws_profile:
-        aws_profile = args.aws_profile
-    else:
-        env_var = "AM_PUBLISH_NOTEBOOK_AWS_PROFILE"
-        dbg.dassert_in(env_var, os.environ, "The env needs to set env var '%s'", env_var)
-        aws_profile = os.environ[env_var]
-    return aws_profile
-
-
-import sys
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
@@ -310,16 +299,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.action == "open":
         # Open an existing HTML notebook.
         src_file_name = args.file
-        if False:
-            cmd = f"aws s3 presign --expires-in 36000 {src_file_name}"
-            _, url = si.system_to_one_line(cmd)
-            _LOG.info("url=%s", url)
-            local_file_name = os.path.basename(src_file_name)
-            #cmd = f"wget {url} -O {local_file_name}"
-            #si.system(cmd)
-            req = requests.get(url)
-            open(local_file_name, 'wb').write(req.content)
-
         # We use AWS CLI to minimize the dependencies from Python packages.
         aws_profile = _get_aws_profile(args)
         # Check that the file exists.
@@ -327,7 +306,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         si.system(cmd)
         # Copy.
         local_file_name = os.path.basename(src_file_name)
-        cmd = f"aws s3 cp --profile {aws_profile} {src_file_name} {local_file_name}"
+        cmd = (
+            f"aws s3 cp --profile {aws_profile} {src_file_name} {local_file_name}"
+        )
         si.system(cmd)
         _LOG.info("Copied remote url to '%s'", local_file_name)
         #
@@ -351,7 +332,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
             dst_dir = args.publish_notebook_dir
         else:
             env_var = "AM_PUBLISH_NOTEBOOK_LOCAL_PATH"
-            dbg.dassert_in(env_var, os.environ, "The env needs to set env var '%s'", env_var)
+            dbg.dassert_in(
+                env_var, os.environ, "The env needs to set env var '%s'", env_var
+            )
             dst_dir = os.environ[env_var]
         dbg.dassert_dir_exists(dst_dir)
         hio.create_dir(dst_dir, incremental=True)
@@ -361,6 +344,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         dst_dir = "."
         html_file_name = _export_notebook_to_dir(src_file_name, dst_dir)
         # Copy to S3.
+        s3_path = _get_s3_path(args)
+        aws_profile = _get_aws_profile(args)
         _post_to_s3(html_file_name, s3_path, aws_profile)
         # TODO(gp): Remove the file or save it directly in a temp dir.
     elif args.action == "publish_on_webserver":

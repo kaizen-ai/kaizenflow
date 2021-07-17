@@ -19,7 +19,7 @@ class Test_publish_notebook1(hut.TestCase):
         )
         cmd = []
         cmd.append("publish_notebook.py")
-        cmd.append("--action publish")
+        cmd.append("--action publish_locally")
         cmd.append(f"--file {file_name}")
         dst_dir = self.get_scratch_space()
         cmd.append(f"--publish_notebook_dir {dst_dir}")
