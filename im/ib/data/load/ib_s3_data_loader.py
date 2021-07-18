@@ -122,8 +122,9 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
         # https://github.com/pandas-dev/pandas/issues/36928 fixed in Pandas 1.1.4
         aws_profile = "am"
         names = list(self.S3_COLUMNS.keys())
+        s3fs = hs3.get_s3fs("am")
         data = pdhelp.read_csv(
-            file_path, aws_profile=aws_profile, nrows=nrows, names=names
+            file_path, s3fs=s3fs, nrows=nrows, names=names
         )
         # TODO(plyq): Reload ES data with a new extractor to have a header.
         # If header was already in data, remove it.

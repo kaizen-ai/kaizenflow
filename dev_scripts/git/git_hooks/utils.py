@@ -104,6 +104,8 @@ def _system_to_string(
 # End copy-paste.
 
 # #############################################################################
+# check_master
+# #############################################################################
 
 
 def _report() -> str:
@@ -122,6 +124,9 @@ def _handle_error(func_name: str, error: bool, abort_on_error: bool) -> None:
 
 
 def check_master(abort_on_error: bool = True) -> None:
+    """
+    Check if we are committing directly to master, instead of a branch.
+    """
     func_name = _report()
     # Print some information.
     verbose = True
@@ -143,9 +148,16 @@ def check_master(abort_on_error: bool = True) -> None:
 
 
 # #############################################################################
+# check_author
+# #############################################################################
 
 
 def check_author(abort_on_error: bool = True) -> None:
+    """
+    Ensure that the committer use a gmail and not a corporate account.
+
+    Extremely custom but effective invariant.
+    """
     func_name = _report()
     # Print some information.
     verbose = True
@@ -173,6 +185,8 @@ def check_author(abort_on_error: bool = True) -> None:
 
 
 # #############################################################################
+# check_file_size
+# #############################################################################
 
 
 # Start copy-paste From helpers/introspection.py
@@ -192,6 +206,11 @@ def _sizeof_fmt(num: float) -> str:
 
 
 def check_file_size(abort_on_error: bool = True) -> None:
+    """
+    Ensure that (not notebook) files are not larger than a certain size.
+
+    The goal is to avoid to check in a 100MB file.
+    """
     func_name = _report()
     print(f"max file size={_MAX_FILE_SIZE_IN_KB} KB")
     # Check all files in the staging-area, i.e., everything but un-staged files.
@@ -222,3 +241,13 @@ def check_file_size(abort_on_error: bool = True) -> None:
                     error = True
     # Handle error.
     _handle_error(func_name, error, abort_on_error)
+
+
+# #############################################################################
+
+
+def check_forbidden_words(abort_on_error: bool = True) -> None:
+    """
+    Check that certain words are not used.
+    """
+    # TODO(gp): grep for EG

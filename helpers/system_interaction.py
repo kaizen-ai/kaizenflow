@@ -139,7 +139,7 @@ def _system(
     :param abort_on_error: whether we should assert in case of error or not
     :param suppress_error: set of error codes to suppress
     :param suppress_output: whether to print the output or not
-        - If "on_debug_level" then print the output if the log level is DEBUG
+        - If "ON_DEBUG_LEVEL" then print the output if the log level is DEBUG
     :param blocking: blocking system call or not
     :param wrapper: another command to prepend the execution of cmd
     :param output_file: redirect stdout and stderr to this file
