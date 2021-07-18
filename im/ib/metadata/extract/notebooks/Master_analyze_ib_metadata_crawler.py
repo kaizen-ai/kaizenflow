@@ -39,9 +39,9 @@ S3_BUCKET = hs3.get_bucket()
 file_name = (
     f"s3://{S3_BUCKET}/data/ib/metadata/symbols-2021-04-01-143112738505.csv"
 )
-aws_profile = "am"
+s3fs = hs3.get_s3fs("am")
 print("file_name=%s" % file_name)
-symbols = pdhelp.read_csv(file_name, aws_profile=aws_profile, sep="\t")
+symbols = pdhelp.read_csv(file_name, s3fs=s3fs, sep="\t")
 
 print(len(symbols))
 

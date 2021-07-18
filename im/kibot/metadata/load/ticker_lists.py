@@ -55,7 +55,8 @@ class TickerListsLoader:
         aws_profile = "am"
         # TODO(gp): Is it \t?
         sep = "/t"
-        lines = pdhelp.read_csv(s3_path, aws_profile=aws_profile, sep=sep).values.tolist()
+        s3fs = hs3.get_s3fs("am")
+        lines = pdhelp.read_csv(s3_path, s3fs=s3fs, sep=sep).values.tolist()
         res = [line[0] for line in lines]
         return res
 

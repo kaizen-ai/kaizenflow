@@ -50,7 +50,8 @@ class IbSymbolUniverse(icmsym.SymbolUniverse):
         _LOG.info("Reading symbols from %s", symbols_file)
         # Prevent to transform values from "NA" to `np.nan`.
         if hs3.is_s3_path(symbols_file):
-            kwargs = {"aws_profile": "am"}
+            s3fs = hs3.get_s3fs("am")
+            kwargs = {"s3fs": s3fs}
         else:
             kwargs = {}
         df = pdhelp.read_csv(
