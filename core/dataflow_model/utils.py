@@ -254,10 +254,10 @@ def save_experiment_result_bundle(
     hpickle.to_pickle(obj, path)
 
 
-def yield_experiment_artifacts(
-    src_dir: str, file_name: str, selected_idxs: Optional[Iterable[int]] = None
-) -> Iterable[Tuple[int, Any]]:
-    _LOG.info("# Load artifacts '%s' from '%s'", file_name, src_dir)
+def get_experiment_subdirs(
+    src_dir: str,
+    selected_idxs: Optional[Iterable[int]] = None,
+) -> Dict[int, str]:
     # Retrieve all the subdirectories in `src_dir`.
     subdirs = [d for d in glob.glob(f"{src_dir}/result_*") if os.path.isdir(d)]
     _LOG.info("Found %d experiment subdirs in '%s'", len(subdirs), src_dir)
@@ -280,9 +280,17 @@ def yield_experiment_artifacts(
         idxs_l = set(selected_idxs)
         dbg.dassert_is_subset(idxs_l, set(config_idxs))
         selected_keys = [key for key in sorted(config_idxs) if key in idxs_l]
+    experiment_subdirs = {key: config_idx_to_dir[key] for key in selected_keys}
+    return experiment_subdirs
+
+
+def yield_experiment_artifacts(
+    src_dir: str, file_name: str, selected_idxs: Optional[Iterable[int]] = None
+) -> Iterable[Tuple[int, Any]]:
+    _LOG.info("# Load artifacts '%s' from '%s'", file_name, src_dir)
+    experiment_subdirs = get_experiment_subdirs(src_dir, selected_idxs)
     # Iterate over experiment directories.
-    for key in tqdm(selected_keys, desc="Loading artifacts"):
-        subdir = config_idx_to_dir[key]
+    for key, subdir in tqdm(experiment_subdirs.items(), desc="Loading artifacts"):
         dbg.dassert_dir_exists(subdir)
         file_name_tmp = os.path.join(src_dir, subdir, file_name)
         _LOG.debug("Loading '%s'", file_name_tmp)
@@ -340,11 +348,11 @@ def load_experiment_artifacts(
     return artifacts
 
 
-def load_rolling_experiment_out_of_sample_df(
+def yield_rolling_experiment_out_of_sample_df(
     src_dir: str,
     file_name_prefix: str,
     selected_idxs: Optional[Iterable[int]] = None,
-) -> Dict[int, Any]:
+) -> Dict[int, pd.DataFrame]:
     """
     Load all the files in dirs under `src_dir` that match `file_name_prefix*`.
 
@@ -357,32 +365,9 @@ def load_rolling_experiment_out_of_sample_df(
     TODO(*): Generalize to loading fit `ResultBundle`s.
     """
     _LOG.info("# Load artifacts '%s' from '%s'", file_name_prefix, src_dir)
-    # Retrieve all the subdirectories in `src_dir`.
-    subdirs = [d for d in glob.glob(f"{src_dir}/result_*") if os.path.isdir(d)]
-    _LOG.info("Found %d experiment subdirs in '%s'", len(subdirs), src_dir)
-    # Build a mapping from "config_idx" to "experiment_dir".
-    config_idx_to_dir: Dict[int, str] = {}
-    for subdir in subdirs:
-        _LOG.debug("subdir='%s'", subdir)
-        # E.g., `result_123"
-        m = re.match(r"^result_(\d+)$", os.path.basename(subdir))
-        dbg.dassert(m)
-        cast(Match[str], m)
-        key = int(m.group(1))
-        dbg.dassert_not_in(key, config_idx_to_dir)
-        config_idx_to_dir[key] = subdir
-    # Specify the indices of files to load.
-    config_idxs = config_idx_to_dir.keys()
-    if selected_idxs is None:
-        selected_keys = sorted(config_idxs)
-    else:
-        idxs_l = set(selected_idxs)
-        dbg.dassert_is_subset(idxs_l, set(config_idxs))
-        selected_keys = [key for key in sorted(config_idxs) if key in idxs_l]
+    experiment_subdirs = get_experiment_subdirs(src_dir, selected_idxs)
     # Iterate over experiment directories.
-    results = collections.OrderedDict()
-    for key in tqdm(selected_keys, desc="Loading artifacts"):
-        subdir = config_idx_to_dir[key]
+    for key, subdir in tqdm(experiment_subdirs.items(), desc="Loading artifacts"):
         dbg.dassert_dir_exists(subdir)
         # TODO(*): Sort these explicitly. Currently we rely on an implicit
         # order.
@@ -405,5 +390,4 @@ def load_rolling_experiment_out_of_sample_df(
             df = pd.concat(dfs, axis=0)
             dbg.dassert_strictly_increasing_index(df)
             df = csigna.resample(df, rule=dfs[0].index.freq).sum(min_count=1)
-            results[key] = df
-    return results
+            yield key, df
