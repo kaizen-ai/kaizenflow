@@ -348,7 +348,7 @@ def load_experiment_artifacts(
     return artifacts
 
 
-def load_rolling_experiment_out_of_sample_df(
+def yield_rolling_experiment_out_of_sample_df(
     src_dir: str,
     file_name_prefix: str,
     selected_idxs: Optional[Iterable[int]] = None,
@@ -367,7 +367,6 @@ def load_rolling_experiment_out_of_sample_df(
     _LOG.info("# Load artifacts '%s' from '%s'", file_name_prefix, src_dir)
     experiment_subdirs = get_experiment_subdirs(src_dir, selected_idxs)
     # Iterate over experiment directories.
-    results = collections.OrderedDict()
     for key, subdir in tqdm(experiment_subdirs.items(), desc="Loading artifacts"):
         dbg.dassert_dir_exists(subdir)
         # TODO(*): Sort these explicitly. Currently we rely on an implicit
@@ -391,5 +390,4 @@ def load_rolling_experiment_out_of_sample_df(
             df = pd.concat(dfs, axis=0)
             dbg.dassert_strictly_increasing_index(df)
             df = csigna.resample(df, rule=dfs[0].index.freq).sum(min_count=1)
-            results[key] = df
-    return results
+            yield key, df
