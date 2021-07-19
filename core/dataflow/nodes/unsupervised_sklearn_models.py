@@ -103,7 +103,6 @@ class UnsupervisedSkLearnModel(
         self._x_vars = x_vars
         self._model = None
         self._col_mode = col_mode or "replace_all"
-        dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
         self._nan_mode = nan_mode or "raise"
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
