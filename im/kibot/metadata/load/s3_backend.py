@@ -49,8 +49,9 @@ class S3Backend:
             vkmcon.S3_PREFIX, "All_Futures_Contracts_1min.csv.gz"
         )
         _LOG.debug("file_name=%s", file_name)
+        s3fs = hs3.get_s3fs("am")
         df = pdhelp.read_csv(
-            file_name, aws_profile="am", index_col=0, nrows=self._max_rows,
+            file_name, s3fs=s3fs, index_col=0, nrows=self._max_rows,
             encoding = "utf-8"
         )
         df = df.iloc[:, 1:]
@@ -80,8 +81,9 @@ class S3Backend:
         )
         hs3.check_valid_s3_path(file_name)
         _LOG.debug("file_name=%s", file_name)
+        s3fs = hs3.get_s3fs("am")
         df = pdhelp.read_csv(
-            file_name, aws_profile="am", index_col=0, nrows=self._max_rows
+            file_name, s3fs=s3fs, index_col=0, nrows=self._max_rows
         )
         df = df.iloc[:, 1:]
         _LOG.debug("df=\n%s", df.head(3))
@@ -112,9 +114,10 @@ class S3Backend:
         file_name = os.path.join(vkmcon.S3_PREFIX, "Futures_tickbidask.txt.gz")
         _LOG.debug("file_name=%s", file_name)
         hs3.check_valid_s3_path(file_name)
+        s3fs = hs3.get_s3fs("am")
         df = pdhelp.read_csv(
             file_name,
-            aws_profile="am",
+            s3fs=s3fs,
             index_col=0,
             skiprows=5,
             header=None,
@@ -162,9 +165,10 @@ class S3Backend:
         )
         _LOG.debug("file_name=%s", file_name)
         hs3.check_valid_s3_path(file_name)
+        s3fs = hs3.get_s3fs("am")
         df = pdhelp.read_csv(
             file_name,
-            aws_profile="am",
+            s3fs=s3fs,
             index_col=0,
             skiprows=5,
             header=None,
@@ -189,8 +193,9 @@ class S3Backend:
     def read_kibot_exchange_mapping() -> pd.DataFrame:
         file_name = os.path.join(vkmcon.S3_PREFIX, "kibot_to_exchange.csv")
         hs3.check_valid_s3_path(file_name)
+        s3fs = hs3.get_s3fs("am")
         kibot_to_cme_mapping = pdhelp.read_csv(
-            file_name, aws_profile="am", index_col="Kibot_symbol"
+            file_name, s3fs=s3fs, index_col="Kibot_symbol"
         )
         return kibot_to_cme_mapping
 

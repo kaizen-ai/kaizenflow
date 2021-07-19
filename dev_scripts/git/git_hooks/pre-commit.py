@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 
 """
-This is a git commit-hook used to check if:
+This is a git commit-hook used to check that a commit follows certain invariants.
 
-- if we are committing to `master` directly
-- if the author / email was set properly
-- files in the staging area larger than `_MAX_FILE_SIZE_IN_KB` variable.
-
-- In case of violations the script will exit non-zero and abort the commit.
+In case of violations the script will exit non-zero and abort the commit.
+User can ignore the checks with `git commit --no-verify '...'`.
 """
 
 # TODO(gp): Check these hooks

@@ -254,24 +254,26 @@ def read_csv(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
     Read a CSV file into a `pd.DataFrame` handling the S3 profile, if needed.
     """
     _LOG.debug("file_name=%s", file_name)
+    # Handle the s3fs param, if needed.
     if hs3.is_s3_path(file_name):
-        # For S3 files we need to have an aws_profile.
-        dbg.dassert_in("aws_profile", kwargs)
-        aws_profile = kwargs.pop("aws_profile")
-        s3fs = hs3.get_s3fs(aws_profile)
+        # For S3 files we need to have an `aws_profile`.
+        dbg.dassert_in("s3fs", kwargs)
+        s3fs = kwargs.pop("s3fs")
         stream = s3fs.open(file_name)
     else:
-        dbg.dassert_not_in(
-            "aws_profile",
-            kwargs,
-            "You should not pass 'aws_profile' for files like %s that are not on S3",
-            file_name,
-        )
+        if "s3fs" in kwargs:
+            _LOG.warning("Passed `s3fs` without an S3 file: ignoring it")
+            _ = kwargs.pop("s3fs")
         stream = file_name
-    _LOG.debug("args=%s", str(args))
-    _LOG.debug("kwargs=%s", str(kwargs))
-    if file_name.endswith(".gz") or file_name.endswith(".gzip"):
+    # Handle zipped files.
+    if any(file_name.endswith(ext) for ext in (".gzip", ".gz")):
         dbg.dassert_not_in("compression", kwargs)
         kwargs["compression"] = "gzip"
+    elif file_name.endswith(".zip"):
+        dbg.dassert_not_in("compression", kwargs)
+        kwargs["compression"] = "zip"
+    # Read.
+    _LOG.debug("args=%s", str(args))
+    _LOG.debug("kwargs=%s", str(kwargs))
     df = pd.read_csv(stream, *args, **kwargs)
     return df
