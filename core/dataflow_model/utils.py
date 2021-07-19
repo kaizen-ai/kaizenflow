@@ -255,7 +255,8 @@ def save_experiment_result_bundle(
 
 
 def get_experiment_subdirs(
-    src_dir: str, selected_idxs: Optional[Iterable[int]] = None,
+    src_dir: str,
+    selected_idxs: Optional[Iterable[int]] = None,
 ) -> Dict[int, str]:
     # Retrieve all the subdirectories in `src_dir`.
     subdirs = [d for d in glob.glob(f"{src_dir}/result_*") if os.path.isdir(d)]
