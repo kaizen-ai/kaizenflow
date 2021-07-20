@@ -396,29 +396,29 @@ def compute_bar_start_timestamps(
     return srs
 
 
-def compute_nanoseconds(
+def compute_epoch(
     data: Union[pd.Series, pd.DataFrame],
-    compute_seconds: bool = False,
-    compute_minutes: bool = False,
-) -> pd.DataFrame:
+    mode: Optional[str] = None
+) -> pd.Series:
     """
-    Convert datetime index times to nanoseconds.
+    Convert datetime index times to minutes, seconds, or nanoseconds.
 
     :param data: a dataframe or series with a `DatetimeIndex`
-    :return: series of int64's with epoch in nanoseconds
+    :param mode: timing of output
+    :return: dataframe of int64's with epoch in minutes, seconds, or nanoseconds
     """
+    mode = mode or "minute"
     dbg.dassert_isinstance(data.index, pd.DatetimeIndex)
     nanoseconds = data.index.astype(np.int64)
-    dfs = []
-    dfs.append(pd.Series(index=data.index, data=nanoseconds, name="nanosecond"))
-    if compute_seconds:
-        seconds = np.int64(nanoseconds * 1e-9)
-        dfs.append(pd.Series(index=data.index, data=seconds, name="second"))
-    if compute_minutes:
-        minutes = np.int64(nanoseconds * 1e-9 / 60)
-        dfs.append(pd.Series(index=data.index, data=minutes, name="minute"))
-    df = pd.concat(dfs, axis=1)
-    return df
+    if mode == "minute":
+        epochs = np.int64(nanoseconds * 1e-9 / 60)
+    elif mode == "second":
+        epochs = np.int64(nanoseconds * 1e-9)
+    elif mode == "nanosecond":
+        epochs = nanoseconds
+    else:
+        raise ValueError(f"Unrecognized mode=`{mode}`")
+    return pd.Series(index=data.index, data=epochs, name=mode)
 
 
 def compute_ret_0(
