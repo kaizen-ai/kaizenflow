@@ -317,7 +317,7 @@ def compute_twap_vwap(
     price_col: str,
     volume_col: str,
     offset: Optional[str] = None,
-    add_bar_start_timestamps = False,
+    add_bar_start_timestamps: bool = False,
 ) -> pd.DataFrame:
     """
     Compute TWAP/VWAP from price and volume columns.
