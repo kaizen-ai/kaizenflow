@@ -2,7 +2,7 @@ import datetime
 import logging
 import os
 import random
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, cast
 
 try:
     import ib_insync
@@ -124,7 +124,9 @@ def to_ET(
 
 def to_timestamp_str(ts: pd.Timestamp) -> str:
     dbg.dassert_is_not(ts, None)
-    return ts.strftime("%Y%m%dT%H%M%S")
+    ret = ts.strftime("%Y%m%dT%H%M%S")
+    cast(str, ret)
+    return ret
 
 
 # #############################################################################
@@ -146,7 +148,7 @@ def req_historical_data(
     IB seem to align days on boundaries at 18:00 of every day.
     """
     check_ib_connected(ib)
-    num_retry = 3 or num_retry
+    num_retry = num_retry or 3
     end_ts = to_ET(end_ts)
     #
     for i in range(num_retry):
@@ -171,11 +173,10 @@ def req_historical_data(
                 #   error message:HMDS query returned no data
                 # There is no data.
                 break
-            else:
-                # Retry.
-                _LOG.info("Retry: %s / %s", i + 1, num_retry)
-                if i == num_retry:
-                    dbg.dfatal("Failed after %s retries", num_retry)
+            # Retry.
+            _LOG.info("Retry: %s / %s", i + 1, num_retry)
+            if i == num_retry:
+                dbg.dfatal("Failed after %s retries", num_retry)
     if bars:
         # Sanity check.
         dbg.dassert_lte(bars[0].date, bars[-1].date)
@@ -245,17 +246,17 @@ def duration_str_to_pd_dateoffset(duration_str: str) -> pd.DateOffset:
 
 
 def find_date_bounds_by_dateoffset(
-    datetime: pd.Timestamp, offset: pd.DateOffset
+    datetime_: pd.Timestamp, offset: pd.DateOffset
 ) -> Tuple[pd.Timestamp, pd.Timestamp]:
     """
-    Find the interval [ts, ts + `offset`) where `datetime` is in.
+    Find the interval [ts, ts + `offset`) where `datetime_` is in.
 
-    :param datetime: timestamp to found bounds for
+    :param datetime_: timestamp to found bounds for
     :param offset: the difference between lower and upper bounds
     :return: pair of lower and upper bounds
     """
     ts_iterator = pd.Timestamp(year=1970, month=1, day=1)
-    while to_ET(ts_iterator) <= to_ET(datetime):
+    while to_ET(ts_iterator) <= to_ET(datetime_):
         ts_iterator += offset
     return (ts_iterator - offset, ts_iterator)
 

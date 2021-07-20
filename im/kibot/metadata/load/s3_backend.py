@@ -51,8 +51,11 @@ class S3Backend:
         _LOG.debug("file_name=%s", file_name)
         s3fs = hs3.get_s3fs("am")
         df = pdhelp.read_csv(
-            file_name, s3fs=s3fs, index_col=0, nrows=self._max_rows,
-            encoding = "utf-8"
+            file_name,
+            s3fs=s3fs,
+            index_col=0,
+            nrows=self._max_rows,
+            encoding="utf-8",
         )
         df = df.iloc[:, 1:]
         _LOG.debug("df=\n%s", df.head(3))
@@ -127,9 +130,7 @@ class S3Backend:
         df.columns = (
             "SymbolBase Symbol StartDate Size(MB) Description Exchange".split()
         )
-        df.shape
         df.dropna(inplace=True, how="all")
-        df.shape
         # dbg.dassert_eq(df_shape[0], df_shape_after_dropna[0])
         df.index = df.index.astype(int)
         df.index.name = None

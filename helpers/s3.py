@@ -5,17 +5,16 @@ import helpers.s3 as hs3
 """
 
 import configparser
-import datetime
 import functools
 import logging
 import os
 import pprint
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional
 
 _WARNING = "\033[33mWARNING\033[0m"
 
 try:
-    import boto3
+    pass
 except ModuleNotFoundError:
     _module = "boto3"
     print(_WARNING + f": Can't find {_module} : continuing")
@@ -27,15 +26,14 @@ except ModuleNotFoundError:
     print(_WARNING + f": Can't find {_module}: continuing")
 
 
-import helpers.dbg as dbg
-import helpers.system_interaction as hsyste
+import helpers.dbg as dbg  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
 _LOG = logging.getLogger(__name__)
 
 
 def _get_aws_config(file_name: str) -> configparser.RawConfigParser:
     file_name = os.path.join(os.path.expanduser("~"), ".aws", file_name)
-    #assert 0
+    # assert 0
     dbg.dassert_file_exists(file_name)
     # Read the config.
     config = configparser.RawConfigParser()

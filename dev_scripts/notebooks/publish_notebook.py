@@ -28,7 +28,7 @@ import logging
 import os
 import sys
 import tempfile
-from typing import BinaryIO, List, Tuple
+from typing import BinaryIO, List, Tuple, cast
 
 import requests
 
@@ -211,6 +211,7 @@ def _get_s3_path(args: argparse.Namespace) -> str:
             env_var, os.environ, "The env needs to set env var '%s'", env_var
         )
         s3_path = os.environ[env_var]
+    cast(str, s3_path)
     return s3_path
 
 
@@ -223,6 +224,7 @@ def _get_aws_profile(args: argparse.Namespace) -> str:
             env_var, os.environ, "The env needs to set env var '%s'", env_var
         )
         aws_profile = os.environ[env_var]
+    cast(str, s3_path)
     return aws_profile
 
 

@@ -146,7 +146,7 @@ def csv_mapreduce(
     out_dir: str,
     key_func: Callable,
     chunk_preprocessor: Union[None, Callable],
-        # TODO(gp): -> chunk_size
+    # TODO(gp): -> chunk_size
     chunksize: int = 1000000,
 ) -> None:
     """
@@ -251,7 +251,7 @@ def convert_csv_dir_to_pq_dir(
         filenames = os.listdir(csv_dir)
     else:
         s3fs = hs3.get_s3fs("am")
-        filenames = hs3.ls(csv_dir)
+        filenames = s3fs.ls(csv_dir)
     dbg.dassert(filenames, "No files in the %s directory.", csv_dir)
     for filename in filenames:
         # Remove .csv/.csv.gz and add .pq.
@@ -354,8 +354,8 @@ def from_typed_csv(file_name: str) -> pd.DataFrame:
     # Load the types.
     dtypes_filename = file_name + ".types"
     dbg.dassert_exists(dtypes_filename)
-    dtypes_file = open(dtypes_filename)
-    dtypes_dict = ast.literal_eval(list(dtypes_file)[0])
+    with open(dtypes_filename) as dtypes_file:
+        dtypes_dict = ast.literal_eval(list(dtypes_file)[0])
     # Load the data.
     df = pd.read_csv(file_name, dtype=dtypes_dict)
     return df
