@@ -124,18 +124,6 @@ def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
 # #############################################################################
 
 
-def resample(
-    df: pd.DataFrame, agg_interval: Union[str, pd.Timedelta, pd.DateOffset]
-) -> pd.DataFrame:
-    """
-    Resample returns (using sum) using our timing convention.
-    """
-    dbg.dassert_strictly_increasing_index(df)
-    resampler = csigna.resample(df, rule=agg_interval, closed="left")
-    rets = resampler.sum()
-    return rets
-
-
 # TODO(gp): Move to `dataflow/types.py`
 KWARGS = Dict[str, Any]
 
@@ -329,6 +317,7 @@ def compute_twap_vwap(
     price_col: str,
     volume_col: str,
     offset: Optional[str] = None,
+    add_bar_start_timestamps: bool = False,
 ) -> pd.DataFrame:
     """
     Compute TWAP/VWAP from price and volume columns.
@@ -379,7 +368,32 @@ def compute_twap_vwap(
     dbg.dassert_not_in(vwap.name, df.columns)
     dbg.dassert_not_in(twap.name, df.columns)
     df_out = pd.concat([vwap, twap], axis=1)
+    if add_bar_start_timestamps:
+        bar_start_timestamps = compute_bar_start_timestamps(df_out)
+        df_out["bar_start_timestamps"] = bar_start_timestamps
     return df_out
+
+
+def compute_bar_start_timestamps(
+    data: Union[pd.Series, pd.DataFrame],
+) -> pd.Series:
+    """
+    Given data on a uniform grid indexed by end times, return start times.
+
+    :param data: a dataframe or series with a `DatetimeIndex` that has a `freq`.
+        It is assumed that the timestamps in the index are times corresponding
+        to the end of bars. For this particular function, assumptions around
+        which endpoints are open or closed are not important.
+    :return: a series with index `data.index` (of bar end timestamps) and values
+        equal to bar start timestamps
+    """
+    freq = data.index.freq
+    dbg.dassert(freq, msg="DatetimeIndex must have a frequency.")
+    size = data.index.size
+    dbg.dassert_lte(1, size, msg="DatetimeIndex has size=%i values" % size)
+    date_range = data.index.shift(-1)
+    srs = pd.Series(index=data.index, data=date_range, name="bar_start_timestamp")
+    return srs
 
 
 def compute_ret_0(
