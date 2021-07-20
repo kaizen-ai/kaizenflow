@@ -83,6 +83,9 @@ class DiskDataSource(DataSource):
         Read the data from the file based on the extension.
         """
         kwargs = self._reader_kwargs.copy()
+        # Add S3 credentials.
+        s3fs = hs3.get_s3fs("am")
+        kwargs["s3fs"] = s3fs
         # Get the extension.
         ext = os.path.splitext(self._file_path)[-1]
         # Select the reading method based on the extension.
@@ -91,10 +94,8 @@ class DiskDataSource(DataSource):
             if "index_col" not in self._reader_kwargs:
                 kwargs["index_col"] = 0
             read_data = pdhelp.read_csv
-            s3fs = hs3.get_s3fs("am")
-            kwargs["s3fs"] = s3fs
         elif ext == ".pq":
-            read_data = pd.read_parquet
+            read_data = pdhelp.read_parquet
         else:
             raise ValueError("Invalid file extension='%s'" % ext)
         # Read the data.
