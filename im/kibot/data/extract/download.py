@@ -212,9 +212,10 @@ class DatasetExtractor:
         """
         aws_file = self.aws_dir + "/"
         aws_file += "%s.csv.gz" % row["Symbol"]
+        s3fs = hs3.get_s3fs("am")
         # Check if S3 file exists.
         if skip_if_exists:
-            exists = hs3.exists(aws_file)
+            exists = s3fs.exists(aws_file)
             if exists:
                 _LOG.info("%s -> skip", aws_file)
                 return False

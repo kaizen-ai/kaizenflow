@@ -51,8 +51,11 @@ class S3Backend:
         _LOG.debug("file_name=%s", file_name)
         s3fs = hs3.get_s3fs("am")
         df = pdhelp.read_csv(
-            file_name, s3fs=s3fs, index_col=0, nrows=self._max_rows,
-            encoding = "utf-8"
+            file_name,
+            s3fs=s3fs,
+            index_col=0,
+            nrows=self._max_rows,
+            encoding="utf-8",
         )
         df = df.iloc[:, 1:]
         _LOG.debug("df=\n%s", df.head(3))
@@ -127,9 +130,7 @@ class S3Backend:
         df.columns = (
             "SymbolBase Symbol StartDate Size(MB) Description Exchange".split()
         )
-        df.shape
         df.dropna(inplace=True, how="all")
-        df.shape
         # dbg.dassert_eq(df_shape[0], df_shape_after_dropna[0])
         df.index = df.index.astype(int)
         df.index.name = None
@@ -223,9 +224,10 @@ class S3Backend:
 
         aws_csv_gz_dir = os.path.join(vkdcon.S3_PREFIX, data_type)
         # List all existing csv gz files on S3.
+        s3fs = hs3.get_s3fs("am")
         csv_gz_s3_file_paths = [
             filename
-            for filename in hs3.listdir(aws_csv_gz_dir)
+            for filename in s3fs.ls(aws_csv_gz_dir)
             if filename.endswith("csv.gz")
         ]
         # Get list of symbols to convert.

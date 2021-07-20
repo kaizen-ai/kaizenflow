@@ -79,13 +79,15 @@ class IbFilePathGenerator(icdlfi.FilePathGenerator):
         Get the latest available file with symbols on S3.
         """
         file_prefix = os.path.join(iidcon.S3_METADATA_PREFIX, "symbols-")
-        files = hs3.ls(file_prefix)
+        s3fs = hs3.get_s3fs("am")
+        files = s3fs.glob(file_prefix + "*")
+        # E.g., files=
+        #   ['alphamatic-data/data/ib/metadata/symbols-2021-04-01-143112738505.csv']
         _LOG.debug("files='%s'", files)
-        # TODO(gp): Make it more robust with globbing.
         latest_file: str = max(files)
         _LOG.debug("latest_file='%s'", latest_file)
         # Add the prefix.
-        latest_file = os.path.join(iidcon.S3_METADATA_PREFIX, latest_file)
-        # TODO(gp): No need to assume that it's on S3.
-        dbg.dassert(hs3.exists(latest_file))
+        latest_file = "s3://" + latest_file
+        _LOG.debug("latest_file=%s", latest_file)
+        dbg.dassert(s3fs.exists(latest_file))
         return latest_file
