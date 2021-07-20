@@ -229,6 +229,7 @@ class KibotEquityReader(cdataf.DataSource):
             data = data.loc[self._start_date : self._end_date]
             # Rename column for volume so that it adheres with our conventions.
             data = data.rename(columns={"vol": "volume"})
+            # Print some info about the data.
             _LOG.debug(hprint.df_to_short_str("data", data))
             # Ensure data is on a uniform frequency grid.
             data = cfinan.resample_ohlcv_bars(data, rule=self._frequency.value)
