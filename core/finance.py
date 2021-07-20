@@ -397,8 +397,7 @@ def compute_bar_start_timestamps(
 
 
 def compute_epoch(
-    data: Union[pd.Series, pd.DataFrame],
-    mode: Optional[str] = None
+    data: Union[pd.Series, pd.DataFrame], mode: Optional[str] = None
 ) -> pd.Series:
     """
     Convert datetime index times to minutes, seconds, or nanoseconds.
