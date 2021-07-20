@@ -45,7 +45,7 @@ def DataSourceNodeFactory(
     elif source_node_name == "multivariate_normal":
         return cdataf.MultivariateNormalGenerator(nid, **source_node_kwargs)
     else:
-        raise ValueError("Unsupported data source node %s", source_node_name)
+        raise ValueError(f"Unsupported data source node {source_node_name}")
 
 
 class KibotDataReader(cdataf.DataSource):

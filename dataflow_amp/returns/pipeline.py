@@ -31,7 +31,8 @@ def check_no_dummy_values(config: cconfig.Config) -> bool:
             val,
             cconfig.DUMMY,
             "DUMMY value %s detected along %s",
-            str(val), str(key)
+            str(val),
+            str(key),
         )
     return True
 
@@ -95,7 +96,9 @@ class ReturnsPipeline(dtf.DagBuilder):
                 self._get_nid("compute_ret_0"): {
                     "cols": ["twap", "vwap"],
                     "col_mode": "merge_all",
-                    "transformer_kwargs": {"mode": "pct_change",},
+                    "transformer_kwargs": {
+                        "mode": "pct_change",
+                    },
                 },
             }
         )
@@ -121,7 +124,8 @@ class ReturnsPipeline(dtf.DagBuilder):
         stage = "filter_weekends"
         nid = self._get_nid(stage)
         node = dtf.ColumnTransformer(
-            nid, transformer_func=fin.set_weekends_to_nan,
+            nid,
+            transformer_func=fin.set_weekends_to_nan,
             **config[nid].to_dict(),
         )
         tail_nid = self._append(dag, tail_nid, node)
@@ -129,7 +133,9 @@ class ReturnsPipeline(dtf.DagBuilder):
         stage = "filter_ath"
         nid = self._get_nid(stage)
         node = dtf.ColumnTransformer(
-            nid, transformer_func=fin.set_non_ath_to_nan, **config[nid].to_dict(),
+            nid,
+            transformer_func=fin.set_non_ath_to_nan,
+            **config[nid].to_dict(),
         )
         tail_nid = self._append(dag, tail_nid, node)
         # Resample.
@@ -140,7 +146,10 @@ class ReturnsPipeline(dtf.DagBuilder):
         # Compute TWAP and VWAP.
         stage = "compute_vwap"
         nid = self._get_nid(stage)
-        node = dtf.TwapVwapComputer(nid, **config[nid].to_dict(),)
+        node = dtf.TwapVwapComputer(
+            nid,
+            **config[nid].to_dict(),
+        )
         tail_nid = self._append(dag, tail_nid, node)
         # Compute returns.
         stage = "compute_ret_0"
@@ -156,7 +165,8 @@ class ReturnsPipeline(dtf.DagBuilder):
         _ = tail_nid
         return dag
 
-    def validate_config(self, config: cconfig.Config) -> None:
+    @staticmethod
+    def validate_config(config: cconfig.Config) -> None:
         """
         Sanity-check config.
 
