@@ -375,24 +375,24 @@ def compute_twap_vwap(
 
 
 def compute_bar_start_timestamps(
-    df: Union[pd.Series, pd.DataFrame],
+    data: Union[pd.Series, pd.DataFrame],
 ) -> pd.Series:
     """
     Given data on a uniform grid indexed by end times, return start times.
 
-    :param df: a dataframe or series with a `DatetimeIndex` that has a `freq`.
+    :param data: a dataframe or series with a `DatetimeIndex` that has a `freq`.
         It is assumed that the timestamps in the index are times corresponding
         to the end of bars. For this particular function, assumptions around
         which endpoints are open or closed are not important.
-    :return: a series with index `df.index` (of bar end timestamps) and values
+    :return: a series with index `data.index` (of bar end timestamps) and values
         equal to bar start timestamps
     """
-    freq = df.index.freq
+    freq = data.index.freq
     dbg.dassert(freq, msg="DatetimeIndex must have a frequency.")
-    size = df.index.size
+    size = data.index.size
     dbg.dassert_lte(1, size, msg="DatetimeIndex has size=%i values" % size)
-    date_range = df.index.shift(-1)
-    srs = pd.Series(index=df.index, data=date_range, name="bar_start_timestamp")
+    date_range = data.index.shift(-1)
+    srs = pd.Series(index=data.index, data=date_range, name="bar_start_timestamp")
     return srs
 
 
