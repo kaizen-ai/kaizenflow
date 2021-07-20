@@ -58,7 +58,8 @@ class Test_s3_1(hut.TestCase):
         # > aws s3 ls alphamatic-data/data/ib/metadata/symbols-2021-04-01-143112738505.csv
         # 2021-04-26 08:39:00   61677776 symbols-2021-04-01-143112738505.csv
         s3fs = hs3.get_s3fs("am")
-        file_path = os.path.join(hs3.get_path(), "data/ib/metadata/symbols-2021-04-01-143112738505.csv")
+        file_path = os.path.join(hs3.get_path(),
+             "data/ib/metadata/symbols-2021-04-01-143112738505.csv")
         act = s3fs.exists(file_path)
         exp = True
         self.assertEqual(act, exp)

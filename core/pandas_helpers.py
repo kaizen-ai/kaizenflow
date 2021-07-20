@@ -1,5 +1,9 @@
 """
 Package with general pandas helpers.
+
+Import as:
+
+import core.pandas_helpers as pdhelp
 """
 
 # TODO(gp): Merge into helpers/pandas_helpers.py
@@ -249,11 +253,8 @@ def df_rolling_apply(
 # #############################################################################
 
 
-def read_csv(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
-    """
-    Read a CSV file into a `pd.DataFrame` handling the S3 profile, if needed.
-    """
-    _LOG.debug("file_name=%s", file_name)
+def _get_local_or_s3_stream(file_name: str, *args: Any, **kwargs: Any):
+    _LOG.debug("file_name=%s args=%s kwargs=%s", file_name, str(args), str(kwargs))
     # Handle the s3fs param, if needed.
     if hs3.is_s3_path(file_name):
         # For S3 files we need to have an `s3fs` parameter.
@@ -265,6 +266,14 @@ def read_csv(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
             _LOG.warning("Passed `s3fs` without an S3 file: ignoring it")
             _ = kwargs.pop("s3fs")
         stream = file_name
+    return stream, args, kwargs
+
+
+def read_csv(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
+    """
+    Read a CSV file into a `pd.DataFrame` handling the S3 profile, if needed.
+    """
+    stream, args, kwargs = _get_local_or_s3_stream(file_name, *args, **kwargs)
     # Handle zipped files.
     if any(file_name.endswith(ext) for ext in (".gzip", ".gz")):
         dbg.dassert_not_in("compression", kwargs)
@@ -276,4 +285,16 @@ def read_csv(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
     _LOG.debug("args=%s", str(args))
     _LOG.debug("kwargs=%s", str(kwargs))
     df = pd.read_csv(stream, *args, **kwargs)
+    return df
+
+
+def read_parquet(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
+    """
+    Read a Parquet file into a `pd.DataFrame` handling the S3 profile, if needed.
+    """
+    stream, args, kwargs = _get_local_or_s3_stream(file_name, *args, **kwargs)
+    # Read.
+    _LOG.debug("args=%s", str(args))
+    _LOG.debug("kwargs=%s", str(kwargs))
+    df = pd.read_parquet(stream, *args, **kwargs)
     return df

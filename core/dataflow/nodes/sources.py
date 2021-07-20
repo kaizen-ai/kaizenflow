@@ -8,7 +8,9 @@ import pandas as pd
 
 import core.artificial_signal_generators as cartif
 import core.finance as cfinan
+import core.pandas_helpers as pdhelp
 import helpers.dbg as dbg
+import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
@@ -80,20 +82,24 @@ class DiskDataSource(DataSource):
         """
         Read the data from the file based on the extension.
         """
+        kwargs = self._reader_kwargs.copy()
         # Get the extension.
         ext = os.path.splitext(self._file_path)[-1]
         # Select the reading method based on the extension.
         if ext == ".csv":
             # Assume that the first column is the index, unless specified.
             if "index_col" not in self._reader_kwargs:
-                self._reader_kwargs["index_col"] = 0
-            read_data = pd.read_csv
+                kwargs["index_col"] = 0
+            read_data = pdhelp.read_csv
+            s3fs = hs3.get_s3fs("am")
+            kwargs["s3fs"] = s3fs
         elif ext == ".pq":
             read_data = pd.read_parquet
         else:
             raise ValueError("Invalid file extension='%s'" % ext)
         # Read the data.
-        self.df = read_data(self._file_path, **self._reader_kwargs)
+        _LOG.debug("filepath=%s kwargs=%s", self._file_path, str(kwargs))
+        self.df = read_data(self._file_path, **kwargs)
 
     def _process_data(self) -> None:
         # Use the specified timestamp column as index, if needed.

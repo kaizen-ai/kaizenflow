@@ -14,12 +14,6 @@ from typing import Any, Dict, Optional
 _WARNING = "\033[33mWARNING\033[0m"
 
 try:
-    pass
-except ModuleNotFoundError:
-    _module = "boto3"
-    print(_WARNING + f": Can't find {_module} : continuing")
-
-try:
     import s3fs
 except ModuleNotFoundError:
     _module = "s3fs"
@@ -31,9 +25,33 @@ import helpers.dbg as dbg  # noqa: E402 module level import not at top of file  
 _LOG = logging.getLogger(__name__)
 
 
+def get_bucket() -> str:
+    """
+    Return the S3 bucket pointed by AM_S3_BUCKET (e.g., `alphamatic-data`).
+
+    Make sure your ~/.aws/credentials uses the right key to access this
+    bucket as default.
+    """
+    env_var = "AM_S3_BUCKET"
+    dbg.dassert_in(env_var, os.environ)
+    s3_bucket = os.environ[env_var]
+    return s3_bucket
+
+
+# TODO(gp): -> get_bucket_path() ?
+def get_path() -> str:
+    """
+    Return the path to the default S3 bucket (e.g., `s3://alphamatic-data`).
+    """
+    path = "s3://" + get_bucket()
+    return path
+
+
 def _get_aws_config(file_name: str) -> configparser.RawConfigParser:
+    """
+    Return a parser to the config in `~/.aws/{file_name]}`.
+    """
     file_name = os.path.join(os.path.expanduser("~"), ".aws", file_name)
-    # assert 0
     dbg.dassert_file_exists(file_name)
     # Read the config.
     config = configparser.RawConfigParser()
@@ -115,33 +133,8 @@ def get_aws_credentials(
     return result
 
 
-def get_bucket() -> str:
-    """
-    Return the default s3 bucket.
-
-    Make sure your ~/.aws/credentials uses the right key to access this
-    bucket as default.
-    """
-    env_var = "AM_S3_BUCKET"
-    dbg.dassert_in(env_var, os.environ)
-    s3_bucket = os.environ[env_var]
-    return s3_bucket
-
-
-# TODO(gp): -> get_bucket_path() ?
-def get_path() -> str:
-    """
-    Return the path corresponding to the default s3 bucket.
-    """
-    path = "s3://" + get_bucket()
-    return path
-
-
 def is_s3_path(path: str) -> bool:
     return path.startswith("s3://")
-
-
-# #############################################################################
 
 
 def get_s3fs(*args: Any, **kwargs: Any) -> s3fs.core.S3FileSystem:
@@ -158,10 +151,23 @@ def get_s3fs(*args: Any, **kwargs: Any) -> s3fs.core.S3FileSystem:
     return s3
 
 
-# TODO(gp): Replace with `is_s3_path()`.
+# TODO(gp): -> is_s3_path()
 def is_valid_s3_path(s3_path: str) -> bool:
+    dbg.dassert_isinstance(s3_path, str)
     return s3_path.startswith("s3://")
 
 
+# TODO(gp): -> dassert_is_s3_path
 def check_valid_s3_path(s3_path: str) -> None:
+    """
+    Assert if a file is not a S3 path.
+    """
     dbg.dassert(is_valid_s3_path(s3_path), "Invalid S3 file='%s'", s3_path)
+
+
+def dassert_s3_exists(s3_path: str, s3fs: s3fs.core.S3FileSystem) -> None:
+    """
+    Assert if an S3 file or dir doesn't exist.
+    """
+    check_valid_s3_path(s3_path)
+    dbg.dassert(s3fs.exists(s3_path), "S3 file '%s' doesn't exist", s3_path)
