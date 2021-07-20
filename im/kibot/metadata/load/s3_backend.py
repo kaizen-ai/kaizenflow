@@ -223,9 +223,10 @@ class S3Backend:
 
         aws_csv_gz_dir = os.path.join(vkdcon.S3_PREFIX, data_type)
         # List all existing csv gz files on S3.
+        s3fs = hs3.get_s3fs("am")
         csv_gz_s3_file_paths = [
             filename
-            for filename in hs3.listdir(aws_csv_gz_dir)
+            for filename in s3fs.ls(aws_csv_gz_dir)
             if filename.endswith("csv.gz")
         ]
         # Get list of symbols to convert.

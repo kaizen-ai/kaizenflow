@@ -256,7 +256,7 @@ def read_csv(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
     _LOG.debug("file_name=%s", file_name)
     # Handle the s3fs param, if needed.
     if hs3.is_s3_path(file_name):
-        # For S3 files we need to have an `aws_profile`.
+        # For S3 files we need to have an `s3fs` parameter.
         dbg.dassert_in("s3fs", kwargs)
         s3fs = kwargs.pop("s3fs")
         stream = s3fs.open(file_name)

@@ -250,7 +250,8 @@ def convert_csv_dir_to_pq_dir(
         # TODO(Paul): check .endswith(".csv") or do glob(csv_dir + "/*.csv")
         filenames = os.listdir(csv_dir)
     else:
-        filenames = hs3.listdir(csv_dir)
+        s3fs = hs3.get_s3fs("am")
+        filenames = hs3.ls(csv_dir)
     dbg.dassert(filenames, "No files in the %s directory.", csv_dir)
     for filename in filenames:
         # Remove .csv/.csv.gz and add .pq.

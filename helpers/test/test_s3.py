@@ -11,9 +11,6 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skipif(
-    hsinte.is_inside_ci(), reason="In CI there is no AWS credentials file"
-)
 class Test_s3_get_credentials1(hut.TestCase):
     def test1(self) -> None:
         aws_profile = "am"
@@ -22,16 +19,6 @@ class Test_s3_get_credentials1(hut.TestCase):
 
 
 class Test_s3_1(hut.TestCase):
-    def test_get_path1(self) -> None:
-        s3_bucket = hs3.get_bucket()
-        file_path = (
-            f"s3://{s3_bucket}/data/kibot/All_Futures_Continuous_Contracts_daily"
-        )
-        bucket_name, file_path = hs3.parse_path(file_path)
-        self.assertEqual(bucket_name, s3_bucket)
-        self.assertEqual(
-            file_path, "data/kibot/All_Futures_Continuous_Contracts_daily"
-        )
 
     def test_ls1(self) -> None:
         file_path = os.path.join(hs3.get_path(), "README.md")
@@ -39,11 +26,35 @@ class Test_s3_1(hut.TestCase):
         # > aws s3 ls s3://*****
         #                   PRE data/
         # 2021-04-06 1:17:44 48 README.md
-        file_names = hs3.ls(file_path)
+        s3fs = hs3.get_s3fs("am")
+        file_names = s3fs.ls(file_path)
+        _LOG.debug("file_names=%s", file_names)
         self.assertGreater(len(file_names), 0)
 
-    @pytest.mark.slow
-    def test_listdir1(self) -> None:
-        file_path = os.path.join(hs3.get_path(), "data/ib")
-        file_names = hs3.listdir(file_path, mode="non-recursive")
+    def test_glob1(self) -> None:
+        # > aws s3 ls s3://alphamatic-data/data/ib/metadata/
+        # 2021-04-26 08:39:00      18791 exchanges-2021-04-01-134738089177.csv
+        # 2021-04-26 08:39:00      18815 exchanges-2021-04-01-143112738505.csv
+        # 2021-04-26 08:39:00   61677776 symbols-2021-04-01-134738089177.csv
+        # 2021-04-26 08:39:00   61677776 symbols-2021-04-01-143112738505.csv
+        s3fs = hs3.get_s3fs("am")
+        file_path = os.path.join(hs3.get_path(), "data/ib/metadata")
+        glob_pattern = file_path + "/exchanges-*"
+        _LOG.debug("glob_pattern=%s", glob_pattern)
+        file_names = s3fs.glob(glob_pattern)
+        _LOG.debug("file_names=%s", file_names)
         self.assertGreater(len(file_names), 0)
+
+    def test_exists1(self) -> None:
+        s3fs = hs3.get_s3fs("am")
+        file_path = os.path.join(hs3.get_path(), "README.md")
+        act = s3fs.exists(file_path)
+        exp = True
+        self.assertEqual(act, exp)
+
+    def test_exists2(self) -> None:
+        s3fs = hs3.get_s3fs("am")
+        file_path = os.path.join(hs3.get_path(), "README_does_not_exist.md")
+        act = s3fs.exists(file_path)
+        exp = False
+        self.assertEqual(act, exp)

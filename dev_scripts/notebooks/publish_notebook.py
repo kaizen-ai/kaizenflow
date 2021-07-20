@@ -150,7 +150,7 @@ def _post_to_s3(local_src_path: str, s3_path: str, aws_profile: str) -> None:
     remote_path = os.path.join(s3_path, basename)
     # TODO(gp): Make sure the S3 dir exists.
     _LOG.info("Copying '%s' to '%s'", local_src_path, remote_path)
-    s3fs = hs3.get_s3fs(aws_profile, force_use_aws_profile=True)
+    s3fs = hs3.get_s3fs(aws_profile)
     s3fs.put(local_src_path, remote_path)
     # TODO(gp): Allow to access the file directly at an URL like:
     #  https://alphamatic-data.s3.amazonaws.com/notebooks/Master_model_analyzer.20210715_014438.html

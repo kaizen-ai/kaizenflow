@@ -453,8 +453,9 @@ def get_tasks(
 
 # TODO(*): Move to helpers.
 def check_file_exists(file_name: str) -> bool:
+    s3fs = hs3.get_s3fs("am")
     is_exist: bool = (
-        hs3.exists(file_name)
+        s3fs.exists(file_name)
         if file_name.startswith("s3://")
         else os.path.exists(file_name)
     )
