@@ -35,6 +35,7 @@ _LOG = logging.getLogger(__name__)
 
 def _get_aws_config(file_name: str) -> configparser.RawConfigParser:
     file_name = os.path.join(os.path.expanduser("~"), ".aws", file_name)
+    #assert 0
     dbg.dassert_file_exists(file_name)
     # Read the config.
     config = configparser.RawConfigParser()
@@ -54,6 +55,7 @@ def get_aws_credentials(
     :return: a dictionary with `access_key_id`, `aws_secret_access_key`,
         `aws_region` and optionally `aws_session_token`
     """
+    assert 0
     result: Dict[str, Optional[str]] = {}
     key_to_env_var: Dict[str, str] = {
         "aws_access_key_id": "AWS_ACCESS_KEY_ID",
