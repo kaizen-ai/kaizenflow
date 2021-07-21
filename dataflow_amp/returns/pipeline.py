@@ -110,7 +110,7 @@ class ReturnsPipeline(dtf.DagBuilder):
         # Read data.
         stage = "load_prices"
         nid = self._get_nid(stage)
-        node = dsn.DataSourceNodeFactory(nid, **config[nid].to_dict())
+        node = dtf.DataLoader(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, tail_nid, node)
         # Set weekends to NaN.
         stage = "filter_weekends"

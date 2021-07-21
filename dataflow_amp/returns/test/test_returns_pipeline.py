@@ -7,6 +7,7 @@ import pytest
 
 import core.config as cconfig
 import core.dataflow as dtf
+import core.dataflow_source_nodes as dsn
 import dataflow_amp.returns.pipeline as retp
 import helpers.printing as prnt
 import helpers.unit_test as hut
@@ -36,8 +37,8 @@ class TestReturnsBuilder(hut.TestCase):
 
         ticker = "AAPL"
         config = {
-            "source_node_name": "disk",
-            "source_node_kwargs": {
+            "func": dtf.load_data_from_disk,
+            "func_kwargs": {
                 "file_path": os.path.join(
                     S3_PREFIX, "pq/sp_500_1min", ticker + ".pq"
                 ),
@@ -50,8 +51,8 @@ class TestReturnsBuilder(hut.TestCase):
     @pytest.mark.slow
     def test_futures1(self) -> None:
         source_node_kwargs = {
-            "source_node_name": "kibot",
-            "source_node_kwargs": {
+            "func": dsn.load_kibot,
+            "func_kwargs": {
                 "frequency": "T",
                 "contract_type": "continuous",
                 "symbol": "ES",
