@@ -216,8 +216,9 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         )
         _, arch_name = os.path.split(arch_file)
         # Find files with partial data locations.
+        s3fs = hs3.get_s3fs("am")
         part_file_names = (
-            hs3.ls("%s/" % part_files_dir)
+            s3fs.ls(part_files_dir + "/")
             if part_files_dir.startswith("s3://")
             else os.listdir(part_files_dir)
         )
