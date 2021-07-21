@@ -1,20 +1,19 @@
 import datetime
 import logging
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 
 import core.artificial_signal_generators as cartif
+import core.dataflow.nodes.base as cdnb
 import core.finance as cfinan
 import core.pandas_helpers as pdhelp
 import helpers.dbg as dbg
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
-
-from core.dataflow.nodes.base import DataSource
 
 # TODO(*): Create a dataflow types file.
 _COL_TYPE = Union[int, str]
@@ -26,9 +25,10 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 # #############################################################################
 
 
-class ReadDataFromDf(DataSource):
+class ReadDataFromDf(cdnb.DataSource):
     """
-    `DataSource` node that accepts data as a DataFrame passed through the constructor.
+    `DataSource` node that accepts data as a DataFrame passed through the
+    constructor.
     """
 
     def __init__(self, nid: str, df: pd.DataFrame) -> None:
@@ -37,7 +37,77 @@ class ReadDataFromDf(DataSource):
         self.df = df
 
 
-class DiskDataSource(DataSource):
+class DataLoader(cdnb.DataSource):
+    def __init__(
+        self,
+        nid: str,
+        func: Callable,
+        func_kwargs: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(nid)
+        self._func = func
+        self._func_kwargs = func_kwargs or {}
+
+    def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
+        self._lazy_load()
+        return super().fit()
+
+    def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
+        self._lazy_load()
+        return super().predict()
+
+    def _lazy_load(self) -> None:
+        if self.df is not None:
+            return
+        df_out = self._func(**self._func_kwargs)
+        dbg.dassert_isinstance(df_out, pd.DataFrame)
+        self.df = df_out
+
+
+def load_data_from_disk(
+    file_path: str,
+    timestamp_col: Optional[str] = None,
+    start_date: Optional[_PANDAS_DATE_TYPE] = None,
+    end_date: Optional[_PANDAS_DATE_TYPE] = None,
+    reader_kwargs: Optional[Dict[str, Any]] = None,
+) -> pd.DataFrame:
+    reader_kwargs = reader_kwargs or {}
+    kwargs = reader_kwargs.copy()
+    # Add S3 credentials.
+    s3fs = hs3.get_s3fs("am")
+    kwargs["s3fs"] = s3fs
+    # Get the extension.
+    ext = os.path.splitext(file_path)[-1]
+    # Select the reading method based on the extension.
+    if ext == ".csv":
+        # Assume that the first column is the index, unless specified.
+        if "index_col" not in reader_kwargs:
+            kwargs["index_col"] = 0
+        read_data = pdhelp.read_csv
+    elif ext == ".pq":
+        read_data = pdhelp.read_parquet
+    else:
+        raise ValueError("Invalid file extension='%s'" % ext)
+    # Read the data.
+    _LOG.debug("filepath=%s kwargs=%s", file_path, str(kwargs))
+    df = read_data(file_path, **kwargs)
+    # Process the data.
+    # Use the specified timestamp column as index, if needed.
+    if timestamp_col is not None:
+        df.set_index(timestamp_col, inplace=True)
+    # Convert index in timestamps.
+    df.index = pd.to_datetime(df.index)
+    dbg.dassert_strictly_increasing_index(df)
+    # Filter by start / end date.
+    # TODO(gp): Not sure that a view is enough to force discarding the unused
+    #  rows in the DataFrame. Maybe do a copy, delete the old data, and call the
+    #  garbage collector.
+    df = df.loc[start_date:end_date]
+    dbg.dassert(not df.empty, "Dataframe is empty")
+    return df
+
+
+class DiskDataSource(cdnb.DataSource):
     def __init__(
         self,
         nid: str,
@@ -68,7 +138,8 @@ class DiskDataSource(DataSource):
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
         """
-        Load the data on the first invocation and then delegate to the base class.
+        Load the data on the first invocation and then delegate to the base
+        class.
 
         We don't need to implement `predict()` since the data is read only on the
         first call to `fit()`, so the behavior of the base class is sufficient.
@@ -78,55 +149,23 @@ class DiskDataSource(DataSource):
         self._lazy_load()
         return super().fit()
 
-    def _read_data(self) -> None:
-        """
-        Read the data from the file based on the extension.
-        """
-        kwargs = self._reader_kwargs.copy()
-        # Add S3 credentials.
-        s3fs = hs3.get_s3fs("am")
-        kwargs["s3fs"] = s3fs
-        # Get the extension.
-        ext = os.path.splitext(self._file_path)[-1]
-        # Select the reading method based on the extension.
-        if ext == ".csv":
-            # Assume that the first column is the index, unless specified.
-            if "index_col" not in self._reader_kwargs:
-                kwargs["index_col"] = 0
-            read_data = pdhelp.read_csv
-        elif ext == ".pq":
-            read_data = pdhelp.read_parquet
-        else:
-            raise ValueError("Invalid file extension='%s'" % ext)
-        # Read the data.
-        _LOG.debug("filepath=%s kwargs=%s", self._file_path, str(kwargs))
-        self.df = read_data(self._file_path, **kwargs)
-
-    def _process_data(self) -> None:
-        # Use the specified timestamp column as index, if needed.
-        if self._timestamp_col is not None:
-            self.df.set_index(self._timestamp_col, inplace=True)
-        # Convert index in timestamps.
-        self.df.index = pd.to_datetime(self.df.index)
-        dbg.dassert_strictly_increasing_index(self.df)
-        # Filter by start / end date.
-        # TODO(gp): Not sure that a view is enough to force discarding the unused
-        #  rows in the DataFrame. Maybe do a copy, delete the old data, and call the
-        #  garbage collector.
-        self.df = self.df.loc[self._start_date : self._end_date]
-        dbg.dassert(not self.df.empty, "Dataframe is empty")
-
     def _lazy_load(self) -> None:
         """
         Load the data if it was not already done.
         """
         if self.df is not None:
             return
-        self._read_data()
-        self._process_data()
+        df = load_data_from_disk(
+            self._file_path,
+            self._timestamp_col,
+            self._start_date,
+            self._end_date,
+            self._reader_kwargs,
+        )
+        self.df = df
 
 
-class ArmaGenerator(DataSource):
+class ArmaGenerator(cdnb.DataSource):
     """
     A node for generating price data from ARMA process returns.
     """
@@ -192,7 +231,7 @@ class ArmaGenerator(DataSource):
         self.df["vol"] = 100
 
 
-class MultivariateNormalGenerator(DataSource):
+class MultivariateNormalGenerator(cdnb.DataSource):
     """
     A node for generating price data from multivariate normal returns.
     """

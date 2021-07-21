@@ -48,6 +48,47 @@ def DataSourceNodeFactory(
         raise ValueError(f"Unsupported data source node {source_node_name}")
 
 
+def process_timestamp(
+    timestamp: Optional[_PANDAS_DATE_TYPE],
+) -> Optional[pd.Timestamp]:
+    if timestamp is pd.NaT:
+        timestamp = None
+    if timestamp is not None:
+        timestamp = pd.Timestamp(timestamp)
+        dbg.dassert_is(timestamp.tz, None)
+    return timestamp
+
+
+def load_kibot(
+    symbol: str,
+    frequency: Union[str, vkibot.Frequency],
+    contract_type: Union[str, vkibot.ContractType],
+    start_date: Optional[_PANDAS_DATE_TYPE] = None,
+    end_date: Optional[_PANDAS_DATE_TYPE] = None,
+    nrows: Optional[int] = None,
+) -> pd.DataFrame:
+    frequency = (
+        vkibot.Frequency(frequency) if isinstance(frequency, str) else frequency
+    )
+    contract_type = (
+        vkibot.ContractType(contract_type)
+        if isinstance(contract_type, str)
+        else contract_type
+    )
+    start_date = process_timestamp(start_date)
+    end_date = process_timestamp(end_date)
+    df_out = vkibot.KibotS3DataLoader().read_data(
+        exchange="CME",
+        asset_class=vkibot.AssetClass.Futures,
+        frequency=frequency,
+        contract_type=contract_type,
+        symbol=symbol,
+        nrows=nrows,
+    )
+    df_out = df_out.loc[start_date:end_date]
+    return df_out
+
+
 class KibotDataReader(cdataf.DataSource):
     def __init__(
         self,
@@ -70,18 +111,10 @@ class KibotDataReader(cdataf.DataSource):
         """
         super().__init__(nid)
         self._symbol = symbol
-        self._frequency = (
-            vkibot.Frequency(frequency)
-            if isinstance(frequency, str)
-            else frequency
-        )
-        self._contract_type = (
-            vkibot.ContractType(contract_type)
-            if isinstance(contract_type, str)
-            else contract_type
-        )
-        self._start_date = KibotDataReader._process_timestamp(start_date)
-        self._end_date = KibotDataReader._process_timestamp(end_date)
+        self._frequency = frequency
+        self._contract_type = contract_type
+        self._start_date = start_date
+        self._end_date = end_date
         self._nrows = nrows
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
@@ -98,26 +131,15 @@ class KibotDataReader(cdataf.DataSource):
     def _lazy_load(self) -> None:
         if self.df is not None:
             return
-        self.df = vkibot.KibotS3DataLoader().read_data(
-            exchange="CME",
-            asset_class=vkibot.AssetClass.Futures,
+        df = load_kibot(
+            symbol=self._symbol,
             frequency=self._frequency,
             contract_type=self._contract_type,
-            symbol=self._symbol,
+            start_date=self._start_date,
+            end_date=self._end_date,
             nrows=self._nrows,
         )
-        self.df = self.df.loc[self._start_date : self._end_date]
-
-    @staticmethod
-    def _process_timestamp(
-        timestamp: Optional[_PANDAS_DATE_TYPE],
-    ) -> Optional[pd.Timestamp]:
-        if timestamp is pd.NaT:
-            timestamp = None
-        if timestamp is not None:
-            timestamp = pd.Timestamp(timestamp)
-            dbg.dassert_is(timestamp.tz, None)
-        return timestamp
+        self.df = df
 
 
 class KibotColumnReader(cdataf.DataSource):
