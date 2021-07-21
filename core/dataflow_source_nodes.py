@@ -68,9 +68,7 @@ def load_kibot(
     nrows: Optional[int] = None,
 ) -> pd.DataFrame:
     frequency = (
-        vkibot.Frequency(frequency)
-        if isinstance(frequency, str)
-        else frequency
+        vkibot.Frequency(frequency) if isinstance(frequency, str) else frequency
     )
     contract_type = (
         vkibot.ContractType(contract_type)
@@ -87,7 +85,7 @@ def load_kibot(
         symbol=symbol,
         nrows=nrows,
     )
-    df_out = df_out.loc[start_date: end_date]
+    df_out = df_out.loc[start_date:end_date]
     return df_out
 
 

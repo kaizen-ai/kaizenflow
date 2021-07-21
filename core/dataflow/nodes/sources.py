@@ -27,7 +27,8 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 class ReadDataFromDf(cdnb.DataSource):
     """
-    `DataSource` node that accepts data as a DataFrame passed through the constructor.
+    `DataSource` node that accepts data as a DataFrame passed through the
+    constructor.
     """
 
     def __init__(self, nid: str, df: pd.DataFrame) -> None:
@@ -37,12 +38,11 @@ class ReadDataFromDf(cdnb.DataSource):
 
 
 class DataLoader(cdnb.DataSource):
-
     def __init__(
-            self,
-            nid: str,
-            func: Callable,
-            func_kwargs: Optional[Dict[str, Any]] = None,
+        self,
+        nid: str,
+        func: Callable,
+        func_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         super().__init__(nid)
         self._func = func
@@ -56,7 +56,7 @@ class DataLoader(cdnb.DataSource):
         self._lazy_load()
         return super().predict()
 
-    def _lazy_load(self):
+    def _lazy_load(self) -> None:
         if self.df is not None:
             return
         df_out = self._func(**self._func_kwargs)
@@ -102,15 +102,15 @@ def load_data_from_disk(
     # TODO(gp): Not sure that a view is enough to force discarding the unused
     #  rows in the DataFrame. Maybe do a copy, delete the old data, and call the
     #  garbage collector.
-    df = df.loc[start_date: end_date]
+    df = df.loc[start_date:end_date]
     dbg.dassert(not df.empty, "Dataframe is empty")
     return df
 
 
 class DiskDataSource(cdnb.DataSource):
     def __init__(
-            self,
-            nid: str,
+        self,
+        nid: str,
         file_path: str,
         timestamp_col: Optional[str] = None,
         start_date: Optional[_PANDAS_DATE_TYPE] = None,
@@ -138,7 +138,8 @@ class DiskDataSource(cdnb.DataSource):
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
         """
-        Load the data on the first invocation and then delegate to the base class.
+        Load the data on the first invocation and then delegate to the base
+        class.
 
         We don't need to implement `predict()` since the data is read only on the
         first call to `fit()`, so the behavior of the base class is sufficient.
