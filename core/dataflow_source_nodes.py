@@ -111,18 +111,10 @@ class KibotDataReader(cdataf.DataSource):
         """
         super().__init__(nid)
         self._symbol = symbol
-        self._frequency = (
-            vkibot.Frequency(frequency)
-            if isinstance(frequency, str)
-            else frequency
-        )
-        self._contract_type = (
-            vkibot.ContractType(contract_type)
-            if isinstance(contract_type, str)
-            else contract_type
-        )
-        self._start_date = KibotDataReader._process_timestamp(start_date)
-        self._end_date = KibotDataReader._process_timestamp(end_date)
+        self._frequency = frequency
+        self._contract_type = contract_type
+        self._start_date = start_date
+        self._end_date = end_date
         self._nrows = nrows
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
