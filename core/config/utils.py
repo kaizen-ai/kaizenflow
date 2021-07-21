@@ -13,8 +13,26 @@ import pandas as pd
 import core.config.config_ as cconfig
 import helpers.dbg as dbg
 import helpers.dict as dct
+import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
+
+
+def check_no_dummy_values(config: cconfig.Config) -> bool:
+    """
+    Assert if there are no `cconfig.DUMMY` values.
+    """
+    for key, val in dct.get_nested_dict_iterator(config.to_dict()):
+        # (k, v) looks like `(('load_prices', 'source_node_name'), 'kibot_equities')`.
+        _LOG.debug(hprint.to_str("key val"))
+        dbg.dassert_ne(
+            val,
+            cconfig.DUMMY,
+            "DUMMY value %s detected along %s",
+            str(val),
+            str(key),
+        )
+    return True
 
 
 def validate_configs(configs: List[cconfig.Config]) -> None:

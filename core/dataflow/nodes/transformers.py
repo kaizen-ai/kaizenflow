@@ -560,6 +560,7 @@ class Resample(cdnb.Transformer):
         return df, info
 
 
+# TODO(Paul): Deprecate.
 class TimeBarResampler(cdnb.Transformer):
     def __init__(
         self,
@@ -617,6 +618,7 @@ class TimeBarResampler(cdnb.Transformer):
         return df, info
 
 
+# TODO(Paul): Deprecate.
 class TwapVwapComputer(cdnb.Transformer):
     def __init__(
         self,
@@ -668,7 +670,8 @@ class MultiindexTwapVwapComputer(cdnb.Transformer):
         """
         Calculate TWAP and VWAP prices from price and volume columns.
 
-        This function wraps `compute_twap_vwap()`. Params as in that function.
+        This function wraps `compute_twap_vwap()`. Params as in that
+        function.
         """
         super().__init__(nid)
         self._rule = rule
