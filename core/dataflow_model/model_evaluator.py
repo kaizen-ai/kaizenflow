@@ -154,6 +154,12 @@ class ModelEvaluator:
         )
         stats_dict = {}
         for key in tqdm(pnl_dict.keys(), desc="Calculating stats"):
+            if pnl_dict[key].empty:
+                _LOG.warning("PnL series for key=%i is empty.", key)
+                continue
+            if pnl_dict[key].dropna().empty:
+                _LOG.warning("PnL series for key=%i is all-NaN.", key)
+                continue
             stats_dict[key] = self._stats_computer.compute_finance_stats(
                 pnl_dict[key],
                 returns_col="returns",
@@ -520,7 +526,7 @@ class TransactionCostModeler:
 # TODO(gp): Maybe make it a classmethod builder for ModelEvaluator called
 #  `build_from_result_bundle_dicts`.
 def build_model_evaluator_from_result_bundles(
-    result_bundle_pairs: Iterable[Tuple[int, cdataf.ResultBunel]],
+    result_bundle_pairs: Iterable[Tuple[int, cdataf.ResultBundle]],
     returns_col: str,
     predictions_col: str,
     oos_start: Optional[Any] = None,
