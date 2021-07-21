@@ -462,6 +462,7 @@ def set_diff_to_str(
     :param sep_char: print the objects using `sep_char` as separating char
     :param add_space: add empty lines to make the output more readable
     """
+
     def _to_string(obj: Iterable) -> str:
         obj = sorted(list(obj))
         if sep_char == "\n":
@@ -717,7 +718,7 @@ def df_to_short_str(tag: str, df: "pd.DataFrame") -> str:
     out.append(dataframe_to_str(df.head(3)))
     out.append("...")
     out.append(dataframe_to_str(df.tail(3)))
-    out.append("df.index in [%s, %s]" % (min(df.index), max(df.index)))
+    out.append("df.index in [%s, %s]" % (df.index.min(), df.index.max()))
     out.append("df.shape=%s" % str(df.shape))
     # txt += "\n# dtypes=\n%s" % str(df.dtypes)
     txt = "\n".join(out)

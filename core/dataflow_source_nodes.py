@@ -12,6 +12,7 @@ import pandas as pd
 import core.dataflow as cdataf
 import core.finance as cfinan
 import helpers.dbg as dbg
+import helpers.printing as hprint
 import im.kibot as vkibot
 
 _LOG = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ def DataSourceNodeFactory(
     elif source_node_name == "multivariate_normal":
         return cdataf.MultivariateNormalGenerator(nid, **source_node_kwargs)
     else:
-        raise ValueError("Unsupported data source node %s", source_node_name)
+        raise ValueError(f"Unsupported data source node {source_node_name}")
 
 
 class KibotDataReader(cdataf.DataSource):
@@ -228,6 +229,8 @@ class KibotEquityReader(cdataf.DataSource):
             data = data.loc[self._start_date : self._end_date]
             # Rename column for volume so that it adheres with our conventions.
             data = data.rename(columns={"vol": "volume"})
+            # Print some info about the data.
+            _LOG.debug(hprint.df_to_short_str("data", data))
             # Ensure data is on a uniform frequency grid.
             data = cfinan.resample_ohlcv_bars(data, rule=self._frequency.value)
             dfs[symbol] = data
