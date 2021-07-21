@@ -159,6 +159,7 @@ class ModelEvaluator:
                 continue
             if pnl_dict[key].dropna().empty:
                 _LOG.warning("PnL series for key=%i is all-NaN.", key)
+                continue
             stats_dict[key] = self._stats_computer.compute_finance_stats(
                 pnl_dict[key],
                 returns_col="returns",
