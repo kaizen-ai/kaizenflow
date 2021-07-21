@@ -315,6 +315,8 @@ def compute_twap_vwap(
     price_col: str,
     volume_col: str,
     offset: Optional[str] = None,
+    add_last_price: bool = False,
+    add_bar_volume: bool = False,
     add_bar_start_timestamps: bool = False,
 ) -> pd.DataFrame:
     """
@@ -339,8 +341,20 @@ def compute_twap_vwap(
     non_nan_idx = df[[price_col, volume_col]].dropna().index
     nan_idx = df.index.difference(non_nan_idx)
     price = df[price_col]
+    if add_last_price:
+        # Calculate last price (regardless of whether we have volume data).
+        last_price = csigna.resample(price, rule=rule, offset=offset).last(
+            min_count=1
+        )
+        last_price.name = "last"
     price.loc[nan_idx] = np.nan
     volume = df[volume_col]
+    if add_bar_volume:
+        # Calculate bar volume (regardless of whether we have price data).
+        bar_volume = csignal.resample(volume, rule=rule, offset=offset).sum(
+            min_count=1
+        )
+        bar_volume.name = "volume"
     volume.loc[nan_idx] = np.nan
     # Weight price according to volume.
     volume_weighted_price = price.multiply(volume)
@@ -365,10 +379,15 @@ def compute_twap_vwap(
     # Make sure columns are not overwritten by the new ones.
     dbg.dassert_not_in(vwap.name, df.columns)
     dbg.dassert_not_in(twap.name, df.columns)
-    df_out = pd.concat([vwap, twap], axis=1)
+    dfs = [vwap, twap]
+    if add_last_price:
+        dfs.append(last_price)
+    if add_bar_volume:
+        dfs.append(bar_volume)
     if add_bar_start_timestamps:
         bar_start_timestamps = compute_bar_start_timestamps(df_out)
-        df_out["bar_start_timestamps"] = bar_start_timestamps
+        dfs.append(bar_start_timestamps)
+    df_out = pd.concat(dfs, axis=1)
     return df_out
 
 
