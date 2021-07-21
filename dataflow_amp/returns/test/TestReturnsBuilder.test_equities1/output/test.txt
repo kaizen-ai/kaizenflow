@@ -15,9 +15,10 @@ filter_ath:
     start_time: 09:30:00
     end_time: 16:00:00
 resample_prices_to_1min:
-  rule: 1T
-  price_cols: ['close']
-  volume_cols: ['vol']
+  func_kwargs:
+    rule: 1T
+    price_cols: ['close']
+    volume_cols: ['vol']
 compute_vwap:
   rule: 5T
   price_col: close

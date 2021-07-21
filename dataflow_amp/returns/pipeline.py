@@ -20,21 +20,6 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Move up to core somewhere.
-def check_no_dummy_values(config: cconfig.Config) -> bool:
-    """
-    Assert if there are no `cconfig.DUMMY` values.
-    """
-    for key, val in dct.get_nested_dict_iterator(config.to_dict()):
-        # (k, v) looks like `(('load_prices', 'source_node_name'), 'kibot_equities')`.
-        _LOG.debug(hprint.to_str("key val"))
-        dbg.dassert_ne(
-            val,
-            cconfig.DUMMY,
-            "DUMMY value %s detected along %s",
-            str(val),
-            str(key),
-        )
-    return True
 
 
 class ReturnsPipeline(dtf.DagBuilder):
@@ -82,9 +67,11 @@ class ReturnsPipeline(dtf.DagBuilder):
                 },
                 # Resample prices to a 1 min grid.
                 self._get_nid("resample_prices_to_1min"): {
-                    "rule": "1T",
-                    "price_cols": ["close"],
-                    "volume_cols": ["vol"],
+                    "func_kwargs": {
+                        "rule": "1T",
+                        "price_cols": ["close"],
+                        "volume_cols": ["vol"],
+                    },
                 },
                 # Compute VWAP.
                 self._get_nid("compute_vwap"): {
@@ -141,7 +128,11 @@ class ReturnsPipeline(dtf.DagBuilder):
         # Resample.
         stage = "resample_prices_to_1min"
         nid = self._get_nid(stage)
-        node = dtf.TimeBarResampler(nid, **config[nid].to_dict())
+        node = dtf.FunctionWrapper(
+            nid,
+            func=fin.resample_time_bars,
+            **config[nid].to_dict()
+        )
         tail_nid = self._append(dag, tail_nid, node)
         # Compute TWAP and VWAP.
         stage = "compute_vwap"
@@ -172,7 +163,7 @@ class ReturnsPipeline(dtf.DagBuilder):
 
         :param config: config object to validate
         """
-        dbg.dassert(check_no_dummy_values(cconfig.Config))
+        dbg.dassert(cconfig.check_no_dummy_values(config))
 
     @staticmethod
     def _append(dag: dtf.DAG, tail_nid: Optional[str], node: dtf.Node) -> str:
