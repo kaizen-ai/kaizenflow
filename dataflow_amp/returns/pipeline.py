@@ -13,8 +13,6 @@ import core.dataflow as dtf
 import core.dataflow_source_nodes as dsn
 import core.finance as fin
 import helpers.dbg as dbg
-import helpers.dict as dct
-import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -81,8 +79,9 @@ class ReturnsPipeline(dtf.DagBuilder):
                         "rule": "5T",
                         "price_col": "close",
                         "volume_col": "vol",
-                        "add_last_price": True,
                         "add_bar_start_timestamps": True,
+                        "add_epoch": True,
+                        "add_last_price": True,
                     },
                 },
                 # Calculate returns.
@@ -135,9 +134,7 @@ class ReturnsPipeline(dtf.DagBuilder):
         stage = "resample_prices_to_1min"
         nid = self._get_nid(stage)
         node = dtf.FunctionWrapper(
-            nid,
-            func=fin.resample_time_bars,
-            **config[nid].to_dict()
+            nid, func=fin.resample_time_bars, **config[nid].to_dict()
         )
         tail_nid = self._append(dag, tail_nid, node)
         # Compute TWAP and VWAP.

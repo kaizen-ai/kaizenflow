@@ -670,7 +670,8 @@ class MultiindexTwapVwapComputer(cdnb.Transformer):
         """
         Calculate TWAP and VWAP prices from price and volume columns.
 
-        This function wraps `compute_twap_vwap()`. Params as in that function.
+        This function wraps `compute_twap_vwap()`. Params as in that
+        function.
         """
         super().__init__(nid)
         self._rule = rule

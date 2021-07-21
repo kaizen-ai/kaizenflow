@@ -315,9 +315,10 @@ def compute_twap_vwap(
     price_col: str,
     volume_col: str,
     offset: Optional[str] = None,
-    add_last_price: bool = False,
     add_bar_volume: bool = False,
     add_bar_start_timestamps: bool = False,
+    add_epoch: bool = False,
+    add_last_price: bool = False,
 ) -> pd.DataFrame:
     """
     Compute TWAP/VWAP from price and volume columns.
@@ -351,7 +352,7 @@ def compute_twap_vwap(
     volume = df[volume_col]
     if add_bar_volume:
         # Calculate bar volume (regardless of whether we have price data).
-        bar_volume = csignal.resample(volume, rule=rule, offset=offset).sum(
+        bar_volume = csigna.resample(volume, rule=rule, offset=offset).sum(
             min_count=1
         )
         bar_volume.name = "volume"
@@ -387,6 +388,9 @@ def compute_twap_vwap(
     if add_bar_start_timestamps:
         bar_start_timestamps = compute_bar_start_timestamps(vwap)
         dfs.append(bar_start_timestamps)
+    if add_epoch:
+        epoch = compute_epoch(vwap)
+        dfs.append(epoch)
     df_out = pd.concat(dfs, axis=1)
     return df_out
 
@@ -415,7 +419,7 @@ def compute_bar_start_timestamps(
 
 def compute_epoch(
     data: Union[pd.Series, pd.DataFrame], unit: Optional[str] = None
-) -> pd.Series:
+) -> Union[pd.Series, pd.DataFrame]:
     """
     Convert datetime index times to minutes, seconds, or nanoseconds.
 
@@ -440,7 +444,10 @@ def compute_epoch(
             f"Unsupported unit=`{unit}`. Supported units are "
             "'minute', 'second', and 'nanosecond'."
         )
-    return pd.Series(index=data.index, data=epochs, name=unit)
+    srs = pd.Series(index=data.index, data=epochs, name=unit)
+    if isinstance(data, pd.DataFrame):
+        return srs.to_frame()
+    return srs
 
 
 # #############################################################################
