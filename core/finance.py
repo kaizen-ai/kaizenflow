@@ -397,27 +397,28 @@ def compute_bar_start_timestamps(
 
 
 def compute_epoch(
-    data: Union[pd.Series, pd.DataFrame], mode: Optional[str] = None
+    data: Union[pd.Series, pd.DataFrame], unit: Optional[str] = None
 ) -> pd.Series:
     """
     Convert datetime index times to minutes, seconds, or nanoseconds.
 
     :param data: a dataframe or series with a `DatetimeIndex`
-    :param mode: timing of output
-    :return: dataframe of int64's with epoch in minutes, seconds, or nanoseconds
+    :param unit: unit for reporting epoch. Suppose units are:
+        "minute", "second', "nanosecond"
+    :return: series of int64's with epoch in minutes, seconds, or nanoseconds
     """
-    mode = mode or "minute"
+    unit = unit or "minute"
     dbg.dassert_isinstance(data.index, pd.DatetimeIndex)
     nanoseconds = data.index.astype(np.int64)
-    if mode == "minute":
+    if unit == "minute":
         epochs = np.int64(nanoseconds * 1e-9 / 60)
-    elif mode == "second":
+    elif unit == "second":
         epochs = np.int64(nanoseconds * 1e-9)
-    elif mode == "nanosecond":
+    elif unit == "nanosecond":
         epochs = nanoseconds
     else:
-        raise ValueError(f"Unrecognized mode=`{mode}`")
-    return pd.Series(index=data.index, data=epochs, name=mode)
+        raise ValueError(f"Unsupported unit=`{unit}`")
+    return pd.Series(index=data.index, data=epochs, name=unit)
 
 
 def compute_ret_0(
