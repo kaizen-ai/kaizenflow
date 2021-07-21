@@ -123,6 +123,7 @@ def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
 # Resampling.
 # #############################################################################
 
+# TODO(Paul): Consider moving resampling code to a new `resampling.py`
 
 # TODO(gp): Move to `dataflow/types.py`
 KWARGS = Dict[str, Any]
@@ -242,6 +243,8 @@ def resample_ohlcv_bars(
     """
     Resample OHLCV bars and optionally add TWAP, VWAP prices based on "close".
 
+    TODO(Paul): compare to native pandas `ohlc` resampling.
+
     :param df: input dataframe with datetime index
     :param rule: resampling frequency
     :param open_col: name of "open" column
@@ -303,11 +306,6 @@ def resample_ohlcv_bars(
         )
         result_df = _merge(result_df, twap_vwap_df)
     return result_df
-
-
-# #############################################################################
-# Returns calculation and helpers.
-# #############################################################################
 
 
 def compute_twap_vwap(
@@ -402,6 +400,8 @@ def compute_epoch(
     """
     Convert datetime index times to minutes, seconds, or nanoseconds.
 
+    TODO(Paul): Add unit tests.
+
     :param data: a dataframe or series with a `DatetimeIndex`
     :param unit: unit for reporting epoch. Suppose units are:
         "minute", "second', "nanosecond"
@@ -417,8 +417,14 @@ def compute_epoch(
     elif unit == "nanosecond":
         epochs = nanoseconds
     else:
-        raise ValueError(f"Unsupported unit=`{unit}`")
+        raise ValueError(f"Unsupported unit=`{unit}`. Supported units are "
+                          "'minute', 'second', and 'nanosecond'.")
     return pd.Series(index=data.index, data=epochs, name=unit)
+
+
+# #############################################################################
+# Returns calculation and helpers.
+# #############################################################################
 
 
 def compute_ret_0(
