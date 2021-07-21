@@ -70,6 +70,8 @@ class ReturnsPipeline(dtf.DagBuilder):
                     "func_kwargs": {
                         "rule": "1T",
                         "price_cols": ["close"],
+                        # TODO(*): Rename "volume" to adhere with our naming
+                        # conventions.
                         "volume_cols": ["vol"],
                     },
                 },
@@ -79,6 +81,8 @@ class ReturnsPipeline(dtf.DagBuilder):
                         "rule": "5T",
                         "price_col": "close",
                         "volume_col": "vol",
+                        "add_last_price": True,
+                        "add_bar_start_timestamps": True,
                     },
                 },
                 # Calculate returns.

@@ -385,7 +385,7 @@ def compute_twap_vwap(
     if add_bar_volume:
         dfs.append(bar_volume)
     if add_bar_start_timestamps:
-        bar_start_timestamps = compute_bar_start_timestamps(df_out)
+        bar_start_timestamps = compute_bar_start_timestamps(vwap)
         dfs.append(bar_start_timestamps)
     df_out = pd.concat(dfs, axis=1)
     return df_out
