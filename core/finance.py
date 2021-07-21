@@ -417,8 +417,10 @@ def compute_epoch(
     elif unit == "nanosecond":
         epochs = nanoseconds
     else:
-        raise ValueError(f"Unsupported unit=`{unit}`. Supported units are "
-                          "'minute', 'second', and 'nanosecond'.")
+        raise ValueError(
+            f"Unsupported unit=`{unit}`. Supported units are "
+            "'minute', 'second', and 'nanosecond'."
+        )
     return pd.Series(index=data.index, data=epochs, name=unit)
 
 
