@@ -131,7 +131,7 @@ class KibotDataReader(cdataf.DataSource):
     def _lazy_load(self) -> None:
         if self.df is not None:
             return
-        return load_kibot(
+        df = load_kibot(
             symbol=self._symbol,
             frequency=self._frequency,
             contract_type=self._contract_type,
@@ -139,6 +139,7 @@ class KibotDataReader(cdataf.DataSource):
             end_date=self._end_date,
             nrows=self._nrows,
         )
+        self.df = df
 
 
 class KibotColumnReader(cdataf.DataSource):
