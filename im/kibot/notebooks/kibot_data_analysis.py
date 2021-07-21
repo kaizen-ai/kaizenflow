@@ -26,7 +26,8 @@ import helpers.s3 as hs3
 S3_BUCKET = hs3.get_bucket()
 file_name = f"s3://{S3_BUCKET}/data/kibot/sp_500_1min/AAPL.csv.gz"
 
-df = pdhelp.read_csv(file_name, aws_profile="am")
+s3fs = hs3.get_s3fs("am")
+df = pdhelp.read_csv(file_name, s3fs=s3fs)
 df.head(5)
 
 # %%

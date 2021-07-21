@@ -49,9 +49,13 @@ class S3Backend:
             vkmcon.S3_PREFIX, "All_Futures_Contracts_1min.csv.gz"
         )
         _LOG.debug("file_name=%s", file_name)
+        s3fs = hs3.get_s3fs("am")
         df = pdhelp.read_csv(
-            file_name, aws_profile="am", index_col=0, nrows=self._max_rows,
-            encoding = "utf-8"
+            file_name,
+            s3fs=s3fs,
+            index_col=0,
+            nrows=self._max_rows,
+            encoding="utf-8",
         )
         df = df.iloc[:, 1:]
         _LOG.debug("df=\n%s", df.head(3))
@@ -80,8 +84,9 @@ class S3Backend:
         )
         hs3.check_valid_s3_path(file_name)
         _LOG.debug("file_name=%s", file_name)
+        s3fs = hs3.get_s3fs("am")
         df = pdhelp.read_csv(
-            file_name, aws_profile="am", index_col=0, nrows=self._max_rows
+            file_name, s3fs=s3fs, index_col=0, nrows=self._max_rows
         )
         df = df.iloc[:, 1:]
         _LOG.debug("df=\n%s", df.head(3))
@@ -112,9 +117,10 @@ class S3Backend:
         file_name = os.path.join(vkmcon.S3_PREFIX, "Futures_tickbidask.txt.gz")
         _LOG.debug("file_name=%s", file_name)
         hs3.check_valid_s3_path(file_name)
+        s3fs = hs3.get_s3fs("am")
         df = pdhelp.read_csv(
             file_name,
-            aws_profile="am",
+            s3fs=s3fs,
             index_col=0,
             skiprows=5,
             header=None,
@@ -124,9 +130,7 @@ class S3Backend:
         df.columns = (
             "SymbolBase Symbol StartDate Size(MB) Description Exchange".split()
         )
-        df.shape
         df.dropna(inplace=True, how="all")
-        df.shape
         # dbg.dassert_eq(df_shape[0], df_shape_after_dropna[0])
         df.index = df.index.astype(int)
         df.index.name = None
@@ -162,9 +166,10 @@ class S3Backend:
         )
         _LOG.debug("file_name=%s", file_name)
         hs3.check_valid_s3_path(file_name)
+        s3fs = hs3.get_s3fs("am")
         df = pdhelp.read_csv(
             file_name,
-            aws_profile="am",
+            s3fs=s3fs,
             index_col=0,
             skiprows=5,
             header=None,
@@ -189,8 +194,9 @@ class S3Backend:
     def read_kibot_exchange_mapping() -> pd.DataFrame:
         file_name = os.path.join(vkmcon.S3_PREFIX, "kibot_to_exchange.csv")
         hs3.check_valid_s3_path(file_name)
+        s3fs = hs3.get_s3fs("am")
         kibot_to_cme_mapping = pdhelp.read_csv(
-            file_name, aws_profile="am", index_col="Kibot_symbol"
+            file_name, s3fs=s3fs, index_col="Kibot_symbol"
         )
         return kibot_to_cme_mapping
 
@@ -218,9 +224,10 @@ class S3Backend:
 
         aws_csv_gz_dir = os.path.join(vkdcon.S3_PREFIX, data_type)
         # List all existing csv gz files on S3.
+        s3fs = hs3.get_s3fs("am")
         csv_gz_s3_file_paths = [
             filename
-            for filename in hs3.listdir(aws_csv_gz_dir)
+            for filename in s3fs.ls(aws_csv_gz_dir)
             if filename.endswith("csv.gz")
         ]
         # Get list of symbols to convert.

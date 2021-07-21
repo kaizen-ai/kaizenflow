@@ -122,7 +122,8 @@ def generate_report(
     )
     dataset_aws_directory = os.path.dirname(dataset_aws_path)
     # Get a list of payloads (symbols) in format XYZ.csv.gz.
-    payloads = hs3.listdir(dataset_aws_directory, mode="non-recursive")
+    s3fs = hs3.get_s3fs("am")
+    payloads = s3fs.ls(dataset_aws_directory)
     # Get only first n-rows.
     n_rows = 100
     # Get only symbols list.

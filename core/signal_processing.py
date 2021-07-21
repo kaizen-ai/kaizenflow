@@ -1703,11 +1703,14 @@ def resample(
 
     The `rule` argument must always be specified and the `closed` and `label`
     arguments are treated specially by default.
+
     The default values of `closed` and `label` arguments are intended to make
     pandas `resample()` behavior consistent for every value of `rule` and to
-    make resampling causal so if we have sampling times t_0 < t_1 < t_2;
+    make resampling causal. So if we have sampling times t_0 < t_1 < t_2, then,
     after resampling, the values at t_1 and t_2 should not be incorporated
-    into the resampled value timestamped with t_0.
+    into the resampled value timestamped with t_0. Note that this behavior is
+    at odds with what may be intuitive for plotting lower-frequency data, e.g.,
+    yearly data is typically labeled in a plot by the start of the year.
 
     :data: pd.Series or pd.DataFrame with a datetime index
     :resample_kwargs: arguments for pd.DataFrame.resample

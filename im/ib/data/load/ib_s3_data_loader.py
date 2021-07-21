@@ -113,18 +113,15 @@ class IbS3DataLoader(icdlab.AbstractS3DataLoader):
             ext=icdtyp.Extension.CSV,
         )
         # Check that file exists.
+        aws_profile = "am"
+        s3fs = hs3.get_s3fs(aws_profile)
         if hs3.is_s3_path(file_path):
-            dbg.dassert_is(
-                hs3.exists(file_path), True, msg=f"S3 key not found: {file_path}"
-            )
+            dbg.dassert(s3fs.exists(file_path), "S3 key not found: %s", file_path)
         # Read data.
         # cls.S3_COLUMNS.keys() -> list(cls.S3_COLUMNS.keys())
         # https://github.com/pandas-dev/pandas/issues/36928 fixed in Pandas 1.1.4
-        aws_profile = "am"
         names = list(self.S3_COLUMNS.keys())
-        data = pdhelp.read_csv(
-            file_path, aws_profile=aws_profile, nrows=nrows, names=names
-        )
+        data = pdhelp.read_csv(file_path, s3fs=s3fs, nrows=nrows, names=names)
         # TODO(plyq): Reload ES data with a new extractor to have a header.
         # If header was already in data, remove it.
         if list(data.iloc[0]) == list(self.S3_COLUMNS.keys()):

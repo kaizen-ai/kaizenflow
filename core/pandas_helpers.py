@@ -1,5 +1,9 @@
 """
 Package with general pandas helpers.
+
+Import as:
+
+import core.pandas_helpers as pdhelp
 """
 
 # TODO(gp): Merge into helpers/pandas_helpers.py
@@ -249,29 +253,48 @@ def df_rolling_apply(
 # #############################################################################
 
 
+def _get_local_or_s3_stream(file_name: str, *args: Any, **kwargs: Any):
+    _LOG.debug("file_name=%s args=%s kwargs=%s", file_name, str(args), str(kwargs))
+    # Handle the s3fs param, if needed.
+    if hs3.is_s3_path(file_name):
+        # For S3 files we need to have an `s3fs` parameter.
+        dbg.dassert_in("s3fs", kwargs)
+        s3fs = kwargs.pop("s3fs")
+        stream = s3fs.open(file_name)
+    else:
+        if "s3fs" in kwargs:
+            _LOG.warning("Passed `s3fs` without an S3 file: ignoring it")
+            _ = kwargs.pop("s3fs")
+        stream = file_name
+    return stream, args, kwargs
+
+
 def read_csv(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
     """
     Read a CSV file into a `pd.DataFrame` handling the S3 profile, if needed.
     """
-    _LOG.debug("file_name=%s", file_name)
-    if hs3.is_s3_path(file_name):
-        # For S3 files we need to have an aws_profile.
-        dbg.dassert_in("aws_profile", kwargs)
-        aws_profile = kwargs.pop("aws_profile")
-        s3fs = hs3.get_s3fs(aws_profile)
-        stream = s3fs.open(file_name)
-    else:
-        dbg.dassert_not_in(
-            "aws_profile",
-            kwargs,
-            "You should not pass 'aws_profile' for files like %s that are not on S3",
-            file_name,
-        )
-        stream = file_name
-    _LOG.debug("args=%s", str(args))
-    _LOG.debug("kwargs=%s", str(kwargs))
-    if file_name.endswith(".gz") or file_name.endswith(".gzip"):
+    stream, args, kwargs = _get_local_or_s3_stream(file_name, *args, **kwargs)
+    # Handle zipped files.
+    if any(file_name.endswith(ext) for ext in (".gzip", ".gz")):
         dbg.dassert_not_in("compression", kwargs)
         kwargs["compression"] = "gzip"
+    elif file_name.endswith(".zip"):
+        dbg.dassert_not_in("compression", kwargs)
+        kwargs["compression"] = "zip"
+    # Read.
+    _LOG.debug("args=%s", str(args))
+    _LOG.debug("kwargs=%s", str(kwargs))
     df = pd.read_csv(stream, *args, **kwargs)
+    return df
+
+
+def read_parquet(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
+    """
+    Read a Parquet file into a `pd.DataFrame` handling the S3 profile, if needed.
+    """
+    stream, args, kwargs = _get_local_or_s3_stream(file_name, *args, **kwargs)
+    # Read.
+    _LOG.debug("args=%s", str(args))
+    _LOG.debug("kwargs=%s", str(kwargs))
+    df = pd.read_parquet(stream, *args, **kwargs)
     return df
