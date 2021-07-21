@@ -75,9 +75,11 @@ class ReturnsPipeline(dtf.DagBuilder):
                 },
                 # Compute VWAP.
                 self._get_nid("compute_vwap"): {
-                    "rule": "5T",
-                    "price_col": "close",
-                    "volume_col": "vol",
+                    "func_kwargs": {
+                        "rule": "5T",
+                        "price_col": "close",
+                        "volume_col": "vol",
+                    },
                 },
                 # Calculate returns.
                 self._get_nid("compute_ret_0"): {
@@ -137,8 +139,9 @@ class ReturnsPipeline(dtf.DagBuilder):
         # Compute TWAP and VWAP.
         stage = "compute_vwap"
         nid = self._get_nid(stage)
-        node = dtf.TwapVwapComputer(
+        node = dtf.FunctionWrapper(
             nid,
+            func=fin.compute_twap_vwap,
             **config[nid].to_dict(),
         )
         tail_nid = self._append(dag, tail_nid, node)

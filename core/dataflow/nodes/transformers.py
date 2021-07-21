@@ -560,6 +560,7 @@ class Resample(cdnb.Transformer):
         return df, info
 
 
+# TODO(Paul): Deprecate.
 class TimeBarResampler(cdnb.Transformer):
     def __init__(
         self,
@@ -617,6 +618,7 @@ class TimeBarResampler(cdnb.Transformer):
         return df, info
 
 
+# TODO(Paul): Deprecate.
 class TwapVwapComputer(cdnb.Transformer):
     def __init__(
         self,

@@ -20,9 +20,10 @@ resample_prices_to_1min:
     price_cols: ['close']
     volume_cols: ['vol']
 compute_vwap:
-  rule: 5T
-  price_col: close
-  volume_col: vol
+  func_kwargs:
+    rule: 5T
+    price_col: close
+    volume_col: vol
 compute_ret_0:
   cols: ['twap', 'vwap']
   col_mode: merge_all
