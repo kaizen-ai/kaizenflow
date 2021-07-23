@@ -718,7 +718,9 @@ def df_to_short_str(tag: str, df: "pd.DataFrame") -> str:
     out.append(dataframe_to_str(df.head(3)))
     out.append("...")
     out.append(dataframe_to_str(df.tail(3)))
-    out.append("df.index in [%s, %s]" % (df.index.min(), df.index.max()))
+    if not df.empty:
+        out.append("df.index in [%s, %s]" % (df.index.min(), df.index.max()))
+        out.append("df.columns=%s" % ",".join(map(str, df.columns)))
     out.append("df.shape=%s" % str(df.shape))
     # txt += "\n# dtypes=\n%s" % str(df.dtypes)
     txt = "\n".join(out)
@@ -733,18 +735,27 @@ def df_to_short_str(tag: str, df: "pd.DataFrame") -> str:
 
 
 def config_notebook(sns_set: bool = True) -> None:
+    # Matplotlib.
     import matplotlib.pyplot as plt
-    import seaborn as sns
 
-    if sns_set:
-        sns.set()
-    import pandas as pd
-
-    pd.set_option("display.max_rows", 500)
-    pd.set_option("display.max_columns", 500)
-    pd.set_option("display.width", 1000)
     # plt.rcParams
     plt.rcParams["figure.figsize"] = (20, 5)
     plt.rcParams["legend.fontsize"] = 14
     plt.rcParams["font.size"] = 14
     plt.rcParams["image.cmap"] = "rainbow"
+
+    # Seaborn.
+    import seaborn as sns
+
+    if sns_set:
+        sns.set()
+
+    # Pandas.
+    import pandas as pd
+
+    pd.set_option("display.max_rows", 500)
+    pd.set_option("display.max_columns", 500)
+    pd.set_option("display.width", 1000)
+
+    # Warnings.
+    import helpers.warnings_helpers

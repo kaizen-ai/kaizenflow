@@ -9,11 +9,11 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestRollingFitPredictDagRunner(hut.TestCase):
-    """
-    Test the ArmaReturnsBuilder pipeline.
-    """
 
     def test1(self) -> None:
+        """
+        Test the DagRunner using `ArmaReturnsBuilder`
+        """
         dag_builder = dtf.ArmaReturnsBuilder()
         config = dag_builder.get_config_template()
         dag_builder.get_dag(config)
@@ -31,11 +31,11 @@ class TestRollingFitPredictDagRunner(hut.TestCase):
 
 
 class TestIncrementalDagRunner(hut.TestCase):
-    """
-    Test the ArmaReturnsBuilder pipeline.
-    """
 
     def test1(self) -> None:
+        """
+        Test the DagRunner using `ArmaReturnsBuilder`
+        """
         dag_builder = dtf.ArmaReturnsBuilder()
         config = dag_builder.get_config_template()
         # Create DAG and generate fit state.

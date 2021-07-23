@@ -34,6 +34,9 @@ def DataSourceNodeFactory(
     dbg.dassert(source_node_name)
     if source_node_name == "arma":
         return cdataf.ArmaGenerator(nid, **source_node_kwargs)
+    elif source_node_name == "crypto_data_download":
+        import core_lem.dataflow.nodes.sources as cldns
+        return cldns.CryptoDataDownload_DataReader(nid, **source_node_kwargs)
     elif source_node_name == "disk":
         return cdataf.DiskDataSource(nid, **source_node_kwargs)
     elif source_node_name == "kibot":
@@ -89,6 +92,11 @@ def load_kibot(
     return df_out
 
 
+# #############################################################################
+
+# TODO(gp): Maybe consolidate KibotDataReader and KibotColumnReader.
+
+# TODO(gp): -> KibotFuturesDataReader
 class KibotDataReader(cdataf.DataSource):
     def __init__(
         self,
@@ -141,6 +149,10 @@ class KibotDataReader(cdataf.DataSource):
         )
         self.df = df
 
+
+# TODO(gp): Move reading only a subset of columns into KibotS3DataLoader.
+#  If we use Parquet we can avoid to read useless data for both time and
+#  columns.
 
 class KibotColumnReader(cdataf.DataSource):
     def __init__(
@@ -211,7 +223,7 @@ class KibotEquityReader(cdataf.DataSource):
         nrows: Optional[int] = None,
     ) -> None:
         """
-        Reads equity OHLCV data.
+        Read equity OHLCV data.
         """
         super().__init__(nid)
         dbg.dassert_isinstance(symbols, list)

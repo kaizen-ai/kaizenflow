@@ -16,9 +16,6 @@ import helpers.dbg as dbg
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): Move up to core somewhere.
-
-
 class ReturnsPipeline(dtf.DagBuilder):
     """
     Pipeline for computing returns from price data.
