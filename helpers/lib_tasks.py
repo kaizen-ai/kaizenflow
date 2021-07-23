@@ -1264,13 +1264,34 @@ def docker_jupyter(  # type: ignore
     ctx,
     stage=STAGE,
     base_image="",
+    auto_assign_port=True,
     port=9999,
     self_test=False,
 ):
     """
     Run jupyter notebook server.
+
+    :param auto_assign_port: use the UID of the user and the inferred number of the
+        repo (e.g., 4 for `~/src/amp4`) to get a unique port
     """
     _report_task()
+    if auto_assign_port:
+        uid = os.getuid()
+        _LOG.debug("uid=%s", uid)
+        git_dir = git.get_client_root(super_module=True)
+        _LOG.debug("git_dir=%s", git_dir)
+        last_char = os.path.basename(git_dir)[-1]
+        if not last_char.isdigit():
+            _LOG.warning("The last char `%s` of the git dir `%s` is not a digit",
+                         last_char, git_dir)
+            sys.exit(-1)
+        git_repo_idx = int(last_char)
+        _LOG.debug("git_repo_idx=%s", git_repo_idx)
+        # We assume that there are no more than `max_idx_per_users` clients.
+        max_idx_per_user = 10
+        dbg.dassert_lte(git_repo_idx, max_idx_per_user)
+        port = (uid * max_idx_per_user) + git_repo_idx
+        _LOG.info("Assigned port is %s", port)
     #
     docker_cmd_ = _get_docker_jupyter_cmd(stage, base_image, port, self_test)
     _docker_cmd(ctx, docker_cmd_)

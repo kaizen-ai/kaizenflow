@@ -1,5 +1,7 @@
 """
 Entry point for `run_experiment.py`.
+
+import core.dataflow_model.master_experiment as cdmme
 """
 
 import logging
@@ -22,6 +24,7 @@ def run_experiment(config: cconfig.Config) -> None:
     All parameters are passed through a `Config`.
     """
     _LOG.debug("config=\n%s", config)
+    config = config.copy()
     dag_config = config.pop("DAG")
     dag_runner = cdataf.PredictionDagRunner(
         dag_config, config["meta"]["dag_builder"]
