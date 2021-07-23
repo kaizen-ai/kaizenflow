@@ -12,8 +12,6 @@ import core.finance as cfinan
 import core.pandas_helpers as pdhelp
 import helpers.dbg as dbg
 import helpers.s3 as hs3
-# TODO(gp): Use our import convention.
-from core.dataflow.nodes.base import DataSource
 
 _LOG = logging.getLogger(__name__)
 
