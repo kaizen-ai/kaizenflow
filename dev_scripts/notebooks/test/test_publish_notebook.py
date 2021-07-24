@@ -35,3 +35,11 @@ class Test_publish_notebook1(hut.TestCase):
 #   --action post_on_s3 \
 #   --s3_path s3://.../notebooks \
 #   --aws_profile am
+
+# TODO(gp): Fix this.
+# http://127.0.0.1:5012/notebooks/amp/core/dataflow_model/notebooks/Master_model_analyzer.ipynb
+# is not resolved correctly
+# ################################################################################
+# * Failed assertion *
+# File '/app/amp/amp/core/dataflow_model/notebooks/Master_model_analyzer.ipynb' doesn't exist
+# ################################################################################

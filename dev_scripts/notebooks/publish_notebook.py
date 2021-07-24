@@ -36,10 +36,35 @@ import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.open as opn
 import helpers.parser as prsr
+import helpers.printing as hprint
 import helpers.s3 as hs3
 import helpers.system_interaction as si
 
 _LOG = logging.getLogger(__name__)
+
+# TODO(gp): Reuse url.py code.
+def _get_path(path_or_url: str) -> str:
+    """
+    Get path from file, local link, or GitHub link.
+
+    :param path_or_url: URL to notebook/github, local path,
+        E.g., `https://github.com/...ipynb`
+    :return: path to file
+        E.g., `UnderstandingAnalysts.ipynb`
+    """
+    if "https://github" in path_or_url:
+        ret = "/".join(path_or_url.split("/")[7:])
+    elif "http://" in path_or_url:
+        ret = "/".join(path_or_url.split("/")[4:])
+        dbg.dassert_exists(ret)
+        if not os.path.exists(path_or_url):
+            # Try to find the file with find basename in the current client.
+            pass
+    elif path_or_url.endswith(".ipynb") and os.path.exists(path_or_url):
+        ret = path_or_url
+    else:
+        raise ValueError(f"Incorrect file '{path_or_url}'")
+    return ret
 
 
 # TODO(gp): This can go in `git.py`.
@@ -63,21 +88,23 @@ def _get_file_from_git_branch(git_branch: str, git_path: str) -> str:
 
 
 # TODO(gp): This seems general enough to be moved in `system_interaction.py`.
-def _add_tag(file_name: str, tag: str = "") -> str:
+def _add_tag(file_name: str, tag: str) -> str:
     """
     By default, add current timestamp in the filename.
 
     :return: new filename
     """
     name, extension = os.path.splitext(os.path.basename(file_name))
-    if not tag:
-        # TODO(gp): Use local time instead of UTC by using `get_timestamp()`.
-        tag = datetime.datetime.now().strftime(".%Y%m%d_%H%M%S")
+    if tag:
+        # If the tag is specified prepend a `.` in the filename.
+        tag = "." + tag
+    # TODO(gp): Use local time instead of UTC by using `get_timestamp()`.
+    tag += "." + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     new_file_name = "".join([name, tag, extension])
     return new_file_name
 
 
-def _export_notebook_to_html(ipynb_file_name: str) -> str:
+def _export_notebook_to_html(ipynb_file_name: str, tag: str) -> str:
     """
     Export a notebook as HTML in the same location, adding a timestamp to file
     name.
@@ -92,7 +119,7 @@ def _export_notebook_to_html(ipynb_file_name: str) -> str:
     file_name = os.path.splitext(os.path.basename(ipynb_file_name))[0]
     # Create dst file name including timestamp.
     html_file_name = file_name + ".html"
-    html_file_name = _add_tag(html_file_name)
+    html_file_name = _add_tag(html_file_name, tag)
     dst_file_name = os.path.join(dir_path, html_file_name)
     # Export notebook file to HTML format.
     cmd = (
@@ -103,7 +130,7 @@ def _export_notebook_to_html(ipynb_file_name: str) -> str:
     return dst_file_name
 
 
-def _export_notebook_to_dir(ipynb_file_name: str, dst_dir: str) -> str:
+def _export_notebook_to_dir(ipynb_file_name: str, tag: str, dst_dir: str) -> str:
     """
     Export a notebook as HTML to a dst dir.
 
@@ -112,7 +139,7 @@ def _export_notebook_to_dir(ipynb_file_name: str, dst_dir: str) -> str:
     :param dst_dir: destination folder
     """
     # Convert to HTML in the same location.
-    html_src_path = _export_notebook_to_html(ipynb_file_name)
+    html_src_path = _export_notebook_to_html(ipynb_file_name, tag)
     #
     html_file_name = os.path.basename(html_src_path)
     html_dst_path = os.path.join(dst_dir, html_file_name)
@@ -121,7 +148,13 @@ def _export_notebook_to_dir(ipynb_file_name: str, dst_dir: str) -> str:
     hio.create_dir(dst_dir, incremental=True)
     cmd = f"mv {html_src_path} {html_dst_path}"
     si.system(cmd)
+    # Print info.
     _LOG.info("Generated HTML file '%s'", html_dst_path)
+    cmd = f"""
+        # To open the notebook run:
+        > publish_notebook.py --file {html_dst_path} --action open
+        """
+    print(hprint.dedent(cmd))
     return html_dst_path
 
 
@@ -152,8 +185,7 @@ def _post_to_s3(local_src_path: str, s3_path: str, aws_profile: str) -> None:
     _LOG.info("Copying '%s' to '%s'", local_src_path, remote_path)
     s3fs = hs3.get_s3fs(aws_profile)
     s3fs.put(local_src_path, remote_path)
-    # TODO(gp): Allow to access the file directly at an URL like:
-    #  https://alphamatic-data.s3.amazonaws.com/notebooks/Master_model_analyzer.20210715_014438.html
+    return remote_path
 
 
 # TODO(gp): This can be more general than this file.
@@ -177,32 +209,11 @@ def _post_to_webserver(local_src_path: str, remote_dst_path: str) -> None:
     _LOG.debug("Response: %s", response.text.encode("utf8"))
 
 
-# TODO(gp): Reuse url.py code.
-def _get_path(path_or_url: str) -> str:
-    """
-    Get path from file, local link, or GitHub link.
-
-    :param path_or_url: URL to notebook/github, local path,
-        E.g., `https://github.com/...ipynb`
-    :return: path to file
-        E.g., `UnderstandingAnalysts.ipynb`
-    """
-    if "https://github" in path_or_url:
-        ret = "/".join(path_or_url.split("/")[7:])
-    elif "http://" in path_or_url:
-        ret = "/".join(path_or_url.split("/")[4:])
-        dbg.dassert_exists(ret)
-        if not os.path.exists(path_or_url):
-            # Try to find the file with find basename in the current client.
-            pass
-    elif path_or_url.endswith(".ipynb") and os.path.exists(path_or_url):
-        ret = path_or_url
-    else:
-        raise ValueError(f"Incorrect file '{path_or_url}'")
-    return ret
-
 
 def _get_s3_path(args: argparse.Namespace) -> str:
+    """
+    Return the S3 path to save notebooks, based on command line option and env vars.
+    """
     if args.s3_path:
         s3_path = args.s3_path
     else:
@@ -216,6 +227,9 @@ def _get_s3_path(args: argparse.Namespace) -> str:
 
 
 def _get_aws_profile(args: argparse.Namespace) -> str:
+    """
+    Return the AWS profile to access S3, based on command line option and env vars.
+    """
     if args.aws_profile:
         aws_profile = args.aws_profile
     else:
@@ -224,7 +238,6 @@ def _get_aws_profile(args: argparse.Namespace) -> str:
             env_var, os.environ, "The env needs to set env var '%s'", env_var
         )
         aws_profile = os.environ[env_var]
-    cast(str, s3_path)
     return aws_profile
 
 
@@ -241,12 +254,11 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="The path to the file ipynb, Jupyter URL, or GitHub URL",
+        help="The path to the ipynb file, a Jupyter URL, or a GitHub URL",
     )
     parser.add_argument(
         "--branch",
         action="store",
-        required=False,
         type=str,
         help="The Git branch containing the notebook, if different than `master`",
     )
@@ -256,6 +268,13 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         default=None,
         help="Dir where to save the HTML file",
+    )
+    parser.add_argument(
+        "--tag",
+        action="store",
+        default="",
+        type=str,
+        help="A tag that is added to the file (e.g., `RH1E_with_magic_parameters`)",
     )
     parser.add_argument(
         "--s3_path",
@@ -325,7 +344,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.action == "convert":
         # Convert to HTML.
         dst_dir = "."
-        html_file_name = _export_notebook_to_dir(src_file_name, dst_dir)
+        html_file_name = _export_notebook_to_dir(src_file_name, args.tag, dst_dir)
         # Try to open.
         opn.open_file(html_file_name)
     elif args.action == "publish_locally":
@@ -340,16 +359,21 @@ def _main(parser: argparse.ArgumentParser) -> None:
             dst_dir = os.environ[env_var]
         dbg.dassert_dir_exists(dst_dir)
         hio.create_dir(dst_dir, incremental=True)
-        _export_notebook_to_dir(src_file_name, dst_dir)
+        _export_notebook_to_dir(src_file_name, args.tag, dst_dir)
     elif args.action == "publish_on_s3":
         # Convert to HTML.
         dst_dir = "."
-        html_file_name = _export_notebook_to_dir(src_file_name, dst_dir)
+        html_file_name = _export_notebook_to_dir(src_file_name, args.tag, dst_dir)
         # Copy to S3.
         s3_path = _get_s3_path(args)
         aws_profile = _get_aws_profile(args)
-        _post_to_s3(html_file_name, s3_path, aws_profile)
+        s3_file_name = _post_to_s3(html_file_name, s3_path, aws_profile)
         # TODO(gp): Remove the file or save it directly in a temp dir.
+        cmd = f"""
+        # To open the notebook from S3 run:
+        > publish_notebook.py --file {s3_file_name} --action open
+        """
+        print(hprint.dedent(cmd))
     elif args.action == "publish_on_webserver":
         remote_dst_path = os.path.basename(html_file_name)
         _post_to_webserver(html_file_name, remote_dst_path)

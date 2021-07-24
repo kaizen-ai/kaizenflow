@@ -1,4 +1,4 @@
-awscli >= 1.19
+awscli >= 1.19  # For aws CLI.
 docker-compose >= 1.29.0
 flaky
 invoke >= 1.5.0
@@ -8,4 +8,5 @@ pytest-cov
 pytest-instafail
 pytest-xdist
 python-dateutil
+s3fs  # For tools like `publish_notebook.py`.
 tqdm

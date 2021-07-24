@@ -187,8 +187,8 @@ def dassert_lgt(
     """
     Assert that `lower_bound <= x <= upper_bound`.
 
-    - param: lower_bound_closed, upper_bound_closed controls
-        the open-ness/close-ness of the interval extremes.
+    :param lower_bound_closed, upper_bound_closed: control the
+        open-ness/close-ness of the interval extremes.
     """
     # `lower_bound <= or < x`.
     if lower_bound_closed:
@@ -1100,7 +1100,7 @@ def shutup_chatty_modules(
 
     :param verbosity: level of verbosity used for chatty modules: the higher the
         better
-    :param: verbose: print extra information
+    :param verbose: print extra information
     """
     module_names = [
         "aiobotocore",

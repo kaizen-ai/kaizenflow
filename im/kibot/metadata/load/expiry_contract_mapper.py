@@ -91,8 +91,7 @@ class ExpiryContractMapper:
         Compare function for two expiry contracts in terms of month and year (
         e.g., "U10") according to python `cmp` convention.
 
-        :param: return -1, 0, 1 in case of <, ==, > relationship between v1 and
-            v2.
+        :return: -1, 0, 1 in case of <, ==, > relationship between v1 and v2.
         """
         base_symbol1, month1, year1 = ExpiryContractMapper.parse_expiry_contract(
             v1

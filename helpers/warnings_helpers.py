@@ -13,6 +13,9 @@ import warnings
 
 # From https://docs.python.org/3/library/warnings.html
 
+# TODO(gp): For some reason "once" doesn't work, so we ignore all of the warnings.
+action = "ignore"
+
 # /venv/lib/python3.8/site-packages/statsmodels/tsa/stattools.py:1910:
 # InterpolationWarning: The test statistic is outside of the range of p-values
 # available in the look-up table. The actual p-value is greater than the
@@ -21,13 +24,20 @@ from statsmodels.tools.sm_exceptions import InterpolationWarning
 
 #warnings.simplefilter("ignore", category=InterpolationWarning)
 
-# TODO(gp): For some reason "once" doesn't work, so we ignore all of the warnings.
-action = "ignore"
+# /venv/lib/python3.8/site-packages/statsmodels/tsa/stattools.py:1906:
+# InterpolationWarning: The test statistic is outside of the range of p-values
+# available in the look-up table. The actual p-value is smaller than the
+# p-value returned.
+warnings.filterwarnings(action, category=InterpolationWarning,
+        module='.*statsmodels.*',
+        lineno=1906,
+        append=False)
+
+
 warnings.filterwarnings(action, category=InterpolationWarning,
         module='.*statsmodels.*',
         lineno=1910,
         append=False)
-
 
 # /venv/lib/python3.8/site-packages/ipykernel/ipkernel.py:283:
 # DeprecationWarning: `should_run_async` will not call `transform_cell`
