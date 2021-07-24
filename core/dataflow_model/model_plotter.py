@@ -22,10 +22,16 @@ import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): Sometimes it is useful to have a more compact DataFrame view of the
+# results, besides plotting, so each function can return DataFrame. We can use
+# this output in the unit tests.
 
 class ModelPlotter:
     """
-    Wraps a ModelEvaluator with plotting functionality.
+    Wrap a `ModelEvaluator` with plotting functionality.
+
+    The meaning of parameters is the same as in `ModelEvaluator`, unless
+    stated otherwise.
     """
 
     def __init__(
@@ -60,22 +66,25 @@ class ModelPlotter:
         - ACF and PACF
         - spectral density and spectrogram
 
-        :param keys: Use all available if `None`
-        :param weights: Average if `None`
+        :param keys: use all available if `None`
+        :param weights: average if `None`
         :param mode: "all_available", "ins", or "oos"
         :param target_volatility: Rescale portfolio to achieve
             `target_volatility` on in-sample region
-        :param resample_rule: Resampling frequency to apply before plotting
+        :param resample_rule: resampling frequency to apply before plotting
         :param axes: a flat list of axes to plot on
         """
+        # Compute the returns.
         rets, _, _ = self.model_evaluator.aggregate_models(
             keys=keys,
             weights=weights,
             mode=mode,
             target_volatility=target_volatility,
         )
+        # Resample, if needed.
         if resample_rule is not None:
             rets = rets.resample(rule=resample_rule).sum(min_count=1)
+        # Plot.
         num_rows = 6
         if axes is None:
             fig = plt.figure(constrained_layout=True, figsize=(20, 5 * num_rows))
@@ -97,7 +106,7 @@ class ModelPlotter:
             ]
         # qq-plot against normal.
         plot.plot_qq(rets, ax=axes[0])
-        # Plot lineplot and density plot.
+        # Plot line and density plot.
         plot.plot_cols(rets, axes=axes[1:3])
         # Plot pnl.
         plot.plot_pnl({"rets pnl": rets}, ax=axes[3])
@@ -125,24 +134,24 @@ class ModelPlotter:
         plot_drawdown_kwargs: Optional[dict] = None,
     ) -> None:
         """
-        Plot strategy performance.
+        Plot model/strategy performance.
 
         Plots include:
         - Cumulative returns
         - Rolling Sharpe Ratio
         - Drawdown
 
-        If a benchmark is provided, then
-        - Cumulative returns against benchmark is displayed
-        - Rolling beta against benchmark is displayed
+        If a benchmark is provided, then also display:
+        - Cumulative returns against benchmark
+        - Rolling beta against benchmark
 
-        :param keys: Use all available if `None`
-        :param weights: Average if `None`
+        :param keys: use all available if `None`
+        :param weights: average if `None`
         :param mode: "all_available", "ins", or "oos"
-        :param target_volatility: Rescale portfolio to achieve
-            `target_volatility` on in-sample region
-        :param resample_rule: Resampling frequency to apply before plotting
-        :param benchmark: Benchmark returns to compare against
+        :param target_volatility: rescale portfolio to achieve `target_volatility`
+            on in-sample region
+        :param resample_rule: resampling frequency to apply before plotting
+        :param benchmark: benchmark returns to compare against
         :param axes: a flat list of axes to plot on
         """
         # Obtain (log) returns.
@@ -168,6 +177,7 @@ class ModelPlotter:
         events = None
         if mode == "all_available" and self.model_evaluator.oos_start is not None:
             events = [(self.model_evaluator.oos_start, "OOS start")]
+        # Create the plots.
         if axes is None:
             # Set number of plots.
             if benchmark is not None:
@@ -343,6 +353,7 @@ class ModelPlotter:
         """
         pnl_dict = self.model_evaluator.compute_pnl(keys=keys, mode=mode)
         for k, v in pnl_dict.items():
+            # TODO(gp): The linter reports that `label` is not part of the interface.
             plot.plot_holding_diffs(v["positions"], label=f"Holdings diffs {k}")
         plt.legend()
 
@@ -361,6 +372,7 @@ class ModelPlotter:
         :param resample_rule: Resampling frequency to apply before plotting
         """
         pnl_dict = self.model_evaluator.compute_pnl(keys=keys, mode=mode)
+        keys = self.model_evaluator.get_keys(keys)
         if axes is None:
             _, axes = plot.get_multiple_plots(
                 len(keys), 1, y_scale=5, sharex=True, sharey=True
