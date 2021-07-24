@@ -12,7 +12,6 @@ import logging
 import re
 from typing import Callable, Iterable, Optional, Tuple, Union
 
-
 _WARNING = "\033[33mWARNING\033[0m"
 
 
@@ -39,7 +38,7 @@ except ModuleNotFoundError:
     print(_WARNING + f": Can't find {_module}: continuing")
 
 
-import helpers.dbg as dbg
+import helpers.dbg as dbg  # noqa: E402 # pylint: disable=wrong-import-position
 
 _LOG = logging.getLogger(__name__)
 
@@ -60,20 +59,27 @@ StrictDatetime = Union[pd.Timestamp, datetime.datetime]
 
 # TODO(gp): Use a single name of the var (e.g., datetime_) everywhere.
 
-def dassert_is_datetime(datetime_: Datetime):
+
+def dassert_is_datetime(datetime_: Datetime) -> None:
     """
     Assert that `datetime_` is of type `Datetime`.
     """
-    dbg.dassert_isinstance(datetime_, (str, pd.Timestamp, datetime.datetime),
-                           "datetime_='%s' of type '%s' is not a DateTimeType")
+    dbg.dassert_isinstance(
+        datetime_,
+        (str, pd.Timestamp, datetime.datetime),
+        "datetime_='%s' of type '%s' is not a DateTimeType",
+    )
 
 
-def dassert_is_strict_datetime(datetime_: StrictDatetime):
+def dassert_is_strict_datetime(datetime_: StrictDatetime) -> None:
     """
     Assert that `datetime_` is of type `StrictDatetime`.
     """
-    dbg.dassert_isinstance(datetime_, (pd.Timestamp, datetime.datetime),
-                           "datetime_='%s' of type '%s' is not a StrictDateTimeType")
+    dbg.dassert_isinstance(
+        datetime_,
+        (pd.Timestamp, datetime.datetime),
+        "datetime_='%s' of type '%s' is not a StrictDateTimeType",
+    )
 
 
 def to_datetime(datetime_: Datetime) -> datetime.datetime:
@@ -87,25 +93,34 @@ def to_datetime(datetime_: Datetime) -> datetime.datetime:
         datetime_ = pd.Timestamp(datetime_)
     if isinstance(datetime_, pd.Timestamp):
         datetime_ = datetime_.to_pydatetime()
-    return datetime_
+    return datetime_  # type: ignore
 
 
 def dassert_is_tz_naive(datetime_: StrictDatetime) -> None:
     """
-    Assert that the passed timestamp is tz-naive, i.e., doesn't have timezone info.
+    Assert that the passed timestamp is tz-naive, i.e., doesn't have timezone
+    info.
     """
-    dbg.dassert_is(datetime_.tzinfo, None,
-                   "datetime_='%s' is not tz naive", datetime_)
+    dbg.dassert_is(
+        datetime_.tzinfo, None, "datetime_='%s' is not tz naive", datetime_
+    )
 
 
 def dassert_has_tz(datetime_: StrictDatetime) -> None:
     """
     Assert that the passed timestamp has timezone info.
     """
-    dbg.dassert_is_not(datetime_.tzinfo, None, "datetime_='%s' doesn't have timezone info", datetime_)
+    dbg.dassert_is_not(
+        datetime_.tzinfo,
+        None,
+        "datetime_='%s' doesn't have timezone info",
+        datetime_,
+    )
 
 
-def _dassert_has_specified_tz(datetime_: StrictDatetime, tz_zones) -> None:
+def _dassert_has_specified_tz(
+    datetime_: StrictDatetime, tz_zones: Iterable[str]
+) -> None:
     """
     Assert that the passed timestamp has the timezone passed in `tz_zones`.
     """
@@ -122,7 +137,7 @@ def _dassert_has_specified_tz(datetime_: StrictDatetime, tz_zones) -> None:
         type(datetime_),
         tz_info,
         tz_zone,
-        tz_zones
+        tz_zones,
     )
 
 
@@ -130,7 +145,7 @@ def dassert_has_UTC_tz(datetime_: StrictDatetime) -> None:
     """
     Assert that the passed timestamp is UTC.
     """
-    tz_zones = (pytz.timezone("UTC").zone, )
+    tz_zones = (pytz.timezone("UTC").zone,)
     _dassert_has_specified_tz(datetime_, tz_zones)
 
 
@@ -145,7 +160,7 @@ def dassert_has_ET_tz(datetime_: StrictDatetime) -> None:
     _dassert_has_specified_tz(datetime_, tz_zones)
 
 
-# ##############################################################################
+# #############################################################################
 
 
 # TODO(gp): -> get_now_timestamp()
@@ -154,8 +169,6 @@ def get_timestamp(tz: Optional[str] = None) -> str:
         timestamp = datetime.datetime.utcnow()
     elif tz == "et":
         # Return in ET.
-        import pytz
-
         timestamp = datetime.datetime.now(pytz.timezone("EST"))
     else:
         dbg.dassert_is(tz, None)
@@ -163,7 +176,7 @@ def get_timestamp(tz: Optional[str] = None) -> str:
     return timestamp.strftime("%Y%m%d_%H%M%S")
 
 
-# ##############################################################################
+# #############################################################################
 
 
 def to_generalized_datetime(
@@ -243,6 +256,7 @@ def _handle_incorrect_conversions(
                 return modified_x
 
             return "%Y-%m-%d", modify_monthly_date
+    return None
 
 
 def _shift_to_period_end(
@@ -291,6 +305,7 @@ def _shift_to_period_end(
     date_without_month = f"{date[:span[0]]}{date[span[1]:]}".strip()
     if len(date_without_month) == 4 and date_without_month.isdigit():
         return shift_to_month_end
+    return None
 
 
 def _determine_date_format(

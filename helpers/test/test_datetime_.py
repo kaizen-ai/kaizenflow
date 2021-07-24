@@ -10,7 +10,7 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
-# ##############################################################################
+# #############################################################################
 
 _STR_TS_NAIVE = "2021-01-04 09:30:00"
 _STR_TS_UTC = "2021-01-04 09:30:00-00:00"
@@ -26,7 +26,6 @@ _DT_DT_ET = pytz.timezone("US/Eastern").localize(_DT_DT_NAIVE)
 
 
 class Test_dassert_tz1(hut.TestCase):
-
     def test_datetime_conversions(self) -> None:
         # Get a tz-naive datetime.
         dt = datetime.datetime(2020, 1, 5, 9, 30, 0)
@@ -54,15 +53,13 @@ class Test_dassert_tz1(hut.TestCase):
             _STR_TS_NAIVE,
             _STR_TS_UTC,
             _STR_TS_ET,
-
             _PD_TS_NAIVE,
             _PD_TS_UTC,
             _PD_TS_ET,
-
             _DT_DT_NAIVE,
             _DT_DT_UTC,
             _DT_DT_ET,
-            ]:
+        ]:
             hdatetime.dassert_is_datetime(obj)
 
     def test_dassert_is_datetime_assert1(self) -> None:
@@ -134,7 +131,7 @@ datetime_='%s' of type '%s' is not a DateTimeType
             self.assertEqual(str(act), str(exp))
 
 
-# ##############################################################################
+# #############################################################################
 
 
 class Test_to_generalized_datetime(hut.TestCase):

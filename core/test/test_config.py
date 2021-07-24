@@ -289,9 +289,11 @@ class Test_nested_config_set1(hut.TestCase):
         """
         Set a key that doesn't exist.
         """
-        config = cconfig.get_config_from_nested_dict({
+        config = cconfig.get_config_from_nested_dict(
+            {
                 "rets/read_data": cconfig.DUMMY,
-                })
+            }
+        )
         exp = r"""
         rets/read_data: __DUMMY__"""
         self.assert_equal(str(config), hprint.dedent(exp))
@@ -307,9 +309,11 @@ class Test_nested_config_set1(hut.TestCase):
         """
         Set a key that already exists.
         """
-        config = cconfig.get_config_from_nested_dict({
+        config = cconfig.get_config_from_nested_dict(
+            {
                 "rets/read_data": cconfig.DUMMY,
-            })
+            }
+        )
         # Overwrite an existing value.
         config["rets/read_data"] = "hello world"
         # Check.
@@ -322,13 +326,15 @@ class Test_nested_config_set1(hut.TestCase):
         """
         Set a key that doesn't exist in the hierarchy.
         """
-        config = cconfig.get_config_from_nested_dict({
+        config = cconfig.get_config_from_nested_dict(
+            {
                 "rets/read_data": cconfig.DUMMY,
-            })
+            }
+        )
         # Set a key that doesn't exist in the hierarchy.
         config["rets/read_data", "source_node_name"] = "data_downloader"
         # This also doesn't work.
-        #config["rets/read_data"]["source_node_name"] = "data_downloader"
+        # config["rets/read_data"]["source_node_name"] = "data_downloader"
         # Check.
         exp = r"""
         rets/read_data: hello world"""
@@ -338,12 +344,15 @@ class Test_nested_config_set1(hut.TestCase):
         """
         Set a key that exist in the hierarchy with a Config.
         """
-        config = cconfig.get_config_from_nested_dict({
+        config = cconfig.get_config_from_nested_dict(
+            {
                 "rets/read_data": cconfig.DUMMY,
-            })
+            }
+        )
         # Assign a config to an existing key.
         config["rets/read_data"] = cconfig.get_config_from_nested_dict(
-            {"source_node_name": "data_downloader"})
+            {"source_node_name": "data_downloader"}
+        )
         # Check.
         exp = r"""
         rets/read_data:
@@ -354,22 +363,26 @@ class Test_nested_config_set1(hut.TestCase):
         """
         Set a key that exists with a complex Config.
         """
-        config = cconfig.get_config_from_nested_dict({
-            "rets/read_data": cconfig.DUMMY,
-        })
-        # Assign a config.
-        config["rets/read_data"] = cconfig.get_config_from_nested_dict({
-            "source_node_name": "data_downloader",
-            "source_node_kwargs": {
-                "exchange": "NASDAQ",
-                "symbol": "AAPL",
-                "root_data_dir": None,
-                "start_date":  datetime.datetime(2020, 1, 4, 9, 30, 0),
-                "end_date": datetime.datetime(2021, 1, 4, 9, 30, 0),
-                "nrows": None,
-                "columns": None,
+        config = cconfig.get_config_from_nested_dict(
+            {
+                "rets/read_data": cconfig.DUMMY,
             }
-        })
+        )
+        # Assign a config.
+        config["rets/read_data"] = cconfig.get_config_from_nested_dict(
+            {
+                "source_node_name": "data_downloader",
+                "source_node_kwargs": {
+                    "exchange": "NASDAQ",
+                    "symbol": "AAPL",
+                    "root_data_dir": None,
+                    "start_date": datetime.datetime(2020, 1, 4, 9, 30, 0),
+                    "end_date": datetime.datetime(2021, 1, 4, 9, 30, 0),
+                    "nrows": None,
+                    "columns": None,
+                },
+            }
+        )
         # Check.
         exp = r"""
         rets/read_data:
