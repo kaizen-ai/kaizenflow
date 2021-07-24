@@ -126,9 +126,9 @@ def _calculate_stats(
     Compute the statistics from the linter when run on a branch vs master.
 
     :param base_commit_sha: hash of the branch to compare
-    :param: head_branch_name: name of the branch to be compared
-    :param: branch_name: branch name for the report
-    :param: build_url: jenkins build url
+    :param head_branch_name: name of the branch to be compared
+    :param branch_name: branch name for the report
+    :param build_url: jenkins build url
     :return: an integer representing the exit status and an error message.
     """
     dir_name = "."

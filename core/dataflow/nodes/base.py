@@ -28,7 +28,7 @@ _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 class FitPredictNode(cdc.Node, abc.ABC):
     """
-    Define an abstract class with sklearn-style `fit` and `predict` functions.
+    Class with abstract sklearn-style `fit` and `predict` functions.
 
     The class contains an optional state that can be serialized/deserialized with
     `get_fit_state()` and `set_fit_state()`.
@@ -86,7 +86,12 @@ class FitPredictNode(cdc.Node, abc.ABC):
 
 class DataSource(FitPredictNode, abc.ABC):
     """
-    A source node that can be configured for cross-validation.
+    A source node that generates data for cross-validation from the passed data frame.
+
+    Derived classes inject the data as a DataFrame in this class at construction time
+    (e.g., from a passed DataFrame, reading from a file)
+    This node implements the interface of `FitPredictNode` allowing to filter data for
+    fitting and predicting based on intervals.
     """
 
     def __init__(self, nid: str, outputs: Optional[List[str]] = None) -> None:
@@ -100,7 +105,7 @@ class DataSource(FitPredictNode, abc.ABC):
         for output in outputs:
             dbg.dassert_ne(output, "")
         super().__init__(nid, inputs=[], outputs=outputs)
-        #
+        # This data is initialized by the derived classes depending on their semantics.
         self.df = None
         self._fit_intervals = None
         self._predict_intervals = None
@@ -108,14 +113,17 @@ class DataSource(FitPredictNode, abc.ABC):
 
     def set_fit_intervals(self, intervals: List[Tuple[Any, Any]]) -> None:
         """
-        :param intervals: closed time intervals like [start1, end1],
+        Set the intervals to be used to generate data for the fit stage.
+
+        :param intervals: a list of closed time intervals like [start1, end1],
             [start2, end2]. `None` boundary is interpreted as data start/end
         """
         self._validate_intervals(intervals)
         self._fit_intervals = intervals
 
-    # DataSource does not have a `df_in` in either `fit` or `predict` as a
-    # typical `FitPredictNode` does.
+    # `DataSource` uses data passed at construction time, so it does not need a
+    # `df_in` in either `fit()` or `predict()` as a typical `FitPredictNode` does.
+    # For this reason the function signature is different.
     # pylint: disable=arguments-differ
     def fit(self) -> Dict[str, pd.DataFrame]:
         """
@@ -131,7 +139,7 @@ class DataSource(FitPredictNode, abc.ABC):
         else:
             fit_df = self.df
         fit_df = fit_df.copy()
-        dbg.dassert(not fit_df.empty)
+        dbg.dassert(not fit_df.empty, "`fit_df` is empty")
         # Update `info`.
         info = collections.OrderedDict()
         info["fit_df_info"] = cdu.get_df_info_as_string(fit_df)
@@ -140,12 +148,10 @@ class DataSource(FitPredictNode, abc.ABC):
 
     def set_predict_intervals(self, intervals: List[Tuple[Any, Any]]) -> None:
         """
-        :param intervals: closed time intervals like [start1, end1],
-            [start2, end2]. `None` boundary is interpreted as data start/end
-
-        TODO(*): Warn if intervals overlap with `fit` intervals.
-        TODO(*): Maybe enforce that the intervals be ordered.
+        Same as `set_fit_intervals()`, but for the predict stage.
         """
+        # TODO(*): Warn if intervals overlap with `fit` intervals.
+        # TODO(*): Maybe enforce that the intervals be ordered.
         self._validate_intervals(intervals)
         self._predict_intervals = intervals
 

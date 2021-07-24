@@ -17,6 +17,13 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# We use a string to represent a node's unique identifier. This type helps
+# improve the interface and make the code more readable (e.g., `Dict[Nid, ...]`
+# instead of `Dict[str, ...]`).
+# TODO(gp): Use this everywhere.
+Nid = str
+
+
 # TODO(gp): If this is private -> _NodeInterface.
 class NodeInterface(abc.ABC):
     """
@@ -250,7 +257,7 @@ class DAG:
         """
         Implement a convenience node accessor.
 
-        :param nid: unique string node id
+        :param nid: unique node id
         """
         dbg.dassert_isinstance(
             nid, str, "Expected str nid but got type %s!", type(nid)
@@ -260,7 +267,7 @@ class DAG:
 
     def remove_node(self, nid: str) -> None:
         """
-        Remove node from DAG (and clears any edges).
+        Remove node from DAG and clear any connected edges.
         """
         dbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG!", nid)
         self._dag.remove_node(nid)
@@ -325,7 +332,7 @@ class DAG:
                 f"Creating edge {parent_nid} -> {child_nid} introduces a cycle!"
             )
 
-    def get_sources(self) -> List[str]:
+    def get_sources(self) -> List[Nid]:
         """
         :return: list of nid's of source nodes
         """
@@ -335,7 +342,7 @@ class DAG:
                 sources.append(nid)
         return sources
 
-    def get_sinks(self) -> List[str]:
+    def get_sinks(self) -> List[Nid]:
         """
         :return: list of nid's of sink nodes
         """
@@ -344,6 +351,14 @@ class DAG:
             if not any(True for _ in self._dag.successors(nid)):
                 sinks.append(nid)
         return sinks
+
+    def get_unique_sink(self) -> Nid:
+        """
+        Return the only sink node, asserting if there is more than one.
+        """
+        sinks = self.get_sinks()
+        dbg.dassert_eq(len(sinks), 1, "There is more than one sink node %s", str(sinks))
+        return sinks[0]
 
     def run_dag(self, method: str) -> Dict[str, Any]:
         """
@@ -406,6 +421,6 @@ class DAG:
         try:
             output = getattr(node, method)(**kwargs)
         except Exception as e:
-            raise Exception(f"An exception occurred in node '{nid}'.") from e
+            raise Exception(f"An exception occurred in node '{nid}'.\n{str(e)}") from e
         for out in node.output_names:
             node._store_output(method, out, output[out])
