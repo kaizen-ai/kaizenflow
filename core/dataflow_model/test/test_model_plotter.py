@@ -1,25 +1,9 @@
 import logging
-from typing import Any, Dict, List, Tuple
 
-import pytest
-
-import helpers.dbg as dbg
-import helpers.printing as hprint
-import helpers.system_interaction as hsinte
-import helpers.unit_test as hut
-
-import numpy as np
-import pandas as pd
-
-import core.artificial_signal_generators as sig_gen
-import core.config as cconfig
-import core.dataflow_model.model_evaluator as modeval
 import core.dataflow_model.model_plotter as modplot
-import core.dataflow_model.utils as cdmu
-import core.statistics as stats
-import helpers.dbg as dbg
-
 import core.dataflow_model.test.test_model_evaluator as cdmttme
+import helpers.printing as hprint
+import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
@@ -30,33 +14,32 @@ _LOG = logging.getLogger(__name__)
 
 class TestModelPlotter1(hut.TestCase):
 
-    def _get_example_model_plotter(self):
-        evaluator, eval_config = cdmttme.get_example_model_evaluator()
-        # Build the ModelPlotter.
-        plotter = modplot.ModelPlotter(evaluator)
-        return plotter, evaluator, eval_config
-
     def test_plot_multiple_tests_adjustment1(self) -> None:
         plotter, _, eval_config = self._get_example_model_plotter()
         #
         plotter.plot_multiple_tests_adjustment(
-            threshold=eval_config["bh_adj_threshold"], mode=eval_config["mode"])
+            threshold=eval_config["bh_adj_threshold"], mode=eval_config["mode"]
+        )
 
     def test_model_selection1(self) -> None:
         plotter, evaluator, eval_config = self._get_example_model_plotter()
         # Calculate stats.
         pnl_stats = evaluator.calculate_stats(
-            mode=eval_config["mode"], target_volatility=eval_config["target_volatility"]
+            mode=eval_config["mode"],
+            target_volatility=eval_config["target_volatility"],
         )
         # TODO(gp): Move this chunk of code in a function and call that.
         col_mask = (
-                pnl_stats.loc["signal_quality"].loc["sr.adj_pval"]
-                < eval_config["bh_adj_threshold"]
+            pnl_stats.loc["signal_quality"].loc["sr.adj_pval"]
+            < eval_config["bh_adj_threshold"]
         )
         selected = pnl_stats.loc[:, col_mask].columns.to_list()
         not_selected = pnl_stats.loc[:, ~col_mask].columns.to_list()
         #
-        print("num model selected=%s" % hprint.perc(len(selected), pnl_stats.shape[1]))
+        print(
+            "num model selected=%s"
+            % hprint.perc(len(selected), pnl_stats.shape[1])
+        )
         print("model selected=%s" % selected)
         print("model not selected=%s" % not_selected)
         #
@@ -142,3 +125,9 @@ class TestModelPlotter1(hut.TestCase):
             resample_rule=eval_config["resample_rule"],
             mode=eval_config["mode"],
         )
+
+    def _get_example_model_plotter(self):
+        evaluator, eval_config = cdmttme.get_example_model_evaluator()
+        # Build the ModelPlotter.
+        plotter = modplot.ModelPlotter(evaluator)
+        return plotter, evaluator, eval_config

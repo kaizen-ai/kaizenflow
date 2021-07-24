@@ -22,8 +22,8 @@ import helpers.datetime_ as hdatetime
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.joblib_helpers as hjoblib
-import helpers.printing as hprint
 import helpers.parser as prsr
+import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 
 _LOG = logging.getLogger(__name__)

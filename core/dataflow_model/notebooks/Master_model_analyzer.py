@@ -27,15 +27,10 @@
 
 import logging
 
-import numpy as np
-import pandas as pd
-
-import core.artificial_signal_generators as sig_gen
 import core.config as cconfig
 import core.dataflow_model.model_evaluator as modeval
 import core.dataflow_model.model_plotter as modplot
 import core.dataflow_model.utils as cdmu
-import core.statistics as stats
 import helpers.dbg as dbg
 import helpers.printing as hprint
 
@@ -52,8 +47,8 @@ hprint.config_notebook()
 # # Notebook config
 
 # %%
-#exp_dir = "/app/experiment1"
-#exp_dir = "/app/experiment.RH1E.crypto.crypto_10.5T.20210723-22_16_50"
+# exp_dir = "/app/experiment1"
+# exp_dir = "/app/experiment.RH1E.crypto.crypto_10.5T.20210723-22_16_50"
 exp_dir = "/app/experiment.RH1E.crypto.crypto_all.5T.20210724-12_45_51"
 
 eval_config = cconfig.get_config_from_nested_dict(
@@ -62,7 +57,7 @@ eval_config = cconfig.get_config_from_nested_dict(
         "model_evaluator_kwargs": {
             "returns_col": "ret_0_vol_adj_2",
             "predictions_col": "ret_0_vol_adj_2_hat",
-            #"oos_start": "2017-01-01",
+            # "oos_start": "2017-01-01",
         },
         "bh_adj_threshold": 0.1,
         "resample_rule": "W",
@@ -77,13 +72,14 @@ eval_config = cconfig.get_config_from_nested_dict(
 # %%
 # Load the data.
 result_bundles = cdmu.yield_experiment_artifacts(
-    eval_config["exp_dir"], "result_bundle.pkl",
+    eval_config["exp_dir"],
+    "result_bundle.pkl",
 )
 
 # Build the ModelEvaluator.
 evaluator = modeval.build_model_evaluator_from_result_bundles(
     result_bundles,
-    abort_on_error = False,
+    abort_on_error=False,
     **eval_config["model_evaluator_kwargs"].to_dict(),
 )
 

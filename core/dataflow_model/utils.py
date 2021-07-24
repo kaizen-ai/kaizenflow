@@ -290,7 +290,12 @@ def yield_experiment_artifacts(
     _LOG.info("# Load artifacts '%s' from '%s'", file_name, src_dir)
     dbg.dassert_dir_exists(src_dir)
     experiment_subdirs = get_experiment_subdirs(src_dir, selected_idxs)
-    dbg.dassert_lte(1, len(experiment_subdirs), "Can't find subdirs in '%s'", experiment_subdirs)
+    dbg.dassert_lte(
+        1,
+        len(experiment_subdirs),
+        "Can't find subdirs in '%s'",
+        experiment_subdirs,
+    )
     # Iterate over experiment directories.
     for key, subdir in tqdm(experiment_subdirs.items(), desc="Loading artifacts"):
         dbg.dassert_dir_exists(subdir)

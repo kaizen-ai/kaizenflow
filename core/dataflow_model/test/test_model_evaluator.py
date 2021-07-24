@@ -1,12 +1,4 @@
 import logging
-from typing import Any, Dict, List, Tuple
-
-import pytest
-
-import helpers.dbg as dbg
-import helpers.printing as hprint
-import helpers.system_interaction as hsinte
-import helpers.unit_test as hut
 
 import numpy as np
 import pandas as pd
@@ -14,11 +6,8 @@ import pandas as pd
 import core.artificial_signal_generators as sig_gen
 import core.config as cconfig
 import core.dataflow_model.model_evaluator as modeval
-import core.dataflow_model.model_plotter as modplot
-import core.dataflow_model.utils as cdmu
 import core.statistics as stats
-import helpers.dbg as dbg
-
+import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
@@ -46,8 +35,8 @@ def generate_synthetic_rets_and_preds(n_assets: int, seed: int = 0):
     # Adjust so that all models have positive SR.
     pred_df = (
         stats.compute_annualized_sharpe_ratio(pred_df.multiply(realization))
-            .apply(np.sign)
-            .multiply(pred_df)
+        .apply(np.sign)
+        .multiply(pred_df)
     )
     _LOG.debug("pred_df=\n%s", pred_df)
     # Assemble the synthetic data.
@@ -86,15 +75,14 @@ def get_example_model_evaluator():
 
 
 class TestModelEvaluator1(hut.TestCase):
-
     def test_calculate_stats1(self) -> None:
         evaluator, eval_config = get_example_model_evaluator()
         # Calculate stats.
         pnl_stats = evaluator.calculate_stats(
-            mode=eval_config["mode"], target_volatility=eval_config["target_volatility"]
+            mode=eval_config["mode"],
+            target_volatility=eval_config["target_volatility"],
         )
         # Check.
-        #stats_df = pnl_stats.loc[["signal_quality", "correlation"]]
         actual = hut.convert_df_to_string(pnl_stats, index=True)
         self.check_string(actual)
 

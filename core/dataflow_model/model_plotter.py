@@ -26,6 +26,7 @@ _LOG = logging.getLogger(__name__)
 # results, besides plotting, so each function can return DataFrame. We can use
 # this output in the unit tests.
 
+
 class ModelPlotter:
     """
     Wrap a `ModelEvaluator` with plotting functionality.

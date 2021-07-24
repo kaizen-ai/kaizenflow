@@ -28,6 +28,7 @@ class ModelEvaluator:
     """
     Evaluate performance of financial models for returns.
     """
+
     # TODO(Paul): Add setters for `prediction_col` and `target_col`.
 
     def __init__(
@@ -54,7 +55,7 @@ class ModelEvaluator:
     # TODO(gp): Maybe `resolve_keys()` is a better name.
     def get_keys(self, keys: Optional[List[Any]]) -> List[Any]:
         """
-        Return the keys to select models. Use all available keys for `keys=None`.
+        Return the keys to select models, or all available keys for `keys=None`.
         """
         keys = keys or self.valid_keys
         dbg.dassert_is_subset(keys, self.valid_keys)
@@ -562,7 +563,11 @@ def build_model_evaluator_from_result_bundles(
             dbg.dassert_in(predictions_col, df.columns)
             data_dict[key] = df[[returns_col, predictions_col]]
         except Exception as e:
-            _LOG.error("Error while loading ResultBundle for config %d with exception:\nstr(e)", key, str(e))
+            _LOG.error(
+                "Error while loading ResultBundle for config %d with exception:\nstr(e)",
+                key,
+                str(e),
+            )
             if abort_on_error:
                 raise e
             else:
