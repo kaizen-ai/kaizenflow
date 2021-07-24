@@ -53,7 +53,7 @@ def _run_experiment(
     # TODO(gp): Rename id -> idx everywhere
     #  jackpy "meta" | grep id | grep config
     idx = config[("meta", "id")]
-    _LOG.info(hprint.frame("Executing experiment for config %d", idx))
+    _LOG.info("\n%s", hprint.frame(f"Executing experiment for config {idx}"))
     _LOG.info("config=\n%s", config)
     dst_dir = config[("meta", "dst_dir")]
     # Prepare the log file.

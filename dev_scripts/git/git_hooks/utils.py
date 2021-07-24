@@ -250,13 +250,4 @@ def check_forbidden_words(abort_on_error: bool = True) -> None:
     """
     Check that certain words are not used.
     """
-    # Use Caesar cipher from https://stackoverflow.com/questions/8886947/caesar-cipher-function-in-python/54590077#54590077
-    #    # TODO(gp): grep for EG
-    #    jackpy "Eg"
-    #    jackpy "EG" | grep -v PEG | grep -v TEG | grep -v AWS | grep -v ECR | grep -v TELEGRAM
-    #    jackpy "egid"
-    #    jackpy "lime"
-    #    jackpy "crypto"
-    #
-    #    ffind.py lime | grep -v ".git"
-    #    ffind.py e.g.,
+    # TODO(gp): grep for EG

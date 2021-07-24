@@ -177,9 +177,8 @@ def convert_df_to_string(
         "display.precision",
         decimals,
     ):
-        # Add N top and bottom rows.
+        # Add N top rows.
         output.append(df.head(n_rows).to_string(index=index))
-        output.append(df.tail(n_rows).to_string(index=index))
     # Convert into string.
     output_str = "\n".join(output)
     return output_str
