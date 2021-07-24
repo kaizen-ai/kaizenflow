@@ -47,9 +47,7 @@ hprint.config_notebook()
 # # Notebook config
 
 # %%
-# exp_dir = "/app/experiment1"
-# exp_dir = "/app/experiment.RH1E.crypto.crypto_10.5T.20210723-22_16_50"
-exp_dir = "/app/experiment.RH1E.crypto.crypto_all.5T.20210724-12_45_51"
+exp_dir = "/app/experiment1"
 
 eval_config = cconfig.get_config_from_nested_dict(
     {
@@ -57,7 +55,7 @@ eval_config = cconfig.get_config_from_nested_dict(
         "model_evaluator_kwargs": {
             "returns_col": "ret_0_vol_adj_2",
             "predictions_col": "ret_0_vol_adj_2_hat",
-            # "oos_start": "2017-01-01",
+            "oos_start": "2017-01-01",
         },
         "bh_adj_threshold": 0.1,
         "resample_rule": "W",
