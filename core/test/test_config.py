@@ -1,6 +1,9 @@
+import datetime
 import logging
 import pprint
 from typing import Any
+
+import pytest
 
 import core.config as cconfig
 import helpers.printing as hprint
@@ -33,7 +36,7 @@ def _check_roundtrip_transformation(self_: Any, config: cconfig.Config) -> str:
 # #############################################################################
 
 
-class Test_flat_config1(hut.TestCase):
+class Test_flat_config_set1(hut.TestCase):
     def test_set1(self) -> None:
         """
         Set a key and print a flat config.
@@ -87,6 +90,10 @@ class Test_flat_config1(hut.TestCase):
 
 
 class Test_flat_config_get1(hut.TestCase):
+    """
+    Test `__getitem__()` to `get()`.
+    """
+
     def test_existing_key1(self) -> None:
         """
         Look up an existing key.
@@ -272,6 +279,123 @@ class Test_nested_config_get1(hut.TestCase):
         act = str(cm.exception)
         exp = r'''"key='read_data2' not in '['nrows', 'read_data', 'single_val', 'zscore']'"'''
         self.assert_equal(act, exp, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class Test_nested_config_set1(hut.TestCase):
+    def test_not_existing_key1(self) -> None:
+        """
+        Set a key that doesn't exist.
+        """
+        config = cconfig.get_config_from_nested_dict(
+            {
+                "rets/read_data": cconfig.DUMMY,
+            }
+        )
+        exp = r"""
+        rets/read_data: __DUMMY__"""
+        self.assert_equal(str(config), hprint.dedent(exp))
+        # Set a key that doesn't exist.
+        config["rets/hello"] = "world"
+        # Check.
+        exp = r"""
+        rets/read_data: __DUMMY__
+        rets/hello: world"""
+        self.assert_equal(str(config), hprint.dedent(exp))
+
+    def test_existing_key1(self) -> None:
+        """
+        Set a key that already exists.
+        """
+        config = cconfig.get_config_from_nested_dict(
+            {
+                "rets/read_data": cconfig.DUMMY,
+            }
+        )
+        # Overwrite an existing value.
+        config["rets/read_data"] = "hello world"
+        # Check.
+        exp = r"""
+        rets/read_data: hello world"""
+        self.assert_equal(str(config), hprint.dedent(exp))
+
+    @pytest.mark.skip(reason="See AmpTask1573")
+    def test_existing_key2(self) -> None:
+        """
+        Set a key that doesn't exist in the hierarchy.
+        """
+        config = cconfig.get_config_from_nested_dict(
+            {
+                "rets/read_data": cconfig.DUMMY,
+            }
+        )
+        # Set a key that doesn't exist in the hierarchy.
+        config["rets/read_data", "source_node_name"] = "data_downloader"
+        # This also doesn't work.
+        # config["rets/read_data"]["source_node_name"] = "data_downloader"
+        # Check.
+        exp = r"""
+        rets/read_data: hello world"""
+        self.assert_equal(str(config), hprint.dedent(exp))
+
+    def test_existing_key3(self) -> None:
+        """
+        Set a key that exist in the hierarchy with a Config.
+        """
+        config = cconfig.get_config_from_nested_dict(
+            {
+                "rets/read_data": cconfig.DUMMY,
+            }
+        )
+        # Assign a config to an existing key.
+        config["rets/read_data"] = cconfig.get_config_from_nested_dict(
+            {"source_node_name": "data_downloader"}
+        )
+        # Check.
+        exp = r"""
+        rets/read_data:
+          source_node_name: data_downloader"""
+        self.assert_equal(str(config), hprint.dedent(exp))
+
+    def test_existing_key4(self) -> None:
+        """
+        Set a key that exists with a complex Config.
+        """
+        config = cconfig.get_config_from_nested_dict(
+            {
+                "rets/read_data": cconfig.DUMMY,
+            }
+        )
+        # Assign a config.
+        config["rets/read_data"] = cconfig.get_config_from_nested_dict(
+            {
+                "source_node_name": "data_downloader",
+                "source_node_kwargs": {
+                    "exchange": "NASDAQ",
+                    "symbol": "AAPL",
+                    "root_data_dir": None,
+                    "start_date": datetime.datetime(2020, 1, 4, 9, 30, 0),
+                    "end_date": datetime.datetime(2021, 1, 4, 9, 30, 0),
+                    "nrows": None,
+                    "columns": None,
+                },
+            }
+        )
+        # Check.
+        exp = r"""
+        rets/read_data:
+          source_node_name: data_downloader
+          source_node_kwargs:
+            exchange: NASDAQ
+            symbol: AAPL
+            root_data_dir: None
+            start_date: 2020-01-04 09:30:00
+            end_date: 2021-01-04 09:30:00
+            nrows: None
+            columns: None"""
+        self.assert_equal(str(config), hprint.dedent(exp))
 
 
 # #############################################################################

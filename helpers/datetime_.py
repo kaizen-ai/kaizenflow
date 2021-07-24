@@ -4,7 +4,7 @@ Import as:
 import helpers.datetime_ as hdatet
 """
 
-# TODO(gp): -> datetime_helpers
+# TODO(gp): -> datetime_helpers (as hdatetime)
 
 import calendar
 import datetime
@@ -12,25 +12,163 @@ import logging
 import re
 from typing import Callable, Iterable, Optional, Tuple, Union
 
-import dateutil.parser as dparse
+_WARNING = "\033[33mWARNING\033[0m"
 
-# TODO(gp): Try to remove / limit this dependency.
-import pandas as pd
 
-import helpers.dbg as dbg
+try:
+    import dateutil.parser as dparse
+except ModuleNotFoundError:
+    _module = "dateutil"
+    print(_WARNING + f": Can't find {_module}: continuing")
+
+
+try:
+    import pandas as pd
+except ModuleNotFoundError:
+    _module = "pandas"
+    print(_WARNING + f": Can't find {_module}: continuing")
+
+
+# TODO(gp): Check if dateutils is equivalent or better so we can simplify the
+#  dependencies.
+try:
+    import pytz
+except ModuleNotFoundError:
+    _module = "pytz"
+    print(_WARNING + f": Can't find {_module}: continuing")
+
+
+import helpers.dbg as dbg  # noqa: E402 # pylint: disable=wrong-import-position
 
 _LOG = logging.getLogger(__name__)
 
-DATETIME_TYPE = Union[pd.Timestamp, datetime.datetime]
+# We use this type to allow flexibility in the interface exposed to client.
+# Typically as soon as we enter functions exposed to users, we call `to_datetime()`
+# to convert the user-provided datetime into a `datetime.datetime` and use only
+# this type in private interfaces.
+# In general it's worth to import this file even for just the type `Datetime`,
+# since typically as soon as the caller uses this type, they also want to use
+# `to_datetime()` and `dassert_*()` functions.
+Datetime = Union[str, pd.Timestamp, datetime.datetime]
+# TODO(gp): Replace _PANDAS_DATE_TYPE with Datetime everywhere
+
+# This type is for stricter interfaces, although it is a bit of a compromise.
+# Either one wants to be flexible and allow everything that can be interpreted as
+# a datetime, or strict and then only the Python type `datetime.datetime` is used.
+StrictDatetime = Union[pd.Timestamp, datetime.datetime]
+
+# TODO(gp): Use a single name of the var (e.g., datetime_) everywhere.
 
 
+def dassert_is_datetime(datetime_: Datetime) -> None:
+    """
+    Assert that `datetime_` is of type `Datetime`.
+    """
+    dbg.dassert_isinstance(
+        datetime_,
+        (str, pd.Timestamp, datetime.datetime),
+        "datetime_='%s' of type '%s' is not a DateTimeType",
+    )
+
+
+def dassert_is_strict_datetime(datetime_: StrictDatetime) -> None:
+    """
+    Assert that `datetime_` is of type `StrictDatetime`.
+    """
+    dbg.dassert_isinstance(
+        datetime_,
+        (pd.Timestamp, datetime.datetime),
+        "datetime_='%s' of type '%s' is not a StrictDateTimeType",
+    )
+
+
+def to_datetime(datetime_: Datetime) -> datetime.datetime:
+    """
+    Assert that datetime_ is a possible datetime.
+
+    :return: tz-aware or naive datetime.datetime
+    """
+    dassert_is_datetime(datetime_)
+    if isinstance(datetime_, str):
+        datetime_ = pd.Timestamp(datetime_)
+    if isinstance(datetime_, pd.Timestamp):
+        datetime_ = datetime_.to_pydatetime()
+    return datetime_  # type: ignore
+
+
+def dassert_is_tz_naive(datetime_: StrictDatetime) -> None:
+    """
+    Assert that the passed timestamp is tz-naive, i.e., doesn't have timezone
+    info.
+    """
+    dbg.dassert_is(
+        datetime_.tzinfo, None, "datetime_='%s' is not tz naive", datetime_
+    )
+
+
+def dassert_has_tz(datetime_: StrictDatetime) -> None:
+    """
+    Assert that the passed timestamp has timezone info.
+    """
+    dbg.dassert_is_not(
+        datetime_.tzinfo,
+        None,
+        "datetime_='%s' doesn't have timezone info",
+        datetime_,
+    )
+
+
+def _dassert_has_specified_tz(
+    datetime_: StrictDatetime, tz_zones: Iterable[str]
+) -> None:
+    """
+    Assert that the passed timestamp has the timezone passed in `tz_zones`.
+    """
+    # Make sure that the passed timestamp has timezone information.
+    dassert_has_tz(datetime_)
+    # Get the timezone.
+    tz_info = datetime_.tzinfo
+    tz_zone = tz_info.zone  # type: ignore
+    has_expected_tz = tz_zone in tz_zones
+    dbg.dassert(
+        has_expected_tz,
+        "datetime_=%s (type=%s) tz_info=%s tz_info.zone=%s instead of tz_zones=%s",
+        datetime_,
+        type(datetime_),
+        tz_info,
+        tz_zone,
+        tz_zones,
+    )
+
+
+def dassert_has_UTC_tz(datetime_: StrictDatetime) -> None:
+    """
+    Assert that the passed timestamp is UTC.
+    """
+    tz_zones = (pytz.timezone("UTC").zone,)
+    _dassert_has_specified_tz(datetime_, tz_zones)
+
+
+def dassert_has_ET_tz(datetime_: StrictDatetime) -> None:
+    """
+    Assert that the passed timestamp is Eastern Time (ET).
+    """
+    tz_zones = (
+        pytz.timezone("US/Eastern").zone,
+        pytz.timezone("America/New_York").zone,
+    )
+    _dassert_has_specified_tz(datetime_, tz_zones)
+
+
+# #############################################################################
+
+
+# TODO(gp): -> get_now_timestamp()
 def get_timestamp(tz: Optional[str] = None) -> str:
     if tz == "utc":
         timestamp = datetime.datetime.utcnow()
     elif tz == "et":
         # Return in ET.
-        import pytz
-
         timestamp = datetime.datetime.now(pytz.timezone("EST"))
     else:
         dbg.dassert_is(tz, None)
@@ -38,44 +176,10 @@ def get_timestamp(tz: Optional[str] = None) -> str:
     return timestamp.strftime("%Y%m%d_%H%M%S")
 
 
-def check_et_timezone(dt: DATETIME_TYPE) -> bool:
-    # TODO(gp): Check if dateutils is better.
-    import pytz
-
-    tzinfo = dt.tzinfo
-    dbg.dassert(tzinfo, "Timestamp should be tz-aware.")
-    zone = tzinfo.zone  # type: ignore
-    ret = zone in (
-        pytz.timezone("US/Eastern").zone,
-        pytz.timezone("America/New_York").zone,
-    )
-    dbg.dassert(
-        ret,
-        "dt=%s (type=%s) tzinfo=%s (type=%s) tzinfo.zone=%s",
-        dt,
-        type(dt),
-        tzinfo,
-        type(tzinfo),
-        zone,
-    )
-    return True
+# #############################################################################
 
 
-def validate_datetime(timestamp: DATETIME_TYPE) -> pd.Timestamp:
-    """
-    Assert that timestamp is in UTC, convert to pd.Timestamp.
-
-    :param timestamp: datetime object or pd.Timestamp
-    :return: tz-aware pd.Timestamp
-    """
-    dbg.dassert_type_in(timestamp, [pd.Timestamp, datetime.datetime])
-    pd_timestamp = pd.Timestamp(timestamp)
-    dbg.dassert(pd_timestamp.tzinfo, "Timestamp should be tz-aware.")
-    dbg.dassert_eq(pd_timestamp.tzinfo.zone, "UTC", "Timezone should be UTC.")
-    return pd_timestamp
-
-
-def to_datetime(
+def to_generalized_datetime(
     dates: Union[pd.Series, pd.Index], date_standard: Optional[str] = None
 ) -> Union[pd.Series, pd.Index]:
     """
@@ -152,11 +256,12 @@ def _handle_incorrect_conversions(
                 return modified_x
 
             return "%Y-%m-%d", modify_monthly_date
+    return None
 
 
 def _shift_to_period_end(
     date: str,
-) -> Optional[Callable[[DATETIME_TYPE], DATETIME_TYPE]]:
+) -> Optional[Callable[[StrictDatetime], StrictDatetime]]:
     """
     Get function to shift the dates to the end of period.
 
@@ -165,13 +270,13 @@ def _shift_to_period_end(
         shift is needed
     """
 
-    def shift_to_month_end(x: DATETIME_TYPE) -> DATETIME_TYPE:
+    def shift_to_month_end(x: StrictDatetime) -> StrictDatetime:
         return x + pd.offsets.MonthEnd(0)
 
-    def shift_to_quarter_end(x: DATETIME_TYPE) -> DATETIME_TYPE:
+    def shift_to_quarter_end(x: StrictDatetime) -> StrictDatetime:
         return x + pd.offsets.QuarterEnd(0)
 
-    def shift_to_year_end(x: DATETIME_TYPE) -> DATETIME_TYPE:
+    def shift_to_year_end(x: StrictDatetime) -> StrictDatetime:
         return x + pd.offsets.YearEnd(0)
 
     if date[:4].isdigit():
@@ -200,6 +305,7 @@ def _shift_to_period_end(
     date_without_month = f"{date[:span[0]]}{date[span[1]:]}".strip()
     if len(date_without_month) == 4 and date_without_month.isdigit():
         return shift_to_month_end
+    return None
 
 
 def _determine_date_format(
