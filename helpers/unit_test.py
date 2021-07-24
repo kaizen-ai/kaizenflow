@@ -160,6 +160,7 @@ def convert_df_to_string(
     """
     if isinstance(df, pd.Series):
         df = df.to_frame()
+    dbg.dassert_isinstance(df, pd.DataFrame)
     n_rows = n_rows or len(df)
     output = []
     # Add title in the beginning if provided.
@@ -176,9 +177,11 @@ def convert_df_to_string(
         "display.precision",
         decimals,
     ):
-        # Add top N rows.
+        # Add N top and bottom rows.
         output.append(df.head(n_rows).to_string(index=index))
-        output_str = "\n".join(output)
+        output.append(df.tail(n_rows).to_string(index=index))
+    # Convert into string.
+    output_str = "\n".join(output)
     return output_str
 
 
@@ -1004,7 +1007,7 @@ class TestCase(unittest.TestCase):
 
         :param fuzzy_match: ignore differences in spaces and end of lines (see
           `_to_single_line_cmd`)
-        :param: purify_text: remove some artifacts (e.g., user names,
+        :param purify_text: remove some artifacts (e.g., user names,
             directories, reference to Git client)
         :param action_on_missing_golden: what to do (e.g., "assert" or "update" when
             the golden outcome is missing)

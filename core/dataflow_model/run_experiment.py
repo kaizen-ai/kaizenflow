@@ -22,6 +22,7 @@ import helpers.datetime_ as hdatetime
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.joblib_helpers as hjoblib
+import helpers.printing as hprint
 import helpers.parser as prsr
 import helpers.system_interaction as hsinte
 
@@ -52,7 +53,8 @@ def _run_experiment(
     # TODO(gp): Rename id -> idx everywhere
     #  jackpy "meta" | grep id | grep config
     idx = config[("meta", "id")]
-    _LOG.info("Executing experiment for config %d\n%s", idx, config)
+    _LOG.info(hprint.frame("Executing experiment for config %d", idx))
+    _LOG.info("config=\n%s", config)
     dst_dir = config[("meta", "dst_dir")]
     # Prepare the log file.
     # TODO(gp): -> experiment_dst_dir
