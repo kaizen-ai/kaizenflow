@@ -20,13 +20,11 @@
 
 ## Setting up a tmux session
 
-- Create a tmux session for lem + amp set-up
+- Create a tmux session for amp set-up
   ```bash
   > cd ~/src
-  > ./dev_scripts_p1/tmux_p1.sh part1
+  > ./dev_scripts/tmux.sh 1
   ```
-- TODO(gp): It might be dependent on GP's set-up and needs to be generalized, if
-  worth it for general consumption
 
 ## Development flow
 

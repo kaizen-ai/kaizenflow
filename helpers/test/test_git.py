@@ -277,7 +277,7 @@ class Test_purify_docker_file_from_git_client1(hut.TestCase):
         exp = "helpers/test/test_git.py"
         self._helper(super_module, exp_found, exp)
 
-    @pytest.mark.skipif(not git.is_lem(), reason="Run only in lem")
+    @pytest.mark.skipif(not git.is_lem(), reason="Run only in lm")
     def test3(self) -> None:
         """
         Test for a file in the repo with respect to the internal sub-module.
@@ -329,7 +329,7 @@ class Test_purify_docker_file_from_git_client2(hut.TestCase):
         exp = "helpers/test/test_git.py"
         self._helper(super_module, exp_found, exp)
 
-    @pytest.mark.skipif(not git.is_lem(), reason="Run only in lem")
+    @pytest.mark.skipif(not git.is_lem(), reason="Run only in lm")
     def test3(self) -> None:
         """
         Test for a file in the repo with respect to the internal sub-module.
@@ -343,7 +343,9 @@ class Test_purify_docker_file_from_git_client2(hut.TestCase):
         # Use this file since `purify_docker_file_from_git_client()` needs to do
         # a `find` in the repo so we need to have a fixed file structure.
         file_name = "/app/amp/helpers/test/test_git.py"
-        act_found, act = git.purify_docker_file_from_git_client(file_name, super_module)
+        act_found, act = git.purify_docker_file_from_git_client(
+            file_name, super_module
+        )
         self.assertEqual(act_found, exp_found)
         self.assertEqual(act, exp)
 
@@ -356,7 +358,9 @@ class Test_purify_docker_file_from_git_client3(hut.TestCase):
     def test1(self) -> None:
         file_name = "/venv/lib/python3.8/site-packages/invoke/tasks.py"
         super_module = False
-        act_found, act = git.purify_docker_file_from_git_client(file_name, super_module)
+        act_found, act = git.purify_docker_file_from_git_client(
+            file_name, super_module
+        )
         exp_found = False
         exp = "/venv/lib/python3.8/site-packages/invoke/tasks.py"
         self.assertEqual(act_found, exp_found)

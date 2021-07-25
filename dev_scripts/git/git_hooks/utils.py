@@ -2,17 +2,16 @@
 import inspect
 import logging
 import os
+import re
+import string
 import subprocess
 import sys
-from typing import List, Tuple
+from typing import Any, List, Optional, Tuple
 
 _LOG = logging.getLogger(__name__)
 
 # The path to the git-binary:
 _GIT_BINARY_PATH = "git"
-
-# The maximum file-size in KB for a file (not notebook) to be committed.
-_MAX_FILE_SIZE_IN_KB = 512
 
 
 # Stat copy-paste from helpers/printing.py
@@ -88,7 +87,7 @@ def _system_to_string(
             line = p.stdout.readline().decode("utf-8")  # type: ignore
             if not line:
                 break
-            print((line.rstrip("\n")))
+            # print((line.rstrip("\n")))
             output += line
         p.stdout.close()  # type: ignore
         rc = p.wait()
@@ -104,8 +103,25 @@ def _system_to_string(
 # End copy-paste.
 
 # #############################################################################
-# check_master
+# Utils.
 # #############################################################################
+
+
+def _get_files() -> List[str]:
+    """
+    Get all the files to process.
+    """
+    # Check all files staged and modified, i.e., skipping only un-tracked files.
+    # TODO(gp): In reality we should check only staged files.
+    # > git status --porcelain -uno
+    #  M dev_scripts/git/git_hooks/pre-commit.py
+    cmd = f"{_GIT_BINARY_PATH} status --porcelain --untracked-files=no"
+    rc, txt = _system_to_string(cmd)
+    _ = rc
+    file_list: List[str] = txt.splitlines()
+    # Remove the Git codes (in the first 3 characters) leaving only the file name.
+    file_list = [file_name[3:] for file_name in file_list]
+    return file_list
 
 
 def _report() -> str:
@@ -115,12 +131,21 @@ def _report() -> str:
 
 
 def _handle_error(func_name: str, error: bool, abort_on_error: bool) -> None:
+    """
+    Abort depending on the error code `error` and on the desired behavior
+    `abort_on_error`.
+    """
     if error:
         print("\n" + color_highlight(f"'{func_name}' failed", "red"))
         if abort_on_error:
             sys.exit(-1)
     else:
         print(color_highlight(f"'{func_name}' passed", "green"))
+
+
+# #############################################################################
+# check_master
+# #############################################################################
 
 
 def check_master(abort_on_error: bool = True) -> None:
@@ -205,7 +230,13 @@ def _sizeof_fmt(num: float) -> str:
 # End copy-paste.
 
 
-def check_file_size(abort_on_error: bool = True) -> None:
+# The maximum file-size in KB for a file (not notebook) to be committed.
+_MAX_FILE_SIZE_IN_KB = 512
+
+
+def check_file_size(
+    abort_on_error: bool = True, file_list: Optional[List[str]] = None
+) -> None:
     """
     Ensure that (not notebook) files are not larger than a certain size.
 
@@ -213,32 +244,29 @@ def check_file_size(abort_on_error: bool = True) -> None:
     """
     func_name = _report()
     print(f"max file size={_MAX_FILE_SIZE_IN_KB} KB")
-    # Check all files in the staging-area, i.e., everything but un-staged files.
-    # TODO(gp): Check only staged files.
-    cmd = f"{_GIT_BINARY_PATH} status --porcelain -uno"
-    rc, txt = _system_to_string(cmd)
-    _ = rc
-    file_list: List[str] = txt.splitlines()
-    # > git status --porcelain -uno
-    #  M dev_scripts/git/git_hooks/pre-commit.py
-    file_list = [file_name[3:] for file_name in file_list]
+    if file_list is None:
+        file_list = _get_files()
+    _LOG.info("Files:\n%s", "\n".join(file_list))
     # Check all files:
     error = False
     for file_name in file_list:
-        if os.path.exists(file_name):
-            stat = os.stat(file_name)
-            size = stat.st_size
-            size_as_str = _sizeof_fmt(stat.st_size)
-            _LOG.debug("%s: %s", file_name, size_as_str)
-            if not file_name.endswith(".ipynb"):
-                if size > _MAX_FILE_SIZE_IN_KB * 1024:
-                    # File is to big, abort the commit.
-                    msg = (
-                        f"Filename '{file_name}' is too big to be committed"
-                        + f": {size_as_str} > {_MAX_FILE_SIZE_IN_KB} KB"
-                    )
-                    _LOG.error(msg)
-                    error = True
+        if not os.path.exists(file_name):
+            _LOG.warning("'%s' doesn't exist", file_name)
+            continue
+        _LOG.info(file_name)
+        stat = os.stat(file_name)
+        size = stat.st_size
+        size_as_str = _sizeof_fmt(stat.st_size)
+        _LOG.debug("%s: %s", file_name, size_as_str)
+        if not file_name.endswith(".ipynb"):
+            if size > _MAX_FILE_SIZE_IN_KB * 1024:
+                # File is to big, abort the commit.
+                msg = (
+                    f"Filename '{file_name}' is too big to be committed"
+                    + f": {size_as_str} > {_MAX_FILE_SIZE_IN_KB} KB"
+                )
+                _LOG.error(msg)
+                error = True
     # Handle error.
     _handle_error(func_name, error, abort_on_error)
 
@@ -246,8 +274,118 @@ def check_file_size(abort_on_error: bool = True) -> None:
 # #############################################################################
 
 
-def check_forbidden_words(abort_on_error: bool = True) -> None:
+def caesar(text: str, step: int) -> str:
+    def shift(alphabet: str) -> str:
+        return alphabet[step:] + alphabet[:step]
+
+    alphabets = (string.ascii_lowercase, string.ascii_uppercase, string.digits)
+    shifted_alphabets = tuple(map(shift, alphabets))
+    joined_alphabets = "".join(alphabets)
+    joined_shifted_alphabets = "".join(shifted_alphabets)
+    table = str.maketrans(joined_alphabets, joined_shifted_alphabets)
+    return text.translate(table)
+
+
+_CAESAR_STEP = 7
+
+
+def _get_regex(decaesarify: bool) -> Any:
+    # Prepare the regex.
+    words = "ln lnpk sptl sltvuhkl slt jyfwav"
+    if decaesarify:
+        words = caesar(words, -_CAESAR_STEP)
+    words_as_regex = "(" + "|".join(words.split()) + ")"
+    regex = fr"""
+            (?<![^\W])     # The preceding char should not be a letter or digit char.
+            {words_as_regex}
+            (?![^\W])      # The next char cannot be a letter or digit.
+            """
+    # regex  = re.compile(r"\b(%s)\b" % "|".join(words.split()))
+    # _LOG.debug("regex=%s", regex)
+    regex = re.compile(regex, re.IGNORECASE | re.VERBOSE)
+    # _LOG.debug("regex=%s", regex)
+    return regex
+
+
+def _check_words_in_text(
+    file_name: str, lines: List[str], decaesarify: bool = True
+) -> List[str]:
     """
-    Check that certain words are not used.
+    Look for words in the content `lines` of `file_name`.
+
+    :return: violations in cfile format
     """
-    # TODO(gp): grep for EG
+    regex = _get_regex(decaesarify)
+    # Search for violations.
+    violations = []
+    for i, line in enumerate(lines):
+        _LOG.debug("%s: %s", i + 1, line)
+        m = regex.search(line)
+        if m:
+            # Remove some false positive.
+            if file_name.endswith(".ipynb") and "image/png" in line:
+                continue
+            if file_name.endswith(".html") and '<td class="ms' in line:
+                continue
+            if file_name.endswith("git.py") and "return _is_repo" in line:
+                continue
+            if file_name.endswith("ack") and "compressed" in line:
+                continue
+            # Found a violation.
+            val = m.group(1)
+            _LOG.debug("  -> found '%s'", val)
+            val = caesar(val, _CAESAR_STEP)
+            violation = f"{file_name}:{i+1}: Found '{val}'"
+            violations.append(violation)
+    return violations
+
+
+def _check_words_files(file_list: List[str]) -> bool:
+    """
+    Look for words in the passed files.
+
+    :return: error
+    """
+    _LOG.debug("Processing %d files", len(file_list))
+    # Scan all the files.
+    violations = []
+    for file_name in file_list:
+        if any(file_name.endswith(ext) for ext in "jpg png zip pkl gz".split()):
+            _LOG.warning("Skipping '%s'", file_name)
+            continue
+        if not os.path.exists(file_name):
+            _LOG.warning("'%s' doesn't exist", file_name)
+            continue
+        _LOG.info(file_name)
+        with open(file_name) as f:
+            lines = f.readlines()
+        violations.extend(_check_words_in_text(file_name, lines))
+    #
+    error = False
+    if violations:
+        file_content = "\n".join(map(str, violations))
+        _LOG.error("There are %d violations:\n%s", len(violations), file_content)
+        # Write file.
+        file_name = "cfile"
+        with open(file_name, "w") as f:
+            f.write(file_content)
+        _LOG.warning("Saved cfile in '%s'", file_name)
+        error = True
+    return error
+
+
+def check_words(
+    abort_on_error: bool = True, file_list: Optional[List[str]] = None
+) -> None:
+    """
+    Check that certain words are not used in the staged files.
+    """
+    func_name = _report()
+    # Get the files.
+    if file_list is None:
+        file_list = _get_files()
+    _LOG.info("Files:\n%s", "\n".join(file_list))
+    #
+    error = _check_words_files(file_list)
+    # Handle error.
+    _handle_error(func_name, error, abort_on_error)

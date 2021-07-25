@@ -275,8 +275,7 @@ EXPECTED VARIABLE: Test_AssertEqual1.test_not_equal1
 exp = r"""
 completed failure Lint    Run_linter
 completed       success Lint    Fast_tests
-completed       success Lint    Slow_tests
-"""'''
+completed       success Lint    Slow_tests"""'''
         if act != exp:
             hio.to_file("act.txt", act)
             hio.to_file("exp.txt", exp)

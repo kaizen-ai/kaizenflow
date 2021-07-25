@@ -128,7 +128,7 @@ def is_amp() -> bool:
 
 def is_lem() -> bool:
     """
-    Return whether we are inside `lem` and `lem` is a sub-module.
+    Return whether we are inside `lm` and `lm` is a sub-module.
     """
     return _is_repo("lem")
 
@@ -137,7 +137,7 @@ def is_lem() -> bool:
 def is_in_amp_as_submodule() -> bool:
     """
     Return whether we are in the `amp` repo and it's a sub-module, e.g., of
-    `lem`.
+    `lm`.
     """
     return is_amp() and is_inside_submodule(".")
 
@@ -184,11 +184,11 @@ def get_path_from_supermodule() -> Tuple[str, str]:
     - for amp without supermodule returns ''
     """
     cmd = "git rev-parse --show-superproject-working-tree"
-    # > cd /Users/saggese/src/.../lem/amp
+    # > cd /Users/saggese/src/.../lm/amp
     # > git rev-parse --show-superproject-working-tree
-    # /Users/saggese/src/.../lem
+    # /Users/saggese/src/.../lm
     #
-    # > cd /Users/saggese/src/.../lem
+    # > cd /Users/saggese/src/.../lm
     # > git rev-parse --show-superproject-working-tree
     # (No result)
     superproject_path: str = hsinte.system_to_one_line(cmd)[1]
@@ -434,9 +434,9 @@ def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
     # TODO(gp): make the linter happy creating this symbol that comes from the
     # `exec()`.
     exec(code, globals())  # pylint: disable=exec-used
-    current_repo_map = get_repo_map()
+    current_repo_map = get_repo_map()  # noqa: F821  # type: ignore
     if include_host_name:
-        host_name = get_host_name()
+        host_name = get_host_name()  # noqa: F821  # type: ignore
         current_repo_map = _decorate_with_host_name(current_repo_map, host_name)
     _LOG.debug(
         "include_host_name=%s, current_repo_map=\n%s",
@@ -445,7 +445,7 @@ def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
     )
     # Update the map.
     dbg.dassert_not_intersection(repo_map.keys(), current_repo_map.keys())
-    repo_map.update(get_repo_map())
+    repo_map.update(get_repo_map())  # noqa: F821  # type: ignore
     dbg.dassert_no_duplicates(repo_map.values())
     _LOG.debug(
         "include_host_name=%s, repo_map=\n%s",
@@ -523,8 +523,8 @@ def get_task_prefix_from_repo_short_name(short_name: str) -> str:
     elif short_name == "dev_tools":
         prefix = "DevToolsTask"
     else:
-        # We assume that we can build the prefix from the name (e.g., "lem" ->
-        # "LemTask").
+        # We assume that we can build the prefix from the name (e.g., "lm" ->
+        # "LmTask").
         # TODO(gp): A more general approach is to save this information inside
         #  `repo_config.py`.
         prefix = short_name.capitalize() + "Task"

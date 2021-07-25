@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
 """
-This is a git commit-hook used to check that a commit follows certain invariants.
+This is a git commit-hook used to check that a commit follows certain
+invariants.
 
-In case of violations the script will exit non-zero and abort the commit.
-User can ignore the checks with `git commit --no-verify '...'`.
+In case of violations the script will exit non-zero and abort the
+commit. User can ignore the checks with `git commit --no-verify '...'`.
 """
 
 # TODO(gp): Check these hooks
@@ -31,6 +32,7 @@ if __name__ == "__main__":
     ghutils.check_master()
     ghutils.check_author()
     ghutils.check_file_size()
+    ghutils.check_words()
     print(
         "\n"
         + ghutils.color_highlight(

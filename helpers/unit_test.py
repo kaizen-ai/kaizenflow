@@ -729,6 +729,9 @@ def _assert_equal(
     _LOG.debug("Before any transformation:")
     _LOG.debug("act='\n%s'", actual)
     _LOG.debug("exp='\n%s'", expected)
+    # Remove `\n` at the end of the strings.
+    actual = actual.rstrip("\n")
+    expected = expected.rstrip("\n")
     #
     if purify_text:
         _LOG.debug("Purifying actual")
@@ -1202,7 +1205,7 @@ class TestCase(unittest.TestCase):
                 # To add a file like
                 # amp/core/test/TestCheckSameConfigs.test_check_same_configs_error/output/test.txt
                 # we need to descend into `amp`.
-                # TODO(gp): This needs to be generalized to lem. We should `cd`
+                # TODO(gp): This needs to be generalized to `lm`. We should `cd`
                 # in the dir of the repo that includes the file.
                 file_name_in_amp = os.path.relpath(file_name_tmp, "amp")
                 cmd = "cd amp; git add -u %s" % file_name_in_amp
