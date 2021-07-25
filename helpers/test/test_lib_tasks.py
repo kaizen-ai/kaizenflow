@@ -1433,6 +1433,7 @@ class Test_pytest_failed1(hut.TestCase):
         exp = r"""core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator core/dataflow/test/test_builders.py::TestArmaReturnsBuilder core/dataflow/test/test_runners.py::TestIncrementalDagRunner core/dataflow_model/test/test_model_evaluator.py::TestModelEvaluator core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1 core/test/test_config.py::Test_subtract_config1 core/test/test_dataframe_modeler.py::TestDataFrameModeler dev_scripts/test/test_run_notebook.py::TestRunNotebook1 helpers/test/test_lib_tasks.py::Test_find_check_string_output1 helpers/test/test_printing.py::Test_dedent1"""
         # pylint: enable=line-too-long
         self._helper(file_name, target_type, exp)
+
     def _build_pytest_file_helper(self, txt: str) -> str:
         txt = hprint.dedent(txt)
         file_name = os.path.join(self.get_scratch_space(), "input.txt")
@@ -1527,7 +1528,7 @@ class Test_pytest_failed1(hut.TestCase):
 # #############################################################################
 
 
-1class Test_pytest_failed2(hut.TestCase):
+class Test_pytest_failed2(hut.TestCase):
     def test_tests1(self) -> None:
         file_name = self._build_pytest_file1()
         target_type = "tests"

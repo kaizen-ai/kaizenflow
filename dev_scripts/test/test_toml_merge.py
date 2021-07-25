@@ -1,6 +1,6 @@
 import pprint
 from io import StringIO
-from typing import Any, Dict
+from typing import Any, MutableMapping
 
 import toml
 
@@ -8,7 +8,7 @@ import dev_scripts.toml_merge as toml_merge
 import helpers.unit_test as hut
 
 
-def _to_toml(txt: str) -> str:
+def _to_toml(txt: str) -> MutableMapping[str, Any]:
     """
     Remove all empty lines and leading / trailing spaces.
     """
