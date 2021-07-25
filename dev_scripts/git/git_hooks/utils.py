@@ -302,13 +302,13 @@ def _get_regex(decaesarify: bool):
     return regex
 
 
-def _check_words_in_text(file_name: str, lines: List[str]) -> List[str]:
+def _check_words_in_text(file_name: str, lines: List[str], decaesarify: bool = True) -> List[str]:
     """
     Look for words in the content `lines` of `file_name`.
 
     :return: violations in cfile format
     """
-    regex = _get_regex(decaesarify=True)
+    regex = _get_regex(decaesarify)
     # Search for violations.
     violations = []
     for i, line in enumerate(lines):
@@ -321,6 +321,8 @@ def _check_words_in_text(file_name: str, lines: List[str]) -> List[str]:
             if file_name.endswith(".html") and "<td class=\"ms" in line:
                 continue
             if file_name.endswith("git.py") and 'return _is_repo' in line:
+                continue
+            if file_name.endswith("ack") and 'compressed' in line:
                 continue
             # Found a violation.
             val = m.group(1)

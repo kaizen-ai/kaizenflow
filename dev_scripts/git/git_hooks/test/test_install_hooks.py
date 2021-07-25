@@ -86,11 +86,15 @@ class Test_git_hooks_utils1(hut.TestCase):
         Olssv LN
         Olssv_TLN
         Olssv_LN_Hello
+        Olssv LN
         """
         txt = hprint.dedent(txt)
         file_name = "foobar.txt"
         lines = txt.split("\n")
-        act = str(ghutils._check_words_in_text(file_name, lines))
+        act = "\n".join(ghutils._check_words_in_text(file_name, lines, decaesarify=False))
         # Check.
-        exp = """["foobar.txt:1: Found 'LN'"]"""
-        self.assertEqual(act, exp)
+        exp = r"""
+        foobar.txt:1: Found 'SU'
+        foobar.txt:4: Found 'SU'"""
+        exp = hprint.dedent(exp)
+        self.assert_equal(act, exp)

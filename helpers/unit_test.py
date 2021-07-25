@@ -729,6 +729,9 @@ def _assert_equal(
     _LOG.debug("Before any transformation:")
     _LOG.debug("act='\n%s'", actual)
     _LOG.debug("exp='\n%s'", expected)
+    # Remove `\n` at the end of the strings.
+    actual = actual.rstrip("\n")
+    expected = expected.rstrip("\n")
     #
     if purify_text:
         _LOG.debug("Purifying actual")
