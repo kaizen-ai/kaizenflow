@@ -128,7 +128,7 @@ def is_amp() -> bool:
 
 def is_lem() -> bool:
     """
-    Return whether we are inside `lem` and `lem` is a sub-module.
+    Return whether we are inside `lm` and `lm` is a sub-module.
     """
     return _is_repo("lem")
 
@@ -137,7 +137,7 @@ def is_lem() -> bool:
 def is_in_amp_as_submodule() -> bool:
     """
     Return whether we are in the `amp` repo and it's a sub-module, e.g., of
-    `lem`.
+    `lm`.
     """
     return is_amp() and is_inside_submodule(".")
 
@@ -184,11 +184,11 @@ def get_path_from_supermodule() -> Tuple[str, str]:
     - for amp without supermodule returns ''
     """
     cmd = "git rev-parse --show-superproject-working-tree"
-    # > cd /Users/saggese/src/.../lem/amp
+    # > cd /Users/saggese/src/.../lm/amp
     # > git rev-parse --show-superproject-working-tree
-    # /Users/saggese/src/.../lem
+    # /Users/saggese/src/.../lm
     #
-    # > cd /Users/saggese/src/.../lem
+    # > cd /Users/saggese/src/.../lm
     # > git rev-parse --show-superproject-working-tree
     # (No result)
     superproject_path: str = hsinte.system_to_one_line(cmd)[1]
@@ -523,8 +523,8 @@ def get_task_prefix_from_repo_short_name(short_name: str) -> str:
     elif short_name == "dev_tools":
         prefix = "DevToolsTask"
     else:
-        # We assume that we can build the prefix from the name (e.g., "lem" ->
-        # "LemTask").
+        # We assume that we can build the prefix from the name (e.g., "lm" ->
+        # "LmTask").
         # TODO(gp): A more general approach is to save this information inside
         #  `repo_config.py`.
         prefix = short_name.capitalize() + "Task"

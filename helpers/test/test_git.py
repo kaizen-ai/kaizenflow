@@ -277,7 +277,7 @@ class Test_purify_docker_file_from_git_client1(hut.TestCase):
         exp = "helpers/test/test_git.py"
         self._helper(super_module, exp_found, exp)
 
-    @pytest.mark.skipif(not git.is_lem(), reason="Run only in lem")
+    @pytest.mark.skipif(not git.is_lem(), reason="Run only in lm")
     def test3(self) -> None:
         """
         Test for a file in the repo with respect to the internal sub-module.
@@ -329,7 +329,7 @@ class Test_purify_docker_file_from_git_client2(hut.TestCase):
         exp = "helpers/test/test_git.py"
         self._helper(super_module, exp_found, exp)
 
-    @pytest.mark.skipif(not git.is_lem(), reason="Run only in lem")
+    @pytest.mark.skipif(not git.is_lem(), reason="Run only in lm")
     def test3(self) -> None:
         """
         Test for a file in the repo with respect to the internal sub-module.

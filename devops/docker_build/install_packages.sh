@@ -28,7 +28,7 @@ apt-get install $APT_GET_OPTS make
 apt-get install $APT_GET_OPTS vim
 
 # This is needed to compile ujson.
-# See https://github.com/alphamatic/lem/issues/155
+# See https://github.com/alphamatic/lm/issues/155
 apt-get install $APT_GET_OPTS build-essential autoconf libtool python3-dev
 
 # Install pip.

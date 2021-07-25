@@ -177,8 +177,9 @@ def convert_df_to_string(
         "display.precision",
         decimals,
     ):
-        # Add N top rows.
+        # Add N top and bottom rows.
         output.append(df.head(n_rows).to_string(index=index))
+        output.append(df.tail(n_rows).to_string(index=index))
     # Convert into string.
     output_str = "\n".join(output)
     return output_str
@@ -1202,7 +1203,7 @@ class TestCase(unittest.TestCase):
                 # To add a file like
                 # amp/core/test/TestCheckSameConfigs.test_check_same_configs_error/output/test.txt
                 # we need to descend into `amp`.
-                # TODO(gp): This needs to be generalized to lem. We should `cd`
+                # TODO(gp): This needs to be generalized to `lm`. We should `cd`
                 # in the dir of the repo that includes the file.
                 file_name_in_amp = os.path.relpath(file_name_tmp, "amp")
                 cmd = "cd amp; git add -u %s" % file_name_in_amp

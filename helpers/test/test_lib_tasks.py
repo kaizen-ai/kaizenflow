@@ -663,7 +663,7 @@ class Test_build_run_command_line1(hut.TestCase):
         )
         self.assert_equal(act, exp)
 
-    @pytest.mark.skipif(not git.is_lem(), reason="Only run in lem")
+    @pytest.mark.skipif(not git.is_lem(), reason="Only run in lm")
     def test_run_fast_tests3(self) -> None:
         """
         Skip submodules.

@@ -31,6 +31,7 @@ if __name__ == "__main__":
     ghutils.check_master()
     ghutils.check_author()
     ghutils.check_file_size()
+    ghutils.check_words()
     print(
         "\n"
         + ghutils.color_highlight(

@@ -36,5 +36,5 @@ OrderedDict([('build-system',
                                                        ('tqdm', '*')])),
                                          ('description', ''),
                                          ('dev-dependencies', OrderedDict()),
-                                         ('name', 'lem'),
+                                         ('name', 'lm'),
                                          ('version', '0.1.0')]))]))])

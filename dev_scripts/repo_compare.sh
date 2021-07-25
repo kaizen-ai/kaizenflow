@@ -9,7 +9,7 @@ GIT_CLIENT="lem1"
 echo "GIT_CLIENT=$GIT_CLIENT"
 
 if [[ 0 == 1 ]]; then
-    # amp vs lem
+    # amp vs lm
     DIR1=$HOME/src/$GIT_CLIENT/amp
     DIR2=$HOME/src/$GIT_CLIENT
 

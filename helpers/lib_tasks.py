@@ -508,7 +508,7 @@ def git_create_branch(  # type: ignore
         issue
     :param repo_short_name: name of the GitHub repo_short_name that the `issue_id` belongs to
         - "current" (default): the current repo_short_name
-        - short name (e.g., "amp", "lem") of the branch
+        - short name (e.g., "amp", "lm") of the branch
     :param suffix: suffix (e.g., "02") to add to the branch name when using issue_id
     :param only_branch_from_master: only allow to branch from master
     """
@@ -2558,7 +2558,7 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
 def _get_repo_full_name_from_cmd(repo_short_name: str) -> Tuple[str, str]:
     """
     Convert the `repo_short_name` from command line (e.g., "current", "amp",
-    "lem") to the repo_short_name full name without host name.
+    "lm") to the repo_short_name full name without host name.
     """
     repo_full_name_with_host: str
     if repo_short_name == "current":

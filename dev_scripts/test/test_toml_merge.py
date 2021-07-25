@@ -64,7 +64,7 @@ class TestMergeToml(hut.TestCase):
         # Define expected output.
         exp = """
         [tool.poetry]
-        name = "lem"
+        name = "lm"
         version = "0.1.0"
         description = ""
         authors = [""]
@@ -114,7 +114,7 @@ class TestMergeToml(hut.TestCase):
     def _get_pyproj1() -> Dict[str, Any]:
         pyproj = """
         [tool.poetry]
-        name = "lem"
+        name = "lm"
         version = "0.1.0"
         description = ""
         authors = [""]

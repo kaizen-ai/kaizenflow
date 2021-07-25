@@ -128,7 +128,7 @@ class Test_sort_dictionary(hut.TestCase):
         dict_ = {
             "tool": {
                 "poetry": {
-                    "name": "lem",
+                    "name": "lm",
                     "version": "0.1.0",
                     "description": "",
                     "authors": [""],
