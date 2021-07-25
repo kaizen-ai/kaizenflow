@@ -288,14 +288,21 @@ def yield_experiment_artifacts(
     src_dir: str, file_name: str, selected_idxs: Optional[Iterable[int]] = None
 ) -> Iterable[Tuple[int, Any]]:
     _LOG.info("# Load artifacts '%s' from '%s'", file_name, src_dir)
+    dbg.dassert_dir_exists(src_dir)
     experiment_subdirs = get_experiment_subdirs(src_dir, selected_idxs)
+    dbg.dassert_lte(
+        1,
+        len(experiment_subdirs),
+        "Can't find subdirs in '%s'",
+        experiment_subdirs,
+    )
     # Iterate over experiment directories.
     for key, subdir in tqdm(experiment_subdirs.items(), desc="Loading artifacts"):
         dbg.dassert_dir_exists(subdir)
         file_name_tmp = os.path.join(src_dir, subdir, file_name)
         _LOG.debug("Loading '%s'", file_name_tmp)
         if not os.path.exists(file_name_tmp):
-            _LOG.warning("Can't find '{file_name_tmp}': skipping")
+            _LOG.warning("Can't find '%s': skipping", file_name_tmp)
             continue
         if file_name_tmp.endswith(".pkl"):
             # Load pickle files.
@@ -376,7 +383,7 @@ def yield_rolling_experiment_out_of_sample_df(
         for file_name_tmp in files:
             _LOG.debug("Loading '%s'", file_name_tmp)
             if not os.path.exists(file_name_tmp):
-                _LOG.warning("Can't find '{file_name_tmp}': skipping")
+                _LOG.warning("Can't find '%s': skipping", file_name_tmp)
                 continue
             if file_name_tmp.endswith(".pkl"):
                 # Load pickle files.

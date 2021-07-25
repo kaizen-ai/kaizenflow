@@ -27,9 +27,9 @@ _LOG = logging.getLogger(__name__)
 class ModelEvaluator:
     """
     Evaluate performance of financial models for returns.
-
-    TODO(Paul): Add setters for `prediction_col` and `target_col`.
     """
+
+    # TODO(Paul): Add setters for `prediction_col` and `target_col`.
 
     def __init__(
         self,
@@ -41,13 +41,25 @@ class ModelEvaluator:
     ) -> None:
         self._data = data
         dbg.dassert(data, msg="Data set must be nonempty.")
-        # Use plain attributes (Item #44).
+        # Use plain attributes (see Effective Python item #44).
         self.prediction_col = prediction_col
         self.target_col = target_col
         self.oos_start = oos_start
         #
         self.valid_keys = list(self._data.keys())
         self._stats_computer = cstats.StatsComputer()
+
+    # TODO(gp): Maybe we can use a stricter type for the keys instead of `Any`.
+    #  It might be better to always use `str` instead of using string-ified ints,
+    #  like `str(0)`.
+    # TODO(gp): Maybe `resolve_keys()` is a better name.
+    def get_keys(self, keys: Optional[List[Any]]) -> List[Any]:
+        """
+        Return the keys to select models, or all available keys for `keys=None`.
+        """
+        keys = keys or self.valid_keys
+        dbg.dassert_is_subset(keys, self.valid_keys)
+        return keys
 
     def aggregate_models(
         self,
@@ -71,8 +83,7 @@ class ModelEvaluator:
         :param mode: "all_available", "ins", or "oos"
         :return: aggregate pnl stream, position stream, statistics
         """
-        keys = keys or self.valid_keys
-        dbg.dassert_is_subset(keys, self.valid_keys)
+        keys = self.get_keys(keys)
         mode = mode or "ins"
         pnl_dict = self.compute_pnl(
             keys=keys,
@@ -200,8 +211,7 @@ class ModelEvaluator:
         :return: dict of dataframes with columns ["returns", "predictions",
             "positions", "pnl"]
         """
-        keys = keys or self.valid_keys
-        dbg.dassert_is_subset(keys, self.valid_keys)
+        keys = self.get_keys(keys)
         #
         returns = {
             k: self._data[k][self.target_col]
@@ -530,6 +540,7 @@ def build_model_evaluator_from_result_bundles(
     returns_col: str,
     predictions_col: str,
     oos_start: Optional[Any] = None,
+    abort_on_error: bool = True,
 ) -> ModelEvaluator:
     """
     Initialize a `ModelEvaluator` from `ResultBundle`s.
@@ -545,11 +556,22 @@ def build_model_evaluator_from_result_bundles(
     data_dict = {}
     # Convert each `ResultBundle` dict into a `ResultBundle` class object.
     for key, value in result_bundle_pairs:
-        result_bundle = cdataf.ResultBundle.from_dict(value)
-        df = result_bundle.result_df
-        dbg.dassert_in(returns_col, df.columns)
-        dbg.dassert_in(predictions_col, df.columns)
-        data_dict[key] = df[[returns_col, predictions_col]]
+        try:
+            result_bundle = cdataf.ResultBundle.from_dict(value)
+            df = result_bundle.result_df
+            dbg.dassert_in(returns_col, df.columns)
+            dbg.dassert_in(predictions_col, df.columns)
+            data_dict[key] = df[[returns_col, predictions_col]]
+        except Exception as e:
+            _LOG.error(
+                "Error while loading ResultBundle for config %d with exception:\nstr(e)",
+                key,
+                str(e),
+            )
+            if abort_on_error:
+                raise e
+            else:
+                _LOG.warning("Continuing as per user request")
     # Initialize `ModelEvaluator`.
     evaluator = ModelEvaluator(
         data=data_dict,

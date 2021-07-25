@@ -23,16 +23,14 @@
 ## Why Jupytext?
 
 - In few words [Jupytext](https://github.com/mwouts/jupytext) associates a
-  python representation to notebooks, which is kept in sync with the notebook in
+  Python representation to a notebook, which is kept in sync with the notebook in
   a sensible way
 
 - Jupytext allows to:
   - Edit notebooks with your favorite editor (hopefully) vi or PyCharm
-  - Keep a python version of your notebook so that you can run long computations
-    from shell instead of using notebooks
-  - Do a code review using the python code
-  - Diff changes or resolve conflicts using `git` (although
-    `git_diff_notebook.py` and `git_merge.py` achieve the same goal)
+  - Use a Python version of your notebook to run long computations from shell
+    instead of using a notebook
+  - Do a code review, diff changes, resolve conflicts using the Python code
 
 ## Reference documentation
 
@@ -41,28 +39,11 @@
 - [https://jupytext.readthedocs.io/en/latest/faq.html](https://jupytext.readthedocs.io/en/latest/faq.html)
 
 ## Installation
-**Docker approach notes:**
-- We perform following steps automatically when we build an image
-  `docker_build/init/jupyter_server_setup.sh` in `commotity_researh` repo.
-
----
-
-- It is part of `*_develop` package
-
-- To install stand-alone
-
-  ```bash
-  > conda install -c conda-forge jupytext
-  ```
-
-- Check what version you got:
+- Check what version you have:
 
   ```bash
   > jupytext --version
   1.2.1
-
-  > conda list | grep jupytext
-  jupytext                  1.2.1                         0    conda-forge
   ```
 
 - Check if you have a Jupyter config:
@@ -71,13 +52,13 @@
   > ls ~/.jupyter/jupyter_notebook_config.py
   ```
 
-  if not generate it with:
+- If you don't have a config, generate it with:
 
   ```bash
   > jupyter notebook --generate-config
   ```
 
-  edit `~/.jupyter/jupyter_notebook_config.py` and append the following:
+- Edit `~/.jupyter/jupyter_notebook_config.py` and append the following:
 
   ```python
   #------------------------------------------------------------------------------
@@ -91,34 +72,38 @@
   c.ContentsManager.outdated_text_notebook_margin = float("inf")
   ```
 
-- Now you need to restart the notebook server to pick up jupytext
+- Now you need to restart the notebook server to pick up Jupytext
 - We use the "percent" format where cells are delimited by a `%%` comment
-  (Pycharm, black, and other tools understand / respect that this is a delimiter
-  for jupyter cells)
+  - Pycharm, black, and other tools understand / respect that this is a delimiter
+    for jupyter cells
 
 ## Using Jupytext
 
-- Remember that now when you `git add` a .ipynb file you need to add also the
-  corresponding .py file.
-- Same thing if you rename (git mv) or delete a notebook. You need to explicitly
-  take care of renaming and deleting also the .py file.
-- You can use PyCharm or your favorite editor (hopefully vim) to edit the .py
-  file, when you want to do a refactoring, a replacement, or run the linter
+- Now when you `git add` a `.ipynb` file you always need to add also the
+  paired `.py` file
+- Same thing if you rename with `git mv` or delete a notebook
+  - You need to explicitly take care of renaming and deleting also the `.py` file
 
 ## Example of uses
 
 ### Test that the conversion works {#test-that-the-conversion-works}
 
-- Jupytext keeps a notebook and the paired .py file in sync
+- Jupytext keeps a notebook and the paired `.py` file in sync
   ```bash
-  > jupytext Task22.ipynb --test --to py:percent -x
+  > jupytext Task22.ipynb --test --to py:percent --stop
   > jupytext Task22.ipynb --test-strict --to py:percent
   ```
 
-### Automatic syncing when using the server
+### Manual sync
 
-- Open a notebook with your notebook server (after you have installed the
-  jupytext extension)
+    ```bash
+    > jupytext --sync --to py:percent XYZ.ipynb
+    ```
+
+### Automatic syncing when using the Jupyter server
+
+- After you have installed the jupytext extension, open a notebook with your
+  Jupyter server
   - You should see that there is a `.py` file close to the `.ipynb` file you
     opened
   - Open the `.py` file
@@ -135,32 +120,21 @@
   - Go to the jupyter notebook and reload it
   - The cell you modified has changed!
 
-### Make sure that a notebook has a companion
-
-    ```bash
-    > jupytext --sync --to py:percent XYZ.ipynb
-    ```
-
-### Manual sync
-
-    ```bash
-    > jupytext --sync --to py:percent XYZ.ipynb
-    ```
-
-### To convert a notebook to script
+### Convert a notebook to script
 
     ```bash
     > jupytext --to py:percent XYZ.ipynb
     ```
 
-### To convert a script into a notebook
+### Convert a script into a notebook
 
-    ```bash
-    # Preserve output of the notebook
-    > jupytext --to notebook --update XYZ.py
-    ```
+  ```bash
+  > jupytext --to notebook XYZ.py
+  ```
 
-- Otherwise
+### Remove metadata from a notebook
+
+- This is equivalent to transforming the paired `.py` file in a notebook
   ```bash
   > jupytext --to notebook XYZ.py
   ```
@@ -171,7 +145,7 @@
   `.ipynb` without losing the formatting
   ```bash
   > linter.py --file XYZ.py
-  jupytext --sync --to py:percent XYZ.py
+  > jupytext --sync --to py:percent XYZ.py
   ```
 
 ### Refresh all the scripts
