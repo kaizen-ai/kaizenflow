@@ -3,9 +3,9 @@
 import argparse
 import logging
 
+import dev_scripts.git.git_hooks.utils as ghutils
 import helpers.dbg as dbg
 import helpers.parser as prsr
-import dev_scripts.git.git_hooks.utils as ghutils
 
 _LOG = logging.getLogger(__name__)
 

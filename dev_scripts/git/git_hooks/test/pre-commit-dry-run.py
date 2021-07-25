@@ -23,8 +23,8 @@ def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    #parser.add_argument("--text", action="store", type=str, required=True)
-    #parser.add_argument("--step", action="store", type=int, required=True)
+    # parser.add_argument("--text", action="store", type=str, required=True)
+    # parser.add_argument("--step", action="store", type=int, required=True)
     prsr.add_verbosity_arg(parser)
     return parser
 
@@ -40,8 +40,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     file_list = file_list.split("\n")
     #
     abort_on_error = False
-    #ghutils.check_master()
-    #ghutils.check_author()
+    # ghutils.check_master()
+    # ghutils.check_author()
     ghutils.check_file_size(abort_on_error, file_list=file_list)
     ghutils.check_words(abort_on_error, file_list=file_list)
 

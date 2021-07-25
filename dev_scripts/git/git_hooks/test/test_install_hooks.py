@@ -41,18 +41,8 @@ class Test_git_hooks_utils1(hut.TestCase):
         txt = hprint.dedent(txt)
         step = 3
         transformed_txt = ghutils.caesar(txt, step)
-        txt2 = ghutils.caesar(transformed_txt , -step)
+        txt2 = ghutils.caesar(transformed_txt, -step)
         self.assert_equal(txt, txt2)
-
-    def _helper(self, txt: str, decaesarify: bool, exp: bool) -> None:
-        _LOG.debug(hprint.to_str("txt decaesarify exp"))
-        regex = ghutils._get_regex(decaesarify)
-        m = regex.search(txt)
-        _LOG.debug("  -> m=%s", bool(m))
-        if m:
-            val = m.group(1)
-            _LOG.debug("  -> val=%s", val)
-        self.assertEqual(bool(m), exp)
 
     def test_regex1(self) -> None:
         self._helper("Olssv LN", False, True)
@@ -91,10 +81,22 @@ class Test_git_hooks_utils1(hut.TestCase):
         txt = hprint.dedent(txt)
         file_name = "foobar.txt"
         lines = txt.split("\n")
-        act = "\n".join(ghutils._check_words_in_text(file_name, lines, decaesarify=False))
+        act = "\n".join(
+            ghutils._check_words_in_text(file_name, lines, decaesarify=False)
+        )
         # Check.
         exp = r"""
         foobar.txt:1: Found 'SU'
         foobar.txt:4: Found 'SU'"""
         exp = hprint.dedent(exp)
         self.assert_equal(act, exp)
+
+    def _helper(self, txt: str, decaesarify: bool, exp: bool) -> None:
+        _LOG.debug(hprint.to_str("txt decaesarify exp"))
+        regex = ghutils._get_regex(decaesarify)
+        m = regex.search(txt)
+        _LOG.debug("  -> m=%s", bool(m))
+        if m:
+            val = m.group(1)
+            _LOG.debug("  -> val=%s", val)
+        self.assertEqual(bool(m), exp)

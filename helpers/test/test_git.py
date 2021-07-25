@@ -343,7 +343,9 @@ class Test_purify_docker_file_from_git_client2(hut.TestCase):
         # Use this file since `purify_docker_file_from_git_client()` needs to do
         # a `find` in the repo so we need to have a fixed file structure.
         file_name = "/app/amp/helpers/test/test_git.py"
-        act_found, act = git.purify_docker_file_from_git_client(file_name, super_module)
+        act_found, act = git.purify_docker_file_from_git_client(
+            file_name, super_module
+        )
         self.assertEqual(act_found, exp_found)
         self.assertEqual(act, exp)
 
@@ -356,7 +358,9 @@ class Test_purify_docker_file_from_git_client3(hut.TestCase):
     def test1(self) -> None:
         file_name = "/venv/lib/python3.8/site-packages/invoke/tasks.py"
         super_module = False
-        act_found, act = git.purify_docker_file_from_git_client(file_name, super_module)
+        act_found, act = git.purify_docker_file_from_git_client(
+            file_name, super_module
+        )
         exp_found = False
         exp = "/venv/lib/python3.8/site-packages/invoke/tasks.py"
         self.assertEqual(act_found, exp_found)

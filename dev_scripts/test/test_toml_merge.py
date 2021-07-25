@@ -8,7 +8,7 @@ import dev_scripts.toml_merge as toml_merge
 import helpers.unit_test as hut
 
 
-def _to_toml(txt: str) -> None:
+def _to_toml(txt: str) -> str:
     """
     Remove all empty lines and leading / trailing spaces.
     """
@@ -111,7 +111,7 @@ class TestMergeToml(hut.TestCase):
             _ = toml_merge._merge_toml(pyprojs=pyprojs)
 
     @staticmethod
-    def _get_pyproj1() -> Dict[str, Any]:
+    def _get_pyproj1() -> str:
         pyproj = """
         [tool.poetry]
         name = "lm"

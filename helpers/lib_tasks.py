@@ -1282,8 +1282,11 @@ def docker_jupyter(  # type: ignore
         _LOG.debug("git_dir=%s", git_dir)
         last_char = os.path.basename(git_dir)[-1]
         if not last_char.isdigit():
-            _LOG.warning("The last char `%s` of the git dir `%s` is not a digit",
-                         last_char, git_dir)
+            _LOG.warning(
+                "The last char `%s` of the git dir `%s` is not a digit",
+                last_char,
+                git_dir,
+            )
             sys.exit(-1)
         git_repo_idx = int(last_char)
         _LOG.debug("git_repo_idx=%s", git_repo_idx)

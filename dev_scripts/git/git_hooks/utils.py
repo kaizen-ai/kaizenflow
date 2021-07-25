@@ -2,9 +2,11 @@
 import inspect
 import logging
 import os
+import re
+import string
 import subprocess
 import sys
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 _LOG = logging.getLogger(__name__)
 
@@ -85,7 +87,7 @@ def _system_to_string(
             line = p.stdout.readline().decode("utf-8")  # type: ignore
             if not line:
                 break
-            #print((line.rstrip("\n")))
+            # print((line.rstrip("\n")))
             output += line
         p.stdout.close()  # type: ignore
         rc = p.wait()
@@ -144,6 +146,7 @@ def _handle_error(func_name: str, error: bool, abort_on_error: bool) -> None:
 # #############################################################################
 # check_master
 # #############################################################################
+
 
 def check_master(abort_on_error: bool = True) -> None:
     """
@@ -231,7 +234,9 @@ def _sizeof_fmt(num: float) -> str:
 _MAX_FILE_SIZE_IN_KB = 512
 
 
-def check_file_size(abort_on_error: bool = True, file_list: Optional[List[str]] = None) -> None:
+def check_file_size(
+    abort_on_error: bool = True, file_list: Optional[List[str]] = None
+) -> None:
     """
     Ensure that (not notebook) files are not larger than a certain size.
 
@@ -267,24 +272,24 @@ def check_file_size(abort_on_error: bool = True, file_list: Optional[List[str]] 
 
 
 # #############################################################################
-import string
-import re
+
 
 def caesar(text: str, step: int) -> str:
-    def shift(alphabet):
+    def shift(alphabet: str) -> str:
         return alphabet[step:] + alphabet[:step]
 
     alphabets = (string.ascii_lowercase, string.ascii_uppercase, string.digits)
     shifted_alphabets = tuple(map(shift, alphabets))
-    joined_alphabets = ''.join(alphabets)
-    joined_shifted_alphabets = ''.join(shifted_alphabets)
+    joined_alphabets = "".join(alphabets)
+    joined_shifted_alphabets = "".join(shifted_alphabets)
     table = str.maketrans(joined_alphabets, joined_shifted_alphabets)
     return text.translate(table)
+
 
 _CAESAR_STEP = 7
 
 
-def _get_regex(decaesarify: bool):
+def _get_regex(decaesarify: bool) -> Any:
     # Prepare the regex.
     words = "ln lnpk sptl sltvuhkl slt jyfwav"
     if decaesarify:
@@ -295,14 +300,16 @@ def _get_regex(decaesarify: bool):
             {words_as_regex}
             (?![^\W])      # The next char cannot be a letter or digit.
             """
-    #regex  = re.compile(r"\b(%s)\b" % "|".join(words.split()))
-    #_LOG.debug("regex=%s", regex)
-    regex  = re.compile(regex, re.IGNORECASE | re.VERBOSE)
-    #_LOG.debug("regex=%s", regex)
+    # regex  = re.compile(r"\b(%s)\b" % "|".join(words.split()))
+    # _LOG.debug("regex=%s", regex)
+    regex = re.compile(regex, re.IGNORECASE | re.VERBOSE)
+    # _LOG.debug("regex=%s", regex)
     return regex
 
 
-def _check_words_in_text(file_name: str, lines: List[str], decaesarify: bool = True) -> List[str]:
+def _check_words_in_text(
+    file_name: str, lines: List[str], decaesarify: bool = True
+) -> List[str]:
     """
     Look for words in the content `lines` of `file_name`.
 
@@ -318,11 +325,11 @@ def _check_words_in_text(file_name: str, lines: List[str], decaesarify: bool = T
             # Remove some false positive.
             if file_name.endswith(".ipynb") and "image/png" in line:
                 continue
-            if file_name.endswith(".html") and "<td class=\"ms" in line:
+            if file_name.endswith(".html") and '<td class="ms' in line:
                 continue
-            if file_name.endswith("git.py") and 'return _is_repo' in line:
+            if file_name.endswith("git.py") and "return _is_repo" in line:
                 continue
-            if file_name.endswith("ack") and 'compressed' in line:
+            if file_name.endswith("ack") and "compressed" in line:
                 continue
             # Found a violation.
             val = m.group(1)
@@ -367,7 +374,9 @@ def _check_words_files(file_list: List[str]) -> bool:
     return error
 
 
-def check_words(abort_on_error: bool = True, file_list: Optional[List[str]] = None) -> None:
+def check_words(
+    abort_on_error: bool = True, file_list: Optional[List[str]] = None
+) -> None:
     """
     Check that certain words are not used in the staged files.
     """
