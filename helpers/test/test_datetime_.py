@@ -1,17 +1,143 @@
+import datetime
 import logging
 
 import pandas as pd
+import pytz
 
-import helpers.datetime_ as hdatet
+import helpers.datetime_ as hdatetime
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
 
-class Test_to_datetime(hut.TestCase):
+# #############################################################################
+
+_STR_TS_NAIVE = "2021-01-04 09:30:00"
+_STR_TS_UTC = "2021-01-04 09:30:00-00:00"
+_STR_TS_ET = "2021-01-04 09:30:00-05:00"
+
+_PD_TS_NAIVE = pd.Timestamp("2021-01-04 09:30:00")
+_PD_TS_UTC = pd.Timestamp("2021-01-04 09:30:00-00:00")
+_PD_TS_ET = pd.Timestamp("2021-01-04 09:30:00-05:00")
+
+_DT_DT_NAIVE = datetime.datetime(2021, 1, 4, 9, 30, 0)
+_DT_DT_UTC = pytz.timezone("UTC").localize(_DT_DT_NAIVE)
+_DT_DT_ET = pytz.timezone("US/Eastern").localize(_DT_DT_NAIVE)
+
+
+class Test_dassert_tz1(hut.TestCase):
+    def test_datetime_conversions(self) -> None:
+        # Get a tz-naive datetime.
+        dt = datetime.datetime(2020, 1, 5, 9, 30, 0)
+        hdatetime.dassert_is_tz_naive(dt)
+        # Localize it to UTC.
+        dt_utc = pytz.timezone("UTC").localize(dt)
+        hdatetime.dassert_has_tz(dt_utc)
+        hdatetime.dassert_has_UTC_tz(dt_utc)
+        # Convert to ET.
+        dt_et = dt_utc.astimezone(pytz.timezone("US/Eastern"))
+        hdatetime.dassert_has_tz(dt_et)
+        hdatetime.dassert_has_ET_tz(dt_et)
+        # Convert it back to UTC.
+        dt_utc2 = dt_et.astimezone(pytz.timezone("UTC"))
+        hdatetime.dassert_has_tz(dt_utc2)
+        hdatetime.dassert_has_UTC_tz(dt_utc2)
+        self.assertEqual(dt_utc, dt_utc2)
+        # Make it naive.
+        dt2 = dt_utc2.replace(tzinfo=None)
+        hdatetime.dassert_is_tz_naive(dt2)
+        self.assertEqual(dt, dt2)
+
+    def test_dassert_is_datetime1(self) -> None:
+        for obj in [
+            _STR_TS_NAIVE,
+            _STR_TS_UTC,
+            _STR_TS_ET,
+            _PD_TS_NAIVE,
+            _PD_TS_UTC,
+            _PD_TS_ET,
+            _DT_DT_NAIVE,
+            _DT_DT_UTC,
+            _DT_DT_ET,
+        ]:
+            hdatetime.dassert_is_datetime(obj)
+
+    def test_dassert_is_datetime_assert1(self) -> None:
+        datetime_ = 5
+        with self.assertRaises(AssertionError) as cm:
+            hdatetime.dassert_is_datetime(datetime_)
+        act = str(cm.exception)
+        exp = r"""
+* Failed assertion *
+instance of '5' is '<class 'int'>' instead of '(<class 'str'>, <class 'pandas._libs.tslibs.timestamps.Timestamp'>, <class 'datetime.datetime'>)'
+Caught assertion while formatting message:
+'not enough arguments for format string'
+datetime_='%s' of type '%s' is not a DateTimeType
+"""
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test_to_datetime1(self) -> None:
+        """
+        Apply `to_datetime` to a naive datetime.
+        """
+        for obj in [
+            _STR_TS_NAIVE,
+            _PD_TS_NAIVE,
+            _DT_DT_NAIVE,
+        ]:
+            _LOG.debug("obj='%s' type='%s'", obj, type(obj))
+            act = hdatetime.to_datetime(obj)
+            exp = _DT_DT_NAIVE
+            self.assertEqual(act, exp)
+            # Check the tz info.
+            hdatetime.dassert_is_tz_naive(act)
+            with self.assertRaises(AssertionError):
+                hdatetime.dassert_has_tz(act)
+                hdatetime.dassert_has_UTC_tz(act)
+                hdatetime.dassert_has_ET_tz(act)
+
+    def test_to_datetime2(self) -> None:
+        """
+        Apply `to_datetime` to a UTC datetime.
+        """
+        for obj in [
+            _STR_TS_UTC,
+            _PD_TS_UTC,
+            _DT_DT_UTC,
+        ]:
+            _LOG.debug("obj='%s' type='%s'", obj, type(obj))
+            act = hdatetime.to_datetime(obj)
+            exp = _DT_DT_UTC
+            self.assertEqual(act, exp)
+            # Check the tz info.
+            hdatetime.dassert_has_tz(act)
+            hdatetime.dassert_has_UTC_tz(act)
+            with self.assertRaises(AssertionError):
+                hdatetime.dassert_is_tz_naive(act)
+                hdatetime.dassert_has_ET_tz(act)
+
+    def test_to_datetime3(self) -> None:
+        """
+        Apply `to_datetime` to an ET datetime.
+        """
+        for obj in [
+            _STR_TS_ET,
+            _PD_TS_ET,
+            _DT_DT_ET,
+        ]:
+            _LOG.debug("obj='%s' type='%s'", obj, type(obj))
+            act = hdatetime.to_datetime(obj)
+            exp = _DT_DT_ET
+            self.assertEqual(str(act), str(exp))
+
+
+# #############################################################################
+
+
+class Test_to_generalized_datetime(hut.TestCase):
     def test_srs1(self) -> None:
         srs = pd.Series(["2010-01-01", "2010-01-02"])
-        actual = hdatet.to_datetime(srs)
+        actual = hdatetime.to_generalized_datetime(srs)
         expected = pd.Series(
             [pd.Timestamp("2010-01-01"), pd.Timestamp("2010-01-02")]
         )
@@ -19,7 +145,7 @@ class Test_to_datetime(hut.TestCase):
 
     def test_index1(self) -> None:
         idx = pd.Index(["2010-01-01", "2010-01-02"])
-        actual = hdatet.to_datetime(idx)
+        actual = hdatetime.to_generalized_datetime(idx)
         expected = pd.Index(
             [pd.Timestamp("2010-01-01"), pd.Timestamp("2010-01-02")]
         )
@@ -27,7 +153,7 @@ class Test_to_datetime(hut.TestCase):
 
     def test_daily1(self) -> None:
         srs = pd.Series(["1 Jan 2010", "2 Jan 2010"])
-        actual = hdatet.to_datetime(srs)
+        actual = hdatetime.to_generalized_datetime(srs)
         expected = pd.Series(
             [pd.Timestamp("2010-01-01"), pd.Timestamp("2010-01-02")]
         )
@@ -35,7 +161,7 @@ class Test_to_datetime(hut.TestCase):
 
     def test_weekly1(self) -> None:
         srs = pd.Series(["2021-W14", "2021-W15"])
-        actual = hdatet.to_datetime(srs)
+        actual = hdatetime.to_generalized_datetime(srs)
         expected = pd.Series(
             [pd.Timestamp("2021-04-10"), pd.Timestamp("2021-04-17")]
         )
@@ -43,7 +169,7 @@ class Test_to_datetime(hut.TestCase):
 
     def test_semiannual1(self) -> None:
         srs = pd.Series(["2021-S1", "2021-S2"])
-        actual = hdatet.to_datetime(srs)
+        actual = hdatetime.to_generalized_datetime(srs)
         expected = pd.Series(
             [pd.Timestamp("2021-06-30"), pd.Timestamp("2021-12-31")]
         )
@@ -51,7 +177,7 @@ class Test_to_datetime(hut.TestCase):
 
     def test_semiannual2(self) -> None:
         srs = pd.Series(["2021/S1", "2021/S2"])
-        actual = hdatet.to_datetime(srs)
+        actual = hdatetime.to_generalized_datetime(srs)
         expected = pd.Series(
             [pd.Timestamp("2021-06-30"), pd.Timestamp("2021-12-31")]
         )
@@ -59,7 +185,7 @@ class Test_to_datetime(hut.TestCase):
 
     def test_bimonthly1(self) -> None:
         srs = pd.Series(["2021-B1", "2021-B2"])
-        actual = hdatet.to_datetime(srs)
+        actual = hdatetime.to_generalized_datetime(srs)
         expected = pd.Series(
             [pd.Timestamp("2021-01-01"), pd.Timestamp("2021-03-01")]
         )
@@ -67,7 +193,7 @@ class Test_to_datetime(hut.TestCase):
 
     def test_monthly1(self) -> None:
         srs = pd.Series(["2020-M1", "2020-M2"])
-        actual = hdatet.to_datetime(srs)
+        actual = hdatetime.to_generalized_datetime(srs)
         expected = pd.Series(
             [pd.Timestamp("2020-01-31"), pd.Timestamp("2020-02-29")]
         )
@@ -75,7 +201,7 @@ class Test_to_datetime(hut.TestCase):
 
     def test_monthly2(self) -> None:
         srs = pd.Series(["2020M01", "2020M02"])
-        actual = hdatet.to_datetime(srs)
+        actual = hdatetime.to_generalized_datetime(srs)
         expected = pd.Series(
             [pd.Timestamp("2020-01-31"), pd.Timestamp("2020-02-29")]
         )
@@ -83,7 +209,7 @@ class Test_to_datetime(hut.TestCase):
 
     def test_monthly3(self) -> None:
         srs = pd.Series(["2020-01", "2020-02"])
-        actual = hdatet.to_datetime(srs)
+        actual = hdatetime.to_generalized_datetime(srs)
         expected = pd.Series(
             [pd.Timestamp("2020-01-31"), pd.Timestamp("2020-02-29")]
         )
@@ -91,7 +217,7 @@ class Test_to_datetime(hut.TestCase):
 
     def test_monthly4(self) -> None:
         srs = pd.Series(["2020 Jan", "2020 Feb"])
-        actual = hdatet.to_datetime(srs)
+        actual = hdatetime.to_generalized_datetime(srs)
         expected = pd.Series(
             [pd.Timestamp("2020-01-31"), pd.Timestamp("2020-02-29")]
         )
@@ -99,7 +225,7 @@ class Test_to_datetime(hut.TestCase):
 
     def test_monthly5(self) -> None:
         srs = pd.Series(["January 2020", "February 2020"])
-        actual = hdatet.to_datetime(srs)
+        actual = hdatetime.to_generalized_datetime(srs)
         expected = pd.Series(
             [pd.Timestamp("2020-01-31"), pd.Timestamp("2020-02-29")]
         )
@@ -107,7 +233,7 @@ class Test_to_datetime(hut.TestCase):
 
     def test_quarterly1(self) -> None:
         srs = pd.Series(["2020-Q1", "2020-Q2"])
-        actual = hdatet.to_datetime(srs)
+        actual = hdatetime.to_generalized_datetime(srs)
         expected = pd.Series(
             [pd.Timestamp("2020-03-31"), pd.Timestamp("2020-06-30")]
         )
@@ -115,7 +241,7 @@ class Test_to_datetime(hut.TestCase):
 
     def test_quarterly2(self) -> None:
         srs = pd.Series(["2020Q1", "2020Q2"])
-        actual = hdatet.to_datetime(srs)
+        actual = hdatetime.to_generalized_datetime(srs)
         expected = pd.Series(
             [pd.Timestamp("2020-03-31"), pd.Timestamp("2020-06-30")]
         )
@@ -123,7 +249,7 @@ class Test_to_datetime(hut.TestCase):
 
     def test_quarterly3(self) -> None:
         srs = pd.Series(["Q1 2020", "Q2 2020"])
-        actual = hdatet.to_datetime(srs)
+        actual = hdatetime.to_generalized_datetime(srs)
         expected = pd.Series(
             [pd.Timestamp("2020-03-31"), pd.Timestamp("2020-06-30")]
         )
@@ -131,7 +257,7 @@ class Test_to_datetime(hut.TestCase):
 
     def test_annual1(self) -> None:
         srs = pd.Series(["2021", "2022"])
-        actual = hdatet.to_datetime(srs)
+        actual = hdatetime.to_generalized_datetime(srs)
         expected = pd.Series(
             [pd.Timestamp("2021-12-31"), pd.Timestamp("2022-12-31")]
         )
