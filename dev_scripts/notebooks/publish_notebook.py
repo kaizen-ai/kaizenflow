@@ -320,18 +320,21 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.action == "open":
         # Open an existing HTML notebook.
         src_file_name = args.file
-        # We use AWS CLI to minimize the dependencies from Python packages.
-        aws_profile = _get_aws_profile(args)
-        # Check that the file exists.
-        cmd = f"aws s3 ls --profile {aws_profile} {src_file_name}"
-        si.system(cmd)
-        # Copy.
-        local_file_name = os.path.basename(src_file_name)
-        cmd = (
-            f"aws s3 cp --profile {aws_profile} {src_file_name} {local_file_name}"
-        )
-        si.system(cmd)
-        _LOG.info("Copied remote url to '%s'", local_file_name)
+        if hs3.is_valid_s3_path(src_file_name):
+            # We use AWS CLI to minimize the dependencies from Python packages.
+            aws_profile = _get_aws_profile(args)
+            # Check that the file exists.
+            cmd = f"aws s3 ls --profile {aws_profile} {src_file_name}"
+            si.system(cmd)
+            # Copy.
+            local_file_name = os.path.basename(src_file_name)
+            cmd = (
+                f"aws s3 cp --profile {aws_profile} {src_file_name} {local_file_name}"
+            )
+            si.system(cmd)
+            _LOG.info("Copied remote url to '%s'", local_file_name)
+        else:
+            local_file_name = src_file_name
         #
         opn.open_file(local_file_name)
         sys.exit(0)
