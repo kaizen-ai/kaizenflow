@@ -21,7 +21,6 @@ except ModuleNotFoundError:
 
 
 import helpers.dbg as dbg  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
-import helpers.printing as hprint # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
 _LOG = logging.getLogger(__name__)
 
