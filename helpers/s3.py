@@ -79,18 +79,19 @@ def get_aws_credentials(
         # TODO(gp): AWS_DEFAULT_REGION -> AWS_REGION?
         "aws_region": "AWS_DEFAULT_REGION",
     }
-    # If the AWS credentials are passed through env vars, they override the
+    # If all the AWS credentials are passed through env vars, they override the
     # config file.
-    # Check if one env var is defined.
-    env_var_override = any(
-        (env_var in os.environ and os.environ[env_var] != "")
-        for env_var in key_to_env_var.values()
-    )
+    env_var_override = False
+    set_env_vars = [(env_var in os.environ and os.environ[env_var] != "")
+        for env_var in sorted(key_to_env_var.values())]
+    if any(set_env_vars):
+        if not all(set_env_vars):
+            _LOG.warning("Some but not all AWS env vars are set (%s): ignoring",
+                         str(set_env_vars))
+        else:
+            env_var_override = True
     if env_var_override:
         _LOG.warning("Using AWS credentials from env vars")
-        # TODO(gp): Support also other S3 profiles. We can derive the names of the
-        #  env vars from aws_profile. E.g., "am" -> AWS_AM_ACCESS_KEY.
-        dbg.dassert_eq(aws_profile, "am")
         # If one variable is defined all should be defined.
         for key, env_var in key_to_env_var.items():
             _LOG.debug("'%s' in env vars=%s", env_var, env_var in os.environ)
@@ -101,7 +102,11 @@ def get_aws_credentials(
             result[key] = os.environ[env_var]
         # TODO(gp): We don't pass this through env var for now.
         result["aws_session_token"] = None
+        # TODO(gp): Support also other S3 profiles. We can derive the names of the
+        #  env vars from aws_profile. E.g., "am" -> AWS_AM_ACCESS_KEY.
+        dbg.dassert_eq(aws_profile, "am")
     else:
+        _LOG.warning("Using AWS credentials from files")
         # > more ~/.aws/credentials
         # [am]
         # aws_access_key_id=AKI...
