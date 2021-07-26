@@ -21,6 +21,7 @@ except ModuleNotFoundError:
 
 
 import helpers.dbg as dbg  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
+import helpers.printing as hprint # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
 _LOG = logging.getLogger(__name__)
 
@@ -83,12 +84,11 @@ def get_aws_credentials(
     # config file.
     env_var_override = False
     set_env_vars = [(env_var in os.environ and os.environ[env_var] != "")
-        for env_var in key_to_env_var.values()]
+        for env_var in sorted(key_to_env_var.values())]
     if any(set_env_vars):
         if not all(set_env_vars):
-            msg = hprint.to_str(" ".join(key_to_env_var.values))
             _LOG.warning("Some but not all AWS env vars are set (%s): ignoring",
-                         msg)
+                         str(set_env_vars))
         else:
             env_var_override = True
     if env_var_override:
