@@ -116,7 +116,7 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         else:
             # This df has no `x_vars` NaNs.
             df = cdu.get_x_and_forward_y_predict_df(
-                df_in, x_vars + self._sample_weight_col, y_vars, self._steps_ahead
+                df_in, x_vars + sample_weight_col, y_vars, self._steps_ahead
             )
         # Handle presence of NaNs according to `nan_mode`.
         idx = df_in.index[: -self._steps_ahead] if fit else df_in.index
@@ -137,10 +137,10 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
             forward_y_fit = cdataa.transform_to_sklearn(df, forward_y_cols)
             # Define and fit model.
             self._model = self._model_func(**self._model_kwargs)
-            self._model = (
-                self._model.fit(
-                    x_vals, forward_y_fit, sample_weight=sample_weights
-                ),
+            self._model = self._model.fit(
+                x_vals,
+                forward_y_fit,
+                sample_weight=sample_weights
             )
         dbg.dassert(
             self._model, "Model not found! Check if `fit()` has been run."
