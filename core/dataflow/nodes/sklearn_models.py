@@ -42,6 +42,7 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
+        sample_weight_col: Optional[_TO_LIST_MIXIN_TYPE] = None,
     ) -> None:
         """
         Specify the data and sklearn modeling parameters.
@@ -81,6 +82,7 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         self._col_mode = col_mode or "replace_all"
         dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
         self._nan_mode = nan_mode or "raise"
+        self._sample_weight_col = sample_weight_col
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=True)
@@ -100,16 +102,21 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         # Materialize names of x and y vars.
         x_vars = cdu.convert_to_list(self._x_vars)
         y_vars = cdu.convert_to_list(self._y_vars)
+        if self._sample_weight_col is not None:
+            sample_weight_col = cdu.convert_to_list(self._sample_weight_col)
+            dbg.dassert_eq(len(sample_weight_col), 1)
+        else:
+            sample_weight_col = []
         # Get x and forward y df.
         if fit:
             # This df has no NaNs.
             df = cdu.get_x_and_forward_y_fit_df(
-                df_in, x_vars, y_vars, self._steps_ahead
+                df_in, x_vars + sample_weight_col, y_vars, self._steps_ahead
             )
         else:
             # This df has no `x_vars` NaNs.
             df = cdu.get_x_and_forward_y_predict_df(
-                df_in, x_vars, y_vars, self._steps_ahead
+                df_in, x_vars + self._sample_weight_col, y_vars, self._steps_ahead
             )
         # Handle presence of NaNs according to `nan_mode`.
         idx = df_in.index[: -self._steps_ahead] if fit else df_in.index
@@ -120,11 +127,15 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         # Prepare x_vars in sklearn format.
         x_vals = cdataa.transform_to_sklearn(df, x_vars)
         if fit:
+            if sample_weight_col:
+                sample_weights = cdataa.transform_to_sklearn(df, sample_weight_col)
+            else:
+                sample_weights = None
             # Prepare forward y_vars in sklearn format.
             forward_y_fit = cdataa.transform_to_sklearn(df, forward_y_cols)
             # Define and fit model.
             self._model = self._model_func(**self._model_kwargs)
-            self._model = self._model.fit(x_vals, forward_y_fit)
+            self._model = self._model.fit(x_vals, forward_y_fit, sample_weight=sample_weights),
         dbg.dassert(
             self._model, "Model not found! Check if `fit()` has been run."
         )
