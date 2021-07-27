@@ -166,7 +166,7 @@ class ModelPlotter:
             rets = rets.resample(rule=resample_rule).sum(min_count=1)
         # Set kwargs.
         plot_cumulative_returns_kwargs = plot_cumulative_returns_kwargs or {
-            "mode": "pct",
+            "mode": "log",
             "unit": "%",
         }
         plot_rolling_beta_kwargs = plot_rolling_beta_kwargs or {"window": 52}
