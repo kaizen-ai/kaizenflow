@@ -49,6 +49,7 @@ class Test_git_hooks_utils1(hut.TestCase):
         self._helper("LN go", False, True)
         self._helper("Olssv_TLN", False, False)
         self._helper("Olssv_LN_Hello", False, False)
+        # jvyl_sptl.khahmsvd.uvklz.zvbyjlz
         #
         self._helper("Ego", True, False)
         self._helper("Eg_o", True, False)

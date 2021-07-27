@@ -1,3 +1,11 @@
+"""
+Contain a variety of data source nodes.
+
+Import as:
+
+import core.dataflow.nodes as cdtfn
+"""
+
 import datetime
 import logging
 import os
@@ -10,6 +18,7 @@ import core.artificial_signal_generators as cartif
 import core.dataflow.nodes.base as cdnb
 import core.finance as cfinan
 import core.pandas_helpers as pdhelp
+import helpers.datetime_ as hdatetime
 import helpers.dbg as dbg
 import helpers.s3 as hs3
 
@@ -21,14 +30,12 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
 # #############################################################################
-# Data source nodes
-# #############################################################################
 
 
+# TODO(gp): -> DataFromFixedDf?
 class ReadDataFromDf(cdnb.DataSource):
     """
-    `DataSource` node that accepts data as a DataFrame passed through the
-    constructor.
+    Data source node accepting data as a DataFrame passed through the constructor.
     """
 
     def __init__(self, nid: str, df: pd.DataFrame) -> None:
@@ -37,13 +44,29 @@ class ReadDataFromDf(cdnb.DataSource):
         self.df = df
 
 
+# #############################################################################
+
+
+# TODO(gp): -> DataFromFunction
 class DataLoader(cdnb.DataSource):
+    """
+    Data source node using the passed function and arguments to generate the data.
+    """
+
     def __init__(
         self,
         nid: str,
         func: Callable,
         func_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
+        """
+        Constructor.
+
+        :param func: function used to generate data. Typically it accepts
+            `start_date` and `end_date` as parameters
+        :param func_kwargs: kwargs passed to the function when generating and loading
+            the data
+        """
         super().__init__(nid)
         self._func = func
         self._func_kwargs = func_kwargs or {}
@@ -60,22 +83,35 @@ class DataLoader(cdnb.DataSource):
         if self.df is not None:
             return
         df_out = self._func(**self._func_kwargs)
+        # TODO(gp): Add more checks like df.index is an increasing timestamp.
         dbg.dassert_isinstance(df_out, pd.DataFrame)
         self.df = df_out
 
 
+# #############################################################################
+
+
 def load_data_from_disk(
     file_path: str,
+    # TODO(gp): -> index_col? (Like pandas naming)
     timestamp_col: Optional[str] = None,
     start_date: Optional[_PANDAS_DATE_TYPE] = None,
     end_date: Optional[_PANDAS_DATE_TYPE] = None,
+    aws_profile: Optional[str] = None,
     reader_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
+    """
+    Read data from CSV or Parquet `file_path`.
+
+    :param timestamp_col: name of the column to use as index
+    :param start_date: data to read
+    """
     reader_kwargs = reader_kwargs or {}
     kwargs = reader_kwargs.copy()
-    # Add S3 credentials.
-    s3fs = hs3.get_s3fs("am")
-    kwargs["s3fs"] = s3fs
+    # Add S3 credentials, if needed.
+    if aws_profile:
+        s3fs = hs3.get_s3fs(aws_profile)
+        kwargs["s3fs"] = s3fs
     # Get the extension.
     ext = os.path.splitext(file_path)[-1]
     # Select the reading method based on the extension.
@@ -102,6 +138,8 @@ def load_data_from_disk(
     # TODO(gp): Not sure that a view is enough to force discarding the unused
     #  rows in the DataFrame. Maybe do a copy, delete the old data, and call the
     #  garbage collector.
+    # TODO(gp): A bit inefficient since Parquet might allow to read only the needed
+    #  data.
     df = df.loc[start_date:end_date]
     dbg.dassert(not df.empty, "Dataframe is empty")
     return df
@@ -118,7 +156,7 @@ class DiskDataSource(cdnb.DataSource):
         reader_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
-        Create data source node reading CSV or Parquet data from disk.
+        Data source node reading CSV or Parquet data from disk.
 
         :param nid: node identifier
         :param file_path: path to the file to read with ".csv" or ".pq" extension
@@ -165,6 +203,9 @@ class DiskDataSource(cdnb.DataSource):
         self.df = df
 
 
+# #############################################################################
+
+
 class ArmaGenerator(cdnb.DataSource):
     """
     A node for generating price data from ARMA process returns.
@@ -179,6 +220,7 @@ class ArmaGenerator(cdnb.DataSource):
         ar_coeffs: Optional[List[float]] = None,
         ma_coeffs: Optional[List[float]] = None,
         scale: Optional[float] = None,
+        # TODO(gp): -> burn_in_period? Otherwise it seems burning without the final g.
         burnin: Optional[float] = None,
         seed: Optional[float] = None,
     ) -> None:
@@ -229,6 +271,9 @@ class ArmaGenerator(cdnb.DataSource):
         self.df = self.df.loc[self._start_date : self._end_date]
         # Use constant volume (for now).
         self.df["vol"] = 100
+
+
+# #############################################################################
 
 
 class MultivariateNormalGenerator(cdnb.DataSource):
@@ -304,3 +349,82 @@ class MultivariateNormalGenerator(cdnb.DataSource):
         df = pd.concat([prices, volume], axis=1, keys=["close", "volume"])
         self.df = df
         self.df = self.df.loc[self._start_date : self._end_date]
+
+
+# #############################################################################
+
+# TODO(gp): Create a RealTimeMixin to inject the RT behavior for all the nodes.
+# TODO(gp): Use the new approach of DataLoader, moving the function out.
+
+class RealTimeSyntheticDataSource(cdnb.DataSource):
+    """
+    Data source node that outputs data mimicking the real-time behavior.
+
+    Depending on the current wall-clock time (which is set through `set_not_time()`)
+    emits the data available up to that time.
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        columns: List[str],
+        start_date: Optional[hdatetime.Datetime] = None,
+        end_date: Optional[hdatetime.Datetime] = None,
+    ) -> None:
+        super().__init__(nid)
+        self._columns = columns
+        self._start_date = start_date
+        self._end_date = end_date
+        # This indicates what time it is, so that the node can emit data up to that
+        # time. In practice, it is used to simulate the inexorable passing of time.
+        self._now = None
+        # Store the entire history of the data.
+        self._entire_df = None
+
+    def set_now_time(self, datetime_: pd.Timestamp) -> None:
+        """
+        Set the simulation time.
+        """
+        dbg.dassert_isinstance(datetime_, pd.Timestamp)
+        # Time only moves forward.
+        if self._now is not None:
+            dbg.dassert_lte(self._now, datetime_)
+        self._now = datetime_
+
+    def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
+        self._get_data_until_now()
+        return super().fit()
+
+    def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
+        self._get_data_until_now()
+        return super().predict()
+
+    def _get_data_until_now(self) -> None:
+        """
+        Get data stored inside the node up and including `self._now`.
+
+        E.g., if `self._now = pd.Timestamp("2010-01-04 09:34:00"`)`, then self.df
+        is set to something like:
+        ```
+                                close    volume
+        ...
+        2010-01-04 09:31:00 -0.377824 -0.660321
+        2010-01-04 09:32:00 -0.508435 -0.349565
+        2010-01-04 09:33:00 -0.151361  0.139516
+        2010-01-04 09:34:00  0.046069 -0.040318
+        ```
+        """
+        dbg.dassert_is_not(self._now, None, "now needs to be set with `set_now_time()`")
+        self._lazy_load()
+        self.df = self._entire_df.loc[:self._now]
+
+    def _lazy_load(self) -> None:
+        if self._entire_df is not None:
+            return
+        dates = pd.date_range(self._start_date, self._end_date, freq="1T")
+        data = np.random.rand(len(dates), len(self._columns)) - 0.5
+        df = pd.DataFrame(data, columns=self._columns, index=dates)
+        df = df.cumsum()
+        self._entire_df = df
+
+

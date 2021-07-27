@@ -20,11 +20,17 @@ _LOG = logging.getLogger(__name__)
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
+# #############################################################################
+
+
 def DataSourceNodeFactory(
     nid: str, source_node_name: str, source_node_kwargs: Dict[str, Any]
 ) -> cdataf.DataSource:
     """
     Initialize the appropriate data source node.
+
+    The use case for this function is to create nodes depending on config parameters
+    leaving the pipeline DAG unchanged.
 
     :param nid: node identifier
     :param source_node_name: short name for data source node type
@@ -32,6 +38,8 @@ def DataSourceNodeFactory(
     :return: data source node of appropriate type instantiated with kwargs
     """
     dbg.dassert(source_node_name)
+    # TODO(gp): To simplify we can use the name of the class (e.g., "ArmaGenerator"
+    #  instead of "arma"), so we don't have to use another level of mnemonics.
     if source_node_name == "arma":
         return cdataf.ArmaGenerator(nid, **source_node_kwargs)
     elif source_node_name == "crypto_data_download":
@@ -45,10 +53,20 @@ def DataSourceNodeFactory(
         return KibotEquityReader(nid, **source_node_kwargs)
     elif source_node_name == "kibot_multi_col":
         return KibotColumnReader(nid, **source_node_kwargs)
+    elif source_node_name == "DataLoader":
+        return cdataf.DataLoader(nid, **source_node_kwargs)
     elif source_node_name == "multivariate_normal":
         return cdataf.MultivariateNormalGenerator(nid, **source_node_kwargs)
+    elif source_node_name == "real_time_synthetic":
+        return cdataf.RealTimeSyntheticDataSource(nid, **source_node_kwargs)
     else:
         raise ValueError(f"Unsupported data source node {source_node_name}")
+
+
+# #############################################################################
+
+
+# TODO(gp): Move all the nodes somewhere else (e.g., sources.py)?
 
 
 def process_timestamp(
@@ -91,8 +109,6 @@ def load_kibot(
     df_out = df_out.loc[start_date:end_date]
     return df_out
 
-
-# #############################################################################
 
 # TODO(gp): Maybe consolidate KibotDataReader and KibotColumnReader.
 
@@ -148,6 +164,9 @@ class KibotDataReader(cdataf.DataSource):
             nrows=self._nrows,
         )
         self.df = df
+
+
+# #############################################################################
 
 
 # TODO(gp): Move reading only a subset of columns into KibotS3DataLoader.
@@ -210,6 +229,9 @@ class KibotColumnReader(cdataf.DataSource):
             data = data.loc[self._start_date : self._end_date]
             dict_df[s] = data
         self.df = pd.DataFrame.from_dict(dict_df)
+
+
+# #############################################################################
 
 
 class KibotEquityReader(cdataf.DataSource):

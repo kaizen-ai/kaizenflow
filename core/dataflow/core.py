@@ -189,6 +189,8 @@ class DAG:
         )
         self._mode = mode
 
+    # TODO(gp): A bit confusing since other classes have `dag / get_dag` method that
+    # returns a DAG. Maybe -> networkx_digraph()
     @property
     def dag(self) -> networ.DiGraph:
         return self._dag
@@ -211,9 +213,10 @@ class DAG:
         """
         # In principle, `NodeInterface` could be supported; however, to do so,
         # the `run` methods below would need to be suitably modified.
-        dbg.dassert_isinstance(
-            node, Node, "Only DAGs of class `Node` are supported!"
-        )
+        # TODO(gp): issubclass?
+        # dbg.dassert_isinstance(
+        #     node, Node, "Only DAGs of class `Node` are supported!"
+        # )
         # NetworkX requires that nodes be hashable and uses hashes for
         # identifying nodes. Because our Nodes are objects whose hashes can
         # change as operations are performed, we use the `Node.nid` as the
