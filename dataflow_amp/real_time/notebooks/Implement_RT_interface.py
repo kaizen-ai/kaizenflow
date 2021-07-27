@@ -39,14 +39,8 @@ dbg.init_logger(verbosity=logging.INFO)
 # dbg.test_logger()
 _LOG = logging.getLogger(__name__)
 
-# %%
-# def print_columns(df: pd.DataFrame) -> None:
-#     print("# Columns")
-#     print("num_cols=%s" % len(df.columns))
-#     print(", ".join(df.columns.tolist()))
-
 # %% [markdown]
-# ## Real-time node
+# # Real-time node
 
 # %%
 import time
@@ -55,15 +49,17 @@ import time
 # ## Test real-time node
 
 # %%
+import core.dataflow.nodes.sources as cdtfns
+
 nid = "rtds"
 start_date = pd.Timestamp("2010-01-04 09:30:00")
 end_date = pd.Timestamp("2010-01-10 09:30:00")
 
 columns = ["close", "volume"]
-rtds = dartu.RealTimeDataSource("rtds", columns start_date, end_date)
+rtds = cdtfns.RealTimeSyntheticDataSource("rtds", columns, start_date, end_date)
 
 now = pd.Timestamp("2010-01-04 09:35:00")
-rtds.set_now_time(now)
+rtds.set_current_time(now)
     
 rtds.fit()
 
@@ -113,7 +109,7 @@ if False:
     
 else:
     start_date = pd.Timestamp("2010-01-04 09:30:00")
-    end_date = pd.Timestamp("2010-01-05 09:30:00")
+    end_date = pd.Timestamp("2010-01-04 11:30:00")
     
     source_node_kwargs = {
         "columns": ["close", "vol"],
@@ -135,33 +131,16 @@ if False:
     #nid = "compute_ret_0"
     nid = "load_prices"
     node = dag.get_node("load_prices")
-    node.set_now_time(pd.to_datetime("2010-01-06 9:30:00"))
+    node.reset_current_time()
+    node.set_current_time(pd.to_datetime("2010-01-06 9:30:00"))
 
     dict_ = dag.run_leq_node(nid, "fit")
 
     print(dict_)
 
 # %%
-# import helpers.printing as hprint
-# df = cldns.load_db_example_data()
-# print("end_time=[%s, %s]" % (min(df["end_time"]), max(df["end_time"])))
-# print(df.shape)
-
-
-# datetime_ = pd.Timestamp("2021-07-22 20:01:00-00:00")
-# print(datetime_)
-# df = cldns.get_db_data(datetime_)
-# print("end_time=[%s, %s]" % (min(df["end_time"]), max(df["end_time"])))
-# print(df.shape)
-
-# df.head()
-
-# %%
-#df[["start_time", "end_time", "timestamp_db"]]
-
-# %%
 node = dag.get_node("load_prices")
-node.reset_now_time()
+node.reset_current_time()
     
 for now in dartu.get_now_time(start_date, end_date):
     print("now=", now)
@@ -169,7 +148,7 @@ for now in dartu.get_now_time(start_date, end_date):
     if execute:
         print("Time to execute the DAG")
         node = dag.get_node("load_prices")
-        node.set_now_time(now)
+        node.set_current_time(now)
         #
         sink = dag.get_unique_sink()
         dict_ = dag.run_leq_node(sink, "fit")

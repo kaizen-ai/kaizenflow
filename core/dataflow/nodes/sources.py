@@ -1,9 +1,9 @@
 """
-Contain a variety of data source nodes.
+Implement several data source nodes.
 
 Import as:
 
-import core.dataflow.nodes as cdtfn
+import core.dataflow.nodes.sources as cdtfns
 """
 
 import datetime
@@ -377,39 +377,39 @@ class RealTimeSyntheticDataSource(cdnb.DataSource):
         self._end_date = end_date
         # This indicates what time it is, so that the node can emit data up to that
         # time. In practice, it is used to simulate the inexorable passing of time.
-        self._now = None
+        self._current_time = None
         # Store the entire history of the data.
         self._entire_df = None
 
-    def set_now_time(self, datetime_: pd.Timestamp) -> None:
+    def set_current_time(self, datetime_: pd.Timestamp) -> None:
         """
         Set the simulation time.
         """
         dbg.dassert_isinstance(datetime_, pd.Timestamp)
         # Time only moves forward.
-        if self._now is not None:
-            dbg.dassert_lte(self._now, datetime_)
-        self._now = datetime_
+        if self._current_time is not None:
+            dbg.dassert_lte(self._current_time, datetime_)
+        self._current_time = datetime_
 
-    def reset_now_time(self) -> None:
+    def reset_current_time(self) -> None:
         """
         Reset the simulation time to `None`.
         """
-        self._now = None
+        self._current_time = None
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
-        self._get_data_until_now()
+        self._get_data_until_current_time()
         return super().fit()
 
     def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
-        self._get_data_until_now()
+        self._get_data_until_current_time()
         return super().predict()
 
-    def _get_data_until_now(self) -> None:
+    def _get_data_until_current_time(self) -> None:
         """
-        Get data stored inside the node up and including `self._now`.
+        Get data stored inside the node up and including `self._current_time`.
 
-        E.g., if `self._now = pd.Timestamp("2010-01-04 09:34:00"`)`, then self.df
+        E.g., if `self._current_time = pd.Timestamp("2010-01-04 09:34:00"`)`, then self.df
         is set to something like:
         ```
                                 close    volume
@@ -420,9 +420,9 @@ class RealTimeSyntheticDataSource(cdnb.DataSource):
         2010-01-04 09:34:00  0.046069 -0.040318
         ```
         """
-        dbg.dassert_is_not(self._now, None, "now needs to be set with `set_now_time()`")
+        dbg.dassert_is_not(self._current_time, None, "The current time needs to be set with `set_current_time()`")
         self._lazy_load()
-        self.df = self._entire_df.loc[:self._now]
+        self.df = self._entire_df.loc[:self._current_time]
 
     def _lazy_load(self) -> None:
         if self._entire_df is not None:
