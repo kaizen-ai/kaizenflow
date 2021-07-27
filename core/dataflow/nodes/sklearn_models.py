@@ -138,9 +138,7 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
             # Define and fit model.
             self._model = self._model_func(**self._model_kwargs)
             self._model = self._model.fit(
-                x_vals,
-                forward_y_fit,
-                sample_weight=sample_weights
+                x_vals, forward_y_fit, sample_weight=sample_weights
             )
         dbg.dassert(
             self._model, "Model not found! Check if `fit()` has been run."
