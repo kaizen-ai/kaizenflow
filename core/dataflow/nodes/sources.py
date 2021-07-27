@@ -391,6 +391,12 @@ class RealTimeSyntheticDataSource(cdnb.DataSource):
             dbg.dassert_lte(self._now, datetime_)
         self._now = datetime_
 
+    def reset_now_time(self) -> None:
+        """
+        Reset the simulation time to `None`.
+        """
+        self._now = None
+
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._get_data_until_now()
         return super().fit()

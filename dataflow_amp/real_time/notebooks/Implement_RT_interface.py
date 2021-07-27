@@ -113,10 +113,10 @@ if False:
     
 else:
     start_date = pd.Timestamp("2010-01-04 09:30:00")
-    end_date = pd.Timestamp("2010-01-10 09:30:00")
+    end_date = pd.Timestamp("2010-01-05 09:30:00")
     
     source_node_kwargs = {
-        "columns": ["close", "volume"],
+        "columns": ["close", "vol"],
         "start_date": start_date,
         "end_date": end_date,
     }
@@ -128,22 +128,18 @@ else:
 print(config)
 
 # %%
-#config = config.copy()
-#dag_runner = cdataf.PredictionDagRunner(
-#    config, config["meta"]["dag_builder"]
-#)
-
-# %%
-#nid = "compute_ret_0"
-nid = "load_prices"
 dag = dag_builder.get_dag(config)
 
-node = dag.get_node("load_prices")
-node.set_now_time(pd.to_datetime("2010-01-04 9:30:00"))
+# %%
+if False:
+    #nid = "compute_ret_0"
+    nid = "load_prices"
+    node = dag.get_node("load_prices")
+    node.set_now_time(pd.to_datetime("2010-01-06 9:30:00"))
 
-dict_ = dag.run_leq_node(nid, "fit")
+    dict_ = dag.run_leq_node(nid, "fit")
 
-print(dict_)
+    print(dict_)
 
 # %%
 # import helpers.printing as hprint
@@ -164,14 +160,18 @@ print(dict_)
 #df[["start_time", "end_time", "timestamp_db"]]
 
 # %%
-for now in dartu.get_now_time():
+node = dag.get_node("load_prices")
+node.reset_now_time()
+    
+for now in dartu.get_now_time(start_date, end_date):
     print("now=", now)
     execute = dartu.is_dag_to_execute(now)
     if execute:
         print("Time to execute the DAG")
-        # Get the data from the DB.
-        df = dartu.get_db_data(now)
-        print("end_time=[%s, %s]" % (min(df["end_time"]), max(df["end_time"])))
-        display(df.head(3))
-        print(df.shape)
+        node = dag.get_node("load_prices")
+        node.set_now_time(now)
+        #
+        sink = dag.get_unique_sink()
+        dict_ = dag.run_leq_node(sink, "fit")
+        print(dict_["df_out"].tail(3))
 
