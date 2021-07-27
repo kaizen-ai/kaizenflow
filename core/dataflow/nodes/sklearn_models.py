@@ -128,14 +128,20 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         x_vals = cdataa.transform_to_sklearn(df, x_vars)
         if fit:
             if sample_weight_col:
-                sample_weights = cdataa.transform_to_sklearn(df, sample_weight_col)
+                sample_weights = cdataa.transform_to_sklearn(
+                    df, sample_weight_col
+                )
             else:
                 sample_weights = None
             # Prepare forward y_vars in sklearn format.
             forward_y_fit = cdataa.transform_to_sklearn(df, forward_y_cols)
             # Define and fit model.
             self._model = self._model_func(**self._model_kwargs)
-            self._model = self._model.fit(x_vals, forward_y_fit, sample_weight=sample_weights),
+            self._model = (
+                self._model.fit(
+                    x_vals, forward_y_fit, sample_weight=sample_weights
+                ),
+            )
         dbg.dassert(
             self._model, "Model not found! Check if `fit()` has been run."
         )
