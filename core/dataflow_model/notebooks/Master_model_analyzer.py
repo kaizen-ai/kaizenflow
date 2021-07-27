@@ -91,7 +91,7 @@ plotter = modplot.ModelPlotter(evaluator)
 pnl_stats = evaluator.calculate_stats(
     mode=eval_config["mode"], target_volatility=eval_config["target_volatility"]
 )
-display(pnl_stats.loc[["signal_quality", "correlation"]])
+display(pnl_stats)
 
 # %% [markdown]
 # ## Model selection
@@ -180,6 +180,9 @@ plotter.plot_rets_and_vol(
     mode=eval_config["mode"],
     target_volatility=eval_config["target_volatility"],
 )
+
+# %%
+assert(0)
 
 # %%
 plotter.plot_positions(
