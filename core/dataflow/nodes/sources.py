@@ -32,7 +32,7 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 # #############################################################################
 
 
-# TODO(gp): -> DataFromFixedDf?
+# TODO(gp): -> DataSourceFromFixedDf?
 class ReadDataFromDf(cdnb.DataSource):
     """
     Data source node accepting data as a DataFrame passed through the constructor.
@@ -47,7 +47,7 @@ class ReadDataFromDf(cdnb.DataSource):
 # #############################################################################
 
 
-# TODO(gp): -> DataFromFunction
+# TODO(gp): -> DataSourceFromFunction
 class DataLoader(cdnb.DataSource):
     """
     Data source node using the passed function and arguments to generate the data.
@@ -146,6 +146,10 @@ def load_data_from_disk(
 
 
 class DiskDataSource(cdnb.DataSource):
+    """
+    Data source node reading CSV or Parquet data from disk.
+    """
+
     def __init__(
         self,
         nid: str,
@@ -156,7 +160,7 @@ class DiskDataSource(cdnb.DataSource):
         reader_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
-        Data source node reading CSV or Parquet data from disk.
+        Constructor.
 
         :param nid: node identifier
         :param file_path: path to the file to read with ".csv" or ".pq" extension
@@ -206,9 +210,10 @@ class DiskDataSource(cdnb.DataSource):
 # #############################################################################
 
 
+# TODO(gp): -> ArmaDataSource
 class ArmaGenerator(cdnb.DataSource):
     """
-    A node for generating price data from ARMA process returns.
+    Data source node generating price data from ARMA process returns.
     """
 
     def __init__(
@@ -238,9 +243,6 @@ class ArmaGenerator(cdnb.DataSource):
         )
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
-        """
-        :return: training set as df
-        """
         self._lazy_load()
         return super().fit()
 
@@ -267,8 +269,8 @@ class ArmaGenerator(cdnb.DataSource):
         # TODO(*): Allow specification of annualized target volatility.
         prices = np.exp(0.1 * rets.cumsum())
         prices.name = "close"
-        self.df = prices.to_frame()
-        self.df = self.df.loc[self._start_date : self._end_date]
+        df = prices.to_frame()
+        self.df = df.loc[self._start_date : self._end_date]
         # Use constant volume (for now).
         self.df["vol"] = 100
 
@@ -276,9 +278,10 @@ class ArmaGenerator(cdnb.DataSource):
 # #############################################################################
 
 
+# TODO(gp): -> MultivariateNormalDataSource
 class MultivariateNormalGenerator(cdnb.DataSource):
     """
-    A node for generating price data from multivariate normal returns.
+    Data source node generating price data from multivariate normal returns.
     """
 
     def __init__(
@@ -306,9 +309,6 @@ class MultivariateNormalGenerator(cdnb.DataSource):
         )
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
-        """
-        :return: training set as df
-        """
         self._lazy_load(fit=True)
         return super().fit()
 
@@ -347,8 +347,7 @@ class MultivariateNormalGenerator(cdnb.DataSource):
             index=prices.index, columns=prices.columns, data=100
         )
         df = pd.concat([prices, volume], axis=1, keys=["close", "volume"])
-        self.df = df
-        self.df = self.df.loc[self._start_date : self._end_date]
+        self.df = df.loc[self._start_date : self._end_date]
 
 
 # #############################################################################
@@ -361,7 +360,7 @@ class RealTimeSyntheticDataSource(cdnb.DataSource):
     Data source node that outputs data mimicking the real-time behavior.
 
     Depending on the current wall-clock time (which is set through `set_not_time()`)
-    emits the data available up to that time.
+    this node emits the data available up and including that time.
     """
 
     def __init__(
@@ -372,18 +371,19 @@ class RealTimeSyntheticDataSource(cdnb.DataSource):
         end_date: Optional[hdatetime.Datetime] = None,
     ) -> None:
         super().__init__(nid)
+        dbg.dassert_container_type(columns, list, str)
         self._columns = columns
         self._start_date = start_date
         self._end_date = end_date
-        # This indicates what time it is, so that the node can emit data up to that
-        # time. In practice, it is used to simulate the inexorable passing of time.
+        # This indicates what is the current time is, so that the node can emit data
+        # up to that time.
         self._current_time = None
         # Store the entire history of the data.
         self._entire_df = None
 
     def set_current_time(self, datetime_: pd.Timestamp) -> None:
         """
-        Set the simulation time.
+        Set the current simulation time.
         """
         dbg.dassert_isinstance(datetime_, pd.Timestamp)
         # Time only moves forward.
@@ -393,7 +393,7 @@ class RealTimeSyntheticDataSource(cdnb.DataSource):
 
     def reset_current_time(self) -> None:
         """
-        Reset the simulation time to `None`.
+        Reset the current simulation time to `None`.
         """
         self._current_time = None
 
@@ -407,20 +407,21 @@ class RealTimeSyntheticDataSource(cdnb.DataSource):
 
     def _get_data_until_current_time(self) -> None:
         """
-        Get data stored inside the node up and including `self._current_time`.
+        Set the data stored inside the node up and including `self._current_time`.
 
-        E.g., if `self._current_time = pd.Timestamp("2010-01-04 09:34:00"`)`, then self.df
-        is set to something like:
+        E.g., if `self._current_time = pd.Timestamp("2010-01-04 09:34:00"`)`,
+        then `self.df` looks like:
         ```
                                 close    volume
-        ...
+        ...                       ...       ...
         2010-01-04 09:31:00 -0.377824 -0.660321
         2010-01-04 09:32:00 -0.508435 -0.349565
         2010-01-04 09:33:00 -0.151361  0.139516
         2010-01-04 09:34:00  0.046069 -0.040318
         ```
         """
-        dbg.dassert_is_not(self._current_time, None, "The current time needs to be set with `set_current_time()`")
+        dbg.dassert_is_not(self._current_time, None,
+                           "The current time needs to be set with `set_current_time()`")
         self._lazy_load()
         self.df = self._entire_df.loc[:self._current_time]
 
@@ -428,9 +429,8 @@ class RealTimeSyntheticDataSource(cdnb.DataSource):
         if self._entire_df is not None:
             return
         dates = pd.date_range(self._start_date, self._end_date, freq="1T")
+        # Random walk with increments independent and uniform in [-0.5, 0.5].
         data = np.random.rand(len(dates), len(self._columns)) - 0.5
         df = pd.DataFrame(data, columns=self._columns, index=dates)
         df = df.cumsum()
         self._entire_df = df
-
-
