@@ -33,7 +33,7 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 # #############################################################################
 
 
-# TODO(gp): -> DataSourceFromFixedDf?
+# TODO(gp): -> DfDataSource
 class ReadDataFromDf(cdnb.DataSource):
     """
     Data source node accepting data as a DataFrame passed through the constructor.
@@ -48,7 +48,7 @@ class ReadDataFromDf(cdnb.DataSource):
 # #############################################################################
 
 
-# TODO(gp): -> DataSourceFromFunction
+# TODO(gp): -> FunctionDataSource
 class DataLoader(cdnb.DataSource):
     """
     Data source node using the passed function and arguments to generate the data.
@@ -105,7 +105,6 @@ def load_data_from_disk(
     Read data from CSV or Parquet `file_path`.
 
     :param timestamp_col: name of the column to use as index
-    :param start_date: data to read
     """
     reader_kwargs = reader_kwargs or {}
     kwargs = reader_kwargs.copy()
@@ -148,7 +147,7 @@ def load_data_from_disk(
 
 class DiskDataSource(cdnb.DataSource):
     """
-    Data source node reading CSV or Parquet data from disk.
+    Data source node reading CSV or Parquet data from disk or S3.
     """
 
     def __init__(
@@ -356,6 +355,66 @@ class MultivariateNormalGenerator(cdnb.DataSource):
 # TODO(gp): Create a RealTimeMixin to inject the RT behavior for all the nodes.
 # TODO(gp): Use the new approach of DataLoader, moving the function out.
 
+class SimulatedRealTimeMixin:
+
+    def __init__(self):
+        # This indicates what is the current time is, so that the node can emit data
+        # up to that time.
+        self._current_time = None
+        # Store the entire history of the data.
+        self._entire_df = None
+
+    def set_current_time(self, datetime_: pd.Timestamp) -> None:
+        """
+        Set the current simulation time.
+        """
+        dbg.dassert_isinstance(datetime_, pd.Timestamp)
+        # Time only moves forward.
+        if self._current_time is not None:
+            dbg.dassert_lte(self._current_time, datetime_)
+        self._current_time = datetime_
+
+    def reset_current_time(self) -> None:
+        """
+        Reset the current simulation time to `None`.
+        """
+        self._current_time = None
+
+    def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
+        self._get_data_until_current_time()
+        return super().fit()
+
+    def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
+        self._get_data_until_current_time()
+        return super().predict()
+
+    def _get_data_until_current_time(self) -> None:
+        """
+        Set the data stored inside the node up and including `self._current_time`.
+
+        E.g., if `self._current_time = pd.Timestamp("2010-01-04 09:34:00"`)`,
+        then `self.df` looks like:
+        ```
+                                close    volume
+        ...                       ...       ...
+        2010-01-04 09:31:00 -0.377824 -0.660321
+        2010-01-04 09:32:00 -0.508435 -0.349565
+        2010-01-04 09:33:00 -0.151361  0.139516
+        2010-01-04 09:34:00  0.046069 -0.040318
+        ```
+        """
+        dbg.dassert_is_not(self._current_time, None,
+                           "The current time needs to be set with `set_current_time()`")
+        self._lazy_load()
+        self.df = self._entire_df.loc[:self._current_time]
+
+    def _lazy_load(self) -> None:
+        if self._entire_df is not None:
+            return
+        self._entire_df = df
+
+
+# -> SimulatedRealTime
 class RealTimeSyntheticDataSource(cdnb.DataSource):
     """
     Data source node that outputs data mimicking the real-time behavior.
