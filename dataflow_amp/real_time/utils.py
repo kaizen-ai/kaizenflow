@@ -20,7 +20,6 @@ import helpers.printing as hprint
 _LOG = logging.getLogger(__name__)
 
 
-#@lru_cache.
 def load_db_example_data_from_disk() -> pd.DataFrame:
     """
     Load some example data from the RT DB.

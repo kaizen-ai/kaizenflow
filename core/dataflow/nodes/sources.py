@@ -19,6 +19,7 @@ import core.dataflow.nodes.base as cdnb
 import core.finance as cfinan
 import core.pandas_helpers as pdhelp
 import helpers.datetime_ as hdatetime
+import helpers.hnumpy as hnumpy
 import helpers.dbg as dbg
 import helpers.s3 as hs3
 
@@ -369,17 +370,30 @@ class RealTimeSyntheticDataSource(cdnb.DataSource):
         columns: List[str],
         start_date: Optional[hdatetime.Datetime] = None,
         end_date: Optional[hdatetime.Datetime] = None,
+        freq: str = "1T",
+        seed: int = 42,
     ) -> None:
+        """
+        Constructor.
+        
+        :param columns: list of columns to generate
+        :param freq: Pandas freq (e.g., `1T` for 1 minute) used to iterate between
+            [start_date, end_date]
+        """
         super().__init__(nid)
         dbg.dassert_container_type(columns, list, str)
         self._columns = columns
         self._start_date = start_date
         self._end_date = end_date
+        dbg.dassert_isinstance(freq, str)
+        self._freq = freq
+        dbg.dassert_isinstance(seed, int)
+        self._seed = seed
         # This indicates what is the current time is, so that the node can emit data
         # up to that time.
-        self._current_time = None
+        self._current_time : Optional[pd.Timestamp] = None
         # Store the entire history of the data.
-        self._entire_df = None
+        self._entire_df : Optional[pd.DataFrame] = None
 
     def set_current_time(self, datetime_: pd.Timestamp) -> None:
         """
@@ -430,7 +444,8 @@ class RealTimeSyntheticDataSource(cdnb.DataSource):
             return
         dates = pd.date_range(self._start_date, self._end_date, freq="1T")
         # Random walk with increments independent and uniform in [-0.5, 0.5].
-        data = np.random.rand(len(dates), len(self._columns)) - 0.5
+        with hnumpy.random_seed_context(self._seed):
+            data = np.random.rand(len(dates), len(self._columns)) - 0.5
         df = pd.DataFrame(data, columns=self._columns, index=dates)
         df = df.cumsum()
         self._entire_df = df

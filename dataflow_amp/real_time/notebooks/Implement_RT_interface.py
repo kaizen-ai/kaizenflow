@@ -58,8 +58,8 @@ end_date = pd.Timestamp("2010-01-10 09:30:00")
 columns = ["close", "volume"]
 rtds = cdtfns.RealTimeSyntheticDataSource("rtds", columns, start_date, end_date)
 
-now = pd.Timestamp("2010-01-04 09:35:00")
-rtds.set_current_time(now)
+current_time = pd.Timestamp("2010-01-04 09:35:00")
+rtds.set_current_time(current_time)
     
 rtds.fit()
 

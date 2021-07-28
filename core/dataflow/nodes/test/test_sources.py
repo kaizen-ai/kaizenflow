@@ -157,3 +157,30 @@ class TestMultivariateNormalGenerator(hut.TestCase):
         df = node.fit()["df_out"]
         act = hut.convert_df_to_string(df, index=True, decimals=2)
         self.check_string(act)
+
+
+class TestRealTimeSyntheticDataSource1(hut.TestCase):
+
+    def test1(self) -> None:
+        """
+        Setting the current time to a specific datetime, the node generates values
+        up and including that datetime.
+        """
+        # Build the node.
+        nid = "rtds"
+        columns = ["close", "volume"]
+        start_date = pd.Timestamp("2010-01-04 09:30:00")
+        end_date = pd.Timestamp("2010-01-05 09:30:00")
+        seed = 42
+        rtds = dtf.RealTimeSyntheticDataSource(nid, columns, start_date=start_date, end_date=end_date, seed=seed)
+        #
+        current_time = pd.Timestamp("2010-01-04 09:35:00")
+        rtds.set_current_time(current_time)
+        dict_ = rtds.fit()
+        # Check.
+        df = dict_["df_out"]
+        act = list(map(str, df.index.tolist()))
+        exp = ['2010-01-04 09:30:00', '2010-01-04 09:31:00',
+               '2010-01-04 09:32:00', '2010-01-04 09:33:00',
+               '2010-01-04 09:34:00', '2010-01-04 09:35:00']
+        self.assert_equal(str(act), str(exp))
