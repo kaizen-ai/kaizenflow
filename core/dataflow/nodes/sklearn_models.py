@@ -122,7 +122,7 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         idx = df_in.index[: -self._steps_ahead] if fit else df_in.index
         self._handle_nans(idx, df.index)
         # Isolate the forward y piece of `df`.
-        forward_y_cols = df.drop(x_vars, axis=1).columns.to_list()
+        forward_y_cols = df.drop(x_vars + sample_weight_col, axis=1).columns.to_list()
         forward_y_df = df[forward_y_cols]
         # Prepare x_vars in sklearn format.
         x_vals = cdataa.transform_to_sklearn(df, x_vars)
@@ -130,11 +130,13 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
             if sample_weight_col:
                 sample_weights = cdataa.transform_to_sklearn(
                     df, sample_weight_col
-                )
+                ).flatten()
             else:
                 sample_weights = None
+            _LOG.info("sample_weights=%s" % sample_weights)
             # Prepare forward y_vars in sklearn format.
             forward_y_fit = cdataa.transform_to_sklearn(df, forward_y_cols)
+            _LOG.info("forward_y_fit=%s" % forward_y_fit)
             # Define and fit model.
             self._model = self._model_func(**self._model_kwargs)
             self._model = self._model.fit(
