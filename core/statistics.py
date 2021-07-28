@@ -1193,6 +1193,27 @@ def compute_implied_sharpe_ratio(srs: pd.Series, corr: float) -> float:
     return sr
 
 
+def compute_hit_rate_implied_by_correlation(corr: float) -> float:
+    """
+    Infer hit rate given `corr`.
+
+    This approximation is only valid under certain distributional assumptions.
+    """
+    const = np.sqrt(np.pi / 2)
+    return sp.stats.norm.sf(-1 * const * corr)
+
+
+def compute_correlation_implied_by_hit_rate(hit_rate: float) -> float:
+    """
+    Infer correlation given `hit_rate`. Assumes normal-like series.
+
+    This inverts `compute_hit_rate_implied_by_correlation()` and is similarly
+    only valid under certain distributional assumptions.
+    """
+    const = np.sqrt(2 / np.pi)
+    return const * sp.stats.norm.ppf(hit_rate)
+
+
 # #############################################################################
 # Drawdown statistics
 # #############################################################################
