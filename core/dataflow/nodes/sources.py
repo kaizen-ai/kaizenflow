@@ -414,8 +414,12 @@ class SimulatedRealTimeMixin:
         self._entire_df = df
 
 
+# #############################################################################
+
+
 # -> SimulatedRealTime
-class RealTimeSyntheticDataSource(cdnb.DataSource):
+# TODO(gp): Express this in terms of the mixin.
+class SimulatedRealTimeSyntheticDataSource(cdnb.DataSource):
     """
     Data source node that outputs data mimicking the real-time behavior.
 

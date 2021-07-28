@@ -275,7 +275,7 @@ def read_csv(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
     """
     stream, args, kwargs = _get_local_or_s3_stream(file_name, *args, **kwargs)
     # Handle zipped files.
-    if any(file_name.endswith(ext) for ext in (".gzip", ".gz")):
+    if any(file_name.endswith(ext) for ext in (".gzip", ".gz", ".tgz")):
         dbg.dassert_not_in("compression", kwargs)
         kwargs["compression"] = "gzip"
     elif file_name.endswith(".zip"):
