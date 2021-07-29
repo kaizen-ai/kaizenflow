@@ -550,6 +550,88 @@ def compute_smooth_moving_average(
     return sum(map(ema_eval, range(min_depth, max_depth + 1))) / denom
 
 
+def extract_smooth_moving_average_weights(
+    signal: Union[pd.DataFrame, pd.Series],
+    tau: float,
+    min_depth: int = 1,
+    max_depth: int = 1,
+    index_location: Optional[Any] = None,
+) -> pd.DataFrame:
+    """
+    Return present and historical weights used in SMA up to `index_location`.
+
+    This can be used in isolation to inspect SMA weights, or can be used on
+    data to, e.g., generate training data weights.
+
+    TODO(Paul): Consider generalizing this to also work with other filters.
+
+    :param signal: data that provides an index (for reindexing). No column
+        values used.
+    :param tau: as in `compute_smooth_moving_average()`
+    :param min_depth: as in `compute_smooth_moving_average()`
+    :param max_depth: as in `compute_smooth_moving_average()`
+    :index_location: current and latest value to be considered operated upon by
+        the smooth moving average (e.g., the last in-sample index). If `None`,
+        then use the last index location of `signal`.
+    :return: dataframe with two columns of weights:
+        1. absolute weights (e.g., weights sum to 1)
+        2. relative weights (weight at `index_location` is equal to `1`, and
+           prior weights are expressed relative to this value
+    """
+    idx = signal.index
+    dbg.dassert_isinstance(idx, pd.Index)
+    dbg.dassert(not idx.empty, msg="`signal.index` must be nonempty.")
+    index_location = index_location or idx[-1]
+    dbg.dassert_in(
+        index_location,
+        idx,
+        msg="`index_location` must be a member of `signal.index`",
+    )
+    dbg.dassert_lt(0, tau)
+    # Build a step series.
+    # - This is a sequence of ones followed by a sequence of zeros
+    # - The length of the ones series is determined by `tau` and is used for
+    #   warm-up
+    # - The length of the zeros is at least as long as the length of the
+    #   weight series implicitly asked for by the caller. If this is less than
+    #   the warm-up length, then we extend the zeros so that we can calculate
+    #   reliable absolute weights
+    desired_length = signal.loc[:index_location].shape[0]
+    warmup_length = int(np.round(10 * tau))
+    ones = pd.Series(index=range(0, warmup_length), data=1)
+    length = max(desired_length, warmup_length)
+    zeros = pd.Series(index=range(warmup_length, warmup_length + length), data=0)
+    step = pd.concat([ones, zeros], axis=0)
+    # Apply the smooth moving average function to the step function.
+    smoothed_step = compute_smooth_moving_average(
+        step,
+        tau=tau,
+        min_depth=min_depth,
+        max_depth=max_depth,
+    )
+    # Drop the warm-up ones from the smoothed series.
+    smoothed_step = smoothed_step.iloc[warmup_length - 1 :]
+    smoothed_step.name = "relative_weight"
+    # Calculate absolute weights.
+    absolute_weights = (smoothed_step / smoothed_step.sum()).rename(
+        "absolute_weight"
+    )
+    # Build a `weights` dataframe of relative and absolute kernel weights.
+    weights = pd.concat([smoothed_step, absolute_weights], axis=1).reset_index(
+        drop=True
+    )
+    # Truncate to `desired_length`, determined by `signal.index` and
+    # `index_location`.
+    weights = weights.iloc[:desired_length]
+    # Reverse the series (because the weights apply to historical
+    # observations).
+    weights = weights.iloc[::-1].reset_index(drop=True)
+    # Index and align the weights so that they terminate at `index_location`.
+    weights.index = signal.loc[:index_location].index
+    # Extend `weights` with NaNs if necessary.
+    return weights.reindex(signal.index)
+
+
 # #############################################################################
 # Rolling moments, norms, z-scoring, demeaning, etc.
 # #############################################################################
