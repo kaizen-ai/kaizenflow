@@ -67,7 +67,7 @@ rtds.fit()
 # ## Build pipeline
 
 # %%
-import dataflow_amp.real_time.utils as dartu
+import core.dataflow.real_time as cdrt
 import dataflow_amp.returns.pipeline as darp
 import core.dataflow as cdataf
 import core.config as cconfig
@@ -142,9 +142,9 @@ if False:
 node = dag.get_node("load_prices")
 node.reset_current_time()
     
-for now in dartu.get_now_time(start_date, end_date):
+for now in cdrt.get_now_time(start_date, end_date):
     print("now=", now)
-    execute = dartu.is_dag_to_execute(now)
+    execute = cdrt.is_dag_to_execute(now)
     if execute:
         print("Time to execute the DAG")
         node = dag.get_node("load_prices")

@@ -168,11 +168,11 @@ class TestMultivariateNormalGenerator(hut.TestCase):
 # #############################################################################
 
 
-import dataflow_amp.real_time.utils as dartu
+import core.dataflow.real_time as cdrt
 
 
 def get_data_builder():
-    data_builder = dartu.generate_synthetic_data
+    data_builder = cdrt.generate_synthetic_data
     data_builder_kwargs = {
         "columns": ["close", "volume"],
         "start_datetime": pd.Timestamp("2010-01-04 09:30:00"),

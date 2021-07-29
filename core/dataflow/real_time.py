@@ -1,7 +1,7 @@
 """
 Import as:
 
-import dataflow_amp.real_time.utils as dartu
+import core.dataflow.real_time as cdrt
 """
 
 import datetime
@@ -40,18 +40,17 @@ _LOG = logging.getLogger(__name__)
 #     calling a method (e.g., `set_current_time(simulated_time)`)
 
 
-# A function that return the current (true or replayed) time as a timestamp.
+# Type for a function that return the current (true or replayed) time as a timestamp.
 GetCurrentTimeFunction = Callable[[], pd.Timestamp]
 
 
-# TODO(gp): Share with SimulatedRealTimeSyntheticDataSource
 def generate_synthetic_data(
     columns: List[str],
     start_datetime: pd.Timestamp,
     end_datetime: pd.Timestamp,
     seed: int = 42) -> pd.DataFrame:
     """
-    Generate synthetic data that can be used to mimic real-time data.
+    Generate synthetic data used to mimic real-time data.
     """
     dbg.dassert_lte(start_datetime, end_datetime)
     dates = pd.date_range(start_datetime, end_datetime, freq="1T")
@@ -97,15 +96,15 @@ class ReplayRealTime:
     - Assume we have captured data in an interval starting on `2021-01-04 9:30am`
       (which we call `initial_replayed_dt`) until the following day `2021-01-05 9:30am`
     - We want to replay this data in real-time starting now, which is by example
-      `2021-06-04 10:30am` (which we call `initial_wallclock_dt`)
+      `2021-06-04 10:30am` (which we call `initial_wall_clock_dt`)
     - We use this class to map times after `2021-06-04 10:30am` to the corresponding
       time after `2021-01-04 9:30am`
     - E.g., when we ask to this class the current "replayed" time at (wall clock
       time) `2021-06-04 12:00pm`, the class returns `2021-01-04 11:00am`, since 1hr
-      has passed since the `initial_wallclock_dt`
+      has passed since the `initial_wall_clock_dt`
 
     In other terms this class mocks `datetime.datetime.now()` so that the actual
-    wallclock time `initial_wallclock_dt` corresponds to `initial_replayed_dt`
+    wall clock time `initial_wall_clock_dt` corresponds to `initial_replayed_dt`
 
     :param initial_replayed_dt: if it has timezone info then this class works
         returns times in the same timezone
@@ -114,17 +113,17 @@ class ReplayRealTime:
     def __init__(self, initial_replayed_dt: pd.Timestamp, speed_up_factor: float=1.0):
         """
         :param initial_replayed_dt: this is the time that we want the current
-            wallclock time to correspond to
-        :param speed_up_factor: how fast time passes. One wallclock second
+            wall clock time to correspond to
+        :param speed_up_factor: how fast time passes. One wall clock second
             corresponds to `speed_up_factor` replayed seconds
         """
         # This is the original time we want to "rewind" to.
         _LOG.debug("initial_replayed_dt=%s", initial_replayed_dt)
         self._initial_replayed_dt = initial_replayed_dt
         # This is when the experiment start.
-        now = self._get_wallclock_time()
-        self._initial_wallclock_dt = now
-        dbg.dassert_lte(self._initial_replayed_dt, self._initial_wallclock_dt,
+        now = self._get_wall_clock_time()
+        self._initial_wall_clock_dt = now
+        dbg.dassert_lte(self._initial_replayed_dt, self._initial_wall_clock_dt,
                         msg="Replaying time can be done only for the past. "
                         "The future can't be replayed yet")
         #
@@ -135,13 +134,13 @@ class ReplayRealTime:
         When replaying data, transform the current time into the corresponding time if
         the real-time experiment started at `initial_simulated_dt`.
         """
-        now = self._get_wallclock_time()
-        dbg.dassert_lte(self._initial_wallclock_dt, now)
-        elapsed_time = now - self._initial_wallclock_dt
+        now = self._get_wall_clock_time()
+        dbg.dassert_lte(self._initial_wall_clock_dt, now)
+        elapsed_time = now - self._initial_wall_clock_dt
         current_replayed_dt = self._initial_replayed_dt + elapsed_time
         return current_replayed_dt
 
-    def _get_wallclock_time(self) -> pd.Timestamp:
+    def _get_wall_clock_time(self) -> pd.Timestamp:
         if self._initial_replayed_dt.tz is None:
             tz = None
         else:
