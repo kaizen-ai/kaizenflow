@@ -131,6 +131,43 @@ datetime_='%s' of type '%s' is not a DateTimeType
             self.assertEqual(str(act), str(exp))
 
 
+class Test_dassert_tz_compatible1(hut.TestCase):
+    def test_dassert_compatible_timestamp1(self) -> None:
+        """
+        Both datetimes are naive.
+        """
+        for datetime1 in [_PD_TS_NAIVE, _DT_DT_NAIVE]:
+            for datetime2 in [_PD_TS_NAIVE, _DT_DT_NAIVE]:
+                hdatetime.dassert_tz_compatible(datetime1, datetime2)
+
+    def test_dassert_compatible_timestamp2(self) -> None:
+        """
+        Both datetimes have tz info.
+        """
+        for datetime1 in [_PD_TS_UTC, _PD_TS_ET]:
+            for datetime2 in [_DT_DT_UTC, _DT_DT_ET]:
+                hdatetime.dassert_tz_compatible(datetime1, datetime2)
+
+    def test_dassert_compatible_timestamp_assert1(self) -> None:
+        with self.assertRaises(AssertionError) as cm:
+            hdatetime.dassert_tz_compatible(_PD_TS_NAIVE, _DT_DT_UTC)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        'False'
+        ==
+        'True'
+        datetime1='2021-01-04 09:30:00' and datetime2='2021-01-04 09:30:00+00:00' are not compatible
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test_dassert_compatible_timestamp_assert2(self) -> None:
+        for datetime1 in [_PD_TS_NAIVE, _DT_DT_NAIVE, _PD_TS_NAIVE, _DT_DT_NAIVE]:
+            for datetime2 in [_PD_TS_UTC, _PD_TS_ET, _DT_DT_UTC, _DT_DT_ET]:
+                with self.assertRaises(AssertionError):
+                    hdatetime.dassert_tz_compatible(datetime1, datetime2)
+
+
 # #############################################################################
 
 

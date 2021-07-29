@@ -160,6 +160,29 @@ def dassert_has_ET_tz(datetime_: StrictDatetime) -> None:
     _dassert_has_specified_tz(datetime_, tz_zones)
 
 
+def dassert_tz_compatible(datetime1: StrictDatetime, datetime2: StrictDatetime) -> None:
+    """
+    Assert that two timestamps are both naive or both have timezone info.
+    """
+    dassert_is_strict_datetime(datetime1)
+    dassert_is_strict_datetime(datetime2)
+    has_tz1 = datetime1.tzinfo is not None
+    has_tz2 = datetime2.tzinfo is not None
+    dbg.dassert_eq(has_tz1, has_tz2, "datetime1='%s' and datetime2='%s' are not compatible",
+                   str(datetime1), str(datetime2))
+
+
+def dassert_tz_compatible_timestamp_df(df: pd.DataFrame, datetime_: StrictDatetime) -> None:
+    """
+    Assert that timestamp and df.index are both naive or both have timezone info.
+    """
+    if df.empty:
+        return
+    # We assume that the first element in the index is representative.
+    df_datetime = df.index.iloc[0]
+    dassert_compatible_timestamps(df_datetime, datetime_)
+
+
 def get_ET_tz() -> pytz.timezone:
     return pytz.timezone("America/New_York")
 

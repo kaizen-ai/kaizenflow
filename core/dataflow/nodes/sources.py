@@ -371,8 +371,8 @@ class RealTimeDataSource(cdnb.DataSource):
         nid: str,
         delay_in_secs: float,
         external_clock: Optional[cdrt.GetCurrentTimeFunction],
-        df_builder: Callable,
-        df_builder_kwargs: Dict[str, Any],
+        data_builder: Callable[[Any], pd.DataFrame],
+        data_builder_kwargs: Dict[str, Any],
     ) -> None:
         """
         Constructor.
@@ -382,12 +382,12 @@ class RealTimeDataSource(cdnb.DataSource):
         :param external_clock: an external wall clock represented in the form of a
             function that returns the time. `None` means that the time is provided
             through an explicit call to `set_current_time()`
-        :param df_builder, df_builder_kwargs: function and its argument to create
+        :param data_builder, data_builder_kwargs: function and its argument to create
             all the data for this node
         """
         super().__init__(nid)
         # Compute the data through the passed dataframe builder.
-        entire_df = df_builder(**df_builder_kwargs)
+        entire_df = data_builder(**data_builder_kwargs)
         # Store the entire history of the data.
         self._entire_df = entire_df
         self._delay_in_secs = delay_in_secs

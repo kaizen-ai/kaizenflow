@@ -37,8 +37,8 @@ _LOG = logging.getLogger(__name__)
 
 # %% [markdown]
 # # Real-time node
-
-import core.dataflow.real_time as cdrt
+#
+# import core.dataflow.real_time as cdrt
 
 # %%
 import helpers.datetime_ as hdatetime
@@ -86,25 +86,48 @@ cdrt.execute_dag_with_real_time_loop(
 # ## Test real-time node
 
 # %%
+start_datetime = pd.Timestamp("2010-01-04 09:30:00")
+end_datetime = pd.Timestamp("2010-01-05 09:30:00")
+columns = ["close", "volume"]
+cdrt.generate_synthetic_data(columns
+
+# %%
 import core.dataflow.nodes.sources as cdtfns
 
 nid = "rtds"
-start_date = pd.Timestamp("2010-01-04 09:30:00")
-end_date = pd.Timestamp("2010-01-10 09:30:00")
+
+delay_in_secs = 0.0
+
+    "start_datetime": pd.Timestamp("2010-01-04 09:30:00"),
+    "end_datetime": pd.Timestamp("2010-01-05 09:30:00"),
+
+# Use a replayed real-time starting at the same time as the data.
+rrt = cdrt.ReplayRealTime(
+    pd.Timestamp("2010-01-04 09:30:00", tz=hdatetime.get_ET_tz())
+)
+get_current_time = rrt.get_replayed_current_time
+
+data_builder = cdrt.generate_synthetic_data
+data_builder_kwargs = {
+    "columns": ["close", "volume"],
+    "start_datetime": pd.Timestamp("2010-01-04 09:30:00"),
+    "end_datetime": pd.Timestamp("2010-01-05 09:30:00"),
+    "seed": 42,
+}
 
 columns = ["close", "volume"]
-rtds = cdtfns.RealTimeSyntheticDataSource("rtds", columns, start_date, end_date)
+rtds = cdtfns.RealTimeDataSource("rtds", delay_in_secs, get_current_time, data_builder, data_builder_kwargs)
 
-current_time = pd.Timestamp("2010-01-04 09:35:00")
-rtds.set_current_time(current_time)
+#current_time = pd.Timestamp("2010-01-04 09:35:00")
+#rtds.set_current_time(current_time)
 
 rtds.fit()
 
 # %% [markdown]
 # ## Build pipeline
-
-import core.config as cconfig
-import core.dataflow as cdataf
+#
+# import core.config as cconfig
+# import core.dataflow as cdataf
 
 # %%
 import core.dataflow.real_time as cdrt

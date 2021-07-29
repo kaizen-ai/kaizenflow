@@ -15,7 +15,6 @@ import pandas as pd
 
 import helpers.datetime_ as hdatetime
 
-# import core.dataflow as cdataf
 import helpers.dbg as dbg
 import helpers.hnumpy as hnumpy
 
@@ -27,7 +26,8 @@ _LOG = logging.getLogger(__name__)
 # dbg.test_logger()
 _LOG.debug = _LOG.info
 
-# There are various levels of real-time:
+
+# There are different ways of reproducing a real-time behaviors:
 # 1) True real-time
 #    - We are running against the real prod / QA system
 #    - The same query to a DB returns the true values, which change depending on the
@@ -224,6 +224,17 @@ RealTimeEvent = collections.namedtuple(
 )
 
 
+def real_time_event_to_str(rte: RealTimeEvent, verbose: bool = False):
+    vals = []
+    vals.append("num_it=%s" % rte.num_it)
+    timestamp_as_str = rte.current_time.strftime("%Y%m%d_%H%M%S")
+    # Add tenths of second.
+    timestamp_as_str += "%s" % int(rte.current_time.microsecond // 1e5)
+    vals.append("current_time=%s" % timestamp_as_str)
+    vals.append("need_execute=%s" % rte.need_execute)
+    return " ".join(vals)
+
+
 def execute_with_real_time_loop(
     sleep_interval_in_secs: float,
     num_iterations: Optional[int],
@@ -232,7 +243,7 @@ def execute_with_real_time_loop(
     workload: Callable[[pd.Timestamp], Any],
 ) -> List[RealTimeEvent]:
     """
-    Execute a DAG using a true or simulated real-time loop.
+    Execute a function using a true or simulated real-time loop.
 
     :param sleep_interval_in_secs: the loop wakes up every `sleep_interval_in_secs`
         true or simulated seconds

@@ -192,6 +192,8 @@ class TestRealTimeDataSource1(hut.TestCase):
         # Build the node.
         nid = "rtds"
         delay_in_secs = 0.0
+        # No external clock, but set the clock through an explicit call to
+        # `set_current_time()`.
         get_current_time = None
         data_builder, data_builder_kwargs = get_data_builder()
         rtds = dtf.RealTimeDataSource(
@@ -210,6 +212,7 @@ class TestRealTimeDataSource1(hut.TestCase):
         # Build the node.
         nid = "rtds"
         delay_in_secs = 0.0
+        # Return always the same time.
         get_current_time = lambda: pd.Timestamp("2010-01-04 09:35:00")
         data_builder, data_builder_kwargs = get_data_builder()
         rtds = dtf.RealTimeDataSource(
@@ -221,6 +224,28 @@ class TestRealTimeDataSource1(hut.TestCase):
         )
         # Execute.
         self._helper(rtds)
+
+    def test_replayed_real_time1(self) -> None:
+        # Build the node.
+        nid = "rtds"
+        delay_in_secs = 0.0
+        # Use a replayed real-time starting at the same time as the data.
+        rrt = cdrt.ReplayRealTime(
+            pd.Timestamp("2010-01-04 09:30:00", tz=hdatetime.get_ET_tz())
+        )
+        get_current_time = rrt.get_replayed_current_time
+        #
+        data_builder, data_builder_kwargs = get_data_builder()
+        rtds = dtf.RealTimeDataSource(
+            nid,
+            delay_in_secs,
+            get_current_time,
+            data_builder,
+            data_builder_kwargs,
+        )
+        # Execute.
+        self._helper(rtds)
+
 
     def _helper(self, rtds) -> None:
         # Execute.
