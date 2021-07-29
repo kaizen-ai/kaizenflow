@@ -552,8 +552,8 @@ def compute_smooth_moving_average(
 
 def extract_smooth_moving_average_weights(
     signal: Union[pd.DataFrame, pd.Series],
-    index_location: Any,
     smooth_moving_average_kwargs: Dict[str, Any],
+    index_location: Optional[Any] = None,
 ) -> pd.DataFrame:
     """
     Return present and historical weights used in SMA up to `index_location`.
@@ -565,10 +565,11 @@ def extract_smooth_moving_average_weights(
 
     :param signal: data that provides an index (for reindexing). No column
         values used.
-    :index_location: current and latest value to be considered operated upon by
-        the smooth moving average (e.g., the last in-sample index)
     :smooth_moving_average_kwargs: must contain `tau`. Other params optional
         but can be used to change the shape of the kernel.
+    :index_location: current and latest value to be considered operated upon by
+        the smooth moving average (e.g., the last in-sample index). If `None`,
+        then use the last index location of `signal`.
     :return: dataframe with two columns of weights:
         1. absolute weights (e.g., weights sum to 1)
         2. relative weights (weight at `index_location` is equal to `1`, and
@@ -576,6 +577,7 @@ def extract_smooth_moving_average_weights(
     """
     idx = signal.index
     dbg.dassert_isinstance(idx, pd.Index)
+    index_location = index_location or idx[-1]
     dbg.dassert_in(
         index_location,
         idx,
@@ -585,31 +587,43 @@ def extract_smooth_moving_average_weights(
     tau = smooth_moving_average_kwargs["tau"]
     dbg.dassert_lt(0, tau)
     # Build a step series.
+    # - This is a sequence of ones followed by a sequence of zeros
+    # - The length of the ones series is determined by `tau` and is used for
+    #   warm-up
+    # - The length of the zeros is at least as long as the length of the
+    #   weight series implicitly asked for by the caller. If this is less than
+    #   the warm-up length, then we extend the zeros so that we can calculate
+    #   reliable absolute weights
     desired_length = signal.loc[:index_location].shape[0]
     warmup_length = int(np.round(10 * tau))
     ones = pd.Series(index=range(0, warmup_length), data=1)
     length = max(desired_length, warmup_length)
     zeros = pd.Series(index=range(warmup_length, warmup_length + length), data=0)
     step = pd.concat([ones, zeros], axis=0)
-    #
+    # Apply the smooth moving average function to the step function.
     smoothed_step = compute_smooth_moving_average(
         step, **smooth_moving_average_kwargs
     )
-    # Drop warmup ones.
+    # Drop the warm-up ones from the smoothed series.
     smoothed_step = smoothed_step.iloc[warmup_length - 1 :]
     smoothed_step.name = "relative_weights"
+    # Calculate absolute weights.
     absolute_weights = (smoothed_step / smoothed_step.sum()).rename(
         "absolute_weights"
     )
+    # Build a `weights` dataframe of relative and absolute kernel weights.
     weights = pd.concat([smoothed_step, absolute_weights], axis=1).reset_index(
         drop=True
     )
-    # Truncate to length.
+    # Truncate to `desired_length`, determined by `signal.index` and
+    # `index_location`.
     weights = weights.iloc[:desired_length]
-    # Reverse the series.
+    # Reverse the series (because the weights apply to historical
+    # observations).
     weights = weights.iloc[::-1].reset_index(drop=True)
-    # Reindex.
+    # Index and align the weights so that they terminate at `index_location`.
     weights.index = signal.loc[:index_location].index
+    # Extend `weights` with NaNs if necessary.
     return weights.reindex(signal.index)
 
 
