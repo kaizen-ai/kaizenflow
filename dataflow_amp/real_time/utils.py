@@ -6,8 +6,10 @@ import dataflow_amp.real_time.utils as dartu
 
 import datetime
 import logging
+import time
 from typing import Any, Callable, Dict, List, Optional
 
+import numpy as np
 import pandas as pd
 import pytz
 
@@ -15,6 +17,7 @@ import pytz
 import helpers.dbg as dbg
 import helpers.cache as hcache
 import helpers.datetime_ as hdatetime
+import helpers.hnumpy as hnumpy
 import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
@@ -37,6 +40,10 @@ _LOG = logging.getLogger(__name__)
 #     calling a method (e.g., `set_current_time(simulated_time)`)
 
 
+# A function that return the current (true or replayed) time as a timestamp.
+GetCurrentTimeFunction = Callable[[], pd.Timestamp]
+
+
 # TODO(gp): Share with SimulatedRealTimeSyntheticDataSource
 def generate_synthetic_data(
     columns: List[str],
@@ -44,7 +51,7 @@ def generate_synthetic_data(
     end_datetime: pd.Timestamp,
     seed: int = 42) -> pd.DataFrame:
     """
-    Load some example data from the RT DB.
+    Generate synthetic data that can be used to mimic real-time data.
     """
     dbg.dassert_lte(start_datetime, end_datetime)
     dates = pd.date_range(start_datetime, end_datetime, freq="1T")
@@ -52,23 +59,31 @@ def generate_synthetic_data(
     # Random walk with increments independent and uniform in [-0.5, 0.5].
     with hnumpy.random_seed_context(seed):
         data = np.random.rand(len(dates), len(columns)) - 0.5
-    df = pd.DataFrame(data, columns=self._columns, index=dates)
+    df = pd.DataFrame(data, columns=columns, index=dates)
     df = df.cumsum()
     return df
 
 
-def get_data_as_of_datetime(df: pd.DataFrame, datetime_: pd.Timestamp, db_delay_in_secs: int =0):
+def get_data_as_of_datetime(df: pd.DataFrame, datetime_: pd.Timestamp, delay_in_secs: int =0):
     """
-    Extract data from the example RT DB at time `datetime_`, assuming that the DB
-    takes `db_delay_in_secs` to update.
+    Extract data from a df (indexed with knowledge time) available at `datetime_`
 
-    I.e., the data market `2021-07-13 13:01:00`
+    :param df: df indexed with timestamp representing knowledge time
+    :param datetime_: the "as of" timestamp
+    :param delay_in_secs: represent how long it takes for the simulated system to
+        respond. E.g., if the data comes from a DB, `delay_in_secs` is the delay
+        of the data query with respect to the knowledge time.
+
+    E.g., if the "as of" timestamp is `2021-07-13 13:01:00` and the simulated system
+    takes 4 seconds to respond, all and only data before `2021-07-13 13:00:56` is
+    returned.
     """
+    dbg.dassert_lte(0, delay_in_secs)
     #hdatetime.dassert_has_tz(datetime_)
     # Convert in UTC since the RT DB uses implicitly UTC.
     #datetime_utc = datetime_.astimezone(pytz.timezone("UTC")).replace(tzinfo=None)
-    # TODO(gp): We could also use the `timestamp_db` field.
-    datetime_eff = datetime_ - datetime.timedelta(seconds=db_delay_in_secs)
+    # TODO(gp): We could also use the `timestamp_db` field if available.
+    datetime_eff = datetime_ - datetime.timedelta(seconds=delay_in_secs)
     mask = df.index <= datetime_eff
     df = df[mask].copy()
     return df
@@ -139,41 +154,54 @@ class ReplayRealTime:
 
 def get_simulated_current_time(start_datetime: pd.Timestamp, end_datetime: pd.Timestamp,
                                freq: str = "1T"):
-    # Simulates a sleep(60)
+    """
+    Iterator yielding timestamps in the given interval and with the given frequency.
+
+    E.g., `freq = "1T"` can be used to simulate a system sampled every minute.
+    """
     datetimes = pd.date_range(start_datetime, end_datetime, freq=freq)
     for dt in datetimes:
         yield dt
 
 
-def execute_every_5_mins(datetime_: pd.Timestamp) -> bool:
+def execute_every_5_minutes(datetime_: pd.Timestamp) -> bool:
     """
-    Return true if the DAG needs to be executed.
+    Return true if `datetime_` is aligned on a 5 minute grid.
     """
     return datetime_.minute % 5 == 0
 
-import time
 
-# TODO(gp)_: This should go somewhere else.
-def real_time_loop(
+def execute_dag_with_real_time_loop(
         sleep_interval_in_secs: float,
         num_iterations: Optional[int],
-        get_current_time: Callable[[], pd.Timestamp],
+        get_current_time: GetCurrentTimeFunction,
         need_to_execute: Callable[[pd.Timestamp], bool]
         ):
     """
-    :param is_dag_to_execute: return true if the DAG needs to be executed.
+    Execute a DAG using a true or simulated real-time loop.
+
+    :param sleep_interval_in_secs: the loop wakes up every `sleep_interval_in_secs`
+        true or simulated seconds
+    :param num_iterations: number of loops to execute. `None` means an infinite loop
+    :param get_current_time: function returning the current true or simulated time
+    :param need_to_execute: function returning true when the DAG needs to be
+        executed
     """
     dbg.dassert_lt(0, sleep_interval_in_secs)
     if num_iterations is not None:
         dbg.dassert_lt(0, num_iterations)
+    #
     num_it = 1
     while True:
         current_time = get_current_time()
         execute = need_to_execute(current_time)
-        _LOG.debug("num_it=%s/%s: current_time=%s", num_it, num_iterations, current_time)
+        _LOG.debug("num_it=%s/%s: current_time=%s", num_it, num_iterations,
+                   current_time)
         if execute:
             _LOG.debug("  -> execute")
+        # Exit, if needed.
         if num_iterations is not None and num_it >= num_iterations:
             break
+        # Go to sleep.
         time.sleep(sleep_interval_in_secs)
         num_it += 1

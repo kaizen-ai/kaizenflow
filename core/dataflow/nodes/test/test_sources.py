@@ -125,6 +125,9 @@ class TestDiskDataSource(hut.TestCase):
         self.check_string(act_result)
 
 
+# #############################################################################
+
+
 class TestArmaGenerator(hut.TestCase):
     def test1(self) -> None:
         node = dtf.ArmaGenerator(
@@ -143,6 +146,9 @@ class TestArmaGenerator(hut.TestCase):
         self.check_string(act)
 
 
+# #############################################################################
+
+
 class TestMultivariateNormalGenerator(hut.TestCase):
     def test1(self) -> None:
         node = dtf.MultivariateNormalGenerator(
@@ -159,23 +165,27 @@ class TestMultivariateNormalGenerator(hut.TestCase):
         self.check_string(act)
 
 
-class TestRealTimeSyntheticDataSource1(hut.TestCase):
+# #############################################################################
 
-    def test1(self) -> None:
-        """
-        Setting the current time to a specific datetime, the node generates values
-        up and including that datetime.
-        """
-        # Build the node.
-        nid = "rtds"
-        columns = ["close", "volume"]
-        start_date = pd.Timestamp("2010-01-04 09:30:00")
-        end_date = pd.Timestamp("2010-01-05 09:30:00")
-        seed = 42
-        rtds = dtf.RealTimeSyntheticDataSource(nid, columns, start_date=start_date, end_date=end_date, seed=seed)
-        #
-        current_time = pd.Timestamp("2010-01-04 09:35:00")
-        rtds.set_current_time(current_time)
+
+import dataflow_amp.real_time.utils as dartu
+
+
+def get_data_builder():
+    data_builder = dartu.generate_synthetic_data
+    data_builder_kwargs = {
+        "columns": ["close", "volume"],
+        "start_datetime": pd.Timestamp("2010-01-04 09:30:00"),
+        "end_datetime": pd.Timestamp("2010-01-05 09:30:00"),
+        "seed": 42,
+    }
+    return data_builder, data_builder_kwargs
+
+
+class TestRealTimeDataSource1(hut.TestCase):
+
+    def _helper(self, rtds) -> None:
+        # Execute.
         dict_ = rtds.fit()
         # Check.
         df = dict_["df_out"]
@@ -184,3 +194,41 @@ class TestRealTimeSyntheticDataSource1(hut.TestCase):
                '2010-01-04 09:32:00', '2010-01-04 09:33:00',
                '2010-01-04 09:34:00', '2010-01-04 09:35:00']
         self.assert_equal(str(act), str(exp))
+
+    def test_simulated_real_time1(self) -> None:
+        """
+        Setting the current time to a specific datetime, the node generates values
+        up and including that datetime.
+        """
+        # Build the node.
+        nid = "rtds"
+        delay_in_secs = 0.0
+        get_current_time = None
+        data_builder, data_builder_kwargs = get_data_builder()
+        rtds = dtf.RealTimeDataSource(
+            nid,
+            delay_in_secs,
+            get_current_time,
+            data_builder,
+            data_builder_kwargs)
+        # Execute.
+        current_time = pd.Timestamp("2010-01-04 09:35:00")
+        rtds.set_current_time(current_time)
+        self._helper(rtds)
+
+    def test_true_real_time1(self) -> None:
+        # Build the node.
+        nid = "rtds"
+        delay_in_secs = 0.0
+        get_current_time = lambda: pd.Timestamp("2010-01-04 09:35:00")
+        data_builder, data_builder_kwargs = get_data_builder()
+        rtds = dtf.RealTimeDataSource(
+            nid,
+            delay_in_secs,
+            get_current_time,
+            data_builder,
+            data_builder_kwargs)
+        # Execute.
+        self._helper(rtds)
+
+    # TODO(gp): Add a test with delay_in_secs

@@ -19,8 +19,9 @@ import core.dataflow.nodes.base as cdnb
 import core.finance as cfinan
 import core.pandas_helpers as pdhelp
 import helpers.datetime_ as hdatetime
-import helpers.hnumpy as hnumpy
 import helpers.dbg as dbg
+import helpers.hnumpy as hnumpy
+import helpers.printing as hprint
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
@@ -352,127 +353,227 @@ class MultivariateNormalGenerator(cdnb.DataSource):
 
 # #############################################################################
 
-# TODO(gp): Create a RealTimeMixin to inject the RT behavior for all the nodes.
-# TODO(gp): Use the new approach of DataLoader, moving the function out.
 
-class SimulatedRealTimeMixin:
-
-    def __init__(self):
-        # This indicates what is the current time is, so that the node can emit data
-        # up to that time.
-        self._current_time = None
-        # Store the entire history of the data.
-        self._entire_df = None
-
-    def set_current_time(self, datetime_: pd.Timestamp) -> None:
-        """
-        Set the current simulation time.
-        """
-        dbg.dassert_isinstance(datetime_, pd.Timestamp)
-        # Time only moves forward.
-        if self._current_time is not None:
-            dbg.dassert_lte(self._current_time, datetime_)
-        self._current_time = datetime_
-
-    def reset_current_time(self) -> None:
-        """
-        Reset the current simulation time to `None`.
-        """
-        self._current_time = None
-
-    def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
-        self._get_data_until_current_time()
-        return super().fit()
-
-    def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
-        self._get_data_until_current_time()
-        return super().predict()
-
-    def _get_data_until_current_time(self) -> None:
-        """
-        Set the data stored inside the node up and including `self._current_time`.
-
-        E.g., if `self._current_time = pd.Timestamp("2010-01-04 09:34:00"`)`,
-        then `self.df` looks like:
-        ```
-                                close    volume
-        ...                       ...       ...
-        2010-01-04 09:31:00 -0.377824 -0.660321
-        2010-01-04 09:32:00 -0.508435 -0.349565
-        2010-01-04 09:33:00 -0.151361  0.139516
-        2010-01-04 09:34:00  0.046069 -0.040318
-        ```
-        """
-        dbg.dassert_is_not(self._current_time, None,
-                           "The current time needs to be set with `set_current_time()`")
-        self._lazy_load()
-        self.df = self._entire_df.loc[:self._current_time]
-
-    def _lazy_load(self) -> None:
-        if self._entire_df is not None:
-            return
-        self._entire_df = df
+# class SimulatedRealTimeMixin:
+#
+#     def __init__(self):
+#         # This indicates what is the current time is, so that the node can emit data
+#         # up to that time.
+#         self._current_time = None
+#         # Store the entire history of the data.
+#         self._entire_df = None
+#
+#     def set_current_time(self, datetime_: pd.Timestamp) -> None:
+#         """
+#         Set the current simulation time.
+#         """
+#         dbg.dassert_isinstance(datetime_, pd.Timestamp)
+#         # Time only moves forward.
+#         if self._current_time is not None:
+#             dbg.dassert_lte(self._current_time, datetime_)
+#         self._current_time = datetime_
+#
+#     def reset_current_time(self) -> None:
+#         """
+#         Reset the current simulation time to `None`.
+#         """
+#         self._current_time = None
+#
+#     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
+#         self._get_data_until_current_time()
+#         return super().fit()
+#
+#     def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
+#         self._get_data_until_current_time()
+#         return super().predict()
+#
+#     def _get_data_until_current_time(self) -> None:
+#         """
+#         Set the data stored inside the node up and including `self._current_time`.
+#
+#         E.g., if `self._current_time = pd.Timestamp("2010-01-04 09:34:00"`)`,
+#         then `self.df` looks like:
+#         ```
+#                                 close    volume
+#         ...                       ...       ...
+#         2010-01-04 09:31:00 -0.377824 -0.660321
+#         2010-01-04 09:32:00 -0.508435 -0.349565
+#         2010-01-04 09:33:00 -0.151361  0.139516
+#         2010-01-04 09:34:00  0.046069 -0.040318
+#         ```
+#         """
+#         dbg.dassert_is_not(self._current_time, None,
+#                            "The current time needs to be set with `set_current_time()`")
+#         self._lazy_load()
+#         self.df = self._entire_df.loc[:self._current_time]
+#
+#     def _lazy_load(self) -> None:
+#         if self._entire_df is not None:
+#             return
+#         self._entire_df = df
+#
+#
+# # #############################################################################
+#
+#
+# # TODO(gp): Express this in terms of the mixin and a function.
+# class SimulatedRealTimeDataSource(cdnb.DataSource):
+#     """
+#     Data source node that outputs data according to a simulated real-time behavior.
+#
+#     See XYZ for reference.
+#
+#     Depending on the current wall-clock time (which is set through `set_not_time()`)
+#     this node emits the data available up and including that time.
+#     """
+#
+#     def __init__(
+#         self,
+#         nid: str,
+#         columns: List[str],
+#         start_date: Optional[hdatetime.Datetime] = None,
+#         end_date: Optional[hdatetime.Datetime] = None,
+#         freq: str = "1T",
+#         seed: int = 42,
+#     ) -> None:
+#         """
+#         Constructor.
+#
+#         :param columns: list of columns to generate
+#         :param freq: Pandas freq (e.g., `1T` for 1 minute) used to iterate between
+#             [start_date, end_date]
+#         """
+#         super().__init__(nid)
+#         dbg.dassert_container_type(columns, list, str)
+#         self._columns = columns
+#         self._start_date = start_date
+#         self._end_date = end_date
+#         dbg.dassert_isinstance(freq, str)
+#         self._freq = freq
+#         dbg.dassert_isinstance(seed, int)
+#         self._seed = seed
+#         # This indicates what is the current time is, so that the node can emit data
+#         # up to that time.
+#         self._current_time : Optional[pd.Timestamp] = None
+#         # Store the entire history of the data.
+#         self._entire_df : Optional[pd.DataFrame] = None
+#
+#     def set_current_time(self, datetime_: pd.Timestamp) -> None:
+#         """
+#         Set the current simulation time.
+#         """
+#         dbg.dassert_isinstance(datetime_, pd.Timestamp)
+#         # Time only moves forward.
+#         if self._current_time is not None:
+#             dbg.dassert_lte(self._current_time, datetime_)
+#         self._current_time = datetime_
+#
+#     def reset_current_time(self) -> None:
+#         """
+#         Reset the current simulation time to `None`.
+#         """
+#         self._current_time = None
+#
+#     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
+#         self._get_data_until_current_time()
+#         return super().fit()
+#
+#     def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
+#         self._get_data_until_current_time()
+#         return super().predict()
+#
+#     def _get_data_until_current_time(self) -> None:
+#         """
+#         Set the data stored inside the node up and including `self._current_time`.
+#
+#         E.g., if `self._current_time = pd.Timestamp("2010-01-04 09:34:00"`)`,
+#         then `self.df` looks like:
+#         ```
+#                                 close    volume
+#         ...                       ...       ...
+#         2010-01-04 09:31:00 -0.377824 -0.660321
+#         2010-01-04 09:32:00 -0.508435 -0.349565
+#         2010-01-04 09:33:00 -0.151361  0.139516
+#         2010-01-04 09:34:00  0.046069 -0.040318
+#         ```
+#         """
+#         dbg.dassert_is_not(self._current_time, None,
+#                            "The current time needs to be set with `set_current_time()`")
+#         self._lazy_load()
+#         self.df = self._entire_df.loc[:self._current_time]
+#
+#     def _lazy_load(self) -> None:
+#         if self._entire_df is not None:
+#             return
+#         dates = pd.date_range(self._start_date, self._end_date, freq="1T")
+#         # Random walk with increments independent and uniform in [-0.5, 0.5].
+#         with hnumpy.random_seed_context(self._seed):
+#             data = np.random.rand(len(dates), len(self._columns)) - 0.5
+#         df = pd.DataFrame(data, columns=self._columns, index=dates)
+#         df = df.cumsum()
+#         self._entire_df = df
 
 
 # #############################################################################
 
+import dataflow_amp.real_time.utils as dartu
 
-# -> SimulatedRealTime
-# TODO(gp): Express this in terms of the mixin.
-class SimulatedRealTimeSyntheticDataSource(cdnb.DataSource):
+
+class RealTimeDataSource(cdnb.DataSource):
     """
-    Data source node that outputs data mimicking the real-time behavior.
+    Data source node that outputs data according to a simulated real-time behavior.
+
+    TODO(gp): See XYZ for reference.
 
     Depending on the current wall-clock time (which is set through `set_not_time()`)
     this node emits the data available up and including that time.
     """
 
     def __init__(
-        self,
-        nid: str,
-        columns: List[str],
-        start_date: Optional[hdatetime.Datetime] = None,
-        end_date: Optional[hdatetime.Datetime] = None,
-        freq: str = "1T",
-        seed: int = 42,
+            self,
+            nid: str,
+            delay_in_secs: float,
+            get_current_time: Optional[dartu.GetCurrentTimeFunction],
+            # TODO(gp): -> df_builder
+            df_builder: Callable,
+            df_builder_kwargs: Dict[str, Any],
     ) -> None:
         """
         Constructor.
-        
-        :param columns: list of columns to generate
-        :param freq: Pandas freq (e.g., `1T` for 1 minute) used to iterate between
-            [start_date, end_date]
+
+        :param delay_in_secs: represent how long it takes for the simulated system to
+            respond. See `get_data_as_of_datetime()` for more details
+        :param get_current_time: a function that returns the time. `None` means
+            that the `set_current_time()` is used
         """
         super().__init__(nid)
-        dbg.dassert_container_type(columns, list, str)
-        self._columns = columns
-        self._start_date = start_date
-        self._end_date = end_date
-        dbg.dassert_isinstance(freq, str)
-        self._freq = freq
-        dbg.dassert_isinstance(seed, int)
-        self._seed = seed
+        # Compute the data through the passed dataframe builder.
+        entire_df = df_builder(**df_builder_kwargs)
+        # Store the entire history of the data.
+        self._entire_df = entire_df
+        self._delay_in_secs = delay_in_secs
+        self._external_time = get_current_time
         # This indicates what is the current time is, so that the node can emit data
         # up to that time.
-        self._current_time : Optional[pd.Timestamp] = None
-        # Store the entire history of the data.
-        self._entire_df : Optional[pd.DataFrame] = None
+        self._current_time: Optional[pd.Timestamp] = None
+        # Last executed timestamp to verify that time always increases.
+        self._last_time: Optional[pd.Timestamp] = None
+
+    def reset(self) -> None:
+        _LOG.debug("reset")
+        self._current_time = None
+        self._last_time = None
 
     def set_current_time(self, datetime_: pd.Timestamp) -> None:
         """
         Set the current simulation time.
         """
-        dbg.dassert_isinstance(datetime_, pd.Timestamp)
-        # Time only moves forward.
-        if self._current_time is not None:
-            dbg.dassert_lte(self._current_time, datetime_)
-        self._current_time = datetime_
-
-    def reset_current_time(self) -> None:
-        """
-        Reset the current simulation time to `None`.
-        """
-        self._current_time = None
+        _LOG.debug("datetime_=%s", datetime_)
+        dbg.dassert_is(self._external_time, None,
+                       "This function can be called only if an external clock "
+                       "was not specified, while instead get_current_time=%s",
+                       self._external_time)
+        self._set_current_time(datetime_)
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._get_data_until_current_time()
@@ -482,33 +583,42 @@ class SimulatedRealTimeSyntheticDataSource(cdnb.DataSource):
         self._get_data_until_current_time()
         return super().predict()
 
+    def _set_current_time(self, datetime_: pd.Timestamp) -> None:
+        """
+        Update the current time.
+        """
+        _LOG.debug(hprint.to_str("datetime_"))
+        dbg.dassert_isinstance(datetime_, pd.Timestamp)
+        # Time only moves forward.
+        if self._last_time is not None:
+            dbg.dassert_lte(self._last_time , datetime_)
+        # Update the state.
+        _LOG.debug("before: " + hprint.to_str("self._last_time self._current_time"))
+        self._last_time = self._current_time
+        self._current_time = datetime_
+        _LOG.debug("after: " + hprint.to_str("self._last_time self._current_time"))
+
+    def _get_current_time(self) -> pd.Timestamp:
+        """
+        Get the current time provided from the external clock `get_current_time()`
+        or set through the method `set_current_time()`
+        """
+        # If an external clock was passed, then use it to update the current time.
+        if self._external_time is not None:
+            current_time = self._external_time()
+            self._set_current_time(current_time)
+        # Return the current time.
+        _LOG.debug(hprint.to_str("self._current_time"))
+        dbg.dassert_is_not(self._current_time, None)
+        return self._current_time
+
     def _get_data_until_current_time(self) -> None:
         """
-        Set the data stored inside the node up and including `self._current_time`.
-
-        E.g., if `self._current_time = pd.Timestamp("2010-01-04 09:34:00"`)`,
-        then `self.df` looks like:
-        ```
-                                close    volume
-        ...                       ...       ...
-        2010-01-04 09:31:00 -0.377824 -0.660321
-        2010-01-04 09:32:00 -0.508435 -0.349565
-        2010-01-04 09:33:00 -0.151361  0.139516
-        2010-01-04 09:34:00  0.046069 -0.040318
-        ```
+        Get the data stored inside the node up and including the current time.
         """
-        dbg.dassert_is_not(self._current_time, None,
-                           "The current time needs to be set with `set_current_time()`")
-        self._lazy_load()
-        self.df = self._entire_df.loc[:self._current_time]
-
-    def _lazy_load(self) -> None:
-        if self._entire_df is not None:
-            return
-        dates = pd.date_range(self._start_date, self._end_date, freq="1T")
-        # Random walk with increments independent and uniform in [-0.5, 0.5].
-        with hnumpy.random_seed_context(self._seed):
-            data = np.random.rand(len(dates), len(self._columns)) - 0.5
-        df = pd.DataFrame(data, columns=self._columns, index=dates)
-        df = df.cumsum()
-        self._entire_df = df
+        # Get the current time.
+        current_time = self._get_current_time()
+        _LOG.debug(hprint.to_str("current_time"))
+        # Filter the data as of the current time.
+        self.df = get_data_as_of_datetime(self._entire_df, current_time,
+                                          delay_in_secs=self._delay_in_secs)
