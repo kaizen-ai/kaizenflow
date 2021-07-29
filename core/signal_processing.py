@@ -610,15 +610,7 @@ def extract_smooth_moving_average_weights(
     weights = weights.iloc[::-1].reset_index(drop=True)
     # Reindex.
     weights.index = signal.loc[:index_location].index
-    return weights
-    # Implementation notes:
-    # - Warm up a series based on `tau`, e.g., take at least `3 * tau` periods
-    #   to warm up
-    # - Warm up series consists of all 1's, then switches to 0's
-    # - Calculate the series out to a length determined by
-    #   `signal.index[:index_location]`
-    # - Reverse the sequence, perform the normalizations, etc.
-    raise NotImplementedError
+    return weights.reindex(signal.index)
 
 
 # #############################################################################
