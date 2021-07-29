@@ -550,6 +550,40 @@ def compute_smooth_moving_average(
     return sum(map(ema_eval, range(min_depth, max_depth + 1))) / denom
 
 
+def extract_smooth_moving_average_weights(
+    signal: Union[pd.DataFrame, pd.Series],
+    index_location: Any,
+    smooth_moving_average_kwargs: Dict[str, Any],
+) -> pd.DataFrame:
+    """
+    Return present and historical weights used in SMA up to `index_location`.
+
+    This can be used in isolation to inspect SMA weights, or can be used on
+    data to, e.g., generate training data weights.
+
+    TODO(Paul): Consider generalizing this to also work with other filters.
+
+    :param signal: data that provides an index (for reindexing). No column
+        values used.
+    :index_location: current and latest value to be considered operated upon by
+        the smooth moving average (e.g., the last in-sample index)
+    :smooth_moving_average_kwargs: must contain `tau`. Other params optional
+        but can be used to change the shape of the kernel.
+    :return: dataframe with two columns of weights:
+        1. absolute weights (e.g., weights sum to 1)
+        2. relative weights (weight at `index_location` is equal to `1`, and
+           prior weights are expressed relative to this value
+    """
+    # Implementation notes:
+    # - Warm up a series based on `tau`, e.g., take at least `3 * tau` periods
+    #   to warm up
+    # - Warm up series consists of all 1's, then switches to 0's
+    # - Calculate the series out to a length determined by
+    #   `signal.index[:index_location]`
+    # - Reverse the sequence, perform the normalizations, etc.
+    raise NotImplementedError
+
+
 # #############################################################################
 # Rolling moments, norms, z-scoring, demeaning, etc.
 # #############################################################################
