@@ -611,10 +611,10 @@ def extract_smooth_moving_average_weights(
     )
     # Drop the warm-up ones from the smoothed series.
     smoothed_step = smoothed_step.iloc[warmup_length - 1 :]
-    smoothed_step.name = "relative_weights"
+    smoothed_step.name = "relative_weight"
     # Calculate absolute weights.
     absolute_weights = (smoothed_step / smoothed_step.sum()).rename(
-        "absolute_weights"
+        "absolute_weight"
     )
     # Build a `weights` dataframe of relative and absolute kernel weights.
     weights = pd.concat([smoothed_step, absolute_weights], axis=1).reset_index(
