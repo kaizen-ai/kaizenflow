@@ -648,60 +648,73 @@ class Test_extract_smooth_moving_average_weights(hut.TestCase):
     def test1(self) -> None:
         df = pd.DataFrame(index=range(0, 20))
         weights = csigna.extract_smooth_moving_average_weights(
-            df,
-            {"tau": 1.4},
-            15,
+            df, tau=1.4, index_location=15,
         )
-        actual = hut.convert_df_to_string(weights.round(5), index=True, decimals=5)
+        actual = hut.convert_df_to_string(
+            weights.round(5), index=True, decimals=5
+        )
         self.check_string(actual)
 
     def test2(self) -> None:
         df = pd.DataFrame(index=range(0, 20))
         weights = csigna.extract_smooth_moving_average_weights(
-            df,
-            {"tau": 16},
-            15,
+            df, tau=16, index_location=15,
         )
-        actual = hut.convert_df_to_string(weights.round(5), index=True, decimals=5)
+        actual = hut.convert_df_to_string(
+            weights.round(5), index=True, decimals=5
+        )
         self.check_string(actual)
 
     def test3(self) -> None:
         df = pd.DataFrame(index=range(0, 20))
         weights = csigna.extract_smooth_moving_average_weights(
             df,
-            {"tau": 16, "min_depth": 2, "max_depth": 2},
-            15,
+            tau=16,
+            min_depth=2,
+            max_depth=2,
+            index_location=15,
         )
-        actual = hut.convert_df_to_string(weights.round(5), index=True, decimals=5)
+        actual = hut.convert_df_to_string(
+            weights.round(5), index=True, decimals=5
+        )
         self.check_string(actual)
 
     def test4(self) -> None:
-        df = pd.DataFrame(index=pd.date_range(start="2001-01-04", end="2001-01-31", freq="B"))
+        df = pd.DataFrame(
+            index=pd.date_range(start="2001-01-04", end="2001-01-31", freq="B")
+        )
         weights = csigna.extract_smooth_moving_average_weights(
             df,
-            {"tau": 16},
-            "2001-01-24",
+            tau=16,
+            index_location="2001-01-24",
         )
-        actual = hut.convert_df_to_string(weights.round(5), index=True, decimals=5)
+        actual = hut.convert_df_to_string(
+            weights.round(5), index=True, decimals=5
+        )
         self.check_string(actual)
 
     def test5(self) -> None:
-        df = pd.DataFrame(index=pd.date_range(start="2001-01-04", end="2001-01-31", freq="B"))
-        weights = csigna.extract_smooth_moving_average_weights(
-            df,
-            {"tau": 252},
-            "2001-01-24",
+        df = pd.DataFrame(
+            index=pd.date_range(start="2001-01-04", end="2001-01-31", freq="B")
         )
-        actual = hut.convert_df_to_string(weights.round(5), index=True, decimals=5)
+        weights = csigna.extract_smooth_moving_average_weights(
+            df, tau=252, index_location="2001-01-24",
+        )
+        actual = hut.convert_df_to_string(
+            weights.round(5), index=True, decimals=5
+        )
         self.check_string(actual)
 
     def test6(self) -> None:
-        df = pd.DataFrame(index=pd.date_range(start="2001-01-04", end="2001-01-31", freq="B"))
-        weights = csigna.extract_smooth_moving_average_weights(
-            df,
-            {"tau": 252},
+        df = pd.DataFrame(
+            index=pd.date_range(start="2001-01-04", end="2001-01-31", freq="B")
         )
-        actual = hut.convert_df_to_string(weights.round(5), index=True, decimals=5)
+        weights = csigna.extract_smooth_moving_average_weights(
+            df, tau=252,
+        )
+        actual = hut.convert_df_to_string(
+            weights.round(5), index=True, decimals=5
+        )
         self.check_string(actual)
 
 
