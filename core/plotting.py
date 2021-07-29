@@ -1495,7 +1495,8 @@ def plot_cumulative_returns(
         raise ValueError("Invalid mode='%s'" % mode)
     label = str(cumulative_rets.name) or "returns"
     #
-    ax = cumulative_rets.plot(ax=ax, title=f"{title}{title_suffix}", label=label)
+    ax = cumulative_rets.plot(ax=ax, title=f"{title}{title_suffix}", label=label,
+                              linewidth=3.0)
     if benchmark_series is not None:
         benchmark_series = benchmark_series.loc[
             cumulative_rets.index[0] : cumulative_rets.index[-1]
