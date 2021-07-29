@@ -648,7 +648,9 @@ class Test_extract_smooth_moving_average_weights(hut.TestCase):
     def test1(self) -> None:
         df = pd.DataFrame(index=range(0, 20))
         weights = csigna.extract_smooth_moving_average_weights(
-            df, tau=1.4, index_location=15,
+            df,
+            tau=1.4,
+            index_location=15,
         )
         actual = hut.convert_df_to_string(
             weights.round(5), index=True, decimals=5
@@ -658,7 +660,9 @@ class Test_extract_smooth_moving_average_weights(hut.TestCase):
     def test2(self) -> None:
         df = pd.DataFrame(index=range(0, 20))
         weights = csigna.extract_smooth_moving_average_weights(
-            df, tau=16, index_location=15,
+            df,
+            tau=16,
+            index_location=15,
         )
         actual = hut.convert_df_to_string(
             weights.round(5), index=True, decimals=5
@@ -698,7 +702,9 @@ class Test_extract_smooth_moving_average_weights(hut.TestCase):
             index=pd.date_range(start="2001-01-04", end="2001-01-31", freq="B")
         )
         weights = csigna.extract_smooth_moving_average_weights(
-            df, tau=252, index_location="2001-01-24",
+            df,
+            tau=252,
+            index_location="2001-01-24",
         )
         actual = hut.convert_df_to_string(
             weights.round(5), index=True, decimals=5
@@ -710,7 +716,8 @@ class Test_extract_smooth_moving_average_weights(hut.TestCase):
             index=pd.date_range(start="2001-01-04", end="2001-01-31", freq="B")
         )
         weights = csigna.extract_smooth_moving_average_weights(
-            df, tau=252,
+            df,
+            tau=252,
         )
         actual = hut.convert_df_to_string(
             weights.round(5), index=True, decimals=5

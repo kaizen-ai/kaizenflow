@@ -604,7 +604,10 @@ def extract_smooth_moving_average_weights(
     step = pd.concat([ones, zeros], axis=0)
     # Apply the smooth moving average function to the step function.
     smoothed_step = compute_smooth_moving_average(
-        step, tau=tau, min_depth=min_depth, max_depth=max_depth,
+        step,
+        tau=tau,
+        min_depth=min_depth,
+        max_depth=max_depth,
     )
     # Drop the warm-up ones from the smoothed series.
     smoothed_step = smoothed_step.iloc[warmup_length - 1 :]
