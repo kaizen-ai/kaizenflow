@@ -177,6 +177,7 @@ def get_current_time(tz: Optional[str] = None) -> pd.Timestamp:
         # Naive.
         dbg.dassert_is(tz, None)
         timestamp = datetime.datetime.now()
+    timestamp = pd.Timestamp(timestamp)
     return timestamp
 
 

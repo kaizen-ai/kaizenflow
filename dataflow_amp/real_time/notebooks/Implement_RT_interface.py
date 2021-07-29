@@ -63,6 +63,15 @@ rct = rrt.get_replayed_current_time()
 print("rct=%s" % rct)
 
 # %%
+current_time = hdatetime.get_current_time(tz="ET")
+print(current_time)
+current_time = pd.Timestamp(current_time)
+print(current_time.round("2S"))
+#num_seconds 
+#aligned_current_time = current_time 
+#print(current_time)
+
+# %%
 rrt = cdrt.ReplayRealTime(pd.Timestamp("2021-07-27 9:30:00-04:00"), speed_up_factor=60)
 
 sleep_interval_in_secs = 1.0

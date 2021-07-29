@@ -1,11 +1,13 @@
 import logging
 import os
+import time
 from typing import Any
 
 import pandas as pd
 
 import helpers.printing as hprint
 import core.dataflow.real_time as cdrt
+import helpers.datetime_ as hdatetime
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -53,24 +55,51 @@ class TestReplayTime1(hut.TestCase):
 
 class Test_execute_dag_with_real_time_loop(hut.TestCase):
 
-    def test_real_time(self) -> None:
+    @staticmethod
+    def workload(current_time: pd.Timestamp) -> int:
+        _ = current_time
+        time.sleep(1)
+        return 1
+
+    def test_real_time1(self) -> None:
+        """
+        Test executing a workload every second.
+        """
         sleep_interval_in_secs = 1.0
-        num_iterations = 10
+        num_iterations = 3
         #get_current_time = datetime.datetime.now
         get_current_time = lambda : hdatetime.get_current_time(tz="ET")
-        need_to_execute = cdrt.execute_every_5_minutes
-        cdrt.execute_dag_with_real_time_loop(sleep_interval_in_secs,
+        need_to_execute = cdrt.execute_every_2_seconds
+        #
+        execution_trace = cdrt.execute_dag_with_real_time_loop(sleep_interval_in_secs,
                                              num_iterations,
                                              get_current_time,
-                                             need_to_execute)
+                                             need_to_execute,
+                                             self.workload)
+        # Check.
+        exp = ""
+        self.assert_equal(str(execution_trace), exp)
 
-    def test_real_time(self) -> None:
+    def test_replayed_real_time1(self) -> None:
         sleep_interval_in_secs = 1.0
         num_iterations = 10
         get_current_time = rrt.get_replayed_current_time
-        need_to_execute = cdrt.execute_every_5_minutes
-        cdrt.execute_dag_with_real_time_loop(sleep_interval_in_secs,
+        need_to_execute = cdrt.execute_every_2_seconds
+        #
+        execution_trace = cdrt.execute_dag_with_real_time_loop(sleep_interval_in_secs,
                                              num_iterations,
                                              get_current_time,
-                                             need_to_execute)
+                                             need_to_execute,
+                                             self.workload)
+        # Check.
+        exp = ""
+        self.assert_equal(str(execution_trace), exp)
 
+    def test_align_on_even_second1(self) -> None:
+        for _ in range(3):
+            current_time1 = hdatetime.get_current_time(tz="ET")
+            _ = current_time1
+            cdrt.align_on_even_second()
+            current_time2 = hdatetime.get_current_time(tz="ET")
+            _LOG.debug(hprint.to_str("current_time1 current_time2"))
+            self.assertEqual(current_time2.second % 2, 0)

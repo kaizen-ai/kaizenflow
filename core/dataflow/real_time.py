@@ -165,6 +165,13 @@ def get_simulated_current_time(start_datetime: pd.Timestamp, end_datetime: pd.Ti
         yield dt
 
 
+def execute_every_2_seconds(datetime_: pd.Timestamp) -> bool:
+    """
+    Return true every other second.
+    """
+    return datetime_.second % 2 == 0
+
+
 def execute_every_5_minutes(datetime_: pd.Timestamp) -> bool:
     """
     Return true if `datetime_` is aligned on a 5 minute grid.
@@ -172,12 +179,47 @@ def execute_every_5_minutes(datetime_: pd.Timestamp) -> bool:
     return datetime_.minute % 5 == 0
 
 
+def align_on_even_second(use_time_sleep: bool = False) -> None:
+    """
+    Wait until the current wall clock time reports an even number of seconds.
+
+    E.g., if wall clock time is `2021-07-29 10:45:51`, then this function
+    terminates when the wall clock is `2021-07-29 10:46:00`.
+
+    :param use_time_sleep: `time.sleep()` has low resolution, so by default the
+        function spins on the clock
+    """
+    current_time = hdatetime.get_current_time(tz="ET")
+    # Align on 2 seconds.
+    target_time = current_time.round("2S")
+    if target_time < current_time:
+        target_time += datetime.timedelta(seconds=2)
+    if use_time_sleep:
+        secs_to_wait = (target_time - current_time).total_seconds()
+        #_LOG.debug(hprint.to_str("current_time target_time secs_to_wait"))
+        dbg.dassert_lte(0, secs_to_wait)
+        time.sleep(secs_to_wait)
+    else:
+        # Busy waiting. OS classes says to never do this, but in this case we need
+        # a high-resolution wait.
+        while True:
+            current_time = hdatetime.get_current_time(tz="ET")
+            if current_time >= target_time:
+                break
+
+
+import collections
+
+RealTimeEvent = collections.namedtuple("RealTimeEvent", 'num_it current_time wall_clock_time need_execute')
+
+
 def execute_dag_with_real_time_loop(
         sleep_interval_in_secs: float,
         num_iterations: Optional[int],
         get_current_time: GetCurrentTimeFunction,
-        need_to_execute: Callable[[pd.Timestamp], bool]
-        ):
+        need_to_execute: Callable[[pd.Timestamp], bool],
+        workload: Callable[[pd.Timestamp], Any]
+        ) -> List[RealTimeEvent]:
     """
     Execute a DAG using a true or simulated real-time loop.
 
@@ -187,22 +229,30 @@ def execute_dag_with_real_time_loop(
     :param get_current_time: function returning the current true or simulated time
     :param need_to_execute: function returning true when the DAG needs to be
         executed
+    :param workload: function executing the work when `need_to_execute()` requires to
     """
     dbg.dassert_lt(0, sleep_interval_in_secs)
     if num_iterations is not None:
         dbg.dassert_lt(0, num_iterations)
     #
+    execution_trace = []
     num_it = 1
     while True:
         current_time = get_current_time()
         execute = need_to_execute(current_time)
-        _LOG.debug("num_it=%s/%s: current_time=%s", num_it, num_iterations,
-                   current_time)
+        wall_clock_time = hdatetime.get_current_time(tz="ET")
+        event = RealTimeEvent(num_it, current_time, wall_clock_time, execute)
+        #_LOG.debug("num_it=%s/%s: current_time=%s", num_it, num_iterations,
+        #           current_time)
+        _LOG.debug("event='%s'", str(event))
+        execution_trace.append(event)
         if execute:
             _LOG.debug("  -> execute")
+            rc = workload(current_time)
         # Exit, if needed.
         if num_iterations is not None and num_it >= num_iterations:
             break
         # Go to sleep.
         time.sleep(sleep_interval_in_secs)
         num_it += 1
+    return execution_trace
