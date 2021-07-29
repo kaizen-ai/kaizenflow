@@ -644,6 +644,58 @@ class Test_compute_smooth_moving_average1(hut.TestCase):
         self.check_string(actual.to_string())
 
 
+class Test_extract_smooth_moving_average_weights(hut.TestCase):
+    def test1(self) -> None:
+        df = pd.DataFrame(index=range(0, 20))
+        weights = csigna.extract_smooth_moving_average_weights(
+            df,
+            15,
+            {"tau": 1.4},
+        )
+        actual = hut.convert_df_to_string(weights.round(5), index=True, decimals=5)
+        self.check_string(actual)
+
+    def test2(self) -> None:
+        df = pd.DataFrame(index=range(0, 20))
+        weights = csigna.extract_smooth_moving_average_weights(
+            df,
+            15,
+            {"tau": 16},
+        )
+        actual = hut.convert_df_to_string(weights.round(5), index=True, decimals=5)
+        self.check_string(actual)
+
+    def test3(self) -> None:
+        df = pd.DataFrame(index=range(0, 20))
+        weights = csigna.extract_smooth_moving_average_weights(
+            df,
+            15,
+            {"tau": 16, "min_depth": 2, "max_depth": 2},
+        )
+        actual = hut.convert_df_to_string(weights.round(5), index=True, decimals=5)
+        self.check_string(actual)
+
+    def test4(self) -> None:
+        df = pd.DataFrame(index=pd.date_range(start="2001-01-04", end="2001-01-31", freq="B"))
+        weights = csigna.extract_smooth_moving_average_weights(
+            df,
+            "2001-01-24",
+            {"tau": 16},
+        )
+        actual = hut.convert_df_to_string(weights.round(5), index=True, decimals=5)
+        self.check_string(actual)
+
+    def test5(self) -> None:
+        df = pd.DataFrame(index=pd.date_range(start="2001-01-04", end="2001-01-31", freq="B"))
+        weights = csigna.extract_smooth_moving_average_weights(
+            df,
+            "2001-01-24",
+            {"tau": 252},
+        )
+        actual = hut.convert_df_to_string(weights.round(5), index=True, decimals=5)
+        self.check_string(actual)
+
+
 class Test_digitize1(hut.TestCase):
     def test1(self) -> None:
         np.random.seed(42)
