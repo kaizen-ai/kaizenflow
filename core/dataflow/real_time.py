@@ -4,28 +4,27 @@ Import as:
 import core.dataflow.real_time as cdrt
 """
 
+import collections
 import datetime
 import logging
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, List, Optional
 
 import numpy as np
 import pandas as pd
-import pytz
 
-#import core.dataflow as cdataf
-import helpers.dbg as dbg
-import helpers.cache as hcache
 import helpers.datetime_ as hdatetime
+
+# import core.dataflow as cdataf
+import helpers.dbg as dbg
 import helpers.hnumpy as hnumpy
-import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Do not merge this.
-#dbg.test_logger()
-#_LOG.setLevel(logging.DEBUG)
-#dbg.test_logger()
+# dbg.test_logger()
+# _LOG.setLevel(logging.DEBUG)
+# dbg.test_logger()
 _LOG.debug = _LOG.info
 
 # There are various levels of real-time:
@@ -50,7 +49,8 @@ def generate_synthetic_data(
     columns: List[str],
     start_datetime: pd.Timestamp,
     end_datetime: pd.Timestamp,
-    seed: int = 42) -> pd.DataFrame:
+    seed: int = 42,
+) -> pd.DataFrame:
     """
     Generate synthetic data used to mimic real-time data.
     """
@@ -65,9 +65,12 @@ def generate_synthetic_data(
     return df
 
 
-def get_data_as_of_datetime(df: pd.DataFrame, datetime_: pd.Timestamp, delay_in_secs: int =0):
+def get_data_as_of_datetime(
+    df: pd.DataFrame, datetime_: pd.Timestamp, delay_in_secs: int = 0
+):
     """
-    Extract data from a df (indexed with knowledge time) available at `datetime_`
+    Extract data from a df (indexed with knowledge time) available at
+    `datetime_`
 
     :param df: df indexed with timestamp representing knowledge time
     :param datetime_: the "as of" timestamp
@@ -80,9 +83,9 @@ def get_data_as_of_datetime(df: pd.DataFrame, datetime_: pd.Timestamp, delay_in_
     returned.
     """
     dbg.dassert_lte(0, delay_in_secs)
-    #hdatetime.dassert_has_tz(datetime_)
+    # hdatetime.dassert_has_tz(datetime_)
     # Convert in UTC since the RT DB uses implicitly UTC.
-    #datetime_utc = datetime_.astimezone(pytz.timezone("UTC")).replace(tzinfo=None)
+    # datetime_utc = datetime_.astimezone(pytz.timezone("UTC")).replace(tzinfo=None)
     # TODO(gp): We could also use the `timestamp_db` field if available.
     datetime_eff = datetime_ - datetime.timedelta(seconds=delay_in_secs)
     mask = df.index <= datetime_eff
@@ -112,7 +115,9 @@ class ReplayRealTime:
         returns times in the same timezone
     """
 
-    def __init__(self, initial_replayed_dt: pd.Timestamp, speed_up_factor: float=1.0):
+    def __init__(
+        self, initial_replayed_dt: pd.Timestamp, speed_up_factor: float = 1.0
+    ):
         """
         :param initial_replayed_dt: this is the time that we want the current
             wall clock time to correspond to
@@ -125,16 +130,19 @@ class ReplayRealTime:
         # This is when the experiment start.
         now = self._get_wall_clock_time()
         self._initial_wall_clock_dt = now
-        dbg.dassert_lte(self._initial_replayed_dt, self._initial_wall_clock_dt,
-                        msg="Replaying time can be done only for the past. "
-                        "The future can't be replayed yet")
+        dbg.dassert_lte(
+            self._initial_replayed_dt,
+            self._initial_wall_clock_dt,
+            msg="Replaying time can be done only for the past. "
+            "The future can't be replayed yet",
+        )
         #
         self._speed_up_factor = speed_up_factor
 
     def get_replayed_current_time(self) -> pd.Timestamp:
         """
-        When replaying data, transform the current time into the corresponding time
-        if the real-time experiment started at `initial_simulated_dt`.
+        When replaying data, transform the current time into the corresponding
+        time if the real-time experiment started at `initial_simulated_dt`.
         """
         now = self._get_wall_clock_time()
         dbg.dassert_lte(self._initial_wall_clock_dt, now)
@@ -153,10 +161,12 @@ class ReplayRealTime:
         return now
 
 
-def get_simulated_current_time(start_datetime: pd.Timestamp, end_datetime: pd.Timestamp,
-                               freq: str = "1T"):
+def get_simulated_current_time(
+    start_datetime: pd.Timestamp, end_datetime: pd.Timestamp, freq: str = "1T"
+):
     """
-    Iterator yielding timestamps in the given interval and with the given frequency.
+    Iterator yielding timestamps in the given interval and with the given
+    frequency.
 
     E.g., `freq = "1T"` can be used to simulate a system sampled every minute.
     """
@@ -196,7 +206,7 @@ def align_on_even_second(use_time_sleep: bool = False) -> None:
         target_time += datetime.timedelta(seconds=2)
     if use_time_sleep:
         secs_to_wait = (target_time - current_time).total_seconds()
-        #_LOG.debug(hprint.to_str("current_time target_time secs_to_wait"))
+        # _LOG.debug(hprint.to_str("current_time target_time secs_to_wait"))
         dbg.dassert_lte(0, secs_to_wait)
         time.sleep(secs_to_wait)
     else:
@@ -208,18 +218,19 @@ def align_on_even_second(use_time_sleep: bool = False) -> None:
                 break
 
 
-import collections
+# Information about the real time execution.
+RealTimeEvent = collections.namedtuple(
+    "RealTimeEvent", "num_it current_time wall_clock_time need_execute"
+)
 
-RealTimeEvent = collections.namedtuple("RealTimeEvent", 'num_it current_time wall_clock_time need_execute')
 
-
-def execute_dag_with_real_time_loop(
-        sleep_interval_in_secs: float,
-        num_iterations: Optional[int],
-        get_current_time: GetCurrentTimeFunction,
-        need_to_execute: Callable[[pd.Timestamp], bool],
-        workload: Callable[[pd.Timestamp], Any]
-        ) -> List[RealTimeEvent]:
+def execute_with_real_time_loop(
+    sleep_interval_in_secs: float,
+    num_iterations: Optional[int],
+    get_current_time: GetCurrentTimeFunction,
+    need_to_execute: Callable[[pd.Timestamp], bool],
+    workload: Callable[[pd.Timestamp], Any],
+) -> List[RealTimeEvent]:
     """
     Execute a DAG using a true or simulated real-time loop.
 
@@ -242,7 +253,7 @@ def execute_dag_with_real_time_loop(
         execute = need_to_execute(current_time)
         wall_clock_time = hdatetime.get_current_time(tz="ET")
         event = RealTimeEvent(num_it, current_time, wall_clock_time, execute)
-        #_LOG.debug("num_it=%s/%s: current_time=%s", num_it, num_iterations,
+        # _LOG.debug("num_it=%s/%s: current_time=%s", num_it, num_iterations,
         #           current_time)
         _LOG.debug("event='%s'", str(event))
         execution_trace.append(event)

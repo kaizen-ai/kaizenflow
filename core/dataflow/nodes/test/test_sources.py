@@ -11,7 +11,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestDiskDataSource(hut.TestCase):
-
     def test_datetime_index_csv1(self) -> None:
         """
         Test CSV file using timestamps in the index.
@@ -63,9 +62,7 @@ class TestDiskDataSource(hut.TestCase):
         #
         ext = ".csv"
         timestamp_col = None
-        dds_kwargs = {
-            "start_date": "2010-01-02",
-            "end_date": "2010-01-05"}
+        dds_kwargs = {"start_date": "2010-01-02", "end_date": "2010-01-05"}
         self._helper(df, ext, timestamp_col, **dds_kwargs)
 
     def test_filter_dates_open_boundary1(self) -> None:
@@ -77,9 +74,7 @@ class TestDiskDataSource(hut.TestCase):
         #
         ext = ".csv"
         timestamp_col = None
-        dds_kwargs = {
-        "start_date": "2010-01-02"
-        }
+        dds_kwargs = {"start_date": "2010-01-02"}
         self._helper(df, ext, timestamp_col, **dds_kwargs)
 
     @staticmethod
@@ -110,14 +105,19 @@ class TestDiskDataSource(hut.TestCase):
             raise ValueError("Invalid extension='%s'" % ext)
         return file_path
 
-    def _helper(self, df: pd.DataFrame, ext: str, timestamp_col: str, **dds_kwargs: Any) -> None:
+    def _helper(
+        self, df: pd.DataFrame, ext: str, timestamp_col: str, **dds_kwargs: Any
+    ) -> None:
         """
-        Instantiate a `DiskDataSource` with the passed parameter, run it and check.
+        Instantiate a `DiskDataSource` with the passed parameter, run it and
+        check.
         """
         # Save the data with the proper extension.
         file_path = self._save_df(df, ext)
         # Instantiate node.
-        dds = dtf.DiskDataSource("read_data", file_path, timestamp_col, **dds_kwargs)
+        dds = dtf.DiskDataSource(
+            "read_data", file_path, timestamp_col, **dds_kwargs
+        )
         # Run node.
         loaded_df = dds.fit()["df_out"]
         # Check output.
@@ -184,21 +184,10 @@ def get_data_builder():
 
 class TestRealTimeDataSource1(hut.TestCase):
 
-    def _helper(self, rtds) -> None:
-        # Execute.
-        dict_ = rtds.fit()
-        # Check.
-        df = dict_["df_out"]
-        act = list(map(str, df.index.tolist()))
-        exp = ['2010-01-04 09:30:00', '2010-01-04 09:31:00',
-               '2010-01-04 09:32:00', '2010-01-04 09:33:00',
-               '2010-01-04 09:34:00', '2010-01-04 09:35:00']
-        self.assert_equal(str(act), str(exp))
-
     def test_simulated_real_time1(self) -> None:
         """
-        Setting the current time to a specific datetime, the node generates values
-        up and including that datetime.
+        Setting the current time to a specific datetime, the node generates
+        values up and including that datetime.
         """
         # Build the node.
         nid = "rtds"
@@ -210,7 +199,8 @@ class TestRealTimeDataSource1(hut.TestCase):
             delay_in_secs,
             get_current_time,
             data_builder,
-            data_builder_kwargs)
+            data_builder_kwargs,
+        )
         # Execute.
         current_time = pd.Timestamp("2010-01-04 09:35:00")
         rtds.set_current_time(current_time)
@@ -227,8 +217,25 @@ class TestRealTimeDataSource1(hut.TestCase):
             delay_in_secs,
             get_current_time,
             data_builder,
-            data_builder_kwargs)
+            data_builder_kwargs,
+        )
         # Execute.
         self._helper(rtds)
+
+    def _helper(self, rtds) -> None:
+        # Execute.
+        dict_ = rtds.fit()
+        # Check.
+        df = dict_["df_out"]
+        act = list(map(str, df.index.tolist()))
+        exp = [
+            "2010-01-04 09:30:00",
+            "2010-01-04 09:31:00",
+            "2010-01-04 09:32:00",
+            "2010-01-04 09:33:00",
+            "2010-01-04 09:34:00",
+            "2010-01-04 09:35:00",
+        ]
+        self.assert_equal(str(act), str(exp))
 
     # TODO(gp): Add a test with delay_in_secs

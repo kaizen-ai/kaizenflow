@@ -19,16 +19,12 @@
 # %load_ext autoreload
 # %autoreload 2
 
-import datetime
 import logging
 import os
 
 import pandas as pd
-from pyarrow import parquet
-import s3fs
 
 import helpers.dbg as dbg
-import helpers.env as env
 import helpers.printing as prnt
 
 # %%
@@ -42,11 +38,10 @@ _LOG = logging.getLogger(__name__)
 # %% [markdown]
 # # Real-time node
 
-# %%
-import time
-import helpers.datetime_ as hdatetime
-
 import core.dataflow.real_time as cdrt
+
+# %%
+import helpers.datetime_ as hdatetime
 
 # %%
 rrt = cdrt.ReplayRealTime(pd.Timestamp("2021-07-27 9:30:00-04:00"))
@@ -67,24 +62,25 @@ current_time = hdatetime.get_current_time(tz="ET")
 print(current_time)
 current_time = pd.Timestamp(current_time)
 print(current_time.round("2S"))
-#num_seconds 
-#aligned_current_time = current_time 
-#print(current_time)
+# num_seconds
+# aligned_current_time = current_time
+# print(current_time)
 
 # %%
-rrt = cdrt.ReplayRealTime(pd.Timestamp("2021-07-27 9:30:00-04:00"), speed_up_factor=60)
+rrt = cdrt.ReplayRealTime(
+    pd.Timestamp("2021-07-27 9:30:00-04:00"), speed_up_factor=60
+)
 
 sleep_interval_in_secs = 1.0
 num_iterations = 10
-#get_current_time = datetime.datetime.now
-#get_current_time = lambda : hdatetime.get_current_time(tz="ET")
+# get_current_time = datetime.datetime.now
+# get_current_time = lambda : hdatetime.get_current_time(tz="ET")
 get_current_time = rrt.get_replayed_current_time
-need_to_execute = cdrt.execute_every_5_minutes 
+need_to_execute = cdrt.execute_every_5_minutes
 
-cdrt.execute_dag_with_real_time_loop(sleep_interval_in_secs,
-               num_iterations,
-               get_current_time,
-               need_to_execute)
+cdrt.execute_dag_with_real_time_loop(
+    sleep_interval_in_secs, num_iterations, get_current_time, need_to_execute
+)
 
 # %% [markdown]
 # ## Test real-time node
@@ -101,17 +97,18 @@ rtds = cdtfns.RealTimeSyntheticDataSource("rtds", columns, start_date, end_date)
 
 current_time = pd.Timestamp("2010-01-04 09:35:00")
 rtds.set_current_time(current_time)
-    
+
 rtds.fit()
 
 # %% [markdown]
 # ## Build pipeline
 
-# %%
-import dataflow_amp.real_time.utils as dartu
-import dataflow_amp.returns.pipeline as darp
-import core.dataflow as cdataf
 import core.config as cconfig
+import core.dataflow as cdataf
+
+# %%
+import core.dataflow.real_time as cdrt
+import dataflow_amp.returns.pipeline as darp
 
 dag_builder = darp.ReturnsPipeline()
 config = dag_builder.get_config_template()
@@ -147,20 +144,22 @@ if False:
     config["load_prices"] = cconfig.get_config_from_nested_dict(
         source_node_kwargs
     )
-    
+
 else:
     start_date = pd.Timestamp("2010-01-04 09:30:00")
     end_date = pd.Timestamp("2010-01-04 11:30:00")
-    
+
     source_node_kwargs = {
         "columns": ["close", "vol"],
         "start_date": start_date,
         "end_date": end_date,
     }
-    config["load_prices"] = cconfig.get_config_from_nested_dict({
-        "source_node_name": "real_time_synthetic",
-        "source_node_kwargs": source_node_kwargs
-    })
+    config["load_prices"] = cconfig.get_config_from_nested_dict(
+        {
+            "source_node_name": "real_time_synthetic",
+            "source_node_kwargs": source_node_kwargs,
+        }
+    )
 
 print(config)
 
@@ -169,7 +168,7 @@ dag = dag_builder.get_dag(config)
 
 # %%
 if False:
-    #nid = "compute_ret_0"
+    # nid = "compute_ret_0"
     nid = "load_prices"
     node = dag.get_node("load_prices")
     node.reset_current_time()
@@ -182,10 +181,10 @@ if False:
 # %%
 node = dag.get_node("load_prices")
 node.reset_current_time()
-    
-for now in dartu.get_now_time(start_date, end_date):
+
+for now in cdrt.get_now_time(start_date, end_date):
     print("now=", now)
-    execute = dartu.is_dag_to_execute(now)
+    execute = cdrt.is_dag_to_execute(now)
     if execute:
         print("Time to execute the DAG")
         node = dag.get_node("load_prices")
@@ -194,4 +193,3 @@ for now in dartu.get_now_time(start_date, end_date):
         sink = dag.get_unique_sink()
         dict_ = dag.run_leq_node(sink, "fit")
         print(dict_["df_out"].tail(3))
-

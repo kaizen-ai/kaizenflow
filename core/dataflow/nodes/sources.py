@@ -18,9 +18,7 @@ import core.artificial_signal_generators as cartif
 import core.dataflow.nodes.base as cdnb
 import core.finance as cfinan
 import core.pandas_helpers as pdhelp
-import helpers.datetime_ as hdatetime
 import helpers.dbg as dbg
-import helpers.hnumpy as hnumpy
 import helpers.printing as hprint
 import helpers.s3 as hs3
 
@@ -37,7 +35,8 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 # TODO(gp): -> DfDataSource
 class ReadDataFromDf(cdnb.DataSource):
     """
-    Data source node accepting data as a DataFrame passed through the constructor.
+    Data source node accepting data as a DataFrame passed through the
+    constructor.
     """
 
     def __init__(self, nid: str, df: pd.DataFrame) -> None:
@@ -52,7 +51,8 @@ class ReadDataFromDf(cdnb.DataSource):
 # TODO(gp): -> FunctionDataSource
 class DataLoader(cdnb.DataSource):
     """
-    Data source node using the passed function and arguments to generate the data.
+    Data source node using the passed function and arguments to generate the
+    data.
     """
 
     def __init__(
@@ -361,18 +361,18 @@ class RealTimeDataSource(cdnb.DataSource):
     """
     Data source node that outputs data according to a real-time behavior.
 
-    Depending on the current time (which is provided by an external clock
-    or set through `set_not_time()`) this node emits the data available up and
-    including the current time.
+    Depending on the current time (which is provided by an external
+    clock or set through `set_not_time()`) this node emits the data
+    available up and including the current time.
     """
 
     def __init__(
-            self,
-            nid: str,
-            delay_in_secs: float,
-            external_clock: Optional[cdrt.GetCurrentTimeFunction],
-            df_builder: Callable,
-            df_builder_kwargs: Dict[str, Any],
+        self,
+        nid: str,
+        delay_in_secs: float,
+        external_clock: Optional[cdrt.GetCurrentTimeFunction],
+        df_builder: Callable,
+        df_builder_kwargs: Dict[str, Any],
     ) -> None:
         """
         Constructor.
@@ -407,13 +407,17 @@ class RealTimeDataSource(cdnb.DataSource):
         """
         Set the current time using the passed timestamp.
 
-        This method should be called only if an external clock was not specified.
+        This method should be called only if an external clock was not
+        specified.
         """
         _LOG.debug("datetime_=%s", datetime_)
-        dbg.dassert_is(self._external_clock, None,
-                       "This function can be called only if an external clock "
-                       "was not specified, while instead external_clock=%s",
-                       self._external_clock)
+        dbg.dassert_is(
+            self._external_clock,
+            None,
+            "This function can be called only if an external clock "
+            "was not specified, while instead external_clock=%s",
+            self._external_clock,
+        )
         self._set_current_time(datetime_)
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
@@ -432,17 +436,21 @@ class RealTimeDataSource(cdnb.DataSource):
         dbg.dassert_isinstance(datetime_, pd.Timestamp)
         # Time only moves forward.
         if self._last_time is not None:
-            dbg.dassert_lte(self._last_time , datetime_)
+            dbg.dassert_lte(self._last_time, datetime_)
         # Update the state.
-        _LOG.debug("before: " + hprint.to_str("self._last_time self._current_time"))
+        _LOG.debug(
+            "before: " + hprint.to_str("self._last_time self._current_time")
+        )
         self._last_time = self._current_time
         self._current_time = datetime_
-        _LOG.debug("after: " + hprint.to_str("self._last_time self._current_time"))
+        _LOG.debug(
+            "after: " + hprint.to_str("self._last_time self._current_time")
+        )
 
     def _get_current_time(self) -> pd.Timestamp:
         """
-        Get the current time provided from the external clock `get_current_time()`
-        or set through the method `set_current_time()`
+        Get the current time provided from the external clock
+        `get_current_time()` or set through the method `set_current_time()`
         """
         # If an external clock was passed, then use it to update the current time.
         if self._external_clock is not None:
@@ -461,5 +469,6 @@ class RealTimeDataSource(cdnb.DataSource):
         current_time = self._get_current_time()
         _LOG.debug(hprint.to_str("current_time"))
         # Filter the data as of the current time.
-        self.df = cdrt.get_data_as_of_datetime(self._entire_df, current_time,
-                                          delay_in_secs=self._delay_in_secs)
+        self.df = cdrt.get_data_as_of_datetime(
+            self._entire_df, current_time, delay_in_secs=self._delay_in_secs
+        )

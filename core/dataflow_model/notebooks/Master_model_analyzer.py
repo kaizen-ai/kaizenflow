@@ -59,14 +59,13 @@ SMALL_SIZE = 8 * scale
 MEDIUM_SIZE = 10 * scale
 BIGGER_SIZE = 12 * scale
 
-plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
-plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
-plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
-plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
-plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
-
+plt.rc("font", size=SMALL_SIZE)  # controls default text sizes
+plt.rc("axes", titlesize=SMALL_SIZE)  # fontsize of the axes title
+plt.rc("axes", labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels
+plt.rc("xtick", labelsize=SMALL_SIZE)  # fontsize of the tick labels
+plt.rc("ytick", labelsize=SMALL_SIZE)  # fontsize of the tick labels
+plt.rc("legend", fontsize=SMALL_SIZE)  # legend fontsize
+plt.rc("figure", titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 
 # %% [markdown]
@@ -81,7 +80,7 @@ eval_config = cconfig.get_config_from_nested_dict(
         "model_evaluator_kwargs": {
             "returns_col": "ret_0_vol_adj_2",
             "predictions_col": "ret_0_vol_adj_2_hat",
-            #"oos_start": "2017-01-01",
+            # "oos_start": "2017-01-01",
         },
         "bh_adj_threshold": 0.1,
         "resample_rule": "W",

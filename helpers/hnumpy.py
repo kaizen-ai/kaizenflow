@@ -1,5 +1,7 @@
 import contextlib
+
 import numpy as np
+
 
 # From https://stackoverflow.com/questions/49555991
 @contextlib.contextmanager

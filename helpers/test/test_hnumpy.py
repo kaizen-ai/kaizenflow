@@ -5,15 +5,14 @@ import numpy as np
 import helpers.hnumpy as hnumpy
 import helpers.unit_test as hut
 
-
 _LOG = logging.getLogger(__name__)
 
 
 class TestRandomSeedContext(hut.TestCase):
     def test_example1(self) -> None:
         """
-        Getting more random numbers without context manager changes the sequence of
-        random numbers.
+        Getting more random numbers without context manager changes the
+        sequence of random numbers.
         """
         n = 3
         # First batch.
@@ -33,8 +32,8 @@ class TestRandomSeedContext(hut.TestCase):
 
     def test_example2(self) -> None:
         """
-        Getting more random numbers with context manager doesn't change the sequence
-        of random numbers.
+        Getting more random numbers with context manager doesn't change the
+        sequence of random numbers.
         """
         n = 3
         # First batch.
