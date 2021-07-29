@@ -22,7 +22,7 @@ import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): Do not commit this.
+# TODO(gp): Do not merge this.
 #_LOG.setLevel(logging.DEBUG)
 #assert 0
 

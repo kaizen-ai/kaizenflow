@@ -45,6 +45,35 @@ _LOG = logging.getLogger(__name__)
 # %%
 import time
 
+# %%
+## 
+
+# %%
+rrt = dartu.ReplayRealTime(pd.Timestamp("2021-07-27 9:30:00-04:00"))
+
+rct = rrt.get_replayed_current_time()
+print("rct=%s" % rct)
+
+# %%
+rct = rrt.get_replayed_current_time()
+print("rct=%s" % rct)
+
+# %%
+rct = rrt.get_replayed_current_time()
+print("rct=%s" % rct)
+
+# %%
+sleep_interval_in_secs = 1.0
+num_iterations = 10
+#get_current_time = datetime.datetime.now
+get_current_time = lambda : hdatetime.get_current_time(tz="ET")
+need_to_execute = dartu.execute_every_5_minutes 
+
+dartu.execute_dag_with_real_time_loop(sleep_interval_in_secs,
+               num_iterations,
+               get_current_time,
+               need_to_execute)
+
 # %% [markdown]
 # ## Test real-time node
 
@@ -67,7 +96,7 @@ rtds.fit()
 # ## Build pipeline
 
 # %%
-import core.dataflow.real_time as cdrt
+import dataflow_amp.real_time.utils as dartu
 import dataflow_amp.returns.pipeline as darp
 import core.dataflow as cdataf
 import core.config as cconfig
@@ -142,9 +171,9 @@ if False:
 node = dag.get_node("load_prices")
 node.reset_current_time()
     
-for now in cdrt.get_now_time(start_date, end_date):
+for now in dartu.get_now_time(start_date, end_date):
     print("now=", now)
-    execute = cdrt.is_dag_to_execute(now)
+    execute = dartu.is_dag_to_execute(now)
     if execute:
         print("Time to execute the DAG")
         node = dag.get_node("load_prices")
