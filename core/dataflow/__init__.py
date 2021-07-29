@@ -15,6 +15,7 @@ from core.dataflow.nodes.transformers import *  # pylint: disable=unused-import 
 from core.dataflow.nodes.unsupervised_sklearn_models import *  # pylint: disable=unused-import # NOQA
 from core.dataflow.nodes.volatility_models import *  # pylint: disable=unused-import # NOQA
 from core.dataflow.pipelines import *  # pylint: disable=unused-import # NOQA
+from core.dataflow.real_time import *  # pylint: disable=unused-import # NOQA
 from core.dataflow.result_bundle import *  # pylint: disable=unused-import # NOQA
 from core.dataflow.runners import *  # pylint: disable=unused-import # NOQA
 from core.dataflow.visitors import *  # pylint: disable=unused-import # NOQA

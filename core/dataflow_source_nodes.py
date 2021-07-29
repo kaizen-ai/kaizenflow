@@ -58,8 +58,8 @@ def DataSourceNodeFactory(
         return cdataf.DataLoader(nid, **source_node_kwargs)
     elif source_node_name == "multivariate_normal":
         return cdataf.MultivariateNormalGenerator(nid, **source_node_kwargs)
-    elif source_node_name == "real_time_synthetic":
-        return cdataf.RealTimeSyntheticDataSource(nid, **source_node_kwargs)
+    elif source_node_name == "RealTimeDataSource":
+        return cdataf.RealTimeDataSource(nid, **source_node_kwargs)
     else:
         raise ValueError(f"Unsupported data source node {source_node_name}")
 

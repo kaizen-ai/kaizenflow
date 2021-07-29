@@ -1,13 +1,19 @@
 import logging
 import os
+import time
 from typing import Any
 
 import pandas as pd
 
+import core.dataflow.real_time as cdrt
 import core.dataflow as dtf
+import helpers.datetime_ as hdatetime
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
+
+
+# #############################################################################
 
 
 class TestDiskDataSource(hut.TestCase):
@@ -168,7 +174,6 @@ class TestMultivariateNormalGenerator(hut.TestCase):
 # #############################################################################
 
 
-import core.dataflow.real_time as cdrt
 
 
 def get_data_builder():
@@ -231,7 +236,9 @@ class TestRealTimeDataSource1(hut.TestCase):
         delay_in_secs = 0.0
         # Use a replayed real-time starting at the same time as the data.
         rrt = cdrt.ReplayRealTime(
-            pd.Timestamp("2010-01-04 09:30:00", tz=hdatetime.get_ET_tz())
+            pd.Timestamp("2010-01-04 09:30:00"),
+            # 1.1 is a fudge factor to make sure we get in the next minute.
+            speed_up_factor=60 * 1.1,
         )
         get_current_time = rrt.get_replayed_current_time
         #
@@ -243,9 +250,26 @@ class TestRealTimeDataSource1(hut.TestCase):
             data_builder,
             data_builder_kwargs,
         )
-        # Execute.
-        self._helper(rtds)
-
+        # Execute right away.
+        dict_ = rtds.fit()
+        # Check.
+        df = dict_["df_out"]
+        act = list(map(str, df.index.tolist()))
+        exp = [
+            "2010-01-04 09:30:00",
+        ]
+        self.assert_equal(str(act), str(exp))
+        # Execute after a replayed second that corresponds to a minute.
+        time.sleep(1)
+        dict_ = rtds.fit()
+        # Check.
+        df = dict_["df_out"]
+        act = list(map(str, df.index.tolist()))
+        exp = [
+            "2010-01-04 09:30:00",
+            "2010-01-04 09:31:00",
+        ]
+        self.assert_equal(str(act), str(exp))
 
     def _helper(self, rtds) -> None:
         # Execute.

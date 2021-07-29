@@ -149,6 +149,9 @@ class Test_dassert_tz_compatible1(hut.TestCase):
                 hdatetime.dassert_tz_compatible(datetime1, datetime2)
 
     def test_dassert_compatible_timestamp_assert1(self) -> None:
+        """
+        Test a single not compatible pair of datetimes and check the raised exception.
+        """
         with self.assertRaises(AssertionError) as cm:
             hdatetime.dassert_tz_compatible(_PD_TS_NAIVE, _DT_DT_UTC)
         act = str(cm.exception)
@@ -162,6 +165,9 @@ class Test_dassert_tz_compatible1(hut.TestCase):
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_dassert_compatible_timestamp_assert2(self) -> None:
+        """
+        Test a pairs of non-compatible datetimes making sure the assertion is raised.
+        """
         for datetime1 in [_PD_TS_NAIVE, _DT_DT_NAIVE, _PD_TS_NAIVE, _DT_DT_NAIVE]:
             for datetime2 in [_PD_TS_UTC, _PD_TS_ET, _DT_DT_UTC, _DT_DT_ET]:
                 with self.assertRaises(AssertionError):

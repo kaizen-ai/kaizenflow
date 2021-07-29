@@ -57,8 +57,6 @@ Datetime = Union[str, pd.Timestamp, datetime.datetime]
 # a datetime, or strict and then only the Python type `datetime.datetime` is used.
 StrictDatetime = Union[pd.Timestamp, datetime.datetime]
 
-# TODO(gp): Use a single name of the var (e.g., datetime_) everywhere.
-
 
 def dassert_is_datetime(datetime_: Datetime) -> None:
     """
@@ -172,22 +170,27 @@ def dassert_tz_compatible(datetime1: StrictDatetime, datetime2: StrictDatetime) 
                    str(datetime1), str(datetime2))
 
 
-def dassert_tz_compatible_timestamp_df(df: pd.DataFrame, datetime_: StrictDatetime) -> None:
+def dassert_tz_compatible_timestamp_with_df(datetime_: StrictDatetime, df: pd.DataFrame) -> None:
     """
     Assert that timestamp and df.index are both naive or both have timezone info.
     """
+    dassert_is_strict_datetime(datetime_)
+    dbg.dassert_isinstance(df, pd.DataFrame)
     if df.empty:
         return
     # We assume that the first element in the index is representative.
-    df_datetime = df.index.iloc[0]
-    dassert_compatible_timestamps(df_datetime, datetime_)
-
-
-def get_ET_tz() -> pytz.timezone:
-    return pytz.timezone("America/New_York")
+    df_datetime = df.index[0]
+    dassert_tz_compatible(df_datetime, datetime_)
 
 
 # #############################################################################
+
+
+def get_ET_tz() -> pytz.timezone:
+    """
+    Return the US Eastern Time timezone.
+    """
+    return pytz.timezone("America/New_York")
 
 
 def get_current_time(tz: Optional[str] = None) -> pd.Timestamp:

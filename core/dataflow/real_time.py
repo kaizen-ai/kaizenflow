@@ -41,10 +41,7 @@ _LOG.debug = _LOG.info
 #     calling a method (e.g., `set_current_time(simulated_time)`)
 
 
-# Type for a function that return the current (true or replayed) time as a timestamp.
-GetCurrentTimeFunction = Callable[[], pd.Timestamp]
-
-
+# TODO(gp): This doesn't belong here, but it's not clear where should it go.
 def generate_synthetic_data(
     columns: List[str],
     start_datetime: pd.Timestamp,
@@ -54,6 +51,7 @@ def generate_synthetic_data(
     """
     Generate synthetic data used to mimic real-time data.
     """
+    hdatetime.dassert_tz_compatible(start_datetime, end_datetime)
     dbg.dassert_lte(start_datetime, end_datetime)
     dates = pd.date_range(start_datetime, end_datetime, freq="1T")
     # TODO(gp): Filter by ATH, if needed.
@@ -63,6 +61,11 @@ def generate_synthetic_data(
     df = pd.DataFrame(data, columns=columns, index=dates)
     df = df.cumsum()
     return df
+
+
+# #############################################################################
+# Time generator
+# #############################################################################
 
 
 def get_data_as_of_datetime(
@@ -83,9 +86,7 @@ def get_data_as_of_datetime(
     returned.
     """
     dbg.dassert_lte(0, delay_in_secs)
-    # hdatetime.dassert_has_tz(datetime_)
-    # Convert in UTC since the RT DB uses implicitly UTC.
-    # datetime_utc = datetime_.astimezone(pytz.timezone("UTC")).replace(tzinfo=None)
+    hdatetime.dassert_tz_compatible_timestamp_with_df(datetime_, df)
     # TODO(gp): We could also use the `timestamp_db` field if available.
     datetime_eff = datetime_ - datetime.timedelta(seconds=delay_in_secs)
     mask = df.index <= datetime_eff
@@ -175,6 +176,9 @@ def get_simulated_current_time(
         yield dt
 
 
+# #############################################################################
+
+
 def execute_every_2_seconds(datetime_: pd.Timestamp) -> bool:
     """
     Return true every other second.
@@ -216,6 +220,15 @@ def align_on_even_second(use_time_sleep: bool = False) -> None:
             current_time = hdatetime.get_current_time(tz="ET")
             if current_time >= target_time:
                 break
+
+
+# #############################################################################
+# Real time loop.
+# #############################################################################
+
+
+# Type for a function that return the current (true or replayed) time as a timestamp.
+GetCurrentTimeFunction = Callable[[], pd.Timestamp]
 
 
 # Information about the real time execution.

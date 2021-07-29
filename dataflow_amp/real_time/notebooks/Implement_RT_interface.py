@@ -89,7 +89,9 @@ cdrt.execute_dag_with_real_time_loop(
 start_datetime = pd.Timestamp("2010-01-04 09:30:00")
 end_datetime = pd.Timestamp("2010-01-05 09:30:00")
 columns = ["close", "volume"]
-cdrt.generate_synthetic_data(columns
+cdrt.generate_synthetic_data(columns, start_datetime, end_datetime)
+
+
 
 # %%
 import core.dataflow.nodes.sources as cdtfns
@@ -98,20 +100,20 @@ nid = "rtds"
 
 delay_in_secs = 0.0
 
-    "start_datetime": pd.Timestamp("2010-01-04 09:30:00"),
-    "end_datetime": pd.Timestamp("2010-01-05 09:30:00"),
+start_datetime = pd.Timestamp("2010-01-04 09:30:00", tz=hdatetime.get_ET_tz())
+end_datetime = pd.Timestamp("2010-01-05 09:30:00", tz=hdatetime.get_ET_tz())
 
 # Use a replayed real-time starting at the same time as the data.
 rrt = cdrt.ReplayRealTime(
-    pd.Timestamp("2010-01-04 09:30:00", tz=hdatetime.get_ET_tz())
+    start_datetime
 )
 get_current_time = rrt.get_replayed_current_time
 
 data_builder = cdrt.generate_synthetic_data
 data_builder_kwargs = {
     "columns": ["close", "volume"],
-    "start_datetime": pd.Timestamp("2010-01-04 09:30:00"),
-    "end_datetime": pd.Timestamp("2010-01-05 09:30:00"),
+    "start_datetime": start_datetime,
+    "end_datetime": end_datetime,
     "seed": 42,
 }
 
@@ -123,13 +125,17 @@ rtds = cdtfns.RealTimeDataSource("rtds", delay_in_secs, get_current_time, data_b
 
 rtds.fit()
 
+# %%
+rtds.fit()
+
 # %% [markdown]
 # ## Build pipeline
 #
-# import core.config as cconfig
-# import core.dataflow as cdataf
 
 # %%
+import core.config as cconfig
+import core.dataflow as cdataf
+
 import core.dataflow.real_time as cdrt
 import dataflow_amp.returns.pipeline as darp
 
@@ -216,3 +222,36 @@ for now in cdrt.get_now_time(start_date, end_date):
         sink = dag.get_unique_sink()
         dict_ = dag.run_leq_node(sink, "fit")
         print(dict_["df_out"].tail(3))
+
+# %%
+import dataflow_amp.real_time.real_time_return_pipeline as dtfart
+
+dag_builder = dtfart.RealTimeReturnPipeline()
+
+config = dag_builder.get_config_template()
+print("\n# config=\n%s" % config)
+
+dag_builder.validate_config(config)
+
+dag = dag_builder.get_dag(config)
+
+# %%
+#print(dag)
+cdataf.draw(dag)
+
+# %%
+# Align on a even second.
+cdrt.align_on_even_second()
+#
+sleep_interval_in_secs = 1.0
+num_iterations = 3
+external_clock = rrt.get_replayed_current_time
+get_current_time = cdrt.execute_every_2_seconds
+#
+execution_trace = cdrt.execute_with_real_time_loop(
+    sleep_interval_in_secs,
+    num_iterations,
+    get_current_time,
+    need_to_execute,
+    workload,
+)
