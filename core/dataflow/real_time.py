@@ -186,8 +186,8 @@ def align_on_even_second(use_time_sleep: bool = False) -> None:
     E.g., if wall clock time is `2021-07-29 10:45:51`, then this function
     terminates when the wall clock is `2021-07-29 10:46:00`.
 
-    :param use_time_sleep: `time.sleep()` has low resolution, so by default the
-        function spins on the clock
+    :param use_time_sleep: `time.sleep()` has low resolution, so by default this
+        function spins on the clock until the proper amount of time has elapsed
     """
     current_time = hdatetime.get_current_time(tz="ET")
     # Align on 2 seconds.
@@ -248,7 +248,7 @@ def execute_dag_with_real_time_loop(
         execution_trace.append(event)
         if execute:
             _LOG.debug("  -> execute")
-            rc = workload(current_time)
+            _ = workload(current_time)
         # Exit, if needed.
         if num_iterations is not None and num_it >= num_iterations:
             break

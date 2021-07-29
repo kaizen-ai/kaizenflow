@@ -160,6 +160,10 @@ def dassert_has_ET_tz(datetime_: StrictDatetime) -> None:
     _dassert_has_specified_tz(datetime_, tz_zones)
 
 
+def get_ET_tz() -> pytz.timezone:
+    return pytz.timezone("America/New_York")
+
+
 # #############################################################################
 
 
@@ -172,7 +176,7 @@ def get_current_time(tz: Optional[str] = None) -> pd.Timestamp:
         timestamp = datetime.datetime.utcnow()
     elif tz == "ET":
         # Return in ET.
-        timestamp = datetime.datetime.now(pytz.timezone("EST"))
+        timestamp = datetime.datetime.now(get_ET_tz())
     else:
         # Naive.
         dbg.dassert_is(tz, None)
@@ -181,7 +185,7 @@ def get_current_time(tz: Optional[str] = None) -> pd.Timestamp:
     return timestamp
 
 
-# TODO(gp): -> get_current_timestamp()
+# TODO(gp): -> get_current_timestamp_as_string()
 def get_timestamp(tz: Optional[str] = None) -> str:
     """
     Return the current time in the format `YYYYMMDD_HHMMSS` (e.g., 20210728_221734).
