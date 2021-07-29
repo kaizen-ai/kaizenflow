@@ -574,6 +574,34 @@ def extract_smooth_moving_average_weights(
         2. relative weights (weight at `index_location` is equal to `1`, and
            prior weights are expressed relative to this value
     """
+    idx = signal.index
+    dbg.dassert_isinstance(idx, pd.Index)
+    dbg.dassert_in(index_location, idx,
+                   msg="`index_location` must be a member of `signal.index`")
+    dbg.dassert_in("tau", smooth_moving_average_kwargs)
+    tau = smooth_moving_average_kwargs["tau"]
+    dbg.dassert_lt(0, tau)
+    # Build a step series.
+    desired_length = signal.loc[:index_location].shape[0]
+    warmup_length = int(np.round(10 * tau))
+    ones = pd.Series(index=range(0, warmup_length), data=1)
+    length = max(desired_length, warmup_length)
+    zeros = pd.Series(index=range(warmup_length, warmup_length + length), data=0)
+    step = pd.concat([ones, zeros], axis=0)
+    #
+    smoothed_step = compute_smooth_moving_average(step, **smooth_moving_average_kwargs)
+    # Drop warmup ones.
+    smoothed_step = smoothed_step.iloc[warmup_length - 1:]
+    smoothed_step.name = "relative_weights"
+    absolute_weights = (smoothed_step / smoothed_step.sum()).rename("absolute_weights")
+    weights = pd.concat([smoothed_step, absolute_weights], axis=1).reset_index(drop=True)
+    # Truncate to length.
+    weights = weights.iloc[:desired_length]
+    # Reverse the series.
+    weights = weights.iloc[::-1].reset_index(drop=True)
+    # Reindex.
+    weights.index = signal.loc[:index_location].index
+    return weights
     # Implementation notes:
     # - Warm up a series based on `tau`, e.g., take at least `3 * tau` periods
     #   to warm up
