@@ -44,12 +44,12 @@ _LOG = logging.getLogger(__name__)
 
 # %%
 import time
+import helpers.datetime_ as hdatetime
+
+import core.dataflow.real_time as cdrt
 
 # %%
-## 
-
-# %%
-rrt = dartu.ReplayRealTime(pd.Timestamp("2021-07-27 9:30:00-04:00"))
+rrt = cdrt.ReplayRealTime(pd.Timestamp("2021-07-27 9:30:00-04:00"))
 
 rct = rrt.get_replayed_current_time()
 print("rct=%s" % rct)
@@ -63,13 +63,16 @@ rct = rrt.get_replayed_current_time()
 print("rct=%s" % rct)
 
 # %%
+rrt = cdrt.ReplayRealTime(pd.Timestamp("2021-07-27 9:30:00-04:00"), speed_up_factor=60)
+
 sleep_interval_in_secs = 1.0
 num_iterations = 10
 #get_current_time = datetime.datetime.now
-get_current_time = lambda : hdatetime.get_current_time(tz="ET")
-need_to_execute = dartu.execute_every_5_minutes 
+#get_current_time = lambda : hdatetime.get_current_time(tz="ET")
+get_current_time = rrt.get_replayed_current_time
+need_to_execute = cdrt.execute_every_5_minutes 
 
-dartu.execute_dag_with_real_time_loop(sleep_interval_in_secs,
+cdrt.execute_dag_with_real_time_loop(sleep_interval_in_secs,
                num_iterations,
                get_current_time,
                need_to_execute)

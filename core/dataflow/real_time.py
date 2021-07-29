@@ -23,8 +23,10 @@ import helpers.printing as hprint
 _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Do not merge this.
+#dbg.test_logger()
 #_LOG.setLevel(logging.DEBUG)
-#assert 0
+#dbg.test_logger()
+_LOG.debug = _LOG.info
 
 # There are various levels of real-time:
 # 1) True real-time
@@ -131,12 +133,12 @@ class ReplayRealTime:
 
     def get_replayed_current_time(self) -> pd.Timestamp:
         """
-        When replaying data, transform the current time into the corresponding time if
-        the real-time experiment started at `initial_simulated_dt`.
+        When replaying data, transform the current time into the corresponding time
+        if the real-time experiment started at `initial_simulated_dt`.
         """
         now = self._get_wall_clock_time()
         dbg.dassert_lte(self._initial_wall_clock_dt, now)
-        elapsed_time = now - self._initial_wall_clock_dt
+        elapsed_time = self._speed_up_factor * (now - self._initial_wall_clock_dt)
         current_replayed_dt = self._initial_replayed_dt + elapsed_time
         return current_replayed_dt
 
