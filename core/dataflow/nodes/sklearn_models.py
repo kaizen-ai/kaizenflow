@@ -194,6 +194,140 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         return metric(y_true, y_pred.loc[y_true.index])
 
 
+class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
+    """
+    Fit and predict multiple sklearn models.
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        in_col_groups: List[Tuple[_COL_TYPE]],
+        out_col_group: Tuple[_COL_TYPE],
+        model_func: Callable[..., Any],
+        x_vars: List[_COL_TYPE],
+        y_vars: List[_COL_TYPE],
+        steps_ahead: int,
+        model_kwargs: Optional[Any] = None,
+        nan_mode: Optional[str] = None,
+    ) -> None:
+        """
+        Params not listed are as in `ContinuousSkLearnModel`.
+
+        :param in_col_groups: list of tuples, each having length
+            `df_in.columns.nlevels - 1`. Leaf values become keys (e.g., they
+            may be symbols), and the next-to-leaf level provides column names
+            of the dataframe with the `x_vars` and `y_vars`.
+        :param out_col_group: column level prefix of length
+            `df_in.columns.nlevels - 2`. It may be an empty tuple.
+        """
+        super().__init__(nid)
+        dbg.dassert_isinstance(in_col_groups, list)
+        self._in_col_groups = in_col_groups
+        self._out_col_group = out_col_group
+        #
+        self._model_func = model_func
+        self._x_vars = x_vars
+        self._y_vars = y_vars
+        self._steps_ahead = steps_ahead
+        self._model_kwargs = model_kwargs
+        self._nan_mode = nan_mode
+        #
+        self._key_fit_state = {}
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=True)
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=False)
+
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {
+            "_fit_state": self._fit_state,
+            "_info['fit']": self._info["fit"],
+        }
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]):
+        self._fit_state = fit_state["_fit_state"]
+        self._info["fit"] = fit_state["_info['fit']"]
+
+    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
+        cdu.validate_df_indices(df_in)
+        dfs = cdnb.GroupedColDfToDfColProcessor.preprocess(
+            df_in, self._in_col_groups
+        )
+        results = {}
+        info = collections.OrderedDict()
+        if fit:
+            stacked_df = self._stack_dfs(dfs)
+            csklm = ContinuousSkLearnModel(
+                "sklearn",
+                model_func=self._model_func,
+                x_vars=self._x_vars,
+                y_vars=self._y_vars,
+                steps_ahead=self._steps_ahead,
+                model_kwargs=self._model_kwargs,
+                col_mode="replace_all",
+                nan_mode=self._nan_mode,
+            )
+            df_out = csklm.fit(stacked_df)["df_out"]
+            results = self._unstack_df(dfs, df_out)
+            info = csklm.get_info("fit")
+            self._fit_state = csklm.get_fit_state()
+        else:
+            csklm = ContinuousSkLearnModel(
+                "sklearn",
+                model_func=self._model_func,
+                x_vars=self._x_vars,
+                y_vars=self._y_vars,
+                steps_ahead=self._steps_ahead,
+                model_kwargs=self._model_kwargs,
+                col_mode="replace_all",
+                nan_mode=self._nan_mode,
+            )
+            csklm.set_fit_state(self._fit_state)
+            for key, df in dfs.items():
+                df_out = csklm.predict(df)["df_out"]
+                info_out = csklm.get_info("predict")
+                results[key] = df_out
+                info[key] = info_out
+        df_out = cdnb.GroupedColDfToDfColProcessor.postprocess(
+            results, self._out_col_group
+        )
+        df_out = df_out.reindex(df_in.index)
+        df_out = cdu.merge_dataframes(df_in, df_out)
+        method = "fit" if fit else "predict"
+        self._set_info(method, info)
+        return {"df_out": df_out}
+
+    def _stack_dfs(
+        self,
+        dfs: Dict[_COL_TYPE, pd.DataFrame]
+    ) -> pd.DataFrame:
+        df = pd.concat(dfs.values()).reset_index(drop=True)
+        return df
+
+    def _unstack_df(
+        self,
+        dfs: Dict[_COL_TYPE, pd.DataFrame],
+        df: pd.DataFrame
+    ) -> Dict[_COL_TYPE, pd.DataFrame]:
+        counter = 0
+        out_dfs = {}
+        for key, value in dfs.items():
+            length = value.shape[0]
+            out_df = df.iloc[counter: counter + length]
+            dbg.dassert_eq(out_df.shape[0], value.shape[0],
+                           msg="key=%s" % key)
+            out_df = out_df.reindex(value.index)
+            dbg.dassert(not out_df.empty)
+            dbg.dassert(out_df.index.equals(value.index))
+            out_dfs[key] = out_df
+            counter += length
+        return out_dfs
+
+
 class MultiindexSkLearnModel(cdnb.FitPredictNode):
     """
     Fit and predict multiple sklearn models.
