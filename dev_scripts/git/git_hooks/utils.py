@@ -354,7 +354,10 @@ def _check_words_files(file_list: List[str]) -> bool:
             _LOG.warning("Skipping '%s'", file_name)
             continue
         if not os.path.exists(file_name):
-            _LOG.warning("'%s' doesn't exist", file_name)
+            _LOG.warning("Skipping '%s' since it doesn't exist", file_name)
+            continue
+        if os.path.isdir(file_name):
+            _LOG.warning("Skipping '%s' since it is a dir", file_name)
             continue
         _LOG.info(file_name)
         with open(file_name) as f:
