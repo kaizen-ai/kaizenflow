@@ -22,8 +22,8 @@ import helpers.datetime_ as hdatetime
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.joblib_helpers as hjoblib
-import helpers.printing as hprint
 import helpers.parser as prsr
+import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 
 _LOG = logging.getLogger(__name__)
@@ -153,7 +153,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     abort_on_error = not args.skip_on_error
     num_attempts = args.num_attempts
     # Prepare the log file.
-    timestamp = hdatetime.get_timestamp("et")
+    timestamp = hdatetime.get_timestamp("naive_ET")
     log_file = os.path.join(dst_dir, f"log.{timestamp}.txt")
     _LOG.info("log_file='%s'", log_file)
     # Execute.

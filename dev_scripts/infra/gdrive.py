@@ -151,7 +151,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     log_dir = "./tmp.gdrive.log"
     log_dir = os.path.abspath(log_dir)
     io_.create_dir(log_dir, incremental=not args.incremental)
-    timestamp = datetime_.get_timestamp()
+    timestamp = datetime_.get_timestamp("naive_ET")
     if args.action == "ls":
         cmd = ["rclone ls", args.src_dir]
         cmd = " ".join(cmd)
