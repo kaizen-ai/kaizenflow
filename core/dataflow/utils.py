@@ -110,7 +110,7 @@ def convert_to_list(to_list: _TO_LIST_MIXIN_TYPE) -> List[_COL_TYPE]:
     if callable(to_list):
         to_list = to_list()
     if isinstance(to_list, list):
-        # Check that the list of columns is not empty and has no duplicates.
+        # Check that the list is not empty and has no duplicates.
         dbg.dassert_lte(1, len(to_list))
         dbg.dassert_no_duplicates(to_list)
         return to_list
