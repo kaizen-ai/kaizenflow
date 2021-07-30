@@ -151,7 +151,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
                 "sample_weight_col": ["weights"],
             }
         )
-        node = ContinuousSkLearnModel(
+        node = cdnsm.ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.LinearRegression,
             **config.to_dict(),
@@ -176,7 +176,7 @@ class TestContinuousSkLearnModel(hut.TestCase):
                 "sample_weight_col": ["weights"],
             }
         )
-        node = ContinuousSkLearnModel(
+        node = cdnsm.ContinuousSkLearnModel(
             "sklearn",
             model_func=slmode.LinearRegression,
             **config.to_dict(),
