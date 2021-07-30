@@ -17,6 +17,7 @@ import statsmodels.api as sm
 import core.signal_processing as csigna
 import helpers.dataframe as hdataf
 import helpers.dbg as dbg
+import helpers.htypes as htypes
 import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
@@ -125,16 +126,13 @@ def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
 
 # TODO(Paul): Consider moving resampling code to a new `resampling.py`
 
-# TODO(gp): Move to `dataflow/types.py`
-KWARGS = Dict[str, Any]
-
 
 def _resample_with_aggregate_function(
     df: pd.DataFrame,
     rule: str,
     cols: List[str],
     agg_func: str,
-    agg_func_kwargs: KWARGS,
+    agg_func_kwargs: htypes.Kwargs,
 ) -> pd.DataFrame:
     """
     Resample columns `cols` of `df` using the passed parameters.
@@ -160,13 +158,13 @@ def resample_time_bars(
     *,
     return_cols: Optional[List[str]] = None,
     return_agg_func: Optional[str] = None,
-    return_agg_func_kwargs: Optional[KWARGS] = None,
+    return_agg_func_kwargs: Optional[htypes.Kwargs] = None,
     price_cols: Optional[List[str]] = None,
     price_agg_func: Optional[str] = None,
-    price_agg_func_kwargs: Optional[KWARGS] = None,
+    price_agg_func_kwargs: Optional[htypes.Kwargs] = None,
     volume_cols: Optional[List[str]] = None,
     volume_agg_func: Optional[str] = None,
-    volume_agg_func_kwargs: Optional[KWARGS] = None,
+    volume_agg_func_kwargs: Optional[htypes.Kwargs] = None,
 ) -> pd.DataFrame:
     """
     Convenience resampler for time bars.

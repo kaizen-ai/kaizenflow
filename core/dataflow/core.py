@@ -145,7 +145,7 @@ class Node(NodeInterface):
         )
         # Create a dictionary of values for `method` if it doesn't exist.
         if method not in self._output_vals:
-            self._output_vals[method]: Dict[str, Any] = {}
+            self._output_vals[method] = {}
         # Assign the requested value.
         self._output_vals[method][name] = value
 
@@ -357,7 +357,9 @@ class DAG:
         Return the only sink node, asserting if there is more than one.
         """
         sinks = self.get_sinks()
-        dbg.dassert_eq(len(sinks), 1, "There is more than one sink node %s", str(sinks))
+        dbg.dassert_eq(
+            len(sinks), 1, "There is more than one sink node %s", str(sinks)
+        )
         return sinks[0]
 
     def run_dag(self, method: str) -> Dict[str, Any]:
@@ -421,6 +423,8 @@ class DAG:
         try:
             output = getattr(node, method)(**kwargs)
         except Exception as e:
-            raise Exception(f"An exception occurred in node '{nid}'.\n{str(e)}") from e
+            raise Exception(
+                f"An exception occurred in node '{nid}'.\n{str(e)}"
+            ) from e
         for out in node.output_names:
             node._store_output(method, out, output[out])

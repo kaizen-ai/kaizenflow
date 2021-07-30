@@ -10,12 +10,14 @@ from typing import Optional
 
 import core.config as cconfig
 import core.dataflow as dtf
+import core.dataflow_source_nodes as dsn
 import core.finance as fin
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): -> ReturnPipeline everywhere?
 class ReturnsPipeline(dtf.DagBuilder):
     """
     Pipeline for computing returns from price data.
@@ -27,69 +29,57 @@ class ReturnsPipeline(dtf.DagBuilder):
 
         :return: reference config
         """
-        config = cconfig.get_config_from_nested_dict(
-            {
-                # Load prices.
-                # TODO(gp): We need to find a way to inject the node reading
-                # data in a programmatic way, since many pipeline most of the
-                # computation. There are various solutions to this problem.
-                # E.g., for Kibot futures:
-                #   self._get_nid("load_prices"): {
-                #     "source_node_name": "kibot",
-                #     "source_node_kwargs": {
-                #         "frequency": "T",
-                #         "contract_type": "continuous",
-                #         "symbol": "ES",
-                #         "start_date": "2010-01-04 09:00:00",
-                #         "end_date": "2010-01-04 16:30:00",
-                #     },
-                # },
-                self._get_nid("load_prices"): {
-                    cconfig.DUMMY: None,
+        dict_ = {
+            # Load prices.
+            # NOTE: The caller needs to inject config values to control the
+            # `DataSourceNodeFactory` node in order to create the proper data
+            # node.
+            self._get_nid("load_prices"): {
+                cconfig.DUMMY: None,
+            },
+            # Filter weekends.
+            self._get_nid("filter_weekends"): {
+                "col_mode": "replace_all",
+            },
+            # Filter ATH.
+            self._get_nid("filter_ath"): {
+                "col_mode": "replace_all",
+                "transformer_kwargs": {
+                    "start_time": datetime.time(9, 30),
+                    "end_time": datetime.time(16, 00),
                 },
-                # Filter weekends.
-                self._get_nid("filter_weekends"): {
-                    "col_mode": "replace_all",
+            },
+            # Resample prices to a 1 min grid.
+            self._get_nid("resample_prices_to_1min"): {
+                "func_kwargs": {
+                    "rule": "1T",
+                    "price_cols": ["close"],
+                    # TODO(*): Rename "volume" to adhere with our naming
+                    # conventions.
+                    "volume_cols": ["vol"],
                 },
-                # Filter ATH.
-                self._get_nid("filter_ath"): {
-                    "col_mode": "replace_all",
-                    "transformer_kwargs": {
-                        "start_time": datetime.time(9, 30),
-                        "end_time": datetime.time(16, 00),
-                    },
+            },
+            # Compute VWAP.
+            self._get_nid("compute_vwap"): {
+                "func_kwargs": {
+                    "rule": "5T",
+                    "price_col": "close",
+                    "volume_col": "vol",
+                    "add_bar_start_timestamps": True,
+                    "add_epoch": True,
+                    "add_last_price": True,
                 },
-                # Resample prices to a 1 min grid.
-                self._get_nid("resample_prices_to_1min"): {
-                    "func_kwargs": {
-                        "rule": "1T",
-                        "price_cols": ["close"],
-                        # TODO(*): Rename "volume" to adhere with our naming
-                        # conventions.
-                        "volume_cols": ["vol"],
-                    },
+            },
+            # Calculate returns.
+            self._get_nid("compute_ret_0"): {
+                "cols": ["twap", "vwap"],
+                "col_mode": "merge_all",
+                "transformer_kwargs": {
+                    "mode": "pct_change",
                 },
-                # Compute VWAP.
-                self._get_nid("compute_vwap"): {
-                    "func_kwargs": {
-                        "rule": "5T",
-                        "price_col": "close",
-                        "volume_col": "vol",
-                        "add_bar_start_timestamps": True,
-                        "add_epoch": True,
-                        "add_last_price": True,
-                    },
-                },
-                # Calculate returns.
-                self._get_nid("compute_ret_0"): {
-                    "cols": ["twap", "vwap"],
-                    "col_mode": "merge_all",
-                    "transformer_kwargs": {
-                        "mode": "pct_change",
-                    },
-                },
-            }
-        )
+            },
+        }
+        config = cconfig.get_config_from_nested_dict(dict_)
         return config
 
     def get_dag(self, config: cconfig.Config, mode: str = "strict") -> dtf.DAG:
@@ -106,7 +96,7 @@ class ReturnsPipeline(dtf.DagBuilder):
         # Read data.
         stage = "load_prices"
         nid = self._get_nid(stage)
-        node = dtf.DataLoader(nid, **config[nid].to_dict())
+        node = dsn.DataSourceNodeFactory(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, tail_nid, node)
         # Set weekends to NaN.
         stage = "filter_weekends"

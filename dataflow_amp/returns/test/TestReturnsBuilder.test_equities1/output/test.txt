@@ -2,11 +2,13 @@
 config
 ################################################################################
 load_prices:
-  func: <function load_data_from_disk>
-  func_kwargs:
-    file_path: s3://alphamatic-data/data/kibot/pq/sp_500_1min/AAPL.pq
-    start_date: 2010-01-04 09:30:00
-    end_date: 2010-01-04 16:05:00
+  source_node_name: DataLoader
+  source_node_kwargs:
+    func: <function load_data_from_disk>
+    func_kwargs:
+      file_path: s3://alphamatic-data/data/kibot/pq/sp_500_1min/AAPL.pq
+      start_date: 2010-01-04 09:30:00
+      end_date: 2010-01-04 16:05:00
 filter_weekends:
   col_mode: replace_all
 filter_ath:
