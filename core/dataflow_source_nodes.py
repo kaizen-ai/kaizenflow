@@ -43,7 +43,7 @@ def DataSourceNodeFactory(
     if source_node_name == "arma":
         ret = cdataf.ArmaGenerator(nid, **source_node_kwargs)
     elif source_node_name == "crypto_data_download":
-        ret = core_lem.dataflow.nodes.sources as cldns
+        import core_lem.dataflow.nodes.sources as cldns
 
         ret = cldns.CryptoDataDownload_DataReader(nid, **source_node_kwargs)
     elif source_node_name == "disk":
