@@ -269,7 +269,7 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
             forward_y_fit_cols = cdu.get_forward_cols(
                 stacked_df[self._y_vars],
                 cols=self._y_vars,
-                steps_ahead=self._steps_ahead
+                steps_ahead=self._steps_ahead,
             ).columns.to_list()
             sklm = SkLearnModel(
                 "sklearn",
@@ -311,26 +311,24 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
         self._set_info(method, info)
         return {"df_out": df_out}
 
-    def _stack_dfs(
-        self,
-        dfs: Dict[_COL_TYPE, pd.DataFrame]
-    ) -> pd.DataFrame:
+    def _stack_dfs(self, dfs: Dict[_COL_TYPE, pd.DataFrame]) -> pd.DataFrame:
         df = pd.concat(dfs.values()).reset_index(drop=True)
         return df
 
     def _unstack_df(
-        self,
-        dfs: Dict[_COL_TYPE, pd.DataFrame],
-        df: pd.DataFrame
+        self, dfs: Dict[_COL_TYPE, pd.DataFrame], df: pd.DataFrame
     ) -> Dict[_COL_TYPE, pd.DataFrame]:
         counter = 0
         out_dfs = {}
         for key, value in dfs.items():
             length = value.shape[0]
-            out_df = df.iloc[counter: counter + length].copy()
+            out_df = df.iloc[counter : counter + length].copy()
             print(out_df)
-            dbg.dassert_eq(out_df.shape[0], value.shape[0],
-                           msg="Dimension mismatch for key=%s" % key)
+            dbg.dassert_eq(
+                out_df.shape[0],
+                value.shape[0],
+                msg="Dimension mismatch for key=%s" % key,
+            )
             out_df.index = value.index
             out_dfs[key] = out_df
             counter += length
