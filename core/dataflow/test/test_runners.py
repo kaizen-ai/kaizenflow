@@ -8,7 +8,7 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
-class TestRollingFitPredictDagRunner(hut.TestCase):
+class TestRollingFitPredictDagRunner1(hut.TestCase):
 
     def test1(self) -> None:
         """
@@ -30,11 +30,11 @@ class TestRollingFitPredictDagRunner(hut.TestCase):
         np.testing.assert_equal(len(result_bundles), 2)
 
 
-class TestIncrementalDagRunner(hut.TestCase):
+class TestIncrementalDagRunner1(hut.TestCase):
 
     def test1(self) -> None:
         """
-        Test the DagRunner using `ArmaReturnsBuilder`
+        Test the DagRunner using `ArmaReturnsBuilder`.
         """
         dag_builder = dtf.ArmaReturnsBuilder()
         config = dag_builder.get_config_template()
@@ -61,3 +61,11 @@ class TestIncrementalDagRunner(hut.TestCase):
             srs_i = rb_i.result_df[col]
             srs_i_next = rb_i_next.result_df[col]
             self.assertTrue(srs_i.compare(srs_i_next[:-1]).empty)
+
+
+class TestRealTimeDagRunner1(hut.TestCase):
+
+    def test1(self) -> None:
+        """
+        Test the RealTimeDagRunner using synthetic data.
+        """

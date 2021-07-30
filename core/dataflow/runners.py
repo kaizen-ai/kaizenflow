@@ -1,6 +1,12 @@
+"""
+Import as:
+
+import core.dataflow.runners as cdtfr
+import core.dataflow as cdtf
+"""
 import datetime
 import logging
-from typing import Any, Generator, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union, Callable
 
 import pandas as pd
 
@@ -13,6 +19,10 @@ from core.dataflow.visitors import extract_info, set_fit_state
 _LOG = logging.getLogger(__name__)
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
+
+# TODO(gp): Why does DagRunner also builds a DAG through the DagBuilder?
+#  This creates some necessary coupling. A DagRunner should accpets a DAG however
+#  built and run it.
 
 class FitPredictDagRunner:
     """
@@ -428,3 +438,44 @@ class IncrementalDagRunner:
             column_to_tags=self._column_to_tags_mapping,
             info=info,
         )
+
+
+import core.dataflow.real_time as cdrt
+
+
+class RealTimeDagRunner:
+    """
+    Class for running a DAG in real-time.
+    """
+
+    def __init__(
+        self,
+        config: cconfig.Config,
+        dag_builder: DagBuilder,
+        fit_state: cconfig.Config,
+        #
+        execute_rt_loop_kwargs: Dict[str, Any],
+        #
+        dst_dir: str,
+    ) -> None:
+        # Save input parameters.
+        self._config = config
+        self._dag_builder = dag_builder
+        # Create DAG using DAG builder.
+        self._dag = self._dag_builder.get_dag(self._config)
+        #
+        self._execute_rt_loop_kwargs = execute_rt_loop_kwargs
+        #
+        self._dst_dir = dst_dir
+
+    def predict(self):
+        def dag_workload(current_time: pd.Timestamp) -> Dict:
+            _ = current_time
+            sink = self._dag.get_unique_sink()
+            dict_ = self._dag.run_leq_node(sink, "predict")
+            return dict_
+
+        execution_trace, results = cdrt.execute_with_real_time_loop(
+            **self._execute_rt_loop_kwargs,
+            workload=dag_workload)
+        return execution_trace, results

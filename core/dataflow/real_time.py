@@ -293,25 +293,3 @@ def execute_with_real_time_loop(
         time.sleep(sleep_interval_in_secs)
         num_it += 1
     return execution_trace, results
-
-
-def execute_dag_with_real_time_loop(
-        sleep_interval_in_secs: float,
-        num_iterations: Optional[int],
-        get_current_time: GetCurrentTimeFunction,
-        need_to_execute: Callable[[pd.Timestamp], bool],
-        dag  # : dtf.DAG
-) -> List[RealTimeEvent]:
-    def dag_workload(current_time: pd.Timestamp) -> Dict:
-        sink = dag.get_unique_sink()
-        dict_ = dag.run_leq_node(sink, "fit")
-        return dict_
-
-    execution_trace, results = execute_with_real_time_loop(
-            sleep_interval_in_secs,
-            num_iterations,
-            get_current_time,
-            need_to_execute,
-            workload=dag_workload)
-
-    return execution_trace, results

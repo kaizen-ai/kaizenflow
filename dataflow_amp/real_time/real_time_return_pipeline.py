@@ -40,6 +40,10 @@ class RealTimeReturnPipeline(dtf.DagBuilder):
         start_datetime = pd.Timestamp("2010-01-04 09:30:00")
         end_datetime = pd.Timestamp("2010-01-04 11:30:00")
         # Use a replayed real-time starting at the same time as the data.
+        # TODO(gp): This should be moved to the `get_dag()` part. The config_template
+        #  contains all the fields that need to be filled, then the rest builds it.
+        #  There can be helpers that help fill configs with group of params that
+        #  are related.
         rrt = dtf.ReplayRealTime(
             start_datetime,
             speed_up_factor=60.0,
@@ -64,7 +68,6 @@ class RealTimeReturnPipeline(dtf.DagBuilder):
                 "source_node_kwargs": source_node_kwargs,
             }
         )
-
         return config
 
     def get_dag(self, config: cconfig.Config, mode: str = "strict") -> dtf.DAG:
