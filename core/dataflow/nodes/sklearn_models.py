@@ -261,17 +261,25 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
         info = collections.OrderedDict()
         if fit:
             # TODO: compute the shifts first, then stack.
-            #
+            for key, value in dfs.items():
+                dfs[key] = cdu.get_x_and_forward_y_fit_df(
+                    value, self._x_vars, self._y_vars, self._steps_ahead
+                )
             stacked_df = self._stack_dfs(dfs)
+            forward_y_fit_cols = cdu.get_forward_cols(
+                stacked_df[self._y_vars],
+                cols=self._y_vars,
+                steps_ahead=self._steps_ahead
+            ).columns.to_list()
             sklm = SkLearnModel(
                 "sklearn",
                 model_func=self._model_func,
                 x_vars=self._x_vars,
-                y_vars=self._y_vars,
+                y_vars=forward_y_fit_cols,
                 model_kwargs=self._model_kwargs,
-                col_mode="replace_all",
+                col_mode="merge_all",
             )
-            df_out = sklm.fit(stacked_df)["df_out"]
+            df_out = sklm.fit(stacked_df)["df_out"].drop(columns=self._y_vars)
             results = self._unstack_df(dfs, df_out)
             info = sklm.get_info("fit")
             self._fit_state = sklm.get_fit_state()
@@ -320,9 +328,10 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
         for key, value in dfs.items():
             length = value.shape[0]
             out_df = df.iloc[counter: counter + length].copy()
+            print(out_df)
             dbg.dassert_eq(out_df.shape[0], value.shape[0],
                            msg="Dimension mismatch for key=%s" % key)
-            out_df = out_df.reindex(value.index)
+            out_df.index = value.index
             out_dfs[key] = out_df
             counter += length
         return out_dfs
