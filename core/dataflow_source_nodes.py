@@ -41,25 +41,26 @@ def DataSourceNodeFactory(
     # TODO(gp): To simplify we can use the name of the class (e.g., "ArmaGenerator"
     #  instead of "arma"), so we don't have to use another level of mnemonics.
     if source_node_name == "arma":
-        return cdataf.ArmaGenerator(nid, **source_node_kwargs)
+        ret = cdataf.ArmaGenerator(nid, **source_node_kwargs)
     elif source_node_name == "crypto_data_download":
-        import core_lem.dataflow.nodes.sources as cldns
+        ret = core_lem.dataflow.nodes.sources as cldns
 
-        return cldns.CryptoDataDownload_DataReader(nid, **source_node_kwargs)
+        ret = cldns.CryptoDataDownload_DataReader(nid, **source_node_kwargs)
     elif source_node_name == "disk":
-        return cdataf.DiskDataSource(nid, **source_node_kwargs)
+        ret = cdataf.DiskDataSource(nid, **source_node_kwargs)
     elif source_node_name == "kibot":
-        return KibotDataReader(nid, **source_node_kwargs)
+        ret = KibotDataReader(nid, **source_node_kwargs)
     elif source_node_name == "kibot_equities":
-        return KibotEquityReader(nid, **source_node_kwargs)
+        ret = KibotEquityReader(nid, **source_node_kwargs)
     elif source_node_name == "kibot_multi_col":
-        return KibotColumnReader(nid, **source_node_kwargs)
+        ret = KibotColumnReader(nid, **source_node_kwargs)
     elif source_node_name == "DataLoader":
-        return cdataf.DataLoader(nid, **source_node_kwargs)
+        ret = cdataf.DataLoader(nid, **source_node_kwargs)
     elif source_node_name == "multivariate_normal":
-        return cdataf.MultivariateNormalGenerator(nid, **source_node_kwargs)
+        ret = cdataf.MultivariateNormalGenerator(nid, **source_node_kwargs)
     else:
         raise ValueError(f"Unsupported data source node {source_node_name}")
+    return ret
 
 
 # #############################################################################

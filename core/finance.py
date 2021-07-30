@@ -8,7 +8,7 @@ import core.finance as fin
 
 import datetime
 import logging
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Dict, List, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -297,8 +297,8 @@ def resample_ohlcv_bars(
         result_df = _merge(result_df, volume_df)
     # Add TWAP / VWAP prices, if needed.
     if add_twap_vwap:
-        price_col: str
-        volume_col: str
+        close_col = cast(str, close_col)
+        volume_col = cast(str, volume_col)
         twap_vwap_df = compute_twap_vwap(
             df, rule=rule, price_col=close_col, volume_col=volume_col
         )

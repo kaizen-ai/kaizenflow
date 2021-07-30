@@ -160,4 +160,4 @@ class ReturnsPipeline(dtf.DagBuilder):
         dag.add_node(node)
         if tail_nid is not None:
             dag.connect(tail_nid, node.nid)
-        return node.nid
+        return cast(str, node.nid)

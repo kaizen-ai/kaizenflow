@@ -89,7 +89,7 @@ class TestReplayTime1(hut.TestCase):
         _LOG.info("  -> time=%s", rct)
         self.assertGreater(rct, pd.Timestamp("2021-07-27 9:30:02-04:00"))
 
-    def _helper(self, rrt, exp: pd.Timestamp) -> None:
+    def _helper(self, rrt: cdrt.ReplayRealTime, exp: pd.Timestamp) -> None:
         rct = rrt.get_replayed_current_time()
         _LOG.info("  -> time=%s", rct)
         _LOG.debug(hprint.to_str("rct.date"))
@@ -166,7 +166,7 @@ class Test_execute_with_real_time_loop(hut.TestCase):
         exp = r"""
         num_it=1 current_time=20100104_0930000 need_execute=True
         num_it=2 current_time=20100104_0930013 need_execute=False
-        num_it=3 current_time=20100104_0930023 need_execute=True""" 
+        num_it=3 current_time=20100104_0930023 need_execute=True"""
         exp = hprint.dedent(exp)
         self.assert_equal(act, exp)
 
