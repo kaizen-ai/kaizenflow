@@ -130,6 +130,9 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         x_vals = cdataa.transform_to_sklearn(df, x_vars)
         if fit:
             if sample_weight_col:
+                # TODO(Paul): The `flatten()` is necessary here (but we do not
+                # need it for the x or y vars). Consider updating
+                # `transform_to_sklearn()` to handle this internally.
                 sample_weights = cdataa.transform_to_sklearn(
                     df, sample_weight_col
                 ).flatten()
