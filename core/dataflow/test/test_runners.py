@@ -3,9 +3,13 @@ import logging
 import numpy as np
 
 import core.dataflow as dtf
+import core.dataflow.test.test_real_time as cdtfttrt
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
+
+
+# #############################################################################
 
 
 class TestRollingFitPredictDagRunner1(hut.TestCase):
@@ -28,6 +32,9 @@ class TestRollingFitPredictDagRunner1(hut.TestCase):
         )
         result_bundles = list(dag_runner.fit_predict())
         np.testing.assert_equal(len(result_bundles), 2)
+
+
+# #############################################################################
 
 
 class TestIncrementalDagRunner1(hut.TestCase):
@@ -63,9 +70,27 @@ class TestIncrementalDagRunner1(hut.TestCase):
             self.assertTrue(srs_i.compare(srs_i_next[:-1]).empty)
 
 
+# #############################################################################
+
+
+# TODO(gp): Test with a very simple DAG since the focus is on the DagRunner.
 class TestRealTimeDagRunner1(hut.TestCase):
 
     def test1(self) -> None:
         """
         Test the RealTimeDagRunner using synthetic data.
         """
+        dtf.align_on_even_second()
+        #
+        execute_rt_loop_kwargs = cdtfttrt.get_test_execute_rt_loop_kwargs()
+        kwargs = {
+            "config": config,
+            "dag_builder": dag_builder,
+            "fit_state": None,
+            #
+            "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
+            #
+            "dst_dir": None,
+        }
+        dag_runner = cdtf.RealTimeDagRunner(**kwargs)
+        dag_runner.predict()

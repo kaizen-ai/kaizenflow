@@ -174,19 +174,6 @@ class TestMultivariateNormalGenerator(hut.TestCase):
 # #############################################################################
 
 
-
-
-def get_data_builder():
-    data_builder = cdrt.generate_synthetic_data
-    data_builder_kwargs = {
-        "columns": ["close", "volume"],
-        "start_datetime": pd.Timestamp("2010-01-04 09:30:00"),
-        "end_datetime": pd.Timestamp("2010-01-05 09:30:00"),
-        "seed": 42,
-    }
-    return data_builder, data_builder_kwargs
-
-
 class TestRealTimeDataSource1(hut.TestCase):
 
     def test_simulated_real_time1(self) -> None:

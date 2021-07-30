@@ -198,8 +198,6 @@ execute_rt_loop_kwargs = {
     "need_to_execute": cdrt.execute_every_2_seconds,
 }
 
-# Align on a even second.
-#cdrt.align_on_even_second()
 #
 kwargs = {
     "config": config,
@@ -213,6 +211,12 @@ kwargs = {
 
 dag_runner = cdtf.RealTimeDagRunner(**kwargs)
 
-dag_runner.predict()
+# Align on a even second.
+cdrt.align_on_even_second()
+result = dag_runner.predict()
 
 # %%
+result[0]
+
+# %%
+len(result[1])

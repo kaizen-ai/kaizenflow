@@ -1,3 +1,8 @@
+"""
+Import as:
+
+import core.dataflow.test.test_real_time as cdtfttrt
+"""
 import logging
 import time
 
@@ -10,6 +15,48 @@ import helpers.printing as hprint
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
+
+
+# The test code for a module needs to provide test objects to the rest of the testing
+# code. This is to avoid recreating the same data structures everywhere leading to
+# coupling.
+# A potentially negative consequence of this approach is that test code needs to
+# include test code, which might need to turn testing code into Python package.
+
+def get_test_data_builder():
+    data_builder = cdrt.generate_synthetic_data
+    data_builder_kwargs = {
+        "columns": ["close", "volume"],
+        "start_datetime": pd.Timestamp("2010-01-04 09:30:00"),
+        "end_datetime": pd.Timestamp("2010-01-05 09:30:00"),
+        "seed": 42,
+    }
+    return data_builder, data_builder_kwargs
+
+
+def get_test_current_time():
+    start_datetime = pd.Timestamp("2010-01-04 09:30:00")
+    # Use a replayed real-time starting at the same time as the data.
+    rrt = cdrt.ReplayRealTime(
+        start_datetime
+    )
+    get_current_time = rrt.get_replayed_current_time
+    return get_current_time
+
+
+# TODO(gp): Reduce to sleep_interval to 0.5 secs.
+def get_test_execute_rt_loop_kwargs():
+    get_current_time = get_test_current_time()
+    execute_rt_loop_kwargs = {
+        "sleep_interval_in_secs": 1.0,
+        "num_iterations": 3,
+        "get_current_time": get_current_time,
+        "need_to_execute": cdrt.execute_every_2_seconds,
+    }
+    return execute_rt_loop_kwargs
+
+
+# #############################################################################
 
 
 class TestReplayTime1(hut.TestCase):
@@ -52,6 +99,9 @@ class TestReplayTime1(hut.TestCase):
         self.assertGreater(rct, pd.Timestamp("2021-07-27 9:30:02-04:00"))
 
 
+# #############################################################################
+
+
 class Test_execute_with_real_time_loop(hut.TestCase):
 
     @staticmethod
@@ -92,20 +142,22 @@ class Test_execute_with_real_time_loop(hut.TestCase):
         # Align on a even second.
         cdrt.align_on_even_second()
         #
-        sleep_interval_in_secs = 1.0
-        num_iterations = 3
-        rrt = cdrt.ReplayRealTime(
-            pd.Timestamp("2021-07-27 9:30:00", tz=hdatetime.get_ET_tz())
-        )
-        get_current_time = rrt.get_replayed_current_time
-        need_to_execute = cdrt.execute_every_2_seconds
+        # sleep_interval_in_secs = 1.0
+        # num_iterations = 3
+        # rrt = cdrt.ReplayRealTime(
+        #     pd.Timestamp("2021-07-27 9:30:00", tz=hdatetime.get_ET_tz())
+        # )
+        # get_current_time = rrt.get_replayed_current_time
+        # need_to_execute = cdrt.execute_every_2_seconds
         #
+        execute_rt_loop_kwargs = get_test_execute_rt_loop_kwargs()
         execution_trace = cdrt.execute_with_real_time_loop(
-            sleep_interval_in_secs,
-            num_iterations,
-            get_current_time,
-            need_to_execute,
-            self.workload,
+            **execute_rt_loop_kwargs,
+            # sleep_interval_in_secs,
+            # num_iterations,
+            # get_current_time,
+            # need_to_execute,
+            workload=self.workload,
         )
         # We can check that the times are exactly the expected ones, since we are
         # replaying time.

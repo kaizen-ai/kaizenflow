@@ -467,9 +467,16 @@ class RealTimeDagRunner:
         self._execute_rt_loop_kwargs = execute_rt_loop_kwargs
         #
         self._dst_dir = dst_dir
+        #
+        self._execution_trace : Optional[cdrt.ExecutionTrace] = None
 
-    def predict(self):
+    # TODO(gp): Should it return a List[ResultBundle]?
+    def predict(self) -> List[Dict]:
+        # TODO(gp): This is similar to an IncrementalDagRunner.
         def dag_workload(current_time: pd.Timestamp) -> Dict:
+            """
+            Workload for the real-time loop to execute a DAG.
+            """
             _ = current_time
             sink = self._dag.get_unique_sink()
             dict_ = self._dag.run_leq_node(sink, "predict")
@@ -478,4 +485,9 @@ class RealTimeDagRunner:
         execution_trace, results = cdrt.execute_with_real_time_loop(
             **self._execute_rt_loop_kwargs,
             workload=dag_workload)
-        return execution_trace, results
+        self._execution_trace = execution_trace
+        return results
+
+    @property
+    def get_execution_trace(self) -> Optional[cdrt.ExecutionTrace]:
+        return self._execution_trace

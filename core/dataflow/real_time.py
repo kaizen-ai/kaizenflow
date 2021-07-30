@@ -237,6 +237,9 @@ RealTimeEvent = collections.namedtuple(
 )
 
 
+ExecutionTrace = List[RealTimeEvent]
+
+
 def real_time_event_to_str(rte: RealTimeEvent, verbose: bool = False):
     vals = []
     vals.append("num_it=%s" % rte.num_it)
@@ -254,7 +257,7 @@ def execute_with_real_time_loop(
     get_current_time: GetCurrentTimeFunction,
     need_to_execute: Callable[[pd.Timestamp], bool],
     workload: Callable[[pd.Timestamp], Any],
-) -> List[RealTimeEvent]:
+) -> Tuple[ExecutionTrace, List[Any]]:
     """
     Execute a function using a true or simulated real-time loop.
 
@@ -265,6 +268,9 @@ def execute_with_real_time_loop(
     :param need_to_execute: function returning true when the DAG needs to be
         executed
     :param workload: function executing the work when `need_to_execute()` requires to
+
+    :return: a Tuple with an execution trace representing the events in the
+        real-time loop and a list of results from the workload
     """
     dbg.dassert_lt(0, sleep_interval_in_secs)
     if num_iterations is not None:
@@ -274,14 +280,14 @@ def execute_with_real_time_loop(
     results = []
     num_it = 1
     while True:
+        # Compute.
         current_time = get_current_time()
         execute = need_to_execute(current_time)
         wall_clock_time = hdatetime.get_current_time(tz="ET")
         event = RealTimeEvent(num_it, current_time, wall_clock_time, execute)
-        # _LOG.debug("num_it=%s/%s: current_time=%s", num_it, num_iterations,
-        #           current_time)
         _LOG.debug("event='%s'", str(event))
         execution_trace.append(event)
+        # Execute the workload, if needed.
         if execute:
             _LOG.debug("  -> execute")
             result = workload(current_time)
