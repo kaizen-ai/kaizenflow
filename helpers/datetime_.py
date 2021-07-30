@@ -10,7 +10,7 @@ import calendar
 import datetime
 import logging
 import re
-from typing import Callable, Iterable, Optional, Tuple, Union
+from typing import Callable, Iterable, Optional, Tuple, Union, cast
 
 _WARNING = "\033[33mWARNING\033[0m"
 

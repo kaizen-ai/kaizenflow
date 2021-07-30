@@ -1039,9 +1039,7 @@ def select_series_to_keep(df_corr: pd.DataFrame, threshold: float) -> List[str]:
         columns_to_remove = subset_corr[
             subset_corr[column_to_keep].notnull()
         ].index
-        corr = subset_corr.drop(columns_to_remove).drop(
-            columns_to_remove, axis=1
-        )
+        corr = subset_corr.drop(columns_to_remove).drop(columns_to_remove, axis=1)
 
 
 def cluster_and_select(

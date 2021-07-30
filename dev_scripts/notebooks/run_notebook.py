@@ -137,7 +137,7 @@ def _get_workload(args: argparse.Namespace) -> hjoblib.Workload:
     # Prepare the tasks.
     tasks = []
     for config in configs:
-        task : joblib.Task = (
+        task: hjoblib.Task = (
             # args.
             (config, notebook_file, publish),
             # kwargs.

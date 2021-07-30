@@ -130,13 +130,13 @@ class Test_dassert_tz1(hut.TestCase):
         with self.assertRaises(AssertionError) as cm:
             hdatetime.dassert_is_datetime(datetime_)
         act = str(cm.exception)
+        # pylint: disable=line-too-long
         exp = r"""
-* Failed assertion *
-instance of '5' is '<class 'int'>' instead of '(<class 'str'>, <class 'pandas._libs.tslibs.timestamps.Timestamp'>, <class 'datetime.datetime'>)'
-Caught assertion while formatting message:
-'not enough arguments for format string'
-datetime_='%s' of type '%s' is not a DateTimeType
-"""
+        * Failed assertion *
+        instance of '5' is '<class 'int'>' instead of '(<class 'str'>, <class 'pandas._libs.tslibs.timestamps.Timestamp'>, <class 'datetime.datetime'>)'
+        datetime_='5' of type '<class 'int'>' is not a DateTimeType
+        """
+        # pylint: enable=line-too-long
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_to_datetime1(self) -> None:
@@ -248,7 +248,6 @@ class Test_dassert_tz_compatible1(hut.TestCase):
 
 
 class Test_get_current_time1(hut.TestCase):
-
     def test_get_current_time_UTC(self) -> None:
         tz = "UTC"
         dt = hdatetime.get_current_time(tz)
@@ -272,6 +271,7 @@ class Test_get_current_time1(hut.TestCase):
         dt = hdatetime.get_current_time(tz)
         _LOG.debug("tz=%s -> dt=%s", tz, dt)
         hdatetime.dassert_is_tz_naive(dt)
+
 
 # #############################################################################
 
