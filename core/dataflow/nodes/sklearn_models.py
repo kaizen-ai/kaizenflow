@@ -260,21 +260,21 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
         results = {}
         info = collections.OrderedDict()
         if fit:
+            # TODO: compute the shifts first, then stack.
+            #
             stacked_df = self._stack_dfs(dfs)
-            csklm = ContinuousSkLearnModel(
+            sklm = SkLearnModel(
                 "sklearn",
                 model_func=self._model_func,
                 x_vars=self._x_vars,
                 y_vars=self._y_vars,
-                steps_ahead=self._steps_ahead,
                 model_kwargs=self._model_kwargs,
                 col_mode="replace_all",
-                nan_mode=self._nan_mode,
             )
-            df_out = csklm.fit(stacked_df)["df_out"]
+            df_out = sklm.fit(stacked_df)["df_out"]
             results = self._unstack_df(dfs, df_out)
-            info = csklm.get_info("fit")
-            self._fit_state = csklm.get_fit_state()
+            info = sklm.get_info("fit")
+            self._fit_state = sklm.get_fit_state()
         else:
             csklm = ContinuousSkLearnModel(
                 "sklearn",
@@ -286,6 +286,8 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
                 col_mode="replace_all",
                 nan_mode=self._nan_mode,
             )
+            # NOTE: we train with one type of sklearn node, predict with
+            #     another
             csklm.set_fit_state(self._fit_state)
             for key, df in dfs.items():
                 df_out = csklm.predict(df)["df_out"]
@@ -317,12 +319,10 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
         out_dfs = {}
         for key, value in dfs.items():
             length = value.shape[0]
-            out_df = df.iloc[counter: counter + length]
+            out_df = df.iloc[counter: counter + length].copy()
             dbg.dassert_eq(out_df.shape[0], value.shape[0],
-                           msg="key=%s" % key)
+                           msg="Dimension mismatch for key=%s" % key)
             out_df = out_df.reindex(value.index)
-            dbg.dassert(not out_df.empty)
-            dbg.dassert(out_df.index.equals(value.index))
             out_dfs[key] = out_df
             counter += length
         return out_dfs
