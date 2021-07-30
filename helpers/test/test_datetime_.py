@@ -25,6 +25,72 @@ _DT_DT_UTC = pytz.timezone("UTC").localize(_DT_DT_NAIVE)
 _DT_DT_ET = pytz.timezone("US/Eastern").localize(_DT_DT_NAIVE)
 
 
+# #############################################################################
+
+
+# TODO(gp): Add tests for get_current_time and use dassert
+
+
+class Test_dassert_is_datetime1(hut.TestCase):
+
+    def test_is_datetime1(self) -> None:
+        """
+        Test valid datetime objects.
+        """
+        objs = [
+                _STR_TS_NAIVE,
+        _STR_TS_UTC,
+        _STR_TS_ET,
+
+        _PD_TS_NAIVE,
+        _PD_TS_UTC,
+        _PD_TS_ET,
+
+        _DT_DT_NAIVE,
+        _DT_DT_UTC,
+        _DT_DT_ET]
+        for obj in objs:
+            hdatetime.dassert_is_datetime(obj)
+
+    def test_is_datetime_fail1(self) -> None:
+        """
+        Test invalid datetime objects.
+        """
+        objs = [0, "hello"]
+        for obj in objs:
+            with self.assertRaises(AssertionError):
+                hdatetime.dassert_is_datetime(obj)
+
+    def test_is_strict_datetime1(self) -> None:
+        """
+        Test valid datetime objects.
+        """
+        objs = [
+            _PD_TS_NAIVE,
+            _PD_TS_UTC,
+            _PD_TS_ET,
+
+            _DT_DT_NAIVE,
+            _DT_DT_UTC,
+            _DT_DT_ET]
+        for obj in objs:
+            hdatetime.dassert_is_strict_datetime(obj)
+
+    def test_is_strict_datetime_fail1(self) -> None:
+        """
+        Test invalid datetime objects.
+        """
+        objs = [
+            0,
+            _STR_TS_NAIVE,
+            _STR_TS_UTC,
+            _STR_TS_ET,
+             "hello"]
+        for obj in objs:
+            with self.assertRaises(AssertionError):
+                hdatetime.dassert_is_strict_datetime(obj)
+
+
 class Test_dassert_tz1(hut.TestCase):
     def test_datetime_conversions(self) -> None:
         # Get a tz-naive datetime.

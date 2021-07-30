@@ -23,6 +23,7 @@ import helpers.printing as hprint
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
+_LOG.debug = _LOG.info
 
 # TODO(*): Create a dataflow types file.
 _COL_TYPE = Union[int, str]
@@ -357,7 +358,7 @@ class MultivariateNormalGenerator(cdnb.DataSource):
 import core.dataflow.real_time as cdrt
 
 
-class RealTimeDataSource(cdnb.DataSource):
+class AbstractRealTimeDataSource(cdnb.DataSource):
     """
     Data source node that outputs data according to a real-time behavior.
 
@@ -387,7 +388,9 @@ class RealTimeDataSource(cdnb.DataSource):
         """
         super().__init__(nid)
         # Compute the data through the passed dataframe builder.
-        entire_df = data_builder(**data_builder_kwargs)
+        self._data_builder = data_builder
+        self._data_builder_kwargs = data_builder_kwargs
+        entire_df = self._data_builder(**self._data_builder_kwargs)
         # Store the entire history of the data.
         self._entire_df = entire_df
         self._delay_in_secs = delay_in_secs
@@ -468,7 +471,35 @@ class RealTimeDataSource(cdnb.DataSource):
         # Get the current time.
         current_time = self._get_current_time()
         _LOG.debug(hprint.to_str("current_time"))
+        self.df = self._get_data()
+
+    def _get_data(self) -> pd.DataFrame:
+        pass
+
+
+class SimulatedRealTimeDataSource(AbstractRealTimeDataSource):
+
+    def _get_data(self) -> pd.DataFrame:
+        if self._entire_df is None:
+            # Compute the data through the passed dataframe builder.
+            entire_df = data_builder(**data_builder_kwargs)
+            # Store the entire history of the data.
+            self._entire_df = entire_df
         # Filter the data as of the current time.
-        self.df = cdrt.get_data_as_of_datetime(
+        df = cdrt.get_data_as_of_datetime(
             self._entire_df, current_time, delay_in_secs=self._delay_in_secs
         )
+        return df
+
+
+class ReplayedRealTimeDataSource(AbstractRealTimeDataSource):
+
+    pass
+
+
+class TrueRealTimeDataSource(AbstractRealTimeDataSource):
+
+    def _get_data(self) -> pd.DataFrame:
+        _LOG.debug("Getting data")
+        df = self._data_builder(**self._data_builder_kwargs)
+        return df

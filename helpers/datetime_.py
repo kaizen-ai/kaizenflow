@@ -49,6 +49,8 @@ _LOG = logging.getLogger(__name__)
 # In general it's worth to import this file even for just the type `Datetime`,
 # since typically as soon as the caller uses this type, they also want to use
 # `to_datetime()` and `dassert_*()` functions.
+# TODO(gp): It would be better to call this "UserFriendlyDateTime" or "GeneralizedDateTime"
+#  and StrictDateTime -> DateTime.
 Datetime = Union[str, pd.Timestamp, datetime.datetime]
 # TODO(gp): Replace _PANDAS_DATE_TYPE with Datetime everywhere
 
@@ -77,6 +79,7 @@ def dassert_is_strict_datetime(datetime_: StrictDatetime) -> None:
         datetime_,
         (pd.Timestamp, datetime.datetime),
         "datetime_='%s' of type '%s' is not a StrictDateTimeType",
+        datetime_, str(type(datetime_))
     )
 
 
@@ -186,6 +189,13 @@ def dassert_tz_compatible_timestamp_with_df(datetime_: StrictDatetime, df: pd.Da
 # #############################################################################
 
 
+def get_UTC_tz() -> pytz.timezone:
+    """
+    Return the UTC timezone.
+    """
+    return pytz.timezone("UTC")
+
+
 def get_ET_tz() -> pytz.timezone:
     """
     Return the US Eastern Time timezone.
@@ -193,24 +203,28 @@ def get_ET_tz() -> pytz.timezone:
     return pytz.timezone("America/New_York")
 
 
+# TODO(gp): Make the argument mandatory.
 def get_current_time(tz: Optional[str] = None) -> pd.Timestamp:
     """
     Return current time in a timezone or as a naive time.
     """
     if tz == "UTC":
-        # Return in UTC.
-        timestamp = datetime.datetime.utcnow()
+        timestamp = datetime.datetime.now(get_UTC_tz())
     elif tz == "ET":
-        # Return in ET.
         timestamp = datetime.datetime.now(get_ET_tz())
+    elif tz in "NAIVE_UTC":
+        timestamp = datetime.datetime.now(get_UTC_tz())
+        timestamp = timestamp.replace(tzinfo=None)
+    elif tz in "NAIVE_ET":
+        timestamp = datetime.datetime.now(get_ET_tz())
+        timestamp = timestamp.replace(tzinfo=None)
     else:
-        # Naive.
-        dbg.dassert_is(tz, None)
-        timestamp = datetime.datetime.now()
+        raise ValueError(f"Invalid tz='{tz}")
     timestamp = pd.Timestamp(timestamp)
     return timestamp
 
 
+# TODO(gp): Make the argument mandatory.
 # TODO(gp): -> get_current_timestamp_as_string()
 def get_timestamp(tz: Optional[str] = None) -> str:
     """
