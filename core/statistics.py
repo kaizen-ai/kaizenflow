@@ -112,22 +112,31 @@ def compute_special_value_stats(
         prefix + "frac_inf",
         prefix + "frac_constant",
         prefix + "num_finite_samples",
+        prefix + "num_finite_samples_inv",
+        prefix + "num_finite_samples_inv_dyadic_scale",
+        prefix + "num_finite_samples_inv_sqrt",
+        prefix + "num_finite_samples_inv_sqrt_dyadic_scale",
         prefix + "num_unique_values",
     ]
     nan_result = pd.Series(np.nan, index=result_index, name=srs.name)
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
         return nan_result
+    num_finite_samples = count_num_finite_samples(srs)
     result_values = [
         len(srs),
         compute_frac_zero(srs),
         compute_frac_nan(srs),
         compute_frac_inf(srs),
         compute_zero_diff_proportion(srs).iloc[1],
-        count_num_finite_samples(srs),
+        num_finite_samples,
+        1 / num_finite_samples,
+        compute_dyadic_scale(1 / num_finite_samples),
+        1 / np.sqrt(num_finite_samples),
+        compute_dyadic_scale(1 / np.sqrt(num_finite_samples)),
         count_num_unique_values(srs),
     ]
-    result = pd.Series(data=result_values, index=result_index, name=srs.name)
+    result = pd.Series(data=result_values, index=result_index, name=srs.name, dtype=object)
     return result
 
 
@@ -278,6 +287,19 @@ def compute_zero_diff_proportion(
     result_values = [approx_const_count, approx_const_frac]
     res = pd.Series(data=result_values, index=result_index, name=srs.name)
     return res
+
+
+def compute_dyadic_scale(num: float) -> int:
+    """
+    Return the dyadic scale of a number.
+
+    We take this to be the integer `j` such that
+    2 ** j <= abs(num) < 2 ** (j + 1)
+    """
+    abs_num = np.abs(num)
+    dbg.dassert_lt(0, abs_num)
+    j = np.floor(np.log2(abs_num))
+    return int(j)
 
 
 # #############################################################################
