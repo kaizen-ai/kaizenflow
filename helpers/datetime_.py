@@ -10,7 +10,7 @@ import calendar
 import datetime
 import logging
 import re
-from typing import Callable, Iterable, Optional, Tuple, Union
+from typing import Callable, Iterable, Optional, Tuple, Union, cast
 
 _WARNING = "\033[33mWARNING\033[0m"
 
@@ -49,6 +49,8 @@ _LOG = logging.getLogger(__name__)
 # In general it's worth to import this file even for just the type `Datetime`,
 # since typically as soon as the caller uses this type, they also want to use
 # `to_datetime()` and `dassert_*()` functions.
+# TODO(gp): It would be better to call this `UserFriendlyDateTime` or
+#  `GeneralDateTime` and rename `StrictDateTime` -> `DateTime`.
 Datetime = Union[str, pd.Timestamp, datetime.datetime]
 # TODO(gp): Replace _PANDAS_DATE_TYPE with Datetime everywhere
 
@@ -56,8 +58,6 @@ Datetime = Union[str, pd.Timestamp, datetime.datetime]
 # Either one wants to be flexible and allow everything that can be interpreted as
 # a datetime, or strict and then only the Python type `datetime.datetime` is used.
 StrictDatetime = Union[pd.Timestamp, datetime.datetime]
-
-# TODO(gp): Use a single name of the var (e.g., datetime_) everywhere.
 
 
 def dassert_is_datetime(datetime_: Datetime) -> None:
@@ -68,6 +68,8 @@ def dassert_is_datetime(datetime_: Datetime) -> None:
         datetime_,
         (str, pd.Timestamp, datetime.datetime),
         "datetime_='%s' of type '%s' is not a DateTimeType",
+        datetime_,
+        str(type(datetime_)),
     )
 
 
@@ -79,6 +81,8 @@ def dassert_is_strict_datetime(datetime_: StrictDatetime) -> None:
         datetime_,
         (pd.Timestamp, datetime.datetime),
         "datetime_='%s' of type '%s' is not a StrictDateTimeType",
+        datetime_,
+        str(type(datetime_)),
     )
 
 
@@ -160,20 +164,92 @@ def dassert_has_ET_tz(datetime_: StrictDatetime) -> None:
     _dassert_has_specified_tz(datetime_, tz_zones)
 
 
+def dassert_tz_compatible(
+    datetime1: StrictDatetime, datetime2: StrictDatetime
+) -> None:
+    """
+    Assert that two timestamps are both naive or both have timezone info.
+    """
+    dassert_is_strict_datetime(datetime1)
+    dassert_is_strict_datetime(datetime2)
+    has_tz1 = datetime1.tzinfo is not None
+    has_tz2 = datetime2.tzinfo is not None
+    dbg.dassert_eq(
+        has_tz1,
+        has_tz2,
+        "datetime1='%s' and datetime2='%s' are not compatible",
+        str(datetime1),
+        str(datetime2),
+    )
+
+
+def dassert_tz_compatible_timestamp_with_df(
+    datetime_: StrictDatetime, df: pd.DataFrame
+) -> None:
+    """
+    Assert that timestamp and df.index are both naive or both have timezone
+    info.
+    """
+    dassert_is_strict_datetime(datetime_)
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    if df.empty:
+        return
+    # We assume that the first element in the index is representative.
+    df_datetime = df.index[0]
+    dassert_tz_compatible(df_datetime, datetime_)
+
+
 # #############################################################################
 
 
-# TODO(gp): -> get_now_timestamp()
-def get_timestamp(tz: Optional[str] = None) -> str:
-    if tz == "utc":
-        timestamp = datetime.datetime.utcnow()
-    elif tz == "et":
-        # Return in ET.
-        timestamp = datetime.datetime.now(pytz.timezone("EST"))
+def get_UTC_tz() -> datetime.tzinfo:
+    """
+    Return the UTC timezone.
+    """
+    return pytz.timezone("UTC")
+
+
+def get_ET_tz() -> datetime.tzinfo:
+    """
+    Return the US Eastern Time timezone.
+    """
+    return pytz.timezone("America/New_York")
+
+
+def get_current_time(tz: str) -> pd.Timestamp:
+    """
+    Return current time in UTC / ET timezone or as a naive time.
+    """
+    if tz == "UTC":
+        timestamp = datetime.datetime.now(get_UTC_tz())
+    elif tz == "ET":
+        timestamp = datetime.datetime.now(get_ET_tz())
+    elif tz == "naive_UTC":
+        timestamp = datetime.datetime.now(get_UTC_tz())
+        timestamp = timestamp.replace(tzinfo=None)
+    elif tz == "naive_ET":
+        timestamp = datetime.datetime.now(get_ET_tz())
+        timestamp = timestamp.replace(tzinfo=None)
     else:
-        dbg.dassert_is(tz, None)
-        timestamp = datetime.datetime.now()
-    return timestamp.strftime("%Y%m%d_%H%M%S")
+        raise ValueError(f"Invalid tz='{tz}")
+    timestamp = pd.Timestamp(timestamp)
+    return timestamp
+
+
+# TODO(gp): -> get_current_timestamp_as_string()
+def get_timestamp(tz: str) -> str:
+    """
+    Return the current time in the format `YYYYMMDD_HHMMSS` (e.g.,
+    20210728_221734).
+
+    Note that no information about the timezone is returned. Thus the
+    same time corresponds to `20210728_171749` for tz="ET" and
+    `20210728_221749` for tz="UTC".
+    """
+    timestamp = get_current_time(tz)
+    ret = timestamp.strftime("%Y%m%d_%H%M%S")
+    ret = cast(str, ret)
+    return ret
 
 
 # #############################################################################
@@ -259,6 +335,7 @@ def _handle_incorrect_conversions(
     return None
 
 
+# pylint: disabled=too-many-return-statements
 def _shift_to_period_end(
     date: str,
 ) -> Optional[Callable[[StrictDatetime], StrictDatetime]]:

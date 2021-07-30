@@ -254,7 +254,9 @@ def df_rolling_apply(
 
 
 def _get_local_or_s3_stream(file_name: str, *args: Any, **kwargs: Any):
-    _LOG.debug("file_name=%s args=%s kwargs=%s", file_name, str(args), str(kwargs))
+    _LOG.debug(
+        "file_name=%s args=%s kwargs=%s", file_name, str(args), str(kwargs)
+    )
     # Handle the s3fs param, if needed.
     if hs3.is_s3_path(file_name):
         # For S3 files we need to have an `s3fs` parameter.
@@ -275,7 +277,7 @@ def read_csv(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
     """
     stream, args, kwargs = _get_local_or_s3_stream(file_name, *args, **kwargs)
     # Handle zipped files.
-    if any(file_name.endswith(ext) for ext in (".gzip", ".gz")):
+    if any(file_name.endswith(ext) for ext in (".gzip", ".gz", ".tgz")):
         dbg.dassert_not_in("compression", kwargs)
         kwargs["compression"] = "gzip"
     elif file_name.endswith(".zip"):
@@ -290,7 +292,8 @@ def read_csv(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
 
 def read_parquet(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
     """
-    Read a Parquet file into a `pd.DataFrame` handling the S3 profile, if needed.
+    Read a Parquet file into a `pd.DataFrame` handling the S3 profile, if
+    needed.
     """
     stream, args, kwargs = _get_local_or_s3_stream(file_name, *args, **kwargs)
     # Read.

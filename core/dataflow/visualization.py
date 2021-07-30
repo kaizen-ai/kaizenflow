@@ -1,3 +1,11 @@
+"""
+Helper functions to visualize a graph in a notebook or save the plot to file.
+
+Import as:
+
+import core.dataflow.visualization as cdtfv
+"""
+
 import IPython
 import networkx as networ
 import pygraphviz
@@ -29,7 +37,7 @@ def draw_to_file(dag: dtf.DAG, file_name: str = "graph.png") -> str:
 
 def _extract_agraph_from_dag(dag: dtf.DAG) -> pygraphviz.agraph.AGraph:
     """
-    Extract a pygraphviz agraph from a DAG.
+    Extract a pygraphviz `agraph` from a DAG.
     """
     # Extract networkx DAG.
     dbg.dassert_isinstance(dag, dtf.DAG)
