@@ -135,10 +135,8 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
                 ).flatten()
             else:
                 sample_weights = None
-            _LOG.info("sample_weights=%s" % sample_weights)
             # Prepare forward y_vars in sklearn format.
             forward_y_fit = cdataa.transform_to_sklearn(df, forward_y_cols)
-            _LOG.info("forward_y_fit=%s" % forward_y_fit)
             # Define and fit model.
             self._model = self._model_func(**self._model_kwargs)
             self._model = self._model.fit(
