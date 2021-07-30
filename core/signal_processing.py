@@ -597,7 +597,8 @@ def extract_smooth_moving_average_weights(
     #   the warm-up length, then we extend the zeros so that we can calculate
     #   reliable absolute weights
     desired_length = signal.loc[:index_location].shape[0]
-    warmup_length = int(np.round(10 * tau))
+    range_ = tau * (min_depth + max_depth) / 2.0
+    warmup_length = int(np.round(10 * range_))
     ones = pd.Series(index=range(0, warmup_length), data=1)
     length = max(desired_length, warmup_length)
     zeros = pd.Series(index=range(warmup_length, warmup_length + length), data=0)
