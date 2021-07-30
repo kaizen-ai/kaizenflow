@@ -245,13 +245,16 @@ cdrt.align_on_even_second()
 #
 sleep_interval_in_secs = 1.0
 num_iterations = 3
-external_clock = rrt.get_replayed_current_time
-get_current_time = cdrt.execute_every_2_seconds
+get_current_time = rrt.get_replayed_current_time
+need_to_execute = cdrt.execute_every_2_seconds
 #
-execution_trace = cdrt.execute_with_real_time_loop(
+execution_trace, results = cdrt.execute_dag_with_real_time_loop(
     sleep_interval_in_secs,
     num_iterations,
     get_current_time,
     need_to_execute,
-    workload,
+    dag,
 )
+
+# %%
+results[0][1]["df_out"]

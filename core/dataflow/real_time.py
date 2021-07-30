@@ -8,7 +8,7 @@ import collections
 import datetime
 import logging
 import time
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -271,6 +271,7 @@ def execute_with_real_time_loop(
         dbg.dassert_lt(0, num_iterations)
     #
     execution_trace = []
+    results = []
     num_it = 1
     while True:
         current_time = get_current_time()
@@ -283,11 +284,34 @@ def execute_with_real_time_loop(
         execution_trace.append(event)
         if execute:
             _LOG.debug("  -> execute")
-            _ = workload(current_time)
+            result = workload(current_time)
+            results.append((current_time, result))
         # Exit, if needed.
         if num_iterations is not None and num_it >= num_iterations:
             break
         # Go to sleep.
         time.sleep(sleep_interval_in_secs)
         num_it += 1
-    return execution_trace
+    return execution_trace, results
+
+
+def execute_dag_with_real_time_loop(
+        sleep_interval_in_secs: float,
+        num_iterations: Optional[int],
+        get_current_time: GetCurrentTimeFunction,
+        need_to_execute: Callable[[pd.Timestamp], bool],
+        dag  # : dtf.DAG
+) -> List[RealTimeEvent]:
+    def dag_workload(current_time: pd.Timestamp) -> Dict:
+        sink = dag.get_unique_sink()
+        dict_ = dag.run_leq_node(sink, "fit")
+        return dict_
+
+    execution_trace, results = execute_with_real_time_loop(
+            sleep_interval_in_secs,
+            num_iterations,
+            get_current_time,
+            need_to_execute,
+            workload=dag_workload)
+
+    return execution_trace, results
