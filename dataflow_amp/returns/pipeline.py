@@ -6,7 +6,7 @@ import dataflow_amp.returns.pipeline as darp
 
 import datetime
 import logging
-from typing import Optional
+from typing import Optional, cast
 
 import core.config as cconfig
 import core.dataflow as dtf
