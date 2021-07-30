@@ -32,23 +32,21 @@ _DT_DT_ET = pytz.timezone("US/Eastern").localize(_DT_DT_NAIVE)
 
 
 class Test_dassert_is_datetime1(hut.TestCase):
-
     def test_is_datetime1(self) -> None:
         """
         Test valid datetime objects.
         """
         objs = [
-                _STR_TS_NAIVE,
-        _STR_TS_UTC,
-        _STR_TS_ET,
-
-        _PD_TS_NAIVE,
-        _PD_TS_UTC,
-        _PD_TS_ET,
-
-        _DT_DT_NAIVE,
-        _DT_DT_UTC,
-        _DT_DT_ET]
+            _STR_TS_NAIVE,
+            _STR_TS_UTC,
+            _STR_TS_ET,
+            _PD_TS_NAIVE,
+            _PD_TS_UTC,
+            _PD_TS_ET,
+            _DT_DT_NAIVE,
+            _DT_DT_UTC,
+            _DT_DT_ET,
+        ]
         for obj in objs:
             hdatetime.dassert_is_datetime(obj)
 
@@ -69,10 +67,10 @@ class Test_dassert_is_datetime1(hut.TestCase):
             _PD_TS_NAIVE,
             _PD_TS_UTC,
             _PD_TS_ET,
-
             _DT_DT_NAIVE,
             _DT_DT_UTC,
-            _DT_DT_ET]
+            _DT_DT_ET,
+        ]
         for obj in objs:
             hdatetime.dassert_is_strict_datetime(obj)
 
@@ -80,12 +78,7 @@ class Test_dassert_is_datetime1(hut.TestCase):
         """
         Test invalid datetime objects.
         """
-        objs = [
-            0,
-            _STR_TS_NAIVE,
-            _STR_TS_UTC,
-            _STR_TS_ET,
-             "hello"]
+        objs = [0, _STR_TS_NAIVE, _STR_TS_UTC, _STR_TS_ET, "hello"]
         for obj in objs:
             with self.assertRaises(AssertionError):
                 hdatetime.dassert_is_strict_datetime(obj)
@@ -216,7 +209,8 @@ class Test_dassert_tz_compatible1(hut.TestCase):
 
     def test_dassert_compatible_timestamp_assert1(self) -> None:
         """
-        Test a single not compatible pair of datetimes and check the raised exception.
+        Test a single not compatible pair of datetimes and check the raised
+        exception.
         """
         with self.assertRaises(AssertionError) as cm:
             hdatetime.dassert_tz_compatible(_PD_TS_NAIVE, _DT_DT_UTC)
@@ -232,7 +226,8 @@ class Test_dassert_tz_compatible1(hut.TestCase):
 
     def test_dassert_compatible_timestamp_assert2(self) -> None:
         """
-        Test a pairs of non-compatible datetimes making sure the assertion is raised.
+        Test a pairs of non-compatible datetimes making sure the assertion is
+        raised.
         """
         for datetime1 in [_PD_TS_NAIVE, _DT_DT_NAIVE, _PD_TS_NAIVE, _DT_DT_NAIVE]:
             for datetime2 in [_PD_TS_UTC, _PD_TS_ET, _DT_DT_UTC, _DT_DT_ET]:

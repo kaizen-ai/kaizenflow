@@ -79,7 +79,8 @@ def dassert_is_strict_datetime(datetime_: StrictDatetime) -> None:
         datetime_,
         (pd.Timestamp, datetime.datetime),
         "datetime_='%s' of type '%s' is not a StrictDateTimeType",
-        datetime_, str(type(datetime_))
+        datetime_,
+        str(type(datetime_)),
     )
 
 
@@ -161,7 +162,9 @@ def dassert_has_ET_tz(datetime_: StrictDatetime) -> None:
     _dassert_has_specified_tz(datetime_, tz_zones)
 
 
-def dassert_tz_compatible(datetime1: StrictDatetime, datetime2: StrictDatetime) -> None:
+def dassert_tz_compatible(
+    datetime1: StrictDatetime, datetime2: StrictDatetime
+) -> None:
     """
     Assert that two timestamps are both naive or both have timezone info.
     """
@@ -169,13 +172,21 @@ def dassert_tz_compatible(datetime1: StrictDatetime, datetime2: StrictDatetime) 
     dassert_is_strict_datetime(datetime2)
     has_tz1 = datetime1.tzinfo is not None
     has_tz2 = datetime2.tzinfo is not None
-    dbg.dassert_eq(has_tz1, has_tz2, "datetime1='%s' and datetime2='%s' are not compatible",
-                   str(datetime1), str(datetime2))
+    dbg.dassert_eq(
+        has_tz1,
+        has_tz2,
+        "datetime1='%s' and datetime2='%s' are not compatible",
+        str(datetime1),
+        str(datetime2),
+    )
 
 
-def dassert_tz_compatible_timestamp_with_df(datetime_: StrictDatetime, df: pd.DataFrame) -> None:
+def dassert_tz_compatible_timestamp_with_df(
+    datetime_: StrictDatetime, df: pd.DataFrame
+) -> None:
     """
-    Assert that timestamp and df.index are both naive or both have timezone info.
+    Assert that timestamp and df.index are both naive or both have timezone
+    info.
     """
     dassert_is_strict_datetime(datetime_)
     dbg.dassert_isinstance(df, pd.DataFrame)
@@ -189,14 +200,14 @@ def dassert_tz_compatible_timestamp_with_df(datetime_: StrictDatetime, df: pd.Da
 # #############################################################################
 
 
-def get_UTC_tz() -> pytz.timezone:
+def get_UTC_tz() -> datetime.tzinfo:
     """
     Return the UTC timezone.
     """
     return pytz.timezone("UTC")
 
 
-def get_ET_tz() -> pytz.timezone:
+def get_ET_tz() -> datetime.tzinfo:
     """
     Return the US Eastern Time timezone.
     """
@@ -212,10 +223,10 @@ def get_current_time(tz: Optional[str] = None) -> pd.Timestamp:
         timestamp = datetime.datetime.now(get_UTC_tz())
     elif tz == "ET":
         timestamp = datetime.datetime.now(get_ET_tz())
-    elif tz in "NAIVE_UTC":
+    elif tz == "NAIVE_UTC":
         timestamp = datetime.datetime.now(get_UTC_tz())
         timestamp = timestamp.replace(tzinfo=None)
-    elif tz in "NAIVE_ET":
+    elif tz == "NAIVE_ET":
         timestamp = datetime.datetime.now(get_ET_tz())
         timestamp = timestamp.replace(tzinfo=None)
     else:
@@ -236,7 +247,9 @@ def get_timestamp(tz: Optional[str] = None) -> str:
     `20210728_221749` for tz="UTC".
     """
     timestamp = get_current_time(tz=tz)
-    return timestamp.strftime("%Y%m%d_%H%M%S")
+    ret = timestamp.strftime("%Y%m%d_%H%M%S")
+    ret = cast(str, ret)
+    return ret
 
 
 # #############################################################################
@@ -322,6 +335,7 @@ def _handle_incorrect_conversions(
     return None
 
 
+# pylint: disabled=too-many-return-statements
 def _shift_to_period_end(
     date: str,
 ) -> Optional[Callable[[StrictDatetime], StrictDatetime]]:

@@ -296,7 +296,7 @@ def plot_value_counts(
     # Compute the counts.
     counts = srs.value_counts(dropna=dropna)
     # Plot.
-    return plot_counts(counts, ax=ax, *args, **kwargs)
+    return plot_counts(counts, *args, ax=ax, **kwargs)
 
 
 def plot_counts(
@@ -1003,7 +1003,9 @@ def compute_linkage(df: pd.DataFrame, method: Optional[str] = None) -> np.ndarra
     """
     method = method or "average"
     corr = df.corr()
-    return schier.linkage(corr, method=method)
+    linkage = schier.linkage(corr, method=method)
+    linkage = cast(np.darray, linkage)
+    return linkage
 
 
 def select_series_to_keep(df_corr: pd.DataFrame, threshold: float) -> List[str]:
@@ -1031,16 +1033,15 @@ def select_series_to_keep(df_corr: pd.DataFrame, threshold: float) -> List[str]:
         subset_corr = corr[abs(corr) > threshold]
         if subset_corr.isnull().values.all():
             return list(subset_corr.columns.values)
-        else:
-            column_to_keep = (
-                subset_corr[abs(subset_corr) > threshold].notnull().sum().idxmax()
-            )
-            columns_to_remove = subset_corr[
-                subset_corr[column_to_keep].notnull()
-            ].index
-            corr = subset_corr.drop(columns_to_remove).drop(
-                columns_to_remove, axis=1
-            )
+        column_to_keep = (
+            subset_corr[abs(subset_corr) > threshold].notnull().sum().idxmax()
+        )
+        columns_to_remove = subset_corr[
+            subset_corr[column_to_keep].notnull()
+        ].index
+        corr = subset_corr.drop(columns_to_remove).drop(
+            columns_to_remove, axis=1
+        )
 
 
 def cluster_and_select(
@@ -1081,11 +1082,11 @@ def cluster_and_select(
     df = df.drop(df.columns[df.nunique() == 1], axis=1)
     if df.shape[1] < 2:
         _LOG.warning("Skipping correlation matrix since df is %s", str(df.shape))
-        return
+        return None
     # Cluster the time series.
     z_linkage = compute_linkage(df, method=method)
     clusters = schier.fcluster(z_linkage, num_clust, criterion="maxclust")
-    series_to_keep = []
+    series_to_keep: List[str] = []
     dict_series_to_keep = {}
     df_name_clust = pd.DataFrame(
         {"name": list(df.columns.values), "cluster": clusters}
@@ -1186,6 +1187,7 @@ def plot_corr_over_time(
         corr_tmp = corr_df.loc[dt]
         # Generate a mask for the upper triangle.
         mask = _get_heatmap_mask(corr_tmp, mode)
+        axis = axes[i]  # type: ignore
         # Plot.
         sns.heatmap(
             corr_tmp,
@@ -1200,9 +1202,9 @@ def plot_corr_over_time(
             linewidths=0.5,
             mask=mask,
             # cbar_kws={"shrink": .5},
-            ax=axes[i],
+            ax=axis,
         )
-        axes[i].set_title(timestamps[i])
+        axis.set_title(timestamps[i])
 
 
 class PCA:
@@ -1234,7 +1236,7 @@ class PCA:
         max_pcs = self.pca.components_.shape[0]
         num_components = self._get_num_pcs_to_plot(num_components, max_pcs)
         _LOG.info(
-            f"Plotting the first {num_components} components out of {max_pcs}"
+            "Plotting the first {num_components} components out of %s", max_pcs
         )
         if axes is None:
             _, axes = get_multiple_plots(
@@ -1321,10 +1323,10 @@ def plot_ipca(
     eigenvector_diffs.plot(title="Eigenvector angular distances")
 
 
-def _get_heatmap_mask(corr: pd.DataFrame, mode: str) -> np.ndarray:
+def _get_heatmap_mask(corr: pd.DataFrame, mode: str) -> Optional[np.ndarray]:
     if mode == "heatmap_semitriangle":
         # Generate a mask for the upper triangle.
-        mask = np.zeros_like(corr, dtype=np.bool)
+        mask = np.zeros_like(corr, dtype=np.bool_)
         mask[np.triu_indices_from(mask)] = True
     elif mode == "heatmap":
         mask = None
@@ -2218,7 +2220,8 @@ def plot_sharpe_ratio_panel(
         resampled_log_rets = csigna.resample(log_rets, rule=freq).sum()
         if len(resampled_log_rets) == 1:
             _LOG.warning(
-                "Resampling to freq='%s' is blocked because resampled series has only 1 observation",
+                "Resampling to freq='%s' is blocked because resampled series "
+                "has only 1 observation",
                 freq,
             )
             continue
