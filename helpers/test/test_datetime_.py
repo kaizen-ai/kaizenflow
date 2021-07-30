@@ -25,6 +25,72 @@ _DT_DT_UTC = pytz.timezone("UTC").localize(_DT_DT_NAIVE)
 _DT_DT_ET = pytz.timezone("US/Eastern").localize(_DT_DT_NAIVE)
 
 
+# #############################################################################
+
+
+# TODO(gp): Add tests for get_current_time and use dassert
+
+
+class Test_dassert_is_datetime1(hut.TestCase):
+
+    def test_is_datetime1(self) -> None:
+        """
+        Test valid datetime objects.
+        """
+        objs = [
+                _STR_TS_NAIVE,
+        _STR_TS_UTC,
+        _STR_TS_ET,
+
+        _PD_TS_NAIVE,
+        _PD_TS_UTC,
+        _PD_TS_ET,
+
+        _DT_DT_NAIVE,
+        _DT_DT_UTC,
+        _DT_DT_ET]
+        for obj in objs:
+            hdatetime.dassert_is_datetime(obj)
+
+    def test_is_datetime_fail1(self) -> None:
+        """
+        Test invalid datetime objects.
+        """
+        objs = [0, "hello"]
+        for obj in objs:
+            with self.assertRaises(AssertionError):
+                hdatetime.dassert_is_datetime(obj)
+
+    def test_is_strict_datetime1(self) -> None:
+        """
+        Test valid datetime objects.
+        """
+        objs = [
+            _PD_TS_NAIVE,
+            _PD_TS_UTC,
+            _PD_TS_ET,
+
+            _DT_DT_NAIVE,
+            _DT_DT_UTC,
+            _DT_DT_ET]
+        for obj in objs:
+            hdatetime.dassert_is_strict_datetime(obj)
+
+    def test_is_strict_datetime_fail1(self) -> None:
+        """
+        Test invalid datetime objects.
+        """
+        objs = [
+            0,
+            _STR_TS_NAIVE,
+            _STR_TS_UTC,
+            _STR_TS_ET,
+             "hello"]
+        for obj in objs:
+            with self.assertRaises(AssertionError):
+                hdatetime.dassert_is_strict_datetime(obj)
+
+
 class Test_dassert_tz1(hut.TestCase):
     def test_datetime_conversions(self) -> None:
         # Get a tz-naive datetime.
@@ -129,6 +195,49 @@ datetime_='%s' of type '%s' is not a DateTimeType
             act = hdatetime.to_datetime(obj)
             exp = _DT_DT_ET
             self.assertEqual(str(act), str(exp))
+
+
+class Test_dassert_tz_compatible1(hut.TestCase):
+    def test_dassert_compatible_timestamp1(self) -> None:
+        """
+        Both datetimes are naive.
+        """
+        for datetime1 in [_PD_TS_NAIVE, _DT_DT_NAIVE]:
+            for datetime2 in [_PD_TS_NAIVE, _DT_DT_NAIVE]:
+                hdatetime.dassert_tz_compatible(datetime1, datetime2)
+
+    def test_dassert_compatible_timestamp2(self) -> None:
+        """
+        Both datetimes have tz info.
+        """
+        for datetime1 in [_PD_TS_UTC, _PD_TS_ET]:
+            for datetime2 in [_DT_DT_UTC, _DT_DT_ET]:
+                hdatetime.dassert_tz_compatible(datetime1, datetime2)
+
+    def test_dassert_compatible_timestamp_assert1(self) -> None:
+        """
+        Test a single not compatible pair of datetimes and check the raised exception.
+        """
+        with self.assertRaises(AssertionError) as cm:
+            hdatetime.dassert_tz_compatible(_PD_TS_NAIVE, _DT_DT_UTC)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        'False'
+        ==
+        'True'
+        datetime1='2021-01-04 09:30:00' and datetime2='2021-01-04 09:30:00+00:00' are not compatible
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test_dassert_compatible_timestamp_assert2(self) -> None:
+        """
+        Test a pairs of non-compatible datetimes making sure the assertion is raised.
+        """
+        for datetime1 in [_PD_TS_NAIVE, _DT_DT_NAIVE, _PD_TS_NAIVE, _DT_DT_NAIVE]:
+            for datetime2 in [_PD_TS_UTC, _PD_TS_ET, _DT_DT_UTC, _DT_DT_ET]:
+                with self.assertRaises(AssertionError):
+                    hdatetime.dassert_tz_compatible(datetime1, datetime2)
 
 
 # #############################################################################
