@@ -66,8 +66,10 @@ class TestReturnsBuilder(hut.TestCase):
         dag_builder = retp.ReturnsPipeline()
         config = dag_builder.get_config_template()
         # Inject the node.
-        config["load_prices"] = cconfig.get_config_from_nested_dict(
-            source_node_kwargs
+        config["load_prices"] = cconfig.get_config_from_nested_dict({
+                "source_node_name": "DataLoader",
+                "source_node_kwargs": source_node_kwargs
+            }
         )
         #
         dag_runner = dtf.FitPredictDagRunner(config, dag_builder)

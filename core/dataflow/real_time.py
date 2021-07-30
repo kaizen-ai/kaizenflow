@@ -8,24 +8,16 @@ import collections
 import datetime
 import logging
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Iterator, List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
 
 import helpers.datetime_ as hdatetime
-
 import helpers.dbg as dbg
 import helpers.hnumpy as hnumpy
 
 _LOG = logging.getLogger(__name__)
-
-# TODO(gp): Do not merge this.
-# dbg.test_logger()
-# _LOG.setLevel(logging.DEBUG)
-# dbg.test_logger()
-_LOG.debug = _LOG.info
-
 
 # There are different ways of reproducing a real-time behaviors:
 # 1) True real-time
@@ -70,7 +62,7 @@ def generate_synthetic_data(
 
 def get_data_as_of_datetime(
     df: pd.DataFrame, datetime_: pd.Timestamp, delay_in_secs: int = 0
-):
+) -> pd.DataFrame:
     """
     Extract data from a df (indexed with knowledge time) available at
     `datetime_`
@@ -164,7 +156,7 @@ class ReplayRealTime:
 
 def get_simulated_current_time(
     start_datetime: pd.Timestamp, end_datetime: pd.Timestamp, freq: str = "1T"
-):
+) -> Iterator[pd.Timestamp]:
     """
     Iterator yielding timestamps in the given interval and with the given
     frequency.
@@ -183,14 +175,18 @@ def execute_every_2_seconds(datetime_: pd.Timestamp) -> bool:
     """
     Return true every other second.
     """
-    return datetime_.second % 2 == 0
+    ret = datetime_.second % 2 == 0
+    ret = cast(bool, ret)
+    return ret
 
 
 def execute_every_5_minutes(datetime_: pd.Timestamp) -> bool:
     """
     Return true if `datetime_` is aligned on a 5 minute grid.
     """
-    return datetime_.minute % 5 == 0
+    ret = datetime_.minute % 5 == 0
+    ret = cast(bool, ret)
+    return ret
 
 
 def align_on_even_second(use_time_sleep: bool = False) -> None:
@@ -227,20 +223,14 @@ def align_on_even_second(use_time_sleep: bool = False) -> None:
 # #############################################################################
 
 
-# Type for a function that return the current (true or replayed) time as a timestamp.
-GetCurrentTimeFunction = Callable[[], pd.Timestamp]
-
-
 # Information about the real time execution.
 RealTimeEvent = collections.namedtuple(
     "RealTimeEvent", "num_it current_time wall_clock_time need_execute"
 )
 
 
-ExecutionTrace = List[RealTimeEvent]
-
-
-def real_time_event_to_str(rte: RealTimeEvent, verbose: bool = False):
+def real_time_event_to_str(rte: RealTimeEvent) -> str:
+    dbg.dassert_isinstance(rte, RealTimeEvent)
     vals = []
     vals.append("num_it=%s" % rte.num_it)
     timestamp_as_str = rte.current_time.strftime("%Y%m%d_%H%M%S")
@@ -249,6 +239,13 @@ def real_time_event_to_str(rte: RealTimeEvent, verbose: bool = False):
     vals.append("current_time=%s" % timestamp_as_str)
     vals.append("need_execute=%s" % rte.need_execute)
     return " ".join(vals)
+
+
+ExecutionTrace = List[RealTimeEvent]
+
+
+# Type for a function that return the current (true or replayed) time as a timestamp.
+GetCurrentTimeFunction = Callable[[], pd.Timestamp]
 
 
 def execute_with_real_time_loop(

@@ -5,12 +5,14 @@ import core.dataflow.test.test_real_time as cdtfttrt
 """
 import logging
 import time
+from typing import Callable, Tuple
 
 import pandas as pd
 import pytest
 
 import core.dataflow.real_time as cdrt
 import helpers.datetime_ as hdatetime
+import helpers.htypes as htypes
 import helpers.printing as hprint
 import helpers.unit_test as hut
 
@@ -23,7 +25,8 @@ _LOG = logging.getLogger(__name__)
 # A potentially negative consequence of this approach is that test code needs to
 # include test code, which might need to turn testing code into Python package.
 
-def get_test_data_builder():
+
+def get_test_data_builder() -> Tuple[Callable, htypes.Kwargs]:
     data_builder = cdrt.generate_synthetic_data
     data_builder_kwargs = {
         "columns": ["close", "volume"],
@@ -34,18 +37,16 @@ def get_test_data_builder():
     return data_builder, data_builder_kwargs
 
 
-def get_test_current_time():
+def get_test_current_time() -> pd.Timestamp:
     start_datetime = pd.Timestamp("2010-01-04 09:30:00")
     # Use a replayed real-time starting at the same time as the data.
-    rrt = cdrt.ReplayRealTime(
-        start_datetime
-    )
+    rrt = cdrt.ReplayRealTime(start_datetime)
     get_current_time = rrt.get_replayed_current_time
     return get_current_time
 
 
 # TODO(gp): Reduce to sleep_interval to 0.5 secs.
-def get_test_execute_rt_loop_kwargs():
+def get_test_execute_rt_loop_kwargs() -> htypes.Kwargs:
     get_current_time = get_test_current_time()
     execute_rt_loop_kwargs = {
         "sleep_interval_in_secs": 1.0,
@@ -60,16 +61,6 @@ def get_test_execute_rt_loop_kwargs():
 
 
 class TestReplayTime1(hut.TestCase):
-    def _helper(self, rrt, exp: pd.Timestamp):
-        rct = rrt.get_replayed_current_time()
-        _LOG.info("  -> time=%s" % rct)
-        _LOG.debug(hprint.to_str("rct.date"))
-        self.assert_equal(str(rct.date()), str(exp.date()))
-        _LOG.debug(hprint.to_str("rct.hour"))
-        self.assert_equal(str(rct.hour), str(exp.hour))
-        _LOG.debug(hprint.to_str("rct.minute"))
-        self.assert_equal(str(rct.minute), str(exp.minute))
-
     def test1(self) -> None:
         """
         Rewind time to 9:30am of a day in the past.
@@ -90,20 +81,29 @@ class TestReplayTime1(hut.TestCase):
             pd.Timestamp("2021-07-27 9:30:00-04:00"), speed_up_factor=1e6
         )
         rct = rrt.get_replayed_current_time()
-        _LOG.info("  -> time=%s" % rct)
+        _LOG.info("  -> time=%s", rct)
         # We can't easily check the expected value, so we just check a lower bound.
         self.assertGreater(rct, pd.Timestamp("2021-07-27 9:30:01-04:00"))
         #
         rct = rrt.get_replayed_current_time()
-        _LOG.info("  -> time=%s" % rct)
+        _LOG.info("  -> time=%s", rct)
         self.assertGreater(rct, pd.Timestamp("2021-07-27 9:30:02-04:00"))
+
+    def _helper(self, rrt, exp: pd.Timestamp) -> None:
+        rct = rrt.get_replayed_current_time()
+        _LOG.info("  -> time=%s", rct)
+        _LOG.debug(hprint.to_str("rct.date"))
+        self.assert_equal(str(rct.date()), str(exp.date()))
+        _LOG.debug(hprint.to_str("rct.hour"))
+        self.assert_equal(str(rct.hour), str(exp.hour))
+        _LOG.debug(hprint.to_str("rct.minute"))
+        self.assert_equal(str(rct.minute), str(exp.minute))
 
 
 # #############################################################################
 
 
 class Test_execute_with_real_time_loop(hut.TestCase):
-
     @staticmethod
     def workload(current_time: pd.Timestamp) -> int:
         _ = current_time
@@ -112,8 +112,8 @@ class Test_execute_with_real_time_loop(hut.TestCase):
 
     def test_real_time1(self) -> None:
         """
-        Test executing a workload every second, starting from an even second using
-        true wall clock time.
+        Test executing a workload every second, starting from an even second
+        using true wall clock time.
         """
         # Align on a even second.
         cdrt.align_on_even_second()
@@ -124,7 +124,7 @@ class Test_execute_with_real_time_loop(hut.TestCase):
         get_current_time = lambda: hdatetime.get_current_time(tz="ET")
         need_to_execute = cdrt.execute_every_2_seconds
         #
-        execution_trace = cdrt.execute_with_real_time_loop(
+        execution_trace, results = cdrt.execute_with_real_time_loop(
             sleep_interval_in_secs,
             num_iterations,
             get_current_time,
@@ -132,12 +132,12 @@ class Test_execute_with_real_time_loop(hut.TestCase):
             self.workload,
         )
         # TODO(gp): Check that the events are triggered every two seconds.
-        _ = execution_trace
+        _ = execution_trace, results
 
     def test_replayed_real_time1(self) -> None:
         """
-        Test executing a workload every second, starting from an even second using
-        replayed real time.
+        Test executing a workload every second, starting from an even second
+        using replayed real time.
         """
         # Align on a even second.
         cdrt.align_on_even_second()
@@ -151,7 +151,7 @@ class Test_execute_with_real_time_loop(hut.TestCase):
         # need_to_execute = cdrt.execute_every_2_seconds
         #
         execute_rt_loop_kwargs = get_test_execute_rt_loop_kwargs()
-        execution_trace = cdrt.execute_with_real_time_loop(
+        execution_trace, results = cdrt.execute_with_real_time_loop(
             **execute_rt_loop_kwargs,
             # sleep_interval_in_secs,
             # num_iterations,
@@ -159,13 +159,14 @@ class Test_execute_with_real_time_loop(hut.TestCase):
             # need_to_execute,
             workload=self.workload,
         )
+        _ = results
         # We can check that the times are exactly the expected ones, since we are
         # replaying time.
         act = "\n".join(map(cdrt.real_time_event_to_str, execution_trace))
         exp = r"""
-        num_it=1 current_time=20210727_0930000 need_execute=True
-        num_it=2 current_time=20210727_0930013 need_execute=False
-        num_it=3 current_time=20210727_0930023 need_execute=True"""
+        num_it=1 current_time=20100104_0930000 need_execute=True
+        num_it=2 current_time=20100104_0930013 need_execute=False
+        num_it=3 current_time=20100104_0930023 need_execute=True""" 
         exp = hprint.dedent(exp)
         self.assert_equal(act, exp)
 
