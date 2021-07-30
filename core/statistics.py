@@ -114,8 +114,9 @@ def compute_special_value_stats(
         prefix + "num_finite_samples",
         prefix + "num_finite_samples_inv",
         prefix + "num_finite_samples_inv_dyadic_scale",
-        prefix + "num_finite_samples_inv_sqrt",
-        prefix + "num_finite_samples_inv_sqrt_dyadic_scale",
+        prefix + "num_finite_samples_sqrt",
+        prefix + "num_finite_samples_sqrt_inv",
+        prefix + "num_finite_samples_sqrt_inv_dyadic_scale",
         prefix + "num_unique_values",
     ]
     nan_result = pd.Series(np.nan, index=result_index, name=srs.name)
@@ -132,6 +133,7 @@ def compute_special_value_stats(
         num_finite_samples,
         1 / num_finite_samples,
         compute_dyadic_scale(1 / num_finite_samples),
+        np.sqrt(num_finite_samples),
         1 / np.sqrt(num_finite_samples),
         compute_dyadic_scale(1 / np.sqrt(num_finite_samples)),
         count_num_unique_values(srs),
