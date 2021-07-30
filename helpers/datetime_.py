@@ -49,8 +49,8 @@ _LOG = logging.getLogger(__name__)
 # In general it's worth to import this file even for just the type `Datetime`,
 # since typically as soon as the caller uses this type, they also want to use
 # `to_datetime()` and `dassert_*()` functions.
-# TODO(gp): It would be better to call this "UserFriendlyDateTime" or "GeneralizedDateTime"
-#  and StrictDateTime -> DateTime.
+# TODO(gp): It would be better to call this `UserFriendlyDateTime` or
+#  `GeneralDateTime` and rename `StrictDateTime` -> `DateTime`.
 Datetime = Union[str, pd.Timestamp, datetime.datetime]
 # TODO(gp): Replace _PANDAS_DATE_TYPE with Datetime everywhere
 
@@ -68,6 +68,8 @@ def dassert_is_datetime(datetime_: Datetime) -> None:
         datetime_,
         (str, pd.Timestamp, datetime.datetime),
         "datetime_='%s' of type '%s' is not a DateTimeType",
+        datetime_,
+        str(type(datetime_)),
     )
 
 
@@ -214,19 +216,18 @@ def get_ET_tz() -> datetime.tzinfo:
     return pytz.timezone("America/New_York")
 
 
-# TODO(gp): Make the argument mandatory.
-def get_current_time(tz: Optional[str] = None) -> pd.Timestamp:
+def get_current_time(tz: str) -> pd.Timestamp:
     """
-    Return current time in a timezone or as a naive time.
+    Return current time in UTC / ET timezone or as a naive time.
     """
     if tz == "UTC":
         timestamp = datetime.datetime.now(get_UTC_tz())
     elif tz == "ET":
         timestamp = datetime.datetime.now(get_ET_tz())
-    elif tz == "NAIVE_UTC":
+    elif tz == "naive_UTC":
         timestamp = datetime.datetime.now(get_UTC_tz())
         timestamp = timestamp.replace(tzinfo=None)
-    elif tz == "NAIVE_ET":
+    elif tz == "naive_ET":
         timestamp = datetime.datetime.now(get_ET_tz())
         timestamp = timestamp.replace(tzinfo=None)
     else:
@@ -235,9 +236,8 @@ def get_current_time(tz: Optional[str] = None) -> pd.Timestamp:
     return timestamp
 
 
-# TODO(gp): Make the argument mandatory.
 # TODO(gp): -> get_current_timestamp_as_string()
-def get_timestamp(tz: Optional[str] = None) -> str:
+def get_timestamp(tz: str) -> str:
     """
     Return the current time in the format `YYYYMMDD_HHMMSS` (e.g.,
     20210728_221734).
@@ -246,7 +246,7 @@ def get_timestamp(tz: Optional[str] = None) -> str:
     same time corresponds to `20210728_171749` for tz="ET" and
     `20210728_221749` for tz="UTC".
     """
-    timestamp = get_current_time(tz=tz)
+    timestamp = get_current_time(tz)
     ret = timestamp.strftime("%Y%m%d_%H%M%S")
     ret = cast(str, ret)
     return ret

@@ -28,9 +28,6 @@ _DT_DT_ET = pytz.timezone("US/Eastern").localize(_DT_DT_NAIVE)
 # #############################################################################
 
 
-# TODO(gp): Add tests for get_current_time and use dassert
-
-
 class Test_dassert_is_datetime1(hut.TestCase):
     def test_is_datetime1(self) -> None:
         """
@@ -48,14 +45,16 @@ class Test_dassert_is_datetime1(hut.TestCase):
             _DT_DT_ET,
         ]
         for obj in objs:
+            _LOG.debug("obj='%s', type='%s'", str(obj), str(type(obj)))
             hdatetime.dassert_is_datetime(obj)
 
     def test_is_datetime_fail1(self) -> None:
         """
         Test invalid datetime objects.
         """
-        objs = [0, "hello"]
+        objs = [0, 0.0]
         for obj in objs:
+            _LOG.debug("obj='%s', type='%s'", str(obj), str(type(obj)))
             with self.assertRaises(AssertionError):
                 hdatetime.dassert_is_datetime(obj)
 
@@ -72,6 +71,7 @@ class Test_dassert_is_datetime1(hut.TestCase):
             _DT_DT_ET,
         ]
         for obj in objs:
+            _LOG.debug("obj='%s', type='%s'", str(obj), str(type(obj)))
             hdatetime.dassert_is_strict_datetime(obj)
 
     def test_is_strict_datetime_fail1(self) -> None:
@@ -80,8 +80,12 @@ class Test_dassert_is_datetime1(hut.TestCase):
         """
         objs = [0, _STR_TS_NAIVE, _STR_TS_UTC, _STR_TS_ET, "hello"]
         for obj in objs:
+            _LOG.debug("obj='%s', type='%s'", str(obj), str(type(obj)))
             with self.assertRaises(AssertionError):
                 hdatetime.dassert_is_strict_datetime(obj)
+
+
+# #############################################################################
 
 
 class Test_dassert_tz1(hut.TestCase):
@@ -190,6 +194,9 @@ datetime_='%s' of type '%s' is not a DateTimeType
             self.assertEqual(str(act), str(exp))
 
 
+# #############################################################################
+
+
 class Test_dassert_tz_compatible1(hut.TestCase):
     def test_dassert_compatible_timestamp1(self) -> None:
         """
@@ -215,6 +222,7 @@ class Test_dassert_tz_compatible1(hut.TestCase):
         with self.assertRaises(AssertionError) as cm:
             hdatetime.dassert_tz_compatible(_PD_TS_NAIVE, _DT_DT_UTC)
         act = str(cm.exception)
+        # pylint: disable=line-too-long
         exp = """
         * Failed assertion *
         'False'
@@ -222,6 +230,7 @@ class Test_dassert_tz_compatible1(hut.TestCase):
         'True'
         datetime1='2021-01-04 09:30:00' and datetime2='2021-01-04 09:30:00+00:00' are not compatible
         """
+        # pylint: enable=line-too-long
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_dassert_compatible_timestamp_assert2(self) -> None:
@@ -234,6 +243,35 @@ class Test_dassert_tz_compatible1(hut.TestCase):
                 with self.assertRaises(AssertionError):
                     hdatetime.dassert_tz_compatible(datetime1, datetime2)
 
+
+# #############################################################################
+
+
+class Test_get_current_time1(hut.TestCase):
+
+    def test_get_current_time_UTC(self) -> None:
+        tz = "UTC"
+        dt = hdatetime.get_current_time(tz)
+        _LOG.debug("tz=%s -> dt=%s", tz, dt)
+        hdatetime.dassert_has_UTC_tz(dt)
+
+    def test_get_current_time_ET(self) -> None:
+        tz = "ET"
+        dt = hdatetime.get_current_time(tz)
+        _LOG.debug("tz=%s -> dt=%s", tz, dt)
+        hdatetime.dassert_has_ET_tz(dt)
+
+    def test_get_current_time_naive_UTC(self) -> None:
+        tz = "naive_UTC"
+        dt = hdatetime.get_current_time(tz)
+        _LOG.debug("tz=%s -> dt=%s", tz, dt)
+        hdatetime.dassert_is_tz_naive(dt)
+
+    def test_get_current_time_naive_ET(self) -> None:
+        tz = "naive_ET"
+        dt = hdatetime.get_current_time(tz)
+        _LOG.debug("tz=%s -> dt=%s", tz, dt)
+        hdatetime.dassert_is_tz_naive(dt)
 
 # #############################################################################
 
