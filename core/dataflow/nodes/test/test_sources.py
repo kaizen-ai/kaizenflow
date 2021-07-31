@@ -5,7 +5,7 @@ from typing import Any
 
 import pandas as pd
 
-import core.dataflow.real_time as cdrt
+import core.dataflow.test.test_real_time as cdtfttrt
 import core.dataflow as dtf
 import helpers.datetime_ as hdatetime
 import helpers.unit_test as hut
@@ -186,14 +186,12 @@ class TestRealTimeDataSource1(hut.TestCase):
         delay_in_secs = 0.0
         # No external clock, but set the clock through an explicit call to
         # `set_current_time()`.
-        get_current_time = None
-        data_builder, data_builder_kwargs = get_data_builder()
-        rtds = dtf.RealTimeDataSource(
+        data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder1()
+        rtds = dtf.SimulatedRealTimeDataSource(
             nid,
-            delay_in_secs,
-            get_current_time,
-            data_builder,
-            data_builder_kwargs,
+            delay_in_secs=delay_in_secs,
+            data_builder=data_builder,
+            data_builder_kwargs=data_builder_kwargs,
         )
         # Execute.
         current_time = pd.Timestamp("2010-01-04 09:35:00")
@@ -206,13 +204,13 @@ class TestRealTimeDataSource1(hut.TestCase):
         delay_in_secs = 0.0
         # Return always the same time.
         get_current_time = lambda: pd.Timestamp("2010-01-04 09:35:00")
-        data_builder, data_builder_kwargs = get_data_builder()
-        rtds = dtf.RealTimeDataSource(
+        data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder2()
+        rtds = dtf.TrueRealTimeDataSource(
             nid,
-            delay_in_secs,
-            get_current_time,
-            data_builder,
-            data_builder_kwargs,
+            delay_in_secs=delay_in_secs,
+            external_clock=get_current_time,
+            data_builder=data_builder,
+            data_builder_kwargs=data_builder_kwargs,
         )
         # Execute.
         self._helper(rtds)
@@ -222,20 +220,20 @@ class TestRealTimeDataSource1(hut.TestCase):
         nid = "rtds"
         delay_in_secs = 0.0
         # Use a replayed real-time starting at the same time as the data.
-        rrt = cdrt.ReplayRealTime(
+        rrt = dtf.ReplayRealTime(
             pd.Timestamp("2010-01-04 09:30:00"),
             # 1.1 is a fudge factor to make sure we get in the next minute.
             speed_up_factor=60 * 1.1,
         )
         get_current_time = rrt.get_replayed_current_time
         #
-        data_builder, data_builder_kwargs = get_data_builder()
-        rtds = dtf.RealTimeDataSource(
+        data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder1()
+        rtds = dtf.ReplayedRealTimeDataSource(
             nid,
-            delay_in_secs,
-            get_current_time,
-            data_builder,
-            data_builder_kwargs,
+            delay_in_secs=delay_in_secs,
+            external_clock=get_current_time,
+            data_builder=data_builder,
+            data_builder_kwargs=data_builder_kwargs,
         )
         # Execute right away.
         dict_ = rtds.fit()

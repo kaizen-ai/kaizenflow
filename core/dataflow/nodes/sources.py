@@ -5,7 +5,7 @@ Import as:
 
 import core.dataflow.nodes.sources as cdtfns
 """
-
+import abc
 import datetime
 import logging
 import os
@@ -16,6 +16,7 @@ import pandas as pd
 
 import core.artificial_signal_generators as cartif
 import core.dataflow.nodes.base as cdnb
+import core.dataflow.real_time as cdrt
 import core.finance as cfinan
 import core.pandas_helpers as pdhelp
 import helpers.dbg as dbg
@@ -36,8 +37,7 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 # TODO(gp): -> DfDataSource
 class ReadDataFromDf(cdnb.DataSource):
     """
-    Data source node accepting data as a DataFrame passed through the
-    constructor.
+    Accept data as a DataFrame passed through the constructor and output the data.
     """
 
     def __init__(self, nid: str, df: pd.DataFrame) -> None:
@@ -52,8 +52,7 @@ class ReadDataFromDf(cdnb.DataSource):
 # TODO(gp): -> FunctionDataSource
 class DataLoader(cdnb.DataSource):
     """
-    Data source node using the passed function and arguments to generate the
-    data.
+    Use the passed function and arguments to generate the data outputted by the node.
     """
 
     def __init__(
@@ -149,7 +148,7 @@ def load_data_from_disk(
 
 class DiskDataSource(cdnb.DataSource):
     """
-    Data source node reading CSV or Parquet data from disk or S3.
+    Read CSV or Parquet data from disk or S3 and output the data.
     """
 
     def __init__(
@@ -215,7 +214,7 @@ class DiskDataSource(cdnb.DataSource):
 # TODO(gp): -> ArmaDataSource
 class ArmaGenerator(cdnb.DataSource):
     """
-    Data source node generating price data from ARMA process returns.
+    Generate price data from ARMA process returns.
     """
 
     def __init__(
@@ -283,7 +282,7 @@ class ArmaGenerator(cdnb.DataSource):
 # TODO(gp): -> MultivariateNormalDataSource
 class MultivariateNormalGenerator(cdnb.DataSource):
     """
-    Data source node generating price data from multivariate normal returns.
+    Generate price data from multivariate normal returns.
     """
 
     def __init__(
@@ -355,23 +354,15 @@ class MultivariateNormalGenerator(cdnb.DataSource):
 # #############################################################################
 
 
-import core.dataflow.real_time as cdrt
-
-
-class AbstractRealTimeDataSource(cdnb.DataSource):
+class _AbstractRealTimeDataSource(cdnb.DataSource):
     """
-    Data source node that outputs data according to a real-time behavior.
-
-    Depending on the current time (which is provided by an external
-    clock or set through `set_not_time()`) this node emits the data
-    available up and including the current time.
+    Output data according to a real-time behavior.
     """
 
     def __init__(
         self,
         nid: str,
         delay_in_secs: float,
-        external_clock: Optional[cdrt.GetCurrentTimeFunction],
         data_builder: Callable[[Any], pd.DataFrame],
         data_builder_kwargs: Dict[str, Any],
     ) -> None:
@@ -387,14 +378,10 @@ class AbstractRealTimeDataSource(cdnb.DataSource):
             all the data for this node
         """
         super().__init__(nid)
-        # Compute the data through the passed dataframe builder.
+        # Save the constr
+        self._delay_in_secs = delay_in_secs
         self._data_builder = data_builder
         self._data_builder_kwargs = data_builder_kwargs
-        entire_df = self._data_builder(**self._data_builder_kwargs)
-        # Store the entire history of the data.
-        self._entire_df = entire_df
-        self._delay_in_secs = delay_in_secs
-        self._external_clock = external_clock
         # This indicates what is the current time is, so that the node can emit data
         # up to that time.
         self._current_time: Optional[pd.Timestamp] = None
@@ -406,29 +393,14 @@ class AbstractRealTimeDataSource(cdnb.DataSource):
         self._current_time = None
         self._last_time = None
 
-    def set_current_time(self, datetime_: pd.Timestamp) -> None:
-        """
-        Set the current time using the passed timestamp.
-
-        This method should be called only if an external clock was not
-        specified.
-        """
-        _LOG.debug("datetime_=%s", datetime_)
-        dbg.dassert_is(
-            self._external_clock,
-            None,
-            "This function can be called only if an external clock "
-            "was not specified, while instead external_clock=%s",
-            self._external_clock,
-        )
-        self._set_current_time(datetime_)
-
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
-        self._get_data_until_current_time()
+        # TODO(gp): This approach of communicating params through the state makes
+        #  the code difficult to understand.
+        self.df = self._get_data_until_current_time()
         return super().fit()
 
     def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
-        self._get_data_until_current_time()
+        self.df = self._get_data_until_current_time()
         return super().predict()
 
     def _set_current_time(self, datetime_: pd.Timestamp) -> None:
@@ -452,54 +424,145 @@ class AbstractRealTimeDataSource(cdnb.DataSource):
 
     def _get_current_time(self) -> pd.Timestamp:
         """
-        Get the current time provided from the external clock
-        `get_current_time()` or set through the method `set_current_time()`
+        Get the current time.
+
+        It can be:
+        - provided from the external clock `get_current_time()`; or
+        - set through the method `set_current_time()`
         """
-        # If an external clock was passed, then use it to update the current time.
-        if self._external_clock is not None:
-            current_time = self._external_clock()
-            self._set_current_time(current_time)
         # Return the current time.
         _LOG.debug(hprint.to_str("self._current_time"))
         dbg.dassert_is_not(self._current_time, None)
         return self._current_time
 
-    def _get_data_until_current_time(self) -> None:
+    def _get_data_until_current_time(self) -> pd.DataFrame:
         """
-        Get the data stored inside the node up and including the current time.
+        Return the data up and including the current time.
         """
-        # Get the current time.
+        # Get the data.
+        df = self._get_data()
+        # Filter the data as of the current time.
         current_time = self._get_current_time()
         _LOG.debug(hprint.to_str("current_time"))
-        self.df = self._get_data()
-
-    def _get_data(self) -> pd.DataFrame:
-        pass
-
-
-class SimulatedRealTimeDataSource(AbstractRealTimeDataSource):
-
-    def _get_data(self) -> pd.DataFrame:
-        if self._entire_df is None:
-            # Compute the data through the passed dataframe builder.
-            entire_df = data_builder(**data_builder_kwargs)
-            # Store the entire history of the data.
-            self._entire_df = entire_df
-        # Filter the data as of the current time.
         df = cdrt.get_data_as_of_datetime(
-            self._entire_df, current_time, delay_in_secs=self._delay_in_secs
+            df, current_time, delay_in_secs=self._delay_in_secs
         )
+        dbg.dassert_lte(df.index.max(), current_time)
         return df
 
+    @abc.abstractmethod
+    def _get_data(self) -> pd.DataFrame:
+        """
+        Return the data to be filtered.
+        """
 
-class ReplayedRealTimeDataSource(AbstractRealTimeDataSource):
-
-    pass
+# #############################################################################
 
 
-class TrueRealTimeDataSource(AbstractRealTimeDataSource):
+class SimulatedRealTimeDataSource(_AbstractRealTimeDataSource):
+    """
+    Implement a "simulated" real-time behavior (see `real_time.py` for details).
+
+    This node:
+    - builds and caches the data like a `DataSourceNode`
+    - has its current time set by an external object through a call to
+      `set_not_time()`
+    - emits the data available up and including the current time
+    """
+
+    def __init__(
+        self,
+        nid: str,
+        **kwargs: Dict[str, Any]
+    ) -> None:
+        super().__init__(nid, **kwargs)
+        # Store the entire history of the data.
+        self._entire_df: Optional[pd.DataFrame] = None
+
+    def set_current_time(self, datetime_: pd.Timestamp) -> None:
+        """
+        Set the current time using the passed timestamp.
+        """
+        self._set_current_time(datetime_)
 
     def _get_data(self) -> pd.DataFrame:
-        _LOG.debug("Getting data")
+        # Lazy load.
+        if self._entire_df is None:
+            _LOG.debug("Computing data for data source node")
+            # Compute and store the entire history of the data through the passed
+            # dataframe builder.
+            self._entire_df = self._data_builder(**self._data_builder_kwargs)
+        return self._entire_df
+
+
+# #############################################################################
+
+
+class TrueRealTimeDataSource(_AbstractRealTimeDataSource):
+    """
+    Implement a "true" real-time behavior (see `real_time.py` for details).
+
+    This node executes the data building function at every invocation since the data
+    is generated by an external data source whose state changes over time (e.g., a
+    DB storing the last N hours worth of data).
+    """
+
+    def __init__(
+            self,
+            nid: str,
+            external_clock: cdrt.GetCurrentTimeFunction,
+            **kwargs: Dict[str, Any]
+    ) -> None:
+        super().__init__(nid, **kwargs)
+        dbg.dassert_is_not(external_clock, None)
+        self._external_clock = external_clock
+
+    def _get_current_time(self) -> pd.Timestamp:
+        # Get the current time provided from the external clock and saves it.
+        current_time = self._external_clock()
+        self._set_current_time(current_time)
+        # # Return the current time.
+        # _LOG.debug(hprint.to_str("self._current_time"))
+        # dbg.dassert_is_not(self._current_time, None)
+        # return self._current_time
+        return super()._get_current_time()
+
+    def _get_data(self) -> pd.DataFrame:
+        _LOG.debug("Getting data from the real-time source")
         df = self._data_builder(**self._data_builder_kwargs)
+        # The data source should not return data after the current time.
+        current_time = self._get_current_time()
+        _LOG.debug(hprint.to_str("current_time"))
+        dbg.dassert_lte(df.index.max(), current_time)
         return df
+
+
+# #############################################################################
+
+
+class ReplayedRealTimeDataSource(TrueRealTimeDataSource):
+    """
+    Implement a "replayed" real-time behavior (see real_time.py for details).
+
+    This node is a `TrueRealTimeDataSource` node with the following differences:
+    - the data is computed once and cached, instead of being queried at every
+      invocation
+    """
+
+    def __init__(
+            self,
+            nid: str,
+            **kwargs: Dict[str, Any]
+    ) -> None:
+        super().__init__(nid, **kwargs)
+        # Store the entire history of the data.
+        self._entire_df: Optional[pd.DataFrame] = None
+
+    def _get_data(self) -> pd.DataFrame:
+        # Lazy load.
+        if self._entire_df is None:
+            _LOG.debug("Computing data for data source node")
+            # Compute and store the entire history of the data through the passed
+            # dataframe builder.
+            self._entire_df = self._data_builder(**self._data_builder_kwargs)
+        return self._entire_df

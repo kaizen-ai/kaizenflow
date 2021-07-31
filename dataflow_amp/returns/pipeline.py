@@ -32,7 +32,7 @@ class ReturnsPipeline(dtf.DagBuilder):
         dict_ = {
             # Load prices.
             # NOTE: The caller needs to inject config values to control the
-            # `DataSourceNodeFactory` node in order to create the proper data
+            # `data_source_node_factory` node in order to create the proper data
             # node.
             self._get_nid("load_prices"): {
                 cconfig.DUMMY: None,
@@ -96,7 +96,7 @@ class ReturnsPipeline(dtf.DagBuilder):
         # Read data.
         stage = "load_prices"
         nid = self._get_nid(stage)
-        node = dsn.DataSourceNodeFactory(nid, **config[nid].to_dict())
+        node = dsn.data_source_node_factory(nid, **config[nid].to_dict())
         tail_nid = self._append(dag, tail_nid, node)
         # Set weekends to NaN.
         stage = "filter_weekends"

@@ -23,7 +23,7 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 # #############################################################################
 
 
-def DataSourceNodeFactory(
+def data_source_node_factory(
     nid: str, source_node_name: str, source_node_kwargs: Dict[str, Any]
 ) -> cdataf.DataSource:
     """
@@ -53,13 +53,13 @@ def DataSourceNodeFactory(
     elif source_node_name == "kibot_equities":
         ret = KibotEquityReader(nid, **source_node_kwargs)
     elif source_node_name == "kibot_multi_col":
-        return KibotColumnReader(nid, **source_node_kwargs)
+        ret = KibotColumnReader(nid, **source_node_kwargs)
     elif source_node_name == "DataLoader":
-        return cdataf.DataLoader(nid, **source_node_kwargs)
+        ret = cdataf.DataLoader(nid, **source_node_kwargs)
     elif source_node_name == "multivariate_normal":
         ret = cdataf.MultivariateNormalGenerator(nid, **source_node_kwargs)
     elif source_node_name == "RealTimeDataSource":
-        return cdataf.RealTimeDataSource(nid, **source_node_kwargs)
+        ret = cdataf.RealTimeDataSource(nid, **source_node_kwargs)
     else:
         raise ValueError(f"Unsupported data source node {source_node_name}")
     return ret

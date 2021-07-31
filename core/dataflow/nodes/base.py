@@ -106,7 +106,7 @@ class DataSource(FitPredictNode, abc.ABC):
             dbg.dassert_ne(output, "")
         super().__init__(nid, inputs=[], outputs=outputs)
         # This data is initialized by the derived classes depending on their semantics.
-        self.df = None
+        self.df: Optional[pd.DataFrame] = None
         self._fit_intervals = None
         self._predict_intervals = None
         self._predict_idxs = None
