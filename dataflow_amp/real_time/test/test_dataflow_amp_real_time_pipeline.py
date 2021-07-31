@@ -16,8 +16,8 @@ _LOG = logging.getLogger(__name__)
 
 import dataflow_amp.real_time.real_time_return_pipeline as dtfart
 
-class TestRealTimeReturnPipeline1(hut.TestCase):
 
+class TestRealTimeReturnPipeline1(hut.TestCase):
     def test1(self) -> None:
         """
         Test the RealTimeDagRunner using synthetic data.
@@ -39,5 +39,5 @@ class TestRealTimeReturnPipeline1(hut.TestCase):
         }
         dag_runner = cdtf.RealTimeDagRunner(**kwargs)
         dtf.align_on_even_second()
-        dicts = dag_runner.predict()
+        dag_runner.predict()
         # TODO(gp): Check.

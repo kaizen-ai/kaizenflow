@@ -1,12 +1,11 @@
 """
 Import as:
 
-import core.dataflow.runners as cdtfr
-import core.dataflow as cdtf
+import core.dataflow.runners as cdtfr import core.dataflow as cdtf
 """
 import datetime
 import logging
-from typing import Any, Dict, Generator, List, Optional, Tuple, Union, Callable
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -23,6 +22,7 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 # TODO(gp): Why does DagRunner also builds a DAG through the DagBuilder?
 #  This creates some necessary coupling. A DagRunner should accpets a DAG however
 #  built and run it.
+
 
 class FitPredictDagRunner:
     """
@@ -468,7 +468,7 @@ class RealTimeDagRunner:
         #
         self._dst_dir = dst_dir
         #
-        self._execution_trace : Optional[cdrt.ExecutionTrace] = None
+        self._execution_trace: Optional[cdrt.ExecutionTrace] = None
 
     # TODO(gp): Should it return a List[ResultBundle]?
     def predict(self) -> List[Dict]:
@@ -483,8 +483,8 @@ class RealTimeDagRunner:
             return dict_
 
         execution_trace, results = cdrt.execute_with_real_time_loop(
-            **self._execute_rt_loop_kwargs,
-            workload=dag_workload)
+            **self._execute_rt_loop_kwargs, workload=dag_workload
+        )
         self._execution_trace = execution_trace
         return results
 

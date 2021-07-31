@@ -4,18 +4,14 @@ Import as:
 import dataflow_amp.real_time.real_time_return_pipeline as dtfart
 """
 
-import datetime
 import logging
-from typing import Optional
 
 import pandas as pd
 
 import core.config as cconfig
 import core.dataflow as dtf
-import core.dataflow_source_nodes as dsn
-import core.finance as fin
-import helpers.dbg as dbg
 import dataflow_amp.returns.pipeline as darp
+import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -60,7 +56,7 @@ class RealTimeReturnPipeline(dtf.DagBuilder):
             "delay_in_secs": 0.0,
             "external_clock": rrt.get_replayed_current_time,
             "data_builder": data_builder,
-            "data_builder_kwargs": data_builder_kwargs
+            "data_builder_kwargs": data_builder_kwargs,
         }
         config["load_prices"] = cconfig.get_config_from_nested_dict(
             {

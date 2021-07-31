@@ -45,7 +45,6 @@ _LOG = logging.getLogger(__name__)
 # %%
 import core.config as cconfig
 import core.dataflow as cdataf
-
 import core.dataflow.real_time as cdrt
 import dataflow_amp.returns.pipeline as darp
 
@@ -149,7 +148,7 @@ dag_builder.validate_config(config)
 dag = dag_builder.get_dag(config)
 
 # %%
-#print(dag)
+# print(dag)
 cdataf.draw(dag)
 
 # %%
@@ -173,19 +172,18 @@ cdataf.draw(dag)
 results[0][1]["df_out"]
 
 # %%
-## 
+##
+
+import core.dataflow.real_time as cdrt
 
 # %%
 import helpers.datetime_ as hdatetime
-import core.dataflow.real_time as cdrt
 
 start_datetime = pd.Timestamp("2010-01-04 09:30:00", tz=hdatetime.get_ET_tz())
 end_datetime = pd.Timestamp("2010-01-05 09:30:00", tz=hdatetime.get_ET_tz())
 
 # Use a replayed real-time starting at the same time as the data.
-rrt = cdrt.ReplayRealTime(
-    start_datetime
-)
+rrt = cdrt.ReplayRealTime(start_datetime)
 get_current_time = rrt.get_replayed_current_time
 
 # %%

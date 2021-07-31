@@ -5,9 +5,8 @@ from typing import Any
 
 import pandas as pd
 
-import core.dataflow.test.test_real_time as cdtfttrt
 import core.dataflow as dtf
-import helpers.datetime_ as hdatetime
+import core.dataflow.test.test_real_time as cdtfttrt
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -175,7 +174,6 @@ class TestMultivariateNormalGenerator(hut.TestCase):
 
 
 class TestRealTimeDataSource1(hut.TestCase):
-
     def test_simulated_real_time1(self) -> None:
         """
         Setting the current time to a specific datetime, the node generates

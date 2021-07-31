@@ -86,12 +86,14 @@ class FitPredictNode(cdc.Node, abc.ABC):
 
 class DataSource(FitPredictNode, abc.ABC):
     """
-    A source node that generates data for cross-validation from the passed data frame.
+    A source node that generates data for cross-validation from the passed data
+    frame.
 
-    Derived classes inject the data as a DataFrame in this class at construction time
-    (e.g., from a passed DataFrame, reading from a file)
-    This node implements the interface of `FitPredictNode` allowing to filter data for
-    fitting and predicting based on intervals.
+    Derived classes inject the data as a DataFrame in this class at
+    construction time (e.g., from a passed DataFrame, reading from a
+    file) This node implements the interface of `FitPredictNode`
+    allowing to filter data for fitting and predicting based on
+    intervals.
     """
 
     def __init__(self, nid: str, outputs: Optional[List[str]] = None) -> None:

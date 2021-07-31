@@ -13,7 +13,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestRollingFitPredictDagRunner1(hut.TestCase):
-
     def test1(self) -> None:
         """
         Test the DagRunner using `ArmaReturnsBuilder`
@@ -38,7 +37,6 @@ class TestRollingFitPredictDagRunner1(hut.TestCase):
 
 
 class TestIncrementalDagRunner1(hut.TestCase):
-
     def test1(self) -> None:
         """
         Test the DagRunner using `ArmaReturnsBuilder`.
@@ -75,7 +73,6 @@ class TestIncrementalDagRunner1(hut.TestCase):
 
 # TODO(gp): Test with a very simple DAG since the focus is on the DagRunner.
 class TestRealTimeDagRunner1(hut.TestCase):
-
     def test1(self) -> None:
         """
         Test the RealTimeDagRunner using synthetic data.
