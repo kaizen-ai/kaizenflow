@@ -127,7 +127,7 @@ class TestDiskDataSource(hut.TestCase):
         dds = dtf.DiskDataSource(
             "read_data",
             file_path=file_path,
-            time_stamp_col=timestamp_col,
+            timestamp_col=timestamp_col,
             **dds_kwargs,
         )
         # Run node.

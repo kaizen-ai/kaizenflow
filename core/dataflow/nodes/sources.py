@@ -158,7 +158,7 @@ class DiskDataSource(cdnb.DataSource):
     """
     Read CSV or Parquet data from disk or S3 and output the data.
 
-    This is a wrapper node around `load_data_from_disk`.
+    This is a wrapper node around `load_data_from_disk()`.
     """
 
     def __init__(
