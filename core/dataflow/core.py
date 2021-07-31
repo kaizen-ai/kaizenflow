@@ -379,6 +379,8 @@ class DAG:
             self._run_node(nid, method)
         return {sink: self.get_node(sink).get_outputs(method) for sink in sinks}
 
+    # TODO(gp): We should have a type for Dict[str, Any] since this is everywhere
+    #  in the code base and it gets confused with other types (e.g., `**kawrga`)
     def run_leq_node(
         self, nid: str, method: str, progress_bar: bool = True
     ) -> Dict[str, Any]:
@@ -430,4 +432,6 @@ class DAG:
                 f"An exception occurred in node '{nid}'.\n{str(e)}"
             ) from e
         for out in node.output_names:
-            node._store_output(method, out, output[out])
+            node._store_output(  # pylint: disable=protected-access
+                method, out, output[out]
+            )

@@ -1,13 +1,13 @@
 import logging
 import os
 import time
-from typing import Any
+from typing import Any, Optional
 
 import pandas as pd
 
 import core.dataflow as dtf
 import core.dataflow.test.test_real_time as cdtfttrt
-import helpers.unit_test as hut
+import helpers.unit_test as hut  # pylint: disable=no-name-in-module
 
 _LOG = logging.getLogger(__name__)
 
@@ -111,7 +111,11 @@ class TestDiskDataSource(hut.TestCase):
         return file_path
 
     def _helper(
-        self, df: pd.DataFrame, ext: str, timestamp_col: str, **dds_kwargs: Any
+        self,
+        df: pd.DataFrame,
+        ext: str,
+        timestamp_col: Optional[str],
+        **dds_kwargs: Any,
     ) -> None:
         """
         Instantiate a `DiskDataSource` with the passed parameter, run it and
@@ -121,7 +125,10 @@ class TestDiskDataSource(hut.TestCase):
         file_path = self._save_df(df, ext)
         # Instantiate node.
         dds = dtf.DiskDataSource(
-            "read_data", file_path, timestamp_col, **dds_kwargs
+            "read_data",
+            file_path=file_path,
+            time_stamp_col=timestamp_col,
+            **dds_kwargs,
         )
         # Run node.
         loaded_df = dds.fit()["df_out"]
@@ -135,7 +142,7 @@ class TestDiskDataSource(hut.TestCase):
 
 class TestArmaGenerator(hut.TestCase):
     def test1(self) -> None:
-        node = dtf.ArmaGenerator(
+        node = dtf.ArmaGenerator(  # pylint: disable=no-member
             nid="source",
             frequency="30T",
             start_date="2010-01-04 09:00",
@@ -156,7 +163,7 @@ class TestArmaGenerator(hut.TestCase):
 
 class TestMultivariateNormalGenerator(hut.TestCase):
     def test1(self) -> None:
-        node = dtf.MultivariateNormalGenerator(
+        node = dtf.MultivariateNormalGenerator(  # pylint: disable=no-member
             nid="source",
             frequency="30T",
             start_date="2010-01-04 09:00",
@@ -203,7 +210,7 @@ class TestRealTimeDataSource1(hut.TestCase):
         # Return always the same time.
         get_current_time = lambda: pd.Timestamp("2010-01-04 09:35:00")
         data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder2()
-        rtds = dtf.TrueRealTimeDataSource(
+        rtds = dtf.TrueRealTimeDataSource(  # pylint: disable=no-member
             nid,
             delay_in_secs=delay_in_secs,
             external_clock=get_current_time,
@@ -226,7 +233,7 @@ class TestRealTimeDataSource1(hut.TestCase):
         get_current_time = rrt.get_replayed_current_time
         #
         data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder1()
-        rtds = dtf.ReplayedRealTimeDataSource(
+        rtds = dtf.ReplayedRealTimeDataSource(  # pylint: disable=no-member
             nid,
             delay_in_secs=delay_in_secs,
             external_clock=get_current_time,
@@ -254,7 +261,9 @@ class TestRealTimeDataSource1(hut.TestCase):
         ]
         self.assert_equal(str(act), str(exp))
 
-    def _helper(self, rtds) -> None:
+    def _helper(
+        self, rtds: dtf.ReplayedRealTimeDataSource
+    ) -> None:
         # Execute.
         dict_ = rtds.fit()
         # Check.

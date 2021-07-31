@@ -5,12 +5,15 @@ import core.dataflow.runners as cdtfr import core.dataflow as cdtf
 """
 import datetime
 import logging
-from typing import Any, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union, cast
 
 import pandas as pd
 
 import core.config as cconfig
+import core.dataflow.real_time as cdrt
 import helpers.dbg as dbg
+
+# TODO(gp): Use the standard imports.
 from core.dataflow.builders import DagBuilder
 from core.dataflow.result_bundle import PredictionResultBundle, ResultBundle
 from core.dataflow.visitors import extract_info, set_fit_state
@@ -246,7 +249,7 @@ class RollingFitPredictDagRunner:
     def _run_predict(
         self,
         interval: Tuple[_PANDAS_DATE_TYPE, _PANDAS_DATE_TYPE],
-        oos_start=_PANDAS_DATE_TYPE,
+        oos_start: _PANDAS_DATE_TYPE,
     ) -> ResultBundle:
         # Set predict interval on DAG.
         for input_nid in self.dag.get_sources():
@@ -255,7 +258,7 @@ class RollingFitPredictDagRunner:
         method = "predict"
         df_out = self.dag.run_leq_node(self._result_nid, method)["df_out"]
         # Restrict `df_out` to out-of-sample portion.
-        df_out = df_out.loc[oos_start:]
+        df_out = df_out.loc[oos_start:]  # type: ignore[misc]
         info = extract_info(self.dag, [method])
         return ResultBundle(
             config=self.config,
@@ -440,9 +443,6 @@ class IncrementalDagRunner:
         )
 
 
-import core.dataflow.real_time as cdrt
-
-
 class RealTimeDagRunner:
     """
     Class for running a DAG in real-time.
@@ -461,6 +461,8 @@ class RealTimeDagRunner:
         # Save input parameters.
         self._config = config
         self._dag_builder = dag_builder
+        # TODO(gp): Use this for stateful DAGs.
+        _ = fit_state
         # Create DAG using DAG builder.
         self._dag = self._dag_builder.get_dag(self._config)
         #
@@ -471,21 +473,23 @@ class RealTimeDagRunner:
         self._execution_trace: Optional[cdrt.ExecutionTrace] = None
 
     # TODO(gp): Should it return a List[ResultBundle]?
-    def predict(self) -> List[Dict]:
+    def predict(self) -> List[Dict[str, Any]]:
         # TODO(gp): This is similar to an IncrementalDagRunner.
-        def dag_workload(current_time: pd.Timestamp) -> Dict:
+        def dag_workload(current_time: pd.Timestamp) -> Dict[str, Any]:
             """
             Workload for the real-time loop to execute a DAG.
             """
             _ = current_time
             sink = self._dag.get_unique_sink()
             dict_ = self._dag.run_leq_node(sink, "predict")
+            dict_ = cast(Dict[str, Any], dict_)
             return dict_
 
         execution_trace, results = cdrt.execute_with_real_time_loop(
             **self._execute_rt_loop_kwargs, workload=dag_workload
         )
         self._execution_trace = execution_trace
+        results = cast(List[Dict[str, Any]], results)
         return results
 
     @property

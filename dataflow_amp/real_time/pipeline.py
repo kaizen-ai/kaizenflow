@@ -21,7 +21,8 @@ class RealTimeReturnPipeline(dtf.DagBuilder):
     Real-time pipeline for computing returns from price data.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        super().__init__()
         self._dag_builder = darp.ReturnsPipeline()
 
     def get_config_template(self) -> cconfig.Config:

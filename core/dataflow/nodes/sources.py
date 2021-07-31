@@ -24,7 +24,6 @@ import helpers.printing as hprint
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
-_LOG.debug = _LOG.info
 
 # TODO(*): Create a dataflow types file.
 _COL_TYPE = Union[int, str]
@@ -77,11 +76,11 @@ class DataLoader(cdnb.DataSource):
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._lazy_load()
-        return super().fit()
+        return super().fit()  # type: ignore[no-any-return]
 
     def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._lazy_load()
-        return super().predict()
+        return super().predict()  # type: ignore[no-any-return]
 
     def _lazy_load(self) -> None:
         if self.df is not None:
@@ -95,6 +94,7 @@ class DataLoader(cdnb.DataSource):
 # #############################################################################
 
 
+# TODO(gp): This should go in a lower layer API, but it's not clear where.
 def load_data_from_disk(
     file_path: str,
     # TODO(gp): -> index_col? (Like pandas naming)
@@ -107,7 +107,13 @@ def load_data_from_disk(
     """
     Read data from CSV or Parquet `file_path`.
 
-    :param timestamp_col: name of the column to use as index
+    :param file_path: path to the file to read with ".csv" or ".pq" extension
+    # TODO(*): Don't the readers support this already?
+    :param timestamp_col: name of the timestamp column. If `None`, assume
+        that index contains timestamps
+    :param start_date: data start date in timezone of the dataset, included
+    :param end_date: data end date in timezone of the dataset, included
+    :param reader_kwargs: kwargs for the data reading function
     """
     reader_kwargs = reader_kwargs or {}
     kwargs = reader_kwargs.copy()
@@ -143,7 +149,7 @@ def load_data_from_disk(
     #  garbage collector.
     # TODO(gp): A bit inefficient since Parquet might allow to read only the needed
     #  data.
-    df = df.loc[start_date:end_date]
+    df = df.loc[start_date:end_date]  # type: ignore[misc]
     dbg.dassert(not df.empty, "Dataframe is empty")
     return df
 
@@ -151,35 +157,20 @@ def load_data_from_disk(
 class DiskDataSource(cdnb.DataSource):
     """
     Read CSV or Parquet data from disk or S3 and output the data.
+
+    This is a wrapper node around `load_data_from_disk`.
     """
 
     def __init__(
-        self,
-        nid: str,
-        file_path: str,
-        timestamp_col: Optional[str] = None,
-        start_date: Optional[_PANDAS_DATE_TYPE] = None,
-        end_date: Optional[_PANDAS_DATE_TYPE] = None,
-        reader_kwargs: Optional[Dict[str, Any]] = None,
+        self, nid: str, **load_data_from_disk_kwargs: Dict[str, Any]
     ) -> None:
         """
         Constructor.
 
         :param nid: node identifier
-        :param file_path: path to the file to read with ".csv" or ".pq" extension
-        # TODO(*): Don't the readers support this already?
-        :param timestamp_col: name of the timestamp column. If `None`, assume
-            that index contains timestamps
-        :param start_date: data start date in timezone of the dataset, included
-        :param end_date: data end date in timezone of the dataset, included
-        :param reader_kwargs: kwargs for the data reading function
         """
         super().__init__(nid)
-        self._file_path = file_path
-        self._timestamp_col = timestamp_col
-        self._start_date = start_date
-        self._end_date = end_date
-        self._reader_kwargs = reader_kwargs or {}
+        self._load_data_from_disk_kwargs = load_data_from_disk_kwargs
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
         """
@@ -192,21 +183,15 @@ class DiskDataSource(cdnb.DataSource):
         :return: dict from output name to DataFrame
         """
         self._lazy_load()
-        return super().fit()
+        return super().fit()  # type: ignore[no-any-return]
 
     def _lazy_load(self) -> None:
         """
         Load the data if it was not already done.
         """
-        if self.df is not None:
+        if self.df is not None:  # type: ignore[has-type]
             return
-        df = load_data_from_disk(
-            self._file_path,
-            self._timestamp_col,
-            self._start_date,
-            self._end_date,
-            self._reader_kwargs,
-        )
+        df = load_data_from_disk(**self._load_data_from_disk_kwargs)
         self.df = df
 
 
@@ -247,11 +232,11 @@ class ArmaGenerator(cdnb.DataSource):
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._lazy_load()
-        return super().fit()
+        return super().fit()  # type: ignore[no-any-return]
 
     def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._lazy_load()
-        return super().predict()
+        return super().predict()  # type: ignore[no-any-return]
 
     def _lazy_load(self) -> None:
         if self.df is not None:
@@ -273,7 +258,7 @@ class ArmaGenerator(cdnb.DataSource):
         prices = np.exp(0.1 * rets.cumsum())
         prices.name = "close"
         df = prices.to_frame()
-        self.df = df.loc[self._start_date : self._end_date]
+        self.df = df.loc[self._start_date : self._end_date]  # type: ignore[misc]
         # Use constant volume (for now).
         self.df["vol"] = 100
 
@@ -313,11 +298,11 @@ class MultivariateNormalGenerator(cdnb.DataSource):
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._lazy_load(fit=True)
-        return super().fit()
+        return super().fit()  # type: ignore[no-any-return]
 
     def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._lazy_load(fit=False)
-        return super().predict()
+        return super().predict()  # type: ignore[no-any-return]
 
     def _generate_returns(self, fit: bool) -> pd.DataFrame:
         rets = self._multivariate_normal_process.generate_sample(
@@ -350,7 +335,7 @@ class MultivariateNormalGenerator(cdnb.DataSource):
             index=prices.index, columns=prices.columns, data=100
         )
         df = pd.concat([prices, volume], axis=1, keys=["close", "volume"])
-        self.df = df.loc[self._start_date : self._end_date]
+        self.df = df.loc[self._start_date : self._end_date]  # type: ignore[misc]
 
 
 # #############################################################################
@@ -399,11 +384,11 @@ class _AbstractRealTimeDataSource(cdnb.DataSource):
         # TODO(gp): This approach of communicating params through the state makes
         #  the code difficult to understand.
         self.df = self._get_data_until_current_time()
-        return super().fit()
+        return super().fit()  # type: ignore[no-any-return]
 
     def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
         self.df = self._get_data_until_current_time()
-        return super().predict()
+        return super().predict()  # type: ignore[no-any-return]
 
     def _set_current_time(self, datetime_: pd.Timestamp) -> None:
         """
@@ -416,12 +401,12 @@ class _AbstractRealTimeDataSource(cdnb.DataSource):
             dbg.dassert_lte(self._last_time, datetime_)
         # Update the state.
         _LOG.debug(
-            "before: " + hprint.to_str("self._last_time self._current_time")
+            "before: %s", hprint.to_str("self._last_time self._current_time")
         )
         self._last_time = self._current_time
         self._current_time = datetime_
         _LOG.debug(
-            "after: " + hprint.to_str("self._last_time self._current_time")
+            "after: %s", hprint.to_str("self._last_time self._current_time")
         )
 
     def _get_current_time(self) -> pd.Timestamp:
@@ -475,7 +460,7 @@ class SimulatedRealTimeDataSource(_AbstractRealTimeDataSource):
     """
 
     def __init__(self, nid: str, **kwargs: Dict[str, Any]) -> None:
-        super().__init__(nid, **kwargs)
+        super().__init__(nid, **kwargs)  # type: ignore[arg-type]
         # Store the entire history of the data.
         self._entire_df: Optional[pd.DataFrame] = None
 
@@ -491,7 +476,7 @@ class SimulatedRealTimeDataSource(_AbstractRealTimeDataSource):
             _LOG.debug("Computing data for data source node")
             # Compute and store the entire history of the data through the passed
             # dataframe builder.
-            self._entire_df = self._data_builder(**self._data_builder_kwargs)
+            self._entire_df = self._data_builder(**self._data_builder_kwargs)  # type: ignore[call-arg]
         return self._entire_df
 
 
@@ -514,7 +499,7 @@ class TrueRealTimeDataSource(_AbstractRealTimeDataSource):
         external_clock: cdrt.GetCurrentTimeFunction,
         **kwargs: Dict[str, Any]
     ) -> None:
-        super().__init__(nid, **kwargs)
+        super().__init__(nid, **kwargs)  # type: ignore[arg-type]
         dbg.dassert_is_not(external_clock, None)
         self._external_clock = external_clock
 
@@ -530,7 +515,7 @@ class TrueRealTimeDataSource(_AbstractRealTimeDataSource):
 
     def _get_data(self) -> pd.DataFrame:
         _LOG.debug("Getting data from the real-time source")
-        df = self._data_builder(**self._data_builder_kwargs)
+        df = self._data_builder(**self._data_builder_kwargs)  # type: ignore[call-arg]
         # The data source should not return data after the current time.
         current_time = self._get_current_time()
         _LOG.debug(hprint.to_str("current_time"))
@@ -541,6 +526,7 @@ class TrueRealTimeDataSource(_AbstractRealTimeDataSource):
 # #############################################################################
 
 
+# pylint: disable=too-many-ancestors
 class ReplayedRealTimeDataSource(TrueRealTimeDataSource):
     """
     Implement a "replayed" real-time behavior (see real_time.py for details).
@@ -561,5 +547,5 @@ class ReplayedRealTimeDataSource(TrueRealTimeDataSource):
             _LOG.debug("Computing data for data source node")
             # Compute and store the entire history of the data through the passed
             # dataframe builder.
-            self._entire_df = self._data_builder(**self._data_builder_kwargs)
+            self._entire_df = self._data_builder(**self._data_builder_kwargs)  # type: ignore[call-arg]
         return self._entire_df
