@@ -26,12 +26,29 @@ _LOG = logging.getLogger(__name__)
 # include test code, which might need to turn testing code into Python package.
 
 
-def get_test_data_builder() -> Tuple[Callable, htypes.Kwargs]:
+def get_test_data_builder1() -> Tuple[Callable, htypes.Kwargs]:
+    """
+    Return data between "2010-01-04 09:30:00" and "2010-01-05 09:30:00".
+    """
     data_builder = cdrt.generate_synthetic_data
     data_builder_kwargs = {
         "columns": ["close", "volume"],
         "start_datetime": pd.Timestamp("2010-01-04 09:30:00"),
         "end_datetime": pd.Timestamp("2010-01-05 09:30:00"),
+        "seed": 42,
+    }
+    return data_builder, data_builder_kwargs
+
+
+def get_test_data_builder2() -> Tuple[Callable, htypes.Kwargs]:
+    """
+    Return data between "2010-01-04 09:30:00" and "2010-01-04 09:35:00".
+    """
+    data_builder = cdrt.generate_synthetic_data
+    data_builder_kwargs = {
+        "columns": ["close", "volume"],
+        "start_datetime": pd.Timestamp("2010-01-04 09:30:00"),
+        "end_datetime": pd.Timestamp("2010-01-04 09:35:00"),
         "seed": 42,
     }
     return data_builder, data_builder_kwargs

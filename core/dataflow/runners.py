@@ -1,17 +1,29 @@
+"""
+Import as:
+
+import core.dataflow.runners as cdtfr import core.dataflow as cdtf
+"""
 import datetime
 import logging
-from typing import Any, Generator, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union, cast
 
 import pandas as pd
 
 import core.config as cconfig
+import core.dataflow.real_time as cdrt
 import helpers.dbg as dbg
+
+# TODO(gp): Use the standard imports.
 from core.dataflow.builders import DagBuilder
 from core.dataflow.result_bundle import PredictionResultBundle, ResultBundle
 from core.dataflow.visitors import extract_info, set_fit_state
 
 _LOG = logging.getLogger(__name__)
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
+
+
+# TODO(gp): Now a DagRunner builds and runs a DAG. This creates some coupling.
+#  Consider having a DagRunner accept a DAG however built and run it.
 
 
 class FitPredictDagRunner:
@@ -236,7 +248,7 @@ class RollingFitPredictDagRunner:
     def _run_predict(
         self,
         interval: Tuple[_PANDAS_DATE_TYPE, _PANDAS_DATE_TYPE],
-        oos_start=_PANDAS_DATE_TYPE,
+        oos_start: _PANDAS_DATE_TYPE,
     ) -> ResultBundle:
         # Set predict interval on DAG.
         for input_nid in self.dag.get_sources():
@@ -245,7 +257,7 @@ class RollingFitPredictDagRunner:
         method = "predict"
         df_out = self.dag.run_leq_node(self._result_nid, method)["df_out"]
         # Restrict `df_out` to out-of-sample portion.
-        df_out = df_out.loc[oos_start:]
+        df_out = df_out.loc[oos_start:]  # type: ignore[misc]
         info = extract_info(self.dag, [method])
         return ResultBundle(
             config=self.config,

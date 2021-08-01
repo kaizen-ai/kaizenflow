@@ -35,6 +35,7 @@ class TestReturnsBuilder(hut.TestCase):
         # }
         from im.kibot.data.config import S3_PREFIX
 
+        # TODO(gp): We could use directly a DiskDataSource here.
         ticker = "AAPL"
         config = {
             "func": dtf.load_data_from_disk,
@@ -42,6 +43,7 @@ class TestReturnsBuilder(hut.TestCase):
                 "file_path": os.path.join(
                     S3_PREFIX, "pq/sp_500_1min", ticker + ".pq"
                 ),
+                "aws_profile": "am",
                 "start_date": pd.to_datetime("2010-01-04 9:30:00"),
                 "end_date": pd.to_datetime("2010-01-04 16:05:00"),
             },
