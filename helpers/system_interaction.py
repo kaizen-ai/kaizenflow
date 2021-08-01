@@ -10,6 +10,7 @@ import helpers.system_interaction as hsinte
 import getpass
 import logging
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -737,3 +738,57 @@ def find_file_with_dir(
     # Select the result based on mode.
     res = select_result_file_from_list(matching_files, mode)
     return res
+
+
+# #############################################################################
+# File timestamping.
+# #############################################################################
+
+
+def has_timestamp(file_name: str) -> bool:
+    """
+    Check whether `file_name` contains a timestamp.
+
+    The timestamp is in the format `%Y%m%d-%H_%M_%S` (e.g.,
+    20210724-12_45_51). E.g., this function for
+    `experiment.RH1E.5T.20210724-12_45_51` returns True.
+    """
+    file_name = os.path.basename(file_name)
+    # E.g., %Y%m%d-%H_%M_%S
+    # The separator is _, -, or nothing.
+    sep = "[-_]?"
+    regex = sep.join(["\d{4}", "\d{2}", "\d{2}", "\d{2}", "\d{2}", "\d{2}"])
+    _LOG.debug("regex=%s", regex)
+    occurrences = re.findall(regex, file_name)
+    dbg.dassert_lte(
+        len(occurrences), 1, "Found more than one timestamp", str(occurrences)
+    )
+    m = re.search("(" + regex + ")", file_name)
+    has_timestamp_ = bool(m)
+    if has_timestamp_:
+        _LOG.debug("Found a timestamp '%s' in '%s'", m.group(1), file_name)
+    return has_timestamp_
+
+
+def append_timestamp_tag(file_name: str, tag: str) -> str:
+    """
+    Add a tag and the current timestamp to a filename, before the extension.
+
+    :return: new filename
+    """
+    dir_name = os.path.dirname(file_name)
+    base_name = os.path.basename(file_name)
+    name, extension = os.path.splitext(base_name)
+    tag_ = ""
+    # E.g., 20210723-20_52_00
+    if not has_timestamp(file_name):
+        import helpers.datetime_ as hdatetime
+
+        tag_ += "." + hdatetime.get_timestamp(tz="ET")
+    # Add tag, if specified.
+    if tag:
+        # If the tag is specified prepend a `.` in the filename.
+        tag_ += "." + tag
+    new_file_name = os.path.join(dir_name, "".join([name, tag_, extension]))
+    _LOG.debug(hprint.to_str("file_name new_file_name"))
+    return new_file_name

@@ -68,8 +68,14 @@ def check_version(file_name: Optional[str] = None) -> None:
     print(msg)
     # Check which env vars are defined.
     msg = ">>ENV<<:"
-    for env_var in ["AM_ECR_BASE_PATH", "AM_S3_BUCKET", "AM_TELEGRAM_TOKEN",
-            "AWS_ACCESS_KEY_ID", "AWS_DEFAULT_REGION", "AWS_SECRET_ACCESS_KEY",
+    for env_var in [
+            "AM_AWS_PROFILE", 
+            "AM_ECR_BASE_PATH",
+            "AM_S3_BUCKET",
+            "AM_TELEGRAM_TOKEN",
+            "AWS_ACCESS_KEY_ID",
+            "AWS_DEFAULT_REGION",
+            "AWS_SECRET_ACCESS_KEY",
             "GH_ACTION_ACCESS_TOKEN"]:
         msg += " %s=%s" % (env_var, env_var in os.environ)
     print(msg)

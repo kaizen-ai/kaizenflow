@@ -22,12 +22,7 @@ except ModuleNotFoundError:
     print(_WARNING + f": Can't find {_module}: continuing")
 
 
-try:
-    import pandas as pd
-except ModuleNotFoundError:
-    _module = "pandas"
-    print(_WARNING + f": Can't find {_module}: continuing")
-
+import pandas as pd  # noqa: E402 # pylint: disable=wrong-import-position
 
 # TODO(gp): Check if dateutils is equivalent or better so we can simplify the
 #  dependencies.
@@ -233,6 +228,7 @@ def get_current_time(tz: str) -> pd.Timestamp:
     else:
         raise ValueError(f"Invalid tz='{tz}")
     timestamp = pd.Timestamp(timestamp)
+    # E.g., 20210723-205200
     return timestamp
 
 
@@ -247,7 +243,7 @@ def get_timestamp(tz: str) -> str:
     `20210728_221749` for tz="UTC".
     """
     timestamp = get_current_time(tz)
-    ret = timestamp.strftime("%Y%m%d_%H%M%S")
+    ret = timestamp.strftime("%Y%m%d-%H%M%S")
     ret = cast(str, ret)
     return ret
 
@@ -336,7 +332,7 @@ def _handle_incorrect_conversions(
 
 
 # pylint: disabled=too-many-return-statements
-def _shift_to_period_end(
+def _shift_to_period_end(  # pylint: disable=too-many-return-statements
     date: str,
 ) -> Optional[Callable[[StrictDatetime], StrictDatetime]]:
     """

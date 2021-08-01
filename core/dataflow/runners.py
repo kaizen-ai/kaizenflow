@@ -22,6 +22,9 @@ _LOG = logging.getLogger(__name__)
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
+# TODO(gp): Should we call the `start` params -> `start_datetime`
+
+
 # TODO(gp): Now a DagRunner builds and runs a DAG. This creates some coupling.
 #  Consider having a DagRunner accept a DAG however built and run it.
 
@@ -33,43 +36,43 @@ class FitPredictDagRunner:
 
     def __init__(self, config: cconfig.Config, dag_builder: DagBuilder) -> None:
         """
+        Constructor.
 
         :param config: config for DAG
-        :param dag_builder: `DagBuilder` instance
+        :param dag_builder: `DagBuilder` instance to build a DAG from the config
         """
         # Save input parameters.
         self.config = config
         self._dag_builder = dag_builder
-        # Create DAG using DAG builder.
+        # Build DAG using DAG builder.
         self.dag = self._dag_builder.get_dag(self.config)
         _LOG.info("dag=%s", self.dag)
+        #
         self._methods = self._dag_builder.methods
         _LOG.info("_methods=%s", self._methods)
+        # Confirm that "fit" and "predict" are registered DAG methods.
+        dbg.dassert_in("fit", self._methods)
+        dbg.dassert_in("predict", self._methods)
+        #
         self._column_to_tags_mapping = (
             self._dag_builder.get_column_to_tags_mapping(self.config)
         )
         _LOG.info("_column_to_tags_mapping=%s", self._column_to_tags_mapping)
-        # Confirm that "fit" and "predict" are registered DAG methods.
-        # TODO(gp): Factor this out.
-        dbg.dassert_in("fit", self._methods)
-        dbg.dassert_in("predict", self._methods)
         # Save the sink node.
-        # TODO(gp): Factor this out.
-        result_nids = self.dag.get_sinks()
-        dbg.dassert_eq(len(result_nids), 1)
-        self._result_nid = result_nids[0]
+        self._result_nid = self.dag.get_unique_sink()
         _LOG.info("_result_nid=%s", self._result_nid)
 
     def set_fit_intervals(
         self, intervals: Optional[List[Tuple[Any, Any]]]
     ) -> None:
         """
-        Set fit intervals for input nodes.
+        Set fit intervals for all the source nodes.
 
         :param intervals: as in `DataSource` node, but allowing `None`
         """
         if intervals is None:
             return
+        # Propagate the fit intervals to all source nodes.
         for input_nid in self.dag.get_sources():
             self.dag.get_node(input_nid).set_fit_intervals(intervals)
 
@@ -77,24 +80,32 @@ class FitPredictDagRunner:
         self, intervals: Optional[List[Tuple[Any, Any]]]
     ) -> None:
         """
-        Set predict intervals for input nodes.
+        Set predict intervals for all the source nodes.
 
         :param intervals: as in `DataSource` node, but allowing `None`
         """
         if intervals is None:
             return
+        # Propagate the predict intervals to all source nodes.
         for input_nid in self.dag.get_sources():
             self.dag.get_node(input_nid).set_predict_intervals(intervals)
 
     def fit(self) -> ResultBundle:
+        """
+        Fitting means running `fit()` method on the DAG up to the sink node.
+        """
         return self._run_dag(self._result_nid, "fit")
 
     def predict(self) -> ResultBundle:
+        """
+        Predicting means running `predict()` method on the DAG up to the sink
+        node.
+        """
         return self._run_dag(self._result_nid, "predict")
 
     def _run_dag(self, nid: str, method: str) -> ResultBundle:
         """
-        Run DAG and return a ResultBundle.
+        Run DAG up to `nid` and return the generated `ResultBundle`.
 
         :param nid: identifier of terminal node for execution
         :param method: `Node` subclass method to be executed
@@ -119,7 +130,7 @@ class PredictionDagRunner(FitPredictDagRunner):
     """
     Class for running prediction DAGs.
 
-    Identical to `FitPredictDagRunner`, but returns a
+    Identical to `FitPredictDagRunner`, but returning a
     `PredictionResultBundle`.
     """
 
@@ -174,9 +185,7 @@ class RollingFitPredictDagRunner:
         dbg.dassert_in("fit", self._methods)
         dbg.dassert_in("predict", self._methods)
         # Save the sink node.
-        result_nids = self.dag.get_sinks()
-        dbg.dassert_eq(len(result_nids), 1)
-        self._result_nid = result_nids[0]
+        self._result_nid = self.dag.get_unique_sink()
         _LOG.info("_result_nid=%s", self._result_nid)
         # Generate retraining dates.
         self._retraining_datetimes = self._generate_retraining_datetimes(
@@ -335,7 +344,11 @@ class RollingFitPredictDagRunner:
 
 class IncrementalDagRunner:
     """
-    Class for running DAGs.
+    Class for running DAGs in incremental fashion, i.e., running one step at a
+    time. Class for running DAGs in incremental fashion, i.e., running one step
+    at a time.
+
+    # TODO(gp): Improve description.
     """
 
     def __init__(
@@ -345,11 +358,10 @@ class IncrementalDagRunner:
         start: _PANDAS_DATE_TYPE,
         end: _PANDAS_DATE_TYPE,
         freq: str,
-        # result_dir: str,
         fit_state: cconfig.Config,
     ) -> None:
         """
-        Initialize DAG.
+        Constructor.
 
         :param config: config for DAG
         :param dag_builder: `DagBuilder` instance
@@ -367,7 +379,6 @@ class IncrementalDagRunner:
         self._start = start
         self._end = end
         self._freq = freq
-        # self._result_dir = result_dir
         self._fit_state = fit_state
         # Create DAG using DAG builder.
         self.dag = self._dag_builder.get_dag(self.config)
@@ -381,10 +392,8 @@ class IncrementalDagRunner:
         # Confirm that "fit" and "predict" are registered DAG methods.
         dbg.dassert_in("fit", self._methods)
         dbg.dassert_in("predict", self._methods)
-        result_nids = self.dag.get_sinks()
-        dbg.dassert_eq(len(result_nids), 1)
-        self._result_nid = result_nids[0]
-        # Create predict range
+        # Create predict range.
+        self._result_nid = self.dag.get_unique_sink()
         self._date_range = pd.date_range(
             start=self._start, end=self._end, freq=self._freq
         )
@@ -397,13 +406,14 @@ class IncrementalDagRunner:
         processes. To ensure that predictions are non-anticipating, we restrict
         the model inputs to times up to and including the prediction time.
 
-        :return: a generator of result bundles (one result bundle for each
+        :return: a generator of `ResultBundle`s (one `ResultBundle` for each
             prediction)
         """
         for end_dt in self._date_range:
             result_bundle = self.predict_at_datetime(end_dt)
             yield result_bundle
 
+    # TODO(gp): Maybe call dt -> datetime_ which seems the name used elsewhere.
     def predict_at_datetime(self, dt: _PANDAS_DATE_TYPE) -> ResultBundle:
         """
         Generate a prediction as of `dt` (for a future point in time).

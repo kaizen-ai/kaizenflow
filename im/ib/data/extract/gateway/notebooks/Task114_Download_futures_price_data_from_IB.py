@@ -291,10 +291,7 @@ df2 = ibutils.get_historical_data_with_IB_loop(ib, contract, start_ts, end_ts, d
                                                       whatToShow, useRTH)
 
 # %%
-pri.print(df.index
-
-# %%
-df2
+pri.print(df.index)
 
 # %%
 contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
