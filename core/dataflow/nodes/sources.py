@@ -118,7 +118,7 @@ def load_data_from_disk(
     reader_kwargs = reader_kwargs or {}
     kwargs = reader_kwargs.copy()
     # Add S3 credentials, if needed.
-    if aws_profile:
+    if aws_profile is not None:
         s3fs = hs3.get_s3fs(aws_profile)
         kwargs["s3fs"] = s3fs
     # Get the extension.

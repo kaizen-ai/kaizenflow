@@ -260,7 +260,8 @@ def _get_local_or_s3_stream(file_name: str, *args: Any, **kwargs: Any):
     # Handle the s3fs param, if needed.
     if hs3.is_s3_path(file_name):
         # For S3 files we need to have an `s3fs` parameter.
-        dbg.dassert_in("s3fs", kwargs)
+        dbg.dassert_in("s3fs", kwargs,
+                   "Credentials through s3fs are needed to access an S3 path")
         s3fs = kwargs.pop("s3fs")
         stream = s3fs.open(file_name)
     else:

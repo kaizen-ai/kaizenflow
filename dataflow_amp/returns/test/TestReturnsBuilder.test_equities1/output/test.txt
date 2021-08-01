@@ -7,6 +7,7 @@ load_prices:
     func: <function load_data_from_disk>
     func_kwargs:
       file_path: s3://alphamatic-data/data/kibot/pq/sp_500_1min/AAPL.pq
+      aws_profile: am
       start_date: 2010-01-04 09:30:00
       end_date: 2010-01-04 16:05:00
 filter_weekends:

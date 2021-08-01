@@ -190,7 +190,7 @@ class DAG:
         self._mode = mode
 
     # TODO(gp): A bit confusing since other classes have `dag / get_dag` method that
-    # returns a DAG. Maybe -> networkx_digraph()
+    # returns a DAG. Maybe -> `networkx_digraph()`
     @property
     def dag(self) -> networ.DiGraph:
         return self._dag
@@ -380,7 +380,7 @@ class DAG:
         return {sink: self.get_node(sink).get_outputs(method) for sink in sinks}
 
     # TODO(gp): We should have a type for Dict[str, Any] since this is everywhere
-    #  in the code base and it gets confused with other types (e.g., `**kawrga`)
+    #  in the code base and it gets confused with other types (e.g., `**kwargs`).
     def run_leq_node(
         self, nid: str, method: str, progress_bar: bool = True
     ) -> Dict[str, Any]:

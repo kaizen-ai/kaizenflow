@@ -22,9 +22,8 @@ _LOG = logging.getLogger(__name__)
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
-# TODO(gp): Why does DagRunner also builds a DAG through the DagBuilder?
-#  This creates some necessary coupling. A DagRunner should accpets a DAG however
-#  built and run it.
+# TODO(gp): Now a DagRunner builds and runs a DAG. This creates some coupling.
+#  Consider having a DagRunner accept a DAG however built and run it.
 
 
 class FitPredictDagRunner:
