@@ -23,7 +23,7 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 # #############################################################################
 
 
-def DataSourceNodeFactory(
+def data_source_node_factory(
     nid: str, source_node_name: str, source_node_kwargs: Dict[str, Any]
 ) -> cdataf.DataSource:
     """
@@ -58,6 +58,12 @@ def DataSourceNodeFactory(
         ret = cdataf.DataLoader(nid, **source_node_kwargs)
     elif source_node_name == "multivariate_normal":
         ret = cdataf.MultivariateNormalGenerator(nid, **source_node_kwargs)
+    elif source_node_name == "SimulatedRealTimeDataSource":
+        ret = cdataf.SimulatedRealTimeDataSource(nid, **source_node_kwargs)
+    elif source_node_name == "ReplayedRealTimeDataSource":
+        ret = cdataf.ReplayedRealTimeDataSource(nid, **source_node_kwargs)
+    elif source_node_name == "TrueRealTimeDataSource":
+        ret = cdataf.TrueRealTimeDataSource(nid, **source_node_kwargs)
     else:
         raise ValueError(f"Unsupported data source node {source_node_name}")
     return ret
@@ -146,11 +152,11 @@ class KibotDataReader(cdataf.DataSource):
         :return: training set as df
         """
         self._lazy_load()
-        return super().fit()
+        return super().fit()  # type: ignore[no-any-return]
 
     def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._lazy_load()
-        return super().predict()
+        return super().predict()  # type: ignore[no-any-return]
 
     def _lazy_load(self) -> None:
         if self.df is not None:
@@ -208,11 +214,11 @@ class KibotColumnReader(cdataf.DataSource):
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._lazy_load()
-        return super().fit()
+        return super().fit()  # type: ignore[no-any-return]
 
     def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._lazy_load()
-        return super().predict()
+        return super().predict()  # type: ignore[no-any-return]
 
     def _lazy_load(self) -> None:
         if self.df is not None:
@@ -227,7 +233,7 @@ class KibotColumnReader(cdataf.DataSource):
                 symbol=s,
                 nrows=self._nrows,
             )[self._col]
-            data = data.loc[self._start_date : self._end_date]
+            data = data.loc[self._start_date : self._end_date]  # type: ignore[misc]
             dict_df[s] = data
         self.df = pd.DataFrame.from_dict(dict_df)
 
@@ -262,11 +268,11 @@ class KibotEquityReader(cdataf.DataSource):
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._lazy_load()
-        return super().fit()
+        return super().fit()  # type: ignore[no-any-return]
 
     def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._lazy_load()
-        return super().predict()
+        return super().predict()  # type: ignore[no-any-return]
 
     def _lazy_load(self) -> None:
         if self.df is not None:
@@ -283,7 +289,7 @@ class KibotEquityReader(cdataf.DataSource):
                 unadjusted=False,
                 nrows=self._nrows,
             )
-            data = data.loc[self._start_date : self._end_date]
+            data = data.loc[self._start_date : self._end_date]  # type: ignore[misc]
             # Rename column for volume so that it adheres with our conventions.
             data = data.rename(columns={"vol": "volume"})
             # Print some info about the data.

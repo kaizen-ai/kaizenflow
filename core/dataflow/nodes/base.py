@@ -4,7 +4,7 @@ import copy
 import datetime
 import functools
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 import pandas as pd
 
@@ -48,7 +48,7 @@ class FitPredictNode(cdc.Node, abc.ABC):
         if outputs is None:
             outputs = ["df_out"]
         super().__init__(nid=nid, inputs=inputs, outputs=outputs)
-        self._info = collections.OrderedDict()
+        self._info: collections.OrderedDict = collections.OrderedDict()
 
     @abc.abstractmethod
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -86,12 +86,14 @@ class FitPredictNode(cdc.Node, abc.ABC):
 
 class DataSource(FitPredictNode, abc.ABC):
     """
-    A source node that generates data for cross-validation from the passed data frame.
+    A source node that generates data for cross-validation from the passed data
+    frame.
 
-    Derived classes inject the data as a DataFrame in this class at construction time
-    (e.g., from a passed DataFrame, reading from a file)
-    This node implements the interface of `FitPredictNode` allowing to filter data for
-    fitting and predicting based on intervals.
+    Derived classes inject the data as a DataFrame in this class at
+    construction time (e.g., from a passed DataFrame, reading from a
+    file) This node implements the interface of `FitPredictNode`
+    allowing to filter data for fitting and predicting based on
+    intervals.
     """
 
     def __init__(self, nid: str, outputs: Optional[List[str]] = None) -> None:
@@ -106,9 +108,9 @@ class DataSource(FitPredictNode, abc.ABC):
             dbg.dassert_ne(output, "")
         super().__init__(nid, inputs=[], outputs=outputs)
         # This data is initialized by the derived classes depending on their semantics.
-        self.df = None
-        self._fit_intervals = None
-        self._predict_intervals = None
+        self.df: Optional[pd.DataFrame] = None
+        self._fit_intervals: Optional[List[Tuple[Any, Any]]] = None
+        self._predict_intervals: Optional[List[Tuple[Any, Any]]] = None
         self._predict_idxs = None
 
     def set_fit_intervals(self, intervals: List[Tuple[Any, Any]]) -> None:
@@ -124,11 +126,14 @@ class DataSource(FitPredictNode, abc.ABC):
     # `DataSource` uses data passed at construction time, so it does not need a
     # `df_in` in either `fit()` or `predict()` as a typical `FitPredictNode` does.
     # For this reason the function signature is different.
-    # pylint: disable=arguments-differ
+    # pylint: disable=arguments-differ  # type: ignore[override]
     def fit(self) -> Dict[str, pd.DataFrame]:
         """
         :return: training set as df
         """
+        dbg.dassert_is_not(self.df, None)
+        self.df = cast(pd.DataFrame, self.df)
+        #
         if self._fit_intervals is not None:
             idx_slices = [
                 self.df.loc[interval[0] : interval[1]].index
@@ -155,11 +160,14 @@ class DataSource(FitPredictNode, abc.ABC):
         self._validate_intervals(intervals)
         self._predict_intervals = intervals
 
-    # pylint: disable=arguments-differ
+    # pylint: disable=arguments-differ  # type: ignore[override]
     def predict(self) -> Dict[str, pd.DataFrame]:
         """
         :return: test set as df
         """
+        dbg.dassert_is_not(self.df, None)
+        self.df = cast(pd.DataFrame, self.df)
+        #
         if self._predict_intervals is not None:
             idx_slices = [
                 self.df.loc[interval[0] : interval[1]].index
@@ -285,7 +293,7 @@ class YConnector(FitPredictNode):
         """
         return self._get_col_names(self._df_in2_col_names)
 
-    # pylint: disable=arguments-differ
+    # pylint: disable=arguments-differ  # type: ignore[override]
     def fit(
         self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
     ) -> Dict[str, pd.DataFrame]:
@@ -293,7 +301,7 @@ class YConnector(FitPredictNode):
         self._set_info("fit", info)
         return {"df_out": df_out}
 
-    # pylint: disable=arguments-differ
+    # pylint: disable=arguments-differ  # type: ignore[override]
     def predict(
         self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
     ) -> Dict[str, pd.DataFrame]:
@@ -313,12 +321,12 @@ class YConnector(FitPredictNode):
         return df_out, info
 
     @staticmethod
-    def _get_col_names(col_names: List[str]) -> List[str]:
+    def _get_col_names(col_names: Optional[List[str]]) -> List[str]:
         dbg.dassert_is_not(
             col_names,
             None,
-            "No column names. This may indicate "
-            "an invocation prior to graph execution.",
+            "No column names. This may indicate an invocation prior to graph "
+            "execution.",
         )
         return col_names
 
@@ -766,6 +774,7 @@ def _postprocess_dataframe_dict(
     dbg.dassert(dfs)
     # Perform sanity checks on dataframe.
     for symbol, df in dfs.items():
+        _ = symbol
         # Ensure that each values of `dfs` is a nonempty dataframe.
         dbg.dassert_isinstance(df, pd.DataFrame)
         dbg.dassert(not df.empty)
