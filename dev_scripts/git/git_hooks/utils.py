@@ -272,6 +272,11 @@ def check_file_size(
 
 
 # #############################################################################
+# check_words
+# #############################################################################
+
+
+_CAESAR_STEP = 7
 
 
 def caesar(text: str, step: int) -> str:
@@ -286,9 +291,6 @@ def caesar(text: str, step: int) -> str:
     return text.translate(table)
 
 
-_CAESAR_STEP = 7
-
-
 def _get_regex(decaesarify: bool) -> Any:
     # Prepare the regex.
     words = "ln lnpk sptl sltvuhkl slt jyfwav"
@@ -296,9 +298,9 @@ def _get_regex(decaesarify: bool) -> Any:
         words = caesar(words, -_CAESAR_STEP)
     words_as_regex = "(" + "|".join(words.split()) + ")"
     regex = fr"""
-            (?<![^\W])     # The preceding char should not be a letter or digit char.
+            (?<![^\W_])     # The preceding char should not be a letter or digit char.
             {words_as_regex}
-            (?![^\W])      # The next char cannot be a letter or digit.
+            (?![^\W_])      # The next char cannot be a letter or digit.
             """
     # regex  = re.compile(r"\b(%s)\b" % "|".join(words.split()))
     # _LOG.debug("regex=%s", regex)
@@ -330,6 +332,8 @@ def _check_words_in_text(
             if file_name.endswith("git.py") and "return _is_repo" in line:
                 continue
             if file_name.endswith("ack") and "compressed" in line:
+                continue
+            if file_name.endswith("helpers/git.py") and "def is_" in line:
                 continue
             # Found a violation.
             val = m.group(1)

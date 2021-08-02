@@ -124,7 +124,8 @@ def to_ET(
 
 def to_timestamp_str(ts: pd.Timestamp) -> str:
     dbg.dassert_is_not(ts, None)
-    ret = ts.strftime("%Y%m%dT%H%M%S")
+    # E.g., 20210723-205200
+    ret = ts.strftime("%Y%m%d-%H%M%S")
     cast(str, ret)
     return ret
 

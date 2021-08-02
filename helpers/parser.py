@@ -30,9 +30,9 @@ def add_bool_arg(
     help_: Optional[str] = None,
 ) -> argparse.ArgumentParser:
     """
-    Add options to a parser like --xyz and --no_xyz.
+    Add options to a parser like `--xyz` and `--no_xyz`.
 
-    E.g., for `--incremental`.
+    E.g., `--incremental` and `--no_incremental`.
     """
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument("--" + name, dest=name, action="store_true", help=help_)
