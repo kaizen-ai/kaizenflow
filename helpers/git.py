@@ -434,9 +434,13 @@ def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
     # TODO(gp): make the linter happy creating this symbol that comes from the
     # `exec()`.
     exec(code, globals())  # pylint: disable=exec-used
-    current_repo_map = get_repo_map()  # noqa: F821  # type: ignore[name-defined]  # pylint: disable=undefined-variable
+    current_repo_map = (
+        get_repo_map()  # noqa: F821  # type: ignore[name-defined]  # pylint: disable=undefined-variable
+    )
     if include_host_name:
-        host_name = get_host_name()  # noqa: F821  # type: ignore[name-defined]  # pylint: disable=undefined-variable
+        host_name = (
+            get_host_name()  # noqa: F821  # type: ignore[name-defined]  # pylint: disable=undefined-variable
+        )
         current_repo_map = _decorate_with_host_name(current_repo_map, host_name)
     _LOG.debug(
         "include_host_name=%s, current_repo_map=\n%s",
@@ -445,7 +449,9 @@ def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
     )
     # Update the map.
     dbg.dassert_not_intersection(repo_map.keys(), current_repo_map.keys())
-    repo_map.update(get_repo_map())  # noqa: F821  # type: ignore[name-defined]  # pylint: disable=undefined-variable
+    repo_map.update(
+        get_repo_map()  # noqa: F821  # type: ignore[name-defined]  # pylint: disable=undefined-variable
+    )
     dbg.dassert_no_duplicates(repo_map.values())
     _LOG.debug(
         "include_host_name=%s, repo_map=\n%s",

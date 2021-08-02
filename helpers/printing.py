@@ -785,5 +785,6 @@ def config_notebook(sns_set: bool = True) -> None:
 
     # Warnings.
     import helpers.warnings_helpers
+
     # Force the linter to keep this import.
     _ = helpers.warning_helpers

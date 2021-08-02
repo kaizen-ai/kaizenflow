@@ -85,7 +85,7 @@ class ImportTimeChecker:
         for module in tqdm(modules):
             self.measure_time(module)
 
-    def print_modules_time(self, sort: bool=False) -> None:
+    def print_modules_time(self, sort: bool = False) -> None:
         """
         Print all measured modules.
 
