@@ -47,8 +47,8 @@ hprint.config_notebook()
 # # Notebook config
 
 # %%
-#exp_dir = "/app/experiment1"
-exp_dir = "s3://alphamatic-data/tmp/tmp.20210802-160830.scratch.tgz"
+exp_dir = "/app/experiment1"
+#exp_dir = "s3://alphamatic-data/experiments/..."
 
 eval_config = cconfig.get_config_from_nested_dict(
     {

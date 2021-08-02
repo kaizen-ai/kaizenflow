@@ -8,6 +8,14 @@ import core.dataflow_model.utils as cdtfut
 """
 
 # TODO(gp): -> experiment_utils.py
+# TODO(gp): All these functions should be tested. The problem is that these functions
+#  rely on results from experiments and the format of the experiment is still in flux.
+#  One approach is to:
+#  - have unit tests that run short experiments (typically disabled)
+#  - save the results of the experiments on S3 (or on disk)
+#  - use the S3 experiments as mocks for the real unit tests
+#  If the format of the experiment changes, we can just re-run the mock experiments
+#  and refresh them on S3.
 
 import argparse
 import collections
@@ -33,6 +41,8 @@ import helpers.printing as hprint
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
+# TODO(gp): Do not merge this.
+_LOG.debug = _LOG.info
 
 
 def add_experiment_arg(
@@ -266,7 +276,7 @@ def yield_experiment_artifacts(
     # Iterate over experiment directories.
     for key, subdir in tqdm(experiment_subdirs.items(), desc="Loading artifacts"):
         dbg.dassert_dir_exists(subdir)
-        file_name_tmp = os.path.join(src_dir, subdir, file_name)
+        file_name_tmp = os.path.join(subdir, file_name)
         _LOG.debug("Loading '%s'", file_name_tmp)
         if not os.path.exists(file_name_tmp):
             _LOG.warning("Can't find '%s': skipping", file_name_tmp)
@@ -313,7 +323,7 @@ def yield_rolling_experiment_out_of_sample_df(
         dbg.dassert_dir_exists(subdir)
         # TODO(Paul): Sort these explicitly. Currently we rely on an implicit
         #  order.
-        files = glob.glob(os.path.join(src_dir, subdir, file_name_prefix) + "*")
+        files = glob.glob(os.path.join(subdir, file_name_prefix) + "*")
         dfs = []
         for file_name_tmp in files:
             _LOG.debug("Loading '%s'", file_name_tmp)
