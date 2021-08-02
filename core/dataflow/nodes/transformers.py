@@ -311,6 +311,7 @@ class SeriesToDfTransformer(cdnb.Transformer):
         # Combine the series representing leaf col transformations back into a
         # single dataframe.
         df = cdnb.SeriesToDfColProcessor.postprocess(dfs, self._out_col_group)
+        df = df.reindex(df_in.index)
         df = cdu.merge_dataframes(df_in, df)
         info["df_transformed_info"] = cdu.get_df_info_as_string(df)
         return df, info
