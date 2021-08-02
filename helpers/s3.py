@@ -315,6 +315,13 @@ def dassert_s3_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
     dbg.dassert(s3fs_.exists(s3_path), "S3 file '%s' doesn't exist", s3_path)
 
 
+def dassert_s3_not_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
+    """
+    Assert if an S3 file or dir exist.
+    """
+    check_valid_s3_path(s3_path)
+    dbg.dassert(not s3fs_.exists(s3_path), "S3 file '%s' already exist", s3_path)
+
 # #############################################################################
 
 
@@ -347,10 +354,10 @@ def archive_data_on_s3(
     dst_path = hsyste.append_timestamp_tag(src_dir, tag) + ".tgz"
     # Compress the dir.
     # > (cd .../TestRunExperimentArchiveOnS3.test_serial1; \
-    #    tar cvzf /app/.../TestRunExperimentArchiveOnS3.test_serial1.tgz tmp.scratch)
-    # tmp.scratch/
-    # tmp.scratch/log.20210802-123758.txt
-    # tmp.scratch/output_metadata.json
+    #    tar cvzf /app/.../TestRunExperimentArchiveOnS3.test_serial1.tgz experiment.RH1E)
+    # experiment.RH1E/
+    # experiment.RH1E/log.20210802-123758.txt
+    # experiment.RH1E/output_metadata.json
     # ...
     _LOG.debug("Destination path is '%s'", dst_path)
     with htimer.TimedScope(logging.INFO, "Compressing"):
@@ -363,9 +370,9 @@ def archive_data_on_s3(
     )
     # Test expanding the tgz. The package should expand to the original dir.
     # > tar tf /app/.../TestRunExperimentArchiveOnS3.test_serial1.tgz
-    # tmp.scratch/
-    # tmp.scratch/log.20210802-123758.txt
-    # tmp.scratch/output_metadata.json
+    # experiment.RH1E/
+    # experiment.RH1E/log.20210802-123758.txt
+    # experiment.RH1E/output_metadata.json
     _LOG.info("Testing archive")
     cmd = f"tar tvf {dst_path}"
     hsyste.system(cmd, log_level=logging.INFO, suppress_output=False)
@@ -387,9 +394,11 @@ def retrieve_archived_data_from_s3(
     Retrieve archived tgz data from S3.
 
     E.g.,
-    - given a tgz file like `s3://.../tmp.20210802-121908.scratch.tgz` (which is the
-      result of compressing a dir like `/app/.../tmp.scratch`)
-    - expand it into a dir `dst_dir/tmp.scratch`
+    - given a tgz file like `s3://.../experiment.20210802-121908.tgz` (which is the
+      result of compressing a dir like `/app/.../experiment.RH1E`)
+    - expand it into a dir `$dst_dir/experiment.RH1E`
+
+    :return: dir with the expanded data (e.g., `$dst_dir/experiment.RH1E`)
     """
     _LOG.info(
         "# Retrieving archive from '%s' to '%s' with aws_profile='%s'",
@@ -412,12 +421,20 @@ def retrieve_archived_data_from_s3(
     # Expand the tgz file.
     # The output should be the original compressed dir under `{dst_dir}`.
     # E.g.,
-    # > tar tzf /app/.../TestRunExperimentArchiveOnS3.test_serial1/tmp.20210802-133901.scratch.tgz
-    # tmp.scratch/
-    # tmp.scratch/log.20210802-133859.txt
-    # tmp.scratch/result_0/
+    # > tar tzf /app/.../TestRunExperimentArchiveOnS3.test_serial1/experiment.20210802-133901.tgz
+    # experiment.RH1E/
+    # experiment.RH1E/log.20210802-133859.txt
+    # experiment.RH1E/result_0/
     with htimer.TimedScope(logging.INFO, "Decompressing"):
         dbg.dassert_file_exists(dst_file)
         cmd = f"cd {dst_dir} && tar xzf {dst_file}"
         hsyste.system(cmd)
-    return dst_file
+    # Get the name of the including dir, e.g., `experiment.RH1E`.
+    cmd = f"cd {dst_dir} && tar tzf {dst_file} | head -1"
+    rc, enclosing_tgz_dir_name = hsyste.system_to_one_line(cmd)
+    _ = rc
+    _LOG.debug(hprint.to_str("enclosing_tgz_dir_name"))
+    tgz_dst_dir = os.path.join(dst_dir, enclosing_tgz_dir_name)
+    dbg.dassert_dir_exists(tgz_dst_dir)
+    # Return `$dst_dir/experiment.RH1E`.
+    return tgz_dst_dir

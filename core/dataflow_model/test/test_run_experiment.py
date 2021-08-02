@@ -9,6 +9,7 @@ import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.git as git
 import helpers.s3 as hs3
+import helpers.system_interaction as hsyste
 import helpers.unit_test as hut
 import helpers.parser as hparse
 
@@ -187,18 +188,26 @@ class TestRunExperimentArchiveOnS3(hut.TestCase):
         $SCRATCH_SPACE/result_0/run_experiment.0.log
         $SCRATCH_SPACE/result_0/success.txt"""
 
+    @pytest.mark.slow
     def test_serial1(self) -> None:
         """
         Execute:
         - two experiments (without any failure)
         - serially
         """
-        if False:
-            dst_dir = self.get_scratch_space()
-            output_metadata_file = f"{dst_dir}/output_metadata.json"
+        scratch_dir = self.get_scratch_space()
+        aws_profile = "am"
+        # Actions.
+        create_s3_archive = True
+        check_s3_archive = True
+        clean_up_s3_archive = False
+        # Create archive on S3.
+        if create_s3_archive:
+            output_metadata_file = f"{scratch_dir}/output_metadata.json"
             cmd_opts = [
                 "--config_builder 'dev_scripts.test.test_run_notebook.build_configs3()'",
                 "--num_threads 'serial'",
+                f"--aws_profile '{aws_profile}'",
                 "--s3_path s3://alphamatic-data/tmp",
                 f"--json_output_metadata {output_metadata_file}"
             ]
@@ -210,13 +219,20 @@ class TestRunExperimentArchiveOnS3(hut.TestCase):
             output_metadata = hparse.read_output_metadata(output_metadata_file)
             s3_path = output_metadata["s3_path"]
             _LOG.debug("s3_path=%s", s3_path)
-        #s3_path = "s3://alphamatic-data/tmp/tmp.20210802-121908.scratch.tgz"
-        s3_path = "s3://alphamatic-data/tmp/tmp.20210802-133901.scratch.tgz"
-        aws_profile = "am"
-        dst_file = hs3.retrieve_archived_data_from_s3(s3_path, aws_profile, "/tmp")
-        _LOG.info("Retrieved to %s", dst_file)
-        # Clean up S3.
-        # Clean up locally.
+        if check_s3_archive:
+            #s3_path = "s3://alphamatic-data/tmp/tmp.20210802-121908.scratch.tgz"
+            tgz_dst_dir = hs3.retrieve_archived_data_from_s3(s3_path, aws_profile, scratch_dir)
+            _LOG.info("Retrieved to %s", tgz_dst_dir)
+            # Check the content.
+            cmd = f"ls -1 {tgz_dst_dir}"
+            files = hsyste.system_to_files(cmd)
+            _LOG.debug("Files are:\n%s", files)
+        if clean_up_s3_archive:
+            # Clean up S3.
+            s3fs_ = hs3.get_s3fs(aws_profile)
+            hs3.dassert_s3_exists(s3_path, s3fs_)
+            s3fs_.rm(s3_path)
+            hs3.dassert_s3_not_exist(s3_path, s3fs_)
 
 
 # #############################################################################

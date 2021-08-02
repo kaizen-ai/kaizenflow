@@ -400,7 +400,7 @@ def to_absolute_paths(files: List[str]) -> List[str]:
     return files
 
 
-def remove_file_non_present(files: List[str]) -> List[str]:
+def remove_files_non_present(files: List[str]) -> List[str]:
     """
     Return list of files from `files` excluding the files that don't exist.
     """
@@ -461,14 +461,15 @@ def select_result_file_from_list(files: List[str], mode: str) -> List[str]:
 
 def system_to_files(
     cmd: str,
-    dir_name: str,
-    remove_files_non_present: bool,
+    dir_name: Optional[str] = None,
+    remove_files_non_present_: bool=False,
     mode: str = "return_all_results",
 ) -> List[str]:
     """
     Execute command `cmd` in `dir_name` and return the output as a list of
     strings.
 
+    :param remove_files_non_present_: remove files that don't exist on the filesystem
     :param mode: like in `select_result_file_from_list()`
     """
     if dir_name is None:
@@ -486,8 +487,8 @@ def system_to_files(
     files = [os.path.join(dir_name, f) for f in files]
     files: List[str] = list(map(os.path.normpath, files))  # type: ignore
     # Remove non-existent files, if needed.
-    if remove_files_non_present:
-        files = remove_file_non_present(files)
+    if remove_files_non_present_:
+        files = remove_files_non_present(files)
     # Process output.
     files = select_result_file_from_list(files, mode)
     return files
@@ -726,11 +727,8 @@ def find_file_with_dir(
     # ./amp/core/dataflow/utils.py
     # ./amp/core/dataflow_model/utils.py
     # ./amp/im/common/test/utils.py
-    remove_files_non_present = False
-    mode_tmp = "return_all_results"
-    candidate_files = system_to_files(
-        cmd, root_dir, remove_files_non_present, mode_tmp
-    )
+    mode_ = "return_all_results"
+    candidate_files = system_to_files(cmd, dir_name=root_dir, mode=mode_)
     _LOG.debug("files=\n%s", "\n".join(candidate_files))
     matching_files = []
     for file in sorted(candidate_files):
