@@ -2,7 +2,8 @@ import datetime as dt
 
 import environs
 
-ts = dt.datetime.utcnow().strftime("%Y-%m-%d-%H%M%S%f")
+# 20210723-205200
+ts = dt.datetime.utcnow().strftime("%Y%m%d-%H%M%S%f")
 env = environs.Env()
 
 ITEM_PIPELINES = {

@@ -274,7 +274,7 @@ def _get_files_to_process(
 # Copied from helpers.datetime_ to avoid dependency from pandas.
 
 
-def _get_ET_timestamp(utc: bool = False) -> str:
+def _get_ET_timestamp() -> str:
     # The timezone depends on how the shell is configured.
     timestamp = datetime.datetime.now()
     return timestamp.strftime("%Y%m%d_%H%M%S")
@@ -547,7 +547,7 @@ def git_create_branch(  # type: ignore
     # Fetch master.
     cmd = "git pull --autostash"
     _run(ctx, cmd)
-    # git checkout -b LemTask169_Get_GH_actions_working_on_lem
+    # git checkout -b LmTask169_Get_GH_actions_working_on_lm
     cmd = f"git checkout -b {branch_name}"
     _run(ctx, cmd)
     # TODO(gp): If the branch already exists, increase the number.
@@ -1326,6 +1326,7 @@ def _get_build_tag(code_ver: str) -> str:
 
     :param code_ver: the value from hversi.get_code_version()
     """
+    # E.g., 20210723-20_52_00
     timestamp = _get_ET_timestamp()
     branch_name = git.get_branch_name()
     hash_ = git.get_head_hash()
@@ -1666,6 +1667,9 @@ def _to_pbcopy(txt: str, pbcopy: bool) -> None:
     txt = txt.rstrip("\n")
     if not pbcopy:
         print(txt)
+        return
+    if not txt:
+        print("Nothing to copy")
         return
     if hsinte.is_running_on_macos():
         # -n = no new line
@@ -2692,3 +2696,5 @@ def gh_create_pr(  # type: ignore
 # TODO(gp): Add gh_open_pr to jump to the PR from this branch.
 
 # TODO(gp): Add ./dev_scripts/testing/pytest_count_files.sh
+
+# TODO(gp): Add dev_scripts/compile_all.py

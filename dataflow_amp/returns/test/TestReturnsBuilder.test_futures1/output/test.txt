@@ -2,13 +2,15 @@
 config
 ################################################################################
 load_prices:
-  func: <function load_kibot>
-  func_kwargs:
-    frequency: T
-    contract_type: continuous
-    symbol: ES
-    start_date: 2010-01-04 09:00:00
-    end_date: 2010-01-04 16:30:00
+  source_node_name: DataLoader
+  source_node_kwargs:
+    func: <function load_kibot>
+    func_kwargs:
+      frequency: T
+      contract_type: continuous
+      symbol: ES
+      start_date: 2010-01-04 09:00:00
+      end_date: 2010-01-04 16:30:00
 filter_weekends:
   col_mode: replace_all
 filter_ath:

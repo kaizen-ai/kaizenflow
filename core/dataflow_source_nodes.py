@@ -20,11 +20,17 @@ _LOG = logging.getLogger(__name__)
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
-def DataSourceNodeFactory(
+# #############################################################################
+
+
+def data_source_node_factory(
     nid: str, source_node_name: str, source_node_kwargs: Dict[str, Any]
 ) -> cdataf.DataSource:
     """
     Initialize the appropriate data source node.
+
+    The use case for this function is to create nodes depending on config parameters
+    leaving the pipeline DAG unchanged.
 
     :param nid: node identifier
     :param source_node_name: short name for data source node type
@@ -32,23 +38,41 @@ def DataSourceNodeFactory(
     :return: data source node of appropriate type instantiated with kwargs
     """
     dbg.dassert(source_node_name)
+    # TODO(gp): To simplify we can use the name of the class (e.g., "ArmaGenerator"
+    #  instead of "arma"), so we don't have to use another level of mnemonics.
     if source_node_name == "arma":
-        return cdataf.ArmaGenerator(nid, **source_node_kwargs)
+        ret = cdataf.ArmaGenerator(nid, **source_node_kwargs)
     elif source_node_name == "crypto_data_download":
         import core_lem.dataflow.nodes.sources as cldns
-        return cldns.CryptoDataDownload_DataReader(nid, **source_node_kwargs)
+
+        ret = cldns.CryptoDataDownload_DataReader(nid, **source_node_kwargs)
     elif source_node_name == "disk":
-        return cdataf.DiskDataSource(nid, **source_node_kwargs)
+        ret = cdataf.DiskDataSource(nid, **source_node_kwargs)
     elif source_node_name == "kibot":
-        return KibotDataReader(nid, **source_node_kwargs)
+        ret = KibotDataReader(nid, **source_node_kwargs)
     elif source_node_name == "kibot_equities":
-        return KibotEquityReader(nid, **source_node_kwargs)
+        ret = KibotEquityReader(nid, **source_node_kwargs)
     elif source_node_name == "kibot_multi_col":
-        return KibotColumnReader(nid, **source_node_kwargs)
+        ret = KibotColumnReader(nid, **source_node_kwargs)
+    elif source_node_name == "DataLoader":
+        ret = cdataf.DataLoader(nid, **source_node_kwargs)
     elif source_node_name == "multivariate_normal":
-        return cdataf.MultivariateNormalGenerator(nid, **source_node_kwargs)
+        ret = cdataf.MultivariateNormalGenerator(nid, **source_node_kwargs)
+    elif source_node_name == "SimulatedRealTimeDataSource":
+        ret = cdataf.SimulatedRealTimeDataSource(nid, **source_node_kwargs)
+    elif source_node_name == "ReplayedRealTimeDataSource":
+        ret = cdataf.ReplayedRealTimeDataSource(nid, **source_node_kwargs)
+    elif source_node_name == "TrueRealTimeDataSource":
+        ret = cdataf.TrueRealTimeDataSource(nid, **source_node_kwargs)
     else:
         raise ValueError(f"Unsupported data source node {source_node_name}")
+    return ret
+
+
+# #############################################################################
+
+
+# TODO(gp): Move all the nodes somewhere else (e.g., sources.py)?
 
 
 def process_timestamp(
@@ -92,8 +116,6 @@ def load_kibot(
     return df_out
 
 
-# #############################################################################
-
 # TODO(gp): Maybe consolidate KibotDataReader and KibotColumnReader.
 
 # TODO(gp): -> KibotFuturesDataReader
@@ -130,11 +152,11 @@ class KibotDataReader(cdataf.DataSource):
         :return: training set as df
         """
         self._lazy_load()
-        return super().fit()
+        return super().fit()  # type: ignore[no-any-return]
 
     def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._lazy_load()
-        return super().predict()
+        return super().predict()  # type: ignore[no-any-return]
 
     def _lazy_load(self) -> None:
         if self.df is not None:
@@ -150,9 +172,13 @@ class KibotDataReader(cdataf.DataSource):
         self.df = df
 
 
+# #############################################################################
+
+
 # TODO(gp): Move reading only a subset of columns into KibotS3DataLoader.
 #  If we use Parquet we can avoid to read useless data for both time and
 #  columns.
+
 
 class KibotColumnReader(cdataf.DataSource):
     def __init__(
@@ -188,11 +214,11 @@ class KibotColumnReader(cdataf.DataSource):
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._lazy_load()
-        return super().fit()
+        return super().fit()  # type: ignore[no-any-return]
 
     def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._lazy_load()
-        return super().predict()
+        return super().predict()  # type: ignore[no-any-return]
 
     def _lazy_load(self) -> None:
         if self.df is not None:
@@ -207,9 +233,12 @@ class KibotColumnReader(cdataf.DataSource):
                 symbol=s,
                 nrows=self._nrows,
             )[self._col]
-            data = data.loc[self._start_date : self._end_date]
+            data = data.loc[self._start_date : self._end_date]  # type: ignore[misc]
             dict_df[s] = data
         self.df = pd.DataFrame.from_dict(dict_df)
+
+
+# #############################################################################
 
 
 class KibotEquityReader(cdataf.DataSource):
@@ -239,11 +268,11 @@ class KibotEquityReader(cdataf.DataSource):
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._lazy_load()
-        return super().fit()
+        return super().fit()  # type: ignore[no-any-return]
 
     def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._lazy_load()
-        return super().predict()
+        return super().predict()  # type: ignore[no-any-return]
 
     def _lazy_load(self) -> None:
         if self.df is not None:
@@ -260,7 +289,7 @@ class KibotEquityReader(cdataf.DataSource):
                 unadjusted=False,
                 nrows=self._nrows,
             )
-            data = data.loc[self._start_date : self._end_date]
+            data = data.loc[self._start_date : self._end_date]  # type: ignore[misc]
             # Rename column for volume so that it adheres with our conventions.
             data = data.rename(columns={"vol": "volume"})
             # Print some info about the data.

@@ -8,8 +8,10 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
-class TestRollingFitPredictDagRunner(hut.TestCase):
+# #############################################################################
 
+
+class TestRollingFitPredictDagRunner1(hut.TestCase):
     def test1(self) -> None:
         """
         Test the DagRunner using `ArmaReturnsBuilder`
@@ -30,11 +32,13 @@ class TestRollingFitPredictDagRunner(hut.TestCase):
         np.testing.assert_equal(len(result_bundles), 2)
 
 
-class TestIncrementalDagRunner(hut.TestCase):
+# #############################################################################
 
+
+class TestIncrementalDagRunner1(hut.TestCase):
     def test1(self) -> None:
         """
-        Test the DagRunner using `ArmaReturnsBuilder`
+        Test the DagRunner using `ArmaReturnsBuilder`.
         """
         dag_builder = dtf.ArmaReturnsBuilder()
         config = dag_builder.get_config_template()
