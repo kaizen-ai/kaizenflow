@@ -108,32 +108,44 @@ def add_s3_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     return parser
 
 
-def get_aws_profile_from_env(args: argparse.Namespace) -> str:
+def _get_variable_value(var_value: str, env_var: str) -> str:
     """
-    Return the AWS profile to access S3, based on command line option and env
-    vars.
+    Get the variable from the environment if `var_value` is `None`.
     """
-    if args.aws_profile:
-        aws_profile = args.aws_profile
-    else:
-        env_var = "AM_AWS_PROFILE"
+    if var_value is None:
+        dbg.dassert_isinstance(env_var, str)
+        _LOG.debug("Using the env var '%s'", env_var)
         dbg.dassert_in(env_var, os.environ, "Env var '%s' is not set", env_var)
-        aws_profile = os.environ[env_var]
+        var_value = os.environ[env_var]
+    else:
+        dbg.dassert_isinstance(var_value, str)
+        _LOG.debug("Using the passed value '%s'", var_value)
+    return var_value  # type: ignore
+
+
+def get_aws_profile(aws_profile: Optional[str]=None) -> str:
+    """
+    Return the AWS profile to access S3, based on:
+    - argument passed
+    - command line option (i.e., `args.aws_profile`)
+    - env vars (i.e., `AM_AWS_PROFILE`)
+    """
+    env_var = "AM_AWS_PROFILE"
+    aws_profile = _get_variable_value(aws_profile, env_var)
     return aws_profile  # type: ignore
 
 
 def get_s3_path_from_env(args: argparse.Namespace) -> Optional[str]:
     """
-    Return the S3 path to use, based on command line option and env vars.
+    Return the S3 path to use, based on:
+    - argument passed
+    - command line option (i.e., `--s3_path` through `args.s3_path`)
+    - env vars (i.e., `AM_S3_BUCKET`)
+    - 
+    command line option and env vars.
     """
-    if args.s3_path:
-        s3_path = args.s3_path
-    else:
-        env_var = "AM_S3_BUCKET"
-        if env_var in os.environ:
-            s3_path = os.environ[env_var]
-        else:
-            s3_path = None
+    env_var = "AM_S3_BUCKET"
+    s3_path = _get_variable_value(s3_path, env_var)
     return s3_path  # type: ignore
 
 
@@ -187,7 +199,7 @@ def get_aws_credentials(
         else:
             env_var_override = True
     if env_var_override:
-        _LOG.warning("Using AWS credentials from env vars")
+        _LOG.debug("Using AWS credentials from env vars")
         # If one variable is defined all should be defined.
         for key, env_var in key_to_env_var.items():
             _LOG.debug("'%s' in env vars=%s", env_var, env_var in os.environ)
@@ -202,7 +214,7 @@ def get_aws_credentials(
         #  env vars from aws_profile. E.g., "am" -> AM_AWS_ACCESS_KEY.
         dbg.dassert_eq(aws_profile, "am")
     else:
-        _LOG.warning("Using AWS credentials from files")
+        _LOG.debug("Using AWS credentials from files")
         # > more ~/.aws/credentials
         # [am]
         # aws_access_key_id=AKI...
@@ -322,11 +334,14 @@ def dassert_s3_not_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
     check_valid_s3_path(s3_path)
     dbg.dassert(not s3fs_.exists(s3_path), "S3 file '%s' already exist", s3_path)
 
+
+# #############################################################################
+# Archive and retrieve data from S3.
 # #############################################################################
 
 
 def archive_data_on_s3(
-    src_dir: str, s3_path: str, aws_profile: str, tag: str = ""
+    src_dir: str, s3_path: str, aws_profile: Optional[str], tag: str = ""
 ) -> str:
     """
     Compress dir `src_dir` and save it on AWS S3 under `s3_path`.
@@ -339,6 +354,7 @@ def archive_data_on_s3(
     :param aws_profile: the profile to use
     :param tag: a tag to add to the name of the file
     """
+    aws_profile = get_aws_profile(aws_profile)
     _LOG.info(
         "# Archiving '%s' to '%s' with aws_profile='%s'",
         src_dir,
@@ -377,18 +393,18 @@ def archive_data_on_s3(
     cmd = f"tar tvf {dst_path}"
     hsyste.system(cmd, log_level=logging.INFO, suppress_output=False)
     # Copy to S3.
-    remote_path = os.path.join(s3_path, os.path.basename(dst_path))
-    _LOG.info("Copying '%s' to '%s'", dst_path, remote_path)
+    s3_file_path = os.path.join(s3_path, os.path.basename(dst_path))
+    _LOG.info("Copying '%s' to '%s'", dst_path, s3_file_path)
     dbg.dassert_file_exists(dst_path)
     s3fs_ = get_s3fs(aws_profile)
     # TODO(gp): Make sure the S3 dir exists.
-    s3fs_.put(dst_path, remote_path)
-    _LOG.info("Data archived on S3 to '%s'", remote_path)
-    return remote_path
+    s3fs_.put(dst_path, s3_file_path)
+    _LOG.info("Data archived on S3 to '%s'", s3_file_path)
+    return s3_file_path
 
 
 def retrieve_archived_data_from_s3(
-    remote_path: str, aws_profile: str, dst_dir: str, incremental: bool = True
+    s3_file_path: str, dst_dir: str, aws_profile: Optional[str] = None, incremental: bool = True
 ) -> str:
     """
     Retrieve archived tgz data from S3.
@@ -396,27 +412,32 @@ def retrieve_archived_data_from_s3(
     E.g.,
     - given a tgz file like `s3://.../experiment.20210802-121908.tgz` (which is the
       result of compressing a dir like `/app/.../experiment.RH1E`)
-    - expand it into a dir `$dst_dir/experiment.RH1E`
+    - expand it into a dir `{dst_dir}/experiment.RH1E`
 
-    :return: dir with the expanded data (e.g., `$dst_dir/experiment.RH1E`)
+    :param s3_file_path: path to the S3 file with the archived data. E.g.,
+       `s3://.../experiment.20210802-121908.tgz`
+    :param dst_dir: directory where expand the archive tarball
+    :return: dir with the expanded data (e.g., `{dst_dir/experiment.RH1E`)
     """
+    aws_profile = get_aws_profile(aws_profile)
     _LOG.info(
         "# Retrieving archive from '%s' to '%s' with aws_profile='%s'",
-        remote_path,
+        s3_file_path,
         dst_dir,
         aws_profile,
     )
+    check_valid_s3_path(s3_file_path)
     # Download the tgz file.
     hio.create_dir(dst_dir, incremental=True)
-    dst_file = os.path.join(dst_dir, os.path.basename(remote_path))
-    _LOG.debug(hprint.to_str("remote_path dst_dir dst_file"))
+    dst_file = os.path.join(dst_dir, os.path.basename(s3_file_path))
+    _LOG.debug(hprint.to_str("s3_file_path dst_dir dst_file"))
     if incremental and os.path.exists(dst_file):
         _LOG.info("Found '%s': skipping downloading", dst_file)
     else:
         s3fs_ = get_s3fs(aws_profile)
-        dassert_s3_exists(remote_path, s3fs_)
-        _LOG.debug("Getting from s3: '%s' -> '%s", remote_path, dst_file)
-        s3fs_.get(remote_path, dst_file)
+        dassert_s3_exists(s3_file_path, s3fs_)
+        _LOG.debug("Getting from s3: '%s' -> '%s", s3_file_path, dst_file)
+        s3fs_.get(s3_file_path, dst_file)
         _LOG.info("Saved to '%s'", dst_file)
     # Expand the tgz file.
     # The output should be the original compressed dir under `{dst_dir}`.
@@ -436,5 +457,5 @@ def retrieve_archived_data_from_s3(
     _LOG.debug(hprint.to_str("enclosing_tgz_dir_name"))
     tgz_dst_dir = os.path.join(dst_dir, enclosing_tgz_dir_name)
     dbg.dassert_dir_exists(tgz_dst_dir)
-    # Return `$dst_dir/experiment.RH1E`.
+    # Return `{dst_dir}/experiment.RH1E`.
     return tgz_dst_dir

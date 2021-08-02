@@ -221,12 +221,19 @@ class TestRunExperimentArchiveOnS3(hut.TestCase):
             _LOG.debug("s3_path=%s", s3_path)
         if check_s3_archive:
             #s3_path = "s3://alphamatic-data/tmp/tmp.20210802-121908.scratch.tgz"
-            tgz_dst_dir = hs3.retrieve_archived_data_from_s3(s3_path, aws_profile, scratch_dir)
+            tgz_dst_dir = hs3.retrieve_archived_data_from_s3(s3_path, scratch_dir, aws_profile)
             _LOG.info("Retrieved to %s", tgz_dst_dir)
             # Check the content.
             cmd = f"ls -1 {tgz_dst_dir}"
             files = hsyste.system_to_files(cmd)
             _LOG.debug("Files are:\n%s", files)
+            # TODO(gp): We should check that the output looks like:
+            # EXPECTED_OUTCOME = r"""# Dir structure
+            #     $SCRATCH_SPACE/result_0
+            #     $SCRATCH_SPACE/result_0/config.pkl
+            #     $SCRATCH_SPACE/result_0/config.txt
+            #     $SCRATCH_SPACE/result_0/run_experiment.0.log
+            #     $SCRATCH_SPACE/result_0/success.txt"""
         if clean_up_s3_archive:
             # Clean up S3.
             s3fs_ = hs3.get_s3fs(aws_profile)

@@ -786,7 +786,7 @@ def config_notebook(sns_set: bool = True) -> None:
     pd.set_option("display.width", 1000)
 
     # Warnings.
-    import helpers.warnings_helpers
+    import helpers.warnings_helpers as warnings_helpers
 
     # Force the linter to keep this import.
-    _ = helpers.warning_helpers
+    _ = warnings_helpers

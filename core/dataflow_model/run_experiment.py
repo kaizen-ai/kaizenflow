@@ -191,10 +191,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
         s3_path = None
     else:
         _LOG.info("Archiving results to S3")
-        aws_profile = hs3.get_aws_profile_from_env(args)
+        aws_profile = hs3.get_aws_profile(args.aws_profile)
         _LOG.debug("aws_profile='%s'", aws_profile)
         # Build the S3 path.
-        s3_path = hs3.get_s3_path_from_env(args)
+        s3_path = hs3.get_s3_path(args.s3_path)
         if s3_path is None:
             # The user didn't specified the path, so we derive it from the
             # credentials or from the env vars.
@@ -209,7 +209,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     }
     ouput_metadata_file = prsr.process_json_output_metadata_args(args, output_metadata)
     _ = ouput_metadata_file
-    # hs3.retrieve_archived_data_from_s3(remote_path, aws_profile, "/tmp")
 
 
 if __name__ == "__main__":

@@ -253,7 +253,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         src_file_name = args.file
         if hs3.is_valid_s3_path(src_file_name):
             # We use AWS CLI to minimize the dependencies from Python packages.
-            aws_profile = hs3.get_aws_profile_from_env(args)
+            aws_profile = hs3.get_aws_profile(args.aws_profile)
             # Check that the file exists.
             cmd = f"aws s3 ls --profile {aws_profile} {src_file_name}"
             hsyste.system(cmd)
@@ -297,8 +297,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         dst_dir = "."
         html_file_name = _export_notebook_to_dir(src_file_name, args.tag, dst_dir)
         # Copy to S3.
-        s3_path = hs3.get_s3_path_from_env(args)
-        aws_profile = hs3.get_aws_profile_from_env(args)
+        s3_path = hs3.get_s3_path(args.s3_path)
+        aws_profile = hs3.get_aws_profile(args.aws_profile)
         s3_file_name = _post_to_s3(html_file_name, s3_path, aws_profile)
         # TODO(gp): Remove the file or save it directly in a temp dir.
         cmd = f"""

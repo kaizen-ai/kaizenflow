@@ -30,6 +30,7 @@ import helpers.io_ as hio
 import helpers.parser as prsr
 import helpers.pickle_ as hpickle
 import helpers.printing as hprint
+import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
@@ -254,48 +255,14 @@ def save_experiment_result_bundle(
     hpickle.to_pickle(obj, path)
 
 
-def get_experiment_subdirs(
-    src_dir: str,
-    selected_idxs: Optional[Iterable[int]] = None,
-) -> Dict[int, str]:
-    # Retrieve all the subdirectories in `src_dir`.
-    subdirs = [d for d in glob.glob(f"{src_dir}/result_*") if os.path.isdir(d)]
-    _LOG.info("Found %d experiment subdirs in '%s'", len(subdirs), src_dir)
-    # Build a mapping from "config_idx" to "experiment_dir".
-    config_idx_to_dir: Dict[int, str] = {}
-    for subdir in subdirs:
-        _LOG.debug("subdir='%s'", subdir)
-        # E.g., `result_123"
-        m = re.match(r"^result_(\d+)$", os.path.basename(subdir))
-        dbg.dassert(m)
-        cast(Match[str], m)
-        key = int(m.group(1))
-        dbg.dassert_not_in(key, config_idx_to_dir)
-        config_idx_to_dir[key] = subdir
-    # Specify the indices of files to load.
-    config_idxs = config_idx_to_dir.keys()
-    if selected_idxs is None:
-        selected_keys = sorted(config_idxs)
-    else:
-        idxs_l = set(selected_idxs)
-        dbg.dassert_is_subset(idxs_l, set(config_idxs))
-        selected_keys = [key for key in sorted(config_idxs) if key in idxs_l]
-    experiment_subdirs = {key: config_idx_to_dir[key] for key in selected_keys}
-    return experiment_subdirs
-
-
 def yield_experiment_artifacts(
-    src_dir: str, file_name: str, selected_idxs: Optional[Iterable[int]] = None
+    src_dir: str, file_name: str, selected_idxs: Optional[Iterable[int]] = None,
+        aws_profile: Optional[str]=None,
 ) -> Iterable[Tuple[int, Any]]:
     _LOG.info("# Load artifacts '%s' from '%s'", file_name, src_dir)
-    dbg.dassert_dir_exists(src_dir)
-    experiment_subdirs = get_experiment_subdirs(src_dir, selected_idxs)
-    dbg.dassert_lte(
-        1,
-        len(experiment_subdirs),
-        "Can't find subdirs in '%s'",
-        experiment_subdirs,
-    )
+    # Get the experiment subdirs.
+    src_dir, experiment_subdirs = _get_experiment_subdirs(src_dir, selected_idxs,
+                                                          aws_profile=aws_profile)
     # Iterate over experiment directories.
     for key, subdir in tqdm(experiment_subdirs.items(), desc="Loading artifacts"):
         dbg.dassert_dir_exists(subdir)
@@ -321,63 +288,31 @@ def yield_experiment_artifacts(
         yield key, res
 
 
-# TODO(gp): We might want also to compare to the original experiments Configs.
-def load_experiment_artifacts(
-    src_dir: str, file_name: str, selected_idxs: Optional[Iterable[int]] = None
-) -> Dict[int, Any]:
-    """
-    Load all the files in dirs under `src_dir` that match `file_name`.
-
-    This function assumes subdirectories withing `dst_dir` have the following
-    structure:
-    ```
-    {dst_dir}/result_{idx}/{file_name}
-    ```
-    where `idx` denotes an integer encoded in the subdirectory name.
-
-    The function returns the contents of the files, indexed by the integer extracted
-    from the subdirectory index name.
-
-    :param src_dir: directory containing subdirectories of experiment results
-        It is the directory that was specified as `--dst_dir` in `run_experiment.py`
-        and `run_notebook.py`
-    :param file_name: the file name within each run results subdirectory to load
-        E.g., `result_bundle.pkl`
-    :param selected_idxs: specific experiment indices to load
-        - `None` (default) loads all available indices
-    """
-    artifact_tuples = yield_experiment_artifacts(
-        src_dir, file_name, selected_idxs
-    )
-    artifacts = collections.OrderedDict()
-    for key, artifact in artifact_tuples:
-        artifacts[key] = artifact
-    return artifacts
-
-
 def yield_rolling_experiment_out_of_sample_df(
     src_dir: str,
     file_name_prefix: str,
     selected_idxs: Optional[Iterable[int]] = None,
+        aws_profile: Optional[str]=None,
 ) -> Dict[int, pd.DataFrame]:
     """
     Load all the files in dirs under `src_dir` that match `file_name_prefix*`.
 
-    Like `load_experiment_artifacts()`, except adapted to picking up prediction
+    Like `_load_experiment_artifacts()`, except adapted to picking up prediction
     `ResultBundle`s from a rolling run. This function stitches together
     out-of-sample predictions from consecutive runs to form a single
     out-of-sample dataframe.
-
-    TODO(*): Factor out code in common with `load_experiment_artifacts()`.
-    TODO(*): Generalize to loading fit `ResultBundle`s.
     """
+    # TODO(Paul): Factor out code in common with `_load_experiment_artifacts()`.
+    # TODO(Paul): Generalize to loading fit `ResultBundle`s.
     _LOG.info("# Load artifacts '%s' from '%s'", file_name_prefix, src_dir)
-    experiment_subdirs = get_experiment_subdirs(src_dir, selected_idxs)
+    # Get the experiment subdirs.
+    src_dir, experiment_subdirs = _get_experiment_subdirs(src_dir, selected_idxs,
+        aws_profile=aws_profile)
     # Iterate over experiment directories.
     for key, subdir in tqdm(experiment_subdirs.items(), desc="Loading artifacts"):
         dbg.dassert_dir_exists(subdir)
-        # TODO(*): Sort these explicitly. Currently we rely on an implicit
-        # order.
+        # TODO(Paul): Sort these explicitly. Currently we rely on an implicit
+        #  order.
         files = glob.glob(os.path.join(src_dir, subdir, file_name_prefix) + "*")
         dfs = []
         for file_name_tmp in files:
@@ -398,3 +333,113 @@ def yield_rolling_experiment_out_of_sample_df(
             dbg.dassert_strictly_increasing_index(df)
             df = csigna.resample(df, rule=dfs[0].index.freq).sum(min_count=1)
             yield key, df
+
+
+# #############################################################################
+
+
+def _retrieve_archived_experiment_artifacts(s3_file_name: str, aws_profile: str,
+                                            scratch_dir: str =".") -> str:
+    """
+    Retrieve a package containing experiment artifacts from S3.
+
+    E.g., s3://alphamatic-data/experiments/experiment.RH1E.v1.20210726-20_09_53.5T.tgz
+
+    :return: path to local dir with the content of the decompressed archive
+    """
+    # Get the file name and the enclosing dir name.
+    dir_name = os.path.basename(os.path.dirname(s3_file_name))
+    if dir_name != "experiments":
+        _LOG.warning("The file name '%s' is not under `experiments` dir", s3_file_name)
+    dbg.dassert_file_extension(s3_file_name, "tgz")
+    tgz_dst_dir = hs3.retrieve_archived_data_from_s3(s3_file_name, scratch_dir, aws_profile)
+    _LOG.info("Retrieved artifacts to '%s'", tgz_dst_dir)
+    return tgz_dst_dir
+
+
+def _get_experiment_subdirs(
+        src_dir: str,
+        selected_idxs: Optional[Iterable[int]] = None,
+        aws_profile: Optional[str] = None,
+) -> Tuple[str, Dict[int, str]]:
+    """
+    Get the subdirectories under `src_dir` with a format like `result_*`.
+
+    This function works also for archived S3 tarballs of experiment results.
+
+    :param src_dir: directory with results or S3 path to archive
+    :param selected_idxs: config indices to consider. `None` means all available
+        experiments
+    :return: the dir used to retrieve the experiment subdirectory,
+        dict `config idx` to `experiment subdirectory`
+    """
+    # Handle the situation where the file is an archived S3 file.
+    if hs3.is_valid_s3_path(src_dir):
+        src_dir = _retrieve_archived_experiment_artifacts(src_dir, aws_profile)
+    # Retrieve all the subdirectories in `src_dir` that store results.
+    dbg.dassert_dir_exists(src_dir)
+    subdirs = [d for d in glob.glob(f"{src_dir}/result_*") if os.path.isdir(d)]
+    _LOG.info("Found %d experiment subdirs in '%s'", len(subdirs), src_dir)
+    # Build a mapping from `config_idx` to `experiment_dir`.
+    config_idx_to_dir: Dict[int, str] = {}
+    for subdir in subdirs:
+        _LOG.debug("subdir='%s'", subdir)
+        # E.g., `result_123"
+        m = re.match(r"^result_(\d+)$", os.path.basename(subdir))
+        dbg.dassert(m)
+        cast(Match[str], m)
+        key = int(m.group(1))
+        dbg.dassert_not_in(key, config_idx_to_dir)
+        config_idx_to_dir[key] = subdir
+    # Select the indices of files to load.
+    config_idxs = config_idx_to_dir.keys()
+    if selected_idxs is None:
+        # All indices.
+        selected_keys = sorted(config_idxs)
+    else:
+        idxs_l = set(selected_idxs)
+        dbg.dassert_is_subset(idxs_l, set(config_idxs))
+        selected_keys = [key for key in sorted(config_idxs) if key in idxs_l]
+    # Subset the experiment subdirs based on the selected keys.
+    experiment_subdirs = {key: config_idx_to_dir[key] for key in selected_keys}
+    dbg.dassert_lte(
+        1,
+        len(experiment_subdirs),
+        "Can't find subdirs in '%s'",
+        experiment_subdirs,
+    )
+    return src_dir, experiment_subdirs
+
+
+# TODO(gp): We might want also to compare to the original experiments Configs.
+def _load_experiment_artifacts(
+        src_dir: str, file_name: str, selected_idxs: Optional[Iterable[int]] = None
+) -> Dict[int, Any]:
+    """
+    Load all the files in dirs under `src_dir` that match `file_name`.
+
+    This function assumes subdirectories under `dst_dir` have the following
+    structure:
+        ```
+        {dst_dir}/result_{idx}/{file_name}
+        ```
+    where `idx` denotes an integer encoded in the subdirectory name.
+
+    The function returns the contents of the files, indexed by the integer extracted
+    from the subdirectory index name.
+
+    :param src_dir: directory containing subdirectories of experiment results
+        It is the directory that was specified as `--dst_dir` in `run_experiment.py`
+        and `run_notebook.py`
+    :param file_name: the file name within each run results subdirectory to load
+        E.g., `result_bundle.pkl`
+    :param selected_idxs: specific experiment indices to load. `None` (default)
+        loads all available indices
+    """
+    artifact_tuples = yield_experiment_artifacts(
+        src_dir, file_name, selected_idxs
+    )
+    artifacts = collections.OrderedDict()
+    for key, artifact in artifact_tuples:
+        artifacts[key] = artifact
+    return artifacts
