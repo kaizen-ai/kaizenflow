@@ -6,17 +6,20 @@ import pytest
 
 import dev_scripts.test.test_run_notebook as trnot
 import helpers.dbg as dbg
+import helpers.io_ as hio
 import helpers.git as git
+import helpers.s3 as hs3
 import helpers.unit_test as hut
+import helpers.parser as hparse
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): We could factor out more common code between here and the corresponding
 #  unit tests in TestRuNotebook*. The difference is only in the command lines.
-class TestRunExperiment1(hut.TestCase):
+class TestRunExperimentSuccess1(hut.TestCase):
     """
-    Run experiments without failures.
+    Run experiments that succeed.
 
     These tests are equivalent to `TestRunNotebook1` but using the
     `run_experiment.py` flow instead of `run_notebook.py`.
@@ -68,7 +71,7 @@ class TestRunExperiment1(hut.TestCase):
 # #############################################################################
 
 
-class TestRunExperiment2(hut.TestCase):
+class TestRunExperimentFail2(hut.TestCase):
     """
     Run experiments that fail.
     """
@@ -101,6 +104,7 @@ class TestRunExperiment2(hut.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
             "--num_threads serial",
+            "--skip_archive_on_S3",
         ]
         #
         exp_pass = False
@@ -119,6 +123,7 @@ class TestRunExperiment2(hut.TestCase):
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
             "--skip_on_error",
             "--num_threads serial",
+            "--skip_archive_on_S3",
         ]
         #
         exp_pass = True
@@ -137,6 +142,7 @@ class TestRunExperiment2(hut.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
             "--num_threads 2",
+            "--skip_archive_on_S3",
         ]
         #
         exp_pass = False
@@ -157,6 +163,7 @@ class TestRunExperiment2(hut.TestCase):
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
             "--skip_on_error",
             "--num_threads 2",
+            "--skip_archive_on_S3",
         ]
         #
         exp_pass = True
@@ -166,9 +173,63 @@ class TestRunExperiment2(hut.TestCase):
 # #############################################################################
 
 
+class TestRunExperimentArchiveOnS3(hut.TestCase):
+    """
+    Run experiments that succeed and archive the results on S3.
+    """
+
+    EXPECTED_OUTCOME = r"""# Dir structure
+        $SCRATCH_SPACE
+        $SCRATCH_SPACE/output_metadata.json
+        $SCRATCH_SPACE/result_0
+        $SCRATCH_SPACE/result_0/config.pkl
+        $SCRATCH_SPACE/result_0/config.txt
+        $SCRATCH_SPACE/result_0/run_experiment.0.log
+        $SCRATCH_SPACE/result_0/success.txt"""
+
+    def test_serial1(self) -> None:
+        """
+        Execute:
+        - two experiments (without any failure)
+        - serially
+        """
+        if False:
+            dst_dir = self.get_scratch_space()
+            output_metadata_file = f"{dst_dir}/output_metadata.json"
+            cmd_opts = [
+                "--config_builder 'dev_scripts.test.test_run_notebook.build_configs3()'",
+                "--num_threads 'serial'",
+                "--s3_path s3://alphamatic-data/tmp",
+                f"--json_output_metadata {output_metadata_file}"
+            ]
+            #
+            exp_pass = True
+            dst_dir = _run_experiment_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
+            _ = dst_dir
+            # Read the metadata back.
+            output_metadata = hparse.read_output_metadata(output_metadata_file)
+            s3_path = output_metadata["s3_path"]
+            _LOG.debug("s3_path=%s", s3_path)
+        #s3_path = "s3://alphamatic-data/tmp/tmp.20210802-121908.scratch.tgz"
+        s3_path = "s3://alphamatic-data/tmp/tmp.20210802-133901.scratch.tgz"
+        aws_profile = "am"
+        dst_file = hs3.retrieve_archived_data_from_s3(s3_path, aws_profile, "/tmp")
+        _LOG.info("Retrieved to %s", dst_file)
+        # Clean up S3.
+        # Clean up locally.
+
+
+# #############################################################################
+
+
 def _run_experiment_helper(
     self: Any, cmd_opts: List[str], exp_pass: bool, exp: str
-) -> None:
+) -> str:
+    """
+    Build, run, and check a `run_experiment` command line.
+
+    :return: destination dir with the results
+    """
     amp_path = git.get_amp_abs_path()
     # Get the executable.
     exec_file = os.path.join(amp_path, "core/dataflow_model/run_experiment.py")
@@ -180,4 +241,5 @@ def _run_experiment_helper(
         "--experiment_builder core.dataflow_model.test.simple_experiment.run_experiment",
         f"--dst_dir {dst_dir}",
     ]
-    trnot.run_cmd_line(self, cmd, cmd_opts, dst_dir, exp, exp_pass)
+    dst_dir = trnot.run_cmd_line(self, cmd, cmd_opts, dst_dir, exp, exp_pass)
+    return dst_dir

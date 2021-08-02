@@ -124,7 +124,7 @@ def _system(
     cmd: str,
     abort_on_error: bool,
     suppress_error: Optional[Any],
-    suppress_output: bool,
+    suppress_output: Union[bool, str],
     blocking: bool,
     wrapper: Optional[Any],
     output_file: Optional[Any],
@@ -153,11 +153,25 @@ def _system(
           logging
     :return: return code (int), output of the command (str)
     """
+    _LOG.debug("##> %s", cmd)
+    _LOG.debug(hprint.to_str("abort_on_error suppress_error suppress_output "
+                 "blocking wrapper output_file num_error_lines tee dry_run log_level"))
     orig_cmd = cmd[:]
+    # Handle `suppress_output`.
+    dbg.dassert_in(suppress_output, ("ON_DEBUG_LEVEL", True, False))
+    if suppress_output == "ON_DEBUG_LEVEL":
+        # print("eff_lev=%s" % eff_level)
+        # print("lev=%s" % logging.DEBUG)
+        _LOG.getEffectiveLevel()
+        # Suppress the output if the verbosity level is higher than DEBUG,
+        # otherwise print.
+        suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
+    _LOG.debug(hprint.to_str("suppress_output"))
     # Prepare the command line.
     cmd = "(%s)" % cmd
     dbg.dassert_imply(tee, output_file is not None)
     if output_file is not None:
+        # Redirect to a file.
         dir_name = os.path.dirname(output_file)
         if not os.path.exists(dir_name):
             _LOG.debug("Dir '%s' doesn't exist: creating", dir_name)
@@ -168,10 +182,12 @@ def _system(
         else:
             cmd += " 2>&1 >%s" % output_file
     else:
+        # Do not redirect to a file.
         cmd += " 2>&1"
+    # Handle `wrapper`.
     if wrapper:
         cmd = wrapper + " && " + cmd
-    #
+    # Handle `log_level`.
     # TODO(gp): Add a check for the valid values.
     # TODO(gp): Make it "ECHO".
     if isinstance(log_level, str):
@@ -180,17 +196,8 @@ def _system(
         _LOG.debug("> %s", cmd)
     else:
         _LOG.log(log_level, "> %s", cmd)
-    #
-    dbg.dassert_in(suppress_output, ("ON_DEBUG_LEVEL", True, False))
-    if suppress_output == "ON_DEBUG_LEVEL":
-        # print("eff_lev=%s" % eff_level)
-        # print("lev=%s" % logging.DEBUG)
-        _LOG.getEffectiveLevel()
-        # Suppress the output if the verbosity level is higher than DEBUG,
-        # otherwise print.
-        suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
-    #
     output = ""
+    # Handle `dry_run`.
     if dry_run:
         _LOG.warning("Not executing cmd\n%s\nas per user request", cmd)
         rc = 0
@@ -210,7 +217,7 @@ def _system(
                     if not line:
                         break
                     if not suppress_output:
-                        print((line.rstrip("\n")))
+                        _LOG.debug("  ==> %s", line.rstrip("\n"))
                     output += line
                 p.stdout.close()  # type: ignore
                 rc = p.wait()
@@ -238,7 +245,7 @@ def _system(
     except OSError as e:
         rc = -1
         _LOG.error("error=%s", str(e))
-    _LOG.debug("  -> rc=%s", rc)
+    _LOG.debug("  ==> rc=%s", rc)
     if abort_on_error and rc != 0:
         msg = (
             "\n"
@@ -263,7 +270,7 @@ def system(
     cmd: str,
     abort_on_error: bool = True,
     suppressed_error: Optional[Any] = None,
-    suppress_output: bool = True,
+    suppress_output: Union[str, bool] = "ON_DEBUG_LEVEL",
     blocking: bool = True,
     wrapper: Optional[Any] = None,
     output_file: Optional[Any] = None,
@@ -322,7 +329,7 @@ def system_to_string(
         cmd,
         abort_on_error=abort_on_error,
         suppress_error=None,
-        suppress_output=True,
+        suppress_output="ON_DEBUG_LEVEL",
         # If we want to see the output the system call must be blocking.
         blocking=True,
         wrapper=wrapper,

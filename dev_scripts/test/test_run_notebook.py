@@ -198,11 +198,11 @@ def _build_config(values: List[bool]) -> List[cconfig.Config]:
     # TODO(gp): -> fail_param
     config_template["fail"] = None
     configs = cconfig.build_multiple_configs(config_template, {("fail",): values})
-    # Duplicate configs are not allowed, so we need to add identifiers to make
+    # Duplicated configs are not allowed, so we need to add identifiers to make
     # each config unique.
     for i, config in enumerate(configs):
         config["id"] = str(i)
-    cast(List[cconfig.Config], configs)
+    configs = cast(List[cconfig.Config], configs)
     return configs
 
 
@@ -224,6 +224,15 @@ def build_configs2() -> List[cconfig.Config]:
     return configs
 
 
+def build_configs3() -> List[cconfig.Config]:
+    """
+    Build 1 config that won't make the notebook to fail.
+    """
+    values = [False]
+    configs = _build_config(values)
+    return configs
+
+
 # #############################################################################
 
 
@@ -234,7 +243,12 @@ def run_cmd_line(
     dst_dir: str,
     exp: str,
     exp_pass: bool,
-) -> None:
+) -> str:
+    """
+    Run run_experiment / run_notebook command line and check return code and output.
+
+    :return: destination dir with the results
+    """
     # Assemble the command line.
     cmd.extend(cmd_opts)
     cmd = " ".join(cmd)
@@ -260,3 +274,4 @@ def run_cmd_line(
     #
     exp = hprint.dedent(exp)
     self.assert_equal(act, exp, fuzzy_match=True)
+    return dst_dir

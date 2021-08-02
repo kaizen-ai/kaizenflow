@@ -22,6 +22,8 @@ except ModuleNotFoundError:
 
 
 import helpers.dbg as dbg  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
+import helpers.io_ as hio # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
+import helpers.printing as hprint # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.system_interaction as hsyste  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.timer as htimer  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
@@ -100,7 +102,7 @@ def add_s3_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         action="store",
         type=str,
         default=None,
-        help="Full S3 path to use (e.g., `s3://alphamatic-data/foobar/notebooks`), "
+        help="Full S3 dir path to use (e.g., `s3://alphamatic-data/foobar/`), "
         "overriding any other setting",
     )
     return parser
@@ -317,36 +319,56 @@ def dassert_s3_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
 
 
 def archive_data_on_s3(
-    src_path: str, s3_path: str, aws_profile: str, tag: str = ""
+    src_dir: str, s3_path: str, aws_profile: str, tag: str = ""
 ) -> str:
     """
-    Compress `src_path` and save it on AWS S3 under `s3_path`.
+    Compress dir `src_dir` and save it on AWS S3 under `s3_path`.
+
+    A timestamp and a tag is added to make the name more informative.
+    The tgz is created so that when expanded a dir with the name `src_dir` is
+    created.
 
     :param s3_path: full S3 path starting with `s3://`
     :param aws_profile: the profile to use
+    :param tag: a tag to add to the name of the file
     """
     _LOG.info(
         "# Archiving '%s' to '%s' with aws_profile='%s'",
-        src_path,
+        src_dir,
         s3_path,
         aws_profile,
     )
-    dbg.dassert_exists(src_path)
+    dbg.dassert_dir_exists(src_dir)
     check_valid_s3_path(s3_path)
     _LOG.info(
-        "The size of '%s' is %s", src_path, hsyste.du(src_path, human_format=True)
+        "The size of '%s' is %s", src_dir, hsyste.du(src_dir, human_format=True)
     )
     # Add a timestamp if needed.
-    dst_path = hsyste.append_timestamp_tag(src_path, tag) + ".tgz"
+    dst_path = hsyste.append_timestamp_tag(src_dir, tag) + ".tgz"
+    # Compress the dir.
+    # > (cd .../TestRunExperimentArchiveOnS3.test_serial1; \
+    #    tar cvzf /app/.../TestRunExperimentArchiveOnS3.test_serial1.tgz tmp.scratch)
+    # tmp.scratch/
+    # tmp.scratch/log.20210802-123758.txt
+    # tmp.scratch/output_metadata.json
+    # ...
     _LOG.debug("Destination path is '%s'", dst_path)
-    # Compress.
     with htimer.TimedScope(logging.INFO, "Compressing"):
-        cmd = f"tar czf {dst_path} {src_path}"
-        _LOG.debug("cmd=%s", cmd)
+        dir_name = os.path.dirname(src_dir)
+        base_name = os.path.basename(src_dir)
+        cmd = f"cd {dir_name} && tar czf {dst_path} {base_name}"
         hsyste.system(cmd)
     _LOG.info(
         "The size of '%s' is %s", dst_path, hsyste.du(dst_path, human_format=True)
     )
+    # Test expanding the tgz. The package should expand to the original dir.
+    # > tar tf /app/.../TestRunExperimentArchiveOnS3.test_serial1.tgz
+    # tmp.scratch/
+    # tmp.scratch/log.20210802-123758.txt
+    # tmp.scratch/output_metadata.json
+    _LOG.info("Testing archive")
+    cmd = f"tar tvf {dst_path}"
+    hsyste.system(cmd, log_level=logging.INFO, suppress_output=False)
     # Copy to S3.
     remote_path = os.path.join(s3_path, os.path.basename(dst_path))
     _LOG.info("Copying '%s' to '%s'", dst_path, remote_path)
@@ -361,27 +383,41 @@ def archive_data_on_s3(
 def retrieve_archived_data_from_s3(
     remote_path: str, aws_profile: str, dst_dir: str, incremental: bool = True
 ) -> str:
+    """
+    Retrieve archived tgz data from S3.
+
+    E.g.,
+    - given a tgz file like `s3://.../tmp.20210802-121908.scratch.tgz` (which is the
+      result of compressing a dir like `/app/.../tmp.scratch`)
+    - expand it into a dir `dst_dir/tmp.scratch`
+    """
     _LOG.info(
         "# Retrieving archive from '%s' to '%s' with aws_profile='%s'",
         remote_path,
         dst_dir,
         aws_profile,
     )
-    #
-    dbg.dassert_dir_exists(dst_dir)
+    # Download the tgz file.
+    hio.create_dir(dst_dir, incremental=True)
     dst_file = os.path.join(dst_dir, os.path.basename(remote_path))
+    _LOG.debug(hprint.to_str("remote_path dst_dir dst_file"))
     if incremental and os.path.exists(dst_file):
         _LOG.info("Found '%s': skipping downloading", dst_file)
     else:
         s3fs_ = get_s3fs(aws_profile)
         dassert_s3_exists(remote_path, s3fs_)
-        s3fs_.get(remote_path, dst_dir)
-    #
-    dbg.dassert_file_exists(dst_file)
-    _LOG.info("Saved to '%s'", dst_file)
-    #
+        _LOG.debug("Getting from s3: '%s' -> '%s", remote_path, dst_file)
+        s3fs_.get(remote_path, dst_file)
+        _LOG.info("Saved to '%s'", dst_file)
+    # Expand the tgz file.
+    # The output should be the original compressed dir under `{dst_dir}`.
+    # E.g.,
+    # > tar tzf /app/.../TestRunExperimentArchiveOnS3.test_serial1/tmp.20210802-133901.scratch.tgz
+    # tmp.scratch/
+    # tmp.scratch/log.20210802-133859.txt
+    # tmp.scratch/result_0/
     with htimer.TimedScope(logging.INFO, "Decompressing"):
-        cmd = f"tar xzf {dst_file} -C {dst_dir}"
-        _LOG.debug("cmd=%s", cmd)
+        dbg.dassert_file_exists(dst_file)
+        cmd = f"cd {dst_dir} && tar xzf {dst_file}"
         hsyste.system(cmd)
     return dst_file

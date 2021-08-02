@@ -20,6 +20,7 @@ import core.config as cconfig
 import core.dataflow_model.utils as cdtfut
 import helpers.datetime_ as hdatetime
 import helpers.dbg as dbg
+import helpers.io_ as hio
 import helpers.git as git
 import helpers.joblib_helpers as hjoblib
 import helpers.parser as prsr
@@ -131,6 +132,7 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--experiment_builder",
         action="store",
+        type=str,
         required=True,
         help="File storing the pipeline to iterate over",
     )
@@ -139,7 +141,14 @@ def _parse() -> argparse.ArgumentParser:
         action="store_true",
         help="Do not archive the results on S3",
     )
+    # parser.add_argument(
+    #     "--json_output",
+    #     type=str,
+    #     action="store",
+    #     help="File storing the output of this script in JSON format",
+    # )
     parser = hs3.add_s3_args(parser)
+    parser = prsr.add_json_output_metadata_args(parser)
     parser = prsr.add_verbosity_arg(parser)
     return parser  # type: ignore
 
@@ -179,21 +188,27 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Archive on S3.
     if args.skip_archive_on_S3:
         _LOG.warning("Skipping archiving results on S3 as per user request")
+        s3_path = None
     else:
         _LOG.info("Archiving results to S3")
         aws_profile = hs3.get_aws_profile_from_env(args)
         _LOG.debug("aws_profile='%s'", aws_profile)
-        #
+        # Build the S3 path.
         s3_path = hs3.get_s3_path_from_env(args)
         if s3_path is None:
             # The user didn't specified the path, so we derive it from the
             # credentials or from the env vars.
             _LOG.debug("Getting s3_path from credentials file")
             s3_path = hs3.get_key_value(aws_profile, "aws_s3_bucket")
-        s3_path = "s3://" + s3_path + "/experiments"
-        #
-        hs3.archive_data_on_s3(dst_dir, s3_path, aws_profile)
-    # To retrieve the data:
+            s3_path = "s3://" + s3_path + "/experiments"
+        # Archive on S3.
+        s3_path = hs3.archive_data_on_s3(dst_dir, s3_path, aws_profile)
+    # Save the metadata.
+    output_metadata = {
+        "s3_path": s3_path
+    }
+    ouput_metadata_file = prsr.process_json_output_metadata_args(args, output_metadata)
+    _ = ouput_metadata_file
     # hs3.retrieve_archived_data_from_s3(remote_path, aws_profile, "/tmp")
 
 
