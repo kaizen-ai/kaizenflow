@@ -286,7 +286,9 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
                     value, self._x_vars, self._y_vars, self._steps_ahead
                 )
             stacked_df = self._stack_dfs(dfs)
-            forward_y_fit_cols = stacked_df.drop(columns=self._x_vars).columns.to_list()
+            forward_y_fit_cols = stacked_df.drop(
+                columns=self._x_vars
+            ).columns.to_list()
             sklm = SkLearnModel(
                 "sklearn",
                 model_func=self._model_func,
