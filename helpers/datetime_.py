@@ -331,7 +331,6 @@ def _handle_incorrect_conversions(
     return None
 
 
-# pylint: disable=too-many-return-statements
 def _shift_to_period_end(  # pylint: disable=too-many-return-statements
     date: str,
 ) -> Optional[Callable[[StrictDatetime], StrictDatetime]]:
