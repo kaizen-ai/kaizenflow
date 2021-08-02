@@ -22,8 +22,8 @@ except ModuleNotFoundError:
 
 
 import helpers.dbg as dbg  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
-import helpers.system_interaction as hsyste # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
-import helpers.timer as htimer # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
+import helpers.system_interaction as hsyste  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
+import helpers.timer as htimer  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
 _LOG = logging.getLogger(__name__)
 
@@ -101,7 +101,7 @@ def add_s3_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         type=str,
         default=None,
         help="Full S3 path to use (e.g., `s3://alphamatic-data/foobar/notebooks`), "
-            "overriding any other setting",
+        "overriding any other setting",
     )
     return parser
 
@@ -115,9 +115,7 @@ def get_aws_profile_from_env(args: argparse.Namespace) -> str:
         aws_profile = args.aws_profile
     else:
         env_var = "AM_AWS_PROFILE"
-        dbg.dassert_in(
-            env_var, os.environ, "Env var '%s' is not set", env_var
-        )
+        dbg.dassert_in(env_var, os.environ, "Env var '%s' is not set", env_var)
         aws_profile = os.environ[env_var]
     return aws_profile  # type: ignore
 
@@ -174,12 +172,16 @@ def get_aws_credentials(
     # If all the AWS credentials are passed through env vars, they override the
     # config file.
     env_var_override = False
-    set_env_vars = [(env_var in os.environ and os.environ[env_var] != "")
-        for env_var in sorted(key_to_env_var.values())]
+    set_env_vars = [
+        (env_var in os.environ and os.environ[env_var] != "")
+        for env_var in sorted(key_to_env_var.values())
+    ]
     if any(set_env_vars):
         if not all(set_env_vars):
-            _LOG.warning("Some but not all AWS env vars are set (%s): ignoring",
-                         str(set_env_vars))
+            _LOG.warning(
+                "Some but not all AWS env vars are set (%s): ignoring",
+                str(set_env_vars),
+            )
         else:
             env_var_override = True
     if env_var_override:
@@ -232,8 +234,8 @@ def get_aws_credentials(
 
 @functools.lru_cache()
 def get_key_value(
-        aws_profile: str,
-        key: str,
+    aws_profile: str,
+    key: str,
 ) -> Optional[str]:
     """
     Retrieve the value corresponding to `key` for the given `aws_profile`.
@@ -244,6 +246,7 @@ def get_key_value(
     dbg.dassert_ne(aws_profile, "")
     env_var = key.capitalize()
     env_var_override = env_var in os.environ and os.environ[env_var] != ""
+    value: Optional[str] = None
     if env_var_override:
         _LOG.debug("Using '%s' from env vars '%s'", key, env_var)
         value = os.environ[env_var]
@@ -256,9 +259,12 @@ def get_key_value(
         if config.has_option(aws_profile, key):
             value = config.get(aws_profile, key)
         else:
-            _LOG.warning("AWS file '%s' doesn't have key '%s' for aws_profile '%s'",
-                         file_name, key, aws_profile)
-            value = None
+            _LOG.warning(
+                "AWS file '%s' doesn't have key '%s' for aws_profile '%s'",
+                file_name,
+                key,
+                aws_profile,
+            )
     _LOG.debug("key='%s' -> value='%s'", key, value)
     return value
 
@@ -292,68 +298,89 @@ def check_valid_s3_path(s3_path: str) -> None:
     """
     Assert if a file is not a S3 path.
     """
-    dbg.dassert(is_valid_s3_path(s3_path),
-                "Invalid S3 file='%s' since it doesn't start with s3://", s3_path)
+    dbg.dassert(
+        is_valid_s3_path(s3_path),
+        "Invalid S3 file='%s' since it doesn't start with s3://",
+        s3_path,
+    )
 
 
-def dassert_s3_exists(s3_path: str, s3fs: s3fs.core.S3FileSystem) -> None:
+def dassert_s3_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
     """
     Assert if an S3 file or dir doesn't exist.
     """
     check_valid_s3_path(s3_path)
-    dbg.dassert(s3fs.exists(s3_path), "S3 file '%s' doesn't exist", s3_path)
+    dbg.dassert(s3fs_.exists(s3_path), "S3 file '%s' doesn't exist", s3_path)
 
 
 # #############################################################################
 
 
-def archive_data_on_s3(src_path: str, s3_path: str, aws_profile: str, tag: str = "") -> str:
+def archive_data_on_s3(
+    src_path: str, s3_path: str, aws_profile: str, tag: str = ""
+) -> str:
     """
     Compress `src_path` and save it on AWS S3 under `s3_path`.
 
     :param s3_path: full S3 path starting with `s3://`
     :param aws_profile: the profile to use
     """
-    _LOG.info("# Archiving '%s' to '%s' with aws_profile='%s'", src_path, s3_path, aws_profile)
+    _LOG.info(
+        "# Archiving '%s' to '%s' with aws_profile='%s'",
+        src_path,
+        s3_path,
+        aws_profile,
+    )
     dbg.dassert_exists(src_path)
     check_valid_s3_path(s3_path)
-    _LOG.info("The size of '%s' is %s", src_path, hsyste.du(src_path, human_format=True))
+    _LOG.info(
+        "The size of '%s' is %s", src_path, hsyste.du(src_path, human_format=True)
+    )
     # Add a timestamp if needed.
     dst_path = hsyste.append_timestamp_tag(src_path, tag) + ".tgz"
     _LOG.debug("Destination path is '%s'", dst_path)
     # Compress.
-    with htimer.TimedScope(logging.INFO, "Compressing") as ts:
+    with htimer.TimedScope(logging.INFO, "Compressing"):
         cmd = f"tar czf {dst_path} {src_path}"
         _LOG.debug("cmd=%s", cmd)
         hsyste.system(cmd)
-    _LOG.info("The size of '%s' is %s", dst_path, hsyste.du(dst_path, human_format=True))
+    _LOG.info(
+        "The size of '%s' is %s", dst_path, hsyste.du(dst_path, human_format=True)
+    )
     # Copy to S3.
     remote_path = os.path.join(s3_path, os.path.basename(dst_path))
     _LOG.info("Copying '%s' to '%s'", dst_path, remote_path)
     dbg.dassert_file_exists(dst_path)
-    s3fs = get_s3fs(aws_profile)
+    s3fs_ = get_s3fs(aws_profile)
     # TODO(gp): Make sure the S3 dir exists.
-    s3fs.put(dst_path, remote_path)
+    s3fs_.put(dst_path, remote_path)
     _LOG.info("Data archived on S3 to '%s'", remote_path)
     return remote_path
 
 
-def retrieve_archived_data_from_s3(remote_path: str, aws_profile: str, dst_dir: str, incremental: bool =True) -> None:
-    _LOG.info("# Retrieving archive from '%s' to '%s' with aws_profile='%s'", remote_path, dst_dir, aws_profile)
+def retrieve_archived_data_from_s3(
+    remote_path: str, aws_profile: str, dst_dir: str, incremental: bool = True
+) -> str:
+    _LOG.info(
+        "# Retrieving archive from '%s' to '%s' with aws_profile='%s'",
+        remote_path,
+        dst_dir,
+        aws_profile,
+    )
     #
     dbg.dassert_dir_exists(dst_dir)
     dst_file = os.path.join(dst_dir, os.path.basename(remote_path))
     if incremental and os.path.exists(dst_file):
         _LOG.info("Found '%s': skipping downloading", dst_file)
     else:
-        s3fs = get_s3fs(aws_profile)
-        dassert_s3_exists(remote_path, s3fs)
-        s3fs.get(remote_path, dst_dir)
+        s3fs_ = get_s3fs(aws_profile)
+        dassert_s3_exists(remote_path, s3fs_)
+        s3fs_.get(remote_path, dst_dir)
     #
     dbg.dassert_file_exists(dst_file)
     _LOG.info("Saved to '%s'", dst_file)
     #
-    with htimer.TimedScope(logging.INFO, "Decompressing") as ts:
+    with htimer.TimedScope(logging.INFO, "Decompressing"):
         cmd = f"tar xzf {dst_file} -C {dst_dir}"
         _LOG.debug("cmd=%s", cmd)
         hsyste.system(cmd)

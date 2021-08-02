@@ -23,7 +23,6 @@ import ib_insync
 
 print(ib_insync.__all__)
 
-import core.explore as exp
 import helpers.dbg as dbg
 import helpers.printing as pri
 import im.ib.data.extract.gateway.utils as ibutils
@@ -40,11 +39,10 @@ ib = ibutils.ib_connect(client_id=100, is_notebook=True)
 # %%
 import logging
 
-#dbg.init_logger(verbosity=logging.DEBUG)
+# dbg.init_logger(verbosity=logging.DEBUG)
 dbg.init_logger(verbosity=logging.INFO)
 
 # %%
-import datetime
 
 # %%
 # start_ts = pd.to_datetime(pd.Timestamp("2018-02-01 06:00:00").tz_localize(tz="America/New_York"))
@@ -64,28 +62,36 @@ start_ts = pd.Timestamp("2019-05-28 15:00").tz_localize(tz="America/New_York")
 end_ts = pd.Timestamp("2019-05-29 15:00").tz_localize(tz="America/New_York")
 barSizeSetting = "1 hour"
 
-bars = ibutils.get_data(ib, contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH)
+bars = ibutils.get_data(
+    ib, contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH
+)
 
 # %%
 start_ts = pd.Timestamp("2019-05-28 15:00").tz_localize(tz="America/New_York")
 end_ts = pd.Timestamp("2019-05-29 15:00").tz_localize(tz="America/New_York")
 barSizeSetting = "1 hour"
 
-bars = ibutils.get_data(ib, contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH)
+bars = ibutils.get_data(
+    ib, contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH
+)
 
 # %%
 start_ts = pd.Timestamp("2019-05-27").tz_localize(tz="America/New_York")
 end_ts = pd.Timestamp("2019-05-28").tz_localize(tz="America/New_York")
 barSizeSetting = "1 hour"
 
-bars = ibutils.get_data(ib, contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH)
+bars = ibutils.get_data(
+    ib, contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH
+)
 
 # %%
 start_ts2 = start_ts - pd.DateOffset(days=1)
 end_ts2 = end_ts + pd.DateOffset(days=1)
 barSizeSetting = "1 hour"
 
-bars2 = ibutils.get_data(ib, contract, start_ts2, end_ts2, barSizeSetting, whatToShow, useRTH)
+bars2 = ibutils.get_data(
+    ib, contract, start_ts2, end_ts2, barSizeSetting, whatToShow, useRTH
+)
 
 # %%
 set(bars.index).issubset(bars2.index)
@@ -94,35 +100,44 @@ set(bars.index).issubset(bars2.index)
 start_ts = pd.Timestamp("2019-04-01 15:00").tz_localize(tz="America/New_York")
 end_ts = pd.Timestamp("2019-05-01 15:00").tz_localize(tz="America/New_York")
 
-df = ibutils.get_historical_data2(ib, contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH)
+df = ibutils.get_historical_data2(
+    ib, contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH
+)
 
 # %%
 import pandas as pd
 
 contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
-whatToShow = 'TRADES'
-durationStr = '2 D'
-barSizeSetting = '1 min'
+whatToShow = "TRADES"
+durationStr = "2 D"
+barSizeSetting = "1 min"
 useRTH = False
-#useRTH = True
+# useRTH = True
 
-#start_ts = pd.to_datetime(pd.Timestamp("2018-02-01"))
+# start_ts = pd.to_datetime(pd.Timestamp("2018-02-01"))
 # Saturday June 1, 2019
-end_ts = pd.to_datetime(pd.Timestamp("2019-05-30 00:00:00") + pd.DateOffset(days=1))
-#end_ts = pd.to_datetime(pd.Timestamp("2019-05-30 18:00:00"))
-#print(start_ts, end_ts)
+end_ts = pd.to_datetime(
+    pd.Timestamp("2019-05-30 00:00:00") + pd.DateOffset(days=1)
+)
+# end_ts = pd.to_datetime(pd.Timestamp("2019-05-30 18:00:00"))
+# print(start_ts, end_ts)
 print("end_ts=", end_ts)
 
-bars = ibutils.req_historical_data(ib, contract, end_ts, durationStr, barSizeSetting, whatToShow, useRTH)
+bars = ibutils.req_historical_data(
+    ib, contract, end_ts, durationStr, barSizeSetting, whatToShow, useRTH
+)
 
-print("durationStr=%s barSizeSetting=%s useRTH=%s" % (durationStr, barSizeSetting, useRTH))
+print(
+    "durationStr=%s barSizeSetting=%s useRTH=%s"
+    % (durationStr, barSizeSetting, useRTH)
+)
 print("bars=[%s, %s]" % (bars.index[0], bars.index[-1]))
 print("diff=", bars.index[-1] - bars.index[0])
 
 bars["close"].plot()
 
 # %%
-pd.date_range(start='2019-04-01 00:00:00', end='2019-05-01 00:00:00', freq='2D')
+pd.date_range(start="2019-04-01 00:00:00", end="2019-05-01 00:00:00", freq="2D")
 
 # %%
 
@@ -140,34 +155,34 @@ import pandas as pd
 ib.reqMarketDataType(4)
 
 if False:
-    contract = ib_insync.Stock('TSLA', 'SMART', 'USD')
-    whatToShow = 'TRADES'
+    contract = ib_insync.Stock("TSLA", "SMART", "USD")
+    whatToShow = "TRADES"
 elif False:
-    contract = ib_insync.Future('ES', '202109', 'GLOBEX')
-    whatToShow = 'TRADES'
+    contract = ib_insync.Future("ES", "202109", "GLOBEX")
+    whatToShow = "TRADES"
 elif True:
     contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
-    whatToShow = 'TRADES'
+    whatToShow = "TRADES"
 else:
-    contract = ib_insync.Forex('EURUSD')
-    whatToShow = 'MIDPOINT'
+    contract = ib_insync.Forex("EURUSD")
+    whatToShow = "MIDPOINT"
 
 if False:
-    durationStr = '1 Y'
-    barSizeSetting = '1 day'
-    #barSizeSetting='1 hour'
+    durationStr = "1 Y"
+    barSizeSetting = "1 day"
+    # barSizeSetting='1 hour'
 else:
-    durationStr = '1 D'
-    barSizeSetting = '1 hour'
+    durationStr = "1 D"
+    barSizeSetting = "1 hour"
 
 print("contract=", contract)
 print("whatToShow=", whatToShow)
 print("durationStr=", durationStr)
 print("barSizeSetting=", barSizeSetting)
 
-#endDateTime = pd.Timestamp("2020-12-11 18:00:00")
+# endDateTime = pd.Timestamp("2020-12-11 18:00:00")
 endDateTime = pd.Timestamp("2020-12-13 18:00:00")
-#endDateTime = ""
+# endDateTime = ""
 
 # Get the datetime of earliest available historical data for the contract.
 start_ts = ib.reqHeadTimeStamp(contract, whatToShow=whatToShow, useRTH=True)
@@ -179,7 +194,8 @@ bars = ib.reqHistoricalData(
     barSizeSetting=barSizeSetting,
     whatToShow=whatToShow,
     useRTH=True,
-    formatDate=1)
+    formatDate=1,
+)
 print("len(bars)=", len(bars))
 print(ib_insync.util.df(bars))
 
@@ -196,15 +212,17 @@ dbg.shutup_chatty_modules(verbose=True)
 import pandas as pd
 
 contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
-whatToShow = 'TRADES'
-durationStr = '2 D'
-barSizeSetting = '1 min'
+whatToShow = "TRADES"
+durationStr = "2 D"
+barSizeSetting = "1 min"
 useRTH = False
 
 start_ts = pd.Timestamp("2018-01-28 15:00").tz_localize(tz="America/New_York")
 end_ts = pd.Timestamp("2018-02-28 15:00").tz_localize(tz="America/New_York")
 
-tasks = ibutils.get_historical_data_workload(contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH)
+tasks = ibutils.get_historical_data_workload(
+    contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH
+)
 print(len(tasks))
 
 ibutils.get_historical_data2(ib, tasks)
@@ -223,13 +241,12 @@ print(ib_insync.__all__)
 # %%
 import logging
 
-import core.explore as exp
 import helpers.dbg as dbg
 import helpers.printing as pri
 import im.ib.data.extract.gateway.utils as ibutils
 
 dbg.init_logger(verbosity=logging.DEBUG)
-#dbg.init_logger(verbosity=logging.INFO)
+# dbg.init_logger(verbosity=logging.INFO)
 
 import pandas as pd
 
@@ -267,16 +284,17 @@ ib = ibutils.ib_connect(8, is_notebook=True)
 
 # %%
 contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
-whatToShow = 'TRADES'
-durationStr = '2 D'
-barSizeSetting = '1 hour'
+whatToShow = "TRADES"
+durationStr = "2 D"
+barSizeSetting = "1 hour"
 useRTH = False
 
 start_ts = pd.Timestamp("2018-01-28 15:00").tz_localize(tz="America/New_York")
 end_ts = pd.Timestamp("2018-02-01 15:00").tz_localize(tz="America/New_York")
 
-tasks = ibutils.get_historical_data_workload(ib, contract, start_ts, end_ts, barSizeSetting,
-              whatToShow, useRTH)
+tasks = ibutils.get_historical_data_workload(
+    ib, contract, start_ts, end_ts, barSizeSetting, whatToShow, useRTH
+)
 
 df = ibutils.get_historical_data2(tasks)
 
@@ -286,9 +304,16 @@ df = ibutils.get_historical_data2(tasks)
 df
 
 # %%
-df2 = ibutils.get_historical_data_with_IB_loop(ib, contract, start_ts, end_ts, durationStr,
-                                                      barSizeSetting,
-                                                      whatToShow, useRTH)
+df2 = ibutils.get_historical_data_with_IB_loop(
+    ib,
+    contract,
+    start_ts,
+    end_ts,
+    durationStr,
+    barSizeSetting,
+    whatToShow,
+    useRTH,
+)
 
 # %%
 pri.print(df.index)
@@ -296,15 +321,23 @@ pri.print(df.index)
 # %%
 contract = ib_insync.ContFuture("ES", "GLOBEX", "USD")
 whatToShow = "TRADES"
-durationStr = '1 D'
-barSizeSetting = '1 hour'
+durationStr = "1 D"
+barSizeSetting = "1 hour"
 # 2021-02-18 is a Thursday and it's full day.
 start_ts = pd.Timestamp("2021-02-17 00:00:00")
 end_ts = pd.Timestamp("2021-02-18 23:59:59")
 useRTH = False
-df, return_ts_seq = ibutils.get_historical_data_with_IB_loop(ib, contract, start_ts, end_ts, durationStr,
-                                              barSizeSetting,
-                                              whatToShow, useRTH, return_ts_seq=True)
+df, return_ts_seq = ibutils.get_historical_data_with_IB_loop(
+    ib,
+    contract,
+    start_ts,
+    end_ts,
+    durationStr,
+    barSizeSetting,
+    whatToShow,
+    useRTH,
+    return_ts_seq=True,
+)
 print(return_ts_seq)
 
 # %%

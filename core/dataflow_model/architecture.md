@@ -83,7 +83,7 @@
       `config_idx`
 
 - An example of running an experiment is:
-  ```
+  ```bash
   > run_experiment.py \
     --experiment_builder "core.dataflow_model.master_experiment.run_experiment" \
     --config_builder "dataflow_lm.RH1E.task89_config_builder.build_15min_ar_model_configs()" \

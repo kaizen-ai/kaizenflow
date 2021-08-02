@@ -7,7 +7,7 @@ Calculate execution time of imports.
 import argparse
 import logging
 import re
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 from tqdm import tqdm
 
@@ -31,7 +31,7 @@ class ImportTimeChecker:
         """
         self.dir_name = dir_name
         # Store all the modules with execution time (module: elapsed_time).
-        self.checked_modules = {}
+        self.checked_modules: Dict[str, float] = {}
         # instance of class for measure elapsed time.
         # Pattern for finding modules in file.
         self.match_pattern = (
@@ -85,7 +85,7 @@ class ImportTimeChecker:
         for module in tqdm(modules):
             self.measure_time(module)
 
-    def print_modules_time(self, sort=False) -> None:
+    def print_modules_time(self, sort: bool=False) -> None:
         """
         Print all measured modules.
 
@@ -112,11 +112,7 @@ class ImportTimeChecker:
         Return self.checled_modules in list format
         :return: list
         """
-        output = [
-            (module, elapsed_time)
-            for module, elapsed_time in self.checked_modules.items()
-        ]
-        return output
+        return list(self.checked_modules.items())
 
     def _sort_by_time(self) -> None:
         """
@@ -124,7 +120,7 @@ class ImportTimeChecker:
         :return: None
         """
         output = sorted(self.checked_modules.items(), key=lambda x: x[1])
-        self.checked_modules = {module: time for module, time in output}
+        self.checked_modules = dict(output)
 
 
 def _parse() -> argparse.ArgumentParser:

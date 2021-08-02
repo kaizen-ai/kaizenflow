@@ -305,7 +305,7 @@ class Test_append_timestamp_tag1(hut.TestCase):
         tag = ""
         act = hsyste.append_timestamp_tag(file_name, tag)
         # /foo/bar/patch.amp.8c5a2da9.20210726-15_11_25.tgz
-        exp = "/foo/bar/patch.amp.8c5a2da9.\S+.tgz"
+        exp = r"/foo/bar/patch.amp.8c5a2da9.\S+.tgz"
         self.assertRegex(act, exp)
 
     def test_no_timestamp2(self) -> None:
@@ -316,7 +316,7 @@ class Test_append_timestamp_tag1(hut.TestCase):
         tag = "hello"
         act = hsyste.append_timestamp_tag(file_name, tag)
         # /foo/bar/patch.amp.8c5a2da9.20210726-15_11_25.hello.tgz
-        exp = "/foo/bar/patch.amp.8c5a2da9.\S+.hello.tgz"
+        exp = r"/foo/bar/patch.amp.8c5a2da9.\S+.hello.tgz"
         self.assertRegex(act, exp)
 
     def test1(self) -> None:

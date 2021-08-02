@@ -95,6 +95,7 @@ class Test_git_hooks_utils1(hut.TestCase):
         # Check.
         exp = r"""
         foobar.txt:1: Found 'SU'
+        foobar.txt:3: Found 'SU'
         foobar.txt:4: Found 'SU'"""
         exp = hprint.dedent(exp)
         self.assert_equal(act, exp)

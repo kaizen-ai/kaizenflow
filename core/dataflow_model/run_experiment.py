@@ -104,7 +104,7 @@ def _get_workload(args: argparse.Namespace) -> hjoblib.Workload:
     # Prepare the tasks.
     tasks = []
     for config in configs:
-        task = (
+        task: hjoblib.Task = (
             # args.
             (config,),
             # kwargs.
@@ -192,10 +192,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
             s3_path = hs3.get_key_value(aws_profile, "aws_s3_bucket")
         s3_path = "s3://" + s3_path + "/experiments"
         #
-        file_name = hs3.archive_data_on_s3(dst_dir, s3_path, aws_profile)
-
-    if True:
-        hs3.retrieve_archived_data_from_s3(remote_path, aws_profile, "/tmp")
+        hs3.archive_data_on_s3(dst_dir, s3_path, aws_profile)
+    # To retrieve the data:
+    # hs3.retrieve_archived_data_from_s3(remote_path, aws_profile, "/tmp")
 
 
 if __name__ == "__main__":

@@ -274,7 +274,7 @@ def _get_files_to_process(
 # Copied from helpers.datetime_ to avoid dependency from pandas.
 
 
-def _get_ET_timestamp(utc: bool = False) -> str:
+def _get_ET_timestamp() -> str:
     # The timezone depends on how the shell is configured.
     timestamp = datetime.datetime.now()
     return timestamp.strftime("%Y%m%d_%H%M%S")

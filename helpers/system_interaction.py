@@ -655,10 +655,11 @@ def du(path_name: str, human_format: bool = False) -> Union[int, str]:
     _LOG.debug("txt=%s", txt)
     # `du` returns size in KB.
     size_in_bytes = int(txt) * 1024
+    size: Union[int, str]
     if human_format:
-        size: str = hintro.format_size(size_in_bytes)
+        size = hintro.format_size(size_in_bytes)
     else:
-        size: int = size_in_bytes
+        size = size_in_bytes
     return size
 
 
@@ -757,14 +758,14 @@ def has_timestamp(file_name: str) -> bool:
     # E.g., %Y%m%d-%H_%M_%S
     # The separator is _, -, or nothing.
     sep = "[-_]?"
-    regex = sep.join(["\d{4}", "\d{2}", "\d{2}", "\d{2}", "\d{2}", "\d{2}"])
+    regex = sep.join([r"\d{4}", r"\d{2}", r"\d{2}", r"\d{2}", r"\d{2}", r"\d{2}"])
     _LOG.debug("regex=%s", regex)
     occurrences = re.findall(regex, file_name)
     dbg.dassert_lte(
         len(occurrences), 1, "Found more than one timestamp", str(occurrences)
     )
     m = re.search("(" + regex + ")", file_name)
-    has_timestamp_ = bool(m)
+    has_timestamp_ = m is not None
     if has_timestamp_:
         _LOG.debug("Found a timestamp '%s' in '%s'", m.group(1), file_name)
     return has_timestamp_
