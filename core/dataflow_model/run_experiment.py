@@ -192,8 +192,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.info("Archiving results to S3")
         aws_profile = hs3.get_aws_profile(args.aws_profile)
         _LOG.debug("aws_profile='%s'", aws_profile)
-        # Build the S3 path.
-        s3_path = hs3.get_s3_path(args.s3_path)
+        # Get the S3 path from command line.
+        s3_path = args.s3_path
+        _LOG.debug("s3_path=%s", s3_path)
         if s3_path is None:
             # The user didn't specified the path, so we derive it from the
             # credentials or from the env vars.

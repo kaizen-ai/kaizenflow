@@ -112,6 +112,7 @@ def _get_variable_value(var_value: Optional[str], env_var: str) -> str:
     """
     Get the variable from the environment if `var_value` is `None`.
     """
+    _LOG.debug("var_value=%s", var_value)
     if var_value is None:
         dbg.dassert_isinstance(env_var, str)
         _LOG.debug("Using the env var '%s'", env_var)
