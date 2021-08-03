@@ -159,14 +159,6 @@ class Test_execute_with_real_time_loop(hut.TestCase):
         # Align on a even second.
         cdrt.align_on_even_second()
         #
-        # sleep_interval_in_secs = 1.0
-        # num_iterations = 3
-        # rrt = cdrt.ReplayRealTime(
-        #     pd.Timestamp("2021-07-27 9:30:00", tz=hdatetime.get_ET_tz())
-        # )
-        # get_current_time = rrt.get_replayed_current_time
-        # need_to_execute = cdrt.execute_every_2_seconds
-        #
         execute_rt_loop_kwargs = get_test_execute_rt_loop_kwargs()
         execution_trace, results = cdrt.execute_with_real_time_loop(
             **execute_rt_loop_kwargs,
@@ -185,6 +177,22 @@ class Test_execute_with_real_time_loop(hut.TestCase):
         num_it=2 current_time=20100104_0930013 need_execute=False
         num_it=3 current_time=20100104_0930023 need_execute=True"""
         exp = hprint.dedent(exp)
+        # Remove the seconds since this is a real-time test and thus sensitive
+        # to CPU load.
+        # num_it=2 current_time=20100104_0930013 need_execute=False
+        # ->
+        # num_it=2 current_time=20100104_093001 need_execute=False
+        def _remove_secs(txt: str) -> str:
+            txt_tmp = []
+            for line in txt.split("\n"):
+                data = line.split(" ")
+                # Remove the last char of `current_time=20100104_0930000`.
+                data[1] = data[1][:-1]
+                line_tmp = " ".join(data)
+                txt_tmp.append(line_tmp)
+            return "\n".join(txt_tmp)
+        act = _remove_secs(act)
+        exp = _remove_secs(exp)
         self.assert_equal(act, exp)
 
     @pytest.mark.slow("It takes around 6 secs")
