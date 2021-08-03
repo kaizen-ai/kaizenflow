@@ -36,7 +36,6 @@ class TestReturnsBuilder(hut.TestCase):
         from im.kibot.data.config import S3_PREFIX
 
         # TODO(gp): We could use directly a DiskDataSource here.
-        # TODO(gp): We should use one of the
         ticker = "AAPL"
         config = {
             "func": dtf.load_data_from_disk,
