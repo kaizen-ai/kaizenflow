@@ -90,7 +90,7 @@ def _process_timestamp(
     return timestamp
 
 
-def _load_kibot_data(
+def load_kibot_data(
     symbol: str,
     frequency: Union[str, vkibot.Frequency],
     contract_type: Union[str, vkibot.ContractType],
@@ -162,7 +162,7 @@ class KibotDataReader(cdataf.DataSource):
     def _lazy_load(self) -> None:
         if self.df is not None:
             return
-        df = _load_kibot_data(
+        df = load_kibot_data(
             symbol=self._symbol,
             frequency=self._frequency,
             contract_type=self._contract_type,
