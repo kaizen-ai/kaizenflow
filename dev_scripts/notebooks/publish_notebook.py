@@ -18,7 +18,7 @@ This script performs several actions on a Jupyter notebook, such as:
   ```
   > publish_notebook.py \
       --file nlp/notebooks/PTask768_event_filtering.ipynb \
-      --action publish_on_S3
+      --action publish_on_s3
   ```
 """
 
@@ -241,7 +241,8 @@ def _parse() -> argparse.ArgumentParser:
 - publish_on_webserver: publish notebook through a webservice
 """,
     )
-    prsr.add_verbosity_arg(parser)
+    parser = hs3.add_s3_args(parser)
+    parser = prsr.add_verbosity_arg(parser)
     return parser
 
 
@@ -297,8 +298,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
         dst_dir = "."
         html_file_name = _export_notebook_to_dir(src_file_name, args.tag, dst_dir)
         # Copy to S3.
-        s3_path = hs3.get_s3_path(args.s3_path)
         aws_profile = hs3.get_aws_profile(args.aws_profile)
+        _LOG.debug("aws_profile='%s'", aws_profile)
+        # Get the S3 path from command line.
+        s3_path = args.s3_path
+        _LOG.debug("s3_path=%s", s3_path)
+        if s3_path is None:
+            # The user didn't specified the path, so we derive it from the
+            # credentials or from the env vars.
+            _LOG.debug("Getting s3_path from credentials file")
+            s3_path = hs3.get_key_value(aws_profile, "aws_s3_bucket")
+        s3_path = "s3://" + s3_path + "/notebooks"
         s3_file_name = _post_to_s3(html_file_name, s3_path, aws_profile)
         # TODO(gp): Remove the file or save it directly in a temp dir.
         cmd = f"""

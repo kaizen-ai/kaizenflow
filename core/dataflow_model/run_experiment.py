@@ -140,12 +140,6 @@ def _parse() -> argparse.ArgumentParser:
         action="store_true",
         help="Do not archive the results on S3",
     )
-    # parser.add_argument(
-    #     "--json_output",
-    #     type=str,
-    #     action="store",
-    #     help="File storing the output of this script in JSON format",
-    # )
     parser = hs3.add_s3_args(parser)
     parser = prsr.add_json_output_metadata_args(parser)
     parser = prsr.add_verbosity_arg(parser)
