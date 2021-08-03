@@ -15,7 +15,7 @@ import signal
 import subprocess
 import sys
 import time
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, List, Match, Optional, Tuple, Union, cast
 
 import helpers.dbg as dbg
 import helpers.introspection as hintro
@@ -404,7 +404,7 @@ def to_absolute_paths(files: List[str]) -> List[str]:
     return files
 
 
-def remove_files_non_present(files: List[str]) -> List[str]:
+def _remove_files_non_present(files: List[str]) -> List[str]:
     """
     Return list of files from `files` excluding the files that don't exist.
     """
@@ -466,14 +466,14 @@ def select_result_file_from_list(files: List[str], mode: str) -> List[str]:
 def system_to_files(
     cmd: str,
     dir_name: Optional[str] = None,
-    remove_files_non_present_: bool = False,
+    remove_files_non_present: bool = False,
     mode: str = "return_all_results",
 ) -> List[str]:
     """
     Execute command `cmd` in `dir_name` and return the output as a list of
     strings.
 
-    :param remove_files_non_present_: remove files that don't exist on the filesystem
+    :param remove_files_non_present: remove files that don't exist on the filesystem
     :param mode: like in `select_result_file_from_list()`
     """
     if dir_name is None:
@@ -491,8 +491,8 @@ def system_to_files(
     files = [os.path.join(dir_name, f) for f in files]
     files: List[str] = list(map(os.path.normpath, files))  # type: ignore
     # Remove non-existent files, if needed.
-    if remove_files_non_present_:
-        files = remove_files_non_present(files)
+    if remove_files_non_present:
+        files = _remove_files_non_present(files)
     # Process output.
     files = select_result_file_from_list(files, mode)
     return files
