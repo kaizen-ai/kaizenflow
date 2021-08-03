@@ -3,6 +3,7 @@ Import as:
 
 import core.dataflow_source_nodes as dtfsn
 """
+
 import datetime
 import logging
 from typing import Any, Dict, List, Optional, Union
@@ -71,11 +72,14 @@ def data_source_node_factory(
 
 # #############################################################################
 
+# TODO(gp): Not sure about all these nodes below. We have too many ways of
+#  doing the same thing. They go through IM. Then there are other nodes that
+#  go directly to disk bypassing IM.
 
 # TODO(gp): Move all the nodes somewhere else (e.g., sources.py)?
 
 
-def process_timestamp(
+def _process_timestamp(
     timestamp: Optional[_PANDAS_DATE_TYPE],
 ) -> Optional[pd.Timestamp]:
     if timestamp is pd.NaT:
@@ -86,7 +90,7 @@ def process_timestamp(
     return timestamp
 
 
-def load_kibot(
+def _load_kibot_data(
     symbol: str,
     frequency: Union[str, vkibot.Frequency],
     contract_type: Union[str, vkibot.ContractType],
@@ -102,8 +106,8 @@ def load_kibot(
         if isinstance(contract_type, str)
         else contract_type
     )
-    start_date = process_timestamp(start_date)
-    end_date = process_timestamp(end_date)
+    start_date = _process_timestamp(start_date)
+    end_date = _process_timestamp(end_date)
     df_out = vkibot.KibotS3DataLoader().read_data(
         exchange="CME",
         asset_class=vkibot.AssetClass.Futures,
@@ -148,9 +152,6 @@ class KibotDataReader(cdataf.DataSource):
         self._nrows = nrows
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
-        """
-        :return: training set as df
-        """
         self._lazy_load()
         return super().fit()  # type: ignore[no-any-return]
 
@@ -161,7 +162,7 @@ class KibotDataReader(cdataf.DataSource):
     def _lazy_load(self) -> None:
         if self.df is not None:
             return
-        df = load_kibot(
+        df = _load_kibot_data(
             symbol=self._symbol,
             frequency=self._frequency,
             contract_type=self._contract_type,
