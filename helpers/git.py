@@ -126,6 +126,8 @@ def is_amp() -> bool:
     return _is_repo("amp")
 
 
+# This should not be used. If a test is specific of a repo it should be moved to
+# that repo.
 def is_lem() -> bool:
     """
     Return whether we are inside `lm` and `lm` is a sub-module.

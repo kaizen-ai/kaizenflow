@@ -41,10 +41,6 @@ class Test_git_submodule1(hut.TestCase):
         func_call = "git.is_amp()"
         _execute_func_call(func_call)
 
-    def test_is_lem(self) -> None:
-        func_call = "git.is_lem()"
-        _execute_func_call(func_call)
-
     def test_get_path_from_supermodule1(self) -> None:
         func_call = "git.get_path_from_supermodule()"
         _execute_func_call(func_call)
@@ -277,16 +273,6 @@ class Test_purify_docker_file_from_git_client1(hut.TestCase):
         exp = "helpers/test/test_git.py"
         self._helper(super_module, exp_found, exp)
 
-    @pytest.mark.skipif(not git.is_lem(), reason="Run only in lm")
-    def test3(self) -> None:
-        """
-        Test for a file in the repo with respect to the internal sub-module.
-        """
-        super_module = True
-        exp_found = True
-        exp = "amp/helpers/test/test_git.py"
-        self._helper(super_module, exp_found, exp)
-
     def _helper(self, super_module: bool, exp_found: bool, exp: str) -> None:
         # Use this file since `purify_docker_file_from_git_client()` needs to do
         # a `find` in the repo so we need to have a fixed file structure.
@@ -327,16 +313,6 @@ class Test_purify_docker_file_from_git_client2(hut.TestCase):
         super_module = False
         exp_found = True
         exp = "helpers/test/test_git.py"
-        self._helper(super_module, exp_found, exp)
-
-    @pytest.mark.skipif(not git.is_lem(), reason="Run only in lm")
-    def test3(self) -> None:
-        """
-        Test for a file in the repo with respect to the internal sub-module.
-        """
-        super_module = True
-        exp_found = True
-        exp = "amp/helpers/test/test_git.py"
         self._helper(super_module, exp_found, exp)
 
     def _helper(self, super_module: bool, exp_found: bool, exp: str) -> None:

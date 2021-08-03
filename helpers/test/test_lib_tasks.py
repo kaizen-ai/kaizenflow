@@ -268,6 +268,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "gh_issue_title(ctx, 1)"
         self._check_output(target)
 
+    @pytest.mark.skipif(not git.is_amp(), reason="Only run in amp")
     def test_gh_workflow_list(self) -> None:
         _gh_login()
         target = "gh_workflow_list(ctx, branch='master')"
@@ -663,34 +664,6 @@ class Test_build_run_command_line1(hut.TestCase):
             r'pytest -m "not slow and not superslow" --cov=. --cov-branch'
             r" --cov-report term-missing --cov-report html --collect-only"
         )
-        self.assert_equal(act, exp)
-
-    @pytest.mark.skipif(not git.is_lem(), reason="Only run in lm")
-    def test_run_fast_tests3(self) -> None:
-        """
-        Skip submodules.
-        """
-        pytest_opts = ""
-        pytest_mark = ""
-        dir_name = ""
-        skip_submodules = True
-        coverage = False
-        collect_only = False
-        tee_to_file = False
-        #
-        skipped_tests = ""
-        act = ltasks._build_run_command_line(
-            pytest_opts,
-            pytest_mark,
-            dir_name,
-            skip_submodules,
-            coverage,
-            collect_only,
-            tee_to_file,
-            #
-            skipped_tests,
-        )
-        exp = r"pytest --ignore amp"
         self.assert_equal(act, exp)
 
     @pytest.mark.skipif(not git.is_amp(), reason="Only run in amp")
