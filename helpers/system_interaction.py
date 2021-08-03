@@ -154,8 +154,12 @@ def _system(
     :return: return code (int), output of the command (str)
     """
     _LOG.debug("##> %s", cmd)
-    _LOG.debug(hprint.to_str("abort_on_error suppress_error suppress_output "
-                 "blocking wrapper output_file num_error_lines tee dry_run log_level"))
+    _LOG.debug(
+        hprint.to_str(
+            "abort_on_error suppress_error suppress_output "
+            "blocking wrapper output_file num_error_lines tee dry_run log_level"
+        )
+    )
     orig_cmd = cmd[:]
     # Handle `suppress_output`.
     dbg.dassert_in(suppress_output, ("ON_DEBUG_LEVEL", True, False))
@@ -462,7 +466,7 @@ def select_result_file_from_list(files: List[str], mode: str) -> List[str]:
 def system_to_files(
     cmd: str,
     dir_name: Optional[str] = None,
-    remove_files_non_present_: bool=False,
+    remove_files_non_present_: bool = False,
     mode: str = "return_all_results",
 ) -> List[str]:
     """
@@ -772,6 +776,7 @@ def has_timestamp(file_name: str) -> bool:
     m = re.search("(" + regex + ")", file_name)
     has_timestamp_ = m is not None
     if has_timestamp_:
+        m = cast(Match[str], m)
         _LOG.debug("Found a timestamp '%s' in '%s'", m.group(1), file_name)
     return has_timestamp_
 

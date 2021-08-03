@@ -369,13 +369,15 @@ Number of threads to use:
 # Command line options for metadata output.
 # #############################################################################
 
+
 def add_json_output_metadata_args(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     """
     Add arguments related to storing the output metadata from a script.
 
-    This data can be read / used by other scripts to post-process a script results.
+    This data can be read / used by other scripts to post-process a
+    script results.
     """
     parser.add_argument(
         "--json_output_metadata",
@@ -402,12 +404,14 @@ def process_json_output_metadata_args(
     dbg.dassert_isinstance(output_metadata, dict)
     file_name = args.json_output_metadata
     if not file_name.endswith(".json"):
-        _LOG.warning("The output metadata file '%s' doesn't end in .json: adding it",
-                     file_name)
+        _LOG.warning(
+            "The output metadata file '%s' doesn't end in .json: adding it",
+            file_name,
+        )
         file_name += ".json"
     hio.to_json(file_name, output_metadata)
     _LOG.info("Saved output metadata in file '%s'", file_name)
-    return output_metadata
+    return file_name
 
 
 def read_output_metadata(output_metadata_file: str) -> OutputMetadata:

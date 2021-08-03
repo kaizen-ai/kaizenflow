@@ -236,35 +236,7 @@ def build_configs3() -> List[cconfig.Config]:
 # #############################################################################
 
 
-def run_cmd_line(
-    self: Any,
-    cmd: List[str],
-    cmd_opts: List[str],
-    dst_dir: str,
-    expected: str,
-    expected_pass: bool,
-) -> str:
-    """
-    Run run_experiment / run_notebook command line and check return code and output.
-
-    :return: destination dir with the results
-    """
-    # Assemble the command line.
-    cmd.extend(cmd_opts)
-    cmd = " ".join(cmd)
-    # Run command.
-    abort_on_error = expected_pass
-    _LOG.debug("expected_pass=%s abort_on_error=%s", expected_pass, abort_on_error)
-    rc = si.system(cmd, abort_on_error=abort_on_error, suppress_output=False)
-    if expected_pass:
-        self.assertEqual(rc, 0)
-    else:
-        self.assertNotEqual(rc, 0)
-    compare_dir_signature(self, dst_dir, expected)
-    return dst_dir
-
-
-def compare_dir_signature(self, dir_name: str, expected: str) -> None:
+def _compare_dir_signature(self: Any, dir_name: str, expected: str) -> None:
     """
     Compute the signature of dir `dir_name` to the expected value `expected`.
     """
@@ -281,3 +253,31 @@ def compare_dir_signature(self, dir_name: str, expected: str) -> None:
     actual = hut.filter_text(r"^.*/log\.\S+\.txt$", actual)
     expected = hprint.dedent(expected)
     self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+def run_cmd_line(
+    self: Any,
+    cmd: List[str],
+    cmd_opts: List[str],
+    dst_dir: str,
+    expected: str,
+    expected_pass: bool,
+) -> None:
+    """
+    Run run_experiment / run_notebook command line and check return code and
+    output.
+    """
+    # Assemble the command line.
+    cmd.extend(cmd_opts)
+    cmd = " ".join(cmd)
+    # Run command.
+    abort_on_error = expected_pass
+    _LOG.debug(
+        "expected_pass=%s abort_on_error=%s", expected_pass, abort_on_error
+    )
+    rc = si.system(cmd, abort_on_error=abort_on_error, suppress_output=False)
+    if expected_pass:
+        self.assertEqual(rc, 0)
+    else:
+        self.assertNotEqual(rc, 0)
+    _compare_dir_signature(self, dst_dir, expected)

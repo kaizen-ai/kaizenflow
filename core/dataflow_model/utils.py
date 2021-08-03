@@ -41,8 +41,6 @@ import helpers.printing as hprint
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
-# TODO(gp): Do not merge this.
-_LOG.debug = _LOG.info
 
 
 def add_experiment_arg(
@@ -266,13 +264,16 @@ def save_experiment_result_bundle(
 
 
 def yield_experiment_artifacts(
-    src_dir: str, file_name: str, selected_idxs: Optional[Iterable[int]] = None,
-        aws_profile: Optional[str]=None,
+    src_dir: str,
+    file_name: str,
+    selected_idxs: Optional[Iterable[int]] = None,
+    aws_profile: Optional[str] = None,
 ) -> Iterable[Tuple[int, Any]]:
     _LOG.info("# Load artifacts '%s' from '%s'", file_name, src_dir)
     # Get the experiment subdirs.
-    src_dir, experiment_subdirs = _get_experiment_subdirs(src_dir, selected_idxs,
-                                                          aws_profile=aws_profile)
+    src_dir, experiment_subdirs = _get_experiment_subdirs(
+        src_dir, selected_idxs, aws_profile=aws_profile
+    )
     # Iterate over experiment directories.
     for key, subdir in tqdm(experiment_subdirs.items(), desc="Loading artifacts"):
         dbg.dassert_dir_exists(subdir)
@@ -302,22 +303,23 @@ def yield_rolling_experiment_out_of_sample_df(
     src_dir: str,
     file_name_prefix: str,
     selected_idxs: Optional[Iterable[int]] = None,
-        aws_profile: Optional[str]=None,
+    aws_profile: Optional[str] = None,
 ) -> Dict[int, pd.DataFrame]:
     """
     Load all the files in dirs under `src_dir` that match `file_name_prefix*`.
 
-    Like `_load_experiment_artifacts()`, except adapted to picking up prediction
-    `ResultBundle`s from a rolling run. This function stitches together
-    out-of-sample predictions from consecutive runs to form a single
-    out-of-sample dataframe.
+    Like `_load_experiment_artifacts()`, except adapted to picking up
+    prediction `ResultBundle`s from a rolling run. This function
+    stitches together out-of-sample predictions from consecutive runs to
+    form a single out-of-sample dataframe.
     """
     # TODO(Paul): Factor out code in common with `_load_experiment_artifacts()`.
     # TODO(Paul): Generalize to loading fit `ResultBundle`s.
     _LOG.info("# Load artifacts '%s' from '%s'", file_name_prefix, src_dir)
     # Get the experiment subdirs.
-    src_dir, experiment_subdirs = _get_experiment_subdirs(src_dir, selected_idxs,
-        aws_profile=aws_profile)
+    src_dir, experiment_subdirs = _get_experiment_subdirs(
+        src_dir, selected_idxs, aws_profile=aws_profile
+    )
     # Iterate over experiment directories.
     for key, subdir in tqdm(experiment_subdirs.items(), desc="Loading artifacts"):
         dbg.dassert_dir_exists(subdir)
@@ -348,8 +350,9 @@ def yield_rolling_experiment_out_of_sample_df(
 # #############################################################################
 
 
-def _retrieve_archived_experiment_artifacts(s3_file_name: str, aws_profile: str,
-                                            scratch_dir: str =".") -> str:
+def _retrieve_archived_experiment_artifacts(
+    s3_file_name: str, aws_profile: str, scratch_dir: str = "."
+) -> str:
     """
     Retrieve a package containing experiment artifacts from S3.
 
@@ -360,17 +363,21 @@ def _retrieve_archived_experiment_artifacts(s3_file_name: str, aws_profile: str,
     # Get the file name and the enclosing dir name.
     dir_name = os.path.basename(os.path.dirname(s3_file_name))
     if dir_name != "experiments":
-        _LOG.warning("The file name '%s' is not under `experiments` dir", s3_file_name)
+        _LOG.warning(
+            "The file name '%s' is not under `experiments` dir", s3_file_name
+        )
     dbg.dassert_file_extension(s3_file_name, "tgz")
-    tgz_dst_dir = hs3.retrieve_archived_data_from_s3(s3_file_name, scratch_dir, aws_profile)
+    tgz_dst_dir = hs3.retrieve_archived_data_from_s3(
+        s3_file_name, scratch_dir, aws_profile
+    )
     _LOG.info("Retrieved artifacts to '%s'", tgz_dst_dir)
     return tgz_dst_dir
 
 
 def _get_experiment_subdirs(
-        src_dir: str,
-        selected_idxs: Optional[Iterable[int]] = None,
-        aws_profile: Optional[str] = None,
+    src_dir: str,
+    selected_idxs: Optional[Iterable[int]] = None,
+    aws_profile: Optional[str] = None,
 ) -> Tuple[str, Dict[int, str]]:
     """
     Get the subdirectories under `src_dir` with a format like `result_*`.
@@ -397,7 +404,7 @@ def _get_experiment_subdirs(
         # E.g., `result_123"
         m = re.match(r"^result_(\d+)$", os.path.basename(subdir))
         dbg.dassert(m)
-        cast(Match[str], m)
+        m = cast(Match[str], m)
         key = int(m.group(1))
         dbg.dassert_not_in(key, config_idx_to_dir)
         config_idx_to_dir[key] = subdir
@@ -423,7 +430,7 @@ def _get_experiment_subdirs(
 
 # TODO(gp): We might want also to compare to the original experiments Configs.
 def _load_experiment_artifacts(
-        src_dir: str, file_name: str, selected_idxs: Optional[Iterable[int]] = None
+    src_dir: str, file_name: str, selected_idxs: Optional[Iterable[int]] = None
 ) -> Dict[int, Any]:
     """
     Load all the files in dirs under `src_dir` that match `file_name`.

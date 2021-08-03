@@ -6,12 +6,11 @@ import pytest
 
 import dev_scripts.test.test_run_notebook as trnot
 import helpers.dbg as dbg
-import helpers.io_ as hio
 import helpers.git as git
+import helpers.parser as hparse
 import helpers.s3 as hs3
 import helpers.system_interaction as hsyste
 import helpers.unit_test as hut
-import helpers.parser as hparse
 
 _LOG = logging.getLogger(__name__)
 
@@ -209,19 +208,22 @@ class TestRunExperimentArchiveOnS3(hut.TestCase):
                 "--num_threads 'serial'",
                 f"--aws_profile '{aws_profile}'",
                 "--s3_path s3://alphamatic-data/tmp",
-                f"--json_output_metadata {output_metadata_file}"
+                f"--json_output_metadata {output_metadata_file}",
             ]
             #
             exp_pass = True
-            dst_dir = _run_experiment_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
-            _ = dst_dir
+            _run_experiment_helper(
+                self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME
+            )
             # Read the metadata back.
             output_metadata = hparse.read_output_metadata(output_metadata_file)
             s3_path = output_metadata["s3_path"]
             _LOG.debug("s3_path=%s", s3_path)
         if check_s3_archive:
-            #s3_path = "s3://alphamatic-data/tmp/tmp.20210802-121908.scratch.tgz"
-            tgz_dst_dir = hs3.retrieve_archived_data_from_s3(s3_path, scratch_dir, aws_profile)
+            # s3_path = "s3://alphamatic-data/tmp/tmp.20210802-121908.scratch.tgz"
+            tgz_dst_dir = hs3.retrieve_archived_data_from_s3(
+                s3_path, scratch_dir, aws_profile
+            )
             _LOG.info("Retrieved to %s", tgz_dst_dir)
             # Check the content.
             cmd = f"ls -1 {tgz_dst_dir}"
@@ -239,7 +241,7 @@ class TestRunExperimentArchiveOnS3(hut.TestCase):
             s3fs_ = hs3.get_s3fs(aws_profile)
             hs3.dassert_s3_exists(s3_path, s3fs_)
             s3fs_.rm(s3_path)
-            hs3.dassert_s3_not_exist(s3_path, s3fs_)
+            hs3.dassert_s3_not_exists(s3_path, s3fs_)
 
 
 # #############################################################################
@@ -247,11 +249,9 @@ class TestRunExperimentArchiveOnS3(hut.TestCase):
 
 def _run_experiment_helper(
     self: Any, cmd_opts: List[str], exp_pass: bool, exp: str
-) -> str:
+) -> None:
     """
     Build, run, and check a `run_experiment` command line.
-
-    :return: destination dir with the results
     """
     amp_path = git.get_amp_abs_path()
     # Get the executable.
@@ -264,5 +264,4 @@ def _run_experiment_helper(
         "--experiment_builder core.dataflow_model.test.simple_experiment.run_experiment",
         f"--dst_dir {dst_dir}",
     ]
-    dst_dir = trnot.run_cmd_line(self, cmd, cmd_opts, dst_dir, exp, exp_pass)
-    return dst_dir
+    trnot.run_cmd_line(self, cmd, cmd_opts, dst_dir, exp, exp_pass)

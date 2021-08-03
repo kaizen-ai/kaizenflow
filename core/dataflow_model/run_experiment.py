@@ -20,7 +20,6 @@ import core.config as cconfig
 import core.dataflow_model.utils as cdtfut
 import helpers.datetime_ as hdatetime
 import helpers.dbg as dbg
-import helpers.io_ as hio
 import helpers.git as git
 import helpers.joblib_helpers as hjoblib
 import helpers.parser as prsr
@@ -204,10 +203,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # Archive on S3.
         s3_path = hs3.archive_data_on_s3(dst_dir, s3_path, aws_profile)
     # Save the metadata.
-    output_metadata = {
-        "s3_path": s3_path
-    }
-    ouput_metadata_file = prsr.process_json_output_metadata_args(args, output_metadata)
+    output_metadata = {"s3_path": s3_path}
+    ouput_metadata_file = prsr.process_json_output_metadata_args(
+        args, output_metadata
+    )
     _ = ouput_metadata_file
 
 

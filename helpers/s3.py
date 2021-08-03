@@ -22,8 +22,8 @@ except ModuleNotFoundError:
 
 
 import helpers.dbg as dbg  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
-import helpers.io_ as hio # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
-import helpers.printing as hprint # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
+import helpers.io_ as hio  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
+import helpers.printing as hprint  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.system_interaction as hsyste  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.timer as htimer  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
@@ -108,7 +108,7 @@ def add_s3_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     return parser
 
 
-def _get_variable_value(var_value: str, env_var: str) -> str:
+def _get_variable_value(var_value: Optional[str], env_var: str) -> str:
     """
     Get the variable from the environment if `var_value` is `None`.
     """
@@ -120,33 +120,33 @@ def _get_variable_value(var_value: str, env_var: str) -> str:
     else:
         dbg.dassert_isinstance(var_value, str)
         _LOG.debug("Using the passed value '%s'", var_value)
-    return var_value  # type: ignore
+    return var_value
 
 
-def get_aws_profile(aws_profile: Optional[str]=None) -> str:
+def get_aws_profile(aws_profile: Optional[str] = None) -> str:
     """
     Return the AWS profile to access S3, based on:
+
     - argument passed
     - command line option (i.e., `args.aws_profile`)
     - env vars (i.e., `AM_AWS_PROFILE`)
     """
     env_var = "AM_AWS_PROFILE"
     aws_profile = _get_variable_value(aws_profile, env_var)
-    return aws_profile  # type: ignore
+    return aws_profile
 
 
-def get_s3_path_from_env(args: argparse.Namespace) -> Optional[str]:
+def get_s3_path(s3_path: Optional[str] = None) -> Optional[str]:
     """
     Return the S3 path to use, based on:
+
     - argument passed
     - command line option (i.e., `--s3_path` through `args.s3_path`)
     - env vars (i.e., `AM_S3_BUCKET`)
-    - 
-    command line option and env vars.
     """
     env_var = "AM_S3_BUCKET"
     s3_path = _get_variable_value(s3_path, env_var)
-    return s3_path  # type: ignore
+    return s3_path
 
 
 def _get_aws_config(file_name: str) -> configparser.RawConfigParser:
@@ -404,7 +404,10 @@ def archive_data_on_s3(
 
 
 def retrieve_archived_data_from_s3(
-    s3_file_path: str, dst_dir: str, aws_profile: Optional[str] = None, incremental: bool = True
+    s3_file_path: str,
+    dst_dir: str,
+    aws_profile: Optional[str] = None,
+    incremental: bool = True,
 ) -> str:
     """
     Retrieve archived tgz data from S3.
