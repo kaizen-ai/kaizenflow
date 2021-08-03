@@ -379,7 +379,11 @@ def archive_data_on_s3(
     with htimer.TimedScope(logging.INFO, "Compressing"):
         dir_name = os.path.dirname(src_dir)
         base_name = os.path.basename(src_dir)
-        cmd = f"cd {dir_name} && tar czf {dst_path} {base_name}"
+        dbg.dassert_ne(base_name, "", "src_dir=%s", src_dir)
+        cmd = ""
+        if dir_name != "":
+            cmd += f"cd {dir_name} && "
+        cmd += f"tar czf {dst_path} {base_name}"
         hsyste.system(cmd)
     _LOG.info(
         "The size of '%s' is %s", dst_path, hsyste.du(dst_path, human_format=True)

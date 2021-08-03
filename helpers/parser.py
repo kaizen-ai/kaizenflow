@@ -395,14 +395,17 @@ OutputMetadata = Dict[str, str]
 def process_json_output_metadata_args(
     args: argparse.Namespace,
     output_metadata: OutputMetadata,
-) -> str:
+) -> Optional[str]:
     """
     Save the output metadata according to the command line options.
 
     :return: file name with the output metadata
     """
     dbg.dassert_isinstance(output_metadata, dict)
+    if args.json_output_metadata is None:
+        return None
     file_name = args.json_output_metadata
+    _LOG.info("Saving output metadata into file '%s'", file_name)
     if not file_name.endswith(".json"):
         _LOG.warning(
             "The output metadata file '%s' doesn't end in .json: adding it",
@@ -410,7 +413,7 @@ def process_json_output_metadata_args(
         )
         file_name += ".json"
     hio.to_json(file_name, output_metadata)
-    _LOG.info("Saved output metadata in file '%s'", file_name)
+    _LOG.info("Saved output metadata into file '%s'", file_name)
     return file_name
 
 
