@@ -2482,7 +2482,8 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
     # The output is tab separated. Parse it with csv and then filter.
     _, txt = hsinte.system_to_string(cmd)
     _LOG.debug(hprint.to_str("txt"))
-    # completed  success  Merge pull...  Fast tests  master  push  2m18s  792511437
+    # STATUS            NAME        WORKFLOW  BRANCH        EVENT  ID   ELAPSED  AGE
+    # Speculative fix   Slow tests  AmpTa...  pull_request  1097983981  1m1s     7m
     cols = [
         "status",
         "outcome",
@@ -2492,6 +2493,7 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
         "trigger",
         "time",
         "workflow_id",
+        "age",
     ]
     table = htable.Table.from_text(cols, txt, delimiter="\t")
     # table = [line for line in csv.reader(txt.split("\n"), delimiter="\t")]
