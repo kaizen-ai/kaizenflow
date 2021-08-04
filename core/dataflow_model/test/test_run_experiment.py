@@ -214,8 +214,7 @@ class TestRunExperimentArchiveOnS3(hut.TestCase):
                 f"--aws_profile '{aws_profile}'",
                 "--s3_path s3://alphamatic-data/tmp",
                 f"--json_output_metadata {output_metadata_file}",
-                # TODO(gp): Don't commit this.
-                f"-v DEBUG",
+                #f"-v DEBUG",
             ]
             #
             exp_pass = True
