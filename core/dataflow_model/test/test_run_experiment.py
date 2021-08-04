@@ -189,7 +189,10 @@ class TestRunExperimentArchiveOnS3(hut.TestCase):
         $SCRATCH_SPACE/result_0/run_experiment.0.log
         $SCRATCH_SPACE/result_0/success.txt"""
 
-    #@pytest.mark.slow
+    # TODO(gp): This test needs write access to S3 for `infra` user. For now we
+    #  gave access to the entire bucket. It would be better to give only access to
+    #  `tmp`.
+    @pytest.mark.slow
     def test_serial1(self) -> None:
         """
         Execute:
