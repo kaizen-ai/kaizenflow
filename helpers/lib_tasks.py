@@ -2482,6 +2482,9 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
     # The output is tab separated. Parse it with csv and then filter.
     _, txt = hsinte.system_to_string(cmd)
     _LOG.debug(hprint.to_str("txt"))
+    # TODO(gp): This is a workaround for AmpTask1612.
+    first_line = txt.split("\n")[0]
+    num_cols = len(first_line.split("\t"))
     # STATUS            NAME        WORKFLOW  BRANCH        EVENT  ID   ELAPSED  AGE
     # Speculative fix   Slow tests  AmpTa...  pull_request  1097983981  1m1s     7m
     cols = [
@@ -2493,8 +2496,10 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
         "trigger",
         "time",
         "workflow_id",
-        "age",
     ]
+    dbg.dassert_in(num_cols, (8, 9))
+    if num_cols == 9:
+        cols.append("age")
     table = htable.Table.from_text(cols, txt, delimiter="\t")
     # table = [line for line in csv.reader(txt.split("\n"), delimiter="\t")]
     _LOG.debug(hprint.to_str("table"))
