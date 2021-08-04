@@ -64,11 +64,10 @@ echo $PYTHONPATH | perl -e 'print join("\n", grep { not $seen{$_}++ } split(/:/,
 echo "# Configure env"
 echo "which gh="$(which gh)
 
-export AM_PUBLISH_NOTEBOOK_S3_PATH="s3://alphamatic-data/notebooks"
-export AM_PUBLISH_NOTEBOOK_AWS_PROFILE="am"
+export AM_AWS_PROFILE="am"
 
 # Print the AM env vars.
-printenv | grep "^AM_"
+printenv | egrep "AM_|AWS_" | sort
 
 # `invoke` doesn't seem to allow to have a single configuration file and
 # doesn't allow to specify it through an env var, so we create an alias.

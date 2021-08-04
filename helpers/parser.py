@@ -8,7 +8,7 @@ import argparse
 import logging
 import os
 import sys
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
@@ -363,3 +363,63 @@ Number of threads to use:
         required=False,
     )
     return parser
+
+
+# #############################################################################
+# Command line options for metadata output.
+# #############################################################################
+
+
+def add_json_output_metadata_args(
+    parser: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
+    """
+    Add arguments related to storing the output metadata from a script.
+
+    This data can be read / used by other scripts to post-process a
+    script results.
+    """
+    parser.add_argument(
+        "--json_output_metadata",
+        type=str,
+        action="store",
+        help="File storing the output metadata of this script in JSON format",
+    )
+    return parser
+
+
+# Store the metadata about the output of a script.
+OutputMetadata = Dict[str, str]
+
+
+def process_json_output_metadata_args(
+    args: argparse.Namespace,
+    output_metadata: OutputMetadata,
+) -> Optional[str]:
+    """
+    Save the output metadata according to the command line options.
+
+    :return: file name with the output metadata
+    """
+    dbg.dassert_isinstance(output_metadata, dict)
+    if args.json_output_metadata is None:
+        return None
+    file_name = args.json_output_metadata
+    _LOG.info("Saving output metadata into file '%s'", file_name)
+    if not file_name.endswith(".json"):
+        _LOG.warning(
+            "The output metadata file '%s' doesn't end in .json: adding it",
+            file_name,
+        )
+        file_name += ".json"
+    hio.to_json(file_name, output_metadata)
+    _LOG.info("Saved output metadata into file '%s'", file_name)
+    return file_name
+
+
+def read_output_metadata(output_metadata_file: str) -> OutputMetadata:
+    """
+    Read the output metdata.
+    """
+    output_metadata = hio.from_json(output_metadata_file)
+    return output_metadata

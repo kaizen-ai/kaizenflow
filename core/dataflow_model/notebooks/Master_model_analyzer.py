@@ -48,6 +48,7 @@ hprint.config_notebook()
 
 # %%
 exp_dir = "/app/experiment1"
+# exp_dir = "s3://alphamatic-data/experiments/..."
 
 eval_config = cconfig.get_config_from_nested_dict(
     {
@@ -182,7 +183,7 @@ plotter.plot_rets_and_vol(
 )
 
 # %%
-assert(0)
+assert 0
 
 # %%
 plotter.plot_positions(

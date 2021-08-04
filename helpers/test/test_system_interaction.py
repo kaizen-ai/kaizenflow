@@ -235,3 +235,107 @@ class Test_find_file_with_dir1(hut.TestCase):
 class Test_Linux_commands1(hut.TestCase):
     def test_du1(self) -> None:
         hsyste.du(".")
+
+
+# #############################################################################
+
+
+class Test_has_timestamp1(hut.TestCase):
+    def test_has_not_timestamp1(self) -> None:
+        """
+        No timestamp.
+        """
+        file_name = "patch.amp.8c5a2da9.tgz"
+        act = hsyste.has_timestamp(file_name)
+        exp = False
+        self.assertEqual(act, exp)
+
+    def test_has_timestamp1(self) -> None:
+        """
+        Valid timestamp.
+        """
+        file_name = "patch.amp.8c5a2da9.20210725_225857.tgz"
+        act = hsyste.has_timestamp(file_name)
+        exp = True
+        self.assertEqual(act, exp)
+
+    def test_has_timestamp2(self) -> None:
+        """
+        Valid timestamp.
+        """
+        file_name = "/foo/bar/patch.amp.8c5a2da9.20210725-22_58_57.tgz"
+        act = hsyste.has_timestamp(file_name)
+        exp = True
+        self.assertEqual(act, exp)
+
+    def test_has_timestamp3(self) -> None:
+        """
+        Valid timestamp.
+        """
+        file_name = "/foo/bar/patch.amp.8c5a2da9.20210725225857.tgz"
+        act = hsyste.has_timestamp(file_name)
+        exp = True
+        self.assertEqual(act, exp)
+
+    def test_has_timestamp4(self) -> None:
+        """
+        Valid timestamp.
+        """
+        file_name = "/foo/bar/patch.amp.8c5a2da9.20210725_22_58_57.tgz"
+        act = hsyste.has_timestamp(file_name)
+        exp = True
+        self.assertEqual(act, exp)
+
+    def test_has_timestamp5(self) -> None:
+        """
+        Valid timestamp.
+        """
+        file_name = "/foo/bar/patch.amp.8c5a2da9.20210725225857.tgz"
+        act = hsyste.has_timestamp(file_name)
+        exp = True
+        self.assertEqual(act, exp)
+
+
+class Test_append_timestamp_tag1(hut.TestCase):
+    def test_no_timestamp1(self) -> None:
+        """
+        Invalid timestamp, with no tag.
+        """
+        file_name = "/foo/bar/patch.amp.8c5a2da9.tgz"
+        tag = ""
+        act = hsyste.append_timestamp_tag(file_name, tag)
+        # /foo/bar/patch.amp.8c5a2da9.20210726-15_11_25.tgz
+        exp = r"/foo/bar/patch.amp.8c5a2da9.\S+.tgz"
+        self.assertRegex(act, exp)
+
+    def test_no_timestamp2(self) -> None:
+        """
+        Invalid timestamp, with no tag.
+        """
+        file_name = "/foo/bar/patch.amp.8c5a2da9.tgz"
+        tag = "hello"
+        act = hsyste.append_timestamp_tag(file_name, tag)
+        # /foo/bar/patch.amp.8c5a2da9.20210726-15_11_25.hello.tgz
+        exp = r"/foo/bar/patch.amp.8c5a2da9.\S+.hello.tgz"
+        self.assertRegex(act, exp)
+
+    def test1(self) -> None:
+        """
+        Valid timestamp, with no tag.
+        """
+        file_name = "/foo/bar/patch.amp.8c5a2da9.20210725_225857.tgz"
+        tag = ""
+        act = hsyste.append_timestamp_tag(file_name, tag)
+        # /foo/bar/patch.amp.8c5a2da9.20210725_225857.20210726-15_11_25.tgz
+        exp = "/foo/bar/patch.amp.8c5a2da9.20210725_225857.tgz"
+        self.assertEqual(act, exp)
+
+    def test2(self) -> None:
+        """
+        Valid timestamp, with a tag.
+        """
+        file_name = "/foo/bar/patch.amp.8c5a2da9.20210725_225857.tgz"
+        tag = "hello"
+        act = hsyste.append_timestamp_tag(file_name, tag)
+        exp = "/foo/bar/patch.amp.8c5a2da9.20210725_225857.hello.tgz"
+        self.assertEqual(act, exp)

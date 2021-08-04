@@ -56,7 +56,8 @@ except ImportError as e:
 
 
 _LOG = logging.getLogger(__name__)
-# _LOG.setLevel(logging.INFO)
+# Mute this module unless we want to debug it.
+_LOG.setLevel(logging.INFO)
 
 # #############################################################################
 

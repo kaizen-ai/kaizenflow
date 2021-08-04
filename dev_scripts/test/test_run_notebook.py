@@ -198,11 +198,11 @@ def _build_config(values: List[bool]) -> List[cconfig.Config]:
     # TODO(gp): -> fail_param
     config_template["fail"] = None
     configs = cconfig.build_multiple_configs(config_template, {("fail",): values})
-    # Duplicate configs are not allowed, so we need to add identifiers to make
+    # Duplicated configs are not allowed, so we need to add identifiers to make
     # each config unique.
     for i, config in enumerate(configs):
         config["id"] = str(i)
-    cast(List[cconfig.Config], configs)
+    configs = cast(List[cconfig.Config], configs)
     return configs
 
 
@@ -224,7 +224,35 @@ def build_configs2() -> List[cconfig.Config]:
     return configs
 
 
+def build_configs3() -> List[cconfig.Config]:
+    """
+    Build 1 config that won't make the notebook to fail.
+    """
+    values = [False]
+    configs = _build_config(values)
+    return configs
+
+
 # #############################################################################
+
+
+def _compare_dir_signature(self: Any, dir_name: str, expected: str) -> None:
+    """
+    Compute the signature of dir `dir_name` to the expected value `expected`.
+    """
+    # Compute and compare the dir signature.
+    actual = hut.get_dir_signature(
+        dir_name, include_file_content=False, num_lines=None
+    )
+    # Remove references like:
+    # $GIT_ROOT/core/dataflow_model/test/TestRunExperiment1.test3/tmp.scratch
+    actual = actual.replace(dir_name, "$SCRATCH_SPACE")
+    actual = hut.purify_txt_from_client(actual)
+    # Remove lines like:
+    # $GIT_ROOT/core/dataflow_model/.../log.20210705_100612.txt
+    actual = hut.filter_text(r"^.*/log\.\S+\.txt$", actual)
+    expected = hprint.dedent(expected)
+    self.assert_equal(actual, expected, fuzzy_match=True)
 
 
 def run_cmd_line(
@@ -232,31 +260,24 @@ def run_cmd_line(
     cmd: List[str],
     cmd_opts: List[str],
     dst_dir: str,
-    exp: str,
-    exp_pass: bool,
+    expected: str,
+    expected_pass: bool,
 ) -> None:
+    """
+    Run run_experiment / run_notebook command line and check return code and
+    output.
+    """
     # Assemble the command line.
     cmd.extend(cmd_opts)
     cmd = " ".join(cmd)
     # Run command.
-    abort_on_error = exp_pass
-    _LOG.debug("exp_pass=%s abort_on_error=%s", exp_pass, abort_on_error)
+    abort_on_error = expected_pass
+    _LOG.debug(
+        "expected_pass=%s abort_on_error=%s", expected_pass, abort_on_error
+    )
     rc = si.system(cmd, abort_on_error=abort_on_error, suppress_output=False)
-    if exp_pass:
+    if expected_pass:
         self.assertEqual(rc, 0)
     else:
         self.assertNotEqual(rc, 0)
-    # Compute and compare the dir signature.
-    act = hut.get_dir_signature(
-        dst_dir, include_file_content=False, num_lines=None
-    )
-    # Remove references like:
-    # $GIT_ROOT/core/dataflow_model/test/TestRunExperiment1.test3/tmp.scratch
-    act = act.replace(self.get_scratch_space(), "$SCRATCH_SPACE")
-    act = hut.purify_txt_from_client(act)
-    # Remove lines like:
-    # $GIT_ROOT/core/dataflow_model/.../log.20210705_100612.txt
-    act = hut.filter_text(r"^.*/log\.\S+\.txt$", act)
-    #
-    exp = hprint.dedent(exp)
-    self.assert_equal(act, exp, fuzzy_match=True)
+    _compare_dir_signature(self, dst_dir, expected)
