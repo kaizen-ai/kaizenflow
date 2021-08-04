@@ -18,17 +18,16 @@ This script performs several actions on a Jupyter notebook, such as:
   ```
   > publish_notebook.py \
       --file nlp/notebooks/PTask768_event_filtering.ipynb \
-      --action publish_on_S3
+      --action publish_on_s3
   ```
 """
 
 import argparse
-import datetime
 import logging
 import os
 import sys
 import tempfile
-from typing import BinaryIO, List, Tuple, cast
+from typing import BinaryIO, List, Tuple
 
 import requests
 
@@ -38,9 +37,10 @@ import helpers.open as opn
 import helpers.parser as prsr
 import helpers.printing as hprint
 import helpers.s3 as hs3
-import helpers.system_interaction as si
+import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
+
 
 # TODO(gp): Reuse url.py code.
 def _get_path(path_or_url: str) -> str:
@@ -83,25 +83,8 @@ def _get_file_from_git_branch(git_branch: str, git_path: str) -> str:
         tempfile.gettempdir(), os.path.basename(git_path)
     )
     _LOG.debug("Check out '%s/%s' to '%s'.", git_branch, git_path, dst_file_name)
-    si.system(f"git show {git_branch}:{git_path} > {dst_file_name}")
+    hsyste.system(f"git show {git_branch}:{git_path} > {dst_file_name}")
     return dst_file_name
-
-
-# TODO(gp): This seems general enough to be moved in `system_interaction.py`.
-def _add_tag(file_name: str, tag: str) -> str:
-    """
-    By default, add current timestamp in the filename.
-
-    :return: new filename
-    """
-    name, extension = os.path.splitext(os.path.basename(file_name))
-    if tag:
-        # If the tag is specified prepend a `.` in the filename.
-        tag = "." + tag
-    # TODO(gp): Use local time instead of UTC by using `get_timestamp()`.
-    tag += "." + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    new_file_name = "".join([name, tag, extension])
-    return new_file_name
 
 
 def _export_notebook_to_html(ipynb_file_name: str, tag: str) -> str:
@@ -119,13 +102,13 @@ def _export_notebook_to_html(ipynb_file_name: str, tag: str) -> str:
     file_name = os.path.splitext(os.path.basename(ipynb_file_name))[0]
     # Create dst file name including timestamp.
     html_file_name = file_name + ".html"
-    html_file_name = _add_tag(html_file_name, tag)
+    html_file_name = hsyste.append_timestamp_tag(html_file_name, tag)
     dst_file_name = os.path.join(dir_path, html_file_name)
     # Export notebook file to HTML format.
     cmd = (
         f"jupyter nbconvert {ipynb_file_name} --to html --output {dst_file_name}"
     )
-    si.system(cmd)
+    hsyste.system(cmd)
     _LOG.debug("Export notebook '%s' to HTML '%s'", file_name, dst_file_name)
     return dst_file_name
 
@@ -147,7 +130,7 @@ def _export_notebook_to_dir(ipynb_file_name: str, tag: str, dst_dir: str) -> str
     _LOG.debug("Export '%s' to '%s'", html_src_path, html_dst_path)
     hio.create_dir(dst_dir, incremental=True)
     cmd = f"mv {html_src_path} {html_dst_path}"
-    si.system(cmd)
+    hsyste.system(cmd)
     # Print info.
     _LOG.info("Generated HTML file '%s'", html_dst_path)
     cmd = f"""
@@ -158,7 +141,7 @@ def _export_notebook_to_dir(ipynb_file_name: str, tag: str, dst_dir: str) -> str
     return html_dst_path
 
 
-def _post_to_s3(local_src_path: str, s3_path: str, aws_profile: str) -> None:
+def _post_to_s3(local_src_path: str, s3_path: str, aws_profile: str) -> str:
     """
     Export a notebook as HTML to S3.
 
@@ -168,19 +151,14 @@ def _post_to_s3(local_src_path: str, s3_path: str, aws_profile: str) -> None:
     """
     dbg.dassert_file_exists(local_src_path)
     # TODO(gp): Pass s3_path through the credentials.
-    dbg.dassert(
-        s3_path.startswith("s3://"),
-        "S3 path needs to start with `s3://`, instead s3_path='%s'",
-        s3_path,
-    )
+    hs3.check_valid_s3_path(s3_path)
     dbg.dassert(
         s3_path.endswith("/notebooks"),
         "S3 path needs to point to a `notebooks` dir, instead s3_path='%s'",
         s3_path,
     )
     # Compute the full S3 path.
-    basename = os.path.basename(local_src_path)
-    remote_path = os.path.join(s3_path, basename)
+    remote_path = os.path.join(s3_path, os.path.basename(local_src_path))
     # TODO(gp): Make sure the S3 dir exists.
     _LOG.info("Copying '%s' to '%s'", local_src_path, remote_path)
     s3fs = hs3.get_s3fs(aws_profile)
@@ -207,38 +185,6 @@ def _post_to_webserver(local_src_path: str, remote_dst_path: str) -> None:
         "POST", _NOTEBOOK_KEEPER_ENTRY_POINT, data=payload, files=files
     )
     _LOG.debug("Response: %s", response.text.encode("utf8"))
-
-
-
-def _get_s3_path(args: argparse.Namespace) -> str:
-    """
-    Return the S3 path to save notebooks, based on command line option and env vars.
-    """
-    if args.s3_path:
-        s3_path = args.s3_path
-    else:
-        env_var = "AM_PUBLISH_NOTEBOOK_S3_PATH"
-        dbg.dassert_in(
-            env_var, os.environ, "The env needs to set env var '%s'", env_var
-        )
-        s3_path = os.environ[env_var]
-    cast(str, s3_path)
-    return s3_path
-
-
-def _get_aws_profile(args: argparse.Namespace) -> str:
-    """
-    Return the AWS profile to access S3, based on command line option and env vars.
-    """
-    if args.aws_profile:
-        aws_profile = args.aws_profile
-    else:
-        env_var = "AM_PUBLISH_NOTEBOOK_AWS_PROFILE"
-        dbg.dassert_in(
-            env_var, os.environ, "The env needs to set env var '%s'", env_var
-        )
-        aws_profile = os.environ[env_var]
-    return aws_profile
 
 
 # #############################################################################
@@ -277,21 +223,6 @@ def _parse() -> argparse.ArgumentParser:
         help="A tag that is added to the file (e.g., `RH1E_with_magic_parameters`)",
     )
     parser.add_argument(
-        "--s3_path",
-        action="store",
-        type=str,
-        default=None,
-        help="S3 path to publish the notebook (e.g., `s3://alphamatic-data/notebooks`)",
-    )
-    parser.add_argument(
-        "--aws_profile",
-        action="store",
-        type=str,
-        default=None,
-        help="The AWS profile to use from `.aws/credentials`",
-    )
-    #
-    parser.add_argument(
         "--action",
         action="store",
         default=["convert"],
@@ -310,7 +241,8 @@ def _parse() -> argparse.ArgumentParser:
 - publish_on_webserver: publish notebook through a webservice
 """,
     )
-    prsr.add_verbosity_arg(parser)
+    parser = hs3.add_s3_args(parser)
+    parser = prsr.add_verbosity_arg(parser)
     return parser
 
 
@@ -322,16 +254,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
         src_file_name = args.file
         if hs3.is_valid_s3_path(src_file_name):
             # We use AWS CLI to minimize the dependencies from Python packages.
-            aws_profile = _get_aws_profile(args)
+            aws_profile = hs3.get_aws_profile(args.aws_profile)
             # Check that the file exists.
             cmd = f"aws s3 ls --profile {aws_profile} {src_file_name}"
-            si.system(cmd)
+            hsyste.system(cmd)
             # Copy.
             local_file_name = os.path.basename(src_file_name)
-            cmd = (
-                f"aws s3 cp --profile {aws_profile} {src_file_name} {local_file_name}"
-            )
-            si.system(cmd)
+            cmd = f"aws s3 cp --profile {aws_profile} {src_file_name} {local_file_name}"
+            hsyste.system(cmd)
             _LOG.info("Copied remote url to '%s'", local_file_name)
         else:
             local_file_name = src_file_name
@@ -368,8 +298,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
         dst_dir = "."
         html_file_name = _export_notebook_to_dir(src_file_name, args.tag, dst_dir)
         # Copy to S3.
-        s3_path = _get_s3_path(args)
-        aws_profile = _get_aws_profile(args)
+        aws_profile = hs3.get_aws_profile(args.aws_profile)
+        _LOG.debug("aws_profile='%s'", aws_profile)
+        # Get the S3 path from command line.
+        s3_path = args.s3_path
+        _LOG.debug("s3_path=%s", s3_path)
+        if s3_path is None:
+            # The user didn't specified the path, so we derive it from the
+            # credentials or from the env vars.
+            _LOG.debug("Getting s3_path from credentials file")
+            s3_path = hs3.get_key_value(aws_profile, "aws_s3_bucket")
+        s3_path = "s3://" + s3_path + "/notebooks"
         s3_file_name = _post_to_s3(html_file_name, s3_path, aws_profile)
         # TODO(gp): Remove the file or save it directly in a temp dir.
         cmd = f"""

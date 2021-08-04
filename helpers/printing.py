@@ -15,6 +15,8 @@ from typing import Any, Dict, Iterable, List, Match, Optional, cast
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
+# Mute this module unless we want to debug it.
+_LOG.setLevel(logging.INFO)
 
 
 # #############################################################################
@@ -744,6 +746,32 @@ def config_notebook(sns_set: bool = True) -> None:
     plt.rcParams["font.size"] = 14
     plt.rcParams["image.cmap"] = "rainbow"
 
+    if False:
+        # Tweak the size of the plots to make it more readable when embedded in
+        # documents or presentations.
+        # font = {'family' : 'normal',
+        #         #'weight' : 'bold',
+        #         'size'   : 32}
+        # matplotlib.rc('font', **font)
+        scale = 3
+        small_size = 8 * scale
+        medium_size = 10 * scale
+        bigger_size = 12 * scale
+        # Default text sizes.
+        plt.rc("font", size=small_size)
+        # Fontsize of the axes title.
+        plt.rc("axes", titlesize=small_size)
+        # Fontsize of the x and y labels.
+        plt.rc("axes", labelsize=medium_size)
+        # Fontsize of the tick labels.
+        plt.rc("xtick", labelsize=small_size)
+        # Fontsize of the tick labels.
+        plt.rc("ytick", labelsize=small_size)
+        # Legend fontsize.
+        plt.rc("legend", fontsize=small_size)
+        # Fontsize of the figure title.
+        plt.rc("figure", titlesize=bigger_size)
+
     # Seaborn.
     import seaborn as sns
 
@@ -758,4 +786,7 @@ def config_notebook(sns_set: bool = True) -> None:
     pd.set_option("display.width", 1000)
 
     # Warnings.
-    import helpers.warnings_helpers
+    import helpers.warnings_helpers as hwarnings
+
+    # Force the linter to keep this import.
+    _ = hwarnings

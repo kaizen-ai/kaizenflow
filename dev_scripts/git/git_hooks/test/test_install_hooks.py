@@ -2,7 +2,7 @@ import logging
 
 import pytest
 
-import dev_scripts.git.git_hooks.utils as ghutils
+import dev_scripts.git.git_hooks.utils as ghutils  # pylint: disable=no-name-in-module
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
@@ -45,23 +45,6 @@ class Test_git_hooks_utils1(hut.TestCase):
         self.assert_equal(txt, txt2)
 
     def test_regex1(self) -> None:
-        self._helper("Olssv LN", False, True)
-        self._helper("LN go", False, True)
-        self._helper("Olssv_TLN", False, False)
-        self._helper("Olssv_LN_Hello", False, False)
-        # jvyl_sptl.khahmsvd.uvklz.zvbyjlz
-        #
-        self._helper("Ego", True, False)
-        self._helper("Eg_o", True, False)
-        self._helper("_EG", True, False)
-        self._helper("_eggo", True, False)
-        self._helper("_eg go", True, False)
-        self._helper("NOTIFY_JUPYTER_TOKEN", True, False)
-        #
-        self._helper("LNPK", False, True)
-        self._helper("This is LNPK or is not", False, True)
-        self._helper("This is _LNPK or is not", False, False)
-        self._helper("LNPKhello", False, False)
         words = "ln Ln LN lnpk LNPK sptl sltvuhkl slt jyfwav"
         for word in words.split():
             self._helper(word, False, True)
@@ -69,8 +52,32 @@ class Test_git_hooks_utils1(hut.TestCase):
             self._helper(" " + word, False, True)
             self._helper(word + " ", False, True)
             self._helper(word + "a", False, False)
-            self._helper(word + "_", False, False)
-            self._helper("_" + word, False, False)
+            self._helper(word + "_hello", False, True)
+            self._helper("is_" + word, False, True)
+
+    def test_regex2(self) -> None:
+        decaesarify = False
+        self._helper("Olssv LN", decaesarify, True)
+        self._helper("LN go", decaesarify, True)
+        self._helper("LN_o", decaesarify, True)
+        self._helper("_LN", decaesarify, True)
+        self._helper("is_LN go", decaesarify, True)
+        self._helper("Olssv_TLN", decaesarify, False)
+        self._helper("Olssv_LN_Hello", decaesarify, True)
+        self._helper("Olssv_LNHello", decaesarify, False)
+        #
+        self._helper("LNPK", decaesarify, True)
+        self._helper("This is LNPK or is not", decaesarify, True)
+        self._helper("This is _LNPK or is not", decaesarify, True)
+        self._helper("LNPKhello", decaesarify, False)
+
+    def test_regex3(self) -> None:
+        # We can't have any found word, otherwise the pre-commit check will
+        # trigger.
+        decaesarify = True
+        self._helper("Ego", decaesarify, False)
+        self._helper("_eggo", decaesarify, False)
+        self._helper("NOTIFY_JUPYTER_TOKEN", decaesarify, False)
 
     def test_check_words_in_text1(self) -> None:
         txt = """
@@ -88,6 +95,7 @@ class Test_git_hooks_utils1(hut.TestCase):
         # Check.
         exp = r"""
         foobar.txt:1: Found 'SU'
+        foobar.txt:3: Found 'SU'
         foobar.txt:4: Found 'SU'"""
         exp = hprint.dedent(exp)
         self.assert_equal(act, exp)

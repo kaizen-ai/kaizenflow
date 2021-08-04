@@ -53,7 +53,7 @@ class TestReturnsBuilder(hut.TestCase):
     @pytest.mark.slow
     def test_futures1(self) -> None:
         source_node_kwargs = {
-            "func": dsn.load_kibot,
+            "func": dsn.load_kibot_data,
             "func_kwargs": {
                 "frequency": "T",
                 "contract_type": "continuous",

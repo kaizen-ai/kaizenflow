@@ -35,7 +35,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     _LOG.warning("\n%s", hprint.frame("This is a dry run!"))
     git_root = git.get_client_root(super_module=False)
-    cmd = fr'''cd {git_root} && find -type f -name "*" -not -path "*/\.git/*"'''
+    cmd = fr'''cd {git_root} && find . -type f -name "*" -not -path "*/\.git/*"'''
     _, file_list = hsinte.system_to_string(cmd)
     file_list = file_list.split("\n")
     #
@@ -44,6 +44,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # ghutils.check_author()
     ghutils.check_file_size(abort_on_error, file_list=file_list)
     ghutils.check_words(abort_on_error, file_list=file_list)
+    ghutils.python_compile(abort_on_error, file_list=file_list)
 
 
 if __name__ == "__main__":

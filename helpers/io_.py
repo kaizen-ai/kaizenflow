@@ -435,6 +435,8 @@ def to_json(file_name: str, obj: dict) -> None:
     :param file_name: name of file
     :return:
     """
+    if not file_name.endswith(".json"):
+        _LOG.warning("The file '%s' doesn't end in .json", file_name)
     dir_name = os.path.dirname(file_name)
     if dir_name != "" and not os.path.isdir(dir_name):
         create_dir(dir_name, incremental=True)
@@ -454,7 +456,9 @@ def from_json(file_name: str) -> dict:
     :param file_name: name of file
     :return: dict with data
     """
-    dbg.dassert_exists(file_name)
+    if not file_name.endswith(".json"):
+        _LOG.warning("The file '%s' doesn't end in .json", file_name)
+    dbg.dassert_file_exists(file_name)
     with open(file_name, "r") as f:
         data: dict = json.loads(f.read())
     return data

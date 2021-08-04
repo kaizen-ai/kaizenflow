@@ -10,11 +10,12 @@ import helpers.system_interaction as hsinte
 import getpass
 import logging
 import os
+import re
 import signal
 import subprocess
 import sys
 import time
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, List, Match, Optional, Tuple, Union, cast
 
 import helpers.dbg as dbg
 import helpers.introspection as hintro
@@ -123,7 +124,7 @@ def _system(
     cmd: str,
     abort_on_error: bool,
     suppress_error: Optional[Any],
-    suppress_output: bool,
+    suppress_output: Union[bool, str],
     blocking: bool,
     wrapper: Optional[Any],
     output_file: Optional[Any],
@@ -152,11 +153,29 @@ def _system(
           logging
     :return: return code (int), output of the command (str)
     """
+    _LOG.debug("##> %s", cmd)
+    _LOG.debug(
+        hprint.to_str(
+            "abort_on_error suppress_error suppress_output "
+            "blocking wrapper output_file num_error_lines tee dry_run log_level"
+        )
+    )
     orig_cmd = cmd[:]
+    # Handle `suppress_output`.
+    dbg.dassert_in(suppress_output, ("ON_DEBUG_LEVEL", True, False))
+    if suppress_output == "ON_DEBUG_LEVEL":
+        # print("eff_lev=%s" % eff_level)
+        # print("lev=%s" % logging.DEBUG)
+        _LOG.getEffectiveLevel()
+        # Suppress the output if the verbosity level is higher than DEBUG,
+        # otherwise print.
+        suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
+    _LOG.debug(hprint.to_str("suppress_output"))
     # Prepare the command line.
     cmd = "(%s)" % cmd
     dbg.dassert_imply(tee, output_file is not None)
     if output_file is not None:
+        # Redirect to a file.
         dir_name = os.path.dirname(output_file)
         if not os.path.exists(dir_name):
             _LOG.debug("Dir '%s' doesn't exist: creating", dir_name)
@@ -167,10 +186,12 @@ def _system(
         else:
             cmd += " 2>&1 >%s" % output_file
     else:
+        # Do not redirect to a file.
         cmd += " 2>&1"
+    # Handle `wrapper`.
     if wrapper:
         cmd = wrapper + " && " + cmd
-    #
+    # Handle `log_level`.
     # TODO(gp): Add a check for the valid values.
     # TODO(gp): Make it "ECHO".
     if isinstance(log_level, str):
@@ -179,17 +200,8 @@ def _system(
         _LOG.debug("> %s", cmd)
     else:
         _LOG.log(log_level, "> %s", cmd)
-    #
-    dbg.dassert_in(suppress_output, ("ON_DEBUG_LEVEL", True, False))
-    if suppress_output == "ON_DEBUG_LEVEL":
-        # print("eff_lev=%s" % eff_level)
-        # print("lev=%s" % logging.DEBUG)
-        _LOG.getEffectiveLevel()
-        # Suppress the output if the verbosity level is higher than DEBUG,
-        # otherwise print.
-        suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
-    #
     output = ""
+    # Handle `dry_run`.
     if dry_run:
         _LOG.warning("Not executing cmd\n%s\nas per user request", cmd)
         rc = 0
@@ -209,7 +221,7 @@ def _system(
                     if not line:
                         break
                     if not suppress_output:
-                        print((line.rstrip("\n")))
+                        _LOG.debug("  ==> %s", line.rstrip("\n"))
                     output += line
                 p.stdout.close()  # type: ignore
                 rc = p.wait()
@@ -237,7 +249,7 @@ def _system(
     except OSError as e:
         rc = -1
         _LOG.error("error=%s", str(e))
-    _LOG.debug("  -> rc=%s", rc)
+    _LOG.debug("  ==> rc=%s", rc)
     if abort_on_error and rc != 0:
         msg = (
             "\n"
@@ -262,7 +274,7 @@ def system(
     cmd: str,
     abort_on_error: bool = True,
     suppressed_error: Optional[Any] = None,
-    suppress_output: bool = True,
+    suppress_output: Union[str, bool] = "ON_DEBUG_LEVEL",
     blocking: bool = True,
     wrapper: Optional[Any] = None,
     output_file: Optional[Any] = None,
@@ -321,7 +333,7 @@ def system_to_string(
         cmd,
         abort_on_error=abort_on_error,
         suppress_error=None,
-        suppress_output=True,
+        suppress_output="ON_DEBUG_LEVEL",
         # If we want to see the output the system call must be blocking.
         blocking=True,
         wrapper=wrapper,
@@ -392,7 +404,7 @@ def to_absolute_paths(files: List[str]) -> List[str]:
     return files
 
 
-def remove_file_non_present(files: List[str]) -> List[str]:
+def _remove_files_non_present(files: List[str]) -> List[str]:
     """
     Return list of files from `files` excluding the files that don't exist.
     """
@@ -453,14 +465,15 @@ def select_result_file_from_list(files: List[str], mode: str) -> List[str]:
 
 def system_to_files(
     cmd: str,
-    dir_name: str,
-    remove_files_non_present: bool,
+    dir_name: Optional[str] = None,
+    remove_files_non_present: bool = False,
     mode: str = "return_all_results",
 ) -> List[str]:
     """
     Execute command `cmd` in `dir_name` and return the output as a list of
     strings.
 
+    :param remove_files_non_present: remove files that don't exist on the filesystem
     :param mode: like in `select_result_file_from_list()`
     """
     if dir_name is None:
@@ -479,7 +492,7 @@ def system_to_files(
     files: List[str] = list(map(os.path.normpath, files))  # type: ignore
     # Remove non-existent files, if needed.
     if remove_files_non_present:
-        files = remove_file_non_present(files)
+        files = _remove_files_non_present(files)
     # Process output.
     files = select_result_file_from_list(files, mode)
     return files
@@ -654,10 +667,11 @@ def du(path_name: str, human_format: bool = False) -> Union[int, str]:
     _LOG.debug("txt=%s", txt)
     # `du` returns size in KB.
     size_in_bytes = int(txt) * 1024
+    size: Union[int, str]
     if human_format:
-        size: str = hintro.format_size(size_in_bytes)
+        size = hintro.format_size(size_in_bytes)
     else:
-        size: int = size_in_bytes
+        size = size_in_bytes
     return size
 
 
@@ -717,11 +731,8 @@ def find_file_with_dir(
     # ./amp/core/dataflow/utils.py
     # ./amp/core/dataflow_model/utils.py
     # ./amp/im/common/test/utils.py
-    remove_files_non_present = False
-    mode_tmp = "return_all_results"
-    candidate_files = system_to_files(
-        cmd, root_dir, remove_files_non_present, mode_tmp
-    )
+    mode_ = "return_all_results"
+    candidate_files = system_to_files(cmd, dir_name=root_dir, mode=mode_)
     _LOG.debug("files=\n%s", "\n".join(candidate_files))
     matching_files = []
     for file in sorted(candidate_files):
@@ -737,3 +748,58 @@ def find_file_with_dir(
     # Select the result based on mode.
     res = select_result_file_from_list(matching_files, mode)
     return res
+
+
+# #############################################################################
+# File timestamping.
+# #############################################################################
+
+
+def has_timestamp(file_name: str) -> bool:
+    """
+    Check whether `file_name` contains a timestamp.
+
+    The timestamp is in the format `%Y%m%d-%H_%M_%S` (e.g.,
+    20210724-12_45_51). E.g., this function for
+    `experiment.RH1E.5T.20210724-12_45_51` returns True.
+    """
+    file_name = os.path.basename(file_name)
+    # E.g., %Y%m%d-%H_%M_%S
+    # The separator is _, -, or nothing.
+    sep = "[-_]?"
+    regex = sep.join([r"\d{4}", r"\d{2}", r"\d{2}", r"\d{2}", r"\d{2}", r"\d{2}"])
+    _LOG.debug("regex=%s", regex)
+    occurrences = re.findall(regex, file_name)
+    dbg.dassert_lte(
+        len(occurrences), 1, "Found more than one timestamp", str(occurrences)
+    )
+    m = re.search("(" + regex + ")", file_name)
+    has_timestamp_ = m is not None
+    if has_timestamp_:
+        m = cast(Match[str], m)
+        _LOG.debug("Found a timestamp '%s' in '%s'", m.group(1), file_name)
+    return has_timestamp_
+
+
+def append_timestamp_tag(file_name: str, tag: str) -> str:
+    """
+    Add a tag and the current timestamp to a filename, before the extension.
+
+    :return: new filename
+    """
+    dir_name = os.path.dirname(file_name)
+    base_name = os.path.basename(file_name)
+    name, extension = os.path.splitext(base_name)
+    tag_ = ""
+    # E.g., 20210723-20_52_00
+    if not has_timestamp(file_name):
+        import helpers.datetime_ as hdatetime
+
+        tag_ += "." + hdatetime.get_timestamp(tz="ET")
+    # Add tag, if specified.
+    if tag:
+        # If the tag is specified prepend a `.` in the filename.
+        tag_ += "." + tag
+    new_file_name = os.path.join(dir_name, "".join([name, tag_, extension]))
+    _LOG.debug(hprint.to_str("file_name new_file_name"))
+    return new_file_name

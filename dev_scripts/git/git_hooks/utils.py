@@ -1,4 +1,5 @@
 # NOTE: This file should depend only on Python standard libraries.
+import compileall
 import inspect
 import logging
 import os
@@ -9,6 +10,14 @@ import sys
 from typing import Any, List, Optional, Tuple
 
 _LOG = logging.getLogger(__name__)
+
+# TODO(gp): Check these hooks
+# https://github.com/pre-commit/pre-commit-hooks/tree/master/pre_commit_hooks
+# https://github.com/pre-commit/pre-commit-hooks/blob/master/pre_commit_hooks/check_ast.py
+# https://github.com/pre-commit/pre-commit-hooks/blob/master/pre_commit_hooks/check_added_large_files.py
+# https://github.com/pre-commit/pre-commit-hooks/blob/master/pre_commit_hooks/check_merge_conflict.py
+# https://code-maven.com/enforcing-commit-message-format-in-git
+
 
 # The path to the git-binary:
 _GIT_BINARY_PATH = "git"
@@ -272,6 +281,11 @@ def check_file_size(
 
 
 # #############################################################################
+# check_words
+# #############################################################################
+
+
+_CAESAR_STEP = 7
 
 
 def caesar(text: str, step: int) -> str:
@@ -286,9 +300,6 @@ def caesar(text: str, step: int) -> str:
     return text.translate(table)
 
 
-_CAESAR_STEP = 7
-
-
 def _get_regex(decaesarify: bool) -> Any:
     # Prepare the regex.
     words = "ln lnpk sptl sltvuhkl slt jyfwav"
@@ -296,9 +307,9 @@ def _get_regex(decaesarify: bool) -> Any:
         words = caesar(words, -_CAESAR_STEP)
     words_as_regex = "(" + "|".join(words.split()) + ")"
     regex = fr"""
-            (?<![^\W])     # The preceding char should not be a letter or digit char.
+            (?<![^\W_])     # The preceding char should not be a letter or digit char.
             {words_as_regex}
-            (?![^\W])      # The next char cannot be a letter or digit.
+            (?![^\W_])      # The next char cannot be a letter or digit.
             """
     # regex  = re.compile(r"\b(%s)\b" % "|".join(words.split()))
     # _LOG.debug("regex=%s", regex)
@@ -330,6 +341,8 @@ def _check_words_in_text(
             if file_name.endswith("git.py") and "return _is_repo" in line:
                 continue
             if file_name.endswith("ack") and "compressed" in line:
+                continue
+            if file_name.endswith("helpers/git.py") and "def is_" in line:
                 continue
             # Found a violation.
             val = m.group(1)
@@ -390,5 +403,53 @@ def check_words(
     _LOG.info("Files:\n%s", "\n".join(file_list))
     #
     error = _check_words_files(file_list)
+    # Handle error.
+    _handle_error(func_name, error, abort_on_error)
+
+
+# #############################################################################
+# Python compile
+# #############################################################################
+
+
+def _check_python_compile(file_list: List[str]) -> bool:
+    """
+    Run `compileall.compile_file()` on the files.
+
+    :return: error
+    """
+    _LOG.debug("Processing %d files", len(file_list))
+    # Scan all the files.
+    violations = []
+    for file_name in file_list:
+        success = compileall.compile_file(
+            file_name,
+            force=True,
+            quiet=0)
+        _LOG.debug("%s -> success=%s", file_name, success)
+        if not success:
+            _LOG.error("file_name='%s' doesn't compile correctly", file_name)
+            violations.append(file_name)
+    _LOG.debug("violations=%s", len(violations))
+    error = len(violations) > 0
+    return error
+
+
+def check_python_compile(
+    abort_on_error: bool = True, file_list: Optional[List[str]] = None
+) -> None:
+    """
+    Check that code can be compiled. This is not as thorough as executing it.
+    """
+    func_name = _report()
+    # Get the files.
+    if file_list is None:
+        file_list = _get_files()
+    _LOG.info("Files:\n%s", "\n".join(file_list))
+    # Keep only the python files.
+    file_list = [f for f in file_list if f.endswith(".py")]
+    _LOG.info("Python files:\n%s", "\n".join(file_list))
+    #
+    error = _check_python_compile(file_list)
     # Handle error.
     _handle_error(func_name, error, abort_on_error)

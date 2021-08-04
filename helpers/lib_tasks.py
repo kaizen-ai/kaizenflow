@@ -274,7 +274,7 @@ def _get_files_to_process(
 # Copied from helpers.datetime_ to avoid dependency from pandas.
 
 
-def _get_ET_timestamp(utc: bool = False) -> str:
+def _get_ET_timestamp() -> str:
     # The timezone depends on how the shell is configured.
     timestamp = datetime.datetime.now()
     return timestamp.strftime("%Y%m%d_%H%M%S")
@@ -395,8 +395,6 @@ def git_clean(ctx, dry_run=False):  # type: ignore
     git_clean_cmd = "git clean -fd"
     if dry_run:
         git_clean_cmd += " --dry-run"
-    cmd = git_clean_cmd
-    _run(ctx, cmd)
     cmd = f"git submodule foreach '{git_clean_cmd}'"
     _run(ctx, cmd)
     # Delete other files.
@@ -547,7 +545,7 @@ def git_create_branch(  # type: ignore
     # Fetch master.
     cmd = "git pull --autostash"
     _run(ctx, cmd)
-    # git checkout -b LemTask169_Get_GH_actions_working_on_lem
+    # git checkout -b LmTask169_Get_GH_actions_working_on_lm
     cmd = f"git checkout -b {branch_name}"
     _run(ctx, cmd)
     # TODO(gp): If the branch already exists, increase the number.
@@ -1326,6 +1324,7 @@ def _get_build_tag(code_ver: str) -> str:
 
     :param code_ver: the value from hversi.get_code_version()
     """
+    # E.g., 20210723-20_52_00
     timestamp = _get_ET_timestamp()
     branch_name = git.get_branch_name()
     hash_ = git.get_head_hash()
@@ -1666,6 +1665,9 @@ def _to_pbcopy(txt: str, pbcopy: bool) -> None:
     txt = txt.rstrip("\n")
     if not pbcopy:
         print(txt)
+        return
+    if not txt:
+        print("Nothing to copy")
         return
     if hsinte.is_running_on_macos():
         # -n = no new line
@@ -2480,7 +2482,11 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
     # The output is tab separated. Parse it with csv and then filter.
     _, txt = hsinte.system_to_string(cmd)
     _LOG.debug(hprint.to_str("txt"))
-    # completed  success  Merge pull...  Fast tests  master  push  2m18s  792511437
+    # TODO(gp): This is a workaround for AmpTask1612.
+    first_line = txt.split("\n")[0]
+    num_cols = len(first_line.split("\t"))
+    # STATUS            NAME        WORKFLOW  BRANCH        EVENT  ID   ELAPSED  AGE
+    # Speculative fix   Slow tests  AmpTa...  pull_request  1097983981  1m1s     7m
     cols = [
         "status",
         "outcome",
@@ -2491,6 +2497,9 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
         "time",
         "workflow_id",
     ]
+    dbg.dassert_in(num_cols, (8, 9))
+    if num_cols == 9:
+        cols.append("age")
     table = htable.Table.from_text(cols, txt, delimiter="\t")
     # table = [line for line in csv.reader(txt.split("\n"), delimiter="\t")]
     _LOG.debug(hprint.to_str("table"))
@@ -2692,3 +2701,5 @@ def gh_create_pr(  # type: ignore
 # TODO(gp): Add gh_open_pr to jump to the PR from this branch.
 
 # TODO(gp): Add ./dev_scripts/testing/pytest_count_files.sh
+
+# TODO(gp): Add dev_scripts/compile_all.py
