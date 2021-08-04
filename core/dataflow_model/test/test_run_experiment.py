@@ -189,7 +189,7 @@ class TestRunExperimentArchiveOnS3(hut.TestCase):
         $SCRATCH_SPACE/result_0/run_experiment.0.log
         $SCRATCH_SPACE/result_0/success.txt"""
 
-    @pytest.mark.slow
+    #@pytest.mark.slow
     def test_serial1(self) -> None:
         """
         Execute:
