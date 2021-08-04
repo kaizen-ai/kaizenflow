@@ -64,6 +64,8 @@ def get_bucket() -> str:
     """
     Return the S3 bucket pointed by AM_S3_BUCKET (e.g., `alphamatic-data`).
 
+    The name should not start with `s3://`.
+
     Make sure your ~/.aws/credentials uses the right key to access this
     bucket as default.
     """
@@ -71,6 +73,8 @@ def get_bucket() -> str:
     env_var = "AM_S3_BUCKET"
     dbg.dassert_in(env_var, os.environ)
     s3_bucket = os.environ[env_var]
+    dbg.dassert(not s3_bucket.startswith("s3://", "Invalid %s value '%s'",
+        env_var, s3_bucket)
     return s3_bucket
 
 
