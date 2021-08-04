@@ -7,6 +7,7 @@ on:
       - master
   push:
     branches:
+      # Comment this out to run when committing on the branch.
       - master
   workflow_dispatch:
   schedule:
@@ -96,6 +97,8 @@ jobs:
           AM_S3_BUCKET: ${{ secrets.AM_S3_BUCKET }}
           AM_TELEGRAM_TOKEN: ${{ secrets.AM_TELEGRAM_TOKEN }}
         run: invoke run_fast_tests
+        # TODO(gp): Run a single test. You need to disable the `push` on master.
+        #run: invoke run_fast_tests --pytest-opts="core/dataflow_model/test/test_run_experiment.py -s --dbg"
         #run: invoke run_fast_tests --pytest-opts="helpers/test/test_git.py::Test_git_modified_files1::test_get_modified_files_in_branch1 -s --dbg"
 
       - name: Post status if was triggered manually

@@ -64,6 +64,8 @@ def get_bucket() -> str:
     """
     Return the S3 bucket pointed by AM_S3_BUCKET (e.g., `alphamatic-data`).
 
+    The name should not start with `s3://`.
+
     Make sure your ~/.aws/credentials uses the right key to access this
     bucket as default.
     """
@@ -71,6 +73,8 @@ def get_bucket() -> str:
     env_var = "AM_S3_BUCKET"
     dbg.dassert_in(env_var, os.environ)
     s3_bucket = os.environ[env_var]
+    dbg.dassert(not s3_bucket.startswith("s3://"), "Invalid %s value '%s'",
+        env_var, s3_bucket)
     return s3_bucket
 
 
@@ -147,6 +151,7 @@ def get_s3_path(s3_path: Optional[str] = None) -> Optional[str]:
     """
     env_var = "AM_S3_BUCKET"
     s3_path = _get_variable_value(s3_path, env_var)
+    is_valid_s3_path(s3_path)
     return s3_path
 
 
@@ -305,7 +310,10 @@ def get_s3fs(*args: Any, **kwargs: Any) -> s3fs.core.S3FileSystem:
 # TODO(gp): -> is_s3_path()
 def is_valid_s3_path(s3_path: str) -> bool:
     dbg.dassert_isinstance(s3_path, str)
-    return s3_path.startswith("s3://")
+    valid = s3_path.startswith("s3://")
+    if s3_path.startswith("s3://s3://"):
+        valid = False
+    return valid
 
 
 # TODO(gp): -> dassert_is_s3_path
@@ -315,7 +323,7 @@ def check_valid_s3_path(s3_path: str) -> None:
     """
     dbg.dassert(
         is_valid_s3_path(s3_path),
-        "Invalid S3 file='%s' since it doesn't start with s3://",
+        "Invalid S3 file='%s' since it doesn't start with 's3://'",
         s3_path,
     )
 

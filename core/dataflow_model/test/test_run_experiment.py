@@ -47,6 +47,7 @@ class TestRunExperimentSuccess1(hut.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs1()'",
             "--num_threads 'serial'",
+            "--skip_archive_on_S3",
         ]
         #
         exp_pass = True
@@ -62,6 +63,7 @@ class TestRunExperimentSuccess1(hut.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs1()'",
             "--num_threads 2",
+            "--skip_archive_on_S3",
         ]
         #
         exp_pass = True
@@ -187,6 +189,9 @@ class TestRunExperimentArchiveOnS3(hut.TestCase):
         $SCRATCH_SPACE/result_0/run_experiment.0.log
         $SCRATCH_SPACE/result_0/success.txt"""
 
+    # TODO(gp): This test needs write access to S3 for `infra` user. For now we
+    #  gave access to the entire bucket. It would be better to give only access to
+    #  `tmp`.
     @pytest.mark.slow
     def test_serial1(self) -> None:
         """
@@ -199,7 +204,7 @@ class TestRunExperimentArchiveOnS3(hut.TestCase):
         # Actions.
         create_s3_archive = True
         check_s3_archive = True
-        clean_up_s3_archive = False
+        clean_up_s3_archive = True
         # Create archive on S3.
         if create_s3_archive:
             output_metadata_file = f"{scratch_dir}/output_metadata.json"
@@ -209,6 +214,7 @@ class TestRunExperimentArchiveOnS3(hut.TestCase):
                 f"--aws_profile '{aws_profile}'",
                 "--s3_path s3://alphamatic-data/tmp",
                 f"--json_output_metadata {output_metadata_file}",
+                #f"-v DEBUG",
             ]
             #
             exp_pass = True
