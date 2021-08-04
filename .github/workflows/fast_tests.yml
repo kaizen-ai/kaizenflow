@@ -3,11 +3,11 @@ on:
   pull_request:
     # https://github.community/t/dont-run-actions-on-draft-pull-requests/16817/19
     types: [opened, synchronize, reopened, ready_for_review]
-    branches:
-      - master
+    #branches:
+    #  - master
   push:
-    branches:
-      - master
+    #branches:
+    #  - master
   workflow_dispatch:
   schedule:
     # Run this once a day even if there are no commit.
