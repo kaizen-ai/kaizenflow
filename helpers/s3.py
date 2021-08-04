@@ -73,7 +73,7 @@ def get_bucket() -> str:
     env_var = "AM_S3_BUCKET"
     dbg.dassert_in(env_var, os.environ)
     s3_bucket = os.environ[env_var]
-    dbg.dassert(not s3_bucket.startswith("s3://", "Invalid %s value '%s'",
+    dbg.dassert(not s3_bucket.startswith("s3://"), "Invalid %s value '%s'",
         env_var, s3_bucket)
     return s3_bucket
 

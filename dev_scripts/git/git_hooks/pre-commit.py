@@ -6,14 +6,10 @@ invariants.
 
 In case of violations the script will exit non-zero and abort the
 commit. User can ignore the checks with `git commit --no-verify '...'`.
-"""
 
-# TODO(gp): Check these hooks
-# https://github.com/pre-commit/pre-commit-hooks/tree/master/pre_commit_hooks
-# https://github.com/pre-commit/pre-commit-hooks/blob/master/pre_commit_hooks/check_ast.py
-# https://github.com/pre-commit/pre-commit-hooks/blob/master/pre_commit_hooks/check_added_large_files.py
-# https://github.com/pre-commit/pre-commit-hooks/blob/master/pre_commit_hooks/check_merge_conflict.py
-# https://code-maven.com/enforcing-commit-message-format-in-git
+One can run this hook to preview what `git commit` will do:
+> pre-commit.py
+"""
 
 # NOTE: This file should depend only on Python standard libraries.
 import logging
@@ -33,6 +29,7 @@ if __name__ == "__main__":
     ghutils.check_author()
     ghutils.check_file_size()
     ghutils.check_words()
+    ghutils.check_python_compile()
     print(
         "\n"
         + ghutils.color_highlight(

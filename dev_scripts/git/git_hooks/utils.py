@@ -1,4 +1,5 @@
 # NOTE: This file should depend only on Python standard libraries.
+import compileall
 import inspect
 import logging
 import os
@@ -9,6 +10,14 @@ import sys
 from typing import Any, List, Optional, Tuple
 
 _LOG = logging.getLogger(__name__)
+
+# TODO(gp): Check these hooks
+# https://github.com/pre-commit/pre-commit-hooks/tree/master/pre_commit_hooks
+# https://github.com/pre-commit/pre-commit-hooks/blob/master/pre_commit_hooks/check_ast.py
+# https://github.com/pre-commit/pre-commit-hooks/blob/master/pre_commit_hooks/check_added_large_files.py
+# https://github.com/pre-commit/pre-commit-hooks/blob/master/pre_commit_hooks/check_merge_conflict.py
+# https://code-maven.com/enforcing-commit-message-format-in-git
+
 
 # The path to the git-binary:
 _GIT_BINARY_PATH = "git"
@@ -394,5 +403,53 @@ def check_words(
     _LOG.info("Files:\n%s", "\n".join(file_list))
     #
     error = _check_words_files(file_list)
+    # Handle error.
+    _handle_error(func_name, error, abort_on_error)
+
+
+# #############################################################################
+# Python compile
+# #############################################################################
+
+
+def _check_python_compile(file_list: List[str]) -> bool:
+    """
+    Run `compileall.compile_file()` on the files.
+
+    :return: error
+    """
+    _LOG.debug("Processing %d files", len(file_list))
+    # Scan all the files.
+    violations = []
+    for file_name in file_list:
+        success = compileall.compile_file(
+            file_name,
+            force=True,
+            quiet=0)
+        _LOG.debug("%s -> success=%s", file_name, success)
+        if not success:
+            _LOG.error("file_name='%s' doesn't compile correctly", file_name)
+            violations.append(file_name)
+    _LOG.debug("violations=%s", len(violations))
+    error = len(violations) > 0
+    return error
+
+
+def check_python_compile(
+    abort_on_error: bool = True, file_list: Optional[List[str]] = None
+) -> None:
+    """
+    Check that code can be compiled. This is not as thorough as executing it.
+    """
+    func_name = _report()
+    # Get the files.
+    if file_list is None:
+        file_list = _get_files()
+    _LOG.info("Files:\n%s", "\n".join(file_list))
+    # Keep only the python files.
+    file_list = [f for f in file_list if f.endswith(".py")]
+    _LOG.info("Python files:\n%s", "\n".join(file_list))
+    #
+    error = _check_python_compile(file_list)
     # Handle error.
     _handle_error(func_name, error, abort_on_error)
