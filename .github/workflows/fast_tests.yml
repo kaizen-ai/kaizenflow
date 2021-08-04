@@ -96,7 +96,7 @@ jobs:
           AM_S3_BUCKET: ${{ secrets.AM_S3_BUCKET }}
           AM_TELEGRAM_TOKEN: ${{ secrets.AM_TELEGRAM_TOKEN }}
           #run: invoke run_fast_tests
-        run: invoke run_fast_tests --pytest-opts="core/dataflow_model/test/test_run_experiment.py::TestRunExperimentSuccess1 -s --dbg"
+        run: invoke run_fast_tests --pytest-opts="core/dataflow_model/test/test_run_experiment.py -s --dbg"
 
       - name: Post status if was triggered manually
         if: ${{ always() && github.event_name == 'workflow_dispatch' }}

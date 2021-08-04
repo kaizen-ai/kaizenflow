@@ -47,6 +47,7 @@ class TestRunExperimentSuccess1(hut.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs1()'",
             "--num_threads 'serial'",
+            "--skip_archive_on_S3",
         ]
         #
         exp_pass = True
@@ -62,6 +63,7 @@ class TestRunExperimentSuccess1(hut.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs1()'",
             "--num_threads 2",
+            "--skip_archive_on_S3",
         ]
         #
         exp_pass = True
