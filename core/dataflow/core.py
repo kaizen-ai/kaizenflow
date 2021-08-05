@@ -23,6 +23,9 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Use this everywhere.
 Nid = str
 
+# Name of a method, e.g., `fit` or `predict`.
+Method = str
+
 
 # TODO(gp): If this is private -> _NodeInterface.
 class NodeInterface(abc.ABC):
@@ -39,6 +42,8 @@ class NodeInterface(abc.ABC):
     the desired methods.
     """
 
+    # TODO(gp): Are inputs / output without names useful? If not we can simplify the
+    #   interface.
     def __init__(
         self,
         nid: str,
@@ -47,8 +52,8 @@ class NodeInterface(abc.ABC):
     ) -> None:
         """
         :param nid: node identifier. Should be unique in a graph.
-        :param inputs: list-like string names of input_names. None for no names.
-        :param outputs: list-like string names of output_names. None for no names.
+        :param inputs: list-like string names of `input_names`. `None` for no names.
+        :param outputs: list-like string names of `output_names`. `None` for no names.
         """
         dbg.dassert_isinstance(nid, str)
         dbg.dassert(nid, "Empty string chosen for unique nid!")
@@ -173,8 +178,8 @@ class DAG:
         :param mode: determines how to handle an attempt to add a node that already
             belongs to the DAG:
             - "strict": asserts
-            - "loose": deletes old node (also removes edges) and adds new
-                node. This is useful for interactive notebooks and debugging.
+            - "loose": deletes old node (also removes edges) and adds new node. This
+              is useful for interactive notebooks and debugging.
         """
         self._dag = networ.DiGraph()
         #
@@ -190,7 +195,8 @@ class DAG:
         self._mode = mode
 
     # TODO(gp): A bit confusing since other classes have `dag / get_dag` method that
-    # returns a DAG. Maybe -> `networkx_digraph()`
+    #  returns a DAG. Also the code does `dag.dag`. Maybe -> `nx_dag()` to say that
+    #  we are extracting the networkx data structures.
     @property
     def dag(self) -> networ.DiGraph:
         return self._dag

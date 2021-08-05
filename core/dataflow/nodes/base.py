@@ -28,7 +28,7 @@ _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 class FitPredictNode(cdc.Node, abc.ABC):
     """
-    Class with abstract sklearn-style `fit` and `predict` functions.
+    Class with abstract sklearn-style `fit()` and `predict()` functions.
 
     The class contains an optional state that can be serialized/deserialized with
     `get_fit_state()` and `set_fit_state()`.
@@ -43,13 +43,16 @@ class FitPredictNode(cdc.Node, abc.ABC):
         inputs: Optional[List[str]] = None,
         outputs: Optional[List[str]] = None,
     ) -> None:
+        # TODO(gp): Consider forcing to specify `inputs` and `outputs` so we can
+        #  simplify interface and code.
         if inputs is None:
             inputs = ["df_in"]
         if outputs is None:
             outputs = ["df_out"]
-        super().__init__(nid=nid, inputs=inputs, outputs=outputs)
+        super().__init__(nid, inputs, outputs)
         self._info: collections.OrderedDict = collections.OrderedDict()
 
+    # TODO(gp): Define a NodeOutput = Dict[str, pd.DataFrame]
     @abc.abstractmethod
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         pass
@@ -58,6 +61,7 @@ class FitPredictNode(cdc.Node, abc.ABC):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         pass
 
+    # TODO(gp): Define a NodeState = Dict[str, Any]
     def get_fit_state(self) -> Dict[str, Any]:
         return {}
 
@@ -67,6 +71,9 @@ class FitPredictNode(cdc.Node, abc.ABC):
     def get_info(
         self, method: str
     ) -> Optional[Union[str, collections.OrderedDict]]:
+        """
+        The returned `info` is not copied and the client should not modify it.
+        """
         # TODO(Paul): Add a dassert_getattr function to use here and in core.
         dbg.dassert_isinstance(method, str)
         dbg.dassert(getattr(self, method))
@@ -76,7 +83,11 @@ class FitPredictNode(cdc.Node, abc.ABC):
         _LOG.warning("No info found for nid=%s, method=%s", self.nid, method)
         return None
 
+    # TODO(gp): values -> info
     def _set_info(self, method: str, values: collections.OrderedDict) -> None:
+        """
+        The passed `info` is copied internally.
+        """
         dbg.dassert_isinstance(method, str)
         dbg.dassert(getattr(self, method))
         dbg.dassert_isinstance(values, collections.OrderedDict)
@@ -84,6 +95,7 @@ class FitPredictNode(cdc.Node, abc.ABC):
         self._info[method] = copy.copy(values)
 
 
+# TODO(gp): -> AbstractDataSource?
 class DataSource(FitPredictNode, abc.ABC):
     """
     A source node that generates data for cross-validation from the passed data

@@ -24,13 +24,63 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 # TODO(gp): Should we call the `start` params -> `start_datetime`
 
 
-# TODO(gp): Now a DagRunner builds and runs a DAG. This creates some coupling.
-#  Consider having a DagRunner accept a DAG however built and run it.
+Optional[List[Tuple[Any, Any]]]
+
+# #############################################################################
 
 
-class FitPredictDagRunner:
+class _AbstractDagRunner(self):
+
+    def __init__(self, config: cconfig.Config, dag_builder: DagBuilder) -> None:
+        # Save input parameters.
+        self.config = config
+        self._dag_builder = dag_builder
+        # Build DAG using DAG builder.
+        # TODO(gp): Now a DagRunner builds and runs a DAG. This creates some coupling.
+        #  Consider having a DagRunner accept a DAG however built and run it.
+        self.dag = self._dag_builder.get_dag(self.config)
+        _LOG.debug("dag=%s", self.dag)
+        # Get available methods.
+        self._methods = self._dag_builder.methods
+        _LOG.debug("_methods=%s", self._methods)
+        dbg.dassert_in("fit", self._methods)
+        dbg.dassert_in("predict", self._methods)
+        # Get the mapping from columns to tags.
+        self._column_to_tags_mapping = (
+            self._dag_builder.get_column_to_tags_mapping(self.config)
+        )
+        _LOG.debug("_column_to_tags_mapping=%s", self._column_to_tags_mapping)
+        # Extract the sink node.
+        # TODO(gp): This maybe is not needed.
+        self._result_nid = self.dag.get_unique_sink()
+        _LOG.debug("_result_nid=%s", self._result_nid)
+
+    def _set_fit_predict_intervals(self, method: str) -> None:
+        # Propagate the intervals to all source nodes.
+        for input_nid in self.dag.get_sources():
+            node = self.dag.get_node(input_nid)
+            if method == "fit":
+                node.set_fit_intervals(intervals)
+            elif method == "predict":
+                node.set_predict_intervals(intervals)
+            else:
+                raise ValueError("Invalid method='%s'" % method)
+
+    def _run_dag_helper(self, method: str) -> Tuple[pd.DataFrame, Info]:
+        nid = self._result_nid
+        # TODO(gp): run_leq_node should do this check.
+        dbg.dassert_in(method, self._methods)
+        df_out = self.dag.run_leq_node(nid, method)["df_out"]
+        info = extract_info(self.dag, [method])
+        return df_out, info
+
+
+# #############################################################################
+
+
+class FitPredictDagRunner(_AbstractDagRunner):
     """
-    Class for running DAGs.
+    Run DAGs that have fit / predict methods.
     """
 
     def __init__(self, config: cconfig.Config, dag_builder: DagBuilder) -> None:
@@ -40,26 +90,7 @@ class FitPredictDagRunner:
         :param config: config for DAG
         :param dag_builder: `DagBuilder` instance to build a DAG from the config
         """
-        # Save input parameters.
-        self.config = config
-        self._dag_builder = dag_builder
-        # Build DAG using DAG builder.
-        self.dag = self._dag_builder.get_dag(self.config)
-        _LOG.info("dag=%s", self.dag)
-        #
-        self._methods = self._dag_builder.methods
-        _LOG.info("_methods=%s", self._methods)
-        # Confirm that "fit" and "predict" are registered DAG methods.
-        dbg.dassert_in("fit", self._methods)
-        dbg.dassert_in("predict", self._methods)
-        #
-        self._column_to_tags_mapping = (
-            self._dag_builder.get_column_to_tags_mapping(self.config)
-        )
-        _LOG.info("_column_to_tags_mapping=%s", self._column_to_tags_mapping)
-        # Save the sink node.
-        self._result_nid = self.dag.get_unique_sink()
-        _LOG.info("_result_nid=%s", self._result_nid)
+        super().__init__(config, dag_builder)
 
     def set_fit_intervals(
         self, intervals: Optional[List[Tuple[Any, Any]]]
@@ -73,7 +104,8 @@ class FitPredictDagRunner:
             return
         # Propagate the fit intervals to all source nodes.
         for input_nid in self.dag.get_sources():
-            self.dag.get_node(input_nid).set_fit_intervals(intervals)
+            node = self.dag.get_node(input_nid)
+            node.set_fit_intervals(intervals)
 
     def set_predict_intervals(
         self, intervals: Optional[List[Tuple[Any, Any]]]
@@ -87,20 +119,23 @@ class FitPredictDagRunner:
             return
         # Propagate the predict intervals to all source nodes.
         for input_nid in self.dag.get_sources():
-            self.dag.get_node(input_nid).set_predict_intervals(intervals)
+            node = self.dag.get_node(input_nid)
+            node.set_predict_intervals(intervals)
 
     def fit(self) -> ResultBundle:
         """
         Fitting means running `fit()` method on the DAG up to the sink node.
         """
-        return self._run_dag(self._result_nid, "fit")
+        method = "fit"
+        return self._run_dag(self._result_nid, method)
 
     def predict(self) -> ResultBundle:
         """
         Predicting means running `predict()` method on the DAG up to the sink
         node.
         """
-        return self._run_dag(self._result_nid, "predict")
+        method = "predict"
+        return self._run_dag(self._result_nid, method)
 
     def _run_dag(self, nid: str, method: str) -> ResultBundle:
         """
@@ -111,10 +146,7 @@ class FitPredictDagRunner:
         :return: `ResultBundle` class containing `config`, `nid`, `method`,
             result dataframe and DAG info
         """
-        # TODO(gp): Factor out this in _run_dag_helper().
-        dbg.dassert_in(method, self._methods)
-        df_out = self.dag.run_leq_node(nid, method)["df_out"]
-        info = extract_info(self.dag, [method])
+        df_out, info = self._run_dag_helper(method)
         return ResultBundle(
             config=self.config,
             result_nid=nid,
@@ -125,9 +157,12 @@ class FitPredictDagRunner:
         )
 
 
+# #############################################################################
+
+
 class PredictionDagRunner(FitPredictDagRunner):
     """
-    Class for running prediction DAGs.
+    Run prediction DAGs.
 
     Identical to `FitPredictDagRunner`, but returning a
     `PredictionResultBundle`.
@@ -137,9 +172,7 @@ class PredictionDagRunner(FitPredictDagRunner):
         """
         Same as super class but return a `PredictionResultBundle`.
         """
-        dbg.dassert_in(method, self._methods)
-        df_out = self.dag.run_leq_node(nid, method)["df_out"]
-        info = extract_info(self.dag, [method])
+        df_out, info = self._run_dag_helper(method)
         return PredictionResultBundle(
             config=self.config,
             result_nid=nid,
@@ -150,9 +183,12 @@ class PredictionDagRunner(FitPredictDagRunner):
         )
 
 
-class RollingFitPredictDagRunner:
+# #############################################################################
+
+
+class RollingFitPredictDagRunner(_AbstractDagRunner):
     """
-    Class for periodic re-fitting of models.
+    Run a DAG by periodic fitting on previous history and evaluating on new data.
     """
 
     def __init__(
@@ -164,28 +200,22 @@ class RollingFitPredictDagRunner:
         retraining_freq: str,
         retraining_lookback: int,
     ) -> None:
+        """
+        Constructor.
+
+        :param start: start of available data for use in training
+        :param end: end of available data for use in training
+        :param retraining_freq: how often to retrain using Pandas frequency
+            convention (e.g., `2B`)
+        :param retraining_lookback: number of periods of past data to include
+            in retraining, expressed in integral units of `retraining_freq`
+        """
+        super().__init__(config, dag_builder)
         # Save input parameters.
-        self.config = config
-        self._dag_builder = dag_builder
         self._start = start
         self._end = end
         self._retraining_freq = retraining_freq
         self._retraining_lookback = retraining_lookback
-        # Create DAG using DAG builder.
-        self.dag = self._dag_builder.get_dag(self.config)
-        _LOG.info("dag=%s", self.dag)
-        self._methods = self._dag_builder.methods
-        _LOG.info("_methods=%s", self._methods)
-        self._column_to_tags_mapping = (
-            self._dag_builder.get_column_to_tags_mapping(self.config)
-        )
-        _LOG.info("_column_to_tags_mapping=%s", self._column_to_tags_mapping)
-        # Confirm that "fit" and "predict" are registered DAG methods.
-        dbg.dassert_in("fit", self._methods)
-        dbg.dassert_in("predict", self._methods)
-        # Save the sink node.
-        self._result_nid = self.dag.get_unique_sink()
-        _LOG.info("_result_nid=%s", self._result_nid)
         # Generate retraining dates.
         self._retraining_datetimes = self._generate_retraining_datetimes(
             start=self._start,
@@ -198,12 +228,15 @@ class RollingFitPredictDagRunner:
     def fit_predict(self) -> Generator:
         """
         Fit at each retraining date and predict until next retraining date.
+
+        :return: the training time, fit `ResultBundle`, predict `ResultBundle`
         """
         for training_datetime in self._retraining_datetimes:
             (
                 fit_result_bundle,
                 predict_result_bundle,
             ) = self.fit_predict_at_datetime(training_datetime)
+            # TODO(gp): Better to return a pd.Timestamp rather than its representation.
             training_datetime_str = training_datetime.strftime("%Y%m%d_%H%M%S")
             yield training_datetime_str, fit_result_bundle, predict_result_bundle
 
@@ -212,7 +245,7 @@ class RollingFitPredictDagRunner:
         datetime_: _PANDAS_DATE_TYPE,
     ) -> Tuple[ResultBundle, ResultBundle]:
         """
-        Fit at `datetime` and then predict.
+        Fit with all the history up and including `datetime` and then predict forward.
 
         :param datetime_: point in time at which to train (historically) and then
             predict (one step ahead)
@@ -226,24 +259,27 @@ class RollingFitPredictDagRunner:
         )
         start_datetime = idx[0]
         fit_interval = (start_datetime, datetime_)
+        # Fit in the interval [start_datetime, datetime_].
         fit_result_bundle = self._run_fit(fit_interval)
         # Determine predict interval.
         idx = idx.shift(freq=self._retraining_freq)
         end_datetime = idx[-1]
         predict_interval = (start_datetime, end_datetime)
+        # Predict in the interval [datetime_ + \epsilon, end_datetime].
         predict_result_bundle = self._run_predict(predict_interval, datetime_)
         return fit_result_bundle, predict_result_bundle
 
+    # TODO(gp): -> _fit for symmetry with the rest of the code.
     def _run_fit(
         self, interval: Tuple[_PANDAS_DATE_TYPE, _PANDAS_DATE_TYPE]
     ) -> ResultBundle:
-        # Set fit interval on DAG.
+        # Set fit interval on all source nodes of the DAG.
         for input_nid in self.dag.get_sources():
-            self.dag.get_node(input_nid).set_fit_intervals([interval])
+            node = self.dag.get_node(input_nid)
+            node.set_fit_intervals([interval])
         # Fit.
         method = "fit"
-        df_out = self.dag.run_leq_node(self._result_nid, method)["df_out"]
-        info = extract_info(self.dag, [method])
+        df_out, info = self._run_dag_helper(method)
         return ResultBundle(
             config=self.config,
             result_nid=self._result_nid,
@@ -258,15 +294,14 @@ class RollingFitPredictDagRunner:
         interval: Tuple[_PANDAS_DATE_TYPE, _PANDAS_DATE_TYPE],
         oos_start: _PANDAS_DATE_TYPE,
     ) -> ResultBundle:
-        # Set predict interval on DAG.
+        # Set predict interval on all source nodes of the DAG.
         for input_nid in self.dag.get_sources():
             self.dag.get_node(input_nid).set_predict_intervals([interval])
         # Predict.
         method = "predict"
-        df_out = self.dag.run_leq_node(self._result_nid, method)["df_out"]
+        df_out, info = self._run_dag_helper(method)
         # Restrict `df_out` to out-of-sample portion.
         df_out = df_out.loc[oos_start:]  # type: ignore[misc]
-        info = extract_info(self.dag, [method])
         return ResultBundle(
             config=self.config,
             result_nid=self._result_nid,
@@ -286,11 +321,8 @@ class RollingFitPredictDagRunner:
         """
         Generate an index of retraining dates based on specs.
 
-        :param start: start of available data for use in training
-        :param end: end of available data for use in training
-        :param retraining_freq: how often to retrain
-        :param retraining_lookback: number of periods of past data to include
-            in retraining, expressed in integral units of `retraining_freq`
+        The input parameters have the same meaning as in the constructor.
+
         :return: (re)training dates
         """
         # Populate an initial index of candidate retraining dates.
@@ -328,9 +360,7 @@ class RollingFitPredictDagRunner:
         :return: `ResultBundle` class containing `config`, `nid`, `method`,
             result dataframe and DAG info
         """
-        dbg.dassert_in(method, self._methods)
-        df_out = self.dag.run_leq_node(nid, method)["df_out"]
-        info = extract_info(self.dag, [method])
+        df_out, info = self._run_dag_helper(method)
         return ResultBundle(
             config=self.config,
             result_nid=nid,
@@ -341,11 +371,12 @@ class RollingFitPredictDagRunner:
         )
 
 
+# #############################################################################
+
+
 class IncrementalDagRunner:
     """
-    Class for running DAGs in incremental fashion, i.e., running one step at a
-    time. Class for running DAGs in incremental fashion, i.e., running one step
-    at a time.
+    Run DAGs in incremental fashion, i.e., running one step at a time.
 
     # TODO(gp): Improve description.
     """
@@ -373,26 +404,13 @@ class IncrementalDagRunner:
         :param fit_state: Config containing any learned state required for
             initializing the DAG
         """
-        self.config = config
-        self._dag_builder = dag_builder
+        super().__init__(config, dag_builder)
         self._start = start
         self._end = end
         self._freq = freq
         self._fit_state = fit_state
-        # Create DAG using DAG builder.
-        self.dag = self._dag_builder.get_dag(self.config)
-        #
         set_fit_state(self.dag, self._fit_state)
-        #
-        self._methods = self._dag_builder.methods
-        self._column_to_tags_mapping = (
-            self._dag_builder.get_column_to_tags_mapping(self.config)
-        )
-        # Confirm that "fit" and "predict" are registered DAG methods.
-        dbg.dassert_in("fit", self._methods)
-        dbg.dassert_in("predict", self._methods)
         # Create predict range.
-        self._result_nid = self.dag.get_unique_sink()
         self._date_range = pd.date_range(
             start=self._start, end=self._end, freq=self._freq
         )
@@ -412,7 +430,7 @@ class IncrementalDagRunner:
             result_bundle = self.predict_at_datetime(end_dt)
             yield result_bundle
 
-    # TODO(gp): Maybe call dt -> datetime_ which seems the name used elsewhere.
+    # TODO(gp): dt -> datetime_ as used elsewhere.
     def predict_at_datetime(self, dt: _PANDAS_DATE_TYPE) -> ResultBundle:
         """
         Generate a prediction as of `dt` (for a future point in time).
@@ -451,9 +469,12 @@ class IncrementalDagRunner:
         )
 
 
+# #############################################################################
+
+
 class RealTimeDagRunner:
     """
-    Class for running a DAG in real-time.
+    Run a DAG in (true or simulated) real-time.
     """
 
     def __init__(
@@ -461,9 +482,7 @@ class RealTimeDagRunner:
         config: cconfig.Config,
         dag_builder: DagBuilder,
         fit_state: cconfig.Config,
-        #
         execute_rt_loop_kwargs: Dict[str, Any],
-        #
         dst_dir: str,
     ) -> None:
         # Save input parameters.
@@ -471,16 +490,14 @@ class RealTimeDagRunner:
         self._dag_builder = dag_builder
         # TODO(gp): Use this for stateful DAGs.
         _ = fit_state
-        # Create DAG using DAG builder.
-        self._dag = self._dag_builder.get_dag(self._config)
-        #
         self._execute_rt_loop_kwargs = execute_rt_loop_kwargs
-        #
         self._dst_dir = dst_dir
         #
+        # Create DAG using DAG builder.
+        self._dag = self._dag_builder.get_dag(self._config)
         self._execution_trace: Optional[cdrt.ExecutionTrace] = None
 
-    # TODO(gp): Should it return a List[ResultBundle]?
+    # TODO(gp): We should de
     def predict(self) -> List[Dict[str, Any]]:
         # TODO(gp): This is similar to an IncrementalDagRunner.
         def dag_workload(current_time: pd.Timestamp) -> Dict[str, Any]:

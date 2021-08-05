@@ -70,23 +70,23 @@ class TestIncrementalDagRunner1(hut.TestCase):
 # #############################################################################
 
 
-## TODO(gp): Test with a very simple DAG since the focus is on the DagRunner.
-# class TestRealTimeDagRunner1(hut.TestCase):
-#    def test1(self) -> None:
-#        """
-#        Test the RealTimeDagRunner using synthetic data.
-#        """
-#        dtf.align_on_even_second()
-#        #
-#        execute_rt_loop_kwargs = cdtfttrt.get_test_execute_rt_loop_kwargs()
-#        kwargs = {
-#            "config": config,
-#            "dag_builder": dag_builder,
-#            "fit_state": None,
-#            #
-#            "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
-#            #
-#            "dst_dir": None,
-#        }
-#        dag_runner = cdtf.RealTimeDagRunner(**kwargs)
-#        dag_runner.predict()
+# TODO(gp): Test with a very simple DAG since the focus is on the DagRunner.
+class TestRealTimeDagRunner1(hut.TestCase):
+   def test1(self) -> None:
+       """
+       Test the RealTimeDagRunner using synthetic data.
+       """
+       dtf.align_on_even_second()
+       #
+       execute_rt_loop_kwargs = cdtfttrt.get_test_execute_rt_loop_kwargs()
+       kwargs = {
+           "config": config,
+           "dag_builder": dag_builder,
+           "fit_state": None,
+           #
+           "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
+           #
+           "dst_dir": None,
+       }
+       dag_runner = cdtf.RealTimeDagRunner(**kwargs)
+       dag_runner.predict()
