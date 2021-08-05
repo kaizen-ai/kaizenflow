@@ -1,3 +1,8 @@
+"""
+Import as:
+
+import core.dataflow.nodes.transformers as cdtfnt
+"""
 import collections
 import datetime
 import inspect

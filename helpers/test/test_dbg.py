@@ -70,7 +70,7 @@ class Test_dassert1(hut.TestCase):
 
         According to the user's intention the assertion should trigger, but, because
         of using `dassert()` instead of `dassert_eq()`, the assertion will not
-        trigger. We notice that the user passed a list instead of a string as `msg`
+        __trigger. We notice that the user passed a list instead of a string as `msg`
         and raise.
         """
         with self.assertRaises(AssertionError) as cm:
@@ -445,6 +445,71 @@ class Test_dassert_container_type1(hut.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
+
+# #############################################################################
+
+
+class _Animal:
+    pass
+
+
+class _Man(_Animal):
+    pass
+
+
+class _Vegetable:
+    pass
+
+
+class Test_dassert_issubclass1(hut.TestCase):
+
+    def test_man1(self) -> None:
+        """
+        An instance of `_Man` descends from `_Animal`.
+        """
+        man = _Man()
+        dbg.dassert_issubclass(man, _Man)
+
+    def test_man2(self) -> None:
+        """
+        An instance of `_Man` descends from object.
+        """
+        man = _Man()
+        dbg.dassert_issubclass(man, object)
+
+    def test_man_fail1(self) -> None:
+        """
+        An instance of `_Man` doesn't descends from `_Vegetable`.
+        """
+        man = _Man()
+        with self.assertRaises(AssertionError) as cm:
+            dbg.dassert_issubclass(man, _Vegetable)
+        self.check_string(str(cm.exception))
+
+    def test_man_fail2(self) -> None:
+        """
+        An instance of `_Man` doesn't descends from `int`.
+        """
+        man = _Man()
+        with self.assertRaises(AssertionError) as cm:
+            dbg.dassert_issubclass(man, int)
+        self.check_string(str(cm.exception))
+
+    def test1(self) -> None:
+        """
+        In Python everything is an object.
+        """
+        dbg.dassert_issubclass(5, object)
+        dbg.dassert_issubclass(int, object)
+        dbg.dassert_issubclass(int, (object, int))
+
+    def test_fail1(self) -> None:
+        """
+        `issubclass` only accepts classes and not instances as second argument.
+        """
+        with self.assertRaises(Exception) as cm:
+            dbg.dassert_issubclass(int, 5.0)
+        self.check_string(str(cm.exception))
 
 # #############################################################################
 

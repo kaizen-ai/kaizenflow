@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.dataflow.runners as cdtfr import core.dataflow as cdtf
+import core.dataflow.runners as cdtfr
 """
 
 import abc
@@ -472,26 +472,36 @@ class RealTimeDagRunner(_AbstractDagRunner):
         # Store information about the real-time execution.
         self._execution_trace: Optional[cdtfrt.ExecutionTrace] = None
 
-    # TODO(gp): We should return a ResultBundle?
-    def predict(self) -> List[Dict[str, Any]]:
+    def predict(self) -> List[ResultBundle]:
+        """
+        Predict every time there is a real-time event.
+
+        :return: list of `ResultBundle`, one per event
+        """
+        method = "predict"
+        # Adapt `_dag_workload()` to the expected call back signature.
+        workload = lambda current_time: self._dag_workload(current_time, method)
+        # Call the event loop.
         execution_trace, results = cdtfrt.execute_with_real_time_loop(
-            **self._execute_rt_loop_kwargs, workload=self._dag_workload
+            **self._execute_rt_loop_kwargs, workload=workload
         )
+        # Save the log of events.
         self._execution_trace = execution_trace
-        results = cast(List[Dict[str, Any]], results)
-        return results
+        # Convert the output in `ResultBundles`.
+        result_bundles = [self._to_result_bundle(method, df_out, info)
+                          for df_out, info in results]
+        return result_bundles
 
     @property
-    def get_execution_trace(self) -> Optional[cdtfrt.ExecutionTrace]:
+    def execution_trace(self) -> Optional[cdtfrt.ExecutionTrace]:
         return self._execution_trace
 
-    # TODO(gp): This is similar to an IncrementalDagRunner.
-    def _dag_workload(self, current_time: pd.Timestamp) -> Dict[str, Any]:
+    def _dag_workload(self, current_time: pd.Timestamp, method: cdtfc.Method
+                      ) -> cdtfc.NodeOutput:
         """
         Workload for the real-time loop to execute a DAG.
         """
         _ = current_time
         sink = self.dag.get_unique_sink()
-        dict_ = self.dag.run_leq_node(sink, "predict")
-        dict_ = cast(Dict[str, Any], dict_)
-        return dict_
+        node_output = self.dag.run_leq_node(sink, method)
+        return node_output

@@ -274,7 +274,7 @@ def to_string(var: str) -> str:
 
 
 def get_random_df(
-    num_cols: int, seed: Optional[int] = None, **kwargs: Any
+    num_cols: int, seed: Optional[int] = None, kwargs: Optional[Dict[str, Any]] = None
 ) -> "pd.DataFrame":
     """
     Compute df with random data with `num_cols` columns and index obtained by

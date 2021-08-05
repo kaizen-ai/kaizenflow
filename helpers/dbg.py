@@ -295,6 +295,25 @@ def dassert_isinstance(
         _dfatal(txt, msg, *args)
 
 
+def dassert_issubclass(
+    val1: Any,
+    val2: Union[type, Iterable[type]],
+    msg: Optional[str] = None,
+    *args: Any,
+) -> None:
+    """
+    Assert that an object `val1` is a subclass of `val2`.
+    """
+    cond = issubclass(val1.__class__, val2)  # type: ignore[arg-type]
+    if not cond:
+        txt = "instance '%s' of class '%s' is not a subclass of '%s'" % (
+            str(val1),
+            val1.__class__.__name__,
+            val2
+        )
+        _dfatal(txt, msg, *args)
+
+
 # Set related.
 
 

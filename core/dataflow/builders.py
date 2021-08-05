@@ -45,6 +45,7 @@ class DagBuilder(abc.ABC):
 
     def __init__(self, nid_prefix: Optional[str] = None) -> None:
         """
+        Constructor.
 
         :param nid_prefix: a namespace ending with "/" for graph node naming.
             This may be useful if the DAG built by the builder is either built

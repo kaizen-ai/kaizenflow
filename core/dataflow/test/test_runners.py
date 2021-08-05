@@ -2,7 +2,11 @@ import logging
 
 import numpy as np
 
+# TODO(gp): We should import only the strict dependencies.
 import core.dataflow as dtf
+import core.dataflow.runners as cdtfr
+import core.dataflow.test.test_real_time as cdtfttrt
+import core.dataflow.nodes.test.test_dag as cdtfnttd
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -44,7 +48,8 @@ class TestIncrementalDagRunner1(hut.TestCase):
         config = dag_builder.get_config_template()
         # Create DAG and generate fit state.
         dag = dag_builder.get_dag(config)
-        dag.run_leq_node("rets/clip", "fit")
+        nid = dag.get_unique_sink()
+        dag.run_leq_node(nid, "fit")
         fit_state = dtf.get_fit_state(dag)
         #
         dag_runner = dtf.IncrementalDagRunner(
@@ -70,23 +75,33 @@ class TestIncrementalDagRunner1(hut.TestCase):
 # #############################################################################
 
 
-# # TODO(gp): Test with a very simple DAG since the focus is on the DagRunner.
-# class TestRealTimeDagRunner1(hut.TestCase):
-#    def test1(self) -> None:
-#        """
-#        Test the RealTimeDagRunner using synthetic data.
-#        """
-#        dtf.align_on_even_second()
-#        #
-#        execute_rt_loop_kwargs = cdtfttrt.get_test_execute_rt_loop_kwargs()
-#        kwargs = {
-#            "config": config,
-#            "dag_builder": dag_builder,
-#            "fit_state": None,
-#            #
-#            "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
-#            #
-#            "dst_dir": None,
-#        }
-#        dag_runner = cdtf.RealTimeDagRunner(**kwargs)
-#        dag_runner.predict()
+# TODO(gp): Test with a very simple DAG since the focus is on the DagRunner.
+class TestRealTimeDagRunner1(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Test the RealTimeDagRunner using synthetic data.
+        """
+        #
+        dag_builder = cdtfnttd._NaivePipeline()
+        config = dag_builder.get_config_template()
+        #
+        dtf.align_on_even_second()
+        #
+        execute_rt_loop_kwargs = cdtfttrt.get_test_execute_rt_loop_kwargs()
+        kwargs = {
+            "config": config,
+            "dag_builder": dag_builder,
+            "fit_state": None,
+            #
+            "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
+            #
+            "dst_dir": None,
+        }
+        dag_runner = cdtfr.RealTimeDagRunner(**kwargs)
+        dag_runner.predict()
+        #
+        actual = []
+        actual.append("execution_trace=\n%s" % str(dag_runner.execution_trace))
+        actual = "\n".join(map(str, actual))
+        expected = ""
+        self.assert_equal(actual, expected)

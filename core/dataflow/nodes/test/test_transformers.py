@@ -13,6 +13,40 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
+class TestResampleTransformer1(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Test `fit()` call.
+        """
+        data = self._get_data()
+        config = cconfig.get_config_from_nested_dict(
+            {
+                "rule": "1B",
+                "agg_func": "last",
+                "resample_kwargs": None,
+                "agg_func_kwargs": None,
+            }
+        )
+        node = cdnt.Reample("resample", **config.to_dict())
+        df_out = node.fit(data)["df_out"]
+        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        self.check_string(df_str)
+
+    def _get_data(self) -> pd.DataFrame:
+        """
+        Generate multivariate normal returns.
+        """
+        num_cols = 2
+        seed = 42
+        date_range_kwargs = {
+            "start": pd.Timestamp("2010-01-01"),
+            "end": pd.Timestamp("2010-02-01"),
+            "freq": "1B",
+        }
+        data = hut.get_random_df(num_cols, seed=seed, kwargs=date_range_kwargs)
+        return data
+
+
 class TestSeriesToSeriesTransformer(hut.TestCase):
     def test1(self) -> None:
         """
