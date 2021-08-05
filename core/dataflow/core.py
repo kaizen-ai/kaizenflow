@@ -1,3 +1,8 @@
+"""
+Import as:
+
+import core.dataflow.core as cdtfc
+"""
 import abc
 import itertools
 import logging

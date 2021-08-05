@@ -4,9 +4,11 @@ Import as:
 import core.dataflow.runners as cdtfr
 import core.dataflow as cdtf
 """
+
+import abc
 import datetime
 import logging
-from typing import Any, Generator, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -17,6 +19,10 @@ import helpers.dbg as dbg
 from core.dataflow.builders import DagBuilder
 from core.dataflow.result_bundle import PredictionResultBundle, ResultBundle
 from core.dataflow.visitors import extract_info, set_fit_state
+import core.dataflow.core as cdtfc
+import core.dataflow.utils as cdtfu
+import core.dataflow.visitors as cdtfv
+import core.dataflow.real_time as cdtfrt
 
 _LOG = logging.getLogger(__name__)
 # TODO(gp): -> Use hdatetime.Datetime
@@ -28,7 +34,13 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 # #############################################################################
 
 
-class _AbstractDagRunner(self):
+class _AbstractDagRunner(abc.ABC):
+    """
+    Abstract class with the common code to all `DagRunner`s.
+
+    There is not a method common to all `DagRunner`s that is abstract, so we use
+    `abc.ABC` to guarantee that this class is not instantiated.
+    """
 
     def __init__(self, config: cconfig.Config, dag_builder: DagBuilder) -> None:
         # Save input parameters.
@@ -54,7 +66,7 @@ class _AbstractDagRunner(self):
         self._result_nid = self.dag.get_unique_sink()
         _LOG.debug("_result_nid=%s", self._result_nid)
 
-    def _set_fit_predict_intervals(self, method: str, intervals: Optional[Intervals]) -> None:
+    def _set_fit_predict_intervals(self, method: str, intervals: Optional[cdtfu.Intervals]) -> None:
         """
         Set fit or predict intervals for all the source nodes.
 
@@ -73,7 +85,7 @@ class _AbstractDagRunner(self):
             else:
                 raise ValueError("Invalid method='%s'" % method)
 
-    def _run_dag_helper(self, method: Method) -> Tuple[pd.DataFrame, Info]:
+    def _run_dag_helper(self, method: cdtfc.Method) -> Tuple[pd.DataFrame, cdtfv.Info]:
         nid = self._result_nid
         # TODO(gp): run_leq_node should do this check.
         dbg.dassert_in(method, self._methods)
@@ -81,7 +93,7 @@ class _AbstractDagRunner(self):
         info = extract_info(self.dag, [method])
         return df_out, info
 
-    def _to_result_bundle(self, df_out: pd.DataFrame, info: Info) -> ResultBundle:
+    def _to_result_bundle(self, df_out: pd.DataFrame, info: cdtfv.Info) -> ResultBundle:
         return ResultBundle(
             config=self.config,
             result_nid=nid,
@@ -380,7 +392,7 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
 # #############################################################################
 
 
-class IncrementalDagRunner:
+class IncrementalDagRunner(_AbstractDagRunner):
     """
     Run DAGs in incremental fashion, i.e., running one step at a time.
 
@@ -505,7 +517,7 @@ class RealTimeDagRunner(_AbstractDagRunner):
         return results
 
     @property
-    def get_execution_trace(self) -> Optional[cdrt.ExecutionTrace]:
+    def get_execution_trace(self) -> Optional[cdtfrt.ExecutionTrace]:
         return self._execution_trace
 
     # TODO(gp): This is similar to an IncrementalDagRunner.

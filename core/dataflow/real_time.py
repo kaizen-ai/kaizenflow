@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.dataflow.real_time as cdrt
+import core.dataflow.real_time as cdtfrt
 """
 
 import collections
