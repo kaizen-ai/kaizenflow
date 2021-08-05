@@ -22,10 +22,11 @@ _COL_TYPE = Union[int, str]
 # TODO(gp): Replace with hdatetime.StrictDatetime
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
-_TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE],
-                            # Function that returns a list of
-                            Callable[[], List[_COL_TYPE]]]
-
+_TO_LIST_MIXIN_TYPE = Union[
+    List[_COL_TYPE],
+    # Function that returns a list of
+    Callable[[], List[_COL_TYPE]],
+]
 
 
 # #############################################################################
@@ -75,13 +76,14 @@ class FitPredictNode(cdc.Node, abc.ABC):
 
     @abc.abstractmethod
     def predict(self, df_in: pd.DataFrame) -> FitPredictNodeOutput:
-        pass
+        _ = self
 
     def get_fit_state(self) -> FitPredictNodeState:
+        _ = self
         return {}
 
     def set_fit_state(self, fit_state: FitPredictNodeState) -> None:
-        pass
+        _ = self
 
     def get_info(
         self, method: str
@@ -153,8 +155,7 @@ class DataSource(FitPredictNode, abc.ABC):
     # `DataSource` uses data passed at construction time, so it does not need a
     # `df_in` in either `fit()` or `predict()` as a typical `FitPredictNode` does.
     # For this reason the function signature is different.
-    # pylint: disable=arguments-differ  # type: ignore[override]
-    def fit(self) -> Dict[str, pd.DataFrame]:
+    def fit(self) -> Dict[str, pd.DataFrame]:  # pylint: disable=arguments-differ  # type: ignore[override]
         """
         :return: training set as df
         """
@@ -187,8 +188,7 @@ class DataSource(FitPredictNode, abc.ABC):
         self._validate_intervals(intervals)
         self._predict_intervals = intervals
 
-    # pylint: disable=arguments-differ  # type: ignore[override]
-    def predict(self) -> Dict[str, pd.DataFrame]:
+    def predict(self) -> Dict[str, pd.DataFrame]:  # pylint: disable=arguments-differ  # type: ignore[override]
         """
         :return: test set as df
         """
@@ -320,16 +320,14 @@ class YConnector(FitPredictNode):
         """
         return self._get_col_names(self._df_in2_col_names)
 
-    # pylint: disable=arguments-differ  # type: ignore[override]
-    def fit(
+    def fit(  # pylint: disable=arguments-differ  # type: ignore[override]
         self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
     ) -> Dict[str, pd.DataFrame]:
         df_out, info = self._apply_connector_func(df_in1, df_in2)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
-    # pylint: disable=arguments-differ  # type: ignore[override]
-    def predict(
+    def predict(  # pylint: disable=arguments-differ  # type: ignore[override]
         self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
     ) -> Dict[str, pd.DataFrame]:
         df_out, info = self._apply_connector_func(df_in1, df_in2)
@@ -355,6 +353,7 @@ class YConnector(FitPredictNode):
             "No column names. This may indicate an invocation prior to graph "
             "execution.",
         )
+        col_names = cast(List[str], col_names)
         return col_names
 
 

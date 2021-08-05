@@ -1,28 +1,27 @@
 """
 Import as:
 
-import core.dataflow.runners as cdtfr
-import core.dataflow as cdtf
+import core.dataflow.runners as cdtfr import core.dataflow as cdtf
 """
 
 import abc
 import datetime
 import logging
-from typing import Any, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union, cast
 
 import pandas as pd
 
 import core.config as cconfig
+import core.dataflow.core as cdtfc
+import core.dataflow.real_time as cdtfrt
+import core.dataflow.utils as cdtfu
+import core.dataflow.visitors as cdtfv
 import helpers.dbg as dbg
 
 # TODO(gp): Use the standard imports.
 from core.dataflow.builders import DagBuilder
 from core.dataflow.result_bundle import PredictionResultBundle, ResultBundle
 from core.dataflow.visitors import extract_info, set_fit_state
-import core.dataflow.core as cdtfc
-import core.dataflow.utils as cdtfu
-import core.dataflow.visitors as cdtfv
-import core.dataflow.real_time as cdtfrt
 
 _LOG = logging.getLogger(__name__)
 # TODO(gp): -> Use hdatetime.Datetime
@@ -38,8 +37,9 @@ class _AbstractDagRunner(abc.ABC):
     """
     Abstract class with the common code to all `DagRunner`s.
 
-    There is not a method common to all `DagRunner`s that is abstract, so we use
-    `abc.ABC` to guarantee that this class is not instantiated directly.
+    There is not a method common to all `DagRunner`s that is abstract,
+    so we use `abc.ABC` to guarantee that this class is not instantiated
+    directly.
     """
 
     def __init__(self, config: cconfig.Config, dag_builder: DagBuilder) -> None:
@@ -71,7 +71,9 @@ class _AbstractDagRunner(abc.ABC):
         self._result_nid = self.dag.get_unique_sink()
         _LOG.debug("_result_nid=%s", self._result_nid)
 
-    def _set_fit_predict_intervals(self, method: cdtfc.Method, intervals: Optional[cdtfu.Intervals]) -> None:
+    def _set_fit_predict_intervals(
+        self, method: cdtfc.Method, intervals: Optional[cdtfu.Intervals]
+    ) -> None:
         """
         Set fit or predict intervals for all the source nodes.
 
@@ -90,7 +92,9 @@ class _AbstractDagRunner(abc.ABC):
             else:
                 raise ValueError("Invalid method='%s'" % method)
 
-    def _run_dag_helper(self, method: cdtfc.Method) -> Tuple[pd.DataFrame, cdtfv.Info]:
+    def _run_dag_helper(
+        self, method: cdtfc.Method
+    ) -> Tuple[pd.DataFrame, cdtfv.Info]:
         """
         Run the DAG for the given method.
 
@@ -104,7 +108,9 @@ class _AbstractDagRunner(abc.ABC):
 
     # TODO(gp): This could be folded into `_run_dag_helper()` if we collapse
     #  `ResultBundle` and `PredictionResultBundle`.
-    def _to_result_bundle(self, method: cdtfc.Method, df_out: pd.DataFrame, info: cdtfv.Info) -> ResultBundle:
+    def _to_result_bundle(
+        self, method: cdtfc.Method, df_out: pd.DataFrame, info: cdtfv.Info
+    ) -> ResultBundle:
         """
         Package the result of a DAG execution into a ResultBundle.
         """
@@ -117,6 +123,7 @@ class _AbstractDagRunner(abc.ABC):
             info=info,
         )
 
+
 # #############################################################################
 
 
@@ -125,18 +132,7 @@ class FitPredictDagRunner(_AbstractDagRunner):
     Run DAGs that have fit / predict methods.
     """
 
-    def __init__(self, config: cconfig.Config, dag_builder: DagBuilder) -> None:
-        """
-        Constructor.
-
-        :param config: config for DAG
-        :param dag_builder: `DagBuilder` instance to build a DAG from the config
-        """
-        super().__init__(config, dag_builder)
-
-    def set_fit_intervals(
-        self, intervals: Optional[cdtfu.Intervals]
-    ) -> None:
+    def set_fit_intervals(self, intervals: Optional[cdtfu.Intervals]) -> None:
         """
         Set fit intervals for all the source nodes.
 
@@ -145,9 +141,7 @@ class FitPredictDagRunner(_AbstractDagRunner):
         method = "fit"
         self._set_fit_predict_intervals(method, intervals)
 
-    def set_predict_intervals(
-        self, intervals: Optional[cdtfu.Intervals]
-    ) -> None:
+    def set_predict_intervals(self, intervals: Optional[cdtfu.Intervals]) -> None:
         """
         Set predict intervals for all the source nodes.
 
@@ -207,7 +201,8 @@ class PredictionDagRunner(FitPredictDagRunner):
 
 class RollingFitPredictDagRunner(_AbstractDagRunner):
     """
-    Run a DAG by periodic fitting on previous history and evaluating on new data.
+    Run a DAG by periodic fitting on previous history and evaluating on new
+    data.
     """
 
     def __init__(
@@ -264,7 +259,8 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
         datetime_: _PANDAS_DATE_TYPE,
     ) -> Tuple[ResultBundle, ResultBundle]:
         """
-        Fit with all the history up and including `datetime` and then predict forward.
+        Fit with all the history up and including `datetime` and then predict
+        forward.
 
         :param datetime_: point in time at which to train (historically) and then
             predict (one step ahead)
@@ -455,7 +451,8 @@ class RealTimeDagRunner(_AbstractDagRunner):
     """
     Run a DAG in true or simulated real-time.
 
-    See `real_time.py` for definitions of different types of real-time execution.
+    See `real_time.py` for definitions of different types of real-time
+    execution.
     """
 
     def __init__(
@@ -473,12 +470,12 @@ class RealTimeDagRunner(_AbstractDagRunner):
         self._execute_rt_loop_kwargs = execute_rt_loop_kwargs
         self._dst_dir = dst_dir
         # Store information about the real-time execution.
-        self._execution_trace: Optional[cdrt.ExecutionTrace] = None
+        self._execution_trace: Optional[cdtfrt.ExecutionTrace] = None
 
     # TODO(gp): We should return a ResultBundle?
     def predict(self) -> List[Dict[str, Any]]:
-        execution_trace, results = cdrt.execute_with_real_time_loop(
-            **self._execute_rt_loop_kwargs, workload=self._dag_workload
+        execution_trace, results = cdtfrt.execute_with_real_time_loop(
+            **self._execute_rt_loop_kwargs, workload=self.dag_workload
         )
         self._execution_trace = execution_trace
         results = cast(List[Dict[str, Any]], results)
@@ -494,7 +491,7 @@ class RealTimeDagRunner(_AbstractDagRunner):
         Workload for the real-time loop to execute a DAG.
         """
         _ = current_time
-        sink = self._dag.get_unique_sink()
-        dict_ = self._dag.run_leq_node(sink, "predict")
+        sink = self.dag.get_unique_sink()
+        dict_ = self.dag.run_leq_node(sink, "predict")
         dict_ = cast(Dict[str, Any], dict_)
         return dict_

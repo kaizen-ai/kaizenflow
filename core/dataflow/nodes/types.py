@@ -1,4 +1,3 @@
 """
-General types used across the entire
+General types used across the entire.
 """
-

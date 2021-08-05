@@ -107,7 +107,8 @@ class Node(NodeInterface):
     A node class that stores and retrieves its output values on a "per-method"
     basis.
 
-    E.g., for each method (e.g., "fit" and "predict") returns a value for each output.
+    E.g., for each method (e.g., "fit" and "predict") returns a value
+    for each output.
     """
 
     def __init__(
@@ -390,7 +391,10 @@ class DAG:
         """
         sinks = self.get_sinks()
         dbg.dassert_eq(
-            len(sinks), 1, "There is more than one sink node %s in DAG", str(sinks)
+            len(sinks),
+            1,
+            "There is more than one sink node %s in DAG",
+            str(sinks),
         )
         return sinks[0]
 
