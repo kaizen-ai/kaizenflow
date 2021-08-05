@@ -1,7 +1,8 @@
 """
 Import as:
 
-import core.dataflow.runners as cdtfr import core.dataflow as cdtf
+import core.dataflow.runners as cdtfr
+import core.dataflow as cdtf
 """
 import datetime
 import logging
@@ -24,7 +25,11 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 # TODO(gp): Should we call the `start` params -> `start_datetime`
 
 
-Optional[List[Tuple[Any, Any]]]
+IntervalEndpoint = Union[pd.Datetime, pd.Timestamp, NoneType]
+# Intervals are considered as closed, i.e., [a, b]. An endpoint equal `None` means
+# unbounded interval on that direction.
+Interval = Tuple[IntervalEndpoint, IntervalEndpoint]
+Intervals = List[Interval]
 
 # #############################################################################
 
@@ -55,7 +60,15 @@ class _AbstractDagRunner(self):
         self._result_nid = self.dag.get_unique_sink()
         _LOG.debug("_result_nid=%s", self._result_nid)
 
-    def _set_fit_predict_intervals(self, method: str) -> None:
+    def _set_fit_predict_intervals(self, method: str, intervals: Optional[Intervals]) -> None:
+        """
+        Set fit or predict intervals for all the source nodes.
+
+        :param intervals: as in `DataSource` node, but allowing `None` to mean no
+            interval
+        """
+        if intervals is None:
+            return
         # Propagate the intervals to all source nodes.
         for input_nid in self.dag.get_sources():
             node = self.dag.get_node(input_nid)
@@ -472,9 +485,11 @@ class IncrementalDagRunner:
 # #############################################################################
 
 
-class RealTimeDagRunner:
+class RealTimeDagRunner(_AbstractDagRunner):
     """
-    Run a DAG in (true or simulated) real-time.
+    Run a DAG in true or simulated real-time.
+
+    See `real_time.py` for definitions of different types of real-time execution.
     """
 
     def __init__(
@@ -485,16 +500,13 @@ class RealTimeDagRunner:
         execute_rt_loop_kwargs: Dict[str, Any],
         dst_dir: str,
     ) -> None:
+        super().__init__(config, dag_builder)
         # Save input parameters.
-        self._config = config
-        self._dag_builder = dag_builder
         # TODO(gp): Use this for stateful DAGs.
         _ = fit_state
         self._execute_rt_loop_kwargs = execute_rt_loop_kwargs
         self._dst_dir = dst_dir
-        #
-        # Create DAG using DAG builder.
-        self._dag = self._dag_builder.get_dag(self._config)
+        # Store information about the real-time execution.
         self._execution_trace: Optional[cdrt.ExecutionTrace] = None
 
     # TODO(gp): We should de
