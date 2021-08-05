@@ -39,10 +39,16 @@ class _AbstractDagRunner(abc.ABC):
     Abstract class with the common code to all `DagRunner`s.
 
     There is not a method common to all `DagRunner`s that is abstract, so we use
-    `abc.ABC` to guarantee that this class is not instantiated.
+    `abc.ABC` to guarantee that this class is not instantiated directly.
     """
 
     def __init__(self, config: cconfig.Config, dag_builder: DagBuilder) -> None:
+        """
+        Constructor.
+
+        :param config: config for DAG
+        :param dag_builder: `DagBuilder` instance to build a DAG from the config
+        """
         # Save input parameters.
         self.config = config
         self._dag_builder = dag_builder
@@ -51,22 +57,21 @@ class _AbstractDagRunner(abc.ABC):
         #  Consider having a DagRunner accept a DAG however built and run it.
         self.dag = self._dag_builder.get_dag(self.config)
         _LOG.debug("dag=%s", self.dag)
-        # Get available methods.
-        self._methods = self._dag_builder.methods
-        _LOG.debug("_methods=%s", self._methods)
-        dbg.dassert_in("fit", self._methods)
-        dbg.dassert_in("predict", self._methods)
+        # Check that the DAG has the required methods.
+        methods = self._dag_builder.methods
+        _LOG.debug("methods=%s", methods)
+        dbg.dassert_in("fit", methods)
+        dbg.dassert_in("predict", methods)
         # Get the mapping from columns to tags.
         self._column_to_tags_mapping = (
             self._dag_builder.get_column_to_tags_mapping(self.config)
         )
         _LOG.debug("_column_to_tags_mapping=%s", self._column_to_tags_mapping)
         # Extract the sink node.
-        # TODO(gp): This maybe is not needed.
         self._result_nid = self.dag.get_unique_sink()
         _LOG.debug("_result_nid=%s", self._result_nid)
 
-    def _set_fit_predict_intervals(self, method: str, intervals: Optional[cdtfu.Intervals]) -> None:
+    def _set_fit_predict_intervals(self, method: cdtfc.Method, intervals: Optional[cdtfu.Intervals]) -> None:
         """
         Set fit or predict intervals for all the source nodes.
 
@@ -86,17 +91,24 @@ class _AbstractDagRunner(abc.ABC):
                 raise ValueError("Invalid method='%s'" % method)
 
     def _run_dag_helper(self, method: cdtfc.Method) -> Tuple[pd.DataFrame, cdtfv.Info]:
+        """
+        Run the DAG for a given method.
+
+        :return: the dataframe for the only output and the associated Info
+        """
         nid = self._result_nid
-        # TODO(gp): run_leq_node should do this check.
-        dbg.dassert_in(method, self._methods)
+        # TODO(gp): Add a check for `df_out`.
         df_out = self.dag.run_leq_node(nid, method)["df_out"]
         info = extract_info(self.dag, [method])
         return df_out, info
 
-    def _to_result_bundle(self, df_out: pd.DataFrame, info: cdtfv.Info) -> ResultBundle:
+    def _to_result_bundle(self, method: cdtfc.Method, df_out: pd.DataFrame, info: cdtfv.Info) -> ResultBundle:
+        """
+        Package the result of a DAG execution into a ResultBundle.
+        """
         return ResultBundle(
             config=self.config,
-            result_nid=nid,
+            result_nid=self._nid,
             method=method,
             result_df=df_out,
             column_to_tags=self._column_to_tags_mapping,
@@ -121,41 +133,33 @@ class FitPredictDagRunner(_AbstractDagRunner):
         super().__init__(config, dag_builder)
 
     def set_fit_intervals(
-        self, intervals: Optional[List[Tuple[Any, Any]]]
+        self, intervals: Optional[cdtfu.Intervals]
     ) -> None:
         """
         Set fit intervals for all the source nodes.
 
         :param intervals: as in `DataSource` node, but allowing `None`
         """
-        if intervals is None:
-            return
-        # Propagate the fit intervals to all source nodes.
-        for input_nid in self.dag.get_sources():
-            node = self.dag.get_node(input_nid)
-            node.set_fit_intervals(intervals)
+        method = "fit"
+        self._set_fit_predict_intervals(method, intervals)
 
     def set_predict_intervals(
-        self, intervals: Optional[List[Tuple[Any, Any]]]
+        self, intervals: Optional[cdtfu.Intervals]
     ) -> None:
         """
         Set predict intervals for all the source nodes.
 
         :param intervals: as in `DataSource` node, but allowing `None`
         """
-        if intervals is None:
-            return
-        # Propagate the predict intervals to all source nodes.
-        for input_nid in self.dag.get_sources():
-            node = self.dag.get_node(input_nid)
-            node.set_predict_intervals(intervals)
+        method = "predict"
+        self._set_fit_predict_intervals(method, intervals)
 
     def fit(self) -> ResultBundle:
         """
         Fitting means running `fit()` method on the DAG up to the sink node.
         """
         method = "fit"
-        return self._run_dag(self._result_nid, method)
+        return self._run_dag(method)
 
     def predict(self) -> ResultBundle:
         """
@@ -163,21 +167,11 @@ class FitPredictDagRunner(_AbstractDagRunner):
         node.
         """
         method = "predict"
-        return self._run_dag(self._result_nid, method)
+        return self._run_dag(method)
 
-    def _run_dag(self, nid: str, method: str) -> ResultBundle:
-        """
-        Run DAG up to `nid` and return the generated `ResultBundle`.
-        """
+    def _run_dag(self, method: cdtfc.Method) -> ResultBundle:
         df_out, info = self._run_dag_helper(method)
-        return ResultBundle(
-            config=self.config,
-            result_nid=nid,
-            method=method,
-            result_df=df_out,
-            column_to_tags=self._column_to_tags_mapping,
-            info=info,
-        )
+        return self._to_result_bundle(method, df_out, info)
 
 
 # #############################################################################
@@ -191,14 +185,14 @@ class PredictionDagRunner(FitPredictDagRunner):
     `PredictionResultBundle`.
     """
 
-    def _run_dag(self, nid: str, method: str) -> PredictionResultBundle:
+    def _run_dag(self, method: cdtfc.Method) -> PredictionResultBundle:
         """
         Same as super class but return a `PredictionResultBundle`.
         """
         df_out, info = self._run_dag_helper(method)
         return PredictionResultBundle(
             config=self.config,
-            result_nid=nid,
+            result_nid=self._result_nid,
             method=method,
             result_df=df_out,
             column_to_tags=self._column_to_tags_mapping,
@@ -303,14 +297,7 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
         # Fit.
         method = "fit"
         df_out, info = self._run_dag_helper(method)
-        return ResultBundle(
-            config=self.config,
-            result_nid=self._result_nid,
-            method=method,
-            result_df=df_out,
-            column_to_tags=self._column_to_tags_mapping,
-            info=info,
-        )
+        return self._to_result_bundle(method, df_out, info)
 
     def _run_predict(
         self,
@@ -325,14 +312,7 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
         df_out, info = self._run_dag_helper(method)
         # Restrict `df_out` to out-of-sample portion.
         df_out = df_out.loc[oos_start:]  # type: ignore[misc]
-        return ResultBundle(
-            config=self.config,
-            result_nid=self._result_nid,
-            method=method,
-            result_df=df_out,
-            column_to_tags=self._column_to_tags_mapping,
-            info=info,
-        )
+        return self._to_result_bundle(method, df_out, info)
 
     @staticmethod
     def _generate_retraining_datetimes(
@@ -374,19 +354,12 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
         dbg.dassert(not idx.empty)
         return idx
 
-    def _run_dag(self, nid: str, method: str) -> ResultBundle:
+    def _run_dag(self, method: cdtfc.Method) -> ResultBundle:
         """
         Run DAG and return a ResultBundle.
         """
         df_out, info = self._run_dag_helper(method)
-        return ResultBundle(
-            config=self.config,
-            result_nid=nid,
-            method=method,
-            result_df=df_out,
-            column_to_tags=self._column_to_tags_mapping,
-            info=info,
-        )
+        return self._to_result_bundle(method, df_out, info)
 
 
 # #############################################################################
@@ -462,22 +435,15 @@ class IncrementalDagRunner(_AbstractDagRunner):
         # Set prediction intervals and predict.
         for input_nid in self.dag.get_sources():
             self.dag.get_node(input_nid).set_predict_intervals(interval)
-        result_bundle = self._run_dag(self._result_nid, "predict")
+        result_bundle = self._run_dag("predict")
         return result_bundle
 
-    def _run_dag(self, nid: str, method: str) -> ResultBundle:
+    def _run_dag(self, method: cdtfc.Method) -> ResultBundle:
         """
         Run DAG and return a ResultBundle.
         """
         df_out, info = self._run_dag_helper(method)
-        return ResultBundle(
-            config=self.config,
-            result_nid=nid,
-            method=method,
-            result_df=df_out,
-            column_to_tags=self._column_to_tags_mapping,
-            info=info,
-        )
+        return self._to_result_bundle(method, df_out, info)
 
 
 # #############################################################################
