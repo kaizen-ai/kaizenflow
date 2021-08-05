@@ -92,7 +92,7 @@ class _AbstractDagRunner(abc.ABC):
 
     def _run_dag_helper(self, method: cdtfc.Method) -> Tuple[pd.DataFrame, cdtfv.Info]:
         """
-        Run the DAG for a given method.
+        Run the DAG for the given method.
 
         :return: the dataframe for the only output and the associated Info
         """
@@ -102,13 +102,15 @@ class _AbstractDagRunner(abc.ABC):
         info = extract_info(self.dag, [method])
         return df_out, info
 
+    # TODO(gp): This could be folded into `_run_dag_helper()` if we collapse
+    #  `ResultBundle` and `PredictionResultBundle`.
     def _to_result_bundle(self, method: cdtfc.Method, df_out: pd.DataFrame, info: cdtfv.Info) -> ResultBundle:
         """
         Package the result of a DAG execution into a ResultBundle.
         """
         return ResultBundle(
             config=self.config,
-            result_nid=self._nid,
+            result_nid=self._result_nid,
             method=method,
             result_df=df_out,
             column_to_tags=self._column_to_tags_mapping,

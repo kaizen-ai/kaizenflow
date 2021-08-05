@@ -1,3 +1,8 @@
+"""
+Import as:
+
+import core.dataflow.builders as cdtfb
+"""
 import abc
 import datetime
 import logging
