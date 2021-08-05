@@ -1,3 +1,14 @@
+"""
+Types and utilities used in entire core/dataflow.
+
+Note this file should not depend on anything in `core`.
+
+Import as:
+
+import core.dataflow.utils as cdtfu
+"""
+
+import datetime
 import io
 import logging
 from typing import Callable, List, Tuple, Union
@@ -12,6 +23,22 @@ _COL_TYPE = Union[int, str]
 _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 
+# #############################################################################
+# Intervals.
+# #############################################################################
+
+
+IntervalEndpoint = Union[datetime.datetime, pd.Timestamp, None]
+# Intervals are considered as closed, i.e., [a, b]. An endpoint equal to `None` means
+# unbounded interval on that direction.
+Interval = Tuple[IntervalEndpoint, IntervalEndpoint]
+Intervals = List[Interval]
+
+
+# #############################################################################
+
+
+# TODO(gp): Move to helpers/printing.py since it's general.
 def get_df_info_as_string(
     df: pd.DataFrame, exclude_memory_usage: bool = True
 ) -> str:

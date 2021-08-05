@@ -16,9 +16,17 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(*): Create a dataflow types file.
+# TODO(gp): -> ColumnType
 _COL_TYPE = Union[int, str]
+
+# TODO(gp): Replace with hdatetime.StrictDatetime
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
-_TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
+
+_TO_LIST_MIXIN_TYPE = Union[
+    List[_COL_TYPE],
+    # Function that returns a list of column types.
+    Callable[[], List[_COL_TYPE]],
+]
 
 
 # #############################################################################
@@ -28,7 +36,7 @@ _TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 class FitPredictNode(cdc.Node, abc.ABC):
     """
-    Class with abstract sklearn-style `fit` and `predict` functions.
+    Class with abstract sklearn-style `fit()` and `predict()` functions.
 
     The class contains an optional state that can be serialized/deserialized with
     `get_fit_state()` and `set_fit_state()`.
@@ -37,36 +45,48 @@ class FitPredictNode(cdc.Node, abc.ABC):
     method's invocation.
     """
 
+    # Represent the output of a `FitPredictNode`, mapping an output name to a dataframe.
+    NodeOutput = Dict[str, pd.DataFrame]
+
+    # Represent the state of a `Node`, mapping a
+    NodeState = Dict[str, Any]
+
     def __init__(
         self,
         nid: str,
         inputs: Optional[List[str]] = None,
         outputs: Optional[List[str]] = None,
     ) -> None:
+        # TODO(gp): Consider forcing to specify `inputs` and `outputs` so we can
+        #  simplify interface and code.
         if inputs is None:
             inputs = ["df_in"]
         if outputs is None:
             outputs = ["df_out"]
-        super().__init__(nid=nid, inputs=inputs, outputs=outputs)
+        super().__init__(nid, inputs, outputs)
         self._info: collections.OrderedDict = collections.OrderedDict()
 
     @abc.abstractmethod
-    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        pass
+    def fit(self, df_in: pd.DataFrame) -> "FitPredictNode.NodeOutput":
+        ...
 
     @abc.abstractmethod
-    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        pass
+    def predict(self, df_in: pd.DataFrame) -> "FitPredictNode.NodeOutput":
+        ...
 
-    def get_fit_state(self) -> Dict[str, Any]:
+    def get_fit_state(self) -> "FitPredictNode.NodeState":
+        _ = self
         return {}
 
-    def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
-        pass
+    def set_fit_state(self, fit_state: "FitPredictNode.NodeState") -> None:
+        _ = self, fit_state
 
     def get_info(
         self, method: str
     ) -> Optional[Union[str, collections.OrderedDict]]:
+        """
+        The returned `info` is not copied and the client should not modify it.
+        """
         # TODO(Paul): Add a dassert_getattr function to use here and in core.
         dbg.dassert_isinstance(method, str)
         dbg.dassert(getattr(self, method))
@@ -76,7 +96,11 @@ class FitPredictNode(cdc.Node, abc.ABC):
         _LOG.warning("No info found for nid=%s, method=%s", self.nid, method)
         return None
 
+    # TODO(gp): values -> info
     def _set_info(self, method: str, values: collections.OrderedDict) -> None:
+        """
+        The passed `info` is copied internally.
+        """
         dbg.dassert_isinstance(method, str)
         dbg.dassert(getattr(self, method))
         dbg.dassert_isinstance(values, collections.OrderedDict)
@@ -84,6 +108,7 @@ class FitPredictNode(cdc.Node, abc.ABC):
         self._info[method] = copy.copy(values)
 
 
+# TODO(gp): -> AbstractDataSource?
 class DataSource(FitPredictNode, abc.ABC):
     """
     A source node that generates data for cross-validation from the passed data
@@ -126,8 +151,9 @@ class DataSource(FitPredictNode, abc.ABC):
     # `DataSource` uses data passed at construction time, so it does not need a
     # `df_in` in either `fit()` or `predict()` as a typical `FitPredictNode` does.
     # For this reason the function signature is different.
-    # pylint: disable=arguments-differ  # type: ignore[override]
-    def fit(self) -> Dict[str, pd.DataFrame]:
+    def fit(  # type: ignore[override]  # pylint: disable=arguments-differ
+        self,
+    ) -> Dict[str, pd.DataFrame]:
         """
         :return: training set as df
         """
@@ -160,8 +186,9 @@ class DataSource(FitPredictNode, abc.ABC):
         self._validate_intervals(intervals)
         self._predict_intervals = intervals
 
-    # pylint: disable=arguments-differ  # type: ignore[override]
-    def predict(self) -> Dict[str, pd.DataFrame]:
+    def predict(  # type: ignore[override]  # pylint: disable=arguments-differ
+        self,
+    ) -> Dict[str, pd.DataFrame]:
         """
         :return: test set as df
         """
@@ -293,16 +320,14 @@ class YConnector(FitPredictNode):
         """
         return self._get_col_names(self._df_in2_col_names)
 
-    # pylint: disable=arguments-differ  # type: ignore[override]
-    def fit(
+    def fit(  # type: ignore[override]  # pylint: disable=arguments-differ
         self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
     ) -> Dict[str, pd.DataFrame]:
         df_out, info = self._apply_connector_func(df_in1, df_in2)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
-    # pylint: disable=arguments-differ  # type: ignore[override]
-    def predict(
+    def predict(  # type: ignore[override]  # pylint: disable=arguments-differ
         self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
     ) -> Dict[str, pd.DataFrame]:
         df_out, info = self._apply_connector_func(df_in1, df_in2)
@@ -328,6 +353,7 @@ class YConnector(FitPredictNode):
             "No column names. This may indicate an invocation prior to graph "
             "execution.",
         )
+        col_names = cast(List[str], col_names)
         return col_names
 
 

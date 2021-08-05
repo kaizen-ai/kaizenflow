@@ -1,3 +1,8 @@
+"""
+Import as:
+
+import core.dataflow.core as cdtfc
+"""
 import abc
 import itertools
 import logging
@@ -16,15 +21,23 @@ _LOG = logging.getLogger(__name__)
 # Core node classes
 # #############################################################################
 
+# TODO(gp): -> core/dataflow/node.py
 
 # We use a string to represent a node's unique identifier. This type helps
-# improve the interface and make the code more readable (e.g., `Dict[Nid, ...]`
+# improve the interface and make the code more readable (e.g., `Dict[NodeId, ...]`
 # instead of `Dict[str, ...]`).
 # TODO(gp): Use this everywhere.
-Nid = str
+# TODO(gp): Do a replacement nid: str -> node.NodeId
+NodeId = str
+
+# Name of a Node's method, e.g., `fit` or `predict`.
+Method = str
+
+# Mapping between the name of an output of a node and the corresponding stored value.
+NodeOutput = Dict[str, Any]
 
 
-# TODO(gp): If this is private -> _NodeInterface.
+# TODO(gp): This seems private -> _NodeInterface or _AbstractNode.
 class NodeInterface(abc.ABC):
     """
     Abstract node class for creating DAGs of functions.
@@ -39,27 +52,32 @@ class NodeInterface(abc.ABC):
     the desired methods.
     """
 
+    # TODO(gp): Are inputs / output without names useful? If not we can simplify the
+    #   interface.
     def __init__(
         self,
-        nid: str,
+        nid: NodeId,
         inputs: Optional[List[str]] = None,
         outputs: Optional[List[str]] = None,
     ) -> None:
         """
+        Constructor.
+
         :param nid: node identifier. Should be unique in a graph.
-        :param inputs: list-like string names of input_names. None for no names.
-        :param outputs: list-like string names of output_names. None for no names.
+        :param inputs: list-like string names of `input_names`. `None` for no names.
+        :param outputs: list-like string names of `output_names`. `None` for no names.
         """
-        dbg.dassert_isinstance(nid, str)
+        dbg.dassert_isinstance(nid, NodeId)
         dbg.dassert(nid, "Empty string chosen for unique nid!")
         self._nid = nid
         self._input_names = self._init_validation_helper(inputs)
         self._output_names = self._init_validation_helper(outputs)
 
     @property
-    def nid(self) -> str:
+    def nid(self) -> NodeId:
         return self._nid
 
+    # TODO(gp): We might want to do getter only.
     @property
     def input_names(self) -> List[str]:
         return self._input_names
@@ -89,23 +107,25 @@ class Node(NodeInterface):
     A node class that stores and retrieves its output values on a "per-method"
     basis.
 
-    TODO(*): Explain use case.
+    E.g., for each method (e.g., "fit" and "predict") returns a value
+    for each output.
     """
 
     def __init__(
         self,
-        nid: str,
+        nid: NodeId,
         inputs: Optional[List[str]] = None,
         outputs: Optional[List[str]] = None,
     ) -> None:
         """
         Implement the same interface as `NodeInterface`.
         """
-        super().__init__(nid=nid, inputs=inputs, outputs=outputs)
+        super().__init__(nid, inputs, outputs)
         # Dictionary method name -> output node name -> output.
-        self._output_vals: Dict[str, Dict[str, Any]] = {}
+        self._output_vals: Dict[Method, NodeOutput] = {}
 
-    def get_output(self, method: str, name: str) -> Any:
+    # TODO(gp): name -> output_name
+    def get_output(self, method: Method, name: str) -> Any:
         """
         Return the value of output `name` for the requested `method`.
         """
@@ -125,14 +145,17 @@ class Node(NodeInterface):
         )
         return self._output_vals[method][name]
 
-    def get_outputs(self, method: str) -> Dict[str, Any]:
+    def get_outputs(self, method: Method) -> NodeOutput:
         """
         Return all the output values for the requested `method`.
+
+        E.g., for a method "fit" it returns, "df_out" -> pd.DataFrame
         """
         dbg.dassert_in(method, self._output_vals.keys())
         return self._output_vals[method]
 
-    def _store_output(self, method: str, name: str, value: Any) -> None:
+    # TODO(gp): name -> output_name
+    def _store_output(self, method: Method, name: str, value: Any) -> None:
         """
         Store the output for `name` and the specific `method`.
         """
@@ -154,6 +177,11 @@ class Node(NodeInterface):
 # Class for creating and executing a DAG of nodes.
 # #############################################################################
 
+# TODO(gp): -> core/dataflow/dag.py
+
+#
+DagOutput = Dict[NodeId, NodeOutput]
+
 
 class DAG:
     """
@@ -163,6 +191,7 @@ class DAG:
     executed nodes).
     """
 
+    # TODO(gp): -> name: str to simplify the interface
     def __init__(
         self, name: Optional[str] = None, mode: Optional[str] = None
     ) -> None:
@@ -173,8 +202,8 @@ class DAG:
         :param mode: determines how to handle an attempt to add a node that already
             belongs to the DAG:
             - "strict": asserts
-            - "loose": deletes old node (also removes edges) and adds new
-                node. This is useful for interactive notebooks and debugging.
+            - "loose": deletes old node (also removes edges) and adds new node. This
+              is useful for interactive notebooks and debugging.
         """
         self._dag = networ.DiGraph()
         #
@@ -190,7 +219,8 @@ class DAG:
         self._mode = mode
 
     # TODO(gp): A bit confusing since other classes have `dag / get_dag` method that
-    # returns a DAG. Maybe -> `networkx_digraph()`
+    #  returns a DAG. Also the code does `dag.dag`. Maybe -> `nx_dag()` to say that
+    #  we are extracting the networkx data structures.
     @property
     def dag(self) -> networ.DiGraph:
         return self._dag
@@ -213,9 +243,10 @@ class DAG:
         """
         # In principle, `NodeInterface` could be supported; however, to do so,
         # the `run` methods below would need to be suitably modified.
-        dbg.dassert_isinstance(
-            node, Node, "Only DAGs of class `Node` are supported!"
-        )
+        # TODO(gp): issubclass?
+        # dbg.dassert_isinstance(
+        #     node, Node, "Only DAGs of class `Node` are supported!"
+        # )
         # NetworkX requires that nodes be hashable and uses hashes for
         # identifying nodes. Because our Nodes are objects whose hashes can
         # change as operations are performed, we use the `Node.nid` as the
@@ -255,7 +286,7 @@ class DAG:
         # Add node.
         self._dag.add_node(node.nid, stage=node)
 
-    def get_node(self, nid: str) -> Node:
+    def get_node(self, nid: NodeId) -> Node:
         """
         Implement a convenience node accessor.
 
@@ -267,7 +298,7 @@ class DAG:
         dbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG!", nid)
         return self._dag.nodes[nid]["stage"]  # type: ignore
 
-    def remove_node(self, nid: str) -> None:
+    def remove_node(self, nid: NodeId) -> None:
         """
         Remove node from DAG and clear any connected edges.
         """
@@ -276,8 +307,8 @@ class DAG:
 
     def connect(
         self,
-        parent: Union[Tuple[str, str], str],
-        child: Union[Tuple[str, str], str],
+        parent: Union[Tuple[NodeId, NodeId], NodeId],
+        child: Union[Tuple[NodeId, NodeId], NodeId],
     ) -> None:
         """
         Add a directed edge from parent node output to child node input.
@@ -334,7 +365,7 @@ class DAG:
                 f"Creating edge {parent_nid} -> {child_nid} introduces a cycle!"
             )
 
-    def get_sources(self) -> List[Nid]:
+    def get_sources(self) -> List[NodeId]:
         """
         :return: list of nid's of source nodes
         """
@@ -344,7 +375,7 @@ class DAG:
                 sources.append(nid)
         return sources
 
-    def get_sinks(self) -> List[Nid]:
+    def get_sinks(self) -> List[NodeId]:
         """
         :return: list of nid's of sink nodes
         """
@@ -354,35 +385,36 @@ class DAG:
                 sinks.append(nid)
         return sinks
 
-    def get_unique_sink(self) -> Nid:
+    def get_unique_sink(self) -> NodeId:
         """
         Return the only sink node, asserting if there is more than one.
         """
         sinks = self.get_sinks()
         dbg.dassert_eq(
-            len(sinks), 1, "There is more than one sink node %s", str(sinks)
+            len(sinks),
+            1,
+            "There is more than one sink node %s in DAG",
+            str(sinks),
         )
         return sinks[0]
 
-    def run_dag(self, method: str) -> Dict[str, Any]:
+    def run_dag(self, method: Method) -> DagOutput:
         """
         Execute entire DAG.
 
         :param method: method of class `Node` (or subclass) to be executed for
-            the entire DAG.
+            the entire DAG
         :return: dict keyed by sink node nid with values from node's
-            `get_outputs(method)`.
+            `get_outputs(method)`
         """
         sinks = self.get_sinks()
         for nid in networ.topological_sort(self._dag):
             self._run_node(nid, method)
         return {sink: self.get_node(sink).get_outputs(method) for sink in sinks}
 
-    # TODO(gp): We should have a type for Dict[str, Any] since this is everywhere
-    #  in the code base and it gets confused with other types (e.g., `**kwargs`).
     def run_leq_node(
-        self, nid: str, method: str, progress_bar: bool = True
-    ) -> Dict[str, Any]:
+        self, nid: NodeId, method: Method, progress_bar: bool = True
+    ) -> NodeOutput:
         """
         Execute DAG up to (and including) Node `nid` and returns output.
 
@@ -390,9 +422,10 @@ class DAG:
         runs a node if and only if there is a directed path from the node to
         `nid`. Nodes are run according to a topological sort.
 
-        :param nid: desired terminal node for execution.
-        :param method: `Node` subclass method to be executed.
-        :return: result of node nid's `get_outputs(method)`.
+        :param nid: desired terminal node for execution
+        :param method: `Node` subclass method to be executed
+        :return: result of node nid's `get_outputs(method)`, i.e., mapping from
+            output name to corresponding value
         """
         ancestors = filter(
             lambda x: x in networ.ancestors(self._dag, nid),
@@ -406,9 +439,10 @@ class DAG:
         for n in nids:
             _LOG.debug("Executing node '%s'", n)
             self._run_node(n, method)
-        return self.get_node(nid).get_outputs(method)
+        node = self.get_node(nid)
+        return node.get_outputs(method)
 
-    def _run_node(self, nid: str, method: str) -> None:
+    def _run_node(self, nid: NodeId, method: Method) -> None:
         """
         Run a single node.
 
