@@ -16,14 +16,28 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(*): Create a dataflow types file.
+# TODO(gp): -> ColumnType
 _COL_TYPE = Union[int, str]
+
+# TODO(gp): Replace with hdatetime.StrictDatetime
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
-_TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
+
+_TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE],
+                            # Function that returns a list of
+                            Callable[[], List[_COL_TYPE]]]
+
 
 
 # #############################################################################
 # Abstract node classes with sklearn-style interfaces
 # #############################################################################
+
+
+# Represent the output of a `FitPredictNode`, mapping an output name to a dataframe.
+FitPredictNodeOutput = Dict[str, pd.DataFrame]
+
+# Represent the state of a `Node`, mapping a
+FitPredictNodeState = Dict[str, Any]
 
 
 class FitPredictNode(cdc.Node, abc.ABC):
@@ -36,6 +50,9 @@ class FitPredictNode(cdc.Node, abc.ABC):
     Nodes may store a dictionary of information for each method following the
     method's invocation.
     """
+
+    # FitPredictNode.Output
+    # Output = Dict[str, pd.DataFrame]
 
     def __init__(
         self,
@@ -52,20 +69,18 @@ class FitPredictNode(cdc.Node, abc.ABC):
         super().__init__(nid, inputs, outputs)
         self._info: collections.OrderedDict = collections.OrderedDict()
 
-    # TODO(gp): Define a NodeOutput = Dict[str, pd.DataFrame]
     @abc.abstractmethod
-    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+    def fit(self, df_in: pd.DataFrame) -> FitPredictNodeOutput:
         pass
 
     @abc.abstractmethod
-    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+    def predict(self, df_in: pd.DataFrame) -> FitPredictNodeOutput:
         pass
 
-    # TODO(gp): Define a NodeState = Dict[str, Any]
-    def get_fit_state(self) -> Dict[str, Any]:
+    def get_fit_state(self) -> FitPredictNodeState:
         return {}
 
-    def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
+    def set_fit_state(self, fit_state: FitPredictNodeState) -> None:
         pass
 
     def get_info(

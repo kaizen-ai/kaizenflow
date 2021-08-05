@@ -16,18 +16,23 @@ _LOG = logging.getLogger(__name__)
 # Core node classes
 # #############################################################################
 
+# TODO(gp): -> core/dataflow/node.py
 
 # We use a string to represent a node's unique identifier. This type helps
 # improve the interface and make the code more readable (e.g., `Dict[Nid, ...]`
 # instead of `Dict[str, ...]`).
 # TODO(gp): Use this everywhere.
+# TODO(gp): Do a replacement nid: str -> node.Nid
 Nid = str
 
-# Name of a method, e.g., `fit` or `predict`.
+# Name of a Node's method, e.g., `fit` or `predict`.
 Method = str
 
+# Mapping between the name of an output of a node and the corresponding stored value.
+NodeOutput = Dict[str, Any]
 
-# TODO(gp): If this is private -> _NodeInterface.
+
+# TODO(gp): This seems private -> _NodeInterface or _AbstractNode.
 class NodeInterface(abc.ABC):
     """
     Abstract node class for creating DAGs of functions.
@@ -46,25 +51,28 @@ class NodeInterface(abc.ABC):
     #   interface.
     def __init__(
         self,
-        nid: str,
+        nid: Nid,
         inputs: Optional[List[str]] = None,
         outputs: Optional[List[str]] = None,
     ) -> None:
         """
+        Constructor.
+
         :param nid: node identifier. Should be unique in a graph.
         :param inputs: list-like string names of `input_names`. `None` for no names.
         :param outputs: list-like string names of `output_names`. `None` for no names.
         """
-        dbg.dassert_isinstance(nid, str)
+        dbg.dassert_isinstance(nid, Nid)
         dbg.dassert(nid, "Empty string chosen for unique nid!")
         self._nid = nid
         self._input_names = self._init_validation_helper(inputs)
         self._output_names = self._init_validation_helper(outputs)
 
     @property
-    def nid(self) -> str:
+    def nid(self) -> Nid:
         return self._nid
 
+    # TODO(gp): We might want to do getter only.
     @property
     def input_names(self) -> List[str]:
         return self._input_names
@@ -94,23 +102,24 @@ class Node(NodeInterface):
     A node class that stores and retrieves its output values on a "per-method"
     basis.
 
-    TODO(*): Explain use case.
+    E.g., for each method (e.g., "fit" and "predict") returns a value for each output.
     """
 
     def __init__(
         self,
-        nid: str,
+        nid: Nid,
         inputs: Optional[List[str]] = None,
         outputs: Optional[List[str]] = None,
     ) -> None:
         """
         Implement the same interface as `NodeInterface`.
         """
-        super().__init__(nid=nid, inputs=inputs, outputs=outputs)
+        super().__init__(nid, inputs, outputs)
         # Dictionary method name -> output node name -> output.
-        self._output_vals: Dict[str, Dict[str, Any]] = {}
+        self._output_vals: Dict[Method, NodeOutput] = {}
 
-    def get_output(self, method: str, name: str) -> Any:
+    # TODO(gp): name -> output_name
+    def get_output(self, method: Method, name: str) -> Any:
         """
         Return the value of output `name` for the requested `method`.
         """
@@ -130,14 +139,17 @@ class Node(NodeInterface):
         )
         return self._output_vals[method][name]
 
-    def get_outputs(self, method: str) -> Dict[str, Any]:
+    def get_outputs(self, method: Method) -> NodeOutput:
         """
         Return all the output values for the requested `method`.
+
+        E.g., for a method "fit" it returns, "df_out" -> pd.DataFrame
         """
         dbg.dassert_in(method, self._output_vals.keys())
         return self._output_vals[method]
 
-    def _store_output(self, method: str, name: str, value: Any) -> None:
+    # TODO(gp): name -> output_name
+    def _store_output(self, method: Method, name: str, value: Any) -> None:
         """
         Store the output for `name` and the specific `method`.
         """
@@ -159,6 +171,11 @@ class Node(NodeInterface):
 # Class for creating and executing a DAG of nodes.
 # #############################################################################
 
+# TODO(gp): -> core/dataflow/dag.py
+
+#
+DagOutput = Dict[Nid, NodeOutput]
+
 
 class DAG:
     """
@@ -168,6 +185,7 @@ class DAG:
     executed nodes).
     """
 
+    # TODO(gp): -> name: str to simplify the interface
     def __init__(
         self, name: Optional[str] = None, mode: Optional[str] = None
     ) -> None:
@@ -262,7 +280,7 @@ class DAG:
         # Add node.
         self._dag.add_node(node.nid, stage=node)
 
-    def get_node(self, nid: str) -> Node:
+    def get_node(self, nid: Nid) -> Node:
         """
         Implement a convenience node accessor.
 
@@ -274,7 +292,7 @@ class DAG:
         dbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG!", nid)
         return self._dag.nodes[nid]["stage"]  # type: ignore
 
-    def remove_node(self, nid: str) -> None:
+    def remove_node(self, nid: Nid) -> None:
         """
         Remove node from DAG and clear any connected edges.
         """
@@ -283,8 +301,8 @@ class DAG:
 
     def connect(
         self,
-        parent: Union[Tuple[str, str], str],
-        child: Union[Tuple[str, str], str],
+        parent: Union[Tuple[Nid, Nid], Nid],
+        child: Union[Tuple[Nid, Nid], Nid],
     ) -> None:
         """
         Add a directed edge from parent node output to child node input.
@@ -367,29 +385,27 @@ class DAG:
         """
         sinks = self.get_sinks()
         dbg.dassert_eq(
-            len(sinks), 1, "There is more than one sink node %s", str(sinks)
+            len(sinks), 1, "There is more than one sink node %s in DAG", str(sinks)
         )
         return sinks[0]
 
-    def run_dag(self, method: str) -> Dict[str, Any]:
+    def run_dag(self, method: Method) -> DagOutput:
         """
         Execute entire DAG.
 
         :param method: method of class `Node` (or subclass) to be executed for
-            the entire DAG.
+            the entire DAG
         :return: dict keyed by sink node nid with values from node's
-            `get_outputs(method)`.
+            `get_outputs(method)`
         """
         sinks = self.get_sinks()
         for nid in networ.topological_sort(self._dag):
             self._run_node(nid, method)
         return {sink: self.get_node(sink).get_outputs(method) for sink in sinks}
 
-    # TODO(gp): We should have a type for Dict[str, Any] since this is everywhere
-    #  in the code base and it gets confused with other types (e.g., `**kwargs`).
     def run_leq_node(
-        self, nid: str, method: str, progress_bar: bool = True
-    ) -> Dict[str, Any]:
+        self, nid: Nid, method: Method, progress_bar: bool = True
+    ) -> NodeOutput:
         """
         Execute DAG up to (and including) Node `nid` and returns output.
 
@@ -397,9 +413,10 @@ class DAG:
         runs a node if and only if there is a directed path from the node to
         `nid`. Nodes are run according to a topological sort.
 
-        :param nid: desired terminal node for execution.
-        :param method: `Node` subclass method to be executed.
-        :return: result of node nid's `get_outputs(method)`.
+        :param nid: desired terminal node for execution
+        :param method: `Node` subclass method to be executed
+        :return: result of node nid's `get_outputs(method)`, i.e., mapping from
+            output name to corresponding value
         """
         ancestors = filter(
             lambda x: x in networ.ancestors(self._dag, nid),
@@ -413,9 +430,10 @@ class DAG:
         for n in nids:
             _LOG.debug("Executing node '%s'", n)
             self._run_node(n, method)
-        return self.get_node(nid).get_outputs(method)
+        node = self.get_node(nid)
+        return node.get_outputs(method)
 
-    def _run_node(self, nid: str, method: str) -> None:
+    def _run_node(self, nid: Nid, method: Method) -> None:
         """
         Run a single node.
 

@@ -19,17 +19,11 @@ from core.dataflow.result_bundle import PredictionResultBundle, ResultBundle
 from core.dataflow.visitors import extract_info, set_fit_state
 
 _LOG = logging.getLogger(__name__)
+# TODO(gp): -> Use hdatetime.Datetime
 _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
 # TODO(gp): Should we call the `start` params -> `start_datetime`
-
-
-IntervalEndpoint = Union[pd.Datetime, pd.Timestamp, NoneType]
-# Intervals are considered as closed, i.e., [a, b]. An endpoint equal `None` means
-# unbounded interval on that direction.
-Interval = Tuple[IntervalEndpoint, IntervalEndpoint]
-Intervals = List[Interval]
 
 # #############################################################################
 
@@ -79,7 +73,7 @@ class _AbstractDagRunner(self):
             else:
                 raise ValueError("Invalid method='%s'" % method)
 
-    def _run_dag_helper(self, method: str) -> Tuple[pd.DataFrame, Info]:
+    def _run_dag_helper(self, method: Method) -> Tuple[pd.DataFrame, Info]:
         nid = self._result_nid
         # TODO(gp): run_leq_node should do this check.
         dbg.dassert_in(method, self._methods)
@@ -87,6 +81,15 @@ class _AbstractDagRunner(self):
         info = extract_info(self.dag, [method])
         return df_out, info
 
+    def _to_result_bundle(self, df_out: pd.DataFrame, info: Info) -> ResultBundle:
+        return ResultBundle(
+            config=self.config,
+            result_nid=nid,
+            method=method,
+            result_df=df_out,
+            column_to_tags=self._column_to_tags_mapping,
+            info=info,
+        )
 
 # #############################################################################
 
@@ -153,11 +156,6 @@ class FitPredictDagRunner(_AbstractDagRunner):
     def _run_dag(self, nid: str, method: str) -> ResultBundle:
         """
         Run DAG up to `nid` and return the generated `ResultBundle`.
-
-        :param nid: identifier of terminal node for execution
-        :param method: `Node` subclass method to be executed
-        :return: `ResultBundle` class containing `config`, `nid`, `method`,
-            result dataframe and DAG info
         """
         df_out, info = self._run_dag_helper(method)
         return ResultBundle(
@@ -367,11 +365,6 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
     def _run_dag(self, nid: str, method: str) -> ResultBundle:
         """
         Run DAG and return a ResultBundle.
-
-        :param nid: identifier of terminal node for execution
-        :param method: `Node` subclass method to be executed
-        :return: `ResultBundle` class containing `config`, `nid`, `method`,
-            result dataframe and DAG info
         """
         df_out, info = self._run_dag_helper(method)
         return ResultBundle(
@@ -463,15 +456,8 @@ class IncrementalDagRunner:
     def _run_dag(self, nid: str, method: str) -> ResultBundle:
         """
         Run DAG and return a ResultBundle.
-
-        :param nid: identifier of terminal node for execution
-        :param method: `Node` subclass method to be executed
-        :return: `ResultBundle` class containing `config`, `nid`, `method`,
-            result dataframe and DAG info
         """
-        dbg.dassert_in(method, self._methods)
-        df_out = self.dag.run_leq_node(nid, method)["df_out"]
-        info = extract_info(self.dag, [method])
+        df_out, info = self._run_dag_helper(method)
         return ResultBundle(
             config=self.config,
             result_nid=nid,
@@ -509,21 +495,10 @@ class RealTimeDagRunner(_AbstractDagRunner):
         # Store information about the real-time execution.
         self._execution_trace: Optional[cdrt.ExecutionTrace] = None
 
-    # TODO(gp): We should de
+    # TODO(gp): We should return a ResultBundle?
     def predict(self) -> List[Dict[str, Any]]:
-        # TODO(gp): This is similar to an IncrementalDagRunner.
-        def dag_workload(current_time: pd.Timestamp) -> Dict[str, Any]:
-            """
-            Workload for the real-time loop to execute a DAG.
-            """
-            _ = current_time
-            sink = self._dag.get_unique_sink()
-            dict_ = self._dag.run_leq_node(sink, "predict")
-            dict_ = cast(Dict[str, Any], dict_)
-            return dict_
-
         execution_trace, results = cdrt.execute_with_real_time_loop(
-            **self._execute_rt_loop_kwargs, workload=dag_workload
+            **self._execute_rt_loop_kwargs, workload=self._dag_workload
         )
         self._execution_trace = execution_trace
         results = cast(List[Dict[str, Any]], results)
@@ -532,3 +507,14 @@ class RealTimeDagRunner(_AbstractDagRunner):
     @property
     def get_execution_trace(self) -> Optional[cdrt.ExecutionTrace]:
         return self._execution_trace
+
+    # TODO(gp): This is similar to an IncrementalDagRunner.
+    def _dag_workload(self, current_time: pd.Timestamp) -> Dict[str, Any]:
+        """
+        Workload for the real-time loop to execute a DAG.
+        """
+        _ = current_time
+        sink = self._dag.get_unique_sink()
+        dict_ = self._dag.run_leq_node(sink, "predict")
+        dict_ = cast(Dict[str, Any], dict_)
+        return dict_
