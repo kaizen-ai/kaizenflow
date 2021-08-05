@@ -34,13 +34,6 @@ _TO_LIST_MIXIN_TYPE = Union[
 # #############################################################################
 
 
-# Represent the output of a `FitPredictNode`, mapping an output name to a dataframe.
-FitPredictNodeOutput = Dict[str, pd.DataFrame]
-
-# Represent the state of a `Node`, mapping a
-FitPredictNodeState = Dict[str, Any]
-
-
 class FitPredictNode(cdc.Node, abc.ABC):
     """
     Class with abstract sklearn-style `fit()` and `predict()` functions.
@@ -52,8 +45,11 @@ class FitPredictNode(cdc.Node, abc.ABC):
     method's invocation.
     """
 
-    # FitPredictNode.Output
-    # Output = Dict[str, pd.DataFrame]
+    # Represent the output of a `FitPredictNode`, mapping an output name to a dataframe.
+    NodeOutput = Dict[str, pd.DataFrame]
+
+    # Represent the state of a `Node`, mapping a
+    NodeState = Dict[str, Any]
 
     def __init__(
         self,
@@ -71,20 +67,18 @@ class FitPredictNode(cdc.Node, abc.ABC):
         self._info: collections.OrderedDict = collections.OrderedDict()
 
     @abc.abstractmethod
-    def fit(self, df_in: pd.DataFrame) -> FitPredictNodeOutput:
-        pass
+    def fit(self, df_in: pd.DataFrame) -> "FitPredictNode.NodeOutput":
+        ...
 
     @abc.abstractmethod
-    def predict(  # pylint: disable=useless-return
-        self, df_in: pd.DataFrame
-    ) -> FitPredictNodeOutput:
-        _ = self, df_in
+    def predict(self, df_in: pd.DataFrame) -> "FitPredictNode.NodeOutput":
+        ...
 
-    def get_fit_state(self) -> FitPredictNodeState:
+    def get_fit_state(self) -> "FitPredictNode.NodeState":
         _ = self
         return {}
 
-    def set_fit_state(self, fit_state: FitPredictNodeState) -> None:
+    def set_fit_state(self, fit_state: "FitPredictNode.NodeState") -> None:
         _ = self, fit_state
 
     def get_info(
@@ -158,7 +152,7 @@ class DataSource(FitPredictNode, abc.ABC):
     # `df_in` in either `fit()` or `predict()` as a typical `FitPredictNode` does.
     # For this reason the function signature is different.
     def fit(  # type: ignore[override]  # pylint: disable=arguments-differ
-        self,  
+        self,
     ) -> Dict[str, pd.DataFrame]:
         """
         :return: training set as df
@@ -333,7 +327,7 @@ class YConnector(FitPredictNode):
         self._set_info("fit", info)
         return {"df_out": df_out}
 
-    def predict(  # type: ignore[override]  # pylint: disable=arguments-differ  
+    def predict(  # type: ignore[override]  # pylint: disable=arguments-differ
         self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
     ) -> Dict[str, pd.DataFrame]:
         df_out, info = self._apply_connector_func(df_in1, df_in2)
