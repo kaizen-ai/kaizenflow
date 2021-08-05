@@ -75,15 +75,17 @@ class FitPredictNode(cdc.Node, abc.ABC):
         pass
 
     @abc.abstractmethod
-    def predict(self, df_in: pd.DataFrame) -> FitPredictNodeOutput:
-        _ = self
+    def predict(  # pylint: disable=useless-return
+        self, df_in: pd.DataFrame
+    ) -> FitPredictNodeOutput:
+        _ = self, df_in
 
     def get_fit_state(self) -> FitPredictNodeState:
         _ = self
         return {}
 
     def set_fit_state(self, fit_state: FitPredictNodeState) -> None:
-        _ = self
+        _ = self, fit_state
 
     def get_info(
         self, method: str
@@ -155,7 +157,9 @@ class DataSource(FitPredictNode, abc.ABC):
     # `DataSource` uses data passed at construction time, so it does not need a
     # `df_in` in either `fit()` or `predict()` as a typical `FitPredictNode` does.
     # For this reason the function signature is different.
-    def fit(self) -> Dict[str, pd.DataFrame]:  # pylint: disable=arguments-differ  # type: ignore[override]
+    def fit(  # type: ignore[override]  # pylint: disable=arguments-differ
+        self,  
+    ) -> Dict[str, pd.DataFrame]:
         """
         :return: training set as df
         """
@@ -188,7 +192,9 @@ class DataSource(FitPredictNode, abc.ABC):
         self._validate_intervals(intervals)
         self._predict_intervals = intervals
 
-    def predict(self) -> Dict[str, pd.DataFrame]:  # pylint: disable=arguments-differ  # type: ignore[override]
+    def predict(  # type: ignore[override]  # pylint: disable=arguments-differ
+        self,
+    ) -> Dict[str, pd.DataFrame]:
         """
         :return: test set as df
         """
@@ -320,14 +326,14 @@ class YConnector(FitPredictNode):
         """
         return self._get_col_names(self._df_in2_col_names)
 
-    def fit(  # pylint: disable=arguments-differ  # type: ignore[override]
+    def fit(  # type: ignore[override]  # pylint: disable=arguments-differ
         self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
     ) -> Dict[str, pd.DataFrame]:
         df_out, info = self._apply_connector_func(df_in1, df_in2)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
-    def predict(  # pylint: disable=arguments-differ  # type: ignore[override]
+    def predict(  # type: ignore[override]  # pylint: disable=arguments-differ  
         self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
     ) -> Dict[str, pd.DataFrame]:
         df_out, info = self._apply_connector_func(df_in1, df_in2)

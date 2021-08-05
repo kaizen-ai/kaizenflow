@@ -94,7 +94,7 @@ class _AbstractDagRunner(abc.ABC):
 
     def _run_dag_helper(
         self, method: cdtfc.Method
-    ) -> Tuple[pd.DataFrame, cdtfv.Info]:
+    ) -> Tuple[pd.DataFrame, cdtfv.NodeInfo]:
         """
         Run the DAG for the given method.
 
@@ -109,7 +109,7 @@ class _AbstractDagRunner(abc.ABC):
     # TODO(gp): This could be folded into `_run_dag_helper()` if we collapse
     #  `ResultBundle` and `PredictionResultBundle`.
     def _to_result_bundle(
-        self, method: cdtfc.Method, df_out: pd.DataFrame, info: cdtfv.Info
+        self, method: cdtfc.Method, df_out: pd.DataFrame, info: cdtfv.NodeInfo
     ) -> ResultBundle:
         """
         Package the result of a DAG execution into a ResultBundle.
@@ -475,7 +475,7 @@ class RealTimeDagRunner(_AbstractDagRunner):
     # TODO(gp): We should return a ResultBundle?
     def predict(self) -> List[Dict[str, Any]]:
         execution_trace, results = cdtfrt.execute_with_real_time_loop(
-            **self._execute_rt_loop_kwargs, workload=self.dag_workload
+            **self._execute_rt_loop_kwargs, workload=self._dag_workload
         )
         self._execution_trace = execution_trace
         results = cast(List[Dict[str, Any]], results)

@@ -6,10 +6,12 @@ import core.dataflow.builders as cdtfb
 import abc
 import datetime
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import core.config as cconfig
 import core.finance as fin
+
+# TODO(gp): Use the standard imports.
 from core.dataflow.core import DAG, Node
 from core.dataflow.nodes.sources import ArmaGenerator
 from core.dataflow.nodes.transformers import (
@@ -102,7 +104,7 @@ class DagBuilder(abc.ABC):
         return ["fit", "predict"]
 
     # TODO(gp): -> tighten types along the lines of `Dict[Column, ...]`.
-    def get_column_to_tags_mapping(
+    def get_column_to_tags_mapping(  # pylint: disable=useless-return
         self, config: cconfig.Config
     ) -> Optional[Dict[Any, List[str]]]:
         """
@@ -265,4 +267,6 @@ class ArmaReturnsBuilder(DagBuilder):
         dag.add_node(node)
         if tail_nid is not None:
             dag.connect(tail_nid, node.nid)
-        return node.nid
+        nid = node.nid
+        nid = cast(str, nid)
+        return nid

@@ -24,11 +24,11 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): -> core/dataflow/node.py
 
 # We use a string to represent a node's unique identifier. This type helps
-# improve the interface and make the code more readable (e.g., `Dict[Nid, ...]`
+# improve the interface and make the code more readable (e.g., `Dict[NodeId, ...]`
 # instead of `Dict[str, ...]`).
 # TODO(gp): Use this everywhere.
-# TODO(gp): Do a replacement nid: str -> node.Nid
-Nid = str
+# TODO(gp): Do a replacement nid: str -> node.NodeId
+NodeId = str
 
 # Name of a Node's method, e.g., `fit` or `predict`.
 Method = str
@@ -56,7 +56,7 @@ class NodeInterface(abc.ABC):
     #   interface.
     def __init__(
         self,
-        nid: Nid,
+        nid: NodeId,
         inputs: Optional[List[str]] = None,
         outputs: Optional[List[str]] = None,
     ) -> None:
@@ -67,14 +67,14 @@ class NodeInterface(abc.ABC):
         :param inputs: list-like string names of `input_names`. `None` for no names.
         :param outputs: list-like string names of `output_names`. `None` for no names.
         """
-        dbg.dassert_isinstance(nid, Nid)
+        dbg.dassert_isinstance(nid, NodeId)
         dbg.dassert(nid, "Empty string chosen for unique nid!")
         self._nid = nid
         self._input_names = self._init_validation_helper(inputs)
         self._output_names = self._init_validation_helper(outputs)
 
     @property
-    def nid(self) -> Nid:
+    def nid(self) -> NodeId:
         return self._nid
 
     # TODO(gp): We might want to do getter only.
@@ -113,7 +113,7 @@ class Node(NodeInterface):
 
     def __init__(
         self,
-        nid: Nid,
+        nid: NodeId,
         inputs: Optional[List[str]] = None,
         outputs: Optional[List[str]] = None,
     ) -> None:
@@ -180,7 +180,7 @@ class Node(NodeInterface):
 # TODO(gp): -> core/dataflow/dag.py
 
 #
-DagOutput = Dict[Nid, NodeOutput]
+DagOutput = Dict[NodeId, NodeOutput]
 
 
 class DAG:
@@ -286,7 +286,7 @@ class DAG:
         # Add node.
         self._dag.add_node(node.nid, stage=node)
 
-    def get_node(self, nid: Nid) -> Node:
+    def get_node(self, nid: NodeId) -> Node:
         """
         Implement a convenience node accessor.
 
@@ -298,7 +298,7 @@ class DAG:
         dbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG!", nid)
         return self._dag.nodes[nid]["stage"]  # type: ignore
 
-    def remove_node(self, nid: Nid) -> None:
+    def remove_node(self, nid: NodeId) -> None:
         """
         Remove node from DAG and clear any connected edges.
         """
@@ -307,8 +307,8 @@ class DAG:
 
     def connect(
         self,
-        parent: Union[Tuple[Nid, Nid], Nid],
-        child: Union[Tuple[Nid, Nid], Nid],
+        parent: Union[Tuple[NodeId, NodeId], NodeId],
+        child: Union[Tuple[NodeId, NodeId], NodeId],
     ) -> None:
         """
         Add a directed edge from parent node output to child node input.
@@ -365,7 +365,7 @@ class DAG:
                 f"Creating edge {parent_nid} -> {child_nid} introduces a cycle!"
             )
 
-    def get_sources(self) -> List[Nid]:
+    def get_sources(self) -> List[NodeId]:
         """
         :return: list of nid's of source nodes
         """
@@ -375,7 +375,7 @@ class DAG:
                 sources.append(nid)
         return sources
 
-    def get_sinks(self) -> List[Nid]:
+    def get_sinks(self) -> List[NodeId]:
         """
         :return: list of nid's of sink nodes
         """
@@ -385,7 +385,7 @@ class DAG:
                 sinks.append(nid)
         return sinks
 
-    def get_unique_sink(self) -> Nid:
+    def get_unique_sink(self) -> NodeId:
         """
         Return the only sink node, asserting if there is more than one.
         """
@@ -413,7 +413,7 @@ class DAG:
         return {sink: self.get_node(sink).get_outputs(method) for sink in sinks}
 
     def run_leq_node(
-        self, nid: Nid, method: Method, progress_bar: bool = True
+        self, nid: NodeId, method: Method, progress_bar: bool = True
     ) -> NodeOutput:
         """
         Execute DAG up to (and including) Node `nid` and returns output.
@@ -442,7 +442,7 @@ class DAG:
         node = self.get_node(nid)
         return node.get_outputs(method)
 
-    def _run_node(self, nid: Nid, method: Method) -> None:
+    def _run_node(self, nid: NodeId, method: Method) -> None:
         """
         Run a single node.
 

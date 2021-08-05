@@ -7,7 +7,7 @@ import core.dataflow.visitors as cdtfv
 import collections
 import copy
 import logging
-from typing import Any, List, MutableMapping
+from typing import Any, Dict, List
 
 import core.dataflow.core as cdtfc
 import helpers.dbg as dbg
@@ -16,10 +16,12 @@ from core.dataflow.nodes.base import FitPredictNode
 _LOG = logging.getLogger(__name__)
 
 # Mapping from node and method to some data.
-Info = MutableMapping[cdtfc.Nid, MutableMapping[cdtfc.Method, Any]]
+# NodeInfo = MutableMapping[cdtfc.NodeId, MutableMapping[cdtfc.Method, Any]]
+# NodeInfo = typing.OrderedDict[cdtfc.NodeId, typing.OrderedDict[cdtfc.Method, Any]]
+NodeInfo = Dict[cdtfc.NodeId, Dict[cdtfc.Method, Any]]
 
 
-def extract_info(dag: cdtfc.DAG, methods: List[cdtfc.Method]) -> Info:
+def extract_info(dag: cdtfc.DAG, methods: List[cdtfc.Method]) -> NodeInfo:
     """
     Extract node info from each DAG node.
 
@@ -43,10 +45,16 @@ def extract_info(dag: cdtfc.DAG, methods: List[cdtfc.Method]) -> Info:
     return info
 
 
+# #############################################################################
+
+
+NodeState = Dict[cdtfc.NodeId, Dict[str, Any]]
+
+
 # TODO(gp): We could save / load state also of DAGs with some stateless Node.
-def get_fit_state(dag: cdtfc.DAG) -> Info:
+def get_fit_state(dag: cdtfc.DAG) -> NodeState:
     """
-    Obtain node state learned during fit.
+    Obtain the node state learned during fit from DAG.
 
     :param dag: dataflow DAG consisting of `FitPredictNode`s
     :return: result of node `get_fit_state()` keyed by nid
@@ -62,7 +70,7 @@ def get_fit_state(dag: cdtfc.DAG) -> Info:
     return fit_state
 
 
-def set_fit_state(dag: cdtfc.DAG, fit_state: collections.OrderedDict) -> None:
+def set_fit_state(dag: cdtfc.DAG, fit_state: NodeState) -> None:
     """
     Initialize a DAG with pre-fit node state.
 
