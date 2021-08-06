@@ -79,7 +79,7 @@ class TestIncrementalDagRunner1(hut.TestCase):
 class TestRealTimeDagRunner1(hut.TestCase):
     def test1(self) -> None:
         """
-        Test the RealTimeDagRunner using synthetic data.
+        Test the RealTimeDagRunner using a simple DAG triggering every 2 seconds.
         """
         # Get a naive pipeline as DAG.
         dag_builder = cdtfnttd._NaivePipeline()
@@ -103,9 +103,9 @@ class TestRealTimeDagRunner1(hut.TestCase):
         actual = "\n".join([event.to_str(include_tenths_of_secs=False)
                            for event in dag_runner.events])
         expected = r"""
-        num_it=1 current_time=20100104_093001 need_execute=False
-        num_it=2 current_time=20100104_093002 need_execute=True
-        num_it=3 current_time=20100104_093003 need_execute=False"""
+        num_it=1 current_time=20100104_093000 need_execute=True
+        num_it=2 current_time=20100104_093001 need_execute=False
+        num_it=3 current_time=20100104_093002 need_execute=True"""
         expected = hprint.dedent(expected)
         self.assert_equal(actual, expected)
         # Check the result bundles.

@@ -484,7 +484,8 @@ class Test_dassert_issubclass1(hut.TestCase):
         man = _Man()
         with self.assertRaises(AssertionError) as cm:
             dbg.dassert_issubclass(man, _Vegetable)
-        self.check_string(str(cm.exception))
+        # We need to purify from object references.
+        self.check_string(str(cm.exception), purify_text=True)
 
     def test_man_fail2(self) -> None:
         """
@@ -493,7 +494,7 @@ class Test_dassert_issubclass1(hut.TestCase):
         man = _Man()
         with self.assertRaises(AssertionError) as cm:
             dbg.dassert_issubclass(man, int)
-        self.check_string(str(cm.exception))
+        self.check_string(str(cm.exception), purify_text=True)
 
     def test1(self) -> None:
         """
@@ -509,7 +510,7 @@ class Test_dassert_issubclass1(hut.TestCase):
         """
         with self.assertRaises(Exception) as cm:
             dbg.dassert_issubclass(int, 5.0)
-        self.check_string(str(cm.exception))
+        self.check_string(str(cm.exception), purify_text=True)
 
 # #############################################################################
 

@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import helpers.dbg as dbg
 import helpers.git as git
+import helpers.introspection as hintro
 import helpers.io_ as hio
 import helpers.printing as hprint
 import helpers.system_interaction as hsinte
@@ -141,8 +142,11 @@ def pytest_warning(txt: str, prefix: str = "") -> None:
 
 
 # #############################################################################
+# Generation and conversion functions.
+# #############################################################################
 
 
+# TODO(gp): -> pandas.helpers?
 def convert_df_to_string(
     df: Union["pd.DataFrame", "pd.Series"],
     n_rows: Optional[int] = None,
@@ -185,6 +189,7 @@ def convert_df_to_string(
     return output_str
 
 
+# TODO(gp): Is this dataflow Info? If so it should go somewhere else.
 def convert_info_to_string(info: Mapping) -> str:
     """
     Convert info to string for verifying test results.
@@ -274,7 +279,7 @@ def to_string(var: str) -> str:
 
 
 def get_random_df(
-    num_cols: int, seed: Optional[int] = None, kwargs: Optional[Dict[str, Any]] = None
+    num_cols: int, seed: Optional[int] = None, date_range_kwargs: Optional[Dict[str, Any]] = None
 ) -> "pd.DataFrame":
     """
     Compute df with random data with `num_cols` columns and index obtained by
@@ -282,7 +287,7 @@ def get_random_df(
     """
     if seed:
         np.random.seed(seed)
-    dt = pd.date_range(**kwargs)
+    dt = pd.date_range(**date_range_kwargs)
     df = pd.DataFrame(np.random.rand(len(dt), num_cols), index=dt)
     return df
 
@@ -398,47 +403,15 @@ def filter_text(regex: str, txt: str) -> str:
     return txt
 
 
-def purify_amp_references(txt: str) -> str:
-    """
-    Remove references to amp.
-    """
-    # E.g., `amp/helpers/test/...`
-    txt = re.sub(r"^\s*amp\/", "", txt, flags=re.MULTILINE)
-    # E.g., `['amp/helpers/test/...`
-    txt = re.sub(r"'amp\/", "'", txt, flags=re.MULTILINE)
-    txt = re.sub(r"\/amp\/", "/", txt, flags=re.MULTILINE)
-    # E.g., `vimdiff helpers/test/...`
-    txt = re.sub(r"\s+amp\/", " ", txt, flags=re.MULTILINE)
-    txt = re.sub(r"\/amp:", ":", txt, flags=re.MULTILINE)
-    txt = re.sub(r"^\./", "", txt, flags=re.MULTILINE)
-    _LOG.debug("After purify_amp_references: txt='\n%s'", txt)
-    return txt
+# #############################################################################
+# Outcome purification functions.
+# #############################################################################
 
 
-def purify_app_references(txt: str) -> str:
-    """
-    Remove references to `/app`.
-    """
-    txt = re.sub("/app/", "", txt, flags=re.MULTILINE)
-    return txt
+# TODO(gp): -> private functions?
 
 
-def purify_file_names(file_names: List[str]) -> List[str]:
-    """
-    Express file names in terms of the root of git repo, removing reference to
-    `amp`.
-    """
-    git_root = git.get_client_root(super_module=True)
-    file_names = [os.path.relpath(f, git_root) for f in file_names]
-    # TODO(gp): Add also `purify_app_references`.
-    file_names = list(map(purify_amp_references, file_names))
-    return file_names
-
-
-def purify_txt_from_client(txt: str) -> str:
-    """
-    Remove from a string all the information specific of a git client.
-    """
+def purify_from_environment(txt: str) -> str:
     # We remove references to the Git modules starting from the innermost one.
     for super_module in [False, True]:
         # Replace the git path with `$GIT_ROOT`.
@@ -454,17 +427,80 @@ def purify_txt_from_client(txt: str) -> str:
     # Replace the user name with `$USER_NAME`.
     user_name = hsinte.get_user_name()
     txt = txt.replace(user_name, "$USER_NAME")
-    # Remove `/app` references.
-    txt = purify_app_references(txt)
-    # Remove `amp` reference.
-    txt = purify_amp_references(txt)
-    # Remove
-    for env_var in ["AM_ECR_BASE_PATH", "AM_S3_BUCKET", "AM_TELEGRAM_TOKEN"]:
-        dbg.dassert_in(env_var, os.environ)
-        val = os.environ[env_var]
-        dbg.dassert_ne(val, "", "Env var '%s' can't be empty", env_var)
-        txt = txt.replace(val, "*****")
+    _LOG.debug("After %s: txt='\n%s'", hintro.get_function_name(), txt)
     return txt
+
+
+def purify_amp_references(txt: str) -> str:
+    """
+    Remove references to amp.
+    """
+    # E.g., `amp/helpers/test/...`
+    txt = re.sub(r"^\s*amp\/", "", txt, flags=re.MULTILINE)
+    # E.g., `['amp/helpers/test/...`
+    txt = re.sub(r"'amp\/", "'", txt, flags=re.MULTILINE)
+    txt = re.sub(r"\/amp\/", "/", txt, flags=re.MULTILINE)
+    # E.g., `vimdiff helpers/test/...`
+    txt = re.sub(r"\s+amp\/", " ", txt, flags=re.MULTILINE)
+    txt = re.sub(r"\/amp:", ":", txt, flags=re.MULTILINE)
+    txt = re.sub(r"^\./", "", txt, flags=re.MULTILINE)
+    _LOG.debug("After %s: txt='\n%s'", hintro.get_function_name(), txt)
+    return txt
+
+
+def purify_app_references(txt: str) -> str:
+    """
+    Remove references to `/app`.
+    """
+    txt = re.sub("/app/", "", txt, flags=re.MULTILINE)
+    _LOG.debug("After %s: txt='\n%s'", hintro.get_function_name(), txt)
+    return txt
+
+
+def purify_file_names(file_names: List[str]) -> List[str]:
+    """
+    Express file names in terms of the root of git repo, removing reference to
+    `amp`.
+    """
+    git_root = git.get_client_root(super_module=True)
+    file_names = [os.path.relpath(f, git_root) for f in file_names]
+    # TODO(gp): Add also `purify_app_references`.
+    file_names = list(map(purify_amp_references, file_names))
+    return file_names
+
+
+def purify_from_env_vars(txt: str) -> str:
+    for env_var in ["AM_ECR_BASE_PATH", "AM_S3_BUCKET", "AM_TELEGRAM_TOKEN"]:
+        if env_var in os.environ:
+            val = os.environ[env_var]
+            dbg.dassert_ne(val, "", "Env var '%s' can't be empty", env_var)
+            txt = txt.replace(val, "*****")
+    _LOG.debug("After %s: txt='\n%s'", hintro.get_function_name(), txt)
+    return txt
+
+
+def purify_object_reference(txt: str) -> str:
+    """
+    Remove references like `at 0x7f43493442e0`.
+    """
+    txt = re.sub(r"at 0x\S{12}", "at 0x", txt, flags=re.MULTILINE)
+    _LOG.debug("After %s: txt='\n%s'", hintro.get_function_name(), txt)
+    return txt
+
+
+def purify_txt_from_client(txt: str) -> str:
+    """
+    Remove from a string all the information specific of a git client.
+    """
+    txt = purify_from_environment(txt)
+    txt = purify_app_references(txt)
+    txt = purify_amp_references(txt)
+    txt = purify_from_env_vars(txt)
+    txt = purify_object_reference(txt)
+    return txt
+
+
+# #############################################################################
 
 
 def diff_files(

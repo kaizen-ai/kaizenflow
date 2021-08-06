@@ -38,7 +38,7 @@ class _NaivePipeline(cdtfb.DagBuilder):
                 "end": pd.Timestamp("2010-01-10"),
                 "freq": "1B",
             }
-            data = hut.get_random_df(num_cols, seed=seed, kwargs=date_range_kwargs)
+            data = hut.get_random_df(num_cols, seed=seed, date_range_kwargs=date_range_kwargs)
             return data
 
         def _process_data(df_in: pd.DataFrame) -> pd.DataFrame:

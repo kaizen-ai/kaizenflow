@@ -231,7 +231,7 @@ date_range_kwargs = {
     "freq": "1B",
 }
 #pd.date_range(**date_range_kwargs)
-data = hut.get_random_df(num_cols, seed=seed, kwargs=date_range_kwargs)
+data = hut.get_random_df(num_cols, seed=seed, date_range_kwargs=date_range_kwargs)
 print(data)
 
 
