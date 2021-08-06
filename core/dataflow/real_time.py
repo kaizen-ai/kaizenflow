@@ -223,25 +223,37 @@ def align_on_even_second(use_time_sleep: bool = False) -> None:
 # #############################################################################
 
 
-# Information about the real time execution.
-RealTimeEvent = collections.namedtuple(
-    "RealTimeEvent", "num_it current_time wall_clock_time need_execute"
-)
+class Event(
+    collections.namedtuple(
+        "Event", "num_it current_time wall_clock_time need_execute"
+    )
+):
+    """
+    Information about the real time execution.
+    """
+
+    def __str__(self) -> str:
+        return self.to_str(include_tenths_of_secs=False)
+
+    # Using the approach from
+    # https://docs.python.org/3/library/collections.html#
+    #    namedtuple-factory-function-for-tuples-with-named-fields
+
+    def to_str(self, include_tenths_of_secs: bool) -> str:
+        vals = []
+        vals.append("num_it=%s" % self.num_it)
+        timestamp_as_str = self.current_time.strftime("%Y%m%d_%H%M%S")
+        # Add tenths of second.
+        if include_tenths_of_secs:
+            timestamp_as_str += "%s" % int(self.current_time.microsecond // 1e5)
+        vals.append("current_time=%s" % timestamp_as_str)
+        vals.append("need_execute=%s" % self.need_execute)
+        return " ".join(vals)
 
 
-def real_time_event_to_str(rte: RealTimeEvent) -> str:
-    dbg.dassert_isinstance(rte, RealTimeEvent)
-    vals = []
-    vals.append("num_it=%s" % rte.num_it)
-    timestamp_as_str = rte.current_time.strftime("%Y%m%d_%H%M%S")
-    # Add tenths of second.
-    timestamp_as_str += "%s" % int(rte.current_time.microsecond // 1e5)
-    vals.append("current_time=%s" % timestamp_as_str)
-    vals.append("need_execute=%s" % rte.need_execute)
-    return " ".join(vals)
-
-
-ExecutionTrace = List[RealTimeEvent]
+class Events(List[Event]):
+    def __str__(self) -> str:
+        return "\n".join(map(str, self))
 
 
 # Type for a function that return the current (true or replayed) time as a timestamp.
@@ -254,7 +266,7 @@ def execute_with_real_time_loop(
     get_current_time: GetCurrentTimeFunction,
     need_to_execute: Callable[[pd.Timestamp], bool],
     workload: Callable[[pd.Timestamp], Any],
-) -> Tuple[ExecutionTrace, List[Any]]:
+) -> Tuple[Events, List[Any]]:
     """
     Execute a function using a true or simulated real-time loop.
 
@@ -266,14 +278,15 @@ def execute_with_real_time_loop(
         executed
     :param workload: function executing the work when `need_to_execute()` requires to
 
-    :return: a Tuple with an execution trace representing the events in the
-        real-time loop and a list of results from the workload
+    :return: a Tuple with:
+        - an execution trace representing the events in the real-time loop; and
+        - a list of results returned by the workload function
     """
     dbg.dassert_lt(0, sleep_interval_in_secs)
     if num_iterations is not None:
         dbg.dassert_lt(0, num_iterations)
     #
-    execution_trace = []
+    events = Events()
     results = []
     num_it = 1
     while True:
@@ -281,9 +294,10 @@ def execute_with_real_time_loop(
         current_time = get_current_time()
         execute = need_to_execute(current_time)
         wall_clock_time = hdatetime.get_current_time(tz="ET")
-        event = RealTimeEvent(num_it, current_time, wall_clock_time, execute)
+        # Update the current events.
+        event = Event(num_it, current_time, wall_clock_time, execute)
         _LOG.debug("event='%s'", str(event))
-        execution_trace.append(event)
+        events.append(event)
         # Execute the workload, if needed.
         if execute:
             _LOG.debug("  -> execute")
@@ -295,4 +309,4 @@ def execute_with_real_time_loop(
         # Go to sleep.
         time.sleep(sleep_interval_in_secs)
         num_it += 1
-    return execution_trace, results
+    return events, results

@@ -243,10 +243,9 @@ class DAG:
         """
         # In principle, `NodeInterface` could be supported; however, to do so,
         # the `run` methods below would need to be suitably modified.
-        # TODO(gp): issubclass?
-        # dbg.dassert_isinstance(
-        #     node, Node, "Only DAGs of class `Node` are supported!"
-        # )
+        dbg.dassert_issubclass(
+            node, Node, "Only DAGs of class `Node` are supported!"
+        )
         # NetworkX requires that nodes be hashable and uses hashes for
         # identifying nodes. Because our Nodes are objects whose hashes can
         # change as operations are performed, we use the `Node.nid` as the
@@ -292,9 +291,7 @@ class DAG:
 
         :param nid: unique node id
         """
-        dbg.dassert_isinstance(
-            nid, str, "Expected str nid but got type %s!", type(nid)
-        )
+        dbg.dassert_isinstance(nid, NodeId)
         dbg.dassert(self._dag.has_node(nid), "Node `%s` is not in DAG!", nid)
         return self._dag.nodes[nid]["stage"]  # type: ignore
 
@@ -460,8 +457,8 @@ class DAG:
         node = self.get_node(nid)
         try:
             output = getattr(node, method)(**kwargs)
-        except Exception as e:
-            raise Exception(
+        except AttributeError as e:
+            raise AttributeError(
                 f"An exception occurred in node '{nid}'.\n{str(e)}"
             ) from e
         for out in node.output_names:

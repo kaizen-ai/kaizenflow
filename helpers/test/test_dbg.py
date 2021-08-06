@@ -68,10 +68,10 @@ class Test_dassert1(hut.TestCase):
         """
         Common error of calling `dassert()` instead of `dassert_eq()`.
 
-        According to the user's intention the assertion should trigger, but, because
-        of using `dassert()` instead of `dassert_eq()`, the assertion will not
-        trigger. We notice that the user passed a list instead of a string as `msg`
-        and raise.
+        According to the user's intention the assertion should trigger,
+        but, because of using `dassert()` instead of `dassert_eq()`, the
+        assertion will not trigger. We notice that the user passed a
+        list instead of a string as `msg` and raise.
         """
         with self.assertRaises(AssertionError) as cm:
             y = ["world"]
@@ -235,7 +235,7 @@ class Test_dassert_misc1(hut.TestCase):
         """
         with self.assertRaises(AssertionError) as cm:
             a = [1, 2, 4, 3]
-            sort_kwargs={"reverse": True}
+            sort_kwargs = {"reverse": True}
             dbg.dassert_is_sorted(a, sort_kwargs=sort_kwargs)
         self.check_string(str(cm.exception))
 
@@ -444,6 +444,72 @@ class Test_dassert_container_type1(hut.TestCase):
         obj='['a', 2, 'c', 'd']'
         """
         self.assert_equal(act, exp, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class _Animal:
+    pass
+
+
+class _Man(_Animal):
+    pass
+
+
+class _Vegetable:
+    pass
+
+
+class Test_dassert_issubclass1(hut.TestCase):
+    def test_man1(self) -> None:
+        """
+        An instance of `_Man` descends from `_Animal`.
+        """
+        man = _Man()
+        dbg.dassert_issubclass(man, _Man)
+
+    def test_man2(self) -> None:
+        """
+        An instance of `_Man` descends from object.
+        """
+        man = _Man()
+        dbg.dassert_issubclass(man, object)
+
+    def test_man_fail1(self) -> None:
+        """
+        An instance of `_Man` doesn't descends from `_Vegetable`.
+        """
+        man = _Man()
+        with self.assertRaises(AssertionError) as cm:
+            dbg.dassert_issubclass(man, _Vegetable)
+        # We need to purify from object references.
+        self.check_string(str(cm.exception), purify_text=True)
+
+    def test_man_fail2(self) -> None:
+        """
+        An instance of `_Man` doesn't descends from `int`.
+        """
+        man = _Man()
+        with self.assertRaises(AssertionError) as cm:
+            dbg.dassert_issubclass(man, int)
+        self.check_string(str(cm.exception), purify_text=True)
+
+    def test1(self) -> None:
+        """
+        In Python everything is an object.
+        """
+        dbg.dassert_issubclass(5, object)
+        dbg.dassert_issubclass(int, object)
+        dbg.dassert_issubclass(int, (object, int))
+
+    def test_fail1(self) -> None:
+        """
+        `issubclass` only accepts classes and not instances as second argument.
+        """
+        with self.assertRaises(Exception) as cm:
+            dbg.dassert_issubclass(int, 5.0)
+        self.check_string(str(cm.exception), purify_text=True)
 
 
 # #############################################################################

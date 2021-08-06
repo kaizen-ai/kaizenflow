@@ -173,7 +173,7 @@ class Test_apply_nan_mode(hut.TestCase):
         series = hut.get_random_df(
             num_cols=1,
             seed=seed,
-            **date_range,
+            date_range_kwargs=date_range,
         )[0]
         series[:3] = np.nan
         series[-3:] = np.nan

@@ -45,6 +45,7 @@ class DagBuilder(abc.ABC):
 
     def __init__(self, nid_prefix: Optional[str] = None) -> None:
         """
+        Constructor.
 
         :param nid_prefix: a namespace ending with "/" for graph node naming.
             This may be useful if the DAG built by the builder is either built
@@ -76,8 +77,7 @@ class DagBuilder(abc.ABC):
         """
 
     @abc.abstractmethod
-    # TODO(*): Consider getting rid of the `dag` argument here.
-    def get_dag(self, config: cconfig.Config, dag: Optional[DAG] = None) -> DAG:
+    def get_dag(self, config: cconfig.Config, mode: str = "strict") -> DAG:
         """
         Build DAG given `config`.
 

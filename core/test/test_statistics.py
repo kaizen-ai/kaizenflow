@@ -328,7 +328,7 @@ class TestMultipleTests(hut.TestCase):
         series = hut.get_random_df(
             num_cols=1,
             seed=seed,
-            **date_range,
+            date_range_kwargs=date_range,
         )[0]
         return series
 
@@ -1779,6 +1779,6 @@ class Test_summarize_time_index_info(hut.TestCase):
         series = hut.get_random_df(
             num_cols=1,
             seed=seed,
-            **date_range,
+            date_range_kwargs=date_range,
         )[0]
         return series

@@ -1,13 +1,13 @@
 """
 Import as:
 
-import core.dataflow.runners as cdtfr import core.dataflow as cdtf
+import core.dataflow.runners as cdtfr
 """
 
 import abc
 import datetime
 import logging
-from typing import Any, Dict, Generator, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -442,3 +442,70 @@ class IncrementalDagRunner(_AbstractDagRunner):
         """
         df_out, info = self._run_dag_helper(method)
         return self._to_result_bundle(method, df_out, info)
+
+
+# #############################################################################
+
+
+class RealTimeDagRunner(_AbstractDagRunner):
+    """
+    Run a DAG in true or simulated real-time.
+
+    See `real_time.py` for definitions of different types of real-time
+    execution.
+    """
+
+    def __init__(
+        self,
+        config: cconfig.Config,
+        dag_builder: DagBuilder,
+        fit_state: cconfig.Config,
+        execute_rt_loop_kwargs: Dict[str, Any],
+        dst_dir: str,
+    ) -> None:
+        super().__init__(config, dag_builder)
+        # Save input parameters.
+        # TODO(gp): Use this for stateful DAGs.
+        _ = fit_state
+        self._execute_rt_loop_kwargs = execute_rt_loop_kwargs
+        self._dst_dir = dst_dir
+        # Store information about the real-time execution.
+        # self._events: Optional[cdtfrt.Events] = None
+        self._events: cdtfrt.Events
+
+    def predict(self) -> List[ResultBundle]:
+        """
+        Predict every time there is a real-time event.
+
+        :return: list of `ResultBundle`, one per event
+        """
+        method = "predict"
+        # Adapt `_dag_workload()` to the expected call back signature.
+        workload = lambda current_time: self._dag_workload(current_time, method)
+        # Call the event loop.
+        events, results = cdtfrt.execute_with_real_time_loop(
+            **self._execute_rt_loop_kwargs, workload=workload
+        )
+        # Save the log of events.
+        self._events = events
+        # Convert the output in `ResultBundles`.
+        result_bundles = [
+            self._to_result_bundle(method, df_out, info)
+            for df_out, info in results
+        ]
+        return result_bundles
+
+    @property
+    def events(self) -> Optional[cdtfrt.Events]:
+        return self._events
+
+    def _dag_workload(
+        self, current_time: pd.Timestamp, method: cdtfc.Method
+    ) -> cdtfc.NodeOutput:
+        """
+        Workload for the real-time loop to execute a DAG.
+        """
+        _ = current_time
+        sink = self.dag.get_unique_sink()
+        node_output = self.dag.run_leq_node(sink, method)
+        return node_output
