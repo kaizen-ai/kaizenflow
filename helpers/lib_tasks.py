@@ -395,6 +395,10 @@ def git_clean(ctx, dry_run=False):  # type: ignore
     git_clean_cmd = "git clean -fd"
     if dry_run:
         git_clean_cmd += " --dry-run"
+    # Clean current repo.
+    cmd = git_clean_cmd
+    _run(ctx, cmd)
+    # Clean submodules.
     cmd = f"git submodule foreach '{git_clean_cmd}'"
     _run(ctx, cmd)
     # Delete other files.
