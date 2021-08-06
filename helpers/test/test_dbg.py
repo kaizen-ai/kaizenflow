@@ -70,7 +70,7 @@ class Test_dassert1(hut.TestCase):
 
         According to the user's intention the assertion should trigger, but, because
         of using `dassert()` instead of `dassert_eq()`, the assertion will not
-        __trigger. We notice that the user passed a list instead of a string as `msg`
+        trigger. We notice that the user passed a list instead of a string as `msg`
         and raise.
         """
         with self.assertRaises(AssertionError) as cm:

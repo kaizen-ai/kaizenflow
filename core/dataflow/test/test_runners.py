@@ -84,7 +84,7 @@ class TestRealTimeDagRunner1(hut.TestCase):
         # Get a naive pipeline as DAG.
         dag_builder = cdtfnttd._NaivePipeline()
         config = dag_builder.get_config_template()
-        #
+        # Set up the event loop.
         execute_rt_loop_kwargs = cdtfttrt.get_test_execute_rt_loop_kwargs()
         kwargs = {
             "config": config,
@@ -99,7 +99,7 @@ class TestRealTimeDagRunner1(hut.TestCase):
         dtf.align_on_even_second()
         dag_runner = cdtfr.RealTimeDagRunner(**kwargs)
         result_bundles = dag_runner.predict()
-        #
+        # Check the events.
         actual = "\n".join([event.to_str(include_tenths_of_secs=False)
                            for event in dag_runner.events])
         expected = r"""
@@ -108,7 +108,7 @@ class TestRealTimeDagRunner1(hut.TestCase):
         num_it=3 current_time=20100104_093003 need_execute=False"""
         expected = hprint.dedent(expected)
         self.assert_equal(actual, expected)
-        #
+        # Check the result bundles.
         actual = []
         events_as_str = str(dag_runner.events)
         actual.append("events=\n%s" % events_as_str)

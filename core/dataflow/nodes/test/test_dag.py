@@ -13,6 +13,7 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): -> test_dag_builer.py
 class _NaivePipeline(cdtfb.DagBuilder):
     """
     Pipeline with:
