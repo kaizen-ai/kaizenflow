@@ -256,7 +256,7 @@ class Events(List[Event]):
         return "\n".join(map(str, self))
 
 
-# Type for a function that return the current (true or replayed) time as a timestamp.
+# Function returning the current (true or replayed) time as a timestamp.
 GetCurrentTimeFunction = Callable[[], pd.Timestamp]
 
 

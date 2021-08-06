@@ -442,6 +442,7 @@ class _AbstractRealTimeDataSource(cdnb.DataSource):
         """
         Return the data to be filtered.
         """
+        ...
 
 
 # #############################################################################
@@ -525,6 +526,9 @@ class TrueRealTimeDataSource(_AbstractRealTimeDataSource):
 
 # #############################################################################
 
+# TODO(gp): Maybe just ReplayedTime instead of ReplayedRealTime since we can change
+#  the speed of time so it's not properly real time. Also the naming becomes simpler
+#  Simulated vs Replayed vs Real
 
 # pylint: disable=too-many-ancestors
 class ReplayedRealTimeDataSource(TrueRealTimeDataSource):
