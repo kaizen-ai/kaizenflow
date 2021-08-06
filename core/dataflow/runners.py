@@ -7,7 +7,7 @@ import core.dataflow.runners as cdtfr
 import abc
 import datetime
 import logging
-from typing import Any, Dict, Generator, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -470,7 +470,7 @@ class RealTimeDagRunner(_AbstractDagRunner):
         self._execute_rt_loop_kwargs = execute_rt_loop_kwargs
         self._dst_dir = dst_dir
         # Store information about the real-time execution.
-        #self._events: Optional[cdtfrt.Events] = None
+        # self._events: Optional[cdtfrt.Events] = None
         self._events: cdtfrt.Events
 
     def predict(self) -> List[ResultBundle]:
@@ -489,16 +489,19 @@ class RealTimeDagRunner(_AbstractDagRunner):
         # Save the log of events.
         self._events = events
         # Convert the output in `ResultBundles`.
-        result_bundles = [self._to_result_bundle(method, df_out, info)
-                          for df_out, info in results]
+        result_bundles = [
+            self._to_result_bundle(method, df_out, info)
+            for df_out, info in results
+        ]
         return result_bundles
 
     @property
     def events(self) -> Optional[cdtfrt.Events]:
         return self._events
 
-    def _dag_workload(self, current_time: pd.Timestamp, method: cdtfc.Method
-                      ) -> cdtfc.NodeOutput:
+    def _dag_workload(
+        self, current_time: pd.Timestamp, method: cdtfc.Method
+    ) -> cdtfc.NodeOutput:
         """
         Workload for the real-time loop to execute a DAG.
         """

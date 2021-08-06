@@ -5,7 +5,7 @@ import abc
 import collections
 import copy
 import logging
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 import pandas as pd
 
@@ -94,11 +94,13 @@ class ResultBundle(abc.ABC):
                 for tag in tags:
                     tag_to_columns.setdefault(tag, []).append(column)
             return tag_to_columns
+        return None
 
     @property
     def info(self) -> Optional[collections.OrderedDict]:
         if self._info is not None:
             return self._info.copy()
+        return None
 
     @property
     def payload(self) -> Optional[cconfig.Config]:
@@ -130,12 +132,14 @@ class ResultBundle(abc.ABC):
             serialized_bundle["commit_hash"] = git.get_current_commit_hash()
         return serialized_bundle
 
-    def to_dict(self, commit_hash: bool = True) -> collections.OrderedDict:
+    def to_dict(self, commit_hash: bool = False) -> collections.OrderedDict:
         """
         Represent class state as an ordered dict.
         """
-        config = self.to_config(commit_hash)
-        return config.to_dict()
+        config = self.to_config(commit_hash=commit_hash)
+        dict_ = config.to_dict()
+        dict_ = cast(collections.OrderedDict, dict_)
+        return dict_
 
     @staticmethod
     def from_dict(result_bundle_dict: collections.OrderedDict) -> ResultBundle:

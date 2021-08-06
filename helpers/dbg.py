@@ -309,7 +309,7 @@ def dassert_issubclass(
         txt = "instance '%s' of class '%s' is not a subclass of '%s'" % (
             str(val1),
             val1.__class__.__name__,
-            val2
+            val2,
         )
         _dfatal(txt, msg, *args)
 
@@ -603,8 +603,8 @@ def dassert_file_extension(
 
 # Pandas related.
 
-# TODO(gp): Consider moving these to `dbg_pandas.py` and avoid the implicit
-#  dependency from pandas.
+# TODO(gp): Consider moving these to `dbg_pandas.py` or `hpandas.py` and avoid
+#  the implicit dependency from pandas.
 
 
 def dassert_index_is_datetime(
@@ -703,7 +703,7 @@ class _LocalTimeZoneFormatter:
     """
 
     def __init__(self, *args: Any, **kwargs: Any):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)  # type: ignore[call-arg]
         try:
             # TODO(gp): Automatically detect the time zone. It might be complicated in
             #  Docker.
@@ -765,9 +765,6 @@ class _ColoredFormatter(  # type: ignore[misc]
         # White on red background.
         "CRITICAL": (41, "CRTCL"),
     }
-
-    def __init__(self, log_format: str, date_format: str):
-        super().__init__(log_format, date_format)
 
     def format(self, record: logging.LogRecord) -> str:
         colored_record = copy.copy(record)

@@ -223,12 +223,18 @@ def align_on_even_second(use_time_sleep: bool = False) -> None:
 # #############################################################################
 
 
-class Event(collections.namedtuple(
+class Event(
+    collections.namedtuple(
         "Event", "num_it current_time wall_clock_time need_execute"
-    )):
+    )
+):
     """
     Information about the real time execution.
     """
+
+    def __str__(self) -> str:
+        return self.to_str(include_tenths_of_secs=False)
+
     # Using the approach from
     # https://docs.python.org/3/library/collections.html#
     #    namedtuple-factory-function-for-tuples-with-named-fields
@@ -244,12 +250,8 @@ class Event(collections.namedtuple(
         vals.append("need_execute=%s" % self.need_execute)
         return " ".join(vals)
 
-    def __str__(self) -> str:
-        return self.to_str(include_tenths_of_secs=False)
-
 
 class Events(List[Event]):
-
     def __str__(self) -> str:
         return "\n".join(map(str, self))
 

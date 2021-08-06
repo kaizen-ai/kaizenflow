@@ -68,10 +68,10 @@ class Test_dassert1(hut.TestCase):
         """
         Common error of calling `dassert()` instead of `dassert_eq()`.
 
-        According to the user's intention the assertion should trigger, but, because
-        of using `dassert()` instead of `dassert_eq()`, the assertion will not
-        trigger. We notice that the user passed a list instead of a string as `msg`
-        and raise.
+        According to the user's intention the assertion should trigger,
+        but, because of using `dassert()` instead of `dassert_eq()`, the
+        assertion will not trigger. We notice that the user passed a
+        list instead of a string as `msg` and raise.
         """
         with self.assertRaises(AssertionError) as cm:
             y = ["world"]
@@ -235,7 +235,7 @@ class Test_dassert_misc1(hut.TestCase):
         """
         with self.assertRaises(AssertionError) as cm:
             a = [1, 2, 4, 3]
-            sort_kwargs={"reverse": True}
+            sort_kwargs = {"reverse": True}
             dbg.dassert_is_sorted(a, sort_kwargs=sort_kwargs)
         self.check_string(str(cm.exception))
 
@@ -462,7 +462,6 @@ class _Vegetable:
 
 
 class Test_dassert_issubclass1(hut.TestCase):
-
     def test_man1(self) -> None:
         """
         An instance of `_Man` descends from `_Animal`.
@@ -511,6 +510,7 @@ class Test_dassert_issubclass1(hut.TestCase):
         with self.assertRaises(Exception) as cm:
             dbg.dassert_issubclass(int, 5.0)
         self.check_string(str(cm.exception), purify_text=True)
+
 
 # #############################################################################
 

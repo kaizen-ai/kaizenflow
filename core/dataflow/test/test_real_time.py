@@ -167,8 +167,9 @@ class Test_execute_with_real_time_loop(hut.TestCase):
         _ = results
         # We can check that the times are exactly the expected ones, since we are
         # replaying time.
-        actual = "\n".join([event.to_str(include_tenths_of_secs=False)
-                            for event in events])
+        actual = "\n".join(
+            [event.to_str(include_tenths_of_secs=False) for event in events]
+        )
         expected = r"""
         num_it=1 current_time=20100104_093001 need_execute=False
         num_it=2 current_time=20100104_093002 need_execute=True

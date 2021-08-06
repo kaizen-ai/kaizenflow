@@ -221,6 +221,7 @@ len(result[1])
 
 # %%
 import pandas as pd
+
 import helpers.unit_test as hut
 
 num_cols = 2
@@ -230,17 +231,17 @@ date_range_kwargs = {
     "end": pd.Timestamp("2010-02-01"),
     "freq": "1B",
 }
-#pd.date_range(**date_range_kwargs)
+# pd.date_range(**date_range_kwargs)
 data = hut.get_random_df(num_cols, seed=seed, date_range_kwargs=date_range_kwargs)
 print(data)
 
 
 config = {
-        "rule": "1B",
-        "agg_func": "last",
-        "resample_kwargs": None,
-        "agg_func_kwargs": None,
-    }
+    "rule": "1B",
+    "agg_func": "last",
+    "resample_kwargs": None,
+    "agg_func_kwargs": None,
+}
 node = cdnt.Reample("resample", **config)
 df_out = node.fit(data)["df_out"]
 
@@ -248,22 +249,22 @@ df_out = node.fit(data)["df_out"]
 import core.dataflow.nodes.transformers as cdtfnt
 
 nid = "nop"
+
+
 def func(df_in):
     return df_in
 
 
 func_kwargs = {}
 
-node = cdtfnt.FunctionWrapper(nid,
-                       func,
-                       func_kwargs)
+node = cdtfnt.FunctionWrapper(nid, func, func_kwargs)
 
 node.fit(data)
 
 # %%
-import core.dataflow.nodes.test.test_dag as test_dag
+import core.dataflow.test.test_builders as test_builders
 
-dag_builder = test_dag._NaivePipeline()
+dag_builder = test_builders._NaivePipeline()
 
 config = dag_builder.get_config_template()
 

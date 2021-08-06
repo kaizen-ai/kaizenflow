@@ -59,7 +59,7 @@ class EventStudyBuilder(DagBuilder):
         config_kwargs["alpha"] = 0.5
         return config
 
-    def get_dag(self, config: cconfig.Config, dag: Optional[DAG] = None) -> DAG:
+    def get_dag(self, config: cconfig.Config, mode: str = "strict") -> DAG:
         """
         Implement a pipeline for running event studies.
 
@@ -70,7 +70,7 @@ class EventStudyBuilder(DagBuilder):
         :param dag: May or may not already contain nodes. If `None`, then
             returns a new DAG.
         """
-        dag = dag or DAG()
+        dag = DAG()
         _LOG.debug("%s", config)
         # Dummy node for grid data input.
         # - The dataframe with timestamps along a frequency should connect to

@@ -5,8 +5,8 @@ import numpy as np
 # TODO(gp): We should import only the strict dependencies.
 import core.dataflow as dtf
 import core.dataflow.runners as cdtfr
+import core.dataflow.test.test_builders as cdtfnttd
 import core.dataflow.test.test_real_time as cdtfttrt
-import core.dataflow.nodes.test.test_dag as cdtfnttd
 import helpers.printing as hprint
 import helpers.unit_test as hut
 
@@ -79,7 +79,8 @@ class TestIncrementalDagRunner1(hut.TestCase):
 class TestRealTimeDagRunner1(hut.TestCase):
     def test1(self) -> None:
         """
-        Test the RealTimeDagRunner using a simple DAG triggering every 2 seconds.
+        Test the RealTimeDagRunner using a simple DAG triggering every 2
+        seconds.
         """
         # Get a naive pipeline as DAG.
         dag_builder = cdtfnttd._NaivePipeline()
@@ -100,8 +101,12 @@ class TestRealTimeDagRunner1(hut.TestCase):
         dag_runner = cdtfr.RealTimeDagRunner(**kwargs)
         result_bundles = dag_runner.predict()
         # Check the events.
-        actual = "\n".join([event.to_str(include_tenths_of_secs=False)
-                           for event in dag_runner.events])
+        actual = "\n".join(
+            [
+                event.to_str(include_tenths_of_secs=False)
+                for event in dag_runner.events
+            ]
+        )
         expected = r"""
         num_it=1 current_time=20100104_093000 need_execute=True
         num_it=2 current_time=20100104_093001 need_execute=False
@@ -116,4 +121,3 @@ class TestRealTimeDagRunner1(hut.TestCase):
         actual.append("result_bundles=\n%s" % result_bundles_as_str)
         actual = "\n".join(map(str, actual))
         self.check_string(actual)
-

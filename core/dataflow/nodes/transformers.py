@@ -7,7 +7,17 @@ import collections
 import datetime
 import inspect
 import logging
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 import pandas as pd
 
@@ -74,13 +84,15 @@ class ColumnTransformer(cdnb.Transformer, cdnb.ColModeMixin):
 
     @property
     def transformed_col_names(self) -> List[str]:
+        col_names = self._transformed_col_names
         dbg.dassert_is_not(
-            self._transformed_col_names,
+            col_names,
             None,
             "No transformed column names. This may indicate "
             "an invocation prior to graph execution.",
         )
-        return self._transformed_col_names
+        col_names = cast(List[str], col_names)
+        return col_names
 
     def _transform(
         self, df: pd.DataFrame
@@ -109,7 +121,7 @@ class ColumnTransformer(cdnb.Transformer, cdnb.ColModeMixin):
         # `_transformer_func` is executed.
         func_sig = inspect.signature(self._transformer_func)
         if "info" in func_sig.parameters:
-            func_info = collections.OrderedDict()
+            func_info = collections.OrderedDict()  # type: ignore
             df = self._transformer_func(
                 df, info=func_info, **self._transformer_kwargs
             )
@@ -186,13 +198,15 @@ class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
 
     @property
     def transformed_col_names(self) -> List[str]:
+        col_names = self._transformed_col_names
         dbg.dassert_is_not(
-            self._transformed_col_names,
+            col_names,
             None,
             "No transformed column names. This may indicate "
             "an invocation prior to graph execution.",
         )
-        return self._transformed_col_names
+        col_names = cast(List[str], col_names)
+        return col_names
 
     def _transform(
         self, df: pd.DataFrame
@@ -207,7 +221,7 @@ class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
         idx = df.index
         # Initialize container to store info (e.g., auxiliary stats) in the
         # node.
-        info = collections.OrderedDict()
+        info = collections.OrderedDict()  # type: ignore
         info["func_info"] = collections.OrderedDict()
         func_info = info["func_info"]
         srs_list = []
@@ -297,11 +311,13 @@ class SeriesToDfTransformer(cdnb.Transformer):
         self._leaf_cols = df.columns.tolist()
         # Initialize container to store info (e.g., auxiliary stats) in the
         # node.
-        info = collections.OrderedDict()
+        info = collections.OrderedDict()  # type: ignore
         info["func_info"] = collections.OrderedDict()
         func_info = info["func_info"]
         dfs = {}
-        for col in self._leaf_cols:
+        leaf_cols = self._leaf_cols
+        leaf_cols = cast(List[str], leaf_cols)
+        for col in leaf_cols:
             df_out, col_info = _apply_func_to_series(
                 df[col],
                 self._nan_mode,
@@ -409,11 +425,13 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
         self._leaf_cols = df.columns.tolist()
         # Initialize container to store info (e.g., auxiliary stats) in the
         # node.
-        info = collections.OrderedDict()
+        info = collections.OrderedDict()  # type: ignore
         info["func_info"] = collections.OrderedDict()
         func_info = info["func_info"]
         srs_list = []
-        for col in self._leaf_cols:
+        leaf_cols = self._leaf_cols
+        leaf_cols = cast(List[str], leaf_cols)
+        for col in leaf_cols:
             srs, col_info = _apply_func_to_series(
                 df[col],
                 self._nan_mode,
@@ -439,8 +457,8 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
 def _apply_func_to_series(
     srs: pd.Series,
     nan_mode: str,
-    func,
-    func_kwargs,
+    func: Callable,
+    func_kwargs: Dict[str, Any],
 ) -> Tuple[Union[pd.Series, pd.DataFrame], Optional[collections.OrderedDict]]:
     """
     Apply `func` to `srs` with `func_kwargs` after first applying `nan_mode`.
@@ -457,7 +475,7 @@ def _apply_func_to_series(
         srs = srs.dropna()
     else:
         raise ValueError(f"Unrecognized `nan_mode` {nan_mode}")
-    info = collections.OrderedDict()
+    info: Optional[collections.OrderedDict] = collections.OrderedDict()
     # Perform the column transformation operations.
     # Introspect to see whether `_transformer_func` contains an `info`
     # parameter. If so, inject an empty dict to be populated when
