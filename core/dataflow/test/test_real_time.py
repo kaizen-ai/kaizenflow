@@ -141,7 +141,7 @@ class Test_execute_with_real_time_loop(hut.TestCase):
         get_current_time = lambda: hdatetime.get_current_time(tz="ET")
         need_to_execute = cdrt.execute_every_2_seconds
         #
-        execution_trace, results = cdrt.execute_with_real_time_loop(
+        events, results = cdrt.execute_with_real_time_loop(
             sleep_interval_in_secs,
             num_iterations,
             get_current_time,
@@ -149,7 +149,7 @@ class Test_execute_with_real_time_loop(hut.TestCase):
             self.workload,
         )
         # TODO(gp): Check that the events are triggered every two seconds.
-        _ = execution_trace, results
+        _ = events, results
 
     def test_replayed_real_time1(self) -> None:
         """
@@ -160,40 +160,21 @@ class Test_execute_with_real_time_loop(hut.TestCase):
         cdrt.align_on_even_second()
         #
         execute_rt_loop_kwargs = get_test_execute_rt_loop_kwargs()
-        execution_trace, results = cdrt.execute_with_real_time_loop(
+        events, results = cdrt.execute_with_real_time_loop(
             **execute_rt_loop_kwargs,
-            # sleep_interval_in_secs,
-            # num_iterations,
-            # get_current_time,
-            # need_to_execute,
             workload=self.workload,
         )
         _ = results
         # We can check that the times are exactly the expected ones, since we are
         # replaying time.
-        act = "\n".join(map(cdrt.real_time_event_to_str, execution_trace))
-        exp = r"""
-        num_it=1 current_time=20100104_0930000 need_execute=True
-        num_it=2 current_time=20100104_0930013 need_execute=False
-        num_it=3 current_time=20100104_0930023 need_execute=True"""
-        exp = hprint.dedent(exp)
-        # Remove the seconds since this is a real-time test and thus sensitive
-        # to CPU load.
-        # num_it=2 current_time=20100104_0930013 need_execute=False
-        # ->
-        # num_it=2 current_time=20100104_093001 need_execute=False
-        def _remove_secs(txt: str) -> str:
-            txt_tmp = []
-            for line in txt.split("\n"):
-                data = line.split(" ")
-                # Remove the last char of `current_time=20100104_0930000`.
-                data[1] = data[1][:-1]
-                line_tmp = " ".join(data)
-                txt_tmp.append(line_tmp)
-            return "\n".join(txt_tmp)
-        act = _remove_secs(act)
-        exp = _remove_secs(exp)
-        self.assert_equal(act, exp)
+        actual = "\n".join([event.to_str(include_tenths_of_secs=False)
+                            for event in events])
+        expected = r"""
+        num_it=1 current_time=20100104_093001 need_execute=False
+        num_it=2 current_time=20100104_093002 need_execute=True
+        num_it=3 current_time=20100104_093003 need_execute=False"""
+        expected = hprint.dedent(expected)
+        self.assert_equal(actual, expected)
 
     @pytest.mark.slow("It takes around 6 secs")
     def test_align_on_even_second1(self) -> None:

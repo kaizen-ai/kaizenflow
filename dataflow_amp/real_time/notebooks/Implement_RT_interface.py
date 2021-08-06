@@ -160,7 +160,7 @@ cdataf.draw(dag)
 # get_current_time = rrt.get_replayed_current_time
 # need_to_execute = cdrt.execute_every_2_seconds
 # #
-# execution_trace, results = cdrt.execute_dag_with_real_time_loop(
+# events, results = cdrt.execute_dag_with_real_time_loop(
 #     sleep_interval_in_secs,
 #     num_iterations,
 #     get_current_time,

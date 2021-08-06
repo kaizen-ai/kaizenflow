@@ -7,6 +7,7 @@ import core.dataflow as dtf
 import core.dataflow.runners as cdtfr
 import core.dataflow.test.test_real_time as cdtfttrt
 import core.dataflow.nodes.test.test_dag as cdtfnttd
+import helpers.printing as hprint
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -75,17 +76,14 @@ class TestIncrementalDagRunner1(hut.TestCase):
 # #############################################################################
 
 
-# TODO(gp): Test with a very simple DAG since the focus is on the DagRunner.
 class TestRealTimeDagRunner1(hut.TestCase):
     def test1(self) -> None:
         """
         Test the RealTimeDagRunner using synthetic data.
         """
-        #
+        # Get a naive pipeline as DAG.
         dag_builder = cdtfnttd._NaivePipeline()
         config = dag_builder.get_config_template()
-        #
-        dtf.align_on_even_second()
         #
         execute_rt_loop_kwargs = cdtfttrt.get_test_execute_rt_loop_kwargs()
         kwargs = {
@@ -97,11 +95,25 @@ class TestRealTimeDagRunner1(hut.TestCase):
             #
             "dst_dir": None,
         }
+        # Run.
+        dtf.align_on_even_second()
         dag_runner = cdtfr.RealTimeDagRunner(**kwargs)
-        dag_runner.predict()
+        result_bundles = dag_runner.predict()
+        #
+        actual = "\n".join([event.to_str(include_tenths_of_secs=False)
+                           for event in dag_runner.events])
+        expected = r"""
+        num_it=1 current_time=20100104_093001 need_execute=False
+        num_it=2 current_time=20100104_093002 need_execute=True
+        num_it=3 current_time=20100104_093003 need_execute=False"""
+        expected = hprint.dedent(expected)
+        self.assert_equal(actual, expected)
         #
         actual = []
-        actual.append("execution_trace=\n%s" % str(dag_runner.execution_trace))
+        events_as_str = str(dag_runner.events)
+        actual.append("events=\n%s" % events_as_str)
+        result_bundles_as_str = "\n".join(map(str, result_bundles))
+        actual.append("result_bundles=\n%s" % result_bundles_as_str)
         actual = "\n".join(map(str, actual))
-        expected = ""
-        self.assert_equal(actual, expected)
+        self.check_string(actual)
+

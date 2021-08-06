@@ -470,7 +470,8 @@ class RealTimeDagRunner(_AbstractDagRunner):
         self._execute_rt_loop_kwargs = execute_rt_loop_kwargs
         self._dst_dir = dst_dir
         # Store information about the real-time execution.
-        self._execution_trace: Optional[cdtfrt.ExecutionTrace] = None
+        #self._events: Optional[cdtfrt.Events] = None
+        self._events: cdtfrt.Events
 
     def predict(self) -> List[ResultBundle]:
         """
@@ -482,19 +483,19 @@ class RealTimeDagRunner(_AbstractDagRunner):
         # Adapt `_dag_workload()` to the expected call back signature.
         workload = lambda current_time: self._dag_workload(current_time, method)
         # Call the event loop.
-        execution_trace, results = cdtfrt.execute_with_real_time_loop(
+        events, results = cdtfrt.execute_with_real_time_loop(
             **self._execute_rt_loop_kwargs, workload=workload
         )
         # Save the log of events.
-        self._execution_trace = execution_trace
+        self._events = events
         # Convert the output in `ResultBundles`.
         result_bundles = [self._to_result_bundle(method, df_out, info)
                           for df_out, info in results]
         return result_bundles
 
     @property
-    def execution_trace(self) -> Optional[cdtfrt.ExecutionTrace]:
-        return self._execution_trace
+    def events(self) -> Optional[cdtfrt.Events]:
+        return self._events
 
     def _dag_workload(self, current_time: pd.Timestamp, method: cdtfc.Method
                       ) -> cdtfc.NodeOutput:
