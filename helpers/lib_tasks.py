@@ -675,6 +675,28 @@ def git_branch_files(ctx):  # type: ignore
 
 
 @task
+def git_files(ctx, modified=False, branch=False, last_commit=False, pbcopy=False
+                     ):  # type: ignore
+    """
+    Report which files are changed in the current branch with respect to
+    master.
+    """
+    _report_task()
+    _ = ctx
+    files = ""
+    mutually_exclusive = True
+    # pre-commit doesn't handle directories, but only files.
+    remove_dirs = True
+    files_as_list = _get_files_to_process(
+        modified, branch, last_commit, files, mutually_exclusive, remove_dirs
+    )
+    print("\n".join(sorted(files_as_list)))
+    if pbcopy:
+        res = " ".join(files_as_list)
+        _to_pbcopy(res, pbcopy)
+
+
+@task
 def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
     """
     Print the status of the files in the previous commit.

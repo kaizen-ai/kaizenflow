@@ -50,7 +50,7 @@ class ContinuousDeepArModel(FitPredictNode):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         y_vars: _TO_LIST_MIXIN_TYPE,
         trainer_kwargs: Optional[Any] = None,
         estimator_kwargs: Optional[Any] = None,
@@ -194,7 +194,7 @@ class DeepARGlobalModel(FitPredictNode):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         x_vars: _TO_LIST_MIXIN_TYPE,
         y_vars: _TO_LIST_MIXIN_TYPE,
         trainer_kwargs: Optional[Any] = None,

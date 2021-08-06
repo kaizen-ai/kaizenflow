@@ -26,8 +26,6 @@ _LOG = logging.getLogger(__name__)
 # We use a string to represent a node's unique identifier. This type helps
 # improve the interface and make the code more readable (e.g., `Dict[NodeId, ...]`
 # instead of `Dict[str, ...]`).
-# TODO(gp): Use this everywhere.
-# TODO(gp): Do a replacement nid: str -> node.NodeId
 NodeId = str
 
 # Name of a Node's method, e.g., `fit` or `predict`.

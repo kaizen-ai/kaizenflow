@@ -25,7 +25,7 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
 def data_source_node_factory(
-    nid: str, source_node_name: str, source_node_kwargs: Dict[str, Any]
+    nid: cdtfc.NodeId, source_node_name: str, source_node_kwargs: Dict[str, Any]
 ) -> cdataf.DataSource:
     """
     Initialize the appropriate data source node.
@@ -126,7 +126,7 @@ def load_kibot_data(
 class KibotDataReader(cdataf.DataSource):
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         symbol: str,
         frequency: Union[str, vkibot.Frequency],
         contract_type: Union[str, vkibot.ContractType],
@@ -184,7 +184,7 @@ class KibotDataReader(cdataf.DataSource):
 class KibotColumnReader(cdataf.DataSource):
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         symbols: List[str],
         frequency: Union[str, vkibot.Frequency],
         contract_type: Union[str, vkibot.ContractType],
@@ -245,7 +245,7 @@ class KibotColumnReader(cdataf.DataSource):
 class KibotEquityReader(cdataf.DataSource):
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         symbols: List[str],
         frequency: Union[str, vkibot.Frequency],
         start_date: Optional[_PANDAS_DATE_TYPE] = None,

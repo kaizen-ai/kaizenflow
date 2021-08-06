@@ -24,7 +24,7 @@ class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         cols: _TO_LIST_MIXIN_TYPE,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,

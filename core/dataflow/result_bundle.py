@@ -24,7 +24,7 @@ class ResultBundle(abc.ABC):
     def __init__(
         self,
         config: cconfig.Config,
-        result_nid: str,
+        result_nid: cdtfc.NodeId,
         method: str,
         result_df: pd.DataFrame,
         column_to_tags: Optional[Dict[Any, List[Any]]] = None,

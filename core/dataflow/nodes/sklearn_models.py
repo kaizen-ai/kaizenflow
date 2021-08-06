@@ -34,7 +34,7 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         model_func: Callable[..., Any],
         x_vars: _TO_LIST_MIXIN_TYPE,
         y_vars: _TO_LIST_MIXIN_TYPE,
@@ -221,7 +221,7 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         in_col_groups: List[Tuple[_COL_TYPE]],
         out_col_group: Tuple[_COL_TYPE],
         model_func: Callable[..., Any],
@@ -359,7 +359,7 @@ class MultiindexSkLearnModel(cdnb.FitPredictNode):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         in_col_groups: List[Tuple[_COL_TYPE]],
         out_col_group: Tuple[_COL_TYPE],
         model_func: Callable[..., Any],
@@ -457,7 +457,7 @@ class SkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         x_vars: _TO_LIST_MIXIN_TYPE,
         y_vars: _TO_LIST_MIXIN_TYPE,
         model_func: Callable[..., Any],

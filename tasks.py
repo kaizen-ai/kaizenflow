@@ -36,6 +36,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     git_create_branch,
     git_create_patch,
     git_delete_merged_branches,
+    git_files,
     git_last_commit_files,
     git_merge_master,
     git_pull,

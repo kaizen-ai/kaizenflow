@@ -800,12 +800,16 @@ def get_modified_files_in_branch(
     See https://stackoverflow.com/questions/18137175
 
     :param dir_name: directory with Git client
-    :param dst_branch: branch to compare to, e.g., master
+    :param dst_branch: branch to compare to, e.g., `master`, `HEAD`
     :param remove_files_non_present: remove the files that are not
         currently present in the client
     :return: list of files
     """
-    cmd = "git diff --name-only %s..." % dst_branch
+    if dst_branch == "HEAD":
+        target = dst_branch
+    else:
+        target = f"{dst_branch}..."
+    cmd = f"git diff --name-only {target}"
     files: List[str] = hsinte.system_to_files(
         cmd, dir_name, remove_files_non_present
     )

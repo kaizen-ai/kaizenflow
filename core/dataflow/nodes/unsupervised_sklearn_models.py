@@ -81,7 +81,7 @@ class UnsupervisedSkLearnModel(
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         model_func: Callable[..., Any],
         x_vars: Optional[_TO_LIST_MIXIN_TYPE] = None,
         model_kwargs: Optional[Any] = None,
@@ -150,7 +150,7 @@ class MultiindexUnsupervisedSkLearnModel(
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         in_col_group: Tuple[_COL_TYPE],
         out_col_group: Tuple[_COL_TYPE],
         model_func: Callable[..., Any],
@@ -270,7 +270,7 @@ class Residualizer(FitPredictNode, _ResidualizerMixin):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         in_col_group: Tuple[_COL_TYPE],
         out_col_group: Tuple[_COL_TYPE],
         model_func: Callable[..., Any],
@@ -333,7 +333,7 @@ class SkLearnInverseTransformer(FitPredictNode, ColModeMixin):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         model_func: Callable[..., Any],
         x_vars: _TO_LIST_MIXIN_TYPE,
         trans_x_vars: _TO_LIST_MIXIN_TYPE,
