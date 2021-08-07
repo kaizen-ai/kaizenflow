@@ -986,7 +986,7 @@ class TestLibTasksGitCreatePatch1(hut.TestCase):
         '0'
         ==
         '1'
-        You need to specify exactly one among --modified, --branch, --last-commit
+        Specify only one among --modified, --branch, --last-commit
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 

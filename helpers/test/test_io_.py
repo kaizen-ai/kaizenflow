@@ -5,10 +5,38 @@ import numpy as np
 import pandas as pd
 
 import helpers.io_ as hio
+import helpers.git as git
 import helpers.printing as hprint
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
+
+
+class Test_find_all_files1(hut.TestCase):
+    def test1(self) -> None:
+        dir_name = git.get_client_root(super_module=False)
+        #
+        # Check that there are files.
+        all_files = hio.find_all_files(dir_name)
+        self.assertGreater(len(all_files), 0)
+        # Check that there are more files than Python files.
+        exclude_paired_jupytext = False
+        py_files = hio.keep_python_files(all_files, exclude_paired_jupytext)
+        self.assertGreater(len(py_files), 0)
+        self.assertGreater(len(all_files), len(py_files))
+        # Check that there are more Python files than not paired Python files.
+        exclude_paired_jupytext = True
+        not_paired_py_files = hio.keep_python_files(all_files, exclude_paired_jupytext)
+        self.assertGreater(len(not_paired_py_files), 0)
+        self.assertGreater(len(py_files), len(not_paired_py_files))
+
+
+class Test_change_filename_extension1(hut.TestCase):
+    def test1(self) -> None:
+        file_name = "./core/dataflow_model/notebooks/Master_experiment_runner.py"
+        actual = hio.change_filename_extension(file_name, "py", "ipynb")
+        expected = "./core/dataflow_model/notebooks/Master_experiment_runner.ipynb"
+        self.assert_equal(actual, expected)
 
 
 class Test_load_df_from_json(hut.TestCase):

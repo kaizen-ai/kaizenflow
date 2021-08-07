@@ -66,7 +66,7 @@ def find_all_files(dir_name: str) -> List[str]:
     Find all files (not directory) under `dir_name`, skipping `.git`.
     """
     cmd = fr'''cd {dir_name} && find . -type f -name "*" -not -path "*/\.git/*"'''
-    _, file_names = system_to_files(cmd)
+    file_names = hsinte.system_to_files(cmd)
     _LOG.debug("Found %s files", len(file_names))
     return file_names
 
@@ -100,6 +100,7 @@ def keep_python_files(
     :param exclude_paired_jupytext: exclude Python file that are associated to
         notebooks (i.e., that have a corresponding `.ipynb` file)
     """
+    dbg.dassert_isinstance(file_names, list)
     # Check all the files.
     py_file_names = []
     for file_name in file_names:
@@ -111,6 +112,8 @@ def keep_python_files(
             else:
                 # Include all the Python files.
                 add = True
+        else:
+            add = False
         _LOG.debug("file_name='%s' -> add='%s'", file_name, add)
         if add:
             py_file_names.append(file_name)
