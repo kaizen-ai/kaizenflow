@@ -372,6 +372,20 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         # Check the outcome.
         self._check_calls(ctx)
 
+# #############################################################################
+
+# TODO(gp): Run test coverage with
+# > i run_fast_slow_tests --pytest-opts="helpers/test/test_lib_tasks.py test/test_tasks.py" --coverage
+
+# TODO(gp): Add tests for:
+# - print_tasks
+# - git_files
+# - git_last_commit_files
+# - check_python_files
+# - docker_stats
+# - traceback (with checked in file)
+# - pytest_failed (with checked in file)
+# - lint
 
 # #############################################################################
 
