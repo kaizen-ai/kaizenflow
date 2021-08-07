@@ -705,6 +705,7 @@ def _compute_file_signature(file_name: str, dir_depth: int) -> Optional[List]:
     return signature
 
 
+# TODO(gp): -> io_.py
 def find_file_with_dir(
     file_name: str,
     root_dir: str = ".",

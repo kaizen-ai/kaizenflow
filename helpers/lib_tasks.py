@@ -203,6 +203,7 @@ def _get_files_to_process(
     modified: bool,
     branch: bool,
     last_commit: bool,
+    all_: bool,
     files_from_user: str,
     mutually_exclusive: bool,
     remove_dirs: bool,
@@ -210,38 +211,44 @@ def _get_files_to_process(
     """
     Get a list of files to process.
 
-    The files are the ones that are:
-    - changed in the branch
-    - changed in the client (both staged and modified)
-    - part of the previous commit
-    - passed by the user
+    The files are selected based on the switches:
+    - `branch`: changed in the branch
+    - `modified`: changed in the client (both staged and modified)
+    - `last_commit`: part of the previous commit
+    - `all`: all the files in the repo
+    - `files_from_user`: passed by the user
 
     :param modified: return files modified in the client (i.e., changed with
         respect to HEAD)
     :param branch: return files modified with respect to the branch point
     :param last_commit: return files part of the previous commit
+    :param all: return all repo files
     :param files_from_user: return files passed to this function
     :param mutually_exclusive: ensure that all options are mutually exclusive
     """
     _LOG.debug(
         hprint.to_str(
-            "modified branch last_commit files_from_user "
+            "modified branch last_commit all_ files_from_user "
             "mutually_exclusive remove_dirs"
         )
     )
     if mutually_exclusive:
+        # All the options are mutually exclusive.
         dbg.dassert_eq(
             int(modified)
             + int(branch)
             + int(last_commit)
+            + int(all_)
             + int(len(files_from_user) > 0),
             1,
             msg="You need to specify exactly one option among --modified, --branch, "
-            "--last-commit, and --files",
+            "--last-commit, --all_files, and --files",
         )
     else:
+        # We filter the files passed from the user through other the options,
+        # so only the filtering options need to be mutually exclusive.
         dbg.dassert_eq(
-            int(modified) + int(branch) + int(last_commit),
+            int(modified) + int(branch) + int(last_commit) + int(all_),
             1,
             msg="You need to specify exactly one among --modified, --branch, "
             "--last-commit",
@@ -252,6 +259,8 @@ def _get_files_to_process(
         files = git.get_modified_files_in_branch("master", ".")
     elif last_commit:
         files = git.get_previous_committed_files(".")
+    elif all_:
+        files = io_.find_all_files()
     if files_from_user:
         # If files were passed, overwrite the previous decision.
         files = files_from_user.split(" ")
@@ -603,13 +612,14 @@ def git_create_patch(  # type: ignore
         git.get_summary_files_in_branch("master", "."),
     )
     # Get the files.
+    all_ = False
     # We allow to specify files as a subset of files modified in the branch or
     # in the client.
     mutually_exclusive = False
     # We don't allow to specify directories.
     remove_dirs = True
     files_as_list = _get_files_to_process(
-        modified, branch, last_commit, files, mutually_exclusive, remove_dirs
+        modified, branch, last_commit, all_, files, mutually_exclusive, remove_dirs
     )
     _LOG.info("Files to save:\n%s", hprint.indent("\n".join(files_as_list)))
     if not files_as_list:
@@ -663,8 +673,8 @@ def git_create_patch(  # type: ignore
 @task
 def git_branch_files(ctx):  # type: ignore
     """
-    Report which files are changed in the current branch with respect to
-    master.
+    Report which files are added, changed, modified in the current branch with respect to
+    master
     """
     _report_task()
     _ = ctx
@@ -683,12 +693,13 @@ def git_files(ctx, modified=False, branch=False, last_commit=False, pbcopy=False
     """
     _report_task()
     _ = ctx
+    all_ = False
     files = ""
     mutually_exclusive = True
     # pre-commit doesn't handle directories, but only files.
     remove_dirs = True
     files_as_list = _get_files_to_process(
-        modified, branch, last_commit, files, mutually_exclusive, remove_dirs
+        modified, branch, last_commit, all_, files, mutually_exclusive, remove_dirs
     )
     print("\n".join(sorted(files_as_list)))
     if pbcopy:
@@ -712,6 +723,40 @@ def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
     # Save to clipboard.
     res = " ".join(files)
     _to_pbcopy(res, pbcopy)
+
+
+@task
+def check_python_files(  # type: ignore
+        ctx,
+        modified=False, branch=False, last_commit=False, all_=False, files="",
+):
+    """
+    Run `compileall.compile_file()` on the files.
+    """
+    _ = ctx
+    # We allow to filter through the user specified `files`.
+    mutually_exclusive = False
+    file_list = _get_files_to_process(
+        modified, branch, last_commit, files, all_, mutually_exclusive, remove_dirs
+    )
+    # Filter keeping only Python files.
+    exclude_paired_jupytext = True
+    file_list = io_.keep_python_files(file_list)
+    _LOG.debug("Processing %d files", len(file_list))
+    # Scan all the files.
+    violations = []
+    for file_name in file_list:
+        success = compileall.compile_file(
+            file_name,
+            force=True,
+            quiet=0)
+        _LOG.debug("%s -> success=%s", file_name, success)
+        if not success:
+            _LOG.error("file_name='%s' doesn't compile correctly", file_name)
+            violations.append(file_name)
+    _LOG.debug("violations=%s", len(violations))
+    error = len(violations) > 0
+    return error
 
 
 @task
@@ -2427,13 +2472,15 @@ def lint(  # type: ignore
         # We don't want to run this all the times.
         # docker_pull(ctx, stage=stage, images="dev_tools")
         # Get the files to lint.
+        # TODO(gp): For now we don't support linting the entire tree.
+        all_ = False
         # For linting we can use only files modified in the client, in the branch, or
         # specified.
         mutually_exclusive = True
         # pre-commit doesn't handle directories, but only files.
         remove_dirs = True
         files_as_list = _get_files_to_process(
-            modified, branch, last_commit, files, mutually_exclusive, remove_dirs
+            modified, branch, last_commit, all_, files, mutually_exclusive, remove_dirs
         )
         _LOG.info("Files to lint:\n%s", "\n".join(files_as_list))
         if not files_as_list:
@@ -2729,3 +2776,5 @@ def gh_create_pr(  # type: ignore
 # TODO(gp): Add ./dev_scripts/testing/pytest_count_files.sh
 
 # TODO(gp): Add dev_scripts/compile_all.py
+
+

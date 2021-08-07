@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 import pandas as pd
 
-import core.dataflow.core as cdc
+import core.dataflow.core as cdtfc
 import core.dataflow.utils as cdu
 import helpers.dbg as dbg
 
@@ -34,7 +34,7 @@ _TO_LIST_MIXIN_TYPE = Union[
 # #############################################################################
 
 
-class FitPredictNode(cdc.Node, abc.ABC):
+class FitPredictNode(cdctc.Node, abc.ABC):
     """
     Class with abstract sklearn-style `fit()` and `predict()` functions.
 

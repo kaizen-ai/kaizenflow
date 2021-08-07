@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
+# This file can use `core.dataflow` package since it's an external client.
 import core.dataflow as cdataf
 import core.finance as cfinan
 import helpers.dbg as dbg
@@ -25,7 +26,7 @@ _PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
 def data_source_node_factory(
-    nid: cdtfc.NodeId, source_node_name: str, source_node_kwargs: Dict[str, Any]
+    nid: cdataf.NodeId, source_node_name: str, source_node_kwargs: Dict[str, Any]
 ) -> cdataf.DataSource:
     """
     Initialize the appropriate data source node.
@@ -126,7 +127,7 @@ def load_kibot_data(
 class KibotDataReader(cdataf.DataSource):
     def __init__(
         self,
-        nid: cdtfc.NodeId,
+        nid: cdataf.NodeId,
         symbol: str,
         frequency: Union[str, vkibot.Frequency],
         contract_type: Union[str, vkibot.ContractType],
@@ -184,7 +185,7 @@ class KibotDataReader(cdataf.DataSource):
 class KibotColumnReader(cdataf.DataSource):
     def __init__(
         self,
-        nid: cdtfc.NodeId,
+        nid: cdataf.NodeId,
         symbols: List[str],
         frequency: Union[str, vkibot.Frequency],
         contract_type: Union[str, vkibot.ContractType],
@@ -245,7 +246,7 @@ class KibotColumnReader(cdataf.DataSource):
 class KibotEquityReader(cdataf.DataSource):
     def __init__(
         self,
-        nid: cdtfc.NodeId,
+        nid: cdataf.NodeId,
         symbols: List[str],
         frequency: Union[str, vkibot.Frequency],
         start_date: Optional[_PANDAS_DATE_TYPE] = None,

@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 
 import core.artificial_signal_generators as cartif
+import core.dataflow.core as cdtfc
 import core.dataflow.nodes.base as cdnb
 import core.dataflow.real_time as cdrt
 import core.finance as cfinan

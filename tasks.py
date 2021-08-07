@@ -8,6 +8,7 @@ import helpers.versioning as hversi
 # > i print_tasks --as-code
 from helpers.lib_tasks import set_default_params  # This is not an invoke target.
 from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
+    check_python_files,
     docker_bash,
     docker_build_local_image,
     docker_build_prod_image,
