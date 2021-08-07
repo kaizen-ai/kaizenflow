@@ -768,10 +768,10 @@ def check_python_files(  # type: ignore
                 force=True,
                 quiet=1)
             _LOG.debug("file_name='%s' -> python_compile=%s", file_name, success)
-            if not success:
-                msg = "'%s' doesn't compile correctly" % file_name
+            if not success: msg = "'%s' doesn't compile correctly" % file_name
                 _LOG.error(msg)
                 failed_filenames.append(file_name)
+        # TODO(gp): Add also `python -c "import ..."`, if not equivalent to `compileall`.
         if python_execute:
             cmd = f"python {file_name}"
             rc = hsinte.system(cmd, abort_on_error=False, suppress_output=False)

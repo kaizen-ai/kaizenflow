@@ -1,6 +1,3 @@
-# TODO(gp): Is this needed?
-from __future__ import annotations
-
 import abc
 import collections
 import copy
@@ -143,7 +140,7 @@ class ResultBundle(abc.ABC):
         return dict_
 
     @staticmethod
-    def from_dict(result_bundle_dict: collections.OrderedDict) -> ResultBundle:
+    def from_dict(result_bundle_dict: collections.OrderedDict) -> "ResultBundle":
         """
         Initialize `ResultBundle` from a nested dict.
         """
@@ -157,7 +154,7 @@ class ResultBundle(abc.ABC):
         return result_bundle
 
     @classmethod
-    def from_config(cls, serialized_bundle: cconfig.Config) -> ResultBundle:
+    def from_config(cls, serialized_bundle: cconfig.Config) -> "ResultBundle":
         """
         Initialize `ResultBundle` from config.
         """

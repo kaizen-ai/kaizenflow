@@ -34,7 +34,7 @@ _TO_LIST_MIXIN_TYPE = Union[
 # #############################################################################
 
 
-class FitPredictNode(cdctc.Node, abc.ABC):
+class FitPredictNode(cdtfc.Node, abc.ABC):
     """
     Class with abstract sklearn-style `fit()` and `predict()` functions.
 
