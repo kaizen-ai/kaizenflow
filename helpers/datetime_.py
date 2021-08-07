@@ -4,7 +4,7 @@ Import as:
 import helpers.datetime_ as hdatet
 """
 
-# TODO(gp): -> datetime_helpers (as hdatetime)
+# TODO(gp): -> hdatetime
 
 import calendar
 import datetime
@@ -47,7 +47,6 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): It would be better to call this `UserFriendlyDateTime` or
 #  `GeneralDateTime` and rename `StrictDateTime` -> `DateTime`.
 Datetime = Union[str, pd.Timestamp, datetime.datetime]
-# TODO(gp): Replace _PANDAS_DATE_TYPE with Datetime everywhere
 
 # This type is for stricter interfaces, although it is a bit of a compromise.
 # Either one wants to be flexible and allow everything that can be interpreted as

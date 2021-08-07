@@ -32,7 +32,6 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(*): Create a dataflow types file.
 _COL_TYPE = Union[int, str]
-_PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 _RESAMPLING_RULE_TYPE = Union[pd.DateOffset, pd.Timedelta, str]
 
 
@@ -498,7 +497,7 @@ class DataframeMethodRunner(cdnb.Transformer):
     def __init__(
         self,
         nid: cdtfc.NodeId,
-        method: str,
+        method: cdtfc.Method,
         method_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         super().__init__(nid)

@@ -19,9 +19,6 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): -> ColumnType
 _COL_TYPE = Union[int, str]
 
-# TODO(gp): Replace with hdatetime.StrictDatetime
-_PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
-
 _TO_LIST_MIXIN_TYPE = Union[
     List[_COL_TYPE],
     # Function that returns a list of column types.
@@ -82,7 +79,7 @@ class FitPredictNode(cdtfc.Node, abc.ABC):
         _ = self, fit_state
 
     def get_info(
-        self, method: str
+        self, method: cdtfc.Method
     ) -> Optional[Union[str, collections.OrderedDict]]:
         """
         The returned `info` is not copied and the client should not modify it.
@@ -97,7 +94,7 @@ class FitPredictNode(cdtfc.Node, abc.ABC):
         return None
 
     # TODO(gp): values -> info
-    def _set_info(self, method: str, values: collections.OrderedDict) -> None:
+    def _set_info(self, method: cdtfc.Method, values: collections.OrderedDict) -> None:
         """
         The passed `info` is copied internally.
         """

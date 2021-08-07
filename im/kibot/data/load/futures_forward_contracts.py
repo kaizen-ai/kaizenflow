@@ -10,8 +10,6 @@ import helpers.dbg as dbg
 import im.common.data.load.abstract_data_loader as icdlab
 import im.common.data.types as vcdtyp
 
-_PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
-
 
 class FuturesForwardContracts:
     """

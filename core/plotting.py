@@ -1128,7 +1128,7 @@ def plot_dendrogram(
     A dendrogram is a diagram representing a tree.
 
     :param df: df to plot a heatmap
-    :param method: str distance calculation method
+    :param method: string distance calculation method
     :param figsize: if nothing specified, basic (20,5) used
     :param kwargs: kwargs for `sp.cluster.hierarchy.dendrogram`
     """

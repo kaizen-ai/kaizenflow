@@ -21,6 +21,7 @@ import core.dataflow.real_time as cdrt
 import core.finance as cfinan
 import core.pandas_helpers as pdhelp
 import helpers.dbg as dbg
+import helpers.datetime_ as hdatetime
 import helpers.printing as hprint
 import helpers.s3 as hs3
 
@@ -28,7 +29,6 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(*): Create a dataflow types file.
 _COL_TYPE = Union[int, str]
-_PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
 # #############################################################################
@@ -100,8 +100,8 @@ def load_data_from_disk(
     file_path: str,
     # TODO(gp): -> index_col? (Like pandas naming)
     timestamp_col: Optional[str] = None,
-    start_date: Optional[_PANDAS_DATE_TYPE] = None,
-    end_date: Optional[_PANDAS_DATE_TYPE] = None,
+    start_date: Optional[hdatetime.Datetime] = None,
+    end_date: Optional[hdatetime.Datetime] = None,
     aws_profile: Optional[str] = None,
     reader_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
@@ -209,8 +209,8 @@ class ArmaGenerator(cdnb.DataSource):
         self,
         nid: cdtfc.NodeId,
         frequency: str,
-        start_date: _PANDAS_DATE_TYPE,
-        end_date: _PANDAS_DATE_TYPE,
+        start_date: hdatetime.Datetime,
+        end_date: hdatetime.Datetime,
         ar_coeffs: Optional[List[float]] = None,
         ma_coeffs: Optional[List[float]] = None,
         scale: Optional[float] = None,
@@ -277,8 +277,8 @@ class MultivariateNormalGenerator(cdnb.DataSource):
         self,
         nid: cdtfc.NodeId,
         frequency: str,
-        start_date: _PANDAS_DATE_TYPE,
-        end_date: _PANDAS_DATE_TYPE,
+        start_date: hdatetime.Datetime,
+        end_date: hdatetime.Datetime,
         dim: int,
         target_volatility: Optional[float] = None,
         seed: Optional[float] = None,

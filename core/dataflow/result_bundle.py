@@ -23,7 +23,7 @@ class ResultBundle(abc.ABC):
         self,
         config: cconfig.Config,
         result_nid: cdtfc.NodeId,
-        method: str,
+        method: cdtfc.Method,
         result_df: pd.DataFrame,
         column_to_tags: Optional[Dict[Any, List[Any]]] = None,
         info: Optional[collections.OrderedDict] = None,

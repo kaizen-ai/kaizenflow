@@ -17,6 +17,7 @@ import core.dataflow.real_time as cdtfrt
 import core.dataflow.utils as cdtfu
 import core.dataflow.visitors as cdtfv
 import helpers.dbg as dbg
+import helpers.datetime_ as hdatetime
 
 # TODO(gp): Use the standard imports.
 from core.dataflow.builders import DagBuilder
@@ -24,8 +25,6 @@ from core.dataflow.result_bundle import PredictionResultBundle, ResultBundle
 from core.dataflow.visitors import extract_info, set_fit_state
 
 _LOG = logging.getLogger(__name__)
-# TODO(gp): -> Use hdatetime.Datetime
-_PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
 # TODO(gp): Should we call the `start` params -> `start_datetime`
@@ -209,8 +208,8 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
         self,
         config: cconfig.Config,
         dag_builder: DagBuilder,
-        start: _PANDAS_DATE_TYPE,
-        end: _PANDAS_DATE_TYPE,
+        start: hdatetime.Datetime,
+        end: hdatetime.Datetime,
         retraining_freq: str,
         retraining_lookback: int,
     ) -> None:
@@ -256,7 +255,7 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
 
     def fit_predict_at_datetime(
         self,
-        datetime_: _PANDAS_DATE_TYPE,
+        datetime_: hdatetime.Datetime,
     ) -> Tuple[ResultBundle, ResultBundle]:
         """
         Fit with all the history up and including `datetime` and then predict
@@ -286,7 +285,7 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
 
     # TODO(gp): -> _fit for symmetry with the rest of the code.
     def _run_fit(
-        self, interval: Tuple[_PANDAS_DATE_TYPE, _PANDAS_DATE_TYPE]
+        self, interval: Tuple[hdatetime.Datetime, hdatetime.Datetime]
     ) -> ResultBundle:
         # Set fit interval on all source nodes of the DAG.
         for input_nid in self.dag.get_sources():
@@ -299,8 +298,9 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
 
     def _run_predict(
         self,
-        interval: Tuple[_PANDAS_DATE_TYPE, _PANDAS_DATE_TYPE],
-        oos_start: _PANDAS_DATE_TYPE,
+        # TODO(gp): Use Interval
+        interval: Tuple[hdatetime.Datetime, hdatetime.Datetime],
+        oos_start: hdatetime.Datetime,
     ) -> ResultBundle:
         # Set predict interval on all source nodes of the DAG.
         for input_nid in self.dag.get_sources():
@@ -314,8 +314,8 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
 
     @staticmethod
     def _generate_retraining_datetimes(
-        start: _PANDAS_DATE_TYPE,
-        end: _PANDAS_DATE_TYPE,
+        start: hdatetime.Datetime,
+        end: hdatetime.Datetime,
         retraining_freq: str,
         retraining_lookback: int,
     ) -> pd.DatetimeIndex:
@@ -374,8 +374,8 @@ class IncrementalDagRunner(_AbstractDagRunner):
         self,
         config: cconfig.Config,
         dag_builder: DagBuilder,
-        start: _PANDAS_DATE_TYPE,
-        end: _PANDAS_DATE_TYPE,
+        start: hdatetime.Datetime,
+        end: hdatetime.Datetime,
         freq: str,
         fit_state: cconfig.Config,
     ) -> None:
@@ -420,7 +420,7 @@ class IncrementalDagRunner(_AbstractDagRunner):
             yield result_bundle
 
     # TODO(gp): dt -> datetime_ as used elsewhere.
-    def predict_at_datetime(self, dt: _PANDAS_DATE_TYPE) -> ResultBundle:
+    def predict_at_datetime(self, dt: hdatetime.Datetime) -> ResultBundle:
         """
         Generate a prediction as of `dt` (for a future point in time).
 
