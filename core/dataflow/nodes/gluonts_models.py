@@ -9,6 +9,7 @@ import pandas as pd
 
 import core.backtest as cbackt
 import core.data_adapters as cdataa
+import core.dataflow.core as cdtfc
 import core.dataflow.utils as cdu
 import helpers.dbg as dbg
 from core.dataflow.nodes.base import FitPredictNode
@@ -50,7 +51,7 @@ class ContinuousDeepArModel(FitPredictNode):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         y_vars: _TO_LIST_MIXIN_TYPE,
         trainer_kwargs: Optional[Any] = None,
         estimator_kwargs: Optional[Any] = None,
@@ -194,7 +195,7 @@ class DeepARGlobalModel(FitPredictNode):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         x_vars: _TO_LIST_MIXIN_TYPE,
         y_vars: _TO_LIST_MIXIN_TYPE,
         trainer_kwargs: Optional[Any] = None,

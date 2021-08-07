@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 import pandas as pd
 
-import core.dataflow.core as cdc
+import core.dataflow.core as cdtfc
 import core.dataflow.utils as cdu
 import helpers.dbg as dbg
 
@@ -34,7 +34,7 @@ _TO_LIST_MIXIN_TYPE = Union[
 # #############################################################################
 
 
-class FitPredictNode(cdc.Node, abc.ABC):
+class FitPredictNode(cdtfc.Node, abc.ABC):
     """
     Class with abstract sklearn-style `fit()` and `predict()` functions.
 
@@ -53,7 +53,7 @@ class FitPredictNode(cdc.Node, abc.ABC):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         inputs: Optional[List[str]] = None,
         outputs: Optional[List[str]] = None,
     ) -> None:
@@ -121,7 +121,9 @@ class DataSource(FitPredictNode, abc.ABC):
     intervals.
     """
 
-    def __init__(self, nid: str, outputs: Optional[List[str]] = None) -> None:
+    def __init__(
+        self, nid: cdtfc.NodeId, outputs: Optional[List[str]] = None
+    ) -> None:
         if outputs is None:
             outputs = ["df_out"]
         # TODO(gp): This seems a common function. We can factor it out in a
@@ -235,7 +237,7 @@ class Transformer(FitPredictNode, abc.ABC):
 
     # TODO(Paul): Consider giving users the option of renaming the single
     #  input and single output (but verify there is only one of each).
-    def __init__(self, nid: str) -> None:
+    def __init__(self, nid: cdtfc.NodeId) -> None:
         super().__init__(nid)
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -278,7 +280,7 @@ class YConnector(FitPredictNode):
     # TODO(Paul): Support different input/output names.
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         connector_func: Callable[..., pd.DataFrame],
         connector_kwargs: Optional[Any] = None,
     ) -> None:

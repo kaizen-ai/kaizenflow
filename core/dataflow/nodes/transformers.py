@@ -21,6 +21,7 @@ from typing import (
 
 import pandas as pd
 
+import core.dataflow.core as cdtfc
 import core.dataflow.nodes.base as cdnb
 import core.dataflow.utils as cdu
 import core.finance as cfinan
@@ -42,7 +43,7 @@ class ColumnTransformer(cdnb.Transformer, cdnb.ColModeMixin):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         transformer_func: Callable[..., pd.DataFrame],
         transformer_kwargs: Optional[Dict[str, Any]] = None,
         # TODO(Paul): May need to assume `List` instead.
@@ -158,7 +159,7 @@ class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         transformer_func: Callable[..., pd.DataFrame],
         transformer_kwargs: Optional[Dict[str, Any]] = None,
         # TODO(Paul): May need to assume `List` instead.
@@ -266,7 +267,7 @@ class SeriesToDfTransformer(cdnb.Transformer):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         in_col_group: Tuple[_COL_TYPE],
         out_col_group: Tuple[_COL_TYPE],
         transformer_func: Callable[..., pd.Series],
@@ -375,7 +376,7 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         in_col_group: Tuple[_COL_TYPE],
         out_col_group: Tuple[_COL_TYPE],
         transformer_func: Callable[..., pd.Series],
@@ -496,7 +497,7 @@ def _apply_func_to_series(
 class DataframeMethodRunner(cdnb.Transformer):
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         method: str,
         method_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
@@ -523,7 +524,7 @@ class DataframeMethodRunner(cdnb.Transformer):
 class FunctionWrapper(cdnb.Transformer):
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         func: Callable,
         func_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
@@ -551,7 +552,7 @@ class FunctionWrapper(cdnb.Transformer):
 class Resample(cdnb.Transformer):
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         rule: Union[pd.DateOffset, pd.Timedelta, str],
         agg_func: str,
         resample_kwargs: Optional[Dict[str, Any]] = None,
@@ -588,7 +589,7 @@ class Resample(cdnb.Transformer):
 class TimeBarResampler(cdnb.Transformer):
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         rule: Union[pd.DateOffset, pd.Timedelta, str],
         return_cols: Optional[list] = None,
         return_agg_func: Optional[str] = None,
@@ -646,7 +647,7 @@ class TimeBarResampler(cdnb.Transformer):
 class TwapVwapComputer(cdnb.Transformer):
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         rule: _RESAMPLING_RULE_TYPE,
         price_col: _COL_TYPE,
         volume_col: _COL_TYPE,
@@ -685,7 +686,7 @@ class TwapVwapComputer(cdnb.Transformer):
 class MultiindexTwapVwapComputer(cdnb.Transformer):
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         rule: _RESAMPLING_RULE_TYPE,
         price_col_group: Tuple[_COL_TYPE],
         volume_col_group: Tuple[_COL_TYPE],

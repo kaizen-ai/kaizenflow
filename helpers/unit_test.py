@@ -439,6 +439,10 @@ def purify_amp_references(txt: str) -> str:
     """
     # E.g., `amp/helpers/test/...`
     txt = re.sub(r"^\s*amp\/", "", txt, flags=re.MULTILINE)
+    # E.g., `<amp.helpers.test.test_dbg._Man object at 0x`
+    txt = re.sub(r"<amp\.", "<", txt, flags=re.MULTILINE)
+    # E.g., class 'amp.
+    txt = re.sub(r"class 'amp\.", "class '", txt, flags=re.MULTILINE)
     # E.g., `['amp/helpers/test/...`
     txt = re.sub(r"'amp\/", "'", txt, flags=re.MULTILINE)
     txt = re.sub(r"\/amp\/", "/", txt, flags=re.MULTILINE)
@@ -804,8 +808,10 @@ def _assert_equal(
         # We always return the variable exactly as this should be, even if we could
         # make it look better through indentation in case of fuzzy match.
         if actual_orig.startswith('"'):
+            # txt.append(f"expected = r'''{actual_orig}'''")
             txt.append(f"exp = r'''{actual_orig}'''")
         else:
+            # txt.append(f"expected = r'''{actual_orig}'''")
             txt.append(f'exp = r"""{actual_orig}"""')
         txt = "\n".join(txt)
         error_msg += txt

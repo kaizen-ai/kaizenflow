@@ -437,11 +437,11 @@ def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
     # `exec()`.
     exec(code, globals())  # pylint: disable=exec-used
     current_repo_map = (
-        get_repo_map()  # noqa: F821  # type: ignore[name-defined]  # pylint: disable=undefined-variable
+        get_repo_map()  # type: ignore[name-defined]  # noqa: F821  # pylint: disable=undefined-variable
     )
     if include_host_name:
         host_name = (
-            get_host_name()  # noqa: F821  # type: ignore[name-defined]  # pylint: disable=undefined-variable
+            get_host_name()  # type: ignore[name-defined]  # noqa: F821  # pylint: disable=undefined-variable
         )
         current_repo_map = _decorate_with_host_name(current_repo_map, host_name)
     _LOG.debug(
@@ -452,7 +452,7 @@ def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
     # Update the map.
     dbg.dassert_not_intersection(repo_map.keys(), current_repo_map.keys())
     repo_map.update(
-        get_repo_map()  # noqa: F821  # type: ignore[name-defined]  # pylint: disable=undefined-variable
+        get_repo_map()  # type: ignore[name-defined]  # noqa: F821  # pylint: disable=undefined-variable
     )
     dbg.dassert_no_duplicates(repo_map.values())
     _LOG.debug(
@@ -800,12 +800,16 @@ def get_modified_files_in_branch(
     See https://stackoverflow.com/questions/18137175
 
     :param dir_name: directory with Git client
-    :param dst_branch: branch to compare to, e.g., master
+    :param dst_branch: branch to compare to, e.g., `master`, `HEAD`
     :param remove_files_non_present: remove the files that are not
         currently present in the client
     :return: list of files
     """
-    cmd = "git diff --name-only %s..." % dst_branch
+    if dst_branch == "HEAD":
+        target = dst_branch
+    else:
+        target = f"{dst_branch}..."
+    cmd = f"git diff --name-only {target}"
     files: List[str] = hsinte.system_to_files(
         cmd, dir_name, remove_files_non_present
     )

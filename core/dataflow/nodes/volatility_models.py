@@ -10,10 +10,10 @@ import sklearn as sklear
 
 import core.config as cconfig
 import core.data_adapters as cdataa
+import core.dataflow.core as cdtfc
 import core.dataflow.utils as cdu
 import core.finance as cfinan
 import core.signal_processing as csigna
-import core.statistics as cstati
 import helpers.dbg as dbg
 from core.dataflow.core import DAG, Node
 from core.dataflow.nodes.base import (
@@ -40,7 +40,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         col: _TO_LIST_MIXIN_TYPE,
         steps_ahead: int,
         tau: Optional[float] = None,
@@ -232,7 +232,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
 class SingleColumnVolatilityModel(FitPredictNode):
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         steps_ahead: int,
         col: _COL_TYPE,
         p_moment: float = 2,
@@ -450,7 +450,7 @@ class VolatilityModel(
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         steps_ahead: int,
         cols: Optional[_TO_LIST_MIXIN_TYPE] = None,
         p_moment: float = 2,
@@ -543,7 +543,7 @@ class MultiindexVolatilityModel(FitPredictNode, _MultiColVolatilityModelMixin):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         in_col_group: Tuple[_COL_TYPE],
         steps_ahead: int,
         p_moment: float = 2,
@@ -634,7 +634,7 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         signal_cols: _TO_LIST_MIXIN_TYPE,
         volatility_col: _COL_TYPE,
         signal_steps_ahead: int,
@@ -727,7 +727,7 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
 class VolatilityNormalizer(FitPredictNode, ColModeMixin):
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         col: str,
         target_volatility: float,
         col_mode: Optional[str] = None,

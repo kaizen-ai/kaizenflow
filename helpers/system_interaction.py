@@ -221,7 +221,7 @@ def _system(
                     if not line:
                         break
                     if not suppress_output:
-                        _LOG.debug("  ==> %s", line.rstrip("\n"))
+                        print("  ==> %s" % line.rstrip("\n"))
                     output += line
                 p.stdout.close()  # type: ignore
                 rc = p.wait()
@@ -705,6 +705,7 @@ def _compute_file_signature(file_name: str, dir_depth: int) -> Optional[List]:
     return signature
 
 
+# TODO(gp): -> io_.py
 def find_file_with_dir(
     file_name: str,
     root_dir: str = ".",

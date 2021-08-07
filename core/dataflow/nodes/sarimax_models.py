@@ -9,6 +9,7 @@ import statsmodels.api as sm
 import statsmodels.iolib as siolib
 from tqdm.autonotebook import tqdm
 
+import core.dataflow.core as cdtfc
 import core.dataflow.nodes.base as cdnb
 import core.dataflow.utils as cdu
 import core.signal_processing as csigna
@@ -49,7 +50,7 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         y_vars: _TO_LIST_MIXIN_TYPE,
         steps_ahead: int,
         init_kwargs: Optional[Dict[str, Any]] = None,
@@ -296,7 +297,7 @@ class MultihorizonReturnsPredictionProcessor(cdnb.FitPredictNode):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         target_col: Any,
         prediction_cols: _TO_LIST_MIXIN_TYPE,
         volatility_col: Any,

@@ -4,6 +4,7 @@ from typing import Callable, Dict, List, Optional, Union
 
 import pandas as pd
 
+import core.dataflow.core as cdtfc
 import core.dataflow.nodes.base as cdnb
 import core.dataflow.utils as cdu
 import core.signal_processing as csigna
@@ -24,7 +25,7 @@ class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         cols: _TO_LIST_MIXIN_TYPE,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,

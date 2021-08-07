@@ -199,10 +199,13 @@ def _run(ctx: Any, cmd: str, *args: Any, **kwargs: Any) -> None:
     ctx.run(cmd, *args, **kwargs)
 
 
+# TODO(gp): We should factor out the meaning of the params in a string and add it
+#  to all the tasks' help.
 def _get_files_to_process(
     modified: bool,
     branch: bool,
     last_commit: bool,
+    all_: bool,
     files_from_user: str,
     mutually_exclusive: bool,
     remove_dirs: bool,
@@ -210,41 +213,46 @@ def _get_files_to_process(
     """
     Get a list of files to process.
 
-    The files are the ones that are:
-    - changed in the branch
-    - changed in the client (both staged and modified)
-    - part of the previous commit
-    - passed by the user
+    The files are selected based on the switches:
+    - `branch`: changed in the branch
+    - `modified`: changed in the client (both staged and modified)
+    - `last_commit`: part of the previous commit
+    - `all`: all the files in the repo
+    - `files_from_user`: passed by the user
 
     :param modified: return files modified in the client (i.e., changed with
         respect to HEAD)
     :param branch: return files modified with respect to the branch point
     :param last_commit: return files part of the previous commit
+    :param all: return all repo files
     :param files_from_user: return files passed to this function
     :param mutually_exclusive: ensure that all options are mutually exclusive
     """
     _LOG.debug(
         hprint.to_str(
-            "modified branch last_commit files_from_user "
+            "modified branch last_commit all_ files_from_user "
             "mutually_exclusive remove_dirs"
         )
     )
     if mutually_exclusive:
+        # All the options are mutually exclusive.
         dbg.dassert_eq(
             int(modified)
             + int(branch)
             + int(last_commit)
+            + int(all_)
             + int(len(files_from_user) > 0),
             1,
-            msg="You need to specify exactly one option among --modified, --branch, "
-            "--last-commit, and --files",
+            msg="Specify only one among --modified, --branch, --last-commit, "
+            "--all_files, and --files",
         )
     else:
+        # We filter the files passed from the user through other the options,
+        # so only the filtering options need to be mutually exclusive.
         dbg.dassert_eq(
-            int(modified) + int(branch) + int(last_commit),
+            int(modified) + int(branch) + int(last_commit) + int(all_),
             1,
-            msg="You need to specify exactly one among --modified, --branch, "
-            "--last-commit",
+            msg="Specify only one among --modified, --branch, --last-commit",
         )
     if modified:
         files = git.get_modified_files(".")
@@ -252,6 +260,8 @@ def _get_files_to_process(
         files = git.get_modified_files_in_branch("master", ".")
     elif last_commit:
         files = git.get_previous_committed_files(".")
+    elif all_:
+        files = hio.find_all_files()
     if files_from_user:
         # If files were passed, overwrite the previous decision.
         files = files_from_user.split(" ")
@@ -568,13 +578,12 @@ def git_create_patch(  # type: ignore
     Create a patch file for the entire repo_short_name client from the base
     revision. This script accepts a list of files to package, if specified.
 
+    The parameters `modified`, `branch`, `last_commit` have the same meaning as
+    in `_get_files_to_process()`.
+
     :param mode: what kind of patch to create
         - "diff": (default) creates a patch with the diff of the files
         - "tar": creates a tar ball with all the files
-    :param modified: select the files modified in the client
-    :param branch: select the files modified in the current branch
-    :param last_commit: select the files modified in the previous commit
-    :param files: specify a space-separated list of files
     """
     _report_task(hprint.to_str("mode modified branch last_commit files"))
     _ = ctx
@@ -603,13 +612,20 @@ def git_create_patch(  # type: ignore
         git.get_summary_files_in_branch("master", "."),
     )
     # Get the files.
+    all_ = False
     # We allow to specify files as a subset of files modified in the branch or
     # in the client.
     mutually_exclusive = False
     # We don't allow to specify directories.
     remove_dirs = True
     files_as_list = _get_files_to_process(
-        modified, branch, last_commit, files, mutually_exclusive, remove_dirs
+        modified,
+        branch,
+        last_commit,
+        all_,
+        files,
+        mutually_exclusive,
+        remove_dirs,
     )
     _LOG.info("Files to save:\n%s", hprint.indent("\n".join(files_as_list)))
     if not files_as_list:
@@ -663,8 +679,8 @@ def git_create_patch(  # type: ignore
 @task
 def git_branch_files(ctx):  # type: ignore
     """
-    Report which files are changed in the current branch with respect to
-    master.
+    Report which files are added, changed, modified in the current branch with
+    respect to master.
     """
     _report_task()
     _ = ctx
@@ -672,6 +688,38 @@ def git_branch_files(ctx):  # type: ignore
         "Difference between HEAD and master:\n"
         + git.get_summary_files_in_branch("master", ".")
     )
+
+
+@task
+def git_files(  # type: ignore
+    ctx, modified=False, branch=False, last_commit=False, pbcopy=False
+):
+    """
+    Report which files are changed in the current branch with respect to
+    master.
+
+    The params have the same meaning as in `_get_files_to_process()`.
+    """
+    _report_task()
+    _ = ctx
+    all_ = False
+    files = ""
+    mutually_exclusive = True
+    # pre-commit doesn't handle directories, but only files.
+    remove_dirs = True
+    files_as_list = _get_files_to_process(
+        modified,
+        branch,
+        last_commit,
+        all_,
+        files,
+        mutually_exclusive,
+        remove_dirs,
+    )
+    print("\n".join(sorted(files_as_list)))
+    if pbcopy:
+        res = " ".join(files_as_list)
+        _to_pbcopy(res, pbcopy)
 
 
 @task
@@ -690,6 +738,76 @@ def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
     # Save to clipboard.
     res = " ".join(files)
     _to_pbcopy(res, pbcopy)
+
+
+@task
+def check_python_files(  # type: ignore
+    ctx,
+    python_compile=True,
+    python_execute=False,
+    modified=False,
+    branch=False,
+    last_commit=False,
+    all_=False,
+    files="",
+):
+    """
+    Compile and execute Python files checking for errors.
+
+    The params have the same meaning as in `_get_files_to_process()`.
+    """
+    _report_task()
+    _ = ctx
+    # We allow to filter through the user specified `files`.
+    mutually_exclusive = False
+    remove_dirs = True
+    file_list = _get_files_to_process(
+        modified,
+        branch,
+        last_commit,
+        all_,
+        files,
+        mutually_exclusive,
+        remove_dirs,
+    )
+    _LOG.debug("Found %d files:\n%s", len(file_list), "\n".join(file_list))
+    # Filter keeping only Python files.
+    _LOG.debug("Filtering for Python files")
+    exclude_paired_jupytext = True
+    file_list = hio.keep_python_files(file_list, exclude_paired_jupytext)
+    _LOG.debug("file_list=%s", "\n".join(file_list))
+    _LOG.info("Need to process %d files", len(file_list))
+    if not file_list:
+        _LOG.warning("No files were selected")
+    # Scan all the files.
+    failed_filenames = []
+    for file_name in file_list:
+        _LOG.info("Processing '%s'", file_name)
+        if python_compile:
+            import compileall
+
+            success = compileall.compile_file(file_name, force=True, quiet=1)
+            _LOG.debug("file_name='%s' -> python_compile=%s", file_name, success)
+            if not success:
+                msg = "'%s' doesn't compile correctly" % file_name
+                _LOG.error(msg)
+                failed_filenames.append(file_name)
+        # TODO(gp): Add also `python -c "import ..."`, if not equivalent to `compileall`.
+        if python_execute:
+            cmd = f"python {file_name}"
+            rc = hsinte.system(cmd, abort_on_error=False, suppress_output=False)
+            _LOG.debug("file_name='%s' -> python_compile=%s", file_name, rc)
+            if rc != 0:
+                msg = "'%s' doesn't execute correctly" % file_name
+                _LOG.error(msg)
+                failed_filenames.append(file_name)
+    _LOG.info(
+        "failed_filenames=%s\n%s",
+        len(failed_filenames),
+        "\n".join(failed_filenames),
+    )
+    error = len(failed_filenames) > 0
+    return error
 
 
 @task
@@ -728,7 +846,7 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
 # dev_scripts/create_class_diagram.sh
 
 # #############################################################################
-# Docker.
+# Basic Docker commands.
 # #############################################################################
 
 
@@ -1301,7 +1419,7 @@ def docker_jupyter(  # type: ignore
 
 
 # #############################################################################
-# Images workflows.
+# Docker image workflows.
 # #############################################################################
 
 
@@ -1554,37 +1672,7 @@ def docker_release_all(ctx):  # type: ignore
 
 
 # #############################################################################
-# Run tests.
-# #############################################################################
-
-_COV_PYTEST_OPTS = [
-    # Only compute coverage for current project and not venv libraries.
-    "--cov=.",
-    "--cov-branch",
-    # Report the missing lines.
-    # Name                 Stmts   Miss  Cover   Missing
-    # -------------------------------------------------------------------------
-    # myproj/__init__          2      0   100%
-    # myproj/myproj          257     13    94%   24-26, 99, 149, 233-236, 297-298
-    "--cov-report term-missing",
-    # Report data in the directory `htmlcov`.
-    "--cov-report html",
-    # "--cov-report annotate",
-]
-
-
-@task
-def run_blank_tests(ctx, stage=STAGE):  # type: ignore
-    """
-    (ONLY CI/CD) Test that pytest in the container works.
-    """
-    _report_task()
-    base_image = ""
-    cmd = '"pytest -h >/dev/null"'
-    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd)
-    _docker_cmd(ctx, docker_cmd_)
-
-
+# Find test.
 # #############################################################################
 
 
@@ -1705,6 +1793,8 @@ def find_test_class(ctx, class_name, dir_name=".", pbcopy=True):  # type: ignore
 
 
 # #############################################################################
+# Find test decorator.
+# #############################################################################
 
 
 # TODO(gp): decorator_name -> pytest_mark
@@ -1757,6 +1847,8 @@ def find_test_decorator(ctx, decorator_name="", dir_name="."):  # type: ignore
     print(res)
 
 
+# #############################################################################
+# Find / replace `check_string`.
 # #############################################################################
 
 
@@ -1820,6 +1912,35 @@ def find_check_string_output(  # type: ignore
 
 
 # #############################################################################
+# Run tests.
+# #############################################################################
+
+_COV_PYTEST_OPTS = [
+    # Only compute coverage for current project and not venv libraries.
+    "--cov=.",
+    "--cov-branch",
+    # Report the missing lines.
+    # Name                 Stmts   Miss  Cover   Missing
+    # -------------------------------------------------------------------------
+    # myproj/__init__          2      0   100%
+    # myproj/myproj          257     13    94%   24-26, 99, 149, 233-236, 297-298
+    "--cov-report term-missing",
+    # Report data in the directory `htmlcov`.
+    "--cov-report html",
+    # "--cov-report annotate",
+]
+
+
+@task
+def run_blank_tests(ctx, stage=STAGE):  # type: ignore
+    """
+    (ONLY CI/CD) Test that pytest in the container works.
+    """
+    _report_task()
+    base_image = ""
+    cmd = '"pytest -h >/dev/null"'
+    docker_cmd_ = _get_docker_cmd(stage, base_image, cmd)
+    _docker_cmd(ctx, docker_cmd_)
 
 
 def _build_run_command_line(
@@ -2084,6 +2205,14 @@ def run_fast_slow_tests(  # type: ignore
     )
 
 
+# #############################################################################
+# Pytest helpers.
+# #############################################################################
+
+
+# TODO(gp): Consolidate the code from dev_scripts/testing here.
+
+
 @task
 def traceback(ctx, log_name="", purify=True):  # type: ignore
     """
@@ -2137,13 +2266,10 @@ def pytest_clean(ctx):  # type: ignore
     hpytes.pytest_clean(".")
 
 
-# TODO(gp): Consolidate the code from dev_scripts/testing here.
-
-
 @task
-def pytest_freeze_failed_test_list(ctx, confirm=False):  # type: ignore
+def pytest_failed_freeze_test_list(ctx, confirm=False):  # type: ignore
     """
-    Copy last list of failed tests so as not overwrite with successive pytest
+    Copy last list of failed tests to not overwrite with successive pytest
     runs.
     """
     _report_task()
@@ -2194,14 +2320,16 @@ def pytest_failed(  # type: ignore
     ```
     # Run a lot of tests, e.g., the entire regression suite.
     > pytest ...
-    # Some tests have failed. Freeze the output of pytest so we can re-run only some
-    # of them.
-    > invoke pytest_freeze_failed_test_list
+    # Some tests fail.
+
+    # Freeze the output of pytest so we can re-run only some of them.
+    > invoke pytest_failed_freeze_test_list
     #
-    > invoke pytest_find_failed_tests
+    > invoke pytest_failed
     ```
 
-    :param use_frozen_list: use the copied list or the one generated by pytest
+    :param use_frozen_list: use the frozen list (default) or the one generated by
+        pytest
     :param target_type: specify what to print about the tests
         - tests (default): print the tests in a single line
         - files: print the name of the files containing files
@@ -2212,7 +2340,7 @@ def pytest_failed(  # type: ignore
     _report_task()
     _ = ctx
     if refresh:
-        pytest_freeze_failed_test_list(ctx, confirm=True)
+        pytest_failed_freeze_test_list(ctx, confirm=True)
     # Read file.
     if not file_name:
         dir_name = "."
@@ -2225,7 +2353,7 @@ def pytest_failed(  # type: ignore
                 frozen_failed_tests_file
             ):
                 _LOG.warning("Freezing the pytest outcomes")
-                pytest_freeze_failed_test_list(ctx)
+                pytest_failed_freeze_test_list(ctx)
             file_name = frozen_failed_tests_file
         else:
             file_name = pytest_failed_tests_file
@@ -2278,7 +2406,12 @@ def pytest_failed(  # type: ignore
     # Package the output.
     _LOG.debug("res=%s", str(targets))
     targets = hlist.remove_duplicates(targets)
-    _LOG.info("Found %d pytest '%s' targets", len(targets), target_type)
+    _LOG.info(
+        "Found %d failed pytest '%s' targets:\n%s",
+        len(targets),
+        target_type,
+        "\n".join(targets),
+    )
     dbg.dassert_isinstance(targets, list)
     res = " ".join(targets)
     _LOG.debug("res=%s", str(res))
@@ -2405,13 +2538,21 @@ def lint(  # type: ignore
         # We don't want to run this all the times.
         # docker_pull(ctx, stage=stage, images="dev_tools")
         # Get the files to lint.
+        # TODO(gp): For now we don't support linting the entire tree.
+        all_ = False
         # For linting we can use only files modified in the client, in the branch, or
         # specified.
         mutually_exclusive = True
         # pre-commit doesn't handle directories, but only files.
         remove_dirs = True
         files_as_list = _get_files_to_process(
-            modified, branch, last_commit, files, mutually_exclusive, remove_dirs
+            modified,
+            branch,
+            last_commit,
+            all_,
+            files,
+            mutually_exclusive,
+            remove_dirs,
         )
         _LOG.info("Files to lint:\n%s", "\n".join(files_as_list))
         if not files_as_list:
@@ -2564,8 +2705,6 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
 # completed       success Another speculative fix for break       Fast tests      master  push    1m54s   797556212
 # pylint: enable=line-too-long
 
-# #############################################################################
-
 
 def _get_repo_full_name_from_cmd(repo_short_name: str) -> Tuple[str, str]:
     """
@@ -2705,5 +2844,3 @@ def gh_create_pr(  # type: ignore
 # TODO(gp): Add gh_open_pr to jump to the PR from this branch.
 
 # TODO(gp): Add ./dev_scripts/testing/pytest_count_files.sh
-
-# TODO(gp): Add dev_scripts/compile_all.py

@@ -8,6 +8,7 @@ import helpers.versioning as hversi
 # > i print_tasks --as-code
 from helpers.lib_tasks import set_default_params  # This is not an invoke target.
 from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
+    check_python_files,
     docker_bash,
     docker_build_local_image,
     docker_build_prod_image,
@@ -36,6 +37,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     git_create_branch,
     git_create_patch,
     git_delete_merged_branches,
+    git_files,
     git_last_commit_files,
     git_merge_master,
     git_pull,
@@ -46,7 +48,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     print_tasks,
     pytest_clean,
     pytest_failed,
-    pytest_freeze_failed_test_list,
+    pytest_failed_freeze_test_list,
     run_blank_tests,
     run_fast_slow_tests,
     run_fast_tests,

@@ -6,7 +6,7 @@ Import as:
 import helpers.io_ as hio
 """
 
-# TODO(gp): -> io_helpers
+# TODO(gp): -> hio
 
 import datetime
 import fnmatch
@@ -17,7 +17,7 @@ import os
 import shutil
 import time
 import uuid
-from typing import Any, List, Optional
+from typing import Any, List, Optional, cast
 
 import helpers.dbg as dbg
 import helpers.printing as hprint
@@ -26,7 +26,7 @@ import helpers.system_interaction as hsinte
 _LOG = logging.getLogger(__name__)
 
 # Set logging level of this file.
-_LOG.setLevel(logging.INFO)
+# _LOG.setLevel(logging.INFO)
 
 
 # #############################################################################
@@ -36,7 +36,7 @@ _LOG.setLevel(logging.INFO)
 
 def find_files(directory: str, pattern: str) -> List[str]:
     """
-    Recursive glob.
+    Find all files under `directory` that match a certain `pattern`.
 
     :param pattern: pattern to match a filename against
     """
@@ -49,13 +49,77 @@ def find_files(directory: str, pattern: str) -> List[str]:
     return file_names
 
 
+# TODO(gp): Seems equivalent to `find_files`. Let's keep this.
 def find_regex_files(src_dir: str, regex: str) -> List[str]:
     cmd = 'find %s -name "%s"' % (src_dir, regex)
     _, output = hsinte.system_to_string(cmd)
+    # TODO(gp): -> system_to_files
     file_names = [f for f in output.split("\n") if f != ""]
     _LOG.debug("Found %s files in %s", len(file_names), src_dir)
     _LOG.debug("\n".join(file_names))
     return file_names
+
+
+# TODO(gp): Redundant with `find_files()`.
+def find_all_files(dir_name: str) -> List[str]:
+    """
+    Find all files (not directory) under `dir_name`, skipping `.git`.
+    """
+    cmd = fr'''cd {dir_name} && find . -type f -name "*" -not -path "*/\.git/*"'''
+    file_names = hsinte.system_to_files(cmd)
+    file_names = cast(List[str], file_names)
+    _LOG.debug("Found %s files", len(file_names))
+    return file_names
+
+
+def is_paired_jupytext_python_file(py_filename: str) -> bool:
+    """
+    Return if a Python file has a paired Jupyter notebook.
+    """
+    dbg.dassert(
+        py_filename.endswith("py"), "Invalid python filename='%s'", py_filename
+    )
+    dbg.dassert_file_exists(py_filename)
+    # Check if a corresponding ipynb file exists.
+    ipynb_filename = change_filename_extension(py_filename, "py", "ipynb")
+    is_paired = os.path.exists(ipynb_filename)
+    _LOG.debug(
+        "Checking ipynb file='%s' for py file='%s': is_paired=%s",
+        py_filename,
+        ipynb_filename,
+        is_paired,
+    )
+    return is_paired
+
+
+def keep_python_files(
+    file_names: List[str], exclude_paired_jupytext: bool
+) -> List[str]:
+    """
+    Return a list with all Python file names (i.e., with the `py` extension).
+
+    :param exclude_paired_jupytext: exclude Python file that are associated to
+        notebooks (i.e., that have a corresponding `.ipynb` file)
+    """
+    dbg.dassert_isinstance(file_names, list)
+    # Check all the files.
+    py_file_names = []
+    for file_name in file_names:
+        if file_name.endswith(".py"):
+            if exclude_paired_jupytext:
+                # Include only the non-paired Python files.
+                is_paired = is_paired_jupytext_python_file(file_name)
+                add = not is_paired
+            else:
+                # Include all the Python files.
+                add = True
+        else:
+            add = False
+        _LOG.debug("file_name='%s' -> add='%s'", file_name, add)
+        if add:
+            py_file_names.append(file_name)
+    _LOG.debug("Found %s python files", len(py_file_names))
+    return py_file_names
 
 
 # #############################################################################
@@ -373,6 +437,16 @@ def get_size_as_str(file_name: str) -> str:
     return res
 
 
+def is_valid_filename_extension(ext: str) -> bool:
+    """
+    By convention extensions are the initial `.`.
+
+    E.g., "tgz" is valid, but not ".tgz".
+    """
+    valid = not ext.startswith(".")
+    return valid
+
+
 def change_filename_extension(filename: str, old_ext: str, new_ext: str) -> str:
     """
     Change extension of a filename (e.g. "data.csv" to "data.json").
@@ -383,16 +457,29 @@ def change_filename_extension(filename: str, old_ext: str, new_ext: str) -> str:
     :return: a filename with the new extension
     """
     dbg.dassert(
+        is_valid_filename_extension(old_ext), "Invalid extension '%s'", old_ext
+    )
+    dbg.dassert(
+        is_valid_filename_extension(new_ext), "Invalid extension '%s'", new_ext
+    )
+    dbg.dassert(
         filename.endswith(old_ext),
         "Extension '%s' doesn't match file '%s'",
         old_ext,
         filename,
     )
     # Remove the old extension.
-    new_filename = filename.rstrip(old_ext)
+    len_ext = len(old_ext)
+    new_filename = filename[:-len_ext]
+    dbg.dassert(new_filename.endswith("."), "new_filename='%s'", new_filename)
     # Add the new extension.
-    new_filename = new_filename + new_ext
+    new_filename += new_ext
     return new_filename
+
+
+# #############################################################################
+# JSON
+# #############################################################################
 
 
 def serialize_custom_types_for_json_encoder(obj: Any) -> Any:

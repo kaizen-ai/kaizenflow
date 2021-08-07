@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 
 import core.artificial_signal_generators as cartif
+import core.dataflow.core as cdtfc
 import core.dataflow.nodes.base as cdnb
 import core.dataflow.real_time as cdrt
 import core.finance as cfinan
@@ -40,7 +41,7 @@ class ReadDataFromDf(cdnb.DataSource):
     data.
     """
 
-    def __init__(self, nid: str, df: pd.DataFrame) -> None:
+    def __init__(self, nid: cdtfc.NodeId, df: pd.DataFrame) -> None:
         super().__init__(nid)
         dbg.dassert_isinstance(df, pd.DataFrame)
         self.df = df
@@ -58,7 +59,7 @@ class DataLoader(cdnb.DataSource):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         func: Callable,
         func_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
@@ -162,7 +163,7 @@ class DiskDataSource(cdnb.DataSource):
     """
 
     def __init__(
-        self, nid: str, **load_data_from_disk_kwargs: Dict[str, Any]
+        self, nid: cdtfc.NodeId, **load_data_from_disk_kwargs: Dict[str, Any]
     ) -> None:
         """
         Constructor.
@@ -206,7 +207,7 @@ class ArmaGenerator(cdnb.DataSource):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         frequency: str,
         start_date: _PANDAS_DATE_TYPE,
         end_date: _PANDAS_DATE_TYPE,
@@ -274,7 +275,7 @@ class MultivariateNormalGenerator(cdnb.DataSource):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         frequency: str,
         start_date: _PANDAS_DATE_TYPE,
         end_date: _PANDAS_DATE_TYPE,
@@ -348,7 +349,7 @@ class _AbstractRealTimeDataSource(cdnb.DataSource):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         delay_in_secs: float,
         data_builder: Callable[[Any], pd.DataFrame],
         data_builder_kwargs: Dict[str, Any],
@@ -460,7 +461,7 @@ class SimulatedRealTimeDataSource(_AbstractRealTimeDataSource):
     - emits the data available up and including the current time
     """
 
-    def __init__(self, nid: str, **kwargs: Dict[str, Any]) -> None:
+    def __init__(self, nid: cdtfc.NodeId, **kwargs: Dict[str, Any]) -> None:
         super().__init__(nid, **kwargs)  # type: ignore[arg-type]
         # Store the entire history of the data.
         self._entire_df: Optional[pd.DataFrame] = None
@@ -496,7 +497,7 @@ class TrueRealTimeDataSource(_AbstractRealTimeDataSource):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         external_clock: cdrt.GetCurrentTimeFunction,
         **kwargs: Dict[str, Any]
     ) -> None:
@@ -540,7 +541,7 @@ class ReplayedRealTimeDataSource(TrueRealTimeDataSource):
       invocation
     """
 
-    def __init__(self, nid: str, **kwargs: Dict[str, Any]) -> None:
+    def __init__(self, nid: cdtfc.NodeId, **kwargs: Dict[str, Any]) -> None:
         super().__init__(nid, **kwargs)
         # Store the entire history of the data.
         self._entire_df: Optional[pd.DataFrame] = None

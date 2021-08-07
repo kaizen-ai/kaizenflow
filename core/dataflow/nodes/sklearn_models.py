@@ -7,6 +7,7 @@ import pandas as pd
 import sklearn as sklear
 
 import core.data_adapters as cdataa
+import core.dataflow.core as cdtfc
 import core.dataflow.nodes.base as cdnb
 import core.dataflow.utils as cdu
 import core.signal_processing as csigna
@@ -34,7 +35,7 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         model_func: Callable[..., Any],
         x_vars: _TO_LIST_MIXIN_TYPE,
         y_vars: _TO_LIST_MIXIN_TYPE,
@@ -98,7 +99,7 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         self._model = fit_state["_model"]
         self._info["fit"] = fit_state["_info['fit']"]
 
-    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: True):
+    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: True) -> Dict[str, pd.DataFrame]:
         # Materialize names of x and y vars.
         x_vars = cdu.convert_to_list(self._x_vars)
         y_vars = cdu.convert_to_list(self._y_vars)
@@ -221,7 +222,7 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         in_col_groups: List[Tuple[_COL_TYPE]],
         out_col_group: Tuple[_COL_TYPE],
         model_func: Callable[..., Any],
@@ -268,11 +269,11 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
         }
         return fit_state
 
-    def set_fit_state(self, fit_state: Dict[str, Any]):
+    def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
         self._fit_state = fit_state["_fit_state"]
         self._info["fit"] = fit_state["_info['fit']"]
 
-    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
+    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool) -> Dict[str, pd.DataFrame]:
         cdu.validate_df_indices(df_in)
         dfs = cdnb.GroupedColDfToDfColProcessor.preprocess(
             df_in, self._in_col_groups
@@ -359,7 +360,7 @@ class MultiindexSkLearnModel(cdnb.FitPredictNode):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         in_col_groups: List[Tuple[_COL_TYPE]],
         out_col_group: Tuple[_COL_TYPE],
         model_func: Callable[..., Any],
@@ -457,7 +458,7 @@ class SkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
 
     def __init__(
         self,
-        nid: str,
+        nid: cdtfc.NodeId,
         x_vars: _TO_LIST_MIXIN_TYPE,
         y_vars: _TO_LIST_MIXIN_TYPE,
         model_func: Callable[..., Any],

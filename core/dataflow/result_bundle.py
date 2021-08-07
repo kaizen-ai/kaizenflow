@@ -1,6 +1,3 @@
-# TODO(gp): Is this needed?
-from __future__ import annotations
-
 import abc
 import collections
 import copy
@@ -10,6 +7,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple, cast
 import pandas as pd
 
 import core.config as cconfig
+import core.dataflow.core as cdtfc
 import helpers.dbg as dbg
 import helpers.git as git
 
@@ -24,7 +22,7 @@ class ResultBundle(abc.ABC):
     def __init__(
         self,
         config: cconfig.Config,
-        result_nid: str,
+        result_nid: cdtfc.NodeId,
         method: str,
         result_df: pd.DataFrame,
         column_to_tags: Optional[Dict[Any, List[Any]]] = None,
@@ -68,11 +66,11 @@ class ResultBundle(abc.ABC):
         return self._config.copy()
 
     @property
-    def result_nid(self) -> str:
+    def result_nid(self) -> cdtfc.NodeId:
         return self._result_nid
 
     @property
-    def method(self) -> str:
+    def method(self) -> cdtfc.Method:
         return self._method
 
     @property
@@ -142,7 +140,7 @@ class ResultBundle(abc.ABC):
         return dict_
 
     @staticmethod
-    def from_dict(result_bundle_dict: collections.OrderedDict) -> ResultBundle:
+    def from_dict(result_bundle_dict: collections.OrderedDict) -> "ResultBundle":
         """
         Initialize `ResultBundle` from a nested dict.
         """
@@ -156,7 +154,7 @@ class ResultBundle(abc.ABC):
         return result_bundle
 
     @classmethod
-    def from_config(cls, serialized_bundle: cconfig.Config) -> ResultBundle:
+    def from_config(cls, serialized_bundle: cconfig.Config) -> "ResultBundle":
         """
         Initialize `ResultBundle` from config.
         """
