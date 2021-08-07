@@ -244,7 +244,7 @@ def _get_files_to_process(
             + int(len(files_from_user) > 0),
             1,
             msg="Specify only one among --modified, --branch, --last-commit, "
-                "--all_files, and --files",
+            "--all_files, and --files",
         )
     else:
         # We filter the files passed from the user through other the options,
@@ -261,7 +261,7 @@ def _get_files_to_process(
     elif last_commit:
         files = git.get_previous_committed_files(".")
     elif all_:
-        files = io_.find_all_files()
+        files = hio.find_all_files()
     if files_from_user:
         # If files were passed, overwrite the previous decision.
         files = files_from_user.split(" ")
@@ -691,9 +691,9 @@ def git_branch_files(ctx):  # type: ignore
 
 
 @task
-def git_files(
+def git_files(  # type: ignore
     ctx, modified=False, branch=False, last_commit=False, pbcopy=False
-):  # type: ignore
+):
     """
     Report which files are changed in the current branch with respect to
     master.
@@ -2269,7 +2269,8 @@ def pytest_clean(ctx):  # type: ignore
 @task
 def pytest_failed_freeze_test_list(ctx, confirm=False):  # type: ignore
     """
-    Copy last list of failed tests to not overwrite with successive pytest runs.
+    Copy last list of failed tests to not overwrite with successive pytest
+    runs.
     """
     _report_task()
     dir_name = "."
@@ -2405,8 +2406,12 @@ def pytest_failed(  # type: ignore
     # Package the output.
     _LOG.debug("res=%s", str(targets))
     targets = hlist.remove_duplicates(targets)
-    _LOG.info("Found %d failed pytest '%s' targets:\n%s", len(targets), target_type,
-              "\n".join(targets))
+    _LOG.info(
+        "Found %d failed pytest '%s' targets:\n%s",
+        len(targets),
+        target_type,
+        "\n".join(targets),
+    )
     dbg.dassert_isinstance(targets, list)
     res = " ".join(targets)
     _LOG.debug("res=%s", str(res))

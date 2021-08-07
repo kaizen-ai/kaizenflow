@@ -67,6 +67,7 @@ def find_all_files(dir_name: str) -> List[str]:
     """
     cmd = fr'''cd {dir_name} && find . -type f -name "*" -not -path "*/\.git/*"'''
     file_names = hsinte.system_to_files(cmd)
+    file_names = cast(List[str], file_names)
     _LOG.debug("Found %s files", len(file_names))
     return file_names
 

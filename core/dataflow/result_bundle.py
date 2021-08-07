@@ -66,11 +66,11 @@ class ResultBundle(abc.ABC):
         return self._config.copy()
 
     @property
-    def result_nid(self) -> str:
+    def result_nid(self) -> cdtfc.NodeId:
         return self._result_nid
 
     @property
-    def method(self) -> str:
+    def method(self) -> cdtfc.Method:
         return self._method
 
     @property

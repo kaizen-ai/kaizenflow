@@ -99,7 +99,7 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         self._model = fit_state["_model"]
         self._info["fit"] = fit_state["_info['fit']"]
 
-    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: True):
+    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: True) -> Dict[str, pd.DataFrame]:
         # Materialize names of x and y vars.
         x_vars = cdu.convert_to_list(self._x_vars)
         y_vars = cdu.convert_to_list(self._y_vars)
@@ -269,11 +269,11 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
         }
         return fit_state
 
-    def set_fit_state(self, fit_state: Dict[str, Any]):
+    def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
         self._fit_state = fit_state["_fit_state"]
         self._info["fit"] = fit_state["_info['fit']"]
 
-    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
+    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool) -> Dict[str, pd.DataFrame]:
         cdu.validate_df_indices(df_in)
         dfs = cdnb.GroupedColDfToDfColProcessor.preprocess(
             df_in, self._in_col_groups
