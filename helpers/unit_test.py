@@ -808,8 +808,10 @@ def _assert_equal(
         # We always return the variable exactly as this should be, even if we could
         # make it look better through indentation in case of fuzzy match.
         if actual_orig.startswith('"'):
+            #txt.append(f"expected = r'''{actual_orig}'''")
             txt.append(f"exp = r'''{actual_orig}'''")
         else:
+            #txt.append(f"expected = r'''{actual_orig}'''")
             txt.append(f'exp = r"""{actual_orig}"""')
         txt = "\n".join(txt)
         error_msg += txt

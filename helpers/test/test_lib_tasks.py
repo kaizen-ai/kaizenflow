@@ -1202,6 +1202,7 @@ class Test_get_files_to_process1(hut.TestCase):
         modified = True
         branch = False
         last_commit = False
+        all_ = False
         files_from_user = ""
         mutually_exclusive = True
         remove_dirs = True
@@ -1209,6 +1210,7 @@ class Test_get_files_to_process1(hut.TestCase):
             modified,
             branch,
             last_commit,
+            all_,
             files_from_user,
             mutually_exclusive,
             remove_dirs,
@@ -1228,6 +1230,7 @@ class Test_get_files_to_process1(hut.TestCase):
         modified = False
         branch = True
         last_commit = False
+        all_ = False
         files_from_user = ""
         mutually_exclusive = True
         remove_dirs = True
@@ -1235,6 +1238,7 @@ class Test_get_files_to_process1(hut.TestCase):
             modified,
             branch,
             last_commit,
+            all_,
             files_from_user,
             mutually_exclusive,
             remove_dirs,
@@ -1247,6 +1251,7 @@ class Test_get_files_to_process1(hut.TestCase):
         modified = False
         branch = False
         last_commit = True
+        all_ = False
         files_from_user = ""
         mutually_exclusive = True
         remove_dirs = True
@@ -1254,6 +1259,7 @@ class Test_get_files_to_process1(hut.TestCase):
             modified,
             branch,
             last_commit,
+            all_,
             files_from_user,
             mutually_exclusive,
             remove_dirs,
@@ -1266,6 +1272,7 @@ class Test_get_files_to_process1(hut.TestCase):
         modified = False
         branch = False
         last_commit = False
+        all_ = False
         files_from_user = __file__
         mutually_exclusive = True
         remove_dirs = True
@@ -1273,6 +1280,7 @@ class Test_get_files_to_process1(hut.TestCase):
             modified,
             branch,
             last_commit,
+            all_,
             files_from_user,
             mutually_exclusive,
             remove_dirs,
@@ -1286,6 +1294,7 @@ class Test_get_files_to_process1(hut.TestCase):
         modified = True
         branch = True
         last_commit = False
+        all_ = True
         files_from_user = ""
         mutually_exclusive = True
         remove_dirs = True
@@ -1294,17 +1303,18 @@ class Test_get_files_to_process1(hut.TestCase):
                 modified,
                 branch,
                 last_commit,
+                all_,
                 files_from_user,
                 mutually_exclusive,
                 remove_dirs,
             )
         act = str(cm.exception)
-        exp = """
+        exp = r"""
         * Failed assertion *
-        '2'
+        '3'
         ==
         '1'
-        You need to specify exactly one option among --modified, --branch, --last-commit, and --files
+        Specify only one among --modified, --branch, --last-commit, --all_files, and --files
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
@@ -1316,6 +1326,7 @@ class Test_get_files_to_process1(hut.TestCase):
         modified = True
         branch = False
         last_commit = False
+        all_ = False
         files_from_user = __file__
         mutually_exclusive = True
         remove_dirs = True
@@ -1324,6 +1335,7 @@ class Test_get_files_to_process1(hut.TestCase):
                 modified,
                 branch,
                 last_commit,
+                all_,
                 files_from_user,
                 mutually_exclusive,
                 remove_dirs,
@@ -1334,7 +1346,7 @@ class Test_get_files_to_process1(hut.TestCase):
         '2'
         ==
         '1'
-        You need to specify exactly one option among --modified, --branch, --last-commit, and --files
+        Specify only one among --modified, --branch, --last-commit, --all_files, and --files
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
@@ -1346,6 +1358,7 @@ class Test_get_files_to_process1(hut.TestCase):
         modified = True
         branch = False
         last_commit = False
+        all_ = False
         files_from_user = __file__
         mutually_exclusive = False
         remove_dirs = True
@@ -1353,6 +1366,7 @@ class Test_get_files_to_process1(hut.TestCase):
             modified,
             branch,
             last_commit,
+            all_,
             files_from_user,
             mutually_exclusive,
             remove_dirs,
