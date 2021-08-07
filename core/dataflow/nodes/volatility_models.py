@@ -11,7 +11,7 @@ import sklearn as sklear
 import core.config as cconfig
 import core.data_adapters as cdataa
 import core.dataflow.core as cdtfc
-import core.dataflow.utils as cdu
+import core.dataflow.utils as cdtfu
 import core.finance as cfinan
 import core.signal_processing as csigna
 import helpers.dbg as dbg
@@ -28,11 +28,6 @@ from core.dataflow.visitors import extract_info
 _LOG = logging.getLogger(__name__)
 
 
-_COL_TYPE = Union[int, str]
-_PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
-_TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
-
-
 class SmaModel(FitPredictNode, ColModeMixin):
     """
     Fit and predict a smooth moving average (SMA) model.
@@ -41,7 +36,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
     def __init__(
         self,
         nid: cdtfc.NodeId,
-        col: _TO_LIST_MIXIN_TYPE,
+        col: cdtfu.NodeColumnList,
         steps_ahead: int,
         tau: Optional[float] = None,
         min_tau_periods: Optional[float] = 2,
@@ -63,7 +58,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
         :param nan_mode: as in `ContinuousSkLearnModel`
         """
         super().__init__(nid)
-        self._col = cdu.convert_to_list(col)
+        self._col = cdtfu.convert_to_list(col)
         dbg.dassert_eq(len(self._col), 1)
         self._steps_ahead = steps_ahead
         dbg.dassert_lte(
@@ -87,7 +82,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
         idx = df_in.index[: -self._steps_ahead]
         x_vars = self._col
         y_vars = self._col
-        df = cdu.get_x_and_forward_y_fit_df(
+        df = cdtfu.get_x_and_forward_y_fit_df(
             df_in, x_vars, y_vars, self._steps_ahead
         )
         forward_y_cols = df.drop(x_vars, axis=1).columns
@@ -107,7 +102,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
         return self._predict_and_package_results(df_in, idx, df.index, fit=True)
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        cdu.validate_df_indices(df_in)
+        cdtfu.validate_df_indices(df_in)
         df = df_in.copy()
         idx = df.index
         # Restrict to times where col has no NaNs.
@@ -141,7 +136,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
     ) -> Dict[str, pd.DataFrame]:
         data = cdataa.transform_to_sklearn(df_in.loc[non_nan_idx], self._col)
         fwd_y_hat = self._predict(data)
-        forward_y_df = cdu.get_forward_cols(df_in, self._col, self._steps_ahead)
+        forward_y_df = cdtfu.get_forward_cols(df_in, self._col, self._steps_ahead)
         forward_y_df = forward_y_df.loc[non_nan_idx]
         # Put predictions in dataflow dataframe format.
         fwd_y_hat_vars = [f"{y}_hat" for y in forward_y_df.columns]
@@ -161,7 +156,7 @@ class SmaModel(FitPredictNode, ColModeMixin):
         info = collections.OrderedDict()
         info["tau"] = self._tau
         info["min_periods"] = self._get_min_periods(self._tau)
-        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
         method = "fit" if fit else "predict"
         self._set_info(method, info)
         return {"df_out": df_out}
@@ -234,7 +229,7 @@ class SingleColumnVolatilityModel(FitPredictNode):
         self,
         nid: cdtfc.NodeId,
         steps_ahead: int,
-        col: _COL_TYPE,
+        col: cdtfu.NodeColumn,
         p_moment: float = 2,
         progress_bar: bool = False,
         tau: Optional[float] = None,
@@ -302,8 +297,8 @@ class SingleColumnVolatilityModel(FitPredictNode):
 
     def _get_config(
         self,
-        col: _COL_TYPE,
-        out_col_prefix: _COL_TYPE,
+        col: cdtfu.NodeColumn,
+        out_col_prefix: cdtfu.NodeColumn,
         tau: Optional[float] = None,
     ) -> cconfig.Config:
         """
@@ -452,7 +447,7 @@ class VolatilityModel(
         self,
         nid: cdtfc.NodeId,
         steps_ahead: int,
-        cols: Optional[_TO_LIST_MIXIN_TYPE] = None,
+        cols: Optional[cdtfu.NodeColumnList] = None,
         p_moment: float = 2,
         progress_bar: bool = False,
         tau: Optional[float] = None,
@@ -493,7 +488,7 @@ class VolatilityModel(
         self._col_mode = col_mode or "merge_all"
         self._nan_mode = nan_mode
         # State of the model to serialize/deserialize.
-        self._fit_cols: List[_COL_TYPE] = []
+        self._fit_cols: List[cdtfu.NodeColumn] = []
         self._col_fit_state = {}
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -516,9 +511,9 @@ class VolatilityModel(
         self._info["fit"] = fit_state["_info['fit']"]
 
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
-        cdu.validate_df_indices(df_in)
+        cdtfu.validate_df_indices(df_in)
         # Get the columns.
-        self._fit_cols = cdu.convert_to_list(self._cols or df_in.columns.tolist())
+        self._fit_cols = cdtfu.convert_to_list(self._cols or df_in.columns.tolist())
         df = df_in[self._fit_cols]
         dfs, info = self._fit_predict_volatility_model(df, fit=fit)
         df_out = pd.concat(dfs.values(), axis=1)
@@ -544,7 +539,7 @@ class MultiindexVolatilityModel(FitPredictNode, _MultiColVolatilityModelMixin):
     def __init__(
         self,
         nid: cdtfc.NodeId,
-        in_col_group: Tuple[_COL_TYPE],
+        in_col_group: Tuple[cdtfu.NodeColumn],
         steps_ahead: int,
         p_moment: float = 2,
         progress_bar: bool = False,
@@ -596,13 +591,13 @@ class MultiindexVolatilityModel(FitPredictNode, _MultiColVolatilityModelMixin):
         self._info["fit"] = fit_state["_info['fit']"]
 
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
-        cdu.validate_df_indices(df_in)
+        cdtfu.validate_df_indices(df_in)
         df = SeriesToDfColProcessor.preprocess(df_in, self._in_col_group)
         dfs, info = self._fit_predict_volatility_model(
             df, fit=fit, out_col_prefix=self._out_col_prefix
         )
         df_out = SeriesToDfColProcessor.postprocess(dfs, self._out_col_group)
-        df_out = cdu.merge_dataframes(df_in, df_out)
+        df_out = cdtfu.merge_dataframes(df_in, df_out)
         method = "fit" if fit else "predict"
         self._set_info(method, info)
         return {"df_out": df_out}
@@ -635,8 +630,8 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
     def __init__(
         self,
         nid: cdtfc.NodeId,
-        signal_cols: _TO_LIST_MIXIN_TYPE,
-        volatility_col: _COL_TYPE,
+        signal_cols: cdtfu.NodeColumnList,
+        volatility_col: cdtfu.NodeColumn,
         signal_steps_ahead: int,
         volatility_steps_ahead: int,
         mode: str,
@@ -660,7 +655,7 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
         :param col_mode: as in `ColumnTransformer`
         """
         super().__init__(nid)
-        self._signal_cols = cdu.convert_to_list(signal_cols)
+        self._signal_cols = cdtfu.convert_to_list(signal_cols)
         self._volatility_col = volatility_col
         dbg.dassert_lte(0, signal_steps_ahead)
         self._signal_steps_ahead = signal_steps_ahead
@@ -675,14 +670,14 @@ class VolatilityModulator(FitPredictNode, ColModeMixin):
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df_out = self._process_signal(df_in)
         info = collections.OrderedDict()
-        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df_out = self._process_signal(df_in)
         info = collections.OrderedDict()
-        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
 

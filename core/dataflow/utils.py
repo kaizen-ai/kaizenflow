@@ -19,8 +19,14 @@ import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
-_COL_TYPE = Union[int, str]
-_TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
+
+# #############################################################################
+# Node columns.
+# #############################################################################
+
+NodeColumn = Union[int, str]
+# A list of columns or a function that returns a list of column types.
+NodeColumnList = Union[List[NodeColumn], Callable[[], List[NodeColumn]]]
 
 
 # #############################################################################
@@ -113,7 +119,7 @@ def validate_df_indices(df: pd.DataFrame) -> None:
     # TODO(*): assert if the datetime index has dups.
 
 
-def convert_to_list(to_list: _TO_LIST_MIXIN_TYPE) -> List[_COL_TYPE]:
+def convert_to_list(to_list: NodeColumnList) -> List[NodeColumn]:
     """
     Return a list given its input.
 
@@ -146,7 +152,7 @@ def convert_to_list(to_list: _TO_LIST_MIXIN_TYPE) -> List[_COL_TYPE]:
 
 def get_forward_cols(
     df: pd.DataFrame,
-    cols: Union[List[_COL_TYPE], Tuple[_COL_TYPE]],
+    cols: Union[List[NodeColumn], Tuple[NodeColumn]],
     steps_ahead: int,
 ) -> pd.DataFrame:
     """
@@ -176,8 +182,8 @@ def get_forward_cols(
 
 def get_x_and_forward_y_fit_df(
     df: pd.DataFrame,
-    x_cols: List[_COL_TYPE],
-    y_cols: List[_COL_TYPE],
+    x_cols: List[NodeColumn],
+    y_cols: List[NodeColumn],
     steps_ahead: int,
 ) -> pd.DataFrame:
     """
@@ -214,8 +220,8 @@ def get_x_and_forward_y_fit_df(
 
 def get_x_and_forward_y_predict_df(
     df: pd.DataFrame,
-    x_cols: List[_COL_TYPE],
-    y_cols: List[_COL_TYPE],
+    x_cols: List[NodeColumn],
+    y_cols: List[NodeColumn],
     steps_ahead: int,
 ) -> pd.DataFrame:
     """

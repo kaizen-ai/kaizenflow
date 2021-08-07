@@ -9,16 +9,12 @@ import sklearn as sklear
 import core.data_adapters as cdataa
 import core.dataflow.core as cdtfc
 import core.dataflow.nodes.base as cdnb
-import core.dataflow.utils as cdu
+import core.dataflow.utils as cdtfu
 import core.signal_processing as csigna
 import core.statistics as cstati
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
-
-
-_COL_TYPE = Union[int, str]
-_TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 
 # #############################################################################
@@ -37,13 +33,13 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         self,
         nid: cdtfc.NodeId,
         model_func: Callable[..., Any],
-        x_vars: _TO_LIST_MIXIN_TYPE,
-        y_vars: _TO_LIST_MIXIN_TYPE,
+        x_vars: cdtfu.NodeColumnList,
+        y_vars: cdtfu.NodeColumnList,
         steps_ahead: int,
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
-        sample_weight_col: Optional[_TO_LIST_MIXIN_TYPE] = None,
+        sample_weight_col: Optional[cdtfu.NodeColumnList] = None,
     ) -> None:
         """
         Specify the data and sklearn modeling parameters.
@@ -101,22 +97,22 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
 
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: True) -> Dict[str, pd.DataFrame]:
         # Materialize names of x and y vars.
-        x_vars = cdu.convert_to_list(self._x_vars)
-        y_vars = cdu.convert_to_list(self._y_vars)
+        x_vars = cdtfu.convert_to_list(self._x_vars)
+        y_vars = cdtfu.convert_to_list(self._y_vars)
         if self._sample_weight_col is not None:
-            sample_weight_col = cdu.convert_to_list(self._sample_weight_col)
+            sample_weight_col = cdtfu.convert_to_list(self._sample_weight_col)
             dbg.dassert_eq(len(sample_weight_col), 1)
         else:
             sample_weight_col = []
         # Get x and forward y df.
         if fit:
             # This df has no NaNs.
-            df = cdu.get_x_and_forward_y_fit_df(
+            df = cdtfu.get_x_and_forward_y_fit_df(
                 df_in, x_vars + sample_weight_col, y_vars, self._steps_ahead
             )
         else:
             # This df has no `x_vars` NaNs.
-            df = cdu.get_x_and_forward_y_predict_df(
+            df = cdtfu.get_x_and_forward_y_predict_df(
                 df_in, x_vars + sample_weight_col, y_vars, self._steps_ahead
             )
         # Handle presence of NaNs according to `nan_mode`.
@@ -178,7 +174,7 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
             cols=y_vars,
             col_mode=self._col_mode,
         )
-        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
         mode = "fit" if fit else "predict"
         self._set_info(mode, info)
         return {"df_out": df_out}
@@ -223,11 +219,11 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
     def __init__(
         self,
         nid: cdtfc.NodeId,
-        in_col_groups: List[Tuple[_COL_TYPE]],
-        out_col_group: Tuple[_COL_TYPE],
+        in_col_groups: List[Tuple[cdtfu.NodeColumn]],
+        out_col_group: Tuple[cdtfu.NodeColumn],
         model_func: Callable[..., Any],
-        x_vars: List[_COL_TYPE],
-        y_vars: List[_COL_TYPE],
+        x_vars: List[cdtfu.NodeColumn],
+        y_vars: List[cdtfu.NodeColumn],
         steps_ahead: int,
         model_kwargs: Optional[Any] = None,
         nan_mode: Optional[str] = None,
@@ -274,7 +270,7 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
         self._info["fit"] = fit_state["_info['fit']"]
 
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool) -> Dict[str, pd.DataFrame]:
-        cdu.validate_df_indices(df_in)
+        cdtfu.validate_df_indices(df_in)
         dfs = cdnb.GroupedColDfToDfColProcessor.preprocess(
             df_in, self._in_col_groups
         )
@@ -283,7 +279,7 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
         if fit:
             # TODO: compute the shifts first, then stack.
             for key, value in dfs.items():
-                dfs[key] = cdu.get_x_and_forward_y_fit_df(
+                dfs[key] = cdtfu.get_x_and_forward_y_fit_df(
                     value, self._x_vars, self._y_vars, self._steps_ahead
                 )
             stacked_df = self._stack_dfs(dfs)
@@ -325,18 +321,18 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
             results, self._out_col_group
         )
         df_out = df_out.reindex(df_in.index)
-        df_out = cdu.merge_dataframes(df_in, df_out)
+        df_out = cdtfu.merge_dataframes(df_in, df_out)
         method = "fit" if fit else "predict"
         self._set_info(method, info)
         return {"df_out": df_out}
 
-    def _stack_dfs(self, dfs: Dict[_COL_TYPE, pd.DataFrame]) -> pd.DataFrame:
+    def _stack_dfs(self, dfs: Dict[cdtfu.NodeColumn, pd.DataFrame]) -> pd.DataFrame:
         df = pd.concat(dfs.values()).reset_index(drop=True)
         return df
 
     def _unstack_df(
-        self, dfs: Dict[_COL_TYPE, pd.DataFrame], df: pd.DataFrame
-    ) -> Dict[_COL_TYPE, pd.DataFrame]:
+        self, dfs: Dict[cdtfu.NodeColumn, pd.DataFrame], df: pd.DataFrame
+    ) -> Dict[cdtfu.NodeColumn, pd.DataFrame]:
         counter = 0
         out_dfs = {}
         for key, value in dfs.items():
@@ -361,11 +357,11 @@ class MultiindexSkLearnModel(cdnb.FitPredictNode):
     def __init__(
         self,
         nid: cdtfc.NodeId,
-        in_col_groups: List[Tuple[_COL_TYPE]],
-        out_col_group: Tuple[_COL_TYPE],
+        in_col_groups: List[Tuple[cdtfu.NodeColumn]],
+        out_col_group: Tuple[cdtfu.NodeColumn],
         model_func: Callable[..., Any],
-        x_vars: List[_COL_TYPE],
-        y_vars: List[_COL_TYPE],
+        x_vars: List[cdtfu.NodeColumn],
+        y_vars: List[cdtfu.NodeColumn],
         steps_ahead: int,
         model_kwargs: Optional[Any] = None,
         nan_mode: Optional[str] = None,
@@ -412,7 +408,7 @@ class MultiindexSkLearnModel(cdnb.FitPredictNode):
         self._info["fit"] = fit_state["_info['fit']"]
 
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool):
-        cdu.validate_df_indices(df_in)
+        cdtfu.validate_df_indices(df_in)
         dfs = cdnb.GroupedColDfToDfColProcessor.preprocess(
             df_in, self._in_col_groups
         )
@@ -443,7 +439,7 @@ class MultiindexSkLearnModel(cdnb.FitPredictNode):
             results, self._out_col_group
         )
         df_out = df_out.reindex(df_in.index)
-        df_out = cdu.merge_dataframes(df_in, df_out)
+        df_out = cdtfu.merge_dataframes(df_in, df_out)
         method = "fit" if fit else "predict"
         self._set_info(method, info)
         return {"df_out": df_out}
@@ -459,8 +455,8 @@ class SkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
     def __init__(
         self,
         nid: cdtfc.NodeId,
-        x_vars: _TO_LIST_MIXIN_TYPE,
-        y_vars: _TO_LIST_MIXIN_TYPE,
+        x_vars: cdtfu.NodeColumnList,
+        y_vars: cdtfu.NodeColumnList,
         model_func: Callable[..., Any],
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
@@ -501,7 +497,7 @@ class SkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         df_out = self._apply_col_mode(
             df, y_hat, cols=y_vars, col_mode=self._col_mode
         )
-        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
@@ -525,7 +521,7 @@ class SkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         df_out = self._apply_col_mode(
             df, y_hat, cols=y_vars, col_mode=self._col_mode
         )
-        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
@@ -562,18 +558,18 @@ class SkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
 
     def _to_sklearn_format(
         self, df: pd.DataFrame
-    ) -> Tuple[List[_COL_TYPE], np.array, List[_COL_TYPE], np.array]:
-        x_vars = cdu.convert_to_list(self._x_vars)
-        y_vars = cdu.convert_to_list(self._y_vars)
+    ) -> Tuple[List[cdtfu.NodeColumn], np.array, List[cdtfu.NodeColumn], np.array]:
+        x_vars = cdtfu.convert_to_list(self._x_vars)
+        y_vars = cdtfu.convert_to_list(self._y_vars)
         x_vals, y_vals = cdataa.transform_to_sklearn_old(df, x_vars, y_vars)
         return x_vars, x_vals, y_vars, y_vals
 
     @staticmethod
     def _from_sklearn_format(
         idx: pd.Index,
-        x_vars: List[_COL_TYPE],
+        x_vars: List[cdtfu.NodeColumn],
         x_vals: np.array,
-        y_vars: List[_COL_TYPE],
+        y_vars: List[cdtfu.NodeColumn],
         y_vals: np.array,
         y_hat: np.array,
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:

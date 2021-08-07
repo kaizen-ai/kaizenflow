@@ -23,16 +23,14 @@ import pandas as pd
 
 import core.dataflow.core as cdtfc
 import core.dataflow.nodes.base as cdnb
-import core.dataflow.utils as cdu
+import core.dataflow.utils as cdtfu
 import core.finance as cfinan
 import core.signal_processing as csigna
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(*): Create a dataflow types file.
-_COL_TYPE = Union[int, str]
-_PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
+# TODO(gp): -> _ResamplingRule
 _RESAMPLING_RULE_TYPE = Union[pd.DateOffset, pd.Timedelta, str]
 
 
@@ -146,7 +144,7 @@ class ColumnTransformer(cdnb.Transformer, cdnb.ColModeMixin):
             col_mode=self._col_mode,
         )
         # Update `info`.
-        info["df_transformed_info"] = cdu.get_df_info_as_string(df)
+        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
         return df, info
 
 
@@ -256,7 +254,7 @@ class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
             col_mode=self._col_mode,
         )
         #
-        info["df_transformed_info"] = cdu.get_df_info_as_string(df)
+        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
         return df, info
 
 
@@ -268,8 +266,8 @@ class SeriesToDfTransformer(cdnb.Transformer):
     def __init__(
         self,
         nid: cdtfc.NodeId,
-        in_col_group: Tuple[_COL_TYPE],
-        out_col_group: Tuple[_COL_TYPE],
+        in_col_group: Tuple[cdtfu.NodeColumn],
+        out_col_group: Tuple[cdtfu.NodeColumn],
         transformer_func: Callable[..., pd.Series],
         transformer_kwargs: Optional[Dict[str, Any]] = None,
         nan_mode: Optional[str] = None,
@@ -334,8 +332,8 @@ class SeriesToDfTransformer(cdnb.Transformer):
         # single dataframe.
         df = cdnb.SeriesToDfColProcessor.postprocess(dfs, self._out_col_group)
         df = df.reindex(df_in.index)
-        df = cdu.merge_dataframes(df_in, df)
-        info["df_transformed_info"] = cdu.get_df_info_as_string(df)
+        df = cdtfu.merge_dataframes(df_in, df)
+        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
         return df, info
 
 
@@ -377,8 +375,8 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
     def __init__(
         self,
         nid: cdtfc.NodeId,
-        in_col_group: Tuple[_COL_TYPE],
-        out_col_group: Tuple[_COL_TYPE],
+        in_col_group: Tuple[cdtfu.NodeColumn],
+        out_col_group: Tuple[cdtfu.NodeColumn],
         transformer_func: Callable[..., pd.Series],
         transformer_kwargs: Optional[Dict[str, Any]] = None,
         nan_mode: Optional[str] = None,
@@ -450,8 +448,8 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
         df = cdnb.SeriesToSeriesColProcessor.postprocess(
             srs_list, self._out_col_group
         )
-        df = cdu.merge_dataframes(df_in, df)
-        info["df_transformed_info"] = cdu.get_df_info_as_string(df)
+        df = cdtfu.merge_dataframes(df_in, df)
+        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
         return df, info
 
 
@@ -498,7 +496,7 @@ class DataframeMethodRunner(cdnb.Transformer):
     def __init__(
         self,
         nid: cdtfc.NodeId,
-        method: str,
+        method: cdtfc.Method,
         method_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         super().__init__(nid)
@@ -517,7 +515,7 @@ class DataframeMethodRunner(cdnb.Transformer):
         dbg.dassert_isinstance(df, pd.DataFrame)
         #
         info = collections.OrderedDict()
-        info["df_transformed_info"] = cdu.get_df_info_as_string(df)
+        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
         return df, info
 
 
@@ -540,7 +538,7 @@ class FunctionWrapper(cdnb.Transformer):
         dbg.dassert_isinstance(df_out, pd.DataFrame)
         # Update `info`.
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        info["df_transformed_info"] = cdu.get_df_info_as_string(df_out)
+        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df_out)
         return df_out, info
 
 
@@ -581,7 +579,7 @@ class Resample(cdnb.Transformer):
         df = func(**self._agg_func_kwargs)
         # Update `info`.
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        info["df_transformed_info"] = cdu.get_df_info_as_string(df)
+        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
         return df, info
 
 
@@ -639,7 +637,7 @@ class TimeBarResampler(cdnb.Transformer):
         )
         #
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        info["df_transformed_info"] = cdu.get_df_info_as_string(df)
+        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
         return df, info
 
 
@@ -649,8 +647,8 @@ class TwapVwapComputer(cdnb.Transformer):
         self,
         nid: cdtfc.NodeId,
         rule: _RESAMPLING_RULE_TYPE,
-        price_col: _COL_TYPE,
-        volume_col: _COL_TYPE,
+        price_col: cdtfu.NodeColumn,
+        volume_col: cdtfu.NodeColumn,
         offset: Optional[str] = None,
     ) -> None:
         """
@@ -679,7 +677,7 @@ class TwapVwapComputer(cdnb.Transformer):
         )
         #
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        info["df_transformed_info"] = cdu.get_df_info_as_string(df)
+        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
         return df, info
 
 
@@ -688,9 +686,9 @@ class MultiindexTwapVwapComputer(cdnb.Transformer):
         self,
         nid: cdtfc.NodeId,
         rule: _RESAMPLING_RULE_TYPE,
-        price_col_group: Tuple[_COL_TYPE],
-        volume_col_group: Tuple[_COL_TYPE],
-        out_col_group: Tuple[_COL_TYPE],
+        price_col_group: Tuple[cdtfu.NodeColumn],
+        volume_col_group: Tuple[cdtfu.NodeColumn],
+        out_col_group: Tuple[cdtfu.NodeColumn],
     ) -> None:
         """
         Calculate TWAP and VWAP prices from price and volume columns.
@@ -734,5 +732,5 @@ class MultiindexTwapVwapComputer(cdnb.Transformer):
         if self._out_col_group:
             df = pd.concat([df], axis=1, keys=[self._out_col_group])
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        info["df_transformed_info"] = cdu.get_df_info_as_string(df)
+        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
         return df, info

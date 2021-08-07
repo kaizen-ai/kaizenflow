@@ -11,16 +11,11 @@ from tqdm.autonotebook import tqdm
 
 import core.dataflow.core as cdtfc
 import core.dataflow.nodes.base as cdnb
-import core.dataflow.utils as cdu
+import core.dataflow.utils as cdtfu
 import core.signal_processing as csigna
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
-
-
-_COL_TYPE = Union[int, str]
-_PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
-_TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 
 # #############################################################################
@@ -51,11 +46,11 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
     def __init__(
         self,
         nid: cdtfc.NodeId,
-        y_vars: _TO_LIST_MIXIN_TYPE,
+        y_vars: cdtfu.NodeColumnList,
         steps_ahead: int,
         init_kwargs: Optional[Dict[str, Any]] = None,
         fit_kwargs: Optional[Dict[str, Any]] = None,
-        x_vars: Optional[_TO_LIST_MIXIN_TYPE] = None,
+        x_vars: Optional[cdtfu.NodeColumnList] = None,
         add_constant: bool = False,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -98,11 +93,11 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         self._disable_tqdm = disable_tqdm
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        cdu.validate_df_indices(df_in)
+        cdtfu.validate_df_indices(df_in)
         df = df_in.copy()
         idx = df.index
         # Get intersection of non-NaN `y` and `x`.
-        y_vars = cdu.convert_to_list(self._y_vars)
+        y_vars = cdtfu.convert_to_list(self._y_vars)
         y_fit = df[y_vars]
         if self._nan_mode == "leave_unchanged":
             non_nan_idx = idx
@@ -132,15 +127,15 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         # `predict()`.
         fwd_y_hat = self._predict(y_fit, x_fit)
         # Package results.
-        y_vars = cdu.convert_to_list(self._y_vars)
-        forward_y_df = cdu.get_forward_cols(df, y_vars, self._steps_ahead)
+        y_vars = cdtfu.convert_to_list(self._y_vars)
+        forward_y_df = cdtfu.get_forward_cols(df, y_vars, self._steps_ahead)
         df_out = forward_y_df.merge(
             fwd_y_hat, how="outer", left_index=True, right_index=True
         )
         df_out = self._apply_col_mode(
             df,
             df_out,
-            cols=cdu.convert_to_list(self._y_vars),
+            cols=cdtfu.convert_to_list(self._y_vars),
             col_mode=self._col_mode,
         )
         # Add info.
@@ -149,16 +144,16 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         info["model_summary"] = _remove_datetime_info_from_sarimax(
             _convert_sarimax_summary_to_dataframe(self._model_results.summary())
         )
-        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        cdu.validate_df_indices(df_in)
+        cdtfu.validate_df_indices(df_in)
         df = df_in.copy()
         idx = df.index
         # Get intersection of non-NaN `y` and `x`.
-        y_vars = cdu.convert_to_list(self._y_vars)
+        y_vars = cdtfu.convert_to_list(self._y_vars)
         dbg.dassert_eq(len(y_vars), 1, "Only univariate `y` is supported")
         y_predict = df[y_vars]
         if self._x_vars is not None:
@@ -174,15 +169,15 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         self._handle_nans(idx, y_predict.index)
         fwd_y_hat = self._predict(y_predict, x_predict)
         # Package results.
-        y_vars = cdu.convert_to_list(self._y_vars)
-        forward_y_df = cdu.get_forward_cols(df, y_vars, self._steps_ahead)
+        y_vars = cdtfu.convert_to_list(self._y_vars)
+        forward_y_df = cdtfu.get_forward_cols(df, y_vars, self._steps_ahead)
         df_out = forward_y_df.merge(
             fwd_y_hat, how="outer", left_index=True, right_index=True
         )
         df_out = self._apply_col_mode(
             df,
             df_out,
-            cols=cdu.convert_to_list(self._y_vars),
+            cols=cdtfu.convert_to_list(self._y_vars),
             col_mode=self._col_mode,
         )
         # Add info.
@@ -190,7 +185,7 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         info["model_summary"] = _remove_datetime_info_from_sarimax(
             _convert_sarimax_summary_to_dataframe(self._model_results.summary())
         )
-        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
@@ -246,7 +241,7 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         This way we predict `y_t` using `x_{t-n}`, ..., `x_{t-1}`, where `n` is
         `self._steps_ahead`.
         """
-        x_vars = cdu.convert_to_list(self._x_vars)
+        x_vars = cdtfu.convert_to_list(self._x_vars)
         shift = self._steps_ahead
         # Shift index instead of series to extend the index.
         bkwd_x_df = df[x_vars].copy()
@@ -258,7 +253,7 @@ class ContinuousSarimaxModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         if not self._add_constant:
             return x
         if self._x_vars is not None:
-            self._x_vars = cdu.convert_to_list(self._x_vars)
+            self._x_vars = cdtfu.convert_to_list(self._x_vars)
             dbg.dassert_not_in(
                 "const",
                 self._x_vars,
@@ -299,7 +294,7 @@ class MultihorizonReturnsPredictionProcessor(cdnb.FitPredictNode):
         self,
         nid: cdtfc.NodeId,
         target_col: Any,
-        prediction_cols: _TO_LIST_MIXIN_TYPE,
+        prediction_cols: cdtfu.NodeColumnList,
         volatility_col: Any,
     ):
         """
@@ -316,21 +311,21 @@ class MultihorizonReturnsPredictionProcessor(cdnb.FitPredictNode):
         """
         super().__init__(nid)
         self._target_col = target_col
-        self._prediction_cols = cdu.convert_to_list(prediction_cols)
+        self._prediction_cols = cdtfu.convert_to_list(prediction_cols)
         self._volatility_col = volatility_col
         self._max_steps_ahead = len(self._prediction_cols)
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df_out = self._process(df_in)
         info = collections.OrderedDict()
-        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df_out = self._process(df_in)
         info = collections.OrderedDict()
-        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
 

@@ -13,13 +13,12 @@ import pandas as pd
 # This file can use `core.dataflow` package since it's an external client.
 import core.dataflow as cdataf
 import core.finance as cfinan
+import helpers.datetime_ as hdatetime
 import helpers.dbg as dbg
 import helpers.printing as hprint
 import im.kibot as vkibot
 
 _LOG = logging.getLogger(__name__)
-
-_PANDAS_DATE_TYPE = Union[str, pd.Timestamp, datetime.datetime]
 
 
 # #############################################################################
@@ -81,7 +80,7 @@ def data_source_node_factory(
 
 
 def _process_timestamp(
-    timestamp: Optional[_PANDAS_DATE_TYPE],
+    timestamp: Optional[hdatetime.Datetime],
 ) -> Optional[pd.Timestamp]:
     if timestamp is pd.NaT:
         timestamp = None
@@ -95,8 +94,8 @@ def load_kibot_data(
     symbol: str,
     frequency: Union[str, vkibot.Frequency],
     contract_type: Union[str, vkibot.ContractType],
-    start_date: Optional[_PANDAS_DATE_TYPE] = None,
-    end_date: Optional[_PANDAS_DATE_TYPE] = None,
+    start_date: Optional[hdatetime.Datetime] = None,
+    end_date: Optional[hdatetime.Datetime] = None,
     nrows: Optional[int] = None,
 ) -> pd.DataFrame:
     frequency = (
@@ -131,8 +130,8 @@ class KibotDataReader(cdataf.DataSource):
         symbol: str,
         frequency: Union[str, vkibot.Frequency],
         contract_type: Union[str, vkibot.ContractType],
-        start_date: Optional[_PANDAS_DATE_TYPE] = None,
-        end_date: Optional[_PANDAS_DATE_TYPE] = None,
+        start_date: Optional[hdatetime.Datetime] = None,
+        end_date: Optional[hdatetime.Datetime] = None,
         nrows: Optional[int] = None,
     ) -> None:
         """
@@ -190,8 +189,8 @@ class KibotColumnReader(cdataf.DataSource):
         frequency: Union[str, vkibot.Frequency],
         contract_type: Union[str, vkibot.ContractType],
         col: str,
-        start_date: Optional[_PANDAS_DATE_TYPE] = None,
-        end_date: Optional[_PANDAS_DATE_TYPE] = None,
+        start_date: Optional[hdatetime.Datetime] = None,
+        end_date: Optional[hdatetime.Datetime] = None,
         nrows: Optional[int] = None,
     ) -> None:
         """
@@ -249,8 +248,8 @@ class KibotEquityReader(cdataf.DataSource):
         nid: cdataf.NodeId,
         symbols: List[str],
         frequency: Union[str, vkibot.Frequency],
-        start_date: Optional[_PANDAS_DATE_TYPE] = None,
-        end_date: Optional[_PANDAS_DATE_TYPE] = None,
+        start_date: Optional[hdatetime.Datetime] = None,
+        end_date: Optional[hdatetime.Datetime] = None,
         nrows: Optional[int] = None,
     ) -> None:
         """

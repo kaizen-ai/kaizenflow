@@ -139,7 +139,7 @@ class DataFrameModeler:
         self,
         node_class: cdataf.FitPredictNode,
         node_kwargs: Dict[str, Any],
-        method: str = "fit",
+        method: cdataf.Method = "fit",
     ) -> DataFrameModeler:
         """
         Applies dataflow node to dataframe.
@@ -165,7 +165,7 @@ class DataFrameModeler:
         col_rename_func: Optional[Callable[[Any], Any]] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
-        method: str = "fit",
+        method: cdataf.Method = "fit",
     ) -> DataFrameModeler:
         """
         Apply a function to a select of columns.
@@ -187,7 +187,7 @@ class DataFrameModeler:
         x_vars: Union[List[str], Callable[[], List[str]]],
         model_kwargs: Optional[Any] = None,
         nan_mode: Optional[str] = "drop",
-        method: str = "fit",
+        method: cdataf.Method = "fit",
     ) -> DataFrameModeler:
         """
         Apply an unsupervised model and residualize.
@@ -212,7 +212,7 @@ class DataFrameModeler:
         col_rename_func: Optional[Callable[[Any], Any]] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
-        method: str = "fit",
+        method: cdataf.Method = "fit",
     ) -> DataFrameModeler:
         """
         Calculate returns (realized at timestamp).
@@ -234,7 +234,7 @@ class DataFrameModeler:
         self,
         start_time: Optional[datetime.time] = None,
         end_time: Optional[datetime.time] = None,
-        method: str = "fit",
+        method: cdataf.Method = "fit",
     ) -> DataFrameModeler:
         """
         Replace values at non active trading hours with NaNs.
@@ -247,7 +247,7 @@ class DataFrameModeler:
         )
         return self._run_node(model, method)
 
-    def set_weekends_to_nan(self, method: str = "fit") -> DataFrameModeler:
+    def set_weekends_to_nan(self, method: cdataf.Method = "fit") -> DataFrameModeler:
         """
         Replace values over weekends with NaNs.
         """
@@ -657,7 +657,7 @@ class DataFrameModeler:
         raise ValueError(f"Unrecognized mode `{mode}`")
 
     def _run_node(
-        self, model: cdataf.FitPredictNode, method: str
+        self, model: cdataf.FitPredictNode, method: cdataf.Method
     ) -> DataFrameModeler:
         info = collections.OrderedDict()
         if method == "fit":
