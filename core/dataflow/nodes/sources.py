@@ -24,6 +24,8 @@ import helpers.dbg as dbg
 import helpers.printing as hprint
 import helpers.s3 as hs3
 
+strunz
+
 _LOG = logging.getLogger(__name__)
 
 # TODO(*): Create a dataflow types file.

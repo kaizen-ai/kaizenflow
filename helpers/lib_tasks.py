@@ -199,6 +199,8 @@ def _run(ctx: Any, cmd: str, *args: Any, **kwargs: Any) -> None:
     ctx.run(cmd, *args, **kwargs)
 
 
+# TODO(gp): We should factor out the meaning of the params in a string and add it
+#  to all the tasks' help.
 def _get_files_to_process(
     modified: bool,
     branch: bool,
@@ -577,13 +579,12 @@ def git_create_patch(  # type: ignore
     Create a patch file for the entire repo_short_name client from the base
     revision. This script accepts a list of files to package, if specified.
 
+    The parameters `modified`, `branch`, `last_commit` have the same meaning as
+    in `_get_files_to_process()`.
+
     :param mode: what kind of patch to create
         - "diff": (default) creates a patch with the diff of the files
         - "tar": creates a tar ball with all the files
-    :param modified: select the files modified in the client
-    :param branch: select the files modified in the current branch
-    :param last_commit: select the files modified in the previous commit
-    :param files: specify a space-separated list of files
     """
     _report_task(hprint.to_str("mode modified branch last_commit files"))
     _ = ctx
@@ -690,6 +691,8 @@ def git_files(ctx, modified=False, branch=False, last_commit=False, pbcopy=False
     """
     Report which files are changed in the current branch with respect to
     master.
+
+    The params have the same meaning as in `_get_files_to_process()`.
     """
     _report_task()
     _ = ctx
@@ -728,32 +731,51 @@ def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
 @task
 def check_python_files(  # type: ignore
         ctx,
+        compile=True, execute=False,
         modified=False, branch=False, last_commit=False, all_=False, files="",
 ):
     """
-    Run `compileall.compile_file()` on the files.
+    Compile and execute Python files checking for errors.
+
+    The params have the same meaning as in `_get_files_to_process()`.
     """
     _ = ctx
     # We allow to filter through the user specified `files`.
     mutually_exclusive = False
+    remove_dirs = True
     file_list = _get_files_to_process(
-        modified, branch, last_commit, files, all_, mutually_exclusive, remove_dirs
+        modified, branch, last_commit, all_, files, mutually_exclusive, remove_dirs
     )
+    _LOG.debug("Found %d files:\n%s", len(file_list), "\n".join(file_list))
     # Filter keeping only Python files.
+    _LOG.debug("Filtering for Python files")
     exclude_paired_jupytext = True
-    file_list = io_.keep_python_files(file_list)
-    _LOG.debug("Processing %d files", len(file_list))
+    file_list = hio.keep_python_files(file_list, exclude_paired_jupytext)
+    _LOG.debug("file_list=%s", "\n".join(file_list))
+    _LOG.info("Need to process %d files", len(file_list))
+    if not file_list:
+        _LOG.warning("No files were selected")
     # Scan all the files.
     violations = []
     for file_name in file_list:
-        success = compileall.compile_file(
-            file_name,
-            force=True,
-            quiet=0)
-        _LOG.debug("%s -> success=%s", file_name, success)
+        if compile:
+            import compileall
+
+            success = compileall.compile_file(
+                file_name,
+                force=True,
+                quiet=1)
         if not success:
-            _LOG.error("file_name='%s' doesn't compile correctly", file_name)
-            violations.append(file_name)
+            msg = "file_name='%s' doesn't compile correctly" % file_name
+            _LOG.error(msg)
+            violations.append(msg)
+        if execute:
+            cmd = "python %s" % file_name
+            rc = system(cmd, abort_on_error=True)
+            if not rc:
+                msg = "file_name='%s' doesn't run correctly" % file_name
+                _LOG.error(msg)
+                violations.append(msg)
     _LOG.debug("violations=%s", len(violations))
     error = len(violations) > 0
     return error

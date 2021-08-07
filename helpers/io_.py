@@ -6,7 +6,7 @@ Import as:
 import helpers.io_ as hio
 """
 
-# TODO(gp): -> io_helpers
+# TODO(gp): -> hio
 
 import datetime
 import fnmatch
@@ -26,7 +26,7 @@ import helpers.system_interaction as hsinte
 _LOG = logging.getLogger(__name__)
 
 # Set logging level of this file.
-_LOG.setLevel(logging.INFO)
+#_LOG.setLevel(logging.INFO)
 
 
 # #############################################################################
@@ -60,18 +60,6 @@ def find_regex_files(src_dir: str, regex: str) -> List[str]:
     return file_names
 
 
-def is_paired_jupytext_python_file(file_name: str) -> bool:
-    """
-    Return if a Python file has a paired Jupyter notebook.
-    """
-    dbg.dassert(file_name.endswith("py"), "Invalid python filename='%s'", file_name)
-    dbg.dassert_file_exists(file_name)
-    # Check if a corresponding ipynb file exists.
-    ipynb = change_filename_extension(file_name, "py", "ipynb")
-    is_paired = os.path.exists(file_name)
-    return is_paired
-
-
 # TODO(gp): Redundant with `find_files()`.
 def find_all_files(dir_name: str) -> List[str]:
     """
@@ -81,6 +69,20 @@ def find_all_files(dir_name: str) -> List[str]:
     _, file_names = system_to_files(cmd)
     _LOG.debug("Found %s files", len(file_names))
     return file_names
+
+
+def is_paired_jupytext_python_file(py_filename: str) -> bool:
+    """
+    Return if a Python file has a paired Jupyter notebook.
+    """
+    dbg.dassert(py_filename.endswith("py"), "Invalid python filename='%s'", py_filename)
+    dbg.dassert_file_exists(py_filename)
+    # Check if a corresponding ipynb file exists.
+    ipynb_filename = change_filename_extension(py_filename, "py", "ipynb")
+    is_paired = os.path.exists(ipynb_filename)
+    _LOG.debug("Checking ipynb file='%s' for py file='%s': is_paired=%s",
+               py_filename, ipynb_filename, is_paired)
+    return is_paired
 
 
 def keep_python_files(file_names: List[str], exclude_paired_jupytext: bool) -> List[str]:
@@ -101,6 +103,7 @@ def keep_python_files(file_names: List[str], exclude_paired_jupytext: bool) -> L
             else:
                 # Include all the Python files.
                 add = True
+        _LOG.debug("file_name='%s' -> add='%s'", file_name, add)
         if add:
             py_file_names.append(file_name)
     _LOG.debug("Found %s python files", len(py_file_names))
@@ -439,8 +442,8 @@ def change_filename_extension(filename: str, old_ext: str, new_ext: str) -> str:
     :param new_ext: the extension to replace the old extension
     :return: a filename with the new extension
     """
-    dbg.dassert(is_valid_file_name_extension(old_ext), "Invalid extension '%s'", old_ext)
-    dbg.dassert(is_valid_file_name_extension(new_ext), "Invalid extension '%s'", new_ext)
+    dbg.dassert(is_valid_filename_extension(old_ext), "Invalid extension '%s'", old_ext)
+    dbg.dassert(is_valid_filename_extension(new_ext), "Invalid extension '%s'", new_ext)
     dbg.dassert(
         filename.endswith(old_ext),
         "Extension '%s' doesn't match file '%s'",
