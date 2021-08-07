@@ -221,7 +221,7 @@ def _system(
                     if not line:
                         break
                     if not suppress_output:
-                        _LOG.debug("  ==> %s", line.rstrip("\n"))
+                        print("  ==> %s" % line.rstrip("\n"))
                     output += line
                 p.stdout.close()  # type: ignore
                 rc = p.wait()

@@ -731,7 +731,7 @@ def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
 @task
 def check_python_files(  # type: ignore
         ctx,
-        compile=True, execute=False,
+        python_compile=True, python_execute=False,
         modified=False, branch=False, last_commit=False, all_=False, files="",
 ):
     """
@@ -739,6 +739,7 @@ def check_python_files(  # type: ignore
 
     The params have the same meaning as in `_get_files_to_process()`.
     """
+    _report_task()
     _ = ctx
     # We allow to filter through the user specified `files`.
     mutually_exclusive = False
@@ -756,28 +757,31 @@ def check_python_files(  # type: ignore
     if not file_list:
         _LOG.warning("No files were selected")
     # Scan all the files.
-    violations = []
+    failed_filenames = []
     for file_name in file_list:
-        if compile:
+        _LOG.info("Processing '%s'", file_name)
+        if python_compile:
             import compileall
 
             success = compileall.compile_file(
                 file_name,
                 force=True,
                 quiet=1)
-        if not success:
-            msg = "file_name='%s' doesn't compile correctly" % file_name
-            _LOG.error(msg)
-            violations.append(msg)
-        if execute:
-            cmd = "python %s" % file_name
-            rc = system(cmd, abort_on_error=True)
-            if not rc:
-                msg = "file_name='%s' doesn't run correctly" % file_name
+            _LOG.debug("file_name='%s' -> python_compile=%s", file_name, success)
+            if not success:
+                msg = "'%s' doesn't compile correctly" % file_name
                 _LOG.error(msg)
-                violations.append(msg)
-    _LOG.debug("violations=%s", len(violations))
-    error = len(violations) > 0
+                failed_filenames.append(file_name)
+        if python_execute:
+            cmd = f"python {file_name}"
+            rc = hsinte.system(cmd, abort_on_error=False, suppress_output=False)
+            _LOG.debug("file_name='%s' -> python_compile=%s", file_name, rc)
+            if rc != 0:
+                msg = "'%s' doesn't execute correctly" % file_name
+                _LOG.error(msg)
+                failed_filenames.append(file_name)
+    _LOG.info("failed_filenames=%s\n%s", len(failed_filenames), "\n".join(failed_filenames))
+    error = len(failed_filenames) > 0
     return error
 
 
