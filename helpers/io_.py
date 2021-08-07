@@ -26,7 +26,7 @@ import helpers.system_interaction as hsinte
 _LOG = logging.getLogger(__name__)
 
 # Set logging level of this file.
-#_LOG.setLevel(logging.INFO)
+# _LOG.setLevel(logging.INFO)
 
 
 # #############################################################################
@@ -75,17 +75,25 @@ def is_paired_jupytext_python_file(py_filename: str) -> bool:
     """
     Return if a Python file has a paired Jupyter notebook.
     """
-    dbg.dassert(py_filename.endswith("py"), "Invalid python filename='%s'", py_filename)
+    dbg.dassert(
+        py_filename.endswith("py"), "Invalid python filename='%s'", py_filename
+    )
     dbg.dassert_file_exists(py_filename)
     # Check if a corresponding ipynb file exists.
     ipynb_filename = change_filename_extension(py_filename, "py", "ipynb")
     is_paired = os.path.exists(ipynb_filename)
-    _LOG.debug("Checking ipynb file='%s' for py file='%s': is_paired=%s",
-               py_filename, ipynb_filename, is_paired)
+    _LOG.debug(
+        "Checking ipynb file='%s' for py file='%s': is_paired=%s",
+        py_filename,
+        ipynb_filename,
+        is_paired,
+    )
     return is_paired
 
 
-def keep_python_files(file_names: List[str], exclude_paired_jupytext: bool) -> List[str]:
+def keep_python_files(
+    file_names: List[str], exclude_paired_jupytext: bool
+) -> List[str]:
     """
     Return a list with all Python file names (i.e., with the `py` extension).
 
@@ -427,7 +435,9 @@ def get_size_as_str(file_name: str) -> str:
 
 def is_valid_filename_extension(ext: str) -> bool:
     """
-    By convention extensions are the initial `.`. E.g., "tgz" is valid, but not ".tgz".
+    By convention extensions are the initial `.`.
+
+    E.g., "tgz" is valid, but not ".tgz".
     """
     valid = not ext.startswith(".")
     return valid
@@ -442,8 +452,12 @@ def change_filename_extension(filename: str, old_ext: str, new_ext: str) -> str:
     :param new_ext: the extension to replace the old extension
     :return: a filename with the new extension
     """
-    dbg.dassert(is_valid_filename_extension(old_ext), "Invalid extension '%s'", old_ext)
-    dbg.dassert(is_valid_filename_extension(new_ext), "Invalid extension '%s'", new_ext)
+    dbg.dassert(
+        is_valid_filename_extension(old_ext), "Invalid extension '%s'", old_ext
+    )
+    dbg.dassert(
+        is_valid_filename_extension(new_ext), "Invalid extension '%s'", new_ext
+    )
     dbg.dassert(
         filename.endswith(old_ext),
         "Extension '%s' doesn't match file '%s'",
@@ -462,6 +476,7 @@ def change_filename_extension(filename: str, old_ext: str, new_ext: str) -> str:
 # #############################################################################
 # JSON
 # #############################################################################
+
 
 def serialize_custom_types_for_json_encoder(obj: Any) -> Any:
     """

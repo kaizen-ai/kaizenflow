@@ -439,6 +439,10 @@ def purify_amp_references(txt: str) -> str:
     """
     # E.g., `amp/helpers/test/...`
     txt = re.sub(r"^\s*amp\/", "", txt, flags=re.MULTILINE)
+    # E.g., `<amp.helpers.test.test_dbg._Man object at 0x`
+    txt = re.sub(r"<amp\.", "<", txt, flags=re.MULTILINE)
+    # E.g., class 'amp.
+    txt = re.sub(r"class 'amp\.", "class '", txt, flags=re.MULTILINE)
     # E.g., `['amp/helpers/test/...`
     txt = re.sub(r"'amp\/", "'", txt, flags=re.MULTILINE)
     txt = re.sub(r"\/amp\/", "/", txt, flags=re.MULTILINE)

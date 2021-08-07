@@ -121,7 +121,9 @@ class DataSource(FitPredictNode, abc.ABC):
     intervals.
     """
 
-    def __init__(self, nid: cdtfc.NodeId, outputs: Optional[List[str]] = None) -> None:
+    def __init__(
+        self, nid: cdtfc.NodeId, outputs: Optional[List[str]] = None
+    ) -> None:
         if outputs is None:
             outputs = ["df_out"]
         # TODO(gp): This seems a common function. We can factor it out in a
