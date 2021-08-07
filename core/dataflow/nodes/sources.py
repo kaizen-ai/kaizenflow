@@ -27,9 +27,6 @@ import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(*): Create a dataflow types file.
-_COL_TYPE = Union[int, str]
-
 
 # #############################################################################
 

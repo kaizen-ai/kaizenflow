@@ -9,21 +9,10 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 import pandas as pd
 
 import core.dataflow.core as cdtfc
-import core.dataflow.utils as cdu
+import core.dataflow.utils as cdtfu
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
-
-
-# TODO(*): Create a dataflow types file.
-# TODO(gp): -> ColumnType
-_COL_TYPE = Union[int, str]
-
-_TO_LIST_MIXIN_TYPE = Union[
-    List[_COL_TYPE],
-    # Function that returns a list of column types.
-    Callable[[], List[_COL_TYPE]],
-]
 
 
 # #############################################################################
@@ -172,7 +161,7 @@ class DataSource(FitPredictNode, abc.ABC):
         dbg.dassert(not fit_df.empty, "`fit_df` is empty")
         # Update `info`.
         info = collections.OrderedDict()
-        info["fit_df_info"] = cdu.get_df_info_as_string(fit_df)
+        info["fit_df_info"] = cdtfu.get_df_info_as_string(fit_df)
         self._set_info("fit", info)
         return {self.output_names[0]: fit_df}
 
@@ -206,7 +195,7 @@ class DataSource(FitPredictNode, abc.ABC):
         dbg.dassert(not predict_df.empty)
         # Update `info`.
         info = collections.OrderedDict()
-        info["predict_df_info"] = cdu.get_df_info_as_string(predict_df)
+        info["predict_df_info"] = cdtfu.get_df_info_as_string(predict_df)
         self._set_info("predict", info)
         return {self.output_names[0]: predict_df}
 
@@ -341,7 +330,7 @@ class YConnector(FitPredictNode):
         # TODO(Paul): Add meaningful info.
         df_out = self._connector_func(df_in1, df_in2, **self._connector_kwargs)
         info = collections.OrderedDict()
-        info["df_merged_info"] = cdu.get_df_info_as_string(df_out)
+        info["df_merged_info"] = cdtfu.get_df_info_as_string(df_out)
         return df_out, info
 
     @staticmethod
@@ -468,8 +457,8 @@ class GroupedColDfToDfColProcessor:
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
-        col_groups: List[Tuple[_COL_TYPE]],
-    ) -> Dict[_COL_TYPE, pd.DataFrame]:
+        col_groups: List[Tuple[cdtfu.NodeColumn]],
+    ) -> Dict[cdtfu.NodeColumn, pd.DataFrame]:
         """
         Provides wrappers for transformations operating on many columns.
 
@@ -539,8 +528,8 @@ class GroupedColDfToDfColProcessor:
 
     @staticmethod
     def postprocess(
-        dfs: Dict[_COL_TYPE, pd.DataFrame],
-        col_group: Tuple[_COL_TYPE],
+        dfs: Dict[cdtfu.NodeColumn, pd.DataFrame],
+        col_group: Tuple[cdtfu.NodeColumn],
     ) -> pd.DataFrame:
         """
         As in `_postprocess_dataframe_dict()`.
@@ -592,7 +581,7 @@ class CrossSectionalDfToDfColProcessor:
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
-        col_group: Tuple[_COL_TYPE],
+        col_group: Tuple[cdtfu.NodeColumn],
     ) -> pd.DataFrame:
         """
         As in `preprocess_multiindex_cols()`.
@@ -602,7 +591,7 @@ class CrossSectionalDfToDfColProcessor:
     @staticmethod
     def postprocess(
         df: pd.DataFrame,
-        col_group: Tuple[_COL_TYPE],
+        col_group: Tuple[cdtfu.NodeColumn],
     ) -> pd.DataFrame:
         """
         Create a multi-indexed column dataframe from a single-indexed one.
@@ -671,7 +660,7 @@ class SeriesToDfColProcessor:
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
-        col_group: Tuple[_COL_TYPE],
+        col_group: Tuple[cdtfu.NodeColumn],
     ) -> pd.DataFrame:
         """
         As in `preprocess_multiindex_cols()`.
@@ -680,8 +669,8 @@ class SeriesToDfColProcessor:
 
     @staticmethod
     def postprocess(
-        dfs: Dict[_COL_TYPE, pd.DataFrame],
-        col_group: Tuple[_COL_TYPE],
+        dfs: Dict[cdtfu.NodeColumn, pd.DataFrame],
+        col_group: Tuple[cdtfu.NodeColumn],
     ) -> pd.DataFrame:
         """
         As in `_postprocess_dataframe_dict()`.
@@ -702,7 +691,7 @@ class SeriesToSeriesColProcessor:
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
-        col_group: Tuple[_COL_TYPE],
+        col_group: Tuple[cdtfu.NodeColumn],
     ) -> pd.DataFrame:
         """
         As in `preprocess_multiindex_cols()`.
@@ -712,7 +701,7 @@ class SeriesToSeriesColProcessor:
     @staticmethod
     def postprocess(
         srs: List[pd.Series],
-        col_group: Tuple[_COL_TYPE],
+        col_group: Tuple[cdtfu.NodeColumn],
     ) -> pd.DataFrame:
         """
         Create a multi-indexed column dataframe from `srs` and `col_group`.
@@ -738,7 +727,7 @@ class SeriesToSeriesColProcessor:
 
 def preprocess_multiindex_cols(
     df: pd.DataFrame,
-    col_group: Tuple[_COL_TYPE],
+    col_group: Tuple[cdtfu.NodeColumn],
 ) -> pd.DataFrame:
     """
     Extract a single-level column dataframe from a multi-indexed one.
@@ -780,8 +769,8 @@ def preprocess_multiindex_cols(
 
 
 def _postprocess_dataframe_dict(
-    dfs: Dict[_COL_TYPE, pd.DataFrame],
-    col_group: Tuple[_COL_TYPE],
+    dfs: Dict[cdtfu.NodeColumn, pd.DataFrame],
+    col_group: Tuple[cdtfu.NodeColumn],
 ) -> pd.DataFrame:
     """
     Create a multi-indexed column dataframe from keys, values, `col_group`.

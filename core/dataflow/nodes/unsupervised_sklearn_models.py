@@ -7,6 +7,7 @@ import pandas as pd
 
 import core.data_adapters as cdataa
 import core.dataflow.core as cdtfc
+import core.dataflow.utils as cdtfu
 import helpers.dbg as dbg
 from core.dataflow.nodes.base import (
     ColModeMixin,
@@ -21,10 +22,6 @@ from core.dataflow.utils import (
 )
 
 _LOG = logging.getLogger(__name__)
-
-
-_COL_TYPE = Union[int, str]
-_TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 
 class _UnsupervisedSkLearnModelMixin:
@@ -83,7 +80,7 @@ class UnsupervisedSkLearnModel(
         self,
         nid: cdtfc.NodeId,
         model_func: Callable[..., Any],
-        x_vars: Optional[_TO_LIST_MIXIN_TYPE] = None,
+        x_vars: Optional[cdtfu.NodeColumnList] = None,
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
@@ -151,8 +148,8 @@ class MultiindexUnsupervisedSkLearnModel(
     def __init__(
         self,
         nid: cdtfc.NodeId,
-        in_col_group: Tuple[_COL_TYPE],
-        out_col_group: Tuple[_COL_TYPE],
+        in_col_group: Tuple[cdtfu.NodeColumn],
+        out_col_group: Tuple[cdtfu.NodeColumn],
         model_func: Callable[..., Any],
         model_kwargs: Optional[Any] = None,
         nan_mode: Optional[str] = None,
@@ -271,8 +268,8 @@ class Residualizer(FitPredictNode, _ResidualizerMixin):
     def __init__(
         self,
         nid: cdtfc.NodeId,
-        in_col_group: Tuple[_COL_TYPE],
-        out_col_group: Tuple[_COL_TYPE],
+        in_col_group: Tuple[cdtfu.NodeColumn],
+        out_col_group: Tuple[cdtfu.NodeColumn],
         model_func: Callable[..., Any],
         model_kwargs: Optional[Any] = None,
         nan_mode: Optional[str] = None,
@@ -335,8 +332,8 @@ class SkLearnInverseTransformer(FitPredictNode, ColModeMixin):
         self,
         nid: cdtfc.NodeId,
         model_func: Callable[..., Any],
-        x_vars: _TO_LIST_MIXIN_TYPE,
-        trans_x_vars: _TO_LIST_MIXIN_TYPE,
+        x_vars: cdtfu.NodeColumnList,
+        trans_x_vars: cdtfu.NodeColumnList,
         model_kwargs: Optional[Any] = None,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,

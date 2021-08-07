@@ -6,16 +6,12 @@ import pandas as pd
 
 import core.dataflow.core as cdtfc
 import core.dataflow.nodes.base as cdnb
-import core.dataflow.utils as cdu
+import core.dataflow.utils as cdtfu
 import core.signal_processing as csigna
 import core.statistics as cstati
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
-
-
-_COL_TYPE = Union[int, str]
-_TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 
 class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
@@ -26,7 +22,7 @@ class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
     def __init__(
         self,
         nid: cdtfc.NodeId,
-        cols: _TO_LIST_MIXIN_TYPE,
+        cols: cdtfu.NodeColumnList,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
     ) -> None:
@@ -48,7 +44,7 @@ class LocalLevelModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
     def _fit_predict_helper(
         self, df_in: pd.DataFrame, fit: bool
     ) -> Dict[str, pd.DataFrame]:
-        cols = cdu.convert_to_list(self._cols)
+        cols = cdtfu.convert_to_list(self._cols)
         dbg.dassert_eq(
             len(cols), 1, msg="`LocalLevelModel` only supports a single column."
         )

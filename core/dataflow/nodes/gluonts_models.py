@@ -10,15 +10,11 @@ import pandas as pd
 import core.backtest as cbackt
 import core.data_adapters as cdataa
 import core.dataflow.core as cdtfc
-import core.dataflow.utils as cdu
+import core.dataflow.utils as cdtfu
 import helpers.dbg as dbg
 from core.dataflow.nodes.base import FitPredictNode
 
 _LOG = logging.getLogger(__name__)
-
-
-_COL_TYPE = Union[int, str]
-_TO_LIST_MIXIN_TYPE = Union[List[_COL_TYPE], Callable[[], List[_COL_TYPE]]]
 
 
 # #############################################################################
@@ -51,10 +47,10 @@ class ContinuousDeepArModel(FitPredictNode):
     def __init__(
         self,
         nid: cdtfc.NodeId,
-        y_vars: _TO_LIST_MIXIN_TYPE,
+        y_vars: cdtfu.NodeColumnList,
         trainer_kwargs: Optional[Any] = None,
         estimator_kwargs: Optional[Any] = None,
-        x_vars: Optional[_TO_LIST_MIXIN_TYPE] = None,
+        x_vars: Optional[cdtfu.NodeColumnList] = None,
         num_traces: int = 100,
     ) -> None:
         """
@@ -102,17 +98,17 @@ class ContinuousDeepArModel(FitPredictNode):
         )
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        cdu.validate_df_indices(df_in)
+        cdtfu.validate_df_indices(df_in)
         df = df_in.copy()
         # Obtain index slice for which forward targets exist.
         dbg.dassert_lt(self._prediction_length, df.index.size)
         df_fit = df.iloc[: -self._prediction_length]
         #
         if self._x_vars is not None:
-            x_vars = cdu.convert_to_list(self._x_vars)
+            x_vars = cdtfu.convert_to_list(self._x_vars)
         else:
             x_vars = None
-        y_vars = cdu.convert_to_list(self._y_vars)
+        y_vars = cdtfu.convert_to_list(self._y_vars)
         # Transform dataflow local timeseries dataframe into gluon-ts format.
         gluon_train = cdataa.transform_to_gluon(
             df_fit, x_vars, y_vars, df_fit.index.freq.freqstr
@@ -139,19 +135,19 @@ class ContinuousDeepArModel(FitPredictNode):
         info["model_x_vars"] = x_vars
         #
         df_out = fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
-        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
         self._set_info("fit", info)
         dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        cdu.validate_df_indices(df_in)
+        cdtfu.validate_df_indices(df_in)
         df = df_in.copy()
         if self._x_vars is not None:
-            x_vars = cdu.convert_to_list(self._x_vars)
+            x_vars = cdtfu.convert_to_list(self._x_vars)
         else:
             x_vars = None
-        y_vars = cdu.convert_to_list(self._y_vars)
+        y_vars = cdtfu.convert_to_list(self._y_vars)
         gluon_train = cdataa.transform_to_gluon(
             df, x_vars, y_vars, df.index.freq.freqstr
         )
@@ -176,7 +172,7 @@ class ContinuousDeepArModel(FitPredictNode):
         info["model_x_vars"] = x_vars
         #
         df_out = fwd_y.merge(fwd_y_hat, left_index=True, right_index=True)
-        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
         self._set_info("predict", info)
         dbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
@@ -195,8 +191,8 @@ class DeepARGlobalModel(FitPredictNode):
     def __init__(
         self,
         nid: cdtfc.NodeId,
-        x_vars: _TO_LIST_MIXIN_TYPE,
-        y_vars: _TO_LIST_MIXIN_TYPE,
+        x_vars: cdtfu.NodeColumnList,
+        y_vars: cdtfu.NodeColumnList,
         trainer_kwargs: Optional[Any] = None,
         estimator_kwargs: Optional[Any] = None,
     ) -> None:
@@ -254,8 +250,8 @@ class DeepARGlobalModel(FitPredictNode):
         """
         dbg.dassert_isinstance(df_in, pd.DataFrame)
         dbg.dassert_no_duplicates(df_in.columns)
-        x_vars = cdu.convert_to_list(self._x_vars)
-        y_vars = cdu.convert_to_list(self._y_vars)
+        x_vars = cdtfu.convert_to_list(self._x_vars)
+        y_vars = cdtfu.convert_to_list(self._y_vars)
         df = df_in.copy()
         # Transform dataflow local timeseries dataframe into gluon-ts format.
         gluon_train = cdataa.transform_to_gluon(df, x_vars, y_vars, self._freq)
@@ -308,15 +304,15 @@ class DeepARGlobalModel(FitPredictNode):
         # info["gluon_test"] = list(gluon_test)
         # info["fit_predictions"] = fit_predictions
         df_out = y_hat.to_frame()
-        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
         self._set_info("fit", info)
         return {"df_out": df_out}
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         dbg.dassert_isinstance(df_in, pd.DataFrame)
         dbg.dassert_no_duplicates(df_in.columns)
-        x_vars = cdu.convert_to_list(self._x_vars)
-        y_vars = cdu.convert_to_list(self._y_vars)
+        x_vars = cdtfu.convert_to_list(self._x_vars)
+        y_vars = cdtfu.convert_to_list(self._y_vars)
         df = df_in.copy()
         # Transform dataflow local timeseries dataframe into gluon-ts format.
         gluon_test = cdataa.transform_to_gluon(
@@ -356,6 +352,6 @@ class DeepARGlobalModel(FitPredictNode):
         # info["gluon_test"] = list(gluon_test)
         # info["fit_predictions"] = fit_predictions
         df_out = y_hat.to_frame()
-        info["df_out_info"] = cdu.get_df_info_as_string(df_out)
+        info["df_out_info"] = cdtfu.get_df_info_as_string(df_out)
         self._set_info("predict", info)
         return {"df_out": df_out}
