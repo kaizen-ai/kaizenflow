@@ -357,13 +357,16 @@ def compute_jensen_ratio(
     prefix: Optional[str] = None,
 ) -> pd.Series:
     """
-    Calculate a ratio >= 1 with equality only when Jensen's inequality holds.
+    Calculate a 0 < ratio <= 1 based on Jensen's inequality.
+
+    TODO(Paul): Rename this "J-ratio" and the function `compute_j_ratio()` for
+        short.
 
     Definition and derivation:
-      - The result is the p-th root of the expectation of the p-th power of
-        abs(f), divided by the expectation of abs(f). If we apply Jensen's
-        inequality to (abs(signal)**p)**(1/p), renormalizing the lower bound to
-        1, then the upper bound is the valued calculated by this function.
+      - The result is the expectation of abs(f) divided by the p-th root of the
+        expectation of the p-th power of abs(f). If we apply Jensen's
+        inequality to (abs(signal)**p)**(1/p), renormalizing the greater value
+        to 1, then the lesser value is the valued calculated by this function.
       - An alternative derivation is to apply Holder's inequality to `signal`,
         using the constant function `1` on the support of the `signal` as the
         2nd function.
@@ -371,14 +374,15 @@ def compute_jensen_ratio(
     Interpretation:
       - If we apply this function to returns in the case where the expected
         value of returns is 0 and we take p_norm = 2, then the result of this
-        function can be interpreted as a renormalized realized volatility.
-      - For a Gaussian signal, the expected value is np.sqrt(np.pi / 2), which
-        is approximately 1.25. This holds regardless of the volatility of the
+        function can be interpreted as a renormalized realized (inverse)
+        volatility.
+      - For a Gaussian signal, the expected value is np.sqrt(2 / np.pi), which
+        is approximately 0.80. This holds regardless of the volatility of the
         Gaussian (so the measure is scale invariant).
       - For a stationary function, the expected value does not change with
         sampled series length.
       - For a signal that is t-distributed with 4 dof, the expected value is
-        approximately 1.41.
+        approximately 0.71.
     """
     dbg.dassert_isinstance(signal, pd.Series)
     # Require that we evaluate a norm.
@@ -418,7 +422,7 @@ def compute_jensen_ratio(
     l1 = sp.linalg.norm(data, ord=1)
     # Ignore support where `signal` has NaNs.
     scaled_support = data.size ** (1 - 1 / p_norm)
-    jensen_ratio = scaled_support * lp / l1
+    jensen_ratio = l1 / (scaled_support * lp)
     res = pd.Series(
         data=[jensen_ratio], index=[prefix + "jensen_ratio"], name=signal.name
     )
