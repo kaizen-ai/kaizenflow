@@ -1214,6 +1214,8 @@ def compute_implied_sharpe_ratio(srs: pd.Series, corr: float) -> float:
     used directly, but rather only the knowledge of whether they are
     included in `srs.count()`, e.g., are non-NaN, non-inf, etc.
     """
+    dbg.dassert_lte(-1, corr)
+    dbg.dassert_lte(corr, 1)
     count_per_year = hdataf.compute_count_per_year(srs)
     sr = apply_sharpe_ratio_correlation_conversion(
         count_per_year, correlation=corr
@@ -1221,25 +1223,33 @@ def compute_implied_sharpe_ratio(srs: pd.Series, corr: float) -> float:
     return sr
 
 
-def compute_hit_rate_implied_by_correlation(corr: float) -> float:
+def compute_hit_rate_implied_by_correlation(corr: float, j_ratio: Optional[float] = None) -> float:
     """
     Infer hit rate given `corr`.
 
     This approximation is only valid under certain distributional assumptions.
     """
-    const = np.sqrt(np.pi / 2)
-    return sp.stats.norm.sf(-1 * const * corr)
+    j_ratio = j_ratio or np.sqrt(2 / np.pi)
+    dbg.dassert_lt(0, j_ratio)
+    dbg.dassert_lte(j_ratio, 1)
+    dbg.dassert_lte(-1, corr)
+    dbg.dassert_lte(corr, 1)
+    return sp.stats.norm.sf(-1 * corr / j_ratio)
 
 
-def compute_correlation_implied_by_hit_rate(hit_rate: float) -> float:
+def compute_correlation_implied_by_hit_rate(hit_rate: float, j_ratio: Optional[float] = None) -> float:
     """
     Infer correlation given `hit_rate`. Assumes normal-like series.
 
     This inverts `compute_hit_rate_implied_by_correlation()` and is similarly
     only valid under certain distributional assumptions.
     """
-    const = np.sqrt(2 / np.pi)
-    return const * sp.stats.norm.ppf(hit_rate)
+    j_ratio = j_ratio or np.sqrt(2 / np.pi)
+    dbg.dassert_lt(0, j_ratio)
+    dbg.dassert_lte(j_ratio, 1)
+    dbg.dassert_lte(0, hit_rate)
+    dbg.dassert_lte(hit_rate, 1)
+    return j_ratio * sp.stats.norm.ppf(hit_rate)
 
 
 # #############################################################################
