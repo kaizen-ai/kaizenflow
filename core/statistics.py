@@ -138,7 +138,9 @@ def compute_special_value_stats(
         compute_dyadic_scale(1 / np.sqrt(num_finite_samples)),
         count_num_unique_values(srs),
     ]
-    result = pd.Series(data=result_values, index=result_index, name=srs.name, dtype=object)
+    result = pd.Series(
+        data=result_values, index=result_index, name=srs.name, dtype=object
+    )
     return result
 
 
@@ -295,8 +297,8 @@ def compute_dyadic_scale(num: float) -> int:
     """
     Return the dyadic scale of a number.
 
-    We take this to be the integer `j` such that
-    2 ** j <= abs(num) < 2 ** (j + 1)
+    We take this to be the integer `j` such that 2 ** j <= abs(num) < 2
+    ** (j + 1)
     """
     abs_num = np.abs(num)
     dbg.dassert_lt(0, abs_num)
@@ -1223,11 +1225,14 @@ def compute_implied_sharpe_ratio(srs: pd.Series, corr: float) -> float:
     return sr
 
 
-def compute_hit_rate_implied_by_correlation(corr: float, j_ratio: Optional[float] = None) -> float:
+def compute_hit_rate_implied_by_correlation(
+    corr: float, j_ratio: Optional[float] = None
+) -> float:
     """
     Infer hit rate given `corr`.
 
-    This approximation is only valid under certain distributional assumptions.
+    This approximation is only valid under certain distributional
+    assumptions.
     """
     j_ratio = j_ratio or np.sqrt(2 / np.pi)
     dbg.dassert_lt(0, j_ratio)
@@ -1237,12 +1242,14 @@ def compute_hit_rate_implied_by_correlation(corr: float, j_ratio: Optional[float
     return sp.stats.norm.sf(-1 * corr / j_ratio)
 
 
-def compute_correlation_implied_by_hit_rate(hit_rate: float, j_ratio: Optional[float] = None) -> float:
+def compute_correlation_implied_by_hit_rate(
+    hit_rate: float, j_ratio: Optional[float] = None
+) -> float:
     """
     Infer correlation given `hit_rate`. Assumes normal-like series.
 
-    This inverts `compute_hit_rate_implied_by_correlation()` and is similarly
-    only valid under certain distributional assumptions.
+    This inverts `compute_hit_rate_implied_by_correlation()` and is
+    similarly only valid under certain distributional assumptions.
     """
     j_ratio = j_ratio or np.sqrt(2 / np.pi)
     dbg.dassert_lt(0, j_ratio)

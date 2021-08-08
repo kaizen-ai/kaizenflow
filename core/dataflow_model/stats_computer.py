@@ -173,7 +173,9 @@ class StatsComputer:
             results.append(pd.concat([sr], keys=["signal_quality"]))
             j_ratio = cstati.compute_jensen_ratio(returns)["jensen_ratio"]
             hit_rate = pd.Series(
-                cstati.compute_hit_rate_implied_by_correlation(prediction_corr, j_ratio),
+                cstati.compute_hit_rate_implied_by_correlation(
+                    prediction_corr, j_ratio
+                ),
                 index=["hit_rate_implied_by_prediction_corr"],
                 name=name,
             )
