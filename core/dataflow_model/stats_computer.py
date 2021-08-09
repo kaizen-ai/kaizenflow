@@ -155,14 +155,6 @@ class StatsComputer:
                 name=name,
             )
             results.append(pd.concat([corr], keys=["correlation"]))
-            hit_rate = cstati.calculate_hit_rate(pnl)
-            hit_rate = hit_rate["hit_rate_point_est_(%)"] / 100
-            corr2 = pd.Series(
-                cstati.compute_correlation_implied_by_hit_rate(hit_rate),
-                index=["prediction_corr_implied_by_hit_rate"],
-                name=name,
-            )
-            results.append(pd.concat([corr2], keys=["correlation"]))
         # Currently we do not calculate individual prediction/returns stats.
         if returns_col is not None and predictions_col is not None:
             name = "pnl"
@@ -179,12 +171,23 @@ class StatsComputer:
                 name=name,
             )
             results.append(pd.concat([sr], keys=["signal_quality"]))
+            j_ratio = cstati.compute_jensen_ratio(returns)["jensen_ratio"]
             hit_rate = pd.Series(
-                cstati.compute_hit_rate_implied_by_correlation(corr),
+                cstati.compute_hit_rate_implied_by_correlation(
+                    prediction_corr, j_ratio
+                ),
                 index=["hit_rate_implied_by_prediction_corr"],
                 name=name,
             )
             results.append(pd.concat([hit_rate], keys=["finance"]))
+            hit_rate = cstati.calculate_hit_rate(returns * predictions)
+            hit_rate = hit_rate["hit_rate_point_est_(%)"] / 100
+            corr2 = pd.Series(
+                cstati.compute_correlation_implied_by_hit_rate(hit_rate, j_ratio),
+                index=["prediction_corr_implied_by_hit_rate"],
+                name=name,
+            )
+            results.append(pd.concat([corr2], keys=["correlation"]))
         if returns_col is not None and positions_col is not None:
             returns = df[returns_col]
             positions = df[positions_col]

@@ -1,2 +1,2 @@
                      0
-jensen_ratio  1.263003
+jensen_ratio  0.791764

@@ -1,2 +1,2 @@
                                0
-commodity_jensen_ratio  1.263003
+commodity_jensen_ratio  0.791764

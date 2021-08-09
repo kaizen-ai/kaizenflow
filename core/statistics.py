@@ -138,7 +138,9 @@ def compute_special_value_stats(
         compute_dyadic_scale(1 / np.sqrt(num_finite_samples)),
         count_num_unique_values(srs),
     ]
-    result = pd.Series(data=result_values, index=result_index, name=srs.name, dtype=object)
+    result = pd.Series(
+        data=result_values, index=result_index, name=srs.name, dtype=object
+    )
     return result
 
 
@@ -295,8 +297,8 @@ def compute_dyadic_scale(num: float) -> int:
     """
     Return the dyadic scale of a number.
 
-    We take this to be the integer `j` such that
-    2 ** j <= abs(num) < 2 ** (j + 1)
+    We take this to be the integer `j` such that 2 ** j <= abs(num) < 2
+    ** (j + 1)
     """
     abs_num = np.abs(num)
     dbg.dassert_lt(0, abs_num)
@@ -357,13 +359,16 @@ def compute_jensen_ratio(
     prefix: Optional[str] = None,
 ) -> pd.Series:
     """
-    Calculate a ratio >= 1 with equality only when Jensen's inequality holds.
+    Calculate a 0 < ratio <= 1 based on Jensen's inequality.
+
+    TODO(Paul): Rename this "J-ratio" and the function `compute_j_ratio()` for
+        short.
 
     Definition and derivation:
-      - The result is the p-th root of the expectation of the p-th power of
-        abs(f), divided by the expectation of abs(f). If we apply Jensen's
-        inequality to (abs(signal)**p)**(1/p), renormalizing the lower bound to
-        1, then the upper bound is the valued calculated by this function.
+      - The result is the expectation of abs(f) divided by the p-th root of the
+        expectation of the p-th power of abs(f). If we apply Jensen's
+        inequality to (abs(signal)**p)**(1/p), renormalizing the greater value
+        to 1, then the lesser value is the valued calculated by this function.
       - An alternative derivation is to apply Holder's inequality to `signal`,
         using the constant function `1` on the support of the `signal` as the
         2nd function.
@@ -371,14 +376,15 @@ def compute_jensen_ratio(
     Interpretation:
       - If we apply this function to returns in the case where the expected
         value of returns is 0 and we take p_norm = 2, then the result of this
-        function can be interpreted as a renormalized realized volatility.
-      - For a Gaussian signal, the expected value is np.sqrt(np.pi / 2), which
-        is approximately 1.25. This holds regardless of the volatility of the
+        function can be interpreted as a renormalized realized (inverse)
+        volatility.
+      - For a Gaussian signal, the expected value is np.sqrt(2 / np.pi), which
+        is approximately 0.80. This holds regardless of the volatility of the
         Gaussian (so the measure is scale invariant).
       - For a stationary function, the expected value does not change with
         sampled series length.
       - For a signal that is t-distributed with 4 dof, the expected value is
-        approximately 1.41.
+        approximately 0.71.
     """
     dbg.dassert_isinstance(signal, pd.Series)
     # Require that we evaluate a norm.
@@ -418,7 +424,7 @@ def compute_jensen_ratio(
     l1 = sp.linalg.norm(data, ord=1)
     # Ignore support where `signal` has NaNs.
     scaled_support = data.size ** (1 - 1 / p_norm)
-    jensen_ratio = scaled_support * lp / l1
+    jensen_ratio = l1 / (scaled_support * lp)
     res = pd.Series(
         data=[jensen_ratio], index=[prefix + "jensen_ratio"], name=signal.name
     )
@@ -1210,6 +1216,8 @@ def compute_implied_sharpe_ratio(srs: pd.Series, corr: float) -> float:
     used directly, but rather only the knowledge of whether they are
     included in `srs.count()`, e.g., are non-NaN, non-inf, etc.
     """
+    dbg.dassert_lte(-1, corr)
+    dbg.dassert_lte(corr, 1)
     count_per_year = hdataf.compute_count_per_year(srs)
     sr = apply_sharpe_ratio_correlation_conversion(
         count_per_year, correlation=corr
@@ -1217,25 +1225,38 @@ def compute_implied_sharpe_ratio(srs: pd.Series, corr: float) -> float:
     return sr
 
 
-def compute_hit_rate_implied_by_correlation(corr: float) -> float:
+def compute_hit_rate_implied_by_correlation(
+    corr: float, j_ratio: Optional[float] = None
+) -> float:
     """
     Infer hit rate given `corr`.
 
-    This approximation is only valid under certain distributional assumptions.
+    This approximation is only valid under certain distributional
+    assumptions.
     """
-    const = np.sqrt(np.pi / 2)
-    return sp.stats.norm.sf(-1 * const * corr)
+    j_ratio = j_ratio or np.sqrt(2 / np.pi)
+    dbg.dassert_lt(0, j_ratio)
+    dbg.dassert_lte(j_ratio, 1)
+    dbg.dassert_lte(-1, corr)
+    dbg.dassert_lte(corr, 1)
+    return sp.stats.norm.sf(-1 * corr / j_ratio)
 
 
-def compute_correlation_implied_by_hit_rate(hit_rate: float) -> float:
+def compute_correlation_implied_by_hit_rate(
+    hit_rate: float, j_ratio: Optional[float] = None
+) -> float:
     """
     Infer correlation given `hit_rate`. Assumes normal-like series.
 
-    This inverts `compute_hit_rate_implied_by_correlation()` and is similarly
-    only valid under certain distributional assumptions.
+    This inverts `compute_hit_rate_implied_by_correlation()` and is
+    similarly only valid under certain distributional assumptions.
     """
-    const = np.sqrt(2 / np.pi)
-    return const * sp.stats.norm.ppf(hit_rate)
+    j_ratio = j_ratio or np.sqrt(2 / np.pi)
+    dbg.dassert_lt(0, j_ratio)
+    dbg.dassert_lte(j_ratio, 1)
+    dbg.dassert_lte(0, hit_rate)
+    dbg.dassert_lte(hit_rate, 1)
+    return j_ratio * sp.stats.norm.ppf(hit_rate)
 
 
 # #############################################################################

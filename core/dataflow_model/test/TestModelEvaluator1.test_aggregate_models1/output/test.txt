@@ -27,7 +27,7 @@ summary        scipy.mean                                           0.003336
                scipy.kurtosis                                       8.444015
                null_mean_zero.tval                                 27.529621
                null_mean_zero.pval                                       0.0
-               jensen_ratio                                          1.66674
+               jensen_ratio                                         0.599974
                count                                                  2610.0
                mean                                                 0.003336
                std                                                  0.006191
@@ -67,4 +67,3 @@ finance        annualized_mean_return_(%)                          87.035456
                hit_rate_97.50%CI_lower_bound_(%)                   68.025947
                hit_rate_97.50%CI_upper_bound_(%)                   71.547007
 correlation    prediction_corr_implied_by_pnl                       0.639684
-               prediction_corr_implied_by_hit_rate                  0.414021
