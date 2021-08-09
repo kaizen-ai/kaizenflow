@@ -1364,7 +1364,6 @@ class Test_compute_correlation_implied_by_hit_rate(hut.TestCase):
         np.testing.asseert_allclose(actual, 0.0200002)
 
 
-
 class Test_compute_drawdown_cdf(hut.TestCase):
     def test1(self) -> None:
         sharpe_ratio = 1
