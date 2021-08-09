@@ -6,17 +6,20 @@ import random
 import helpers.introspection as hintro
 
 
-start_time = time.time()
+#start_time = time.time()
 
 
 mode = "true"
 
 
 def print_message(msg):
-    current_time = get_current_time()
-    replayed_time = round(time.time() - start_time, 1)
+    #current_time = get_current_time()
+    #replayed_time = round(time.time() - start_time, 1)
+    replayed_time = round(loop.time() - start_time, 1)
+
     func_name = hintro.get_function_name(1)
-    print(f"{current_time}: {replayed_time}: {func_name}: {msg}")
+    #print(f"{current_time}: {replayed_time}: {func_name}: {msg}")
+    print(f"{replayed_time}: {func_name}: {msg}")
 
 
 async def execute_task(max_delay_in_sec):
@@ -36,7 +39,8 @@ async def wait_on_db_1min_bar_data():
 
 async def execute_dag():
     current_time = get_current_time()
-    if current_time.secs % 5 == 0:
+    print_message("current_time=%s" % current_time)
+    if current_time.second % 5 == 0:
         print_message("# Time to execute DAG!")
         # Wait for the DB to be updated.
         print_message("Waiting on DB bar: start")
@@ -58,12 +62,14 @@ async def heartbeat():
 
 
 async def sleep(interval_in_secs: int):
-    if true_real_time:
+    if mode == "true":
         asyncio.sleep(interval)
-    elif replayed_real_time:
+    elif mode == "replayed":
         asyncio.sleep(interval)
-    elif simulated_time:
+    elif mode == "simulated":
         await external_clock()
+    else:
+        raise ValueError
 
 
 def get_current_time():
@@ -80,18 +86,48 @@ def get_current_time():
 
 
 async def infinite_loop():
+    interval_in_secs = 5
+    num_iters = 0
     while True:
-        print_message()
-        interval_in_secs = 5
+        print_message("Infinite loop: start")
         await asyncio.gather(
             asyncio.sleep(interval_in_secs),
             execute_dag(),
         )
+        print_message("Infinite loop: end")
+        num_iters += 1
+        if num_iters > 5:
+            break
 
-
-asyncio.run(inifinte_loop)
 
 
 # How to "simulate time"?
 # - Maybe add a fake clock instead that is incremented every time?
 # -
+
+
+# async def infinite_loop():
+#     print(loop.time())
+#     await asyncio.sleep(60)
+#     print(loop.time())
+
+#
+if False:
+    import async_solipsism
+    loop = async_solipsism.EventLoop()
+else:
+    loop = asyncio.new_event_loop()
+
+asyncio.set_event_loop(loop)
+start_time = loop.time()
+
+#asyncio.run(infinite_loop())
+
+#loop = asyncio.get_event_loop()
+try:
+    loop.run_until_complete(infinite_loop())
+finally:
+    loop.close()
+
+
+
