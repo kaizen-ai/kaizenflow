@@ -14,6 +14,9 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+
+
 class TestJsonRoundtrip1(hut.TestCase):
     """
     Test roundtrip conversion through jsonpickle for different types.
@@ -44,6 +47,9 @@ class TestJsonRoundtrip1(hut.TestCase):
         obj = datetime.date(2015, 1, 1)
         #
         hplayb.round_trip_convert(obj, logging.DEBUG)
+
+
+# #############################################################################
 
 
 class TestPlaybackInputOutput1(hut.TestCase):
@@ -277,9 +283,12 @@ class TestPlaybackInputOutput1(hut.TestCase):
                 code = get_result_cs(*args, **kwargs)
         else:
             raise ValueError("Invalid mode ")
-        self.check_string(code)
+        self.check_string(code, purify_text=True)
         _LOG.debug("Testing code:\n%s", code)
         exec(code, locals())  # pylint: disable=exec-used
+
+
+# #############################################################################
 
 
 class TestToPythonCode1(hut.TestCase):
@@ -390,6 +399,9 @@ class TestToPythonCode1(hut.TestCase):
         self.assert_equal(res, expected)
 
 
+# #############################################################################
+
+
 class TestPlaybackFilePath1(hut.TestCase):
     """
     Test file mode correctness.
@@ -403,6 +415,9 @@ class TestPlaybackFilePath1(hut.TestCase):
         self.assert_equal(
             test_file, "./path/to/test/test_by_playback_somewhere.py"
         )
+
+
+# #############################################################################
 
 
 class TestPlaybackFileMode1(hut.TestCase):
