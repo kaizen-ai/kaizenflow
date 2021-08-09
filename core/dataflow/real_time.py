@@ -86,6 +86,7 @@ def get_data_as_of_datetime(
     return df
 
 
+# TODO(gp): -> ReplayedRealTime
 class ReplayRealTime:
     """
     Allow to test a real-time system replaying current times in the past.
@@ -260,7 +261,60 @@ class Events(List[Event]):
 GetCurrentTimeFunction = Callable[[], pd.Timestamp]
 
 
+# TODO(gp): -> sync
 def execute_with_real_time_loop(
+    sleep_interval_in_secs: float,
+    num_iterations: Optional[int],
+    get_current_time: GetCurrentTimeFunction,
+    need_to_execute: Callable[[pd.Timestamp], bool],
+    workload: Callable[[pd.Timestamp], Any],
+) -> Tuple[Events, List[Any]]:
+    """
+    Execute a function using a true or simulated real-time loop.
+
+    :param sleep_interval_in_secs: the loop wakes up every `sleep_interval_in_secs`
+        true or simulated seconds
+    :param num_iterations: number of loops to execute. `None` means an infinite loop
+    :param get_current_time: function returning the current true or simulated time
+    :param need_to_execute: function returning true when the DAG needs to be
+        executed
+    :param workload: function executing the work when `need_to_execute()` requires to
+
+    :return: a Tuple with:
+        - an execution trace representing the events in the real-time loop; and
+        - a list of results returned by the workload function
+    """
+    dbg.dassert_lt(0, sleep_interval_in_secs)
+    if num_iterations is not None:
+        dbg.dassert_lt(0, num_iterations)
+    #
+    events = Events()
+    results = []
+    num_it = 1
+    while True:
+        # Compute.
+        current_time = get_current_time()
+        execute = need_to_execute(current_time)
+        wall_clock_time = hdatetime.get_current_time(tz="ET")
+        # Update the current events.
+        event = Event(num_it, current_time, wall_clock_time, execute)
+        _LOG.debug("event='%s'", str(event))
+        events.append(event)
+        # Execute the workload, if needed.
+        if execute:
+            _LOG.debug("  -> execute")
+            result = workload(current_time)
+            results.append((current_time, result))
+        # Exit, if needed.
+        if num_iterations is not None and num_it >= num_iterations:
+            break
+        # Go to sleep.
+        time.sleep(sleep_interval_in_secs)
+        num_it += 1
+    return events, results
+
+
+def execute_with_async_real_time_loop(
     sleep_interval_in_secs: float,
     num_iterations: Optional[int],
     get_current_time: GetCurrentTimeFunction,

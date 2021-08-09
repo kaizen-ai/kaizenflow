@@ -451,8 +451,12 @@ class RealTimeDagRunner(_AbstractDagRunner):
     """
     Run a DAG in true or simulated real-time.
 
-    See `real_time.py` for definitions of different types of real-time
-    execution.
+    A DAG can be executed in real-time if one of the source nodes has a notion of
+    time and emits different data for the same invocation because time has elapsed.
+
+    See:
+    - `real_time.py` for definitions of different types of real-time executions
+    - `_AbstractRealTimeDataSource` and descendants for nodes with real-time semantic
     """
 
     def __init__(

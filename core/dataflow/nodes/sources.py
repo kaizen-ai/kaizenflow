@@ -495,10 +495,12 @@ class TrueRealTimeDataSource(_AbstractRealTimeDataSource):
     def __init__(
         self,
         nid: cdtfc.NodeId,
+        # TODO(gp): We should not expose this at all, since it's true real time.
         external_clock: cdrt.GetCurrentTimeFunction,
         **kwargs: Dict[str, Any]
     ) -> None:
         super().__init__(nid, **kwargs)  # type: ignore[arg-type]
+        # TODO(gp): This needs to set delay_in_secs=0.0 since it is true real-time.
         dbg.dassert_is_not(external_clock, None)
         self._external_clock = external_clock
 
@@ -506,10 +508,7 @@ class TrueRealTimeDataSource(_AbstractRealTimeDataSource):
         # Get the current time provided from the external clock and saves it.
         current_time = self._external_clock()
         self._set_current_time(current_time)
-        # # Return the current time.
-        # _LOG.debug(hprint.to_str("self._current_time"))
-        # dbg.dassert_is_not(self._current_time, None)
-        # return self._current_time
+        # Return the current time.
         return super()._get_current_time()
 
     def _get_data(self) -> pd.DataFrame:
@@ -528,10 +527,13 @@ class TrueRealTimeDataSource(_AbstractRealTimeDataSource):
 #  the speed of time so it's not properly real time. Also the naming becomes simpler
 #  Simulated vs Replayed vs Real
 
+# TODO(gp): This should get all the parameters needed to build a ReplayRealTime,
+#  instead of accepting the time function. In the end they are coupled.
+
 # pylint: disable=too-many-ancestors
 class ReplayedRealTimeDataSource(TrueRealTimeDataSource):
     """
-    Implement a "replayed" real-time behavior (see real_time.py for details).
+    Implement a "replayed" real-time behavior (see `real_time.py` for details).
 
     This node is a `TrueRealTimeDataSource` node with the following differences:
     - the data is computed once and cached, instead of being queried at every
