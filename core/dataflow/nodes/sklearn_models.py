@@ -64,6 +64,7 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         :param col_mode: "merge_all" or "replace_all", as in
             `ColumnTransformer()`
         :param nan_mode: "drop" or "raise"
+        :param sample_weight_col: column of relative weights to apply in `fit()`
         """
         super().__init__(nid)
         self._model_func = model_func

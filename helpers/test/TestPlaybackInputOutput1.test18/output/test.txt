@@ -1,4 +1,4 @@
-# Test created for amp.helpers.test.test_playback.get_result_ae_none.
+# Test created for helpers.test.test_playback.get_result_ae_none.
 
 import helpers.unit_test as hut
 import jsonpickle

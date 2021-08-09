@@ -440,9 +440,17 @@ def purify_amp_references(txt: str) -> str:
     # E.g., `amp/helpers/test/...`
     txt = re.sub(r"^\s*amp\/", "", txt, flags=re.MULTILINE)
     # E.g., `<amp.helpers.test.test_dbg._Man object at 0x`
-    txt = re.sub(r"<amp\.", "<", txt, flags=re.MULTILINE)
+    # in GH actions the packages end up being called `app.` for some reason
+    # (see AmpTask1627), so we clean up also that.
+    txt = re.sub(r"<a[mp]p\.", "<", txt, flags=re.MULTILINE)
     # E.g., class 'amp.
-    txt = re.sub(r"class 'amp\.", "class '", txt, flags=re.MULTILINE)
+    txt = re.sub(r"class 'a[mp]p\.", "class '", txt, flags=re.MULTILINE)
+    # E.g., from helpers/test/test_playback.py::TestPlaybackInputOutput1
+    # ```
+    # Test created for amp.helpers.test.test_playback.get_result_ae
+    # ```
+    txt = re.sub(r"# Test created for a[mp]p\.helpers", "# Test created for helpers",
+            txt, flags=re.MULTILINE)
     # E.g., `['amp/helpers/test/...`
     txt = re.sub(r"'amp\/", "'", txt, flags=re.MULTILINE)
     txt = re.sub(r"\/amp\/", "/", txt, flags=re.MULTILINE)

@@ -424,8 +424,8 @@ def compute_epoch(
     TODO(Paul): Add unit tests.
 
     :param data: a dataframe or series with a `DatetimeIndex`
-    :param unit: unit for reporting epoch. Suppose units are:
-        "minute", "second', "nanosecond"
+    :param unit: unit for reporting epoch. Supported units are:
+        "minute", "second', "nanosecond". Default is "minute".
     :return: series of int64's with epoch in minutes, seconds, or nanoseconds
     """
     unit = unit or "minute"
