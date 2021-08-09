@@ -431,6 +431,45 @@ def compute_jensen_ratio(
     return res
 
 
+def compute_hill_number(data: pd.Series, q: float) -> float:
+    """
+    Compute the Hill number as a measure of diversity.
+
+    The output is a number between zero and the number of points in data.
+    The result can be used as an "effective count".
+
+    Note that q = 1 corresponds to the exponent of Shannon entropy.
+
+    Transformations of the Hill number can be related to
+    - Shannon index
+    - Renyi entropy
+    - Simpson index
+    - Gini-Simpson index
+    - Berger-Parker index
+    See https://en.wikipedia.org/wiki/Diversity_index for details.
+
+    :param data: data representing class counts or probabilities
+    :param q: order of the Hill number
+      - q = 1 provides an entropy measure
+      - increasing q puts more weight on top relative classes
+    :return: a float between zero and data.size
+    """
+    dbg.dassert_lte(1, q, "Order `q` must be greater than or equal to 1.")
+    dbg.dassert((data >= 0).all(), "Series `data` must have only nonnegative values.")
+    # Normalize nonnegative data so that its sums to one.
+    normalized_data = data / data.sum()
+    # Treat boundary points of `q` specially.
+    if np.isinf(q):
+        diversity = 1 / normalized_data.max()
+    elif q > 1:
+        diversity = (normalized_data ** q).sum() ** (1 / (1 - q))
+    elif q == 1:
+        log_normalized_data = np.log(normalized_data)
+        entropy = -(normalized_data * log_normalized_data).sum()
+        diversity = np.exp(entropy)
+    return diversity
+
+
 # #############################################################################
 # Stationarity statistics
 # #############################################################################

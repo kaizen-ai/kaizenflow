@@ -874,6 +874,26 @@ class Test_compute_jensen_ratio(hut.TestCase):
         return signal
 
 
+class Test_compute_hill_number(hut.TestCase):
+    def test_equally_distributed1(self) -> None:
+        length = 10
+        data = pd.Series(index=range(0, length), data=1/length)
+        actual = cstati.compute_hill_number(data, 1)
+        np.testing.assert_allclose(actual, 10)
+
+    def test_equally_distributed2(self) -> None:
+        length = 10
+        data = pd.Series(index=range(0, length), data=1/length)
+        actual = cstati.compute_hill_number(data, 2)
+        np.testing.assert_allclose(actual, 10)
+
+    def test_equally_distributed3(self) -> None:
+        length = 10
+        data = pd.Series(index=range(0, length), data=1/length)
+        actual = cstati.compute_hill_number(data, np.inf)
+        np.testing.assert_allclose(actual, 10)
+
+
 class Test_compute_forecastability(hut.TestCase):
     def test1(self) -> None:
         signal = self._get_signal(seed=1)
