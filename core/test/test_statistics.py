@@ -1332,6 +1332,39 @@ class Test_sharpe_ratio_correlation_conversion(hut.TestCase):
         np.testing.assert_allclose(actual, 3, atol=0.01)
 
 
+class Test_compute_hit_rate_implied_by_correlation(hut.TestCase):
+    def zero_corr(self) -> None:
+        actual = cstati.compute_hit_rate_implied_by_correlation(0)
+        np.testing.assert_allclose(actual, 0.5)
+
+    def one_percent_corr(self) -> None:
+        actual = cstati.compute_hit_rate_implied_by_correlation(0.01)
+        np.testing.assert_allclose(actual, 0.5049999)
+
+    def heavy_tails(self) -> None:
+        actual = cstati.compute_hit_rate_implied_by_correlation(0.01, 0.6)
+        np.testing.assert_allclose(actual, 0.5066487)
+
+
+class Test_compute_correlation_implied_by_hit_rate(hut.TestCase):
+    def zero_hit_rate(self) -> None:
+        actual = cstati.compute_correlation_implied_by_hit_rate(0)
+        np.testing.assert_allclose(actual, 0)
+
+    def small_edge_to_one_percent_corr(self) -> None:
+        actual = cstati.compute_correlation_implied_by_hit_rate(0.5049999)
+        np.testing.asseert_allclose(actual, 0.0100001)
+
+    def heavy_tails(self) -> None:
+        actual = cstati.compute_correlation_implied_by_hit_rate(0.5049999, 0.6)
+        np.testing.asseert_allclose(actual, 0.0075120)
+
+    def fifty_one_percent(self) -> None:
+        actual = cstati.compute_correlation_implied_by_hit_rate(0.51)
+        np.testing.asseert_allclose(actual, 0.0200002)
+
+
+
 class Test_compute_drawdown_cdf(hut.TestCase):
     def test1(self) -> None:
         sharpe_ratio = 1
