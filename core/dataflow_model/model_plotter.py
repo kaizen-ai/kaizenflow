@@ -463,6 +463,25 @@ class ModelPlotter:
         )
         plot.plot_correlation_matrix(df, ax=ax, **plot_correlation_matrix_kwargs)
 
+    def plot_effective_correlation_rank(
+        self,
+        series: str,
+        keys: Optional[List[Any]] = None,
+        mode: Optional[str] = None,
+        resample_rule: Optional[str] = None,
+        ax: Optional[mpl.axes.Axes] = None,
+        plot_effective_correlation_rank_kwargs: Optional[dict] = None,
+    ) -> None:
+        plot_effective_correlation_rank_kwargs = (
+            plot_effective_correlation_rank_kwargs or {}
+        )
+        df = self._get_series_as_df(
+            series, keys=keys, mode=mode, resample_rule=resample_rule
+        )
+        plot.plot_effective_correlation_rank(
+            df, ax=ax, **plot_effective_correlation_rank_kwargs
+        )
+
     def plot_clustermap(
         self,
         series: str,
