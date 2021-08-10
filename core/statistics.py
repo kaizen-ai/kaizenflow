@@ -435,11 +435,10 @@ def compute_hill_number(data: pd.Series, q: float) -> float:
     """
     Compute the Hill number as a measure of diversity.
 
-    The output is a number between zero and the number of points in `data`.
-    The result can be used as an "effective count".
-
-    - Note that q = 1 corresponds to exp(Shannon entropy).
-    - The q = np.inf case is used in the calculation of stable rank.
+    - The output is a number between zero and the number of points in `data`
+    - The result can be used as an "effective count"
+    - Note that q = 1 corresponds to exp(Shannon entropy)
+    - The q = np.inf case is used in the calculation of stable rank
 
     Transformations of the Hill number can be related to
     - Shannon index
