@@ -431,6 +431,25 @@ def compute_jensen_ratio(
     return res
 
 
+def compute_t_distribution_j_2(nu: float):
+    """
+    Compute the Jensen ratio with `p_norm = 2` for a standard t-distribution.
+
+    :param nu: degrees of freedom
+    :return: the theoretical J-ratio for a standard t-distribution with `nu`
+        degrees of freedom.
+    """
+    dbg.dassert_lte(2, nu, "The Jensen ratio is only well defined for nu >= 2.")
+    # The limiting case for the Cauchy distribution is zero.
+    if nu == 2:
+        jensen_2 = 0
+    else:
+        const = 2 / np.sqrt(np.pi)
+        dist = sp.special.gamma((nu + 1) / 2) / (sp.special.gamma(nu / 2) * (nu - 1))
+        jensen_2 = const * dist * np.sqrt(nu - 2)
+    return jensen_2
+
+
 def compute_hill_number(data: pd.Series, q: float) -> float:
     """
     Compute the Hill number as a measure of diversity.

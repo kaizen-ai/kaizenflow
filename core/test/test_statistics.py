@@ -874,6 +874,20 @@ class Test_compute_jensen_ratio(hut.TestCase):
         return signal
 
 
+class Test_compute_t_distribution_j_2(hut.TestCase):
+    def test_almost_normal(self) -> None:
+        actual = cstati.compute_t_distribution_j_2(200)
+        np.testing.assert_allclose(actual, np.sqrt(2 / np.pi), atol=1e-2)
+
+    def test_4dof(self) -> None:
+        actual = cstati.compute_t_distribution_j_2(4)
+        np.testing.assert_allclose(actual, 0.707107, atol=1e-5)
+
+    def test_2dof(self) -> None:
+        actual = cstati.compute_t_distribution_j_2(2)
+        np.testing.assert_allclose(actual, 0)
+
+
 class Test_compute_hill_number(hut.TestCase):
     def test_equally_distributed1(self) -> None:
         length = 10
