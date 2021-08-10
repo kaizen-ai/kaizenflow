@@ -990,6 +990,28 @@ def display_corr_df(df: pd.core.frame.DataFrame) -> None:
         _LOG.warning("Can't display correlation df since it is None")
 
 
+def plot_effective_correlation_rank(
+    df: pd.DataFrame,
+    q: float = 1,
+    figsize: Optional[Tuple[int, int]] = None,
+    ax: Optional[mpl.axes.Axes] = None,
+) -> float:
+    """
+    Compute effective rank of data correlation based on singular values.
+    """
+    if ax is None:
+        _, ax = plt.subplots(figsize=figsize)
+    corr = df.corr()
+    sv = np.linalg.svd(corr.values, hermitian=True)[1]
+    singular_values = pd.Series(index=range(1, len(sv) + 1), data=sv)
+    effective_rank = cstati.compute_hill_number(singular_values, q)
+    singular_values.plot(
+        title="Singular values and effective rank", ylim=(0, None)
+    )
+    ax.axvline(effective_rank, ls="--", c="k")
+    return effective_rank
+
+
 def compute_linkage(df: pd.DataFrame, method: Optional[str] = None) -> np.ndarray:
     """
     Perform hierarchical clustering.
