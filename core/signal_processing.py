@@ -381,6 +381,37 @@ def skip_apply_func(
     return df
 
 
+def sign_normalize(
+    signal: Union[pd.DataFrame, pd.Series],
+    atol: float = 0,
+) -> Union[pd.DataFrame, pd.Series]:
+    """
+    Normalize nonzero values to +/- 1 according to sign.
+
+    :param signal: series or 1-dimensional dataframe
+    :param atol: values < atol are forced to zero
+    :return: series/1-d dataframe with finite values of either -1, 0, or 1
+    """
+    # Convert to series before performing calculations.
+    convert_to_frame = False
+    if isinstance(signal, pd.DataFrame):
+        signal = signal.squeeze()
+        convert_to_frame = True
+    dbg.dassert_isinstance(signal, pd.Series,
+                           msg="Only series and 1-dimensional dataframes are admissible")
+    # Force small values to zero.
+    atol_mask = signal.abs() < atol
+    normalized_signal = signal.copy()
+    normalized_signal.loc[atol_mask] = 0
+    # Mask out zeros when rescaling nonzero values.
+    zero_mask = normalized_signal == 0
+    normalized_signal = normalized_signal.copy()
+    normalized_signal.loc[~zero_mask] /= normalized_signal.loc[~zero_mask].abs()
+    if convert_to_frame:
+        normalized_signal = normalized_signal.to_frame()
+    return normalized_signal
+
+
 # #############################################################################
 # EMAs and derived kernels
 # #############################################################################
