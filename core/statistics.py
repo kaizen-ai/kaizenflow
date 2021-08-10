@@ -456,8 +456,10 @@ def compute_hill_number(data: pd.Series, q: float) -> float:
     :return: a float between zero and data.size
     """
     dbg.dassert_lte(1, q, "Order `q` must be greater than or equal to 1.")
-    dbg.dassert((data >= 0).all(), "Series `data` must have only nonnegative values.")
     dbg.dassert_isinstance(data, pd.Series)
+    dbg.dassert(
+        (data >= 0).all(), "Series `data` must have only nonnegative values."
+    )
     # Normalize nonnegative data so that its sums to one.
     normalized_data = data / data.sum()
     # Treat boundary points of `q` specially.
