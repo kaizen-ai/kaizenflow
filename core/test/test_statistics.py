@@ -874,6 +874,49 @@ class Test_compute_jensen_ratio(hut.TestCase):
         return signal
 
 
+class Test_compute_hill_number(hut.TestCase):
+    def test_equally_distributed1(self) -> None:
+        length = 10
+        data = pd.Series(index=range(0, length), data=1)
+        actual = cstati.compute_hill_number(data, 1)
+        np.testing.assert_allclose(actual, 10)
+
+    def test_equally_distributed2(self) -> None:
+        length = 10
+        data = pd.Series(index=range(0, length), data=1)
+        actual = cstati.compute_hill_number(data, 2)
+        np.testing.assert_allclose(actual, 10)
+
+    def test_equally_distributed3(self) -> None:
+        length = 10
+        data = pd.Series(index=range(0, length), data=1)
+        actual = cstati.compute_hill_number(data, np.inf)
+        np.testing.assert_allclose(actual, 10)
+
+    def test_scale_invariance1(self) -> None:
+        length = 32
+        np.random.seed(137)
+        data = pd.Series(data=np.random.rand(length, 1).flatten())
+        actual_1 = cstati.compute_hill_number(data, 2)
+        actual_2 = cstati.compute_hill_number(7 * data, 2)
+        np.testing.assert_allclose(actual_1, actual_2)
+
+    def test_exponentially_distributed1(self) -> None:
+        data = pd.Series([2 ** j for j in range(10, 0, -1)])
+        actual = cstati.compute_hill_number(data, 1)
+        np.testing.assert_allclose(actual, 3.969109, atol=1e-5)
+
+    def test_exponentially_distributed2(self) -> None:
+        data = pd.Series([2 ** j for j in range(10, 0, -1)])
+        actual = cstati.compute_hill_number(data, 2)
+        np.testing.assert_allclose(actual, 2.994146, atol=1e-5)
+
+    def test_exponentially_distributed3(self) -> None:
+        data = pd.Series([2 ** j for j in range(10, 0, -1)])
+        actual = cstati.compute_hill_number(data, np.inf)
+        np.testing.assert_allclose(actual, 1.998047, atol=1e-5)
+
+
 class Test_compute_forecastability(hut.TestCase):
     def test1(self) -> None:
         signal = self._get_signal(seed=1)
@@ -1353,15 +1396,15 @@ class Test_compute_correlation_implied_by_hit_rate(hut.TestCase):
 
     def small_edge_to_one_percent_corr(self) -> None:
         actual = cstati.compute_correlation_implied_by_hit_rate(0.5049999)
-        np.testing.asseert_allclose(actual, 0.0100001)
+        np.testing.assert_allclose(actual, 0.0100001)
 
     def heavy_tails(self) -> None:
         actual = cstati.compute_correlation_implied_by_hit_rate(0.5049999, 0.6)
-        np.testing.asseert_allclose(actual, 0.0075120)
+        np.testing.assert_allclose(actual, 0.0075120)
 
     def fifty_one_percent(self) -> None:
         actual = cstati.compute_correlation_implied_by_hit_rate(0.51)
-        np.testing.asseert_allclose(actual, 0.0200002)
+        np.testing.assert_allclose(actual, 0.0200002)
 
 
 class Test_compute_drawdown_cdf(hut.TestCase):
