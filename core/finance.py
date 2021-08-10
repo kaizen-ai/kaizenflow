@@ -798,12 +798,7 @@ def compute_bet_runs(
     # closed out).
     nan_mode = nan_mode or "ffill"
     positions = hdataf.apply_nan_mode(positions, mode=nan_mode)
-    # Locate zero positions so that we can avoid dividing by zero when
-    # determining bet sign.
-    zero_mask = positions == 0
-    # Calculate bet "runs".
-    bet_runs = positions.copy()
-    bet_runs.loc[~zero_mask] /= np.abs(bet_runs.loc[~zero_mask])
+    bet_runs = csigna.sign_normalize(positions)
     return bet_runs
 
 
@@ -821,13 +816,7 @@ def compute_bet_starts(
     bet_runs = compute_bet_runs(positions, nan_mode)
     # Determine start of bets.
     bet_starts = bet_runs.subtract(bet_runs.shift(1, fill_value=0), fill_value=0)
-    # TODO(*): Consider factoring out this operation.
-    # Locate zero positions so that we can avoid dividing by zero when
-    # determining bet sign.
-    bet_starts_zero_mask = bet_starts == 0
-    bet_starts.loc[~bet_starts_zero_mask] /= np.abs(
-        bet_starts.loc[~bet_starts_zero_mask]
-    )
+    bet_starts = csigna.sign_normalize(bet_starts)
     # Set zero bet runs to `NaN`.
     bet_runs_zero_mask = bet_runs == 0
     bet_starts.loc[bet_runs_zero_mask] = np.nan
