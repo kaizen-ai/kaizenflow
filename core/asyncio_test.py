@@ -16,7 +16,6 @@ def print_message(msg):
     #current_time = get_current_time()
     #replayed_time = round(time.time() - start_time, 1)
     replayed_time = round(loop.time() - start_time, 1)
-
     func_name = hintro.get_function_name(1)
     #print(f"{current_time}: {replayed_time}: {func_name}: {msg}")
     print(f"{replayed_time}: {func_name}: {msg}")
@@ -40,7 +39,8 @@ async def wait_on_db_1min_bar_data():
 async def execute_dag():
     current_time = get_current_time()
     print_message("current_time=%s" % current_time)
-    if current_time.second % 5 == 0:
+    to_execute = current_time.second % 2 == 1
+    if to_execute:
         print_message("# Time to execute DAG!")
         # Wait for the DB to be updated.
         print_message("Waiting on DB bar: start")
@@ -50,6 +50,7 @@ async def execute_dag():
         print_message("Executing DAG: start")
         await execute_task(3)
         print_message("Executing DAG: done")
+    return to_execute
 
 
 async def heartbeat():
@@ -66,8 +67,6 @@ async def sleep(interval_in_secs: int):
         asyncio.sleep(interval)
     elif mode == "replayed":
         asyncio.sleep(interval)
-    elif mode == "simulated":
-        await external_clock()
     else:
         raise ValueError
 
@@ -90,20 +89,16 @@ async def infinite_loop():
     num_iters = 0
     while True:
         print_message("Infinite loop: start")
-        await asyncio.gather(
+        rc = await asyncio.gather(
             asyncio.sleep(interval_in_secs),
             execute_dag(),
         )
+        print(rc)
         print_message("Infinite loop: end")
         num_iters += 1
         if num_iters > 5:
             break
 
-
-
-# How to "simulate time"?
-# - Maybe add a fake clock instead that is incremented every time?
-# -
 
 
 # async def infinite_loop():
@@ -112,7 +107,7 @@ async def infinite_loop():
 #     print(loop.time())
 
 #
-if False:
+if True:
     import async_solipsism
     loop = async_solipsism.EventLoop()
 else:

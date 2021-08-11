@@ -210,24 +210,26 @@ def get_ET_tz() -> datetime.tzinfo:
     return pytz.timezone("America/New_York")
 
 
-def get_current_time(tz: str) -> pd.Timestamp:
+def get_current_time(tz: str, loop=None) -> pd.Timestamp:
     """
     Return current time in UTC / ET timezone or as a naive time.
     """
+    if loop is not None:
+        timestamp = loop.time()
+    else:
+        timestamp = datetime.datetime.utcnow()
+    timestamp = pd.Timestamp(timestamp, tz=get_UTC_tz())
     if tz == "UTC":
-        timestamp = datetime.datetime.now(get_UTC_tz())
+        pass
     elif tz == "ET":
-        timestamp = datetime.datetime.now(get_ET_tz())
+        timestamp = timestamp.tz_convert(get_ET_tz())
     elif tz == "naive_UTC":
-        timestamp = datetime.datetime.now(get_UTC_tz())
         timestamp = timestamp.replace(tzinfo=None)
     elif tz == "naive_ET":
-        timestamp = datetime.datetime.now(get_ET_tz())
+        timestamp = timestamp.tz_convert(get_ET_tz())
         timestamp = timestamp.replace(tzinfo=None)
     else:
         raise ValueError(f"Invalid tz='{tz}")
-    timestamp = pd.Timestamp(timestamp)
-    # E.g., 20210723-205200
     return timestamp
 
 

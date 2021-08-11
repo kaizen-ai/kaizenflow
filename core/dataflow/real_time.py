@@ -190,6 +190,7 @@ def execute_every_5_minutes(datetime_: pd.Timestamp) -> bool:
     return ret
 
 
+# TODO(gp): Pass loop.
 def align_on_even_second(use_time_sleep: bool = False) -> None:
     """
     Wait until the current wall clock time reports an even number of seconds.
@@ -211,7 +212,7 @@ def align_on_even_second(use_time_sleep: bool = False) -> None:
         dbg.dassert_lte(0, secs_to_wait)
         time.sleep(secs_to_wait)
     else:
-        # Busy waiting. OS classes says to never do this, but in this case we need
+        # Busy waiting. OS courses says to never do this, but in this case we need
         # a high-resolution wait.
         while True:
             current_time = hdatetime.get_current_time(tz="ET")
@@ -226,7 +227,7 @@ def align_on_even_second(use_time_sleep: bool = False) -> None:
 
 class Event(
     collections.namedtuple(
-        "Event", "num_it current_time wall_clock_time need_execute"
+        "Event", "num_it current_time wall_clock_time"
     )
 ):
     """
@@ -243,12 +244,12 @@ class Event(
     def to_str(self, include_tenths_of_secs: bool) -> str:
         vals = []
         vals.append("num_it=%s" % self.num_it)
-        timestamp_as_str = self.current_time.strftime("%Y%m%d_%H%M%S")
         # Add tenths of second.
-        if include_tenths_of_secs:
-            timestamp_as_str += "%s" % int(self.current_time.microsecond // 1e5)
-        vals.append("current_time=%s" % timestamp_as_str)
-        vals.append("need_execute=%s" % self.need_execute)
+        current_time = self.current_time
+        if not include_tenths_of_secs:
+            current_time = current_time.replace(microsecond=0)
+        vals.append("current_time='%s'" % current_time)
+        vals.append("wall_clock_time='%s'" % self.wall_clock_time)
         return " ".join(vals)
 
 
@@ -256,17 +257,18 @@ class Events(List[Event]):
     def __str__(self) -> str:
         return "\n".join(map(str, self))
 
+    def to_str(self, *args: Any, **kwargs: Any) -> str:
+        return "\n".join([x.to_str(*args, **kwargs) for x in self])
 
 # Function returning the current (true or replayed) time as a timestamp.
 GetCurrentTimeFunction = Callable[[], pd.Timestamp]
 
+import asyncio
 
-# TODO(gp): -> sync
-def execute_with_real_time_loop(
+async def execute_with_real_time_loop(
     sleep_interval_in_secs: float,
-    num_iterations: Optional[int],
+    time_out_in_secs: Optional[int],
     get_current_time: GetCurrentTimeFunction,
-    need_to_execute: Callable[[pd.Timestamp], bool],
     workload: Callable[[pd.Timestamp], Any],
 ) -> Tuple[Events, List[Any]]:
     """
@@ -276,91 +278,38 @@ def execute_with_real_time_loop(
         true or simulated seconds
     :param num_iterations: number of loops to execute. `None` means an infinite loop
     :param get_current_time: function returning the current true or simulated time
-    :param need_to_execute: function returning true when the DAG needs to be
-        executed
-    :param workload: function executing the work when `need_to_execute()` requires to
+    :param workload: function executing the workload
 
     :return: a Tuple with:
         - an execution trace representing the events in the real-time loop; and
         - a list of results returned by the workload function
     """
     dbg.dassert_lt(0, sleep_interval_in_secs)
-    if num_iterations is not None:
+    if time_out_in_secs is not None:
+        # TODO(gp): Consider using a real-time check instead of number of iterations.
+        num_iterations = int(time_out_in_secs / sleep_interval_in_secs)
         dbg.dassert_lt(0, num_iterations)
+    else:
+        num_iterations = None
     #
     events = Events()
     results = []
     num_it = 1
     while True:
-        # Compute.
         current_time = get_current_time()
-        execute = need_to_execute(current_time)
         wall_clock_time = hdatetime.get_current_time(tz="ET")
         # Update the current events.
-        event = Event(num_it, current_time, wall_clock_time, execute)
+        event = Event(num_it, current_time, wall_clock_time)
         _LOG.debug("event='%s'", str(event))
         events.append(event)
-        # Execute the workload, if needed.
-        if execute:
-            _LOG.debug("  -> execute")
-            result = workload(current_time)
-            results.append((current_time, result))
+        # Execute workload.
+        result = await asyncio.gather(
+            asyncio.sleep(sleep_interval_in_secs),
+            workload(current_time),
+        )
+        results.append((current_time, result[1]))
         # Exit, if needed.
         if num_iterations is not None and num_it >= num_iterations:
             break
-        # Go to sleep.
-        time.sleep(sleep_interval_in_secs)
-        num_it += 1
-    return events, results
-
-
-def execute_with_async_real_time_loop(
-    sleep_interval_in_secs: float,
-    num_iterations: Optional[int],
-    get_current_time: GetCurrentTimeFunction,
-    need_to_execute: Callable[[pd.Timestamp], bool],
-    workload: Callable[[pd.Timestamp], Any],
-) -> Tuple[Events, List[Any]]:
-    """
-    Execute a function using a true or simulated real-time loop.
-
-    :param sleep_interval_in_secs: the loop wakes up every `sleep_interval_in_secs`
-        true or simulated seconds
-    :param num_iterations: number of loops to execute. `None` means an infinite loop
-    :param get_current_time: function returning the current true or simulated time
-    :param need_to_execute: function returning true when the DAG needs to be
-        executed
-    :param workload: function executing the work when `need_to_execute()` requires to
-
-    :return: a Tuple with:
-        - an execution trace representing the events in the real-time loop; and
-        - a list of results returned by the workload function
-    """
-    dbg.dassert_lt(0, sleep_interval_in_secs)
-    if num_iterations is not None:
-        dbg.dassert_lt(0, num_iterations)
-    #
-    events = Events()
-    results = []
-    num_it = 1
-    while True:
-        # Compute.
-        current_time = get_current_time()
-        execute = need_to_execute(current_time)
-        wall_clock_time = hdatetime.get_current_time(tz="ET")
-        # Update the current events.
-        event = Event(num_it, current_time, wall_clock_time, execute)
-        _LOG.debug("event='%s'", str(event))
-        events.append(event)
-        # Execute the workload, if needed.
-        if execute:
-            _LOG.debug("  -> execute")
-            result = workload(current_time)
-            results.append((current_time, result))
-        # Exit, if needed.
-        if num_iterations is not None and num_it >= num_iterations:
-            break
-        # Go to sleep.
-        time.sleep(sleep_interval_in_secs)
         num_it += 1
     return events, results
