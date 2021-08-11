@@ -101,10 +101,10 @@ async def infinite_loop():
 
 
 
-# async def infinite_loop():
-#     print(loop.time())
-#     await asyncio.sleep(60)
-#     print(loop.time())
+async def test():
+    print(loop.time())
+    await asyncio.sleep(60)
+    print(loop.time())
 
 #
 if True:
@@ -120,7 +120,8 @@ start_time = loop.time()
 
 #loop = asyncio.get_event_loop()
 try:
-    loop.run_until_complete(infinite_loop())
+    #loop.run_until_complete(infinite_loop())
+    loop.run_until_complete(test())
 finally:
     loop.close()
 

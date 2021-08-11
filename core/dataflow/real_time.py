@@ -16,6 +16,7 @@ import pandas as pd
 import helpers.datetime_ as hdatetime
 import helpers.dbg as dbg
 import helpers.hnumpy as hnumpy
+import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -86,7 +87,7 @@ def get_data_as_of_datetime(
     return df
 
 
-# TODO(gp): -> ReplayedRealTime
+# TODO(gp): -> ReplayedTime
 class ReplayRealTime:
     """
     Allow to test a real-time system replaying current times in the past.
@@ -105,68 +106,66 @@ class ReplayRealTime:
     In other terms this class mocks `datetime.datetime.now()` so that the actual
     wall clock time `initial_wall_clock_dt` corresponds to `initial_replayed_dt`
 
-    :param initial_replayed_dt: if it has timezone info then this class works
-        returns times in the same timezone
     """
 
     def __init__(
-        self, initial_replayed_dt: pd.Timestamp, speed_up_factor: float = 1.0
+        self,
+            initial_replayed_dt: pd.Timestamp,
+            get_current_time,
     ):
         """
-        :param initial_replayed_dt: this is the time that we want the current
-            wall clock time to correspond to
-        :param speed_up_factor: how fast time passes. One wall clock second
-            corresponds to `speed_up_factor` replayed seconds
+        Constructor.
+
+        If param `initial_replayed_dt` has timezone info then this class works in
+        the same timezone.
+
+        :param initial_replayed_dt: the time that we want the current wall clock
+            time to correspond to
+        :param get_current_time: return the wall clock time. It is usually
+            a closure of `hdatetime.get_current_time()`. The returned time needs
+            to have the same timezone as `initial_replayed_dt`
         """
         # This is the original time we want to "rewind" to.
-        _LOG.debug("initial_replayed_dt=%s", initial_replayed_dt)
         self._initial_replayed_dt = initial_replayed_dt
+        self._get_current_time = get_current_time
         # This is when the experiment start.
-        now = self._get_wall_clock_time()
-        self._initial_wall_clock_dt = now
+        self._initial_wall_clock_dt = self._get_current_time()
+        _LOG.debug(
+            hprint.to_str(
+                "self._initial_replayed_dt self._initial_wall_clock_dt"))
+        hdatetime.dassert_tz_compatible(self._initial_replayed_dt,
+                                        self._initial_wall_clock_dt)
         dbg.dassert_lte(
             self._initial_replayed_dt,
             self._initial_wall_clock_dt,
             msg="Replaying time can be done only for the past. "
             "The future can't be replayed yet",
         )
-        #
-        self._speed_up_factor = speed_up_factor
 
-    def get_replayed_current_time(self) -> pd.Timestamp:
+    def get_current_time(self) -> pd.Timestamp:
         """
-        When replaying data, transform the current time into the corresponding
-        time if the real-time experiment started at `initial_simulated_dt`.
+        Transform the current time into the time corresponding to the real-time
+        experiment starting at `initial_simulated_dt`.
         """
-        now = self._get_wall_clock_time()
+        now = self._get_current_time()
         dbg.dassert_lte(self._initial_wall_clock_dt, now)
-        elapsed_time = self._speed_up_factor * (now - self._initial_wall_clock_dt)
+        elapsed_time = now - self._initial_wall_clock_dt
         current_replayed_dt = self._initial_replayed_dt + elapsed_time
         return current_replayed_dt
 
-    def _get_wall_clock_time(self) -> pd.Timestamp:
-        if self._initial_replayed_dt.tz is None:
-            tz = None
-        else:
-            tz = self._initial_replayed_dt.tz
-        _LOG.debug("Using tz '%s'", tz)
-        now = pd.Timestamp(datetime.datetime.now(tz))
-        _LOG.debug("now='%s'", now)
-        return now
 
-
-def get_simulated_current_time(
-    start_datetime: pd.Timestamp, end_datetime: pd.Timestamp, freq: str = "1T"
-) -> Iterator[pd.Timestamp]:
-    """
-    Iterator yielding timestamps in the given interval and with the given
-    frequency.
-
-    E.g., `freq = "1T"` can be used to simulate a system sampled every minute.
-    """
-    datetimes = pd.date_range(start_datetime, end_datetime, freq=freq)
-    for dt in datetimes:
-        yield dt
+# def get_simulated_current_time(
+#     start_datetime: pd.Timestamp, end_datetime: pd.Timestamp, freq: str = "1T"
+# ) -> Iterator[pd.Timestamp]:
+#     """
+#     Iterator yielding timestamps in the given interval and with the given
+#     frequency.
+#
+#     E.g., `freq = "1T"` can be used to simulate a system sampled every minute.
+#     """
+#     datetimes = pd.date_range(start_datetime, end_datetime, freq=freq)
+#     for dt in datetimes:
+#         yield dt
 
 
 # #############################################################################
@@ -235,21 +234,24 @@ class Event(
     """
 
     def __str__(self) -> str:
-        return self.to_str(include_tenths_of_secs=False)
+        return self.to_str(include_tenths_of_secs=False,
+                           include_wall_clock_time=True)
 
     # Using the approach from
     # https://docs.python.org/3/library/collections.html#
     #    namedtuple-factory-function-for-tuples-with-named-fields
 
-    def to_str(self, include_tenths_of_secs: bool) -> str:
+    def to_str(self, include_tenths_of_secs: bool, include_wall_clock_time: bool) -> str:
         vals = []
         vals.append("num_it=%s" % self.num_it)
-        # Add tenths of second.
+        #
         current_time = self.current_time
         if not include_tenths_of_secs:
             current_time = current_time.replace(microsecond=0)
         vals.append("current_time='%s'" % current_time)
-        vals.append("wall_clock_time='%s'" % self.wall_clock_time)
+        #
+        if include_wall_clock_time:
+            vals.append("wall_clock_time='%s'" % self.wall_clock_time)
         return " ".join(vals)
 
 
@@ -260,6 +262,7 @@ class Events(List[Event]):
     def to_str(self, *args: Any, **kwargs: Any) -> str:
         return "\n".join([x.to_str(*args, **kwargs) for x in self])
 
+# TODO(gp): Remove this
 # Function returning the current (true or replayed) time as a timestamp.
 GetCurrentTimeFunction = Callable[[], pd.Timestamp]
 
@@ -307,7 +310,7 @@ async def execute_with_real_time_loop(
             asyncio.sleep(sleep_interval_in_secs),
             workload(current_time),
         )
-        results.append((current_time, result[1]))
+        results.append(result[1])
         # Exit, if needed.
         if num_iterations is not None and num_it >= num_iterations:
             break
