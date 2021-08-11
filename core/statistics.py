@@ -440,7 +440,6 @@ def compute_t_distribution_j_2(nu: float):
         degrees of freedom.
     """
     dbg.dassert_lte(2, nu, "The Jensen ratio is only well defined for nu >= 2.")
-    # The limiting case for the Cauchy distribution is zero.
     if nu == 2:
         jensen_2 = 0
     else:
