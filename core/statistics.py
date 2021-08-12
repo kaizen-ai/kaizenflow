@@ -440,10 +440,13 @@ def compute_t_distribution_j_2(nu: float):
         degrees of freedom.
     """
     dbg.dassert_lte(2, nu, "The Jensen ratio is only well defined for nu >= 2.")
-    # The limiting case for the Cauchy distribution is zero.
-    if nu == 2:
+    if nu == np.inf:
+        jensen_2 = np.sqrt(2 / np.pi)
+    elif nu == 2:
         jensen_2 = 0
     else:
+        if nu > 300:
+            _LOG.warning("Computation is unstable for large values of `nu`.")
         const = 2 / np.sqrt(np.pi)
         dist = sp.special.gamma((nu + 1) / 2) / (sp.special.gamma(nu / 2) * (nu - 1))
         jensen_2 = const * dist * np.sqrt(nu - 2)
