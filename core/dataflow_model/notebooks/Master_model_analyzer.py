@@ -134,11 +134,25 @@ plotter.plot_correlation_matrix(
     mode=eval_config["mode"],
 )
 
+# %%
+plotter.plot_effective_correlation_rank(
+    series="returns",
+    resample_rule=eval_config["resample_rule"],
+    mode=eval_config["mode"],
+)
+
 # %% [markdown]
 # ## Model correlation
 
 # %%
 plotter.plot_correlation_matrix(
+    series="pnl",
+    resample_rule=eval_config["resample_rule"],
+    mode=eval_config["mode"],
+)
+
+# %%
+plotter.plot_effective_correlation_rank(
     series="pnl",
     resample_rule=eval_config["resample_rule"],
     mode=eval_config["mode"],
