@@ -131,7 +131,7 @@ import asyncio
 
 import helpers.hasyncio as hasyncio
 
-class Test_execute_with_real_time_loop(hut.TestCase):
+class Test_execute_with_real_time_loop1(hut.TestCase):
     @staticmethod
     async def workload(current_time: pd.Timestamp) -> bool:
         need_execute = cdrt.execute_every_2_seconds(current_time)
@@ -142,7 +142,7 @@ class Test_execute_with_real_time_loop(hut.TestCase):
             await asyncio.sleep(0.1)
         return need_execute
 
-    def helper(self, get_current_time, loop) -> str:
+    def helper(self, get_current_time, loop) -> Tuple[str, str]:
         """
         Test executing a workload every even second for 3 seconds using different
         event loops and wall clock times.
@@ -165,110 +165,82 @@ class Test_execute_with_real_time_loop(hut.TestCase):
         _LOG.debug("events=\n%s", str(events))
         _LOG.debug("results=\n%s", str(results))
         # Assemble output.
-        txt = []
-        txt.append("events=\n%s" % events.to_str(include_tenths_of_secs=False,
-                                                 include_wall_clock_time=False))
-        txt.append("results=\n%s" % str(results))
-        txt = "\n".join(txt)
-        _LOG.debug("%s", txt)
-        return txt
+        events_as_str = "events=\n%s" % events.to_str(include_tenths_of_secs=False,
+                                                 include_wall_clock_time=False)
+        results_as_str = "results=\n%s" % str(results)
+        return events_as_str, results_as_str
 
     def test_real_time1(self) -> None:
         """
-        Test executing a workload every second, starting from an even second
-        using true wall clock time.
+        Use real-time.
         """
-        get_current_time = lambda: hdatetime.get_current_time(tz="ET", loop=loop)
+        # Use the wall clock time with no special event loop.
+        get_current_time = lambda: hdatetime.get_current_time(tz="ET")
         loop = None
-        _ = self.helper(get_current_time, loop)
+        events_as_str, results_as_str = self.helper(get_current_time, loop)
+        # Check.
+        self._check_output_real_time(events_as_str, results_as_str)
 
-    def test_simulated_time1(self) -> None:
+    def test_simulated_real_time1(self) -> None:
         """
-        Test executing a workload every second, starting from an even second
-        using true wall clock time.
+        Use simulated real-time.
         """
+        # Use the wall clock time.
         get_current_time = lambda: hdatetime.get_current_time(tz="ET", loop=loop)
+        # Use the solipsistic event loop to simulate the real-time faster.
         with hasyncio.solipsism_context() as loop:
-            act = self.helper(get_current_time, loop)
-        # Check that the events are triggered every two seconds.
-        exp = ""
-        self.assert_equal(act, exp)
+            events_as_str, results_as_str = self.helper(get_current_time, loop)
+        # Check.
+        self._check_output_real_time(events_as_str, results_as_str)
 
-        # loop = async_solipsism.EventLoop()
-        # asyncio.set_event_loop(loop)
-        # # Align on an even second.
-        # cdrt.align_on_even_second()
-        # #
-        # sleep_interval_in_secs = 1.0
-        # time_out_in_secs = 3
-        # # get_current_time = datetime.datetime.now
-        # get_current_time = lambda: hdatetime.get_current_time(tz="ET", loop=loop)
-        # #
-        # events, results = run(
-        #     cdrt.execute_with_real_time_loop(
-        #         sleep_interval_in_secs,
-        #         time_out_in_secs,
-        #         get_current_time,
-        #         self.workload,
-        #     ), loop)
-        # # TODO(gp): Check that the events are triggered every two seconds.
-        # _ = events, results
-        # _LOG.debug("events=\n%s", str(events))
-        # _LOG.debug("results=\n%s", str(results))
+    def _check_output_real_time(self, events_as_str: str, results_as_str: str) -> None:
+        # We can't check the events since they happen in real-time, so we check only
+        # the results.
+        _ = events_as_str
+        exp = """
+        results=
+        [True, False, True]"""
+        self.assert_equal(results_as_str, exp, dedent=True)
 
-    def test_replayed_time1(self) -> None:
+    def test_replayed_real_time1(self) -> None:
         """
-        Test executing a workload every second, starting from an even second
-        using replayed real time.
+        Use replayed real-time.
         """
+        # Create a replayed clock using the wall clock.
         start_datetime = pd.Timestamp("2010-01-04 09:30:00", tz=hdatetime.get_ET_tz())
         get_wall_clock_time = lambda: hdatetime.get_current_time(tz="ET")
         rrt = cdrt.ReplayRealTime(start_datetime, get_wall_clock_time)
+        # Get replayed current time and no special loop (i.e., real-time).
         get_current_time = rrt.get_current_time
         loop = None
-        act = self.helper(get_current_time, loop)
-        # Check that the events are triggered every two seconds.
-        exp = ""
-        self.assert_equal(act, exp)
+        events_as_str, results_as_str = self.helper(get_current_time, loop)
+        # Check.
+        self._check_output_replayed(events_as_str, results_as_str)
 
-        # # Align on a even second.
-        # cdrt.align_on_even_second()
-        # #
-        # execute_rt_loop_kwargs = get_test_execute_rt_loop_kwargs()
-        # events, results = cdrt.execute_with_real_time_loop(
-        #     **execute_rt_loop_kwargs,
-        #     workload=self.workload,
-        # )
-        # _ = results
-        # # We can check that the times are exactly the expected ones, since we are
-        # # replaying time.
-        # actual = "\n".join(
-        #     [event.to_str(include_tenths_of_secs=False) for event in events]
-        # )
-        # # TODO(gp): Fix this. See AmpTask1618.
-        # _ = actual
-        # if False:
-        #     expected = r"""
-        #     num_it=1 current_time=20100104_093001 need_execute=False
-        #     num_it=2 current_time=20100104_093002 need_execute=True
-        #     num_it=3 current_time=20100104_093003 need_execute=False"""
-        #     expected = hprint.dedent(expected)
-        #     self.assert_equal(actual, expected)
+    def _check_output_replayed(self, events_as_str: str, results_as_str: str) -> None:
+        # Check that the events are triggered on even seconds.
+        act = f"{events_as_str}\n{results_as_str}"
+        exp = r"""
+        events=
+        num_it=1 current_time='2010-01-04 09:30:00-05:00'
+        num_it=2 current_time='2010-01-04 09:30:01-05:00'
+        num_it=3 current_time='2010-01-04 09:30:02-05:00'
+        results=
+        [True, False, True]"""
+        self.assert_equal(act, exp, dedent=True)
 
     def test_simulated_replayed_time1(self) -> None:
         """
-        Test executing a workload every second, starting from an even second
-        using replayed real time.
+        Use replayed simulated.
         """
         get_wall_clock_time = lambda: hdatetime.get_current_time(tz="ET", loop=loop)
         start_datetime = pd.Timestamp("2010-01-04 09:30:00", tz=hdatetime.get_ET_tz())
         with hasyncio.solipsism_context() as loop:
             rrt = cdrt.ReplayRealTime(start_datetime, get_wall_clock_time)
             get_current_time = rrt.get_current_time
-        act = self.helper(get_current_time, loop)
-        # Check that the events are triggered every two seconds.
-        exp = ""
-        self.assert_equal(act, exp)
+        events_as_str, results_as_str = self.helper(get_current_time, loop)
+        # Check.
+        self._check_output_replayed(events_as_str, results_as_str)
 
     @pytest.mark.slow("It takes around 4 secs")
     def test_align_on_even_second1(self) -> None:
