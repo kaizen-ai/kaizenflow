@@ -1,12 +1,16 @@
 """
-Wrappers around `asyncio` to allow to switch true and simulated real-time loops.
+Wrappers around `asyncio` to allow to switch true and simulated real-time
+loops.
 """
 import asyncio
-import datetime
 import contextlib
-from typing import Any, Iterator
+import datetime
+from typing import Any, Iterator, Optional
 
 import async_solipsism
+
+import helpers.dbg as dbg
+
 
 # TODO(gp): We could make this a mixin and add this behavior to both asyncio and
 #  async_solipsism event loop.
@@ -41,18 +45,18 @@ def solipsism_context() -> Iterator:
         asyncio.set_event_loop(None)
 
 
-# # TODO(gp): For some reason `asyncio.run()` doesn't seem to pick up the set event
-# #  loop. So we use a re-implementation of `run` that does that.
-# def run(coroutine, loop: Optional[asyncio.AbstractEventLoop] = None) -> Any:
-#     """
-#     `asyncio.run()` wrapper that allows to use a specified `EventLoop`.
-#     """
-#     if loop is None:
-#         # Use a normal `asyncio` EventLoop.
-#         loop = asyncio.new_event_loop()
-#     dbg.dassert_issubclass(loop, asyncio.AbstractEventLoop)
-#     try:
-#         ret = loop.run_until_complete(coroutine)
-#     finally:
-#         loop.close()
-#     return ret
+# TODO(gp): For some reason `asyncio.run()` doesn't seem to pick up the set event
+#  loop. So we use a re-implementation of `run` that does that.
+def run(coroutine, loop: Optional[asyncio.AbstractEventLoop] = None) -> Any:
+    """
+    `asyncio.run()` wrapper that allows to use a specified `EventLoop`.
+    """
+    if loop is None:
+        # Use a normal `asyncio` EventLoop.
+        loop = asyncio.new_event_loop()
+    dbg.dassert_issubclass(loop, asyncio.AbstractEventLoop)
+    try:
+        ret = loop.run_until_complete(coroutine)
+    finally:
+        loop.close()
+    return ret

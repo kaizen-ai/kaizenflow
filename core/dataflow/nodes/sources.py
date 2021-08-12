@@ -6,10 +6,9 @@ Import as:
 import core.dataflow.nodes.sources as cdtfns
 """
 import abc
-import datetime
 import logging
 import os
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -20,8 +19,8 @@ import core.dataflow.nodes.base as cdnb
 import core.dataflow.real_time as cdrt
 import core.finance as cfinan
 import core.pandas_helpers as pdhelp
-import helpers.dbg as dbg
 import helpers.datetime_ as hdatetime
+import helpers.dbg as dbg
 import helpers.printing as hprint
 import helpers.s3 as hs3
 
@@ -475,7 +474,8 @@ class SimulatedRealTimeDataSource(_AbstractRealTimeDataSource):
             _LOG.debug("Computing data for data source node")
             # Compute and store the entire history of the data through the passed
             # dataframe builder.
-            self._entire_df = self._data_builder(**self._data_builder_kwargs)  # type: ignore[call-arg]
+            self._entire_df = self._data_builder(  # type: ignore[call-arg]
+                    **self._data_builder_kwargs)
         return self._entire_df
 
 
@@ -496,6 +496,7 @@ class TrueRealTimeDataSource(_AbstractRealTimeDataSource):
         self,
         nid: cdtfc.NodeId,
         # TODO(gp): We should not expose this at all, since it's true real time.
+        # TODO(gp): external_clock -> get_wall_clock_time
         external_clock: hdatetime.GetWallClockTime,
         **kwargs: Dict[str, Any]
     ) -> None:
@@ -551,5 +552,6 @@ class ReplayedRealTimeDataSource(TrueRealTimeDataSource):
             _LOG.debug("Computing data for data source node")
             # Compute and store the entire history of the data through the passed
             # dataframe builder.
-            self._entire_df = self._data_builder(**self._data_builder_kwargs)  # type: ignore[call-arg]
+            self._entire_df = self._data_builder(  # type: ignore[call-arg]
+                    **self._data_builder_kwargs)
         return self._entire_df

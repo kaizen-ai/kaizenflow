@@ -1,23 +1,21 @@
-import datetime
 import asyncio
-import time
+import datetime
 import random
 
 import helpers.introspection as hintro
 
-
-#start_time = time.time()
+# start_time = time.time()
 
 
 mode = "true"
 
 
 def print_message(msg):
-    #current_time = get_current_time()
-    #replayed_time = round(time.time() - start_time, 1)
+    # current_time = get_current_time()
+    # replayed_time = round(time.time() - start_time, 1)
     replayed_time = round(loop.time() - start_time, 1)
     func_name = hintro.get_function_name(1)
-    #print(f"{current_time}: {replayed_time}: {func_name}: {msg}")
+    # print(f"{current_time}: {replayed_time}: {func_name}: {msg}")
     print(f"{replayed_time}: {func_name}: {msg}")
 
 
@@ -73,7 +71,7 @@ async def sleep(interval_in_secs: int):
 
 def get_current_time():
     # Return true, replayed, or simulated time.
-    #pass
+    # pass
     return datetime.datetime.now()
 
 
@@ -100,15 +98,16 @@ async def infinite_loop():
             break
 
 
-
 async def test():
     print(loop.time())
     await asyncio.sleep(60)
     print(loop.time())
 
+
 #
 if True:
     import async_solipsism
+
     loop = async_solipsism.EventLoop()
 else:
     loop = asyncio.new_event_loop()
@@ -116,14 +115,11 @@ else:
 asyncio.set_event_loop(loop)
 start_time = loop.time()
 
-#asyncio.run(infinite_loop())
+# asyncio.run(infinite_loop())
 
-#loop = asyncio.get_event_loop()
+# loop = asyncio.get_event_loop()
 try:
-    #loop.run_until_complete(infinite_loop())
+    # loop.run_until_complete(infinite_loop())
     loop.run_until_complete(test())
 finally:
     loop.close()
-
-
-

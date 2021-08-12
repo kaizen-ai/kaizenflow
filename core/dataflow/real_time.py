@@ -9,7 +9,7 @@ import collections
 import datetime
 import logging
 import time
-from typing import Any, Callable, Iterator, List, Optional, Tuple, cast
+from typing import Any, Callable, List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -83,13 +83,12 @@ class ReplayedTime:
 
     In other terms this class mocks `datetime.datetime.now()` so that the actual
     wall clock time `initial_wall_clock_dt` corresponds to `initial_replayed_dt`
-
     """
 
     def __init__(
         self,
-            initial_replayed_dt: pd.Timestamp,
-            get_wall_clock_time: hdatetime.GetWallClockTime,
+        initial_replayed_dt: pd.Timestamp,
+        get_wall_clock_time: hdatetime.GetWallClockTime,
     ):
         """
         Constructor.
@@ -109,10 +108,11 @@ class ReplayedTime:
         # This is when the experiment start.
         self._initial_wall_clock_dt = self._get_wall_clock_time()
         _LOG.debug(
-            hprint.to_str(
-                "self._initial_replayed_dt self._initial_wall_clock_dt"))
-        hdatetime.dassert_tz_compatible(self._initial_replayed_dt,
-                                        self._initial_wall_clock_dt)
+            hprint.to_str("self._initial_replayed_dt self._initial_wall_clock_dt")
+        )
+        hdatetime.dassert_tz_compatible(
+            self._initial_replayed_dt, self._initial_wall_clock_dt
+        )
         dbg.dassert_lte(
             self._initial_replayed_dt,
             self._initial_wall_clock_dt,
@@ -133,10 +133,11 @@ class ReplayedTime:
 
 
 def get_data_as_of_datetime(
-        df: pd.DataFrame, datetime_: pd.Timestamp, delay_in_secs: int = 0
+    df: pd.DataFrame, datetime_: pd.Timestamp, delay_in_secs: int = 0
 ) -> pd.DataFrame:
     """
-    Extract data available at `datetime_` from a df indexed with knowledge time.
+    Extract data available at `datetime_` from a df indexed with knowledge
+    time.
 
     :param df: df indexed with timestamp representing knowledge time
     :param datetime_: the "as of" timestamp
@@ -213,23 +214,24 @@ def align_on_even_second(use_time_sleep: bool = False) -> None:
 
 
 class Event(
-    collections.namedtuple(
-        "Event", "num_it current_time wall_clock_time"
-    )
+    collections.namedtuple("Event", "num_it current_time wall_clock_time")
 ):
     """
     Information about the real time execution.
     """
 
     def __str__(self) -> str:
-        return self.to_str(include_tenths_of_secs=False,
-                           include_wall_clock_time=True)
+        return self.to_str(
+            include_tenths_of_secs=False, include_wall_clock_time=True
+        )
 
     # From
     # https://docs.python.org/3/library/collections.html#
     #    namedtuple-factory-function-for-tuples-with-named-fields
 
-    def to_str(self, include_tenths_of_secs: bool, include_wall_clock_time: bool) -> str:
+    def to_str(
+        self, include_tenths_of_secs: bool, include_wall_clock_time: bool
+    ) -> str:
         vals = []
         vals.append("num_it=%s" % self.num_it)
         #
@@ -255,7 +257,6 @@ class Events(List[Event]):
         return "\n".join([x.to_str(*args, **kwargs) for x in self])
 
 
-
 async def execute_with_real_time_loop(
     get_wall_clock_time: hdatetime.GetWallClockTime,
     sleep_interval_in_secs: float,
@@ -276,12 +277,11 @@ async def execute_with_real_time_loop(
         - a list of results returned by the workload function
     """
     dbg.dassert_lt(0, sleep_interval_in_secs)
+    num_iterations: Optional[int] = None
     if time_out_in_secs is not None:
         # TODO(gp): Consider using a real-time check instead of number of iterations.
         num_iterations = int(time_out_in_secs / sleep_interval_in_secs)
         dbg.dassert_lt(0, num_iterations)
-    else:
-        num_iterations = None
     #
     events = Events()
     results = []
@@ -296,7 +296,7 @@ async def execute_with_real_time_loop(
         _LOG.debug("event='%s'", str(event))
         events.append(event)
         # Execute workload.
-        result = await asyncio.gather(
+        result = await asyncio.gather(  # type: ignore[var-annotated]
             asyncio.sleep(sleep_interval_in_secs),
             # We need to use the passed `wall_clock_time` since that's what being
             # used as real, simulated, replayed time.

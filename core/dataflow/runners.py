@@ -5,9 +5,8 @@ import core.dataflow.runners as cdtfr
 """
 
 import abc
-import datetime
 import logging
-from typing import Any, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple
 
 import pandas as pd
 
@@ -16,8 +15,8 @@ import core.dataflow.core as cdtfc
 import core.dataflow.real_time as cdtfrt
 import core.dataflow.utils as cdtfu
 import core.dataflow.visitors as cdtfv
-import helpers.dbg as dbg
 import helpers.datetime_ as hdatetime
+import helpers.dbg as dbg
 
 # TODO(gp): Use the standard imports.
 from core.dataflow.builders import DagBuilder
@@ -309,7 +308,7 @@ class RollingFitPredictDagRunner(_AbstractDagRunner):
         method = "predict"
         df_out, info = self._run_dag_helper(method)
         # Restrict `df_out` to out-of-sample portion.
-        df_out = df_out.loc[oos_start:]  # type: ignore[misc]
+        df_out = df_out.loc[oos_start:]
         return self._to_result_bundle(method, df_out, info)
 
     @staticmethod

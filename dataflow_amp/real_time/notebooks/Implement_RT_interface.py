@@ -157,14 +157,13 @@ cdataf.draw(dag)
 # #
 # sleep_interval_in_secs = 1.0
 # num_iterations = 3
-# get_current_time = rrt.get_replayed_current_time
+# get_wall_clock_time = rrt.get_wall_clock_time
 # need_to_execute = cdrt.execute_every_2_seconds
 # #
 # events, results = cdrt.execute_dag_with_real_time_loop(
+#     get_wall_clock_time,
 #     sleep_interval_in_secs,
 #     num_iterations,
-#     get_current_time,
-#     need_to_execute,
 #     dag,
 # )
 
@@ -184,13 +183,13 @@ end_datetime = pd.Timestamp("2010-01-05 09:30:00", tz=hdatetime.get_ET_tz())
 
 # Use a replayed real-time starting at the same time as the data.
 rrt = cdrt.ReplayedTime(start_datetime, hdatetime.get_current_time(tz="ET"))
-get_current_time = rrt.get_replayed_current_time
+get_wall_clock_time = rrt.get_wall_clock_time
 
 # %%
 import core.dataflow as cdtf
 
 execute_rt_loop_kwargs = {
-    "get_current_time": rrt.get_replayed_current_time,
+    "get_wall_clock_time": rrt.get_wall_clock_time,
     "sleep_interval_in_secs": 1.0,
     "num_iterations": 3,
 }

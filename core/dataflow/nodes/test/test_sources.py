@@ -208,12 +208,12 @@ class TestRealTimeDataSource1(hut.TestCase):
         nid = "rtds"
         delay_in_secs = 0.0
         # Return always the same time.
-        get_current_time = lambda: pd.Timestamp("2010-01-04 09:35:00")
+        get_wall_clock_time = lambda: pd.Timestamp("2010-01-04 09:35:00")
         data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder2()
         rtds = dtf.TrueRealTimeDataSource(  # pylint: disable=no-member
             nid,
             delay_in_secs=delay_in_secs,
-            external_clock=get_current_time,
+            external_clock=get_wall_clock_time,
             data_builder=data_builder,
             data_builder_kwargs=data_builder_kwargs,
         )
@@ -223,20 +223,19 @@ class TestRealTimeDataSource1(hut.TestCase):
     def test_replayed_real_time1(self) -> None:
         # Build the node.
         nid = "rtds"
-        delay_in_secs = 0.0
+        get_wall_clock_time = lambda: hdatetime.get_current_time("naive_ET")
         # Use a replayed real-time starting at the same time as the data.
         rrt = dtf.ReplayedTime(
             pd.Timestamp("2010-01-04 09:30:00"),
-            # 1.1 is a fudge factor to make sure we get in the next minute.
-            speed_up_factor=60 * 1.1,
+            get_wall_clock_time,
         )
-        get_current_time = rrt.get_replayed_current_time
+        get_wall_clock_time = rrt.get_wall_clock_time
         #
         data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder1()
         rtds = dtf.ReplayedRealTimeDataSource(  # pylint: disable=no-member
             nid,
             delay_in_secs=delay_in_secs,
-            external_clock=get_current_time,
+            external_clock=get_wall_clock_time,
             data_builder=data_builder,
             data_builder_kwargs=data_builder_kwargs,
         )
@@ -261,9 +260,7 @@ class TestRealTimeDataSource1(hut.TestCase):
         ]
         self.assert_equal(str(act), str(exp))
 
-    def _helper(
-        self, rtds: dtf.ReplayedRealTimeDataSource
-    ) -> None:
+    def _helper(self, rtds: dtf.ReplayedRealTimeDataSource) -> None:
         # Execute.
         dict_ = rtds.fit()
         # Check.

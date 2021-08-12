@@ -449,8 +449,12 @@ def purify_amp_references(txt: str) -> str:
     # ```
     # Test created for amp.helpers.test.test_playback.get_result_ae
     # ```
-    txt = re.sub(r"# Test created for a[mp]p\.helpers", "# Test created for helpers",
-            txt, flags=re.MULTILINE)
+    txt = re.sub(
+        r"# Test created for a[mp]p\.helpers",
+        "# Test created for helpers",
+        txt,
+        flags=re.MULTILINE,
+    )
     # E.g., `['amp/helpers/test/...`
     txt = re.sub(r"'amp\/", "'", txt, flags=re.MULTILINE)
     txt = re.sub(r"\/amp\/", "/", txt, flags=re.MULTILINE)

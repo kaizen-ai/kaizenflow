@@ -41,6 +41,7 @@ _LOG = logging.getLogger(__name__)
 # Another approach is to use a "meta_parameter" Config key with all the parameters
 # used by multiple nodes
 
+
 class RealTimeReturnPipeline(dtf.DagBuilder):
     """
     Real-time pipeline for computing returns from price data.
@@ -48,7 +49,6 @@ class RealTimeReturnPipeline(dtf.DagBuilder):
     It is built as a composition of:
     - the real-time machinery
     - the DAG `ReturnsPipeline`
-
     """
 
     def __init__(self) -> None:
@@ -69,7 +69,7 @@ class RealTimeReturnPipeline(dtf.DagBuilder):
                 "real_time": {
                     "type": cconfig.DUMMY,
                     "kwargs": cconfig.DUMMY,
-                }
+                },
             }
         )
         #
@@ -96,7 +96,7 @@ class RealTimeReturnPipeline(dtf.DagBuilder):
         # Inject a real-time node.
         source_node_kwargs = {
             "delay_in_secs": 0.0,
-            "external_clock": rrt.get_replayed_current_time,
+            "external_clock": rrt.get_wall_clock_time,
             "data_builder": data_builder,
             "data_builder_kwargs": data_builder_kwargs,
         }
@@ -133,7 +133,7 @@ class RealTimeReturnPipeline(dtf.DagBuilder):
         # Inject a real-time node.
         source_node_kwargs = {
             "delay_in_secs": 0.0,
-            "external_clock": rrt.get_replayed_current_time,
+            "external_clock": rrt.get_wall_clock_time,
             "data_builder": data_builder,
             "data_builder_kwargs": data_builder_kwargs,
         }
