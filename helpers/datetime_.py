@@ -210,9 +210,9 @@ def get_ET_tz() -> datetime.tzinfo:
     return pytz.timezone("America/New_York")
 
 
-# Function returning the current (true or replayed) time as a timestamp.
-# TODO(gp): -> GetWallClockTime
-GetCurrentTimeFunction = Callable[[], pd.Timestamp]
+# Function returning the current (true, replayed, simulated) wall-clock time as a
+# timestamp.
+GetWallClockTime = Callable[[], pd.Timestamp]
 
 
 # TODO(gp): -> get_wall_clock_time

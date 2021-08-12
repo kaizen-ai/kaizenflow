@@ -3,6 +3,7 @@ Import as:
 
 import core.dataflow.test.test_real_time as cdtfttrt
 """
+import asyncio
 import logging
 import time
 from typing import Any, Callable, Tuple
@@ -12,6 +13,7 @@ import pytest
 
 import core.dataflow.real_time as cdrt
 import helpers.datetime_ as hdatetime
+import helpers.hasyncio as hasyncio
 import helpers.htypes as htypes
 import helpers.printing as hprint
 import helpers.unit_test as hut
@@ -54,22 +56,21 @@ def get_test_data_builder2() -> Tuple[Callable, htypes.Kwargs]:
     return data_builder, data_builder_kwargs
 
 
-def get_test_current_time() -> pd.Timestamp:
+def get_replayed_real_time() -> pd.Timestamp:
     start_datetime = pd.Timestamp("2010-01-04 09:30:00")
     # Use a replayed real-time starting at the same time as the data.
-    rrt = cdrt.ReplayRealTime(start_datetime)
+    rrt = cdrt.ReplayedTime(start_datetime, hdatetime.get_current_time(tz="NAIVE_ET"))
     get_current_time = rrt.get_replayed_current_time
     return get_current_time
 
 
-# TODO(gp): Reduce to sleep_interval to 0.5 secs.
+# TODO(gp): Reduce to sleep_interval to 0.5 secs, if possible.
 def get_test_execute_rt_loop_kwargs() -> htypes.Kwargs:
-    get_current_time = get_test_current_time()
+    get_wall_clock_time = get_replayed_real_time()
     execute_rt_loop_kwargs = {
+        "get_wall_clock_time": get_wall_clock_time,
         "sleep_interval_in_secs": 1.0,
         "num_iterations": 3,
-        "get_current_time": get_current_time,
-        "need_to_execute": cdrt.execute_every_2_seconds,
     }
     return execute_rt_loop_kwargs
 
@@ -77,36 +78,19 @@ def get_test_execute_rt_loop_kwargs() -> htypes.Kwargs:
 # #############################################################################
 
 
-class TestReplayTime1(hut.TestCase):
+class TestReplayedTime1(hut.TestCase):
     def test1(self) -> None:
         """
         Rewind time to 9:30am of a day in the past.
         """
-        rrt = cdrt.ReplayRealTime(pd.Timestamp("2021-07-27 9:30:00-04:00"))
+        rrt = get_replayed_real_time()
         # We assume that these 2 calls take less than 1 minute.
-        exp = pd.Timestamp("2021-07-27 9:30")
+        exp = pd.Timestamp("2010-01-04 09:30:00")
         self._helper(rrt, exp)
         #
-        exp = pd.Timestamp("2021-07-27 9:30")
         self._helper(rrt, exp)
 
-    def test2(self) -> None:
-        """
-        Rewind time to 9:30am of a day in the past and speed up time 1e6 times.
-        """
-        rrt = cdrt.ReplayRealTime(
-            pd.Timestamp("2021-07-27 9:30:00-04:00"), speed_up_factor=1e6
-        )
-        rct = rrt.get_replayed_current_time()
-        _LOG.info("  -> time=%s", rct)
-        # We can't easily check the expected value, so we just check a lower bound.
-        self.assertGreater(rct, pd.Timestamp("2021-07-27 9:30:01-04:00"))
-        #
-        rct = rrt.get_replayed_current_time()
-        _LOG.info("  -> time=%s", rct)
-        self.assertGreater(rct, pd.Timestamp("2021-07-27 9:30:02-04:00"))
-
-    def _helper(self, rrt: cdrt.ReplayRealTime, exp: pd.Timestamp) -> None:
+    def _helper(self, rrt: cdrt.ReplayedTime, exp: pd.Timestamp) -> None:
         rct = rrt.get_replayed_current_time()
         _LOG.info("  -> time=%s", rct)
         _LOG.debug(hprint.to_str("rct.date"))
@@ -119,17 +103,6 @@ class TestReplayTime1(hut.TestCase):
 
 # #############################################################################
 
-import asyncio
-#import async_solipsism
-
-# def run(coroutine, loop) -> Any:
-#     try:
-#         ret = loop.run_until_complete(coroutine)
-#     finally:
-#         loop.close()
-#     return ret
-
-import helpers.hasyncio as hasyncio
 
 class Test_execute_with_real_time_loop1(hut.TestCase):
     @staticmethod
@@ -142,22 +115,20 @@ class Test_execute_with_real_time_loop1(hut.TestCase):
             await asyncio.sleep(0.1)
         return need_execute
 
-    def helper(self, get_current_time, loop) -> Tuple[str, str]:
+    def helper(self, get_current_time: hdatetime.GetWallClockTime, loop: asyncio.AbstractEventLoop) -> Tuple[str, str]:
         """
         Test executing a workload every even second for 3 seconds using different
         event loops and wall clock times.
         """
-        # Align on a even second.
-        cdrt.align_on_even_second()
         # Do 3 iterations of 1.0s.
         sleep_interval_in_secs = 1.0
         time_out_in_secs = 1.0 * 3 + 0.1
         #
         events, results = hasyncio.run(
             cdrt.execute_with_real_time_loop(
+                get_current_time,
                 sleep_interval_in_secs,
                 time_out_in_secs,
-                get_current_time,
                 self.workload,
             ),
             loop=loop
@@ -174,6 +145,8 @@ class Test_execute_with_real_time_loop1(hut.TestCase):
         """
         Use real-time.
         """
+        # Align on a even second.
+        cdrt.align_on_even_second()
         # Use the wall clock time with no special event loop.
         get_current_time = lambda: hdatetime.get_current_time(tz="ET")
         loop = None
@@ -185,6 +158,8 @@ class Test_execute_with_real_time_loop1(hut.TestCase):
         """
         Use simulated real-time.
         """
+        # Align on a even second.
+        cdrt.align_on_even_second()
         # Use the wall clock time.
         get_current_time = lambda: hdatetime.get_current_time(tz="ET", loop=loop)
         # Use the solipsistic event loop to simulate the real-time faster.
@@ -209,7 +184,7 @@ class Test_execute_with_real_time_loop1(hut.TestCase):
         # Create a replayed clock using the wall clock.
         start_datetime = pd.Timestamp("2010-01-04 09:30:00", tz=hdatetime.get_ET_tz())
         get_wall_clock_time = lambda: hdatetime.get_current_time(tz="ET")
-        rrt = cdrt.ReplayRealTime(start_datetime, get_wall_clock_time)
+        rrt = cdrt.ReplayedTime(start_datetime, get_wall_clock_time)
         # Get replayed current time and no special loop (i.e., real-time).
         get_current_time = rrt.get_current_time
         loop = None
@@ -236,11 +211,14 @@ class Test_execute_with_real_time_loop1(hut.TestCase):
         get_wall_clock_time = lambda: hdatetime.get_current_time(tz="ET", loop=loop)
         start_datetime = pd.Timestamp("2010-01-04 09:30:00", tz=hdatetime.get_ET_tz())
         with hasyncio.solipsism_context() as loop:
-            rrt = cdrt.ReplayRealTime(start_datetime, get_wall_clock_time)
+            rrt = cdrt.ReplayedTime(start_datetime, get_wall_clock_time)
             get_current_time = rrt.get_current_time
         events_as_str, results_as_str = self.helper(get_current_time, loop)
         # Check.
         self._check_output_replayed(events_as_str, results_as_str)
+
+
+class Test_execute_with_real_time_loop2(hut.TestCase):
 
     @pytest.mark.slow("It takes around 4 secs")
     def test_align_on_even_second1(self) -> None:

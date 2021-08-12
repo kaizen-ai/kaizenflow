@@ -21,7 +21,7 @@ _LOG = logging.getLogger(__name__)
 # 2) Mixing Python objects / functions (e.g., the real time logic) and DAG nodes
 # 3) The same parameter needs to be used by different objects / functions and DAG nodes
 #    and kept in sync some how (e.g., the `start_datetime` for the node and for the
-#    `ReplayRealTime`
+#    `ReplayedTime`
 # 4) Use different Python objects / functions inside the DAG
 
 # We could build the DAG using a builder function which returns a DAG without following
@@ -80,9 +80,11 @@ class RealTimeReturnPipeline(dtf.DagBuilder):
         #  contains all the fields that need to be filled, then the rest builds it.
         #  There can be helpers that help fill configs with group of params that
         #  are related.
-        rrt = dtf.ReplayRealTime(
+        # TODO(gp): Add this
+        get_wall_clock_time = None
+        rrt = dtf.ReplayedTime(
             start_datetime,
-            speed_up_factor=60.0,
+            get_wall_clock_time,
         )
         # Data builder.
         data_builder = dtf.generate_synthetic_data
@@ -117,9 +119,9 @@ class RealTimeReturnPipeline(dtf.DagBuilder):
         #  contains all the fields that need to be filled, then the rest builds it.
         #  There can be helpers that help fill configs with group of params that
         #  are related.
-        rrt = dtf.ReplayRealTime(
+        rrt = dtf.ReplayedTime(
             config["meta_parameters"]["start_datetime"],
-            speed_up_factor=60.0,
+            config["replayed_time"]["get_wall_clock_time"],
         )
         # Data builder.
         data_builder = dtf.generate_synthetic_data

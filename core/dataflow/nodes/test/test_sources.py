@@ -225,7 +225,7 @@ class TestRealTimeDataSource1(hut.TestCase):
         nid = "rtds"
         delay_in_secs = 0.0
         # Use a replayed real-time starting at the same time as the data.
-        rrt = dtf.ReplayRealTime(
+        rrt = dtf.ReplayedTime(
             pd.Timestamp("2010-01-04 09:30:00"),
             # 1.1 is a fudge factor to make sure we get in the next minute.
             speed_up_factor=60 * 1.1,

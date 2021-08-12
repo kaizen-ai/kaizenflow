@@ -183,17 +183,16 @@ start_datetime = pd.Timestamp("2010-01-04 09:30:00", tz=hdatetime.get_ET_tz())
 end_datetime = pd.Timestamp("2010-01-05 09:30:00", tz=hdatetime.get_ET_tz())
 
 # Use a replayed real-time starting at the same time as the data.
-rrt = cdrt.ReplayRealTime(start_datetime)
+rrt = cdrt.ReplayedTime(start_datetime, hdatetime.get_current_time(tz="ET"))
 get_current_time = rrt.get_replayed_current_time
 
 # %%
 import core.dataflow as cdtf
 
 execute_rt_loop_kwargs = {
+    "get_current_time": rrt.get_replayed_current_time,
     "sleep_interval_in_secs": 1.0,
     "num_iterations": 3,
-    "get_current_time": rrt.get_replayed_current_time,
-    "need_to_execute": cdrt.execute_every_2_seconds,
 }
 
 #

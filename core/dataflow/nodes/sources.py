@@ -496,7 +496,7 @@ class TrueRealTimeDataSource(_AbstractRealTimeDataSource):
         self,
         nid: cdtfc.NodeId,
         # TODO(gp): We should not expose this at all, since it's true real time.
-        external_clock: cdrt.GetCurrentTimeFunction,
+        external_clock: hdatetime.GetWallClockTime,
         **kwargs: Dict[str, Any]
     ) -> None:
         super().__init__(nid, **kwargs)  # type: ignore[arg-type]
@@ -527,7 +527,7 @@ class TrueRealTimeDataSource(_AbstractRealTimeDataSource):
 #  the speed of time so it's not properly real time. Also the naming becomes simpler
 #  Simulated vs Replayed vs Real
 
-# TODO(gp): This should get all the parameters needed to build a ReplayRealTime,
+# TODO(gp): This should get all the parameters needed to build a ReplayedTime,
 #  instead of accepting the time function. In the end they are coupled.
 
 # pylint: disable=too-many-ancestors
