@@ -1020,8 +1020,9 @@ def plot_effective_correlation_rank(
         effective_ranks.append(effective_rank)
     # Plot singular values.
     singular_values.plot(
-        title="Singular values and effective rank", ylim=(0, None),
-        label="Correlation matrix eigenvalues"
+        title="Singular values and effective rank",
+        ylim=(0, None),
+        label="Correlation matrix eigenvalues",
     )
     # Plot effective rank bars.
     colors = mcm.get_cmap("Set1")(np.linspace(0, 1, len(effective_ranks)))
