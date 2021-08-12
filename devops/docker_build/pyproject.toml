@@ -5,6 +5,7 @@ description = ""
 authors = [""]
 
 [tool.poetry.dependencies]
+async_solipsism = ">= 0.3"
 awscli = "*"
 boto3 = "*"
 bs4 = "*"

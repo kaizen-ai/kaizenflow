@@ -7,6 +7,7 @@ import logging
 import time
 from typing import Callable, Tuple
 
+import async_solipsism
 import pandas as pd
 import pytest
 
