@@ -992,24 +992,50 @@ def display_corr_df(df: pd.core.frame.DataFrame) -> None:
 
 def plot_effective_correlation_rank(
     df: pd.DataFrame,
-    q: float = 1,
+    q_values: Optional[List[float]] = None,
     figsize: Optional[Tuple[int, int]] = None,
     ax: Optional[mpl.axes.Axes] = None,
-) -> float:
+) -> List[float]:
     """
     Compute effective rank of data correlation based on singular values.
     """
     if ax is None:
         _, ax = plt.subplots(figsize=figsize)
+    # Defaults include the endpoints and a value in-between.
+    # - q = 1 corresponds to entropy and yields the largest expected rank
+    # - q = np.inf corresponds to "stable rank" and yields the smallest expected
+    #   rank
+    q_values = q_values or [1, 2, np.inf]
+    dbg.dassert_isinstance(q_values, list)
+    # Calculate (sample) correlation matrix.
     corr = df.corr()
+    # Calculate eigenvalues of sample correlation matrix (i.e., squared
+    # singular values of `df`).
     sv = np.linalg.svd(corr.values, hermitian=True)[1]
     singular_values = pd.Series(index=range(1, len(sv) + 1), data=sv)
-    effective_rank = cstati.compute_hill_number(singular_values, q)
+    # Calculate effective rank over q_values.
+    effective_ranks = []
+    for q in q_values:
+        effective_rank = cstati.compute_hill_number(singular_values, q)
+        effective_ranks.append(effective_rank)
+    # Plot singular values.
     singular_values.plot(
-        title="Singular values and effective rank", ylim=(0, None)
+        title="Singular values and effective rank", ylim=(0, None),
+        label="Correlation matrix eigenvalues"
     )
-    ax.axvline(effective_rank, ls="--", c="k")
-    return effective_rank
+    # Plot effective rank bars.
+    colors = mcm.get_cmap("Set1")(np.linspace(0, 1, len(effective_ranks)))
+    for idx, effective_rank in enumerate(effective_ranks):
+        q = q_values[idx]
+        color = colors[idx]
+        ax.axvline(
+            effective_rank,
+            label=f"q={q} effective rank={effective_rank:.2f}",
+            color=color,
+            linestyle="--",
+        )
+    ax.legend()
+    return effective_ranks
 
 
 def compute_linkage(df: pd.DataFrame, method: Optional[str] = None) -> np.ndarray:
