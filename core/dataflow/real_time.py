@@ -263,7 +263,7 @@ async def execute_with_real_time_loop(
     sleep_interval_in_secs: float,
     time_out_in_secs: Optional[int],
     workload: Callable[[pd.Timestamp], Any],
-) -> Tuple[Events, List[Any]]:
+) -> Tuple[Event, Any]:
     """
     Execute a function using a true, simulated, replayed event loop.
 
@@ -286,10 +286,9 @@ async def execute_with_real_time_loop(
         num_iterations = int(time_out_in_secs / sleep_interval_in_secs)
         dbg.dassert_lt(0, num_iterations)
     #
-    events = Events()
-    results = []
+    #events = Events()
+    #results = []
     num_it = 1
-    _LOG.error("ERROR")
     while True:
         wall_clock_time = get_wall_clock_time()
         # For the wall clock time, we always use the real one. This is used only for
@@ -298,7 +297,7 @@ async def execute_with_real_time_loop(
         # Update the current events.
         event = Event(num_it, wall_clock_time, real_wall_clock_time)
         _LOG.debug("event='%s'", str(event))
-        events.append(event)
+        #events.append(event)
         # Execute workload.
         result = await asyncio.gather(  # type: ignore[var-annotated]
             asyncio.sleep(sleep_interval_in_secs),
@@ -306,9 +305,9 @@ async def execute_with_real_time_loop(
             # used as real, simulated, replayed time.
             workload(wall_clock_time),
         )
-        #yield event, result[1]
-        yield result
-        results.append(result[1])
+        print("1: result=", str(result))
+        yield event, result[1]
+        #results.append(result[1])
         # Exit, if needed.
         if num_iterations is not None and num_it >= num_iterations:
             break

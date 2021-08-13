@@ -473,10 +473,18 @@ class RealTimeDagRunner(_AbstractDagRunner):
         self._execute_rt_loop_kwargs = execute_rt_loop_kwargs
         self._dst_dir = dst_dir
         # Store information about the real-time execution.
-        # self._events: Optional[cdtfrt.Events] = None
-        self._events: cdtfrt.Events
+        self._events: cdtfrt.Events = []
 
-    async def predict(self) -> ResultBundle:
+    async def predict(self) -> List[ResultBundle]:
+        """
+        Execute the DAG until there are events.
+
+        This adapts the asynchronous generator to a synchronous semantic.
+        """
+        result_bundles = [result_bundle async for result_bundle in self.predict_at_datetime()]
+        return result_bundles
+
+    async def predict_at_datetime(self) -> ResultBundle:
         """
         Predict every time there is a real-time event.
 
@@ -484,40 +492,18 @@ class RealTimeDagRunner(_AbstractDagRunner):
         """
         method = "predict"
         # Adapt `_dag_workload()` to the expected call back signature.
-        workload = lambda current_time: self._dag_workload(current_time, method)
+        workload = lambda current_time: self._run_dag(method)
         # Call the event loop.
-        #event, result = cdtfrt.execute_with_real_time_loop(
-        async for result in cdtfrt.execute_with_real_time_loop(
+        async for event, result_bundle in cdtfrt.execute_with_real_time_loop(
             **self._execute_rt_loop_kwargs, workload=workload
         ):
-            yield result
+            self._events.append(event)
+            yield result_bundle
 
-        #assert 0
-        #import asyncio
-        #await asyncio.sleep(0.1)
-        #yield self._to_result_bundle(method, result[0], result[1])
-        #yield result
-        # # Save the log of events.
-        # self._events = events
-        # # Convert the output in `ResultBundles`.
-        # result_bundles = [
-        #     self._to_result_bundle(method, df_out, info)
-        #     for df_out, info in results
-        # ]
-        # return result_bundles
+    @property
+    def events(self) -> Optional[cdtfrt.Events]:
+        return self._events
 
-    # @property
-    # def events(self) -> Optional[cdtfrt.Events]:
-    #     return self._events
-
-    async def _dag_workload(
-        self, current_time: pd.Timestamp, method: cdtfc.Method
-    ) -> cdtfc.NodeOutput:
-        """
-        Workload for the real-time loop to execute a DAG.
-        """
-        _ = current_time
-        sink = self.dag.get_unique_sink()
-        node_output = self.dag.run_leq_node(sink, method)
-        return 1
-        #return node_output
+    async def _run_dag(self, method: cdtfc.Method) -> ResultBundle:
+        df_out, info = self._run_dag_helper(method)
+        return self._to_result_bundle(method, df_out, info)

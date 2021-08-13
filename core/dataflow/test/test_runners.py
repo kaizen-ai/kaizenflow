@@ -7,6 +7,7 @@ import core.dataflow as dtf
 import core.dataflow.runners as cdtfr
 import core.dataflow.test.test_builders as cdtfnttd
 import core.dataflow.test.test_real_time as cdtfttrt
+import helpers.hasyncio as hasyncio
 import helpers.printing as hprint
 import helpers.unit_test as hut
 
@@ -75,20 +76,6 @@ class TestIncrementalDagRunner1(hut.TestCase):
 
 # #############################################################################
 
-import helpers.hasyncio as hasyncio
-
-import asyncio
-
-async def execute(dag_runner):
-    #i async for i in dag_runner.predict()])
-    #v = await dag_runner.predict()
-    vals = [i async for i in dag_runner.predict()]
-    print("vals=", str(vals))
-    return vals
-    #yield v
-    #await asyncio.sleep(0.1)
-
-
 
 class TestRealTimeDagRunner1(hut.TestCase):
 
@@ -114,7 +101,7 @@ class TestRealTimeDagRunner1(hut.TestCase):
         # Run.
         dtf.align_on_even_second()
         dag_runner = cdtfr.RealTimeDagRunner(**kwargs)
-        results = hasyncio.run(execute(dag_runner))
+        results = hasyncio.run(dag_runner.predict())
         # # Check the events.
         # actual = "\n".join(
         #     [
