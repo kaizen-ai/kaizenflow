@@ -479,9 +479,12 @@ class RealTimeDagRunner(_AbstractDagRunner):
         """
         Execute the DAG until there are events.
 
-        This adapts the asynchronous generator to a synchronous semantic.
+        This adapts the asynchronous generator to a synchronous
+        semantic.
         """
-        result_bundles = [result_bundle async for result_bundle in self.predict_at_datetime()]
+        result_bundles = [
+            result_bundle async for result_bundle in self.predict_at_datetime()
+        ]
         return result_bundles
 
     async def predict_at_datetime(self) -> ResultBundle:

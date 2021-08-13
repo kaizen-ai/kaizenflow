@@ -372,6 +372,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         # Check the outcome.
         self._check_calls(ctx)
 
+
 # #############################################################################
 
 # TODO(gp): Run test coverage with

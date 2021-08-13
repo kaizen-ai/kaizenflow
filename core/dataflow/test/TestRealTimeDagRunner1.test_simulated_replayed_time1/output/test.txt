@@ -1,5 +1,3 @@
-events=
-[Event(num_it=1, current_time=Timestamp('2010-01-04 09:30:00'), wall_clock_time=Timestamp('2021-08-13 08:13:14.017796-0400', tz='America/New_York')), Event(num_it=2, current_time=Timestamp('2010-01-04 09:30:01'), wall_clock_time=Timestamp('2021-08-13 08:13:14.213663-0400', tz='America/New_York')), Event(num_it=3, current_time=Timestamp('2010-01-04 09:30:02'), wall_clock_time=Timestamp('2021-08-13 08:13:14.398295-0400', tz='America/New_York'))]
 result_bundles=
 config:
   get_data:

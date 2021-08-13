@@ -80,7 +80,7 @@ class DataLoader(cdnb.DataSource):
         return super().predict()  # type: ignore[no-any-return]
 
     def _lazy_load(self) -> None:
-        if self.df is not None:
+        if self.df is not None:  # type: ignore[has-type]
             return
         df_out = self._func(**self._func_kwargs)
         # TODO(gp): Add more checks like df.index is an increasing timestamp.
@@ -146,7 +146,7 @@ def load_data_from_disk(
     #  garbage collector.
     # TODO(gp): A bit inefficient since Parquet might allow to read only the needed
     #  data.
-    df = df.loc[start_date:end_date]  # type: ignore[misc]
+    df = df.loc[start_date:end_date]
     dbg.dassert(not df.empty, "Dataframe is empty")
     return df
 
@@ -188,7 +188,9 @@ class DiskDataSource(cdnb.DataSource):
         """
         if self.df is not None:  # type: ignore[has-type]
             return
-        df = load_data_from_disk(**self._load_data_from_disk_kwargs)
+        df = load_data_from_disk(  # type: ignore[arg-type]
+            **self._load_data_from_disk_kwargs
+        )
         self.df = df
 
 
@@ -236,7 +238,7 @@ class ArmaGenerator(cdnb.DataSource):
         return super().predict()  # type: ignore[no-any-return]
 
     def _lazy_load(self) -> None:
-        if self.df is not None:
+        if self.df is not None:  # type: ignore[has-type]
             return
         rets = self._arma_process.generate_sample(
             date_range_kwargs={
@@ -255,9 +257,9 @@ class ArmaGenerator(cdnb.DataSource):
         prices = np.exp(0.1 * rets.cumsum())
         prices.name = "close"
         df = prices.to_frame()
-        self.df = df.loc[self._start_date : self._end_date]  # type: ignore[misc]
+        self.df = df.loc[self._start_date : self._end_date]
         # Use constant volume (for now).
-        self.df["vol"] = 100
+        self.df["vol"] = 100  # type: ignore[index]
 
 
 # #############################################################################
@@ -319,7 +321,7 @@ class MultivariateNormalGenerator(cdnb.DataSource):
         return rets * self._volatility_scale_factor
 
     def _lazy_load(self, fit: bool) -> None:
-        if self.df is not None:
+        if self.df is not None:  # type: ignore[has-type]
             return
         rets = self._generate_returns(fit)
         # Cumulatively sum to generate a price series (implicitly assumes the
@@ -332,7 +334,7 @@ class MultivariateNormalGenerator(cdnb.DataSource):
             index=prices.index, columns=prices.columns, data=100
         )
         df = pd.concat([prices, volume], axis=1, keys=["close", "volume"])
-        self.df = df.loc[self._start_date : self._end_date]  # type: ignore[misc]
+        self.df = df.loc[self._start_date : self._end_date]
 
 
 # #############################################################################
@@ -476,7 +478,8 @@ class SimulatedRealTimeDataSource(_AbstractRealTimeDataSource):
             # Compute and store the entire history of the data through the passed
             # dataframe builder.
             self._entire_df = self._data_builder(  # type: ignore[call-arg]
-                    **self._data_builder_kwargs)
+                **self._data_builder_kwargs
+            )
         return self._entire_df
 
 
@@ -556,5 +559,6 @@ class ReplayedRealTimeDataSource(TrueRealTimeDataSource):
             # Compute and store the entire history of the data through the passed
             # dataframe builder.
             self._entire_df = self._data_builder(  # type: ignore[call-arg]
-                    **self._data_builder_kwargs)
+                **self._data_builder_kwargs
+            )
         return self._entire_df

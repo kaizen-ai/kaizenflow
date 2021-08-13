@@ -91,7 +91,8 @@ async def infinite_loop():
             break
 
 
-#################################
+# #############################################################################
+
 
 async def test():
     print(loop.time())
@@ -99,8 +100,7 @@ async def test():
     print(loop.time())
 
 
-
-#################################
+# #############################################################################
 
 if False:
     import async_solipsism
@@ -146,14 +146,15 @@ async def inf_loop2():
 
 
 async def predict():
-    #yield from inf_loop2()
-    #rc = await inf_loop2()
-    #yield rc
+    # yield from inf_loop2()
+    # rc = await inf_loop2()
+    # yield rc
     async for i in inf_loop2():
         yield i
 
+
 async def execute():
-    #v = [i async for i in inf_loop2()]
+    # v = [i async for i in inf_loop2()]
     v = [i async for i in predict()]
     print(v)
     return v

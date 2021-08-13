@@ -9,7 +9,7 @@ import collections
 import datetime
 import logging
 import time
-from typing import Any, Callable, List, Optional, Tuple, cast
+from typing import Any, AsyncGenerator, Callable, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -263,7 +263,7 @@ async def execute_with_real_time_loop(
     sleep_interval_in_secs: float,
     time_out_in_secs: Optional[int],
     workload: Callable[[pd.Timestamp], Any],
-) -> Tuple[Event, Any]:
+) -> AsyncGenerator[Tuple[Event, Any], None]:
     """
     Execute a function using a true, simulated, replayed event loop.
 
@@ -277,8 +277,11 @@ async def execute_with_real_time_loop(
         - an execution trace representing the events in the real-time loop; and
         - a list of results returned by the workload function
     """
-    dbg.dassert(callable(get_wall_clock_time), "get_wall_clock_time='%s' is not callable",
-                str(get_wall_clock_time))
+    dbg.dassert(
+        callable(get_wall_clock_time),
+        "get_wall_clock_time='%s' is not callable",
+        str(get_wall_clock_time),
+    )
     dbg.dassert_lt(0, sleep_interval_in_secs)
     num_iterations: Optional[int] = None
     if time_out_in_secs is not None:
@@ -286,8 +289,6 @@ async def execute_with_real_time_loop(
         num_iterations = int(time_out_in_secs / sleep_interval_in_secs)
         dbg.dassert_lt(0, num_iterations)
     #
-    #events = Events()
-    #results = []
     num_it = 1
     while True:
         wall_clock_time = get_wall_clock_time()
@@ -297,7 +298,6 @@ async def execute_with_real_time_loop(
         # Update the current events.
         event = Event(num_it, wall_clock_time, real_wall_clock_time)
         _LOG.debug("event='%s'", str(event))
-        #events.append(event)
         # Execute workload.
         result = await asyncio.gather(  # type: ignore[var-annotated]
             asyncio.sleep(sleep_interval_in_secs),
@@ -305,11 +305,18 @@ async def execute_with_real_time_loop(
             # used as real, simulated, replayed time.
             workload(wall_clock_time),
         )
-        print("1: result=", str(result))
-        yield event, result[1]
-        #results.append(result[1])
+        _, workload_result = result
+        yield event, workload_result
         # Exit, if needed.
         if num_iterations is not None and num_it >= num_iterations:
             break
         num_it += 1
-    #return events, results
+
+
+async def execute_all_with_real_time_loop(
+        *args: Tuple[Any], **kwargs: Dict[str, Any]
+) -> Tuple[List[Event], List[Any]]:
+    """
+    Execute the entire event loop until the end.
+    """
+    return zip([v async for v in execute_with_real_time_loop(*args, **kwargs)])

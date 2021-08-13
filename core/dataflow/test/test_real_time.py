@@ -29,7 +29,8 @@ _LOG = logging.getLogger(__name__)
 
 def get_test_data_builder1() -> Tuple[Callable, htypes.Kwargs]:
     """
-    Return data between "2010-01-04 09:30:00" and "2010-01-04 09:35:00" every second.
+    Return data between "2010-01-04 09:30:00" and "2010-01-04 09:35:00" every
+    second.
     """
     data_builder = cdrt.generate_synthetic_data
     data_builder_kwargs = {
@@ -57,17 +58,22 @@ def get_test_data_builder2() -> Tuple[Callable, htypes.Kwargs]:
     return data_builder, data_builder_kwargs
 
 
-def get_replayed_time(loop=None) -> cdrt.ReplayedTime:
+def get_replayed_time(
+    loop: Optional[asyncio.AbstractEventLoop] = None,
+) -> cdrt.ReplayedTime:
     start_datetime = pd.Timestamp("2010-01-04 09:30:00")
     # Use a replayed real-time starting at the same time as the data.
-    get_wall_clock_time = lambda: hdatetime.get_current_time(tz="naive_ET",
-                                                             loop=loop)
+    get_wall_clock_time = lambda: hdatetime.get_current_time(
+        tz="naive_ET", loop=loop
+    )
     rt = cdrt.ReplayedTime(start_datetime, get_wall_clock_time)
     return rt
 
 
 # TODO(gp): Reduce to sleep_interval to 0.5 secs, if possible.
-def get_replayed_time_execute_rt_loop_kwargs(loop=None) -> htypes.Kwargs:
+def get_replayed_time_execute_rt_loop_kwargs(
+    loop: Optional[asyncio.AbstractEventLoop] = None,
+) -> htypes.Kwargs:
     rt = get_replayed_time(loop)
     get_wall_clock_time = rt.get_wall_clock_time
     execute_rt_loop_kwargs = {
@@ -120,7 +126,7 @@ class Test_execute_with_real_time_loop1(hut.TestCase):
             await asyncio.sleep(0.1)
         return need_execute
 
-    def helper(
+    def _helper(
         self,
         get_wall_clock_time: hdatetime.GetWallClockTime,
         loop: Optional[asyncio.AbstractEventLoop],
@@ -134,7 +140,7 @@ class Test_execute_with_real_time_loop1(hut.TestCase):
         time_out_in_secs = 1.0 * 3 + 0.1
         #
         events, results = hasyncio.run(
-            cdrt.execute_with_real_time_loop(
+            cdrt.execute_all_with_real_time_loop(
                 get_wall_clock_time,
                 sleep_interval_in_secs,
                 time_out_in_secs,
@@ -160,7 +166,7 @@ class Test_execute_with_real_time_loop1(hut.TestCase):
         # Use the wall clock time with no special event loop.
         get_wall_clock_time = lambda: hdatetime.get_current_time(tz="ET")
         loop = None
-        events_as_str, results_as_str = self.helper(get_wall_clock_time, loop)
+        events_as_str, results_as_str = self._helper(get_wall_clock_time, loop)
         # Check.
         self._check_output_real_time(events_as_str, results_as_str)
 
@@ -173,8 +179,10 @@ class Test_execute_with_real_time_loop1(hut.TestCase):
         # Use the solipsistic event loop to simulate the real-time faster.
         with hasyncio.solipsism_context() as loop:
             # Use the wall clock time.
-            get_wall_clock_time = lambda: hdatetime.get_current_time(tz="ET", loop=loop)
-            events_as_str, results_as_str = self.helper(get_wall_clock_time, loop)
+            get_wall_clock_time = lambda: hdatetime.get_current_time(
+                tz="ET", loop=loop
+            )
+            events_as_str, results_as_str = self._helper(get_wall_clock_time, loop)
         # Check.
         self._check_output_real_time(events_as_str, results_as_str)
 
@@ -191,7 +199,7 @@ class Test_execute_with_real_time_loop1(hut.TestCase):
         # Get replayed current time and no special loop (i.e., real-time).
         get_wall_clock_time = rt.get_wall_clock_time
         loop = None
-        events_as_str, results_as_str = self.helper(get_wall_clock_time, loop)
+        events_as_str, results_as_str = self._helper(get_wall_clock_time, loop)
         # Check.
         self._check_output_replayed(events_as_str, results_as_str)
 
@@ -208,7 +216,7 @@ class Test_execute_with_real_time_loop1(hut.TestCase):
             )
             rt = cdrt.ReplayedTime(start_datetime, get_wall_clock_time)
             get_wall_clock_time = rt.get_wall_clock_time
-            events_as_str, results_as_str = self.helper(get_wall_clock_time, loop)
+            events_as_str, results_as_str = self._helper(get_wall_clock_time, loop)
         # Check.
         self._check_output_replayed(events_as_str, results_as_str)
 
