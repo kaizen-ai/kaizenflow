@@ -7,6 +7,7 @@ import pandas as pd
 
 import core.dataflow as dtf
 import core.dataflow.test.test_real_time as cdtfttrt
+import helpers.datetime_ as hdatetime
 import helpers.unit_test as hut  # pylint: disable=no-name-in-module
 
 _LOG = logging.getLogger(__name__)
@@ -199,7 +200,7 @@ class TestRealTimeDataSource1(hut.TestCase):
             data_builder_kwargs=data_builder_kwargs,
         )
         # Execute.
-        current_time = pd.Timestamp("2010-01-04 09:35:00")
+        current_time = pd.Timestamp("2010-01-04 09:30:05")
         rtds.set_current_time(current_time)
         self._helper(rtds)
 
@@ -208,7 +209,7 @@ class TestRealTimeDataSource1(hut.TestCase):
         nid = "rtds"
         delay_in_secs = 0.0
         # Return always the same time.
-        get_wall_clock_time = lambda: pd.Timestamp("2010-01-04 09:35:00")
+        get_wall_clock_time = lambda: pd.Timestamp("2010-01-04 09:30:05")
         data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder2()
         rtds = dtf.TrueRealTimeDataSource(  # pylint: disable=no-member
             nid,
@@ -223,6 +224,7 @@ class TestRealTimeDataSource1(hut.TestCase):
     def test_replayed_real_time1(self) -> None:
         # Build the node.
         nid = "rtds"
+        delay_in_secs = 0.0
         get_wall_clock_time = lambda: hdatetime.get_current_time("naive_ET")
         # Use a replayed real-time starting at the same time as the data.
         rrt = dtf.ReplayedTime(
@@ -256,7 +258,7 @@ class TestRealTimeDataSource1(hut.TestCase):
         act = list(map(str, df.index.tolist()))
         exp = [
             "2010-01-04 09:30:00",
-            "2010-01-04 09:31:00",
+            "2010-01-04 09:30:01",
         ]
         self.assert_equal(str(act), str(exp))
 
@@ -268,11 +270,11 @@ class TestRealTimeDataSource1(hut.TestCase):
         act = list(map(str, df.index.tolist()))
         exp = [
             "2010-01-04 09:30:00",
-            "2010-01-04 09:31:00",
-            "2010-01-04 09:32:00",
-            "2010-01-04 09:33:00",
-            "2010-01-04 09:34:00",
-            "2010-01-04 09:35:00",
+            "2010-01-04 09:30:01",
+            "2010-01-04 09:30:02",
+            "2010-01-04 09:30:03",
+            "2010-01-04 09:30:04",
+            "2010-01-04 09:30:05",
         ]
         self.assert_equal(str(act), str(exp))
 

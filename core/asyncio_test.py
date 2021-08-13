@@ -75,13 +75,6 @@ def get_current_time():
     return datetime.datetime.now()
 
 
-# async external_clock():
-#     """
-#     Pulse every second, real or simulated.
-#     """
-#     while True:
-
-
 async def infinite_loop():
     interval_in_secs = 5
     num_iters = 0
@@ -98,28 +91,72 @@ async def infinite_loop():
             break
 
 
+#################################
+
 async def test():
     print(loop.time())
     await asyncio.sleep(60)
     print(loop.time())
 
 
-#
-if True:
+
+#################################
+
+if False:
     import async_solipsism
 
     loop = async_solipsism.EventLoop()
 else:
     loop = asyncio.new_event_loop()
-
+#
 asyncio.set_event_loop(loop)
 start_time = loop.time()
+#
+# # asyncio.run(infinite_loop())
+#
+# # loop = asyncio.get_event_loop()
+# try:
+#     # loop.run_until_complete(infinite_loop())
+#     loop.run_until_complete(test())
+# finally:
+#     loop.close()
 
-# asyncio.run(infinite_loop())
 
-# loop = asyncio.get_event_loop()
-try:
-    # loop.run_until_complete(infinite_loop())
-    loop.run_until_complete(test())
-finally:
-    loop.close()
+async def workload(i):
+    print_message(i)
+    await asyncio.sleep(0.01)
+    return i + 1
+
+
+async def inf_loop2():
+    interval_in_secs = 1
+    i = 0
+    while True:
+        print_message(f"Starting while: {i}")
+        rc = await asyncio.gather(
+            asyncio.sleep(interval_in_secs),
+            workload(i),
+        )
+        i += 1
+        print_message(f"Yield: {i}")
+        yield rc[1]
+        if i > 3:
+            print_message(f"Done: {i}")
+            return
+
+
+async def predict():
+    #yield from inf_loop2()
+    #rc = await inf_loop2()
+    #yield rc
+    async for i in inf_loop2():
+        yield i
+
+async def execute():
+    #v = [i async for i in inf_loop2()]
+    v = [i async for i in predict()]
+    print(v)
+    return v
+
+
+asyncio.run(execute())

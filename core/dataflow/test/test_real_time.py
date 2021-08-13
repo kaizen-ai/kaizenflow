@@ -29,13 +29,14 @@ _LOG = logging.getLogger(__name__)
 
 def get_test_data_builder1() -> Tuple[Callable, htypes.Kwargs]:
     """
-    Return data between "2010-01-04 09:30:00" and "2010-01-05 09:30:00".
+    Return data between "2010-01-04 09:30:00" and "2010-01-04 09:35:00" every second.
     """
     data_builder = cdrt.generate_synthetic_data
     data_builder_kwargs = {
         "columns": ["close", "volume"],
         "start_datetime": pd.Timestamp("2010-01-04 09:30:00"),
         "end_datetime": pd.Timestamp("2010-01-05 09:30:00"),
+        "freq": "1S",
         "seed": 42,
     }
     return data_builder, data_builder_kwargs
@@ -43,13 +44,14 @@ def get_test_data_builder1() -> Tuple[Callable, htypes.Kwargs]:
 
 def get_test_data_builder2() -> Tuple[Callable, htypes.Kwargs]:
     """
-    Return data between "2010-01-04 09:30:00" and "2010-01-04 09:35:00".
+    Return data between "2010-01-04 09:30:00" and "2010-01-04 09:30:05".
     """
     data_builder = cdrt.generate_synthetic_data
     data_builder_kwargs = {
         "columns": ["close", "volume"],
         "start_datetime": pd.Timestamp("2010-01-04 09:30:00"),
-        "end_datetime": pd.Timestamp("2010-01-04 09:35:00"),
+        "end_datetime": pd.Timestamp("2010-01-04 09:30:05"),
+        "freq": "1S",
         "seed": 42,
     }
     return data_builder, data_builder_kwargs
@@ -65,11 +67,12 @@ def get_replayed_real_time() -> cdrt.ReplayedTime:
 
 # TODO(gp): Reduce to sleep_interval to 0.5 secs, if possible.
 def get_test_execute_rt_loop_kwargs() -> htypes.Kwargs:
-    get_wall_clock_time = get_replayed_real_time()
+    replayed_time = get_replayed_real_time()
+    get_wall_clock_time = replayed_time.get_wall_clock_time
     execute_rt_loop_kwargs = {
         "get_wall_clock_time": get_wall_clock_time,
         "sleep_interval_in_secs": 1.0,
-        "num_iterations": 3,
+        "time_out_in_secs": 3,
     }
     return execute_rt_loop_kwargs
 

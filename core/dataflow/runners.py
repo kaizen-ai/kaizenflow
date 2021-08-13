@@ -476,7 +476,7 @@ class RealTimeDagRunner(_AbstractDagRunner):
         # self._events: Optional[cdtfrt.Events] = None
         self._events: cdtfrt.Events
 
-    def predict(self) -> List[ResultBundle]:
+    async def predict(self) -> ResultBundle:
         """
         Predict every time there is a real-time event.
 
@@ -486,23 +486,31 @@ class RealTimeDagRunner(_AbstractDagRunner):
         # Adapt `_dag_workload()` to the expected call back signature.
         workload = lambda current_time: self._dag_workload(current_time, method)
         # Call the event loop.
-        events, results = cdtfrt.execute_with_real_time_loop(
+        #event, result = cdtfrt.execute_with_real_time_loop(
+        async for result in cdtfrt.execute_with_real_time_loop(
             **self._execute_rt_loop_kwargs, workload=workload
-        )
-        # Save the log of events.
-        self._events = events
-        # Convert the output in `ResultBundles`.
-        result_bundles = [
-            self._to_result_bundle(method, df_out, info)
-            for df_out, info in results
-        ]
-        return result_bundles
+        ):
+            yield result
 
-    @property
-    def events(self) -> Optional[cdtfrt.Events]:
-        return self._events
+        #assert 0
+        #import asyncio
+        #await asyncio.sleep(0.1)
+        #yield self._to_result_bundle(method, result[0], result[1])
+        #yield result
+        # # Save the log of events.
+        # self._events = events
+        # # Convert the output in `ResultBundles`.
+        # result_bundles = [
+        #     self._to_result_bundle(method, df_out, info)
+        #     for df_out, info in results
+        # ]
+        # return result_bundles
 
-    def _dag_workload(
+    # @property
+    # def events(self) -> Optional[cdtfrt.Events]:
+    #     return self._events
+
+    async def _dag_workload(
         self, current_time: pd.Timestamp, method: cdtfc.Method
     ) -> cdtfc.NodeOutput:
         """
@@ -511,4 +519,5 @@ class RealTimeDagRunner(_AbstractDagRunner):
         _ = current_time
         sink = self.dag.get_unique_sink()
         node_output = self.dag.run_leq_node(sink, method)
-        return node_output
+        return 1
+        #return node_output

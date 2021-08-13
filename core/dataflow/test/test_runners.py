@@ -75,8 +75,23 @@ class TestIncrementalDagRunner1(hut.TestCase):
 
 # #############################################################################
 
+import helpers.hasyncio as hasyncio
+
+import asyncio
+
+async def execute(dag_runner):
+    #i async for i in dag_runner.predict()])
+    #v = await dag_runner.predict()
+    vals = [i async for i in dag_runner.predict()]
+    print("vals=", str(vals))
+    return vals
+    #yield v
+    #await asyncio.sleep(0.1)
+
+
 
 class TestRealTimeDagRunner1(hut.TestCase):
+
     def test1(self) -> None:
         """
         Test the RealTimeDagRunner using a simple DAG triggering every 2
@@ -99,28 +114,28 @@ class TestRealTimeDagRunner1(hut.TestCase):
         # Run.
         dtf.align_on_even_second()
         dag_runner = cdtfr.RealTimeDagRunner(**kwargs)
-        result_bundles = dag_runner.predict()
-        # Check the events.
-        actual = "\n".join(
-            [
-                event.to_str(include_tenths_of_secs=False)
-                for event in dag_runner.events
-            ]
-        )
-        # TODO(gp): Fix this. See AmpTask1618.
-        _ = actual
-        if False:
-            expected = r"""
-            num_it=1 current_time=20100104_093000 need_execute=True
-            num_it=2 current_time=20100104_093001 need_execute=False
-            num_it=3 current_time=20100104_093002 need_execute=True"""
-            expected = hprint.dedent(expected)
-            self.assert_equal(actual, expected)
-            # Check the result bundles.
-            actual = []
-            events_as_str = str(dag_runner.events)
-            actual.append("events=\n%s" % events_as_str)
-            result_bundles_as_str = "\n".join(map(str, result_bundles))
-            actual.append("result_bundles=\n%s" % result_bundles_as_str)
-            actual = "\n".join(map(str, actual))
-            self.check_string(actual)
+        results = hasyncio.run(execute(dag_runner))
+        # # Check the events.
+        # actual = "\n".join(
+        #     [
+        #         event.to_str(include_tenths_of_secs=False)
+        #         for event in dag_runner.events
+        #     ]
+        # )
+        # # TODO(gp): Fix this. See AmpTask1618.
+        # _ = actual
+        # if False:
+        #     expected = r"""
+        #     num_it=1 current_time=20100104_093000 need_execute=True
+        #     num_it=2 current_time=20100104_093001 need_execute=False
+        #     num_it=3 current_time=20100104_093002 need_execute=True"""
+        #     expected = hprint.dedent(expected)
+        #     self.assert_equal(actual, expected)
+        #     # Check the result bundles.
+        #     actual = []
+        #     events_as_str = str(dag_runner.events)
+        #     actual.append("events=\n%s" % events_as_str)
+        #     result_bundles_as_str = "\n".join(map(str, result_bundles))
+        #     actual.append("result_bundles=\n%s" % result_bundles_as_str)
+        #     actual = "\n".join(map(str, actual))
+        #     self.check_string(actual)

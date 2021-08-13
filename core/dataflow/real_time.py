@@ -44,6 +44,7 @@ def generate_synthetic_data(
     columns: List[str],
     start_datetime: pd.Timestamp,
     end_datetime: pd.Timestamp,
+    freq: str = "1T",
     seed: int = 42,
 ) -> pd.DataFrame:
     """
@@ -51,7 +52,7 @@ def generate_synthetic_data(
     """
     hdatetime.dassert_tz_compatible(start_datetime, end_datetime)
     dbg.dassert_lte(start_datetime, end_datetime)
-    dates = pd.date_range(start_datetime, end_datetime, freq="1T")
+    dates = pd.date_range(start_datetime, end_datetime, freq=freq)
     # TODO(gp): Filter by ATH, if needed.
     # Random walk with increments independent and uniform in [-0.5, 0.5].
     with hnumpy.random_seed_context(seed):
@@ -276,6 +277,8 @@ async def execute_with_real_time_loop(
         - an execution trace representing the events in the real-time loop; and
         - a list of results returned by the workload function
     """
+    dbg.dassert(callable(get_wall_clock_time), "get_wall_clock_time='%s' is not callable",
+                str(get_wall_clock_time))
     dbg.dassert_lt(0, sleep_interval_in_secs)
     num_iterations: Optional[int] = None
     if time_out_in_secs is not None:
@@ -286,6 +289,7 @@ async def execute_with_real_time_loop(
     events = Events()
     results = []
     num_it = 1
+    _LOG.error("ERROR")
     while True:
         wall_clock_time = get_wall_clock_time()
         # For the wall clock time, we always use the real one. This is used only for
@@ -302,9 +306,11 @@ async def execute_with_real_time_loop(
             # used as real, simulated, replayed time.
             workload(wall_clock_time),
         )
+        #yield event, result[1]
+        yield result
         results.append(result[1])
         # Exit, if needed.
         if num_iterations is not None and num_it >= num_iterations:
             break
         num_it += 1
-    return events, results
+    #return events, results

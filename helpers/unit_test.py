@@ -1173,7 +1173,9 @@ class TestCase(unittest.TestCase):
     def check_dataframe(
         self,
         actual: "pd.DataFrame",
+        *,
         err_threshold: float = 0.05,
+        dedent: bool = False,
         tag: str = "test_df",
         abort_on_error: bool = True,
         action_on_missing_golden: str = _ACTION_ON_MISSING_GOLDEN,

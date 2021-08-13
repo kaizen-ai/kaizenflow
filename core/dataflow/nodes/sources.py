@@ -445,6 +445,7 @@ class _AbstractRealTimeDataSource(cdnb.DataSource):
 # #############################################################################
 
 
+# TODO(gp): -> SimulatedTime
 class SimulatedRealTimeDataSource(_AbstractRealTimeDataSource):
     """
     Implement a "simulated" real-time behavior (see `real_time.py` for
@@ -482,6 +483,7 @@ class SimulatedRealTimeDataSource(_AbstractRealTimeDataSource):
 # #############################################################################
 
 
+# TODO(gp): -> RealTime
 class TrueRealTimeDataSource(_AbstractRealTimeDataSource):
     """
     Implement a "true" real-time behavior (see `real_time.py` for details).
@@ -532,6 +534,7 @@ class TrueRealTimeDataSource(_AbstractRealTimeDataSource):
 #  instead of accepting the time function. In the end they are coupled.
 
 # pylint: disable=too-many-ancestors
+# TODO(gp): -> ReplayedTime
 class ReplayedRealTimeDataSource(TrueRealTimeDataSource):
     """
     Implement a "replayed" real-time behavior (see `real_time.py` for details).

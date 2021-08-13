@@ -1158,7 +1158,7 @@ class Test_find_check_string_output1(hut.TestCase):
         """
         # Force to generate a `check_string` file so we can search for it.
         act = "A fake check_string output to use for test1"
-        self.check_string(act, act)
+        self.check_string(act)
         # Check.
         exp = '''
         act =
@@ -1175,7 +1175,7 @@ class Test_find_check_string_output1(hut.TestCase):
         """
         # Force to generate a `check_string` file so we can search for it.
         act = "A fake check_string output to use for test2"
-        self.check_string(act, act)
+        self.check_string(act)
         # Check.
         exp = '''
         act =
