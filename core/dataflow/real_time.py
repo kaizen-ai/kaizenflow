@@ -9,7 +9,16 @@ import collections
 import datetime
 import logging
 import time
-from typing import Any, AsyncGenerator, Callable, Dict, List, Optional, Tuple, cast
+from typing import (
+    Any,
+    AsyncGenerator,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    cast,
+)
 
 import numpy as np
 import pandas as pd
@@ -90,6 +99,7 @@ class ReplayedTime:
         self,
         initial_replayed_dt: pd.Timestamp,
         get_wall_clock_time: hdatetime.GetWallClockTime,
+        speed_up_factor: float = 1.0,
     ):
         """
         Constructor.
@@ -106,6 +116,8 @@ class ReplayedTime:
         # This is the original time we want to "rewind" to.
         self._initial_replayed_dt = initial_replayed_dt
         self._get_wall_clock_time = get_wall_clock_time
+        dbg.dassert_lt(0, speed_up_factor)
+        self._speed_up_factor = speed_up_factor
         # This is when the experiment start.
         self._initial_wall_clock_dt = self._get_wall_clock_time()
         _LOG.debug(
@@ -129,7 +141,8 @@ class ReplayedTime:
         now = self._get_wall_clock_time()
         dbg.dassert_lte(self._initial_wall_clock_dt, now)
         elapsed_time = now - self._initial_wall_clock_dt
-        current_replayed_dt = self._initial_replayed_dt + elapsed_time
+        current_replayed_dt = (self._initial_replayed_dt +
+                               self._speed_up_factor * elapsed_time)
         return current_replayed_dt
 
 
@@ -238,7 +251,7 @@ class Event(
         #
         current_time = self.current_time
         if not include_tenths_of_secs:
-            current_time = current_time.replace(microsecond=0)
+            current_time = current_time.replace(microsecond=0, nanosecond=0)
         vals.append("current_time='%s'" % current_time)
         #
         if include_wall_clock_time:
@@ -314,9 +327,13 @@ async def execute_with_real_time_loop(
 
 
 async def execute_all_with_real_time_loop(
-        *args: Tuple[Any], **kwargs: Dict[str, Any]
+    *args: Tuple[Any], **kwargs: Dict[str, Any]
 ) -> Tuple[List[Event], List[Any]]:
     """
     Execute the entire event loop until the end.
     """
-    return zip([v async for v in execute_with_real_time_loop(*args, **kwargs)])
+    vals = zip(*[v async for v in execute_with_real_time_loop(*args, **kwargs)])
+    events, results = list(vals)
+    events = Events(events)
+    results = list(results)
+    return events, results

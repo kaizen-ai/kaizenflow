@@ -126,6 +126,75 @@ class Test_execute_with_real_time_loop1(hut.TestCase):
             await asyncio.sleep(0.1)
         return need_execute
 
+    def test_real_time1(self) -> None:
+        """
+        Use real-time.
+        """
+        # Align on a even second.
+        cdrt.align_on_even_second()
+        # Use the wall clock time with no special event loop.
+        get_wall_clock_time = lambda: hdatetime.get_current_time(tz="ET")
+        loop = None
+        events_as_str, results_as_str = self._helper(get_wall_clock_time, loop)
+        # Check.
+        self._check_output_real_time(events_as_str, results_as_str)
+
+    def test_simulated_real_time1(self) -> None:
+        """
+        Use simulated real-time.
+        """
+        # Align on a even second.
+        cdrt.align_on_even_second()
+        # Use the solipsistic event loop to simulate the real-time faster.
+        with hasyncio.solipsism_context() as loop:
+            # Use the wall clock time.
+            get_wall_clock_time = lambda: hdatetime.get_current_time(
+                tz="ET", loop=loop
+            )
+            events_as_str, results_as_str = self._helper(
+                get_wall_clock_time, loop
+            )
+        # Check.
+        self._check_output_real_time(events_as_str, results_as_str)
+
+    def test_replayed_real_time1(self) -> None:
+        """
+        Use replayed real-time.
+        """
+        # Create a replayed clock using the wall clock.
+        start_datetime = pd.Timestamp(
+            "2010-01-04 09:30:00", tz=hdatetime.get_ET_tz()
+        )
+        get_wall_clock_time = lambda: hdatetime.get_current_time(tz="ET")
+        rt = cdrt.ReplayedTime(start_datetime, get_wall_clock_time,
+                               # Speed it up a bit time to make the test more robust.
+                               speed_up_factor=1.1)
+        # Get replayed current time and no special loop (i.e., real-time).
+        get_wall_clock_time = rt.get_wall_clock_time
+        loop = None
+        events_as_str, results_as_str = self._helper(get_wall_clock_time, loop)
+        # Check.
+        self._check_output_replayed(events_as_str, results_as_str)
+
+    def test_simulated_replayed_time1(self) -> None:
+        """
+        Use replayed simulated.
+        """
+        start_datetime = pd.Timestamp(
+            "2010-01-04 09:30:00", tz=hdatetime.get_ET_tz()
+        )
+        with hasyncio.solipsism_context() as loop:
+            get_wall_clock_time = lambda: hdatetime.get_current_time(
+                tz="ET", loop=loop
+            )
+            rt = cdrt.ReplayedTime(start_datetime, get_wall_clock_time)
+            get_wall_clock_time = rt.get_wall_clock_time
+            events_as_str, results_as_str = self._helper(
+                get_wall_clock_time, loop
+            )
+        # Check.
+        self._check_output_replayed(events_as_str, results_as_str)
+
     def _helper(
         self,
         get_wall_clock_time: hdatetime.GetWallClockTime,
@@ -156,69 +225,6 @@ class Test_execute_with_real_time_loop1(hut.TestCase):
         )
         results_as_str = "results=\n%s" % str(results)
         return events_as_str, results_as_str
-
-    def test_real_time1(self) -> None:
-        """
-        Use real-time.
-        """
-        # Align on a even second.
-        cdrt.align_on_even_second()
-        # Use the wall clock time with no special event loop.
-        get_wall_clock_time = lambda: hdatetime.get_current_time(tz="ET")
-        loop = None
-        events_as_str, results_as_str = self._helper(get_wall_clock_time, loop)
-        # Check.
-        self._check_output_real_time(events_as_str, results_as_str)
-
-    def test_simulated_real_time1(self) -> None:
-        """
-        Use simulated real-time.
-        """
-        # Align on a even second.
-        cdrt.align_on_even_second()
-        # Use the solipsistic event loop to simulate the real-time faster.
-        with hasyncio.solipsism_context() as loop:
-            # Use the wall clock time.
-            get_wall_clock_time = lambda: hdatetime.get_current_time(
-                tz="ET", loop=loop
-            )
-            events_as_str, results_as_str = self._helper(get_wall_clock_time, loop)
-        # Check.
-        self._check_output_real_time(events_as_str, results_as_str)
-
-    def test_replayed_real_time1(self) -> None:
-        """
-        Use replayed real-time.
-        """
-        # Create a replayed clock using the wall clock.
-        start_datetime = pd.Timestamp(
-            "2010-01-04 09:30:00", tz=hdatetime.get_ET_tz()
-        )
-        get_wall_clock_time = lambda: hdatetime.get_current_time(tz="ET")
-        rt = cdrt.ReplayedTime(start_datetime, get_wall_clock_time)
-        # Get replayed current time and no special loop (i.e., real-time).
-        get_wall_clock_time = rt.get_wall_clock_time
-        loop = None
-        events_as_str, results_as_str = self._helper(get_wall_clock_time, loop)
-        # Check.
-        self._check_output_replayed(events_as_str, results_as_str)
-
-    def test_simulated_replayed_time1(self) -> None:
-        """
-        Use replayed simulated.
-        """
-        start_datetime = pd.Timestamp(
-            "2010-01-04 09:30:00", tz=hdatetime.get_ET_tz()
-        )
-        with hasyncio.solipsism_context() as loop:
-            get_wall_clock_time = lambda: hdatetime.get_current_time(
-                tz="ET", loop=loop
-            )
-            rt = cdrt.ReplayedTime(start_datetime, get_wall_clock_time)
-            get_wall_clock_time = rt.get_wall_clock_time
-            events_as_str, results_as_str = self._helper(get_wall_clock_time, loop)
-        # Check.
-        self._check_output_replayed(events_as_str, results_as_str)
 
     def _check_output_real_time(
         self, events_as_str: str, results_as_str: str

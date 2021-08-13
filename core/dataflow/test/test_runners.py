@@ -101,7 +101,7 @@ class TestRealTimeDagRunner1(hut.TestCase):
 
     @staticmethod
     def _helper(
-        loop: asyncio.AbstractEventLoop
+        loop: asyncio.AbstractEventLoop,
     ) -> Tuple[cdtfrt.Events, List[cdtfrb.ResultBundle]]:
         """
         Test `RealTimeDagRunner` using a simple DAG triggering every 2 seconds.
