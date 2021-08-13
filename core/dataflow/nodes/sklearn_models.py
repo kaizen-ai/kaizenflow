@@ -96,7 +96,9 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         self._model = fit_state["_model"]
         self._info["fit"] = fit_state["_info['fit']"]
 
-    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: True) -> Dict[str, pd.DataFrame]:
+    def _fit_predict_helper(
+        self, df_in: pd.DataFrame, fit: True
+    ) -> Dict[str, pd.DataFrame]:
         # Materialize names of x and y vars.
         x_vars = cdtfu.convert_to_list(self._x_vars)
         y_vars = cdtfu.convert_to_list(self._y_vars)
@@ -270,7 +272,9 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
         self._fit_state = fit_state["_fit_state"]
         self._info["fit"] = fit_state["_info['fit']"]
 
-    def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool) -> Dict[str, pd.DataFrame]:
+    def _fit_predict_helper(
+        self, df_in: pd.DataFrame, fit: bool
+    ) -> Dict[str, pd.DataFrame]:
         cdtfu.validate_df_indices(df_in)
         dfs = cdnb.GroupedColDfToDfColProcessor.preprocess(
             df_in, self._in_col_groups
@@ -327,7 +331,9 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
         self._set_info(method, info)
         return {"df_out": df_out}
 
-    def _stack_dfs(self, dfs: Dict[cdtfu.NodeColumn, pd.DataFrame]) -> pd.DataFrame:
+    def _stack_dfs(
+        self, dfs: Dict[cdtfu.NodeColumn, pd.DataFrame]
+    ) -> pd.DataFrame:
         df = pd.concat(dfs.values()).reset_index(drop=True)
         return df
 
@@ -563,7 +569,9 @@ class SkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
 
     def _to_sklearn_format(
         self, df: pd.DataFrame
-    ) -> Tuple[List[cdtfu.NodeColumn], np.array, List[cdtfu.NodeColumn], np.array]:
+    ) -> Tuple[
+        List[cdtfu.NodeColumn], np.array, List[cdtfu.NodeColumn], np.array
+    ]:
         x_vars = cdtfu.convert_to_list(self._x_vars)
         y_vars = cdtfu.convert_to_list(self._y_vars)
         x_vals, y_vals = cdataa.transform_to_sklearn_old(df, x_vars, y_vars)

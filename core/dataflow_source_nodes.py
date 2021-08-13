@@ -4,7 +4,6 @@ Import as:
 import core.dataflow_source_nodes as dtfsn
 """
 
-import datetime
 import logging
 from typing import Any, Dict, List, Optional, Union
 
@@ -299,8 +298,9 @@ class KibotEquityReader(cdataf.DataSource):
                 symbol,
                 data.shape[0] / n_rows,
             )
-            dbg.dassert(not data.empty,
-                        "No data for %s in requested time range", symbol)
+            dbg.dassert(
+                not data.empty, "No data for %s in requested time range", symbol
+            )
             # Rename column for volume so that it adheres with our conventions.
             data = data.rename(columns={"vol": "volume"})
             # Print some info about the data.

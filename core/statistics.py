@@ -448,7 +448,9 @@ def compute_t_distribution_j_2(nu: float):
         if nu > 300:
             _LOG.warning("Computation is unstable for large values of `nu`.")
         const = 2 / np.sqrt(np.pi)
-        dist = sp.special.gamma((nu + 1) / 2) / (sp.special.gamma(nu / 2) * (nu - 1))
+        dist = sp.special.gamma((nu + 1) / 2) / (
+            sp.special.gamma(nu / 2) * (nu - 1)
+        )
         jensen_2 = const * dist * np.sqrt(nu - 2)
     return jensen_2
 
