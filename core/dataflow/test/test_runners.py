@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -101,7 +101,7 @@ class TestRealTimeDagRunner1(hut.TestCase):
 
     @staticmethod
     def _helper(
-        loop: asyncio.AbstractEventLoop,
+        loop: Optional[asyncio.AbstractEventLoop],
     ) -> Tuple[cdtfrt.Events, List[cdtfrb.ResultBundle]]:
         """
         Test `RealTimeDagRunner` using a simple DAG triggering every 2 seconds.

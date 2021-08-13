@@ -447,8 +447,7 @@ class _AbstractRealTimeDataSource(cdnb.DataSource):
 # #############################################################################
 
 
-# TODO(gp): -> SimulatedTime
-class SimulatedRealTimeDataSource(_AbstractRealTimeDataSource):
+class SimulatedTimeDataSource(_AbstractRealTimeDataSource):
     """
     Implement a "simulated" real-time behavior (see `real_time.py` for
     details).
@@ -486,8 +485,7 @@ class SimulatedRealTimeDataSource(_AbstractRealTimeDataSource):
 # #############################################################################
 
 
-# TODO(gp): -> RealTime
-class TrueRealTimeDataSource(_AbstractRealTimeDataSource):
+class RealTimeDataSource(_AbstractRealTimeDataSource):
     """
     Implement a "true" real-time behavior (see `real_time.py` for details).
 
@@ -537,12 +535,11 @@ class TrueRealTimeDataSource(_AbstractRealTimeDataSource):
 #  instead of accepting the time function. In the end they are coupled.
 
 # pylint: disable=too-many-ancestors
-# TODO(gp): -> ReplayedTime
-class ReplayedRealTimeDataSource(TrueRealTimeDataSource):
+class ReplayedTimeDataSource(RealTimeDataSource):
     """
     Implement a "replayed" real-time behavior (see `real_time.py` for details).
 
-    This node is a `TrueRealTimeDataSource` node with the following differences:
+    This node is a `RealTimeDataSource` node with the following differences:
     - the data is computed once and cached, instead of being queried at every
       invocation
     """

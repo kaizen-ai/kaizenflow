@@ -141,8 +141,9 @@ class ReplayedTime:
         now = self._get_wall_clock_time()
         dbg.dassert_lte(self._initial_wall_clock_dt, now)
         elapsed_time = now - self._initial_wall_clock_dt
-        current_replayed_dt = (self._initial_replayed_dt +
-                               self._speed_up_factor * elapsed_time)
+        current_replayed_dt = (
+            self._initial_replayed_dt + self._speed_up_factor * elapsed_time
+        )
         return current_replayed_dt
 
 
@@ -332,7 +333,8 @@ async def execute_all_with_real_time_loop(
     """
     Execute the entire event loop until the end.
     """
-    vals = zip(*[v async for v in execute_with_real_time_loop(*args, **kwargs)])
+    vals = zip(*[v async for v in
+        execute_with_real_time_loop(*args, **kwargs)])  # type: error[arg-type]
     events, results = list(vals)
     events = Events(events)
     results = list(results)

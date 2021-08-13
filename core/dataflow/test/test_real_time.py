@@ -166,9 +166,12 @@ class Test_execute_with_real_time_loop1(hut.TestCase):
             "2010-01-04 09:30:00", tz=hdatetime.get_ET_tz()
         )
         get_wall_clock_time = lambda: hdatetime.get_current_time(tz="ET")
-        rt = cdrt.ReplayedTime(start_datetime, get_wall_clock_time,
-                               # Speed it up a bit time to make the test more robust.
-                               speed_up_factor=1.1)
+        rt = cdrt.ReplayedTime(
+            start_datetime,
+            get_wall_clock_time,
+            # Speed it up a bit time to make the test more robust.
+            speed_up_factor=1.1,
+        )
         # Get replayed current time and no special loop (i.e., real-time).
         get_wall_clock_time = rt.get_wall_clock_time
         loop = None

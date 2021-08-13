@@ -193,7 +193,7 @@ class TestRealTimeDataSource1(hut.TestCase):
         # No external clock, but set the clock through an explicit call to
         # `set_current_time()`.
         data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder1()
-        rtds = dtf.SimulatedRealTimeDataSource(
+        rtds = dtf.SimulatedTimeDataSource(
             nid,
             delay_in_secs=delay_in_secs,
             data_builder=data_builder,
@@ -211,7 +211,7 @@ class TestRealTimeDataSource1(hut.TestCase):
         # Return always the same time.
         get_wall_clock_time = lambda: pd.Timestamp("2010-01-04 09:30:05")
         data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder2()
-        rtds = dtf.TrueRealTimeDataSource(  # pylint: disable=no-member
+        rtds = dtf.RealTimeDataSource(  # pylint: disable=no-member
             nid,
             delay_in_secs=delay_in_secs,
             external_clock=get_wall_clock_time,
@@ -234,7 +234,7 @@ class TestRealTimeDataSource1(hut.TestCase):
         get_wall_clock_time = rrt.get_wall_clock_time
         #
         data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder1()
-        rtds = dtf.ReplayedRealTimeDataSource(  # pylint: disable=no-member
+        rtds = dtf.ReplayedTimeDataSource(  # pylint: disable=no-member
             nid,
             delay_in_secs=delay_in_secs,
             external_clock=get_wall_clock_time,
@@ -262,7 +262,7 @@ class TestRealTimeDataSource1(hut.TestCase):
         ]
         self.assert_equal(str(act), str(exp))
 
-    def _helper(self, rtds: dtf.ReplayedRealTimeDataSource) -> None:
+    def _helper(self, rtds: dtf.ReplayedTimeDataSource) -> None:
         # Execute.
         dict_ = rtds.fit()
         # Check.
