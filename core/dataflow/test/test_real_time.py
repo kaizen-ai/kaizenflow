@@ -7,6 +7,7 @@ import asyncio
 import logging
 from typing import Callable, Optional, Tuple
 
+import async_solipsism
 import pandas as pd
 import pytest
 

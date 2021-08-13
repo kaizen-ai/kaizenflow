@@ -1043,10 +1043,11 @@ def docker_pull(ctx, stage=STAGE, images="all"):  # type: ignore
 def _get_aws_cli_version() -> int:
     # > aws --version
     # aws-cli/1.19.49 Python/3.7.6 Darwin/19.6.0 botocore/1.20.49
+    # aws-cli/1.20.1 Python/3.9.5 Darwin/19.6.0 botocore/1.20.106
     cmd = "aws --version"
     res = hsinte.system_to_one_line(cmd)[1]
     # Parse the output.
-    m = re.match(r"aws-cli/((\d+).\d+.\d+)\S", res)
+    m = re.match(r"aws-cli/((\d+)\.\d+\.\d+)\s", res)
     dbg.dassert(m, "Can't parse '%s'", res)
     m: Match[Any]
     version = m.group(1)
