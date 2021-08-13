@@ -57,18 +57,19 @@ def get_test_data_builder2() -> Tuple[Callable, htypes.Kwargs]:
     return data_builder, data_builder_kwargs
 
 
-def get_replayed_real_time() -> cdrt.ReplayedTime:
+def get_replayed_time(loop=None) -> cdrt.ReplayedTime:
     start_datetime = pd.Timestamp("2010-01-04 09:30:00")
     # Use a replayed real-time starting at the same time as the data.
-    get_wall_clock_time = lambda: hdatetime.get_current_time(tz="naive_ET")
-    rrt = cdrt.ReplayedTime(start_datetime, get_wall_clock_time)
-    return rrt
+    get_wall_clock_time = lambda: hdatetime.get_current_time(tz="naive_ET",
+                                                             loop=loop)
+    rt = cdrt.ReplayedTime(start_datetime, get_wall_clock_time)
+    return rt
 
 
 # TODO(gp): Reduce to sleep_interval to 0.5 secs, if possible.
-def get_test_execute_rt_loop_kwargs() -> htypes.Kwargs:
-    replayed_time = get_replayed_real_time()
-    get_wall_clock_time = replayed_time.get_wall_clock_time
+def get_replayed_time_execute_rt_loop_kwargs(loop=None) -> htypes.Kwargs:
+    rt = get_replayed_time(loop)
+    get_wall_clock_time = rt.get_wall_clock_time
     execute_rt_loop_kwargs = {
         "get_wall_clock_time": get_wall_clock_time,
         "sleep_interval_in_secs": 1.0,
@@ -85,15 +86,15 @@ class TestReplayedTime1(hut.TestCase):
         """
         Rewind time to 9:30am of a day in the past.
         """
-        rrt = get_replayed_real_time()
+        rt = get_replayed_time()
         # We assume that these 2 calls take less than 1 minute.
         exp = pd.Timestamp("2010-01-04 09:30:00")
-        self._helper(rrt, exp)
+        self._helper(rt, exp)
         #
-        self._helper(rrt, exp)
+        self._helper(rt, exp)
 
-    def _helper(self, rrt: cdrt.ReplayedTime, exp: pd.Timestamp) -> None:
-        rct = rrt.get_wall_clock_time()
+    def _helper(self, rt: cdrt.ReplayedTime, exp: pd.Timestamp) -> None:
+        rct = rt.get_wall_clock_time()
         _LOG.info("  -> time=%s", rct)
         _LOG.debug(hprint.to_str("rct.date"))
         self.assert_equal(str(rct.date()), str(exp.date()))
@@ -186,9 +187,9 @@ class Test_execute_with_real_time_loop1(hut.TestCase):
             "2010-01-04 09:30:00", tz=hdatetime.get_ET_tz()
         )
         get_wall_clock_time = lambda: hdatetime.get_current_time(tz="ET")
-        rrt = cdrt.ReplayedTime(start_datetime, get_wall_clock_time)
+        rt = cdrt.ReplayedTime(start_datetime, get_wall_clock_time)
         # Get replayed current time and no special loop (i.e., real-time).
-        get_wall_clock_time = rrt.get_wall_clock_time
+        get_wall_clock_time = rt.get_wall_clock_time
         loop = None
         events_as_str, results_as_str = self.helper(get_wall_clock_time, loop)
         # Check.
@@ -205,8 +206,8 @@ class Test_execute_with_real_time_loop1(hut.TestCase):
             get_wall_clock_time = lambda: hdatetime.get_current_time(
                 tz="ET", loop=loop
             )
-            rrt = cdrt.ReplayedTime(start_datetime, get_wall_clock_time)
-            get_wall_clock_time = rrt.get_wall_clock_time
+            rt = cdrt.ReplayedTime(start_datetime, get_wall_clock_time)
+            get_wall_clock_time = rt.get_wall_clock_time
             events_as_str, results_as_str = self.helper(get_wall_clock_time, loop)
         # Check.
         self._check_output_replayed(events_as_str, results_as_str)

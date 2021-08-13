@@ -79,7 +79,7 @@ class TestIncrementalDagRunner1(hut.TestCase):
 
 class TestRealTimeDagRunner1(hut.TestCase):
 
-    def test1(self) -> None:
+    def _helper(self, loop) -> None:
         """
         Test the RealTimeDagRunner using a simple DAG triggering every 2
         seconds.
@@ -88,7 +88,59 @@ class TestRealTimeDagRunner1(hut.TestCase):
         dag_builder = cdtfnttd._NaivePipeline()
         config = dag_builder.get_config_template()
         # Set up the event loop.
-        execute_rt_loop_kwargs = cdtfttrt.get_test_execute_rt_loop_kwargs()
+        execute_rt_loop_kwargs = cdtfttrt.get_replayed_time_execute_rt_loop_kwargs(loop)
+        kwargs = {
+            "config": config,
+            "dag_builder": dag_builder,
+            "fit_state": None,
+            #
+            "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
+            #
+            "dst_dir": None,
+        }
+        # Run.
+        dtf.align_on_even_second()
+        dag_runner = cdtfr.RealTimeDagRunner(**kwargs)
+        result_bundles = hasyncio.run(dag_runner.predict(), loop)
+        events = dag_runner.events
+        #
+        _LOG.debug("events=\n%s", events)
+        _LOG.debug("result_bundles=\n%s", result_bundles)
+        return events, result_bundles
+
+    def _check(self, events, result_bundles):
+        # Check the events.
+        actual = "\n".join(
+            [
+                event.to_str(include_tenths_of_secs=False,
+                             include_wall_clock_time=False)
+                for event in events
+            ]
+        )
+        expected = r"""
+        num_it=1 current_time='2010-01-04 09:30:00'
+        num_it=2 current_time='2010-01-04 09:30:01'
+        num_it=3 current_time='2010-01-04 09:30:02'"""
+        self.assert_equal(actual, expected, dedent=True)
+        # Check the result bundles.
+        actual = []
+        events_as_str = str(events)
+        actual.append("events=\n%s" % events_as_str)
+        result_bundles_as_str = "\n".join(map(str, result_bundles))
+        actual.append("result_bundles=\n%s" % result_bundles_as_str)
+        actual = "\n".join(map(str, actual))
+        self.check_string(actual)
+
+    def test_replayed_time1(self) -> None:
+        """
+        Test the RealTimeDagRunner using a simple DAG triggering every 2
+        seconds.
+        """
+        # Get a naive pipeline as DAG.
+        dag_builder = cdtfnttd._NaivePipeline()
+        config = dag_builder.get_config_template()
+        # Set up the event loop.
+        execute_rt_loop_kwargs = cdtfttrt.get_replayed_time_execute_rt_loop_kwargs()
         kwargs = {
             "config": config,
             "dag_builder": dag_builder,
@@ -126,3 +178,12 @@ class TestRealTimeDagRunner1(hut.TestCase):
         #     actual.append("result_bundles=\n%s" % result_bundles_as_str)
         #     actual = "\n".join(map(str, actual))
         #     self.check_string(actual)
+
+    def test_simulated_replayed_time1(self) -> None:
+        """
+        Test the RealTimeDagRunner using a simple DAG triggering every 2
+        seconds.
+        """
+        with hasyncio.solipsism_context() as loop:
+            events, result_bundles = self._helper(loop)
+        self._check(events, result_bundles)

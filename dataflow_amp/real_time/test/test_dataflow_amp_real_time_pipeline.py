@@ -18,7 +18,7 @@ _LOG = logging.getLogger(__name__)
 #
 #        dag_builder.validate_config(config)
 #        # Create the DAG runner.
-#        execute_rt_loop_kwargs = cdtfttrt.get_test_execute_rt_loop_kwargs()
+#        execute_rt_loop_kwargs = cdtfttrt.get_replayed_time_execute_rt_loop_kwargs()
 #        kwargs = {
 #            "config": config,
 #            "dag_builder": dag_builder,
