@@ -1,0 +1,127 @@
+result_bundles=
+config:
+  get_data:
+    source_node_name: DataLoader
+    source_node_kwargs:
+      func: <function _NaivePipeline.get_config_template.<locals>._get_data>
+  process_data:
+    func: <function _NaivePipeline.get_config_template.<locals>._process_data>
+result_nid: process_data
+method: predict
+result_df:                    0         1
+2010-01-01  0.374540  0.950714
+2010-01-04  0.731994  0.598658
+2010-01-05  0.156019  0.155995
+2010-01-06  0.058084  0.866176
+2010-01-07  0.601115  0.708073
+2010-01-08  0.020584  0.969910
+column_to_tags: None
+info:
+  get_data:
+    predict:
+      predict_df_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 6 entries, 2010-01-01 to 2010-01-08
+      Freq: B
+      Data columns (total 2 columns):
+       #   Column  Non-Null Count  Dtype  
+      ---  ------  --------------  -----  
+       0   0       6 non-null      float64
+       1   1       6 non-null      float64
+      dtypes: float64(2)
+  process_data:
+    predict:
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 6 entries, 2010-01-01 to 2010-01-08
+      Freq: B
+      Data columns (total 2 columns):
+       #   Column  Non-Null Count  Dtype  
+      ---  ------  --------------  -----  
+       0   0       6 non-null      float64
+       1   1       6 non-null      float64
+      dtypes: float64(2)
+payload: None
+class: ResultBundle
+config:
+  get_data:
+    source_node_name: DataLoader
+    source_node_kwargs:
+      func: <function _NaivePipeline.get_config_template.<locals>._get_data>
+  process_data:
+    func: <function _NaivePipeline.get_config_template.<locals>._process_data>
+result_nid: process_data
+method: predict
+result_df:                    0         1
+2010-01-01  0.374540  0.950714
+2010-01-04  0.731994  0.598658
+2010-01-05  0.156019  0.155995
+2010-01-06  0.058084  0.866176
+2010-01-07  0.601115  0.708073
+2010-01-08  0.020584  0.969910
+column_to_tags: None
+info:
+  get_data:
+    predict:
+      predict_df_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 6 entries, 2010-01-01 to 2010-01-08
+      Freq: B
+      Data columns (total 2 columns):
+       #   Column  Non-Null Count  Dtype  
+      ---  ------  --------------  -----  
+       0   0       6 non-null      float64
+       1   1       6 non-null      float64
+      dtypes: float64(2)
+  process_data:
+    predict:
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 6 entries, 2010-01-01 to 2010-01-08
+      Freq: B
+      Data columns (total 2 columns):
+       #   Column  Non-Null Count  Dtype  
+      ---  ------  --------------  -----  
+       0   0       6 non-null      float64
+       1   1       6 non-null      float64
+      dtypes: float64(2)
+payload: None
+class: ResultBundle
+config:
+  get_data:
+    source_node_name: DataLoader
+    source_node_kwargs:
+      func: <function _NaivePipeline.get_config_template.<locals>._get_data>
+  process_data:
+    func: <function _NaivePipeline.get_config_template.<locals>._process_data>
+result_nid: process_data
+method: predict
+result_df:                    0         1
+2010-01-01  0.374540  0.950714
+2010-01-04  0.731994  0.598658
+2010-01-05  0.156019  0.155995
+2010-01-06  0.058084  0.866176
+2010-01-07  0.601115  0.708073
+2010-01-08  0.020584  0.969910
+column_to_tags: None
+info:
+  get_data:
+    predict:
+      predict_df_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 6 entries, 2010-01-01 to 2010-01-08
+      Freq: B
+      Data columns (total 2 columns):
+       #   Column  Non-Null Count  Dtype  
+      ---  ------  --------------  -----  
+       0   0       6 non-null      float64
+       1   1       6 non-null      float64
+      dtypes: float64(2)
+  process_data:
+    predict:
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 6 entries, 2010-01-01 to 2010-01-08
+      Freq: B
+      Data columns (total 2 columns):
+       #   Column  Non-Null Count  Dtype  
+      ---  ------  --------------  -----  
+       0   0       6 non-null      float64
+       1   1       6 non-null      float64
+      dtypes: float64(2)
+payload: None
+class: ResultBundle
