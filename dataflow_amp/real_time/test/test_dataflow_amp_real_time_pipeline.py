@@ -1,4 +1,5 @@
 import logging
+from typing import Callable, Tuple
 
 import pandas as pd
 
