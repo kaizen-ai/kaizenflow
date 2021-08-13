@@ -493,6 +493,10 @@ class SkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         info = collections.OrderedDict()
         info["model_x_vars"] = x_vars
         info["model_params"] = self._model.get_params()
+        model_attribute_info = collections.OrderedDict()
+        for k, v in vars(self._model).items():
+            model_attribute_info[k] = v
+        info["model_attributes"] = model_attribute_info
         # Return targets and predictions.
         y_hat = y_hat.reindex(idx)
         df_out = self._apply_col_mode(

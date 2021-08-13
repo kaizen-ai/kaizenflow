@@ -957,7 +957,25 @@ def compute_swt_coeffs(
     beta = covar.divide(var).rename("beta")
     beta_se = np.sqrt(srs2.var() / var.multiply(counts)).rename("SE(beta)")
     zs = beta.divide(beta_se).rename("beta_z_scored")
-    return pd.concat([counts, var, covar, rho, beta, beta_se, zs], axis=1)
+    auto_covar = (
+        swt1.multiply(swt1.shift(1), axis=0)
+        .sum(axis=0)
+        .divide(swt1.count())
+        .rename("auto_covar")
+    )
+    auto_corr = auto_covar.divide(var).rename("auto_corr")
+    series = [
+        counts,
+        var,
+        covar,
+        rho,
+        beta,
+        beta_se,
+        zs,
+        auto_covar,
+        auto_corr,
+    ]
+    return pd.concat(series, axis=1)
 
 
 # #############################################################################

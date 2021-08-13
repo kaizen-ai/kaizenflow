@@ -290,7 +290,17 @@ class KibotEquityReader(cdataf.DataSource):
                 unadjusted=False,
                 nrows=self._nrows,
             )
+            n_rows = data.shape[0]
+            _LOG.debug("Read %d rows for symbol=%s", n_rows, symbol)
             data = data.loc[self._start_date : self._end_date]  # type: ignore[misc]
+            _LOG.debug(
+                "Retained %s rows for symbol=%s after time filtering (%.2f)",
+                data.shape[0],
+                symbol,
+                data.shape[0] / n_rows,
+            )
+            dbg.dassert(not data.empty,
+                        "No data for %s in requested time range", symbol)
             # Rename column for volume so that it adheres with our conventions.
             data = data.rename(columns={"vol": "volume"})
             # Print some info about the data.
