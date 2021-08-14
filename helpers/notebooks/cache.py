@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.5.2
+#       jupytext_version: 1.11.2
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -17,48 +17,65 @@
 # # Test Cache in Jupyter Notebook
 
 # %%
-import helpers.cache as hcac
+# %load_ext autoreload
+# %autoreload 2
 
-# %%
+import logging
+
+import helpers.cache as hcac
 import helpers.dbg as dbg
+import helpers.printing as prnt
+
+prnt.config_notebook()
+
+# dbg.init_logger(verbosity=logging.DEBUG)
+dbg.init_logger(verbosity=logging.INFO)
+# dbg.test_logger()
+_LOG = logging.getLogger(__name__)
+
 
 # %% [markdown] pycharm={"name": "#%% md\n"}
 # # Define computation function
-#
-# This function will be subjected to cache.
 
 # %%
-def computation_function(a, b):
+def func(a, b):
     # hello
     # assert 0
     out = a * b
     print("Multiplication: %s * %s = %s" % (a, b, out))
     return out
 
-
 inputs = (1, 2)
 exp_output = 2
 
-computation_function(*inputs)
+func(*inputs)
 
 # %% [markdown] pycharm={"name": "#%% md\n"}
 # ## Memory cache
 
+# %%
+# !ls /app/tmp.cache.disk/joblib/
+
+# %%
+# !ls /mnt/tmpfs/tmp.cache.mem/joblib/lib
+
 # %% pycharm={"name": "#%%\n"}
-memory_cached_computation = hcac.Cached(
-    computation_function, use_mem_cache=True, use_disk_cache=False
+memory_cached_func = hcac.Cached(
+    func, use_mem_cache=True, use_disk_cache=False
 )
 
-memory_cached_computation.clear_cache()
+print(memory_cached_func.get_info())
 
-dbg.dassert_eq(memory_cached_computation(*inputs), exp_output)
-dbg.dassert_eq(memory_cached_computation.get_last_cache_accessed(), "no_cache")
+cache_type = None
+memory_cached_func.clear_cache(cache_type)
 
-dbg.dassert_eq(memory_cached_computation(*inputs), exp_output)
-dbg.dassert_eq(memory_cached_computation.get_last_cache_accessed(), "mem")
+# dbg.dassert_eq(memory_cached_func(*inputs), exp_output)
+# dbg.dassert_eq(memory_cached_func.get_last_cache_accessed(), "no_cache")
 
-print("memory caching checks passed")
+# dbg.dassert_eq(memory_cached_func(*inputs), exp_output)
+# dbg.dassert_eq(memory_cached_func.get_last_cache_accessed(), "mem")
 
+# print("memory caching checks passed")
 
 # %%
 def computation_function(a, b):
