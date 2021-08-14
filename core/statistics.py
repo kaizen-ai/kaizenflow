@@ -966,6 +966,7 @@ def compute_swt_coeffs(
         .rename("auto_covar")
     )
     auto_corr = auto_covar.divide(var).rename("auto_corr")
+    tub = np.sqrt(2 * (1 - auto_corr)).rename("tub")
     series = [
         counts,
         var,
@@ -976,6 +977,7 @@ def compute_swt_coeffs(
         zs,
         auto_covar,
         auto_corr,
+        tub,
     ]
     return pd.concat(series, axis=1)
 
@@ -1667,7 +1669,7 @@ def compute_avg_turnover_and_holding_period(
     dbg.dassert(pos.index.freq)
     pos_freq = pos.index.freq
     unit = unit or pos_freq
-    nan_mode = nan_mode or "ffill"
+    nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     result_index = [
         prefix + "avg_turnover_(%)",
