@@ -50,6 +50,81 @@ exp_output = 2
 
 func(*inputs)
 
+# %%
+# !ls hello/joblib/__main__*/f/
+
+# %%
+# !pip install https://github.com/aabadie/joblib-s3.git
+
+# %%
+# #!git clone git://github.com/aabadie/joblib-s3.git
+!(cd joblib-s3 && pip install -r requirements.txt .)
+
+# %%
+import joblibs3
+
+joblibs3.register_s3fs_store_backend()
+
+# dict(compress=False, bucket=None, anon=False,
+                               #key=None, secret=None, token=None, use_ssl=True)
+dict2 = {
+    "bucket": "alphamatic-data",
+    "key": dict_["aws_access_key_id"],
+    "secret": dict_["aws_secret_access_key"],
+}
+mem = joblib.Memory('joblib_cache', backend='s3', verbose=100, compress=True,
+                 backend_options=dict2)
+
+# %%
+import joblib
+import helpers.joblib_helpers as hjoblib
+import helpers.s3 as hs3
+
+hjoblib.register_s3fs_store_backend()
+
+s3fs = hs3.get_s3fs("am")
+
+dict2 = {
+    "bucket": "alphamatic-data",
+    #"key": dict_["aws_access_key_id"],
+    #"secret": dict_["aws_secret_access_key"],
+    "s3fs": s3fs
+}
+
+mem = joblib.Memory('joblib_cache', backend='s3', verbose=100, compress=True, backend_options=dict2)
+
+# %%
+print(dict_)
+
+# %%
+#dict_["bucket"] = "alphamatic-data/tmp"
+
+print(dict_)
+
+# %%
+from joblibs3 import register_s3_store_backend
+
+# %%
+import helpers.s3 as hs3
+
+dict_ = hs3.get_aws_credentials("am")
+print(dict_)
+#s3fs = hs3.get_s3fs("am")
+#s3fs.ls("s3://alphamatic-data/tmp")
+
+# %%
+#import joblib
+
+#cachedir = "./hello"
+#memory = joblib.Memory(cachedir, verbose=0)
+
+@mem.cache
+def f(x):
+    print('Running f(%s)' % x)
+    return x
+
+f(1)
+
 # %% [markdown] pycharm={"name": "#%% md\n"}
 # ## Memory cache
 
@@ -66,16 +141,17 @@ memory_cached_func = hcac.Cached(
 
 print(memory_cached_func.get_info())
 
-cache_type = None
-memory_cached_func.clear_cache(cache_type)
+#cache_type = None
+#memory_cached_func.clear_cache(cache_type)
 
-# dbg.dassert_eq(memory_cached_func(*inputs), exp_output)
-# dbg.dassert_eq(memory_cached_func.get_last_cache_accessed(), "no_cache")
+dbg.dassert_eq(memory_cached_func(*inputs), exp_output)
+dbg.dassert_eq(memory_cached_func.get_last_cache_accessed(), "no_cache")
 
-# dbg.dassert_eq(memory_cached_func(*inputs), exp_output)
-# dbg.dassert_eq(memory_cached_func.get_last_cache_accessed(), "mem")
+dbg.dassert_eq(memory_cached_func(*inputs), exp_output)
+dbg.dassert_eq(memory_cached_func.get_last_cache_accessed(), "mem")
 
-# print("memory caching checks passed")
+print("memory caching checks passed")
+
 
 # %%
 def computation_function(a, b):

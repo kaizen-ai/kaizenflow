@@ -294,6 +294,11 @@ def is_s3_path(path: str) -> bool:
 
 
 def get_s3fs(*args: Any, **kwargs: Any) -> s3fs.core.S3FileSystem:
+    """
+    Return an s3fs object for a
+
+    Same parameters as `get_aws_credentials()`.
+    """
     # From https://stackoverflow.com/questions/62562945
     aws_credentials = get_aws_credentials(*args, **kwargs)
     _LOG.debug("%s", pprint.pformat(aws_credentials))

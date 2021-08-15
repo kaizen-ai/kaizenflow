@@ -104,8 +104,8 @@ def get_cache_path(cache_type: str, tag: Optional[str] = None) -> str:
     """
     Get path to the directory storing the cache.
 
-    For a disk cache, the path is on the file system relative to Git root.
     For a memory cache, the path is in a predefined RAM disk.
+    For a disk cache, the path is on the file system relative to Git root.
 
     :return: the file system path to the cache
     """
@@ -252,6 +252,9 @@ class Cached:
       a process or in notebooks without resetting the state.
     """
 
+    # TODO(gp): Either allow users to initialize `mem_cache_path` here or with
+    #  `set_cache_path()` but not both code paths. It's unclear which option is
+    #  better. Maybe `set_cache_path()` is more explicit.
     def __init__(
         self,
         func: Callable,
@@ -419,6 +422,8 @@ class Cached:
 
         :param cache_type: type of a cache to clear, or `None` to clear all caches
         """
+        dbg.dassert(self.has_function_specific_cache(),
+                    "This function has no function-specific cache")
         if cache_type is None:
             for cache_type_tmp in get_cache_types():
                 self.clear_cache(cache_type_tmp, destroy=destroy)
@@ -457,8 +462,10 @@ class Cached:
         _check_valid_cache_type(cache_type)
         if cache_type == "mem":
             self._mem_cache_path = cache_path
-        else:
+        elif cache_type == "disk":
             self._disk_cache_path = cache_path
+        else:
+            raise ValueError("Invalid cache_type='%s'", cache_type)
         self._create_cache(cache_type)
 
     def get_cache_path(self, cache_type: str) -> Optional[str]:
