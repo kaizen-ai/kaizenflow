@@ -14,19 +14,25 @@ def _func() -> str:
     return txt
 
 
-def _test() -> None:
+def _test1() -> None:
+    """
+    Call the intrinsic function.
+    """
     _ = _func()
 
 
 def _test2() -> None:
-    tag = None
-    hcac.clear_global_cache("mem", tag=tag)
+    """
+    """
+    tag = "manage_cache"
+    hcac.clear_global_cache("all", tag=tag)
+    # Create a function-specific cache on disk only.
     path = "/tmp/cache.function"
     _func.set_cache_path("disk", path)
-    #
     _func.clear_cache(cache_type="disk")
     #
     _func()
+    print(_func.get_info())
     hcac.clear_global_cache("mem", tag=tag)
     #
     _func()
@@ -48,7 +54,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     action = args.action
-    cache_types = hcac._get_cache_types()
     tag = None
     actions = [
         "clear_cache",
@@ -60,19 +65,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
     ]
     dbg.dassert_in(action, actions)
     if action == "clear_cache":
-        print("cache_types=%s" % str(cache_types))
-        for cache_type in cache_types:
-            hcac.clear_global_cache(cache_type, tag=tag)
+        hcac.clear_global_cache("all", tag=tag)
     elif action == "clear_mem_cache":
         hcac.clear_global_cache("mem", tag=tag)
     elif action == "clear_disk_cache":
         hcac.clear_global_cache("disk", tag=tag)
     elif action == "print_cache_info":
-        print("cache_types=%s" % str(cache_types))
-        for cache_type in cache_types:
-            path = hcac._get_cache_path(cache_type, tag=tag)
-            cache_info = hcac.get_cache_size_info(path, cache_type)
-            print(cache_info)
+        txt = hcac.get_global_cache_info()
+        print(txt)
     elif action == "test":
         _test2()
     elif action == "list":

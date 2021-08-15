@@ -461,8 +461,8 @@ class _ResetFunctionSpecificCacheHelper(_ResetGlobalCacheHelper):
     def setUp(self) -> None:
         super().setUp()
         # Create temp directories to store the cache.
-        self.disk_cache_temp_dir = tempfile.mkdtemp()
         self.mem_cache_temp_dir = tempfile.mkdtemp()
+        self.disk_cache_temp_dir = tempfile.mkdtemp()
         # Clear global cache.
         hcache.clear_global_cache("all", tag=self.cache_tag)
 
@@ -475,8 +475,8 @@ class _ResetFunctionSpecificCacheHelper(_ResetGlobalCacheHelper):
         # Create the cached function using the function specific cache.
         cf = hcache.Cached(
             f,
-            disk_cache_path=self.disk_cache_temp_dir,
             mem_cache_path=self.mem_cache_temp_dir,
+            disk_cache_path=self.disk_cache_temp_dir,
             tag=self.cache_tag,
         )
         # Reset the caches.
@@ -720,3 +720,35 @@ class TestAmpTask1407(_ResetGlobalCacheHelper):
         self.assertEqual(klass.static_print.get_last_cache_accessed(), "no_cache")
         klass.static_print(6)
         self.assertEqual(klass.static_print.get_last_cache_accessed(), "mem")
+
+
+# #############################################################################
+
+
+class TestCachingOnS3(_ResetFunctionSpecificCacheHelper):
+
+    def setUp(self) -> None:
+        super().setUp()
+        # Create temp directories to store the cache.
+        self.mem_cache_temp_dir = tempfile.mkdtemp()
+        self.disk_cache_temp_dir = tempfile.mkdtemp()
+        # Clear global cache.
+        hcache.clear_global_cache("all", tag=self.cache_tag)
+
+    def test_with_caching1(self) -> None:
+        """
+        - Test using the function-specific cache
+        - Disable function-specific cache and switching to global cache
+        - Test using the global cache
+        """
+        f, cf = self._get_f_cf_functions()
+        # Execute the first time: verify that it is executed.
+        _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
+        self._execute_and_check_state(
+            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
+
+
+
+# TODO(gp): Add a test for verbose mode in __call__
+# TODO(gp): get_info

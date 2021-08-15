@@ -37,7 +37,7 @@ _LOG = logging.getLogger(__name__)
 # - Some code needs to refer always and only to the AM S3 bucket (e.g., for Kibot
 #   data)
 # - Other code needs to work with different AWS S3 systems (e.g., publish_notebooks,
-#   saving / retrieving experiments)
+#   saving / retrieving experiments, caching)
 #
 # - The different AWS S3 systems are selected through an `aws_profile` parameter
 #   (e.g., `am`)
@@ -89,6 +89,22 @@ def get_path() -> str:
     """
     path = "s3://" + get_bucket()
     return path
+
+
+def extract_bucket_from_path(path: str) -> str:
+    """
+    Extract the bucket from an S3 path.
+
+    E.g., for `s3://alphamatic-data/tmp/hello` returns `alphamatic-data`.
+    """
+    check_valid_s3_path(path)
+    # Remove the s3 prefix.
+    prefix = "s3://"
+    dbg.dassert(path.startswith(prefix))
+    path = path[len(prefix):]
+    # Break the path into dirs.
+    dirs = path.split("/")
+    return dirs[0]
 
 
 # #############################################################################
@@ -299,7 +315,7 @@ def is_s3_path(path: str) -> bool:
 
 def get_s3fs(*args: Any, **kwargs: Any) -> s3fs.core.S3FileSystem:
     """
-    Return an s3fs object for a.
+    Return an s3fs object.
 
     Same parameters as `get_aws_credentials()`.
     """

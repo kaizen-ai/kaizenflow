@@ -28,6 +28,7 @@ import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): Do not commit this.
 _LOG.debug = _LOG.info
 
 # We try to keep aligned the interfaces of the global cache (i.e., the cache for all
@@ -61,6 +62,20 @@ def is_caching_enabled() -> bool:
     """
     return _IS_CACHE_ENABLED
 
+
+def get_global_cache_info() -> str:
+    """
+    Report information on global cache.
+    """
+    cache_types = _get_cache_types()
+    txt = []
+    txt.append("# cache_types=%s" % str(cache_types))
+    for cache_type in cache_types:
+        path = _get_cache_path(cache_type, tag=tag)
+        cache_info = get_cache_size_info(path, cache_type)
+        txt.append(cache_info)
+    txt = "\n".join(txt)
+    return txt
 
 # #############################################################################
 # Global cache interface
@@ -113,7 +128,6 @@ def _get_cache_path(cache_type: str, tag: Optional[str] = None) -> str:
     # Get the enclosing directory path.
     if cache_type == "mem":
         tmpfs_path = "/tmp" if hsyste.get_os_name() == "Darwin" else "/mnt/tmpfs"
-        tmpfs_path = os.getenv("CACHE_MEMORY_TMPFS_PATH", tmpfs_path)
         root_path = tmpfs_path
     elif cache_type == "disk":
         root_path = git.get_client_root(super_module=True)
@@ -125,9 +139,12 @@ def _get_cache_path(cache_type: str, tag: Optional[str] = None) -> str:
 
 # TODO(gp): -> ?
 def get_cache_size_info(path: str, cache_type: str) -> str:
-    size_in_bytes = hsyste.du(path)
-    size_as_str = hintro.format_size(size_in_bytes)
-    txt = "'%s' cache in '%s' has size=%s" % (cache_type, path, size_as_str)
+    if path is None:
+        txt = "'%s' cache in '%s' doesn't exist yet" % (cache_type, path)
+    else:
+        size_in_bytes = hsyste.du(path)
+        size_as_str = hintro.format_size(size_in_bytes)
+        txt = "'%s' cache in '%s' has size=%s" % (cache_type, path, size_as_str)
     return txt
 
 
@@ -247,7 +264,8 @@ class Cached:
 
     # TODO(gp): Either allow users to initialize `mem_cache_path` here or with
     #  `set_cache_path()` but not both code paths. It's unclear which option is
-    #  better. Maybe `set_cache_path()` is more explicit.
+    #  better. On the one side `set_cache_path()` is more explicit, but it can't be
+    #  changed. On the other side the wrapper needs to be initialized in one shot.
     def __init__(
         self,
         func: Callable,
@@ -260,6 +278,8 @@ class Cached:
         disk_cache_path: Optional[str] = None,
     ):
         """
+        Constructor.
+
         :param func: function to cache
         :param use_mem_cache, use_disk_cache: whether we allow memory and disk caching
         :param set_verbose_mode: print high-level information about the cache
@@ -488,7 +508,7 @@ class Cached:
 
     def _create_cache(self, cache_type: str) -> None:
         """
-        Return an object storing a cache.
+        Initialize joblib object storing a cache.
 
         :param cache_type: type of a cache
         """
@@ -508,14 +528,29 @@ class Cached:
                 self._memory_cache = get_global_cache(cache_type, self._tag)
             # TODO(gp): -> _mem_cached_func
             self._memory_cached_func = self._memory_cache.cache(self._func)
-        else:
+        elif cache_type == "disk":
             if self._disk_cache_path:
+                # Create a function-specific cache.
+                memory_kwargs = {
+                    "verbose":0, "compress": True,
+                }
+                if self._disk_cache_path.startswith("s3://"):
+                    import helpers.s3 as hs3
+                    aws_profile = hs3.get_aws_profile()
+                    s3fs = get_s3fs(aws_profile)
+                    bucket = hs3.extract_bucket_from_path(self._disk_cache_path)
+                    memory_kwargs.update({
+                        "backend": "s3",
+                        "backend_options": {"s3fs": s3fs,
+                                            "bucket": bucket}})
                 self._disk_cache = joblib.Memory(
-                    self._disk_cache_path, verbose=0, compress=1
-                )
+                    self._disk_cache_path, **memory_kwargs)
             else:
+                # Use the global cache.
                 self._disk_cache = get_global_cache(cache_type, self._tag)
             self._disk_cached_func = self._disk_cache.cache(self._func)
+        else:
+            raise ValueError("Invalid cache_type='%s'" % cache_type)
 
     def _get_identifiers(
         self, cache_type: str, args: Any, kwargs: Any
@@ -683,13 +718,14 @@ class Cached:
 
 
 def cache(
-    func: Optional[Callable] = None,
+    func: Callable,
+    *,
     use_mem_cache: bool = True,
     use_disk_cache: bool = True,
     set_verbose_mode: bool = False,
     tag: Optional[str] = None,
-    disk_cache_path: Optional[str] = None,
     mem_cache_path: Optional[str] = None,
+    disk_cache_path: Optional[str] = None,
 ) -> Union[Callable, Cached]:
     """
     Decorate a function with a cache.
@@ -709,16 +745,7 @@ def cache(
         return x + y
     ```
     """
-    if callable(func):
-        return Cached(
-            func,
-            use_mem_cache=use_mem_cache,
-            use_disk_cache=use_disk_cache,
-            set_verbose_mode=set_verbose_mode,
-            disk_cache_path=disk_cache_path,
-            mem_cache_path=mem_cache_path,
-            tag=tag,
-        )
+    dbg.dassert(callable(func), "func='%s' is not callable")
 
     def wrapper(func: Callable) -> Cached:
         return Cached(
@@ -726,9 +753,19 @@ def cache(
             use_mem_cache=use_mem_cache,
             use_disk_cache=use_disk_cache,
             set_verbose_mode=set_verbose_mode,
-            disk_cache_path=disk_cache_path,
             mem_cache_path=mem_cache_path,
+            disk_cache_path=disk_cache_path,
             tag=tag,
         )
 
     return wrapper
+
+
+# #############################################################################
+
+
+import atexit
+
+# TODO(gp): Add another function and make it silent.
+atexit.register(clear_global_cache, cache_type="mem", destroy="true")
+
