@@ -384,12 +384,12 @@ class Cached:
         """
         if self._last_used_mem_cache:
             # If the memory cache was used, then the disk cache should not been used.
-            dbg.dassert(not self._last_used_disk_cache)
+            #dbg.dassert(not self._last_used_disk_cache)
             ret = "mem"
             if verbose:
                 ret += " (%s)" % str(self.get_cache_path("mem"))
         elif self._last_used_disk_cache:
-            dbg.dassert(not self._last_used_mem_cache)
+            #dbg.dassert(not self._last_used_mem_cache)
             ret = "disk"
             if verbose:
                 ret += " (%s)" % str(self.get_cache_path("disk"))

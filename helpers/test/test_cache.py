@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 import helpers.cache as hcache
+import helpers.dbg as dbg
 import helpers.printing as hprint
 import helpers.unit_test as hut
 
@@ -41,10 +42,10 @@ def _reset_add_function(func: Callable) -> None:
 # #############################################################################
 
 
-# TODO(gp): -> _ResetGlobalCacheHelper
-class _TestClassHelper(hut.TestCase):
+class _ResetGlobalCacheHelper(hut.TestCase):
     """
-    Class helper that resets the global cache at every test method invocation.
+    Create a global cache for each test method and resets it at every test method
+    invocation.
     """
 
     def setUp(self) -> None:
@@ -72,6 +73,79 @@ class _TestClassHelper(hut.TestCase):
             hcache.clear_global_cache(cache_type, tag=self.cache_tag,
                                       destroy=True)
 
+    def _get_f_cf_functions(
+            self, **cached_kwargs: Any
+    ) -> Tuple[Callable, hcache.Cached]:
+        """
+        Create the intrinsic function `f` and its cached version `cf`.
+        """
+        # Make sure that we are using the unit test cache.
+        disk_cache_name = hcache.get_cache_name("disk", self.cache_tag)
+        _LOG.debug("disk_cache_name=%s", disk_cache_name)
+        _LOG.debug(
+            "disk_cache_path=%s", hcache.get_cache_path("disk", self.cache_tag)
+        )
+        # TODO(gp): Add an assertion.
+        # Create the intrinsic function.
+        f = _get_add_function()
+        # Create the cached function.
+        cf = hcache.Cached(f, tag=self.cache_tag, **cached_kwargs)
+        # Reset everything and check that it's in the expected state.
+        # TODO(gp): cache_type="all"
+        hcache.clear_global_cache("disk", self.cache_tag)
+        hcache.clear_global_cache("mem", self.cache_tag)
+        cf._reset_cache_tracing()
+        return f, cf
+
+    def _execute_and_check_state(
+            self,
+            f: Callable,
+            cf: hcache.Cached,
+            val1: int,
+            val2: int,
+            exp_f_state: bool,
+            exp_cf_state: str,
+    ) -> None:
+        """
+        Call the function `f(val1, val2) and its cached function `cf(val1, val2)`
+        and check whether the intrinsic function was executed and what caches were
+        used, according to `exp_f_state` and `exp_cf_state`.
+        """
+        _LOG.debug(
+            "val1=%s, val2=%s, exp_f_state=%s, exp_cf_state=%s",
+            val1,
+            val2,
+            exp_f_state,
+            exp_cf_state,
+        )
+        # Reset the intrinsic function since we want to verify if it was called
+        # or not when we call the cached function.
+        _reset_add_function(f)
+        # Call the cached function.
+        act = cf(val1, val2)
+        exp = val1 + val2
+        # Check the result.
+        self.assertEqual(act, exp)
+        # Check which function was executed and what caches were used.
+        _LOG.debug("f.executed='%s.", f.executed)
+        self.assertEqual(f.executed, exp_f_state)
+        _LOG.debug("cf.get_last_cache_accessed=%s", cf.get_last_cache_accessed())
+        self.assertEqual(cf.get_last_cache_accessed(), exp_cf_state)
+
+
+class _ResetFunctionSpecificCacheHelper(hut.TestCase):
+
+    def setUp(self) -> None:
+        super().setUp()
+        # Create temp directories to store the cache.
+        self.disk_cache_temp_dir = tempfile.mkdtemp()
+        self.mem_cache_temp_dir = tempfile.mkdtemp()
+        # Clear global cache.
+        hcache.clear_global_cache("mem", tag=self.cache_tag)
+        hcache.clear_global_cache("disk", tag=self.cache_tag)
+        # Create intrinsic and cached functions.
+        self.f, self.cf = self._get_f_cf_functions()
+
     # TODO(gp): Pass the params here.
     def _get_f_cf_functions(self) -> Tuple[Callable, hcache.Cached]:
         """
@@ -91,12 +165,11 @@ class _TestClassHelper(hut.TestCase):
         cf._reset_cache_tracing()
         return f, cf
 
-
 # #############################################################################
 
 
-class TestCacheTag(hut.TestCase):
-    def test1(self) -> None:
+class TestCacheFunctions(hut.TestCase):
+    def test_get_cache_name1(self) -> None:
         """
         Make sure we are using the unit test cache and not the development cache,
         by checking the name of the disk cache.
@@ -110,10 +183,11 @@ class TestCacheTag(hut.TestCase):
 # #############################################################################
 
 
-class TestCacheFeatures(_TestClassHelper):
+class TestGlobalCache1(_ResetGlobalCacheHelper):
     def test_without_caching1(self) -> None:
         """
-        Without caching if we execute two times we get two executions of a function.
+        If we execute two times without caching, we get two executions of the
+        intrinsic function.
         """
         f = _get_add_function()
         self.assertFalse(f.executed)
@@ -133,148 +207,154 @@ class TestCacheFeatures(_TestClassHelper):
 
     def test_with_caching1(self) -> None:
         """
-        Cache the same value.
+        - Leave the caches enabled
+        - Show that the memory cache is used
         """
         f, cf = self._get_f_cf_functions()
         # Execute the first time: verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the second time: verify that it is *NOT* executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 2nd time"))
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
         # Execute the third time: verify that it is *NOT* executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 3rd time"))
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
 
     def test_with_caching2(self) -> None:
         """
-        Cache different values.
+        - Leave the caches enabled
+        - Cache different values
         """
         f, cf = self._get_f_cf_functions()
         # Execute the first time: verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Use a different workload.
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the second time: verify that it is *NOT* executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 2nd time"))
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
         # Use a different workload.
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 4, 4, exp_f_state=False, exp_cf_state="mem"
         )
 
     def test_with_caching3(self) -> None:
         """
-        - Cache a single value
         - Disable both mem and disk cache.
+        - Cache a single value
         """
         f, cf = self._get_f_cf_functions(
             use_mem_cache=False, use_disk_cache=False
         )
         # Execute the first time.
         _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         #
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the second time.
         _LOG.debug("\n%s", hprint.frame("Executing the 2nd time"))
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         #
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
 
     def test_with_caching4(self) -> None:
         """
-        - Cache different values
         - Disable only the disk cache
+        - Cache different values
         """
         f, cf = self._get_f_cf_functions(use_mem_cache=True, use_disk_cache=False)
         # Execute the first time: verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         #
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the second time: verify that it is *NOT* executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 2nd time"))
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
         #
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 4, 4, exp_f_state=False, exp_cf_state="mem"
         )
 
     def test_with_caching5(self) -> None:
         """
-        - Cache different values
         - Disable only the memory cache
+        - Cache different values
         """
         f, cf = self._get_f_cf_functions(use_mem_cache=False, use_disk_cache=True)
         # Execute the first time: verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         #
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the second time: verify that it is *NOT* executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 2nd time"))
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
         )
         #
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 4, 4, exp_f_state=False, exp_cf_state="disk"
         )
 
+    # ////////////////////////////////////////////////////////////////////////////
+
     def test_with_caching_mem_reset(self) -> None:
         """
-        - Cache a single value
         - Use only the memory cache
-        - Execute and cache, reset the mem cache, execute again
+        - Execute and cache
+        - Reset the mem cache
+        - Execute again
+        - Check that the cached function is recomputed
         """
         f, cf = self._get_f_cf_functions(use_mem_cache=True, use_disk_cache=False)
         # Execute the first time: verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the second time: verify that it is *NOT* executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 2nd time"))
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
         # Reset memory cache.
         hcache.clear_global_cache("mem", self.cache_tag)
         # Execute the third time: verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 3rd time"))
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
 
@@ -285,21 +365,50 @@ class TestCacheFeatures(_TestClassHelper):
         f, cf = self._get_f_cf_functions(use_mem_cache=False, use_disk_cache=True)
         # Execute the first time: verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the second time: verify that it is *NOT* executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 2nd time"))
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
         )
         # Reset disk cache.
         hcache.clear_global_cache("disk", self.cache_tag)
         # Execute the third time: verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 3rd time"))
-        self._check_cache_state(
+        self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
+
+    def test_with_caching_mem_reset2(self) -> None:
+        """
+        - Use both caches
+        - Execute and cache
+        - Reset the mem cache
+        - Execute again
+        - Check that the cached value is found in the disk cache
+        """
+        f, cf = self._get_f_cf_functions(use_mem_cache=True, use_disk_cache=True)
+        # Execute the first time: verify that it is executed.
+        _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
+        self._execute_and_check_state(
+            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
+        # Execute the second time: verify that it is *NOT* executed.
+        _LOG.debug("\n%s", hprint.frame("Executing the 2nd time"))
+        self._execute_and_check_state(
+            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
+        )
+        # Reset memory cache.
+        hcache.clear_global_cache("mem", self.cache_tag)
+        # Execute the third time: verify that it is executed.
+        _LOG.debug("\n%s", hprint.frame("Executing the 3rd time"))
+        self._execute_and_check_state(
+            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
+        )
+
+    # ////////////////////////////////////////////////////////////////////////////
 
     # TODO(gp): Add a test with all the cache levels, resetting the memory and
     #  finding the value in the disk cache.
@@ -310,29 +419,29 @@ class TestCacheFeatures(_TestClassHelper):
         intrinsic function should not be recomputed.
         """
         # Define the function inline imitating working in a notebook.
-        add = self._get_add_function()
+        add = _get_add_function()
         cached_add = hcache.Cached(add, tag=self.cache_tag)
         # Execute the first time.
-        self._check_cache_state(
+        self._execute_and_check_state(
             add, cached_add, 1, 2, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the second time. Must use memory cache.
-        self._check_cache_state(
+        self._execute_and_check_state(
             add, cached_add, 1, 2, exp_f_state=False, exp_cf_state="mem"
         )
         # Redefine the function inline.
-        add = self._get_add_function()
+        add = _get_add_function()
         cached_add = hcache.Cached(add, tag=self.cache_tag)
         # Execute the third time. Should still use memory cache.
-        self._check_cache_state(
+        self._execute_and_check_state(
             add, cached_add, 1, 2, exp_f_state=False, exp_cf_state="mem"
         )
         # Execute the fourth time. Should still use memory cache.
-        self._check_cache_state(
+        self._execute_and_check_state(
             add, cached_add, 1, 2, exp_f_state=False, exp_cf_state="mem"
         )
         # Check that call with other arguments miss the cache.
-        self._check_cache_state(
+        self._execute_and_check_state(
             add, cached_add, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
 
@@ -348,11 +457,11 @@ class TestCacheFeatures(_TestClassHelper):
 
         cached_add = hcache.Cached(add, tag=self.cache_tag)
         # Execute the first time.
-        self._check_cache_state(
+        self._execute_and_check_state(
             add, cached_add, 1, 2, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the second time. Must use memory cache.
-        self._check_cache_state(
+        self._execute_and_check_state(
             add, cached_add, 1, 2, exp_f_state=False, exp_cf_state="mem"
         )
         # Redefine the function inline. Change body.
@@ -365,76 +474,40 @@ class TestCacheFeatures(_TestClassHelper):
 
         cached_add = hcache.Cached(add, tag=self.cache_tag)
         # Execute the third time. Should still use memory cache.
-        self._check_cache_state(
+        self._execute_and_check_state(
             add, cached_add, 1, 2, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the fourth time. Should still use memory cache.
-        self._check_cache_state(
+        self._execute_and_check_state(
             add, cached_add, 1, 2, exp_f_state=False, exp_cf_state="mem"
         )
         # Check that call with other arguments miss the cache.
-        self._check_cache_state(
+        self._execute_and_check_state(
             add, cached_add, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
 
-    # TODO(gp): -> _execute_and_check_state
-    # TODO(gp): -> factor this out
-    def _check_cache_state(
-        self,
-        f: Callable,
-        cf: hcache.Cached,
-        val1: int,
-        val2: int,
-        exp_f_state: bool,
-        exp_cf_state: str,
-    ) -> None:
-        """
-        Call the function `f(val1, val2) and its cached function `cf(val1, val2)`
-        and check whether the intrinsic function was executed and what caches were
-        used, according to `exp_f_state` and `exp_cf_state`.
-        """
-        _LOG.debug(
-            "val1=%s, val2=%s, exp_f_state=%s, exp_cf_state=%s",
-            val1,
-            val2,
-            exp_f_state,
-            exp_cf_state,
-        )
-        # We reset the intrinsic function since we want to verify if it was called
-        # or not when we were calling the cached function.
-        self._reset_function(f)
-        # Call the cached function.
-        act = cf(val1, val2)
-        exp = val1 + val2
-        self.assertEqual(act, exp)
-        # Check which function was executed and what caches were used.
-        _LOG.debug("executed=%s", f.executed)
-        self.assertEqual(f.executed, exp_f_state)
-        _LOG.debug("get_last_cache_accessed=%s", cf.get_last_cache_accessed())
-        self.assertEqual(cf.get_last_cache_accessed(), exp_cf_state)
-
-    # TODO(gp): Remove this.
-    def _get_f_cf_functions(
-        self, **kwargs: Any
-    ) -> Tuple[Callable, hcache.Cached]:
-        """
-        Create the intrinsic function `f` and its cached version `cf`.
-        """
-        # Make sure that we are using the unit test cache.
-        disk_cache_name = hcache.get_cache_name("disk", self.cache_tag)
-        _LOG.debug("disk_cache_name=%s", disk_cache_name)
-        _LOG.debug(
-            "disk_cache_path=%s", hcache.get_cache_path("disk", self.cache_tag)
-        )
-        # Create the intrinsic function.
-        f = self._get_function()
-        # Create the cached function.
-        cf = hcache.Cached(f, tag=self.cache_tag, **kwargs)
-        # Reset everything and check that it's in the expected state.
-        hcache.clear_global_cache("disk", self.cache_tag)
-        hcache.clear_global_cache("mem", self.cache_tag)
-        cf._reset_cache_tracing()
-        return f, cf
+    # # TODO(gp): Remove this.
+    # def _get_f_cf_functions(
+    #     self, **kwargs: Any
+    # ) -> Tuple[Callable, hcache.Cached]:
+    #     """
+    #     Create the intrinsic function `f` and its cached version `cf`.
+    #     """
+    #     # Make sure that we are using the unit test cache.
+    #     disk_cache_name = hcache.get_cache_name("disk", self.cache_tag)
+    #     _LOG.debug("disk_cache_name=%s", disk_cache_name)
+    #     _LOG.debug(
+    #         "disk_cache_path=%s", hcache.get_cache_path("disk", self.cache_tag)
+    #     )
+    #     # Create the intrinsic function.
+    #     f = self._get_function()
+    #     # Create the cached function.
+    #     cf = hcache.Cached(f, tag=self.cache_tag, **kwargs)
+    #     # Reset everything and check that it's in the expected state.
+    #     hcache.clear_global_cache("disk", self.cache_tag)
+    #     hcache.clear_global_cache("mem", self.cache_tag)
+    #     cf._reset_cache_tracing()
+    #     return f, cf
 
 
 # #############################################################################
@@ -442,39 +515,29 @@ class TestCacheFeatures(_TestClassHelper):
 
 # TODO(gp): -> TestFunctionSpecificCache
 # TODO(gp): -> not sure we should derive from this helper. Only tag is shared
-class TestSpecificCache(_TestClassHelper):
-    def setUp(self) -> None:
-        super().setUp()
-        # Create temp directories to store the cache.
-        self.disk_cache_temp_dir = tempfile.mkdtemp()
-        self.mem_cache_temp_dir = tempfile.mkdtemp()
-        # Clear global cache.
-        hcache.clear_global_cache("mem", tag=self.cache_tag)
-        hcache.clear_global_cache("disk", tag=self.cache_tag)
-        # Create intrinsic and cached functions.
-        self.f, self.cf = self._get_f_cf_functions()
+class TestSpecificCache(_ResetGlobalCacheHelper):
 
     def test_with_specific_cache(self) -> None:
         """
         Test that caching mixing different values works.
         """
         # Execute the first time: verify that it is executed.
-        self._check_cache_state(3, 4, exp_f_state=True, exp_cf_state="no_cache")
+        self._execute_and_check_state(3, 4, exp_f_state=True, exp_cf_state="no_cache")
         # Execute the second time: verify that it is *NOT* executed.
-        self._check_cache_state(3, 4, exp_f_state=False, exp_cf_state="mem")
+        self._execute_and_check_state(3, 4, exp_f_state=False, exp_cf_state="mem")
         # Restore back to global cache.
         self.cf.set_cache_path("mem", None)
         self.cf.set_cache_path("disk", None)
         # Verify that function is executed with global cache.
-        self._check_cache_state(3, 4, exp_f_state=True, exp_cf_state="no_cache")
+        self._execute_and_check_state(3, 4, exp_f_state=True, exp_cf_state="no_cache")
         # Restore back specific cache.
         self.cf.set_cache_path("disk", self.disk_cache_temp_dir)
         self.cf.set_cache_path("mem", self.mem_cache_temp_dir)
         # Verify that it is *NOT* executed with specific cache.
-        self._check_cache_state(3, 4, exp_f_state=False, exp_cf_state="mem")
+        self._execute_and_check_state(3, 4, exp_f_state=False, exp_cf_state="mem")
 
     # TODO(gp): -> factor out if it's the same
-    def _check_cache_state(
+    def _execute_and_check_state(
         self,
         val1: int,
         val2: int,
@@ -494,7 +557,7 @@ class TestSpecificCache(_TestClassHelper):
         )
         # We reset the function since we want to verify if it was called or not,
         # when calling the cached function.
-        self._reset_function(self.f)
+        _reset_add_function(self.f)
         # Call the cached function.
         act = self.cf(val1, val2)
         exp = val1 + val2
@@ -511,7 +574,7 @@ class TestSpecificCache(_TestClassHelper):
 # #################################################################################
 
 
-class TestCachePerformance(_TestClassHelper):
+class TestCachePerformance(_ResetGlobalCacheHelper):
     def test_performance_dataframe(self) -> None:
         """
         Test performance of the cache over pandas DataFrame.
@@ -600,7 +663,7 @@ class TestCachePerformance(_TestClassHelper):
 # #################################################################################
 
 
-class TestCacheDecorator(_TestClassHelper):
+class TestCacheDecorator(_ResetGlobalCacheHelper):
     def test_decorated_function(self) -> None:
         """
         Test decorator with both caches enabled.
@@ -612,11 +675,11 @@ class TestCacheDecorator(_TestClassHelper):
             return x + y
 
         # Execute the first time.
-        self._check_cache_state(
+        self._execute_and_check_state(
             add.__wrapped__, add, 1, 2, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the second time. Must use memory cache.
-        self._check_cache_state(
+        self._execute_and_check_state(
             add.__wrapped__, add, 1, 2, exp_f_state=False, exp_cf_state="mem"
         )
 
@@ -631,52 +694,52 @@ class TestCacheDecorator(_TestClassHelper):
             return x + y
 
         # Execute the first time.
-        self._check_cache_state(
+        self._execute_and_check_state(
             add.__wrapped__, add, 1, 2, exp_f_state=True, exp_cf_state="no_cache"
         )
         # Execute the second time. Must use disk cache.
-        self._check_cache_state(
+        self._execute_and_check_state(
             add.__wrapped__, add, 1, 2, exp_f_state=False, exp_cf_state="disk"
         )
 
-    # TODO(gp): -> factor out
-    def _check_cache_state(
-        self,
-        f: Callable,
-        cf: hcache.Cached,
-        val1: int,
-        val2: int,
-        exp_f_state: bool,
-        exp_cf_state: str,
-    ) -> None:
-        """
-        Call the (cached function) `cf(val1, val2)` and check whether the
-        intrinsic function was executed and what caches were used.
-        """
-        _LOG.debug(
-            "val1=%s, val2=%s, exp_f_state=%s, exp_cf_state=%s",
-            val1,
-            val2,
-            exp_f_state,
-            exp_cf_state,
-        )
-        # Reset the function.
-        f.executed = False
-        # Call the cached function.
-        act = cf(val1, val2)
-        exp = val1 + val2
-        self.assertEqual(act, exp)
-        # Check which function was executed and what caches were used.
-        _LOG.debug("get_last_cache_accessed=%s", cf.get_last_cache_accessed())
-        self.assertEqual(exp_cf_state, cf.get_last_cache_accessed())
-        _LOG.debug("executed=%s", f.executed)
-        self.assertEqual(exp_f_state, f.executed)
+    # # TODO(gp): -> factor out
+    # def _execute_and_check_state(
+    #     self,
+    #     f: Callable,
+    #     cf: hcache.Cached,
+    #     val1: int,
+    #     val2: int,
+    #     exp_f_state: bool,
+    #     exp_cf_state: str,
+    # ) -> None:
+    #     """
+    #     Call the (cached function) `cf(val1, val2)` and check whether the
+    #     intrinsic function was executed and what caches were used.
+    #     """
+    #     _LOG.debug(
+    #         "val1=%s, val2=%s, exp_f_state=%s, exp_cf_state=%s",
+    #         val1,
+    #         val2,
+    #         exp_f_state,
+    #         exp_cf_state,
+    #     )
+    #     # Reset the function.
+    #     f.executed = False
+    #     # Call the cached function.
+    #     act = cf(val1, val2)
+    #     exp = val1 + val2
+    #     self.assertEqual(act, exp)
+    #     # Check which function was executed and what caches were used.
+    #     _LOG.debug("get_last_cache_accessed=%s", cf.get_last_cache_accessed())
+    #     self.assertEqual(exp_cf_state, cf.get_last_cache_accessed())
+    #     _LOG.debug("executed=%s", f.executed)
+    #     self.assertEqual(exp_f_state, f.executed)
 
 
 # #############################################################################
 
 
-class TestAmpTask1407(_TestClassHelper):
+class TestAmpTask1407(_ResetGlobalCacheHelper):
     def test1(self) -> None:
         """
         A class method can't be cached.
