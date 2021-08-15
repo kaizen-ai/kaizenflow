@@ -1,11 +1,12 @@
 <!--ts-->
    * [Cache](#cache)
-      * [How it works](#how-it-works)
-         * [Disk level](#disk-level)
-         * [Memory level](#memory-level)
-         * [Global cache](#global-cache)
+      * [How to use Cache](#how-to-use-cache)
+      * [How the Cache works](#how-the-cache-works)
+      * [Disk level](#disk-level)
+      * [Memory level](#memory-level)
+      * [Global cache](#global-cache)
          * [Tagged global cache](#tagged-global-cache)
-         * [Function-specific cache](#function-specific-cache)
+      * [Function-specific cache](#function-specific-cache)
 
 
 
@@ -19,7 +20,8 @@
   regular class methods
 - `Cache` works in code and in Python notebooks with `%autoreload`
 
-## How the `Cache` works 
+## How the `Cache` works
+
 - `Cache` tracks changes in the source code of the wrapped function
   - For performance reasons, it checks the code only one time unless the pointer
     to the function is changed, e.g. in notebooks
@@ -56,7 +58,8 @@
 - Cons:
 
   1. Only hashable arguments are supported
-  2. No access to cache, it's not possible to check if an item is in cache or not
+  2. No access to cache, it's not possible to check if an item is in cache or
+     not
   3. It does not work properly in notebooks
 
 - Because Cons outweighed Pros, we decided to implement `Memory` level as
@@ -64,23 +67,23 @@
   over [`tmpfs`](https://uk.wikipedia.org/wiki/Tmpfs)
 - In this way we reuse the same code for `Disk` level cache but over a RAM-based
   disk
-  - This implementation overcomes the Cons listed above, although it is
-    slightly slower than the pure `functools.lru_cache` approach
+  - This implementation overcomes the Cons listed above, although it is slightly
+    slower than the pure `functools.lru_cache` approach
 
 ## Global cache
 
 - By default, all cached functions save their cached values in the default
   global cache
 - The cache is "global" in the sense that:
-  - it is unique per-user and per Git client
-  - it serves all the functions of a Git client
+  - It is unique per-user and per Git client
+  - It serves all the functions of a Git client
 - The cached data stored in a folder `$GIT_ROOT/tmp.cache.{mem,disk}.[tag]`
 - This global cache is being managed via global functions named
   `*_global_cache`, e.g., `set_global_cache()`
 
 - TODO(gp): maybe a better name is
-  - global -> local_cache, client_cache
-  - function_specific -> global or shared
+  - Global -> local_cache, client_cache
+  - Function_specific -> global or shared
 
 ### Tagged global cache
 

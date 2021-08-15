@@ -46,7 +46,8 @@ _USE_CACHING: bool = True
 
 def set_caching(val: bool) -> None:
     """
-    Enable or disable all caching, i.e., global, tagged global, function-specific.
+    Enable or disable all caching, i.e., global, tagged global, function-
+    specific.
     """
     global _USE_CACHING
     _LOG.warning("Setting caching to %s -> %s", _USE_CACHING, val)
@@ -146,7 +147,7 @@ _DISK_CACHE: Optional[joblib.Memory] = None
 
 
 def _create_cache_backend(
-        cache_type: str, tag: Optional[str] = None
+    cache_type: str, tag: Optional[str] = None
 ) -> joblib.Memory:
     """
     Create a Joblib memory object storing a cache.
@@ -369,7 +370,8 @@ class Cached:
             # Global cache.
             for cache_type in get_cache_types():
                 txt.append(
-                    "global %s cache path=%s" % (cache_type, get_cache_path(cache_type))
+                    "global %s cache path=%s"
+                    % (cache_type, get_cache_path(cache_type))
                 )
         # TODO(gp): Finish this.
         txt = "\n".join(txt)
@@ -384,12 +386,12 @@ class Cached:
         """
         if self._last_used_mem_cache:
             # If the memory cache was used, then the disk cache should not been used.
-            #dbg.dassert(not self._last_used_disk_cache)
+            # dbg.dassert(not self._last_used_disk_cache)
             ret = "mem"
             if verbose:
                 ret += " (%s)" % str(self.get_cache_path("mem"))
         elif self._last_used_disk_cache:
-            #dbg.dassert(not self._last_used_mem_cache)
+            # dbg.dassert(not self._last_used_mem_cache)
             ret = "disk"
             if verbose:
                 ret += " (%s)" % str(self.get_cache_path("disk"))
@@ -406,7 +408,8 @@ class Cached:
 
     def has_function_specific_cache(self) -> bool:
         """
-        Return whether this function has a function-specific cache or uses the global cache.
+        Return whether this function has a function-specific cache or uses the
+        global cache.
         """
         has_func_cache = any(
             self.get_cache_path(cache_type) is not None
@@ -422,8 +425,10 @@ class Cached:
 
         :param cache_type: type of a cache to clear, or `None` to clear all caches
         """
-        dbg.dassert(self.has_function_specific_cache(),
-                    "This function has no function-specific cache")
+        dbg.dassert(
+            self.has_function_specific_cache(),
+            "This function has no function-specific cache",
+        )
         if cache_type is None:
             for cache_type_tmp in get_cache_types():
                 self.clear_cache(cache_type_tmp, destroy=destroy)
@@ -465,7 +470,7 @@ class Cached:
         elif cache_type == "disk":
             self._disk_cache_path = cache_path
         else:
-            raise ValueError("Invalid cache_type='%s'", cache_type)
+            raise ValueError("Invalid cache_type='%s'" % cache_type)
         self._create_cache(cache_type)
 
     def get_cache_path(self, cache_type: str) -> Optional[str]:
@@ -483,7 +488,7 @@ class Cached:
         elif cache_type == "disk":
             ret = self._disk_cache_path
         else:
-            raise ValueError("Invalid cache_type='%s'", cache_type)
+            raise ValueError("Invalid cache_type='%s'" % cache_type)
         _LOG.debug("ret=%s", ret)
         return ret
 

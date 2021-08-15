@@ -20,11 +20,12 @@ def _get_add_function() -> Callable:
     """
     Return a function with the ability to track state, used for testing.
     """
+
     def func(x: int, y: int) -> int:
-        func.executed = True
+        func.executed = True  # type: ignore[attr-defined]
         return x + y
 
-    func.executed = False
+    func.executed = False  # type: ignore[attr-defined]
     return func
 
 
@@ -33,10 +34,11 @@ def _reset_add_function(func: Callable) -> None:
     Reset the function before another execution, so we can verify if it was
     executed or not.
 
-    We should do this every time we run the cached version of the function.
+    We should do this every time we run the cached version of the
+    function.
     """
-    func.executed = False
-    dbg.dassert(not func.executed)
+    func.executed = False  # type: ignore[attr-defined]
+    dbg.dassert(not func.executed)  # type: ignore[attr-defined]
 
 
 # #############################################################################
@@ -44,8 +46,8 @@ def _reset_add_function(func: Callable) -> None:
 
 class _ResetGlobalCacheHelper(hut.TestCase):
     """
-    Create a global cache for each test method and resets it at every test method
-    invocation.
+    Create a global cache for each test method and resets it at every test
+    method invocation.
     """
 
     def setUp(self) -> None:
@@ -70,11 +72,12 @@ class _ResetGlobalCacheHelper(hut.TestCase):
         """
         # TODO(gp): use cache_type = None instead of the loop.
         for cache_type in hcache.get_cache_types():
-            hcache.clear_global_cache(cache_type, tag=self.cache_tag,
-                                      destroy=True)
+            hcache.clear_global_cache(
+                cache_type, tag=self.cache_tag, destroy=True
+            )
 
     def _get_f_cf_functions(
-            self, **cached_kwargs: Any
+        self, **cached_kwargs: Any
     ) -> Tuple[Callable, hcache.Cached]:
         """
         Create the intrinsic function `f` and its cached version `cf`.
@@ -98,18 +101,18 @@ class _ResetGlobalCacheHelper(hut.TestCase):
         return f, cf
 
     def _execute_and_check_state(
-            self,
-            f: Callable,
-            cf: hcache.Cached,
-            val1: int,
-            val2: int,
-            exp_f_state: bool,
-            exp_cf_state: str,
+        self,
+        f: Callable,
+        cf: hcache.Cached,
+        val1: int,
+        val2: int,
+        exp_f_state: bool,
+        exp_cf_state: str,
     ) -> None:
         """
-        Call the function `f(val1, val2) and its cached function `cf(val1, val2)`
-        and check whether the intrinsic function was executed and what caches were
-        used, according to `exp_f_state` and `exp_cf_state`.
+        Call the function `f(val1, val2) and its cached function `cf(val1,
+        val2)` and check whether the intrinsic function was executed and what
+        caches were used, according to `exp_f_state` and `exp_cf_state`.
         """
         _LOG.debug(
             "val1=%s, val2=%s, exp_f_state=%s, exp_cf_state=%s",
@@ -128,9 +131,10 @@ class _ResetGlobalCacheHelper(hut.TestCase):
         self.assertEqual(act, exp)
         # Check which function was executed and what caches were used.
         _LOG.debug("f.executed='%s.", f.executed)
-        self.assertEqual(f.executed, exp_f_state)
+        self.assertEqual(f.executed, exp_f_state)  # type: ignore[attr-defined]
         _LOG.debug("cf.get_last_cache_accessed=%s", cf.get_last_cache_accessed())
         self.assertEqual(cf.get_last_cache_accessed(), exp_cf_state)
+
 
 # #############################################################################
 
@@ -138,8 +142,8 @@ class _ResetGlobalCacheHelper(hut.TestCase):
 class TestCacheFunctions(hut.TestCase):
     def test_get_cache_name1(self) -> None:
         """
-        Make sure we are using the unit test cache and not the development cache,
-        by checking the name of the disk cache.
+        Make sure we are using the unit test cache and not the development
+        cache, by checking the name of the disk cache.
         """
         cache_tag = "unittest"
         disk_cache_name = hcache.get_cache_name("disk", cache_tag)
@@ -157,20 +161,20 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
         intrinsic function.
         """
         f = _get_add_function()
-        self.assertFalse(f.executed)
+        self.assertFalse(f.executed)  # type: ignore[attr-defined]
         # Execute.
         act = f(3, 4)
         self.assertEqual(act, 7)
         # Check that the function was executed.
-        self.assertTrue(f.executed)
+        self.assertTrue(f.executed)  # type: ignore[attr-defined]
         # Reset.
         _reset_add_function(f)
-        self.assertFalse(f.executed)
+        self.assertFalse(f.executed)  # type: ignore[attr-defined]
         # Execute again.
         act = f(3, 4)
         self.assertEqual(act, 7)
         # Check that the function is executed again, since there is no caching.
-        self.assertTrue(f.executed)
+        self.assertTrue(f.executed)  # type: ignore[attr-defined]
 
     def test_with_caching1(self) -> None:
         """
@@ -416,7 +420,7 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
         """
         # Define the function imitating working in a notebook.
         def add(x: int, y: int) -> int:
-            add.executed = True
+            add.executed = True  # type: ignore[attr-defined]
             return x + y
 
         cached_add = hcache.Cached(add, tag=self.cache_tag)
@@ -431,7 +435,7 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
         # Redefine the function with different code.
 
         # pylint: disable=function-redefined
-        def add(x: int, y: int) -> int:
+        def add(x: int, y: int) -> int:  # type: ignore[no-redef]
             add.executed = True
             z = x + y
             return z
@@ -455,7 +459,6 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
 
 
 class _ResetFunctionSpecificCacheHelper(_ResetGlobalCacheHelper):
-
     def setUp(self) -> None:
         super().setUp()
         # Create temp directories to store the cache.
@@ -465,7 +468,7 @@ class _ResetFunctionSpecificCacheHelper(_ResetGlobalCacheHelper):
         hcache.clear_global_cache("mem", tag=self.cache_tag)
         hcache.clear_global_cache("disk", tag=self.cache_tag)
 
-    def _get_f_cf_functions(self) -> Tuple[Callable, hcache.Cached]:
+    def _get_f_cf_functions(self) -> Tuple[Callable, hcache.Cached]:  # type: ignore[override]
         """
         Create the intrinsic function `f` and its cached version `cf`.
         """
@@ -487,7 +490,6 @@ class _ResetFunctionSpecificCacheHelper(_ResetGlobalCacheHelper):
 
 
 class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
-
     def test_with_caching1(self) -> None:
         """
         - Test using the function-specific cache
@@ -497,28 +499,38 @@ class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
         f, cf = self._get_f_cf_functions()
         # Execute the first time: verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
-        self._execute_and_check_state(f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache")
+        self._execute_and_check_state(
+            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
         # Execute the second time: verify that it is *NOT* executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 2nd time"))
-        self._execute_and_check_state(f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem")
+        self._execute_and_check_state(
+            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
+        )
         # Restore back to global cache.
         cf.set_cache_path("mem", None)
         cf.set_cache_path("disk", None)
         # Verify that function is executed with global cache.
         _LOG.debug("\n%s", hprint.frame("Executing the 3rd time"))
-        self._execute_and_check_state(f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache")
+        self._execute_and_check_state(
+            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
         #
         _LOG.debug("\n%s", hprint.frame("Executing the 4th time"))
-        self._execute_and_check_state(f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem")
+        self._execute_and_check_state(
+            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
+        )
         # Restore back specific cache.
         cf.set_cache_path("disk", self.disk_cache_temp_dir)
         cf.set_cache_path("mem", self.mem_cache_temp_dir)
         # Verify that it is *NOT* executed with specific cache.
         _LOG.debug("\n%s", hprint.frame("Executing the 5th time"))
-        self._execute_and_check_state(f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem")
+        self._execute_and_check_state(
+            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
+        )
 
 
-# #################################################################################
+# #############################################################################
 
 
 class TestCachePerformance(_ResetGlobalCacheHelper):
@@ -607,7 +619,7 @@ class TestCachePerformance(_ResetGlobalCacheHelper):
         print("hot disk cache benefit=%f" % (no_cache_ct - disk_cache_ct))
 
 
-# #################################################################################
+# #############################################################################
 
 
 class TestCacheDecorator(_ResetGlobalCacheHelper):
