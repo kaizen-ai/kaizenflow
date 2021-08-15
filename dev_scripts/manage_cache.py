@@ -48,7 +48,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     action = args.action
-    cache_types = hcac.get_cache_types()
+    cache_types = hcac._get_cache_types()
     tag = None
     actions = [
         "clear_cache",
@@ -70,7 +70,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     elif action == "print_cache_info":
         print("cache_types=%s" % str(cache_types))
         for cache_type in cache_types:
-            path = hcac.get_cache_path(cache_type, tag=tag)
+            path = hcac._get_cache_path(cache_type, tag=tag)
             cache_info = hcac.get_cache_size_info(path, cache_type)
             print(cache_info)
     elif action == "test":

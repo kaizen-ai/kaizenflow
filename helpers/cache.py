@@ -40,8 +40,7 @@ _LOG.debug = _LOG.info
 # #############################################################################
 
 
-# TODO(gp): -> _IS_CACHE_ENABLED
-_USE_CACHING: bool = True
+_IS_CACHE_ENABLED: bool = True
 
 
 def set_caching(val: bool) -> None:
@@ -49,9 +48,9 @@ def set_caching(val: bool) -> None:
     Enable or disable all caching, i.e., global, tagged global, function-
     specific.
     """
-    global _USE_CACHING
-    _LOG.warning("Setting caching to %s -> %s", _USE_CACHING, val)
-    _USE_CACHING = val
+    global _IS_CACHE_ENABLED
+    _LOG.warning("Setting caching to %s -> %s", _IS_CACHE_ENABLED, val)
+    _IS_CACHE_ENABLED = val
 
 
 def is_caching_enabled() -> bool:
@@ -60,30 +59,29 @@ def is_caching_enabled() -> bool:
 
     :return: whether the cache is enabled or not
     """
-    return _USE_CACHING
+    return _IS_CACHE_ENABLED
 
 
-# TODO(gp): -> _get_cache_type
-def get_cache_types() -> List[str]:
+# #############################################################################
+# Global cache interface
+# #############################################################################
+
+
+def _get_cache_types() -> List[str]:
     """
     Return the types (aka levels) of the cache.
     """
     return ["mem", "disk"]
 
 
-# TODO(gp): -> dassert_is_valid_cache_type
-def _check_valid_cache_type(cache_type: str) -> None:
+def _dassert_is_valid_cache_type(cache_type: str) -> None:
     """
     Assert that `cache_type` is a valid cache type.
     """
-    dbg.dassert_in(cache_type, get_cache_types())
+    dbg.dassert_in(cache_type, _get_cache_types())
 
 
-# #############################################################################
-
-
-# TODO(gp): -> _get_cache_name
-def get_cache_name(cache_type: str, tag: Optional[str] = None) -> str:
+def _get_cache_name(cache_type: str, tag: Optional[str] = None) -> str:
     """
     Get the canonical cache name for a type of cache and tag.
 
@@ -93,15 +91,14 @@ def get_cache_name(cache_type: str, tag: Optional[str] = None) -> str:
     :param tag: optional unique tag of the cache
     :return: name of the folder for a cache
     """
-    _check_valid_cache_type(cache_type)
+    _dassert_is_valid_cache_type(cache_type)
     cache_name = f"tmp.cache.{cache_type}"
     if tag is not None:
         cache_name += f".{tag}"
     return cache_name
 
 
-# TODO(gp): -> _
-def get_cache_path(cache_type: str, tag: Optional[str] = None) -> str:
+def _get_cache_path(cache_type: str, tag: Optional[str] = None) -> str:
     """
     Get path to the directory storing the cache.
 
@@ -110,9 +107,9 @@ def get_cache_path(cache_type: str, tag: Optional[str] = None) -> str:
 
     :return: the file system path to the cache
     """
-    _check_valid_cache_type(cache_type)
+    _dassert_is_valid_cache_type(cache_type)
     # Get the cache name.
-    cache_name = get_cache_name(cache_type, tag)
+    cache_name = _get_cache_name(cache_type, tag)
     # Get the enclosing directory path.
     if cache_type == "mem":
         tmpfs_path = "/tmp" if hsyste.get_os_name() == "Darwin" else "/mnt/tmpfs"
@@ -134,10 +131,6 @@ def get_cache_size_info(path: str, cache_type: str) -> str:
     return txt
 
 
-# #############################################################################
-# Global cache interface
-# #############################################################################
-
 # This is the global memory cache.
 _MEMORY_CACHE: Optional[joblib.Memory] = None
 
@@ -154,20 +147,20 @@ def _create_cache_backend(
 
     :return: cache backend object
     """
-    _check_valid_cache_type(cache_type)
-    file_name = get_cache_path(cache_type, tag)
+    _dassert_is_valid_cache_type(cache_type)
+    file_name = _get_cache_path(cache_type, tag)
     cache_backend = joblib.Memory(file_name, verbose=0, compress=1)
     return cache_backend
 
 
-# TODO(gp): -> get_cache
+# TODO(gp): -> get_cache?
 def get_global_cache(cache_type: str, tag: Optional[str] = None) -> joblib.Memory:
     """
     Get global cache by cache type.
 
     :return: caching backend
     """
-    _check_valid_cache_type(cache_type)
+    _dassert_is_valid_cache_type(cache_type)
     global _MEMORY_CACHE
     global _DISK_CACHE
     if tag is None:
@@ -194,7 +187,7 @@ def set_global_cache(cache_type: str, cache_backend: joblib.Memory) -> None:
     :param cache_type: type of a cache
     :param cache_backend: caching backend
     """
-    _check_valid_cache_type(cache_type)
+    _dassert_is_valid_cache_type(cache_type)
     global _MEMORY_CACHE
     global _DISK_CACHE
     if cache_type == "mem":
@@ -203,9 +196,8 @@ def set_global_cache(cache_type: str, cache_backend: joblib.Memory) -> None:
         _DISK_CACHE = cache_backend
 
 
-# TODO(gp): cache_type -> "all" so we avoid the Optional
 def clear_global_cache(
-    cache_type: Optional[str], tag: Optional[str] = None, destroy: bool = False
+    cache_type: str, tag: Optional[str] = None, destroy: bool = False
 ) -> None:
     """
     Reset the global cache by cache type.
@@ -214,13 +206,13 @@ def clear_global_cache(
     :param tag: optional unique tag of the cache, empty by default
     :param destroy: remove physical directory
     """
-    if cache_type is None:
-        for cache_type_tmp in get_cache_types():
+    if cache_type == "all":
+        for cache_type_tmp in _get_cache_types():
             clear_global_cache(cache_type_tmp, tag=tag, destroy=destroy)
         return
-    _check_valid_cache_type(cache_type)
+    _dassert_is_valid_cache_type(cache_type)
     # Clear and / or destroy the cache `cache_type` with the given `tag`.
-    cache_path = get_cache_path(cache_type, tag)
+    cache_path = _get_cache_path(cache_type, tag)
     info_before = get_cache_size_info(cache_path, cache_type)
     _LOG.warning("Resetting %s cache '%s'", cache_type, cache_path)
     if destroy:
@@ -361,17 +353,17 @@ class Cached:
         txt.append("has function-specific cache=%s" % has_func_cache)
         if has_func_cache:
             # Function-specific cache: print the paths of the local cache.
-            for cache_type in get_cache_types():
+            for cache_type in _get_cache_types():
                 txt.append(
                     "local %s cache path=%s"
-                    % (cache_type, self.get_cache_path(cache_type)),
+                    % (cache_type, self._get_cache_path(cache_type)),
                 )
         else:
             # Global cache.
-            for cache_type in get_cache_types():
+            for cache_type in _get_cache_types():
                 txt.append(
                     "global %s cache path=%s"
-                    % (cache_type, get_cache_path(cache_type))
+                    % (cache_type, _get_cache_path(cache_type))
                 )
         # TODO(gp): Finish this.
         txt = "\n".join(txt)
@@ -389,12 +381,12 @@ class Cached:
             # dbg.dassert(not self._last_used_disk_cache)
             ret = "mem"
             if verbose:
-                ret += " (%s)" % str(self.get_cache_path("mem"))
+                ret += " (%s)" % str(self._get_cache_path("mem"))
         elif self._last_used_disk_cache:
             # dbg.dassert(not self._last_used_mem_cache)
             ret = "disk"
             if verbose:
-                ret += " (%s)" % str(self.get_cache_path("disk"))
+                ret += " (%s)" % str(self._get_cache_path("disk"))
         else:
             ret = "no_cache"
         return ret
@@ -412,13 +404,13 @@ class Cached:
         global cache.
         """
         has_func_cache = any(
-            self.get_cache_path(cache_type) is not None
-            for cache_type in get_cache_types()
+            self._get_cache_path(cache_type) is not None
+            for cache_type in _get_cache_types()
         )
         return has_func_cache
 
     def clear_cache(
-        self, cache_type: Optional[str], destroy: bool = False
+        self, cache_type: str, destroy: bool = False
     ) -> None:
         """
         Clear a function-specific cache by type.
@@ -429,12 +421,12 @@ class Cached:
             self.has_function_specific_cache(),
             "This function has no function-specific cache",
         )
-        if cache_type is None:
-            for cache_type_tmp in get_cache_types():
+        if cache_type == "all":
+            for cache_type_tmp in _get_cache_types():
                 self.clear_cache(cache_type_tmp, destroy=destroy)
             return
         #
-        cache_path = self.get_cache_path(cache_type)
+        cache_path = self._get_cache_path(cache_type)
         dbg.dassert_is_not(cache_path, None)
         cache_path = cast(str, cache_path)
         # Collect info before.
@@ -464,7 +456,7 @@ class Cached:
         :param cache_path: cache directory or None for global cache
             - If `None` is passed then use global cache.
         """
-        _check_valid_cache_type(cache_type)
+        _dassert_is_valid_cache_type(cache_type)
         if cache_type == "mem":
             self._mem_cache_path = cache_path
         elif cache_type == "disk":
@@ -473,7 +465,7 @@ class Cached:
             raise ValueError("Invalid cache_type='%s'" % cache_type)
         self._create_cache(cache_type)
 
-    def get_cache_path(self, cache_type: str) -> Optional[str]:
+    def _get_cache_path(self, cache_type: str) -> Optional[str]:
         """
         Get the cache directory for a cache type, `None` if global cache is
         used.
@@ -482,7 +474,7 @@ class Cached:
         :return: directory for specific cache or None if global cache is used
         """
         _LOG.debug("cache_type=%s", cache_type)
-        _check_valid_cache_type(cache_type)
+        _dassert_is_valid_cache_type(cache_type)
         if cache_type == "mem":
             ret = self._mem_cache_path
         elif cache_type == "disk":
@@ -501,7 +493,7 @@ class Cached:
         :param cache_type: type of a cache
         """
         _LOG.debug("Create cache for cache_type='%s'", cache_type)
-        _check_valid_cache_type(cache_type)
+        _dassert_is_valid_cache_type(cache_type)
         # TODO(gp): Use a dict self._cache[cache_type] instead of duplicating all
         #  the vars.
         if cache_type == "mem":
@@ -547,7 +539,7 @@ class Cached:
         :param cache_type: type of a cache
         :return: instance of the cache from joblib
         """
-        _check_valid_cache_type(cache_type)
+        _dassert_is_valid_cache_type(cache_type)
         if cache_type == "mem":
             cache_backend = self._memory_cached_func
         elif cache_type == "disk":

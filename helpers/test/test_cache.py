@@ -70,11 +70,10 @@ class _ResetGlobalCacheHelper(hut.TestCase):
         """
         Clean and remove all the caches for this test.
         """
-        # TODO(gp): use cache_type = None instead of the loop.
-        for cache_type in hcache.get_cache_types():
-            hcache.clear_global_cache(
-                cache_type, tag=self.cache_tag, destroy=True
-            )
+        cache_type = "all"
+        hcache.clear_global_cache(
+            cache_type, tag=self.cache_tag, destroy=True
+        )
 
     def _get_f_cf_functions(
         self, **cached_kwargs: Any
@@ -83,10 +82,10 @@ class _ResetGlobalCacheHelper(hut.TestCase):
         Create the intrinsic function `f` and its cached version `cf`.
         """
         # Make sure that we are using the unit test cache.
-        disk_cache_name = hcache.get_cache_name("disk", self.cache_tag)
+        disk_cache_name = hcache._get_cache_name("disk", self.cache_tag)
         _LOG.debug("disk_cache_name=%s", disk_cache_name)
         _LOG.debug(
-            "disk_cache_path=%s", hcache.get_cache_path("disk", self.cache_tag)
+            "disk_cache_path=%s", hcache._get_cache_path("disk", self.cache_tag)
         )
         # TODO(gp): Add an assertion.
         # Create the intrinsic function.
@@ -146,7 +145,7 @@ class TestCacheFunctions(hut.TestCase):
         cache, by checking the name of the disk cache.
         """
         cache_tag = "unittest"
-        disk_cache_name = hcache.get_cache_name("disk", cache_tag)
+        disk_cache_name = hcache._get_cache_name("disk", cache_tag)
         _LOG.debug("disk_cache_name=%s", disk_cache_name)
         self.assertIn(cache_tag, disk_cache_name)
 
@@ -465,8 +464,7 @@ class _ResetFunctionSpecificCacheHelper(_ResetGlobalCacheHelper):
         self.disk_cache_temp_dir = tempfile.mkdtemp()
         self.mem_cache_temp_dir = tempfile.mkdtemp()
         # Clear global cache.
-        hcache.clear_global_cache("mem", tag=self.cache_tag)
-        hcache.clear_global_cache("disk", tag=self.cache_tag)
+        hcache.clear_global_cache("all", tag=self.cache_tag)
 
     def _get_f_cf_functions(self) -> Tuple[Callable, hcache.Cached]:  # type: ignore[override]
         """
@@ -482,9 +480,7 @@ class _ResetFunctionSpecificCacheHelper(_ResetGlobalCacheHelper):
             tag=self.cache_tag,
         )
         # Reset the caches.
-        # TODO(gp): cache_type="all"
-        cf.clear_cache("mem")
-        cf.clear_cache("disk")
+        cf.clear_cache("all")
         cf._reset_cache_tracing()
         return f, cf
 
