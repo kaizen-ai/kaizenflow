@@ -7,6 +7,7 @@ import pandas as pd
 
 import core.dataflow as dtf
 import core.dataflow.test.test_real_time as cdtfttrt
+import helpers.datetime_ as hdatetime
 import helpers.unit_test as hut  # pylint: disable=no-name-in-module
 
 _LOG = logging.getLogger(__name__)
@@ -192,14 +193,14 @@ class TestRealTimeDataSource1(hut.TestCase):
         # No external clock, but set the clock through an explicit call to
         # `set_current_time()`.
         data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder1()
-        rtds = dtf.SimulatedRealTimeDataSource(
+        rtds = dtf.SimulatedTimeDataSource(
             nid,
             delay_in_secs=delay_in_secs,
             data_builder=data_builder,
             data_builder_kwargs=data_builder_kwargs,
         )
         # Execute.
-        current_time = pd.Timestamp("2010-01-04 09:35:00")
+        current_time = pd.Timestamp("2010-01-04 09:30:05")
         rtds.set_current_time(current_time)
         self._helper(rtds)
 
@@ -208,12 +209,12 @@ class TestRealTimeDataSource1(hut.TestCase):
         nid = "rtds"
         delay_in_secs = 0.0
         # Return always the same time.
-        get_current_time = lambda: pd.Timestamp("2010-01-04 09:35:00")
+        get_wall_clock_time = lambda: pd.Timestamp("2010-01-04 09:30:05")
         data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder2()
-        rtds = dtf.TrueRealTimeDataSource(  # pylint: disable=no-member
+        rtds = dtf.RealTimeDataSource(  # pylint: disable=no-member
             nid,
             delay_in_secs=delay_in_secs,
-            external_clock=get_current_time,
+            external_clock=get_wall_clock_time,
             data_builder=data_builder,
             data_builder_kwargs=data_builder_kwargs,
         )
@@ -224,19 +225,19 @@ class TestRealTimeDataSource1(hut.TestCase):
         # Build the node.
         nid = "rtds"
         delay_in_secs = 0.0
+        get_wall_clock_time = lambda: hdatetime.get_current_time("naive_ET")
         # Use a replayed real-time starting at the same time as the data.
-        rrt = dtf.ReplayRealTime(
+        rrt = dtf.ReplayedTime(
             pd.Timestamp("2010-01-04 09:30:00"),
-            # 1.1 is a fudge factor to make sure we get in the next minute.
-            speed_up_factor=60 * 1.1,
+            get_wall_clock_time,
         )
-        get_current_time = rrt.get_replayed_current_time
+        get_wall_clock_time = rrt.get_wall_clock_time
         #
         data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder1()
-        rtds = dtf.ReplayedRealTimeDataSource(  # pylint: disable=no-member
+        rtds = dtf.ReplayedTimeDataSource(  # pylint: disable=no-member
             nid,
             delay_in_secs=delay_in_secs,
-            external_clock=get_current_time,
+            external_clock=get_wall_clock_time,
             data_builder=data_builder,
             data_builder_kwargs=data_builder_kwargs,
         )
@@ -257,13 +258,11 @@ class TestRealTimeDataSource1(hut.TestCase):
         act = list(map(str, df.index.tolist()))
         exp = [
             "2010-01-04 09:30:00",
-            "2010-01-04 09:31:00",
+            "2010-01-04 09:30:01",
         ]
         self.assert_equal(str(act), str(exp))
 
-    def _helper(
-        self, rtds: dtf.ReplayedRealTimeDataSource
-    ) -> None:
+    def _helper(self, rtds: dtf.ReplayedTimeDataSource) -> None:
         # Execute.
         dict_ = rtds.fit()
         # Check.
@@ -271,11 +270,11 @@ class TestRealTimeDataSource1(hut.TestCase):
         act = list(map(str, df.index.tolist()))
         exp = [
             "2010-01-04 09:30:00",
-            "2010-01-04 09:31:00",
-            "2010-01-04 09:32:00",
-            "2010-01-04 09:33:00",
-            "2010-01-04 09:34:00",
-            "2010-01-04 09:35:00",
+            "2010-01-04 09:30:01",
+            "2010-01-04 09:30:02",
+            "2010-01-04 09:30:03",
+            "2010-01-04 09:30:04",
+            "2010-01-04 09:30:05",
         ]
         self.assert_equal(str(act), str(exp))
 

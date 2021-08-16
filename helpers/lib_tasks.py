@@ -254,14 +254,15 @@ def _get_files_to_process(
             1,
             msg="Specify only one among --modified, --branch, --last-commit",
         )
+    dir_name = "."
     if modified:
-        files = git.get_modified_files(".")
+        files = git.get_modified_files(dir_name)
     elif branch:
-        files = git.get_modified_files_in_branch("master", ".")
+        files = git.get_modified_files_in_branch("master", dir_name)
     elif last_commit:
-        files = git.get_previous_committed_files(".")
+        files = git.get_previous_committed_files(dir_name)
     elif all_:
-        files = hio.find_all_files()
+        files = hio.find_all_files(dir_name)
     if files_from_user:
         # If files were passed, overwrite the previous decision.
         files = files_from_user.split(" ")
@@ -740,6 +741,8 @@ def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
     _to_pbcopy(res, pbcopy)
 
 
+# TODO(gp): When running `python_execute` we could launch it inside a
+# container.
 @task
 def check_python_files(  # type: ignore
     ctx,
@@ -1040,10 +1043,11 @@ def docker_pull(ctx, stage=STAGE, images="all"):  # type: ignore
 def _get_aws_cli_version() -> int:
     # > aws --version
     # aws-cli/1.19.49 Python/3.7.6 Darwin/19.6.0 botocore/1.20.49
+    # aws-cli/1.20.1 Python/3.9.5 Darwin/19.6.0 botocore/1.20.106
     cmd = "aws --version"
     res = hsinte.system_to_one_line(cmd)[1]
     # Parse the output.
-    m = re.match(r"aws-cli/((\d+).\d+.\d+)\S", res)
+    m = re.match(r"aws-cli/((\d+)\.\d+\.\d+)\s", res)
     dbg.dassert(m, "Can't parse '%s'", res)
     m: Match[Any]
     version = m.group(1)
@@ -2291,7 +2295,7 @@ def pytest_failed_freeze_test_list(ctx, confirm=False):  # type: ignore
     _run(ctx, cmd)
 
 
-def _get_failed_tests(file_name: str) -> List[str]:
+def _get_failed_tests_from_file(file_name: str) -> List[str]:
     dbg.dassert_file_exists(file_name)
     # {
     # "vendors/test/test_vendors.py::Test_gp::test1": true,
@@ -2304,6 +2308,22 @@ def _get_failed_tests(file_name: str) -> List[str]:
     return tests
 
 
+def _get_failed_tests_from_clipboard() -> List[str]:
+    """
+    ```
+
+    FAILED core/dataflow/nodes/test/test_sources.py::TestRealTimeDataSource1::test_replayed_real_time1 - TypeError: __init__() got an unexpected keyword argument 'speed_up_factor'
+    FAILED helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test1 - TypeError: check_string() takes 2 positional arguments but 3 were given
+    FAILED helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test2 - TypeError: check_string() takes 2 positional arguments but 3 were given
+    FAILED core/dataflow/test/test_runners.py::TestRealTimeDagRunner1::test1 - TypeError: execute_with_real_time_loop() got an unexpected keyword argument 'num_iterations'
+    FAILED helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal1 - NameError: name 'dedent' is not defined
+    FAILED helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal2 - NameError: name 'dedent' is not defined                                                                                                                                 FAILED helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal4 - NameError: name 'dedent' is not defined
+    ```
+    """
+    hsinte.system_to_string("pbpaste")
+    # TODO(gp): Finish this.
+
+
 @task
 def pytest_failed(  # type: ignore
     ctx,
@@ -2311,6 +2331,7 @@ def pytest_failed(  # type: ignore
     target_type="tests",
     file_name="",
     refresh=False,
+    use_clipboard=True,
     pbcopy=True,
 ):
     """
@@ -2336,6 +2357,7 @@ def pytest_failed(  # type: ignore
         - classes: print the name of all classes
     :param file_name: specify the file name containing the pytest file to parse
     :param refresh: force to update the frozen file from the current pytest file
+    :param use_clipboard: use the content of the clipboard
     """
     _report_task()
     _ = ctx
@@ -2360,7 +2382,8 @@ def pytest_failed(  # type: ignore
     _LOG.info("Reading file_name='%s'", file_name)
     dbg.dassert_file_exists(file_name)
     # E.g., vendors/test/test_vendors.py::Test_gp::test1
-    tests = _get_failed_tests(file_name)
+    _LOG.info("Reading failed tests from file '%s'", file_name)
+    tests = _get_failed_tests_from_file(file_name)
     _LOG.debug("tests=%s", str(tests))
     # Process the tests.
     targets = []

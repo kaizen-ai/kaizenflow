@@ -449,8 +449,12 @@ def purify_amp_references(txt: str) -> str:
     # ```
     # Test created for amp.helpers.test.test_playback.get_result_ae
     # ```
-    txt = re.sub(r"# Test created for a[mp]p\.helpers", "# Test created for helpers",
-            txt, flags=re.MULTILINE)
+    txt = re.sub(
+        r"# Test created for a[mp]p\.helpers",
+        "# Test created for helpers",
+        txt,
+        flags=re.MULTILINE,
+    )
     # E.g., `['amp/helpers/test/...`
     txt = re.sub(r"'amp\/", "'", txt, flags=re.MULTILINE)
     txt = re.sub(r"\/amp\/", "/", txt, flags=re.MULTILINE)
@@ -760,8 +764,10 @@ def _assert_equal(
     expected: str,
     full_test_name: str,
     test_dir: str,
-    fuzzy_match: bool = False,
+    *,
+    dedent: bool = False,
     purify_text: bool = False,
+    fuzzy_match: bool = False,
     abort_on_error: bool = True,
     dst_dir: str = ".",
     error_msg: str = "",
@@ -783,16 +789,21 @@ def _assert_equal(
     # Remove `\n` at the end of the strings.
     actual = actual.rstrip("\n")
     expected = expected.rstrip("\n")
-    #
+    # Dedent expected, if needed.
+    if dedent:
+        _LOG.debug("# Dedent expected")
+        expected = hprint.dedent(expected)
+        _LOG.debug("exp='\n%s'", expected)
+    # Purify actual text, if needed.
     if purify_text:
-        _LOG.debug("Purifying actual")
+        _LOG.debug("# Purify actual")
         actual = purify_txt_from_client(actual)
         _LOG.debug("act='\n%s'", actual)
     # Fuzzy match, if needed.
     actual_orig = actual
     expected_orig = expected
     if fuzzy_match:
-        _LOG.debug("# Using fuzzy match")
+        _LOG.debug("# Use fuzzy match")
         actual = _fuzzy_clean(actual)
         expected = _fuzzy_clean(expected)
     # Check.
@@ -863,6 +874,7 @@ def _assert_equal(
 _ACTION_ON_MISSING_GOLDEN = "assert"
 
 
+# TODO(gp): Remove all the calls to `dedent()` and use the `dedent` switch.
 class TestCase(unittest.TestCase):
     """
     Add some functions to compare actual results to a golden outcome.
@@ -1006,8 +1018,10 @@ class TestCase(unittest.TestCase):
         self,
         actual: str,
         expected: str,
-        fuzzy_match: bool = False,
+        *,
+        dedent: bool = False,
         purify_text: bool = False,
+        fuzzy_match: bool = False,
         abort_on_error: bool = True,
         dst_dir: str = ".",
     ) -> bool:
@@ -1035,8 +1049,9 @@ class TestCase(unittest.TestCase):
             expected,
             test_name,
             dir_name,
-            fuzzy_match=fuzzy_match,
+            dedent=dedent,
             purify_text=purify_text,
+            fuzzy_match=fuzzy_match,
             abort_on_error=abort_on_error,
             dst_dir=dst_dir,
         )
@@ -1048,8 +1063,10 @@ class TestCase(unittest.TestCase):
     def check_string(
         self,
         actual: str,
-        fuzzy_match: bool = False,
+        *,
+        dedent: bool = False,
         purify_text: bool = False,
+        fuzzy_match: bool = False,
         use_gzip: bool = False,
         tag: str = "test",
         abort_on_error: bool = True,
@@ -1066,12 +1083,14 @@ class TestCase(unittest.TestCase):
             directories, reference to Git client)
         :param action_on_missing_golden: what to do (e.g., "assert" or "update" when
             the golden outcome is missing)
+        :param dedent: call `dedent` on the expected string to align it to the
+            beginning of the row
         :return: outcome_updated, file_exists, is_equal
         :raises: `RuntimeError` if there is a mismatch. If `about_on_error` is False
             (which should be used only for unit testing) return the result but do not
             assert
         """
-        _LOG.debug(hprint.to_str("fuzzy_match purify_text abort_on_error"))
+        _LOG.debug(hprint.to_str("fuzzy_match purify_text abort_on_error dedent"))
         dbg.dassert_in(type(actual), (bytes, str), "actual='%s'", actual)
         #
         dir_name, file_name = self._get_golden_outcome_file_name(tag)
@@ -1079,6 +1098,7 @@ class TestCase(unittest.TestCase):
             file_name += ".gz"
         _LOG.debug("file_name=%s", file_name)
         # Remove reference from the current environment.
+        # TODO(gp): Not sure why we purify here and not delegate to `assert_equal`.
         if purify_text:
             _LOG.debug("Purifying actual outcome")
             actual = purify_txt_from_client(actual)
@@ -1115,9 +1135,10 @@ class TestCase(unittest.TestCase):
                     expected,
                     test_name,
                     dir_name,
-                    fuzzy_match=fuzzy_match,
+                    dedent=dedent,
                     # We have handled the purification of the output earlier.
                     purify_text=False,
+                    fuzzy_match=fuzzy_match,
                     abort_on_error=abort_on_error,
                 )
             else:
@@ -1152,7 +1173,9 @@ class TestCase(unittest.TestCase):
     def check_dataframe(
         self,
         actual: "pd.DataFrame",
+        *,
         err_threshold: float = 0.05,
+        dedent: bool = False,
         tag: str = "test_df",
         abort_on_error: bool = True,
         action_on_missing_golden: str = _ACTION_ON_MISSING_GOLDEN,
@@ -1203,8 +1226,9 @@ class TestCase(unittest.TestCase):
                         str(expected),
                         test_name,
                         dir_name,
-                        fuzzy_match=False,
+                        dedent=dedent,
                         purify_text=False,
+                        fuzzy_match=False,
                         abort_on_error=abort_on_error,
                         error_msg=self._error_msg,
                     )

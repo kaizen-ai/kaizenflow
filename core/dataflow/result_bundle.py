@@ -1,3 +1,8 @@
+"""
+Import as:
+
+import core.dataflow.result_bundle as cdtfrb
+"""
 import abc
 import collections
 import copy

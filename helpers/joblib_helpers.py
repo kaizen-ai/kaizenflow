@@ -11,6 +11,7 @@ import random
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import joblib
+from joblib._store_backends import StoreBackendBase, StoreBackendMixin
 from tqdm.autonotebook import tqdm
 
 import helpers.datetime_ as hdatetime
@@ -376,3 +377,97 @@ def parallel_execute(
         )
     _LOG.info("Saved log info in '%s'", log_file)
     return res
+
+
+# #############################################################################
+# joblib storage backend for S3.
+# #############################################################################
+
+# Adapted from https://github.com/aabadie/joblib-s3
+
+
+class _S3FSStoreBackend(StoreBackendBase, StoreBackendMixin):
+    """
+    A StoreBackend for S3 cloud storage file system.
+    """
+
+    def _open_item(self, fd: Any, mode: str) -> Any:
+        return self.storage.open(fd, mode)
+
+    def _item_exists(self, path: str) -> None:
+        return self.storage.exists(path)
+
+    def _move_item(self, src: str, dst: str) -> None:
+        self.storage.mv(src, dst)
+
+    def clear_location(self, location: str) -> None:
+        """
+        Check if object exists in store.
+        """
+        self.storage.rm(location, recursive=True)
+
+    def create_location(self, location: str) -> None:
+        """
+        Create object location on store.
+        """
+        self._mkdirp(location)
+
+    def get_items(self) -> List[Any]:
+        """
+        Return the whole list of items available in cache.
+        """
+        _ = self
+        return []
+
+    def configure(
+        self,
+        location: str,
+        backend_options: Dict[str, Any],
+        verbose: int =0,
+    ):
+        """
+        Configure the store backend.
+        """
+        options = backend_options
+        dbg.dassert_in("s3fs", options)
+        self.storage = options["s3fs"]
+        dbg.dassert_in("bucket", options)
+        bucket = options["bucket"]
+        # Ensure the given bucket exists.
+        root_bucket = os.path.join("s3://", bucket)
+        if not self.storage.exists(root_bucket):
+            self.storage.mkdir(root_bucket)
+        if location.startswith("/"):
+            location.replace("/", "")
+        self.location = os.path.join(root_bucket, location)
+        if not self.storage.exists(self.location):
+            self.storage.mkdir(self.location)
+        # Computation results can be stored compressed for faster I/O.
+        self.compress = backend_options["compress"]
+        # Memory map mode is not supported.
+        self.mmap_mode = None
+
+    def _mkdirp(self, directory: str) -> None:
+        """
+        Create recursively a directory on the S3 store.
+        """
+        # Remove root cachedir from input directory to create as it should
+        # have already been created in the configure function.
+        if directory.startswith(self.location):
+            directory = directory.replace(self.location + "/", "")
+        current_path = self.location
+        for sub_dir in directory.split("/"):
+            current_path = os.path.join(current_path, sub_dir)
+            self.storage.mkdir(current_path)
+
+
+def _register_s3fs_store_backend() -> None:
+    """
+    Register the S3 store backend for joblib memory caching.
+    """
+    from joblib import register_store_backend
+
+    register_store_backend("s3", _S3FSStoreBackend)
+
+
+_register_s3fs_store_backend()

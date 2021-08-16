@@ -210,24 +210,41 @@ def get_ET_tz() -> datetime.tzinfo:
     return pytz.timezone("America/New_York")
 
 
-def get_current_time(tz: str) -> pd.Timestamp:
+# Function returning the current (true, replayed, simulated) wall-clock time as a
+# timestamp.
+GetWallClockTime = Callable[[], pd.Timestamp]
+
+
+# TODO(gp): -> get_wall_clock_time
+def get_current_time(tz: str, loop=None) -> pd.Timestamp:
     """
     Return current time in UTC / ET timezone or as a naive time.
+
+    This should be the only way to get the current wall-clock time,
+    since it handles both wall-clock time and "simulated" wall-clock
+    time through async-
     """
+    if loop is not None:
+        # We accept only hasyncio.EventLoop here. If we are using asyncio
+        # EventLoop we rely on wall-clock time instead of `loop.time()`.
+        import asyncio
+
+        dbg.dassert_isinstance(loop, asyncio.AbstractEventLoop)
+        timestamp = loop.get_current_time()
+    else:
+        timestamp = datetime.datetime.utcnow()
+    timestamp = pd.Timestamp(timestamp, tz=get_UTC_tz())
     if tz == "UTC":
-        timestamp = datetime.datetime.now(get_UTC_tz())
+        pass
     elif tz == "ET":
-        timestamp = datetime.datetime.now(get_ET_tz())
+        timestamp = timestamp.tz_convert(get_ET_tz())
     elif tz == "naive_UTC":
-        timestamp = datetime.datetime.now(get_UTC_tz())
         timestamp = timestamp.replace(tzinfo=None)
     elif tz == "naive_ET":
-        timestamp = datetime.datetime.now(get_ET_tz())
+        timestamp = timestamp.tz_convert(get_ET_tz())
         timestamp = timestamp.replace(tzinfo=None)
     else:
-        raise ValueError(f"Invalid tz='{tz}")
-    timestamp = pd.Timestamp(timestamp)
-    # E.g., 20210723-205200
+        raise ValueError(f"Invalid tz='{tz}'")
     return timestamp
 
 

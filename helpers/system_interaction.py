@@ -657,7 +657,7 @@ def du(path_name: str, human_format: bool = False) -> Union[int, str]:
     :param human_format: represent the size in KB, MB instead of bytes.
     """
     if not os.path.exists(path_name):
-        _LOG.warning("Path '%s' doesn't exist")
+        _LOG.warning("Path '%s' doesn't exist", path_name)
         return 0
     dbg.dassert_exists(path_name)
     cmd = f"du -d 0 {path_name}" + " | awk '{print $1}'"
