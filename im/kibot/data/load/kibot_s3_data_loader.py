@@ -76,7 +76,7 @@ class KibotS3DataLoader(icdlab.AbstractS3DataLoader):
         return data
 
     @staticmethod
-    @hcache.cache
+    @hcache.cache()
     def _read_csv(
         file_path: str,
         frequency: icdtyp.Frequency,
