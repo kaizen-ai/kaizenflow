@@ -8,7 +8,9 @@ import pandas as pd
 
 import helpers.cache as hcache
 import helpers.dbg as dbg
+import helpers.git as git
 import helpers.printing as hprint
+import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -771,9 +773,8 @@ class TestCachingOnS3(_ResetFunctionSpecificCacheHelper):
 
     def setUp(self) -> None:
         super().setUp()
-        # Create temp directories to store the cache.
-        self.mem_cache_temp_dir = tempfile.mkdtemp()
-        self.disk_cache_temp_dir = tempfile.mkdtemp()
+        # Get a directory to store the cache on S3.
+        self.disk_cache_dir = self.get_s3_scratch_dir()
         # Clear global cache.
         hcache.clear_global_cache("all", tag=self.cache_tag)
 
