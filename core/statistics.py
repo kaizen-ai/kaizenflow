@@ -448,7 +448,9 @@ def compute_t_distribution_j_2(nu: float):
         if nu > 300:
             _LOG.warning("Computation is unstable for large values of `nu`.")
         const = 2 / np.sqrt(np.pi)
-        dist = sp.special.gamma((nu + 1) / 2) / (sp.special.gamma(nu / 2) * (nu - 1))
+        dist = sp.special.gamma((nu + 1) / 2) / (
+            sp.special.gamma(nu / 2) * (nu - 1)
+        )
         jensen_2 = const * dist * np.sqrt(nu - 2)
     return jensen_2
 
@@ -957,7 +959,27 @@ def compute_swt_coeffs(
     beta = covar.divide(var).rename("beta")
     beta_se = np.sqrt(srs2.var() / var.multiply(counts)).rename("SE(beta)")
     zs = beta.divide(beta_se).rename("beta_z_scored")
-    return pd.concat([counts, var, covar, rho, beta, beta_se, zs], axis=1)
+    auto_covar = (
+        swt1.multiply(swt1.shift(1), axis=0)
+        .sum(axis=0)
+        .divide(swt1.count())
+        .rename("auto_covar")
+    )
+    auto_corr = auto_covar.divide(var).rename("auto_corr")
+    tub = np.sqrt(2 * (1 - auto_corr)).rename("tub")
+    series = [
+        counts,
+        var,
+        covar,
+        rho,
+        beta,
+        beta_se,
+        zs,
+        auto_covar,
+        auto_corr,
+        tub,
+    ]
+    return pd.concat(series, axis=1)
 
 
 # #############################################################################
@@ -1647,7 +1669,7 @@ def compute_avg_turnover_and_holding_period(
     dbg.dassert(pos.index.freq)
     pos_freq = pos.index.freq
     unit = unit or pos_freq
-    nan_mode = nan_mode or "ffill"
+    nan_mode = nan_mode or "drop"
     prefix = prefix or ""
     result_index = [
         prefix + "avg_turnover_(%)",
