@@ -734,7 +734,7 @@ def compute_turnover(
     """
     dbg.dassert_isinstance(pos, pd.Series)
     dbg.dassert(pos.index.freq)
-    nan_mode = nan_mode or "ffill"
+    nan_mode = nan_mode or "drop"
     pos = hdataf.apply_nan_mode(pos, mode=nan_mode)
     numerator = pos.diff().abs()
     denominator = (pos.abs() + pos.shift().abs()) / 2
@@ -771,7 +771,7 @@ def compute_average_holding_period(
         pos_freq_in_year,
         msg=f"Upsampling pos freq={pd.infer_freq(pos.index)} to unit freq={unit} is not allowed",
     )
-    nan_mode = nan_mode or "ffill"
+    nan_mode = nan_mode or "drop"
     pos = hdataf.apply_nan_mode(pos, mode=nan_mode)
     unit_coef = unit_freq_in_year / pos_freq_in_year
     average_holding_period = (
