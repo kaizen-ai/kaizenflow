@@ -475,7 +475,6 @@ class _ResetFunctionSpecificCacheHelper(_ResetGlobalCacheHelper):
         # Create the cached function using the function specific cache.
         cf = hcache.Cached(
             f,
-            mem_cache_path=self.mem_cache_temp_dir,
             disk_cache_path=self.disk_cache_temp_dir,
             tag=self.cache_tag,
         )
@@ -504,8 +503,7 @@ class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
         # Restore back to global cache.
-        cf.set_cache_path("mem", None)
-        cf.set_cache_path("disk", None)
+        cf.set_cache_path(None)
         # Verify that function is executed with global cache.
         _LOG.debug("\n%s", hprint.frame("Executing the 3rd time"))
         self._execute_and_check_state(
@@ -517,8 +515,7 @@ class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
         # Restore back specific cache.
-        cf.set_cache_path("disk", self.disk_cache_temp_dir)
-        cf.set_cache_path("mem", self.mem_cache_temp_dir)
+        cf.set_cache_path(self.disk_cache_temp_dir)
         # Verify that it is *NOT* executed with specific cache.
         _LOG.debug("\n%s", hprint.frame("Executing the 5th time"))
         self._execute_and_check_state(
