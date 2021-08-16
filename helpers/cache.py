@@ -28,9 +28,6 @@ import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): Do not commit this.
-_LOG.debug = _LOG.info
-
 # We try to keep aligned the interfaces of the global cache (i.e., the cache for all
 # the functions) and the function-specific caches by:
 # - using the same names for functions and variables, letting the fact that it's a
