@@ -715,6 +715,7 @@ class Cached:
 
 
 def cache(
+    func: Optional[Callable] = None,
     use_mem_cache: bool = True,
     use_disk_cache: bool = True,
     set_verbose_mode: bool = False,
@@ -740,6 +741,17 @@ def cache(
         return x + y
     ```
     """
+    if callable(func):
+        return Cached(
+            func,
+            use_mem_cache=use_mem_cache,
+            use_disk_cache=use_disk_cache,
+            set_verbose_mode=set_verbose_mode,
+            disk_cache_path=disk_cache_path,
+            mem_cache_path=mem_cache_path,
+            tag=tag,
+        )
+
     def wrapper(func: Callable) -> Cached:
         return Cached(
             func,
