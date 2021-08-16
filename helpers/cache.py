@@ -28,9 +28,6 @@ import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): Do not commit this.
-_LOG.debug = _LOG.info
-
 # We try to keep aligned the interfaces of the global cache (i.e., the cache for all
 # the functions) and the function-specific caches by:
 # - using the same names for functions and variables, letting the fact that it's a
@@ -718,8 +715,6 @@ class Cached:
 
 
 def cache(
-    func: Callable,
-    *,
     use_mem_cache: bool = True,
     use_disk_cache: bool = True,
     set_verbose_mode: bool = False,
@@ -745,8 +740,6 @@ def cache(
         return x + y
     ```
     """
-    dbg.dassert(callable(func), "func='%s' is not callable")
-
     def wrapper(func: Callable) -> Cached:
         return Cached(
             func,
@@ -759,13 +752,3 @@ def cache(
         )
 
     return wrapper
-
-
-# #############################################################################
-
-
-import atexit
-
-# TODO(gp): Add another function and make it silent.
-atexit.register(clear_global_cache, cache_type="mem", destroy="true")
-
