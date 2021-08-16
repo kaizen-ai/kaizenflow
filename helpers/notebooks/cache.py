@@ -77,7 +77,6 @@ func(*inputs)
 
 # %%
 import joblib
-
 import helpers.joblib_helpers as hjoblib
 import helpers.s3 as hs3
 
@@ -102,6 +101,14 @@ print(dict_)
 
 print(dict_)
 
+
+# %%
+def dec(func=None, val=5):
+    if func is not None:
+        return 
+    
+    
+
 # %%
 from joblibs3 import register_s3_store_backend
 
@@ -114,17 +121,31 @@ print(dict_)
 #s3fs.ls("s3://alphamatic-data/tmp")
 
 # %%
+s3fs.clear_instance_cache()
+
+
+# %%
 #import joblib
 
 #cachedir = "./hello"
 #memory = joblib.Memory(cachedir, verbose=0)
 
-@mem.cache
+@mem.cache()
 def f(x):
+    # hello
     print('Running f(%s)' % x)
     return x
 
 f(1)
+
+# %%
+import helpers.cache as hcache
+
+hcache.cache(set_verbose_mode=True)
+def hello():
+    return "hello"
+
+hello()
 
 # %% [markdown] pycharm={"name": "#%% md\n"}
 # ## Memory cache

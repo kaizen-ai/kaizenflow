@@ -210,7 +210,7 @@ class AbstractSqlDataLoader(AbstractDataLoader):
         return trade_symbol_id
 
     # TODO(plyq): Uncomment once #1047 will be resolved.
-    # @hcache.cache
+    # @hcache.cache()
     # Use lru_cache for now.
     @functools.lru_cache(maxsize=64)
     def read_data(
