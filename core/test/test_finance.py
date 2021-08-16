@@ -1086,7 +1086,7 @@ class Test_compute_average_holding_period(hut.TestCase):
         series = self._get_series_in_unit(seed=1)
         series[5:10] = np.nan
         actual = fin.compute_average_holding_period(series)
-        expected = 1.23458
+        expected = 1.08458
         np.testing.assert_almost_equal(actual, expected, decimal=3)
 
     def test2(self) -> None:
