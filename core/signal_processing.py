@@ -381,6 +381,7 @@ def skip_apply_func(
     return df
 
 
+# TODO(Paul): Add test coverage.
 def sign_normalize(
     signal: Union[pd.DataFrame, pd.Series],
     atol: float = 0,
@@ -410,6 +411,22 @@ def sign_normalize(
     if convert_to_frame:
         normalized_signal = normalized_signal.to_frame()
     return normalized_signal
+
+
+# TODO(Paul): Add test coverage.
+def normalize(
+    signal: pd.Series,
+) -> pd.Series:
+    """
+    Normalize `signal` by dividing it by its l2 norm.
+    """
+    dbg.dassert_isinstance(signal, pd.Series)
+    dbg.dassert(not signal.isna().any(), msg="NaNs detected at %s" %
+                signal[signal.isna()].index)
+    norm = np.linalg.norm(signal)
+    _LOG.debug("l2 norm=%f", norm)
+    normalized = signal / norm
+    return normalized
 
 
 # #############################################################################
