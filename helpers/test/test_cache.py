@@ -82,20 +82,19 @@ class _ResetGlobalCacheHelper(hut.TestCase):
         Create the intrinsic function `f` and its cached version `cf`.
         """
         # Make sure that we are using the unit test cache.
-        disk_cache_name = hcache._get_cache_name("disk", self.cache_tag)
-        _LOG.debug("disk_cache_name=%s", disk_cache_name)
-        _LOG.debug(
-            "disk_cache_path=%s", hcache._get_cache_path("disk", self.cache_tag)
-        )
+        # disk_cache_name = hcache._get_cache_name("disk", self.cache_tag)
+        # _LOG.debug("disk_cache_name=%s", disk_cache_name)
+        # _LOG.debug(
+        #     "disk_cache_path=%s", hcache._get_cache_path("disk", self.cache_tag)
+        # )
+
         # TODO(gp): Add an assertion.
         # Create the intrinsic function.
         f = _get_add_function()
         # Create the cached function.
         cf = hcache.Cached(f, tag=self.cache_tag, **cached_kwargs)
-        # Reset the caches.
-        # TODO(gp): cache_type="all"
-        hcache.clear_global_cache("mem", self.cache_tag)
-        hcache.clear_global_cache("disk", self.cache_tag)
+        # Reset all the caches.
+        hcache.clear_global_cache("all", self.cache_tag)
         cf._reset_cache_tracing()
         return f, cf
 
@@ -461,12 +460,13 @@ class _ResetFunctionSpecificCacheHelper(_ResetGlobalCacheHelper):
     def setUp(self) -> None:
         super().setUp()
         # Create temp directories to store the cache.
-        self.mem_cache_temp_dir = tempfile.mkdtemp()
         self.disk_cache_temp_dir = tempfile.mkdtemp()
         # Clear global cache.
         hcache.clear_global_cache("all", tag=self.cache_tag)
 
-    def _get_f_cf_functions(self) -> Tuple[Callable, hcache.Cached]:  # type: ignore[override]
+    # TODO(gp): Pass `disk_cache_path=self.disk_cache_temp_dir` and reuse the value.
+    def _get_f_cf_functions(self, **cached_kwargs: Any
+        ) -> Tuple[Callable, hcache.Cached]:
         """
         Create the intrinsic function `f` and its cached version `cf`.
         """
@@ -477,6 +477,7 @@ class _ResetFunctionSpecificCacheHelper(_ResetGlobalCacheHelper):
             f,
             disk_cache_path=self.disk_cache_temp_dir,
             tag=self.cache_tag,
+            **cached_kwargs,
         )
         # Reset the caches.
         cf.clear_cache("all")
@@ -487,11 +488,15 @@ class _ResetFunctionSpecificCacheHelper(_ResetGlobalCacheHelper):
 class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
     def test_with_caching1(self) -> None:
         """
-        - Test using the function-specific cache
+        - Test using the function-specific disk cache
         - Disable function-specific cache and switching to global cache
         - Test using the global cache
         """
-        f, cf = self._get_f_cf_functions()
+        # Use a global cache and
+        _LOG.debug("\n%s", hprint.frame("Starting"))
+        _LOG.debug("# get_global_cache_info()=\n%s", hcache.get_global_cache_info(tag=self.cache_tag))
+        f, cf = self._get_f_cf_functions(use_mem_cache=True, use_disk_cache=True)
+        _LOG.debug("# cf.get_info()=\n%s", cf.get_info())
         # Execute the first time: verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
         self._execute_and_check_state(
@@ -502,7 +507,47 @@ class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
         self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
-        # Restore back to global cache.
+        # Clear the global cache.
+        _LOG.debug("\n%s", hprint.frame("clear_global_cache"))
+        hcache.clear_global_cache("all")
+        # # Verify that function is executed with global cache.
+        # _LOG.debug("\n%s", hprint.frame("Executing the 3rd time"))
+        # self._execute_and_check_state(
+        #     f, cf, 3, 4, exp_f_state=False, exp_cf_state="no_cache"
+        # )
+        # #
+        # _LOG.debug("\n%s", hprint.frame("Executing the 4th time"))
+        # self._execute_and_check_state(
+        #     f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
+        # )
+        # # Clear the global cache.
+        # hcache.clear_global_cache("all")
+        # # Verify that it is *NOT* executed with specific cache.
+        # _LOG.debug("\n%s", hprint.frame("Executing the 5th time"))
+        # self._execute_and_check_state(
+        #     f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
+        # )
+
+    def test_with_caching2(self) -> None:
+        """
+        - Test using the function-specific disk cache
+        - Disable function-specific cache and switching to global cache
+        - Test using the global cache
+        """
+        f, cf = self._get_f_cf_functions(use_mem_cache=False)
+        # Execute the first time: verify that it is executed.
+        _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
+        self._execute_and_check_state(
+            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
+        )
+        # Clear the global cache.
+        hcache.clear_global_cache("all")
+        # Execute the second time: verify that it is *NOT* executed.
+        _LOG.debug("\n%s", hprint.frame("Executing the 2nd time"))
+        self._execute_and_check_state(
+            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
+        )
+        # Use the global cache.
         cf.set_cache_path(None)
         # Verify that function is executed with global cache.
         _LOG.debug("\n%s", hprint.frame("Executing the 3rd time"))
@@ -512,14 +557,14 @@ class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
         #
         _LOG.debug("\n%s", hprint.frame("Executing the 4th time"))
         self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
+            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
         )
         # Restore back specific cache.
         cf.set_cache_path(self.disk_cache_temp_dir)
         # Verify that it is *NOT* executed with specific cache.
         _LOG.debug("\n%s", hprint.frame("Executing the 5th time"))
         self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
+            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
         )
 
 
