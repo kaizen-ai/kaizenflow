@@ -999,8 +999,8 @@ class TestCase(unittest.TestCase):
         """
         Return the path of the directory storing scratch data for this test.
 
-        The directory is also created and cleaned up based on whether the
-        incremental behavior is enabled or not.
+        The directory is also created and cleaned up based on whether
+        the incremental behavior is enabled or not.
         """
         if self._scratch_dir is None:
             # Create the dir on the first invocation on a given test.
@@ -1014,12 +1014,14 @@ class TestCase(unittest.TestCase):
             self._scratch_dir = dir_name
         return self._scratch_dir
 
-    def get_s3_scratch_dir(self,
+    def get_s3_scratch_dir(
+        self,
         test_class_name: Optional[str] = None,
-        test_method_name: Optional[str] = None
+        test_method_name: Optional[str] = None,
     ) -> str:
         """
-        Return the path of a directory storing scratch data on S3 for this test.
+        Return the path of a directory storing scratch data on S3 for this
+        test.
 
         E.g.,
             s3://alphamatic-data/tmp/cache.unit_test/

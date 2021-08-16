@@ -71,7 +71,8 @@ def get_client_root(super_module: bool) -> str:
 
 def get_project_dirname(only_index: bool = False) -> str:
     """
-    Return the name of the project name (e.g., `/Users/saggese/src/amp1` -> `amp1`).
+    Return the name of the project name (e.g., `/Users/saggese/src/amp1` ->
+    `amp1`).
 
     NOTE: this works properly only outside Docker, e.g., when calling from `invoke`.
     Inside Docker the result might be incorrect since the Git client is mapped on
@@ -85,10 +86,12 @@ def get_project_dirname(only_index: bool = False) -> str:
     ret = os.path.basename(git_dir)
     if only_index:
         last_char = project_name[-1]
-        dbg.dassert(last_char.isdigit(),
-                "The last char `%s` of the git dir `%s` is not a digit",
-                last_char,
-                git_dir)
+        dbg.dassert(
+            last_char.isdigit(),
+            "The last char `%s` of the git dir `%s` is not a digit",
+            last_char,
+            git_dir,
+        )
         ret = last_char
     _LOG.debug("ret=%s", ret)
     return ret

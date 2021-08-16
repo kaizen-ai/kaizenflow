@@ -215,7 +215,7 @@ class TestRunExperimentArchiveOnS3(hut.TestCase):
                 f"--aws_profile '{aws_profile}'",
                 f"--s3_path {s3_tmp_path}",
                 f"--json_output_metadata {output_metadata_file}",
-                #f"-v DEBUG",
+                # f"-v DEBUG",
             ]
             #
             exp_pass = True

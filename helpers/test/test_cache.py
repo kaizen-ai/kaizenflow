@@ -8,9 +8,7 @@ import pandas as pd
 
 import helpers.cache as hcache
 import helpers.dbg as dbg
-import helpers.git as git
 import helpers.printing as hprint
-import helpers.system_interaction as hsinte
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -73,9 +71,7 @@ class _ResetGlobalCacheHelper(hut.TestCase):
         Clean and remove all the caches for this test.
         """
         cache_type = "all"
-        hcache.clear_global_cache(
-            cache_type, tag=self.cache_tag, destroy=True
-        )
+        hcache.clear_global_cache(cache_type, tag=self.cache_tag, destroy=True)
 
     def _get_f_cf_functions(
         self, **cached_kwargs: Any
@@ -467,8 +463,9 @@ class _ResetFunctionSpecificCacheHelper(_ResetGlobalCacheHelper):
         hcache.clear_global_cache("all", tag=self.cache_tag)
 
     # TODO(gp): Pass `disk_cache_path=self.disk_cache_temp_dir` and reuse the value.
-    def _get_f_cf_functions(self, **cached_kwargs: Any
-        ) -> Tuple[Callable, hcache.Cached]:
+    def _get_f_cf_functions(
+        self, **cached_kwargs: Any
+    ) -> Tuple[Callable, hcache.Cached]:
         """
         Create the intrinsic function `f` and its cached version `cf`.
         """
@@ -496,7 +493,10 @@ class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
         """
         # Use a global cache and
         _LOG.debug("\n%s", hprint.frame("Starting"))
-        _LOG.debug("# get_global_cache_info()=\n%s", hcache.get_global_cache_info(tag=self.cache_tag))
+        _LOG.debug(
+            "# get_global_cache_info()=\n%s",
+            hcache.get_global_cache_info(tag=self.cache_tag),
+        )
         f, cf = self._get_f_cf_functions(use_mem_cache=True, use_disk_cache=True)
         _LOG.debug("# cf.get_info()=\n%s", cf.get_info())
         # Execute the first time: verify that it is executed.
@@ -770,7 +770,6 @@ class TestAmpTask1407(_ResetGlobalCacheHelper):
 
 
 class TestCachingOnS3(_ResetFunctionSpecificCacheHelper):
-
     def setUp(self) -> None:
         super().setUp()
         # Get a directory to store the cache on S3.
@@ -790,7 +789,6 @@ class TestCachingOnS3(_ResetFunctionSpecificCacheHelper):
         self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
-
 
 
 # TODO(gp): Add a test for verbose mode in __call__

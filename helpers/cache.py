@@ -100,7 +100,8 @@ def _dassert_is_valid_cache_type(cache_type: str) -> None:
 # TODO(gp): -> _get_client_cache_name
 def _get_cache_name(cache_type: str, tag: Optional[str] = None) -> str:
     """
-    Get the canonical cache name for a type of cache and tag, both global and function-specific.
+    Get the canonical cache name for a type of cache and tag, both global and
+    function-specific.
 
     E.g., `tmp.cache.{cache_type}.{tag}` like `tmp.cache.mem.unit_tests`
 
@@ -378,8 +379,8 @@ class Cached:
             # Function-specific cache: print the paths of the local cache.
             cache_type = "disk"
             txt.append(
-                "local %s cache path=%s"
-                % (cache_type, self._disk_cache_path))
+                "local %s cache path=%s" % (cache_type, self._disk_cache_path)
+            )
         else:
             # Global cache.
             for cache_type in _get_cache_types():
@@ -422,9 +423,7 @@ class Cached:
         return has_func_cache
 
     # TODO(gp): -> clear_function_specific_disk_cache
-    def clear_cache(
-        self, destroy: bool = False
-    ) -> None:
+    def clear_cache(self, destroy: bool = False) -> None:
         """
         Clear a function-specific cache.
         """
@@ -495,19 +494,24 @@ class Cached:
             if self._disk_cache_path:
                 # Create a function-specific cache.
                 memory_kwargs = {
-                    "verbose":0, "compress": True,
+                    "verbose": 0,
+                    "compress": True,
                 }
                 if self._disk_cache_path.startswith("s3://"):
                     import helpers.s3 as hs3
+
                     aws_profile = hs3.get_aws_profile()
                     s3fs = get_s3fs(aws_profile)
                     bucket = hs3.extract_bucket_from_path(self._disk_cache_path)
-                    memory_kwargs.update({
-                        "backend": "s3",
-                        "backend_options": {"s3fs": s3fs,
-                                            "bucket": bucket}})
+                    memory_kwargs.update(
+                        {
+                            "backend": "s3",
+                            "backend_options": {"s3fs": s3fs, "bucket": bucket},
+                        }
+                    )
                 self._disk_cache = joblib.Memory(
-                    self._disk_cache_path, **memory_kwargs)
+                    self._disk_cache_path, **memory_kwargs
+                )
             else:
                 # Use the global cache.
                 self._disk_cache = get_global_cache(cache_type, self._tag)
@@ -543,7 +547,12 @@ class Cached:
         :return: digests of the function and current arguments
         """
         cache_backend = self._get_cache(cache_type)
-        dbg.dassert_is_not(cache_backend, None, "Cache backend not initialized for %s", cache_type)
+        dbg.dassert_is_not(
+            cache_backend,
+            None,
+            "Cache backend not initialized for %s",
+            cache_type,
+        )
         func_id, args_id = cache_backend._get_output_identifiers(*args, **kwargs)
         return func_id, args_id
 
@@ -612,7 +621,7 @@ class Cached:
 
     def _execute_func_from_mem_cache(self, *args: Any, **kwargs: Any) -> Any:
         """
-        Execute the function
+        Execute the function.
         """
         # Get the function signature.
         func_id, args_id = self._get_identifiers("mem", *args, **kwargs)
