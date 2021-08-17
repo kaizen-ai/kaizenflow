@@ -264,7 +264,7 @@ def dassert_type_is(
     # pylint: disable=unidiomatic-typecheck
     cond = type(val1) is val2
     if not cond:
-        txt = "type of '%s' is '%s' instead of '%s'" % (val1, type(val1), val2)
+        txt = "Type of '%s' is '%s' instead of '%s'" % (val1, type(val1), val2)
         _dfatal(txt, msg, *args)
 
 
@@ -275,7 +275,7 @@ def dassert_type_in(
     # pylint: disable=unidiomatic-typecheck
     cond = type(val1) in val2
     if not cond:
-        txt = "type of '%s' is '%s' not in '%s'" % (val1, type(val1), val2)
+        txt = "Type of '%s' is '%s' not in '%s'" % (val1, type(val1), val2)
         _dfatal(txt, msg, *args)
 
 
@@ -287,7 +287,7 @@ def dassert_isinstance(
 ) -> None:
     cond = isinstance(val1, val2)  # type: ignore[arg-type]
     if not cond:
-        txt = "instance of '%s' is '%s' instead of '%s'" % (
+        txt = "Instance of '%s' is '%s' instead of '%s'" % (
             val1,
             type(val1),
             val2,
@@ -306,11 +306,25 @@ def dassert_issubclass(
     """
     cond = issubclass(val1.__class__, val2)  # type: ignore[arg-type]
     if not cond:
-        txt = "instance '%s' of class '%s' is not a subclass of '%s'" % (
+        txt = "Instance '%s' of class '%s' is not a subclass of '%s'" % (
             str(val1),
             val1.__class__.__name__,
             val2,
         )
+        _dfatal(txt, msg, *args)
+
+
+def dassert_callable(
+    func: Any,
+    msg: Optional[str] = None,
+    *args: Any,
+) -> None:
+    """
+    Assert that an object `val1` is callable.
+    """
+    cond = callable(func)  # type: ignore[arg-type]
+    if not cond:
+        txt = "obj '%s' is not callable", str(func)
         _dfatal(txt, msg, *args)
 
 

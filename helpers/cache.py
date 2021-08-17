@@ -31,12 +31,6 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Do not commit this.
 _LOG.debug = _LOG.info
 
-# We try to keep aligned the interfaces of the global cache (i.e., the cache for all
-# the functions) and the function-specific caches by:
-# - using the same names for functions and variables, letting the fact that it's a
-#   static method or a class method distinguish whether it's global or
-#   function-specific
-
 
 # #############################################################################
 
@@ -315,7 +309,7 @@ class _Cached:
             when running unit tests we want to use a different cache)
         :param disk_cache_path: path of the function-specific cache
         """
-        dbg.dassert(callable(func), "obj '%s' is not callable", str(func))
+        dbg.dassert_callable(func)
         # Make the class have the same attributes (e.g., `__name__`, `__doc__`,
         # `__dict__`) as the called function.
         functools.update_wrapper(self, func)

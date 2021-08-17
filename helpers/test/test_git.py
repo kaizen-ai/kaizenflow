@@ -31,7 +31,7 @@ class Test_git_submodule1(hut.TestCase):
         _execute_func_call(func_call)
 
     def test_get_project_dirname1(self) -> None:
-        func_call = "git.get_project_dirname1()"
+        func_call = "git.get_project_dirname()"
         _execute_func_call(func_call)
 
     def test_get_branch_name1(self) -> None:
