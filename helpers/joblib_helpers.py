@@ -395,23 +395,6 @@ class _S3FSStoreBackend(StoreBackendBase, StoreBackendMixin):
         super().__init__()
         self._objs = []
 
-    def _flush(self):
-        # TODO(gp): No need to flush for now.
-        return
-        for fd in self._objs:
-            fd.flush(force=True)
-
-    def _open_item(self, fd: Any, mode: str) -> Any:
-        self._objs.append(fd)
-        return self.storage.open(fd, mode)
-
-    def _item_exists(self, path: str) -> None:
-        self._flush()
-        return self.storage.exists(path)
-
-    def _move_item(self, src: str, dst: str) -> None:
-        self.storage.mv(src, dst)
-
     def clear_location(self, location: str) -> None:
         """
         Check if object exists in store.
@@ -437,7 +420,7 @@ class _S3FSStoreBackend(StoreBackendBase, StoreBackendMixin):
         self,
         location: str,
         backend_options: Dict[str, Any],
-        verbose: int =0,
+        verbose: int = 0,
     ):
         """
         Configure the store backend.
@@ -460,6 +443,23 @@ class _S3FSStoreBackend(StoreBackendBase, StoreBackendMixin):
         self.compress = backend_options["compress"]
         # Memory map mode is not supported.
         self.mmap_mode = None
+
+    def _flush(self):
+        # TODO(gp): No need to flush for now.
+        return
+        for fd in self._objs:
+            fd.flush(force=True)
+
+    def _open_item(self, fd: Any, mode: str) -> Any:
+        self._objs.append(fd)
+        return self.storage.open(fd, mode)
+
+    def _item_exists(self, path: str) -> None:
+        self._flush()
+        return self.storage.exists(path)
+
+    def _move_item(self, src: str, dst: str) -> None:
+        self.storage.mv(src, dst)
 
     def _mkdirp(self, directory: str) -> None:
         """

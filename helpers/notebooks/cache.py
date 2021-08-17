@@ -45,6 +45,7 @@ def func(a, b):
     print("Multiplication: %s * %s = %s" % (a, b, out))
     return out
 
+
 inputs = (1, 2)
 exp_output = 2
 
@@ -78,51 +79,55 @@ func(*inputs)
 # %%
 import joblib
 
-import helpers.joblib_helpers as hjoblib
 import helpers.s3 as hs3
 
-#hjoblib.register_s3fs_store_backend()
+# hjoblib.register_s3fs_store_backend()
 
 s3fs = hs3.get_s3fs("am")
 
 dict2 = {
     "bucket": "alphamatic-data",
-    #"key": dict_["aws_access_key_id"],
-    #"secret": dict_["aws_secret_access_key"],
-    "s3fs": s3fs
+    # "key": dict_["aws_access_key_id"],
+    # "secret": dict_["aws_secret_access_key"],
+    "s3fs": s3fs,
 }
 
-mem = joblib.Memory('joblib_cache', backend='s3', verbose=100, compress=True, backend_options=dict2)
+mem = joblib.Memory(
+    "joblib_cache",
+    backend="s3",
+    verbose=100,
+    compress=True,
+    backend_options=dict2,
+)
 
 # %%
 import joblib
 
-import helpers.joblib_helpers as hjoblib
 import helpers.s3 as hs3
 
-#hjoblib.register_s3fs_store_backend()
+# hjoblib.register_s3fs_store_backend()
 
 s3fs = hs3.get_s3fs("am")
 
 dict2 = {
     "bucket": "alphamatic-data",
-    #"key": dict_["aws_access_key_id"],
-    #"secret": dict_["aws_secret_access_key"],
-    "s3fs": s3fs
+    # "key": dict_["aws_access_key_id"],
+    # "secret": dict_["aws_secret_access_key"],
+    "s3fs": s3fs,
 }
 path = "/tmp/cache.unit_test/root.98e1cf5b88c3.app.TestCachingOnS3.test_with_caching1"
 
 
 s3fs.ls(path)
 
-#mem = joblib.Memory(path, backend='s3', verbose=100, compress=True, backend_options=dict2)
+# mem = joblib.Memory(path, backend='s3', verbose=100, compress=True, backend_options=dict2)
 
 
 # %%
 print(dict_)
 
 # %%
-#dict_["bucket"] = "alphamatic-data/tmp"
+# dict_["bucket"] = "alphamatic-data/tmp"
 
 print(dict_)
 
@@ -133,33 +138,33 @@ def dec(func=None, val=5):
         return
 
 
-
 # %%
-from joblibs3 import register_s3_store_backend
 
 # %%
 import helpers.s3 as hs3
 
 dict_ = hs3.get_aws_credentials("am")
 print(dict_)
-#s3fs = hs3.get_s3fs("am")
-#s3fs.ls("s3://alphamatic-data/tmp")
+# s3fs = hs3.get_s3fs("am")
+# s3fs.ls("s3://alphamatic-data/tmp")
 
 # %%
 s3fs.clear_instance_cache()
 
 
 # %%
-#import joblib
+# import joblib
 
-#cachedir = "./hello"
-#memory = joblib.Memory(cachedir, verbose=0)
+# cachedir = "./hello"
+# memory = joblib.Memory(cachedir, verbose=0)
+
 
 @mem.cache()
 def f(x):
     # hello
-    print('Running f(%s)' % x)
+    print("Running f(%s)" % x)
     return x
+
 
 f(1)
 
@@ -167,8 +172,11 @@ f(1)
 import helpers.cache as hcache
 
 hcache.cache(set_verbose_mode=True)
+
+
 def hello():
     return "hello"
+
 
 hello()
 
@@ -182,14 +190,12 @@ hello()
 # !ls /mnt/tmpfs/tmp.cache.mem/joblib/lib
 
 # %% pycharm={"name": "#%%\n"}
-memory_cached_func = hcac._Cached(
-    func, use_mem_cache=True, use_disk_cache=False
-)
+memory_cached_func = hcac._Cached(func, use_mem_cache=True, use_disk_cache=False)
 
 print(memory_cached_func.get_function_cache_info())
 
-#cache_type = None
-#memory_cached_func.clear_function_cache(cache_type)
+# cache_type = None
+# memory_cached_func.clear_function_cache(cache_type)
 
 dbg.dassert_eq(memory_cached_func(*inputs), exp_output)
 dbg.dassert_eq(memory_cached_func.get_last_cache_accessed(), "no_cache")

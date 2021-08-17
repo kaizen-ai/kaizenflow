@@ -30,9 +30,9 @@ import helpers.timer as htimer  # noqa: E402 module level import not at top of f
 _LOG = logging.getLogger(__name__)
 
 
-# ##########################################
+# #############################################################################
 # Basic utils.
-# ##########################################
+# #############################################################################
 
 
 def is_s3_path(s3_path: str) -> bool:
@@ -64,6 +64,7 @@ def dassert_is_not_s3_path(s3_path: str) -> None:
         s3_path,
     )
 
+
 def dassert_s3_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
     """
     Assert if an S3 file or dir doesn't exist.
@@ -82,27 +83,32 @@ def dassert_s3_not_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
 
 def split_path(s3_path: str) -> str:
     """
-    Separate an S3 path in the bucket and the rest of the path as absolute from the root.
+    Separate an S3 path in the bucket and the rest of the path as absolute from
+    the root.
 
-    E.g., for `s3://alphamatic-data/tmp/hello` returns (`alphamatic-data`, /tmp/hello`)
+    E.g., for `s3://alphamatic-data/tmp/hello` returns (`alphamatic-
+    data`, /tmp/hello`)
     """
     dassert_is_s3_path(s3_path)
     # Remove the s3 prefix.
     prefix = "s3://"
     dbg.dassert(s3_path.startswith(prefix))
-    s3_path = s3_path[len(prefix):]
+    s3_path = s3_path[len(prefix) :]
     # Break the path into dirs.
     dirs = s3_path.split("/")
     bucket = dirs[0]
     abs_path = os.path.join("/", *dirs[1:])
-    dbg.dassert(abs_path.startswith("/"), "The path should be absolute instead of %s",
-                abs_path)
+    dbg.dassert(
+        abs_path.startswith("/"),
+        "The path should be absolute instead of %s",
+        abs_path,
+    )
     return bucket, abs_path
 
 
-# ###########################################
+# #############################################################################
 # Bucket
-# ###########################################
+# #############################################################################
 
 
 # TODO(gp): Merge with get_path() to create get_s3_am_bucket_path().

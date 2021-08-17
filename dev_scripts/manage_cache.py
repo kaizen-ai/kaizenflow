@@ -22,9 +22,6 @@ def _test1() -> None:
 
 
 def _test2() -> None:
-    """
-    
-    """
     tag = "manage_cache"
     hcac.clear_global_cache("all", tag=tag)
     # Create a function-specific cache on disk only.

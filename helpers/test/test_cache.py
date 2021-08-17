@@ -438,6 +438,7 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
         """
         # Define the function imitating working in a notebook.
         _LOG.debug("\n%s", hprint.frame("Define function"))
+
         def add(x: int, y: int) -> int:
             add.executed = True  # type: ignore[attr-defined]
             return x + y
@@ -506,7 +507,7 @@ class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
             hcache.get_global_cache_info(tag=self.cache_tag),
         )
         f, cf = self._get_f_cf_functions(
-            use_mem_cache=True,
+            use_mem_cache=False,
             use_disk_cache=True,
             disk_cache_path=self.disk_cache_dir,
         )
@@ -518,19 +519,18 @@ class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
         self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
-        # 2) Execute and verify that it is not executed, since it's cached in memory.
+        # 2) Execute and verify that it is not executed, since it's cached on disk.
         _LOG.debug("\n%s", hprint.frame("Execute the 2nd time"))
         self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
+            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
         )
         # 3) Clear the global cache.
         _LOG.debug("\n%s", hprint.frame("clear_global_cache"))
         hcache.clear_global_cache("all")
-        # 4) Execute and verify that it is not executed, since it's cached in disk.
-        # TODO(gp): We should propagate the value to disk cache.
+        # 4) Execute and verify that it is not executed, since it's cached on disk.
         _LOG.debug("\n%s", hprint.frame("Execute the 2nd time"))
         self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
+            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
         )
 
     def test_with_caching2(self) -> None:
@@ -557,7 +557,9 @@ class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
         )
         # 4) Use the global cache.
-        _LOG.debug("\n%s", hprint.frame("Disable function cache and use global cache"))
+        _LOG.debug(
+            "\n%s", hprint.frame("Disable function cache and use global cache")
+        )
         cf.set_function_cache_path(None)
         # 5) Verify that function is executed with global cache.
         _LOG.debug("\n%s", hprint.frame("Execute the 3rd time"))
@@ -799,8 +801,9 @@ class TestCachingOnS3(_ResetFunctionSpecificCacheHelper):
             hcache.get_global_cache_info(tag=self.cache_tag, add_banner=True),
         )
         f, cf = self._get_f_cf_functions(
-            use_mem_cache=False, disk_cache_path=self.disk_cache_dir,
-            aws_profile=self.aws_profile
+            use_mem_cache=False,
+            disk_cache_path=self.disk_cache_dir,
+            aws_profile=self.aws_profile,
         )
         _LOG.debug("\n%s", cf.get_function_cache_info(add_banner=True))
         cf.clear_function_cache(destroy=False)

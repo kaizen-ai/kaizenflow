@@ -329,12 +329,12 @@ class _Cached:
         # TODO(gp): We might simplify the code by using a dict instead of 2 variables.
         # Store the Joblib memory cache object for this function.
         self._memory_cached_func: joblib.MemorizedFunc
-        self._create_function_cache("mem")
+        self._create_function_memory_cache()
         # Store the Joblib memory object.
         self._disk_cache: joblib.Memory
         # Store the Joblib memory cache object for this function.
         self._disk_cached_func: joblib.Memory
-        self._create_function_cache("disk")
+        self._create_function_disk_cache()
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """
@@ -477,74 +477,75 @@ class _Cached:
 
         :param cache_path: cache directory or `None` to use global cache
         """
+        # We need to disable the memory cache.
+        self._use_mem_cache = False
         self._disk_cache_path = cache_path
-        self._create_function_cache("disk")
+        self._create_function_disk_cache()
 
     # ///////////////////////////////////////////////////////////////////////////
 
-    def _create_function_cache(self, cache_type: str) -> None:
+    def _create_function_memory_cache(self) -> None:
         """
-        Initialize Joblib object storing a cache for this function.
-
-        :param cache_type: type of a cache
+        Initialize Joblib object storing a memory cache for this function.
         """
-        _LOG.debug("Create cache for cache_type='%s'", cache_type)
-        _dassert_is_valid_cache_type(cache_type)
-        if cache_type == "mem":
-            # For memory always use the global cache.
-            memory_cache = get_global_cache(cache_type, self._tag)
-            # Get the Joblib object corresponding to the cached function.
-            self._memory_cached_func = memory_cache.cache(self._func)
-        elif cache_type == "disk":
-            if self._disk_cache_path:
-                # Create a function-specific cache.
-                memory_kwargs: Dict[str, Any] = {
-                    "verbose": 0,
-                    "compress": True,
-                }
-                if hs3.is_s3_path(self._disk_cache_path):
-                    import helpers.joblib_helpers as hjoblib
+        _LOG.debug("Create memory cache")
+        # For memory always use the global cache.
+        cache_type = "mem"
+        memory_cache = get_global_cache(cache_type, self._tag)
+        # Get the Joblib object corresponding to the cached function.
+        self._memory_cached_func = memory_cache.cache(self._func)
 
-                    # Register the S3 backend.
-                    hjoblib.register_s3fs_store_backend()
-                    # Use the default profile, unless it was explicitly passed.
-                    if self._aws_profile is None:
-                        aws_profile = hs3.get_aws_profile()
-                    else:
-                        aws_profile = self._aws_profile
-                    s3fs = hs3.get_s3fs(aws_profile)
-                    bucket, path = hs3.split_path(self._disk_cache_path)
-                    # Remove the initial `/` from the path that makes the path
-                    # absolute, since `Joblib.Memory` wants a path relative to the
-                    # bucket.
-                    dbg.dassert(
-                        path.startswith("/"),
-                        "The path should be absolute instead of %s",
-                        path,
-                    )
-                    path = path[1:]
-                    memory_kwargs.update(
-                        {
-                            "backend": "s3",
-                            "backend_options": {"s3fs": s3fs, "bucket": bucket},
-                        }
-                    )
+    def _create_function_disk_cache(self) -> None:
+        """
+        Initialize Joblib object storing a disk cache for this function.
+        """
+        if self._disk_cache_path:
+            dbg.dassert(not self._use_mem_cache,
+                        "When using function cache the memory cache needs to be disabled")
+            # Create a function-specific cache.
+            memory_kwargs: Dict[str, Any] = {
+                "verbose": 0,
+                "compress": True,
+            }
+            if hs3.is_s3_path(self._disk_cache_path):
+                import helpers.joblib_helpers as hjoblib
+
+                # Register the S3 backend.
+                hjoblib.register_s3fs_store_backend()
+                # Use the default profile, unless it was explicitly passed.
+                if self._aws_profile is None:
+                    aws_profile = hs3.get_aws_profile()
                 else:
-                    path = self._disk_cache_path
-                _LOG.debug(
-                    "path='%s'\nmemory_kwargs=\n%s", path, str(memory_kwargs)
+                    aws_profile = self._aws_profile
+                s3fs = hs3.get_s3fs(aws_profile)
+                bucket, path = hs3.split_path(self._disk_cache_path)
+                # Remove the initial `/` from the path that makes the path
+                # absolute, since `Joblib.Memory` wants a path relative to the
+                # bucket.
+                dbg.dassert(
+                    path.startswith("/"),
+                    "The path should be absolute instead of %s",
+                    path,
                 )
-                self._disk_cache = joblib.Memory(path, **memory_kwargs)
+                path = path[1:]
+                memory_kwargs.update(
+                    {
+                        "backend": "s3",
+                        "backend_options": {"s3fs": s3fs, "bucket": bucket},
+                    }
+                )
             else:
-                # Use the global cache.
-                self._disk_cache = get_global_cache(cache_type, self._tag)
-            # Get the Joblib object corresponding to the cached function.
-            disk_cache = self._disk_cache
-            dbg.dassert_is_not(disk_cache, None)
-            disk_cache = cast(joblib.Memory, disk_cache)
-            self._disk_cached_func = self._disk_cache.cache(self._func)
+                path = self._disk_cache_path
+            _LOG.debug(
+                "path='%s'\nmemory_kwargs=\n%s", path, str(memory_kwargs)
+            )
+            self._disk_cache = joblib.Memory(path, **memory_kwargs)
         else:
-            raise ValueError("Invalid cache_type='%s'" % cache_type)
+            # Use the global cache.
+            cache_type = "disk"
+            self._disk_cache = get_global_cache(cache_type, self._tag)
+        # Get the Joblib object corresponding to the cached function.
+        self._disk_cached_func = self._disk_cache.cache(self._func)
 
     def _get_function_cache(self, cache_type: str) -> joblib.MemorizedResult:
         """
