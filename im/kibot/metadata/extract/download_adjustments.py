@@ -89,7 +89,7 @@ def _download_adjustments_data_for_symbol(symbol: str, tmp_dir: str) -> None:
     aws_path = os.path.join(
         vkmcon.S3_PREFIX, vkmcon.ADJUSTMENTS_SUB_DIR, file_name
     )
-    hs3.check_valid_s3_path(aws_path)
+    hs3.dassert_is_s3_path(aws_path)
 
     # TODO(amr): create hs3.copy() helper.
     cmd = "aws s3 cp %s %s" % (file_path, aws_path)

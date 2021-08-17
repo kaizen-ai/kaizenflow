@@ -21,6 +21,7 @@ from typing import Any, List, Optional, cast
 
 import helpers.dbg as dbg
 import helpers.printing as hprint
+import helpers.s3 as hs3
 import helpers.system_interaction as hsinte
 
 _LOG = logging.getLogger(__name__)
@@ -148,6 +149,7 @@ def create_soft_link(src: str, dst: str) -> None:
 
 def delete_file(file_name: str) -> None:
     _LOG.debug("Deleting file '%s'", file_name)
+    dbg.dassert(hs3.is)
     if not os.path.exists(file_name) or file_name == "/dev/null":
         # Nothing to delete.
         return
@@ -173,11 +175,13 @@ def delete_dir(
     """
     Delete a directory.
 
-    - change_perms: change permissions to -R rwx before deleting to deal with
+    :param change_perms: change permissions to -R rwx before deleting to deal with
       incorrect permissions left over
-    - errnum_to_retry_on: specify the error to retry on
-      OSError: [Errno 16] Device or resource busy:
-        'gridTmp/.nfs0000000002c8c10b00056e57'
+    :param errnum_to_retry_on: specify the error to retry on, e.g.,
+        ```
+        OSError: [Errno 16] Device or resource busy:
+          'gridTmp/.nfs0000000002c8c10b00056e57'
+        ```
     """
     _LOG.debug("Deleting dir '%s'", dir_)
     if not os.path.isdir(dir_):

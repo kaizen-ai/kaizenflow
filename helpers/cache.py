@@ -1,13 +1,10 @@
 """
-See helpers/cache/README.md for implementation details.
+See `helpers/cache.md` for implementation details.
 
 Import as:
 
 import helpers.cache as hcache
 """
-
-# TODO(gp): For code application, we might want to delete memory cache.
-#  lru_cache doesn't survive different activations
 
 import copy
 import functools
@@ -25,6 +22,7 @@ import helpers.git as git
 import helpers.introspection as hintro
 import helpers.io_ as hio
 import helpers.printing as hprint
+import helpers.s3 as hs3
 import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
@@ -251,8 +249,13 @@ def clear_global_cache(
     info_before = get_cache_size_info(cache_path, description)
     _LOG.info("# Before: %s", info_before)
     _LOG.warning("Resetting 'global %s' cache '%s'", cache_type, cache_path)
-    # We don't use `hs3.is_valid_s3_path` to avoid an extra dependency here.
-    dbg.dassert(not cache_path.startswith("s3://"))
+    # We don't use `hs3.is_s3_path` to avoid an extra dependency here.
+    if hs3.is_s3_path(cache_path):
+        # For now we only allow to delete caches under the unit test path.
+        bucket, abs_path = hs3.split_path(cache_path)
+        dbg.dassert(abs_path.startswith("/tmp/cache.unit_test/"),
+                    "The path '%s' is not valid", abs_path)
+        assert 0
     if destroy:
         _LOG.warning("Destroying ...")
         hio.delete_dir(cache_path)
@@ -398,13 +401,6 @@ class Cached:
             txt.append(
                 "local %s cache path=%s" % (cache_type, self._disk_cache_path)
             )
-        # else:
-        #     # Global cache.
-        #     for cache_type in _get_cache_types():
-        #         txt.append(
-        #             "global %s cache path=%s"
-        #             % (cache_type, _get_cache_path(cache_type))
-        #         )
         txt = "\n".join(txt)
         return txt
 
@@ -464,7 +460,7 @@ class Cached:
             self._func.__name__,
             cache_path,
         )
-        # We don't use `hs3.is_valid_s3_path` to avoid an extra dependency here.
+        # We don't use `hs3.is_s3_path` to avoid an extra dependency here.
         dbg.dassert(not cache_path.startswith("s3://"))
         if destroy:
             _LOG.warning("Destroying cache...")
@@ -507,10 +503,7 @@ class Cached:
                     "verbose": 0,
                     "compress": True,
                 }
-                # We don't use `hs3.is_valid_s3_path` to avoid an extra dependency
-                # here.
-                if self._disk_cache_path.startswith("s3://"):
-                    import helpers.s3 as hs3
+                if hs3.is_s3_path(self._disk_cache_path):
                     import helpers.joblib_helpers as hjoblib
 
                     # Register the S3 backend.

@@ -91,23 +91,23 @@ def get_path() -> str:
     return path
 
 
-def split_path(path: str) -> str:
+def split_path(s3_path: str) -> str:
     """
     Separate an S3 path in the bucket and the rest of the path as absolute from the root.
 
     E.g., for `s3://alphamatic-data/tmp/hello` returns (`alphamatic-data`, /tmp/hello`)
     """
-    check_valid_s3_path(path)
+    dassert_is_s3_path(s3_path)
     # Remove the s3 prefix.
     prefix = "s3://"
-    dbg.dassert(path.startswith(prefix))
-    path = path[len(prefix):]
+    dbg.dassert(s3_path.startswith(prefix))
+    s3_path = s3_path[len(prefix):]
     # Break the path into dirs.
-    dirs = path.split("/")
+    dirs = s3_path.split("/")
     bucket = dirs[0]
     abs_path = os.path.join("/", *dirs[1:])
     dbg.dassert(abs_path.startswith("/"), "The path should be absolute instead of %s",
-                path)
+                abs_path)
     return bucket, abs_path
 
 
@@ -175,7 +175,7 @@ def get_s3_path(s3_path: Optional[str] = None) -> Optional[str]:
     """
     env_var = "AM_S3_BUCKET"
     s3_path = _get_variable_value(s3_path, env_var)
-    is_valid_s3_path(s3_path)
+    dassert_is_s3_path(s3_path)
     return s3_path
 
 
@@ -336,8 +336,7 @@ def get_s3fs(*args: Any, **kwargs: Any) -> s3fs.core.S3FileSystem:
     return s3
 
 
-# TODO(gp): -> is_s3_path()
-def is_valid_s3_path(s3_path: str) -> bool:
+def is_s3_path(s3_path: str) -> bool:
     dbg.dassert_isinstance(s3_path, str)
     valid = s3_path.startswith("s3://")
     if s3_path.startswith("s3://s3://"):
@@ -345,13 +344,12 @@ def is_valid_s3_path(s3_path: str) -> bool:
     return valid
 
 
-# TODO(gp): -> dassert_is_s3_path
-def check_valid_s3_path(s3_path: str) -> None:
+def dassert_is_s3_path(s3_path: str) -> None:
     """
     Assert if a file is not a S3 path.
     """
     dbg.dassert(
-        is_valid_s3_path(s3_path),
+        is_s3_path(s3_path),
         "Invalid S3 file='%s' since it doesn't start with 's3://'",
         s3_path,
     )
@@ -361,7 +359,7 @@ def dassert_s3_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
     """
     Assert if an S3 file or dir doesn't exist.
     """
-    check_valid_s3_path(s3_path)
+    dassert_is_s3_path(s3_path)
     dbg.dassert(s3fs_.exists(s3_path), "S3 file '%s' doesn't exist", s3_path)
 
 
@@ -369,7 +367,7 @@ def dassert_s3_not_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
     """
     Assert if an S3 file or dir exist.
     """
-    check_valid_s3_path(s3_path)
+    dassert_is_s3_path(s3_path)
     dbg.dassert(not s3fs_.exists(s3_path), "S3 file '%s' already exist", s3_path)
 
 
@@ -400,7 +398,7 @@ def archive_data_on_s3(
         aws_profile,
     )
     dbg.dassert_dir_exists(src_dir)
-    check_valid_s3_path(s3_path)
+    dassert_is_s3_path(s3_path)
     _LOG.info(
         "The size of '%s' is %s", src_dir, hsyste.du(src_dir, human_format=True)
     )
@@ -471,7 +469,7 @@ def retrieve_archived_data_from_s3(
         dst_dir,
         aws_profile,
     )
-    check_valid_s3_path(s3_file_path)
+    dassert_is_s3_path(s3_file_path)
     # Download the tgz file.
     hio.create_dir(dst_dir, incremental=True)
     dst_file = os.path.join(dst_dir, os.path.basename(s3_file_path))

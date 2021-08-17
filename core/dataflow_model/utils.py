@@ -391,7 +391,7 @@ def _get_experiment_subdirs(
         dict `config idx` to `experiment subdirectory`
     """
     # Handle the situation where the file is an archived S3 file.
-    if hs3.is_valid_s3_path(src_dir):
+    if hs3.is_s3_path(src_dir):
         src_dir = _retrieve_archived_experiment_artifacts(src_dir, aws_profile)
     # Retrieve all the subdirectories in `src_dir` that store results.
     dbg.dassert_dir_exists(src_dir)
