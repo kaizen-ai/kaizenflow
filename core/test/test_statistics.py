@@ -1879,12 +1879,14 @@ class TestComputeRegressionCoefficients1(hut.TestCase):
         mvnp.set_cov_from_inv_wishart_draw(dim=10, seed=1)
         df = mvnp.generate_sample(
             date_range_kwargs={"start": "2010-01-04", "periods": 40, "freq": "B"},
-            seed=20
+            seed=20,
         )
         actual = cstati.compute_regression_coefficients(
             df,
             x_cols=list(range(0, 9)),
             y_col=9,
         )
-        actual_string = hut.convert_df_to_string(actual.round(3), index=True, decimals=3)
+        actual_string = hut.convert_df_to_string(
+            actual.round(3), index=True, decimals=3
+        )
         self.check_string(actual_string, fuzzy_match=True)

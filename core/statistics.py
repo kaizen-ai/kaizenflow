@@ -1923,10 +1923,14 @@ def compute_regression_coefficients(
     y_variance = df[y_col].pow(2).sum() / df[y_col].count()
     _LOG.debug("y_col=`%s` variance=%f", y_col, y_variance)
     # Calculate correlation from covariances and variances.
-    rho = covariance.divide(np.sqrt(x_variance) * np.sqrt(y_variance)).rename("rho")
+    rho = covariance.divide(np.sqrt(x_variance) * np.sqrt(y_variance)).rename(
+        "rho"
+    )
     # Calculate beta coefficients and associated statistics.
     beta = covariance.divide(x_variance).rename("beta")
-    beta_se = np.sqrt(y_variance / x_variance.multiply(x_var_counts)).rename("SE(beta)")
+    beta_se = np.sqrt(y_variance / x_variance.multiply(x_var_counts)).rename(
+        "SE(beta)"
+    )
     z_scores = beta.divide(beta_se).rename("beta_z_scored")
     # Calculate autocovariance-related stats of x variables.
     autocovariance = (
