@@ -461,13 +461,14 @@ class _S3FSStoreBackend(StoreBackendBase, StoreBackendMixin):
             self.storage.mkdir(current_path)
 
 
-def _register_s3fs_store_backend() -> None:
+_REGISTER_S3FS_STORE = False
+
+
+def register_s3fs_store_backend() -> None:
     """
     Register the S3 store backend for joblib memory caching.
     """
-    from joblib import register_store_backend
-
-    register_store_backend("s3", _S3FSStoreBackend)
-
-
-_register_s3fs_store_backend()
+    global _REGISTER_S3FS_STORE
+    if not _REGISTER_S3FS_STORE:
+        joblib.register_store_backend("s3", _S3FSStoreBackend)
+        _REGISTER_S3FS_STORE = True

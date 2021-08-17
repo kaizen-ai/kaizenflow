@@ -94,6 +94,29 @@ dict2 = {
 mem = joblib.Memory('joblib_cache', backend='s3', verbose=100, compress=True, backend_options=dict2)
 
 # %%
+import joblib
+import helpers.joblib_helpers as hjoblib
+import helpers.s3 as hs3
+
+#hjoblib.register_s3fs_store_backend()
+
+s3fs = hs3.get_s3fs("am")
+
+dict2 = {
+    "bucket": "alphamatic-data",
+    #"key": dict_["aws_access_key_id"],
+    #"secret": dict_["aws_secret_access_key"],
+    "s3fs": s3fs
+}
+path = "/tmp/cache.unit_test/root.98e1cf5b88c3.app.TestCachingOnS3.test_with_caching1"
+
+
+s3fs.ls(path)
+
+#mem = joblib.Memory(path, backend='s3', verbose=100, compress=True, backend_options=dict2)
+
+
+# %%
 print(dict_)
 
 # %%

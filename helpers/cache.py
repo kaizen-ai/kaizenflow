@@ -24,6 +24,7 @@ import helpers.dbg as dbg
 import helpers.git as git
 import helpers.introspection as hintro
 import helpers.io_ as hio
+import helpers.printing as hprint
 import helpers.system_interaction as hsyste
 
 _LOG = logging.getLogger(__name__)
@@ -63,16 +64,21 @@ def is_caching_enabled() -> bool:
     return _IS_CACHE_ENABLED
 
 
-def get_global_cache_info(tag: Optional[str] = None) -> str:
+def get_global_cache_info(tag: Optional[str] = None, add_banner: bool = False) -> str:
     """
     Report information on global cache.
     """
-    cache_types = _get_cache_types()
     txt = []
-    txt.append("# cache_types=%s" % str(cache_types))
+    if add_banner:
+        txt.append(hprint.frame("get_global_cache_info()", char1="<"))
+    txt.append("is global cache enabled=%s" % is_caching_enabled())
+    #
+    cache_types = _get_cache_types()
+    txt.append("cache_types=%s" % str(cache_types))
     for cache_type in cache_types:
         path = _get_cache_path(cache_type, tag=tag)
-        cache_info = get_cache_size_info(path, cache_type)
+        description = f"global {cache_type}"
+        cache_info = get_cache_size_info(path, description)
         txt.append(cache_info)
     txt = "\n".join(txt)
     return txt
@@ -141,14 +147,21 @@ def _get_cache_path(cache_type: str, tag: Optional[str] = None) -> str:
     return file_name
 
 
-# TODO(gp): -> _get_client_cache_size
-def get_cache_size_info(path: str, cache_type: str) -> str:
+# TODO(gp): -> _get_cache_size
+def get_cache_size_info(path: str, description: str) -> str:
+    """
+    Report information about a cache (global or function) stored at a given path.
+    """
     if path is None:
-        txt = "'%s' cache in '%s' doesn't exist yet" % (cache_type, path)
+        txt = "'%s' cache: path='%s' doesn't exist yet" % (description, path)
     else:
-        size_in_bytes = hsyste.du(path)
-        size_as_str = hintro.format_size(size_in_bytes)
-        txt = "'%s' cache in '%s' has size=%s" % (cache_type, path, size_as_str)
+        if os.path.exists(path):
+            size_in_bytes = hsyste.du(path)
+            size_as_str = hintro.format_size(size_in_bytes)
+        else:
+            size_as_str = "nan"
+        # TODO(gp): Compute number of files.
+        txt = "'%s' cache: path='%s', size=%s" % (description, path, size_as_str)
     return txt
 
 
@@ -234,8 +247,12 @@ def clear_global_cache(
     _dassert_is_valid_cache_type(cache_type)
     # Clear and / or destroy the cache `cache_type` with the given `tag`.
     cache_path = _get_cache_path(cache_type, tag)
-    info_before = get_cache_size_info(cache_path, cache_type)
-    _LOG.warning("Resetting %s cache '%s'", cache_type, cache_path)
+    description = f"global {cache_type}"
+    info_before = get_cache_size_info(cache_path, description)
+    _LOG.info("# Before: %s", info_before)
+    _LOG.warning("Resetting 'global %s' cache '%s'", cache_type, cache_path)
+    # We don't use `hs3.is_valid_s3_path` to avoid an extra dependency here.
+    dbg.dassert(not cache_path.startswith("s3://"))
     if destroy:
         _LOG.warning("Destroying ...")
         hio.delete_dir(cache_path)
@@ -243,8 +260,8 @@ def clear_global_cache(
         cache_backend = get_global_cache(cache_type, tag)
         cache_backend.clear(warn=True)
     # Report stats before and after.
-    info_after = get_cache_size_info(cache_path, cache_type)
-    _LOG.info("# Info: %s -> %s", info_before, info_after)
+    info_after = get_cache_size_info(cache_path, description)
+    _LOG.info("# After: %s", info_after)
 
 
 # #############################################################################
@@ -365,14 +382,14 @@ class Cached:
             )
         return obj
 
-    # TODO(gp): -> get_caching_info()
-    def get_info(self) -> str:
+    # TODO(gp): -> get_function_cache_info()
+    def get_info(self, add_banner: bool = False) -> str:
         """
         Return info about the caching properties for this function.
         """
         txt = []
-        txt.append("is global cache enabled=%s" % is_caching_enabled())
-        #
+        if add_banner:
+            txt.append(hprint.frame("get_global_cache_info()", char1="<"))
         has_func_cache = self.has_function_specific_cache()
         txt.append("has function-specific cache=%s" % has_func_cache)
         if has_func_cache:
@@ -381,13 +398,13 @@ class Cached:
             txt.append(
                 "local %s cache path=%s" % (cache_type, self._disk_cache_path)
             )
-        else:
-            # Global cache.
-            for cache_type in _get_cache_types():
-                txt.append(
-                    "global %s cache path=%s"
-                    % (cache_type, _get_cache_path(cache_type))
-                )
+        # else:
+        #     # Global cache.
+        #     for cache_type in _get_cache_types():
+        #         txt.append(
+        #             "global %s cache path=%s"
+        #             % (cache_type, _get_cache_path(cache_type))
+        #         )
         txt = "\n".join(txt)
         return txt
 
@@ -423,6 +440,7 @@ class Cached:
         return has_func_cache
 
     # TODO(gp): -> clear_function_specific_disk_cache
+    # TODO(gp): Can we reuse the same code for `clear_cache` as above?
     def clear_cache(self, destroy: bool = False) -> None:
         """
         Clear a function-specific cache.
@@ -431,12 +449,14 @@ class Cached:
             self.has_function_specific_cache(),
             "This function has no function-specific cache",
         )
+        # Get the path for the disk cache.
         cache_path = self._disk_cache_path
         dbg.dassert_is_not(cache_path, None)
         cache_path = cast(str, cache_path)
         # Collect info before.
         cache_type = "disk"
-        info_before = get_cache_size_info(cache_path, cache_type)
+        description = f"function {cache_type}"
+        info_before = get_cache_size_info(cache_path, description)
         # Clear / destroy the cache.
         _LOG.warning(
             "Resetting '%s' cache for function '%s' in dir '%s'",
@@ -444,16 +464,18 @@ class Cached:
             self._func.__name__,
             cache_path,
         )
+        # We don't use `hs3.is_valid_s3_path` to avoid an extra dependency here.
+        dbg.dassert(not cache_path.startswith("s3://"))
         if destroy:
             _LOG.warning("Destroying cache...")
             hio.delete_dir(cache_path)
         else:
             self._disk_cache.clear()
         # Print stats.
-        info_after = get_cache_size_info(cache_path, cache_type)
+        info_after = get_cache_size_info(cache_path, description)
         _LOG.info("# Info: %s -> %s", info_before, info_after)
 
-    # TODO(gp): -> set_function_specific_disk_cache
+    # TODO(gp): -> set_function_disk_cache
     def set_cache_path(self, cache_path: Optional[str]) -> None:
         """
         Set the path for the function-specific cache for a cache type.
@@ -462,18 +484,6 @@ class Cached:
         """
         self._disk_cache_path = cache_path
         self._create_cache("disk")
-
-    # def _get_cache_path(self) -> Optional[str]:
-    #     """
-    #     Get the cache directory for a cache type, `None` if global cache is
-    #     used.
-    #
-    #     :param cache_type: type of a cache
-    #     :return: directory for specific cache or None if global cache is used
-    #     """
-    #     ret = self._disk_cache_path
-    #     _LOG.debug("ret=%s", ret)
-    #     return ret
 
     # ///////////////////////////////////////////////////////////////////////////
 
@@ -497,20 +507,33 @@ class Cached:
                     "verbose": 0,
                     "compress": True,
                 }
+                # We don't use `hs3.is_valid_s3_path` to avoid an extra dependency
+                # here.
                 if self._disk_cache_path.startswith("s3://"):
                     import helpers.s3 as hs3
+                    import helpers.joblib_helpers as hjoblib
 
+                    # Register the S3 backend.
+                    hjoblib.register_s3fs_store_backend()
                     aws_profile = hs3.get_aws_profile()
-                    s3fs = get_s3fs(aws_profile)
-                    bucket = hs3.extract_bucket_from_path(self._disk_cache_path)
+                    s3fs = hs3.get_s3fs(aws_profile)
+                    bucket, path = hs3.split_path(self._disk_cache_path)
+                    # Remove the initial `/` from the path that makes the path absolute,
+                    # since `Joblib.Memory` wants a path relative to the bucket.
+                    dbg.dassert(path.startswith("/"), "The path should be absolute instead of %s",
+                                path)
+                    path = path[1:]
                     memory_kwargs.update(
                         {
                             "backend": "s3",
                             "backend_options": {"s3fs": s3fs, "bucket": bucket},
                         }
                     )
+                else:
+                    path = self._disk_cache_path
+                _LOG.debug("path='%s'\nmemory_kwargs=\n%s", path, str(memory_kwargs))
                 self._disk_cache = joblib.Memory(
-                    self._disk_cache_path, **memory_kwargs
+                    path, **memory_kwargs
                 )
             else:
                 # Use the global cache.

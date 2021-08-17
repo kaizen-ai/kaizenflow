@@ -13,6 +13,9 @@ import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): Do not commit this.
+_LOG.debug = _LOG.info
+
 # #############################################################################
 
 
@@ -458,30 +461,9 @@ class _ResetFunctionSpecificCacheHelper(_ResetGlobalCacheHelper):
     def setUp(self) -> None:
         super().setUp()
         # Create temp directories to store the cache.
-        self.disk_cache_temp_dir = tempfile.mkdtemp()
+        self.disk_cache_dir = tempfile.mkdtemp()
         # Clear global cache.
         hcache.clear_global_cache("all", tag=self.cache_tag)
-
-    # # TODO(gp): Pass `disk_cache_path=self.disk_cache_temp_dir` and reuse the value.
-    # def _get_f_cf_functions(
-    #     self, **cached_kwargs: Any
-    # ) -> Tuple[Callable, hcache.Cached]:
-    #     """
-    #     Create the intrinsic function `f` and its cached version `cf`.
-    #     """
-    #     # Create the intrinsic function.
-    #     f = _get_add_function()
-    #     # Create the cached function using the function specific cache.
-    #     cf = hcache.Cached(
-    #         f,
-    #         disk_cache_path=self.disk_cache_temp_dir,
-    #         tag=self.cache_tag,
-    #         **cached_kwargs,
-    #     )
-    #     # Reset the caches.
-    #     cf.clear_cache("all")
-    #     cf._reset_cache_tracing()
-    #     return f, cf
 
 
 class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
@@ -498,8 +480,7 @@ class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
             hcache.get_global_cache_info(tag=self.cache_tag),
         )
         f, cf = self._get_f_cf_functions(use_mem_cache=True, use_disk_cache=True,
-            disk_cache_path=self.disk_cache_temp_dir)
-
+            disk_cache_path=self.disk_cache_dir)
         _LOG.debug("# cf.get_info()=\n%s", cf.get_info())
         # Execute the first time: verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
@@ -539,7 +520,7 @@ class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
         - Test using the global cache
         """
         f, cf = self._get_f_cf_functions(use_mem_cache=False,
-            disk_cache_path=self.disk_cache_temp_dir)
+            disk_cache_path=self.disk_cache_dir)
         # Execute the first time: verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
         self._execute_and_check_state(
@@ -565,7 +546,7 @@ class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
             f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
         )
         # Restore back specific cache.
-        cf.set_cache_path(self.disk_cache_temp_dir)
+        cf.set_cache_path(self.disk_cache_dir)
         # Verify that it is *NOT* executed with specific cache.
         _LOG.debug("\n%s", hprint.frame("Executing the 5th time"))
         self._execute_and_check_state(
@@ -773,6 +754,7 @@ class TestAmpTask1407(_ResetGlobalCacheHelper):
 
 
 class TestCachingOnS3(_ResetFunctionSpecificCacheHelper):
+
     def setUp(self) -> None:
         super().setUp()
         # Get a directory to store the cache on S3.
@@ -786,7 +768,14 @@ class TestCachingOnS3(_ResetFunctionSpecificCacheHelper):
         - Disable function-specific cache and switching to global cache
         - Test using the global cache
         """
-        f, cf = self._get_f_cf_functions()
+        _LOG.debug("\n%s", hprint.frame("Starting"))
+        _LOG.debug("\n%s",
+            hcache.get_global_cache_info(tag=self.cache_tag, add_banner=True),
+        )
+        f, cf = self._get_f_cf_functions(use_mem_cache=False,
+                                         disk_cache_path=self.disk_cache_dir)
+        _LOG.debug("\n%s",
+           cf.get_info(add_banner=True))
         # Execute the first time: verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
         self._execute_and_check_state(

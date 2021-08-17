@@ -91,11 +91,11 @@ def get_path() -> str:
     return path
 
 
-def extract_bucket_from_path(path: str) -> str:
+def split_path(path: str) -> str:
     """
-    Extract the bucket from an S3 path.
+    Separate an S3 path in the bucket and the rest of the path as absolute from the root.
 
-    E.g., for `s3://alphamatic-data/tmp/hello` returns `alphamatic-data`.
+    E.g., for `s3://alphamatic-data/tmp/hello` returns (`alphamatic-data`, /tmp/hello`)
     """
     check_valid_s3_path(path)
     # Remove the s3 prefix.
@@ -104,7 +104,11 @@ def extract_bucket_from_path(path: str) -> str:
     path = path[len(prefix):]
     # Break the path into dirs.
     dirs = path.split("/")
-    return dirs[0]
+    bucket = dirs[0]
+    abs_path = os.path.join("/", *dirs[1:])
+    dbg.dassert(abs_path.startswith("/"), "The path should be absolute instead of %s",
+                path)
+    return bucket, abs_path
 
 
 # #############################################################################

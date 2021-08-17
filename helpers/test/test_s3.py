@@ -14,6 +14,15 @@ class Test_s3_get_credentials1(hut.TestCase):
         _LOG.debug("res=%s", str(res))
 
 
+class Test_s3_functions1(hut.TestCase):
+
+    def test_extract_bucket_from_path1(self) -> None:
+        path = "s3://alphamatic-data/tmp/TestCachingOnS3.test_with_caching1/joblib"
+        bucket, path = hs3.split_path(path)
+        self.assert_equal(bucket, "alphamatic-data")
+        self.assert_equal(path, "/tmp/TestCachingOnS3.test_with_caching1/joblib")
+
+
 class Test_s3_1(hut.TestCase):
     def test_ls1(self) -> None:
         file_path = os.path.join(hs3.get_path(), "README.md")
