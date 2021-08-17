@@ -391,10 +391,22 @@ class _S3FSStoreBackend(StoreBackendBase, StoreBackendMixin):
     A StoreBackend for S3 cloud storage file system.
     """
 
+    def __init__(self):
+        super().__init__()
+        self._objs = []
+
+    def _flush(self):
+        # TODO(gp): No need to flush for now.
+        return
+        for fd in self._objs:
+            fd.flush(force=True)
+
     def _open_item(self, fd: Any, mode: str) -> Any:
+        self._objs.append(fd)
         return self.storage.open(fd, mode)
 
     def _item_exists(self, path: str) -> None:
+        self._flush()
         return self.storage.exists(path)
 
     def _move_item(self, src: str, dst: str) -> None:
@@ -404,7 +416,9 @@ class _S3FSStoreBackend(StoreBackendBase, StoreBackendMixin):
         """
         Check if object exists in store.
         """
-        self.storage.rm(location, recursive=True)
+        if self.storage.exists(location):
+            self._flush()
+            self.storage.rm(location, recursive=True)
 
     def create_location(self, location: str) -> None:
         """

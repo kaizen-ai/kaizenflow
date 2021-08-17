@@ -241,7 +241,7 @@ def clear_global_cache(
     cache_path = _get_global_cache_path(cache_type, tag)
     description = f"global {cache_type}"
     info_before = _get_cache_size(cache_path, description)
-    _LOG.info("Before: %s", info_before)
+    _LOG.info("Before clear_global_cache: %s", info_before)
     _LOG.warning("Resetting 'global %s' cache '%s'", cache_type, cache_path)
     if hs3.is_s3_path(cache_path):
         # For now we only allow to delete caches under the unit test path.
@@ -259,7 +259,7 @@ def clear_global_cache(
         cache_backend.clear(warn=True)
     # Report stats before and after.
     info_after = _get_cache_size(cache_path, description)
-    _LOG.info("After: %s", info_after)
+    _LOG.info("After clear_global_cache: %s", info_after)
 
 
 # #############################################################################
@@ -445,6 +445,7 @@ class _Cached:
         cache_type = "disk"
         description = f"function {cache_type}"
         info_before = _get_cache_size(cache_path, description)
+        _LOG.info("Before clear_function_cache: %s", info_before)
         # Clear / destroy the cache.
         _LOG.warning(
             "Resetting '%s' cache for function '%s' in dir '%s'",
@@ -467,7 +468,7 @@ class _Cached:
             self._disk_cache.clear()
         # Print stats.
         info_after = _get_cache_size(cache_path, description)
-        _LOG.info("# Info: %s -> %s", info_before, info_after)
+        _LOG.info("After clear_function_cache: %s", info_after)
 
     def set_function_cache_path(self, cache_path: Optional[str]) -> None:
         """

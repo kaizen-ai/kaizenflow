@@ -324,7 +324,7 @@ def dassert_callable(
     """
     cond = callable(func)  # type: ignore[arg-type]
     if not cond:
-        txt = "obj '%s' is not callable", str(func)
+        txt = "Obj '%s' of type '%s' is not callable" % (str(func), str(type(func)))
         _dfatal(txt, msg, *args)
 
 

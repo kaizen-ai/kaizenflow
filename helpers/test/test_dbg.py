@@ -407,7 +407,7 @@ class Test_dassert_container_type1(hut.TestCase):
         act = str(cm.exception)
         exp = r"""
         * Failed assertion *
-        instance of '['a', 'b', 'c']' is '<class 'list'>' instead of 'typing.Tuple'
+        Instance of '['a', 'b', 'c']' is '<class 'list'>' instead of 'typing.Tuple'
         obj='['a', 'b', 'c']'
         """
         self.assert_equal(act, exp, fuzzy_match=True)
@@ -422,7 +422,7 @@ class Test_dassert_container_type1(hut.TestCase):
         act = str(cm.exception)
         exp = r"""
         * Failed assertion *
-        instance of '2' is '<class 'int'>' instead of '<class 'str'>'
+        Instance of '2' is '<class 'int'>' instead of '<class 'str'>'
         obj='['a', 2, 'c', 'd']'
         """
         self.assert_equal(act, exp, fuzzy_match=True)
@@ -439,7 +439,7 @@ class Test_dassert_container_type1(hut.TestCase):
         act = str(cm.exception)
         exp = r"""
         * Failed assertion *
-        instance of '2' is '<class 'int'>' instead of '<class 'str'>'
+        Instance of '2' is '<class 'int'>' instead of '<class 'str'>'
         list_ is not homogeneous
         obj='['a', 2, 'c', 'd']'
         """
@@ -510,6 +510,26 @@ class Test_dassert_issubclass1(hut.TestCase):
         with self.assertRaises(Exception) as cm:
             dbg.dassert_issubclass(int, 5.0)
         self.check_string(str(cm.exception), purify_text=True)
+
+
+# #############################################################################
+
+
+class Test_dassert_callable1(hut.TestCase):
+    def test1(self) -> None:
+        func = lambda x: x
+        dbg.dassert_callable(func)
+
+    def test_fail1(self) -> None:
+        func = 4
+        with self.assertRaises(AssertionError) as cm:
+            dbg.dassert_callable(func)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        Obj '4' of type '<class 'int'>' is not callable
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
 
 
 # #############################################################################
