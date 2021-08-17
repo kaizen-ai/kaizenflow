@@ -1879,8 +1879,78 @@ def compute_interarrival_time_stats(
 
 
 # #############################################################################
-# Local level model statistics
+# Models
 # #############################################################################
+
+
+def compute_regression_coefficients(
+    df: pd.DataFrame,
+    x_cols: List[Union[int, str]],
+    y_col: Union[int, str],
+) -> pd.DataFrame:
+    """
+    Regresses `y_col` on each `x_col` independently.
+
+    This function assumes (but does not check) that the x and y variables are
+    centered.
+
+    :param df: data dataframe
+    :param x_cols: x variable columns
+    :param y_col: y variable column
+    :return: dataframe of regression coefficients and related stats
+    """
+    dbg.dassert(not df.empty, msg="Dataframe must be nonempty")
+    dbg.dassert_isinstance(x_cols, list)
+    dbg.dassert_is_subset(x_cols, df.columns)
+    dbg.dassert_isinstance(y_col, (int, str))
+    dbg.dassert_in(y_col, df.columns)
+    # Drop rows with no y value.
+    _LOG.debug("y_col=`%s` count=%i", y_col, df[y_col].count())
+    df = df.dropna(subset=[y_col])
+    # Extract x variables.
+    x_vars = df[x_cols]
+    x_var_counts = x_vars.count().rename("count")
+    # Calculate variance assuming x variables are centered at zero.
+    x_variance = x_vars.pow(2).sum().divide(x_var_counts).rename("var")
+    # Calculate covariance assuming x variables and y variable are centered.
+    covariance = (
+        x_vars.multiply(df[y_col], axis=0)
+        .sum(axis=0)
+        .divide(x_var_counts, axis=0)
+        .rename("covar")
+    )
+    # Calculate y variance assuming variable is centered.
+    y_variance = df[y_col].pow(2).sum() / df[y_col].count()
+    _LOG.debug("y_col=`%s` variance=%f", y_col, y_variance)
+    # Calculate correlation from covariances and variances.
+    rho = covariance.divide(np.sqrt(x_variance) * np.sqrt(y_variance)).rename("rho")
+    # Calculate beta coefficients and associated statistics.
+    beta = covariance.divide(x_variance).rename("beta")
+    beta_se = np.sqrt(y_variance / x_variance.multiply(x_var_counts)).rename("SE(beta)")
+    z_scores = beta.divide(beta_se).rename("beta_z_scored")
+    # Calculate autocovariance-related stats of x variables.
+    autocovariance = (
+        x_vars.multiply(x_vars.shift(1), axis=0)
+        .sum(axis=0)
+        .divide(x_var_counts)
+        .rename("autocovar")
+    )
+    autocorrelation = autocovariance.divide(x_variance).rename("autocorr")
+    turn = np.sqrt(2 * (1 - autocorrelation)).rename("turn")
+    # Consolidate stats.
+    coefficients = [
+        x_var_counts,
+        x_variance,
+        covariance,
+        rho,
+        beta,
+        beta_se,
+        z_scores,
+        autocovariance,
+        autocorrelation,
+        turn,
+    ]
+    return pd.concat(coefficients, axis=1)
 
 
 def compute_local_level_model_stats(
