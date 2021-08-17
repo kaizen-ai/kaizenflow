@@ -85,7 +85,7 @@ def get_project_dirname(only_index: bool = False) -> str:
     _LOG.debug("git_dir=%s", git_dir)
     ret = os.path.basename(git_dir)
     if only_index:
-        last_char = project_name[-1]
+        last_char = ret[-1]
         dbg.dassert(
             last_char.isdigit(),
             "The last char `%s` of the git dir `%s` is not a digit",

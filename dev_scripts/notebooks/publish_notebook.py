@@ -243,7 +243,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser = hs3.add_s3_args(parser)
     parser = prsr.add_verbosity_arg(parser)
-    return parser
+    return parser  # type: ignore[no-any-return]
 
 
 def _main(parser: argparse.ArgumentParser) -> None:

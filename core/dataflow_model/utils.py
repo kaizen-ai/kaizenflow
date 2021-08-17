@@ -371,7 +371,7 @@ def _retrieve_archived_experiment_artifacts(
         s3_file_name, scratch_dir, aws_profile
     )
     _LOG.info("Retrieved artifacts to '%s'", tgz_dst_dir)
-    return tgz_dst_dir
+    return tgz_dst_dir  # type: ignore[no-any-return]
 
 
 def _get_experiment_subdirs(

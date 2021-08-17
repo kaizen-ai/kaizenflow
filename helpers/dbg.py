@@ -322,7 +322,7 @@ def dassert_callable(
     """
     Assert that an object `val1` is callable.
     """
-    cond = callable(func)  # type: ignore[arg-type]
+    cond = callable(func)
     if not cond:
         txt = "Obj '%s' of type '%s' is not callable" % (
             str(func),

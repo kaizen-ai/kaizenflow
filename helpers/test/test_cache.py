@@ -105,7 +105,6 @@ class _ResetGlobalCacheHelper(hut.TestCase):
         cf: hcache._Cached,
         val1: int,
         val2: int,
-        exp_f_state: bool,
         exp_cf_state: str,
     ) -> None:
         """
@@ -114,9 +113,10 @@ class _ResetGlobalCacheHelper(hut.TestCase):
         caches were used, according to `exp_f_state` and `exp_cf_state`.
         """
         if exp_cf_state == "no_cache":
-            assert exp_f_state == True
+            # If there was no caching then we must have executed the function.
+            exp_f_state = True
         else:
-            assert exp_f_state == False
+            exp_f_state = False
         _LOG.debug(
             "val1=%s, val2=%s, exp_f_state=%s, exp_cf_state=%s",
             val1,
@@ -133,8 +133,16 @@ class _ResetGlobalCacheHelper(hut.TestCase):
         # Check the result.
         self.assertEqual(act, exp)
         # Check which function was executed and what caches were used.
-        _LOG.debug("f.executed=%s vs %s", f.executed, exp_f_state)
-        _LOG.debug("cf.get_last_cache_accessed=%s vs %s", cf.get_last_cache_accessed(), exp_cf_state)
+        _LOG.debug(
+            "f.executed=%s vs %s",
+            f.executed,  # type: ignore[attr-defined]
+            exp_f_state,
+        )
+        _LOG.debug(
+            "cf.get_last_cache_accessed=%s vs %s",
+            cf.get_last_cache_accessed(),
+            exp_cf_state,
+        )
         self.assertEqual(f.executed, exp_f_state)  # type: ignore[attr-defined]
         self.assertEqual(cf.get_last_cache_accessed(), exp_cf_state)
 
@@ -188,19 +196,13 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
         f, cf = self._get_f_cf_functions()
         # 1) Execute and verify that it is executed, since it was not cached.
         _LOG.debug("\n%s", hprint.frame("Execute the 1st time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="no_cache")
         # 2) Execute and verify that it is not executed, since it's cached in memory.
         _LOG.debug("\n%s", hprint.frame("Execute the 2nd time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="mem")
         # 3) Execute and verify that it is not executed, since it's cached.
         _LOG.debug("\n%s", hprint.frame("Execute the 3rd time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="mem")
 
     def test_with_caching2(self) -> None:
         """
@@ -211,24 +213,16 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
         f, cf = self._get_f_cf_functions()
         # 1) Execute and verify that it is executed, since it's not cached.
         _LOG.debug("\n%s", hprint.frame("Execute the 1st time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="no_cache")
         # 2) Use a different workload.
         _LOG.debug("\n%s", hprint.frame("Execute"))
-        self._execute_and_check_state(
-            f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 4, 4, exp_cf_state="no_cache")
         # 3) Execute the second time: verify that it is not executed, since cached.
         _LOG.debug("\n%s", hprint.frame("Execute the 2nd time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="mem")
         # 4) Use a different workload: not executed since cached.
         _LOG.debug("\n%s", hprint.frame("Execute"))
-        self._execute_and_check_state(
-            f, cf, 4, 4, exp_f_state=False, exp_cf_state="mem"
-        )
+        self._execute_and_check_state(f, cf, 4, 4, exp_cf_state="mem")
 
     def test_with_caching3(self) -> None:
         """
@@ -241,22 +235,14 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
         )
         # 1) Execute the first time: executed since it's not cached.
         _LOG.debug("\n%s", hprint.frame("Execute the 1st time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="no_cache")
         #
-        self._execute_and_check_state(
-            f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 4, 4, exp_cf_state="no_cache")
         # 2) Execute the second time: executed since it's not cached.
         _LOG.debug("\n%s", hprint.frame("Execute the 2nd time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="no_cache")
         #
-        self._execute_and_check_state(
-            f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 4, 4, exp_cf_state="no_cache")
 
     def test_with_caching4(self) -> None:
         """
@@ -267,22 +253,14 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
         f, cf = self._get_f_cf_functions(use_mem_cache=True, use_disk_cache=False)
         # 1) Execute and verify that it is executed since not cached.
         _LOG.debug("\n%s", hprint.frame("Execute the 1st time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="no_cache")
         #
-        self._execute_and_check_state(
-            f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 4, 4, exp_cf_state="no_cache")
         # 2) Execute the second time: verify that it was cached from memory.
         _LOG.debug("\n%s", hprint.frame("Execute the 2nd time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="mem")
         #
-        self._execute_and_check_state(
-            f, cf, 4, 4, exp_f_state=False, exp_cf_state="mem"
-        )
+        self._execute_and_check_state(f, cf, 4, 4, exp_cf_state="mem")
 
     def test_with_caching5(self) -> None:
         """
@@ -293,22 +271,14 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
         f, cf = self._get_f_cf_functions(use_mem_cache=False, use_disk_cache=True)
         # 1) Verify that it is executed since there is no cache.
         _LOG.debug("\n%s", hprint.frame("Execute the 1st time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="no_cache")
         #
-        self._execute_and_check_state(
-            f, cf, 4, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 4, 4, exp_cf_state="no_cache")
         # 2) Verify that it is executed, since it's cached in memory.
         _LOG.debug("\n%s", hprint.frame("Execute the 2nd time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="disk")
         #
-        self._execute_and_check_state(
-            f, cf, 4, 4, exp_f_state=False, exp_cf_state="disk"
-        )
+        self._execute_and_check_state(f, cf, 4, 4, exp_cf_state="disk")
 
     # ////////////////////////////////////////////////////////////////////////////
 
@@ -324,22 +294,16 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
         f, cf = self._get_f_cf_functions(use_mem_cache=True, use_disk_cache=False)
         # 1) Verify that it is executed, since it's not cached.
         _LOG.debug("\n%s", hprint.frame("Execute the 1st time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="no_cache")
         # 2) Verify that it is not executed, since it's cached in memory.
         _LOG.debug("\n%s", hprint.frame("Execute the 2nd time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="mem")
         # 3) Reset memory cache.
         _LOG.debug("\n%s", hprint.frame("Reset memory cache"))
         hcache.clear_global_cache("mem", self.cache_tag)
         # 4) Verify that it is executed, since the cache was emptied.
         _LOG.debug("\n%s", hprint.frame("Execute the 3rd time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="no_cache")
 
     def test_with_caching_disk_reset(self) -> None:
         """
@@ -349,22 +313,16 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
         f, cf = self._get_f_cf_functions(use_mem_cache=False, use_disk_cache=True)
         # 1) Verify that it is executed, since it's not cached.
         _LOG.debug("\n%s", hprint.frame("Execute the 1st time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="no_cache")
         # 2) Verify that it is not executed, since cached in disk.
         _LOG.debug("\n%s", hprint.frame("Execute the 2nd time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="disk")
         # 3) Reset disk cache.
         _LOG.debug("\n%s", hprint.frame("Reset memory cache"))
         hcache.clear_global_cache("disk", self.cache_tag)
         # 4) Verify that it is executed, since the cache was emptied.
         _LOG.debug("\n%s", hprint.frame("Execute the 3rd time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="no_cache")
 
     def test_with_caching_mem_reset2(self) -> None:
         """
@@ -378,21 +336,15 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
         f, cf = self._get_f_cf_functions(use_mem_cache=True, use_disk_cache=True)
         # 1) Verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Execute the 1st time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="no_cache")
         # 2) Verify that it is not executed, since it's cached in memory.
         _LOG.debug("\n%s", hprint.frame("Execute the 2nd time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="mem")
         # 3) Reset memory cache.
         hcache.clear_global_cache("mem", self.cache_tag)
         # 4) Verify that it is not executed, since it's in the disk cache.
         _LOG.debug("\n%s", hprint.frame("Execute the 3rd time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="disk")
 
     # ////////////////////////////////////////////////////////////////////////////
 
@@ -408,31 +360,25 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
         # 1) Execute the first time.
         _LOG.debug("\n%s", hprint.frame("Execute the 1st time"))
         self._execute_and_check_state(
-            add, cached_add, 1, 2, exp_f_state=True, exp_cf_state="no_cache"
+            add, cached_add, 1, 2, exp_cf_state="no_cache"
         )
         # 2) Execute the second time. Must use memory cache.
         _LOG.debug("\n%s", hprint.frame("Execute the 2nd time"))
-        self._execute_and_check_state(
-            add, cached_add, 1, 2, exp_f_state=False, exp_cf_state="mem"
-        )
+        self._execute_and_check_state(add, cached_add, 1, 2, exp_cf_state="mem")
         # 3) Redefine the function inline.
         _LOG.debug("\n%s", hprint.frame("Redefine function"))
         add = _get_add_function()
         cached_add = hcache._Cached(add, tag=self.cache_tag)
         # 4) Execute the third time. Should still use memory cache.
         _LOG.debug("\n%s", hprint.frame("Execute the 3rd time"))
-        self._execute_and_check_state(
-            add, cached_add, 1, 2, exp_f_state=False, exp_cf_state="mem"
-        )
+        self._execute_and_check_state(add, cached_add, 1, 2, exp_cf_state="mem")
         # 5) Execute the fourth time. Should still use memory cache.
         _LOG.debug("\n%s", hprint.frame("Execute the 4th time"))
-        self._execute_and_check_state(
-            add, cached_add, 1, 2, exp_f_state=False, exp_cf_state="mem"
-        )
+        self._execute_and_check_state(add, cached_add, 1, 2, exp_cf_state="mem")
         # 6) Check that call with other arguments miss the cache.
         _LOG.debug("\n%s", hprint.frame("Execute the 5th time"))
         self._execute_and_check_state(
-            add, cached_add, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
+            add, cached_add, 3, 4, exp_cf_state="no_cache"
         )
 
     def test_changed_function(self) -> None:
@@ -451,13 +397,11 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
         # 1) Execute the first time.
         _LOG.debug("\n%s", hprint.frame("Execute the 1st time"))
         self._execute_and_check_state(
-            add, cached_add, 1, 2, exp_f_state=True, exp_cf_state="no_cache"
+            add, cached_add, 1, 2, exp_cf_state="no_cache"
         )
         # 2) Execute the second time. Must use memory cache.
         _LOG.debug("\n%s", hprint.frame("Execute the 2nd time"))
-        self._execute_and_check_state(
-            add, cached_add, 1, 2, exp_f_state=False, exp_cf_state="mem"
-        )
+        self._execute_and_check_state(add, cached_add, 1, 2, exp_cf_state="mem")
         # 3) Redefine the function with different code.
         _LOG.debug("\n%s", hprint.frame("Redefine function"))
 
@@ -471,17 +415,15 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
         # 4) Execute the third time. Should still use memory cache.
         _LOG.debug("\n%s", hprint.frame("Execute the 3rd time"))
         self._execute_and_check_state(
-            add, cached_add, 1, 2, exp_f_state=True, exp_cf_state="no_cache"
+            add, cached_add, 1, 2, exp_cf_state="no_cache"
         )
         # 5) Execute the fourth time. Should still use memory cache.
         _LOG.debug("\n%s", hprint.frame("Execute the 4th time"))
-        self._execute_and_check_state(
-            add, cached_add, 1, 2, exp_f_state=False, exp_cf_state="mem"
-        )
+        self._execute_and_check_state(add, cached_add, 1, 2, exp_cf_state="mem")
         # 6) Check that call with other arguments miss the cache.
         _LOG.debug("\n%s", hprint.frame("Execute the 5th time"))
         self._execute_and_check_state(
-            add, cached_add, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
+            add, cached_add, 3, 4, exp_cf_state="no_cache"
         )
 
 
@@ -520,22 +462,16 @@ class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
         )
         # 1) Execute and verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Execute the 1st time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="no_cache")
         # 2) Execute and verify that it is not executed, since it's cached on disk.
         _LOG.debug("\n%s", hprint.frame("Execute the 2nd time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="disk")
         # 3) Clear the global cache.
         _LOG.debug("\n%s", hprint.frame("clear_global_cache"))
         hcache.clear_global_cache("all")
         # 4) Execute and verify that it is not executed, since it's cached on disk.
         _LOG.debug("\n%s", hprint.frame("Execute the 2nd time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="disk")
 
     def test_with_caching2(self) -> None:
         """
@@ -549,17 +485,13 @@ class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
         )
         # 1) Execute and verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Execute the 1st time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="no_cache")
         # 2) Clear the global cache.
         _LOG.debug("\n%s", hprint.frame("clear_global_cache"))
         hcache.clear_global_cache("all")
         # 3) Execute and verify that it is not executed.
         _LOG.debug("\n%s", hprint.frame("Execute the 2nd time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="disk")
         # 4) Use the global cache.
         _LOG.debug(
             "\n%s", hprint.frame("Disable function cache and use global cache")
@@ -567,23 +499,17 @@ class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
         cf.set_function_cache_path(None)
         # 5) Execute and verify that function is executed with global cache.
         _LOG.debug("\n%s", hprint.frame("Execute the 3rd time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="no_cache")
         # 6) Execute. Now we get the value from the memory cache since disabling
         #    the function cache means enabling the memory cache.
         _LOG.debug("\n%s", hprint.frame("Execute the 4th time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="mem")
         # 7) Restore back specific cache.
         _LOG.debug("\n%s", hprint.frame("Restore function cache"))
         cf.set_function_cache_path(self.disk_cache_dir)
         # Verify that it is *NOT* executed with specific cache.
         _LOG.debug("\n%s", hprint.frame("Execute the 5th time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="disk")
 
 
 # #############################################################################
@@ -691,11 +617,11 @@ class TestCacheDecorator(_ResetGlobalCacheHelper):
 
         # Execute the first time.
         self._execute_and_check_state(
-            add.__wrapped__, add, 1, 2, exp_f_state=True, exp_cf_state="no_cache"
+            add.__wrapped__, add, 1, 2, exp_cf_state="no_cache"
         )
         # Execute the second time. Must use memory cache.
         self._execute_and_check_state(
-            add.__wrapped__, add, 1, 2, exp_f_state=False, exp_cf_state="mem"
+            add.__wrapped__, add, 1, 2, exp_cf_state="mem"
         )
 
     def test_decorated_function_no_mem(self) -> None:
@@ -710,11 +636,11 @@ class TestCacheDecorator(_ResetGlobalCacheHelper):
 
         # Execute the first time.
         self._execute_and_check_state(
-            add.__wrapped__, add, 1, 2, exp_f_state=True, exp_cf_state="no_cache"
+            add.__wrapped__, add, 1, 2, exp_cf_state="no_cache"
         )
         # Execute the second time. Must use disk cache.
         self._execute_and_check_state(
-            add.__wrapped__, add, 1, 2, exp_f_state=False, exp_cf_state="disk"
+            add.__wrapped__, add, 1, 2, exp_cf_state="disk"
         )
 
 
@@ -814,35 +740,25 @@ class TestCachingOnS3(_ResetFunctionSpecificCacheHelper):
         cf.clear_function_cache(destroy=False)
         # 1) Execute and verify that it is executed, since the value is not cached.
         _LOG.debug("\n%s", hprint.frame("Execute the 1st time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="no_cache")
         # 2) Execute and verify that it is not executed, since it's cached on disk.
         _LOG.debug("\n%s", hprint.frame("Execute the 2nd time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="disk")
         # 3) Clear the global cache.
         _LOG.debug("\n%s", hprint.frame("Clear global cache"))
         hcache.clear_global_cache("all")
         # 4) Verify that it is *NOT* executed, since the S3 cache is used.
         _LOG.debug("\n%s", hprint.frame("Execute the 3rd time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="disk")
         # 5) Clear the function cache.
         _LOG.debug("\n%s", hprint.frame("Clear function cache"))
         cf.clear_function_cache()
         # 6) Clear the function cache.
         _LOG.debug("\n%s", hprint.frame("Execute the 4th time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="no_cache")
         # 7) Verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Execute the 5th time"))
-        self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
-        )
+        self._execute_and_check_state(f, cf, 3, 4, exp_cf_state="disk")
 
 
 # TODO(gp): Add a test for verbose mode in __call__

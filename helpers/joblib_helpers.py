@@ -349,7 +349,7 @@ def parallel_execute(
             )
             res.append(res_tmp)
     else:
-        num_threads = int(num_threads)  # type: ignore[assignment]
+        num_threads = int(num_threads)
         # -1 is interpreted by joblib like for all cores.
         _LOG.info("Using %d threads", num_threads)
         # From https://stackoverflow.com/questions/24983493
@@ -391,9 +391,9 @@ class _S3FSStoreBackend(StoreBackendBase, StoreBackendMixin):
     A StoreBackend for S3 cloud storage file system.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self._objs = []
+        self._objs: List[Any] = []
 
     def clear_location(self, location: str) -> None:
         """
@@ -421,7 +421,7 @@ class _S3FSStoreBackend(StoreBackendBase, StoreBackendMixin):
         location: str,
         backend_options: Dict[str, Any],
         verbose: int = 0,
-    ):
+    ) -> None:
         """
         Configure the store backend.
         """
@@ -444,7 +444,7 @@ class _S3FSStoreBackend(StoreBackendBase, StoreBackendMixin):
         # Memory map mode is not supported.
         self.mmap_mode = None
 
-    def _flush(self):
+    def _flush(self) -> None:
         # TODO(gp): No need to flush for now.
         return
         for fd in self._objs:
@@ -454,9 +454,10 @@ class _S3FSStoreBackend(StoreBackendBase, StoreBackendMixin):
         self._objs.append(fd)
         return self.storage.open(fd, mode)
 
-    def _item_exists(self, path: str) -> None:
+    def _item_exists(self, path: str) -> bool:
         self._flush()
-        return self.storage.exists(path)
+        ret: bool = self.storage.exists(path)
+        return ret
 
     def _move_item(self, src: str, dst: str) -> None:
         self.storage.mv(src, dst)

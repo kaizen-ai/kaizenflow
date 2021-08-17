@@ -331,7 +331,10 @@ class _Cached:
         self._memory_cached_func = self._create_function_memory_cache()
         # Store the Joblib memory object and the Joblib memory cache object for
         # this function.
-        self._disk_cache, self._disk_cached_func = self._create_function_disk_cache()
+        (
+            self._disk_cache,
+            self._disk_cached_func,
+        ) = self._create_function_disk_cache()
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """
@@ -480,7 +483,10 @@ class _Cached:
         else:
             self._use_mem_cache = True
         self._disk_cache_path = cache_path
-        self._disk_cache, self._disk_cached_func = self._create_function_disk_cache()
+        (
+            self._disk_cache,
+            self._disk_cached_func,
+        ) = self._create_function_disk_cache()
 
     # ///////////////////////////////////////////////////////////////////////////
 
@@ -495,13 +501,17 @@ class _Cached:
         # Get the Joblib object corresponding to the cached function.
         return memory_cache.cache(self._func)
 
-    def _create_function_disk_cache(self) -> Tuple[joblib.Memory, joblib.memory.MemorizedFunc]:
+    def _create_function_disk_cache(
+        self,
+    ) -> Tuple[joblib.Memory, joblib.memory.MemorizedFunc]:
         """
         Initialize Joblib object storing a disk cache for this function.
         """
         if self._disk_cache_path:
-            dbg.dassert(not self._use_mem_cache,
-                        "When using function cache the memory cache needs to be disabled")
+            dbg.dassert(
+                not self._use_mem_cache,
+                "When using function cache the memory cache needs to be disabled",
+            )
             # Create a function-specific cache.
             memory_kwargs: Dict[str, Any] = {
                 "verbose": 0,
@@ -536,9 +546,7 @@ class _Cached:
                 )
             else:
                 path = self._disk_cache_path
-            _LOG.debug(
-                "path='%s'\nmemory_kwargs=\n%s", path, str(memory_kwargs)
-            )
+            _LOG.debug("path='%s'\nmemory_kwargs=\n%s", path, str(memory_kwargs))
             disk_cache = joblib.Memory(path, **memory_kwargs)
         else:
             # Use the global cache.
@@ -763,7 +771,7 @@ def cache(
             verbose=set_verbose_mode,
             tag=tag,
             disk_cache_path=disk_cache_path,
-            aws_profile=aws_profile
+            aws_profile=aws_profile,
         )
 
     return wrapper
