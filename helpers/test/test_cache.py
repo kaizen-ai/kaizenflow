@@ -462,26 +462,26 @@ class _ResetFunctionSpecificCacheHelper(_ResetGlobalCacheHelper):
         # Clear global cache.
         hcache.clear_global_cache("all", tag=self.cache_tag)
 
-    # TODO(gp): Pass `disk_cache_path=self.disk_cache_temp_dir` and reuse the value.
-    def _get_f_cf_functions(
-        self, **cached_kwargs: Any
-    ) -> Tuple[Callable, hcache.Cached]:
-        """
-        Create the intrinsic function `f` and its cached version `cf`.
-        """
-        # Create the intrinsic function.
-        f = _get_add_function()
-        # Create the cached function using the function specific cache.
-        cf = hcache.Cached(
-            f,
-            disk_cache_path=self.disk_cache_temp_dir,
-            tag=self.cache_tag,
-            **cached_kwargs,
-        )
-        # Reset the caches.
-        cf.clear_cache("all")
-        cf._reset_cache_tracing()
-        return f, cf
+    # # TODO(gp): Pass `disk_cache_path=self.disk_cache_temp_dir` and reuse the value.
+    # def _get_f_cf_functions(
+    #     self, **cached_kwargs: Any
+    # ) -> Tuple[Callable, hcache.Cached]:
+    #     """
+    #     Create the intrinsic function `f` and its cached version `cf`.
+    #     """
+    #     # Create the intrinsic function.
+    #     f = _get_add_function()
+    #     # Create the cached function using the function specific cache.
+    #     cf = hcache.Cached(
+    #         f,
+    #         disk_cache_path=self.disk_cache_temp_dir,
+    #         tag=self.cache_tag,
+    #         **cached_kwargs,
+    #     )
+    #     # Reset the caches.
+    #     cf.clear_cache("all")
+    #     cf._reset_cache_tracing()
+    #     return f, cf
 
 
 class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
@@ -497,7 +497,9 @@ class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
             "# get_global_cache_info()=\n%s",
             hcache.get_global_cache_info(tag=self.cache_tag),
         )
-        f, cf = self._get_f_cf_functions(use_mem_cache=True, use_disk_cache=True)
+        f, cf = self._get_f_cf_functions(use_mem_cache=True, use_disk_cache=True,
+            disk_cache_path=self.disk_cache_temp_dir)
+
         _LOG.debug("# cf.get_info()=\n%s", cf.get_info())
         # Execute the first time: verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
@@ -536,7 +538,8 @@ class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
         - Disable function-specific cache and switching to global cache
         - Test using the global cache
         """
-        f, cf = self._get_f_cf_functions(use_mem_cache=False)
+        f, cf = self._get_f_cf_functions(use_mem_cache=False,
+            disk_cache_path=self.disk_cache_temp_dir)
         # Execute the first time: verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
         self._execute_and_check_state(
@@ -722,9 +725,9 @@ class TestAmpTask1407(_ResetGlobalCacheHelper):
                     string += "hello" + ("o" * len(self._string)) + " "
                 return string
 
-        klass = _AmpTask1407Class("test")
+        obj = _AmpTask1407Class("test")
         with self.assertRaises(ValueError):
-            klass.print(5)
+            obj.print(5)
 
     def test2(self) -> None:
         """
@@ -751,19 +754,19 @@ class TestAmpTask1407(_ResetGlobalCacheHelper):
                     string += "hello" + ("o" * len("world")) + " "
                 return string
 
-        klass = _AmpTask1407Class("test")
-        klass.static_print(5)
-        self.assertEqual(klass.static_print.get_last_cache_accessed(), "no_cache")
+        obj = _AmpTask1407Class("test")
+        obj.static_print(5)
+        self.assertEqual(obj.static_print.get_last_cache_accessed(), "no_cache")
         #
-        klass.static_print(5)
-        self.assertEqual(klass.static_print.get_last_cache_accessed(), "mem")
-        klass.static_print(5)
-        self.assertEqual(klass.static_print.get_last_cache_accessed(), "mem")
+        obj.static_print(5)
+        self.assertEqual(obj.static_print.get_last_cache_accessed(), "mem")
+        obj.static_print(5)
+        self.assertEqual(obj.static_print.get_last_cache_accessed(), "mem")
         #
-        klass.static_print(6)
-        self.assertEqual(klass.static_print.get_last_cache_accessed(), "no_cache")
-        klass.static_print(6)
-        self.assertEqual(klass.static_print.get_last_cache_accessed(), "mem")
+        obj.static_print(6)
+        self.assertEqual(obj.static_print.get_last_cache_accessed(), "no_cache")
+        obj.static_print(6)
+        self.assertEqual(obj.static_print.get_last_cache_accessed(), "mem")
 
 
 # #############################################################################
