@@ -290,16 +290,17 @@ class _Cached:
         *,
         use_mem_cache: bool = True,
         use_disk_cache: bool = True,
-        set_verbose_mode: bool = False,
+        verbose: bool = False,
         tag: Optional[str] = None,
         disk_cache_path: Optional[str] = None,
+        aws_profile: Optional[str] = None,
     ):
         """
         Constructor.
 
         :param func: function to cache
         :param use_mem_cache, use_disk_cache: whether we allow memory and disk caching
-        :param set_verbose_mode: print high-level information about the cache
+        :param verbose: print high-level information about the cache
             behavior, e.g.,
             - whether a function was cached or not
             - from which level the data was retrieved
@@ -308,19 +309,20 @@ class _Cached:
         :param tag: a tag added to the global cache path to make it specific (e.g.,
             when running unit tests we want to use a different cache)
         :param disk_cache_path: path of the function-specific cache
+        :param aws_profile: the AWS profile to use in case of S3 backend
         """
-        dbg.dassert_callable(func)
         # Make the class have the same attributes (e.g., `__name__`, `__doc__`,
         # `__dict__`) as the called function.
         functools.update_wrapper(self, func)
         # Save interface parameters.
+        dbg.dassert_callable(func)
         self._func = func
         self._use_mem_cache = use_mem_cache
         self._use_disk_cache = use_disk_cache
-        # TODO(gp): -> _is_verbose_mode
-        self._set_verbose_mode = set_verbose_mode
+        self._is_verbose = verbose
         self._tag = tag
         self._disk_cache_path = disk_cache_path
+        self._aws_profile = aws_profile
         #
         self._reset_cache_tracing()
         # Create the memory and disk cache objects for this function.
@@ -328,7 +330,6 @@ class _Cached:
         # Store the Joblib memory cache object for this function.
         self._memory_cached_func: joblib.MemorizedFunc
         self._create_function_cache("mem")
-        #
         # Store the Joblib memory object.
         self._disk_cache: joblib.Memory
         # Store the Joblib memory cache object for this function.
@@ -342,7 +343,7 @@ class _Cached:
         :return: object returned by the wrapped function
         """
         perf_counter_start: float
-        if self._set_verbose_mode:
+        if self._is_verbose:
             perf_counter_start = time.perf_counter()
         # Execute the cached function.
         if not is_caching_enabled():
@@ -363,7 +364,7 @@ class _Cached:
             #  the client should not modify a cached value.
             obj = copy.deepcopy(obj)
         # Print caching info.
-        if self._set_verbose_mode:
+        if self._is_verbose:
             # Get time.
             elapsed_time = time.perf_counter() - perf_counter_start
             # Get memory.
@@ -506,11 +507,16 @@ class _Cached:
 
                     # Register the S3 backend.
                     hjoblib.register_s3fs_store_backend()
-                    aws_profile = hs3.get_aws_profile()
+                    # Use the default profile, unless it was explicitly passed.
+                    if self._aws_profile is None:
+                        aws_profile = hs3.get_aws_profile()
+                    else:
+                        aws_profile = self._aws_profile
                     s3fs = hs3.get_s3fs(aws_profile)
                     bucket, path = hs3.split_path(self._disk_cache_path)
-                    # Remove the initial `/` from the path that makes the path absolute,
-                    # since `Joblib.Memory` wants a path relative to the bucket.
+                    # Remove the initial `/` from the path that makes the path
+                    # absolute, since `Joblib.Memory` wants a path relative to the
+                    # bucket.
                     dbg.dassert(
                         path.startswith("/"),
                         "The path should be absolute instead of %s",
@@ -726,6 +732,7 @@ def cache(
     set_verbose_mode: bool = False,
     tag: Optional[str] = None,
     disk_cache_path: Optional[str] = None,
+    aws_profile: Optional[str] = None,
 ) -> Union[Callable, _Cached]:
     """
     Decorate a function with a cache.
@@ -751,9 +758,10 @@ def cache(
             func,
             use_mem_cache=use_mem_cache,
             use_disk_cache=use_disk_cache,
-            set_verbose_mode=set_verbose_mode,
-            disk_cache_path=disk_cache_path,
+            verbose=set_verbose_mode,
             tag=tag,
+            disk_cache_path=disk_cache_path,
+            aws_profile=aws_profile
         )
 
     return wrapper

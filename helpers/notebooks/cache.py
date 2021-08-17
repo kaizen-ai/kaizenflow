@@ -58,7 +58,7 @@ func(*inputs)
 
 # %%
 # #!git clone git://github.com/aabadie/joblib-s3.git
-!(cd joblib-s3 && pip install -r requirements.txt .)
+# !(cd joblib-s3 && pip install -r requirements.txt .)
 
 # %%
 # import joblibs3

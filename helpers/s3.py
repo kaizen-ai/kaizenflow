@@ -49,7 +49,7 @@ def dassert_is_s3_path(s3_path: str) -> None:
     """
     dbg.dassert(
         is_s3_path(s3_path),
-        "Invalid S3 file='%s' since it doesn't start with 's3://'",
+        "Invalid S3 file='%s'",
         s3_path,
     )
 
