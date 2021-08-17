@@ -21,7 +21,9 @@ from typing import Any, List, Optional, cast
 
 import helpers.dbg as dbg
 import helpers.printing as hprint
-import helpers.s3 as hs3
+
+# TODO(gp): Enable this after the linter has been updated.
+# import helpers.s3 as hs3
 import helpers.system_interaction as hsinte
 
 _LOG = logging.getLogger(__name__)
@@ -137,8 +139,8 @@ def create_soft_link(src: str, dst: str) -> None:
     soft link.
     """
     _LOG.debug("# CreateSoftLink")
-    hs3.dassert_is_not_s3_path(src)
-    hs3.dassert_is_not_s3_path(dst)
+    # hs3.dassert_is_not_s3_path(src)
+    # hs3.dassert_is_not_s3_path(dst)
     # Create the enclosing directory, if needed.
     enclosing_dir = os.path.dirname(dst)
     _LOG.debug("enclosing_dir=%s", enclosing_dir)
@@ -151,7 +153,7 @@ def create_soft_link(src: str, dst: str) -> None:
 
 def delete_file(file_name: str) -> None:
     _LOG.debug("Deleting file '%s'", file_name)
-    hs3.dassert_is_not_s3_path(file_name)
+    # hs3.dassert_is_not_s3_path(file_name)
     if not os.path.exists(file_name) or file_name == "/dev/null":
         # Nothing to delete.
         return
@@ -186,7 +188,7 @@ def delete_dir(
         ```
     """
     _LOG.debug("Deleting dir '%s'", dir_)
-    hs3.dassert_is_not_s3_path(dir_)
+    # hs3.dassert_is_not_s3_path(dir_)
     if not os.path.isdir(dir_):
         # No directory so nothing to do.
         return
@@ -304,7 +306,7 @@ def create_enclosing_dir(file_name: str, incremental: bool = False) -> str:
     """
     _LOG.debug(hprint.to_str("file_name incremental"))
     _dassert_is_valid_file_name(file_name)
-    hs3.dassert_is_not_s3_path(file_name)
+    # hs3.dassert_is_not_s3_path(file_name)
     #
     dir_name = os.path.dirname(file_name)
     _LOG.debug(hprint.to_str("dir_name"))

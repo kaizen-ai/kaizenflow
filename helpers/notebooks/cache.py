@@ -77,6 +77,7 @@ func(*inputs)
 
 # %%
 import joblib
+
 import helpers.joblib_helpers as hjoblib
 import helpers.s3 as hs3
 
@@ -95,6 +96,7 @@ mem = joblib.Memory('joblib_cache', backend='s3', verbose=100, compress=True, ba
 
 # %%
 import joblib
+
 import helpers.joblib_helpers as hjoblib
 import helpers.s3 as hs3
 
@@ -128,9 +130,9 @@ print(dict_)
 # %%
 def dec(func=None, val=5):
     if func is not None:
-        return 
-    
-    
+        return
+
+
 
 # %%
 from joblibs3 import register_s3_store_backend
@@ -184,10 +186,10 @@ memory_cached_func = hcac._Cached(
     func, use_mem_cache=True, use_disk_cache=False
 )
 
-print(memory_cached_func.get_info())
+print(memory_cached_func.get_function_cache_info())
 
 #cache_type = None
-#memory_cached_func.clear_cache(cache_type)
+#memory_cached_func.clear_function_cache(cache_type)
 
 dbg.dassert_eq(memory_cached_func(*inputs), exp_output)
 dbg.dassert_eq(memory_cached_func.get_last_cache_accessed(), "no_cache")
@@ -221,7 +223,7 @@ disk_cached_computation = hcac._Cached(
     computation_function, use_mem_cache=False, use_disk_cache=True
 )
 
-disk_cached_computation.clear_cache("disk")
+disk_cached_computation.clear_function_cache("disk")
 
 dbg.dassert_eq(disk_cached_computation(*inputs), exp_output)
 dbg.dassert_eq(disk_cached_computation.get_last_cache_accessed(), "no_cache")
@@ -239,7 +241,7 @@ fully_cached_computation = hcac._Cached(
     computation_function, use_mem_cache=True, use_disk_cache=True
 )
 
-fully_cached_computation.clear_cache()
+fully_cached_computation.clear_function_cache()
 
 dbg.dassert_eq(fully_cached_computation(*inputs), exp_output)
 dbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "no_cache")
@@ -251,7 +253,7 @@ dbg.dassert_eq(fully_cached_computation(*inputs), exp_output)
 dbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "mem")
 
 print("Clear mem cache")
-fully_cached_computation.clear_cache("mem")
+fully_cached_computation.clear_function_cache("mem")
 
 dbg.dassert_eq(fully_cached_computation(*inputs), exp_output)
 dbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "disk")
@@ -267,6 +269,6 @@ dbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "mem")
 
 # %%
 # This should fail all the times, because we clear the memory cache.
-fully_cached_computation.clear_cache("mem")
+fully_cached_computation.clear_function_cache("mem")
 dbg.dassert_eq(fully_cached_computation(*inputs), exp_output)
 dbg.dassert_eq(fully_cached_computation.get_last_cache_accessed(), "mem")
