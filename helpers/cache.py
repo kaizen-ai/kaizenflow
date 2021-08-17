@@ -328,13 +328,10 @@ class _Cached:
         # Create the memory and disk cache objects for this function.
         # TODO(gp): We might simplify the code by using a dict instead of 2 variables.
         # Store the Joblib memory cache object for this function.
-        self._memory_cached_func: joblib.MemorizedFunc
-        self._create_function_memory_cache()
-        # Store the Joblib memory object.
-        self._disk_cache: joblib.Memory
-        # Store the Joblib memory cache object for this function.
-        self._disk_cached_func: joblib.Memory
-        self._create_function_disk_cache()
+        self._memory_cached_func = self._create_function_memory_cache()
+        # Store the Joblib memory object and the Joblib memory cache object for
+        # this function.
+        self._disk_cache, self._disk_cached_func = self._create_function_disk_cache()
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """
@@ -478,13 +475,16 @@ class _Cached:
         :param cache_path: cache directory or `None` to use global cache
         """
         # We need to disable the memory cache.
-        self._use_mem_cache = False
+        if cache_path:
+            self._use_mem_cache = False
+        else:
+            self._use_mem_cache = True
         self._disk_cache_path = cache_path
-        self._create_function_disk_cache()
+        self._disk_cache, self._disk_cached_func = self._create_function_disk_cache()
 
     # ///////////////////////////////////////////////////////////////////////////
 
-    def _create_function_memory_cache(self) -> None:
+    def _create_function_memory_cache(self) -> joblib.Memory:
         """
         Initialize Joblib object storing a memory cache for this function.
         """
@@ -493,9 +493,9 @@ class _Cached:
         cache_type = "mem"
         memory_cache = get_global_cache(cache_type, self._tag)
         # Get the Joblib object corresponding to the cached function.
-        self._memory_cached_func = memory_cache.cache(self._func)
+        return memory_cache.cache(self._func)
 
-    def _create_function_disk_cache(self) -> None:
+    def _create_function_disk_cache(self) -> Tuple[joblib.Memory, joblib.memory.MemorizedFunc]:
         """
         Initialize Joblib object storing a disk cache for this function.
         """
@@ -539,13 +539,14 @@ class _Cached:
             _LOG.debug(
                 "path='%s'\nmemory_kwargs=\n%s", path, str(memory_kwargs)
             )
-            self._disk_cache = joblib.Memory(path, **memory_kwargs)
+            disk_cache = joblib.Memory(path, **memory_kwargs)
         else:
             # Use the global cache.
             cache_type = "disk"
-            self._disk_cache = get_global_cache(cache_type, self._tag)
+            disk_cache = get_global_cache(cache_type, self._tag)
         # Get the Joblib object corresponding to the cached function.
-        self._disk_cached_func = self._disk_cache.cache(self._func)
+        disk_cached_func = disk_cache.cache(self._func)
+        return disk_cache, disk_cached_func
 
     def _get_function_cache(self, cache_type: str) -> joblib.MemorizedResult:
         """

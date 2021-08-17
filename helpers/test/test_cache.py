@@ -129,9 +129,9 @@ class _ResetGlobalCacheHelper(hut.TestCase):
         # Check the result.
         self.assertEqual(act, exp)
         # Check which function was executed and what caches were used.
-        _LOG.debug("f.executed='%s.", f.executed)
+        _LOG.debug("f.executed=%s vs %s", f.executed, exp_f_state)
+        _LOG.debug("cf.get_last_cache_accessed=%s vs %s", cf.get_last_cache_accessed(), exp_cf_state)
         self.assertEqual(f.executed, exp_f_state)  # type: ignore[attr-defined]
-        _LOG.debug("cf.get_last_cache_accessed=%s", cf.get_last_cache_accessed())
         self.assertEqual(cf.get_last_cache_accessed(), exp_cf_state)
 
 
@@ -561,15 +561,16 @@ class TestFunctionSpecificCache1(_ResetFunctionSpecificCacheHelper):
             "\n%s", hprint.frame("Disable function cache and use global cache")
         )
         cf.set_function_cache_path(None)
-        # 5) Verify that function is executed with global cache.
+        # 5) Execute and verify that function is executed with global cache.
         _LOG.debug("\n%s", hprint.frame("Execute the 3rd time"))
         self._execute_and_check_state(
             f, cf, 3, 4, exp_f_state=True, exp_cf_state="no_cache"
         )
-        # 6) Execute.
+        # 6) Execute. Now we get the value from the memory cache since disabling
+        #    the function cache means enabling the memory cache.
         _LOG.debug("\n%s", hprint.frame("Execute the 4th time"))
         self._execute_and_check_state(
-            f, cf, 3, 4, exp_f_state=False, exp_cf_state="disk"
+            f, cf, 3, 4, exp_f_state=False, exp_cf_state="mem"
         )
         # 7) Restore back specific cache.
         _LOG.debug("\n%s", hprint.frame("Restore function cache"))
