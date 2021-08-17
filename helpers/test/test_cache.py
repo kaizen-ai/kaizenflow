@@ -113,6 +113,10 @@ class _ResetGlobalCacheHelper(hut.TestCase):
         val2)` and check whether the intrinsic function was executed and what
         caches were used, according to `exp_f_state` and `exp_cf_state`.
         """
+        if exp_cf_state == "no_cache":
+            assert exp_f_state == True
+        else:
+            assert exp_f_state == False
         _LOG.debug(
             "val1=%s, val2=%s, exp_f_state=%s, exp_cf_state=%s",
             val1,
