@@ -247,24 +247,22 @@ def clear_global_cache(
     cache_path = _get_cache_path(cache_type, tag)
     description = f"global {cache_type}"
     info_before = get_cache_size_info(cache_path, description)
-    _LOG.info("# Before: %s", info_before)
+    _LOG.info("Before: %s", info_before)
     _LOG.warning("Resetting 'global %s' cache '%s'", cache_type, cache_path)
-    # We don't use `hs3.is_s3_path` to avoid an extra dependency here.
     if hs3.is_s3_path(cache_path):
         # For now we only allow to delete caches under the unit test path.
         bucket, abs_path = hs3.split_path(cache_path)
         dbg.dassert(abs_path.startswith("/tmp/cache.unit_test/"),
                     "The path '%s' is not valid", abs_path)
-        assert 0
     if destroy:
-        _LOG.warning("Destroying ...")
+        _LOG.warning("Destroying '%s' ...", cache_path)
         hio.delete_dir(cache_path)
     else:
         cache_backend = get_global_cache(cache_type, tag)
         cache_backend.clear(warn=True)
     # Report stats before and after.
     info_after = get_cache_size_info(cache_path, description)
-    _LOG.info("# After: %s", info_after)
+    _LOG.info("After: %s", info_after)
 
 
 # #############################################################################
@@ -460,10 +458,13 @@ class Cached:
             self._func.__name__,
             cache_path,
         )
-        # We don't use `hs3.is_s3_path` to avoid an extra dependency here.
-        dbg.dassert(not cache_path.startswith("s3://"))
+        if hs3.is_s3_path(cache_path):
+            # For now we only allow to delete caches under the unit test path.
+            bucket, abs_path = hs3.split_path(cache_path)
+            dbg.dassert(abs_path.startswith("/tmp/cache.unit_test/"),
+                        "The path '%s' is not valid", abs_path)
         if destroy:
-            _LOG.warning("Destroying cache...")
+            _LOG.warning("Destroying '%s' ...", cache_path)
             hio.delete_dir(cache_path)
         else:
             self._disk_cache.clear()

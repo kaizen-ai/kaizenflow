@@ -776,6 +776,7 @@ class TestCachingOnS3(_ResetFunctionSpecificCacheHelper):
                                          disk_cache_path=self.disk_cache_dir)
         _LOG.debug("\n%s",
            cf.get_info(add_banner=True))
+        cf.clear_cache(destroy=False)
         # Execute the first time: verify that it is executed.
         _LOG.debug("\n%s", hprint.frame("Executing the 1st time"))
         self._execute_and_check_state(

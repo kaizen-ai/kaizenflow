@@ -30,32 +30,79 @@ import helpers.timer as htimer  # noqa: E402 module level import not at top of f
 _LOG = logging.getLogger(__name__)
 
 
-# Architecture of the AWS authentication
-#
-# - There can be two or more AWS S3 systems with different credentials, paths to
-#   bucket, and other properties
-# - Some code needs to refer always and only to the AM S3 bucket (e.g., for Kibot
-#   data)
-# - Other code needs to work with different AWS S3 systems (e.g., publish_notebooks,
-#   saving / retrieving experiments, caching)
-#
-# - The different AWS S3 systems are selected through an `aws_profile` parameter
-#   (e.g., `am`)
-# - The value of AWS profile is obtained:
-#   - from the `--aws_profile` command line option; or
-#   - from the `AM_AWS_PROFILE` env var
-#
-# - The AWS profile is then used to access the `~/.aws` files and extract:
-#   - the credentials (e.g., `aws_access_key_id`, `aws_secret_access_key`,
-#     `aws_region`)
-#   - other variables (e.g., `aws_s3_bucket`)
-# - The variables that are extracted from the files can also be passed through
-#   env vars directly (mainly for GitHub Actions CI)
-#   - E.g., `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`,
-#     `AWS_S3_BUCKET`)
-#   - One can specify env vars conditioned to different profiles, using the AWS
-#     profile (e.g., `am` profile for `AWS_ACCESS_KEY_ID` corresponds to
-#     `AM_AWS_ACCESS_KEY_ID`)
+# ##########################################
+# Basic utils.
+# ##########################################
+
+
+def is_s3_path(s3_path: str) -> bool:
+    dbg.dassert_isinstance(s3_path, str)
+    valid = s3_path.startswith("s3://")
+    if s3_path.startswith("s3://s3://"):
+        valid = False
+    return valid
+
+
+def dassert_is_s3_path(s3_path: str) -> None:
+    """
+    Assert if a file is not a S3 path.
+    """
+    dbg.dassert(
+        is_s3_path(s3_path),
+        "Invalid S3 file='%s' since it doesn't start with 's3://'",
+        s3_path,
+    )
+
+
+def dassert_is_not_s3_path(s3_path: str) -> None:
+    """
+    Assert if a file is a S3 path.
+    """
+    dbg.dassert(
+        not is_s3_path(s3_path),
+        "Passed an S3 file='%s' when it was not expected",
+        s3_path,
+    )
+
+def dassert_s3_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
+    """
+    Assert if an S3 file or dir doesn't exist.
+    """
+    dassert_is_s3_path(s3_path)
+    dbg.dassert(s3fs_.exists(s3_path), "S3 file '%s' doesn't exist", s3_path)
+
+
+def dassert_s3_not_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
+    """
+    Assert if an S3 file or dir exist.
+    """
+    dassert_is_s3_path(s3_path)
+    dbg.dassert(not s3fs_.exists(s3_path), "S3 file '%s' already exist", s3_path)
+
+
+def split_path(s3_path: str) -> str:
+    """
+    Separate an S3 path in the bucket and the rest of the path as absolute from the root.
+
+    E.g., for `s3://alphamatic-data/tmp/hello` returns (`alphamatic-data`, /tmp/hello`)
+    """
+    dassert_is_s3_path(s3_path)
+    # Remove the s3 prefix.
+    prefix = "s3://"
+    dbg.dassert(s3_path.startswith(prefix))
+    s3_path = s3_path[len(prefix):]
+    # Break the path into dirs.
+    dirs = s3_path.split("/")
+    bucket = dirs[0]
+    abs_path = os.path.join("/", *dirs[1:])
+    dbg.dassert(abs_path.startswith("/"), "The path should be absolute instead of %s",
+                abs_path)
+    return bucket, abs_path
+
+
+# ###########################################
+# Bucket
+# ###########################################
 
 
 # TODO(gp): Merge with get_path() to create get_s3_am_bucket_path().
@@ -91,26 +138,8 @@ def get_path() -> str:
     return path
 
 
-def split_path(s3_path: str) -> str:
-    """
-    Separate an S3 path in the bucket and the rest of the path as absolute from the root.
-
-    E.g., for `s3://alphamatic-data/tmp/hello` returns (`alphamatic-data`, /tmp/hello`)
-    """
-    dassert_is_s3_path(s3_path)
-    # Remove the s3 prefix.
-    prefix = "s3://"
-    dbg.dassert(s3_path.startswith(prefix))
-    s3_path = s3_path[len(prefix):]
-    # Break the path into dirs.
-    dirs = s3_path.split("/")
-    bucket = dirs[0]
-    abs_path = os.path.join("/", *dirs[1:])
-    dbg.dassert(abs_path.startswith("/"), "The path should be absolute instead of %s",
-                abs_path)
-    return bucket, abs_path
-
-
+# #############################################################################
+# Parser.
 # #############################################################################
 
 
@@ -190,6 +219,38 @@ def _get_aws_config(file_name: str) -> configparser.RawConfigParser:
     config.read(file_name)
     _LOG.debug("config.sections=%s", config.sections())
     return config
+
+
+# #############################################################################
+# Authentication.
+# #############################################################################
+
+# Architecture of the AWS authentication
+#
+# - There can be two or more AWS S3 systems with different credentials, paths to
+#   bucket, and other properties
+# - Some code needs to refer always and only to the AM S3 bucket (e.g., for Kibot
+#   data)
+# - Other code needs to work with different AWS S3 systems (e.g., publish_notebooks,
+#   saving / retrieving experiments, caching)
+#
+# - The different AWS S3 systems are selected through an `aws_profile` parameter
+#   (e.g., `am`)
+# - The value of AWS profile is obtained:
+#   - from the `--aws_profile` command line option; or
+#   - from the `AM_AWS_PROFILE` env var
+#
+# - The AWS profile is then used to access the `~/.aws` files and extract:
+#   - the credentials (e.g., `aws_access_key_id`, `aws_secret_access_key`,
+#     `aws_region`)
+#   - other variables (e.g., `aws_s3_bucket`)
+# - The variables that are extracted from the files can also be passed through
+#   env vars directly (mainly for GitHub Actions CI)
+#   - E.g., `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`,
+#     `AWS_S3_BUCKET`)
+#   - One can specify env vars conditioned to different profiles, using the AWS
+#     profile (e.g., `am` profile for `AWS_ACCESS_KEY_ID` corresponds to
+#     `AM_AWS_ACCESS_KEY_ID`)
 
 
 @functools.lru_cache()
@@ -313,10 +374,6 @@ def get_key_value(
     return value
 
 
-def is_s3_path(path: str) -> bool:
-    return path.startswith("s3://")
-
-
 def get_s3fs(*args: Any, **kwargs: Any) -> s3fs.core.S3FileSystem:
     """
     Return an s3fs object.
@@ -334,41 +391,6 @@ def get_s3fs(*args: Any, **kwargs: Any) -> s3fs.core.S3FileSystem:
         client_kwargs={"region_name": aws_credentials["aws_region"]},
     )
     return s3
-
-
-def is_s3_path(s3_path: str) -> bool:
-    dbg.dassert_isinstance(s3_path, str)
-    valid = s3_path.startswith("s3://")
-    if s3_path.startswith("s3://s3://"):
-        valid = False
-    return valid
-
-
-def dassert_is_s3_path(s3_path: str) -> None:
-    """
-    Assert if a file is not a S3 path.
-    """
-    dbg.dassert(
-        is_s3_path(s3_path),
-        "Invalid S3 file='%s' since it doesn't start with 's3://'",
-        s3_path,
-    )
-
-
-def dassert_s3_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
-    """
-    Assert if an S3 file or dir doesn't exist.
-    """
-    dassert_is_s3_path(s3_path)
-    dbg.dassert(s3fs_.exists(s3_path), "S3 file '%s' doesn't exist", s3_path)
-
-
-def dassert_s3_not_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
-    """
-    Assert if an S3 file or dir exist.
-    """
-    dassert_is_s3_path(s3_path)
-    dbg.dassert(not s3fs_.exists(s3_path), "S3 file '%s' already exist", s3_path)
 
 
 # #############################################################################

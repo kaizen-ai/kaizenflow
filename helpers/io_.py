@@ -137,6 +137,8 @@ def create_soft_link(src: str, dst: str) -> None:
     soft link.
     """
     _LOG.debug("# CreateSoftLink")
+    hs3.dassert_is_not_s3_path(src)
+    hs3.dassert_is_not_s3_path(dst)
     # Create the enclosing directory, if needed.
     enclosing_dir = os.path.dirname(dst)
     _LOG.debug("enclosing_dir=%s", enclosing_dir)
@@ -149,7 +151,7 @@ def create_soft_link(src: str, dst: str) -> None:
 
 def delete_file(file_name: str) -> None:
     _LOG.debug("Deleting file '%s'", file_name)
-    dbg.dassert(hs3.is)
+    hs3.dassert_is_not_s3_path(file_name)
     if not os.path.exists(file_name) or file_name == "/dev/null":
         # Nothing to delete.
         return
@@ -184,6 +186,7 @@ def delete_dir(
         ```
     """
     _LOG.debug("Deleting dir '%s'", dir_)
+    hs3.dassert_is_not_s3_path(dir_)
     if not os.path.isdir(dir_):
         # No directory so nothing to do.
         return
@@ -268,7 +271,7 @@ def create_dir(
         else:
             shutil.rmtree(dir_name)
     _LOG.debug("Creating directory '%s'", dir_name)
-    # Note that makedirs raises OSError if the target directory already exists.
+    # NOTE: `os.makedirs` raises `OSError` if the target directory already exists.
     # A race condition can happen when another process creates our target
     # directory, while we have just found that it doesn't exist, so we need to
     # handle this situation gracefully.
@@ -285,7 +288,7 @@ def create_dir(
             raise e
 
 
-def _is_valid_file_name(file_name: str) -> None:
+def _dassert_is_valid_file_name(file_name: str) -> None:
     # dbg.dassert_in(type(file_name), (str, unicode))
     dbg.dassert_in(type(file_name), [str])
     dbg.dassert_is_not(file_name, None)
@@ -300,7 +303,8 @@ def create_enclosing_dir(file_name: str, incremental: bool = False) -> str:
     :param incremental: same meaning as in `create_dir()`
     """
     _LOG.debug(hprint.to_str("file_name incremental"))
-    _is_valid_file_name(file_name)
+    _dassert_is_valid_file_name(file_name)
+    hs3.dassert_is_not_s3_path(file_name)
     #
     dir_name = os.path.dirname(file_name)
     _LOG.debug(hprint.to_str("dir_name"))
@@ -337,7 +341,7 @@ def to_file(
     :param force_flush: whether to forcibly clear the file buffer
     """
     _LOG.debug(hprint.to_str("file_name use_gzip mode force_flush"))
-    _is_valid_file_name(file_name)
+    _dassert_is_valid_file_name(file_name)
     # Choose default writing mode based on compression.
     if mode is None:
         if use_gzip:
@@ -396,9 +400,8 @@ def from_file(
     :param encoding: encoding to use when reading the string
     :return: contents of file as string
     """
-    # Verify that file name is not empty.
     dbg.dassert_ne(file_name, "")
-    # Verify that the file name exists.
+    _dassert_is_valid_file_name(file_name)
     dbg.dassert_exists(file_name)
     if use_gzip:
         # Check if user provided correct file name.
