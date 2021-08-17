@@ -180,7 +180,7 @@ hello()
 # !ls /mnt/tmpfs/tmp.cache.mem/joblib/lib
 
 # %% pycharm={"name": "#%%\n"}
-memory_cached_func = hcac.Cached(
+memory_cached_func = hcac._Cached(
     func, use_mem_cache=True, use_disk_cache=False
 )
 
@@ -217,7 +217,7 @@ dbg.dassert_eq(memory_cached_computation.get_last_cache_accessed(), "mem")
 # ## Disk cache
 
 # %% pycharm={"name": "#%%\n"}
-disk_cached_computation = hcac.Cached(
+disk_cached_computation = hcac._Cached(
     computation_function, use_mem_cache=False, use_disk_cache=True
 )
 
@@ -235,7 +235,7 @@ print("disk caching checks passed")
 # ## Full cache
 
 # %% pycharm={"name": "#%%\n"}
-fully_cached_computation = hcac.Cached(
+fully_cached_computation = hcac._Cached(
     computation_function, use_mem_cache=True, use_disk_cache=True
 )
 

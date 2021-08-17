@@ -76,7 +76,7 @@ def get_global_cache_info(tag: Optional[str] = None, add_banner: bool = False) -
     for cache_type in cache_types:
         path = _get_cache_path(cache_type, tag=tag)
         description = f"global {cache_type}"
-        cache_info = get_cache_size_info(path, description)
+        cache_info = _get_cache_size(path, description)
         txt.append(cache_info)
     txt = "\n".join(txt)
     return txt
@@ -145,8 +145,7 @@ def _get_cache_path(cache_type: str, tag: Optional[str] = None) -> str:
     return file_name
 
 
-# TODO(gp): -> _get_cache_size
-def get_cache_size_info(path: str, description: str) -> str:
+def _get_cache_size(path: str, description: str) -> str:
     """
     Report information about a cache (global or function) stored at a given path.
     """
@@ -185,7 +184,6 @@ def _create_cache_backend(
     return cache_backend
 
 
-# TODO(gp): -> get_cache?
 def get_global_cache(cache_type: str, tag: Optional[str] = None) -> joblib.Memory:
     """
     Get global cache by cache type.
@@ -246,7 +244,7 @@ def clear_global_cache(
     # Clear and / or destroy the cache `cache_type` with the given `tag`.
     cache_path = _get_cache_path(cache_type, tag)
     description = f"global {cache_type}"
-    info_before = get_cache_size_info(cache_path, description)
+    info_before = _get_cache_size(cache_path, description)
     _LOG.info("Before: %s", info_before)
     _LOG.warning("Resetting 'global %s' cache '%s'", cache_type, cache_path)
     if hs3.is_s3_path(cache_path):
@@ -261,15 +259,14 @@ def clear_global_cache(
         cache_backend = get_global_cache(cache_type, tag)
         cache_backend.clear(warn=True)
     # Report stats before and after.
-    info_after = get_cache_size_info(cache_path, description)
+    info_after = _get_cache_size(cache_path, description)
     _LOG.info("After: %s", info_after)
 
 
 # #############################################################################
 
 
-# TODO(gp): -> _Cached
-class Cached:
+class _Cached:
     # pylint: disable=protected-access
     """
     Implement a cache in memory and disk for a function.
@@ -450,7 +447,7 @@ class Cached:
         # Collect info before.
         cache_type = "disk"
         description = f"function {cache_type}"
-        info_before = get_cache_size_info(cache_path, description)
+        info_before = _get_cache_size(cache_path, description)
         # Clear / destroy the cache.
         _LOG.warning(
             "Resetting '%s' cache for function '%s' in dir '%s'",
@@ -469,7 +466,7 @@ class Cached:
         else:
             self._disk_cache.clear()
         # Print stats.
-        info_after = get_cache_size_info(cache_path, description)
+        info_after = _get_cache_size(cache_path, description)
         _LOG.info("# Info: %s -> %s", info_before, info_after)
 
     # TODO(gp): -> set_function_disk_cache
@@ -724,11 +721,11 @@ def cache(
     set_verbose_mode: bool = False,
     tag: Optional[str] = None,
     disk_cache_path: Optional[str] = None,
-) -> Union[Callable, Cached]:
+) -> Union[Callable, _Cached]:
     """
     Decorate a function with a cache.
 
-    The parameters are the same as `hcache.Cached`.
+    The parameters are the same as `hcache._Cached`.
 
     Usage examples:
     ```
@@ -744,8 +741,8 @@ def cache(
     ```
     """
 
-    def wrapper(func: Callable) -> Cached:
-        return Cached(
+    def wrapper(func: Callable) -> _Cached:
+        return _Cached(
             func,
             use_mem_cache=use_mem_cache,
             use_disk_cache=use_disk_cache,

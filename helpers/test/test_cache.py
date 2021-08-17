@@ -78,7 +78,7 @@ class _ResetGlobalCacheHelper(hut.TestCase):
 
     def _get_f_cf_functions(
         self, **cached_kwargs: Any
-    ) -> Tuple[Callable, hcache.Cached]:
+    ) -> Tuple[Callable, hcache._Cached]:
         """
         Create the intrinsic function `f` and its cached version `cf`.
         """
@@ -93,7 +93,7 @@ class _ResetGlobalCacheHelper(hut.TestCase):
         # Create the intrinsic function.
         f = _get_add_function()
         # Create the cached function.
-        cf = hcache.Cached(f, tag=self.cache_tag, **cached_kwargs)
+        cf = hcache._Cached(f, tag=self.cache_tag, **cached_kwargs)
         # Reset all the caches.
         hcache.clear_global_cache("all", self.cache_tag)
         cf._reset_cache_tracing()
@@ -102,7 +102,7 @@ class _ResetGlobalCacheHelper(hut.TestCase):
     def _execute_and_check_state(
         self,
         f: Callable,
-        cf: hcache.Cached,
+        cf: hcache._Cached,
         val1: int,
         val2: int,
         exp_f_state: bool,
@@ -387,7 +387,7 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
         """
         # Define the function inline imitating working in a notebook.
         add = _get_add_function()
-        cached_add = hcache.Cached(add, tag=self.cache_tag)
+        cached_add = hcache._Cached(add, tag=self.cache_tag)
         # Execute the first time.
         self._execute_and_check_state(
             add, cached_add, 1, 2, exp_f_state=True, exp_cf_state="no_cache"
@@ -398,7 +398,7 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
         )
         # Redefine the function inline.
         add = _get_add_function()
-        cached_add = hcache.Cached(add, tag=self.cache_tag)
+        cached_add = hcache._Cached(add, tag=self.cache_tag)
         # Execute the third time. Should still use memory cache.
         self._execute_and_check_state(
             add, cached_add, 1, 2, exp_f_state=False, exp_cf_state="mem"
@@ -422,7 +422,7 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
             add.executed = True  # type: ignore[attr-defined]
             return x + y
 
-        cached_add = hcache.Cached(add, tag=self.cache_tag)
+        cached_add = hcache._Cached(add, tag=self.cache_tag)
         # Execute the first time.
         self._execute_and_check_state(
             add, cached_add, 1, 2, exp_f_state=True, exp_cf_state="no_cache"
@@ -439,7 +439,7 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
             z = x + y
             return z
 
-        cached_add = hcache.Cached(add, tag=self.cache_tag)
+        cached_add = hcache._Cached(add, tag=self.cache_tag)
         # Execute the third time. Should still use memory cache.
         self._execute_and_check_state(
             add, cached_add, 1, 2, exp_f_state=True, exp_cf_state="no_cache"
@@ -610,13 +610,13 @@ class TestCachePerformance(_ResetGlobalCacheHelper):
         :param val: any hashable argument
         """
         # Create cached versions of the computation function.
-        _mem_cached_computation = hcache.Cached(
+        _mem_cached_computation = hcache._Cached(
             self._computation,
             tag=self.cache_tag,
             use_mem_cache=True,
             use_disk_cache=False,
         )
-        _disk_cached_computation = hcache.Cached(
+        _disk_cached_computation = hcache._Cached(
             self._computation,
             tag=self.cache_tag,
             use_mem_cache=False,
