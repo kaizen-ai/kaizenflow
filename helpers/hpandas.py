@@ -6,6 +6,8 @@ import helpers.hpandas as hpandas
 
 from typing import Any, Optional, Union
 
+import pandas as pd
+
 import helpers.dbg as dbg
 
 
