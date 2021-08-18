@@ -7,9 +7,8 @@ from tqdm.autonotebook import tqdm
 
 import core.data_adapters as adpt
 import helpers.dbg as dbg
-import helpers.list as hlist
-
 import helpers.hpandas as hpandas
+import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 

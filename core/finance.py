@@ -17,10 +17,9 @@ import statsmodels.api as sm
 import core.signal_processing as csigna
 import helpers.dataframe as hdataf
 import helpers.dbg as dbg
+import helpers.hpandas as hpandas
 import helpers.htypes as htypes
 import helpers.printing as hprint
-
-import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 

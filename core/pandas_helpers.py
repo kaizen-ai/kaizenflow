@@ -18,9 +18,9 @@ import pandas as pd
 from tqdm.auto import tqdm
 
 import helpers.dbg as dbg
+import helpers.hpandas as hpandas
 import helpers.printing as pri
 import helpers.s3 as hs3
-import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
@@ -261,8 +261,11 @@ def _get_local_or_s3_stream(file_name: str, *args: Any, **kwargs: Any):
     # Handle the s3fs param, if needed.
     if hs3.is_s3_path(file_name):
         # For S3 files we need to have an `s3fs` parameter.
-        dbg.dassert_in("s3fs", kwargs,
-                   "Credentials through s3fs are needed to access an S3 path")
+        dbg.dassert_in(
+            "s3fs",
+            kwargs,
+            "Credentials through s3fs are needed to access an S3 path",
+        )
         s3fs = kwargs.pop("s3fs")
         stream = s3fs.open(file_name)
     else:

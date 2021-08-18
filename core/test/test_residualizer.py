@@ -10,11 +10,9 @@ import scipy
 import core.explore as exp
 import core.pandas_helpers as pde
 import core.residualizer as res
-import helpers.dbg as dbg
+import helpers.hpandas as hpandas
 import helpers.printing as pri
 import helpers.unit_test as hut
-import helpers.hpandas as hpandas
-
 
 _LOG = logging.getLogger(__name__)
 

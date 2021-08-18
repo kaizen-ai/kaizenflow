@@ -20,8 +20,8 @@ import pandas as pd
 from tqdm import tqdm
 
 import helpers.dbg as dbg
-import helpers.s3 as hs3
 import helpers.io_ as hio
+import helpers.s3 as hs3
 import im.ib.data.extract.gateway.utils as videgu
 
 _LOG = logging.getLogger(__name__)
@@ -363,9 +363,7 @@ def load_historical_data(file_name: str, verbose: bool = False) -> pd.DataFrame:
     """
     _LOG.debug("file_name=%s", file_name)
     s3fs = hs3.get_s3fs("am")
-    df = pdhelp.read_csv(
-        file_name, s3fs=s3fs, parse_dates=True, index_col=0
-    )
+    df = pdhelp.read_csv(file_name, s3fs=s3fs, parse_dates=True, index_col=0)
     # dbg.dassert_isinstance(df.index[0], pd.Timestamp)
     if verbose:
         _LOG.info(

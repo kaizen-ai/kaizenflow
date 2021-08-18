@@ -21,10 +21,9 @@ import core.finance as cfinan
 import core.pandas_helpers as pdhelp
 import helpers.datetime_ as hdatetime
 import helpers.dbg as dbg
+import helpers.hpandas as hpandas
 import helpers.printing as hprint
 import helpers.s3 as hs3
-
-import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 

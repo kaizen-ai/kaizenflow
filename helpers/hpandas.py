@@ -4,7 +4,7 @@ Import as:
 import helpers.hpandas as hpandas
 """
 
-from typing import Optional, Any, Union
+from typing import Any, Optional, Union
 
 import helpers.dbg as dbg
 

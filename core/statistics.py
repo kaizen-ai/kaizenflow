@@ -23,7 +23,6 @@ import core.finance as cfinan
 import core.signal_processing as csigna
 import helpers.dataframe as hdataf
 import helpers.dbg as dbg
-
 import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)

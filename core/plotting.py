@@ -33,9 +33,8 @@ import core.signal_processing as csigna
 import core.statistics as cstati
 import helpers.dataframe as hdataf
 import helpers.dbg as dbg
-import helpers.list as hlist
-
 import helpers.hpandas as hpandas
+import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
 
