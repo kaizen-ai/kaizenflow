@@ -25,7 +25,7 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
         x_vars: cdtfu.NodeColumnList,
         y_vars: cdtfu.NodeColumnList,
         steps_ahead: int,
-        smoothing: Optional[float] = 0,
+        smoothing: float = 0,
         col_mode: Optional[str] = None,
         nan_mode: Optional[str] = None,
         # TODO(*): Add support for weighted data.
@@ -40,7 +40,6 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
         dbg.dassert_lte(
             0, self._steps_ahead, "Non-causal prediction attempted! Aborting..."
         )
-        # NOTE: Set to "replace_all" for backward compatibility.
         self._col_mode = col_mode or "replace_all"
         dbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
         self._nan_mode = nan_mode or "raise"
@@ -82,7 +81,7 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
         # Handle presence of NaNs according to `nan_mode`.
         idx = df_in.index[: -self._steps_ahead] if fit else df_in.index
         self._handle_nans(idx, df.index)
-        # Isolate the forward y piece of `df`.
+        # Get the name of the forward y column.
         forward_y_cols = df.drop(x_vars, axis=1).columns.to_list()
         dbg.dassert_eq(1, len(forward_y_cols))
         forward_y_col = forward_y_cols[0]
