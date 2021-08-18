@@ -8,6 +8,7 @@ from core.dataflow.builders import *  # pylint: disable=unused-import # NOQA
 from core.dataflow.core import *  # pylint: disable=unused-import # NOQA
 from core.dataflow.nodes.base import *  # pylint: disable=unused-import # NOQA
 from core.dataflow.nodes.local_level_model import *  # pylint: disable=unused-import # NOQA
+from core.dataflow.nodes.regression_models import *  # pylint: disable=unused-import # NOQA
 from core.dataflow.nodes.sarimax_models import *  # pylint: disable=unused-import # NOQA
 from core.dataflow.nodes.sklearn_models import *  # pylint: disable=unused-import # NOQA
 from core.dataflow.nodes.sources import *  # pylint: disable=unused-import # NOQA
