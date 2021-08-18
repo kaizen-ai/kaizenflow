@@ -1890,3 +1890,29 @@ class TestComputeRegressionCoefficients1(hut.TestCase):
             actual.round(3), index=True, decimals=3
         )
         self.check_string(actual_string, fuzzy_match=True)
+
+    def test2(self) -> None:
+        cov = pd.DataFrame(
+            np.array(
+                [
+                    [1, 0.05, 0.3, -0.2, 0.1],
+                    [0.05, 1, 0, 0, 0],
+                    [0.3, 0, 1, 0, 0],
+                    [-0.2, 0, 0, 1, 0],
+                    [0.1, 0, 0, 0, 1],
+                ],
+            )
+        )
+        mvnp = casgen.MultivariateNormalProcess(cov=cov)
+        df = mvnp.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=1
+        )
+        actual = cstati.compute_regression_coefficients(
+            df,
+            x_cols=list(range(1, 5)),
+            y_col=0,
+        )
+        actual_string = hut.convert_df_to_string(
+            actual.round(3), index=True, decimals=3
+        )
+        self.check_string(actual_string, fuzzy_match=True)

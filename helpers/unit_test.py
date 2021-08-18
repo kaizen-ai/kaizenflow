@@ -882,13 +882,19 @@ class TestCase(unittest.TestCase):
     """
 
     def setUp(self) -> None:
+        """
+        Execute before any test method.
+        """
         # Print banner to signal the start of a new test.
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
         _LOG.debug("\n%s", hprint.frame(func_name))
         # Set the random seed.
-        random.seed(20000101)
+        random_seed = 20000101
+        _LOG.debug("Resetting random.seed to %s", random_seed)
+        random.seed(random_seed)
         if _HAS_NUMPY:
-            np.random.seed(20000101)
+            _LOG.debug("Resetting np.random.seed to %s", random_seed)
+            np.random.seed(random_seed)
         # Disable matplotlib plotting by overwriting the `show` function.
         if _HAS_MATPLOTLIB:
             plt.show = lambda: 0
