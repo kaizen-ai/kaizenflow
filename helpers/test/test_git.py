@@ -30,6 +30,10 @@ class Test_git_submodule1(hut.TestCase):
         func_call = "git.get_client_root(super_module=False)"
         _execute_func_call(func_call)
 
+    def test_get_project_dirname1(self) -> None:
+        func_call = "git.get_project_dirname()"
+        _execute_func_call(func_call)
+
     def test_get_branch_name1(self) -> None:
         _ = git.get_branch_name()
 

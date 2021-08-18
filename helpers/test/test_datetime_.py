@@ -133,7 +133,7 @@ class Test_dassert_tz1(hut.TestCase):
         # pylint: disable=line-too-long
         exp = r"""
         * Failed assertion *
-        instance of '5' is '<class 'int'>' instead of '(<class 'str'>, <class 'pandas._libs.tslibs.timestamps.Timestamp'>, <class 'datetime.datetime'>)'
+        Instance of '5' is '<class 'int'>' instead of '(<class 'str'>, <class 'pandas._libs.tslibs.timestamps.Timestamp'>, <class 'datetime.datetime'>)'
         datetime_='5' of type '<class 'int'>' is not a DateTimeType
         """
         # pylint: enable=line-too-long

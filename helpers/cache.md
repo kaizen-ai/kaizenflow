@@ -101,4 +101,4 @@
   constructor
 - If cache is set for the function, it can be managed with
   `.set_cache_directory()`, `.get_cache_directory()`, `.destroy_cache()` and
-  `.clear_cache()` methods.
+  `.clear_function_cache()` methods.

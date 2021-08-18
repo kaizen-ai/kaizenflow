@@ -14,6 +14,16 @@ class Test_s3_get_credentials1(hut.TestCase):
         _LOG.debug("res=%s", str(res))
 
 
+class Test_s3_functions1(hut.TestCase):
+    def test_extract_bucket_from_path1(self) -> None:
+        path = (
+            "s3://alphamatic-data/tmp/TestCachingOnS3.test_with_caching1/joblib"
+        )
+        bucket, path = hs3.split_path(path)
+        self.assert_equal(bucket, "alphamatic-data")
+        self.assert_equal(path, "/tmp/TestCachingOnS3.test_with_caching1/joblib")
+
+
 class Test_s3_1(hut.TestCase):
     def test_ls1(self) -> None:
         file_path = os.path.join(hs3.get_path(), "README.md")
@@ -58,8 +68,9 @@ class Test_s3_1(hut.TestCase):
         # > aws s3 ls alphamatic-data/data/ib/metadata/symbols-2021-04-01-143112738505.csv
         # 2021-04-26 08:39:00   61677776 symbols-2021-04-01-143112738505.csv
         s3fs = hs3.get_s3fs("am")
-        file_path = os.path.join(hs3.get_path(),
-             "data/ib/metadata/symbols-2021-04-01-143112738505.csv")
+        file_path = os.path.join(
+            hs3.get_path(), "data/ib/metadata/symbols-2021-04-01-143112738505.csv"
+        )
         act = s3fs.exists(file_path)
         exp = True
         self.assertEqual(act, exp)

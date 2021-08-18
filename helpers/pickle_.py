@@ -122,7 +122,7 @@ def pickle_function(func: Callable) -> str:
 
     - return: string
     """
-    dbg.dassert(callable(func))
+    dbg.dassert_callable(func)
     code_as_bytes = marshal.dumps(func.__code__)
     return code_as_bytes.decode()
 

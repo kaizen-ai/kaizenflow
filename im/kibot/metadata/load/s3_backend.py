@@ -82,7 +82,7 @@ class S3Backend:
         file_name = os.path.join(
             vkmcon.S3_PREFIX, "All_Futures_Contracts_daily.csv.gz"
         )
-        hs3.check_valid_s3_path(file_name)
+        hs3.dassert_is_s3_path(file_name)
         _LOG.debug("file_name=%s", file_name)
         s3fs = hs3.get_s3fs("am")
         df = pdhelp.read_csv(
@@ -116,7 +116,7 @@ class S3Backend:
         # pylint: enable=line-too-long
         file_name = os.path.join(vkmcon.S3_PREFIX, "Futures_tickbidask.txt.gz")
         _LOG.debug("file_name=%s", file_name)
-        hs3.check_valid_s3_path(file_name)
+        hs3.dassert_is_s3_path(file_name)
         s3fs = hs3.get_s3fs("am")
         df = pdhelp.read_csv(
             file_name,
@@ -165,7 +165,7 @@ class S3Backend:
             vkmcon.S3_PREFIX, "FuturesContinuous_intraday.txt.gz"
         )
         _LOG.debug("file_name=%s", file_name)
-        hs3.check_valid_s3_path(file_name)
+        hs3.dassert_is_s3_path(file_name)
         s3fs = hs3.get_s3fs("am")
         df = pdhelp.read_csv(
             file_name,
@@ -193,7 +193,7 @@ class S3Backend:
     @staticmethod
     def read_kibot_exchange_mapping() -> pd.DataFrame:
         file_name = os.path.join(vkmcon.S3_PREFIX, "kibot_to_exchange.csv")
-        hs3.check_valid_s3_path(file_name)
+        hs3.dassert_is_s3_path(file_name)
         s3fs = hs3.get_s3fs("am")
         kibot_to_cme_mapping = pdhelp.read_csv(
             file_name, s3fs=s3fs, index_col="Kibot_symbol"

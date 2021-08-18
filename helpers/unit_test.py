@@ -20,6 +20,7 @@ import helpers.git as git
 import helpers.introspection as hintro
 import helpers.io_ as hio
 import helpers.printing as hprint
+import helpers.s3 as hs3
 import helpers.system_interaction as hsinte
 import helpers.timer as htimer
 
@@ -996,11 +997,10 @@ class TestCase(unittest.TestCase):
         use_absolute_path: bool = True,
     ) -> str:
         """
-        Return the path of the directory storing scratch data for this test
-        class. The directory is also created and cleaned up based on whether
-        the incremental behavior is enabled or not.
+        Return the path of the directory storing scratch data for this test.
 
-        :return: dir name
+        The directory is also created and cleaned up based on whether
+        the incremental behavior is enabled or not.
         """
         if self._scratch_dir is None:
             # Create the dir on the first invocation on a given test.
@@ -1013,6 +1013,35 @@ class TestCase(unittest.TestCase):
             hio.create_dir(dir_name, incremental=get_incremental_tests())
             self._scratch_dir = dir_name
         return self._scratch_dir
+
+    def get_s3_scratch_dir(
+        self,
+        test_class_name: Optional[str] = None,
+        test_method_name: Optional[str] = None,
+    ) -> str:
+        """
+        Return the path of a directory storing scratch data on S3 for this
+        test.
+
+        E.g.,
+            s3://alphamatic-data/tmp/cache.unit_test/
+                root.98e1cf5b88c3.amp.TestTestCase1.test_get_s3_scratch_dir1
+        """
+        # Make the path unique for the test.
+        test_path = self._get_current_path(
+            test_class_name=test_class_name,
+            test_method_name=test_method_name,
+            use_absolute_path=False,
+        )
+        # Make the path unique for the current user.
+        user_name = hsinte.get_user_name()
+        server_name = hsinte.get_server_name()
+        project_dirname = git.get_project_dirname()
+        dir_name = f"{user_name}.{server_name}.{project_dirname}"
+        # Assemble everything in a single path.
+        s3_bucket = hs3.get_path()
+        scratch_dir = f"{s3_bucket}/tmp/cache.unit_test/{dir_name}.{test_path}"
+        return scratch_dir
 
     def assert_equal(
         self,
