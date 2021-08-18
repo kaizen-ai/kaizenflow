@@ -10,6 +10,8 @@ import helpers.dbg as dbg
 import im.common.data.load.abstract_data_loader as icdlab
 import im.common.data.types as vcdtyp
 
+import helpers.hpandas as hpandas
+
 
 class FuturesForwardContracts:
     """
@@ -113,6 +115,6 @@ class FuturesForwardContracts:
             data_subseries.append(subseries.copy())
         # Merge the contract data over the partitioned srs index.
         df = pd.concat(data_subseries, axis=0)
-        dbg.dassert_strictly_increasing_index(df)
+        hpandas.dassert_strictly_increasing_index(df)
         dbg.dassert(df.index.equals(srs.index))
         return df

@@ -9,6 +9,8 @@ import core.data_adapters as adpt
 import helpers.dbg as dbg
 import helpers.list as hlist
 
+import helpers.hpandas as hpandas
+
 _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Remove after PTask2335.
@@ -105,7 +107,7 @@ if True:
         dbg.dassert(
             df.index.freq, "The dataframe should have uniform datetime grid"
         )
-        dbg.dassert_strictly_increasing_index(df.index)
+        hpandas.dassert_strictly_increasing_index(df.index)
         if isinstance(y_vars, str):
             y_vars = [y_vars]
         dbg.dassert_isinstance(y_vars, list)

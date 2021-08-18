@@ -7,6 +7,8 @@ import logging
 import os
 from typing import Any, Iterator, List, Optional, Tuple, Union
 
+import helpers.hpandas as hpandas
+
 try:
     import ib_insync
 except ModuleNotFoundError:
@@ -196,7 +198,7 @@ def save_historical_data_by_intervals_IB_loop(
                     ~df_to_write.index.duplicated(keep="last")
                 ]
                 df_to_write.sort_index(inplace=True)
-            dbg.dassert_monotonic_index(
+            hpandas.dassert_monotonic_index(
                 df_to_write,
                 "Most likely the data for selected interval already exists, try incremental mode.",
             )

@@ -13,6 +13,8 @@ import pandas as pd
 
 import helpers.dbg as dbg
 
+import helpers.hpandas as hpandas
+
 _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Remove after PTask2335.
@@ -269,7 +271,7 @@ if True:
         `gluonts.dataset.common.ListDataset`.
         """
         dbg.dassert_isinstance(local_ts.index, pd.MultiIndex)
-        dbg.dassert_strictly_increasing_index(
+        hpandas.dassert_strictly_increasing_index(
             local_ts.index.get_level_values(0).unique()
         )
         for ts, local_ts_grid in local_ts.groupby(level=1):

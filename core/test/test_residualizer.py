@@ -13,6 +13,8 @@ import core.residualizer as res
 import helpers.dbg as dbg
 import helpers.printing as pri
 import helpers.unit_test as hut
+import helpers.hpandas as hpandas
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -45,7 +47,7 @@ class TestPcaFactorComputer1(hut.TestCase):
         eigval_df = prev_eigval_df.reindex(columns=shuffle)
         eigval_df.columns = list(range(eigval_df.shape[1]))
         for obj in (prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df):
-            dbg.dassert_strictly_increasing_index(obj)
+            hpandas.dassert_strictly_increasing_index(obj)
         return prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df
 
     def test_stabilize_eigenvec1(self) -> None:

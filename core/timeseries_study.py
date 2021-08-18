@@ -15,6 +15,8 @@ from tqdm.auto import tqdm
 import core.plotting as plot
 import helpers.dbg as dbg
 import helpers.introspection as intr
+import helpers.hpandas as hpandas
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -52,7 +54,7 @@ class _TimeSeriesAnalyzer:
         """
         dbg.dassert_isinstance(time_series, pd.Series)
         dbg.dassert_isinstance(time_series.index, pd.DatetimeIndex)
-        dbg.dassert_strictly_increasing_index(time_series.index)
+        hpandas.dassert_strictly_increasing_index(time_series.index)
         self._time_series = time_series
         self._ts_name = time_series.name
         self._data_name = data_name

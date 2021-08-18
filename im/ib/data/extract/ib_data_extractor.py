@@ -18,6 +18,8 @@ import im.ib.data.extract.gateway.download_data_ib_loop as iidegd
 import im.ib.data.extract.gateway.utils as iidegu
 import im.ib.data.load.ib_file_path_generator as iidlib
 
+import helpers.hpandas as hpandas
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -237,7 +239,7 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         )
         # Sort index.
         data = data.sort_index(ascending=True)
-        dbg.dassert_monotonic_index(data)
+        hpandas.dassert_monotonic_index(data)
         # Save data to archive.
         data.to_csv(arch_file, compression="gzip")
         _LOG.info("Finished, data in `%s`", arch_file)

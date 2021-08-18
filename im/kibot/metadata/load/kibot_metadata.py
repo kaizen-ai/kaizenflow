@@ -19,6 +19,8 @@ import im.kibot.metadata.load.expiry_contract_mapper as ikmlex
 import im.kibot.metadata.load.s3_backend as ikmls3
 import im.kibot.metadata.types as ikmtyp
 
+import helpers.hpandas as hpandas
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -639,7 +641,7 @@ class FuturesContractExpiryMapper:
         contract_end_dates = contracts[["contract", "end_date"]].set_index(
             "end_date"
         )
-        dbg.dassert_strictly_increasing_index(contract_end_dates)
+        hpandas.dassert_strictly_increasing_index(contract_end_dates)
         # Shift to index nth contracts by end date.
         nth_contract_end_dates = contract_end_dates.shift(-1 * (n - 1))
         # Realign the end date to nth contract mapping to `idx` and backfill

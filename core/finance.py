@@ -20,6 +20,8 @@ import helpers.dbg as dbg
 import helpers.htypes as htypes
 import helpers.printing as hprint
 
+import helpers.hpandas as hpandas
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -35,7 +37,7 @@ def remove_dates_with_no_data(
     :return: filtered df
     """
     # This is not strictly necessary.
-    dbg.dassert_strictly_increasing_index(df)
+    hpandas.dassert_strictly_increasing_index(df)
     # Store the dates of the days removed because of all NaNs.
     removed_days = []
     # Accumulate the df for all the days that are not discarded.
@@ -51,7 +53,7 @@ def remove_dates_with_no_data(
             df_out.append(df_tmp)
         num_days += 1
     df_out = pd.concat(df_out)
-    dbg.dassert_strictly_increasing_index(df_out)
+    hpandas.dassert_strictly_increasing_index(df_out)
     #
     if report_stats:
         # Stats for rows.
@@ -93,7 +95,7 @@ def set_non_ath_to_nan(
       - `time <= end_time`
     """
     dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
-    dbg.dassert_strictly_increasing_index(df)
+    hpandas.dassert_strictly_increasing_index(df)
     if start_time is None:
         start_time = datetime.time(9, 30)
     if end_time is None:
@@ -793,7 +795,7 @@ def compute_bet_runs(
     :return: series of -1/0/1 with 1's indicating long bets and -1 indicating
         short bets
     """
-    dbg.dassert_monotonic_index(positions)
+    hpandas.dassert_monotonic_index(positions)
     # Forward fill NaN positions by default (e.g., do not assume they are
     # closed out).
     nan_mode = nan_mode or "ffill"
@@ -903,7 +905,7 @@ def compute_returns_per_bet(
         bet
     """
     dbg.dassert(positions.index.equals(log_rets.index))
-    dbg.dassert_strictly_increasing_index(log_rets)
+    hpandas.dassert_strictly_increasing_index(log_rets)
     bet_ends = compute_bet_ends(positions, nan_mode)
     # Retrieve locations of bet starts and bet ends.
     bet_ends_idx = bet_ends.loc[bet_ends != 0].dropna().index
