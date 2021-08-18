@@ -1,12 +1,9 @@
 import collections
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional
 
-import numpy as np
 import pandas as pd
-import sklearn as sklear
 
-import core.data_adapters as cdataa
 import core.dataflow.core as cdtfc
 import core.dataflow.nodes.base as cdnb
 import core.dataflow.utils as cdtfu
@@ -21,6 +18,7 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
     """
     Fit and predict a linear regression model.
     """
+
     def __init__(
         self,
         nid: cdtfc.NodeId,
@@ -54,7 +52,10 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
         return self._fit_predict_helper(df_in, fit=False)
 
     def get_fit_state(self) -> Dict[str, Any]:
-        fit_state = {"_fit_coefficients": self._fit_coefficients, "_info['fit']": self._info["fit"]}
+        fit_state = {
+            "_fit_coefficients": self._fit_coefficients,
+            "_info['fit']": self._info["fit"],
+        }
         return fit_state
 
     def set_fit_state(self, fit_state: Dict[str, Any]):
@@ -82,9 +83,7 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
         idx = df_in.index[: -self._steps_ahead] if fit else df_in.index
         self._handle_nans(idx, df.index)
         # Isolate the forward y piece of `df`.
-        forward_y_cols = df.drop(
-            x_vars, axis=1
-        ).columns.to_list()
+        forward_y_cols = df.drop(x_vars, axis=1).columns.to_list()
         dbg.dassert_eq(1, len(forward_y_cols))
         forward_y_col = forward_y_cols[0]
         coefficients = cstati.compute_regression_coefficients(
@@ -95,15 +94,20 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
         if fit:
             self._fit_coefficients = coefficients.copy()
         dbg.dassert(
-            self._fit_coefficients is not None, "Model not found! Check if `fit()` has been run."
+            self._fit_coefficients is not None,
+            "Model not found! Check if `fit()` has been run.",
         )
         # Generate x_var weights.
         self._fit_coefficients["weight"] = self._fit_coefficients["beta"] / (
             self._fit_coefficients["turn"] ** self._smoothing
         )
-        self._fit_coefficients["norm_weight"] = csigna.normalize(self._fit_coefficients["weight"])
+        self._fit_coefficients["norm_weight"] = csigna.normalize(
+            self._fit_coefficients["weight"]
+        )
         # Generate predictions.
-        forward_y_hat = df[x_vars].multiply(self._fit_coefficients["weight"]).sum(axis=1)
+        forward_y_hat = (
+            df[x_vars].multiply(self._fit_coefficients["weight"]).sum(axis=1)
+        )
         forward_y_hat_col = f"{forward_y_col}_hat"
         forward_y_hat = forward_y_hat.rename(forward_y_hat_col)
         info = collections.OrderedDict()
@@ -132,7 +136,7 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
         return {"df_out": df_out}
 
     def _handle_nans(
-            self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
+        self, idx: pd.DataFrame.index, non_nan_idx: pd.DataFrame.index
     ) -> None:
         if self._nan_mode == "raise":
             if idx.shape[0] != non_nan_idx.shape[0]:
@@ -142,4 +146,3 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
             pass
         else:
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
-
