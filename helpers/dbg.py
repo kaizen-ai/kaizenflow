@@ -618,11 +618,6 @@ def dassert_file_extension(
     )
 
 
-# TODO(gp): Factor out common code related to extracting the index from several
-#  pandas data structures.
-# TODO(gp): Not sure it's used or useful?
-
-
 # #############################################################################
 # Logger.
 # #############################################################################

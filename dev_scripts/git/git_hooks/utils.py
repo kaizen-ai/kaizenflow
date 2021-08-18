@@ -18,6 +18,8 @@ _LOG = logging.getLogger(__name__)
 # https://github.com/pre-commit/pre-commit-hooks/blob/master/pre_commit_hooks/check_merge_conflict.py
 # https://code-maven.com/enforcing-commit-message-format-in-git
 
+# TODO(gp): Add a check for "Do not commit" or "Do not merge".
+
 
 # The path to the git-binary:
 _GIT_BINARY_PATH = "git"

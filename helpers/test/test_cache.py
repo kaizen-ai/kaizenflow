@@ -14,7 +14,7 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Do not commit this.
-_LOG.debug = _LOG.info
+#_LOG.debug = _LOG.info
 
 # #############################################################################
 

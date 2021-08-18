@@ -29,7 +29,7 @@ import helpers.system_interaction as hsyste
 _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Do not commit this.
-_LOG.debug = _LOG.info
+#_LOG.debug = _LOG.info
 
 
 # #############################################################################
