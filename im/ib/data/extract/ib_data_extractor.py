@@ -11,6 +11,7 @@ import ib_insync
 import pandas as pd
 
 import helpers.dbg as dbg
+import helpers.hpandas as hpandas
 import helpers.s3 as hs3
 import im.common.data.extract.data_extractor as icdeda
 import im.common.data.types as icdtyp
@@ -237,7 +238,7 @@ class IbDataExtractor(icdeda.AbstractDataExtractor):
         )
         # Sort index.
         data = data.sort_index(ascending=True)
-        dbg.dassert_monotonic_index(data)
+        hpandas.dassert_monotonic_index(data)
         # Save data to archive.
         data.to_csv(arch_file, compression="gzip")
         _LOG.info("Finished, data in `%s`", arch_file)

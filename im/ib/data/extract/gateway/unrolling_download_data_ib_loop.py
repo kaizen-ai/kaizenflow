@@ -2,6 +2,8 @@ import logging
 import os
 from typing import Any, List, Optional, Tuple, Union
 
+import helpers.hpandas as hpandas
+
 try:
     import ib_insync
 except ModuleNotFoundError:
@@ -211,7 +213,7 @@ def get_historical_data_from_tasks(
             what_to_show,
             use_rth,
         )
-        dbg.dassert_monotonic_index(df_tmp)
+        hpandas.dassert_monotonic_index(df_tmp)
         _LOG.debug("%s -> df_tmp=%s", end_ts, videgu.get_df_signature(df_tmp))
         df.append(df_tmp)
     #
@@ -266,7 +268,7 @@ def _execute_ptask(
         use_rth,
     )
     ib.disconnect()
-    dbg.dassert_monotonic_index(df)
+    hpandas.dassert_monotonic_index(df)
     _LOG.debug("%s -> df=%s", end_ts, videgu.get_df_signature(df))
     if not df.empty:
         df.to_csv(file_name)
@@ -442,7 +444,7 @@ def get_historical_data(
     if not df.empty:
         # import helpers.unit_test as hut
         # hut.diff_df_monotonic(df)
-        dbg.dassert_monotonic_index(df)
+        hpandas.dassert_monotonic_index(df)
         end_ts3 = end_ts - pd.DateOffset(seconds=1)
         _LOG.debug("start_ts= %s end_ts3=%s", start_ts, end_ts3)
         df = df[start_ts:end_ts3]

@@ -11,6 +11,7 @@ from tqdm.autonotebook import tqdm
 
 import core.pandas_helpers as pdhelp
 import helpers.dbg as dbg
+import helpers.hpandas as hpandas
 import helpers.io_ as hio
 import helpers.s3 as hs3
 import im.common.data.types as icdtyp
@@ -639,7 +640,7 @@ class FuturesContractExpiryMapper:
         contract_end_dates = contracts[["contract", "end_date"]].set_index(
             "end_date"
         )
-        dbg.dassert_strictly_increasing_index(contract_end_dates)
+        hpandas.dassert_strictly_increasing_index(contract_end_dates)
         # Shift to index nth contracts by end date.
         nth_contract_end_dates = contract_end_dates.shift(-1 * (n - 1))
         # Realign the end date to nth contract mapping to `idx` and backfill

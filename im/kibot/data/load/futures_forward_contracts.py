@@ -1,12 +1,10 @@
-import datetime
-from typing import Union
-
 import pandas as pd
 from tqdm.auto import tqdm
 
 import core.finance as cfinan
 import helpers.dataframe as hdataf
 import helpers.dbg as dbg
+import helpers.hpandas as hpandas
 import im.common.data.load.abstract_data_loader as icdlab
 import im.common.data.types as vcdtyp
 
@@ -113,6 +111,6 @@ class FuturesForwardContracts:
             data_subseries.append(subseries.copy())
         # Merge the contract data over the partitioned srs index.
         df = pd.concat(data_subseries, axis=0)
-        dbg.dassert_strictly_increasing_index(df)
+        hpandas.dassert_strictly_increasing_index(df)
         dbg.dassert(df.index.equals(srs.index))
         return df

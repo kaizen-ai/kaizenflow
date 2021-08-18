@@ -23,6 +23,7 @@ from scipy.spatial.distance import cosine  # type: ignore
 import core.explore as exp
 import core.plotting as plot
 import helpers.dbg as dbg
+import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
@@ -342,7 +343,7 @@ class PcaFactorComputer(FactorComputer):
 
     def _execute(self, df: pd.DataFrame, ts: int) -> pd.Series:
         _LOG.debug("ts=%s", ts)
-        dbg.dassert_strictly_increasing_index(df)
+        hpandas.dassert_strictly_increasing_index(df)
         # Compute correlation.
         df = exp.handle_nans(df, self.nan_mode_in_data)
         corr_df = df.corr()
@@ -440,8 +441,8 @@ class PcaFactorComputer(FactorComputer):
                     return sign
             return None
 
-        dbg.dassert_strictly_increasing_index(prev_eigvec_df)
-        dbg.dassert_strictly_increasing_index(eigvec_df)
+        hpandas.dassert_strictly_increasing_index(prev_eigvec_df)
+        hpandas.dassert_strictly_increasing_index(eigvec_df)
         # TODO(gp): This code can be sped up by:
         # 1) keeping a running list of the v2 columns already mapped so that
         #    we don't have to check over and over.

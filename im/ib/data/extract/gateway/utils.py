@@ -4,6 +4,8 @@ import os
 import random
 from typing import Dict, List, Optional, Tuple, Union, cast
 
+import helpers.hpandas as hpandas
+
 try:
     import ib_insync
 except ModuleNotFoundError:
@@ -184,7 +186,7 @@ def req_historical_data(
         # Organize the data as a dataframe with increasing times.
         df = ib_insync.util.df(bars)
         df.set_index("date", drop=True, inplace=True)
-        dbg.dassert_monotonic_index(df)
+        hpandas.dassert_monotonic_index(df)
         # Convert to ET.
         if bar_size_setting != "1 day":
             df.index = df.index.tz_convert(tz="America/New_York")
@@ -323,7 +325,7 @@ def truncate(
     if df.empty:
         return df
     dbg.dassert_in(type(df.index[0]), [datetime.date, pd.Timestamp])
-    dbg.dassert_monotonic_index(df)
+    hpandas.dassert_monotonic_index(df)
     start_ts = pd.Timestamp(start_ts)
     end_ts = pd.Timestamp(end_ts)
     end_ts3 = end_ts - pd.DateOffset(seconds=1)

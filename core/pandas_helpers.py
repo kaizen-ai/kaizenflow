@@ -18,6 +18,7 @@ import pandas as pd
 from tqdm.auto import tqdm
 
 import helpers.dbg as dbg
+import helpers.hpandas as hpandas
 import helpers.printing as pri
 import helpers.s3 as hs3
 
@@ -182,7 +183,7 @@ def df_rolling_apply(
         rows as `df`
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
-    dbg.dassert_strictly_increasing_index(df)
+    hpandas.dassert_strictly_increasing_index(df)
     # Make sure the window is not larger than the df.
     dbg.dassert_lt(0, window)
     if int(window) != window:
@@ -197,7 +198,7 @@ def df_rolling_apply(
         iter_ = range(0, df.shape[0])
     else:
         dbg.dassert_isinstance(timestamps, pd.Index)
-        dbg.dassert_strictly_increasing_index(timestamps)
+        hpandas.dassert_strictly_increasing_index(timestamps)
         idxs = df.index.intersection(timestamps)
         dbg.dassert_lte(1, len(idxs))
         if len(idxs) < len(timestamps):
@@ -260,8 +261,11 @@ def _get_local_or_s3_stream(file_name: str, *args: Any, **kwargs: Any):
     # Handle the s3fs param, if needed.
     if hs3.is_s3_path(file_name):
         # For S3 files we need to have an `s3fs` parameter.
-        dbg.dassert_in("s3fs", kwargs,
-                   "Credentials through s3fs are needed to access an S3 path")
+        dbg.dassert_in(
+            "s3fs",
+            kwargs,
+            "Credentials through s3fs are needed to access an S3 path",
+        )
         s3fs = kwargs.pop("s3fs")
         stream = s3fs.open(file_name)
     else:
