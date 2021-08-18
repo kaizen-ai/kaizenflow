@@ -208,13 +208,14 @@ class TestRunExperimentArchiveOnS3(hut.TestCase):
         # Create archive on S3.
         if create_s3_archive:
             output_metadata_file = f"{scratch_dir}/output_metadata.json"
+            s3_tmp_path = self.get_s3_scratch_dir()
             cmd_opts = [
                 "--config_builder 'dev_scripts.test.test_run_notebook.build_configs3()'",
                 "--num_threads 'serial'",
                 f"--aws_profile '{aws_profile}'",
-                "--s3_path s3://alphamatic-data/tmp",
+                f"--s3_path {s3_tmp_path}",
                 f"--json_output_metadata {output_metadata_file}",
-                #f"-v DEBUG",
+                # f"-v DEBUG",
             ]
             #
             exp_pass = True

@@ -22,8 +22,6 @@ def _test1() -> None:
 
 
 def _test2() -> None:
-    """
-    """
     tag = "manage_cache"
     hcac.clear_global_cache("all", tag=tag)
     # Create a function-specific cache on disk only.
@@ -56,19 +54,19 @@ def _main(parser: argparse.ArgumentParser) -> None:
     action = args.action
     tag = None
     actions = [
-        "clear_cache",
-        "clear_mem_cache",
-        "clear_disk_cache",
+        "clear_global_cache",
+        "clear_global_mem_cache",
+        "clear_global_disk_cache",
         "list",
         "print_cache_info",
         "test",
     ]
     dbg.dassert_in(action, actions)
-    if action == "clear_cache":
+    if action == "clear_global_cache":
         hcac.clear_global_cache("all", tag=tag)
-    elif action == "clear_mem_cache":
+    elif action == "clear_global_mem_cache":
         hcac.clear_global_cache("mem", tag=tag)
-    elif action == "clear_disk_cache":
+    elif action == "clear_global_disk_cache":
         hcac.clear_global_cache("disk", tag=tag)
     elif action == "print_cache_info":
         txt = hcac.get_global_cache_info()

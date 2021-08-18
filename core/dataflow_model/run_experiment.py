@@ -196,7 +196,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             s3_path = hs3.get_key_value(aws_profile, "aws_s3_bucket")
             dbg.dassert(not s3_path.startswith("s3://"), "Invalid value '%s'")
             s3_path = "s3://" + s3_path + "/experiments"
-        hs3.is_valid_s3_path(s3_path)
+        hs3.is_s3_path(s3_path)
         # Archive on S3.
         s3_path = hs3.archive_data_on_s3(dst_dir, s3_path, aws_profile)
     # Save the metadata.

@@ -151,7 +151,7 @@ def _post_to_s3(local_src_path: str, s3_path: str, aws_profile: str) -> str:
     """
     dbg.dassert_file_exists(local_src_path)
     # TODO(gp): Pass s3_path through the credentials.
-    hs3.check_valid_s3_path(s3_path)
+    hs3.dassert_is_s3_path(s3_path)
     dbg.dassert(
         s3_path.endswith("/notebooks"),
         "S3 path needs to point to a `notebooks` dir, instead s3_path='%s'",
@@ -243,7 +243,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser = hs3.add_s3_args(parser)
     parser = prsr.add_verbosity_arg(parser)
-    return parser
+    return parser  # type: ignore[no-any-return]
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
@@ -252,7 +252,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.action == "open":
         # Open an existing HTML notebook.
         src_file_name = args.file
-        if hs3.is_valid_s3_path(src_file_name):
+        if hs3.is_s3_path(src_file_name):
             # We use AWS CLI to minimize the dependencies from Python packages.
             aws_profile = hs3.get_aws_profile(args.aws_profile)
             # Check that the file exists.

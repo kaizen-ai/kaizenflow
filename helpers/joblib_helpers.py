@@ -349,7 +349,7 @@ def parallel_execute(
             )
             res.append(res_tmp)
     else:
-        num_threads = int(num_threads)  # type: ignore[assignment]
+        num_threads = int(num_threads)
         # -1 is interpreted by joblib like for all cores.
         _LOG.info("Using %d threads", num_threads)
         # From https://stackoverflow.com/questions/24983493
@@ -391,20 +391,17 @@ class _S3FSStoreBackend(StoreBackendBase, StoreBackendMixin):
     A StoreBackend for S3 cloud storage file system.
     """
 
-    def _open_item(self, fd: Any, mode: str) -> Any:
-        return self.storage.open(fd, mode)
-
-    def _item_exists(self, path: str) -> None:
-        return self.storage.exists(path)
-
-    def _move_item(self, src: str, dst: str) -> None:
-        self.storage.mv(src, dst)
+    def __init__(self) -> None:
+        super().__init__()
+        self._objs: List[Any] = []
 
     def clear_location(self, location: str) -> None:
         """
         Check if object exists in store.
         """
-        self.storage.rm(location, recursive=True)
+        if self.storage.exists(location):
+            self._flush()
+            self.storage.rm(location, recursive=True)
 
     def create_location(self, location: str) -> None:
         """
@@ -423,8 +420,8 @@ class _S3FSStoreBackend(StoreBackendBase, StoreBackendMixin):
         self,
         location: str,
         backend_options: Dict[str, Any],
-        verbose: int =0,
-    ):
+        verbose: int = 0,
+    ) -> None:
         """
         Configure the store backend.
         """
@@ -447,6 +444,24 @@ class _S3FSStoreBackend(StoreBackendBase, StoreBackendMixin):
         # Memory map mode is not supported.
         self.mmap_mode = None
 
+    def _flush(self) -> None:
+        # TODO(gp): No need to flush for now.
+        return
+        for fd in self._objs:
+            fd.flush(force=True)
+
+    def _open_item(self, fd: Any, mode: str) -> Any:
+        self._objs.append(fd)
+        return self.storage.open(fd, mode)
+
+    def _item_exists(self, path: str) -> bool:
+        self._flush()
+        ret: bool = self.storage.exists(path)
+        return ret
+
+    def _move_item(self, src: str, dst: str) -> None:
+        self.storage.mv(src, dst)
+
     def _mkdirp(self, directory: str) -> None:
         """
         Create recursively a directory on the S3 store.
@@ -461,13 +476,14 @@ class _S3FSStoreBackend(StoreBackendBase, StoreBackendMixin):
             self.storage.mkdir(current_path)
 
 
-def _register_s3fs_store_backend() -> None:
+_REGISTER_S3FS_STORE = False
+
+
+def register_s3fs_store_backend() -> None:
     """
     Register the S3 store backend for joblib memory caching.
     """
-    from joblib import register_store_backend
-
-    register_store_backend("s3", _S3FSStoreBackend)
-
-
-_register_s3fs_store_backend()
+    global _REGISTER_S3FS_STORE
+    if not _REGISTER_S3FS_STORE:
+        joblib.register_store_backend("s3", _S3FSStoreBackend)
+        _REGISTER_S3FS_STORE = True

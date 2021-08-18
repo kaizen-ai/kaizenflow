@@ -111,6 +111,18 @@ class TestTestCase1(hut.TestCase):
         exp = "$GIT_ROOT/helpers/test/test_class.test_method/tmp.scratch"
         self.assertEqual(act, exp)
 
+    def test_get_s3_scratch_dir1(self) -> None:
+        act = self.get_s3_scratch_dir()
+        _LOG.debug("act=%s", act)
+        # It is difficult to test, so we just execute.
+
+    def test_get_s3_scratch_dir2(self) -> None:
+        test_class_name = "test_class"
+        test_method_name = "test_method"
+        act = self.get_s3_scratch_dir(test_class_name, test_method_name)
+        _LOG.debug("act=%s", act)
+        # It is difficult to test, so we just execute.
+
     def test_assert_equal1(self) -> None:
         actual = "hello world"
         expected = actual

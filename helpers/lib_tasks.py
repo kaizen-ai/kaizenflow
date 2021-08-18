@@ -1400,17 +1400,8 @@ def docker_jupyter(  # type: ignore
     if auto_assign_port:
         uid = os.getuid()
         _LOG.debug("uid=%s", uid)
-        git_dir = git.get_client_root(super_module=True)
-        _LOG.debug("git_dir=%s", git_dir)
-        last_char = os.path.basename(git_dir)[-1]
-        if not last_char.isdigit():
-            _LOG.warning(
-                "The last char `%s` of the git dir `%s` is not a digit",
-                last_char,
-                git_dir,
-            )
-            sys.exit(-1)
-        git_repo_idx = int(last_char)
+        git_repo_idx = git.get_project_dirname(only_index=True)
+        git_repo_idx = int(git_repo_idx)
         _LOG.debug("git_repo_idx=%s", git_repo_idx)
         # We assume that there are no more than `max_idx_per_users` clients.
         max_idx_per_user = 10
@@ -2218,9 +2209,9 @@ def run_fast_slow_tests(  # type: ignore
 
 
 @task
-def traceback(ctx, log_name="", purify=True):  # type: ignore
+def traceback(ctx, log_name="tmp.pytest_script.log", purify=True):  # type: ignore
     """
-    Parse the traceback from pytest and navigate it with vim.
+    Parse the traceback from Pytest and navigate it with vim.
 
     ```
     # Run a unit test.
@@ -2317,7 +2308,8 @@ def _get_failed_tests_from_clipboard() -> List[str]:
     FAILED helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test2 - TypeError: check_string() takes 2 positional arguments but 3 were given
     FAILED core/dataflow/test/test_runners.py::TestRealTimeDagRunner1::test1 - TypeError: execute_with_real_time_loop() got an unexpected keyword argument 'num_iterations'
     FAILED helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal1 - NameError: name 'dedent' is not defined
-    FAILED helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal2 - NameError: name 'dedent' is not defined                                                                                                                                 FAILED helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal4 - NameError: name 'dedent' is not defined
+    FAILED helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal2 - NameError: name 'dedent' is not defined
+    FAILED helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal4 - NameError: name 'dedent' is not defined
     ```
     """
     hsinte.system_to_string("pbpaste")
