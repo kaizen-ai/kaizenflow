@@ -1894,11 +1894,13 @@ class TestComputeRegressionCoefficients1(hut.TestCase):
     def test2(self) -> None:
         cov = pd.DataFrame(
             np.array(
-                [[1, 0.05, 0.3, -0.2, 0.1],
-                 [0.05, 1, 0, 0, 0],
-                 [0.3, 0, 1, 0, 0],
-                 [-0.2, 0, 0, 1, 0],
-                 [0.1, 0, 0, 0, 1]],
+                [
+                    [1, 0.05, 0.3, -0.2, 0.1],
+                    [0.05, 1, 0, 0, 0],
+                    [0.3, 0, 1, 0, 0],
+                    [-0.2, 0, 0, 1, 0],
+                    [0.1, 0, 0, 0, 1],
+                ],
             )
         )
         mvnp = casgen.MultivariateNormalProcess(cov=cov)

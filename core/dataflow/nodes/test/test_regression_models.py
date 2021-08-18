@@ -86,11 +86,13 @@ class TestLinearRegression(hut.TestCase):
         """
         cov = pd.DataFrame(
             np.array(
-                [[1, 0.05, 0.3, -0.2, 0.1],
-                [0.05, 1, 0, 0, 0],
-                [0.3, 0, 1, 0, 0],
-                [-0.2, 0, 0, 1, 0],
-                [0.1, 0, 0, 0, 1]],
+                [
+                    [1, 0.05, 0.3, -0.2, 0.1],
+                    [0.05, 1, 0, 0, 0],
+                    [0.3, 0, 1, 0, 0],
+                    [-0.2, 0, 0, 1, 0],
+                    [0.1, 0, 0, 0, 1],
+                ],
             )
         )
         mn_process = casgen.MultivariateNormalProcess(cov=cov)
