@@ -15,7 +15,10 @@ class TestLinearRegression(hut.TestCase):
 
     def test0(self) -> None:
         # Load test data.
+        print("Generating data")
         data = self._get_data(seed=1)
+        print(data)
+        print("Checking")
         df_str = hut.convert_df_to_string(data, index=True, decimals=3)
         self.check_string(df_str)
 
