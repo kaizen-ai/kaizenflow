@@ -14,11 +14,15 @@ _LOG = logging.getLogger(__name__)
 class TestLinearRegression(hut.TestCase):
 
     def test0(self) -> None:
-        # Load test data.
-        print("Generating data")
+        """
+        Check that the randomly generated data is stable. See AmpTask1649.
+        """
+        _LOG.debug("Current seed=%s", np.random.get_state()[1][0])
+        _LOG.debug("Generating data")
         data = self._get_data(seed=1)
-        print(data)
-        print("Checking")
+        _LOG.debug("Current seed=%s", np.random.get_state()[1][0])
+        _LOG.debug("data=\n%s", str(data))
+        _LOG.debug("Checking against golden")
         df_str = hut.convert_df_to_string(data, index=True, decimals=3)
         self.check_string(df_str)
 
