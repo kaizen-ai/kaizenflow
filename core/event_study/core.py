@@ -35,6 +35,7 @@ import numpy as np
 import pandas as pd
 
 import helpers.dbg as dbg
+import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
@@ -114,8 +115,8 @@ def build_local_timeseries(
     # Enforce assumptions on inputs.
     dbg.dassert_isinstance(events, pd.DataFrame)
     dbg.dassert_isinstance(grid_data, pd.DataFrame)
-    dbg.dassert_strictly_increasing_index(events.index)
-    dbg.dassert_strictly_increasing_index(grid_data.index)
+    hpandas.dassert_strictly_increasing_index(events.index)
+    hpandas.dassert_strictly_increasing_index(grid_data.index)
     # Make `relative_grid_indices` a sorted list.
     if not isinstance(relative_grid_indices, list):
         relative_grid_indices = list(relative_grid_indices)
@@ -138,7 +139,7 @@ def build_local_timeseries(
         relative_data[idx] = data_at_idx
     # Turn the data dictionary into a multiindexed dataframe.
     df = pd.concat(relative_data)
-    dbg.dassert_strictly_increasing_index(df)
+    hpandas.dassert_strictly_increasing_index(df)
     return df
 
 
@@ -181,7 +182,7 @@ def unwrap_local_timeseries(
     # Reindex according to grid_data.
     df_reindexed = df_mean.reindex(index=grid_data.index)
     #
-    dbg.dassert_strictly_increasing_index(df_reindexed)
+    hpandas.dassert_strictly_increasing_index(df_reindexed)
     return df_reindexed
 
 

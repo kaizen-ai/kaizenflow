@@ -26,8 +26,8 @@ def _test2() -> None:
     hcac.clear_global_cache("all", tag=tag)
     # Create a function-specific cache on disk only.
     path = "/tmp/cache.function"
-    _func.set_cache_path("disk", path)
-    _func.clear_cache(cache_type="disk")
+    _func.set_function_cache_path(path)
+    _func.clear_function_cache()
     #
     _func()
     print(_func.get_info())

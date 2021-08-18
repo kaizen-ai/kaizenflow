@@ -7,6 +7,7 @@ from tqdm.autonotebook import tqdm
 
 import core.data_adapters as adpt
 import helpers.dbg as dbg
+import helpers.hpandas as hpandas
 import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
@@ -105,7 +106,7 @@ if True:
         dbg.dassert(
             df.index.freq, "The dataframe should have uniform datetime grid"
         )
-        dbg.dassert_strictly_increasing_index(df.index)
+        hpandas.dassert_strictly_increasing_index(df.index)
         if isinstance(y_vars, str):
             y_vars = [y_vars]
         dbg.dassert_isinstance(y_vars, list)

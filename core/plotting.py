@@ -33,6 +33,7 @@ import core.signal_processing as csigna
 import core.statistics as cstati
 import helpers.dataframe as hdataf
 import helpers.dbg as dbg
+import helpers.hpandas as hpandas
 import helpers.list as hlist
 
 _LOG = logging.getLogger(__name__)
@@ -238,7 +239,7 @@ def plot_projection(
     mode = mode or "no-scatter"
     ax = ax or plt.gca()
     ax.set_yticklabels([])
-    dbg.dassert_strictly_increasing_index(df)
+    hpandas.dassert_strictly_increasing_index(df)
     dbg.dassert_no_duplicates(df.columns.tolist())
     df = df.copy()
     # Get a mask for special values.
@@ -813,7 +814,7 @@ def plot_histograms_and_lagged_scatterplot(
     :param axes: flat list of axes or `None`
     """
     dbg.dassert(isinstance(srs, pd.Series), "Input must be Series")
-    dbg.dassert_monotonic_index(srs, "Index must be monotonic")
+    hpandas.dassert_monotonic_index(srs, "Index must be monotonic")
     hist_kwargs = hist_kwargs or {}
     scatter_kwargs = scatter_kwargs or {}
     # Handle inf and nan.
@@ -2084,8 +2085,8 @@ def plot_rolling_beta(
     :param events: list of tuples with dates and labels to point out on the plot
     :param kwargs: kwargs for statsmodels.regression.rolling.RollingOLS
     """
-    dbg.dassert_strictly_increasing_index(rets)
-    dbg.dassert_strictly_increasing_index(benchmark_rets)
+    hpandas.dassert_strictly_increasing_index(rets)
+    hpandas.dassert_strictly_increasing_index(benchmark_rets)
     dbg.dassert_eq(rets.index.freq, benchmark_rets.index.freq)
     # Assert that the 'rets' index is a subset of the 'benchmark_rets' index.
     dbg.dassert(rets.index.isin(benchmark_rets.index).all())

@@ -21,6 +21,7 @@ import core.finance as cfinan
 import core.pandas_helpers as pdhelp
 import helpers.datetime_ as hdatetime
 import helpers.dbg as dbg
+import helpers.hpandas as hpandas
 import helpers.printing as hprint
 import helpers.s3 as hs3
 
@@ -139,7 +140,7 @@ def load_data_from_disk(
         df.set_index(timestamp_col, inplace=True)
     # Convert index in timestamps.
     df.index = pd.to_datetime(df.index)
-    dbg.dassert_strictly_increasing_index(df)
+    hpandas.dassert_strictly_increasing_index(df)
     # Filter by start / end date.
     # TODO(gp): Not sure that a view is enough to force discarding the unused
     #  rows in the DataFrame. Maybe do a copy, delete the old data, and call the
