@@ -241,9 +241,7 @@ class MultivariateNormalProcess:
         """
         scale = np.identity(dim)
         rv = sp.stats.invwishart(df=dim, scale=scale)
-        _LOG.info("seed=%s", seed)
         self.cov = rv.rvs(random_state=seed)
-        _LOG.info("cov=%s", str(self.cov))
 
     def generate_sample(
         self, date_range_kwargs: Dict[str, Any], seed: Optional[int] = None
@@ -255,18 +253,12 @@ class MultivariateNormalProcess:
         """
         index = pd.date_range(**date_range_kwargs)
         nsample = index.size
-        _LOG.info("mean=%s", str(self.mean))
-        _LOG.info("cov=%s", str(self.cov))
-        _LOG.info("allow_singular=%s", str(self.allow_singular))
-        #self.allow_singular = False
-        with hnumpy.random_seed_context(seed):
-            rv = sp.stats.multivariate_normal(
-                mean=self.mean, cov=self.cov, allow_singular=self.allow_singular
-            )
-            _LOG.info("seed=%s", seed)
-            #rng = np.random.RandomState(seed=seed)
-            data = rv.rvs(size=nsample) #, random_state=rng)
-            _LOG.info("data=%s", str(data))
+        rv = sp.stats.multivariate_normal(
+            mean=self.mean, cov=self.cov, allow_singular=self.allow_singular,
+        )
+        # Setting the seed through scipy interface seems to be jittery (see
+        # AmpTask1649).
+        data = rv.rvs(size=nsample, random_state=seed)
         return pd.DataFrame(index=index, data=data)
 
     @staticmethod
