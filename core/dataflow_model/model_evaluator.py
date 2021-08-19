@@ -564,9 +564,9 @@ def build_model_evaluator_from_result_bundles(
             data_dict[key] = df[[returns_col, predictions_col]]
         except Exception as e:
             _LOG.error(
-                "Error while loading ResultBundle for config %d with exception:\nstr(e)",
+                "Error while loading ResultBundle for config %d with exception:\n%s" % (
                 key,
-                str(e),
+                str(e))
             )
             if abort_on_error:
                 raise e
