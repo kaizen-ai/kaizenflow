@@ -261,7 +261,8 @@ class MultivariateNormalProcess:
             mean=self.mean, cov=self.cov, allow_singular=self.allow_singular
         )
         _LOG.info("seed=%s", seed)
-        data = rv.rvs(size=nsample, random_state=seed)
+        rng = np.random.RandomState(seed=seed)
+        data = rv.rvs(size=nsample, random_state=rng)
         _LOG.info("data=%s", str(data))
         return pd.DataFrame(index=index, data=data)
 
