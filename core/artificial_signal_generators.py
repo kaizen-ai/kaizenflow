@@ -15,6 +15,7 @@ import scipy as sp
 import statsmodels.api as sm
 
 import helpers.dbg as dbg
+import helpers.hnumpy as hnumpy
 
 # TODO(*): statsmodels needs this import to work properly.
 # import statsmodels.tsa.arima_process as smarima  # isort: skip # noqa: F401 # pylint: disable=unused-import
@@ -253,8 +254,10 @@ class MultivariateNormalProcess:
         index = pd.date_range(**date_range_kwargs)
         nsample = index.size
         rv = sp.stats.multivariate_normal(
-            mean=self.mean, cov=self.cov, allow_singular=self.allow_singular
+            mean=self.mean, cov=self.cov, allow_singular=self.allow_singular,
         )
+        # Setting the seed through scipy interface seems to be jittery (see
+        # AmpTask1649).
         data = rv.rvs(size=nsample, random_state=seed)
         return pd.DataFrame(index=index, data=data)
 
