@@ -15,6 +15,7 @@ import scipy as sp
 import statsmodels.api as sm
 
 import helpers.dbg as dbg
+import helpers.hnumpy as hnumpy
 
 # TODO(*): statsmodels needs this import to work properly.
 # import statsmodels.tsa.arima_process as smarima  # isort: skip # noqa: F401 # pylint: disable=unused-import
@@ -257,13 +258,15 @@ class MultivariateNormalProcess:
         _LOG.info("mean=%s", str(self.mean))
         _LOG.info("cov=%s", str(self.cov))
         _LOG.info("allow_singular=%s", str(self.allow_singular))
-        rv = sp.stats.multivariate_normal(
-            mean=self.mean, cov=self.cov, allow_singular=self.allow_singular
-        )
-        _LOG.info("seed=%s", seed)
-        rng = np.random.RandomState(seed=seed)
-        data = rv.rvs(size=nsample, random_state=rng)
-        _LOG.info("data=%s", str(data))
+        #self.allow_singular = False
+        with hnumpy.random_seed_context(seed):
+            rv = sp.stats.multivariate_normal(
+                mean=self.mean, cov=self.cov, allow_singular=self.allow_singular
+            )
+            _LOG.info("seed=%s", seed)
+            #rng = np.random.RandomState(seed=seed)
+            data = rv.rvs(size=nsample) #, random_state=rng)
+            _LOG.info("data=%s", str(data))
         return pd.DataFrame(index=index, data=data)
 
     @staticmethod
