@@ -242,7 +242,7 @@ def disconnect_all_clients(dbname: str):
 
 def get_db_names(connection: DbConnection) -> List[str]:
     """
-  DbConnection  Return the names of the available DBs.
+    DbConnection  Return the names of the available DBs.
 
     E.g., ['postgres', 'rdsadmin', 'template0', 'template1']
     """
