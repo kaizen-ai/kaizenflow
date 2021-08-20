@@ -971,18 +971,34 @@ class TestCase(unittest.TestCase):
 
     def get_input_dir(
         self,
+        use_only_test_class: bool = False,
         test_class_name: Optional[str] = None,
         test_method_name: Optional[str] = None,
+        use_absolute_path: bool = True,
     ) -> str:
         """
         Return the path of the directory storing input data for this test
         class.
 
+        E.g., `TestLinearRegression1.test1`.
+
+        :param use_only_test_class: use only the name on the test class and not of
+            the method. E.g., when one wants all the test methods to use a single
+            file for testing
+        :param test_class_name: `None` uses the current test class name
+        :param test_method_name: `None` uses the current test method name
+        :param use_absolute_path: use the path from the file containing the test
         :return: dir name
         """
-        dir_name = os.path.join(
-            self._get_current_path(test_class_name, test_method_name), "input"
+        # Get the dir of the test.
+        dir_name = self._get_current_path(
+            use_only_test_class,
+            test_class_name,
+            test_method_name,
+            use_absolute_path,
         )
+        # Add `input` to the dir.
+        dir_name = os.path.join(dir_name, "input")
         return dir_name
 
     def get_output_dir(self) -> str:
@@ -992,7 +1008,19 @@ class TestCase(unittest.TestCase):
 
         :return: dir name
         """
-        dir_name = os.path.join(self._get_current_path(), "output")
+        # The output dir is specific of this dir.
+        use_only_test_class = False
+        test_class_name = None
+        test_method_name = None
+        use_absolute_path = True
+        dir_name = self._get_current_path(
+            use_only_test_class,
+            test_class_name,
+            test_method_name,
+            use_absolute_path,
+        )
+        # Add `output` to the dir.
+        dir_name = os.path.join(dir_name, "output")
         return dir_name
 
     # TODO(gp): -> get_scratch_dir().
@@ -1010,13 +1038,18 @@ class TestCase(unittest.TestCase):
         """
         if self._scratch_dir is None:
             # Create the dir on the first invocation on a given test.
-            curr_path = self._get_current_path(
-                test_class_name=test_class_name,
-                test_method_name=test_method_name,
-                use_absolute_path=use_absolute_path,
+            use_only_test_class = False
+            dir_name = self._get_current_path(
+                use_only_test_class,
+                test_class_name,
+                test_method_name,
+                use_absolute_path,
             )
-            dir_name = os.path.join(curr_path, "tmp.scratch")
+            # Add `tmp.scratch` to the dir.
+            dir_name = os.path.join(dir_name, "tmp.scratch")
+            # On the first invocation create the dir.
             hio.create_dir(dir_name, incremental=get_incremental_tests())
+            # Store the value.
             self._scratch_dir = dir_name
         return self._scratch_dir
 
@@ -1034,10 +1067,13 @@ class TestCase(unittest.TestCase):
                 root.98e1cf5b88c3.amp.TestTestCase1.test_get_s3_scratch_dir1
         """
         # Make the path unique for the test.
+        use_only_test_class = False
+        use_absolute_path = False
         test_path = self._get_current_path(
-            test_class_name=test_class_name,
-            test_method_name=test_method_name,
-            use_absolute_path=False,
+            use_only_test_class,
+            test_class_name,
+            test_method_name,
+            use_absolute_path,
         )
         # Make the path unique for the current user.
         user_name = hsinte.get_user_name()
@@ -1073,7 +1109,17 @@ class TestCase(unittest.TestCase):
         _LOG.debug(hprint.to_str("fuzzy_match abort_on_error dst_dir"))
         dbg.dassert_in(type(actual), (bytes, str), "actual=%s", str(actual))
         dbg.dassert_in(type(expected), (bytes, str), "expected=%s", str(expected))
-        dir_name = self._get_current_path()
+        # Get the current dir name.
+        use_only_test_class = False
+        test_class_name = None
+        test_method_name = None
+        use_absolute_path = True
+        dir_name = self._get_current_path(
+            use_only_test_class,
+            test_class_name,
+            test_method_name,
+            use_absolute_path,
+        )
         _LOG.debug("dir_name=%s", dir_name)
         hio.create_dir(dir_name, incremental=True)
         dbg.dassert_exists(dir_name)
@@ -1422,7 +1468,17 @@ class TestCase(unittest.TestCase):
     # #########################################################################
 
     def _get_golden_outcome_file_name(self, tag: str) -> Tuple[str, str]:
-        dir_name = self._get_current_path()
+        # Get the current dir name.
+        use_only_test_class = False
+        test_class_name = None
+        test_method_name = None
+        use_absolute_path = True
+        dir_name = self._get_current_path(
+            use_only_test_class,
+            test_class_name,
+            test_method_name,
+            use_absolute_path,
+        )
         _LOG.debug("dir_name=%s", dir_name)
         hio.create_dir(dir_name, incremental=True)
         dbg.dassert_exists(dir_name)
@@ -1438,22 +1494,30 @@ class TestCase(unittest.TestCase):
 
     def _get_current_path(
         self,
-        test_class_name: Optional[str] = None,
-        test_method_name: Optional[str] = None,
-        use_absolute_path: bool = True,
+        use_only_class_name: bool,
+        test_class_name: Optional[str],
+        test_method_name: Optional[str],
+        use_absolute_path: bool,
     ) -> str:
         """
         Return the name of the directory containing the input / output data
         (e.g., ./core/dataflow/test/TestContinuousSarimaxModel.test_compare)
+
+        The parameters have the same meaning as in `get_input_dir()`.
         """
         if test_class_name is None:
             test_class_name = self.__class__.__name__
-        if test_method_name is None:
-            test_method_name = self._testMethodName
-        dir_name = "%s.%s" % (
-            test_class_name,
-            test_method_name,
-        )
+        if use_only_class_name:
+            # Use only class name.
+            dir_name = test_class_name
+        else:
+            # Use both class and test method.
+            if test_method_name is None:
+                test_method_name = self._testMethodName
+            dir_name = "%s.%s" % (
+                test_class_name,
+                test_method_name,
+            )
         if use_absolute_path:
             # E.g., .../dataflow/test/TestContinuousSarimaxModel.test_compare
             dir_name = os.path.join(self._base_dir_name, dir_name)
