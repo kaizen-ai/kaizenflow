@@ -2,6 +2,7 @@ import collections
 import logging
 from typing import Any, Dict, Optional
 
+import numpy as np
 import pandas as pd
 
 import core.dataflow.core as cdtfc
@@ -97,8 +98,11 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
             "Model not found! Check if `fit()` has been run.",
         )
         # Generate x_var weights.
-        smoothing = csigna.normalize(1 / self._fit_coefficients["turn"] ** self._smoothing)
-        self._fit_coefficients["weight"] = self._fit_coefficients["beta"] * smoothing
+        smoothing = 1 / self._fit_coefficients["turn"] ** self._smoothing
+        beta_norm = np.linalg.norm(self._fit_coefficients["beta"])
+        self._fit_coefficients["weight"] = beta_norm * csigna.normalize(
+            self._fit_coefficients["beta"] * smoothing
+        )
         self._fit_coefficients["norm_weight"] = csigna.normalize(
             self._fit_coefficients["weight"]
         )
