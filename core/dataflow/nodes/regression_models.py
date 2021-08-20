@@ -100,7 +100,9 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
         # Generate x_var weights.
         smoothing = 1 / self._fit_coefficients["turn"] ** self._smoothing
         beta_norm = np.linalg.norm(self._fit_coefficients["beta"])
-        self._fit_coefficients["weight"] = beta_norm * csigna.normalize(self._fit_coefficients["beta"] * smoothing)
+        self._fit_coefficients["weight"] = beta_norm * csigna.normalize(
+            self._fit_coefficients["beta"] * smoothing
+        )
         self._fit_coefficients["norm_weight"] = csigna.normalize(
             self._fit_coefficients["weight"]
         )
