@@ -97,7 +97,7 @@ class LinearRegression(cdnb.FitPredictNode, cdnb.ColModeMixin):
             "Model not found! Check if `fit()` has been run.",
         )
         # Generate x_var weights.
-        smoothing = csigna.normalize(1 / self._fit_coefficients["turn"] ** self._smoothing)
+        smoothing = 1 / self._fit_coefficients["turn"] ** self._smoothing
         self._fit_coefficients["weight"] = self._fit_coefficients["beta"] * smoothing
         self._fit_coefficients["norm_weight"] = csigna.normalize(
             self._fit_coefficients["weight"]
