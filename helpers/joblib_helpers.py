@@ -260,6 +260,123 @@ def _parallel_execute_decorator(
     return res
 
 
+def _parallel_execute_decorator(
+            task_idx: int,
+            task_len: int,
+            incremental: bool,
+            abort_on_error: bool,
+            num_attempts: int,
+            log_file: str,
+            #
+            workload_func: Callable,
+            func_name: str,
+            task: Task,
+    ) -> Any:
+    """
+    :param abort_on_error: control whether to abort on `workload_func` function
+        that is failing and asserting
+        - If `workload_func` fails:
+            - if `abort_on_error=True` the exception from `workload_func` is
+              propagated and the return value is `None`
+            - if `abort_on_error=False` the exception is not propagated, but the
+              return value is the string representation of the exception
+
+    :return: the return value of the workload function or the exception string
+    """
+    # Validate very carefully all the parameters.
+    dbg.dassert_lte(0, task_idx)
+    dbg.dassert_lt(task_idx, task_len)
+    dbg.dassert_isinstance(incremental, bool)
+    dbg.dassert_isinstance(abort_on_error, bool)
+    dbg.dassert_lte(1, num_attempts)
+    dbg.dassert_isinstance(log_file, str)
+    dbg.dassert_isinstance(workload_func, Callable)
+    dbg.dassert_isinstance(func_name, str)
+    dbg.dassert(validate_task(task))
+    # Redirect the logging output of each task to a different file.
+    # TODO(gp): This file should go in the `task_dst_dir`.
+    # log_to_file = True
+    log_to_file = False
+    if log_to_file:
+        dst_dir = os.path.dirname(os.path.abspath(log_file))
+        print(dst_dir)
+        hio.create_dir(dst_dir, incremental=True)
+        file_name = os.path.join(
+            dst_dir, f"{func_name}.{task_idx + 1}_{task_len}.log"
+        )
+        _LOG.warning("Logging to %s", file_name)
+        file_handler = logging.FileHandler(file_name)
+        root_logger = logging.getLogger()
+        root_logger.addHandler(file_handler)
+
+    # Save some information about the function execution.
+    txt = []
+    # `start_ts` needs to be before running the function.
+    start_ts = hdatetime.get_timestamp("naive_ET")
+    tag = "%s/%s (%s)" % (task_idx + 1, task_len, start_ts)
+    txt.append("\n" + hprint.frame(tag) + "\n")
+    txt.append("tag=%s" % tag)
+    txt.append("workload_func=%s" % workload_func.__name__)
+    txt.append("func_name=%s" % func_name)
+    txt.append(task_to_string(task))
+    args, kwargs = task
+    kwargs.update({"incremental": incremental, "num_attempts": num_attempts})
+    memento = htimer.dtimer_start(
+        logging.DEBUG, "Execute '%s'" % workload_func.__name__
+    )
+    try:
+        res = workload_func(*args, **kwargs)
+        error = False
+    except Exception as e:  # pylint: disable=broad-except
+        exception = e
+        txt.append("exception='%s'" % str(e))
+        res = None
+        error = True
+        _LOG.error("Execution failed")
+    msg, elapsed_time = htimer.dtimer_stop(memento)
+    _ = msg
+    txt.append("func_res=\n%s" % hprint.indent(str(res)))
+    txt.append("elapsed_time_in_secs=%s" % elapsed_time)
+    txt.append("start_ts=%s" % start_ts)
+    end_ts = hdatetime.get_timestamp("naive_ET")
+    txt.append("end_ts=%s" % end_ts)
+    txt.append("error=%s" % error)
+    # Update log file.
+    txt = "\n".join(txt)
+    _LOG.debug("txt=\n%s", hprint.indent(txt))
+    hio.to_file(log_file, txt, mode="a")
+    if error:
+        # The execution wasn't successful.
+        _LOG.error(txt)
+        if abort_on_error:
+            _LOG.error("Aborting since abort_on_error=%s", abort_on_error)
+            raise exception  # noqa: F821
+        _LOG.error(
+            "Continuing execution since abort_on_error=%s", abort_on_error
+        )
+        res = str(exception)
+    else:
+        # The execution was successful.
+        pass
+    return res
+    #
+    # # TODO(gp): For some reason `@functools.wraps` reports an error like:
+    # #   File "/app/amp/helpers/joblib_helpers.py", line 136, in parallel_execute
+    # #     res_tmp = wrapped_func(
+    # #   TypeError: update_wrapper() got multiple values for argument 'wrapped'
+    # wrapper.__name__ = func.__name__
+    # wrapper.__doc__ = func.__doc__
+    # return wrapper
+
+import sys
+
+def f(args):
+    print(args)
+    sys.stdout.flush()
+    #assert 0, args
+    return _parallel_execute_decorator(*args)
+
+
 # TODO(gp): Pass a `task_dst_dir` to each task so it can write there.
 #  This is a generalization of `experiment_result_dir` for `run_experiment` and
 #  `run_notebook`.
@@ -314,6 +431,12 @@ def parallel_execute(
     _LOG.info("Saving log info in '%s'", log_file)
     _LOG.info("Number of tasks=%s", len(tasks))
     # Run.
+    # from multiprocessing import Pool
+    #
+    # p = Pool(5)
+    # with p:
+    #     p.map(f, tasks)
+    # assert 0
     task_len = len(tasks)
     tqdm_out = htqdm.TqdmToLogger(_LOG, level=logging.INFO)
     tqdm_iter = tqdm(
