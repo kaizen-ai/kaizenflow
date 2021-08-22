@@ -359,22 +359,6 @@ def _parallel_execute_decorator(
         # The execution was successful.
         pass
     return res
-    #
-    # # TODO(gp): For some reason `@functools.wraps` reports an error like:
-    # #   File "/app/amp/helpers/joblib_helpers.py", line 136, in parallel_execute
-    # #     res_tmp = wrapped_func(
-    # #   TypeError: update_wrapper() got multiple values for argument 'wrapped'
-    # wrapper.__name__ = func.__name__
-    # wrapper.__doc__ = func.__doc__
-    # return wrapper
-
-import sys
-
-def f(args):
-    print(args)
-    sys.stdout.flush()
-    #assert 0, args
-    return _parallel_execute_decorator(*args)
 
 
 # TODO(gp): Pass a `task_dst_dir` to each task so it can write there.
@@ -431,12 +415,6 @@ def parallel_execute(
     _LOG.info("Saving log info in '%s'", log_file)
     _LOG.info("Number of tasks=%s", len(tasks))
     # Run.
-    # from multiprocessing import Pool
-    #
-    # p = Pool(5)
-    # with p:
-    #     p.map(f, tasks)
-    # assert 0
     task_len = len(tasks)
     tqdm_out = htqdm.TqdmToLogger(_LOG, level=logging.INFO)
     tqdm_iter = tqdm(
