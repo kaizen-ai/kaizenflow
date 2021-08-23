@@ -481,17 +481,23 @@ def plot_time_series_by_periods(
     dbg.dassert_isinstance(srs, pd.Series)
     dbg.dassert_isinstance(srs.index, pd.DatetimeIndex)
     dbg.dassert_isinstance(period, str)
-    dbg.dassert(hasattr(srs.index, period),
-                msg="Not an attribute of `pd.DatetimeIndex`, whose attributes are %s" %
-                pd.DatetimeIndex._datetimelike_ops)
+    dbg.dassert(
+        hasattr(srs.index, period),
+        msg="Not an attribute of `pd.DatetimeIndex`, whose attributes are %s"
+        % pd.DatetimeIndex._datetimelike_ops,
+    )
     if not srs.name:
         srs = srs.copy()
         srs.name = "values"
     df = srs.to_frame()
     periods = getattr(df.index, period)
     periods.name = period
-    dbg.dassert_lt(1, len(periods.unique()),
-                   msg="The unique period value found is `%s`. Multiple values expected." % periods[0])
+    dbg.dassert_lt(
+        1,
+        len(periods.unique()),
+        msg="The unique period value found is `%s`. Multiple values expected."
+        % periods[0],
+    )
     sns.relplot(x=periods, y=srs.name, data=df, kind="line")
 
 
