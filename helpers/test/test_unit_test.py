@@ -74,12 +74,33 @@ class TestTestCase1(hut.TestCase):
         self.assertEqual(act, exp)
 
     def test_get_input_dir2(self) -> None:
+        use_only_test_class = False
         test_class_name = "test_class"
         test_method_name = "test_method"
-        act = self.get_input_dir(test_class_name, test_method_name)
+        act = self.get_input_dir(use_only_test_class, test_class_name, test_method_name)
         act = hut.purify_txt_from_client(act)
         #
         exp = "$GIT_ROOT/helpers/test/test_class.test_method/input"
+        self.assertEqual(act, exp)
+
+    def test_get_input_dir3(self) -> None:
+        use_only_test_class = False
+        test_class_name = None
+        test_method_name = None
+        act = self.get_input_dir(use_only_test_class, test_class_name, test_method_name)
+        act = hut.purify_txt_from_client(act)
+        #
+        exp = "$GIT_ROOT/helpers/test/TestTestCase1.test_get_input_dir3/input"
+        self.assertEqual(act, exp)
+
+    def test_get_input_dir4(self) -> None:
+        use_only_test_class = True
+        test_class_name = None
+        test_method_name = None
+        act = self.get_input_dir(use_only_test_class, test_class_name, test_method_name)
+        act = hut.purify_txt_from_client(act)
+        #
+        exp = "$GIT_ROOT/helpers/test/TestTestCase1/input"
         self.assertEqual(act, exp)
 
     def test_get_output_dir1(self) -> None:
@@ -109,6 +130,16 @@ class TestTestCase1(hut.TestCase):
         act = self.get_scratch_space(test_class_name, test_method_name)
         act = hut.purify_txt_from_client(act)
         exp = "$GIT_ROOT/helpers/test/test_class.test_method/tmp.scratch"
+        self.assertEqual(act, exp)
+
+    def test_get_scratch_space3(self) -> None:
+        test_class_name = "test_class"
+        test_method_name = "test_method"
+        use_absolute_path = False
+        act = self.get_scratch_space(test_class_name, test_method_name,
+                                     use_absolute_path)
+        act = hut.purify_txt_from_client(act)
+        exp = "test_class.test_method/tmp.scratch"
         self.assertEqual(act, exp)
 
     def test_get_s3_scratch_dir1(self) -> None:
