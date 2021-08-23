@@ -464,6 +464,37 @@ def plot_barplot(
 # #############################################################################
 
 
+def plot_time_series_by_periods(
+    srs: pd.Series,
+    period: str,
+) -> None:
+    """
+    Average series values according to a datetime period.
+
+    TODO(Paul): Consider adding support for other aggregations.
+
+    srs: numerical series
+    period: a period, such as "year", "month", "day", "hour", etc. This must
+        be a `pd.DatetimeIndex` attribute:
+        https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DatetimeIndex.html
+    """
+    dbg.dassert_isinstance(srs, pd.Series)
+    dbg.dassert_isinstance(srs.index, pd.DatetimeIndex)
+    dbg.dassert_isinstance(period, str)
+    dbg.dassert(hasattr(srs.index, period),
+                msg="Not an attribute of `pd.DatetimeIndex`, whose attributes are %s" %
+                pd.DatetimeIndex._datetimelike_ops)
+    if not srs.name:
+        srs = srs.copy()
+        srs.name = "values"
+    df = srs.to_frame()
+    periods = getattr(df.index, period)
+    periods.name = period
+    dbg.dassert_lt(1, len(periods.unique()),
+                   msg="The unique period value found is `%s`. Multiple values expected." % periods[0])
+    sns.relplot(x=periods, y=srs.name, data=df, kind="line")
+
+
 def plot_timeseries_distribution(
     srs: pd.Series,
     datetime_types: Optional[List[str]] = None,
