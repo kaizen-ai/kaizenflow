@@ -495,8 +495,9 @@ def plot_time_series_by_period(
     if periods in ["date", "time"]:
         periods = [x.isoformat() for x in periods]
         periods = pd.Index(periods)
-    dbg.dassert_isinstance(periods, pd.Index,
-                           msg="period=%s is not supported" % period)
+    dbg.dassert_isinstance(
+        periods, pd.Index, msg="period=%s is not supported" % period
+    )
     periods.name = period
     dbg.dassert_lt(
         1,
