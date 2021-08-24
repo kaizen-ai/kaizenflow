@@ -514,7 +514,8 @@ def get_symmetric_normal_quantiles(bin_width: float) -> list:
     dbg.dassert_lt(bin_width, 1)
     half_bin_width = bin_width / 2
     positive_bin_boundaries = [
-        sp.stats.norm.ppf(x + 0.5) for x in np.arange(half_bin_width, 0.5, bin_width)
+        sp.stats.norm.ppf(x + 0.5)
+        for x in np.arange(half_bin_width, 0.5, bin_width)
     ]
     positive_bin_boundaries.append(np.inf)
     negative_bin_boundaries = [-x for x in reversed(positive_bin_boundaries)]
