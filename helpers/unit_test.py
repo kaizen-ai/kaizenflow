@@ -190,6 +190,16 @@ def convert_df_to_string(
     return output_str
 
 
+def subset_df(df: pd.DataFrame, nrows: int, seed: int = 42) -> pd.DataFrame:
+    dbg.dassert_lte(1, nrows)
+    dbg.dassert_lte(nrows, df.shape[0])
+    idx = list(range(df.shape[0]))
+    random.seed(seed)
+    random.shuffle(idx)
+    idx = sorted(idx[nrows:])
+    return df.iloc[idx]
+
+
 # TODO(gp): Is this dataflow Info? If so it should go somewhere else.
 def convert_info_to_string(info: Mapping) -> str:
     """
