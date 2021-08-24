@@ -498,6 +498,33 @@ def compute_hill_number(data: pd.Series, q: float) -> float:
     return diversity
 
 
+def get_symmetric_normal_quantiles(bin_width: float) -> list:
+    """
+    Get centered quantiles of normal distribution.
+
+    This function creates a centered bin of width `bin_width` about zero and
+    then adds bins on either side until the entire distribution is captured.
+    All bins carry an equal percentage of the normal distribution, with the
+    possible exception of the two tail bins.
+
+    :param bin_width: percentage of normal distribution to capture in each bin
+    :return: ordered endpoints of bins, including `-np.inf` and `np.inf`
+    """
+    dbg.dassert_lt(0, bin_width)
+    dbg.dassert_lt(bin_width, 1)
+    half_bin_width = bin_width / 2
+    positive_bin_boundaries = [
+        sp.stats.norm.ppf(x + 0.5) for x in np.arange(half_bin_width, 0.5, bin_width)
+    ]
+    positive_bin_boundaries.append(np.inf)
+    negative_bin_boundaries = [-x for x in reversed(positive_bin_boundaries)]
+    bin_boundaries = negative_bin_boundaries + positive_bin_boundaries
+    # Sanity check.
+    expected_n_boundaries = int(np.ceil(1 / bin_width + 2))
+    dbg.dassert_eq(expected_n_boundaries, len(bin_boundaries))
+    return bin_boundaries
+
+
 # #############################################################################
 # Stationarity statistics
 # #############################################################################
