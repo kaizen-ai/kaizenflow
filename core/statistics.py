@@ -955,61 +955,6 @@ def compute_swt_covar_summary(
     return decomp
 
 
-def compute_swt_coeffs(
-    srs1: pd.Series,
-    srs2: pd.Series,
-    wavelet: Optional[str] = None,
-    depth: Optional[int] = None,
-    timing_mode: Optional[str] = None,
-) -> pd.DataFrame:
-    """
-    Get approximate coefficients.
-    """
-    swt1 = csigna.get_swt(
-        srs1,
-        wavelet=wavelet,
-        depth=depth,
-        timing_mode=timing_mode,
-        output_mode="detail",
-    )
-    swt1 = swt1.dropna()
-    counts = swt1.count().rename("counts")
-    var = compute_swt_var_summary(
-        srs1, wavelet=wavelet, depth=depth, timing_mode=timing_mode
-    )["swt_var"]
-    covar = (
-        swt1.multiply(srs2, axis=0)
-        .sum(axis=0)
-        .divide(swt1.count())
-        .rename("covar")
-    )
-    rho = covar.divide(np.sqrt(var) * np.sqrt(srs2.var())).rename("rho")
-    beta = covar.divide(var).rename("beta")
-    beta_se = np.sqrt(srs2.var() / var.multiply(counts)).rename("SE(beta)")
-    zs = beta.divide(beta_se).rename("beta_z_scored")
-    auto_covar = (
-        swt1.multiply(swt1.shift(1), axis=0)
-        .sum(axis=0)
-        .divide(swt1.count())
-        .rename("auto_covar")
-    )
-    auto_corr = auto_covar.divide(var).rename("auto_corr")
-    tub = np.sqrt(2 * (1 - auto_corr)).rename("tub")
-    series = [
-        counts,
-        var,
-        covar,
-        rho,
-        beta,
-        beta_se,
-        zs,
-        auto_covar,
-        auto_corr,
-        tub,
-    ]
-    return pd.concat(series, axis=1)
-
-
 # #############################################################################
 # Sharpe ratio
 # #############################################################################
