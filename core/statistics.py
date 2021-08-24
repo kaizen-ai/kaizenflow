@@ -520,9 +520,6 @@ def get_symmetric_normal_quantiles(bin_width: float) -> list:
     positive_bin_boundaries.append(np.inf)
     negative_bin_boundaries = [-x for x in reversed(positive_bin_boundaries)]
     bin_boundaries = negative_bin_boundaries + positive_bin_boundaries
-    # Sanity check.
-    expected_n_boundaries = int(np.ceil(1 / bin_width + 2))
-    dbg.dassert_eq(expected_n_boundaries, len(bin_boundaries))
     return bin_boundaries
 
 
