@@ -464,7 +464,7 @@ def plot_barplot(
 # #############################################################################
 
 
-def plot_time_series_by_periods(
+def plot_time_series_by_period(
     srs: pd.Series,
     period: str,
 ) -> None:
@@ -491,6 +491,12 @@ def plot_time_series_by_periods(
         srs.name = "values"
     df = srs.to_frame()
     periods = getattr(df.index, period)
+    # Handle special cases that return np.arrays of datetime-type objects.
+    if periods in ["date", "time"]:
+        periods = [x.isoformat() for x in periods]
+        periods = pd.Index(periods)
+    dbg.dassert_isinstance(periods, pd.Index,
+                           msg="period=%s is not supported" % period)
     periods.name = period
     dbg.dassert_lt(
         1,
