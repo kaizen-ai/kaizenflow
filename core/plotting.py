@@ -492,7 +492,7 @@ def plot_time_series_by_period(
     df = srs.to_frame()
     periods = getattr(df.index, period)
     # Handle special cases that return np.arrays of datetime-type objects.
-    if periods in ["date", "time"]:
+    if period in ["date", "time"]:
         periods = [x.isoformat() for x in periods]
         periods = pd.Index(periods)
     dbg.dassert_isinstance(
