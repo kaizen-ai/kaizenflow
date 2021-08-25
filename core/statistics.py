@@ -555,11 +555,14 @@ def group_by_bin(
     mean = grouped_col_values.mean().rename("mean")
     stdev = grouped_col_values.std().rename("stdev")
     # Join aggregation and counts.
-    result_df = pd.concat([
-        count,
-        mean,
-        stdev,
-    ], axis=1)
+    result_df = pd.concat(
+        [
+            count,
+            mean,
+            stdev,
+        ],
+        axis=1,
+    )
     return result_df
 
 
