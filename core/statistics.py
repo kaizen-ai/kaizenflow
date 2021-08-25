@@ -455,6 +455,7 @@ def compute_t_distribution_j_2(nu: float):
         jensen_2 = const * dist * np.sqrt(nu - 2)
     return jensen_2
 
+
 def _check_alpha_and_normalize_data(data: pd.Series, alpha: float) -> pd.Series:
     """
     Check assumptions used in surprise, diversity, and entropy functions.
@@ -462,7 +463,9 @@ def _check_alpha_and_normalize_data(data: pd.Series, alpha: float) -> pd.Series:
     :param data: series of nonnegative numbers
     :param alpha: parameter in [0, np.inf]
     """
-    dbg.dassert_lte(0, alpha, "Parameter `alpha` must be greater than or equal to 0.")
+    dbg.dassert_lte(
+        0, alpha, "Parameter `alpha` must be greater than or equal to 0."
+    )
     dbg.dassert_isinstance(data, pd.Series)
     dbg.dassert(
         (data >= 0).all(), "Series `data` must have only nonnegative values."
@@ -486,7 +489,9 @@ def compute_surprise(data: pd.Series, alpha: float) -> float:
     :param data: series of nonnegative numbers
     :param alpha: parameter in [0, np.inf]
     """
-    dbg.dassert_ne(1, alpha, "The special case `alpha=1` must be handled separately.")
+    dbg.dassert_ne(
+        1, alpha, "The special case `alpha=1` must be handled separately."
+    )
     normalized_data = _check_alpha_and_normalize_data(data, alpha)
     surprise = (1 - normalized_data ** (alpha - 1)) / (alpha - 1)
     return surprise
@@ -514,7 +519,9 @@ def compute_diversity(data: pd.Series, alpha: float) -> float:
     :param alpha: parameter in [0, np.inf]
     :return: a number between 0 and the surprise of `1 / data.count()`.
     """
-    dbg.dassert_ne(1, alpha, "The special case `alpha=1` must be handled separately.")
+    dbg.dassert_ne(
+        1, alpha, "The special case `alpha=1` must be handled separately."
+    )
     normalized_data = _check_alpha_and_normalize_data(data, alpha)
     sum_of_powers = (normalized_data ** alpha).sum()
     diversity = (1 - sum_of_powers) / (alpha - 1)
