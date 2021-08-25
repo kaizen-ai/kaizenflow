@@ -8,13 +8,10 @@ SERVER_NAME=$(uname -n)
 echo "SERVER_NAME=$SERVER_NAME"
 
 if [[ $SERVER_NAME == "gpmac"* ]]; then
-  HOME_DIR="/Users/saggese"
-elif [[ $SERVER_NAME == "ip-*" ]]; then
-  # AWS.
-  HOME_DIR="/data/saggese"
+  HOME_DIR="/Users/$USER"
 else
-  echo "Invalid server '$SERVER_NAME'"
-  exit -1
+  # AWS.
+  HOME_DIR="/data/$USER"
 fi;
 
 # #############################################################################
