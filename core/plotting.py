@@ -508,43 +508,6 @@ def plot_time_series_by_period(
     sns.relplot(x=periods, y=srs.name, data=df, kind="line")
 
 
-def plot_time_series_by_bin(
-    df: pd.DataFrame,
-    bin_col: Union[str, int],
-    bin_width: float,
-    aggregation_col: Union[str, int],
-    aggregation: str,
-) -> pd.Series:
-    """
-    Plot `aggregation_col` grouped by `bin_col` bins and aggregated.
-
-    :param df: dataframe with numerical cols
-    :param bin_col: a column used for binning; ideally the values are centered
-        and approximately normally distributed, though not necessarily
-        standardized
-    :param bin_width: the percentage of data to be captured by each (non-tail)
-        bin
-    :param aggregation_col: the numerical col to aggregate and plot
-    :param aggregation: how to aggregate `aggregation_col` after grouping,
-        e.g., "mean", "sum", or "count"
-    """
-    # Get bin boundaries assuming a normal distribution. Using theoretical
-    # boundaries rather than empirical ones facilities comparisons across
-    # different data.
-    bin_boundaries = cstati.get_symmetric_normal_quantiles(bin_width)
-    # Standardize the binning column and cut.
-    normalized_bin_col = df[bin_col] / df[bin_col].std()
-    cuts = pd.cut(normalized_bin_col, bin_boundaries)
-    # Group the aggregation column according to the bins.
-    grouped_col_values = df.groupby(cuts)[aggregation_col]
-    # Aggregate the grouped result.
-    dbg.dassert(hasattr(grouped_col_values, aggregation))
-    result = getattr(grouped_col_values, aggregation)()
-    # Plot.
-    result.plot()
-    return result
-
-
 def plot_timeseries_distribution(
     srs: pd.Series,
     datetime_types: Optional[List[str]] = None,

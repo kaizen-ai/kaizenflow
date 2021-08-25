@@ -523,6 +523,46 @@ def get_symmetric_normal_quantiles(bin_width: float) -> list:
     return bin_boundaries
 
 
+def group_by_bin(
+    df: pd.DataFrame,
+    bin_col: Union[str, int],
+    bin_width: float,
+    aggregation_col: Union[str, int],
+) -> pd.DataFrame:
+    """
+    Compute aggregations in `aggregation_col` according to bins from `bin_col`.
+
+    :param df: dataframe with numerical cols
+    :param bin_col: a column used for binning; ideally the values are centered
+        and approximately normally distributed, though not necessarily
+        standardized
+    :param bin_width: the percentage of data to be captured by each (non-tail)
+        bin
+    :param aggregation_col: the numerical col to aggregate
+    :return: dataframe with count, mean, stdev of `aggregation_col` by bin
+    """
+    # Get bin boundaries assuming a normal distribution. Using theoretical
+    # boundaries rather than empirical ones facilities comparisons across
+    # different data.
+    bin_boundaries = get_symmetric_normal_quantiles(bin_width)
+    # Standardize the binning column and cut.
+    normalized_bin_col = df[bin_col] / df[bin_col].std()
+    cuts = pd.cut(normalized_bin_col, bin_boundaries)
+    # Group the aggregation column according to the bins.
+    grouped_col_values = df.groupby(cuts)[aggregation_col]
+    # Aggregate the grouped result.
+    count = grouped_col_values.count().rename("count")
+    mean = grouped_col_values.mean().rename("mean")
+    stdev = grouped_col_values.std().rename("stdev")
+    # Join aggregation and counts.
+    result_df = pd.concat([
+        count,
+        mean,
+        stdev,
+    ], axis=1)
+    return result_df
+
+
 # #############################################################################
 # Stationarity statistics
 # #############################################################################
