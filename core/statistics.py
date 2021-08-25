@@ -498,6 +498,74 @@ def compute_hill_number(data: pd.Series, q: float) -> float:
     return diversity
 
 
+def get_symmetric_normal_quantiles(bin_width: float) -> list:
+    """
+    Get centered quantiles of normal distribution.
+
+    This function creates a centered bin of width `bin_width` about zero and
+    then adds bins on either side until the entire distribution is captured.
+    All bins carry an equal percentage of the normal distribution, with the
+    possible exception of the two tail bins.
+
+    :param bin_width: percentage of normal distribution to capture in each bin
+    :return: ordered endpoints of bins, including `-np.inf` and `np.inf`
+    """
+    dbg.dassert_lt(0, bin_width)
+    dbg.dassert_lt(bin_width, 1)
+    half_bin_width = bin_width / 2
+    positive_bin_boundaries = [
+        sp.stats.norm.ppf(x + 0.5)
+        for x in np.arange(half_bin_width, 0.5, bin_width)
+    ]
+    positive_bin_boundaries.append(np.inf)
+    negative_bin_boundaries = [-x for x in reversed(positive_bin_boundaries)]
+    bin_boundaries = negative_bin_boundaries + positive_bin_boundaries
+    return bin_boundaries
+
+
+def group_by_bin(
+    df: pd.DataFrame,
+    bin_col: Union[str, int],
+    bin_width: float,
+    aggregation_col: Union[str, int],
+) -> pd.DataFrame:
+    """
+    Compute aggregations in `aggregation_col` according to bins from `bin_col`.
+
+    :param df: dataframe with numerical cols
+    :param bin_col: a column used for binning; ideally the values are centered
+        and approximately normally distributed, though not necessarily
+        standardized
+    :param bin_width: the percentage of data to be captured by each (non-tail)
+        bin
+    :param aggregation_col: the numerical col to aggregate
+    :return: dataframe with count, mean, stdev of `aggregation_col` by bin
+    """
+    # Get bin boundaries assuming a normal distribution. Using theoretical
+    # boundaries rather than empirical ones facilities comparisons across
+    # different data.
+    bin_boundaries = get_symmetric_normal_quantiles(bin_width)
+    # Standardize the binning column and cut.
+    normalized_bin_col = df[bin_col] / df[bin_col].std()
+    cuts = pd.cut(normalized_bin_col, bin_boundaries)
+    # Group the aggregation column according to the bins.
+    grouped_col_values = df.groupby(cuts)[aggregation_col]
+    # Aggregate the grouped result.
+    count = grouped_col_values.count().rename("count")
+    mean = grouped_col_values.mean().rename("mean")
+    stdev = grouped_col_values.std().rename("stdev")
+    # Join aggregation and counts.
+    result_df = pd.concat(
+        [
+            count,
+            mean,
+            stdev,
+        ],
+        axis=1,
+    )
+    return result_df
+
+
 # #############################################################################
 # Stationarity statistics
 # #############################################################################
@@ -926,61 +994,6 @@ def compute_swt_covar_summary(
         np.sqrt(decomp[var1_col].multiply(decomp[var2_col]))
     )
     return decomp
-
-
-def compute_swt_coeffs(
-    srs1: pd.Series,
-    srs2: pd.Series,
-    wavelet: Optional[str] = None,
-    depth: Optional[int] = None,
-    timing_mode: Optional[str] = None,
-) -> pd.DataFrame:
-    """
-    Get approximate coefficients.
-    """
-    swt1 = csigna.get_swt(
-        srs1,
-        wavelet=wavelet,
-        depth=depth,
-        timing_mode=timing_mode,
-        output_mode="detail",
-    )
-    swt1 = swt1.dropna()
-    counts = swt1.count().rename("counts")
-    var = compute_swt_var_summary(
-        srs1, wavelet=wavelet, depth=depth, timing_mode=timing_mode
-    )["swt_var"]
-    covar = (
-        swt1.multiply(srs2, axis=0)
-        .sum(axis=0)
-        .divide(swt1.count())
-        .rename("covar")
-    )
-    rho = covar.divide(np.sqrt(var) * np.sqrt(srs2.var())).rename("rho")
-    beta = covar.divide(var).rename("beta")
-    beta_se = np.sqrt(srs2.var() / var.multiply(counts)).rename("SE(beta)")
-    zs = beta.divide(beta_se).rename("beta_z_scored")
-    auto_covar = (
-        swt1.multiply(swt1.shift(1), axis=0)
-        .sum(axis=0)
-        .divide(swt1.count())
-        .rename("auto_covar")
-    )
-    auto_corr = auto_covar.divide(var).rename("auto_corr")
-    tub = np.sqrt(2 * (1 - auto_corr)).rename("tub")
-    series = [
-        counts,
-        var,
-        covar,
-        rho,
-        beta,
-        beta_se,
-        zs,
-        auto_covar,
-        auto_corr,
-        tub,
-    ]
-    return pd.concat(series, axis=1)
 
 
 # #############################################################################
