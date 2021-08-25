@@ -2,15 +2,21 @@
 
 # set -x
 
-IDX=$1
+DIR_PREFIX=$1
+if [[ -z $DIR_PREFIX ]]; then
+  echo "ERROR: You need to specify the prefix of the dir, e.g. 'amp' of 'cmamp'"
+  exit -1
+fi;
+
+IDX=$2
 if [[ -z $IDX ]]; then
     echo "ERROR: You need to specify a client, like 1, 2, 3..."
     exit -1
 fi;
 
-DIR_NAME="$HOME/src/cmamp$IDX"
+DIR_NAME="$HOME/src/$DIR_PREFIX$IDX"
 FILE="dev_scripts/tmux_amp.sh $IDX"
-echo "> $DIR/$FILE"
+echo "> $DIR_NAME/$FILE"
 
 cd $DIR_NAME
 exec $FILE

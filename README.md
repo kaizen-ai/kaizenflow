@@ -42,9 +42,9 @@
 ## Cloning the repo
 - Path to the local repo folder should look like this:
    ```bash
-   ~/src/cmamp{IDX}
+   ~/src/{DIR_PREFIX}{IDX}
    ```
-where `IDX` is an integer, e.g. `~/src/cmamp1`, `~/src/cmamp2`
+where `DIR_PREFIX` is "amp" or "cmamp", depending on the working repository, and `IDX` is an integer, e.g. "1", "2".
    - This is required to run `go_amp.sh` script
    - To clone a repo, use SSH cloning command described [here in Github official documentation](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository-from-github/cloning-a-repository).
       ```bash
