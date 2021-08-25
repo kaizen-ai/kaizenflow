@@ -53,6 +53,7 @@ class Test_s3_1(hut.TestCase):
     def test_exists1(self) -> None:
         s3fs = hs3.get_s3fs("am")
         file_path = os.path.join(hs3.get_path(), "README.md")
+        _LOG.debug("file_path=%s", file_path)
         act = s3fs.exists(file_path)
         exp = True
         self.assertEqual(act, exp)
@@ -60,6 +61,7 @@ class Test_s3_1(hut.TestCase):
     def test_exists2(self) -> None:
         s3fs = hs3.get_s3fs("am")
         file_path = os.path.join(hs3.get_path(), "README_does_not_exist.md")
+        _LOG.debug("file_path=%s", file_path)
         act = s3fs.exists(file_path)
         exp = False
         self.assertEqual(act, exp)
@@ -71,6 +73,7 @@ class Test_s3_1(hut.TestCase):
         file_path = os.path.join(
             hs3.get_path(), "data/ib/metadata/symbols-2021-04-01-143112738505.csv"
         )
+        _LOG.debug("file_path=%s", file_path)
         act = s3fs.exists(file_path)
         exp = True
         self.assertEqual(act, exp)

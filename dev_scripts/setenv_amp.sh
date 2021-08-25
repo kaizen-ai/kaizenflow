@@ -64,7 +64,12 @@ echo $PYTHONPATH | perl -e 'print join("\n", grep { not $seen{$_}++ } split(/:/,
 echo "# Configure env"
 echo "which gh="$(which gh)
 
+# Select which profile to use by default.
 export AM_AWS_PROFILE="am"
+
+# These variables are propagated to Docker.
+export AM_ECR_BASE_PATH="665840871993.dkr.ecr.us-east-1.amazonaws.com"
+export AM_S3_BUCKET="alphamatic-data"
 
 # Print the AM env vars.
 printenv | egrep "AM_|AWS_" | sort
