@@ -11,6 +11,7 @@ import unittest.mock as umock
 import uuid
 from typing import Optional, Tuple
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -903,6 +904,23 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Nam
 
 
 # #############################################################################
+
+
+class TestSubsetDf1(hut.TestCase):
+    def test1(self) -> None:
+        # Generate some random data.
+        np.random.seed(42)
+        df = pd.DataFrame(np.random.randint(0,100,size=(20, 4)), columns=list('ABCD'))
+        # Subset.
+        df2 = hut.subset_df(df, nrows = 5, seed = 43)
+        # Check.
+        act = []
+        act.append("df=")
+        act.append(str(df))
+        act.append("df2=")
+        act.append(str(df2))
+        act = "\n".join(act)
+        self.check_string(act)
 
 
 class TestDataframeToJson(hut.TestCase):
