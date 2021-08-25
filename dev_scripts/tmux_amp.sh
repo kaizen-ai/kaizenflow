@@ -23,7 +23,7 @@ if [[ -z $IDX ]]; then
   exit -1
 fi;
 
-AMP_DIR="$HOME_DIR/src/amp$IDX"
+AMP_DIR="$HOME_DIR/src/cmamp$IDX"
 echo "AMP_DIR=$AMP_DIR"
 
 # #############################################################################

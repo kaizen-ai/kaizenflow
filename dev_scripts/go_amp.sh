@@ -8,7 +8,7 @@ if [[ -z $IDX ]]; then
     exit -1
 fi;
 
-DIR_NAME="$HOME/src/amp$IDX"
+DIR_NAME="$HOME/src/cmamp$IDX"
 FILE="dev_scripts/tmux_amp.sh $IDX"
 echo "> $DIR/$FILE"
 
