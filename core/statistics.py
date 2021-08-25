@@ -455,6 +455,70 @@ def compute_t_distribution_j_2(nu: float):
         jensen_2 = const * dist * np.sqrt(nu - 2)
     return jensen_2
 
+def _check_alpha_and_normalize_data(data: pd.Series, alpha: float) -> pd.Series:
+    """
+    Check assumptions used in surprise, diversity, and entropy functions.
+
+    :param data: series of nonnegative numbers
+    :param alpha: parameter in [0, np.inf]
+    """
+    dbg.dassert_lte(0, alpha, "Parameter `alpha` must be greater than or equal to 0.")
+    dbg.dassert_isinstance(data, pd.Series)
+    dbg.dassert(
+        (data >= 0).all(), "Series `data` must have only nonnegative values."
+    )
+    # Normalize nonnegative data so that it sums to one.
+    normalized_data = data / data.sum()
+    return normalized_data
+
+
+def compute_surprise(data: pd.Series, alpha: float) -> float:
+    """
+    Compute the alpha-surprise per entry after probability normalizing `data`.
+
+    This treats `data` as a probability space. All values of `data` must be
+    nonnegative. Before calculating surprise, the data is renormalized so that
+    its sum is one.
+
+    See the following for details:
+    https://golem.ph.utexas.edu/category/2008/11/entropy_diversity_and_cardinal_1.html
+
+    :param data: series of nonnegative numbers
+    :param alpha: parameter in [0, np.inf]
+    """
+    dbg.dassert_ne(1, alpha, "The special case `alpha=1` must be handled separately.")
+    normalized_data = _check_alpha_and_normalize_data(data, alpha)
+    surprise = (1 - normalized_data ** (alpha - 1)) / (alpha - 1)
+    return surprise
+
+
+def compute_diversity(data: pd.Series, alpha: float) -> float:
+    """
+    Compute the alpha-diversity of `data` after probability normalizing.
+
+    Special cases:
+      - alpha = 0: `data.count() - 1`
+      - alpha = 1: Shannon entropy
+      - alpha = 2: Simpson diversity
+      - alpha = np.inf: 0
+
+    Conceptually, this can be calculated by
+        ```
+        surpise = compute_surprise(data, alpha)
+        normalized_data = data / data.sum()
+        diversity = (normalized_data * surprise).sum()
+        ```
+    We implement the function differently so as to avoid numerical instability.
+
+    :param data: series of nonnegative numbers
+    :param alpha: parameter in [0, np.inf]
+    :return: a number between 0 and the surprise of `1 / data.count()`.
+    """
+    dbg.dassert_ne(1, alpha, "The special case `alpha=1` must be handled separately.")
+    normalized_data = _check_alpha_and_normalize_data(data, alpha)
+    sum_of_powers = (normalized_data ** alpha).sum()
+    diversity = (1 - sum_of_powers) / (alpha - 1)
+    return diversity
 
 def _check_alpha_and_normalize_data(data: pd.Series, alpha: float) -> pd.Series:
     """
