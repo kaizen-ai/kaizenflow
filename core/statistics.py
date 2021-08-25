@@ -519,12 +519,14 @@ def compute_diversity(data: pd.Series, alpha: float) -> float:
     :param alpha: parameter in [0, np.inf]
     :return: a number between 0 and the surprise of `1 / data.count()`.
     """
-    dbg.dassert_ne(
-        1, alpha, "The special case `alpha=1` must be handled separately."
-    )
     normalized_data = _check_alpha_and_normalize_data(data, alpha)
-    sum_of_powers = (normalized_data ** alpha).sum()
-    diversity = (1 - sum_of_powers) / (alpha - 1)
+    if alpha == 1:
+        log_normalized_data = np.log(normalized_data)
+        entropy = -(normalized_data * log_normalized_data).sum()
+        diversity = np.exp(entropy)
+    else:
+        sum_of_powers = (normalized_data ** alpha).sum()
+        diversity = (1 - sum_of_powers) / (alpha - 1)
     return diversity
 
 def _check_alpha_and_normalize_data(data: pd.Series, alpha: float) -> pd.Series:
