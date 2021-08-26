@@ -24,6 +24,12 @@ def _LOG_frame(txt: str) -> None:
     _LOG.debug("\n%s", hprint.frame(txt))
 
 
+
+# TODO(gp): Use this everywhere.
+def _LOG_frame(txt: str) -> None:
+    _LOG.debug("\n%s", hprint.frame(txt))
+
+
 # #############################################################################
 
 
