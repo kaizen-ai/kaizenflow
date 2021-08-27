@@ -828,7 +828,6 @@ class TestCacheEnableReadOnly1(_ResetGlobalCacheHelper):
 
 
 class TestCacheUpdateFunction1(_ResetGlobalCacheHelper):
-
     def test1(self) -> None:
         # Define the function imitating working in a notebook.
         _LOG.debug("\n%s", hprint.frame("Define function"))
