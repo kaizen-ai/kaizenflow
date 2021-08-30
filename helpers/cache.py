@@ -75,6 +75,20 @@ def enable_clear_cache(val: bool) -> None:
     _IS_CLEAR_CACHE_ENABLED = val
 
 
+_GLOBAL_CACHE_NAME = "tmp.cache"
+
+
+def set_global_cache_name(val: str) -> None:
+    """
+    Rename the prefix for the cache name.
+
+    E.g., from `{GIT_ROOT}/tmp.cache` to `{GIT_ROOT}/tmp.cache.unit_tests`.
+    """
+    global _GLOBAL_CACHE_NAME
+    _LOG.warning("Setting global cache name %s -> %s", _GLOBAL_CACHE_NAME, val)
+    _GLOBAL_CACHE_NAME = val
+
+
 def get_global_cache_info(
     tag: Optional[str] = None, add_banner: bool = False
 ) -> str:
@@ -128,7 +142,7 @@ def _get_global_cache_name(cache_type: str, tag: Optional[str] = None) -> str:
     :return: name of the folder for a cache
     """
     _dassert_is_valid_cache_type(cache_type)
-    cache_name = f"tmp.cache.{cache_type}"
+    cache_name = f"{_GLOBAL_CACHE_NAME}.{cache_type}"
     if tag is not None:
         cache_name += f".{tag}"
     return cache_name
