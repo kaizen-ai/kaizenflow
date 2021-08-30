@@ -17,13 +17,17 @@ fi;
 # #############################################################################
 # Compute IDX.
 # #############################################################################
-IDX=$1
+DIR_PREFIX=$1
+if [[ -z $DIR_PREFIX ]]; then
+  echo "ERROR: you need to specify directory prefix, e.g. 'amp' or 'cmamp'"
+
+IDX=$2
 if [[ -z $IDX ]]; then
   echo "ERROR: You need to specify IDX={1,2,3}"
   exit -1
 fi;
 
-AMP_DIR="$HOME_DIR/src/cmamp$IDX"
+AMP_DIR="$HOME_DIR/src/$DIR_PREFIX$IDX"
 echo "AMP_DIR=$AMP_DIR"
 
 # #############################################################################

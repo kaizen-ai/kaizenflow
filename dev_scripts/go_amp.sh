@@ -15,7 +15,7 @@ if [[ -z $IDX ]]; then
 fi;
 
 DIR_NAME="$HOME/src/$DIR_PREFIX$IDX"
-FILE="dev_scripts/tmux_amp.sh $IDX"
+FILE="dev_scripts/tmux_amp.sh $DIR_PREFIX $IDX"
 echo "> $DIR_NAME/$FILE"
 
 cd $DIR_NAME
