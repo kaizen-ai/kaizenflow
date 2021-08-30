@@ -65,7 +65,11 @@ def log_into_exchange(exchange_id: str,
     dbg.dassert_in(exchange_id, credentials, msg="%s exchange ID not correct.")
     credentials = credentials[exchange_id]
     exchange_class = getattr(ccxt, exchange_id)
+    # TODO(Danya): Add a required credentials check:
+    # exchange.requiredCredentials()
     exchange = exchange_class(credentials)
+    # TODO (Danya): Add check for required credentials.
+    dbg.dassert(exchange.checkRequiredCredentials(), msg="Required credentials not passed.")
     if mode == "sandbox":
         exchange.set_sandbox_mode(True)
     return exchange
@@ -79,4 +83,12 @@ def log_into_exchange(exchange_id: str,
 # mid-price (avg btw bid and ask) is better than last price
 
 # %%
-binance = log_into_exchange("binance", "sandbox")
+binance = log_into_exchange("kucoin", mode="huobi")
+
+# %%
+print(binance.requiredCredentials) 
+
+# %%
+# ?binance.checkRequiredCredentials
+
+# %%
