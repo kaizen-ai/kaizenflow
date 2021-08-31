@@ -930,8 +930,9 @@ class TestCase(unittest.TestCase):
         # Print banner to signal the start of a new test.
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
         _LOG.debug("\n%s", hprint.frame(func_name))
-        # Set the default cache name.
-        hcache.set_global_cache_name("tmp.cache.unit_tests")
+        # # Set the default cache name.
+        # hcache.set_global_cache_name("tmp.cache.unit_tests")
+        # hcache.clear_global_cache("all", destroy=True)
         # Set the random seed.
         random_seed = 20000101
         _LOG.debug("Resetting random.seed to %s", random_seed)
