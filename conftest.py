@@ -68,6 +68,12 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
         import helpers.env as henv
 
         print(henv.get_system_signature()[0])
+        # Set the default cache name.
+        import helpers.cache as hcache
+        hcache.set_global_cache_name("tmp.cache.unit_tests")
+        hcache.clear_global_cache("all", destroy=True)
+        assert 0
+
         _WARNING = "\033[33mWARNING\033[0m"
         if config.getoption("--update_outcomes"):
             print(f"\n{_WARNING}: Updating test outcomes")
