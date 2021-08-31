@@ -59,6 +59,9 @@ echo "BUILD_TAG='$BUILD_TAG'"
 echo "which python: "$(which python)
 echo "check pandas package: "$(python -c "import pandas; print(pandas)")
 
+# CmampTask16: Add env var.
+export HOME=/app/home
+
 echo "PATH=$PATH"
 echo "PYTHONPATH=$PYTHONPATH"
 echo "entrypoint.sh: '$@'"
