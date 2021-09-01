@@ -15,7 +15,6 @@ import traceback
 import unittest
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
-import helpers.cache as hcache
 import helpers.dbg as dbg
 import helpers.git as git
 import helpers.introspection as hintro
