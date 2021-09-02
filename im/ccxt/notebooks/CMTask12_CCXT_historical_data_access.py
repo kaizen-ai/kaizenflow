@@ -26,8 +26,10 @@ import helpers.env as henv
 import helpers.io_ as io_
 import helpers.printing as hprint
 from typing import Any
+import time
 
 import ccxt
+import pandas as pd
 
 # %%
 dbg.init_logger(verbosity=logging.INFO)
@@ -89,29 +91,61 @@ def download_ohlcv_data(exchange_id,
                             end_date,
                             curr_symbol,
                             timeframe="1m",
-                            ratelimit=1000):
+                            step=500,
+                            sleep_time=3):
     """
-    Download historical data for given time period and currency.
+    Download historical OHLCV data for given time period and currency.
     """
-    exchange = log_into_exchange(exchange_id, mode="boss")
+    exchange = log_into_exchange(exchange_id)
     dbg.dassert_in(timeframe, exchange.timeframes)
     dbg.dassert(exchange.has["fetchOHLCV"])
     dbg.dassert_in(curr_symbol, exchange.load_markets().keys())
     start_date = exchange.parse8601(start_date)
     end_date = exchange.parse8601(end_date)
-    print(end_date)
-    duration = exchange.parse_timeframe(timeframe) * ratelimit
+    # Convert to ms.
+    duration = exchange.parse_timeframe(timeframe) * 1000
     all_candles = []
-    for t in range(start_date, end_date+duration, duration*ratelimit):
-        print (t)
-        candles = exchange.fetch_ohlcv(curr_symbol, timeframe, t, ratelimit)
+    for t in range(start_date, end_date+duration, duration*step):
+        candles = exchange.fetch_ohlcv(curr_symbol, timeframe, t, step)
         print('Fetched', len(candles), 'candles')
         if candles:
             print('From', exchange.iso8601(candles[0][0]), 'to', exchange.iso8601(candles[-1][0]))
         all_candles += candles
         total_length = len(all_candles)
         print('Fetched', total_length, 'candles in total')
+        time.sleep(sleep_time)
     return all_candles
+
+
+def download_trade_data(exchange_id,
+                            start_date,
+                            end_date,
+                            curr_symbol,
+                            timeframe="1m",
+                            step=500,
+                            sleep_time=3):
+    """
+    Download historical data for given time period and currency.
+    """
+    exchange = log_into_exchange(exchange_id)
+    dbg.dassert_in(timeframe, exchange.timeframes)
+    dbg.dassert(exchange.has["fetchTrades"])
+    dbg.dassert_in(curr_symbol, exchange.load_markets().keys())
+    start_date = exchange.parse8601(start_date)
+    end_date = exchange.parse8601(end_date)
+    latest_trade = start_date
+    all_trades = []
+    while latest_trade <= end_date:
+        trades = exchange.fetch_trades(curr_symbol, since=latest_trade, limit=step, params={"endTime": latest_trade+36000})
+        print('Fetched', len(trades), 'trades')
+        if trades:
+            print('From', exchange.iso8601(trades[0]["timestamp"]), 'to', exchange.iso8601(trades[-1]["timestamp"]))
+            latest_trade = trades[-1]["timestamp"]
+        all_trades += trades
+        total_length = len(all_trades)
+        print('Fetched', total_length, 'trades in total')
+        time.sleep(sleep_time)
+    return all_trades
 
 
 # %% [markdown]
@@ -136,4 +170,57 @@ coinbase.has
 # %% [markdown]
 # ## Loading OHLCV data
 
+# %% [markdown]
+# ### Binance
+
 # %%
+binance_data = download_ohlcv_data("binance",
+                                  "2018-01-01T00:00:00Z",
+                                  "2018-02-01T00:00:00Z",
+                                  "BTC/USDT")
+
+# %% [markdown]
+# ### Kraken
+
+# %%
+kraken_data = download_ohlcv_data("kraken",
+                                  "2018-01-01T00:00:00Z",
+                                  "2018-02-01T00:00:00Z",
+                                  "BTC/USDT")
+
+# %% [markdown]
+# Kraken data seems to be corrupted in some way, since `fetch_trades` method does not behave the same, parsing dates incorrectly. Investigate.
+
+# %% [markdown]
+# ## Trade data
+
+# %% [markdown]
+# ### Binance
+
+# %%
+binance_trade = download_trade_data("binance",
+                                  "2018-01-01T00:00:00Z",
+                                  "2018-02-01T00:00:00Z",
+                                  "BTC/USDT")
+
+# %%
+binance_trade = download_trade_data("binance",
+                                  "2018-01-01T00:00:00Z",
+                                  "2018-01-01T02:00:00Z",
+                                  "BTC/USDT",
+                                   step=1000)
+
+# %% [markdown]
+# ## Bids/asks
+
+# %%
+binance = log_into_exchange("binance")
+binance.fetch_bids_asks("BTC/USDT")
+
+# %% [markdown]
+# Fetching bids and asks is available only for real-time data.
+
+# %% [markdown]
+# ## TODO:
+#
+# Check trades and OHLCV for other exchanges in the list.
