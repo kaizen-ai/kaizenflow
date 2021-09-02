@@ -68,8 +68,6 @@ def log_into_exchange(exchange_id: str):
     credentials = credentials[exchange_id]
     credentials["rateLimit"] = True
     exchange_class = getattr(ccxt, exchange_id)
-    # TODO(Danya): Add a required credentials check:
-    # exchange.requiredCredentials()
     exchange = exchange_class(credentials)
     dbg.dassert(exchange.checkRequiredCredentials(), msg="Required credentials not passed.")
     return exchange
