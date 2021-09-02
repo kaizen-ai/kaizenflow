@@ -1,6 +1,7 @@
 # ---
 # jupyter:
 #   jupytext:
+#     formats: ipynb,py:percent
 #     text_representation:
 #       extension: .py
 #       format_name: percent
@@ -11,9 +12,6 @@
 #     language: python
 #     name: python3
 # ---
-
-# %%
-# !pip install ccxt
 
 # %%
 # %load_ext autoreload
@@ -49,7 +47,7 @@ ALL_EXCHANGES = ["binance",
 "kucoin",
 "bitfinex",
 "gateio",
-# "binanceus" # no API for these three exchanges.
+# "binanceus" # no API access for these three exchanges.
 # "bithumb"
 # "bitstamp"
                 ]
@@ -59,36 +57,83 @@ ALL_EXCHANGES = ["binance",
 # ## Functions
 
 # %%
-def log_into_exchange(exchange_id: str,
-                     mode: str):
+def log_into_exchange(exchange_id: str):
+    """
+    Log into exchange via ccxt.
+    """
     credentials = io_.from_json("API_keys.json")
     dbg.dassert_in(exchange_id, credentials, msg="%s exchange ID not correct.")
     credentials = credentials[exchange_id]
+    credentials["rateLimit"] = True
     exchange_class = getattr(ccxt, exchange_id)
-    # TODO(Danya): Add a required credentials check:
-    # exchange.requiredCredentials()
     exchange = exchange_class(credentials)
-    # TODO (Danya): Add check for required credentials.
     dbg.dassert(exchange.checkRequiredCredentials(), msg="Required credentials not passed.")
-    if mode == "sandbox":
-        exchange.set_sandbox_mode(True)
     return exchange
 
+def describe_exchange_data(exchange_id: str):
+    """
+    """
+    exchange = log_into_exchange(exchange_id)
+    print("%s:" % exchange_id)
+    print ("Has fetchOHLCV: %s" % exchange.has["fetchOHLCV"])
+    print ("Has fetchTrades: %s" % exchange.has["fetchTrades"])
+    print("Available timeframes:")
+    print (exchange.timeframes)
+    print("Available currency pairs:")
+    print(exchange.load_markets().keys())
+    print("="*50)
+    return None
+
+def download_ohlcv_data(exchange_id,
+                            start_date,
+                            end_date,
+                            curr_symbol,
+                            timeframe="1m",
+                            ratelimit=1000):
+    """
+    Download historical data for given time period and currency.
+    """
+    exchange = log_into_exchange(exchange_id, mode="boss")
+    dbg.dassert_in(timeframe, exchange.timeframes)
+    dbg.dassert(exchange.has["fetchOHLCV"])
+    dbg.dassert_in(curr_symbol, exchange.load_markets().keys())
+    start_date = exchange.parse8601(start_date)
+    end_date = exchange.parse8601(end_date)
+    print(end_date)
+    duration = exchange.parse_timeframe(timeframe) * ratelimit
+    all_candles = []
+    for t in range(start_date, end_date+duration, duration*ratelimit):
+        print (t)
+        candles = exchange.fetch_ohlcv(curr_symbol, timeframe, t, ratelimit)
+        print('Fetched', len(candles), 'candles')
+        if candles:
+            print('From', exchange.iso8601(candles[0][0]), 'to', exchange.iso8601(candles[-1][0]))
+        all_candles += candles
+        total_length = len(all_candles)
+        print('Fetched', total_length, 'candles in total')
+    return all_candles
+
 
 # %% [markdown]
-# ## Log into Binance exchange
+# ## Check availability of historical data for exchanges
+
+# %%
+for e in ALL_EXCHANGES:
+    describe_exchange_data(e)
 
 # %% [markdown]
-# Ideally 1 min last price (traded), bid / ask, traded volume
-# mid-price (avg btw bid and ask) is better than last price
+# ### Checking data availability at coinbase
 
 # %%
-binance = log_into_exchange("kucoin", mode="huobi")
+coinbase = log_into_exchange("coinbase")
 
 # %%
-print(binance.requiredCredentials) 
+coinbase.has
 
-# %%
-# ?binance.checkRequiredCredentials
+# %% [markdown]
+# `coinbase` exchange does not provide any kind of historical data (neither on OHLCV nor on trading orders), and it seems that its API allows only for trading.
+
+# %% [markdown]
+# ## Loading OHLCV data
 
 # %%
