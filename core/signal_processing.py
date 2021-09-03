@@ -2024,8 +2024,8 @@ def c_infinity(x: float) -> float:
     """
     Return C-infinity function evaluated at x.
 
-    This function is zero for x <= 0 and approaches exp(1) as x ->
-    infinity.
+    This function is zero for x <= 0 and approaches exp(1) as x -> infinity.
+    It assumes the value 0 in 0, it is continuous but not differentiable in 0.
     """
     if x > 0:
         return np.exp(-1 / x)
@@ -2039,6 +2039,7 @@ def c_infinity_step_function(x: float) -> float:
     This function is
       - 0 for x <= 0
       - 1 for x >= 1
+      - sigmoid shape between 0 and 1
     """
     fx = c_infinity(x)
     f1mx = c_infinity(1 - x)
@@ -2050,6 +2051,8 @@ def c_infinity_step_function(x: float) -> float:
 def c_infinity_bump_function(x: float, a: float, b: float) -> float:
     """
     Return value of C-infinity bump function evaluated at x.
+
+    This function is like a bump and
 
     :param x: point at which to evaluate
     :param a: function is 1 between -a and a
