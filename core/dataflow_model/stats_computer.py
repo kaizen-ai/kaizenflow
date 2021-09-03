@@ -23,6 +23,7 @@ class StatsComputer:
     Compute a particular piece of stats instead of the whole stats table.
     """
 
+    # TODO(gp): -> compute_all_stats.
     def compute_time_series_stats(self, srs: pd.Series) -> pd.Series:
         """
         Compute statistics for a non-necessarily financial time series.
