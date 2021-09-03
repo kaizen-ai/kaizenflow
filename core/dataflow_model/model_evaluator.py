@@ -536,6 +536,72 @@ class ModelEvaluator:
         hdbg.dassert_is_subset(keys, self.valid_keys)
         return keys
 
+    def compute_pnl(
+            self,
+            keys: Optional[List[Key]] = None,
+            position_method: Optional[str] = None,
+            target_volatility: Optional[float] = None,
+            returns_shift: Optional[int] = 0,
+            predictions_shift: Optional[int] = 0,
+            mode: Optional[str] = None,
+    ) -> Dict[Any, pd.DataFrame]:
+        """
+        Helper for calculating positions and PnL from returns and predictions.
+
+        :param keys: use all available models if `None`
+        :param position_method: as in `PositionComputer.compute_positions()`
+        :param target_volatility: as in `PositionComputer.compute_positions()`
+        :param returns_shift: number of shifts to pre-apply to returns col
+        :param predictions_shift: number of shifts to pre-apply to predictions
+            col
+        :param mode: "all_available", "ins", or "oos"
+        :return: dict of dataframes with columns ["returns", "predictions",
+            "positions", "pnl"]
+        """
+        keys = self.get_keys(keys)
+        # Extract and align the returns.
+        returns = {}
+        for key in keys:
+            dbg.dassert_in(self.target_col, self._data[key].columns)
+            returns[key] = (self._data[key][self.target_col]
+                            .shift(returns_shift)
+                            .rename("returns"))
+        # Extract and align the predictions.
+        predictions = {}
+        for key in keys:
+            dbg.dassert_in(self.prediction_col, self._data[key].columns)
+            predictions[key] = (self._data[key][self.prediction_col]
+                                .shift(predictions_shift)
+                                .rename("predictions"))
+        # Compute the positions.
+        positions = {}
+        for key in tqdm(returns.keys(), "Calculating positions"):
+            position_computer = PositionComputer(
+                returns=returns[key],
+                predictions=predictions[key],
+            )
+            positions[key] = position_computer.compute_positions(
+                prediction_strategy=position_method,
+                target_volatility=target_volatility,
+            ).rename("positions")
+        # Compute PnLs.
+        pnls = {}
+        for key in tqdm(positions.keys(), "Calculating PnL"):
+            pnl_computer = PnlComputer(
+                returns=returns[key],
+                positions=positions[key],
+            )
+            pnls[key] = pnl_computer.compute_pnl().rename("pnl")
+        # Assemble the results into a dictionary of dataframes.
+        pnl_dict = {}
+        for key in keys:
+            pnl_dict[key] = pd.concat(
+                [returns[key], predictions[key], positions[key], pnls[key]], axis=1
+            )
+        # Trim to the
+        pnl_dict = self._trim_time_range(pnl_dict, mode=mode)
+        return pnl_dict
+
     def aggregate_models(
         self,
         keys: Optional[List[Any]] = None,
