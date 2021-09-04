@@ -1,11 +1,13 @@
 import helpers.io_ as hio
 import helpers.dbg as dbg
+import ccxt
 
 class CCXTExchange:
     def __init__(self, exchange_id: str, api_keys_path: str):
         self.exchange_id = exchange_id
-        self.api_key_path = "/data/danya/src/cmamp1/im/ccxt/notebooks/API_keys.json"
+        self.api_keys_path = "/data/danya/src/cmamp1/im/ccxt/notebooks/API_keys.json"
         self.exchange = self.log_into_exchange()
+
     def log_into_exchange(self):
         """
         Log into exchange via ccxt.
