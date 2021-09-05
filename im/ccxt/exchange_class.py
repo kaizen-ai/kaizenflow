@@ -1,13 +1,15 @@
-import helpers.io_ as hio
-import helpers.dbg as dbg
+from typing import Dict, Optional
+
 import ccxt
-from typing import Optional
+
+import helpers.dbg as dbg
+import helpers.io_ as hio
 
 API_KEYS_PATH = "/data/shared/data/API_keys.json"
 
 
 class CCXTExchange:
-    def __init__(self, exchange_id: str, api_keys_path: Optional[str]) -> None:
+    def __init__(self, exchange_id: str, api_keys_path: Optional[str] = None) -> None:
         """
         Create a class for accessing ccxt exchange data.
 
@@ -27,7 +29,7 @@ class CCXTExchange:
         all_credentials = hio.from_json(self.api_keys_path)
         return all_credentials
 
-    def log_into_exchange(self):
+    def log_into_exchange(self) -> Dict[Dict[str, str]]:
         """
         Log into exchange via ccxt.
         """
