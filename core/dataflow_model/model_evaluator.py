@@ -315,6 +315,9 @@ class StrategyEvaluator:
 # ModelEvaluator
 # #############################################################################
 
+# A model / experiment is represented by a key, encoded as a string.
+Key = str
+
 
 # TODO(Paul): Deprecate.
 class ModelEvaluator:
