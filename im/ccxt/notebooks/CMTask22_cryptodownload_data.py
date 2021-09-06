@@ -53,6 +53,9 @@ CURRENCY_SYMBOLS = ["BTC/USDT",
 "EOS/USDT"]
 
 
+# %% [markdown]
+# ## Functions
+
 # %%
 def get_download_page(exchange_symbol: str) -> str:
     download_url = WEBSITE_PREFIX + exchange_symbol
@@ -119,5 +122,9 @@ df = pd.read_csv('https://www.cryptodatadownload.com/cdd/OCEANUSDT_Binance_futur
 
 # %%
 df
+
+# %%
+aws_profile = s3
+s3_credentials = hs3.get_aws_credentials(hs3.get_aws_profile())
 
 # %%
