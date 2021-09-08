@@ -33,6 +33,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): No need for verbose. Just use log_level.
 def to_pickle(
     obj: Any,
     file_name: str,
