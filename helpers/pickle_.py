@@ -18,6 +18,7 @@ from typing import Any, Callable
 import helpers.dbg as hdbg
 import helpers.introspection as hintros
 import helpers.io_ as hio
+import helpers.introspection as hintro
 import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
