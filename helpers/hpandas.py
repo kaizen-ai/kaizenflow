@@ -68,3 +68,36 @@ def dassert_monotonic_index(
     cond = index.is_monotonic_increasing or index.is_monotonic_decreasing
     dbg.dassert(cond, msg=msg, *args)  # type: ignore
     dbg.dassert(index.is_unique, msg=msg, *args)  # type: ignore
+
+
+# #############################################################################
+# Parquet
+# #############################################################################
+
+def to_parquet(df: pd.DataFrame, file_name: str) -> None:
+    dbg.dassert_is_instance(df, pd.DataFrame)
+    dbg.dassert_type_is(file_name, str)
+    dbg.dassert(file_name.endswith(".pq"), "Invalid file_name='%s'", file_name)
+    #
+    hio.create_enclosing_dir(file_name, incremental=True)
+    _LOG.log(log_level, "df.shape=%s", str(df.shape))
+    mem = df.memory_usage().sum()
+    import helpers.introspection as hintro
+    _LOG.log(log_level, "df.memory_usage=%s", hintro.format_size(mem))
+    #
+    dtmr = htimer.dtimer_start(log_level, "To parquet '%s'" % file_name)
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    table = pa.Table.from_pandas(df)
+    pq.write_table(table, file_name)
+    #
+    _, elapsed_time = htimer.dtimer_stop(dtmr)
+    size_mb = hintro.format_size(os.path.getsize(file_name))
+    # TODO(gp): Use hintro.format_size().
+    if verbose:
+        _LOG.info(
+            "Saved '%s' (size=%.2f Mb, time=%.1fs)",
+            file_name,
+            size_mb,
+            elapsed_time,
+        )
