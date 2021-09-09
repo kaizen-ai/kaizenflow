@@ -27,15 +27,24 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="The path to the folder to store the output",
     )
+
+    parser.add_argument(
+        "--file_name",
+        action="store",
+        required=True,
+        type=str,
+        help="The path to the folder to store the output"
+    )
+
     parser.add_argument(
         "--exchange",
         action="store",
         required=True,
         type=str,
-        help="Name of the exchange to download data from",
+        help="CCXT name of the exchange to download data from",
     )
     parser.add_argument(
-        "--currency",
+        "--currency_pair",
         action="store",
         required=True,
         type=str,
@@ -53,15 +62,26 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         type=str,
         default=None,
-        help="End date of download in iso8601 format (optional)"
+        help="End date of download in iso8601 format (optional, defaults to datetime.now())"
     )
-
+    parser.add_argument("--incremental", action="store_true")
+    parser.add_argument("--dry_run", action="store_true")
     parser = prsr.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
+    args = parser.parse_args()
+    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    # Create the dst dir.
+    # Initialize the exchange class.
+    #  Note: won't work with default keys path inside bash docker
 
+    # Download ohlcv.
+
+    # Transform to dataframe.
+
+    # Save as single .csv.gz file.
     return None
 
 

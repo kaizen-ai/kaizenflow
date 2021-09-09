@@ -80,7 +80,7 @@ class CCXTExchange:
         :param curr_symbol: a currency pair, e.g. "BTC/USDT"
         :param step: a number of candles per iteration
         :param sleep_time: time in seconds between iterations
-        :return:
+        :return: OHLCV data from ccxt
         """
         # Verify that the exchange has fetch_ohlcv method.
         dbg.dassert(self.exchange.has["fetchOHLCV"])
