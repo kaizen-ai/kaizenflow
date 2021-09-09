@@ -73,7 +73,6 @@ def _parse() -> argparse.ArgumentParser:
         help="Size of each API request per iteration",
     )
     parser.add_argument("--incremental", action="store_true")
-    parser.add_argument("--dry_run", action="store_true")
     parser = prsr.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
 
