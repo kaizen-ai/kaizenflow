@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Union
 import time
 import logging
 
@@ -52,34 +52,43 @@ class CCXTExchange:
         return exchange
 
     def download_ohlcv_data(self,
-                            start_date: int,
-                            end_date: int,
+                            start_date: Union[int, str],
+                            end_date: Union[int, str],
                             curr_symbol: str,
                             step: Optional[int] = None,
-                            sleep_time: int = 1):
+                            sleep_time: int = 1) -> List[List[int, float]]:
         """
 
-        :param start_date:
-        :param end_date:
-        :param curr_symbol:
-        :param step:
-        :param sleep_time:
+        :param start_date: starting point for data
+        :param end_date: end point for data
+        :param curr_symbol: a currency pair, e.g. "BTC/USDT"
+        :param step: a number of candles per iteration
+        :param sleep_time: time in seconds between iterations
         :return:
         """
+        # Verify that the exchange has fetch_ohlcv method.
         dbg.dassert(self.exchange.has["fetchOHLCV"])
+        # Verify that the provided currency pair is present in exchange.
         dbg.dassert_in(curr_symbol, self.exchange.load_markets().keys())
-        start_date = self.exchange.parse8601(start_date)
-        end_date = self.exchange.parse8601(end_date)
-        # Convert to ms.
+        # Verify that date parameters are of correct format.
+        dbg.dassert_isinstance(start_date, [int, str], msg="Type of start_date param is incorrect.")
+        dbg.dassert_isinstance(end_date, [int, str], msg="Type of end_date param is incorrect.")
+        if isinstance(start_date, str):
+            start_date = self.exchange.parse8601(start_date)
+        if isinstance(end_date, str):
+            end_date = self.exchange.parse8601(end_date)
+        # Get 1m timeframe as millisecond.
         duration = self.exchange.parse_timeframe("1m") * 1000
         all_candles = []
+        # Iterate over the time period.
+        #  Note:
         for t in range(start_date, end_date+duration, duration*step):
-            candles = self.exchange.fetch_ohlcv(curr_symbol, "1m", t, step)
+            # Fetch OHLCV candles for 1m since current datetime.
+            candles = self.exchange.fetch_ohlcv(curr_symbol, timeframe="1m", since=t, limit=step)
             _LOG.info('Fetched', len(candles), 'candles')
             if candles:
                 _LOG.info('From', self.exchange.iso8601(candles[0][0]), 'to', self.exchange.iso8601(candles[-1][0]))
             all_candles += candles
-            total_length = len(all_candles)
-            _LOG.info('Fetched', total_length, 'candles in total')
+            _LOG.info('Fetched', len(all_candles), 'candles so far')
             time.sleep(sleep_time)
         return all_candles
