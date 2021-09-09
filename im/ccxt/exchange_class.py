@@ -25,7 +25,7 @@ class CCXTExchange:
         """
         self.exchange_id = exchange_id
         self.api_keys_path = api_keys_path or API_KEYS_PATH
-        self.exchange = self.log_into_exchange()
+        self._exchange = self.log_into_exchange()
 
     def load_api_credentials(self) -> Dict[str, Dict[str, Union[str, bool]]]:
         """
@@ -83,9 +83,9 @@ class CCXTExchange:
         :return: OHLCV data from ccxt
         """
         # Verify that the exchange has fetch_ohlcv method.
-        dbg.dassert(self.exchange.has["fetchOHLCV"])
+        dbg.dassert(self._exchange.has["fetchOHLCV"])
         # Verify that the provided currency pair is present in exchange.
-        dbg.dassert_in(curr_symbol, self.exchange.load_markets().keys())
+        dbg.dassert_in(curr_symbol, self._exchange.load_markets().keys())
         # Verify that date parameters are of correct format.
         dbg.dassert_isinstance(
             start_date, [int, str], msg="Type of start_date param is incorrect."
@@ -94,11 +94,11 @@ class CCXTExchange:
             end_date, [int, str], msg="Type of end_date param is incorrect."
         )
         if isinstance(start_date, str):
-            start_date = self.exchange.parse8601(start_date)
+            start_date = self._exchange.parse8601(start_date)
         if isinstance(end_date, str):
-            end_date = self.exchange.parse8601(end_date)
+            end_date = self._exchange.parse8601(end_date)
         # Get 1m timeframe as millisecond.
-        duration = self.exchange.parse_timeframe("1m") * 1000
+        duration = self._exchange.parse_timeframe("1m") * 1000
         all_candles = []
         # Iterate over the time period.
         #  Note: the iteration goes from start date to end date in
@@ -107,16 +107,16 @@ class CCXTExchange:
         # since
         for t in range(start_date, end_date + duration, duration * step):
             # Fetch OHLCV candles for 1m since current datetime.
-            candles = self.exchange.fetch_ohlcv(
+            candles = self._exchange.fetch_ohlcv(
                 curr_symbol, timeframe="1m", since=t, limit=step
             )
             _LOG.info("Fetched", len(candles), "candles")
             if candles:
                 _LOG.info(
                     "From",
-                    self.exchange.iso8601(candles[0][0]),
+                    self._exchange.iso8601(candles[0][0]),
                     "to",
-                    self.exchange.iso8601(candles[-1][0]),
+                    self._exchange.iso8601(candles[-1][0]),
                 )
             all_candles += candles
             _LOG.info("Fetched", len(all_candles), "candles so far")

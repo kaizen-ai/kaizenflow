@@ -4,8 +4,8 @@ Script to download historical data from ccxt.
 
 import im.ccxt.exchange_class as icec
 import logging
-import time
-from typing import Any, Dict, List, Optional, Union
+import pandas as pd
+import os
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
@@ -37,7 +37,7 @@ def _parse() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        "--exchange",
+        "--exchange_id",
         action="store",
         required=True,
         type=str,
@@ -73,15 +73,26 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    dbg.dassert_file_extension(args.file_name, "csv.gz")
     # Create the dst dir.
+    hio.create_dir(args.dst_dir, incremental=args.incremental)
     # Initialize the exchange class.
     #  Note: won't work with default keys path inside bash docker
-
+    exchange = icec.CCXTExchange(args.exchange_id)
     # Download ohlcv.
-
+    start_date = args.start_date
+    # If end_date is not provided, get current time in ms.
+    #  Note: utilizes ccxt's method that provides data in correct format.
+    end_date = args.end_date or exchange._exchange.milliseconds()
+    ohlcv_data = exchange.download_ohlcv_data(start_date,
+                                              end_date,
+                                              args.exchange_id,
+                                              args.currency_pair)
     # Transform to dataframe.
-
-    # Save as single .csv.gz file.
+    ohlcv_df = pd.DataFrame(ohlcv_data,
+                            columns=["timestamp","open", "high", "low", "close", "volume"])
+    # Save as single .csv file.
+    ohlcv_df.to_csv(os.path.join(args.dst_dir, args.file_name))
     return None
 
 
