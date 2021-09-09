@@ -27,7 +27,7 @@ class CCXTExchange:
         self.api_keys_path = api_keys_path or API_KEYS_PATH
         self.exchange = self.log_into_exchange()
 
-    def load_api_credentials(self) -> Dict[str, Dict[str, str]]:
+    def load_api_credentials(self) -> Dict[str, Dict[str, Union[str, bool]]]:
         """
         Load JSON file with available ccxt credentials
         :return: JSON file with API credentials
@@ -67,7 +67,7 @@ class CCXTExchange:
         curr_symbol: str,
         step: Optional[int] = None,
         sleep_time: int = 1,
-    ) -> List[List[int, float]]:
+    ) -> List[List[Union[int, float]]]:
         """
         Download minute OHLCV candles.
 
