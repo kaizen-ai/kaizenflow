@@ -88,10 +88,10 @@ class CCXTExchange:
         dbg.dassert_in(curr_symbol, self._exchange.load_markets().keys())
         # Verify that date parameters are of correct format.
         dbg.dassert_isinstance(
-            start_date, [int, str], msg="Type of start_date param is incorrect."
+            start_date, tuple([int, str]), msg="Type of start_date param is incorrect."
         )
         dbg.dassert_isinstance(
-            end_date, [int, str], msg="Type of end_date param is incorrect."
+            end_date, tuple([int, str]), msg="Type of end_date param is incorrect."
         )
         if isinstance(start_date, str):
             start_date = self._exchange.parse8601(start_date)
