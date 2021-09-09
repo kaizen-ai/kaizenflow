@@ -1,6 +1,6 @@
-from typing import Any, Dict, List, Optional, Union
-import time
 import logging
+import time
+from typing import Any, Dict, List, Optional, Union
 
 import ccxt
 
@@ -58,6 +58,11 @@ class CCXTExchange:
                             step: Optional[int] = None,
                             sleep_time: int = 1) -> List[List[int, float]]:
         """
+        Download minute OHLCV candles.
+
+        start_date and end_date should be passed as a datetime
+        string in iso8601 format, e.g. '2019-02-19T00:00:00Z',
+        or as a UNIX epoch time in ms, e.g. 1550534400000.
 
         :param start_date: starting point for data
         :param end_date: end point for data
@@ -81,8 +86,11 @@ class CCXTExchange:
         duration = self.exchange.parse_timeframe("1m") * 1000
         all_candles = []
         # Iterate over the time period.
-        #  Note:
-        for t in range(start_date, end_date+duration, duration*step):
+        #  Note: the iteration goes from start date to end date in
+        # milliseconds, with the step defined by `step` parameter.
+        # Because of that, output can go slightly over the end_date,
+        # since
+        for t in range(start_date, end_date + duration, duration * step):
             # Fetch OHLCV candles for 1m since current datetime.
             candles = self.exchange.fetch_ohlcv(curr_symbol, timeframe="1m", since=t, limit=step)
             _LOG.info('Fetched', len(candles), 'candles')
