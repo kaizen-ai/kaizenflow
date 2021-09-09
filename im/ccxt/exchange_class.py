@@ -14,7 +14,9 @@ API_KEYS_PATH = "/data/shared/data/API_keys.json"
 
 
 class CCXTExchange:
-    def __init__(self, exchange_id: str, api_keys_path: Optional[str] = None) -> None:
+    def __init__(
+        self, exchange_id: str, api_keys_path: Optional[str] = None
+    ) -> None:
         """
         Create a class for accessing ccxt exchange data.
 
@@ -40,7 +42,11 @@ class CCXTExchange:
         """
         # Load all exchange credentials.
         all_credentials = self.load_api_credentials()
-        dbg.dassert_in(self.exchange_id, all_credentials, msg="'%s' exchange ID is incorrect.")
+        dbg.dassert_in(
+            self.exchange_id,
+            all_credentials,
+            msg="'%s' exchange ID is incorrect.",
+        )
         # Select credentials for provided exchange.
         credentials = all_credentials[self.exchange_id]
         # Enable rate limit.
@@ -48,15 +54,20 @@ class CCXTExchange:
         exchange_class = getattr(ccxt, self.exchange_id)
         # Create a `ccxt` exchange class.
         exchange = exchange_class(credentials)
-        dbg.dassert(exchange.checkRequiredCredentials(), msg="Required credentials not passed")
+        dbg.dassert(
+            exchange.checkRequiredCredentials(),
+            msg="Required credentials not passed",
+        )
         return exchange
 
-    def download_ohlcv_data(self,
-                            start_date: Union[int, str],
-                            end_date: Union[int, str],
-                            curr_symbol: str,
-                            step: Optional[int] = None,
-                            sleep_time: int = 1) -> List[List[int, float]]:
+    def download_ohlcv_data(
+        self,
+        start_date: Union[int, str],
+        end_date: Union[int, str],
+        curr_symbol: str,
+        step: Optional[int] = None,
+        sleep_time: int = 1,
+    ) -> List[List[int, float]]:
         """
         Download minute OHLCV candles.
 
@@ -76,8 +87,12 @@ class CCXTExchange:
         # Verify that the provided currency pair is present in exchange.
         dbg.dassert_in(curr_symbol, self.exchange.load_markets().keys())
         # Verify that date parameters are of correct format.
-        dbg.dassert_isinstance(start_date, [int, str], msg="Type of start_date param is incorrect.")
-        dbg.dassert_isinstance(end_date, [int, str], msg="Type of end_date param is incorrect.")
+        dbg.dassert_isinstance(
+            start_date, [int, str], msg="Type of start_date param is incorrect."
+        )
+        dbg.dassert_isinstance(
+            end_date, [int, str], msg="Type of end_date param is incorrect."
+        )
         if isinstance(start_date, str):
             start_date = self.exchange.parse8601(start_date)
         if isinstance(end_date, str):
@@ -92,11 +107,18 @@ class CCXTExchange:
         # since
         for t in range(start_date, end_date + duration, duration * step):
             # Fetch OHLCV candles for 1m since current datetime.
-            candles = self.exchange.fetch_ohlcv(curr_symbol, timeframe="1m", since=t, limit=step)
-            _LOG.info('Fetched', len(candles), 'candles')
+            candles = self.exchange.fetch_ohlcv(
+                curr_symbol, timeframe="1m", since=t, limit=step
+            )
+            _LOG.info("Fetched", len(candles), "candles")
             if candles:
-                _LOG.info('From', self.exchange.iso8601(candles[0][0]), 'to', self.exchange.iso8601(candles[-1][0]))
+                _LOG.info(
+                    "From",
+                    self.exchange.iso8601(candles[0][0]),
+                    "to",
+                    self.exchange.iso8601(candles[-1][0]),
+                )
             all_candles += candles
-            _LOG.info('Fetched', len(all_candles), 'candles so far')
+            _LOG.info("Fetched", len(all_candles), "candles so far")
             time.sleep(sleep_time)
         return all_candles
