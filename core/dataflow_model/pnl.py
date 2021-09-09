@@ -9,6 +9,7 @@ _LOG = logging.getLogger(__name__)
 
 _LOG.debug = _LOG.info
 
+
 def compute_data(num_samples: int, seed: int = 42) -> pd.DataFrame:
     np.random.seed(seed)
     date_range = pd.date_range("09:30", periods=num_samples, freq="1T")
