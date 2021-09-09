@@ -93,8 +93,8 @@ class CCXTExchange:
         dbg.dassert_isinstance(
             end_date, tuple([int, str]), msg="Type of end_date param is incorrect."
         )
-        # Make the maximum limit of 1500 a default step.
-        step = step or 1500
+        # Make the minimal limit of 500 a default step.
+        step = step or 500
         if isinstance(start_date, str):
             start_date = self._exchange.parse8601(start_date)
         if isinstance(end_date, str):

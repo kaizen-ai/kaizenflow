@@ -65,6 +65,13 @@ def _parse() -> argparse.ArgumentParser:
         default=None,
         help="End date of download in iso8601 format (optional, defaults to datetime.now())",
     )
+    parser.add_argument(
+        "--step",
+        action="store",
+        type=int,
+        default=None,
+        help="Size of each API request per iteration",
+    )
     parser.add_argument("--incremental", action="store_true")
     parser.add_argument("--dry_run", action="store_true")
     parser = prsr.add_verbosity_arg(parser)
@@ -86,7 +93,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #  Note: utilizes ccxt's method that provides data in correct format.
     end_date = args.end_date or exchange._exchange.milliseconds()
     ohlcv_data = exchange.download_ohlcv_data(
-        start_date, end_date, args.currency_pair
+        start_date, end_date, curr_symbol=args.currency_pair, step=args.step
     )
     # Transform to dataframe.
     ohlcv_df = pd.DataFrame(
