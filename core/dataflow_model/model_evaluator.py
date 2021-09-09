@@ -532,7 +532,7 @@ class ModelEvaluator:
         result_bundle_dict: Dict[Key, cdataf.ResultBundle],
         predictions_col: str,
         target_col: str,
-        oos_start: Optional[Any] = None,
+        oos_start: Optional[pd.Timestamp],
         abort_on_error: bool = True,
     ) -> ModelEvaluator:
         """
