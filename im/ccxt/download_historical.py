@@ -2,15 +2,16 @@
 Script to download historical data from ccxt.
 """
 
-import im.ccxt.exchange_class as icec
+import argparse
 import logging
-import pandas as pd
 import os
+
+import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.parser as prsr
-import argparse
+import im.ccxt.exchange_class as icec
 
 _LOG = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="The path to the folder to store the output"
+        help="The path to the folder to store the output",
     )
 
     parser.add_argument(
@@ -55,14 +56,14 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="Start date of download in iso8601 format"
+        help="Start date of download in iso8601 format",
     )
     parser.add_argument(
         "--end_date",
         action="store",
         type=str,
         default=None,
-        help="End date of download in iso8601 format (optional, defaults to datetime.now())"
+        help="End date of download in iso8601 format (optional, defaults to datetime.now())",
     )
     parser.add_argument("--incremental", action="store_true")
     parser.add_argument("--dry_run", action="store_true")
@@ -84,12 +85,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # If end_date is not provided, get current time in ms.
     #  Note: utilizes ccxt's method that provides data in correct format.
     end_date = args.end_date or exchange._exchange.milliseconds()
-    ohlcv_data = exchange.download_ohlcv_data(start_date,
-                                              end_date,
-                                              args.currency_pair)
+    ohlcv_data = exchange.download_ohlcv_data(
+        start_date, end_date, args.currency_pair
+    )
     # Transform to dataframe.
-    ohlcv_df = pd.DataFrame(ohlcv_data,
-                            columns=["timestamp", "open", "high", "low", "close", "volume"])
+    ohlcv_df = pd.DataFrame(
+        ohlcv_data,
+        columns=["timestamp", "open", "high", "low", "close", "volume"],
+    )
     # Save as single .csv file.
     full_path = os.path.join(args.dst_dir, args.file_name)
     ohlcv_df.to_csv(full_path, index=False)
