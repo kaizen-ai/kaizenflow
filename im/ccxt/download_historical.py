@@ -73,7 +73,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    dbg.dassert_file_extension(args.file_name, "csv.gz")
+    dbg.dassert_file_extension(args.file_name, "csv")
     # Create the dst dir.
     hio.create_dir(args.dst_dir, incremental=args.incremental)
     # Initialize the exchange class.
