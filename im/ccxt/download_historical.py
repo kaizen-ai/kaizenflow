@@ -89,9 +89,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
                                               args.currency_pair)
     # Transform to dataframe.
     ohlcv_df = pd.DataFrame(ohlcv_data,
-                            columns=["timestamp","open", "high", "low", "close", "volume"])
+                            columns=["timestamp", "open", "high", "low", "close", "volume"])
     # Save as single .csv file.
-    ohlcv_df.to_csv(os.path.join(args.dst_dir, args.file_name))
+    full_path = os.path.join(args.dst_dir, args.file_name)
+    ohlcv_df.to_csv(full_path, index=False)
+    _LOG.info("Saved to %s" % full_path)
     return None
 
 
