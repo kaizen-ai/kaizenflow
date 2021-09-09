@@ -114,6 +114,9 @@ evaluator = modeval.ModelEvaluator.from_eval_config(eval_config)
 # Build the ModelPlotter.
 plotter = modplot.ModelPlotter(evaluator)
 
+# %%
+evaluator._data["0"]
+
 # %% [markdown]
 # # Analysis
 
