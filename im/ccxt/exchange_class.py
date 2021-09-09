@@ -10,7 +10,7 @@ import helpers.io_ as hio
 dbg.init_logger(verbosity=logging.INFO)
 _LOG = logging.getLogger(__name__)
 
-API_KEYS_PATH = "/data/shared/data/API_keys.json"
+API_KEYS_PATH = "/app/im/ccxt/notebooks/API_keys.json"
 
 
 class CCXTExchange:
