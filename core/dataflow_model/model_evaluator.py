@@ -526,6 +526,58 @@ class ModelEvaluator:
         )
         return evaluator
 
+    @classmethod
+    def from_result_bundle_dict(
+        cls,
+        result_bundle_dict: Dict[Key, cdataf.ResultBundle],
+        predictions_col: str,
+        target_col: str,
+        oos_start: Optional[Any] = None,
+        abort_on_error: bool = True,
+    ) -> ModelEvaluator:
+        """
+        Initialize a `ModelEvaluator` from a dictionary `key` -> `ResultBundle`.
+
+        :param result_bundle_dict: mapping from key to `ResultBundle`
+        :param *: as in `ModelEvaluator` constructor
+        :return: `ModelEvaluator` initialized with returns and predictions from
+           result bundles
+        """
+        data_dict: Dict[Key, pd.DataFrame] = {}
+        # Convert each `ResultBundle` dict into a `ResultBundle` class object.
+        for key, result_bundle in result_bundle_dict.items():
+            _LOG.debug("Loading key=%s", key)
+            try:
+                _LOG.debug("memory_usage=%s", dbg.get_memory_usage_as_str(None))
+                df = result_bundle.result_df
+                dbg.dassert_is_not(df, None)
+                _LOG.debug(
+                    "result_df.memory_usage=%s",
+                    hintro.format_size(df.memory_usage(index=True, deep=True).sum()),
+                )
+                # Extract the needed columns.
+                dbg.dassert_in(target_col, df.columns)
+                dbg.dassert_in(predictions_col, df.columns)
+                dbg.dassert_not_in(key, data_dict.keys())
+                data_dict[key] = df[[target_col, predictions_col]]
+            except Exception as e:
+                _LOG.error(
+                    "Error while loading ResultBundle for config %s with exception:\n%s"
+                    % (key, str(e))
+                )
+                if abort_on_error:
+                    raise e
+                else:
+                    _LOG.warning("Continuing as per user request")
+        # Initialize `ModelEvaluator`.
+        evaluator = cls(
+            data=data_dict,
+            prediction_col=predictions_col,
+            target_col=target_col,
+            oos_start=oos_start,
+        )
+        return evaluator
+
     # TODO(gp): Maybe `resolve_keys()` is a better name.
     def get_keys(self, keys: Optional[List[Key]]) -> List[Any]:
         """
