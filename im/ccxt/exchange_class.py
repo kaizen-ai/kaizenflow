@@ -93,6 +93,8 @@ class CCXTExchange:
         dbg.dassert_isinstance(
             end_date, tuple([int, str]), msg="Type of end_date param is incorrect."
         )
+        # Make the maximum limit of 1500 a default step.
+        step = step or 1500
         if isinstance(start_date, str):
             start_date = self._exchange.parse8601(start_date)
         if isinstance(end_date, str):
@@ -110,15 +112,12 @@ class CCXTExchange:
             candles = self._exchange.fetch_ohlcv(
                 curr_symbol, timeframe="1m", since=t, limit=step
             )
-            _LOG.info("Fetched", len(candles), "candles")
+            _LOG.info("Fetched %s candles" % len(candles))
             if candles:
                 _LOG.info(
-                    "From",
-                    self._exchange.iso8601(candles[0][0]),
-                    "to",
-                    self._exchange.iso8601(candles[-1][0]),
-                )
+                    "From %s to %s" %
+                    tuple([self._exchange.iso8601(candles[0][0]), self._exchange.iso8601(candles[-1][0])]))
             all_candles += candles
-            _LOG.info("Fetched", len(all_candles), "candles so far")
+            _LOG.info("Fetched %s candles so far" % len(all_candles))
             time.sleep(sleep_time)
         return all_candles
