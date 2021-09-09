@@ -86,7 +86,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     end_date = args.end_date or exchange._exchange.milliseconds()
     ohlcv_data = exchange.download_ohlcv_data(start_date,
                                               end_date,
-                                              args.exchange_id,
                                               args.currency_pair)
     # Transform to dataframe.
     ohlcv_df = pd.DataFrame(ohlcv_data,
