@@ -341,7 +341,8 @@ class ResultBundle(abc.ABC):
         """
         Look for a key `key` in the dictionary `mapping`.
 
-        Return the corresponding value or `None` if the key does not exist.
+        Return the corresponding value or `None` if the key does not
+        exist.
         """
         if mapping is None:
             _LOG.warning("No mapping provided to search for '%s'", key)
