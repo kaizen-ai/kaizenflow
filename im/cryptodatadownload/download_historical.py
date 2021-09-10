@@ -15,6 +15,8 @@ import helpers.parser as prsr
 
 _LOG = logging.getLogger(__name__)
 
+WEBSITE_PREFIX = "https://www.cryptodatadownload.com/data/"
+
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
