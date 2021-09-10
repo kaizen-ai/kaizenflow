@@ -7,6 +7,7 @@ import logging
 import os
 
 import pandas as pd
+import datetime
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
@@ -73,28 +74,44 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    # Verify that the provided file's extension is `.csv.gz`
     dbg.dassert_file_extension(args.file_name, ".csv.gz")
-    # Create the dst dir.
+    # Create the enclosing directory.
     hio.create_enclosing_dir(args.file_name, incremental=args.incremental)
-    # Initialize the exchange class.
-    exchange = icec.CCXTExchange(args.exchange_id)
-    # Download OHLCV.
     start_date = args.start_datetime
     # If end_date is not provided, get current time in ms.
-    #  Note: utilizes CCXT's method that provides data in correct format.
-    end_date = args.end_datetime or exchange._exchange.milliseconds()
-    ohlcv_data = exchange.download_ohlcv_data(
-        start_date, end_date, curr_symbol=args.currency_pair, step=args.step
-    )
-    # Transform to dataframe.
-    ohlcv_df = pd.DataFrame(
-        ohlcv_data,
-        columns=["timestamp", "open", "high", "low", "close", "volume"],
-    )
-    # Save as single .csv file.
-    full_path = os.path.join(args.dst_dir, args.file_name)
-    ohlcv_df.to_csv(full_path, index=False, compression="gzip")
-    _LOG.info("Saved to %s" % full_path)
+    end_date = args.end_datetime or int(datetime.datetime.utcnow().timestamp()*1000)
+    ohlcv_df = []
+    if args.exchange_id == "all":
+        # Iterate over all available exchanges.
+        exchange_ids = ["binance", "kucoin"]
+    else:
+        # Get a single exchange.
+        exchange_ids = [args.exchange_id]
+    for exchange_id in exchange_ids:
+        # Initialize the exchange class.
+        exchange = icec.CCXTExchange(exchange_id)
+        if args.currency_symbol == "all":
+            # Iterate over all currencies available for exchange.
+            currency_pairs = exchange.currency_pairs
+        else:
+            # Iterate over single provided currency.
+            currency_pairs = [args.currency_pair]
+        for pair in currency_pairs:
+            # Download OHLCV data.
+            ohlcv_data = exchange.download_ohlcv_data(
+                start_date, end_date, curr_symbol=pair, step=args.step
+            )
+            # Transform to dataframe.
+            exchange_df = pd.DataFrame(
+                ohlcv_data,
+                columns=["timestamp", "open", "high", "low", "close", "volume"],
+            )
+            ohlcv_df.append(exchange_df)
+    ohlcv_df = pd.concat(ohlcv_df)
+    # Save file.
+    ohlcv_df.to_csv(args.file_name, index=False, compression="gzip")
+    _LOG.info("Saved to %s" % args.file_name)
     return None
 
 

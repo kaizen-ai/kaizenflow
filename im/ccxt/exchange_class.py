@@ -26,6 +26,7 @@ class CCXTExchange:
         self.exchange_id = exchange_id
         self.api_keys_path = api_keys_path or API_KEYS_PATH
         self._exchange = self.log_into_exchange()
+        self.currency_pairs = self.get_exchange_currencies()
 
     def load_api_credentials(self) -> Dict[str, Dict[str, Union[str, bool]]]:
         """
@@ -60,7 +61,10 @@ class CCXTExchange:
         )
         return exchange
 
-    def get_exchange_symbols(self):
+    def get_exchange_currencies(self):
+        """
+        Get all currency pairs available for exchange.
+        """
         return self._exchange.load_markets().keys()
 
     def download_ohlcv_data(
