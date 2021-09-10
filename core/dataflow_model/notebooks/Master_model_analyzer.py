@@ -113,9 +113,6 @@ evaluator = cdtfmomoev.ModelEvaluator.from_eval_config(eval_config)
 # Build the ModelPlotter.
 plotter = cdtfmomopl.ModelPlotter(evaluator)
 
-# %%
-evaluator._data["0"]
-
 # %% [markdown]
 # # Analysis
 
