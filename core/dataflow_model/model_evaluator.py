@@ -315,8 +315,8 @@ class StrategyEvaluator:
 # ModelEvaluator
 # #############################################################################
 
-# A model / experiment is represented by a key, encoded as a string.
-Key = str
+# A model / experiment is represented by a key, encoded as an int.
+Key = int
 
 
 # TODO(Paul): Deprecate.
@@ -513,7 +513,6 @@ class ModelEvaluator:
                     raise e
                 else:
                     _LOG.warning("Continuing as per user request")
-        print(data_dict)
         # Initialize `ModelEvaluator`.
         evaluator = cls(
             data=data_dict,
