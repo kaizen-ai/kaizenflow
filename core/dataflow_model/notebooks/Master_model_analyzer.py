@@ -53,7 +53,7 @@ hprint.config_notebook()
 # obj = hpickle.from_pickle(file_name)
 
 # %%
-#obj.keys()
+# obj.keys()
 
 # %%
 # import helpers.introspection as hintro
@@ -62,7 +62,7 @@ hprint.config_notebook()
 #     print(k, hintro.get_size_in_bytes(obj[k]))
 
 # %%
-#obj["payload"]["fit_result_bundle"]["result_df"]
+# obj["payload"]["fit_result_bundle"]["result_df"]
 
 # %% [markdown]
 # # Notebook config

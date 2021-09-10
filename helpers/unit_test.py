@@ -351,7 +351,7 @@ def compare_df(df1: pd.DataFrame, df2: pd.DataFrame) -> None:
 
 
 def create_test_dir(
-        dir_name: str, incremental: bool, file_dict: Dict[str, str]
+    dir_name: str, incremental: bool, file_dict: Dict[str, str]
 ) -> None:
     """
     Create a directory `dir_name` with the files from `file_dict`.

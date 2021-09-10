@@ -481,7 +481,10 @@ class ModelEvaluator:
         :return: `ModelEvaluator` initialized with returns and predictions from
            result bundles
         """
-        _LOG.info("Before building ModelEvaluator: memory_usage=%s", dbg.get_memory_usage_as_str(None))
+        _LOG.info(
+            "Before building ModelEvaluator: memory_usage=%s",
+            dbg.get_memory_usage_as_str(None),
+        )
         data_dict: Dict[Key, pd.DataFrame] = {}
         # Convert each `ResultBundle` dict into a `ResultBundle` class object.
         for key, result_bundle in result_bundle_dict.items():
@@ -492,7 +495,9 @@ class ModelEvaluator:
                 dbg.dassert_is_not(df, None)
                 _LOG.debug(
                     "result_df.memory_usage=%s",
-                    hintro.format_size(df.memory_usage(index=True, deep=True).sum()),
+                    hintro.format_size(
+                        df.memory_usage(index=True, deep=True).sum()
+                    ),
                 )
                 # Extract the needed columns.
                 dbg.dassert_in(target_col, df.columns)
@@ -516,7 +521,10 @@ class ModelEvaluator:
             target_col=target_col,
             oos_start=oos_start,
         )
-        _LOG.info("After building ModelEvaluator: memory_usage=%s", dbg.get_memory_usage_as_str(None))
+        _LOG.info(
+            "After building ModelEvaluator: memory_usage=%s",
+            dbg.get_memory_usage_as_str(None),
+        )
         return evaluator
 
     # TODO(gp): Maybe `resolve_keys()` is a better name.
