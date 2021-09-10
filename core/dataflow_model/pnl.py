@@ -23,7 +23,7 @@ def compute_data(num_samples: int, seed: int = 42) -> pd.DataFrame:
     df["ask"] = price + np.abs(np.random.normal(0, 1, size=len(date_range)))
     df["bid"] = price - np.abs(np.random.normal(0, 1, size=len(date_range)))
     return df
-    #display(df.head(5))
+    # display(df.head(5))
 
 
 def resample_data(df: pd.DataFrame, mode: str, seed: int = 42) -> pd.DataFrame:
@@ -41,14 +41,15 @@ def resample_data(df: pd.DataFrame, mode: str, seed: int = 42) -> pd.DataFrame:
     np.random.seed(seed)
     vals = (np.random.random(df_5mins.shape[0]) >= 0.5) * 2.0 - 1.0
     # nan the last two predictions since we need to rows to enter / exit.
-    #vals[-2:] = np.nan
+    # vals[-2:] = np.nan
     vals[-2:] = 0
     df_5mins["preds"] = vals
     return df_5mins
 
 
-def compute_pnl_for_instantaneous_no_cost_case(w0: float, df: pd.DataFrame,
-                                               df_5mins: pd.DataFrame):
+def compute_pnl_for_instantaneous_no_cost_case(
+    w0: float, df: pd.DataFrame, df_5mins: pd.DataFrame
+):
     w = w0
     # Skip the last two rows since we need two rows to enter / exit the position.
     for ts, row in df_5mins[:-2].iterrows():
