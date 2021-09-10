@@ -1,6 +1,7 @@
 import logging
 import time
 from typing import Dict, List, Optional, Union
+import tqdm
 
 import ccxt
 import pandas as pd
@@ -115,18 +116,12 @@ class CCXTExchange:
         # milliseconds, with the step defined by `step` parameter.
         # Because of that, output can go slightly over the end_date,
         # since
-        for t in range(start_datetime, end_datetime + duration, duration * step):
+        for t in tqdm.tqdm(range(start_datetime, end_datetime + duration, duration * step)):
             # Fetch OHLCV candles for 1m since current datetime.
             candles = self._exchange.fetch_ohlcv(
                 curr_symbol, timeframe="1m", since=t, limit=step
             )
-            _LOG.info("Fetched %s candles" % len(candles))
-            if candles:
-                _LOG.info(
-                    "From %s to %s" %
-                    tuple([self._exchange.iso8601(candles[0][0]), self._exchange.iso8601(candles[-1][0])]))
             all_candles += candles
-            _LOG.info("Fetched %s candles so far" % len(all_candles))
             time.sleep(sleep_time)
         all_candles = pd.DataFrame(all_candles, columns=["timestamp", "open", "high", "low", "close", "volume"])
         return all_candles

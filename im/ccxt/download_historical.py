@@ -1,13 +1,46 @@
 """
 Script to download historical data from CCXT.
+
+Use as:
+
+- Download Binance BTC/USDT data from 2019-01-01 to 2019-01-02:
+> download_historical.py \
+     --file_name test.csv.gz \
+     --exchange_id "binance" \
+     --currency_pair "BTC/USDT" \
+     --start_datetime "2019-01-01" \
+     --end_datetime "2019-01-02"
+
+- Download Binance data from 2019-01-01 to now,
+  for all currency pairs:
+> download_historical.py \
+     --file_name test.csv.gz \
+     --exchange_id "binance" \
+     --currency_pair "all" \
+     --start_datetime "2019-01-01" \
+
+- Download data for all exchanges, BTC/USDT currency pair,
+from 2019-01-01 to now:
+> download_historical.py \
+     --file_name test.csv.gz \
+     --exchange_id "all" \
+     --currency_pair "BTC/USDT" \
+     --start_datetime "2019-01-01" \
+
+- Download data for all exchanges and all pairs,
+from 2019-01-01 to 2019-01-02:
+> download_historical.py \
+     --file_name test.csv.gz \
+     --exchange_id "all" \
+     --currency_pair "all" \
+     --start_datetime "2019-01-01" \
+     --start_endtime "2019-01-02"
 """
 
 import argparse
 import logging
-import os
 
 import pandas as pd
-import datetime
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
