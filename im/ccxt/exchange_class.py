@@ -60,6 +60,9 @@ class CCXTExchange:
         )
         return exchange
 
+    def get_exchange_symbols(self):
+        return self._exchange.load_markets().keys()
+
     def download_ohlcv_data(
         self,
         start_date: Union[int, str],
@@ -85,7 +88,7 @@ class CCXTExchange:
         # Verify that the exchange has fetch_ohlcv method.
         dbg.dassert(self._exchange.has["fetchOHLCV"])
         # Verify that the provided currency pair is present in exchange.
-        dbg.dassert_in(curr_symbol, self._exchange.load_markets().keys())
+        dbg.dassert_in(curr_symbol, self.get_exchange_symbols())
         # Verify that date parameters are of correct format.
         dbg.dassert_isinstance(
             start_date, tuple([int, str]), msg="Type of start_date param is incorrect."

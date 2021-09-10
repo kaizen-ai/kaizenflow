@@ -1,5 +1,5 @@
 """
-Script to download historical data from ccxt.
+Script to download historical data from CCXT.
 """
 
 import argparse
@@ -22,48 +22,41 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--dst_dir",
-        action="store",
-        required=True,
-        type=str,
-        help="The path to the folder to store the output",
-    )
-
-    parser.add_argument(
         "--file_name",
         action="store",
         required=True,
         type=str,
-        help="The path to the folder to store the output",
+        help="Full path to the output file",
     )
-
     parser.add_argument(
         "--exchange_id",
         action="store",
         required=True,
         type=str,
-        help="CCXT name of the exchange to download data from",
+        help="CCXT name of the exchange to download data for, e.g. 'binance'",
     )
     parser.add_argument(
         "--currency_pair",
         action="store",
         required=True,
         type=str,
-        help="Name of the currency pair to download data from",
+        help="Name of the currency pair to download data for, e.g. 'BTC/USD',"
+             " 'all' for each currency pair in exchange",
     )
     parser.add_argument(
-        "--start_date",
+        "--start_datetime",
         action="store",
         required=True,
         type=str,
-        help="Start date of download in iso8601 format",
+        help="Start date of download in iso8601 format, e.g. '2021-09-08T00:00:00.000Z'",
     )
     parser.add_argument(
-        "--end_date",
+        "--end_datetime",
         action="store",
         type=str,
         default=None,
-        help="End date of download in iso8601 format (optional, defaults to datetime.now())",
+        help="End date of download in iso8601 format, e.g. '2021-10-08T00:00:00.000Z'."
+             "Optional, defaults to datetime.now())",
     )
     parser.add_argument(
         "--step",
@@ -80,17 +73,16 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    dbg.dassert_file_extension(args.file_name, "csv")
+    dbg.dassert_file_extension(args.file_name, ".csv.gz")
     # Create the dst dir.
-    hio.create_dir(args.dst_dir, incremental=args.incremental)
+    hio.create_enclosing_dir(args.file_name, incremental=args.incremental)
     # Initialize the exchange class.
-    #  Note: won't work with default keys path inside bash docker
     exchange = icec.CCXTExchange(args.exchange_id)
-    # Download ohlcv.
-    start_date = args.start_date
+    # Download OHLCV.
+    start_date = args.start_datetime
     # If end_date is not provided, get current time in ms.
-    #  Note: utilizes ccxt's method that provides data in correct format.
-    end_date = args.end_date or exchange._exchange.milliseconds()
+    #  Note: utilizes CCXT's method that provides data in correct format.
+    end_date = args.end_datetime or exchange._exchange.milliseconds()
     ohlcv_data = exchange.download_ohlcv_data(
         start_date, end_date, curr_symbol=args.currency_pair, step=args.step
     )
@@ -101,7 +93,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
     # Save as single .csv file.
     full_path = os.path.join(args.dst_dir, args.file_name)
-    ohlcv_df.to_csv(full_path, index=False)
+    ohlcv_df.to_csv(full_path, index=False, compression="gzip")
     _LOG.info("Saved to %s" % full_path)
     return None
 
