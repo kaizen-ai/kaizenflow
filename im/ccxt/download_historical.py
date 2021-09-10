@@ -78,9 +78,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.dassert_file_extension(args.file_name, ".csv.gz")
     # Create the enclosing directory.
     hio.create_enclosing_dir(args.file_name, incremental=args.incremental)
-    start_date = args.start_datetime
-    # If end_date is not provided, get current time in ms.
-    end_date = args.end_datetime or int(datetime.datetime.utcnow().timestamp()*1000)
+    start_datetime = pd.Timestamp(args.start_datetime)
+    # If end_date is not provided, get current time.
+    if not args.end_datetime:
+        end_datetime = pd.Timestamp.now()
+    else:
+        end_datetime = pd.Timestamp(args.end_datetime)
     ohlcv_df = []
     if args.exchange_id == "all":
         # Iterate over all available exchanges.
@@ -100,7 +103,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         for pair in currency_pairs:
             # Download OHLCV data.
             pair_data = exchange.download_ohlcv_data(
-                start_date, end_date, curr_symbol=pair, step=args.step
+                start_datetime, end_datetime, curr_symbol=pair, step=args.step
             )
             ohlcv_df.append(pair_data)
     ohlcv_df = pd.concat(ohlcv_df)
