@@ -45,6 +45,25 @@ _LOG = logging.getLogger(__name__)
 
 hprint.config_notebook()
 
+# %%
+# file_name = "/app/oos_experiment.RH2Eg.v2_0-top10.5T.run1_test/result_1/result_bundle.v2_0.pkl"
+
+# import helpers.pickle_ as hpickle
+
+# obj = hpickle.from_pickle(file_name)
+
+# %%
+#obj.keys()
+
+# %%
+# import helpers.introspection as hintro
+
+# for k in obj.keys():
+#     print(k, hintro.get_size_in_bytes(obj[k]))
+
+# %%
+#obj["payload"]["fit_result_bundle"]["result_df"]
+
 # %% [markdown]
 # # Notebook config
 
