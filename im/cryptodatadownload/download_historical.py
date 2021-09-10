@@ -74,7 +74,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # Select filename from url.
         orig_filename = link.rsplit("/", 1)[-1]
         # Construct new name with timestamp.
-        filename = os.path.join(dst_dir, f"{args.timestamp}_{orig_filename}")
+        filename = os.path.join(dst_dir, f"{timestamp}_{orig_filename}")
         _LOG.info("Saved to %s" % filename)
         df.to_csv(filename, index=False)
     _LOG.info("Download finished")
