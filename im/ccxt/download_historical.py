@@ -108,7 +108,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Verify that the provided file's extension is `.csv.gz`
-    dbg.dassert_file_extension(args.file_name, ".csv.gz")
+    #dbg.dassert_file_extension(args.file_name, ".csv.gz")
     # Create the enclosing directory.
     hio.create_enclosing_dir(args.file_name, incremental=args.incremental)
     start_datetime = pd.Timestamp(args.start_datetime)
