@@ -5,7 +5,7 @@ Script to download historical data from Cryptodatadownload.
 import argparse
 import logging
 import os
-import urllib
+import urllib.request
 from typing import List
 
 import bs4
