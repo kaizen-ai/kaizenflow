@@ -71,8 +71,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.info("Downloaded %s" % link)
         timestamp = hdatet.get_timestamp("ET")
         # Construct filename.
-        if exchange_id.lower() not in dst_dir.lower():
-            dst_dir = os.path.join(dst_dir, exchange_id + "/")
+        if args.exchange_id.lower() not in dst_dir.lower():
+            dst_dir = os.path.join(dst_dir, args.exchange_id + "/")
         hio.create_dir(dst_dir, incremental=True)
         # Select filename from url.
         orig_filename = link.rsplit("/", 1)[-1]
