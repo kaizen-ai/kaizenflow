@@ -127,7 +127,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for exchange_id in exchange_ids:
         # Initialize the exchange class.
         exchange = icec.CCXTExchange(exchange_id)
-        if args.currency_symbol == "all":
+        if args.currency_pair == "all":
             # Iterate over all currencies available for exchange.
             currency_pairs = exchange.currency_pairs
         else:
