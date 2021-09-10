@@ -267,9 +267,9 @@ def save_experiment_result_bundle(
 
 
 def _retrieve_archived_experiment_artifacts_from_S3(
-    s3_file_name: str,
-    dst_dir: str,
-    aws_profile: str,
+        s3_file_name: str,
+        dst_dir: str,
+        aws_profile: str,
 ) -> str:
     """
     Retrieve a package containing experiment artifacts from S3.
@@ -296,9 +296,9 @@ def _retrieve_archived_experiment_artifacts_from_S3(
 
 
 def _get_experiment_subdirs(
-    src_dir: str,
-    selected_idxs: Optional[Iterable[int]] = None,
-    aws_profile: Optional[str] = None,
+        src_dir: str,
+        selected_idxs: Optional[Iterable[int]] = None,
+        aws_profile: Optional[str] = None,
 ) -> Tuple[str, Dict[int, str]]:
     """
     Get the subdirectories under `src_dir` with a format like `result_*`.
