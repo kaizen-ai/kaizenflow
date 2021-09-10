@@ -5,6 +5,7 @@ Script to download historical data from Cryptodatadownload.
 import argparse
 import logging
 import os
+import ssl
 import urllib.request
 from typing import List
 
@@ -17,6 +18,8 @@ import helpers.io_ as hio
 import helpers.parser as prsr
 
 _LOG = logging.getLogger(__name__)
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 WEBSITE_PREFIX = "https://www.cryptodatadownload.com/data/"
 
