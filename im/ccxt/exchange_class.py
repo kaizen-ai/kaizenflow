@@ -70,8 +70,8 @@ class CCXTExchange:
 
     def download_ohlcv_data(
         self,
-        start_date: Union[int, str],
-        end_date: Union[int, str],
+        start_datetime: pd.Timestamp,
+        end_datetime: pd.Timestamp,
         curr_symbol: str,
         step: Optional[int] = None,
         sleep_time: int = 1,
@@ -79,12 +79,12 @@ class CCXTExchange:
         """
         Download minute OHLCV candles.
 
-        start_date and end_date should be passed as a datetime
-        string in iso8601 format, e.g. '2019-02-19T00:00:00Z',
-        or as a UNIX epoch time in ms, e.g. 1550534400000.
+        start_datetime and end_datetime should be passed as
+         pd.Timestamp which will be converted into UNIX epoch time
+        in ms e.g. '2019-02-19T00:00:00Z' to 1550534400000.
 
-        :param start_date: starting point for data
-        :param end_date: end point for data
+        :param start_datetime: starting point for data
+        :param end_datetime: end point for data
         :param curr_symbol: a currency pair, e.g. "BTC/USDT"
         :param step: a number of candles per iteration
         :param sleep_time: time in seconds between iterations
@@ -96,18 +96,18 @@ class CCXTExchange:
         dbg.dassert_in(curr_symbol, self.currency_pairs)
         # Verify that date parameters are of correct format.
         dbg.dassert_isinstance(
-            start_date, tuple([int, str]), msg="Type of start_date param is incorrect."
+            start_datetime, pd.Timestamp, msg="Type of start_datetime param is incorrect."
         )
         dbg.dassert_isinstance(
-            end_date, tuple([int, str]), msg="Type of end_date param is incorrect."
+            end_datetime, pd.Timestamp, msg="Type of end_datetime param is incorrect."
         )
         # Make the minimal limit of 500 a default step.
         step = step or 500
-        if isinstance(start_date, str):
-            start_date = self._exchange.parse8601(start_date)
-        if isinstance(end_date, str):
-            end_date = self._exchange.parse8601(end_date)
-        # Get 1m timeframe as millisecond.
+        # Convert datetime into ms.
+        start_datetime = start_datetime.asm8.astype(int) // 1000000
+        # Convert datetime into ms.
+        end_datetime = end_datetime.asm8.astype(int) // 1000000
+        # Get 1m timeframe as ms.
         duration = self._exchange.parse_timeframe("1m") * 1000
         all_candles = []
         # Iterate over the time period.
@@ -115,7 +115,7 @@ class CCXTExchange:
         # milliseconds, with the step defined by `step` parameter.
         # Because of that, output can go slightly over the end_date,
         # since
-        for t in range(start_date, end_date + duration, duration * step):
+        for t in range(start_datetime, end_datetime + duration, duration * step):
             # Fetch OHLCV candles for 1m since current datetime.
             candles = self._exchange.fetch_ohlcv(
                 curr_symbol, timeframe="1m", since=t, limit=step
