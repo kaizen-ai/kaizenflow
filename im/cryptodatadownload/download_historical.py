@@ -5,10 +5,13 @@ Script to download historical data from Cryptodatadownload.
 import argparse
 import logging
 import os
+import urllib
 from typing import List
 
+import bs4
 import pandas as pd
 
+import helpers.datetime_ as hdatet
 import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.parser as prsr
