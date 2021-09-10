@@ -75,7 +75,7 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         type=str,
         help="Name of the currency pair to download data for, e.g. 'BTC/USD',"
-             " 'all' for each currency pair in exchange",
+        " 'all' for each currency pair in exchange",
     )
     parser.add_argument(
         "--start_datetime",
@@ -90,7 +90,7 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         default=None,
         help="End date of download in iso8601 format, e.g. '2021-10-08T00:00:00.000Z'."
-             "Optional, defaults to datetime.now())",
+        "Optional, defaults to datetime.now())",
     )
     parser.add_argument(
         "--step",
@@ -108,7 +108,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Verify that the provided file's extension is `.csv.gz`
-    #dbg.dassert_file_extension(args.file_name, ".csv.gz")
+    #  Note: disabled since `dassert_file_extension` does not
+    #  work with double file extensions.
+    # dbg.dassert_file_extension(args.file_name, ".csv.gz")
     # Create the enclosing directory.
     hio.create_enclosing_dir(args.file_name, incremental=args.incremental)
     start_datetime = pd.Timestamp(args.start_datetime)
