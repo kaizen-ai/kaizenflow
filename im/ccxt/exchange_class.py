@@ -1,8 +1,9 @@
 import logging
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import ccxt
+import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
@@ -37,7 +38,7 @@ class CCXTExchange:
         all_credentials = hio.from_json(self.api_keys_path)
         return all_credentials
 
-    def log_into_exchange(self) -> Any:
+    def log_into_exchange(self) -> ccxt.Exchange:
         """
         Log into exchange via ccxt.
         """
@@ -92,7 +93,7 @@ class CCXTExchange:
         # Verify that the exchange has fetch_ohlcv method.
         dbg.dassert(self._exchange.has["fetchOHLCV"])
         # Verify that the provided currency pair is present in exchange.
-        dbg.dassert_in(curr_symbol, self.get_exchange_symbols())
+        dbg.dassert_in(curr_symbol, self.currency_pairs)
         # Verify that date parameters are of correct format.
         dbg.dassert_isinstance(
             start_date, tuple([int, str]), msg="Type of start_date param is incorrect."
@@ -127,4 +128,5 @@ class CCXTExchange:
             all_candles += candles
             _LOG.info("Fetched %s candles so far" % len(all_candles))
             time.sleep(sleep_time)
+        all_candles = pd.DataFrame(all_candles, columns=["timestamp", "open", "high", "low", "close", "volume"])
         return all_candles

@@ -99,15 +99,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
             currency_pairs = [args.currency_pair]
         for pair in currency_pairs:
             # Download OHLCV data.
-            ohlcv_data = exchange.download_ohlcv_data(
+            pair_data = exchange.download_ohlcv_data(
                 start_date, end_date, curr_symbol=pair, step=args.step
             )
-            # Transform to dataframe.
-            exchange_df = pd.DataFrame(
-                ohlcv_data,
-                columns=["timestamp", "open", "high", "low", "close", "volume"],
-            )
-            ohlcv_df.append(exchange_df)
+            ohlcv_df.append(pair_data)
     ohlcv_df = pd.concat(ohlcv_df)
     # Save file.
     ohlcv_df.to_csv(args.file_name, index=False, compression="gzip")
