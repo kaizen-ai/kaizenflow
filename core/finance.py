@@ -710,6 +710,38 @@ def compute_pnl(
     return out_df
 
 
+def compute_spread_costs(
+    df: pd.DataFrame,
+    position_col: str,
+    spread_col: str,
+    spread_fraction_paid: float,
+    position_delay: int = 0,
+    spread_delay: int = 1,
+) -> pd.Series:
+    """
+    Compute spread costs incurred by changing position values.
+
+    The default delays assume that timestamped positions and spreads represent
+    the state of the world at that timestamp.
+
+    :param position_col: series of positions
+    :param spread_col: series of spreads
+    :param spread_fraction_paid: number indicating the fraction of the spread
+        paid, e.g., `0.5` means that 50% of the spread is paid
+    :param position_delay: number of shifts to pre-apply to `position_col`
+    :param spread_delay: number of shifts to pre-apply to `spread_col`
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert_in(position_col, df.columns)
+    dbg.dassert_in(spread_col, df.columns)
+    dbg.dassert_lte(0, spread_fraction_paid)
+    dbg.dassert_lte(1, spread_fraction_paid)
+    adjusted_spread = spread_fraction_paid * df[spread_col].shift(spread_delay)
+    position_delta = df[position_col].shift(position_delay).diff()
+    spread_costs = position_delta.multiply(adjusted_spread)
+    return spread_costs
+
+
 # #############################################################################
 # Returns calculation and helpers.
 # #############################################################################
