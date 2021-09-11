@@ -86,6 +86,7 @@ def resample_data(df: pd.DataFrame, mode: str, seed: int = 42) -> pd.DataFrame:
     df_5mins["preds"] = vals
     return df_5mins
 
+# TODO(gp): Extend for multiple stocks.
 
 # #############################################################################
 
