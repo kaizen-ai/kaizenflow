@@ -872,12 +872,12 @@ datetime,quoted_spread
             df, "bid", "ask", "bid_volume", "ask_volume", ["relative_spread"]
         )
         txt = """
-    datetime,relative_spread
-    2016-01-04 12:00:00,9.998500224957161e-05
-    2016-01-04 12:01:00,9.998500224957161e-05
-    2016-01-04 12:02:00,0.00020000000000010233
-    2016-01-04 12:03:00,0.00039999999999992044
-    """
+datetime,relative_spread
+2016-01-04 12:00:00,9.998500224957161e-05
+2016-01-04 12:01:00,9.998500224957161e-05
+2016-01-04 12:02:00,0.00020000000000010233
+2016-01-04 12:03:00,0.00039999999999992044
+"""
         expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
         np.testing.assert_allclose(actual, expected)
 
