@@ -715,35 +715,53 @@ def compute_pnl(
 
 def compute_spread_cost(
     df: pd.DataFrame,
-    position_col: str,
+    *,
+    target_position_col: str,
     spread_col: str,
     spread_fraction_paid: float,
-    position_delay: int = 0,
-    spread_delay: int = 1,
     join_output_with_input: bool = False,
 ) -> pd.DataFrame:
     """
     Compute spread costs incurred by changing position values.
 
-    The default delays assume that timestamped positions and spreads represent
-    the state of the world at that timestamp.
-
-    :param position_col: series of positions
+    :param target_position_col: series of one-step-ahead target positions
     :param spread_col: series of spreads
     :param spread_fraction_paid: number indicating the fraction of the spread
         paid, e.g., `0.5` means that 50% of the spread is paid
-    :param position_delay: number of shifts to pre-apply to `position_col`
-    :param spread_delay: number of shifts to pre-apply to `spread_col`
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
-    dbg.dassert_in(position_col, df.columns)
+    dbg.dassert_in(target_position_col, df.columns)
     dbg.dassert_in(spread_col, df.columns)
     dbg.dassert_lte(0, spread_fraction_paid)
     dbg.dassert_lte(spread_fraction_paid, 1)
-    adjusted_spread = spread_fraction_paid * df[spread_col].shift(spread_delay)
-    position_delta = df[position_col].shift(position_delay).diff()
-    spread_costs = position_delta.abs().multiply(adjusted_spread)
+    adjusted_spread = spread_fraction_paid * df[spread_col]
+    target_position_delta = df[target_position_col].diff().shift(1)
+    spread_costs = target_position_delta.abs().multiply(adjusted_spread)
     out_df = spread_costs.rename("spread_cost").to_frame()
+    if join_output_with_input:
+        out_df = out_df.merge(df, left_index=True, right_index=True, how="outer")
+        dbg.dassert(not out_df.columns.has_duplicates)
+    return out_df
+
+
+def compute_pnl(
+    df: pd.DataFrame,
+    *,
+    target_position_col: str,
+    return_col: str,
+    join_output_with_input: bool = False,
+) -> pd.DataFrame:
+    """
+    Compute PnL from a stream of target positions and returns.
+
+    :param target_position_col: series of one-step-ahead target positions
+    :param return_col: series of returns
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    dbg.dassert_in(target_position_col, df.columns)
+    dbg.dassert_in(return_col, df.columns)
+    pnl = df[target_position_col].multiply(df[return_col])
+    out_df = pnl.rename("pnl").to_frame()
     if join_output_with_input:
         out_df = out_df.merge(df, left_index=True, right_index=True, how="outer")
         dbg.dassert(not out_df.columns.has_duplicates)
