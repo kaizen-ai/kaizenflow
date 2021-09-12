@@ -819,10 +819,13 @@ datetime,close,vol
         act = "\n".join(act)
         return act
 
+
 class Test_process_bid_ask(hut.TestCase):
     def test_mid(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(df, "bid", "ask", "bid_volume", "ask_volume", ["mid"])
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["mid"]
+        )
         txt = """
 datetime,mid
 2016-01-04 12:00:00,100.015
@@ -835,7 +838,9 @@ datetime,mid
 
     def test_geometric_mid(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(df, "bid", "ask", "bid_volume", "ask_volume", ["geometric_mid"])
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["geometric_mid"]
+        )
         txt = """
 datetime,geometric_mid
 2016-01-04 12:00:00,100.01499987501875
@@ -848,7 +853,9 @@ datetime,geometric_mid
 
     def test_quoted_spread(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(df, "bid", "ask", "bid_volume", "ask_volume", ["quoted_spread"])
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["quoted_spread"]
+        )
         txt = """
 datetime,quoted_spread
 2016-01-04 12:00:00,0.01
@@ -861,7 +868,9 @@ datetime,quoted_spread
 
     def test_log_relative_spread(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(df, "bid", "ask", "bid_volume", "ask_volume", ["log_relative_spread"])
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["log_relative_spread"]
+        )
         txt = """
 datetime,log_relative_spread
 2016-01-04 12:00:00,9.998500233265872e-05
@@ -874,7 +883,9 @@ datetime,log_relative_spread
 
     def test_weighted_mid(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(df, "bid", "ask", "bid_volume", "ask_volume", ["weighted_mid"])
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["weighted_mid"]
+        )
         txt = """
 datetime,weighted_mid
 2016-01-04 12:00:00,100.015
@@ -887,7 +898,9 @@ datetime,weighted_mid
 
     def test_order_book_imbalance(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(df, "bid", "ask", "bid_volume", "ask_volume", ["order_book_imbalance"])
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["order_book_imbalance"]
+        )
         txt = """
 datetime,order_book_imbalance
 2016-01-04 12:00:00,0.5
@@ -900,7 +913,9 @@ datetime,order_book_imbalance
 
     def test_bid_value(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(df, "bid", "ask", "bid_volume", "ask_volume", ["bid_value"])
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["bid_value"]
+        )
         txt = """
 datetime,bid_value
 2016-01-04 12:00:00,20002.0
@@ -913,7 +928,9 @@ datetime,bid_value
 
     def test_ask_value(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(df, "bid", "ask", "bid_volume", "ask_volume", ["ask_value"])
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["ask_value"]
+        )
         txt = """
 datetime,ask_value
 2016-01-04 12:00:00,20004.0
@@ -926,7 +943,9 @@ datetime,ask_value
 
     def test_mid_value(self) -> None:
         df = self._get_df()
-        actual = fin.process_bid_ask(df, "bid", "ask", "bid_volume", "ask_volume", ["mid_value"])
+        actual = fin.process_bid_ask(
+            df, "bid", "ask", "bid_volume", "ask_volume", ["mid_value"]
+        )
         txt = """
 datetime,mid_value
 2016-01-04 12:00:00,20003.0
