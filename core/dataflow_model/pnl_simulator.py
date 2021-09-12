@@ -53,13 +53,17 @@ def get_random_market_data(num_samples: int, seed: int = 42) -> pd.DataFrame:
 
 def get_example_data1() -> pd.DataFrame:
     date_range = pd.date_range("09:30", periods=5, freq="5T")
-    df_5mins = pd.DataFrame([
-        [100, 1.0],
-        [90, -1.0],
-        [80, 1.0],
-        [90, 0.0],
-        [70, 0.0],
-    ], index=date_range, columns=["price", "preds"])
+    df_5mins = pd.DataFrame(
+        [
+            [100, 1.0],
+            [90, -1.0],
+            [80, 1.0],
+            [90, 0.0],
+            [70, 0.0],
+        ],
+        index=date_range,
+        columns=["price", "preds"],
+    )
     df_5mins["ret_0"] = df_5mins["price"].pct_change()
     return df_5mins
 
@@ -98,6 +102,7 @@ def resample_data(df: pd.DataFrame, mode: str, seed: int = 42) -> pd.DataFrame:
     vals[-2:] = 0
     df_5mins["preds"] = vals
     return df_5mins
+
 
 # TODO(gp): Extend for multiple stocks.
 
@@ -251,7 +256,6 @@ def compute_lag_pnl(df_5mins: pd.DataFrame) -> pd.DataFrame:
     tot_ret_lag = (1 + df_5mins["pnl.lag"]).prod() - 1
     return tot_ret_lag, df_5mins
 
-# ##########################################################################
 
 # #############################################################################
 # Price computation.

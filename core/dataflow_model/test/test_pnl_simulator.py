@@ -1,7 +1,6 @@
 import logging
 
 import numpy as np
-import pandas as pd
 
 import core.dataflow_model.pnl_simulator as pnlsim
 import helpers.printing as hprint
