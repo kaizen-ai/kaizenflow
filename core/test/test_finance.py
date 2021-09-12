@@ -967,10 +967,6 @@ datetime,mid_value
 
     @staticmethod
     def _get_df() -> pd.DataFrame:
-        """
-        Return a df without NaNs.
-        """
-        # From `s3://*****-data/data/kibot/all_stocks_1min/AAPL.csv.gz`.
         txt = """
 datetime,bid,ask,bid_volume,ask_volume
 2016-01-04 12:00:00,100.01,100.02,200,200
