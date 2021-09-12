@@ -51,23 +51,6 @@ def get_random_market_data(num_samples: int, seed: int = 42) -> pd.DataFrame:
     return df
 
 
-def get_example_data1() -> pd.DataFrame:
-    date_range = pd.date_range("09:30", periods=5, freq="5T")
-    df_5mins = pd.DataFrame(
-        [
-            [100, 1.0],
-            [90, -1.0],
-            [80, 1.0],
-            [90, 0.0],
-            [70, 0.0],
-        ],
-        index=date_range,
-        columns=["price", "preds"],
-    )
-    df_5mins["ret_0"] = df_5mins["price"].pct_change()
-    return df_5mins
-
-
 def resample_data(df: pd.DataFrame, mode: str, seed: int = 42) -> pd.DataFrame:
     """
     Resample 1-min market data to 5 minutes to match the trading pattern and
@@ -102,6 +85,35 @@ def resample_data(df: pd.DataFrame, mode: str, seed: int = 42) -> pd.DataFrame:
     vals[-2:] = 0
     df_5mins["preds"] = vals
     return df_5mins
+
+
+# #################################################################################
+
+
+def get_example_data1() -> Tuple[pd.DataFrame, pd.DataFrame]:
+    date_range = pd.date_range("09:30", periods=5, freq="5T")
+    df_5mins = pd.DataFrame(
+        [
+            [100, 1.0],
+            [90, -1.0],
+            [80, 1.0],
+            [90, 0.0],
+            [70, 0.0],
+        ],
+        index=date_range,
+        columns=["price", "preds"],
+    )
+    df_5mins["ret_0"] = df_5mins["price"].pct_change()
+    df = df_5mins.copy()
+    return df, df_5mins
+
+
+def get_example_data2(num_samples: int, seed: int) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    # Generate some random data.
+    df = compute_data(num_samples, seed=seed)
+    mode = "instantaneous"
+    df_5mins = resample_data(df, mode)
+    return df, df_5mins
 
 
 # #################################################################################
