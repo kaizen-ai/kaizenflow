@@ -51,6 +51,9 @@ def get_random_market_data(num_samples: int, seed: int = 42) -> pd.DataFrame:
     return df
 
 
+#def get_example_data1() -> pd.DataFrame:
+
+
 def resample_data(df: pd.DataFrame, mode: str, seed: int = 42) -> pd.DataFrame:
     """
     Resample 1-min market data to 5 minutes to match the trading pattern and
