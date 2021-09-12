@@ -757,7 +757,7 @@ def compute_pnl(
     dbg.dassert_isinstance(df, pd.DataFrame)
     dbg.dassert_in(target_position_col, df.columns)
     dbg.dassert_in(return_col, df.columns)
-    pnl = df[target_position_col].multiply(df[return_col])
+    pnl = df[target_position_col].shift(2).multiply(df[return_col])
     out_df = pnl.rename("pnl").to_frame()
     if join_output_with_input:
         out_df = out_df.merge(df, left_index=True, right_index=True, how="outer")
