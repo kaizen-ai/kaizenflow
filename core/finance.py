@@ -713,14 +713,15 @@ def compute_pnl(
     return out_df
 
 
-def compute_spread_costs(
+def compute_spread_cost(
     df: pd.DataFrame,
     position_col: str,
     spread_col: str,
     spread_fraction_paid: float,
     position_delay: int = 0,
     spread_delay: int = 1,
-) -> pd.Series:
+    join_output_with_input: bool = False,
+) -> pd.DataFrame:
     """
     Compute spread costs incurred by changing position values.
 
@@ -738,11 +739,15 @@ def compute_spread_costs(
     dbg.dassert_in(position_col, df.columns)
     dbg.dassert_in(spread_col, df.columns)
     dbg.dassert_lte(0, spread_fraction_paid)
-    dbg.dassert_lte(1, spread_fraction_paid)
+    dbg.dassert_lte(spread_fraction_paid, 1)
     adjusted_spread = spread_fraction_paid * df[spread_col].shift(spread_delay)
     position_delta = df[position_col].shift(position_delay).diff()
-    spread_costs = position_delta.multiply(adjusted_spread)
-    return spread_costs
+    spread_costs = position_delta.abs().multiply(adjusted_spread)
+    out_df = spread_costs.rename("spread_cost").to_frame()
+    if join_output_with_input:
+        out_df = out_df.merge(df, left_index=True, right_index=True, how="outer")
+        dbg.dassert(not out_df.columns.has_duplicates)
+    return out_df
 
 
 # #############################################################################
