@@ -5,7 +5,7 @@ Use as:
 
 - Download Binance BTC/USDT data from 2019-01-01 to 2019-01-02:
 > download_historical.py \
-     --file_name test.csv.gz \
+     --dst_dir test \
      --exchange_id "binance" \
      --currency_pair "BTC/USDT" \
      --start_datetime "2019-01-01" \
@@ -14,7 +14,7 @@ Use as:
 - Download Binance data from 2019-01-01 to now,
   for all currency pairs:
 > download_historical.py \
-     --file_name test.csv.gz \
+     --dst_dir test \
      --exchange_id "binance" \
      --currency_pair "all" \
      --start_datetime "2019-01-01" \
@@ -22,7 +22,7 @@ Use as:
 - Download data for all exchanges, BTC/USDT currency pair,
 from 2019-01-01 to now:
 > download_historical.py \
-     --file_name test.csv.gz \
+     --dst_dir test \
      --exchange_id "all" \
      --currency_pair "BTC/USDT" \
      --start_datetime "2019-01-01" \
@@ -30,7 +30,7 @@ from 2019-01-01 to now:
 - Download data for all exchanges and all pairs,
 from 2019-01-01 to 2019-01-02:
 > download_historical.py \
-     --file_name test.csv.gz \
+     --dst_dir test \
      --exchange_id "all" \
      --currency_pair "all" \
      --start_datetime "2019-01-01" \
