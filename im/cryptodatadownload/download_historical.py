@@ -82,8 +82,8 @@ def _parse() -> argparse.ArgumentParser:
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
-    # Disable default certificate verification by python in order to
-    # avoid error when running this script in a notebook.
+    # Disable default certificate verification to run from inside docker
+    # containers.
     ssl._create_default_https_context = ssl._create_unverified_context
     # Set parser arguments.
     args = parser.parse_args()
@@ -99,13 +99,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
         df = pd.read_csv(link)
         _LOG.debug("Downloaded %s", link)
         timestamp = hdatet.get_timestamp("ET")
-        # Construct filename.
-        dst_dir = os.path.join(args.dir_name, args.exchange_id)
-        hio.create_dir(dst_dir, incremental=True)
         # Select filename from URL.
         orig_filename = link.rsplit("/", 1)[-1]
         # Construct new name with timestamp.
-        filename = os.path.join(dst_dir, f"{timestamp}_{orig_filename}")
+        filename = os.path.join(args.dir_name, f"{timestamp}_{orig_filename}")
         _LOG.debug("Saved to %s", filename)
         df.to_csv(filename, index=False, compression="gzip")
     _LOG.info("Download finished")
