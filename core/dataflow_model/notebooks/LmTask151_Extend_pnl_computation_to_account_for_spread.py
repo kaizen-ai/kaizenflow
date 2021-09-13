@@ -33,7 +33,6 @@ _LOG = logging.getLogger(__name__)
 
 # %%
 import numpy as np
-import pandas as pd
 
 import oms.pnl_simulator as opnlsimu
 

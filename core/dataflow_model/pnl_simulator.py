@@ -16,7 +16,7 @@ import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
-#_LOG.debug = _LOG.info
+# _LOG.debug = _LOG.info
 
 # TODO(gp): Generalize for different intervals, besides 5 mins trading.
 # TODO(gp): Extend for computing PnL on multiple stocks.
@@ -49,8 +49,8 @@ def get_random_market_data(num_samples: int, seed: int = 42) -> pd.DataFrame:
     df["ask"] = price + np.abs(np.random.normal(0, 1, size=len(date_range)))
     df["bid"] = price - np.abs(np.random.normal(0, 1, size=len(date_range)))
     # TODO(gp): Use functions in core/finance.py.
-    #df["midpoint"] = (df["ask"] + df["bid"]) / 2
-    #df["spread"] = df["ask"] - df["bid"]
+    # df["midpoint"] = (df["ask"] + df["bid"]) / 2
+    # df["spread"] = df["ask"] - df["bid"]
     return df
 
 
@@ -90,7 +90,7 @@ def resample_data(df: pd.DataFrame, mode: str, seed: int = 42) -> pd.DataFrame:
     return df_5mins
 
 
-# #################################################################################
+# #############################################################################
 
 
 def get_example_data1() -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -111,7 +111,9 @@ def get_example_data1() -> Tuple[pd.DataFrame, pd.DataFrame]:
     return df, df_5mins
 
 
-def get_example_data2(num_samples: int, seed: int) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def get_example_data2(
+    num_samples: int, seed: int
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     # Generate some random data.
     df = compute_data(num_samples, seed=seed)
     mode = "instantaneous"
@@ -119,7 +121,7 @@ def get_example_data2(num_samples: int, seed: int) -> Tuple[pd.DataFrame, pd.Dat
     return df, df_5mins
 
 
-# #################################################################################
+# #############################################################################
 
 # TODO(gp): Extend for multiple stocks.
 
