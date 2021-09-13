@@ -7,19 +7,19 @@ Use as:
 
 - Download Binance minutely candles:
 > download_historical.py \
-     --dir_name /app/im/cryptodatadownload/data \
+     --dir_name /app/im/cryptodatadownload/data/binance \
      --exchange_id "binance" \
      --timeframe "minute"
 
 - Download Kucoin minutely candles:
 > download_historical.py \
-     --dir_name /app/im/cryptodatadownload/data \
+     --dir_name /app/im/cryptodatadownload/data/kucoin \
      --exchange_id "kucoin" \
      --timeframe "minute"
 
 - Download Binance hourly candles:
 > download_historical.py \
-     --dir_name /app/im/cryptodatadownload/data \
+     --dir_name /app/im/cryptodatadownload/data/binance \
      --exchange_id "binance" \
      --timeframe "hourly"
 
