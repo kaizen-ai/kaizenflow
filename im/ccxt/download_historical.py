@@ -39,6 +39,7 @@ from 2019-01-01 to 2019-01-02:
 
 import argparse
 import logging
+import os
 
 import pandas as pd
 
@@ -56,11 +57,11 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--file_name",
+        "--dst_dir",
         action="store",
         required=True,
         type=str,
-        help="Full path to the output file",
+        help="Folder to download files to",
     )
     parser.add_argument(
         "--exchange_id",
@@ -107,19 +108,14 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Verify that the provided file's extension is `.csv.gz`
-    #  Note: disabled since `dassert_file_extension` does not
-    #  work with double file extensions.
-    # dbg.dassert_file_extension(args.file_name, ".csv.gz")
-    # Create the enclosing directory.
-    hio.create_enclosing_dir(args.file_name, incremental=args.incremental)
+    # Create the directory.
+    hio.create_dir(args.dst_dir, incremental=args.incremental)
     start_datetime = pd.Timestamp(args.start_datetime)
     # If end_date is not provided, get current time.
     if not args.end_datetime:
         end_datetime = pd.Timestamp.now()
     else:
         end_datetime = pd.Timestamp(args.end_datetime)
-    ohlcv_df = []
     if args.exchange_id == "all":
         # Iterate over all available exchanges.
         exchange_ids = ["binance", "kucoin"]
@@ -127,6 +123,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # Get a single exchange.
         exchange_ids = [args.exchange_id]
     for exchange_id in exchange_ids:
+        ohlcv_df = []
         # Initialize the exchange class.
         exchange = icec.CCXTExchange(exchange_id)
         if args.currency_pair == "all":
@@ -140,10 +137,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
             pair_data = exchange.download_ohlcv_data(
                 start_datetime, end_datetime, curr_symbol=pair, step=args.step
             )
-            ohlcv_df.append(pair_data)
-    ohlcv_df = pd.concat(ohlcv_df)
-    # Save file.
-    ohlcv_df.to_csv(args.file_name, index=False, compression="gzip")
+            # Save file.
+            pair_data.to_csv(os.path.join(args.dst_dir, f"{exchange_id}_{pair}.csv.gz"), index=False, compression="gzip")
     _LOG.info("Saved to %s" % args.file_name)
     return None
 
