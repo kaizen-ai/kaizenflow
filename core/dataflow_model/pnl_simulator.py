@@ -51,9 +51,6 @@ def get_random_market_data(num_samples: int, seed: int = 42) -> pd.DataFrame:
     # Add `ask`, `bid` (note that `price` is not the midpoint).
     df["ask"] = price + np.abs(np.random.normal(0, 1, size=len(date_range)))
     df["bid"] = price - np.abs(np.random.normal(0, 1, size=len(date_range)))
-    # TODO(gp): Use functions in core/finance.py.
-    # df["midpoint"] = (df["ask"] + df["bid"]) / 2
-    # df["spread"] = df["ask"] - df["bid"]
     return df
 
 
@@ -96,8 +93,11 @@ def resample_data(df: pd.DataFrame, mode: str, seed: int = 42) -> pd.DataFrame:
 # #############################################################################
 
 
-def get_example_data1() -> Tuple[pd.DataFrame, pd.DataFrame]:
-    date_range = pd.date_range("09:30", periods=5, freq="5T")
+def get_example_market_data1() -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Handcrafted small example.
+    """
+    date_range = pd.date_range("2021-09-12 09:30", periods=5, freq="5T")
     df_5mins = pd.DataFrame(
         [
             [100, 1.0],
@@ -114,11 +114,14 @@ def get_example_data1() -> Tuple[pd.DataFrame, pd.DataFrame]:
     return df, df_5mins
 
 
-def get_example_data2(
+def get_example_market_data2(
     num_samples: int, seed: int
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Fixed random example.
+    """
     # Generate some random data.
-    df = compute_data(num_samples, seed=seed)
+    df = get_random_market_data(num_samples, seed=seed)
     mode = "instantaneous"
     df_5mins = resample_data(df, mode)
     return df, df_5mins
