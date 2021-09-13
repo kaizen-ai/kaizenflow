@@ -272,6 +272,15 @@ def _compute_pnl_level2(
     pd.testing.assert_frame_equal(df_5mins_no_cache, df_5mins)
     return df_5mins
 
+    def _get_data(self) -> pd.DataFrame:
+        """
+        Return fixed random data for the other unit tests.
+        """
+        num_samples = 21
+        seed = 42
+        df = pnlsim.get_random_market_data(num_samples, seed)
+        return df
+
 
 class TestPnlSimulator1(hut.TestCase):
     """
