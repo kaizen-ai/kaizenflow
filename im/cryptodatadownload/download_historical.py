@@ -28,6 +28,7 @@ import argparse
 import logging
 import os
 import ssl
+import tqdm
 import urllib.request
 from typing import List
 
