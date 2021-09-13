@@ -22,23 +22,27 @@ Use as:
      --dir_name /app/im/cryptodatadownload/data \
      --exchange_id "binance" \
      --timeframe "hourly"
+
+Import as:
+
+import im.cryptodatadownload.download_historical as imcrdh
 """
 
 import argparse
 import logging
 import os
 import ssl
-import tqdm
 import urllib.request
 from typing import List
 
 import bs4
 import pandas as pd
+import tqdm
 
 import helpers.datetime_ as hdatet
 import helpers.dbg as dbg
 import helpers.io_ as hio
-import helpers.parser as prsr
+import helpers.parser as hparse
 
 _LOG = logging.getLogger(__name__)
 
@@ -73,7 +77,7 @@ def _parse() -> argparse.ArgumentParser:
         help="Timeframe of the data to load",
     )
     parser.add_argument("--incremental", action="store_true")
-    parser = prsr.add_verbosity_arg(parser)
+    parser = hparse.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
 
 
@@ -144,7 +148,8 @@ def _get_download_links(
         lambda tag: tag.name == "a" and timeframe in tag.text.lower()
     )
     download_links = [
-        urllib.parse.urljoin(_WEBSITE_PREFIX, tag["href"]) for tag in download_tags
+        urllib.parse.urljoin(_WEBSITE_PREFIX, tag["href"])
+        for tag in download_tags
     ]
     return download_links
 
