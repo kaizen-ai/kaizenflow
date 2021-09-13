@@ -124,7 +124,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # Get a single exchange.
         exchange_ids = [args.exchange_id]
     for exchange_id in exchange_ids:
-        ohlcv_df = []
+        pass
         # Initialize the exchange class.
         exchange = icec.CCXTExchange(exchange_id)
         if args.currency_pair == "all":
@@ -139,7 +139,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 start_datetime, end_datetime, curr_symbol=pair, step=args.step
             )
             # Save file.
-            pair_data.to_csv(os.path.join(args.dst_dir, f"{exchange_id}_{pair.replace('/', '_')}.csv.gz"), index=False, compression="gzip")
+            pair_data.to_csv(
+                os.path.join(
+                    args.dst_dir, f"{exchange_id}_{pair.replace('/', '_')}.csv.gz"
+                ),
+                index=False,
+                compression="gzip",
+            )
     _LOG.info("Saved to %s" % args.file_name)
     return None
 
