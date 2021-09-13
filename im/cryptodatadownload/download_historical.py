@@ -28,6 +28,7 @@ import argparse
 import logging
 import os
 import ssl
+import tqdm
 import urllib.request
 from typing import List
 
@@ -90,9 +91,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Create destination directory.
     hio.create_dir(args.dir_name, incremental=args.incremental)
     _LOG.info("Downloading %s links", len(download_links))
-    for link in download_links:
+    for link in tqdm.tqdm(download_links, desc="Links loaded:"):
         df = pd.read_csv(link)
-        _LOG.info("Downloaded %s", link)
+        _LOG.debug("Downloaded %s", link)
         timestamp = hdatet.get_timestamp("ET")
         # Construct filename.
         dst_dir = os.path.join(args.dir_name, args.exchange_id)
