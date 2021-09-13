@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Script to download historical data from CCXT.
 
