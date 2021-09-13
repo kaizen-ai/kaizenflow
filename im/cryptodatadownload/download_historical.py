@@ -22,13 +22,16 @@ Use as:
      --dir_name /app/im/cryptodatadownload/data/binance \
      --exchange_id "binance" \
      --timeframe "hourly"
+
+Import as:
+
+import im.cryptodatadownload.download_historical as imcrdh
 """
 
 import argparse
 import logging
 import os
 import ssl
-import tqdm
 import urllib.request
 from typing import List
 
