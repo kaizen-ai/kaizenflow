@@ -138,7 +138,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 start_datetime, end_datetime, curr_symbol=pair, step=args.step
             )
             # Save file.
-            pair_data.to_csv(os.path.join(args.dst_dir, f"{exchange_id}_{pair}.csv.gz"), index=False, compression="gzip")
+            pair_data.to_csv(os.path.join(args.dst_dir, f"{exchange_id}_{pair.replace('/', '_')}.csv.gz"), index=False, compression="gzip")
     _LOG.info("Saved to %s" % args.file_name)
     return None
 
