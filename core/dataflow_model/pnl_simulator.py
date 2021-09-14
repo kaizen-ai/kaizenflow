@@ -351,15 +351,15 @@ class MarketInterface:
         The function should be called `get_twa_price()` or `get_twap()`.
         """
         # TODO(gp): For use_cache=True it's not clear how to speed this up.
-        if debug_mode: dbg.dassert_lt(ts_start, ts_end)
+        dbg.dassert_lt(ts_start, ts_end)
         # Get the slice (ts_start, ts_end] of prices.
         # TODO(gp): Maybe binary search can help.
         dbg.dassert_in(ts_start, self._df.index)
         dbg.dassert_in(ts_end, self._df.index)
         prices = self._df[ts_start:ts_end][column]
         prices = prices.iloc[1:]
-        if debug_mode: _LOG.debug("prices=\n%s", prices)
-        if debug_mode: dbg.dassert_lte(1, prices.shape[0])
+        _LOG.debug("prices=\n%s", prices)
+        dbg.dassert_lte(1, prices.shape[0])
         price: float = prices.mean()
         return price
 
@@ -394,7 +394,7 @@ class Order:
         #    - "twap"
         #    - "vwap"
         self.type_ = type_
-        if debug_mode: dbg.dassert_lt(ts_start, ts_end)
+        dbg.dassert_lt(ts_start, ts_end)
         self.ts_start = ts_start
         self.ts_end = ts_end
         self.num_shares = num_shares
@@ -453,7 +453,7 @@ class Order:
                 price = (1.0 - perc) * ask_price + perc * bid_price
         else:
             raise ValueError("Invalid type='%s'", type_)
-        if debug_mode: _LOG.debug(
+        _LOG.debug(
             "type=%s, ts_start=%s, ts_end=%s -> execution_price=%s",
             type_,
             ts_start,
@@ -488,7 +488,7 @@ class Order:
         """
         # Only orders for the same type / interval, with different num_shares can
         # be merged.
-        if debug_mode: dbg.dassert(self.is_mergeable(rhs))
+        dbg.dassert(self.is_mergeable(rhs))
         num_shares = self.num_shares + rhs.num_shares
         order = Order(
             self._mi, self.type_, self.ts_start, self.ts_end, num_shares
@@ -525,7 +525,7 @@ def get_orders_to_execute(orders: List[Order], ts: pd.Timestamp) -> List[Order]:
     Return the orders from `orders` that can be executed at timestamp `ts`.
     """
     orders.sort(key=lambda x: x.ts_start, reverse=False)
-    if debug_mode: dbg.dassert_lte(orders[0].ts_start, ts)
+    dbg.dassert_lte(orders[0].ts_start, ts)
     # TODO(gp): This is inefficient. Use binary search.
     curr_orders = []
     for order in orders:
@@ -569,7 +569,7 @@ def _append_accounting_df(
     """
     dfs = []
     for key, value in accounting.items():
-        if debug_mode: _LOG.debug("key=%s", key)
+        _LOG.debug("key=%s", key)
         num_vals = len(accounting[key])
         buffer = [np.nan] * (df_5mins.shape[0] - num_vals)
         col_name = _get_col_name(key, prefix)
@@ -595,7 +595,7 @@ def get_total_wealth(
     dbg.dassert(np.isfinite(price), "price=%s", price)
     dbg.dassert(np.isfinite(holdings), "holdings=%s", holdings)
     holdings_value = holdings * price
-    # if debug_mode: _LOG.debug(
+    # _LOG.debug(
     #     "Marking at ts=%s holdings=%s at %s -> value=%s",
     #     _ts_to_str(ts),
     #     holdings,
@@ -616,7 +616,7 @@ def _get_orders_to_execute(ts: pd.Timestamp, orders: List[Order]) -> List[Order]
         # dbg.dassert_eq(len(orders), 1, "%s", orders_to_string(orders))
         assert 0
     orders_to_execute = get_orders_to_execute(orders, ts)
-    if debug_mode: _LOG.debug("orders_to_execute=%s", orders_to_string(orders_to_execute))
+    _LOG.debug("orders_to_execute=%s", orders_to_string(orders_to_execute))
     # Merge the orders.
     merged_orders = []
     while orders_to_execute:
@@ -628,7 +628,7 @@ def _get_orders_to_execute(ts: pd.Timestamp, orders: List[Order]) -> List[Order]
                 orders_to_execute_tmp.remove(next_order)
         merged_orders.append(order)
         orders_to_execute = orders_to_execute_tmp
-    if debug_mode: _LOG.debug(
+    _LOG.debug(
         "After merging:\n  merged_orders=%s\n  orders_to_execute=%s",
         orders_to_string(merged_orders),
         orders_to_string(orders_to_execute),
@@ -696,7 +696,7 @@ def _compute_pnl_level2(
     """
     def _update(key: str, value: float) -> None:
         prev_value = accounting[key][-1] if accounting[key] else None
-        if debug_mode: _LOG.debug("%s=%s -> %s", key, prev_value, value)
+        _LOG.debug("%s=%s -> %s", key, prev_value, value)
         accounting[key].append(value)
     # def _update(key: str, value: float) -> None:
     #     pass
@@ -728,7 +728,7 @@ def _compute_pnl_level2(
             # any more orders.
             continue
         # Use current price to convert forecasts in position intents.
-        if debug_mode: _LOG.debug("# Decide how much to trade")
+        _LOG.debug("# Decide how much to trade")
         # Enter position between [0, 5].
         ts_start = ts
         ts_end = ts + offset_5min
@@ -752,36 +752,36 @@ def _compute_pnl_level2(
         else:
             price_0 = mi.get_instantaneous_price(ts, price_column)
             wealth_to_allocate = wealth
-        if debug_mode: _LOG.debug("price_0=%s", price_0)
+        _LOG.debug("price_0=%s", price_0)
         target_num_shares = wealth_to_allocate / price_0
         target_num_shares *= pred
         _update("target_n_shares", target_num_shares)
         _update("cash", cash)
         _update("holdings", holdings)
-        if debug_mode: _LOG.debug("# Place orders")
+        _LOG.debug("# Place orders")
         diff = target_num_shares - holdings
         _update("diff_n_shares", diff)
         # Create order.
         order = Order(mi, order_type, ts_start, ts_end, diff)
-        if debug_mode: _LOG.debug("order=%s", order)
+        _LOG.debug("order=%s", order)
         orders.append(order)
         # 2) Execute the orders.
         # INV: When we get here all the orders for the current timestamp `ts` have
         # been placed since we acted on the predictions for `ts` and we can't place
         # orders in the past.
         # Find all the orders with the current timestamp.
-        if debug_mode: _LOG.debug("# Get orders to execute")
+        _LOG.debug("# Get orders to execute")
         merged_orders = _get_orders_to_execute(ts, orders)
         # Execute the merged orders.
-        if debug_mode: _LOG.debug("# Execute orders")
+        _LOG.debug("# Execute orders")
         # TODO(gp): We rely on the assumption that order span only one time step.
         #  so we can evaluate an order starting now and ending in the next time step.
         #  A more accurate simulation requires to attach "callbacks" representing
         #  actions to timestamp.
         # TODO(gp): For now there should be at most one order.
-        if debug_mode: dbg.dassert_lte(len(merged_orders), 1)
+        dbg.dassert_lte(len(merged_orders), 1)
         order = merged_orders[0]
-        if debug_mode: _LOG.debug("order=%s", order)
+        _LOG.debug("order=%s", order)
         num_shares = order.num_shares
         _update("filled_n_shares", num_shares)
         holdings += num_shares
