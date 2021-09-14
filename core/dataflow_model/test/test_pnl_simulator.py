@@ -83,11 +83,11 @@ class TestPnlSimulatorFunctions1(hut.TestCase):
             ts_end = pd.Timestamp("2021-09-12 09:35:00")
             order = pnlsim.Order(mi, type_, ts_start, ts_end, num_shares)
             act = order.get_execution_price()
-            np.testing.assert_almost_equal(act, exp)
+            np.testing.assert_almost_equal(act, exp, decimal=5)
 
     def test_order_price1(self) -> None:
         df = self._get_data()
-        type_ = "price.start"
+        type_ = "price@start"
         num_shares = 100
         ts_start = pd.Timestamp("2021-09-12 09:30:00")
         exp = df.loc[ts_start]["price"]
@@ -96,7 +96,7 @@ class TestPnlSimulatorFunctions1(hut.TestCase):
 
     def test_order_price2(self) -> None:
         df = self._get_data()
-        type_ = "price.end"
+        type_ = "price@end"
         num_shares = 100
         ts_start = pd.Timestamp("2021-09-12 09:35:00")
         exp = df.loc[ts_start]["price"]
@@ -105,7 +105,7 @@ class TestPnlSimulatorFunctions1(hut.TestCase):
 
     def test_order_price3(self) -> None:
         df = self._get_data()
-        type_ = "price.twap"
+        type_ = "price@twap"
         num_shares = 100
         exp = (
            100.358450 +
@@ -118,71 +118,116 @@ class TestPnlSimulatorFunctions1(hut.TestCase):
 
     def test_order_midpoint1(self) -> None:
         df = self._get_data()
-        type_ = "midpoint.start"
+        type_ = "midpoint@start"
         num_shares = 100
         exp = 100.551778
         self._test_order(type_, num_shares, exp)
 
     def test_order_midpoint2(self) -> None:
         df = self._get_data()
-        type_ = "midpoint.end"
+        type_ = "midpoint@end"
         num_shares = 100
         exp = 102.107814
         self._test_order(type_, num_shares, exp)
 
     def test_order_midpoint3(self) -> None:
         df = self._get_data()
-        type_ = "midpoint.twap"
+        type_ = "midpoint@twap"
         num_shares = 100
         exp = (100.241662 + 100.979251 + 102.441438 + 102.120157 + 102.107814) / 5.0
         self._test_order(type_, num_shares, exp)
 
     def test_order_full_spread1(self) -> None:
         df = self._get_data()
-        type_ = "full_spread.end"
+        type_ = "full_spread@end"
         num_shares = 100
         exp = 103.211871
         self._test_order(type_, num_shares, exp)
 
     def test_order_full_spread2(self) -> None:
         df = self._get_data()
-        type_ = "full_spread.end"
+        type_ = "full_spread@end"
         num_shares = -100
         exp = 101.003756
         self._test_order(type_, num_shares, exp)
 
     def test_order_full_spread3(self) -> None:
         df = self._get_data()
-        type_ = "full_spread.twap"
+        type_ = "full_spread@twap"
         num_shares = 100
         exp = (100.425978 + 102.430887 + 103.073551 + 102.405937 + 103.211871) / 5
         self._test_order(type_, num_shares, exp)
 
     def test_order_full_spread4(self) -> None:
         df = self._get_data()
-        type_ = "full_spread.twap"
+        type_ = "full_spread@twap"
         num_shares = -100
         exp = (100.057346 + 99.527616 + 101.809324 + 101.834376 + 101.003756) / 5
         self._test_order(type_, num_shares, exp)
 
     def test_order_partial_spread1(self) -> None:
         """
-        Same as test_order_full_spread3
+        Same as full_spread.
         """
         df = self._get_data()
-        type_ = "partial_spread_1.0.twap"
+        type_ = "partial_spread_1.0@twap"
         num_shares = 100
         exp = (100.425978 + 102.430887 + 103.073551 + 102.405937 + 103.211871) / 5
         self._test_order(type_, num_shares, exp)
 
     def test_order_partial_spread2(self) -> None:
-        """
-        Same as test_order_full_spread4
-        """
         df = self._get_data()
-        type_ = "partial_spread_1.0.twap"
+        type_ = "partial_spread_1.0@twap"
         num_shares = -100
         exp = (100.057346 + 99.527616 + 101.809324 + 101.834376 + 101.003756) / 5
+        self._test_order(type_, num_shares, exp)
+
+    def test_order_partial_spread3(self) -> None:
+        """
+        Same as midpoint.
+        """
+        df = self._get_data()
+        type_ = "partial_spread_0.5@twap"
+        num_shares = 100
+        exp = (100.425978 + 100.057346 +
+            102.430887 + 99.527616 +
+            103.073551 + 101.809324 +
+            102.405937 + 101.834376 +
+            103.211871 + 101.003756) / 10.0
+        self._test_order(type_, num_shares, exp)
+
+    def test_order_partial_spread4(self) -> None:
+        df = self._get_data()
+        type_ = "partial_spread_0.5@twap"
+        num_shares = -100
+        exp = (100.241662 + 100.979251 + 102.441438 + 102.120157 + 102.107814) / 5.0
+        self._test_order(type_, num_shares, exp)
+
+    def test_order_partial_spread5(self) -> None:
+        """
+        No spread.
+        """
+        df = self._get_data()
+        type_ = "partial_spread_0.0@twap"
+        num_shares = 100
+        exp = (
+       100.057346 +
+        99.527616 +
+       101.809324 +
+       101.834376 +
+       101.003756) / 5.0
+        self._test_order(type_, num_shares, exp)
+
+    def test_order_partial_spread6(self) -> None:
+        df = self._get_data()
+        type_ = "partial_spread_0.0@twap"
+        num_shares = -100
+        exp = (
+100.425978 +
+102.430887 +
+103.073551 +
+102.405937 +
+103.211871) / 5.0
         self._test_order(type_, num_shares, exp)
 
     def _get_data(self) -> pd.DataFrame:

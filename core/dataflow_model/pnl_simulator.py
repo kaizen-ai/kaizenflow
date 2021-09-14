@@ -418,7 +418,7 @@ class Order:
         Get price that one order with given parameters would achieve.
         """
         # Parse the type.
-        config = type_.split(".")
+        config = type_.split("@")
         dbg.dassert_eq(len(config), 2, "Invalid type_='%s'", type_)
         price_type, timing = config
         # Get the price depending on the price_type.
