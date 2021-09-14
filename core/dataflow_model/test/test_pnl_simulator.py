@@ -504,6 +504,7 @@ class TestPnlSimulator2(hut.TestCase):
         act = "\n".join(act)
         self.check_string(act)
 
+    @pytest.mark.skip("For performance measurement")
     def test_perf1(self) -> None:
         """
         Same as `test1()` but without future information.
