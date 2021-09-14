@@ -311,6 +311,31 @@ def _compute_pnl_level2(
         np.testing.assert_almost_equal(exp, 100.496714)
         self._test_order(type_, num_shares, exp)
 
+    def test_order2(self) -> None:
+        df = self._get_data()
+        type_ = "price.end"
+        num_shares = 100
+        ts_start = pd.Timestamp("2021-09-12 09:35:00")
+        exp = df.loc[ts_start]["price"]
+        np.testing.assert_almost_equal(exp, 102.060878)
+        self._test_order(type_, num_shares, exp)
+
+    def test_order3(self) -> None:
+        df = self._get_data()
+        type_ = "midpoint.start"
+        num_shares = 100
+        ts_start = pd.Timestamp("2021-09-12 09:30:00")
+        exp = (100.722490 + 100.381066) / 2
+        self._test_order(type_, num_shares, exp)
+
+    def test_order4(self) -> None:
+        df = self._get_data()
+        type_ = "midpoint.end"
+        num_shares = 100
+        ts_start = pd.Timestamp("2021-09-12 09:35:00")
+        exp = (103.211871 + 101.003756) / 2
+        self._test_order(type_, num_shares, exp)
+
     def _get_data(self) -> pd.DataFrame:
         """
         Return fixed random data for the other unit tests.
