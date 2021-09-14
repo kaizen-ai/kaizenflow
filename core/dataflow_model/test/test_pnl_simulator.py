@@ -226,6 +226,25 @@ class TestPnlSimulator2(hut.TestCase):
         act = "\n".join(act)
         self.check_string(act)
 
+    def test_perf1(self) -> None:
+        """
+        Same as `test1()` but without future information.
+        """
+        act = []
+        #
+        num_samples = 5 * 10000 + 1
+        seed = 43
+        df, df_5mins = pnlsim.get_example_market_data2(num_samples, seed)
+        #
+        initial_wealth = 1e6
+        #
+        config = {
+            "price_column": "price",
+            "future_snoop_allocation": False,
+            "order_type": "price.end",
+        }
+        df_5mins = pnlsim.compute_pnl_level2(df, df_5mins, initial_wealth, config)
+
 
 # TODO(gp): Add unit tests for computing PnL with level2 sim using midpoint price,
 #  and different spread amount.
