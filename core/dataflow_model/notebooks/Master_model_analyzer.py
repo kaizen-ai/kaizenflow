@@ -116,15 +116,24 @@ df_1min = vltbut.load_single_instrument_data(10025, datetime.date(2009, 1, 1), d
 df_1min.head()
 
 # %%
-df_1min_out = df_1min[["close"]]
+df_1min[["close"]].min()
+
+# %%
+df_1min_out = df_1min[["close", "good_bid", "good_ask"]]
+
 df_1min_out = df_1min_out.resample("1T", closed="right", label="right").mean()
+mask = df_1min_out < 0.40
+df_1min_out = df_1min_out[~mask]
 
 df_1min_out.fillna(method="ffill", limit=None, inplace=True)
 # .sum(min_count=1) #.replace(np.nan, 0)
 
-df_1min_out.columns = ["price"]
+df_1min_out.columns = ["price", "bid", "ask"]
 
 df_1min_out.dropna().head()
+
+# %%
+df_1min_out["price"].hist(bins=101)
 
 # %%
 df_price = df_1min_out.resample("5T", closed="right", label="right").last()
@@ -149,13 +158,19 @@ initial_wealth = 1e6
 config = {
     "price_column": "price",
     "future_snoop_allocation": False,
-    "order_type": "price.end",
+    #"order_type": "price.end",
+    #"order_type": "midpoint.end",
+    "order_type": "full_spread.end",
+    "use_cache": True,
 }
 df_5mins_out = pnlsim.compute_pnl_level2(df_1min_out, df_5mins, initial_wealth, config)
 #wealth, ret, df_5mins_out = pnlsim.compute_pnl_level1(initial_wealth, df_1min_out, df_5mins)
 
 # %%
 df_5mins_out.tail()
+
+# %%
+df_5mins_out["wealth"].resample("1B").mean().plot()#["2012-01-01":].plot()
 
 # %%
 df_5mins_out["wealth"].resample("1B").mean().plot()#["2012-01-01":].plot()
