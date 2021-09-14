@@ -124,6 +124,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     else:
         # Get a single exchange.
         exchange_ids = args.exchange_id.split()
+    _LOG.info("Getting data for exchanges %s", ", ".join(exchange_ids))
     for exchange_id in exchange_ids:
         pass
         # Initialize the exchange class.
@@ -134,6 +135,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         else:
             # Iterate over single provided currency.
             currency_pairs = args.currency_pair.split()
+        _LOG.info("Getting data for currencies %s", ", ".join(currency_pairs))
         for pair in currency_pairs:
             # Download OHLCV data.
             pair_data = exchange.download_ohlcv_data(
