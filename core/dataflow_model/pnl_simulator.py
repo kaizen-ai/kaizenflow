@@ -692,6 +692,8 @@ def _compute_pnl_level2(
         prev_value = accounting[key][-1] if accounting[key] else None
         _LOG.debug("%s=%s -> %s", key, prev_value, value)
         accounting[key].append(value)
+    # def _update(key: str, value: float) -> None:
+    #     pass
 
     orders: List[Order] = []
     # Initial balance.
