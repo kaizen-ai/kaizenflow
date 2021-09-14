@@ -20,12 +20,12 @@ Use as:
      --currency_pair "all" \
      --start_datetime "2019-01-01" \
 
-- Download data for all exchanges, BTC/USDT currency pair,
-from 2019-01-01 to now:
+- Download data for all exchanges, BTC/USDT and ETH/USDT currency pairs,
+  from 2019-01-01 to now:
 > download_historical.py \
      --dst_dir test \
      --exchange_id "all" \
-     --currency_pair "BTC/USDT" \
+     --currency_pair "BTC/USDT ETH/USDT" \
      --start_datetime "2019-01-01" \
 
 - Download data for all exchanges and all pairs,
