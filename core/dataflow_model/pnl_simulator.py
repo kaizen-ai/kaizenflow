@@ -6,7 +6,7 @@ import core.dataflow_model.pnl_simulator as pnlsim
 import collections
 import copy
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -289,9 +289,9 @@ def compute_lag_pnl(df_5mins: pd.DataFrame) -> pd.DataFrame:
 # #############################################################################
 
 # _LOG.debug = _LOG.info
-#_LOG.debug = lambda *_: 0
+# _LOG.debug = lambda *_: 0
 
-#debug_mode = True
+# debug_mode = True
 debug_mode = False
 
 def get_instantaneous_price(
@@ -316,28 +316,37 @@ def get_twap_price(
     """
     Compute TWAP of the column `column` in (ts_start, ts_end].
 
-class MarketInterface:
 
-    def __init__(self, df: pd.DataFrame, use_cache: bool, columns: Optional[List[str]] = None):
+class MarketInterface:
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        use_cache: bool,
+        columns: Optional[List[str]] = None,
+    ):
         self._use_cache = use_cache
         self._df = df
         if self._use_cache:
             self._cached = {}
             dbg.dassert_is_not(columns, None)
+            columns = cast(List[str], columns)
             for column in columns:
                 dbg.dassert_in(column, df.columns)
                 self._cached[column] = df[column].to_dict()
 
     def get_instantaneous_price(
-        self, ts: pd.Timestamp, column: str,
+        self,
+        ts: pd.Timestamp,
+        column: str,
     ) -> float:
+        price: float
         if self._use_cache:
             price = self._cached[column][ts]
         else:
             dbg.dassert_in(ts, self._df.index)
-            price: float = self._df.loc[ts][column]
-            #idx = df.index.searchsorted(ts)
-            #price: float = df.iloc[idx][column]
+            price = self._df.loc[ts][column]
+            # idx = df.index.searchsorted(ts)
+            # price: float = df.iloc[idx][column]
         return price
 
     def get_twap_price(
@@ -543,7 +552,8 @@ def orders_to_string(orders: List[Order]) -> str:
 # Accounting functions.
 # #############################################################################
 
-Accounting = Dict[str, List[float]],
+Accounting = Dict[str, List[float]]
+
 
 def _create_accounting_stats(columns: List[str]) -> Accounting:
     accounting = collections.OrderedDict()
@@ -553,7 +563,8 @@ def _create_accounting_stats(columns: List[str]) -> Accounting:
 
 
 def _append_accounting_df(
-    df_5mins: pd.DataFrame, accounting: Accounting,
+    df_5mins: pd.DataFrame,
+    accounting: Accounting,
 ) -> pd.DataFrame:
     """
     Update the df with intermediate results.
@@ -568,8 +579,11 @@ def _append_accounting_df(
 
 # TODO(gp): Move to MarketInterface?
 def get_total_wealth(
-    mi: MarketInterface, ts: pd.Timestamp, cash: float, holdings: float,
-    column: str
+    mi: MarketInterface,
+    ts: pd.Timestamp,
+    cash: float,
+    holdings: float,
+    column: str,
 ) -> float:
     """
     Return the value of the portfolio at time ts.
@@ -596,7 +610,7 @@ def _get_orders_to_execute(ts: pd.Timestamp, orders: List[Order]) -> List[Order]
     if True:
         if orders[0].ts_start == ts:
             return [orders.pop()]
-        #dbg.dassert_eq(len(orders), 1, "%s", orders_to_string(orders))
+        # dbg.dassert_eq(len(orders), 1, "%s", orders_to_string(orders))
         assert 0
     orders_to_execute = get_orders_to_execute(orders, ts)
     _LOG.debug("orders_to_execute=%s", orders_to_string(orders_to_execute))
@@ -628,7 +642,9 @@ def compute_pnl_level2(
     dbg.dassert(df.index.is_monotonic)
     dbg.dassert(df_5mins.index.is_monotonic)
     #
-    mi = MarketInterface(df, config["use_cache"], columns=config.get("cached_columns", None))
+    mi = MarketInterface(
+        df, config["use_cache"], columns=config.get("cached_columns", None)
+    )
     # Create the accounting data structure.
     columns = [
         "target_n_shares",
@@ -645,7 +661,9 @@ def compute_pnl_level2(
     accounting = _create_accounting_stats(columns)
     preds = list(zip(df_5mins.index, df_5mins["preds"].values))
     # Run the simulation.
-    accounting = _compute_pnl_level2(mi, preds, initial_wealth, config, accounting)
+    accounting = _compute_pnl_level2(
+        mi, preds, initial_wealth, config, accounting
+    )
     # Update the df with intermediate results.
     df_5mins = _append_accounting_df(df_5mins, accounting)
     df_5mins["pnl.sim2"] = df_5mins["wealth"].pct_change()
@@ -668,10 +686,12 @@ def _compute_pnl_level2(
     - The columns ending with `+1` represent what happens in the next interval
       of time
     """
+
     def _update(key: str, value: float) -> None:
         prev_value = accounting[key][-1] if accounting[key] else None
         _LOG.debug("%s=%s -> %s", key, prev_value, value)
         accounting[key].append(value)
+
     # def _update(key: str, value: float) -> None:
     #     pass
 
@@ -766,5 +786,6 @@ use_profiler = False
 
 if use_profiler:
     import line_profiler
+
     profiler = line_profiler.LineProfiler()
     _compute_pnl_level2 = profiler(_compute_pnl_level2)
