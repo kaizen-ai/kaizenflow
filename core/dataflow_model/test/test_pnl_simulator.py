@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+import pytest
 from typing import Any, Dict, List, Tuple
 
 import core.dataflow_model.pnl_simulator as pnlsim
@@ -257,6 +258,7 @@ class TestPnlSimulator2(hut.TestCase):
         act = "\n".join(act)
         self.check_string(act)
 
+    @pytest.mark.skip("For performance measurement")
     def test_perf1(self) -> None:
         """
         Same as `test1()` but without future information.
