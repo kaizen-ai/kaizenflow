@@ -69,14 +69,15 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="CCXT name of the exchange to download data for, e.g. 'binance'",
+        help="CCXT names of exchanges to download data for, separated by spaces, e.g. 'binance gemini',"
+             "'all' for each exchange (currently includes Binance and Kucoin by default)",
     )
     parser.add_argument(
         "--currency_pair",
         action="store",
         required=True,
         type=str,
-        help="Name of the currency pair to download data for, e.g. 'BTC/USD',"
+        help="Name of the currency pair to download data for, separated by spaces, e.g. 'BTC/USD ETH/USD',"
         " 'all' for each currency pair in exchange",
     )
     parser.add_argument(
@@ -122,7 +123,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         exchange_ids = ["binance", "kucoin"]
     else:
         # Get a single exchange.
-        exchange_ids = [args.exchange_id]
+        exchange_ids = args.exchange_id.split()
     for exchange_id in exchange_ids:
         pass
         # Initialize the exchange class.
@@ -132,7 +133,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             currency_pairs = exchange.currency_pairs
         else:
             # Iterate over single provided currency.
-            currency_pairs = [args.currency_pair]
+            currency_pairs = args.currency_pair.split()
         for pair in currency_pairs:
             # Download OHLCV data.
             pair_data = exchange.download_ohlcv_data(
