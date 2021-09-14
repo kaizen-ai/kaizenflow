@@ -148,7 +148,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 index=False,
                 compression="gzip",
             )
-        _LOG.debug("Saved to %s" % file_name)
+            _LOG.debug("Saved to %s", file_name)
     return None
 
 
