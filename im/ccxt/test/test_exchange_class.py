@@ -30,11 +30,11 @@ class Test_CCXTExchange(hut.TestCase):
         # Assert corner datetimes if output is not empty.
         # TODO(Dan): return to code after https://github.com/cryptomtc/cmamp/issues/43 is fixed.
         # if not actual.empty:
-            #exchange = exchange_class._exchange
-            #first_date = exchange.iso8601(int(actual["timestamp"].iloc[0]))
-            #last_date = exchange.iso8601(int(actual["timestamp"].iloc[-1]))
-            #dbg.dassert_eq(exp_first_date, first_date)
-            #dbg.dassert_eq(exp_last_date, last_date)
+            # exchange = exchange_class._exchange
+            # first_date = exchange.iso8601(int(actual["timestamp"].iloc[0]))
+            # last_date = exchange.iso8601(int(actual["timestamp"].iloc[-1]))
+            # dbg.dassert_eq(exp_first_date, first_date)
+            # dbg.dassert_eq(exp_last_date, last_date)
 
     @pytest.mark.skip()
     def test_get_exchange_currencies(self) -> None:
