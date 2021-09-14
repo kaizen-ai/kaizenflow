@@ -437,8 +437,8 @@ class Order:
             perc = float(price_type.split("_")[2])
             dbg.dassert_lte(0, perc)
             dbg.dassert_lte(perc, 1.0)
-            bid_price = Order._get_price(mi, ts_start, ts_end, column, "bid")
-            ask_price = Order._get_price(mi, ts_start, ts_end, column, "ask")
+            bid_price = Order._get_price(mi, ts_start, ts_end, "bid", timing)
+            ask_price = Order._get_price(mi, ts_start, ts_end, "ask", timing)
             if num_shares >= 0:
                 # We need to buy:
                 # - if perc == 1.0 pay ask (i.e., pay full-spread)
