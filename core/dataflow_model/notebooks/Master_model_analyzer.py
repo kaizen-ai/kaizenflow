@@ -45,25 +45,6 @@ _LOG = logging.getLogger(__name__)
 
 hprint.config_notebook()
 
-# %%
-# file_name = "/app/oos_experiment.RH2Eg.v2_0-top10.5T.run1_test/result_1/result_bundle.v2_0.pkl"
-
-# import helpers.pickle_ as hpickle
-
-# obj = hpickle.from_pickle(file_name)
-
-# %%
-# obj.keys()
-
-# %%
-# import helpers.introspection as hintro
-
-# for k in obj.keys():
-#     print(k, hintro.get_size_in_bytes(obj[k]))
-
-# %%
-# obj["payload"]["fit_result_bundle"]["result_df"]
-
 # %% [markdown]
 # # Notebook config
 
@@ -113,6 +94,85 @@ evaluator = modeval.ModelEvaluator.from_eval_config(eval_config)
 
 # Build the ModelPlotter.
 plotter = modplot.ModelPlotter(evaluator)
+
+# %%
+result_bundle_dict[0].config
+
+# %%
+result_bundle_dict[0].result_df.dropna()
+
+# %%
+import vendors_lime.taq_bars.utils as vltbut
+import datetime
+
+import pandas as pd
+import numpy as np
+
+# %%
+# Load the 1min data.
+columns = ['end_time', 'close', 'volume', 'egid', 'good_ask', 'good_bid', 'good_bid_size', 'good_ask_size']
+cache_dir = "/cache/vltbut.get_bar_data.v2_1-all.2009_2019.20210907-07_52_53/cache.get_bar_data.v2_0-all.2009_2019"
+df_1min = vltbut.load_single_instrument_data(10025, datetime.date(2009, 1, 1), datetime.date(2019, 1, 1), columns=columns, cache_dir=cache_dir)
+
+df_1min.head()
+
+# %%
+df_1min_out = df_1min[["close"]]
+df_1min_out = df_1min_out.resample("1T", closed="right", label="right").mean()
+
+df_1min_out.fillna(method="ffill", limit=None, inplace=True)
+# .sum(min_count=1) #.replace(np.nan, 0)
+
+df_1min_out.columns = ["price"]
+
+df_1min_out.dropna().head()
+
+# %%
+df_price = df_1min_out.resample("5T", closed="right", label="right").last()
+df_price["ret_0"] = df_price["price"].pct_change()
+df_price.resample("1D").mean().plot()
+
+# %%
+#import pandas as pd
+#df_5mins.loc[pd.Timestamp("2009-01-02 17:00:00-05:00")]
+
+# %%
+df_1min_out.loc[pd.Timestamp("2009-01-05 13:40:00-05:00"):pd.Timestamp("2009-01-05 14:00:00-05:00")]
+
+# %%
+import core.dataflow_model.pnl_simulator as pnlsim
+
+df_5mins = result_bundle_dict[0].result_df[["mid_ret_0_vol_adj_clipped_2_hat"]]
+df_5mins.columns = ["preds"]
+df_5mins.dropna(inplace=True)
+
+initial_wealth = 1e6
+config = {
+    "price_column": "price",
+    "future_snoop_allocation": False,
+    "order_type": "price.end",
+}
+df_5mins_out = pnlsim.compute_pnl_level2(df_1min_out, df_5mins, initial_wealth, config)
+#wealth, ret, df_5mins_out = pnlsim.compute_pnl_level1(initial_wealth, df_1min_out, df_5mins)
+
+# %%
+df_5mins_out.tail()
+
+# %%
+df_5mins_out["wealth"].resample("1B").mean().plot()#["2012-01-01":].plot()
+
+# %%
+df_5mins_merged = df_5mins_out.merge(df_price, right_index=True, left_index=True)
+
+_, df_5mins_merged = pnlsim.compute_lag_pnl(df_5mins_merged)
+#display(df_5mins_merged)
+#df_5mins_merged["pnl.lag"].cumsum().plot()
+df_5mins_merged["pnl.sim1"].cumsum().plot()
+
+# %%
+df_5mins_out
+
+# %%
 
 # %% [markdown]
 # # Analysis

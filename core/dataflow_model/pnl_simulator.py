@@ -18,7 +18,9 @@ import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
-# _LOG.debug = _LOG.info
+#old = _LOG.debug
+
+_LOG.debug = lambda *args: 0
 
 # TODO(gp): Generalize for different intervals, besides 5 mins trading.
 # TODO(gp): Extend for computing PnL on multiple stocks.
@@ -707,6 +709,7 @@ def _compute_pnl_level2(
         # _LOG.debug(hprint.frame("# ts=%s" % _ts_to_str(ts)))
         # 1) Place orders based on the predictions, if needed.
         _LOG.debug("pred=%s", pred)
+        dbg.dassert(np.isfinite(pred), "pred=%s", pred)
         # Mark the portfolio to market.
         _LOG.debug("# Mark portfolio to market")
         wealth = get_total_wealth(mi, ts, cash, holdings, price_column)
