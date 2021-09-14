@@ -432,6 +432,7 @@ class Order:
             else:
                 column = "bid"
             price = Order._get_price(mi, ts_start, ts_end, column, timing)
+            assert 0
         elif price_type.startswith("partial_spread"):
             perc = float(price_type.split("_")[2])
             dbg.dassert_lte(0, perc)
