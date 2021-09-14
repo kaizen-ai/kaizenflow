@@ -732,7 +732,9 @@ def compute_spread_cost(
     dbg.dassert_isinstance(df, pd.DataFrame)
     dbg.dassert_in(target_position_col, df.columns)
     dbg.dassert_in(spread_col, df.columns)
-    dbg.dassert_lte(0, spread_fraction_paid)
+    if spread_fraction_paid < 0:
+        _LOG.warning("spread_fraction_paid=%f", spread_fraction_paid)
+    # dbg.dassert_lte(0, spread_fraction_paid)
     dbg.dassert_lte(spread_fraction_paid, 1)
     adjusted_spread = spread_fraction_paid * df[spread_col]
     target_position_delta = df[target_position_col].diff().shift(1)
@@ -747,20 +749,20 @@ def compute_spread_cost(
 def compute_pnl(
     df: pd.DataFrame,
     *,
-    target_position_col: str,
+    position_intent_col: str,
     return_col: str,
     join_output_with_input: bool = False,
 ) -> pd.DataFrame:
     """
-    Compute PnL from a stream of target positions and returns.
+    Compute PnL from a stream of position intents and returns.
 
-    :param target_position_col: series of one-step-ahead target positions
+    :param position_intent_col: series of one-step-ahead target positions
     :param return_col: series of returns
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
-    dbg.dassert_in(target_position_col, df.columns)
+    dbg.dassert_in(position_intent_col, df.columns)
     dbg.dassert_in(return_col, df.columns)
-    pnl = df[target_position_col].shift(2).multiply(df[return_col])
+    pnl = df[position_intent_col].shift(2).multiply(df[return_col])
     out_df = pnl.rename("pnl").to_frame()
     if join_output_with_input:
         out_df = out_df.merge(df, left_index=True, right_index=True, how="outer")
