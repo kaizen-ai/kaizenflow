@@ -165,12 +165,25 @@ class TestPnlSimulatorFunctions1(hut.TestCase):
         exp = (100.057346 + 99.527616 + 101.809324 + 101.834376 + 101.003756) / 5
         self._test_order(type_, num_shares, exp)
 
-    # def test_order7(self) -> None:
-    #     df = self._get_data()
-    #     type_ = "partial_spread_0.5.end"
-    #     num_shares = -100
-    #     exp = 101.003756
-    #     self._test_order(type_, num_shares, exp)
+    def test_order_partial_spread1(self) -> None:
+        """
+        Same as test_order_full_spread3
+        """
+        df = self._get_data()
+        type_ = "partial_spread_1.0.twap"
+        num_shares = 100
+        exp = (100.425978 + 102.430887 + 103.073551 + 102.405937 + 103.211871) / 5
+        self._test_order(type_, num_shares, exp)
+
+    def test_order_partial_spread2(self) -> None:
+        """
+        Same as test_order_full_spread4
+        """
+        df = self._get_data()
+        type_ = "partial_spread_1.0.twap"
+        num_shares = -100
+        exp = (100.057346 + 99.527616 + 101.809324 + 101.834376 + 101.003756) / 5
+        self._test_order(type_, num_shares, exp)
 
     def _get_data(self) -> pd.DataFrame:
         """
