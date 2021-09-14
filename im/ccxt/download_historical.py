@@ -65,7 +65,7 @@ def _parse() -> argparse.ArgumentParser:
         help="Folder to download files to",
     )
     parser.add_argument(
-        "--exchange_id",
+        "--exchange_ids",
         action="store",
         required=True,
         type=str,
@@ -73,7 +73,7 @@ def _parse() -> argparse.ArgumentParser:
              "'all' for each exchange (currently includes Binance and Kucoin by default)",
     )
     parser.add_argument(
-        "--currency_pair",
+        "--currency_pairs",
         action="store",
         required=True,
         type=str,
@@ -118,12 +118,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
         end_datetime = pd.Timestamp.now()
     else:
         end_datetime = pd.Timestamp(args.end_datetime)
-    if args.exchange_id == "all":
+    if args.exchange_ids == "all":
         # Iterate over all available exchanges.
         exchange_ids = ["binance", "kucoin"]
     else:
         # Get a single exchange.
-        exchange_ids = args.exchange_id.split()
+        exchange_ids = args.exchange_ids.split()
     _LOG.info("Getting data for exchanges %s", ", ".join(exchange_ids))
     for exchange_id in exchange_ids:
         pass
@@ -134,15 +134,15 @@ def _main(parser: argparse.ArgumentParser) -> None:
             currency_pairs = exchange.currency_pairs
         else:
             # Iterate over single provided currency.
-            currency_pairs = args.currency_pair.split()
-        _LOG.info("Getting data for currencies %s", ", ".join(currency_pairs))
+            currency_pairs = args.currency_pairs.split()
+        _LOG.debug("Getting data for currencies %s", ", ".join(currency_pairs))
         for pair in currency_pairs:
             # Download OHLCV data.
             pair_data = exchange.download_ohlcv_data(
                 start_datetime, end_datetime, curr_symbol=pair, step=args.step
             )
             # Save file.
-            file_name = os.path.join( args.dst_dir, f"{exchange_id}_{pair.replace('/', '_')}.csv.gz")
+            file_name = os.path.join(args.dst_dir, f"{exchange_id}_{pair.replace('/', '_')}.csv.gz")
             pair_data.to_csv(
                 file_name,
                 index=False,
