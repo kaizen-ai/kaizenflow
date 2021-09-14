@@ -263,7 +263,7 @@ class TestPnlSimulator2(hut.TestCase):
         """
         act = []
         #
-        num_samples = 5 * 10000 + 1
+        num_samples = 5 * 100000 + 1
         seed = 43
         df, df_5mins = pnlsim.get_example_market_data2(num_samples, seed)
         #

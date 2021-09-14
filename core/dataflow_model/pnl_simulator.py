@@ -291,7 +291,7 @@ def compute_lag_pnl(df_5mins: pd.DataFrame) -> pd.DataFrame:
 # _LOG.debug = _LOG.info
 #_LOG.debug = lambda *_: 0
 
-#dbg.dassert
+debug_mode = True
 
 def get_instantaneous_price(
     df: pd.DataFrame, ts: pd.Timestamp, column: str
@@ -613,12 +613,6 @@ def _get_orders_to_execute(ts: pd.Timestamp, orders: List[Order]) -> List[Order]
     )
     return merged_orders
 
-if False:
-    import numba
-    import line_profiler
-    profiler = line_profiler.LineProfiler()
-
-
 
 def compute_pnl_level2(
     df: pd.DataFrame,
@@ -632,7 +626,7 @@ def compute_pnl_level2(
     use_cache = config["use_cache"]
     price_column = config["price_column"]
     mi = MarketInterface(df, price_column, use_cache)
-    # Create the
+    # Create the accounting data structure.
     columns = [
         "target_n_shares",
         "cash",
@@ -646,11 +640,8 @@ def compute_pnl_level2(
         # "wealth.after",
     ]
     accounting = _create_accounting_stats(columns)
-    # accounting = collections.OrderedDict()
-    # for column in columns:
-    #     accounting[column] = []
     preds = list(zip(df_5mins.index, df_5mins["preds"].values))
-    #
+    # Run the simulation.
     accounting = _compute_pnl_level2(mi, preds, initial_wealth, config, accounting)
     # Update the df with intermediate results.
     df_5mins = _append_accounting_df(df_5mins, accounting)
@@ -658,8 +649,6 @@ def compute_pnl_level2(
     return df_5mins
 
 
-#@numba.jit(nopython=True)
-#@profiler
 def _compute_pnl_level2(
     mi: MarketInterface,
     preds: List[Tuple[pd.Timestamp, float]],
@@ -764,5 +753,15 @@ def _compute_pnl_level2(
         executed_price = order.get_execution_price()
         cash -= executed_price * num_shares
         _update("cash+1", cash)
-    #profiler.print_stats()
+    if use_profiler:
+        profiler.print_stats()
     return accounting
+
+
+#use_profiler = False
+use_profiler = True
+
+if use_profiler:
+    import line_profiler
+    profiler = line_profiler.LineProfiler()
+    _compute_pnl_level2 = profiler(_compute_pnl_level2)
