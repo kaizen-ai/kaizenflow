@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+from typing import Any, Dict, List, Tuple
 
 import core.dataflow_model.pnl_simulator as pnlsim
 import helpers.printing as hprint
@@ -48,23 +49,36 @@ class TestPnlSimulatorFunctions1(hut.TestCase):
         expected_result = hprint.dedent(expected_result)
         self.assert_equal(actual_result, expected_result)
 
-    def test_get_twap_price1(self) -> None:
+    def _test_get_twap_price1(self, use_cache: bool) -> None:
         """
         Test that TWAP is computed properly.
         """
         df = self._get_data()
+        column = "price"
+        mi = pnlsim.MarketInterface(df, column, use_cache=use_cache)
         ts_start = pd.Timestamp("2021-09-12 09:30:00")
         ts_end = pd.Timestamp("2021-09-12 09:35:00")
-        column = "price"
-        act = pnlsim.get_twap_price(df, ts_start, ts_end, column)
+        act = mi.get_twap_price(ts_start, ts_end)
         #
         exp = df.loc[ts_start + pd.Timedelta(minutes=1) : ts_end]["price"].mean()
         np.testing.assert_almost_equal(act, exp)
         #
         exp = (
-            100.358450 + 101.006138 + 102.529168 + 102.295015 + 102.060878
-        ) / 5.0
+              100.358450 + 101.006138 + 102.529168 + 102.295015 + 102.060878
+              ) / 5.0
         np.testing.assert_almost_equal(act, exp)
+
+    def test_get_twap_price1(self) -> None:
+        """
+        Test that TWAP is computed properly.
+        """
+        self._test_get_twap_price1(use_cache=True)
+
+    def test_get_twap_price2(self) -> None:
+        """
+        Like `test_get_twap_price1` but without cache.
+        """
+        self._test_get_twap_price1(use_cache=False)
 
     def _get_data(self) -> pd.DataFrame:
         """
@@ -74,6 +88,22 @@ class TestPnlSimulatorFunctions1(hut.TestCase):
         seed = 42
         df = pnlsim.get_random_market_data(num_samples, seed)
         return df
+
+
+def _compute_pnl_level2(
+        self_: Any,
+        df: pd.DataFrame,
+        df_5mins: pd.DataFrame,
+        initial_wealth: float,
+        config: Dict[str, Any]):
+    # Check that with / without cache we get the same results.
+    config["use_cache"] = False
+    df_5mins_no_cache = pnlsim.compute_pnl_level2(df, df_5mins, initial_wealth, config)
+    config["use_cache"] = True
+    df_5mins = pnlsim.compute_pnl_level2(df, df_5mins, initial_wealth, config)
+    self_.assert_equal(str(df_5mins_no_cache), str(df_5mins))
+    pd.testing.assert_frame_equal(df_5mins_no_cache, df_5mins)
+    return df_5mins
 
 
 class TestPnlSimulator1(hut.TestCase):
@@ -158,7 +188,8 @@ class TestPnlSimulator1(hut.TestCase):
             "future_snoop_allocation": True,
             "order_type": "price.end",
         }
-        df_5mins = pnlsim.compute_pnl_level2(df, df_5mins, initial_wealth, config)
+        # Check that with / without cache we get the same results.
+        df_5mins = _compute_pnl_level2(self, df, df_5mins, initial_wealth, config)
         act.append(
             "After pnl simulation level 2: df_5mins=\n%s"
             % hut.convert_df_to_string(df_5mins, index=True)
@@ -196,7 +227,7 @@ class TestPnlSimulator2(hut.TestCase):
             "future_snoop_allocation": True,
             "order_type": "price.end",
         }
-        df_5mins = pnlsim.compute_pnl_level2(df, df_5mins, initial_wealth, config)
+        df_5mins = _compute_pnl_level2(self, df, df_5mins, initial_wealth, config)
         act.append(
             "df_5mins=\n%s" % hut.convert_df_to_string(df_5mins, index=True)
         )
@@ -218,7 +249,7 @@ class TestPnlSimulator2(hut.TestCase):
             "future_snoop_allocation": False,
             "order_type": "price.end",
         }
-        df_5mins = pnlsim.compute_pnl_level2(df, df_5mins, initial_wealth, config)
+        df_5mins = _compute_pnl_level2(self, df, df_5mins, initial_wealth, config)
         act.append(
             "df_5mins=\n%s" % hut.convert_df_to_string(df_5mins, index=True)
         )
@@ -242,6 +273,7 @@ class TestPnlSimulator2(hut.TestCase):
             "price_column": "price",
             "future_snoop_allocation": False,
             "order_type": "price.end",
+            "use_cache": True,
         }
         df_5mins = pnlsim.compute_pnl_level2(df, df_5mins, initial_wealth, config)
 

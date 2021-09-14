@@ -288,10 +288,6 @@ def compute_lag_pnl(df_5mins: pd.DataFrame) -> pd.DataFrame:
 # Price computation.
 # #############################################################################
 
-speed_up = True
-
-_cached = None
-
 # _LOG.debug = _LOG.info
 #_LOG.debug = lambda *_: 0
 
@@ -319,21 +315,50 @@ def get_twap_price(
     """
     Compute TWAP of the column `column` in (ts_start, ts_end].
 
-    E.g., TWAP for (9:30, 9:35] means avg(p(9:31), ..., p(9:35)).
+class MarketInterface:
 
-    The function should be called `get_twa_price()` or `get_twap()`.
-    """
-    dbg.dassert_in(ts_start, df.index)
-    dbg.dassert_in(ts_end, df.index)
-    dbg.dassert_lt(ts_start, ts_end)
-    dbg.dassert_in(column, df.columns)
-    # Get the slice (ts_start, ts_end] of prices.
-    prices = df[ts_start:ts_end][column]
-    prices = prices.iloc[1:]
-    _LOG.debug("prices=\n%s", prices)
-    dbg.dassert_lte(1, prices.shape[0])
-    price: float = prices.mean()
-    return price
+    def __init__(self, df: pd.DataFrame, column: str, use_cache: bool):
+        self._use_cache = use_cache
+        self._df = df
+        dbg.dassert_in(column, df.columns)
+        self._column = column
+        if self._use_cache:
+            self._cached = df[column].to_dict()
+
+    def get_instantaneous_price(
+        self, ts: pd.Timestamp
+    ) -> float:
+        if self._use_cache:
+            price = self._cached[ts]
+        else:
+            dbg.dassert_in(ts, self._df.index)
+            price: float = self._df.loc[ts][self._column]
+            #idx = df.index.searchsorted(ts)
+            #price: float = df.iloc[idx][column]
+        return price
+
+    def get_twap_price(
+        self, ts_start: pd.Timestamp, ts_end: pd.Timestamp
+    ) -> float:
+        """
+        Compute TWAP of the column `column` in (ts_start, ts_end].
+
+        E.g., TWAP for (9:30, 9:35] means avg(p(9:31), ..., p(9:35)).
+
+        The function should be called `get_twa_price()` or `get_twap()`.
+        """
+        # TODO(gp): For use_cache=True it's not clear how to speed this up.
+        dbg.dassert_lt(ts_start, ts_end)
+        # Get the slice (ts_start, ts_end] of prices.
+        # TODO(gp): Maybe binary search can help.
+        dbg.dassert_in(ts_start, self._df.index)
+        dbg.dassert_in(ts_end, self._df.index)
+        prices = self._df[ts_start:ts_end][self._column]
+        prices = prices.iloc[1:]
+        _LOG.debug("prices=\n%s", prices)
+        dbg.dassert_lte(1, prices.shape[0])
+        price: float = prices.mean()
+        return price
 
 
 # #############################################################################
@@ -344,7 +369,7 @@ def get_twap_price(
 class Order:
     def __init__(
         self,
-        df: pd.DataFrame,
+        mi: MarketInterface,
         type_: str,
         ts_start: pd.Timestamp,
         ts_end: pd.Timestamp,
@@ -353,7 +378,7 @@ class Order:
         """
         Represent an order executed in (ts_start, ts_end].
         """
-        self._df = df
+        self._mi = mi
         # An order has 2 characteristics:
         # 1) what price is executed at, e.g.,
         #    - price: the (historical) realized price
@@ -380,7 +405,7 @@ class Order:
 
     @staticmethod
     def get_price(
-        df: pd.DataFrame,
+        mi: MarketInterface,
         type_: str,
         ts_start: pd.Timestamp,
         ts_end: pd.Timestamp,
@@ -396,20 +421,20 @@ class Order:
         # Get the price depending on the price_type.
         if price_type in ("price", "midpoint"):
             column = price_type
-            price = Order._get_price(df, ts_start, ts_end, column, timing)
+            price = Order._get_price(mi, ts_start, ts_end, column, timing)
         elif price_type == "full_spread":
             # Cross the spread depending on buy / sell.
             if num_shares >= 0:
                 column = "ask"
             else:
                 column = "bid"
-            price = Order._get_price(df, ts_start, ts_end, column, timing)
+            price = Order._get_price(mi, ts_start, ts_end, column, timing)
         elif price_type.startswith("partial_spread"):
             perc = float(price_type.split("_")[2])
             dbg.dassert_lte(0, perc)
             dbg.dassert_lte(perc, 1.0)
-            bid_price = Order._get_price(df, ts_start, ts_end, column, "bid")
-            ask_price = Order._get_price(df, ts_start, ts_end, column, "ask")
+            bid_price = Order._get_price(mi, ts_start, ts_end, column, "bid")
+            ask_price = Order._get_price(mi, ts_start, ts_end, column, "ask")
             if num_shares >= 0:
                 # We need to buy:
                 # - if perc == 1.0 pay ask (i.e., pay full-spread)
@@ -438,7 +463,7 @@ class Order:
         Get price that this order executes at.
         """
         price = self.get_price(
-            self._df, self.type_, self.ts_start, self.ts_end, self.num_shares
+            self._mi, self.type_, self.ts_start, self.ts_end, self.num_shares
         )
         return price
 
@@ -462,7 +487,7 @@ class Order:
         dbg.dassert(self.is_mergeable(rhs))
         num_shares = self.num_shares + rhs.num_shares
         order = Order(
-            self._df, self.type_, self.ts_start, self.ts_end, num_shares
+            self._mi, self.type_, self.ts_start, self.ts_end, num_shares
         )
         return order
 
@@ -471,7 +496,7 @@ class Order:
 
     @staticmethod
     def _get_price(
-        df: pd.DataFrame,
+        mi: MarketInterface,
         ts_start: pd.Timestamp,
         ts_end: pd.Timestamp,
         column: str,
@@ -481,11 +506,11 @@ class Order:
         Get the price corresponding to a certain column and timing.
         """
         if timing == "start":
-            price = get_instantaneous_price(df, ts_start, column)
+            price = mi.get_instantaneous_price(ts_start)
         elif timing == "end":
-            price = get_instantaneous_price(df, ts_end, column)
+            price = mi.get_instantaneous_price(ts_end)
         elif timing == "twap":
-            price = get_twap_price(df, ts_start, ts_end, column)
+            price = mi.get_twap_price(ts_start, ts_end)
         else:
             raise ValueError("Invalid timing='%s'", timing)
         return price
@@ -514,8 +539,9 @@ def orders_to_string(orders: List[Order]) -> str:
 # Accounting functions.
 # #############################################################################
 
+Accounting = Dict[str, List[float]],
 
-def _create_accounting_stats(columns: List[str]) -> Dict[str, List[float]]:
+def _create_accounting_stats(columns: List[str]) -> Accounting:
     accounting = collections.OrderedDict()
     for column in columns:
         accounting[column] = []
@@ -523,7 +549,7 @@ def _create_accounting_stats(columns: List[str]) -> Dict[str, List[float]]:
 
 
 def _append_accounting_df(
-    df_5mins: pd.DataFrame, accounting: Dict[str, List[float]]
+    df_5mins: pd.DataFrame, accounting: Accounting,
 ) -> pd.DataFrame:
     """
     Update the df with intermediate results.
@@ -536,8 +562,9 @@ def _append_accounting_df(
     return df_5mins
 
 
+# TODO(gp): Move to MarketInterface?
 def get_total_wealth(
-    df: pd.DataFrame, ts: pd.Timestamp, cash: float, holdings: float, column: str
+    mi: MarketInterface, ts: pd.Timestamp, cash: float, holdings: float
 ) -> float:
     """
     Return the value of the portfolio at time ts.
@@ -561,7 +588,7 @@ def get_total_wealth(
 
 
 def _get_orders_to_execute(ts: pd.Timestamp, orders: List[Order]) -> List[Order]:
-    if speed_up:
+    if True:
         if orders[0].ts_start == ts:
             return [orders.pop()]
         #dbg.dassert_eq(len(orders), 1, "%s", orders_to_string(orders))
@@ -586,31 +613,26 @@ def _get_orders_to_execute(ts: pd.Timestamp, orders: List[Order]) -> List[Order]
     )
     return merged_orders
 
-import numba
+if False:
+    import numba
+    import line_profiler
+    profiler = line_profiler.LineProfiler()
 
-import line_profiler
 
-profiler = line_profiler.LineProfiler()
 
-#@numba.jit(nopython=True)
-#@profiler
 def compute_pnl_level2(
     df: pd.DataFrame,
     df_5mins: pd.DataFrame,
     initial_wealth: float,
     config: Dict[str, Any],
 ) -> pd.DataFrame:
-    """
-    In this implementation we use the prediction to place orders, that are
-    realized over the span of two intervals of time (i.e., two lags).
-
-    - The PnL is realized two intervals of time after the corresponding prediction
-    - The columns reported in the df are for the beginning of the interval of time
-    - The columns ending with `+1` represent what happens in the next interval
-      of time
-    """
-    df.sort_index(inplace=True)
-
+    dbg.dassert(df.index.is_monotonic)
+    dbg.dassert(df_5mins.index.is_monotonic)
+    #
+    use_cache = config["use_cache"]
+    price_column = config["price_column"]
+    mi = MarketInterface(df, price_column, use_cache)
+    # Create the
     columns = [
         "target_n_shares",
         "cash",
@@ -627,7 +649,33 @@ def compute_pnl_level2(
     # accounting = collections.OrderedDict()
     # for column in columns:
     #     accounting[column] = []
+    preds = list(zip(df_5mins.index, df_5mins["preds"].values))
+    #
+    accounting = _compute_pnl_level2(mi, preds, initial_wealth, config, accounting)
+    # Update the df with intermediate results.
+    df_5mins = _append_accounting_df(df_5mins, accounting)
+    df_5mins["pnl.sim2"] = df_5mins["wealth"].pct_change()
+    return df_5mins
 
+
+#@numba.jit(nopython=True)
+#@profiler
+def _compute_pnl_level2(
+    mi: MarketInterface,
+    preds: List[Tuple[pd.Timestamp, float]],
+    initial_wealth: float,
+    config: Dict[str, Any],
+    accounting: Accounting,
+) -> Accounting:
+    """
+    In this implementation we use the prediction to place orders, that are
+    realized over the span of two intervals of time (i.e., two lags).
+
+    - The PnL is realized two intervals of time after the corresponding prediction
+    - The columns reported in the df are for the beginning of the interval of time
+    - The columns ending with `+1` represent what happens in the next interval
+      of time
+    """
     def _update(key: str, value: float) -> None:
         prev_value = accounting[key][-1] if accounting[key] else None
         _LOG.debug("%s=%s -> %s", key, prev_value, value)
@@ -643,7 +691,6 @@ def compute_pnl_level2(
     for ts, row in tqdm(df_5mins.iterrows(), total=num_rows):
         _LOG.debug(hprint.frame("# ts=%s" % _ts_to_str(ts)))
         # 1) Place orders based on the predictions, if needed.
-        #pred = row["preds"]
         _LOG.debug("pred=%s", pred)
         dbg.dassert(np.isfinite(pred), "pred=%s", pred)
         # Mark the portfolio to market.
@@ -658,9 +705,7 @@ def compute_pnl_level2(
         # Use current price to convert forecasts in position intents.
         _LOG.debug("# Decide how much to trade")
         # Enter position between [0, 5].
-        #ts_start = ts + pd.DateOffset(minutes=0)
         ts_start = ts
-        #ts_end = ts + pd.DateOffset(minutes=5)
         ts_end = ts + offset_5min
         if config.get("future_snoop_allocation", False):
             # - In the vectorized PnL case we assume we work in terms of dollar and
@@ -673,14 +718,14 @@ def compute_pnl_level2(
             # The direction of the trade is enough to determine the price.
             num_shares_proxy = pred
             price_0 = Order.get_price(
-                df, order_type, ts_start, ts_end, num_shares_proxy
+                mi, order_type, ts_start, ts_end, num_shares_proxy
             )
             dbg.dassert(np.isfinite(price_0), "price_0=%s", pred)
             wealth_to_allocate = get_total_wealth(
-                df, ts_end, cash, holdings, price_column
+                mi, ts_end, cash, holdings
             )
         else:
-            price_0 = get_instantaneous_price(df, ts, price_column)
+            price_0 = mi.get_instantaneous_price(ts)
             wealth_to_allocate = wealth
         _LOG.debug("price_0=%s", price_0)
         target_num_shares = wealth_to_allocate / price_0
@@ -692,7 +737,7 @@ def compute_pnl_level2(
         diff = target_num_shares - holdings
         _update("diff_n_shares", diff)
         # Create order.
-        order = Order(df, order_type, ts_start, ts_end, diff)
+        order = Order(mi, order_type, ts_start, ts_end, diff)
         _LOG.debug("order=%s", order)
         orders.append(order)
         # 2) Execute the orders.
@@ -719,10 +764,5 @@ def compute_pnl_level2(
         executed_price = order.get_execution_price()
         cash -= executed_price * num_shares
         _update("cash+1", cash)
-    # Update the df with intermediate results.
-    df_5mins = _append_accounting_df(df_5mins, accounting)
-    df_5mins["pnl.sim2"] = df_5mins["wealth"].pct_change()
     #profiler.print_stats()
-    return df_5mins
-
-
+    return accounting
