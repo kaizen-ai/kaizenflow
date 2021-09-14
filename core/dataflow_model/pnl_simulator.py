@@ -10,13 +10,16 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
+from tqdm.autonotebook import tqdm
 
 import helpers.dbg as dbg
 import helpers.printing as hprint
 
 _LOG = logging.getLogger(__name__)
 
-# _LOG.debug = _LOG.info
+#old = _LOG.debug
+
+_LOG.debug = lambda *args: 0
 
 # TODO(gp): Generalize for different intervals, besides 5 mins trading.
 # TODO(gp): Extend for computing PnL on multiple stocks.
@@ -197,7 +200,8 @@ def compute_pnl_level1(
     # Initial balance.
     wealth = initial_wealth
     # Skip the last two rows since we need two rows to enter / exit the position.
-    for ts, row in df_5mins[:-2].iterrows():
+    num_rows = df_5mins.shape[0]
+    for ts, row in tqdm(df_5mins[:-2].iterrows(), total=num_rows):
         _LOG.debug(hprint.frame("# ts=%s" % _ts_to_str(ts), char1="<"))
         pred = row["preds"]
         _LOG.debug("wealth=%s", wealth)
@@ -290,6 +294,7 @@ def get_instantaneous_price(
     dbg.dassert_in(ts, df.index)
     dbg.dassert_in(column, df.columns)
     price: float = df.loc[ts][column]
+    dbg.dassert(np.isfinite(price), "price=%s at ts=%s", price, ts)
     return price
 
 
@@ -523,6 +528,8 @@ def get_total_wealth(
     Return the value of the portfolio at time ts.
     """
     price = get_instantaneous_price(df, ts, column)
+    dbg.dassert(np.isfinite(price), "price=%s", price)
+    dbg.dassert(np.isfinite(holdings), "holdings=%s", holdings)
     holdings_value = holdings * price
     _LOG.debug(
         "Marking at ts=%s holdings=%s at %s -> value=%s",
@@ -576,14 +583,17 @@ def compute_pnl_level2(
     # Initial balance.
     holdings = 0.0
     cash = initial_wealth
-    for ts, row in df_5mins.iterrows():
+    num_rows = df_5mins.shape[0]
+    for ts, row in tqdm(df_5mins.iterrows(), total=num_rows):
         _LOG.debug(hprint.frame("# ts=%s" % _ts_to_str(ts)))
         # 1) Place orders based on the predictions, if needed.
         pred = row["preds"]
         _LOG.debug("pred=%s", pred)
+        dbg.dassert(np.isfinite(pred), "pred=%s", pred)
         # Mark the portfolio to market.
         _LOG.debug("# Mark portfolio to market")
         wealth = get_total_wealth(df, ts, cash, holdings, config["price_column"])
+        dbg.dassert(np.isfinite(wealth), "wealth=%s", wealth)
         _update("wealth", wealth)
         if ts == df_5mins.index[-1]:
             # For the last timestamp we only need to mark to market, but not post
@@ -608,6 +618,7 @@ def compute_pnl_level2(
             price_0 = Order.get_price(
                 df, order_type, ts_start, ts_end, num_shares_proxy
             )
+            dbg.dassert(np.isfinite(price_0), "price_0=%s", pred)
             wealth_to_allocate = get_total_wealth(
                 df, ts_end, cash, holdings, config["price_column"]
             )
