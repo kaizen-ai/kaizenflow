@@ -7,8 +7,8 @@ Use as:
 - Download Binance BTC/USDT data from 2019-01-01 to 2019-01-02:
 > download_historical.py \
      --dst_dir test \
-     --exchange_id "binance" \
-     --currency_pair "BTC/USDT" \
+     --exchange_ids "binance" \
+     --currency_pairs "BTC/USDT" \
      --start_datetime "2019-01-01" \
      --end_datetime "2019-01-02"
 
@@ -16,24 +16,24 @@ Use as:
   for all currency pairs:
 > download_historical.py \
      --dst_dir test \
-     --exchange_id "binance" \
-     --currency_pair "all" \
+     --exchange_ids "binance" \
+     --currency_pairs "all" \
      --start_datetime "2019-01-01" \
 
 - Download data for all exchanges, BTC/USDT and ETH/USDT currency pairs,
   from 2019-01-01 to now:
 > download_historical.py \
      --dst_dir test \
-     --exchange_id "all" \
-     --currency_pair "BTC/USDT ETH/USDT" \
+     --exchange_ids "all" \
+     --currency_pairs "BTC/USDT ETH/USDT" \
      --start_datetime "2019-01-01" \
 
 - Download data for all exchanges and all pairs,
 from 2019-01-01 to 2019-01-02:
 > download_historical.py \
      --dst_dir test \
-     --exchange_id "all" \
-     --currency_pair "all" \
+     --exchange_ids "all" \
+     --currency_pairs "all" \
      --start_datetime "2019-01-01" \
      --start_endtime "2019-01-02"
 """
@@ -129,7 +129,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         pass
         # Initialize the exchange class.
         exchange = icec.CCXTExchange(exchange_id)
-        if args.currency_pair == "all":
+        if args.currency_pairs == "all":
             # Iterate over all currencies available for exchange.
             currency_pairs = exchange.currency_pairs
         else:
