@@ -47,7 +47,7 @@ class TestPnlSimulatorFunctions1(hut.TestCase):
         expected_result = hprint.dedent(expected_result)
         self.assert_equal(actual_result, expected_result)
 
-    def test_get_twap_price1(self) -> None:
+    def _test_get_twap_price1(self, use_cache: bool) -> None:
         """
         Test that TWAP is computed properly.
         """
@@ -272,6 +272,18 @@ def _compute_pnl_level2(
     pd.testing.assert_frame_equal(df_5mins_no_cache, df_5mins)
     return df_5mins
 
+    def test_get_twap_price1(self) -> None:
+        """
+        Test that TWAP is computed properly.
+        """
+        self._test_get_twap_price1(use_cache=True)
+
+    def test_get_twap_price2(self) -> None:
+        """
+        Like `test_get_twap_price1` but without cache.
+        """
+        self._test_get_twap_price1(use_cache=False)
+
     def _get_data(self) -> pd.DataFrame:
         """
         Return fixed random data for the other unit tests.
@@ -280,6 +292,22 @@ def _compute_pnl_level2(
         seed = 42
         df = pnlsim.get_random_market_data(num_samples, seed)
         return df
+
+
+def _compute_pnl_level2(
+        self_: Any,
+        df: pd.DataFrame,
+        df_5mins: pd.DataFrame,
+        initial_wealth: float,
+        config: Dict[str, Any]):
+    # Check that with / without cache we get the same results.
+    config["use_cache"] = False
+    df_5mins_no_cache = pnlsim.compute_pnl_level2(df, df_5mins, initial_wealth, config)
+    config["use_cache"] = True
+    df_5mins = pnlsim.compute_pnl_level2(df, df_5mins, initial_wealth, config)
+    self_.assert_equal(str(df_5mins_no_cache), str(df_5mins))
+    pd.testing.assert_frame_equal(df_5mins_no_cache, df_5mins)
+    return df_5mins
 
 
 class TestPnlSimulator1(hut.TestCase):
@@ -492,6 +520,7 @@ class TestPnlSimulator2(hut.TestCase):
             "price_column": "price",
             "future_snoop_allocation": False,
             "order_type": "price.end",
+            "use_cache": True,
         }
         df_5mins = pnlsim.compute_pnl_level2(df, df_5mins, initial_wealth, config)
 
