@@ -276,19 +276,6 @@ def _compute_pnl_level2(
         """
         Test that TWAP is computed properly.
         """
-        use_cache = True
-        columns = ["price", "ask", "bid"]
-        self._test_get_twap_price1(use_cache, columns)
-
-    def test_get_twap_price2(self) -> None:
-        """
-        Like `test_get_twap_price1` but without cache.
-        """
-        use_cache = False
-        columns = ["price", "ask", "bid"]
-        self._test_get_twap_price1(use_cache, columns)
-
-    def _test_order(self, type_: str, num_shares: float, exp: float) -> None:
         df = self._get_data()
         for use_cache in [True, False]:
             if use_cache:
@@ -298,11 +285,31 @@ def _compute_pnl_level2(
             mi = pnlsim.MarketInterface(df, use_cache, columns=columns)
             ts_start = pd.Timestamp("2021-09-12 09:30:00")
             ts_end = pd.Timestamp("2021-09-12 09:35:00")
+            act = mi.get_twap_price(ts_start, ts_end, "price")
+            #
+            exp = df.loc[ts_start + pd.Timedelta(minutes=1) : ts_end]["price"].mean()
+            np.testing.assert_almost_equal(act, exp)
+            #
+            exp = (
+                  100.358450 + 101.006138 + 102.529168 + 102.295015 + 102.060878
+                  ) / 5.0
+            np.testing.assert_almost_equal(act, exp)
+
+    def _test_order(self, type_: str, num_shares: float, exp: float) -> None:
+        df = self._get_data()
+        for use_cache in [True, False]:
+            if use_cache:
+                columns = ["price", "ask", "bid", "midpoint"]
+            else:
+                columns = None
+            mi = pnlsim.MarketInterface(df, use_cache, columns=columns)
+            ts_start = pd.Timestamp("2021-09-12 09:30:00")
+            ts_end = pd.Timestamp("2021-09-12 09:35:00")
             order = pnlsim.Order(mi, type_, ts_start, ts_end, num_shares)
             act = order.get_execution_price()
             np.testing.assert_almost_equal(act, exp)
 
-    def test_order1(self) -> None:
+    def test_order_price1(self) -> None:
         df = self._get_data()
         type_ = "price.start"
         num_shares = 100
@@ -311,7 +318,7 @@ def _compute_pnl_level2(
         np.testing.assert_almost_equal(exp, 100.496714)
         self._test_order(type_, num_shares, exp)
 
-    def test_order2(self) -> None:
+    def test_order_price2(self) -> None:
         df = self._get_data()
         type_ = "price.end"
         num_shares = 100
@@ -320,21 +327,74 @@ def _compute_pnl_level2(
         np.testing.assert_almost_equal(exp, 102.060878)
         self._test_order(type_, num_shares, exp)
 
-    def test_order3(self) -> None:
+    def test_order_price3(self) -> None:
+        df = self._get_data()
+        type_ = "price.twap"
+        num_shares = 100
+        exp = (
+           100.358450 +
+           101.006138 +
+           102.529168 +
+           102.295015 +
+           102.060878
+              ) / 5.0
+        self._test_order(type_, num_shares, exp)
+
+    def test_order_midpoint1(self) -> None:
         df = self._get_data()
         type_ = "midpoint.start"
         num_shares = 100
-        ts_start = pd.Timestamp("2021-09-12 09:30:00")
-        exp = (100.722490 + 100.381066) / 2
+        exp = 100.551778
         self._test_order(type_, num_shares, exp)
 
-    def test_order4(self) -> None:
+    def test_order_midpoint2(self) -> None:
         df = self._get_data()
         type_ = "midpoint.end"
         num_shares = 100
-        ts_start = pd.Timestamp("2021-09-12 09:35:00")
-        exp = (103.211871 + 101.003756) / 2
+        exp = 102.107814
         self._test_order(type_, num_shares, exp)
+
+    def test_order_midpoint3(self) -> None:
+        df = self._get_data()
+        type_ = "midpoint.twap"
+        num_shares = 100
+        exp = (100.241662 + 100.979251 + 102.441438 + 102.120157 + 102.107814) / 5.0
+        self._test_order(type_, num_shares, exp)
+
+    def test_order_full_spread1(self) -> None:
+        df = self._get_data()
+        type_ = "full_spread.end"
+        num_shares = 100
+        exp = 103.211871
+        self._test_order(type_, num_shares, exp)
+
+    def test_order_full_spread2(self) -> None:
+        df = self._get_data()
+        type_ = "full_spread.end"
+        num_shares = -100
+        exp = 101.003756
+        self._test_order(type_, num_shares, exp)
+
+    def test_order_full_spread3(self) -> None:
+        df = self._get_data()
+        type_ = "full_spread.twap"
+        num_shares = 100
+        exp = (100.425978 + 102.430887 + 103.073551 + 102.405937 + 103.211871) / 5
+        self._test_order(type_, num_shares, exp)
+
+    def test_order_full_spread4(self) -> None:
+        df = self._get_data()
+        type_ = "full_spread.twap"
+        num_shares = -100
+        exp = (100.057346 + 99.527616 + 101.809324 + 101.834376 + 101.003756) / 5
+        self._test_order(type_, num_shares, exp)
+
+    # def test_order7(self) -> None:
+    #     df = self._get_data()
+    #     type_ = "partial_spread_0.5.end"
+    #     num_shares = -100
+    #     exp = 101.003756
+    #     self._test_order(type_, num_shares, exp)
 
     def _get_data(self) -> pd.DataFrame:
         """
@@ -343,6 +403,7 @@ def _compute_pnl_level2(
         num_samples = 21
         seed = 42
         df = pnlsim.get_random_market_data(num_samples, seed)
+        df["midpoint"] = (df["ask"] + df["bid"]) / 2
         df = df.round(6)
         return df
 
