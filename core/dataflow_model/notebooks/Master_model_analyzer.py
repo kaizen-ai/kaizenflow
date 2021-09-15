@@ -95,10 +95,9 @@ evaluator = cdtfmomoev.ModelEvaluator.from_eval_config(eval_config)
 plotter = cdtfmomopl.ModelPlotter(evaluator)
 
 # %%
-result_bundle_dict[0].config
-
-# %%
-result_bundle_dict[0].result_df.dropna()
+for i in range(3):
+    egid = result_bundle_dict[i].config["load_prices"]["source_node_kwargs"]["func_kwargs"]["egid"]
+    print(egid)
 
 # %%
 import vendors_lime.taq_bars.utils as vltbut
@@ -109,13 +108,31 @@ import numpy as np
 
 # %%
 # Load the 1min data.
+#egid = 10025
+#egid = 10035
+egid = 10036
 columns = ['end_time', 'close', 'volume', 'egid', 'good_ask', 'good_bid', 'good_bid_size', 'good_ask_size']
 cache_dir = "/cache/vltbut.get_bar_data.v2_1-all.2009_2019.20210907-07_52_53/cache.get_bar_data.v2_0-all.2009_2019"
-df_1min = vltbut.load_single_instrument_data(10025, datetime.date(2009, 1, 1), datetime.date(2019, 1, 1), columns=columns, cache_dir=cache_dir)
+df_1min = vltbut.load_single_instrument_data(egid, datetime.date(2009, 1, 1), datetime.date(2019, 1, 1), columns=columns, cache_dir=cache_dir)
 
 df_1min.head()
 
 # %%
+df_1min["close"].resample("1D").mean().plot()
+
+# %%
+mad_func = lambda x: np.fabs(x - x.mean()).mean()
+
+mad = df_1min["close"].rolling(window=60).apply(mad_func, raw=True)
+
+#df_1min["close"] +
+#.plot(style='k')
+
+# %%
+mad.resample("1D").mean()
+
+# %%
+df_1min["close"].hist(bins=101)
 df_1min[["close"]].min()
 
 # %%
