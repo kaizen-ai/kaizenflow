@@ -726,7 +726,7 @@ class MultiindexFunctionWrapper(cdnb.Transformer):
         )
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
         info["df_transformed_info"] = cdtfu.get_df_info_as_string(out_df)
-        return df, info
+        return out_df, info
 
 
 # #############################################################################
