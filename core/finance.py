@@ -712,20 +712,25 @@ def compute_pnl(
 
 def compute_spread_cost(
     df: pd.DataFrame,
-    *,
+    # TODO(gp): -> position_intent_1_col or position_intent_col ?
     target_position_col: str,
     spread_col: str,
     spread_fraction_paid: float,
+    *,
     join_output_with_input: bool = False,
 ) -> pd.DataFrame:
     """
     Compute spread costs incurred by changing position values.
+
+    The columns are aligned so that
 
     :param target_position_col: series of one-step-ahead target positions
     :param spread_col: series of spreads
     :param spread_fraction_paid: number indicating the fraction of the spread
         paid, e.g., `0.5` means that 50% of the spread is paid
     """
+    # TODO(gp): Clarify / make uniform the spread nomenclature. If `spread_col` is
+    #  `quoted_spread` then midpoint corresponds to 0.5.
     dbg.dassert_isinstance(df, pd.DataFrame)
     dbg.dassert_in(target_position_col, df.columns)
     dbg.dassert_in(spread_col, df.columns)
@@ -733,7 +738,9 @@ def compute_spread_cost(
         _LOG.warning("spread_fraction_paid=%f", spread_fraction_paid)
     # dbg.dassert_lte(0, spread_fraction_paid)
     dbg.dassert_lte(spread_fraction_paid, 1)
+    # TODO(gp): adjusted_spread -> spread_paid?
     adjusted_spread = spread_fraction_paid * df[spread_col]
+    # Since target_
     target_position_delta = df[target_position_col].diff().shift(1)
     spread_costs = target_position_delta.abs().multiply(adjusted_spread)
     out_df = spread_costs.rename("spread_cost").to_frame()
@@ -745,9 +752,9 @@ def compute_spread_cost(
 
 def compute_pnl(
     df: pd.DataFrame,
-    *,
     position_intent_col: str,
     return_col: str,
+    *,
     join_output_with_input: bool = False,
 ) -> pd.DataFrame:
     """
@@ -759,6 +766,7 @@ def compute_pnl(
     dbg.dassert_isinstance(df, pd.DataFrame)
     dbg.dassert_in(position_intent_col, df.columns)
     dbg.dassert_in(return_col, df.columns)
+    #
     pnl = df[position_intent_col].shift(2).multiply(df[return_col])
     out_df = pnl.rename("pnl").to_frame()
     if join_output_with_input:
