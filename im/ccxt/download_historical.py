@@ -41,6 +41,7 @@ from 2019-01-01 to 2019-01-02:
 import argparse
 import logging
 import os
+import time
 
 import pandas as pd
 
@@ -141,6 +142,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             pair_data = exchange.download_ohlcv_data(
                 start_datetime, end_datetime, curr_symbol=pair, step=args.step
             )
+            time.sleep(60)
             # Save file.
             file_name = os.path.join(args.dst_dir, f"{exchange_id}_{pair.replace('/', '_')}.csv.gz")
             pair_data.to_csv(
