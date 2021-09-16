@@ -229,7 +229,7 @@ class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
         func_info = info["func_info"]
         srs_list = []
         for col in self._leaf_cols:
-            srs, col_info = _apply_func_to_series(
+            srs, col_info = _apply_func_to_data(
                 df[col],
                 self._nan_mode,
                 self._transformer_func,
