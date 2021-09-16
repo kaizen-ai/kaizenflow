@@ -100,7 +100,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # Construct new name with timestamp.
         filename = os.path.join(args.dir_name, f"{timestamp}_{orig_filename}")
         _LOG.debug("Saved to %s", filename)
-        df.to_csv(filename, index=False, compression="gzip")
+        df.to_csv(filename, index=True, compression="gzip")
     _LOG.info("Download finished")
 
 
