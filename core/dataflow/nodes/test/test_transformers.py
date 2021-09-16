@@ -721,8 +721,12 @@ class TestSeriesToSeriesTransformer(hut.TestCase):
 2016-01-04 09:31:00,0.05,-0.02,105.0,98.0,35000,44000
 2016-01-04 09:32:00,-0.5,-0.5,52.5,49.0,40000,45000
 """
-        expected = pd.read_csv(io.StringIO(expected_txt), index_col=0, parse_dates=True,
-                               header=[0, 1])
+        expected = pd.read_csv(
+            io.StringIO(expected_txt),
+            index_col=0,
+            parse_dates=True,
+            header=[0, 1],
+        )
         # NOTE: `hut.compare_df()` is unstable due to round-off errors.
         np.testing.assert_allclose(actual, expected)
 
@@ -734,7 +738,9 @@ datetime,MN0,MN1,MN0,MN1
 2016-01-04 09:31:00,105.00,98.00,35000,44000
 2016-01-04 09:32:00,52.50,49.00,40000,45000
 """
-        df = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True, header=[0, 1])
+        df = pd.read_csv(
+            io.StringIO(txt), index_col=0, parse_dates=True, header=[0, 1]
+        )
         return df
 
 
