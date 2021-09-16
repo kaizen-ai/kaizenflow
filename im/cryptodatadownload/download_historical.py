@@ -22,10 +22,6 @@ Use as:
      --dir_name /app/im/cryptodatadownload/data/binance \
      --exchange_id "binance" \
      --timeframe "hourly"
-
-Import as:
-
-import im.cryptodatadownload.download_historical as imcrdh
 """
 
 import argparse
