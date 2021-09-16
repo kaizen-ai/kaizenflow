@@ -728,42 +728,6 @@ class FunctionWrapper(cdtfnobas.Transformer):
         return df_out, info
 
 
-class MultiindexFunctionWrapper(cdnb.Transformer):
-    def __init__(
-        self,
-        nid: cdtfc.NodeId,
-        in_col_groups: List[Tuple[cdtfu.NodeColumn]],
-        out_col_group: Tuple[cdtfu.NodeColumn],
-        func: Callable,
-        func_kwargs: Optional[Dict[str, Any]] = None,
-    ) -> None:
-        """"""
-        super().__init__(nid)
-        self._in_col_groups = in_col_groups
-        self._out_col_group = out_col_group
-        self._func = func
-        self._func_kwargs = func_kwargs or {}
-
-    def _transform(
-        self, df: pd.DataFrame
-    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
-        # Get a dict of dataframes
-        in_dfs = cdnb.GroupedColDfToDfColProcessor.preprocess(
-            df, self._in_col_groups
-        )
-        out_dfs = {}
-        for key, df in in_dfs.items():
-            df_out = self._func(df, **self._func_kwargs)
-            dbg.dassert_isinstance(df_out, pd.DataFrame)
-            out_dfs[key] = df_out
-        out_df = cdnb.GroupedColDfToDfColProcessor.postprocess(
-            out_dfs, self._out_col_group
-        )
-        info: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        info["df_transformed_info"] = cdtfu.get_df_info_as_string(out_df)
-        return out_df, info
-
-
 # #############################################################################
 # Resamplers (deprecated)
 # #############################################################################
