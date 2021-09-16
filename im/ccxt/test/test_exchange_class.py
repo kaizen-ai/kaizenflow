@@ -30,7 +30,7 @@ class Test_CCXTExchange(hut.TestCase):
         # Verify that the output is a non-empty list with only string values.
         dbg.dassert_isinstance(curr_list, list)
         dbg.dassert_lt(0, len(curr_list))
-        dbg.dassert_eq(all(isinstance(curr, str) for curr in curr_list)
+        dbg.dassert_eq(all(isinstance(curr, str) for curr in curr_list))
 
     @pytest.mark.skip()
     def test_download_ohlcv_data(self) -> None:
