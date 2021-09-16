@@ -32,7 +32,7 @@ class Test_CCXTExchange(hut.TestCase):
         dbg.dassert_lt(0, len(curr_list))
         dbg.dassert_eq(all(isinstance(curr, str) for curr in curr_list)
 
-    @ pytest.mark.skip()
+    @pytest.mark.skip()
     def test_download_ohlcv_data(self) -> None:
         """
         Test that historical data is being loaded correctly.
