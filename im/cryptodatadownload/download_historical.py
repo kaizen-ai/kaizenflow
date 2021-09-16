@@ -22,10 +22,6 @@ Use as:
      --dir_name /app/im/cryptodatadownload/data/binance \
      --exchange_id "binance" \
      --timeframe "hourly"
-
-Import as:
-
-import im.cryptodatadownload.download_historical as imcrdh
 """
 
 import argparse
@@ -82,7 +78,7 @@ def _parse() -> argparse.ArgumentParser:
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
-    # Disable default certificate verification to run from inside docker
+    # Disable default certificate verification to run from inside Docker
     # containers.
     ssl._create_default_https_context = ssl._create_unverified_context
     # Set parser arguments.
