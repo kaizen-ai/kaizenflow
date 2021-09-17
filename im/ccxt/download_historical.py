@@ -7,8 +7,8 @@ Use as:
 - Download Binance BTC/USDT data from 2019-01-01 to 2019-01-02:
 > download_historical.py \
      --dst_dir test \
-     --exchange_id "binance" \
-     --currency_pair "BTC/USDT" \
+     --exchange_ids "binance" \
+     --currency_pairs "BTC/USDT" \
      --start_datetime "2019-01-01" \
      --end_datetime "2019-01-02"
 
@@ -16,24 +16,24 @@ Use as:
   for all currency pairs:
 > download_historical.py \
      --dst_dir test \
-     --exchange_id "binance" \
-     --currency_pair "all" \
+     --exchange_ids "binance" \
+     --currency_pairs "all" \
      --start_datetime "2019-01-01" \
 
-- Download data for all exchanges, BTC/USDT currency pair,
-from 2019-01-01 to now:
+- Download data for all exchanges, BTC/USDT and ETH/USDT currency pairs,
+  from 2019-01-01 to now:
 > download_historical.py \
      --dst_dir test \
-     --exchange_id "all" \
-     --currency_pair "BTC/USDT" \
+     --exchange_ids "all" \
+     --currency_pairs "BTC/USDT ETH/USDT" \
      --start_datetime "2019-01-01" \
 
 - Download data for all exchanges and all pairs,
 from 2019-01-01 to 2019-01-02:
 > download_historical.py \
      --dst_dir test \
-     --exchange_id "all" \
-     --currency_pair "all" \
+     --exchange_ids "all" \
+     --currency_pairs "all" \
      --start_datetime "2019-01-01" \
      --start_endtime "2019-01-02"
 """
@@ -65,18 +65,19 @@ def _parse() -> argparse.ArgumentParser:
         help="Folder to download files to",
     )
     parser.add_argument(
-        "--exchange_id",
+        "--exchange_ids",
         action="store",
         required=True,
         type=str,
-        help="CCXT name of the exchange to download data for, e.g. 'binance'",
+        help="CCXT names of exchanges to download data for, separated by spaces, e.g. 'binance gemini',"
+             "'all' for each exchange (currently includes Binance and Kucoin by default)",
     )
     parser.add_argument(
-        "--currency_pair",
+        "--currency_pairs",
         action="store",
         required=True,
         type=str,
-        help="Name of the currency pair to download data for, e.g. 'BTC/USD',"
+        help="Name of the currency pair to download data for, separated by spaces, e.g. 'BTC/USD ETH/USD',"
         " 'all' for each currency pair in exchange",
     )
     parser.add_argument(
@@ -117,22 +118,24 @@ def _main(parser: argparse.ArgumentParser) -> None:
         end_datetime = pd.Timestamp.now()
     else:
         end_datetime = pd.Timestamp(args.end_datetime)
-    if args.exchange_id == "all":
+    if args.exchange_ids == "all":
         # Iterate over all available exchanges.
         exchange_ids = ["binance", "kucoin"]
     else:
         # Get a single exchange.
-        exchange_ids = [args.exchange_id]
+        exchange_ids = args.exchange_ids.split()
+    _LOG.info("Getting data for exchanges %s", ", ".join(exchange_ids))
     for exchange_id in exchange_ids:
         pass
         # Initialize the exchange class.
         exchange = icec.CCXTExchange(exchange_id)
-        if args.currency_pair == "all":
+        if args.currency_pairs == "all":
             # Iterate over all currencies available for exchange.
             currency_pairs = exchange.currency_pairs
         else:
             # Iterate over single provided currency.
-            currency_pairs = [args.currency_pair]
+            currency_pairs = args.currency_pairs.split()
+        _LOG.debug("Getting data for currencies %s", ", ".join(currency_pairs))
         for pair in currency_pairs:
             # Download OHLCV data.
             pair_data = exchange.download_ohlcv_data(
@@ -147,7 +150,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 index=False,
                 compression="gzip",
             )
-    _LOG.info("Saved to %s" % args.file_name)
+            _LOG.debug("Saved to %s", file_name)
     return None
 
 
