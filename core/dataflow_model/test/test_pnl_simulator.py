@@ -482,14 +482,17 @@ def _compute_pnl_level2(
     config: Dict[str, Any],
 ) -> pd.DataFrame:
     # Check that with / without cache we get the same results.
-    config_ = config.copy()
-    config_["use_cache"] = False
+    use_cache = False
+    columns = None
+    mi = pnlsim.MarketInterface(df, use_cache, columns)
     df_5mins_no_cache = pnlsim.compute_pnl_level2(
-        df, df_5mins, initial_wealth, config_
+        mi, df_5mins, initial_wealth, config
     )
-    config_ = config.copy()
-    config_["use_cache"] = True
-    df_5mins = pnlsim.compute_pnl_level2(df, df_5mins, initial_wealth, config_)
+    #
+    use_cache = True
+    columns = ["price"]
+    mi = pnlsim.MarketInterface(df, use_cache, columns)
+    df_5mins = pnlsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
     self_.assert_equal(str(df_5mins_no_cache), str(df_5mins))
     pd.testing.assert_frame_equal(df_5mins_no_cache, df_5mins)
     return df_5mins
