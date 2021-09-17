@@ -576,7 +576,7 @@ def _append_accounting_df(
         _LOG.debug("key=%s", key)
         num_vals = len(accounting[key])
         buffer = [np.nan] * (df_5mins.shape[0] - num_vals)
-        #df_5mins[key] = value + buffer
+        # df_5mins[key] = value + buffer
         df = pd.DataFrame(value + buffer, index=df_5mins.index, columns=[key])
         dbg.dassert_eq(df.shape[0], df_5mins.shape[0])
         dfs.append(df)
@@ -641,19 +641,14 @@ def _get_orders_to_execute(ts: pd.Timestamp, orders: List[Order]) -> List[Order]
 
 
 def compute_pnl_level2(
-    #df: pd.DataFrame,
+    # df: pd.DataFrame,
     mi: MarketInterface,
     df_5mins: pd.DataFrame,
     initial_wealth: float,
     config: Dict[str, Any],
 ) -> pd.DataFrame:
-    #dbg.dassert(df.index.is_monotonic)
+    # dbg.dassert(df.index.is_monotonic)
     dbg.dassert(df_5mins.index.is_monotonic)
-    #
-    if False:
-        mi = MarketInterface(
-            df, config["use_cache"], columns=config.get("cached_columns", None)
-        )
     # Create the accounting data structure.
     columns = [
         "target_n_shares",
@@ -791,7 +786,7 @@ def _compute_pnl_level2(
 
 
 use_profiler = False
-#use_profiler = True
+# use_profiler = True
 
 if use_profiler:
     import line_profiler
