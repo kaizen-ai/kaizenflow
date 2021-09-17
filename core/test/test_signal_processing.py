@@ -664,6 +664,7 @@ class Test_extract_smooth_moving_average_weights(hunitest.TestCase):
         weights = csigproc.extract_smooth_moving_average_weights(
             df,
             tau=252,
+            index_location=datetime.datetime(2001, 2, 1),
         )
         actual = hunitest.convert_df_to_string(
             weights.round(5), index=True, decimals=5
