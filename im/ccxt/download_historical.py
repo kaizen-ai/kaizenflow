@@ -141,10 +141,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
             pair_data = exchange.download_ohlcv_data(
                 start_datetime, end_datetime, curr_symbol=pair, step=args.step
             )
+            # Create file name based on exchange and pair, replacing '/' with '_'.
+            file_name = f"{exchange_id}_{pair.replace('/', '_')}.csv.gz"
+            full_path = os.path.join(args.dst_dir, file_name)
             # Save file.
-            file_name = os.path.join(args.dst_dir, f"{exchange_id}_{pair.replace('/', '_')}.csv.gz")
             pair_data.to_csv(
-                file_name,
+                full_path,
                 index=False,
                 compression="gzip",
             )
