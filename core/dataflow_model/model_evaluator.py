@@ -26,7 +26,7 @@ import helpers.introspection as hintrosp
 
 _LOG = logging.getLogger(__name__)
 
-#_LOG.debug = _LOG.info
+# _LOG.debug = _LOG.info
 
 # #############################################################################
 # StrategyEvaluator
