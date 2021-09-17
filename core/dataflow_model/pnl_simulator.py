@@ -325,14 +325,17 @@ class MarketInterface:
         columns: Optional[List[str]] = None,
     ):
         self._use_cache = use_cache
+        dbg.dassert(df.index.is_monotonic)
         self._df = df
         if self._use_cache:
+            _LOG.info("Caching")
             self._cached = {}
             dbg.dassert_is_not(columns, None)
             columns = cast(List[str], columns)
-            for column in columns:
+            for column in tqdm(columns):
                 dbg.dassert_in(column, df.columns)
                 self._cached[column] = df[column].to_dict()
+            _LOG.info("Caching done")
 
     def get_instantaneous_price(
         self,
@@ -441,7 +444,6 @@ class Order:
             else:
                 column = "bid"
             price = Order._get_price(mi, ts_start, ts_end, column, timing)
-            assert 0
         elif price_type.startswith("partial_spread"):
             perc = float(price_type.split("_")[2])
             dbg.dassert_lte(0, perc)
@@ -569,11 +571,16 @@ def _append_accounting_df(
     """
     Update the df with intermediate results.
     """
+    dfs = [df_5mins]
     for key, value in accounting.items():
         _LOG.debug("key=%s", key)
         num_vals = len(accounting[key])
         buffer = [np.nan] * (df_5mins.shape[0] - num_vals)
-        df_5mins[key] = value + buffer
+        #df_5mins[key] = value + buffer
+        df = pd.DataFrame(value + buffer, index=df_5mins.index, columns=[key])
+        dbg.dassert_eq(df.shape[0], df_5mins.shape[0])
+        dfs.append(df)
+    df_5mins = pd.concat(dfs, axis=0)
     return df_5mins
 
 
@@ -634,17 +641,19 @@ def _get_orders_to_execute(ts: pd.Timestamp, orders: List[Order]) -> List[Order]
 
 
 def compute_pnl_level2(
-    df: pd.DataFrame,
+    #df: pd.DataFrame,
+    mi: MarketInterface,
     df_5mins: pd.DataFrame,
     initial_wealth: float,
     config: Dict[str, Any],
 ) -> pd.DataFrame:
-    dbg.dassert(df.index.is_monotonic)
+    #dbg.dassert(df.index.is_monotonic)
     dbg.dassert(df_5mins.index.is_monotonic)
     #
-    mi = MarketInterface(
-        df, config["use_cache"], columns=config.get("cached_columns", None)
-    )
+    if False:
+        mi = MarketInterface(
+            df, config["use_cache"], columns=config.get("cached_columns", None)
+        )
     # Create the accounting data structure.
     columns = [
         "target_n_shares",
