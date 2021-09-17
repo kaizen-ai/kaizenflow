@@ -109,9 +109,9 @@ import numpy as np
 
 # %%
 # Load the 1min data.
-#egid = 10025
+egid = 10025
 #egid = 10035
-egid = 10036
+#egid = 10036
 columns = ['end_time', 'close', 'volume', 'egid', 'good_ask', 'good_bid', 'good_bid_size', 'good_ask_size']
 cache_dir = "/cache/vltbut.get_bar_data.v2_1-all.2009_2019.20210907-07_52_53/cache.get_bar_data.v2_0-all.2009_2019"
 df_1min = vltbut.load_single_instrument_data(egid, datetime.date(2009, 1, 1), datetime.date(2019, 1, 1), columns=columns, cache_dir=cache_dir)
@@ -119,39 +119,67 @@ df_1min = vltbut.load_single_instrument_data(egid, datetime.date(2009, 1, 1), da
 df_1min.head()
 
 # %%
-df_1min["close"].resample("1D").mean().plot()
+columns = ["close", "good_bid", "good_ask"]
+df_1min[columns].resample("1B").mean().plot()
+df_1min[columns].pct_change().resample("1B").mean().plot()
+thr = 0.002
+df_1min_clean = vltbut.clean_bars(df_1min, columns, thr)
+
+df_1min_clean[columns].resample("1B").mean().plot()
+df_1min_clean[columns].pct_change().resample("1B").mean().plot()
 
 # %%
-mad_func = lambda x: np.fabs(x - x.mean()).mean()
+# thr = 0.001
+# for column in columns:
+#     lower_bound = df_1min[column].quantile(thr)
+#     upper_bound = df_1min[column].quantile(1.0 - thr)
+#     mask = (df_1min[column] <= lower_bound) | (df_1min[column] >= upper_bound)
+#     #print(mask)
+#     #df_1min.loc[mask].resample("1B").mean().plot()
+#     df_1min[mask] = np.nan
+# #df_1min[df_1min <= lower_bound] = np.nan
 
-mad = df_1min["close"].rolling(window=60).apply(mad_func, raw=True)
-
-#df_1min["close"] +
-#.plot(style='k')
+# #df_1min[["good_ask", "good_bid", "close"]].quantile(0.99)
+# df_1min[["good_ask", "good_bid", "close"]].resample("1B").mean().plot()
+# #df_1min[["close"]].resample("1B").mean().plot()
 
 # %%
-mad.resample("1D").mean()
+# mask = df_1min["close"] < 0.40
+# df_1min[mask]
+
+# ret_0 = df_1min.pct_change()
+# ret_0.resample("1B").mean().plot()
 
 # %%
-df_1min["close"].hist(bins=101)
-df_1min[["close"]].min()
+# #mad_func = lambda x: np.fabs(x - x.mean()).mean()
+# #mad = df_1min["close"].dropna().rolling(window=60).apply(mad_func, raw=True)
+
+# mad = df_1min["close"].dropna().rolling(window=60).quantile(.01)
+
+# #df_1min["close"] +
+# #.plot(style='k')
+
+# mad.resample("1B").mean().plot()
 
 # %%
-df_1min_out = df_1min[["close", "good_bid", "good_ask"]]
+# df_1min["close"].hist(bins=101)
+# df_1min[["close"]].min()
 
-df_1min_out = df_1min_out.resample("1T", closed="right", label="right").mean()
-mask = df_1min_out < 0.40
-df_1min_out = df_1min_out[~mask]
+# %%
+df_1min_out = df_1min_clean[columns].resample("1T", closed="right", label="right").mean()
+#mask = df_1min_out < 0.40
+#df_1min_out = df_1min_out[~mask]
 
 df_1min_out.fillna(method="ffill", limit=None, inplace=True)
 # .sum(min_count=1) #.replace(np.nan, 0)
 
 df_1min_out.columns = ["price", "bid", "ask"]
+df_1min_out.resample("1B").mean().plot()
 
 df_1min_out.dropna().head()
 
 # %%
-df_1min_out["price"].hist(bins=101)
+#df_1min_out["price"].hist(bins=101)
 
 # %%
 df_price = df_1min_out.resample("5T", closed="right", label="right").last()
@@ -163,7 +191,13 @@ df_price.resample("1D").mean().plot()
 #df_5mins.loc[pd.Timestamp("2009-01-02 17:00:00-05:00")]
 
 # %%
-df_1min_out.loc[pd.Timestamp("2009-01-05 13:40:00-05:00"):pd.Timestamp("2009-01-05 14:00:00-05:00")]
+#df_1min_out.loc[pd.Timestamp("2009-01-05 13:40:00-05:00"):pd.Timestamp("2009-01-05 14:00:00-05:00")]
+
+# %%
+df_1min_out["midpoint"] = (df_1min_out["bid"] + df_1min_out["ask"]) / 2
+
+# %%
+df_1min_out.head()
 
 # %%
 import core.dataflow_model.pnl_simulator as pnlsim
@@ -172,17 +206,95 @@ df_5mins = result_bundle_dict[0].result_df[["mid_ret_0_vol_adj_clipped_2_hat"]]
 df_5mins.columns = ["preds"]
 df_5mins.dropna(inplace=True)
 
+
 initial_wealth = 1e6
 config = {
     "price_column": "price",
     "future_snoop_allocation": False,
-    #"order_type": "price.end",
-    #"order_type": "midpoint.end",
-    "order_type": "full_spread.end",
+    "order_type": "price@end",
+    #"order_type": "midpoint@end",
+    #"order_type": "full_spread@end",
     "use_cache": True,
+    "cached_columns": ["price", "midpoint", "bid", "ask"]
 }
-df_5mins_out = pnlsim.compute_pnl_level2(df_1min_out, df_5mins, initial_wealth, config)
+mi = pnlsim.MarketInterface(df_1min_out, config["use_cache"], columns=config.get("cached_columns", None))
+
+# %%
+df_5mins_out = pnlsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
 #wealth, ret, df_5mins_out = pnlsim.compute_pnl_level1(initial_wealth, df_1min_out, df_5mins)
+
+df_5mins_out["wealth"].resample("1B").mean().plot()#["2012-01-01":].plot()
+
+# %%
+config ["order_type"] = "midpoint@end"
+df_5mins_out = pnlsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
+#wealth, ret, df_5mins_out = pnlsim.compute_pnl_level1(initial_wealth, df_1min_out, df_5mins)
+
+df_5mins_out["wealth"].resample("1B").mean().plot()#["2012-01-01":].plot()
+
+# %%
+config ["order_type"] = "midpoint@twap"
+df_5mins_out = pnlsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
+
+df_5mins_out["wealth"].resample("1B").mean().plot()#["2012-01-01":].plot()
+
+
+# %%
+config ["order_type"] = "partial_spread_0.5@end"
+df_5mins_out = pnlsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
+#wealth, ret, df_5mins_out = pnlsim.compute_pnl_level1(initial_wealth, df_1min_out, df_5mins)
+
+df_5mins_out["wealth"].resample("1B").mean().plot()#["2012-01-01":].plot()
+
+# %%
+config ["order_type"] = "partial_spread_0.0@end"
+df_5mins_out = pnlsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
+#wealth, ret, df_5mins_out = pnlsim.compute_pnl_level1(initial_wealth, df_1min_out, df_5mins)
+
+df_5mins_out["wealth"].resample("1b").mean().plot()#["2012-01-01":].plot()
+
+# %%
+config ["order_type"] = "partial_spread_0.3@end"
+df_5mins_out = pnlsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
+df_5mins_out["wealth"].resample("1b").mean().plot()#["2012-01-01":].plot()
+
+# %%
+config ["order_type"] = "partial_spread_0.51@end"
+df_5mins_out = pnlsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
+df_5mins_out["wealth"].resample("1b").mean().plot()#["2012-01-01":].plot()
+
+# %%
+config ["order_type"] = "full_spread@end"
+df_5mins_out = pnlsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
+#wealth, ret, df_5mins_out = pnlsim.compute_pnl_level1(initial_wealth, df_1min_out, df_5mins)
+
+df_5mins_out["wealth"].resample("1B").mean().plot()#["2012-01-01":].plot()
+
+# %%
+df_all2 = pd.DataFrame()
+for order_type in [
+                   "partial_spread_0.5@end", "midpoint@end", "midpoint@twap"
+]:
+    config ["order_type"] = order_type
+    df_5mins_out = pnlsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
+    df_all2[order_type] = df_5mins_out["wealth"]
+
+df_all2.resample("1B").mean().plot()#["2012-01-01":].plot()
+
+# %%
+df_all = pd.DataFrame()
+for order_type in [
+                   #"partial_spread_0.3@end", 
+                   #"partial_spread_0.4@end",
+                   "partial_spread_0.45@end", "partial_spread_0.5@end",
+                  "partial_spread_0.51@end",
+                  "partial_spread_0.52@end",
+                  "partial_spread_0.53@end"]: 
+    config ["order_type"] = order_type
+    df_5mins_out = pnlsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
+    df_all[order_type] = df_5mins_out["wealth"]
+
+df_all.resample("1B").mean().plot()#["2012-01-01":].plot()
 
 # %%
 df_5mins_out.tail()
