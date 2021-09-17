@@ -1,5 +1,27 @@
+#!/usr/bin/env python
+
 """
-Script to download historical data from Cryptodatadownload.
+Script to download historical data from CryptoDataDownload.
+
+Use as:
+
+- Download Binance minutely candles:
+> download_historical.py \
+     --dir_name /app/im/cryptodatadownload/data/binance \
+     --exchange_id "binance" \
+     --timeframe "minute"
+
+- Download Kucoin minutely candles:
+> download_historical.py \
+     --dir_name /app/im/cryptodatadownload/data/kucoin \
+     --exchange_id "kucoin" \
+     --timeframe "minute"
+
+- Download Binance hourly candles:
+> download_historical.py \
+     --dir_name /app/im/cryptodatadownload/data/binance \
+     --exchange_id "binance" \
+     --timeframe "hourly"
 """
 
 import argparse
@@ -11,17 +33,16 @@ from typing import List
 
 import bs4
 import pandas as pd
+import tqdm
 
 import helpers.datetime_ as hdatet
 import helpers.dbg as dbg
 import helpers.io_ as hio
-import helpers.parser as prsr
+import helpers.parser as hparse
 
 _LOG = logging.getLogger(__name__)
 
-ssl._create_default_https_context = ssl._create_unverified_context
-
-WEBSITE_PREFIX = "https://www.cryptodatadownload.com/data/"
+_WEBSITE_PREFIX = "https://www.cryptodatadownload.com/data/"
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -41,55 +62,54 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="Cryptodatadownload name of the exchange to download data for, e.g. 'binance'",
+        help="CryptoDataDownload name of the exchange to download data for, e.g. 'binance'",
     )
     parser.add_argument(
         "--timeframe",
         action="store",
         required=True,
         type=str,
-        help="Timeframe of the data to load. Possible values: 'minute', 'hourly', 'daily'",
+        choices=["minute", "hourly", "daily"],
+        help="Timeframe of the data to load",
     )
     parser.add_argument("--incremental", action="store_true")
-    parser = prsr.add_verbosity_arg(parser)
+    parser = hparse.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
+    # Disable default certificate verification to run from inside Docker
+    # containers.
+    ssl._create_default_https_context = ssl._create_unverified_context
+    # Set parser arguments.
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Get html contents of webpage as string.
-    page_content = get_download_page(args.exchange_id)
+    # Get HTML contents of webpage as string.
+    page_content = _get_download_page(args.exchange_id)
     # Parse download links from the page.
-    download_links = get_download_links(page_content, args.timeframe)
-    # Set destination directory name and create it.
-    dst_dir = args.dir_name
-    hio.create_dir(dst_dir, incremental=args.incremental)
-    _LOG.info("Downloading %s links" % len(download_links))
-    for link in download_links:
+    download_links = _get_download_links(page_content, args.timeframe)
+    # Create destination directory.
+    hio.create_dir(args.dir_name, incremental=args.incremental)
+    _LOG.info("Downloading %s links", len(download_links))
+    for link in tqdm.tqdm(download_links, desc="Links loaded:"):
         df = pd.read_csv(link)
-        _LOG.info("Downloaded %s" % link)
+        _LOG.debug("Downloaded %s", link)
         timestamp = hdatet.get_timestamp("ET")
-        # Construct filename.
-        if args.exchange_id.lower() not in dst_dir.lower():
-            dst_dir = os.path.join(dst_dir, args.exchange_id + "/")
-        hio.create_dir(dst_dir, incremental=True)
-        # Select filename from url.
+        # Select filename from URL.
         orig_filename = link.rsplit("/", 1)[-1]
         # Construct new name with timestamp.
-        filename = os.path.join(dst_dir, f"{timestamp}_{orig_filename}")
-        _LOG.info("Saved to %s" % filename)
-        df.to_csv(filename, index=False)
+        filename = os.path.join(args.dir_name, f"{timestamp}_{orig_filename}")
+        _LOG.debug("Saved to %s", filename)
+        df.to_csv(filename, index=True, compression="gzip")
     _LOG.info("Download finished")
-    return None
 
 
-def get_download_page(exchange_id: str) -> str:
+def _get_download_page(exchange_id: str) -> str:
     """
-    Get html contents of webpage as string.
+    Get HTML contents of webpage as string.
     """
-    # Construct url and load.
-    download_url = WEBSITE_PREFIX + exchange_id
+    # Construct URL and load.
+    download_url = _WEBSITE_PREFIX + exchange_id
     u1 = urllib.request.urlopen(download_url)
     page_content = []
     for line in u1:
@@ -98,7 +118,7 @@ def get_download_page(exchange_id: str) -> str:
     return page_content
 
 
-def get_download_links(
+def _get_download_links(
     download_page_content: str,
     timeframe: str,
 ) -> List[str]:
@@ -111,7 +131,7 @@ def get_download_links(
     <a href="/cdd/Binance_BTCUSDT_minute.csv"> [Minute]</a>
     ```
 
-    :param download_page_content: html content of the page with links
+    :param download_page_content: HTML content of the page with links
     :param timeframe: timeframe of the data to load. Possible values:
         'minute', 'hourly', 'daily'.
     :return: list of download links
@@ -121,7 +141,8 @@ def get_download_links(
         lambda tag: tag.name == "a" and timeframe in tag.text.lower()
     )
     download_links = [
-        urllib.parse.urljoin(WEBSITE_PREFIX, tag["href"]) for tag in download_tags
+        urllib.parse.urljoin(_WEBSITE_PREFIX, tag["href"])
+        for tag in download_tags
     ]
     return download_links
 

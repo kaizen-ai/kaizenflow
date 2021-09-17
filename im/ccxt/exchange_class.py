@@ -80,10 +80,6 @@ class CCXTExchange:
         """
         Download minute OHLCV candles.
 
-        start_datetime and end_datetime should be passed as
-         pd.Timestamp which will be converted into UNIX epoch time
-        in ms e.g. '2019-02-19T00:00:00Z' to 1550534400000.
-
         :param start_datetime: starting point for data
         :param end_datetime: end point for data
         :param curr_symbol: a currency pair, e.g. "BTC/USDT"
