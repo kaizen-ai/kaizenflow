@@ -23,6 +23,14 @@ import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
 
+import datetime
+
+def _trim_df_trading_hours(df) -> pd.DataFrame:
+    df_time = df.index.time
+    mask = (df_time >= datetime.time(9, 25)) & (df_time <= datetime.time(16, 0))
+    _LOG.debug(mask.sum() / len(mask))
+    dbg.dassert_eq(len(df[~mask].dropna()), 0)
+    return df[mask]
 
 # #############################################################################
 # ResultBundle
