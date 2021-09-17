@@ -26,7 +26,8 @@ _LOG.debug = lambda *args: 0
 # TODO(gp): Extend for computing PnL on multiple stocks.
 # TODO(gp): Consider ts -> datetime_, {start,end}_ts -> {start,end}_datetime for
 #  uniformity with the rest of the code.
-
+# TODO(gp): Find a better name for `future_snoop_allocation` that represents the
+#  intent rather than how it's achieve it (e.g., `force_ideal_allocation`).
 
 def _ts_to_str(ts: pd.Timestamp) -> str:
     """
@@ -173,7 +174,8 @@ def get_example_market_data2(
 
 
 def compute_pnl_level1(
-    initial_wealth: float, df: pd.DataFrame, df_5mins: pd.DataFrame
+    initial_wealth: float, df: pd.DataFrame, df_5mins: pd.DataFrame,
+    prefix="sim1"
 ) -> Tuple[float, float, pd.DataFrame]:
     """
     In this implementation:
@@ -263,24 +265,27 @@ def compute_pnl_level1(
         wealth += diff
         _update("wealth", wealth)
     # Update the df with intermediate results.
-    df_5mins = _append_accounting_df(df_5mins, accounting)
+    df_5mins = _append_accounting_df(df_5mins, accounting, prefix)
     # Little index gymnastic to introduce the initial value, given that the
     # semantic of the interval is at the end of the interval.
-    wealth_srs = pd.Series([initial_wealth] + df_5mins["wealth"].values.tolist())
+    col_name = _get_col_name("wealth", prefix)
+    wealth_srs = pd.Series([initial_wealth] + df_5mins[col_name].values.tolist())
     # _LOG.debug("wealth_srs=%s", wealth_srs)
-    df_5mins["pnl.sim1"] = wealth_srs.pct_change().values[1:]
+    col_name = _get_col_name("pnl", prefix)
+    df_5mins[col_name] = wealth_srs.pct_change().values[1:]
     # Compute total return.
     total_ret = (wealth - initial_wealth) / initial_wealth
     return wealth, total_ret, df_5mins
 
 
-def compute_lag_pnl(df_5mins: pd.DataFrame) -> pd.DataFrame:
+def compute_lag_pnl(df_5mins: pd.DataFrame, prefix: str = "lag") -> pd.DataFrame:
     """
     Compute PnL using vectorized equation as in post-processing of
     `ResultBundles`.
     """
-    df_5mins["pnl.lag"] = df_5mins["preds"] * df_5mins["ret_0"].shift(-2)
-    tot_ret_lag = (1 + df_5mins["pnl.lag"]).prod() - 1
+    col_name = _get_col_name("pnl", prefix)
+    df_5mins[col_name] = df_5mins["preds"] * df_5mins["ret_0"].shift(-2)
+    tot_ret_lag = (1 + df_5mins[col_name]).prod() - 1
     return tot_ret_lag, df_5mins
 
 
@@ -564,23 +569,30 @@ def _create_accounting_stats(columns: List[str]) -> Accounting:
     return accounting
 
 
+def _get_col_name(col_name: str, prefix: str) -> str:
+    if prefix != "":
+        col_name = prefix + "." + col_name
+    return col_name
+
+
 def _append_accounting_df(
     df_5mins: pd.DataFrame,
     accounting: Accounting,
+    prefix: str,
 ) -> pd.DataFrame:
     """
     Update the df with intermediate results.
     """
-    dfs = [df_5mins]
+    dfs = []
     for key, value in accounting.items():
         _LOG.debug("key=%s", key)
         num_vals = len(accounting[key])
         buffer = [np.nan] * (df_5mins.shape[0] - num_vals)
-        # df_5mins[key] = value + buffer
-        df = pd.DataFrame(value + buffer, index=df_5mins.index, columns=[key])
+        col_name = _get_col_name(key, prefix)
+        df = pd.DataFrame(value + buffer, index=df_5mins.index, columns=[col_name])
         dbg.dassert_eq(df.shape[0], df_5mins.shape[0])
         dfs.append(df)
-    df_5mins = pd.concat(dfs, axis=0)
+    df_5mins = pd.concat([df_5mins] + dfs, axis=1)
     return df_5mins
 
 
@@ -641,13 +653,13 @@ def _get_orders_to_execute(ts: pd.Timestamp, orders: List[Order]) -> List[Order]
 
 
 def compute_pnl_level2(
-    # df: pd.DataFrame,
     mi: MarketInterface,
     df_5mins: pd.DataFrame,
     initial_wealth: float,
     config: Dict[str, Any],
+    prefix: str = "sim2"
 ) -> pd.DataFrame:
-    # dbg.dassert(df.index.is_monotonic)
+    print(df_5mins)
     dbg.dassert(df_5mins.index.is_monotonic)
     # Create the accounting data structure.
     columns = [
@@ -669,8 +681,10 @@ def compute_pnl_level2(
         mi, preds, initial_wealth, config, accounting
     )
     # Update the df with intermediate results.
-    df_5mins = _append_accounting_df(df_5mins, accounting)
-    df_5mins["pnl.sim2"] = df_5mins["wealth"].pct_change()
+    df_5mins = _append_accounting_df(df_5mins, accounting, prefix)
+    pnl = _get_col_name("pnl", prefix)
+    wealth = _get_col_name("wealth", prefix)
+    df_5mins[pnl] = df_5mins[wealth].pct_change()
     return df_5mins
 
 

@@ -257,14 +257,17 @@ def _compute_pnl_level2(
     config: Dict[str, Any],
 ) -> pd.DataFrame:
     # Check that with / without cache we get the same results.
-    config_ = config.copy()
-    config_["use_cache"] = False
+    use_cache = False
+    columns = None
+    mi = pnlsim.MarketInterface(df, use_cache, columns)
     df_5mins_no_cache = pnlsim.compute_pnl_level2(
-        df, df_5mins, initial_wealth, config_
+        mi, df_5mins, initial_wealth, config
     )
-    config_ = config.copy()
-    config_["use_cache"] = True
-    df_5mins = pnlsim.compute_pnl_level2(df, df_5mins, initial_wealth, config_)
+    #
+    use_cache = True
+    columns = ["price"]
+    mi = pnlsim.MarketInterface(df, use_cache, columns)
+    df_5mins = pnlsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
     self_.assert_equal(str(df_5mins_no_cache), str(df_5mins))
     pd.testing.assert_frame_equal(df_5mins_no_cache, df_5mins)
     return df_5mins
@@ -317,7 +320,7 @@ class TestPnlSimulator1(hut.TestCase):
     def _run(self, df: pd.DataFrame, df_5mins: pd.DataFrame) -> None:
         """
         Compute PnL using lag-based approach, level1 simulation, and level2
-        simulations, checking that:
+        simulation, checking that:
 
         - the intermediate PnL stream match
         - the total return from the different approaches matches
@@ -350,7 +353,7 @@ class TestPnlSimulator1(hut.TestCase):
         config = {
             "price_column": "price",
             "future_snoop_allocation": True,
-            "order_type": "price.end",
+            "order_type": "price@end",
             "cached_columns": ["price"],
         }
         # Check that with / without cache we get the same results.
@@ -363,17 +366,20 @@ class TestPnlSimulator1(hut.TestCase):
         act = "\n".join(act)
         self.check_string(act)
         # Check that all the realized PnL are the same.
-        df_5mins["pnl.sim2.shifted(-2)"] = df_5mins["pnl.sim2"].shift(-2)
-        for col in ["pnl.lag", "pnl.sim1", "pnl.sim2.shifted(-2)"]:
+        df_5mins["sim2.pnl.shifted(-2)"] = df_5mins["sim2.pnl"].shift(-2)
+        for col in ["lag.pnl", "sim1.pnl", "sim2.pnl.shifted(-2)"]:
             df_5mins[col] = df_5mins[col].replace(np.nan, 0)
         np.testing.assert_array_almost_equal(
-            df_5mins["pnl.lag"], df_5mins["pnl.sim1"]
+            df_5mins["lag.pnl"], df_5mins["sim1.pnl"]
         )
         np.testing.assert_array_almost_equal(
-            df_5mins["pnl.lag"], df_5mins["pnl.sim2.shifted(-2)"]
+            df_5mins["lag.pnl"], df_5mins["sim2.pnl.shifted(-2)"]
         )
         # Check that the total returns are the same.
         np.testing.assert_almost_equal(tot_ret, tot_ret_lag)
+
+
+# #############################################################################
 
 
 class TestPnlSimulator2(hut.TestCase):
@@ -387,7 +393,7 @@ class TestPnlSimulator2(hut.TestCase):
         config = {
             "price_column": "price",
             "future_snoop_allocation": True,
-            "order_type": "price.end",
+            "order_type": "price@end",
             "cached_columns": ["price"],
         }
         self._run(df, df_5mins, initial_wealth, config)
@@ -401,7 +407,7 @@ class TestPnlSimulator2(hut.TestCase):
         config = {
             "price_column": "price",
             "future_snoop_allocation": False,
-            "order_type": "price.end",
+            "order_type": "price@end",
             "cached_columns": ["price"],
         }
         self._run(df, df_5mins, initial_wealth, config)
@@ -417,7 +423,7 @@ class TestPnlSimulator2(hut.TestCase):
         config = {
             "price_column": "price",
             "future_snoop_allocation": False,
-            "order_type": "price.end",
+            "order_type": "price@end",
             "cached_columns": ["price"],
         }
         self._run(df, df_5mins, initial_wealth, config)
@@ -436,7 +442,7 @@ class TestPnlSimulator2(hut.TestCase):
         config = {
             "price_column": "price",
             "future_snoop_allocation": False,
-            "order_type": "price.end",
+            "order_type": "price@end",
             "use_cache": True,
         }
         df_5mins = pnlsim.compute_pnl_level2(df, df_5mins, initial_wealth, config)
