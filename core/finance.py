@@ -737,8 +737,8 @@ def compute_spread_cost(
     dbg.dassert_isinstance(df, pd.DataFrame)
     dbg.dassert_in(target_position_col, df.columns)
     dbg.dassert_in(spread_col, df.columns)
-    if spread_fraction_paid < 0:
-        _LOG.warning("spread_fraction_paid=%f", spread_fraction_paid)
+    #if spread_fraction_paid < 0:
+    #    _LOG.warning("spread_fraction_paid=%f", spread_fraction_paid)
     # dbg.dassert_lte(0, spread_fraction_paid)
     dbg.dassert_lte(spread_fraction_paid, 1)
     # TODO(gp): adjusted_spread -> spread_paid?
