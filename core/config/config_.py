@@ -352,6 +352,12 @@ class Config:
             _LOG.error(msg)
             raise ValueError(msg)
 
+    @classmethod
+    def from_env_var(cls, env_var: str) -> "Config":
+        dbg.dassert_in(env_var, os.environ.keys())
+        python_code = os.environ[env_var]
+        return cls.from_python(python_code)
+
     # TODO(*): Standardize/allow to be configurable what to return if a value is
     #     missing.
     # TODO(gp): return a string
