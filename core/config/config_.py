@@ -11,7 +11,6 @@ import core.config.config_ as cconconf
 import collections
 import copy
 import logging
-import os
 import re
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
@@ -352,12 +351,6 @@ class Config:
             _LOG.error(msg)
             raise ValueError(msg)
 
-    @classmethod
-    def from_env_var(cls, env_var: str) -> "Config":
-        dbg.dassert_in(env_var, os.environ.keys())
-        python_code = os.environ[env_var]
-        return cls.from_python(python_code)
-
     # TODO(*): Standardize/allow to be configurable what to return if a value is
     #     missing.
     # TODO(gp): return a string
@@ -381,24 +374,6 @@ class Config:
             "Invalid %s='%s' in config=\n%s"
             % (key, self._config[key], hprint.indent(str(self)))
         )
-
-    def dassert_is_serializable(self) -> None:
-        """
-        Make sure the config can be serialized and deserialized correctly.
-        """
-        code = self.to_python()
-        config = self.from_python(code)
-        dbg.dassert_eq(str(config), str(self))
-        dbg.dassert_eq(config, self)
-
-    @classmethod
-    def from_env_var(cls, env_var: str) -> Optional["Config"]:
-        if env_var in os.environ:
-            code = os.environ[env_var]
-            ret = cls.from_python(code)
-        else:
-            ret = None
-        return ret
 
     @staticmethod
     def _parse_compound_key(key: Key) -> Tuple[str, Iterable[str]]:
