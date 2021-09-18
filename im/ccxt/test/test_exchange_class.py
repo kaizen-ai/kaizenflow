@@ -11,15 +11,14 @@ import helpers.unit_test as hut
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.skip()
 class Test_CCXTExchange(hut.TestCase):
-    @pytest.mark.skip()
     def test_initialize_class(self) -> None:
         """
         Smoke test that the class is being initialized correctly.
         """
         _ = iccexcl.CCXTExchange("binance")
 
-    @pytest.mark.skip()
     def test_get_exchange_currencies(self) -> None:
         """
         Test that a non-empty list of exchange currencies is loaded.
@@ -28,11 +27,9 @@ class Test_CCXTExchange(hut.TestCase):
         exchange_class = iccexcl.CCXTExchange("binance")
         curr_list = exchange_class.get_exchange_currencies()
         # Verify that the output is a non-empty list with only string values.
-        dbg.dassert_isinstance(curr_list, list)
-        dbg.dassert_lt(0, len(curr_list))
-        dbg.dassert_eq(all(isinstance(curr, str) for curr in curr_list))
+        dbg.dassert_container_type(curr_list, list, str)
+        self.assertGreater(len(curr_list), 0)
 
-    @pytest.mark.skip()
     def test_download_ohlcv_data(self) -> None:
         """
         Test that historical data is being loaded correctly.
@@ -48,20 +45,20 @@ class Test_CCXTExchange(hut.TestCase):
             curr_symbol="BTC/USDT",
         )
         # Verify that the output is a dataframe and verify its length.
-        dbg.dassert_isinstance(actual, pd.DataFrame)
-        dbg.dassert_eq(1500, actual.shape[0])
+        self.assertEqual(pd.DataFrame, type(actual))
+        self.assertEqual(1500, actual.shape[0])
         # Verify column names.
         exp_col_names = ["timestamp", "open", "high", "close", "volume"]
-        dbg.dassert_eq(list(actual.columns), exp_col_names)
+        self.assertEqual(exp_col_names, actual.columns.to_list())
         # Verify types inside each column.
         col_types = [col_type.name for col_type in actual.dtypes]
         exp_col_types = ["int64"] + ["float64"] * 5
-        dbg.dassert_eq(exp_col_types, col_types)
+        self.assertEqual(exp_col_types, col_types)
         # Verify corner datetimes if output is not empty.
         first_date = int(actual["timestamp"].iloc[0])
         last_date = int(actual["timestamp"].iloc[-1])
-        dbg.dassert_eq(1631145600000, first_date)
-        dbg.dassert_eq(1631235540000, last_date)
+        self.assertEqual(1631145600000, first_date)
+        self.assertEqual(1631235540000, last_date)
         # Check the output values.
         actual_string = hut.convert_df_to_json_string(actual, n_tail=None)
         self.check_string(actual_string)
