@@ -431,7 +431,7 @@ class SeriesToDfTransformer(cdnb.Transformer):
         leaf_cols = self._leaf_cols
         leaf_cols = cast(List[str], leaf_cols)
         for col in leaf_cols:
-            df_out, col_info = _apply_func_to_series(
+            df_out, col_info = _apply_func_to_data(
                 df[col],
                 self._transformer_func,
                 self._transformer_kwargs,
@@ -553,7 +553,7 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
         leaf_cols = self._leaf_cols
         leaf_cols = cast(List[str], leaf_cols)
         for col in leaf_cols:
-            srs, col_info = _apply_func_to_series(
+            srs, col_info = _apply_func_to_data(
                 df[col],
                 self._transformer_func,
                 self._transformer_kwargs,
