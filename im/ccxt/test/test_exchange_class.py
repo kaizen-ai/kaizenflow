@@ -45,7 +45,7 @@ class Test_CCXTExchange(hut.TestCase):
             curr_symbol="BTC/USDT",
         )
         # Verify that the output is a dataframe and verify its length.
-        self.assertEqual(pd.DataFrame, type(actual))
+        dbg.dassert_isinstance(actual, pd.DataFrame)
         self.assertEqual(1500, actual.shape[0])
         # Verify column names.
         exp_col_names = ["timestamp", "open", "high", "close", "volume"]
