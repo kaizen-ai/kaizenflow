@@ -70,7 +70,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         type=str,
         default=icec.API_KEYS_PATH,
-        help="Path to JSON file that contains API keys for exchange access"
+        help="Path to JSON file that contains API keys for exchange access",
     )
     parser.add_argument(
         "--exchange_ids",
@@ -78,7 +78,7 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         type=str,
         help="CCXT names of exchanges to download data for, separated by spaces, e.g. 'binance gemini',"
-             "'all' for each exchange (currently includes Binance and Kucoin by default)",
+        "'all' for each exchange (currently includes Binance and Kucoin by default)",
     )
     parser.add_argument(
         "--currency_pairs",
