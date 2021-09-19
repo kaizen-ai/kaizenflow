@@ -66,6 +66,13 @@ def _parse() -> argparse.ArgumentParser:
         help="Folder to download files to",
     )
     parser.add_argument(
+        "--api_keys",
+        action="store",
+        type=str,
+        default=icec.API_KEYS_PATH,
+        help="Path to JSON file that contains API keys for exchange access"
+    )
+    parser.add_argument(
         "--exchange_ids",
         action="store",
         required=True,
@@ -129,7 +136,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for exchange_id in exchange_ids:
         pass
         # Initialize the exchange class.
-        exchange = icec.CCXTExchange(exchange_id)
+        exchange = icec.CCXTExchange(exchange_id, api_keys_path=args.api_keys)
         if args.currency_pairs == "all":
             # Iterate over all currencies available for exchange.
             currency_pairs = exchange.currency_pairs
