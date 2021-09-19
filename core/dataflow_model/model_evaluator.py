@@ -609,10 +609,8 @@ class ModelEvaluator:
         }
         result_bundle_dict = cdmu.load_experiment_artifacts(**load_config)
         # Build the ModelEvaluator.
-        evaluator = modeval.ModelEvaluator.from_result_bundle_dict(
+        evaluator = ModelEvaluator.from_result_bundle_dict(
             result_bundle_dict,
-            # abort_on_error=False,
-            abort_on_error=True,
             **eval_config["model_evaluator_kwargs"].to_dict(),
         )
         return evaluator
