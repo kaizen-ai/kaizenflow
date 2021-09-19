@@ -376,15 +376,6 @@ class Config:
             % (key, self._config[key], hprint.indent(str(self)))
         )
 
-    def dassert_is_serializable(self) -> None:
-        """
-        Make sure the config can be serialized and deserialized correctly.
-        """
-        code = self.to_python()
-        config = self.from_python(code)
-        dbg.dassert_eq(str(config), str(self))
-        dbg.dassert_eq(config, self)
-
     @staticmethod
     def _parse_compound_key(key: Key) -> Tuple[str, Iterable[str]]:
         hdbg.dassert(hintros.is_iterable(key), "Key='%s' is not iterable", key)
