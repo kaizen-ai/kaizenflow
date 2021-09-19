@@ -41,6 +41,7 @@ from 2019-01-01 to 2019-01-02:
 import argparse
 import logging
 import os
+import time
 
 import pandas as pd
 
@@ -65,12 +66,19 @@ def _parse() -> argparse.ArgumentParser:
         help="Folder to download files to",
     )
     parser.add_argument(
+        "--api_keys",
+        action="store",
+        type=str,
+        default=icec.API_KEYS_PATH,
+        help="Path to JSON file that contains API keys for exchange access",
+    )
+    parser.add_argument(
         "--exchange_ids",
         action="store",
         required=True,
         type=str,
         help="CCXT names of exchanges to download data for, separated by spaces, e.g. 'binance gemini',"
-             "'all' for each exchange (currently includes Binance and Kucoin by default)",
+        "'all' for each exchange (currently includes Binance and Kucoin by default)",
     )
     parser.add_argument(
         "--currency_pairs",
@@ -128,7 +136,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for exchange_id in exchange_ids:
         pass
         # Initialize the exchange class.
-        exchange = icec.CCXTExchange(exchange_id)
+        exchange = icec.CCXTExchange(exchange_id, api_keys_path=args.api_keys)
         if args.currency_pairs == "all":
             # Iterate over all currencies available for exchange.
             currency_pairs = exchange.currency_pairs
@@ -141,6 +149,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
             pair_data = exchange.download_ohlcv_data(
                 start_datetime, end_datetime, curr_symbol=pair, step=args.step
             )
+            # Set up sleep time between iterations.
+            time.sleep(60)
             # Create file name based on exchange and pair, replacing '/' with '_'.
             file_name = f"{exchange_id}_{pair.replace('/', '_')}.csv.gz"
             full_path = os.path.join(args.dst_dir, file_name)
