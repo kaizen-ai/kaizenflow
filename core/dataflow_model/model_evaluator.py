@@ -591,6 +591,32 @@ class ModelEvaluator:
         )
         return evaluator
 
+    @classmethod
+    def from_eval_config(
+        cls,
+        eval_config: cconfig.Config,
+    ) -> ModelEvaluator:
+        """
+        Initialize a `ModelEvaluator` from an eval config.
+        """
+        load_config = eval_config["load_experiment_kwargs"].to_dict()
+        # Load only the columns needed by the ModelEvaluator.
+        load_config["load_rb_kwargs"] = {
+            "columns": [
+                eval_config["model_evaluator_kwargs"]["target_col"],
+                eval_config["model_evaluator_kwargs"]["predictions_col"],
+            ]
+        }
+        result_bundle_dict = cdmu.load_experiment_artifacts(**load_config)
+        # Build the ModelEvaluator.
+        evaluator = modeval.ModelEvaluator.from_result_bundle_dict(
+            result_bundle_dict,
+            # abort_on_error=False,
+            abort_on_error=True,
+            **eval_config["model_evaluator_kwargs"].to_dict(),
+        )
+        return evaluator
+
     # TODO(gp): Maybe `resolve_keys()` is a better name.
     def get_keys(self, keys: Optional[List[Key]]) -> List[Any]:
         """
