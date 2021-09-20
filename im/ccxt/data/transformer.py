@@ -11,10 +11,10 @@ class CcxtTransformer:
     """
     Class to transform raw CCXT data into DB view.
     """
-
-    @classmethod
+    # TODO(*): To merge into single `Loader` class as separate method.
+    #  Remove this class afterwards.
     def transform(
-        cls, data: pd.DataFrame, exchange: str, currency: str, data_type: str
+        self, data: pd.DataFrame, exchange: str, currency: str, data_type: str
     ):
         """
         Transform CCXT data loaded from S3.
@@ -25,7 +25,7 @@ class CcxtTransformer:
         :param data_type: OHLCV or trade, bid/ask data
         :return: processed dataframe
         """
-        transformed_data = cls._apply_ccxt_transformation(
+        transformed_data = self._apply_ccxt_transformation(
             data, exchange, currency
         )
         if data_type.lower() == "ohlcv":
