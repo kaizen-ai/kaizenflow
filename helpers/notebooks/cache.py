@@ -6,9 +6,9 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.11.2
+#       jupytext_version: 1.11.5
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
@@ -22,9 +22,12 @@
 
 import logging
 
+import joblib
+
 import helpers.cache as hcac
 import helpers.dbg as dbg
 import helpers.printing as prnt
+import helpers.s3 as hs3
 
 prnt.config_notebook()
 
@@ -77,10 +80,6 @@ func(*inputs)
 #                  backend_options=dict2)
 
 # %%
-import joblib
-
-import helpers.s3 as hs3
-
 # hjoblib.register_s3fs_store_backend()
 
 s3fs = hs3.get_s3fs("am")
@@ -101,10 +100,6 @@ mem = joblib.Memory(
 )
 
 # %%
-import joblib
-
-import helpers.s3 as hs3
-
 # hjoblib.register_s3fs_store_backend()
 
 s3fs = hs3.get_s3fs("am")
@@ -141,8 +136,6 @@ def dec(func=None, val=5):
 # %%
 
 # %%
-import helpers.s3 as hs3
-
 dict_ = hs3.get_aws_credentials("am")
 print(dict_)
 # s3fs = hs3.get_s3fs("am")
@@ -169,9 +162,7 @@ def f(x):
 f(1)
 
 # %%
-import helpers.cache as hcache
-
-hcache.cache(set_verbose_mode=True)
+hcac.cache(set_verbose_mode=True)
 
 
 def hello():
