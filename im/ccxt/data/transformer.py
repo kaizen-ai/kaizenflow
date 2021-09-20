@@ -1,24 +1,67 @@
 import pandas as pd
-import im.common.data.types as vcdtyp
+import helpers.dbg as dbg
+import logging
 
 _LOG = logging.getLogger(__name__)
 
 
 class CcxtTransformer:
-    def __init__(self) -> None:
-        return
+    """
+    Class to transform raw CCXT data into DB view.
+    """
     @classmethod
     def transform(cls,
                   data: pd.DataFrame,
                   exchange: str,
                   currency: str,
-                  frequency: vcdtyp.Frequency):
+                  data_type: str):
         """
-        Transform IB data loaded from S3 to load to SQL.
+        Transform CCXT data loaded from S3.
 
-        :param df: dataframe with data from S3
-        :param trade_symbol_id: symbol id in SQL database
-        :param frequency: dataframe frequency
+        :param data: dataframe with CCXT data from S3
+        :param exchange: CCXT exchange id
+        :param currency: currency pair (e.g. "BTC/USDT")
+        :param data_type: OHLCV or trade, bid/ask data
         :return: processed dataframe
         """
+        transformed_data = cls._apply_ccxt_transformation(data, exchange, currency)
+        if data_type.lower() == "ohlcv":
+            transformed_data = cls._apply_ohlcv_transformation(transformed_data)
+        else:
+            dbg.dfatal("Incorrect data type. Acceptable types: ohlcv")
         return transformed_data
+
+    @staticmethod
+    def _apply_ccxt_transformation(data, exchange, currency):
+        """
+        Apply transform common to all CCXT data.
+
+        This includes:
+        - datetime format assertion
+        - Converting epoch ms timestamp to pd.Timestamp
+        - Adding exchange_id and currency_pair columns
+        :return:
+        """
+        return transformed_data
+
+    @staticmethod
+    def _apply_ohlcv_transformation(transformed_data):
+        """
+        Apply transformations for OHLCV data.
+
+        This includes:
+        - Assertion of present columns
+        - Assertion of data types
+        - Renaming and rearranging of OHLCV columns, namely:
+            ["timestamp",
+             "open",
+             "high",
+             "low",
+             "close"
+             "volume",
+             "epoch",
+             "currency_pair",
+             "exchange"]
+        :return:
+        """
+        return transformed_ohlcv
