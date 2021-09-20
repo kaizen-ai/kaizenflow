@@ -47,8 +47,8 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
-import helpers.parser as prsr
-import im.ccxt.exchange_class as icec
+import helpers.parser as hparse
+import im.ccxt.data.extract.exchange_class as deecla
 
 _LOG = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ def _parse() -> argparse.ArgumentParser:
         "--api_keys",
         action="store",
         type=str,
-        default=icec.API_KEYS_PATH,
+        default=deecla.API_KEYS_PATH,
         help="Path to JSON file that contains API keys for exchange access",
     )
     parser.add_argument(
@@ -110,8 +110,15 @@ def _parse() -> argparse.ArgumentParser:
         default=None,
         help="Size of each API request per iteration",
     )
+    parser.add_argument(
+        "--sleep_time",
+        action="store",
+        type=int,
+        default=60,
+        help="Sleep time between currency pair downloads (in seconds).",
+    )
     parser.add_argument("--incremental", action="store_true")
-    parser = prsr.add_verbosity_arg(parser)
+    parser = hparse.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
 
 
@@ -136,21 +143,33 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for exchange_id in exchange_ids:
         pass
         # Initialize the exchange class.
-        exchange = icec.CCXTExchange(exchange_id, api_keys_path=args.api_keys)
+        exchange = deecla.CcxtExchange(exchange_id, api_keys_path=args.api_keys)
         if args.currency_pairs == "all":
             # Iterate over all currencies available for exchange.
-            currency_pairs = exchange.currency_pairs
+            present_pairs = exchange.currency_pairs
         else:
-            # Iterate over single provided currency.
+            # Iterate over provided currency.
             currency_pairs = args.currency_pairs.split()
-        _LOG.debug("Getting data for currencies %s", ", ".join(currency_pairs))
-        for pair in currency_pairs:
+            # Leave only currencies present in exchange.
+            present_pairs = [
+                curr for curr in currency_pairs if curr in exchange.currency_pairs
+            ]
+            # Warn if not all passed currencies are present.
+            if len(present_pairs) != len(currency_pairs):
+                _LOG.warning(
+                    "Currencies %s not present in exchange %s!",
+                    list(
+                        set.difference(set(currency_pairs), set(present_pairs))
+                    ),
+                )
+        _LOG.debug("Getting data for currencies %s", ", ".join(present_pairs))
+        for pair in present_pairs:
             # Download OHLCV data.
             pair_data = exchange.download_ohlcv_data(
                 start_datetime, end_datetime, curr_symbol=pair, step=args.step
             )
             # Set up sleep time between iterations.
-            time.sleep(60)
+            time.sleep(args.sleep_time)
             # Create file name based on exchange and pair, replacing '/' with '_'.
             file_name = f"{exchange_id}_{pair.replace('/', '_')}.csv.gz"
             full_path = os.path.join(args.dst_dir, file_name)

@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im.ccxt.data.extract.exchange_class as deecla
+"""
+
 import logging
 import time
 from typing import Dict, List, Optional, Union
@@ -15,7 +21,7 @@ _LOG = logging.getLogger(__name__)
 API_KEYS_PATH = "/data/shared/data/API_keys.json"
 
 
-class CCXTExchange:
+class CcxtExchange:
     def __init__(
         self, exchange_id: str, api_keys_path: Optional[str] = None
     ) -> None:

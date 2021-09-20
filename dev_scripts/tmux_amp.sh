@@ -17,9 +17,11 @@ fi;
 # #############################################################################
 # Compute IDX.
 # #############################################################################
+
 DIR_PREFIX=$1
 if [[ -z $DIR_PREFIX ]]; then
   echo "ERROR: you need to specify directory prefix, e.g. 'amp' or 'cmamp'"
+fi;
 
 IDX=$2
 if [[ -z $IDX ]]; then
@@ -27,7 +29,7 @@ if [[ -z $IDX ]]; then
   exit -1
 fi;
 
-AMP_DIR="$HOME_DIR/src/$DIR_PREFIX$IDX"
+AMP_DIR="${HOME_DIR}/src/${DIR_PREFIX}${IDX}"
 echo "AMP_DIR=$AMP_DIR"
 
 # #############################################################################
@@ -38,13 +40,13 @@ SETENV="dev_scripts/setenv_amp.sh"
 # No `clear` since we want to see issues, if any.
 #CMD="source ${SETENV} && reset && clear"
 CMD="source ${SETENV}"
-TMUX_NAME="amp$IDX"
+TMUX_NAME="amp${IDX}"
 
 # #############################################################################
 # Open the tmux windows.
 # #############################################################################
 
-tmux new-session -d -s $TMUX_NAME -n "---AMP$IDX---"
+tmux new-session -d -s $TMUX_NAME -n "---AMP${IDX}---"
 
 # The first one window seems a problem.
 tmux send-keys "white; cd ${AMP_DIR} && $CMD" C-m C-m
