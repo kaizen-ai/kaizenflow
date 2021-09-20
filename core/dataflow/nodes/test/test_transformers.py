@@ -293,7 +293,7 @@ class TestGroupedColDfToDfTransformer4(hut.TestCase):
         expected_txt = """
 ,close_diff,close_diff,mid_diff,mid_diff
 ,MN0,MN1,MN0,MN1
-2016-01-05 09:29:00,NaN,NaN,NaN,NaN
+2016-01-04 16:00:00,NaN,NaN,NaN,NaN
 2016-01-05 09:30:00,5.0,,0.0,
 2016-01-05 09:31:00,5.0,2.0,6.049999999999997,-0.980000000000004
 2016-01-05 09:32:00,-52.5,-49.0,-53.025,-48.51
@@ -304,6 +304,8 @@ class TestGroupedColDfToDfTransformer4(hut.TestCase):
             parse_dates=True,
             header=[0, 1],
         )
+        assert actual.index.to_list() == expected.index.to_list()
+        assert actual.columns.to_list() == expected.columns.to_list()
         np.testing.assert_allclose(actual, expected)
 
     def _get_data(self) -> pd.DataFrame:
@@ -762,7 +764,8 @@ class TestSeriesToSeriesTransformer(hut.TestCase):
             parse_dates=True,
             header=[0, 1],
         )
-        # NOTE: `hut.compare_df()` is unstable due to round-off errors.
+        assert actual.index.to_list() == expected.index.to_list()
+        assert actual.columns.to_list() == expected.columns.to_list()
         np.testing.assert_allclose(actual, expected)
 
     def _get_data(self) -> pd.DataFrame:
@@ -829,6 +832,89 @@ class TestSeriesToSeriesTransformer2(hut.TestCase):
         )
         data = pd.concat([realization, volume], axis=1, keys=["close", "volume"])
         return data
+
+
+class TestSeriesToSeriesTransformer3(hut.TestCase):
+    def test_drop_nans(self) -> None:
+        data = self._get_data()
+        config = cconfig.get_config_from_nested_dict(
+            {
+                "in_col_group": ("close",),
+                "out_col_group": ("diff",),
+                "transformer_func": lambda x: x.diff(),
+                "drop_nans": True,
+                "join_output_with_input": False,
+            }
+        )
+        node = cdnt.SeriesToSeriesTransformer("diff", **config.to_dict())
+        actual = node.fit(data)["df_out"]
+        expected_txt = """
+,diff,diff
+,MN0,MN1
+2016-01-04 16:00:00,NaN,NaN
+2016-01-04 16:01:00,NaN,NaN
+2016-01-05 09:29:00,NaN,NaN
+2016-01-05 09:30:00,5.0,NaN
+2016-01-05 09:31:00,5.0,2.0
+2016-01-05 09:32:00,-52.5,-49.0
+"""
+        expected = pd.read_csv(
+            io.StringIO(expected_txt),
+            index_col=0,
+            parse_dates=True,
+            header=[0, 1],
+        )
+        assert actual.index.to_list() == expected.index.to_list()
+        assert actual.columns.to_list() == expected.columns.to_list()
+        np.testing.assert_allclose(actual, expected)
+
+    def test_drop_nans_without_reindexing(self) -> None:
+        data = self._get_data()
+        config = cconfig.get_config_from_nested_dict(
+            {
+                "in_col_group": ("close",),
+                "out_col_group": ("diff",),
+                "transformer_func": lambda x: x.diff(),
+                "drop_nans": True,
+                "reindex_like_input": False,
+                "join_output_with_input": False,
+            }
+        )
+        node = cdnt.SeriesToSeriesTransformer("diff", **config.to_dict())
+        actual = node.fit(data)["df_out"]
+        expected_txt = """
+,diff,diff
+,MN0,MN1
+2016-01-04 16:00:00,NaN,NaN
+2016-01-05 09:30:00,5.0,NaN
+2016-01-05 09:31:00,5.0,2.0
+2016-01-05 09:32:00,-52.5,-49.0
+"""
+        expected = pd.read_csv(
+            io.StringIO(expected_txt),
+            index_col=0,
+            parse_dates=True,
+            header=[0, 1],
+        )
+        assert actual.index.to_list() == expected.index.to_list()
+        assert actual.columns.to_list() == expected.columns.to_list()
+        np.testing.assert_allclose(actual, expected)
+
+    def _get_data(self) -> pd.DataFrame:
+        txt = """
+,close,close,mid,mid
+datetime,MN0,MN1,MN0,MN1
+2016-01-04 16:00:00,95.00,96.00,100,98.00
+2016-01-04 16:01:00,NaN,NaN,NaN,NaN
+2016-01-05 09:29:00,NaN,NaN,NaN,NaN
+2016-01-05 09:30:00,100.00,NaN,100,NaN
+2016-01-05 09:31:00,105.00,98.00,106.05,97.02
+2016-01-05 09:32:00,52.50,49.00,53.025,48.51
+"""
+        df = pd.read_csv(
+            io.StringIO(txt), index_col=0, parse_dates=True, header=[0, 1]
+        )
+        return df
 
 
 class TestFunctionWrapper(hut.TestCase):
