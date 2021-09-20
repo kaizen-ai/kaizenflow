@@ -1,6 +1,8 @@
-import pandas as pd
-import helpers.dbg as dbg
 import logging
+
+import pandas as pd
+
+import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -9,12 +11,11 @@ class CcxtTransformer:
     """
     Class to transform raw CCXT data into DB view.
     """
+
     @classmethod
-    def transform(cls,
-                  data: pd.DataFrame,
-                  exchange: str,
-                  currency: str,
-                  data_type: str):
+    def transform(
+        cls, data: pd.DataFrame, exchange: str, currency: str, data_type: str
+    ):
         """
         Transform CCXT data loaded from S3.
 
@@ -24,7 +25,9 @@ class CcxtTransformer:
         :param data_type: OHLCV or trade, bid/ask data
         :return: processed dataframe
         """
-        transformed_data = cls._apply_ccxt_transformation(data, exchange, currency)
+        transformed_data = cls._apply_ccxt_transformation(
+            data, exchange, currency
+        )
         if data_type.lower() == "ohlcv":
             transformed_data = cls._apply_ohlcv_transformation(transformed_data)
         else:
@@ -32,7 +35,9 @@ class CcxtTransformer:
         return transformed_data
 
     @staticmethod
-    def _apply_ccxt_transformation(data, exchange, currency):
+    def _apply_ccxt_transformation(
+        data: pd.DataFrame, exchange: str, currency: str
+    ):
         """
         Apply transform common to all CCXT data.
 
@@ -45,7 +50,7 @@ class CcxtTransformer:
         return transformed_data
 
     @staticmethod
-    def _apply_ohlcv_transformation(transformed_data):
+    def _apply_ohlcv_transformation(transformed_data: pd.DataFrame):
         """
         Apply transformations for OHLCV data.
 
