@@ -28,5 +28,6 @@ class CCXTLoader:
         # It is assumed that the "transform" part is done by Danya
         # in the same class below.
         transformed_data = self._transform(data, exchange, currency, data_type)
+        return transformed_data
 
 
