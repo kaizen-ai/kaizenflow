@@ -110,6 +110,13 @@ def _parse() -> argparse.ArgumentParser:
         default=None,
         help="Size of each API request per iteration",
     )
+    parser.add_argument(
+        "--sleep_time",
+        action="store",
+        type=int,
+        default=60,
+        help="Sleep time between currency pair downloads (in seconds).",
+    )
     parser.add_argument("--incremental", action="store_true")
     parser = hparse.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
@@ -141,8 +148,20 @@ def _main(parser: argparse.ArgumentParser) -> None:
             # Iterate over all currencies available for exchange.
             currency_pairs = exchange.currency_pairs
         else:
-            # Iterate over single provided currency.
+            # Iterate over provided currency.
             currency_pairs = args.currency_pairs.split()
+            # Leave only currencies present in exchange.
+            filtered_pairs = [
+                curr for curr in currency_pairs if curr in exchange.currency_pairs
+            ]
+            # Warn if not all passed currencies are present.
+            if len(filtered_pairs) != len(currency_pairs):
+                _LOG.warning(
+                    "Currencies %s not present in exchange %s!",
+                    list(
+                        set.difference(set(currency_pairs), set(filtered_pairs))
+                    ),
+                )
         _LOG.debug("Getting data for currencies %s", ", ".join(currency_pairs))
         for pair in currency_pairs:
             # Download OHLCV data.
@@ -150,7 +169,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 start_datetime, end_datetime, curr_symbol=pair, step=args.step
             )
             # Set up sleep time between iterations.
-            time.sleep(60)
+            time.sleep(args.sleep_time)
             # Create file name based on exchange and pair, replacing '/' with '_'.
             file_name = f"{exchange_id}_{pair.replace('/', '_')}.csv.gz"
             full_path = os.path.join(args.dst_dir, file_name)
