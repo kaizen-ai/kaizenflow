@@ -1,6 +1,5 @@
 import io
 import logging
-import pytest
 
 import numpy as np
 import pandas as pd
