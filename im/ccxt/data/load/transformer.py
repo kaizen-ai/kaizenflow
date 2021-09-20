@@ -7,13 +7,13 @@ import helpers.dbg as dbg
 _LOG = logging.getLogger(__name__)
 
 
-class CcxtTransformer:
+class CcxtLoader:
     """
-    Class to transform raw CCXT data into DB view.
+    Class to load CCXT data.
     """
-    # TODO(*): To merge into single `Loader` class as separate method.
+    # TODO(*): To merge into `load_data` method.
     #  Remove this class afterwards.
-    def transform(
+    def _transform(
         self, data: pd.DataFrame, exchange: str, currency: str, data_type: str
     ):
         """
@@ -29,7 +29,7 @@ class CcxtTransformer:
             data, exchange, currency
         )
         if data_type.lower() == "ohlcv":
-            transformed_data = cls._apply_ohlcv_transformation(transformed_data)
+            transformed_data = self._apply_ohlcv_transformation(transformed_data)
         else:
             dbg.dfatal("Incorrect data type. Acceptable types: ohlcv")
         return transformed_data
