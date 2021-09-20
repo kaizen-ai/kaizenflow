@@ -586,7 +586,6 @@ class SeriesToSeriesTransformer(cdtfnobas.Transformer):
                 srs = pd.Series(np.nan, index=df[col].index)
             hdbg.dassert_isinstance(srs, pd.Series)
             srs.name = col
-            srs = srs.reindex(index=df.index)
             if col_info is not None:
                 func_info[col] = col_info
             srs_list.append(srs)

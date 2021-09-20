@@ -295,7 +295,7 @@ class TestGroupedColDfToDfTransformer4(hunitest.TestCase):
         expected_txt = """
 ,close_diff,close_diff,mid_diff,mid_diff
 ,MN0,MN1,MN0,MN1
-2016-01-05 09:29:00,NaN,NaN,NaN,NaN
+2016-01-04 16:00:00,NaN,NaN,NaN,NaN
 2016-01-05 09:30:00,5.0,,0.0,
 2016-01-05 09:31:00,5.0,2.0,6.049999999999997,-0.980000000000004
 2016-01-05 09:32:00,-52.5,-49.0,-53.025,-48.51
@@ -306,6 +306,8 @@ class TestGroupedColDfToDfTransformer4(hunitest.TestCase):
             parse_dates=True,
             header=[0, 1],
         )
+        assert actual.index.to_list() == expected.index.to_list()
+        assert actual.columns.to_list() == expected.columns.to_list()
         np.testing.assert_allclose(actual, expected)
 
     def _get_data(self) -> pd.DataFrame:
