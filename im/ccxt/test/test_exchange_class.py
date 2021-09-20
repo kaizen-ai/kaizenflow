@@ -6,25 +6,25 @@ import pytest
 
 import helpers.unit_test as hut
 # TODO(Dan): return to code after CmTask43 is fixed.
-# import im.ccxt.exchange_class as iccexcl
+# import im.ccxt.data.extract.exchange_class as deecla
 
 _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skip()
-class Test_CCXTExchange(hut.TestCase):
+class Test_CcxtExchange(hut.TestCase):
     def test_initialize_class(self) -> None:
         """
         Smoke test that the class is being initialized correctly.
         """
-        _ = iccexcl.CCXTExchange("binance")
+        _ = deecla.CcxtExchange("binance")
 
     def test_get_exchange_currencies(self) -> None:
         """
         Test that a non-empty list of exchange currencies is loaded.
         """
         # Extract a list of currencies.
-        exchange_class = iccexcl.CCXTExchange("binance")
+        exchange_class = deecla.CcxtExchange("binance")
         curr_list = exchange_class.get_exchange_currencies()
         # Verify that the output is a non-empty list with only string values.
         dbg.dassert_container_type(curr_list, list, str)
@@ -35,7 +35,7 @@ class Test_CCXTExchange(hut.TestCase):
         Test that historical data is being loaded correctly.
         """
         # Initiate class and set date parameters.
-        exchange_class = iccexcl.CCXTExchange("binance")
+        exchange_class = deecla.CcxtExchange("binance")
         start_date = "2021-09-09T00:00:00Z"
         end_date = "2021-09-10T00:00:00Z"
         # Extract data.

@@ -47,8 +47,8 @@ import pandas as pd
 
 import helpers.dbg as dbg
 import helpers.io_ as hio
-import helpers.parser as prsr
-import im.ccxt.exchange_class as icec
+import helpers.parser as hparse
+import im.ccxt.data.extract.exchange_class as deecla
 
 _LOG = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ def _parse() -> argparse.ArgumentParser:
         "--api_keys",
         action="store",
         type=str,
-        default=icec.API_KEYS_PATH,
+        default=deecla.API_KEYS_PATH,
         help="Path to JSON file that contains API keys for exchange access",
     )
     parser.add_argument(
@@ -111,7 +111,7 @@ def _parse() -> argparse.ArgumentParser:
         help="Size of each API request per iteration",
     )
     parser.add_argument("--incremental", action="store_true")
-    parser = prsr.add_verbosity_arg(parser)
+    parser = hparse.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
 
 
@@ -136,7 +136,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for exchange_id in exchange_ids:
         pass
         # Initialize the exchange class.
-        exchange = icec.CCXTExchange(exchange_id, api_keys_path=args.api_keys)
+        exchange = deecla.CcxtExchange(exchange_id, api_keys_path=args.api_keys)
         if args.currency_pairs == "all":
             # Iterate over all currencies available for exchange.
             currency_pairs = exchange.currency_pairs
