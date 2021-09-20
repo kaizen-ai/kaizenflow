@@ -286,8 +286,7 @@ class GroupedColDfToDfTransformer(cdnb.Transformer):
         join_output_with_input: bool = True,
     ) -> None:
         """
-        For reference, let.
-
+        For reference, let
           - N = df.columns.nlevels
           - leaf_cols = df[in_col_group].columns
 
@@ -382,8 +381,7 @@ class SeriesToDfTransformer(cdnb.Transformer):
         join_output_with_input: bool = True,
     ) -> None:
         """
-        For reference, let.
-
+        For reference, let
           - N = df.columns.nlevels
           - leaf_cols = df[in_col_group].columns
 
@@ -502,8 +500,7 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
         join_output_with_input: bool = True,
     ) -> None:
         """
-        For reference, let.
-
+        For reference, let
           - N = df.columns.nlevels
           - leaf_cols = df[in_col_group].columns
 
