@@ -35,9 +35,8 @@ class CcxtLoader:
             dbg.dfatal("Incorrect data type. Acceptable types: ohlcv")
         return transformed_data
 
-    @staticmethod
     def _apply_ccxt_transformation(
-        data: pd.DataFrame, exchange: str, currency: str
+        self, data: pd.DataFrame, exchange: str, currency: str
     ):
         """
         Apply transform common to all CCXT data.
@@ -46,18 +45,32 @@ class CcxtLoader:
         - datetime format assertion
         - Converting epoch ms timestamp to pd.Timestamp
         - Adding exchange_id and currency_pair columns
+
+        :param data:
+        :param exchange:
+        :param currency:
         :return:
         """
+        # Verify that the timestamp data is provided in ms.
         dbg.dassert_container_type(data["timestamp"], container_type=None, elem_type=int)
         transformed_data = data.copy()
+        # Rename col with original Unix ms epoch.
         transformed_data = transformed_data.rename({"timestamp": "epoch"}, axis=1)
-        transformed_data["timestamp"] = transformed_data["epoch"].apply(ccxt.)
+        # Transform Unix epoch into standard timestamp.
+        transformed_data["timestamp"] = self._convert_epochs_to_timestamp(transformed_data["epoch"], exchange)
+        # Add columns with exchange and currency pair.
         transformed_data["exchange"] = exchange
         transformed_data["currency_pair"] = currency
         return transformed_data
 
     @staticmethod
     def _convert_epochs_to_timestamp(epoch_col: pd.Series, exchange: str):
+        """
+
+        :param epoch_col:
+        :param exchange:
+        :return:
+        """
         exchange_class = getattr(ccxt, exchange)
         timestamp_col = epoch_col.apply(exchange_class.iso8601)
         # Convert to timestamp.
@@ -72,7 +85,7 @@ class CcxtLoader:
         This includes:
         - Assertion of present columns
         - Assertion of data types
-        - Renaming and rearranging of OHLCV columns, namely:
+        - Rearranging of OHLCV columns, namely:
             ["timestamp",
              "open",
              "high",
@@ -82,9 +95,12 @@ class CcxtLoader:
              "epoch",
              "currency_pair",
              "exchange"]
-        :return:
+        :return: transformed OHLCV dataframe
         """
         ohlcv_columns = ["timestamp", "open", "high", "low", "close", "volume", "epoch", "currency_pair", "exchange"]
         transformed_ohlcv = transformed_data.copy()
+        # Verify that dataframe contains OHLCV columns.
         dbg.dassert_is_subset(transformed_ohlcv.columns, ohlcv_columns)
+        # Rearrange the columns.
+        transformed_ohlcv = transformed_ohlcv[ohlcv_columns]
         return transformed_ohlcv
