@@ -1,7 +1,8 @@
 import logging
 
-import ccxt
 import pandas as pd
+
+import ccxt
 import helpers.datetime_ as hdatet
 import helpers.dbg as dbg
 
@@ -12,11 +13,9 @@ class CcxtLoader:
     """
     Class to load CCXT data.
     """
-    # TODO(*): To merge into `load_data` method.
-    #  Remove this class afterwards.
     def _transform(
         self, data: pd.DataFrame, exchange: str, currency: str, data_type: str
-    ):
+    ) -> pd.DataFrame:
         """
         Transform CCXT data loaded from S3.
 
@@ -52,19 +51,25 @@ class CcxtLoader:
         :return: transformed CCXT data
         """
         # Verify that the timestamp data is provided in ms.
-        dbg.dassert_container_type(data["timestamp"], container_type=None, elem_type=int)
+        dbg.dassert_container_type(
+            data["timestamp"], container_type=None, elem_type=int
+        )
         transformed_data = data.copy()
         # Rename col with original Unix ms epoch.
         transformed_data = transformed_data.rename({"timestamp": "epoch"}, axis=1)
         # Transform Unix epoch into standard timestamp.
-        transformed_data["timestamp"] = self._convert_epochs_to_timestamp(transformed_data["epoch"], exchange)
+        transformed_data["timestamp"] = self._convert_epochs_to_timestamp(
+            transformed_data["epoch"], exchange
+        )
         # Add columns with exchange and currency pair.
         transformed_data["exchange"] = exchange
         transformed_data["currency_pair"] = currency
         return transformed_data
 
     @staticmethod
-    def _convert_epochs_to_timestamp(epoch_col: pd.Series, exchange: str) -> pd.Series:
+    def _convert_epochs_to_timestamp(
+        epoch_col: pd.Series, exchange: str
+    ) -> pd.Series:
         """
         Convert Unix epoch to timestamp.
 
@@ -81,7 +86,9 @@ class CcxtLoader:
         return timestamp_col
 
     @staticmethod
-    def _apply_ohlcv_transformation(transformed_data: pd.DataFrame) -> pd.DataFrame:
+    def _apply_ohlcv_transformation(
+        transformed_data: pd.DataFrame,
+    ) -> pd.DataFrame:
         """
         Apply transformations for OHLCV data.
 
@@ -102,7 +109,17 @@ class CcxtLoader:
         :param transformed_data: data after general CCXT transforms
         :return: transformed OHLCV dataframe
         """
-        ohlcv_columns = ["timestamp", "open", "high", "low", "close", "volume", "epoch", "currency_pair", "exchange"]
+        ohlcv_columns = [
+            "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "epoch",
+            "currency_pair",
+            "exchange",
+        ]
         transformed_ohlcv = transformed_data.copy()
         # Verify that dataframe contains OHLCV columns.
         dbg.dassert_is_subset(transformed_ohlcv.columns, ohlcv_columns)
