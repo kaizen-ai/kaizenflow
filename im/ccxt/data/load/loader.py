@@ -11,8 +11,9 @@ _LOG = logging.getLogger(__name__)
 
 class CcxtLoader:
     """
-    Class to load CCXT data.
+    Load CCXT data.
     """
+
     def _transform(
         self, data: pd.DataFrame, exchange: str, currency: str, data_type: str
     ) -> pd.DataFrame:
