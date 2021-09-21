@@ -219,7 +219,7 @@ class CcxtLoader:
         This includes:
         - Assertion of present columns
         - Assertion of data types
-        - Renaming and rearranging of OHLCV columns, namely:
+        - Rearranging of OHLCV columns, namely:
             ["timestamp",
              "open",
              "high",
