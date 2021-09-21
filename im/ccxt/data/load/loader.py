@@ -3,6 +3,7 @@ import os
 
 import pandas as pd
 
+import core.pandas_helpers as pdhelp
 import helpers.dbg as dbg
 import helpers.s3 as hs3
 
@@ -38,15 +39,15 @@ _DOWNLOADED_EXCHANGES_CURRENCIES = {
 }
 
 
-def get_file_name(exchange: str, currency: str) -> str:
+def _get_file_name(exchange: str, currency: str) -> str:
     """
     Get name for a file with CCXT data.
 
     File name is constructed in the following way:
-    "<exchange>_<currency1>_<currency2>.csv.gz.
+    `<exchange>_<currency1>_<currency2>.csv.gz.`
 
     :param exchange: CCXT exchange id
-    :param currency: currency pair "<currency1>/<currency2>" (e.g. "BTC/USDT")
+    :param currency: currency pair `<currency1>/<currency2>` (e.g. "BTC/USDT")
     :return: name for a file with CCXT data
     """
     # Make sure that data for the input exchange was downloaded.
@@ -84,7 +85,7 @@ class CcxtLoader:
         self, exchange: str, currency: str, data_type: str
     ) -> pd.DataFrame:
         """
-        Load data from s3 and process it.
+        Load data from S3 and process it in the common format used by the models.
 
         :param exchange: CCXT exchange id
         :param currency: currency pair (e.g. "BTC/USDT")
