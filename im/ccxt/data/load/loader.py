@@ -8,6 +8,35 @@ import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
+# List from the spreadsheet:
+# https://docs.google.com/spreadsheets/d/1qIw4AvPr3Ykh5zlRsNNEVzzPuyq-F3JMh_UZQS0kRhA/edit#gid=0
+_DOWNLOADED_EXCHANGES_CURRENCIES = {
+    "binance": [
+        "ADA/USDT",
+        "AVAX/USDT",
+        "BNB/USDT",
+        "BTC/USDT",
+        "DOGE/USDT",
+        "EOS/USDT",
+        "ETH/USDT",
+        "LINK/USDT",
+        "SOL/USDT",
+    ],
+    "kucoin": [
+        "ADA/USDT",
+        "AVAX/USDT",
+        "BNB/USDT",
+        "BTC/USDT",
+        "DOGE/USDT",
+        "EOS/USDT",
+        "ETH/USDT",
+        "FIL/USDT",
+        "LINK/USDT",
+        "SOL/USDT",
+        "XPR/USDT",
+    ],
+}
+
 
 def get_file_name(exchange: str, currency: str) -> str:
     """
@@ -20,7 +49,19 @@ def get_file_name(exchange: str, currency: str) -> str:
     :param currency: currency pair "<currency1>/<currency2>" (e.g. "BTC/USDT")
     :return: name for a file with CCXT data
     """
-    # TODO(Grisha): get supported currency pairs and exchanges and assert.
+    # Make sure that data for the input exchange was downloaded.
+    dbg.dassert_in(
+        exchange,
+        _DOWNLOADED_EXCHANGES_CURRENCIES.keys(),
+        msg="Data for exchange='%s' was not downloaded" % exchange,
+    )
+    # Make sure that data for the input exchange, currency was downloaded.
+    downloaded_currencies = _DOWNLOADED_EXCHANGES_CURRENCIES[exchange]
+    dbg.dassert_in(
+        currency,
+        downloaded_currencies,
+        msg="Data for exchange='%s', currency pair='%s' was not downloaded" % (exchange, currency),
+    )
     file_name = f"{exchange}_{currency.replace('/', '_')}.csv.gz"
     return file_name
 

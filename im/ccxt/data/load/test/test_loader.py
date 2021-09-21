@@ -25,13 +25,21 @@ class TestGetFileName(hut.TestCase):
 
     def test3(self) -> None:
         """
-        Test unsupported exchange, currencies.
+        Test unsupported exchange.
         """
-        exchange = "exchange"
-        currency = "currency"
-        actual = icdloloa.get_file_name(exchange, currency)
-        expected = "exchange_currency.csv.gz"
-        self.assert_equal(actual, expected)
+        exchange = "unsupported exchange"
+        currency = "ADA/USDT"
+        with self.assertRaises(AssertionError):
+            icdloloa.get_file_name(exchange, currency)
+
+    def test4(self) -> None:
+        """
+        Test unsupported currency pair.
+        """
+        exchange = "binance"
+        currency = "unsupported_currency"
+        with self.assertRaises(AssertionError):
+            icdloloa.get_file_name(exchange, currency)
 
 
 # TODO(Grisha): add tests for CcxtLoader.read_data() once aws is fixed #28.
