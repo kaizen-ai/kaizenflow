@@ -20,6 +20,7 @@ def get_file_name(exchange: str, currency: str) -> str:
     :param currency: currency pair "<currency1>/<currency2>" (e.g. "BTC/USDT")
     :return: name for a file with CCXT data
     """
+    # TODO(Grisha): get supported currency pairs and exchanges and assert.
     file_name = f"{exchange}_{currency.replace('/', '_')}.csv.gz"
     return file_name
 
@@ -42,10 +43,16 @@ class CcxtLoader:
         """
         # Get file path for a CCXT file.
         file_name = get_file_name(exchange, currency)
-        s3_bucket = hs3.get_path()
-        file_path = os.path.join(s3_bucket, file_name)
+        s3_bucket_path = hs3.get_path()
+        file_path = os.path.join(s3_bucket_path, file_name)
+        # TODO(Grisha): assert if a file does not exist.
         # Read raw CCXT data from s3.
-        _LOG.info("Reading file '%s'...", file_path)
+        _LOG.info(
+            "Reading CCXT data for exchange='%s', currencies='%s' from file='%s'...",
+            exchange,
+            currency,
+            file_path,
+        )
         data = pd.read_csv(file_path)
         # Apply transformation to raw data.
         _LOG.info(
