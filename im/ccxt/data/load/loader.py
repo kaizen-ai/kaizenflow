@@ -20,6 +20,7 @@ def get_file_name(exchange: str, currency: str) -> str:
     :param currency: currency pair "<currency1>/<currency2>" (e.g. "BTC/USDT")
     :return: name for a file with CCXT data
     """
+    # TODO(Grisha): get supported currency pairs and exchanges and assert.
     file_name = f"{exchange}_{currency.replace('/', '_')}.csv.gz"
     return file_name
 
