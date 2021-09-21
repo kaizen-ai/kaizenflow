@@ -44,9 +44,9 @@ def _get_file_name(exchange: str, currency: str) -> str:
     Get name for a file with CCXT data.
 
     File name is constructed in the following way:
-    `<exchange>_<currency1>_<currency2>.csv.gz.`
+    `<exchange>_<currency1>_<currency2>.csv.gz`.
 
-    :param exchange: CCXT exchange id
+    :param exchange: CCXT exchange id (e.g. "binance")
     :param currency: currency pair `<currency1>/<currency2>` (e.g. "BTC/USDT")
     :return: name for a file with CCXT data
     """
