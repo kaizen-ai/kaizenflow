@@ -77,7 +77,8 @@ class CcxtLoader:
         self, exchange: str, currency: str, data_type: str
     ) -> pd.DataFrame:
         """
-        Load data from S3 and process it in the common format used by the models.
+        Load data from S3 and process it in the common format used by the
+        models.
 
         :param exchange: CCXT exchange id
         :param currency: currency pair (e.g. "BTC/USDT")
