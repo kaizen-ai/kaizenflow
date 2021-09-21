@@ -37,7 +37,7 @@ class CcxtLoader:
 
     def _apply_ccxt_transformation(
         self, data: pd.DataFrame, exchange: str, currency: str
-    ):
+    ) -> pd.DataFrame:
         """
         Apply transform common to all CCXT data.
 
@@ -46,10 +46,10 @@ class CcxtLoader:
         - Converting epoch ms timestamp to pd.Timestamp
         - Adding exchange_id and currency_pair columns
 
-        :param data:
-        :param exchange:
-        :param currency:
-        :return:
+        :param data: raw data from S3
+        :param exchange: name of exchange, e.g. "binance"
+        :param currency: currency pair, e.g. "BTC/USDT"
+        :return: transformed CCXT data
         """
         # Verify that the timestamp data is provided in ms.
         dbg.dassert_container_type(data["timestamp"], container_type=None, elem_type=int)
@@ -64,12 +64,15 @@ class CcxtLoader:
         return transformed_data
 
     @staticmethod
-    def _convert_epochs_to_timestamp(epoch_col: pd.Series, exchange: str):
+    def _convert_epochs_to_timestamp(epoch_col: pd.Series, exchange: str) -> pd.Series:
         """
+        Convert Unix epoch to timestamp.
 
-        :param epoch_col:
-        :param exchange:
-        :return:
+        All timestamps in CCXT are provided with UTC tz.
+
+        :param epoch_col: Series with unix time epochs
+        :param exchange: name of exchange
+        :return: Series with epochs converted to UTC timestamps
         """
         exchange_class = getattr(ccxt, exchange)
         timestamp_col = epoch_col.apply(exchange_class.iso8601)
@@ -78,7 +81,7 @@ class CcxtLoader:
         return timestamp_col
 
     @staticmethod
-    def _apply_ohlcv_transformation(transformed_data: pd.DataFrame):
+    def _apply_ohlcv_transformation(transformed_data: pd.DataFrame) -> pd.DataFrame:
         """
         Apply transformations for OHLCV data.
 
@@ -95,6 +98,8 @@ class CcxtLoader:
              "epoch",
              "currency_pair",
              "exchange"]
+
+        :param transformed_data: data after general CCXT transforms
         :return: transformed OHLCV dataframe
         """
         ohlcv_columns = ["timestamp", "open", "high", "low", "close", "volume", "epoch", "currency_pair", "exchange"]
