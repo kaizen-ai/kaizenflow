@@ -3,6 +3,7 @@ import os
 
 import pandas as pd
 
+import core.pandas_helpers as pdhelp
 import helpers.dbg as dbg
 import helpers.s3 as hs3
 
@@ -38,15 +39,15 @@ _DOWNLOADED_EXCHANGES_CURRENCIES = {
 }
 
 
-def get_file_name(exchange: str, currency: str) -> str:
+def _get_file_name(exchange: str, currency: str) -> str:
     """
     Get name for a file with CCXT data.
 
     File name is constructed in the following way:
-    "<exchange>_<currency1>_<currency2>.csv.gz.
+    `<exchange>_<currency1>_<currency2>.csv.gz.`
 
     :param exchange: CCXT exchange id
-    :param currency: currency pair "<currency1>/<currency2>" (e.g. "BTC/USDT")
+    :param currency: currency pair `<currency1>/<currency2>` (e.g. "BTC/USDT")
     :return: name for a file with CCXT data
     """
     # Make sure that data for the input exchange was downloaded.
@@ -76,7 +77,7 @@ class CcxtLoader:
         self, exchange: str, currency: str, data_type: str
     ) -> pd.DataFrame:
         """
-        Load data from s3 and process it.
+        Load data from S3 and process it in the common format used by the models.
 
         :param exchange: CCXT exchange id
         :param currency: currency pair (e.g. "BTC/USDT")
@@ -84,18 +85,20 @@ class CcxtLoader:
         :return: processed CCXT data
         """
         # Get file path for a CCXT file.
-        file_name = get_file_name(exchange, currency)
+        file_name = _get_file_name(exchange, currency)
         s3_bucket_path = hs3.get_path()
         file_path = os.path.join(s3_bucket_path, file_name)
-        # TODO(Grisha): assert if a file does not exist.
-        # Read raw CCXT data from s3.
+        # Make sure that the file exists.
+        s3fs = hs3.get_s3fs("am")
+        hs3.dassert_s3_exists(file_path, s3fs)
+        # Read raw CCXT data from S3.
         _LOG.info(
             "Reading CCXT data for exchange='%s', currencies='%s' from file='%s'...",
             exchange,
             currency,
             file_path,
         )
-        data = pd.read_csv(file_path)
+        data = pdhelp.read_csv(file_path, s3fs)
         # Apply transformation to raw data.
         _LOG.info(
             "Processing CCXT data for exchange='%s', currencies='%s'...",
