@@ -20,8 +20,8 @@ class CcxtLoader:
         Transform CCXT data loaded from S3.
 
         :param data: dataframe with CCXT data from S3
-        :param exchange: CCXT exchange id
-        :param currency: currency pair (e.g. "BTC/USDT")
+        :param exchange: CCXT exchange id, e.g. "binance"
+        :param currency: currency pair, e.g. "BTC/USDT"
         :param data_type: OHLCV or trade, bid/ask data
         :return: processed dataframe
         """
