@@ -1,5 +1,5 @@
-import im.ccxt.data.load.loader as icdloloa
 import helpers.unit_test as hut
+import im.ccxt.data.load.loader as icdloloa
 
 
 class TestGetFileName(hut.TestCase):

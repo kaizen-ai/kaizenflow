@@ -60,7 +60,8 @@ def get_file_name(exchange: str, currency: str) -> str:
     dbg.dassert_in(
         currency,
         downloaded_currencies,
-        msg="Data for exchange='%s', currency pair='%s' was not downloaded" % (exchange, currency),
+        msg="Data for exchange='%s', currency pair='%s' was not downloaded"
+        % (exchange, currency),
     )
     file_name = f"{exchange}_{currency.replace('/', '_')}.csv.gz"
     return file_name
@@ -101,9 +102,7 @@ class CcxtLoader:
             exchange,
             currency,
         )
-        transformed_data = self._transform(
-            data, exchange, currency, data_type
-        )
+        transformed_data = self._transform(data, exchange, currency, data_type)
         return transformed_data
 
     def _transform(
