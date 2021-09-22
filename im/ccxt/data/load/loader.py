@@ -1,9 +1,15 @@
+"""
+Import as:
+
+import im.ccxt.data.load.loader as cdlloa
+"""
+
 import logging
 import os
 
+import ccxt
 import pandas as pd
 
-import ccxt
 import core.pandas_helpers as pdhelp
 import helpers.datetime_ as hdatet
 import helpers.dbg as dbg
@@ -65,7 +71,7 @@ def _get_file_name(exchange_id: str, currency: str) -> str:
         currency_pair,
         downloaded_currencies,
         msg="Data for exchange id='%s', currency pair='%s' was not downloaded"
-            % (exchange_id, currency_pair),
+        % (exchange_id, currency_pair),
     )
     file_name = f"{exchange_id}_{currency_pair.replace('/', '_')}.csv.gz"
     return file_name
@@ -109,12 +115,18 @@ class CcxtLoader:
             exchange_id,
             currency_pair,
         )
-        transformed_data = self._transform(data, exchange_id, currency_pair, data_type)
+        transformed_data = self._transform(
+            data, exchange_id, currency_pair, data_type
+        )
         return transformed_data
 
     # TODO(*): Consider making `exchange_id` a class member.
     def _transform(
-        self, data: pd.DataFrame, exchange_id: str, currency_pair: str, data_type: str
+        self,
+        data: pd.DataFrame,
+        exchange_id: str,
+        currency_pair: str,
+        data_type: str,
     ) -> pd.DataFrame:
         """
         Transform CCXT data loaded from S3.
