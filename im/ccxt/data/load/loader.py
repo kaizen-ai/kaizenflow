@@ -1,6 +1,13 @@
+"""
+Import as:
+
+import im.ccxt.data.load.loader as cdlloa
+"""
+
 import logging
 import os
 
+import ccxt
 import pandas as pd
 
 import core.pandas_helpers as pdhelp
@@ -124,7 +131,9 @@ class CcxtLoader:
             exchange_id,
             currency_pair,
         )
-        transformed_data = self._transform(data, exchange_id, currency_pair, data_type)
+        transformed_data = self._transform(
+            data, exchange_id, currency_pair, data_type
+        )
         return transformed_data
 
     def _transform(
