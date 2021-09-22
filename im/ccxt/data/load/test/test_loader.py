@@ -1,5 +1,5 @@
 import helpers.unit_test as hut
-import im.ccxt.data.load.loader as icdloloa
+import im.ccxt.data.load.loader as cdlloa
 
 
 class TestGetFileName(hut.TestCase):
@@ -9,7 +9,7 @@ class TestGetFileName(hut.TestCase):
         """
         exchange_id = "binance"
         currency_pair = "ETH/USDT"
-        actual = icdloloa._get_file_name(exchange_id, currency_pair)
+        actual = cdlloa._get_file_name(exchange_id, currency_pair)
         expected = "binance_ETH_USDT.csv.gz"
         self.assert_equal(actual, expected)
 
@@ -19,7 +19,7 @@ class TestGetFileName(hut.TestCase):
         """
         exchange_id = "kucoin"
         currency_pair = "ADA/USDT"
-        actual = icdloloa._get_file_name(exchange_id, currency_pair)
+        actual = cdlloa._get_file_name(exchange_id, currency_pair)
         expected = "kucoin_ADA_USDT.csv.gz"
         self.assert_equal(actual, expected)
 
@@ -30,7 +30,7 @@ class TestGetFileName(hut.TestCase):
         exchange_id = "unsupported exchange"
         currency_pair = "ADA/USDT"
         with self.assertRaises(AssertionError):
-            icdloloa._get_file_name(exchange_id, currency_pair)
+            cdlloa._get_file_name(exchange_id, currency_pair)
 
     def test4(self) -> None:
         """
@@ -39,7 +39,7 @@ class TestGetFileName(hut.TestCase):
         exchange_id = "binance"
         currency_pair = "unsupported_currency"
         with self.assertRaises(AssertionError):
-            icdloloa._get_file_name(exchange_id, currency_pair)
+            cdlloa._get_file_name(exchange_id, currency_pair)
 
 
 # TODO(Grisha): add tests for CcxtLoader.read_data() once aws is fixed #28.
