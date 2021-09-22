@@ -5,41 +5,41 @@ import im.ccxt.data.load.loader as icdloloa
 class TestGetFileName(hut.TestCase):
     def test1(self) -> None:
         """
-        Test supported exchange, currencies.
+        Test supported exchange id and currency pair.
         """
-        exchange = "binance"
-        currency = "ETH/USDT"
-        actual = icdloloa._get_file_name(exchange, currency)
+        exchange_id = "binance"
+        currency_pair = "ETH/USDT"
+        actual = icdloloa._get_file_name(exchange_id, currency_pair)
         expected = "binance_ETH_USDT.csv.gz"
         self.assert_equal(actual, expected)
 
     def test2(self) -> None:
         """
-        Test supported exchange, currencies.
+        Test supported exchange id and currency pair.
         """
-        exchange = "kucoin"
-        currency = "ADA/USDT"
-        actual = icdloloa._get_file_name(exchange, currency)
+        exchange_id = "kucoin"
+        currency_pair = "ADA/USDT"
+        actual = icdloloa._get_file_name(exchange_id, currency_pair)
         expected = "kucoin_ADA_USDT.csv.gz"
         self.assert_equal(actual, expected)
 
     def test3(self) -> None:
         """
-        Test unsupported exchange.
+        Test unsupported exchange id.
         """
-        exchange = "unsupported exchange"
-        currency = "ADA/USDT"
+        exchange_id = "unsupported exchange"
+        currency_pair = "ADA/USDT"
         with self.assertRaises(AssertionError):
-            icdloloa._get_file_name(exchange, currency)
+            icdloloa._get_file_name(exchange_id, currency_pair)
 
     def test4(self) -> None:
         """
         Test unsupported currency pair.
         """
-        exchange = "binance"
-        currency = "unsupported_currency"
+        exchange_id = "binance"
+        currency_pair = "unsupported_currency"
         with self.assertRaises(AssertionError):
-            icdloloa._get_file_name(exchange, currency)
+            icdloloa._get_file_name(exchange_id, currency_pair)
 
 
 # TODO(Grisha): add tests for CcxtLoader.read_data() once aws is fixed #28.
