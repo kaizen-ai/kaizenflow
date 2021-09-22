@@ -5,7 +5,7 @@ import helpers.unit_test as hut
 class TestGetFileName(hut.TestCase):
     def test1(self) -> None:
         """
-        Test supported exchange, currencies.
+        Test supported exchange id and currency pair.
         """
         exchange = "binance"
         currency = "ETH/USDT"
@@ -15,7 +15,7 @@ class TestGetFileName(hut.TestCase):
 
     def test2(self) -> None:
         """
-        Test supported exchange, currencies.
+        Test supported exchange id and currency pair.
         """
         exchange = "kucoin"
         currency = "ADA/USDT"
@@ -25,10 +25,10 @@ class TestGetFileName(hut.TestCase):
 
     def test3(self) -> None:
         """
-        Test unsupported exchange.
+        Test unsupported exchange id.
         """
-        exchange = "unsupported exchange"
-        currency = "ADA/USDT"
+        exchange_id = "unsupported exchange"
+        currency_pair = "ADA/USDT"
         with self.assertRaises(AssertionError):
             icdloloa.get_file_name(exchange, currency)
 
@@ -36,8 +36,8 @@ class TestGetFileName(hut.TestCase):
         """
         Test unsupported currency pair.
         """
-        exchange = "binance"
-        currency = "unsupported_currency"
+        exchange_id = "binance"
+        currency_pair = "unsupported_currency"
         with self.assertRaises(AssertionError):
             icdloloa.get_file_name(exchange, currency)
 
