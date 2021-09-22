@@ -47,7 +47,7 @@ _DOWNLOADED_EXCHANGES_CURRENCIES = {
 }
 
 
-def _get_file_name(exchange_id: str, currency: str) -> str:
+def _get_file_name(exchange_id: str, currency_pair: str) -> str:
     """
     Get name for a file with CCXT data.
 
