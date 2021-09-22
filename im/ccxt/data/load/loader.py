@@ -41,32 +41,33 @@ _DOWNLOADED_EXCHANGES_CURRENCIES = {
 }
 
 
-def _get_file_name(exchange: str, currency: str) -> str:
+def _get_file_name(exchange_id: str, currency: str) -> str:
     """
     Get name for a file with CCXT data.
 
     File name is constructed in the following way:
-    `<exchange>_<currency1>_<currency2>.csv.gz`.
+    `<exchange_id>_<currency1>_<currency2>.csv.gz`.
 
-    :param exchange: CCXT exchange id (e.g. "binance")
-    :param currency: currency pair `<currency1>/<currency2>` (e.g. "BTC/USDT")
+    :param exchange_id: CCXT exchange id (e.g. "binance")
+    :param currency_pair: currency pair `<currency1>/<currency2>` (e.g. "BTC/USDT")
     :return: name for a file with CCXT data
     """
-    # Make sure that data for the input exchange was downloaded.
+    # Make sure that data for the input exchange id was downloaded.
     dbg.dassert_in(
-        exchange,
+        exchange_id,
         _DOWNLOADED_EXCHANGES_CURRENCIES.keys(),
-        msg="Data for exchange='%s' was not downloaded" % exchange,
+        msg="Data for exchange id='%s' was not downloaded" % exchange_id,
     )
-    # Make sure that data for the input exchange, currency was downloaded.
-    downloaded_currencies = _DOWNLOADED_EXCHANGES_CURRENCIES[exchange]
+    # Make sure that data for the input exchange id and currency pair was
+    # downloaded.
+    downloaded_currencies = _DOWNLOADED_EXCHANGES_CURRENCIES[exchange_id]
     dbg.dassert_in(
-        currency,
+        currency_pair,
         downloaded_currencies,
-        msg="Data for exchange='%s', currency pair='%s' was not downloaded"
-            % (exchange, currency),
+        msg="Data for exchange id='%s', currency pair='%s' was not downloaded"
+            % (exchange_id, currency_pair),
     )
-    file_name = f"{exchange}_{currency.replace('/', '_')}.csv.gz"
+    file_name = f"{exchange_id}_{currency_pair.replace('/', '_')}.csv.gz"
     return file_name
 
 
@@ -76,19 +77,19 @@ class CcxtLoader:
     """
 
     def read_data(
-            self, exchange: str, currency: str, data_type: str
+        self, exchange_id: str, currency_pair: str, data_type: str
     ) -> pd.DataFrame:
         """
         Load data from S3 and process it in the common format used by the
         models.
 
-        :param exchange: CCXT exchange id
-        :param currency: currency pair (e.g. "BTC/USDT")
+        :param exchange_id: CCXT exchange id
+        :param currency_pair: currency pair (e.g. "BTC/USDT")
         :param data_type: OHLCV or trade, bid/ask data
         :return: processed CCXT data
         """
         # Get file path for a CCXT file.
-        file_name = _get_file_name(exchange, currency)
+        file_name = _get_file_name(exchange_id, currency_pair)
         s3_bucket_path = hs3.get_path()
         file_path = os.path.join(s3_bucket_path, file_name)
         # Make sure that the file exists.
@@ -96,19 +97,19 @@ class CcxtLoader:
         hs3.dassert_s3_exists(file_path, s3fs)
         # Read raw CCXT data from S3.
         _LOG.info(
-            "Reading CCXT data for exchange='%s', currencies='%s' from file='%s'...",
-            exchange,
-            currency,
+            "Reading CCXT data for exchange id='%s', currencies='%s' from file='%s'...",
+            exchange_id,
+            currency_pair,
             file_path,
         )
         data = pdhelp.read_csv(file_path, s3fs)
         # Apply transformation to raw data.
         _LOG.info(
-            "Processing CCXT data for exchange='%s', currencies='%s'...",
-            exchange,
-            currency,
+            "Processing CCXT data for exchange id='%s', currencies='%s'...",
+            exchange_id,
+            currency_pair,
         )
-        transformed_data = self._transform(data, exchange, currency, data_type)
+        transformed_data = self._transform(data, exchange_id, currency_pair, data_type)
         return transformed_data
 
     # TODO(*): Consider making `exchange_id` a class member.
