@@ -6,6 +6,7 @@ import core.dataflow_model.model_evaluator as cdtfmomoev
 
 from __future__ import annotations
 
+import collections
 import functools
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -1098,19 +1099,14 @@ def process_single_name_result_df(
     spread_0_col: str,
     prediction_col: str,
     target_col: str,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> pd.DataFrame:
     """
     Process a result bundle df corresponding to a single name.
 
     This function
       - Calculates PnL in two ways
       - Calculates half-spread costs
-      - Calculates stats for the alpha (at the native frequency)
-      - Resamples PnL and related series to business daily
-
-    # TODO(Paul): Currently some stats require an `index.freq`. Remove this
-    # requirement or add an optional resampling step to this function to be
-    # applied before stats calculations.
+      - Standardizes column names.
 
     :param df: result dataframe
     :param position_intent_1_col: one-step ahead position intents in units of
@@ -1121,8 +1117,6 @@ def process_single_name_result_df(
         two-step ahead z-scored returns)
     :param target_col: the target of `prediction`, aligned with `prediction`
         (e.g., two-step ahead z-scored returns)
-    :return: business-daily resampled results dataframe and stats dataframe
-        (where stats are generated from `prediction_col` and `target_col`)
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
     expected_columns = [
@@ -1137,28 +1131,122 @@ def process_single_name_result_df(
     dbg.dassert_not_in("research_pnl_2", expected_columns)
     dbg.dassert_not_in("half_spread_cost", expected_columns)
     df = df[expected_columns]
+    df.rename(columns={
+        position_intent_1_col: "position_intent_1",
+        ret_0_col: "ret_0",
+        spread_0_col: "spread_0",
+        prediction_col: "prediction",
+        target_col: "target",
+    },
+              inplace=True)
     # Compute PnL from predictions (e.g., in z-score space).
     research_pnl_2 = df["prediction_col"] * df["target_col"]
     df["research_pnl_2"] = research_pnl_2
     # Compute PnL in original returns space.
     pnl_0 = fin.compute_pnl(
-        position_intent_col=position_intent_1_col, return_col=ret_0_col
+        df,
+        position_intent_col="position_intent_1", return_col="ret_0"
     )
     df["pnl_0"] = pnl_0
     half_spread_cost = fin.compute_spread_cost(
         df,
-        target_position_col=position_intent_1_col,
-        spread_col=spread_0_col,
+        target_position_col="position_intent_1",
+        spread_col="spread_0",
         spread_fraction_paid=0.5,
     )
     df["half_spread_cost"] = half_spread_cost
+    return df
+
+
+def compute_single_name_stats(
+    df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Calculate stats.
+
+    This function
+      - Calculates stats for the alpha (at the native frequency)
+      - Resamples PnL and related series to business daily
+
+    # TODO(Paul): Currently some stats require an `index.freq`. Remove this
+    # requirement or add an optional resampling step to this function to be
+    # applied before stats calculations.
+
+    :return: business-daily resampled results dataframe and stats dataframe
+        (where stats are generated from `prediction_col` and `target_col`)
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    expected_columns = [
+        "position_intent_1",
+        "ret_0",
+        "spread_0",
+        "prediction",
+        "target",
+        "research_pnl_2",
+        "pnl_0",
+        "half_spread_cost",
+    ]
+    dbg.dassert_is_subset(expected_columns, df.columns.to_list())
     # Use predictions/targets for stats. Alignment is important.
     stats = cstats.StatsComputer.compute_finance_stats(
         df,
-        returns_col=prediction_col,
-        positions_col=prediction_col,
-        pnl_col=research_pnl_2,
+        returns_col="target",
+        positions_col="prediction",
+        pnl_col="research_pnl_2",
     )
-    # Resample to business daily frequency.
-    df = df.resample("B").sum(min_count=1)
-    return df, stats
+    return stats
+
+
+def incrementally_average(
+    mean_n_df: pd.DataFrame,
+    next_df: pd.DataFrame,
+    n: int,
+) -> pd.DataFrame:
+    dbg.dassert_isinstance(mean_n_df, pd.DataFrame)
+    dbg.dassert_isinstance(next_df, pd.DataFrame)
+    dbg.dassert_lt(-1, n)
+    diff = mean_n_df - next_df
+    mean_n1_df = mean_n_df + diff / (n + 1)
+    return mean_n1_df
+
+
+def process_single_name_artifacts(
+    src_dir: str,
+    file_name: str,
+    load_rb_kwargs: Dict[str, Any],
+    result_df_cols: Dict[str, str],
+    selected_idxs: Optional[Iterable[int]] = None,
+    aws_profile: Optional[str] = None,
+    # TODO: Change `Any` to `Union[int, str]`.
+) -> Tuple[Dict[Any, pd.DataFrame], Dict[Any, pd.DataFrame], pd.DataFrame]:
+    stats = collections.OrderedDict()
+    daily_result_dfs = collections.OrderedDict()
+    portfolio = pd.DataFrame()
+    iter = cdmu.yield_experiment_artifacts(
+        src_dir,
+        file_name,
+        load_rb_kwargs=load_rb_kwargs,
+        selected_idxs=selected_idxs,
+        aws_profile=aws_profile,
+    )
+    counter = 0
+    for key, artifact in iter:
+        _LOG.info(
+            "load_experiment_artifacts: memory_usage=%s",
+            dbg.get_memory_usage_as_str(None),
+        )
+        df_for_key = artifact.result_df
+        # Compute (intraday) PnL and spread costs.
+        df_for_key = process_single_name_result_df(
+            df_for_key,
+            **result_df_cols,
+        )
+        daily_result_dfs[key] = df_for_key
+        # Compute (intraday) stats.
+        stats[key] = compute_single_name_stats(df_for_key)
+        # Update (intraday) portfolio.
+        portfolio = incrementally_average(portfolio, df_for_key, counter)
+        # Resample to business daily frequency.
+        daily_result_dfs[key] = df_for_key.resample("B").sum(min_count=1)
+        counter += 1
+    return stats, daily_result_dfs, portfolio
