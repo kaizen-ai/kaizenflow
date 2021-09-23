@@ -1205,9 +1205,8 @@ def incrementally_average(
     dbg.dassert_isinstance(mean_n_df, pd.DataFrame)
     dbg.dassert_isinstance(next_df, pd.DataFrame)
     dbg.dassert_lt(-1, n)
-    adj_diff = (next_df - mean_n_df) / (n + 1)
-    adj_diff.fillna(0, inplace=True)
-    mean_n1_df = mean_n_df + adj_diff
+    adj_diff = next_df.sub(mean_n_df, fill_value=0) / (n + 1)
+    mean_n1_df = adj_diff.add(mean_n_df, fill_value=0)
     return mean_n1_df
 
 
