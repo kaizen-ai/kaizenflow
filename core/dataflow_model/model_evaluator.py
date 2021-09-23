@@ -1143,8 +1143,12 @@ def process_single_name_result_df(
         position_intent_col=position_intent_1_col, return_col=ret_0_col
     )
     df["pnl_0"] = pnl_0
-    half_spread_cost = fin.compute_spread_cost(df, target_position_col=position_intent_1_col,
-                                               spread_col = spread_0_col, spread_fraction_paid=0.5)
+    half_spread_cost = fin.compute_spread_cost(
+        df,
+        target_position_col=position_intent_1_col,
+        spread_col=spread_0_col,
+        spread_fraction_paid=0.5,
+    )
     df["half_spread_cost"] = half_spread_cost
     # Use predictions/targets for stats. Alignment is important.
     stats = cstats.StatsComputer.compute_finance_stats(
