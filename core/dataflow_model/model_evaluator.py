@@ -1129,21 +1129,22 @@ def process_single_name_result_df(
     dbg.dassert_not_in("research_pnl_2", expected_columns)
     dbg.dassert_not_in("half_spread_cost", expected_columns)
     df = df[expected_columns]
-    df.rename(columns={
-        position_intent_1_col: "position_intent_1",
-        ret_0_col: "ret_0",
-        spread_0_col: "spread_0",
-        prediction_col: "prediction",
-        target_col: "target",
-    },
-              inplace=True)
+    df.rename(
+        columns={
+            position_intent_1_col: "position_intent_1",
+            ret_0_col: "ret_0",
+            spread_0_col: "spread_0",
+            prediction_col: "prediction",
+            target_col: "target",
+        },
+        inplace=True,
+    )
     # Compute PnL from predictions (e.g., in z-score space).
     research_pnl_2 = df["prediction_col"] * df["target_col"]
     df["research_pnl_2"] = research_pnl_2
     # Compute PnL in original returns space.
     pnl_0 = fin.compute_pnl(
-        df,
-        position_intent_col="position_intent_1", return_col="ret_0"
+        df, position_intent_col="position_intent_1", return_col="ret_0"
     )
     df["pnl_0"] = pnl_0
     half_spread_cost = fin.compute_spread_cost(
