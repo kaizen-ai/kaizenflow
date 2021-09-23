@@ -1189,7 +1189,8 @@ def compute_single_name_stats(
     ]
     dbg.dassert_is_subset(expected_columns, df.columns.to_list())
     # Use predictions/targets for stats. Alignment is important.
-    stats = cstats.StatsComputer.compute_finance_stats(
+    stats_computer = cstats.StatsComputer()
+    stats = stats_computer.compute_finance_stats(
         df,
         returns_col="target",
         positions_col="prediction",
