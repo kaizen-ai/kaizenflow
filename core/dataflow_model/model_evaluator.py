@@ -1089,3 +1089,44 @@ class PositionComputer:
         else:
             raise ValueError(f"Invalid mode `{mode}`")
         return ret
+
+
+def process_result_df(
+    df: pd.DataFrame,
+    position_intent_1_col: str,
+    ret_0_col: str,
+    spread_0_col: str,
+    prediction_col: str,
+    target_col: str,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    expected_columns = [
+        position_intent_1_col,
+        ret_0_col,
+        spread_0_col,
+        prediction_col,
+        target_col,
+    ]
+    dbg.dassert_is_subset(expected_columns, df.columns.to_list())
+    dbg.dassert_not_in("pnl_0", expected_columns)
+    dbg.dassert_not_in("research_pnl_2", expected_columns)
+    df = df[expected_columns]
+    # Compute PnL from predictions (e.g., in z-score space).
+    research_pnl_2 = df["prediction_col"] * df["target_col"]
+    df["research_pnl_2"] = research_pnl_2
+    # Compute PnL in original returns space.
+    pnl_0 = fin.compute_pnl(position_intent_col=position_intent_1_col,
+                            return_col=ret_0_col)
+    df["pnl_0"] = pnl_0
+    # Use predictions/targets for stats. Alignment is important.
+    stats = cstats.StatsComputer.compute_finance_stats(df,
+                                               returns_col=prediction_col,
+                                               positions_col=prediction_col,
+                                               pnl_col=research_pnl_2
+                                               )
+    # Resample to business daily frequency.
+    # Note that we do not directly use `spread_0_col`, but pass it through.
+    # Due to linearity, we can still estimate transaction costs at the daily
+    # level after resampling.
+    df = df.resample("B").sum(min_count=1)
+    return df, stats
