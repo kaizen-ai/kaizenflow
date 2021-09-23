@@ -1113,15 +1113,17 @@ def process_result_df(
     research_pnl_2 = df["prediction_col"] * df["target_col"]
     df["research_pnl_2"] = research_pnl_2
     # Compute PnL in original returns space.
-    pnl_0 = fin.compute_pnl(position_intent_col=position_intent_1_col,
-                            return_col=ret_0_col)
+    pnl_0 = fin.compute_pnl(
+        position_intent_col=position_intent_1_col, return_col=ret_0_col
+    )
     df["pnl_0"] = pnl_0
     # Use predictions/targets for stats. Alignment is important.
-    stats = cstats.StatsComputer.compute_finance_stats(df,
-                                               returns_col=prediction_col,
-                                               positions_col=prediction_col,
-                                               pnl_col=research_pnl_2
-                                               )
+    stats = cstats.StatsComputer.compute_finance_stats(
+        df,
+        returns_col=prediction_col,
+        positions_col=prediction_col,
+        pnl_col=research_pnl_2,
+    )
     # Resample to business daily frequency.
     # Note that we do not directly use `spread_0_col`, but pass it through.
     # Due to linearity, we can still estimate transaction costs at the daily
