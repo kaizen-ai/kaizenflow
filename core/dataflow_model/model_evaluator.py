@@ -1128,7 +1128,7 @@ def process_single_name_result_df(
     dbg.dassert_not_in("pnl_0", expected_columns)
     dbg.dassert_not_in("research_pnl_2", expected_columns)
     dbg.dassert_not_in("half_spread_cost", expected_columns)
-    df = df[expected_columns]
+    df = df[expected_columns].copy()
     df.rename(
         columns={
             position_intent_1_col: "position_intent_1",
@@ -1205,8 +1205,9 @@ def incrementally_average(
     dbg.dassert_isinstance(mean_n_df, pd.DataFrame)
     dbg.dassert_isinstance(next_df, pd.DataFrame)
     dbg.dassert_lt(-1, n)
-    diff = next_df - mean_n_df
-    mean_n1_df = mean_n_df + diff / (n + 1)
+    adj_diff = (next_df - mean_n_df) / (n + 1)
+    adj_diff.fillna(0, inplace=True)
+    mean_n1_df = mean_n_df + adj_diff
     return mean_n1_df
 
 
