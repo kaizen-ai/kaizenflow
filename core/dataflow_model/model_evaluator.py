@@ -1142,7 +1142,7 @@ def process_single_name_result_df(
         inplace=True,
     )
     # Compute PnL from predictions (e.g., in z-score space).
-    research_pnl_2 = df["prediction_col"] * df["target_col"]
+    research_pnl_2 = df["prediction"] * df["target"]
     df["research_pnl_2"] = research_pnl_2
     # Compute PnL in original returns space.
     pnl_0 = fin.compute_pnl(
