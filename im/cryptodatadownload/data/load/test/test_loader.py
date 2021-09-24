@@ -1,7 +1,11 @@
 import helpers.unit_test as hut
-import im.cryptodatadownload.data.load.loader as crdall
+# TODO(Dan): return to code after CmTask43 is fixed.
+# import im.cryptodatadownload.data.load.loader as crdall
+
+import pytest
 
 
+@pytest.mark.skip()
 class TestGetFileName(hut.TestCase):
     def test1(self) -> None:
         """
