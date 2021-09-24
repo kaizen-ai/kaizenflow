@@ -6,10 +6,9 @@ import core.dataflow_model.model_evaluator as cdtfmomoeva
 
 from __future__ import annotations
 
-import collections
 import functools
 import logging
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
