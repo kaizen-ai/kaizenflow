@@ -2,15 +2,16 @@ version: '3'
 
 services:
   app:
-    image: ${IMAGE}
+    build: .
     restart: "no"
     depends_on:
       - im_postgres_local
     volumes:
       - ../../../:/app
     env_file:
-      - ../env/local.im_db_config.env
+      - ../devops/env/local.im_db_config.env
     working_dir: /app
+    entrypoint: /app/im/devops/entrypoint_deploy.sh
 
   im_postgres_local:
     image: postgres:13
@@ -20,7 +21,7 @@ services:
     ports:
       - 5432:5432
     env_file:
-      - ../env/local.im_db_config.env
+      - ../devops/env/local.im_db_config.env
 
 volumes:
   im_postgres_data_local: {}
