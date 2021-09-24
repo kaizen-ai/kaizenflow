@@ -78,8 +78,8 @@ class CcxtExchange:
     def download_ohlcv_data(
         self,
         curr_symbol: str,
-        start_datetime: pd.Timestamp,
-        end_datetime: pd.Timestamp,
+        start_datetime: Optional[pd.Timestamp] = None,
+        end_datetime: Optional[pd.Timestamp] = None,
         step: Optional[int] = None,
         sleep_time: int = 1,
     ) -> pd.DataFrame:
