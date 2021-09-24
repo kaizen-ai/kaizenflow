@@ -6,10 +6,11 @@ import im.ccxt.data.load.loader as cdlloa
 
 import logging
 import os
+from typing import Optional
 
 import pandas as pd
 
-import core.pandas_helpers as pdhelp
+import core.pandas_helpers as cphelp
 import helpers.datetime_ as hdatet
 import helpers.dbg as dbg
 import helpers.s3 as hs3
@@ -105,7 +106,7 @@ class CcxtLoader:
             currency_pair,
             file_path,
         )
-        data = pdhelp.read_csv(file_path, s3fs)
+        data = cphelp.read_csv(file_path, s3fs)
         # Apply transformation to raw data.
         _LOG.info(
             "Processing CCXT data for exchange id='%s', currencies='%s'...",
@@ -187,7 +188,7 @@ class CcxtLoader:
     @staticmethod
     def _convert_epochs_to_timestamp(
         epoch_col: pd.Series,
-        tz: str = None,
+        tz: Optional[str] = None,
     ) -> pd.Series:
         """
         Convert Unix epoch to timestamp in a specified timezone.
