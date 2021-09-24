@@ -1138,7 +1138,7 @@ def compute_stats_for_single_name_artifacts(
         df_for_key["pnl"] = pnl
         # Compute (intraday) csta.
         stats_computer = cdtfmostcom.StatsComputer()
-        csta[key] = stats_computer.compute_finance_stats(
+        stats[key] = stats_computer.compute_finance_stats(
             df_for_key,
             returns_col=target_col,
             positions_col=prediction_col,
