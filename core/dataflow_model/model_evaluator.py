@@ -1118,9 +1118,7 @@ def compute_stats_for_single_name_artifacts(
         multiindex for grouped stats
     """
     stats = collections.OrderedDict()
-    load_rb_kwargs = {
-        "columns": list([prediction_col, target_col])
-    }
+    load_rb_kwargs = {"columns": list([prediction_col, target_col])}
     iter = cdmu.yield_experiment_artifacts(
         src_dir,
         file_name,
@@ -1134,7 +1132,7 @@ def compute_stats_for_single_name_artifacts(
             dbg.get_memory_usage_as_str(None),
         )
         # Extract df and restrict to [start, end].
-        df_for_key = artifact.result_df.loc[start: end].copy()
+        df_for_key = artifact.result_df.loc[start:end].copy()
         # Compute (intraday) PnL.
         pnl = df_for_key[prediction_col] * df_for_key[target_col]
         df_for_key["pnl"] = pnl
@@ -1204,7 +1202,7 @@ def process_single_name_result_df(
     dbg.dassert_not_in("pnl_0", expected_columns)
     dbg.dassert_not_in("research_pnl_2", expected_columns)
     dbg.dassert_not_in("half_spread_cost", expected_columns)
-    df = df[expected_columns].loc[start: end].copy()
+    df = df[expected_columns].loc[start:end].copy()
     df.rename(
         columns={
             position_intent_1_col: "position_intent_1",
@@ -1277,5 +1275,3 @@ def _incrementally_average(
     adj_diff = next_df.sub(mean_n_df, fill_value=0) / (n + 1)
     mean_n1_df = adj_diff.add(mean_n_df, fill_value=0)
     return mean_n1_df
-
-
