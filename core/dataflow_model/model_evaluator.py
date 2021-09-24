@@ -49,7 +49,7 @@ class StrategyEvaluator:
         position_intent_col: str,
         returns_col: str,
         spread_col: str,
-        # TODO(Paul): Allow specification of start and end times for stats.
+        # TODO(Paul): Allow specification of start and end times for csta.
         # This is useful for interactive analysis and/or zooming in on a
         # specific time period.
         # start: Optional[pd.Timestamp] = None,
@@ -548,26 +548,26 @@ class ModelEvaluator:
         """
         _LOG.info(
             "Before building ModelEvaluator: memory_usage=%s",
-            dbg.get_memory_usage_as_str(None),
+            hdbg.get_memory_usage_as_str(None),
         )
         data_dict: Dict[Key, pd.DataFrame] = {}
         # Convert each `ResultBundle` dict into a `ResultBundle` class object.
         for key, result_bundle in result_bundle_dict.items():
             _LOG.debug("Loading key=%s", key)
             try:
-                _LOG.debug("memory_usage=%s", dbg.get_memory_usage_as_str(None))
+                _LOG.debug("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
                 df = result_bundle.result_df
-                dbg.dassert_is_not(df, None)
+                hdbg.dassert_is_not(df, None)
                 _LOG.debug(
                     "result_df.memory_usage=%s",
-                    hintro.format_size(
+                    hintrosp.format_size(
                         df.memory_usage(index=True, deep=True).sum()
                     ),
                 )
                 # Extract the needed columns.
-                dbg.dassert_in(target_col, df.columns)
-                dbg.dassert_in(predictions_col, df.columns)
-                dbg.dassert_not_in(key, data_dict.keys())
+                hdbg.dassert_in(target_col, df.columns)
+                hdbg.dassert_in(predictions_col, df.columns)
+                hdbg.dassert_not_in(key, data_dict.keys())
                 data_dict[key] = df[[target_col, predictions_col]]
             except Exception as e:
                 _LOG.error(
@@ -588,7 +588,7 @@ class ModelEvaluator:
         )
         _LOG.info(
             "After building ModelEvaluator: memory_usage=%s",
-            dbg.get_memory_usage_as_str(None),
+            hdbg.get_memory_usage_as_str(None),
         )
         return evaluator
 
@@ -608,7 +608,7 @@ class ModelEvaluator:
                 eval_config["model_evaluator_kwargs"]["predictions_col"],
             ]
         }
-        result_bundle_dict = cdmu.load_experiment_artifacts(**load_config)
+        result_bundle_dict = cdtfmouti.load_experiment_artifacts(**load_config)
         # Build the ModelEvaluator.
         evaluator = ModelEvaluator.from_result_bundle_dict(
             result_bundle_dict,
@@ -1100,13 +1100,13 @@ def compute_stats_for_single_name_artifacts(
     file_name: str,
     prediction_col: str,
     target_col: str,
-    start: Optional[hdatet.Datetime],
-    end: Optional[hdatet.Datetime],
+    start: Optional[hdatetim.Datetime],
+    end: Optional[hdatetim.Datetime],
     selected_idxs: Optional[Iterable[int]] = None,
     aws_profile: Optional[str] = None,
 ) -> pd.DataFrame:
     """
-    Generates single-name stats.
+    Generates single-name csta.
 
     This function only requires maintaining at most one result bundle in-memory
     at a time.
@@ -1117,7 +1117,7 @@ def compute_stats_for_single_name_artifacts(
     """
     stats = collections.OrderedDict()
     load_rb_kwargs = {"columns": list([prediction_col, target_col])}
-    iter = cdmu.yield_experiment_artifacts(
+    iter = cdtfmouti.yield_experiment_artifacts(
         src_dir,
         file_name,
         load_rb_kwargs=load_rb_kwargs,
@@ -1127,25 +1127,25 @@ def compute_stats_for_single_name_artifacts(
     for key, artifact in iter:
         _LOG.info(
             "load_experiment_artifacts: memory_usage=%s",
-            dbg.get_memory_usage_as_str(None),
+            hdbg.get_memory_usage_as_str(None),
         )
         # Extract df and restrict to [start, end].
         df_for_key = artifact.result_df.loc[start:end].copy()
         # Compute (intraday) PnL.
         pnl = df_for_key[prediction_col] * df_for_key[target_col]
         df_for_key["pnl"] = pnl
-        # Compute (intraday) stats.
-        stats_computer = cstats.StatsComputer()
-        stats[key] = stats_computer.compute_finance_stats(
-            df,
+        # Compute (intraday) csta.
+        stats_computer = cdtfmostcom.StatsComputer()
+        csta[key] = stats_computer.compute_finance_stats(
+            df_for_key,
             returns_col=target_col,
             positions_col=prediction_col,
             pnl_col="pnl",
         )
-    # Generate dataframe from dictionary of stats.
+    # Generate dataframe from dictionary of csta.
     stats_df = pd.DataFrame(stats)
     # Perform multiple tests adjustment.
-    adj_pvals = stats.multipletests(
+    adj_pvals = csta.multipletests(
         stats_df.loc["signal_quality"].loc["sr.pval"], nan_mode="drop"
     ).rename("sr.adj_pval")
     # Add multiple test info to stats dataframe.
@@ -1153,7 +1153,7 @@ def compute_stats_for_single_name_artifacts(
         [adj_pvals.to_frame().transpose()], keys=["signal_quality"]
     )
     stats_df = pd.concat([stats_df, adj_pvals], axis=0)
-    _LOG.info("memory_usage=%s", dbg.get_memory_usage_as_str(None))
+    _LOG.info("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
     return stats_df
 
 
@@ -1164,8 +1164,8 @@ def process_single_name_result_df(
     spread_0_col: str,
     prediction_col: str,
     target_col: str,
-    start: hdatet.Datetime,
-    end: hdatet.Datetime,
+    start: hdatetim.Datetime,
+    end: hdatetim.Datetime,
 ) -> pd.DataFrame:
     """
     Process a result bundle df corresponding to a single name.
@@ -1188,7 +1188,7 @@ def process_single_name_result_df(
     :param end: last time to load (inclusive); `None` means all available
     :return: dataframe with pnl and spread costs calculated
     """
-    dbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_isinstance(df, pd.DataFrame)
     expected_columns = [
         position_intent_1_col,
         ret_0_col,
@@ -1196,10 +1196,10 @@ def process_single_name_result_df(
         prediction_col,
         target_col,
     ]
-    dbg.dassert_is_subset(expected_columns, df.columns.to_list())
-    dbg.dassert_not_in("pnl_0", expected_columns)
-    dbg.dassert_not_in("research_pnl_2", expected_columns)
-    dbg.dassert_not_in("half_spread_cost", expected_columns)
+    hdbg.dassert_is_subset(expected_columns, df.columns.to_list())
+    hdbg.dassert_not_in("pnl_0", expected_columns)
+    hdbg.dassert_not_in("research_pnl_2", expected_columns)
+    hdbg.dassert_not_in("half_spread_cost", expected_columns)
     df = df[expected_columns].loc[start:end].copy()
     df.rename(
         columns={
@@ -1215,11 +1215,11 @@ def process_single_name_result_df(
     research_pnl_2 = df["prediction"] * df["target"]
     df["research_pnl_2"] = research_pnl_2
     # Compute PnL in original returns space.
-    pnl_0 = fin.compute_pnl(
+    pnl_0 = cfin.compute_pnl(
         df, position_intent_col="position_intent_1", return_col="ret_0"
     )
     df["pnl_0"] = pnl_0
-    half_spread_cost = fin.compute_spread_cost(
+    half_spread_cost = cfin.compute_spread_cost(
         df,
         target_position_col="position_intent_1",
         spread_col="spread_0",
@@ -1246,7 +1246,7 @@ def _compute_single_name_stats(
     :return: business-daily resampled results dataframe and stats dataframe
         (where stats are generated from `prediction_col` and `target_col`)
     """
-    dbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_isinstance(df, pd.DataFrame)
     expected_columns = [
         "position_intent_1",
         "ret_0",
@@ -1257,8 +1257,8 @@ def _compute_single_name_stats(
         "pnl_0",
         "half_spread_cost",
     ]
-    dbg.dassert_is_subset(expected_columns, df.columns.to_list())
-    # Use predictions/targets for stats. Alignment is important.
+    hdbg.dassert_is_subset(expected_columns, df.columns.to_list())
+    # Use predictions/targets for csta. Alignment is important.
     return stats
 
 
@@ -1267,9 +1267,9 @@ def _incrementally_average(
     next_df: pd.DataFrame,
     n: int,
 ) -> pd.DataFrame:
-    dbg.dassert_isinstance(mean_n_df, pd.DataFrame)
-    dbg.dassert_isinstance(next_df, pd.DataFrame)
-    dbg.dassert_lt(-1, n)
+    hdbg.dassert_isinstance(mean_n_df, pd.DataFrame)
+    hdbg.dassert_isinstance(next_df, pd.DataFrame)
+    hdbg.dassert_lt(-1, n)
     adj_diff = next_df.sub(mean_n_df, fill_value=0) / (n + 1)
     mean_n1_df = adj_diff.add(mean_n_df, fill_value=0)
     return mean_n1_df
