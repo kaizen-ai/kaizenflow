@@ -1097,6 +1097,8 @@ def process_single_name_result_df(
     spread_0_col: str,
     prediction_col: str,
     target_col: str,
+    start: hdatet.Datetime,
+    end: hdatet.Datetime,
 ) -> pd.DataFrame:
     """
     Process a result bundle df corresponding to a single name.
@@ -1115,6 +1117,7 @@ def process_single_name_result_df(
         two-step ahead z-scored returns)
     :param target_col: the target of `prediction`, aligned with `prediction`
         (e.g., two-step ahead z-scored returns)
+    :return: dataframe with pnl and spread costs calculated
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
     expected_columns = [
@@ -1128,7 +1131,7 @@ def process_single_name_result_df(
     dbg.dassert_not_in("pnl_0", expected_columns)
     dbg.dassert_not_in("research_pnl_2", expected_columns)
     dbg.dassert_not_in("half_spread_cost", expected_columns)
-    df = df[expected_columns].copy()
+    df = df[expected_columns].loc[start: end].copy()
     df.rename(
         columns={
             position_intent_1_col: "position_intent_1",
@@ -1210,18 +1213,29 @@ def incrementally_average(
     return mean_n1_df
 
 
-def process_single_name_artifacts(
+def compute_stats_for_single_name_artifacts(
     src_dir: str,
     file_name: str,
-    load_rb_kwargs: Dict[str, Any],
     result_df_cols: Dict[str, str],
+    start: Optional[hdatet.Datetime],
+    end: Optional[hdatet.Datetime],
     selected_idxs: Optional[Iterable[int]] = None,
     aws_profile: Optional[str] = None,
-    # TODO: Change `Any` to `Union[int, str]`.
-) -> Tuple[Dict[Any, pd.DataFrame], Dict[Any, pd.DataFrame], pd.DataFrame]:
+) -> pd.DataFrame:
+    """
+    Generates single-name stats.
+
+    This function only requires maintaining at most one result bundle in-memory
+    at a time.
+
+    :param result_df_cols: as in `process_single_name_result_df()`
+    :return: dataframe of stats, with keys as column names and a row
+        multiindex for grouped stats
+    """
     stats = collections.OrderedDict()
-    daily_result_dfs = collections.OrderedDict()
-    portfolio = pd.DataFrame()
+    load_rb_kwargs = {
+        "columns": list(result_df_cols.values())
+    }
     iter = cdmu.yield_experiment_artifacts(
         src_dir,
         file_name,
@@ -1229,7 +1243,6 @@ def process_single_name_artifacts(
         selected_idxs=selected_idxs,
         aws_profile=aws_profile,
     )
-    counter = 0
     for key, artifact in iter:
         _LOG.info(
             "load_experiment_artifacts: memory_usage=%s",
@@ -1240,13 +1253,21 @@ def process_single_name_artifacts(
         df_for_key = process_single_name_result_df(
             df_for_key,
             **result_df_cols,
+            start=start,
+            end=end,
         )
-        daily_result_dfs[key] = df_for_key
         # Compute (intraday) stats.
         stats[key] = compute_single_name_stats(df_for_key)
-        # Update (intraday) portfolio.
-        portfolio = incrementally_average(portfolio, df_for_key, counter)
-        # Resample to business daily frequency.
-        daily_result_dfs[key] = df_for_key.resample("B").sum(min_count=1)
-        counter += 1
-    return stats, daily_result_dfs, portfolio
+    # Generate dataframe from dictionary of stats.
+    stats_df = pd.DataFrame(stats)
+    # Perform multiple tests adjustment.
+    adj_pvals = stats.multipletests(
+        stats_df.loc["signal_quality"].loc["sr.pval"], nan_mode="drop"
+    ).rename("sr.adj_pval")
+    # Add multiple test info to stats dataframe.
+    adj_pvals = pd.concat(
+        [adj_pvals.to_frame().transpose()], keys=["signal_quality"]
+    )
+    stats_df = pd.concat([stats_df, adj_pvals], axis=0)
+    _LOG.info("memory_usage=%s", dbg.get_memory_usage_as_str(None))
+    return stats_df
