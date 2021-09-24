@@ -7,7 +7,6 @@ import im.ccxt.data.load.loader as cdlloa
 import logging
 import os
 
-import ccxt
 import pandas as pd
 
 import core.pandas_helpers as pdhelp
@@ -178,32 +177,25 @@ class CcxtLoader:
         )
         # Rename col with original Unix ms epoch.
         data = data.rename({"timestamp": "epoch"}, axis=1)
-        # Transform Unix epoch into standard timestamp.
-        data["timestamp"] = self._convert_epochs_to_et_timestamp(
-            data["epoch"], exchange_id
-        )
+        # Transform Unix epoch into ET timestamp.
+        data["timestamp"] = self._convert_epochs_to_et_timestamp(data["epoch"])
         # Add columns with exchange id and currency pair.
         data["exchange_id"] = exchange_id
         data["currency_pair"] = currency_pair
         return data
 
     @staticmethod
-    def _convert_epochs_to_et_timestamp(
-        epoch_col: pd.Series, exchange_id: str
-    ) -> pd.Series:
+    def _convert_epochs_to_et_timestamp(epoch_col: pd.Series) -> pd.Series:
         """
         Convert Unix epoch to timestamp in ET.
 
-        All Unix time epochs in CCXT are provided in UTC tz.
+        All Unix time epochs in CDD are provided in ms and in UTC tz.
 
         :param epoch_col: Series with Unix time epochs
-        :param exchange_id: CCXT exchange id, e.g. "binance"
         :return: Series with epochs converted to ET timestamps
         """
-        exchange_class = getattr(ccxt, exchange_id)
-        timestamp_col = epoch_col.apply(exchange_class.iso8601)
         # Convert to timestamp.
-        timestamp_col = hdatet.to_generalized_datetime(timestamp_col)
+        timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
         # Convert to ET tz.
         timestamp_col = timestamp_col.dt.tz_convert(hdatet.get_ET_tz())
         return timestamp_col

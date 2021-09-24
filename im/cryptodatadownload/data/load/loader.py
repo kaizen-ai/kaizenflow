@@ -8,7 +8,6 @@ import logging
 import os
 from typing import Optional
 
-import ccxt
 import pandas as pd
 
 import core.pandas_helpers as cpanh
@@ -231,22 +230,17 @@ class CddLoader:
         return data
 
     @staticmethod
-    def _convert_epochs_to_et_timestamp(
-        epoch_col: pd.Series, exchange_id: str
-    ) -> pd.Series:
+    def _convert_epochs_to_et_timestamp(epoch_col: pd.Series) -> pd.Series:
         """
         Convert Unix epoch to timestamp in ET.
 
-        All Unix time epochs in CDD are provided in UTC tz.
+        All Unix time epochs in CDD are provided in ms and in UTC tz.
 
         :param epoch_col: Series with Unix time epochs
-        :param exchange_id: CDD exchange id, e.g. "binance"
         :return: Series with epochs converted to ET timestamps
         """
-        exchange_class = getattr(ccxt, exchange_id)
-        timestamp_col = epoch_col.apply(exchange_class.iso8601)
         # Convert to timestamp.
-        timestamp_col = hdatet.to_generalized_datetime(timestamp_col)
+        timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
         # Convert to ET tz.
         timestamp_col = timestamp_col.dt.tz_convert(hdatet.get_ET_tz())
         return timestamp_col
