@@ -8,6 +8,7 @@ import logging
 import os
 from typing import Optional
 
+import ccxt
 import pandas as pd
 
 import core.pandas_helpers as cphelp
