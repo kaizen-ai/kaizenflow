@@ -12,37 +12,14 @@ import pandas as pd
 
 import core.pandas_helpers as pdhelp
 import helpers.dbg as dbg
+import helpers.io_ as hio
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
 # Data about downloaded currencies from the spreadsheet in CMTask41.
-_DOWNLOADED_EXCHANGES_CURRENCIES = {
-    "binance": [
-        "ADA/USDT",
-        "AVAX/USDT",
-        "BNB/USDT",
-        "BTC/USDT",
-        "DOGE/USDT",
-        "EOS/USDT",
-        "ETH/USDT",
-        "LINK/USDT",
-        "SOL/USDT",
-    ],
-    "kucoin": [
-        "ADA/USDT",
-        "AVAX/USDT",
-        "BNB/USDT",
-        "BTC/USDT",
-        "DOGE/USDT",
-        "EOS/USDT",
-        "ETH/USDT",
-        "FIL/USDT",
-        "LINK/USDT",
-        "SOL/USDT",
-        "XPR/USDT",
-    ],
-}
+_DOWNLOADED_CURRENCIES_PATH = "/im/data/shared/data/downloaded_currencies.json"
+_DOWNLOADED_CURRENCIES = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)["CCXT"]["minute"]
 
 
 def _get_file_name(exchange_id: str, currency: str) -> str:
@@ -59,12 +36,12 @@ def _get_file_name(exchange_id: str, currency: str) -> str:
     # Verify that data for the input exchange id was downloaded.
     dbg.dassert_in(
         exchange_id,
-        _DOWNLOADED_EXCHANGES_CURRENCIES.keys(),
+        _DOWNLOADED_CURRENCIES.keys(),
         msg="Data for exchange id='%s' was not downloaded" % exchange_id,
     )
     # Verify that data for the input exchange id and currency pair was
     # downloaded.
-    downloaded_currencies = _DOWNLOADED_EXCHANGES_CURRENCIES[exchange_id]
+    downloaded_currencies = _DOWNLOADED_CURRENCIES[exchange_id]
     dbg.dassert_in(
         currency_pair,
         downloaded_currencies,
