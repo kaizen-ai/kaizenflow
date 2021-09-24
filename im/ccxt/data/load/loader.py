@@ -137,9 +137,9 @@ class CcxtLoader:
 
         Output data example:
             timestamp                  open     high     low      close    volume    epoch          currency_pair exchange_id
-            2021-09-09 00:00:00+00:00  3499.01  3499.49  3496.17  3496.36  346.4812  1631145600000  BTC/USDT      binance
-            2021-09-09 00:01:00+00:00  3496.36  3501.59  3495.69  3501.59  401.9576  1631145660000  BTC/USDT      binance
-            2021-09-09 00:02:00+00:00  3501.59  3513.10  3499.89  3513.09  579.5656  1631145720000  BTC/USDT      binance
+            2021-09-08 20:00:00-04:00  3499.01  3499.49  3496.17  3496.36  346.4812  1631145600000  ETH/USDT      binance
+            2021-09-08 20:01:00-04:00  3496.36  3501.59  3495.69  3501.59  401.9576  1631145660000  ETH/USDT      binance
+            2021-09-08 20:02:00-04:00  3501.59  3513.10  3499.89  3513.09  579.5656  1631145720000  ETH/USDT      binance
 
         :param data: dataframe with CCXT data from S3
         :param exchange_id: CCXT exchange id, e.g. "binance"
@@ -179,7 +179,7 @@ class CcxtLoader:
         # Rename col with original Unix ms epoch.
         data = data.rename({"timestamp": "epoch"}, axis=1)
         # Transform Unix epoch into standard timestamp.
-        data["timestamp"] = self._convert_epochs_to_timestamp(
+        data["timestamp"] = self._convert_epochs_to_et_timestamp(
             data["epoch"], exchange_id
         )
         # Add columns with exchange id and currency pair.
@@ -188,22 +188,24 @@ class CcxtLoader:
         return data
 
     @staticmethod
-    def _convert_epochs_to_timestamp(
+    def _convert_epochs_to_et_timestamp(
         epoch_col: pd.Series, exchange_id: str
     ) -> pd.Series:
         """
-        Convert Unix epoch to timestamp.
+        Convert Unix epoch to timestamp in ET.
 
-        All timestamps in CCXT are provided with UTC tz.
+        All Unix time epochs in CCXT are provided in UTC tz.
 
-        :param epoch_col: Series with unix time epochs
+        :param epoch_col: Series with Unix time epochs
         :param exchange_id: CCXT exchange id, e.g. "binance"
-        :return: Series with epochs converted to UTC timestamps
+        :return: Series with epochs converted to ET timestamps
         """
         exchange_class = getattr(ccxt, exchange_id)
         timestamp_col = epoch_col.apply(exchange_class.iso8601)
         # Convert to timestamp.
         timestamp_col = hdatet.to_generalized_datetime(timestamp_col)
+        # Convert to ET tz.
+        timestamp_col = timestamp_col.dt.tz_convert(hdatet.get_ET_tz())
         return timestamp_col
 
     @staticmethod
