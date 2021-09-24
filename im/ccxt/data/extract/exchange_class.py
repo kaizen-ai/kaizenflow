@@ -8,10 +8,10 @@ import logging
 import time
 from typing import Dict, List, Optional, Union
 
-import ccxt
 import pandas as pd
 import tqdm
 
+import ccxt
 import helpers.dbg as dbg
 import helpers.io_ as hio
 
@@ -107,14 +107,14 @@ class CcxtExchange:
             return all_candles
         # Verify that date parameters are of correct format.
         dbg.dassert_isinstance(
-        end_datetime,
-        pd.Timestamp,
-        msg="Type of end_datetime param is incorrect.",
+            end_datetime,
+            pd.Timestamp,
+            msg="Type of end_datetime param is incorrect.",
         )
         dbg.dassert_isinstance(
-        start_datetime,
-        pd.Timestamp,
-        msg="Type of start_datetime param is incorrect.",
+            start_datetime,
+            pd.Timestamp,
+            msg="Type of start_datetime param is incorrect.",
         )
         # Convert datetime into ms.
         start_datetime = start_datetime.asm8.astype(int) // 1000000

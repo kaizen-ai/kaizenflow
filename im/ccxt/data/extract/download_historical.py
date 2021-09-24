@@ -166,7 +166,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
         for pair in currency_pairs:
             # Download OHLCV data.
             pair_data = exchange.download_ohlcv_data(
-                curr_symbol=pair, start_datetime=start_datetime, end_datetime=end_datetime, step=args.step
+                curr_symbol=pair,
+                start_datetime=start_datetime,
+                end_datetime=end_datetime,
+                step=args.step,
             )
             time.sleep(60)
             # Save file.
