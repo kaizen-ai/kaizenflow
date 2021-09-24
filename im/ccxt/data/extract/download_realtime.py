@@ -67,10 +67,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hio.create_dir(args.dst_dir, incremental=args.incremental)
     start_datetime = pd.Timestamp(args.start_datetime)
     # If end_date is not provided, get current time.
-    if not args.end_datetime:
-        end_datetime = pd.Timestamp.now()
-    else:
-        end_datetime = pd.Timestamp(args.end_datetime)
     if args.exchange_ids == "all":
         # Iterate over all available exchanges.
         exchange_ids = ["binance", "kucoin"]
@@ -95,7 +91,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             for pair in present_pairs:
                 # Download OHLCV data.
                 pair_data = exchange.download_ohlcv_data(
-                    start_datetime, end_datetime, curr_symbol=pair, step=5
+                    curr_symbol=pair, step=5
                 )
                 # Set up sleep time between iterations.
                 time.sleep(60)
