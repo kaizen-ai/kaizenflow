@@ -19,7 +19,7 @@ import helpers.s3 as hs3
 _LOG = logging.getLogger(__name__)
 
 # Data about downloaded currencies from the spreadsheet in CMTask41.
-_DOWNLOADED_CURRENCIES_PATH = "/im/data/shared/data/downloaded_currencies.json"
+_DOWNLOADED_CURRENCIES_PATH = "/im/data/downloaded_currencies.json"
 _DOWNLOADED_CURRENCIES = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)["CCXT"]
 
 
