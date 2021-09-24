@@ -232,7 +232,7 @@ class CddLoader:
     @staticmethod
     def _convert_epochs_to_timestamp(
         epoch_col: pd.Series,
-        tz: str = None,
+        tz: Optional[str] = None,
     ) -> pd.Series:
         """
         Convert Unix epoch to timestamp in a specified timezone.
