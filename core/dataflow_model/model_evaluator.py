@@ -1092,6 +1092,75 @@ class PositionComputer:
         return ret
 
 
+# #############################################################################
+# Incremental processing
+# #############################################################################
+
+
+def compute_stats_for_single_name_artifacts(
+    src_dir: str,
+    file_name: str,
+    prediction_col: str,
+    target_col: str,
+    start: Optional[hdatet.Datetime],
+    end: Optional[hdatet.Datetime],
+    selected_idxs: Optional[Iterable[int]] = None,
+    aws_profile: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Generates single-name stats.
+
+    This function only requires maintaining at most one result bundle in-memory
+    at a time.
+
+    :param result_df_cols: as in `process_single_name_result_df()`
+    :return: dataframe of stats, with keys as column names and a row
+        multiindex for grouped stats
+    """
+    stats = collections.OrderedDict()
+    load_rb_kwargs = {
+        "columns": list([prediction_col, target_col])
+    }
+    iter = cdmu.yield_experiment_artifacts(
+        src_dir,
+        file_name,
+        load_rb_kwargs=load_rb_kwargs,
+        selected_idxs=selected_idxs,
+        aws_profile=aws_profile,
+    )
+    for key, artifact in iter:
+        _LOG.info(
+            "load_experiment_artifacts: memory_usage=%s",
+            dbg.get_memory_usage_as_str(None),
+        )
+        # Extract df and restrict to [start, end].
+        df_for_key = artifact.result_df.loc[start: end].copy()
+        # Compute (intraday) PnL.
+        pnl = df_for_key[prediction_col] * df_for_key[target_col]
+        df_for_key["pnl"] = pnl
+        # Compute (intraday) stats.
+        stats_computer = cstats.StatsComputer()
+        stats[key] = stats_computer.compute_finance_stats(
+            df,
+            returns_col=target_col,
+            positions_col=prediction_col,
+            pnl_col="pnl",
+        )
+    # Generate dataframe from dictionary of stats.
+    stats_df = pd.DataFrame(stats)
+    # Perform multiple tests adjustment.
+    adj_pvals = stats.multipletests(
+        stats_df.loc["signal_quality"].loc["sr.pval"], nan_mode="drop"
+    ).rename("sr.adj_pval")
+    # Add multiple test info to stats dataframe.
+    adj_pvals = pd.concat(
+        [adj_pvals.to_frame().transpose()], keys=["signal_quality"]
+    )
+    stats_df = pd.concat([stats_df, adj_pvals], axis=0)
+    _LOG.info("memory_usage=%s", dbg.get_memory_usage_as_str(None))
+    return stats_df
+
+
 def process_single_name_result_df(
     df: pd.DataFrame,
     position_intent_1_col: str,
@@ -1164,71 +1233,6 @@ def process_single_name_result_df(
     return df
 
 
-# #############################################################################
-# Incremental processing
-# #############################################################################
-
-
-def compute_stats_for_single_name_artifacts(
-    src_dir: str,
-    file_name: str,
-    result_df_cols: Dict[str, str],
-    start: Optional[hdatet.Datetime],
-    end: Optional[hdatet.Datetime],
-    selected_idxs: Optional[Iterable[int]] = None,
-    aws_profile: Optional[str] = None,
-) -> pd.DataFrame:
-    """
-    Generates single-name stats.
-
-    This function only requires maintaining at most one result bundle in-memory
-    at a time.
-
-    :param result_df_cols: as in `process_single_name_result_df()`
-    :return: dataframe of stats, with keys as column names and a row
-        multiindex for grouped stats
-    """
-    stats = collections.OrderedDict()
-    load_rb_kwargs = {
-        "columns": list(result_df_cols.values())
-    }
-    iter = cdmu.yield_experiment_artifacts(
-        src_dir,
-        file_name,
-        load_rb_kwargs=load_rb_kwargs,
-        selected_idxs=selected_idxs,
-        aws_profile=aws_profile,
-    )
-    for key, artifact in iter:
-        _LOG.info(
-            "load_experiment_artifacts: memory_usage=%s",
-            dbg.get_memory_usage_as_str(None),
-        )
-        df_for_key = artifact.result_df
-        # Compute (intraday) PnL and spread costs.
-        df_for_key = process_single_name_result_df(
-            df_for_key,
-            **result_df_cols,
-            start=start,
-            end=end,
-        )
-        # Compute (intraday) stats.
-        stats[key] = _compute_single_name_stats(df_for_key)
-    # Generate dataframe from dictionary of stats.
-    stats_df = pd.DataFrame(stats)
-    # Perform multiple tests adjustment.
-    adj_pvals = stats.multipletests(
-        stats_df.loc["signal_quality"].loc["sr.pval"], nan_mode="drop"
-    ).rename("sr.adj_pval")
-    # Add multiple test info to stats dataframe.
-    adj_pvals = pd.concat(
-        [adj_pvals.to_frame().transpose()], keys=["signal_quality"]
-    )
-    stats_df = pd.concat([stats_df, adj_pvals], axis=0)
-    _LOG.info("memory_usage=%s", dbg.get_memory_usage_as_str(None))
-    return stats_df
-
-
 def _compute_single_name_stats(
     df: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -1259,13 +1263,6 @@ def _compute_single_name_stats(
     ]
     dbg.dassert_is_subset(expected_columns, df.columns.to_list())
     # Use predictions/targets for stats. Alignment is important.
-    stats_computer = cstats.StatsComputer()
-    stats = stats_computer.compute_finance_stats(
-        df,
-        returns_col="target",
-        positions_col="prediction",
-        pnl_col="research_pnl_2",
-    )
     return stats
 
 
