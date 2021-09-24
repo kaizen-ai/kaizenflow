@@ -17,8 +17,7 @@ import helpers.s3 as hs3
 _LOG = logging.getLogger(__name__)
 
 # TODO(Dan): Fill the lists and decide whether to put them outside of the file.
-# List from the spreadsheet:
-# https://docs.google.com/spreadsheets/d/1qIw4AvPr3Ykh5zlRsNNEVzzPuyq-F3JMh_UZQS0kRhA/edit#gid=0
+# Data about downloaded currencies from the spreadsheet in CMTask41.
 _DOWNLOADED_EXCHANGES_TIMEFRAMES_CURRENCIES = {
     "binance": {
         "minute": [
@@ -58,19 +57,19 @@ def _get_file_name(exchange_id: str, currency_pair: str, timeframe: str) -> str:
     File name is constructed in the following way:
     `<Exchange_id>_<currency1><currency2>_<timeframe>.csv.gz`.
 
-    :param exchange_id: CDD exchange id (e.g. "binance")
-    :param currency_pair: currency pair `<currency1>/<currency2>` (e.g. "BTC/USDT")
+    :param exchange_id: CDD exchange id, e.g. "binance"
+    :param currency_pair: currency pair `<currency1>/<currency2>`, e.g. "BTC/USDT"
     :param timeframe: timeframe of the data to load. Possible values:
         'minute', 'hourly', 'daily'.
     :return: name for a file with CDD data
     """
-    # Make sure that data for the input exchange id was downloaded.
+    # Verify that data for the input exchange id was downloaded.
     dbg.dassert_in(
         exchange_id,
         _DOWNLOADED_EXCHANGES_TIMEFRAMES_CURRENCIES.keys(),
         msg="Data for exchange id='%s' was not downloaded" % exchange_id,
     )
-    # Make sure that data for the input exchange id and timeframe was
+    # Verify that data for the input exchange id and timeframe was
     # downloaded.
     downloaded_timeframes = _DOWNLOADED_EXCHANGES_TIMEFRAMES_CURRENCIES[
         exchange_id
@@ -81,7 +80,7 @@ def _get_file_name(exchange_id: str, currency_pair: str, timeframe: str) -> str:
         msg="Data for exchange id='%s', timeframe='%s' was not downloaded"
         % (exchange_id, timeframe),
     )
-    # Make sure that data for the input exchange id, timeframe, and currency
+    # Verify that data for the input exchange id, timeframe, and currency
     # pair was downloaded.
     downloaded_currencies = _DOWNLOADED_EXCHANGES_TIMEFRAMES_CURRENCIES[
         exchange_id
@@ -106,11 +105,10 @@ class CddLoader:
         self, exchange_id: str, currency_pair: str, timeframe: str, data_type: str
     ) -> pd.DataFrame:
         """
-        Load data from S3 and process it in the common format used by the
-        models.
+        Load data from S3 and process it for use downstream.
 
-        :param exchange_id: CDD exchange id
-        :param currency_pair: currency pair (e.g. "BTC/USDT")
+        :param exchange_id: CDD exchange id, e.g. "binance"
+        :param currency_pair: currency pair, e.g. "BTC/USDT"
         :param timeframe: timeframe of the data to load. Possible values:
             'minute', 'hourly', 'daily'.
         :param data_type: OHLCV or trade, bid/ask data
@@ -120,7 +118,7 @@ class CddLoader:
         file_name = _get_file_name(exchange_id, currency_pair, timeframe)
         s3_bucket_path = hs3.get_path()
         file_path = os.path.join(s3_bucket_path, file_name)
-        # Make sure that the file exists.
+        # Verify that the file exists.
         s3fs = hs3.get_s3fs("am")
         hs3.dassert_s3_exists(file_path, s3fs)
         # Read raw CDD data from S3.
@@ -196,7 +194,7 @@ class CddLoader:
         - Adding exchange_id and currency_pair columns
 
         :param data: raw data from S3
-        :param exchange_id: name of exchange, e.g. "binance"
+        :param exchange_id: CDD exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC/USDT"
         :return: transformed CDD data
         """
