@@ -40,9 +40,9 @@ class Test_CcxtExchange(hut.TestCase):
         end_date = "2021-09-10T00:00:00Z"
         # Extract data.
         actual = exchange_class.download_ohlcv_data(
+            curr_symbol="BTC/USDT",
             start_datetime=pd.Timestamp(start_date),
             end_datetime=pd.Timestamp(end_date),
-            curr_symbol="BTC/USDT",
         )
         # Verify that the output is a dataframe and verify its length.
         dbg.dassert_isinstance(actual, pd.DataFrame)

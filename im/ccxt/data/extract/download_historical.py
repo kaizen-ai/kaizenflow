@@ -166,7 +166,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         for pair in present_pairs:
             # Download OHLCV data.
             pair_data = exchange.download_ohlcv_data(
-                start_datetime, end_datetime, curr_symbol=pair, step=args.step
+                curr_symbol=pair, start_datetime=start_datetime, end_datetime=end_datetime, step=args.step
             )
             # Set up sleep time between iterations.
             time.sleep(args.sleep_time)

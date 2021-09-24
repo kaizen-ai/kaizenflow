@@ -77,18 +77,18 @@ class CcxtExchange:
 
     def download_ohlcv_data(
         self,
+        curr_symbol: str,
         start_datetime: pd.Timestamp,
         end_datetime: pd.Timestamp,
-        curr_symbol: str,
         step: Optional[int] = None,
         sleep_time: int = 1,
     ) -> pd.DataFrame:
         """
         Download minute OHLCV candles.
 
+        :param curr_symbol: a currency pair, e.g. "BTC/USDT"
         :param start_datetime: starting point for data
         :param end_datetime: end point for data
-        :param curr_symbol: a currency pair, e.g. "BTC/USDT"
         :param step: a number of candles per iteration
         :param sleep_time: time in seconds between iterations
         :return: OHLCV data from ccxt
@@ -97,22 +97,28 @@ class CcxtExchange:
         dbg.dassert(self._exchange.has["fetchOHLCV"])
         # Verify that the provided currency pair is present in exchange.
         dbg.dassert_in(curr_symbol, self.currency_pairs)
-        # Verify that date parameters are of correct format.
-        dbg.dassert_isinstance(
-            start_datetime,
-            pd.Timestamp,
-            msg="Type of start_datetime param is incorrect.",
-        )
-        dbg.dassert_isinstance(
-            end_datetime,
-            pd.Timestamp,
-            msg="Type of end_datetime param is incorrect.",
-        )
         # Make the minimal limit of 500 a default step.
         step = step or 500
+        # Get latest candles if no datetime is provided.
+        if end_datetime is None and start_datetime is None:
+            all_candles = self._exchange.fetch_ohlcv(
+                curr_symbol, timeframe="1m", limit=step
+            )
+            return all_candles
+        # Verify that date parameters are of correct format.
+        dbg.dassert_isinstance(
+        end_datetime,
+        pd.Timestamp,
+        msg="Type of end_datetime param is incorrect.",
+        )
+        dbg.dassert_isinstance(
+        start_datetime,
+        pd.Timestamp,
+        msg="Type of start_datetime param is incorrect.",
+        )
         # Convert datetime into ms.
         start_datetime = start_datetime.asm8.astype(int) // 1000000
-        # Convert datetime into ms.
+        # Convert get datetime into ms.
         end_datetime = end_datetime.asm8.astype(int) // 1000000
         # Get 1m timeframe as ms.
         duration = self._exchange.parse_timeframe("1m") * 1000
@@ -130,8 +136,8 @@ class CcxtExchange:
             )
             all_candles += candles
             time.sleep(sleep_time)
-        all_candles = pd.DataFrame(
-            all_candles,
-            columns=["timestamp", "open", "high", "low", "close", "volume"],
-        )
-        return all_candles
+            all_candles = pd.DataFrame(
+                all_candles,
+                columns=["timestamp", "open", "high", "low", "close", "volume"],
+            )
+            return all_candles
