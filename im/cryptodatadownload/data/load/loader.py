@@ -12,42 +12,14 @@ import pandas as pd
 import core.pandas_helpers as cphelp
 import helpers.datetime_ as hdatet
 import helpers.dbg as dbg
+import helpers.io_ as hio
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(Dan): Fill the lists and decide whether to put them outside of the file.
 # Data about downloaded currencies from the spreadsheet in CMTask41.
-_DOWNLOADED_EXCHANGES_TIMEFRAMES_CURRENCIES = {
-    "binance": {
-        "minute": [
-            "ADA/USDT",
-            "AVAX/USDT",
-            "BNB/USDT",
-            "BTC/USDT",
-            "DOGE/USDT",
-            "EOS/USDT",
-            "ETH/USDT",
-            "LINK/USDT",
-            "SOL/USDT",
-        ],
-    },
-    "kucoin": {
-        "minute": [
-            "ADA/USDT",
-            "AVAX/USDT",
-            "BNB/USDT",
-            "BTC/USDT",
-            "DOGE/USDT",
-            "EOS/USDT",
-            "ETH/USDT",
-            "FIL/USDT",
-            "LINK/USDT",
-            "SOL/USDT",
-            "XPR/USDT",
-        ],
-    },
-}
+_DOWNLOADED_CURRENCIES_PATH = "/im/data/shared/data/downloaded_currencies.json"
+_DOWNLOADED_CURRENCIES = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)["CDD"]
 
 
 def _get_file_name(exchange_id: str, currency_pair: str, timeframe: str) -> str:
@@ -66,12 +38,12 @@ def _get_file_name(exchange_id: str, currency_pair: str, timeframe: str) -> str:
     # Verify that data for the input exchange id was downloaded.
     dbg.dassert_in(
         exchange_id,
-        _DOWNLOADED_EXCHANGES_TIMEFRAMES_CURRENCIES.keys(),
+        _DOWNLOADED_CURRENCIES.keys(),
         msg="Data for exchange id='%s' was not downloaded" % exchange_id,
     )
     # Verify that data for the input exchange id and timeframe was
     # downloaded.
-    downloaded_timeframes = _DOWNLOADED_EXCHANGES_TIMEFRAMES_CURRENCIES[
+    downloaded_timeframes = _DOWNLOADED_CURRENCIES[
         exchange_id
     ]
     dbg.dassert_in(
@@ -82,7 +54,7 @@ def _get_file_name(exchange_id: str, currency_pair: str, timeframe: str) -> str:
     )
     # Verify that data for the input exchange id, timeframe, and currency
     # pair was downloaded.
-    downloaded_currencies = _DOWNLOADED_EXCHANGES_TIMEFRAMES_CURRENCIES[
+    downloaded_currencies = _DOWNLOADED_CURRENCIES[
         exchange_id
     ][timeframe]
     dbg.dassert_in(
