@@ -54,10 +54,10 @@ tmux send-keys "white; cd ${AMP_DIR} && $CMD" C-m C-m
 tmux new-window -n "dbash"
 tmux send-keys "green; cd ${AMP_DIR} && $CMD" C-m C-m
 #
-tmux new-window -n " "
+tmux new-window -n "regr"
 tmux send-keys "yellow; cd ${AMP_DIR} && $CMD" C-m C-m
 #
-tmux new-window -n " "
+tmux new-window -n "jupyter"
 tmux send-keys "yellow; cd ${AMP_DIR} && $CMD" C-m C-m
 
 # Go to the first tab.
