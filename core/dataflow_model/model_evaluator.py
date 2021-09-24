@@ -49,7 +49,7 @@ class StrategyEvaluator:
         position_intent_col: str,
         returns_col: str,
         spread_col: str,
-        # TODO(Paul): Allow specification of start and end times for csta.
+        # TODO(Paul): Allow specification of start and end times for stats.
         # This is useful for interactive analysis and/or zooming in on a
         # specific time period.
         # start: Optional[pd.Timestamp] = None,
@@ -1106,12 +1106,11 @@ def compute_stats_for_single_name_artifacts(
     aws_profile: Optional[str] = None,
 ) -> pd.DataFrame:
     """
-    Generates single-name csta.
+    Generates single-name stats.
 
     This function only requires maintaining at most one result bundle in-memory
     at a time.
 
-    :param result_df_cols: as in `process_single_name_result_df()`
     :return: dataframe of stats, with keys as column names and a row
         multiindex for grouped stats
     """
@@ -1125,7 +1124,7 @@ def compute_stats_for_single_name_artifacts(
         aws_profile=aws_profile,
     )
     for key, artifact in iter:
-        _LOG.info(
+        _LOG.debug(
             "load_experiment_artifacts: memory_usage=%s",
             hdbg.get_memory_usage_as_str(None),
         )
@@ -1134,7 +1133,7 @@ def compute_stats_for_single_name_artifacts(
         # Compute (intraday) PnL.
         pnl = df_for_key[prediction_col] * df_for_key[target_col]
         df_for_key["pnl"] = pnl
-        # Compute (intraday) csta.
+        # Compute (intraday) stats.
         stats_computer = cdtfmostcom.StatsComputer()
         stats[key] = stats_computer.compute_finance_stats(
             df_for_key,
@@ -1142,7 +1141,7 @@ def compute_stats_for_single_name_artifacts(
             positions_col=prediction_col,
             pnl_col="pnl",
         )
-    # Generate dataframe from dictionary of csta.
+    # Generate dataframe from dictionary of stats.
     stats_df = pd.DataFrame(stats)
     # Perform multiple tests adjustment.
     adj_pvals = csta.multipletests(
@@ -1258,7 +1257,7 @@ def _compute_single_name_stats(
         "half_spread_cost",
     ]
     hdbg.dassert_is_subset(expected_columns, df.columns.to_list())
-    # Use predictions/targets for csta. Alignment is important.
+    # Use predictions/targets for stats. Alignment is important.
     return stats
 
 
