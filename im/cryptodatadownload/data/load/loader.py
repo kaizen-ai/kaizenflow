@@ -23,17 +23,15 @@ _DOWNLOADED_CURRENCIES_PATH = "/im/data/shared/data/downloaded_currencies.json"
 _DOWNLOADED_CURRENCIES = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)["CDD"]
 
 
-def _get_file_name(exchange_id: str, currency_pair: str, timeframe: str) -> str:
+def _get_file_name(exchange_id: str, currency_pair: str) -> str:
     """
     Get name for a file with CDD data.
 
     File name is constructed in the following way:
-    `<Exchange_id>_<currency1><currency2>_<timeframe>.csv.gz`.
+    `<Exchange_id>_<currency1><currency2>_minute.csv.gz`.
 
     :param exchange_id: CDD exchange id, e.g. "binance"
     :param currency_pair: currency pair `<currency1>/<currency2>`, e.g. "BTC/USDT"
-    :param timeframe: timeframe of the data to load. Possible values:
-        'minute', 'hourly', 'daily'.
     :return: name for a file with CDD data
     """
     # Verify that data for the input exchange id was downloaded.
@@ -42,30 +40,16 @@ def _get_file_name(exchange_id: str, currency_pair: str, timeframe: str) -> str:
         _DOWNLOADED_CURRENCIES.keys(),
         msg="Data for exchange id='%s' was not downloaded" % exchange_id,
     )
-    # Verify that data for the input exchange id and timeframe was
+    # Verify that data for the input exchange id and currency pair was
     # downloaded.
-    downloaded_timeframes = _DOWNLOADED_CURRENCIES[
-        exchange_id
-    ]
-    dbg.dassert_in(
-        timeframe,
-        downloaded_timeframes,
-        msg="Data for exchange id='%s', timeframe='%s' was not downloaded"
-        % (exchange_id, timeframe),
-    )
-    # Verify that data for the input exchange id, timeframe, and currency
-    # pair was downloaded.
-    downloaded_currencies = _DOWNLOADED_CURRENCIES[
-        exchange_id
-    ][timeframe]
+    downloaded_currencies = _DOWNLOADED_CURRENCIES[exchange_id]
     dbg.dassert_in(
         currency_pair,
         downloaded_currencies,
-        msg="Data for exchange id='%s', timeframe='%s', currency pair='%s' was not downloaded"
-        % (exchange_id, timeframe, currency_pair),
+        msg="Data for exchange id='%s', currency pair='%s' was not downloaded"
+        % (exchange_id, currency_pair),
     )
-    # TODO(Dan): Discuss unification of file names logic on S3 for CCXT and CDD.
-    file_name = f"{exchange_id.capitalize()}_{currency_pair.replace('/', '')}_{timeframe}.csv.gz"
+    file_name = f"{exchange_id.capitalize()}_{currency_pair.replace('/', '')}_minute.csv.gz"
     return file_name
 
 
@@ -75,20 +59,18 @@ class CddLoader:
     """
 
     def read_data(
-        self, exchange_id: str, currency_pair: str, timeframe: str, data_type: str
+        self, exchange_id: str, currency_pair: str, data_type: str
     ) -> pd.DataFrame:
         """
         Load data from S3 and process it for use downstream.
 
         :param exchange_id: CDD exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC/USDT"
-        :param timeframe: timeframe of the data to load. Possible values:
-            'minute', 'hourly', 'daily'.
         :param data_type: OHLCV or trade, bid/ask data
         :return: processed CDD data
         """
         # Get file path for a CDD file.
-        file_name = _get_file_name(exchange_id, currency_pair, timeframe)
+        file_name = _get_file_name(exchange_id, currency_pair)
         s3_bucket_path = hs3.get_path()
         file_path = os.path.join(s3_bucket_path, file_name)
         # Verify that the file exists.
@@ -96,19 +78,17 @@ class CddLoader:
         hs3.dassert_s3_exists(file_path, s3fs)
         # Read raw CDD data from S3.
         _LOG.info(
-            "Reading CDD data for exchange id='%s', currencies='%s', timeframe='%s' from file='%s'...",
+            "Reading CDD data for exchange id='%s', currencies='%s', from file='%s'...",
             exchange_id,
             currency_pair,
-            timeframe,
             file_path,
         )
         data = cphelp.read_csv(file_path, s3fs)
         # Apply transformation to raw data.
         _LOG.info(
-            "Processing CDD data for exchange id='%s', currencies='%s', timeframe='%s'...",
+            "Processing CDD data for exchange id='%s', currencies='%s'...",
             exchange_id,
             currency_pair,
-            timeframe,
         )
         transformed_data = self._transform(
             data, exchange_id, currency_pair, data_type
