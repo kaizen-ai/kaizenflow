@@ -6,6 +6,7 @@ import im.ccxt.data.load.loader as cdlloa
 
 import logging
 import os
+from typing import Optional
 
 import pandas as pd
 
