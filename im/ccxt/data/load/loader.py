@@ -178,26 +178,34 @@ class CcxtLoader:
         # Rename col with original Unix ms epoch.
         data = data.rename({"timestamp": "epoch"}, axis=1)
         # Transform Unix epoch into ET timestamp.
-        data["timestamp"] = self._convert_epochs_to_et_timestamp(data["epoch"])
+        data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
         # Add columns with exchange id and currency pair.
         data["exchange_id"] = exchange_id
         data["currency_pair"] = currency_pair
         return data
 
     @staticmethod
-    def _convert_epochs_to_et_timestamp(epoch_col: pd.Series) -> pd.Series:
+    def _convert_epochs_to_timestamp(
+        epoch_col: pd.Series,
+        tz: str = None,
+    ) -> pd.Series:
         """
-        Convert Unix epoch to timestamp in ET.
+        Convert Unix epoch to timestamp in a specified timezone.
 
-        All Unix time epochs in CDD are provided in ms and in UTC tz.
+        All Unix time epochs in CCXT are provided in ms and in UTC tz.
 
         :param epoch_col: Series with Unix time epochs
-        :return: Series with epochs converted to ET timestamps
+        :param timezone: "ET" or "UTC"
+        :return: Series with epochs converted to timestamps
         """
-        # Convert to timestamp.
+        # Set tz value and verify that it is valid.
+        tz = tz or "ET"
+        dbg.dassert_in(tz, ["ET", "UTC"])
+        # Convert to timestamp in UTC tz.
         timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
-        # Convert to ET tz.
-        timestamp_col = timestamp_col.dt.tz_convert(hdatet.get_ET_tz())
+        # Convert to ET tz if specified.
+        if tz == "ET":
+            timestamp_col = timestamp_col.dt.tz_convert(hdatet.get_ET_tz())
         return timestamp_col
 
     @staticmethod
