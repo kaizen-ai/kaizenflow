@@ -203,7 +203,7 @@ class CddLoader:
     @staticmethod
     def _convert_epochs_to_timestamp(epoch_col: pd.Series) -> pd.Series:
         """
-        Convert Unix epoch to timestamp in ET.
+        Convert Unix epoch to timestamp in a specified timezone.
 
         All Unix time epochs in CDD are provided in ms and in UTC tz.
 
@@ -212,8 +212,9 @@ class CddLoader:
         """
         # Convert to timestamp in UTC tz.
         timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
-        # Convert to ET tz.
-        timestamp_col = timestamp_col.dt.tz_convert(hdatet.get_ET_tz())
+        # Convert to ET tz if specified.
+        if tz == "ET":
+            timestamp_col = timestamp_col.dt.tz_convert(hdatet.get_ET_tz())
         return timestamp_col
 
     @staticmethod
