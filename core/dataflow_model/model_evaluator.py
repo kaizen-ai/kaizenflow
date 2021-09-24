@@ -1106,7 +1106,7 @@ def process_single_name_result_df(
     This function
       - Calculates PnL in two ways
       - Calculates half-spread costs
-      - Standardizes column names.
+      - Standardizes column names
 
     :param df: result dataframe
     :param position_intent_1_col: one-step ahead position intents in units of
@@ -1117,6 +1117,8 @@ def process_single_name_result_df(
         two-step ahead z-scored returns)
     :param target_col: the target of `prediction`, aligned with `prediction`
         (e.g., two-step ahead z-scored returns)
+    :param start: first time to load (inclusive); `None` means all available
+    :param end: last time to load (inclusive); `None` means all available
     :return: dataframe with pnl and spread costs calculated
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
@@ -1160,57 +1162,9 @@ def process_single_name_result_df(
     return df
 
 
-def compute_single_name_stats(
-    df: pd.DataFrame,
-) -> pd.DataFrame:
-    """
-    Calculate stats.
-
-    This function
-      - Calculates stats for the alpha (at the native frequency)
-      - Resamples PnL and related series to business daily
-
-    # TODO(Paul): Currently some stats require an `index.freq`. Remove this
-    # requirement or add an optional resampling step to this function to be
-    # applied before stats calculations.
-
-    :return: business-daily resampled results dataframe and stats dataframe
-        (where stats are generated from `prediction_col` and `target_col`)
-    """
-    dbg.dassert_isinstance(df, pd.DataFrame)
-    expected_columns = [
-        "position_intent_1",
-        "ret_0",
-        "spread_0",
-        "prediction",
-        "target",
-        "research_pnl_2",
-        "pnl_0",
-        "half_spread_cost",
-    ]
-    dbg.dassert_is_subset(expected_columns, df.columns.to_list())
-    # Use predictions/targets for stats. Alignment is important.
-    stats_computer = cstats.StatsComputer()
-    stats = stats_computer.compute_finance_stats(
-        df,
-        returns_col="target",
-        positions_col="prediction",
-        pnl_col="research_pnl_2",
-    )
-    return stats
-
-
-def incrementally_average(
-    mean_n_df: pd.DataFrame,
-    next_df: pd.DataFrame,
-    n: int,
-) -> pd.DataFrame:
-    dbg.dassert_isinstance(mean_n_df, pd.DataFrame)
-    dbg.dassert_isinstance(next_df, pd.DataFrame)
-    dbg.dassert_lt(-1, n)
-    adj_diff = next_df.sub(mean_n_df, fill_value=0) / (n + 1)
-    mean_n1_df = adj_diff.add(mean_n_df, fill_value=0)
-    return mean_n1_df
+# #############################################################################
+# Incremental processing
+# #############################################################################
 
 
 def compute_stats_for_single_name_artifacts(
@@ -1257,7 +1211,7 @@ def compute_stats_for_single_name_artifacts(
             end=end,
         )
         # Compute (intraday) stats.
-        stats[key] = compute_single_name_stats(df_for_key)
+        stats[key] = _compute_single_name_stats(df_for_key)
     # Generate dataframe from dictionary of stats.
     stats_df = pd.DataFrame(stats)
     # Perform multiple tests adjustment.
@@ -1271,3 +1225,58 @@ def compute_stats_for_single_name_artifacts(
     stats_df = pd.concat([stats_df, adj_pvals], axis=0)
     _LOG.info("memory_usage=%s", dbg.get_memory_usage_as_str(None))
     return stats_df
+
+
+def _compute_single_name_stats(
+    df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Calculate stats.
+
+    This function
+      - Calculates stats for the alpha (at the native frequency)
+      - Resamples PnL and related series to business daily
+
+    # TODO(Paul): Currently some stats require an `index.freq`. Remove this
+    # requirement or add an optional resampling step to this function to be
+    # applied before stats calculations.
+
+    :return: business-daily resampled results dataframe and stats dataframe
+        (where stats are generated from `prediction_col` and `target_col`)
+    """
+    dbg.dassert_isinstance(df, pd.DataFrame)
+    expected_columns = [
+        "position_intent_1",
+        "ret_0",
+        "spread_0",
+        "prediction",
+        "target",
+        "research_pnl_2",
+        "pnl_0",
+        "half_spread_cost",
+    ]
+    dbg.dassert_is_subset(expected_columns, df.columns.to_list())
+    # Use predictions/targets for stats. Alignment is important.
+    stats_computer = cstats.StatsComputer()
+    stats = stats_computer.compute_finance_stats(
+        df,
+        returns_col="target",
+        positions_col="prediction",
+        pnl_col="research_pnl_2",
+    )
+    return stats
+
+
+def _incrementally_average(
+    mean_n_df: pd.DataFrame,
+    next_df: pd.DataFrame,
+    n: int,
+) -> pd.DataFrame:
+    dbg.dassert_isinstance(mean_n_df, pd.DataFrame)
+    dbg.dassert_isinstance(next_df, pd.DataFrame)
+    dbg.dassert_lt(-1, n)
+    adj_diff = next_df.sub(mean_n_df, fill_value=0) / (n + 1)
+    mean_n1_df = adj_diff.add(mean_n_df, fill_value=0)
+    return mean_n1_df
+
+
