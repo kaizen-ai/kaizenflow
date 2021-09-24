@@ -1,10 +1,8 @@
 import pytest
 
 import helpers.unit_test as hut
-# TODO(Dan): return to code after CmTask43 is fixed.
-# import im.ccxt.data.load.loader as cdlloa
+import im.ccxt.data.load.loader as cdlloa
 
-import pytest
 
 class TestGetFilePath(hut.TestCase):
     def test1(self) -> None:
