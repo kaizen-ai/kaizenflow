@@ -6,6 +6,7 @@ import im.cryptodatadownload.data.load.loader as crdall
 
 import logging
 import os
+from typing import Optional
 
 import pandas as pd
 
@@ -115,7 +116,6 @@ class CddLoader:
         return transformed_data
 
     # TODO(*): Consider making `exchange_id` a class member.
-    # TODO(Dan): Decide whether `timestamp` col should contain "+00:00" at the end (compare with CCXT).
     def _transform(
         self,
         data: pd.DataFrame,
@@ -133,10 +133,10 @@ class CddLoader:
             1631145720000  2021-09-09 00:02:00  ETH/USDT  3501.59  3513.10  3499.89  3513.09  579.5656    2032108      1118
 
         Output data example:
-            timestamp            open     high     low      close    volume    epoch          currency_pair exchange_id
-            2021-09-09 00:00:00  3499.01  3499.49  3496.17  3496.36  346.4812  1631145600000  ETH/USDT      binance
-            2021-09-09 00:01:00  3496.36  3501.59  3495.69  3501.59  401.9576  1631145660000  ETH/USDT      binance
-            2021-09-09 00:02:00  3501.59  3513.10  3499.89  3513.09  579.5656  1631145720000  ETH/USDT      binance
+            timestamp                  open     high     low      close    volume    epoch          currency_pair exchange_id
+            2021-09-08 20:00:00-04:00  3499.01  3499.49  3496.17  3496.36  346.4812  1631145600000  ETH/USDT      binance
+            2021-09-08 20:01:00-04:00  3496.36  3501.59  3495.69  3501.59  401.9576  1631145660000  ETH/USDT      binance
+            2021-09-08 20:02:00-04:00  3501.59  3513.10  3499.89  3513.09  579.5656  1631145720000  ETH/USDT      binance
 
         :param data: dataframe with CDD data from S3
         :param exchange_id: CDD exchange id, e.g. "binance"
@@ -176,8 +176,8 @@ class CddLoader:
         )
         # Rename col with original Unix ms epoch.
         data = data.rename({"unix": "epoch"}, axis=1)
-        # Transform dates into standard timestamps.
-        data["timestamp"] = hdatet.to_generalized_datetime(data["date"])
+        # Transform Unix epoch into ET timestamp.
+        data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
         # Rename col with traded volume in amount of the 1st currency in pair.
         data = data.rename(
             {"Volume " + currency_pair.split("/")[0]: "volume"}, axis=1
@@ -187,6 +187,30 @@ class CddLoader:
         # Add a col with exchange id.
         data["exchange_id"] = exchange_id
         return data
+
+    @staticmethod
+    def _convert_epochs_to_timestamp(
+        epoch_col: pd.Series,
+        tz: Optional[str] = None,
+    ) -> pd.Series:
+        """
+        Convert Unix epoch to timestamp in a specified timezone.
+
+        All Unix time epochs in CDD are provided in ms and in UTC tz.
+
+        :param epoch_col: Series with Unix time epochs
+        :param timezone: "ET" or "UTC"
+        :return: Series with epochs converted to timestamps
+        """
+        # Set tz value and verify that it is valid.
+        tz = tz or "ET"
+        dbg.dassert_in(tz, ["ET", "UTC"])
+        # Convert to timestamp in UTC tz.
+        timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
+        # Convert to ET tz if specified.
+        if tz == "ET":
+            timestamp_col = timestamp_col.dt.tz_convert(hdatet.get_ET_tz())
+        return timestamp_col
 
     @staticmethod
     def _apply_ohlcv_transformation(data: pd.DataFrame) -> pd.DataFrame:
