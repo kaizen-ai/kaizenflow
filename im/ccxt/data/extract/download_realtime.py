@@ -7,13 +7,11 @@ import logging
 import os
 import time
 
-import pandas as pd
-
+import helpers.datetime_ as hdt
 import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.parser as hparse
 import im.ccxt.data.extract.exchange_class as deecla
-import helpers.datetime_ as hdt
 
 _LOG = logging.getLogger(__name__)
 
@@ -57,7 +55,7 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         # TODO(Danya): remove after adding the SQL connection.
         "--incremental",
-        action="store_true"
+        action="store_true",
     )
     parser = hparse.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
@@ -79,7 +77,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     currency_pairs = dict()
     for exchange_id in exchange_ids:
         # Initialize a class instance for each provided exchange.
-        exchange_class = deecla.CcxtExchange(exchange_id, api_keys_path=args.api_keys)
+        exchange_class = deecla.CcxtExchange(
+            exchange_id, api_keys_path=args.api_keys
+        )
         # Store the exchange class instance.
         exchanges[exchange_id] = exchange_class
         if args.currency_pairs == "all":
@@ -90,20 +90,23 @@ def _main(parser: argparse.ArgumentParser) -> None:
             provided_pairs = args.currency_pairs.split()
             # Store currency pairs present in each exchange.
             currency_pairs[exchange_id] = [
-                curr for curr in provided_pairs if curr in exchange_class.currency_pairs
+                curr
+                for curr in provided_pairs
+                if curr in exchange_class.currency_pairs
             ]
     # Launch an infinite loop.
     while True:
         for exchange_id in exchange_ids:
             for pair in currency_pairs[exchange_id]:
                 # Download latest 5 minutes for the currency pair and exchange.
-                pair_data = exchanges[exchange_id].download_ohlcv_data(curr_symbol=pair, step=5)
+                pair_data = exchanges[exchange_id].download_ohlcv_data(
+                    curr_symbol=pair, step=5
+                )
                 # Save data with timestamp.
                 # TODO (Danya): replace saving with DB update.
-                file_name = f"{exchange_id}_{pair.replace('/', '_')}_{hdt.get_timestamp('ET')}.csv"
+                file_name = f"{exchange_id}_{pair.replace('/', '_')}_{hdt.get_timestamp('ET')}.csv.gz"
                 file_path = os.path.join(args.dst_dir, file_name)
-                _LOG.warning("Saved to %s", file_path)
-                pair_data.to_csv(file_path)
+                pair_data.to_csv(file_path, index=False, compression="gzip")
         time.sleep(60)
 
 
