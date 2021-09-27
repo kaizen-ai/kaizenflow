@@ -104,7 +104,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 file_path = os.path.join(args.dst_dir, file_name)
                 _LOG.warning("Saved to %s", file_path)
                 pair_data.to_csv(file_path)
-                time.sleep(60)
+        time.sleep(60)
 
 
 if __name__ == "__main__":
