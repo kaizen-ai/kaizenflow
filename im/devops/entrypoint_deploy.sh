@@ -27,6 +27,6 @@ export PYTHONPATH=/app:$PYTHONPATH
 echo "PYTHONPATH=$PYTHONPATH"
 
 # Initialize the DB.
-./im/devops//init_im_db.py --db $POSTGRES_DB
+./im/devops/init_im_db.py --db $POSTGRES_DB
 
 eval "$@"
