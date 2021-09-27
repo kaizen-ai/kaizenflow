@@ -23,6 +23,7 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
+        # TODO(Danya): replace dst_dir with SQL connection.
         "--dst_dir",
         action="store",
         required=True,
@@ -53,6 +54,7 @@ def _parse() -> argparse.ArgumentParser:
         " 'all' for each currency pair in exchange",
     )
     parser.add_argument(
+        # TODO(Danya): remove after adding the SQL connection.
         "--incremental",
         action="store_true"
     )
@@ -65,19 +67,21 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create the directory.
     hio.create_dir(args.dst_dir, incremental=args.incremental)
-    start_datetime = pd.Timestamp(args.start_datetime)
     # If end_date is not provided, get current time.
     if args.exchange_ids == "all":
         # Iterate over all available exchanges.
         exchange_ids = ["binance", "kucoin"]
     else:
-        # Get a single exchange.
+        # Get provided exchanges.
         exchange_ids = args.exchange_ids.split()
-    _LOG.info("Getting data for exchanges %s", ", ".join(exchange_ids))
+    exchanges = []
+    for exchange_id in exchange_ids:
+        # Initialize a class instance for each provided exchange.
+        exchanges.append(deecla.CcxtExchange(exchange_id, api_keys_path=args.api_keys))
+    # Launch an infinite loop.
     while True:
-        for exchange_id in exchange_ids:
+        for exchange in exchanges:
             # Initialize the exchange class.
-            exchange = deecla.CcxtExchange(exchange_id, api_keys_path=args.api_keys)
             if args.currency_pairs == "all":
                 # Iterate over all currencies available for exchange.
                 present_pairs = exchange.currency_pairs
