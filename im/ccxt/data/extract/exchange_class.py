@@ -104,6 +104,10 @@ class CcxtExchange:
             all_candles = self._exchange.fetch_ohlcv(
                 curr_symbol, timeframe="1m", limit=step
             )
+            all_candles = pd.DataFrame(
+                all_candles,
+                columns=["timestamp", "open", "high", "low", "close", "volume"],
+            )
             return all_candles
         # Verify that date parameters are of correct format.
         dbg.dassert_isinstance(
