@@ -2,11 +2,12 @@
 name = "im"
 version = "0.1.0"
 description = ""
-authors = ""
+authors = [""]
 
 [tool.poetry.dependencies]
-pandas = "*"
+pandas = "^1.2.0"
 psycopg2-binary = "*"
+python = "^3.9"
 
 [tool.poetry.dev-dependencies]
 
