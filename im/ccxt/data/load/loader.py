@@ -35,7 +35,9 @@ def _get_file_name(exchange_id: str, currency_pair: str) -> str:
     :return: name for a file with CCXT data
     """
     # Extract data about downloaded currencies for CCXT.
-    downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)["CCXT"]
+    downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)[
+        "CCXT"
+    ]
     # Verify that data for the input exchange id was downloaded.
     dbg.dassert_in(
         exchange_id,
