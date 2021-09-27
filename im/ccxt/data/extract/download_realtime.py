@@ -87,10 +87,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
             currency_pairs[exchange_id] = exchange_class.currency_pairs
         else:
             # Iterate over provided currencies.
-            currency_pairs = args.currency_pairs.split()
+            provided_pairs = args.currency_pairs.split()
             # Store currency pairs present in each exchange.
             currency_pairs[exchange_id] = [
-                curr for curr in currency_pairs if curr in exchange_class.currency_pairs
+                curr for curr in provided_pairs if curr in exchange_class.currency_pairs
             ]
     # Launch an infinite loop.
     while True:
