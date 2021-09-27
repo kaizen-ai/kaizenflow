@@ -79,29 +79,25 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for exchange_id in exchange_ids:
         # Initialize a class instance for each provided exchange.
         exchange_class = deecla.CcxtExchange(exchange_id, api_keys_path=args.api_keys)
+        # Store the exchange class instance.
         exchanges[exchange_id] = exchange_class
-        currency_pairs[exchange_id] = exchange_class.get_exchange_currencies()
+        if args.currency_pairs == "all":
+            # Store all currency pairs for each exchange.
+            currency_pairs[exchange_id] = exchange_class.currency_pairs
+        else:
+            # Iterate over provided currencies.
+            currency_pairs = args.currency_pairs.split()
+            # Store currency pairs present in each exchange.
+            currency_pairs[exchange_id] = [
+                curr for curr in currency_pairs if curr in exchange_class.currency_pairs
+            ]
     # Launch an infinite loop.
     while True:
-        for exchange in exchanges:
-            # Initialize the exchange class.
-            if args.currency_pairs == "all":
-                # Iterate over all currencies available for exchange.
-                present_pairs = exchange.currency_pairs
-            else:
-                # Iterate over provided currency.
-                currency_pairs = args.currency_pairs.split()
-                # Leave only currencies present in exchange.
-                present_pairs = [
-                    curr for curr in currency_pairs if curr in exchange.currency_pairs
-                ]
-            for pair in present_pairs:
-                # Download OHLCV data.
-                pair_data = exchange.download_ohlcv_data(
-                    curr_symbol=pair, step=5
-                )
-                # Set up sleep time between iterations.
+        for exchange_id in exchange_ids:
+            for pair in currency_pairs[exchange_id]:
+                pair_data = exchanges[exchange_id].download_ohlcv_data(curr_symbol=pair, step=5)
                 time.sleep(60)
+
 
 if __name__ == "__main__":
     _main(_parse())
