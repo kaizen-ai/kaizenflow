@@ -11,9 +11,12 @@ source /${ENV_NAME}/bin/activate
 # TODO(gp): Since we execute bash in eval we lose this config.
 set -o vi
 
+# CmampTask16: Add env var.
+export HOME=/app
+
 # We use ~/.aws to pass the credentials.
 # TODO(gp): -> set_aws_env_vars.sh
-#source devops/docker_build/entrypoint/aws_credentials.sh
+source devops/docker_build/entrypoint/aws_credentials.sh
 
 # TODO(gp): -> set_env_vars.sh
 source devops/docker_build/entrypoint/patch_environment_variables.sh
@@ -40,9 +43,6 @@ echo "BUILD_TAG='$BUILD_TAG'"
 
 echo "which python: "$(which python)
 echo "check pandas package: "$(python -c "import pandas; print(pandas)")
-
-# CmampTask16: Add env var.
-export HOME=/app/home
 
 echo "PATH=$PATH"
 echo "PYTHONPATH=$PYTHONPATH"
