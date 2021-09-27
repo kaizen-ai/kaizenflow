@@ -100,7 +100,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 pair_data = exchanges[exchange_id].download_ohlcv_data(curr_symbol=pair, step=5)
                 # Save data with timestamp.
                 # TODO (Danya): replace saving with DB update.
-                file_name = f"{exchange_id}_{pair.replace('/', '_')}_{hdt.get_timestamp('ET')}"
+                file_name = f"{exchange_id}_{pair.replace('/', '_')}_{hdt.get_timestamp('ET')}.csv"
                 file_path = os.path.join(args.dst_dir, file_name)
                 _LOG.warning("Saved to %s", file_path)
                 pair_data.to_csv(file_path)
