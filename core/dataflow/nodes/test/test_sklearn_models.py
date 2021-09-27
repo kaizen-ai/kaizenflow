@@ -231,6 +231,34 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
         )
         self.check_string(df_str)
 
+    def test8(self) -> None:
+        """
+        Use `sample_weight_col` in `predict()`.
+        """
+        data = self._get_data(2)
+        data["weights"] = range(0, data.shape[0])
+        data["weights"].loc["2010-01-01 00:31:00":] = np.nan
+        data_fit = data.loc[:"2010-01-01 00:29:00"]
+        data_predict = data.loc["2010-01-01 00:30:00":]
+        config = cconfig.get_config_from_nested_dict(
+            {
+                "x_vars": ["x"],
+                "y_vars": ["y"],
+                "steps_ahead": 2,
+                "sample_weight_col": ["weights"],
+                "nan_mode": "drop",
+            }
+        )
+        node = cdnsm.ContinuousSkLearnModel(
+            "sklearn",
+            model_func=slmode.LinearRegression,
+            **config.to_dict(),
+        )
+        node.fit(data_fit)["df_out"]
+        df_out = node.predict(data_predict)["df_out"]
+        df_str = hut.convert_df_to_string(df_out.round(3), index=True, decimals=3)
+        self.check_string(df_str)
+
     def _get_data(self, lag: int) -> pd.DataFrame:
         """
         Generate "random returns".
