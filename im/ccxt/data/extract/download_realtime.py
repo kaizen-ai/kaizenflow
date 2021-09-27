@@ -74,10 +74,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     else:
         # Get provided exchanges.
         exchange_ids = args.exchange_ids.split()
-    exchanges = []
+    exchanges = dict()
+    currency_pairs = dict()
     for exchange_id in exchange_ids:
         # Initialize a class instance for each provided exchange.
-        exchanges.append(deecla.CcxtExchange(exchange_id, api_keys_path=args.api_keys))
+        exchange_class = deecla.CcxtExchange(exchange_id, api_keys_path=args.api_keys)
+        exchanges[exchange_id] = exchange_class
+        currency_pairs[exchange_id] = exchange_class.get_exchange_currencies()
     # Launch an infinite loop.
     while True:
         for exchange in exchanges:
