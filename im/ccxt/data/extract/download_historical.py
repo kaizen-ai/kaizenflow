@@ -158,15 +158,16 @@ def _main(parser: argparse.ArgumentParser) -> None:
             if len(present_pairs) != len(currency_pairs):
                 _LOG.warning(
                     "Currencies %s not present in exchange %s!",
-                    list(
-                        set.difference(set(currency_pairs), set(present_pairs))
-                    ),
+                    list(set.difference(set(currency_pairs), set(present_pairs))),
                 )
         _LOG.debug("Getting data for currencies %s", ", ".join(present_pairs))
         for pair in present_pairs:
             # Download OHLCV data.
             pair_data = exchange.download_ohlcv_data(
-                start_datetime, end_datetime, curr_symbol=pair, step=args.step
+                curr_symbol=pair,
+                start_datetime=start_datetime,
+                end_datetime=end_datetime,
+                step=args.step,
             )
             # Set up sleep time between iterations.
             time.sleep(args.sleep_time)
