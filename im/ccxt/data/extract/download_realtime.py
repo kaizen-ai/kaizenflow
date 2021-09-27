@@ -13,6 +13,7 @@ import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.parser as hparse
 import im.ccxt.data.extract.exchange_class as deecla
+import helpers.datetime_ as hdt
 
 _LOG = logging.getLogger(__name__)
 
@@ -95,7 +96,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     while True:
         for exchange_id in exchange_ids:
             for pair in currency_pairs[exchange_id]:
+                # Download latest 5 minutes for the currency pair and exchange.
                 pair_data = exchanges[exchange_id].download_ohlcv_data(curr_symbol=pair, step=5)
+                # Save data with timestamp.
+                # TODO (Danya): replace saving with DB update.
+                file_name = f"{exchange_id}_{pair.replace('/', '_')}_{hdt.get_timestamp('Eastern')}"
+                file_path = os.path.join(args.dst_dir, file_name)
+                pair_data.to_csv(file_path)
                 time.sleep(60)
 
 
