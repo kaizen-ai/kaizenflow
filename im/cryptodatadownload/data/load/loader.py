@@ -18,11 +18,11 @@ import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
-# Data about downloaded currencies from the spreadsheet in CMTask41.
+# Path to the data about downloaded currencies from the spreadsheet in CMTask41.
 _DOWNLOADED_CURRENCIES_PATH = "im/data/downloaded_currencies.json"
-_DOWNLOADED_CURRENCIES = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)["CDD"]
 
 
+# TODO(Dan): Update docstring after CMTask78 is finished.
 def _get_file_name(exchange_id: str, currency_pair: str) -> str:
     """
     Get name for a file with CDD data.
@@ -34,15 +34,17 @@ def _get_file_name(exchange_id: str, currency_pair: str) -> str:
     :param currency_pair: currency pair `<currency1>/<currency2>`, e.g. "BTC/USDT"
     :return: name for a file with CDD data
     """
+    # Extract data about downloaded currencies for CDD.
+    downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)["CDD"]
     # Verify that data for the input exchange id was downloaded.
     dbg.dassert_in(
         exchange_id,
-        _DOWNLOADED_CURRENCIES.keys(),
+        downloaded_currencies_info.keys(),
         msg="Data for exchange id='%s' was not downloaded" % exchange_id,
     )
     # Verify that data for the input exchange id and currency pair was
     # downloaded.
-    downloaded_currencies = _DOWNLOADED_CURRENCIES[exchange_id]
+    downloaded_currencies = downloaded_currencies_info[exchange_id]
     dbg.dassert_in(
         currency_pair,
         downloaded_currencies,
