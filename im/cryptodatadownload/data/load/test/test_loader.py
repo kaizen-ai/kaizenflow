@@ -42,4 +42,16 @@ class TestGetFileName(hut.TestCase):
             crdall._get_file_name(exchange_id, currency_pair)
 
 
+class TestCddLoader(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Test that locally stored files are being read correctly.
+        """
+        cdd_loader = crdall.CddLoader("/app/im")
+        actual = cdd_loader.read_data("binance", "BTC/USDT", "OHLCV")
+        # Check the output values.
+        actual_string = hut.convert_df_to_json_string(actual)
+        self.check_string(actual_string)
+
+
 # TODO(Dan): add tests for CddLoader.read_data() once aws is fixed #28.
