@@ -66,8 +66,8 @@ class CcxtLoader:
         """
         Load CCXT data.
 
-        :param: root_dir: either a local root path (e.g., "/app/im/ccxt")
-            or an S3 path ("s3://alphamatic-data/data/ccxt)
+        :param: root_dir: either a local root path (e.g., "/app/im")
+            or an S3 path ("s3://alphamatic-data/data)
         :param: aws_profile: AWS profile name (e.g., "am")
         """
         self._root_dir = root_dir
