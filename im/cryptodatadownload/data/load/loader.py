@@ -59,8 +59,6 @@ class CddLoader:
 
         :param exchange_id: CDD exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC/USDT"
-        :param timeframe: timeframe of the data to load. Possible values:
-            'minute', 'hourly', 'daily'.
         :param data_type: OHLCV or trade, bid/ask data
         :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
         :return: processed CDD data
@@ -232,10 +230,7 @@ class CddLoader:
         return data
 
     @staticmethod
-    def _convert_epochs_to_timestamp(
-        epoch_col: pd.Series,
-        tz: Optional[str] = None,
-    ) -> pd.Series:
+    def _convert_epochs_to_timestamp(epoch_col: pd.Series) -> pd.Series:
         """
         Convert Unix epoch to timestamp in a specified timezone.
 
