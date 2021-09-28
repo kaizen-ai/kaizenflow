@@ -1712,10 +1712,14 @@ def plot_rolling_annualized_sharpe_ratio(
     """
     title_suffix = title_suffix or ""
     srs = hdataf.apply_nan_mode(srs, mode="fill_with_zero")
+    # Resample to business daily time scale.
+    srs = srs.resample("B").sum(min_count=1)
+    points_per_year = hdataf.infer_sampling_points_per_year(srs)
     min_periods = tau * max_depth
     rolling_sharpe = csigna.compute_rolling_annualized_sharpe_ratio(
         srs,
         tau,
+        points_per_year=points_per_year,
         min_periods=min_periods,
         min_depth=min_depth,
         max_depth=max_depth,

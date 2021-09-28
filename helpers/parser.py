@@ -148,7 +148,7 @@ def parse_dst_dir_arg(args: argparse.Namespace) -> Tuple[str, bool]:
 def add_action_arg(
     parser: argparse.ArgumentParser,
     valid_actions: List[str],
-    default_actions: List[str],
+    default_actions: Optional[List[str]],
 ) -> argparse.ArgumentParser:
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument(
@@ -163,11 +163,12 @@ def add_action_arg(
         choices=valid_actions,
         help="Actions to skip",
     )
-    parser.add_argument(
-        "--all",
-        action="store_true",
-        help="Run all the actions (%s)" % (" ".join(default_actions)),
-    )
+    if default_actions is not None:
+        parser.add_argument(
+            "--all",
+            action="store_true",
+            help="Run all the actions (%s)" % (" ".join(default_actions)),
+        )
     return parser
 
 
@@ -404,7 +405,7 @@ def process_json_output_metadata_args(
     dbg.dassert_isinstance(output_metadata, dict)
     if args.json_output_metadata is None:
         return None
-    file_name = args.json_output_metadata
+    file_name: str = args.json_output_metadata
     _LOG.info("Saving output metadata into file '%s'", file_name)
     if not file_name.endswith(".json"):
         _LOG.warning(
@@ -421,5 +422,5 @@ def read_output_metadata(output_metadata_file: str) -> OutputMetadata:
     """
     Read the output metdata.
     """
-    output_metadata = hio.from_json(output_metadata_file)
+    output_metadata: OutputMetadata = hio.from_json(output_metadata_file)
     return output_metadata

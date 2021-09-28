@@ -1,5 +1,6 @@
 config without 'commit_hash' field:
-config: OrderedDict([('key', 'val')])
+config:
+  key: val
 result_nid: leaf_node
 method: fit
 result_df:    col0  col1  col2  col3  col4

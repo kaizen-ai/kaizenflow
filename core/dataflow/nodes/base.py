@@ -1,7 +1,6 @@
 import abc
 import collections
 import copy
-import datetime
 import functools
 import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
@@ -83,7 +82,9 @@ class FitPredictNode(cdtfc.Node, abc.ABC):
         return None
 
     # TODO(gp): values -> info
-    def _set_info(self, method: cdtfc.Method, values: collections.OrderedDict) -> None:
+    def _set_info(
+        self, method: cdtfc.Method, values: collections.OrderedDict
+    ) -> None:
         """
         The passed `info` is copied internally.
         """
@@ -808,3 +809,79 @@ def _postprocess_dataframe_dict(
     if col_group:
         df = pd.concat([df], axis=1, keys=[col_group])
     return df
+
+
+# #############################################################################
+# Dataframe stacking/unstacking
+# #############################################################################
+
+
+class DfStacker:
+    """
+    Stack and unstack dataframes with identical columns.
+
+    A use case for this transformation is learning a pooled model.
+    """
+
+    @staticmethod
+    def preprocess(
+        dfs: Dict[cdtfu.NodeColumn, pd.DataFrame],
+    ) -> pd.DataFrame:
+        """
+        Stack dataframes with identical columns into a single dataframe.
+
+        :param dfs: dictionary of dataframes with identical columns
+        :return: dataframes from `dfs` stacked vertically. The indices are not
+            preserved, and the output dataframe has a range index.
+        """
+        DfStacker._validate_dfs(dfs)
+        df = pd.concat(dfs.values()).reset_index(drop=True)
+        return df
+
+    @staticmethod
+    def postprocess(
+        dfs: Dict[cdtfu.NodeColumn, pd.DataFrame],
+        df: pd.DataFrame,
+    ) -> Dict[cdtfu.NodeColumn, pd.DataFrame]:
+        """
+        Unstack dataframes according to location in `dfs`
+
+        :param dfs: as in `preprocess()`
+        :param df: like the output of `preprocess()` in terms of shape and
+            indices
+        :return: a dictionary of dataframes keyed as `dfs`. Each value is a
+            dataframe with the same index and same columns as the analogous
+            dataframe of `dfs`.
+        """
+        DfStacker._validate_dfs(dfs)
+        counter = 0
+        out_dfs = {}
+        for key, value in dfs.items():
+            length = value.shape[0]
+            out_df = df.iloc[counter : counter + length].copy()
+            dbg.dassert_eq(
+                out_df.shape[0],
+                value.shape[0],
+                msg="Dimension mismatch for key=%s" % key,
+            )
+            out_df.index = value.index
+            out_dfs[key] = out_df
+            counter += length
+        return out_dfs
+
+    @staticmethod
+    def _validate_dfs(dfs: Dict[cdtfu.NodeColumn, pd.DataFrame]) -> None:
+        """
+        Perform sanity checks on `dfs`.
+        """
+        # Ensure that `dfs` is nonempty.
+        dbg.dassert(dfs)
+        # Ensure that all dataframes in `dfs` share the same index and the same
+        # columns.
+        key = next(iter(dfs))
+        idx = dfs[key].index
+        cols = dfs[key].columns.to_list()
+        for key, value in dfs.items():
+            dbg.dassert_eq(cols, value.columns.to_list())
+            # TODO(Paul): We may want to relax the identical index requirement.
+            dbg.dassert(idx.equals(value.index))

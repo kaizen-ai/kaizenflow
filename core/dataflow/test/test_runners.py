@@ -81,27 +81,27 @@ class TestIncrementalDagRunner1(hut.TestCase):
 
 
 class TestRealTimeDagRunner1(hut.TestCase):
+    def test_simulated_replayed_time1(self) -> None:
+        """
+        Use simulated replayed time.
+        """
+        with hasyncio.solipsism_context() as event_loop:
+            events, result_bundles = self._helper(event_loop)
+        self._check(events, result_bundles)
+
     def test_replayed_time1(self) -> None:
         """
         Use replayed real-time.
         """
         dtf.align_on_even_second()
-        loop = None
-        events, result_bundles = self._helper(loop)
+        event_loop = None
+        events, result_bundles = self._helper(event_loop)
         # It's difficult to check the output of any real-time test.
         _ = events, result_bundles
 
-    def test_simulated_replayed_time1(self) -> None:
-        """
-        Use simulated replayed time.
-        """
-        with hasyncio.solipsism_context() as loop:
-            events, result_bundles = self._helper(loop)
-        self._check(events, result_bundles)
-
     @staticmethod
     def _helper(
-        loop: Optional[asyncio.AbstractEventLoop],
+        event_loop: Optional[asyncio.AbstractEventLoop],
     ) -> Tuple[cdtfrt.Events, List[cdtfrb.ResultBundle]]:
         """
         Test `RealTimeDagRunner` using a simple DAG triggering every 2 seconds.
@@ -111,20 +111,18 @@ class TestRealTimeDagRunner1(hut.TestCase):
         config = dag_builder.get_config_template()
         # Set up the event loop.
         execute_rt_loop_kwargs = (
-            cdtfttrt.get_replayed_time_execute_rt_loop_kwargs(loop)
+            cdtfttrt.get_replayed_time_execute_rt_loop_kwargs(event_loop)
         )
         kwargs = {
             "config": config,
             "dag_builder": dag_builder,
             "fit_state": None,
-            #
             "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
-            #
             "dst_dir": None,
         }
         # Run.
         dag_runner = cdtfr.RealTimeDagRunner(**kwargs)
-        result_bundles = hasyncio.run(dag_runner.predict(), loop)
+        result_bundles = hasyncio.run(dag_runner.predict(), event_loop=event_loop)
         events = dag_runner.events
         #
         _LOG.debug("events=\n%s", events)

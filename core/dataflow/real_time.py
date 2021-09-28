@@ -33,15 +33,15 @@ _LOG = logging.getLogger(__name__)
 # There are different ways of reproducing real-time behaviors:
 # 1) True real-time
 #    - We are running against the real prod / QA system
-#    - The same query to a DB returns the true real-time values, which change
+#    - The query to a DB returns the true real-time values, with different results
 #      depending on the actual wall-clock time
 # 2) Simulated real-time
 #   - The advancing of time is simulated through calling a method (e.g.,
-#     `set_current_time(simulated_time)`) or through a simulted version of the
+#     `set_current_time(simulated_time)`) or through a simulated version of the
 #     `asyncio` `EventLoop`
 # 3) Replayed time
-#    - The wall-clock time is transformed in a historical wall-clock time (e.g.,
-#      5:30pm today is remapped to 9:30pm of 2021-01-04)
+#    - The wall-clock time is transformed into a historical wall-clock time
+#    - E.g., 5:30pm today is remapped to 9:30pm of 2021-01-04
 #    - Data is returned depending on the current wall-clock time
 #      - The data can be frozen from a real-time system or synthetic
 # 4) Simulated replayed time
@@ -72,7 +72,7 @@ def generate_synthetic_data(
 
 
 # #############################################################################
-# Time generator
+# Replayed and simulated time.
 # #############################################################################
 
 
@@ -82,9 +82,9 @@ class ReplayedTime:
 
     A use case is the following:
     - Assume we have captured data in an interval starting on `2021-01-04 9:30am`
-      (which we call `initial_replayed_dt`) until the following day `2021-01-05 9:30am`
+      (called `initial_replayed_dt`) until the following day `2021-01-05 9:30am`
     - We want to replay this data in real-time starting now, which is by example
-      `2021-06-04 10:30am` (which we call `initial_wall_clock_dt`)
+      `2021-06-04 10:30am` (called `initial_wall_clock_dt`)
     - We use this class to map times after `2021-06-04 10:30am` to the corresponding
       time after `2021-01-04 9:30am`
     - E.g., when we ask to this class the current "replayed" time at (wall clock
@@ -92,7 +92,7 @@ class ReplayedTime:
       has passed since the `initial_wall_clock_dt`
 
     In other terms this class mocks `datetime.datetime.now()` so that the actual
-    wall clock time `initial_wall_clock_dt` corresponds to `initial_replayed_dt`
+    wall clock time `initial_wall_clock_dt` corresponds to `initial_replayed_dt`.
     """
 
     def __init__(
@@ -118,7 +118,7 @@ class ReplayedTime:
         self._get_wall_clock_time = get_wall_clock_time
         dbg.dassert_lt(0, speed_up_factor)
         self._speed_up_factor = speed_up_factor
-        # This is when the experiment start.
+        # This is when the experiment starts.
         self._initial_wall_clock_dt = self._get_wall_clock_time()
         _LOG.debug(
             hprint.to_str("self._initial_replayed_dt self._initial_wall_clock_dt")
@@ -155,7 +155,7 @@ def get_data_as_of_datetime(
     time.
 
     :param df: df indexed with timestamp representing knowledge time
-    :param datetime_: the "as of" timestamp
+    :param datetime_: the "as of" timestamp (in the sense of `<=`)
     :param delay_in_secs: represent how long it takes for the simulated system to
         respond. E.g., if the data comes from a DB, `delay_in_secs` is the delay
         of the data query with respect to the knowledge time.
@@ -173,6 +173,8 @@ def get_data_as_of_datetime(
     return df
 
 
+# #############################################################################
+# Real time.
 # #############################################################################
 
 
@@ -192,11 +194,6 @@ def execute_every_5_minutes(datetime_: pd.Timestamp) -> bool:
     ret = datetime_.minute % 5 == 0
     ret = cast(bool, ret)
     return ret
-
-
-# #############################################################################
-# Real time loop.
-# #############################################################################
 
 
 def align_on_even_second(use_time_sleep: bool = False) -> None:
@@ -233,6 +230,11 @@ class Event(
 ):
     """
     Information about the real time execution.
+
+    :param num_it: number of iteration of the clock
+    :param current_time: the simulated time
+    :param wall_clock_time: the actual wall clock time of the running system for
+        accounting
     """
 
     def __str__(self) -> str:
@@ -279,7 +281,7 @@ async def execute_with_real_time_loop(
     workload: Callable[[pd.Timestamp], Any],
 ) -> AsyncGenerator[Tuple[Event, Any], None]:
     """
-    Execute a function using a true, simulated, replayed event loop.
+    Execute a function using a true, simulated, or replayed event loop.
 
     :param sleep_interval_in_secs: the loop wakes up every `sleep_interval_in_secs`
         true or simulated seconds
@@ -332,9 +334,13 @@ async def execute_all_with_real_time_loop(
 ) -> Tuple[List[Event], List[Any]]:
     """
     Execute the entire event loop until the end.
+
+    This is a way to bridge the async to sync semantic. It is conceptually
+    equivalent to adding a list around a Python generator.
     """
-    vals = zip(*[v async for v in
-        execute_with_real_time_loop(*args, **kwargs)])  # type: error[arg-type]
+    vals = zip(
+        *[v async for v in execute_with_real_time_loop(*args, **kwargs)]
+    )  # type: ignore[arg-type]
     events, results = list(vals)
     events = Events(events)
     results = list(results)

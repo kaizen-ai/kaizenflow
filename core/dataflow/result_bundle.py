@@ -6,6 +6,7 @@ import core.dataflow.result_bundle as cdtfrb
 import abc
 import collections
 import copy
+import datetime
 import logging
 from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
@@ -15,8 +16,17 @@ import core.config as cconfig
 import core.dataflow.core as cdtfc
 import helpers.dbg as dbg
 import helpers.git as git
+import helpers.hparquet as hparquet
+import helpers.io_ as io_
+import helpers.pickle_ as hpickle
+import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
+
+
+# #############################################################################
+# ResultBundle
+# #############################################################################
 
 
 class ResultBundle(abc.ABC):
@@ -30,11 +40,14 @@ class ResultBundle(abc.ABC):
         result_nid: cdtfc.NodeId,
         method: cdtfc.Method,
         result_df: pd.DataFrame,
+        # TODO(gp): -> str
         column_to_tags: Optional[Dict[Any, List[Any]]] = None,
         info: Optional[collections.OrderedDict] = None,
         payload: Optional[cconfig.Config] = None,
     ) -> None:
         """
+        Constructor.
+
         :param config: DAG config
         :param result_nid: identifier of terminal node for which DAG was executed
         :param method: method which was executed
@@ -46,7 +59,10 @@ class ResultBundle(abc.ABC):
         """
         self._config = config
         self._result_nid = result_nid
+        dbg.dassert_isinstance(method, cdtfc.Method)
         self._method = method
+        if result_df is not None:
+            dbg.dassert_isinstance(result_df, pd.DataFrame)
         self._result_df = result_df
         self._column_to_tags = column_to_tags
         self._info = info
@@ -54,21 +70,23 @@ class ResultBundle(abc.ABC):
 
     def __str__(self) -> str:
         """
-        Return the string representation.
+        Return a string representation.
         """
         return str(self.to_config())
 
     def __repr__(self) -> str:
         """
-        Return an unambiguous representation the same as str().
+        Return an unambiguous string representation.
 
         This is used by Jupyter notebook when printing.
         """
         return str(self)
 
+    # Accessors.
+
     @property
     def config(self) -> cconfig.Config:
-        return self._config.copy()
+        return self._config
 
     @property
     def result_nid(self) -> cdtfc.NodeId:
@@ -80,9 +98,7 @@ class ResultBundle(abc.ABC):
 
     @property
     def result_df(self) -> pd.DataFrame:
-        # TODO(gp): Ok to copy but we will make a copy at every access. Maybe we
-        #  can make a single copy and use only that.
-        return self._result_df.copy()
+        return self._result_df
 
     @property
     def column_to_tags(self) -> Optional[Dict[Any, List[Any]]]:
@@ -109,9 +125,26 @@ class ResultBundle(abc.ABC):
     def payload(self) -> Optional[cconfig.Config]:
         return self._payload
 
+    def get_tags_for_column(self, column: Any) -> Optional[List[Any]]:
+        return ResultBundle._search_mapping(column, self._column_to_tags)
+
+    def get_columns_for_tag(self, tag: Any) -> Optional[List[Any]]:
+        return ResultBundle._search_mapping(tag, self.tag_to_columns)
+
+    # Setters.
+
+    @result_df.setter
+    def result_df(self, value: pd.DataFrame) -> None:
+        self._result_df = value
+
     @payload.setter
     def payload(self, value: Optional[cconfig.Config]) -> None:
         self._payload = value
+
+    # Methods to serialize to / from strings.
+
+    # TODO(gp): Not sure if all the serialization would work also for derived classes,
+    #  e.g., `PredictionResultBundle`.
 
     def to_config(self, commit_hash: bool = False) -> cconfig.Config:
         """
@@ -135,29 +168,6 @@ class ResultBundle(abc.ABC):
             serialized_bundle["commit_hash"] = git.get_current_commit_hash()
         return serialized_bundle
 
-    def to_dict(self, commit_hash: bool = False) -> collections.OrderedDict:
-        """
-        Represent class state as an ordered dict.
-        """
-        config = self.to_config(commit_hash=commit_hash)
-        dict_ = config.to_dict()
-        dict_ = cast(collections.OrderedDict, dict_)
-        return dict_
-
-    @staticmethod
-    def from_dict(result_bundle_dict: collections.OrderedDict) -> "ResultBundle":
-        """
-        Initialize `ResultBundle` from a nested dict.
-        """
-        result_bundle_config = cconfig.get_config_from_nested_dict(
-            result_bundle_dict
-        )
-        result_bundle_class = eval(result_bundle_config["class"])
-        result_bundle: ResultBundle = result_bundle_class.from_config(
-            result_bundle_config
-        )
-        return result_bundle
-
     @classmethod
     def from_config(cls, serialized_bundle: cconfig.Config) -> "ResultBundle":
         """
@@ -180,34 +190,179 @@ class ResultBundle(abc.ABC):
         )
         return rb
 
-    def get_tags_for_column(self, column: Any) -> Optional[List[Any]]:
-        return ResultBundle._search_mapping(column, self._column_to_tags)
+    def to_dict(self, commit_hash: bool = False) -> collections.OrderedDict:
+        """
+        Represent class state as an ordered dict.
+        """
+        config = self.to_config(commit_hash=commit_hash)
+        dict_ = config.to_dict()
+        dict_ = cast(collections.OrderedDict, dict_)
+        return dict_
 
-    def get_columns_for_tag(self, tag: Any) -> Optional[List[Any]]:
-        return ResultBundle._search_mapping(tag, self.tag_to_columns)
+    # TODO(gp): Use classmethod.
+    @staticmethod
+    def from_dict(result_bundle_dict: collections.OrderedDict) -> "ResultBundle":
+        """
+        Initialize `ResultBundle` from a nested dict.
+        """
+        result_bundle_config = cconfig.get_config_from_nested_dict(
+            result_bundle_dict
+        )
+        result_bundle_class = eval(result_bundle_config["class"])
+        result_bundle: ResultBundle = result_bundle_class.from_config(
+            result_bundle_config
+        )
+        return result_bundle
 
-    # TODO(gp): value -> key?
+    # Methods to serialize to / from disk.
+
+    def to_pickle(self, file_name: str, use_pq: bool = True) -> List[str]:
+        """
+        Serialize the current `ResultBundle`.
+
+        :param use_pq: save the `result_df` dataframe using Parquet.
+            If False, everything is saved as a single pickle object.
+        :return: list with names of the files saved
+        """
+        # TODO(gp): We should pass file_name without an extension, since the
+        #  extension(s) depend on the format used.
+        io_.create_enclosing_dir(file_name, incremental=True)
+        # Convert to a dict.
+        obj = copy.copy(self)
+        if use_pq:
+            # Split the object in two pieces.
+            result_df = obj.result_df
+            obj.result_df = None
+            # Save the config as pickle.
+            file_name_rb = io_.change_filename_extension(
+                file_name, "pkl", "v2_0.pkl"
+            )
+            hpickle.to_pickle(obj, file_name_rb, log_level=logging.DEBUG)
+            # Save the `result_df` as parquet.
+            file_name_pq = io_.change_filename_extension(
+                file_name, "pkl", "v2_0.pq"
+            )
+            hparquet.to_parquet(result_df, file_name_pq, log_level=logging.DEBUG)
+            file_name_metadata_df = io_.change_filename_extension(
+                file_name, "pkl", "v2_0.metadata_df.pkl"
+            )
+            metadata_df = {"index.freq": result_df.index.freq}
+            hpickle.to_pickle(
+                metadata_df, file_name_metadata_df, log_level=logging.DEBUG
+            )
+            #
+            res = [file_name_rb, file_name_pq, file_name_metadata_df]
+        else:
+            # Save the entire object as pickle.
+            file_name = io_.change_filename_extension(
+                file_name, "pkl", "v1_0.pkl"
+            )
+            hpickle.to_pickle(obj, file_name, log_level=logging.DEBUG)
+            res = [file_name]
+        return res
+
+    # TODO(gp): Use classmethod.
+    @staticmethod
+    def from_pickle(
+        file_name: str,
+        use_pq: bool = True,
+        columns: Optional[List[str]] = None,
+    ) -> "ResultBundle":
+        """
+        Deserialize the current `ResultBundle`.
+
+        :param use_pq: load multiple files storing the data
+        :param columns: columns of `result_df` to load
+        """
+        # TODO(gp): We should pass file_name without an extension, since the
+        #  extension(s) depend on the format used.
+        if use_pq:
+            # Load the part of the `ResultBundle` stored as pickle.
+            dbg.dassert(
+                file_name.endswith("v2_0.pkl"),
+                "Invalid file_name='%s'",
+                file_name,
+            )
+            with htimer.TimedScope(logging.DEBUG, "Load pickle"):
+                obj = hpickle.from_pickle(file_name, log_level=logging.DEBUG)
+                # TODO(gp): This is a workaround waiting for LimeTask164.
+                #  We load 200MB of data and then discard 198MB.
+                if hasattr(obj, "payload"):
+                    obj.payload = None
+                dbg.dassert_isinstance(obj, ResultBundle)
+            # Load the `result_df` as parquet.
+            file_name_pq = io_.change_filename_extension(file_name, "pkl", "pq")
+            if columns is None:
+                _LOG.warning(
+                    "Loading the entire `result_df` without filtering by columns: "
+                    "this is slow and requires a lot of memory"
+                )
+            with htimer.TimedScope(logging.DEBUG, "Load parquet"):
+                obj.result_df = hparquet.from_parquet(
+                    file_name_pq, columns=columns, log_level=logging.DEBUG
+                )
+            file_name_metadata_df = io_.change_filename_extension(
+                file_name, "pkl", "metadata_df.pkl"
+            )
+            metadata_df = hpickle.from_pickle(
+                file_name_metadata_df, log_level=logging.DEBUG
+            )
+            # metadata_df = {
+            #     "index.freq": result_df.index.freq
+            # }
+            obj.result_df.index.freq = metadata_df.pop("index.freq")
+            # TODO(gp): See AmpTask1732 about disabling this.
+            #obj.result_df = _trim_df_trading_hours(obj.result_df)
+            dbg.dassert(
+                not metadata_df, "metadata_df='%s' is not empty", str(metadata_df)
+            )
+        else:
+            # Load the `ResultBundle` as a single pickle.
+            dbg.dassert(
+                file_name.endswith("v1_0.pkl"),
+                "Invalid file_name='%s'",
+                file_name,
+            )
+            dbg.dassert_is(
+                columns,
+                None,
+                "`columns` can be specified only with `use_pq=True`",
+            )
+            file_name = io_.change_filename_extension(
+                file_name, "pkl", "v1_0.pkl"
+            )
+            obj = hpickle.from_pickle(file_name, log_level=logging.DEBUG)
+        return obj
+
     @staticmethod
     def _search_mapping(
-        value: Any, mapping: Optional[Dict[Any, List[Any]]]
+        key: Any, mapping: Optional[Dict[Any, List[Any]]]
     ) -> Optional[List[Any]]:
         """
-        Look for a key `value` in the dictionary `mapping`.
+        Look for a key `key` in the dictionary `mapping`.
 
         Return the corresponding value or `None` if the key does not
         exist.
         """
         if mapping is None:
-            _LOG.warning("No mapping provided.")
+            _LOG.warning("No mapping provided to search for '%s'", key)
             return None
-        if value not in mapping:
-            _LOG.warning("'%s' not in `mapping`='%s'.", value, mapping)
+        if key not in mapping:
+            _LOG.warning("'%s' not in `mapping`='%s'", key, mapping)
             return None
-        return mapping[value]
+        return mapping[key]
 
 
-# TODO(gp): Add a docstring explaining the difference with `ResultBundle`.
+# #############################################################################
+# PredictionResultBundle
+# #############################################################################
+
+
 class PredictionResultBundle(ResultBundle):
+    """
+    Class adding some semantic meaning to a `ResultBundle`.
+    """
+
     @property
     def feature_col_names(self) -> List[Any]:
         cols = self.get_columns_for_tag("feature_col") or []
@@ -236,6 +391,7 @@ class PredictionResultBundle(ResultBundle):
         dbg.dassert_isinstance(tags, list)
         target_cols = set(self.target_col_names)
         prediction_cols = set(self.prediction_col_names)
+        # TODO(gp): Move this out.
         TargetPredictionColPair = collections.namedtuple(
             "TargetPredictionColPair", ["target", "prediction"]
         )
@@ -324,3 +480,20 @@ class PredictionResultBundle(ResultBundle):
             tag,
         )
         return selected_cols_for_tag[0]
+
+
+# #############################################################################
+
+
+# TODO(gp): This is probably more general than here. Probably we want to trim
+#  the data also inside the pipeline.
+def _trim_df_trading_hours(df) -> pd.DataFrame:
+    """
+    Remove data outside trading hours.
+    """
+    df_time = df.index.time
+    # TODO(gp): We should extend this to handle the overnight return.
+    mask = (df_time >= datetime.time(9, 30)) & (df_time <= datetime.time(16, 0))
+    _LOG.debug(mask.sum() / len(mask))
+    dbg.dassert_eq(len(df[~mask].dropna()), 0)
+    return df[mask]

@@ -4,7 +4,7 @@ experiments.
 
 Import as:
 
-import core.dataflow_model.utils as cdtfut
+import core.dataflow_model.utils as cdtfmouti
 """
 
 # TODO(gp): -> experiment_utils.py
@@ -31,13 +31,13 @@ import pandas as pd
 from tqdm.autonotebook import tqdm
 
 import core.config as cconfig
-import core.dataflow as dtg
-import core.signal_processing as csigna
-import helpers.dbg as dbg
+import core.dataflow as dtf
+import core.signal_processing as csipro
+import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.parser as prsr
+import helpers.parser as hparser
 import helpers.pickle_ as hpickle
-import helpers.printing as hprint
+import helpers.printing as hprintin
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
@@ -55,10 +55,10 @@ def add_experiment_arg(
         or not. If not, a default value should be passed through `dst_dir_default`
     :param dst_dir_default: a default destination dir
     """
-    parser = prsr.add_dst_dir_arg(
+    parser = hparser.add_dst_dir_arg(
         parser, dst_dir_required=dst_dir_required, dst_dir_default=dst_dir_default
     )
-    parser = prsr.add_parallel_processing_arg(parser)
+    parser = hparser.add_parallel_processing_arg(parser)
     parser.add_argument(
         "--index",
         action="store",
@@ -123,7 +123,7 @@ def setup_experiment_dir(config: cconfig.Config) -> None:
 
     :return: whether we need to run this config or not
     """
-    dbg.dassert_isinstance(config, cconfig.Config)
+    hdbg.dassert_isinstance(config, cconfig.Config)
     # Create subdirectory structure for experiment results.
     experiment_result_dir = config[("meta", "experiment_result_dir")]
     _LOG.info("Creating experiment dir '%s'", experiment_result_dir)
@@ -151,13 +151,13 @@ def select_config(
     :param start_from_index: index of a config to start execution from, if not `None`
     :return: list of configs to execute
     """
-    dbg.dassert_container_type(configs, List, cconfig.Config)
-    dbg.dassert_lte(1, len(configs))
+    hdbg.dassert_container_type(configs, List, cconfig.Config)
+    hdbg.dassert_lte(1, len(configs))
     if index is not None:
         index = int(index)
         _LOG.warning("Only config %d will be executed because of --index", index)
-        dbg.dassert_lte(0, index)
-        dbg.dassert_lt(index, len(configs))
+        hdbg.dassert_lte(0, index)
+        hdbg.dassert_lt(index, len(configs))
         configs = [configs[index]]
     elif start_from_index is not None:
         start_from_index = int(start_from_index)
@@ -165,11 +165,11 @@ def select_config(
             "Only configs >= %d will be executed because of --start_from_index",
             start_from_index,
         )
-        dbg.dassert_lte(0, start_from_index)
-        dbg.dassert_lt(start_from_index, len(configs))
+        hdbg.dassert_lte(0, start_from_index)
+        hdbg.dassert_lt(start_from_index, len(configs))
         configs = [c for idx, c in enumerate(configs) if idx >= start_from_index]
     _LOG.info("Selected %s configs", len(configs))
-    dbg.dassert_container_type(configs, List, cconfig.Config)
+    hdbg.dassert_container_type(configs, List, cconfig.Config)
     return configs
 
 
@@ -211,7 +211,7 @@ def get_configs_from_command_line(
             "The following configs will not be executed due to passing --dry_run:"
         )
         for i, config in enumerate(configs):
-            print(hprint.frame("Config %d/%s" % (i + 1, len(configs))))
+            print(hprintin.frame("Config %d/%s" % (i + 1, len(configs))))
             print(str(config))
         sys.exit(0)
     return configs
@@ -246,129 +246,50 @@ def report_failed_experiments(
 
 
 # #############################################################################
+# Load and save experiment `ResultBundle`.
+# #############################################################################
 
 
 def save_experiment_result_bundle(
     config: cconfig.Config,
-    result_bundle: dtg.ResultBundle,
+    result_bundle: dtf.ResultBundle,
     file_name: str = "result_bundle.pkl",
 ) -> None:
     """
     Save the `ResultBundle` from running `Config`.
     """
     # TODO(Paul): Consider having the caller provide the dir instead.
-    path = os.path.join(config["meta", "experiment_result_dir"], file_name)
-    # TODO(gp): This should be a method of `ResultBundle`.
-    obj = result_bundle.to_config().to_dict()
-    hpickle.to_pickle(obj, path)
-
-
-def yield_experiment_artifacts(
-    src_dir: str,
-    file_name: str,
-    selected_idxs: Optional[Iterable[int]] = None,
-    aws_profile: Optional[str] = None,
-) -> Iterable[Tuple[int, Any]]:
-    _LOG.info("# Load artifacts '%s' from '%s'", file_name, src_dir)
-    # Get the experiment subdirs.
-    src_dir, experiment_subdirs = _get_experiment_subdirs(
-        src_dir, selected_idxs, aws_profile=aws_profile
-    )
-    # Iterate over experiment directories.
-    for key, subdir in tqdm(experiment_subdirs.items(), desc="Loading artifacts"):
-        dbg.dassert_dir_exists(subdir)
-        file_name_tmp = os.path.join(subdir, file_name)
-        _LOG.debug("Loading '%s'", file_name_tmp)
-        if not os.path.exists(file_name_tmp):
-            _LOG.warning("Can't find '%s': skipping", file_name_tmp)
-            continue
-        if file_name_tmp.endswith(".pkl"):
-            # Load pickle files.
-            res = hpickle.from_pickle(
-                file_name_tmp, log_level=logging.DEBUG, verbose=False
-            )
-        elif file_name_tmp.endswith(".json"):
-            # Load JSON files.
-            with open(file_name_tmp, "r") as file:
-                res = json.load(file)
-        elif file_name_tmp.endswith(".txt"):
-            # Load txt files.
-            res = hio.from_file(file_name_tmp)
-        else:
-            raise ValueError(f"Unsupported file type='{file_name_tmp}'")
-        yield key, res
-
-
-def yield_rolling_experiment_out_of_sample_df(
-    src_dir: str,
-    file_name_prefix: str,
-    selected_idxs: Optional[Iterable[int]] = None,
-    aws_profile: Optional[str] = None,
-) -> Dict[int, pd.DataFrame]:
-    """
-    Load all the files in dirs under `src_dir` that match `file_name_prefix*`.
-
-    Like `_load_experiment_artifacts()`, except adapted to picking up
-    prediction `ResultBundle`s from a rolling run. This function
-    stitches together out-of-sample predictions from consecutive runs to
-    form a single out-of-sample dataframe.
-    """
-    # TODO(Paul): Factor out code in common with `_load_experiment_artifacts()`.
-    # TODO(Paul): Generalize to loading fit `ResultBundle`s.
-    _LOG.info("# Load artifacts '%s' from '%s'", file_name_prefix, src_dir)
-    # Get the experiment subdirs.
-    src_dir, experiment_subdirs = _get_experiment_subdirs(
-        src_dir, selected_idxs, aws_profile=aws_profile
-    )
-    # Iterate over experiment directories.
-    for key, subdir in tqdm(experiment_subdirs.items(), desc="Loading artifacts"):
-        dbg.dassert_dir_exists(subdir)
-        # TODO(Paul): Sort these explicitly. Currently we rely on an implicit
-        #  order.
-        files = glob.glob(os.path.join(subdir, file_name_prefix) + "*")
-        dfs = []
-        for file_name_tmp in files:
-            _LOG.debug("Loading '%s'", file_name_tmp)
-            if not os.path.exists(file_name_tmp):
-                _LOG.warning("Can't find '%s': skipping", file_name_tmp)
-                continue
-            if file_name_tmp.endswith(".pkl"):
-                # Load pickle files.
-                res = hpickle.from_pickle(
-                    file_name_tmp, log_level=logging.DEBUG, verbose=False
-                )
-            else:
-                raise ValueError(f"Unsupported file type='{file_name_tmp}'")
-            dfs.append(res["result_df"])
-        if dfs:
-            df = pd.concat(dfs, axis=0)
-            dbg.dassert_strictly_increasing_index(df)
-            df = csigna.resample(df, rule=dfs[0].index.freq).sum(min_count=1)
-            yield key, df
+    file_name = os.path.join(config["meta", "experiment_result_dir"], file_name)
+    result_bundle.to_pickle(file_name, use_pq=True)
 
 
 # #############################################################################
 
 
-def _retrieve_archived_experiment_artifacts(
-    s3_file_name: str, aws_profile: str, scratch_dir: str = "."
+def _retrieve_archived_experiment_artifacts_from_S3(
+    s3_file_name: str,
+    dst_dir: str,
+    aws_profile: str,
 ) -> str:
     """
     Retrieve a package containing experiment artifacts from S3.
 
-    E.g., s3://alphamatic-data/experiments/experiment.RH1E.v1.20210726-20_09_53.5T.tgz
-
+    :param s3_file_name: S3 file name containing the archive.
+        E.g., s3://alphamatic-data/experiments/experiment.RH1E.v1.20210726-20_09_53.5T.tgz
+    :param dst_dir: where to save the data
+    :param aws_profile: the AWS profile to use it to access the archive
     :return: path to local dir with the content of the decompressed archive
     """
+    hs3.dassert_is_s3_path(s3_file_name)
     # Get the file name and the enclosing dir name.
     dir_name = os.path.basename(os.path.dirname(s3_file_name))
     if dir_name != "experiments":
         _LOG.warning(
             "The file name '%s' is not under `experiments` dir", s3_file_name
         )
-    dbg.dassert_file_extension(s3_file_name, "tgz")
+    hdbg.dassert_file_extension(s3_file_name, "tgz")
     tgz_dst_dir = hs3.retrieve_archived_data_from_s3(
-        s3_file_name, scratch_dir, aws_profile
+        s3_file_name, dst_dir, aws_profile
     )
     _LOG.info("Retrieved artifacts to '%s'", tgz_dst_dir)
     return tgz_dst_dir  # type: ignore[no-any-return]
@@ -382,7 +303,7 @@ def _get_experiment_subdirs(
     """
     Get the subdirectories under `src_dir` with a format like `result_*`.
 
-    This function works also for archived S3 tarballs of experiment results.
+    This function works also for archived (S3 or local) tarballs of experiment results.
 
     :param src_dir: directory with results or S3 path to archive
     :param selected_idxs: config indices to consider. `None` means all available
@@ -390,11 +311,22 @@ def _get_experiment_subdirs(
     :return: the dir used to retrieve the experiment subdirectory,
         dict `config idx` to `experiment subdirectory`
     """
-    # Handle the situation where the file is an archived S3 file.
-    if hs3.is_s3_path(src_dir):
-        src_dir = _retrieve_archived_experiment_artifacts(src_dir, aws_profile)
+    # Handle the situation where the file is an archived file.
+    if src_dir.endswith(".tgz"):
+        if hs3.is_s3_path(src_dir):
+            hdbg.dassert_is_not(aws_profile, None)
+            aws_profile = cast(str, aws_profile)
+            tgz_file = _retrieve_archived_experiment_artifacts_from_S3(
+                src_dir, scratch_dir, aws_profile
+            )
+        else:
+            tgz_file = src_dir
+        # Expand.
+        scratch_dir = "."
+        src_dir = hs3.expand_archived_data(tgz_file, scratch_dir)
+        _LOG.debug("src_dir=%s", src_dir)
     # Retrieve all the subdirectories in `src_dir` that store results.
-    dbg.dassert_dir_exists(src_dir)
+    hdbg.dassert_dir_exists(src_dir)
     subdirs = [d for d in glob.glob(f"{src_dir}/result_*") if os.path.isdir(d)]
     _LOG.info("Found %d experiment subdirs in '%s'", len(subdirs), src_dir)
     # Build a mapping from `config_idx` to `experiment_dir`.
@@ -403,10 +335,10 @@ def _get_experiment_subdirs(
         _LOG.debug("subdir='%s'", subdir)
         # E.g., `result_123"
         m = re.match(r"^result_(\d+)$", os.path.basename(subdir))
-        dbg.dassert(m)
+        hdbg.dassert(m)
         m = cast(Match[str], m)
         key = int(m.group(1))
-        dbg.dassert_not_in(key, config_idx_to_dir)
+        hdbg.dassert_not_in(key, config_idx_to_dir)
         config_idx_to_dir[key] = subdir
     # Select the indices of files to load.
     config_idxs = config_idx_to_dir.keys()
@@ -415,11 +347,11 @@ def _get_experiment_subdirs(
         selected_keys = sorted(config_idxs)
     else:
         idxs_l = set(selected_idxs)
-        dbg.dassert_is_subset(idxs_l, set(config_idxs))
+        hdbg.dassert_is_subset(idxs_l, set(config_idxs))
         selected_keys = [key for key in sorted(config_idxs) if key in idxs_l]
     # Subset the experiment subdirs based on the selected keys.
     experiment_subdirs = {key: config_idx_to_dir[key] for key in selected_keys}
-    dbg.dassert_lte(
+    hdbg.dassert_lte(
         1,
         len(experiment_subdirs),
         "Can't find subdirs in '%s'",
@@ -428,35 +360,192 @@ def _get_experiment_subdirs(
     return src_dir, experiment_subdirs
 
 
-# TODO(gp): We might want also to compare to the original experiments Configs.
-def _load_experiment_artifacts(
-    src_dir: str, file_name: str, selected_idxs: Optional[Iterable[int]] = None
-) -> Dict[int, Any]:
+def _load_experiment_artifact(
+    file_name: str,
+    load_rb_kwargs: Optional[Dict[str, Any]] = None,
+) -> Any:
     """
-    Load all the files in dirs under `src_dir` that match `file_name`.
+    Load an experiment artifact whose format is encoded in name and extension.
 
-    This function assumes subdirectories under `dst_dir` have the following
+    The content of a `result` dir looks like:
+        config.pkl
+        config.txt
+        result_bundle_v1.0.pkl
+        result_bundle_v2.0.pkl
+        result_bundle_v2.0.pkl
+        run_experiment.0.log
+
+    - `result_bundle.v2_0.*`: a `ResultBundle` split between a pickle and Parquet
+    - `result_bundle.v1_0.pkl`: a pickle file containing an entire `ResultBundle`
+    - `config.pkl`: a pickle file containing a `Config`
+
+    :param load_rb_kwargs: parameters passed to `ResultBundle.from_pickle`
+    """
+    base_name = os.path.basename(file_name)
+    if base_name == "result_bundle.v2_0.pkl":
+        # Load a `ResultBundle` stored in `rb` format.
+        res = dtf.ResultBundle.from_pickle(
+            file_name, use_pq=True, **load_rb_kwargs
+        )
+    elif base_name == "result_bundle.v1_0.pkl":
+        # Load `ResultBundle` stored as a single pickle.
+        res = dtf.ResultBundle.from_pickle(
+            file_name, use_pq=False, **load_rb_kwargs
+        )
+    elif base_name == "config.pkl":
+        # Load a `Config` stored as a pickle file.
+        res = hpickle.from_pickle(file_name, log_level=logging.DEBUG)
+        # TODO(gp): We should convert it to a `Config`.
+    elif base_name.endswith(".json"):
+        # Load JSON files.
+        # TODO(gp): Use hpickle.to_json
+        with open(file_name, "r") as file:
+            res = json.load(file)
+    elif base_name.endswith(".txt"):
+        # Load txt files.
+        res = hio.from_file(file_name)
+    else:
+        raise ValueError(f"Invalid file_name='{file_name}'")
+    return res
+
+
+def yield_experiment_artifacts(
+    src_dir: str,
+    file_name: str,
+    load_rb_kwargs: Dict[str, Any],
+    selected_idxs: Optional[Iterable[int]] = None,
+    aws_profile: Optional[str] = None,
+) -> Iterable[Tuple[str, Any]]:
+    """
+    Create an iterator returning the key of the experiment and an artifact.
+
+    Same inputs as `load_experiment_artifacts()`.
+    """
+    _LOG.info("# Load artifacts '%s' from '%s'", file_name, src_dir)
+    # Get the experiment subdirs.
+    src_dir, experiment_subdirs = _get_experiment_subdirs(
+        src_dir, selected_idxs, aws_profile=aws_profile
+    )
+    # Iterate over experiment directories.
+    for key, subdir in tqdm(experiment_subdirs.items(), desc="Loading artifacts"):
+        # Build the name of the file.
+        hdbg.dassert_dir_exists(subdir)
+        file_name_tmp = os.path.join(subdir, file_name)
+        _LOG.debug("Loading '%s'", file_name_tmp)
+        if not os.path.exists(file_name_tmp):
+            _LOG.warning("Can't find '%s': skipping", file_name_tmp)
+            continue
+        obj = _load_experiment_artifact(file_name_tmp, load_rb_kwargs)
+        yield key, obj
+
+
+def _yield_rolling_experiment_out_of_sample_df(
+    src_dir: str,
+    file_name_prefix: str,
+    load_rb_kwargs: Dict[str, Any],
+    selected_idxs: Optional[Iterable[int]] = None,
+    aws_profile: Optional[str] = None,
+) -> Iterable[Tuple[str, pd.DataFrame]]:
+    """
+    Return in experiment dirs under `src_dir` matching `file_name_prefix*`.
+
+    This function stitches together out-of-sample predictions from consecutive runs
+    to form a single out-of-sample dataframe.
+
+    Same inputs as `load_experiment_artifacts()`.
+    """
+    # TODO(gp): Not sure what are the acceptable prefixes.
+    hdbg.dassert_in(
+        file_name_prefix, ("result_bundle.v1_0.pkl", "result_bundle.v2_0.pkl")
+    )
+    # TODO(Paul): Generalize to loading fit `ResultBundle`s.
+    _LOG.info("# Load artifacts '%s' from '%s'", file_name_prefix, src_dir)
+    # Get the experiment subdirs.
+    src_dir, experiment_subdirs = _get_experiment_subdirs(
+        src_dir, selected_idxs, aws_profile=aws_profile
+    )
+    # Iterate over experiment directories.
+    for key, subdir in tqdm(experiment_subdirs.items(), desc="Loading artifacts"):
+        hdbg.dassert_dir_exists(subdir)
+        # TODO(Paul): Sort these explicitly. Currently we rely on an implicit
+        #  order.
+        files = glob.glob(os.path.join(subdir, file_name_prefix) + "*")
+        dfs = []
+        # Iterate over OOS chunks.
+        for file_name_tmp in files:
+            _LOG.debug("Loading '%s'", file_name_tmp)
+            if not os.path.exists(file_name_tmp):
+                _LOG.warning("Can't find '%s': skipping", file_name_tmp)
+                continue
+            hdbg.dassert(os.path.basename(file_name_tmp))
+            rb = _load_experiment_artifact(file_name_tmp, load_rb_kwargs)
+            dfs.append(rb["result_df"])
+        if dfs:
+            df = pd.concat(dfs, axis=0)
+            hdbg.dassert_strictly_increasing_index(df)
+            df = csipro.resample(df, rule=dfs[0].index.freq).sum(min_count=1)
+            yield key, df
+
+
+def load_experiment_artifacts(
+    src_dir: str,
+    file_name: str,
+    experiment_type: str,
+    load_rb_kwargs: Optional[Dict[str, Any]] = None,
+    selected_idxs: Optional[Iterable[int]] = None,
+    aws_profile: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Load the results of an experiment.
+
+    The function returns the contents of the files, indexed by the key extracted
+    from the subdirectory index name.
+
+    This function assumes subdirectories under `src_dir` have the following
     structure:
         ```
-        {dst_dir}/result_{idx}/{file_name}
+        {src_dir}/result_{idx}/{file_name}
         ```
-    where `idx` denotes an integer encoded in the subdirectory name.
-
-    The function returns the contents of the files, indexed by the integer extracted
-    from the subdirectory index name.
+    where `idx` denotes an integer encoded in the subdirectory name, representing
+    the key of the experiment.
 
     :param src_dir: directory containing subdirectories of experiment results
         It is the directory that was specified as `--dst_dir` in `run_experiment.py`
         and `run_notebook.py`
     :param file_name: the file name within each run results subdirectory to load
-        E.g., `result_bundle.pkl`
+        E.g., `result_bundle.v1_0.pkl` or `result_bundle.v2_0.pkl`
+    :param load_rb_kwargs: parameters for loading a `ResultBundle` (see
     :param selected_idxs: specific experiment indices to load. `None` (default)
         loads all available indices
     """
-    artifact_tuples = yield_experiment_artifacts(
-        src_dir, file_name, selected_idxs
+    _LOG.info(
+        "Before load_experiment_artifacts: memory_usage=%s",
+        hdbg.get_memory_usage_as_str(None),
     )
+    if experiment_type == "ins_oos":
+        iterator = yield_experiment_artifacts
+    elif experiment_type == "rolling_oos":
+        iterator = _yield_rolling_experiment_out_of_sample_df
+    else:
+        raise ValueError("Invalid experiment_type='%s'", experiment_type)
+    iter = iterator(
+        src_dir,
+        file_name,
+        load_rb_kwargs=load_rb_kwargs,
+        selected_idxs=selected_idxs,
+        aws_profile=aws_profile,
+    )
+    # TODO(gp): We might want also to compare to the original experiments Configs.
     artifacts = collections.OrderedDict()
-    for key, artifact in artifact_tuples:
+    for key, artifact in iter:
+        _LOG.info(
+            "load_experiment_artifacts: memory_usage=%s",
+            hdbg.get_memory_usage_as_str(None),
+        )
         artifacts[key] = artifact
+    hdbg.dassert(artifacts, "No data read from '%s'", src_dir)
+    _LOG.info(
+        "After load_experiment_artifacts: memory_usage=%s",
+        hdbg.get_memory_usage_as_str(None),
+    )
     return artifacts

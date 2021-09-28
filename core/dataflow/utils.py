@@ -115,7 +115,6 @@ def validate_df_indices(df: pd.DataFrame) -> None:
     """
     dbg.dassert_isinstance(df, pd.DataFrame)
     dbg.dassert_no_duplicates(df.columns.tolist())
-    dbg.dassert(df.index.freq)
     # TODO(*): assert if the datetime index has dups.
 
 
