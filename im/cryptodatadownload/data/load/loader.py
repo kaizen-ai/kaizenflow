@@ -68,8 +68,8 @@ class CddLoader:
         """
         Load CDD data.
 
-        :param: root_dir: either a local root path (e.g., "/app/im/cryptodatadownload")
-            or an S3 path ("s3://alphamatic-data/data/cryptodatadownload)
+        :param: root_dir: either a local root path (e.g., "/app/im")
+            or an S3 path ("s3://alphamatic-data/data)
         :param: aws_profile: AWS profile name (e.g., "am")
         """
         self._root_dir = root_dir
