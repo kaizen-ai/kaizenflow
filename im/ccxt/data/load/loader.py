@@ -60,9 +60,18 @@ def _get_file_path(
 
 
 class CcxtLoader:
-    """
-    Load CCXT data.
-    """
+    def __init__(
+        self, root_dir: str, aws_profile: Optional[str] = None
+    ) -> None:
+        """
+        Load CCXT data.
+
+        :param: root_dir: either a local root path (e.g., "/app/im/ccxt")
+            or an S3 path ("s3://alphamatic-data/data/ccxt)
+        :param: aws_profile: AWS profile name (e.g., "am")
+        """
+        self._root_dir = root_dir
+        self._aws_profile = aws_profile
 
     def read_data(
         self,
@@ -82,20 +91,30 @@ class CcxtLoader:
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
         # Get absolute file path for a CCXT file.
-        file_path = _get_file_path(data_snapshot, exchange_id, currency_pair)
-        s3_bucket_path = hs3.get_path()
-        file_path = os.path.join(s3_bucket_path, "data", file_path)
-        # Verify that the file exists.
-        s3fs = hs3.get_s3fs("am")
-        hs3.dassert_s3_exists(file_path, s3fs)
-        # Read raw CCXT data from S3.
+        file_path = os.path.join(
+            self._root_dir, _get_file_path(
+                data_snapshot, exchange_id, currency_pair
+            )
+        )
+        # Initialize kwargs dict for further CCXT data reading.
+        kwargs = {}
+        # TODO(Dan): Remove asserts below after CMTask108 is resolved.
+        # Verify that the file exists and fill kwargs if needed.
+        if hs3.is_s3_path(file_path):
+            s3fs = hs3.get_s3fs(self._aws_profile)
+            hs3.dassert_s3_exists(file_path, s3fs)
+            # Add s3fs argument to kwargs.
+            kwargs["s3fs"] = s3fs
+        else:
+            dbg.dassert_file_exists(file_path)
+        # Read raw CCXT data.
         _LOG.info(
             "Reading CCXT data for exchange id='%s', currencies='%s' from file='%s'...",
             exchange_id,
             currency_pair,
             file_path,
         )
-        data = cphelp.read_csv(file_path, s3fs)
+        data = cphelp.read_csv(file_path, **kwargs)
         # Apply transformation to raw data.
         _LOG.info(
             "Processing CCXT data for exchange id='%s', currencies='%s'...",
