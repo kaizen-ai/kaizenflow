@@ -476,6 +476,7 @@ def archive_data_on_s3(
 
 def retrieve_archived_data_from_s3(
     s3_file_path: str,
+    dst_dir: str,
     aws_profile: Optional[str] = None,
     incremental: bool = True,
 ) -> str:

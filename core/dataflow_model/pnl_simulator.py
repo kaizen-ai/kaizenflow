@@ -1,3 +1,8 @@
+"""
+Import as:
+
+import core.dataflow_model.pnl_simulator as pnlsim
+"""
 import collections
 import copy
 import logging
@@ -289,6 +294,7 @@ class MarketInterface:
             price = self._df.loc[ts][column]
             # idx = df.index.searchsorted(ts)
             # price: float = df.iloc[idx][column]
+        dbg.dassert(np.isfinite(price), "price=%s at ts=%s", price, ts)
         return price
 
     def get_twap_price(
@@ -541,6 +547,8 @@ def get_total_wealth(
     Return the value of the portfolio at time ts.
     """
     price = mi.get_instantaneous_price(ts, column)
+    dbg.dassert(np.isfinite(price), "price=%s", price)
+    dbg.dassert(np.isfinite(holdings), "holdings=%s", holdings)
     holdings_value = holdings * price
     # _LOG.debug(
     #     "Marking at ts=%s holdings=%s at %s -> value=%s",
@@ -641,9 +649,6 @@ def _compute_pnl_level2(
         _LOG.debug("%s=%s -> %s", key, prev_value, value)
         accounting[key].append(value)
 
-    # def _update(key: str, value: float) -> None:
-    #     pass
-
     orders: List[Order] = []
     # Initial balance.
     holdings = 0.0
@@ -663,6 +668,7 @@ def _compute_pnl_level2(
         # Mark the portfolio to market.
         _LOG.debug("# Mark portfolio to market")
         wealth = get_total_wealth(mi, ts, cash, holdings, price_column)
+        dbg.dassert(np.isfinite(wealth), "wealth=%s", wealth)
         _update("wealth", wealth)
         if ts == last_index:
             # For the last timestamp we only need to mark to market, but not post
