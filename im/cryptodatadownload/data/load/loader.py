@@ -18,9 +18,10 @@ import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
-# Data about downloaded currencies from the spreadsheet in CMTask41.
-_DOWNLOADED_CURRENCIES_PATH = "/im/data/shared/data/downloaded_currencies.json"
-_DOWNLOADED_CURRENCIES = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)["CDD"]
+# Path to the data about downloaded currencies from the spreadsheet in CMTask41.
+_DOWNLOADED_CURRENCIES_PATH = "im/data/downloaded_currencies.json"
+# Latest historical data snapsot.
+_LATEST_DATA_SNAPSHOT = "20210924"
 
 
 def _get_file_path(
@@ -34,34 +35,22 @@ def _get_file_path(
     File path is constructed in the following way:
     `cryptodatadownload/<snapshot>/<exchange_id>/<currency_pair>.csv.gz`.
 
+    :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
     :param exchange_id: CDD exchange id, e.g. "binance"
     :param currency_pair: currency pair `<currency1>/<currency2>`, e.g. "BTC/USDT"
-    :param timeframe: timeframe of the data to load. Possible values:
-        'minute', 'hourly', 'daily'.
-    :return: name for a file with CDD data
+    :return: path to a file with CDD data
     """
+    # Extract data about downloaded currencies for CDD.
+    downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)["CDD"]
     # Verify that data for the input exchange id was downloaded.
     dbg.dassert_in(
         exchange_id,
-        _DOWNLOADED_CURRENCIES.keys(),
+        downloaded_currencies_info.keys(),
         msg="Data for exchange id='%s' was not downloaded" % exchange_id,
     )
-    # Verify that data for the input exchange id and timeframe was
+    # Verify that data for the input exchange id and currency pair was
     # downloaded.
-    downloaded_timeframes = _DOWNLOADED_CURRENCIES[
-        exchange_id
-    ]
-    dbg.dassert_in(
-        timeframe,
-        downloaded_timeframes,
-        msg="Data for exchange id='%s', timeframe='%s' was not downloaded"
-        % (exchange_id, timeframe),
-    )
-    # Verify that data for the input exchange id, timeframe, and currency
-    # pair was downloaded.
-    downloaded_currencies = _DOWNLOADED_CURRENCIES[
-        exchange_id
-    ][timeframe]
+    downloaded_currencies = downloaded_currencies_info[exchange_id]
     dbg.dassert_in(
         currency_pair,
         downloaded_currencies,
@@ -89,8 +78,6 @@ class CddLoader:
 
         :param exchange_id: CDD exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC/USDT"
-        :param timeframe: timeframe of the data to load. Possible values:
-            'minute', 'hourly', 'daily'.
         :param data_type: OHLCV or trade, bid/ask data
         :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
         :return: processed CDD data
@@ -99,7 +86,7 @@ class CddLoader:
         # Get absolute file path for a CDD file.
         file_path = _get_file_path(data_snapshot, exchange_id, currency_pair)
         s3_bucket_path = hs3.get_path()
-        file_path = os.path.join(s3_bucket_path, file_name)
+        file_path = os.path.join(s3_bucket_path, "data", file_path)
         # Verify that the file exists.
         s3fs = hs3.get_s3fs("am")
         hs3.dassert_s3_exists(file_path, s3fs)
@@ -184,7 +171,7 @@ class CddLoader:
         # Rename col with original Unix ms epoch.
         data = data.rename({"unix": "epoch"}, axis=1)
         # Transform Unix epoch into ET timestamp.
-        data["timestamp"] = self._convert_epochs_to_et_timestamp(data["epoch"])
+        data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
         # Rename col with traded volume in amount of the 1st currency in pair.
         data = data.rename(
             {"Volume " + currency_pair.split("/")[0]: "volume"}, axis=1
@@ -196,19 +183,16 @@ class CddLoader:
         return data
 
     @staticmethod
-    def _convert_epochs_to_timestamp(
-        epoch_col: pd.Series,
-        tz: Optional[str] = None,
-    ) -> pd.Series:
+    def _convert_epochs_to_timestamp(epoch_col: pd.Series) -> pd.Series:
         """
         Convert Unix epoch to timestamp in ET.
 
         All Unix time epochs in CDD are provided in ms and in UTC tz.
 
         :param epoch_col: Series with Unix time epochs
-        :return: Series with epochs converted to ET timestamps
+        :return: Series with epochs converted to timestamps in ET
         """
-        # Convert to timestamp.
+        # Convert to timestamp in UTC tz.
         timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
         # Convert to ET tz.
         timestamp_col = timestamp_col.dt.tz_convert(hdatet.get_ET_tz())

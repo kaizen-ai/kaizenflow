@@ -18,39 +18,49 @@ import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
-# Data about downloaded currencies from the spreadsheet in CMTask41.
-_DOWNLOADED_CURRENCIES_PATH = "/im/data/shared/data/downloaded_currencies.json"
-_DOWNLOADED_CURRENCIES = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)["CCXT"]["minute"]
+# Path to the data about downloaded currencies from the spreadsheet in CMTask41.
+_DOWNLOADED_CURRENCIES_PATH = "im/data/downloaded_currencies.json"
+# Latest historical data snapsot.
+_LATEST_DATA_SNAPSHOT = "20210924"
 
 
-def _get_file_name(exchange_id: str, currency: str) -> str:
+def _get_file_path(
+    data_snapshot: str,
+    exchange_id: str,
+    currency_pair: str,
+) -> str:
     """
     Get path to a file with CCXT data from a content root.
 
-    File name is constructed in the following way:
-    `<exchange_id>_<currency1>_<currency2>.csv.gz`.
+    File path is constructed in the following way:
+    `ccxt/<snapshot>/<exchange_id>/<currency_pair>.csv.gz`.
 
+    :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
     :param exchange_id: CCXT exchange id, e.g. "binance"
     :param currency_pair: currency pair `<currency1>/<currency2>`, e.g. "BTC/USDT"
-    :return: name for a file with CCXT data
+    :return: path to a file with CCXT data
     """
+    # Extract data about downloaded currencies for CCXT.
+    downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)[
+        "CCXT"
+    ]
     # Verify that data for the input exchange id was downloaded.
     dbg.dassert_in(
         exchange_id,
-        _DOWNLOADED_CURRENCIES.keys(),
+        downloaded_currencies_info.keys(),
         msg="Data for exchange id='%s' was not downloaded" % exchange_id,
     )
     # Verify that data for the input exchange id and currency pair was
     # downloaded.
-    downloaded_currencies = _DOWNLOADED_CURRENCIES[exchange_id]
+    downloaded_currencies = downloaded_currencies_info[exchange_id]
     dbg.dassert_in(
         currency_pair,
         downloaded_currencies,
         msg="Data for exchange id='%s', currency pair='%s' was not downloaded"
         % (exchange_id, currency_pair),
     )
-    file_name = f"{exchange_id}_{currency_pair.replace('/', '_')}.csv.gz"
-    return file_name
+    file_path = f"ccxt/{data_snapshot}/{exchange_id}/{currency_pair.replace('/', '_')}.csv.gz"
+    return file_path
 
 
 class CcxtLoader:
@@ -59,7 +69,11 @@ class CcxtLoader:
     """
 
     def read_data(
-        self, exchange_id: str, currency_pair: str, data_type: str
+        self,
+        exchange_id: str,
+        currency_pair: str,
+        data_type: str,
+        data_snapshot: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Load data from S3 and process it for use downstream.
@@ -67,12 +81,14 @@ class CcxtLoader:
         :param exchange_id: CCXT exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC/USDT"
         :param data_type: OHLCV or trade, bid/ask data
+        :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
         :return: processed CCXT data
         """
-        # Get file path for a CCXT file.
-        file_name = _get_file_name(exchange_id, currency_pair)
+        data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
+        # Get absolute file path for a CCXT file.
+        file_path = _get_file_path(data_snapshot, exchange_id, currency_pair)
         s3_bucket_path = hs3.get_path()
-        file_path = os.path.join(s3_bucket_path, file_name)
+        file_path = os.path.join(s3_bucket_path, "data", file_path)
         # Verify that the file exists.
         s3fs = hs3.get_s3fs("am")
         hs3.dassert_s3_exists(file_path, s3fs)
@@ -95,13 +111,14 @@ class CcxtLoader:
         )
         return transformed_data
 
+    # TODO(*): Consider making `exchange_id` a class member.
     def _transform(
         self,
         data: pd.DataFrame,
-        exchange: str,
-        currency: str,
+        exchange_id: str,
+        currency_pair: str,
         data_type: str,
-    ):
+    ) -> pd.DataFrame:
         """
         Transform CCXT data loaded from S3.
 
@@ -118,13 +135,13 @@ class CcxtLoader:
             2021-09-08 20:02:00-04:00  3501.59  3513.10  3499.89  3513.09  579.5656  1631145720000  ETH/USDT      binance
 
         :param data: dataframe with CCXT data from S3
-        :param exchange: CCXT exchange id
-        :param currency: currency pair (e.g. "BTC/USDT")
+        :param exchange_id: CCXT exchange id, e.g. "binance"
+        :param currency_pair: currency pair, e.g. "BTC/USDT"
         :param data_type: OHLCV or trade, bid/ask data
         :return: processed dataframe
         """
-        transformed_data = self._apply_ccxt_transformation(
-            data, exchange, currency
+        transformed_data = self._apply_common_transformation(
+            data, exchange_id, currency_pair
         )
         if data_type.lower() == "ohlcv":
             transformed_data = self._apply_ohlcv_transformation(transformed_data)
@@ -132,15 +149,14 @@ class CcxtLoader:
             dbg.dfatal("Incorrect data type. Acceptable types: ohlcv")
         return transformed_data
 
-    @staticmethod
-    def _apply_ccxt_transformation(
-        data: pd.DataFrame, exchange: str, currency: str
-    ):
+    def _apply_common_transformation(
+        self, data: pd.DataFrame, exchange_id: str, currency_pair: str
+    ) -> pd.DataFrame:
         """
         Apply transform common to all CCXT data.
 
         This includes:
-        - datetime format assertion
+        - Datetime format assertion
         - Converting epoch ms timestamp to pd.Timestamp
         - Adding exchange_id and currency_pair columns
 
@@ -156,33 +172,30 @@ class CcxtLoader:
         # Rename col with original Unix ms epoch.
         data = data.rename({"timestamp": "epoch"}, axis=1)
         # Transform Unix epoch into ET timestamp.
-        data["timestamp"] = self._convert_epochs_to_et_timestamp(data["epoch"])
+        data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
         # Add columns with exchange id and currency pair.
         data["exchange_id"] = exchange_id
         data["currency_pair"] = currency_pair
         return data
 
     @staticmethod
-    def _convert_epochs_to_timestamp(
-        epoch_col: pd.Series,
-        tz: Optional[str] = None,
-    ) -> pd.Series:
+    def _convert_epochs_to_timestamp(epoch_col: pd.Series) -> pd.Series:
         """
         Convert Unix epoch to timestamp in ET.
 
-        All Unix time epochs in CDD are provided in ms and in UTC tz.
+        All Unix time epochs in CCXT are provided in ms and in UTC tz.
 
         :param epoch_col: Series with Unix time epochs
-        :return: Series with epochs converted to ET timestamps
+        :return: Series with epochs converted to timestamps in ET
         """
-        # Convert to timestamp.
+        # Convert to timestamp in UTC tz.
         timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
         # Convert to ET tz.
         timestamp_col = timestamp_col.dt.tz_convert(hdatet.get_ET_tz())
         return timestamp_col
 
     @staticmethod
-    def _apply_ohlcv_transformation(transformed_data: pd.DataFrame):
+    def _apply_ohlcv_transformation(data: pd.DataFrame) -> pd.DataFrame:
         """
         Apply transformations for OHLCV data.
 
@@ -198,7 +211,24 @@ class CcxtLoader:
              "volume",
              "epoch",
              "currency_pair",
-             "exchange"]
-        :return:
+             "exchange_id"]
+
+        :param data: data after general CCXT transforms
+        :return: transformed OHLCV dataframe
         """
-        return transformed_ohlcv
+        ohlcv_columns = [
+            "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "epoch",
+            "currency_pair",
+            "exchange_id",
+        ]
+        # Verify that dataframe contains OHLCV columns.
+        dbg.dassert_is_subset(ohlcv_columns, data.columns)
+        # Rearrange the columns.
+        data = data[ohlcv_columns].copy()
+        return data

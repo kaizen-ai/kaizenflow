@@ -151,19 +151,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
             # Iterate over provided currency.
             currency_pairs = args.currency_pairs.split()
             # Leave only currencies present in exchange.
-            filtered_pairs = [
+            present_pairs = [
                 curr for curr in currency_pairs if curr in exchange.currency_pairs
             ]
             # Warn if not all passed currencies are present.
-            if len(filtered_pairs) != len(currency_pairs):
+            if len(present_pairs) != len(currency_pairs):
                 _LOG.warning(
                     "Currencies %s not present in exchange %s!",
-                    list(
-                        set.difference(set(currency_pairs), set(filtered_pairs))
-                    ),
+                    list(set.difference(set(currency_pairs), set(present_pairs))),
                 )
-        _LOG.debug("Getting data for currencies %s", ", ".join(currency_pairs))
-        for pair in currency_pairs:
+        _LOG.debug("Getting data for currencies %s", ", ".join(present_pairs))
+        for pair in present_pairs:
             # Download OHLCV data.
             pair_data = exchange.download_ohlcv_data(
                 curr_symbol=pair,
