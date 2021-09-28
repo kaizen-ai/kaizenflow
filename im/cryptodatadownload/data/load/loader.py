@@ -59,6 +59,8 @@ class CddLoader:
 
         :param exchange_id: CDD exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC/USDT"
+        :param timeframe: timeframe of the data to load. Possible values:
+            'minute', 'hourly', 'daily'.
         :param data_type: OHLCV or trade, bid/ask data
         :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
         :return: processed CDD data

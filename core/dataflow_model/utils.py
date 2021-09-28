@@ -37,7 +37,7 @@ import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.parser as hparser
 import helpers.pickle_ as hpickle
-import helpers.printing as hprint
+import helpers.printing as hprintin
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
@@ -211,7 +211,7 @@ def get_configs_from_command_line(
             "The following configs will not be executed due to passing --dry_run:"
         )
         for i, config in enumerate(configs):
-            print(hprint.frame("Config %d/%s" % (i + 1, len(configs))))
+            print(hprintin.frame("Config %d/%s" % (i + 1, len(configs))))
             print(str(config))
         sys.exit(0)
     return configs

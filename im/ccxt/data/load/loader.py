@@ -38,12 +38,12 @@ def _get_file_name(exchange_id: str, currency: str) -> str:
     # Verify that data for the input exchange id was downloaded.
     dbg.dassert_in(
         exchange_id,
-        downloaded_currencies_info.keys(),
+        _DOWNLOADED_CURRENCIES.keys(),
         msg="Data for exchange id='%s' was not downloaded" % exchange_id,
     )
     # Verify that data for the input exchange id and currency pair was
     # downloaded.
-    downloaded_currencies = downloaded_currencies_info[exchange_id]
+    downloaded_currencies = _DOWNLOADED_CURRENCIES[exchange_id]
     dbg.dassert_in(
         currency_pair,
         downloaded_currencies,
@@ -96,14 +96,13 @@ class CcxtLoader:
         )
         return transformed_data
 
-    # TODO(*): Consider making `exchange_id` a class member.
     def _transform(
         self,
         data: pd.DataFrame,
-        exchange_id: str,
-        currency_pair: str,
+        exchange: str,
+        currency: str,
         data_type: str,
-    ) -> pd.DataFrame:
+    ):
         """
         Transform CCXT data loaded from S3.
 
@@ -120,13 +119,13 @@ class CcxtLoader:
             2021-09-08 20:02:00-04:00  3501.59  3513.10  3499.89  3513.09  579.5656  1631145720000  ETH/USDT      binance
 
         :param data: dataframe with CCXT data from S3
-        :param exchange_id: CCXT exchange id, e.g. "binance"
-        :param currency_pair: currency pair, e.g. "BTC/USDT"
+        :param exchange: CCXT exchange id
+        :param currency: currency pair (e.g. "BTC/USDT")
         :param data_type: OHLCV or trade, bid/ask data
         :return: processed dataframe
         """
-        transformed_data = self._apply_common_transformation(
-            data, exchange_id, currency_pair
+        transformed_data = self._apply_ccxt_transformation(
+            data, exchange, currency
         )
         if data_type.lower() == "ohlcv":
             transformed_data = self._apply_ohlcv_transformation(transformed_data)
@@ -134,14 +133,15 @@ class CcxtLoader:
             dbg.dfatal("Incorrect data type. Acceptable types: ohlcv")
         return transformed_data
 
-    def _apply_common_transformation(
-        self, data: pd.DataFrame, exchange_id: str, currency_pair: str
-    ) -> pd.DataFrame:
+    @staticmethod
+    def _apply_ccxt_transformation(
+        data: pd.DataFrame, exchange: str, currency: str
+    ):
         """
         Apply transform common to all CCXT data.
 
         This includes:
-        - Datetime format assertion
+        - datetime format assertion
         - Converting epoch ms timestamp to pd.Timestamp
         - Adding exchange_id and currency_pair columns
 
@@ -157,7 +157,7 @@ class CcxtLoader:
         # Rename col with original Unix ms epoch.
         data = data.rename({"timestamp": "epoch"}, axis=1)
         # Transform Unix epoch into ET timestamp.
-        data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
+        data["timestamp"] = self._convert_epochs_to_et_timestamp(data["epoch"])
         # Add columns with exchange id and currency pair.
         data["exchange_id"] = exchange_id
         data["currency_pair"] = currency_pair
@@ -171,7 +171,7 @@ class CcxtLoader:
         """
         Convert Unix epoch to timestamp in a specified timezone.
 
-        All Unix time epochs in CCXT are provided in ms and in UTC tz.
+        All Unix time epochs in CDD are provided in ms and in UTC tz.
 
         :param epoch_col: Series with Unix time epochs
         :param timezone: "ET" or "UTC"
@@ -188,7 +188,7 @@ class CcxtLoader:
         return timestamp_col
 
     @staticmethod
-    def _apply_ohlcv_transformation(data: pd.DataFrame) -> pd.DataFrame:
+    def _apply_ohlcv_transformation(transformed_data: pd.DataFrame):
         """
         Apply transformations for OHLCV data.
 
@@ -204,24 +204,7 @@ class CcxtLoader:
              "volume",
              "epoch",
              "currency_pair",
-             "exchange_id"]
-
-        :param data: data after general CCXT transforms
-        :return: transformed OHLCV dataframe
+             "exchange"]
+        :return:
         """
-        ohlcv_columns = [
-            "timestamp",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "epoch",
-            "currency_pair",
-            "exchange_id",
-        ]
-        # Verify that dataframe contains OHLCV columns.
-        dbg.dassert_is_subset(ohlcv_columns, data.columns)
-        # Rearrange the columns.
-        data = data[ohlcv_columns].copy()
-        return data
+        return transformed_ohlcv
