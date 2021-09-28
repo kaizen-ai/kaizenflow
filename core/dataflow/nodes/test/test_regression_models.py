@@ -204,6 +204,7 @@ class TestLinearRegression(hut.TestCase):
         # Unfortunately CSV is a lousy serialization format and loses metadata so
         # we need to patch it up to make it look exactly the original one.
         df = pd.read_csv(file_name, index_col=0, parse_dates=True)
+        df.columns = map(int, df.columns)
         df = df.asfreq("B")
         return df
 
@@ -226,5 +227,4 @@ class TestLinearRegression(hut.TestCase):
         data = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 10, "freq": "B"}, seed=seed
         )
-        data.columns = ["y", "x1", "x2", "x3", "x4"]
         return data

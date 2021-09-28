@@ -17,10 +17,9 @@ import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
-# Path to the data about downloaded currencies from the spreadsheet in CMTask41.
-_DOWNLOADED_CURRENCIES_PATH = "im/data/downloaded_currencies.json"
-# Latest historical data snapsot.
-_LATEST_DATA_SNAPSHOT = "20210924"
+# Data about downloaded currencies from the spreadsheet in CMTask41.
+_DOWNLOADED_CURRENCIES_PATH = "/im/data/shared/data/downloaded_currencies.json"
+_DOWNLOADED_CURRENCIES = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)["CCXT"]["minute"]
 
 
 def _get_file_name(exchange_id: str, currency: str) -> str:
@@ -39,20 +38,20 @@ def _get_file_name(exchange_id: str, currency: str) -> str:
     # Verify that data for the input exchange id was downloaded.
     dbg.dassert_in(
         exchange_id,
-        downloaded_currencies_info.keys(),
+        _DOWNLOADED_CURRENCIES.keys(),
         msg="Data for exchange id='%s' was not downloaded" % exchange_id,
     )
     # Verify that data for the input exchange id and currency pair was
     # downloaded.
-    downloaded_currencies = downloaded_currencies_info[exchange_id]
+    downloaded_currencies = _DOWNLOADED_CURRENCIES[exchange_id]
     dbg.dassert_in(
         currency_pair,
         downloaded_currencies,
         msg="Data for exchange='%s', currency pair='%s' was not downloaded"
         % (exchange, currency),
     )
-    file_path = f"ccxt/{data_snapshot}/{exchange_id}/{currency_pair.replace('/', '_')}.csv.gz"
-    return file_path
+    file_name = f"{exchange_id}_{currency_pair.replace('/', '_')}.csv.gz"
+    return file_name
 
 
 class CcxtLoader:
@@ -77,7 +76,6 @@ class CcxtLoader:
         :param exchange_id: CCXT exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC/USDT"
         :param data_type: OHLCV or trade, bid/ask data
-        :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
         :return: processed CCXT data
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
