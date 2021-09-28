@@ -35,6 +35,7 @@ def _get_file_path(
     File path is constructed in the following way:
     `cryptodatadownload/<snapshot>/<exchange_id>/<currency_pair>.csv.gz`.
 
+    :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
     :param exchange_id: CDD exchange id, e.g. "binance"
     :param currency_pair: currency pair `<currency1>/<currency2>`, e.g. "BTC/USDT"
     :return: path to a file with CDD data
