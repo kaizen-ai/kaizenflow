@@ -20,19 +20,25 @@ _LOG = logging.getLogger(__name__)
 
 # Path to the data about downloaded currencies from the spreadsheet in CMTask41.
 _DOWNLOADED_CURRENCIES_PATH = "im/data/downloaded_currencies.json"
+# Latest historical data snapsot.
+_LATEST_DATA_SNAPSHOT = "20210924"
 
 
-# TODO(Dan): Update docstring after CMTask78 is finished.
-def _get_file_name(exchange_id: str, currency_pair: str) -> str:
+def _get_file_path(
+    data_snapshot: str,
+    exchange_id: str,
+    currency_pair: str,
+) -> str:
     """
-    Get name for a file with CDD data.
+    Get path to a file with CDD data from a content root.
 
-    File name is constructed in the following way:
-    `<Exchange_id>_<currency1><currency2>_minute.csv.gz`.
+    File path is constructed in the following way:
+    `cryptodatadownload/<snapshot>/<exchange_id>/<currency_pair>.csv.gz`.
 
+    :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
     :param exchange_id: CDD exchange id, e.g. "binance"
     :param currency_pair: currency pair `<currency1>/<currency2>`, e.g. "BTC/USDT"
-    :return: name for a file with CDD data
+    :return: path to a file with CDD data
     """
     # Extract data about downloaded currencies for CDD.
     downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)["CDD"]
@@ -51,8 +57,8 @@ def _get_file_name(exchange_id: str, currency_pair: str) -> str:
         msg="Data for exchange id='%s', currency pair='%s' was not downloaded"
         % (exchange_id, currency_pair),
     )
-    file_name = f"{exchange_id.capitalize()}_{currency_pair.replace('/', '')}_minute.csv.gz"
-    return file_name
+    file_path = f"cryptodatadownload/{data_snapshot}/{exchange_id}/{currency_pair.replace('/', '_')}.csv.gz"
+    return file_path
 
 
 class CddLoader:
@@ -61,7 +67,11 @@ class CddLoader:
     """
 
     def read_data(
-        self, exchange_id: str, currency_pair: str, data_type: str
+        self,
+        exchange_id: str,
+        currency_pair: str,
+        data_type: str,
+        data_snapshot: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Load data from S3 and process it for use downstream.
@@ -69,12 +79,14 @@ class CddLoader:
         :param exchange_id: CDD exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC/USDT"
         :param data_type: OHLCV or trade, bid/ask data
+        :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
         :return: processed CDD data
         """
-        # Get file path for a CDD file.
-        file_name = _get_file_name(exchange_id, currency_pair)
+        data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
+        # Get absolute file path for a CDD file.
+        file_path = _get_file_path(data_snapshot, exchange_id, currency_pair)
         s3_bucket_path = hs3.get_path()
-        file_path = os.path.join(s3_bucket_path, file_name)
+        file_path = os.path.join(s3_bucket_path, "data", file_path)
         # Verify that the file exists.
         s3fs = hs3.get_s3fs("am")
         hs3.dassert_s3_exists(file_path, s3fs)
