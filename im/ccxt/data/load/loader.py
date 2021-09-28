@@ -19,11 +19,13 @@ _LOG = logging.getLogger(__name__)
 
 # Path to the data about downloaded currencies from the spreadsheet in CMTask41.
 _DOWNLOADED_CURRENCIES_PATH = "im/data/downloaded_currencies.json"
+# Latest historical data snapsot.
+_LATEST_DATA_SNAPSHOT = "20210924"
 
 
 def _get_file_name(exchange_id: str, currency: str) -> str:
     """
-    Get name for a file with CCXT data.
+    Get path to a file with CCXT data from a content root.
 
     File name is constructed in the following way:
     `<exchange>_<currency1>_<currency2>.csv.gz.`
@@ -49,8 +51,8 @@ def _get_file_name(exchange_id: str, currency: str) -> str:
         msg="Data for exchange='%s', currency pair='%s' was not downloaded"
         % (exchange, currency),
     )
-    file_name = f"{exchange_id}_{currency_pair.replace('/', '_')}.csv.gz"
-    return file_name
+    file_path = f"ccxt/{data_snapshot}/{exchange_id}/{currency_pair.replace('/', '_')}.csv.gz"
+    return file_path
 
 
 class CcxtLoader:
@@ -75,6 +77,7 @@ class CcxtLoader:
         :param exchange_id: CCXT exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC/USDT"
         :param data_type: OHLCV or trade, bid/ask data
+        :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
         :return: processed CCXT data
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
