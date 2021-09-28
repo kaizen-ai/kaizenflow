@@ -41,14 +41,11 @@ def run_experiment(config: cconfig.Config) -> None:
             **config["meta", "set_predict_intervals", "func_kwargs"].to_dict()
         )
     fit_result_bundle = dag_runner.fit()
-    # Process payload.
-    payload = cconfig.get_config_from_nested_dict({"config": config})
+    # Maybe run OOS.
     if "run_oos" in config["meta"].to_dict().keys() and config["meta"]:
         result_bundle = dag_runner.predict()
-        payload["fit_result_bundle"] = fit_result_bundle.to_config()
     else:
         result_bundle = fit_result_bundle
-    result_bundle.payload = payload
     # Save results.
     # TODO(gp): We could return a `ResultBundle` and have
     # `run_experiment_stub.py` save it.

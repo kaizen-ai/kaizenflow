@@ -137,6 +137,9 @@ def dtimer_stop(idx: int) -> Tuple[str, int]:
       - time in seconds (int)
     """
     dbg.dassert_lte(0, idx)
+    # TODO(gp): This assertion might create problems when an exception is
+    # thrown and we don't use context managers to handle the timers. Consider
+    # alternative solutions.
     dbg.dassert_lt(idx, len(_DTIMER_INFO))
     log_level, message, timer = _DTIMER_INFO[idx]
     timer.stop()
@@ -183,7 +186,8 @@ class TimedScope:
 
     def __exit__(self, *args: Any) -> None:
         if self._idx is not None:
-            self.elapsed_time = dtimer_stop(self._idx)
+            msg, self.elapsed_time = dtimer_stop(self._idx)
+            _ = msg
 
 
 # #############################################################################

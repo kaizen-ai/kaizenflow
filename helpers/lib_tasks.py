@@ -529,7 +529,8 @@ def git_create_branch(  # type: ignore
         dbg.dassert_eq(
             branch_name, "", "You can't specify both --issue and --branch_name"
         )
-        branch_name = _get_gh_issue_title(issue_id, repo_short_name)
+        title, _ = _get_gh_issue_title(issue_id, repo_short_name)
+        branch_name = title
         _LOG.info(
             "Issue %d in %s repo_short_name corresponds to '%s'",
             issue_id,
@@ -2766,7 +2767,7 @@ def _get_repo_full_name_from_cmd(repo_short_name: str) -> Tuple[str, str]:
     return repo_full_name_with_host, ret_repo_short_name
 
 
-def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> str:
+def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> Tuple[str, str]:
     """
     Get the title of a GitHub issue.
 
@@ -2776,12 +2777,10 @@ def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> str:
     repo_full_name_with_host, repo_short_name = _get_repo_full_name_from_cmd(
         repo_short_name
     )
-    # > (export NO_COLOR=1; gh issue view 1251 --json title )
+    # > (export NO_COLOR=1; gh issue view 1251 --json title)
     # {"title":"Update GH actions for amp"}
     dbg.dassert_lte(1, issue_id)
-    cmd = (
-        f"gh issue view {issue_id} --repo {repo_full_name_with_host} --json title"
-    )
+    cmd = f"gh issue view {issue_id} --repo {repo_full_name_with_host} --json title,url"
     _, txt = hsinte.system_to_string(cmd)
     _LOG.debug("txt=\n%s", txt)
     # Parse json.
@@ -2789,6 +2788,8 @@ def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> str:
     _LOG.debug("dict_=\n%s", dict_)
     title = dict_["title"]
     _LOG.debug("title=%s", title)
+    url = dict_["url"]
+    _LOG.debug("url=%s", url)
     # Remove some annoying chars.
     for char in ": + ( ) / ` *".split():
         title = title.replace(char, "")
@@ -2801,7 +2802,7 @@ def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> str:
     task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
     _LOG.debug("task_prefix=%s", task_prefix)
     title = "%s%d_%s" % (task_prefix, issue_id, title)
-    return title
+    return title, url
 
 
 @task
@@ -2816,9 +2817,10 @@ def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # ty
     _ = ctx
     issue_id = int(issue_id)
     dbg.dassert_lte(1, issue_id)
-    res = _get_gh_issue_title(issue_id, repo_short_name)
+    title, url = _get_gh_issue_title(issue_id, repo_short_name)
     # Print or copy to clipboard.
-    _to_pbcopy(res, pbcopy)
+    msg = f"{title}: {url}"
+    _to_pbcopy(msg, pbcopy)
 
 
 # TODO(gp): Add unit test for
@@ -2870,3 +2872,13 @@ def gh_create_pr(  # type: ignore
 # TODO(gp): Add gh_open_pr to jump to the PR from this branch.
 
 # TODO(gp): Add ./dev_scripts/testing/pytest_count_files.sh
+
+
+# From https://stackoverflow.com/questions/34878808/finding-docker-container-processes-from-host-point-of-view
+# Convert Docker container to processes id
+# for i in $(docker container ls --format "{{.ID}}"); do docker inspect -f '{{.State.Pid}} {{.Name}}' $i; done
+# 7444 /compose_app_run_d386dc360071
+# 8857 /compose_jupyter_server_run_7575f1652032
+# 1767 /compose_app_run_6782c2bd6999
+# 25163 /compose_app_run_ab27e17f2c47
+# 18721 /compose_app_run_de23819a6bc2

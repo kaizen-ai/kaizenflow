@@ -1,12 +1,20 @@
 <!--ts-->
-   * [Profiling](#profiling)
-      * [Selected profilers](#selected-profilers)
-         * [Time profilers](#time-profilers)
-            * [Overall](#overall)
-            * [By function](#by-function)
-         * [Memory profilers](#memory-profilers)
-            * [Peak memory](#peak-memory)
-            * [Memory by line](#memory-by-line)
+   * [Profiling end-to-end a command line](#profiling-end-to-end-a-command-line)
+   * [Profiling Python code from command line](#profiling-python-code-from-command-line)
+      * [line_profiler](#line_profiler)
+         * [Install](#install)
+         * [How to use](#how-to-use)
+      * [pytest-profiling](#pytest-profiling)
+         * [Install](#install-1)
+         * [How to use](#how-to-use-1)
+      * [cProfile](#cprofile)
+   * [Profiling in a Jupyter notebook](#profiling-in-a-jupyter-notebook)
+      * [Time profilers](#time-profilers)
+         * [Overall](#overall)
+         * [By function](#by-function)
+      * [Memory profilers](#memory-profilers)
+
+
 
 <!--te-->
 
@@ -44,6 +52,7 @@
   ```
 
 - Information about the spent time are:
+
   ```bash
   User time (seconds): 187.70
   System time (seconds): 16.27
@@ -62,27 +71,59 @@
 # Profiling Python code from command line
 
 ## `line_profiler`
+
 - Profile a function line by line
-- Decorate target function with `@profile`
-  - Check `kernprof.py -h` for more ways of marking the interesting parts of
-    code
+
+- GitHub: https://github.com/pyutils/line_profiler
+
+### Install
+
+- Install with:
   ```bash
-  > kernprof -l -o line_profile.lprof $CMD
-  > python -m line_profiler line_profile.lprof
+  > pip install line_profiler
   ```
 
-- TODO(*): Finish this
+### How to use
+
+- Instrument the code to profile:
+
+  ```bash
+  import line_profiler
+
+  profiler = line_profiler.LineProfiler()
+
+  @profiler
+  def function():
+    ...
+    profiler.print_stats()
+  ```
+
+## `pytest-profiling`
+
+- Webpage: https://pypi.org/project/pytest-profiling
+
+### Install
+
+- Install with:
+  ```bash
+  > pip install pytest-profiling
+  ```
+
+### How to use
+
+```bash
+> pytest --profile ./amp/core/dataflow_model/test/test_pnl_simulator.py::TestPnlSimulator2::test_perf1 -s
+```
 
 ## `cProfile`
+
 - You need to run the code first with profiling enabled
 
 - Example of command lines:
+
   ```bash
   # Profile a python script.
   > python -m cProfile -o prof.bin CMD
-
-  # Profile with run_tests.py.
-  > python -m cProfile -o prof.bin test/run_tests.py -v 10 TestComputeDerivedFeatures2.test3
 
   # Profile a unit test.
   > python -m cProfile -o profile edgar/forms8/test/test_edgar_utils.py
@@ -103,6 +144,7 @@
   ```
 
 - `gprof2dot` has lots of interesting options, e.g.,
+
   ```bash
   gprof2dot -h
 
@@ -169,15 +211,15 @@
   dspl.Image(filename="output.png")
   ```
 
-- This will output something like this:
-  ![](img/gprof2dot_output1.png)
+- This will output something like this: ![](img/gprof2dot_output1.png)
 
 - If you open the output image in the new tab, you can zoom in and look at the
   graph in detail.
 
-- `gprof2dot` 
-  [supports thresholds](https://github.com/jrfonseca/gprof2dot#documentation) that make
-  output more readable:
+- `gprof2dot`
+  [supports thresholds](https://github.com/jrfonseca/gprof2dot#documentation)
+  that make output more readable:
+
   ```python
   !gprof2dot -n 5 -e 5 -f pstats tmp.pstats | dot -Tpng -o output.png
   dspl.Image(filename="output.png")
@@ -188,9 +230,11 @@
 
 ## Memory profilers
 
-- We prefer using [memory-profiler](https://github.com/pythonprofilers/memory_profiler).
+- We prefer using
+  [memory-profiler](https://github.com/pythonprofilers/memory_profiler).
 
 - Peak memory
+
   ```python
   %%memit
   func()

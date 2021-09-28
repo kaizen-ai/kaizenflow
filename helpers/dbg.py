@@ -593,6 +593,7 @@ def dassert_not_exists(
         _dfatal(txt, msg, *args)
 
 
+# TODO(gp): Does it work for a file ending in ".pkl.gz"? Add unit test.
 def dassert_file_extension(
     file_name: str, extensions: Union[str, List[str]]
 ) -> None:
@@ -736,6 +737,34 @@ class _ColoredFormatter(  # type: ignore[misc]
         return logging.Formatter.format(self, colored_record)
 
 
+def get_memory_usage(process: Optional[Any] = None) -> Tuple[float, float, float]:
+    """
+    Return the memory usage in terms of resident, virtual, and percent of total
+    used memory.
+    """
+    if process is None:
+        import psutil
+
+        process = psutil.Process()
+    rss_in_GB = process.memory_info().rss / (1024 ** 3)
+    vms_in_GB = process.memory_info().vms / (1024 ** 3)
+    mem_pct = process.memory_percent()
+    return (rss_in_GB, vms_in_GB, mem_pct)
+
+
+def get_memory_usage_as_str(process: Optional[Any] = None) -> str:
+    """
+    Like `get_memory_usage()` but returning a formatted string.
+    """
+    (rss_in_GB, vms_in_GB, mem_pct) = get_memory_usage(process)
+    resource_use = "rss=%.3fGB vms=%.3fGB mem_pct=%.0f%%" % (
+        rss_in_GB,
+        vms_in_GB,
+        mem_pct,
+    )
+    return resource_use
+
+
 # From https://stackoverflow.com/questions/10848342
 # and https://docs.python.org/3/howto/logging-cookbook.html#filters-contextual
 class ResourceUsageFilter(logging.Filter):
@@ -759,14 +788,7 @@ class ResourceUsageFilter(logging.Filter):
         """
         p = self._process
         # Report memory usage.
-        rss_in_GB = p.memory_info().rss / (1024 ** 3)
-        vms_in_GB = p.memory_info().vms / (1024 ** 3)
-        mem_pct = p.memory_percent()
-        resource_use = "rss=%.1fGB vms=%.1fGB mem_pct=%.0f%%" % (
-            rss_in_GB,
-            vms_in_GB,
-            mem_pct,
-        )
+        resource_use = get_memory_usage_as_str(p)
         # Report CPU usage.
         if self._report_cpu_usage:
             # CPU usage since the previous call.
@@ -884,6 +906,8 @@ def init_logger(
     force_white: bool = True,
     force_no_warning: bool = False,
     in_pytest: bool = False,
+    report_resource_usage: bool = False,
+    report_cpu_usage: bool = False,
 ) -> None:
     """
     Send stderr and stdout to logging (optionally teeing the logs to file).
@@ -901,6 +925,8 @@ def init_logger(
         output of a script when redirected to file with echo characters
     :param in_pytest: True when we are running through pytest, so that we
         can overwrite the default logger from pytest
+    :param report_resource_usage: turn on reporting memory usage
+    :param report_cpu_usage: turn on reporting CPU usage
     """
     # TODO(gp): Print the stacktrace every time is called.
     if force_white:
@@ -928,9 +954,6 @@ def init_logger(
         return
     #
     print(INFO + ": > cmd='%s'" % get_command_line())
-    # Turn on reporting memory and CPU usage.
-    report_resource_usage = report_cpu_usage = False
-    #
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(verbosity)
     # Decide whether to use verbose or print format.
