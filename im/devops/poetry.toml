@@ -1,8 +1,7 @@
 cache-dir = "tmp.pypoetry"
 experimental.new-installer = true
 installer.parallel = true
-# We don't want poetry to automatically create / manage virtual environment
-# (see use devops/docker_build/install_requirements.sh).
-#virtualenvs.create = true
+# We don't want poetry to automatically create / manage virtual environment,
+# see use `cmamp/devops/docker_build/install_requirements.sh`.
 virtualenvs.create = false
 virtualenvs.in-project = true
