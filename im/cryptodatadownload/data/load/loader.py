@@ -30,9 +30,9 @@ def _get_file_path(
     currency_pair: str,
 ) -> str:
     """
-    Get path for a file with CDD data from a content root.
+    Get path to a file with CDD data from a content root.
 
-    File name is constructed in the following way:
+    File path is constructed in the following way:
     `cryptodatadownload/<snapshot>/<exchange_id>/<currency_pair>.csv.gz`.
 
     :param exchange_id: CDD exchange id, e.g. "binance"
@@ -82,7 +82,7 @@ class CddLoader:
         :return: processed CDD data
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
-        # Get file path for a CDD file.
+        # Get absolute file path for a CDD file.
         file_path = _get_file_path(data_snapshot, exchange_id, currency_pair)
         s3_bucket_path = hs3.get_path()
         file_path = os.path.join(s3_bucket_path, "data", file_path)
