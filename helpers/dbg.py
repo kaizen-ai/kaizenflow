@@ -737,9 +737,14 @@ class _ColoredFormatter(  # type: ignore[misc]
         return logging.Formatter.format(self, colored_record)
 
 
-def get_memory_usage(process: Optional[Any]=None) -> str:
+def get_memory_usage(process: Optional[Any] = None) -> Tuple[float, float, float]:
+    """
+    Return the memory usage in terms of resident, virtual, and percent of total
+    used memory.
+    """
     if process is None:
         import psutil
+
         process = psutil.Process()
     rss_in_GB = process.memory_info().rss / (1024 ** 3)
     vms_in_GB = process.memory_info().vms / (1024 ** 3)
@@ -747,7 +752,10 @@ def get_memory_usage(process: Optional[Any]=None) -> str:
     return (rss_in_GB, vms_in_GB, mem_pct)
 
 
-def get_memory_usage_as_str(process: Optional[Any]=None) -> str:
+def get_memory_usage_as_str(process: Optional[Any] = None) -> str:
+    """
+    Like `get_memory_usage()` but returning a formatted string.
+    """
     (rss_in_GB, vms_in_GB, mem_pct) = get_memory_usage(process)
     resource_use = "rss=%.3fGB vms=%.3fGB mem_pct=%.0f%%" % (
         rss_in_GB,
@@ -899,7 +907,7 @@ def init_logger(
     force_no_warning: bool = False,
     in_pytest: bool = False,
     report_resource_usage: bool = False,
-    report_cpu_usage: bool = False
+    report_cpu_usage: bool = False,
 ) -> None:
     """
     Send stderr and stdout to logging (optionally teeing the logs to file).

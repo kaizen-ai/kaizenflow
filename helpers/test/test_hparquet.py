@@ -48,6 +48,7 @@ class TestParquet1(hut.TestCase):
         # Check.
         self.assert_equal(str(df), str(df2))
         self.assertTrue(df.equals(df2))
+
     @staticmethod
     def _get_df(date: datetime.date, seed: int = 42) -> pd.DataFrame:
         """

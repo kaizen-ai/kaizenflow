@@ -75,7 +75,7 @@ class StrategyEvaluator:
             returns_col,
             spread_col,
         )
-        self.alpha_col = alpha_col
+        self.position_intent_col = position_intent_col
         self.returns_col = returns_col
         self.spread_col = spread_col
         # self.start = start
@@ -90,14 +90,13 @@ class StrategyEvaluator:
     def from_result_bundle_dict(
         cls,
         result_bundle_dict: Dict[Key, cdataf.ResultBundle],
-        alpha_col: str,
+        position_intent_col: str,
         returns_col: str,
         spread_col: str,
         abort_on_error: bool = True,
     ) -> StrategyEvaluator:
         """
-        Initialize a `ModelEvaluator` from a dictionary `key` ->
-        `ResultBundle`.
+        Initialize a `StrategyEvaluator` from a result bundle dictionary.
         """
         _LOG.info(
             "Before building StrategyEvaluator: memory_usage=%s",
@@ -135,7 +134,7 @@ class StrategyEvaluator:
         # Initialize `StrategyEvaluator`.
         evaluator = cls(
             data=data_dict,
-            alpha_col=alpha_col,
+            position_intent_col=position_intent_col,
             returns_col=returns_col,
             spread_col=spread_col,
         )
@@ -199,7 +198,7 @@ class StrategyEvaluator:
             ):
                 hdbg.dassert_in(col, self._data[key].columns)
             df = self._data[key][
-                [self.returns_col, self.alpha_col, self.spread_col]
+                [self.returns_col, self.position_intent_col, self.spread_col]
             ]
             # TODO(gp): Not sure about renaming the columns, since it might prevent
             #  re-running on the same data. It might be simpler to leave the data
@@ -207,9 +206,9 @@ class StrategyEvaluator:
             #  `ret_0 = self.returns_col`.
             df.rename(
                 columns={
-                    self.returns_col: "returns",
-                    self.alpha_col: "alpha",
-                    self.spread_col: "spread",
+                    self.returns_col: "ret_0",
+                    self.position_intent_col: "position_intent_1",
+                    self.spread_col: "spread_0",
                 },
                 inplace=True,
             )
@@ -217,19 +216,19 @@ class StrategyEvaluator:
             pnl = (
                 cfin.compute_pnl(
                     df,
-                    target_position_col="target_position",
-                    return_col="returns",
+                    position_intent_col="position_intent_1",
+                    return_col="ret_0",
                 )
                 .squeeze()
-                .rename("pnl")
+                .rename("pnl_0")
             )
             df["pnl_0"] = pnl
             # Compute spread cost.
             spread_cost = (
                 cfin.compute_spread_cost(
                     df,
-                    target_position_col="target_position",
-                    spread_col="spread",
+                    target_position_col="position_intent_1",
+                    spread_col="spread_0",
                     spread_fraction_paid=spread_fraction_paid,
                 )
                 .squeeze()
@@ -335,6 +334,10 @@ class ModelEvaluator:
         """
         Constructor.
 
+        The `prediction_col` and `target_col` should be aligned, i.e., the
+        prediction at a given index location should be a prediction for the
+        target at that same index location.
+
         :param data: a dict key (tag of model / experiment) -> dataframe (containing
             `ResultBundle.result_df`). Each model / experiment is represented by
             a key.
@@ -347,7 +350,7 @@ class ModelEvaluator:
              2009-01-02 09:05:00-05:00                              NaN ...
              2009-01-02 09:10:00-05:00                              NaN ...
              2009-01-02 09:15:00-05:00                              NaN ...
-             ```
+            ```
 
         :param prediction_col: column of to use as predictions
         :param target_col: column of to use as targets (e.g., returns)
@@ -678,9 +681,9 @@ class ModelEvaluator:
         pnl_dict = {}
         for key in keys:
             pnl_dict[key] = pd.concat(
-                [returns[key], predictions[key], positions[key], pnls[key]], axis=1
+                [returns[key], predictions[key], positions[key], pnls[key]],
+                axis=1,
             )
-        # Trim to the
         _LOG.debug("Trim pnl_dict")
         pnl_dict = self._trim_time_range(pnl_dict, mode=mode)
         _LOG.info("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
@@ -895,7 +898,7 @@ class PositionComputer:
         pnl = pnl_computer.compute_pnl()
         pnl.name = "pnl"
         # Rescale in-sample.
-        ins_pnl = pnl[: self.oos_start]
+        ins_pnl = pnl[: self.oos_start]  # type: ignore[misc]
         if volatility_strategy == "rescale":
             scale_factor = cfin.compute_volatility_normalization_factor(
                 srs=ins_pnl, target_volatility=target_volatility

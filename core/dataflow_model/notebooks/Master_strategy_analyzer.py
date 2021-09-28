@@ -53,10 +53,9 @@ hprint.config_notebook()
 # Read from env var.
 eval_config = cconfig.Config.from_env_var("AM_CONFIG_CODE")
 
-if config is None:
-    experiment_dir = "/cache/experiments/oos_experiment.RH2Eg.v2_0-all.5T.run2.hacked"
+if eval_config is None:
+    experiment_dir = ""
     aws_profile = None
-    #selected_idxs = range(200)
     selected_idxs = None
 
     eval_config = cconfig.get_config_from_nested_dict(

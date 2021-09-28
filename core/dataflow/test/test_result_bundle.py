@@ -5,7 +5,6 @@ import os
 import pandas as pd
 
 import core.config as cconfig
-
 # TODO(gp): Use
 # import core.dataflow.result_bundle as cdtfrb
 import core.dataflow as dtf
@@ -61,10 +60,15 @@ class TestResultBundle(hut.TestCase):
         file_name = os.path.join(dir_name, "result_bundle.pkl")
         rb.to_pickle(file_name, use_pq=False)
         # Compute the signature of the dir.
-        act = hut.get_dir_signature(dir_name, include_file_content=False)
+        actual = hut.get_dir_signature(dir_name, include_file_content=False)
         # Check.
-        exp = []
-        self.assert_equal(act, exp)
+        expected = """
+        # Dir structure
+        $GIT_ROOT/core/dataflow/test/TestResultBundle.test_pickle1/tmp.scratch
+        $GIT_ROOT/core/dataflow/test/TestResultBundle.test_pickle1/tmp.scratch/result_bundle.v1_0.pkl
+        """
+        expected = hprint.dedent(expected)
+        self.assert_equal(str(actual), str(expected), purify_text=True)
 
     def test_get_tags_for_column1(self) -> None:
         rb = self._get_result_bundle()
@@ -105,8 +109,7 @@ class TestResultBundle(hut.TestCase):
         )
         return init_config
 
-    @staticmethod
-    def _get_result_bundle() -> dtf.ResultBundle:
+    def _get_result_bundle(self) -> dtf.ResultBundle:
         """
         Initialize a `ResultBundle` from a config.
         """
@@ -115,7 +118,7 @@ class TestResultBundle(hut.TestCase):
         return rb
 
 
-# #############################################################################
+# ##################################################################################
 
 
 class TestPredictionResultBundle(hut.TestCase):

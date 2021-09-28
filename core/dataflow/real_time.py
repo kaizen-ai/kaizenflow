@@ -339,8 +339,9 @@ async def execute_all_with_real_time_loop(
     equivalent to adding a list around a Python generator.
     """
     vals = zip(
-        *[v async for v in execute_with_real_time_loop(*args, **kwargs)]
-    )  # type: ignore[arg-type]
+        *[v async for v in
+            execute_with_real_time_loop(*args, **kwargs)]  # type: ignore[arg-type]
+    )
     events, results = list(vals)
     events = Events(events)
     results = list(results)

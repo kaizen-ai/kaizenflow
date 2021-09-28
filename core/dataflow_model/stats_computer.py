@@ -41,9 +41,7 @@ class StatsComputer:
         # stats.append(self.compute_autocorrelation_stats(srs))
         with htimer.TimedScope(logging.DEBUG, "Computing spectral stats"):
             stats.append(self.compute_spectral_stats(srs))
-        with htimer.TimedScope(
-            logging.DEBUG, "Computing signal quality stats"
-        ):
+        with htimer.TimedScope(logging.DEBUG, "Computing signal quality stats"):
             stats.append(self.compute_signal_quality_stats(srs))
         # Concatenate the resulting series into a single multi-index series.
         names = [stat.name for stat in stats]

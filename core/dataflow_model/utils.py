@@ -313,6 +313,7 @@ def _get_experiment_subdirs(
     """
     # Handle the situation where the file is an archived file.
     if src_dir.endswith(".tgz"):
+        scratch_dir = "."
         if hs3.is_s3_path(src_dir):
             hdbg.dassert_is_not(aws_profile, None)
             aws_profile = cast(str, aws_profile)
@@ -322,7 +323,6 @@ def _get_experiment_subdirs(
         else:
             tgz_file = src_dir
         # Expand.
-        scratch_dir = "."
         src_dir = hs3.expand_archived_data(tgz_file, scratch_dir)
         _LOG.debug("src_dir=%s", src_dir)
     # Retrieve all the subdirectories in `src_dir` that store results.
