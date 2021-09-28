@@ -9,6 +9,7 @@ set -e
 FILE_NAME="devops/docker_build/entrypoint/aws_credentials.sh"
 echo "##> $FILE_NAME"
 
+echo "HOME=$HOME"
 AWS_VOLUME="${HOME}/.aws"
 if [[ ! -d $AWS_VOLUME ]]; then
     echo "Can't find $AWS_VOLUME: exiting"
@@ -30,8 +31,8 @@ else
     done < $INI_FILE
     # Update the password file.
     # TODO(gp): Change default00 -> alphamatic-data.
-    echo $AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY > /etc/passwd-s3fs-default00-bucket
-    chmod 600 /etc/passwd-s3fs-default00-bucket
+    #echo $AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY > /etc/passwd-s3fs-default00-bucket
+    #chmod 600 /etc/passwd-s3fs-default00-bucket
 fi;
 
 # TODO(gp): Load also the AWS_DEFAULT_REGION from ~/.aws/config.
