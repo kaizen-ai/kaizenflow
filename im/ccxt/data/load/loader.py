@@ -6,74 +6,61 @@ import im.ccxt.data.load.loader as cdlloa
 
 import logging
 import os
+from typing import Optional
 
-import ccxt
 import pandas as pd
 
-import core.pandas_helpers as pdhelp
+import core.pandas_helpers as cphelp
 import helpers.datetime_ as hdatet
 import helpers.dbg as dbg
+import helpers.io_ as hio
 import helpers.s3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
-# Data about downloaded currencies from the spreadsheet in CMTask41.
-_DOWNLOADED_EXCHANGES_CURRENCIES = {
-    "binance": [
-        "ADA/USDT",
-        "AVAX/USDT",
-        "BNB/USDT",
-        "BTC/USDT",
-        "DOGE/USDT",
-        "EOS/USDT",
-        "ETH/USDT",
-        "LINK/USDT",
-        "SOL/USDT",
-    ],
-    "kucoin": [
-        "ADA/USDT",
-        "AVAX/USDT",
-        "BNB/USDT",
-        "BTC/USDT",
-        "DOGE/USDT",
-        "EOS/USDT",
-        "ETH/USDT",
-        "FIL/USDT",
-        "LINK/USDT",
-        "SOL/USDT",
-        "XPR/USDT",
-    ],
-}
+# Path to the data about downloaded currencies from the spreadsheet in CMTask41.
+_DOWNLOADED_CURRENCIES_PATH = "im/data/downloaded_currencies.json"
+# Latest historical data snapsot.
+_LATEST_DATA_SNAPSHOT = "20210924"
 
 
-def _get_file_name(exchange_id: str, currency_pair: str) -> str:
+def _get_file_path(
+    data_snapshot: str,
+    exchange_id: str,
+    currency_pair: str,
+) -> str:
     """
-    Get name for a file with CCXT data.
+    Get path to a file with CCXT data from a content root.
 
-    File name is constructed in the following way:
-    `<exchange_id>_<currency1>_<currency2>.csv.gz`.
+    File path is constructed in the following way:
+    `ccxt/<snapshot>/<exchange_id>/<currency_pair>.csv.gz`.
 
+    :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
     :param exchange_id: CCXT exchange id, e.g. "binance"
     :param currency_pair: currency pair `<currency1>/<currency2>`, e.g. "BTC/USDT"
-    :return: name for a file with CCXT data
+    :return: path to a file with CCXT data
     """
+    # Extract data about downloaded currencies for CCXT.
+    downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)[
+        "CCXT"
+    ]
     # Verify that data for the input exchange id was downloaded.
     dbg.dassert_in(
         exchange_id,
-        _DOWNLOADED_EXCHANGES_CURRENCIES.keys(),
+        downloaded_currencies_info.keys(),
         msg="Data for exchange id='%s' was not downloaded" % exchange_id,
     )
     # Verify that data for the input exchange id and currency pair was
     # downloaded.
-    downloaded_currencies = _DOWNLOADED_EXCHANGES_CURRENCIES[exchange_id]
+    downloaded_currencies = downloaded_currencies_info[exchange_id]
     dbg.dassert_in(
         currency_pair,
         downloaded_currencies,
         msg="Data for exchange id='%s', currency pair='%s' was not downloaded"
         % (exchange_id, currency_pair),
     )
-    file_name = f"{exchange_id}_{currency_pair.replace('/', '_')}.csv.gz"
-    return file_name
+    file_path = f"ccxt/{data_snapshot}/{exchange_id}/{currency_pair.replace('/', '_')}.csv.gz"
+    return file_path
 
 
 class CcxtLoader:
@@ -82,7 +69,11 @@ class CcxtLoader:
     """
 
     def read_data(
-        self, exchange_id: str, currency_pair: str, data_type: str
+        self,
+        exchange_id: str,
+        currency_pair: str,
+        data_type: str,
+        data_snapshot: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Load data from S3 and process it for use downstream.
@@ -90,12 +81,14 @@ class CcxtLoader:
         :param exchange_id: CCXT exchange id, e.g. "binance"
         :param currency_pair: currency pair, e.g. "BTC/USDT"
         :param data_type: OHLCV or trade, bid/ask data
+        :param data_snapshot: snapshot of datetime when data was loaded, e.g. "20210924"
         :return: processed CCXT data
         """
-        # Get file path for a CCXT file.
-        file_name = _get_file_name(exchange_id, currency_pair)
+        data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
+        # Get absolute file path for a CCXT file.
+        file_path = _get_file_path(data_snapshot, exchange_id, currency_pair)
         s3_bucket_path = hs3.get_path()
-        file_path = os.path.join(s3_bucket_path, file_name)
+        file_path = os.path.join(s3_bucket_path, "data", file_path)
         # Verify that the file exists.
         s3fs = hs3.get_s3fs("am")
         hs3.dassert_s3_exists(file_path, s3fs)
@@ -106,7 +99,7 @@ class CcxtLoader:
             currency_pair,
             file_path,
         )
-        data = pdhelp.read_csv(file_path, s3fs)
+        data = cphelp.read_csv(file_path, s3fs)
         # Apply transformation to raw data.
         _LOG.info(
             "Processing CCXT data for exchange id='%s', currencies='%s'...",
@@ -137,9 +130,9 @@ class CcxtLoader:
 
         Output data example:
             timestamp                  open     high     low      close    volume    epoch          currency_pair exchange_id
-            2021-09-09 00:00:00+00:00  3499.01  3499.49  3496.17  3496.36  346.4812  1631145600000  BTC/USDT      binance
-            2021-09-09 00:01:00+00:00  3496.36  3501.59  3495.69  3501.59  401.9576  1631145660000  BTC/USDT      binance
-            2021-09-09 00:02:00+00:00  3501.59  3513.10  3499.89  3513.09  579.5656  1631145720000  BTC/USDT      binance
+            2021-09-08 20:00:00-04:00  3499.01  3499.49  3496.17  3496.36  346.4812  1631145600000  ETH/USDT      binance
+            2021-09-08 20:01:00-04:00  3496.36  3501.59  3495.69  3501.59  401.9576  1631145660000  ETH/USDT      binance
+            2021-09-08 20:02:00-04:00  3501.59  3513.10  3499.89  3513.09  579.5656  1631145720000  ETH/USDT      binance
 
         :param data: dataframe with CCXT data from S3
         :param exchange_id: CCXT exchange id, e.g. "binance"
@@ -178,32 +171,27 @@ class CcxtLoader:
         )
         # Rename col with original Unix ms epoch.
         data = data.rename({"timestamp": "epoch"}, axis=1)
-        # Transform Unix epoch into standard timestamp.
-        data["timestamp"] = self._convert_epochs_to_timestamp(
-            data["epoch"], exchange_id
-        )
+        # Transform Unix epoch into ET timestamp.
+        data["timestamp"] = self._convert_epochs_to_timestamp(data["epoch"])
         # Add columns with exchange id and currency pair.
         data["exchange_id"] = exchange_id
         data["currency_pair"] = currency_pair
         return data
 
     @staticmethod
-    def _convert_epochs_to_timestamp(
-        epoch_col: pd.Series, exchange_id: str
-    ) -> pd.Series:
+    def _convert_epochs_to_timestamp(epoch_col: pd.Series) -> pd.Series:
         """
-        Convert Unix epoch to timestamp.
+        Convert Unix epoch to timestamp in ET.
 
-        All timestamps in CCXT are provided with UTC tz.
+        All Unix time epochs in CCXT are provided in ms and in UTC tz.
 
-        :param epoch_col: Series with unix time epochs
-        :param exchange_id: CCXT exchange id, e.g. "binance"
-        :return: Series with epochs converted to UTC timestamps
+        :param epoch_col: Series with Unix time epochs
+        :return: Series with epochs converted to timestamps in ET
         """
-        exchange_class = getattr(ccxt, exchange_id)
-        timestamp_col = epoch_col.apply(exchange_class.iso8601)
-        # Convert to timestamp.
-        timestamp_col = hdatet.to_generalized_datetime(timestamp_col)
+        # Convert to timestamp in UTC tz.
+        timestamp_col = pd.to_datetime(epoch_col, unit="ms", utc=True)
+        # Convert to ET tz.
+        timestamp_col = timestamp_col.dt.tz_convert(hdatet.get_ET_tz())
         return timestamp_col
 
     @staticmethod

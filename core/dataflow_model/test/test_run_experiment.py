@@ -47,7 +47,6 @@ class TestRunExperimentSuccess1(hut.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs1()'",
             "--num_threads 'serial'",
-            "--skip_archive_on_S3",
         ]
         #
         exp_pass = True
@@ -63,7 +62,6 @@ class TestRunExperimentSuccess1(hut.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs1()'",
             "--num_threads 2",
-            "--skip_archive_on_S3",
         ]
         #
         exp_pass = True
@@ -106,7 +104,6 @@ class TestRunExperimentFail2(hut.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
             "--num_threads serial",
-            "--skip_archive_on_S3",
         ]
         #
         exp_pass = False
@@ -125,7 +122,6 @@ class TestRunExperimentFail2(hut.TestCase):
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
             "--skip_on_error",
             "--num_threads serial",
-            "--skip_archive_on_S3",
         ]
         #
         exp_pass = True
@@ -144,7 +140,6 @@ class TestRunExperimentFail2(hut.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
             "--num_threads 2",
-            "--skip_archive_on_S3",
         ]
         #
         exp_pass = False
@@ -165,7 +160,6 @@ class TestRunExperimentFail2(hut.TestCase):
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
             "--skip_on_error",
             "--num_threads 2",
-            "--skip_archive_on_S3",
         ]
         #
         exp_pass = True
@@ -215,6 +209,7 @@ class TestRunExperimentArchiveOnS3(hut.TestCase):
                 f"--aws_profile '{aws_profile}'",
                 f"--s3_path {s3_tmp_path}",
                 f"--json_output_metadata {output_metadata_file}",
+                "--archive_on_S3",
                 # f"-v DEBUG",
             ]
             #

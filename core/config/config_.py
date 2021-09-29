@@ -5,6 +5,7 @@
 import collections
 import copy
 import logging
+import os
 import re
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
@@ -249,19 +250,25 @@ class Config:
         return copy.deepcopy(self)
 
     @classmethod
-    def from_python(cls, code: str) -> "Config":
+    def from_python(cls, code: str) -> Optional["Config"]:
         """
         Create an object from the code returned by `to_python()`.
         """
         dbg.dassert_isinstance(code, str)
-        # eval function need unknown globals to be set.
-        val = eval(code, {"nan": np.nan, "Config": Config})
-        dbg.dassert_isinstance(val, Config)
+        try:
+            # eval function need unknown globals to be set.
+            val = eval(code, {"nan": np.nan, "Config": Config})
+            dbg.dassert_isinstance(val, Config)
+        except SyntaxError as e:
+            _LOG.error("Error deserializing: %s", str(e))
+            return None
         return val  # type: ignore
 
     def to_python(self, check: bool = True) -> str:
         """
         Return python code that builds, when executed, the current object.
+
+        :param check: check that the Config can be serialized/deserialized correctly.
         """
         config_as_str = str(self.to_dict())
         # We don't need `cconfig.` since we are inside the config module.
@@ -272,6 +279,19 @@ class Config:
             # Compare.
             dbg.dassert_eq(str(self), str(config_tmp))
         return config_as_str
+
+    @classmethod
+    def from_env_var(cls, env_var: str) -> Optional["Config"]:
+        if env_var in os.environ:
+            python_code = os.environ[env_var]
+            config = cls.from_python(python_code)
+        else:
+            _LOG.warning(
+                "Environment variable '%s' not defined: no config retrieved",
+                env_var,
+            )
+            config = None
+        return config
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -288,6 +308,15 @@ class Config:
             else:
                 dict_[k] = v
         return dict_
+
+    def is_serializable(self) -> bool:
+        """
+        Make sure the config can be serialized and deserialized correctly.
+        """
+        code = self.to_python(check=False)
+        config = self.from_python(code)
+        ret = str(config) == str(self)
+        return ret
 
     def flatten(self) -> Dict[Tuple[str], Any]:
         """

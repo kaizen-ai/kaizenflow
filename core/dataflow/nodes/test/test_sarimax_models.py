@@ -418,7 +418,7 @@ class TestMultihorizonReturnsPredictionProcessor(hut.TestCase):
         cum_y_yhat = mrpp.fit(model_output)["df_out"]
         #
         ret_0 = model_output["ret_0"]
-        cumret_3 = csproc.accumulate(ret_0, 3)
+        cumret_3 = ret_0.rolling(window=3).sum()
         fwd_cumret_3 = cumret_3.shift(-3).rename("cumret_3_original")
         #
         cumret_3_from_result = cum_y_yhat[["cumret_3"]]

@@ -1,11 +1,7 @@
 import helpers.unit_test as hut
-# TODO(Dan): return to code after CmTask43 is fixed.
-# import im.ccxt.data.load.loader as cdlloa
-
-import pytest
+import im.ccxt.data.load.loader as cdlloa
 
 
-@pytest.mark.skip()
 class TestGetFileName(hut.TestCase):
     def test1(self) -> None:
         """

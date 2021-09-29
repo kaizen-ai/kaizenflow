@@ -159,7 +159,7 @@ def convert_df_to_string(
     Convert DataFrame or Series to string for verifying test results.
 
     :param df: DataFrame to be verified
-    :param n_rows: number of rows in expected output
+    :param n_rows: number of rows in expected output. If `None` all rows are shown.
     :param title: title for test output
     :param decimals: number of decimal points
     :return: string representation of input
@@ -167,7 +167,6 @@ def convert_df_to_string(
     if isinstance(df, pd.Series):
         df = df.to_frame()
     dbg.dassert_isinstance(df, pd.DataFrame)
-    n_rows = n_rows or len(df)
     output = []
     # Add title in the beginning if provided.
     if title is not None:
@@ -183,6 +182,7 @@ def convert_df_to_string(
         "display.precision",
         decimals,
     ):
+        n_rows = n_rows or len(df)
         # Add N top rows.
         output.append(df.head(n_rows).to_string(index=index))
     # Convert into string.
@@ -289,6 +289,8 @@ def to_string(var: str) -> str:
     return """f"%s={%s}""" % (var, var)
 
 
+# TODO(gp): Maybe we should move it to hpandas.py so we can limit the dependencies
+#  from pandas.
 def get_random_df(
     num_cols: int,
     seed: Optional[int] = None,
@@ -318,6 +320,35 @@ def get_df_signature(df: "pd.DataFrame", num_rows: int = 3) -> str:
     return txt
 
 
+def compare_df(df1: pd.DataFrame, df2: pd.DataFrame) -> None:
+    """
+    Compare two dfs including their metadata.
+    """
+    if not df1.equals(df2):
+        print(df1.compare(df2))
+        raise ValueError("Dfs are different")
+
+    def _compute_df_signature(df: pd.DataFrame) -> str:
+        txt = []
+        txt.append("df1=\n%s" % str(df))
+        txt.append("df1.dtypes=\n%s" % str(df.dtypes))
+        if hasattr(df.index, "freq"):
+            txt.append("df1.index.freq=\n%s" % str(df.index.freq))
+        return "\n".join(txt)
+
+    full_test_name = "dummy"
+    test_dir = "."
+    _assert_equal(
+        _compute_df_signature(df1),
+        _compute_df_signature(df2),
+        full_test_name,
+        test_dir,
+    )
+
+
+# #############################################################################
+
+
 def create_test_dir(
     dir_name: str, incremental: bool, file_dict: Dict[str, str]
 ) -> None:
@@ -338,7 +369,7 @@ def create_test_dir(
 
 
 def get_dir_signature(
-    dir_name: str, include_file_content: bool, num_lines: Optional[int]
+    dir_name: str, include_file_content: bool, num_lines: Optional[int] = None
 ) -> str:
     """
     Compute a string with the content of the files in `dir_name`.
@@ -1148,6 +1179,19 @@ class TestCase(unittest.TestCase):
         )
         return is_equal
 
+    def assert_dfs_close(
+        self, actual: pd.DataFrame, expected: pd.DataFrame
+    ) -> None:
+        """
+        Assert dfs have same indexes and columns and that all values are close.
+
+        This is a more robust alternative to `compare_df()`. In particular, it
+        is less sensitive to floating point round-off errors.
+        """
+        self.assertEqual(actual.index.to_list(), expected.index.to_list())
+        self.assertEqual(actual.columns.to_list(), expected.columns.to_list())
+        np.testing.assert_allclose(actual, expected)
+
     # TODO(gp): There is a lot of similarity between `check_string()` and
     #  `check_df_string()` that can be factored out if we extract the code that
     #  reads and saves the golden file.
@@ -1536,62 +1580,3 @@ class TestCase(unittest.TestCase):
     def _to_error(self, msg: str) -> None:
         self._error_msg += msg + "\n"
         _LOG.error(msg)
-
-
-# #############################################################################
-# Notebook testing.
-# #############################################################################
-
-
-def run_notebook(
-    file_name: str,
-    scratch_dir: str,
-    config_builder: Optional[str] = None,
-    idx: int = 0,
-) -> None:
-    """
-    Run jupyter notebook.
-
-    `core.config_builders.get_config_from_env()` supports passing in a config
-    only through a path to a config builder function that returns a list of
-    configs, and a config index from that list.
-
-    Assert if the notebook doesn't complete successfully.
-
-    :param file_name: path to the notebook to run. If this is a .py file,
-        convert to .ipynb first
-    :param scratch_dir: temporary dir storing the output
-    :param config_builder: path to config builder function that returns a list
-        of configs
-    :param idx: index of target config in the config list
-    """
-    file_name = os.path.abspath(file_name)
-    dbg.dassert_exists(file_name)
-    dbg.dassert_exists(scratch_dir)
-    # Build command line.
-    cmd = []
-    # Convert .py file into .ipynb if needed.
-    root, ext = os.path.splitext(file_name)
-    if ext == ".ipynb":
-        notebook_name = file_name
-    elif ext == ".py":
-        cmd.append(f"jupytext --update --to notebook {file_name}; ")
-        notebook_name = f"{root}.ipynb"
-    else:
-        raise ValueError(f"Unsupported file format for `file_name`='{file_name}'")
-    # Export config variables.
-    if config_builder is not None:
-        cmd.append(f'export __CONFIG_BUILDER__="{config_builder}"; ')
-        cmd.append(f'export __CONFIG_IDX__="{idx}"; ')
-        cmd.append(f'export __CONFIG_DST_DIR__="{scratch_dir}" ;')
-    # Execute notebook.
-    cmd.append("cd %s && " % scratch_dir)
-    cmd.append("jupyter nbconvert %s" % notebook_name)
-    cmd.append("--execute")
-    cmd.append("--to html")
-    cmd.append("--ExecutePreprocessor.kernel_name=python")
-    # No time-out.
-    cmd.append("--ExecutePreprocessor.timeout=-1")
-    # Execute.
-    cmd_as_str = " ".join(cmd)
-    hsinte.system(cmd_as_str, abort_on_error=True)

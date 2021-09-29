@@ -1,7 +1,6 @@
 import collections
-import datetime
 import logging
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -12,7 +11,6 @@ from tqdm.autonotebook import tqdm
 import core.dataflow.core as cdtfc
 import core.dataflow.nodes.base as cdnb
 import core.dataflow.utils as cdtfu
-import core.signal_processing as csigna
 import helpers.dbg as dbg
 
 _LOG = logging.getLogger(__name__)
@@ -365,7 +363,7 @@ class MultihorizonReturnsPredictionProcessor(cdnb.FitPredictNode):
         # Accumulate target for each step.
         cum_rets = []
         for i in range(1, self._max_steps_ahead + 1):
-            cum_ret_curr = csigna.accumulate(target, i).rename(f"cumret_{i}")
+            cum_ret_curr = target.rolling(window=i).sum().rename(f"cumret_{i}")
             cum_rets.append(cum_ret_curr)
         cum_rets = pd.concat(cum_rets, axis=1)
         fwd_cum_ret = cum_rets.shift(-self._max_steps_ahead)

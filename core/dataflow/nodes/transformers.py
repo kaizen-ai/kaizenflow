@@ -4,7 +4,6 @@ Import as:
 import core.dataflow.nodes.transformers as cdtfnt
 """
 import collections
-import datetime
 import inspect
 import logging
 from typing import (
@@ -32,6 +31,11 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): -> _ResamplingRule
 _RESAMPLING_RULE_TYPE = Union[pd.DateOffset, pd.Timedelta, str]
+
+
+# #############################################################################
+# Column transformers.
+# #############################################################################
 
 
 class ColumnTransformer(cdnb.Transformer, cdnb.ColModeMixin):
@@ -258,6 +262,107 @@ class SeriesTransformer(cdnb.Transformer, cdnb.ColModeMixin):
         return df, info
 
 
+# #############################################################################
+# Multi-level column transformers
+# #############################################################################
+
+
+class GroupedColDfToDfTransformer(cdnb.Transformer):
+    """
+    Wrap transformers using the `GroupedColDfToDfColProcessor` pattern.
+    """
+
+    def __init__(
+        self,
+        nid: cdtfc.NodeId,
+        in_col_groups: List[Tuple[cdtfu.NodeColumn]],
+        out_col_group: Tuple[cdtfu.NodeColumn],
+        transformer_func: Callable[..., Union[pd.Series, pd.DataFrame]],
+        transformer_kwargs: Optional[Dict[str, Any]] = None,
+        col_mapping: Optional[Dict[cdtfu.NodeColumn, cdtfu.NodeColumn]] = None,
+        *,
+        drop_nans: bool = False,
+        reindex_like_input: bool = True,
+        join_output_with_input: bool = True,
+    ) -> None:
+        """
+        For reference, let
+          - N = df.columns.nlevels
+          - leaf_cols = df[in_col_group].columns
+
+        :param nid: unique node id
+        :param in_col_groups: a list of group of cols specified by the first
+            N - 1 levels
+        :param out_col_group: new output col group names. This specifies the
+            names of the first N - 1 levels. The leaf_cols names remain the
+            same.
+        :param transformer_func: df -> {df, srs}
+        :param transformer_kwargs: transformer_func kwargs
+        :param drop_nans: apply `dropna()` after grouping and extracting
+            `in_col_groups` columns
+        :param reindex_like_input: reindex result of `transformer_func` like
+            the input dataframe
+        join_output_with_input: whether to join the output with the input. A
+            common case where this should typically be set to `False` is in
+            resampling.
+        join_output_with_input: whether to join the output with the input. A
+            common case where this should typically be set to `False` is in
+            resampling.
+        """
+        super().__init__(nid)
+        # TODO(Paul): Add more checks here.
+        dbg.dassert_isinstance(in_col_groups, list)
+        dbg.dassert_isinstance(out_col_group, tuple)
+        self._in_col_groups = in_col_groups
+        self._out_col_group = out_col_group
+        self._transformer_func = transformer_func
+        self._transformer_kwargs = transformer_kwargs or {}
+        self._col_mapping = col_mapping or {}
+        self._drop_nans = drop_nans
+        self._reindex_like_input = reindex_like_input
+        self._join_output_with_input = join_output_with_input
+        # The leaf col names are determined from the dataframe at runtime.
+        self._leaf_cols = None
+
+    def _transform(
+        self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
+        #
+        df_in = df.copy()
+        #
+        in_dfs = cdnb.GroupedColDfToDfColProcessor.preprocess(
+            df, self._in_col_groups
+        )
+        self._leaf_cols = list(in_dfs.keys())
+        #
+        info = collections.OrderedDict()  # type: ignore
+        info["func_info"] = collections.OrderedDict()
+        func_info = info["func_info"]
+        out_dfs = {}
+        for key in self._leaf_cols:
+            df_out, key_info = _apply_func_to_data(
+                in_dfs[key],
+                self._transformer_func,
+                self._transformer_kwargs,
+                self._drop_nans,
+                self._reindex_like_input,
+            )
+            dbg.dassert_isinstance(df_out, pd.DataFrame)
+            if key_info is not None:
+                func_info[key] = key_info
+            if self._col_mapping:
+                df_out = df_out.rename(columns=self._col_mapping)
+            out_dfs[key] = df_out
+        info["func_info"] = func_info
+        df = cdnb.GroupedColDfToDfColProcessor.postprocess(
+            out_dfs, self._out_col_group
+        )
+        if self._join_output_with_input:
+            df = cdtfu.merge_dataframes(df_in, df)
+        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
+        return df, info
+
+
 class SeriesToDfTransformer(cdnb.Transformer):
     """
     Wrap transformers using the `SeriesToDfColProcessor` pattern.
@@ -270,11 +375,13 @@ class SeriesToDfTransformer(cdnb.Transformer):
         out_col_group: Tuple[cdtfu.NodeColumn],
         transformer_func: Callable[..., pd.Series],
         transformer_kwargs: Optional[Dict[str, Any]] = None,
-        nan_mode: Optional[str] = None,
+        *,
+        drop_nans: bool = False,
+        reindex_like_input: bool = True,
+        join_output_with_input: bool = True,
     ) -> None:
         """
-        For reference, let:
-
+        For reference, let
           - N = df.columns.nlevels
           - leaf_cols = df[in_col_group].columns
 
@@ -286,8 +393,13 @@ class SeriesToDfTransformer(cdnb.Transformer):
             same.
         :param transformer_func: srs -> srs
         :param transformer_kwargs: transformer_func kwargs
-        :param nan_mode: `leave_unchanged` or `drop`. If `drop`, applies to
-            columns individually.
+        :param drop_nans: apply `dropna()` after grouping and extracting
+            `in_col_groups` columns
+        :param reindex_like_input: reindex result of `transformer_func` like
+            the input dataframe
+        join_output_with_input: whether to join the output with the input. A
+            common case where this should typically be set to `False` is in
+            resampling.
         """
         super().__init__(nid)
         dbg.dassert_isinstance(in_col_group, tuple)
@@ -296,7 +408,9 @@ class SeriesToDfTransformer(cdnb.Transformer):
         self._out_col_group = out_col_group
         self._transformer_func = transformer_func
         self._transformer_kwargs = transformer_kwargs or {}
-        self._nan_mode = nan_mode or "leave_unchanged"
+        self._drop_nans = drop_nans
+        self._reindex_like_input = reindex_like_input
+        self._join_output_with_input = join_output_with_input
         # The leaf col names are determined from the dataframe at runtime.
         self._leaf_cols = None
 
@@ -317,11 +431,12 @@ class SeriesToDfTransformer(cdnb.Transformer):
         leaf_cols = self._leaf_cols
         leaf_cols = cast(List[str], leaf_cols)
         for col in leaf_cols:
-            df_out, col_info = _apply_func_to_series(
+            df_out, col_info = _apply_func_to_data(
                 df[col],
-                self._nan_mode,
                 self._transformer_func,
                 self._transformer_kwargs,
+                self._drop_nans,
+                self._reindex_like_input,
             )
             dbg.dassert_isinstance(df_out, pd.DataFrame)
             if col_info is not None:
@@ -331,8 +446,8 @@ class SeriesToDfTransformer(cdnb.Transformer):
         # Combine the series representing leaf col transformations back into a
         # single dataframe.
         df = cdnb.SeriesToDfColProcessor.postprocess(dfs, self._out_col_group)
-        df = df.reindex(df_in.index)
-        df = cdtfu.merge_dataframes(df_in, df)
+        if self._join_output_with_input:
+            df = cdtfu.merge_dataframes(df_in, df)
         info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
         return df, info
 
@@ -379,11 +494,13 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
         out_col_group: Tuple[cdtfu.NodeColumn],
         transformer_func: Callable[..., pd.Series],
         transformer_kwargs: Optional[Dict[str, Any]] = None,
-        nan_mode: Optional[str] = None,
+        *,
+        drop_nans: bool = False,
+        reindex_like_input: bool = True,
+        join_output_with_input: bool = True,
     ) -> None:
         """
-        For reference, let:
-
+        For reference, let
           - N = df.columns.nlevels
           - leaf_cols = df[in_col_group].columns
 
@@ -395,8 +512,11 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
             same.
         :param transformer_func: srs -> srs
         :param transformer_kwargs: transformer_func kwargs
-        :param nan_mode: `leave_unchanged` or `drop`. If `drop`, applies to
-            columns individually.
+        :param drop_nans: apply `dropna()` after grouping and extracting
+            `in_col_groups` columns
+        :param reindex_like_input: reindex result of `transformer_func` like
+            the input series
+        join_output_with_input: whether to join the output with the input
         """
         super().__init__(nid)
         dbg.dassert_isinstance(in_col_group, tuple)
@@ -410,7 +530,9 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
         self._out_col_group = out_col_group
         self._transformer_func = transformer_func
         self._transformer_kwargs = transformer_kwargs or {}
-        self._nan_mode = nan_mode or "leave_unchanged"
+        self._drop_nans = drop_nans
+        self._reindex_like_input = reindex_like_input
+        self._join_output_with_input = join_output_with_input
         # The leaf col names are determined from the dataframe at runtime.
         self._leaf_cols = None
 
@@ -431,11 +553,12 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
         leaf_cols = self._leaf_cols
         leaf_cols = cast(List[str], leaf_cols)
         for col in leaf_cols:
-            srs, col_info = _apply_func_to_series(
+            srs, col_info = _apply_func_to_data(
                 df[col],
-                self._nan_mode,
                 self._transformer_func,
                 self._transformer_kwargs,
+                self._drop_nans,
+                self._reindex_like_input,
             )
             dbg.dassert_isinstance(srs, pd.Series)
             srs.name = col
@@ -448,11 +571,43 @@ class SeriesToSeriesTransformer(cdnb.Transformer):
         df = cdnb.SeriesToSeriesColProcessor.postprocess(
             srs_list, self._out_col_group
         )
-        df = cdtfu.merge_dataframes(df_in, df)
+        if self._join_output_with_input:
+            df = cdtfu.merge_dataframes(df_in, df)
         info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
         return df, info
 
 
+def _apply_func_to_data(
+    data: Union[pd.Series, pd.DataFrame],
+    func: Callable,
+    func_kwargs: Dict[str, Any],
+    drop_nans: bool = False,
+    reindex_like_input: bool = True,
+) -> Tuple[Union[pd.Series, pd.DataFrame], Optional[collections.OrderedDict]]:
+    idx = data.index
+    if drop_nans:
+        data = data.dropna()
+    info: Optional[collections.OrderedDict] = collections.OrderedDict()
+    # Perform the column transformation operations.
+    # Introspect to see whether `_transformer_func` contains an `info`
+    # parameter. If so, inject an empty dict to be populated when
+    # `_transformer_func` is executed.
+    func_sig = inspect.signature(func)
+    if "info" in func_sig.parameters:
+        result = func(
+            data,
+            info=info,
+            **func_kwargs,
+        )
+    else:
+        result = func(data, **func_kwargs)
+        info = None
+    if reindex_like_input:
+        result = result.reindex(idx)
+    return result, info
+
+
+# TODO(Paul): Consider deprecating.
 def _apply_func_to_series(
     srs: pd.Series,
     nan_mode: str,
@@ -468,28 +623,24 @@ def _apply_func_to_series(
     TODO(*): We should consider only having `nan_mode` as one of the
     `func_kwargs`, since now many functions support it directly.
     """
+    drop_nans = False
+    reindex_like_input = True
     if nan_mode == "leave_unchanged":
         pass
     elif nan_mode == "drop":
-        srs = srs.dropna()
+        drop_nans = True
     else:
         raise ValueError(f"Unrecognized `nan_mode` {nan_mode}")
-    info: Optional[collections.OrderedDict] = collections.OrderedDict()
-    # Perform the column transformation operations.
-    # Introspect to see whether `_transformer_func` contains an `info`
-    # parameter. If so, inject an empty dict to be populated when
-    # `_transformer_func` is executed.
-    func_sig = inspect.signature(func)
-    if "info" in func_sig.parameters:
-        result = func(
-            srs,
-            info=info,
-            **func_kwargs,
-        )
-    else:
-        result = func(srs, **func_kwargs)
-        info = None
+    dbg.dassert_isinstance(srs, pd.Series)
+    result, info = _apply_func_to_data(
+        srs, func, func_kwargs, drop_nans, reindex_like_input
+    )
     return result, info
+
+
+# #############################################################################
+# Method and function wrappers.
+# #############################################################################
 
 
 class DataframeMethodRunner(cdnb.Transformer):
@@ -543,10 +694,11 @@ class FunctionWrapper(cdnb.Transformer):
 
 
 # #############################################################################
-# Resamplers
+# Resamplers (deprecated)
 # #############################################################################
 
 
+# TODO(Paul): Deprecate.
 class Resample(cdnb.Transformer):
     def __init__(
         self,
@@ -681,6 +833,7 @@ class TwapVwapComputer(cdnb.Transformer):
         return df, info
 
 
+# TODO(Paul): Deprecate.
 class MultiindexTwapVwapComputer(cdnb.Transformer):
     def __init__(
         self,
@@ -734,3 +887,61 @@ class MultiindexTwapVwapComputer(cdnb.Transformer):
         info: collections.OrderedDict[str, Any] = collections.OrderedDict()
         info["df_transformed_info"] = cdtfu.get_df_info_as_string(df)
         return df, info
+
+
+# #############################################################################
+# Column Arithmetic
+# #############################################################################
+
+
+class Calculator(cdnb.Transformer):
+    def __init__(
+        self,
+        nid: cdtfc.NodeId,
+        term1: cdtfu.NodeColumn,
+        term2: cdtfu.NodeColumn,
+        out_col_name: cdtfu.NodeColumn,
+        operation: str,
+        arithmetic_kwargs: Optional[Dict[str, Any]] = None,
+        term1_delay: Optional[int] = 0,
+        term2_delay: Optional[int] = 0,
+        nan_mode: Optional[str] = None,
+    ) -> None:
+        super().__init__(nid)
+        self._term1 = term1
+        self._term2 = term2
+        self._out_col_name = out_col_name
+        dbg.dassert_in(
+            operation,
+            ["multiply", "divide", "add", "subtract"],
+            "Operation %s not supported.",
+        )
+        self._operation = operation
+        self._arithmetic_kwargs = arithmetic_kwargs or {}
+        self._term1_delay = term1_delay
+        self._term2_delay = term2_delay
+        self._nan_mode = nan_mode or "leave_unchanged"
+
+    def _transform(
+        self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
+        dbg.dassert_in(self._term1, df.columns.to_list())
+        dbg.dassert_in(self._term2, df.columns.to_list())
+        dbg.dassert_not_in(self._out_col_name, df.columns.to_list())
+        df_out = df.copy()
+        terms = df_out[[self._term1, self._term2]]
+        if self._nan_mode == "leave_unchanged":
+            pass
+        elif self._nan_mode == "drop":
+            terms = terms.dropna()
+        else:
+            raise ValueError(f"Unrecognized `nan_mode` {self._nan_mode}")
+        term1 = terms[self._term1].shift(self._term1_delay)
+        term2 = terms[self._term2].shift(self._term2_delay)
+        result = getattr(term1, self._operation)(term2, **self._arithmetic_kwargs)
+        result = result.reindex(index=df.index)
+        df_out[self._out_col_name] = result
+        # Update `info`.
+        info: collections.OrderedDict[str, Any] = collections.OrderedDict()
+        info["df_transformed_info"] = cdtfu.get_df_info_as_string(df_out)
+        return df_out, info

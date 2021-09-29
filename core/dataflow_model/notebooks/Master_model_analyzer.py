@@ -5,9 +5,9 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.11.2
+#       jupytext_version: 1.11.4
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
@@ -17,6 +17,8 @@
 #
 # - Initialize with returns, predictions, target volatility, and oos start date
 # - Evaluate portfolios generated from the predictions
+#
+# - TODO(gp): This should be called `Master_model_evaluator` like the class
 
 # %% [markdown]
 # # Imports
@@ -30,12 +32,12 @@ import logging
 import core.config as cconfig
 import core.dataflow_model.model_evaluator as modeval
 import core.dataflow_model.model_plotter as modplot
-import core.dataflow_model.utils as cdmu
 import helpers.dbg as dbg
 import helpers.printing as hprint
 
 # %%
 dbg.init_logger(verbosity=logging.INFO)
+# dbg.init_logger(verbosity=logging.DEBUG)
 
 _LOG = logging.getLogger(__name__)
 
@@ -47,40 +49,48 @@ hprint.config_notebook()
 # # Notebook config
 
 # %%
-exp_dir = "/app/experiment1"
-# exp_dir = "s3://alphamatic-data/experiments/..."
+# Read from env var.
+eval_config = cconfig.Config.from_env_var("AM_CONFIG_CODE")
 
-eval_config = cconfig.get_config_from_nested_dict(
-    {
-        "exp_dir": exp_dir,
-        "model_evaluator_kwargs": {
-            "returns_col": "ret_0_vol_adj_2",
-            "predictions_col": "ret_0_vol_adj_2_hat",
-            "oos_start": "2017-01-01",
-        },
-        "bh_adj_threshold": 0.1,
-        "resample_rule": "W",
-        "mode": "ins",
-        "target_volatility": 0.1,
-    }
-)
+# Override config.
+if eval_config is None:
+    # experiment_dir = "s3://eglp-spm-sasm/experiments/experiment.RH2Ef.v1_9-all.5T.20210831-004747.run1.tgz"
+    #experiment_dir = "/cache/experiments/oos_experiment.RH1E.v2_0-top100.5T"
+    experiment_dir = "/cache/experiments/experiment.RH4E.v2_0-top10.5T"
+    aws_profile = None
+    selected_idxs = None
+
+    eval_config = cconfig.get_config_from_nested_dict(
+        {
+            "load_experiment_kwargs": {
+                "src_dir": experiment_dir,
+                "file_name": "result_bundle.v2_0.pkl",
+                "experiment_type": "ins_oos",
+                "selected_idxs": selected_idxs,
+                "aws_profile": aws_profile,
+            },
+            "model_evaluator_kwargs": {
+                "predictions_col": "mid_ret_0_vol_adj_clipped_2_hat",
+                "target_col": "mid_ret_0_vol_adj_clipped_2",
+                # "oos_start": "2017-01-01",
+                "oos_start": None,
+                "abort_on_error": True,
+            },
+            "bh_adj_threshold": 0.1,
+            "resample_rule": "W",
+            "mode": "ins",
+            "target_volatility": 0.1,
+        }
+    )
+
+print(str(eval_config))
 
 # %% [markdown]
 # # Initialize ModelEvaluator and ModelPlotter
 
 # %%
-# Load the data.
-result_bundles = cdmu.yield_experiment_artifacts(
-    eval_config["exp_dir"],
-    "result_bundle.pkl",
-)
-
-# Build the ModelEvaluator.
-evaluator = modeval.build_model_evaluator_from_result_bundles(
-    result_bundles,
-    abort_on_error=False,
-    **eval_config["model_evaluator_kwargs"].to_dict(),
-)
+# Build the ModelEvaluator from the eval config.
+evaluator = modeval.ModelEvaluator.from_eval_config(eval_config)
 
 # Build the ModelPlotter.
 plotter = modplot.ModelPlotter(evaluator)
@@ -118,6 +128,7 @@ print("model not selected=%s" % not_selected)
 # Use `selected = None` to show all the models.
 
 # %%
+# selected = None
 plotter.plot_multiple_pnls(
     keys=selected,
     resample_rule=eval_config["resample_rule"],
@@ -197,20 +208,19 @@ plotter.plot_rets_and_vol(
 )
 
 # %%
-assert 0
+if False:
+    plotter.plot_positions(
+        keys=selected,
+        mode=eval_config["mode"],
+        target_volatility=eval_config["target_volatility"],
+    )
 
 # %%
-plotter.plot_positions(
-    keys=selected,
-    mode=eval_config["mode"],
-    target_volatility=eval_config["target_volatility"],
-)
-
-# %%
-# Plot the returns and prediction for one or more models.
-model_key = selected[:1]
-plotter.plot_returns_and_predictions(
-    keys=model_key,
-    resample_rule=eval_config["resample_rule"],
-    mode=eval_config["mode"],
-)
+if False:
+    # Plot the returns and prediction for one or more models.
+    model_key = selected[:1]
+    plotter.plot_returns_and_predictions(
+        keys=model_key,
+        resample_rule=eval_config["resample_rule"],
+        mode=eval_config["mode"],
+    )

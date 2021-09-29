@@ -138,7 +138,8 @@ def _workload_function(*args: Any, **kwargs: Any) -> str:
     """
     _ = args
     incremental = kwargs.pop("incremental")
-    _ = incremental
+    num_attempts = kwargs.pop("num_attempts")
+    _ = incremental, num_attempts
     func_output: List[str] = []
     func_output = "\n".join(func_output)
     return func_output
@@ -159,118 +160,105 @@ def _get_workload(
 # #############################################################################
 
 
-def _parallel_execute_decorator(func: Callable) -> Callable:
-    """
-    Decorator to handle execution logging of the function.
-    """
-
-    def wrapper(
-        task_idx: int,
-        task_len: int,
-        incremental: bool,
-        abort_on_error: bool,
-        num_attempts: int,
-        log_file: str,
-        #
-        workload_func: Callable,
-        func_name: str,
-        task: Task,
+def _parallel_execute_decorator(
+            task_idx: int,
+            task_len: int,
+            incremental: bool,
+            abort_on_error: bool,
+            num_attempts: int,
+            log_file: str,
+            #
+            workload_func: Callable,
+            func_name: str,
+            task: Task,
     ) -> Any:
-        """
-        :param abort_on_error: control whether to abort on `workload_func` function
-            that is failing and asserting
-            - If `workload_func` fails:
-                - if `abort_on_error=True` the exception from `workload_func` is
-                  propagated and the return value is `None`
-                - if `abort_on_error=False` the exception is not propagated, but the
-                  return value is the string representation of the exception
+    """
+    :param abort_on_error: control whether to abort on `workload_func` function
+        that is failing and asserting
+        - If `workload_func` fails:
+            - if `abort_on_error=True` the exception from `workload_func` is
+              propagated and the return value is `None`
+            - if `abort_on_error=False` the exception is not propagated, but the
+              return value is the string representation of the exception
 
-        :return: the return value of the workload function or the exception string
-        """
-        # Validate very carefully all the parameters.
-        dbg.dassert_lte(0, task_idx)
-        dbg.dassert_lt(task_idx, task_len)
-        dbg.dassert_isinstance(incremental, bool)
-        dbg.dassert_isinstance(abort_on_error, bool)
-        dbg.dassert_lte(1, num_attempts)
-        dbg.dassert_isinstance(log_file, str)
-        dbg.dassert_isinstance(workload_func, Callable)
-        dbg.dassert_isinstance(func_name, str)
-        dbg.dassert(validate_task(task))
-        # Redirect the logging output of each task to a different file.
-        # TODO(gp): This file should go in the `task_dst_dir`.
-        # log_to_file = True
-        log_to_file = False
-        if log_to_file:
-            dst_dir = os.path.dirname(os.path.abspath(log_file))
-            print(dst_dir)
-            hio.create_dir(dst_dir, incremental=True)
-            file_name = os.path.join(
-                dst_dir, f"{func_name}.{task_idx + 1}_{task_len}.log"
-            )
-            _LOG.warning("Logging to %s", file_name)
-            file_handler = logging.FileHandler(file_name)
-            root_logger = logging.getLogger()
-            root_logger.addHandler(file_handler)
-
-        # Save some information about the function execution.
-        txt = []
-        # `start_ts` needs to be before running the function.
-        start_ts = hdatetime.get_timestamp("naive_ET")
-        tag = "%s/%s (%s)" % (task_idx + 1, task_len, start_ts)
-        txt.append(hprint.frame(tag) + "\n")
-        txt.append("tag=%s" % tag)
-        txt.append("workload_func=%s" % workload_func.__name__)
-        txt.append("func_name=%s" % func_name)
-        txt.append(task_to_string(task))
-        args, kwargs = task
-        kwargs.update({"incremental": incremental, "num_attempts": num_attempts})
-        memento = htimer.dtimer_start(
-            logging.DEBUG, "Execute '%s'" % workload_func.__name__
+    :return: the return value of the workload function or the exception string
+    """
+    # Validate very carefully all the parameters.
+    dbg.dassert_lte(0, task_idx)
+    dbg.dassert_lt(task_idx, task_len)
+    dbg.dassert_isinstance(incremental, bool)
+    dbg.dassert_isinstance(abort_on_error, bool)
+    dbg.dassert_lte(1, num_attempts)
+    dbg.dassert_isinstance(log_file, str)
+    dbg.dassert_isinstance(workload_func, Callable)
+    dbg.dassert_isinstance(func_name, str)
+    dbg.dassert(validate_task(task))
+    # Redirect the logging output of each task to a different file.
+    # TODO(gp): This file should go in the `task_dst_dir`.
+    # log_to_file = True
+    log_to_file = False
+    if log_to_file:
+        dst_dir = os.path.dirname(os.path.abspath(log_file))
+        print(dst_dir)
+        hio.create_dir(dst_dir, incremental=True)
+        file_name = os.path.join(
+            dst_dir, f"{func_name}.{task_idx + 1}_{task_len}.log"
         )
-        try:
-            res = workload_func(*args, **kwargs)
-            error = False
-        except Exception as e:  # pylint: disable=broad-except
-            exception = e
-            txt.append("exception='%s'" % str(e))
-            res = None
-            error = True
-            _LOG.error("Execution failed")
-        msg, elapsed_time = htimer.dtimer_stop(memento)
-        _ = msg
-        txt.append("func_res=\n%s" % hprint.indent(str(res)))
-        txt.append("elapsed_time_in_secs=%s" % elapsed_time)
-        txt.append("start_ts=%s" % start_ts)
-        end_ts = hdatetime.get_timestamp("naive_ET")
-        txt.append("end_ts=%s" % end_ts)
-        txt.append("error=%s" % error)
-        # Update log file.
-        txt = "\n".join(txt)
-        _LOG.debug("txt=\n%s", hprint.indent(txt))
-        hio.to_file(log_file, txt, mode="a")
-        if error:
-            # The execution wasn't successful.
-            _LOG.error(txt)
-            if abort_on_error:
-                _LOG.error("Aborting since abort_on_error=%s", abort_on_error)
-                raise exception  # noqa: F821
-            _LOG.error(
-                "Continuing execution since abort_on_error=%s", abort_on_error
-            )
-            res = str(exception)
-        else:
-            # The execution was successful.
-            pass
-        return res
+        _LOG.warning("Logging to %s", file_name)
+        file_handler = logging.FileHandler(file_name)
+        root_logger = logging.getLogger()
+        root_logger.addHandler(file_handler)
 
-    # TODO(gp): For some reason `@functools.wraps` reports an error like:
-    #   File "/app/amp/helpers/joblib_helpers.py", line 136, in parallel_execute
-    #     res_tmp = wrapped_func(
-    #   TypeError: update_wrapper() got multiple values for argument 'wrapped'
-    wrapper.__name__ = func.__name__
-    wrapper.__doc__ = func.__doc__
-    return wrapper
+    # Save some information about the function execution.
+    txt = []
+    # `start_ts` needs to be before running the function.
+    start_ts = hdatetime.get_timestamp("naive_ET")
+    tag = "%s/%s (%s)" % (task_idx + 1, task_len, start_ts)
+    txt.append("\n" + hprint.frame(tag) + "\n")
+    txt.append("tag=%s" % tag)
+    txt.append("workload_func=%s" % workload_func.__name__)
+    txt.append("func_name=%s" % func_name)
+    txt.append(task_to_string(task))
+    args, kwargs = task
+    kwargs.update({"incremental": incremental, "num_attempts": num_attempts})
+    memento = htimer.dtimer_start(
+        logging.DEBUG, "Execute '%s'" % workload_func.__name__
+    )
+    try:
+        res = workload_func(*args, **kwargs)
+        error = False
+    except Exception as e:  # pylint: disable=broad-except
+        exception = e
+        txt.append("exception='%s'" % str(e))
+        res = None
+        error = True
+        _LOG.error("Execution failed")
+    msg, elapsed_time = htimer.dtimer_stop(memento)
+    _ = msg
+    txt.append("func_res=\n%s" % hprint.indent(str(res)))
+    txt.append("elapsed_time_in_secs=%s" % elapsed_time)
+    txt.append("start_ts=%s" % start_ts)
+    end_ts = hdatetime.get_timestamp("naive_ET")
+    txt.append("end_ts=%s" % end_ts)
+    txt.append("error=%s" % error)
+    # Update log file.
+    txt = "\n".join(txt)
+    _LOG.debug("txt=\n%s", hprint.indent(txt))
+    hio.to_file(log_file, txt, mode="a")
+    if error:
+        # The execution wasn't successful.
+        _LOG.error(txt)
+        if abort_on_error:
+            _LOG.error("Aborting since abort_on_error=%s", abort_on_error)
+            raise exception  # noqa: F821
+        _LOG.error(
+            "Continuing execution since abort_on_error=%s", abort_on_error
+        )
+        res = str(exception)
+    else:
+        # The execution was successful.
+        pass
+    return res
 
 
 # TODO(gp): Pass a `task_dst_dir` to each task so it can write there.
@@ -323,7 +311,7 @@ def parallel_execute(
     _LOG.info("Saving log info in '%s'", log_file)
     _LOG.info("Number of tasks=%s", len(tasks))
     # Apply the wrapper that handles logging of the function.
-    wrapped_func = _parallel_execute_decorator(workload_func)
+    wrapped_func = _parallel_execute_decorator
     # Run.
     task_len = len(tasks)
     if num_threads == "serial":
@@ -335,7 +323,7 @@ def parallel_execute(
                 "\n%s", hprint.frame("Task %s / %s" % (task_idx + 1, task_len))
             )
             # Execute.
-            res_tmp = wrapped_func(
+            res_tmp = _parallel_execute_decorator(
                 task_idx,
                 task_len,
                 incremental,
@@ -352,16 +340,13 @@ def parallel_execute(
         num_threads = int(num_threads)
         # -1 is interpreted by joblib like for all cores.
         _LOG.info("Using %d threads", num_threads)
-        # From https://stackoverflow.com/questions/24983493
-        # TODO(gp): It doesn't seem to work.
-        tqdm_ = tqdm(
-            enumerate(tasks), total=len(tasks), desc="Running parallel tasks"
-        )
+        #from joblib.externals.loky import set_loky_pickler
+        #set_loky_pickler('cloudpickle')
         # backend = "threading"
         # backend = "multiprocessing"
         backend = "loky"
         res = joblib.Parallel(n_jobs=num_threads, backend=backend, verbose=200)(
-            joblib.delayed(wrapped_func)(
+            joblib.delayed(_parallel_execute_decorator)(
                 task_idx,
                 task_len,
                 incremental,
@@ -373,7 +358,7 @@ def parallel_execute(
                 func_name,
                 task,
             )
-            for task_idx, task in tqdm_
+            for task_idx, task in enumerate(tasks)
         )
     _LOG.info("Saved log info in '%s'", log_file)
     return res

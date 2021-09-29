@@ -102,28 +102,30 @@ class ContinuousSkLearnModel(cdnb.FitPredictNode, cdnb.ColModeMixin):
         # Materialize names of x and y vars.
         x_vars = cdtfu.convert_to_list(self._x_vars)
         y_vars = cdtfu.convert_to_list(self._y_vars)
-        if self._sample_weight_col is not None:
+        if fit and self._sample_weight_col is not None:
             sample_weight_col = cdtfu.convert_to_list(self._sample_weight_col)
             dbg.dassert_eq(len(sample_weight_col), 1)
+            x_vars_and_maybe_weight = x_vars + sample_weight_col
         else:
-            sample_weight_col = []
+            x_vars_and_maybe_weight = x_vars
+            sample_weight_col = None
         # Get x and forward y df.
         if fit:
             # This df has no NaNs.
             df = cdtfu.get_x_and_forward_y_fit_df(
-                df_in, x_vars + sample_weight_col, y_vars, self._steps_ahead
+                df_in, x_vars_and_maybe_weight, y_vars, self._steps_ahead
             )
         else:
             # This df has no `x_vars` NaNs.
             df = cdtfu.get_x_and_forward_y_predict_df(
-                df_in, x_vars + sample_weight_col, y_vars, self._steps_ahead
+                df_in, x_vars_and_maybe_weight, y_vars, self._steps_ahead
             )
         # Handle presence of NaNs according to `nan_mode`.
         idx = df_in.index[: -self._steps_ahead] if fit else df_in.index
         self._handle_nans(idx, df.index)
         # Isolate the forward y piece of `df`.
         forward_y_cols = df.drop(
-            x_vars + sample_weight_col, axis=1
+            x_vars_and_maybe_weight, axis=1
         ).columns.to_list()
         forward_y_df = df[forward_y_cols]
         # Prepare x_vars in sklearn format.
@@ -287,7 +289,7 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
                 dfs[key] = cdtfu.get_x_and_forward_y_fit_df(
                     value, self._x_vars, self._y_vars, self._steps_ahead
                 )
-            stacked_df = self._stack_dfs(dfs)
+            stacked_df = cdnb.DfStacker.preprocess(dfs)
             forward_y_fit_cols = stacked_df.drop(
                 columns=self._x_vars
             ).columns.to_list()
@@ -300,7 +302,7 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
                 col_mode="merge_all",
             )
             df_out = sklm.fit(stacked_df)["df_out"].drop(columns=self._x_vars)
-            results = self._unstack_df(dfs, df_out)
+            results = cdnb.DfStacker.postprocess(dfs, df_out)
             info = sklm.get_info("fit")
             self._fit_state = sklm.get_fit_state()
         else:
@@ -330,30 +332,6 @@ class MultiindexPooledSkLearnModel(cdnb.FitPredictNode):
         method = "fit" if fit else "predict"
         self._set_info(method, info)
         return {"df_out": df_out}
-
-    def _stack_dfs(
-        self, dfs: Dict[cdtfu.NodeColumn, pd.DataFrame]
-    ) -> pd.DataFrame:
-        df = pd.concat(dfs.values()).reset_index(drop=True)
-        return df
-
-    def _unstack_df(
-        self, dfs: Dict[cdtfu.NodeColumn, pd.DataFrame], df: pd.DataFrame
-    ) -> Dict[cdtfu.NodeColumn, pd.DataFrame]:
-        counter = 0
-        out_dfs = {}
-        for key, value in dfs.items():
-            length = value.shape[0]
-            out_df = df.iloc[counter : counter + length].copy()
-            dbg.dassert_eq(
-                out_df.shape[0],
-                value.shape[0],
-                msg="Dimension mismatch for key=%s" % key,
-            )
-            out_df.index = value.index
-            out_dfs[key] = out_df
-            counter += length
-        return out_dfs
 
 
 class MultiindexSkLearnModel(cdnb.FitPredictNode):

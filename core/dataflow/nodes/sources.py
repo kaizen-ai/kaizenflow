@@ -16,7 +16,7 @@ import pandas as pd
 import core.artificial_signal_generators as cartif
 import core.dataflow.core as cdtfc
 import core.dataflow.nodes.base as cdnb
-import core.dataflow.real_time as cdrt
+import core.dataflow.real_time as cdtfrt
 import core.finance as cfinan
 import core.pandas_helpers as pdhelp
 import helpers.datetime_ as hdatetime
@@ -189,8 +189,8 @@ class DiskDataSource(cdnb.DataSource):
         """
         if self.df is not None:  # type: ignore[has-type]
             return
-        df = load_data_from_disk(  # type: ignore[arg-type]
-            **self._load_data_from_disk_kwargs
+        df = load_data_from_disk(
+            **self._load_data_from_disk_kwargs  # type: ignore[arg-type]
         )
         self.df = df
 
@@ -229,6 +229,9 @@ class ArmaGenerator(cdnb.DataSource):
         self._arma_process = cartif.ArmaProcess(
             ar_coeffs=self._ar_coeffs, ma_coeffs=self._ma_coeffs
         )
+        self._poisson_process = cartif.PoissonProcess(
+            mu=100
+        )
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
         self._lazy_load()
@@ -251,6 +254,22 @@ class ArmaGenerator(cdnb.DataSource):
             burnin=self._burnin,
             seed=self._seed,
         )
+        bid_volume = self._poisson_process.generate_sample(
+            date_range_kwargs={
+                "start": self._start_date,
+                "end": self._end_date,
+                "freq": self._frequency,
+            },
+            seed=self._seed,
+        )
+        ask_volume = self._poisson_process.generate_sample(
+            date_range_kwargs={
+                "start": self._start_date,
+                "end": self._end_date,
+                "freq": self._frequency,
+            },
+            seed=self._seed + 1,
+        )
         # Cumulatively sum to generate a price series (implicitly assumes the
         # returns are log returns; at small enough scales and short enough
         # times this is practically interchangeable with percentage returns).
@@ -260,7 +279,11 @@ class ArmaGenerator(cdnb.DataSource):
         df = prices.to_frame()
         self.df = df.loc[self._start_date : self._end_date]
         # Use constant volume (for now).
-        self.df["vol"] = 100  # type: ignore[index]
+        self.df["volume"] = 10000  # type: ignore[index]
+        self.df["bid"] = self.df["close"] - 0.01
+        self.df["ask"] = self.df["close"] + 0.01
+        self.df["bid_size"] = bid_volume
+        self.df["ask_size"] = ask_volume
 
 
 # #############################################################################
@@ -339,9 +362,11 @@ class MultivariateNormalGenerator(cdnb.DataSource):
 
 
 # #############################################################################
+# Real-time nodes.
+# #############################################################################
 
 
-class _AbstractRealTimeDataSource(cdnb.DataSource):
+class AbstractRealTimeDataSource(cdnb.DataSource, abc.ABC):
     """
     Output data according to a real-time behavior.
     """
@@ -358,9 +383,6 @@ class _AbstractRealTimeDataSource(cdnb.DataSource):
 
         :param delay_in_secs: represent how long it takes for the simulated system to
             respond. See `get_data_as_of_datetime()` for more details
-        :param external_clock: an external wall clock represented in the form of a
-            function that returns the time. `None` means that the time is provided
-            through an explicit call to `set_current_time()`
         :param data_builder, data_builder_kwargs: function and its argument to create
             all the data for this node
         """
@@ -431,7 +453,7 @@ class _AbstractRealTimeDataSource(cdnb.DataSource):
         # Filter the data as of the current time.
         current_time = self._get_current_time()
         _LOG.debug(hprint.to_str("current_time"))
-        df = cdrt.get_data_as_of_datetime(
+        df = cdtfrt.get_data_as_of_datetime(
             df, current_time, delay_in_secs=self._delay_in_secs
         )
         dbg.dassert_lte(df.index.max(), current_time)
@@ -448,7 +470,7 @@ class _AbstractRealTimeDataSource(cdnb.DataSource):
 # #############################################################################
 
 
-class SimulatedTimeDataSource(_AbstractRealTimeDataSource):
+class SimulatedTimeDataSource(AbstractRealTimeDataSource):
     """
     Implement a "simulated" real-time behavior (see `real_time.py` for
     details).
@@ -486,7 +508,58 @@ class SimulatedTimeDataSource(_AbstractRealTimeDataSource):
 # #############################################################################
 
 
-class RealTimeDataSource(_AbstractRealTimeDataSource):
+class ReplayedTimeDataSource(AbstractRealTimeDataSource):
+    """
+    Implement a "replayed" time behavior (see `real_time.py` for details).
+
+    This node is different from `RealTimeDataSource` because the data is
+    computed once and cached, instead of being queried at every
+    invocation.
+    """
+
+    def __init__(
+        self,
+        nid: cdtfc.NodeId,
+        initial_replayed_dt: pd.Timestamp,
+        get_wall_clock_time: hdatetime.GetWallClockTime,
+        speed_up_factor: float = 1.0,
+        **kwargs: Dict[str, Any]
+    ) -> None:
+        super().__init__(nid, **kwargs)  # type: ignore[arg-type]
+        # Store the entire history of the data.
+        self._entire_df: Optional[pd.DataFrame] = None
+        # Build a ReplayedTime object and extract its wall clock.
+        self._replayed_time = cdtfrt.ReplayedTime(
+            initial_replayed_dt, get_wall_clock_time, speed_up_factor
+        )
+        self._get_wall_clock_time = self._replayed_time.get_wall_clock_time
+
+    def _get_current_time(self) -> pd.Timestamp:
+        """
+        Same as `RealTimeDataSource` but using a different wall clock time.
+        """
+        # Get the current time provided from the external clock and saves it.
+        current_time = self._get_wall_clock_time()
+        self._set_current_time(current_time)
+        # Return the current time.
+        return super()._get_current_time()
+
+    def _get_data(self) -> pd.DataFrame:
+        # Lazy load.
+        if self._entire_df is None:
+            _LOG.debug("Computing data for data source node")
+            # Compute and store the entire history of the data through the passed
+            # dataframe builder.
+            self._entire_df = self._data_builder(  # type: ignore[call-arg]
+                **self._data_builder_kwargs
+            )
+        return self._entire_df
+
+
+# #############################################################################
+
+
+class RealTimeDataSource(AbstractRealTimeDataSource):
     """
     Implement a "true" real-time behavior (see `real_time.py` for details).
 
@@ -499,19 +572,18 @@ class RealTimeDataSource(_AbstractRealTimeDataSource):
     def __init__(
         self,
         nid: cdtfc.NodeId,
-        # TODO(gp): We should not expose this at all, since it's true real time.
-        # TODO(gp): external_clock -> get_wall_clock_time
-        external_clock: hdatetime.GetWallClockTime,
+        # TODO(gp): maybe not expose this since it's true real time
+        get_wall_clock_time: hdatetime.GetWallClockTime,
         **kwargs: Dict[str, Any]
     ) -> None:
-        super().__init__(nid, **kwargs)  # type: ignore[arg-type]
-        # TODO(gp): This needs to set delay_in_secs=0.0 since it is true real-time.
-        dbg.dassert_is_not(external_clock, None)
-        self._external_clock = external_clock
+        # Set delay_in_secs=0.0 since it is true real-time.
+        super().__init__(nid, delay_in_secs=0.0, **kwargs)  # type: ignore[arg-type]
+        dbg.dassert_is_not(get_wall_clock_time, None)
+        self._get_wall_clock_time = get_wall_clock_time
 
     def _get_current_time(self) -> pd.Timestamp:
         # Get the current time provided from the external clock and saves it.
-        current_time = self._external_clock()
+        current_time = self._get_wall_clock_time()
         self._set_current_time(current_time)
         # Return the current time.
         return super()._get_current_time()
@@ -524,39 +596,3 @@ class RealTimeDataSource(_AbstractRealTimeDataSource):
         _LOG.debug(hprint.to_str("current_time"))
         dbg.dassert_lte(df.index.max(), current_time)
         return df
-
-
-# #############################################################################
-
-# TODO(gp): Maybe just ReplayedTime instead of ReplayedRealTime since we can change
-#  the speed of time so it's not properly real time. Also the naming becomes simpler
-#  Simulated vs Replayed vs Real
-
-# TODO(gp): This should get all the parameters needed to build a ReplayedTime,
-#  instead of accepting the time function. In the end they are coupled.
-
-# pylint: disable=too-many-ancestors
-class ReplayedTimeDataSource(RealTimeDataSource):
-    """
-    Implement a "replayed" real-time behavior (see `real_time.py` for details).
-
-    This node is a `RealTimeDataSource` node with the following differences:
-    - the data is computed once and cached, instead of being queried at every
-      invocation
-    """
-
-    def __init__(self, nid: cdtfc.NodeId, **kwargs: Dict[str, Any]) -> None:
-        super().__init__(nid, **kwargs)
-        # Store the entire history of the data.
-        self._entire_df: Optional[pd.DataFrame] = None
-
-    def _get_data(self) -> pd.DataFrame:
-        # Lazy load.
-        if self._entire_df is None:
-            _LOG.debug("Computing data for data source node")
-            # Compute and store the entire history of the data through the passed
-            # dataframe builder.
-            self._entire_df = self._data_builder(  # type: ignore[call-arg]
-                **self._data_builder_kwargs
-            )
-        return self._entire_df

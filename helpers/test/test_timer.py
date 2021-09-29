@@ -14,6 +14,6 @@ class TestTimedScope(hut.TestCase):
         with htimer.TimedScope(logging.INFO, "Test") as ts:
             time.sleep(1)
         # Round actual time up to 1 decimal and compare it with expected.
-        actual_rounded_time = round(ts.elapsed_time[-1], 1)
+        actual_rounded_time = round(ts.elapsed_time, 1)
         expected_rounded_time = 1.0
         self.assertEqual(actual_rounded_time, expected_rounded_time)

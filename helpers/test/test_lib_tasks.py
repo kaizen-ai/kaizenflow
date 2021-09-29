@@ -407,8 +407,9 @@ class TestLibTasks1(hut.TestCase):
         issue_id = 1
         repo = "amp"
         act = ltasks._get_gh_issue_title(issue_id, repo)
-        exp = "AmpTask1_Bridge_Python_and_R"
-        self.assert_equal(act, exp)
+        exp = ('AmpTask1_Bridge_Python_and_R',
+               'https://github.com/alphamatic/amp/issues/1')
+        self.assert_equal(str(act), str(exp))
 
     # TODO(gp): This test should be moved to `dev_tools`.
     def test_get_gh_issue_title3(self) -> None:
@@ -416,8 +417,9 @@ class TestLibTasks1(hut.TestCase):
         issue_id = 1
         repo = "dev_tools"
         act = ltasks._get_gh_issue_title(issue_id, repo)
-        exp = "DevToolsTask1_Migration_from_amp"
-        self.assert_equal(act, exp)
+        exp = ('DevToolsTask1_Migration_from_amp',
+               'https://github.com/alphamatic/dev_tools/issues/1')
+        self.assert_equal(str(act), str(exp))
 
     def test_get_gh_issue_title4(self) -> None:
         _gh_login()
