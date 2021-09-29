@@ -32,7 +32,7 @@ class TestGetFileName(hut.TestCase):
         with self.assertRaises(AssertionError):
             icdloloa.get_file_name(exchange, currency)
 
-    def test4(self) -> None:
+    def test3(self) -> None:
         """
         Test unsupported currency pair.
         """
