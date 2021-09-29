@@ -116,7 +116,11 @@ class CcxtExchange:
             pd.Timestamp,
             msg="Type of start_datetime param is incorrect.",
         )
-        dbg.dassert_lte(start_datetime, end_datetime, msg="Start datetime should be less or equal to end datetime!")
+        dbg.dassert_lte(
+            start_datetime,
+            end_datetime,
+            msg="Start datetime should be less or equal to end datetime!",
+        )
         # Convert datetime into ms.
         start_datetime = start_datetime.asm8.astype(int) // 1000000
         end_datetime = end_datetime.asm8.astype(int) // 1000000
