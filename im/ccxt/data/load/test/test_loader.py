@@ -1,7 +1,10 @@
+import pytest
+
 import helpers.unit_test as hut
 import im.ccxt.data.load.loader as cdlloa
 
 
+@pytest.mark.skip
 class TestGetFileName(hut.TestCase):
     def test1(self) -> None:
         """
