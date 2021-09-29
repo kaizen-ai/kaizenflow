@@ -60,9 +60,7 @@ def _get_file_path(
 
 
 class CcxtLoader:
-    def __init__(
-        self, ccxt_root: str, aws_profile: Optional[str] = None
-    ) -> None:
+    def __init__(self, ccxt_root: str, aws_profile: Optional[str] = None) -> None:
         """
         Load CCXT data.
 
@@ -92,9 +90,8 @@ class CcxtLoader:
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
         # Get absolute file path for a CCXT file.
         file_path = os.path.join(
-            self._ccxt_root, _get_file_path(
-                data_snapshot, exchange_id, currency_pair
-            )
+            self._ccxt_root,
+            _get_file_path(data_snapshot, exchange_id, currency_pair),
         )
         # Initialize kwargs dict for further CCXT data reading.
         read_csv_kwargs = {}
