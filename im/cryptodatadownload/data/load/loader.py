@@ -39,7 +39,7 @@ class CddLoader:
         :param remove_dups: whether to remove full duplicates or not
         :param resample_to_1_min: whether to resample to 1 min or not
         """
-        self._root_dir = root_dir
+        self._cdd_root = cdd_root
         self._aws_profile = aws_profile
         self._remove_dups = remove_dups
         self._resample_to_1_min = resample_to_1_min
