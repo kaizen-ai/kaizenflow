@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 
 """
-Apply schema to PostgreSQL database inside a Docker container.
+Set SQL schema for IM database inside a Docker container.
+
+Note: IM database is creates using environment variables.
 
 Usage:
-- Apply schema to database with name `im_db_local`:
-> init_in_db.py --db_name im_db_local
+- Set SQL schema for the IM database:
+    > init_im_db.py
 """
 import argparse
 import logging
+import os
 
 import helpers.dbg as dbg
 import helpers.parser as hparse
@@ -21,12 +24,6 @@ def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument(
-        "--db_name",
-        action="store",
-        help="Name of a database to update",
-        required=True,
-    )
     hparse.add_verbosity_arg(parser)
     return parser
 
@@ -34,12 +31,10 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
-    _LOG.info("Updating schema to DB %s...", args.db)
-    sql_schemas = icdcrsch.get_init_sql_files()
-    icdcrsch.initialize_database(
-        args.db, init_sql_files=sql_schemas
-    )
-    _LOG.info("Database %s is ready to use", args.db)
+    db_name = os.environ["POSTGRES_DB"]
+    _LOG.info("Applying schema to DB `%s`...", db_name)
+    icdcrsch.create_schema()
+    _LOG.info("Database `%s` is ready to use.", db_name)
 
 
 if __name__ == "__main__":
