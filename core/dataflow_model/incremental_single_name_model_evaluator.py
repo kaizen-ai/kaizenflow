@@ -241,4 +241,4 @@ def load_info(
             info = info[k]
         info_dict[key] = info
     _LOG.info("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
-    return info
+    return info_dict
