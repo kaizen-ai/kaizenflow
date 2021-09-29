@@ -88,7 +88,7 @@ class CcxtExchange:
 
         :param curr_symbol: a currency pair, e.g. "BTC/USDT"
         :param start_datetime: starting point for data
-        :param end_datetime: end point for data
+        :param end_datetime: end point for data (included)
         :param step: a number of candles per iteration
         :param sleep_time: time in seconds between iterations
         :return: OHLCV data from ccxt
@@ -116,6 +116,7 @@ class CcxtExchange:
             pd.Timestamp,
             msg="Type of start_datetime param is incorrect.",
         )
+        dbg.dassert_lte(start_datetime, end_datetime, msg="Start datetime should be less or equal to end datetime!")
         # Convert datetime into ms.
         start_datetime = start_datetime.asm8.astype(int) // 1000000
         # Convert get datetime into ms.
