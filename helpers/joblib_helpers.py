@@ -463,6 +463,29 @@ def parallel_execute(
                 for task_idx, task in enumerate(tasks)
             )
         elif backend in ("asyncio_threads", "asyncio_processing"):
+            tqdm_out = htqdm.TqdmToLogger(_LOG, level=logging.INFO)
+            # Serial.
+            # for date in tqdm_out(dates, desc="Retrieving TAQ data"):
+            #     df = func(date)
+            #     dfs.append(df)
+            # Parallel.
+            dbg.dassert_lte(1, num_threads)
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=num_threads
+            ) as executor:
+                dfs = list(
+                    tqdm(executor.map(func, dates), file=tqdm_out, total=len(dates))
+                )
+            # Different implementation.
+            # dfs = []
+            # with tqdm(file=tqdm_out, total=len(dates)) as pbar:
+            #     with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
+            #         futures = {executor.submit(func, arg): arg for arg in dates}
+            #         _LOG.debug("done submitting")
+            #         for future in concurrent.futures.as_completed(futures):
+            #             df = future.result()
+            #             dfs.append(df)
+            #             pbar.update(1)
             pass
         else:
             raise ValueError("Invalid backend='%s'" % backend)
