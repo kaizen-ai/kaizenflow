@@ -5,7 +5,9 @@ from typing import Any, List, Optional, Union
 
 import pytest
 
+import helpers.dbg as dbg
 import helpers.joblib_helpers as hjoblib
+import helpers.timer as htimer
 import helpers.printing as hprint
 import helpers.unit_test as hunitest
 
@@ -133,6 +135,16 @@ val1=4, val2=8, incremental=True, num_attempts=1, kwargs={'hello4': 'world8', 'g
             self, workload, num_threads, abort_on_error, expected_return, backend
         )
 
+    def test_parallel_asyncio_process1(self) -> None:
+        """
+        Execute:
+        - a workload of 5 tasks that succeeds
+        - with 1 thread
+        - asyncio_threading backend
+        """
+        num_threads = "1"
+        backend = "asyncio_threading"
+        self._run_test(num_threads, backend)
 
 # #############################################################################
 # Test_parallel_execute2

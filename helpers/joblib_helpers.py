@@ -19,6 +19,7 @@ import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.htqdm as htqdm
 import helpers.io_ as hio
+import helpers.htqdm as htqdm
 import helpers.printing as hprint
 import helpers.timer as htimer
 
@@ -321,20 +322,17 @@ def _parallel_execute_decorator(
     txt.append(task_to_string(task))
     args, kwargs = task
     kwargs.update({"incremental": incremental, "num_attempts": num_attempts})
-    memento = htimer.dtimer_start(
-        logging.DEBUG, "Execute '%s'" % workload_func.__name__
-    )
-    try:
-        res = workload_func(*args, **kwargs)
-        error = False
-    except Exception as e:  # pylint: disable=broad-except
-        exception = e
-        txt.append("exception='%s'" % str(e))
-        res = None
-        error = True
-        _LOG.error("Execution failed")
-    msg, elapsed_time = htimer.dtimer_stop(memento)
-    _ = msg
+    with htimer.TimedScope(logging.DEBUG, "Execute '%s'" % workload_func.__name__) as ts:
+        try:
+            res = workload_func(*args, **kwargs)
+            error = False
+        except Exception as e:  # pylint: disable=broad-except
+            exception = e
+            txt.append("exception='%s'" % str(e))
+            res = None
+            error = True
+            _LOG.error("Execution failed")
+    elapsed_time = ts.elapsed_time
     txt.append("func_res=\n%s" % hprint.indent(str(res)))
     txt.append("elapsed_time_in_secs=%s" % elapsed_time)
     txt.append("start_ts=%s" % start_ts)
