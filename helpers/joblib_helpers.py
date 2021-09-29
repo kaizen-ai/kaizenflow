@@ -465,8 +465,14 @@ def parallel_execute(
                 for task_idx, task in enumerate(tasks)
             )
         elif backend in ("asyncio_threading", "asyncio_multiprocessing"):
-            func = lambda args: _parallel_execute_decorator(
-                args[0],
+            if backend == "asyncio_threading":
+                executor = concurrent.futures.ThreadPoolExecutor
+            elif backend == "asyncio_multiprocessing":
+                executor = concurrent.futures.ProcessPoolExecutor
+            else:
+                raise ValueError("Invalid backend='%s'" % backend)
+            func = lambda args_: _parallel_execute_decorator(
+                args_[0],
                 task_len,
                 incremental,
                 abort_on_error,
@@ -475,23 +481,23 @@ def parallel_execute(
                 #
                 workload_func,
                 func_name,
-                args[1],
+                args_[1],
             )
             args = list(enumerate(tasks))
-            with concurrent.futures.ThreadPoolExecutor(
-                max_workers=num_threads
-            ) as executor:
-                res = list(executor.map(func, args))
-            # Different implementation.
-            # dfs = []
-            # with tqdm(file=tqdm_out, total=len(dates)) as pbar:
-            #     with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
-            #         futures = {executor.submit(func, arg): arg for arg in dates}
-            #         _LOG.debug("done submitting")
-            #         for future in concurrent.futures.as_completed(futures):
-            #             df = future.result()
-            #             dfs.append(df)
-            #             pbar.update(1)
+            # Implementation without progress bar.
+            if True:
+                with executor(max_workers=num_threads) as executor_:
+                    res = list(executor_.map(func, args))
+            else:
+                res = []
+                with tqdm_iter as pbar:
+                    with executor(max_workers=num_threads) as executor_:
+                        futures = {executor_.submit(func, arg): arg for arg in args}
+                        _LOG.debug("done submitting")
+                        for future in concurrent.futures.as_completed(futures):
+                            res_tmp = future.result()
+                            res.append(res_tmp)
+                            pbar.update(1)
         else:
             raise ValueError("Invalid backend='%s'" % backend)
     _LOG.info("Saved log info in '%s'", log_file)
@@ -565,9 +571,9 @@ class _S3FSStoreBackend(StoreBackendBase, StoreBackendMixin):
 
     def _flush(self) -> None:
         # TODO(gp): No need to flush for now.
+        #for fd in self._objs:
+        #    fd.flush(force=True)
         return
-        for fd in self._objs:
-            fd.flush(force=True)
 
     def _open_item(self, fd: Any, mode: str) -> Any:
         self._objs.append(fd)

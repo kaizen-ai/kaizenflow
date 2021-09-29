@@ -482,10 +482,11 @@ if __name__ == "__main__":
     dbg.init_logger(verbosity=logging.INFO)
     workload = get_workload1(randomize=True)
     #num_threads = "serial"
-    #num_threads = "1"
-    num_threads = "5"
+    num_threads = "1"
+    #num_threads = "5"
     #backend = "loky"
     backend = "asyncio_threading"
+    #backend = "asyncio_multiprocessing"
     abort_on_error = True
     #
     dry_run = False
