@@ -286,6 +286,9 @@ def get_workload3(
 
 
 class Test_parallel_execute3(hut.TestCase):
+    """
+    Execute a workload with 5 tasks that succeed and 1 task that fails.
+    """
 
     # pylint: disable=line-too-long
     EXPECTED_STRING1 = r"""Error: val1=-1, val2=7, incremental=True, num_attempts=1, kwargs={'hello2': 'world2', 'good2': 'bye2'}"""
@@ -298,21 +301,32 @@ val1=3, val2=6, incremental=True, num_attempts=1, kwargs={'hello3': 'world6', 'g
 val1=4, val2=8, incremental=True, num_attempts=1, kwargs={'hello4': 'world8', 'good': 'bye'}"""
     # pylint: enable=line-too-long
 
-    def test_serial1(self) -> None:
-        """
-        Execute:
-        - a workload with 5 tasks that succeed and 1 task that fails
-        - serially
-        """
+    def _run_test(self, abort_on_error: bool, num_threads: int, backend: str, should_succeed: bool) -> None:
         workload = get_workload3(randomize=False)
-        num_threads = "serial"
-        abort_on_error = True
         # Since there is an error and `abort_on_error=True` we only get information
         # about the failed task.
-        expected_exception = self.EXPECTED_STRING1
-        _helper_fail(
-            self, workload, num_threads, abort_on_error, expected_exception
-        )
+        if should_succeed:
+            expected_return = self.EXPECTED_STRING2
+            _helper_success(
+                self, workload, num_threads, abort_on_error, expected_return,
+                backend,
+            )
+        else:
+            # Since there is an error and `abort_on_error=True` we only get information
+            # about the failed task.
+            expected_exception = self.EXPECTED_STRING1
+            _helper_fail(
+                self, workload, num_threads, abort_on_error, expected_exception,
+                backend,
+            )
+
+    def test_serial1(self) -> None:
+        num_threads = "serial"
+        abort_on_error = True
+        backend = ""
+        #
+        should_succeed = False
+        self._run_test(abort_on_error, num_threads, backend, should_succeed)
 
     def test_serial2(self) -> None:
         """
@@ -321,84 +335,79 @@ val1=4, val2=8, incremental=True, num_attempts=1, kwargs={'hello4': 'world8', 'g
         - serially
         - don't abort because abort_on_error=False
         """
-        workload = get_workload3(randomize=False)
         num_threads = "serial"
         abort_on_error = False
+        backend = ""
         #
-        expected_return = self.EXPECTED_STRING2
-        _helper_success(
-            self, workload, num_threads, abort_on_error, expected_return
-        )
+        should_succeed = True
+        self._run_test(abort_on_error, num_threads, backend, should_succeed)
 
-    def test_parallel1(self) -> None:
-        """
-        Execute:
-        - a workload with 5 tasks that succeed and 1 task that fails
-        - with 1 thread
-
-        The outcome should be the same as `test_serial1`.
-        """
-        workload = get_workload3(randomize=False)
+    def test_parallel_loky1(self) -> None:
         num_threads = "1"
         abort_on_error = True
+        backend = "loky"
         #
-        expected_exception = self.EXPECTED_STRING1
-        _helper_fail(
-            self, workload, num_threads, abort_on_error, expected_exception
-        )
+        should_succeed = False
+        self._run_test(abort_on_error, num_threads, backend, should_succeed)
 
-    def test_parallel2(self) -> None:
-        """
-        Execute:
-        - a workload with 5 tasks that succeed and 1 task that fails
-        - with 3 threads
-
-        The outcome should be the same as `test_serial1`.
-        """
-        workload = get_workload3(randomize=False)
+    def test_parallel_loky2(self) -> None:
         num_threads = "3"
         abort_on_error = True
+        backend = "loky"
         #
-        expected_exception = self.EXPECTED_STRING1
-        _helper_fail(
-            self, workload, num_threads, abort_on_error, expected_exception
-        )
+        should_succeed = False
+        self._run_test(abort_on_error, num_threads, backend, should_succeed)
 
-    def test_parallel3(self) -> None:
-        """
-        Execute:
-        - a workload with 5 tasks that succeed and 1 task that fails
-        - with 1 thread
-        - don't abort because abort_on_error=False
-
-        The outcome should be the same as `test_serial2`.
-        """
-        workload = get_workload3(randomize=False)
+    def test_parallel_loky3(self) -> None:
         num_threads = "1"
         abort_on_error = False
+        backend = "loky"
         #
-        expected_return = self.EXPECTED_STRING2
-        _helper_success(
-            self, workload, num_threads, abort_on_error, expected_return
-        )
+        should_succeed = True
+        self._run_test(abort_on_error, num_threads, backend, should_succeed)
 
-    def test_parallel4(self) -> None:
-        """
-        Execute:
-        - a workload with 5 tasks that succeed and 1 task that fails
-        - with 3 thread
-        - don't abort because abort_on_error=False
-
-        The outcome should be the same as `test_serial2`.
-        """
-        workload = get_workload3(randomize=False)
+    def test_parallel_loky4(self) -> None:
         num_threads = "3"
         abort_on_error = False
+        backend = "loky"
         #
-        expected_return = self.EXPECTED_STRING2
-        _helper_success(
-            self, workload, num_threads, abort_on_error, expected_return
-        )
+        should_succeed = True
+        self._run_test(abort_on_error, num_threads, backend, should_succeed)
+
+    def test_parallel_asyncio_threading1(self) -> None:
+        num_threads = "1"
+        abort_on_error = True
+        backend = "asyncio_threading"
+        #
+        should_succeed = False
+        self._run_test(abort_on_error, num_threads, backend, should_succeed)
+
+    def test_parallel_asyncio_threading2(self) -> None:
+        num_threads = "3"
+        abort_on_error = True
+        backend = "asyncio_threading"
+        #
+        should_succeed = False
+        self._run_test(abort_on_error, num_threads, backend, should_succeed)
+
+    def test_parallel_asyncio_threading3(self) -> None:
+        num_threads = "1"
+        abort_on_error = False
+        backend = "asyncio_threading"
+        #
+        should_succeed = True
+        self._run_test(abort_on_error, num_threads, backend, should_succeed)
+
+    def test_parallel_asyncio_threading4(self) -> None:
+        num_threads = "3"
+        abort_on_error = False
+        backend = "asyncio_threading"
+        #
+        should_succeed = True
+        self._run_test(abort_on_error, num_threads, backend, should_succeed)
+
+
+# #############################################################################
 
 
 @pytest.mark.skip(reason="Just for experimenting with joblib")
