@@ -29,6 +29,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): Reuse hjupyter.run_notebook if possible
 def _run_notebook(
     config: cconfig.Config,
     notebook_file: str,
@@ -84,7 +85,7 @@ def _run_notebook(
     #  system_interaction.
     # Try running the notebook up to `num_attempts` times.
     dbg.dassert_lte(1, num_attempts)
-    rc = None
+    rc: Optional[int] = None
     for n in range(1, num_attempts + 1):
         if n > 1:
             _LOG.warning(
