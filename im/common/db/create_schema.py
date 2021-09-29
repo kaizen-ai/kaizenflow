@@ -19,7 +19,9 @@ import helpers.sql as hsql
 _LOG = logging.getLogger(__name__)
 
 
-def get_db_connection_from_environment() -> Tuple[hsql.DbConnection, psycop.extensions.cursor]:
+def get_db_connection_from_environment() -> Tuple[
+    hsql.DbConnection, psycop.extensions.cursor
+]:
     """
     Get connection and cursor for a SQL database using environment variables.
 
@@ -129,9 +131,7 @@ def create_tables(
         try:
             hsql.execute_query(db_connection, sql_query)
         except psycop.errors.DuplicateObject:
-            _LOG.warning(
-                "Schemas are already created. Terminated."
-            )
+            _LOG.warning("Schemas are already created. Terminated.")
             break
 
 
@@ -162,10 +162,7 @@ def create_schema(custom_files: Optional[List[str]] = None) -> None:
     :param custom_files: provider-specific sql files
     :return:
     """
-    _LOG.info(
-        "DB connection:\n%s",
-        get_db_connection_details_from_environment()
-    )
+    _LOG.info("DB connection:\n%s", get_db_connection_details_from_environment())
     # Connect to recently created database.
     connection, _ = get_db_connection_from_environment()
     # Define data types.

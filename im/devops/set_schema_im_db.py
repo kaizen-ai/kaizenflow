@@ -3,7 +3,7 @@
 """
 Set SQL schema for IM database inside a Docker container.
 
-Note: IM database is creates using environment variables.
+Note: IM database is created using environment variables.
 
 Usage:
 - Set SQL schema for the IM database:
