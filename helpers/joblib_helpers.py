@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.joblib_helpers as hjoblib
+import helpers.joblib_helpers as hjoh
 """
 
 import concurrent.futures
@@ -19,8 +19,7 @@ import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.htqdm as htqdm
 import helpers.io_ as hio
-import helpers.htqdm as htqdm
-import helpers.printing as hprint
+import helpers.printing as hprintin
 import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
@@ -116,7 +115,7 @@ def workload_to_string(workload: Workload) -> str:
     txt.append("workload_func=%s" % workload_func.__name__)
     txt.append("func_name=%s" % func_name)
     for i, task in enumerate(tasks):
-        txt.append("\n" + hprint.frame("Task %s / %s" % (i + 1, len(tasks))))
+        txt.append("\n" + hprintin.frame("Task %s / %s" % (i + 1, len(tasks))))
         txt.append(task_to_string(task))
     txt = "\n".join(txt)
     return txt
@@ -285,15 +284,15 @@ def _parallel_execute_decorator(
     :return: the return value of the workload function or the exception string
     """
     # Validate very carefully all the parameters.
-    dbg.dassert_lte(0, task_idx)
-    dbg.dassert_lt(task_idx, task_len)
-    dbg.dassert_isinstance(incremental, bool)
-    dbg.dassert_isinstance(abort_on_error, bool)
-    dbg.dassert_lte(1, num_attempts)
-    dbg.dassert_isinstance(log_file, str)
-    dbg.dassert_isinstance(workload_func, Callable)
-    dbg.dassert_isinstance(func_name, str)
-    dbg.dassert(validate_task(task))
+    hdbg.dassert_lte(0, task_idx)
+    hdbg.dassert_lt(task_idx, task_len)
+    hdbg.dassert_isinstance(incremental, bool)
+    hdbg.dassert_isinstance(abort_on_error, bool)
+    hdbg.dassert_lte(1, num_attempts)
+    hdbg.dassert_isinstance(log_file, str)
+    hdbg.dassert_isinstance(workload_func, Callable)
+    hdbg.dassert_isinstance(func_name, str)
+    hdbg.dassert(validate_task(task))
     # Redirect the logging output of each task to a different file.
     # TODO(gp): This file should go in the `task_dst_dir`.
     # log_to_file = True
@@ -313,16 +312,18 @@ def _parallel_execute_decorator(
     # Save some information about the function execution.
     txt = []
     # `start_ts` needs to be before running the function.
-    start_ts = hdatetime.get_timestamp("naive_ET")
+    start_ts = hdatetim.get_timestamp("naive_ET")
     tag = "%s/%s (%s)" % (task_idx + 1, task_len, start_ts)
-    txt.append("\n" + hprint.frame(tag) + "\n")
+    txt.append("\n" + hprintin.frame(tag) + "\n")
     txt.append("tag=%s" % tag)
     txt.append("workload_func=%s" % workload_func.__name__)
     txt.append("func_name=%s" % func_name)
     txt.append(task_to_string(task))
     args, kwargs = task
     kwargs.update({"incremental": incremental, "num_attempts": num_attempts})
-    with htimer.TimedScope(logging.DEBUG, "Execute '%s'" % workload_func.__name__) as ts:
+    with htimer.TimedScope(
+        logging.DEBUG, "Execute '%s'" % workload_func.__name__
+    ) as ts:
         try:
             res = workload_func(*args, **kwargs)
             error = False
@@ -333,15 +334,15 @@ def _parallel_execute_decorator(
             error = True
             _LOG.error("Execution failed")
     elapsed_time = ts.elapsed_time
-    txt.append("func_res=\n%s" % hprint.indent(str(res)))
+    txt.append("func_res=\n%s" % hprintin.indent(str(res)))
     txt.append("elapsed_time_in_secs=%s" % elapsed_time)
     txt.append("start_ts=%s" % start_ts)
-    end_ts = hdatetime.get_timestamp("naive_ET")
+    end_ts = hdatetim.get_timestamp("naive_ET")
     txt.append("end_ts=%s" % end_ts)
     txt.append("error=%s" % error)
     # Update log file.
     txt = "\n".join(txt)
-    _LOG.debug("txt=\n%s", hprint.indent(txt))
+    _LOG.debug("txt=\n%s", hprintin.indent(txt))
     hio.to_file(log_file, txt, mode="a")
     if error:
         # The execution wasn't successful.
@@ -349,9 +350,7 @@ def _parallel_execute_decorator(
         if abort_on_error:
             _LOG.error("Aborting since abort_on_error=%s", abort_on_error)
             raise exception  # noqa: F821
-        _LOG.error(
-            "Continuing execution since abort_on_error=%s", abort_on_error
-        )
+        _LOG.error("Continuing execution since abort_on_error=%s", abort_on_error)
         res = str(exception)
     else:
         # The execution was successful.
@@ -402,7 +401,7 @@ def parallel_execute(
     workload_func, func_name, tasks = workload
     #
     _LOG.info(
-        hprint.to_str(
+        hprintin.to_str(
             "dry_run num_threads incremental num_attempts abort_on_error"
         )
     )
@@ -425,7 +424,7 @@ def parallel_execute(
         res = []
         for task_idx, task in tqdm_iter:
             _LOG.debug(
-                "\n%s", hprint.frame("Task %s / %s" % (task_idx + 1, task_len))
+                "\n%s", hprintin.frame("Task %s / %s" % (task_idx + 1, task_len))
             )
             # Execute.
             res_tmp = _parallel_execute_decorator(
