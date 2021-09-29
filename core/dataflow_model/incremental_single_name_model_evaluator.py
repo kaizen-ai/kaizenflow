@@ -44,14 +44,14 @@ def compute_stats_for_single_name_artifacts(
     """
     stats = collections.OrderedDict()
     load_rb_kwargs = {"columns": list([prediction_col, target_col])}
-    iter = cdtfmouti.yield_experiment_artifacts(
+    iterator = cdtfmouti.yield_experiment_artifacts(
         src_dir,
         file_name,
         load_rb_kwargs=load_rb_kwargs,
         selected_idxs=selected_idxs,
         aws_profile=aws_profile,
     )
-    for key, artifact in iter:
+    for key, artifact in iterator:
         _LOG.debug(
             "load_experiment_artifacts: memory_usage=%s",
             hdbg.get_memory_usage_as_str(None),
