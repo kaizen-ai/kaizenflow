@@ -490,6 +490,7 @@ def parallel_execute(
                 with executor(max_workers=num_threads) as executor_:
                     res = list(executor_.map(func, args))
             else:
+                # Implementation with progress bar.
                 res = []
                 with tqdm_iter as pbar:
                     with executor(max_workers=num_threads) as executor_:

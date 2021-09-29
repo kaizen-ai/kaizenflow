@@ -40,8 +40,13 @@ def workload_function(
     return res
 
 
+# #############################################################################
+# Test_parallel_execute1
+# #############################################################################
+
+
 def get_workload1(
-    randomize: bool, *, seed: Optional[int] = None
+        randomize: bool, *, seed: Optional[int] = None
 ) -> hjoblib.Workload:
     """
     Return a workload for `workload_function()` with 5 tasks that succeeds.
@@ -58,40 +63,6 @@ def get_workload1(
             workload, seed=seed
         )
     return workload
-
-
-def get_workload2() -> hjoblib.Workload:
-    """
-    Return a workload for `workload_function()` with 1 task that fails.
-    """
-    task = ((-1, 7), {"hello2": "world2", "good2": "bye2"})
-    tasks = [task]
-    workload: hjoblib.Workload = (workload_function, "workload_function", tasks)
-    return workload
-
-
-def get_workload3(
-    randomize: bool, seed: Optional[int] = None
-) -> hjoblib.Workload:
-    """
-    Return a workload for `workload_function()` with 5 tasks succeeding and one
-    task failing.
-    """
-    workload = get_workload1(randomize=True)
-    # Modify the workflow in place.
-    (workload_func, func_name, tasks) = workload
-    _ = workload_func, func_name
-    task = ((-1, 7), {"hello2": "world2", "good2": "bye2"})
-    tasks.append(task)
-    if randomize:
-        # Randomize workload.
-        workload: hjoblib.Workload = hjoblib.randomize_workload(
-            workload, seed=seed
-        )
-    return workload
-
-
-# #############################################################################
 
 
 class Test_parallel_execute1(hut.TestCase):
@@ -136,9 +107,7 @@ val1=4, val2=8, incremental=True, num_attempts=1, kwargs={'hello4': 'world8', 'g
         - a workload of 5 tasks that succeeds
         - serially
         """
-        #sleep = None
-        sleep = 2
-        workload = get_workload1(randomize=True, sleep=sleep)
+        workload = get_workload1(randomize=True)
         abort_on_error = True
         #
         expected_return = self.EXPECTED_RETURN
@@ -179,7 +148,7 @@ val1=4, val2=8, incremental=True, num_attempts=1, kwargs={'hello4': 'world8', 'g
         backend = "loky"
         self._run_test(num_threads, backend)
 
-    def test_parallel_asyncio_process1(self) -> None:
+    def test_parallel_asyncio_threading1(self) -> None:
         """
         Execute:
         - a workload of 5 tasks that succeeds
@@ -190,79 +159,130 @@ val1=4, val2=8, incremental=True, num_attempts=1, kwargs={'hello4': 'world8', 'g
         backend = "asyncio_threading"
         self._run_test(num_threads, backend)
 
+    def test_parallel_asyncio_threading2(self) -> None:
+        """
+        Execute:
+        - a workload of 5 tasks that succeeds
+        - with 3 threads
+        - asyncio_threading backend
+        """
+        num_threads = "3"
+        backend = "asyncio_threading"
+        self._run_test(num_threads, backend)
+
+
+# #############################################################################
+# Test_parallel_execute2
 # #############################################################################
 
 
+def get_workload2() -> hjoblib.Workload:
+    """
+    Return a workload for `workload_function()` with 1 task that fails.
+    """
+    task = ((-1, 7), {"hello2": "world2", "good2": "bye2"})
+    tasks = [task]
+    workload: hjoblib.Workload = (workload_function, "workload_function", tasks)
+    return workload
+
+
 class Test_parallel_execute2(hut.TestCase):
+    """
+    Execute a workload of 1 task that fails.
+    """
 
     # pylint: disable=line-too-long
     EXPECTED_STRING = r"""Error: val1=-1, val2=7, incremental=True, num_attempts=1, kwargs={'hello2': 'world2', 'good2': 'bye2'}"""
     # pylint: enable=line-too-long
 
-    def test_serial1(self) -> None:
-        """
-        Execute:
-        - a workload of 1 task that fails
-        - serially
-        """
+    def _run_test(self, abort_on_error: bool, num_threads: int, backend: str, should_succeed: bool) -> None:
         workload = get_workload2()
+        #
+        expected_return = self.EXPECTED_STRING
+        if should_succeed:
+            _helper_success(
+                self, workload, num_threads, abort_on_error, expected_return,
+                backend
+            )
+        else:
+            _helper_fail(
+                self, workload, num_threads, abort_on_error, expected_return,
+                backend
+            )
+
+    def test_serial1(self) -> None:
         num_threads = "serial"
         abort_on_error = True
+        backend = ""
         #
-        expected_assertion = self.EXPECTED_STRING
-        _helper_fail(
-            self, workload, num_threads, abort_on_error, expected_assertion
-        )
+        should_succeed = False
+        self._run_test(abort_on_error, num_threads, backend, should_succeed)
 
     def test_serial2(self) -> None:
-        """
-        Execute:
-        - a workload of 1 task that fails
-        - serially
-        - don't abort because abort_on_error=False
-        """
-        workload = get_workload2()
         num_threads = "serial"
         abort_on_error = False
+        backend = ""
         #
-        expected_return = self.EXPECTED_STRING
-        _helper_success(
-            self, workload, num_threads, abort_on_error, expected_return
-        )
+        should_succeed = True
+        self._run_test(abort_on_error, num_threads, backend, should_succeed)
 
-    def test_parallel1(self) -> None:
-        """
-        Execute:
-        - a workload of 1 task that fails
-        - serially
-        """
-        workload = get_workload2()
+    def test_parallel_loky1(self) -> None:
         num_threads = 2
         abort_on_error = True
+        backend = "loky"
         #
-        expected_assertion = self.EXPECTED_STRING
-        _helper_fail(
-            self, workload, num_threads, abort_on_error, expected_assertion
-        )
+        should_succeed = False
+        self._run_test(abort_on_error, num_threads, backend, should_succeed)
 
-    def test_parallel2(self) -> None:
-        """
-        Execute:
-        - a workload of 1 task that fails
-        - serially
-        - don't abort because abort_on_error=False
-        """
-        workload = get_workload2()
+    def test_parallel_loky2(self) -> None:
         num_threads = 2
         abort_on_error = False
+        backend = "loky"
         #
-        expected_return = self.EXPECTED_STRING
-        _helper_success(
-            self, workload, num_threads, abort_on_error, expected_return
-        )
+        should_succeed = True
+        self._run_test(abort_on_error, num_threads, backend, should_succeed)
+
+    def test_parallel_asyncio_threading1(self) -> None:
+        num_threads = 2
+        abort_on_error = True
+        backend = "asyncio_threading"
+        #
+        should_succeed = False
+        self._run_test(abort_on_error, num_threads, backend, should_succeed)
+
+    def test_parallel_asyncio_threading2(self) -> None:
+        num_threads = 2
+        abort_on_error = False
+        backend = "asyncio_threading"
+        #
+        should_succeed = True
+        self._run_test(abort_on_error, num_threads, backend, should_succeed)
 
 
 # #############################################################################
+# Test_parallel_execute3
+# #############################################################################
+
+
+def get_workload3(
+        randomize: bool, seed: Optional[int] = None
+) -> hjoblib.Workload:
+    """
+    Return a workload for `workload_function()` with 5 tasks succeeding and one
+    task failing.
+    """
+    workload = get_workload1(randomize=True)
+    # Modify the workflow in place.
+    (workload_func, func_name, tasks) = workload
+    _ = workload_func, func_name
+    task = ((-1, 7), {"hello2": "world2", "good2": "bye2"})
+    tasks.append(task)
+    if randomize:
+        # Randomize workload.
+        workload: hjoblib.Workload = hjoblib.randomize_workload(
+            workload, seed=seed
+        )
+    return workload
 
 
 class Test_parallel_execute3(hut.TestCase):
@@ -456,6 +476,7 @@ def _helper_fail(
     num_threads: Union[str, int],
     abort_on_error: bool,
     expected_assertion: str,
+    backend: str,
 ) -> None:
     dry_run = False
     incremental = True
@@ -471,14 +492,17 @@ def _helper_fail(
             abort_on_error,
             num_attempts,
             log_file,
+            backend=backend,
         )
+        # Print result if it succeeds.
         _LOG.debug("res=%s", str(res))
+    # Check.
     act = str(cm.exception)
     self_.assert_equal(act, expected_assertion)
 
 
 # To observe the output in real-time.
-if __name__ == "__main__":
+if False and __name__ == "__main__":
     dbg.init_logger(verbosity=logging.INFO)
     workload = get_workload1(randomize=True)
     #num_threads = "serial"
