@@ -62,9 +62,7 @@ def _get_file_path(
 
 
 class CddLoader:
-    def __init__(
-        self, cdd_root: str, aws_profile: Optional[str] = None
-    ) -> None:
+    def __init__(self, cdd_root: str, aws_profile: Optional[str] = None) -> None:
         """
         Load CDD data.
 
@@ -94,9 +92,8 @@ class CddLoader:
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
         # Get absolute file path for a CDD file.
         file_path = os.path.join(
-            self._cdd_root, _get_file_path(
-                data_snapshot, exchange_id, currency_pair
-            )
+            self._cdd_root,
+            _get_file_path(data_snapshot, exchange_id, currency_pair),
         )
         # Initialize kwargs dict for further CDD data reading.
         # Add "skiprows" to kwargs in order to skip a row with the file name.
