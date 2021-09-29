@@ -7,7 +7,7 @@ Note: IM database is creates using environment variables.
 
 Usage:
 - Set SQL schema for the IM database:
-    > init_im_db.py
+    > set_schema_im_db.py
 """
 import argparse
 import logging
@@ -32,7 +32,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
     db_name = os.environ["POSTGRES_DB"]
-    _LOG.info("Applying schema to DB `%s`...", db_name)
+    _LOG.info("Setting schema for DB `%s`...", db_name)
     icdcrsch.create_schema()
     _LOG.info("Database `%s` is ready to use.", db_name)
 
