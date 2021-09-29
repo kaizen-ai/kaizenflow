@@ -149,7 +149,6 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-
     # Create the dst dir.
     dst_dir, clean_dst_dir = prsr.parse_dst_dir_arg(args)
     _ = clean_dst_dir

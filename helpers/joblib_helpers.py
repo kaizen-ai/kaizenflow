@@ -374,6 +374,7 @@ def parallel_execute(
     abort_on_error: bool,
     num_attempts: int,
     log_file: str,
+    backend: str = "loky",
 ) -> Optional[List[Any]]:
     """
     Run a workload in parallel.
@@ -438,29 +439,33 @@ def parallel_execute(
             )
             res.append(res_tmp)
     else:
-        num_threads = int(num_threads)
         # -1 is interpreted by joblib like for all cores.
-        _LOG.info("Using %d threads", num_threads)
-        #from joblib.externals.loky import set_loky_pickler
-        #set_loky_pickler('cloudpickle')
-        # backend = "threading"
-        # backend = "multiprocessing"
-        backend = "loky"
-        res = joblib.Parallel(n_jobs=num_threads, backend=backend, verbose=200)(
-            joblib.delayed(_parallel_execute_decorator)(
-                task_idx,
-                task_len,
-                incremental,
-                abort_on_error,
-                num_attempts,
-                log_file,
-                #
-                workload_func,
-                func_name,
-                task,
+        num_threads = int(num_threads)
+        _LOG.info("Using %d threads, backend='%s'", num_threads, backend)
+        if backend in ("loky", "threading", "multiprocessing"):
+            #from joblib.externals.loky import set_loky_pickler
+            #set_loky_pickler('cloudpickle')
+            # backend = "threading"
+            # backend = "multiprocessing"
+            res = joblib.Parallel(n_jobs=num_threads, backend=backend, verbose=200)(
+                joblib.delayed(_parallel_execute_decorator)(
+                    task_idx,
+                    task_len,
+                    incremental,
+                    abort_on_error,
+                    num_attempts,
+                    log_file,
+                    #
+                    workload_func,
+                    func_name,
+                    task,
+                )
+                for task_idx, task in enumerate(tasks)
             )
-            for task_idx, task in enumerate(tasks)
-        )
+        elif backend in ("asyncio_threads", "asyncio_processing"):
+            pass
+        else:
+            raise ValueError("Invalid backend='%s'" % backend)
     _LOG.info("Saved log info in '%s'", log_file)
     return res
 
