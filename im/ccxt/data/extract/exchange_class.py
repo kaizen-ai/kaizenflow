@@ -104,6 +104,10 @@ class CcxtExchange:
             all_bars = self._exchange.fetch_ohlcv(
                 curr_symbol, timeframe="1m", limit=step
             )
+            all_bars = pd.DataFrame(
+                all_bars,
+                columns=["timestamp", "open", "high", "low", "close", "volume"],
+            )
             return all_bars
         # Verify that date parameters are of correct format.
         dbg.dassert_isinstance(
