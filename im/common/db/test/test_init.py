@@ -1,7 +1,7 @@
 import os
 
 import helpers.unit_test as hut
-import im.common.db.init as vcdini
+import im.common.db.create_schema as vcdini
 
 
 class TestDbSchemaFile(hut.TestCase):

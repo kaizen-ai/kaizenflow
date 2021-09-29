@@ -12,7 +12,7 @@ import logging
 
 import helpers.dbg as dbg
 import helpers.parser as hparse
-import im.common.db.init as vcdini
+import im.common.db.create_schema as vcdini
 
 _LOG = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@ import pytest
 import helpers.unit_test as hut
 import im.common.data.transform.transform as icdttr
 import im.common.data.types as icdtyp
-import im.common.db.init as icdini
+import im.common.db.create_schema as icdini
 import im.common.test.utils as ictuti
 import im.ib.data.load.ib_s3_data_loader as iidlib3
 import im.ib.data.load.ib_sql_data_loader as iidlib

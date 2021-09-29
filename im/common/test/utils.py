@@ -5,7 +5,7 @@ import pandas as pd
 
 import helpers.sql as hsql
 import helpers.unit_test as hut
-import im.common.db.init as vcdini
+import im.common.db.create_schema as vcdini
 import im.common.sql_writer_backend as vcsqlw
 
 _LOG = logging.getLogger(__name__)

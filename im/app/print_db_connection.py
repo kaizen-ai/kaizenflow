@@ -9,7 +9,7 @@ import logging
 
 import helpers.dbg as dbg
 import helpers.parser as prsr
-import im.common.db.init as init
+import im.common.db.create_schema as init
 
 _LOG = logging.getLogger(__name__)
 
