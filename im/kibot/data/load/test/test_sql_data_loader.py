@@ -6,13 +6,13 @@ import pytest
 
 import helpers.unit_test as hut
 import im.common.data.types as icdtyp
-import im.common.db.create_schema as icdini
+import im.common.db.create_schema as icdcrsch
 import im.kibot.data.load.kibot_sql_data_loader as ikdlki
 import im.kibot.kibot_sql_writer_backend as ikkibo
 
 
 @pytest.mark.skipif(
-    not icdini.is_inside_im_container(),
+    not icdcrsch.is_inside_im_container(),
     reason="Testable only inside IM container",
 )
 class TestSqlDataLoader1(hut.TestCase):
@@ -29,9 +29,8 @@ class TestSqlDataLoader1(hut.TestCase):
         password = os.environ["POSTGRES_PASSWORD"]
         self.dbname = self._get_test_name().replace("/", "").replace(".", "")
         # Create database for test.
-        icdini.create_database(
+        icdcrsch.create_database(
             self.dbname,
-            icdini.get_init_sql_files(),
             force=True,
         )
         # Initialize writer class to test.

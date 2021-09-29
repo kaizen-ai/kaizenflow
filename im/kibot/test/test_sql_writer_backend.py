@@ -3,14 +3,14 @@ import pytest
 
 import helpers.unit_test as hut
 import im.common.data.types as icdtyp
-import im.common.db.create_schema as icdini
+import im.common.db.create_schema as icdcrsch
 import im.common.test.utils as ictuti
 import im.kibot.kibot_sql_writer_backend as ikkibo
 
 
 # TODO(*): -> TestKibotSqlWriterBackend1
 @pytest.mark.skipif(
-    not icdini.is_inside_im_container(),
+    not icdcrsch.is_inside_im_container(),
     reason="Testable only inside IM container",
 )
 class TestSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
