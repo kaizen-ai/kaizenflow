@@ -608,8 +608,7 @@ class TestPnlSimulator1(hut.TestCase):
 
 
 class TestPnlSimulator2(hut.TestCase):
-    def _run(self, df: pd.DataFrame, df_5mins: pd.DataFrame, initial_wealth: float,
-             config: Dict[str, Any]) -> None:
+    def test1(self) -> None:
         """
         Run level2 simulation using future information to use invest all the
         working capital.

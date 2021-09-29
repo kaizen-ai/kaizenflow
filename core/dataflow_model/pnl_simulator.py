@@ -688,11 +688,6 @@ def _compute_pnl_level2(
       of time
     """
 
-    - The PnL is realized two intervals of time after the corresponding prediction
-    - The columns reported in the df are for the beginning of the interval of time
-    - The columns ending with `+1` represent what happens in the next interval
-      of time
-    """
     def _update(key: str, value: float) -> None:
         prev_value = accounting[key][-1] if accounting[key] else None
         _LOG.debug("%s=%s -> %s", key, prev_value, value)
