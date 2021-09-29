@@ -165,6 +165,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     log_file = os.path.join(dst_dir, f"log.{timestamp}.txt")
     _LOG.info("log_file='%s'", log_file)
     # Execute.
+    #backend = "loky"
+    backend = "asyncio_threading"
     hjoblib.parallel_execute(
         workload,
         dry_run,
@@ -173,6 +175,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         abort_on_error,
         num_attempts,
         log_file,
+        backend=backend,
     )
     #
     _LOG.info("dst_dir='%s'", dst_dir)

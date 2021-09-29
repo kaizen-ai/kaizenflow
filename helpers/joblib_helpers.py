@@ -484,8 +484,9 @@ def parallel_execute(
                 args_[1],
             )
             args = list(enumerate(tasks))
-            # Implementation without progress bar.
-            if True:
+            use_progress_bar = True
+            if not use_progress_bar:
+                # Implementation without progress bar.
                 with executor(max_workers=num_threads) as executor_:
                     res = list(executor_.map(func, args))
             else:

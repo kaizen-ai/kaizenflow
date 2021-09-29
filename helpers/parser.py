@@ -128,13 +128,15 @@ def parse_dst_dir_arg(args: argparse.Namespace) -> Tuple[str, bool]:
     _LOG.debug("dst_dir=%s", dst_dir)
     clean_dst_dir = False
     if args.clean_dst_dir:
+        _LOG.info("Cleaning dst_dir='%s'", dst_dir)
         if os.path.exists(dst_dir):
-            _LOG.warning("Found that dir '%s' already exists", dst_dir)
+            _LOG.warning("Dir '%s' already exists", dst_dir)
             if not args.no_confirm:
-                clean_dst_dir = hsyste.query_yes_no(
+                hsyste.query_yes_no(
                     "Do you want to delete the dir '%s'" % dst_dir,
                     abort_on_no=True,
                 )
+            hio.create_dir(dst_dir, incremental=False)
     hio.create_dir(dst_dir, incremental=True)
     _LOG.debug("clean_dst_dir=%s", clean_dst_dir)
     return dst_dir, clean_dst_dir
