@@ -222,7 +222,7 @@ def load_info(
     info_path: List[str],
     selected_idxs: Optional[Iterable[int]] = None,
     aws_profile: Optional[str] = None,
-) -> Dict[Union[str, int], Any]
+) -> Dict[Union[str, int], Any]:
     iterator = cdtfmouti.yield_experiment_artifacts(
         src_dir,
         file_name,
