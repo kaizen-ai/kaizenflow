@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 """
 Script to download data from CCXT in real-time.
+
+Use as:
+
+python im/ccxt/data/extract/download_realtime.py \
+--dst_dir test1 \
+--exchange_ids 'binance kucoin ftx' \
+--currency_pairs 'all'
 """
 import argparse
 import logging
@@ -64,32 +71,32 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Create the directory.
     hio.create_dir(args.dst_dir, incremental=args.incremental)
-    # If end_date is not provided, get current time.
+    # Get exchange ids.
     if args.exchange_ids == "all":
-        # Iterate over all available exchanges.
         exchange_ids = ["binance", "kucoin"]
     else:
-        # Get provided exchanges.
+        # Get exchanges provided by the user.
         exchange_ids = args.exchange_ids.split()
-    exchanges = dict()
-    currency_pairs = dict()
+    # Build mappings from exchange ids to classes and currencies.
+    exchange_id_to_class = dict()
+    exchange_id_to_currency_pairs = dict()
     for exchange_id in exchange_ids:
         # Initialize a class instance for each provided exchange.
         exchange_class = deecla.CcxtExchange(
             exchange_id, api_keys_path=args.api_keys
         )
         # Store the exchange class instance.
-        exchanges[exchange_id] = exchange_class
+        exchange_id_to_class[exchange_id] = exchange_class
         if args.currency_pairs == "all":
             # Store all currency pairs for each exchange.
-            currency_pairs[exchange_id] = exchange_class.currency_pairs
+            exchange_id_to_currency_pairs[
+                exchange_id
+            ] = exchange_class.currency_pairs
         else:
-            # Iterate over provided currencies.
+            # Store currency pairs present in provided exchanges.
             provided_pairs = args.currency_pairs.split()
-            # Store currency pairs present in each exchange.
-            currency_pairs[exchange_id] = [
+            exchange_id_to_currency_pairs[exchange_id] = [
                 curr
                 for curr in provided_pairs
                 if curr in exchange_class.currency_pairs
@@ -97,13 +104,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Launch an infinite loop.
     while True:
         for exchange_id in exchange_ids:
-            for pair in currency_pairs[exchange_id]:
+            for pair in exchange_id_to_currency_pairs[exchange_id]:
                 # Download latest 5 minutes for the currency pair and exchange.
-                pair_data = exchanges[exchange_id].download_ohlcv_data(
+                pair_data = exchange_id_to_class[exchange_id].download_ohlcv_data(
                     curr_symbol=pair, step=5
                 )
                 # Save data with timestamp.
-                # TODO (Danya): replace saving with DB update.
+                # TODO(Danya): replace saving with DB update.
                 file_name = f"{exchange_id}_{pair.replace('/', '_')}_{hdt.get_timestamp('ET')}.csv.gz"
                 file_path = os.path.join(args.dst_dir, file_name)
                 pair_data.to_csv(file_path, index=False, compression="gzip")
