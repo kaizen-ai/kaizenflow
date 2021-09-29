@@ -4,10 +4,12 @@ Script to download data from CCXT in real-time.
 
 Use as:
 
-python im/ccxt/data/extract/download_realtime.py \
---dst_dir test1 \
---exchange_ids 'binance kucoin ftx' \
---currency_pairs 'all'
+- Download all currency pairs for Binance, Kucoin,
+  FTX exchanges:
+> python im/ccxt/data/extract/download_realtime.py \
+    --dst_dir test1 \
+    --exchange_ids 'binance kucoin ftx' \
+    --currency_pairs 'all'
 """
 import argparse
 import logging
