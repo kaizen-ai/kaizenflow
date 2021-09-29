@@ -1,7 +1,7 @@
 import os
 
 import helpers.unit_test as hut
-import im.common.db.create_schema as vcdini
+import im.common.db.create_schema as icdcrsch
 
 
 class TestDbSchemaFile(hut.TestCase):
@@ -9,5 +9,5 @@ class TestDbSchemaFile(hut.TestCase):
         """
         Test that files with SQL schema exist.
         """
-        for file_name in vcdini.get_init_sql_files():
+        for file_name in icdcrsch.get_sql_files():
             self.assertTrue(os.path.exists(file_name))
