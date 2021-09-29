@@ -63,16 +63,16 @@ def _get_file_path(
 
 class CddLoader:
     def __init__(
-        self, root_dir: str, aws_profile: Optional[str] = None
+        self, cdd_root: str, aws_profile: Optional[str] = None
     ) -> None:
         """
         Load CDD data.
 
-        :param: root_dir: either a local root path (e.g., "/app/im")
-            or an S3 path ("s3://alphamatic-data/data)
+        :param: cdd_root: either a local root path (e.g., "/app/im") or
+            an S3 root path ("s3://alphamatic-data/data) to CDD data
         :param: aws_profile: AWS profile name (e.g., "am")
         """
-        self._root_dir = root_dir
+        self._cdd_root = cdd_root
         self._aws_profile = aws_profile
 
     def read_data(
@@ -94,19 +94,20 @@ class CddLoader:
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
         # Get absolute file path for a CDD file.
         file_path = os.path.join(
-            self._root_dir, _get_file_path(
+            self._cdd_root, _get_file_path(
                 data_snapshot, exchange_id, currency_pair
             )
         )
         # Initialize kwargs dict for further CDD data reading.
-        kwargs = {"skiprows": 1}
+        # Add "skiprows" to kwargs in order to skip a row with the file name.
+        read_csv_kwargs = {"skiprows": 1}
         # TODO(Dan): Remove asserts below after CMTask108 is resolved.
         # Verify that the file exists and fill kwargs if needed.
         if hs3.is_s3_path(file_path):
             s3fs = hs3.get_s3fs(self._aws_profile)
             hs3.dassert_s3_exists(file_path, s3fs)
             # Add s3fs argument to kwargs.
-            kwargs["s3fs"] = s3fs
+            read_csv_kwargs["s3fs"] = s3fs
         else:
             dbg.dassert_file_exists(file_path)
         # Read raw CDD data.
@@ -116,7 +117,7 @@ class CddLoader:
             currency_pair,
             file_path,
         )
-        data = cphelp.read_csv(file_path, **kwargs)
+        data = cphelp.read_csv(file_path, **read_csv_kwargs)
         # Apply transformation to raw data.
         _LOG.info(
             "Processing CDD data for exchange id='%s', currencies='%s'...",
