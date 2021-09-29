@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 """
-Apply schema to PostgreSQL database inside the container.
+Apply schema to PostgreSQL database inside a Docker container.
 
 Usage:
 - Apply schema to database with name `im_db_local`:
-    > init_in_db.py --db im_db_local
+> init_in_db.py --db_name im_db_local
 """
 import argparse
 import logging
@@ -22,10 +22,9 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        # TODO(*): -> db_name?
-        "--db",
+        "--db_name",
         action="store",
-        help="Database to update",
+        help="Name of a database to update",
         required=True,
     )
     hparse.add_verbosity_arg(parser)
@@ -36,8 +35,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
     _LOG.info("Updating schema to DB %s...", args.db)
+    sql_schemas = vcdini.get_init_sql_files()
     vcdini.initialize_database(
-        args.db, init_sql_files=vcdini.get_init_sql_files()
+        args.db, init_sql_files=sql_schemas
     )
     _LOG.info("Database %s is ready to use", args.db)
 
