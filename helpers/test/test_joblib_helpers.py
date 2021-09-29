@@ -46,7 +46,7 @@ def workload_function(
 
 
 def get_workload1(
-    randomize: bool, *, seed: Optional[int] = None
+        randomize: bool, *, seed: Optional[int] = None
 ) -> hjoblib.Workload:
     """
     Return a workload for `workload_function()` with 5 tasks that succeeds.
@@ -146,6 +146,20 @@ val1=4, val2=8, incremental=True, num_attempts=1, kwargs={'hello4': 'world8', 'g
         backend = "asyncio_threading"
         self._run_test(num_threads, backend)
 
+    def test_parallel_asyncio_threading2(self) -> None:
+        """
+        Execute:
+        - a workload of 5 tasks that succeeds
+        - with 3 threads
+        - asyncio_threading backend
+        """
+        num_threads = "3"
+        backend = "asyncio_threading"
+        self._run_test(num_threads, backend)
+
+
+# #############################################################################
+# Test_parallel_execute2
 # #############################################################################
 # Test_parallel_execute2
 # #############################################################################
