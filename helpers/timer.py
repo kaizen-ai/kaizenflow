@@ -116,36 +116,33 @@ class Timer:
 
 # #############################################################################
 
-_DTIMER_INFO: Dict[int, Any] = {}
+# _DTIMER_INFO: Dict[int, Any] = {}
+#
+# import threading
+#
+# lock = threading.Lock()
 
+_TimerMemento = Tuple[int, str, Timer]
 
-def dtimer_start(log_level: int, message: str) -> int:
+def dtimer_start(log_level: int, message: str) -> _TimerMemento:
     """
     :return: memento of the timer.
     """
     _LOG.log(log_level, "%s ...", message)
-    idx = len(_DTIMER_INFO)
-    info = log_level, message, Timer()
-    _DTIMER_INFO[idx] = info
-    return idx
+    memento = log_level, message, Timer()
+    return memento
 
 
-def dtimer_stop(idx: int) -> Tuple[str, int]:
+def dtimer_stop(memento: _TimerMemento) -> Tuple[str, int]:
     """
     :return:
       - message as as string
       - time in seconds (int)
     """
-    dbg.dassert_lte(0, idx)
-    # TODO(gp): This assertion might create problems when an exception is
-    # thrown and we don't use context managers to handle the timers. Consider
-    # alternative solutions.
-    dbg.dassert_lt(idx, len(_DTIMER_INFO))
-    log_level, message, timer = _DTIMER_INFO[idx]
+    log_level, message, timer = memento
     timer.stop()
     elapsed_time = round(timer.get_elapsed(), 3)
     msg = "%s done (%.3f s)" % (message, elapsed_time)
-    del _DTIMER_INFO[idx]
     _LOG.log(log_level, msg)
     return msg, elapsed_time
 

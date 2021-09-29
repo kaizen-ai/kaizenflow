@@ -4,6 +4,7 @@ Import as:
 import helpers.joblib_helpers as hjoblib
 """
 
+import concurrent.futures
 import logging
 import os
 import pprint
@@ -17,6 +18,7 @@ from tqdm.autonotebook import tqdm
 import helpers.datetime_ as hdatetime
 import helpers.dbg as dbg
 import helpers.io_ as hio
+import helpers.htqdm as htqdm
 import helpers.printing as hprint
 import helpers.timer as htimer
 
@@ -161,16 +163,16 @@ def _get_workload(
 
 
 def _parallel_execute_decorator(
-            task_idx: int,
-            task_len: int,
-            incremental: bool,
-            abort_on_error: bool,
-            num_attempts: int,
-            log_file: str,
-            #
-            workload_func: Callable,
-            func_name: str,
-            task: Task,
+    task_idx: int,
+    task_len: int,
+    incremental: bool,
+    abort_on_error: bool,
+    num_attempts: int,
+    log_file: str,
+    #
+    workload_func: Callable,
+    func_name: str,
+    task: Task,
     ) -> Any:
     """
     :param abort_on_error: control whether to abort on `workload_func` function
@@ -221,20 +223,17 @@ def _parallel_execute_decorator(
     txt.append(task_to_string(task))
     args, kwargs = task
     kwargs.update({"incremental": incremental, "num_attempts": num_attempts})
-    memento = htimer.dtimer_start(
-        logging.DEBUG, "Execute '%s'" % workload_func.__name__
-    )
-    try:
-        res = workload_func(*args, **kwargs)
-        error = False
-    except Exception as e:  # pylint: disable=broad-except
-        exception = e
-        txt.append("exception='%s'" % str(e))
-        res = None
-        error = True
-        _LOG.error("Execution failed")
-    msg, elapsed_time = htimer.dtimer_stop(memento)
-    _ = msg
+    with htimer.TimedScope(logging.DEBUG, "Execute '%s'" % workload_func.__name__) as ts:
+        try:
+            res = workload_func(*args, **kwargs)
+            error = False
+        except Exception as e:  # pylint: disable=broad-except
+            exception = e
+            txt.append("exception='%s'" % str(e))
+            res = None
+            error = True
+            _LOG.error("Execution failed")
+    elapsed_time = ts.elapsed_time
     txt.append("func_res=\n%s" % hprint.indent(str(res)))
     txt.append("elapsed_time_in_secs=%s" % elapsed_time)
     txt.append("start_ts=%s" % start_ts)
@@ -374,6 +373,7 @@ def parallel_execute(
     abort_on_error: bool,
     num_attempts: int,
     log_file: str,
+    *,
     backend: str = "loky",
 ) -> Optional[List[Any]]:
     """
@@ -391,6 +391,8 @@ def parallel_execute(
     :param num_attempts: number of times to attempt running a function before
         declaring an error
     :param log_file: file used to log information about the execution
+    :param backend: specify the backend type (e.g., joblib `loky` or
+        `asyncio_process_executor`)
 
     :return: list with the results from executing `func` or the exception of the
         failing function
@@ -412,15 +414,13 @@ def parallel_execute(
         return None
     _LOG.info("Saving log info in '%s'", log_file)
     _LOG.info("Number of tasks=%s", len(tasks))
-    # Apply the wrapper that handles logging of the function.
-    wrapped_func = _parallel_execute_decorator
     # Run.
     task_len = len(tasks)
+    tqdm_out = htqdm.TqdmToLogger(_LOG, level=logging.INFO)
+    tqdm_iter = tqdm(enumerate(tasks), total=task_len, file=tqdm_out, desc=f"num_threads={num_threads} backend={backend}")
     if num_threads == "serial":
         res = []
-        for task_idx, task in tqdm(
-            enumerate(tasks), total=len(tasks), desc="Running serial tasks"
-        ):
+        for task_idx, task in tqdm_iter:
             _LOG.debug(
                 "\n%s", hprint.frame("Task %s / %s" % (task_idx + 1, task_len))
             )
@@ -460,22 +460,28 @@ def parallel_execute(
                     func_name,
                     task,
                 )
+                # We can't use `tqdm_iter` since this only shows the submission of
+                # the jobs but not their completion.
                 for task_idx, task in enumerate(tasks)
             )
-        elif backend in ("asyncio_threads", "asyncio_processing"):
-            tqdm_out = htqdm.TqdmToLogger(_LOG, level=logging.INFO)
-            # Serial.
-            # for date in tqdm_out(dates, desc="Retrieving TAQ data"):
-            #     df = func(date)
-            #     dfs.append(df)
-            # Parallel.
-            dbg.dassert_lte(1, num_threads)
+        elif backend in ("asyncio_threading", "asyncio_multiprocessing"):
+            func = lambda args: _parallel_execute_decorator(
+                args[0],
+                task_len,
+                incremental,
+                abort_on_error,
+                num_attempts,
+                log_file,
+                #
+                workload_func,
+                func_name,
+                args[1],
+            )
+            args = list(enumerate(tasks))
             with concurrent.futures.ThreadPoolExecutor(
                 max_workers=num_threads
             ) as executor:
-                dfs = list(
-                    tqdm(executor.map(func, dates), file=tqdm_out, total=len(dates))
-                )
+                res = list(executor.map(func, args))
             # Different implementation.
             # dfs = []
             # with tqdm(file=tqdm_out, total=len(dates)) as pbar:
@@ -486,7 +492,6 @@ def parallel_execute(
             #             df = future.result()
             #             dfs.append(df)
             #             pbar.update(1)
-            pass
         else:
             raise ValueError("Invalid backend='%s'" % backend)
     _LOG.info("Saved log info in '%s'", log_file)
