@@ -159,6 +159,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 _LOG.warning(
                     "Currencies %s not present in exchange %s!",
                     list(set.difference(set(currency_pairs), set(present_pairs))),
+                    exchange_id
                 )
         _LOG.debug("Getting data for currencies %s", ", ".join(present_pairs))
         for pair in present_pairs:
