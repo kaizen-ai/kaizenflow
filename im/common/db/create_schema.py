@@ -3,7 +3,7 @@ Creates and handles the Postgres DB.
 
 Import as:
 
-import im.common.db.init as init
+import im.common.db.create_schema as icdcrsch
 """
 
 import logging

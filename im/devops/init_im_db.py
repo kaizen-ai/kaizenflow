@@ -12,7 +12,7 @@ import logging
 
 import helpers.dbg as dbg
 import helpers.parser as hparse
-import im.common.db.create_schema as vcdini
+import im.common.db.create_schema as icdcrsch
 
 _LOG = logging.getLogger(__name__)
 
@@ -35,8 +35,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
     _LOG.info("Updating schema to DB %s...", args.db)
-    sql_schemas = vcdini.get_init_sql_files()
-    vcdini.initialize_database(
+    sql_schemas = icdcrsch.get_init_sql_files()
+    icdcrsch.initialize_database(
         args.db, init_sql_files=sql_schemas
     )
     _LOG.info("Database %s is ready to use", args.db)
