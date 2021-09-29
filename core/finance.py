@@ -268,6 +268,7 @@ def resample_bars(
     hdbg.dassert(out_df.index.freq)
     return out_df
 
+    Output column names must not collide.
 
 # TODO(Paul): Consider deprecating.
 # This provides some sensible defaults for `resample_bars()`, but may not be

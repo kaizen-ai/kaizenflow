@@ -40,6 +40,9 @@ DbConnectionInfo = collections.namedtuple(
 DbConnection = psycop.extensions.connection
 
 
+DbConnection = psycop.extensions.connection
+
+
 def get_connection(
     host: str,
     dbname: str,
