@@ -65,12 +65,12 @@ def get_db_connection_details_from_environment() -> str:
     return txt
 
 
-def get_sql_schema_files(custom_files: Optional[List[str]] = None) -> List[str]:
+def get_sql_files(custom_files: Optional[List[str]] = None) -> List[str]:
     """
-    Return the PostgreSQL initialization scripts in proper execution order.
+    Get SQL files with `CREATE TABLE` instructions.
 
-    :param custom_files: provider related init files
-    :return: all files needed to initialize the database
+    :param custom_files: provider-specific sql files
+    :return: SQL files with `CREATE TABLE` instructions
     """
     # Common files.
     files = [
@@ -87,27 +87,13 @@ def get_sql_schema_files(custom_files: Optional[List[str]] = None) -> List[str]:
     return files
 
 
-def create_database(
-    dbname: str, sql_schemas: List[str], force: Optional[bool] = None
-) -> None:
-    """
-    Create database in current environment.
-
-    :param dbname: database name, e.g. `im_db_local`
-    :param sql_schemas:
-    :param force: overwrite existing database
-    """
-    # Initialize connection.
-    connection, _ = get_db_connection_from_environment()
-    _LOG.debug("connection=%s", connection)
-    # Create database.
-    hsql.create_database(connection, db=dbname, force=force)
-    connection.close()
-    # Initialize database.
-    initialize_database(dbname, sql_schemas)
-
-
 def define_data_types(db_connection: hsql.DbConnection) -> None:
+    """
+    Define custom data types inside a database.
+
+    :param db_connection: database connection
+    :return:
+    """
     # Define data types.
     define_types_query = """
     /* TODO: Futures -> futures */
@@ -117,22 +103,29 @@ def define_data_types(db_connection: hsql.DbConnection) -> None:
     CREATE TYPE ContractType AS ENUM ('continuous', 'expiry');
     CREATE SEQUENCE serial START 1;
     """
-    _LOG.info("Defining data types with query %s.", define_types_query)
+    _LOG.info("Defining data types with query '%s'...", define_types_query)
     try:
         hsql.execute_query(db_connection, define_types_query)
     except psycop.errors.DuplicateObject:
         _LOG.warning("Specified data types already exist. Terminated.")
 
 
-def create_schemas(
+def create_tables(
     db_connection: hsql.DbConnection,
     custom_files: Optional[List[str]] = None,
 ) -> None:
-    schema_files = get_sql_schema_files(custom_files)
+    """
+    Create tables inside a database.
+
+    :param db_connection: database connection
+    :param custom_files: provider-specific sql files
+    :return:
+    """
+    sql_files = get_sql_files(custom_files)
     # Create schemas.
-    for schema_file in schema_files:
-        _LOG.info("Executing %s...", schema_file)
-        sql_query = hio.from_file(schema_file)
+    for sql_file in sql_files:
+        _LOG.info("Creating tables from '%s'...", sql_file)
+        sql_query = hio.from_file(sql_file)
         try:
             hsql.execute_query(db_connection, sql_query)
         except psycop.errors.DuplicateObject:
@@ -142,21 +135,32 @@ def create_schemas(
             break
 
 
-def test_db(db_connection: hsql.DbConnection) -> None:
+def test_tables(db_connection: hsql.DbConnection) -> None:
+    """
+    Test that tables are created.
+
+    :param db_connection: database connection
+    :return:
+    """
     test_query = "INSERT INTO Exchange (name) VALUES ('TestExchange');"
-    _LOG.info("Testing db by executing query %s", test_query)
+    _LOG.info("Testing db by executing query '%s'...", test_query)
     try:
         hsql.execute_query(db_connection, test_query)
     except psycop.Error:
-        _LOG.warning("Test failed with error %s", psycop.Error)
+        _LOG.warning("Test failed with error '%s'.", psycop.Error)
 
 
-def initialize_database(dbname: str, sql_schemas: List[str]) -> None:
+def create_schema(custom_files: Optional[List[str]] = None) -> None:
     """
-    Execute init scripts on database.
+    Create SQL schema.
 
-    :param dbname: database name, e.g. `im_db_local`
-    :param sql_schemas: init
+    Creating schema includes:
+        - Defining custom data types
+        - Creating new tables
+        - Testing that tables are created
+
+    :param custom_files: provider-specific sql files
+    :return:
     """
     _LOG.info(
         "DB connection:\n%s",
@@ -166,12 +170,35 @@ def initialize_database(dbname: str, sql_schemas: List[str]) -> None:
     connection, _ = get_db_connection_from_environment()
     # Define data types.
     define_data_types(connection)
-    # Create schemas.
-    create_schemas(connection, sql_schemas)
+    # Create tables.
+    create_tables(connection, custom_files)
     # Test the db.
-    test_db(connection)
+    test_tables(connection)
     # Close connection.
     connection.close()
+
+
+def create_database(
+    dbname: str,
+    custom_files: Optional[List[str]] = None,
+    force: Optional[bool] = None,
+) -> None:
+    """
+    Create database and SQL schema inside it.
+
+    :param dbname: database name, e.g. `im_db_local`
+    :param custom_files: provider-specific sql files
+    :param force: overwrite existing database
+    :return:
+    """
+    # Initialize connection.
+    connection, _ = get_db_connection_from_environment()
+    _LOG.debug("connection=%s", connection)
+    # Create database.
+    hsql.create_database(connection, db=dbname, force=force)
+    connection.close()
+    # Create SQL schema.
+    create_schema(custom_files)
 
 
 def remove_database(dbname: str) -> None:
