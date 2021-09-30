@@ -1279,11 +1279,12 @@ def _get_docker_cmd(
         --rm"""
     )
     # - Handle the user.
-    user_name = hsinte.get_user_name()
-    docker_cmd_.append(
-        rf"""
+    if True:
+        user_name = hsinte.get_user_name()
+        docker_cmd_.append(
+            rf"""
         --user $(id -u):$(id -g)"""
-    )
+        )
     # - Handle the extra docker options.
     if extra_docker_run_opts:
         dbg.dassert_isinstance(extra_docker_run_opts, list)
