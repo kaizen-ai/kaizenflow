@@ -1,3 +1,5 @@
+import pytest
+
 import helpers.unit_test as hut
 import im.cryptodatadownload.data.load.loader as crdall
 
@@ -38,6 +40,7 @@ class TestGetFilePath(hut.TestCase):
             )
 
 
+@pytest.mark.skip()
 class TestCddLoader(hut.TestCase):
     def test1(self) -> None:
         """

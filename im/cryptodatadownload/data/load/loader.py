@@ -62,15 +62,15 @@ def _get_file_path(
 
 
 class CddLoader:
-    def __init__(self, cdd_root: str, aws_profile: Optional[str] = None) -> None:
+    def __init__(self, root_dir: str, aws_profile: Optional[str] = None) -> None:
         """
         Load CDD data.
 
-        :param: cdd_root: either a local root path (e.g., "/app/im") or
+        :param: root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path ("s3://alphamatic-data/data) to CDD data
         :param: aws_profile: AWS profile name (e.g., "am")
         """
-        self._cdd_root = cdd_root
+        self._root_dir = root_dir
         self._aws_profile = aws_profile
 
     def read_data(
@@ -92,7 +92,7 @@ class CddLoader:
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
         # Get absolute file path for a CDD file.
         file_path = os.path.join(
-            self._cdd_root,
+            self._root_dir,
             _get_file_path(data_snapshot, exchange_id, currency_pair),
         )
         # Initialize kwargs dict for further CDD data reading.
