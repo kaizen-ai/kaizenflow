@@ -2,7 +2,7 @@ import im.ccxt.data.load.loader as icdloloa
 import helpers.unit_test as hut
 
 
-class TestGetFileName(hut.TestCase):
+class TestGetFilePath(hut.TestCase):
     def test1(self) -> None:
         """
         Test supported exchange id and currency pair.
@@ -42,4 +42,37 @@ class TestGetFileName(hut.TestCase):
             icdloloa.get_file_name(exchange, currency)
 
 
-# TODO(Grisha): add tests for CcxtLoader.read_data() once aws is fixed #28.
+class TestCcxtLoader(hut.TestCase):
+    def test1(self) -> None:
+        """
+        Test files on S3 are being read correctly.
+        """
+        ccxt_loader = cdlloa.CcxtLoader("s3://alphamatic-data/data", "am")
+        actual = ccxt_loader.read_data("binance", "BTC/USDT", "OHLCV")
+        # Check the output values.
+        actual_string = hut.convert_df_to_json_string(actual)
+        self.check_string(actual_string)
+
+    def test2(self) -> None:
+        """
+        Test unsupported exchange id.
+        """
+        ccxt_loader = cdlloa.CcxtLoader("s3://alphamatic-data/data", "am")
+        with self.assertRaises(AssertionError):
+            ccxt_loader.read_data("unsupported_exchange_id", "BTC/USDT", "OHLCV")
+
+    def test3(self) -> None:
+        """
+        Test unsupported currency pair.
+        """
+        ccxt_loader = cdlloa.CcxtLoader("s3://alphamatic-data/data", "am")
+        with self.assertRaises(AssertionError):
+            ccxt_loader.read_data("binance", "unsupported_currency_pair", "OHLCV")
+
+    def test4(self) -> None:
+        """
+        Test unsupported data type.
+        """
+        ccxt_loader = cdlloa.CcxtLoader("s3://alphamatic-data/data", "am")
+        with self.assertRaises(AssertionError):
+            ccxt_loader.read_data("binance", "BTC/USDT", "unsupported_data_type")
