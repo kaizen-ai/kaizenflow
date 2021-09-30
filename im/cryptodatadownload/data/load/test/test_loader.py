@@ -1,5 +1,3 @@
-import pytest
-
 import helpers.unit_test as hut
 import im.cryptodatadownload.data.load.loader as crdall
 
@@ -40,17 +38,37 @@ class TestGetFilePath(hut.TestCase):
             )
 
 
-@pytest.mark.skip()
 class TestCddLoader(hut.TestCase):
     def test1(self) -> None:
         """
-        Test that locally stored files are being read correctly.
+        Test files on S3 are being read correctly.
         """
-        cdd_loader = crdall.CddLoader("/app/im")
+        cdd_loader = crdall.CddLoader("s3://alphamatic-data/data", "am")
         actual = cdd_loader.read_data("binance", "BTC/USDT", "OHLCV")
         # Check the output values.
         actual_string = hut.convert_df_to_json_string(actual)
         self.check_string(actual_string)
 
+    def test2(self) -> None:
+        """
+        Test unsupported exchange id.
+        """
+        cdd_loader = crdall.CddLoader("s3://alphamatic-data/data", "am")
+        with self.assertRaises(AssertionError):
+            cdd_loader.read_data("unsupported_exchange_id", "BTC/USDT", "OHLCV")
 
-# TODO(Dan): add tests for CddLoader.read_data() once aws is fixed #28.
+    def test3(self) -> None:
+        """
+        Test unsupported currency pair.
+        """
+        cdd_loader = crdall.CddLoader("s3://alphamatic-data/data", "am")
+        with self.assertRaises(AssertionError):
+            cdd_loader.read_data("binance", "unsupported_currency_pair", "OHLCV")
+
+    def test4(self) -> None:
+        """
+        Test unsupported data type.
+        """
+        cdd_loader = crdall.CddLoader("s3://alphamatic-data/data", "am")
+        with self.assertRaises(AssertionError):
+            cdd_loader.read_data("binance", "BTC/USDT", "unsupported_data_type")
