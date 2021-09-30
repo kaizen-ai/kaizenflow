@@ -89,11 +89,11 @@ def get_sql_files(custom_files: Optional[List[str]] = None) -> List[str]:
     return files
 
 
-def define_data_types(db_connection: hsql.DbConnection) -> None:
+def define_data_types(cursor: psycop.extensions.cursor) -> None:
     """
     Define custom data types inside a database.
 
-    :param db_connection: database connection
+    :param cursor: a database cursor
     :return:
     """
     # Define data types.
@@ -105,47 +105,47 @@ def define_data_types(db_connection: hsql.DbConnection) -> None:
     CREATE TYPE ContractType AS ENUM ('continuous', 'expiry');
     CREATE SEQUENCE serial START 1;
     """
-    _LOG.info("Defining data types with query '%s'...", define_types_query)
+    _LOG.debug("Defining data types with query '%s'...", define_types_query)
     try:
-        hsql.execute_query(db_connection, define_types_query)
+        cursor.execute(define_types_query)
     except psycop.errors.DuplicateObject:
         _LOG.warning("Specified data types already exist. Terminated.")
 
 
 def create_tables(
-    db_connection: hsql.DbConnection,
+    cursor: psycop.extensions.cursor,
     custom_files: Optional[List[str]] = None,
 ) -> None:
     """
     Create tables inside a database.
 
-    :param db_connection: database connection
+    :param cursor: a database cursor
     :param custom_files: provider-specific sql files
     :return:
     """
     sql_files = get_sql_files(custom_files)
-    # Create schemas.
+    # Create tables.
     for sql_file in sql_files:
-        _LOG.info("Creating tables from '%s'...", sql_file)
+        _LOG.debug("Creating tables from '%s'...", sql_file)
         sql_query = hio.from_file(sql_file)
         try:
-            hsql.execute_query(db_connection, sql_query)
+            cursor.execute(sql_query)
         except psycop.errors.DuplicateObject:
             _LOG.warning("Schemas are already created. Terminated.")
             break
 
 
-def test_tables(db_connection: hsql.DbConnection) -> None:
+def test_tables(cursor: psycop.extensions.cursor) -> None:
     """
     Test that tables are created.
 
-    :param db_connection: database connection
+    :param cursor: a database cursor
     :return:
     """
     test_query = "INSERT INTO Exchange (name) VALUES ('TestExchange');"
-    _LOG.info("Testing db by executing query '%s'...", test_query)
+    _LOG.debug("Testing db by executing query '%s'...", test_query)
     try:
-        hsql.execute_query(db_connection, test_query)
+        cursor.execute(test_query)
     except psycop.Error:
         _LOG.warning("Test failed with error '%s'.", psycop.Error)
 
@@ -163,14 +163,17 @@ def create_schema(custom_files: Optional[List[str]] = None) -> None:
     :return:
     """
     _LOG.info("DB connection:\n%s", get_db_connection_details_from_environment())
-    # Connect to recently created database.
-    connection, _ = get_db_connection_from_environment()
+    # Get database connection and cursor.
+    connection, cursor = get_db_connection_from_environment()
     # Define data types.
-    define_data_types(connection)
+    _LOG.info("Defining data types...")
+    define_data_types(cursor)
     # Create tables.
-    create_tables(connection, custom_files)
+    _LOG.info("Creating tables...")
+    create_tables(cursor, custom_files)
     # Test the db.
-    test_tables(connection)
+    _LOG.info("Testing created tables...")
+    test_tables(cursor)
     # Close connection.
     connection.close()
 
