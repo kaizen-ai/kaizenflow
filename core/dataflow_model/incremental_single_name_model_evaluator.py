@@ -139,6 +139,43 @@ def aggregate_single_name_models(
     return portfolio, dfs
 
 
+def load_result_dfs(
+    src_dir: str,
+    file_name: str,
+    start: Optional[hdatetim.Datetime],
+    end: Optional[hdatetim.Datetime],
+    load_rb_kwargs: Dict[str, Any],
+    selected_idxs: Optional[Iterable[int]] = None,
+    aws_profile: Optional[str] = None,
+) -> Dict[int, pd.DataFrame]:
+    """
+    Loads result dataframes.
+
+    Use `load_rb_kwargs` to restrict to desired columns.
+
+    This function should be used judiciously on large runs due to the memory
+    requirements.
+    """
+    iterator = cdtfmouti.yield_experiment_artifacts(
+        src_dir,
+        file_name,
+        load_rb_kwargs=load_rb_kwargs,
+        selected_idxs=selected_idxs,
+        aws_profile=aws_profile,
+    )
+    dfs = collections.OrderedDict()
+    for key, artifact in iterator:
+        _LOG.debug(
+            "load_experiment_artifacts: memory_usage=%s",
+            hdbg.get_memory_usage_as_str(None),
+        )
+        # Extract df and restrict to [start, end].
+        df = artifact.result_df.loc[start:end].copy()
+        dfs[key] = df
+    _LOG.info("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
+    return dfs
+
+
 def _process_single_name_result_df(
     df: pd.DataFrame,
     position_intent_1_col: str,
