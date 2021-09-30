@@ -165,7 +165,7 @@ def load_result_dfs(
     )
     dfs = collections.OrderedDict()
     for key, artifact in iterator:
-        _LOG.debug(
+        _LOG.info(
             "load_experiment_artifacts: memory_usage=%s",
             hdbg.get_memory_usage_as_str(None),
         )
