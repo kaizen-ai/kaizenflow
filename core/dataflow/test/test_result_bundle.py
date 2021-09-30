@@ -1,10 +1,14 @@
 import collections
 import logging
+import os
 
 import pandas as pd
 
 import core.config as cconfig
+# TODO(gp): Use
+# import core.dataflow.result_bundle as cdtfrb
 import core.dataflow as dtf
+import helpers.printing as hprint
 import helpers.unit_test as hut
 
 _LOG = logging.getLogger(__name__)
@@ -12,27 +16,33 @@ _LOG = logging.getLogger(__name__)
 
 class TestResultBundle(hut.TestCase):
     def test_to_config1(self) -> None:
-        init_config = self._get_init_config()
-        # Initialize a `ResultBundle` using params from `init_config`.
-        rb = dtf.ResultBundle(**init_config.to_dict())
+        """
+        Convert a `ResultBundle` to a config.
+        """
+        rb = self._get_result_bundle()
         # Check.
         actual_config = rb.to_config(commit_hash=False)
-        self.check_string(f"config without 'commit_hash' field:\n{actual_config}")
+        txt = f"config without 'commit_hash' field:\n{actual_config}"
+        self.check_string(txt)
 
     def test_from_config1(self) -> None:
         """
         Initialize a `ResultBundle` from a config.
         """
-        init_config = self._get_init_config()
         # Initialize a `ResultBundle` from a config.
+        init_config = self._get_init_config()
         rb = dtf.ResultBundle.from_config(init_config)
         # Check.
         actual_config = rb.to_config(commit_hash=False)
-        self.check_string(f"config without 'commit_hash' field:\n{actual_config}")
+        txt = f"config without 'commit_hash' field:\n{actual_config}"
+        self.check_string(txt)
 
     def test_to_dict_and_back(self) -> None:
-        init_config = self._get_init_config()
+        """
+        Round-trip conversion using `from_config()` and `to_config()`.
+        """
         # Initialize a `ResultBundle` from a config.
+        init_config = self._get_init_config()
         result_bundle = dtf.ResultBundle.from_config(init_config)
         # This pattern is used in `master_experiment.py` before pickling.
         rb_as_dict = result_bundle.to_config().to_dict()
@@ -40,21 +50,39 @@ class TestResultBundle(hut.TestCase):
         result_bundle_2 = dtf.ResultBundle.from_config(
             cconfig.get_config_from_nested_dict(rb_as_dict)
         )
+        # Check.
         self.assert_equal(str(result_bundle), str(result_bundle_2))
 
+    def test_pickle1(self) -> None:
+        rb = self._get_result_bundle()
+        # Serialize.
+        dir_name = self.get_scratch_space()
+        file_name = os.path.join(dir_name, "result_bundle.pkl")
+        rb.to_pickle(file_name, use_pq=False)
+        # Compute the signature of the dir.
+        actual = hut.get_dir_signature(dir_name, include_file_content=False)
+        # Check.
+        expected = """
+        # Dir structure
+        $GIT_ROOT/core/dataflow/test/TestResultBundle.test_pickle1/tmp.scratch
+        $GIT_ROOT/core/dataflow/test/TestResultBundle.test_pickle1/tmp.scratch/result_bundle.v1_0.pkl
+        """
+        expected = hprint.dedent(expected)
+        self.assert_equal(str(actual), str(expected), purify_text=True)
+
     def test_get_tags_for_column1(self) -> None:
-        init_config = self._get_init_config()
-        rb = dtf.ResultBundle(**init_config.to_dict())
+        rb = self._get_result_bundle()
+        #
         actual = rb.get_tags_for_column("col2")
         expected = ["target_col", "step_1"]
-        self.assertListEqual(actual, expected)
+        self.assert_equal(str(actual), str(expected))
 
     def test_get_columns_for_tag1(self) -> None:
-        init_config = self._get_init_config()
-        rb = dtf.ResultBundle(**init_config.to_dict())
+        rb = self._get_result_bundle()
+        #
         actual = rb.get_columns_for_tag("step_1")
         expected = ["col2", "col4"]
-        self.assertListEqual(actual, expected)
+        self.assert_equal(str(actual), str(expected))
 
     @staticmethod
     def _get_init_config() -> cconfig.Config:
@@ -80,6 +108,17 @@ class TestResultBundle(hut.TestCase):
             }
         )
         return init_config
+
+    def _get_result_bundle(self) -> dtf.ResultBundle:
+        """
+        Initialize a `ResultBundle` from a config.
+        """
+        init_config = self._get_init_config()
+        rb = dtf.ResultBundle.from_config(init_config)
+        return rb
+
+
+# ##################################################################################
 
 
 class TestPredictionResultBundle(hut.TestCase):

@@ -3,6 +3,7 @@ version: '3'
 services:
   # Docker container running code that talks to the DB.
   app:
+    # TODO(Grisha): use amp image w/o the `Dockerfile`.
     build:
       context: .
       dockerfile: dev.Dockerfile

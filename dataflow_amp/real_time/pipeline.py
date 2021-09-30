@@ -1,12 +1,10 @@
 """
 Import as:
 
-import dataflow_amp.real_time.real_time_return_pipeline as dtfart
+import dataflow_amp.real_time.pipeline as dtfartp
 """
 
 import logging
-
-import pandas as pd
 
 import core.config as cconfig
 import core.dataflow as dtf
@@ -42,6 +40,8 @@ _LOG = logging.getLogger(__name__)
 # used by multiple nodes
 
 
+# TODO(gp): With the last implementation of the async dataflow nodes there is no
+#  need to create a different DAG.
 class RealTimeReturnPipeline(dtf.DagBuilder):
     """
     Real-time pipeline for computing returns from price data.
@@ -63,81 +63,12 @@ class RealTimeReturnPipeline(dtf.DagBuilder):
         """
         # Get the DAG builder and the config template.
         config = self._dag_builder.get_config_template()
-        config["meta_parameters"] = cconfig.get_config_from_nested_dict(
-            {
-                "start_datetime": "RealTimeDataSource",
-                "real_time": {
-                    "type": cconfig.DUMMY,
-                    "kwargs": cconfig.DUMMY,
-                },
-            }
-        )
-        #
-        start_datetime = pd.Timestamp("2010-01-04 09:30:00")
-        end_datetime = pd.Timestamp("2010-01-04 11:30:00")
-        # Use a replayed real-time starting at the same time as the data.
-        # TODO(gp): This should be moved to the `get_dag()` part. The config_template
-        #  contains all the fields that need to be filled, then the rest builds it.
-        #  There can be helpers that help fill configs with group of params that
-        #  are related.
-        # TODO(gp): Add this
-        get_wall_clock_time = None
-        rrt = dtf.ReplayedTime(
-            start_datetime,
-            get_wall_clock_time,
-        )
-        # Data builder.
-        data_builder = dtf.generate_synthetic_data
-        data_builder_kwargs = {
-            "columns": ["close", "vol"],
-            "start_datetime": cconfig.DUMMY,
-            "end_datetime": cconfig.DUMMY,
-        }
-        # Inject a real-time node.
-        source_node_kwargs = {
-            "delay_in_secs": 0.0,
-            "external_clock": rrt.get_wall_clock_time,
-            "data_builder": data_builder,
-            "data_builder_kwargs": data_builder_kwargs,
-        }
-        config["load_prices"] = cconfig.get_config_from_nested_dict(
-            {
-                "source_node_name": "RealTimeDataSource",
-                "source_node_kwargs": source_node_kwargs,
-            }
-        )
         return config
 
     def get_dag(self, config: cconfig.Config, mode: str = "strict") -> dtf.DAG:
         """
         Generate pipeline DAG.
         """
-        # Wire some parameters that depend on other already set.
-
-        # Use a replayed real-time starting at the same time as the data.
-        # TODO(gp): This should be moved to the `get_dag()` part. The config_template
-        #  contains all the fields that need to be filled, then the rest builds it.
-        #  There can be helpers that help fill configs with group of params that
-        #  are related.
-        rrt = dtf.ReplayedTime(
-            config["meta_parameters"]["start_datetime"],
-            config["replayed_time"]["get_wall_clock_time"],
-        )
-        # Data builder.
-        data_builder = dtf.generate_synthetic_data
-        data_builder_kwargs = {
-            "columns": ["close", "vol"],
-            "start_datetime": cconfig.DUMMY,
-            "end_datetime": cconfig.DUMMY,
-        }
-        # Inject a real-time node.
-        source_node_kwargs = {
-            "delay_in_secs": 0.0,
-            "external_clock": rrt.get_wall_clock_time,
-            "data_builder": data_builder,
-            "data_builder_kwargs": data_builder_kwargs,
-        }
-
         dag = self._dag_builder.get_dag(config, mode=mode)
         return dag
 

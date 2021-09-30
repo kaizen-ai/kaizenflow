@@ -84,12 +84,12 @@ class CcxtExchange:
         sleep_time: int = 1,
     ) -> pd.DataFrame:
         """
-        Download minute OHLCV candles.
+        Download minute OHLCV bars.
 
         :param curr_symbol: a currency pair, e.g. "BTC/USDT"
         :param start_datetime: starting point for data
-        :param end_datetime: end point for data
-        :param step: a number of candles per iteration
+        :param end_datetime: end point for data (included)
+        :param step: number of bars per iteration
         :param sleep_time: time in seconds between iterations
         :return: OHLCV data from ccxt
         """
@@ -99,12 +99,16 @@ class CcxtExchange:
         dbg.dassert_in(curr_symbol, self.currency_pairs)
         # Make the minimal limit of 500 a default step.
         step = step or 500
-        # Get latest candles if no datetime is provided.
+        # Get latest bars if no datetime is provided.
         if end_datetime is None and start_datetime is None:
-            all_candles = self._exchange.fetch_ohlcv(
+            all_bars = self._exchange.fetch_ohlcv(
                 curr_symbol, timeframe="1m", limit=step
             )
-            return all_candles
+            all_bars = pd.DataFrame(
+                all_bars,
+                columns=["timestamp", "open", "high", "low", "close", "volume"],
+            )
+            return all_bars
         # Verify that date parameters are of correct format.
         dbg.dassert_isinstance(
             end_datetime,
@@ -116,13 +120,16 @@ class CcxtExchange:
             pd.Timestamp,
             msg="Type of start_datetime param is incorrect.",
         )
+        dbg.dassert_lte(
+            start_datetime,
+            end_datetime,
+            msg="Start datetime should be less or equal to end datetime!",
+        )
         # Convert datetime into ms.
         start_datetime = start_datetime.asm8.astype(int) // 1000000
-        # Convert get datetime into ms.
         end_datetime = end_datetime.asm8.astype(int) // 1000000
-        # Get 1m timeframe as ms.
         duration = self._exchange.parse_timeframe("1m") * 1000
-        all_candles = []
+        all_bars = []
         # Iterate over the time period.
         #  Note: the iteration goes from start date to end date in
         # milliseconds, with the step defined by `step` parameter.
@@ -130,14 +137,14 @@ class CcxtExchange:
         for t in tqdm.tqdm(
             range(start_datetime, end_datetime + duration, duration * step)
         ):
-            # Fetch OHLCV candles for 1m since current datetime.
-            candles = self._exchange.fetch_ohlcv(
+            # Fetch OHLCV bars for 1m since current datetime.
+            bars = self._exchange.fetch_ohlcv(
                 curr_symbol, timeframe="1m", since=t, limit=step
             )
-            all_candles += candles
+            all_bars += bars
             time.sleep(sleep_time)
-            all_candles = pd.DataFrame(
-                all_candles,
+            all_bars = pd.DataFrame(
+                all_bars,
                 columns=["timestamp", "open", "high", "low", "close", "volume"],
             )
-            return all_candles
+            return all_bars

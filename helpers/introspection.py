@@ -45,6 +45,7 @@ def get_function_name(count: int = 0) -> str:
 # https://code.activestate.com/recipes/577504/
 # https://stackoverflow.com/questions/449560/how-do-i-determine-the-size-of-an-object-in-python
 
+
 def get_size_in_bytes(obj: object, seen: Optional[set] = None) -> int:
     """
     Recursively find size of an object `obj` in bytes.
@@ -57,7 +58,7 @@ def get_size_in_bytes(obj: object, seen: Optional[set] = None) -> int:
     obj_id = id(obj)
     if obj_id in seen:
         return 0
-    # Important mark as seen *before* entering recursion to gracefully handle
+    # Mark as seen *before* entering recursion to gracefully handle
     # self-referential objects.
     seen.add(obj_id)
     if hasattr(obj, "__dict__"):
@@ -83,6 +84,7 @@ def get_size_in_bytes(obj: object, seen: Optional[set] = None) -> int:
     return size
 
 
+# TODO(gp): -> move to helpers/hprint.py
 def format_size(num: float) -> str:
     """
     Return a human-readable string for a filesize (e.g., "3.5 MB").

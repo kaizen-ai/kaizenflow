@@ -45,7 +45,7 @@ def get_workload1(
         # val1, val2
         task = ((i, 2 * i), {f"hello{i}": f"world{2 * i}", "good": "bye"})
         tasks.append(task)
-    workload = (workload_function, "workload_function", tasks)
+    workload: hjoblib.Workload = (workload_function, "workload_function", tasks)
     if randomize:
         # Randomize workload.
         workload: hjoblib.Workload = hjoblib.randomize_workload(
@@ -60,7 +60,7 @@ def get_workload2() -> hjoblib.Workload:
     """
     task = ((-1, 7), {"hello2": "world2", "good2": "bye2"})
     tasks = [task]
-    workload = (workload_function, "workload_function", tasks)
+    workload: hjoblib.Workload = (workload_function, "workload_function", tasks)
     return workload
 
 

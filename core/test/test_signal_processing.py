@@ -1,4 +1,5 @@
 import collections
+import datetime
 import logging
 import os
 import pprint
@@ -11,6 +12,7 @@ import pytest
 import core.artificial_signal_generators as cartif
 import core.signal_processing as csigna
 import helpers.git as git
+import helpers.jupyter as hjupyter
 import helpers.printing as hprint
 import helpers.unit_test as hut
 
@@ -99,84 +101,6 @@ class Test_correlate_with_lagged_cumsum(hut.TestCase):
             date_range_kwargs=date_range, scale=0.1, seed=seed + 2
         ).rename("y2")
         return pd.concat([srs1, srs2, srs3], axis=1)
-
-
-class Test_accumulate(hut.TestCase):
-    def test1(self) -> None:
-        srs = pd.Series(
-            range(0, 20), index=pd.date_range("2010-01-01", periods=20)
-        )
-        actual = csigna.accumulate(srs, num_steps=1)
-        expected = srs.astype(float)
-        pd.testing.assert_series_equal(actual, expected)
-
-    def test2(self) -> None:
-        idx = pd.date_range("2010-01-01", periods=10)
-        srs = pd.Series([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], index=idx)
-        actual = csigna.accumulate(srs, num_steps=2)
-        expected = pd.Series([np.nan, 1, 3, 5, 7, 9, 11, 13, 15, 17], index=idx)
-        pd.testing.assert_series_equal(actual, expected)
-
-    def test3(self) -> None:
-        idx = pd.date_range("2010-01-01", periods=10)
-        srs = pd.Series([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], index=idx)
-        actual = csigna.accumulate(srs, num_steps=3)
-        expected = pd.Series(
-            [np.nan, np.nan, 3, 6, 9, 12, 15, 18, 21, 24], index=idx
-        )
-        pd.testing.assert_series_equal(actual, expected)
-
-    def test4(self) -> None:
-        srs = pd.Series(
-            np.random.randn(100), index=pd.date_range("2010-01-01", periods=100)
-        )
-        output = pd.concat([srs, csigna.accumulate(srs, num_steps=5)], axis=1)
-        output.columns = ["series", "series_accumulated"]
-        self.check_string(hut.convert_df_to_string(output, index=True))
-
-    def test_long_step1(self) -> None:
-        idx = pd.date_range("2010-01-01", periods=3)
-        srs = pd.Series([1, 2, 3], index=idx)
-        actual = csigna.accumulate(srs, num_steps=5)
-        expected = pd.Series([np.nan, np.nan, np.nan], index=idx)
-        pd.testing.assert_series_equal(actual, expected)
-
-    def test_nans1(self) -> None:
-        idx = pd.date_range("2010-01-01", periods=10)
-        srs = pd.Series([0, 1, np.nan, 2, 3, 4, np.nan, 5, 6, 7], index=idx)
-        actual = csigna.accumulate(srs, num_steps=3)
-        expected = pd.Series(
-            [
-                np.nan,
-                np.nan,
-                np.nan,
-                np.nan,
-                np.nan,
-                9,
-                np.nan,
-                np.nan,
-                np.nan,
-                18,
-            ],
-            index=idx,
-        )
-        pd.testing.assert_series_equal(actual, expected)
-
-    def test_nans2(self) -> None:
-        idx = pd.date_range("2010-01-01", periods=6)
-        srs = pd.Series([np.nan, np.nan, np.nan, 2, 3, 4], index=idx)
-        actual = csigna.accumulate(srs, num_steps=3)
-        expected = pd.Series(
-            [np.nan, np.nan, np.nan, np.nan, np.nan, 9], index=idx
-        )
-        pd.testing.assert_series_equal(actual, expected)
-
-    def test_nans3(self) -> None:
-        idx = pd.date_range("2010-01-01", periods=6)
-        srs = pd.Series([np.nan, np.nan, np.nan, 2, 3, 4], index=idx)
-        actual = csigna.accumulate(srs, num_steps=2)
-        expected = pd.Series([np.nan, np.nan, np.nan, np.nan, 5, 7], index=idx)
-        pd.testing.assert_series_equal(actual, expected)
 
 
 class Test_get_symmetric_equisized_bins(hut.TestCase):
@@ -646,6 +570,9 @@ class Test_compute_smooth_moving_average1(hut.TestCase):
 
 class Test_extract_smooth_moving_average_weights(hut.TestCase):
     def test1(self) -> None:
+        """
+        Perform a typical application.
+        """
         df = pd.DataFrame(index=range(0, 20))
         weights = csigna.extract_smooth_moving_average_weights(
             df,
@@ -658,6 +585,9 @@ class Test_extract_smooth_moving_average_weights(hut.TestCase):
         self.check_string(actual)
 
     def test2(self) -> None:
+        """
+        Like `test1()`, but with `tau` varied.
+        """
         df = pd.DataFrame(index=range(0, 20))
         weights = csigna.extract_smooth_moving_average_weights(
             df,
@@ -670,6 +600,9 @@ class Test_extract_smooth_moving_average_weights(hut.TestCase):
         self.check_string(actual)
 
     def test3(self) -> None:
+        """
+        Like `test2()`, but with `min_depth` and `max_depth` increased.
+        """
         df = pd.DataFrame(index=range(0, 20))
         weights = csigna.extract_smooth_moving_average_weights(
             df,
@@ -684,13 +617,16 @@ class Test_extract_smooth_moving_average_weights(hut.TestCase):
         self.check_string(actual)
 
     def test4(self) -> None:
+        """
+        Use a datatime index instead of a range index.
+        """
         df = pd.DataFrame(
             index=pd.date_range(start="2001-01-04", end="2001-01-31", freq="B")
         )
         weights = csigna.extract_smooth_moving_average_weights(
             df,
             tau=16,
-            index_location="2001-01-24",
+            index_location=datetime.datetime(2001, 1, 24),
         )
         actual = hut.convert_df_to_string(
             weights.round(5), index=True, decimals=5
@@ -698,13 +634,16 @@ class Test_extract_smooth_moving_average_weights(hut.TestCase):
         self.check_string(actual)
 
     def test5(self) -> None:
+        """
+        Like `test4()`, but with `tau` varied.
+        """
         df = pd.DataFrame(
             index=pd.date_range(start="2001-01-04", end="2001-01-31", freq="B")
         )
         weights = csigna.extract_smooth_moving_average_weights(
             df,
             tau=252,
-            index_location="2001-01-24",
+            index_location=datetime.datetime(2001, 1, 24),
         )
         actual = hut.convert_df_to_string(
             weights.round(5), index=True, decimals=5
@@ -712,12 +651,32 @@ class Test_extract_smooth_moving_average_weights(hut.TestCase):
         self.check_string(actual)
 
     def test6(self) -> None:
+        """
+        Let `index_location` equal its default of `None`.
+        """
         df = pd.DataFrame(
             index=pd.date_range(start="2001-01-04", end="2001-01-31", freq="B")
         )
         weights = csigna.extract_smooth_moving_average_weights(
             df,
             tau=252,
+        )
+        actual = hut.convert_df_to_string(
+            weights.round(5), index=True, decimals=5
+        )
+        self.check_string(actual)
+
+    def test7(self) -> None:
+        """
+        Set `index_location` past `end`.
+        """
+        df = pd.DataFrame(
+            index=pd.date_range(start="2001-01-04", end="2001-01-31", freq="B")
+        )
+        weights = csigna.extract_smooth_moving_average_weights(
+            df,
+            tau=252,
+            index_location=datetime.datetime(2001, 2, 1),
         )
         actual = hut.convert_df_to_string(
             weights.round(5), index=True, decimals=5
@@ -1171,7 +1130,7 @@ class Test_gallery_signal_processing1(hut.TestCase):
             "core/notebooks/gallery_signal_processing.ipynb",
         )
         scratch_dir = self.get_scratch_space()
-        hut.run_notebook(file_name, scratch_dir)
+        hjupyter.run_notebook(file_name, scratch_dir)
 
 
 class TestProcessNonfinite1(hut.TestCase):
@@ -1220,7 +1179,7 @@ class Test_compute_rolling_annualized_sharpe_ratio(hut.TestCase):
             burnin=5,
         )
         rolling_sr = csigna.compute_rolling_annualized_sharpe_ratio(
-            realization, tau=16
+            realization, tau=16, points_per_year=260.875
         )
         self.check_string(hut.convert_df_to_string(rolling_sr, index=True))
 

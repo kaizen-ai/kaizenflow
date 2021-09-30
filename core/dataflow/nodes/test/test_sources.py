@@ -182,7 +182,7 @@ class TestMultivariateNormalGenerator(hut.TestCase):
 
 
 class TestRealTimeDataSource1(hut.TestCase):
-    def test_simulated_real_time1(self) -> None:
+    def test_simulated_time1(self) -> None:
         """
         Setting the current time to a specific datetime, the node generates
         values up and including that datetime.
@@ -204,40 +204,20 @@ class TestRealTimeDataSource1(hut.TestCase):
         rtds.set_current_time(current_time)
         self._helper(rtds)
 
-    def test_true_real_time1(self) -> None:
+    def test_replayed_time1(self) -> None:
         # Build the node.
         nid = "rtds"
         delay_in_secs = 0.0
-        # Return always the same time.
-        get_wall_clock_time = lambda: pd.Timestamp("2010-01-04 09:30:05")
-        data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder2()
-        rtds = dtf.RealTimeDataSource(  # pylint: disable=no-member
-            nid,
-            delay_in_secs=delay_in_secs,
-            external_clock=get_wall_clock_time,
-            data_builder=data_builder,
-            data_builder_kwargs=data_builder_kwargs,
-        )
-        # Execute.
-        self._helper(rtds)
-
-    def test_replayed_real_time1(self) -> None:
-        # Build the node.
-        nid = "rtds"
-        delay_in_secs = 0.0
-        get_wall_clock_time = lambda: hdatetime.get_current_time("naive_ET")
         # Use a replayed real-time starting at the same time as the data.
-        rrt = dtf.ReplayedTime(
-            pd.Timestamp("2010-01-04 09:30:00"),
-            get_wall_clock_time,
-        )
-        get_wall_clock_time = rrt.get_wall_clock_time
+        initial_replayed_dt = pd.Timestamp("2010-01-04 09:30:00")
+        get_wall_clock_time = lambda: hdatetime.get_current_time("naive_ET")
         #
         data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder1()
         rtds = dtf.ReplayedTimeDataSource(  # pylint: disable=no-member
             nid,
             delay_in_secs=delay_in_secs,
-            external_clock=get_wall_clock_time,
+            initial_replayed_dt=initial_replayed_dt,
+            get_wall_clock_time=get_wall_clock_time,
             data_builder=data_builder,
             data_builder_kwargs=data_builder_kwargs,
         )
@@ -262,7 +242,24 @@ class TestRealTimeDataSource1(hut.TestCase):
         ]
         self.assert_equal(str(act), str(exp))
 
-    def _helper(self, rtds: dtf.ReplayedTimeDataSource) -> None:
+    # TODO(gp): Add a test_simulated_replayed_time using async_solipsism.
+
+    def test_real_time1(self) -> None:
+        # Build the node.
+        nid = "rtds"
+        # Return always the same time.
+        get_wall_clock_time = lambda: pd.Timestamp("2010-01-04 09:30:05")
+        data_builder, data_builder_kwargs = cdtfttrt.get_test_data_builder2()
+        rtds = dtf.RealTimeDataSource(  # pylint: disable=no-member
+            nid,
+            get_wall_clock_time=get_wall_clock_time,
+            data_builder=data_builder,
+            data_builder_kwargs=data_builder_kwargs,
+        )
+        # Execute.
+        self._helper(rtds)
+
+    def _helper(self, rtds: dtf.AbstractRealTimeDataSource) -> None:
         # Execute.
         dict_ = rtds.fit()
         # Check.

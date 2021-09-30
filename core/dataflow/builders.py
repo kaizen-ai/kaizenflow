@@ -157,13 +157,13 @@ class ArmaReturnsBuilder(DagBuilder):
                 self._get_nid("rets/resample"): {
                     "rule": "1T",
                     "price_cols": ["close"],
-                    "volume_cols": ["vol"],
+                    "volume_cols": ["volume"],
                 },
                 # Compute TWAP and VWAP.
                 self._get_nid("rets/compute_wap"): {
                     "rule": "5T",
                     "price_col": "close",
-                    "volume_col": "vol",
+                    "volume_col": "volume",
                 },
                 # Calculate rets.
                 self._get_nid("rets/compute_ret_0"): {
