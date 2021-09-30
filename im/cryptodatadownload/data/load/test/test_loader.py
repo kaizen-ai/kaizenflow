@@ -40,6 +40,7 @@ class TestGetFilePath(hut.TestCase):
             )
 
 
+@pytest.mark.skip()
 class TestCddLoader(hut.TestCase):
     def test1(self) -> None:
         """
