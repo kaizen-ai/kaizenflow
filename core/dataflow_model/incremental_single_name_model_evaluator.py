@@ -222,7 +222,15 @@ def load_info(
     info_path: List[str],
     selected_idxs: Optional[Iterable[int]] = None,
     aws_profile: Optional[str] = None,
-) -> Dict[Union[str, int], Any]:
+) -> Dict[int, Any]:
+    """
+    Return a subset of `info` from result bundles.
+
+    :param info_path: a list of keys to traverse for subsetting `info`. An
+        empty list means no restriction.
+    :return: dict keyed by experiment, with value equal to `info`
+        restricted to `info_path`
+    """
     iterator = cdtfmouti.yield_experiment_artifacts(
         src_dir,
         file_name,
@@ -232,10 +240,6 @@ def load_info(
     )
     info_dict = collections.OrderedDict()
     for key, artifact in iterator:
-        _LOG.info(
-            "load_experiment_artifacts: memory_usage=%s",
-            hdbg.get_memory_usage_as_str(None),
-        )
         info = artifact.info
         for k in info_path:
             info = info[k]
