@@ -240,7 +240,6 @@ def define_data_types(cursor: psycop.extensions.cursor) -> None:
     CREATE TYPE ContractType AS ENUM ('continuous', 'expiry');
     CREATE SEQUENCE serial START 1;
     """
-    _LOG.debug("Executing query '%s'...", define_types_query)
     try:
         cursor.execute(define_types_query)
     except psycop.errors.DuplicateObject:
@@ -255,7 +254,6 @@ def create_tables(
 
     :param cursor: a database cursor
     """
-    _LOG.info("Creating tables...")
     # Get SQL query to create the common tables.
     common_query = get_common_create_table_query()
     # Get SQL query to create the `kibot` tables.
@@ -263,14 +261,18 @@ def create_tables(
     # Get SQL query to create the `ib` tables.
     ib_query = get_ib_create_table_query()
     # Collect the queries.
-    create_table_queries = [common_query, kibot_query, ib_query]
+    provider_to_query = {
+        "common": common_query,
+        "kibot": kibot_query,
+        "ib": ib_query,
+    }
     # Create tables.
-    for query in create_table_queries:
-        _LOG.debug("Executing query '%s'...", query)
+    for provider, query in provider_to_query:
         try:
+            _LOG.info("Creating `%s` tables...", )
             cursor.execute(query)
         except psycop.errors.DuplicateObject:
-            _LOG.warning("Tables are already created: skipping.")
+            _LOG.warning("The `%s` tables are already created: skipping.", provider)
 
 
 def test_tables(cursor: psycop.extensions.cursor) -> None:
@@ -281,7 +283,6 @@ def test_tables(cursor: psycop.extensions.cursor) -> None:
     """
     _LOG.info("Testing created tables...")
     test_query = "INSERT INTO Exchange (name) VALUES ('TestExchange');"
-    _LOG.debug("Executing query '%s'...", test_query)
     cursor.execute(test_query)
 
 
