@@ -23,5 +23,8 @@ print(conn)
 
 print(hsql.get_db_names(conn))
 print(f"Table names: \n{','.join(hsql.get_table_names(conn))}")
-print(f"Table sizes: \n{','.join(hsql.get_table_size(conn))}")
-
+print(f"Column names for exchange: \n{hsql.get_columns(conn, 'exchange')}")
+print(f"Column names for symbol: \n{hsql.get_columns(conn, 'symbol')}")
+print(f"Column names for kibotminutedata: \n{hsql.get_columns(conn, 'kibotminutedata')}")
+print(f"Column names for kibotminutedata: \n{hsql.get_columns(conn, 'kibotminutedata')}")
+print(f"Column names for kibotminutedata: \n{hsql.get_columns(conn, 'kibottickbidaskdata')}")
