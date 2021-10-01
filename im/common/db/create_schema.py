@@ -8,6 +8,7 @@ import im.common.db.create_schema as imcodbcrsch
 
 import logging
 import os
+import time
 from typing import Optional, Tuple
 
 import psycopg2 as psycop
@@ -75,22 +76,18 @@ def check_db_connection() -> None:
     """
     Verify that the database is available.
     """
-    _LOG.info("Checking the database connection...")
-    cmd = """
-    postgres_ready() {
-      pg_isready -d $POSTGRES_DB -p $POSTGRES_PORT -h $POSTGRES_HOST
-    }
-
-    echo "POSTGRES_HOST: $POSTGRES_HOST"
-    echo "POSTGRES_PORT: $POSTGRES_PORT"
-
-    until postgres_ready; do
-      >&2 echo 'Waiting for PostgreSQL to become available...'
-      sleep 1
-    done
-    >&2 echo 'PostgreSQL is available'
-    """
-    hsyint.system(cmd, suppress_output=False)
+    _LOG.info(
+        "Checking the database connection:\n%s",
+        get_db_connection_details_from_environment()
+    )
+    while True:
+        _LOG.info("Waiting for PostgreSQL to become available...")
+        cmd = "pg_isready -d %s -p %s -h %s"
+        rc = hsyint.system(cmd % (os.environ["POSTGRES_DB"], os.environ["POSTGRES_PORT"], os.environ["POSTGRES_HOST"]))
+        time.sleep(1)
+        if rc == 0:
+            _LOG.info("PostgreSQL is available")
+            break
 
 
 def get_common_create_table_query() -> str:
@@ -293,16 +290,16 @@ def test_tables(
     actual_tables = hsql.get_table_names(connection)
     expected_tables = [
         "exchange",
-        "tradesymbol",
-        "symbol",
-        "kibotdailydata",
-        "kibotminutedata",
-        "kibottickbidaskdata",
-        "kibottickdata",
         "ibdailydata",
         "ibminutedata",
         "ibtickbidaskdata",
         "ibtickdata",
+        "kibotdailydata",
+        "kibotminutedata",
+        "kibottickbidaskdata",
+        "kibottickdata",
+        "symbol",
+        "tradesymbol",
     ]
     hdbg.dassert_set_eq(actual_tables, expected_tables)
     # Execute the test query.
