@@ -8,6 +8,7 @@ import im.common.db.create_schema as icdcrsch
 
 import logging
 import os
+import time
 from typing import List, Optional, Tuple
 
 import psycopg2 as psycop
@@ -65,6 +66,26 @@ def get_db_connection_details_from_environment() -> str:
     txt.append("password='%s'" % os.environ["POSTGRES_PASSWORD"])
     txt = "\n".join(txt)
     return txt
+
+
+def check_db_connection() -> None:
+    """
+    Verify that the database is available by executing test query.
+    """
+    try:
+        # Get database connection and cursor.
+        connection, cursor = get_db_connection_from_environment()
+        _LOG.info("DB connection:\n%s", get_db_connection_details_from_environment())
+        # Execute the test query to verify that the database works.
+        cursor.execute("SELECT version();")
+        record = cursor.fetchone()
+        _LOG.info("Successfully connected to '%s'", record)
+        # Close the database connection.
+        connection.close()
+        cursor.close()
+    except psycop.Error:
+        _LOG.info("for PostgreSQL to become available...")
+        time.sleep(1)
 
 
 def get_sql_files(custom_files: Optional[List[str]] = None) -> List[str]:

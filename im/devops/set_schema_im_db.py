@@ -31,6 +31,9 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     dbg.init_logger(verbosity=args.log_level)
+    # Verify that the database is available.
+    icdcrsch.check_db_connection()
+    # Set schema for the database.
     db_name = os.environ["POSTGRES_DB"]
     _LOG.info("Setting schema for DB `%s`...", db_name)
     icdcrsch.create_schema()
