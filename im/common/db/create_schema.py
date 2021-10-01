@@ -13,6 +13,7 @@ from typing import Optional, Tuple
 import psycopg2 as psycop
 import psycopg2.sql as psql
 
+import helpers.dbg as dbg
 import helpers.sql as hsql
 import helpers.system_interaction as sysint
 
@@ -79,7 +80,6 @@ def check_db_connection() -> None:
       pg_isready -d $POSTGRES_DB -p $POSTGRES_PORT -h $POSTGRES_HOST
     }
     
-    echo "STAGE: $STAGE"
     echo "POSTGRES_HOST: $POSTGRES_HOST"
     echo "POSTGRES_PORT: $POSTGRES_PORT"
     
@@ -267,21 +267,30 @@ def create_tables(
         "ib": ib_query,
     }
     # Create tables.
-    for provider, query in provider_to_query:
+    for provider, query in provider_to_query.items():
         try:
-            _LOG.info("Creating `%s` tables...", )
+            _LOG.info("Creating `%s` tables...", provider)
             cursor.execute(query)
         except psycop.errors.DuplicateObject:
             _LOG.warning("The `%s` tables are already created: skipping.", provider)
 
 
-def test_tables(cursor: psycop.extensions.cursor) -> None:
+def test_tables(
+    connection: hsql.DbConnection,
+    cursor: psycop.extensions.cursor,
+) -> None:
     """
     Test that tables are created.
 
+    :param connection: a database connection
     :param cursor: a database cursor
     """
     _LOG.info("Testing created tables...")
+    # Check tables list.
+    actual_tables = hsql.get_table_names(connection)
+    expected_tables = [""]
+    dbg.dassert_is_subset(actual_tables, expected_tables)
+    # Execute the test query.
     test_query = "INSERT INTO Exchange (name) VALUES ('TestExchange');"
     cursor.execute(test_query)
 
@@ -304,6 +313,7 @@ def create_schema() -> None:
     create_tables(cursor)
     # Test the db.
     test_tables(cursor)
+    print(hsql.get_table_names(connection))
     # Close connection.
     connection.close()
 
