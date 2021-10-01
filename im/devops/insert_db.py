@@ -22,4 +22,6 @@ conn = get_db_connection()
 print(conn)
 
 print(hsql.get_db_names(conn))
-print(hsql.get_table_names(conn))
+print(f"Table names: \n{','.join(hsql.get_table_names(conn))}")
+print(f"Table sizes: \n{','.join(hsql.get_table_size(conn))}")
+
