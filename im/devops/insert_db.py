@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 import os
 
-import psycopg2 as psycop
-import psycopg2.sql as psql
-
-import helpers.io_ as hio
 import helpers.sql as hsql
+import helpers.dbg as dbg
 
-def get_db_connection() -> psycop.extensions.connection:
+
+def get_db_connection() -> hsql.DbConnection:
     conn, _ = hsql.get_connection(
         dbname=os.environ["POSTGRES_DB"],
         host=os.environ["POSTGRES_HOST"],
@@ -18,28 +16,50 @@ def get_db_connection() -> psycop.extensions.connection:
     return conn
 
 
-def create_table(conn):
+def _get_create_table_command(table_name: str) -> str:
+    """
+    Build a CREATE TABLE command based on table name.
+
+    Currently available tables:
+        - 'ccxtohlcv': OHLCV table with CCXT data
+
+    :param table_name:
+    """
+    if table_name == "ccxtohlcv":
+        command = """
+                CREATE TABLE ccxtohlcv (
+                id SERIAL PRIMARY KEY,
+                timestamp TIMESTAMPTZ NOT NULL,
+                open NUMERIC NOT NULL,
+                high NUMERIC NOT NULL,
+                low NUMERIC NOT NULL,
+                epoch INTEGER NOT NULL,
+                currency_pair VARCHAR(255) NOT NULL,
+                exchange_id VARCHAR(255) NOT NULL
+                )
+                """
+    else:
+        dbg.dfatal("Table %s is not available for creation", table_name)
+    return command
+
+
+def create_table(conn: hsql.DbConnection, table_name: str):
     """
 
     :param conn:
+    :param table_name:
     :return:
     """
     cursor = conn.cursor()
-    command = """
-    CREATE TABLE ccxohlcv (
-    id SERIAL PRIMARY KEY,
-    timestamp TIMESTAMPTZ NOT NULL,
-    open NUMERIC NOT NULL,
-    high NUMERIC NOT NULL,
-    low NUMERIC NOT NULL,
-    epoch INTEGER NOT NULL,
-    currency_pair VARCHAR(255) NOT NULL,
-    exchange_id VARCHAR(255) NOT NULL
-    )
-    """
-    cursor.execute()
+    # Build a CREATE TABLE command from name.
+    command = _get_create_table_command(table_name)
+    cursor.execute(command)
+    cursor.close()
     conn.commit()
     return None
+
+
+# -
 
 conn = get_db_connection()
 
