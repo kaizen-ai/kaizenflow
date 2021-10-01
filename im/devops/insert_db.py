@@ -17,6 +17,23 @@ def get_db_connection() -> psycop.extensions.connection:
     )
     return conn
 
+
+def create_table(conn):
+    cursor = conn.cursor()
+    command = """
+    CREATE TABLE ccxohlcv (
+    id SERIAL PRIMARY KEY,
+    timestamp ,
+    open FLOAT,
+    high FLOAT,
+    low FLOAT,
+    epoch INT,
+    currency_pair FOREIGN_KEY,
+    exchange_id FOREIGN_KEY
+    )
+    """
+    return None
+
 conn = get_db_connection()
 
 print(conn)
