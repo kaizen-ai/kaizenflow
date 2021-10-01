@@ -47,7 +47,7 @@ def get_package_summary(conda_env_name: str, add_frame: bool) -> str:
 def get_conda_export_list(conda_env_name: str, add_frame: bool) -> str:
     msg = ""
     if add_frame:
-        msg += hprint.frame("Package summary") + "\n"
+        msg += hprintin.frame("Package summary") + "\n"
     cmd = (
         "(conda activate %s 2>&1 >/dev/null) && conda list --export"
         % conda_env_name

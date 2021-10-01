@@ -109,9 +109,9 @@ def _report_task(txt: str = "") -> None:
         _WAS_FIRST_CALL_DONE = True
         hversio.check_version()
     # Print the name of the function.
-    func_name = hintros.get_function_name(count=1)
+    func_name = hintrosp.get_function_name(count=1)
     msg = "## %s: %s" % (func_name, txt)
-    print(hprint.color_highlight(msg, color="purple"))
+    print(hprintin.color_highlight(msg, color="purple"))
 
 
 # TODO(gp): Move this to helpers.system_interaction and allow to add the switch
@@ -230,7 +230,7 @@ def _get_files_to_process(
     :param mutually_exclusive: ensure that all options are mutually exclusive
     """
     _LOG.debug(
-        hprint.to_str(
+        hprintin.to_str(
             "modified branch last_commit all_ files_from_user "
             "mutually_exclusive remove_dirs"
         )
@@ -400,7 +400,7 @@ def git_clean(ctx, dry_run=False):  # type: ignore
 
     Run `git status --ignored` to see what it's skipped.
     """
-    _report_task(hprint.to_str("dry_run"))
+    _report_task(hprintin.to_str("dry_run"))
     # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
     #  mistake.
     # Clean recursively.
@@ -459,7 +459,7 @@ def git_create_patch(  # type: ignore
         - "diff": (default) creates a patch with the diff of the files
         - "tar": creates a tar ball with all the files
     """
-    _report_task(hprint.to_str("mode modified branch last_commit files"))
+    _report_task(hprintin.to_str("mode modified branch last_commit files"))
     _ = ctx
     # TODO(gp): Check that the current branch is up to date with master to avoid
     #  failures when we try to merge the patch.
@@ -501,7 +501,7 @@ def git_create_patch(  # type: ignore
         mutually_exclusive,
         remove_dirs,
     )
-    _LOG.info("Files to save:\n%s", hprint.indent("\n".join(files_as_list)))
+    _LOG.info("Files to save:\n%s", hprintin.indent("\n".join(files_as_list)))
     if not files_as_list:
         _LOG.warning("Nothing to patch: exiting")
         return
@@ -859,7 +859,7 @@ def docker_stats(  # type: ignore
     :param all: report stats for all the containers
     """
     # pylint: enable=line-too-long
-    _report_task(hprint.to_str("all"))
+    _report_task(hprintin.to_str("all"))
     _ = ctx
     fmt = (
         r"table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
@@ -899,7 +899,7 @@ def docker_kill(  # type: ignore
 
     :param all: kill all the containers (be careful!)
     """
-    _report_task(hprint.to_str("all"))
+    _report_task(hprintin.to_str("all"))
     # TODO(gp): Ask if we are sure and add a --just-do-it option.
     # Last container.
     opts = "-l"
@@ -1222,7 +1222,7 @@ def _get_docker_cmd(
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
     :param print_config: print the docker config for debugging purposes
     """
-    hprint.log(
+    hprintin.log(
         _LOG,
         logging.DEBUG,
         "stage base_image cmd extra_env_vars"
@@ -1275,11 +1275,11 @@ def _get_docker_cmd(
     if has_default_param(key):
         docker_compose_files.append(get_default_param(key))
     #
-    _LOG.debug(hprint.to_str("docker_compose_files"))
+    _LOG.debug(hprintin.to_str("docker_compose_files"))
     for docker_compose in docker_compose_files:
         hdbg.dassert_exists(docker_compose)
     file_opts = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
-    _LOG.debug(hprint.to_str("file_opts"))
+    _LOG.debug(hprintin.to_str("file_opts"))
     # TODO(gp): Use something like `.append(rf"{space}{...}")`
     docker_cmd_.append(
         rf"""
@@ -2054,7 +2054,7 @@ def find_check_string_output(  # type: ignore
         if not fuzzy_match:
             # Align the output at the same level as 'exp = r...'.
             num_spaces = 8
-            txt = hprint.indent(txt, num_spaces=num_spaces)
+            txt = hprintin.indent(txt, num_spaces=num_spaces)
         output = f"""
         act =
         exp = r\"\"\"
@@ -2855,7 +2855,7 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
     """
     Report the status of the GH workflows in a branch.
     """
-    _report_task(hprint.to_str("branch status"))
+    _report_task(hprintin.to_str("branch status"))
     _ = ctx
     #
     cmd = "export NO_COLOR=1; gh run list"
@@ -2897,7 +2897,7 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
         cols.append("age")
     table = htable.Table.from_text(cols, txt, delimiter="\t")
     # table = [line for line in csv.reader(txt.split("\n"), delimiter="\t")]
-    _LOG.debug(hprint.to_str("table"))
+    _LOG.debug(hprintin.to_str("table"))
     #
     if branch != "all":
         field = "branch"
@@ -2919,7 +2919,7 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
     """
     Run GH workflows in a branch.
     """
-    _report_task(hprint.to_str("branch workflows"))
+    _report_task(hprintin.to_str("branch workflows"))
     # Get the branch name.
     if branch == "branch":
         branch_name = hgit.get_branch_name()
@@ -2927,13 +2927,13 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
         branch_name = "master"
     else:
         raise ValueError("Invalid branch='%s'" % branch)
-    _LOG.debug(hprint.to_str("branch_name"))
+    _LOG.debug(hprintin.to_str("branch_name"))
     # Get the workflows.
     if workflows == "all":
         gh_tests = ["fast_tests", "slow_tests"]
     else:
         gh_tests = [workflows]
-    _LOG.debug(hprint.to_str("workflows"))
+    _LOG.debug(hprintin.to_str("workflows"))
     # Run.
     for gh_test in gh_tests:
         gh_test += ".yml"
@@ -3036,7 +3036,7 @@ def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # ty
 
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
-    _report_task(hprint.to_str("issue_id repo_short_name"))
+    _report_task(hprintin.to_str("issue_id repo_short_name"))
     _ = ctx
     issue_id = int(issue_id)
     hdbg.dassert_lte(1, issue_id)

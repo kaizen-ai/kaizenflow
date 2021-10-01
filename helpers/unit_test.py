@@ -19,7 +19,7 @@ import helpers.dbg as hdbg
 import helpers.git as hgit
 import helpers.introspection as hintros
 import helpers.io_ as hio
-import helpers.printing as hprint
+import helpers.printing as hprintin
 import helpers.s3 as hs3
 import helpers.system_interaction as hsysinte
 import helpers.timer as htimer
@@ -30,7 +30,7 @@ import helpers.timer as htimer
 
 # Minimize dependencies from installed packages.
 
-# TODO(gp): Use `hprint.color_highlight`.
+# TODO(gp): Use `hprintin.color_highlight`.
 _WARNING = "\033[33mWARNING\033[0m"
 
 try:
@@ -139,7 +139,7 @@ def pytest_warning(txt: str, prefix: str = "") -> None:
     txt_tmp = ""
     if prefix:
         txt_tmp += prefix
-    txt_tmp += hprint.color_highlight("WARNING", "yellow") + f": {txt}"
+    txt_tmp += hprintin.color_highlight("WARNING", "yellow") + f": {txt}"
     pytest_print(txt_tmp)
 
 
@@ -171,7 +171,7 @@ def convert_df_to_string(
     output = []
     # Add title in the beginning if provided.
     if title is not None:
-        output.append(hprint.frame(title))
+        output.append(hprintin.frame(title))
     # Provide context for full representation of data.
     with pd.option_context(
         "display.max_colwidth",
@@ -222,7 +222,7 @@ def convert_info_to_string(info: Mapping) -> str:
         "display.max_rows",
         None,
     ):
-        output.append(hprint.frame("info"))
+        output.append(hprintin.frame("info"))
         output.append(pprint.pformat(info))
         output_str = "\n".join(output)
     return output_str
@@ -580,13 +580,13 @@ def diff_files(
     :param abort_on_exit: whether to assert or not
     :param dst_dir: dir where to save the comparing script
     """
-    _LOG.debug(hprint.to_str("tag abort_on_exit dst_dir"))
+    _LOG.debug(hprintin.to_str("tag abort_on_exit dst_dir"))
     file_name1 = os.path.relpath(file_name1, os.getcwd())
     file_name2 = os.path.relpath(file_name2, os.getcwd())
     msg = []
     # Add tag.
     if tag is not None:
-        msg.append("\n" + hprint.frame(tag, "-"))
+        msg.append("\n" + hprintin.frame(tag, "-"))
     # Diff to screen.
     _, res = hsysinte.system_to_string(
         "echo; sdiff --expand-tabs -l -w 150 %s %s" % (file_name1, file_name2),
@@ -615,7 +615,7 @@ def diff_files(
         log_msg_as_str = (
             msg_as_str
             + "\n"
-            + hprint.frame("Traceback", "-")
+            + hprintin.frame("Traceback", "-")
             + "\n"
             + "".join(traceback.format_stack())
         )
@@ -638,7 +638,7 @@ def diff_strings(
 
     :param dst_dir: where to save the intermediatary files
     """
-    _LOG.debug(hprint.to_str("tag abort_on_exit dst_dir"))
+    _LOG.debug(hprintin.to_str("tag abort_on_exit dst_dir"))
     # Save the actual and expected strings to files.
     file_name1 = "%s/tmp.string1.txt" % dst_dir
     hio.to_file(file_name1, string1)
@@ -667,7 +667,7 @@ def diff_df_monotonic(
     Check for a dataframe to be monotonic using the vimdiff flow from
     diff_files().
     """
-    _LOG.debug(hprint.to_str("abort_on_exit dst_dir"))
+    _LOG.debug(hprintin.to_str("abort_on_exit dst_dir"))
     if not df.index.is_monotonic_increasing:
         df2 = df.copy()
         df2.sort_index(inplace=True)
@@ -792,7 +792,7 @@ def _fuzzy_clean(txt: str) -> str:
     return txt
 
 
-# TODO(gp): Use the one in hprint. Is it even needed?
+# TODO(gp): Use the one in hprintin. Is it even needed?
 def _to_pretty_string(obj: str) -> str:
     if isinstance(obj, dict):
         ret = pprint.pformat(obj)
@@ -821,7 +821,7 @@ def _assert_equal(
     :param full_test_name: e.g., `TestRunNotebook1.test2`
     """
     _LOG.debug(
-        hprint.to_str(
+        hprintin.to_str(
             "full_test_name test_dir fuzzy_match abort_on_error dst_dir"
         )
     )
@@ -835,7 +835,7 @@ def _assert_equal(
     # Dedent expected, if needed.
     if dedent:
         _LOG.debug("# Dedent expected")
-        expected = hprint.dedent(expected)
+        expected = hprintin.dedent(expected)
         _LOG.debug("exp='\n%s'", expected)
     # Purify actual text, if needed.
     if purify_text:
@@ -857,7 +857,7 @@ def _assert_equal(
     if not is_equal:
         _LOG.error(
             "%s",
-            "\n" + hprint.frame("Test '%s' failed" % full_test_name, "=", 80),
+            "\n" + hprintin.frame("Test '%s' failed" % full_test_name, "=", 80),
         )
         # Print the correct output, like:
         #   exp = r'""""
@@ -866,7 +866,7 @@ def _assert_equal(
         #   2021-02-17 11:00:00-05:00
         #   """
         txt = []
-        txt.append(hprint.frame(f"EXPECTED VARIABLE: {full_test_name}", "-"))
+        txt.append(hprintin.frame(f"EXPECTED VARIABLE: {full_test_name}", "-"))
         # We always return the variable exactly as this should be, even if we could
         # make it look better through indentation in case of fuzzy match.
         if actual_orig.startswith('"'):
@@ -929,7 +929,7 @@ class TestCase(unittest.TestCase):
         """
         # Print banner to signal the start of a new test.
         func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
-        _LOG.debug("\n%s", hprint.frame(func_name))
+        _LOG.debug("\n%s", hprintin.frame(func_name))
         # Set the random seed.
         random_seed = 20000101
         _LOG.debug("Resetting random.seed to %s", random_seed)
@@ -1309,7 +1309,7 @@ class TestCase(unittest.TestCase):
                         + f"'{action_on_missing_golden}'"
                     )
         self._test_was_updated = outcome_updated
-        _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
+        _LOG.debug(hprintin.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal
 
     def check_dataframe(
@@ -1332,7 +1332,7 @@ class TestCase(unittest.TestCase):
         _LOG.debug("file_name=%s", file_name)
         outcome_updated = False
         file_exists = os.path.exists(file_name)
-        _LOG.debug(hprint.to_str("file_exists"))
+        _LOG.debug(hprintin.to_str("file_exists"))
         is_equal: Optional[bool] = None
         if self._update_tests:
             _LOG.debug("# Update golden outcomes")
@@ -1341,7 +1341,7 @@ class TestCase(unittest.TestCase):
                 is_equal, _ = self._check_df_compare_outcome(
                     file_name, actual, err_threshold
                 )
-                _LOG.debug(hprint.to_str("is_equal"))
+                _LOG.debug(hprintin.to_str("is_equal"))
                 if not is_equal:
                     outcome_updated = True
             else:
@@ -1401,7 +1401,7 @@ class TestCase(unittest.TestCase):
                         + f"'{action_on_missing_golden}'"
                     )
         self._test_was_updated = outcome_updated
-        _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
+        _LOG.debug(hprintin.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal
 
     # #########################################################################
@@ -1440,7 +1440,7 @@ class TestCase(unittest.TestCase):
     def _check_string_update_outcome(
         self, file_name: str, actual: str, use_gzip: bool
     ) -> None:
-        _LOG.debug(hprint.to_str("file_name"))
+        _LOG.debug(hprintin.to_str("file_name"))
         hio.to_file(file_name, actual, use_gzip=use_gzip)
         # Add to git repo.
         self._git_add_file(file_name)
@@ -1452,7 +1452,7 @@ class TestCase(unittest.TestCase):
         file_name: str,
         actual: "pd.DataFrame",
     ) -> None:
-        _LOG.debug(hprint.to_str("file_name"))
+        _LOG.debug(hprintin.to_str("file_name"))
         hio.create_enclosing_dir(file_name)
         actual.to_csv(file_name)
         pytest_warning(f"Update golden outcome file '{file_name}'", prefix="\n")
@@ -1462,7 +1462,7 @@ class TestCase(unittest.TestCase):
     def _check_df_compare_outcome(
         self, file_name: str, actual: "pd.DataFrame", err_threshold: float
     ) -> Tuple[bool, "pd.DataFrame"]:
-        _LOG.debug(hprint.to_str("file_name"))
+        _LOG.debug(hprintin.to_str("file_name"))
         _LOG.debug("actual_=\n%s", actual)
         hdbg.dassert_lte(0, err_threshold)
         hdbg.dassert_lte(err_threshold, 1.0)

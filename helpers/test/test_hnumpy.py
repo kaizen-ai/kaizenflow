@@ -43,7 +43,7 @@ class TestRandomSeedContext(hunitest.TestCase):
         # Second batch.
         np.random.seed(0)
         vals1b = np.random.randn(n)
-        with hnumpy.random_seed_context(42):
+        with hhnumpy.random_seed_context(42):
             vals = np.random.randn(n)
             _ = vals
         vals2b = np.random.randn(n)

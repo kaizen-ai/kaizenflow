@@ -304,7 +304,7 @@ class Test_Traceback1(hunitest.TestCase):
         # Compare traceback.
         # Handle `None`.
         act_traceback = str(act_traceback)
-        exp_traceback = hprint.dedent(exp_traceback)
+        exp_traceback = hprintin.dedent(exp_traceback)
         self.assert_equal(
             act_traceback, exp_traceback, fuzzy_match=True, purify_text=True
         )

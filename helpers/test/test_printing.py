@@ -10,8 +10,8 @@ _LOG = logging.getLogger(__name__)
 
 class Test_printing1(hunitest.TestCase):
     def test_color_highlight1(self) -> None:
-        for c in hprint._COLOR_MAP:
-            _LOG.debug(hprint.color_highlight(c, c))
+        for c in hprintin._COLOR_MAP:
+            _LOG.debug(hprintin.color_highlight(c, c))
 
 
 # #############################################################################
@@ -22,7 +22,7 @@ class Test_to_str1(hunitest.TestCase):
         x = 1
         # To disable linter complaints.
         _ = x
-        act = hprint.to_str("x")
+        act = hprintin.to_str("x")
         exp = "x=1"
         self.assertEqual(act, exp)
 
@@ -30,7 +30,7 @@ class Test_to_str1(hunitest.TestCase):
         x = "hello world"
         # To disable linter complaints.
         _ = x
-        act = hprint.to_str("x")
+        act = hprintin.to_str("x")
         exp = "x='hello world'"
         self.assertEqual(act, exp)
 
@@ -38,7 +38,7 @@ class Test_to_str1(hunitest.TestCase):
         x = 2
         # To disable linter complaints.
         _ = x
-        act = hprint.to_str("x*2")
+        act = hprintin.to_str("x*2")
         exp = "x*2=4"
         self.assertEqual(act, exp)
 
@@ -50,7 +50,7 @@ class Test_to_str1(hunitest.TestCase):
         y = "hello"
         # To disable linter complaints.
         _ = x, y
-        act = hprint.to_str("x y")
+        act = hprintin.to_str("x y")
         exp = "x=1, y='hello'"
         self.assertEqual(act, exp)
 
@@ -62,7 +62,7 @@ class Test_to_str1(hunitest.TestCase):
         y = "hello"
         # To disable linter complaints.
         _ = x, y
-        act = hprint.to_str("x y")
+        act = hprintin.to_str("x y")
         exp = "x='1', y='hello'"
         self.assertEqual(act, exp)
 
@@ -73,7 +73,7 @@ class Test_to_str1(hunitest.TestCase):
         x = [1, "hello", "world"]
         # To disable linter complaints.
         _ = x
-        act = hprint.to_str("x")
+        act = hprintin.to_str("x")
         exp = "x=[1, 'hello', 'world']"
         self.assertEqual(act, exp)
 
@@ -90,7 +90,7 @@ class Test_log(hunitest.TestCase):
         # To disable linter complaints.
         _ = x
         for verb in [logging.DEBUG, logging.INFO]:
-            hprint.log(_LOG, verb, "x")
+            hprintin.log(_LOG, verb, "x")
 
     def test3(self) -> None:
         x = 1
@@ -98,7 +98,7 @@ class Test_log(hunitest.TestCase):
         # To disable linter complaints.
         _ = x, y
         for verb in [logging.DEBUG, logging.INFO]:
-            hprint.log(_LOG, verb, "x y")
+            hprintin.log(_LOG, verb, "x y")
 
     def test4(self) -> None:
         """
@@ -117,7 +117,7 @@ class Test_log(hunitest.TestCase):
         # To disable linter complaints.
         _ = x, y, z
         for verb in [logging.DEBUG, logging.INFO]:
-            hprint.log(_LOG, verb, "x y z")
+            hprintin.log(_LOG, verb, "x y z")
 
 
 # #############################################################################
@@ -170,7 +170,7 @@ class Test_sort_dictionary(hunitest.TestCase):
                 "build-backend": "poetry.masonry.api",
             },
         }
-        act = hprint.sort_dictionary(dict_)
+        act = hprintin.sort_dictionary(dict_)
         self.check_string(pprint.pformat(act))
 
 
@@ -184,7 +184,7 @@ class Test_indent1(hunitest.TestCase):
 class TestHelloWorld(hunitest.TestCase):
     bar
 """
-        act = hprint.indent(txt, 2)
+        act = hprintin.indent(txt, 2)
         exp = """  foo
 
   class TestHelloWorld(hunitest.TestCase):
@@ -204,7 +204,7 @@ class Test_dedent1(hunitest.TestCase):
         class TestHelloWorld(hunitest.TestCase):
             bar
 """
-        act = hprint.dedent(txt)
+        act = hprintin.dedent(txt)
         exp = """foo
 
 class TestHelloWorld(hunitest.TestCase):
@@ -220,7 +220,7 @@ class TestHelloWorld(hunitest.TestCase):
         zscore:
           style: gaz
           com: 28"""
-        act = hprint.dedent(txt)
+        act = hprintin.dedent(txt)
         exp = """read_data:
   file_name: foo_bar.txt
   nrows: 999
@@ -238,8 +238,8 @@ zscore:
 
 class TestHelloWorld(hunitest.TestCase):
     bar"""
-        txt2 = hprint.indent(txt1, 3)
-        txt3 = hprint.dedent(txt2)
+        txt2 = hprintin.indent(txt1, 3)
+        txt3 = hprintin.dedent(txt2)
         self.assert_equal(txt1, txt3, fuzzy_match=False)
 
 
@@ -253,7 +253,7 @@ class Test_align_on_left1(hunitest.TestCase):
 class TestHelloWorld(hunitest.TestCase):
     bar
 """
-        act = hprint.align_on_left(txt)
+        act = hprintin.align_on_left(txt)
         exp = """foo
 
 class TestHelloWorld(hunitest.TestCase):

@@ -237,7 +237,7 @@ def create_dir(
         asks before deleting
     """
     _LOG.debug(
-        hprint.to_str("dir_name incremental abort_if_exists ask_to_delete")
+        hprintin.to_str("dir_name incremental abort_if_exists ask_to_delete")
     )
     hdbg.dassert_is_not(dir_name, None)
     dir_name = os.path.normpath(dir_name)
@@ -245,7 +245,7 @@ def create_dir(
         _LOG.debug("Can't create dir '%s'", dir_name)
     exists = os.path.exists(dir_name)
     is_dir = os.path.isdir(dir_name)
-    _LOG.debug(hprint.to_str("dir_name exists is_dir"))
+    _LOG.debug(hprintin.to_str("dir_name exists is_dir"))
     if abort_if_exists:
         hdbg.dassert_not_exists(dir_name)
     #                   dir exists / dir does not exist
@@ -304,12 +304,12 @@ def create_enclosing_dir(file_name: str, incremental: bool = False) -> str:
 
     :param incremental: same meaning as in `create_dir()`
     """
-    _LOG.debug(hprint.to_str("file_name incremental"))
+    _LOG.debug(hprintin.to_str("file_name incremental"))
     _dassert_is_valid_file_name(file_name)
     # hs3.dassert_is_not_s3_path(file_name)
     #
     dir_name = os.path.dirname(file_name)
-    _LOG.debug(hprint.to_str("dir_name"))
+    _LOG.debug(hprintin.to_str("dir_name"))
     if dir_name != "":
         _LOG.debug(
             "Creating dir_name='%s' for file_name='%s'", dir_name, file_name
@@ -342,7 +342,7 @@ def to_file(
     :param mode: file writing mode
     :param force_flush: whether to forcibly clear the file buffer
     """
-    _LOG.debug(hprint.to_str("file_name use_gzip mode force_flush"))
+    _LOG.debug(hprintin.to_str("file_name use_gzip mode force_flush"))
     _dassert_is_valid_file_name(file_name)
     # Choose default writing mode based on compression.
     if mode is None:

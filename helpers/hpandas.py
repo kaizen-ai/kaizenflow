@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.hpandas as hpandas
+import helpers.hpandas as hhpandas
 """
 import logging
 from typing import Any, Dict, List, Optional, Union

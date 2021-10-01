@@ -75,7 +75,7 @@ class _CheckDryRunTestCase(hunitest.TestCase):
         `check_string()` the sequence of commands issued in the context.
         """
         act = "\n".join(map(str, ctx.run.mock_calls))
-        act = hprint.remove_non_printable_chars(act)
+        act = hprintin.remove_non_printable_chars(act)
         self.check_string(act)
 
     def _check_output(self, target: str, check: bool = True) -> None:
@@ -744,7 +744,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         scratch_space = self.get_scratch_space(use_absolute_path=False)
         dir_name = os.path.join(scratch_space, "test")
         file_dict = {
-            "test_this.py": hprint.dedent(
+            "test_this.py": hprintin.dedent(
                 """
                     foo
 
@@ -752,7 +752,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
                         bar
                     """
             ),
-            "test_that.py": hprint.dedent(
+            "test_that.py": hprintin.dedent(
                 """
                     foo
                     baz
@@ -870,7 +870,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
         scratch_space = self.get_scratch_space()
         dir_name = os.path.join(scratch_space, "test")
         file_dict = {
-            "test_this.py": hprint.dedent(
+            "test_this.py": hprintin.dedent(
                 """
                     foo
 
@@ -878,7 +878,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
                         bar
                     """
             ),
-            "test_that.py": hprint.dedent(
+            "test_that.py": hprintin.dedent(
                 """
                     foo
                     baz
@@ -911,7 +911,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
         scratch_space = self.get_scratch_space()
         dir_name = os.path.join(scratch_space, "test")
         file_dict = {
-            "test_this.py": hprint.dedent(
+            "test_this.py": hprintin.dedent(
                 """
                     foo
 
@@ -919,7 +919,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
                         bar
                     """
             ),
-            "test_that.py": hprint.dedent(
+            "test_that.py": hprintin.dedent(
                 """
                     foo
                     baz
@@ -1586,7 +1586,7 @@ class Test_pytest_failed1(hunitest.TestCase):
     # #########################################################################
 
     def _build_pytest_file_helper(self, txt: str) -> str:
-        txt = hprint.dedent(txt)
+        txt = hprintin.dedent(txt)
         file_name = os.path.join(self.get_scratch_space(), "input.txt")
         hio.to_file(file_name, txt)
         return file_name

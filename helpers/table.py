@@ -42,10 +42,10 @@ class Table:
         table_as_str = [[str(cell) for cell in row] for row in table]
         # Find the length of each columns.
         lengths = [max(map(len, col)) for col in zip(*table_as_str)]
-        _LOG.debug(hprint.to_str("lengths"))
+        _LOG.debug(hprintin.to_str("lengths"))
         # Compute format for the columns.
         fmt = " ".join("{{:{}}} |".format(x) for x in lengths)
-        _LOG.debug(hprint.to_str("fmt"))
+        _LOG.debug(hprintin.to_str("fmt"))
         # Add the row separating the column names.
         row_sep = ["-" * lenght for lenght in lengths]
         table.insert(1, row_sep)
@@ -92,7 +92,7 @@ class Table:
         rows_filter = [
             row for row in self._table if row[self._col_to_idx[field]] == value
         ]
-        _LOG.debug(hprint.to_str("rows_filter"))
+        _LOG.debug(hprintin.to_str("rows_filter"))
         # Build the resulting table.
         table_filter = Table(rows_filter, self._cols)
         _LOG.debug("table_filter=\n%s", repr(table_filter))

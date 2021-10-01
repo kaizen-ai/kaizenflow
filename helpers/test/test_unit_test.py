@@ -278,7 +278,7 @@ completed       success Lint    Slow_tests
         is_equal = hunitest._assert_equal(
             act, exp, test_name, test_dir, fuzzy_match=fuzzy_match
         )
-        _LOG.debug(hprint.to_str("is_equal"))
+        _LOG.debug(hprintin.to_str("is_equal"))
         self.assertTrue(is_equal)
 
     def test_not_equal1(self) -> None:
@@ -738,7 +738,7 @@ class TestCheckDataFrame1(hunitest.TestCase):
         self.mock_update_tests()
         tag = "test_df"
         _, file_name = self._get_golden_outcome_file_name(tag)
-        _LOG.debug(hprint.to_str("file_name"))
+        _LOG.debug(hprintin.to_str("file_name"))
         try:
             # Remove the golden.
             hio.delete_file(file_name)

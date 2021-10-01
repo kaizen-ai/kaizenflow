@@ -3,7 +3,7 @@ Contain general types based on standard Python libraries.
 
 Import as:
 
-import helpers.htypes as htypes
+import helpers.htypes as hhtypes
 """
 
 from typing import Any, Dict
