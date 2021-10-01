@@ -39,13 +39,16 @@ def _diff(dir1: str, dir2: str) -> str:
     dbg.dassert_exists(dir2)
     # Find all the files in both dirs.
     cmd = ""
-    cmd += '(cd %s && find %s -name "*" | sort >/tmp/dir1) && ' % (
+    remove_cmd = "grep -v .git | grep -v .idea |"
+    cmd += '(cd %s && find %s -name "*" | %s sort >/tmp/dir1) && ' % (
         os.path.dirname(dir1),
         os.path.basename(dir1),
+        remove_cmd,
     )
-    cmd += '(cd %s && find %s -name "*" | sort >/tmp/dir2)' % (
+    cmd += '(cd %s && find %s -name "*" | %s sort >/tmp/dir2)' % (
         os.path.dirname(dir2),
         os.path.basename(dir2),
+        remove_cmd,
     )
     si.system(cmd, abort_on_error=True)
     # Compare the file listings.
