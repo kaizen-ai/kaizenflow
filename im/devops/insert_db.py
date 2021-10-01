@@ -19,19 +19,26 @@ def get_db_connection() -> psycop.extensions.connection:
 
 
 def create_table(conn):
+    """
+
+    :param conn:
+    :return:
+    """
     cursor = conn.cursor()
     command = """
     CREATE TABLE ccxohlcv (
     id SERIAL PRIMARY KEY,
-    timestamp ,
-    open FLOAT,
-    high FLOAT,
-    low FLOAT,
-    epoch INT,
-    currency_pair FOREIGN_KEY,
-    exchange_id FOREIGN_KEY
+    timestamp TIMESTAMPTZ NOT NULL,
+    open NUMERIC NOT NULL,
+    high NUMERIC NOT NULL,
+    low NUMERIC NOT NULL,
+    epoch INTEGER NOT NULL,
+    currency_pair VARCHAR(255) NOT NULL,
+    exchange_id VARCHAR(255) NOT NULL
     )
     """
+    cursor.execute()
+    conn.commit()
     return None
 
 conn = get_db_connection()
