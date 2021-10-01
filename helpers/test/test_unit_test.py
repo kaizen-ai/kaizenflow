@@ -78,7 +78,9 @@ class TestTestCase1(huntes.TestCase):
         use_only_test_class = False
         test_class_name = "test_class"
         test_method_name = "test_method"
-        act = self.get_input_dir(use_only_test_class, test_class_name, test_method_name)
+        act = self.get_input_dir(
+            use_only_test_class, test_class_name, test_method_name
+        )
         act = huntes.purify_txt_from_client(act)
         #
         exp = "$GIT_ROOT/helpers/test/test_class.test_method/input"
@@ -88,7 +90,9 @@ class TestTestCase1(huntes.TestCase):
         use_only_test_class = False
         test_class_name = None
         test_method_name = None
-        act = self.get_input_dir(use_only_test_class, test_class_name, test_method_name)
+        act = self.get_input_dir(
+            use_only_test_class, test_class_name, test_method_name
+        )
         act = huntes.purify_txt_from_client(act)
         #
         exp = "$GIT_ROOT/helpers/test/TestTestCase1.test_get_input_dir3/input"
@@ -98,7 +102,9 @@ class TestTestCase1(huntes.TestCase):
         use_only_test_class = True
         test_class_name = None
         test_method_name = None
-        act = self.get_input_dir(use_only_test_class, test_class_name, test_method_name)
+        act = self.get_input_dir(
+            use_only_test_class, test_class_name, test_method_name
+        )
         act = huntes.purify_txt_from_client(act)
         #
         exp = "$GIT_ROOT/helpers/test/TestTestCase1/input"
@@ -137,8 +143,9 @@ class TestTestCase1(huntes.TestCase):
         test_class_name = "test_class"
         test_method_name = "test_method"
         use_absolute_path = False
-        act = self.get_scratch_space(test_class_name, test_method_name,
-                                     use_absolute_path)
+        act = self.get_scratch_space(
+            test_class_name, test_method_name, use_absolute_path
+        )
         act = huntes.purify_txt_from_client(act)
         exp = "test_class.test_method/tmp.scratch"
         self.assertEqual(act, exp)
@@ -895,7 +902,7 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Nam
         Test case when client root path is equal to `/`
         """
         # pylint: disable=redefined-outer-name
-        git = umock.Mock()
+        hgit = umock.Mock()
         hgit.get_client_root.return_value = "/"
         txt = "/tmp/subdir1"
         exp = txt
@@ -910,9 +917,11 @@ class TestSubsetDf1(huntes.TestCase):
     def test1(self) -> None:
         # Generate some random data.
         np.random.seed(42)
-        df = pd.DataFrame(np.random.randint(0,100,size=(20, 4)), columns=list('ABCD'))
+        df = pd.DataFrame(
+            np.random.randint(0, 100, size=(20, 4)), columns=list("ABCD")
+        )
         # Subset.
-        df2 = huntes.subset_df(df, nrows = 5, seed = 43)
+        df2 = huntes.subset_df(df, nrows=5, seed=43)
         # Check.
         act = []
         act.append("df=")
@@ -1036,7 +1045,9 @@ class Test_get_dir_signature1(huntes.TestCase):
 
     def _helper(self, include_file_content: bool) -> str:
         in_dir = self.get_input_dir()
-        act = huntes.get_dir_signature(in_dir, include_file_content, num_lines=None)
+        act = huntes.get_dir_signature(
+            in_dir, include_file_content, num_lines=None
+        )
         act = huntes.purify_txt_from_client(act)
         return act  # type: ignore[no-any-return]
 

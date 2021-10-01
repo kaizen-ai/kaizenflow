@@ -223,7 +223,6 @@ class Test_Traceback1(huntes.TestCase):
     # SyntaxError: invalid syntax
     # pylint: enable=line-too-long
 
-
     def _parse_traceback_helper(
         self,
         txt: str,

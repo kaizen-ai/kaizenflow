@@ -1149,7 +1149,9 @@ class TestCase(unittest.TestCase):
         """
         _LOG.debug(hprintin.to_str("fuzzy_match abort_on_error dst_dir"))
         hdbg.dassert_in(type(actual), (bytes, str), "actual=%s", str(actual))
-        hdbg.dassert_in(type(expected), (bytes, str), "expected=%s", str(expected))
+        hdbg.dassert_in(
+            type(expected), (bytes, str), "expected=%s", str(expected)
+        )
         # Get the current dir name.
         use_only_test_class = False
         test_class_name = None
@@ -1185,8 +1187,9 @@ class TestCase(unittest.TestCase):
         """
         Assert dfs have same indexes and columns and that all values are close.
 
-        This is a more robust alternative to `compare_df()`. In particular, it
-        is less sensitive to floating point round-off errors.
+        This is a more robust alternative to `compare_df()`. In
+        particular, it is less sensitive to floating point round-off
+        errors.
         """
         self.assertEqual(actual.index.to_list(), expected.index.to_list())
         self.assertEqual(actual.columns.to_list(), expected.columns.to_list())
@@ -1225,7 +1228,9 @@ class TestCase(unittest.TestCase):
             (which should be used only for unit testing) return the result but do not
             assert
         """
-        _LOG.debug(hprintin.to_str("fuzzy_match purify_text abort_on_error dedent"))
+        _LOG.debug(
+            hprintin.to_str("fuzzy_match purify_text abort_on_error dedent")
+        )
         hdbg.dassert_in(type(actual), (bytes, str), "actual='%s'", actual)
         #
         dir_name, file_name = self._get_golden_outcome_file_name(tag)

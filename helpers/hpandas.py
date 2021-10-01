@@ -17,8 +17,6 @@ def dassert_index_is_datetime(
     """
     Ensure that the dataframe has an index containing datetimes.
     """
-    import pandas as pd
-
     # TODO(gp): Add support also for series.
     hdbg.dassert_isinstance(df, pd.DataFrame, msg, *args)
     hdbg.dassert_isinstance(df.index, pd.DatetimeIndex, msg, *args)
@@ -32,8 +30,6 @@ def dassert_strictly_increasing_index(
     """
     Ensure that the dataframe has a strictly increasing index.
     """
-    import pandas as pd
-
     if isinstance(obj, pd.Index):
         index = obj
     else:
@@ -55,10 +51,6 @@ def dassert_monotonic_index(
     """
     Ensure that the dataframe has a strictly increasing or decreasing index.
     """
-    # For some reason importing pandas is slow and we don't want to pay this
-    # start up cost unless we have to.
-    import pandas as pd
-
     if isinstance(obj, pd.Index):
         index = obj
     else:

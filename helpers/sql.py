@@ -16,6 +16,7 @@ import helpers.timer as htimer
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): mypy doesn't like this.
 DbConnection = psycop.extensions.connection
 
 

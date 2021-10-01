@@ -12,7 +12,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestParquet1(huntes.TestCase):
-
     def test1(self) -> None:
         # Prepare data.
         date = datetime.date(2020, 1, 1)
@@ -54,9 +53,12 @@ class TestParquet1(huntes.TestCase):
         """
         Create pandas random data, like:
 
-        idx instr  val1  val2 2000-01-01    0     A    99
-        30 2000-01-02    0     A    54    46 2000-01-03    0     A    85
-        86
+        ```
+                     idx instr  val1  val2
+        2000-01-01     0     A    99    30
+        2000-01-02     0     A    54    46 
+        2000-01-03     0     A    85    86
+        ```
         """
         instruments = "A B C D E".split()
         date = pd.Timestamp(date, tz="America/New_York")

@@ -1638,7 +1638,6 @@ def docker_release_prod_image(  # type: ignore
     run_fast=True,
     run_slow=True,
     run_superslow=False,
-    base_image="",
     push_to_repo=True,
 ):
     """
@@ -2313,9 +2312,9 @@ def _get_failed_tests_from_file(file_name: str) -> List[str]:
 
 
 def _get_failed_tests_from_clipboard() -> List[str]:
+    # pylint: disable=line-too-long
     """
     ```
-
     FAILED core/dataflow/nodes/test/test_sources.py::TestRealTimeDataSource1::test_replayed_real_time1 - TypeError: __init__() got an unexpected keyword argument 'speed_up_factor'
     FAILED helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test1 - TypeError: check_string() takes 2 positional arguments but 3 were given
     FAILED helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test2 - TypeError: check_string() takes 2 positional arguments but 3 were given
@@ -2325,6 +2324,7 @@ def _get_failed_tests_from_clipboard() -> List[str]:
     FAILED helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal4 - NameError: name 'dedent' is not defined
     ```
     """
+    # pylint: enable=line-too-long
     hsyint.system_to_string("pbpaste")
     # TODO(gp): Finish this.
 

@@ -220,7 +220,9 @@ GetWallClockTime = Callable[[], pd.Timestamp]
 
 
 # TODO(gp): -> get_wall_clock_time
-def get_current_time(tz: str, event_loop: Optional[asyncio.AbstractEventLoop]=None) -> pd.Timestamp:
+def get_current_time(
+    tz: str, event_loop: Optional[asyncio.AbstractEventLoop] = None
+) -> pd.Timestamp:
     """
     Return current time in UTC / ET timezone or as a naive time.
 

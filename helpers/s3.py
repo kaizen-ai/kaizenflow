@@ -545,7 +545,7 @@ def expand_archived_data(src_tgz_file: str, dst_dir: str) -> str:
         # Expand the tgz file.
         # The output should be the original compressed dir under `{dst_dir}`.
         # E.g.,
-        # > tar tzf /app/.../TestRunExperimentArchiveOnS3.test_serial1/experiment.20210802-133901.tgz
+        # > tar tzf /app/.../experiment.20210802-133901.tgz
         # experiment.RH1E/
         # experiment.RH1E/log.20210802-133859.txt
         # experiment.RH1E/result_0/

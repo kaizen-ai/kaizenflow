@@ -192,8 +192,12 @@ def _create_global_cache_backend(
     """
     _dassert_is_valid_cache_type(cache_type)
     dir_name = _get_global_cache_path(cache_type, tag)
-    _LOG.debug("Creating cache for cache_type='%s' and tag='%s' at '%s'",
-               cache_type, tag, dir_name)
+    _LOG.debug(
+        "Creating cache for cache_type='%s' and tag='%s' at '%s'",
+        cache_type,
+        tag,
+        dir_name,
+    )
     cache_backend = joblib.Memory(dir_name, verbose=0, compress=True)
     return cache_backend
 
@@ -266,7 +270,7 @@ def clear_global_cache(
     _LOG.warning("Resetting 'global %s' cache '%s'", cache_type, cache_path)
     if hs3.is_s3_path(cache_path):
         # For now we only allow to delete caches under the unit test path.
-        bucket, abs_path = hs3.split_path(cache_path)
+        _, abs_path = hs3.split_path(cache_path)
         hdbg.dassert(
             abs_path.startswith("/tmp/cache.unit_test/"),
             "The path '%s' is not valid",
@@ -424,7 +428,7 @@ class _Cached:
                 obj_size_as_str,
                 elapsed_time,
                 self._tag,
-                cache_dir
+                cache_dir,
             )
         return obj
 
@@ -566,7 +570,7 @@ class _Cached:
         )
         if hs3.is_s3_path(cache_path):
             # For now we only allow to delete caches under the unit test path.
-            bucket, abs_path = hs3.split_path(cache_path)
+            _, abs_path = hs3.split_path(cache_path)
             hdbg.dassert(
                 abs_path.startswith("/tmp/"),
                 "The path '%s' is not valid",
@@ -830,10 +834,10 @@ class _Cached:
                 msg = f"{func_info}: trying to execute"
                 raise NotCachedValueException(msg)
             obj = self._disk_cached_func(*args, **kwargs)
-            #obj = self._execute_intrinsic_function(*args, **kwargs)
+            # obj = self._execute_intrinsic_function(*args, **kwargs)
             # The function was not cached in disk, so now we need to update the
             # memory cache.
-            #self._store_cached_version("disk", func_id, args_id, obj)
+            # self._store_cached_version("disk", func_id, args_id, obj)
         return obj
 
     def _execute_func_from_mem_cache(self, *args: Any, **kwargs: Any) -> Any:

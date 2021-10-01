@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.11.5
+#       jupytext_version: 1.12.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -181,7 +181,9 @@ hello()
 # !ls /mnt/tmpfs/tmp.cache.mem/joblib/lib
 
 # %% pycharm={"name": "#%%\n"}
-memory_cached_func = hcache._Cached(func, use_mem_cache=True, use_disk_cache=False)
+memory_cached_func = hcache._Cached(
+    func, use_mem_cache=True, use_disk_cache=False
+)
 
 print(memory_cached_func.get_function_cache_info())
 

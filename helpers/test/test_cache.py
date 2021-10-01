@@ -772,7 +772,6 @@ class TestCachingOnS3(_ResetFunctionSpecificCacheHelper):
 
 
 class TestCacheEnableReadOnly1(_ResetGlobalCacheHelper):
-
     def test_mem_cache1(self) -> None:
         self._helper(cache_from="mem", use_mem_cache=True, use_disk_cache=False)
 
@@ -872,7 +871,6 @@ class TestCacheUpdateFunction1(_ResetGlobalCacheHelper):
 
 
 class TestCacheEnableCheckOnlyIfPresent1(_ResetGlobalCacheHelper):
-
     def test_mem_cache1(self) -> None:
         self._helper(cache_from="mem", use_mem_cache=True, use_disk_cache=False)
 

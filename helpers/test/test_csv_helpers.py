@@ -13,9 +13,7 @@ class Test_convert_csv_to_dict(huntes.TestCase):
     def test1(self) -> None:
         dir_name = self.get_input_dir()
         test_csv_path = os.path.join(dir_name, "test.csv")
-        actual_result = hcsh.convert_csv_to_dict(
-            test_csv_path, remove_nans=True
-        )
+        actual_result = hcsh.convert_csv_to_dict(test_csv_path, remove_nans=True)
         expected_result = {
             "col1": ["a", "b", "c", "d"],
             "col2": ["a", "b"],

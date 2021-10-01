@@ -6,7 +6,7 @@ import helpers.old.tunnels as holtun
 
 import logging
 import os
-from typing import Dict, List, Tuple, cast
+from typing import Any, Dict, List, Tuple, cast
 
 import helpers.dbg as hdbg
 import helpers.old.user_credentials as holuscre
@@ -36,6 +36,7 @@ def get_tunnel_info() -> Tuple[list, str]:
 def tunnel_info_to_string(tunnel_info: list) -> str:
     ret = "\n".join(map(str, tunnel_info))
     ret = hprintin.indent(ret)
+    ret = cast(str, ret)
     return ret
 
 
@@ -101,7 +102,7 @@ def _get_tunnel_info() -> Tuple[Any, str]:
 def _tunnel_info_to_string(tunnel_info: list) -> str:
     ret = "\n".join(map(str, tunnel_info))
     ret = hprintin.indent(ret)
-    cast(str, ret)
+    ret = cast(str, ret)
     return ret
 
 

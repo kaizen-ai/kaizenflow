@@ -51,7 +51,11 @@ def solipsism_context() -> Iterator:
 
 # TODO(gp): For some reason `asyncio.run()` doesn't seem to pick up the new event
 #  loop. So we use a re-implementation of `run` that does that.
-def run(coroutine: Coroutine, *, event_loop: Optional[asyncio.AbstractEventLoop] = None) -> Any:
+def run(
+    coroutine: Coroutine,
+    *,
+    event_loop: Optional[asyncio.AbstractEventLoop] = None
+) -> Any:
     """
     `asyncio.run()` wrapper that allows to use a specified `EventLoop`.
 

@@ -64,7 +64,8 @@ def to_pickle(
         elif backend == "pickle_gzip":
             # TODO(gp): Use `dassert_file_extension` if possible.
             hdbg.dassert(
-                file_name.endswith(".pkl.gz"), msg="Invalid file_name=%s" % file_name
+                file_name.endswith(".pkl.gz"),
+                msg="Invalid file_name=%s" % file_name,
             )
             with gzip.open(file_name, "wb") as zfd:
                 pickler = pickle.Pickler(zfd, pickle.HIGHEST_PROTOCOL)
@@ -92,7 +93,9 @@ def from_pickle(
     Unpickle and return object stored in `file_name`.
     """
     hdbg.dassert_isinstance(file_name, str)
-    with htimer.TimedScope(logging.DEBUG, "Unpickling from '%s'" % file_name) as ts:
+    with htimer.TimedScope(
+        logging.DEBUG, "Unpickling from '%s'" % file_name
+    ) as ts:
         # We assume that the user always specifies a .pkl extension and then we
         # change the extension based on the backend.
         if backend in ("pickle", "dill"):
@@ -111,7 +114,8 @@ def from_pickle(
         elif backend == "pickle_gzip":
             # TODO(gp): Use `dassert_file_extension` if possible.
             hdbg.dassert(
-                file_name.endswith(".pkl.gz"), msg="Invalid file_name=%s" % file_name
+                file_name.endswith(".pkl.gz"),
+                msg="Invalid file_name=%s" % file_name,
             )
             with gzip.open(file_name, "rb") as zfd:
                 unpickler = pickle.Unpickler(zfd)

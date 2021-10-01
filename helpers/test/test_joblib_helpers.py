@@ -30,7 +30,7 @@ def workload_function(
     res: str = hprintin.to_str("val1 val2 incremental num_attempts kwargs")
     _LOG.debug("res=%s", res)
     sleep = 0.01
-    #sleep = 2
+    # sleep = 2
     time.sleep(sleep)
     _LOG.info("Ending workload %s", val1)
     if val1 == -1:

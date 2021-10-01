@@ -262,7 +262,9 @@ class Test_dassert_lgt1(huntes.TestCase):
         """
         No assertion raised since `0 <= 0 <= 3`.
         """
-        hdbg.dassert_lgt(0, 0, 3, lower_bound_closed=True, upper_bound_closed=True)
+        hdbg.dassert_lgt(
+            0, 0, 3, lower_bound_closed=True, upper_bound_closed=True
+        )
 
     def test2(self) -> None:
         """
