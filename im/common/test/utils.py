@@ -5,7 +5,7 @@ import pandas as pd
 
 import helpers.sql as hsql
 import helpers.unit_test as hut
-import im.common.db.init as vcdini
+import im.common.db.create_schema as icdcrsch
 import im.common.sql_writer_backend as vcsqlw
 
 _LOG = logging.getLogger(__name__)
@@ -25,9 +25,8 @@ class SqlWriterBackendTestCase(hut.TestCase):
         self._password = os.environ["POSTGRES_PASSWORD"]
         self._dbname = self._get_test_string()
         # Create database for each test.
-        vcdini.create_database(
+        icdcrsch.create_database(
             self._dbname,
-            vcdini.get_init_sql_files(),
             force=True,
         )
         # Define constant IDs for records across the test.
@@ -41,7 +40,7 @@ class SqlWriterBackendTestCase(hut.TestCase):
         # Close connection.
         self._writer.close()
         # Remove created database.
-        vcdini.remove_database(self._dbname)
+        icdcrsch.remove_database(self._dbname)
         super().tearDown()
 
     def _prepare_tables(
