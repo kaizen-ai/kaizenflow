@@ -8,7 +8,6 @@ import im.common.db.create_schema as icdcrsch
 
 import logging
 import os
-import time
 from typing import List, Optional, Tuple
 
 import psycopg2 as psycop
@@ -16,6 +15,7 @@ import psycopg2.sql as psql
 
 import helpers.io_ as hio
 import helpers.sql as hsql
+import helpers.system_interaction as sysint
 
 _LOG = logging.getLogger(__name__)
 
@@ -70,22 +70,25 @@ def get_db_connection_details_from_environment() -> str:
 
 def check_db_connection() -> None:
     """
-    Verify that the database is available by executing test query.
+    Verify that the database is available.
     """
-    try:
-        # Get database connection and cursor.
-        connection, cursor = get_db_connection_from_environment()
-        _LOG.info("DB connection:\n%s", get_db_connection_details_from_environment())
-        # Execute the test query to verify that the database works.
-        cursor.execute("SELECT version();")
-        record = cursor.fetchone()
-        _LOG.info("Successfully connected to '%s'", record)
-        # Close the database connection.
-        connection.close()
-        cursor.close()
-    except psycop.Error:
-        _LOG.info("for PostgreSQL to become available...")
-        time.sleep(1)
+    _LOG.info("Checking the database connection...")
+    cmd = """
+    postgres_ready() {
+      pg_isready -d $POSTGRES_DB -p $POSTGRES_PORT -h $POSTGRES_HOST
+    }
+    
+    echo "STAGE: $STAGE"
+    echo "POSTGRES_HOST: $POSTGRES_HOST"
+    echo "POSTGRES_PORT: $POSTGRES_PORT"
+    
+    until postgres_ready; do
+      >&2 echo 'Waiting for PostgreSQL to become available...'
+      sleep 1
+    done
+    >&2 echo 'PostgreSQL is available'
+    """
+    sysint.system(cmd, suppress_output=False)
 
 
 def get_sql_files(custom_files: Optional[List[str]] = None) -> List[str]:
