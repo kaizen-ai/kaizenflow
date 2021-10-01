@@ -37,6 +37,7 @@ DbConnectionInfo = collections.namedtuple(
 )
 
 
+# TODO(gp): mypy doesn't like this.
 DbConnection = psycop.extensions.connection
 
 
