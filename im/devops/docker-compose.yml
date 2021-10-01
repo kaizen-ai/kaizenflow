@@ -10,6 +10,7 @@ services:
       - im_postgres_local
     volumes:
       - ../../:/app
+      - ~/.aws:/app/home/.aws
     env_file:
       - ./env/local.im_db_config.env
     working_dir: /app
