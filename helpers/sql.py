@@ -40,6 +40,7 @@ DbConnectionInfo = collections.namedtuple(
 DbConnection = psycop.extensions.connection
 
 
+# TODO(gp): mypy doesn't like this.
 DbConnection = psycop.extensions.connection
 
 
