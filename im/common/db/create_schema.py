@@ -3,7 +3,7 @@ Create and handle the Postgres DB.
 
 Import as:
 
-import im.common.db.create_schema as icdcrsch
+import im.common.db.create_schema as imcodbcrsch
 """
 
 import logging
@@ -13,14 +13,15 @@ from typing import Optional, Tuple
 import psycopg2 as psycop
 import psycopg2.sql as psql
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.sql as hsql
-import helpers.system_interaction as sysint
+import helpers.system_interaction as hsyint
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(Grisha): convert the code into a class.
+
 
 def get_db_connection_from_environment() -> Tuple[
     hsql.DbConnection, psycop.extensions.cursor
@@ -79,17 +80,17 @@ def check_db_connection() -> None:
     postgres_ready() {
       pg_isready -d $POSTGRES_DB -p $POSTGRES_PORT -h $POSTGRES_HOST
     }
-    
+
     echo "POSTGRES_HOST: $POSTGRES_HOST"
     echo "POSTGRES_PORT: $POSTGRES_PORT"
-    
+
     until postgres_ready; do
       >&2 echo 'Waiting for PostgreSQL to become available...'
       sleep 1
     done
     >&2 echo 'PostgreSQL is available'
     """
-    sysint.system(cmd, suppress_output=False)
+    hsyint.system(cmd, suppress_output=False)
 
 
 def get_common_create_table_query() -> str:
@@ -101,7 +102,7 @@ def get_common_create_table_query() -> str:
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         name text UNIQUE
     );
-    
+
     CREATE TABLE IF NOT EXISTS Symbol (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         code text UNIQUE,
@@ -110,7 +111,7 @@ def get_common_create_table_query() -> str:
         start_date date DEFAULT CURRENT_DATE,
         symbol_base text
     );
-    
+
     CREATE TABLE IF NOT EXISTS TradeSymbol (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         exchange_id integer REFERENCES Exchange,
@@ -140,7 +141,7 @@ def get_ib_create_table_query() -> str:
         barCount integer,
         UNIQUE (trade_symbol_id, date)
     );
-    
+
     CREATE TABLE IF NOT EXISTS IbMinuteData (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         trade_symbol_id integer REFERENCES TradeSymbol,
@@ -154,7 +155,7 @@ def get_ib_create_table_query() -> str:
         barCount integer,
         UNIQUE (trade_symbol_id, datetime)
     );
-    
+
     CREATE TABLE IF NOT EXISTS IbTickBidAskData (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         trade_symbol_id integer REFERENCES TradeSymbol,
@@ -163,7 +164,7 @@ def get_ib_create_table_query() -> str:
         ask numeric,
         volume bigint
     );
-    
+
     CREATE TABLE IF NOT EXISTS IbTickData (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         trade_symbol_id integer REFERENCES TradeSymbol,
@@ -191,7 +192,7 @@ def get_kibot_create_table_query() -> str:
         volume bigint,
         UNIQUE (trade_symbol_id, date)
     );
-    
+
     CREATE TABLE IF NOT EXISTS KibotMinuteData (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         trade_symbol_id integer REFERENCES TradeSymbol,
@@ -203,7 +204,7 @@ def get_kibot_create_table_query() -> str:
         volume bigint,
         UNIQUE (trade_symbol_id, datetime)
     );
-    
+
     CREATE TABLE IF NOT EXISTS KibotTickBidAskData (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         trade_symbol_id integer REFERENCES TradeSymbol,
@@ -212,7 +213,7 @@ def get_kibot_create_table_query() -> str:
         ask numeric,
         volume bigint
     );
-    
+
     CREATE TABLE IF NOT EXISTS KibotTickData (
         id integer PRIMARY KEY DEFAULT nextval('serial'),
         trade_symbol_id integer REFERENCES TradeSymbol,
@@ -272,7 +273,9 @@ def create_tables(
             _LOG.info("Creating `%s` tables...", provider)
             cursor.execute(query)
         except psycop.errors.DuplicateObject:
-            _LOG.warning("The `%s` tables are already created: skipping.", provider)
+            _LOG.warning(
+                "The `%s` tables are already created: skipping.", provider
+            )
 
 
 def test_tables(
@@ -301,7 +304,7 @@ def test_tables(
         "ibtickbidaskdata",
         "ibtickdata",
     ]
-    dbg.dassert_set_eq(actual_tables, expected_tables)
+    hdbg.dassert_set_eq(actual_tables, expected_tables)
     # Execute the test query.
     test_query = "INSERT INTO Exchange (name) VALUES ('TestExchange');"
     cursor.execute(test_query)
