@@ -68,6 +68,7 @@ def create_table(conn: hsql.DbConnection, table_name: str) -> None:
     # Build a CREATE TABLE command from name.
     command = _get_create_table_command(table_name)
     cursor.execute(command)
+    print(hsql.get_table_names(conn))
     cursor.close()
     conn.commit()
     return None
