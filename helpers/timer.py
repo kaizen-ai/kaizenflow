@@ -6,9 +6,9 @@ import helpers.timer as htimer
 
 import logging
 import time
-from typing import Any, Callable, Dict, Optional, Tuple, cast
+from typing import Any, Callable, Optional, Tuple, cast
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -54,14 +54,14 @@ class Timer:
         Stop the timer and accumulate the interval.
         """
         # Timer must have not been stopped before.
-        dbg.dassert(self.is_started() and not self.is_stopped())
+        hdbg.dassert(self.is_started() and not self.is_stopped())
         # For better accuracy stop the timer as first action.
         self._stop = time.time()
         # Update the total elapsed time.
         # Sometimes we get numerical error tripping this assertion
         # (e.g., '1619552498.813126' <= '1619552498.805193') so we give
         # a little slack to the assertion.
-        # dbg.dassert_lte(self._start, self._stop + 1e-2)
+        # hdbg.dassert_lte(self._start, self._stop + 1e-2)
         self._last_elapsed = cast(float, self._stop) - cast(float, self._start)
         self._total_elapsed += self._last_elapsed
         # Stop.
@@ -74,7 +74,7 @@ class Timer:
         """
         if not self.is_stopped():
             self.stop()
-        dbg.dassert_is_not(self._last_elapsed, None)
+        hdbg.dassert_is_not(self._last_elapsed, None)
         return cast(float, self._last_elapsed)
 
     # /////////////////////////////////////////////////////////////////////////
@@ -84,7 +84,7 @@ class Timer:
         Resume the timer after a stop.
         """
         # Timer must have been stopped before.
-        dbg.dassert(self.is_started() or self.is_stopped())
+        hdbg.dassert(self.is_started() or self.is_stopped())
         self._stop = None
         # Start last for better accuracy.
         self._start = time.time()
@@ -108,44 +108,37 @@ class Timer:
         Accumulate the value of a timer to the current object.
         """
         # Both timers must be stopped.
-        dbg.dassert(timer.is_stopped())
-        dbg.dassert(self.is_stopped())
-        dbg.dassert_lte(0.0, timer.get_total_elapsed())
+        hdbg.dassert(timer.is_stopped())
+        hdbg.dassert(self.is_stopped())
+        hdbg.dassert_lte(0.0, timer.get_total_elapsed())
         self._total_elapsed += timer.get_total_elapsed()
 
 
 # #############################################################################
 
-_DTIMER_INFO: Dict[int, Any] = {}
+
+_TimerMemento = Tuple[int, str, Timer]
 
 
-def dtimer_start(log_level: int, message: str) -> int:
+def dtimer_start(log_level: int, message: str) -> _TimerMemento:
     """
     :return: memento of the timer.
     """
     _LOG.log(log_level, "%s ...", message)
-    idx = len(_DTIMER_INFO)
-    info = log_level, message, Timer()
-    _DTIMER_INFO[idx] = info
-    return idx
+    memento = log_level, message, Timer()
+    return memento
 
 
-def dtimer_stop(idx: int) -> Tuple[str, int]:
+def dtimer_stop(memento: _TimerMemento) -> Tuple[str, float]:
     """
     :return:
       - message as as string
       - time in seconds (int)
     """
-    dbg.dassert_lte(0, idx)
-    # TODO(gp): This assertion might create problems when an exception is
-    # thrown and we don't use context managers to handle the timers. Consider
-    # alternative solutions.
-    dbg.dassert_lt(idx, len(_DTIMER_INFO))
-    log_level, message, timer = _DTIMER_INFO[idx]
+    log_level, message, timer = memento
     timer.stop()
     elapsed_time = round(timer.get_elapsed(), 3)
     msg = "%s done (%.3f s)" % (message, elapsed_time)
-    del _DTIMER_INFO[idx]
     _LOG.log(log_level, msg)
     return msg, elapsed_time
 
@@ -167,26 +160,25 @@ class TimedScope:
     """
     Measure the execution time of a block of code.
 
-    Use example
-        ```
-        with htimer.TimedScope(logging.INFO, "Work") as ts:
-            ... work work work ...
-        ```
+    ```
+    with htimer.TimedScope(logging.INFO, "Work") as ts:
+        ... work work work ...
+    ```
     """
 
     def __init__(self, log_level: int, message: str):
         self._log_level = log_level
         self._message = message
-        self._idx: Optional[int] = None
+        self._memento: Optional[_TimerMemento] = None
         self.elapsed_time = None
 
     def __enter__(self) -> "TimedScope":
-        self._idx = dtimer_start(self._log_level, self._message)
+        self._memento = dtimer_start(self._log_level, self._message)
         return self
 
     def __exit__(self, *args: Any) -> None:
-        if self._idx is not None:
-            msg, self.elapsed_time = dtimer_stop(self._idx)
+        if self._memento is not None:
+            msg, self.elapsed_time = dtimer_stop(self._memento)
             _ = msg
 
 
