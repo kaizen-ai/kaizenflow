@@ -53,7 +53,7 @@ def filter_data_by_values(
         hdbg.dassert_isinstance(vals, tuple)
         mask = data[col_name].isin(vals)
         info[f"n_{col_name}"] = mask.sum()
-        info[f"perc_{col_name}"] = hprint.perc(mask.sum(), data.shape[0])
+        info[f"perc_{col_name}"] = hprintin.perc(mask.sum(), data.shape[0])
         masks.append(mask)
     masks = pd.concat(masks, axis=1)
     combined_mask = _combine_masks(masks, mode, info)
@@ -98,7 +98,7 @@ def filter_data_by_comparison(
             )
             mask = getattr(data[col_name], comparison_method)(val)
             info[f"n_{col_name}_{comparison_method}_{val}"] = mask.sum()
-            info[f"perc_{col_name}_{comparison_method}_{val}"] = hprint.perc(
+            info[f"perc_{col_name}_{comparison_method}_{val}"] = hprintin.perc(
                 mask.sum(), data.shape[0]
             )
             masks.append(mask)
@@ -137,7 +137,7 @@ def filter_data_by_method(
         for method, kwargs in method_dict.items():
             mask = operator.attrgetter(method)(data[col_name])(**kwargs)
             info[f"n_{col_name}"] = mask.sum()
-            info[f"perc_{col_name}"] = hprint.perc(mask.sum(), data.shape[0])
+            info[f"perc_{col_name}"] = hprintin.perc(mask.sum(), data.shape[0])
             masks.append(mask)
     masks = pd.concat(masks, axis=1)
     combined_mask = _combine_masks(masks, mode, info)

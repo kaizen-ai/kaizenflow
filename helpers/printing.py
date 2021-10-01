@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.printing as hprint
+import helpers.printing as hprintin
 """
 
 # TODO(gp): -> hprint
