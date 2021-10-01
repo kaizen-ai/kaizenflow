@@ -170,13 +170,16 @@ def get_indexes(connection: DbConnection) -> pd.DataFrame:
 
 
 def get_columns(connection: DbConnection, table_name: str) -> list:
+    """
+    Get column names for given table.
+    """
     query = (
         """SELECT column_name
             FROM information_schema.columns
             WHERE TABLE_NAME = '%s' """
         % table_name
     )
-    cursor = connection.get_cursor()
+    cursor = connection.cursor()
     cursor.execute(query)
     columns = [x[0] for x in cursor.fetchall()]
     return columns
