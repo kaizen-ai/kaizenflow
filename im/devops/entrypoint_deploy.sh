@@ -26,7 +26,10 @@ umask 000
 export PYTHONPATH=/app:$PYTHONPATH
 echo "PYTHONPATH=$PYTHONPATH"
 
+# Activate virtual environment to access Python packages.
+source /${ENV_NAME}/bin/activate
+
 # Initialize the DB.
-#./im/devops/init_im_db.py --db $POSTGRES_DB
+# ./im/devops/init_im_db.py --db $POSTGRES_DB
 
 eval "$@"

@@ -75,6 +75,7 @@ class CcxtLoader:
         self._root_dir = root_dir
         self._aws_profile = aws_profile
 
+    # TODO(Dan): Dassert `data_type` value before reading data from S3.
     def read_data(
         self,
         exchange_id: str,
