@@ -29,10 +29,10 @@ import pyarrow.parquet as pq
 import pyarrow.dataset as ds
 import numpy as np
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
 
-dbg.init_logger(verbosity=logging.INFO)
+hdbg.init_logger(verbosity=logging.INFO)
 _LOG = logging.getLogger(__name__)
 
 

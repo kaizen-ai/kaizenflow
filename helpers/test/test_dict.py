@@ -2,12 +2,12 @@ import logging
 
 import core.config as cconfig
 import helpers.dict as hdict
-import helpers.unit_test as hut
+import helpers.unit_test as huntes
 
 _LOG = logging.getLogger(__name__)
 
 
-class Test_get_nested_dict_iterator(hut.TestCase):
+class Test_get_nested_dict_iterator(huntes.TestCase):
     def test1(self) -> None:
         """
         Test basic case with no nesting.

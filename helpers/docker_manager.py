@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.docker_manager as hdoman
+"""
+
 import argparse
 from typing import Dict, List
 

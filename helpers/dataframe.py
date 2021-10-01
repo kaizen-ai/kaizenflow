@@ -3,7 +3,7 @@ Helper functions for processing pandas dataframes.
 
 Import as:
 
-import helpers.dataframe as hdataf
+import helpers.dataframe as hdatafra
 """
 
 # TODO(gp): Consider merging with `helpers/pandas_helpers.py`.
@@ -17,8 +17,8 @@ from typing import Any, Dict, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
-import helpers.dbg as dbg
-import helpers.printing as hprint
+import helpers.dbg as hdbg
+import helpers.printing as hprintin
 
 _LOG = logging.getLogger(__name__)
 
@@ -50,10 +50,10 @@ def filter_data_by_values(
     # Create filter masks for each column.
     masks = []
     for col_name, vals in filters.items():
-        dbg.dassert_isinstance(vals, tuple)
+        hdbg.dassert_isinstance(vals, tuple)
         mask = data[col_name].isin(vals)
         info[f"n_{col_name}"] = mask.sum()
-        info[f"perc_{col_name}"] = hprint.perc(mask.sum(), data.shape[0])
+        info[f"perc_{col_name}"] = hprintin.perc(mask.sum(), data.shape[0])
         masks.append(mask)
     masks = pd.concat(masks, axis=1)
     combined_mask = _combine_masks(masks, mode, info)
@@ -93,12 +93,12 @@ def filter_data_by_comparison(
         if not isinstance(tuple_[0], tuple):
             tuple_ = (tuple_,)  # type: ignore
         for comparison_method, val in tuple_:
-            dbg.dassert_in(
+            hdbg.dassert_in(
                 comparison_method, ("eq", "ne", "le", "lt", "ge", "gt")
             )
             mask = getattr(data[col_name], comparison_method)(val)
             info[f"n_{col_name}_{comparison_method}_{val}"] = mask.sum()
-            info[f"perc_{col_name}_{comparison_method}_{val}"] = hprint.perc(
+            info[f"perc_{col_name}_{comparison_method}_{val}"] = hprintin.perc(
                 mask.sum(), data.shape[0]
             )
             masks.append(mask)
@@ -137,7 +137,7 @@ def filter_data_by_method(
         for method, kwargs in method_dict.items():
             mask = operator.attrgetter(method)(data[col_name])(**kwargs)
             info[f"n_{col_name}"] = mask.sum()
-            info[f"perc_{col_name}"] = hprint.perc(mask.sum(), data.shape[0])
+            info[f"perc_{col_name}"] = hprintin.perc(mask.sum(), data.shape[0])
             masks.append(mask)
     masks = pd.concat(masks, axis=1)
     combined_mask = _combine_masks(masks, mode, info)
@@ -179,7 +179,7 @@ def apply_nan_mode(
     :param info: information storage
     :return: transformed copy of input series
     """
-    dbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_isinstance(srs, pd.Series)
     if srs.empty:
         _LOG.warning("Empty input series `%s`", srs.name)
     if mode == "leave_unchanged":
@@ -200,9 +200,9 @@ def apply_nan_mode(
         raise ValueError(f"Unrecognized mode `{mode}`")
     #
     if info is not None:
-        dbg.dassert_isinstance(info, dict)
+        hdbg.dassert_isinstance(info, dict)
         # Dictionary should be empty.
-        dbg.dassert(not info)
+        hdbg.dassert(not info)
         info["series_name"] = srs.name
         info["num_elems_before"] = len(srs)
         info["num_nans_before"] = np.isnan(srs).sum()
@@ -229,7 +229,7 @@ def infer_sampling_points_per_year(data: Union[pd.Series, pd.DataFrame]) -> floa
     :param data: series or dataframe with non-null `data.index.freq`
     :return: number of time points per year (approximate)
     """
-    dbg.dassert(data.index.freq)
+    hdbg.dassert(data.index.freq)
     freq = data.index.freq
     # TODO(*): Make start, end dates parameters that can be passed in.
     return compute_points_per_year_for_given_freq(freq)
@@ -262,7 +262,7 @@ def compute_count_per_year(data: Union[pd.Series, pd.DataFrame]) -> float:
     Return data.count() divided by the length of `data` in years.
     """
     freq = data.index.freq
-    dbg.dassert(freq, msg="`data` must have a `DatetimeIndex` with a `freq`")
+    hdbg.dassert(freq, msg="`data` must have a `DatetimeIndex` with a `freq`")
     # Calculate the time span of `data` in years.
     points_per_year = compute_points_per_year_for_given_freq(freq)
     span_in_years = data.size / points_per_year

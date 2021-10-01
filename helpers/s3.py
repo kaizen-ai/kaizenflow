@@ -21,10 +21,10 @@ except ModuleNotFoundError:
     print(_WARNING + f": Can't find {_module}: continuing")
 
 
-import helpers.dbg as dbg  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
+import helpers.dbg as hdbg  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.io_ as hio  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
-import helpers.printing as hprint  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
-import helpers.system_interaction as hsyste  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
+import helpers.printing as hprintin  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
+import helpers.system_interaction as hsyint  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.timer as htimer  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
 _LOG = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def is_s3_path(s3_path: str) -> bool:
-    dbg.dassert_isinstance(s3_path, str)
+    hdbg.dassert_isinstance(s3_path, str)
     valid = s3_path.startswith("s3://")
     if s3_path.startswith("s3://s3://"):
         valid = False
@@ -47,7 +47,7 @@ def dassert_is_s3_path(s3_path: str) -> None:
     """
     Assert if a file is not a S3 path.
     """
-    dbg.dassert(
+    hdbg.dassert(
         is_s3_path(s3_path),
         "Invalid S3 file='%s'",
         s3_path,
@@ -58,7 +58,7 @@ def dassert_is_not_s3_path(s3_path: str) -> None:
     """
     Assert if a file is a S3 path.
     """
-    dbg.dassert(
+    hdbg.dassert(
         not is_s3_path(s3_path),
         "Passed an S3 file='%s' when it was not expected",
         s3_path,
@@ -70,7 +70,7 @@ def dassert_s3_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
     Assert if an S3 file or dir doesn't exist.
     """
     dassert_is_s3_path(s3_path)
-    dbg.dassert(s3fs_.exists(s3_path), "S3 file '%s' doesn't exist", s3_path)
+    hdbg.dassert(s3fs_.exists(s3_path), "S3 file '%s' doesn't exist", s3_path)
 
 
 def dassert_s3_not_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
@@ -78,7 +78,7 @@ def dassert_s3_not_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
     Assert if an S3 file or dir exist.
     """
     dassert_is_s3_path(s3_path)
-    dbg.dassert(not s3fs_.exists(s3_path), "S3 file '%s' already exist", s3_path)
+    hdbg.dassert(not s3fs_.exists(s3_path), "S3 file '%s' already exist", s3_path)
 
 
 def split_path(s3_path: str) -> Tuple[str, str]:
@@ -92,13 +92,13 @@ def split_path(s3_path: str) -> Tuple[str, str]:
     dassert_is_s3_path(s3_path)
     # Remove the s3 prefix.
     prefix = "s3://"
-    dbg.dassert(s3_path.startswith(prefix))
+    hdbg.dassert(s3_path.startswith(prefix))
     s3_path = s3_path[len(prefix) :]
     # Break the path into dirs.
     dirs = s3_path.split("/")
     bucket = dirs[0]
     abs_path = os.path.join("/", *dirs[1:])
-    dbg.dassert(
+    hdbg.dassert(
         abs_path.startswith("/"),
         "The path should be absolute instead of %s",
         abs_path,
@@ -124,9 +124,9 @@ def get_bucket() -> str:
     """
     # TODO(gp): -> AM_AWS_S3_BUCKET
     env_var = "AM_S3_BUCKET"
-    dbg.dassert_in(env_var, os.environ)
+    hdbg.dassert_in(env_var, os.environ)
     s3_bucket = os.environ[env_var]
-    dbg.dassert(
+    hdbg.dassert(
         not s3_bucket.startswith("s3://"),
         "Invalid %s value '%s'",
         env_var,
@@ -177,12 +177,12 @@ def _get_variable_value(var_value: Optional[str], env_var: str) -> str:
     """
     _LOG.debug("var_value=%s", var_value)
     if var_value is None:
-        dbg.dassert_isinstance(env_var, str)
+        hdbg.dassert_isinstance(env_var, str)
         _LOG.debug("Using the env var '%s'", env_var)
-        dbg.dassert_in(env_var, os.environ, "Env var '%s' is not set", env_var)
+        hdbg.dassert_in(env_var, os.environ, "Env var '%s' is not set", env_var)
         var_value = os.environ[env_var]
     else:
-        dbg.dassert_isinstance(var_value, str)
+        hdbg.dassert_isinstance(var_value, str)
         _LOG.debug("Using the passed value '%s'", var_value)
     return var_value
 
@@ -219,7 +219,7 @@ def _get_aws_config(file_name: str) -> configparser.RawConfigParser:
     Return a parser to the config in `~/.aws/{file_name]}`.
     """
     file_name = os.path.join(os.path.expanduser("~"), ".aws", file_name)
-    dbg.dassert_file_exists(file_name)
+    hdbg.dassert_file_exists(file_name)
     # Read the config.
     config = configparser.RawConfigParser()
     config.read(file_name)
@@ -270,7 +270,7 @@ def get_aws_credentials(
         `aws_region` and optionally `aws_session_token`
     """
     _LOG.debug("Getting credentials for aws_profile='%s'", aws_profile)
-    dbg.dassert_ne(aws_profile, "")
+    hdbg.dassert_ne(aws_profile, "")
     #
     result: Dict[str, Optional[str]] = {}
     key_to_env_var: Dict[str, str] = {
@@ -303,13 +303,13 @@ def get_aws_credentials(
             _LOG.debug(
                 "'%s' != ''=%s", env_var, os.environ.get(env_var, None) != ""
             )
-            dbg.dassert_in(env_var, os.environ)
+            hdbg.dassert_in(env_var, os.environ)
             result[key] = os.environ[env_var]
         # TODO(gp): We don't pass this through env var for now.
         result["aws_session_token"] = None
         # TODO(gp): Support also other S3 profiles. We can derive the names of the
         #  env vars from aws_profile. E.g., "am" -> AM_AWS_ACCESS_KEY.
-        dbg.dassert_eq(aws_profile, "am")
+        hdbg.dassert_eq(aws_profile, "am")
     else:
         _LOG.debug("Using AWS credentials from files")
         # > more ~/.aws/credentials
@@ -340,7 +340,7 @@ def get_aws_credentials(
         # For ~/.aws/config the tag is `profile am` instead of `am`.
         result[key] = config.get(f"profile {aws_profile}", "region")
     #
-    dbg.dassert_is_subset(key_to_env_var.keys(), result.keys())
+    hdbg.dassert_is_subset(key_to_env_var.keys(), result.keys())
     return result
 
 
@@ -355,7 +355,7 @@ def get_key_value(
     This function accesses the `~/.aws` files or the env vars.
     """
     _LOG.debug("Getting key-value for aws_profile='%s'", aws_profile)
-    dbg.dassert_ne(aws_profile, "")
+    hdbg.dassert_ne(aws_profile, "")
     env_var = key.capitalize()
     env_var_override = env_var in os.environ and os.environ[env_var] != ""
     value: Optional[str] = None
@@ -426,13 +426,13 @@ def archive_data_on_s3(
         s3_path,
         aws_profile,
     )
-    dbg.dassert_dir_exists(src_dir)
+    hdbg.dassert_dir_exists(src_dir)
     dassert_is_s3_path(s3_path)
     _LOG.info(
-        "The size of '%s' is %s", src_dir, hsyste.du(src_dir, human_format=True)
+        "The size of '%s' is %s", src_dir, hsyint.du(src_dir, human_format=True)
     )
     # Add a timestamp if needed.
-    dst_path = hsyste.append_timestamp_tag(src_dir, tag) + ".tgz"
+    dst_path = hsyint.append_timestamp_tag(src_dir, tag) + ".tgz"
     # Compress the dir.
     # > (cd .../TestRunExperimentArchiveOnS3.test_serial1; \
     #    tar cvzf /app/.../TestRunExperimentArchiveOnS3.test_serial1.tgz experiment.RH1E)
@@ -444,14 +444,14 @@ def archive_data_on_s3(
     with htimer.TimedScope(logging.INFO, "Compressing"):
         dir_name = os.path.dirname(src_dir)
         base_name = os.path.basename(src_dir)
-        dbg.dassert_ne(base_name, "", "src_dir=%s", src_dir)
+        hdbg.dassert_ne(base_name, "", "src_dir=%s", src_dir)
         cmd = ""
         if dir_name != "":
             cmd += f"cd {dir_name} && "
         cmd += f"tar czf {dst_path} {base_name}"
-        hsyste.system(cmd)
+        hsyint.system(cmd)
     _LOG.info(
-        "The size of '%s' is %s", dst_path, hsyste.du(dst_path, human_format=True)
+        "The size of '%s' is %s", dst_path, hsyint.du(dst_path, human_format=True)
     )
     # Test expanding the tgz. The package should expand to the original dir.
     # > tar tf /app/.../TestRunExperimentArchiveOnS3.test_serial1.tgz
@@ -460,11 +460,11 @@ def archive_data_on_s3(
     # experiment.RH1E/output_metadata.json
     _LOG.info("Testing archive")
     cmd = f"tar tvf {dst_path}"
-    hsyste.system(cmd, log_level=logging.INFO, suppress_output=False)
+    hsyint.system(cmd, log_level=logging.INFO, suppress_output=False)
     # Copy to S3.
     s3_file_path = os.path.join(s3_path, os.path.basename(dst_path))
     _LOG.info("Copying '%s' to '%s'", dst_path, s3_file_path)
-    dbg.dassert_file_exists(dst_path)
+    hdbg.dassert_file_exists(dst_path)
     s3fs_ = get_s3fs(aws_profile)
     # TODO(gp): Make sure the S3 dir exists.
     s3fs_.put(dst_path, s3_file_path)
@@ -499,7 +499,7 @@ def retrieve_archived_data_from_s3(
     # Download the tgz file.
     hio.create_dir(dst_dir, incremental=True)
     dst_file = os.path.join(dst_dir, os.path.basename(s3_file_path))
-    _LOG.debug(hprint.to_str("s3_file_path dst_dir dst_file"))
+    _LOG.debug(hprintin.to_str("s3_file_path dst_dir dst_file"))
     if incremental and os.path.exists(dst_file):
         _LOG.warning("Found '%s': skipping downloading", dst_file)
     else:
@@ -529,13 +529,13 @@ def expand_archived_data(src_tgz_file: str, dst_dir: str) -> str:
     _LOG.debug("Expanding '%s'", src_tgz_file)
     # Get the name of the including dir, e.g., `experiment.RH1E`.
     cmd = f"cd {dst_dir} && tar tzf {src_tgz_file} | head -1"
-    rc, enclosing_tgz_dir_name = hsyste.system_to_one_line(cmd)
+    rc, enclosing_tgz_dir_name = hsyint.system_to_one_line(cmd)
     _ = rc
-    _LOG.debug(hprint.to_str("enclosing_tgz_dir_name"))
+    _LOG.debug(hprintin.to_str("enclosing_tgz_dir_name"))
     tgz_dst_dir = os.path.join(dst_dir, enclosing_tgz_dir_name)
 
     if os.path.exists(tgz_dst_dir):
-        dbg.dassert_dir_exists(dst_dir)
+        hdbg.dassert_dir_exists(dst_dir)
         _LOG.info(
             "While expanding '%s' dst dir '%s' already exists: skipping",
             src_tgz_file,
@@ -550,9 +550,9 @@ def expand_archived_data(src_tgz_file: str, dst_dir: str) -> str:
         # experiment.RH1E/log.20210802-133859.txt
         # experiment.RH1E/result_0/
         with htimer.TimedScope(logging.INFO, "Decompressing"):
-            dbg.dassert_file_exists(src_tgz_file)
+            hdbg.dassert_file_exists(src_tgz_file)
             cmd = f"cd {dst_dir} && tar xzf {src_tgz_file}"
-            hsyste.system(cmd)
-    dbg.dassert_dir_exists(tgz_dst_dir)
+            hsyint.system(cmd)
+    hdbg.dassert_dir_exists(tgz_dst_dir)
     # Return `{dst_dir}/experiment.RH1E`.
     return tgz_dst_dir

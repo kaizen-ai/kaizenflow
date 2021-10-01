@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.numba_ as hnumba
+"""
+
 import logging
 from typing import Any, Callable, TypeVar
 

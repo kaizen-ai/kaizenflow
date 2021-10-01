@@ -1,10 +1,16 @@
+"""
+Import as:
+
+import helpers.traceback_helper as htrhel
+"""
+
 import logging
 import os
 import re
 from typing import Any, List, Match, Optional, Tuple
 
-import helpers.dbg as dbg
-import helpers.git as git
+import helpers.dbg as hdbg
+import helpers.git as hgit
 
 _LOG = logging.getLogger(__name__)
 
@@ -21,12 +27,12 @@ CFILE_ROW = Tuple[str, int, str]
 
 def cfile_row_to_str(cfile_row: CFILE_ROW) -> str:
     # helpers/git.py:295:def get_repo_long_name_from_client(super_module
-    dbg.dassert_isinstance(cfile_row, tuple)
+    hdbg.dassert_isinstance(cfile_row, tuple)
     return ":".join(list(map(str, cfile_row)))
 
 
 def cfile_to_str(cfile: List[CFILE_ROW]) -> str:
-    dbg.dassert_isinstance(cfile, list)
+    hdbg.dassert_isinstance(cfile, list)
     return "\n".join(map(cfile_row_to_str, cfile))
 
 
@@ -48,7 +54,7 @@ def parse_traceback(
         File "/app/amp/test/test_lib_tasks.py", line 27, in test_get_gh_issue_title2
           act = ltasks._get_gh_issue_title(issue_id, repo)
         File "/app/amp/lib_tasks.py", line 1265, in _get_gh_issue_title
-          task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
+          task_prefix = hgit.get_task_prefix_from_repo_short_name(repo_short_name)
         File "/app/amp/helpers/git.py", line 397, in get_task_prefix_from_repo_short_name
           if repo_short_name == "amp":
       NameError: name 'repo_short_name' is not defined
@@ -76,7 +82,7 @@ def parse_traceback(
             #     act = ltasks._get_gh_issue_title(issue_id, repo)
             regex = r"^\s*File \"(\S+)\", line (\d+), in (\S+)$"
             m = re.match(regex, line)
-            dbg.dassert(m, "Can't parse '%s'", line)
+            hdbg.dassert(m, "Can't parse '%s'", line)
             m: Match[Any]
             file_name = m.group(1)
             line_num = int(m.group(2))
@@ -86,7 +92,7 @@ def parse_traceback(
             # Parse the next line until the next `File...`.
             _LOG.debug("Search end of snippet")
             j = i + 1
-            dbg.dassert_lte(j, len(lines))
+            hdbg.dassert_lte(j, len(lines))
             while j < len(lines):
                 _LOG.debug("  j=%d: line='%s'", j, lines[j])
                 if lines[j].startswith('  File "') or not lines[j].startswith(
@@ -127,9 +133,9 @@ def parse_traceback(
         cfile = []
         traceback = None
     elif state == "end":
-        dbg.dassert_lte(0, start_idx)
-        dbg.dassert_lte(start_idx, end_idx)
-        dbg.dassert_lt(end_idx, len(lines))
+        hdbg.dassert_lte(0, start_idx)
+        hdbg.dassert_lte(start_idx, end_idx)
+        hdbg.dassert_lt(end_idx, len(lines))
         traceback = "\n".join(lines[start_idx:end_idx])
     else:
         raise ValueError("Invalid state='%s'" % state)
@@ -144,7 +150,7 @@ def parse_traceback(
             # Leave the files relative to the current dir.
             super_module = None
             mode = "return_all_results"
-            _, file_name = git.purify_docker_file_from_git_client(
+            _, file_name = hgit.purify_docker_file_from_git_client(
                 file_name, super_module=super_module, mode=mode
             )
             cfile_tmp.append((file_name, line_num, text))

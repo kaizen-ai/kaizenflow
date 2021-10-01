@@ -2,10 +2,7 @@
 """
 Import as:
 
-import helpers.user_credentials as huserc
-
-# Test that all the credentials are properly defined.
-> helpers/user_credentials.py
+import helpers.old.user_credentials as holuscre
 """
 
 import argparse
@@ -14,11 +11,11 @@ import os
 import pprint
 from typing import Any, Dict, List, Tuple
 
-import helpers.dbg as dbg
-import helpers.git as git
+import helpers.dbg as hdbg
+import helpers.git as hgit
 import helpers.io_ as hio
-import helpers.parser as hparse
-import helpers.system_interaction as hsyste
+import helpers.parser as hparser
+import helpers.system_interaction as hsyint
 
 _LOG = logging.getLogger(__name__)
 
@@ -83,11 +80,11 @@ def get_credentials() -> Dict[str, Any]:
         notebooks
     """
     #
-    user_name = hsyste.get_user_name()
-    server_name = hsyste.get_server_name()
+    user_name = hsyint.get_user_name()
+    server_name = hsyint.get_server_name()
     _LOG.debug("user_name='%s'", user_name)
     _LOG.debug("server_name='%s'", server_name)
-    git_repo_name = git.get_repo_full_name_from_client(super_module=True)
+    git_repo_name = hgit.get_repo_full_name_from_client(super_module=True)
     # Values to assign.
     git_user_name = ""
     git_user_email = ""
@@ -123,7 +120,7 @@ def get_credentials() -> Dict[str, Any]:
             if git_repo_name == "":
                 jupyter_port = 10003
         else:
-            dbg.dassert_ne(conda_sh_path, "")
+            hdbg.dassert_ne(conda_sh_path, "")
     elif user_name == "paul":
         # Paul.
         git_user_name = "paul"
@@ -140,7 +137,7 @@ def get_credentials() -> Dict[str, Any]:
         # We allow the rest of the variables (e.g., ssh_key_path, tunnel_info) to
         # be empty since in some configurations they can be undefined.
     ]:
-        dbg.dassert_is_not(
+        hdbg.dassert_is_not(
             val_name,
             None,
             "Undefined '%s': add your credentials for user_name='%s' and "
@@ -152,18 +149,18 @@ def get_credentials() -> Dict[str, Any]:
         )
     conda_sh_path = os.path.expanduser(conda_sh_path)
     conda_sh_path = os.path.abspath(conda_sh_path)
-    dbg.dassert_exists(conda_sh_path)
+    hdbg.dassert_exists(conda_sh_path)
     #
     conda_env_path = os.path.abspath(os.path.expanduser(conda_env_path))
     # Not necessarily the conda_env_path exists.
     if not os.path.exists(conda_env_path):
         _LOG.warning("The dir '%s' doesn't exist: creating it", conda_env_path)
         hio.create_dir(conda_env_path, incremental=True)
-    dbg.dassert_exists(os.path.dirname(conda_env_path))
+    hdbg.dassert_exists(os.path.dirname(conda_env_path))
     #
     for service in tunnel_info:
         # TODO(gp): We should call in ssh_tunnels.py to keep this encapsulated.
-        dbg.dassert_eq(len(service), 4)
+        hdbg.dassert_eq(len(service), 4)
         service_name, server, local_port, remote_port = service
         _ = service_name, server, local_port, remote_port
     ret = {
@@ -191,15 +188,15 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--user", action="store", default=None, help="Impersonate a user"
     )
-    hparse.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     if args.user:
-        hsyste.set_user_name(args.user)
+        hsyint.set_user_name(args.user)
     usc = get_credentials()
     pprint.pprint(usc)
 

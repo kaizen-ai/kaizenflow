@@ -7,9 +7,9 @@ import pandas as pd
 
 import core.config as cconfig
 import helpers.io_ as hio
-import helpers.playback as hplayb
-import helpers.system_interaction as hsyste
-import helpers.unit_test as hut
+import helpers.playback as hplaybac
+import helpers.system_interaction as hsyint
+import helpers.unit_test as huntes
 
 _LOG = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class TestJsonRoundtrip1(hut.TestCase):
+class TestJsonRoundtrip1(huntes.TestCase):
     """
     Test roundtrip conversion through jsonpickle for different types.
     """
@@ -25,12 +25,12 @@ class TestJsonRoundtrip1(hut.TestCase):
     def test1(self) -> None:
         obj = 3
         #
-        hplayb.round_trip_convert(obj, logging.DEBUG)
+        hplaybac.round_trip_convert(obj, logging.DEBUG)
 
     def test2(self) -> None:
         obj = "hello"
         #
-        hplayb.round_trip_convert(obj, logging.DEBUG)
+        hplaybac.round_trip_convert(obj, logging.DEBUG)
 
     def test3(self) -> None:
         data = {
@@ -41,18 +41,18 @@ class TestJsonRoundtrip1(hut.TestCase):
         df.index.name = "hello"
         #
         obj = df
-        hplayb.round_trip_convert(obj, logging.DEBUG)
+        hplaybac.round_trip_convert(obj, logging.DEBUG)
 
     def test4(self) -> None:
         obj = datetime.date(2015, 1, 1)
         #
-        hplayb.round_trip_convert(obj, logging.DEBUG)
+        hplaybac.round_trip_convert(obj, logging.DEBUG)
 
 
 # #############################################################################
 
 
-class TestPlaybackInputOutput1(hut.TestCase):
+class TestPlaybackInputOutput1(huntes.TestCase):
     """
     Freeze the output of Playback.
     """
@@ -232,7 +232,7 @@ class TestPlaybackInputOutput1(hut.TestCase):
     def _helper(self, mode: str, *args: Any, **kwargs: Any) -> None:
         # Define a function to generate a unit test for.
         def get_result_ae(a: Any, b: Any) -> Any:
-            p = hplayb.Playback("assert_equal")
+            p = hplaybac.Playback("assert_equal")
             if isinstance(a, datetime.date) and isinstance(b, datetime.date):
                 return p.run(abs(a - b))
             if isinstance(a, dict) and isinstance(b, dict):
@@ -248,7 +248,7 @@ class TestPlaybackInputOutput1(hut.TestCase):
             return p.run(a + b)
 
         def get_result_cs(a: Any, b: Any) -> Any:
-            p = hplayb.Playback("check_string")
+            p = hplaybac.Playback("check_string")
             if isinstance(a, datetime.date) and isinstance(b, datetime.date):
                 return p.run(abs(a - b))
             if isinstance(a, dict) and isinstance(b, dict):
@@ -264,11 +264,11 @@ class TestPlaybackInputOutput1(hut.TestCase):
             return p.run(a + b)
 
         def get_result_ae_none() -> Any:
-            p = hplayb.Playback("assert_equal")
+            p = hplaybac.Playback("assert_equal")
             return p.run("Some string.")
 
         def get_result_cs_none() -> Any:
-            p = hplayb.Playback("check_string")
+            p = hplaybac.Playback("check_string")
             return p.run("Some string")
 
         if mode == "assert_equal":
@@ -291,7 +291,7 @@ class TestPlaybackInputOutput1(hut.TestCase):
 # #############################################################################
 
 
-class TestToPythonCode1(hut.TestCase):
+class TestToPythonCode1(huntes.TestCase):
     """
     Test to_python_code() for different types.
     """
@@ -395,14 +395,14 @@ class TestToPythonCode1(hut.TestCase):
         )
 
     def _check(self, input_obj: Any, expected: str) -> None:
-        res = hplayb.to_python_code(input_obj)
+        res = hplaybac.to_python_code(input_obj)
         self.assert_equal(res, expected)
 
 
 # #############################################################################
 
 
-class TestPlaybackFilePath1(hut.TestCase):
+class TestPlaybackFilePath1(huntes.TestCase):
     """
     Test file mode correctness.
     """
@@ -411,7 +411,7 @@ class TestPlaybackFilePath1(hut.TestCase):
         """
         test writing to file when number of tests is more than generated (10).
         """
-        test_file = hplayb.Playback._get_test_file_name("./path/to/somewhere.py")
+        test_file = hplaybac.Playback._get_test_file_name("./path/to/somewhere.py")
         self.assert_equal(
             test_file, "./path/to/test/test_by_playback_somewhere.py"
         )
@@ -420,7 +420,7 @@ class TestPlaybackFilePath1(hut.TestCase):
 # #############################################################################
 
 
-class TestPlaybackFileMode1(hut.TestCase):
+class TestPlaybackFileMode1(huntes.TestCase):
     """
     Test file mode correctness.
     """
@@ -458,7 +458,7 @@ class TestPlaybackFileMode1(hut.TestCase):
         # Save the code to the file.
         hio.to_file(tmp_py_file, self._code(max_tests))
         # Executes the code.
-        hsyste.system("python %s" % tmp_py_file)
+        hsyint.system("python %s" % tmp_py_file)
         playback_code = hio.from_file(tmp_test_file)
         return playback_code
 
@@ -470,9 +470,9 @@ class TestPlaybackFileMode1(hut.TestCase):
         code = (
             "\n".join(
                 [
-                    "import helpers.playback as hplayb",
+                    "import helpers.playback as hplaybac",
                     "def plbck_sum(a: int, b: int) -> int:",
-                    '    hplayb.Playback("check_string", to_file=True%s).run(None)',
+                    '    hplaybac.Playback("check_string", to_file=True%s).run(None)',
                     "    return a + b",
                     "",
                     "[plbck_sum(i, i + 1) for i in range(4)]",

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.csv_helpers as hchelp
+import helpers.csv_helpers as hcsh
 """
 
 # TODO(gp): -> merge with core.pandas_helper or -> helpers.pandas_csv_helper
@@ -13,7 +13,7 @@ from typing import Any, Callable, Dict, Optional, Union
 
 import pandas as pd
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
 import helpers.s3 as hs3
 
@@ -35,8 +35,8 @@ def read_csv_range(
     :param to: last line to read, not inclusive
     :return: DataFrame with columns from csv line 0 (header)
     """
-    dbg.dassert_lt(0, from_, msg="Row 0 assumed to be header row")
-    dbg.dassert_lt(from_, to, msg="Empty range requested!")
+    hdbg.dassert_lt(0, from_, msg="Row 0 assumed to be header row")
+    hdbg.dassert_lt(from_, to, msg="Empty range requested!")
     skiprows = range(1, from_)
     nrows = to - from_
     df = pd.read_csv(csv_path, skiprows=skiprows, nrows=nrows, **kwargs)
@@ -70,7 +70,7 @@ def build_chunk(
     :param nrows_at_a_time: size of chunks to process
     :return: DataFrame with columns from csv line 0
     """
-    dbg.dassert_lt(0, start)
+    hdbg.dassert_lt(0, start)
     stop = False
     dfs = []
     init_df = read_csv_range(csv_path, start, start + 1, **kwargs)
@@ -213,12 +213,12 @@ def _maybe_remove_extension(filename: str, extension: str) -> Optional[str]:
     :return: returns a copy of filename but without `extension`, if applicable,
         else returns `None`.
     """
-    dbg.dassert_isinstance(filename, str)
+    hdbg.dassert_isinstance(filename, str)
     # Assert filename is not empty.
-    dbg.dassert(filename)
+    hdbg.dassert(filename)
     #
-    dbg.dassert_isinstance(extension, str)
-    dbg.dassert(
+    hdbg.dassert_isinstance(extension, str)
+    hdbg.dassert(
         extension.startswith("."),
         "filename extension=`%s` expected to start with `.`",
         extension,
@@ -246,13 +246,13 @@ def convert_csv_dir_to_pq_dir(
     :return: None
     """
     if not hs3.is_s3_path(csv_dir):
-        dbg.dassert_exists(csv_dir)
+        hdbg.dassert_exists(csv_dir)
         # TODO(Paul): check .endswith(".csv") or do glob(csv_dir + "/*.csv")
         filenames = os.listdir(csv_dir)
     else:
         s3fs = hs3.get_s3fs("am")
         filenames = s3fs.ls(csv_dir)
-    dbg.dassert(filenames, "No files in the %s directory.", csv_dir)
+    hdbg.dassert(filenames, "No files in the %s directory.", csv_dir)
     for filename in filenames:
         # Remove .csv/.csv.gz and add .pq.
         csv_stem = _maybe_remove_extension(filename, ".csv")
@@ -279,7 +279,7 @@ def convert_csv_to_dict(path_to_csv: str, remove_nans: bool) -> Dict[Any, Any]:
     :param remove_nans: whether to remove NaNs from the dictionary
     :return: a json-compatible dict with the dataframe data
     """
-    dbg.dassert_exists(
+    hdbg.dassert_exists(
         path_to_csv,
         "The file '%s' is not found.",
         path_to_csv,
@@ -353,7 +353,7 @@ def from_typed_csv(file_name: str) -> pd.DataFrame:
     """
     # Load the types.
     dtypes_filename = file_name + ".types"
-    dbg.dassert_exists(dtypes_filename)
+    hdbg.dassert_exists(dtypes_filename)
     with open(dtypes_filename) as dtypes_file:
         dtypes_dict = ast.literal_eval(list(dtypes_file)[0])
     # Load the data.

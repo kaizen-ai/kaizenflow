@@ -5,13 +5,13 @@ import random
 
 import pandas as pd
 
-import helpers.hparquet as hparquet
-import helpers.unit_test as hut
+import helpers.hparquet as hhparque
+import helpers.unit_test as huntes
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestParquet1(hut.TestCase):
+class TestParquet1(huntes.TestCase):
 
     def test1(self) -> None:
         # Prepare data.
@@ -21,9 +21,9 @@ class TestParquet1(hut.TestCase):
         # Save data.
         dir_name = self.get_scratch_space()
         file_name = os.path.join(dir_name, "df.pq")
-        hparquet.to_parquet(df, file_name, log_level=logging.INFO)
+        hhparque.to_parquet(df, file_name, log_level=logging.INFO)
         # Read data back.
-        df2 = hparquet.from_parquet(file_name, log_level=logging.INFO)
+        df2 = hhparque.from_parquet(file_name, log_level=logging.INFO)
         _LOG.debug("df2=\n%s", df2.head(3))
         # Check.
         self.assert_equal(str(df), str(df2))
@@ -37,10 +37,10 @@ class TestParquet1(hut.TestCase):
         # Save data.
         dir_name = self.get_scratch_space()
         file_name = os.path.join(dir_name, "df.pq")
-        hparquet.to_parquet(df, file_name, log_level=logging.INFO)
+        hhparque.to_parquet(df, file_name, log_level=logging.INFO)
         # Read data back.
         columns = ["val1"]
-        df2 = hparquet.from_parquet(
+        df2 = hhparque.from_parquet(
             file_name, columns=columns, log_level=logging.INFO
         )
         _LOG.debug("df2=\n%s", df2.head(3))

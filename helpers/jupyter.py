@@ -6,9 +6,9 @@ import helpers.jupyter as hjupyter
 
 import os
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.system_interaction as hsinte
+import helpers.system_interaction as hsyint
 
 
 def run_notebook(
@@ -28,7 +28,7 @@ def run_notebook(
     :param pre_cmd:
     """
     file_name = os.path.abspath(file_name)
-    dbg.dassert_exists(file_name)
+    hdbg.dassert_exists(file_name)
     hio.create_dir(scratch_dir, incremental=True)
     # Build command line.
     cmd = []
@@ -53,4 +53,4 @@ def run_notebook(
     cmd.append("--ExecutePreprocessor.timeout=-1")
     # Execute.
     cmd_as_str = " ".join(cmd)
-    hsinte.system(cmd_as_str, abort_on_error=True, suppress_output=False)
+    hsyint.system(cmd_as_str, abort_on_error=True, suppress_output=False)

@@ -7,10 +7,10 @@ import helpers.env as henv
 import logging
 from typing import List, Tuple
 
-import helpers.git as git
-import helpers.printing as hprint
-import helpers.system_interaction as hsinte
-import helpers.versioning as hversi
+import helpers.git as hgit
+import helpers.printing as hprintin
+import helpers.system_interaction as hsyint
+import helpers.versioning as hversion
 
 _LOG = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ def _append(
 
 def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     # TODO(gp): This should return a string that we append to the rest.
-    hversi.check_version()
+    hversion.check_version()
     #
     txt: List[str] = []
     # Add git signature.
@@ -56,22 +56,22 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     txt_tmp: List[str] = []
     try:
         cmd = "git branch --show-current"
-        _, branch_name = hsinte.system_to_one_line(cmd)
+        _, branch_name = hsyint.system_to_one_line(cmd)
         txt_tmp.append("branch_name='%s'" % branch_name)
         #
         cmd = "git rev-parse --short HEAD"
-        _, hash_ = hsinte.system_to_one_line(cmd)
+        _, hash_ = hsyint.system_to_one_line(cmd)
         txt_tmp.append("hash='%s'" % hash_)
         #
         num_commits = 3
         if git_commit_type == "all":
             txt_tmp.append("# Last commits:")
-            log_txt = git.git_log(num_commits=num_commits, my_commits=False)
-            txt_tmp.append(hprint.indent(log_txt))
+            log_txt = hgit.git_log(num_commits=num_commits, my_commits=False)
+            txt_tmp.append(hprintin.indent(log_txt))
         elif git_commit_type == "mine":
             txt_tmp.append("# Your last commits:")
-            log_txt = git.git_log(num_commits=num_commits, my_commits=True)
-            txt_tmp.append(hprint.indent(log_txt))
+            log_txt = hgit.git_log(num_commits=num_commits, my_commits=True)
+            txt_tmp.append(hprintin.indent(log_txt))
         elif git_commit_type == "none":
             pass
         else:

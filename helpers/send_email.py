@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.send_email as hseema
+"""
+
 import email.mime.multipart as emmult
 import email.mime.text as emtext
 import os

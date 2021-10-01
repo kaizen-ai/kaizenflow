@@ -1,11 +1,17 @@
+"""
+Import as:
+
+import helpers.old.conda as holcon
+"""
+
 import json
 import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple
 
-import helpers.dbg as dbg
-import helpers.old.user_credentials as houser
-import helpers.system_interaction as hsyste
+import helpers.dbg as hdbg
+import helpers.old.user_credentials as holuscre
+import helpers.system_interaction as hsyint
 
 _LOG = logging.getLogger(__name__)
 
@@ -23,22 +29,22 @@ def conda_system(cmd: str, *args: Any, **kwargs: Any) -> int:
     :return:
     """
     # TODO(gp): Pass conda_env_name as done in get_conda_list()
-    path = houser.get_credentials()["conda_sh_path"]
-    dbg.dassert_exists(path)
-    dbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
+    path = holuscre.get_credentials()["conda_sh_path"]
+    hdbg.dassert_exists(path)
+    hdbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
     cmd = "source %s && %s" % (path, cmd)
-    output: int = hsyste.system(cmd, *args, **kwargs)
+    output: int = hsyint.system(cmd, *args, **kwargs)
     return output
 
 
 def conda_system_to_string(
     cmd: str, *args: Any, **kwargs: Any
 ) -> Tuple[int, str]:
-    path = houser.get_credentials()["conda_sh_path"]
-    dbg.dassert_exists(path)
-    dbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
+    path = holuscre.get_credentials()["conda_sh_path"]
+    hdbg.dassert_exists(path)
+    hdbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
     cmd = "source %s && %s" % (path, cmd)
-    output: Tuple[int, str] = hsyste.system_to_string(cmd, *args, **kwargs)
+    output: Tuple[int, str] = hsyint.system_to_string(cmd, *args, **kwargs)
     return output
 
 
@@ -49,9 +55,9 @@ def get_conda_envs_dirs() -> List[str]:
     _, ret = conda_system_to_string(r"conda config --show envs_dirs --json")
     _LOG.debug("ret=%s", ret)
     envs = json.loads(ret)
-    dbg.dassert_in("envs_dirs", envs)
+    hdbg.dassert_in("envs_dirs", envs)
     envs = envs["envs_dirs"]
-    dbg.dassert_isinstance(envs, list)
+    hdbg.dassert_isinstance(envs, list)
     return list(envs)
 
 
@@ -91,7 +97,7 @@ def set_conda_env_root(conda_env_path: str) -> None:
         conda_system(cmd)
         # Check.
         envs = get_conda_envs_dirs()
-        dbg.dassert(
+        hdbg.dassert(
             envs or envs[0] != conda_env_path,
             msg="%s is not first env dir in %s" % (conda_env_path, envs),
         )
@@ -133,7 +139,7 @@ def get_conda_info_envs() -> Tuple[dict, None]:
             env_dict[env_name] = env_path
         elif len(vals) == 3:
             env_name, star, env_path = vals
-            dbg.dassert_eq(star, "*")
+            hdbg.dassert_eq(star, "*")
             env_dict[env_name] = env_path
         else:
             _LOG.debug("Can't parse line='%s'", line)

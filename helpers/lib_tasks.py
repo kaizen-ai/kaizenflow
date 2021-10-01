@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.lib_tasks as ltasks
+import helpers.lib_tasks as hlitas
 """
 
 import datetime
@@ -19,15 +19,15 @@ from invoke import task
 
 # We want to minimize the dependencies from non-standard Python packages since
 # this code needs to run with minimal dependencies and without Docker.
-import helpers.dbg as dbg
-import helpers.git as git
-import helpers.introspection as hintros
+import helpers.dbg as hdbg
+import helpers.git as hgit
+import helpers.introspection as hintrosp
 import helpers.io_ as hio
 import helpers.list as hlist
-import helpers.printing as hprint
-import helpers.system_interaction as hsinte
+import helpers.printing as hprintin
+import helpers.system_interaction as hsyint
 import helpers.table as htable
-import helpers.versioning as hversi
+import helpers.versioning as hversion
 
 _LOG = logging.getLogger(__name__)
 
@@ -50,8 +50,8 @@ def set_default_params(params: Dict[str, Any]) -> None:
 
 
 def get_default_param(key: str) -> Any:
-    dbg.dassert_in(key, _DEFAULT_PARAMS)
-    dbg.dassert_isinstance(key, str)
+    hdbg.dassert_in(key, _DEFAULT_PARAMS)
+    hdbg.dassert_isinstance(key, str)
     return _DEFAULT_PARAMS[key]
 
 
@@ -74,9 +74,9 @@ def reset_default_params() -> None:
 # TODO(gp): Check http://docs.pyinvoke.org/en/1.0/concepts/library.html#
 #   modifying-core-parser-arguments
 if ("-d" in sys.argv) or ("--debug" in sys.argv):
-    dbg.init_logger(verbosity=logging.DEBUG)
+    hdbg.init_logger(verbosity=logging.DEBUG)
 else:
-    dbg.init_logger(verbosity=logging.INFO)
+    hdbg.init_logger(verbosity=logging.INFO)
 
 
 # NOTE: We need to use a `# type: ignore` for all the @task functions because
@@ -106,11 +106,11 @@ def _report_task(txt: str = "") -> None:
     global _IS_FIRST_CALL
     if _IS_FIRST_CALL:
         _IS_FIRST_CALL = True
-        hversi.check_version()
+        hversion.check_version()
     # Print the name of the function.
-    func_name = hintros.get_function_name(count=1)
+    func_name = hintrosp.get_function_name(count=1)
     msg = "## %s: %s" % (func_name, txt)
-    print(hprint.color_highlight(msg, color="purple"))
+    print(hprintin.color_highlight(msg, color="purple"))
 
 
 # TODO(gp): Move this to helpers.system_interaction and allow to add the switch
@@ -135,7 +135,7 @@ def _to_single_line_cmd(cmd: Union[str, List[str]]) -> str:
     """
     if isinstance(cmd, list):
         cmd = " ".join(cmd)
-    dbg.dassert_isinstance(cmd, str)
+    hdbg.dassert_isinstance(cmd, str)
     cmd = cmd.rstrip().lstrip()
     # Remove `\` at the end of the line.
     cmd = re.sub(r" \\\s*$", " ", cmd, flags=re.MULTILINE)
@@ -173,7 +173,7 @@ def _to_multi_line_cmd(docker_cmd_: List[str]) -> str:
     docker_cmd_tmp = []
     for dc in docker_cmd_:
         # Add a `\` at the end of each string.
-        dbg.dassert(not dc.endswith("\\"), "dc='%s'", dc)
+        hdbg.dassert(not dc.endswith("\\"), "dc='%s'", dc)
         dc += " \\"
         docker_cmd_tmp.extend(dc.split("\n"))
     docker_cmd_ = docker_cmd_tmp
@@ -229,14 +229,14 @@ def _get_files_to_process(
     :param mutually_exclusive: ensure that all options are mutually exclusive
     """
     _LOG.debug(
-        hprint.to_str(
+        hprintin.to_str(
             "modified branch last_commit all_ files_from_user "
             "mutually_exclusive remove_dirs"
         )
     )
     if mutually_exclusive:
         # All the options are mutually exclusive.
-        dbg.dassert_eq(
+        hdbg.dassert_eq(
             int(modified)
             + int(branch)
             + int(last_commit)
@@ -249,32 +249,32 @@ def _get_files_to_process(
     else:
         # We filter the files passed from the user through other the options,
         # so only the filtering options need to be mutually exclusive.
-        dbg.dassert_eq(
+        hdbg.dassert_eq(
             int(modified) + int(branch) + int(last_commit) + int(all_),
             1,
             msg="Specify only one among --modified, --branch, --last-commit",
         )
     dir_name = "."
     if modified:
-        files = git.get_modified_files(dir_name)
+        files = hgit.get_modified_files(dir_name)
     elif branch:
-        files = git.get_modified_files_in_branch("master", dir_name)
+        files = hgit.get_modified_files_in_branch("master", dir_name)
     elif last_commit:
-        files = git.get_previous_committed_files(dir_name)
+        files = hgit.get_previous_committed_files(dir_name)
     elif all_:
         files = hio.find_all_files(dir_name)
     if files_from_user:
         # If files were passed, overwrite the previous decision.
         files = files_from_user.split(" ")
     # Convert into a list.
-    dbg.dassert_isinstance(files, list)
+    hdbg.dassert_isinstance(files, list)
     files_to_process = [f for f in files if f != ""]
     # We need to remove `amp` to avoid copying the entire tree.
     files_to_process = [f for f in files_to_process if f != "amp"]
     _LOG.debug("files_to_process='%s'", str(files_to_process))
     # Remove dirs, if needed.
     if remove_dirs:
-        files_to_process = hsinte.remove_dirs(files_to_process)
+        files_to_process = hsyint.remove_dirs(files_to_process)
     _LOG.debug("files_to_process='%s'", str(files_to_process))
     # Ensure that there are files to process.
     if not files_to_process:
@@ -328,7 +328,7 @@ def print_tasks(ctx, as_code=False):  # type: ignore
     # def print_setup(ctx):  # type: ignore
     # def git_pull(ctx):  # type: ignore
     # def git_pull_master(ctx):  # type: ignore
-    _, txt = hsinte.system_to_string(cmd)
+    _, txt = hsyint.system_to_string(cmd)
     for line in txt.split("\n"):
         _LOG.debug("line=%s", line)
         m = re.match(r"^def\s+(\S+)\(", line)
@@ -384,7 +384,7 @@ def git_merge_master(ctx):  # type: ignore
 
 
 # TODO(gp): Add git_co(ctx)
-# Reuse git.git_stash_push() and git.stash_apply()
+# Reuse hgit.git_stash_push() and hgit.stash_apply()
 # git stash save your-file-name
 # git checkout master
 # # do whatever you had to do with master
@@ -399,7 +399,7 @@ def git_clean(ctx, dry_run=False):  # type: ignore
 
     Run `git status --ignored` to see what it's skipped.
     """
-    _report_task(hprint.to_str("dry_run"))
+    _report_task(hprintin.to_str("dry_run"))
     # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
     #  mistake.
     # Clean recursively.
@@ -450,8 +450,8 @@ def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
     else:
         raise ValueError(f"Invalid tag='{tag}'")
     # TODO(gp): Use system_to_lines
-    _, txt = hsinte.system_to_string(find_cmd, abort_on_error=False)
-    branches = hsinte.text_to_list(txt)
+    _, txt = hsyint.system_to_string(find_cmd, abort_on_error=False)
+    branches = hsyint.text_to_list(txt)
     # Print info.
     _LOG.info(
         "There are %d %s branches to delete:\n%s",
@@ -464,8 +464,8 @@ def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
         return
     # Ask whether to continue.
     if confirm_delete:
-        hsinte.query_yes_no(
-            dbg.WARNING + f": Delete these {tag} branches?", abort_on_no=True
+        hsyint.query_yes_no(
+            hdbg.WARNING + f": Delete these {tag} branches?", abort_on_no=True
         )
     for branch in branches:
         cmd_tmp = f"{delete_cmd} {branch}"
@@ -478,8 +478,8 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     Remove (both local and remote) branches that have been merged into master.
     """
     _report_task()
-    dbg.dassert(
-        git.get_branch_name(),
+    hdbg.dassert(
+        hgit.get_branch_name(),
         "master",
         "You need to be on master to delete dead branches",
     )
@@ -526,7 +526,7 @@ def git_create_branch(  # type: ignore
     _report_task()
     if issue_id > 0:
         # User specified an issue id on GitHub.
-        dbg.dassert_eq(
+        hdbg.dassert_eq(
             branch_name, "", "You can't specify both --issue and --branch_name"
         )
         title, _ = _get_gh_issue_title(issue_id, repo_short_name)
@@ -550,12 +550,12 @@ def git_create_branch(  # type: ignore
             branch_name += "_" + suffix
     #
     _LOG.info("branch_name='%s'", branch_name)
-    dbg.dassert_ne(branch_name, "")
+    hdbg.dassert_ne(branch_name, "")
     # Make sure we are branching from `master`, unless that's what the user wants.
-    curr_branch = git.get_branch_name()
+    curr_branch = hgit.get_branch_name()
     if curr_branch != "master":
         if only_branch_from_master:
-            dbg.dfatal(
+            hdbg.dfatal(
                 "You should branch from master and not from '%s'" % curr_branch
             )
     # Fetch master.
@@ -587,16 +587,16 @@ def git_create_patch(  # type: ignore
         - "diff": (default) creates a patch with the diff of the files
         - "tar": creates a tar ball with all the files
     """
-    _report_task(hprint.to_str("mode modified branch last_commit files"))
+    _report_task(hprintin.to_str("mode modified branch last_commit files"))
     _ = ctx
     # TODO(gp): Check that the current branch is up to date with master to avoid
     #  failures when we try to merge the patch.
-    dbg.dassert_in(mode, ("tar", "diff"))
+    hdbg.dassert_in(mode, ("tar", "diff"))
     # For now we just create a patch for the current submodule.
     # TODO(gp): Extend this to handle also nested repos.
     super_module = False
-    git_client_root = git.get_client_root(super_module)
-    hash_ = git.get_head_hash(git_client_root, short_hash=True)
+    git_client_root = hgit.get_client_root(super_module)
+    hash_ = hgit.get_head_hash(git_client_root, short_hash=True)
     timestamp = _get_ET_timestamp()
     #
     tag = os.path.basename(git_client_root)
@@ -606,12 +606,12 @@ def git_create_patch(  # type: ignore
     elif mode == "diff":
         dst_file += ".patch"
     else:
-        dbg.dfatal("Invalid code path")
+        hdbg.dfatal("Invalid code path")
     _LOG.debug("dst_file=%s", dst_file)
     # Summary of files.
     _LOG.info(
         "Difference between HEAD and master:\n%s",
-        git.get_summary_files_in_branch("master", "."),
+        hgit.get_summary_files_in_branch("master", "."),
     )
     # Get the files.
     all_ = False
@@ -629,7 +629,7 @@ def git_create_patch(  # type: ignore
         mutually_exclusive,
         remove_dirs,
     )
-    _LOG.info("Files to save:\n%s", hprint.indent("\n".join(files_as_list)))
+    _LOG.info("Files to save:\n%s", hprintin.indent("\n".join(files_as_list)))
     if not files_as_list:
         _LOG.warning("Nothing to patch: exiting")
         return
@@ -648,7 +648,7 @@ def git_create_patch(  # type: ignore
         elif last_commit:
             opts = "HEAD^"
         else:
-            dbg.dfatal(
+            hdbg.dfatal(
                 "You need to specify one among -modified, --branch, "
                 "--last-commit"
             )
@@ -656,9 +656,9 @@ def git_create_patch(  # type: ignore
         cmd_inv = "git apply"
     # Execute patch command.
     _LOG.info("Creating the patch into %s", dst_file)
-    dbg.dassert_ne(cmd, "")
+    hdbg.dassert_ne(cmd, "")
     _LOG.debug("cmd=%s", cmd)
-    rc = hsinte.system(cmd, abort_on_error=False)
+    rc = hsyint.system(cmd, abort_on_error=False)
     if not rc:
         _LOG.warning("Command failed with rc=%d", rc)
     # Print message to apply the patch.
@@ -688,7 +688,7 @@ def git_branch_files(ctx):  # type: ignore
     _ = ctx
     print(
         "Difference between HEAD and master:\n"
-        + git.get_summary_files_in_branch("master", ".")
+        + hgit.get_summary_files_in_branch("master", ".")
     )
 
 
@@ -734,7 +734,7 @@ def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
     cmd = 'git log -1 --name-status --pretty=""'
     _run(ctx, cmd)
     # Get the list of existing files.
-    files = git.get_previous_committed_files(".")
+    files = hgit.get_previous_committed_files(".")
     txt = "\n".join(files)
     print(f"\n# The files modified are:\n{txt}")
     # Save to clipboard.
@@ -799,7 +799,7 @@ def check_python_files(  # type: ignore
         # TODO(gp): Add also `python -c "import ..."`, if not equivalent to `compileall`.
         if python_execute:
             cmd = f"python {file_name}"
-            rc = hsinte.system(cmd, abort_on_error=False, suppress_output=False)
+            rc = hsyint.system(cmd, abort_on_error=False, suppress_output=False)
             _LOG.debug("file_name='%s' -> python_compile=%s", file_name, rc)
             if rc != 0:
                 msg = "'%s' doesn't execute correctly" % file_name
@@ -821,13 +821,13 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
     """
     _report_task()
     #
-    old_branch_name = git.get_branch_name(".")
-    dbg.dassert_ne(old_branch_name, new_branch_name)
+    old_branch_name = hgit.get_branch_name(".")
+    hdbg.dassert_ne(old_branch_name, new_branch_name)
     msg = (
         f"Do you want to rename the current branch '{old_branch_name}' to "
         f"'{new_branch_name}'"
     )
-    hsinte.query_yes_no(msg, abort_on_no=True)
+    hsyint.query_yes_no(msg, abort_on_no=True)
     # https://stackoverflow.com/questions/6591213/how-do-i-rename-a-local-git-branch
     # To rename a local branch:
     # git branch -m <oldname> <newname>
@@ -894,9 +894,9 @@ def _get_last_container_id() -> str:
     cmd = "docker ps -l | grep -v 'CONTAINER ID'"
     # CONTAINER ID   IMAGE          COMMAND                  CREATED
     # 90897241b31a   eeb33fe1880a   "/bin/sh -c '/bin/ba…"   34 hours ago ...
-    _, txt = hsinte.system_to_one_line(cmd)
+    _, txt = hsyint.system_to_one_line(cmd)
     # Parse the output: there should be at least one line.
-    dbg.dassert_lte(1, len(txt.split(" ")), "Invalid output='%s'", txt)
+    hdbg.dassert_lte(1, len(txt.split(" ")), "Invalid output='%s'", txt)
     container_id: str = txt.split(" ")[0]
     return container_id
 
@@ -918,14 +918,14 @@ def docker_stats(  # type: ignore
     :param all: report stats for all the containers
     """
     # pylint: enable=line-too-long
-    _report_task(hprint.to_str("all"))
+    _report_task(hprintin.to_str("all"))
     _ = ctx
     fmt = (
         r"table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
         + r"\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}"
     )
     cmd = f"docker stats --no-stream --format='{fmt}'"
-    _, txt = hsinte.system_to_string(cmd)
+    _, txt = hsyint.system_to_string(cmd)
     if all:
         output = txt
     else:
@@ -942,7 +942,7 @@ def docker_stats(  # type: ignore
                 output.append(line)
         # There should be at most two rows: the header and the one corresponding to
         # the container.
-        dbg.dassert_lte(
+        hdbg.dassert_lte(
             len(output), 2, "Invalid output='%s' for '%s'", output, txt
         )
         output = "\n".join(output)
@@ -958,7 +958,7 @@ def docker_kill(  # type: ignore
 
     :param all: kill all the containers (be careful!)
     """
-    _report_task(hprint.to_str("all"))
+    _report_task(hprintin.to_str("all"))
     # TODO(gp): Ask if we are sure and add a --just-do-it option.
     # Last container.
     opts = "-l"
@@ -1046,10 +1046,10 @@ def _get_aws_cli_version() -> int:
     # aws-cli/1.19.49 Python/3.7.6 Darwin/19.6.0 botocore/1.20.49
     # aws-cli/1.20.1 Python/3.9.5 Darwin/19.6.0 botocore/1.20.106
     cmd = "aws --version"
-    res = hsinte.system_to_one_line(cmd)[1]
+    res = hsyint.system_to_one_line(cmd)[1]
     # Parse the output.
     m = re.match(r"aws-cli/((\d+)\.\d+\.\d+)\s", res)
-    dbg.dassert(m, "Can't parse '%s'", res)
+    hdbg.dassert(m, "Can't parse '%s'", res)
     m: Match[Any]
     version = m.group(1)
     _LOG.debug("version=%s", version)
@@ -1064,7 +1064,7 @@ def docker_login(ctx):  # type: ignore
     Log in the AM Docker repo_short_name on AWS.
     """
     _report_task()
-    if hsinte.is_inside_ci():
+    if hsyint.is_inside_ci():
         _LOG.warning("Running inside GitHub Action: skipping `docker_login`")
         return
     major_version = _get_aws_cli_version()
@@ -1108,7 +1108,7 @@ def _get_amp_docker_compose_path() -> Optional[str]:
     E.g., `devops/compose/docker-compose_as_submodule.yml` and
     `devops/compose/docker-compose_as_supermodule.yml`
     """
-    path, _ = git.get_path_from_supermodule()
+    path, _ = hgit.get_path_from_supermodule()
     docker_compose_path: Optional[str]
     if path != "":
         _LOG.warning("amp is a submodule")
@@ -1125,7 +1125,7 @@ def _get_amp_docker_compose_path() -> Optional[str]:
 # TODO(gp): Isn't this in helper.git?
 def _get_git_hash() -> str:
     cmd = "git rev-parse HEAD"
-    git_hash: str = hsinte.system_to_one_line(cmd)[1]
+    git_hash: str = hsyint.system_to_one_line(cmd)[1]
     _LOG.debug("git_hash=%s", git_hash)
     return git_hash
 
@@ -1142,7 +1142,7 @@ def _check_image(image: str) -> None:
     *****.dkr.ecr.us-east-1.amazonaws.com/amp:local
     """
     m = re.match(rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_RE}:{_TAG_RE}$", image)
-    dbg.dassert(m, "Invalid image: '%s'", image)
+    hdbg.dassert(m, "Invalid image: '%s'", image)
 
 
 def _check_base_image(base_image: str) -> None:
@@ -1154,7 +1154,7 @@ def _check_base_image(base_image: str) -> None:
     regex = rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_RE}$"
     _LOG.debug("regex=%s", regex)
     m = re.match(regex, base_image)
-    dbg.dassert(m, "Invalid base_image: '%s'", base_image)
+    hdbg.dassert(m, "Invalid base_image: '%s'", base_image)
 
 
 def _get_base_image(base_image: str) -> str:
@@ -1179,7 +1179,7 @@ def get_image(stage: str, base_image: str) -> str:
     """
     # Docker refers the default image as "latest", although in our stage
     # nomenclature we call it "dev".
-    dbg.dassert_in(stage, "local dev prod hash".split())
+    hdbg.dassert_in(stage, "local dev prod hash".split())
     if stage == "hash":
         stage = _get_git_hash()
     # Get the base image.
@@ -1207,7 +1207,7 @@ def _get_docker_cmd(
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
     :param print_config: print the docker config for debugging purposes
     """
-    hprint.log(
+    hprintin.log(
         _LOG,
         logging.DEBUG,
         "stage base_image cmd extra_env_vars"
@@ -1222,7 +1222,7 @@ def _get_docker_cmd(
     docker_cmd_.append(f"IMAGE={image}")
     # - Handle extra env vars.
     if extra_env_vars:
-        dbg.dassert_isinstance(extra_env_vars, list)
+        hdbg.dassert_isinstance(extra_env_vars, list)
         for env_var in extra_env_vars:
             docker_cmd_.append(f"{env_var}")
     #
@@ -1234,8 +1234,8 @@ def _get_docker_cmd(
     docker_compose_files = []
     docker_compose_files.append(_get_base_docker_compose_path())
     #
-    dir_name = git.get_repo_full_name_from_dirname(".", include_host_name=False)
-    repo_short_name = git.get_repo_name(dir_name, in_mode="full_name")
+    dir_name = hgit.get_repo_full_name_from_dirname(".", include_host_name=False)
+    repo_short_name = hgit.get_repo_name(dir_name, in_mode="full_name")
     _LOG.debug("repo_short_name=%s", repo_short_name)
     if repo_short_name == "amp":
         docker_compose_file_tmp = _get_amp_docker_compose_path()
@@ -1243,18 +1243,18 @@ def _get_docker_cmd(
             docker_compose_files.append(docker_compose_file_tmp)
     # Add the compose files from command line.
     if extra_docker_compose_files:
-        dbg.dassert_isinstance(extra_docker_compose_files, list)
+        hdbg.dassert_isinstance(extra_docker_compose_files, list)
         docker_compose_files.extend(extra_docker_compose_files)
     # Add the compose files from the global params.
     key = "DOCKER_COMPOSE_FILES"
     if has_default_param(key):
         docker_compose_files.append(get_default_param(key))
     #
-    _LOG.debug(hprint.to_str("docker_compose_files"))
+    _LOG.debug(hprintin.to_str("docker_compose_files"))
     for docker_compose in docker_compose_files:
-        dbg.dassert_exists(docker_compose)
+        hdbg.dassert_exists(docker_compose)
     file_opts = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
-    _LOG.debug(hprint.to_str("file_opts"))
+    _LOG.debug(hprintin.to_str("file_opts"))
     # TODO(gp): Use something like `.append(rf"{space}{...}")`
     docker_cmd_.append(
         rf"""
@@ -1280,14 +1280,14 @@ def _get_docker_cmd(
     )
     # - Handle the user.
     if True:
-        user_name = hsinte.get_user_name()
+        user_name = hsyint.get_user_name()
         docker_cmd_.append(
             rf"""
         --user $(id -u):$(id -g)"""
         )
     # - Handle the extra docker options.
     if extra_docker_run_opts:
-        dbg.dassert_isinstance(extra_docker_run_opts, list)
+        hdbg.dassert_isinstance(extra_docker_run_opts, list)
         extra_opts = " ".join(extra_docker_run_opts)
         docker_cmd_.append(
             rf"""
@@ -1316,7 +1316,7 @@ def _get_docker_cmd(
         _LOG.debug("docker_config_cmd=\n%s", docker_config_cmd_as_str)
         _LOG.debug(
             "docker_config=\n%s",
-            hsinte.system_to_string(docker_config_cmd_as_str)[1],
+            hsyint.system_to_string(docker_config_cmd_as_str)[1],
         )
     # Print the config for debugging purpose.
     docker_cmd_ = _to_multi_line_cmd(docker_cmd_)
@@ -1352,7 +1352,7 @@ def docker_cmd(ctx, stage=STAGE, cmd=""):  # type: ignore
     Execute the command `cmd` inside a container corresponding to a stage.
     """
     _report_task()
-    dbg.dassert_ne(cmd, "")
+    hdbg.dassert_ne(cmd, "")
     base_image = ""
     # TODO(gp): Do we need to overwrite the entrypoint?
     docker_cmd_ = _get_docker_cmd(stage, base_image, cmd)
@@ -1402,12 +1402,12 @@ def docker_jupyter(  # type: ignore
     if auto_assign_port:
         uid = os.getuid()
         _LOG.debug("uid=%s", uid)
-        git_repo_idx = git.get_project_dirname(only_index=True)
+        git_repo_idx = hgit.get_project_dirname(only_index=True)
         git_repo_idx = int(git_repo_idx)
         _LOG.debug("git_repo_idx=%s", git_repo_idx)
         # We assume that there are no more than `max_idx_per_users` clients.
         max_idx_per_user = 10
-        dbg.dassert_lte(git_repo_idx, max_idx_per_user)
+        hdbg.dassert_lte(git_repo_idx, max_idx_per_user)
         port = (uid * max_idx_per_user) + git_repo_idx
         _LOG.info("Assigned port is %s", port)
     #
@@ -1422,7 +1422,7 @@ def docker_jupyter(  # type: ignore
 
 def _to_abs_path(filename: str) -> str:
     filename = os.path.abspath(filename)
-    dbg.dassert_exists(filename)
+    hdbg.dassert_exists(filename)
     return filename
 
 
@@ -1441,12 +1441,12 @@ def _get_build_tag(code_ver: str) -> str:
         AmpTask1280_Use_versioning_to_keep_code_and_container_in_sync-
         500a9e31ee70e51101c1b2eb82945c19992fa86e
 
-    :param code_ver: the value from hversi.get_code_version()
+    :param code_ver: the value from hversion.get_code_version()
     """
     # E.g., 20210723-20_52_00
     timestamp = _get_ET_timestamp()
-    branch_name = git.get_branch_name()
-    hash_ = git.get_head_hash()
+    branch_name = hgit.get_branch_name()
+    hash_ = hgit.get_head_hash()
     build_tag = f"{code_ver}-{timestamp}-{branch_name}-{hash_}"
     return build_tag
 
@@ -1484,7 +1484,7 @@ def docker_build_local_image(  # type: ignore
     #
     opts = "--no-cache" if not cache else ""
     # The container version is the version used from this code.
-    container_version = hversi.get_code_version("./version.txt")
+    container_version = hversion.get_code_version("./version.txt")
     build_tag = _get_build_tag(container_version)
     # TODO(gp): Use _to_multi_line_cmd()
     cmd = rf"""
@@ -1691,7 +1691,7 @@ def _find_test_files(
     Find all the files containing test code in `dir_name`.
     """
     dir_name = dir_name or "."
-    dbg.dassert_dir_exists(dir_name)
+    hdbg.dassert_dir_exists(dir_name)
     _LOG.debug("dir_name=%s", dir_name)
     # Find all the file names containing test code.
     _LOG.info("Searching from '%s'", dir_name)
@@ -1699,18 +1699,18 @@ def _find_test_files(
     _LOG.debug("path=%s", path)
     file_names = glob.glob(path, recursive=True)
     _LOG.debug("Found %d files: %s", len(file_names), str(file_names))
-    dbg.dassert_no_duplicates(file_names)
+    hdbg.dassert_no_duplicates(file_names)
     # Test files should always under a dir called `test`.
     for file_name in file_names:
         if "/old/" in file_name:
             continue
-        dbg.dassert_eq(
+        hdbg.dassert_eq(
             os.path.basename(os.path.dirname(file_name)),
             "test",
             "Test file '%s' needs to be under a `test` dir ",
             file_name,
         )
-        dbg.dassert_not_in(
+        hdbg.dassert_not_in(
             "notebook/",
             file_name,
             "Test file '%s' should not be under a `notebook` dir",
@@ -1722,7 +1722,7 @@ def _find_test_files(
     #
     file_names = sorted(file_names)
     _LOG.debug("file_names=%s", file_names)
-    dbg.dassert_no_duplicates(file_names)
+    hdbg.dassert_no_duplicates(file_names)
     return file_names
 
 
@@ -1769,10 +1769,10 @@ def _to_pbcopy(txt: str, pbcopy: bool) -> None:
     if not txt:
         print("Nothing to copy")
         return
-    if hsinte.is_running_on_macos():
+    if hsyint.is_running_on_macos():
         # -n = no new line
         cmd = f"echo -n '{txt}' | pbcopy"
-        hsinte.system(cmd)
+        hsyint.system(cmd)
         print(f"\n# Copied to system clipboard:\n{txt}")
     else:
         _LOG.warning("pbcopy works only on macOS")
@@ -1791,7 +1791,7 @@ def find_test_class(ctx, class_name, dir_name=".", pbcopy=True):  # type: ignore
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
     _report_task("class_name dir_name pbcopy")
-    dbg.dassert(class_name != "", "You need to specify a class name")
+    hdbg.dassert(class_name != "", "You need to specify a class name")
     _ = ctx
     file_names = _find_test_files(dir_name)
     res = _find_test_class(class_name, file_names)
@@ -1811,7 +1811,7 @@ def _find_test_decorator(decorator_name: str, file_names: List[str]) -> List[str
     Find test files containing tests with a certain decorator
     `@pytest.mark.XYZ`.
     """
-    dbg.dassert_isinstance(file_names, list)
+    hdbg.dassert_isinstance(file_names, list)
     # E.g.,
     #   @pytest.mark.slow(...)
     #   @pytest.mark.no_container
@@ -1848,7 +1848,7 @@ def find_test_decorator(ctx, decorator_name="", dir_name="."):  # type: ignore
     """
     _report_task()
     _ = ctx
-    dbg.dassert_ne(decorator_name, "", "You need to specify a decorator name")
+    hdbg.dassert_ne(decorator_name, "", "You need to specify a decorator name")
     file_names = _find_test_files(dir_name)
     res = _find_test_class(decorator_name, file_names)
     res = " ".join(res)
@@ -1878,24 +1878,24 @@ def find_check_string_output(  # type: ignore
     """
     _report_task()
     _ = ctx
-    dbg.dassert_ne(class_name, "", "You need to specify a class name")
-    dbg.dassert_ne(method_name, "", "You need to specify a method name")
+    hdbg.dassert_ne(class_name, "", "You need to specify a class name")
+    hdbg.dassert_ne(method_name, "", "You need to specify a method name")
     # Look for the directory named `class_name.method_name`.
     cmd = f"find . -name '{class_name}.{method_name}' -type d"
     # > find . -name "TestResultBundle.test_from_config1" -type d
     # ./core/dataflow/test/TestResultBundle.test_from_config1
-    _, txt = hsinte.system_to_string(cmd, abort_on_error=False)
+    _, txt = hsyint.system_to_string(cmd, abort_on_error=False)
     file_names = txt.split("\n")
     if not txt:
-        dbg.dfatal(f"Can't find the requested dir with '{cmd}'")
+        hdbg.dfatal(f"Can't find the requested dir with '{cmd}'")
     if len(file_names) > 1:
-        dbg.dfatal(f"Found more than one dir with '{cmd}':\n{txt}")
+        hdbg.dfatal(f"Found more than one dir with '{cmd}':\n{txt}")
     dir_name = file_names[0]
     # Find the only file underneath that dir.
-    dbg.dassert_dir_exists(dir_name)
+    hdbg.dassert_dir_exists(dir_name)
     cmd = f"find {dir_name} -name 'test.txt' -type f"
-    _, file_name = hsinte.system_to_one_line(cmd)
-    dbg.dassert_file_exists(file_name)
+    _, file_name = hsyint.system_to_one_line(cmd)
+    hdbg.dassert_file_exists(file_name)
     # Read the content of the file.
     _LOG.info("Found file '%s' for %s::%s", file_name, class_name, method_name)
     txt = hio.from_file(file_name)
@@ -1904,7 +1904,7 @@ def find_check_string_output(  # type: ignore
         if not fuzzy_match:
             # Align the output at the same level as 'exp = r...'.
             num_spaces = 8
-            txt = hprint.indent(txt, num_spaces=num_spaces)
+            txt = hprintin.indent(txt, num_spaces=num_spaces)
         output = f"""
         act =
         exp = r\"\"\"
@@ -1984,7 +1984,7 @@ def _build_run_command_line(
         )
         pytest_opts_tmp.extend(file_names)
     if skip_submodules:
-        submodule_paths = git.get_submodule_paths()
+        submodule_paths = hgit.get_submodule_paths()
         _LOG.warning(
             "Skipping %d submodules: %s", len(submodule_paths), submodule_paths
         )
@@ -2036,13 +2036,13 @@ def _run_test_cmd(
   covered
 """
         print(msg)
-        if start_coverage_script and hsinte.is_running_on_macos():
+        if start_coverage_script and hsyint.is_running_on_macos():
             # Create and run a script to show the coverage in the browser.
             script_txt = """(sleep 2; open http://localhost:33333) &
 (cd ./htmlcov; python -m http.server 33333)"""
             script_name = "./tmp.coverage.sh"
-            hsinte.create_executable_script(script_name, script_txt)
-            hsinte.system(script_name)
+            hsyint.create_executable_script(script_name, script_txt)
+            hsyint.system(script_name)
 
 
 def _run_tests(
@@ -2269,9 +2269,9 @@ def pytest_clean(ctx):  # type: ignore
     """
     _report_task()
     _ = ctx
-    import helpers.pytest_ as hpytes
+    import helpers.pytest_ as hpytest
 
-    hpytes.pytest_clean(".")
+    hpytest.pytest_clean(".")
 
 
 @task
@@ -2287,27 +2287,27 @@ def pytest_failed_freeze_test_list(ctx, confirm=False):  # type: ignore
     )
     frozen_failed_tests_file = "tmp.pytest_cache.lastfailed"
     if os.path.exists(frozen_failed_tests_file) and not confirm:
-        dbg.dfatal(
+        hdbg.dfatal(
             "File {frozen_failed_tests_file} already exists. Re-run with --confirm to overwrite"
         )
     _LOG.info(
         "Copying '%s' to '%s'", pytest_failed_tests_file, frozen_failed_tests_file
     )
     # Make a copy of the pytest file.
-    dbg.dassert_file_exists(pytest_failed_tests_file)
+    hdbg.dassert_file_exists(pytest_failed_tests_file)
     cmd = f"cp {pytest_failed_tests_file} {frozen_failed_tests_file}"
     _run(ctx, cmd)
 
 
 def _get_failed_tests_from_file(file_name: str) -> List[str]:
-    dbg.dassert_file_exists(file_name)
+    hdbg.dassert_file_exists(file_name)
     # {
     # "vendors/test/test_vendors.py::Test_gp::test1": true,
     # "vendors/test/test_vendors.py::Test_kibot_utils1::...": true,
     # }
     txt = hio.from_file(file_name)
     vals = json.loads(txt)
-    dbg.dassert_isinstance(vals, dict)
+    hdbg.dassert_isinstance(vals, dict)
     tests = [k for k, v in vals.items() if v]
     return tests
 
@@ -2325,7 +2325,7 @@ def _get_failed_tests_from_clipboard() -> List[str]:
     FAILED helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal4 - NameError: name 'dedent' is not defined
     ```
     """
-    hsinte.system_to_string("pbpaste")
+    hsyint.system_to_string("pbpaste")
     # TODO(gp): Finish this.
 
 
@@ -2385,7 +2385,7 @@ def pytest_failed(  # type: ignore
         else:
             file_name = pytest_failed_tests_file
     _LOG.info("Reading file_name='%s'", file_name)
-    dbg.dassert_file_exists(file_name)
+    hdbg.dassert_file_exists(file_name)
     # E.g., vendors/test/test_vendors.py::Test_gp::test1
     _LOG.info("Reading failed tests from file '%s'", file_name)
     tests = _get_failed_tests_from_file(file_name)
@@ -2394,7 +2394,7 @@ def pytest_failed(  # type: ignore
     targets = []
     for test in tests:
         data = test.split("::")
-        dbg.dassert_lte(len(data), 3, "Can't parse '%s'", test)
+        hdbg.dassert_lte(len(data), 3, "Can't parse '%s'", test)
         # E.g., dev_scripts/testing/test/test_run_tests.py
         # E.g., helpers/test/helpers/test/test_list.py::Test_list_1
         # E.g., core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test5
@@ -2430,7 +2430,7 @@ def pytest_failed(  # type: ignore
                     test_class,
                 )
         else:
-            dbg.dfatal(f"Invalid target_type='{target_type}'")
+            hdbg.dfatal(f"Invalid target_type='{target_type}'")
     # Package the output.
     _LOG.debug("res=%s", str(targets))
     targets = hlist.remove_duplicates(targets)
@@ -2440,7 +2440,7 @@ def pytest_failed(  # type: ignore
         target_type,
         "\n".join(targets),
     )
-    dbg.dassert_isinstance(targets, list)
+    hdbg.dassert_isinstance(targets, list)
     res = " ".join(targets)
     _LOG.debug("res=%s", str(res))
     #
@@ -2454,7 +2454,7 @@ def pytest_failed(  # type: ignore
 
 
 def _get_lint_docker_cmd(precommit_opts: str, run_bash: bool) -> str:
-    superproject_path, submodule_path = git.get_path_from_supermodule()
+    superproject_path, submodule_path = hgit.get_path_from_supermodule()
     if superproject_path:
         # We are running in a Git submodule.
         work_dir = f"/src/{submodule_path}"
@@ -2508,7 +2508,7 @@ def _parse_linter_output(txt: str) -> str:
         m = re.search(r"^(\S+):(\d+)[:\d+:]\s+(.*)$", line)
         if m:
             _LOG.debug("  -> Found a lint to parse: '%s'", line)
-            dbg.dassert_is_not(stage, None)
+            hdbg.dassert_is_not(stage, None)
             file_name = m.group(1)
             line_num = int(m.group(2))
             msg = m.group(3)
@@ -2560,7 +2560,7 @@ def lint(  # type: ignore
         _run(ctx, cmd)
     #
     if only_format_steps:
-        dbg.dassert_eq(phases, "")
+        hdbg.dassert_eq(phases, "")
         phases = "isort black"
     if run_linter_step:
         # We don't want to run this all the times.
@@ -2633,7 +2633,7 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
     """
     Report the status of the GH workflows in a branch.
     """
-    _report_task(hprint.to_str("branch status"))
+    _report_task(hprintin.to_str("branch status"))
     _ = ctx
     #
     cmd = "export NO_COLOR=1; gh run list"
@@ -2645,7 +2645,7 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
     # X  Fix lint issue                          Fast tests  master                                 workflow_dispatch  788949955
     # pylint: enable=line-too-long
     if branch == "branch":
-        branch_name = git.get_branch_name()
+        branch_name = hgit.get_branch_name()
     elif branch == "master":
         branch_name = "master"
     elif branch == "all":
@@ -2653,8 +2653,8 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
     else:
         raise ValueError("Invalid mode='%s'" % branch)
     # The output is tab separated. Parse it with csv and then filter.
-    _, txt = hsinte.system_to_string(cmd)
-    _LOG.debug(hprint.to_str("txt"))
+    _, txt = hsyint.system_to_string(cmd)
+    _LOG.debug(hprintin.to_str("txt"))
     # TODO(gp): This is a workaround for AmpTask1612.
     first_line = txt.split("\n")[0]
     num_cols = len(first_line.split("\t"))
@@ -2670,12 +2670,12 @@ def gh_workflow_list(ctx, branch="branch", status="all"):  # type: ignore
         "time",
         "workflow_id",
     ]
-    dbg.dassert_in(num_cols, (8, 9))
+    hdbg.dassert_in(num_cols, (8, 9))
     if num_cols == 9:
         cols.append("age")
     table = htable.Table.from_text(cols, txt, delimiter="\t")
     # table = [line for line in csv.reader(txt.split("\n"), delimiter="\t")]
-    _LOG.debug(hprint.to_str("table"))
+    _LOG.debug(hprintin.to_str("table"))
     #
     if branch != "all":
         field = "branch"
@@ -2697,21 +2697,21 @@ def gh_workflow_run(ctx, branch="branch", workflows="all"):  # type: ignore
     """
     Run GH workflows in a branch.
     """
-    _report_task(hprint.to_str("branch workflows"))
+    _report_task(hprintin.to_str("branch workflows"))
     # Get the branch name.
     if branch == "branch":
-        branch_name = git.get_branch_name()
+        branch_name = hgit.get_branch_name()
     elif branch == "master":
         branch_name = "master"
     else:
         raise ValueError("Invalid branch='%s'" % branch)
-    _LOG.debug(hprint.to_str("branch_name"))
+    _LOG.debug(hprintin.to_str("branch_name"))
     # Get the workflows.
     if workflows == "all":
         gh_tests = ["fast_tests", "slow_tests"]
     else:
         gh_tests = [workflows]
-    _LOG.debug(hprint.to_str("workflows"))
+    _LOG.debug(hprintin.to_str("workflows"))
     # Run.
     for gh_test in gh_tests:
         gh_test += ".yml"
@@ -2742,20 +2742,20 @@ def _get_repo_full_name_from_cmd(repo_short_name: str) -> Tuple[str, str]:
     repo_full_name_with_host: str
     if repo_short_name == "current":
         # Get the repo name from the current repo.
-        repo_full_name_with_host = git.get_repo_full_name_from_dirname(
+        repo_full_name_with_host = hgit.get_repo_full_name_from_dirname(
             ".", include_host_name=True
         )
         # Compute the short repo name corresponding to "current".
-        repo_full_name = git.get_repo_full_name_from_dirname(
+        repo_full_name = hgit.get_repo_full_name_from_dirname(
             ".", include_host_name=False
         )
-        ret_repo_short_name = git.get_repo_name(
+        ret_repo_short_name = hgit.get_repo_name(
             repo_full_name, in_mode="full_name", include_host_name=False
         )
 
     else:
         # Get the repo name using the short -> full name mapping.
-        repo_full_name_with_host = git.get_repo_name(
+        repo_full_name_with_host = hgit.get_repo_name(
             repo_short_name, in_mode="short_name", include_host_name=True
         )
         ret_repo_short_name = repo_short_name
@@ -2780,9 +2780,9 @@ def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> Tuple[str, str]:
     )
     # > (export NO_COLOR=1; gh issue view 1251 --json title)
     # {"title":"Update GH actions for amp"}
-    dbg.dassert_lte(1, issue_id)
+    hdbg.dassert_lte(1, issue_id)
     cmd = f"gh issue view {issue_id} --repo {repo_full_name_with_host} --json title,url"
-    _, txt = hsinte.system_to_string(cmd)
+    _, txt = hsyint.system_to_string(cmd)
     _LOG.debug("txt=\n%s", txt)
     # Parse json.
     dict_ = json.loads(txt)
@@ -2800,7 +2800,7 @@ def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> Tuple[str, str]:
     title = title.replace(" ", "_")
     title = title.replace("-", "_")
     # Add the prefix `AmpTaskXYZ_...`
-    task_prefix = git.get_task_prefix_from_repo_short_name(repo_short_name)
+    task_prefix = hgit.get_task_prefix_from_repo_short_name(repo_short_name)
     _LOG.debug("task_prefix=%s", task_prefix)
     title = "%s%d_%s" % (task_prefix, issue_id, title)
     return title, url
@@ -2814,10 +2814,10 @@ def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # ty
 
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
-    _report_task(hprint.to_str("issue_id repo_short_name"))
+    _report_task(hprintin.to_str("issue_id repo_short_name"))
     _ = ctx
     issue_id = int(issue_id)
-    dbg.dassert_lte(1, issue_id)
+    hdbg.dassert_lte(1, issue_id)
     title, url = _get_gh_issue_title(issue_id, repo_short_name)
     # Print or copy to clipboard.
     msg = f"{title}: {url}"
@@ -2840,7 +2840,7 @@ def gh_create_pr(  # type: ignore
     :param draft: draft or ready-to-review PR
     """
     _report_task()
-    branch_name = git.get_branch_name()
+    branch_name = hgit.get_branch_name()
     if not title:
         # Use the branch name as title.
         title = branch_name

@@ -1,7 +1,7 @@
 import logging
 
 import helpers.open as hopen
-import helpers.unit_test as hut
+import helpers.unit_test as huntes
 
 _LOG = logging.getLogger(__name__)
 
@@ -10,7 +10,7 @@ _LOG = logging.getLogger(__name__)
 #  test other systems.
 
 
-class Test_open_unknown(hut.TestCase):
+class Test_open_unknown(huntes.TestCase):
     """
     Test unknown extension and unknown systems.
     """
@@ -34,7 +34,7 @@ class Test_open_unknown(hut.TestCase):
         self.assertIn("UnknownOS", str(cm.exception))
 
 
-class Test_open_html(hut.TestCase):
+class Test_open_html(huntes.TestCase):
     """
     Test different command correctness for opening html file.
     """
@@ -61,7 +61,7 @@ class Test_open_html(hut.TestCase):
         self.check_string(str(cmd))
 
 
-class Test_open_pdf(hut.TestCase):
+class Test_open_pdf(huntes.TestCase):
     """
     Test different command correctness for opening pdf file.
     """

@@ -24,17 +24,17 @@
 
 import logging
 
-import helpers.dbg as dbg
-import helpers.env as env
-import helpers.printing as prnt
+import helpers.dbg as hdbg
+import helpers.env as henv
+import helpers.printing as hprintin
 
 # %%
-print(env.get_system_signature()[0])
+print(henv.get_system_signature()[0])
 
-prnt.config_notebook()
+hprintin.config_notebook()
 
 # %%
-# dbg.init_logger(verbosity=logging.DEBUG)
-dbg.init_logger(verbosity=logging.INFO)
-# dbg.test_logger()
+# hdbg.init_logger(verbosity=logging.DEBUG)
+hdbg.init_logger(verbosity=logging.INFO)
+# hdbg.test_logger()
 _LOG = logging.getLogger(__name__)

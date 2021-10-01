@@ -34,19 +34,19 @@ import logging
 
 import pandas as pd
 
-import helpers.dbg as dbg
-import helpers.env as env
-import helpers.playback as plbck
-import helpers.printing as prnt
+import helpers.dbg as hdbg
+import helpers.env as henv
+import helpers.playback as hplaybac
+import helpers.printing as hprintin
 
 # %%
-dbg.init_logger(verbosity=logging.INFO)
+hdbg.init_logger(verbosity=logging.INFO)
 
 _LOG = logging.getLogger(__name__)
 
-_LOG.info("%s", env.get_system_signature()[0])
+_LOG.info("%s", henv.get_system_signature()[0])
 
-prnt.config_notebook()
+hprintin.config_notebook()
 
 # %%
 import pandas as pd
@@ -65,7 +65,7 @@ print(df)
 df.to_dict(orient="series")
 
 # %%
-plbck.to_python_code(df)
+hplaybac.to_python_code(df)
 
 # %%
 pd.DataFrame.from_dict(
@@ -81,7 +81,7 @@ use_playback = True
 
 def F(a, b):
     if use_playback:
-        playback = plbck.Playback("assert_equal", "F", a, b)
+        playback = hplaybac.Playback("assert_equal", "F", a, b)
         playback.start()
     c = a + b
     if use_playback:
@@ -97,13 +97,13 @@ b = df
 print(F(a, b))
 
 # %%
-plbck.to_python_code(["3", 3])
+hplaybac.to_python_code(["3", 3])
 
 # %%
-plbck.round_trip_convert(df, logging.INFO)
+hplaybac.round_trip_convert(df, logging.INFO)
 
 # %%
-plbck.round_trip_convert("hello", logging.INFO)
+hplaybac.round_trip_convert("hello", logging.INFO)
 
 
 # %%

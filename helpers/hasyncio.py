@@ -1,6 +1,10 @@
 """
 Wrappers around `asyncio` to allow to switch true and simulated real-time
 loops.
+
+Import as:
+
+import helpers.hasyncio as hhasynci
 """
 import asyncio
 import contextlib
@@ -9,7 +13,7 @@ from typing import Any, Coroutine, Iterator, Optional
 
 import async_solipsism
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 
 
 # TODO(gp): We could make this a mixin and add this behavior to both asyncio and
@@ -59,7 +63,7 @@ def run(coroutine: Coroutine, *, event_loop: Optional[asyncio.AbstractEventLoop]
     if event_loop is None:
         # Use a normal `asyncio` EventLoop.
         event_loop = asyncio.new_event_loop()
-    dbg.dassert_issubclass(event_loop, asyncio.AbstractEventLoop)
+    hdbg.dassert_issubclass(event_loop, asyncio.AbstractEventLoop)
     try:
         ret = event_loop.run_until_complete(coroutine)
     finally:
