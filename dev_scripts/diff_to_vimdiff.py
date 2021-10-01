@@ -39,13 +39,13 @@ def _diff(dir1: str, dir2: str) -> str:
     dbg.dassert_exists(dir2)
     # Find all the files in both dirs.
     cmd = ""
-    remove_cmd = "grep -v .git | grep -v .idea |"
-    cmd += '(cd %s && find %s -name "*" | %s sort >/tmp/dir1) && ' % (
+    remove_cmd = "| grep -v .git | grep -v .idea"
+    cmd += '(cd %s && find %s -name "*" %s | sort >/tmp/dir1) && ' % (
         os.path.dirname(dir1),
         os.path.basename(dir1),
         remove_cmd,
     )
-    cmd += '(cd %s && find %s -name "*" | %s sort >/tmp/dir2)' % (
+    cmd += '(cd %s && find %s -name "*" %s | sort >/tmp/dir2)' % (
         os.path.dirname(dir2),
         os.path.basename(dir2),
         remove_cmd,
@@ -58,7 +58,8 @@ def _diff(dir1: str, dir2: str) -> str:
     cmd = "vimdiff /tmp/dir1 /tmp/dir2"
     print("# Diff file listing with:\n> " + cmd)
     dst_file = "./tmp.diff_file_listings.txt"
-    cmd = "diff --brief -r %s %s >%s" % (dir1, dir2, dst_file)
+    # TODO(gp): We should use diff_file_listings to compare.
+    cmd = "diff --brief -r %s %s %s >%s" % (dir1, dir2, remove_cmd, dst_file)
     # We don't abort since rc != 0 in case of differences, which is a valid outcome.
     si.system(cmd, abort_on_error=False)
     print(

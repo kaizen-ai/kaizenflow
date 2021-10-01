@@ -393,11 +393,14 @@ def normalize(
 
 
 def split_positive_and_negative_parts(
-    signal: pd.Series,
+    signal: Union[pd.Series, pd.DataFrame],
 ) -> pd.DataFrame:
     """
     Split `signal` into max(signal, 0) and max(-signal, 0).
     """
+    if isinstance(signal, pd.DataFrame):
+        hdbg.dassert_eq(len(signal.columns), 1)
+        signal = signal.squeeze()
     hdbg.dassert_isinstance(signal, pd.Series)
     positive = ((signal + signal.abs()) / 2).rename("positive")
     negative = ((signal.abs() - signal) / 2).rename("negative")
