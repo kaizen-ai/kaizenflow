@@ -2220,6 +2220,9 @@ def compute_regression_coefficients(
         y_variance / (x_variance.multiply(x_var_eff_counts))
     ).rename("SE(beta)")
     z_scores = beta.divide(beta_se).rename("beta_z_scored")
+    # Calculate two-sided p-values.
+    p_val_array = 2 * sp.stats.norm.sf(z_scores.abs())
+    p_val = pd.Series(index=z_scores.index, data=p_val_array, name="p_val_2s")
     # Calculate autocovariance-related stats of x variables.
     autocovariance = (
         x_vars.multiply(x_vars.shift(1), axis=0)
@@ -2241,6 +2244,7 @@ def compute_regression_coefficients(
         beta,
         beta_se,
         z_scores,
+        p_val,
         autocovariance,
         autocorrelation,
         turn,
