@@ -1,5 +1,5 @@
 """
-Creates and handles the Postgres DB.
+Create and handle the Postgres DB.
 
 Import as:
 
@@ -94,8 +94,8 @@ def define_data_types(cursor: psycop.extensions.cursor) -> None:
     Define custom data types inside a database.
 
     :param cursor: a database cursor
-    :return:
     """
+    _LOG.info("Defining data types...")
     # Define data types.
     define_types_query = """
     /* TODO: Futures -> futures */
@@ -105,11 +105,11 @@ def define_data_types(cursor: psycop.extensions.cursor) -> None:
     CREATE TYPE ContractType AS ENUM ('continuous', 'expiry');
     CREATE SEQUENCE serial START 1;
     """
-    _LOG.debug("Defining data types with query '%s'...", define_types_query)
+    _LOG.debug("Executing query '%s'...", define_types_query)
     try:
         cursor.execute(define_types_query)
     except psycop.errors.DuplicateObject:
-        _LOG.warning("Specified data types already exist. Terminated.")
+        _LOG.warning("Specified data types already exist: skipping.")
 
 
 def create_tables(
@@ -121,8 +121,8 @@ def create_tables(
 
     :param cursor: a database cursor
     :param custom_files: provider-specific sql files
-    :return:
     """
+    _LOG.info("Creating tables...")
     sql_files = get_sql_files(custom_files)
     # Create tables.
     for sql_file in sql_files:
@@ -131,7 +131,7 @@ def create_tables(
         try:
             cursor.execute(sql_query)
         except psycop.errors.DuplicateObject:
-            _LOG.warning("Schemas are already created. Terminated.")
+            _LOG.warning("Schemas are already created: skipping.")
             break
 
 
@@ -140,14 +140,11 @@ def test_tables(cursor: psycop.extensions.cursor) -> None:
     Test that tables are created.
 
     :param cursor: a database cursor
-    :return:
     """
+    _LOG.info("Testing created tables...")
     test_query = "INSERT INTO Exchange (name) VALUES ('TestExchange');"
-    _LOG.debug("Testing db by executing query '%s'...", test_query)
-    try:
-        cursor.execute(test_query)
-    except psycop.Error:
-        _LOG.warning("Test failed with error '%s'.", psycop.Error)
+    _LOG.debug("Executing query '%s'...", test_query)
+    cursor.execute(test_query)
 
 
 def create_schema(custom_files: Optional[List[str]] = None) -> None:
@@ -160,19 +157,15 @@ def create_schema(custom_files: Optional[List[str]] = None) -> None:
         - Testing that tables are created
 
     :param custom_files: provider-specific sql files
-    :return:
     """
     _LOG.info("DB connection:\n%s", get_db_connection_details_from_environment())
     # Get database connection and cursor.
     connection, cursor = get_db_connection_from_environment()
     # Define data types.
-    _LOG.info("Defining data types...")
     define_data_types(cursor)
     # Create tables.
-    _LOG.info("Creating tables...")
     create_tables(cursor, custom_files)
     # Test the db.
-    _LOG.info("Testing created tables...")
     test_tables(cursor)
     # Close connection.
     connection.close()
@@ -189,7 +182,6 @@ def create_database(
     :param dbname: database name, e.g. `im_db_local`
     :param custom_files: provider-specific sql files
     :param force: overwrite existing database
-    :return:
     """
     # Initialize connection.
     connection, _ = get_db_connection_from_environment()
@@ -206,7 +198,6 @@ def remove_database(dbname: str) -> None:
     Remove database in current environment.
 
     :param dbname: database name, e.g. `im_db_local`
-    :return:
     """
     # Initialize connection.
     connection, cursor = get_db_connection_from_environment()
