@@ -19,6 +19,5 @@ source /${ENV_NAME}/bin/activate
 
 # Initialize the DB.
 # ./im/devops/init_im_db.py --db $POSTGRES_DB
-./im/devops/set_schema_im_db.py
 
 eval "$@"

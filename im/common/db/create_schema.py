@@ -288,8 +288,20 @@ def test_tables(
     _LOG.info("Testing created tables...")
     # Check tables list.
     actual_tables = hsql.get_table_names(connection)
-    expected_tables = [""]
-    dbg.dassert_is_subset(actual_tables, expected_tables)
+    expected_tables = [
+        "exchange",
+        "tradesymbol",
+        "symbol",
+        "kibotdailydata",
+        "kibotminutedata",
+        "kibottickbidaskdata",
+        "kibottickdata",
+        "ibdailydata",
+        "ibminutedata",
+        "ibtickbidaskdata",
+        "ibtickdata",
+    ]
+    dbg.dassert_set_eq(actual_tables, expected_tables)
     # Execute the test query.
     test_query = "INSERT INTO Exchange (name) VALUES ('TestExchange');"
     cursor.execute(test_query)
@@ -312,8 +324,7 @@ def create_schema() -> None:
     # Create tables.
     create_tables(cursor)
     # Test the db.
-    test_tables(cursor)
-    print(hsql.get_table_names(connection))
+    test_tables(connection, cursor)
     # Close connection.
     connection.close()
 
