@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.joblib_helpers as hjoblib
+import helpers.joblib_helpers as hjoh
 """
 
 import concurrent.futures
@@ -19,7 +19,7 @@ import helpers.datetime_ as hdateti
 import helpers.dbg as hdbg
 import helpers.htqdm as htqdm
 import helpers.io_ as hio
-import helpers.printing as hprint
+import helpers.printing as hprintin
 import helpers.timer as htimer
 
 _LOG = logging.getLogger(__name__)
@@ -115,7 +115,7 @@ def workload_to_string(workload: Workload) -> str:
     txt.append("workload_func=%s" % workload_func.__name__)
     txt.append("func_name=%s" % func_name)
     for i, task in enumerate(tasks):
-        txt.append("\n" + hprint.frame("Task %s / %s" % (i + 1, len(tasks))))
+        txt.append("\n" + hprintin.frame("Task %s / %s" % (i + 1, len(tasks))))
         txt.append(task_to_string(task))
     txt = "\n".join(txt)
     return txt
@@ -216,7 +216,7 @@ def _parallel_execute_decorator(
     # `start_ts` needs to be before running the function.
     start_ts = hdateti.get_timestamp("naive_ET")
     tag = "%s/%s (%s)" % (task_idx + 1, task_len, start_ts)
-    txt.append("\n" + hprint.frame(tag) + "\n")
+    txt.append("\n" + hprintin.frame(tag) + "\n")
     txt.append("tag=%s" % tag)
     txt.append("workload_func=%s" % workload_func.__name__)
     txt.append("func_name=%s" % func_name)
@@ -244,7 +244,7 @@ def _parallel_execute_decorator(
     txt.append("error=%s" % error)
     # Update log file.
     txt = "\n".join(txt)
-    _LOG.debug("txt=\n%s", hprint.indent(txt))
+    _LOG.debug("txt=\n%s", hprintin.indent(txt))
     hio.to_file(log_file, txt, mode="a")
     if error:
         # The execution wasn't successful.
@@ -401,7 +401,7 @@ def parallel_execute(
     workload_func, func_name, tasks = workload
     #
     _LOG.info(
-        hprint.to_str(
+        hprintin.to_str(
             "dry_run num_threads incremental num_attempts abort_on_error"
         )
     )
@@ -424,7 +424,7 @@ def parallel_execute(
         res = []
         for task_idx, task in tqdm_iter:
             _LOG.debug(
-                "\n%s", hprint.frame("Task %s / %s" % (task_idx + 1, task_len))
+                "\n%s", hprintin.frame("Task %s / %s" % (task_idx + 1, task_len))
             )
             # Execute.
             res_tmp = _parallel_execute_decorator(
