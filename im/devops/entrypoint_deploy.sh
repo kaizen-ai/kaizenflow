@@ -3,7 +3,7 @@
 # Entrypoint for an app that runs together with PostgreSQL.
 #
 
-# TODO(Grisha): remove this file and use amp entrypoint #106.
+# TODO(Grisha): remove this file and use the amp entrypoint #106.
 
 set -e
 

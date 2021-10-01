@@ -8,17 +8,18 @@ import im.common.db.create_schema as icdcrsch
 
 import logging
 import os
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 import psycopg2 as psycop
 import psycopg2.sql as psql
 
-import helpers.io_ as hio
 import helpers.sql as hsql
 import helpers.system_interaction as sysint
 
 _LOG = logging.getLogger(__name__)
 
+
+# TODO(Grisha): convert the code into a class.
 
 def get_db_connection_from_environment() -> Tuple[
     hsql.DbConnection, psycop.extensions.cursor
@@ -91,26 +92,136 @@ def check_db_connection() -> None:
     sysint.system(cmd, suppress_output=False)
 
 
-def get_sql_files(custom_files: Optional[List[str]] = None) -> List[str]:
+def get_common_create_table_query() -> str:
     """
-    Get SQL files with `CREATE TABLE` instructions.
+    Get SQL query that is used to create tables for common usage.
+    """
+    sql_query = """
+    CREATE TABLE IF NOT EXISTS Exchange (
+        id integer PRIMARY KEY DEFAULT nextval('serial'),
+        name text UNIQUE
+    );
+    
+    CREATE TABLE IF NOT EXISTS Symbol (
+        id integer PRIMARY KEY DEFAULT nextval('serial'),
+        code text UNIQUE,
+        description text,
+        asset_class AssetClass,
+        start_date date DEFAULT CURRENT_DATE,
+        symbol_base text
+    );
+    
+    CREATE TABLE IF NOT EXISTS TradeSymbol (
+        id integer PRIMARY KEY DEFAULT nextval('serial'),
+        exchange_id integer REFERENCES Exchange,
+        symbol_id integer REFERENCES Symbol,
+        UNIQUE (exchange_id, symbol_id)
+    );
+    """
+    return sql_query
 
-    :param custom_files: provider-specific sql files
-    :return: SQL files with `CREATE TABLE` instructions
+
+def get_ib_create_table_query() -> str:
     """
-    # Common files.
-    files = [
-        os.path.join(os.path.dirname(__file__), "../db/sql", filename)
-        for filename in (
-            "static.sql",
-            "kibot.sql",
-            "ib.sql",
-        )
-    ]
-    # Extend with custom files, if needed.
-    if custom_files:
-        files.extend(custom_files)
-    return files
+    Get SQL query that is used to create tables for `ib`.
+    """
+    sql_query = """
+    CREATE TABLE IF NOT EXISTS IbDailyData (
+        id integer PRIMARY KEY DEFAULT nextval('serial'),
+        trade_symbol_id integer REFERENCES TradeSymbol,
+        date date,
+        open numeric,
+        high numeric,
+        low numeric,
+        close numeric,
+        volume bigint,
+        average numeric,
+        -- TODO(*): barCount -> bar_count
+        barCount integer,
+        UNIQUE (trade_symbol_id, date)
+    );
+    
+    CREATE TABLE IF NOT EXISTS IbMinuteData (
+        id integer PRIMARY KEY DEFAULT nextval('serial'),
+        trade_symbol_id integer REFERENCES TradeSymbol,
+        datetime timestamptz,
+        open numeric,
+        high numeric,
+        low numeric,
+        close numeric,
+        volume bigint,
+        average numeric,
+        barCount integer,
+        UNIQUE (trade_symbol_id, datetime)
+    );
+    
+    CREATE TABLE IF NOT EXISTS IbTickBidAskData (
+        id integer PRIMARY KEY DEFAULT nextval('serial'),
+        trade_symbol_id integer REFERENCES TradeSymbol,
+        datetime timestamp,
+        bid numeric,
+        ask numeric,
+        volume bigint
+    );
+    
+    CREATE TABLE IF NOT EXISTS IbTickData (
+        id integer PRIMARY KEY DEFAULT nextval('serial'),
+        trade_symbol_id integer REFERENCES TradeSymbol,
+        datetime timestamp,
+        price numeric,
+        size bigint
+    );
+    """
+    return sql_query
+
+
+def get_kibot_create_table_query() -> str:
+    """
+    Get SQL query that is used to create tables for `kibot`.
+    """
+    sql_query = """
+    CREATE TABLE IF NOT EXISTS KibotDailyData (
+        id integer PRIMARY KEY DEFAULT nextval('serial'),
+        trade_symbol_id integer REFERENCES TradeSymbol,
+        date date,
+        open numeric,
+        high numeric,
+        low numeric,
+        close numeric,
+        volume bigint,
+        UNIQUE (trade_symbol_id, date)
+    );
+    
+    CREATE TABLE IF NOT EXISTS KibotMinuteData (
+        id integer PRIMARY KEY DEFAULT nextval('serial'),
+        trade_symbol_id integer REFERENCES TradeSymbol,
+        datetime timestamp,
+        open numeric,
+        high numeric,
+        low numeric,
+        close numeric,
+        volume bigint,
+        UNIQUE (trade_symbol_id, datetime)
+    );
+    
+    CREATE TABLE IF NOT EXISTS KibotTickBidAskData (
+        id integer PRIMARY KEY DEFAULT nextval('serial'),
+        trade_symbol_id integer REFERENCES TradeSymbol,
+        datetime timestamp,
+        bid numeric,
+        ask numeric,
+        volume bigint
+    );
+    
+    CREATE TABLE IF NOT EXISTS KibotTickData (
+        id integer PRIMARY KEY DEFAULT nextval('serial'),
+        trade_symbol_id integer REFERENCES TradeSymbol,
+        datetime timestamp,
+        price numeric,
+        size bigint
+    );
+    """
+    return sql_query
 
 
 def define_data_types(cursor: psycop.extensions.cursor) -> None:
@@ -138,25 +249,28 @@ def define_data_types(cursor: psycop.extensions.cursor) -> None:
 
 def create_tables(
     cursor: psycop.extensions.cursor,
-    custom_files: Optional[List[str]] = None,
 ) -> None:
     """
     Create tables inside a database.
 
     :param cursor: a database cursor
-    :param custom_files: provider-specific sql files
     """
     _LOG.info("Creating tables...")
-    sql_files = get_sql_files(custom_files)
+    # Get SQL query to create the common tables.
+    common_query = get_common_create_table_query()
+    # Get SQL query to create the `kibot` tables.
+    kibot_query = get_kibot_create_table_query()
+    # Get SQL query to create the `ib` tables.
+    ib_query = get_ib_create_table_query()
+    # Collect the queries.
+    create_table_queries = [common_query, kibot_query, ib_query]
     # Create tables.
-    for sql_file in sql_files:
-        _LOG.debug("Creating tables from '%s'...", sql_file)
-        sql_query = hio.from_file(sql_file)
+    for query in create_table_queries:
+        _LOG.debug("Executing query '%s'...", query)
         try:
-            cursor.execute(sql_query)
+            cursor.execute(query)
         except psycop.errors.DuplicateObject:
-            _LOG.warning("Schemas are already created: skipping.")
-            break
+            _LOG.warning("Tables are already created: skipping.")
 
 
 def test_tables(cursor: psycop.extensions.cursor) -> None:
@@ -171,7 +285,7 @@ def test_tables(cursor: psycop.extensions.cursor) -> None:
     cursor.execute(test_query)
 
 
-def create_schema(custom_files: Optional[List[str]] = None) -> None:
+def create_schema() -> None:
     """
     Create SQL schema.
 
@@ -179,8 +293,6 @@ def create_schema(custom_files: Optional[List[str]] = None) -> None:
         - Defining custom data types
         - Creating new tables
         - Testing that tables are created
-
-    :param custom_files: provider-specific sql files
     """
     _LOG.info("DB connection:\n%s", get_db_connection_details_from_environment())
     # Get database connection and cursor.
@@ -188,7 +300,7 @@ def create_schema(custom_files: Optional[List[str]] = None) -> None:
     # Define data types.
     define_data_types(cursor)
     # Create tables.
-    create_tables(cursor, custom_files)
+    create_tables(cursor)
     # Test the db.
     test_tables(cursor)
     # Close connection.
@@ -197,14 +309,12 @@ def create_schema(custom_files: Optional[List[str]] = None) -> None:
 
 def create_database(
     dbname: str,
-    custom_files: Optional[List[str]] = None,
     force: Optional[bool] = None,
 ) -> None:
     """
     Create database and SQL schema inside it.
 
     :param dbname: database name, e.g. `im_db_local`
-    :param custom_files: provider-specific sql files
     :param force: overwrite existing database
     """
     # Initialize connection.
@@ -214,7 +324,7 @@ def create_database(
     hsql.create_database(connection, db=dbname, force=force)
     connection.close()
     # Create SQL schema.
-    create_schema(custom_files)
+    create_schema()
 
 
 def remove_database(dbname: str) -> None:
