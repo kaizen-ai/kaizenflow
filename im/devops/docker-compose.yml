@@ -1,11 +1,14 @@
 version: '3'
 
 services:
+  # Docker container running code that talks to the DB.
   app:
     # TODO(Grisha): use amp image w/o the `Dockerfile`.
     build:
       context: .
       dockerfile: dev.Dockerfile
+    environment:
+      - ENV_NAME=venv
     restart: "no"
     depends_on:
       - im_postgres_local
@@ -16,6 +19,7 @@ services:
     working_dir: /app
     entrypoint: /app/im/devops/entrypoint_deploy.sh
 
+  # Docker container running Postgres DB.
   im_postgres_local:
     image: postgres:13
     restart: "no"
