@@ -1,12 +1,17 @@
 #!/usr/bin/env python
+"""
+Import as:
+
+import im.devops.insert_db as imdeindb
+"""
+
+import argparse
+import logging
 import os
 
-import helpers.dbg as dbg
-import helpers.parser as hparse
+import helpers.dbg as hdbg
+import helpers.parser as hparser
 import helpers.sql as hsql
-
-import logging
-import argparse
 
 _LOG = logging.getLogger(__name__)
 
@@ -35,7 +40,7 @@ def _get_create_table_command(table_name: str) -> str:
                 )
                 """
     else:
-        dbg.dfatal("Table %s is not available for creation", table_name)
+        hdbg.dfatal("Table %s is not available for creation", table_name)
     return command
 
 
@@ -54,8 +59,11 @@ def create_table(conn: hsql.DbConnection, table_name: str) -> None:
     :param conn: DB connection
     :param table_name: name of the table
     """
-    dbg.dassert_not_in(table_name, hsql.get_table_names(conn),
-                       msg="Table %s already exists!" % table_name)
+    hdbg.dassert_not_in(
+        table_name,
+        hsql.get_table_names(conn),
+        msg="Table %s already exists!" % table_name,
+    )
     cursor = conn.cursor()
     # Build a CREATE TABLE command from name.
     command = _get_create_table_command(table_name)
@@ -72,26 +80,25 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        # TODO(Danya): replace dst_dir with SQL connection.
         "--table_name",
         action="store",
         required=True,
         type=str,
-        help="Folder to download files to",
+        help="Name of table to create",
     )
-    parser = hparse.add_verbosity_arg(parser)
+    parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     conn, _ = hsql.get_connection(
-            dbname=os.environ["POSTGRES_DB"],
-            host=os.environ["POSTGRES_HOST"],
-            port=int(os.environ["POSTGRES_PORT"]),
-            user=os.environ["POSTGRES_USER"],
-            password=os.environ["POSTGRES_PASSWORD"],
-        )
+        dbname=os.environ["POSTGRES_DB"],
+        host=os.environ["POSTGRES_HOST"],
+        port=int(os.environ["POSTGRES_PORT"]),
+        user=os.environ["POSTGRES_USER"],
+        password=os.environ["POSTGRES_PASSWORD"],
+    )
     create_table(conn, args.table_name)
     return None
