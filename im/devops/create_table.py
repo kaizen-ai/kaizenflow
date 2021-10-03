@@ -1,8 +1,15 @@
 #!/usr/bin/env python
 """
+Insert a table into the local database.
+
+Use example:
+
+> python create_table.py \
+    --table_name 'ccxtohlcv'
+
 Import as:
 
-import im.devops.insert_db as imdeindb
+import im.devops.create_table as imdecrtab
 """
 
 import argparse
@@ -27,8 +34,7 @@ def _get_create_table_command(table_name: str) -> str:
     :return: CREATE TABLE command
     """
     if table_name == "ccxtohlcv":
-        command = """
-                CREATE TABLE ccxtohlcv (
+        command = """CREATE TABLE ccxtohlcv(
                 id SERIAL PRIMARY KEY,
                 timestamp TIMESTAMPTZ NOT NULL,
                 open NUMERIC NOT NULL,
@@ -37,8 +43,8 @@ def _get_create_table_command(table_name: str) -> str:
                 epoch INTEGER NOT NULL,
                 currency_pair VARCHAR(255) NOT NULL,
                 exchange_id VARCHAR(255) NOT NULL
-                )
-                """
+                )"""
+        _LOG.debug(command)
     else:
         hdbg.dfatal("Table %s is not available for creation", table_name)
     return command
@@ -54,7 +60,7 @@ def create_table(conn: hsql.DbConnection, table_name: str) -> None:
     Currently available tables:
         - 'ccxtohlcv': OHLCV table with CCXT data
 
-    #TODO (Danya): Add support for custom schemas (e.g. from file)
+    #TODO(Danya): Add support for custom schemas (e.g. from file)
 
     :param conn: DB connection
     :param table_name: name of the table
@@ -68,13 +74,11 @@ def create_table(conn: hsql.DbConnection, table_name: str) -> None:
     # Build a CREATE TABLE command from name.
     command = _get_create_table_command(table_name)
     cursor.execute(command)
-    print(hsql.get_table_names(conn))
-    cursor.close()
     conn.commit()
-    return None
+    cursor.close()
+    conn.close()
 
 
-# +
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -102,4 +106,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         password=os.environ["POSTGRES_PASSWORD"],
     )
     create_table(conn, args.table_name)
-    return None
+
+
+if __name__ == "__main__":
+    _main(_parse())
