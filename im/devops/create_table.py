@@ -5,7 +5,7 @@ Insert a table into the local database.
 Use example:
 
 > python create_table.py \
-    --table_name 'ccxtohlcv'
+    --table_name 'ccxt_ohlcv'
 
 Import as:
 
@@ -23,18 +23,15 @@ import helpers.sql as hsql
 _LOG = logging.getLogger(__name__)
 
 
-def _get_create_table_command(table_name: str) -> str:
+def _get_create_table_sql_command(table_name: str) -> str:
     """
     Build a CREATE TABLE command based on table name.
-
-    Currently available tables:
-        - 'ccxtohlcv': OHLCV table with CCXT data
 
     :param table_name: name of the table
     :return: CREATE TABLE command
     """
-    if table_name == "ccxtohlcv":
-        command = """CREATE TABLE ccxtohlcv(
+    if table_name == "ccxt_ohlcv":
+        command = """CREATE TABLE ccxt_ohlcv(
                 id SERIAL PRIMARY KEY,
                 timestamp TIMESTAMPTZ NOT NULL,
                 open NUMERIC NOT NULL,
@@ -43,10 +40,11 @@ def _get_create_table_command(table_name: str) -> str:
                 epoch INTEGER NOT NULL,
                 currency_pair VARCHAR(255) NOT NULL,
                 exchange_id VARCHAR(255) NOT NULL
-                )"""
-        _LOG.debug(command)
+                )
+                """
     else:
-        hdbg.dfatal("Table %s is not available for creation", table_name)
+        raise ValueError("Table '%s' is not valid" % table_name)
+    _LOG.debug("command=%s", command)
     return command
 
 
@@ -58,9 +56,7 @@ def create_table(conn: hsql.DbConnection, table_name: str) -> None:
     with preset schema.
 
     Currently available tables:
-        - 'ccxtohlcv': OHLCV table with CCXT data
-
-    #TODO(Danya): Add support for custom schemas (e.g. from file)
+        - 'ccxt_ohlcv': OHLCV table with CCXT data
 
     :param conn: DB connection
     :param table_name: name of the table
@@ -72,7 +68,7 @@ def create_table(conn: hsql.DbConnection, table_name: str) -> None:
     )
     cursor = conn.cursor()
     # Build a CREATE TABLE command from name.
-    command = _get_create_table_command(table_name)
+    command = _get_create_table_sql_command(table_name)
     cursor.execute(command)
     conn.commit()
     cursor.close()
