@@ -13,6 +13,7 @@ import pandas as pd
 import core.pandas_helpers as cphelp
 import helpers.datetime_ as hdatet
 import helpers.dbg as dbg
+import helpers.git as git
 import helpers.io_ as hio
 import helpers.s3 as hs3
 
@@ -41,7 +42,9 @@ def _get_file_path(
     :return: path to a file with CCXT data
     """
     # Extract data about downloaded currencies for CCXT.
-    downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)[
+    amp_dir = git.get_amp_abs_path()
+    file_name = os.path.join(amp_dir, _DOWNLOADED_CURRENCIES_PATH)
+    downloaded_currencies_info = hio.from_json(file_name)[
         "CCXT"
     ]
     # Verify that data for the input exchange id was downloaded.
