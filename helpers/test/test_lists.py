@@ -1,12 +1,12 @@
 import logging
 
 import helpers.list as hlist
-import helpers.unit_test as hut
+import helpers.unit_test as huntes
 
 _LOG = logging.getLogger(__name__)
 
 
-class Test_list1(hut.TestCase):
+class Test_list1(huntes.TestCase):
     def test_find_duplicates1(self) -> None:
         list_ = "a b c d".split()
         list_out = hlist.find_duplicates(list_)

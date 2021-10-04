@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.printing as hprint
+import helpers.printing as hprintin
 """
 
 # TODO(gp): -> print_helpers
@@ -12,7 +12,7 @@ import sys
 import tempfile
 from typing import Any, Dict, Iterable, List, Match, Optional, cast
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 # Mute this module unless we want to debug it.
@@ -49,7 +49,7 @@ def color_highlight(text: str, color: str) -> str:
     """
     prefix = "\033["
     suffix = "\033[0m"
-    dbg.dassert_in(color, _COLOR_MAP)
+    hdbg.dassert_in(color, _COLOR_MAP)
     color_code = _COLOR_MAP[color]
     txt = f"{prefix}{color_code}m{text}{suffix}"
     return txt
@@ -87,16 +87,16 @@ def frame(
         char2 = char1
     elif char1 is None and char2 is not None:
         # User specified the second char, but not the first.
-        dbg.dfatal("Invalid char1='%s' char2='%s'" % (char1, char2))
+        hdbg.dfatal("Invalid char1='%s' char2='%s'" % (char1, char2))
     else:
         # User specified both chars. Nothing to do.
         pass
     num_chars = 80 if num_chars is None else num_chars
     # Sanity check.
-    dbg.dassert_lte(1, thickness)
-    dbg.dassert_eq(len(char1), 1)
-    dbg.dassert_eq(len(char2), 1)
-    dbg.dassert_lte(1, num_chars)
+    hdbg.dassert_lte(1, thickness)
+    hdbg.dassert_eq(len(char1), 1)
+    hdbg.dassert_eq(len(char2), 1)
+    hdbg.dassert_lte(1, num_chars)
     # Build the return value.
     ret = (
         (line(char1, num_chars) + "\n") * thickness
@@ -153,7 +153,7 @@ def dedent(txt: str, remove_empty_leading_trailing_lines: bool = True) -> str:
             _LOG.debug("  -> Skipping empty line")
             continue
         m = re.search(r"^(\s*)", curr_line)
-        dbg.dassert(m)
+        hdbg.dassert(m)
         m: Match[Any]
         curr_num_spaces = len(m.group(1))
         _LOG.debug("  -> curr_num_spaces=%s", curr_num_spaces)
@@ -168,7 +168,7 @@ def dedent(txt: str, remove_empty_leading_trailing_lines: bool = True) -> str:
         if curr_line.lstrip().rstrip() == "":
             txt_out.append("")
             continue
-        dbg.dassert_lte(min_num_spaces, len(curr_line))
+        hdbg.dassert_lte(min_num_spaces, len(curr_line))
         txt_out.append(curr_line[min_num_spaces:])
     res = "\n".join(txt_out)
     return res
@@ -251,8 +251,8 @@ def perc(
     :param use_thousands_separator: report the numbers using thousands separator
     :return: string with a/b
     """
-    dbg.dassert_lte(0, a)
-    dbg.dassert_lte(a, b)
+    hdbg.dassert_lte(0, a)
+    hdbg.dassert_lte(a, b)
     if use_thousands_separator:
         a_str = str("{0:,}".format(a))
         b_str = str("{0:,}".format(b))
@@ -261,7 +261,7 @@ def perc(
         b_str = str(b)
     if invert:
         a = b - a
-    dbg.dassert_lte(0, num_digits)
+    hdbg.dassert_lte(0, num_digits)
     if only_perc:
         fmt = "%." + str(num_digits) + "f%%"
         ret = fmt % (float(a) / b * 100.0)
@@ -296,7 +296,7 @@ def round_digits(
 
 # #############################################################################
 
-# TODO(gp): Move to dbg.py close to logging.
+# TODO(gp): Move to hdbg.py close to logging.
 
 
 def to_str(expression: str, frame_lev: int = 1) -> str:
@@ -316,7 +316,7 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
     """
     # TODO(gp): If we pass an object it would be nice to find the name of it.
     # E.g., https://github.com/pwwang/python-varname
-    dbg.dassert_isinstance(expression, str)
+    hdbg.dassert_isinstance(expression, str)
     if " " in expression:
         # If expression is a list of space-separated expression, convert each in a
         # string.
@@ -332,7 +332,7 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
     return ret
 
 
-# TODO(gp): Move to dbg.log (or dbg.logging_helpers)
+# TODO(gp): Move to hdbg.log (or hdbg.logging_helpers)
 def log(logger: logging.Logger, verbosity: int, *vals: Any) -> None:
     """
     log(_LOG, logging.DEBUG, "ticker", "exchange")
@@ -342,7 +342,7 @@ def log(logger: logging.Logger, verbosity: int, *vals: Any) -> None:
     _LOG.debug("%s, %s", to_str("ticker"), to_str("exchange"))
     _LOG.debug("ticker=%s, exchange=%s", ticker, exchange)
     """
-    logger_verbosity = dbg.get_logger_verbosity()
+    logger_verbosity = hdbg.get_logger_verbosity()
     # print("verbosity=%s logger_verbosity=%s" % (verbosity, logger_verbosity))
     # We want to avoid the overhead of converting strings, so we evaluate the
     # expressions only if we are going to print.
@@ -369,13 +369,13 @@ def type_to_string(type_as_str: str) -> str:
     """
     if isinstance(type_as_str, type):
         type_as_str = str(type_as_str)
-    dbg.dassert_isinstance(type_as_str, str)
+    hdbg.dassert_isinstance(type_as_str, str)
     # Remove the extra string from:
     #   <class 'core.dataflow.Zscore'>
     prefix = "<class '"
-    dbg.dassert(type_as_str.startswith(prefix), type_as_str)
+    hdbg.dassert(type_as_str.startswith(prefix), type_as_str)
     suffix = "'>"
-    dbg.dassert(type_as_str.endswith(suffix), type_as_str)
+    hdbg.dassert(type_as_str.endswith(suffix), type_as_str)
     type_as_str = type_as_str[len(prefix) : -len(suffix)]
     return type_as_str
 
@@ -398,7 +398,7 @@ def format_list(
     if max_n is None:
         max_n = 10
     max_n = cast(int, max_n)
-    dbg.dassert_lte(1, max_n)
+    hdbg.dassert_lte(1, max_n)
     n = len(list_)
     txt = ""
     if tag is not None:
@@ -408,7 +408,7 @@ def format_list(
         txt += sep.join(map(str, list_))
     else:
         num_elems = int(max_n / 2)
-        dbg.dassert_lte(1, num_elems)
+        hdbg.dassert_lte(1, num_elems)
         txt += sep.join(map(str, list_[:num_elems]))
         txt += " ... "
         # pylint: disable=invalid-unary-operand-type
@@ -434,7 +434,7 @@ def list_to_str(
         if list_ is None:
             txt += "%s: (%s) %s" % (tag, 0, "None") + "\n"
         else:
-            # dbg.dassert_in(type(l), (list, pd.Index, pd.Int64Index))
+            # hdbg.dassert_in(type(l), (list, pd.Index, pd.Int64Index))
             vals = list(map(str, list_))
             if sort:
                 vals = sorted(vals)
@@ -476,13 +476,13 @@ def set_diff_to_str(
     res: List[str] = []
     # obj1.
     obj1 = set(obj1)
-    dbg.dassert_lte(1, len(obj1))
+    hdbg.dassert_lte(1, len(obj1))
     res.append("* %s: (%s) %s" % (obj1_name, len(obj1), _to_string(obj1)))
     if add_space:
         res.append("")
     # obj2.
     obj2 = set(obj2)
-    dbg.dassert_lte(1, len(obj2))
+    hdbg.dassert_lte(1, len(obj2))
     res.append("* %s: (%s) %s" % (obj2_name, len(obj2), _to_string(obj2)))
     if add_space:
         res.append("")
@@ -536,9 +536,9 @@ def diff_strings(
     #
     cmd = f"sdiff --width={width} {file_name1} {file_name2}"
     # To avoid circular dependencies.
-    import helpers.system_interaction as hsinte
+    import helpers.system_interaction as hsyint
 
-    _, txt = hsinte.system_to_string(
+    _, txt = hsyint.system_to_string(
         cmd,
         # We don't care if they are different.
         abort_on_error=False,
@@ -569,7 +569,7 @@ def obj_to_str(
     """
 
     def _to_skip_callable(attr: Any, callable_mode: str) -> bool:
-        dbg.dassert_in(callable_mode, ("skip", "only", "all"))
+        hdbg.dassert_in(callable_mode, ("skip", "only", "all"))
         is_callable = callable(attr)
         skip = False
         if callable_mode == "skip" and is_callable:
@@ -579,7 +579,7 @@ def obj_to_str(
         return skip
 
     def _to_skip_private(name: str, private_mode: str) -> bool:
-        dbg.dassert_in(
+        hdbg.dassert_in(
             private_mode,
             ("skip_dunder", "only_dunder", "skip_private", "only_private", "all"),
         )
@@ -633,7 +633,7 @@ def obj_to_str(
             out = _to_str(attr, print_type)
             ret.append(out)
     else:
-        dbg.dassert("Invalid attr_mode='%s'" % attr_mode)
+        hdbg.dassert("Invalid attr_mode='%s'" % attr_mode)
     return "\n".join(ret)
 
 
@@ -786,7 +786,7 @@ def config_notebook(sns_set: bool = True) -> None:
     pd.set_option("display.width", 1000)
 
     # Warnings.
-    import helpers.warnings_helpers as hwarnings
+    import helpers.warnings_helpers as hwah
 
     # Force the linter to keep this import.
-    _ = hwarnings
+    _ = hwah

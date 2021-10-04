@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.sql as hsql
+"""
+
 import logging
 from typing import List, Optional, Tuple, Union
 
@@ -10,6 +16,7 @@ import helpers.timer as htimer
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): mypy doesn't like this.
 DbConnection = psycop.extensions.connection
 
 
@@ -170,6 +177,9 @@ def get_indexes(connection: DbConnection) -> pd.DataFrame:
 
 
 def get_columns(connection: DbConnection, table_name: str) -> list:
+    """
+    Get column names for given table.
+    """
     query = (
         """SELECT column_name
             FROM information_schema.columns

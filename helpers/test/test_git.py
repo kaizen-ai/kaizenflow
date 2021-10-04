@@ -3,8 +3,8 @@ from typing import Optional
 
 import pytest
 
-import helpers.git as git
-import helpers.unit_test as hut
+import helpers.git as hgit
+import helpers.unit_test as huntes
 
 _LOG = logging.getLogger(__name__)
 
@@ -15,63 +15,63 @@ _LOG = logging.getLogger(__name__)
 
 def _execute_func_call(func_call: str) -> None:
     """
-    Execute a function call, e.g., `func_call = "git.get_modified_files()"`.
+    Execute a function call, e.g., `func_call = "hgit.get_modified_files()"`.
     """
     act = eval(func_call)
     _LOG.debug("\n-> %s=\n  '%s'", func_call, act)
 
 
-class Test_git_submodule1(hut.TestCase):
+class Test_git_submodule1(huntes.TestCase):
     def test_get_client_root1(self) -> None:
-        func_call = "git.get_client_root(super_module=True)"
+        func_call = "hgit.get_client_root(super_module=True)"
         _execute_func_call(func_call)
 
     def test_get_client_root2(self) -> None:
-        func_call = "git.get_client_root(super_module=False)"
+        func_call = "hgit.get_client_root(super_module=False)"
         _execute_func_call(func_call)
 
     def test_get_project_dirname1(self) -> None:
-        func_call = "git.get_project_dirname()"
+        func_call = "hgit.get_project_dirname()"
         _execute_func_call(func_call)
 
     def test_get_branch_name1(self) -> None:
-        _ = git.get_branch_name()
+        _ = hgit.get_branch_name()
 
     def test_is_inside_submodule1(self) -> None:
-        func_call = "git.is_inside_submodule()"
+        func_call = "hgit.is_inside_submodule()"
         _execute_func_call(func_call)
 
     def test_is_amp(self) -> None:
-        func_call = "git.is_amp()"
+        func_call = "hgit.is_amp()"
         _execute_func_call(func_call)
 
     def test_get_path_from_supermodule1(self) -> None:
-        func_call = "git.get_path_from_supermodule()"
+        func_call = "hgit.get_path_from_supermodule()"
         _execute_func_call(func_call)
 
     def test_get_submodule_paths1(self) -> None:
-        func_call = "git.get_submodule_paths()"
+        func_call = "hgit.get_submodule_paths()"
         _execute_func_call(func_call)
 
 
-class Test_git_submodule2(hut.TestCase):
+class Test_git_submodule2(huntes.TestCase):
 
     # def test_get_submodule_hash1(self) -> None:
     #     dir_name = "amp"
-    #     _ = git._get_submodule_hash(dir_name)
+    #     _ = hgit._get_submodule_hash(dir_name)
 
     def test_get_remote_head_hash1(self) -> None:
         dir_name = "."
-        _ = git.get_head_hash(dir_name)
+        _ = hgit.get_head_hash(dir_name)
 
     # def test_report_submodule_status1(self) -> None:
     #     dir_names = ["."]
     #     short_hash = True
-    #     _ = git.report_submodule_status(dir_names, short_hash)
+    #     _ = hgit.report_submodule_status(dir_names, short_hash)
 
     def test_get_head_hash1(self) -> None:
         dir_name = "."
-        _ = git.get_head_hash(dir_name)
+        _ = hgit.get_head_hash(dir_name)
 
     def test_group_hashes1(self) -> None:
         head_hash = "a2bfc704"
@@ -103,88 +103,88 @@ class Test_git_submodule2(hut.TestCase):
     def _helper_group_hashes(
         self, head_hash: str, remh_hash: str, subm_hash: Optional[str], exp: str
     ) -> None:
-        act = git._group_hashes(head_hash, remh_hash, subm_hash)
+        act = hgit._group_hashes(head_hash, remh_hash, subm_hash)
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
-class Test_git_repo_name1(hut.TestCase):
+class Test_git_repo_name1(huntes.TestCase):
     def test_parse_github_repo_name1(self) -> None:
         repo_name = "git@github.com:alphamatic/amp"
-        host_name, repo_name = git._parse_github_repo_name(repo_name)
+        host_name, repo_name = hgit._parse_github_repo_name(repo_name)
         self.assert_equal(host_name, "github.com")
         self.assert_equal(repo_name, "alphamatic/amp")
 
     def test_parse_github_repo_name2(self) -> None:
         repo_name = "https://github.com/alphamatic/amp"
-        git._parse_github_repo_name(repo_name)
-        host_name, repo_name = git._parse_github_repo_name(repo_name)
+        hgit._parse_github_repo_name(repo_name)
+        host_name, repo_name = hgit._parse_github_repo_name(repo_name)
         self.assert_equal(host_name, "github.com")
         self.assert_equal(repo_name, "alphamatic/amp")
 
     def test_parse_github_repo_name3(self) -> None:
         repo_name = "git@github.fake.com:alphamatic/amp"
-        host_name, repo_name = git._parse_github_repo_name(repo_name)
+        host_name, repo_name = hgit._parse_github_repo_name(repo_name)
         self.assert_equal(host_name, "github.fake.com")
         self.assert_equal(repo_name, "alphamatic/amp")
 
     def test_parse_github_repo_name4(self) -> None:
         repo_name = "https://github.fake.com/alphamatic/amp"
-        host_name, repo_name = git._parse_github_repo_name(repo_name)
+        host_name, repo_name = hgit._parse_github_repo_name(repo_name)
         self.assert_equal(host_name, "github.fake.com")
         self.assert_equal(repo_name, "alphamatic/amp")
 
     def test_get_repo_full_name_from_dirname1(self) -> None:
-        func_call = "git.get_repo_full_name_from_dirname(dir_name='.', include_host_name=False)"
+        func_call = "hgit.get_repo_full_name_from_dirname(dir_name='.', include_host_name=False)"
         _execute_func_call(func_call)
 
     def test_get_repo_full_name_from_dirname2(self) -> None:
-        func_call = "git.get_repo_full_name_from_dirname(dir_name='.', include_host_name=True)"
+        func_call = "hgit.get_repo_full_name_from_dirname(dir_name='.', include_host_name=True)"
         _execute_func_call(func_call)
 
     def test_get_repo_full_name_from_client1(self) -> None:
-        func_call = "git.get_repo_full_name_from_client(super_module=True)"
+        func_call = "hgit.get_repo_full_name_from_client(super_module=True)"
         _execute_func_call(func_call)
 
     def test_get_repo_full_name_from_client2(self) -> None:
-        func_call = "git.get_repo_full_name_from_client(super_module=False)"
+        func_call = "hgit.get_repo_full_name_from_client(super_module=False)"
         _execute_func_call(func_call)
 
     def test_get_repo_name1(self) -> None:
         short_name = "amp"
         mode = "short_name"
-        act = git.get_repo_name(short_name, mode)
+        act = hgit.get_repo_name(short_name, mode)
         exp = "alphamatic/amp"
         self.assert_equal(act, exp)
 
     def test_get_repo_name2(self) -> None:
         full_name = "alphamatic/amp"
         mode = "full_name"
-        act = git.get_repo_name(full_name, mode)
+        act = hgit.get_repo_name(full_name, mode)
         exp = "amp"
         self.assert_equal(act, exp)
 
     def test_get_repo_name4(self) -> None:
         full_name = "alphamatic/dev_tools"
         mode = "full_name"
-        act = git.get_repo_name(full_name, mode)
+        act = hgit.get_repo_name(full_name, mode)
         exp = "dev_tools"
         self.assert_equal(act, exp)
 
     @pytest.mark.skipif(
-        not git.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
+        not hgit.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
     )
     def test_get_all_repo_names1(self) -> None:
         mode = "short_name"
-        act = git.get_all_repo_names(mode)
+        act = hgit.get_all_repo_names(mode)
         exp = ["amp", "dev_tools"]
         self.assert_equal(str(act), str(exp))
 
     @pytest.mark.skipif(
-        not git.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
+        not hgit.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
     )
     def test_get_all_repo_names2(self) -> None:
         mode = "full_name"
-        act = git.get_all_repo_names(mode)
+        act = hgit.get_all_repo_names(mode)
         exp = ["alphamatic/amp", "alphamatic/dev_tools"]
         self.assert_equal(str(act), str(exp))
 
@@ -194,57 +194,57 @@ class Test_git_repo_name1(hut.TestCase):
         """
         # Get the short name for all the repos.
         mode = "short_name"
-        all_repo_short_names = git.get_all_repo_names(mode)
+        all_repo_short_names = hgit.get_all_repo_names(mode)
         # Round trip.
         for repo_short_name in all_repo_short_names:
-            repo_full_name = git.get_repo_name(repo_short_name, "short_name")
-            repo_short_name_tmp = git.get_repo_name(repo_full_name, "full_name")
+            repo_full_name = hgit.get_repo_name(repo_short_name, "short_name")
+            repo_short_name_tmp = hgit.get_repo_name(repo_full_name, "full_name")
             self.assert_equal(repo_short_name, repo_short_name_tmp)
 
     def test_get_task_prefix_from_repo_short_name1(self) -> None:
         short_name = "dev_tools"
-        act = git.get_task_prefix_from_repo_short_name(short_name)
+        act = hgit.get_task_prefix_from_repo_short_name(short_name)
         exp = "DevToolsTask"
         self.assert_equal(act, exp)
 
 
-class Test_git_path1(hut.TestCase):
+class Test_git_path1(huntes.TestCase):
     def test_get_path_from_git_root1(self) -> None:
         file_name = "helpers/test/test_git.py"
-        act = git.get_path_from_git_root(file_name, super_module=False)
+        act = hgit.get_path_from_git_root(file_name, super_module=False)
         _LOG.debug("get_path_from_git_root()=%s", act)
 
 
-class Test_git_modified_files1(hut.TestCase):
+class Test_git_modified_files1(huntes.TestCase):
     def setUp(self) -> None:
         """
         All these tests need a reference to Git master branch.
         """
         super().setUp()
-        git.fetch_origin_master_if_needed()
+        hgit.fetch_origin_master_if_needed()
 
     def test_get_modified_files1(self) -> None:
-        func_call = "git.get_modified_files()"
+        func_call = "hgit.get_modified_files()"
         _execute_func_call(func_call)
 
     def test_get_previous_committed_files1(self) -> None:
-        func_call = "git.get_previous_committed_files()"
+        func_call = "hgit.get_previous_committed_files()"
         _execute_func_call(func_call)
 
     def test_get_modified_files_in_branch1(self) -> None:
-        func_call = "git.get_modified_files_in_branch('master')"
+        func_call = "hgit.get_modified_files_in_branch('master')"
         _execute_func_call(func_call)
 
     def test_get_summary_files_in_branch1(self) -> None:
-        func_call = "git.get_summary_files_in_branch('master')"
+        func_call = "hgit.get_summary_files_in_branch('master')"
         _execute_func_call(func_call)
 
     def test_git_log1(self) -> None:
-        func_call = "git.git_log()"
+        func_call = "hgit.git_log()"
         _execute_func_call(func_call)
 
 
-class Test_purify_docker_file_from_git_client1(hut.TestCase):
+class Test_purify_docker_file_from_git_client1(huntes.TestCase):
     """
     Test for a file that:
 
@@ -253,7 +253,7 @@ class Test_purify_docker_file_from_git_client1(hut.TestCase):
     """
 
     @pytest.mark.skipif(
-        not git.is_in_amp_as_supermodule(),
+        not hgit.is_in_amp_as_supermodule(),
         reason="Run only in amp as super-module",
     )
     def test1(self) -> None:
@@ -266,7 +266,7 @@ class Test_purify_docker_file_from_git_client1(hut.TestCase):
         self._helper(super_module, exp_found, exp)
 
     @pytest.mark.skipif(
-        not git.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
+        not hgit.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
     )
     def test2(self) -> None:
         """
@@ -281,7 +281,7 @@ class Test_purify_docker_file_from_git_client1(hut.TestCase):
         # Use this file since `purify_docker_file_from_git_client()` needs to do
         # a `find` in the repo so we need to have a fixed file structure.
         file_name = "amp/helpers/test/test_git.py"
-        act_found, act = git.purify_docker_file_from_git_client(
+        act_found, act = hgit.purify_docker_file_from_git_client(
             file_name, super_module
         )
         self.assertEqual(act_found, exp_found)
@@ -289,13 +289,13 @@ class Test_purify_docker_file_from_git_client1(hut.TestCase):
         self.assertEqual(act, exp)
 
 
-class Test_purify_docker_file_from_git_client2(hut.TestCase):
+class Test_purify_docker_file_from_git_client2(huntes.TestCase):
     """
     Test for a file that is from Docker (e.g., it starts with `/app`)
     """
 
     @pytest.mark.skipif(
-        not git.is_in_amp_as_supermodule(),
+        not hgit.is_in_amp_as_supermodule(),
         reason="Run only in amp as super-module",
     )
     def test1(self) -> None:
@@ -308,7 +308,7 @@ class Test_purify_docker_file_from_git_client2(hut.TestCase):
         self._helper(super_module, exp_found, exp)
 
     @pytest.mark.skipif(
-        not git.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
+        not hgit.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
     )
     def test2(self) -> None:
         """
@@ -323,14 +323,14 @@ class Test_purify_docker_file_from_git_client2(hut.TestCase):
         # Use this file since `purify_docker_file_from_git_client()` needs to do
         # a `find` in the repo so we need to have a fixed file structure.
         file_name = "/app/amp/helpers/test/test_git.py"
-        act_found, act = git.purify_docker_file_from_git_client(
+        act_found, act = hgit.purify_docker_file_from_git_client(
             file_name, super_module
         )
         self.assertEqual(act_found, exp_found)
         self.assertEqual(act, exp)
 
 
-class Test_purify_docker_file_from_git_client3(hut.TestCase):
+class Test_purify_docker_file_from_git_client3(huntes.TestCase):
     """
     Test for a file that is from Docker (e.g., it starts with `/app`)
     """
@@ -338,7 +338,7 @@ class Test_purify_docker_file_from_git_client3(hut.TestCase):
     def test1(self) -> None:
         file_name = "/venv/lib/python3.8/site-packages/invoke/tasks.py"
         super_module = False
-        act_found, act = git.purify_docker_file_from_git_client(
+        act_found, act = hgit.purify_docker_file_from_git_client(
             file_name, super_module
         )
         exp_found = False

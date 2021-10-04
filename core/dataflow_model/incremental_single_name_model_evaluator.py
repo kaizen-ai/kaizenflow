@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import collections
 import logging
-from typing import Iterable, Optional
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -44,14 +44,14 @@ def compute_stats_for_single_name_artifacts(
     """
     stats = collections.OrderedDict()
     load_rb_kwargs = {"columns": list([prediction_col, target_col])}
-    iter = cdtfmouti.yield_experiment_artifacts(
+    iterator = cdtfmouti.yield_experiment_artifacts(
         src_dir,
         file_name,
         load_rb_kwargs=load_rb_kwargs,
         selected_idxs=selected_idxs,
         aws_profile=aws_profile,
     )
-    for key, artifact in iter:
+    for key, artifact in iterator:
         _LOG.debug(
             "load_experiment_artifacts: memory_usage=%s",
             hdbg.get_memory_usage_as_str(None),
@@ -96,7 +96,7 @@ def aggregate_single_name_models(
     end: Optional[hdatetim.Datetime],
     selected_idxs: Optional[Iterable[int]] = None,
     aws_profile: Optional[str] = None,
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, Dict[Union[str, int], pd.DataFrame]]:
     expected_columns = [
         position_intent_1_col,
         ret_0_col,
@@ -137,6 +137,43 @@ def aggregate_single_name_models(
         dfs[key] = df_for_key.resample("B").sum(min_count=1)
     _LOG.info("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
     return portfolio, dfs
+
+
+def load_result_dfs(
+    src_dir: str,
+    file_name: str,
+    load_rb_kwargs: Dict[str, Any],
+    selected_idxs: Optional[Iterable[int]] = None,
+    aws_profile: Optional[str] = None,
+    start: Optional[hdatetim.Datetime] = None,
+    end: Optional[hdatetim.Datetime] = None,
+) -> Dict[int, pd.DataFrame]:
+    """
+    Loads result dataframes.
+
+    Use `load_rb_kwargs` to restrict to desired columns.
+
+    This function should be used judiciously on large runs due to the memory
+    requirements.
+    """
+    iterator = cdtfmouti.yield_experiment_artifacts(
+        src_dir,
+        file_name,
+        load_rb_kwargs=load_rb_kwargs,
+        selected_idxs=selected_idxs,
+        aws_profile=aws_profile,
+    )
+    dfs = collections.OrderedDict()
+    for key, artifact in iterator:
+        _LOG.info(
+            "load_experiment_artifacts: memory_usage=%s",
+            hdbg.get_memory_usage_as_str(None),
+        )
+        # Extract df and restrict to [start, end].
+        df = artifact.result_df.loc[start:end].copy()
+        dfs[key] = df
+    _LOG.info("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
+    return dfs
 
 
 def _process_single_name_result_df(
@@ -214,3 +251,35 @@ def _process_single_name_result_df(
     )
     df["half_spread_cost"] = half_spread_cost
     return df
+
+
+def load_info(
+    src_dir: str,
+    file_name: str,
+    info_path: List[str],
+    selected_idxs: Optional[Iterable[int]] = None,
+    aws_profile: Optional[str] = None,
+) -> Dict[int, Any]:
+    """
+    Return a subset of `info` from result bundles.
+
+    :param info_path: a list of keys to traverse for subsetting `info`. An
+        empty list means no restriction.
+    :return: dict keyed by experiment, with value equal to `info`
+        restricted to `info_path`
+    """
+    iterator = cdtfmouti.yield_experiment_artifacts(
+        src_dir,
+        file_name,
+        load_rb_kwargs={"columns": []},
+        selected_idxs=selected_idxs,
+        aws_profile=aws_profile,
+    )
+    info_dict = collections.OrderedDict()
+    for key, artifact in iterator:
+        info = artifact.info
+        for k in info_path:
+            info = info[k]
+        info_dict[key] = info
+    _LOG.info("memory_usage=%s", hdbg.get_memory_usage_as_str(None))
+    return info_dict

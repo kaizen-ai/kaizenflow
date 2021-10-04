@@ -1,17 +1,17 @@
 """
 Import as:
 
-import helpers.tunnels as htunne
+import helpers.old.tunnels as holtun
 """
 
 import logging
 import os
-from typing import Dict, List, Tuple, cast
+from typing import Any, Dict, List, Tuple, cast
 
-import helpers.dbg as dbg
-import helpers.old.user_credentials as houser
-import helpers.printing as hprint
-import helpers.system_interaction as hsyste
+import helpers.dbg as hdbg
+import helpers.old.user_credentials as holuscre
+import helpers.printing as hprintin
+import helpers.system_interaction as hsyint
 
 _LOG = logging.getLogger(__name__)
 
@@ -19,28 +19,29 @@ _LOG = logging.getLogger(__name__)
 
 
 def get_tunnel_info() -> Tuple[list, str]:
-    credentials = houser.get_credentials()
+    credentials = holuscre.get_credentials()
     #
     tunnel_info = credentials["tunnel_info"]
-    dbg.dassert_is_not(tunnel_info, None)
+    hdbg.dassert_is_not(tunnel_info, None)
     # Add tunnels for standard services.
     services = _get_services_info()
     tunnel_info.extend(services)
     #
     ssh_key_path = credentials["ssh_key_path"]
-    dbg.dassert_is_not(ssh_key_path, None)
+    hdbg.dassert_is_not(ssh_key_path, None)
     # TODO(gp): Add check to make sure that the source ports are all different.
     return tunnel_info, ssh_key_path
 
 
 def tunnel_info_to_string(tunnel_info: list) -> str:
     ret = "\n".join(map(str, tunnel_info))
-    ret = hprint.indent(ret)
+    ret = hprintin.indent(ret)
+    ret = cast(str, ret)
     return ret
 
 
 def parse_service(service: str) -> Dict[str, str]:
-    dbg.dassert_eq(len(service), 4, "service=%s", service)
+    hdbg.dassert_eq(len(service), 4, "service=%s", service)
     service_name, server, local_port, remote_port = service
     return {
         "service_name": service_name,
@@ -54,9 +55,9 @@ def find_service(service_name: str, tunnel_info: list) -> str:
     ret = None
     for service in tunnel_info:
         if service_name == parse_service(service)["service_name"]:
-            dbg.dassert_is(ret, None)
+            hdbg.dassert_is(ret, None)
             ret = service
-    dbg.dassert_is_not(ret, None)
+    hdbg.dassert_is_not(ret, None)
     return ret
 
 
@@ -72,10 +73,10 @@ def _get_services_info() -> list:
     # Server ports.
     services = [
         # service name, server public IP, local port, remote port.
-        ("MongoDb", hsyste.get_env_var("OLD_DEV_SERVER"), 27017, 27017),
-        ("Jenkins", hsyste.get_env_var("JENKINS_SERVER"), 8080, 8080),
-        # ("Reviewboard", hsyste.get_env_var("REVIEWBOARD_SERVER"), 8000, 8000),
-        # ("Doc server", hsyste.get_env_var("REVIEWBOARD_SERVER"), 8001, 80),
+        ("MongoDb", hsyint.get_env_var("OLD_DEV_SERVER"), 27017, 27017),
+        ("Jenkins", hsyint.get_env_var("JENKINS_SERVER"), 8080, 8080),
+        # ("Reviewboard", hsyint.get_env_var("REVIEWBOARD_SERVER"), 8000, 8000),
+        # ("Doc server", hsyint.get_env_var("REVIEWBOARD_SERVER"), 8001, 80),
         # Netdata to Jenkins and Dev server.
         # ("Dev system performance", DEV_SERVER, 19999),
         # ("Jenkins system performance", DEV_SERVER, 19999),
@@ -84,24 +85,24 @@ def _get_services_info() -> list:
 
 
 def _get_tunnel_info() -> Tuple[Any, str]:
-    credentials = houser.get_credentials()
+    credentials = holuscre.get_credentials()
     #
     tunnel_info = credentials["tunnel_info"]
-    dbg.dassert_is_not(tunnel_info, None)
+    hdbg.dassert_is_not(tunnel_info, None)
     # Add tunnels for standard services.
     services = _get_services_info()
     tunnel_info.extend(services)
     #
     ssh_key_path = credentials["ssh_key_path"]
-    dbg.dassert_is_not(ssh_key_path, None)
+    hdbg.dassert_is_not(ssh_key_path, None)
     # TODO(gp): Add check to make sure that the source ports are all different.
     return tunnel_info, ssh_key_path
 
 
 def _tunnel_info_to_string(tunnel_info: list) -> str:
     ret = "\n".join(map(str, tunnel_info))
-    ret = hprint.indent(ret)
-    cast(str, ret)
+    ret = hprintin.indent(ret)
+    ret = cast(str, ret)
     return ret
 
 
@@ -137,7 +138,7 @@ def _get_ssh_tunnel_process(
         return keep
 
     _LOG.debug("local_port=%d -> remote_port=%d", local_port, remote_port)
-    pids, txt = hsyste.get_process_pids(_keep_line)
+    pids, txt = hsyint.get_process_pids(_keep_line)
     _LOG.debug("pids=%s", pids)
     _LOG.debug("txt=\n%s", txt)
     return pids, txt
@@ -156,7 +157,7 @@ def _create_tunnel(
     """
     ssh_key_path = os.path.expanduser(ssh_key_path)
     _LOG.debug("ssh_key_path=%s", ssh_key_path)
-    dbg.dassert_exists(ssh_key_path)
+    hdbg.dassert_exists(ssh_key_path)
     #
     cmd = (
         "ssh -i {ssh_key_path} -f -nNT -L {local_port}:localhost:{remote_port}"
@@ -169,10 +170,10 @@ def _create_tunnel(
         remote_port=remote_port,
         server=server_name,
     )
-    hsyste.system(cmd, blocking=False)
+    hsyint.system(cmd, blocking=False)
     # Check that the tunnel is up and running.
     pids = _get_ssh_tunnel_process(local_port, remote_port, fuzzy_match=True)
-    dbg.dassert_lte(1, len(pids))
+    hdbg.dassert_lte(1, len(pids))
 
 
 def _kill_ssh_tunnel_process(local_port: int, remote_port: int) -> None:
@@ -182,7 +183,7 @@ def _kill_ssh_tunnel_process(local_port: int, remote_port: int) -> None:
     get_pids = lambda: _get_ssh_tunnel_process(
         local_port, remote_port, fuzzy_match=True
     )
-    hsyste.kill_process(get_pids)
+    hsyint.kill_process(get_pids)
 
 
 # #############################################################################
@@ -256,5 +257,5 @@ def kill_all_tunnel_processes() -> None:
         keep = ("ssh -i" in line) and (":localhost:" in line)
         return keep
 
-    get_pids = lambda: hsyste.get_process_pids(_keep_line)
-    hsyste.kill_process(get_pids)
+    get_pids = lambda: hsyint.get_process_pids(_keep_line)
+    hsyint.kill_process(get_pids)

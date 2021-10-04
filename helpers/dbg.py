@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 """
 
 import copy
@@ -12,8 +12,8 @@ import pprint
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
 
-# import helpers.versioning as hversi
-# hversi.check_version()
+# import helpers.versioning as hversion
+# hversion.check_version()
 
 # This module should not depend on anything else than Python standard modules.
 

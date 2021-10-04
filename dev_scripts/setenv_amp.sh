@@ -99,4 +99,9 @@ alias il="invoke --list"
 # Print the aliases.
 alias
 
+if [[ $(whoami) == "saggese" && $(pwd) =~ "/cmamp" ]]; then
+    export GIT_SSH_COMMAND="ssh -i ~/.ssh/cryptomatic/id_rsa.cryptomtc.github"
+    echo "GIT_SSH_COMMAND=$GIT_SSH_COMMAND"
+fi;
+
 echo "==> SUCCESS <=="

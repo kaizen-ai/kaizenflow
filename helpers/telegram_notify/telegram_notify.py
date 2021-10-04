@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.telegram_notify.telegram_notify as tntnot
+import helpers.telegram_notify.telegram_notify as htenotenot
 """
 
 import json
@@ -17,7 +17,7 @@ import requests
 # Alternative that works for both Python 2 and 3:
 import requests.compat as rcompa
 
-import helpers.telegram_notify.config as htncfg
+import helpers.telegram_notify.config as htenocon
 
 _LOG = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class TelegramNotebookNotify:
 
     def __init__(self) -> None:
         self.launcher_name = _get_launcher_name()
-        self.token, self.chat_id = htncfg.get_info()
+        self.token, self.chat_id = htenocon.get_info()
 
     def notify(self, message: str) -> None:
         msg = "<pre>{notebook_name}</pre>: {message}".format(
@@ -98,7 +98,7 @@ def _get_launcher_name() -> str:
 
 class _RequestsHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> bytes:  # type: ignore
-        token, chat_id = htncfg.get_info()
+        token, chat_id = htenocon.get_info()
         log_entry = self.format(record)
         payload = {"chat_id": chat_id, "text": log_entry, "parse_mode": "HTML"}
         return requests.post(
@@ -138,7 +138,7 @@ class TelegramNotify:
     """
 
     def __init__(self) -> None:
-        self.token, self.chat_id = htncfg.get_info()
+        self.token, self.chat_id = htenocon.get_info()
 
     def send(self, text: str) -> Optional[bytes]:
         payload = {"chat_id": self.chat_id, "text": text, "parse_mode": "HTML"}

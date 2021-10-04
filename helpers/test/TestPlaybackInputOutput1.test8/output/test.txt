@@ -1,12 +1,12 @@
 # Test created for helpers.test.test_playback.get_result_cs.
 
-import helpers.unit_test as hut
+import helpers.unit_test as huntes
 import jsonpickle
 import pandas as pd
 import core.config as cconfi
 
 
-class TestGetResultCs(hut.TestCase):
+class TestGetResultCs(huntes.TestCase):
     def test1(self) -> None:
         # Define input variables.
         a = "test"

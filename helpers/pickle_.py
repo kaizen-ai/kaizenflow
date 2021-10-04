@@ -15,8 +15,8 @@ import pickle
 import types
 from typing import Any, Callable
 
-import helpers.dbg as dbg
-import helpers.introspection as hintro
+import helpers.dbg as hdbg
+import helpers.introspection as hintrosp
 import helpers.io_ as hio
 import helpers.timer as htimer
 
@@ -42,13 +42,13 @@ def to_pickle(
         extension)
     :param backend: pickle, dill, pickle_gzip
     """
-    dbg.dassert_type_is(file_name, str)
+    hdbg.dassert_type_is(file_name, str)
     hio.create_enclosing_dir(file_name, incremental=True)
     with htimer.TimedScope(logging.DEBUG, "Pickling to '%s'" % file_name) as ts:
         # We assume that the user always specifies a .pkl extension and then we
         # change the extension based on the backend.
         if backend in ("pickle", "dill"):
-            dbg.dassert_file_extension(file_name, "pkl")
+            hdbg.dassert_file_extension(file_name, "pkl")
             if backend == "pickle":
                 with open(file_name, "wb") as fd:
                     pickler = pickle.Pickler(fd, pickle.HIGHEST_PROTOCOL)
@@ -63,8 +63,9 @@ def to_pickle(
                 raise ValueError("Invalid backend='%s'" % backend)
         elif backend == "pickle_gzip":
             # TODO(gp): Use `dassert_file_extension` if possible.
-            dbg.dassert(
-                file_name.endswith(".pkl.gz"), msg="Invalid file_name=%s" % file_name
+            hdbg.dassert(
+                file_name.endswith(".pkl.gz"),
+                msg="Invalid file_name=%s" % file_name,
             )
             with gzip.open(file_name, "wb") as zfd:
                 pickler = pickle.Pickler(zfd, pickle.HIGHEST_PROTOCOL)
@@ -73,7 +74,7 @@ def to_pickle(
         else:
             raise ValueError("Invalid backend='%s'" % backend)
     # Report time and size.
-    file_size = hintro.format_size(os.path.getsize(file_name))
+    file_size = hintrosp.format_size(os.path.getsize(file_name))
     _LOG.log(
         log_level,
         "Saved '%s' (size=%s, time=%.1fs)",
@@ -91,12 +92,14 @@ def from_pickle(
     """
     Unpickle and return object stored in `file_name`.
     """
-    dbg.dassert_isinstance(file_name, str)
-    with htimer.TimedScope(logging.DEBUG, "Unpickling from '%s'" % file_name) as ts:
+    hdbg.dassert_isinstance(file_name, str)
+    with htimer.TimedScope(
+        logging.DEBUG, "Unpickling from '%s'" % file_name
+    ) as ts:
         # We assume that the user always specifies a .pkl extension and then we
         # change the extension based on the backend.
         if backend in ("pickle", "dill"):
-            dbg.dassert_file_extension(file_name, "pkl")
+            hdbg.dassert_file_extension(file_name, "pkl")
             if backend == "pickle":
                 with open(file_name, "rb") as fd:
                     unpickler = pickle.Unpickler(fd)
@@ -110,8 +113,9 @@ def from_pickle(
                 raise ValueError("Invalid backend='%s'" % backend)
         elif backend == "pickle_gzip":
             # TODO(gp): Use `dassert_file_extension` if possible.
-            dbg.dassert(
-                file_name.endswith(".pkl.gz"), msg="Invalid file_name=%s" % file_name
+            hdbg.dassert(
+                file_name.endswith(".pkl.gz"),
+                msg="Invalid file_name=%s" % file_name,
             )
             with gzip.open(file_name, "rb") as zfd:
                 unpickler = pickle.Unpickler(zfd)
@@ -119,7 +123,7 @@ def from_pickle(
         else:
             raise ValueError("Invalid backend='%s'" % backend)
     # Report time and size.
-    file_size = hintro.format_size(os.path.getsize(file_name))
+    file_size = hintrosp.format_size(os.path.getsize(file_name))
     _LOG.log(
         log_level,
         "Read '%s' (size=%s, time=%.1fs)",
@@ -140,7 +144,7 @@ def pickle_function(func: Callable) -> str:
 
     - return: string
     """
-    dbg.dassert_callable(func)
+    hdbg.dassert_callable(func)
     code_as_bytes = marshal.dumps(func.__code__)
     return code_as_bytes.decode()
 
@@ -153,7 +157,7 @@ def unpickle_function(code_as_str: str, func_name: str) -> Callable:
 
     - return: function
     """
-    dbg.dassert_isinstance(code_as_str, str)
+    hdbg.dassert_isinstance(code_as_str, str)
     code = marshal.loads(code_as_str.encode())
     func = types.FunctionType(code, globals(), name=func_name)
     return func
@@ -168,13 +172,13 @@ def unpickle_function(code_as_str: str, func_name: str) -> Callable:
 
 # TODO(gp): Switch file_name and obj to be consistent with the pickle functions.
 def to_json(file_name: str, obj: object) -> None:
-    dbg.dassert_file_extension(file_name, "json")
+    hdbg.dassert_file_extension(file_name, "json")
     with open(file_name, "w") as outfile:
         json.dump(obj, outfile)
 
 
 def from_json(file_name: str) -> object:
-    dbg.dassert_exists(file_name)
-    dbg.dassert_file_extension(file_name, "json")
+    hdbg.dassert_exists(file_name)
+    hdbg.dassert_file_extension(file_name, "json")
     obj = json.loads(hio.from_file(file_name))
     return obj

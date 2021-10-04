@@ -18,14 +18,14 @@ import joblib
 import joblib.func_inspect as jfunci
 import joblib.memory as jmemor
 
-import helpers.datetime_ as hdatetime
-import helpers.dbg as dbg
-import helpers.git as git
-import helpers.introspection as hintro
+import helpers.datetime_ as hdatetim
+import helpers.dbg as hdbg
+import helpers.git as hgit
+import helpers.introspection as hintrosp
 import helpers.io_ as hio
-import helpers.printing as hprint
+import helpers.printing as hprintin
 import helpers.s3 as hs3
-import helpers.system_interaction as hsyste
+import helpers.system_interaction as hsyint
 
 _LOG = logging.getLogger(__name__)
 
@@ -79,7 +79,7 @@ def get_global_cache_info(
     """
     txt = []
     if add_banner:
-        txt.append(hprint.frame("get_global_cache_info()", char1="<"))
+        txt.append(hprintin.frame("get_global_cache_info()", char1="<"))
     txt.append("is global cache enabled=%s" % is_caching_enabled())
     #
     cache_types = _get_cache_types()
@@ -109,7 +109,7 @@ def _dassert_is_valid_cache_type(cache_type: str) -> None:
     """
     Assert that `cache_type` is a valid cache type.
     """
-    dbg.dassert_in(cache_type, _get_cache_types())
+    hdbg.dassert_in(cache_type, _get_cache_types())
 
 
 def _get_global_cache_name(cache_type: str, tag: Optional[str] = None) -> str:
@@ -144,12 +144,12 @@ def _get_global_cache_path(cache_type: str, tag: Optional[str] = None) -> str:
     cache_name = _get_global_cache_name(cache_type, tag)
     # Get the enclosing directory path.
     if cache_type == "mem":
-        if hsyste.get_os_name() == "Darwin":
+        if hsyint.get_os_name() == "Darwin":
             root_path = "/tmp"
         else:
             root_path = "/mnt/tmpfs"
     elif cache_type == "disk":
-        root_path = git.get_client_root(super_module=True)
+        root_path = hgit.get_client_root(super_module=True)
     # Compute path.
     file_name = os.path.join(root_path, cache_name)
     file_name = os.path.abspath(file_name)
@@ -165,8 +165,8 @@ def _get_cache_size(path: str, description: str) -> str:
         txt = "'%s' cache: path='%s' doesn't exist yet" % (description, path)
     else:
         if os.path.exists(path):
-            size_in_bytes = hsyste.du(path)
-            size_as_str = hintro.format_size(size_in_bytes)
+            size_in_bytes = hsyint.du(path)
+            size_as_str = hintrosp.format_size(size_in_bytes)
         else:
             size_as_str = "nan"
         # TODO(gp): Compute number of files.
@@ -192,8 +192,12 @@ def _create_global_cache_backend(
     """
     _dassert_is_valid_cache_type(cache_type)
     dir_name = _get_global_cache_path(cache_type, tag)
-    _LOG.debug("Creating cache for cache_type='%s' and tag='%s' at '%s'",
-               cache_type, tag, dir_name)
+    _LOG.debug(
+        "Creating cache for cache_type='%s' and tag='%s' at '%s'",
+        cache_type,
+        tag,
+        dir_name,
+    )
     cache_backend = joblib.Memory(dir_name, verbose=0, compress=True)
     return cache_backend
 
@@ -259,15 +263,15 @@ def clear_global_cache(
     # Clear and / or destroy the cache `cache_type` with the given `tag`.
     cache_path = _get_global_cache_path(cache_type, tag)
     if not _IS_CLEAR_CACHE_ENABLED:
-        dbg.dfatal("Trying to delete cache '%s'" % cache_path)
+        hdbg.dfatal("Trying to delete cache '%s'" % cache_path)
     description = f"global {cache_type}"
     info_before = _get_cache_size(cache_path, description)
     _LOG.info("Before clear_global_cache: %s", info_before)
     _LOG.warning("Resetting 'global %s' cache '%s'", cache_type, cache_path)
     if hs3.is_s3_path(cache_path):
         # For now we only allow to delete caches under the unit test path.
-        bucket, abs_path = hs3.split_path(cache_path)
-        dbg.dassert(
+        _, abs_path = hs3.split_path(cache_path)
+        hdbg.dassert(
             abs_path.startswith("/tmp/cache.unit_test/"),
             "The path '%s' is not valid",
             abs_path,
@@ -353,7 +357,7 @@ class _Cached:
         # `__dict__`) as the called function.
         functools.update_wrapper(self, func)
         # Save interface parameters.
-        dbg.dassert_callable(func)
+        hdbg.dassert_callable(func)
         self._func = func
         self._use_mem_cache = use_mem_cache
         self._use_disk_cache = use_disk_cache
@@ -412,8 +416,8 @@ class _Cached:
             # Get time.
             elapsed_time = time.perf_counter() - perf_counter_start
             # Get memory.
-            obj_size = hintro.get_size_in_bytes(obj)
-            obj_size_as_str = hintro.format_size(obj_size)
+            obj_size = hintrosp.get_size_in_bytes(obj)
+            obj_size_as_str = hintrosp.format_size(obj_size)
             last_cache = self.get_last_cache_accessed()
             cache_dir = self._get_cache_dir(last_cache, self._tag)
             _LOG.info(
@@ -424,7 +428,7 @@ class _Cached:
                 obj_size_as_str,
                 elapsed_time,
                 self._tag,
-                cache_dir
+                cache_dir,
             )
         return obj
 
@@ -434,7 +438,7 @@ class _Cached:
         """
         txt = []
         if add_banner:
-            txt.append(hprint.frame("get_global_cache_info()", char1="<"))
+            txt.append(hprintin.frame("get_global_cache_info()", char1="<"))
         has_func_cache = self.has_function_cache()
         txt.append("has function-specific cache=%s" % has_func_cache)
         if has_func_cache:
@@ -456,7 +460,7 @@ class _Cached:
             ret = "mem"
         elif self._last_used_disk_cache:
             # If the disk cache was used, then the memory cache should not been used.
-            dbg.dassert(not self._last_used_mem_cache)
+            hdbg.dassert(not self._last_used_mem_cache)
             ret = "disk"
         else:
             ret = "no_cache"
@@ -500,7 +504,7 @@ class _Cached:
         NOTE: here the caller must guarantee that the new function yields exactly
         the same results than the previous ones. Use carefully.
         """
-        dbg.dassert(
+        hdbg.dassert(
             self.has_function_cache(),
             "This is used only for function-specific caches",
         )
@@ -508,13 +512,13 @@ class _Cached:
         # https://github.com/joblib/joblib/tree/master/joblib/_store_backends.py
         func_path = self._get_function_specific_code_path()
         # Archive old code.
-        new_func_path = func_path + "." + hdatetime.get_timestamp(tz="ET")
+        new_func_path = func_path + "." + hdatetim.get_timestamp(tz="ET")
         _LOG.debug("new_func_path='%s'", new_func_path)
         # Get the store backend.
         cache_type = "disk"
         memorized_result = self._get_memorized_result(cache_type)
         store_backend = memorized_result.store_backend
-        dbg.dassert(
+        hdbg.dassert(
             not store_backend._item_exists(new_func_path),
             "'%s' already exists",
             new_func_path,
@@ -542,16 +546,16 @@ class _Cached:
         """
         Clear a function-specific cache.
         """
-        dbg.dassert(
+        hdbg.dassert(
             self.has_function_cache(),
             "This function has no function-specific cache",
         )
         # Get the path for the disk cache.
         cache_path = self._disk_cache_path
-        dbg.dassert_is_not(cache_path, None)
+        hdbg.dassert_is_not(cache_path, None)
         cache_path = cast(str, cache_path)
         if not _IS_CLEAR_CACHE_ENABLED:
-            dbg.dfatal("Trying to delete function cache '%s'" % cache_path)
+            hdbg.dfatal("Trying to delete function cache '%s'" % cache_path)
         # Collect info before.
         cache_type = "disk"
         description = f"function {cache_type}"
@@ -566,8 +570,8 @@ class _Cached:
         )
         if hs3.is_s3_path(cache_path):
             # For now we only allow to delete caches under the unit test path.
-            bucket, abs_path = hs3.split_path(cache_path)
-            dbg.dassert(
+            _, abs_path = hs3.split_path(cache_path)
+            hdbg.dassert(
                 abs_path.startswith("/tmp/"),
                 "The path '%s' is not valid",
                 abs_path,
@@ -608,7 +612,7 @@ class _Cached:
         # Assemble the path.
         func_path = os.path.join(store_backend.location, func_id, "func_code.py")
         _LOG.debug("func_path='%s'", func_path)
-        dbg.dassert(
+        hdbg.dassert(
             store_backend._item_exists(func_path), "Can't find '%s'", func_path
         )
         return func_path
@@ -631,7 +635,7 @@ class _Cached:
         Initialize Joblib object storing a disk cache for this function.
         """
         if self.has_function_cache():
-            dbg.dassert(
+            hdbg.dassert(
                 not self._use_mem_cache,
                 "When using function cache the memory cache needs to be disabled",
             )
@@ -641,10 +645,10 @@ class _Cached:
                 "compress": True,
             }
             if hs3.is_s3_path(self._disk_cache_path):
-                import helpers.joblib_helpers as hjoblib
+                import helpers.joblib_helpers as hjoh
 
                 # Register the S3 backend.
-                hjoblib.register_s3fs_store_backend()
+                hjoh.register_s3fs_store_backend()
                 # Use the default profile, unless it was explicitly passed.
                 if self._aws_profile is None:
                     aws_profile = hs3.get_aws_profile()
@@ -655,7 +659,7 @@ class _Cached:
                 # Remove the initial `/` from the path that makes the path
                 # absolute, since `Joblib.Memory` wants a path relative to the
                 # bucket.
-                dbg.dassert(
+                hdbg.dassert(
                     path.startswith("/"),
                     "The path should be absolute instead of %s",
                     path,
@@ -689,7 +693,7 @@ class _Cached:
         if cache_type == "no_cache":
             return "no_cache"
         if self.has_function_cache():
-            dbg.dassert_eq(cache_type, "disk")
+            hdbg.dassert_eq(cache_type, "disk")
             ret = self._disk_cache_path
         else:
             ret = _get_global_cache_path(cache_type, tag=tag)
@@ -724,7 +728,7 @@ class _Cached:
         :return: digests of the function and current arguments
         """
         memorized_result = self._get_memorized_result(cache_type)
-        dbg.dassert_is_not(
+        hdbg.dassert_is_not(
             memorized_result,
             None,
             "Cache backend not initialized for %s",
@@ -830,10 +834,10 @@ class _Cached:
                 msg = f"{func_info}: trying to execute"
                 raise NotCachedValueException(msg)
             obj = self._disk_cached_func(*args, **kwargs)
-            #obj = self._execute_intrinsic_function(*args, **kwargs)
+            # obj = self._execute_intrinsic_function(*args, **kwargs)
             # The function was not cached in disk, so now we need to update the
             # memory cache.
-            #self._store_cached_version("disk", func_id, args_id, obj)
+            # self._store_cached_version("disk", func_id, args_id, obj)
         return obj
 
     def _execute_func_from_mem_cache(self, *args: Any, **kwargs: Any) -> Any:

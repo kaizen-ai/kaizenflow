@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.hnumpy as hhnumpy
+"""
+
 import contextlib
 from typing import Iterator
 

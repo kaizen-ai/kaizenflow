@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.introspection as hintro
+import helpers.introspection as hintrosp
 """
 
 import collections.abc as cabc
@@ -9,7 +9,7 @@ import inspect
 import sys
 from typing import Any, List, Optional
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 
 
 def is_iterable(obj: object) -> bool:
@@ -33,7 +33,7 @@ def get_function_name(count: int = 0) -> str:
     # step walking the call stack.
     count += 1
     for _ in range(count):
-        dbg.dassert_is_not(ptr, None)
+        hdbg.dassert_is_not(ptr, None)
         ptr = ptr.f_back  # type: ignore
     func_name = ptr.f_code.co_name  # type: ignore
     return func_name

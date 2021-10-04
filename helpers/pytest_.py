@@ -1,5 +1,7 @@
 """
+Import as:
 
+import helpers.pytest_ as hpytest
 """
 
 import logging
@@ -7,45 +9,45 @@ import os
 import shutil
 from typing import List, Optional
 
-import helpers.dbg as dbg
-import helpers.printing as hprint
-import helpers.system_interaction as hsi
+import helpers.dbg as hdbg
+import helpers.printing as hprintin
+import helpers.system_interaction as hsyint
 
 _LOG = logging.getLogger(__name__)
 
 
 def _pytest_show_artifacts(dir_name: str, tag: Optional[str] = None) -> List[str]:
-    dbg.dassert_ne(dir_name, "")
-    dbg.dassert_dir_exists(dir_name)
+    hdbg.dassert_ne(dir_name, "")
+    hdbg.dassert_dir_exists(dir_name)
     cd_cmd = "cd %s && " % dir_name
     # There might be no pytest artifacts.
     abort_on_error = False
     file_names: List[str] = []
     # Find pytest artifacts.
     cmd = 'find . -name ".pytest_cache" -type d'
-    _, output_tmp = hsi.system_to_string(
+    _, output_tmp = hsyint.system_to_string(
         cd_cmd + cmd, abort_on_error=abort_on_error
     )
     file_names.extend(output_tmp.split())
     #
     cmd = 'find . -name "__pycache__" -type d'
-    _, output_tmp = hsi.system_to_string(
+    _, output_tmp = hsyint.system_to_string(
         cd_cmd + cmd, abort_on_error=abort_on_error
     )
     file_names.extend(output_tmp.split())
     # Find .pyc artifacts.
     cmd = 'find . -name "*.pyc" -type f'
-    _, output_tmp = hsi.system_to_string(
+    _, output_tmp = hsyint.system_to_string(
         cd_cmd + cmd, abort_on_error=abort_on_error
     )
     file_names.extend(output_tmp.split())
     # Remove empty lines.
-    file_names = hprint.remove_empty_lines_from_string_list(file_names)
+    file_names = hprintin.remove_empty_lines_from_string_list(file_names)
     #
     if tag is not None:
         num_files = len(file_names)
         _LOG.info("%s: %d", tag, num_files)
-        _LOG.debug("\n%s", hprint.indent("\n".join(file_names)))
+        _LOG.debug("\n%s", hprintin.indent("\n".join(file_names)))
     return file_names  # type: ignore
 
 
@@ -54,8 +56,8 @@ def pytest_clean(dir_name: str, preview: bool = False) -> None:
     Clean pytest artifacts.
     """
     _LOG.warning("Cleaning pytest artifacts")
-    dbg.dassert_ne(dir_name, "")
-    dbg.dassert_dir_exists(dir_name)
+    hdbg.dassert_ne(dir_name, "")
+    hdbg.dassert_dir_exists(dir_name)
     if preview:
         _LOG.warning("Preview only: nothing will be deleted")
     # Show before cleaning.
@@ -76,4 +78,4 @@ def pytest_clean(dir_name: str, preview: bool = False) -> None:
                 _LOG.debug("rm %s", f)
     # Show after cleaning.
     file_names = _pytest_show_artifacts(dir_name, tag="After cleaning")
-    dbg.dassert_eq(len(file_names), 0)
+    hdbg.dassert_eq(len(file_names), 0)

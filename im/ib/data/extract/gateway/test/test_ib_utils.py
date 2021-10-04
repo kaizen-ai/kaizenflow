@@ -7,7 +7,7 @@ except ModuleNotFoundError:
 import pandas as pd
 import pytest
 
-import im.common.db.init as icdini
+import im.common.db.create_schema as icdcrsch
 import im.ib.data.extract.gateway.test.utils as iidegt
 import im.ib.data.extract.gateway.utils as iidegu
 
@@ -87,7 +87,7 @@ class Test_utils1(iidegt.IbExtractionTest):
 
 
 @pytest.mark.skipif(
-    not icdini.is_inside_im_container(),
+    not icdcrsch.is_inside_im_container(),
     reason="Testable only inside IB container",
 )
 class Test_get_historical_data(iidegt.IbExtractionTest):

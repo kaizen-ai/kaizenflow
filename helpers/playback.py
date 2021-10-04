@@ -3,7 +3,7 @@ Code to automatically generate unit tests for functions.
 
 Import as:
 
-import helpers.playback as hplayb
+import helpers.playback as hplaybac
 """
 
 import inspect
@@ -17,9 +17,9 @@ import jsonpickle.ext.pandas as jepand  # type: ignore
 import pandas as pd
 
 import core.config as cconfig
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.printing as hprint
+import helpers.printing as hprintin
 
 jepand.register_handlers()
 
@@ -99,7 +99,7 @@ class Playback:
         :param max_tests: limit a number of generated tests for the testing function.
             Can be useful if the function is called a lot of times during the execution.
         """
-        dbg.dassert_in(mode, ("check_string", "assert_equal"))
+        hdbg.dassert_in(mode, ("check_string", "assert_equal"))
         self.mode = mode
         cur_frame = inspect.currentframe()
         self._func_name = cur_frame.f_back.f_code.co_name  # type: ignore
@@ -111,7 +111,7 @@ class Playback:
         if "kwargs" in self._kwargs:
             expected_arg_count += 1
         # TODO(gp): Is this necessary?
-        # dbg.dassert_eq(
+        # hdbg.dassert_eq(
         #    expected_arg_count,
         #    len(cur_frame.f_back.f_locals),  # type: ignore
         #    msg="the Playback class should be the first thing instantiated in a function.",
@@ -220,7 +220,7 @@ class Playback:
         if self.mode == "check_string":
             if isinstance(func_output, (pd.DataFrame, pd.Series, str)):
                 if not isinstance(func_output, str):
-                    self._append("act = hut.convert_df_to_string(act)", 2)
+                    self._append("act = huntes.convert_df_to_string(act)", 2)
             if not isinstance(func_output, (str, bytes)):
                 self._append("act = str(act)", 2)
             self._append("# Check output.", 2)
@@ -235,8 +235,8 @@ class Playback:
                 self._append("exp = jsonpickle.decode(exp)", 2)
 
             if isinstance(func_output, (pd.DataFrame, pd.Series)):
-                self._append("act = hut.convert_df_to_string(act)", 2)
-                self._append("exp = hut.convert_df_to_string(exp)", 2)
+                self._append("act = huntes.convert_df_to_string(act)", 2)
+                self._append("exp = huntes.convert_df_to_string(exp)", 2)
             self._append("# Compare actual and expected output.", 2)
             self._append("self.assertEqual(act, exp)", 2)
         else:
@@ -247,7 +247,7 @@ class Playback:
         Add the code with imports.
         """
         # Add imports.
-        self._append("import helpers.unit_test as hut")
+        self._append("import helpers.unit_test as huntes")
         self._append("import jsonpickle")
         self._append("import pandas as pd")
         self._append("import core.config as cconfi")
@@ -285,7 +285,7 @@ class Playback:
         """
         Get a string for the test code with the name of the test class.
 
-        I.e. "class TestMyMethod(hut.TestCase):".
+        I.e. "class TestMyMethod(huntes.TestCase):".
         """
         test_name = (
             self._parent_class.__class__.__name__
@@ -293,7 +293,7 @@ class Playback:
             else ""
         )
         test_name += "".join([x.capitalize() for x in self._func_name.split("_")])
-        class_string = f"class Test{test_name}(hut.TestCase):"
+        class_string = f"class Test{test_name}(huntes.TestCase):"
         return class_string
 
     def _add_function_call(self) -> None:
@@ -354,7 +354,7 @@ class Playback:
         """
         Add indented line to the code.
         """
-        self._code.append(hprint.indent(string, num_tabs * 4))
+        self._code.append(hprintin.indent(string, num_tabs * 4))
 
 
 def json_pretty_print(parsed: Any) -> str:
@@ -394,7 +394,7 @@ def round_trip_convert(obj1: Any, log_level: int) -> Any:
         pass
     else:
         if isinstance(obj1, pd.DataFrame):
-            dbg.dassert(obj1.equals(obj2), "obj1=\n%s\nobj2=\n%s", obj1, obj2)
+            hdbg.dassert(obj1.equals(obj2), "obj1=\n%s\nobj2=\n%s", obj1, obj2)
         else:
-            dbg.dassert_eq(obj1, obj2)
+            hdbg.dassert_eq(obj1, obj2)
     return obj2

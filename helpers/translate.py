@@ -6,6 +6,10 @@ module or CLI tool.
 
 Supported languages and languages codes:
 https://docs.aws.amazon.com/translate/latest/dg/what-is.html
+
+Import as:
+
+import helpers.translate as htransla
 """
 import argparse
 import configparser

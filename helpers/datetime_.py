@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.datetime_ as hdatet
+import helpers.datetime_ as hdatetim
 """
 
 # TODO(gp): -> hdatetime
@@ -34,7 +34,7 @@ except ModuleNotFoundError:
     print(_WARNING + f": Can't find {_module}: continuing")
 
 
-import helpers.dbg as dbg  # noqa: E402 # pylint: disable=wrong-import-position
+import helpers.dbg as hdbg  # noqa: E402 # pylint: disable=wrong-import-position
 
 _LOG = logging.getLogger(__name__)
 
@@ -62,7 +62,7 @@ def dassert_is_datetime(datetime_: Datetime) -> None:
     """
     Assert that `datetime_` is of type `Datetime`.
     """
-    dbg.dassert_isinstance(
+    hdbg.dassert_isinstance(
         datetime_,
         (str, pd.Timestamp, datetime.datetime),
         "datetime_='%s' of type '%s' is not a DateTimeType",
@@ -75,7 +75,7 @@ def dassert_is_strict_datetime(datetime_: StrictDatetime) -> None:
     """
     Assert that `datetime_` is of type `StrictDatetime`.
     """
-    dbg.dassert_isinstance(
+    hdbg.dassert_isinstance(
         datetime_,
         (pd.Timestamp, datetime.datetime),
         "datetime_='%s' of type '%s' is not a StrictDateTimeType",
@@ -103,7 +103,7 @@ def dassert_is_tz_naive(datetime_: StrictDatetime) -> None:
     Assert that the passed timestamp is tz-naive, i.e., doesn't have timezone
     info.
     """
-    dbg.dassert_is(
+    hdbg.dassert_is(
         datetime_.tzinfo, None, "datetime_='%s' is not tz naive", datetime_
     )
 
@@ -112,7 +112,7 @@ def dassert_has_tz(datetime_: StrictDatetime) -> None:
     """
     Assert that the passed timestamp has timezone info.
     """
-    dbg.dassert_is_not(
+    hdbg.dassert_is_not(
         datetime_.tzinfo,
         None,
         "datetime_='%s' doesn't have timezone info",
@@ -132,7 +132,7 @@ def _dassert_has_specified_tz(
     tz_info = datetime_.tzinfo
     tz_zone = tz_info.zone  # type: ignore
     has_expected_tz = tz_zone in tz_zones
-    dbg.dassert(
+    hdbg.dassert(
         has_expected_tz,
         "datetime_=%s (type=%s) tz_info=%s tz_info.zone=%s instead of tz_zones=%s",
         datetime_,
@@ -172,7 +172,7 @@ def dassert_tz_compatible(
     dassert_is_strict_datetime(datetime2)
     has_tz1 = datetime1.tzinfo is not None
     has_tz2 = datetime2.tzinfo is not None
-    dbg.dassert_eq(
+    hdbg.dassert_eq(
         has_tz1,
         has_tz2,
         "datetime1='%s' and datetime2='%s' are not compatible",
@@ -189,7 +189,7 @@ def dassert_tz_compatible_timestamp_with_df(
     info.
     """
     dassert_is_strict_datetime(datetime_)
-    dbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_isinstance(df, pd.DataFrame)
     if df.empty:
         return
     # We assume that the first element in the index is representative.
@@ -220,7 +220,9 @@ GetWallClockTime = Callable[[], pd.Timestamp]
 
 
 # TODO(gp): -> get_wall_clock_time
-def get_current_time(tz: str, event_loop: Optional[asyncio.AbstractEventLoop]=None) -> pd.Timestamp:
+def get_current_time(
+    tz: str, event_loop: Optional[asyncio.AbstractEventLoop] = None
+) -> pd.Timestamp:
     """
     Return current time in UTC / ET timezone or as a naive time.
 
@@ -231,7 +233,7 @@ def get_current_time(tz: str, event_loop: Optional[asyncio.AbstractEventLoop]=No
     if event_loop is not None:
         # We accept only `hasyncio.EventLoop` here. If we are using asyncio
         # EventLoop we rely on wall-clock time instead of `loop.time()`.
-        dbg.dassert_isinstance(event_loop, asyncio.AbstractEventLoop)
+        hdbg.dassert_isinstance(event_loop, asyncio.AbstractEventLoop)
         timestamp = event_loop.get_current_time()
     else:
         timestamp = datetime.datetime.utcnow()
@@ -284,8 +286,8 @@ def to_generalized_datetime(
     :return: datetime dates
     """
     # This function doesn't deal with mixed formats.
-    dbg.dassert_isinstance(dates, Iterable)
-    dbg.dassert(not isinstance(dates, str))
+    hdbg.dassert_isinstance(dates, Iterable)
+    hdbg.dassert(not isinstance(dates, str))
     # Try converting to datetime using `pd.to_datetime`.
     format_example_index = -1
     date_example = dates.tolist()[format_example_index]

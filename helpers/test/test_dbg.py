@@ -1,8 +1,8 @@
 import logging
 from typing import List, Tuple
 
-import helpers.dbg as dbg
-import helpers.unit_test as hut
+import helpers.dbg as hdbg
+import helpers.unit_test as huntes
 
 _LOG = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Use a self.assert_equal() instead of a check_string() since this
 #  code needs to be stable.
-class Test_dassert1(hut.TestCase):
+class Test_dassert1(huntes.TestCase):
     """
     Test `dassert()`.
     """
@@ -22,14 +22,14 @@ class Test_dassert1(hut.TestCase):
         """
         An assertion that is verified.
         """
-        dbg.dassert(True)
+        hdbg.dassert(True)
 
     def test2(self) -> None:
         """
         An assertion that is not verified.
         """
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert(False)
+            hdbg.dassert(False)
         self.check_string(str(cm.exception))
 
     def test3(self) -> None:
@@ -37,7 +37,7 @@ class Test_dassert1(hut.TestCase):
         An assertion with a message.
         """
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert(False, msg="hello")
+            hdbg.dassert(False, msg="hello")
         self.check_string(str(cm.exception))
 
     def test4(self) -> None:
@@ -45,7 +45,7 @@ class Test_dassert1(hut.TestCase):
         An assertion with a message to format.
         """
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert(False, "hello %s", "world")
+            hdbg.dassert(False, "hello %s", "world")
         self.check_string(str(cm.exception))
 
     def test5(self) -> None:
@@ -53,7 +53,7 @@ class Test_dassert1(hut.TestCase):
         Too many parameters.
         """
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert(False, "hello %s", "world", "too_many")
+            hdbg.dassert(False, "hello %s", "world", "too_many")
         self.check_string(str(cm.exception))
 
     def test6(self) -> None:
@@ -61,7 +61,7 @@ class Test_dassert1(hut.TestCase):
         Not enough parameters.
         """
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert(False, "hello %s")
+            hdbg.dassert(False, "hello %s")
         self.check_string(str(cm.exception))
 
     def test7(self) -> None:
@@ -75,28 +75,28 @@ class Test_dassert1(hut.TestCase):
         """
         with self.assertRaises(AssertionError) as cm:
             y = ["world"]
-            dbg.dassert(y, ["hello"])
+            hdbg.dassert(y, ["hello"])
         self.check_string(str(cm.exception))
 
 
 # #############################################################################
 
 
-class Test_dassert_eq1(hut.TestCase):
+class Test_dassert_eq1(huntes.TestCase):
     def test1(self) -> None:
-        dbg.dassert_eq(1, 1)
+        hdbg.dassert_eq(1, 1)
 
     def test2(self) -> None:
-        dbg.dassert_eq(1, 1, msg="hello world")
+        hdbg.dassert_eq(1, 1, msg="hello world")
 
     def test3(self) -> None:
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert_eq(1, 2, msg="hello world")
+            hdbg.dassert_eq(1, 2, msg="hello world")
         self.check_string(str(cm.exception))
 
     def test4(self) -> None:
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert_eq(1, 2, "hello %s", "world")
+            hdbg.dassert_eq(1, 2, "hello %s", "world")
         self.check_string(str(cm.exception))
 
     def test5(self) -> None:
@@ -104,7 +104,7 @@ class Test_dassert_eq1(hut.TestCase):
         Raise assertion with incorrect message.
         """
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert_eq(1, 2, "hello %s")
+            hdbg.dassert_eq(1, 2, "hello %s")
         self.check_string(str(cm.exception))
 
 
@@ -112,48 +112,48 @@ class Test_dassert_eq1(hut.TestCase):
 
 
 # TODO(gp): Break it in piece.
-class Test_dassert_misc1(hut.TestCase):
+class Test_dassert_misc1(huntes.TestCase):
 
     # dassert_in
 
     def test_in1(self) -> None:
-        dbg.dassert_in("a", "abc")
+        hdbg.dassert_in("a", "abc")
 
     def test_in2(self) -> None:
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert_in("a", "xyz".split())
+            hdbg.dassert_in("a", "xyz".split())
         self.check_string(str(cm.exception))
 
     # dassert_is
 
     def test_is1(self) -> None:
         a = None
-        dbg.dassert_is(a, None)
+        hdbg.dassert_is(a, None)
 
     def test_is2(self) -> None:
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert_is("a", None)
+            hdbg.dassert_is("a", None)
         self.check_string(str(cm.exception))
 
     # dassert_isinstance
 
     def test_is_instance1(self) -> None:
-        dbg.dassert_isinstance("a", str)
+        hdbg.dassert_isinstance("a", str)
 
     def test_is_instance2(self) -> None:
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert_isinstance("a", int)
+            hdbg.dassert_isinstance("a", int)
         self.check_string(str(cm.exception))
 
     def test_is_instance3(self) -> None:
-        dbg.dassert_isinstance("a", (str, int))
+        hdbg.dassert_isinstance("a", (str, int))
 
     def test_is_instance4(self) -> None:
-        dbg.dassert_isinstance(5.0, (float, int))
+        hdbg.dassert_isinstance(5.0, (float, int))
 
     def test_is_instance5(self) -> None:
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert_isinstance("a", (float, int))
+            hdbg.dassert_isinstance("a", (float, int))
         self.check_string(str(cm.exception))
 
     # dassert_set_eq
@@ -161,13 +161,13 @@ class Test_dassert_misc1(hut.TestCase):
     def test_set_eq1(self) -> None:
         a = [1, 2, 3]
         b = [2, 3, 1]
-        dbg.dassert_set_eq(a, b)
+        hdbg.dassert_set_eq(a, b)
 
     def test_set_eq2(self) -> None:
         with self.assertRaises(AssertionError) as cm:
             a = [1, 2, 3]
             b = [2, 2, 1]
-            dbg.dassert_set_eq(a, b)
+            hdbg.dassert_set_eq(a, b)
         self.check_string(str(cm.exception))
 
     # dassert_is_subset
@@ -175,13 +175,13 @@ class Test_dassert_misc1(hut.TestCase):
     def test_is_subset1(self) -> None:
         a = [1, 2]
         b = [2, 1, 3]
-        dbg.dassert_is_subset(a, b)
+        hdbg.dassert_is_subset(a, b)
 
     def test_is_subset2(self) -> None:
         with self.assertRaises(AssertionError) as cm:
             a = [1, 2, 3]
             b = [4, 2, 1]
-            dbg.dassert_is_subset(a, b)
+            hdbg.dassert_is_subset(a, b)
         self.check_string(str(cm.exception))
 
     # dassert_not_intersection
@@ -189,37 +189,37 @@ class Test_dassert_misc1(hut.TestCase):
     def test_not_intersection1(self) -> None:
         a = [1, 2, 3]
         b = [4, 5]
-        dbg.dassert_not_intersection(a, b)
+        hdbg.dassert_not_intersection(a, b)
 
     def test_not_intersection2(self) -> None:
         with self.assertRaises(AssertionError) as cm:
             a = [1, 2, 3]
             b = [4, 2, 1]
-            dbg.dassert_not_intersection(a, b)
+            hdbg.dassert_not_intersection(a, b)
         self.check_string(str(cm.exception))
 
     # dassert_no_duplicates
 
     def test_no_duplicates1(self) -> None:
         a = [1, 2, 3]
-        dbg.dassert_no_duplicates(a)
+        hdbg.dassert_no_duplicates(a)
 
     def test_no_duplicates2(self) -> None:
         with self.assertRaises(AssertionError) as cm:
             a = [1, 3, 3]
-            dbg.dassert_no_duplicates(a)
+            hdbg.dassert_no_duplicates(a)
         self.check_string(str(cm.exception))
 
     # dassert_is_sorted
 
     def test_is_sorted1(self) -> None:
         a = [1, 2, 3]
-        dbg.dassert_is_sorted(a)
+        hdbg.dassert_is_sorted(a)
 
     def test_is_sorted2(self) -> None:
         with self.assertRaises(AssertionError) as cm:
             a = [1, 2, 4, 3]
-            dbg.dassert_is_sorted(a)
+            hdbg.dassert_is_sorted(a)
         self.check_string(str(cm.exception))
 
     def test_is_sorted3(self) -> None:
@@ -227,7 +227,7 @@ class Test_dassert_misc1(hut.TestCase):
         Test an array that is sorted descending.
         """
         a = [3, 2, 2]
-        dbg.dassert_is_sorted(a, sort_kwargs={"reverse": True})
+        hdbg.dassert_is_sorted(a, sort_kwargs={"reverse": True})
 
     def test_is_sorted4(self) -> None:
         """
@@ -236,7 +236,7 @@ class Test_dassert_misc1(hut.TestCase):
         with self.assertRaises(AssertionError) as cm:
             a = [1, 2, 4, 3]
             sort_kwargs = {"reverse": True}
-            dbg.dassert_is_sorted(a, sort_kwargs=sort_kwargs)
+            hdbg.dassert_is_sorted(a, sort_kwargs=sort_kwargs)
         self.check_string(str(cm.exception))
 
     # dassert_eq_all
@@ -244,32 +244,34 @@ class Test_dassert_misc1(hut.TestCase):
     def test_eq_all1(self) -> None:
         a = [1, 2, 3]
         b = [1, 2, 3]
-        dbg.dassert_eq_all(a, b)
+        hdbg.dassert_eq_all(a, b)
 
     def test_eq_all2(self) -> None:
         with self.assertRaises(AssertionError) as cm:
             a = [1, 2, 3]
             b = [1, 2, 4]
-            dbg.dassert_eq_all(a, b)
+            hdbg.dassert_eq_all(a, b)
         self.check_string(str(cm.exception))
 
 
 # #############################################################################
 
 
-class Test_dassert_lgt1(hut.TestCase):
+class Test_dassert_lgt1(huntes.TestCase):
     def test1(self) -> None:
         """
         No assertion raised since `0 <= 0 <= 3`.
         """
-        dbg.dassert_lgt(0, 0, 3, lower_bound_closed=True, upper_bound_closed=True)
+        hdbg.dassert_lgt(
+            0, 0, 3, lower_bound_closed=True, upper_bound_closed=True
+        )
 
     def test2(self) -> None:
         """
         Raise assertion since it is not true that `0 < 0 <= 3`.
         """
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert_lgt(
+            hdbg.dassert_lgt(
                 0, 0, 3, lower_bound_closed=False, upper_bound_closed=True
             )
         act = str(cm.exception)
@@ -288,7 +290,7 @@ class Test_dassert_lgt1(hut.TestCase):
         with self.assertRaises(AssertionError) as cm:
             lower_bound_closed = False
             upper_bound_closed = True
-            dbg.dassert_lgt(
+            hdbg.dassert_lgt(
                 0,
                 100,
                 3,
@@ -309,31 +311,31 @@ class Test_dassert_lgt1(hut.TestCase):
 # #############################################################################
 
 
-class Test_dassert_is_proportion1(hut.TestCase):
+class Test_dassert_is_proportion1(huntes.TestCase):
     def test1(self) -> None:
         """
         Passing assertion with correct message and format.
         """
-        dbg.dassert_is_proportion(0.1, "hello %s", "world")
+        hdbg.dassert_is_proportion(0.1, "hello %s", "world")
 
     def test2(self) -> None:
         """
         Passing assertion with correct message and format.
         """
-        dbg.dassert_is_proportion(0.0, "hello %s", "world")
+        hdbg.dassert_is_proportion(0.0, "hello %s", "world")
 
     def test3(self) -> None:
         """
         Passing assertion with correct message and format.
         """
-        dbg.dassert_is_proportion(1.0, "hello %s", "world")
+        hdbg.dassert_is_proportion(1.0, "hello %s", "world")
 
     def test_assert1(self) -> None:
         """
         Failing assertion with correct message and format.
         """
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert_is_proportion(1.01, "hello %s", "world")
+            hdbg.dassert_is_proportion(1.01, "hello %s", "world")
         act = str(cm.exception)
         exp = r"""
         * Failed assertion *
@@ -347,7 +349,7 @@ class Test_dassert_is_proportion1(hut.TestCase):
         Failing assertion with correct message.
         """
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert_is_proportion(1.01, "hello world")
+            hdbg.dassert_is_proportion(1.01, "hello world")
         act = str(cm.exception)
         exp = r"""
         * Failed assertion *
@@ -361,7 +363,7 @@ class Test_dassert_is_proportion1(hut.TestCase):
         Failing assertion with incorrect message formatting.
         """
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert_is_proportion(1.01, "hello", "world")
+            hdbg.dassert_is_proportion(1.01, "hello", "world")
         act = str(cm.exception)
         exp = r"""
         * Failed assertion *
@@ -377,7 +379,7 @@ class Test_dassert_is_proportion1(hut.TestCase):
         Failing assertion with incorrect message formatting.
         """
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert_is_proportion(1.01, "hello %s %s", "world")
+            hdbg.dassert_is_proportion(1.01, "hello %s %s", "world")
         act = str(cm.exception)
         exp = r"""
         * Failed assertion *
@@ -392,10 +394,10 @@ class Test_dassert_is_proportion1(hut.TestCase):
 # #############################################################################
 
 
-class Test_dassert_container_type1(hut.TestCase):
+class Test_dassert_container_type1(huntes.TestCase):
     def test1(self) -> None:
         list_ = "a b c".split()
-        dbg.dassert_container_type(list_, List, str)
+        hdbg.dassert_container_type(list_, List, str)
 
     def test_assert1(self) -> None:
         """
@@ -403,7 +405,7 @@ class Test_dassert_container_type1(hut.TestCase):
         """
         list_ = "a b c".split()
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert_container_type(list_, Tuple, str)
+            hdbg.dassert_container_type(list_, Tuple, str)
         act = str(cm.exception)
         exp = r"""
         * Failed assertion *
@@ -418,7 +420,7 @@ class Test_dassert_container_type1(hut.TestCase):
         """
         list_ = ["a", 2, "c", "d"]
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert_container_type(list_, list, str)
+            hdbg.dassert_container_type(list_, list, str)
         act = str(cm.exception)
         exp = r"""
         * Failed assertion *
@@ -433,7 +435,7 @@ class Test_dassert_container_type1(hut.TestCase):
         """
         list_ = ["a", 2, "c", "d"]
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert_container_type(
+            hdbg.dassert_container_type(
                 list_, list, str, "list_ is %s homogeneous", "not"
             )
         act = str(cm.exception)
@@ -461,20 +463,20 @@ class _Vegetable:
     pass
 
 
-class Test_dassert_issubclass1(hut.TestCase):
+class Test_dassert_issubclass1(huntes.TestCase):
     def test_man1(self) -> None:
         """
         An instance of `_Man` descends from `_Animal`.
         """
         man = _Man()
-        dbg.dassert_issubclass(man, _Man)
+        hdbg.dassert_issubclass(man, _Man)
 
     def test_man2(self) -> None:
         """
         An instance of `_Man` descends from object.
         """
         man = _Man()
-        dbg.dassert_issubclass(man, object)
+        hdbg.dassert_issubclass(man, object)
 
     def test_man_fail1(self) -> None:
         """
@@ -482,7 +484,7 @@ class Test_dassert_issubclass1(hut.TestCase):
         """
         man = _Man()
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert_issubclass(man, _Vegetable)
+            hdbg.dassert_issubclass(man, _Vegetable)
         # We need to purify from object references.
         self.check_string(str(cm.exception), purify_text=True)
 
@@ -492,38 +494,38 @@ class Test_dassert_issubclass1(hut.TestCase):
         """
         man = _Man()
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert_issubclass(man, int)
+            hdbg.dassert_issubclass(man, int)
         self.check_string(str(cm.exception), purify_text=True)
 
     def test1(self) -> None:
         """
         In Python everything is an object.
         """
-        dbg.dassert_issubclass(5, object)
-        dbg.dassert_issubclass(int, object)
-        dbg.dassert_issubclass(int, (object, int))
+        hdbg.dassert_issubclass(5, object)
+        hdbg.dassert_issubclass(int, object)
+        hdbg.dassert_issubclass(int, (object, int))
 
     def test_fail1(self) -> None:
         """
         `issubclass` only accepts classes and not instances as second argument.
         """
         with self.assertRaises(Exception) as cm:
-            dbg.dassert_issubclass(int, 5.0)
+            hdbg.dassert_issubclass(int, 5.0)
         self.check_string(str(cm.exception), purify_text=True)
 
 
 # #############################################################################
 
 
-class Test_dassert_callable1(hut.TestCase):
+class Test_dassert_callable1(huntes.TestCase):
     def test1(self) -> None:
         func = lambda x: x
-        dbg.dassert_callable(func)
+        hdbg.dassert_callable(func)
 
     def test_fail1(self) -> None:
         func = 4
         with self.assertRaises(AssertionError) as cm:
-            dbg.dassert_callable(func)
+            hdbg.dassert_callable(func)
         act = str(cm.exception)
         exp = r"""
         * Failed assertion *
@@ -535,6 +537,6 @@ class Test_dassert_callable1(hut.TestCase):
 # #############################################################################
 
 
-class Test_logging1(hut.TestCase):
+class Test_logging1(huntes.TestCase):
     def test_logging_levels1(self) -> None:
-        dbg.test_logger()
+        hdbg.test_logger()

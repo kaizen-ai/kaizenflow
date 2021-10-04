@@ -25,14 +25,13 @@ import random
 
 import pandas as pd
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pyarrow.dataset as ds
-import numpy as np
+import pyarrow.parquet as pq
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
 
-dbg.init_logger(verbosity=logging.INFO)
+hdbg.init_logger(verbosity=logging.INFO)
 _LOG = logging.getLogger(__name__)
 
 
@@ -40,27 +39,34 @@ _LOG = logging.getLogger(__name__)
 def get_df() -> pd.DataFrame:
     """
     Create pandas random data, like:
-    
+
+    ```
                 idx instr  val1  val2
     2000-01-01    0     A    99    30
     2000-01-02    0     A    54    46
     2000-01-03    0     A    85    86
+    ```
     """
-    num_rows = 100
     instruments = "A B C D E".split()
-    cols = "id stock val1 val2".split()
-    df_idx = pd.date_range(pd.Timestamp("2000-01-01"), pd.Timestamp("2000-01-15"), freq="1D")
-    #print(df_idx)
+    "id stock val1 val2".split()
+    df_idx = pd.date_range(
+        pd.Timestamp("2000-01-01"), pd.Timestamp("2000-01-15"), freq="1D"
+    )
+    # print(df_idx)
     random.seed(1000)
 
     df = []
     for idx, inst in enumerate(instruments):
-        df_tmp = pd.DataFrame({"idx": idx,
-                               "instr": inst,
-                               "val1": [random.randint(0, 100) for k in range(len(df_idx))],
-                               "val2": [random.randint(0, 100) for k in range(len(df_idx))],
-                              }, index=df_idx)
-        #print(df_tmp)
+        df_tmp = pd.DataFrame(
+            {
+                "idx": idx,
+                "instr": inst,
+                "val1": [random.randint(0, 100) for k in range(len(df_idx))],
+                "val2": [random.randint(0, 100) for k in range(len(df_idx))],
+            },
+            index=df_idx,
+        )
+        # print(df_tmp)
         df.append(df_tmp)
     df = pd.concat(df)
     return df
@@ -80,7 +86,7 @@ def df_to_str(df: pd.DataFrame) -> str:
 
 # %%
 df = get_df()
-#print(df.head())
+# print(df.head())
 print(df_to_str(df))
 
 # %%
@@ -125,21 +131,17 @@ print(df_to_str(df))
 
 # %%
 base = "."
-dir_name =  os.path.join(base, "parquet_dataset_partitioned")
+dir_name = os.path.join(base, "parquet_dataset_partitioned")
 os.system("rm -rf %s" % dir_name)
 
-pq.write_to_dataset(table,
-                    dir_name,
-                    partition_cols=['idx'])
+pq.write_to_dataset(table, dir_name, partition_cols=["idx"])
 
 # %%
-# !ls parquet_dataset_partitioned 
+# !ls parquet_dataset_partitioned
 
 # %%
 # Read data back.
-dataset = ds.dataset(dir_name,
-                     format="parquet",
-                     partitioning="hive")
+dataset = ds.dataset(dir_name, format="parquet", partitioning="hive")
 
 print("\n".join(dataset.files))
 
@@ -175,12 +177,10 @@ print("table=\n%s" % table)
 
 # %%
 base = "."
-dir_name =  os.path.join(base, "pq_partitioned2")
+dir_name = os.path.join(base, "pq_partitioned2")
 os.system("rm -rf %s" % dir_name)
 
-pq.write_to_dataset(table,
-                    dir_name,
-                    partition_cols=['idx', "year", "month"])
+pq.write_to_dataset(table, dir_name, partition_cols=["idx", "year", "month"])
 
 # %%
 # !ls $dir_name
@@ -190,33 +190,29 @@ pq.write_to_dataset(table,
 
 # %%
 # Read data back.
-dataset = ds.dataset(dir_name,
-                     format="parquet",
-                     partitioning="hive")
+dataset = ds.dataset(dir_name, format="parquet", partitioning="hive")
 
 print("\n".join(dataset.files))
 
 # %%
 # Read data back.
-dataset = ds.dataset(dir_name,
-                     format="parquet",
-                     partitioning="hive")
+dataset = ds.dataset(dir_name, format="parquet", partitioning="hive")
 
-df2 = dataset.to_table(filter=ds.field('idx') == 2).to_pandas()
+df2 = dataset.to_table(filter=ds.field("idx") == 2).to_pandas()
 print(df_to_str(df2))
 
 # %%
 # We could scan manually and create the dirs manually if we don't want to add
 # add a new dir.
 base = "."
-dir_name =  os.path.join(base, "parquet_dataset_partitioned2")
+dir_name = os.path.join(base, "parquet_dataset_partitioned2")
 os.system("rm -rf %s" % dir_name)
 
 schemas = []
 
 schema = pa.Table.from_pandas(df).schema
 print(schema)
-#assert 0
+# assert 0
 # idx: int64
 # instr: string
 # val1: int64
@@ -224,7 +220,7 @@ print(schema)
 # year: int64
 # month: int64
 
-#grouped = df.groupby(lambda x: x.day)
+# grouped = df.groupby(lambda x: x.day)
 group_by_idx = df.groupby("idx")
 for idx, df_tmp in group_by_idx:
     _LOG.debug("idx=%s -> df.shape=%s", idx, str(df_tmp.shape))
@@ -236,16 +232,18 @@ for idx, df_tmp in group_by_idx:
         group_by_month = df_tmp2.groupby(lambda x: x.month)
         for month, df_tmp3 in group_by_month:
             _LOG.debug("month=%s -> df.shape=%s", month, str(df_tmp3.shape))
-            #file_name = "df_in_one_file.pq"
-            #pq.write_table(table, file_name)
+            # file_name = "df_in_one_file.pq"
+            # pq.write_table(table, file_name)
             # /app/data/idx=0/year=2000/month=1/02e3265d515e4fb88ebe1a72a405fc05.parquet
-            subdir_name = os.path.join(dir_name, f"idx={idx}", f"year={year}", f"month={month}")
+            subdir_name = os.path.join(
+                dir_name, f"idx={idx}", f"year={year}", f"month={month}"
+            )
             table = pa.Table.from_pandas(df_tmp3, schema=schema)
             schemas.append(table.schema)
-            #print(df_tmp3)
-            #print(table.schema)
-#             pq.write_to_dataset(table,
-#                     subdir_name, schema=schema)
+            # print(df_tmp3)
+            # print(table.schema)
+            #             pq.write_to_dataset(table,
+            #                     subdir_name, schema=schema)
             file_name = os.path.join(subdir_name, "df_out.pq")
             hio.create_enclosing_dir(file_name)
             pq.write_table(table, file_name)
@@ -264,14 +262,12 @@ schemas
 # %%
 # Read data back.
 # https://github.com/dask/dask/issues/4194
-#src_dir = f"{dir_name}/idx=0/year=2000/month=1"
+# src_dir = f"{dir_name}/idx=0/year=2000/month=1"
 src_dir = f"{dir_name}/idx=0/year=2000"
-dataset = ds.dataset(src_dir,
-                     format="parquet",
-                     partitioning="hive")
+dataset = ds.dataset(src_dir, format="parquet", partitioning="hive")
 
 df2 = dataset.to_table().to_pandas()
-#print(df_to_str(df2))
+# print(df_to_str(df2))
 print("\n".join(dataset.files))
 
 # %% [markdown]
@@ -280,10 +276,12 @@ print("\n".join(dataset.files))
 # %%
 from pyarrow.dataset import DirectoryPartitioning
 
-partitioning = DirectoryPartitioning(pa.schema([("year", pa.int16()), ("month", pa.int8()), ("day", pa.int8())]))
+partitioning = DirectoryPartitioning(
+    pa.schema([("year", pa.int16()), ("month", pa.int8()), ("day", pa.int8())])
+)
 print(partitioning.parse("/2009/11/3"))
 
-#partitioning.discover()
+# partitioning.discover()
 
 # %%
 # !ls /app/data
@@ -292,9 +290,7 @@ print(partitioning.parse("/2009/11/3"))
 dir_name = "/app/data"
 
 # Read data back.
-dataset = ds.dataset(dir_name,
-                     format="parquet",
-                     partitioning="hive")
+dataset = ds.dataset(dir_name, format="parquet", partitioning="hive")
 
 print("\n".join(dataset.files))
 

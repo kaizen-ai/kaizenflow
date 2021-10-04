@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.versioning as hversi
+import helpers.versioning as hversion
 """
 
 # This code implements version control for code

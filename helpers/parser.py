@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.parser as hparse
+import helpers.parser as hparser
 """
 
 import argparse
@@ -10,10 +10,10 @@ import os
 import sys
 from typing import Any, Dict, List, Optional, Tuple
 
-import helpers.dbg as dbg
+import helpers.dbg as hdbg
 import helpers.io_ as hio
-import helpers.printing as hprint
-import helpers.system_interaction as hsyste
+import helpers.printing as hprintin
+import helpers.system_interaction as hsyint
 
 _LOG = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ def add_verbosity_arg(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
 def parse_verbosity_args(
     args: argparse.Namespace, *args_: Any, **kwargs: Any
 ) -> None:
-    dbg.init_logger(verbosity=args.log_level, *args_, **kwargs)
+    hdbg.init_logger(verbosity=args.log_level, *args_, **kwargs)
 
 
 # #############################################################################
@@ -79,7 +79,7 @@ def add_dst_dir_arg(
     """
     # TODO(gp): Add unit test to check this.
     # A required dst_dir implies no default dst_dir.
-    dbg.dassert_imply(
+    hdbg.dassert_imply(
         dst_dir_required,
         not dst_dir_default,
         "Since dst_dir_required='%s', you need to specify a default "
@@ -88,7 +88,7 @@ def add_dst_dir_arg(
         dst_dir_default,
     )
     # If dst_dir is not required, then a default dst_dir must be specified.
-    dbg.dassert_imply(
+    hdbg.dassert_imply(
         not dst_dir_required,
         dst_dir_default,
         "Since dst_dir_required='%s', you can't specify a default "
@@ -128,13 +128,15 @@ def parse_dst_dir_arg(args: argparse.Namespace) -> Tuple[str, bool]:
     _LOG.debug("dst_dir=%s", dst_dir)
     clean_dst_dir = False
     if args.clean_dst_dir:
+        _LOG.info("Cleaning dst_dir='%s'", dst_dir)
         if os.path.exists(dst_dir):
-            _LOG.warning("Found that dir '%s' already exists", dst_dir)
+            _LOG.warning("Dir '%s' already exists", dst_dir)
             if not args.no_confirm:
-                clean_dst_dir = hsyste.query_yes_no(
+                hsyint.query_yes_no(
                     "Do you want to delete the dir '%s'" % dst_dir,
                     abort_on_no=True,
                 )
+            hio.create_dir(dst_dir, incremental=False)
     hio.create_dir(dst_dir, incremental=True)
     _LOG.debug("clean_dst_dir=%s", clean_dst_dir)
     return dst_dir, clean_dst_dir
@@ -182,8 +184,8 @@ def actions_to_string(
     ]
     actions_as_str = "\n".join(actions)
     if add_frame:
-        ret = hprint.frame("# Action selected:") + "\n"
-        ret += hprint.indent(actions_as_str)
+        ret = hprintin.frame("# Action selected:") + "\n"
+        ret += hprintin.indent(actions_as_str)
     else:
         ret = actions_as_str
     return ret  # type: ignore
@@ -192,11 +194,11 @@ def actions_to_string(
 def select_actions(
     args: argparse.Namespace, valid_actions: List[str], default_actions: List[str]
 ) -> List[str]:
-    dbg.dassert(
+    hdbg.dassert(
         not (args.action and args.all),
         "You can't specify together --action and --all",
     )
-    dbg.dassert(
+    hdbg.dassert(
         not (args.action and args.skip_action),
         "You can't specify together --action and --skip_action",
     )
@@ -204,22 +206,22 @@ def select_actions(
     if not args.action or args.all:
         if default_actions is None:
             default_actions = valid_actions[:]
-        dbg.dassert_is_subset(default_actions, valid_actions)
+        hdbg.dassert_is_subset(default_actions, valid_actions)
         # Convert it into list since through some code paths it can be a tuple.
         actions = list(default_actions)
     else:
         actions = args.action[:]
-    dbg.dassert_isinstance(actions, list)
-    dbg.dassert_no_duplicates(actions)
+    hdbg.dassert_isinstance(actions, list)
+    hdbg.dassert_no_duplicates(actions)
     # Validate actions.
     for action in set(actions):
         if action not in valid_actions:
             raise ValueError("Invalid action '%s'" % action)
     # Remove actions, if needed.
     if args.skip_action:
-        dbg.dassert_isinstance(args.skip_action, list)
+        hdbg.dassert_isinstance(args.skip_action, list)
         for skip_action in args.skip_action:
-            dbg.dassert_in(skip_action, actions)
+            hdbg.dassert_in(skip_action, actions)
             actions = [a for a in actions if a != skip_action]
     # Reorder actions according to 'valid_actions'.
     actions = [action for action in valid_actions if action in actions]
@@ -228,7 +230,7 @@ def select_actions(
 
 def mark_action(action: str, actions: List[str]) -> Tuple[bool, List[str]]:
     to_execute = action in actions
-    _LOG.debug("\n%s", hprint.frame("action=%s" % action))
+    _LOG.debug("\n%s", hprintin.frame("action=%s" % action))
     if to_execute:
         actions = [a for a in actions if a != action]
     else:
@@ -402,7 +404,7 @@ def process_json_output_metadata_args(
 
     :return: file name with the output metadata
     """
-    dbg.dassert_isinstance(output_metadata, dict)
+    hdbg.dassert_isinstance(output_metadata, dict)
     if args.json_output_metadata is None:
         return None
     file_name: str = args.json_output_metadata

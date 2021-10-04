@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.network as hnetwork
+"""
+
 import logging
 import os
 import re
@@ -5,9 +11,9 @@ from typing import Optional, Tuple
 
 import requests
 
-import helpers.dbg as dbg
-import helpers.git as git
-import helpers.system_interaction as hsyste
+import helpers.dbg as hdbg
+import helpers.git as hgit
+import helpers.system_interaction as hsyint
 
 _LOG = logging.getLogger(__name__)
 
@@ -33,13 +39,13 @@ def get_prefixes(jupyter_port: Optional[int] = None) -> Tuple[str, str]:
     Return the prefixes that a file should have under a GitHub repo and a
     Jupyter notebook.
     """
-    hsyste.get_user_name()
+    hsyint.get_user_name()
     if jupyter_port is None:
         jupyter_port = 10001
         _LOG.warning(
             "jupyter_port not available: using the default one %s", jupyter_port
         )
-    repo_name = git.get_repo_full_name_from_client(super_module=False)
+    repo_name = hgit.get_repo_full_name_from_client(super_module=False)
     _LOG.debug("repo_name=%s", repo_name)
     github_prefix = "https://github.com/%s/blob/master" % repo_name
     jupyter_prefix = "http://localhost:%s/tree" % jupyter_port
@@ -87,5 +93,5 @@ def get_file_name(url: str) -> str:
         if os.path.exists(url):
             ret = url
     if ret is None:
-        dbg.dassert_is_not(ret, None, "url=%s", url)
+        hdbg.dassert_is_not(ret, None, "url=%s", url)
     return ret  # type: ignore
