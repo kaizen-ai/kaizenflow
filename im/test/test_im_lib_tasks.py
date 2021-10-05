@@ -62,6 +62,7 @@ class TestGetImDockerDown(huntes.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+# TODO(Grisha): 'is_inside_docker()' -> 'is_inside_im_container()' in #100.
 @pytest.mark.skipif(hsyint.is_inside_docker(), reason="amp #1189")
 class TestImDockerCmd(huntes.TestCase):
     def test1(self) -> None:
