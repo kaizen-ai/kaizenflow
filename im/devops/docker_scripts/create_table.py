@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """
-Insert a table into the local database.
+Insert a table into the database.
 
 Use example:
 
-> python create_table.py \
+> create_table.py \
     --table_name 'ccxt_ohlcv'
 
 Import as:
