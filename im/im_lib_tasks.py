@@ -37,13 +37,13 @@ def _get_im_docker_cmd(cmd: str) -> str:
     E.g, to run the `im/devops/set_schema_im_db.py`:
     ```
     docker-compose \
-        --file app/im/devops/compose/docker_compose.yml \
+        --file /app/im/devops/compose/docker-compose.yml \
         run --rm app \
         im/devops/set_schema_im_db.py
     ```
 
     :param cmd: command to execute
-    :return:
+    :return: `im docker-compose' command
     """
     docker_cmd = ["docker-compose"]
     # Add `docker-compose` file path.
