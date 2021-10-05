@@ -56,7 +56,10 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     run_superslow_tests,
     traceback,
 )
-from im.im_lib_tasks import im_docker_cmd  # noqa: F401  # pylint: disable=unused-import
+from im.im_lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
+    im_docker_cleanup,
+    im_docker_cmd,
+)
 
 _LOG = logging.getLogger(__name__)
 
