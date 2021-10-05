@@ -72,8 +72,9 @@ class CddLoader:
         """
         self._root_dir = root_dir
         self._aws_profile = aws_profile
+        # Specify supported data types to load.
+        self._data_types = ["ohlcv"]
 
-    # TODO(Dan): Dassert `data_type` value before reading data from S3.
     def read_data(
         self,
         exchange_id: str,
@@ -91,6 +92,13 @@ class CddLoader:
         :return: processed CDD data
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
+        # Verify that requested data type is valid.
+        dbg.dassert_in(
+            data_type.lower(),
+            self._data_types,
+            msg="Incorrect data type: '%s'. Acceptable types: '%s'"
+                % (data_type.lower(), self._data_types),
+        )
         # Get absolute file path for a CDD file.
         file_path = os.path.join(
             self._root_dir,
@@ -162,7 +170,10 @@ class CddLoader:
         if data_type.lower() == "ohlcv":
             transformed_data = self._apply_ohlcv_transformation(transformed_data)
         else:
-            dbg.dfatal("Incorrect data type. Acceptable types: ohlcv")
+            dbg.dfatal(
+                "Incorrect data type: '%s'. Acceptable types: '%s'"
+                % (data_type.lower(), self._data_types)
+            )
         return transformed_data
 
     def _apply_common_transformation(
