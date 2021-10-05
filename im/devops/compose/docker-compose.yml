@@ -23,7 +23,7 @@ services:
     volumes:
       - im_postgres_data_local:/var/lib/postgresql/data
     ports:
-      - 5432:5432
+      - 5432
     env_file:
       - ../env/local.im_db_config.env
 
