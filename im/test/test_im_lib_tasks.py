@@ -1,3 +1,5 @@
+import pytest
+
 import helpers.system_interaction as hsinte
 import helpers.unit_test as huntes
 import im.im_lib_tasks as imimlitas  # pylint: disable=no-name-in-module
@@ -33,6 +35,7 @@ class TestGetImDockerCmd(huntes.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+@pytest.mark.skipif(hsinte.is_inside_docker(), reason="amp #1189")
 class TestImDockerCmd(huntes.TestCase):
     def test1(self) -> None:
         """
