@@ -59,7 +59,7 @@ def _get_im_docker_cmd(cmd: str) -> str:
 
 
 @task
-def im_docker_cmd(ctx, cmd=""):  # type: ignore
+def im_docker_cmd(ctx, cmd):  # type: ignore
     """
     Execute the command `cmd` inside a container attached to the `im app`.
 

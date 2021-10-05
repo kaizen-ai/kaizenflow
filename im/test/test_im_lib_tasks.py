@@ -1,3 +1,4 @@
+import helpers.system_interaction as hsinte
 import helpers.unit_test as huntes
 import im.im_lib_tasks as imimlitas  # pylint: disable=no-name-in-module
 
@@ -30,3 +31,12 @@ class TestGetImDockerCmd(huntes.TestCase):
             im/devops/docker_scripts/set_shema_im_db.py
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+class TestImDockerCmd(huntes.TestCase):
+    def test1(self) -> None:
+        """
+        Test running a simple command inside `im` container.
+        """
+        cmd = "invoke im_docker_cmd -c ls"
+        hsinte.system(cmd)
