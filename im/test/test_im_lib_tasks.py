@@ -1,5 +1,5 @@
 import helpers.unit_test as huntes
-import im.im_lib_tasks as imimlitas
+import im.im_lib_tasks as imimlitas  # pylint: disable=no-name-in-module
 
 
 class TestGetImDockerCmd(huntes.TestCase):
