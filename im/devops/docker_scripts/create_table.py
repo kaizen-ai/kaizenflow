@@ -9,7 +9,7 @@ Use example:
 
 Import as:
 
-import im.devops.create_table as imdecrtab
+import im.devops.docker_scripts.create_table as imddosccretab
 """
 
 import argparse
@@ -71,7 +71,7 @@ def create_table(conn: hsql.DbConnection, table_name: str) -> None:
     command = _get_create_table_sql_command(table_name)
     cursor.execute(command)
     cursor.close()
-    # TODO (Danya): Remove cloing from function
+    # TODO(Danya): Remove closing from function.
     conn.close()
 
 
