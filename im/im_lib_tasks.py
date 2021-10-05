@@ -3,7 +3,7 @@ Tasks related to `im` project.
 
 Import as:
 
-import im.im_lib_tasks as iilitask
+import im.im_lib_tasks as imimlitas
 """
 
 import os
@@ -11,12 +11,13 @@ import os
 from invoke import task
 
 import helpers.dbg as hdbg
-import helpers.lib_tasks as hlibtask
+import helpers.lib_tasks as hlitas
 
 
 def _get_im_docker_compose_path() -> str:
     """
-    Return path to the docker-compose file `im/devops/compose/docker-compose.yml`.
+    Return path to the docker-compose file `im/devops/compose/docker-
+    compose.yml`.
     """
     # Get `docker-compose` file path.
     docker_compose_dir = "im/devops/compose"
@@ -47,6 +48,6 @@ def im_docker_cmd(ctx, cmd=""):  # type: ignore
     docker_cmd.append(f"run --rm {service_name}")
     docker_cmd.append(cmd)
     # Convert the list to a multiline command.
-    multiline_docker_cmd = hlibtask._to_multi_line_cmd(docker_cmd)
+    multiline_docker_cmd = hlitas._to_multi_line_cmd(docker_cmd)
     # Execute the command.
-    hlibtask._run(ctx, multiline_docker_cmd, pty=True)
+    hlitas._run(ctx, multiline_docker_cmd, pty=True)
