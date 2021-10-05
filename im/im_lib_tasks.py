@@ -26,7 +26,7 @@ def _get_im_docker_compose_path() -> str:
     # Get absolute version of a file path.
     docker_compose_abs_path = os.path.abspath(docker_compose_path)
     # Verify that the file exists.
-    hdbg.dassert_exists(docker_compose_abs_path)
+    hdbg.dassert_file_exists(docker_compose_abs_path)
     return docker_compose_abs_path
 
 
