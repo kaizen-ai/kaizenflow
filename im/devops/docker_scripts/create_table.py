@@ -14,11 +14,11 @@ import im.devops.create_table as imdecrtab
 
 import argparse
 import logging
-import os
 
 import helpers.dbg as hdbg
 import helpers.parser as hparser
 import helpers.sql as hsql
+import im.common.db.create_schema as imcodbcrsch
 
 _LOG = logging.getLogger(__name__)
 
@@ -70,8 +70,8 @@ def create_table(conn: hsql.DbConnection, table_name: str) -> None:
     # Build a CREATE TABLE command from name.
     command = _get_create_table_sql_command(table_name)
     cursor.execute(command)
-    conn.commit()
     cursor.close()
+    # TODO (Danya): Remove cloing from function
     conn.close()
 
 
@@ -94,13 +94,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    conn, _ = hsql.get_connection(
-        dbname=os.environ["POSTGRES_DB"],
-        host=os.environ["POSTGRES_HOST"],
-        port=int(os.environ["POSTGRES_PORT"]),
-        user=os.environ["POSTGRES_USER"],
-        password=os.environ["POSTGRES_PASSWORD"],
-    )
+    conn, _ = imcodbcrsch.get_db_connection_from_environment()
     create_table(conn, args.table_name)
 
 
