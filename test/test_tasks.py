@@ -63,6 +63,13 @@ class TestExecuteTasks1(hut.TestCase):
         cmd = "invoke docker_jupyter --self-test"
         hsinte.system(cmd)
 
+    def test_im_docker_cmd(self) -> None:
+        """
+        Test running a simple command inside `im` container.
+        """
+        cmd = "invoke im_docker_cmd -c ls"
+        hsinte.system(cmd)
+
 
 @pytest.mark.no_container
 @pytest.mark.skipif(hsinte.is_inside_docker(), reason="AmpTask165")
