@@ -35,6 +35,33 @@ class TestGetImDockerCmd(huntes.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+class TestGetImDockerDown(huntes.TestCase):
+    def test1(self) -> None:
+        """
+        Test remove containers only.
+        """
+        actual = imimlitas._get_im_docker_down(remove_volumes=False)
+        expected = r"""
+        docker-compose \
+            --file /app/im/devops/compose/docker-compose.yml \
+            down
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test2(self) -> None:
+        """
+        Test remove containers and volumes.
+        """
+        actual = imimlitas._get_im_docker_down(remove_volumes=True)
+        expected = r"""
+        docker-compose \
+            --file /app/im/devops/compose/docker-compose.yml \
+            down \
+            -v
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
 @pytest.mark.skipif(hsinte.is_inside_docker(), reason="amp #1189")
 class TestImDockerCmd(huntes.TestCase):
     def test1(self) -> None:

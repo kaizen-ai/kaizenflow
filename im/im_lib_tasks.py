@@ -105,6 +105,9 @@ def im_docker_down(ctx, remove_volumes=False):  # type: ignore
     """
     Remove containers and volumes attached to the `im app`.
 
+    By default volumes are not removed, to also remove volumes do
+    `invoke im_docker_down -r`.
+
     :param remove_volumes: whether to remove attached volumes or not
     :param ctx: `context` object
     """
