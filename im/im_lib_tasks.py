@@ -71,3 +71,16 @@ def im_docker_cmd(ctx, cmd):  # type: ignore
     docker_cmd = _get_im_docker_cmd(cmd)
     # Execute the command.
     hlitas._run(ctx, docker_cmd, pty=True)
+
+
+@task
+def im_docker_cleanup(ctx):  # type: ignore
+    docker_compose_down = "docker-compose down"
+    hlitas._run(ctx, docker_compose_down, pty=True)
+    docker_container_prune = "docker container prune"
+    hlitas._run(ctx, docker_container_prune, pty=True)
+
+
+docker-compose \
+    --file /app/im/devops/compose/docker-compose.yml \
+    down
