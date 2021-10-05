@@ -30,15 +30,21 @@ def _get_im_docker_compose_path() -> str:
     return docker_compose_abs_path
 
 
-@task
-def im_docker_cmd(ctx, cmd=""):  # type: ignore
+def _get_im_docker_cmd(cmd: str) -> str:
     """
-    Execute the command `cmd` inside a container attached to the `im app`.
+    Get `im docker-compose' command.
 
-    :param ctx: `context` object
+    E.g, to run the `im/devops/set_schema_im_db.py`:
+    ```
+    docker-compose \
+        --file app/im/devops/compose/docker_compose.yml \
+        run --rm app \
+        im/devops/set_schema_im_db.py
+    ```
+
     :param cmd: command to execute
+    :return:
     """
-    hdbg.dassert_ne(cmd, "")
     docker_cmd = ["docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = _get_im_docker_compose_path()
@@ -49,5 +55,19 @@ def im_docker_cmd(ctx, cmd=""):  # type: ignore
     docker_cmd.append(cmd)
     # Convert the list to a multiline command.
     multiline_docker_cmd = hlitas._to_multi_line_cmd(docker_cmd)
+    return multiline_docker_cmd
+
+
+@task
+def im_docker_cmd(ctx, cmd=""):  # type: ignore
+    """
+    Execute the command `cmd` inside a container attached to the `im app`.
+
+    :param ctx: `context` object
+    :param cmd: command to execute
+    """
+    hdbg.dassert_ne(cmd, "")
+    # Get docker cmd.
+    docker_cmd = _get_im_docker_cmd(cmd)
     # Execute the command.
-    hlitas._run(ctx, multiline_docker_cmd, pty=True)
+    hlitas._run(ctx, docker_cmd, pty=True)
