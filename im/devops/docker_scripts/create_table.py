@@ -34,9 +34,11 @@ def _get_create_table_sql_command(table_name: str) -> str:
         command = """CREATE TABLE ccxt_ohlcv(
                 id SERIAL PRIMARY KEY,
                 timestamp TIMESTAMPTZ NOT NULL,
-                open NUMERIC NOT NULL,
-                high NUMERIC NOT NULL,
-                low NUMERIC NOT NULL,
+                open NUMERIC,
+                high NUMERIC,
+                low NUMERIC,
+                close NUMERIC,
+                volume NUMERIC,
                 epoch INTEGER NOT NULL,
                 currency_pair VARCHAR(255) NOT NULL,
                 exchange_id VARCHAR(255) NOT NULL
@@ -57,6 +59,11 @@ def create_table(conn: hsql.DbConnection, table_name: str) -> None:
 
     Currently available tables:
         - 'ccxt_ohlcv': OHLCV table with CCXT data
+
+    Example of OHLCV data from CCXT:
+    timestamp,open,high,low,close,volume
+    1632745560000,43480.71,43489.87,43435.0,43460.31,18.85418
+    1632745620000,43460.32,43467.68,43420.59,43445.21,39.4702
 
     :param conn: DB connection
     :param table_name: name of the table
