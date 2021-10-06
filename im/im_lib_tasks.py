@@ -32,7 +32,7 @@ def _get_im_docker_compose_path() -> str:
 
 def _get_im_docker_cmd(cmd: str) -> str:
     """
-    Get `im docker-compose' command.
+    Construct `im docker-compose' command.
 
     E.g, to run the `im/devops/set_schema_im_db.py`:
     ```
@@ -60,7 +60,7 @@ def _get_im_docker_cmd(cmd: str) -> str:
 
 def _get_im_docker_down(volumes_remove: bool) -> str:
     """
-    Get `im docker-compose down' command.
+    Construct `im docker-compose down' command.
 
     E.g.,
     ```
