@@ -38,7 +38,7 @@ class TestGetImDockerCmd(huntes.TestCase):
 class TestGetImDockerDown(huntes.TestCase):
     def test1(self) -> None:
         """
-        Test remove containers only.
+        Check the command line to only remove containers.
         """
         actual = imimlitas._get_im_docker_down(remove_volumes=False)
         expected = r"""
@@ -50,7 +50,7 @@ class TestGetImDockerDown(huntes.TestCase):
 
     def test2(self) -> None:
         """
-        Test remove containers and volumes.
+        Check the command line to remove containers and volumes.
         """
         actual = imimlitas._get_im_docker_down(remove_volumes=True)
         expected = r"""

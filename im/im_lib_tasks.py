@@ -58,7 +58,7 @@ def _get_im_docker_cmd(cmd: str) -> str:
     return multiline_docker_cmd
 
 
-def _get_im_docker_down(remove_volumes: bool) -> str:
+def _get_im_docker_down(volumes_remove: bool) -> str:
     """
     Get `im docker-compose down' command.
 
@@ -69,7 +69,7 @@ def _get_im_docker_down(remove_volumes: bool) -> str:
         down -v
     ```
 
-    :param remove_volumes: whether to remove attached volumes or not
+    :param volumes_remove: whether to remove attached volumes or not
     :return: `im docker-compose down' command
     """
     docker_compose_down = ["docker-compose"]
@@ -101,17 +101,17 @@ def im_docker_cmd(ctx, cmd):  # type: ignore
 
 
 @task
-def im_docker_down(ctx, remove_volumes=False):  # type: ignore
+def im_docker_down(ctx, volumes_remove=False):  # type: ignore
     """
     Remove containers and volumes attached to the `im app`.
 
     By default volumes are not removed, to also remove volumes do
-    `invoke im_docker_down -r`.
+    `invoke im_docker_down -v`.
 
-    :param remove_volumes: whether to remove attached volumes or not
+    :param volumes_remove: whether to remove attached volumes or not
     :param ctx: `context` object
     """
     # Get docker down command.
-    docker_clean_up_cmd = _get_im_docker_down(remove_volumes)
+    docker_clean_up_cmd = _get_im_docker_down(volumes_remove)
     # Execute the command.
     hlitas._run(ctx, docker_clean_up_cmd, pty=True)
