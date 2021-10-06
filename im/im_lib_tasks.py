@@ -32,7 +32,7 @@ def _get_im_docker_compose_path() -> str:
 
 def _get_im_docker_cmd(cmd: str) -> str:
     """
-    Get `im docker-compose' command.
+    Construct `im docker-compose' command.
 
     E.g, to run the `im/devops/set_schema_im_db.py`:
     ```
@@ -58,6 +58,33 @@ def _get_im_docker_cmd(cmd: str) -> str:
     return multiline_docker_cmd
 
 
+def _get_im_docker_down(volumes_remove: bool) -> str:
+    """
+    Construct `im docker-compose down' command.
+
+    E.g.,
+    ```
+    docker-compose \
+        --file /app/im/devops/compose/docker-compose.yml \
+        down -v
+    ```
+
+    :param volumes_remove: whether to remove attached volumes or not
+    :return: `im docker-compose down' command
+    """
+    docker_compose_down = ["docker-compose"]
+    # Add `docker-compose` file path.
+    docker_compose_file_path = _get_im_docker_compose_path()
+    docker_compose_down.append(f"--file {docker_compose_file_path}")
+    # Add `down` command.
+    docker_compose_down.append("down")
+    if volumes_remove:
+        # Use the '-v' option to remove attached volumes.
+        docker_compose_down.append("-v")
+    multiline_docker_compose_down = hlitas._to_multi_line_cmd(docker_compose_down)
+    return multiline_docker_compose_down
+
+
 @task
 def im_docker_cmd(ctx, cmd):  # type: ignore
     """
@@ -71,3 +98,20 @@ def im_docker_cmd(ctx, cmd):  # type: ignore
     docker_cmd = _get_im_docker_cmd(cmd)
     # Execute the command.
     hlitas._run(ctx, docker_cmd, pty=True)
+
+
+@task
+def im_docker_down(ctx, volumes_remove=False):  # type: ignore
+    """
+    Remove containers and volumes attached to the `im app`.
+
+    By default volumes are not removed, to also remove volumes do
+    `invoke im_docker_down -v`.
+
+    :param volumes_remove: whether to remove attached volumes or not
+    :param ctx: `context` object
+    """
+    # Get docker down command.
+    docker_clean_up_cmd = _get_im_docker_down(volumes_remove)
+    # Execute the command.
+    hlitas._run(ctx, docker_clean_up_cmd, pty=True)
