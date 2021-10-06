@@ -21,8 +21,17 @@ import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.parser as hparse
 import im.ccxt.data.extract.exchange_class as deecla
+import collections
 
 _LOG = logging.getLogger(__name__)
+
+
+def instantiate_exchanges(exchange_ids: str,
+                          currency_pairs: str):
+    exchange_to_currency = collections.namedtuple("ExchangeToCurrency",
+                                                  ["exchange_id", "exchange_class", "currency_pairs"])
+    exchange_to_currency
+    return exchange_to_currency
 
 
 def _parse() -> argparse.ArgumentParser:
