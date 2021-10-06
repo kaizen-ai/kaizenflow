@@ -40,7 +40,7 @@ class TestGetImDockerDown(huntes.TestCase):
         """
         Check the command line to only remove containers.
         """
-        actual = imimlitas._get_im_docker_down(remove_volumes=False)
+        actual = imimlitas._get_im_docker_down(volumes_remove=False)
         expected = r"""
         docker-compose \
             --file /app/im/devops/compose/docker-compose.yml \
@@ -52,7 +52,7 @@ class TestGetImDockerDown(huntes.TestCase):
         """
         Check the command line to remove containers and volumes.
         """
-        actual = imimlitas._get_im_docker_down(remove_volumes=True)
+        actual = imimlitas._get_im_docker_down(volumes_remove=True)
         expected = r"""
         docker-compose \
             --file /app/im/devops/compose/docker-compose.yml \
