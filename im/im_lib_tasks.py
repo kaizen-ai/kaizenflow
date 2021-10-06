@@ -78,7 +78,7 @@ def _get_im_docker_down(volumes_remove: bool) -> str:
     docker_compose_down.append(f"--file {docker_compose_file_path}")
     # Add `down` command.
     docker_compose_down.append("down")
-    if remove_volumes:
+    if volumes_remove:
         # Use the '-v' option to remove attached volumes.
         docker_compose_down.append("-v")
     multiline_docker_compose_down = hlitas._to_multi_line_cmd(docker_compose_down)
