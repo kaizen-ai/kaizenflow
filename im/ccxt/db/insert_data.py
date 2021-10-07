@@ -11,8 +11,11 @@ import logging
 
 import pandas as pd
 
+import helpers.parser as hparser
 import helpers.dbg as hdbg
 import helpers.sql as hsql
+import argparse
+import im.common.db.create_schema as imcodbcrsch
 
 _LOG = logging.getLogger(__name__)
 
@@ -52,6 +55,7 @@ def create_insert_query(rows: pd.DataFrame, table_name: str) -> str:
     """
     columns = ",".join(list(rows.columns))
     query = f"INSERT INTO {table_name}({columns}) VALUES({'%%s'*len(columns)})"
+    _LOG.info("Executing %s", query)
     return query
 
 
@@ -78,3 +82,31 @@ def execute_insert_query(
     cur = connection.cursor()
     cur.executemany(query, values)
     connection.commit()
+
+
+def _parse() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument(
+        "--table_name",
+        action="store",
+        required=True,
+        type=str,
+        help="Name of table to create",
+    )
+    parser = hparser.add_verbosity_arg(parser)
+    return parser  # type: ignore[no-any-return]
+
+
+def _main(parser: argparse.ArgumentParser) -> None:
+    args = parser.parse_args()
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    conn, _ = imcodbcrsch.get_db_connection_from_environment()
+    rows = pd.read_csv("binance_ETH_USDT_20210927-083608.csv")
+    execute_insert_query(conn, rows, table_name=args.table_name)
+
+
+if __name__ == "__main__":
+    _main(_parse())
