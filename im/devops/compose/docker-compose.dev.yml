@@ -11,7 +11,7 @@ services:
     volumes:
       - im_postgres_data_dev:/var/lib/postgresql/data
     ports:
-      - 5433
+      - 5551
     env_file:
       - ../env/dev.im_db_config.env
 
