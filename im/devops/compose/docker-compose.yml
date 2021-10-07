@@ -5,27 +5,16 @@ services:
   app:
     # TODO(Grisha): use environment variable for image.
     image: 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev
-    restart: "no"
     depends_on:
-      - im_postgres_local
+      - im_postgres
+    restart: "no"
     volumes:
       - ../../../:/app
       - ~/.aws:/app/home/.aws
-    env_file:
-      - ../env/local.im_db_config.env
     working_dir: /app
     entrypoint: /app/devops/docker_build/entrypoint.sh
 
   # Docker container running Postgres DB.
-  im_postgres_local:
+  im_postgres:
     image: postgres:13
     restart: "no"
-    volumes:
-      - im_postgres_data_local:/var/lib/postgresql/data
-    ports:
-      - 5432
-    env_file:
-      - ../env/local.im_db_config.env
-
-volumes:
-  im_postgres_data_local: {}
