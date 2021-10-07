@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  # Docker container running code that talks to the DB.
+  app:
+    # TODO(Grisha): use environment variable for image.
+    image: 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:prod
+    env_file:
+      - ../env/prod.im_db_config.env
+
+  # Docker container running Postgres DB.
+  im_postgres:
+    ports:
+      - 8080
+    env_file:
+      - ../env/prod.im_db_config.env
