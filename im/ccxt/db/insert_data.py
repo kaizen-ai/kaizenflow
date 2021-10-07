@@ -14,7 +14,7 @@ import psycopg2
 from typing import List, Tuple
 
 
-def get_insert_rows_sql_command(values: List[Tuple], table_name: str):
+def get_insert_rows_sql_command(values: List[Tuple], table_name: str, connection: hsql.DbConnection):
     """
     Get command to insert given values into CCXT table.
 
@@ -22,6 +22,10 @@ def get_insert_rows_sql_command(values: List[Tuple], table_name: str):
     :param table_name:
     :return:
     """
+    cur = connection.cursor()
+    args_str = ", ".join(cur.mogrify(""))
+    command = f"{}"
     return command
+
 
 _LOG = logging.getLogger(__name__)
