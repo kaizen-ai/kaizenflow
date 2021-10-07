@@ -54,9 +54,8 @@ def create_insert_query(rows: pd.DataFrame, table_name: str) -> str:
     :return: INSERT command
     """
     columns = ",".join(list(rows.columns))
-    _LOG.info("%s columns found", len(columns))
-    query = f"INSERT INTO {table_name}({columns}) VALUES({'%%s'*len(rows.columns)})"
-    _LOG.info("Executing %s", query)
+    query = f"INSERT INTO {table_name}({columns}) VALUES({','.join(['%%s']*len(rows.columns))})"
+    _LOG.debug("Executing %s", query)
     return query
 
 
