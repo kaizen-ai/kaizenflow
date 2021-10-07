@@ -17,13 +17,17 @@ import helpers.lib_tasks as hlitas
 
 def _get_im_docker_compose_path(stage: Optional[str] = None) -> str:
     """
-    Return path to the docker-compose file, e.g., `im/devops/compose/docker-
-    compose.yml`.
+    Return path to the stage-specific docker-compose file.
+
+    E.g., `im/devops/compose/docker-compose.dev.yml`.
+
+    :param stage: development stage, e.g. `local`, `prod`
     """
     # Get `docker-compose` file path.
     docker_compose_dir = "im/devops/compose"
     compose_file_name = "docker-compose.yml"
     if stage is not None:
+        hdbg.dassert_in(stage, ["local", "dev", "prod"])
         compose_file_name = f"docker-compose.{stage}.yml"
     docker_compose_path = os.path.join(docker_compose_dir, compose_file_name)
     # Get absolute version of a file path.
@@ -35,7 +39,7 @@ def _get_im_docker_compose_path(stage: Optional[str] = None) -> str:
 
 def _get_im_docker_cmd(stage: str, cmd: str) -> str:
     """
-    Construct `im docker-compose' command.
+    Construct stage-specific `im docker-compose' command.
 
     E.g, to run the `im/devops/set_schema_im_db.py` on the `local` stage:
     ```
@@ -46,6 +50,7 @@ def _get_im_docker_cmd(stage: str, cmd: str) -> str:
         im/devops/set_schema_im_db.py
     ```
 
+    :param stage: development stage, e.g. `local`, `prod`
     :param cmd: command to execute
     :return: `im docker-compose' command
     """
@@ -67,15 +72,17 @@ def _get_im_docker_cmd(stage: str, cmd: str) -> str:
 
 def _get_im_docker_down(stage: str, volumes_remove: bool) -> str:
     """
-    Construct `im docker-compose down' command.
+    Construct stage-specific `im docker-compose down' command.
 
     E.g.,
     ```
     docker-compose \
         --file /app/im/devops/compose/docker-compose.yml \
+        --file /app/im/devops/compose/docker-compose.local.yml \
         down -v
     ```
 
+    :param stage: development stage, e.g. `local`, `prod`
     :param volumes_remove: whether to remove attached volumes or not
     :return: `im docker-compose down' command
     """
@@ -101,6 +108,7 @@ def im_docker_cmd(ctx, stage, cmd):  # type: ignore
     Execute the command `cmd` inside a container attached to the `im app`.
 
     :param ctx: `context` object
+    :param stage: development stage, e.g. `local`, `prod`
     :param cmd: command to execute
     """
     hdbg.dassert_ne(cmd, "")
@@ -118,6 +126,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
     By default volumes are not removed, to also remove volumes do
     `invoke im_docker_down -v`.
 
+    :param stage: development stage, e.g. `local`, `prod`
     :param volumes_remove: whether to remove attached volumes or not
     :param ctx: `context` object
     """
