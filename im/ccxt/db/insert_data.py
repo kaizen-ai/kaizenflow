@@ -10,7 +10,6 @@ import helpers.dbg as hdbg
 import helpers.parser as hparser
 import helpers.sql as hsql
 import im.common.db.create_schema as imcodbcrsch
-import psycopg2
 from typing import List, Tuple
 
 
@@ -23,8 +22,8 @@ def get_insert_rows_sql_command(values: List[Tuple], table_name: str, connection
     :return:
     """
     cur = connection.cursor()
-    args_str = ", ".join(cur.mogrify(""))
-    command = f"{}"
+    args_str = ", ".join(cur.mogrify("("+"%s"*len(values)+")", v) for v in values)
+    command = f"INSERT INTO {table_name} VALUES {args_str}"
     return command
 
 
