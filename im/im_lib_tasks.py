@@ -107,6 +107,9 @@ def im_docker_cmd(ctx, stage, cmd):  # type: ignore
     """
     Execute the command `cmd` inside a container attached to the `im app`.
 
+    Use `-s` parameter to specify stage, e.g. to run on the `local` stage:
+    `invoke im_docker_cmd -s local -c bash`.
+
     :param ctx: `context` object
     :param stage: development stage, e.g. `local`, `prod`
     :param cmd: command to execute
@@ -123,8 +126,8 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
     """
     Remove containers and volumes attached to the `im app`.
 
-    By default volumes are not removed, to also remove volumes do
-    `invoke im_docker_down -v`.
+    By default volumes are not removed, to also remove volumes use
+    `-v` parameter.
 
     :param stage: development stage, e.g. `local`, `prod`
     :param volumes_remove: whether to remove attached volumes or not
