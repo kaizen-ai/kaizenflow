@@ -10,6 +10,7 @@ services:
   im_postgres:
     volumes:
       - im_postgres_data_local:/var/lib/postgresql/data
+    # TODO(Grisha): pass port via environment variable.
     ports:
       - 5432
     env_file:

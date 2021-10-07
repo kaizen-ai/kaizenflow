@@ -10,6 +10,7 @@ services:
 
   # Docker container running Postgres DB.
   im_postgres:
+    # TODO(Grisha): pass port via environment variable.
     ports:
       - 8080
     env_file:
