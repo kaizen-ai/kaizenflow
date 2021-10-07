@@ -55,7 +55,8 @@ class TestGetImDockerDown(huntes.TestCase):
 
     def test2(self) -> None:
         """
-        Check the command line to remove containers and volumes on the `dev` stage.
+        Check the command line to remove containers and volumes on the `dev`
+        stage.
         """
         actual = imimlitas._get_im_docker_down(stage="dev", volumes_remove=True)
         expected = r"""
