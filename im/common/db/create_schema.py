@@ -89,7 +89,8 @@ def check_db_connection() -> None:
                 os.environ["POSTGRES_DB"],
                 os.environ["POSTGRES_PORT"],
                 os.environ["POSTGRES_HOST"],
-            )
+            ),
+            abort_on_error=False,
         )
         time.sleep(1)
         if rc == 0:
