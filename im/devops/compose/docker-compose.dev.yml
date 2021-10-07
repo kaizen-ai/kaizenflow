@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  # Docker container running code that talks to the DB.
+  app:
+    env_file:
+      - ../env/dev.im_db_config.env
+
+  # Docker container running Postgres DB.
+  im_postgres:
+    volumes:
+      - im_postgres_data_dev:/var/lib/postgresql/data
+    ports:
+      - 5433
+    env_file:
+      - ../env/dev.im_db_config.env
+
+volumes:
+  im_postgres_data_dev: {}
