@@ -16,6 +16,7 @@ import helpers.dbg as hdbg
 import helpers.sql as hsql
 import argparse
 import im.common.db.create_schema as imcodbcrsch
+import psycopg2
 
 _LOG = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ def create_insert_query(rows: pd.DataFrame, table_name: str) -> str:
     :return: INSERT command
     """
     columns = ",".join(list(rows.columns))
-    query = f"INSERT INTO {table_name}({columns}) VALUES({','.join(['%%s']*len(rows.columns))})"
+    query = f"INSERT INTO {table_name}({columns}) VALUES %%s"
     _LOG.debug("Executing %s", query)
     return query
 
@@ -80,7 +81,7 @@ def execute_insert_query(
     query = create_insert_query(rows, table_name)
     # Execute query for each provided row.
     cur = connection.cursor()
-    cur.executemany(query, values)
+    psycopg2.extras.execute_values(cur, query, values)
     connection.commit()
 
 
