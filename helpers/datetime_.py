@@ -182,18 +182,26 @@ def dassert_tz_compatible(
 
 
 def dassert_tz_compatible_timestamp_with_df(
-    datetime_: StrictDatetime, df: pd.DataFrame
+    datetime_: StrictDatetime,
+    df: pd.DataFrame,
+    col_name: Optional[str],
 ) -> None:
     """
-    Assert that timestamp and df.index are both naive or both have timezone
+    Assert that timestamp and a df column are both naive or both have timezone
     info.
+
+    :param col_name: col_name. `None` represents the index.
     """
     dassert_is_strict_datetime(datetime_)
     hdbg.dassert_isinstance(df, pd.DataFrame)
     if df.empty:
         return
-    # We assume that the first element in the index is representative.
-    df_datetime = df.index[0]
+    if col_name is None:
+        # We assume that the first element in the index is representative.
+        df_datetime = df.index[0]
+    else:
+        hdbg.dassert_in(col_name, df.columns)
+        df_datetime = df[col_name].iloc[0]
     dassert_tz_compatible(df_datetime, datetime_)
 
 
@@ -228,15 +236,20 @@ def get_current_time(
 
     This should be the only way to get the current wall-clock time,
     since it handles both wall-clock time and "simulated" wall-clock
-    time through async-
+    time through asyncio.
+
+    :param tz: how to represent the returned time (e.g., "UTC", "ET", "naive")
+    :param event_loop: use
     """
     if event_loop is not None:
-        # We accept only `hasyncio.EventLoop` here. If we are using asyncio
+        # We accept only `hasyncio.EventLoop` here. If we are using standard asyncio
         # EventLoop we rely on wall-clock time instead of `loop.time()`.
         hdbg.dassert_isinstance(event_loop, asyncio.AbstractEventLoop)
         timestamp = event_loop.get_current_time()
     else:
+        # Use true real-time.
         timestamp = datetime.datetime.utcnow()
+    # Convert it into the right
     timestamp = pd.Timestamp(timestamp, tz=get_UTC_tz())
     if tz == "UTC":
         pass

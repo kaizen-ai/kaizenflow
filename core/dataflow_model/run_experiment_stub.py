@@ -8,15 +8,20 @@ Run a single DAG model wrapping
     --experiment_builder "core.dataflow_model.master_experiment.run_experiment" \
     --config_builder "nlp.build_configs.build_PTask1088_configs()" \
     --num_threads 2
+
+Import as:
+
+import core.dataflow_model.run_experiment_stub as cdtfmoruexpstu
 """
 import argparse
 import importlib
 import logging
 import re
+from typing import cast
 
 import core.config as cconfig
-import helpers.dbg as dbg
-import helpers.parser as prsr
+import helpers.dbg as hdbg
+import helpers.parser as hparser
 
 _LOG = logging.getLogger(__name__)
 
@@ -51,13 +56,18 @@ def _parse() -> argparse.ArgumentParser:
         help="Destination dir for the entire experiment set, not for this"
         " specific experiment",
     )
-    parser = prsr.add_verbosity_arg(parser)
+
+    parser: argparse.ArgumentParser = hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level)
+    report_resource_usage = False
+    # report_resource_usage = True
+    hdbg.init_logger(
+        verbosity=args.log_level, report_resource_usage=report_resource_usage
+    )
     #
     params = {
         "config_builder": args.config_builder,
@@ -72,13 +82,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # E.g., `core.dataflow_model.master_experiment.run_experiment`
     builder = args.experiment_builder
     _LOG.info("experiment_builder='%s'", builder)
-    dbg.dassert(
+    hdbg.dassert(
         not builder.endswith("()"), "Invalid experiment_builder='%s'", builder
     )
     builder = f"{builder}(config)"
     # E.g., ``.
-    m: re.Match = re.match(r"^(\S+)\.(\S+)\((.*)\)$", builder)
-    dbg.dassert(m, "builder='%s'", builder)
+    m = re.match(r"^(\S+)\.(\S+)\((.*)\)$", builder)
+    hdbg.dassert(m, "builder='%s'", builder)
+    m = cast(re.Match, m)
     import_, function, args = m.groups()
     _LOG.debug("import=%s", import_)
     _LOG.debug("function=%s", function)
@@ -90,7 +101,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _ = imp
     python_code = "imp.%s(%s)" % (function, args)
     _LOG.debug("executing '%s'", python_code)
-    exec(python_code)
+    exec(python_code)  # pylint: disable=exec-used
 
 
 if __name__ == "__main__":
