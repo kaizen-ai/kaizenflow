@@ -31,12 +31,20 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        # TODO(Danya): replace dst_dir with SQL connection.
-        "--dst_dir",
+        "--db",
+        action="store",
+        # TODO(Danya): set db connections, if needed, as labels that are used to
+        #  set db connection afterwards. Includes DB name and stage.
+        default="from_env",
+        type=str,
+        help="db to connect to."
+    )
+    parser.add_argument(
+        "--table_name",
         action="store",
         required=True,
         type=str,
-        help="Folder to download files to",
+        help="Name of the table to update",
     )
     parser.add_argument(
         "--api_keys",
