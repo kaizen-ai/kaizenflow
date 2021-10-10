@@ -1,4 +1,12 @@
 #!/bin/bash -e
+#
+# Create a standard tmux session for the amp repo.
+# 
+# # Create an amp tmux session for $HOME/src/amp1
+# > dev_scripts/tmux_amp.sh amp 1
+#
+# # Create a cmamp tmux session for $HOME/src/cmamp2
+# > dev_scripts/tmux_amp.sh cmamp 2
 
 echo "##> dev_scripts/tmux_amp.sh"
 
@@ -40,13 +48,13 @@ SETENV="dev_scripts/setenv_amp.sh"
 # No `clear` since we want to see issues, if any.
 #CMD="source ${SETENV} && reset && clear"
 CMD="source ${SETENV}"
-TMUX_NAME="amp${IDX}"
+TMUX_NAME="${DIR_PREFIX}${IDX}"
 
 # #############################################################################
 # Open the tmux windows.
 # #############################################################################
 
-tmux new-session -d -s $TMUX_NAME -n "---AMP${IDX}---"
+tmux new-session -d -s $TMUX_NAME -n "---${TMUX_NAME}---"
 
 # The first one window seems a problem.
 tmux send-keys "white; cd ${AMP_DIR} && $CMD" C-m C-m
