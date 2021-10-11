@@ -102,7 +102,9 @@ class ReplayedTime:
         # This is when the experiment starts.
         self._initial_wall_clock_dt = self._get_wall_clock_time()
         _LOG.debug(
-            hprint.to_str("self._initial_replayed_dt self._initial_wall_clock_dt")
+            hprintin.to_str(
+                "self._initial_replayed_dt self._initial_wall_clock_dt"
+            )
         )
         hdateti.dassert_tz_compatible(
             self._initial_replayed_dt, self._initial_wall_clock_dt
