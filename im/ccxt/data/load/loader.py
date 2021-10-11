@@ -13,7 +13,6 @@ import pandas as pd
 import core.pandas_helpers as cphelp
 import helpers.datetime_ as hdatet
 import helpers.dbg as dbg
-import helpers.git as git
 import helpers.io_ as hio
 import helpers.s3 as hs3
 
@@ -42,9 +41,7 @@ def _get_file_path(
     :return: path to a file with CCXT data
     """
     # Extract data about downloaded currencies for CCXT.
-    amp_dir = git.get_amp_abs_path()
-    file_name = os.path.join(amp_dir, _DOWNLOADED_CURRENCIES_PATH)
-    downloaded_currencies_info = hio.from_json(file_name)[
+    downloaded_currencies_info = hio.from_json(_DOWNLOADED_CURRENCIES_PATH)[
         "CCXT"
     ]
     # Verify that data for the input exchange id was downloaded.
@@ -77,8 +74,9 @@ class CcxtLoader:
         """
         self._root_dir = root_dir
         self._aws_profile = aws_profile
+        # Specify supported data types to load.
+        self._data_types = ["ohlcv"]
 
-    # TODO(Dan): Dassert `data_type` value before reading data from S3.
     def read_data(
         self,
         exchange_id: str,
@@ -96,6 +94,13 @@ class CcxtLoader:
         :return: processed CCXT data
         """
         data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
+        # Verify that requested data type is valid.
+        dbg.dassert_in(
+            data_type.lower(),
+            self._data_types,
+            msg="Incorrect data type: '%s'. Acceptable types: '%s'"
+                % (data_type.lower(), self._data_types),
+        )
         # Get absolute file path for a CCXT file.
         file_path = os.path.join(
             self._root_dir,
@@ -166,7 +171,10 @@ class CcxtLoader:
         if data_type.lower() == "ohlcv":
             transformed_data = self._apply_ohlcv_transformation(transformed_data)
         else:
-            dbg.dfatal("Incorrect data type. Acceptable types: ohlcv")
+            dbg.dfatal(
+                "Incorrect data type: '%s'. Acceptable types: '%s'"
+                % (data_type.lower(), self._data_types)
+            )
         return transformed_data
 
     def _apply_common_transformation(
