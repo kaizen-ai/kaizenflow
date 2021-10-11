@@ -15,6 +15,7 @@ import helpers.datetime_ as hdatet
 import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.s3 as hs3
+import helpers.sql as hsql
 import im.common.db.create_schema as imcodbcrsch
 
 _LOG = logging.getLogger(__name__)
@@ -79,15 +80,21 @@ class CcxtLoader:
         self._data_types = ["ohlcv"]
 
     @staticmethod
-    def read_db_data(table_name: str) -> pd.DataFrame:
+    def read_db_data(
+        connection: hsql.DbConnection,
+        table_name: str,
+    ) -> pd.DataFrame:
         """
-        Load CCXT data from DB.
+        Load CCXT data from database.
 
-        :param: table_name: table name to load (e.g., "ccxt_ohlcv")
+        :param connection: DB connection
+        :param table_name: name of the table to load (e.g., "ccxt_ohlcv")
         :return: table
         """
+        dbg.dassert_in(
+            table_name, hsql.get_table_names(connection)
+        )
         sql_query = "SELECT * FROM %s" % table_name
-        connection, _ = imcodbcrsch.get_db_connection_from_environment()
         table = pd.read_sql(sql_query, connection)
         return table
 
