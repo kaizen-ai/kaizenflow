@@ -15,6 +15,7 @@ import helpers.datetime_ as hdatet
 import helpers.dbg as dbg
 import helpers.io_ as hio
 import helpers.s3 as hs3
+import im.common.db.create_schema as imcodbcrsch
 
 _LOG = logging.getLogger(__name__)
 
@@ -76,6 +77,13 @@ class CcxtLoader:
         self._aws_profile = aws_profile
         # Specify supported data types to load.
         self._data_types = ["ohlcv"]
+
+    @staticmethod
+    def read_db_data(table_name: str) -> pd.DataFrame:
+        sql_query = "SELECT * FROM '%s" % table_name
+        connection, _ = imcodbcrsch.get_db_connection_from_environment()
+        table = pd.read_sql(sql_query, connection)
+        return table
 
     def read_data(
         self,
